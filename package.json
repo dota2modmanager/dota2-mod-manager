@@ -1,7 +1,7 @@
 {
   "name": "dota2-mod-manager",
   "productName": "Dota 2 Mod Manager",
-  "version": "2.8.0-beta.2",
+  "version": "2.8.0-beta.3",
   "description": "Desktop mod manager for Dota 2 — browse, install, toggle and preset 1100+ cosmetic mods from the D2PFX catalog",
   "main": "main.js",
   "scripts": {
