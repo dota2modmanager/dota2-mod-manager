@@ -200,7 +200,7 @@ installed here survives its uninstall.
 | [Bug report](https://github.com/dota2modmanager/dota2-mod-manager/issues/new?template=bug_report.yml) | Something is broken. **Settings → Diagnostics → Export report** puts everything needed in one file |
 | [Feature request](https://github.com/dota2modmanager/dota2-mod-manager/issues/new?template=feature_request.yml) | An idea for how the app should work |
 | [Discussions](https://github.com/dota2modmanager/dota2-mod-manager/discussions) | Questions, setups worth showing, and anything that is not yet a bug |
-| [Discord](https://discord.gg/PBvG8D9MxT) | Quick help in the Mod Manager post under #utilities on the D2PFX catalog's server, and new versions in #mod-manager. The maintainer is there as Fleece, with the Dota 2 Mod Manager Dev role and this GitHub account linked on the profile |
+| [Discord](https://discord.gg/PBvG8D9MxT) | Quick help in the Mod Manager post under #utilities on the D2PFX catalog's server, and new versions in #mod-manager. The maintainer is there as Fleece, with the Dota 2 Mod Manager Dev role and this GitHub account linked on the profile. The server's [widget](https://discord.com/widget?id=1488030765429166163) lists who is online, no account needed |
 | [Security](SECURITY.md) | Vulnerabilities, privately — never a public issue |
 | [hello@dota2modmanager.com](mailto:hello@dota2modmanager.com) | Anything that does not fit a public tracker: press, licensing, a company asking questions |
 
