@@ -491,6 +491,9 @@ function seedUserData() {
     langPromptSeen: true,
     // the Source 2 Viewer offer; unanswered, it opened in front of every sandbox launch
     toolsPromptSeen: true,
+    // the 18+ question (renderer/core/adult.js), answered no, which shows what an unanswered one
+    // does; unanswered, it opened in front of every sandbox launch
+    showAdult: false,
     lastSeenVersion: require('../package.json').version,
     discordPresence: false,
     schemaPatch: false,
