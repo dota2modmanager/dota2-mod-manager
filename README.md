@@ -182,7 +182,7 @@ installed here survives its uninstall.
 | [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/API.md](docs/API.md) | Which file owns which decision, and every module's exports |
 | [CONTRIBUTING.md](CONTRIBUTING.md) · [AGENTS.md](AGENTS.md) · [SECURITY.md](SECURITY.md) | How to work on it, with or without an assistant, and how to report a hole |
 | [docs/assurance-case.md](docs/assurance-case.md) | What could go wrong, what stops it, and the test that proves each answer |
-| [TRADEMARK.md](TRADEMARK.md) · [docs/code-signing-policy.md](docs/code-signing-policy.md) | What the licence gives you and what it does not, and what is signed today |
+| [TRADEMARK.md](TRADEMARK.md) · [Code signing policy](docs/code-signing-policy.md) | What the licence gives you and what it does not, and what is signed today |
 | [Status](https://dota2modmanager.betteruptime.com) | Whether the update feed, the mirror, the catalog and the site are answering right now |
 | [PRIVACY.md](PRIVACY.md) | What is collected (nothing), and every address the app can contact |
 | [DECISIONS.md](DECISIONS.md) | What was decided on purpose, what is genuinely missing, and the command that checks each one |

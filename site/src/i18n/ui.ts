@@ -42,7 +42,7 @@ export const ui = {
     'foot.takedown.after': ' and it is done.',
     'foot.privacy': 'Privacy',
     'foot.terms': 'Terms',
-    'foot.codesigning': 'Code signing',
+    'foot.codesigning': 'Code signing policy',
     'foot.releases': 'Releases',
 
     'lang.switch': 'Русский',
@@ -76,7 +76,7 @@ export const ui = {
     'foot.takedown.after': ', и так и будет.',
     'foot.privacy': 'Приватность',
     'foot.terms': 'Условия',
-    'foot.codesigning': 'Подпись кода',
+    'foot.codesigning': 'Политика подписи кода',
     'foot.releases': 'Релизы',
 
     'lang.switch': 'English',

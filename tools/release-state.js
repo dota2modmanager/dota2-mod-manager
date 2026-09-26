@@ -126,13 +126,16 @@ function mirrorDrift(want, seen) {
 const NOTES_LIMIT = 3200;
 /** Written into the release notes once the post went out, where nothing renders it. */
 const ANNOUNCED = '<!-- announced in Discord -->';
+/** The last line of every release page. The SignPath Foundation asks for the term "Code signing
+ *  policy" on the pages people download from; the Discord post is not one, and goes without it. */
+const SIGNING_POLICY = '[Code signing policy](https://dota2modmanager.com/code-signing/)';
 
 /**
  * The message for a release, cut by characters rather than bytes: `head -c` could stop in the
  * middle of a letter, and the post would carry half of it.
  */
 function discordPayload({ name, url, notes }) {
-  const chars = [...String(notes || '').replace(/\r\n/g, '\n').replace(ANNOUNCED, '').trim()];
+  const chars = [...String(notes || '').replace(/\r\n/g, '\n').replace(ANNOUNCED, '').replace(SIGNING_POLICY, '').trim()];
   let text = chars.join('');
   if (chars.length > NOTES_LIMIT) text = `${chars.slice(0, NOTES_LIMIT).join('').replace(/\s+\S*$/, '')}…`;
   if (!text) text = 'A new release has been published!';
@@ -173,7 +176,7 @@ const VIRUSTOTAL_MARK = '<!-- virustotal -->';
 const scanned = (release) => String((release && release.body) || '').includes(VIRUSTOTAL_MARK);
 
 module.exports = {
-  FEEDS, BINARIES, PROOF, REQUIRED_ASSETS, NOTES_LIMIT, ANNOUNCED, WATCH_FROM,
+  FEEDS, BINARIES, PROOF, REQUIRED_ASSETS, NOTES_LIMIT, ANNOUNCED, SIGNING_POLICY, WATCH_FROM,
   missingAssets, parseVersion, compareVersions, isBetaVersion, channelHeads, feedVersion,
   mirrorExpectation, mirrorDrift, discordPayload, changelogSection, watched, announced, scanned,
 };
