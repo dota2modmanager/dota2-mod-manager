@@ -769,6 +769,8 @@ section { padding: 44px 0; }
 .foot-legal p { max-width: 82ch; font-size: 13px; line-height: 1.6; color: var(--text-dim); }
 .foot-links { margin-left: auto; display: flex; gap: 20px; }
 @media (max-width: 720px) { .foot-links { margin-left: 0; } }
+/* the policies, under the paragraphs they belong with, spaced like the links above */
+.foot-legal .foot-policies { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 10px; }
 
 /* The name once more, at the size of the page and almost out of sight.
  *

@@ -2,18 +2,42 @@
 
 What is signed, by whom, and what a person downloading this program can check for themselves.
 
-## Today: the installer is not signed
+## The Windows installer
 
-Windows SmartScreen warns about every download of this app, and that warning is honest: the
-installer carries no Authenticode signature. A certificate costs money this project does not take
-in, and the free programme for open source turned this project down once, in August 2026, for not
-being well enough known yet.
+Today the installer carries no Authenticode signature, and Windows SmartScreen warns about it on
+first run. A certificate costs money this project does not take in. This project has applied to
+the SignPath Foundation, which signs open-source software for free. Once the certificate is
+issued, the installer and the portable build will be signed through SignPath, and this page will
+carry the credit that programme asks for: "Free code signing provided by SignPath.io, certificate
+by SignPath Foundation".
 
-What is signed today, and how to check it, is below. This page is also what this project will keep
-current on the day a certificate arrives, because the programme that grants it asks for exactly
-this page.
+Only files this repository's release workflow builds from its own source are sent for signing.
+Nothing built on a developer's machine, and nothing written by somebody else, is signed under this
+project's name.
 
-## What is signed
+## Team roles
+
+| Role | Who | What they do |
+|---|---|---|
+| Committers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Write changes. A change reaches `main` only through a pull request, the maintainers' own included |
+| Reviewers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Approve pull requests. The author's own approval does not count, and a new push dismisses an approval that came before it. A change from outside the project is reviewed by a maintainer |
+| Approvers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Tag a release on a commit of `main`, and approve each signing request once signing is in place |
+
+Both are owners of the [dota2modmanager](https://github.com/dota2modmanager) organization, which
+requires two-factor authentication of every member. They use it on every service that can publish
+anything. [GOVERNANCE.md](../GOVERNANCE.md) says who decides what.
+
+## How a release is built
+
+Releases are built only by GitHub Actions, from a tag on a commit of `main`, never on a developer
+machine. The commit has to have passed every check in
+[`.github/required-checks.json`](../.github/required-checks.json), the same list a pull request
+needs before it can merge. The release opens as a draft that nobody outside the project can see.
+The installer and the AppImage on it are installed on Windows and Linux by CI and used to install a
+mod before the release is published, and a published release cannot be changed afterwards.
+[RELEASING.md](../RELEASING.md) is the whole procedure.
+
+## What is signed today
 
 **Every published file, by the build itself.** Each release carries `SHA256SUMS`, the SHA-256 of
 every file on it, and a Sigstore provenance attestation over that list, made by the release
@@ -30,20 +54,14 @@ SHA-256 from that signed list before it reaches a game folder.
 
 **The file that can change the app after a release**, by this project. `config/app.json` switches
 a feature off, shows a notice, names the beta testers and can add a download mirror. It is signed
-with an ed25519 key held by the maintainer and pinned in the app; a copy that does not verify is
-ignored exactly as if it were unreachable.
+with an ed25519 key held by [@TheFleece](https://github.com/TheFleece) and pinned in the app; a
+copy that does not verify is ignored exactly as if it were unreachable.
 
-## Who can sign, and how
+## Privacy
 
-The maintainer, [@TheFleece](https://github.com/TheFleece), holds the key for `config/app.json`
-and the accounts that publish releases. Two-factor authentication is on for GitHub and for every
-service that can publish anything.
-
-Releases are built only by CI, from a tag on `main`, and never from a developer machine. A change
-reaches `main` only through a pull request that passed the checks listed in
-[`.github/required-checks.json`](../.github/required-checks.json), and the branch rule applies to
-the maintainer too. [GOVERNANCE.md](../GOVERNANCE.md) says who may merge, and
-[RELEASING.md](../RELEASING.md) is the whole release procedure.
+This program sends no information about you, your machine or your games. There is no telemetry and
+no account. It contacts the mod catalog and the update feed; every address it can contact, what for
+and when, is listed in [PRIVACY.md](../PRIVACY.md).
 
 ## What the program does to a machine
 
@@ -52,10 +70,9 @@ the language folder the game mounts, can write loose fonts and cursors, and can 
 file. Anything it replaces is copied first and restored byte for byte on removal. It asks before
 it touches the game folder the first time, and the uninstaller asks what should go with it.
 
-It contacts the catalog, the update feed and nothing else. Every address is listed in
-[PRIVACY.md](../PRIVACY.md). There is no telemetry, no account requirement and no bundled
-software. [SECURITY.md](../SECURITY.md) says what the program promises and what it refuses to
-promise; [docs/assurance-case.md](assurance-case.md) is the argument behind those promises.
+There is no bundled software. [SECURITY.md](../SECURITY.md) says what the program promises and
+what it refuses to promise; [docs/assurance-case.md](assurance-case.md) is the argument behind
+those promises.
 
 ## Third-party components
 
@@ -63,9 +80,3 @@ The app ships two runtime dependencies from npm and three typefaces, all listed 
 [NOTICE](../NOTICE) with their licences, and a CycloneDX SBOM of what each release contains is
 published beside the installer. One external tool, Source2Viewer-CLI (MIT), is downloaded only
 when a feature needs it, pinned by version and SHA-256, and never bundled.
-
-## When this changes
-
-If a certificate is granted, this page will name the issuer and the programme that granted it,
-and the credit those programmes ask for will appear here and on the project's front page. Until
-then the honest summary is the first line of this file.

@@ -1,0 +1,12 @@
+---
+import Base from '../../layouts/Base.astro';
+import Legal from '../../components/Legal.astro';
+import { fromMarkdown } from '../../lib/legal';
+import * as source from '../../../../docs/code-signing-policy.ru.md';
+
+const doc = fromMarkdown(await source.compiledContent(), 'docs/code-signing-policy.ru.md');
+---
+
+<Base title={doc.title} description={doc.description} path="/code-signing/">
+  <Legal doc={doc} />
+</Base>

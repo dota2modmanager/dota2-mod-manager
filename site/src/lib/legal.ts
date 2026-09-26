@@ -31,20 +31,35 @@ export interface LegalDoc {
 }
 
 const REPO = 'https://github.com/dota2modmanager/dota2-mod-manager/blob/main/';
-const SITE_PAGES: Record<string, string> = { 'PRIVACY.md': '/privacy/', 'PRIVACY.ru.md': '/ru/privacy/' };
+/** Repository files that are pages on the site as well, so a link between them stays on the site. */
+const SITE_PAGES: Record<string, string> = {
+  'PRIVACY.md': '/privacy/',
+  'PRIVACY.ru.md': '/ru/privacy/',
+  'docs/code-signing-policy.md': '/code-signing/',
+  'docs/code-signing-policy.ru.md': '/ru/code-signing/',
+};
 
-/** PRIVACY.md or PRIVACY.ru.md, rendered by Astro, made into a page. */
+/**
+ * A repository Markdown file (PRIVACY.md, docs/code-signing-policy.md and their Russian twins),
+ * rendered by Astro, made into a page. `source` is its path from the repository root.
+ */
 export function fromMarkdown(html: string, source: string): LegalDoc {
   const heading = between(html, '<h1', '</h1>');
   const title = textOf(heading.slice(heading.indexOf('>') + 1));
   if (!title) throw new Error(`${source} has no heading`);
+  const dir = source.includes('/') ? source.slice(0, source.lastIndexOf('/') + 1) : '';
   const body = cut(html, '<h1', '</h1>')
-    // links relative to the repository root, like [SECURITY.md](SECURITY.md); an address with a
+    // links relative to the file, like [SECURITY.md](../SECURITY.md) from docs/; an address with a
     // scheme (https:, mailto:) or a fragment is left alone
-    .replace(/href="([^"]*)"/g, (whole, target: string) =>
-      /^([a-z][a-z0-9+.-]*:|#|\/)/i.test(target) ? whole : `href="${SITE_PAGES[target] || REPO + target}"`)
+    .replace(/href="([^"]*)"/g, (whole, target: string) => {
+      if (/^([a-z][a-z0-9+.-]*:|#|\/)/i.test(target)) return whole;
+      const url = new URL(target, `https://repo.invalid/${dir}`);
+      const file = decodeURIComponent(url.pathname.slice(1));
+      return `href="${SITE_PAGES[file] ? SITE_PAGES[file] + url.hash : REPO + file + url.hash}"`;
+    })
     .trim();
-  return { title, body, description: describe(body, (text) => !text.includes('PRIVACY.md')) };
+  // a translation opens by naming the file it translates, which is not what the page is about
+  return { title, body, description: describe(body, (text) => !/\b[\w.-]+\.md\b/.test(text)) };
 }
 
 /** The terms, from docs/terms/index.html, in one language. */

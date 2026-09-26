@@ -153,8 +153,13 @@ const RELEASES = `${GITHUB}/releases/latest`;
         <p>
           {t('foot.takedown.before')}<a href={DISCORD} rel="noopener">{t('nav.discord')}</a>{t('foot.takedown.after')}
         </p>
-        {/* Privacy and Terms are carried over from the old site together with the docs (6.4);
-            until then they are not linked, because a link to nothing is not a placeholder. */}
+        {/* The policies, each a page built from the file the repository keeps (src/lib/legal.ts).
+            The code signing policy is the page the SignPath Foundation asks a project to publish. */}
+        <p class="foot-policies">
+          <a href={pathIn(lang, '/privacy/')}>{t('foot.privacy')}</a>
+          <a href={pathIn(lang, '/terms/')}>{t('foot.terms')}</a>
+          <a href={pathIn(lang, '/code-signing/')}>{t('foot.codesigning')}</a>
+        </p>
       </div>
       <p class="wordmark" aria-hidden="true">{t('site.name')}</p>
     </footer>
