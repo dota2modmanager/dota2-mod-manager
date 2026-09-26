@@ -21,6 +21,7 @@ import { watchMedia } from './ui/media.js';
 import { render, switchView, invalidateViews } from './core/router.js';
 import { refreshInstalledIndex, refreshCosmeticSlots } from './core/installed.js';
 import { switchOffStaleTerrains } from './core/terrain-age.js';
+import { askAdultOnce } from './core/adult.js';
 import { refreshPatchState, paintMasterSwitch, refreshMasterSwitch, refreshSidebarStatus } from './ui/statusbar.js';
 import { applyContentZoom, readPanels, bindPanels } from './ui/chrome.js';
 import { applyStaticI18n, showLanguagePicker } from './ui/language.js';
@@ -403,6 +404,13 @@ window.api.patch.onRepair((st) => {
 
   // first launch, or first launch after this release — let the user pick a language
   if (!cfg.langPromptSeen) await showLanguagePicker();
+
+  // mods the catalog tags adult stay hidden until the user says they are 18 and wants them:
+  // asked once, in the language just chosen, and only when the catalog has any (core/adult.js)
+  if (await askAdultOnce()) {
+    invalidateViews();
+    render();
+  }
 
   // …and the one thing the app cannot do for itself: the fifty megabytes that read Dota's
   // compiled formats. Asked once, on the same run as the language, because a mod with no

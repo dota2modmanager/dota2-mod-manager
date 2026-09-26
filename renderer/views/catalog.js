@@ -33,6 +33,7 @@ import { bindItemBuilder, itemRailHtml, isItemCosmeticSlot, cosmeticFavValue, re
   forgetItemHub, forgetItemSlotModal, redrawItemSlotModal, openItemSlotModal } from './item-builder.js';
 import { heroOf, heroMatches, heroGridWanted, renderHeroGrid, heroBackHtml, layoutToggleHtml, bindHeroControls } from './hero-grid.js';
 import { staleTerrainPillHtml } from '../core/terrain-age.js';
+import { shownMods, isAdult, adultShown } from '../core/adult.js';
 
 const viewRoot = pane('catalog');
 
@@ -64,7 +65,7 @@ function favoriteMods() {
     const cut = key.indexOf('|');
     if (cut < 0) continue;
     const mod = findModByName(key.slice(0, cut), key.slice(cut + 1));
-    if (mod) out.push(mod);
+    if (mod && (adultShown() || !isAdult(mod))) out.push(mod);
   }
   return out;
 }
@@ -136,7 +137,7 @@ function saveCustomPacks(packs) {
   localStorage.setItem('customPacks', JSON.stringify(packs));
 }
 
-function categoryMods(categoryId) {
+function allCategoryMods(categoryId) {
   const data = state.catalog?.mods?.modsData?.[categoryId];
   if (!data) return [];
   if (Array.isArray(data)) {
@@ -159,6 +160,8 @@ function categoryMods(categoryId) {
   }
   return [];
 }
+// what browsing shows: without the adult mods until the user said yes (core/adult.js)
+const categoryMods = (categoryId) => shownMods(allCategoryMods(categoryId));
 
 function isGrouped(categoryId) {
   const data = state.catalog?.mods?.modsData?.[categoryId];
@@ -173,7 +176,7 @@ function visibleCategories() {
 function buildModIndex() {
   state.modIndex.clear();
   for (const c of state.catalog?.constants?.categories || []) {
-    for (const m of categoryMods(c.id)) {
+    for (const m of allCategoryMods(c.id)) {
       if (m.name) state.modIndex.set(m.name.toLowerCase(), { categoryId: c.id, mod: m });
     }
   }
@@ -498,7 +501,7 @@ async function renderHome() {
         ? { ...hit.mod, _cat: hit.categoryId }
         : (state.modIndex.get(r.name.toLowerCase()) ? { ...state.modIndex.get(r.name.toLowerCase()).mod, _cat: state.modIndex.get(r.name.toLowerCase()).categoryId } : null);
     })
-    .filter(Boolean)
+    .filter((m) => m && (adultShown() || !isAdult(m)))
     .slice(0, 12);
 
   // No heading over any of it: the window says Каталог in the tab strip, and a title

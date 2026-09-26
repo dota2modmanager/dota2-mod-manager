@@ -41,6 +41,7 @@ test('a fresh install starts on the defaults, and they are the documented ones',
   assert.deepEqual(s.get('favorites'), []);
   assert.equal(s.get('panels'), null);
   assert.equal(s.get('account'), null);
+  assert.equal(s.get('showAdult'), null, 'adult mods stay hidden until the user answers');
 });
 
 test('nothing is written until something is set', (t) => {
@@ -73,6 +74,15 @@ test('a file from an older version keeps its values and gains the new defaults',
   assert.equal(s.get('schemaPatch'), false, 'a key added later comes from the defaults');
   assert.equal(s.get('theme'), 'ursa');
   assert.equal(s.get('langPromptSeen'), false, 'so an upgrading user sees the picker once too');
+});
+
+test('a file with a byte order mark in front keeps its values', (t) => {
+  /* Notepad and Windows PowerShell 5 write one. JSON.parse refused it, every value fell back to
+   * its default, and with the game path gone the app went looking for Dota again: on 2026-09-26 a
+   * sandbox run found the real install that way and wrote into it. */
+  const { s } = store(t, `\uFEFF${JSON.stringify({ dotaGamePath: 'D:/sandbox/game', uiLang: 'ru' })}`);
+  assert.equal(s.get('dotaGamePath'), 'D:/sandbox/game');
+  assert.equal(s.get('uiLang'), 'ru');
 });
 
 test('a stored false or zero is kept rather than treated as missing', (t) => {
