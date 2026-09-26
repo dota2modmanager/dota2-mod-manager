@@ -70,6 +70,16 @@ const EN = {
   // The catalog ships these in English; these are our own words for them. 'Эффекты' and
   // 'Звуки' are already above as category names, with the same English.
   'Иконки': 'Icons', 'Аниме': 'Anime', '18+': '18+',
+  // the 18+ question and its switch (core/adult.js)
+  'Моды 18+': '18+ mods',
+  'Показывать моды 18+?': 'Show 18+ mods?',
+  'Спрашиваем один раз, ответ можно поменять в настройках': 'Asked once. You can change the answer in Settings',
+  'В каталоге {0} для взрослых: откровенные модели героев. Пока ты не ответишь, их не видно ни в каталоге, ни в поиске.': 'The catalog has {0} for adults: explicit hero models. Until you answer, they are hidden from the catalog and the search.',
+  'Уже установленные моды это не трогает.': 'Mods you already installed stay as they are.',
+  'Не показывать': 'Do not show',
+  'Мне есть 18, показывать': 'I am 18 or older, show them',
+  '{0} с откровенными моделями героев. Включая, ты подтверждаешь, что тебе есть 18 лет.': '{0} with explicit hero models. Turning this on, you confirm you are 18 or older.',
+  'Включая, ты подтверждаешь, что тебе есть 18 лет.': 'Turning this on, you confirm you are 18 or older.',
   'Видео': 'Video', 'Картинка': 'Image', 'Плохое качество': 'Poor quality',
   'Мета': 'Meta', 'Статистика': 'Stats', 'Развлечения': 'Fun', 'Исходный код': 'Source code',
   'Оружие': 'Weapon', 'Наплечники': 'Shoulders', 'Голова': 'Head', 'Руки': 'Arms',

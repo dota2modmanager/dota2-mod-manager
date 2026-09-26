@@ -17,7 +17,7 @@
  */
 import { $ } from '../core/dom.js';
 import { state } from '../core/store.js';
-import { registerView, pane } from '../core/router.js';
+import { registerView, pane, invalidateViews } from '../core/router.js';
 import { esc, fmtMB } from '../ui/format.js';
 import { toast } from '../ui/toast.js';
 import { showWhatsNew } from '../ui/dialog.js';
@@ -25,6 +25,7 @@ import { refreshSidebarStatus } from '../ui/statusbar.js';
 import { clampScale, currentScalePct, paintScale, applyScalePct, clampPanelZoom, paintPanels, savePanels } from '../ui/chrome.js';
 import { applyLanguage } from '../ui/language.js';
 import { loadCatalog } from './catalog.js';
+import { adultShown, adultHint, setAdultShown } from '../core/adult.js';
 import { paint } from '../ui/transitions.js';
 
 const viewRoot = pane('settings');
@@ -135,6 +136,12 @@ export async function renderSettings() {
         <span class="settings-label">${L`Источник`}</span>
         <a class="settings-link" id="srcLink">github.com/h6rd/Dota2PornFxWeb</a>
       </div>
+      <div class="settings-row spaced">
+        <span class="settings-label">${L`Моды 18+`}</span>
+        <button class="toggle ${adultShown() ? 'on' : ''}" id="adultToggle" role="switch"
+                aria-checked="${adultShown()}" aria-label="${L`Моды 18+`}"></button>
+      </div>
+      <div class="settings-hint">${adultHint()}</div>
     </div>
 
     <div class="settings-block" style="--i:5">
@@ -258,6 +265,14 @@ export async function renderSettings() {
   $('#refreshCatBtn2').addEventListener('click', async () => {
     await loadCatalog(true);
     renderSettings();
+  });
+  // the catalog and the search are drawn again with or without them next time they open
+  $('#adultToggle')?.addEventListener('click', async (e) => {
+    const on = !e.currentTarget.classList.contains('on');
+    e.currentTarget.classList.toggle('on', on);
+    e.currentTarget.setAttribute('aria-checked', String(on));
+    await setAdultShown(on);
+    invalidateViews();
   });
   $('#srcLink').addEventListener('click', () => window.api.misc.openExternal('https://github.com/h6rd/Dota2PornFxWeb'));
 }

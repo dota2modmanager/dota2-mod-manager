@@ -49,6 +49,10 @@ const DEFAULTS = {
   // installs and for anybody updating from before it was offered, so everyone gets the
   // question once; the Settings row is the way in afterwards either way.
   toolsPromptSeen: false,
+  // Mods the catalog tags adult (18+): true once the user said they are 18 and want them,
+  // false once they said no, null until they answer the one-time question
+  // (renderer/core/adult.js). Hidden until then.
+  showAdult: null,
   // last version whose release notes the user was shown. Null on a fresh install, which is
   // why nobody gets a "what's new" popup for a version they just installed by hand.
   lastSeenVersion: null,
@@ -64,7 +68,11 @@ class Settings {
   load() {
     try {
       if (fs.existsSync(this.file)) {
-        this.data = { ...DEFAULTS, ...JSON.parse(fs.readFileSync(this.file, 'utf-8')) };
+        // A byte order mark in front is what Notepad and Windows PowerShell 5 write. JSON.parse
+        // refuses it, and every setting fell back to its default: the game path included, so the
+        // app went looking for Dota again and could settle on another install than the user's.
+        const text = fs.readFileSync(this.file, 'utf-8').replace(/^﻿/, '');
+        this.data = { ...DEFAULTS, ...JSON.parse(text) };
       }
     } catch {
       this.data = { ...DEFAULTS };
