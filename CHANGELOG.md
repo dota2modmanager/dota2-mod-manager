@@ -2,6 +2,23 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.8.0-beta.3
+
+A third beta for the testers on the list. Everything in it, and in the two betas before it,
+reaches everybody with 2.8.0.
+
+### 18+ mods stay hidden until you say yes
+
+The catalog marks five mods 18+: explicit hero models. The app now asks once whether you are 18
+and want them shown. Until you say yes, they are hidden from the catalog, the search, Recently
+added and Favorites. Settings → Catalog has a switch to change the answer. Mods you already
+installed stay in My mods as they are.
+
+### Fixes
+
+- A settings file saved with a byte order mark, as Notepad saves it, lost every setting on the
+  next start, the game path included. It now loads.
+
 ## 2.8.0-beta.2
 
 A second beta for the testers on the list. Everything in it, and in 2.8.0-beta.1, reaches
