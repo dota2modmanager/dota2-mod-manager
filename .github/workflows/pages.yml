@@ -1,0 +1,50 @@
+# The old address, https://dota2modmanager.github.io/dota2-mod-manager/, served from docs/.
+#
+# It is a signpost: docs/index.html says the site moved to dota2modmanager.com, and docs/p/,
+# docs/privacy/ and docs/terms/ keep links from before the move working. Until 2026-09-26 GitHub
+# Pages built it the legacy way, from the branch, on every push to main whatever the push touched.
+# When several pull requests landed within a minute, GitHub cancelled all but the last build, and
+# each cancelled build was a red cross on a commit of main that meant nothing.
+#
+# Now it is published only when docs/ or this file changes, and a publish waits for the one before
+# it instead of cancelling it.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+# The token reads the repository and nothing more. The job below asks for what publishing needs.
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      # publishing to Pages, and proving to Pages which workflow did it
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: docs
+
+      - name: Publish the signpost
+        id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

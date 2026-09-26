@@ -508,3 +508,12 @@ test('no commit on main has its analysis cancelled by the next one', () => {
   assert.match(block, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/, 'a push to main can cancel an analysis still running');
 });
 
+test('the old address is published only when docs/ changes, and never cancelled by the next push', () => {
+  /* GitHub's own branch build ran on every push to main and cancelled itself when merges landed
+     close together: #155 carries a red cross for a signpost that had not changed. */
+  const text = read('pages.yml');
+  assert.match(text, /push:\n\s+branches: \[main\]\n\s+paths:\n\s+- 'docs\/\*\*'/, 'the signpost is rebuilt on pushes that do not touch it');
+  assert.match(text, /concurrency:\n\s+group: pages\n\s+cancel-in-progress: false/, 'a publish can cancel the one before it');
+  assert.match(text, /actions\/upload-pages-artifact@[0-9a-f]{40}[^\n]*\n\s+with:\n\s+path: docs\n/, 'something other than docs/ would be published');
+});
+
