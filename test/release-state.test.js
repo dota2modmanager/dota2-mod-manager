@@ -2,6 +2,8 @@
  * the lists release.yml checks the draft against and tools/release-watch.mjs repairs the mirror by. */
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const state = require('../tools/release-state.js');
 const { currentPlan } = require('../tools/mirror-plan.js');
@@ -100,6 +102,15 @@ test('the Discord post is cut by characters, and never loses its link', () => {
   assert.match(state.discordPayload({ name: 'x', url: 'u', notes: '' }).embeds[0].description, /^A new release has been published!/);
   assert.equal(state.discordPayload({ name: 'x', url: 'u', notes: `Notes.\n${state.ANNOUNCED}` }).embeds[0].description.includes('announced'), false,
     'the hidden line stays out of the post');
+  assert.equal(state.discordPayload({ name: 'x', url: 'u', notes: `Notes.\n\n${state.SIGNING_POLICY}\n` }).embeds[0].description,
+    'Notes.\n\n[**Open Release Page**](u)', 'the policy line belongs to the release page, not the post');
+});
+
+test('every release page ends with the code signing policy, on both roads the notes take', () => {
+  // the draft gets it when it opens, and notify when it finds the page empty; the post drops it
+  const workflow = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'release.yml'), 'utf8');
+  const lines = workflow.split('\n').filter((l) => l.includes(`echo '${state.SIGNING_POLICY}'; } >> notes.md`));
+  assert.equal(lines.length, 2, 'release.yml appends the policy line in both notes steps');
 });
 
 test('the changelog section is the one release.yml puts on the page', () => {

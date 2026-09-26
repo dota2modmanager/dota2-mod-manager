@@ -112,6 +112,9 @@ jobs:
             echo "::warning::CHANGELOG.md has no section for $TAG - the release page will be empty"
             printf '' > notes.md
           fi
+          # SignPath asks for the term on every page people download from; the Discord post drops
+          # it again (SIGNING_POLICY in tools/release-state.js)
+          { echo; echo '[Code signing policy](https://dota2modmanager.com/code-signing/)'; } >> notes.md
           if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
             echo "release already exists, leaving it alone"
           else
@@ -649,6 +652,8 @@ jobs:
             echo "::warning::CHANGELOG.md has no section for $TAG - the release page stays empty"
             exit 0
           fi
+          # the same last line as the draft got (SIGNING_POLICY in tools/release-state.js)
+          { echo; echo '[Code signing policy](https://dota2modmanager.com/code-signing/)'; } >> notes.md
           id=$(gh api "repos/$REPO/releases/tags/$TAG" --jq '.id')
           have=$(gh api "repos/$REPO/releases/$id" --jq '.body | length')
           if [ "$have" = "0" ]; then
