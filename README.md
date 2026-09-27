@@ -297,9 +297,9 @@ section 7 of the GPL.
 | [Astro](https://github.com/withastro/astro) | The documentation site, not the app | MIT |
 
 <!-- facts:deps-en -->
-`package.json` lists seven: `adm-zip` and `electron-updater` ship inside the app, `electron`, `electron-builder`, `eslint`, `fast-check` and `typescript` only build or check it.
+`package.json` lists 14: `adm-zip` and `electron-updater` ship inside the app, `@types/react`, `@types/react-dom`, `@vitejs/plugin-react`, `electron`, `electron-builder`, `eslint`, `fast-check`, `motion`, `react`, `react-dom`, `typescript` and `vite` only build or check it.
 <!-- /facts:deps-en -->
-The tests and everything under `tools/` use no dependencies at all. The VPK reader and writer, the KeyValues parser, the zip guards and the
+The tests use no dependencies at all, and `tools/` uses one, `vite`, to build the window. The VPK reader and writer, the KeyValues parser, the zip guards and the
 update logic are written here, because every dependency is a stranger with write access to a
 game folder on tens of thousands of machines.
 

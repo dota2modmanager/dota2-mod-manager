@@ -1,12 +1,28 @@
 {
-  "_why": "Lines each of the largest files is allowed. tools/size-budget.mjs fails a run where one grows, and where a file that is not listed crosses 800 lines. --update writes measurements back but never raises a number: raising one means editing this file by hand and saying why. Splitting these files shows up here as a number going down.",
-  "measured": "2026-09-24",
-  "watchAt": 800,
+  "_why": "Lines each of the largest files is allowed. tools/size-budget.mjs fails a run where one grows, and where a file that is not listed crosses 300 lines. --update writes measurements back but never raises a number: raising one means editing this file by hand and saying why. Splitting these files shows up here as a number going down.",
+  "measured": "2026-09-27",
+  "watchAt": 300,
   "files": {
     "main.js": 1129,
+    "renderer/app.js": 426,
+    "renderer/i18n.js": 787,
     "renderer/views/catalog.js": 1699,
+    "renderer/views/item-builder.js": 674,
     "renderer/views/library.js": 1374,
+    "renderer/views/presets.js": 433,
+    "src/diagnostics.js": 405,
+    "src/gamelang.js": 462,
+    "src/icons.js": 486,
     "src/installer.js": 1324,
+    "src/ipc-library.js": 414,
+    "src/item-builder.js": 542,
+    "src/mod-preview.js": 392,
+    "src/net.js": 427,
+    "src/overlays.js": 326,
+    "src/patcher.js": 429,
+    "src/presets-service.js": 334,
+    "src/schema-service.js": 416,
+    "src/schema.js": 613,
     "src/vpk.js": 901
   }
 }

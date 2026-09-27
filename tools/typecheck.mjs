@@ -70,17 +70,25 @@ export function compare(baseline, now) {
   return { worse, better, gone };
 }
 
-/** Run tsc through the local install, and hand back whatever it printed. */
+/**
+ * Run tsc through the local install over both projects, and hand back whatever it printed.
+ * tsconfig.json is the main process and src/, checked through JSDoc against the baseline;
+ * renderer/tsconfig.json is the window's TypeScript, strict and with nothing in the baseline, so
+ * a single error there fails the run.
+ */
 function runTsc() {
   const tsc = require.resolve('typescript/bin/tsc');
-  try {
-    execFileSync(process.execPath, [tsc, '-p', 'tsconfig.json'], { cwd: root, encoding: 'utf8' });
-    return '';
-  } catch (err) {
-    // tsc exits non-zero when it found something; that is the normal path here
-    if (err.stdout == null && err.stderr == null) throw err;
-    return `${err.stdout || ''}${err.stderr || ''}`;
+  let out = '';
+  for (const project of ['tsconfig.json', 'renderer/tsconfig.json']) {
+    try {
+      execFileSync(process.execPath, [tsc, '-p', project], { cwd: root, encoding: 'utf8' });
+    } catch (err) {
+      // tsc exits non-zero when it found something; that is the normal path here
+      if (err.stdout == null && err.stderr == null) throw err;
+      out += `${err.stdout || ''}${err.stderr || ''}`;
+    }
   }
+  return out;
 }
 
 const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

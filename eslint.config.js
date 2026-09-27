@@ -83,7 +83,7 @@ const rules = {
 module.exports = [
   {
     ignores: [
-      'node_modules/**', 'dist/**', 'sandbox/**', 'site/**', 'coverage/**',
+      'node_modules/**', 'dist/**', 'out/**', 'sandbox/**', 'site/**', 'coverage/**',
       '.claude/**', 'assets/**',
     ],
   },
