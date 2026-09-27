@@ -22,6 +22,9 @@
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .modal-overlay.hidden { display: none; }
+/* The window's two layers and the islands of markup inside it take no room of their own
+   (catalog/modal/layers.ts): the window's styles see the same children they always did. */
+.modal-layer { display: contents; }
 .modal-overlay.closing { animation: fadeOut var(--dur-base) var(--ease-accelerate) both; }
 @keyframes fadeOut { to { opacity: 0; } }
 .modal-content {

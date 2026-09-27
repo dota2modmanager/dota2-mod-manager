@@ -20,10 +20,14 @@ import { COSMETIC_PREFIX } from '../core/constants.js';
 import { catName, catIcon } from '../core/categories.js';
 import { pickedIn, refreshCosmeticSlots } from '../core/installed.js';
 import { legacyLayer } from '../catalog/layers.ts';
+import { legacyModalLayer } from '../catalog/modal/layers.ts';
 import { esc, plural } from '../ui/format.js';
 import { paint } from '../ui/transitions.js';
 import { toast } from '../ui/toast.js';
 import { cosmeticIcon, loadCosmeticIcons, paintCosmeticIcons, watchCosmeticIcons } from '../ui/cosmetic-icons.js';
+
+// the builder's windows share the overlay with the mod window: a picker is the wide one
+const pickerWindow = (wide) => { $('#modalContent').classList.toggle('item-picker-modal', wide); return legacyModalLayer(); };
 
 /** What the catalog hands over; set once by bindItemBuilder before anything here runs. */
 let cat = null;
@@ -176,8 +180,7 @@ function drawItemSlotModal() {
   const effectOptions = (data.effects || []).filter((fx) => fx.id);
   const back = st.back;
 
-  $('#modalContent').classList.add('item-picker-modal');
-  $('#modalContent').innerHTML = `
+  pickerWindow(true).innerHTML = `
     <div class="modal-body item-picker-body">
       ${builderHeadHtml(back?.label, (back?.hero && data.slotLabel) || data.label || catName(COSMETIC_PREFIX + st.slot),
         `<span>${L`вид для стандартного предмета`}</span><span>· ${data.options.length} ${plural(data.options.length, 'вариант', 'варианта', 'вариантов')}</span>`)}
@@ -481,8 +484,7 @@ function openItemHeroModal(heroName, slots, from) {
 
 function drawItemHeroModal(heroName, slots) {
   const sets = heroSets(heroName);
-  $('#modalContent').classList.remove('item-picker-modal');
-  $('#modalContent').innerHTML = `
+  pickerWindow(false).innerHTML = `
     <div class="modal-body">
       <div class="modal-title-row">
         <div class="modal-title">${esc(heroName)}</div>
@@ -535,8 +537,7 @@ function setCardHtml(set, i) {
 function drawItemSetsModal() {
   const st = itemSetState;
   const sets = heroSets(st.back.heroName);
-  $('#modalContent').classList.add('item-picker-modal');
-  $('#modalContent').innerHTML = `
+  pickerWindow(true).innerHTML = `
     <div class="modal-body item-picker-body">
       ${builderHeadHtml(st.back.heroName, L`Наборы`, `<span>${sets.length} ${plural(sets.length, 'набор', 'набора', 'наборов')}</span>`)}
       <div class="tb-search item-picker-search"><span class="ms">search</span><input type="text" id="itemSetSearch" placeholder="${L`Поиск…`}" value="${esc(st.query)}" autocomplete="off"></div>
@@ -596,8 +597,7 @@ function drawItemSetModal() {
   const count = set.fit < n ? L`${set.fit} из ${n} ${plural(n, 'детали', 'деталей', 'деталей')}` : `${n} ${plural(n, 'деталь', 'детали', 'деталей')}`;
   const act = st.busy ? { label: L`Надеваю…`, icon: 'hourglass_top', off: true }
     : setIsOn(set) ? { label: L`Надето`, icon: 'check', off: true } : { label: L`Надеть весь набор`, icon: 'checkroom' };
-  $('#modalContent').classList.add('item-picker-modal');
-  $('#modalContent').innerHTML = `
+  pickerWindow(true).innerHTML = `
     <div class="modal-body item-picker-body">
       ${builderHeadHtml(L`Наборы`, set.name, `<span>${esc(set.heroLabel)}</span><span>· ${count}</span>`)}
       <div class="item-pick-grid">${set.pieces.map(pieceCardHtml).join('')}</div>

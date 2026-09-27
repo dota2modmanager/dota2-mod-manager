@@ -20,9 +20,8 @@ import { creditChipsHtml, bindCreditChips } from '../ui/credit-chips.js';
 import { esc, fmtDate, plural } from '../ui/format.js';
 import { toast } from '../ui/toast.js';
 import { confirmDialog } from '../ui/dialog.js';
-import { previewUrl, isMedia, resolveUrl, mediaHtml } from '../ui/media.js';
+import { previewUrl, isMedia, resolveUrl } from '../ui/media.js';
 import { openPlayer } from '../ui/player.js';
-import { thumbHtml } from '../ui/thumb.js';
 import { loadCosmeticIcons, paintCosmeticIcons, watchCosmeticIcons, cosmeticIcon, cosmeticIconKnown } from '../ui/cosmetic-icons.js';
 import { paint } from '../ui/transitions.js';
 import { isQueued, dropFromQueue, useInstaller } from '../ui/queue.js';
@@ -39,12 +38,13 @@ import { tagLabel as labelOfTag, collectTags, collectSlots as slotsOf, collectGr
 import { applyFilters as filterMods, sortMods, narrowed as filtersNarrowed } from '../catalog/filters.ts';
 import { favKey, isFav, toggleFavorite } from '../catalog/favorites.ts';
 import { styleIndex, pickStyle, isInstalled } from '../catalog/looks.ts';
-import { flatColor } from '../catalog/colors.ts';
 import { playablePreview } from '../catalog/preview.ts';
 import { showScreen, redrawScreen } from '../catalog/screen/root.tsx';
 import { renderRail as drawRail } from '../catalog/rail/Rail.tsx';
 import { bannerLayer, legacyLayer } from '../catalog/layers.ts';
 import { growFrom, shrinkAway } from '../catalog/modal-motion.ts';
+import { showModModal } from '../catalog/modal/root.tsx';
+import { legacyModalLayer, clearModal } from '../catalog/modal/layers.ts';
 
 const viewRoot = pane('catalog');
 
@@ -573,7 +573,7 @@ function closeModal() {
     if (!overlay.classList.contains('closing')) return;
     overlay.classList.add('hidden');
     overlay.classList.remove('closing');
-    $('#modalContent').innerHTML = '';
+    clearModal();
     modalState = null;
     cosModalState = null;
     forgetItemSlotModal();
@@ -592,34 +592,10 @@ const LINK_LABEL = {
   'source-code': 'Исходники',
 };
 
-// A style's colour comes from the catalog and goes into a custom property, so it has to be
-// a colour and nothing else. Two mods ship a gradient there rather than a hex, which is why
-// this passes anything a colour or gradient is made of and stops at the characters that
-// would end the declaration and start another one.
 // A pack's `mods` entry is usually a mod-name string, but the catalog also ships
 // entries shaped like { name, style } — treat both, or the modal crashes on open.
 function packMemberName(entry) {
   return (typeof entry === 'string' ? entry : entry?.name || '').trim();
-}
-
-/* A tool is somebody else's program, so the window offers what you can do with a program
- * rather than what you can do with a mod: fetch it, start it, open the folder it went into,
- * throw it away. There is no switch anywhere - a tool sits in the app's own folder and the
- * game never looks at it. */
-function toolActionsHtml(mod, rec, target, busy) {
-  if (rec) {
-    const relPath = rec.files?.[0]?.relPath || '';
-    return `
-      <button class="btn btn-primary" id="toolRunBtn" data-rel="${esc(relPath)}"><span class="ms">play_arrow</span>${L`Запустить`}</button>
-      <button class="btn" id="toolFolderBtn" data-rel="${esc(relPath)}"><span class="ms">folder_open</span>${L`Папка`}</button>
-      <button class="btn btn-danger" id="toolDeleteBtn"><span class="ms">delete</span>${L`Удалить`}</button>`;
-  }
-  if (target) {
-    return `<button class="btn btn-primary" id="installBtn" ${busy ? 'disabled' : ''}><span class="ms">download</span>${busy ? L`Скачивание…` : L`Скачать`}</button>`;
-  }
-  return mod.file
-    ? `<button class="btn" id="openLinkBtn"><span class="ms">open_in_new</span>${L`Открыть сайт`}</button>`
-    : '';
 }
 
 function packMembers(mod) {
@@ -629,6 +605,8 @@ function packMembers(mod) {
     .map((name) => ({ name, hit: state.modIndex.get(name.toLowerCase()) }));
 }
 
+// ---------- the window itself (catalog/modal/ModModal.tsx draws it) ----------
+
 function drawModal() {
   const { categoryId, mod, styleIdx } = modalState;
   const styles = mod.styles || null;
@@ -636,170 +614,55 @@ function drawModal() {
   const fileRef = styles ? cur.file : mod.file;
   const target = fileRef && /\.(vpk|zip)$/i.test(fileRef) ? fileRef : null;
   const isPack = mod.type === 'pack';
-  const isTool = categoryId === 'tools';
   const styleLabel = styles ? cur.label : null;
   const installedRec = state.installedIndex.get(keyOf(categoryId, mod.name, styleLabel));
-  const busy = installing.has(keyOf(categoryId, mod.name, styleLabel));
-  // What the catalog wrote about this mod reads here rather than on a screen of its own
-  const guides = modGuidesHtml(mod);
-
   const links = mod.links || [];
-  const playable = playablePreview(mod);
-  const mediaUrl = previewUrl(categoryId, cur.preview || mod.preview);
-
   // everybody the catalog credits, not only the first author (core/credits.js says why)
   const credits = modCredits(mod, state.catalog?.constants);
-
   // people are credits above, not buttons: their "url" is a name, which opened as a 404
   const otherLinks = links.filter((l) => !(l.type === 'preview' && isMedia(l.url)) && !CREDIT_ROLES.includes(l.type));
-
-  // pack contents (with per-session exclusions)
+  // pack contents, with the members dropped for this install
   if (isPack && !modalState.packExcluded) modalState.packExcluded = new Set();
   const members = isPack ? packMembers(mod) : [];
-  const activeCount = isPack ? members.filter((x) => !modalState.packExcluded.has(x.name)).length : 0;
+  const excluded = modalState.packExcluded;
+  const playable = playablePreview(mod);
 
-  $('#modalContent').innerHTML = `
-    <div class="modal-media">
-      ${mediaHtml(mediaUrl, { autoplay: true, fallbackIcon: catIcon(categoryId) })}
-      <button class="modal-close" id="modalCloseBtn" aria-label="${L`Закрыть`}"><span class="ms">close</span></button>
-      ${playable ? `
-        <button class="preview-toggle" id="previewPlayBtn">
-          <span class="ms">play_circle</span>${L`Смотреть превью`}
-        </button>` : ''}
-    </div>
-    <div class="modal-body">
-      <div class="modal-title-row">
-        <div class="modal-title">${esc(mod.name)}</div>
-        ${favButtonHtml(categoryId, mod.name)}
-      </div>
-      <div class="modal-sub">
-        <span>${esc(catName(categoryId))}</span>
-        ${mod._group ? `<span>· ${esc(mod._group)}</span>` : ''}
-        ${mod._custom ? `<span>${L`· свой пак`}</span>` : ''}
-        ${mod.meta?.date ? `<span>· ${fmtDate(mod.meta.date)}</span>` : ''}
-        ${creditChipsHtml(credits)}
-      </div>
-      ${styles ? `
-        <div class="style-row">
-          ${styles.map((s, i) => `
-            <button class="style-btn ${i === styleIdx ? 'active' : ''}" data-style="${i}" style="--c:${flatColor(s.color)}">
-              ${esc(s.label || tr('Обычный'))}
-            </button>`).join('')}
-        </div>` : ''}
-      ${isPack ? `
-        <div class="pack-list">
-          ${members.map((x) => {
-            const excluded = modalState.packExcluded.has(x.name);
-            const thumb = x.hit ? previewUrl(x.hit.categoryId, x.hit.mod.preview || x.hit.mod.styles?.[0]?.preview) : null;
-            const inst = x.hit && isInstalled(x.hit.categoryId, x.hit.mod);
-            return `
-            <div class="pack-row ${excluded ? 'excluded' : ''} ${x.hit ? '' : 'missing'}" data-member="${esc(x.name)}">
-              ${thumbHtml('pack-thumb', thumb)}
-              <div class="pack-info">
-                <div class="pack-mod-name">${esc(x.name)}</div>
-                <div class="pack-mod-cat">${x.hit ? esc(catName(x.hit.categoryId)) : L`не найден в каталоге`}${inst ? L` · установлен` : ''}</div>
-              </div>
-              <button class="pack-x" data-toggle="${esc(x.name)}" aria-label="${excluded ? L`Вернуть` : L`Убрать`}">
-                <span class="ms">${excluded ? 'add' : 'close'}</span>
-              </button>
-            </div>`;
-          }).join('')}
-        </div>
-        <div class="pack-save-row">
-          <input class="input" id="packSaveName" placeholder="${L`Название своего пака…`}" value="${mod._custom ? esc(mod.name) : ''}">
-          <button class="btn btn-sm" id="packSaveBtn"><span class="ms">bookmark_add</span>${L`Сохранить пак`}</button>
-          ${mod._custom ? `<button class="btn btn-sm btn-danger" id="packDeleteBtn">${L`Удалить пак`}</button>` : ''}
-        </div>` : ''}
-      <div class="modal-actions">
-        ${isTool ? toolActionsHtml(mod, installedRec, target, busy) : ''}
-        ${!isTool && isPack ? `<button class="btn btn-primary" id="installPackBtn" ${activeCount ? '' : 'disabled'}><span class="ms">download</span>${L`Установить пак (${activeCount})`}</button>` : ''}
-        ${!isTool && !isPack && target ? (installedRec
-          ? `<button class="btn btn-danger" id="uninstallBtn"><span class="ms">delete</span>${L`Удалить`}</button>`
-          : `<button class="btn btn-primary" id="installBtn" ${busy ? 'disabled' : ''}><span class="ms">download</span>${busy ? L`Установка…` : L`Установить`}</button>`) : ''}
-        ${!isTool && !isPack && !target && mod.file ? `<button class="btn" id="openLinkBtn"><span class="ms">open_in_new</span>${L`Открыть ссылку`}</button>` : ''}
-      </div>
-      ${guides}
-      ${otherLinks.length ? `
-        <div class="modal-links">
-          ${otherLinks.map((l) => `<button class="btn btn-sm" data-link="${links.indexOf(l)}"><span class="ms">open_in_new</span>${esc(tr(LINK_LABEL[l.type] || l.type || 'Ссылка'))}</button>`).join('')}
-        </div>` : ''}
-      ${categoryId === 'fonts' ? `<div class="modal-note">${L`Шрифт ставится в файлы игры (game\\dota\\panorama\\fonts) — параметр запуска не нужен. Оригиналы сохраняются автоматически.`}</div>` : ''}
-      ${categoryId === 'cursors' ? `<div class="modal-note">${L`Курсор ставится в game\\dota\\resource\\cursor — параметр запуска не нужен. Оригиналы сохраняются автоматически. Включать и выключать его можно в «Моих модах», но активным может быть только один курсор: новый выключит предыдущий.`}</div>` : ''}
-    </div>
-  `;
+  const model = {
+    categoryId,
+    catName: catName(categoryId),
+    mod,
+    styles,
+    styleIdx,
+    mediaUrl: previewUrl(categoryId, cur.preview || mod.preview),
+    fallbackIcon: catIcon(categoryId),
+    playable,
+    fav: isFav(categoryId, mod.name),
+    date: mod.meta?.date ? fmtDate(mod.meta.date) : null,
+    creditsHtml: creditChipsHtml(credits),
+    kind: categoryId === 'tools' ? 'tool' : isPack ? 'pack' : 'mod',
+    target,
+    installedId: installedRec?.id ?? null,
+    toolRelPath: installedRec?.files?.[0]?.relPath || '',
+    busy: installing.has(keyOf(categoryId, mod.name, styleLabel)),
+    pack: isPack ? {
+      members: members.map((x) => ({
+        name: x.name,
+        thumb: x.hit ? previewUrl(x.hit.categoryId, x.hit.mod.preview || x.hit.mod.styles?.[0]?.preview) : null,
+        catName: x.hit ? catName(x.hit.categoryId) : null,
+        installed: Boolean(x.hit && isInstalled(x.hit.categoryId, x.hit.mod)),
+        excluded: excluded.has(x.name),
+      })),
+      activeCount: members.filter((x) => !excluded.has(x.name)).length,
+      custom: Boolean(mod._custom),
+    } : null,
+    guidesHtml: modGuidesHtml(mod),
+    links: otherLinks.map((l) => ({ index: links.indexOf(l), label: tr(LINK_LABEL[l.type] || l.type || 'Ссылка') })),
+    note: categoryId === 'fonts' ? L`Шрифт ставится в файлы игры (game\\dota\\panorama\\fonts) — параметр запуска не нужен. Оригиналы сохраняются автоматически.`
+      : categoryId === 'cursors' ? L`Курсор ставится в game\\dota\\resource\\cursor — параметр запуска не нужен. Оригиналы сохраняются автоматически. Включать и выключать его можно в «Моих модах», но активным может быть только один курсор: новый выключит предыдущий.`
+        : null,
+  };
 
-  $('#modalCloseBtn').addEventListener('click', closeModal);
-  const favBtn = $('#modalContent .fav-btn');
-  if (favBtn) bindFavButton(favBtn);
-
-  $('#previewPlayBtn')?.addEventListener('click', () => openPlayer(playable, mod.name));
-
-  bindCreditChips(document, credits, (url) => window.api.misc.openExternal(url));
-
-  // pack interactions
-  document.querySelectorAll('.pack-x').forEach((b) => {
-    b.addEventListener('click', () => {
-      const n = b.dataset.toggle;
-      if (modalState.packExcluded.has(n)) modalState.packExcluded.delete(n);
-      else modalState.packExcluded.add(n);
-      drawModal();
-    });
-  });
-  const packSaveBtn = $('#packSaveBtn');
-  if (packSaveBtn) {
-    packSaveBtn.addEventListener('click', () => {
-      const name = $('#packSaveName').value.trim();
-      if (!name) { toast(L`Введи название пака`, 'warn'); return; }
-      const modNames = members.filter((x) => !modalState.packExcluded.has(x.name)).map((x) => x.name);
-      if (!modNames.length) { toast(L`В паке не осталось модов`, 'warn'); return; }
-      const packs = customPacks().filter((p) => p.name !== name && p.name !== (mod._custom ? mod.name : null));
-      packs.push({ name, mods: modNames });
-      saveCustomPacks(packs);
-      toast(L`Пак «${name}» сохранён — он появился в категории Паки`);
-      if (state.view === 'catalog' && state.activeCategory === 'packs') { closeModal(); renderCatalog(); }
-    });
-  }
-  const packDeleteBtn = $('#packDeleteBtn');
-  if (packDeleteBtn) {
-    packDeleteBtn.addEventListener('click', async () => {
-      if (!await confirmDialog(L`Удалить пак «${mod.name}»?`)) return;
-      saveCustomPacks(customPacks().filter((p) => p.name !== mod.name));
-      closeModal();
-      renderCatalog();
-    });
-  }
-
-  document.querySelectorAll('.style-btn').forEach((b) => {
-    b.addEventListener('click', () => {
-      modalState.styleIdx = Number(b.dataset.style);
-      // the card behind the window is showing a look too; they agree from here on
-      pickStyle(categoryId, mod, modalState.styleIdx);
-      redrawScreen();
-      drawModal();
-    });
-  });
-
-  $('#installBtn')?.addEventListener('click', () => doInstall(categoryId, mod, styleLabel, fileRef, cur.preview || mod.preview));
-  const uninstallBtn = $('#uninstallBtn');
-  if (uninstallBtn) {
-    uninstallBtn.addEventListener('click', async () => {
-      if (!await confirmDialog(L`Удалить «${mod.name}»?`)) return;
-      const r = await window.api.mods.remove(installedRec.id);
-      if (r.error) toast(r.error, 'error');
-      else toast(L`${mod.name} удалён`);
-      await refreshInstalledIndex();
-      refreshCardBadges();
-      drawModal();
-    });
-  }
-  const packBtn = $('#installPackBtn');
-  if (packBtn) packBtn.addEventListener('click', () => installPack(mod));
-  $('#toolRunBtn')?.addEventListener('click', async (e) => {
-    const r = await window.api.misc.runTool(e.currentTarget.dataset.rel);
-    if (r.error) toast(r.error, 'error');
-  });
-  $('#toolFolderBtn')?.addEventListener('click', (e) => window.api.misc.openToolsFolder(e.currentTarget.dataset.rel));
-  $('#toolDeleteBtn')?.addEventListener('click', async () => {
+  const removeInstalled = async () => {
     if (!await confirmDialog(L`Удалить «${mod.name}»?`)) return;
     const r = await window.api.mods.remove(installedRec.id);
     if (r.error) toast(r.error, 'error');
@@ -807,16 +670,59 @@ function drawModal() {
     await refreshInstalledIndex();
     refreshCardBadges();
     drawModal();
-  });
-  const openLinkBtn = $('#openLinkBtn');
-  if (openLinkBtn) openLinkBtn.addEventListener('click', () => window.api.misc.openExternal(mod.file));
-  bindGuides($('#modalContent'));
-  otherLinks.forEach((l) => {
-    const a = document.querySelector(`[data-link="${links.indexOf(l)}"]`);
-    if (a) a.addEventListener('click', () => {
-      const u = resolveUrl(l.url);
+  };
+
+  showModModal(model, {
+    close: closeModal,
+    toggleFav: async () => {
+      await toggleFavorite(categoryId, mod.name);
+      drawModal();
+      redrawScreen(); // the card behind the window wears the same heart
+      actions.favChanged();
+    },
+    playPreview: () => openPlayer(playable, mod.name),
+    pickStyle: (i) => {
+      modalState.styleIdx = i;
+      // the card behind the window is showing a look too; they agree from here on
+      pickStyle(categoryId, mod, i);
+      redrawScreen();
+      drawModal();
+    },
+    togglePackMember: (name) => {
+      if (excluded.has(name)) excluded.delete(name);
+      else excluded.add(name);
+      drawModal();
+    },
+    savePack: (name) => {
+      if (!name) { toast(L`Введи название пака`, 'warn'); return; }
+      const modNames = members.filter((x) => !excluded.has(x.name)).map((x) => x.name);
+      if (!modNames.length) { toast(L`В паке не осталось модов`, 'warn'); return; }
+      const packs = customPacks().filter((p) => p.name !== name && p.name !== (mod._custom ? mod.name : null));
+      packs.push({ name, mods: modNames });
+      saveCustomPacks(packs);
+      toast(L`Пак «${name}» сохранён — он появился в категории Паки`);
+      if (state.view === 'catalog' && state.activeCategory === 'packs') { closeModal(); renderCatalog(); }
+    },
+    deletePack: async () => {
+      if (!await confirmDialog(L`Удалить пак «${mod.name}»?`)) return;
+      saveCustomPacks(customPacks().filter((p) => p.name !== mod.name));
+      closeModal();
+      renderCatalog();
+    },
+    install: () => (isPack ? installPack(mod) : doInstall(categoryId, mod, styleLabel, fileRef, cur.preview || mod.preview)),
+    uninstall: removeInstalled,
+    runTool: async () => {
+      const r = await window.api.misc.runTool(model.toolRelPath);
+      if (r.error) toast(r.error, 'error');
+    },
+    openToolFolder: () => window.api.misc.openToolsFolder(model.toolRelPath),
+    openLink: () => window.api.misc.openExternal(mod.file),
+    openExtraLink: (index) => {
+      const u = resolveUrl(links[index].url);
       if (u) window.api.misc.openExternal(u);
-    });
+    },
+    bindCredits: (el) => bindCreditChips(el, credits, (url) => window.api.misc.openExternal(url)),
+    bindGuides: (el) => bindGuides(el),
   });
 }
 
@@ -1005,7 +911,7 @@ function drawCosmeticModal() {
   const icon = cosmeticIcon(o.name);
   const busy = installing.has(COSMETIC_PREFIX + slot + '|' + o.id + '|');
 
-  $('#modalContent').innerHTML = `
+  legacyModalLayer().innerHTML = `
     <div class="modal-media cos">
       ${icon
         ? `<img src="${esc(icon)}" alt="">`

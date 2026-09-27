@@ -41,7 +41,8 @@ export function growFrom(panel: HTMLElement, card: Element | null): void {
   if (overlay) {
     overlay.classList.add('grows');
     animate(overlay, { backgroundColor: ['rgba(3, 3, 6, 0)', 'rgba(3, 3, 6, 0.7)'], backdropFilter: ['blur(0px)', 'blur(8px)'] },
-      { duration: dur('--dur-slow'), ease: ease('--ease-standard') });
+      { duration: dur('--dur-slow'), ease: ease('--ease-standard') })
+      .finished.then(() => settle(overlay, ['background-color', 'backdrop-filter'])).catch(() => {});
   }
   const to = panel.getBoundingClientRect();
   const s = from.width / to.width;
@@ -53,7 +54,18 @@ export function growFrom(panel: HTMLElement, card: Element | null): void {
   animate(panel, {
     transform: [`translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${s})`, 'translate(0px, 0px) scale(1)'],
     clipPath: [`inset(0px 0px ${hidden}px 0px round ${cardRadius}px)`, `inset(0px 0px 0px 0px round ${ownRadius}px)`],
-  }, { duration: dur('--dur-slow'), ease: ease('--ease-standard') });
+  }, { duration: dur('--dur-slow'), ease: ease('--ease-standard') })
+    .finished.then(() => settle(panel, ['transform', 'clip-path'])).catch(() => {});
+}
+
+/* Once it has landed the window hands its look back to the stylesheet. A transform left on it,
+ * even the identity one, keeps it on a layer of its own, and text there is antialiased in grey
+ * instead of the way the rest of the window draws it: every glyph came out a shade off. */
+function settle(el: HTMLElement, props: string[]): void {
+  // a frame later: Motion writes the final values back after its promise settles
+  requestAnimationFrame(() => {
+    for (const p of props) el.style.removeProperty(p);
+  });
 }
 
 /** Closing plays the CSS exit; the class that turned the entrance off would hold it back too. */

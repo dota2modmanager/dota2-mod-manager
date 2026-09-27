@@ -8,10 +8,12 @@ import { isVideo, isAudio, mirrorOf, mediaGaveUp } from '../../ui/media.js';
 interface Props {
   url: string | null;
   hoverPlay?: boolean;
+  /** a window's picture plays on its own, loaded whole rather than from its first frame */
+  autoplay?: boolean;
   fallbackIcon?: string;
 }
 
-export function Media({ url, hoverPlay = false, fallbackIcon = 'image' }: Props) {
+export function Media({ url, hoverPlay = false, autoplay = false, fallbackIcon = 'image' }: Props) {
   const [src, setSrc] = useState(url);
   const [gaveUp, setGaveUp] = useState(false);
 
@@ -26,7 +28,7 @@ export function Media({ url, hoverPlay = false, fallbackIcon = 'image' }: Props)
   if (isVideo(src)) {
     return (
       <video
-        src={src} muted loop playsInline preload="metadata" data-owned="react"
+        src={src} muted loop playsInline preload={autoplay ? 'auto' : 'metadata'} autoPlay={autoplay} data-owned="react"
         data-hoverplay={hoverPlay ? '1' : undefined}
         onMouseEnter={hoverPlay ? (e) => { e.currentTarget.play().catch(() => {}); } : undefined}
         onMouseLeave={hoverPlay ? (e) => e.currentTarget.pause() : undefined}
