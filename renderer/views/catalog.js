@@ -34,6 +34,9 @@ import { bindItemBuilder, itemRailHtml, isItemCosmeticSlot, cosmeticFavValue, re
 import { heroOf, heroMatches, heroGridWanted, renderHeroGrid, heroBackHtml, layoutToggleHtml, bindHeroControls } from './hero-grid.js';
 import { staleTerrainPillHtml } from '../core/terrain-age.js';
 import { shownMods, isAdult, adultShown } from '../core/adult.js';
+import { modsOf, isGrouped as grouped, installTarget, canBeInstalled, modIndexOf } from '../catalog/mods.ts';
+import { SLOT_TAGS, tagLabel as labelOfTag, modTags, collectTags, collectSlots as slotsOf, collectGroups } from '../catalog/tags.ts';
+import { applyFilters as filterMods, sortMods, narrowed as filtersNarrowed } from '../catalog/filters.ts';
 
 const viewRoot = pane('catalog');
 
@@ -117,9 +120,7 @@ function filterCosmetics(list) {
   const f = filters;
   let out = f.installedOnly ? list.filter(({ slot, o }) => pickedIn(slot)?.itemId === o.id) : list;
   if (f.favOnly) out = out.filter(({ slot, o }) => isFav(COSMETIC_PREFIX + slot, cosmeticFavValue(slot, o)));
-  if (f.sort === 'name') out = [...out].sort((a, b) => a.o.name.localeCompare(b.o.name));
-  else if (f.sort === 'name-desc') out = [...out].sort((a, b) => b.o.name.localeCompare(a.o.name));
-  return out;
+  return sortMods(out, f.sort, ({ o }) => o.name);
 }
 
 // ---------- catalog data helpers ----------
@@ -137,159 +138,40 @@ function saveCustomPacks(packs) {
   localStorage.setItem('customPacks', JSON.stringify(packs));
 }
 
-function allCategoryMods(categoryId) {
-  const data = state.catalog?.mods?.modsData?.[categoryId];
-  if (!data) return [];
-  if (Array.isArray(data)) {
-    const mods = data
-      .filter((m) => categoryId !== 'tools' || !TOOLS_HIDDEN.some((re) => re.test(m.name || '')))
-      .map((m) => ({ ...m, _group: null }));
-    if (categoryId === 'packs') {
-      for (const p of customPacks()) {
-        mods.push({ name: p.name, type: 'pack', mods: p.mods, _group: null, _custom: true });
-      }
-    }
-    return mods;
-  }
-  if (data.groups) {
-    const out = [];
-    for (const g of data.groups) {
-      for (const m of g.mods || []) out.push({ ...m, _group: g.name, _groupId: g.id });
-    }
-    return out;
-  }
-  return [];
-}
+const modsData = (categoryId) => state.catalog?.mods?.modsData?.[categoryId];
+const allCategoryMods = (categoryId) => modsOf(modsData(categoryId), categoryId, { toolsHidden: TOOLS_HIDDEN, customPacks: customPacks() });
 // what browsing shows: without the adult mods until the user said yes (core/adult.js)
 const categoryMods = (categoryId) => shownMods(allCategoryMods(categoryId));
-
-function isGrouped(categoryId) {
-  const data = state.catalog?.mods?.modsData?.[categoryId];
-  return !!(data && !Array.isArray(data) && data.groups);
-}
+const isGrouped = (categoryId) => grouped(modsData(categoryId));
 
 function visibleCategories() {
   const cats = state.catalog?.constants?.categories || [];
   return cats.filter((c) => !CATALOG_EXCLUDE.includes(c.id) && categoryMods(c.id).length);
 }
 
+// state.modIndex is filled in place: other screens hold the same Map
 function buildModIndex() {
+  const index = modIndexOf(state.catalog?.constants?.categories || [], allCategoryMods);
   state.modIndex.clear();
-  for (const c of state.catalog?.constants?.categories || []) {
-    for (const m of allCategoryMods(c.id)) {
-      if (m.name) state.modIndex.set(m.name.toLowerCase(), { categoryId: c.id, mod: m });
-    }
-  }
+  for (const [name, hit] of index) state.modIndex.set(name, hit);
 }
 
-function installTarget(mod) {
-  const f = mod.file;
-  if (!f) return null;
-  if (/\.(vpk|zip)$/i.test(f)) return f;
-  return null;
-}
-
-/* Tags in the catalog answer two different questions, and only one of them is a filter you
- * flip. "What does this mod change" - effects, icons, sounds - can be true at once and stays
- * a chip. The rest of hero-items names the slot the item sits in: one answer at a time out of
- * fourteen, which as chips was a second toolbar under the first, six of them finding one mod
- * each. Heroes are already a dropdown for the same reason. */
-const SLOT_TAGS = new Set(['weapon', 'shoulders', 'head', 'arms', 'arm', 'armor', 'back', 'mount', 'shield', 'totem', 'hair']);
-// the catalog spells one slot both ways
-const TAG_ALIAS = { arm: 'arms' };
-export const canonTag = (t) => TAG_ALIAS[t] || t;
-
-// Our own words for what the catalog ships in English. Keys are Russian, like everywhere
-// else in the app, so tr() carries them into English by the same table as the rest.
-const TAG_WORD = {
-  effects: 'Эффекты', icons: 'Иконки', sounds: 'Звуки', anime: 'Аниме', adult: '18+',
-  video: 'Видео', image: 'Картинка', lowres: 'Плохое качество',
-  meta: 'Мета', stats: 'Статистика', fun: 'Развлечения', 'source-code': 'Исходный код',
-  weapon: 'Оружие', shoulders: 'Наплечники', head: 'Голова', arms: 'Руки', armor: 'Броня',
-  back: 'Спина', mount: 'Ездовое', shield: 'Щит', totem: 'Тотем', hair: 'Волосы',
-};
-
-function tagLabel(categoryId, tag) {
-  const known = TAG_WORD[canonTag(tag)];
-  if (known) return tr(known);
-  // a tag we have never seen: the catalog's own label if it has one, else the raw key, and
-  // either way it starts with a capital rather than looking like a leftover id
-  const cfg = state.catalog?.constants?.TAG_CONFIGS?.[categoryId];
-  const raw = String(cfg?.map?.[tag] || tag);
-  return raw.charAt(0).toUpperCase() + raw.slice(1);
-}
+const tagLabel = (categoryId, tag) => labelOfTag(tag, state.catalog?.constants?.TAG_CONFIGS?.[categoryId]?.map);
+const collectSlots = (mods, categoryId) => slotsOf(mods, (t) => tagLabel(categoryId, t));
 
 function isInstalled(categoryId, m) {
   return state.installedIndex.has(keyOf(categoryId, m.name, null)) ||
     (m.styles || []).some((s) => state.installedIndex.has(keyOf(categoryId, m.name, s.label)));
 }
 
-// can this mod ever carry the "Установлен" badge? (guides/sites are link-only)
-function canBeInstalled(m) {
-  return !!installTarget(m) || (m.styles || []).some((s) => s.file && /\.(vpk|zip)$/i.test(s.file));
-}
-
-// ---------- filtering / sorting ----------
-
-// Chips: what the mod changes, commonest first. A chip that finds one mod today is kept -
-// the catalog grows, and "which courier has effects" is worth asking even of a list of one.
-function collectTags(mods) {
-  const tags = new Map(); // tag -> count
-  for (const m of mods) {
-    for (const [k, v] of Object.entries(m.tags || {})) {
-      if (v && !SLOT_TAGS.has(k)) tags.set(k, (tags.get(k) || 0) + 1);
-    }
-  }
-  return [...tags.entries()].sort((a, b) => b[1] - a[1]).map(([tag]) => tag);
-}
-
-// The dropdown beside it: which slot the item goes in, A-Z by the word the user reads.
-function collectSlots(mods, categoryId) {
-  const seen = new Set();
-  for (const m of mods) {
-    for (const [k, v] of Object.entries(m.tags || {})) {
-      if (v && SLOT_TAGS.has(k)) seen.add(canonTag(k));
-    }
-  }
-  return [...seen].sort((a, b) => tagLabel(categoryId, a).localeCompare(tagLabel(categoryId, b)));
-}
-
-function collectGroups(mods) {
-  const seen = new Set();
-  const out = [];
-  for (const m of mods) {
-    if (m._group && !seen.has(m._group)) {
-      seen.add(m._group);
-      out.push(m._group);
-    }
-  }
-  return out;
-}
+// ---------- filtering / sorting (catalog/filters.ts) ----------
 
 function applyFilters(mods, catForInstalled) {
-  const f = filters;
-  let out = mods;
-  if (f.group) out = out.filter((m) => m._group === f.group);
-  if (f.hero) out = out.filter((m) => heroMatches(f.hero, m.name));
-  if (f.tags.size) {
-    out = out.filter((m) => [...f.tags].every((t) => m.tags?.[t]));
-  }
-  if (f.slot) {
-    out = out.filter((m) => Object.entries(m.tags || {}).some(([k, v]) => v && canonTag(k) === f.slot));
-  }
-  if (f.installedOnly) {
-    out = out.filter((m) => isInstalled(m._cat || catForInstalled, m));
-  }
-  if (f.favOnly) {
-    out = out.filter((m) => isFav(m._cat || catForInstalled, m.name));
-  }
-  const dateOf = (m) => m.meta?.date || 0;
-  switch (f.sort) {
-    case 'date': out = [...out].sort((a, b) => dateOf(b) - dateOf(a)); break;
-    case 'name': out = [...out].sort((a, b) => a.name.localeCompare(b.name)); break;
-    case 'name-desc': out = [...out].sort((a, b) => b.name.localeCompare(a.name)); break;
-  }
-  return out;
+  return filterMods(mods, filters, {
+    isInstalled: (m) => isInstalled(m._cat || catForInstalled, m),
+    isFav: (m) => isFav(m._cat || catForInstalled, m.name),
+    heroMatches,
+  });
 }
 
 function favButtonHtml(cat, name) {
@@ -647,10 +529,7 @@ const GROUP_LABEL = { 'hero-items': 'Все герои', 'item-effects': 'Все
 // Is the list in front of you shorter than the category itself? That, and only that, is when
 // a number of results is worth printing: it answers "did that chip do anything". Sorting is
 // not narrowing - the same mods come back in another order - so it does not count.
-function narrowed() {
-  const f = filters;
-  return !!(f.tags.size || f.slot || f.installedOnly || f.favOnly || f.group || f.hero || state.search.trim());
-}
+const narrowed = () => filtersNarrowed(filters) || Boolean(state.search.trim());
 
 // Two lines, on purpose. The top one is how to look at the category - what order, whose
 // heroes, which slot, and the two answers about your own library - and it is the same
@@ -878,7 +757,7 @@ function cardMediaHtml(cat, m) {
   // two tags, and all three came out with an ellipsis through them.
   const badges = (isPack ? 1 : 0) + (m._custom ? 1 : 0) + (external ? 1 : 0);
   const room = Math.max(0, (looks > 2 ? 1 : 2) - badges);
-  const tags = [...new Set(Object.entries(m.tags || {}).filter(([, v]) => v).map(([k]) => canonTag(k)))]
+  const tags = modTags(m)
     .sort((a, b) => (SLOT_TAGS.has(a) ? 1 : 0) - (SLOT_TAGS.has(b) ? 1 : 0))
     .slice(0, room);
   const playable = modPreviewMedia(cat, m);

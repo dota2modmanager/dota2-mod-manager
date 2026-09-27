@@ -6,6 +6,10 @@
 // allowJs without checkJs: a component can import one of the plain modules the screens still
 // share (core/store.js, ui/format.js) and get the types TypeScript infers from it, while those
 // modules are not held to strict rules they were never written for. They move over one at a time.
+//
+// The tests import these files straight into Node, which strips the types and runs the rest.
+// That is why imports name the .ts file, type-only imports say so (verbatimModuleSyntax), and
+// nothing here needs compiling to run (erasableSyntaxOnly: no enums, no namespaces).
 {
   "compilerOptions": {
     "target": "ES2023",
@@ -18,6 +22,9 @@
     "allowJs": true,
     "checkJs": false,
     "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
     "skipLibCheck": true,
     "types": []
   },
