@@ -290,12 +290,13 @@ Node 24, Electron 44, без сборщика: рендерер — обычны
 | [electron-updater](https://github.com/electron-userland/electron-builder) | Проверка обновлений и их установка | MIT |
 | [adm-zip](https://github.com/cthackers/adm-zip) | Чтение архивов модов, за нашими проверками размера и путей | MIT |
 | [React](https://github.com/facebook/react) | Экраны окна, собранные в его страницу | MIT |
+| [Motion](https://github.com/motiondivision/motion) | Как движутся экраны окна, собрано в его страницу | MIT |
 | [Source 2 Viewer](https://github.com/ValveResourceFormat/ValveResourceFormat) | Расшифровка текстур игры для иконок предметов. Качается по требованию, в сборку не входит | MIT |
 | [Inter](https://github.com/rsms/inter), [Exo 2](https://github.com/NDISCOVER/Exo-2.0), [Material Symbols](https://github.com/google/material-design-icons) | Шрифты и иконки, лежат внутри приложения, а не тянутся из сети | OFL-1.1, Apache-2.0 |
 | [Astro](https://github.com/withastro/astro) | Сайт документации, не приложение | MIT |
 
 <!-- facts:deps-ru -->
-В `package.json` их 14: `adm-zip` и `electron-updater` едут внутри приложения, `react` и `react-dom` собраны в его окно, `@types/react`, `@types/react-dom`, `@vitejs/plugin-react`, `electron`, `electron-builder`, `eslint`, `fast-check`, `motion`, `typescript` и `vite` только собирают или проверяют его.
+В `package.json` их 14: `adm-zip` и `electron-updater` едут внутри приложения, `motion`, `react` и `react-dom` собраны в его окно, `@types/react`, `@types/react-dom`, `@vitejs/plugin-react`, `electron`, `electron-builder`, `eslint`, `fast-check`, `typescript` и `vite` только собирают или проверяют его.
 <!-- /facts:deps-ru -->
 Тесты не зависят ни от чего, а в `tools/` одна зависимость, `vite`: она собирает окно. Чтение и запись VPK, разбор KeyValues, защита от zip-бомб и логика обновления написаны
 здесь, потому что каждая зависимость — это чужак с правом записи в папку игры на десятках тысяч

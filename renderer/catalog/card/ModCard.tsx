@@ -8,7 +8,8 @@
  * The card owns three things now that were patched into the DOM from outside: the look on show,
  * the star, and the plus. Switching a look redraws this card alone, where it used to rebuild the
  * picture by hand and bind its buttons again. */
-import { useReducer, type CSSProperties, type MouseEvent } from 'react';
+import { useReducer, type CSSProperties, type MouseEvent, type Ref } from 'react';
+import { motion } from 'motion/react';
 import type { Mod } from '../types.ts';
 import { catalogConstants } from '../data.ts';
 import { keyOf } from '../../core/keys.js';
@@ -27,6 +28,7 @@ import { cssColor } from '../colors.ts';
 import { Media } from './Media.tsx';
 import { ToolMeta } from './ToolMeta.tsx';
 import { useQueued, useTerrainMark } from './hooks.ts';
+import { cardMotion } from './card-motion.ts';
 
 export interface CardProps {
   mod: Mod;
@@ -36,11 +38,13 @@ export interface CardProps {
   onOpen: (mod: Mod, card: HTMLElement) => void;
   /** after a star flips: the favourites list has to lose the card, anywhere else the rail recounts */
   onFavChanged: () => void;
+  /** AnimatePresence holds a leaving card by this */
+  ref?: Ref<HTMLDivElement>;
 }
 
 const stop = (e: MouseEvent) => e.stopPropagation();
 
-export function ModCard({ mod: m, index, withCat = false, onOpen, onFavChanged }: CardProps) {
+export function ModCard({ mod: m, index, withCat = false, onOpen, onFavChanged, ref }: CardProps) {
   const cat = m._cat || '';
   // read on every draw as well: the window can switch the look while the card stays put
   const look = styleIndex(cat, m);
@@ -83,7 +87,11 @@ export function ModCard({ mod: m, index, withCat = false, onOpen, onFavChanged }
   const addLabel = queued ? L`В списке установки` : L`Добавить в список`;
 
   return (
-    <div
+    <motion.div
+      ref={ref}
+      layout="position"
+      exit={cardMotion().exit}
+      transition={cardMotion().transition}
       className={`card ${installed ? 'installed' : ''}`}
       data-key={keyOf(cat, m.name, null)}
       style={{ '--i': Math.min(index, 28) } as CSSProperties}
@@ -141,6 +149,6 @@ export function ModCard({ mod: m, index, withCat = false, onOpen, onFavChanged }
             </div>
           )}
       </div>
-    </div>
+    </motion.div>
   );
 }

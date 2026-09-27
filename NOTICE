@@ -91,6 +91,8 @@ own folders under node_modules and inside the installer.
 React and React DOM, Copyright (c) Meta Platforms, Inc. and affiliates, MIT
 licensed, are compiled into the window's page rather than shipped as packages:
 https://github.com/facebook/react
+Motion, Copyright (c) 2024 Motion B.V., MIT licensed, is compiled in the same way:
+https://github.com/motiondivision/motion
 Every package compiled into the page is listed with its full license text in
 THIRD-PARTY-LICENSES.md beside it (out/renderer), which the build writes and the
 installer carries.

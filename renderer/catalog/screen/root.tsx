@@ -4,6 +4,7 @@
  * synchronously, so a view transition captures the new screen whole. */
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
+import { MotionConfig } from 'motion/react';
 import { Screen } from './Screen.tsx';
 import type { ScreenActions, ScreenModel } from './model.ts';
 import { screenLayer, whenScreenLeaves } from '../layers.ts';
@@ -13,7 +14,7 @@ let last: { model: ScreenModel; actions: ScreenActions } | null = null;
 
 function draw(model: ScreenModel, actions: ScreenActions): void {
   last = { model, actions };
-  flushSync(() => root.render(<Screen model={model} actions={actions} />));
+  flushSync(() => root.render(<MotionConfig reducedMotion="user"><Screen model={model} actions={actions} /></MotionConfig>));
 }
 
 export function showScreen(model: ScreenModel, actions: ScreenActions): void {

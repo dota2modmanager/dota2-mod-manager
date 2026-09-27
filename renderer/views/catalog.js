@@ -43,6 +43,7 @@ import { playablePreview } from '../catalog/preview.ts';
 import { showScreen, redrawScreen } from '../catalog/screen/root.tsx';
 import { renderRail as drawRail } from '../catalog/rail/Rail.tsx';
 import { bannerLayer, legacyLayer } from '../catalog/layers.ts';
+import { growFrom, shrinkAway } from '../catalog/modal-motion.ts';
 
 const viewRoot = pane('catalog');
 
@@ -569,6 +570,7 @@ function openModal(draw, from) {
   draw();
   openFrom(from);
   overlay.classList.remove('hidden');
+  growFrom($('#modalContent'), from);
 }
 
 function openModModal(categoryId, mod, from) {
@@ -583,6 +585,7 @@ function closeModal() {
   const overlay = $('#modalOverlay');
   if (overlay.classList.contains('hidden')) return;
   overlay.classList.add('closing');
+  shrinkAway($('#modalContent'));
   clearTimeout(closingTimer);
   closingTimer = setTimeout(() => {
     // reopened while it was falling: that pass owns the overlay now

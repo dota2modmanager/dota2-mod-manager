@@ -6,6 +6,8 @@
  * (measured against the string templates it replaced, which never did); this way no single task
  * is that long, and nothing below the fold was going to be seen in the first frame anyway. */
 import { startTransition, useEffect, useState, type ReactElement } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { cardMotion } from './card-motion.ts';
 import type { Mod } from '../types.ts';
 import { keyOf } from '../../core/keys.js';
 import { ModCard } from './ModCard.tsx';
@@ -36,10 +38,14 @@ export function ModGrid({ mods, grouped = false, withCat = false, emptyText, onO
   let last: string | null | undefined;
   shown.forEach((m, i) => {
     if (grouped && m._group !== last) {
-      out.push(<div key={`group:${i}`} className="group-title">{m._group || tr('Прочее')}</div>);
+      out.push(
+        <motion.div key={`group:${m._group ?? ''}`} layout="position" exit={cardMotion().exit} transition={cardMotion().transition}
+          className="group-title">{m._group || tr('Прочее')}</motion.div>,
+      );
       last = m._group;
     }
     out.push(<ModCard key={keyOf(m._cat, m.name, null)} mod={m} index={i} withCat={withCat} onOpen={onOpen} onFavChanged={onFavChanged} />);
   });
-  return <>{out}</>;
+  // popLayout: a card on its way out stops holding its place, so the rest move at once
+  return <AnimatePresence mode="popLayout" initial={false}>{out}</AnimatePresence>;
 }
