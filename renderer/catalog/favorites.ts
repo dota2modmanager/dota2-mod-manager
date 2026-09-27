@@ -12,3 +12,6 @@ export async function toggleFavorite(cat: string, name: string): Promise<boolean
   state.settings = await window.api.settings.set('favorites', [...state.favorites]);
   return state.favorites.has(key);
 }
+
+/** Whether a star is on, by its whole key ("<categoryId>|<name>"). */
+export const isFavKey = (key: string): boolean => state.favorites.has(key);

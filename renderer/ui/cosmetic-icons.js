@@ -19,12 +19,29 @@ const cosIconCache = new Map();
 export const cosmeticIcon = (name) => cosIconCache.get(name);
 export const cosmeticIconKnown = (name) => cosIconCache.has(name);
 
+// A tile drawn by React hears about its own picture here, by name, instead of being repainted
+// by the sweep below (which skips anything marked data-owned).
+const listeners = new Map(); // name -> Set<fn>
+export function subscribeIcon(name, fn) {
+  if (!listeners.has(name)) listeners.set(name, new Set());
+  listeners.get(name).add(fn);
+  return () => {
+    const set = listeners.get(name);
+    set?.delete(fn);
+    if (set && !set.size) listeners.delete(name);
+  };
+}
+function announce(names) {
+  for (const n of names) for (const fn of listeners.get(n) || []) fn();
+}
+
 export async function loadCosmeticIcons(names, onEach) {
   const want = [...new Set(names)].filter((n) => n && !cosIconCache.has(n));
   for (let i = 0; i < want.length; i += 24) {
     const chunk = want.slice(i, i + 24);
     const { pictures, decode } = await window.api.cosmetics.icons(chunk);
     for (const n of chunk) cosIconCache.set(n, pictures[n] || null);
+    announce(chunk);
     onEach(chunk);
 
     // A mod that replaces a hero's animated portrait has the best picture of itself in that
@@ -37,6 +54,7 @@ export async function loadCosmeticIcons(names, onEach) {
       if (!src) continue;
       const touched = chunk.filter((n) => n.split('|')[0] === clip);
       for (const n of touched) cosIconCache.set(n, src);
+      announce(touched);
       onEach(touched);
     }
   }
@@ -84,7 +102,7 @@ async function frameFromVideo(key) {
 // unless the picture has actually changed - which happens when a frame decoded out of the
 // mod's own clip arrives and takes the place of the stand-in shown meanwhile.
 export function paintCosmeticIcons(root) {
-  for (const el of root.querySelectorAll('.card-thumb[data-name], .lib-thumb[data-name]')) {
+  for (const el of root.querySelectorAll('.card-thumb[data-name]:not([data-owned]), .lib-thumb[data-name]:not([data-owned])')) {
     const src = cosIconCache.get(el.dataset.name);
     if (!src) continue;
     const img = el.querySelector('img');
@@ -117,6 +135,35 @@ export function watchCosmeticIcons(root, scroller) {
     }
     if (queue.size && !timer) timer = setTimeout(flush, 80);
   }, { root: scroller || null, rootMargin: '200px' });
-  for (const el of root.querySelectorAll('.card-thumb[data-name], .lib-thumb[data-name]')) io.observe(el);
+  for (const el of root.querySelectorAll('.card-thumb[data-name]:not([data-owned]), .lib-thumb[data-name]:not([data-owned])')) io.observe(el);
   return io;
+}
+
+/* One watcher for every tile React draws: a tile hands over its element and its name when it
+ * mounts, and the picture is fetched once the tile is near the screen, in the same batches. */
+let shared = null;
+const sharedQueue = new Set();
+let sharedTimer = null;
+export function watchIconFor(el, name) {
+  if (!name || cosIconCache.has(name)) return () => {};
+  if (!shared) {
+    shared = new IntersectionObserver((entries) => {
+      for (const en of entries) {
+        if (!en.isIntersecting) continue;
+        shared.unobserve(en.target);
+        const n = en.target.dataset.name;
+        if (n && !cosIconCache.has(n)) sharedQueue.add(n);
+      }
+      if (sharedQueue.size && !sharedTimer) {
+        sharedTimer = setTimeout(() => {
+          sharedTimer = null;
+          const names = [...sharedQueue];
+          sharedQueue.clear();
+          loadCosmeticIcons(names, () => {}).catch(() => {});
+        }, 80);
+      }
+    }, { rootMargin: '200px' });
+  }
+  shared.observe(el);
+  return () => shared?.unobserve(el);
 }

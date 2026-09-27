@@ -2,6 +2,7 @@
  * split keeps the rules (which mods, which chips, which heading) where the data is, and the
  * markup in one place per shape. */
 import type { Filters, Mod } from '../types.ts';
+import type { CosmeticItem } from '../cosmetic/CosmeticCard.tsx';
 
 export interface ToolbarModel {
   resultCount: number;
@@ -56,9 +57,21 @@ export type ScreenModel =
     toolbar: ToolbarModel | null;
     note?: string;
     mods: (GridModel & { heading: boolean }) | null;
-    cosmetics: { html: string; more?: string } | null;
+    cosmetics: { items: CosmeticItem[]; emptyText?: string; more?: string } | null;
   }
-  | { kind: 'heroes'; key: string; title: string; toolbar: ToolbarModel; tiles: HeroTileModel[] };
+  | { kind: 'heroes'; key: string; title: string; toolbar: ToolbarModel; tiles: HeroTileModel[] }
+  | {
+    /** one slot of free looks, with a search of its own: a slot runs to thousands */
+    kind: 'cosmetics';
+    key: string;
+    title: string;
+    sort: string;
+    search: string;
+    installedOnly: boolean;
+    favOnly: boolean;
+    count: string;
+    items: CosmeticItem[];
+  };
 
 /** What the screen can ask the catalog to do. */
 export interface ScreenActions {
@@ -71,5 +84,7 @@ export interface ScreenActions {
   retry: () => void;
   openMod: (mod: Mod, card: HTMLElement) => void;
   favChanged: () => void;
-  bindCosmetics: (grid: HTMLElement) => void;
+  openCosmetic: (slot: string, id: string, card: HTMLElement) => void;
+  cosmeticFavChanged: () => void;
+  cosmeticFilter: (patch: { sort?: string; installedOnly?: boolean; favOnly?: boolean; search?: string }) => void;
 }

@@ -10,19 +10,19 @@
  * which is why the mod index is built here: it is a reading of the same data.
  */
 import { $ } from '../core/dom.js';
-import { RAW_BASE, COSMETIC_PREFIX, cosmeticMeta, RAIL_SECTIONS, CATALOG_EXCLUDE, TOOLS_HIDDEN, SORTS, freshFilters } from '../core/constants.js';
+import { RAW_BASE, COSMETIC_PREFIX, cosmeticMeta, RAIL_SECTIONS, CATALOG_EXCLUDE, TOOLS_HIDDEN, freshFilters } from '../core/constants.js';
 import { state } from '../core/store.js';
-import { registerView, render, pane } from '../core/router.js';
+import { registerView, render } from '../core/router.js';
 import { keyOf, pickedIn, refreshInstalledIndex, refreshCosmeticSlots } from '../core/installed.js';
 import { catName, catIcon } from '../core/categories.js';
 import { modCredits, CREDIT_ROLES } from '../core/credits.js';
 import { creditChipsHtml, bindCreditChips } from '../ui/credit-chips.js';
-import { esc, fmtDate, plural } from '../ui/format.js';
+import { fmtDate, plural } from '../ui/format.js';
 import { toast } from '../ui/toast.js';
 import { confirmDialog } from '../ui/dialog.js';
 import { previewUrl, isMedia, resolveUrl } from '../ui/media.js';
 import { openPlayer } from '../ui/player.js';
-import { loadCosmeticIcons, paintCosmeticIcons, watchCosmeticIcons, cosmeticIcon, cosmeticIconKnown } from '../ui/cosmetic-icons.js';
+import { loadCosmeticIcons, cosmeticIconKnown } from '../ui/cosmetic-icons.js';
 import { paint } from '../ui/transitions.js';
 import { isQueued, dropFromQueue, useInstaller } from '../ui/queue.js';
 import { refreshSidebarStatus } from '../ui/statusbar.js';
@@ -41,12 +41,11 @@ import { styleIndex, pickStyle, isInstalled } from '../catalog/looks.ts';
 import { playablePreview } from '../catalog/preview.ts';
 import { showScreen, redrawScreen } from '../catalog/screen/root.tsx';
 import { renderRail as drawRail } from '../catalog/rail/Rail.tsx';
-import { bannerLayer, legacyLayer } from '../catalog/layers.ts';
+import { bannerLayer } from '../catalog/layers.ts';
 import { growFrom, shrinkAway } from '../catalog/modal-motion.ts';
-import { showModModal } from '../catalog/modal/root.tsx';
-import { legacyModalLayer, clearModal } from '../catalog/modal/layers.ts';
+import { showModModal, showCosmeticModal } from '../catalog/modal/root.tsx';
+import { clearModal } from '../catalog/modal/layers.ts';
 
-const viewRoot = pane('catalog');
 
 // This screen's own state, off the shared store now that it has somewhere to live.
 let filters = freshFilters();   // sort + tag/group/hero/installed/starred narrowing
@@ -166,13 +165,6 @@ function applyFilters(mods, catForInstalled) {
   });
 }
 
-function favButtonHtml(cat, name) {
-  const on = isFav(cat, name);
-  return `<button class="fav-btn ${on ? 'on' : ''}" data-fav="${esc(favKey(cat, name))}"
-    aria-pressed="${on}" title="${on ? L`Убрать из избранного` : L`В избранное`}"
-    aria-label="${on ? L`Убрать из избранного` : L`В избранное`}"><span class="ms">${on ? 'favorite' : 'favorite_border'}</span></button>`;
-}
-
 // ===== Category rail (catalog/rail/Rail.tsx) =====
 
 function railModel() {
@@ -262,7 +254,13 @@ const actions = {
     if (state.activeCategory === 'favorites' || filters.favOnly) renderCatalog();
     else renderRail();
   },
-  bindCosmetics: (grid) => bindCosmeticCards(grid),
+  openCosmetic: (slot, id, card) => openCosmeticModal(slot, id, card),
+  cosmeticFavChanged: () => actions.favChanged(),
+  cosmeticFilter: ({ search, ...patch }) => {
+    Object.assign(filters, patch);
+    if (search !== undefined) cosSearch = search;
+    renderCatalog();
+  },
 };
 
 async function renderCatalog() {
@@ -338,7 +336,16 @@ function showNoGameBanner(banners) {
 }
 
 const NOTHING = () => L`Ничего не найдено — сбрось фильтры`;
-const cosmeticCards = (list) => list.map(({ slot, o }, i) => cosmeticCardHtml(slot, o, i, true)).join('');
+/** Looks as the cards draw them (catalog/cosmetic/CosmeticCard.tsx). */
+const cosmeticItems = (list, withCat = false) => list.map(({ slot, o }) => ({
+  slot,
+  id: o.id,
+  name: o.name,
+  favKey: favKey(COSMETIC_PREFIX + slot, cosmeticFavValue(slot, o)),
+  picked: pickedIn(slot)?.itemId === o.id,
+  fallbackIcon: cosmeticMeta(slot).icon,
+  catName: withCat ? catName(COSMETIC_PREFIX + slot) : undefined,
+}));
 
 // --- favorites ---
 
@@ -359,7 +366,7 @@ async function renderFavorites() {
     toolbar: empty ? null : toolbarModel(mods.length + cos.length, { installable, fav: false }),
     note: empty ? L`Здесь пусто — жми на сердечко у мода в каталоге` : undefined,
     mods: all.length ? { heading: cosAll.length > 0, mods, withCat: true, emptyText: NOTHING() } : null,
-    cosmetics: cosAll.length ? { html: cos.length ? cosmeticCards(cos) : `<div class="empty-note">${NOTHING()}</div>` } : null,
+    cosmetics: cosAll.length ? { items: cosmeticItems(cos, true), emptyText: NOTHING() } : null,
   }, actions));
 }
 
@@ -415,7 +422,7 @@ async function renderSearchResults() {
     note: !mods.length && !cos.length ? L`Ничего не найдено` : undefined,
     mods: mods.length ? { heading: cos.length > 0, mods, withCat: true } : null,
     cosmetics: cos.length ? {
-      html: cosmeticCards(shownCos),
+      items: cosmeticItems(shownCos, true),
       more: cos.length > shownCos.length ? L`…и ещё ${cos.length - shownCos.length} — уточни запрос` : undefined,
     } : null,
   }, actions));
@@ -496,27 +503,6 @@ function toolbarModel(resultCount, { tags = [], slots = [], groups = [], heroes 
     tags: tags.map((t) => ({ id: t, label: tagLabel(categoryId, t), on: f.tags.has(t) })),
     layout: categoryId === 'heroes' ? heroLayout() : null,
   };
-}
-
-// star button on a card or in the modal: flips the star without disturbing the grid,
-// unless the Favorites view is open — there an unstarred mod has to leave the list
-function bindFavButton(btn) {
-  btn.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    const key = btn.dataset.fav;
-    const cut = key.indexOf('|');
-    const on = await toggleFavorite(key.slice(0, cut), key.slice(cut + 1));
-    btn.classList.toggle('on', on);
-    btn.setAttribute('aria-pressed', String(on));
-    btn.querySelector('.ms').textContent = on ? 'favorite' : 'favorite_border';
-    const label = on ? L`Убрать из избранного` : L`В избранное`;
-    btn.title = label;
-    btn.setAttribute('aria-label', label);
-    if (state.view !== 'catalog') return;
-    // in a list that IS the favourites, the card has to leave it
-    if (state.activeCategory === 'favorites' || filters.favOnly) renderCatalog();
-    else renderRail();
-  });
 }
 
 function findModByName(cat, name) {
@@ -845,48 +831,10 @@ useInstaller(async (list) => {
 // ===== Cosmetics: free looks taken from the game's own item schema, browsed as a catalog
 // category like any other (see COSMETIC_SLOTS / cosmeticMeta near the top of the file) =====
 
-// One card per look, styled exactly like a catalog mod card (same .card/.grid classes):
-// a picture, a favourite star, and the same green edge on whichever one is live.
-function cosmeticCardHtml(slot, o, i, withCat = false) {
-  const cat = COSMETIC_PREFIX + slot;
-  const icon = cosmeticIcon(o.name);
-  const picked = pickedIn(slot)?.itemId === o.id;
-  return `
-    <div class="card ${picked ? 'installed' : ''}" data-cos="${esc(slot)}" data-cos-id="${esc(o.id)}" style="--i:${Math.min(i, 28)}">
-      <div class="card-media">
-        <span class="card-thumb" data-name="${esc(o.name)}">${icon
-          ? `<img src="${esc(icon)}" alt="" loading="lazy">`
-          : `<div class="noimg"><span class="ms">${cosmeticMeta(slot).icon}</span></div>`}</span>
-        <div class="card-actions">${favButtonHtml(cat, cosmeticFavValue(slot, o))}</div>
-      </div>
-      <div class="card-body">
-        <div class="card-name">${esc(o.name)}</div>
-        ${withCat ? `<div class="card-meta"><span>${esc(catName(cat))}</span></div>` : ''}
-      </div>
-    </div>`;
-}
+// the live look is marked on whatever screen is on show, drawn again in place
+const refreshCosmeticBadges = () => redrawScreen();
 
-// Cosmetic cards behave like mod cards: a click opens the look, it does not install it.
-function bindCosmeticCards(root) {
-  if (!root) return;
-  root.querySelectorAll('.card .fav-btn').forEach((btn) => bindFavButton(btn));
-  root.querySelectorAll('.card[data-cos]').forEach((card) => {
-    card.addEventListener('click', () => openCosmeticModal(card.dataset.cos, card.dataset.cosId, card));
-  });
-  paintCosmeticIcons(root);
-  return watchCosmeticIcons(root, null);
-}
-
-// mark the live look on visible cosmetic cards in place — same idea as refreshCardBadges()
-// for mods, so a pick never costs the grid its scroll position
-function refreshCosmeticBadges() {
-  viewRoot.querySelectorAll('.card[data-cos]').forEach((card) => {
-    const picked = pickedIn(card.dataset.cos)?.itemId === card.dataset.cosId;
-    card.classList.toggle('installed', picked);
-  });
-}
-
-// ---------- cosmetic modal (the mod modal's twin, same markup and classes) ----------
+// ---------- cosmetic modal (catalog/cosmetic/CosmeticModal.tsx) ----------
 
 let cosModalState = null;
 function openCosmeticModal(slot, itemId, from) {
@@ -907,46 +855,31 @@ function drawCosmeticModal() {
   const meta = cosmeticMeta(slot);
   const data = slotData(slot);
   const live = pickedIn(slot);
-  const isLive = live?.itemId === o.id;
-  const icon = cosmeticIcon(o.name);
-  const busy = installing.has(COSMETIC_PREFIX + slot + '|' + o.id + '|');
-
-  legacyModalLayer().innerHTML = `
-    <div class="modal-media cos">
-      ${icon
-        ? `<img src="${esc(icon)}" alt="">`
-        : `<div class="noimg"><span class="ms">${meta.icon}</span></div>`}
-      <button class="modal-close" id="modalCloseBtn" aria-label="${L`Закрыть`}"><span class="ms">close</span></button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-title-row">
-        <div class="modal-title">${esc(o.name)}</div>
-        ${favButtonHtml(COSMETIC_PREFIX + slot, cosmeticFavValue(slot, o))}
-      </div>
-      <div class="modal-sub">
-        <span>${esc(tr(meta.label))}</span>
-        <span>· ${L`вид для стандартного предмета`}</span>
-        ${data ? `<span>· ${data.options.length} ${plural(data.options.length, 'вариант', 'варианта', 'вариантов')}</span>` : ''}
-      </div>
-      <div class="modal-actions">
-        ${isLive
-          ? `<button class="btn btn-danger" id="cosRemoveBtn"><span class="ms">delete</span>${L`Убрать`}</button>`
-          : `<button class="btn btn-primary" id="cosPickBtn" ${busy ? 'disabled' : ''}><span class="ms">download</span>${busy ? L`Установка…` : L`Установить`}</button>`}
-      </div>
-      <div class="modal-note">
-        ${isLive
-          ? L`Этот вид сейчас стоит в слоте «${tr(meta.label)}». Убрать — вернуть то, что даёт игра; включить обратно можно в «Моих модах».`
-          : live
-            ? L`На один слот — только один вид: этот заменит «${live.name}». Прошлый выбор останется в «Моих модах» выключенным.`
-            : L`Вид подставляется в схему предметов игры — стандартный предмет просто рисуется как выбранный. Файлы модов это не трогает, и видно только тебе.`}
-      </div>
-    </div>`;
-
-  $('#modalCloseBtn').addEventListener('click', closeModal);
-  const favBtn = $('#modalContent .fav-btn');
-  if (favBtn) bindFavButton(favBtn);
-  $('#cosPickBtn')?.addEventListener('click', () => pickCosmetic(slot, o, false));
-  $('#cosRemoveBtn')?.addEventListener('click', () => pickCosmetic(slot, o, true));
+  const cat = COSMETIC_PREFIX + slot;
+  const value = cosmeticFavValue(slot, o);
+  showCosmeticModal({
+    slot,
+    id: o.id,
+    name: o.name,
+    fallbackIcon: meta.icon,
+    label: tr(meta.label),
+    options: data ? data.options.length : null,
+    favKey: favKey(cat, value),
+    fav: isFav(cat, value),
+    live: live?.itemId === o.id,
+    replaces: live && live.itemId !== o.id ? live.name : null,
+    busy: installing.has(COSMETIC_PREFIX + slot + '|' + o.id + '|'),
+  }, {
+    close: closeModal,
+    toggleFav: async () => {
+      await toggleFavorite(cat, value);
+      drawCosmeticModal();
+      redrawScreen();
+      actions.favChanged();
+    },
+    pick: () => pickCosmetic(slot, o, false),
+    remove: () => pickCosmetic(slot, o, true),
+  });
 }
 
 /**
@@ -987,74 +920,35 @@ async function afterCosmeticPick() {
 async function renderCosmeticCategory(slot) {
   if (slot === 'items') return renderItemCosmeticHub();
   const meta = cosmeticMeta(slot);
-  await paint(() => { legacyLayer().innerHTML = `<div class="view-header"><h1 class="view-title">${esc(tr(meta.label))}</h1></div><div class="empty-note">${L`Читаем схему игры…`}</div>`; });
+  const waiting = (note) => paint(() => showScreen({ kind: 'list', key: `cos:${slot}:note`, title: tr(meta.label), toolbar: null, note, mods: null, cosmetics: null }, actions));
+  await waiting(L`Читаем схему игры…`);
   if (!state.cosmeticSlots) await refreshCosmeticSlots();
   if (state.activeCategory !== COSMETIC_PREFIX + slot) return; // moved on while reading
 
   const data = (state.cosmeticSlots || []).find((s) => s.slot === slot);
   if (!data) {
-    await paint(() => { legacyLayer().innerHTML = `<div class="view-header"><h1 class="view-title">${esc(tr(meta.label))}</h1></div><div class="empty-note">${L`Схема игры не прочиталась — проверь путь к Dota 2 в настройках.`}</div>`; });
+    await waiting(L`Схема игры не прочиталась — проверь путь к Dota 2 в настройках.`);
     return;
   }
 
   const f = filters;
-  let io = null;
-
-  const filtered = () => {
-    const q = cosSearch.trim().toLowerCase();
-    let list = data.options.map((o) => ({ slot, o }));
-    if (q) list = list.filter(({ o }) => o.name.toLowerCase().includes(q));
-    return filterCosmetics(list);
-  };
-
-  const paintGrid = () => {
-    const list = filtered();
-    const shown = list.slice(0, 400); // search narrows the rest; nobody scrolls past this
-    // same rule as the mod grid: a number only once the list in front of you is a subset
-    const narrow = !!(cosSearch.trim() || f.installedOnly || f.favOnly);
-    $('#cosCount').textContent = narrow
-      ? `${list.length} ${plural(list.length, 'результат', 'результата', 'результатов')}`
-      : '';
-    const grid = $('#cosGrid');
-    grid.innerHTML = shown.length
-      ? shown.map(({ o }, i) => cosmeticCardHtml(slot, o, i)).join('')
-      : `<div class="empty-note">${L`Ничего не найдено — сбрось фильтры`}</div>`;
-    if (io) io.disconnect();
-    io = bindCosmeticCards(grid);
-  };
-
-  await paint(() => { legacyLayer().innerHTML = `
-    <div class="view-header">
-      <h1 class="view-title">${esc(tr(meta.label))}</h1>
-    </div>
-    <div class="toolbar">
-      <div class="select-wrap">
-        <span class="ms">sort</span>
-        <select id="cosSort">
-          ${SORTS.filter((s) => s.key !== 'date').map((s) => `<option value="${s.key}" ${f.sort === s.key ? 'selected' : ''}>${esc(tr(s.label))}</option>`).join('')}
-        </select>
-      </div>
-      <div class="tb-search cat-search"><span class="ms">search</span><input type="text" id="cosSearch" placeholder="${L`Поиск…`}" value="${esc(cosSearch)}" autocomplete="off"></div>
-      <div class="sep"></div>
-      <button class="fchip ${f.installedOnly ? 'active' : ''}" id="cosInstalledChip"><span class="ms">check_circle</span>${L`Установленные`}</button>
-      <button class="fchip ${f.favOnly ? 'active' : ''}" id="cosFavChip"><span class="ms">favorite</span>${L`Избранное`}</button>
-      <span class="count" id="cosCount"></span>
-    </div>
-    <div class="grid" id="cosGrid"></div>`; });
-
-  $('#cosSort').addEventListener('change', (e) => { f.sort = e.target.value; paintGrid(); });
-  $('#cosSearch').addEventListener('input', (e) => { cosSearch = e.target.value; paintGrid(); });
-  $('#cosInstalledChip').addEventListener('click', (e) => {
-    f.installedOnly = !f.installedOnly;
-    e.currentTarget.classList.toggle('active', f.installedOnly);
-    paintGrid();
-  });
-  $('#cosFavChip').addEventListener('click', (e) => {
-    f.favOnly = !f.favOnly;
-    e.currentTarget.classList.toggle('active', f.favOnly);
-    paintGrid();
-  });
-  paintGrid();
+  const q = cosSearch.trim().toLowerCase();
+  let list = data.options.map((o) => ({ slot, o }));
+  if (q) list = list.filter(({ o }) => o.name.toLowerCase().includes(q));
+  list = filterCosmetics(list);
+  // same rule as the mod grid: a number only once the list in front of you is a subset
+  const narrow = Boolean(cosSearch.trim() || f.installedOnly || f.favOnly);
+  await paint(() => showScreen({
+    kind: 'cosmetics',
+    key: `cos:${slot}`,
+    title: tr(meta.label),
+    sort: f.sort,
+    search: cosSearch,
+    installedOnly: f.installedOnly,
+    favOnly: f.favOnly,
+    count: narrow ? `${list.length} ${plural(list.length, 'результат', 'результата', 'результатов')}` : '',
+    items: cosmeticItems(list.slice(0, 400)), // search narrows the rest; nobody scrolls past this
+  }, actions));
 }
 
 const CATALOG_MAX_AGE = 30 * 60 * 1000;

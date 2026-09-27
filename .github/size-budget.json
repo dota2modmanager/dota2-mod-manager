@@ -6,7 +6,7 @@
     "main.js": 1129,
     "renderer/app.js": 426,
     "renderer/i18n.js": 787,
-    "renderer/views/catalog.js": 1087,
+    "renderer/views/catalog.js": 981,
     "renderer/views/item-builder.js": 669,
     "renderer/views/library.js": 1374,
     "renderer/views/presets.js": 433,

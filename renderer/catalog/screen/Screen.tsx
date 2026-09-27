@@ -5,7 +5,8 @@ import type { ScreenActions, ScreenModel } from './model.ts';
 import { Toolbar } from './Toolbar.tsx';
 import { Home } from './Home.tsx';
 import { HeroGrid } from './HeroGrid.tsx';
-import { LegacyHtml } from './LegacyHtml.tsx';
+import { CosmeticScreen } from './CosmeticScreen.tsx';
+import { CosmeticGrid } from '../cosmetic/CosmeticCard.tsx';
 import { ModGrid } from '../card/ModGrid.tsx';
 
 interface Props { model: ScreenModel; actions: ScreenActions }
@@ -30,6 +31,8 @@ export function Screen({ model, actions }: Props) {
       );
     case 'list':
       return <List model={model} actions={actions} key={model.key} />;
+    case 'cosmetics':
+      return <CosmeticScreen m={model} actions={actions} key={model.key} />;
   }
 }
 
@@ -58,7 +61,10 @@ function List({ model: m, actions }: { model: Extract<ScreenModel, { kind: 'list
       {m.cosmetics && (
         <>
           <div className="section-h spaced"><span className="ms">auto_awesome</span>{L`Косметика`}</div>
-          <LegacyHtml className="grid" id="cosGrid" html={m.cosmetics.html} bind={actions.bindCosmetics} />
+          <div className="grid" id="cosGrid">
+            <CosmeticGrid items={m.cosmetics.items} emptyText={m.cosmetics.emptyText}
+              onOpen={actions.openCosmetic} onFavChanged={actions.cosmeticFavChanged} />
+          </div>
           {m.cosmetics.more && <div className="search-more">{m.cosmetics.more}</div>}
         </>
       )}
