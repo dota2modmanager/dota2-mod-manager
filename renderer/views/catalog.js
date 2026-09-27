@@ -33,6 +33,7 @@ import { bindItemBuilder, itemRailEntry, isItemCosmeticSlot, cosmeticFavValue, r
   forgetItemHub, forgetItemSlotModal, redrawItemSlotModal, openItemSlotModal } from './item-builder.js';
 import { heroOf, heroMatches, heroGridWanted, heroTiles, heroLayout, setHeroLayout } from './hero-grid.js';
 import { shownMods, isAdult, adultShown } from '../core/adult.js';
+import { tokenMs } from '../core/css-time.js';
 import { modsOf, isGrouped as grouped, canBeInstalled, modIndexOf } from '../catalog/mods.ts';
 import { tagLabel as labelOfTag, collectTags, collectSlots as slotsOf, collectGroups } from '../catalog/tags.ts';
 import { applyFilters as filterMods, sortMods, narrowed as filtersNarrowed } from '../catalog/filters.ts';
@@ -542,10 +543,7 @@ let closingTimer = null;
 
 // read rather than repeated, so the stylesheet stays the one place the tempo is set - and so
 // the system's reduced-motion setting, which flattens it to 1ms, is honoured for free
-function exitMs() {
-  const v = getComputedStyle(document.documentElement).getPropertyValue('--dur-base');
-  return parseFloat(v) || 0;
-}
+const exitMs = () => tokenMs('--dur-base');
 
 /* Where the window comes from. A window that appears in the middle no matter what was
  * clicked is a window with no cause; one that grows out of the thing you pressed keeps the
