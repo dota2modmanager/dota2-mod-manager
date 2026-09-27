@@ -88,6 +88,13 @@ https://github.com/SteamDatabase/ValveResourceFormat
 The npm packages the build depends on carry their own licenses, listed in their
 own folders under node_modules and inside the installer.
 
+React and React DOM, Copyright (c) Meta Platforms, Inc. and affiliates, MIT
+licensed, are compiled into the window's page rather than shipped as packages:
+https://github.com/facebook/react
+Every package compiled into the page is listed with its full license text in
+THIRD-PARTY-LICENSES.md beside it (out/renderer), which the build writes and the
+installer carries.
+
 
 Fonts
 

@@ -50,3 +50,12 @@ test('the loader, the Vite build and the installer agree on out/renderer', () =>
   // devDependencies: Vite bundles them into the page, and the installer should not carry them twice
   for (const name of ['react', 'react-dom', 'motion']) assert.ok(!pkg.dependencies[name], `${name} is packed as a module as well as bundled`);
 });
+
+test('the licences of what is compiled into the page ship beside it, and NOTICE says where', () => {
+  /* A bundle keeps none of the licence headers of the code inside it, and MIT asks for the notice
+     to travel with every copy. Vite writes them out (build.license); NOTICE, which the installer
+     carries, names the file. */
+  const vite = fs.readFileSync(path.join(root, 'vite.config.mjs'), 'utf8');
+  assert.match(vite, /license: \{ fileName: 'THIRD-PARTY-LICENSES\.md' \}/);
+  assert.match(fs.readFileSync(path.join(root, 'NOTICE'), 'utf8'), /THIRD-PARTY-LICENSES\.md/);
+});

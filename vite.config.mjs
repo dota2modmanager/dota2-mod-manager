@@ -41,6 +41,9 @@ export default defineConfig({
     // the page only ever runs in Electron's own Chromium
     target: 'esnext',
     modulePreload: { polyfill: false },
+    // the licences of every package compiled into the page, written beside it and shipped with it
+    // (NOTICE points here): the bundle itself keeps none of their headers
+    license: { fileName: 'THIRD-PARTY-LICENSES.md' },
     rollupOptions: { input: path.join(root, 'index.html') },
   },
   server: { host: '127.0.0.1', port: 5173, strictPort: true },

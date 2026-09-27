@@ -123,3 +123,54 @@ test('sorting is not narrowing', async () => {
   }
   assert.equal(filters.narrowed({ ...freshFilters(), tags: new Set(['effects']) }), true);
 });
+
+test('a card answers for the look on show: its own install badge, and its own entry in the list', async () => {
+  const store = await import('../renderer/core/store.js');
+  const looks = await import('../renderer/catalog/looks.ts');
+  const queueing = await import('../renderer/catalog/queueing.ts');
+  const mod = { name: 'Lina Flame', file: 'lina.vpk', styles: [{ label: 'Red', file: 'red.vpk', preview: 'red.png' }, { label: 'Blue', file: 'blue.vpk' }] };
+  store.state.installedIndex.clear();
+  store.state.installedIndex.set('heroes|Lina Flame|Blue', {});
+  store.state.catalog = { constants: { addToCartRules: {} } };
+
+  assert.equal(looks.styleIndex('heroes', mod), 0, 'the catalog\'s first look until one is picked');
+  assert.equal(looks.isInstalled('heroes', mod), true, 'some look of it is installed');
+  assert.equal(looks.lookInstalled('heroes', mod), false, 'but not the red one on show');
+  assert.equal(queueing.queueEntry('heroes', mod).key, 'heroes|Lina Flame|Red');
+
+  looks.pickStyle('heroes', mod, 1);
+  assert.equal(looks.shownStyle('heroes', mod).label, 'Blue');
+  assert.equal(looks.lookInstalled('heroes', mod), true);
+  assert.equal(queueing.queueEntry('heroes', mod).file, 'blue.vpk');
+
+  looks.pickStyle('heroes', mod, 9);
+  assert.equal(looks.styleIndex('heroes', mod), 0, 'a look that is gone falls back to the first');
+  store.state.installedIndex.clear();
+});
+
+test('the install list takes only what the catalog\'s own rules allow', async () => {
+  const store = await import('../renderer/core/store.js');
+  const { canQueue } = await import('../renderer/catalog/queueing.ts');
+  store.state.catalog = { constants: { addToCartRules: { hiddenCategories: ['tools'], allowedMods: { couriers: ['Golden Baby Roshan'] } } } };
+  assert.equal(canQueue('heroes', { name: 'a', file: 'a.vpk' }), true);
+  assert.equal(canQueue('heroes', { name: 'a', links: [{ url: 'u' }] }), false, 'a link is not a download');
+  assert.equal(canQueue('tools', { name: 'a', file: 'a.zip' }), false);
+  assert.equal(canQueue('heroes', { name: 'p', type: 'pack', file: 'p.zip' }), false, 'a pack is a list already');
+  assert.equal(canQueue('couriers', { name: 'golden baby roshan', file: 'g.vpk' }), true);
+  assert.equal(canQueue('couriers', { name: 'Other Courier', file: 'o.vpk' }), false);
+  store.state.catalog = null;
+});
+
+test('a star is saved with the settings, and comes back off on a second press', async () => {
+  const store = await import('../renderer/core/store.js');
+  const fav = await import('../renderer/catalog/favorites.ts');
+  const saved = [];
+  globalThis.window = { api: { settings: { set: async (key, value) => { saved.push([key, value]); return { favorites: value }; } } } };
+  store.state.favorites.clear();
+  assert.equal(await fav.toggleFavorite('heroes', 'Lina Flame'), true);
+  assert.equal(fav.isFav('heroes', 'Lina Flame'), true);
+  assert.deepEqual(saved.at(-1), ['favorites', ['heroes|Lina Flame']]);
+  assert.equal(await fav.toggleFavorite('heroes', 'Lina Flame'), false);
+  assert.deepEqual(saved.at(-1), ['favorites', []]);
+  delete globalThis.window;
+});
