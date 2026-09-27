@@ -545,30 +545,13 @@ let closingTimer = null;
 // the system's reduced-motion setting, which flattens it to 1ms, is honoured for free
 const exitMs = () => tokenMs('--dur-base');
 
-/* Where the window comes from. A window that appears in the middle no matter what was
- * clicked is a window with no cause; one that grows out of the thing you pressed keeps the
- * two connected, the way Windows does it. The panel is centred by the overlay, so the only
- * thing the stylesheet needs is how far the card was from that centre. */
-function openFrom(el) {
-  const panel = $('#modalContent');
-  if (!el) {
-    panel.style.removeProperty('--from-x');
-    panel.style.removeProperty('--from-y');
-    return;
-  }
-  const r = el.getBoundingClientRect();
-  panel.style.setProperty('--from-x', `${Math.round(r.left + r.width / 2 - window.innerWidth / 2)}px`);
-  panel.style.setProperty('--from-y', `${Math.round(r.top + r.height / 2 - window.innerHeight / 2)}px`);
-}
-
 function openModal(draw, from) {
   const overlay = $('#modalOverlay');
   clearTimeout(closingTimer);
   overlay.classList.remove('closing');
   draw();
-  openFrom(from);
   overlay.classList.remove('hidden');
-  growFrom($('#modalContent'), from);
+  growFrom($('#modalContent'), from); // catalog/modal-motion.ts
 }
 
 function openModModal(categoryId, mod, from) {

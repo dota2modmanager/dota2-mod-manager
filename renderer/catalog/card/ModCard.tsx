@@ -9,7 +9,6 @@
  * the star, and the plus. Switching a look redraws this card alone, where it used to rebuild the
  * picture by hand and bind its buttons again. */
 import { useReducer, type CSSProperties, type MouseEvent, type Ref } from 'react';
-import { motion } from 'motion/react';
 import type { Mod } from '../types.ts';
 import { catalogConstants } from '../data.ts';
 import { keyOf } from '../../core/keys.js';
@@ -28,7 +27,7 @@ import { cssColor } from '../colors.ts';
 import { Media } from './Media.tsx';
 import { ToolMeta } from './ToolMeta.tsx';
 import { useQueued, useTerrainMark } from './hooks.ts';
-import { cardMotion } from './card-motion.ts';
+import { CardShell } from './CardShell.tsx';
 
 export interface CardProps {
   mod: Mod;
@@ -38,13 +37,15 @@ export interface CardProps {
   onOpen: (mod: Mod, card: HTMLElement) => void;
   /** after a star flips: the favourites list has to lose the card, anywhere else the rail recounts */
   onFavChanged: () => void;
+  /** whether this card slides to its new place and fades out when it goes (the first screenful) */
+  moves?: boolean;
   /** AnimatePresence holds a leaving card by this */
   ref?: Ref<HTMLDivElement>;
 }
 
 const stop = (e: MouseEvent) => e.stopPropagation();
 
-export function ModCard({ mod: m, index, withCat = false, onOpen, onFavChanged, ref }: CardProps) {
+export function ModCard({ mod: m, index, withCat = false, moves = false, onOpen, onFavChanged, ref }: CardProps) {
   const cat = m._cat || '';
   // read on every draw as well: the window can switch the look while the card stays put
   const look = styleIndex(cat, m);
@@ -87,16 +88,8 @@ export function ModCard({ mod: m, index, withCat = false, onOpen, onFavChanged, 
   const addLabel = queued ? L`В списке установки` : L`Добавить в список`;
 
   return (
-    <motion.div
-      ref={ref}
-      layout="position"
-      exit={cardMotion().exit}
-      transition={cardMotion().transition}
-      className={`card ${installed ? 'installed' : ''}`}
-      data-key={keyOf(cat, m.name, null)}
-      style={{ '--i': Math.min(index, 28) } as CSSProperties}
-      onClick={(e) => onOpen(m, e.currentTarget)}
-    >
+    <CardShell moves={moves} ref={ref} installed={installed} dataKey={keyOf(cat, m.name, null)} index={index}
+      onClick={(e) => onOpen(m, e.currentTarget)}>
       <div className="card-media">
         <Media key={prev || ''} url={prev} hoverPlay fallbackIcon={catIcon(cat)} />
         <div className="card-actions">
@@ -149,6 +142,6 @@ export function ModCard({ mod: m, index, withCat = false, onOpen, onFavChanged, 
             </div>
           )}
       </div>
-    </motion.div>
+    </CardShell>
   );
 }

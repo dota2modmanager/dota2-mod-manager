@@ -9,9 +9,14 @@ let cached: { transition: Transition; exit: TargetAndTransition } | null = null;
 
 export function cardMotion(): { transition: Transition; exit: TargetAndTransition } {
   if (!cached) {
+    /* A card that goes and a card that takes its place share the spot for a moment, and two names
+     * printed over each other read as a glitch. So the one leaving fades on a curve that is mostly
+     * gone in its first half (standard, not the ease-in a lone exit would get), and the ones
+     * moving set off after that first half. */
+    const fast = dur('--dur-fast');
     cached = {
-      transition: { layout: { duration: dur('--dur-medium-long'), ease: ease('--ease-standard') } },
-      exit: { opacity: 0, scale: 0.96, transition: { duration: dur('--dur-fast'), ease: ease('--ease-accelerate') } },
+      transition: { layout: { duration: dur('--dur-medium-long'), ease: ease('--ease-standard'), delay: fast / 2 } },
+      exit: { opacity: 0, scale: 0.94, transition: { duration: fast, ease: ease('--ease-standard') } },
     };
   }
   return cached;

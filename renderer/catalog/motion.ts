@@ -2,12 +2,12 @@
  * stylesheet stays the one place it is set - and the system's reduced-motion setting, which
  * flattens every duration there to 1ms, reaches these too. */
 
+import { tokenMs } from '../core/css-time.js';
+
 const css = (): CSSStyleDeclaration => getComputedStyle(document.documentElement);
 
-/** A duration token, in the seconds Motion takes. */
-export function dur(token: string): number {
-  return (parseFloat(css().getPropertyValue(token)) || 0) / 1000;
-}
+/** A duration token, in the seconds Motion takes (the build writes 300ms as .3s: core/css-time.js). */
+export const dur = (token: string): number => tokenMs(token) / 1000;
 
 /** An easing token, as the four numbers of its cubic-bezier. */
 export function ease(token: string): [number, number, number, number] {

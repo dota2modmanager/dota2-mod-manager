@@ -51,6 +51,7 @@
    The two CSS entrances above step aside for it: the frame's, and the picture's own grow, which
    would be the second motion the old version was taken out for. */
 .modal-content.grows { animation: none; transform-origin: 0 0; }
+.modal-overlay.grows { animation: none; }
 .grows .modal-media img, .grows .modal-media video { animation: none; }
 
 .modal-media {

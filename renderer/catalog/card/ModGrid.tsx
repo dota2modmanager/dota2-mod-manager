@@ -28,24 +28,46 @@ export interface GridProps {
 
 export function ModGrid({ mods, grouped = false, withCat = false, emptyText, onOpen, onFavChanged }: GridProps) {
   const [whole, setWhole] = useState(mods.length <= FIRST_PASS);
+  // A list that grows by more than a screenful at once - a chip turned off, taking Heroes from 60
+  // back to 614 - arrives in two parts too, the way a new screen does.
+  const [count, setCount] = useState(mods.length);
+  if (mods.length !== count) {
+    setCount(mods.length);
+    if (mods.length - count > FIRST_PASS) setWhole(false);
+  }
   useEffect(() => {
     if (!whole) startTransition(() => setWhole(true));
   }, [whole]);
 
   if (!mods.length) return emptyText ? <div className="empty-note">{emptyText}</div> : null;
   const shown = whole ? mods : mods.slice(0, FIRST_PASS);
-  const out: ReactElement[] = [];
+  /* The first screenful moves: a chip that narrows the list slides the cards that stay into their
+   * new places and fades out the ones that go (popLayout: a leaving card stops holding its place,
+   * so the rest move at once). Everything past it is plain markup beside it, changed in place.
+   * Wrapping all 614 heroes cost up to 100 ms per chip - a measure and a style for every card,
+   * and a motion element per card to mount - where the same change with nothing animated never
+   * passed 10 ms; and those cards are below the fold, where nobody sees them move anyway. */
+  const moving: ReactElement[] = [];
+  const still: ReactElement[] = [];
   let last: string | null | undefined;
   shown.forEach((m, i) => {
+    const moves = i < FIRST_PASS;
+    const into = moves ? moving : still;
     if (grouped && m._group !== last) {
-      out.push(
-        <motion.div key={`group:${m._group ?? ''}`} layout="position" exit={cardMotion().exit} transition={cardMotion().transition}
-          className="group-title">{m._group || tr('Прочее')}</motion.div>,
-      );
+      const title = m._group || tr('Прочее');
+      into.push(moves
+        ? <motion.div key={`group:${m._group ?? ''}`} layout="position" exit={cardMotion().exit} transition={cardMotion().transition}
+          className="group-title">{title}</motion.div>
+        : <div key={`group:${m._group ?? ''}`} className="group-title">{title}</div>);
       last = m._group;
     }
-    out.push(<ModCard key={keyOf(m._cat, m.name, null)} mod={m} index={i} withCat={withCat} onOpen={onOpen} onFavChanged={onFavChanged} />);
+    into.push(<ModCard key={keyOf(m._cat, m.name, null)} mod={m} index={i} withCat={withCat} moves={moves}
+      onOpen={onOpen} onFavChanged={onFavChanged} />);
   });
-  // popLayout: a card on its way out stops holding its place, so the rest move at once
-  return <AnimatePresence mode="popLayout" initial={false}>{out}</AnimatePresence>;
+  return (
+    <>
+      <AnimatePresence mode="popLayout" initial={false}>{moving}</AnimatePresence>
+      {still}
+    </>
+  );
 }
