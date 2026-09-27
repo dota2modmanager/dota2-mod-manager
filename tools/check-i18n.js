@@ -186,12 +186,14 @@ function scan(src, names, baseLine = 1) {
 }
 
 // ---- what to check --------------------------------------------------------
+// .ts and .tsx too: the window's screens move to TypeScript and React, and a string written
+// there needs its English twin exactly as much as one written in plain JavaScript
 function jsFiles(dir, skip) {
   const out = [];
   for (const e of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
     const p = `${dir}/${e.name}`;
     if (e.isDirectory()) out.push(...jsFiles(p, skip));
-    else if (e.name.endsWith('.js') && !skip.includes(p)) out.push(p);
+    else if (/\.(js|ts|tsx)$/.test(e.name) && !e.name.endsWith('.d.ts') && !skip.includes(p)) out.push(p);
   }
   return out;
 }

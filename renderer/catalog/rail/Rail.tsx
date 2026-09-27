@@ -1,0 +1,58 @@
+/* The category rail down the left: everything, the favourites, then the catalog's sections and the
+ * free cosmetics. views/catalog.js works out what is in it; this draws it, in the element the
+ * window already has for it (#catRail). */
+import { createRoot } from 'react-dom/client';
+import { flushSync } from 'react-dom';
+
+export interface RailItem {
+  id: string;
+  icon: string;
+  name: string;
+  /** how many are starred, beside the favourites */
+  count?: number;
+  /** something picked in this cosmetic slot */
+  dot?: boolean;
+  fav?: boolean;
+}
+
+export interface RailModel {
+  active: string;
+  sections: { label: string | null; items: RailItem[] }[];
+}
+
+function Rail({ model, pick }: { model: RailModel; pick: (id: string) => void }) {
+  return (
+    <>
+      {model.sections.map((s, si) => (
+        <RailSection key={s.label ?? `top:${si}`} label={s.label} items={s.items} active={model.active} pick={pick} />
+      ))}
+    </>
+  );
+}
+
+function RailSection({ label, items, active, pick }: { label: string | null; items: RailItem[]; active: string; pick: (id: string) => void }) {
+  return (
+    <>
+      {label && <div className="rail-section">{label}</div>}
+      {items.map((it) => (
+        <button key={it.id} className={`rail-item ${it.fav ? 'fav ' : ''}${active === it.id ? 'active' : ''}`}
+          data-cat={it.id} onClick={() => pick(it.id)}>
+          <span className="ms">{it.icon}</span>{it.name}
+          {it.count ? <span className="rail-cnt">{it.count}</span> : null}
+          {it.dot && <span className="rail-dot" />}
+        </button>
+      ))}
+    </>
+  );
+}
+
+let root: ReturnType<typeof createRoot> | null = null;
+
+export function renderRail(el: HTMLElement, model: RailModel, pick: (id: string) => void): void {
+  if (!root) {
+    el.replaceChildren();
+    root = createRoot(el);
+  }
+  const r = root;
+  flushSync(() => r.render(<Rail model={model} pick={pick} />));
+}

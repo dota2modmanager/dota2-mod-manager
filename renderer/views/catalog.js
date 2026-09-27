@@ -29,9 +29,9 @@ import { isQueued, dropFromQueue, useInstaller } from '../ui/queue.js';
 import { refreshSidebarStatus } from '../ui/statusbar.js';
 import { modGuidesHtml, bindGuides } from '../ui/guide.js';
 import { refreshNotices, noticeBannerHtml, bindNotice } from '../ui/notice.js';
-import { bindItemBuilder, itemRailHtml, isItemCosmeticSlot, cosmeticFavValue, renderItemCosmeticHub, refreshItemHub,
+import { bindItemBuilder, itemRailEntry, isItemCosmeticSlot, cosmeticFavValue, renderItemCosmeticHub, refreshItemHub,
   forgetItemHub, forgetItemSlotModal, redrawItemSlotModal, openItemSlotModal } from './item-builder.js';
-import { heroOf, heroMatches, heroGridWanted, renderHeroGrid, heroBackHtml, layoutToggleHtml, bindHeroControls } from './hero-grid.js';
+import { heroOf, heroMatches, heroGridWanted, heroTiles, heroLayout, setHeroLayout } from './hero-grid.js';
 import { shownMods, isAdult, adultShown } from '../core/adult.js';
 import { modsOf, isGrouped as grouped, canBeInstalled, modIndexOf } from '../catalog/mods.ts';
 import { tagLabel as labelOfTag, collectTags, collectSlots as slotsOf, collectGroups } from '../catalog/tags.ts';
@@ -40,7 +40,9 @@ import { favKey, isFav, toggleFavorite } from '../catalog/favorites.ts';
 import { styleIndex, pickStyle, isInstalled } from '../catalog/looks.ts';
 import { flatColor } from '../catalog/colors.ts';
 import { playablePreview } from '../catalog/preview.ts';
-import { renderGrid, refreshGrids } from '../catalog/card/grid-root.tsx';
+import { showScreen, redrawScreen } from '../catalog/screen/root.tsx';
+import { renderRail as drawRail } from '../catalog/rail/Rail.tsx';
+import { bannerLayer, legacyLayer } from '../catalog/layers.ts';
 
 const viewRoot = pane('catalog');
 
@@ -169,93 +171,105 @@ function favButtonHtml(cat, name) {
     aria-label="${on ? L`Убрать из избранного` : L`В избранное`}"><span class="ms">${on ? 'favorite' : 'favorite_border'}</span></button>`;
 }
 
-// ===== Category rail =====
+// ===== Category rail (catalog/rail/Rail.tsx) =====
 
-function renderRail() {
-  const rail = $('#catRail');
+function railModel() {
   const cats = new Set(visibleCategories().map((c) => c.id));
   const favCount = favoriteMods().length + favoriteCosmetics().length;
-  let html = `
-    <button class="rail-item ${state.activeCategory === 'all' ? 'active' : ''}" data-cat="all">
-      <span class="ms">apps</span>${L`Все категории`}
-    </button>
-    <button class="rail-item fav ${state.activeCategory === 'favorites' ? 'active' : ''}" data-cat="favorites">
-      <span class="ms">favorite</span>${L`Избранное`}
-      ${favCount ? `<span class="rail-cnt">${favCount}</span>` : ''}
-    </button>`;
+  const sections = [{ label: null, items: [
+    { id: 'all', icon: 'apps', name: L`Все категории` },
+    { id: 'favorites', icon: 'favorite', name: L`Избранное`, count: favCount, fav: true },
+  ] }];
   for (const [label, ids] of RAIL_SECTIONS) {
     const present = ids.filter((id) => cats.has(id));
-    if (!present.length) continue;
-    html += `<div class="rail-section">${esc(tr(label))}</div>`;
-    for (const id of present) {
-      html += `
-        <button class="rail-item ${state.activeCategory === id ? 'active' : ''}" data-cat="${esc(id)}">
-          <span class="ms">${catIcon(id)}</span>${esc(catName(id))}
-        </button>`;
-    }
+    if (present.length) sections.push({ label: tr(label), items: present.map((id) => ({ id, icon: catIcon(id), name: catName(id) })) });
   }
-  // Free cosmetics only work once safe mode is off (the patch is what lets the game read
-  // them at all) — showing the section without that would just be a list of dead buttons.
+  // Free cosmetics only work once safe mode is off (the patch is what lets the game read them at
+  // all): showing the section without that would just be a list of dead buttons.
   const cos = cosmeticSlotList();
   if (cos.length) {
-    html += `<div class="rail-section">${L`Косметика`}</div>`;
-    for (const s of cos.filter((x) => !isItemCosmeticSlot(x.slot))) { // the builder's slots have one entry of their own
-      const id = COSMETIC_PREFIX + s.slot;
-      html += `
-        <button class="rail-item ${state.activeCategory === id ? 'active' : ''}" data-cat="${esc(id)}">
-          <span class="ms">${catIcon(id)}</span>${esc(catName(id))}
-          ${pickedIn(s.slot) ? '<span class="rail-dot"></span>' : ''}
-        </button>`;
-    }
-    html += itemRailHtml(state.activeCategory);
+    const items = cos
+      .filter((x) => !isItemCosmeticSlot(x.slot)) // the builder's slots have one entry of their own
+      .map((s) => {
+        const id = COSMETIC_PREFIX + s.slot;
+        return { id, icon: catIcon(id), name: catName(id), dot: Boolean(pickedIn(s.slot)) };
+      });
+    const builder = itemRailEntry();
+    if (builder) items.push(builder);
+    sections.push({ label: L`Косметика`, items });
   }
-  rail.innerHTML = html;
-  rail.querySelectorAll('.rail-item').forEach((b) => {
-    b.addEventListener('click', () => {
-      state.activeCategory = b.dataset.cat;
-      filters = freshFilters();
-      cosSearch = '';
-      if (state.search) {
-        state.search = '';
-        $('#globalSearch').value = '';
-        $('#clearSearch').classList.add('hidden');
-      }
-      renderCatalog();
-    });
-  });
+  return { active: state.activeCategory, sections };
 }
 
-// ===== Catalog =====
+function pickCategory(id) {
+  state.activeCategory = id;
+  filters = freshFilters();
+  cosSearch = '';
+  if (state.search) {
+    state.search = '';
+    $('#globalSearch').value = '';
+    $('#clearSearch').classList.add('hidden');
+  }
+  renderCatalog();
+}
+
+function renderRail() {
+  drawRail($('#catRail'), railModel(), pickCategory);
+}
+
+// ===== Catalog (catalog/screen/) =====
+
+/** What the screen can ask for (catalog/screen/model.ts, ScreenActions). */
+const actions = {
+  openCategory: async (id) => {
+    state.activeCategory = id;
+    filters = freshFilters();
+    await renderCatalog(); // the grid has to exist before it can be scrolled to the top
+    $('#main').scrollTop = 0;
+  },
+  filter: (patch) => {
+    Object.assign(filters, patch);
+    renderCatalog();
+  },
+  toggleTag: (tag) => {
+    if (filters.tags.has(tag)) filters.tags.delete(tag);
+    else filters.tags.add(tag);
+    renderCatalog();
+  },
+  // the way back and the grid/list switch both end on the whole category, unpicked
+  allHeroes: () => {
+    filters.hero = '';
+    renderCatalog();
+  },
+  layout: (v) => {
+    setHeroLayout(v);
+    actions.allHeroes();
+  },
+  pickHero: (hero) => {
+    // the mods no hero claims have no entry in the hero dropdown: they sit last in the list
+    if (!hero) setHeroLayout('list');
+    filters.hero = hero;
+    renderCatalog();
+    $('#main')?.scrollTo({ top: 0 });
+  },
+  retry: () => loadCatalog(true),
+  openMod: (mod, card) => openModModal(mod._cat, mod, card),
+  favChanged: () => {
+    if (state.view !== 'catalog') return;
+    // in a list that IS the favourites, the card has to leave it
+    if (state.activeCategory === 'favorites' || filters.favOnly) renderCatalog();
+    else renderRail();
+  },
+  bindCosmetics: (grid) => bindCosmeticCards(grid),
+};
 
 async function renderCatalog() {
   forgetItemHub();
-  if (!state.catalog) {
-    await paint(() => { viewRoot.innerHTML = `<div class="empty-note">${L`Загрузка каталога…`}</div>`; });
-    return;
-  }
-  if (state.catalog.error) {
-    /* Two failures that need different sentences.
-     *
-     * Not being able to open a socket is what happens when the wifi is off or the whole route
-     * to the catalog is blocked, and it used to print "fetch failed" - Node's words, at a
-     * player, on the screen where the mods should be. Anything else is a server that answered
-     * with something, and telling that person to check their connection sends them to fix
-     * what is not broken.
-     *
-     * Either way the app itself is fine and the mods already installed are still installed,
-     * which is the part worth saying out loud on an otherwise empty screen. */
-    const offline = state.catalog.offline;
-    await paint(() => { viewRoot.innerHTML = `
-      <div class="empty-note offline-note">
-        <span class="ms offline-icon">${offline ? 'wifi_off' : 'cloud_off'}</span>
-        <b>${offline ? L`Нет соединения с интернетом` : L`Каталог сейчас недоступен`}</b>
-        <span>${offline
-          ? L`Моды, которые уже стоят, работают. Каталог появится, как только связь вернётся.`
-          : L`Моды, которые уже стоят, работают. Попробуй ещё раз через минуту.`}</span>
-        <button class="btn btn-primary" id="retryCat">${L`Повторить`}</button>
-        <span class="offline-detail">${esc(state.catalog.error)}</span>
-      </div>`; });
-    $('#retryCat').addEventListener('click', () => loadCatalog(true));
+  if (!state.catalog || state.catalog.error) {
+    bannerLayer().replaceChildren();
+    await paint(() => showScreen(state.catalog
+      ? { kind: 'offline', offline: Boolean(state.catalog.offline), error: String(state.catalog.error) }
+      : { kind: 'loading' }, actions));
     return;
   }
 
@@ -270,19 +284,21 @@ async function renderCatalog() {
   else await renderCategory(state.activeCategory);
   // the no-game banner goes on last so it ends up on top: a user with no Dota has a more
   // pressing problem than whatever the network wanted to say
-  showNoticeBanner();
-  showNoGameBanner();
+  const banners = bannerLayer();
+  banners.replaceChildren();
+  showNoticeBanner(banners);
+  showNoGameBanner(banners);
 }
 
-/* A notice that arrived from the network (see ui/notice.js). Prepended after the screen has
- * drawn, the same way the no-game banner is, so no category screen has to know about it. */
-function showNoticeBanner() {
+/* A notice that arrived from the network (see ui/notice.js). Drawn after the screen, the same way
+ * the no-game banner is, so no category screen has to know about it. */
+function showNoticeBanner(banners) {
   const html = noticeBannerHtml();
   if (!html) return;
   const holder = document.createElement('div');
   holder.innerHTML = html;
-  viewRoot.prepend(holder.firstElementChild);
-  bindNotice(viewRoot, () => renderCatalog());
+  banners.prepend(holder.firstElementChild);
+  bindNotice(banners, () => renderCatalog());
 }
 
 /* Without Dota there is a catalog and no way to install from it, and the only sign of that
@@ -290,7 +306,7 @@ function showNoticeBanner() {
  * The banner says it before that, on whichever catalog screen the user is standing on, and
  * carries the two answers with it so nobody has to go looking through Settings.
  */
-function showNoGameBanner() {
+function showNoGameBanner(banners) {
   if (state.settings?.dotaPathValid) return;
   const el = document.createElement('div');
   el.className = 'banner warn';
@@ -299,7 +315,7 @@ function showNoGameBanner() {
     <div class="banner-body"><b>${L`Dota 2 не найдена`}</b>${L` — моды ставить некуда. Проверь, что игра установлена, или укажи её папку вручную.`}</div>
     <button class="btn btn-sm" id="findDotaBtn"><span class="ms">search</span>${L`Искать снова`}</button>
     <button class="btn btn-sm btn-primary" id="pickDotaBtn"><span class="ms">folder_open</span>${L`Указать папку`}</button>`;
-  viewRoot.prepend(el);
+  banners.prepend(el);
 
   const settled = async (found) => {
     state.settings = await window.api.settings.get();
@@ -319,6 +335,9 @@ function showNoGameBanner() {
   });
 }
 
+const NOTHING = () => L`Ничего не найдено — сбрось фильтры`;
+const cosmeticCards = (list) => list.map(({ slot, o }, i) => cosmeticCardHtml(slot, o, i, true)).join('');
+
 // --- favorites ---
 
 async function renderFavorites() {
@@ -331,31 +350,20 @@ async function renderFavorites() {
   const installable = all.some(canBeInstalled) || cosAll.length > 0;
   const empty = !all.length && !cosAll.length;
 
-  await paint(() => { viewRoot.innerHTML = `
-    <div class="view-header">
-      <h1 class="view-title">${L`Избранное`}</h1>
-    </div>
-    ${empty ? '' : toolbarHtml(mods.length + cos.length, { installable, fav: false })}
-    ${empty ? `<div class="empty-note">${L`Здесь пусто — жми на сердечко у мода в каталоге`}</div>` : ''}
-    ${all.length ? `
-      ${cosAll.length ? `<div class="section-h"><span class="ms">extension</span>${L`Моды`}</div>` : ''}
-      <div class="grid" id="modGrid"></div>` : ''}
-    ${cosAll.length ? `
-      <div class="section-h spaced"><span class="ms">auto_awesome</span>${L`Косметика`}</div>
-      <div class="grid" id="cosGrid">
-        ${cos.length ? cos.map(({ slot, o }, i) => cosmeticCardHtml(slot, o, i, true)).join('') : `<div class="empty-note">${L`Ничего не найдено — сбрось фильтры`}</div>`}
-      </div>` : ''}
-  `;
-  renderGrid($('#modGrid'), { mods, withCat: true, emptyText: L`Ничего не найдено — сбрось фильтры`, ...gridHandlers });
-  });
-  if (!empty) bindToolbar();
-  bindCosmeticCards($('#cosGrid'));
+  await paint(() => showScreen({
+    kind: 'list',
+    key: 'favorites',
+    title: L`Избранное`,
+    toolbar: empty ? null : toolbarModel(mods.length + cos.length, { installable, fav: false }),
+    note: empty ? L`Здесь пусто — жми на сердечко у мода в каталоге` : undefined,
+    mods: all.length ? { heading: cosAll.length > 0, mods, withCat: true, emptyText: NOTHING() } : null,
+    cosmetics: cosAll.length ? { html: cos.length ? cosmeticCards(cos) : `<div class="empty-note">${NOTHING()}</div>` } : null,
+  }, actions));
 }
 
 // --- home (all categories) ---
 
 async function renderHome() {
-  const cats = visibleCategories();
   const recent = (state.catalog.mods.recentlyAddedMods || [])
     .map((r) => {
       const hit = state.modIndex.get(r.name.toLowerCase());
@@ -365,39 +373,12 @@ async function renderHome() {
     })
     .filter((m) => m && (adultShown() || !isAdult(m)))
     .slice(0, 12);
-
-  // No heading over any of it: the window says Каталог in the tab strip, and a title
-  // repeating that would push the first mods below the fold to say nothing.
-  await paint(() => { viewRoot.innerHTML = `
-    ${recent.length ? `
-      <div class="section-h"><span class="ms">new_releases</span>${L`Недавно добавленные`}</div>
-      <div class="recent-row" id="recentRow"></div>` : ''}
-    <div class="section-h"><span class="ms">apps</span>${L`Категории`}</div>
-    <div class="cat-tiles">
-      ${cats.map((c, i) => {
-        const prev = c.preview ? `${RAW_BASE}/assets/previews/categories/${encodeURIComponent(c.preview)}` : null;
-        return `
-        <div class="cat-tile" data-cat="${esc(c.id)}" style="--i:${Math.min(i, 24)}">
-          ${prev ? mediaHtml(prev) : ''}
-          <div class="ct-shade"></div>
-          <div class="ct-label">
-            <span class="ct-name">${esc(catName(c.id))}</span>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-  `;
-  renderGrid($('#recentRow'), { mods: recent, withCat: true, ...gridHandlers });
-  });
-
-  viewRoot.querySelectorAll('.cat-tile').forEach((t) => {
-    t.addEventListener('click', async () => {
-      state.activeCategory = t.dataset.cat;
-      filters = freshFilters();
-      await renderCatalog(); // the grid has to exist before it can be scrolled to the top
-      $('#main').scrollTop = 0;
-    });
-  });
+  const tiles = visibleCategories().map((c) => ({
+    id: c.id,
+    name: catName(c.id),
+    preview: c.preview ? `${RAW_BASE}/assets/previews/categories/${encodeURIComponent(c.preview)}` : null,
+  }));
+  await paint(() => showScreen({ kind: 'home', recent, tiles }, actions));
 }
 
 // --- search results ---
@@ -408,40 +389,34 @@ const COS_SEARCH_LIMIT = 120;
 
 async function renderSearchResults() {
   const q = state.search.trim().toLowerCase();
-  const cats = visibleCategories();
   let mods = [];
-  for (const c of cats) {
+  for (const c of visibleCategories()) {
     for (const m of categoryMods(c.id)) {
       if (m.name && m.name.toLowerCase().includes(q)) mods.push({ ...m, _cat: c.id });
     }
   }
   // the search reaches the free cosmetics too, in their own section below the mods
   const cosAll = searchCosmetics(q);
-  // whether the "Установленные" chip makes sense at all — decided before filtering, or
-  // the chip would vanish once it filtered everything out and could never be undone
+  // whether the "Установленные" chip makes sense at all - decided before filtering, or the chip
+  // would vanish once it filtered everything out and could never be undone
   const installable = mods.some(canBeInstalled) || cosAll.length > 0;
   mods = applyFilters(mods);
   const cos = filterCosmetics(cosAll);
   const shownCos = cos.slice(0, COS_SEARCH_LIMIT);
 
-  await paint(() => { viewRoot.innerHTML = `
-    <div class="view-header">
-      <h1 class="view-title">${L`Поиск:`} <span class="accent">${esc(state.search.trim())}</span></h1>
-    </div>
-    ${toolbarHtml(mods.length + cos.length, { tags: [], groups: [], installable })}
-    ${!mods.length && !cos.length ? `<div class="empty-note">${L`Ничего не найдено`}</div>` : ''}
-    ${mods.length ? `
-      ${cos.length ? `<div class="section-h"><span class="ms">extension</span>${L`Моды`}</div>` : ''}
-      <div class="grid" id="modGrid"></div>` : ''}
-    ${cos.length ? `
-      <div class="section-h spaced"><span class="ms">auto_awesome</span>${L`Косметика`}</div>
-      <div class="grid" id="cosGrid">${shownCos.map(({ slot, o }, i) => cosmeticCardHtml(slot, o, i, true)).join('')}</div>
-      ${cos.length > shownCos.length ? `<div class="search-more">${L`…и ещё ${cos.length - shownCos.length} — уточни запрос`}</div>` : ''}` : ''}
-  `;
-  renderGrid($('#modGrid'), { mods, withCat: true, ...gridHandlers });
-  });
-  bindToolbar();
-  bindCosmeticCards($('#cosGrid'));
+  await paint(() => showScreen({
+    kind: 'list',
+    key: 'search',
+    title: L`Поиск:`,
+    accent: state.search.trim(),
+    toolbar: toolbarModel(mods.length + cos.length, { installable }),
+    note: !mods.length && !cos.length ? L`Ничего не найдено` : undefined,
+    mods: mods.length ? { heading: cos.length > 0, mods, withCat: true } : null,
+    cosmetics: cos.length ? {
+      html: cosmeticCards(shownCos),
+      more: cos.length > shownCos.length ? L`…и ещё ${cos.length - shownCos.length} — уточни запрос` : undefined,
+    } : null,
+  }, actions));
 }
 
 // --- single category ---
@@ -454,20 +429,21 @@ async function renderCategory(categoryId) {
   if (byHero) for (const m of all) m._group = heroOf(m.name);
   const tags = collectTags(all);
   const slots = collectSlots(all, categoryId);
-  // hero dropdowns are long enough that catalog order is useless — sort them A-Z
+  // hero dropdowns are long enough that catalog order is useless - sort them A-Z
   const groups = isGrouped(categoryId) ? collectGroups(all) : [];
   if (categoryId === 'hero-items') groups.sort((a, b) => a.localeCompare(b));
-  const heroes = categoryId === 'heroes'
+  const heroes = byHero
     ? (state.catalog?.constants?.HEROES_LIST || [])
       .filter((h) => all.some((m) => heroMatches(h, m.name)))
       .sort((a, b) => a.localeCompare(b))
     : [];
   const mods = applyFilters(all, categoryId);
   const installable = all.some(canBeInstalled);
+  const toolbar = toolbarModel(mods.length, { tags, slots, groups, heroes, categoryId, installable });
   if (byHero && heroGridWanted(filters)) {
-    await renderHeroGrid(viewRoot, catName(categoryId), toolbarHtml(mods.length, { tags, slots, heroes, categoryId, installable }), mods,
-      { isInstalled, pick: (hero) => { filters.hero = hero; renderCatalog(); } });
-    return bindToolbar();
+    const tiles = await heroTiles(mods, isInstalled);
+    await paint(() => showScreen({ kind: 'heroes', key: `cat:${categoryId}:heroes`, title: catName(categoryId), toolbar, tiles }, actions));
+    return;
   }
 
   // Picking one hero out of the dropdown already answers the question the headings answer,
@@ -477,19 +453,18 @@ async function renderCategory(categoryId) {
   // the mod that names no hero at the end rather than in the middle of the alphabet
   if (grouped && byHero) mods.sort((a, b) => (a._group ? 0 : 1) - (b._group ? 0 : 1) || a._group.localeCompare(b._group));
 
-  await paint(() => { viewRoot.innerHTML = `
-    <div class="view-header">
-      ${byHero && filters.hero ? heroBackHtml() : ''}<h1 class="view-title">${esc((byHero && filters.hero) || catName(categoryId))}</h1>
-    </div>
-    ${toolbarHtml(mods.length, { tags, slots, groups, heroes, categoryId, installable })}
-    <div class="grid" id="modGrid"></div>
-  `;
-  renderGrid($('#modGrid'), { mods, grouped, emptyText: L`Ничего не найдено — сбрось фильтры`, ...gridHandlers });
-  });
-  bindToolbar();
+  await paint(() => showScreen({
+    kind: 'list',
+    key: `cat:${categoryId}`,
+    title: (byHero && filters.hero) || catName(categoryId),
+    back: byHero && Boolean(filters.hero),
+    toolbar,
+    mods: { heading: false, mods, grouped, emptyText: NOTHING() },
+    cosmetics: null,
+  }, actions));
 }
 
-// --- toolbar ---
+// --- toolbar (catalog/screen/Toolbar.tsx) ---
 
 const GROUP_LABEL = { 'hero-items': 'Все герои', 'item-effects': 'Все предметы', creeps: 'Все крипы', towers: 'Все башни', 'creep-deny': 'Все типы' };
 
@@ -498,115 +473,28 @@ const GROUP_LABEL = { 'hero-items': 'Все герои', 'item-effects': 'Все
 // not narrowing - the same mods come back in another order - so it does not count.
 const narrowed = () => filtersNarrowed(filters) || Boolean(state.search.trim());
 
-// Two lines, on purpose. The top one is how to look at the category - what order, whose
-// heroes, which slot, and the two answers about your own library - and it is the same
-// everywhere. Tags belong to this category alone, so they sit under it, quieter. Nothing
-// folds any more: the longest row left is four chips, now that slots are a dropdown.
-function toolbarHtml(resultCount, { tags = [], slots = [], groups = [], heroes = [], categoryId = null, installable = true, fav = true }) {
+function toolbarModel(resultCount, { tags = [], slots = [], groups = [], heroes = [], categoryId = null, installable = true, fav = true }) {
   const f = filters;
-  return `
-    <div class="toolbar">
-      <div class="tb-line">
-        <div class="select-wrap">
-          <span class="ms">sort</span>
-          <select id="sortSelect">
-            ${SORTS.map((s) => `<option value="${s.key}" ${f.sort === s.key ? 'selected' : ''}>${esc(tr(s.label))}</option>`).join('')}
-          </select>
-        </div>
-        ${heroes.length ? `
-          <div class="select-wrap">
-            <span class="ms">person</span>
-            <select id="heroSelect">
-              <option value="">${L`Все герои`}</option>
-              ${heroes.map((h) => `<option value="${esc(h)}" ${f.hero === h ? 'selected' : ''}>${esc(h)}</option>`).join('')}
-            </select>
-          </div>` : ''}
-        ${groups.length ? `
-          <div class="select-wrap">
-            <span class="ms">${categoryId === 'hero-items' ? 'person' : catIcon(categoryId) || 'group'}</span>
-            <select id="groupSelect">
-              <option value="">${esc(tr(GROUP_LABEL[categoryId] || 'Все группы'))}</option>
-              ${groups.map((g) => `<option value="${esc(g)}" ${f.group === g ? 'selected' : ''}>${esc(g)}</option>`).join('')}
-            </select>
-          </div>` : ''}
-        ${slots.length ? `
-          <div class="select-wrap">
-            <span class="ms">checkroom</span>
-            <select id="slotSelect">
-              <option value="">${L`Все слоты`}</option>
-              ${slots.map((s) => `<option value="${esc(s)}" ${f.slot === s ? 'selected' : ''}>${esc(tagLabel(categoryId, s))}</option>`).join('')}
-            </select>
-          </div>` : ''}
-        ${installable || fav ? '<div class="sep"></div>' : ''}
-        ${installable ? `
-        <button class="fchip ${f.installedOnly ? 'active' : ''}" id="installedChip">
-          <span class="ms">check_circle</span>${L`Установленные`}
-        </button>` : ''}
-        ${fav ? `
-        <button class="fchip ${f.favOnly ? 'active' : ''}" id="favChip">
-          <span class="ms">favorite</span>${L`Избранное`}
-        </button>` : ''}
-        ${categoryId === 'heroes' ? layoutToggleHtml() : ''}
-        ${narrowed() ? `<span class="count">${resultCount} ${plural(resultCount, 'результат', 'результата', 'результатов')}</span>` : ''}
-      </div>
-      ${tags.length ? `
-        <div class="tb-line tb-tags">
-          ${tags.map((tag) => `
-            <button class="fchip ${f.tags.has(tag) ? 'active' : ''}" data-tag="${esc(tag)}">
-              ${esc(tagLabel(categoryId, tag))}
-            </button>`).join('')}
-        </div>` : ''}
-    </div>`;
+  return {
+    resultCount,
+    showCount: narrowed(),
+    sort: f.sort,
+    heroes,
+    hero: f.hero,
+    groups,
+    group: f.group,
+    groupLabel: tr(GROUP_LABEL[categoryId] || 'Все группы'),
+    groupIcon: categoryId === 'hero-items' ? 'person' : (categoryId && catIcon(categoryId)) || 'group',
+    slots: slots.map((s) => ({ id: s, label: tagLabel(categoryId, s) })),
+    slot: f.slot,
+    installable,
+    installedOnly: f.installedOnly,
+    fav,
+    favOnly: f.favOnly,
+    tags: tags.map((t) => ({ id: t, label: tagLabel(categoryId, t), on: f.tags.has(t) })),
+    layout: categoryId === 'heroes' ? heroLayout() : null,
+  };
 }
-
-function bindToolbar() {
-  bindHeroControls(() => { filters.hero = ''; renderCatalog(); });
-  $('#sortSelect')?.addEventListener('change', (e) => {
-    filters.sort = e.target.value;
-    renderCatalog();
-  });
-  $('#groupSelect')?.addEventListener('change', (e) => {
-    filters.group = e.target.value;
-    renderCatalog();
-  });
-  $('#heroSelect')?.addEventListener('change', (e) => {
-    filters.hero = e.target.value;
-    renderCatalog();
-  });
-  $('#slotSelect')?.addEventListener('change', (e) => {
-    filters.slot = e.target.value;
-    renderCatalog();
-  });
-  $('#installedChip')?.addEventListener('click', () => {
-    filters.installedOnly = !filters.installedOnly;
-    renderCatalog();
-  });
-  $('#favChip')?.addEventListener('click', () => {
-    filters.favOnly = !filters.favOnly;
-    renderCatalog();
-  });
-  document.querySelectorAll('.fchip[data-tag]').forEach((c) => {
-    c.addEventListener('click', () => {
-      const t = c.dataset.tag;
-      if (filters.tags.has(t)) filters.tags.delete(t);
-      else filters.tags.add(t);
-      renderCatalog();
-    });
-  });
-}
-
-// --- cards (catalog/card/ModCard.tsx, drawn through renderGrid) ---
-
-/** What every grid hands its cards: open the window, and follow a star that changed. */
-const gridHandlers = {
-  onOpen: (mod, card) => openModModal(mod._cat, mod, card),
-  onFavChanged: () => {
-    if (state.view !== 'catalog') return;
-    // in a list that IS the favourites, the card has to leave it
-    if (state.activeCategory === 'favorites' || filters.favOnly) renderCatalog();
-    else renderRail();
-  },
-};
 
 // star button on a card or in the modal: flips the star without disturbing the grid,
 // unless the Favorites view is open — there an unstarred mod has to leave the list
@@ -639,7 +527,7 @@ function findModByName(cat, name) {
 }
 
 // the "Установлен" badges follow the library: every grid on screen draws again, in place
-const refreshCardBadges = () => refreshGrids();
+const refreshCardBadges = () => redrawScreen();
 
 // ---------- mod modal ----------
 
@@ -902,7 +790,7 @@ function drawModal() {
       modalState.styleIdx = Number(b.dataset.style);
       // the card behind the window is showing a look too; they agree from here on
       pickStyle(categoryId, mod, modalState.styleIdx);
-      refreshGrids();
+      redrawScreen();
       drawModal();
     });
   });
@@ -1209,13 +1097,13 @@ async function afterCosmeticPick() {
 async function renderCosmeticCategory(slot) {
   if (slot === 'items') return renderItemCosmeticHub();
   const meta = cosmeticMeta(slot);
-  await paint(() => { viewRoot.innerHTML = `<div class="view-header"><h1 class="view-title">${esc(tr(meta.label))}</h1></div><div class="empty-note">${L`Читаем схему игры…`}</div>`; });
+  await paint(() => { legacyLayer().innerHTML = `<div class="view-header"><h1 class="view-title">${esc(tr(meta.label))}</h1></div><div class="empty-note">${L`Читаем схему игры…`}</div>`; });
   if (!state.cosmeticSlots) await refreshCosmeticSlots();
   if (state.activeCategory !== COSMETIC_PREFIX + slot) return; // moved on while reading
 
   const data = (state.cosmeticSlots || []).find((s) => s.slot === slot);
   if (!data) {
-    await paint(() => { viewRoot.innerHTML = `<div class="view-header"><h1 class="view-title">${esc(tr(meta.label))}</h1></div><div class="empty-note">${L`Схема игры не прочиталась — проверь путь к Dota 2 в настройках.`}</div>`; });
+    await paint(() => { legacyLayer().innerHTML = `<div class="view-header"><h1 class="view-title">${esc(tr(meta.label))}</h1></div><div class="empty-note">${L`Схема игры не прочиталась — проверь путь к Dota 2 в настройках.`}</div>`; });
     return;
   }
 
@@ -1245,7 +1133,7 @@ async function renderCosmeticCategory(slot) {
     io = bindCosmeticCards(grid);
   };
 
-  await paint(() => { viewRoot.innerHTML = `
+  await paint(() => { legacyLayer().innerHTML = `
     <div class="view-header">
       <h1 class="view-title">${esc(tr(meta.label))}</h1>
     </div>
