@@ -1,6 +1,6 @@
 {
   "heroes": 147,
-  "mods": 1415,
+  "mods": 1419,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -83,7 +83,7 @@
       "name": "Axe",
       "mods": [
         {"name":"Axe Automaton","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon"]},
-        {"name":"Axe Automaton Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","back"]},
+        {"name":"Axe Automaton Reborn","categoryId":"heroes","styleLabel":null,"slots":["weapon","base","back","tail","belt","arms"]},
         {"name":"Axe Gawr Gura","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"]},
         {"name":"Axe Heracles","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"]},
         {"name":"Axe Immortal Bootblack","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","misc","head"]},
@@ -429,7 +429,7 @@
         {"name":"Drow Ranger Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon","shoulder"]},
         {"name":"Drow Ranger Diretide","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
         {"name":"Drow Ranger Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
-        {"name":"Drow Ranger Master Of Madness","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","legs","weapon","shoulder"]},
+        {"name":"Drow Ranger Master Of Madness","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
         {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":"Crimson","slots":["back"]},
         {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":"Golden","slots":["back"]},
         {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":null,"slots":["back"]},
@@ -701,6 +701,7 @@
     "juggernaut": {
       "name": "Juggernaut",
       "mods": [
+        {"name":"Juggernaut Ancient Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
         {"name":"Juggernaut Ancient Exile","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Juggernaut Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Juggernaut Arcana Golden Edge","categoryId":"heroes","styleLabel":null,"slots":["head","misc","arms","back","weapon"]},
@@ -723,12 +724,13 @@
         {"name":"Camel Keeper of the Light","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Keeper Of The Light - Snowdrift","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Keeper Of The Light BMW","categoryId":"hero-items","styleLabel":null,"slots":["mount"]},
         {"name":"Keeper of the Light Darklord","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon","belt","arms","misc"]},
         {"name":"Keeper of the Light Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Keeper of the Light Northlight Illuminance","categoryId":"herofx","styleLabel":null,"slots":[]},
         {"name":"Keeper of the Light Prominence","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Keeper of the Light Renegade","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
-        {"name":"Keeper of the Light Sematary","categoryId":"heroes","styleLabel":null,"slots":["mount","head","legs"]},
+        {"name":"Keeper of the Light Sematary","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
         {"name":"Keeper of the Light Tamamo","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","legs","weapon","arms","belt"]},
         {"name":"Keeper of the Light Waitureally","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
         {"name":"Keeper of the Light Wings of Daybreak","categoryId":"hero-items","styleLabel":null,"slots":["mount"]},
@@ -851,7 +853,7 @@
         {"name":"Lina Aerial Aphrodite Flame","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc"]},
         {"name":"Lina Crystal Empress","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","belt","head"]},
         {"name":"Lina Fire Flame of Origin","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc"]},
-        {"name":"Lina Soul Slayer Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc"]},
+        {"name":"Lina Soul Slayer Immortal","categoryId":"heroes","styleLabel":null,"slots":["head","misc","arms","belt"]},
         {"name":"Lina Wyrmwrought Flame","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -922,6 +924,7 @@
         {"name":"Luna Moon Stalker","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Moonfall","categoryId":"hero-items","styleLabel":"Golden","slots":["shield"]},
         {"name":"Luna Moonfall","categoryId":"hero-items","styleLabel":null,"slots":["shield"]},
+        {"name":"Luna Sematary Rainbow Bridge III","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Twilight Schism","categoryId":"hero-items","styleLabel":"Crimson","slots":["weapon"]},
         {"name":"Luna Twilight Schism","categoryId":"hero-items","styleLabel":"Golden","slots":["weapon"]},
         {"name":"Luna Twilight Schism","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
@@ -1261,6 +1264,7 @@
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Ice Phoenix","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Phoenix Vermillion Crucible","categoryId":"heroes","styleLabel":null,"slots":["misc","head","wings"]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Star Sage Phoenix","categoryId":"heroes","styleLabel":null,"slots":["misc","head","wings"]},
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
