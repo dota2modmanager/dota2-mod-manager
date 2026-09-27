@@ -174,3 +174,16 @@ test('a star is saved with the settings, and comes back off on a second press', 
   assert.deepEqual(saved.at(-1), ['favorites', []]);
   delete globalThis.window;
 });
+
+test('a duration token reads the same written as the stylesheet has it or as the build rewrites it', async () => {
+  /* Vite minifies tokens.css, and 200ms comes out as .2s. The mod window read that as 0.2 ms and
+     cut its closing animation to nothing, and the mascot's spin went the same way. */
+  const { parseCssTime } = await import('../renderer/core/css-time.js');
+  assert.equal(parseCssTime('200ms'), 200);
+  assert.equal(parseCssTime('.2s'), 200);
+  assert.equal(parseCssTime(' .3s '), 300);
+  assert.equal(parseCssTime('1ms'), 1, 'reduced motion stays one millisecond');
+  assert.equal(parseCssTime('1.5s'), 1500);
+  assert.equal(parseCssTime(''), 0);
+  assert.equal(parseCssTime('auto'), 0);
+});
