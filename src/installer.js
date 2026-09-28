@@ -116,6 +116,8 @@ class Installer {
    * @param {() => string|null} opts.getGamePath   e.g. ...\dota 2 beta\game
    * @param {() => string} opts.getLangSuffix      e.g. "123"
    * @param {(evt: object) => void} opts.onProgress
+   * @param {((paths: string[]) => Array<object>) | null} [opts.identify]  catalog mods these files are
+   * @param {((categoryId: string, file: string) => string|null) | null} [opts.publishedHash]  its sha256
    */
   constructor({ userDataDir, getGamePath, getLangSuffix, onProgress, identify = null, publishedHash = null }) {
     this.downloadsDir = path.join(userDataDir, 'downloads');

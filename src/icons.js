@@ -454,6 +454,7 @@ class Icons {
    */
   async getMany(names) {
     const list = [...new Set((Array.isArray(names) ? names : []).filter(Boolean))];
+    /** @type {Record<string, string|null>} */
     const out = {};
     let next = 0;
     const worker = async () => {
