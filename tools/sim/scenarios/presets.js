@@ -2,7 +2,7 @@
  * A preset saved, applied over a changed state, applied again after one of its mods was deleted,
  * and deleted, with the game's reading checked each time.
  *
- * What the app promises (src/ipc-presets.js, renderer/views/presets.js): a preset remembers which
+ * What the app promises (src/ipc-presets.js, renderer/views/presets.ts): a preset remembers which
  * mods are on; applying it switches those on and every other mod off; a member that is no longer
  * installed is fetched back from the catalog first, and the toast says how many were.
  *

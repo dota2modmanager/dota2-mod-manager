@@ -24,7 +24,7 @@ src/               everything that thinks: installer, vpk, schema, gamelang, cat
 src/ipc-*.js       one file per group of channels, each naming what it needs
 renderer/          the UI. views/ draw screens, ui/ are shared pieces, core/ is state
 renderer/catalog/  the catalog's React components, and the rules they draw in .ts with tests
-renderer/library/  the same for My mods
+renderer/library/  the same for My mods, and renderer/presets/ for the presets
 test/              node:test, no framework, no mocks library
 tools/             scripts that are not shipped: fingerprints, i18n check, sandbox
 site/              the documentation site (Astro). Separate from the app

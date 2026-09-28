@@ -33,7 +33,7 @@ import { bindHelp } from './ui/help.js';
 import { bindHotkeys } from './ui/hotkeys.js';
 import { handleImportResult } from './views/library.ts';
 import { loadCatalog } from './views/catalog.ts';
-import { handlePresetImport } from './views/presets.js';
+import { handlePresetImport } from './views/presets.ts';
 import './views/settings.js';
 
 // A crash the user can't explain is the hardest kind to fix from a support chat. Both land

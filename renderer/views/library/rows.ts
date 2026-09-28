@@ -5,24 +5,14 @@ import { catName, catIcon } from '../../core/categories.js';
 import { isCursorRec, isFontRec, isCosmeticRec, effectNames } from '../../core/records.js';
 import { staleTerrainWhy } from '../../core/terrain-age.js';
 import { fmtMB } from '../../ui/format.js';
-import { isVideo, previewUrl } from '../../ui/media.js';
-import { recPreviewUrl, wikiFallbackKey, pictureChain, catalogPreviewFor } from '../../ui/thumb.js';
+import { isVideo } from '../../ui/media.js';
+import { recPreviewUrl } from '../../ui/thumb.js';
+import { extThumb, recThumb } from '../../library/thumbs.ts';
 import { memberKey } from '../../library/selection.ts';
 import { pakFileName } from '../../library/order.ts';
-import type { ExternalRowModel, PackRowModel, RowModel, Tag, Thumb } from '../../library/model.ts';
+import type { ExternalRowModel, PackRowModel, RowModel, Tag } from '../../library/model.ts';
 import type { Cover, ExternalFile, LibRecord, Member } from '../../library/types.ts';
 import { lib } from './state.ts';
-
-const picture = (url: string): Thumb => ({ url, video: isVideo(url) });
-
-/** A record's own picture, else the catalog's, else one fetched out of the mod or the wiki (ui/thumb.js). */
-function recThumb(rec: LibRecord | Member): Thumb {
-  const url = recPreviewUrl(rec);
-  if (url) return picture(url);
-  const fb = wikiFallbackKey(rec);
-  const chain = pictureChain(rec, fb && fb.key);
-  return chain ? { key: chain, icon: fb ? fb.icon : null } : { icon: null };
-}
 
 /* Mods that carry item-schema changes: their model installs like any other, but the effects and
  * icons only exist once the schema patch is on. Say which of the two it is. */
@@ -114,21 +104,6 @@ export function packRow(rec: LibRecord, index: number): PackRowModel {
       thumb: recThumb(m),
     })),
   };
-}
-
-/* A foreign file's tile, from the same sources a row uses: the catalog's picture when the file is
- * recognised, otherwise the wiki portrait of the hero it turned out to be about. */
-function extThumb(f: ExternalFile): Thumb {
-  if (f.kind === 'cursor') return { key: 'generic:cursor', icon: 'arrow_selector_tool' };
-  if (f.kind === 'font') return { icon: 'text_fields' };
-  const cp = catalogPreviewFor(f.match);
-  if (cp && f.match) return picture(previewUrl(f.match[0].categoryId, cp));
-  const heroes = f.heroNames || [];
-  const fb = heroes.length === 1 ? { key: 'hero:' + heroes[0], icon: 'person' }
-    : heroes.length > 1 ? { key: 'generic:pack', icon: 'auto_awesome' }
-      : { key: null, icon: 'folder_zip' };
-  const chain = pictureChain(f, fb.key);
-  return chain ? { key: chain, icon: fb.icon } : { icon: fb.icon };
 }
 
 export function externalRow(f: ExternalFile): ExternalRowModel {
