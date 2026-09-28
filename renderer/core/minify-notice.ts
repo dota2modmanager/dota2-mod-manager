@@ -23,6 +23,10 @@ export interface MinifyState {
   mounted?: string | null;
   folder?: string;
   ourFolder?: string;
+  /** how the Settings note names the paks Minify keeps for itself */
+  reservedLabel?: string;
+  /** its wrapper is in Steam's launch options, even when the program itself is gone */
+  prelaunch?: boolean;
   [key: string]: unknown;
 }
 

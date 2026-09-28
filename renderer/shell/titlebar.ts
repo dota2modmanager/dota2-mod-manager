@@ -9,6 +9,7 @@ import { bindHelp } from '../ui/help.ts';
 import { bindHotkeys } from '../ui/hotkeys.ts';
 import { loadCatalog } from '../views/catalog.ts';
 import { byId } from './dom.ts';
+import type { AppSettings } from '../api/app.ts';
 
 const RESTORE = '<svg viewBox="0 0 12 12" width="12" height="12"><rect x="2" y="3.5" width="6.5" height="6.5" fill="none" stroke="currentColor" stroke-width="1.1" rx="1"/><path d="M4 3.5V2.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-1" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>';
 const MAXIMIZE = '<svg viewBox="0 0 12 12" width="12" height="12"><rect x="2.5" y="2.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.2" rx="1"/></svg>';
@@ -41,7 +42,7 @@ byId('openModsFolderBtn').addEventListener('click', async () => {
 export function paintAccount(): void {
   const host = document.getElementById('tbAccount');
   if (!host) return;
-  const s = state.settings || {};
+  const s: Partial<AppSettings> = state.settings || {};
   if (!s.discordConfigured) { host.innerHTML = ''; return; }
   const acc = s.account;
   host.innerHTML = acc
@@ -63,7 +64,7 @@ export function paintAccount(): void {
     paintAccount();
   });
   document.getElementById('tbUserBtn')?.addEventListener('click', async () => {
-    if (!await confirmDialog(L`Выйти из аккаунта «${acc.username}»?`, { okLabel: L`Выйти`, danger: false })) return;
+    if (!await confirmDialog(L`Выйти из аккаунта «${acc?.username}»?`, { okLabel: L`Выйти`, danger: false })) return;
     await window.api.account.signOut();
     state.settings = await window.api.settings.get();
     paintAccount();

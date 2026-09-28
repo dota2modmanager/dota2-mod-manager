@@ -38,7 +38,7 @@ document.getElementById('safeModeBtn')?.addEventListener('click', async () => {
   const r = await window.api.patch.setEnabled(turningUnsafe);
   btn.disabled = false;
   if (r.error) { toast(r.error, 'error'); return; }
-  state.settings = { ...state.settings, schemaPatch: turningUnsafe };
+  if (state.settings) state.settings = { ...state.settings, schemaPatch: turningUnsafe };
   toast(turningUnsafe ? L`Безопасный режим выключен — эффекты и косметика доступны` : L`Безопасный режим включён, файлы игры восстановлены. Эффекты и косметика ждут, пока не выключишь его снова.`);
   await Promise.all([refreshCosmeticSlots(), refreshPatchState()]);
   if (state.view === 'catalog') {

@@ -103,7 +103,7 @@ export interface BannersModel {
   /** -language in Steam's launch options; followed when it names our folder */
   launchLang: { lang: string; followed: boolean } | null;
   /** Minify beside us (core/minify-notice.ts), with the folders it and we build into */
-  minify: { case: string; kind: string; folder: string; mounted: string; ourFolder: string; reservedLabel: string | null; ourMods: number } | null;
+  minify: { case: string; kind: string; folder: string; mounted: string | null; ourFolder: string; reservedLabel: string | null; ourMods: number } | null;
   prelaunch: boolean;
   /** fonts and cursors Steam put back, with no archive left to reinstall from */
   stuck: string[];

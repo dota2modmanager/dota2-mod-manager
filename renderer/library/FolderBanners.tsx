@@ -22,8 +22,10 @@ function minifyBody(m: Minify) {
     // it holds the folder the game reads, so ours are the ones sitting dark
     case 'minify-live':
       return <><b>{L`Игра читает моды Minify из dota_${m.mounted}`}</b>{L`, а наши ${ourMods} лежат в dota_${m.ourFolder} и сейчас не грузятся. ${one} Какую именно — решает параметр запуска Dota, и сейчас он указывает на папку Minify.`}</>;
+    // the folder both build into, which is not always the one the game reads: that one may not
+    // be known yet, and naming it printed "dota_null"
     case 'shared':
-      return <><b>{L`Minify рядом, и обе программы работают`}</b>{L`: моды в одной папке dota_${m.mounted}, а слоты ${m.reservedLabel || 'pak65-67'}, куда он пишет, мы не занимаем.`}</>;
+      return <><b>{L`Minify рядом, и обе программы работают`}</b>{L`: моды в одной папке dota_${m.folder}, а слоты ${m.reservedLabel || 'pak65-67'}, куда он пишет, мы не занимаем.`}</>;
     // the game reads our folder, whether or not anything of ours is in it yet
     case 'ours-read':
       return <><b>{L`Рядом установлен Minify`}</b>{L`. Игра читает dota_${m.ourFolder}, куда ставятся наши моды. Minify собирает в dota_${m.folder}, поэтому его моды сейчас не грузятся. ${one}`}</>;
