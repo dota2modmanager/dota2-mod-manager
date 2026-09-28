@@ -30,6 +30,8 @@ export interface RowModel {
   order: number | null;
   /** the entrance's stagger */
   index: number;
+  /** moved in the order from its menu just now: it travels over its neighbour (row-motion.ts) */
+  lift: boolean;
   thumb: Thumb;
   /** a cosmetic pick's picture, by its name, with its slot's glyph until then */
   cosmetic: { name: string; icon: string } | null;
@@ -61,6 +63,7 @@ export interface PackRowModel {
   open: boolean;
   order: number | null;
   index: number;
+  lift: boolean;
   /** the first members' pictures in a 2x2 grid, or one stand-in when not one of them has a picture */
   cells: ({ url: string; video: boolean } | { icon: string } | null)[] | null;
   standIn: Thumb;
@@ -113,6 +116,8 @@ export interface BannersModel {
 export interface LibraryModel {
   /** a new key draws the screen fresh, the rows' entrance and all */
   key: number;
+  /** a new number lets the rows move to where this draw puts them (row-motion.ts) */
+  motion: number;
   noticeHtml: string;
   banners: BannersModel;
   search: string;

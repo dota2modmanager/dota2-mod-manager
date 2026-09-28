@@ -17,6 +17,7 @@ import { lib, recById, screen } from './state.ts';
 async function moveRecord(id: string, dir: number) {
   const r = await window.api.mods.move(id, dir);
   if (r.error) toast(r.error, 'error', 6000);
+  else lib.moved = id;
   await screen.reload();
 }
 

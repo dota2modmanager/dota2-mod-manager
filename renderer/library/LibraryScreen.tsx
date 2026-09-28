@@ -4,6 +4,7 @@
  * pick, a font with no switch at all, or a file somebody dropped into the mods folder by hand.
  * Each draws its own row, yet all of them share one selection and one bulk bar. */
 import { useCallback, useEffect, useRef } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { bindContextMenu } from '../ui/menu.js';
 import { bindNotice } from '../ui/notice.js';
 import { LegacyHtml } from '../catalog/screen/LegacyHtml.tsx';
@@ -59,11 +60,16 @@ function LibList({ m, actions }: { m: LibraryModel; actions: LibraryActions }) {
     <div className="lib-list" id="libList" ref={ref}>
       {m.empty ? <div className="empty-note">{m.empty}</div> : (
         <>
-          {m.rows.map((r) => (r.kind === 'pack'
-            ? <PackRow key={r.id} p={r} masterOff={m.masterOff} actions={actions} />
-            : <ModRow key={r.id} r={r} masterOff={m.masterOff} actions={actions} />))}
+          {/* a row that goes folds away before it leaves the page (row-motion.ts) */}
+          <AnimatePresence initial={false}>
+            {m.rows.map((r) => (r.kind === 'pack'
+              ? <PackRow key={r.id} p={r} masterOff={m.masterOff} actions={actions} motionKey={m.motion} />
+              : <ModRow key={r.id} r={r} masterOff={m.masterOff} actions={actions} motionKey={m.motion} />))}
+          </AnimatePresence>
           <CosmeticsHead m={m} actions={actions} />
-          {m.cosmetics?.rows.map((r) => <ModRow key={r.id} r={r} masterOff={m.masterOff} actions={actions} />)}
+          <AnimatePresence initial={false}>
+            {m.cosmetics?.rows.map((r) => <ModRow key={r.id} r={r} masterOff={m.masterOff} actions={actions} motionKey={m.motion} />)}
+          </AnimatePresence>
         </>
       )}
     </div>

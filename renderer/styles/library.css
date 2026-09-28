@@ -1,7 +1,7 @@
 /* ============ Library ============ */
 .lib-toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
 .lib-stats { color: var(--text-muted); font-size: 13px; margin-right: auto; }
-.lib-list { display: flex; flex-direction: column; gap: 8px; }
+.lib-list { display: flex; flex-direction: column; gap: var(--space-2); }
 .lib-row {
   display: flex;
   align-items: center;
@@ -10,7 +10,9 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px 14px;
-  transition: all 0.2s var(--ease);
+  /* not transform: a row that changes place in the order travels on it (library/row-motion.ts),
+     and a transition on it would drag a step behind every frame of that */
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease), opacity 0.2s var(--ease), box-shadow 0.2s var(--ease);
   /* backwards, not both: a row that makes room for a dragged one moves on transform
      (library/drag.ts), and an entrance holding transform would pin it where it stood */
   animation: cardIn 0.35s var(--ease) backwards;
@@ -20,6 +22,17 @@
   will-change: opacity;
 }
 .lib-row:hover { border-color: var(--border-strong); background: var(--surface-hover); }
+/* a row moved in the order from its menu, on its way: over its neighbour, lifted the way a dragged
+   one is, and solid, so the two names never print over each other (library/row-motion.ts) */
+.lib-row.lifting {
+  position: relative;
+  z-index: 2;
+  border-color: var(--primary);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-3);
+}
+/* a row folding away as it goes: its content stays inside it, and nothing eases behind Motion */
+.lib-row.leaving { overflow: hidden; transition: none; pointer-events: none; }
 /* A switched-off row is dimmed, as a switched-off mod inside a pack always was. The rule stood here
    for a long time without showing: the entrance held opacity at 1 once it had played. */
 .lib-row.disabled { opacity: 0.5; }
@@ -282,7 +295,10 @@ input:-webkit-autofill, input:-webkit-autofill:focus {
   display: none; flex-direction: column; gap: 6px;
   margin: 2px 0 8px 40px; padding-left: 14px; border-left: 2px solid var(--border);
 }
-.pack-members.open { display: flex; animation: cardIn 0.25s var(--ease) backwards; }
+.pack-members.open { display: flex; }
+/* the height an open pack's members fold in and out of (library/row-motion.ts); the clip margin
+   keeps a focused member's ring from being cut at the edge */
+.pack-fold { overflow: clip; overflow-clip-margin: var(--space-1); }
 .member-row {
   display: flex; align-items: center; gap: 12px;
   background: var(--surface); border: 1px solid var(--border);

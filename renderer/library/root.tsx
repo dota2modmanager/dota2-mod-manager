@@ -4,6 +4,7 @@
  * caller's paint(), so a view transition captures the new screen whole. */
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
+import { MotionConfig } from 'motion/react';
 import { pane } from '../core/router.js';
 import { LibraryScreen } from './LibraryScreen.tsx';
 import type { LibraryActions, LibraryModel } from './model.ts';
@@ -11,5 +12,5 @@ import type { LibraryActions, LibraryModel } from './model.ts';
 const root = createRoot(pane('library'));
 
 export function showLibrary(model: LibraryModel, actions: LibraryActions): void {
-  flushSync(() => root.render(<LibraryScreen key={model.key} m={model} actions={actions} />));
+  flushSync(() => root.render(<MotionConfig reducedMotion="user"><LibraryScreen key={model.key} m={model} actions={actions} /></MotionConfig>));
 }

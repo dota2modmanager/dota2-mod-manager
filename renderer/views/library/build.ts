@@ -54,6 +54,7 @@ export function libraryModel(): LibraryModel {
   const dupes = lib.external.filter((f) => f.duplicateOf).length;
   return {
     key: lib.key,
+    motion: lib.motion,
     noticeHtml: noticeBannerHtml(),
     banners: banners(),
     search: lib.search,

@@ -50,7 +50,11 @@ async function renderLibrary(fresh = false): Promise<void> {
 }
 
 function draw(): void {
+  // the rows of a drop are already where they end up (library/drag.ts): that draw moves nothing
+  if (lib.still) lib.still = false;
+  else lib.motion++;
   showLibrary(libraryModel(), actions);
+  lib.moved = '';
 }
 
 screen.draw = draw;

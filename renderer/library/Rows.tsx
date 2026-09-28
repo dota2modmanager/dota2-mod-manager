@@ -1,20 +1,50 @@
 /* The rows of My mods: a mod (or a cosmetic pick, or a font), a pack that folds open into its
  * members, and a file somebody dropped into the mods folder by hand. Each draws the markup the
  * string templates wrote, so the styles, the simulation and the drag find what they always did. */
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { AnimatePresence, motion, useIsPresent } from 'motion/react';
 import { plural } from '../ui/format.js';
+import { rowMotion } from './row-motion.ts';
 import type { ExternalRowModel, LibraryActions, MemberModel, PackRowModel, RowModel } from './model.ts';
 import { CosmeticThumb, Grip, PackThumb, PakFile, Tags, Thumb } from './Thumb.tsx';
 
 interface RowProps { masterOff: boolean; actions: LibraryActions }
+/** Bumped by the screen on every redraw but the one after a drop (row-motion.ts). */
+interface Moves { motionKey: number }
+
+/* The row's own box, which travels to a new place in the order and folds away when it goes. While
+ * it folds it is .leaving: no CSS transition of its own, and nothing spilling out of it. The row
+ * moved from its menu is .lifting until it arrives, so it passes over its neighbour rather than
+ * through it. */
+function RowBox({ className, motionKey, lift, children, ...data }: {
+  className: string; motionKey: number; lift: boolean; children: ReactNode; 'data-row': string; 'data-order'?: number; style: CSSProperties;
+}) {
+  const present = useIsPresent();
+  const [up, setUp] = useState(false);
+  useEffect(() => {
+    if (!lift) return undefined;
+    setUp(true);
+    // the end of the move lowers it; this is for a move that never played (reduced motion, no change)
+    const t = setTimeout(() => setUp(false), rowMotion().moveMs + 100);
+    return () => clearTimeout(t);
+  }, [lift, motionKey]);
+  const m = rowMotion();
+  const cls = `${className}${up ? ' lifting' : ''}${present ? '' : ' leaving'}`;
+  return (
+    <motion.div className={cls} layout="position" layoutDependency={motionKey}
+      transition={m.transition} exit={m.leave} onLayoutAnimationComplete={() => setUp(false)} {...data}>
+      {children}
+    </motion.div>
+  );
+}
 
 const stagger = (i: number) => ({ '--i': Math.min(i, 20) }) as CSSProperties;
 const rowClass = (base: string, enabled: boolean, selected: boolean) => `${base} ${enabled ? '' : 'disabled'} ${selected ? 'selected' : ''}`;
 
-export function ModRow({ r, masterOff, actions }: RowProps & { r: RowModel }) {
+export function ModRow({ r, masterOff, actions, motionKey }: RowProps & Moves & { r: RowModel }) {
   const [adopting, setAdopting] = useState(false);
   return (
-    <div className={rowClass('lib-row', r.enabled, r.selected)} data-row={r.id} data-order={r.order ?? undefined} style={stagger(r.index)}>
+    <RowBox className={rowClass('lib-row', r.enabled, r.selected)} motionKey={motionKey} lift={r.lift} data-row={r.id} data-order={r.order ?? undefined} style={stagger(r.index)}>
       <Grip id={r.id} order={r.order} />
       {r.selectable
         ? <input type="checkbox" className="lib-check" data-check={r.id} checked={r.selected} aria-label={L`Выбрать мод`}
@@ -42,15 +72,15 @@ export function ModRow({ r, masterOff, actions }: RowProps & { r: RowModel }) {
         )}
         <button className="btn btn-sm btn-danger" data-del={r.id} onClick={() => actions.remove(r.id)}>{L`Удалить`}</button>
       </div>
-    </div>
+    </RowBox>
   );
 }
 
-export function PackRow({ p, masterOff, actions }: RowProps & { p: PackRowModel }) {
+export function PackRow({ p, masterOff, actions, motionKey }: RowProps & Moves & { p: PackRowModel }) {
   const n = p.members.length;
   return (
     <>
-      <div className={rowClass('lib-row pack-row', p.enabled, p.selected)} data-row={p.id} data-order={p.order ?? undefined} style={stagger(p.index)}>
+      <RowBox className={rowClass('lib-row pack-row', p.enabled, p.selected)} motionKey={motionKey} lift={p.lift} data-row={p.id} data-order={p.order ?? undefined} style={stagger(p.index)}>
         <Grip id={p.id} order={p.order} />
         <input type="checkbox" className="lib-check" data-check={p.id} checked={p.selected} aria-label={L`Выбрать пак`}
           onChange={(e) => actions.select(p.id, e.target.checked)} />
@@ -68,10 +98,18 @@ export function PackRow({ p, masterOff, actions }: RowProps & { p: PackRowModel 
             disabled={masterOff} onClick={() => actions.toggle(p.id)} />
           <button className="btn btn-sm btn-danger" data-del={p.id} onClick={() => actions.remove(p.id)}>{L`Удалить`}</button>
         </div>
-      </div>
-      <div className={`pack-members ${p.open ? 'open' : ''}`} data-members={p.id}>
-        {p.members.map((m) => <MemberRow key={m.key} packId={p.id} m={m} masterOff={masterOff} actions={actions} />)}
-      </div>
+      </RowBox>
+      {/* rendered only while open, so a closed pack has nothing under it for the drag to carry */}
+      <AnimatePresence initial={false}>
+        {p.open && (
+          <motion.div key="fold" className="pack-fold" layout="position" layoutDependency={motionKey} transition={rowMotion().transition}
+            initial={rowMotion().fold} animate={rowMotion().unfold} exit={rowMotion().fold}>
+            <div className="pack-members open" data-members={p.id}>
+              {p.members.map((m) => <MemberRow key={m.key} packId={p.id} m={m} masterOff={masterOff} actions={actions} />)}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

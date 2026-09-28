@@ -21,6 +21,11 @@ export const lib = {
   slotCeil: 98,
   /** bumped for a fresh draw */
   key: 0,
+  /** bumped for every draw the rows may move on; a drop's draw is still (library/row-motion.ts) */
+  motion: 0,
+  still: false,
+  /** the record just moved in the order from its menu, for the draw that moves it */
+  moved: '',
 };
 
 export const recById = (id: string): LibRecord | undefined => lib.records.find((r) => r.id === id);

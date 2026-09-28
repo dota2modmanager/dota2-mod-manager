@@ -49,6 +49,7 @@ export function modRow(rec: LibRecord, index: number): RowModel {
     selectable: !isFontRec(rec),
     order: place ? place.index : null,
     index,
+    lift: lib.moved === rec.id,
     thumb: cosmetic ? { icon: null } : recThumb(rec),
     cosmetic: cosmetic ? { name: rec.name, icon: catIcon(COSMETIC_PREFIX + rec.slot) } : null,
     tags: known([
@@ -89,6 +90,7 @@ export function packRow(rec: LibRecord, index: number): PackRowModel {
     open: lib.open.has(rec.id),
     order: place ? place.index : null,
     index,
+    lift: lib.moved === rec.id,
     cells,
     standIn: { key: 'generic:pack', icon: 'auto_awesome' },
     onCount: members.filter((m) => m.enabled).length,

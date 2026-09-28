@@ -41,7 +41,7 @@ function measure(list: HTMLElement): Unit[] {
   const rows = [...list.querySelectorAll<HTMLElement>('.lib-row[data-order]')];
   return rows.map((row) => {
     const next = row.nextElementSibling as HTMLElement | null;
-    const tail = next?.classList.contains('pack-members') ? next : null;
+    const tail = next?.classList.contains('pack-fold') ? next : null; // an open pack's members
     const last = tail && tail.offsetHeight ? tail : row;
     const after = (tail || row).nextElementSibling as HTMLElement | null;
     const r = row.getBoundingClientRect();

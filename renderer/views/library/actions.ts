@@ -196,6 +196,7 @@ export const actions: LibraryActions = {
   reorder: async (id, to) => {
     const res = await window.api.mods.reorder(id, to);
     if (res?.error) toast(res.error, 'error', 6000);
+    lib.still = true;
     await screen.reload();
   },
   banner,
