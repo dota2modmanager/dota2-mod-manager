@@ -34,7 +34,7 @@ import { bindHotkeys } from './ui/hotkeys.js';
 import { handleImportResult } from './views/library.ts';
 import { loadCatalog } from './views/catalog.ts';
 import { handlePresetImport } from './views/presets.ts';
-import './views/settings.js';
+import './views/settings.ts';
 
 // A crash the user can't explain is the hardest kind to fix from a support chat. Both land
 // in the app's own log (see main.js diag:rendererError / src/diagnostics.js), so "it broke"

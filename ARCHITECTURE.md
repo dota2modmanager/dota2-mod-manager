@@ -29,9 +29,9 @@ Anything a user can do to a mod touches three files, in this order:
 3. `renderer/views/*.js` calls it and draws the result
 
 Miss the middle one and the button exists but does nothing. The renderer is split by view
-(`catalog.ts`, `library.ts` and `presets.ts`, each with its parts in a folder of the same name,
-and `settings.js`) with shared pieces under `renderer/ui/`. Those three draw with React components
-from `renderer/catalog/`, `renderer/library/` and `renderer/presets/`; Settings will follow.
+(`catalog.ts`, `library.ts`, `presets.ts` and `settings.ts`, the larger ones with their parts in a
+folder of the same name) with shared pieces under `renderer/ui/`. Each draws with React components
+from the folder of its name under `renderer/`: `catalog/`, `library/`, `presets/`, `settings/`.
 
 ## Where mods end up
 
