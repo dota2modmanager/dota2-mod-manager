@@ -35,7 +35,7 @@
   "license": "GPL-3.0-or-later",
   "homepage": "https://github.com/dota2modmanager/dota2-mod-manager",
   "devDependencies": {
-    "electron": "^44.4.3",
+    "electron": "^44.4.5",
     "electron-builder": "^26.15.3",
     "eslint": "^10.11.0",
     "fast-check": "^4.10.2",
