@@ -7,7 +7,6 @@
     "renderer/app.js": 426,
     "renderer/i18n.js": 787,
     "renderer/views/item-builder.js": 284,
-    "renderer/views/library.js": 1374,
     "renderer/views/presets.js": 433,
     "src/diagnostics.js": 405,
     "src/gamelang.js": 462,

@@ -31,7 +31,7 @@ import { initTheme } from './ui/theme.js';
 import { initQueue } from './ui/queue.js';
 import { bindHelp } from './ui/help.js';
 import { bindHotkeys } from './ui/hotkeys.js';
-import { handleImportResult } from './views/library.js';
+import { handleImportResult } from './views/library.ts';
 import { loadCatalog } from './views/catalog.ts';
 import { handlePresetImport } from './views/presets.js';
 import './views/settings.js';

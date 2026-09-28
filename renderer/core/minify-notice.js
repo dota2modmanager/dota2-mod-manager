@@ -1,5 +1,5 @@
 /* Which note about Minify fits this machine, decided apart from the markup so it can be
- * tested without a window (test/minify-notice.test.js). The words live in views/library.js.
+ * tested without a window (test/minify-notice.test.js). The words live in library/FolderBanners.tsx.
  *
  * src/minify.js answers whose mods the game reads right now: 'ours', 'minify', 'both',
  * 'neither' or 'unknown'. 'neither' covers three different machines, and the banner used to

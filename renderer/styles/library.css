@@ -11,11 +11,18 @@
   border-radius: var(--radius-sm);
   padding: 10px 14px;
   transition: all 0.2s var(--ease);
-  animation: cardIn 0.35s var(--ease) both;
+  /* backwards, not both: a row that makes room for a dragged one moves on transform
+     (library/drag.ts), and an entrance holding transform would pin it where it stood */
+  animation: cardIn 0.35s var(--ease) backwards;
   animation-delay: calc(var(--i) * 18ms);
+  /* the frosted buttons on a row (.btn, backdrop-filter) blur the row itself, not the page under
+     it: while the entrance held opacity, that is what it did, and the buttons are drawn for it */
+  will-change: opacity;
 }
 .lib-row:hover { border-color: var(--border-strong); background: var(--surface-hover); }
-.lib-row.disabled { opacity: 0.5; }
+/* A switched-off row is not dimmed. .lib-row.disabled { opacity: 0.5 } stood here and never showed:
+   the entrance held opacity at 1 once it had played. It went when the entrance stopped holding,
+   so that a row looks as it always has; whether it should be dimmed is a question of its own. */
 .lib-thumb {
   width: 76px; height: 47px;
   border-radius: var(--radius-xs);
@@ -275,7 +282,7 @@ input:-webkit-autofill, input:-webkit-autofill:focus {
   display: none; flex-direction: column; gap: 6px;
   margin: 2px 0 8px 40px; padding-left: 14px; border-left: 2px solid var(--border);
 }
-.pack-members.open { display: flex; animation: cardIn 0.25s var(--ease) both; }
+.pack-members.open { display: flex; animation: cardIn 0.25s var(--ease) backwards; }
 .member-row {
   display: flex; align-items: center; gap: 12px;
   background: var(--surface); border: 1px solid var(--border);
