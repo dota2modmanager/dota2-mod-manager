@@ -234,9 +234,11 @@
   font-size: var(--text-xs);
 }
 .item-pick-card .card-meta span { min-height: 1em; }
-/* The cards' entrance ends holding opacity at 1, over the global dimming of [disabled]: the
-   dimming goes on what is inside instead. An effect before an item is chosen, a piece of a set
-   the builder does not put on. */
+/* The global dimming of [disabled] goes on what is inside, not on the card: an effect before an
+   item is chosen, a piece of a set the builder does not put on. The card's entrance used to hold
+   it at full opacity by accident (fill both); it lets go now (.card above), so this says it. */
+.item-pick-card:disabled,
+.item-pick-card.is-disabled { opacity: 1; }
 .item-pick-card:disabled > *,
 .item-pick-card.is-disabled > * { opacity: var(--disabled-opacity); }
 @media (max-width: 980px) {

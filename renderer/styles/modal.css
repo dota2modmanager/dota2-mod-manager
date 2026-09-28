@@ -22,12 +22,15 @@
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .modal-overlay.hidden { display: none; }
-/* The window's two layers and the islands of markup inside it take no room of their own
-   (catalog/modal/layers.ts): the window's styles see the same children they always did. */
+/* React's layer and the islands of markup inside it take no room of their own
+   (catalog/modal/root.tsx): the window's styles see the same children they always did. */
 .modal-layer { display: contents; }
 .modal-overlay.closing { animation: fadeOut var(--dur-base) var(--ease-accelerate) both; }
 @keyframes fadeOut { to { opacity: 0; } }
 .modal-content {
+  /* what the close button (.modal-close) sits in. A transform left over by the entrance used to
+     do this by accident; once the window settles it has none, and the button flew to the corner */
+  position: relative;
   background: var(--surface-solid);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);

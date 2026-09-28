@@ -29,7 +29,7 @@ import { refreshSidebarStatus } from '../ui/statusbar.js';
 import { modGuidesHtml, bindGuides } from '../ui/guide.js';
 import { refreshNotices, noticeBannerHtml, bindNotice } from '../ui/notice.js';
 import { bindItemBuilder, itemRailEntry, isItemCosmeticSlot, cosmeticFavValue, renderItemCosmeticHub, refreshItemHub,
-  forgetItemHub, forgetItemSlotModal, redrawItemSlotModal, openItemSlotModal } from './item-builder.js';
+  forgetItemSlotModal, redrawItemSlotModal, openItemSlotModal } from './item-builder.js';
 import { heroOf, heroMatches, heroGridWanted, heroTiles, heroLayout, setHeroLayout } from './hero-grid.js';
 import { shownMods, isAdult, adultShown } from '../core/adult.js';
 import { tokenMs } from '../core/css-time.js';
@@ -43,8 +43,7 @@ import { showScreen, redrawScreen } from '../catalog/screen/root.tsx';
 import { renderRail as drawRail } from '../catalog/rail/Rail.tsx';
 import { bannerLayer } from '../catalog/layers.ts';
 import { growFrom, shrinkAway } from '../catalog/modal-motion.ts';
-import { showModModal, showCosmeticModal } from '../catalog/modal/root.tsx';
-import { clearModal } from '../catalog/modal/layers.ts';
+import { showModModal, showCosmeticModal, clearModal } from '../catalog/modal/root.tsx';
 
 
 // This screen's own state, off the shared store now that it has somewhere to live.
@@ -264,7 +263,6 @@ const actions = {
 };
 
 async function renderCatalog() {
-  forgetItemHub();
   if (!state.catalog || state.catalog.error) {
     bannerLayer().replaceChildren();
     await paint(() => showScreen(state.catalog

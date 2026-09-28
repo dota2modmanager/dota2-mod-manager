@@ -6,6 +6,7 @@ import { Toolbar } from './Toolbar.tsx';
 import { Home } from './Home.tsx';
 import { HeroGrid } from './HeroGrid.tsx';
 import { CosmeticScreen } from './CosmeticScreen.tsx';
+import { BuilderHub } from './BuilderHub.tsx';
 import { CosmeticGrid } from '../cosmetic/CosmeticCard.tsx';
 import { ModGrid } from '../card/ModGrid.tsx';
 
@@ -13,8 +14,6 @@ interface Props { model: ScreenModel; actions: ScreenActions }
 
 export function Screen({ model, actions }: Props) {
   switch (model.kind) {
-    case 'none':
-      return null;
     case 'loading':
       return <div className="empty-note">{L`Загрузка каталога…`}</div>;
     case 'offline':
@@ -33,6 +32,8 @@ export function Screen({ model, actions }: Props) {
       return <List model={model} actions={actions} key={model.key} />;
     case 'cosmetics':
       return <CosmeticScreen m={model} actions={actions} key={model.key} />;
+    case 'builder':
+      return <BuilderHub m={model} actions={actions} />;
   }
 }
 

@@ -43,7 +43,6 @@ export interface HeroTileModel {
 }
 
 export type ScreenModel =
-  | { kind: 'none' }
   | { kind: 'loading' }
   | { kind: 'offline'; offline: boolean; error: string }
   | { kind: 'home'; recent: Mod[]; tiles: { id: string; name: string; preview: string | null }[] }
@@ -71,6 +70,15 @@ export type ScreenModel =
     favOnly: boolean;
     count: string;
     items: CosmeticItem[];
+  }
+  | {
+    /** the item builder's heroes (views/item-builder.js) */
+    kind: 'builder';
+    title: string;
+    search: string;
+    installedOnly: boolean;
+    count: string;
+    heroes: { hero: string; icon: string | null; installed: boolean; meta: string }[];
   };
 
 /** What the screen can ask the catalog to do. */
@@ -87,4 +95,5 @@ export interface ScreenActions {
   openCosmetic: (slot: string, id: string, card: HTMLElement) => void;
   cosmeticFavChanged: () => void;
   cosmeticFilter: (patch: { sort?: string; installedOnly?: boolean; favOnly?: boolean; search?: string }) => void;
+  openHero: (hero: string, card: HTMLElement) => void;
 }
