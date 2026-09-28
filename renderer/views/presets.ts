@@ -18,20 +18,10 @@ import { recThumb } from '../library/thumbs.ts';
 import type { LibRecord } from '../library/types.ts';
 import { showPresets } from '../presets/PresetsScreen.tsx';
 import type { OwnPreset, PresetsActions, SharedPreset } from '../presets/model.ts';
+import type { PresetRecord } from '../api/content.ts';
 import { shareDialog, shareSheet } from './presets/share.ts';
 
-interface Identity { name: string; categoryId?: string }
-interface Preset {
-  id: string;
-  name: string;
-  modIds: string[];
-  absent?: Identity[];
-  link?: { count: number; skipped: unknown[] };
-  /** a received preset, waiting to be installed */
-  wanted?: unknown;
-  source?: { author?: string; note?: string };
-  status?: { installed: number; download: number; embedded: number; free?: number; unavailable: string[] };
-}
+type Preset = PresetRecord;
 
 let presets: Preset[] = [];
 let key = 0;

@@ -20,6 +20,7 @@ says why.
 ```
 main.js            app lifecycle, window, auto-update. Nothing else belongs here
 preload.js         the only bridge the renderer gets. Every channel is listed once
+renderer/api/      its types: every name on window.api, and what each handler answers
 src/               everything that thinks: installer, vpk, schema, gamelang, catalog…
 src/ipc-*.js       one file per group of channels, each naming what it needs
 renderer/          the UI. views/ draw screens, ui/ are shared pieces, core/ is state

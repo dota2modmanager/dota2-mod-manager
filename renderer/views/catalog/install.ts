@@ -51,7 +51,7 @@ export async function doInstall(categoryId: string, mod: Mod, styleLabel: string
    * housekeeping and passes without a word; another program's is not, and Minify puts its map
    * mods in exactly that file. Asked before the download rather than reported after it. */
   if (!batch && categoryId === 'terrains') {
-    const maps = await window.api.mods.mapsOwner().catch(() => ({ present: false }));
+    const maps = await window.api.mods.mapsOwner().catch((): { present: boolean; owner?: string } => ({ present: false }));
     if (maps.present) {
       const go = await confirmDialog(
         maps.owner === 'minify'

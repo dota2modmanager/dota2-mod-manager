@@ -1,14 +1,10 @@
-/* What a module finds on window before it runs: the bridge preload.js exposes, and the
- * translation helpers i18n.js publishes (app.js imports it first).
- *
- * The bridge is typed loosely for now: ninety-odd channels, each with its own reply, and a type
- * for each belongs next to its handler rather than guessed here. Until then a component names
- * the shape it expects where it calls one. */
-export {};
+/* What a module finds on window before it runs: the bridge preload.js exposes (typed in api/),
+ * and the translation helpers i18n.js publishes (app.js imports it first). */
+import type { Api } from './api/index.ts';
 
 declare global {
   interface Window {
-    api: any;
+    api: Api;
     I18N_LANG: 'ru' | 'en';
     i18nLocale: () => 'ru' | 'en';
   }

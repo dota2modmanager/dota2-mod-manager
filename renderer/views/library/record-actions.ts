@@ -100,7 +100,7 @@ export async function combineSelection(ids: string[] | null): Promise<void> {
   const r = await window.api.packs.combine(name, ids);
   if (r.error) { toast(r.error, 'error', 6000); return; }
   lib.sel.clear();
-  const n = r.pack.members.length;
+  const n = (r.pack.members || []).length;
   toast(L`Пак «${r.pack.name}»: ${n} ${plural(n, 'мод', 'мода', 'модов')}`, 'ok', 6000);
   if (r.conflicts?.length) toast(L`Пересечения файлов: ${r.conflicts.length} (победил тот, что раньше в паке)`, 'warn', 6000);
   await screen.reload();
