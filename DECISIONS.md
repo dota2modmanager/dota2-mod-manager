@@ -102,7 +102,7 @@ programme means. Reading and writing VPK archives is this repository's own code.
 ### The window is built by Vite, and moves to TypeScript and React
 
 Until 2026-09-27 the renderer was plain JavaScript with no build step, so that a reviewer reading
-`renderer/app.js` read the program itself. That cost more every month. The catalog screen reached
+renderer/app.js read the program itself. That cost more every month. The catalog screen reached
 1,699 lines and the library 1,374, a redesign meant editing strings of HTML inside them, and an
 animation meant timing code written by hand. The size budget stopped the growth; it could not
 undo it.

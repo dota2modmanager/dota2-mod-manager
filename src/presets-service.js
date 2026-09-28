@@ -23,7 +23,7 @@ const { t } = require('./i18n');
 
 // The mods of one catalog category. Most categories are a flat array, but some (creeps,
 // towers, hero-items, item-effects, creep-deny) group theirs under `groups` - the same two
-// shapes the catalog view walks (see categoryMods in renderer/app.js). Reading only the
+// shapes the catalog view walks (see categoryMods in renderer/views/catalog/lists.ts). Reading only the
 // flat ones meant every mod in a grouped category looked like it was not in the catalog:
 // the share dialog called them the user's own and packed them into the file as bytes, and
 // a preset link dropped them entirely.

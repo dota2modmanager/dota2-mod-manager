@@ -101,7 +101,7 @@ test('the scripts index.html loads are files that exist', () => {
   const html = fs.readFileSync(path.join(RENDERER, 'index.html'), 'utf8');
   const missing = [];
   let checked = 0;
-  for (const m of html.matchAll(/src="([^"]+\.js)"/g)) {
+  for (const m of html.matchAll(/src="([^"]+\.(?:js|ts))"/g)) {
     if (/^https?:/.test(m[1])) continue;
     checked++;
     if (!fs.existsSync(path.join(RENDERER, m[1]))) missing.push(`index.html loads ${m[1]}, which is not there`);
