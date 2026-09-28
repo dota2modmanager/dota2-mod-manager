@@ -20,9 +20,9 @@
   will-change: opacity;
 }
 .lib-row:hover { border-color: var(--border-strong); background: var(--surface-hover); }
-/* A switched-off row is not dimmed. .lib-row.disabled { opacity: 0.5 } stood here and never showed:
-   the entrance held opacity at 1 once it had played. It went when the entrance stopped holding,
-   so that a row looks as it always has; whether it should be dimmed is a question of its own. */
+/* A switched-off row is dimmed, as a switched-off mod inside a pack always was. The rule stood here
+   for a long time without showing: the entrance held opacity at 1 once it had played. */
+.lib-row.disabled { opacity: 0.5; }
 .lib-thumb {
   width: 76px; height: 47px;
   border-radius: var(--radius-xs);
