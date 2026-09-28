@@ -177,6 +177,11 @@
   width: min(400px, calc(88vw / var(--content-zoom)));
   box-shadow: var(--shadow), 0 0 50px color-mix(in srgb, var(--md-primary) 10%, transparent);
   animation: modalIn 0.28s var(--ease);
+  /* Never taller than the window. A 1366x768 laptop at 125% gives the app 582 px, and the safe
+     mode window was 668: its title went off the top and its buttons off the bottom. A box that
+     cannot fit scrolls instead (and the safe mode one gives up only its argument, below). */
+  max-height: calc((100vh - 2 * var(--space-5)) / var(--content-zoom));
+  overflow-y: auto;
 }
 .confirm-msg { font-size: 15px; font-weight: 600; margin-bottom: 20px; line-height: 1.5; }
 /* wraps rather than spilling out of the box when labels are long (RU labels are) */
@@ -471,7 +476,14 @@ audio::-webkit-media-controls-panel { background: var(--surface-solid); }
    does today and sits quiet, the card below is what it will do and is lit, and a short rule
    runs from one to the other. The shields are the status bar switch's own icons, so the
    window also shows what the thing being flipped looks like afterwards. */
-.safe-box { width: min(600px, calc(92vw / var(--content-zoom))); text-align: left; }
+.safe-box {
+  width: min(600px, calc(92vw / var(--content-zoom)));
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
+}
+.safe-box > * { flex-shrink: 0; }
 .safe-title {
   font-family: var(--font-head);
   font-size: var(--text-lg);
@@ -480,9 +492,12 @@ audio::-webkit-media-controls-panel { background: var(--surface-solid); }
   margin-bottom: var(--space-5);
 }
 /* The argument scrolls; the warning and the buttons under it never do. On a short window the
-   two state cards are what gets cut, and they are the part somebody can scroll back to. */
+   two state cards are what gets cut, and they are the part somebody can scroll back to. It takes
+   the height the rest leaves, where a share of the window's height left the rest too little. */
 .safe-body {
-  max-height: min(calc(56vh / var(--content-zoom)), 480px);
+  flex-shrink: 1;
+  min-height: var(--space-7);
+  max-height: 480px;
   overflow-y: auto;
   padding-right: var(--space-2);
 }

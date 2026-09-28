@@ -30,7 +30,15 @@ module.exports = async function builder(sim) {
   const setSafe = async (on) => {
     if (await safeOn() === on) return true;
     await sim.click('#safeModeBtn');
-    if (!on && await sim.until(`document.querySelector('.safe-box [data-c="yes"]')`, 5000)) await sim.click('.safe-box [data-c="yes"]');
+    if (!on && await sim.until(`document.querySelector('.safe-box [data-c="yes"]')`, 5000)) {
+      // on a short screen it lost its title off the top and its buttons off the bottom (668 px of
+      // box in a 584 px window, a 1366x768 laptop at 125%)
+      const box = await sim.js(`(() => { const b = document.querySelector('.safe-box').getBoundingClientRect();
+        return { top: Math.round(b.top), bottom: Math.round(b.bottom), window: innerHeight }; })()`);
+      sim.check('the safe mode window fits in the app window, its title and its buttons both', box.top >= 0 && box.bottom <= box.window,
+        `box ${box.top}..${box.bottom}, window ${box.window}`, box);
+      await sim.click('.safe-box [data-c="yes"]');
+    }
     return sim.until(`document.getElementById('safeModeBtn').getAttribute('aria-checked') === '${on}'`, 15000);
   };
   const picks = () => sim.js(`window.api.mods.list().then(({ installed }) => installed
