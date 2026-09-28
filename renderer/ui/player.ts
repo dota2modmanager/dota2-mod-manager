@@ -58,10 +58,22 @@ export function openPlayer(url: string, title?: string): void {
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
   part('.player-close').addEventListener('click', close);
 
-  const togglePlay = () => { if (media.paused) media.play(); else media.pause(); };
+  /* What the user asked for, not what the element reports. Until the clip arrives the element
+     says it is paused while it waits to autoplay, so a pause pressed in that second read as
+     "play": the clip started anyway, and only a second press stopped it. A pause before the
+     start also cancels the autoplay, and fires no event, so the button is painted here. */
+  let playing = true;
+  const paintPlay = () => { playBtn.textContent = playing ? 'pause' : 'play_arrow'; };
+  const togglePlay = () => {
+    playing = !playing;
+    paintPlay();
+    // a play() cut short by the next pause rejects, which is the user's doing and not a fault
+    if (playing) media.play().catch(() => {});
+    else media.pause();
+  };
   part('[data-act="play"]').addEventListener('click', togglePlay);
-  media.addEventListener('play', () => { playBtn.textContent = 'pause'; });
-  media.addEventListener('pause', () => { playBtn.textContent = 'play_arrow'; });
+  media.addEventListener('play', () => { playing = true; paintPlay(); });
+  media.addEventListener('pause', () => { playing = false; paintPlay(); });
   if (!audio) media.addEventListener('click', togglePlay);
 
   media.addEventListener('timeupdate', () => {
