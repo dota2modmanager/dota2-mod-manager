@@ -2,7 +2,7 @@
  * reach into the grid and repaint it; a card drawn by React subscribes instead, and the old sweeps
  * skip anything marked data-owned="react". */
 import { useSyncExternalStore } from 'react';
-import { isQueued, onQueueChange } from '../../ui/queue.js';
+import { isQueued, onQueueChange } from '../../ui/queue.ts';
 import { terrainMark, onTerrainAges } from '../../core/terrain-age.ts';
 import type { Mod } from '../types.ts';
 

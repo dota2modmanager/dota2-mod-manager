@@ -15,28 +15,30 @@ import { tokenMs } from '../core/css-time.ts';
 
 export const THEMES = ['ursa', 'brew', 'fura', 'storm', 'invoker', 'meepo', 'bh', 'axe'];
 
-function mascotUrl(theme) {
+function mascotUrl(theme: string): string {
   const cfg = state.catalog?.constants?.GIF_CONFIG;
   const i = THEMES.indexOf(theme);
-  const fromCatalog = cfg?.themes?.indexOf(theme) >= 0 ? cfg.gifs?.[cfg.themes.indexOf(theme)] : null;
+  const at = cfg?.themes?.indexOf(theme) ?? -1;
+  const fromCatalog = at >= 0 ? cfg?.gifs?.[at] : null;
   return `${RAW_BASE}/${fromCatalog || `assets/previews/hueta/${THEMES[i < 0 ? 0 : i]}.gif`}`;
 }
 
 /** Put a theme on the window. Unknown names fall back to the one the app ships on. */
-export function applyTheme(name) {
-  const theme = THEMES.includes(name) ? name : THEMES[0];
+export function applyTheme(name: unknown): string {
+  const theme = typeof name === 'string' && THEMES.includes(name) ? name : THEMES[0];
   document.documentElement.dataset.theme = theme;
-  const img = $('#themeMascot img');
+  const img = document.querySelector<HTMLImageElement>('#themeMascot img');
   if (img) img.src = mascotUrl(theme);
   return theme;
 }
 
-export function initTheme() {
+export function initTheme(): void {
   applyTheme(state.settings?.theme);
-  const mascot = $('#themeMascot');
-  mascot?.addEventListener('click', () => {
+  const mascot = document.querySelector<HTMLElement>('#themeMascot');
+  if (!mascot) return;
+  mascot.addEventListener('click', () => {
     if (mascot.classList.contains('spinning')) return;
-    const now = document.documentElement.dataset.theme;
+    const now = document.documentElement.dataset.theme || THEMES[0];
     const next = THEMES[(THEMES.indexOf(now) + 1) % THEMES.length];
     // The hero turns away and the new one turns back: the window changes colour at the point
     // of the spin where the face is smallest, so the two look like one event rather than a

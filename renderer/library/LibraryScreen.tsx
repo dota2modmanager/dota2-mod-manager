@@ -4,15 +4,15 @@
  * pick, a font with no switch at all, or a file somebody dropped into the mods folder by hand.
  * Each draws its own row, yet all of them share one selection and one bulk bar. */
 import { useCallback, useEffect, useRef } from 'react';
-import { bindContextMenu } from '../ui/menu.js';
-import { bindNotice } from '../ui/notice.js';
+import { bindContextMenu } from '../ui/menu.ts';
+import { bindNotice } from '../ui/notice.ts';
 import { LegacyHtml } from '../catalog/screen/LegacyHtml.tsx';
 import type { LibraryActions, LibraryModel } from './model.ts';
 import { Banners } from './Banners.tsx';
 import { BulkBar, CosmeticsHead, LibToolbar, ListHead } from './Toolbar.tsx';
 import { ExternalRow, ModRow, PackRow } from './Rows.tsx';
 import { useOrderDrag } from './drag.ts';
-import { plural } from '../ui/format.js';
+import { plural } from '../ui/format.ts';
 
 export function LibraryScreen({ m, actions }: { m: LibraryModel; actions: LibraryActions }) {
   const bindBanner = useCallback((el: HTMLElement) => bindNotice(el, actions.noticeRead), [actions]);

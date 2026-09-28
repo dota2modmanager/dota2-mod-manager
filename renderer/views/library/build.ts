@@ -3,8 +3,8 @@
 import { state } from '../../core/store.ts';
 import { isCosmeticRec } from '../../core/records.ts';
 import { minifyNotice } from '../../core/minify-notice.ts';
-import { plural } from '../../ui/format.js';
-import { noticeBannerHtml } from '../../ui/notice.js';
+import { plural } from '../../ui/format.ts';
+import { noticeBannerHtml } from '../../ui/notice.ts';
 import { listParts } from '../../library/order.ts';
 import { bulkOffer, selectableCosmetics, selectableMods, tristate } from '../../library/selection.ts';
 import type { BannersModel, LibraryModel } from '../../library/model.ts';

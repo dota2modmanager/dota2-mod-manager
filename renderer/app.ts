@@ -21,14 +21,14 @@ import { render, invalidateViews } from './core/router.ts';
 import { refreshInstalledIndex, refreshCosmeticSlots } from './core/installed.ts';
 import { switchOffStaleTerrains } from './core/terrain-age.ts';
 import { askAdultOnce } from './core/adult.ts';
-import { toast } from './ui/toast.js';
-import { showWhatsNew, toolchainDialog } from './ui/dialog.js';
-import { watchMedia } from './ui/media.js';
-import { refreshPatchState, refreshMasterSwitch, refreshSidebarStatus } from './ui/statusbar.js';
-import { applyContentZoom, readPanels, bindPanels } from './ui/chrome.js';
-import { applyStaticI18n, showLanguagePicker } from './ui/language.js';
-import { initTheme } from './ui/theme.js';
-import { initQueue } from './ui/queue.js';
+import { toast } from './ui/toast.ts';
+import { showWhatsNew, toolchainDialog } from './ui/dialog.ts';
+import { watchMedia } from './ui/media.ts';
+import { refreshPatchState, refreshMasterSwitch, refreshSidebarStatus } from './ui/statusbar.ts';
+import { applyContentZoom, readPanels, bindPanels } from './ui/chrome.ts';
+import { applyStaticI18n, showLanguagePicker } from './ui/language.ts';
+import { initTheme } from './ui/theme.ts';
+import { initQueue } from './ui/queue.ts';
 import { loadCatalog } from './views/catalog.ts';
 
 /* Fetching it is a download of somebody else's program, so it happens on a yes and never

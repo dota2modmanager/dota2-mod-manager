@@ -11,7 +11,10 @@
  */
 import { $ } from '../core/dom.ts';
 import { state } from '../core/store.ts';
-import { PANEL_DEFAULTS, PANEL_LIMITS, PANEL_ZOOM_LIMITS } from '../core/constants.ts';
+import { PANEL_DEFAULTS, PANEL_LIMITS, PANEL_ZOOM_LIMITS, type Panels, type PanelSize } from '../core/constants.ts';
+
+type PanelZoom = 'topZoom' | 'bottomZoom' | 'railZoom';
+type PanelFold = 'topFolded' | 'bottomFolded' | 'railFolded';
 
 // Scale of the content — the catalog, the library, the settings — in percent. It is CSS zoom
 // on the content itself, deliberately not a window zoom: the panels have their own scale, and
@@ -20,37 +23,37 @@ import { PANEL_DEFAULTS, PANEL_LIMITS, PANEL_ZOOM_LIMITS } from '../core/constan
 // zoom accelerators); Ctrl + wheel and the slider in Settings land here.
 const SCALE_MIN = 70;
 const SCALE_MAX = 160;
-export const clampScale = (pct) => Math.min(SCALE_MAX, Math.max(SCALE_MIN, Math.round(Number(pct) / 5) * 5));
-export const currentScalePct = () => Math.round((Number(state.settings?.uiScale) || 1) * 100);
+export const clampScale = (pct: unknown): number => Math.min(SCALE_MAX, Math.max(SCALE_MIN, Math.round(Number(pct) / 5) * 5));
+export const currentScalePct = (): number => Math.round((Number(state.settings?.uiScale) || 1) * 100);
 
 // keep a slider and its readout in step with the value that is actually in force
-function paintScaleRow(id, pct) {
-  const range = $(`#${id}`);
+function paintScaleRow(id: string, pct: number): void {
+  const range = document.querySelector<HTMLInputElement>(`#${id}`);
   if (range) range.value = String(pct);
-  const val = $(`#${id}Val`);
+  const val = document.querySelector(`#${id}Val`);
   if (val) val.textContent = `${pct}%`;
 }
 
 // the content scale doubles as the "everything" number in Settings
-export function paintScale(pct) {
+export function paintScale(pct: number): void {
   paintScaleRow('zoomContent', pct);
   paintScaleRow('masterRange', pct);
 }
 
-function paintPanelScales() {
+function paintPanelScales(): void {
   paintScaleRow('zoomTop', Math.round(state.panels.topZoom * 100));
   paintScaleRow('zoomRail', Math.round(state.panels.railZoom * 100));
   paintScaleRow('zoomBottom', Math.round(state.panels.bottomZoom * 100));
 }
 
-export function applyContentZoom(factor) {
+export function applyContentZoom(factor: number): void {
   if (state.settings) state.settings.uiScale = factor;
   document.documentElement.style.setProperty('--content-zoom', String(factor));
   paintScale(Math.round(factor * 100));
 }
 
 // paints first, saves after: the wheel can outrun the IPC and must not wait for it
-export function applyScalePct(pct) {
+export function applyScalePct(pct: number): void {
   const want = clampScale(pct);
   applyContentZoom(want / 100);
   window.api.ui.setZoom(want / 100);
@@ -58,7 +61,7 @@ export function applyScalePct(pct) {
 
 // Ctrl + wheel resizes whatever the pointer is over: each chrome panel has its own size,
 // and everywhere else means the content, which is what the UI scale governs.
-const WHEEL_ZONES = [
+const WHEEL_ZONES: { sel: string; zoom: PanelZoom; fold: PanelFold }[] = [
   { sel: '#titlebar, #gripTop', zoom: 'topZoom', fold: 'topFolded' },
   { sel: '#statusbar, #gripBottom', zoom: 'bottomZoom', fold: 'bottomFolded' },
   { sel: '#catRail, #gripRail', zoom: 'railZoom', fold: 'railFolded' },
@@ -68,7 +71,8 @@ window.addEventListener('wheel', (e) => {
   if (!e.ctrlKey) return;
   e.preventDefault();
   const dir = e.deltaY < 0 ? 1 : -1;
-  const zone = e.target instanceof Element ? WHEEL_ZONES.find((z) => e.target.closest(z.sel)) : null;
+  const target = e.target;
+  const zone = target instanceof Element ? WHEEL_ZONES.find((z) => target.closest(z.sel)) : null;
   if (!zone) { applyScalePct(currentScalePct() + dir * 5); return; }
   if (state.panels[zone.fold]) foldPanel(zone.fold, false); // scaling a folded panel opens it
   state.panels[zone.zoom] = clampPanelZoom(state.panels[zone.zoom] + dir * 0.05);
@@ -81,31 +85,33 @@ window.api.ui.onZoom((factor) => applyContentZoom(factor));
 
 // ---------- panels ----------
 
-export function readPanels(saved) {
-  const p = { ...PANEL_DEFAULTS, ...(saved || {}) };
-  for (const [key, [min, max]] of Object.entries(PANEL_LIMITS)) {
+/** Whatever settings.json holds for the panels, made into sizes the window can use. */
+export function readPanels(saved: unknown): Panels {
+  const p = { ...PANEL_DEFAULTS, ...(saved && typeof saved === 'object' ? saved : {}) } as Panels;
+  for (const [key, [min, max]] of Object.entries(PANEL_LIMITS) as [PanelSize, [number, number]][]) {
     const v = Math.round(Number(p[key]));
     p[key] = Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : PANEL_DEFAULTS[key];
   }
-  for (const key of ['topZoom', 'bottomZoom', 'railZoom']) {
+  for (const key of ['topZoom', 'bottomZoom', 'railZoom'] as const) {
     const v = Number(p[key]);
     p[key] = Number.isFinite(v) ? clampPanelZoom(v) : 1;
   }
-  for (const key of ['topFolded', 'bottomFolded', 'railFolded']) p[key] = !!p[key];
+  for (const key of ['topFolded', 'bottomFolded', 'railFolded'] as const) p[key] = !!p[key];
   return p;
 }
 
-export const clampPanelZoom = (v) => Math.round(Math.min(PANEL_ZOOM_LIMITS[1], Math.max(PANEL_ZOOM_LIMITS[0], v)) * 100) / 100;
+export const clampPanelZoom = (v: number): number => Math.round(Math.min(PANEL_ZOOM_LIMITS[1], Math.max(PANEL_ZOOM_LIMITS[0], v)) * 100) / 100;
 
-function paintGripToggle(sel, icon, label) {
-  const btn = $(sel);
+function paintGripToggle(sel: string, icon: string, label: string): void {
+  const btn = document.querySelector<HTMLElement>(sel);
   if (!btn) return;
-  btn.querySelector('.ms').textContent = icon;
+  const glyph = btn.querySelector('.ms');
+  if (glyph) glyph.textContent = icon;
   btn.setAttribute('aria-label', label);
   btn.title = label;
 }
 
-export function paintPanels() {
+export function paintPanels(): void {
   const p = state.panels;
   const root = document.documentElement.style;
   root.setProperty('--tb-h', `${p.topH}px`);
@@ -127,24 +133,26 @@ export function paintPanels() {
     p.railFolded ? L`Показать категории` : L`Скрыть категории`);
 }
 
-let panelSaveTimer = null;
-export function savePanels() {
+let panelSaveTimer = 0;
+export function savePanels(): void {
   clearTimeout(panelSaveTimer);
-  panelSaveTimer = setTimeout(() => { window.api.settings.set('panels', state.panels); }, 250);
+  panelSaveTimer = window.setTimeout(() => { window.api.settings.set('panels', state.panels); }, 250);
 }
 
-function foldPanel(key, on) {
+function foldPanel(key: PanelFold, on?: boolean): void {
   state.panels[key] = on === undefined ? !state.panels[key] : !!on;
   paintPanels();
   savePanels();
 }
 
 // drag the edge itself; the chevron sitting on it folds the panel instead
-function bindGrip(sel, { size: sizeKey, zoom: zoomKey, fold: foldKey, delta }) {
-  const el = $(sel);
+type Grip = { size: PanelSize; zoom: PanelZoom; fold: PanelFold; delta: (ev: PointerEvent, origin: { x: number; y: number }) => number };
+
+function bindGrip(sel: string, { size: sizeKey, zoom: zoomKey, fold: foldKey, delta }: Grip): void {
+  const el = document.querySelector<HTMLElement>(sel);
   if (!el) return;
   el.addEventListener('pointerdown', (e) => {
-    if (e.button !== 0 || e.target.closest('.grip-toggle')) return;
+    if (e.button !== 0 || (e.target as Element).closest('.grip-toggle')) return;
     if (state.panels[foldKey]) foldPanel(foldKey, false); // dragging a folded panel opens it
     const [min, max] = PANEL_LIMITS[sizeKey];
     const start = state.panels[sizeKey];
@@ -156,7 +164,7 @@ function bindGrip(sel, { size: sizeKey, zoom: zoomKey, fold: foldKey, delta }) {
     document.body.classList.add('grip-dragging');
     // the window, not the grip: the grip moves out from under the pointer as the panel
     // grows, and pointer capture is not something to depend on for that
-    const move = (ev) => {
+    const move = (ev: PointerEvent) => {
       state.panels[sizeKey] = Math.min(max, Math.max(min, Math.round(start + delta(ev, origin) * perPixel)));
       paintPanels();
     };
@@ -182,20 +190,20 @@ function bindGrip(sel, { size: sizeKey, zoom: zoomKey, fold: foldKey, delta }) {
 
 // The tab strip runs out of room on a small window or a high UI scale, and then it scrolls:
 // sideways with the wheel, or by grabbing and swiping it like a strip on a phone.
-export function syncNavOverflow() {
-  const nav = $('#tbNav');
+export function syncNavOverflow(): void {
+  const nav = document.querySelector<HTMLElement>('#tbNav');
   if (nav) nav.classList.toggle('scrollable', nav.scrollWidth > nav.clientWidth + 1);
 }
 
-function bindNavScroll() {
-  const nav = $('#tbNav');
+function bindNavScroll(): void {
+  const nav = document.querySelector<HTMLElement>('#tbNav');
   if (!nav) return;
   new ResizeObserver(syncNavOverflow).observe(nav);
   syncNavOverflow();
 
   // the bar drops the wordmark when it gets cramped — measured on the bar itself, since its
   // own zoom decides how much room it really has
-  const tb = $('#titlebar');
+  const tb = document.querySelector<HTMLElement>('#titlebar');
   if (tb) {
     const syncWidth = () => {
       tb.classList.toggle('narrow', tb.clientWidth < 1000);
@@ -213,7 +221,7 @@ function bindNavScroll() {
     nav.scrollLeft += delta;
   }, { passive: false });
 
-  let drag = null;
+  let drag: { id: number; x: number; left: number; moved: boolean } | null = null;
   let swallowClick = false;
   nav.addEventListener('pointerdown', (e) => {
     if (e.button !== 0 || nav.scrollWidth <= nav.clientWidth) return;
@@ -246,7 +254,7 @@ function bindNavScroll() {
   }, true);
 }
 
-export function bindPanels() {
+export function bindPanels(): void {
   bindGrip('#gripTop', { size: 'topH', zoom: 'topZoom', fold: 'topFolded', delta: (ev, o) => ev.clientY - o.y });
   bindGrip('#gripBottom', { size: 'bottomH', zoom: 'bottomZoom', fold: 'bottomFolded', delta: (ev, o) => o.y - ev.clientY });
   bindGrip('#gripRail', { size: 'railW', zoom: 'railZoom', fold: 'railFolded', delta: (ev, o) => ev.clientX - o.x });

@@ -7,9 +7,9 @@
 import { state } from '../core/store.ts';
 import { registerView } from '../core/router.ts';
 import { applyInstalled, refreshInstalledIndex } from '../core/installed.ts';
-import { refreshPatchState, paintMasterSwitch } from '../ui/statusbar.js';
-import { paint } from '../ui/transitions.js';
-import { refreshNotices } from '../ui/notice.js';
+import { refreshPatchState, paintMasterSwitch } from '../ui/statusbar.ts';
+import { paint } from '../ui/transitions.ts';
+import { refreshNotices } from '../ui/notice.ts';
 import { loadOrder } from '../library/order.ts';
 import { pruneSelection } from '../library/selection.ts';
 import type { LibRecord } from '../library/types.ts';

@@ -12,7 +12,7 @@
  * No router here: this is imported by a test, and whoever changes the answer redraws.
  */
 import { state } from './store.ts';
-import { plural } from '../ui/format.js';
+import { plural } from '../ui/format.ts';
 
 /** Anything that may carry the catalog's tags. */
 type Tagged = { tags?: Record<string, unknown> | null } | null | undefined;

@@ -3,8 +3,8 @@
 import { state } from '../../core/store.ts';
 import { render } from '../../core/router.ts';
 import { refreshInstalledIndex } from '../../core/installed.ts';
-import { plural } from '../../ui/format.js';
-import { toast } from '../../ui/toast.js';
+import { plural } from '../../ui/format.ts';
+import { toast } from '../../ui/toast.ts';
 
 export interface ImportResult {
   cancelled?: boolean;

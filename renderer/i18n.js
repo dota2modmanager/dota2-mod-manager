@@ -102,7 +102,7 @@ const EN = {
   'Безопасно:': 'Safe:',
   'Безопасный режим: моды из патча (эффекты, косметика) скрыты и не работают. Выключи, чтобы их включить — приложение впишет свою папку в файлы игры.':
     'Safe mode: patch-only mods (effects, cosmetics) are hidden and inactive. Turn it off to enable them — the app will register its folder in the game files.',
-  // the dialog that asks before the app is let into the game's files (renderer/ui/dialog.js)
+  // the dialog that asks before the app is let into the game's files (renderer/ui/dialog.ts)
   'Выключить безопасный режим': 'Turn safe mode off',
   'Оставить безопасный режим': 'Keep safe mode',
   'Сейчас': 'Now',
@@ -501,7 +501,7 @@ const EN = {
   'Удалить пресет «{0}»?': 'Delete preset «{0}»?',
 
   // ---------- tools ----------
-  // the one-time offer on first run (renderer/ui/dialog.js, toolchainDialog)
+  // the one-time offer on first run (renderer/ui/dialog.ts, toolchainDialog)
   'Скачать Source 2 Viewer?': 'Download Source 2 Viewer?',
   'Открытая программа (MIT) от ValveResourceFormat, не наша': 'An open-source program (MIT) by ValveResourceFormat, not ours',
   'Дота хранит почти всё в сжатых форматах Source 2. Простую половину приложение читает само, а остальное разбирает эта программа.':

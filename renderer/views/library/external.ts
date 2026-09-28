@@ -1,8 +1,8 @@
 /* Files in the mods folder that no record owns: switched, taken in ("Принять"), split by hero or
  * deleted. A cursor or font set is a whole folder, so it is only ever taken in. */
-import { toast } from '../../ui/toast.js';
-import { confirmDialog } from '../../ui/dialog.js';
-import { catalogPreviewFor } from '../../ui/thumb.js';
+import { toast } from '../../ui/toast.ts';
+import { confirmDialog } from '../../ui/dialog.ts';
+import { catalogPreviewFor } from '../../ui/thumb.ts';
 import { lib, screen } from './state.ts';
 
 export async function external(what: 'toggle' | 'adopt' | 'split' | 'remove', key: string): Promise<void> {

@@ -11,11 +11,14 @@ import { $ } from '../core/dom.ts';
 import { state } from '../core/store.ts';
 import { HELP_LINKS } from '../core/constants.ts';
 
-const newsUrl = (re) => (state.catalog?.mods?.modsData?.news || [])
-  .map((n) => n.url)
-  .find((u) => typeof u === 'string' && re.test(u));
+function newsUrl(re: RegExp): string | undefined {
+  const news = state.catalog?.mods?.modsData?.news;
+  return (Array.isArray(news) ? news : [])
+    .map((n) => n.url)
+    .find((u): u is string => typeof u === 'string' && re.test(u));
+}
 
-function wikiUrl() {
+function wikiUrl(): string {
   const base = newsUrl(/wiki/i) || HELP_LINKS.wiki;
   try {
     const u = new URL(base);
@@ -34,7 +37,7 @@ const discordUrl = () => newsUrl(/discord\.(gg|com)/i) || HELP_LINKS.discord;
 const SITE = 'https://dota2modmanager.com/';
 const siteUrl = () => (window.I18N_LANG === 'ru' ? `${SITE}ru/` : SITE);
 
-export function bindHelp() {
+export function bindHelp(): void {
   const btn = $('#helpBtn');
   const menu = $('#helpMenu');
   if (!btn || !menu) return;
@@ -63,9 +66,9 @@ export function bindHelp() {
         <span>${L`Сайт программы`}</span>
         <span class="ms tb-menu-out">open_in_new</span>
       </button>`;
-    menu.querySelectorAll('[data-url]').forEach((item) => {
+    menu.querySelectorAll<HTMLElement>('[data-url]').forEach((item) => {
       item.addEventListener('click', () => {
-        window.api.misc.openExternal(item.dataset.url);
+        window.api.misc.openExternal(item.dataset.url || '');
         close();
       });
     });
@@ -79,7 +82,7 @@ export function bindHelp() {
     else close();
   });
   document.addEventListener('click', (e) => {
-    if (!menu.classList.contains('hidden') && !menu.contains(e.target)) close();
+    if (!menu.classList.contains('hidden') && !menu.contains(e.target as Node)) close();
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') close();

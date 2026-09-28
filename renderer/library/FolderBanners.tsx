@@ -6,7 +6,7 @@
  * its cases says only what is known and the fix that belongs to it (src/minify.js,
  * core/minify-notice.ts). And after a Dota patch: done, waiting for the game to close, or failed. */
 import { useState } from 'react';
-import { plural } from '../ui/format.js';
+import { plural } from '../ui/format.ts';
 import type { BannersModel, LibraryActions } from './model.ts';
 import { Banner, BannerButton } from './Banner.tsx';
 

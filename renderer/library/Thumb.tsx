@@ -1,8 +1,8 @@
-/* A My mods row's picture (ui/thumb.js says where each comes from), and the pills after its name.
+/* A My mods row's picture (ui/thumb.ts says where each comes from), and the pills after its name.
  * A picture fetched by name out of the game or the mod itself arrives when the row is near the
  * screen, through the same loader the catalog's cards use. */
 import { Fragment, useEffect, useRef } from 'react';
-import { watchIconFor } from '../ui/cosmetic-icons.js';
+import { watchIconFor } from '../ui/cosmetic-icons.ts';
 import { useCosmeticIcon } from '../catalog/cosmetic/CosmeticCard.tsx';
 import type { PackRowModel, Tag, Thumb as ThumbModel } from './model.ts';
 

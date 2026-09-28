@@ -17,8 +17,8 @@ import { showScreen } from '../catalog/screen/root.tsx';
 import { heroCardMeta, heroesOf } from '../catalog/builder/logic.ts';
 import type { CosmeticSlot } from '../catalog/types.ts';
 import type { ScreenActions, ScreenModel } from '../catalog/screen/model.ts';
-import { plural } from '../ui/format.js';
-import { paint } from '../ui/transitions.js';
+import { plural } from '../ui/format.ts';
+import { paint } from '../ui/transitions.ts';
 import { view } from './catalog/state.ts';
 import { catalogActions, heroSets, itemCosmeticSlots } from './item-builder.ts';
 

@@ -7,9 +7,10 @@
  * mod carried so that a few could use them. */
 import { catName } from '../../core/categories.ts';
 import { isCursorRec, isPackableRec } from '../../core/records.ts';
-import { fmtMB, plural } from '../../ui/format.js';
-import { toast } from '../../ui/toast.js';
-import { confirmDialog, promptDialog } from '../../ui/dialog.js';
+import { fmtMB, plural } from '../../ui/format.ts';
+import { toast } from '../../ui/toast.ts';
+import { confirmDialog, promptDialog } from '../../ui/dialog.ts';
+import type { MenuItem } from '../../ui/menu.ts';
 import type { LibRecord } from '../../library/types.ts';
 import { pickModsDialog, type Candidate } from './pick-mods.ts';
 import { lib, recById, screen } from './state.ts';
@@ -106,7 +107,6 @@ export async function combineSelection(ids: string[] | null): Promise<void> {
   await screen.reload();
 }
 
-type MenuItem = { label?: string; icon?: string; separator?: boolean; disabled?: boolean; danger?: boolean; onPick?: () => void };
 const langDir = (rec: LibRecord) => (rec.files || []).some((f) => f.root === 'lang' && /_dir\.vpk$/i.test(f.relPath));
 
 /* The load order is on offer for every mod, not only the ones the app thinks are in conflict:

@@ -2,7 +2,7 @@
  * which slot, and the two answers about your own library - and it is the same everywhere. Tags
  * belong to this category alone, so they sit under it, quieter. */
 import { SORTS } from '../../core/constants.ts';
-import { plural } from '../../ui/format.js';
+import { plural } from '../../ui/format.ts';
 import type { ScreenActions, ToolbarModel } from './model.ts';
 
 interface Props { model: ToolbarModel; actions: ScreenActions }

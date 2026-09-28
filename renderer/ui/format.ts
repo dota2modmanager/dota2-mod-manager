@@ -4,18 +4,20 @@
  * author or a file path runs through it, because catalog data is third-party content and
  * lands in innerHTML. Forgetting it is an injection, not a typo. */
 
-export function esc(s) {
-  return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ENTITY: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+export function esc(s: unknown): string {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ENTITY[c] || c);
 }
 
-export function fmtMB(bytes) { return (bytes / 1024 / 1024).toFixed(1); }
+export function fmtMB(bytes: number): string { return (bytes / 1024 / 1024).toFixed(1); }
 
-export function fmtDate(unix) {
+export function fmtDate(unix: number | null | undefined): string {
   if (!unix) return '';
   return new Date(unix * 1000).toLocaleDateString(window.i18nLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-export function plural(n, one, few, many) {
+export function plural(n: number, one: string, few: string, many: string): string {
   if (window.I18N_LANG === 'en') {
     const pair = window.EN_PLURAL[many];
     return pair ? (n === 1 ? pair[0] : pair[1]) : many;

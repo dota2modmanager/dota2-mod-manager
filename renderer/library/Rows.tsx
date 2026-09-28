@@ -2,7 +2,7 @@
  * members, and a file somebody dropped into the mods folder by hand. Each draws the markup the
  * string templates wrote, so the styles, the simulation and the drag find what they always did. */
 import { useState, type CSSProperties } from 'react';
-import { plural } from '../ui/format.js';
+import { plural } from '../ui/format.ts';
 import type { ExternalRowModel, LibraryActions, MemberModel, PackRowModel, RowModel } from './model.ts';
 import { CosmeticThumb, Grip, PackThumb, PakFile, Tags, Thumb } from './Thumb.tsx';
 

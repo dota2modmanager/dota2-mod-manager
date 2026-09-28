@@ -6,7 +6,7 @@
  * (issue #122). It stays installable: the mark says what it will do, and the author's next
  * build clears it. */
 import { state } from './store.ts';
-import { toast } from '../ui/toast.js';
+import { toast } from '../ui/toast.ts';
 
 let asked = false;
 

@@ -7,13 +7,16 @@
  * Shared by the catalog and the library, which is why it lives here rather than in either. */
 import { state } from '../core/store.ts';
 import { isCursorRec } from '../core/records.ts';
-import { esc } from './format.js';
-import { previewUrl, isVideo } from './media.js';
-import { cosmeticIcon, cosmeticIconKnown } from './cosmetic-icons.js';
+import { esc } from './format.ts';
+import { previewUrl, isVideo } from './media.ts';
+import type { LibFile, LibRecord, Match, Member } from '../library/types.ts';
+
+/** A row, a pack member or a foreign file: anything the tiles of My mods picture. */
+type Pictured = Pick<LibRecord, 'categoryId' | 'name'> & Partial<Pick<LibRecord, 'preview' | 'match' | 'styleLabel' | 'fileRef' | 'files'>>;
 
 // The catalog's own picture for a mod, by the name it is filed under. Styles have one each,
 // so the record's file (or its style label) says which of them is this one's.
-export function catalogPreviewUrl(categoryId, name, styleLabel, fileRef) {
+function catalogPreviewUrl(categoryId: string, name: string, styleLabel?: string | null, fileRef?: string): string | null {
   const hit = state.modIndex.get(String(name || '').toLowerCase());
   if (!hit || hit.categoryId !== categoryId) return null;
   const styles = hit.mod.styles || [];
@@ -26,18 +29,20 @@ export function catalogPreviewUrl(categoryId, name, styleLabel, fileRef) {
 // Picture for one library entry — a row or a pack member: its own, else the catalog's for
 // the same mod. The fallback is what gives a record installed without a preview (and an
 // import recognised by its fingerprint) a thumbnail instead of an empty box.
-export function recPreviewUrl(rec) {
+export function recPreviewUrl(rec: Pictured | LibRecord | Member): string | null {
   if (rec.preview) return previewUrl(rec.categoryId, rec.preview);
-  if (rec.match) {
-    const cp = catalogPreviewFor(rec.match);
-    if (cp) return previewUrl(rec.match[0].categoryId, cp);
+  // a pack member carries no match of its own shape, so only an array is read as one
+  const match = Array.isArray(rec.match) ? rec.match as Match : null;
+  if (match) {
+    const cp = catalogPreviewFor(match);
+    if (cp) return previewUrl(match[0].categoryId, cp);
   }
-  return catalogPreviewUrl(rec.categoryId, rec.name, rec.styleLabel, rec.fileRef);
+  return catalogPreviewUrl(rec.categoryId, rec.name, rec.styleLabel, typeof rec.fileRef === 'string' ? rec.fileRef : undefined);
 }
 
 // A library thumbnail: a still for a picture, the first frame for a clip (a few catalog
 // entries only ship an .mp4), an empty box when there is nothing to show.
-export function thumbHtml(cls, url) {
+export function thumbHtml(cls: string, url: string | null | undefined): string {
   if (!url) return `<div class="${cls}"></div>`;
   if (isVideo(url)) return `<video class="${cls}" src="${esc(url)}" muted playsinline preload="metadata"></video>`;
   return `<img class="${cls}" src="${esc(url)}" loading="lazy" alt="">`;
@@ -49,16 +54,17 @@ export function thumbHtml(cls, url) {
 // unsplit bundle of several heroes at once. Each is a real thing the wiki itself illustrates
 // with one picture; a font, or anything the app cannot place in one of these, stays a plain
 // icon rather than guess.
-export function wikiFallbackKey(rec) {
+export function wikiFallbackKey(rec: LibRecord | Member): { key: string; icon: string } | null {
   if (isCursorRec(rec)) return { key: 'generic:cursor', icon: 'arrow_selector_tool' };
-  if (rec.categoryId !== 'imported' || !Array.isArray(rec.heroNames) || !rec.heroNames.length) return null;
-  return rec.heroNames.length === 1
-    ? { key: 'hero:' + rec.heroNames[0], icon: 'person' }
+  const heroes = rec.heroNames;
+  if (rec.categoryId !== 'imported' || !Array.isArray(heroes) || !heroes.length) return null;
+  return heroes.length === 1
+    ? { key: 'hero:' + heroes[0], icon: 'person' }
     : { key: 'generic:pack', icon: 'auto_awesome' };
 }
 
 // The mod's own *_dir.vpk, which is what a picture can be taken out of (see src/mod-preview.js).
-function modFileRef(files) {
+function modFileRef(files: LibFile[] | undefined): string | null {
   const f = (files || []).find((x) => x.root === 'lang' && /_dir\.vpk$/i.test(x.relPath));
   return f ? f.relPath : null;
 }
@@ -72,60 +78,14 @@ function modFileRef(files) {
  * hero, because the wiki shows the *vanilla* hero and this mod is what replaced him. A raw
  * model texture loses to the wiki instead - it is a UV layout and reads as a coloured smear.
  */
-export function pictureChain(rec, fallbackKey) {
+export function pictureChain(rec: { files?: LibFile[] }, fallbackKey: string | null | undefined): string {
   const ref = modFileRef(rec.files);
   return [ref && `modvid:${ref}`, ref && `modart:${ref}`, fallbackKey, ref && `modtex:${ref}`]
     .filter(Boolean).join('|');
 }
 
-// A tile for a fixed fallback key (a hero's portrait, a category's stand-in): whatever is
-// already known client-side, or a placeholder icon with the data-name the list's own
-// IntersectionObserver picks up for free (see watchCosmeticIcons) once it scrolls into view.
-// A null icon means "wait empty" - for a mod with nothing to stand in for it, where a glyph
-// would be a new thing on screen rather than a picture arriving.
-export function fallbackThumbHtml(key, icon, cls) {
-  const glyph = icon ? `<span class="ms thumb-glyph">${icon}</span>` : '';
-  if (cosmeticIconKnown(key)) {
-    const cached = cosmeticIcon(key);
-    // a lookup that came back with nothing leaves the tile as it was before it was asked:
-    // redrawing the list must not turn a mod with no picture into an empty box
-    return cached ? `<img class="${cls}" src="${esc(cached)}" loading="lazy" alt="">` : `<div class="${cls}">${glyph}</div>`;
-  }
-  return `<div class="${cls}" data-name="${esc(key)}">${glyph}</div>`;
-}
-
-// thumbHtml, with the mod's own picture and the wiki one layered on for a record with
-// neither a preview of its own nor the catalog's.
-export function libThumbHtml(rec, cls) {
-  const url = recPreviewUrl(rec);
-  if (url) return thumbHtml(cls, url);
-  const fb = wikiFallbackKey(rec);
-  const chain = pictureChain(rec, fb && fb.key);
-  if (!chain) return `<div class="${cls}"></div>`;
-  return fallbackThumbHtml(chain, fb && fb.icon, cls);
-}
-
-// A foreign file's tile, from the same sources a library row uses: the catalog's picture
-// when the file is recognised, otherwise the wiki portrait of the hero it turned out to be
-// about. A file in the mods folder is a mod — it should not look emptier than one the app
-// installed itself just because nobody clicked "adopt" yet.
-export function extThumbHtml(f) {
-  const cls = 'lib-thumb';
-  if (f.kind === 'cursor') return fallbackThumbHtml('generic:cursor', 'arrow_selector_tool', cls);
-  if (f.kind === 'font') return `<div class="${cls}"><span class="ms thumb-glyph">text_fields</span></div>`;
-  const cp = catalogPreviewFor(f.match);
-  if (cp) return thumbHtml(cls, previewUrl(f.match[0].categoryId, cp));
-  const heroes = f.heroNames || [];
-  const fb = heroes.length === 1 ? { key: 'hero:' + heroes[0], icon: 'person' }
-    : heroes.length > 1 ? { key: 'generic:pack', icon: 'auto_awesome' }
-      : { key: null, icon: 'folder_zip' };
-  const chain = pictureChain(f, fb.key);
-  if (!chain) return `<div class="${cls}"><span class="ms thumb-glyph">${fb.icon}</span></div>`;
-  return fallbackThumbHtml(chain, fb.icon, cls);
-}
-
 // catalog thumbnail for a fingerprint match, resolved from the loaded catalog index
-export function catalogPreviewFor(match) {
+export function catalogPreviewFor(match: Match | null | undefined): string | null {
   const m = match && match[0];
   if (!m) return null;
   const hit = state.modIndex.get(m.name.toLowerCase());

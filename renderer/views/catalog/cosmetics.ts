@@ -4,8 +4,8 @@
 import { COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.ts';
 import { state } from '../../core/store.ts';
 import { pickedIn, refreshInstalledIndex } from '../../core/installed.ts';
-import { toast } from '../../ui/toast.js';
-import { loadCosmeticIcons, cosmeticIconKnown } from '../../ui/cosmetic-icons.js';
+import { toast } from '../../ui/toast.ts';
+import { loadCosmeticIcons, cosmeticIconKnown } from '../../ui/cosmetic-icons.ts';
 import { favKey, isFav, toggleFavorite } from '../../catalog/favorites.ts';
 import { redrawScreen } from '../../catalog/screen/root.tsx';
 import { showCosmeticModal } from '../../catalog/modal/root.tsx';

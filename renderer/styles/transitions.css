@@ -1,6 +1,6 @@
 /* ============ View transitions ============
    The browser animates one state of the window into the next; this file says how. See
-   ui/transitions.js for when. Motion durations come from the tokens, so the reduced-motion
+   ui/transitions.ts for when. Motion durations come from the tokens, so the reduced-motion
    media query already shortens them to nothing - and the module skips the transition
    outright in that case, since an instant crossfade is still a crossfade. */
 

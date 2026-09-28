@@ -3,9 +3,9 @@
 // Strict from the first file: the code checked here is written in TypeScript from the start, so
 // it carries no debt worth a baseline, and tools/typecheck.mjs fails on any error in it.
 //
-// allowJs without checkJs: a component can import one of the plain modules the screens still
-// share (ui/format.js, ui/dialog.js) and get the types TypeScript infers from it, while those
-// modules are not held to strict rules they were never written for. They move over one at a time.
+// allowJs without checkJs: two plain scripts stay JavaScript on purpose. i18n.js and uninstall.js
+// are loaded by the uninstall window as they are, without Vite, and app.ts imports i18n.js first
+// so L and tr are on window before anything else runs. Everything else here is TypeScript.
 //
 // The tests import these files straight into Node, which strips the types and runs the rest.
 // That is why imports name the .ts file, type-only imports say so (verbatimModuleSyntax), and

@@ -1,5 +1,5 @@
 /* ============ Guide ============
-   A how-to from the catalog, drawn wherever the thing it explains is drawn (renderer/ui/guide.js).
+   A how-to from the catalog, drawn wherever the thing it explains is drawn (renderer/ui/guide.ts).
    It is for the user who stopped, not the one who is installing, so it stays quieter than the
    mod's own controls: no fill, one hairline, and the steps folded away until asked for. The
    note form has no fold at all - a single sentence hidden behind a click is a sentence nobody
@@ -99,7 +99,7 @@
 .g-note.g-warn > .ms { color: var(--warning); }
 .g-note.g-result > .ms { color: var(--installed); }
 
-/* Two tags the catalog writes for its own site, given a meaning here (see ui/guide.js) */
+/* Two tags the catalog writes for its own site, given a meaning here (see ui/guide.ts) */
 .guide-body code,
 .g-hl {
   padding: 1px 5px;

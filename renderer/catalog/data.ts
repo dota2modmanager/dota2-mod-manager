@@ -13,6 +13,8 @@ export interface CatalogConstants {
   /** a credited name's page, where the catalog has one (core/credits.ts) */
   MOD_AUTHOR?: Record<string, string>;
   MOD_SENDER?: Record<string, string>;
+  /** the mascots of the window's themes, by theme (ui/theme.ts) */
+  GIF_CONFIG?: { themes?: string[]; gifs?: string[] };
 }
 
 export interface CatalogData {

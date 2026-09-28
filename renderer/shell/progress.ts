@@ -1,6 +1,6 @@
 /* The progress bar over the status bar: a download with its size, a batch counted in items (how
  * many of how many, not a guessed percentage), a stage of work, and the end. */
-import { fmtMB } from '../ui/format.js';
+import { fmtMB } from '../ui/format.ts';
 import { byId } from './dom.ts';
 
 const bar = byId('progressBar');

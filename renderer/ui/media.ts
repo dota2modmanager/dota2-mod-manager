@@ -1,9 +1,9 @@
 /* Where a preview lives and how it is drawn. The catalog stores previews as repo-relative
  * paths, absolute links, or nothing at all, and each of those has to end up as one tag. */
 import { RAW_BASE, MIRROR_BASE } from '../core/constants.ts';
-import { esc } from './format.js';
-
-export function previewUrl(categoryId, preview) {
+export function previewUrl(categoryId: string, preview: string): string;
+export function previewUrl(categoryId: string, preview: string | null | undefined): string | null;
+export function previewUrl(categoryId: string, preview: string | null | undefined): string | null {
   if (!preview) return null;
   if (/^https?:\/\//i.test(preview)) return preview;
   if (preview.startsWith('assets/previews/')) return `${RAW_BASE}/${preview.split('/').map(encodeURIComponent).join('/')}`;
@@ -17,35 +17,21 @@ export function previewUrl(categoryId, preview) {
  * absolute link belongs to whoever wrote it, and pointing that at our bucket would ask for a
  * file nobody ever put there.
  */
-export function mirrorOf(url) {
+export function mirrorOf(url: unknown): string | null {
   return typeof url === 'string' && url.startsWith(`${RAW_BASE}/`)
     ? `${MIRROR_BASE}/${url.slice(RAW_BASE.length + 1)}`
     : null;
 }
 
-export function isVideo(src) { return /\.(mp4|webm)$/i.test(src || ''); }
-export function isAudio(src) { return /\.(mp3|wav|ogg)$/i.test(src || ''); }
-export function isMedia(src) { return isVideo(src) || isAudio(src); }
+export function isVideo(src: string | null | undefined): boolean { return /\.(mp4|webm)$/i.test(src || ''); }
+export function isAudio(src: string | null | undefined): boolean { return /\.(mp3|wav|ogg)$/i.test(src || ''); }
+export function isMedia(src: string | null | undefined): boolean { return isVideo(src) || isAudio(src); }
 
 // resolve a repo-relative or absolute link to a full URL
-export function resolveUrl(url) {
+export function resolveUrl(url: string | null | undefined): string | null {
   if (!url) return null;
   if (/^https?:\/\//i.test(url)) return url;
   return `${RAW_BASE}/${url.split('/').map(encodeURIComponent).join('/')}`;
-}
-
-export function mediaHtml(url, { hoverPlay = false, autoplay = false, controls = false, fallbackIcon = 'image' } = {}) {
-  if (!url) {
-    return `<div class="noimg"><span class="ms">${esc(fallbackIcon)}</span></div>`;
-  }
-  if (isVideo(url)) {
-    // preload="metadata" shows the first frame instead of a black box
-    return `<video src="${esc(url)}" ${controls ? 'controls' : 'muted'} loop playsinline preload="${autoplay ? 'auto' : 'metadata'}" ${autoplay ? 'autoplay' : ''} ${hoverPlay ? 'data-hoverplay="1"' : ''}></video>`;
-  }
-  if (isAudio(url)) {
-    return `<div class="audio-wrap"><span class="ms audio-icon">graphic_eq</span><audio src="${esc(url)}" controls preload="none"></audio></div>`;
-  }
-  return `<img src="${esc(url)}" loading="lazy" alt="">`;
 }
 
 /**
@@ -65,16 +51,16 @@ export function mediaHtml(url, { hoverPlay = false, autoplay = false, controls =
  * One listener in the capture phase, because error events from an <img> do not bubble and a
  * strict CSP has no room for an onerror attribute.
  *
- * @param {(msg: string) => void} onTrouble  called once when pictures keep failing
+ * onTrouble is called once when pictures keep failing.
  */
 let failures = 0;
 let told = false;
-let trouble = () => {};
+let trouble: () => void = () => {};
 
 /** Counts a picture that failed from both hosts, and tells the user once after a handful. A
  *  picture drawn by React (catalog/card/Media.tsx) retries and gives up on its own, then calls
  *  this, because the listener below must not swap out an element React owns. */
-export function mediaGaveUp() {
+export function mediaGaveUp(): void {
   failures += 1;
   if (failures >= 3 && !told) {
     told = true;
@@ -82,7 +68,7 @@ export function mediaGaveUp() {
   }
 }
 
-export function watchMedia(onTrouble = () => {}) {
+export function watchMedia(onTrouble: () => void = () => {}): void {
   trouble = onTrouble;
   document.addEventListener('error', (e) => {
     const el = e.target;

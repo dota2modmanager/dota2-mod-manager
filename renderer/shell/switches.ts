@@ -4,9 +4,9 @@ import { COSMETIC_PREFIX } from '../core/constants.ts';
 import { state } from '../core/store.ts';
 import { render, invalidateViews } from '../core/router.ts';
 import { refreshCosmeticSlots } from '../core/installed.ts';
-import { toast } from '../ui/toast.js';
-import { safeModeDialog } from '../ui/dialog.js';
-import { refreshPatchState, paintMasterSwitch } from '../ui/statusbar.js';
+import { toast } from '../ui/toast.ts';
+import { safeModeDialog } from '../ui/dialog.ts';
+import { refreshPatchState, paintMasterSwitch } from '../ui/statusbar.ts';
 import { byId } from './dom.ts';
 
 document.getElementById('launchBtn')?.addEventListener('click', async () => {

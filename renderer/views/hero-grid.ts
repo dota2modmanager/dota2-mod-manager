@@ -6,7 +6,7 @@
  * knows the heroes (who a mod belongs to, their portraits, grid or list); catalog/screen/
  * HeroGrid.tsx draws the tiles and the catalog hands it the list already narrowed.
  */
-import { previewUrl, isMedia, resolveUrl } from '../ui/media.js';
+import { previewUrl, isMedia, resolveUrl } from '../ui/media.ts';
 import { catalogConstants } from '../catalog/data.ts';
 import type { Filters, Mod } from '../catalog/types.ts';
 import type { HeroTileModel } from '../catalog/screen/model.ts';
@@ -85,7 +85,7 @@ export async function heroTiles(mods: Mod[], isInstalled: (cat: string, mod: Mod
     // No portrait (no game found, or one of the newest heroes): the first of its mods' own
     // pictures stands in, which is still that hero and still not a grey box.
     const first = list[0];
-    const stand: string | null = art ? null : previewUrl(first._cat, first.preview || first.styles?.[0]?.preview);
+    const stand: string | null = art ? null : previewUrl(first._cat || '', first.preview || first.styles?.[0]?.preview);
     const standIn = Boolean(stand && !isMedia(stand));
     return {
       hero,

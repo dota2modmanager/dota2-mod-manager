@@ -1,6 +1,6 @@
 /* Keys for the things done every session.
  *
- * The rare actions went to the right mouse button (see ui/menu.js); this is the other half:
+ * The rare actions went to the right mouse button (see ui/menu.ts); this is the other half:
  * moving between the four sections, getting to the search box, and refreshing the catalog.
  * Nothing here deletes or installs anything - a keyboard is easy to hit by accident, and the
  * app writes into somebody's game files.
@@ -15,16 +15,13 @@ import { $ } from '../core/dom.ts';
 const SECTIONS = ['catalog', 'library', 'presets', 'settings'];
 
 // .confirm-overlay covers the confirm, the prompt, the share sheet and the what's-new notes
-const overlayOpen = () => !!document.querySelector('.confirm-overlay, .lang-pick-overlay')
+const overlayOpen = (): boolean => !!document.querySelector('.confirm-overlay, .lang-pick-overlay')
   || !$('#modalOverlay').classList.contains('hidden')
   || !$('#queueOverlay').classList.contains('hidden');
 
-/**
- * @param {{ onSection: (view: string) => void, onRefresh: () => void }} actions
- *   passed in rather than imported: this module lives under ui/ and the screens live above it
- */
-export function bindHotkeys({ onSection, onRefresh }) {
-  const search = $('#globalSearch');
+/** The actions are passed in rather than imported: this module lives under ui/ and the screens live above it. */
+export function bindHotkeys({ onSection, onRefresh }: { onSection: (view: string) => void; onRefresh: () => void }): void {
+  const search = $<HTMLInputElement>('#globalSearch');
 
   document.addEventListener('keydown', (e) => {
     // Escape in the search box empties it. The field is the one place where the key has

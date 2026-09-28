@@ -9,20 +9,22 @@
  */
 import { state } from '../core/store.ts';
 import { render } from '../core/router.ts';
-import { paintMasterSwitch, paintSafeModeSwitch, refreshSidebarStatus } from './statusbar.js';
-import { paintPanels, syncNavOverflow } from './chrome.js';
+import { paintMasterSwitch, paintSafeModeSwitch, refreshSidebarStatus } from './statusbar.ts';
+import { paintPanels, syncNavOverflow } from './chrome.ts';
 
 // translate the static app chrome (index.html markup) in place, preserving child nodes
-export function applyStaticI18n() {
+export function applyStaticI18n(): void {
   document.documentElement.lang = window.I18N_LANG;
   document.querySelectorAll('[data-i18n]').forEach((el) => {
-    const txt = tr(el.getAttribute('data-i18n'));
+    const txt = tr(el.getAttribute('data-i18n') || '');
     if (el.firstChild && el.firstChild.nodeType === 3) el.firstChild.nodeValue = txt;
     else el.insertBefore(document.createTextNode(txt), el.firstChild);
   });
-  document.querySelectorAll('[data-i18n-ph]').forEach((el) => el.setAttribute('placeholder', tr(el.getAttribute('data-i18n-ph'))));
-  document.querySelectorAll('[data-i18n-title]').forEach((el) => el.setAttribute('title', tr(el.getAttribute('data-i18n-title'))));
-  document.querySelectorAll('[data-i18n-aria]').forEach((el) => el.setAttribute('aria-label', tr(el.getAttribute('data-i18n-aria'))));
+  const attr = (from: string, to: string) => document.querySelectorAll(`[${from}]`)
+    .forEach((el) => el.setAttribute(to, tr(el.getAttribute(from) || '')));
+  attr('data-i18n-ph', 'placeholder');
+  attr('data-i18n-title', 'title');
+  attr('data-i18n-aria', 'aria-label');
   if (state.panels) paintPanels(); // grip labels depend on whether the panel is folded
   syncNavOverflow();               // translated tab labels change how much room they need
 }
@@ -30,8 +32,8 @@ export function applyStaticI18n() {
 // switch the app's own UI language. It used to also pick the Dota folder (English -> dota_123),
 // which is exactly what broke when Dota stopped mounting made-up folders — the folder now
 // follows the game's audio language and has nothing to do with the language of this app.
-export async function applyLanguage(lang) {
-  lang = lang === 'ru' ? 'ru' : 'en';
+export async function applyLanguage(want: unknown): Promise<void> {
+  const lang = want === 'ru' ? 'ru' : 'en';
   window.I18N_LANG = lang;
   try { localStorage.setItem('uiLang', lang); } catch { /* ignore */ }
   await window.api.settings.set('uiLang', lang);
@@ -49,7 +51,7 @@ export async function applyLanguage(lang) {
 
 // one-time chooser shown on first launch and once after this release ships. English is the
 // default. Resolves once the user picks (the choice is applied by applyLanguage).
-export function showLanguagePicker() {
+export function showLanguagePicker(): Promise<void> {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
     overlay.className = 'lang-pick-overlay';
@@ -75,9 +77,9 @@ export function showLanguagePicker() {
       </div>`;
     document.body.appendChild(overlay);
     requestAnimationFrame(() => overlay.classList.add('show'));
-    overlay.querySelectorAll('.lang-pick-btn').forEach((btn) => {
+    overlay.querySelectorAll<HTMLButtonElement>('.lang-pick-btn').forEach((btn) => {
       btn.addEventListener('click', async () => {
-        overlay.querySelectorAll('.lang-pick-btn').forEach((b) => (b.disabled = true));
+        overlay.querySelectorAll<HTMLButtonElement>('.lang-pick-btn').forEach((b) => { b.disabled = true; });
         await applyLanguage(btn.dataset.lang);
         await window.api.settings.set('langPromptSeen', true);
         overlay.classList.remove('show');

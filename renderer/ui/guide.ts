@@ -13,23 +13,39 @@
  */
 import { state } from '../core/store.ts';
 import { GUIDE_ALSO } from '../core/constants.ts';
-import { esc } from './format.js';
+import { esc } from './format.ts';
+import type { Mod } from '../catalog/types.ts';
+
+/* A guide as guides.json writes it: per language, a list of blocks. */
+type Step = string | { icon?: string; text?: string };
+interface Block {
+  title?: string;
+  icon?: string;
+  info?: string;
+  infoPosition?: string;
+  steps?: Step[];
+  result?: string;
+  warning?: string;
+}
+interface Guide { content?: { ru?: Block[]; en?: Block[] } }
+
+const guidesOf = (): Record<string, Guide | undefined> => (state.catalog?.guides || {}) as Record<string, Guide | undefined>;
 
 // Two guides put a sentence-long description where a heading goes. Past this length it is
 // read as one and printed inside the guide instead of on the button that opens it.
 const TITLE_MAX = 40;
 
 /** Which guides belong to a mod: its own, plus any the catalog left unclaimed beside it. */
-export function guideIds(mod) {
-  const all = state.catalog?.guides || {};
-  const own = mod?.guideId;
+function guideIds(mod: Mod | null | undefined): string[] {
+  const all = guidesOf();
+  const own = typeof mod?.guideId === 'string' ? mod.guideId : '';
   if (!own) return [];
   return [own, ...(GUIDE_ALSO[own] || [])].filter((id) => all[id]);
 }
 
 // The catalog ships both languages; an English reader gets the Russian only if that is all
 // there is, which is how the old screen behaved too.
-function blocksOf(guide) {
+function blocksOf(guide: Guide | undefined): Block[] {
   const c = guide?.content || {};
   return (window.I18N_LANG === 'en' ? (c.en || c.ru) : (c.ru || c.en)) || [];
 }
@@ -43,7 +59,7 @@ function blocksOf(guide) {
  * loses its tag and keeps its words, so a guide that grows a table still reads - and a
  * guide that grows a <meta refresh>, an <iframe> or a style attribute does nothing at all.
  */
-const GUIDE_TAGS = {
+const GUIDE_TAGS: Record<string, string[] | undefined> = {
   a: ['href'], code: [], span: ['class'], b: [], strong: [], i: [], em: [],
   br: [], p: [], ul: [], ol: [], li: [],
 };
@@ -51,13 +67,13 @@ const GUIDE_TAGS = {
 const ELEMENT_NODE = 1;
 const COMMENT_NODE = 8;
 
-function sanitizeGuideHtml(html) {
+function sanitizeGuideHtml(html: string): string {
   const tpl = document.createElement('template');
   tpl.innerHTML = html; // inert: a template's content loads nothing and runs nothing
-  const walk = (node) => {
+  const walk = (node: Node) => {
     for (const child of [...node.childNodes]) {
-      if (child.nodeType === COMMENT_NODE) { child.remove(); continue; }
-      if (child.nodeType !== ELEMENT_NODE) continue; // text is text
+      if (child.nodeType === COMMENT_NODE) { (child as ChildNode).remove(); continue; }
+      if (!(child instanceof Element) || child.nodeType !== ELEMENT_NODE) continue; // text is text
       walk(child); // clean the inside before deciding what happens to the outside
       const allowed = GUIDE_TAGS[child.tagName.toLowerCase()];
       if (!allowed) { child.replaceWith(...child.childNodes); continue; }
@@ -80,20 +96,20 @@ function sanitizeGuideHtml(html) {
 
 // The catalog's own dialect first (<fcode> is the author's filename style and <span id="tg">
 // his highlight, neither means anything here), then the whitelist above.
-function fromCatalogHtml(html) {
+function fromCatalogHtml(html: unknown): string {
   return sanitizeGuideHtml(String(html)
     .replace(/<(\/?)fcode>/gi, '<$1code>')
     .replace(/<span\s+id=(["'])tg\1\s*>/gi, '<span class="g-hl">'));
 }
 
-function noteHtml(icon, html, cls = '') {
+function noteHtml(icon: string | undefined, html: string, cls = ''): string {
   return `<div class="g-note ${cls}">${icon ? `<span class="ms">${esc(icon)}</span>` : ''}<div>${html}</div></div>`;
 }
 
 /* Numbered steps with notes wedged between them. The numbering has to survive the
  * interruption - a note after step 3 must not send the next step back to 1 - so each run of
  * steps picks up where the last one stopped. */
-function stepsHtml(steps) {
+function stepsHtml(steps: Step[]): string {
   let html = '';
   let done = 0;
   let open = false;
@@ -110,8 +126,8 @@ function stepsHtml(steps) {
   return open ? `${html}</ol>` : html;
 }
 
-function blockHtml(b, { skipTitle = false } = {}) {
-  const longTitle = b.title && b.title.length > TITLE_MAX;
+function blockHtml(b: Block, { skipTitle = false } = {}): string {
+  const longTitle = (b.title?.length || 0) > TITLE_MAX;
   return `
     ${b.title && !skipTitle ? (longTitle
       ? `<div class="g-lead">${esc(b.title)}</div>`
@@ -126,7 +142,7 @@ function blockHtml(b, { skipTitle = false } = {}) {
 /* What to call it. The guide's own outer title is English whatever the reader's language is,
  * so it never shows: a single block lends its own translated heading, and anything longer is
  * just "the guide" with its parts named inside. */
-function heading(blocks) {
+function heading(blocks: Block[]): { label: string; icon: string; own: boolean } {
   const one = blocks.length === 1 ? blocks[0] : null;
   return one?.title && one.title.length <= TITLE_MAX
     ? { label: one.title, icon: one.icon || 'menu_book', own: true }
@@ -135,13 +151,13 @@ function heading(blocks) {
 
 // Nothing to walk through - one block that only warns or explains. Folding that away behind
 // a click would hide a sentence the user should simply read.
-function isNote(blocks) {
+function isNote(blocks: Block[]): boolean {
   if (blocks.length !== 1) return false;
   const b = blocks[0];
   return !b.result && !(b.steps || []).some((s) => typeof s === 'string');
 }
 
-function oneGuideHtml(id, guide) {
+function oneGuideHtml(id: string, guide: Guide | undefined): string {
   const blocks = blocksOf(guide);
   if (!blocks.length) return '';
   const head = heading(blocks);
@@ -166,20 +182,20 @@ function oneGuideHtml(id, guide) {
 }
 
 /** Every guide a mod carries, ready to drop into whatever is showing that mod. */
-export function modGuidesHtml(mod) {
-  const all = state.catalog?.guides || {};
+export function modGuidesHtml(mod: Mod | null | undefined): string {
+  const all = guidesOf();
   return guideIds(mod).map((id) => oneGuideHtml(id, all[id])).join('');
 }
 
 /** Make the guides inside a container work: the folds open, the links leave for a browser. */
-export function bindGuides(root) {
+export function bindGuides(root: ParentNode): void {
   root.querySelectorAll('.guide-head').forEach((head) => {
     head.addEventListener('click', () => {
-      const open = head.closest('.guide').classList.toggle('open');
+      const open = head.closest('.guide')?.classList.toggle('open') || false;
       head.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
   });
-  root.querySelectorAll('.guide-body a[href]').forEach((a) => {
+  root.querySelectorAll<HTMLAnchorElement>('.guide-body a[href]').forEach((a) => {
     a.addEventListener('click', (e) => {
       e.preventDefault();
       window.api.misc.openExternal(a.href);

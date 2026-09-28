@@ -1,7 +1,7 @@
 /* A hero's window in the item builder: its sets as one tile, then a tile per item slot showing the
  * look on it, or how many there are to choose from. */
 import type { CSSProperties } from 'react';
-import { plural } from '../../ui/format.js';
+import { plural } from '../../ui/format.ts';
 import type { HeroModalActions, HeroModalModel } from './model.ts';
 import { CosThumb } from './parts.tsx';
 

@@ -11,13 +11,13 @@
  * again. It asks the catalog for its data, not for a drawing, so the router is not what it wants. */
 import { state } from '../core/store.ts';
 import { registerView, invalidateViews } from '../core/router.ts';
-import { fmtMB } from '../ui/format.js';
-import { toast } from '../ui/toast.js';
-import { showWhatsNew } from '../ui/dialog.js';
-import { refreshSidebarStatus } from '../ui/statusbar.js';
-import { clampScale, currentScalePct, paintScale, applyScalePct, clampPanelZoom, paintPanels, savePanels } from '../ui/chrome.js';
-import { applyLanguage } from '../ui/language.js';
-import { paint } from '../ui/transitions.js';
+import { fmtMB } from '../ui/format.ts';
+import { toast } from '../ui/toast.ts';
+import { showWhatsNew } from '../ui/dialog.ts';
+import { refreshSidebarStatus } from '../ui/statusbar.ts';
+import { clampScale, currentScalePct, paintScale, applyScalePct, clampPanelZoom, paintPanels, savePanels } from '../ui/chrome.ts';
+import { applyLanguage } from '../ui/language.ts';
+import { paint } from '../ui/transitions.ts';
 import { adultShown, adultHint, setAdultShown } from '../core/adult.ts';
 import { loadCatalog } from './catalog.ts';
 import { showSettings, type SettingsActions, type SettingsModel } from '../settings/SettingsScreen.tsx';

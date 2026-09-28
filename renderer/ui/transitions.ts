@@ -21,19 +21,19 @@ const stillness = window.matchMedia('(prefers-reduced-motion: reduce)');
 // The router says a screen change is coming; the next paint spends it.
 let running = 0;
 // the screen change on show right now, and a press that landed on it rather than on the window
-let current = null;
-let lost = null;
+let current: ViewTransition | null = null;
+let lost: { x: number; y: number; vt: ViewTransition } | null = null;
 let armed = false;
 // Screens keep their own element now, so somebody has to put the new one on screen. Doing
 // it at switch time would show an empty screen for as long as the fetch takes, so it rides
 // along with the paint instead and lands in the same frame as the markup.
-let swap = null;
+let swap: (() => void) | null = null;
 
 /**
  * Called by the router when the user asked for a different screen.
- * @param {() => void} [showPane] swap the visible screen; runs first, inside the transition
+ * @param showPane swap the visible screen; runs first, inside the transition
  */
-export function screenChanging(showPane) {
+export function screenChanging(showPane?: () => void): void {
   armed = true;
   swap = showPane || null;
 }
@@ -48,10 +48,10 @@ export function screenChanging(showPane) {
  * throws outright. Both went unnoticed for a while because a machine asking for reduced
  * motion sends every paint down the synchronous branch, and that was the machine we tested on.
  *
- * @param {() => void} update writes the new markup; must be synchronous
- * @returns {Promise<void>} settles once the markup is on the page
+ * @param update writes the new markup; must be synchronous
+ * @returns settles once the markup is on the page
  */
-export function paint(update) {
+export function paint(update: () => void): Promise<void> {
   const wanted = armed;
   const showPane = swap;
   armed = false;

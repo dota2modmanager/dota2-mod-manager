@@ -198,7 +198,7 @@
 .scale-range:focus-visible { border-color: color-mix(in srgb, var(--md-primary) 50%, transparent); }
 
 /* ============ Context menu ============
-   What a row can do beyond its switch (see ui/menu.js). Lives on the body rather than in the
+   What a row can do beyond its switch (see ui/menu.ts). Lives on the body rather than in the
    row, so it is never clipped by a list that scrolls, and it borrows the same surface, radius
    and shadow as the help menu in the title bar - one kind of floating panel, not two. */
 .ctx-menu {

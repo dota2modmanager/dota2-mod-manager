@@ -11,44 +11,49 @@
  * focus) closes it too, because a menu pinned to a row that has scrolled away is a menu
  * pointing at the wrong thing.
  */
-import { esc } from './format.js';
+import { esc } from './format.ts';
 
-let host = null;
+export interface MenuItem {
+  label?: string;
+  icon?: string;
+  danger?: boolean;
+  disabled?: boolean;
+  onPick?: () => void;
+  separator?: boolean;
+}
 
-export function closeMenu() {
+let host: HTMLElement | null = null;
+
+export function closeMenu(): void {
   host?.remove();
   host = null;
 }
 
-/**
- * @param {{label?: string, icon?: string, danger?: boolean, disabled?: boolean,
- *          onPick?: () => void, separator?: boolean}[]} items
- * @param {number} x viewport coordinates of the click
- * @param {number} y
- */
-export function openMenu(items, x, y) {
+/** x and y are the viewport coordinates of the click. A falsy entry is a row left out. */
+export function openMenu(items: (MenuItem | false | null | undefined)[], x: number, y: number): void {
   closeMenu();
-  const live = items.filter(Boolean);
+  const live = items.filter((item): item is MenuItem => Boolean(item));
   if (!live.length) return;
 
-  host = document.createElement('div');
-  host.className = 'ctx-menu';
-  host.setAttribute('role', 'menu');
-  host.innerHTML = live.map((item, i) => (item.separator
+  const menu = document.createElement('div');
+  host = menu;
+  menu.className = 'ctx-menu';
+  menu.setAttribute('role', 'menu');
+  menu.innerHTML = live.map((item, i) => (item.separator
     ? '<div class="ctx-sep"></div>'
     : `<button class="ctx-item ${item.danger ? 'danger' : ''}" data-i="${i}" role="menuitem" ${item.disabled ? 'disabled' : ''}>
          <span class="ms">${esc(item.icon || '')}</span><span>${esc(item.label)}</span>
        </button>`)).join('');
-  document.body.appendChild(host);
+  document.body.appendChild(menu);
 
   // keep it on screen: a row near the bottom edge would otherwise open a menu into nowhere
-  const r = host.getBoundingClientRect();
+  const r = menu.getBoundingClientRect();
   const left = Math.min(x, window.innerWidth - r.width - 8);
   const top = Math.min(y, window.innerHeight - r.height - 8);
-  host.style.left = `${Math.max(8, left)}px`;
-  host.style.top = `${Math.max(8, top)}px`;
+  menu.style.left = `${Math.max(8, left)}px`;
+  menu.style.top = `${Math.max(8, top)}px`;
 
-  host.querySelectorAll('.ctx-item').forEach((btn) => {
+  menu.querySelectorAll<HTMLElement>('.ctx-item').forEach((btn) => {
     btn.addEventListener('click', () => {
       const item = live[Number(btn.dataset.i)];
       closeMenu();
@@ -59,7 +64,7 @@ export function openMenu(items, x, y) {
 
 // Closing is global and permanent: the listeners are registered once, not per menu, so a
 // menu can never outlive the thing it belongs to.
-document.addEventListener('mousedown', (e) => { if (host && !host.contains(e.target)) closeMenu(); });
+document.addEventListener('mousedown', (e) => { if (host && !host.contains(e.target as Node)) closeMenu(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
 window.addEventListener('blur', closeMenu);
 window.addEventListener('resize', closeMenu);
@@ -70,9 +75,10 @@ document.addEventListener('scroll', closeMenu, true);
  * builds for that element. Returning nothing means this row has nothing to offer, and the
  * browser's own menu is left alone.
  */
-export function bindContextMenu(root, selector, itemsFor) {
+export function bindContextMenu(root: HTMLElement, selector: string,
+  itemsFor: (el: HTMLElement, e: MouseEvent) => (MenuItem | false | null | undefined)[] | null | undefined): void {
   root.addEventListener('contextmenu', (e) => {
-    const el = e.target.closest(selector);
+    const el = (e.target as Element).closest<HTMLElement>(selector);
     if (!el || !root.contains(el)) return;
     const items = itemsFor(el, e);
     if (!items || !items.length) return;

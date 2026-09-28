@@ -2,11 +2,11 @@
  * and the Discord account chip. */
 import { state } from '../core/store.ts';
 import { switchView } from '../core/router.ts';
-import { esc } from '../ui/format.js';
-import { toast } from '../ui/toast.js';
-import { confirmDialog } from '../ui/dialog.js';
-import { bindHelp } from '../ui/help.js';
-import { bindHotkeys } from '../ui/hotkeys.js';
+import { esc } from '../ui/format.ts';
+import { toast } from '../ui/toast.ts';
+import { confirmDialog } from '../ui/dialog.ts';
+import { bindHelp } from '../ui/help.ts';
+import { bindHotkeys } from '../ui/hotkeys.ts';
 import { loadCatalog } from '../views/catalog.ts';
 import { byId } from './dom.ts';
 
@@ -69,5 +69,5 @@ export function paintAccount(): void {
     paintAccount();
   });
 }
-// drawn in whichever language was on when it was drawn (see applyLanguage in ui/language.js)
+// drawn in whichever language was on when it was drawn (see applyLanguage in ui/language.ts)
 document.addEventListener('mm:language', () => paintAccount());

@@ -3,7 +3,7 @@
  * stagedItemAction): a pick used to be written on every click. The card the border marks is the
  * one chosen here; "Надето" is said only of what the game shows. */
 import { useRef, type CSSProperties } from 'react';
-import { plural } from '../../ui/format.js';
+import { plural } from '../../ui/format.ts';
 import type { SlotPickerActions, SlotPickerModel } from './model.ts';
 import { BuilderFoot, BuilderHead, CosThumb, EmptySearch, PickerSearch } from './parts.tsx';
 

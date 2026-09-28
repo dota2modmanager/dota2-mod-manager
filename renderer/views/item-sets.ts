@@ -13,9 +13,9 @@
 import { pickedIn } from '../core/installed.ts';
 import { showSetsModal, showSetModal } from '../catalog/modal/root.tsx';
 import { matchingSets, setCardMeta, setCount, setIsOn } from '../catalog/builder/logic.ts';
-import { plural } from '../ui/format.js';
-import { toast } from '../ui/toast.js';
-import { loadCosmeticIcons } from '../ui/cosmetic-icons.js';
+import { plural } from '../ui/format.ts';
+import { toast } from '../ui/toast.ts';
+import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
 import { closeOverlay } from './catalog/overlay.ts';
 import { afterPick, heroSets, isOpen, openItemHeroModal, openItemSlotModal, openWindow } from './item-builder.ts';
 import type { CosmeticSet } from '../catalog/types.ts';

@@ -6,30 +6,29 @@
  * on the day, not in the next release. Dismissing is per notice id and remembered, so it says
  * a thing once and then gets out of the way.
  *
- * The whole list stays readable afterwards in What's new (see ui/dialog.js): a banner is for
+ * The whole list stays readable afterwards in What's new (see ui/dialog.ts): a banner is for
  * now, the list is for "what did that message say again".
  */
-import { esc } from './format.js';
+import { esc } from './format.ts';
+import type { Notice } from '../api/content.ts';
 
-let state = { notices: [], seen: [], features: {} };
+type NoticeState = { notices: Notice[]; seen: string[]; features: Record<string, unknown> };
+
+let state: NoticeState = { notices: [], seen: [], features: {} };
 
 /** Ask the main process what it knows. Cheap; every screen that draws the banner calls it. */
-export async function refreshNotices() {
+export async function refreshNotices(): Promise<NoticeState> {
   try { state = await window.api.config.state(); } catch { /* keep whatever we had */ }
   return state;
 }
 
-export function noticeState() {
-  return state;
-}
-
 /** The newest notice this user has not put away, or null. */
-export function liveNotice() {
+function liveNotice(): Notice | null {
   const seen = new Set(state.seen || []);
   return (state.notices || []).find((n) => !seen.has(n.id)) || null;
 }
 
-export function noticeBannerHtml() {
+export function noticeBannerHtml(): string {
   const n = liveNotice();
   if (!n) return '';
   return `
@@ -41,14 +40,14 @@ export function noticeBannerHtml() {
 }
 
 /** Wire the banner that noticeBannerHtml() just drew. `after` redraws the screen it sits on. */
-export function bindNotice(root, after) {
-  root.querySelector('[data-notice-seen]')?.addEventListener('click', async (e) => {
-    const id = e.currentTarget.dataset.noticeSeen;
+export function bindNotice(root: ParentNode, after?: () => void): void {
+  root.querySelector<HTMLElement>('[data-notice-seen]')?.addEventListener('click', async (e) => {
+    const id = (e.currentTarget as HTMLElement).dataset.noticeSeen || '';
     state = await window.api.config.noticeSeen(id).then(() => window.api.config.state()).catch(() => state);
     if (after) after();
   });
-  root.querySelector('.notice-link')?.addEventListener('click', (e) => {
+  root.querySelector<HTMLElement>('.notice-link')?.addEventListener('click', (e) => {
     e.preventDefault();
-    window.api.misc.openExternal(e.currentTarget.dataset.url);
+    window.api.misc.openExternal((e.currentTarget as HTMLElement).dataset.url || '');
   });
 }

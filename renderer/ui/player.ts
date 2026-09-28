@@ -1,15 +1,15 @@
 /* The built-in preview player. Catalog previews are video and audio as often as images,
  * and sending people to a browser to hear an announcer is a worse answer than 90 lines. */
-import { esc } from './format.js';
-import { isAudio } from './media.js';
+import { esc } from './format.ts';
+import { isAudio } from './media.ts';
 
-export function fmtTime(s) {
+function fmtTime(s: number): string {
   if (!isFinite(s)) return '0:00';
   const m = Math.floor(s / 60), sec = Math.floor(s % 60);
   return `${m}:${String(sec).padStart(2, '0')}`;
 }
 
-export function openPlayer(url, title) {
+export function openPlayer(url: string, title?: string): void {
   const audio = isAudio(url);
   const overlay = document.createElement('div');
   overlay.className = 'player-overlay';
@@ -30,14 +30,16 @@ export function openPlayer(url, title) {
     </div>`;
   document.body.appendChild(overlay);
 
-  const media = overlay.querySelector('video, audio');
-  const box = overlay.querySelector('.player-box');
-  const playBtn = overlay.querySelector('[data-act="play"] .ms');
-  const muteBtn = overlay.querySelector('[data-act="mute"] .ms');
-  const fill = overlay.querySelector('.pl-fill');
-  const knob = overlay.querySelector('.pl-knob');
-  const timeEl = overlay.querySelector('.pl-time');
-  const progress = overlay.querySelector('.pl-progress');
+  // the markup above is ours, so every part of it is there
+  const part = <T extends Element = HTMLElement>(sel: string) => overlay.querySelector(sel) as T;
+  const media = part<HTMLMediaElement>('video, audio');
+  const box = part('.player-box');
+  const playBtn = part('[data-act="play"] .ms');
+  const muteBtn = part('[data-act="mute"] .ms');
+  const fill = part('.pl-fill');
+  const knob = part('.pl-knob');
+  const timeEl = part('.pl-time');
+  const progress = part('.pl-progress');
 
   media.loop = true;
 
@@ -48,16 +50,16 @@ export function openPlayer(url, title) {
     overlay.remove();
     document.removeEventListener('keydown', onKey, true); // capture flag must match addEventListener
   };
-  const onKey = (e) => {
+  const onKey = (e: KeyboardEvent) => {
     if (e.key === 'Escape') { e.stopPropagation(); close(); }
     if (e.key === ' ') { e.preventDefault(); togglePlay(); }
   };
   document.addEventListener('keydown', onKey, true);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-  overlay.querySelector('.player-close').addEventListener('click', close);
+  part('.player-close').addEventListener('click', close);
 
-  const togglePlay = () => { media.paused ? media.play() : media.pause(); };
-  overlay.querySelector('[data-act="play"]').addEventListener('click', togglePlay);
+  const togglePlay = () => { if (media.paused) media.play(); else media.pause(); };
+  part('[data-act="play"]').addEventListener('click', togglePlay);
   media.addEventListener('play', () => { playBtn.textContent = 'pause'; });
   media.addEventListener('pause', () => { playBtn.textContent = 'play_arrow'; });
   if (!audio) media.addEventListener('click', togglePlay);
@@ -69,20 +71,20 @@ export function openPlayer(url, title) {
     timeEl.textContent = `${fmtTime(media.currentTime)} / ${fmtTime(media.duration)}`;
   });
 
-  const seek = (e) => {
+  const seek = (e: MouseEvent) => {
     const rect = progress.getBoundingClientRect();
     const pct = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
     if (media.duration) media.currentTime = pct * media.duration;
   };
   progress.addEventListener('mousedown', (e) => {
     seek(e);
-    const move = (ev) => seek(ev);
+    const move = (ev: MouseEvent) => seek(ev);
     const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', up);
   });
 
-  overlay.querySelector('[data-act="mute"]').addEventListener('click', () => {
+  part('[data-act="mute"]').addEventListener('click', () => {
     media.muted = !media.muted;
     muteBtn.textContent = media.muted ? 'volume_off' : 'volume_up';
   });

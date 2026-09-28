@@ -2,7 +2,7 @@
  * be open: a preset from Discord lands wherever the user is standing, and so do mods. */
 import { state } from '../core/store.ts';
 import { switchView } from '../core/router.ts';
-import { toast } from '../ui/toast.js';
+import { toast } from '../ui/toast.ts';
 import { handleImportResult } from '../views/library.ts';
 import { handlePresetImport } from '../views/presets.ts';
 

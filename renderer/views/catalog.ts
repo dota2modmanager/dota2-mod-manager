@@ -11,10 +11,10 @@ import { state } from '../core/store.ts';
 import { registerView } from '../core/router.ts';
 import { pickedIn } from '../core/installed.ts';
 import { catName, catIcon } from '../core/categories.ts';
-import { toast } from '../ui/toast.js';
-import { paint } from '../ui/transitions.js';
-import { refreshSidebarStatus } from '../ui/statusbar.js';
-import { refreshNotices, noticeBannerHtml, bindNotice } from '../ui/notice.js';
+import { toast } from '../ui/toast.ts';
+import { paint } from '../ui/transitions.ts';
+import { refreshSidebarStatus } from '../ui/statusbar.ts';
+import { refreshNotices, noticeBannerHtml, bindNotice } from '../ui/notice.ts';
 import { bindItemBuilder, openItemHeroModal } from './item-builder.ts';
 import { itemRailEntry } from './item-hub.ts';
 import { setHeroLayout } from './hero-grid.ts';
@@ -158,7 +158,7 @@ async function renderCatalog(): Promise<void> {
   showNoGameBanner(banners);
 }
 
-/* A notice that arrived from the network (see ui/notice.js). Drawn after the screen, the same way
+/* A notice that arrived from the network (see ui/notice.ts). Drawn after the screen, the same way
  * the no-game banner is, so no category screen has to know about it. */
 function showNoticeBanner(banners: HTMLElement): void {
   const html = noticeBannerHtml();

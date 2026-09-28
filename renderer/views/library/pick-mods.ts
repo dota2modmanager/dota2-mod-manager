@@ -1,7 +1,7 @@
 /* The window that asks which mods to put into a pack: standalone mods, each with a tick, and one
  * box that ticks them all. Resolves with the chosen ids, or null. */
-import { esc } from '../../ui/format.js';
-import { toast } from '../../ui/toast.js';
+import { esc } from '../../ui/format.ts';
+import { toast } from '../../ui/toast.ts';
 
 export interface Candidate { id: string; name: string; sub: string }
 

@@ -3,8 +3,8 @@
 import { state } from '../core/store.ts';
 import { render } from '../core/router.ts';
 import { switchOffStaleTerrains } from '../core/terrain-age.ts';
-import { esc } from '../ui/format.js';
-import { toast } from '../ui/toast.js';
+import { esc } from '../ui/format.ts';
+import { toast } from '../ui/toast.ts';
 
 /** A bar along the bottom of the window, with its buttons wired by the caller. */
 function updateBar(html: string): HTMLElement {

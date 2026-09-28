@@ -7,6 +7,8 @@ declare global {
     api: Api;
     I18N_LANG: 'ru' | 'en';
     i18nLocale: () => 'ru' | 'en';
+    /** English singular and plural, keyed by the Russian "many" form plural() is given */
+    EN_PLURAL: Record<string, [string, string] | undefined>;
   }
 
   /** L`Текст ${x}`: the English for a Russian source string, or the Russian when there is none. */

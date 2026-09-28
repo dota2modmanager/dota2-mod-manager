@@ -2,7 +2,7 @@
  * A piece the builder cannot put on stays in the picture, dimmed, with why: it is part of what the
  * set looks like, and without it "4 of 6" would not add up. */
 import { useRef, type CSSProperties } from 'react';
-import { plural } from '../../ui/format.js';
+import { plural } from '../../ui/format.ts';
 import type { SetModalActions, SetModalModel, SetsModalActions, SetsModalModel } from './model.ts';
 import { BuilderFoot, BuilderHead, CosThumb, EmptySearch, PickerSearch } from './parts.tsx';
 

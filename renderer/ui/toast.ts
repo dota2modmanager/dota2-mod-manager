@@ -2,7 +2,9 @@
  * remove themselves on a timer, so a message that matters belongs in a dialog. */
 import { $ } from '../core/dom.ts';
 
-export function toast(msg, type = 'ok', ms = 4000) {
+export type ToastKind = 'ok' | 'warn' | 'error';
+
+export function toast(msg: string, type: ToastKind = 'ok', ms = 4000): void {
   const el = document.createElement('div');
   el.className = `toast ${type === 'ok' ? '' : type}`;
   el.textContent = msg;

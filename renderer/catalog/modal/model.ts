@@ -32,7 +32,7 @@ export interface ModModalModel {
   toolRelPath: string;
   busy: boolean;
   pack: { members: PackMember[]; activeCount: number; custom: boolean } | null;
-  /** what the catalog wrote about the mod (ui/guide.js) */
+  /** what the catalog wrote about the mod (ui/guide.ts) */
   guidesHtml: string;
   links: { index: number; label: string }[];
   note: string | null;

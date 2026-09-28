@@ -14,36 +14,35 @@
  * for one mod already lives).
  */
 import { $ } from '../core/dom.ts';
-import { esc } from './format.js';
-import { thumbHtml } from './thumb.js';
+import { esc } from './format.ts';
+import { thumbHtml } from './thumb.ts';
+import type { QueueEntry } from '../catalog/queueing.ts';
 
-const items = new Map(); // key -> { key, cat, name, label, file, preview, title }
-let installer = null;
+const items = new Map<string, QueueEntry>();
+let installer: ((list: QueueEntry[]) => Promise<void>) | null = null;
 let busy = false;
-const listeners = new Set();
+const listeners = new Set<() => void>();
 
-/** A card drawn by React follows the list through here: paintCards() below reaches into the
- *  DOM, and must not touch an element React owns. Returns the unsubscribe. */
-export function onQueueChange(fn) {
+/** A card follows the list through here. Returns the unsubscribe. */
+export function onQueueChange(fn: () => void): () => void {
   listeners.add(fn);
-  return () => listeners.delete(fn);
+  return () => { listeners.delete(fn); };
 }
 
 /** The catalog registers what to do with the list once the user commits to it. */
-export function useInstaller(fn) { installer = fn; }
+export function useInstaller(fn: (list: QueueEntry[]) => Promise<void>): void { installer = fn; }
 
-export const isQueued = (key) => items.has(key);
-export const queueSize = () => items.size;
+export const isQueued = (key: string): boolean => items.has(key);
 
 /** Installing a mod on its own takes it out of the list; the list is a plan, not a record. */
-export function dropFromQueue(key) {
+export function dropFromQueue(key: string): void {
   if (!items.delete(key)) return;
   paintBadge();
   if (!$('#queueOverlay').classList.contains('hidden')) drawPanel();
 }
 
 /** Put a mod in the list or take it out; returns whether it is in there now. */
-export function toggleQueued(entry) {
+export function toggleQueued(entry: QueueEntry): boolean {
   if (items.has(entry.key)) items.delete(entry.key);
   else items.set(entry.key, entry);
   paintBadge();
@@ -51,37 +50,24 @@ export function toggleQueued(entry) {
   return items.has(entry.key);
 }
 
-export function clearQueue() {
+function clearQueue(): void {
   items.clear();
   paintBadge();
   drawPanel();
 }
 
-function paintBadge() {
-  const btn = $('#queueBtn');
+function paintBadge(): void {
+  const btn = $<HTMLButtonElement>('#queueBtn');
   if (btn) {
     btn.classList.toggle('has', items.size > 0);
     $('#queueCount').textContent = items.size ? String(items.size) : '';
     btn.disabled = items.size === 0;
   }
-  paintCards();
-}
-
-/* Every card on screen carries the answer to "is this one in the list", and the list can
- * change from somewhere else entirely: emptied here, spent by installing, or dropped when a
- * mod is installed on its own. One sweep after every change is what keeps the two from
- * disagreeing - which they did, leaving ticks on cards after the list had been cleared. */
-function paintCards() {
+  /* Every card on screen carries the answer to "is this one in the list", and the list can
+   * change from somewhere else entirely: emptied here, spent by installing, or dropped when a
+   * mod is installed on its own. Telling every card after every change is what keeps the two
+   * from disagreeing - which they did, leaving ticks on cards after the list had been cleared. */
   for (const fn of listeners) fn();
-  document.querySelectorAll('[data-add]:not([data-owned])').forEach((btn) => {
-    const on = items.has(btn.dataset.add);
-    const label = on ? L`В списке установки` : L`Добавить в список`;
-    btn.classList.toggle('on', on);
-    const icon = btn.querySelector('.ms');
-    if (icon) icon.textContent = on ? 'check' : 'add';
-    btn.title = label;
-    btn.setAttribute('aria-label', label);
-  });
 }
 
 // Above this many rows the list is scrolled rather than read, and finding the one mod you
@@ -90,13 +76,13 @@ function paintCards() {
 const SEARCH_FROM = 8;
 let search = '';
 
-function matching() {
+function matching(): QueueEntry[] {
   const q = search.trim().toLowerCase();
   const list = [...items.values()];
   return q ? list.filter((it) => `${it.title} ${it.catName}`.toLowerCase().includes(q)) : list;
 }
 
-function rowsHtml() {
+function rowsHtml(): string {
   const rows = matching();
   if (!rows.length) return `<div class="empty-note">${L`Ничего не найдено`}</div>`;
   return rows.map((it) => `
@@ -110,10 +96,10 @@ function rowsHtml() {
     </div>`).join('');
 }
 
-function bindRows() {
-  $('#queueRows')?.querySelectorAll('[data-drop]').forEach((b) => {
+function bindRows(): void {
+  $('#queueRows')?.querySelectorAll<HTMLElement>('[data-drop]').forEach((b) => {
     b.addEventListener('click', () => {
-      items.delete(b.dataset.drop);
+      items.delete(b.dataset.drop || '');
       paintBadge();
       // only the rows, so the search box keeps both its text and the cursor in it
       $('#queueRows').innerHTML = rowsHtml();
@@ -124,12 +110,12 @@ function bindRows() {
   });
 }
 
-function paintFoot() {
+function paintFoot(): void {
   const go = $('#queueGo');
   if (go) go.innerHTML = `<span class="ms">download</span>${busy ? L`Установка…` : L`Установить всё (${items.size})`}`;
 }
 
-function drawPanel() {
+function drawPanel(): void {
   const panel = $('#queuePanel');
   if (!panel) return;
   const list = [...items.values()];
@@ -156,7 +142,7 @@ function drawPanel() {
   $('#queueClose')?.addEventListener('click', closePanel);
   $('#queueClear')?.addEventListener('click', clearQueue);
   $('#queueSearch')?.addEventListener('input', (e) => {
-    search = e.target.value;
+    search = (e.target as HTMLInputElement).value;
     $('#queueRows').innerHTML = rowsHtml();
     bindRows();
   });
@@ -164,7 +150,7 @@ function drawPanel() {
   $('#queueGo')?.addEventListener('click', runInstall);
 }
 
-async function runInstall() {
+async function runInstall(): Promise<void> {
   if (busy || !installer || !items.size) return;
   busy = true;
   drawPanel();
@@ -181,16 +167,16 @@ async function runInstall() {
   }
 }
 
-export function openPanel() {
+function openPanel(): void {
   drawPanel();
   $('#queueOverlay').classList.remove('hidden');
 }
 
-export function closePanel() {
+function closePanel(): void {
   $('#queueOverlay').classList.add('hidden');
 }
 
-export function initQueue() {
+export function initQueue(): void {
   paintBadge();
   $('#queueBtn')?.addEventListener('click', openPanel);
   $('#queueOverlay')?.addEventListener('click', (e) => {

@@ -39,7 +39,7 @@ export interface ToolsApi {
   remove: (name: string) => Promise<Reply<{ tools: ToolState[] }>>;
 }
 
-export interface Notice { id: string; level?: string; text: string; url?: string }
+export interface Notice { id: string; date?: string; level?: string; text: string; url?: string }
 
 export interface ConfigApi {
   state: () => Promise<{ features: Record<string, unknown>; notices: Notice[]; seen: string[] }>;
@@ -48,7 +48,7 @@ export interface ConfigApi {
 
 export interface CosmeticsApi {
   slots: () => Promise<{ slots: CosmeticSlot[]; sets: CosmeticSet[] } & Record<string, unknown>>;
-  /** pictures by name; the clips among them come back to be decoded here (ui/cosmetic-icons.js) */
+  /** pictures by name; the clips among them come back to be decoded here (ui/cosmetic-icons.ts) */
   icons: (names: string[]) => Promise<{ pictures: Record<string, string | null>; decode: string[] }>;
   heroPortraits: (ids: string[]) => Promise<Record<string, string>>;
   heroPortraitsByName: (names: string[]) => Promise<Record<string, string>>;
@@ -59,7 +59,8 @@ export interface CosmeticsApi {
 /** A mod's own video, and the still the window decodes out of it. */
 export interface PreviewApi {
   video: (key: string) => Promise<Uint8Array | null>;
-  frame: (key: string, png: Uint8Array) => Promise<unknown>;
+  /** the frame kept as the mod's picture, as a data URI, or null when it was not worth showing */
+  frame: (key: string, png: Uint8Array) => Promise<string | null>;
 }
 
 /** A preset as presets:list gives it: the build, with what is and is not installed worked out. */

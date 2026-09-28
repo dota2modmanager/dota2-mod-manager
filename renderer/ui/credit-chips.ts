@@ -5,11 +5,12 @@
  * as on the site. An author is the default and needs no word; a modder or a sender says what
  * they did, quieter than their name, so the author still leads.
  */
-import { esc } from './format.js';
+import { esc } from './format.ts';
+import type { Credit, CreditRole } from '../core/credits.ts';
 
-const ICON = { author: 'person', modded: 'construction', sender: 'send' };
+const ICON: Record<CreditRole, string> = { author: 'person', modded: 'construction', sender: 'send' };
 
-export function creditChipsHtml(credits) {
+export function creditChipsHtml(credits: Credit[]): string {
   return credits.map((c, i) => {
     const role = c.role === 'modded' ? L`моддер` : c.role === 'sender' ? L`отправитель` : '';
     const title = c.role === 'modded' ? L`Моддер: ${c.name}` : c.role === 'sender' ? L`Отправитель: ${c.name}` : L`Автор: ${c.name}`;
@@ -20,10 +21,10 @@ export function creditChipsHtml(credits) {
   }).join('');
 }
 
-/** @param {(url: string) => void} open */
-export function bindCreditChips(root, credits, open) {
+export function bindCreditChips(root: ParentNode, credits: Credit[], open: (url: string) => void): void {
   credits.forEach((c, i) => {
     const chip = root.querySelector(`[data-credit="${i}"]`);
-    if (chip && c.href) chip.addEventListener('click', () => open(c.href));
+    const href = c.href;
+    if (chip && href) chip.addEventListener('click', () => open(href));
   });
 }

@@ -1,8 +1,8 @@
 /* One free look, drawn like a mod card (same .card/.grid classes): a picture, a star, and the same
  * green edge on whichever look is live. Its picture comes out of the game's own files and is
- * fetched once the card is near the screen (ui/cosmetic-icons.js, watchIconFor). */
+ * fetched once the card is near the screen (ui/cosmetic-icons.ts, watchIconFor). */
 import { useEffect, useReducer, useRef, useSyncExternalStore, type CSSProperties, type MouseEvent } from 'react';
-import { cosmeticIcon, subscribeIcon, watchIconFor } from '../../ui/cosmetic-icons.js';
+import { cosmeticIcon, subscribeIcon, watchIconFor } from '../../ui/cosmetic-icons.ts';
 import { toggleFavorite, isFavKey } from '../favorites.ts';
 
 export interface CosmeticItem {

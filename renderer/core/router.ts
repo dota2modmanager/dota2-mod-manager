@@ -22,7 +22,7 @@
  */
 import { state } from './store.ts';
 import { $ } from './dom.ts';
-import { screenChanging, paint } from '../ui/transitions.js';
+import { screenChanging, paint } from '../ui/transitions.ts';
 
 /** What a screen does to draw itself; some fetch first, and the switch waits for them. */
 type Draw = () => unknown;
