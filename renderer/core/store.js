@@ -14,12 +14,18 @@
  */
 import { PANEL_DEFAULTS } from './constants.js';
 
+// The fields that start empty say what they will hold, so the window's TypeScript reads them as
+// that rather than as "always null" (renderer/catalog/types.ts, data.ts).
 export const state = {
   view: 'catalog',
+  /** @type {import('../catalog/data.ts').CatalogData | null} */
   catalog: null,
+  /** @type {import('../catalog/types.ts').CosmeticSlot[] | null} */
   cosmeticSlots: null,     // free-cosmetics slots from the game's own schema (safe mode off)
+  /** @type {import('../catalog/types.ts').CosmeticSet[] | null} */
   cosmeticSets: null,      // the item builder's sets (src/item-builder.js itemSets)
   patchState: null,        // src/patcher.js + schema-service state: patched/signed/conflicts/foreign
+  /** @type {Record<string, any> | null} what settings.json holds (src/settings.js) */
   settings: null,
   activeCategory: 'all',   // written by the shell too: safe mode can retire the open category
   search: '',              // the title-bar search box, which belongs to the window

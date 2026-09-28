@@ -18,6 +18,9 @@ export interface CatalogData {
   guides?: Record<string, unknown>;
   error?: string;
   offline?: boolean;
+  /** the last copy on disk, shown because the fetch failed */
+  stale?: boolean;
+  fetchedAt?: number;
 }
 
 export const catalogData = (): CatalogData | null => state.catalog as unknown as CatalogData | null;

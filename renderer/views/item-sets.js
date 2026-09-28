@@ -16,7 +16,8 @@ import { matchingSets, setCardMeta, setCount, setIsOn } from '../catalog/builder
 import { plural } from '../ui/format.js';
 import { toast } from '../ui/toast.js';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.js';
-import { builderCtx, heroSets, isOpen, openItemHeroModal, openItemSlotModal, openWindow } from './item-builder.js';
+import { closeOverlay } from './catalog/overlay.ts';
+import { afterPick, heroSets, isOpen, openItemHeroModal, openItemSlotModal, openWindow } from './item-builder.js';
 
 /** A hero's sets; query: what was typed into their search, kept for the way back from a set. */
 export function openSets(heroName, query = '') {
@@ -37,7 +38,7 @@ function drawSets(key, st) {
     }),
   }, {
     back: () => openItemHeroModal(st.heroName, null),
-    close: () => builderCtx().closeModal(),
+    close: closeOverlay,
     search: (q) => { st.query = q; drawSets(key, st); },
     open: (id) => {
       const set = sets.find((s) => s.id === id);
@@ -69,7 +70,7 @@ function drawSet(key, st) {
     action: setAction(st),
   }, {
     back: () => openSets(st.back.heroName, st.back.query),
-    close: () => builderCtx().closeModal(),
+    close: closeOverlay,
     piece: (index) => {
       const p = set.pieces[index];
       openItemSlotModal(p.slot, null, { query: p.name, select: p.itemId, back: { label: set.name, go: () => openSet(set, st.back) } });
@@ -94,6 +95,6 @@ async function applySet(key, st) {
   st.busy = false;
   if (r.error) toast(r.error, 'error');
   else toast(r.applied === r.pieces ? L`Надето: ${st.set.name}` : L`Надето ${r.applied} из ${r.pieces} ${plural(r.pieces, 'детали', 'деталей', 'деталей')}`);
-  if (!r.error) await builderCtx().afterPick();
+  if (!r.error) await afterPick();
   if (isOpen(key)) drawSet(key, st);
 }

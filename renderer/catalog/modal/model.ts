@@ -1,4 +1,4 @@
-/* What the mod window shows, worked out by views/catalog.js (drawModal) and drawn by ModModal.tsx. */
+/* What the mod window shows, worked out by views/catalog/mod-window.ts and drawn by ModModal.tsx. */
 import type { Mod, ModStyle } from '../types.ts';
 
 export interface PackMember {

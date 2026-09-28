@@ -1,4 +1,4 @@
-/* What the catalog screen shows, worked out by views/catalog.js and drawn by Screen.tsx. The
+/* What the catalog screen shows, worked out by views/catalog/screens.ts and drawn by Screen.tsx. The
  * split keeps the rules (which mods, which chips, which heading) where the data is, and the
  * markup in one place per shape. */
 import type { Filters, Mod } from '../types.ts';

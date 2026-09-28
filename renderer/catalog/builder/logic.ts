@@ -2,25 +2,14 @@
  * with what is chosen, which heroes and sets a search leaves, and what a hero's card says. What a
  * pick does to the game is src/item-builder.js. */
 import { plural } from '../../ui/format.js';
+import type { CosmeticSet, CosmeticSlot } from '../types.ts';
 import type { BuilderAction } from './model.ts';
 
-export interface ItemOption { id: string; name: string; tags?: string[] }
-export interface ItemEffect { id: string; name: string }
-export interface ItemSlot {
-  slot: string;
-  kind?: string;
-  label?: string;
-  slotLabel?: string;
-  heroLabel?: string;
-  heroIds?: string[];
-  icon?: string;
-  options: ItemOption[];
-  effects?: ItemEffect[];
-}
+type ItemSlot = CosmeticSlot;
+type ItemSet = CosmeticSet;
+type ItemEffect = { id: string; name: string };
 /** What the game shows on a slot now (core/installed.js pickedIn). */
 export interface LivePick { itemId?: string; name?: string; effectId?: string }
-export interface SetPiece { slot: string; itemId: string; name: string; fits: boolean; reason?: string; slotLabel?: string }
-export interface ItemSet { id: string; name: string; heroLabel: string; fit: number; pieces: SetPiece[] }
 
 export type PickedIn = (slot: string) => LivePick | null | undefined;
 

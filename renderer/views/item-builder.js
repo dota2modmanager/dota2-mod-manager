@@ -11,10 +11,10 @@
  * The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
  * the credits of the program it goes into.
  *
- * It lives beside the catalog rather than inside it, and reaches the catalog only through what
- * bindItemBuilder hands over: the window, the slot data, the pick itself, the filters and search.
- * It keeps what is chosen and works out what each window shows; catalog/builder/ draws it, and
- * catalog/builder/logic.ts holds the rules.
+ * It lives beside the catalog rather than inside it: it reads the slots and the toolbar's state
+ * from views/catalog/, opens its windows in the overlay the catalog's share, and gets the pick
+ * itself through bindItemBuilder. It keeps what is chosen and works out what each window shows;
+ * catalog/builder/ draws it, and catalog/builder/logic.ts holds the rules.
  */
 import { $ } from '../core/dom.js';
 import { state } from '../core/store.js';
@@ -28,16 +28,15 @@ import { byName, effectKey, effectPicture, heroCardMeta, heroesOf, liveEffects, 
 import { plural } from '../ui/format.js';
 import { paint } from '../ui/transitions.js';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.js';
+import { cosmeticSlotList, slotData } from './catalog/lists.ts';
+import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './catalog/overlay.ts';
+import { view } from './catalog/state.ts';
 import { openSets } from './item-sets.js';
 
-/** What the catalog hands over; set once by bindItemBuilder before anything here runs. */
+/** The pick itself, from views/catalog/cosmetics.ts; set once by bindItemBuilder before anything here runs. */
 let cat = null;
 
-/**
- * @param {{ slotData: Function, cosmeticSlotList: Function, pickCosmetic: Function, afterPick: Function,
- *   openModal: Function, closeModal: Function, resetModalState: Function, filters: () => object,
- *   search: () => string, setSearch: (v: string) => void }} ctx
- */
+/** @param {{ pickCosmetic: Function, afterPick: () => Promise<void> }} ctx */
 export function bindItemBuilder(ctx) {
   cat = ctx;
 }
@@ -45,15 +44,7 @@ export function bindItemBuilder(ctx) {
 const HUB = COSMETIC_PREFIX + 'items';
 
 function itemCosmeticSlots() {
-  return cat.cosmeticSlotList().filter((s) => s.kind === 'item-effect' || String(s.slot || '').startsWith('item:'));
-}
-
-export function isItemCosmeticSlot(slot) {
-  return cat.slotData(slot)?.kind === 'item-effect' || String(slot || '') === 'items' || String(slot || '').startsWith('item:');
-}
-
-export function cosmeticFavValue(slot, o) {
-  return isItemCosmeticSlot(slot) ? o.id : o.name;
+  return cosmeticSlotList().filter((s) => s.kind === 'item-effect' || String(s.slot || '').startsWith('item:'));
 }
 
 export const heroSets = (heroName) => (state.cosmeticSets || []).filter((s) => s.heroLabel === heroName);
@@ -65,10 +56,10 @@ let redrawOpen = null;
 
 /** Put a builder window on the overlay. wide: a picker, the wide one; the hero's own window is not. */
 export function openWindow(from, wide, draw) {
+  takeOverlay(); // this lets go of the builder's own window too, so the key comes after
   const key = ++opened;
   redrawOpen = () => { if (isOpen(key)) draw(key); };
-  cat.resetModalState();
-  cat.openModal(() => {
+  openOverlay(() => {
     $('#modalContent').classList.toggle('item-picker-modal', wide);
     draw(key);
   }, from);
@@ -77,8 +68,8 @@ export function openWindow(from, wide, draw) {
 /** Still the window on show: a pick that took a while may come back to a closed or different one. */
 export const isOpen = (key) => opened === key;
 
-/** What the set windows (views/item-sets.js) reach the catalog through. */
-export const builderCtx = () => cat;
+/** The pick itself, for the set windows (views/item-sets.js). */
+export const afterPick = () => cat.afterPick();
 
 // ---------- a slot: its wearables, the effects on top, and the button that puts them on ----------
 
@@ -92,7 +83,7 @@ export const builderCtx = () => cat;
  *   hero: that window is the hero's, so the button names the hero and the title need not
  */
 export function openItemSlotModal(slot, from, { query = '', select = '', back = null } = {}) {
-  const data = cat.slotData(slot);
+  const data = slotData(slot);
   if (!data) return;
   const live = pickedIn(slot);
   const selectedId = select || live?.itemId || '';
@@ -102,7 +93,7 @@ export function openItemSlotModal(slot, from, { query = '', select = '', back = 
 }
 
 function drawSlot(key, st) {
-  const data = cat.slotData(st.slot);
+  const data = slotData(st.slot);
   if (!data) return;
   const live = pickedIn(st.slot);
   const hasItem = !!st.selectedId;
@@ -132,7 +123,7 @@ function drawSlot(key, st) {
     action: stagedItemAction(data.effects, live, st),
   }, {
     back: () => st.back.go(),
-    close: () => cat.closeModal(),
+    close: closeOverlay,
     search: (q) => { st.query = q; again(); },
     choose: (id) => {
       if (st.busy) return;
@@ -150,7 +141,7 @@ function drawSlot(key, st) {
 }
 
 async function applySlot(key, st, chosen) {
-  const data = cat.slotData(st.slot);
+  const data = slotData(st.slot);
   const act = stagedItemAction(data.effects, pickedIn(st.slot), st);
   if (act.off || (!act.remove && !chosen)) return;
   st.busy = true;
@@ -191,7 +182,7 @@ function drawHero(key, heroName, slots) {
     }),
     sets: sets.length ? { name: shown.name, count: sets.length, on: sets.some((s) => setIsOn(s, pickedIn)) } : null,
   }, {
-    close: () => cat.closeModal(),
+    close: closeOverlay,
     openSets: () => openSets(heroName),
     openSlot: (slot) => openItemSlotModal(slot, null,
       { back: { label: heroName, hero: true, go: () => openItemHeroModal(heroName, null) } }),
@@ -204,24 +195,24 @@ const heroSlots = (hero) => heroesOf(itemCosmeticSlots()).find(([h]) => h === he
 
 const hubActions = {
   cosmeticFilter: ({ search, installedOnly }) => {
-    if (search !== undefined) cat.setSearch(search);
-    if (installedOnly !== undefined) cat.filters().installedOnly = installedOnly;
+    if (search !== undefined) view.cosSearch = search;
+    if (installedOnly !== undefined) view.filters.installedOnly = installedOnly;
     drawHub();
   },
   openHero: (hero, card) => openItemHeroModal(hero, card),
 };
 
 function hubModel() {
-  const f = cat.filters();
-  const q = cat.search().trim().toLowerCase();
+  const f = view.filters;
+  const q = view.cosSearch.trim().toLowerCase();
   const shown = heroesOf(itemCosmeticSlots()).filter(([hero, slots]) =>
     (!q || hero.toLowerCase().includes(q)) && (!f.installedOnly || slots.some((s) => pickedIn(s.slot))));
   return {
     kind: 'builder',
     title: catName(HUB),
-    search: cat.search(),
+    search: view.cosSearch,
     installedOnly: f.installedOnly,
-    count: (cat.search() || f.installedOnly) ? `${shown.length} ${plural(shown.length, 'герой', 'героя', 'героев')}` : '',
+    count: (view.cosSearch || f.installedOnly) ? `${shown.length} ${plural(shown.length, 'герой', 'героя', 'героев')}` : '',
     heroes: shown.map(([hero, slots]) => ({
       hero,
       icon: heroPortraits.get(hero) || null,
@@ -245,7 +236,7 @@ export async function renderItemCosmeticHub() {
   await loadHeroPortraits(list);
   if (state.activeCategory !== HUB) return; // moved on while reading
   if (!list.length) return hubNote(L`Схема игры не прочиталась — проверь путь к Dota 2 в настройках.`);
-  cat.filters().favOnly = false;
+  view.filters.favOnly = false;
   await paint(drawHub);
 }
 
@@ -267,11 +258,12 @@ async function loadHeroPortraits(heroes) {
 }
 
 /** Let go of an open builder window: another window is taking the overlay, or it closed. */
-export function forgetItemSlotModal() {
+function forgetItemSlotModal() {
   opened++;
   redrawOpen = null;
   $('#modalContent').classList.remove('item-picker-modal');
 }
+sharesOverlay(forgetItemSlotModal);
 
 /** The builder's one entry in the catalog rail (catalog/rail/Rail.tsx), or null with no item slots. */
 export function itemRailEntry() {

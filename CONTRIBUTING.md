@@ -115,10 +115,9 @@ node --test --experimental-test-coverage test/safe-zip.test.js
 npm run size
 ```
 
-Five files carry 7,155 lines between them while the median module in `src/` is 171:
-`src/installer.js`, `renderer/views/catalog.js`, `renderer/views/library.js`, `main.js` and
-`src/vpk.js`. Each is in `.github/size-budget.json` at its current length, and the check fails when
-one grows, or when a file nobody listed crosses 800 lines.
+A file in `src/` or `renderer/` fails the check once it crosses 300 lines. The files that were
+already longer when that mark came down from 800, on 2026-09-27, are in `.github/size-budget.json`
+at their length, and the check fails when one of them grows.
 
 If your change makes one of them longer, split something out of it rather than raising the number.
 `node tools/size-budget.mjs --update` writes measurements back and refuses to raise any of them; a

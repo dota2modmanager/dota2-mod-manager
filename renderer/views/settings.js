@@ -24,7 +24,7 @@ import { showWhatsNew } from '../ui/dialog.js';
 import { refreshSidebarStatus } from '../ui/statusbar.js';
 import { clampScale, currentScalePct, paintScale, applyScalePct, clampPanelZoom, paintPanels, savePanels } from '../ui/chrome.js';
 import { applyLanguage } from '../ui/language.js';
-import { loadCatalog } from './catalog.js';
+import { loadCatalog } from './catalog.ts';
 import { adultShown, adultHint, setAdultShown } from '../core/adult.js';
 import { paint } from '../ui/transitions.js';
 

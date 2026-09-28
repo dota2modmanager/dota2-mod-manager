@@ -1,4 +1,4 @@
-/* Where views/catalog.js hands its screen to React. One root for the life of the window, so a
+/* Where the catalog (views/catalog/screens.ts) hands its screen to React. One root for the life of the window, so a
  * filter flipped on the same category updates the cards on show instead of throwing them away;
  * a new category is a new key (model.ts), and draws fresh. Drawn inside the caller's paint(),
  * synchronously, so a view transition captures the new screen whole. */

@@ -23,6 +23,7 @@ preload.js         the only bridge the renderer gets. Every channel is listed on
 src/               everything that thinks: installer, vpk, schema, gamelang, catalog…
 src/ipc-*.js       one file per group of channels, each naming what it needs
 renderer/          the UI. views/ draw screens, ui/ are shared pieces, core/ is state
+renderer/catalog/  the catalog's React components, and the rules they draw in .ts with tests
 test/              node:test, no framework, no mocks library
 tools/             scripts that are not shipped: fingerprints, i18n check, sandbox
 site/              the documentation site (Astro). Separate from the app
