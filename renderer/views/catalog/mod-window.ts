@@ -1,9 +1,9 @@
 /* A mod's window: what it shows (catalog/modal/ModModal.tsx draws it) and what its buttons do. It
  * opens on the look the card was showing, which is the one the user was just looking at. */
-import { state } from '../../core/store.js';
-import { keyOf, refreshInstalledIndex } from '../../core/installed.js';
-import { catName, catIcon } from '../../core/categories.js';
-import { modCredits, CREDIT_ROLES } from '../../core/credits.js';
+import { state } from '../../core/store.ts';
+import { keyOf, refreshInstalledIndex } from '../../core/installed.ts';
+import { catName, catIcon } from '../../core/categories.ts';
+import { modCredits, isCreditRole } from '../../core/credits.ts';
 import { creditChipsHtml, bindCreditChips } from '../../ui/credit-chips.js';
 import { fmtDate } from '../../ui/format.js';
 import { toast } from '../../ui/toast.js';
@@ -71,10 +71,10 @@ function drawModal(): void {
   const preview = style?.preview || mod.preview;
   const installedRec = state.installedIndex.get(keyOf(categoryId, mod.name, styleLabel));
   const links = mod.links || [];
-  // everybody the catalog credits, not only the first author (core/credits.js says why)
+  // everybody the catalog credits, not only the first author (core/credits.ts says why)
   const credits = modCredits(mod, state.catalog?.constants);
   // people are credits above, not buttons: their "url" is a name, which opened as a 404
-  const otherLinks = links.filter((l) => !(l.type === 'preview' && isMedia(l.url)) && !CREDIT_ROLES.includes(l.type || ''));
+  const otherLinks = links.filter((l) => !(l.type === 'preview' && isMedia(l.url)) && !isCreditRole(l.type));
   const members = isPack ? packMembers(mod) : [];
   const excluded = st.packExcluded;
   const playable = playablePreview(mod);
@@ -147,7 +147,7 @@ function drawModal(): void {
       installPack(mod, excluded);
     },
     uninstall: async () => {
-      if (!await confirmDialog(L`Удалить «${mod.name}»?`)) return;
+      if (!installedRec || !await confirmDialog(L`Удалить «${mod.name}»?`)) return;
       const r = await window.api.mods.remove(installedRec.id);
       if (r.error) toast(r.error, 'error');
       else toast(L`${mod.name} удалён`);

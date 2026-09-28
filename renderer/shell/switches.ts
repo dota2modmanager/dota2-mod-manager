@@ -1,9 +1,9 @@
 /* The status bar's buttons: launching the game, the switch that turns every mod off at once, and
  * safe mode, which keeps the game's own files untouched and the effects and free cosmetics off. */
-import { COSMETIC_PREFIX } from '../core/constants.js';
-import { state } from '../core/store.js';
-import { render, invalidateViews } from '../core/router.js';
-import { refreshCosmeticSlots } from '../core/installed.js';
+import { COSMETIC_PREFIX } from '../core/constants.ts';
+import { state } from '../core/store.ts';
+import { render, invalidateViews } from '../core/router.ts';
+import { refreshCosmeticSlots } from '../core/installed.ts';
 import { toast } from '../ui/toast.js';
 import { safeModeDialog } from '../ui/dialog.js';
 import { refreshPatchState, paintMasterSwitch } from '../ui/statusbar.js';

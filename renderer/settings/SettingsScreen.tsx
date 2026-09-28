@@ -4,7 +4,7 @@
 import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
-import { pane } from '../core/router.js';
+import { pane } from '../core/router.ts';
 
 export interface SettingsModel {
   key: number;

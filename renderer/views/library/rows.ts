@@ -1,9 +1,9 @@
 /* A My mods row as the components draw it (library/model.ts), out of a record from main. */
-import { COSMETIC_PREFIX } from '../../core/constants.js';
-import { matchLabel } from '../../core/installed.js';
-import { catName, catIcon } from '../../core/categories.js';
-import { isCursorRec, isFontRec, isCosmeticRec, effectNames } from '../../core/records.js';
-import { staleTerrainWhy } from '../../core/terrain-age.js';
+import { COSMETIC_PREFIX } from '../../core/constants.ts';
+import { matchLabel } from '../../core/installed.ts';
+import { catName, catIcon } from '../../core/categories.ts';
+import { isCursorRec, isFontRec, isCosmeticRec, effectNames } from '../../core/records.ts';
+import { staleTerrainWhy } from '../../core/terrain-age.ts';
 import { fmtMB } from '../../ui/format.js';
 import { isVideo } from '../../ui/media.js';
 import { recPreviewUrl } from '../../ui/thumb.js';

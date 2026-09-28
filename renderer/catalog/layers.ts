@@ -1,6 +1,6 @@
 /* The catalog pane, in two layers. Banners (a notice, the missing-game warning) sit on top and are
  * rewritten on every draw; below them is React's screen (catalog/screen/). */
-import { pane } from '../core/router.js';
+import { pane } from '../core/router.ts';
 
 const root: HTMLElement = pane('catalog');
 

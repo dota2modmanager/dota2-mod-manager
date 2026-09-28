@@ -1,8 +1,8 @@
 /* News that arrives while the window is open: a new version of the app, and Dota patching itself
  * underneath the mods. */
-import { state } from '../core/store.js';
-import { render } from '../core/router.js';
-import { switchOffStaleTerrains } from '../core/terrain-age.js';
+import { state } from '../core/store.ts';
+import { render } from '../core/router.ts';
+import { switchOffStaleTerrains } from '../core/terrain-age.ts';
 import { esc } from '../ui/format.js';
 import { toast } from '../ui/toast.js';
 
@@ -56,7 +56,7 @@ window.api.update.onUpdate((evt) => {
 // decides how the user hears about it. On My mods that is the banner, so redraw and let it speak;
 // anywhere else a toast, because a patch that ate the mods is news wherever you are standing.
 window.api.patch.onRepair((st) => {
-  // an update can change the map under a whole-map terrain (core/terrain-age.js)
+  // an update can change the map under a whole-map terrain (core/terrain-age.ts)
   if (st.state === 'done') switchOffStaleTerrains().then((off: unknown[]) => { if (off.length && state.view === 'library') render(); });
   if (state.view === 'library') { render(); return; }
   if (st.state === 'waiting') toast(L`Dota обновилась — вернём моды, как только закроешь игру`, 'warn', 8000);

@@ -3,7 +3,7 @@
  * The game mounts pakNN in numeric order, so a mod's pak number is its priority: the list is shown
  * in it, and moving a mod up or down renames its file. Fonts, cursors and cosmetic picks live
  * outside a numbered pak and have no place in it. */
-import { isCosmeticRec } from '../core/records.js';
+import { isCosmeticRec } from '../core/records.ts';
 import type { LibRecord } from './types.ts';
 
 const PAK_DIR = /^pak\d+_dir\.vpk$/i;

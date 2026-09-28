@@ -9,10 +9,10 @@
  * The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
  * the credits of the program it goes into.
  */
-import { state } from '../core/store.js';
-import { COSMETIC_PREFIX } from '../core/constants.js';
-import { catName, catIcon } from '../core/categories.js';
-import { pickedIn, refreshCosmeticSlots } from '../core/installed.js';
+import { state } from '../core/store.ts';
+import { COSMETIC_PREFIX } from '../core/constants.ts';
+import { catName, catIcon } from '../core/categories.ts';
+import { pickedIn, refreshCosmeticSlots } from '../core/installed.ts';
 import { showScreen } from '../catalog/screen/root.tsx';
 import { heroCardMeta, heroesOf } from '../catalog/builder/logic.ts';
 import type { CosmeticSlot } from '../catalog/types.ts';

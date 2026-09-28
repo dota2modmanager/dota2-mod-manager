@@ -10,7 +10,7 @@
  * The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
  * the credits of the program it goes into.
  */
-import { pickedIn } from '../core/installed.js';
+import { pickedIn } from '../core/installed.ts';
 import { showSetsModal, showSetModal } from '../catalog/modal/root.tsx';
 import { matchingSets, setCardMeta, setCount, setIsOn } from '../catalog/builder/logic.ts';
 import { plural } from '../ui/format.js';

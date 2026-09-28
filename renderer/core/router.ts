@@ -20,26 +20,29 @@
  * opening a category concerns the catalog and nobody else, and those call their own render
  * directly, as they always did.
  */
-import { state } from './store.js';
-import { $ } from './dom.js';
+import { state } from './store.ts';
+import { $ } from './dom.ts';
 import { screenChanging, paint } from '../ui/transitions.js';
 
-const screens = new Map();
-const panes = new Map();
+/** What a screen does to draw itself; some fetch first, and the switch waits for them. */
+type Draw = () => unknown;
+
+const screens = new Map<string, Draw>();
+const panes = new Map<string, HTMLElement>();
 
 // screens whose picture no longer matches the data; rebuilt when they are next opened
-const stale = new Set();
+const stale = new Set<string>();
 // where each screen was left. #main is the scroller and it is shared, so without this a
 // screen opens at whatever offset the previous one happened to be at.
-const scrolls = new Map();
+const scrolls = new Map<string, number>();
 
 /** Give a name a way to draw itself. Called once per screen, as it is loaded. */
-export function registerView(name, render) {
+export function registerView(name: string, render: Draw): void {
   screens.set(name, render);
 }
 
 /** The element a screen owns and draws into. Created on first ask, then kept. */
-export function pane(name) {
+export function pane(name: string): HTMLElement {
   let el = panes.get(name);
   if (!el) {
     el = document.createElement('div');
@@ -57,28 +60,28 @@ export function pane(name) {
  * whatever did the changing, not from the screen that noticed - the screen on show is
  * redrawing itself anyway, and marking it would only make it draw twice.
  */
-export function invalidateViews() {
+export function invalidateViews(): void {
   for (const name of screens.keys()) if (name !== state.view) stale.add(name);
 }
 
-function showPane(view) {
+function showPane(view: string): void {
   for (const [name, el] of panes) el.hidden = name !== view;
 }
 
 /** Redraw whatever is showing, because something under it changed. A name with nothing
  *  registered draws nothing rather than throwing: a half-extracted screen should leave a
  *  blank area, not a broken window. */
-export function render() {
+export function render(): unknown {
   invalidateViews();
   stale.delete(state.view);
   const draw = screens.get(state.view);
   return draw ? draw() : undefined;
 }
 
-export function switchView(view) {
+export function switchView(view: string): Promise<void> {
   const main = $('#main');
   scrolls.set(state.view, main.scrollTop);
-  document.querySelectorAll('.tb-tab').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll<HTMLElement>('.tb-tab').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   state.view = view;
   const railOff = view !== 'catalog';
   $('#catRail').classList.toggle('hidden', railOff);

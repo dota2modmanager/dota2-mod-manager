@@ -11,33 +11,36 @@
  *
  * No router here: this is imported by a test, and whoever changes the answer redraws.
  */
-import { state } from './store.js';
+import { state } from './store.ts';
 import { plural } from '../ui/format.js';
 
+/** Anything that may carry the catalog's tags. */
+type Tagged = { tags?: Record<string, unknown> | null } | null | undefined;
+
 /** Whether the catalog tags a mod adult. */
-export const isAdult = (m) => Boolean(m && m.tags && m.tags.adult);
+export const isAdult = (m: Tagged): boolean => Boolean(m && m.tags && m.tags.adult);
 
 /** Whether the user said they are 18 and want adult mods shown. Unanswered is no. */
-export const adultShown = () => state.settings?.showAdult === true;
+export const adultShown = (): boolean => state.settings?.showAdult === true;
 
 /** The mods somebody browsing the catalog is shown. */
-export const shownMods = (mods) => (adultShown() ? mods : mods.filter((m) => !isAdult(m)));
+export const shownMods = <T extends Tagged>(mods: T[]): T[] => (adultShown() ? mods : mods.filter((m) => !isAdult(m)));
 
 /** How many adult mods the loaded catalog has, counted in the whole mod index. */
-export function adultCount() {
+export function adultCount(): number {
   let n = 0;
   for (const hit of state.modIndex.values()) if (isAdult(hit.mod)) n++;
   return n;
 }
 
 /** Whether the question still needs asking: never answered, and something to ask about. */
-export const adultUnanswered = () => typeof state.settings?.showAdult !== 'boolean' && adultCount() > 0;
+export const adultUnanswered = (): boolean => typeof state.settings?.showAdult !== 'boolean' && adultCount() > 0;
 
 /** "5 mods", in the language of the window. */
-const modsWord = (n) => `${n} ${plural(n, 'мод', 'мода', 'модов')}`;
+const modsWord = (n: number) => `${n} ${plural(n, 'мод', 'мода', 'модов')}`;
 
 /** The line under the switch in Settings. */
-export function adultHint() {
+export function adultHint(): string {
   const n = adultCount();
   return n
     ? L`${modsWord(n)} с откровенными моделями героев. Включая, ты подтверждаешь, что тебе есть 18 лет.`
@@ -50,7 +53,7 @@ export function adultHint() {
  * outside answer nothing: they stay hidden and the question comes back on the next start.
  *
  * Resolves true to show them, false not to, null when the window was closed without an answer. */
-export function adultDialog(count) {
+export function adultDialog(count: number): Promise<boolean | null> {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
@@ -71,18 +74,19 @@ export function adultDialog(count) {
         </div>
       </div>`;
     document.body.appendChild(overlay);
-    const done = (v) => { overlay.remove(); document.removeEventListener('keydown', onKey); resolve(v); };
+    const done = (v: boolean | null) => { overlay.remove(); document.removeEventListener('keydown', onKey); resolve(v); };
     overlay.addEventListener('click', (e) => { if (e.target === overlay) done(null); });
-    overlay.querySelector('[data-c="no"]').addEventListener('click', () => done(false));
-    overlay.querySelector('[data-c="yes"]').addEventListener('click', () => done(true));
-    const onKey = (e) => { if (e.key === 'Escape') done(null); };
+    const no = overlay.querySelector<HTMLButtonElement>('[data-c="no"]')!;
+    no.addEventListener('click', () => done(false));
+    overlay.querySelector('[data-c="yes"]')!.addEventListener('click', () => done(true));
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') done(null); };
     document.addEventListener('keydown', onKey);
-    overlay.querySelector('[data-c="no"]').focus();
+    no.focus();
   });
 }
 
 /** Save an answer. The caller redraws whatever is on screen. */
-export async function setAdultShown(on) {
+export async function setAdultShown(on: boolean): Promise<void> {
   state.settings = await window.api.settings.set('showAdult', on === true);
 }
 
@@ -90,7 +94,7 @@ export async function setAdultShown(on) {
  * Asked once, when there is something to ask about. Resolves true when the answer changed what
  * the catalog shows, so the caller knows to redraw.
  */
-export async function askAdultOnce() {
+export async function askAdultOnce(): Promise<boolean> {
   if (!adultUnanswered()) return false;
   const answer = await adultDialog(adultCount());
   if (answer === null) return false;

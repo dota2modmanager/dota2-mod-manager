@@ -4,6 +4,7 @@
  *
  * These are data, not behaviour. Anything that needs a decision made about them lives
  * with the view that makes it. */
+import type { Filters } from '../catalog/types.ts';
 
 export const RAW_BASE = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main';
 
@@ -17,7 +18,7 @@ export const RAW_BASE = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/m
  */
 export const MIRROR_BASE = 'https://cdn.dota2modmanager.com';
 
-export const CAT_RU = {
+export const CAT_RU: Record<string, string> = {
   heroes: 'Герои', 'item-effects': 'Эффекты предметов', 'hero-items': 'Предметы героев',
   backgrounds: 'Фоны меню', cursors: 'Курсоры', 'mega-kill': 'Мега-килл', shaders: 'Шейдеры',
   couriers: 'Курьеры', terrains: 'Ландшафты', creeps: 'Крипы', trees: 'Деревья', river: 'Река',
@@ -31,7 +32,7 @@ export const CAT_RU = {
   tools: 'Инструменты', imported: 'Импортированный',
 };
 
-export const CAT_ICON = {
+export const CAT_ICON: Record<string, string> = {
   all: 'apps', heroes: 'person', 'hero-items': 'swords', herofx: 'auto_fix_high',
   'hero-sounds': 'record_voice_over', terrains: 'landscape', trees: 'forest', river: 'water',
   creeps: 'bug_report', towers: 'cell_tower', roshan: 'skull', ancient: 'castle',
@@ -49,7 +50,9 @@ export const CAT_ICON = {
 // Free cosmetics: each is a slot in the game's own item schema (see src/schema.js), read
 // live from the installed game — so a slot Valve adds later just shows up. This only maps
 // the ones we know a nice label/icon for; an unknown one still works, titled from its id.
-export const COSMETIC_SLOTS = {
+export interface SlotMeta { label: string; icon: string }
+
+export const COSMETIC_SLOTS: Record<string, SlotMeta> = {
   weather: { label: 'Погода', icon: 'rainy' },
   items: { label: 'Предметы', icon: 'checkroom' },
   terrain: { label: 'Ландшафт', icon: 'terrain' },
@@ -70,23 +73,23 @@ export const COSMETIC_SLOTS = {
   streak_effect: { label: 'Серия убийств', icon: 'local_fire_department' },
 };
 export const COSMETIC_PREFIX = 'cosmetic:';
-export function cosmeticMeta(slot) {
+export function cosmeticMeta(slot: string): SlotMeta {
   if (COSMETIC_SLOTS[slot]) return COSMETIC_SLOTS[slot];
   if (String(slot).startsWith('item:')) {
     const equip = String(slot).split(':').pop();
-    const icon = {
+    const icon = ({
       head: 'face', hair: 'content_cut', weapon: 'swords', offhand: 'shield', shield: 'shield', armor: 'security',
       shoulder: 'accessibility_new', shoulders: 'accessibility_new', belt: 'checkroom', arms: 'front_hand',
       arm: 'front_hand', back: 'checkroom', wings: 'flutter_dash', tail: 'gesture', legs: 'directions_run',
       mount: 'pets', ambient: 'auto_awesome', misc: 'checkroom',
-    }[equip] || 'checkroom';
+    } as Record<string, string>)[equip || ''] || 'checkroom';
     return { label: 'Предметы', icon };
   }
   return { label: slot.replace(/_/g, ' '), icon: 'auto_awesome' };
 }
 
 // rail sections: [label, [categoryIds]]
-export const RAIL_SECTIONS = [
+export const RAIL_SECTIONS: [label: string, categoryIds: string[]][] = [
   ['Герои', ['heroes', 'hero-items', 'herofx', 'hero-sounds']],
   ['Мир', ['terrains', 'trees', 'river', 'creeps', 'towers', 'roshan', 'ancient', 'tormentor', 'wards', 'couriers', 'pedestal', 'creep-deny']],
   ['Эффекты', ['shaders', 'ti-bp-effects', 'item-effects', 'ranged-attack', 'high-five']],
@@ -108,7 +111,7 @@ export const TOOLS_HIDDEN = [/linux/i, /^dota 2 mod manager$/i];
  * be unreachable. This hands an orphan to the mod that needs it, keyed by the guide the mod
  * already names. The other five orphans stay dropped: two are for Linux and three are
  * general how-tos the wiki covers. */
-export const GUIDE_ALSO = { warning: ['weather'] };
+export const GUIDE_ALSO: Record<string, string[]> = { warning: ['weather'] };
 
 /* Where a stuck user goes. Both are in the catalog's own "news" entries, which is what the
  * help menu reads - these are the fallback for a first run with no catalog yet. */
@@ -126,17 +129,24 @@ export const SORTS = [
 
 // What the toolbar above a grid holds. Mods and free cosmetics share it, so "Установленные"
 // and "Избранное" mean the same thing wherever they are — and switching category resets it.
-export const FILTER_DEFAULTS = { sort: 'default', tags: new Set(), installedOnly: false, favOnly: false, group: '', hero: '', slot: '' };
-export const freshFilters = () => ({ ...FILTER_DEFAULTS, tags: new Set() });
+export const FILTER_DEFAULTS: Filters = { sort: 'default', tags: new Set(), installedOnly: false, favOnly: false, group: '', hero: '', slot: '' };
+export const freshFilters = (): Filters => ({ ...FILTER_DEFAULTS, tags: new Set() });
 
 // Chrome panels the user can resize, scale and fold away: the title bar, the status bar and
 // the category rail. Everything lives in CSS variables (see "Panel grips").
 // Two independent knobs each: the grip drags its size, Ctrl + wheel over it sets its own
 // zoom. Neither follows the content scale — scaling the catalog leaves the chrome alone.
-export const PANEL_DEFAULTS = {
+export interface Panels {
+  topH: number; bottomH: number; railW: number;
+  topZoom: number; bottomZoom: number; railZoom: number;
+  topFolded: boolean; bottomFolded: boolean; railFolded: boolean;
+}
+export type PanelSize = 'topH' | 'bottomH' | 'railW';
+
+export const PANEL_DEFAULTS: Panels = {
   topH: 48, bottomH: 50, railW: 218,
   topZoom: 1, bottomZoom: 1, railZoom: 1,
   topFolded: false, bottomFolded: false, railFolded: false,
 };
-export const PANEL_LIMITS = { topH: [34, 88], bottomH: [36, 96], railW: [148, 400] };
-export const PANEL_ZOOM_LIMITS = [0.6, 1.8];
+export const PANEL_LIMITS: Record<PanelSize, [min: number, max: number]> = { topH: [34, 88], bottomH: [36, 96], railW: [148, 400] };
+export const PANEL_ZOOM_LIMITS: [min: number, max: number] = [0.6, 1.8];

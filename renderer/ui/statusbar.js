@@ -5,8 +5,8 @@
  * stay with the rest of the shell wiring in app.js, because turning safe mode off also
  * reloads the cosmetic slots and the catalog rail, and none of that belongs here.
  */
-import { state } from '../core/store.js';
-import { $ } from '../core/dom.js';
+import { state } from '../core/store.ts';
+import { $ } from '../core/dom.ts';
 
 // Small, and only fetched where it's actually shown: the safe-mode switch's warning dot
 // and the Library's schema-conflict banner (see paintSafeModeSwitch / renderLibrary).

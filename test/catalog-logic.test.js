@@ -125,7 +125,7 @@ test('sorting is not narrowing', async () => {
 });
 
 test('a card answers for the look on show: its own install badge, and its own entry in the list', async () => {
-  const store = await import('../renderer/core/store.js');
+  const store = await import('../renderer/core/store.ts');
   const looks = await import('../renderer/catalog/looks.ts');
   const queueing = await import('../renderer/catalog/queueing.ts');
   const mod = { name: 'Lina Flame', file: 'lina.vpk', styles: [{ label: 'Red', file: 'red.vpk', preview: 'red.png' }, { label: 'Blue', file: 'blue.vpk' }] };
@@ -149,7 +149,7 @@ test('a card answers for the look on show: its own install badge, and its own en
 });
 
 test('the install list takes only what the catalog\'s own rules allow', async () => {
-  const store = await import('../renderer/core/store.js');
+  const store = await import('../renderer/core/store.ts');
   const { canQueue } = await import('../renderer/catalog/queueing.ts');
   store.state.catalog = { constants: { addToCartRules: { hiddenCategories: ['tools'], allowedMods: { couriers: ['Golden Baby Roshan'] } } } };
   assert.equal(canQueue('heroes', { name: 'a', file: 'a.vpk' }), true);
@@ -162,7 +162,7 @@ test('the install list takes only what the catalog\'s own rules allow', async ()
 });
 
 test('a star is saved with the settings, and comes back off on a second press', async () => {
-  const store = await import('../renderer/core/store.js');
+  const store = await import('../renderer/core/store.ts');
   const fav = await import('../renderer/catalog/favorites.ts');
   const saved = [];
   globalThis.window = { api: { settings: { set: async (key, value) => { saved.push([key, value]); return { favorites: value }; } } } };
@@ -178,7 +178,7 @@ test('a star is saved with the settings, and comes back off on a second press', 
 test('a duration token reads the same written as the stylesheet has it or as the build rewrites it', async () => {
   /* Vite minifies tokens.css, and 200ms comes out as .2s. The mod window read that as 0.2 ms and
      cut its closing animation to nothing, and the mascot's spin went the same way. */
-  const { parseCssTime } = await import('../renderer/core/css-time.js');
+  const { parseCssTime } = await import('../renderer/core/css-time.ts');
   assert.equal(parseCssTime('200ms'), 200);
   assert.equal(parseCssTime('.2s'), 200);
   assert.equal(parseCssTime(' .3s '), 300);

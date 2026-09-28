@@ -13,12 +13,29 @@
  * folder", a guess the banner is not allowed to make.
  */
 
+/** The minify block of the settings (src/minify.js readMinify). */
+export interface MinifyState {
+  present?: boolean;
+  mounts?: boolean;
+  live?: 'ours' | 'minify' | 'both' | 'neither' | 'unknown' | string;
+  sharing?: boolean;
+  /** the folder the game mounts, and the two it could be */
+  mounted?: string | null;
+  folder?: string;
+  ourFolder?: string;
+  [key: string]: unknown;
+}
+
+export interface MinifyNotice {
+  kind: 'info' | 'warn';
+  case: 'unmountable' | 'minify-live' | 'shared' | 'unknown' | 'ours-read' | 'minify-empty' | 'elsewhere';
+}
+
 /**
- * @param {object|null} m  the minify block of the settings (src/minify.js readMinify)
- * @param {number} [ourMods] how many mods this app has installed
- * @returns {{ kind: 'info'|'warn', case: 'unmountable'|'minify-live'|'shared'|'unknown'|'ours-read'|'minify-empty'|'elsewhere' }|null}
+ * @param m       the minify block of the settings (src/minify.js readMinify)
+ * @param ourMods how many mods this app has installed
  */
-export function minifyNotice(m, ourMods = 0) {
+export function minifyNotice(m: MinifyState | null | undefined, ourMods = 0): MinifyNotice | null {
   if (!m || !m.present) return null;
   // it builds into a folder this game cannot be pointed at: its mods do nothing, ours are fine
   if (!m.mounts) return { kind: 'info', case: 'unmountable' };

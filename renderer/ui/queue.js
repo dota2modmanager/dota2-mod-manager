@@ -13,7 +13,7 @@
  * whoever registered as the installer (the catalog does, since that is where the machinery
  * for one mod already lives).
  */
-import { $ } from '../core/dom.js';
+import { $ } from '../core/dom.ts';
 import { esc } from './format.js';
 import { thumbHtml } from './thumb.js';
 

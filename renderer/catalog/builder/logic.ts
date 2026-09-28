@@ -8,7 +8,7 @@ import type { BuilderAction } from './model.ts';
 type ItemSlot = CosmeticSlot;
 type ItemSet = CosmeticSet;
 type ItemEffect = { id: string; name: string };
-/** What the game shows on a slot now (core/installed.js pickedIn). */
+/** What the game shows on a slot now (core/installed.ts pickedIn). */
 export interface LivePick { itemId?: string; name?: string; effectId?: string }
 
 export type PickedIn = (slot: string) => LivePick | null | undefined;

@@ -4,7 +4,7 @@
 // it carries no debt worth a baseline, and tools/typecheck.mjs fails on any error in it.
 //
 // allowJs without checkJs: a component can import one of the plain modules the screens still
-// share (core/store.js, ui/format.js) and get the types TypeScript infers from it, while those
+// share (ui/format.js, ui/dialog.js) and get the types TypeScript infers from it, while those
 // modules are not held to strict rules they were never written for. They move over one at a time.
 //
 // The tests import these files straight into Node, which strips the types and runs the rest.

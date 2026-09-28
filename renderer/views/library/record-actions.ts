@@ -5,8 +5,8 @@
  * What the row does not print lives in the menu. The load order, exporting a mod as one file and
  * taking a multi-hero mod apart are all real and all rare: on the row they were three buttons every
  * mod carried so that a few could use them. */
-import { catName } from '../../core/categories.js';
-import { isCursorRec, isPackableRec } from '../../core/records.js';
+import { catName } from '../../core/categories.ts';
+import { isCursorRec, isPackableRec } from '../../core/records.ts';
 import { fmtMB, plural } from '../../ui/format.js';
 import { toast } from '../../ui/toast.js';
 import { confirmDialog, promptDialog } from '../../ui/dialog.js';

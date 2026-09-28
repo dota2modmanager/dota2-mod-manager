@@ -5,7 +5,7 @@
  * came to close in a fifth of a millisecond once Vite built the page. */
 
 /** "200ms", ".2s", "1ms" -> milliseconds; anything else -> 0. */
-export function parseCssTime(value) {
+export function parseCssTime(value: unknown): number {
   const v = String(value || '').trim();
   const n = parseFloat(v);
   if (!Number.isFinite(n)) return 0;
@@ -15,6 +15,6 @@ export function parseCssTime(value) {
 }
 
 /** The token's value on the document, in milliseconds. */
-export function tokenMs(name) {
+export function tokenMs(name: string): number {
   return parseCssTime(getComputedStyle(document.documentElement).getPropertyValue(name));
 }

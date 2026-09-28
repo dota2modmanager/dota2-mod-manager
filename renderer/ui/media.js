@@ -1,6 +1,6 @@
 /* Where a preview lives and how it is drawn. The catalog stores previews as repo-relative
  * paths, absolute links, or nothing at all, and each of those has to end up as one tag. */
-import { RAW_BASE, MIRROR_BASE } from '../core/constants.js';
+import { RAW_BASE, MIRROR_BASE } from '../core/constants.ts';
 import { esc } from './format.js';
 
 export function previewUrl(categoryId, preview) {

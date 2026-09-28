@@ -22,7 +22,7 @@ export interface ModModalModel {
   playable: string | null;
   fav: boolean;
   date: string | null;
-  /** everybody the catalog credits, as core/credits.js draws them */
+  /** everybody the catalog credits, as core/credits.ts draws them */
   creditsHtml: string;
   kind: 'tool' | 'pack' | 'mod';
   /** the archive an install downloads, or null for a link */

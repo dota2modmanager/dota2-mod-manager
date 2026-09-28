@@ -11,8 +11,8 @@
  * way in. The rest goes through a whitelist (see fromCatalogHtml): it is somebody else's
  * markup arriving over the network, and it is the one thing in this app that does.
  */
-import { state } from '../core/store.js';
-import { GUIDE_ALSO } from '../core/constants.js';
+import { state } from '../core/store.ts';
+import { GUIDE_ALSO } from '../core/constants.ts';
 import { esc } from './format.js';
 
 // Two guides put a sentence-long description where a heading goes. Past this length it is

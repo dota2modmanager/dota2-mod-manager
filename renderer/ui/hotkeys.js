@@ -10,7 +10,7 @@
  * underneath one would leave the user looking at a window belonging to a screen they left.
  * Escape is not handled here at all - each of those closes itself.
  */
-import { $ } from '../core/dom.js';
+import { $ } from '../core/dom.ts';
 
 const SECTIONS = ['catalog', 'library', 'presets', 'settings'];
 

@@ -1,8 +1,8 @@
 /* What an import brought in, said once: the mods, the files glued into one, what failed. The
  * buttons over My mods and a drop onto the window (app.js) both end here. */
-import { state } from '../../core/store.js';
-import { render } from '../../core/router.js';
-import { refreshInstalledIndex } from '../../core/installed.js';
+import { state } from '../../core/store.ts';
+import { render } from '../../core/router.ts';
+import { refreshInstalledIndex } from '../../core/installed.ts';
 import { plural } from '../../ui/format.js';
 import { toast } from '../../ui/toast.js';
 

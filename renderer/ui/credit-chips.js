@@ -1,4 +1,4 @@
-/* The people a mod credits, as chips in the mod window. core/credits.js decides who they are;
+/* The people a mod credits, as chips in the mod window. core/credits.ts decides who they are;
  * this draws them and makes the ones with a page open it.
  *
  * The icons are the catalog's own (LINK_ICONS in its constants), so a person reads the same here

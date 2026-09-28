@@ -1,7 +1,7 @@
 /* The search in the title bar, which belongs to the window rather than to a screen: the catalog
  * draws its results wherever it was typed. */
-import { state } from '../core/store.js';
-import { render, switchView, invalidateViews } from '../core/router.js';
+import { state } from '../core/store.ts';
+import { render, switchView, invalidateViews } from '../core/router.ts';
 import { byId } from './dom.ts';
 
 const input = byId<HTMLInputElement>('globalSearch');

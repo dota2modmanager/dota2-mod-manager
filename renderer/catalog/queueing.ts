@@ -1,8 +1,8 @@
 /* Which mods can go in the install list (ui/queue.js), and what the list is told about one. */
 import type { Mod } from './types.ts';
 import { catalogConstants } from './data.ts';
-import { keyOf } from '../core/keys.js';
-import { catName } from '../core/categories.js';
+import { keyOf } from '../core/keys.ts';
+import { catName } from '../core/categories.ts';
 import { previewUrl } from '../ui/media.js';
 import { canBeInstalled } from './mods.ts';
 import { shownStyle } from './looks.ts';

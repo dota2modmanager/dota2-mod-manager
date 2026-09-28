@@ -70,7 +70,7 @@ const EN = {
   // The catalog ships these in English; these are our own words for them. 'Эффекты' and
   // 'Звуки' are already above as category names, with the same English.
   'Иконки': 'Icons', 'Аниме': 'Anime', '18+': '18+',
-  // the 18+ question and its switch (core/adult.js)
+  // the 18+ question and its switch (core/adult.ts)
   'Моды 18+': '18+ mods',
   'Показывать моды 18+?': 'Show 18+ mods?',
   'Спрашиваем один раз, ответ можно поменять в настройках': 'Asked once. You can change the answer in Settings',
@@ -90,7 +90,7 @@ const EN = {
   'Убрать из избранного': 'Remove from favorites',
   'Здесь пусто — жми на сердечко у мода в каталоге': 'Nothing here yet — tap the heart on a mod in the catalog',
   'Превью': 'Preview', 'Источник': 'Source', 'Автор': 'Author', 'Баг': 'Bug', 'Гайд': 'Guide',
-  // who made a mod, in the mod window (core/credits.js)
+  // who made a mod, in the mod window (core/credits.ts)
   'моддер': 'modder', 'отправитель': 'sender',
   'Автор: {0}': 'Author: {0}', 'Моддер: {0}': 'Modder: {0}', 'Отправитель: {0}': 'Sender: {0}',
 

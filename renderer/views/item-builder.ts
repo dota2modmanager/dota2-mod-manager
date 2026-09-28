@@ -16,10 +16,10 @@
  * itself through bindItemBuilder. It keeps what is chosen and works out what each window shows;
  * catalog/builder/ draws it, and catalog/builder/logic.ts holds the rules.
  */
-import { state } from '../core/store.js';
-import { COSMETIC_PREFIX } from '../core/constants.js';
-import { catName } from '../core/categories.js';
-import { pickedIn } from '../core/installed.js';
+import { state } from '../core/store.ts';
+import { COSMETIC_PREFIX } from '../core/constants.ts';
+import { catName } from '../core/categories.ts';
+import { pickedIn } from '../core/installed.ts';
 import { showSlotPicker, showHeroModal } from '../catalog/modal/root.tsx';
 import { byName, effectKey, effectPicture, heroesOf, liveEffects, setIsOn, stagedItemAction, tagLine } from '../catalog/builder/logic.ts';
 import { plural } from '../ui/format.js';

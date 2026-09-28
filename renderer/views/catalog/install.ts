@@ -1,9 +1,9 @@
 /* Putting mods from the catalog into the game: one from its window, a pack, the list the user
  * built. Whatever is on screen says it is busy while a download is in flight (state.ts installing),
  * and the badges follow once it lands. */
-import { state } from '../../core/store.js';
-import { render } from '../../core/router.js';
-import { keyOf, refreshInstalledIndex } from '../../core/installed.js';
+import { state } from '../../core/store.ts';
+import { render } from '../../core/router.ts';
+import { keyOf, refreshInstalledIndex } from '../../core/installed.ts';
 import { toast } from '../../ui/toast.js';
 import { confirmDialog } from '../../ui/dialog.js';
 import { isQueued, dropFromQueue, useInstaller } from '../../ui/queue.js';

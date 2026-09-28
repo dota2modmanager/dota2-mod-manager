@@ -1,7 +1,7 @@
 /* Files dropped anywhere on the window. The file says what to do with it, not the tab that happens to
  * be open: a preset from Discord lands wherever the user is standing, and so do mods. */
-import { state } from '../core/store.js';
-import { switchView } from '../core/router.js';
+import { state } from '../core/store.ts';
+import { switchView } from '../core/router.ts';
 import { toast } from '../ui/toast.js';
 import { handleImportResult } from '../views/library.ts';
 import { handlePresetImport } from '../views/presets.ts';

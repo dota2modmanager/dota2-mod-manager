@@ -4,20 +4,21 @@
  * cosmetics screen asks what currently dresses a slot. All three read the same index, and
  * it is rebuilt from one call rather than each screen fetching its own list.
  */
-import { state } from './store.js';
-import { $ } from './dom.js';
-import { invalidateViews } from './router.js';
-import { keyOf } from './keys.js';
+import { state } from './store.ts';
+import { $ } from './dom.ts';
+import { invalidateViews } from './router.ts';
+import { keyOf } from './keys.ts';
+import type { LibRecord, Match } from '../library/types.ts';
 
 export { keyOf };
 
 // label for a fingerprint match (array of catalog identities that share the content)
-export function matchLabel(matches) {
+export function matchLabel(matches: Match): string {
   return matches.map((m) => m.name + (m.styleLabel ? ` · ${m.styleLabel}` : '')).join(' / ');
 }
 
 // refresh the catalog "installed" lookup + the library tab counter from a list
-export function applyInstalled(installed) {
+export function applyInstalled(installed: LibRecord[]): void {
   state.installedIndex.clear();
   state.cosmeticPicks.clear();
   for (const rec of installed) {
@@ -29,7 +30,7 @@ export function applyInstalled(installed) {
   }
   // tools live in the index so their card knows it has them, but they are not in the Library
   // and must not be counted on its tab
-  $('#libCount').textContent = installed.filter((r) => r.categoryId !== 'tools').length || '';
+  $('#libCount').textContent = String(installed.filter((r) => r.categoryId !== 'tools').length || '');
 
   // Screens that are not on show keep what they built, so somebody has to tell them the
   // folder moved under them - a mod installed from the catalog changes a row in the Library
@@ -44,10 +45,10 @@ export function applyInstalled(installed) {
 }
 
 // what applyInstalled() last saw, so it can tell a real change from a re-read
-let lastInstalledSig = null;
+let lastInstalledSig: string | null = null;
 
 // the record that currently dresses a cosmetic slot, if any
-export function pickedIn(slot) {
+export function pickedIn(slot: string): LibRecord | null {
   return state.cosmeticPicks.get(slot) || null;
 }
 
@@ -55,7 +56,7 @@ export function pickedIn(slot) {
 // folded into refreshInstalledIndex(): the option lists run to a couple hundred KB and
 // most of the app's actions (toggling a regular mod, searching the catalog) never need
 // them, so this is fetched only where a cosmetic pick could actually have changed.
-export async function refreshCosmeticSlots() {
+export async function refreshCosmeticSlots(): Promise<void> {
   const { slots, sets } = await window.api.cosmetics.slots();
   state.cosmeticSlots = slots || [];
   state.cosmeticSets = sets || []; // the item builder's sets, read with the slots they fill
@@ -64,7 +65,7 @@ export async function refreshCosmeticSlots() {
   invalidateViews();
 }
 
-export async function refreshInstalledIndex() {
+export async function refreshInstalledIndex(): Promise<void> {
   const { installed } = await window.api.mods.list();
   applyInstalled(installed);
 }

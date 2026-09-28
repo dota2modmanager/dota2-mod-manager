@@ -3,7 +3,7 @@
  * mod the catalog does not have; a file carries anything, and can run to hundreds of megabytes.
  * The second is the file's pre-flight: what travels as a catalog reference and what as bytes, so
  * a 190 MB file is a choice and not a surprise. */
-import { state } from '../../core/store.js';
+import { state } from '../../core/store.ts';
 import { esc, fmtMB, plural } from '../../ui/format.js';
 
 interface ShareEntry { kind: string; key: string; name: string; size: number; members?: ShareEntry[] }

@@ -9,8 +9,8 @@
  *
  * The one import from another screen is loadCatalog, for the button that fetches the catalog
  * again. It asks the catalog for its data, not for a drawing, so the router is not what it wants. */
-import { state } from '../core/store.js';
-import { registerView, invalidateViews } from '../core/router.js';
+import { state } from '../core/store.ts';
+import { registerView, invalidateViews } from '../core/router.ts';
 import { fmtMB } from '../ui/format.js';
 import { toast } from '../ui/toast.js';
 import { showWhatsNew } from '../ui/dialog.js';
@@ -18,7 +18,7 @@ import { refreshSidebarStatus } from '../ui/statusbar.js';
 import { clampScale, currentScalePct, paintScale, applyScalePct, clampPanelZoom, paintPanels, savePanels } from '../ui/chrome.js';
 import { applyLanguage } from '../ui/language.js';
 import { paint } from '../ui/transitions.js';
-import { adultShown, adultHint, setAdultShown } from '../core/adult.js';
+import { adultShown, adultHint, setAdultShown } from '../core/adult.ts';
 import { loadCatalog } from './catalog.ts';
 import { showSettings, type SettingsActions, type SettingsModel } from '../settings/SettingsScreen.tsx';
 

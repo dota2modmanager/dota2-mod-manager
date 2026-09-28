@@ -4,9 +4,9 @@
  * live beside it in views/library/: the state (state.ts), the model (build.ts, rows.ts), what the
  * screen can ask for (actions.ts), what a row's menu does (record-actions.ts), the foreign files
  * (external.ts) and imports (import.ts). */
-import { state } from '../core/store.js';
-import { registerView } from '../core/router.js';
-import { applyInstalled, refreshInstalledIndex } from '../core/installed.js';
+import { state } from '../core/store.ts';
+import { registerView } from '../core/router.ts';
+import { applyInstalled, refreshInstalledIndex } from '../core/installed.ts';
 import { refreshPatchState, paintMasterSwitch } from '../ui/statusbar.js';
 import { paint } from '../ui/transitions.js';
 import { refreshNotices } from '../ui/notice.js';

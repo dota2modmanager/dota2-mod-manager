@@ -1,8 +1,8 @@
 /* The whole of My mods as library/LibraryScreen.tsx draws it, worked out from what was last read
  * from main (state.ts) and the store's settings and patch state. */
-import { state } from '../../core/store.js';
-import { isCosmeticRec } from '../../core/records.js';
-import { minifyNotice } from '../../core/minify-notice.js';
+import { state } from '../../core/store.ts';
+import { isCosmeticRec } from '../../core/records.ts';
+import { minifyNotice } from '../../core/minify-notice.ts';
 import { plural } from '../../ui/format.js';
 import { noticeBannerHtml } from '../../ui/notice.js';
 import { listParts } from '../../library/order.ts';

@@ -4,12 +4,12 @@
  * the game's own schema, and whatever the catalog's translation file adds. Screens should
  * not have to know which of the three a given id came from.
  */
-import { state } from './store.js';
-import { CAT_RU, CAT_ICON, COSMETIC_PREFIX, cosmeticMeta } from './constants.js';
+import { state } from './store.ts';
+import { CAT_RU, CAT_ICON, COSMETIC_PREFIX, cosmeticMeta } from './constants.ts';
 
-const cosmeticSlot = (slot) => (state.cosmeticSlots || []).find((s) => s.slot === slot) || null;
+const cosmeticSlot = (slot: string) => (state.cosmeticSlots || []).find((s) => s.slot === slot) || null;
 
-export function catName(id) {
+export function catName(id: string): string {
   if (id === 'all') return tr('Все категории');
   if (id.startsWith(COSMETIC_PREFIX)) {
     const slot = id.slice(COSMETIC_PREFIX.length);
@@ -18,7 +18,7 @@ export function catName(id) {
   return tr(CAT_RU[id]) || state.catalog?.constants?.translations?.[id] || id;
 }
 
-export function catIcon(id) {
+export function catIcon(id: string): string {
   if (id.startsWith(COSMETIC_PREFIX)) {
     const slot = id.slice(COSMETIC_PREFIX.length);
     return cosmeticSlot(slot)?.icon || cosmeticMeta(slot).icon;

@@ -5,12 +5,12 @@
  * (lists.ts), the screens (screens.ts), the overlay its windows share (overlay.ts), a mod's window
  * (mod-window.ts), installing (install.ts) and the free looks (cosmetics.ts). What they draw with
  * is catalog/, in React. */
-import { $ } from '../core/dom.js';
-import { COSMETIC_PREFIX, RAIL_SECTIONS, freshFilters } from '../core/constants.js';
-import { state } from '../core/store.js';
-import { registerView } from '../core/router.js';
-import { pickedIn } from '../core/installed.js';
-import { catName, catIcon } from '../core/categories.js';
+import { $ } from '../core/dom.ts';
+import { COSMETIC_PREFIX, RAIL_SECTIONS, freshFilters } from '../core/constants.ts';
+import { state } from '../core/store.ts';
+import { registerView } from '../core/router.ts';
+import { pickedIn } from '../core/installed.ts';
+import { catName, catIcon } from '../core/categories.ts';
 import { toast } from '../ui/toast.js';
 import { paint } from '../ui/transitions.js';
 import { refreshSidebarStatus } from '../ui/statusbar.js';

@@ -16,11 +16,11 @@ import './shell/drop.ts';
 import './shell/progress.ts';
 import './shell/updates.ts';
 import './views/settings.ts';
-import { state } from './core/store.js';
-import { render, invalidateViews } from './core/router.js';
-import { refreshInstalledIndex, refreshCosmeticSlots } from './core/installed.js';
-import { switchOffStaleTerrains } from './core/terrain-age.js';
-import { askAdultOnce } from './core/adult.js';
+import { state } from './core/store.ts';
+import { render, invalidateViews } from './core/router.ts';
+import { refreshInstalledIndex, refreshCosmeticSlots } from './core/installed.ts';
+import { switchOffStaleTerrains } from './core/terrain-age.ts';
+import { askAdultOnce } from './core/adult.ts';
 import { toast } from './ui/toast.js';
 import { showWhatsNew, toolchainDialog } from './ui/dialog.js';
 import { watchMedia } from './ui/media.js';
@@ -90,7 +90,7 @@ async function offerToolchain(): Promise<void> {
   if (!cfg.langPromptSeen) await showLanguagePicker();
 
   // mods the catalog tags adult stay hidden until the user says they are 18 and wants them: asked
-  // once, in the language just chosen, and only when the catalog has any (core/adult.js)
+  // once, in the language just chosen, and only when the catalog has any (core/adult.ts)
   if (await askAdultOnce()) {
     invalidateViews();
     render();

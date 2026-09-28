@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const { readMinify: read, MINIFY_FOLDER, MINIFY_BORROWED } = require('../src/minify.js');
 const { DOTA_LANGUAGES } = require('../src/gamelang.js');
 
-const load = () => import('../renderer/core/minify-notice.js');
+const load = () => import('../renderer/core/minify-notice.ts');
 // never the Minify installed on the machine running the tests
 const readMinify = (p) => read({ config: null, gameLanguages: DOTA_LANGUAGES, ...p });
 const folder = (suffix, modFiles = 0, official = false) => ({ suffix, official, valveContent: false, modFiles });

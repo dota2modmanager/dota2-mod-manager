@@ -1,7 +1,7 @@
 /* The title bar: the window's own buttons, the section tabs, help and the hotkeys, the mods folder,
  * and the Discord account chip. */
-import { state } from '../core/store.js';
-import { switchView } from '../core/router.js';
+import { state } from '../core/store.ts';
+import { switchView } from '../core/router.ts';
 import { esc } from '../ui/format.js';
 import { toast } from '../ui/toast.js';
 import { confirmDialog } from '../ui/dialog.js';
@@ -22,7 +22,7 @@ byId('winClose').addEventListener('click', () => window.api.win.close());
 window.api.win.onMaximized(paintMaximized);
 
 document.querySelectorAll<HTMLElement>('.tb-tab').forEach((btn) => {
-  btn.addEventListener('click', () => switchView(btn.dataset.view));
+  btn.addEventListener('click', () => { if (btn.dataset.view) switchView(btn.dataset.view); });
 });
 
 bindHelp();

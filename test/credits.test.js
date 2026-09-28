@@ -8,7 +8,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const load = () => import('../renderer/core/credits.js');
+const load = () => import('../renderer/core/credits.ts');
 const CONSTANTS = {
   MOD_AUTHOR: { Darkness: 'https://t.me/Darkness_Logovo', apathydxd: 'https://discord.com/users/538760177470668810' },
   MOD_SENDER: { papapodzaborniy: 'https://example.org/papa' },

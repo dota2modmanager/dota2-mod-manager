@@ -9,9 +9,9 @@
  * The shell drives this from Ctrl + wheel and the panel grips; Settings drives the same
  * values from its sliders. That is why it lives apart from either.
  */
-import { $ } from '../core/dom.js';
-import { state } from '../core/store.js';
-import { PANEL_DEFAULTS, PANEL_LIMITS, PANEL_ZOOM_LIMITS } from '../core/constants.js';
+import { $ } from '../core/dom.ts';
+import { state } from '../core/store.ts';
+import { PANEL_DEFAULTS, PANEL_LIMITS, PANEL_ZOOM_LIMITS } from '../core/constants.ts';
 
 // Scale of the content — the catalog, the library, the settings — in percent. It is CSS zoom
 // on the content itself, deliberately not a window zoom: the panels have their own scale, and

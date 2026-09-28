@@ -76,7 +76,7 @@ export interface CosmeticSet {
   pieces: SetPiece[];
 }
 
-/** What the toolbar above a grid narrows by (core/constants.js FILTER_DEFAULTS). */
+/** What the toolbar above a grid narrows by (core/constants.ts FILTER_DEFAULTS). */
 export interface Filters {
   sort: string;
   tags: Set<string>;

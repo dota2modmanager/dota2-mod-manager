@@ -5,8 +5,8 @@
  * mod with no picture is a card the eye slides off, so the fallbacks are worth the code.
  *
  * Shared by the catalog and the library, which is why it lives here rather than in either. */
-import { state } from '../core/store.js';
-import { isCursorRec } from '../core/records.js';
+import { state } from '../core/store.ts';
+import { isCursorRec } from '../core/records.ts';
 import { esc } from './format.js';
 import { previewUrl, isVideo } from './media.js';
 import { cosmeticIcon, cosmeticIconKnown } from './cosmetic-icons.js';

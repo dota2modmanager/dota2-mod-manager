@@ -7,8 +7,8 @@
  * The language of this app has nothing to do with Dota's own, nor with which mods folder is
  * used: that follows the game's audio language (see src/gamelang.js).
  */
-import { state } from '../core/store.js';
-import { render } from '../core/router.js';
+import { state } from '../core/store.ts';
+import { render } from '../core/router.ts';
 import { paintMasterSwitch, paintSafeModeSwitch, refreshSidebarStatus } from './statusbar.js';
 import { paintPanels, syncNavOverflow } from './chrome.js';
 

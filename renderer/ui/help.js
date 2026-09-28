@@ -7,9 +7,9 @@
  * The wiki is written in both languages, so the link carries the one the user is already
  * reading in rather than dropping an English page on a Russian window.
  */
-import { $ } from '../core/dom.js';
-import { state } from '../core/store.js';
-import { HELP_LINKS } from '../core/constants.js';
+import { $ } from '../core/dom.ts';
+import { state } from '../core/store.ts';
+import { HELP_LINKS } from '../core/constants.ts';
 
 const newsUrl = (re) => (state.catalog?.mods?.modsData?.news || [])
   .map((n) => n.url)

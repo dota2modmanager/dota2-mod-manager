@@ -4,7 +4,7 @@
  * Dota mounts one language folder: the one the voice language names, or whatever `-language` in
  * Steam's launch options says. Minify is a neighbour to be exact about, never guessed at: each of
  * its cases says only what is known and the fix that belongs to it (src/minify.js,
- * core/minify-notice.js). And after a Dota patch: done, waiting for the game to close, or failed. */
+ * core/minify-notice.ts). And after a Dota patch: done, waiting for the game to close, or failed. */
 import { useState } from 'react';
 import { plural } from '../ui/format.js';
 import type { BannersModel, LibraryActions } from './model.ts';
