@@ -18,12 +18,15 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const RENDERER = path.join(ROOT, 'renderer');
 
-/** Every .js file under renderer/, as absolute paths. */
+/* Every module under renderer/, as absolute paths: the plain modules and, since the window moved to
+ * TypeScript, the .ts and .tsx ones, which import the plain modules and are imported by them.
+ * TypeScript checks its own files' imports as well; what it does not check is a .js file importing
+ * one, which is the half this reads. */
 function rendererFiles(dir = RENDERER, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
-    if (e.isDirectory()) rendererFiles(p, out);
-    else if (e.name.endsWith('.js')) out.push(p);
+    if (e.isDirectory()) { if (e.name !== 'public') rendererFiles(p, out); }
+    else if (/\.(js|ts|tsx)$/.test(e.name)) out.push(p);
   }
   return out;
 }
@@ -82,7 +85,8 @@ test('every name the renderer imports is a name the other file exports', () => {
       if (have.has('*')) continue; // re-exports: this check cannot follow them
       for (const part of m[1].split(',')) {
         const t = part.trim();
-        if (!t) continue;
+        // a type is gone by the time the browser loads the file, and TypeScript checks it
+        if (!t || t.startsWith('type ')) continue;
         checked++;
         const name = t.split(/\s+as\s+/)[0].trim();
         if (!have.has(name)) missing.push(`${rel(file)} imports ${name} from ${m[2]}, which does not export it`);

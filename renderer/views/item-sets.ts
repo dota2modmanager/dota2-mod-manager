@@ -1,6 +1,6 @@
 /* The item builder's sets: a hero's list of them, and one set, every piece of it put on in one
  * write (src/item-builder.js itemSets). The windows are catalog/builder/SetsModal.tsx; the rest
- * of the builder is views/item-builder.js.
+ * of the builder is views/item-builder.ts.
  *
  * Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
  * (https://github.com/TheFleece).
@@ -17,16 +17,22 @@ import { plural } from '../ui/format.js';
 import { toast } from '../ui/toast.js';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.js';
 import { closeOverlay } from './catalog/overlay.ts';
-import { afterPick, heroSets, isOpen, openItemHeroModal, openItemSlotModal, openWindow } from './item-builder.js';
+import { afterPick, heroSets, isOpen, openItemHeroModal, openItemSlotModal, openWindow } from './item-builder.ts';
+import type { CosmeticSet } from '../catalog/types.ts';
+import type { BuilderAction } from '../catalog/builder/model.ts';
+
+/** A hero's sets on show, with what was typed into their search, kept for the way back from a set. */
+interface SetsState { heroName: string; query: string }
+interface SetState { set: CosmeticSet; back: SetsState; busy: boolean }
 
 /** A hero's sets; query: what was typed into their search, kept for the way back from a set. */
-export function openSets(heroName, query = '') {
-  const st = { heroName, query };
+export function openSets(heroName: string, query = ''): void {
+  const st: SetsState = { heroName, query };
   openWindow(null, true, (key) => drawSets(key, st));
   loadCosmeticIcons(heroSets(heroName).slice(0, 36).map((s) => s.name), () => {}).catch(() => {});
 }
 
-function drawSets(key, st) {
+function drawSets(key: number, st: SetsState): void {
   const sets = heroSets(st.heroName);
   showSetsModal(key, {
     hero: st.heroName,
@@ -48,15 +54,15 @@ function drawSets(key, st) {
 }
 
 /** One set. back: the list it was opened from, with its search. */
-function openSet(set, back) {
-  const st = { set, back, busy: false };
+function openSet(set: CosmeticSet, back: SetsState): void {
+  const st: SetState = { set, back, busy: false };
   openWindow(null, true, (key) => drawSet(key, st));
   loadCosmeticIcons(set.pieces.map((p) => p.name), () => {}).catch(() => {});
 }
 
 // A piece opens its slot's window with it chosen: a set brings no effects, and that is where they
 // go on. The search there has the piece typed in, so its one card sits right above the effects.
-function drawSet(key, st) {
+function drawSet(key: number, st: SetState): void {
   const { set } = st;
   const count = setCount(set);
   showSetModal(key, {
@@ -65,7 +71,7 @@ function drawSet(key, st) {
     count,
     pieces: set.pieces.map((p, index) => {
       const on = p.fits && pickedIn(p.slot)?.itemId === p.itemId;
-      return { index, name: p.name, fits: p.fits, on, meta: !p.fits ? p.reason : on ? `${p.slotLabel} · ${L`Надето`}` : p.slotLabel };
+      return { index, name: p.name, fits: p.fits, on, meta: !p.fits ? p.reason || '' : on ? `${p.slotLabel} · ${L`Надето`}` : p.slotLabel || '' };
     }),
     action: setAction(st),
   }, {
@@ -79,22 +85,22 @@ function drawSet(key, st) {
   });
 }
 
-const setAction = (st) => (st.busy ? { label: L`Надеваю…`, icon: 'hourglass_top', off: true }
+const setAction = (st: SetState): BuilderAction => (st.busy ? { label: L`Надеваю…`, icon: 'hourglass_top', off: true }
   : setIsOn(st.set, pickedIn) ? { label: L`Надето`, icon: 'check', off: true } : { label: L`Надеть весь набор`, icon: 'checkroom' });
 
-async function applySet(key, st) {
+async function applySet(key: number, st: SetState): Promise<void> {
   if (setAction(st).off) return;
   st.busy = true;
   drawSet(key, st);
-  let r;
+  let r: { error?: string; applied?: number; pieces?: number };
   try {
     r = await window.api.cosmetics.pickSet(st.set.id);
   } catch (err) {
-    r = { error: String(err?.message || err) };
+    r = { error: String((err as Error)?.message || err) };
   }
   st.busy = false;
   if (r.error) toast(r.error, 'error');
-  else toast(r.applied === r.pieces ? L`Надето: ${st.set.name}` : L`Надето ${r.applied} из ${r.pieces} ${plural(r.pieces, 'детали', 'деталей', 'деталей')}`);
+  else toast(r.applied === r.pieces ? L`Надето: ${st.set.name}` : L`Надето ${r.applied} из ${r.pieces} ${plural(r.pieces || 0, 'детали', 'деталей', 'деталей')}`);
   if (!r.error) await afterPick();
   if (isOpen(key)) drawSet(key, st);
 }

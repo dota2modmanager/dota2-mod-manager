@@ -15,8 +15,9 @@ import { toast } from '../ui/toast.js';
 import { paint } from '../ui/transitions.js';
 import { refreshSidebarStatus } from '../ui/statusbar.js';
 import { refreshNotices, noticeBannerHtml, bindNotice } from '../ui/notice.js';
-import { bindItemBuilder, itemRailEntry, openItemHeroModal } from './item-builder.js';
-import { setHeroLayout } from './hero-grid.js';
+import { bindItemBuilder, openItemHeroModal } from './item-builder.ts';
+import { itemRailEntry } from './item-hub.ts';
+import { setHeroLayout } from './hero-grid.ts';
 import { showScreen } from '../catalog/screen/root.tsx';
 import type { ScreenActions } from '../catalog/screen/model.ts';
 import { renderRail as drawRail, type RailModel } from '../catalog/rail/Rail.tsx';
@@ -233,5 +234,5 @@ export async function loadCatalog(force = false): Promise<void> {
 screen.redraw = renderCatalog;
 screen.rail = renderRail;
 screen.favChanged = actions.favChanged;
-// The item builder lives in views/item-builder.js and reaches the catalog only through this.
-bindItemBuilder({ pickCosmetic, afterPick: afterCosmeticPick });
+// The item builder lives in views/item-builder.ts and reaches the catalog only through this.
+bindItemBuilder({ pickCosmetic, afterPick: afterCosmeticPick, actions });

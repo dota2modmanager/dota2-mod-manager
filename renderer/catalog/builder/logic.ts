@@ -1,4 +1,4 @@
-/* The item builder's rules, out of its screen (views/item-builder.js): what the one button does
+/* The item builder's rules, out of its screen (views/item-builder.ts): what the one button does
  * with what is chosen, which heroes and sets a search leaves, and what a hero's card says. What a
  * pick does to the game is src/item-builder.js. */
 import { plural } from '../../ui/format.js';

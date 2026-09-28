@@ -150,7 +150,7 @@ async function openSection(sim, view) {
 
 /**
  * Heroes as the list of every hero mod, the biggest list there is. The category opens on a grid
- * of heroes, one tile each (renderer/views/hero-grid.js), and remembers the switch; this presses
+ * of heroes, one tile each (renderer/views/hero-grid.ts), and remembers the switch; this presses
  * "all mods as a list" when the grid is up, after checking the grid came up with its heroes.
  * @returns {Promise<number|null>} how many cards the list shows, null when it never did
  */

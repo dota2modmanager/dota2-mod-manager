@@ -1,4 +1,4 @@
-/* What the item builder's windows show, worked out by views/item-builder.js (which keeps what is
+/* What the item builder's windows show, worked out by views/item-builder.ts (which keeps what is
  * chosen, what is on and what the button does) and drawn by the components beside this file. */
 
 /** The one button along a builder window's bottom, and what it will put on. */

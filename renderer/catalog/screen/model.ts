@@ -72,7 +72,7 @@ export type ScreenModel =
     items: CosmeticItem[];
   }
   | {
-    /** the item builder's heroes (views/item-builder.js) */
+    /** the item builder's heroes (views/item-builder.ts) */
     kind: 'builder';
     title: string;
     search: string;

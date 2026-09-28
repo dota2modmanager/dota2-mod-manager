@@ -6,7 +6,6 @@
     "main.js": 1129,
     "renderer/app.js": 426,
     "renderer/i18n.js": 787,
-    "renderer/views/item-builder.js": 284,
     "src/diagnostics.js": 405,
     "src/gamelang.js": 462,
     "src/icons.js": 486,

@@ -7,7 +7,7 @@ import { COSMETIC_PREFIX, CATALOG_EXCLUDE, TOOLS_HIDDEN } from '../../core/const
 import { state } from '../../core/store.js';
 import { pickedIn } from '../../core/installed.js';
 import { shownMods, isAdult, adultShown } from '../../core/adult.js';
-import { heroMatches } from '../hero-grid.js';
+import { heroMatches } from '../hero-grid.ts';
 import { modsOf, isGrouped, modIndexOf, type CustomPack } from '../../catalog/mods.ts';
 import { tagLabel as labelOfTag, collectSlots as slotsOf } from '../../catalog/tags.ts';
 import { applyFilters as filterMods, sortMods } from '../../catalog/filters.ts';
@@ -100,7 +100,7 @@ export function slotData(slot: string): CosmeticSlot | null {
   return cosmeticSlotList().find((s) => s.slot === slot) || null;
 }
 
-/** A hero's item, which the item builder (views/item-builder.js) puts on rather than a slot of its own. */
+/** A hero's item, which the item builder (views/item-builder.ts) puts on rather than a slot of its own. */
 export function isItemCosmeticSlot(slot: string): boolean {
   const s = String(slot || '');
   return slotData(s)?.kind === 'item-effect' || s === 'items' || s.startsWith('item:');

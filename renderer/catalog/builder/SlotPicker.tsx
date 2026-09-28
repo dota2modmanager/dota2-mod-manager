@@ -1,5 +1,5 @@
 /* One slot of a hero: its wearables to choose from, the effects to put on top, and the button that
- * puts the choice on. Nothing reaches the game until it is pressed (views/item-builder.js,
+ * puts the choice on. Nothing reaches the game until it is pressed (views/item-builder.ts,
  * stagedItemAction): a pick used to be written on every click. The card the border marks is the
  * one chosen here; "Надето" is said only of what the game shows. */
 import { useRef, type CSSProperties } from 'react';

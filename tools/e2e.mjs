@@ -144,7 +144,7 @@ export const EVAL_INSTALL = `
   ${HELPERS}
   await sleep(1000);
   if (!step('no dialog stands in front of the catalog', !dialogs().length, dialogs().join(' | '))) return out;
-  // Heroes opens on a grid of heroes (renderer/views/hero-grid.js): the mod is behind its hero
+  // Heroes opens on a grid of heroes (renderer/views/hero-grid.ts): the mod is behind its hero
   const tile = await until(() => document.querySelector('.hero-tile[data-hero=' + JSON.stringify(${JSON.stringify(MOD.hero)}) + ']'), 20000);
   if (!step('its hero is on the heroes grid', tile, 'tiles on screen: ' + document.querySelectorAll('.hero-tile').length)) return out;
   tile.click();

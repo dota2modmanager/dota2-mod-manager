@@ -16,83 +16,98 @@
  * itself through bindItemBuilder. It keeps what is chosen and works out what each window shows;
  * catalog/builder/ draws it, and catalog/builder/logic.ts holds the rules.
  */
-import { $ } from '../core/dom.js';
 import { state } from '../core/store.js';
 import { COSMETIC_PREFIX } from '../core/constants.js';
-import { catName, catIcon } from '../core/categories.js';
-import { pickedIn, refreshCosmeticSlots } from '../core/installed.js';
-import { showScreen } from '../catalog/screen/root.tsx';
+import { catName } from '../core/categories.js';
+import { pickedIn } from '../core/installed.js';
 import { showSlotPicker, showHeroModal } from '../catalog/modal/root.tsx';
-import { byName, effectKey, effectPicture, heroCardMeta, heroesOf, liveEffects, setIsOn, stagedItemAction,
-  tagLine } from '../catalog/builder/logic.ts';
+import { byName, effectKey, effectPicture, heroesOf, liveEffects, setIsOn, stagedItemAction, tagLine } from '../catalog/builder/logic.ts';
 import { plural } from '../ui/format.js';
-import { paint } from '../ui/transitions.js';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.js';
 import { cosmeticSlotList, slotData } from './catalog/lists.ts';
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './catalog/overlay.ts';
-import { view } from './catalog/state.ts';
-import { openSets } from './item-sets.js';
+import { openSets } from './item-sets.ts';
+import type { CosmeticOption, CosmeticSet, CosmeticSlot } from '../catalog/types.ts';
+import type { ScreenActions } from '../catalog/screen/model.ts';
 
-/** The pick itself, from views/catalog/cosmetics.ts; set once by bindItemBuilder before anything here runs. */
-let cat = null;
+/** What the catalog hands over, once, before anything here runs (views/catalog.ts). */
+interface BuilderCtx {
+  /** the pick itself (views/catalog/cosmetics.ts) */
+  pickCosmetic: (slot: string, o: CosmeticOption, remove: boolean, effectId?: string) => Promise<void>;
+  afterPick: () => Promise<void>;
+  /** what the catalog's screen can ask for: the hub keeps all of it but its own filter */
+  actions: ScreenActions;
+}
+let cat: BuilderCtx | null = null;
 
-/** @param {{ pickCosmetic: Function, afterPick: () => Promise<void> }} ctx */
-export function bindItemBuilder(ctx) {
+export function bindItemBuilder(ctx: BuilderCtx): void {
   cat = ctx;
 }
 
+const panel = () => document.getElementById('modalContent') as HTMLElement;
+
 const HUB = COSMETIC_PREFIX + 'items';
 
-function itemCosmeticSlots() {
+export function itemCosmeticSlots(): CosmeticSlot[] {
   return cosmeticSlotList().filter((s) => s.kind === 'item-effect' || String(s.slot || '').startsWith('item:'));
 }
 
-export const heroSets = (heroName) => (state.cosmeticSets || []).filter((s) => s.heroLabel === heroName);
+export const heroSets = (heroName: string): CosmeticSet[] => (state.cosmeticSets || []).filter((s) => s.heroLabel === heroName);
 
 /* One builder window on show at a time. Each open counts up: the count is the window's key, so
  * opening draws it fresh (its cards play their entrance) and a change inside it updates in place. */
 let opened = 0;
-let redrawOpen = null;
+let redrawOpen: (() => void) | null = null;
 
 /** Put a builder window on the overlay. wide: a picker, the wide one; the hero's own window is not. */
-export function openWindow(from, wide, draw) {
+export function openWindow(from: Element | null, wide: boolean, draw: (key: number) => void): void {
   takeOverlay(); // this lets go of the builder's own window too, so the key comes after
   const key = ++opened;
   redrawOpen = () => { if (isOpen(key)) draw(key); };
   openOverlay(() => {
-    $('#modalContent').classList.toggle('item-picker-modal', wide);
+    panel().classList.toggle('item-picker-modal', wide);
     draw(key);
   }, from);
 }
 
 /** Still the window on show: a pick that took a while may come back to a closed or different one. */
-export const isOpen = (key) => opened === key;
+export const isOpen = (key: number): boolean => opened === key;
 
-/** The pick itself, for the set windows (views/item-sets.js). */
-export const afterPick = () => cat.afterPick();
+/** The pick itself, for the set windows (views/item-sets.ts). */
+export const afterPick = (): Promise<void> => (cat ? cat.afterPick() : Promise.resolve());
+
+/** What the catalog's screen can ask for, for the hub (views/item-hub.ts). */
+export const catalogActions = (): ScreenActions => (cat as BuilderCtx).actions;
 
 // ---------- a slot: its wearables, the effects on top, and the button that puts them on ----------
 
+/** The window a slot's picker was opened from (a hero, a set), which its header leads back to. */
+interface Back {
+  label: string;
+  go: () => void;
+  /** that window is the hero's, so the button names the hero and the title need not */
+  hero?: boolean;
+}
+
+interface SlotState { slot: string; selectedId: string; effectIds: string[]; query: string; back: Back | null; busy: boolean }
+
 /**
- * @param {string} slot
- * @param {Element|null} from  the card it grows out of
- * @param {{ query?: string, select?: string, back?: { label: string, go: () => void, hero?: boolean } }} [opts]
- *   query: typed into the search, for a card found by the catalog's search or in favourites;
- *   select: the item chosen when it opens, for a piece opened from its set; the one on otherwise;
- *   back: the window it was opened from (a hero, a set), which the header then leads back to;
- *   hero: that window is the hero's, so the button names the hero and the title need not
+ * @param from  the card it grows out of
+ * @param opts.query  typed into the search, for a card found by the catalog's search or in favourites
+ * @param opts.select  the item chosen when it opens, for a piece opened from its set; the one on otherwise
  */
-export function openItemSlotModal(slot, from, { query = '', select = '', back = null } = {}) {
+export function openItemSlotModal(slot: string, from: Element | null,
+  { query = '', select = '', back = null }: { query?: string; select?: string; back?: Back | null } = {}): void {
   const data = slotData(slot);
   if (!data) return;
   const live = pickedIn(slot);
   const selectedId = select || live?.itemId || '';
-  const st = { slot, selectedId, effectIds: live?.itemId === selectedId ? liveEffects(live) : [], query, back, busy: false };
+  const st: SlotState = { slot, selectedId, effectIds: live?.itemId === selectedId ? liveEffects(live) : [], query, back, busy: false };
   openWindow(from, true, (key) => drawSlot(key, st));
   loadCosmeticIcons(data.options.slice(0, 36).map((o) => o.name).filter(Boolean), () => {}).catch(() => {});
 }
 
-function drawSlot(key, st) {
+function drawSlot(key: number, st: SlotState): void {
   const data = slotData(st.slot);
   if (!data) return;
   const live = pickedIn(st.slot);
@@ -122,7 +137,7 @@ function drawSlot(key, st) {
     summary: { name: chosen ? chosen.name : L`Стандартный`, effects: chosen && names.length ? names.join(', ') : '' },
     action: stagedItemAction(data.effects, live, st),
   }, {
-    back: () => st.back.go(),
+    back: () => st.back?.go(),
     close: closeOverlay,
     search: (q) => { st.query = q; again(); },
     choose: (id) => {
@@ -140,14 +155,17 @@ function drawSlot(key, st) {
   });
 }
 
-async function applySlot(key, st, chosen) {
+async function applySlot(key: number, st: SlotState, chosen: CosmeticOption | null | undefined): Promise<void> {
   const data = slotData(st.slot);
+  if (!data || !cat) return;
   const act = stagedItemAction(data.effects, pickedIn(st.slot), st);
-  if (act.off || (!act.remove && !chosen)) return;
+  // taking a pick off puts the stock item back, which has no id of its own
+  const look = act.remove ? { id: '', name: L`Стандартный` } : chosen;
+  if (act.off || !look) return;
   st.busy = true;
   drawSlot(key, st);
   try {
-    await cat.pickCosmetic(st.slot, act.remove ? { id: '', name: L`Стандартный` } : chosen, !!act.remove, effectKey(data.effects, st.effectIds));
+    await cat.pickCosmetic(st.slot, look, !!act.remove, effectKey(data.effects, st.effectIds));
   } finally {
     st.busy = false;
     if (isOpen(key)) drawSlot(key, st);
@@ -156,7 +174,9 @@ async function applySlot(key, st, chosen) {
 
 // ---------- a hero: its sets as one tile, then a tile per item slot ----------
 
-export function openItemHeroModal(heroName, from) {
+const heroSlots = (hero: string): CosmeticSlot[] => heroesOf(itemCosmeticSlots()).find(([h]) => h === hero)?.[1] || [];
+
+export function openItemHeroModal(heroName: string, from: Element | null): void {
   const slots = heroSlots(heroName);
   openWindow(from, false, (key) => drawHero(key, heroName, slots));
   const sets = heroSets(heroName);
@@ -164,7 +184,7 @@ export function openItemHeroModal(heroName, from) {
     .catch(() => {});
 }
 
-function drawHero(key, heroName, slots) {
+function drawHero(key: number, heroName: string, slots: CosmeticSlot[]): void {
   const sets = heroSets(heroName);
   const shown = sets.find((s) => setIsOn(s, pickedIn)) || sets[0];
   showHeroModal(key, {
@@ -174,7 +194,7 @@ function drawHero(key, heroName, slots) {
       const live = pickedIn(s.slot);
       return {
         slot: s.slot,
-        label: s.slotLabel || s.label,
+        label: s.slotLabel || s.label || '',
         icon: s.icon || 'checkroom',
         liveName: live?.name || null,
         meta: live ? live.name : `${s.options.length} ${plural(s.options.length, 'вариант', 'варианта', 'вариантов')}`,
@@ -189,96 +209,15 @@ function drawHero(key, heroName, slots) {
   });
 }
 
-// ---------- the hub: every hero the game's own table lets the builder dress ----------
-
-const heroSlots = (hero) => heroesOf(itemCosmeticSlots()).find(([h]) => h === hero)?.[1] || [];
-
-const hubActions = {
-  cosmeticFilter: ({ search, installedOnly }) => {
-    if (search !== undefined) view.cosSearch = search;
-    if (installedOnly !== undefined) view.filters.installedOnly = installedOnly;
-    drawHub();
-  },
-  openHero: (hero, card) => openItemHeroModal(hero, card),
-};
-
-function hubModel() {
-  const f = view.filters;
-  const q = view.cosSearch.trim().toLowerCase();
-  const shown = heroesOf(itemCosmeticSlots()).filter(([hero, slots]) =>
-    (!q || hero.toLowerCase().includes(q)) && (!f.installedOnly || slots.some((s) => pickedIn(s.slot))));
-  return {
-    kind: 'builder',
-    title: catName(HUB),
-    search: view.cosSearch,
-    installedOnly: f.installedOnly,
-    count: (view.cosSearch || f.installedOnly) ? `${shown.length} ${plural(shown.length, 'герой', 'героя', 'героев')}` : '',
-    heroes: shown.map(([hero, slots]) => ({
-      hero,
-      icon: heroPortraits.get(hero) || null,
-      installed: slots.some((s) => pickedIn(s.slot)),
-      meta: heroCardMeta(slots, heroSets(hero), pickedIn),
-    })),
-  };
-}
-
-const drawHub = () => showScreen(hubModel(), hubActions);
-
-const hubNote = (note) => paint(() => showScreen(
-  { kind: 'list', key: 'cos:items:note', title: catName(HUB), toolbar: null, note, mods: null, cosmetics: null }, hubActions));
-
-export async function renderItemCosmeticHub() {
-  // said only while there is something to wait for: the game's schema, or the portraits the first time
-  const waiting = !state.cosmeticSlots || heroesOf(itemCosmeticSlots()).some(([hero]) => !heroPortraits.has(hero));
-  if (waiting) await hubNote(L`Читаем схему игры…`);
-  if (!state.cosmeticSlots) await refreshCosmeticSlots();
-  const list = heroesOf(itemCosmeticSlots());
-  await loadHeroPortraits(list);
-  if (state.activeCategory !== HUB) return; // moved on while reading
-  if (!list.length) return hubNote(L`Схема игры не прочиталась — проверь путь к Dota 2 в настройках.`);
-  view.filters.favOnly = false;
-  await paint(drawHub);
-}
-
-// A hero's portrait, read out of the installed game (src/game-icons.js heroPortraits): the game
-// keeps them as plain PNG, so this needs no toolchain and no network. Keyed by the label the hub
-// shows. They used to ship inside the app, 132 of Valve's pictures in a GPL repository.
-const heroPortraits = new Map();
-
-async function loadHeroPortraits(heroes) {
-  const want = new Map(); // hero id -> the labels that show it
-  for (const [label, slots] of heroes) {
-    const id = slots[0]?.heroIds?.[0];
-    if (id && !heroPortraits.has(label)) want.set(id, [...(want.get(id) || []), label]);
-  }
-  if (!want.size) return;
-  let got = {};
-  try { got = await window.api.cosmetics.heroPortraits([...want.keys()]); } catch { /* no game: glyphs */ }
-  for (const [id, labels] of want) for (const label of labels) heroPortraits.set(label, got[id] || null);
-}
-
 /** Let go of an open builder window: another window is taking the overlay, or it closed. */
 function forgetItemSlotModal() {
   opened++;
   redrawOpen = null;
-  $('#modalContent').classList.remove('item-picker-modal');
+  panel().classList.remove('item-picker-modal');
 }
 sharesOverlay(forgetItemSlotModal);
 
-/** The builder's one entry in the catalog rail (catalog/rail/Rail.tsx), or null with no item slots. */
-export function itemRailEntry() {
-  const slots = itemCosmeticSlots();
-  if (!slots.length) return null;
-  return { id: HUB, icon: catIcon(HUB), name: catName(HUB), dot: slots.some((s) => pickedIn(s.slot)) };
-}
-
-/** Draw the hub again after a pick, when it is the screen on show; it stays where it was scrolled. */
-export async function refreshItemHub() {
-  if (state.view !== 'catalog' || state.activeCategory !== HUB || !state.cosmeticSlots) return;
-  drawHub();
-}
-
 /** Mark the open builder window again: what is on changed. */
-export function redrawItemSlotModal() {
+export function redrawItemSlotModal(): void {
   redrawOpen?.();
 }
