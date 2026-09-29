@@ -1,6 +1,6 @@
-/* The tempo of every animation Motion plays, read from tokens.css rather than written here, so the
- * stylesheet stays the one place it is set - and the system's reduced-motion setting, which
- * flattens every duration there to 1ms, reaches these too. */
+/* The tempo and the spacing every animation Motion plays with, read from tokens.css rather than
+ * written here, so the stylesheet stays the one place they are set - and the system's reduced-motion
+ * setting, which flattens every duration there to 1ms, reaches these too. */
 
 import { tokenMs } from '../core/css-time.ts';
 
@@ -18,3 +18,6 @@ export function ease(token: string): [number, number, number, number] {
 
 /** Whether the system asked for less motion. */
 export const stillness = (): boolean => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** A length token on :root, in pixels. */
+export const px = (token: string): number => parseFloat(css().getPropertyValue(token)) || 0;

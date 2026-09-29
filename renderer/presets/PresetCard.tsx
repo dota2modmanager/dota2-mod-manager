@@ -3,17 +3,24 @@
  * cursor. The full list is one click away and grouped, rather than a paragraph of proper nouns in
  * the way of everybody who does not need it. */
 import { Fragment, useState, type CSSProperties } from 'react';
+import { motion } from 'motion/react';
 import { Thumb } from '../library/Thumb.tsx';
+import { foldAway, travel } from '../motion/list.ts';
+import { Swap } from '../motion/Swap.tsx';
 import type { OwnPreset, PresetsActions, SharedPreset } from './model.ts';
+
+/* A card moves like a row of My mods: a card saved above it or deleted beside it makes it travel to
+   its new place, and a deleted one folds away (motion/list.ts). Its entrance is cardIn in presets.css. */
+const cardMotion = () => ({ layout: 'position' as const, transition: travel(), exit: foldAway('--space-3') });
 
 export function OwnPresetCard({ p, index, actions }: { p: OwnPreset; index: number; actions: PresetsActions }) {
   // applying can download the members that are not installed, which is long enough to press twice
   const [busy, setBusy] = useState(false);
   return (
-    <div className="preset-card " style={{ '--i': index } as CSSProperties}>
+    <motion.div className="preset-card" style={{ '--i': index } as CSSProperties} {...cardMotion()}>
       <div className="preset-head">
         <div className="preset-name">{p.name}</div>
-        <span className="text-meta">{p.count}</span>
+        <Swap className="text-meta" value={p.count} />
         {p.absent && <span className="text-meta preset-absent" title={p.absent.title}>{p.absent.text}</span>}
         <button className="btn btn-sm btn-primary" data-apply={p.id} disabled={busy}
           onClick={() => { setBusy(true); actions.apply(p.id).finally(() => setBusy(false)); }}>
@@ -24,7 +31,7 @@ export function OwnPresetCard({ p, index, actions }: { p: OwnPreset; index: numb
         </button>
       </div>
       <PresetBody p={p} />
-    </div>
+    </motion.div>
   );
 }
 
@@ -66,7 +73,7 @@ function PresetBody({ p }: { p: OwnPreset }) {
 export function SharedPresetCard({ p, index, actions }: { p: SharedPreset; index: number; actions: PresetsActions }) {
   const [busy, setBusy] = useState(false);
   return (
-    <div className="preset-card shared" style={{ '--i': index } as CSSProperties}>
+    <motion.div className="preset-card shared" style={{ '--i': index } as CSSProperties} {...cardMotion()}>
       <div className="preset-head">
         <div className="preset-name">{p.name}</div>
         <span className="lib-tag">{p.tag}</span>
@@ -81,6 +88,6 @@ export function SharedPresetCard({ p, index, actions }: { p: SharedPreset; index
       {p.note && <div className="preset-note">{p.note}</div>}
       <div className="preset-mods">{p.mods}</div>
       {p.warn && <div className="preset-warn"><span className="ms">warning</span>{p.warn}</div>}
-    </div>
+    </motion.div>
   );
 }

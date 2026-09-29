@@ -133,6 +133,12 @@ img, video { -webkit-user-drag: none; user-select: none; }
 /* Digits that sit in a column or change in place, so the row stops jittering. */
 .num { font-variant-numeric: tabular-nums; }
 .grow { flex: 1; }
+/* A value that changes in place (motion/Swap.tsx): the old one leaves over the new one, so the box
+   holds them both for a moment and cuts off what lifts past its edge. */
+.swap { position: relative; display: inline-flex; overflow: clip; overflow-clip-margin: var(--space-1); }
+.swap-value { display: inline-block; }
+/* A part of a screen that opens and closes by height (motion/Reveal.tsx): margins stay inside it. */
+.reveal { overflow: clip; display: flow-root; }
 
 /* The line under a view title that says what the screen is for. */
 .view-intro {

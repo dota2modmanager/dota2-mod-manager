@@ -4,7 +4,7 @@
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { MotionConfig, motion } from 'motion/react';
-import { dur, ease } from '../motion.ts';
+import { dur, ease } from '../../motion/tokens.ts';
 
 export interface RailItem {
   id: string;

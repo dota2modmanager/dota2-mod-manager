@@ -9,7 +9,7 @@
  * Without a card (a mod reached from a link) or with the system asking for less motion, the CSS
  * entrance in modal.css plays as it did. */
 import { animate } from 'motion';
-import { dur, ease, stillness } from './motion.ts';
+import { dur, ease, stillness } from '../motion/tokens.ts';
 
 /* Where the window comes from, for the entrance in modal.css (windowIn): a window that appears in
  * the middle no matter what was clicked is a window with no cause; one that grows out of the thing

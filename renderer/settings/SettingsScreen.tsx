@@ -4,7 +4,10 @@
 import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
+import { MotionConfig } from 'motion/react';
 import { pane } from '../core/router.ts';
+import { Reveal } from '../motion/Reveal.tsx';
+import { Swap } from '../motion/Swap.tsx';
 
 export interface SettingsModel {
   key: number;
@@ -112,20 +115,18 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
         </div>
         <div className="settings-hint">{L`В самом Discord для этого включено «Отображать текущую активность как статус».`}</div>
         {/* offered only to an account the signed list names: a switch you cannot use is noise */}
-        {m.beta.eligible && (
-          <>
-            <div className="settings-row spaced">
-              <span className="settings-label">{L`Бета-версии`}</span>
-              <Toggle id="betaToggle" on={m.beta.on} label={L`Бета-версии`} onClick={actions.beta} />
-            </div>
-            <div className="settings-hint">{L`Твой аккаунт в списке тестеров: приложение будет обновляться до сборок, которых ещё нет у остальных. Выйдешь из Discord, и оно вернётся на обычные.`}</div>
-          </>
-        )}
+        <Reveal show={m.beta.eligible}>
+          <div className="settings-row spaced">
+            <span className="settings-label">{L`Бета-версии`}</span>
+            <Toggle id="betaToggle" on={m.beta.on} label={L`Бета-версии`} onClick={actions.beta} />
+          </div>
+          <div className="settings-hint">{L`Твой аккаунт в списке тестеров: приложение будет обновляться до сборок, которых ещё нет у остальных. Выйдешь из Discord, и оно вернётся на обычные.`}</div>
+        </Reveal>
       </Block>
 
       <Block i={2} title={L`Путь к Dota 2`}>
         <div className="settings-row">
-          <span className="mono grow">{m.dotaPath || L`не найден`}</span>
+          <Swap className="mono grow" value={m.dotaPath || L`не найден`} />
           <span className={`dot ${m.dotaValid ? 'ok' : 'bad'}`} />
         </div>
         <div className="settings-row">
@@ -137,7 +138,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
       <Block i={3} title={L`Кэш загрузок`}>
         <div className="settings-row">
           <span className="settings-label">{L`Размер`}</span>
-          <span className="num">{m.cache}</span>
+          <Swap className="num" value={m.cache} />
           <button className="btn btn-sm" id="clearCacheBtn" onClick={actions.clearCache}>{L`Очистить`}</button>
         </div>
         <div className="settings-hint">{L`Скачанные архивы, чтобы не качать повторно. Удаление ничего не сломает.`}</div>
@@ -146,8 +147,8 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
       {m.vrf && (
         <Block i={4} title={L`Картинки из игры и модов`}>
           <div className="settings-row">
-            <span className="settings-label">{m.vrf.ready ? L`Инструмент установлен` : L`Инструмент не скачан`}</span>
-            <span className="num">{m.vrf.size}</span>
+            <Swap className="settings-label" value={m.vrf.ready}>{m.vrf.ready ? L`Инструмент установлен` : L`Инструмент не скачан`}</Swap>
+            <Swap className="num" value={m.vrf.size} />
             {m.vrf.ready
               ? <button className="btn btn-sm" id="toolRemoveBtn" onClick={() => actions.tool(false)}>{L`Удалить`}</button>
               // 48 MB is a real download, so it says so and waits for the press
@@ -165,7 +166,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
       <Block i={4} title={L`Каталог`}>
         <div className="settings-row">
           <span className="settings-label">{L`Обновлён`}</span>
-          <span>{m.catalogUpdated}</span>
+          <Swap value={m.catalogUpdated} />
           <button className="btn btn-sm" id="refreshCatBtn2" onClick={actions.refreshCatalog}>{L`Обновить сейчас`}</button>
         </div>
         <div className="settings-row">
@@ -220,5 +221,5 @@ const root = createRoot(pane('settings'));
 
 /** Drawn synchronously, inside the caller's paint(); a new key draws it fresh, entrances and all. */
 export function showSettings(model: SettingsModel, actions: SettingsActions): void {
-  flushSync(() => root.render(<SettingsScreen key={model.key} m={model} actions={actions} />));
+  flushSync(() => root.render(<MotionConfig reducedMotion="user"><SettingsScreen key={model.key} m={model} actions={actions} /></MotionConfig>));
 }

@@ -1,14 +1,20 @@
 /* ============ Presets ============ */
 .preset-new { display: flex; gap: 10px; margin-bottom: 18px; }
 .preset-new .input { flex: 1; max-width: 340px; }
+/* A column with a gap rather than margins: a card that folds away (motion/list.ts) takes one gap
+   with it and the cards after it close up by exactly that. */
+#presetList { display: flex; flex-direction: column; gap: var(--space-3); }
 .preset-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 14px 16px;
-  margin-bottom: 10px;
   transition: border-color 0.2s;
-  animation: cardIn 0.35s var(--ease) both;
+  /* backwards, not both: a fill that held the entrance's transform would pin the card where it
+     entered and fight Motion moving it. will-change keeps the card its own layer as the held
+     animation did, which the glass of the buttons inside is drawn against. */
+  animation: cardIn 0.35s var(--ease) backwards;
+  will-change: opacity;
 }
 .preset-card:hover { border-color: var(--border-strong); }
 .preset-head { display: flex; align-items: center; gap: 12px; }
@@ -57,8 +63,17 @@
 }
 .preset-all summary::-webkit-details-marker { display: none; }
 .preset-all summary:hover { color: var(--text); }
-.preset-all summary .ms { font-size: 16px; transition: transform 0.18s var(--ease); }
+.preset-all summary .ms { font-size: 16px; transition: transform var(--dur-medium-long) var(--ease-standard); }
 .preset-all[open] summary .ms { transform: rotate(180deg); }
+/* the list opens to its height instead of appearing, on the same clock as the chevron */
+.preset-all { interpolate-size: allow-keywords; }
+.preset-all::details-content {
+  block-size: 0;
+  overflow-y: clip;
+  transition: block-size var(--dur-medium-long) var(--ease-standard),
+    content-visibility var(--dur-medium-long) allow-discrete;
+}
+.preset-all[open]::details-content { block-size: auto; }
 .preset-group { margin-top: 10px; }
 .preset-group-head {
   display: flex; align-items: center; gap: 6px;

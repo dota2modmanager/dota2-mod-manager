@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
+import { AnimatePresence, MotionConfig } from 'motion/react';
 import { pane } from '../core/router.ts';
 import { bindContextMenu } from '../ui/menu.ts';
 import type { PresetsActions, PresetsModel } from './model.ts';
@@ -33,9 +34,12 @@ function PresetsScreen({ m, actions }: { m: PresetsModel; actions: PresetsAction
         <button className="btn" id="importPresetBtn" onClick={actions.importFile}><span className="ms">upload_file</span>{L`Открыть .d2mm`}</button>
       </div>
       <div id="presetList" ref={list}>
-        {m.presets.length ? m.presets.map((p, i) => (p.kind === 'shared'
-          ? <SharedPresetCard key={p.id} p={p} index={i} actions={actions} />
-          : <OwnPresetCard key={p.id} p={p} index={i} actions={actions} />)) : (
+        <AnimatePresence initial={false}>
+          {m.presets.map((p, i) => (p.kind === 'shared'
+            ? <SharedPresetCard key={p.id} p={p} index={i} actions={actions} />
+            : <OwnPresetCard key={p.id} p={p} index={i} actions={actions} />))}
+        </AnimatePresence>
+        {!m.presets.length && (
           <div className="empty-state">
             <span className="ms">bookmarks</span>
             <div className="empty-title">{L`Пресетов пока нет`}</div>
@@ -51,5 +55,5 @@ const root = createRoot(pane('presets'));
 
 /** Drawn synchronously, inside the caller's paint(); a new key draws it fresh, entrances and all. */
 export function showPresets(model: PresetsModel, actions: PresetsActions): void {
-  flushSync(() => root.render(<PresetsScreen key={model.key} m={model} actions={actions} />));
+  flushSync(() => root.render(<MotionConfig reducedMotion="user"><PresetsScreen key={model.key} m={model} actions={actions} /></MotionConfig>));
 }
