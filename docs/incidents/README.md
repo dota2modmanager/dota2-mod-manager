@@ -15,6 +15,7 @@ incident, named by the day it was found.
 | 2026-09-15 | [The site built as version 0.0.0 (near miss)](2026-09-15-site-built-as-0.0.0.md) | the site, on Dependabot's Astro 7 update (pull request #12) | commit 53416db, before #12 was merged |
 | 2026-09-17 | [Fonts and cursors put back at every start](2026-09-17-restored-after-every-start.md) | 2.0.0 to 2.6.12 | pull request #62 |
 | 2026-09-20 | [The antivirus check never ran](2026-09-20-antivirus-check-never-ran.md) | 2.7.0 | unreleased |
+
 ## Writing one
 
 Copy the shape of any file above: a title, a table with `Date`, `Versions`, `Fixed in` and
