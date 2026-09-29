@@ -6,6 +6,19 @@ import type { CosmeticSet, CosmeticSlot } from '../catalog/types.ts';
 import type { LibRecord, RepairState } from '../library/types.ts';
 import type { Dialog, Reply } from './reply.ts';
 
+/** One mod of a preset as sharing it would carry it (src/presets-service.js planShape). */
+export interface ShareEntry {
+  key: string;
+  /** 'catalog' travels as a name, 'embedded' as its bytes, 'missing' cannot travel */
+  kind: 'catalog' | 'embedded' | 'missing' | 'cosmetic' | 'pack' | string;
+  name: string;
+  size: number;
+  info: string;
+  reason: string;
+  slot?: string;
+  members?: ShareEntry[];
+}
+
 export interface CatalogApi {
   load: (force?: boolean) => Promise<CatalogData & { stale?: boolean; fetchedAt?: number }>;
   /** which whole-map terrains were built for an older map than the game's */
@@ -86,7 +99,7 @@ export interface PresetsApi {
   rename: (id: string, name: string) => Promise<Reply<{ name: string }>>;
   delete: (id: string) => Promise<unknown[]>;
   apply: (id: string) => Promise<Reply<{ installed: number; missing: string[]; errors: string[] }>>;
-  exportPlan: (id: string) => Promise<Reply<{ name: string; entries: any[] }>>;
+  exportPlan: (id: string) => Promise<Reply<{ name: string; entries: ShareEntry[] }>>;
   exportFile: (id: string, opts: { skip: string[]; author: string; note: string }) => Promise<Dialog<{ path: string; size: number }>>;
   shareLink: (id: string) => Promise<Reply<{ web?: string; count: number; skipped: unknown[] }>>;
   importDialog: () => Promise<Dialog<{ preset: { name: string } }>>;

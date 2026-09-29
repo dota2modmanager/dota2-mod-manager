@@ -1,6 +1,5 @@
 /* The catalog as the window holds it (state.catalog, filled by loadCatalog), typed for the code
- * that reads it. core/store.ts declares the field as null until the fetch lands, which TypeScript
- * would otherwise read as "always null". */
+ * that reads it. */
 import type { CategoryData } from './types.ts';
 import { state } from '../core/store.ts';
 
@@ -28,5 +27,5 @@ export interface CatalogData {
   fetchedAt?: number;
 }
 
-export const catalogData = (): CatalogData | null => state.catalog as unknown as CatalogData | null;
+export const catalogData = (): CatalogData | null => state.catalog;
 export const catalogConstants = (): CatalogConstants => catalogData()?.constants || {};

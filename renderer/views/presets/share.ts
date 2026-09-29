@@ -5,8 +5,8 @@
  * a 190 MB file is a choice and not a surprise. */
 import { state } from '../../core/store.ts';
 import { esc, fmtMB, plural } from '../../ui/format.ts';
+import type { ShareEntry } from '../../api/content.ts';
 
-interface ShareEntry { kind: string; key: string; name: string; size: number; members?: ShareEntry[] }
 export interface SharePlan { name: string; entries: ShareEntry[] }
 export interface ShareLink { web?: string; count: number; skipped: unknown[] }
 export interface ShareOptions { skip: string[]; author: string; note: string }
