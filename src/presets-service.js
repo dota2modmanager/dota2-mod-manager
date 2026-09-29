@@ -68,10 +68,19 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
   }
 
 
-  // "<categoryId>|<name>|<styleLabel>" -> what mods:install needs to fetch it
+  /* "<categoryId>|<name>|<styleLabel>" -> what mods:install needs to fetch it.
+   *
+   * lookup() goes on the map before anything can fail. It used to be attached at the end, so the
+   * early return for a catalog that could not be loaded (offline, nothing cached) handed back a
+   * map without it, and every caller asking cat.lookup() threw: a first start without a network
+   * could not list, share or apply a preset. Empty now means "nothing in the catalog", which is
+   * the truth, and a preset's own embedded mods still travel. */
+  /** @returns {Promise<Map<string, object> & { lookup: (c: string, n: string, s?: string|null) => object|null }>} */
   async function catalogIndex() {
-    const map = new Map();
     const key = (c, n, s) => `${c}|${n}|${s || ''}`;
+    const map = Object.assign(new Map(), {
+      lookup: (c, n, s) => map.get(key(c, n, s)) || null,
+    });
     let data;
     try { data = await catalog.load(); } catch { return map; } // offline with no cache
     for (const [categoryId, list] of Object.entries((data.mods && data.mods.modsData) || {})) {
@@ -86,7 +95,6 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
         }
       }
     }
-    map.lookup = (c, n, s) => map.get(key(c, n, s)) || null;
     return map;
   }
 

@@ -91,14 +91,12 @@ test('every write-up names at least one test or workflow among its guards', () =
   }
 });
 
-test('the index lists every write-up once, and nothing that is not there', () => {
-  const index = read(path.join(DIR, 'README.md'));
-  const linked = [...index.matchAll(/\]\(([^)\s]+\.md)\)/g)].map((m) => m[1]);
-  assert.deepEqual([...linked].sort(), files, 'docs/incidents/README.md and the folder disagree');
-  for (const name of files) {
-    const row = index.split('\n').find((line) => line.includes(`](${name})`));
-    assert.ok(row.startsWith(`| ${parse(name).fields.Date} |`), `the index row for ${name} carries a different date`);
-  }
+test('the committed incident index is exactly what the generator produces', () => {
+  const generator = require('../tools/gen-incidents');
+  const expected = generator.build();
+  const actual = read(path.join(DIR, 'README.md'));
+
+  assert.equal(actual, expected, 'docs/incidents/README.md is out of date. Run: npm run docs');
 });
 
 test('the test-title reader sees the titles node:test prints', () => {

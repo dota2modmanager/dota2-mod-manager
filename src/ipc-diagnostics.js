@@ -20,8 +20,20 @@ const { buildReport, renderSummary, renderDetailed } = require('./diagnostics');
 
 /**
  * @param {object} ctx  everything the report asks about, read late where it changes
+ * @param {any} ctx.autoUpdater       electron-updater, for the channel and the feed
+ * @param {any} ctx.catalog
+ * @param {(msg: string) => void} ctx.diag
+ * @param {() => Promise<boolean>} ctx.dotaIsRunning
+ * @param {any} ctx.icons
+ * @param {any} ctx.installer
+ * @param {any} ctx.library
+ * @param {() => string|null} ctx.logFile
+ * @param {any} ctx.remoteConfig
+ * @param {any} ctx.schemaService
+ * @param {any} ctx.settings
+ * @param {any} ctx.toolchain
  * @param {() => Electron.BrowserWindow} ctx.win
- * @param {() => string[]} ctx.rendererErrors
+ * @param {() => Array<{ at: string, text: string }>} ctx.rendererErrors  what the window reported, newest last
  * @param {() => string|null} ctx.lastUpdateError
  */
 function registerDiagnosticsIpc({
@@ -101,7 +113,7 @@ function registerDiagnosticsIpc({
            * had no way to answer it. */
           gpu: await (async () => {
             try {
-              const info = await app.getGPUInfo('basic');
+              const info = /** @type {{ gpuDevice?: any[] }} */ (await app.getGPUInfo('basic'));
               return {
                 featureStatus: app.getGPUFeatureStatus(),
                 devices: (info.gpuDevice || []).map((d) => ({

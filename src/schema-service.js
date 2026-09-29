@@ -290,7 +290,7 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
    * Every slot that has both a free "base item" and something to put on it, in one call.
    * The list comes from the installed game, so a slot Valve adds later appears by itself.
    * With them, the item builder's sets (item-builder.js itemSets).
-   * @returns {{ slots: Array<{slot, base, picked, options}>, sets: Array<object> }}
+   * @returns {{ slots: Array<{slot, base, picked, options}>, sets: Array<object>, error?: string }}
    */
   function cosmeticSlots() {
     const game = gamePath();

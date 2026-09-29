@@ -1,6 +1,6 @@
 {
   "heroes": 147,
-  "mods": 1419,
+  "mods": 1428,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -48,6 +48,7 @@
         {"name":"Anti-Mage Bloody Reaper","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Blue Illidan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Creep","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head"]},
+        {"name":"Anti-Mage Fervent Conscript","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","shoulder","offhand"]},
         {"name":"Anti-Mage Forgotten Planes","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","shoulder"]},
         {"name":"Anti-Mage Illidan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","legs","offhand","shoulder"]},
         {"name":"Anti-Mage Illidan v2","categoryId":"heroes","styleLabel":null,"slots":["head","weapon","arms","misc","belt"]},
@@ -66,6 +67,7 @@
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Arc Warden Ancient Gaoler","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
         {"name":"Arc Warden Black Hole","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
+        {"name":"Arc Warden Frosty Toy","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden Sakura Winter","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden Yin Yang","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
         {"name":"Ashes Arc Warden","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
@@ -83,7 +85,7 @@
       "name": "Axe",
       "mods": [
         {"name":"Axe Automaton","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon"]},
-        {"name":"Axe Automaton Reborn","categoryId":"heroes","styleLabel":null,"slots":["weapon","base","back","tail","belt","arms"]},
+        {"name":"Axe Automaton Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","back","base"]},
         {"name":"Axe Gawr Gura","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"]},
         {"name":"Axe Heracles","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"]},
         {"name":"Axe Immortal Bootblack","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","misc","head"]},
@@ -109,7 +111,10 @@
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },
-    "bard": {"name":"Largo","mods":[{"name":"Custom Largo","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]}]},
+    "bard": {
+      "name": "Largo",
+      "mods": [{"name":"Custom Largo","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]},{"name":"Largo Largling","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]}]
+    },
     "batrider": {
       "name": "Batrider",
       "mods": [
@@ -409,6 +414,7 @@
         {"name":"Dragon Knight Burning Scale","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon"]},
         {"name":"Dragon Knight Dragon Hold","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon"]},
         {"name":"Dragon Knight Fire","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon"]},
+        {"name":"Dragon Knight Persona Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon"]},
         {"name":"Dragon Knight Silverwurm Sacrifice","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon"]},
         {"name":"Emerald Dragon Knight","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shield","shoulder","legs","weapon"]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -491,6 +497,7 @@
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Enchantress Darkwood Witness","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Enchantress Golubika","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
         {"name":"Enchantress Sematary","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
         {"name":"Enchantress Shiro","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","belt","shoulder","legs"]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -706,10 +713,12 @@
         {"name":"Juggernaut Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Juggernaut Arcana Golden Edge","categoryId":"heroes","styleLabel":null,"slots":["head","misc","arms","back","weapon"]},
         {"name":"Juggernaut Arcana Purple","categoryId":"heroes","styleLabel":null,"slots":["head","misc","weapon","back","arms"]},
+        {"name":"Juggernaut Aura","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Juggernaut Bladeform Aesthete","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Juggernaut Fireborn Assault","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
         {"name":"Juggernaut Ice and Fire","categoryId":"heroes","styleLabel":null,"slots":["misc","back","arms","head","weapon"]},
         {"name":"Juggernaut Jagged Honor","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
+        {"name":"Juggernaut Lineage Kantusa","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
         {"name":"Juggernaut Okita Souji","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
         {"name":"Juggernaut Provocation Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Juggernaut Samurai of Wind","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","weapon","arms"]},
@@ -1061,11 +1070,13 @@
         {"name":"Flameling Morphling","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Morphling Abyss Revenge","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Morphling Akulenok","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Morphling Automaton","categoryId":"heroes","styleLabel":null,"slots":["misc","arms"]},
         {"name":"Morphling Blade Of Tears","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
         {"name":"Morphling Darktrench Purple","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Morphling Darktrench Tears","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
         {"name":"Morphling Fluid Frenzy","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Morphling Green Immortal","categoryId":"heroes","styleLabel":null,"slots":["head","weapon"]},
         {"name":"Morphling Immortal Electro Gem","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Morphling Megalodon","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},

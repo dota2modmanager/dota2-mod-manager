@@ -54,7 +54,8 @@ const SOURCES = [
 /**
  * The three fields the app needs out of portable.yml, without pulling in a YAML parser for a
  * file this project writes itself. Anything missing or malformed is a manifest we refuse.
- * @returns {{ file: string, size: number, sha256: string }}
+ * @returns {{ file: string, size: number, sha256: string, version: string }}  version is '' when
+ *   the manifest does not say
  */
 function parseManifest(text) {
   const field = (name) => {
@@ -84,8 +85,10 @@ function portableDir() {
  * @param {object} [opts]
  * @param {(loaded: number, total: number) => void} [opts.onProgress]
  * @param {string} [opts.dir]        where to put it; defaults to the folder holding the exe
+ * @param {(msg: string) => void} [opts.log]
  * @param {Array} [opts.sources]     where to look and in what order; SOURCES unless a test says
- * @returns {Promise<{ path: string, name: string, bytes: number }>}
+ * @returns {Promise<{ path: string, name: string, bytes: number, already?: boolean }>}  already
+ *   when the same build was fetched before
  */
 async function fetchBeside(version, { onProgress = () => {}, dir = portableDir(), log = () => {}, sources = SOURCES } = {}) {
   if (!dir) throw new Error('not a portable copy');

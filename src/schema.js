@@ -528,7 +528,7 @@ function buildSchemaVpk(text, extraEntries = []) {
  * @param {string} opts.folder            the mod folder the schema VPK is written into
  * @param {Array} opts.patches
  * @param {{ text: string, stamp: string }} [opts.base]  the game's own table, if already read
- * @returns {{ applied: Array, missing: string[], conflicts: Array, stamp: string, bytes: number }}
+ * @returns {{ applied: Array, missing: string[], conflicts: Array, stamp: string, bytes: number, items: number }}
  */
 function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath) }) {
   const merged = mergeSchema(base.text, patches);

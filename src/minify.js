@@ -115,7 +115,7 @@ function configPath() {
 /**
  * What Minify says about itself, or null. Its own config beats anything we could infer: it
  * names the locale it sets, which is the whole question between the two apps.
- * @returns {{ outputPath: string|null, locale: string|null }|null}
+ * @returns {{ outputPath: string|null, locale: string|null, folder: string|null }|null}
  */
 function readConfig(file = configPath()) {
   try {
@@ -177,10 +177,15 @@ function prelaunchHook(options) {
  * @param {string} p.ourFolder   the suffix this app installs into, from gamelang.folderFor()
  * @param {number} [p.ourMods]   how many mods this app has installed
  * @param {string|null} [p.launchOptions]  Steam's launch options for Dota, unescaped
+ * @param {{ folder?: string|null, outputPath: string|null }|null} [p.config]  what Minify's own
+ *   config says, read from disk unless a test hands one in
+ * @param {((suffix: string) => number)|null} [p.countMods]  how many of the files in a folder
+ *   are Minify's own, when the caller can look at them
  * @returns {{
  *   present: boolean, folder: string|null, mods: number, mounts: boolean,
  *   mounted: string|null, ourFolder: string, sharing: boolean,
  *   live: 'ours'|'minify'|'both'|'neither'|'unknown', declared: boolean, prelaunch: boolean,
+ *   reservedLabel: string,
  * }}
  */
 function readMinify({
@@ -211,6 +216,7 @@ function readMinify({
   const mounted = audio ? String(audio).toLowerCase() : null;
   const sharing = present && folder === ourFolder;
 
+  /** @type {'ours'|'minify'|'both'|'neither'|'unknown'} */
   let live = 'unknown';
   if (mounted) {
     const oursLive = mounted === ourFolder && ourMods > 0;

@@ -19,6 +19,7 @@ const { app, screen } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { compareFrames, markChanges } = require('./frames');
+const { fitsWorkArea } = require('./fit');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -343,9 +344,11 @@ class Sim {
     const b = this.win.getBounds();
     const fake = /^(\d+)x(\d+)$/.exec(process.env.MM_WORKAREA || '');
     const area = fake ? { x: 0, y: 0, width: Number(fake[1]), height: Number(fake[2]) } : screen.getDisplayMatching(b).workArea;
-    const fits = b.width <= area.width && b.height <= area.height;
-    return this.check('the window fits the work area it opened in', fits,
-      `window ${b.width}x${b.height}, work area ${area.width}x${area.height}`, { window: b, workArea: area });
+    // a profile's scale is forced on the machine's own screen, and that rounds sizes (fit.js)
+    const forcedScale = app.commandLine.hasSwitch('force-device-scale-factor');
+    return this.check('the window fits the work area it opened in', fitsWorkArea(b, area, { forcedScale }),
+      `window ${b.width}x${b.height}, work area ${area.width}x${area.height}${forcedScale ? ', scale forced' : ''}`,
+      { window: b, workArea: area, forcedScale });
   }
 }
 
