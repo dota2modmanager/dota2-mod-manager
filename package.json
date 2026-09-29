@@ -25,7 +25,7 @@
     "fuzz": "node tools/fuzz-parsers.mjs",
     "mutate": "node tools/mutate.mjs",
     "rollback": "node tools/rollback.mjs",
-    "docs": "node tools/gen-api-docs.js && node tools/gen-doc-facts.js",
+    "docs": "node tools/gen-api-docs.js && node tools/gen-doc-facts.js && node tools/gen-incidents.js",
     "docs:check": "node tools/gen-api-docs.js --check",
     "aur": "node tools/gen-aur.js"
   },
@@ -40,7 +40,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
-    "electron": "^44.4.3",
+    "electron": "^44.4.5",
     "electron-builder": "^26.15.3",
     "eslint": "^10.11.0",
     "fast-check": "^4.10.2",
