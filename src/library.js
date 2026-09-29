@@ -41,6 +41,11 @@ class Library {
     ) || null;
   }
 
+  /**
+   * @param {{ name: string, categoryId: string, styleLabel?: string|null, fileRef?: string|null,
+   *   preview?: string|null, files: Array<{ root: string, relPath: string }>, kind?: string,
+   *   members?: Array<object> }} rec
+   */
   add({ name, categoryId, styleLabel, fileRef, preview, files, kind, members }) {
     const id = crypto.randomUUID();
     const rec = {

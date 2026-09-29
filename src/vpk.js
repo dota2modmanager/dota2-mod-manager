@@ -746,7 +746,7 @@ function combineVpksToFiles(members, outDir, outBase, { volumeCap = 1 << 30 } = 
   const entries = [];
   const seen = new Set();
   const conflicts = [];
-  const memberPaths = {};
+  const memberPaths = /** @type {Record<string, string[]>} */ ({});
   const partName = (i) => `${outBase}_${String(i).padStart(3, '0')}.vpk`;
 
   let volIdx = 0;
@@ -807,7 +807,7 @@ function mergeVpkToSingle(dirPath, archivePathFor) {
  * that hero; everything else (shared stock, cross-hero assets) is copied into every
  * output so each result stands alone and installs/removes independently.
  *
- * @returns {Array<{ id: string, name: string, buf: Buffer }>} empty if <2 heroes.
+ * @returns {Array<{ id: string, name: string, buf: Buffer, paths: string[] }>} empty if <2 heroes.
  */
 function splitVpkByHero(dirPath, archivePathFor) {
   const dirBuf = fs.readFileSync(dirPath);

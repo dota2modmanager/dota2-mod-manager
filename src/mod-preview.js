@@ -277,6 +277,7 @@ function createModPreviews({ userDataDir, toolchain, langFileOf, images = null, 
    * @returns {Promise<Record<string, string>>}
    */
   async function getMany(keys) {
+    /** @type {Record<string, string>} */
     const out = {};
 
     const todo = new Map(); // cache path -> job (two keys can want the same picture)

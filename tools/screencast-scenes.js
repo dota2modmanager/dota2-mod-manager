@@ -21,6 +21,12 @@
  * until the install scene fills it, exactly as it is for somebody who just downloaded this.
  */
 
+/**
+ * @typedef {{ move?: string|number[], click?: string|number[], hover?: string|number[], wheel?: number,
+ *   type?: string, wait?: number, eval?: string, dur?: number, after?: number, settle?: number,
+ *   hold?: number, steps?: number, gap?: number }} Step
+ */
+
 const js = (cast, expr) => cast.win.webContents.executeJavaScript(expr);
 const nap = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -104,6 +110,7 @@ const filter = [
 // 3. Collecting. One set for each of ten different heroes, then a cursor and a terrain.
 // ---------------------------------------------------------------------------------------
 function collect() {
+  /** @type {Step[]} */
   const steps = [{ wait: 500 }];
   // the first four at a readable pace, so the move is legible
   for (const h of HEROES.slice(0, 4)) steps.push(...findAndAdd(h));
@@ -161,6 +168,7 @@ async function mine(cast, log) {
   log(`library: ${JSON.stringify(found)}`);
   if (!found) return [{ wait: 800 }];
 
+  /** @type {Step[]} */
   const steps = [
     { wait: 900 },
     { move: [680, 380], dur: 700, after: 500 },

@@ -50,7 +50,7 @@ The code is GPL-3.0, so anyone may take it. These did and say so.
 
 | Project | Author | Credit given |
 |---|---|---|
-| [VANTA DOTA2 HUB](https://github.com/artem-prime42/VANTA-DOTA2-HUB), formerly Dota2Skins Manager | [artem-prime42](https://github.com/artem-prime42) | The README's Credits section names this project as the code it modified, dated 2026-07-21, with a link. The project's site, [dota2skins.vercel.app](https://dota2skins.vercel.app/), says the manager was "created based on Dota 2 Mod Manager by Mykhailo Lynnyk". Its launch post on Reddit, [r/DotA2Mods](https://www.reddit.com/r/DotA2Mods/comments/1vgi58s/after_4_months_of_work_i_made_a_free_dota_2_mod/) (August 2026), says the same and links this repository as the original project |
+| [VANTA DOTA2 HUB](https://github.com/artem-prime42/VANTA-DOTA2-HUB), formerly Dota2Skins Manager | [artem-prime42](https://github.com/artem-prime42) | Until 2026-09-25 the README's Credits section named this project as the code it modified, dated 2026-07-21, with a link. That day the repository started over with a new history, and its README now calls VANTA "an independent implementation" that does not run or import this app. The project's site, [dota2skins.vercel.app](https://dota2skins.vercel.app/), still says the manager was "created based on Dota 2 Mod Manager by Mykhailo Lynnyk". Its launch post on Reddit, [r/DotA2Mods](https://www.reddit.com/r/DotA2Mods/comments/1vgi58s/after_4_months_of_work_i_made_a_free_dota_2_mod/) (August 2026), says the same and links this repository as the original project |
 
 ### Forks on GitHub
 

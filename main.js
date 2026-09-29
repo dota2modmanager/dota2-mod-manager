@@ -449,7 +449,7 @@ function diag(msg) {
 }
 
 process.on('uncaughtException', (err) => diag('uncaughtException: ' + (err?.stack || err)));
-process.on('unhandledRejection', (reason) => diag('unhandledRejection: ' + (reason?.stack || reason)));
+process.on('unhandledRejection', (reason) => diag('unhandledRejection: ' + (/** @type {{ stack?: string }} */ (reason)?.stack || reason)));
 
 app.whenReady().then(async () => {
   diag('whenReady');

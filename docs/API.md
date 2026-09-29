@@ -933,6 +933,11 @@ somebody reads the game in is their business, decided long before this app arriv
 the audio language is ours to set, because it is what names the folder the engine mounts
 and therefore where a mod has to live.
 
+```
+@param {string} gamePath
+@param {{ ui?: string, audio?: string }} langs  a setting left out is left as it is
+```
+
 ### `voiceInstalled`
 
 ```js
@@ -1378,10 +1383,15 @@ it mounts
 @param {string} p.ourFolder   the suffix this app installs into, from gamelang.folderFor()
 @param {number} [p.ourMods]   how many mods this app has installed
 @param {string|null} [p.launchOptions]  Steam's launch options for Dota, unescaped
+@param {{ folder?: string|null, outputPath: string|null }|null} [p.config]  what Minify's own
+config says, read from disk unless a test hands one in
+@param {((suffix: string) => number)|null} [p.countMods]  how many of the files in a folder
+are Minify's own, when the caller can look at them
 @returns {{
 present: boolean, folder: string|null, mods: number, mounts: boolean,
 mounted: string|null, ourFolder: string, sharing: boolean,
 live: 'ours'|'minify'|'both'|'neither'|'unknown', declared: boolean, prelaunch: boolean,
+reservedLabel: string,
 }}
 ```
 
@@ -1395,7 +1405,7 @@ What Minify says about itself, or null. Its own config beats anything we could i
 names the locale it sets, which is the whole question between the two apps.
 
 ```
-@returns {{ outputPath: string|null, locale: string|null }|null}
+@returns {{ outputPath: string|null, locale: string|null, folder: string|null }|null}
 ```
 
 ### `configPath`
@@ -1793,6 +1803,8 @@ Fetch, walking the mirrors. Returns the Response of the first mirror that answer
 @param {string} url            the canonical (raw.githubusercontent.com) URL
 @param {object} [opts]
 @param {boolean} [opts.small]  allow size-capped mirrors
+@param {boolean} [opts.trustedOnly]  the canonical host and nothing else, for a file that is
+only ever trusted from where it was published
 @param {object} [opts.headers]
 @param {string[]} [opts.exclude] hosts already tried for this file and found wanting; a
 mirror that answered with the wrong bytes must not be offered again on the retry
@@ -2379,7 +2391,8 @@ The three fields the app needs out of portable.yml, without pulling in a YAML pa
 file this project writes itself. Anything missing or malformed is a manifest we refuse.
 
 ```
-@returns {{ file: string, size: number, sha256: string }}
+@returns {{ file: string, size: number, sha256: string, version: string }}  version is '' when
+the manifest does not say
 ```
 
 ### `fetchBeside`
@@ -2395,8 +2408,10 @@ Fetch the new build and leave it beside the current one.
 @param {object} [opts]
 @param {(loaded: number, total: number) => void} [opts.onProgress]
 @param {string} [opts.dir]        where to put it; defaults to the folder holding the exe
+@param {(msg: string) => void} [opts.log]
 @param {Array} [opts.sources]     where to look and in what order; SOURCES unless a test says
-@returns {Promise<{ path: string, name: string, bytes: number }>}
+@returns {Promise<{ path: string, name: string, bytes: number, already?: boolean }>}  already
+when the same build was fetched before
 ```
 
 ### `portableDir`
@@ -2991,7 +3006,7 @@ it is read here as before.
 @param {string} opts.folder            the mod folder the schema VPK is written into
 @param {Array} opts.patches
 @param {{ text: string, stamp: string }} [opts.base]  the game's own table, if already read
-@returns {{ applied: Array, missing: string[], conflicts: Array, stamp: string, bytes: number }}
+@returns {{ applied: Array, missing: string[], conflicts: Array, stamp: string, bytes: number, items: number }}
 ```
 
 ### `undeploy`
@@ -3819,7 +3834,7 @@ that hero; everything else (shared stock, cross-hero assets) is copied into ever
 output so each result stands alone and installs/removes independently.
 
 ```
-@returns {Array<{ id: string, name: string, buf: Buffer }>} empty if <2 heroes.
+@returns {Array<{ id: string, name: string, buf: Buffer, paths: string[] }>} empty if <2 heroes.
 ```
 
 ### `readVpkEntries`
