@@ -90,7 +90,7 @@ If one of these fails, the fix is almost never the test.
 - **Errors are for people.** "Свободных слотов pakNN не осталось" beats "ENOENT".
 - **Anything that needs the network fails quietly.** The app has to work offline with what it
   cached. A feature that throws because GitHub is unreachable is a bug.
-- **Writing into the game folder is a transaction.** `src/file-tx.js`. If a step fails,
+- **Writing into the game folder is a transaction.** `src/file-tx.ts`. If a step fails,
   everything goes back, including files displaced to make room.
 - No emoji in code, comments, commits, UI or documentation.
 

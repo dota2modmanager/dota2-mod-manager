@@ -6,30 +6,31 @@
 // forty-three mods reported as installed, nothing in the game, and the library still listing
 // them all. The check now asks for Valve's own content pak, the one file that cannot be
 // present unless the game is.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const { validateGamePath, findDotaGamePath } = require('../src/steam.js');
-const { Installer } = require('../src/installer.js');
+import { validateGamePath, findDotaGamePath } from '../src/steam.ts';
+import installerJs from '../src/installer.js';
+const { Installer } = installerJs;
 
-function tmpDir(t) {
+function tmpDir(t: TestContext): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-gamepath-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 
 /** A game folder as Steam leaves it behind after the library moves: the tree, none of it. */
-function movedAway(root) {
+function movedAway(root: string): string {
   const game = path.join(root, 'steamapps', 'common', 'dota 2 beta', 'game');
   fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
   return game;
 }
 
 /** A real one: the tree plus the content pak. */
-function realInstall(root) {
+function realInstall(root: string): string {
   const game = movedAway(root);
   fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), 'not really a vpk, but it is there');
   return game;

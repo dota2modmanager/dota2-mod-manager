@@ -1,8 +1,36 @@
 // Simple JSON settings store in userData
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
-const DEFAULTS = {
+/** What settings.json holds. The window has the same shape (renderer/api/app.ts StoredSettings). */
+export interface StoredSettings {
+  dotaGamePath: string | null;
+  langSuffix: string;
+  uiLang: 'en' | 'ru' | string;
+  langPromptSeen: boolean;
+  uiScale: number;
+  theme: string;
+  favorites: string[];
+  panels: Record<string, unknown> | null;
+  account: { id: string; username: string; avatar?: string | null } | null;
+  discordPresence: boolean;
+  schemaPatch: boolean;
+  cosmetics: Record<string, unknown>;
+  schemaStamp: string | null;
+  toolsPromptSeen: boolean;
+  showAdult: boolean | null;
+  lastSeenVersion: string | null;
+  /** the beta switch; it only counts for an account on the signed list (src/beta.ts) */
+  betaChannel?: boolean;
+  /** remote notices put away (src/remote-config.js) */
+  seenNotices?: string[];
+  /** which layout of the load order this install was moved to, once (src/slot-zones.js) */
+  slotZones?: number;
+  /** the build of the game last seen on disk (src/patch-watch.js gameStamp) */
+  gameStamp?: string | null;
+}
+
+const DEFAULTS: StoredSettings = {
   dotaGamePath: null,
   // folder mods are installed into: game/dota_<langSuffix>. Decided by Dota's own audio
   // language rather than by us, so Korean speech means dota_koreana and Chinese means
@@ -58,14 +86,17 @@ const DEFAULTS = {
   lastSeenVersion: null,
 };
 
-class Settings {
-  constructor(userDataDir) {
+export class Settings {
+  file: string;
+  data: StoredSettings;
+
+  constructor(userDataDir: string) {
     this.file = path.join(userDataDir, 'settings.json');
     this.data = { ...DEFAULTS };
     this.load();
   }
 
-  load() {
+  load(): void {
     try {
       if (fs.existsSync(this.file)) {
         // A byte order mark in front is what Notepad and Windows PowerShell 5 write. JSON.parse
@@ -79,23 +110,22 @@ class Settings {
     }
   }
 
-  save() {
+  save(): void {
     fs.mkdirSync(path.dirname(this.file), { recursive: true });
     fs.writeFileSync(this.file, JSON.stringify(this.data, null, 2));
   }
 
-  get(key) {
+  get<K extends keyof StoredSettings>(key: K): StoredSettings[K] {
     return this.data[key];
   }
 
-  set(key, value) {
+  set<K extends keyof StoredSettings>(key: K, value: StoredSettings[K]): void {
     this.data[key] = value;
     this.save();
   }
 
-  all() {
+  all(): StoredSettings {
     return { ...this.data };
   }
 }
 
-module.exports = { Settings };

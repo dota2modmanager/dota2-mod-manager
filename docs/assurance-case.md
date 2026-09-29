@@ -23,7 +23,7 @@ app can reach is short and public ([PRIVACY.md](../PRIVACY.md)).
 | # | Boundary | What crosses it | Where it is enforced |
 |---|---|---|---|
 | 1 | The network and the app | Catalog data, mod archives, the switches file, one external tool | `src/net.js`, `src/catalog-signature.ts`, `src/remote-config.js`, `src/toolchain.js` |
-| 2 | Foreign archives and the disk | Zip and VPK contents, file names, paths | `src/safe-zip.js`, `src/vpk.js`, `src/file-tx.js` |
+| 2 | Foreign archives and the disk | Zip and VPK contents, file names, paths | `src/safe-zip.js`, `src/vpk.js`, `src/file-tx.ts` |
 | 3 | The main process and the window | Every action the UI can ask for | `preload.js` and the `src/ipc-*.js` modules |
 | 4 | The app and the game folder | Mod packs, loose fonts and cursors, one patched text file | `src/installer.js`, `src/overlays.js`, `src/patcher.js` |
 | 5 | The user and everything above | Files they drop, presets from other people | `src/import.js`, `src/preset-share.js`, `src/adopt.js` |
@@ -58,10 +58,10 @@ cannot turn into a path either.
 archives at it rather than only the ones somebody thought of.
 
 **An install that stops half way.** Power cuts, full disks and antivirus locks all land in the
-middle of writing. Writes go through `src/file-tx.js`, which stages and then commits, so the game
+middle of writing. Writes go through `src/file-tx.ts`, which stages and then commits, so the game
 folder is either as it was or as it should be. Valve's own files are copied before the first
 write and put back byte for byte on revert.
-*Check:* `test/file-tx.test.js`, `test/patcher.test.js` (the patch round-trips byte for byte).
+*Check:* `test/file-tx.test.ts`, `test/patcher.test.js` (the patch round-trips byte for byte).
 
 **Catalog text rendered as code.** Guides are HTML written by people who are not us. They go
 through an allowlist of tags, and the window runs under a content security policy with no remote

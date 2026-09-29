@@ -56,9 +56,10 @@ test('a TypeScript module is read by its export statements, its opening comment 
     'export { hidden as shown, late };',
   ].join('\n'));
   assert.equal(doc.header, 'What this module is for,\nin two lines.', 'the opening comment, not the first export\'s');
-  assert.deepEqual(doc.items.map((it) => it.name), ['FIRST', 'pick', 'Box', 'shown', 'late'], 'types are not listed');
-  assert.equal(doc.items[1].sig, 'export function pick<T>(list: T[]): T');
-  assert.equal(doc.items[1].doc, 'Called with a type parameter.');
+  assert.deepEqual(doc.items.map((it) => it.name), ['FIRST', 'Shape', 'pick', 'Box', 'shown', 'late'], 'types are listed too');
+  assert.equal(doc.items[1].sig, 'export interface Shape { a: number }');
+  assert.equal(doc.items[2].sig, 'export function pick<T>(list: T[]): T');
+  assert.equal(doc.items[2].doc, 'Called with a type parameter.');
   assert.equal(doc.lang, 'ts');
 });
 

@@ -13,11 +13,12 @@
  * carries in the archive stands in for it. A terrain built before the game's current map is
  * marked, in the catalog and in My mods, and switched off once when the game's map changes.
  */
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
+import type { LibFile, LibRecord } from './types.ts';
 
 /** Where a whole-map terrain puts its map, under the language folder. */
-const MAP_REL = 'maps/dota.vpk';
+export const MAP_REL = 'maps/dota.vpk';
 const MAP_IN_ARCHIVE = /(^|\/)maps\/dota\.vpk$/i;
 /* A zip keeps the local time of whoever packed it, in no named zone, and the game's file carries
    the moment Steam wrote it. A day either way covers every zone there is; a terrain packed the
@@ -25,21 +26,30 @@ const MAP_IN_ARCHIVE = /(^|\/)maps\/dota\.vpk$/i;
 const MARGIN_MS = 24 * 60 * 60 * 1000;
 /** The end of a zip holds its table of contents. A terrain archive has two or three files, so
  *  the table is a few hundred bytes; this much reaches it even behind a long archive comment. */
-const TAIL_BYTES = 64 * 1024;
+export const TAIL_BYTES = 64 * 1024;
+
+/** What is worked out once and kept: the map last acted on, and each catalog terrain by its hash. */
+interface Store {
+  mapSeen?: number;
+  catalog?: Record<string, { hash: string; builtAt: number | null }>;
+}
+
+/** A record as far as this module reads it. */
+type TerrainRecord = Pick<LibRecord, 'id' | 'name' | 'files' | 'enabled' | 'categoryId' | 'fileRef'> & { mapBuiltAt?: unknown };
 
 /** The record's map file, when the record is a whole-map terrain. */
-function mapFileOf(rec) {
+export function mapFileOf(rec: Pick<LibRecord, 'files'> | null | undefined): LibFile | null {
   return (rec && rec.files || []).find((f) => f.root === 'lang' && String(f.relPath).toLowerCase() === MAP_REL) || null;
 }
 
 /** When Steam last wrote the game's own map, or null with no game or no map. */
-function gameMapTime(gamePath) {
+export function gameMapTime(gamePath: string | null | undefined): number | null {
   if (!gamePath) return null;
   try { return fs.statSync(path.join(gamePath, 'dota', 'maps', 'dota.vpk')).mtimeMs; } catch { return null; }
 }
 
 /** A DOS date and time, as a zip stores them, in milliseconds. */
-function fromDos(date, time) {
+function fromDos(date: number, time: number): number | null {
   const d = new Date(((date >> 9) & 0x7f) + 1980, Math.max(((date >> 5) & 0x0f) - 1, 0), Math.max(date & 0x1f, 1),
     (time >> 11) & 0x1f, (time >> 5) & 0x3f, (time & 0x1f) * 2);
   return Number.isFinite(d.getTime()) ? d.getTime() : null;
@@ -49,9 +59,8 @@ function fromDos(date, time) {
  * When the map inside a zip was packed, read from the zip's table of contents, which sits at the
  * end: `buf` may be the whole archive or only its last bytes. null when there is no map in it or
  * the bytes are not a zip.
- * @param {Buffer} buf
  */
-function mapTimeInZip(buf) {
+export function mapTimeInZip(buf: unknown): number | null {
   if (!Buffer.isBuffer(buf) || buf.length < 22) return null;
   let end = -1;
   for (let i = buf.length - 22; i >= 0; i--) {
@@ -77,8 +86,8 @@ function mapTimeInZip(buf) {
 }
 
 /** The same, for an archive on disk: only its tail is read. */
-function mapTimeInArchive(file) {
-  let fd = null;
+export function mapTimeInArchive(file: string): number | null {
+  let fd: number | null = null;
   try {
     fd = fs.openSync(file, 'r');
     const size = fs.fstatSync(fd).size; // the open file, not the path again (js/file-system-race)
@@ -94,35 +103,38 @@ function mapTimeInArchive(file) {
 }
 
 /** Built for a map older than the one the game has. Unknown either way is not old. */
-function isStale(builtAt, mapAt) {
-  return Number.isFinite(builtAt) && Number.isFinite(mapAt) && builtAt < mapAt - MARGIN_MS;
+export function isStale(builtAt: unknown, mapAt: unknown): boolean {
+  return typeof builtAt === 'number' && typeof mapAt === 'number' && Number.isFinite(builtAt) && Number.isFinite(mapAt)
+    && builtAt < mapAt - MARGIN_MS;
 }
 
 /**
- * @param {object} deps
- * @param {string} [deps.downloadsDir]       where downloaded archives are kept, <category>/<file>
- * @param {() => string|null} deps.gamePath
- * @param {string} [deps.storeFile]          a small JSON file of what has been worked out
- * @param {(categoryId: string, fileRef: string) => Promise<Buffer|null>} [deps.fetchTail]
- *   the last bytes of a catalog archive, for a terrain nobody has downloaded yet
+ * @param deps.downloadsDir  where downloaded archives are kept, <category>/<file>
+ * @param deps.storeFile     a small JSON file of what has been worked out
+ * @param deps.fetchTail     the last bytes of a catalog archive, for a terrain nobody has downloaded yet
  */
-function createTerrainAges({ downloadsDir, gamePath, storeFile, fetchTail = async () => null }) {
-  const load = () => { try { return JSON.parse(fs.readFileSync(String(storeFile), 'utf8')); } catch { return {}; } };
-  const save = (s) => { if (storeFile) try { fs.writeFileSync(storeFile, JSON.stringify(s, null, 1)); } catch { /* next time */ } };
+export function createTerrainAges({ downloadsDir, gamePath, storeFile, fetchTail = async () => null }: {
+  downloadsDir?: string;
+  gamePath: () => string | null;
+  storeFile?: string;
+  fetchTail?: (categoryId: string, fileRef: string) => Promise<Buffer | null>;
+}) {
+  const load = (): Store => { try { return JSON.parse(fs.readFileSync(String(storeFile), 'utf8')); } catch { return {}; } };
+  const save = (s: Store) => { if (storeFile) try { fs.writeFileSync(storeFile, JSON.stringify(s, null, 1)); } catch { /* next time */ } };
 
   /** When a record's map was built: what the record says, or its archive in the download cache. */
-  function builtAtOf(rec) {
+  function builtAtOf(rec: TerrainRecord): number | null {
     const map = mapFileOf(rec);
     if (!map) return null;
-    if (Number.isFinite(rec.mapBuiltAt)) return rec.mapBuiltAt;
+    if (typeof rec.mapBuiltAt === 'number' && Number.isFinite(rec.mapBuiltAt)) return rec.mapBuiltAt;
     if (!downloadsDir || !rec.fileRef ||/[\\/]/.test(rec.fileRef)) return null;
     return mapTimeInArchive(path.join(downloadsDir, String(rec.categoryId || ''), rec.fileRef));
   }
 
   /** For each whole-map terrain in the list: when it was built and whether that is too old. */
-  function forRecords(records) {
+  function forRecords(records: TerrainRecord[]): Map<string, { builtAt: number | null; stale: boolean }> {
     const mapAt = gameMapTime(gamePath());
-    const out = new Map();
+    const out = new Map<string, { builtAt: number | null; stale: boolean }>();
     for (const rec of records) {
       if (!mapFileOf(rec)) continue;
       const builtAt = builtAtOf(rec);
@@ -135,16 +147,14 @@ function createTerrainAges({ downloadsDir, gamePath, storeFile, fetchTail = asyn
    * Switch off the whole-map terrains that are older than the game's map, once per map: the
    * first time a map is seen, and again after Valve changes it. Somebody who turns one back on
    * afterwards has been told and chosen, and is left alone until the next map.
-   * @param {Array<object>} records
-   * @param {(rec: object) => void} switchOff
-   * @returns {string[]} the names of what was switched off
+   * @returns the names of what was switched off
    */
-  function switchOffStale(records, switchOff) {
+  function switchOffStale<R extends TerrainRecord>(records: R[], switchOff: (rec: R) => void): string[] {
     const mapAt = gameMapTime(gamePath());
-    if (!Number.isFinite(mapAt)) return [];
+    if (mapAt === null || !Number.isFinite(mapAt)) return [];
     const store = load();
     if (store.mapSeen === mapAt) return [];
-    const names = [];
+    const names: string[] = [];
     for (const rec of records) {
       if (rec.enabled === false || !mapFileOf(rec) || !isStale(builtAtOf(rec), mapAt)) continue;
       switchOff(rec);
@@ -159,28 +169,29 @@ function createTerrainAges({ downloadsDir, gamePath, storeFile, fetchTail = asyn
    * older than the game's map. Read from the end of each
    * archive over the network, a few kilobytes each, and kept by the archive's published hash, so
    * a terrain is asked about again only when its author replaces it.
-   * @param {Array<{file: string}>} terrains  the catalog's terrains category
-   * @param {(file: string) => string|null} hashOf  the catalog's published sha256 for a file
+   * @param terrains  the catalog's terrains category
+   * @param hashOf    the catalog's published sha256 for a file
    */
-  async function forCatalog(terrains, hashOf) {
+  async function forCatalog(terrains: ({ file?: string } | null | undefined)[] | null | undefined, hashOf: (file: string) => string | null) {
     const store = load();
     const known = store.catalog || {};
-    const ages = {};
+    const ages: Record<string, number | null> = {};
     let changed = false;
     for (const m of terrains || []) {
-      if (!m || !/\.zip$/i.test(m.file || '')) continue;
-      const hash = hashOf(m.file) || `name:${m.file}`;
-      if (known[m.file] && known[m.file].hash === hash) { ages[m.file] = known[m.file].builtAt; continue; }
-      let builtAt = null;
-      try { builtAt = mapTimeInZip(await fetchTail('terrains', m.file)); } catch { /* unknown is not old */ }
+      const file = m?.file || '';
+      if (!/\.zip$/i.test(file)) continue;
+      const hash = hashOf(file) || `name:${file}`;
+      if (known[file] && known[file].hash === hash) { ages[file] = known[file].builtAt; continue; }
+      let builtAt: number | null = null;
+      try { builtAt = mapTimeInZip(await fetchTail('terrains', file)); } catch { /* unknown is not old */ }
       // an archive with no map in it is remembered as such, and not asked about again
-      known[m.file] = { hash, builtAt };
-      ages[m.file] = builtAt;
+      known[file] = { hash, builtAt };
+      ages[file] = builtAt;
       changed = true;
     }
     if (changed) save({ ...load(), catalog: known });
     const mapAt = gameMapTime(gamePath());
-    const stale = {};
+    const stale: Record<string, boolean> = {};
     for (const [file, builtAt] of Object.entries(ages)) if (isStale(builtAt, mapAt)) stale[file] = true;
     return { mapAt, ages, stale };
   }
@@ -188,4 +199,3 @@ function createTerrainAges({ downloadsDir, gamePath, storeFile, fetchTail = asyn
   return { builtAtOf, forRecords, switchOffStale, forCatalog };
 }
 
-module.exports = { MAP_REL, TAIL_BYTES, mapFileOf, gameMapTime, mapTimeInZip, mapTimeInArchive, isStale, createTerrainAges };

@@ -14,7 +14,7 @@ const path = require('path');
 const Module = require('module');
 
 const { Installer } = require('../src/installer.js');
-const { Library } = require('../src/library.js');
+const { Library } = require('../src/library.ts');
 
 const ROOT = path.resolve(__dirname, '..');
 

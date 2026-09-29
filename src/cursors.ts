@@ -11,25 +11,44 @@
  * src/presets-service.js takes them. It moved for a reason beyond size: main.js cannot be
  * required by a test (it pulls in Electron), so the startup repair below - which decides
  * whether a user's cursor comes back after a game update or a Steam verify - could not be
- * tested where it was. test/cursors.test.js is what the move is for.
+ * tested where it was. test/cursors.test.ts is what the move is for.
  */
-const fs = require('fs');
+import fs from 'node:fs';
+import type { Settings } from './settings.ts';
+import type { LibFile, LibRecord } from './types.ts';
+
+/** What of the installer this needs: the cursor store, deploy and undeploy. */
+export interface CursorInstaller {
+  setEnabled(files: LibFile[], enabled: boolean, recId?: string | null): unknown;
+  deployCursor(recId: string, files: LibFile[]): unknown;
+  undeployCursor(recId: string, files: LibFile[]): unknown;
+  masterIsOff(): boolean;
+  cursorStoreDir(recId: string): string;
+  ensureCursorStore(recId: string, files: LibFile[]): boolean;
+}
+
+/** What of the library this needs: the records, and switching one. */
+export interface CursorLibrary {
+  list(): LibRecord[];
+  setEnabled(id: string, enabled: boolean): unknown;
+}
 
 /** A record that owns cursor files, whatever else it holds. */
-function isCursorRecord(rec) {
+export function isCursorRecord(rec: Pick<LibRecord, 'files'> | null | undefined): boolean {
   return !!rec && (rec.files || []).some((f) => f.root === 'cursor');
 }
 
 /**
- * @param {object} ctx
- * @param {object} ctx.installer  the installer engine: the cursor store, deploy and undeploy
- * @param {object} ctx.library    the manifest of installed records
- * @param {object} ctx.settings   read for the game path, which the repair needs
+ * @param ctx.installer  the installer engine: the cursor store, deploy and undeploy
+ * @param ctx.library    the manifest of installed records
+ * @param ctx.settings   read for the game path, which the repair needs
  */
-function createCursors({ installer, library, settings }) {
+export function createCursors({ installer, library, settings }: {
+  installer: CursorInstaller; library: CursorLibrary; settings: Pick<Settings, 'get'>;
+}) {
   // switch off every cursor set except one, and report which ones gave way
-  function disableOtherCursors(exceptId) {
-    const off = [];
+  function disableOtherCursors(exceptId: string | null | undefined): string[] {
+    const off: string[] = [];
     for (const rec of library.list()) {
       if (rec.id === exceptId || rec.enabled === false || !isCursorRecord(rec)) continue;
       try {
@@ -43,8 +62,8 @@ function createCursors({ installer, library, settings }) {
 
   // a slot (weather, courier, ...) only ever has one active look — same rule as cursors,
   // just without files to rename: the sibling only needs its enabled flag flipped
-  function disableOtherCosmetics(rec) {
-    const off = [];
+  function disableOtherCosmetics(rec: Pick<LibRecord, 'id' | 'slot'>): string[] {
+    const off: string[] = [];
     for (const other of library.list()) {
       if (other.id === rec.id || other.enabled === false) continue;
       if (other.categoryId !== 'cosmetic' || other.slot !== rec.slot) continue;
@@ -56,7 +75,7 @@ function createCursors({ installer, library, settings }) {
 
   // the master switch renames paks in the language folder, which leaves cursors untouched —
   // take them off (and put them back) alongside it, so "mods off" really means vanilla
-  function applyMasterToCursors(enabled) {
+  function applyMasterToCursors(enabled: boolean): void {
     for (const rec of library.list()) {
       if (rec.enabled === false || !isCursorRecord(rec)) continue;
       try {
@@ -70,7 +89,7 @@ function createCursors({ installer, library, settings }) {
    * verify, another tool), and records made before cursors could be switched off have no
    * stored copy yet. Also settles the legacy case of several sets marked on at once — only
    * the newest was ever really on disk. */
-  function reconcileCursors() {
+  function reconcileCursors(): void {
     if (!settings.get('dotaGamePath')) return;
     const cursors = library.list().filter(isCursorRecord)
       .sort((a, b) => (b.installedAt || 0) - (a.installedAt || 0));
@@ -98,4 +117,3 @@ function createCursors({ installer, library, settings }) {
   return { isCursorRecord, disableOtherCursors, disableOtherCosmetics, applyMasterToCursors, reconcileCursors };
 }
 
-module.exports = { createCursors, isCursorRecord };

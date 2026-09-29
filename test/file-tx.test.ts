@@ -3,24 +3,24 @@
 // folder has to look exactly as it did before the first step. Both directions count - a
 // rollback that misses a file leaves rubbish, and a commit that misses one leaves .mmtx
 // files sitting in the game folder forever.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const { FileTx } = require('../src/file-tx.js');
+import { FileTx, copyInto, writeInto } from '../src/file-tx.ts';
 
-function tree(t) {
+function tree(t: TestContext): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-tx-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   return root;
 }
 
 /** Everything under a folder as "relative path -> contents", so two states can be compared. */
-function snapshot(root) {
-  const out = {};
-  const walk = (dir) => {
+function snapshot(root: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const walk = (dir: string) => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, e.name);
       const rel = path.relative(root, full).replace(/\\/g, '/');
@@ -32,7 +32,7 @@ function snapshot(root) {
   return out;
 }
 
-const put = (root, rel, text) => {
+const put = (root: string, rel: string, text: string) => {
   const p = path.join(root, rel);
   fs.mkdirSync(path.dirname(p), { recursive: true });
   fs.writeFileSync(p, text);
@@ -140,7 +140,7 @@ test('overwriting restores the original bytes, not just the name', (t) => {
 test('rollback does not throw when the world moved under it', (t) => {
   const root = tree(t);
   put(root, 'pak10_dir.vpk', 'mod');
-  const logged = [];
+  const logged: string[] = [];
   const tx = new FileTx((m) => logged.push(m));
   tx.write(path.join(root, 'pak11_dir.vpk'), Buffer.from('x'));
   tx.remove(path.join(root, 'pak10_dir.vpk'));
@@ -160,4 +160,36 @@ test('commit and rollback are each once', (t) => {
   tx.commit();
   tx.rollback(); // a late rollback after a good commit must not undo the change
   assert.equal(fs.readFileSync(path.join(root, 'a.vpk'), 'utf-8'), 'b');
+});
+
+test('a copy over an existing file is undone to the original, and a copy into a new folder takes the folder too', (t) => {
+  const root = tree(t);
+  const src = put(root, 'incoming/mod.vpk', 'new');
+  put(root, 'lang/pak10_dir.vpk', 'old');
+  const before = snapshot(root);
+  assert.throws(() => FileTx.run((tx) => {
+    tx.copy(src, path.join(root, 'lang', 'pak10_dir.vpk'));
+    tx.copy(src, path.join(root, 'fresh', 'deep', 'pak11_dir.vpk'));
+    assert.equal(fs.readFileSync(path.join(root, 'lang', 'pak10_dir.vpk'), 'utf-8'), 'new');
+    throw new Error('the disk filled up');
+  }), /the disk filled up/);
+  assert.deepEqual(snapshot(root), before, 'the original is back and the folder made for the copy is gone');
+});
+
+test('copyInto and writeInto go through a transaction when handed one, and straight to disk when not', (t) => {
+  const root = tree(t);
+  const src = put(root, 'incoming/mod.vpk', 'bytes');
+
+  copyInto(src, path.join(root, 'direct', 'a.vpk'));
+  writeInto('written', path.join(root, 'direct', 'b.vpk'));
+  assert.equal(fs.readFileSync(path.join(root, 'direct', 'a.vpk'), 'utf-8'), 'bytes');
+  assert.equal(fs.readFileSync(path.join(root, 'direct', 'b.vpk'), 'utf-8'), 'written');
+
+  const before = snapshot(root);
+  assert.throws(() => FileTx.run((tx) => {
+    copyInto(src, path.join(root, 'tx', 'c.vpk'), tx);
+    writeInto('written', path.join(root, 'tx', 'd.vpk'), tx);
+    throw new Error('stop');
+  }));
+  assert.deepEqual(snapshot(root), before, 'both were part of the change that was taken back');
 });

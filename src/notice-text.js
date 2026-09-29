@@ -3,7 +3,7 @@
  * When Dota cannot verify the game before matchmaking it says "Valve Anti-Cheat was unable to
  * verify that your machine is secure", and a player with mods reads that as a ban on the way.
  * It is not one: the usual cause is a damaged install or a Steam that needs a restart. The app
- * replaces the four strings of that window with src/notice-texts.js, in the language the game
+ * replaces the four strings of that window with src/notice-texts.ts, in the language the game
  * shows, and names the one switch that takes every mod out.
  *
  * How: a localization file in the language folder the game mounts, inside the app's own pak
@@ -23,7 +23,7 @@ const path = require('path');
 const vpk = require('./vpk');
 const gamelang = require('./gamelang');
 const { APP_PAK } = require('./slot-zones');
-const { NOTICE_TEXTS, NOTICE_KEYS } = require('./notice-texts');
+const { NOTICE_TEXTS, NOTICE_KEYS } = require('./notice-texts.ts');
 
 /** The file name of the app's pak in the language folder. */
 const NOTICE_PAK = `pak${APP_PAK}_dir.vpk`;

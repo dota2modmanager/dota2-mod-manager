@@ -16,7 +16,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const { Library } = require('../src/library.js');
+const { Library } = require('../src/library.ts');
 const { createAdopt } = require('../src/adopt.js');
 
 const LANG = (slot) => [{ root: 'lang', relPath: `${slot}_dir.vpk` }];

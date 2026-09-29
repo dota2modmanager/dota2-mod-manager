@@ -5,14 +5,14 @@
 // plausible ones. Everything after that is Steam's own layout rather than the platform's:
 // libraryfolders.vdf lists the other drives, the game sits under steamapps/common, and both
 // read the same on either system.
-const { execFile } = require('child_process');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import { execFile } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 const WINDOWS = process.platform === 'win32';
 
-function regQuery(hive, key, value) {
+function regQuery(hive: string, key: string, value: string): Promise<string | null> {
   return new Promise((resolve) => {
     execFile('reg', ['query', `${hive}\\${key}`, '/v', value], (err, stdout) => {
       if (err || !stdout) return resolve(null);
@@ -22,9 +22,13 @@ function regQuery(hive, key, value) {
   });
 }
 
-function parseLibraryFolders(vdfText) {
+/* parseLibraryFolders and steamappsDir are exported for the tests and used nowhere else.
+ * Both read files Valve writes, in formats Valve changes without telling anybody, and a wrong
+ * answer from either sends the app looking for the game on the wrong drive - which is the kind
+ * of thing that is hard to notice and easy to pin down with a fixture. */
+export function parseLibraryFolders(vdfText: string): string[] {
   // libraryfolders.vdf: "path" "C:\\..." entries
-  const paths = [];
+  const paths: string[] = [];
   const re = /"path"\s+"([^"]+)"/g;
   let m;
   while ((m = re.exec(vdfText)) !== null) {
@@ -40,7 +44,7 @@ function parseLibraryFolders(vdfText) {
  * a current install, and XDG_DATA_HOME moves that for the people who set it. The flatpak build
  * sees none of the above: it has its own home under ~/.var/app.
  */
-function linuxSteamRoots() {
+function linuxSteamRoots(): string[] {
   const home = os.homedir();
   const xdg = process.env.XDG_DATA_HOME || path.join(home, '.local', 'share');
   return [
@@ -54,7 +58,7 @@ function linuxSteamRoots() {
 /* Steam spelled it SteamApps for years and steamapps after that. Windows does not care and
  * Linux does, so the folder that is actually on disk decides.
  */
-function steamappsDir(lib) {
+export function steamappsDir(lib: string): string {
   for (const name of ['steamapps', 'SteamApps']) {
     const dir = path.join(lib, name);
     if (fs.existsSync(dir)) return dir;
@@ -62,8 +66,8 @@ function steamappsDir(lib) {
   return path.join(lib, 'steamapps');
 }
 
-async function findSteamRoot() {
-  const candidates = WINDOWS
+async function findSteamRoot(): Promise<string | null> {
+  const candidates: (string | null)[] = WINDOWS
     ? [
         await regQuery('HKCU', 'SOFTWARE\\Valve\\Steam', 'SteamPath'),
         await regQuery('HKLM', 'SOFTWARE\\WOW6432Node\\Valve\\Steam', 'InstallPath'),
@@ -83,7 +87,7 @@ async function findSteamRoot() {
  * On Windows that is every drive letter; on Linux the roots are the same handful as above,
  * plus the one folder a second library usually ends up in.
  */
-function fallbackLibraries() {
+function fallbackLibraries(): string[] {
   if (!WINDOWS) return [...linuxSteamRoots(), path.join(os.homedir(), 'Games', 'SteamLibrary')];
   const libs = [];
   for (const drive of 'CDEFGH') {
@@ -98,9 +102,9 @@ function fallbackLibraries() {
   return libs;
 }
 
-async function findDotaGamePath() {
+export async function findDotaGamePath(): Promise<string | null> {
   const steamRoot = await findSteamRoot();
-  const libs = [];
+  const libs: string[] = [];
   if (steamRoot) {
     libs.push(steamRoot);
     const vdf = path.join(steamappsDir(steamRoot), 'libraryfolders.vdf');
@@ -112,7 +116,7 @@ async function findDotaGamePath() {
   }
   libs.push(...fallbackLibraries());
 
-  const seen = new Set();
+  const seen = new Set<string>();
   for (const lib of libs) {
     if (!lib || seen.has(lib.toLowerCase())) continue;
     seen.add(lib.toLowerCase());
@@ -140,7 +144,7 @@ async function findDotaGamePath() {
  * the voice pack, which plenty of people never download, and testing for those would call a
  * working install broken.
  */
-function validateGamePath(p) {
+export function validateGamePath(p: string | null | undefined): boolean {
   if (!p) return false;
   try {
     return fs.existsSync(path.join(p, 'dota', 'pak01_dir.vpk'))
@@ -150,9 +154,3 @@ function validateGamePath(p) {
     return false;
   }
 }
-
-/* parseLibraryFolders and steamappsDir are exported for the tests and used nowhere else.
- * Both read files Valve writes, in formats Valve changes without telling anybody, and a wrong
- * answer from either sends the app looking for the game on the wrong drive - which is the kind
- * of thing that is hard to notice and easy to pin down with a fixture. */
-module.exports = { findDotaGamePath, validateGamePath, parseLibraryFolders, steamappsDir };

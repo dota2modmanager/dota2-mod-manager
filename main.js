@@ -17,19 +17,19 @@ try {
   ({ autoUpdater } = require('electron-updater'));
 } catch { /* dev environment without the dependency installed yet */ }
 
-const { Settings } = require('./src/settings');
+const { Settings } = require('./src/settings.ts');
 const { Catalog } = require('./src/catalog');
 const { Installer } = require('./src/installer');
 // under one name: main.js has a wrapper of its own called importVpkBuffers
 const importer = require('./src/import');
-const { createCursors } = require('./src/cursors');
+const { createCursors } = require('./src/cursors.ts');
 const { createAdopt } = require('./src/adopt');
-const { Library } = require('./src/library');
+const { Library } = require('./src/library.ts');
 const { Fingerprints } = require('./src/fingerprints');
 const { SCHEME } = require('./src/preset-link');
 const discordAuth = require('./src/discord-auth');
 const { DiscordPresence } = require('./src/discord-presence');
-const { findDotaGamePath, validateGamePath } = require('./src/steam');
+const { findDotaGamePath, validateGamePath } = require('./src/steam.ts');
 const { createSchemaService } = require('./src/schema-service');
 const { createRemoteConfig } = require('./src/remote-config');
 // the download chain, so a mirror named in that signed file joins it (electron's own `net` is above)

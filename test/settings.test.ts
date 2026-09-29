@@ -6,19 +6,19 @@
  * and what the app does with those decides whether an upgrade is quiet or destructive.
  *
  * The defaults themselves are checked one by one because several of them are decisions with a
- * comment above them in src/settings.js explaining what a different value would cost -
+ * comment above them in src/settings.ts explaining what a different value would cost -
  * schemaPatch starting off, langSuffix starting russian, lastSeenVersion starting null. A
  * default that drifts is a decision undone by accident.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const { Settings } = require('../src/settings.js');
+import { Settings } from '../src/settings.ts';
 
-function store(t, contents) {
+function store(t: TestContext, contents?: string) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-set-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const file = path.join(dir, 'settings.json');
@@ -122,9 +122,11 @@ test('all() hands back a copy, so nobody edits the store by holding its object',
 
 test('an unknown key reads as undefined and can be set like any other', (t) => {
   const { s, dir } = store(t);
-  assert.equal(s.get('somethingNobodyDefined'), undefined);
-  s.set('somethingNobodyDefined', 7);
-  assert.equal(new Settings(dir).get('somethingNobodyDefined'), 7);
+  // a key main has not declared yet, as a newer version might have written: read around the types
+  const loose = s as unknown as { get(k: string): unknown; set(k: string, v: unknown): void };
+  assert.equal(loose.get('somethingNobodyDefined'), undefined);
+  loose.set('somethingNobodyDefined', 7);
+  assert.equal((new Settings(dir) as unknown as typeof loose).get('somethingNobodyDefined'), 7);
 });
 
 test('the folder is created if it is not there yet', (t) => {

@@ -10,22 +10,22 @@
  * So the cases below are mostly about identity: what a preset remembers, what still matches
  * after the mod is gone and comes back, and what a preset is not allowed to touch.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const { Library } = require('../src/library.js');
+import { Library, type NewRecord } from '../src/library.ts';
 
 /** A library in a throwaway folder, cleaned up when the test ends. */
-function lib(t) {
+function lib(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-lib-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return { store: new Library(dir), dir };
 }
 
-const modFields = (name, over = {}) => ({
+const modFields = (name: string, over: Partial<NewRecord> = {}): NewRecord => ({
   name,
   categoryId: 'heroes',
   styleLabel: null,
@@ -39,8 +39,8 @@ test('a record comes back by id, by key, and in the list', (t) => {
   const { store } = lib(t);
   const rec = store.add(modFields('Crystal Maiden'));
   assert.equal(store.list().length, 1);
-  assert.equal(store.find(rec.id).name, 'Crystal Maiden');
-  assert.equal(store.findByKey('heroes', 'Crystal Maiden', null).id, rec.id);
+  assert.equal(store.find(rec.id)?.name, 'Crystal Maiden');
+  assert.equal(store.findByKey('heroes', 'Crystal Maiden', null)?.id, rec.id);
   assert.equal(store.find('nobody'), null);
   assert.equal(store.findByKey('heroes', 'Nobody', null), null);
 });
@@ -50,8 +50,8 @@ test('a style label is part of the key, and an absent one is null rather than un
   const plain = store.add(modFields('Juggernaut'));
   const styled = store.add(modFields('Juggernaut', { styleLabel: 'Red' }));
   assert.notEqual(plain.id, styled.id);
-  assert.equal(store.findByKey('heroes', 'Juggernaut', null).id, plain.id);
-  assert.equal(store.findByKey('heroes', 'Juggernaut', 'Red').id, styled.id);
+  assert.equal(store.findByKey('heroes', 'Juggernaut', null)?.id, plain.id);
+  assert.equal(store.findByKey('heroes', 'Juggernaut', 'Red')?.id, styled.id);
   assert.equal(plain.styleLabel, null, 'stored as null, so a saved preset compares equal to it');
 });
 
@@ -87,7 +87,7 @@ test('a preset holds what is switched on, and only that', (t) => {
 
   store.savePreset('Mine');
   const preset = store.listPresets()[0];
-  assert.deepEqual(preset.mods.map((m) => m.name), ['On']);
+  assert.deepEqual(preset.mods?.map((m) => m.name), ['On']);
 });
 
 test('deleting every mod leaves the build intact, with its members marked absent', (t) => {
@@ -104,7 +104,7 @@ test('deleting every mod leaves the build intact, with its members marked absent
 
   assert.equal(store.list().length, 0);
   const preset = store.listPresets()[0];
-  assert.equal(preset.mods.length, 2, 'the build still names both');
+  assert.equal(preset.mods?.length, 2, 'the build still names both');
   const members = store.presetMembers(preset);
   assert.equal(members.length, 2);
   assert.equal(members.filter((m) => m.rec).length, 0, 'none of them installed');
@@ -148,7 +148,8 @@ test('add() does not keep a fingerprint, so a stored record never matches by one
    * carries the sender's fingerprint precisely so a renamed mod still matches, and the
    * receiving side cannot use it. Worth closing, and not by editing this test. */
   const { store } = lib(t);
-  const rec = store.add(modFields('Named', { fp: 'fp-1' }));
+  const handed = { ...modFields('Named'), fp: 'fp-1' };
+  const rec = store.add(handed);
   assert.equal(rec.fp, undefined, 'dropped on the way in');
   assert.equal(Library.identityOf(rec).fp, null);
   assert.equal(store.list()[0].fp, undefined);
@@ -161,11 +162,12 @@ test('free cosmetics are not part of a build', (t) => {
    * off. */
   const { store } = lib(t);
   store.add(modFields('A mod'));
-  store.add(modFields('A courier', { categoryId: 'cosmetic', slot: 'courier', itemId: 42 }));
+  const courier = { ...modFields('A courier', { categoryId: 'cosmetic' }), slot: 'courier', itemId: 42 };
+  store.add(courier);
 
   store.savePreset('Build');
   const preset = store.listPresets()[0];
-  assert.deepEqual(preset.mods.map((m) => m.name), ['A mod']);
+  assert.deepEqual(preset.mods?.map((m) => m.name), ['A mod']);
   assert.equal(store.presetMembers(preset).length, 1);
   assert.equal(Library.inPreset({ categoryId: 'cosmetic' }), false);
   assert.equal(Library.inPreset({ categoryId: 'heroes' }), true);
@@ -184,7 +186,7 @@ test('a preset saved before builds stopped being lists of ids is still readable'
 
   const members = store.presetMembers(preset);
   assert.equal(members.length, 1);
-  assert.equal(members[0].rec.id, rec.id);
+  assert.equal(members[0].rec?.id, rec.id);
   assert.equal(members[0].identity.name, 'Old Shape', 'turned into an identity on the way out');
 });
 
@@ -195,7 +197,7 @@ test('saving over a name updates that build, and a received one of the same name
   store.add(modFields('Second'));
   store.savePreset('Same');
   assert.equal(store.listPresets().length, 1, 'one build, brought up to date');
-  assert.equal(store.listPresets()[0].mods.length, 2);
+  assert.equal(store.listPresets()[0].mods?.length, 2);
 
   store.addSharedPreset({ name: 'Same', wanted: [{ categoryId: 'heroes', name: 'Theirs' }] });
   store.savePreset('Same');
@@ -203,7 +205,7 @@ test('saving over a name updates that build, and a received one of the same name
   const received = store.listPresets().filter((p) => p.wanted);
   assert.equal(own.length, 1);
   assert.equal(received.length, 1, "somebody else's build of the same name is a different thing");
-  assert.equal(received[0].wanted.length, 1, 'and today’s state was not folded into it');
+  assert.equal(received[0].wanted?.length, 1, 'and today’s state was not folded into it');
 });
 
 test('updating a build by id needs no retyped name, and refuses to touch a received one', (t) => {
@@ -213,7 +215,7 @@ test('updating a build by id needs no retyped name, and refuses to touch a recei
   const preset = store.listPresets()[0];
   store.add(modFields('Two'));
 
-  assert.equal(store.updatePresetMods(preset.id).mods.length, 2);
+  assert.equal(store.updatePresetMods(preset.id)?.mods?.length, 2);
   const shared = store.addSharedPreset({ name: 'Theirs', wanted: [] });
   assert.equal(store.updatePresetMods(shared.id), null, 'a received build is not ours to recapture');
   assert.equal(store.updatePresetMods('nobody'), null);
@@ -223,8 +225,8 @@ test('renaming and deleting a build', (t) => {
   const { store } = lib(t);
   store.savePreset('Before');
   const id = store.listPresets()[0].id;
-  assert.equal(store.updatePreset(id, { name: 'After' }).name, 'After');
-  assert.equal(store.getPreset(id).name, 'After');
+  assert.equal(store.updatePreset(id, { name: 'After' })?.name, 'After');
+  assert.equal(store.getPreset(id)?.name, 'After');
   store.deletePreset(id);
   assert.equal(store.listPresets().length, 0);
   assert.equal(store.getPreset(id), null);
@@ -236,7 +238,8 @@ test('the same mod named twice in one build is one member', (t) => {
   store.add(modFields('Twice'));
   store.savePreset('Build');
   const preset = store.listPresets()[0];
-  preset.mods.push({ ...preset.mods[0] });
+  const mods = preset.mods ?? [];
+  mods.push({ ...mods[0] });
   assert.equal(store.presetMembers(preset).length, 1);
 });
 

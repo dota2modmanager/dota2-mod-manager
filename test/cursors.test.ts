@@ -4,26 +4,33 @@
  * copying files back and forth rather than renaming a pak. The repair below runs on every
  * start and decides whether a user's cursor comes back after a game update, a Steam verify, or
  * another tool writing into the same folder. It had no test at all, because it lived in
- * main.js and main.js cannot be required: it pulls in Electron. Moving it into src/cursors.js
+ * main.js and main.js cannot be required: it pulls in Electron. Moving it into src/cursors.ts
  * is what these tests are for, and the order had to be that way round.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const { crc32 } = require('node:zlib');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { crc32 } from 'node:zlib';
 
-const vpk = require('../src/vpk.js');
-const { Installer } = require('../src/installer.js');
-const { Library } = require('../src/library.js');
-const { createCursors } = require('../src/cursors.js');
+import vpk from '../src/vpk.js';
+import installerJs from '../src/installer.js';
+const { Installer } = installerJs;
+import { Library } from '../src/library.ts';
+import { createCursors } from '../src/cursors.ts';
+import type { Settings } from '../src/settings.ts';
+
+/** A settings store that answers only the game path, which is all the cursors ask it. */
+const gameAt = (game: string | null): Pick<Settings, 'get'> => ({
+  get: ((key: string) => (key === 'dotaGamePath' ? game : null)) as Settings['get'],
+});
 
 const ARROW = 'arrow.ani';
 const VANILLA = 'valve\'s own arrow';
 
 /** A game folder the installer accepts, a real library, and the cursor functions over both. */
-function stand(t) {
+function stand(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-cursors-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const game = path.join(dir, 'game');
@@ -41,17 +48,17 @@ function stand(t) {
     onProgress: () => {},
   });
   const library = new Library(userDataDir);
-  const settings = { get: (key) => (key === 'dotaGamePath' ? game : null) };
+  const settings = gameAt(game);
   const cursors = createCursors({ installer, library, settings });
 
   /** An installed cursor set: a library record plus the copy installing one leaves behind. */
-  const cursorSet = (name, bytes, { stored = true } = {}) => {
+  const cursorSet = (name: string, bytes: string | null, { stored = true }: { stored?: boolean } = {}) => {
     const files = [{ root: 'cursor', relPath: ARROW }];
     const rec = library.add({ name, categoryId: 'cursors', styleLabel: null, fileRef: null, preview: null, files });
     if (stored) {
       const store = installer.cursorStoreDir(rec.id);
       fs.mkdirSync(store, { recursive: true });
-      fs.writeFileSync(path.join(store, ARROW), bytes);
+      fs.writeFileSync(path.join(store, ARROW), bytes ?? '');
     }
     return rec;
   };
@@ -70,8 +77,8 @@ test('one cursor set coming on takes the others off, and says which gave way', (
   const off = cursors.disableOtherCursors(mine.id);
 
   assert.deepEqual(off, ['Theirs']);
-  assert.equal(library.find(theirs.id).enabled, false);
-  assert.equal(library.find(mine.id).enabled, true, 'the set being switched on was switched off');
+  assert.equal(library.find(theirs.id)?.enabled, false);
+  assert.equal(library.find(mine.id)?.enabled, true, 'the set being switched on was switched off');
 });
 
 test('a set that is already off is not reported as having given way', (t) => {
@@ -87,7 +94,7 @@ test('a set that is already off is not reported as having given way', (t) => {
 
 test('a slot wears one look: the sibling is switched off, another slot is left alone', (t) => {
   const { cursors, library } = stand(t);
-  const add = (name, slot) => library.add({
+  const add = (name: string) => library.add({
     name, categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [],
   });
   const courier = add('Courier A');
@@ -97,11 +104,11 @@ test('a slot wears one look: the sibling is switched off, another slot is left a
   library.update(sibling.id, { slot: 'courier' });
   library.update(ward.id, { slot: 'ward' });
 
-  const off = cursors.disableOtherCosmetics(library.find(courier.id));
+  const off = cursors.disableOtherCosmetics(library.find(courier.id)!);
 
   assert.deepEqual(off, ['Courier B']);
-  assert.equal(library.find(sibling.id).enabled, false);
-  assert.equal(library.find(ward.id).enabled, true, 'a different slot was switched off with it');
+  assert.equal(library.find(sibling.id)?.enabled, false);
+  assert.equal(library.find(ward.id)?.enabled, true, 'a different slot was switched off with it');
 });
 
 test('mods off puts the game\'s own cursor back, and mods on brings the set again', (t) => {
@@ -160,8 +167,8 @@ test('with several sets marked on and nothing stored, only the newest keeps the 
 
   assert.ok(fs.existsSync(path.join(installer.cursorStoreDir(newer.id), ARROW)), 'the newest set kept nothing');
   assert.equal(fs.existsSync(installer.cursorStoreDir(older.id)), false, 'the older set claimed the same bytes');
-  assert.equal(library.find(older.id).enabled, false, 'the older set still says it is on');
-  assert.equal(library.find(newer.id).enabled, true);
+  assert.equal(library.find(older.id)?.enabled, false, 'the older set still says it is on');
+  assert.equal(library.find(newer.id)?.enabled, true);
 });
 
 test('a set with no copy anywhere is switched off instead of claiming to be on', (t) => {
@@ -173,7 +180,7 @@ test('a set with no copy anywhere is switched off instead of claiming to be on',
 
   cursors.reconcileCursors();
 
-  assert.equal(library.find(rec.id).enabled, false);
+  assert.equal(library.find(rec.id)?.enabled, false);
 });
 
 test('with the master switch off the repair leaves the folder vanilla', (t) => {
@@ -191,16 +198,16 @@ test('with the master switch off the repair leaves the folder vanilla', (t) => {
   cursors.reconcileCursors();
 
   assert.equal(onDisk(), VANILLA, 'mods are off and the mod\'s cursor is on screen');
-  assert.equal(library.find(rec.id).enabled, true, 'master off is not the same as switching the mod off');
+  assert.equal(library.find(rec.id)?.enabled, true, 'master off is not the same as switching the mod off');
 });
 
 test('no game path means nothing is touched', (t) => {
   const { installer, library, cursorSet, onDisk } = stand(t);
   const rec = cursorSet('Mine', 'my arrow');
-  const cursors = createCursors({ installer, library, settings: { get: () => null } });
+  const cursors = createCursors({ installer, library, settings: gameAt(null) });
 
   cursors.reconcileCursors();
 
   assert.equal(onDisk(), VANILLA);
-  assert.equal(library.find(rec.id).enabled, true);
+  assert.equal(library.find(rec.id)?.enabled, true);
 });

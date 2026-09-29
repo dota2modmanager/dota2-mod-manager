@@ -70,12 +70,12 @@ or turning mods back on would resurrect the ones you had deliberately switched o
 4. Compare its contents against what is already installed and report conflicts (see below).
 5. Pick a free slot: low ones for categories that must load early, otherwise the first free number
    from 10 up. Combined packs exist for the same reason and are described in `src/vpk.js`.
-6. Write everything through `src/file-tx.js`.
-7. Record it in `manifest.json` through `src/library.js`.
+6. Write everything through `src/file-tx.ts`.
+7. Record it in `manifest.json` through `src/library.ts`.
 
 ## All of it or none of it
 
-`src/file-tx.js` is the reason the app can be trusted with a game folder. One install is five or
+`src/file-tx.ts` is the reason the app can be trusted with a game folder. One install is five or
 six writes, a removal is as many deletes, and switching a mod off renames every file it owns.
 A failure halfway through, a locked file because Dota just started, a full disk, an antivirus
 holding a handle, used to leave the folder in a state the game would happily load half of.
@@ -361,19 +361,19 @@ that location is not writable.
 | `src/beta.ts` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
 | `src/overlays.js` | Fonts and cursors: files written over the game's own, their kept originals, and putting them back after Steam's file check |
 | `src/import.js` | Taking a mod in: a `.vpk`, a `.zip`, an author's folder, or bytes off a drop |
-| `src/cursors.js` | Which cursor set is live, which look a slot wears, and the repair at startup |
+| `src/cursors.ts` | Which cursor set is live, which look a slot wears, and the repair at startup |
 | `src/adopt.js` | What a VPK goes through before it counts as a mod: named, harvested, split |
 | `src/updater.js` | Where an installed copy looks for a new version: the two feeds, and the channel it reads |
 | `src/vpk.js` | The VPK format: read, write, merge, split, combine, fingerprint |
-| `src/file-tx.js` | One transaction per change to the game folder |
-| `src/library.js` | `manifest.json`: installed records and presets |
-| `src/settings.js` | `settings.json` and its defaults |
+| `src/file-tx.ts` | One transaction per change to the game folder |
+| `src/library.ts` | `manifest.json`: installed records and presets |
+| `src/settings.ts` | `settings.json` and its defaults |
 | `src/catalog.js`, `src/catalog-signature.ts` | Catalog data and who is allowed to change it |
 | `src/net.js` | Downloads, mirrors, backoff |
 | `src/remote-config.js` | The switches and notices this project can change after a release, the version ranges a switch can be held to, and the signature over them |
 | `tools/sign-catalog.js` | The signing side, for whoever holds a private key |
 | `src/safe-zip.js` | Every foreign archive comes through here |
-| `src/steam.js` | Finding Steam and the game, and proving the folder is really a game |
+| `src/steam.ts` | Finding Steam and the game, and proving the folder is really a game |
 | `src/gamelang.js` | Which folder Dota will mount, and moving mods across when that changes |
 | `src/patcher.js`, `src/schema.js`, `src/schema-service.js` | Search-path patch, signatures, item schema |
 | `src/patch-watch.js` | Noticing a game update and repairing after it |

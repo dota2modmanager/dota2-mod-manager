@@ -20,8 +20,8 @@ const GLOBAL_TABLE_RE = new RegExp('^(?:' + [
 ].join('|') + ')');
 const { ensureLangFolder } = require('./gamelang');
 const { openZip, safeJoin } = require('./safe-zip');
-const { validateGamePath } = require('./steam');
-const { FileTx, copyInto, writeInto } = require('./file-tx');
+const { validateGamePath } = require('./steam.ts');
+const { FileTx, copyInto, writeInto } = require('./file-tx.ts');
 const { Overlays, FONTS_SUBDIR, CURSOR_SUBDIR } = require('./overlays');
 const { RESERVED_PAKS, isMinifyFile, isMinifyPak } = require('./minify');
 const { downloadFile } = require('./net');
@@ -66,7 +66,7 @@ function isOfficialLangFile(baseLower) {
   return /^pak01_/.test(baseLower) || baseLower === 'gameinfo.gi' || zones.isAppPak(baseLower);
 }
 
-// What a FileTx parks next to a file it is about to replace or delete (see src/file-tx.js).
+// What a FileTx parks next to a file it is about to replace or delete (see src/file-tx.ts).
 // Nothing should outlive its transaction; one that does means the app died mid-write, and
 // sweepStaged() cleans up after that on the next start.
 const STAGED_RE = /\.[a-z0-9]+\.mmtx$/i;

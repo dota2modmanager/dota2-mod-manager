@@ -190,4 +190,4 @@ const NOTICE_KEYS = {
   party: 'DOTA_VAC_Verification_Header_Party',
 };
 
-module.exports = { NOTICE_TEXTS, NOTICE_KEYS };
+export { NOTICE_TEXTS, NOTICE_KEYS };

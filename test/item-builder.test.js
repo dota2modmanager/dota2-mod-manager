@@ -513,7 +513,7 @@ test('choosing other effects for the same item changes its row instead of adding
   // My mods showed three rows reading "Blightfall - Head" for one item picked with fire, then
   // snow, then nothing, and nothing on them said which was which.
   const { createSchemaService } = require('../src/schema-service.js');
-  const { Library } = require('../src/library.js');
+  const { Library } = require('../src/library.ts');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-picks-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const library = new Library(dir);
@@ -601,7 +601,7 @@ test('a set lists the hero items the builder puts on, and says why it leaves one
 
 test('a whole set goes on in one write, a row per piece, and a piece already on keeps its effects', (t) => {
   const { createSchemaService } = require('../src/schema-service.js');
-  const { Library } = require('../src/library.js');
+  const { Library } = require('../src/library.ts');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-sets-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const game = path.join(dir, 'game');

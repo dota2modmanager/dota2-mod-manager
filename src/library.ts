@@ -1,16 +1,38 @@
 // Library: manifest of installed mods + presets
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import type { LibFile, LibRecord, ModIdentity, Preset } from './types.ts';
 
-class Library {
-  constructor(userDataDir) {
+/** A record as far as telling mods apart goes. No category means an import. */
+type ModLike = { name: string; categoryId?: string; styleLabel?: string | null; fp?: string | null };
+
+/** What manifest.json holds. */
+interface Manifest { installed: LibRecord[]; presets: Preset[] }
+
+/** What adding a record takes; the id, the switch and the time are the library's own. */
+export interface NewRecord {
+  name: string;
+  categoryId: string;
+  styleLabel?: string | null;
+  fileRef?: string | null;
+  preview?: string | null;
+  files: LibFile[];
+  kind?: string;
+  members?: Record<string, unknown>[];
+}
+
+export class Library {
+  file: string;
+  data: Manifest;
+
+  constructor(userDataDir: string) {
     this.file = path.join(userDataDir, 'manifest.json');
     this.data = { installed: [], presets: [] };
     this.load();
   }
 
-  load() {
+  load(): void {
     try {
       if (fs.existsSync(this.file)) {
         const parsed = JSON.parse(fs.readFileSync(this.file, 'utf-8'));
@@ -22,33 +44,28 @@ class Library {
     }
   }
 
-  save() {
+  save(): void {
     fs.mkdirSync(path.dirname(this.file), { recursive: true });
     fs.writeFileSync(this.file, JSON.stringify(this.data, null, 2));
   }
 
-  list() {
+  list(): LibRecord[] {
     return this.data.installed;
   }
 
-  find(id) {
+  find(id: string): LibRecord | null {
     return this.data.installed.find((m) => m.id === id) || null;
   }
 
-  findByKey(categoryId, name, styleLabel) {
+  findByKey(categoryId: string, name: string, styleLabel?: string | null): LibRecord | null {
     return this.data.installed.find(
       (m) => m.categoryId === categoryId && m.name === name && (m.styleLabel || null) === (styleLabel || null)
     ) || null;
   }
 
-  /**
-   * @param {{ name: string, categoryId: string, styleLabel?: string|null, fileRef?: string|null,
-   *   preview?: string|null, files: Array<{ root: string, relPath: string }>, kind?: string,
-   *   members?: Array<object> }} rec
-   */
-  add({ name, categoryId, styleLabel, fileRef, preview, files, kind, members }) {
+  add({ name, categoryId, styleLabel, fileRef, preview, files, kind, members }: NewRecord): LibRecord {
     const id = crypto.randomUUID();
-    const rec = {
+    const rec: LibRecord = {
       id,
       name,
       categoryId,
@@ -66,13 +83,13 @@ class Library {
     return rec;
   }
 
-  update(id, fields) {
+  update(id: string, fields: Partial<LibRecord>): LibRecord | null {
     const rec = this.find(id);
     if (rec) { Object.assign(rec, fields); this.save(); }
     return rec;
   }
 
-  setEnabled(id, enabled) {
+  setEnabled(id: string, enabled: boolean): LibRecord | null {
     const rec = this.find(id);
     if (rec) {
       rec.enabled = enabled;
@@ -88,13 +105,13 @@ class Library {
    * new record with a new id. A build survived exactly as long as its installation, which is
    * the opposite of what people keep them for. Presets hold the mod's own identity now (see
    * Library.identityOf), so a deleted mod is a member that is simply not installed. */
-  removeRecord(id) {
+  removeRecord(id: string): void {
     this.data.installed = this.data.installed.filter((m) => m.id !== id);
     this.save();
   }
 
-  knownLangRelPaths() {
-    const out = [];
+  knownLangRelPaths(): string[] {
+    const out: string[] = [];
     for (const m of this.data.installed) {
       for (const f of m.files) {
         if (f.root === 'lang') out.push(f.relPath);
@@ -105,8 +122,8 @@ class Library {
 
   // every installed file across all roots (lang/fonts/cursor/tools) — used to tell
   // app-managed content apart from foreign files during the foreign scan
-  knownFiles() {
-    const out = [];
+  knownFiles(): LibFile[] {
+    const out: LibFile[] = [];
     for (const m of this.data.installed) {
       for (const f of m.files) out.push({ root: f.root, relPath: f.relPath });
     }
@@ -115,7 +132,7 @@ class Library {
 
   // ---------- presets ----------
 
-  listPresets() {
+  listPresets(): Preset[] {
     return this.data.presets;
   }
 
@@ -124,7 +141,7 @@ class Library {
    * off. Folding the two together is what made applying a build silently strip somebody's
    * courier and wards - they were never in the preset, so the apply turned them off. The
    * picks are left alone by everything here; the Library is where they are managed. */
-  static inPreset(rec) {
+  static inPreset(rec: Pick<LibRecord, 'categoryId'> | null | undefined): boolean {
     return !!rec && rec.categoryId !== 'cosmetic';
   }
 
@@ -132,7 +149,7 @@ class Library {
    * travels inside a .d2mm (see src/preset-share.js), so what is stored and what is shared
    * say the same thing. Not an id - an id belongs to one installation of one mod on one
    * machine, and a build outlives both. */
-  static identityOf(rec) {
+  static identityOf(rec: ModLike): ModIdentity {
     return {
       categoryId: rec.categoryId || 'imported',
       name: rec.name,
@@ -141,7 +158,7 @@ class Library {
     };
   }
 
-  static sameMod(identity, rec) {
+  static sameMod(identity: ModIdentity | null | undefined, rec: ModLike | null | undefined): boolean {
     if (!identity || !rec) return false;
     if (identity.fp && rec.fp) return identity.fp === rec.fp;
     return (rec.categoryId || 'imported') === identity.categoryId
@@ -149,7 +166,7 @@ class Library {
       && (rec.styleLabel || null) === (identity.styleLabel || null);
   }
 
-  savePreset(name) {
+  savePreset(name: string): void {
     const enabled = this.data.installed.filter((m) => m.enabled && Library.inPreset(m));
     const mods = enabled.map(Library.identityOf);
     // never fold today's state into a shared preset waiting to be installed — same name,
@@ -167,7 +184,7 @@ class Library {
 
   // Re-capture what is enabled right now into an existing preset. Saving by name meant
   // retyping it exactly to update a build, and a typo silently created a second preset.
-  updatePresetMods(presetId) {
+  updatePresetMods(presetId: string): Preset | null {
     const p = this.getPreset(presetId);
     if (!p || p.wanted) return null;
     p.mods = this.data.installed.filter((m) => m.enabled && Library.inPreset(m)).map(Library.identityOf);
@@ -179,8 +196,10 @@ class Library {
 
   // A preset that arrived as a .d2mm and hasn't been installed yet: it holds the sender's
   // wish list (`wanted`) instead of local mod ids, plus where the file is stashed.
-  addSharedPreset({ name, note, author, wanted, sourceFile }) {
-    const preset = {
+  addSharedPreset({ name, note, author, wanted, sourceFile }: {
+    name: string; note?: string; author?: string; wanted: Record<string, unknown>[]; sourceFile?: string | null;
+  }): Preset {
+    const preset: Preset = {
       id: crypto.randomUUID(),
       name,
       modIds: [],
@@ -193,18 +212,18 @@ class Library {
     return preset;
   }
 
-  updatePreset(id, fields) {
+  updatePreset(id: string, fields: Partial<Preset>): Preset | null {
     const p = this.getPreset(id);
     if (p) { Object.assign(p, fields); this.save(); }
     return p;
   }
 
-  deletePreset(presetId) {
+  deletePreset(presetId: string): void {
     this.data.presets = this.data.presets.filter((p) => p.id !== presetId);
     this.save();
   }
 
-  getPreset(presetId) {
+  getPreset(presetId: string): Preset | null {
     return this.data.presets.find((p) => p.id === presetId) || null;
   }
 
@@ -215,12 +234,11 @@ class Library {
    * before this holds ids, and turning those into identities on the way out means a
    * downgrade still finds its presets intact. Cosmetics that a pre-2.6 preset still names
    * are dropped here too, so reading gives the same answer saving again would.
-   * @returns {Array<{ identity: object, rec: object|null }>}
    */
-  presetMembers(preset) {
-    const out = [];
-    const seen = new Set();
-    const push = (identity, rec) => {
+  presetMembers(preset: Preset | null | undefined): { identity: ModIdentity; rec: LibRecord | null }[] {
+    const out: { identity: ModIdentity; rec: LibRecord | null }[] = [];
+    const seen = new Set<string>();
+    const push = (identity: ModIdentity, rec: LibRecord | null | undefined) => {
       const key = `${identity.categoryId}|${identity.name}|${identity.styleLabel || ''}`;
       if (seen.has(key)) return;
       seen.add(key);
@@ -242,9 +260,8 @@ class Library {
   }
 
   /** The installed records a preset names, for everything that works in ids. */
-  presetModIds(preset) {
-    return this.presetMembers(preset).filter((m) => m.rec).map((m) => m.rec.id);
+  presetModIds(preset: Preset | null | undefined): string[] {
+    return this.presetMembers(preset).flatMap((m) => (m.rec ? [m.rec.id] : []));
   }
 }
 
-module.exports = { Library };

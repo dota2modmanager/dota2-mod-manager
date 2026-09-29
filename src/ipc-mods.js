@@ -12,7 +12,7 @@ const { dialog, ipcMain } = require('electron');
 const { t } = require('./i18n');
 const { fetchMirrored } = require('./net');
 const { RAW_BASE } = require('./catalog');
-const { createTerrainAges, TAIL_BYTES } = require('./terrain-age');
+const { createTerrainAges, TAIL_BYTES } = require('./terrain-age.ts');
 const { createNoticeText } = require('./notice-text');
 const zones = require('./slot-zones');
 
@@ -24,7 +24,7 @@ function registerModsIpc({
   // is created, so a value captured here would be undefined forever - which is exactly
   // what win:isMaximized did on the first run after this file was split out.
 
-  // whole-map terrains against the game's own map (src/terrain-age.js)
+  // whole-map terrains against the game's own map (src/terrain-age.ts)
   const terrainAges = createTerrainAges({
     downloadsDir: installer.downloadsDir,
     gamePath: () => (installer.getGamePath ? installer.getGamePath() : null),

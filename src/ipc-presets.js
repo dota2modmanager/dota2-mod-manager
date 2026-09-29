@@ -11,7 +11,7 @@
 const fs = require('fs');
 const { app, dialog, ipcMain } = require('electron');
 
-const { Library } = require('./library');
+const { Library } = require('./library.ts');
 const { readPresetFile, writePresetFile } = require('./preset-share');
 const { encodePresetLink } = require('./preset-link');
 const { installVpkBuffer } = require('./import');

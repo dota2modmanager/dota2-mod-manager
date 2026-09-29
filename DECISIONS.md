@@ -330,7 +330,7 @@ to do next, and turning it off would put back the wording that caused the issues
 never listed as a mod either, so nobody removes it by accident; the site says it is there, and
 the uninstaller takes it out.
 
-*Check:* `node --test test/notice-text.test.js`, and `src/notice-texts.js` for every word of it.
+*Check:* `node --test test/notice-text.test.js`, and `src/notice-texts.ts` for every word of it.
 
 ---
 
@@ -370,7 +370,7 @@ The suite runs on both since 2026-09-09, which is what issue
 the coverage gate, `windows-latest` runs the same tests for correctness, and that job earned
 itself on its first run by finding a libuv abort Linux cannot see.
 
-What is still one-sided is the floor. `src/steam.js` takes a different half of itself on each
+What is still one-sided is the floor. `src/steam.ts` takes a different half of itself on each
 operating system, so the two platforms report different figures, and a number calibrated against
 one of them fails on the other.
 
@@ -414,7 +414,7 @@ is never waived.
 ### `main.js` still holds several jobs
 
 It went from 3,102 lines to about 1,300 when the IPC handlers moved into `src/ipc-*.js`, and to
-about 1,150 on 2026-09-16, when the cursor rules went to `src/cursors.js` and everything a freshly
+about 1,150 on 2026-09-16, when the cursor rules went to `src/cursors.ts` and everything a freshly
 landed VPK goes through before it counts as a mod went to `src/adopt.js`. What is left is the
 window, the log, auto-update, deep links, the import progress bar, Discord presence and the
 language folder, which is still more than one file's worth of subject.

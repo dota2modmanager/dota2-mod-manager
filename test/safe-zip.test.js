@@ -95,7 +95,7 @@ test('unpacking writes under the target folder and nothing outside it', (t) => {
 test('unpacking inside a transaction can be taken back whole', (t) => {
   /* Installs and tool downloads unpack through a FileTx, so a failure halfway leaves nothing
      behind. The plain unpack above never takes that path. */
-  const { FileTx } = require('../src/file-tx.js');
+  const { FileTx } = require('../src/file-tx.ts');
   const dest = path.join(tempDir(t), 'SomeTool');
   fs.mkdirSync(dest, { recursive: true });
   fs.writeFileSync(path.join(dest, 'readme.txt'), 'old');

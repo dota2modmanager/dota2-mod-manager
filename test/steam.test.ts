@@ -15,16 +15,16 @@
  * the machine. gamelang.test.js had exactly that problem and had to be isolated after it broke
  * on a developer's own launch options.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const { validateGamePath, parseLibraryFolders, steamappsDir } = require('../src/steam.js');
+import { validateGamePath, parseLibraryFolders, steamappsDir } from '../src/steam.ts';
 
 /** A folder holding one file, at a path given as segments. */
-function tree(t, ...relParts) {
+function tree(t: TestContext, ...relParts: string[][]): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-steam-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   for (const rel of relParts) {

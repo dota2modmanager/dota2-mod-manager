@@ -16,7 +16,7 @@
  * backups\written.json, and a file that holds what this app wrote is this app's file, whatever
  * else it happens to match.
  *
- * Moved out of src/installer.js on 2026-09-17; test/installer.test.js and test/cursors.test.js
+ * Moved out of src/installer.js on 2026-09-17; test/installer.test.js and test/cursors.test.ts
  * cover it through the installer.
  */
 const fs = require('fs');
@@ -24,7 +24,7 @@ const path = require('path');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
 const { openZip, safeJoin } = require('./safe-zip');
-const { copyInto, writeInto } = require('./file-tx');
+const { copyInto, writeInto } = require('./file-tx.ts');
 const { t } = require('./i18n');
 
 /** Where font mods go, under the game folder. */

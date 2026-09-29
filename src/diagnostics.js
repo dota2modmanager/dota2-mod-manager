@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const gamelang = require('./gamelang');
-const { validateGamePath } = require('./steam');
+const { validateGamePath } = require('./steam.ts');
 const { mirrorHealth } = require('./net');
 
 // Nothing about a folder listing that matters for troubleshooting needs the file's bytes,

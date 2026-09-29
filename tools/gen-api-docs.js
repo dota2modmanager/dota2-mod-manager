@@ -70,10 +70,10 @@ function splitDoc(doc) {
 }
 
 /** Everything a module says it exports: in the order module.exports lists them, or, for a module
- *  written with export, in the order they appear. Types are left out: the reference is about what
- *  can be called. */
+ *  written with export, in the order they appear. A TypeScript module's exported types are listed
+ *  with the rest: the shape of what it hands over is as much its interface as its functions. */
 function exportsOf(text) {
-  const named = [...text.matchAll(/^export\s+(?:async\s+)?(?:function\*?|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);
+  const named = [...text.matchAll(/^export\s+(?:async\s+)?(?:function\*?|const|let|class|interface|type)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);
   for (const list of text.matchAll(/^export\s*\{([^}]*)\}/gm)) {
     for (const part of list[1].split(',')) {
       const name = part.trim().split(/\s+as\s+/).pop();
@@ -97,6 +97,7 @@ function defineOf(lines, name) {
     new RegExp(`^(?:export\\s+)?class\\s+${name}\\b`),
     new RegExp(`^(?:export\\s+)?const\\s+${name}\\s*[=:]`),
     new RegExp(`^(?:export\\s+)?let\\s+${name}\\s*[=:]`),
+    new RegExp(`^(?:export\\s+)?(?:interface|type)\\s+${name}\\b`),
   ];
   for (let i = 0; i < lines.length; i++) {
     if (patterns.some((re) => re.test(lines[i]))) return i;

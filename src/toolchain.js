@@ -23,7 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const { downloadFile } = require('./net');
 const { openZip } = require('./safe-zip');
-const { FileTx } = require('./file-tx');
+const { FileTx } = require('./file-tx.ts');
 
 // The only pins there are: what the app was built knowing.
 // Measured again 2026-09-07 for 20.0: the digest comes from GitHub's own release API and was

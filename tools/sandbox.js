@@ -9,7 +9,7 @@
  *   node tools/sandbox.js status   what is on disk right now
  *
  * The layout mirrors a real Steam library, because the app derives things from it: the game
- * path ends in ...\dota 2 beta\game (src/steam.js) and src/gamelang.js walks three levels up
+ * path ends in ...\dota 2 beta\game (src/steam.ts) and src/gamelang.js walks three levels up
  * looking for appmanifest_570.acf.
  *
  * Nothing here changes app code. The app is pointed at the sandbox purely through

@@ -12,7 +12,7 @@
  * fine and says so, asking for the baseline to be raised. The same shape as the type-error
  * ratchet in tools/typecheck.mjs, and the same rule: never lower a line to make a run pass.
  *
- * Platforms measure differently, which is why this is not one number for everybody. src/steam.js
+ * Platforms measure differently, which is why this is not one number for everybody. src/steam.ts
  * asks which operating system it is on and takes a different half of itself on each, so the same
  * file honestly reports 53% on one and something else on the other; measured on 2026-09-10, Linux
  * read 75.2% of lines against Windows' 74.8%, and the two swapped places on branches.

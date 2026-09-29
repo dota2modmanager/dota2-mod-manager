@@ -14,7 +14,7 @@ const path = require('path');
 const AdmZip = require('adm-zip');
 
 const { Installer } = require('../src/installer.js');
-const { FileTx } = require('../src/file-tx.js');
+const { FileTx } = require('../src/file-tx.ts');
 const { rawZip } = require('./fixtures/raw-zip.js');
 
 const FONTS = ['dota', 'panorama', 'fonts'];
@@ -423,7 +423,7 @@ test('a cursor set another program put in the game is found, folders and all, un
 // Slots 02-29 belong to the categories that must load first, everything else starts at 30
 // (PRIORITY_SLOTS in src/installer.js).
 
-const { Library } = require('../src/library.js');
+const { Library } = require('../src/library.ts');
 
 /** A pak file of ours on disk and the record that owns it. */
 function placed(s, library, { base, categoryId, name = base, suffix = '', volumes = 0 }) {

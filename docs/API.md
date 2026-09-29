@@ -18,12 +18,12 @@ the code, not in this page.
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
 | [`src/catalog.js`](#srccatalogjs) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
-| [`src/cursors.js`](#srccursorsjs) | Which cursor set is live, and which look a slot is wearing. |
+| [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/diagnostics.js`](#srcdiagnosticsjs) | A support report a user can send instead of a round of screenshots: Dota's own path and |
 | [`src/discord-auth.js`](#srcdiscord-authjs) | Sign in with Discord, without a server of our own. |
 | [`src/discord-presence.js`](#srcdiscord-presencejs) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
 | [`src/feature-gate.js`](#srcfeature-gatejs) | Is this feature switched off right now? |
-| [`src/file-tx.js`](#srcfile-txjs) | All of it, or none of it. |
+| [`src/file-tx.ts`](#srcfile-txts) | All of it, or none of it. |
 | [`src/fingerprints.js`](#srcfingerprintsjs) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
 | [`src/game-icons.js`](#srcgame-iconsjs) | Item pictures taken from the installed game instead of scraped off a wiki. |
 | [`src/gamelang.js`](#srcgamelangjs) | Which dota_<lang> folder the game actually mounts. |
@@ -33,13 +33,13 @@ the code, not in this page.
 | [`src/import.js`](#srcimportjs) | Taking in a mod the user already has: a .vpk, a .zip, a folder, or bytes off a drop. |
 | [`src/installer.js`](#srcinstallerjs) | Installer engine: download, extract, pak allocation, per-category install/uninstall |
 | [`src/item-builder.js`](#srcitem-builderjs) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
-| [`src/library.js`](#srclibraryjs) | Library: manifest of installed mods + presets |
+| [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
 | [`src/minify.js`](#srcminifyjs) | Living next to Minify. |
 | [`src/mod-id.js`](#srcmod-idjs) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
 | [`src/mod-preview.js`](#srcmod-previewjs) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/net.js`](#srcnetjs) | Getting bytes from the internet, on a connection that may not want to cooperate. |
 | [`src/notice-text.js`](#srcnotice-textjs) | The game's anti-cheat notice, in words that say what to do. |
-| [`src/notice-texts.js`](#srcnotice-textsjs) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.js puts |
+| [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.js puts |
 | [`src/overlays.js`](#srcoverlaysjs) | Fonts and cursors: loose files written over the game's own. |
 | [`src/patch-watch.js`](#srcpatch-watchjs) | Noticing that Dota was patched, while the app is open. |
 | [`src/patcher.js`](#srcpatcherjs) | Search-path patch: registers an extra content folder ahead of the game's own, which |
@@ -51,11 +51,12 @@ the code, not in this page.
 | [`src/safe-zip.js`](#srcsafe-zipjs) | The one door every foreign archive comes through. |
 | [`src/schema-service.js`](#srcschema-servicejs) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
 | [`src/schema.js`](#srcschemajs) | Item-schema engine: the game's own scripts/items/items_game.txt is the only place |
-| [`src/settings.js`](#srcsettingsjs) | Simple JSON settings store in userData |
+| [`src/settings.ts`](#srcsettingsts) | Simple JSON settings store in userData |
 | [`src/slot-zones.js`](#srcslot-zonesjs) | The load order in two parts. |
-| [`src/steam.js`](#srcsteamjs) | Finding Steam, and then finding Dota inside it. |
-| [`src/terrain-age.js`](#srcterrain-agejs) | Terrains that replace the whole map, and whether the game's own map has moved on since. |
+| [`src/steam.ts`](#srcsteamts) | Finding Steam, and then finding Dota inside it. |
+| [`src/terrain-age.ts`](#srcterrain-agets) | Terrains that replace the whole map, and whether the game's own map has moved on since. |
 | [`src/toolchain.js`](#srctoolchainjs) | Tools the app can borrow, fetched only when something actually needs them. |
+| [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
 | [`src/updater.js`](#srcupdaterjs) | Where an installed copy looks for a new version, and on which channel. |
 | [`src/vpk.js`](#srcvpkjs) | Minimal reader for the index of Source-engine VPK "_dir" files (v1/v2). |
@@ -77,7 +78,7 @@ instead, which is why a received build showed up unnamed, unrecognised and still
 that cannot happen again.
 
 Lifted out of main.js unchanged, with the services arriving as arguments the way
-src/cursors.js and src/presets-service.js take them. It moved for the same reason the
+src/cursors.ts and src/presets-service.js take them. It moved for the same reason the
 cursors did: main.js cannot be required by a test, so none of this could be tested where it
 was, and it decides what a user sees in their library.
 
@@ -134,6 +135,30 @@ export const STABLE_CHANNEL = 'latest'
 ```
 
 What everybody else reads: latest.yml, the release channel.
+
+### `Channel`
+
+```ts
+export type Channel = typeof BETA_CHANNEL | typeof STABLE_CHANNEL
+```
+
+_No description in the source._
+
+### `BetaList`
+
+```ts
+export interface BetaList { salt?: string; ids?: unknown[] }
+```
+
+The `beta` block of the signed config: a salt and the hashed ids let in.
+
+### `BetaAsk`
+
+```ts
+export interface BetaAsk { discordId?: string | null; beta?: BetaList | null; wanted?: boolean }
+```
+
+Who is asking and whether they switched the beta on.
 
 ### `idHash`
 
@@ -347,7 +372,7 @@ whole TI battle-pass row - so a reader that knows only the array shows them with
 preview at all. The site reads both; folding one into the other here means the rest of the
 app only ever sees the array. The cache on disk keeps whatever the author wrote.
 
-## src/cursors.js
+## src/cursors.ts
 
 Which cursor set is live, and which look a slot is wearing.
 
@@ -362,28 +387,43 @@ Lifted out of main.js unchanged, with the services arriving as arguments the way
 src/presets-service.js takes them. It moved for a reason beyond size: main.js cannot be
 required by a test (it pulls in Electron), so the startup repair below - which decides
 whether a user's cursor comes back after a game update or a Steam verify - could not be
-tested where it was. test/cursors.test.js is what the move is for.
+tested where it was. test/cursors.test.ts is what the move is for.
 
-### `createCursors`
+### `CursorInstaller`
 
-```js
-function createCursors({ installer, library, settings })
+```ts
+export interface CursorInstaller
 ```
 
+What of the installer this needs: the cursor store, deploy and undeploy.
+
+### `CursorLibrary`
+
+```ts
+export interface CursorLibrary
 ```
-@param {object} ctx
-@param {object} ctx.installer  the installer engine: the cursor store, deploy and undeploy
-@param {object} ctx.library    the manifest of installed records
-@param {object} ctx.settings   read for the game path, which the repair needs
-```
+
+What of the library this needs: the records, and switching one.
 
 ### `isCursorRecord`
 
-```js
-function isCursorRecord(rec)
+```ts
+export function isCursorRecord(rec: Pick<LibRecord, 'files'> | null | undefined): boolean
 ```
 
 A record that owns cursor files, whatever else it holds.
+
+### `createCursors`
+
+```ts
+export function createCursors({ installer, library, settings }: { installer: CursorInstaller; library: CursorLibrary; settings: Pick<Settings, 'get'>; })
+```
+
+```
+@param ctx.installer  the installer engine: the cursor store, deploy and undeploy
+@param ctx.library    the manifest of installed records
+@param ctx.settings   read for the game path, which the repair needs
+```
 
 ## src/diagnostics.js
 
@@ -594,7 +634,7 @@ function createGate({ remoteConfig, settings })
 @returns {(name: string) => {error: string}|null} the answer to send back, or null to carry on
 ```
 
-## src/file-tx.js
+## src/file-tx.ts
 
 All of it, or none of it.
 
@@ -611,26 +651,34 @@ itself with a .mmtx suffix, which is atomic, costs nothing for a 300 MB pak, and
 the cross-volume copy that staging in %APPDATA% would (the game usually lives on another
 drive). Commit deletes those; rollback renames them back.
 
+### `Writer`
+
+```ts
+export type Writer = FileTx | null | undefined
+```
+
+Something to write a file through: a transaction, or nothing, which writes directly.
+
 ### `FileTx`
 
-```js
-class FileTx
+```ts
+export class FileTx
 ```
 
 _No description in the source._
 
 ### `copyInto`
 
-```js
-function copyInto(src, dest, tx = null)
+```ts
+export function copyInto(src: string, dest: string, tx: Writer = null): void
 ```
 
 Copy a file into place: through the transaction when there is one, directly when not.
 
 ### `writeInto`
 
-```js
-function writeInto(buf, dest, tx = null)
+```ts
+export function writeInto(buf: string | NodeJS.ArrayBufferView, dest: string, tx: Writer = null): void
 ```
 
 Write bytes into place: through the transaction when there is one, directly when not.
@@ -1287,14 +1335,22 @@ function gameAssetEntries(gamePath, assetCopies)
 
 Read compiled asset bytes out of pak01 and stage them under the renamed path in our VPK.
 
-## src/library.js
+## src/library.ts
 
 Library: manifest of installed mods + presets
 
+### `NewRecord`
+
+```ts
+export interface NewRecord
+```
+
+What adding a record takes; the id, the switch and the time are the library's own.
+
 ### `Library`
 
-```js
-class Library
+```ts
+export class Library
 ```
 
 _No description in the source._
@@ -1847,7 +1903,7 @@ The game's anti-cheat notice, in words that say what to do.
 When Dota cannot verify the game before matchmaking it says "Valve Anti-Cheat was unable to
 verify that your machine is secure", and a player with mods reads that as a ban on the way.
 It is not one: the usual cause is a damaged install or a Steam that needs a restart. The app
-replaces the four strings of that window with src/notice-texts.js, in the language the game
+replaces the four strings of that window with src/notice-texts.ts, in the language the game
 shows, and names the one switch that takes every mod out.
 
 How: a localization file in the language folder the game mounts, inside the app's own pak
@@ -1957,7 +2013,7 @@ or any pak in the language folder.
 @param {{ gamePath: () => string|null, langDir: () => string, diag: (msg: string) => void, retryMs?: number }} ctx
 ```
 
-## src/notice-texts.js
+## src/notice-texts.ts
 
 The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.js puts
 them in). Keyed by the name Dota gives a language in its own files: dota_<name>.txt.
@@ -1973,7 +2029,7 @@ No ASCII double quote may appear in a string: they are written into a quoted Key
 
 ### `NOTICE_TEXTS`
 
-```js
+```ts
 const NOTICE_TEXTS =
 ```
 
@@ -1991,7 +2047,7 @@ No ASCII double quote may appear in a string: they are written into a quoted Key
 
 ### `NOTICE_KEYS`
 
-```js
+```ts
 const NOTICE_KEYS =
 ```
 
@@ -2017,7 +2073,7 @@ and a later removal put them back. So every write here is recorded by hash in
 backups\written.json, and a file that holds what this app wrote is this app's file, whatever
 else it happens to match.
 
-Moved out of src/installer.js on 2026-09-17; test/installer.test.js and test/cursors.test.js
+Moved out of src/installer.js on 2026-09-17; test/installer.test.js and test/cursors.test.ts
 cover it through the installer.
 
 ### `Overlays`
@@ -3177,14 +3233,22 @@ stays readable (and diffable) when someone opens it.
 
 _No description in the source._
 
-## src/settings.js
+## src/settings.ts
 
 Simple JSON settings store in userData
 
+### `StoredSettings`
+
+```ts
+export interface StoredSettings
+```
+
+What settings.json holds. The window has the same shape (renderer/api/app.ts StoredSettings).
+
 ### `Settings`
 
-```js
-class Settings
+```ts
+export class Settings
 ```
 
 _No description in the source._
@@ -3337,7 +3401,7 @@ game refuses puts back what already moved and throws; the next call tries again.
 @returns {boolean} whether a mod moved
 ```
 
-## src/steam.js
+## src/steam.ts
 
 Finding Steam, and then finding Dota inside it.
 
@@ -3347,18 +3411,38 @@ plausible ones. Everything after that is Steam's own layout rather than the plat
 libraryfolders.vdf lists the other drives, the game sits under steamapps/common, and both
 read the same on either system.
 
+### `parseLibraryFolders`
+
+```ts
+export function parseLibraryFolders(vdfText: string): string[]
+```
+
+parseLibraryFolders and steamappsDir are exported for the tests and used nowhere else.
+Both read files Valve writes, in formats Valve changes without telling anybody, and a wrong
+answer from either sends the app looking for the game on the wrong drive - which is the kind
+of thing that is hard to notice and easy to pin down with a fixture.
+
+### `steamappsDir`
+
+```ts
+export function steamappsDir(lib: string): string
+```
+
+Steam spelled it SteamApps for years and steamapps after that. Windows does not care and
+Linux does, so the folder that is actually on disk decides.
+
 ### `findDotaGamePath`
 
-```js
-async function findDotaGamePath()
+```ts
+export async function findDotaGamePath(): Promise<string | null>
 ```
 
 _No description in the source._
 
 ### `validateGamePath`
 
-```js
-function validateGamePath(p)
+```ts
+export function validateGamePath(p: string | null | undefined): boolean
 ```
 
 A folder called "dota" is not a Dota install.
@@ -3379,24 +3463,7 @@ is the game's own content and is always there. The pak01 files in game\dota_<lan
 the voice pack, which plenty of people never download, and testing for those would call a
 working install broken.
 
-### `parseLibraryFolders`
-
-```js
-function parseLibraryFolders(vdfText)
-```
-
-_No description in the source._
-
-### `steamappsDir`
-
-```js
-function steamappsDir(lib)
-```
-
-Steam spelled it SteamApps for years and steamapps after that. Windows does not care and
-Linux does, so the folder that is actually on disk decides.
-
-## src/terrain-age.js
+## src/terrain-age.ts
 
 Terrains that replace the whole map, and whether the game's own map has moved on since.
 
@@ -3414,16 +3481,16 @@ marked, in the catalog and in My mods, and switched off once when the game's map
 
 ### `MAP_REL`
 
-```js
-const MAP_REL = 'maps/dota.vpk'
+```ts
+export const MAP_REL = 'maps/dota.vpk'
 ```
 
 Where a whole-map terrain puts its map, under the language folder.
 
 ### `TAIL_BYTES`
 
-```js
-const TAIL_BYTES = 64 * 1024
+```ts
+export const TAIL_BYTES = 64 * 1024
 ```
 
 The end of a zip holds its table of contents. A terrain archive has two or three files, so
@@ -3431,63 +3498,56 @@ The end of a zip holds its table of contents. A terrain archive has two or three
 
 ### `mapFileOf`
 
-```js
-function mapFileOf(rec)
+```ts
+export function mapFileOf(rec: Pick<LibRecord, 'files'> | null | undefined): LibFile | null
 ```
 
 The record's map file, when the record is a whole-map terrain.
 
 ### `gameMapTime`
 
-```js
-function gameMapTime(gamePath)
+```ts
+export function gameMapTime(gamePath: string | null | undefined): number | null
 ```
 
 When Steam last wrote the game's own map, or null with no game or no map.
 
 ### `mapTimeInZip`
 
-```js
-function mapTimeInZip(buf)
+```ts
+export function mapTimeInZip(buf: unknown): number | null
 ```
 
 When the map inside a zip was packed, read from the zip's table of contents, which sits at the
 end: `buf` may be the whole archive or only its last bytes. null when there is no map in it or
 the bytes are not a zip.
 
-```
-@param {Buffer} buf
-```
-
 ### `mapTimeInArchive`
 
-```js
-function mapTimeInArchive(file)
+```ts
+export function mapTimeInArchive(file: string): number | null
 ```
 
 The same, for an archive on disk: only its tail is read.
 
 ### `isStale`
 
-```js
-function isStale(builtAt, mapAt)
+```ts
+export function isStale(builtAt: unknown, mapAt: unknown): boolean
 ```
 
 Built for a map older than the one the game has. Unknown either way is not old.
 
 ### `createTerrainAges`
 
-```js
-function createTerrainAges({ downloadsDir, gamePath, storeFile, fetchTail = async () => null })
+```ts
+export function createTerrainAges({ downloadsDir, gamePath, storeFile, fetchTail = async () => null }: { downloadsDir?: string; gamePath: () => string | null; storeFile?: string; fetchTail?: (categoryId: string, fileRef: string) => Promise<Buffer | null>; })
 ```
 
 ```
-@param {object} deps
-@param {string} [deps.downloadsDir]       where downloaded archives are kept, <category>/<file>
-@param {() => string|null} deps.gamePath
-@param {string} [deps.storeFile]          a small JSON file of what has been worked out
-@param {(categoryId: string, fileRef: string) => Promise<Buffer|null>} [deps.fetchTail]
-the last bytes of a catalog archive, for a terrain nobody has downloaded yet
+@param deps.downloadsDir  where downloaded archives are kept, <category>/<file>
+@param deps.storeFile     a small JSON file of what has been worked out
+@param deps.fetchTail     the last bytes of a catalog archive, for a terrain nobody has downloaded yet
 ```
 
 ## src/toolchain.js
@@ -3577,6 +3637,44 @@ const fallbackUrl = (name, version) => `${FALLBACK_BASE}${name}-${version}.zip`
 ```
 
 Where the copy of a pinned archive lives, keyed by the tool and the version pinned to it.
+
+## src/types.ts
+
+The shapes the main process hands between its modules: a record of the library and the files it
+owns. src/library.ts writes them to manifest.json; the window reads the same records over IPC and
+keeps its own copy of the shape (renderer/library/types.ts).
+
+### `LibFile`
+
+```ts
+export interface LibFile
+```
+
+A file a record owns, under one of the folders the app writes into.
+
+### `LibRecord`
+
+```ts
+export interface LibRecord
+```
+
+One entry of the library: a mod, a pack of them, or a cosmetic pick.
+
+### `ModIdentity`
+
+```ts
+export interface ModIdentity
+```
+
+A mod as a preset remembers it: what it is, not which installation of it (src/preset-share.js).
+
+### `Preset`
+
+```ts
+export interface Preset
+```
+
+A saved build, or one received as a .d2mm and not installed yet (`wanted`).
 
 ## src/uninstall-args.ts
 

@@ -1,4 +1,4 @@
-/* The anti-cheat notice in plain words (src/notice-text.js, src/notice-texts.js).
+/* The anti-cheat notice in plain words (src/notice-text.js, src/notice-texts.ts).
  *
  * A throwaway game tree with Valve's localization in dota/pak01 and a language folder beside
  * it: the pak the app writes has to carry the chat file the game would have read, with the four
@@ -14,7 +14,7 @@ const path = require('path');
 const vpk = require('../src/vpk');
 const gamelang = require('../src/gamelang');
 const notice = require('../src/notice-text');
-const { NOTICE_TEXTS, NOTICE_KEYS } = require('../src/notice-texts');
+const { NOTICE_TEXTS, NOTICE_KEYS } = require('../src/notice-texts.ts');
 
 const BOM = '﻿';
 const chatFile = (language, extra = '') =>

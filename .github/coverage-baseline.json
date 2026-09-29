@@ -21,7 +21,7 @@
         "src/catalog.js": {
           "lines": 96.5
         },
-        "src/cursors.js": {
+        "src/cursors.ts": {
           "lines": 100
         },
         "src/diagnostics.js": {
@@ -30,7 +30,7 @@
         "src/feature-gate.js": {
           "lines": 100
         },
-        "src/file-tx.js": {
+        "src/file-tx.ts": {
           "lines": 100
         },
         "src/fingerprints.js": {
@@ -78,7 +78,7 @@
         "src/ipc-window.js": {
           "lines": 91.7
         },
-        "src/library.js": {
+        "src/library.ts": {
           "lines": 100
         },
         "src/minify.js": {
@@ -120,10 +120,10 @@
         "src/schema.js": {
           "lines": 78.7
         },
-        "src/settings.js": {
+        "src/settings.ts": {
           "lines": 100
         },
-        "src/steam.js": {
+        "src/steam.ts": {
           "lines": 79.7
         },
         "src/toolchain.js": {
@@ -215,7 +215,7 @@
         "src/catalog.js": {
           "lines": 96.5
         },
-        "src/cursors.js": {
+        "src/cursors.ts": {
           "lines": 100
         },
         "src/diagnostics.js": {
@@ -224,7 +224,7 @@
         "src/feature-gate.js": {
           "lines": 100
         },
-        "src/file-tx.js": {
+        "src/file-tx.ts": {
           "lines": 100
         },
         "src/fingerprints.js": {
@@ -272,7 +272,7 @@
         "src/ipc-window.js": {
           "lines": 91.7
         },
-        "src/library.js": {
+        "src/library.ts": {
           "lines": 100
         },
         "src/minify.js": {
@@ -317,10 +317,10 @@
         "src/schema.js": {
           "lines": 99.5
         },
-        "src/settings.js": {
+        "src/settings.ts": {
           "lines": 100
         },
-        "src/steam.js": {
+        "src/steam.ts": {
           "lines": 53.2
         },
         "src/toolchain.js": {
