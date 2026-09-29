@@ -22,7 +22,6 @@ const crypto = require('crypto');
 
 const net = require('../src/net.js');
 const { Catalog } = require('../src/catalog.js');
-const signature = require('../src/catalog-signature.js');
 
 const DATA_FILES = ['mods.json', 'constants.json', 'guides.json', 'mod-hashes.json'];
 
@@ -64,33 +63,27 @@ async function publish(t, { rawData, rawSig, snapData, snapSig }) {
 
   // every raw URL goes to /raw/<basename>, keeping the .sig suffix
   net.setMirrors([{ host: `127.0.0.1:${port}`, map: (u) => `http://127.0.0.1:${port}/raw/${u.split('/').pop()}` }]);
-  const pinned = signature.configured;
-  signature.configured = () => true;
-  const realVerify = signature.verify;
-  signature.verify = (payload, sig) => realVerify(payload, sig, pub);
-
   t.after(() => {
     server.close();
     net.setMirrors(null);
-    signature.configured = pinned;
-    signature.verify = realVerify;
   });
 
-  return { port, asked, snapshotBase: `http://127.0.0.1:${port}/snap/` };
+  // the catalog is handed this test's key, so the real one is never involved
+  return { port, asked, snapshotBase: `http://127.0.0.1:${port}/snap/`, publicKey: pub };
 }
 
 const good = (name) => JSON.stringify({ modsData: { heroes: [{ name: `from ${name}`, file: `${name}.zip` }] } });
 
 test('a stale signature on one side is not a forgery, and the catalog still loads', async (t) => {
   // exactly the shape observed: the data is current, the signature is the previous one
-  const { asked, snapshotBase } = await publish(t, {
+  const { asked, snapshotBase, publicKey } = await publish(t, {
     rawData: (n) => good(n),
     rawSig: (n, sign) => sign(`${good(n)} as it was an hour ago`),
     snapData: (n) => good(n),
     snapSig: (n, sign) => sign(good(n)),
   });
 
-  const cat = new Catalog(userDir(t), { snapshotBase });
+  const cat = new Catalog(userDir(t), { snapshotBase, publicKey });
   const out = await cat.load({ forceRefresh: true });
 
   assert.ok(out.mods.modsData.heroes.length, 'the catalog came through');
@@ -98,7 +91,7 @@ test('a stale signature on one side is not a forgery, and the catalog still load
 });
 
 test('a rewritten catalog fails on both, and is not saved', async (t) => {
-  const { snapshotBase } = await publish(t, {
+  const { snapshotBase, publicKey } = await publish(t, {
     rawData: () => JSON.stringify({ modsData: { heroes: [{ name: 'not from the author' }] } }),
     rawSig: (n, sign) => sign(good(n)),
     snapData: () => JSON.stringify({ modsData: { heroes: [{ name: 'not from the author' }] } }),
@@ -106,20 +99,20 @@ test('a rewritten catalog fails on both, and is not saved', async (t) => {
   });
 
   const dir = userDir(t);
-  const cat = new Catalog(dir, { snapshotBase });
+  const cat = new Catalog(dir, { snapshotBase, publicKey });
   await assert.rejects(() => cat.load({ forceRefresh: true }), /signature does not match/);
   assert.ok(!fs.existsSync(cat.cachePath('mods.json')), 'nothing unverified may be written to disk');
 });
 
 test('a matching pair never asks the snapshot at all', async (t) => {
-  const { asked, snapshotBase } = await publish(t, {
+  const { asked, snapshotBase, publicKey } = await publish(t, {
     rawData: (n) => good(n),
     rawSig: (n, sign) => sign(good(n)),
     snapData: (n) => good(n),
     snapSig: (n, sign) => sign(good(n)),
   });
 
-  const cat = new Catalog(userDir(t), { snapshotBase });
+  const cat = new Catalog(userDir(t), { snapshotBase, publicKey });
   await cat.load({ forceRefresh: true });
 
   assert.ok(!asked.some((u) => u.startsWith('/snap/')), 'the fallback is for the skew, not the normal path');

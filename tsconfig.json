@@ -13,6 +13,8 @@
 //     when the easy errors are gone, one flag at a time.
 //   module CommonJS, moduleResolution node10 - what the app actually is: require, not import.
 //   resolveJsonModule - src/icons.js reads package.json for the version, which is real.
+//   allowImportingTsExtensions - the modules already moved to TypeScript are required by their
+//     .ts name, which is how Node finds them. Their own checking is src/tsconfig.json, strict.
 //   skipLibCheck - Electron's own .d.ts is not this project's to fix.
 //
 // Not covered: renderer/ and tools/. The renderer is ES modules against the DOM, the tools are a
@@ -27,6 +29,7 @@
     "module": "CommonJS",
     "moduleResolution": "node10",
     "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "strict": false,
     "types": ["node"]

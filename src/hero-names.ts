@@ -3,11 +3,10 @@
  * Pain"). Out of src/vpk.js, where it began, because the catalog asks too and vpk.js is at its
  * size budget.
  */
-'use strict';
 
 // Dota's internal hero folder names differ from the display name for a chunk of the
 // roster. Only the mismatches are listed; anything else is title-cased from its id.
-const HERO_DISPLAY = {
+export const HERO_DISPLAY: Readonly<Record<string, string>> = {
   nerubian_assassin: 'Nyx Assassin', obsidian_destroyer: 'Outworld Destroyer',
   skeleton_king: 'Wraith King', windrunner: 'Windranger', shredder: 'Timbersaw',
   rattletrap: 'Clockwerk', furion: "Nature's Prophet", doom_bringer: 'Doom',
@@ -33,7 +32,7 @@ const HERO_DISPLAY = {
 // nothing like the name. Anything that differs only in spacing or punctuation
 // (crystalmaiden / crystal_maiden, queenofpain / queen_of_pain) needs no entry — heroKey
 // below folds those together on its own.
-const HERO_ALIAS = {
+export const HERO_ALIAS: Readonly<Record<string, string>> = {
   nyx: 'nerubian_assassin', nyx_assassin: 'nerubian_assassin', nyx_assasin: 'nerubian_assassin',
   outworld_destroyer: 'obsidian_destroyer', outworld_devourer: 'obsidian_destroyer',
   wraith_king: 'skeleton_king', windranger: 'windrunner', timbersaw: 'shredder',
@@ -59,7 +58,7 @@ const HERO_ALIAS = {
 };
 
 /** What people call a hero the game or an author files as `id` (skeleton_king -> Wraith King). */
-function heroDisplayName(id) {
+export function heroDisplayName(id: string): string {
   const canon = HERO_ALIAS[id] || id;
   if (HERO_DISPLAY[canon]) return HERO_DISPLAY[canon];
   return canon.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -69,7 +68,7 @@ function heroDisplayName(id) {
 // files it under an id that can look nothing like that (queenofpain, furion). Display names
 // are matched first, punctuation ignored, and whatever is not among them is taken as a folder
 // name somebody typed.
-const HERO_ID_BY_NAME = new Map();
+const HERO_ID_BY_NAME = new Map<string, string>();
 for (const [id, name] of Object.entries(HERO_DISPLAY)) {
   const key = name.toLowerCase().replace(/[^a-z0-9]/g, '');
   // first listed wins: antimage, the game's own folder, before anti_mage, the common spelling
@@ -77,7 +76,7 @@ for (const [id, name] of Object.entries(HERO_DISPLAY)) {
 }
 
 /** The game's id for a hero the catalog names ("Queen of Pain" -> queenofpain), or null. */
-function heroIdFromName(name) {
+export function heroIdFromName(name: unknown): string | null {
   const text = String(name || '').toLowerCase();
   const byName = HERO_ID_BY_NAME.get(text.replace(/[^a-z0-9]/g, ''));
   if (byName) return byName;
@@ -89,8 +88,6 @@ function heroIdFromName(name) {
 // "crystal_maiden", "crystalmaiden" and "CrystalMaiden" inside one pack, and each spelling
 // used to count as a separate hero — which turned a single-hero skin into a "bundle of 3"
 // and offered to split it into parts that make no sense.
-function heroKey(id) {
+export function heroKey(id: string): string {
   return heroDisplayName(id).toLowerCase().replace(/[^a-z0-9]/g, '');
 }
-
-module.exports = { HERO_DISPLAY, HERO_ALIAS, heroDisplayName, heroIdFromName, heroKey };

@@ -40,7 +40,8 @@ const ELECTRON_USERS = [
   'src/uninstall-window.js',
 ];
 
-const REQUIRE = /require\(\s*['"]([^'"]+)['"]\s*\)/g;
+// require('x'), and the ESM forms the TypeScript modules use: import ... from 'x', import('x')
+const REQUIRE = /(?:require\(\s*|\bfrom\s+|\bimport\s*\(\s*|^import\s+)['"]([^'"]+)['"]/gm;
 
 /** What one file requires: 'electron', or repository-relative paths of local modules. */
 function requiresOf(root, file) {
@@ -49,8 +50,9 @@ function requiresOf(root, file) {
     const spec = m[1];
     if (spec === 'electron') { out.push('electron'); continue; }
     if (!spec.startsWith('.')) continue;
-    let target = path.posix.normalize(path.posix.join(path.posix.dirname(file), spec));
-    if (!target.endsWith('.js')) target += '.js';
+    const base = path.posix.normalize(path.posix.join(path.posix.dirname(file), spec));
+    // named with its extension, or without one, which CommonJS resolves to the .js
+    const target = /\.(js|ts)$/.test(base) ? base : `${base}.js`;
     if (fs.existsSync(path.join(root, target))) out.push(target);
   }
   return out;
@@ -69,7 +71,7 @@ function pathToElectron(root, file, seen = new Set()) {
 }
 
 const srcFiles = () => fs.readdirSync(path.join(ROOT, 'src'))
-  .filter((f) => f.endsWith('.js')).map((f) => `src/${f}`).sort();
+  .filter((f) => /\.(js|ts)$/.test(f) && !f.endsWith('.d.ts')).map((f) => `src/${f}`).sort();
 
 test('the detection finds a chain two modules long, and reports it', () => {
   /* Proof that the check below is not empty: a module that reaches Electron only through a

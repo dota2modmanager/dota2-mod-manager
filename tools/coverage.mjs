@@ -199,7 +199,7 @@ function runSuite() {
     '--test', '--experimental-test-coverage',
     '--test-reporter=spec', '--test-reporter-destination=stdout',
     '--test-reporter=lcov', `--test-reporter-destination=${out}`,
-    'test/**/*.test.js',
+    'test/**/*.test.js', 'test/**/*.test.ts',
   ];
   let suiteFailed = false;
   try {

@@ -12,10 +12,10 @@
         "src/adopt.js": {
           "lines": 100
         },
-        "src/capture.js": {
+        "src/capture.ts": {
           "lines": 100
         },
-        "src/catalog-signature.js": {
+        "src/catalog-signature.ts": {
           "lines": 100
         },
         "src/catalog.js": {
@@ -132,7 +132,7 @@
         "src/vpk.js": {
           "lines": 98.4
         },
-        "src/vtex.js": {
+        "src/vtex.ts": {
           "lines": 100
         },
         "tools/catalog-mods.js": {
@@ -203,13 +203,13 @@
         "src/adopt.js": {
           "lines": 100
         },
-        "src/beta.js": {
+        "src/beta.ts": {
           "lines": 100
         },
-        "src/capture.js": {
+        "src/capture.ts": {
           "lines": 100
         },
-        "src/catalog-signature.js": {
+        "src/catalog-signature.ts": {
           "lines": 100
         },
         "src/catalog.js": {
@@ -329,7 +329,7 @@
         "src/vpk.js": {
           "lines": 98.2
         },
-        "src/vtex.js": {
+        "src/vtex.ts": {
           "lines": 100
         },
         "tools/catalog-mods.js": {

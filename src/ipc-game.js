@@ -8,7 +8,7 @@
 const { ipcMain } = require('electron');
 
 const { t } = require('./i18n');
-const { heroIdFromName } = require('./hero-names');
+const { heroIdFromName } = require('./hero-names.ts');
 
 /** @param {object} ctx  the services and main-process callbacks these channels use */
 function registerGameIpc({

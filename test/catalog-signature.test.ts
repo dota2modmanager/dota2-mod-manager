@@ -1,18 +1,18 @@
 // The catalog arrives over mirrors that can rewrite it, so a signature is the only thing that
 // can say the bytes are the author's. What matters here is the failure side: a check that
 // passes when it should not is worse than no check at all.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const crypto = require('crypto');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 
-const { verify, configured } = require('../src/catalog-signature.js');
+import { verify, configured } from '../src/catalog-signature.ts';
 
 function keypair() {
   const { privateKey, publicKey } = crypto.generateKeyPairSync('ed25519');
   return { privateKey, pub: publicKey.export({ type: 'spki', format: 'der' }).toString('base64') };
 }
 
-const signWith = (key, data) => crypto.sign(null, Buffer.from(data), key).toString('base64');
+const signWith = (key: crypto.KeyObject, data: string) => crypto.sign(null, Buffer.from(data), key).toString('base64');
 
 test('a file signed by the pinned key verifies', () => {
   const { privateKey, pub } = keypair();

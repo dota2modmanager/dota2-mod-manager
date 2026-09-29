@@ -652,19 +652,19 @@
     },
     {
       "name": "the beta list is hashed without its salt",
-      "file": "src/beta.js",
-      "anchor": "function idHash(id, salt) {",
+      "file": "src/beta.ts",
+      "anchor": "export function idHash(id: string | number, salt: string | undefined): string {",
       "from": "update(`${String(salt || '')}:${String(id || '').trim()}`)",
       "to": "update(`${String(id || '').trim()}`)",
-      "test": "test/beta.test.js"
+      "test": "test/beta.test.ts"
     },
     {
       "name": "the beta switch alone decides the channel",
-      "file": "src/beta.js",
-      "anchor": "function channelFor({ discordId = null, beta = null, wanted = false } = {}) {",
+      "file": "src/beta.ts",
+      "anchor": "export function channelFor({ discordId = null, beta = null, wanted = false }: BetaAsk = {}): Channel {",
       "from": "wanted && isTester(discordId, beta)",
       "to": "wanted",
-      "test": "test/beta.test.js"
+      "test": "test/beta.test.ts"
     },
     {
       "name": "anything in the beta list counts as an account",
@@ -672,7 +672,7 @@
       "anchor": "const beta = raw.beta && typeof raw.beta === 'object' ? raw.beta : null;",
       "from": "typeof id === 'string' && /^[0-9a-f]{64}$/i.test(id.trim())",
       "to": "typeof id === 'string'",
-      "test": "test/beta.test.js"
+      "test": "test/beta.test.ts"
     },
     {
       "name": "a beta's binaries are mirrored under the release's own names",
@@ -732,11 +732,11 @@
     },
     {
       "name": "the removal window opens during an update too",
-      "file": "src/uninstall-args.js",
+      "file": "src/uninstall-args.ts",
       "anchor": "/** A person removing the program, which is the only case the window may open in. */",
       "lineStartsWith": "const isUninstallRun = ",
       "to": "const isUninstallRun = (argv = []) => argv.includes('--uninstall');",
-      "test": "test/uninstall-args.test.js"
+      "test": "test/uninstall-args.test.ts"
     },
     {
       "name": "the Discord post waits for the mirror to succeed",

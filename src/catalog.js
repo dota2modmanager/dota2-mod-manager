@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { fetchText } = require('./net');
-const signature = require('./catalog-signature');
+const signature = require('./catalog-signature.ts');
 
 const RAW_BASE = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main';
 const DATA_FILES = ['mods.json', 'constants.json', 'guides.json'];
@@ -60,10 +60,13 @@ class Catalog {
    * @param {object} [opts]
    * @param {string} [opts.snapshotBase]  where to look for a data-and-signature pair that is
    *   guaranteed to be from one moment; the site's own copy unless a test says otherwise
+   * @param {string} [opts.publicKey]  the key the catalog is signed with; the pinned one unless a
+   *   test signs its own catalog
    */
-  constructor(userDataDir, { snapshotBase = SNAPSHOT_BASE } = {}) {
+  constructor(userDataDir, { snapshotBase = SNAPSHOT_BASE, publicKey = signature.CATALOG_PUBLIC_KEY } = {}) {
     this.cacheDir = path.join(userDataDir, 'catalog-cache');
     this.snapshotBase = snapshotBase;
+    this.publicKey = publicKey;
     fs.mkdirSync(this.cacheDir, { recursive: true });
   }
 
@@ -97,13 +100,13 @@ class Catalog {
     const dataUrl = `${RAW_BASE}/assets/data/${name}`;
     const sigUrl = `${RAW_BASE}/${signature.SIG_DIR}/${name}${signature.SIG_SUFFIX}`;
     const text = await fetchText(dataUrl);
-    if (!signature.configured()) {
+    if (!signature.configured(this.publicKey)) {
       JSON.parse(text);
       return text;
     }
 
     const sig = await fetchText(sigUrl);
-    if (signature.verify(text, sig)) {
+    if (signature.verify(text, sig, this.publicKey)) {
       JSON.parse(text); // validate before persisting
       return text;
     }
@@ -127,7 +130,7 @@ class Catalog {
     const snapshot = `${this.snapshotBase}${name}`;
     const consistent = await fetchText(snapshot);
     const consistentSig = await fetchText(`${snapshot}${signature.SIG_SUFFIX}`);
-    if (!signature.verify(consistent, consistentSig)) {
+    if (!signature.verify(consistent, consistentSig, this.publicKey)) {
       throw new Error(`${name}: signature does not match the catalog's key`);
     }
     JSON.parse(consistent);

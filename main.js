@@ -40,14 +40,14 @@ const { createModPreviews } = require('./src/mod-preview');
 const { createModIdentity } = require('./src/mod-id');
 const portableUpdater = require('./src/portable-update');
 const { createUpdater } = require('./src/updater');
-const { channelFor } = require('./src/beta');
+const { channelFor } = require('./src/beta.ts');
 const { gameStamp, createPatchWatcher } = require('./src/patch-watch');
 const { Icons } = require('./src/icons');
 const gamelang = require('./src/gamelang');
 // handed to src/ipc-settings.js by name, the same one it has always been passed under
 const { moveLangFolder } = gamelang;
 const { uninstallFlow } = require('./src/uninstall-window');
-const { isUninstallRun } = require('./src/uninstall-args');
+const { isUninstallRun } = require('./src/uninstall-args.ts');
 const { presetsService } = require('./src/presets-service');
 const { registerPresetsIpc } = require('./src/ipc-presets');
 const { registerModsIpc } = require('./src/ipc-mods');
@@ -92,7 +92,7 @@ const IS_PORTABLE = !!process.env.PORTABLE_EXECUTABLE_DIR;
  * An update runs the old uninstaller with --updated and /KEEP_APP_DATA, and the NSIS side
  * already stops there. This is the second lock on the same door: it went wrong once, in front
  * of everybody, and the failure mode is a person being asked whether to delete their mods
- * while they are merely updating. Both locks and the reasoning are in src/uninstall-args.js,
+ * while they are merely updating. Both locks and the reasoning are in src/uninstall-args.ts,
  * which takes a command line so the cases can be tested without being launched. */
 const IS_UNINSTALL = isUninstallRun(process.argv);
 if (IS_PORTABLE) {
@@ -373,8 +373,8 @@ function createWindow() {
             fs.writeFileSync(`${process.env.MM_SHOT}.eval.json`, JSON.stringify(out, null, 1));
           }
           await new Promise((r) => setTimeout(r, 500));
-          // a runner's xvfb sometimes has no frame to hand over yet (UnknownVizError): src/capture.js
-          const { captureWithRetry } = require('./src/capture');
+          // a runner's xvfb sometimes has no frame to hand over yet (UnknownVizError): src/capture.ts
+          const { captureWithRetry } = require('./src/capture.ts');
           const img = await captureWithRetry(() => win.webContents.capturePage(), { log: diag });
           fs.writeFileSync(process.env.MM_SHOT, img.toPNG());
           diag('capture done ' + img.getSize().width + 'x' + img.getSize().height);

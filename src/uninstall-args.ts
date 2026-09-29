@@ -14,7 +14,6 @@
  * It lives in its own file rather than inline in main.js so it can be called with a command line
  * instead of the one this process happens to have been given.
  */
-'use strict';
 
 /**
  * Command-line flags that mean "this is not a person removing the program".
@@ -28,18 +27,16 @@
  * the command line tells an update from a removal. Windows' own uninstall entry passes no
  * arguments at all, which is exactly when the questions should be asked.
  */
-const UPDATE_FLAGS = ['--updated', '/KEEP_APP_DATA', '/S'];
+export const UPDATE_FLAGS: readonly string[] = ['--updated', '/KEEP_APP_DATA', '/S'];
 
 /** A flag matches whole and regardless of case; a path that merely contains the text does not. */
-const flagged = (argv, flags) => argv.some((arg) => {
+const flagged = (argv: readonly unknown[], flags: readonly string[]): boolean => argv.some((arg) => {
   const a = String(arg).toLowerCase();
   return flags.some((f) => f.toLowerCase() === a);
 });
 
 /** electron-builder replacing a version, wearing the uninstaller's clothes. */
-const isUpdateRun = (argv = []) => flagged(argv, UPDATE_FLAGS);
+export const isUpdateRun = (argv: readonly unknown[] = []): boolean => flagged(argv, UPDATE_FLAGS);
 
 /** A person removing the program, which is the only case the window may open in. */
-const isUninstallRun = (argv = []) => argv.includes('--uninstall') && !isUpdateRun(argv);
-
-module.exports = { UPDATE_FLAGS, isUpdateRun, isUninstallRun };
+export const isUninstallRun = (argv: readonly unknown[] = []): boolean => argv.includes('--uninstall') && !isUpdateRun(argv);

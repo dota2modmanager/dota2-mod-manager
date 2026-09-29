@@ -1,0 +1,7 @@
+// Type checking for the tests written in TypeScript, with the same strict settings as the code they
+// test (../src/tsconfig.json). A test is code that runs on every push: a mistyped argument in one is
+// a test that checks something other than what its name says.
+{
+  "extends": "../src/tsconfig.json",
+  "include": ["**/*.ts"]
+}

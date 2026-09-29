@@ -14,9 +14,9 @@ the code, not in this page.
 | Module | What it owns |
 |---|---|
 | [`src/adopt.js`](#srcadoptjs) | What a VPK has to go through before it counts as a mod. |
-| [`src/beta.js`](#srcbetajs) | The beta channel: who is let in, and which update feed this copy reads. |
-| [`src/capture.js`](#srccapturejs) |  |
-| [`src/catalog-signature.js`](#srccatalog-signaturejs) | Making the catalog's own author the only person who can change the catalog. |
+| [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
+| [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
+| [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
 | [`src/catalog.js`](#srccatalogjs) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
 | [`src/cursors.js`](#srccursorsjs) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/diagnostics.js`](#srcdiagnosticsjs) | A support report a user can send instead of a round of screenshots: Dota's own path and |
@@ -27,7 +27,7 @@ the code, not in this page.
 | [`src/fingerprints.js`](#srcfingerprintsjs) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
 | [`src/game-icons.js`](#srcgame-iconsjs) | Item pictures taken from the installed game instead of scraped off a wiki. |
 | [`src/gamelang.js`](#srcgamelangjs) | Which dota_<lang> folder the game actually mounts. |
-| [`src/hero-names.js`](#srchero-namesjs) | Which hero a name means, in the three spellings this app meets: the game's folder id |
+| [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/i18n.js`](#srci18njs) | Minimal i18n for the main process (main.js, installer.js, vpk.js). |
 | [`src/icons.js`](#srciconsjs) | Pictures for the cosmetics picker, and for the Library where a picture can be found for |
 | [`src/import.js`](#srcimportjs) | Taking in a mod the user already has: a .vpk, a .zip, a folder, or bytes off a drop. |
@@ -56,10 +56,10 @@ the code, not in this page.
 | [`src/steam.js`](#srcsteamjs) | Finding Steam, and then finding Dota inside it. |
 | [`src/terrain-age.js`](#srcterrain-agejs) | Terrains that replace the whole map, and whether the game's own map has moved on since. |
 | [`src/toolchain.js`](#srctoolchainjs) | Tools the app can borrow, fetched only when something actually needs them. |
-| [`src/uninstall-args.js`](#srcuninstall-argsjs) | Whether this run of the app is the uninstaller asking what to take along. |
+| [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
 | [`src/updater.js`](#srcupdaterjs) | Where an installed copy looks for a new version, and on which channel. |
 | [`src/vpk.js`](#srcvpkjs) | Minimal reader for the index of Source-engine VPK "_dir" files (v1/v2). |
-| [`src/vtex.js`](#srcvtexjs) | The picture inside a compiled Source 2 texture, when it is already a picture. |
+| [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
 
 ## src/adopt.js
 
@@ -94,7 +94,7 @@ function createAdopt({ installer, library, schemaService })
 @param {object} ctx.schemaService  lifts the item blocks out, and splits a multi-hero pack
 ```
 
-## src/beta.js
+## src/beta.ts
 
 The beta channel: who is let in, and which update feed this copy reads.
 
@@ -121,37 +121,37 @@ so the channel falls back to the stable one on the next check.
 
 ### `BETA_CHANNEL`
 
-```js
-const BETA_CHANNEL = 'beta'
+```ts
+export const BETA_CHANNEL = 'beta'
 ```
 
 The channel name electron-updater reads, and the file it looks for: beta.yml.
 
 ### `STABLE_CHANNEL`
 
-```js
-const STABLE_CHANNEL = 'latest'
+```ts
+export const STABLE_CHANNEL = 'latest'
 ```
 
 What everybody else reads: latest.yml, the release channel.
 
 ### `idHash`
 
-```js
-function idHash(id, salt)
+```ts
+export function idHash(id: string | number, salt: string | undefined): string
 ```
 
 How an id becomes a line in the public list.
 
 ```
-@param {string|number} id  the Discord account id
-@param {string} salt       from the same block of the config
+@param id    the Discord account id
+@param salt  from the same block of the config
 ```
 
 ### `isTester`
 
-```js
-function isTester(discordId, beta)
+```ts
+export function isTester(discordId: string | null | undefined, beta: BetaList | null | undefined): boolean
 ```
 
 Is this account on the list? A missing list, a missing id or a damaged entry all mean no,
@@ -159,14 +159,13 @@ because the honest answer to "should this person be offered an unreleased build"
 until something says otherwise.
 
 ```
-@param {string|null} discordId
-@param {{salt?: string, ids?: string[]}|null} beta  the `beta` block of the signed config
+@param beta  the `beta` block of the signed config
 ```
 
 ### `channelFor`
 
-```js
-function channelFor({ discordId = null, beta = null, wanted = false } = {})
+```ts
+export function channelFor({ discordId = null, beta = null, wanted = false }: BetaAsk = {}): Channel
 ```
 
 Which update channel this copy should read now.
@@ -175,31 +174,37 @@ Which update channel this copy should read now.
 owner was taken off the list, or who signed out of Discord, goes back to the stable channel
 with the switch still on, and turns beta again by itself if they are let back in.
 
-```
-@param {{discordId?: string|null, beta?: object|null, wanted?: boolean}} state
-@returns {'latest'|'beta'}
-```
-
 ### `betaState`
 
-```js
-function betaState({ discordId = null, beta = null, wanted = false } = {})
+```ts
+export function betaState({ discordId = null, beta = null, wanted = false }: BetaAsk = {}): { eligible: boolean; on: boolean; channel: Channel }
 ```
 
 What the settings screen needs to draw: whether to show the switch at all, and where it sits.
 Somebody who is not on the list is not told there is a list - a switch they cannot use is
 noise, and "you are not invited" is a worse thing to read than nothing.
 
-```
-@returns {{eligible: boolean, on: boolean, channel: 'latest'|'beta'}}
-```
+## src/capture.ts
 
-## src/capture.js
+Take a screenshot of the window, and try again when Chromium has no frame to hand over yet.
+
+Under xvfb on a CI runner, webContents.capturePage() now and then rejects with UnknownVizError:
+the compositor has nothing to give at that moment. On 2026-09-15 that failed the Linux start
+check on a pull request that had not touched the app, after seven green runs in a row. A
+required check that fails at random for reasons outside the change gets rerun without being
+read, and then it guards nothing. So a capture gets a few tries, and every failed try goes to
+the log, which keeps a capture that never works exactly as visible as before.
+@param capture  the call to make, usually () => win.webContents.capturePage()
+@param opts.tries  how many times to call it before giving up
+@param opts.waitMs  the pause between tries
+@param opts.log  where each failed try is reported
+@param opts.sleep  the pause itself, replaceable in tests
+@returns whatever the capture returned
 
 ### `captureWithRetry`
 
-```js
-async function captureWithRetry(capture, { tries = 3, waitMs = 1500, log = () => {}, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), } = {})
+```ts
+export async function captureWithRetry<T>(capture: () => Promise<T>, { tries = 3, waitMs = 1500, log = () => {}, sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms)), }: { tries?: number; waitMs?: number; log?: (msg: string) => void; sleep?: (ms: number) => Promise<void> } = {}): Promise<T>
 ```
 
 Take a screenshot of the window, and try again when Chromium has no frame to hand over yet.
@@ -212,16 +217,15 @@ read, and then it guards nothing. So a capture gets a few tries, and every faile
 the log, which keeps a capture that never works exactly as visible as before.
 
 ```
-@param {() => Promise<any>} capture  the call to make, usually () => win.webContents.capturePage()
-@param {object} [opts]
-@param {number} [opts.tries]  how many times to call it before giving up
-@param {number} [opts.waitMs]  the pause between tries
-@param {(msg: string) => void} [opts.log]  where each failed try is reported
-@param {(ms: number) => Promise<void>} [opts.sleep]  the pause itself, replaceable in tests
-@returns {Promise<any>} whatever the capture returned
+@param capture  the call to make, usually () => win.webContents.capturePage()
+@param opts.tries  how many times to call it before giving up
+@param opts.waitMs  the pause between tries
+@param opts.log  where each failed try is reported
+@param opts.sleep  the pause itself, replaceable in tests
+@returns whatever the capture returned
 ```
 
-## src/catalog-signature.js
+## src/catalog-signature.ts
 
 Making the catalog's own author the only person who can change the catalog.
 
@@ -241,31 +245,10 @@ Without a key this module answers "nothing pinned, carry on", which is what it d
 day it was written until 2026-09-10. Refusing every fetch because a signature had not been
 arranged yet would have taken the app down for everybody and protected nobody.
 
-### `verify`
-
-```js
-function verify(payload, signatureB64, key = CATALOG_PUBLIC_KEY)
-```
-
-```
-@param {string|Buffer} payload      the file exactly as it was published
-@param {string} signatureB64        contents of the .sig file (base64, whitespace ignored)
-@param {string} [key]               base64 SPKI public key; defaults to the pinned one
-@returns {boolean} true when the signature is this key's signature over this payload
-```
-
-### `configured`
-
-```js
-function configured(key = CATALOG_PUBLIC_KEY)
-```
-
-Is there a key to check against at all?
-
 ### `CATALOG_PUBLIC_KEY`
 
-```js
-const CATALOG_PUBLIC_KEY = 'MCowBQYDK2VwAyEAkzP+iIJLaFlc20Uj3OyLnDX4arckiBuSpPk1BcRKUsk='
+```ts
+export const CATALOG_PUBLIC_KEY = 'MCowBQYDK2VwAyEAkzP+iIJLaFlc20Uj3OyLnDX4arckiBuSpPk1BcRKUsk='
 ```
 
 Base64 SPKI of the catalog author's ed25519 public key. `tools/sign-catalog.js --keygen`
@@ -282,8 +265,8 @@ what is published disagrees with what is signed.
 
 ### `SIG_DIR`
 
-```js
-const SIG_DIR = 'assets/signatures'
+```ts
+export const SIG_DIR = 'assets/signatures'
 ```
 
 Where the signatures live in the catalog repository, and what they are called there:
@@ -291,11 +274,32 @@ assets/signatures/mods.json.sig for assets/data/mods.json.
 
 ### `SIG_SUFFIX`
 
-```js
-const SIG_SUFFIX = '.sig'
+```ts
+export const SIG_SUFFIX = '.sig'
 ```
 
 _No description in the source._
+
+### `configured`
+
+```ts
+export function configured(key: string = CATALOG_PUBLIC_KEY): boolean
+```
+
+Is there a key to check against at all?
+
+### `verify`
+
+```ts
+export function verify(payload: string | Buffer, signatureB64: unknown, key: string = CATALOG_PUBLIC_KEY): boolean
+```
+
+```
+@param payload      the file exactly as it was published
+@param signatureB64 contents of the .sig file (base64, whitespace ignored)
+@param key          base64 SPKI public key; defaults to the pinned one
+@returns true when the signature is this key's signature over this payload
+```
 
 ## src/catalog.js
 
@@ -665,7 +669,7 @@ the picture itself sits in the game's own pak01 as a compiled texture.
 
 Almost all of them need no decoding at all. Panorama's images are authored as PNG and
 compiled with the format left as PNG, so the .vtex_c is a short header with the PNG file
-appended (see src/vtex.js): of 3000 item icons in the installed game, 2877 come out whole
+appended (see src/vtex.ts): of 3000 item icons in the installed game, 2877 come out whole
 by slicing the header off. Those cost one seek each and work offline, on a fresh install,
 with nothing downloaded.
 
@@ -931,7 +935,7 @@ current mod and this one is a leftover.
 @returns {number} how many files were actually moved
 ```
 
-## src/hero-names.js
+## src/hero-names.ts
 
 Which hero a name means, in the three spellings this app meets: the game's folder id
 (queenofpain), what an author typed (queen_of_pain, qop), and what people read ("Queen of
@@ -940,8 +944,8 @@ size budget.
 
 ### `HERO_DISPLAY`
 
-```js
-const HERO_DISPLAY =
+```ts
+export const HERO_DISPLAY: Readonly<Record<string, string>> =
 ```
 
 Dota's internal hero folder names differ from the display name for a chunk of the
@@ -949,8 +953,8 @@ roster. Only the mismatches are listed; anything else is title-cased from its id
 
 ### `HERO_ALIAS`
 
-```js
-const HERO_ALIAS =
+```ts
+export const HERO_ALIAS: Readonly<Record<string, string>> =
 ```
 
 Short and misspelled folder names authors use for a hero whose canonical id looks
@@ -960,24 +964,24 @@ below folds those together on its own.
 
 ### `heroDisplayName`
 
-```js
-function heroDisplayName(id)
+```ts
+export function heroDisplayName(id: string): string
 ```
 
 What people call a hero the game or an author files as `id` (skeleton_king -> Wraith King).
 
 ### `heroIdFromName`
 
-```js
-function heroIdFromName(name)
+```ts
+export function heroIdFromName(name: unknown): string | null
 ```
 
 The game's id for a hero the catalog names ("Queen of Pain" -> queenofpain), or null.
 
 ### `heroKey`
 
-```js
-function heroKey(id)
+```ts
+export function heroKey(id: string): string
 ```
 
 Identity of a hero regardless of how the author spelled the folder. Authors mix
@@ -2628,7 +2632,7 @@ off for every one of them, while a key they have never heard of is one they leav
 tools/rollback.mjs writes both, signs the file and refuses the mistakes.
 
 `beta` is the list of Discord accounts the beta channel is offered to, as hashes: the file is
-public and a list of a dozen people's accounts is not ours to publish. src/beta.js does the
+public and a list of a dozen people's accounts is not ours to publish. src/beta.ts does the
 checking; this only reads the block and refuses anything that is not shaped like one.
 
 ### `createRemoteConfig`
@@ -3574,7 +3578,7 @@ const fallbackUrl = (name, version) => `${FALLBACK_BASE}${name}-${version}.zip`
 
 Where the copy of a pinned archive lives, keyed by the tool and the version pinned to it.
 
-## src/uninstall-args.js
+## src/uninstall-args.ts
 
 Whether this run of the app is the uninstaller asking what to take along.
 
@@ -3593,8 +3597,8 @@ instead of the one this process happens to have been given.
 
 ### `UPDATE_FLAGS`
 
-```js
-const UPDATE_FLAGS = ['--updated', '/KEEP_APP_DATA', '/S']
+```ts
+export const UPDATE_FLAGS: readonly string[] = ['--updated', '/KEEP_APP_DATA', '/S']
 ```
 
 Command-line flags that mean "this is not a person removing the program".
@@ -3610,16 +3614,16 @@ arguments at all, which is exactly when the questions should be asked.
 
 ### `isUpdateRun`
 
-```js
-const isUpdateRun = (argv = []) => flagged(argv, UPDATE_FLAGS)
+```ts
+export const isUpdateRun = (argv: readonly unknown[] = []): boolean => flagged(argv, UPDATE_FLAGS)
 ```
 
 electron-builder replacing a version, wearing the uninstaller's clothes.
 
 ### `isUninstallRun`
 
-```js
-const isUninstallRun = (argv = []) => argv.includes('--uninstall') && !isUpdateRun(argv)
+```ts
+export const isUninstallRun = (argv: readonly unknown[] = []): boolean => argv.includes('--uninstall') && !isUpdateRun(argv)
 ```
 
 A person removing the program, which is the only case the window may open in.
@@ -3639,7 +3643,7 @@ because an app that fails to update looks exactly like an app. Each four-hourly 
 GitHub again: the mirror is for the hours it is down, not a place to settle into.
 
 Two channels. Everybody reads `latest`; the testers the maintainer picked read `beta`, which is
-a different manifest (beta.yml) in the same place. src/beta.js decides who is on which, and the
+a different manifest (beta.yml) in the same place. src/beta.ts decides who is on which, and the
 decision is re-read rather than remembered: a tester taken off the list is back on the stable
 channel at the next check, without anybody touching their machine.
 
@@ -4033,7 +4037,7 @@ one wears Disruptor's back piece - and that single model used to make the mod re
 heroes. It came in named "Clinkz, Phoenix", and an import of two to four heroes splits
 itself, so the set arrived in two halves with the bow in one of them.
 
-## src/vtex.js
+## src/vtex.ts
 
 The picture inside a compiled Source 2 texture, when it is already a picture.
 
@@ -4052,11 +4056,11 @@ different job and the fallback already exists.
 
 ### `pngFromVtex`
 
-```js
-function pngFromVtex(buf)
+```ts
+export function pngFromVtex(buf: unknown): Buffer | null
 ```
 
 ```
-@param {Buffer} buf contents of a .vtex_c
-@returns {Buffer|null} the PNG file it carries, or null when it carries pixels instead
+@param buf contents of a .vtex_c
+@returns the PNG file it carries, or null when it carries pixels instead
 ```

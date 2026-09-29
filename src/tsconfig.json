@@ -1,0 +1,31 @@
+// Type checking for the main process's TypeScript (src/**/*.ts), through tools/typecheck.mjs.
+//
+// The same shape as renderer/tsconfig.json, for the same reasons. Strict from the first file, with
+// nothing in the baseline: the code checked here is TypeScript from the start. Nothing is compiled:
+// Electron's Node and the test runner strip the types themselves, which is why imports name the
+// .ts file, type-only imports say so (verbatimModuleSyntax), and only syntax that can simply be
+// erased is allowed (no enums, no namespaces).
+//
+// allowJs without checkJs: a TypeScript module can import a plain one that has not moved yet and
+// get the types TypeScript infers from it. The plain ones are held by ../tsconfig.json, against
+// its own baseline.
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["**/*.ts"]
+}

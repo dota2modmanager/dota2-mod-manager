@@ -119,7 +119,7 @@ contextBridge.exposeInMainWorld('api', {
     signIn: () => ipcRenderer.invoke('account:signIn'),
     signOut: () => ipcRenderer.invoke('account:signOut'),
   },
-  // the beta channel: shown only to an account the signed list names (src/beta.js)
+  // the beta channel: shown only to an account the signed list names (src/beta.ts)
   beta: {
     state: () => ipcRenderer.invoke('beta:state'),
     set: (on) => ipcRenderer.invoke('beta:set', on),

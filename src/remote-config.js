@@ -33,12 +33,12 @@
 // tools/rollback.mjs writes both, signs the file and refuses the mistakes.
 //
 // `beta` is the list of Discord accounts the beta channel is offered to, as hashes: the file is
-// public and a list of a dozen people's accounts is not ours to publish. src/beta.js does the
+// public and a list of a dozen people's accounts is not ours to publish. src/beta.ts does the
 // checking; this only reads the block and refuses anything that is not shaped like one.
 const fs = require('fs');
 const path = require('path');
 const { fetchText } = require('./net');
-const { verify } = require('./catalog-signature');
+const { verify } = require('./catalog-signature.ts');
 
 const CONFIG_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json';
 /** The signature, always the config's own address with .sig on the end. */

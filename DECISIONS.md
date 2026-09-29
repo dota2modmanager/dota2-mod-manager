@@ -213,7 +213,7 @@ holds the line; it does not claim the line is where it should be.
 
 ### The catalog is verified, and the key was pinned later than it arrived
 
-`src/catalog-signature.js` checks an ed25519 signature over every catalog file the app reads, so
+`src/catalog-signature.ts` checks an ed25519 signature over every catalog file the app reads, so
 a proxy handing over a rewritten `mods.json` fails here rather than at the point where somebody's
 machine acts on it. The catalog's author holds the private half.
 
@@ -229,7 +229,7 @@ The whole chain this belongs to - what carries a proof, what each failed check c
 none of it covers - is written out in [ARCHITECTURE.md](ARCHITECTURE.md) under "Who is allowed
 to have written this".
 
-*Check:* `src/catalog-signature.js`, `test/catalog-signature.test.js`, and, in the catalog's own
+*Check:* `src/catalog-signature.ts`, `test/catalog-signature.test.ts`, and, in the catalog's own
 repository, [update-catalog.yml](https://github.com/h6rd/Dota2PornFxWeb/blob/main/.github/workflows/update-catalog.yml),
 where one `git add` stages the data and the signatures.
 
@@ -294,6 +294,28 @@ That is worth doing, and it is a piece of work rather than a dependency bump, so
 to stop offering the major version until somebody does it.
 
 *Check:* `.github/dependabot.yml`, the `ignore` block for the app's dependencies.
+
+### The main process moves to TypeScript, with no build step
+
+`src/` is moving from JavaScript checked through JSDoc to TypeScript, a few modules per pull
+request, leaves first. Nothing compiles it. Electron 44 runs on Node 24, which strips the types
+itself when it loads a `.ts` file, and it does so from inside `app.asar` as well: checked on
+2026-09-29 with a packed test app, before the first module moved. So the installer, the updater
+and the release pipeline see the same kind of files they always did, and there is no build output
+that can drift from the source.
+
+That rules some TypeScript out. Only syntax that can simply be erased is allowed (no enums, no
+namespaces, `erasableSyntaxOnly`), and imports name the `.ts` file, because that is the path Node
+loads. The moved modules are ES modules, since a CommonJS `.ts` file has no way to type a
+`require` without syntax that would need compiling. A module not moved yet is imported whole
+(`import old from './old.js'`), because Node cannot always see the names a CommonJS file exports.
+
+Their tests move with them, to `.test.ts` importing the module. Node's coverage leaves out a `.ts`
+file that was only ever loaded through `require`, so a module whose tests still used `require`
+would drop out of the coverage baseline without anything else changing.
+
+*Check:* `src/tsconfig.json` and `test/tsconfig.json`, both strict and with nothing in the
+baseline, run by `npm run typecheck`; `ls src/*.ts` for how far it has got.
 
 ### The anti-cheat notice is rewritten, and there is no switch for it
 

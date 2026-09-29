@@ -15,7 +15,7 @@ const path = require('path');
 
 const current = require('../src/remote-config.js');
 const shipped = require('./fixtures/remote-config-2.6.12.js');
-const { verify } = require('../src/catalog-signature.js');
+const { verify } = require('../src/catalog-signature.ts');
 
 const load = () => import('../tools/rollback.mjs');
 const TODAY = '2026-09-16';
@@ -216,9 +216,9 @@ test('the salt is made once: a second invitation does not throw the first one of
 });
 
 test('what the tool writes is what the app lets in', async () => {
-  // the whole point of the file: hashed here, hashed the same way in src/beta.js
+  // the whole point of the file: hashed here, hashed the same way in src/beta.ts
   const { invite, serialize } = await load();
-  const { isTester } = require('../src/beta.js');
+  const { isTester } = require('../src/beta.ts');
   const written = JSON.parse(serialize(invite(EMPTY, TESTER).config));
   const read = current.normalize(written).beta;
 

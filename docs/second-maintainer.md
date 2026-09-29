@@ -60,7 +60,7 @@ Read hardest where a mistake costs a user something:
 - anything that writes into the game folder (`src/patcher.js`, `src/vpk.js`, `src/gamelang.js`,
   `src/schema.js`, `src/file-tx.js`, `src/overlays.js`),
 - anything that decides what gets downloaded or whether it is trusted (`src/net.js`,
-  `src/catalog-signature.js`, `src/remote-config.js`),
+  `src/catalog-signature.ts`, `src/remote-config.js`),
 - the workflows, the release workflow above all,
 - and any text a user reads, where a second reader catches what the first stopped seeing.
 
