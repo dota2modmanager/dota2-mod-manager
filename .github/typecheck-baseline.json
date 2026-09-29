@@ -1,26 +1,6 @@
 {
   "_why": "How many type errors each file still has. tools/typecheck.mjs refuses a run where a file has more than its number here, or where a file appears that had none. Lower it by fixing errors and running: node tools/typecheck.mjs --update. Never raise a line to make a run pass.",
-  "measured": "2026-09-16",
-  "total": 66,
-  "files": {
-    "main.js": 4,
-    "src/diagnostics.js": 2,
-    "src/discord-auth.js": 1,
-    "src/game-icons.js": 4,
-    "src/icons.js": 1,
-    "src/installer.js": 3,
-    "src/ipc-diagnostics.js": 14,
-    "src/minify.js": 4,
-    "src/mod-preview.js": 2,
-    "src/net.js": 2,
-    "src/patcher.js": 2,
-    "src/portable-update.js": 6,
-    "src/presets-service.js": 1,
-    "src/safe-zip.js": 1,
-    "src/schema-service.js": 3,
-    "src/schema.js": 10,
-    "src/settings-view.js": 1,
-    "src/vpk.js": 1,
-    "tools/screencast-scenes.js": 4
-  }
+  "measured": "2026-09-28",
+  "total": 0,
+  "files": {}
 }

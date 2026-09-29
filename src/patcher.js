@@ -34,10 +34,13 @@ function paths(gamePath) {
   };
 }
 
+/** @type {Uint32Array|null} built on the first call */
+let crcTable = null;
+
 function crc32(buf) {
-  let table = crc32.table;
+  let table = crcTable;
   if (!table) {
-    table = crc32.table = new Uint32Array(256);
+    table = crcTable = new Uint32Array(256);
     for (let n = 0; n < 256; n++) {
       let c = n;
       for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;

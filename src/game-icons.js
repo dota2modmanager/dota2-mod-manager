@@ -181,6 +181,7 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
    * @returns {Promise<Record<string, string>>}
    */
   async function getMany(names) {
+    /** @type {Record<string, string>} */
     const out = {};
     if (!ready()) return out;
     const map = nameIndex();
@@ -243,6 +244,7 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
    * @returns {Promise<Record<string, string>>} the ones a picture was found for
    */
   async function heroPortraits(ids) {
+    /** @type {Record<string, string>} */
     /** @type {Record<string, string>} */
     const out = {};
     if (!ready()) return out;

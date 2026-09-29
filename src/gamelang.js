@@ -351,6 +351,8 @@ function detectLangSuffix(gamePath) {
  * somebody reads the game in is their business, decided long before this app arrived. Only
  * the audio language is ours to set, because it is what names the folder the engine mounts
  * and therefore where a mod has to live.
+ * @param {string} gamePath
+ * @param {{ ui?: string, audio?: string }} langs  a setting left out is left as it is
  */
 function writeBootLanguages(gamePath, { ui, audio }) {
   const file = path.join(gamePath, 'dota', 'cfg', 'boot.vcfg');

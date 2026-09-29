@@ -169,6 +169,8 @@ function liveOrder(entries) {
  * @param {string} url            the canonical (raw.githubusercontent.com) URL
  * @param {object} [opts]
  * @param {boolean} [opts.small]  allow size-capped mirrors
+ * @param {boolean} [opts.trustedOnly]  the canonical host and nothing else, for a file that is
+ *   only ever trusted from where it was published
  * @param {object} [opts.headers]
  * @param {string[]} [opts.exclude] hosts already tried for this file and found wanting; a
  *   mirror that answered with the wrong bytes must not be offered again on the retry
@@ -361,7 +363,7 @@ async function downloadFile(url, dest, {
       }
       // flagged rather than matched on its wording: the caller turns this into a sentence in
       // the user's language, and it should not have to recognise it by its English
-      const bad = new Error(`checksum mismatch for ${path.basename(dest)}`);
+      const bad = /** @type {Error & { checksum?: boolean }} */ (new Error(`checksum mismatch for ${path.basename(dest)}`));
       bad.checksum = true;
       throw bad;
     }

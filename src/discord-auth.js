@@ -86,7 +86,7 @@ function awaitToken(state) {
     };
     const timer = setTimeout(() => finish(new Error(t('Вход занял слишком много времени'))), TIMEOUT_MS);
 
-    server.on('error', (err) => finish(err.code === 'EADDRINUSE'
+    server.on('error', (/** @type {NodeJS.ErrnoException} */ err) => finish(err.code === 'EADDRINUSE'
       ? new Error(t('Порт {0} занят — закрой другой вход и попробуй снова', PORT))
       : err));
     server.listen(PORT, HOST); // loopback only: never reachable from the network

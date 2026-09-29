@@ -39,7 +39,7 @@ const toPosix = (name) => String(name).replace(/\\/g, '/');
 // Marked so a caller that turns "could not read this file" into its own wording can still
 // let a refusal through with its reason intact.
 function refuse(message) {
-  const err = new Error(message);
+  const err = /** @type {Error & { safeZip?: boolean }} */ (new Error(message));
   err.safeZip = true;
   return err;
 }
