@@ -118,8 +118,9 @@ class Installer {
    * @param {(evt: object) => void} opts.onProgress
    * @param {((paths: string[]) => Array<object>) | null} [opts.identify]  catalog mods these files are
    * @param {((categoryId: string, file: string) => string|null) | null} [opts.publishedHash]  its sha256
+   * @param {(msg: string) => void} [opts.log]  the diagnostics log, told when a change could not be undone
    */
-  constructor({ userDataDir, getGamePath, getLangSuffix, onProgress, identify = null, publishedHash = null }) {
+  constructor({ userDataDir, getGamePath, getLangSuffix, onProgress, identify = null, publishedHash = null, log = () => {} }) {
     this.downloadsDir = path.join(userDataDir, 'downloads');
     this.toolsDir = path.join(userDataDir, 'tools');
     this.backupsDir = path.join(userDataDir, 'backups');
@@ -144,6 +145,8 @@ class Installer {
     // what the catalog says an archive should hash to (src/catalog.js); optional and often
     // null, which means the download is checked the way it always was
     this.publishedHash = publishedHash || (() => null);
+    // told what a failed change could not put back, usually a pak Dota holds open (src/file-tx.js)
+    this.log = log;
   }
 
   /**
@@ -557,7 +560,7 @@ class Installer {
     // A mod is rarely one file, and everything below writes into somebody else's game
     // folder. One transaction around the lot: a failure on the fourth file takes the first
     // three with it, instead of leaving paks nothing in the library points at.
-    return FileTx.run((tx) => this.installInto(tx, { categoryId, modName, local }));
+    return FileTx.run((tx) => this.installInto(tx, { categoryId, modName, local }), this.log);
   }
 
   installInto(tx, { categoryId, modName, local }) {
@@ -688,7 +691,7 @@ class Installer {
         if (enabled && fs.existsSync(off)) tx.move(off, abs);
         if (!enabled && fs.existsSync(abs)) tx.move(abs, off);
       }
-    });
+    }, this.log);
   }
 
   // opts.recId drops the record's stored cursor copy; opts.deployed=false says its files are
@@ -720,7 +723,7 @@ class Installer {
           }
         }
       }
-    });
+    }, this.log);
     this.overlays.forgetWritten(files);
   }
 

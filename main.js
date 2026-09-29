@@ -468,6 +468,7 @@ app.whenReady().then(async () => {
     onProgress: sendProgress,
     identify: (paths) => modId.identify(paths),
     publishedHash: (categoryId, file) => catalog.publishedHash(categoryId, file),
+    log: diag,
   });
   presence = new DiscordPresence({ clientId: discordAuth.CLIENT_ID, onDiag: diag });
   schemaService = createSchemaService({ settings, library, installer, userDataDir: userData, log: diag });

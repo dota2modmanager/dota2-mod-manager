@@ -22,6 +22,7 @@ const AdmZip = require('adm-zip');
 const vpk = require('../src/vpk.js');
 const { Installer } = require('../src/installer.js');
 const { importVpks, importVpkBuffers, installVpkBuffer } = require('../src/import.js');
+const { FileTx } = require('../src/file-tx.js');
 
 /** One inline-data entry in the shape buildVpk() wants. */
 function entry(relPath, body) {
@@ -81,6 +82,21 @@ function stand(t) {
 
 const HOOK = 'models/items/pudge/hook/hook.vmdl_c';
 const BLADE = 'models/items/juggernaut/blade/blade.vmdl_c';
+
+test('an import hands its transaction the installer\'s log, for what could not be undone', async (t) => {
+  const { installer, source } = stand(t);
+  const log = () => {};
+  installer.log = log;
+  const handed = [];
+  const run = FileTx.run;
+  FileTx.run = (body, l) => { handed.push(l); return run.call(FileTx, body, l); };
+  t.after(() => { FileTx.run = run; });
+  const dropped = source('one', { 'one/hook_dir.vpk': mod([[HOOK, 'the hook']]) });
+  const [result] = await importVpks(installer, [dropped]);
+  FileTx.run = run;
+  assert.equal(result.error, undefined, result.error);
+  assert.deepEqual(handed, [log]);
+});
 
 test('a mod several folders down in what was dropped is still found', async (t) => {
   // a Skinchanger pack unzips to a whole game tree; the archive is never at the top

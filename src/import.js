@@ -219,7 +219,7 @@ async function importVpkFiles(installer, paths, onStep) {
           files.push({ root: 'lang', relPath: partName });
         }
         results.push({ source: `${set.base}_dir.vpk`, name: set.base, files });
-      });
+      }, installer.log);
     } catch (err) {
       results.push({ source: set.sourceLabel, error: String(err.message || err) });
     }
