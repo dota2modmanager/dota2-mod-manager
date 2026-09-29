@@ -1,14 +1,15 @@
 /* Putting mods from the catalog into the game: one from its window, a pack, the list the user
  * built. Whatever is on screen says it is busy while a download is in flight (state.ts installing),
  * and the badges follow once it lands. */
-import { state } from '../../core/store.js';
-import { render } from '../../core/router.js';
-import { keyOf, refreshInstalledIndex } from '../../core/installed.js';
-import { toast } from '../../ui/toast.js';
-import { confirmDialog } from '../../ui/dialog.js';
-import { isQueued, dropFromQueue, useInstaller } from '../../ui/queue.js';
+import { state } from '../../core/store.ts';
+import { render } from '../../core/router.ts';
+import { keyOf, refreshInstalledIndex } from '../../core/installed.ts';
+import { toast } from '../../ui/toast.ts';
+import { confirmDialog } from '../../ui/dialog.ts';
+import { isQueued, dropFromQueue, useInstaller } from '../../ui/queue.ts';
 import { redrawScreen } from '../../catalog/screen/root.tsx';
 import type { Mod } from '../../catalog/types.ts';
+import type { QueueEntry } from '../../catalog/queueing.ts';
 import { findModByName } from './lists.ts';
 import { installing } from './state.ts';
 
@@ -128,11 +129,11 @@ export async function installPack(pack: Mod, excluded: Set<string>): Promise<voi
 }
 
 // The install list hands its contents back here, since this is where installing lives.
-useInstaller(async (list: { cat: string; name: string; label: string | null; file?: string; preview?: string }[]) => {
+useInstaller(async (list: QueueEntry[]) => {
   const entries = list
     .map(({ cat, name, label, file, preview }): Entry | null => {
       const mod = findModByName(cat, name);
-      return mod ? { categoryId: cat, mod, styleLabel: label, fileRef: file, preview } : null;
+      return mod ? { categoryId: cat, mod, styleLabel: label, fileRef: file, preview: preview ?? undefined } : null;
     })
     .filter((e): e is Entry => e !== null);
   const { ok, skip, fail } = await installMany(entries);

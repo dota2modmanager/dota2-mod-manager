@@ -1,7 +1,7 @@
 /* What every item builder window shares: a look's picture, the header with its way back, the bar
  * along the bottom, and what an empty search says. */
 import { useEffect, useRef, type ReactNode, type RefObject } from 'react';
-import { watchIconFor } from '../../ui/cosmetic-icons.js';
+import { watchIconFor } from '../../ui/cosmetic-icons.ts';
 import { useCosmeticIcon } from '../cosmetic/CosmeticCard.tsx';
 import type { BuilderAction } from './model.ts';
 

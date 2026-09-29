@@ -1,9 +1,9 @@
 /* A preview: a picture, a looping clip, a sound, or the category's icon when there is none.
- * The same four answers as mediaHtml() in ui/media.js, drawn by React. A picture that fails asks
+ * The same four answers as mediaHtml() in ui/media.ts, drawn by React. A picture that fails asks
  * the mirror once, then gives up to the placeholder and counts towards the one warning.
  * Give it key={url}: a new address is a new picture, with its own retry. */
 import { useState } from 'react';
-import { isVideo, isAudio, mirrorOf, mediaGaveUp } from '../../ui/media.js';
+import { isVideo, isAudio, mirrorOf, mediaGaveUp } from '../../ui/media.ts';
 
 interface Props {
   url: string | null;

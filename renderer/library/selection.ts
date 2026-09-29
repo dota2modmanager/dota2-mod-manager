@@ -2,7 +2,7 @@
  *
  * A key is a record's id, or "m:<pack>:<member>" for a mod inside a pack: one selection covers
  * both, so a member can be switched off or pulled out of its pack alongside ordinary mods. */
-import { isCosmeticRec, isFontRec, isPackableRec } from '../core/records.js';
+import { isCosmeticRec, isFontRec, isPackableRec } from '../core/records.ts';
 import { matchesSearch } from './order.ts';
 import type { LibRecord } from './types.ts';
 

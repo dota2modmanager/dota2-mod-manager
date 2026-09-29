@@ -1,10 +1,10 @@
 /* Settings: everything the app itself remembers, drawn from what views/settings.ts reads. The
- * page is mostly other modules' knobs (the scale is ui/chrome.js's, the language ui/language.js's),
+ * page is mostly other modules' knobs (the scale is ui/chrome.ts's, the language ui/language.ts's),
  * because a setting is a thing the whole window obeys, not a thing this screen owns. */
 import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
-import { pane } from '../core/router.js';
+import { pane } from '../core/router.ts';
 
 export interface SettingsModel {
   key: number;
@@ -52,7 +52,7 @@ function Toggle({ id, on, label, onClick }: { id: string; on: boolean; label: st
 }
 
 /* The number moves while the slider is dragged and the window resizes on release: scaling on every
- * input event fights the drag, since the slider moves under the pointer. ui/chrome.js paints the
+ * input event fights the drag, since the slider moves under the pointer. ui/chrome.ts paints the
  * slider and its number, so React leaves both to it. */
 function Scale({ pct, actions }: { pct: number; actions: SettingsActions }) {
   const range = useRef<HTMLInputElement>(null);

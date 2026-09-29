@@ -6,6 +6,19 @@ import type { CosmeticSet, CosmeticSlot } from '../catalog/types.ts';
 import type { LibRecord, RepairState } from '../library/types.ts';
 import type { Dialog, Reply } from './reply.ts';
 
+/** One mod of a preset as sharing it would carry it (src/presets-service.js planShape). */
+export interface ShareEntry {
+  key: string;
+  /** 'catalog' travels as a name, 'embedded' as its bytes, 'missing' cannot travel */
+  kind: 'catalog' | 'embedded' | 'missing' | 'cosmetic' | 'pack' | string;
+  name: string;
+  size: number;
+  info: string;
+  reason: string;
+  slot?: string;
+  members?: ShareEntry[];
+}
+
 export interface CatalogApi {
   load: (force?: boolean) => Promise<CatalogData & { stale?: boolean; fetchedAt?: number }>;
   /** which whole-map terrains were built for an older map than the game's */
@@ -39,7 +52,7 @@ export interface ToolsApi {
   remove: (name: string) => Promise<Reply<{ tools: ToolState[] }>>;
 }
 
-export interface Notice { id: string; level?: string; text: string; url?: string }
+export interface Notice { id: string; date?: string; level?: string; text: string; url?: string }
 
 export interface ConfigApi {
   state: () => Promise<{ features: Record<string, unknown>; notices: Notice[]; seen: string[] }>;
@@ -48,7 +61,7 @@ export interface ConfigApi {
 
 export interface CosmeticsApi {
   slots: () => Promise<{ slots: CosmeticSlot[]; sets: CosmeticSet[] } & Record<string, unknown>>;
-  /** pictures by name; the clips among them come back to be decoded here (ui/cosmetic-icons.js) */
+  /** pictures by name; the clips among them come back to be decoded here (ui/cosmetic-icons.ts) */
   icons: (names: string[]) => Promise<{ pictures: Record<string, string | null>; decode: string[] }>;
   heroPortraits: (ids: string[]) => Promise<Record<string, string>>;
   heroPortraitsByName: (names: string[]) => Promise<Record<string, string>>;
@@ -59,7 +72,8 @@ export interface CosmeticsApi {
 /** A mod's own video, and the still the window decodes out of it. */
 export interface PreviewApi {
   video: (key: string) => Promise<Uint8Array | null>;
-  frame: (key: string, png: Uint8Array) => Promise<unknown>;
+  /** the frame kept as the mod's picture, as a data URI, or null when it was not worth showing */
+  frame: (key: string, png: Uint8Array) => Promise<string | null>;
 }
 
 /** A preset as presets:list gives it: the build, with what is and is not installed worked out. */
@@ -85,7 +99,7 @@ export interface PresetsApi {
   rename: (id: string, name: string) => Promise<Reply<{ name: string }>>;
   delete: (id: string) => Promise<unknown[]>;
   apply: (id: string) => Promise<Reply<{ installed: number; missing: string[]; errors: string[] }>>;
-  exportPlan: (id: string) => Promise<Reply<{ name: string; entries: any[] }>>;
+  exportPlan: (id: string) => Promise<Reply<{ name: string; entries: ShareEntry[] }>>;
   exportFile: (id: string, opts: { skip: string[]; author: string; note: string }) => Promise<Dialog<{ path: string; size: number }>>;
   shareLink: (id: string) => Promise<Reply<{ web?: string; count: number; skipped: unknown[] }>>;
   importDialog: () => Promise<Dialog<{ preset: { name: string } }>>;

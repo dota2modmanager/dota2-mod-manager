@@ -3,7 +3,7 @@
  * string templates wrote, so the styles, the simulation and the drag find what they always did. */
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { AnimatePresence, motion, useIsPresent } from 'motion/react';
-import { plural } from '../ui/format.js';
+import { plural } from '../ui/format.ts';
 import { rowMotion } from './row-motion.ts';
 import type { ExternalRowModel, LibraryActions, MemberModel, PackRowModel, RowModel } from './model.ts';
 import { CosmeticThumb, Grip, PackThumb, PakFile, Tags, Thumb } from './Thumb.tsx';

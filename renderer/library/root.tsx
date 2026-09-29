@@ -5,7 +5,7 @@
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { MotionConfig } from 'motion/react';
-import { pane } from '../core/router.js';
+import { pane } from '../core/router.ts';
 import { LibraryScreen } from './LibraryScreen.tsx';
 import type { LibraryActions, LibraryModel } from './model.ts';
 

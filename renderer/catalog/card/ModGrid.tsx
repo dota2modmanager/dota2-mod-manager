@@ -9,7 +9,7 @@ import { startTransition, useEffect, useState, type ReactElement } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { cardMotion } from './card-motion.ts';
 import type { Mod } from '../types.ts';
-import { keyOf } from '../../core/keys.js';
+import { keyOf } from '../../core/keys.ts';
 import { ModCard } from './ModCard.tsx';
 
 /** Cards drawn in the first pass: more than a 4K window shows at the smallest card size. */
@@ -61,7 +61,7 @@ export function ModGrid({ mods, grouped = false, withCat = false, emptyText, onO
         : <div key={`group:${m._group ?? ''}`} className="group-title">{title}</div>);
       last = m._group;
     }
-    into.push(<ModCard key={keyOf(m._cat, m.name, null)} mod={m} index={i} withCat={withCat} moves={moves}
+    into.push(<ModCard key={keyOf(m._cat ?? '', m.name, null)} mod={m} index={i} withCat={withCat} moves={moves}
       onOpen={onOpen} onFavChanged={onFavChanged} />);
   });
   return (

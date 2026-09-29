@@ -1,10 +1,10 @@
 /* What My mods can ask for (library/model.ts, LibraryActions): the ticks, the search, the switches,
  * the bulk bar, the banners and the foreign files. What a single row's menu does is in
  * record-actions.ts. */
-import { isCursorRec, isCosmeticRec, isFontRec, isPackableRec } from '../../core/records.js';
-import { toast } from '../../ui/toast.js';
-import { confirmDialog } from '../../ui/dialog.js';
-import { catalogPreviewFor } from '../../ui/thumb.js';
+import { isCursorRec, isCosmeticRec, isFontRec, isPackableRec } from '../../core/records.ts';
+import { toast } from '../../ui/toast.ts';
+import { confirmDialog } from '../../ui/dialog.ts';
+import { catalogPreviewFor } from '../../ui/thumb.ts';
 import { isMemberKey, memberOf, selectableCosmetics, selectableMods } from '../../library/selection.ts';
 import type { LibraryActions } from '../../library/model.ts';
 import { external } from './external.ts';

@@ -1,6 +1,6 @@
 /* The catalog screen's own state, off the shared store now that it has somewhere to live, and
  * what its parts reach back into the screen for. */
-import { freshFilters } from '../../core/constants.js';
+import { freshFilters } from '../../core/constants.ts';
 import type { Filters } from '../../catalog/types.ts';
 
 /** What the toolbar narrows by, and the search inside one cosmetic slot (its list runs to thousands). */

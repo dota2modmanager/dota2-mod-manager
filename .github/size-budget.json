@@ -4,7 +4,6 @@
   "watchAt": 300,
   "files": {
     "main.js": 1129,
-    "renderer/app.js": 426,
     "renderer/i18n.js": 787,
     "src/diagnostics.js": 405,
     "src/gamelang.js": 462,

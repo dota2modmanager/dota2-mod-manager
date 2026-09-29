@@ -36,6 +36,9 @@ export interface LibRecord {
   categoryId: string;
   /** a cosmetic pick's slot in the item schema */
   slot?: string;
+  /** the item a cosmetic pick dresses the slot in, and its effects, comma separated (src/item-builder.js) */
+  itemId?: string;
+  effectId?: string;
   styleLabel?: string | null;
   /** what the analysis says the file is, for an import */
   info?: string;

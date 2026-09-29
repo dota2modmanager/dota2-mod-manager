@@ -1,13 +1,13 @@
-/* Where a mod's picture comes from, for the tiles of My mods and the presets (ui/thumb.js has the
+/* Where a mod's picture comes from, for the tiles of My mods and the presets (ui/thumb.ts has the
  * sources in order): a preview, a picture fetched by name, or only a glyph. */
-import { isVideo, previewUrl } from '../ui/media.js';
-import { recPreviewUrl, wikiFallbackKey, pictureChain, catalogPreviewFor } from '../ui/thumb.js';
+import { isVideo, previewUrl } from '../ui/media.ts';
+import { recPreviewUrl, wikiFallbackKey, pictureChain, catalogPreviewFor } from '../ui/thumb.ts';
 import type { Thumb } from './model.ts';
 import type { ExternalFile, LibRecord, Member } from './types.ts';
 
 const picture = (url: string): Thumb => ({ url, video: isVideo(url) });
 
-/** A record's own picture, else the catalog's, else one fetched out of the mod or the wiki (ui/thumb.js). */
+/** A record's own picture, else the catalog's, else one fetched out of the mod or the wiki (ui/thumb.ts). */
 export function recThumb(rec: LibRecord | Member): Thumb {
   const url = recPreviewUrl(rec);
   if (url) return picture(url);

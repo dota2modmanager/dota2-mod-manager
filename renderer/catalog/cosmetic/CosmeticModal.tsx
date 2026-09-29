@@ -2,7 +2,7 @@
  * into the game's own item table rather than into a file, so the window says what taking it
  * will do to the slot, and which look it replaces. */
 import { useCosmeticIcon } from './CosmeticCard.tsx';
-import { plural } from '../../ui/format.js';
+import { plural } from '../../ui/format.ts';
 
 export interface CosmeticModalModel {
   slot: string;

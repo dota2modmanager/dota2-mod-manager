@@ -3,10 +3,10 @@
  *
  * What is offered comes from the upstream catalog (src/catalog.js via loadCatalog), which is why
  * the mod index is built here: it is a reading of the same data. */
-import { COSMETIC_PREFIX, CATALOG_EXCLUDE, TOOLS_HIDDEN } from '../../core/constants.js';
-import { state } from '../../core/store.js';
-import { pickedIn } from '../../core/installed.js';
-import { shownMods, isAdult, adultShown } from '../../core/adult.js';
+import { COSMETIC_PREFIX, CATALOG_EXCLUDE, TOOLS_HIDDEN } from '../../core/constants.ts';
+import { state } from '../../core/store.ts';
+import { pickedIn } from '../../core/installed.ts';
+import { shownMods, isAdult, adultShown } from '../../core/adult.ts';
 import { heroMatches } from '../hero-grid.ts';
 import { modsOf, isGrouped, modIndexOf, type CustomPack } from '../../catalog/mods.ts';
 import { tagLabel as labelOfTag, collectSlots as slotsOf } from '../../catalog/tags.ts';
@@ -38,7 +38,7 @@ export function saveCustomPacks(packs: CustomPack[]): void {
 const modsData = (categoryId: string) => catalogData()?.mods?.modsData?.[categoryId];
 const allCategoryMods = (categoryId: string): Mod[] =>
   modsOf(modsData(categoryId), categoryId, { toolsHidden: TOOLS_HIDDEN, customPacks: customPacks() });
-/** What browsing shows: without the adult mods until the user said yes (core/adult.js). */
+/** What browsing shows: without the adult mods until the user said yes (core/adult.ts). */
 export const categoryMods = (categoryId: string): Mod[] => shownMods(allCategoryMods(categoryId));
 export const isGroupedCategory = (categoryId: string): boolean => isGrouped(modsData(categoryId));
 

@@ -6,7 +6,7 @@
  * modal.css; the only number needed here is when the exit is over, read rather than repeated so
  * the stylesheet stays the one place the tempo is set, and so the system's reduced-motion setting,
  * which flattens it to 1ms, is honoured for free. */
-import { tokenMs } from '../../core/css-time.js';
+import { tokenMs } from '../../core/css-time.ts';
 import { growFrom, shrinkAway } from '../../catalog/modal-motion.ts';
 import { clearModal } from '../../catalog/modal/root.tsx';
 

@@ -2,7 +2,7 @@
  * so this is where the reasons are said: the master switch, files waiting to be linked, the slot
  * ceiling, the item schema, another patcher, a game file that fails Dota's signature, and the
  * folders the game does or does not read (FolderBanners.tsx). */
-import { plural } from '../ui/format.js';
+import { plural } from '../ui/format.ts';
 import type { BannersModel, LibraryActions } from './model.ts';
 import { Banner, BannerButton } from './Banner.tsx';
 import { FolderBanners } from './FolderBanners.tsx';

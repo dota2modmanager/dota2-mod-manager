@@ -1,14 +1,14 @@
 /* The item builder's rules, out of its screen (views/item-builder.ts): what the one button does
  * with what is chosen, which heroes and sets a search leaves, and what a hero's card says. What a
  * pick does to the game is src/item-builder.js. */
-import { plural } from '../../ui/format.js';
+import { plural } from '../../ui/format.ts';
 import type { CosmeticSet, CosmeticSlot } from '../types.ts';
 import type { BuilderAction } from './model.ts';
 
 type ItemSlot = CosmeticSlot;
 type ItemSet = CosmeticSet;
 type ItemEffect = { id: string; name: string };
-/** What the game shows on a slot now (core/installed.js pickedIn). */
+/** What the game shows on a slot now (core/installed.ts pickedIn). */
 export interface LivePick { itemId?: string; name?: string; effectId?: string }
 
 export type PickedIn = (slot: string) => LivePick | null | undefined;

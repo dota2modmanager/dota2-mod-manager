@@ -1,7 +1,7 @@
 /* What sits over and under the list: the search, the counts and the import buttons; the "select
  * all" lines of the mods and the cosmetics; and the bar that acts on whatever is ticked. */
 import { useEffect, useRef } from 'react';
-import { plural } from '../ui/format.js';
+import { plural } from '../ui/format.ts';
 import type { LibraryActions, LibraryModel } from './model.ts';
 
 export function LibToolbar({ m, actions }: { m: LibraryModel; actions: LibraryActions }) {

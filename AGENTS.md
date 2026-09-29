@@ -24,6 +24,7 @@ renderer/api/      its types: every name on window.api, and what each handler an
 src/               everything that thinks: installer, vpk, schema, gamelang, catalog…
 src/ipc-*.js       one file per group of channels, each naming what it needs
 renderer/          the UI. views/ draw screens, ui/ are shared pieces, core/ is state
+renderer/shell/    what is not a screen: title bar, status bar, search, drops, updates
 renderer/catalog/  the catalog's React components, and the rules they draw in .ts with tests
 renderer/library/  the same for My mods; renderer/presets/ and renderer/settings/ for the rest
 test/              node:test, no framework, no mocks library

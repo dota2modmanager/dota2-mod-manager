@@ -1,11 +1,11 @@
-/* Mods the catalog tags adult (renderer/core/adult.js): hidden from browsing until the user says
+/* Mods the catalog tags adult (renderer/core/adult.ts): hidden from browsing until the user says
  * they are 18 and want them, and the one question asked only when it means something. */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const load = async () => ({
-  adult: await import('../renderer/core/adult.js'),
-  store: await import('../renderer/core/store.js'),
+  adult: await import('../renderer/core/adult.ts'),
+  store: await import('../renderer/core/store.ts'),
 });
 
 // the shape the catalog ships: an adult mod, one whose tags are all false, and one with none

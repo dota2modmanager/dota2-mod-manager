@@ -1,11 +1,11 @@
 /* Free looks taken from the game's own item schema, browsed as a catalog category like any other:
  * a look's window (catalog/cosmetic/CosmeticModal.tsx draws it) and the pick itself. A hero's item
  * opens the item builder's window instead (views/item-builder.ts). */
-import { COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.js';
-import { state } from '../../core/store.js';
-import { pickedIn, refreshInstalledIndex } from '../../core/installed.js';
-import { toast } from '../../ui/toast.js';
-import { loadCosmeticIcons, cosmeticIconKnown } from '../../ui/cosmetic-icons.js';
+import { COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.ts';
+import { state } from '../../core/store.ts';
+import { pickedIn, refreshInstalledIndex } from '../../core/installed.ts';
+import { toast } from '../../ui/toast.ts';
+import { loadCosmeticIcons, cosmeticIconKnown } from '../../ui/cosmetic-icons.ts';
 import { favKey, isFav, toggleFavorite } from '../../catalog/favorites.ts';
 import { redrawScreen } from '../../catalog/screen/root.tsx';
 import { showCosmeticModal } from '../../catalog/modal/root.tsx';

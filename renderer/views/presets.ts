@@ -6,14 +6,14 @@
  * used to empty every preset on screen, because the card counted only the records it could
  * resolve; a build outliving its installations is the point of storing identities, so a member
  * that is not installed is drawn as absent instead of dropped. */
-import { state } from '../core/store.js';
-import { registerView, switchView } from '../core/router.js';
-import { refreshInstalledIndex } from '../core/installed.js';
-import { catName, catIcon } from '../core/categories.js';
-import { fmtMB, plural } from '../ui/format.js';
-import { toast } from '../ui/toast.js';
-import { confirmDialog, promptDialog } from '../ui/dialog.js';
-import { paint } from '../ui/transitions.js';
+import { state } from '../core/store.ts';
+import { registerView, switchView } from '../core/router.ts';
+import { refreshInstalledIndex } from '../core/installed.ts';
+import { catName, catIcon } from '../core/categories.ts';
+import { fmtMB, plural } from '../ui/format.ts';
+import { toast } from '../ui/toast.ts';
+import { confirmDialog, promptDialog } from '../ui/dialog.ts';
+import { paint } from '../ui/transitions.ts';
 import { recThumb } from '../library/thumbs.ts';
 import type { LibRecord } from '../library/types.ts';
 import { showPresets } from '../presets/PresetsScreen.tsx';

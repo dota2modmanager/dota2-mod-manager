@@ -1,7 +1,7 @@
 /* One slot of free looks: its own search (a slot runs to thousands), the sort, and the two answers
  * about the user's own library, over a grid of the looks. The same rule as the mod grid for the
  * count: a number only once the list in front of you is a subset. */
-import { SORTS } from '../../core/constants.js';
+import { SORTS } from '../../core/constants.ts';
 import type { ScreenActions, ScreenModel } from './model.ts';
 import { CosmeticGrid } from '../cosmetic/CosmeticCard.tsx';
 

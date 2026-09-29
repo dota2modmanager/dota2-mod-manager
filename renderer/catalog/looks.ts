@@ -5,8 +5,8 @@
  * first, and opening the window to find out is a detour. The site this catalog comes from works
  * the same way and keeps the choice; here it lasts the session, which is as long as a grid does. */
 import type { Mod, ModStyle } from './types.ts';
-import { state } from '../core/store.js';
-import { keyOf } from '../core/keys.js';
+import { state } from '../core/store.ts';
+import { keyOf } from '../core/keys.ts';
 
 const picked = new Map<string, number>(); // "cat|name" -> index
 const lookKey = (cat: string, name: string): string => `${cat}|${name}`;

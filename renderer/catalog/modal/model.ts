@@ -22,7 +22,7 @@ export interface ModModalModel {
   playable: string | null;
   fav: boolean;
   date: string | null;
-  /** everybody the catalog credits, as core/credits.js draws them */
+  /** everybody the catalog credits, as core/credits.ts draws them */
   creditsHtml: string;
   kind: 'tool' | 'pack' | 'mod';
   /** the archive an install downloads, or null for a link */
@@ -32,7 +32,7 @@ export interface ModModalModel {
   toolRelPath: string;
   busy: boolean;
   pack: { members: PackMember[]; activeCount: number; custom: boolean } | null;
-  /** what the catalog wrote about the mod (ui/guide.js) */
+  /** what the catalog wrote about the mod (ui/guide.ts) */
   guidesHtml: string;
   links: { index: number; label: string }[];
   note: string | null;

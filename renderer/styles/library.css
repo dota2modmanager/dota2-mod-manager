@@ -89,7 +89,7 @@
   background: rgba(251, 191, 36, 0.12);
   border-color: rgba(251, 191, 36, 0.4);
 }
-/* a whole-map terrain built for an older map than the game's (renderer/core/terrain-age.js) */
+/* a whole-map terrain built for an older map than the game's (renderer/core/terrain-age.ts) */
 .lib-tag.stale,
 .lib-tag.schema.off {
   color: var(--warning);

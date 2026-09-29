@@ -209,7 +209,7 @@ class Sim {
     return true;
   }
 
-  /** The right button, which is where the app keeps its rare actions (ui/menu.js). */
+  /** The right button, which is where the app keeps its rare actions (ui/menu.ts). */
   async rightClick(spec) {
     const p = await this.find(spec);
     if (!p) return false;

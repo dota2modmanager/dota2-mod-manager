@@ -3,8 +3,8 @@
 import { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
-import { pane } from '../core/router.js';
-import { bindContextMenu } from '../ui/menu.js';
+import { pane } from '../core/router.ts';
+import { bindContextMenu } from '../ui/menu.ts';
 import type { PresetsActions, PresetsModel } from './model.ts';
 import { OwnPresetCard, SharedPresetCard } from './PresetCard.tsx';
 

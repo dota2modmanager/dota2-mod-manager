@@ -1,13 +1,13 @@
 /* The catalog's screens as catalog/screen/Screen.tsx draws them: the favourites, the home page,
  * the search results, one category, one slot of free looks. Each works out its model and hands it
  * over inside paint(), so a view transition captures the new screen whole. */
-import { RAW_BASE, COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.js';
-import { state } from '../../core/store.js';
-import { pickedIn, refreshCosmeticSlots } from '../../core/installed.js';
-import { catName, catIcon } from '../../core/categories.js';
-import { isAdult, adultShown } from '../../core/adult.js';
-import { plural } from '../../ui/format.js';
-import { paint } from '../../ui/transitions.js';
+import { RAW_BASE, COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.ts';
+import { state } from '../../core/store.ts';
+import { pickedIn, refreshCosmeticSlots } from '../../core/installed.ts';
+import { catName, catIcon } from '../../core/categories.ts';
+import { isAdult, adultShown } from '../../core/adult.ts';
+import { plural } from '../../ui/format.ts';
+import { paint } from '../../ui/transitions.ts';
 import { heroOf, heroMatches, heroGridWanted, heroTiles, heroLayout } from '../hero-grid.ts';
 import { renderItemCosmeticHub } from '../item-hub.ts';
 import { canBeInstalled } from '../../catalog/mods.ts';

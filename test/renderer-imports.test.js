@@ -1,7 +1,7 @@
 /* The renderer is ES modules loaded by a browser, and nothing here ever loads them.
  *
  * The unit tests are CommonJS in Node and never touch renderer/. eslint checks that a name a
- * file uses exists in that file, and stops there: it does not resolve `./ui/toast.js` or ask
+ * file uses exists in that file, and stops there: it does not resolve `./ui/toast.ts` or ask
  * whether that file exports `toast`. So a moved file or a renamed export is invisible to every
  * check this project has, right up until the window opens and the browser refuses the module -
  * at which point the screen is blank and nothing in the log says why.
@@ -101,7 +101,7 @@ test('the scripts index.html loads are files that exist', () => {
   const html = fs.readFileSync(path.join(RENDERER, 'index.html'), 'utf8');
   const missing = [];
   let checked = 0;
-  for (const m of html.matchAll(/src="([^"]+\.js)"/g)) {
+  for (const m of html.matchAll(/src="([^"]+\.(?:js|ts))"/g)) {
     if (/^https?:/.test(m[1])) continue;
     checked++;
     if (!fs.existsSync(path.join(RENDERER, m[1]))) missing.push(`index.html loads ${m[1]}, which is not there`);
