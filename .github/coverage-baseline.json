@@ -288,7 +288,7 @@
           "lines": 93.9
         },
         "src/installer-downloads.ts": {
-          "lines": 98.5
+          "lines": 98.6
         },
         "src/installer-files.ts": {
           "lines": 100
@@ -336,7 +336,7 @@
           "lines": 94.4
         },
         "src/item-builder.ts": {
-          "lines": 98.8
+          "lines": 98.9
         },
         "src/library.ts": {
           "lines": 100
@@ -384,7 +384,7 @@
           "lines": 94.1
         },
         "src/presets-service.ts": {
-          "lines": 71.1
+          "lines": 71.2
         },
         "src/release-notes.ts": {
           "lines": 100
