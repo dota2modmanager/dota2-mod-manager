@@ -295,27 +295,36 @@ to stop offering the major version until somebody does it.
 
 *Check:* `.github/dependabot.yml`, the `ignore` block for the app's dependencies.
 
-### The main process moves to TypeScript, with no build step
+### The main process is TypeScript, with no build step
 
-`src/` is moving from JavaScript checked through JSDoc to TypeScript, a few modules per pull
-request, leaves first. Nothing compiles it. Electron 44 runs on Node 24, which strips the types
-itself when it loads a `.ts` file, and it does so from inside `app.asar` as well: checked on
-2026-09-29 with a packed test app, before the first module moved. So the installer, the updater
+Every file of the main process is TypeScript since 2026-10-01, the entry included: package.json
+starts `src/main.ts`. Nothing compiles it. Electron 44 runs on Node 24, which strips the types
+itself when it loads a `.ts` file, and it does so from inside `app.asar` as well: checked with a
+packed test app before the first module moved, and again with the installer built from the last
+one, which installed, switched and removed a mod through the window. So the installer, the updater
 and the release pipeline see the same kind of files they always did, and there is no build output
 that can drift from the source.
 
 That rules some TypeScript out. Only syntax that can simply be erased is allowed (no enums, no
 namespaces, `erasableSyntaxOnly`), and imports name the `.ts` file, because that is the path Node
-loads. The moved modules are ES modules, since a CommonJS `.ts` file has no way to type a
-`require` without syntax that would need compiling. A module not moved yet is imported whole
-(`import old from './old.js'`), because Node cannot always see the names a CommonJS file exports.
+loads. The modules are ES modules, and `src/package.json` says so, so Node reads each one once
+instead of trying CommonJS first. A CommonJS `.ts` file has no way to type a `require` without
+syntax that would need compiling.
 
-Their tests move with them, to `.test.ts` importing the module. Node's coverage leaves out a `.ts`
-file that was only ever loaded through `require`, so a module whose tests still used `require`
-would drop out of the coverage baseline without anything else changing.
+The compiler is also the lint for these files. `eslint.config.js` reads the JavaScript; for the
+TypeScript, `src/tsconfig.json` turns on what strict leaves out: a name nobody reads, code nothing
+reaches, a switch case falling into the next. Adding `typescript-eslint` instead would be a second
+parser for rules the compiler already holds.
+
+The preload bridges stay JavaScript, because Electron runs them in the sandbox as CommonJS before
+the page. The tools and most tests stay JavaScript too. Neither ships, and rewriting them would be
+a diff nobody can review for no change in what runs. The exception is the tests of a module: they
+are `.test.ts` importing it, because Node's coverage leaves out a `.ts` file that was only ever
+loaded through `require`, and a module tested that way would drop out of the coverage baseline
+without anything else changing.
 
 *Check:* `src/tsconfig.json` and `test/tsconfig.json`, both strict and with nothing in the
-baseline, run by `npm run typecheck`; `ls src/*.ts` for how far it has got.
+baseline, run by `npm run typecheck`; `ls src/*.js` finds nothing.
 
 ### The anti-cheat notice is rewritten, and there is no switch for it
 
