@@ -198,8 +198,26 @@
       }
     },
     "win32": {
-      "measured": "2026-09-19",
+      "measured": "2026-09-30",
       "files": {
+        "renderer/core/adult.js": {
+          "lines": 57.6
+        },
+        "renderer/core/constants.js": {
+          "lines": 90.8
+        },
+        "renderer/core/credits.js": {
+          "lines": 100
+        },
+        "renderer/core/minify-notice.js": {
+          "lines": 100
+        },
+        "renderer/core/store.js": {
+          "lines": 100
+        },
+        "renderer/ui/format.js": {
+          "lines": 48.1
+        },
         "src/adopt.ts": {
           "lines": 100
         },
@@ -213,13 +231,13 @@
           "lines": 100
         },
         "src/catalog.ts": {
-          "lines": 96.5
+          "lines": 97
         },
         "src/cursors.ts": {
           "lines": 100
         },
         "src/diagnostics.ts": {
-          "lines": 72.4
+          "lines": 87.6
         },
         "src/feature-gate.ts": {
           "lines": 100
@@ -228,37 +246,40 @@
           "lines": 100
         },
         "src/fingerprints.ts": {
-          "lines": 48.6
+          "lines": 100
         },
         "src/game-icons.ts": {
-          "lines": 48.1
+          "lines": 64.9
         },
         "src/gamelang.ts": {
           "lines": 99.4
         },
+        "src/hero-names.ts": {
+          "lines": 100
+        },
         "src/i18n.ts": {
-          "lines": 96.8
+          "lines": 98.1
         },
         "src/import.js": {
           "lines": 93.9
         },
         "src/installer.js": {
-          "lines": 86
+          "lines": 91.9
         },
         "src/ipc-diagnostics.js": {
-          "lines": 80.8
+          "lines": 82.1
         },
         "src/ipc-game.js": {
-          "lines": 87
+          "lines": 87.8
         },
         "src/ipc-library.js": {
-          "lines": 63.6
+          "lines": 76.6
         },
         "src/ipc-misc.js": {
           "lines": 77.2
         },
         "src/ipc-mods.js": {
-          "lines": 56.6
+          "lines": 77.1
         },
         "src/ipc-packs.js": {
           "lines": 44.5
@@ -267,46 +288,55 @@
           "lines": 62.4
         },
         "src/ipc-settings.js": {
-          "lines": 89.4
+          "lines": 91.5
         },
         "src/ipc-window.js": {
-          "lines": 91.7
+          "lines": 94.3
+        },
+        "src/item-builder.ts": {
+          "lines": 98.9
         },
         "src/library.ts": {
           "lines": 100
         },
         "src/minify.ts": {
-          "lines": 97.9
+          "lines": 99.6
         },
         "src/mod-id.ts": {
           "lines": 100
         },
         "src/mod-preview.ts": {
-          "lines": 75.3
+          "lines": 75.9
         },
         "src/net.ts": {
-          "lines": 99.2
+          "lines": 100
+        },
+        "src/notice-text.ts": {
+          "lines": 99.6
+        },
+        "src/notice-texts.ts": {
+          "lines": 100
         },
         "src/overlays.ts": {
           "lines": 99.4
         },
         "src/patch-watch.ts": {
-          "lines": 93.9
+          "lines": 94.8
         },
         "src/patcher.ts": {
           "lines": 97.7
         },
         "src/portable-update.ts": {
-          "lines": 97.8
+          "lines": 98.7
         },
         "src/preset-link.ts": {
           "lines": 100
         },
         "src/preset-share.ts": {
-          "lines": 88.7
+          "lines": 94.1
         },
         "src/presets-service.ts": {
-          "lines": 13.8
+          "lines": 71.2
         },
         "src/remote-config.ts": {
           "lines": 100
@@ -314,20 +344,47 @@
         "src/safe-zip.ts": {
           "lines": 100
         },
+        "src/schema-service.ts": {
+          "lines": 46.5
+        },
         "src/schema.ts": {
-          "lines": 99.5
+          "lines": 100
+        },
+        "src/settings-view.ts": {
+          "lines": 90.6
         },
         "src/settings.ts": {
           "lines": 100
         },
+        "src/slot-zones.ts": {
+          "lines": 57.2
+        },
         "src/steam.ts": {
           "lines": 53.2
         },
+        "src/terrain-age.ts": {
+          "lines": 100
+        },
         "src/toolchain.ts": {
-          "lines": 98.1
+          "lines": 98.3
+        },
+        "src/uninstall-args.ts": {
+          "lines": 100
+        },
+        "src/updater.ts": {
+          "lines": 96.3
+        },
+        "src/vpk-analyze.ts": {
+          "lines": 97.7
+        },
+        "src/vpk-read.ts": {
+          "lines": 99
+        },
+        "src/vpk-write.ts": {
+          "lines": 98.9
         },
         "src/vpk.ts": {
-          "lines": 98.2
+          "lines": 100
         },
         "src/vtex.ts": {
           "lines": 100
@@ -336,22 +393,25 @@
           "lines": 100
         },
         "tools/check-credentials.mjs": {
-          "lines": 74.1
+          "lines": 74.2
         },
         "tools/check-i18n.js": {
-          "lines": 93.8
+          "lines": 94.7
         },
         "tools/coverage.mjs": {
           "lines": 70
         },
         "tools/e2e.mjs": {
-          "lines": 65.1
+          "lines": 65.5
         },
         "tools/gen-api-docs.js": {
-          "lines": 91.1
+          "lines": 92.9
         },
         "tools/gen-doc-facts.js": {
           "lines": 78.6
+        },
+        "tools/gen-incidents.js": {
+          "lines": 95.2
         },
         "tools/google-auth.mjs": {
           "lines": 27.9
@@ -378,28 +438,43 @@
           "lines": 79.2
         },
         "tools/radar.mjs": {
-          "lines": 74
+          "lines": 75.1
         },
         "tools/release-gate.mjs": {
-          "lines": 58.3
+          "lines": 65.2
+        },
+        "tools/release-state.js": {
+          "lines": 90.6
         },
         "tools/rollback.mjs": {
-          "lines": 75.9
+          "lines": 80.2
         },
         "tools/seo-state.mjs": {
           "lines": 99
         },
+        "tools/sim/dota.js": {
+          "lines": 89.4
+        },
+        "tools/sim/fit.js": {
+          "lines": 100
+        },
+        "tools/sim/frames.js": {
+          "lines": 100
+        },
+        "tools/sim/run.mjs": {
+          "lines": 66.2
+        },
         "tools/size-budget.mjs": {
-          "lines": 72.7
+          "lines": 72.9
         },
         "tools/sync-labels.mjs": {
           "lines": 55.1
         },
         "tools/typecheck.mjs": {
-          "lines": 63.9
+          "lines": 64.1
         },
         "tools/virustotal.mjs": {
-          "lines": 60.5
+          "lines": 61.3
         }
       }
     }
