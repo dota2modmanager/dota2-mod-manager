@@ -11,11 +11,13 @@
  * path, the language folder the game will really mount, whose mods those are, what Minify is
  * doing and what is stranded outside the folder - and none of that is about starting a window.
  */
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
-const gamelang = require('./gamelang.ts');
-const { readMinify, isMinifyFile, isMinifyPak } = require('./minify.ts');
+import * as gamelang from './gamelang.ts';
+import { readMinify, isMinifyFile, isMinifyPak } from './minify.ts';
+import type { Settings } from './settings.ts';
+import type { Library } from './library.ts';
 
 /**
  * @param {object} deps
@@ -28,7 +30,11 @@ const { readMinify, isMinifyFile, isMinifyPak } = require('./minify.ts');
  * @param {() => object|null} [deps.takeSlotMigration]  the one-shot news about the load order being laid out, or null
  * @returns {(opts?: { consumeMigration?: boolean }) => object}
  */
-function settingsViewFor({ settings, library, discordAuth, validateGamePath, langFolder, takeMigration, takeSlotMigration = () => null }) {
+export function settingsViewFor({ settings, library, discordAuth, validateGamePath, langFolder, takeMigration, takeSlotMigration = () => null }: {
+  settings: Pick<Settings, 'get' | 'all'>; library: Pick<Library, 'list'>; discordAuth: { isConfigured(): boolean };
+  validateGamePath: (game: string | null) => boolean; langFolder: () => string;
+  takeMigration: () => unknown; takeSlotMigration?: () => unknown;
+}) {
   // ----- settings -----
   /**
    * What the renderer means by "settings": the stored values plus the few facts about this
@@ -50,7 +56,7 @@ function settingsViewFor({ settings, library, discordAuth, validateGamePath, lan
     /* How many of the files in its folder are its own. Once both apps share one folder,
      * counting everything there would report our mods as Minify's - and the answer has to be
      * a fact about who wrote what, which is what the marker is for. */
-    const minifyModsIn = (suffix) => {
+    const minifyModsIn = (suffix: string) => {
       if (!suffix || !game) return 0;
       try {
         const dir = path.join(game, `dota_${suffix}`);
@@ -109,4 +115,3 @@ function settingsViewFor({ settings, library, discordAuth, validateGamePath, lan
   };
 }
 
-module.exports = { settingsViewFor };

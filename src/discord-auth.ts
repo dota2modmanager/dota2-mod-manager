@@ -17,25 +17,33 @@
 //  - the identity this produces is trusted by THIS app only. A nickname written into a
 //    shared preset is just text; proving who made a preset needs a server that verifies
 //    the token with Discord, and that comes with the community catalog.
-const http = require('http');
-const crypto = require('crypto');
-const { shell } = require('electron');
-const { t } = require('./i18n.ts');
+import http from 'node:http';
+import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
+import { t } from './i18n.ts';
+
+// electron through require, as before: under plain node, in tests, it is only a path and shell stays undefined
+const require = createRequire(import.meta.url);
+const { shell } = require('electron') as typeof import('electron');
+
+/** Who signed in: the Discord account's id, the name it shows, and its avatar as a data URI. */
+export interface DiscordUser { id: string; username: string; avatar: string | null }
 
 // Public by design in OAuth2 — it identifies the app, it is not a secret, and it ships in
 // every OAuth request anyway. The client SECRET is a different thing and is never needed
 // here: the implicit grant doesn't use one, so none exists in this repo.
 // REDIRECT_URI below must be listed verbatim under OAuth2 -> Redirects for this app.
-const CLIENT_ID = '1529830456697163867';
+export const CLIENT_ID = '1529830456697163867';
 
 // Discord matches redirect URIs exactly, so the port can't be random.
-const PORT = 53174;
+export const PORT = 53174;
 const HOST = '127.0.0.1';
-const REDIRECT_URI = `http://${HOST}:${PORT}/callback`;
+export const REDIRECT_URI = `http://${HOST}:${PORT}/callback`;
 const TIMEOUT_MS = 3 * 60 * 1000;
 const AVATAR_MAX = 256 * 1024;
 
-function isConfigured() { return !!CLIENT_ID; }
+/** Whether this build carries an application id to sign in with. */
+export function isConfigured(): boolean { return !!CLIENT_ID; }
 
 // served on the loopback: pulls the token out of the fragment and posts it back to us
 const CALLBACK_PAGE = `<!doctype html><meta charset="utf-8"><title>Dota 2 Mod Manager</title>
@@ -49,21 +57,21 @@ const CALLBACK_PAGE = `<!doctype html><meta charset="utf-8"><title>Dota 2 Mod Ma
   else { fetch('/token', { method: 'POST', body: f }).catch(function () {}); }
 </script>`;
 
-const page = (res, body, code = 200) => {
+const page = (res: http.ServerResponse, body: string, code = 200) => {
   res.writeHead(code, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
   res.end(body);
 };
 
 // Wait on the loopback for Discord to come back. Resolves with the access token.
-function awaitToken(state) {
+function awaitToken(state: string): Promise<string> {
   return new Promise((resolve, reject) => {
     let done = false;
     const server = http.createServer((req, res) => {
-      const url = new URL(req.url, `http://${HOST}:${PORT}`);
+      const url = new URL(req.url || '/', `http://${HOST}:${PORT}`);
       if (req.method === 'GET' && url.pathname === '/callback') return page(res, CALLBACK_PAGE);
       if (req.method === 'POST' && url.pathname === '/token') {
         let body = '';
-        req.on('data', (c) => { body += c; if (body.length > 4096) req.destroy(); });
+        req.on('data', (c: Buffer) => { body += c; if (body.length > 4096) req.destroy(); });
         req.on('end', () => {
           res.writeHead(204).end();
           const q = new URLSearchParams(body);
@@ -77,7 +85,7 @@ function awaitToken(state) {
       return page(res, 'Not found', 404);
     });
 
-    const finish = (err, token) => {
+    const finish = (err: Error | null, token = '') => {
       if (done) return;
       done = true;
       clearTimeout(timer);
@@ -86,7 +94,7 @@ function awaitToken(state) {
     };
     const timer = setTimeout(() => finish(new Error(t('Вход занял слишком много времени'))), TIMEOUT_MS);
 
-    server.on('error', (/** @type {NodeJS.ErrnoException} */ err) => finish(err.code === 'EADDRINUSE'
+    server.on('error', (err: NodeJS.ErrnoException) => finish(err.code === 'EADDRINUSE'
       ? new Error(t('Порт {0} занят — закрой другой вход и попробуй снова', PORT))
       : err));
     server.listen(PORT, HOST); // loopback only: never reachable from the network
@@ -95,7 +103,7 @@ function awaitToken(state) {
 
 // Discord's avatar CDN isn't in the renderer's CSP, and shouldn't be — fetch the picture
 // here once and keep it as a data URI, so the UI never talks to Discord at all.
-async function avatarDataUri(user) {
+async function avatarDataUri(user: { id: string; avatar?: string | null }): Promise<string | null> {
   if (!user.avatar) return null;
   try {
     const res = await fetch(`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`);
@@ -112,7 +120,7 @@ async function avatarDataUri(user) {
  * Opens the system browser, waits for the redirect, and returns who signed in.
  * @returns {Promise<{id: string, username: string, avatar: string|null}>}
  */
-async function signIn() {
+export async function signIn(): Promise<DiscordUser> {
   if (!isConfigured()) throw new Error(t('Вход через Discord пока не настроен в этой сборке'));
   const state = crypto.randomBytes(16).toString('hex');
   const authUrl = 'https://discord.com/oauth2/authorize?' + new URLSearchParams({
@@ -130,7 +138,7 @@ async function signIn() {
 
   const res = await fetch('https://discord.com/api/v10/users/@me', { headers: { authorization: `Bearer ${token}` } });
   if (!res.ok) throw new Error(t('Discord не отдал профиль (HTTP {0})', res.status));
-  const user = await res.json();
+  const user = await res.json() as { id: string; avatar?: string | null; global_name?: string | null; username?: string };
   // the token has done its one job; it is never written to disk
   return {
     id: String(user.id),
@@ -139,4 +147,3 @@ async function signIn() {
   };
 }
 
-module.exports = { signIn, isConfigured, CLIENT_ID, REDIRECT_URI, PORT };

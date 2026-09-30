@@ -3,23 +3,24 @@
 // what these pin - the extraction itself is proven against the real game (see the ticket),
 // not here, because a fixture for it would mean shipping fifty megabytes of somebody else's
 // program and a copy of Dota.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const crypto = require('crypto');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
 
-const { createGameIcons } = require('../src/game-icons.js');
+import { createGameIcons } from '../src/game-icons.ts';
+import { buildVpk, crc32 } from '../src/vpk.ts';
 
-function userDir(t) {
+function userDir(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-gi-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 
 const noTool = { pathOf: () => null, ensure: async () => { throw new Error('not here'); } };
-const withTool = (exe) => ({ pathOf: () => exe, ensure: async () => exe });
+const withTool = (exe: string) => ({ pathOf: () => exe, ensure: async () => exe });
 
 test('without the toolchain there are no pictures and no complaints', async (t) => {
   const icons = createGameIcons({ userDataDir: userDir(t), toolchain: noTool, getGamePath: () => 'C:/nowhere' });
@@ -56,12 +57,11 @@ test('the cache is keyed by the picture path, so a second run finds what the fir
 
 test('hero portraits come out of pak01 by hero id: the landscape one, else the one from hero selection', async (t) => {
   // The item builder's hub shows them; they used to ship inside the app as Valve's pictures.
-  const { buildVpk, crc32 } = require('../src/vpk.ts');
   const dir = userDir(t);
   const game = path.join(dir, 'game');
   fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
   const sig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  const pngOf = (w, h) => {
+  const pngOf = (w: number, h: number) => {
     const ihdr = Buffer.alloc(25);
     ihdr.writeUInt32BE(13, 0);
     ihdr.write('IHDR', 4);
@@ -69,8 +69,8 @@ test('hero portraits come out of pak01 by hero id: the landscape one, else the o
     ihdr.writeUInt32BE(h, 12);
     return Buffer.concat([sig, ihdr, Buffer.from([0, 0, 0, 0, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82])]);
   };
-  const vtexOf = (body) => { const head = Buffer.alloc(64); head.writeUInt32LE(64, 0); return Buffer.concat([head, body]); };
-  const file = (folder, id, body) => {
+  const vtexOf = (body: Buffer) => { const head = Buffer.alloc(64); head.writeUInt32LE(64, 0); return Buffer.concat([head, body]); };
+  const file = (folder: string, id: string, body: Buffer) => {
     const data = vtexOf(body);
     return { ext: 'vtex_c', folder: `panorama/images/${folder}`, name: `npc_dota_hero_${id}_png`, data, preload: Buffer.alloc(0), crc: crc32(data) };
   };
@@ -86,7 +86,7 @@ test('hero portraits come out of pak01 by hero id: the landscape one, else the o
 
   const got = await icons.heroPortraits(['axe', 'abaddon', 'marci', 'lina', '../../dota/axe', 'AXE']);
   assert.deepEqual(Object.keys(got).sort(), ['abaddon', 'axe'], 'a picture where the game has one, and nothing asked by a path');
-  const size = (uri) => { const b = Buffer.from(uri.split(',')[1], 'base64'); return `${b.readUInt32BE(16)}x${b.readUInt32BE(20)}`; };
+  const size = (uri: string) => { const b = Buffer.from(uri.split(',')[1], 'base64'); return `${b.readUInt32BE(16)}x${b.readUInt32BE(20)}`; };
   assert.equal(size(got.axe), '128x72', 'the landscape portrait where it is a PNG');
   assert.equal(size(got.abaddon), '142x188', 'the hero selection portrait where the landscape one is compressed');
   assert.deepEqual(await icons.heroPortraits(['axe']), { axe: got.axe }, 'a second ask reads the cache');

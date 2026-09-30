@@ -15,42 +15,49 @@
 // This needs no toolchain - items_game.txt is plain text inside the game's own pak and our
 // reader has always been able to get it. Without a game path there is simply no answer and
 // the caller keeps the guess.
-const schema = require('./schema.ts');
-const { heroDisplayName } = require('./vpk.ts');
+import * as schema from './schema.ts';
+import { heroDisplayName } from './vpk.ts';
+
+/** A cosmetic of the game's own, as a model file leads to it. */
+type ItemRef = { name: string; slot: string; heroes: string[] };
+
+/** Which of the game's items a mod replaces; see identify. */
+export interface ModIdentityGuess { items: string[]; slots: string[]; heroNames: string[] }
 
 /**
  * @param {object} deps
  * @param {() => string|null} deps.getGamePath
  * @param {(msg: string) => void} [deps.log]
  */
-function createModIdentity({ getGamePath, log = () => {} }) {
-  let index = null;      // "models/items/…/x.vmdl" -> [{ name, slot, heroes }]
-  let indexStamp = null; // which build of the game it was built from
-  let lastUnreadable = null; // the last complaint made, so it is not repeated per record
+/** Names a mod by the game's own items it replaces, read out of the installed item table. */
+export function createModIdentity({ getGamePath, log = () => {} }: { getGamePath: () => string | null; log?: (msg: string) => void }) {
+  let index: Map<string, ItemRef[]> | null = null;      // "models/items/…/x.vmdl" -> [{ name, slot, heroes }]
+  let indexStamp: string | null = null; // which build of the game it was built from
+  let lastUnreadable: string | null = null; // the last complaint made, so it is not repeated per record
 
   /**
    * Every cosmetic the game knows, keyed by the model file it owns. Walking 25k item blocks
    * costs about half a second, so it is built once per build of the game.
    */
-  function build() {
+  function build(): Map<string, ItemRef[]> | null {
     const game = getGamePath();
     if (!game) return null;
-    let stamp = null;
+    let stamp: string | null = null;
     try { stamp = schema.gameSchemaStamp(game); } catch { /* unreadable: rebuild every time */ }
     if (index && stamp && stamp === indexStamp) return index;
-    let text;
+    let text: string;
     try { ({ text } = schema.readGameSchema(game)); } catch (err) {
       // Once per reason, not once per mod. This is called for every record in the library, so
       // a missing item table wrote the same line a thousand times: a support report of 166 KB
       // in which the one useful sentence was hidden by its own repetitions.
-      const why = String(err.message || err);
+      const why = String((err as Error)?.message || err);
       if (why !== lastUnreadable) {
         lastUnreadable = why;
         log(`mod id: item table unreadable (${why})`);
       }
       return null;
     }
-    const map = new Map();
+    const map = new Map<string, ItemRef[]>();
     for (const item of schema.listItems(text)) {
       const block = text.slice(item.start, item.end);
       const model = /"model_player"\s+"([^"]+)"/i.exec(block);
@@ -60,8 +67,9 @@ function createModIdentity({ getGamePath, log = () => {} }) {
         .map((m) => m[1].slice('npc_dota_hero_'.length).toLowerCase());
       // the table is read as latin1 to keep byte offsets exact, so names with accents and
       // curly quotes are raw UTF-8 until something shows them to a person
-      const entry = { name: toText(item.name), slot: item.slot || '', heroes };
-      if (!map.has(key)) map.set(key, [entry]); else map.get(key).push(entry);
+      const entry = { name: schema.toUtf8(item.name), slot: item.slot || '', heroes };
+      const known = map.get(key);
+      if (!known) map.set(key, [entry]); else known.push(entry);
     }
     index = map;
     indexStamp = stamp;
@@ -69,25 +77,22 @@ function createModIdentity({ getGamePath, log = () => {} }) {
     return index;
   }
 
-  const toText = (s) => (/[\x80-\xff]/.test(s) ? Buffer.from(s, 'latin1').toString('utf8') : s);
-
-  function ready() {
+  function ready(): boolean {
     return !!getGamePath();
   }
 
   /**
    * Which of the game's own items this mod replaces.
-   * @param {string[]} paths lowercased inner VPK paths
-   * @returns {null | { items: string[], slots: string[], heroNames: string[] }}
-   *   null when the game cannot be asked or recognises nothing here, which is not a failure:
+   * @param paths lowercased inner VPK paths
+   * @returns null when the game cannot be asked or recognises nothing here, which is not a failure:
    *   a mod may replace a hero's bare body, particles or sounds, and own no item at all.
    */
-  function identify(paths) {
+  function identify(paths: Iterable<string>): ModIdentityGuess | null {
     const map = build();
     if (!map) return null;
-    const items = new Set();
-    const slots = new Set();
-    const heroes = new Set();
+    const items = new Set<string>();
+    const slots = new Set<string>();
+    const heroes = new Set<string>();
     for (const p of paths) {
       if (!p.endsWith('.vmdl_c')) continue;
       // the table names the source file; the archive carries the compiled one
@@ -101,11 +106,11 @@ function createModIdentity({ getGamePath, log = () => {} }) {
     return {
       items: [...items].sort((a, b) => a.localeCompare(b)),
       slots: [...slots],
-      heroNames: [...heroes].map(heroDisplayName),
+      heroNames: [...heroes].map((h) => heroDisplayName(h)),
     };
   }
 
-  function clear() {
+  function clear(): void {
     index = null;
     indexStamp = null;
   }
@@ -113,4 +118,3 @@ function createModIdentity({ getGamePath, log = () => {} }) {
   return { identify, ready, clear };
 }
 
-module.exports = { createModIdentity };

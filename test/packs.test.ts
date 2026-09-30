@@ -101,7 +101,7 @@ test('two mods go into one slot, and every file of both is in it', (t) => {
 test('the pack takes a slot no mod is sitting in', (t) => {
   /* Deploying over an occupied slot would replace somebody else's mod with the pack, and the
      library would go on showing the mod that is no longer there. */
-  /* 30 and 31 are the first two slots a pack can be given (src/slot-zones.js): mods sitting in
+  /* 30 and 31 are the first two slots a pack can be given (src/slot-zones.ts): mods sitting in
      02-29 would be skipped whether or not deployPack looked at the folder, so the test would pass
      against a pack that never did. That is what it did from 2026-09-24 to 2026-09-26. */
   const { installer, put } = stand(t);

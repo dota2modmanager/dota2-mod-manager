@@ -6,7 +6,7 @@
  * everybody, it is a few people the maintainer picked himself, who know they are running the
  * build that has not been released yet.
  *
- * Who: the accounts already signed in with Discord (src/discord-auth.js). The list lives in the
+ * Who: the accounts already signed in with Discord (src/discord-auth.ts). The list lives in the
  * signed config/app.json, so it changes without a release, and it holds hashes rather than ids -
  * that file is public, and a list of a dozen people's Discord accounts is not ours to publish.
  * The salt sits next to the list: it does not make a hash unguessable for somebody who already

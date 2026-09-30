@@ -27,8 +27,8 @@ const { RESERVED_PAKS, isMinifyFile, isMinifyPak } = require('./minify.ts');
 const { downloadFile } = require('./net.ts');
 const { t } = require('./i18n.ts');
 
-// The categories that load before the rest, and the slots they get: src/slot-zones.js.
-const zones = require('./slot-zones');
+// The categories that load before the rest, and the slots they get: src/slot-zones.ts.
+const zones = require('./slot-zones.ts');
 const { PRIORITY_CATEGORIES } = zones;
 
 // Merging a multi-volume import into one file holds the whole mod in memory once. Well
@@ -138,7 +138,7 @@ class Installer {
     });
     this.getLangSuffix = getLangSuffix;
     this.onProgress = onProgress || (() => {});
-    // asks the game which of its own items a path list replaces (src/mod-id.js); optional,
+    // asks the game which of its own items a path list replaces (src/mod-id.ts); optional,
     // because without a game path there is nothing to ask and the path guess still answers
     this.identify = identify || (() => null);
     // what the catalog says an archive should hash to (src/catalog.ts); optional and often
@@ -347,7 +347,7 @@ class Installer {
     return { changed };
   }
 
-  /** Which part of the load order a category's mods belong in (src/slot-zones.js). */
+  /** Which part of the load order a category's mods belong in (src/slot-zones.ts). */
   zoneFor(categoryId) {
     return zones.zoneFor(categoryId);
   }
@@ -361,12 +361,12 @@ class Installer {
     return name;
   }
 
-  /** Into the part of the load order its category belongs in (src/slot-zones.js). */
+  /** Into the part of the load order its category belongs in (src/slot-zones.ts). */
   moveToZone(rec) {
     return zones.moveToZone(this, rec);
   }
 
-  /** The one-time layout of an order from before the two parts (src/slot-zones.js). */
+  /** The one-time layout of an order from before the two parts (src/slot-zones.ts). */
   migrateSlotZones(library) {
     return zones.migrateSlotZones(this, library);
   }

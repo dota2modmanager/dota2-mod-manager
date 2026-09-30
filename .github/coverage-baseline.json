@@ -36,7 +36,7 @@
         "src/fingerprints.ts": {
           "lines": 48.6
         },
-        "src/game-icons.js": {
+        "src/game-icons.ts": {
           "lines": 48.1
         },
         "src/gamelang.ts": {
@@ -84,7 +84,7 @@
         "src/minify.ts": {
           "lines": 97.9
         },
-        "src/mod-id.js": {
+        "src/mod-id.ts": {
           "lines": 100
         },
         "src/mod-preview.ts": {
@@ -230,7 +230,7 @@
         "src/fingerprints.ts": {
           "lines": 48.6
         },
-        "src/game-icons.js": {
+        "src/game-icons.ts": {
           "lines": 48.1
         },
         "src/gamelang.ts": {
@@ -278,7 +278,7 @@
         "src/minify.ts": {
           "lines": 97.9
         },
-        "src/mod-id.js": {
+        "src/mod-id.ts": {
           "lines": 100
         },
         "src/mod-preview.ts": {

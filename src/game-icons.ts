@@ -20,14 +20,14 @@
 // slot the picker offers has one, and their names are unique, so a name is a safe key. One
 // CLI call for nine icons costs 898 ms while one call for one costs 865 - the price is
 // starting the program, not the icons - so misses are always fetched in one batch.
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const crypto = require('crypto');
-const { execFile } = require('child_process');
-const schema = require('./schema.ts');
-const { openVpkIndex } = require('./vpk.ts');
-const { pngFromVtex } = require('./vtex.ts');
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import crypto from 'node:crypto';
+import { execFile } from 'node:child_process';
+import * as schema from './schema.ts';
+import { openVpkIndex, type VpkIndex } from './vpk.ts';
+import { pngFromVtex } from './vtex.ts';
 
 // Enough to fill a screen of tiles in one go; the renderer asks in batches of 24.
 const MAX_PER_CALL = 60;
@@ -35,37 +35,34 @@ const MAX_PER_CALL = 60;
 // shows placeholders until it returns.
 const CALL_TIMEOUT_MS = 60000;
 
-const safeName = (imagePath) => `${crypto.createHash('sha1').update(imagePath).digest('hex').slice(0, 16)}.png`;
+const safeName = (imagePath: string) => `${crypto.createHash('sha1').update(imagePath).digest('hex').slice(0, 16)}.png`;
 
-/**
- * @param {object} deps
- * @param {string} deps.userDataDir
- * @param {{ pathOf: (name: string) => string|null, ensure: (name: string) => Promise<string> }} deps.toolchain
- * @param {() => string|null} deps.getGamePath
- * @param {(msg: string) => void} [deps.log]
- */
-function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }) {
+/** Item and hero pictures out of the installed game, cached in userData. */
+export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }: {
+  userDataDir: string; toolchain: { pathOf: (name: string) => string | null };
+  getGamePath: () => string | null; log?: (msg: string) => void;
+}) {
   const root = path.join(userDataDir, 'icons', 'game');
-  let index = null;      // name -> image_inventory path, built from the installed game
-  let indexStamp = null; // which build of the game it was built from
-  let pak = null;        // the game's own archive, opened once: its tree is 384 001 entries
-  let pakStamp = null;
+  let index: Map<string, string> | null = null;      // name -> image_inventory path, built from the installed game
+  let indexStamp: string | null = null; // which build of the game it was built from
+  let pak: VpkIndex | null = null;        // the game's own archive, opened once: its tree is 384 001 entries
+  let pakStamp: string | null = null;
 
-  function pakPath() {
+  function pakPath(): string | null {
     const game = getGamePath();
     return game ? path.join(game, 'dota', 'pak01_dir.vpk') : null;
   }
 
   /** The game's own answer to "where is this item's picture", rebuilt when the game changes. */
-  function nameIndex() {
+  function nameIndex(): Map<string, string> | null {
     const game = getGamePath();
     if (!game) return null;
-    let stamp = null;
+    let stamp: string | null = null;
     try { stamp = schema.gameSchemaStamp(game); } catch { /* unreadable: rebuild every time */ }
     if (index && stamp && stamp === indexStamp) return index;
     try {
       const { text } = schema.readGameSchema(game);
-      const map = new Map();
+      const map = new Map<string, string>();
       for (const item of schema.listItems(text)) {
         if (item.image && item.name) map.set(item.name, item.image);
       }
@@ -73,13 +70,13 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
       indexStamp = stamp;
       log(`game icons: ${map.size} items know where their picture is`);
     } catch (err) {
-      log(`game icons: item table unreadable (${err.message || err})`);
+      log(`game icons: item table unreadable (${(err as Error)?.message || err})`);
       return null;
     }
     // a new build of the game means new pictures: the old cache is not worth keeping
     if (stamp) {
       const marker = path.join(root, 'stamp');
-      let old = null;
+      let old: string | null = null;
       try { old = fs.readFileSync(marker, 'utf-8'); } catch { /* first run */ }
       if (old !== stamp) {
         fs.rmSync(root, { recursive: true, force: true });
@@ -90,14 +87,14 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
     return index;
   }
 
-  const cacheFile = (imagePath) => path.join(root, safeName(imagePath));
-  const texturePath = (imagePath) => `panorama/images/${imagePath}_png.vtex_c`;
+  const cacheFile = (imagePath: string) => path.join(root, safeName(imagePath));
+  const texturePath = (imagePath: string) => `panorama/images/${imagePath}_png.vtex_c`;
 
   /** The game's archive, read once per build rather than once per picture. */
-  function pakIndex() {
+  function pakIndex(): VpkIndex | null {
     const file = pakPath();
     if (!file || !fs.existsSync(file)) return null;
-    let stamp = null;
+    let stamp: string | null = null;
     try { const st = fs.statSync(file); stamp = `${st.size}:${st.mtimeMs}`; } catch { /* reopen */ }
     if (pak && stamp && stamp === pakStamp) return pak;
     try {
@@ -105,18 +102,19 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
       pakStamp = stamp;
       log(`game icons: pak01 index of ${pak.size} entries`);
     } catch (err) {
-      log(`game icons: pak01 unreadable (${err.message || err})`);
+      log(`game icons: pak01 unreadable (${(err as Error)?.message || err})`);
       pak = null;
     }
     return pak;
   }
 
   /** Is this usable right now? The game alone is enough for the pictures it stores as PNG. */
-  function ready() {
-    return !!(pakPath() && fs.existsSync(pakPath()));
+  function ready(): boolean {
+    const file = pakPath();
+    return !!(file && fs.existsSync(file));
   }
 
-  function runCli(exe, args) {
+  function runCli(exe: string, args: string[]): Promise<void> {
     return new Promise((resolve, reject) => {
       execFile(exe, args, { timeout: CALL_TIMEOUT_MS, windowsHide: true, maxBuffer: 8 * 1024 * 1024 },
         (err) => (err ? reject(err) : resolve()));
@@ -125,9 +123,9 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
 
   /**
    * Pull these pictures out of the game and into the cache.
-   * @param {string[]} imagePaths values of image_inventory, e.g. "econ/items/abaddon/..."
+   * @param imagePaths values of image_inventory, e.g. "econ/items/abaddon/..."
    */
-  async function extract(imagePaths) {
+  async function extract(imagePaths: string[]): Promise<void> {
     const left = takeReadyMade(imagePaths);
     if (!left.length) return;
     // whatever is stored compressed rather than as a picture: the toolchain or nothing
@@ -153,13 +151,12 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
 
   /**
    * Copy out every picture the game already stores as one, and say which are left.
-   * @param {string[]} imagePaths
-   * @returns {string[]} the ones nothing here could read
+   * @returns the ones nothing here could read
    */
-  function takeReadyMade(imagePaths) {
+  function takeReadyMade(imagePaths: string[]): string[] {
     const ix = pakIndex();
     if (!ix) return imagePaths.slice();
-    const left = [];
+    const left: string[] = [];
     fs.mkdirSync(root, { recursive: true });
     for (const imagePath of imagePaths) {
       try {
@@ -167,7 +164,7 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
         if (png) fs.writeFileSync(cacheFile(imagePath), png);
         else left.push(imagePath);
       } catch (err) {
-        log(`game icons: ${imagePath} unreadable (${err.message || err})`);
+        log(`game icons: ${imagePath} unreadable (${(err as Error)?.message || err})`);
         left.push(imagePath);
       }
     }
@@ -177,17 +174,14 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
   /**
    * Pictures for these item names, as data URIs. Anything the game does not have (or that the
    * toolchain could not read) comes back missing, and the caller falls back to the wiki.
-   * @param {string[]} names
-   * @returns {Promise<Record<string, string>>}
    */
-  async function getMany(names) {
-    /** @type {Record<string, string>} */
-    const out = {};
+  async function getMany(names: string[]): Promise<Record<string, string>> {
+    const out: Record<string, string> = {};
     if (!ready()) return out;
     const map = nameIndex();
     if (!map) return out;
 
-    const wanted = new Map(); // image path -> [names asking for it]
+    const wanted = new Map<string, string[]>(); // image path -> [names asking for it]
     for (const name of names) {
       const imagePath = map.get(name);
       if (!imagePath) continue;
@@ -196,8 +190,8 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
         out[name] = `data:image/png;base64,${fs.readFileSync(file).toString('base64')}`;
         continue;
       }
-      if (!wanted.has(imagePath)) wanted.set(imagePath, []);
-      wanted.get(imagePath).push(name);
+      const asking = wanted.get(imagePath);
+      if (asking) asking.push(name); else wanted.set(imagePath, [name]);
     }
     if (!wanted.size) return out;
 
@@ -207,7 +201,7 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
       try {
         await extract(chunk);
       } catch (err) {
-        log(`game icons: extraction failed (${err.message || err})`);
+        log(`game icons: extraction failed (${(err as Error)?.message || err})`);
         break; // the wiki answers for the rest
       }
     }
@@ -220,13 +214,13 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
     return out;
   }
 
-  function size() {
+  function size(): number {
     let bytes = 0;
     try { for (const f of fs.readdirSync(root)) bytes += fs.statSync(path.join(root, f)).size; } catch { /* nothing cached */ }
     return bytes;
   }
 
-  function clear() {
+  function clear(): void {
     fs.rmSync(root, { recursive: true, force: true });
     index = null;
     indexStamp = null;
@@ -240,19 +234,17 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
    * plain PNG, the rest block-compressed, so the toolchain opens those when it is here. Without
    * it, the portrait from hero selection, which is a PNG for 116 of them. The eight left (the
    * newest heroes) keep their glyph. Both go into the same cache as item pictures.
-   * @param {string[]} ids  hero ids without the npc_dota_hero_ prefix, e.g. "antimage"
-   * @returns {Promise<Record<string, string>>} the ones a picture was found for
+   * @param ids  hero ids without the npc_dota_hero_ prefix, e.g. "antimage"
+   * @returns the ones a picture was found for
    */
-  async function heroPortraits(ids) {
-    /** @type {Record<string, string>} */
-    /** @type {Record<string, string>} */
-    const out = {};
+  async function heroPortraits(ids: unknown[]): Promise<Record<string, string>> {
+    const out: Record<string, string> = {};
     if (!ready()) return out;
     // names, never paths: they go into one
-    const valid = [...new Set(ids)].filter((id) => typeof id === 'string' && /^[a-z0-9_]+$/.test(id));
-    const wide = (id) => `heroes/npc_dota_hero_${id}`;
-    const tall = (id) => `heroes/selection/npc_dota_hero_${id}`;
-    const cached = (imagePath) => fs.existsSync(cacheFile(imagePath));
+    const valid = [...new Set(ids)].filter((id): id is string => typeof id === 'string' && /^[a-z0-9_]+$/.test(id));
+    const wide = (id: string) => `heroes/npc_dota_hero_${id}`;
+    const tall = (id: string) => `heroes/selection/npc_dota_hero_${id}`;
+    const cached = (imagePath: string) => fs.existsSync(cacheFile(imagePath));
     await extract(valid.map(wide).filter((p) => !cached(p)));
     takeReadyMade(valid.filter((id) => !cached(wide(id))).map(tall).filter((p) => !cached(p)));
     for (const id of valid) {
@@ -265,4 +257,3 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
   return { ready, getMany, heroPortraits, size, clear, root };
 }
 
-module.exports = { createGameIcons };

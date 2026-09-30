@@ -27,7 +27,7 @@ const { createAdopt } = require('./src/adopt.ts');
 const { Library } = require('./src/library.ts');
 const { Fingerprints } = require('./src/fingerprints.ts');
 const { SCHEME } = require('./src/preset-link.ts');
-const discordAuth = require('./src/discord-auth');
+const discordAuth = require('./src/discord-auth.ts');
 const { DiscordPresence } = require('./src/discord-presence.ts');
 const { findDotaGamePath, validateGamePath } = require('./src/steam.ts');
 const { createSchemaService } = require('./src/schema-service');
@@ -35,9 +35,9 @@ const { createRemoteConfig } = require('./src/remote-config.ts');
 // the download chain, so a mirror named in that signed file joins it (electron's own `net` is above)
 const { applyMirrors } = require('./src/net.ts');
 const { createToolchain } = require('./src/toolchain.ts');
-const { createGameIcons } = require('./src/game-icons');
+const { createGameIcons } = require('./src/game-icons.ts');
 const { createModPreviews } = require('./src/mod-preview.ts');
-const { createModIdentity } = require('./src/mod-id');
+const { createModIdentity } = require('./src/mod-id.ts');
 const portableUpdater = require('./src/portable-update.ts');
 const { createUpdater } = require('./src/updater.ts');
 const { channelFor } = require('./src/beta.ts');
@@ -56,7 +56,7 @@ const { registerLibraryIpc } = require('./src/ipc-library');
 const { registerPacksIpc } = require('./src/ipc-packs');
 const { registerWindowIpc } = require('./src/ipc-window');
 const { registerMiscIpc } = require('./src/ipc-misc');
-const { settingsViewFor } = require('./src/settings-view');
+const { settingsViewFor } = require('./src/settings-view.ts');
 const { registerSettingsIpc } = require('./src/ipc-settings');
 const { registerGameIpc } = require('./src/ipc-game');
 const { registerDiagnosticsIpc } = require('./src/ipc-diagnostics');
@@ -1042,7 +1042,7 @@ function registerIpc() {
     releaseNotes, sendProgress, settings, win: () => win,
   });
 
-  // What the Settings screen is told, computed in src/settings-view.js. The two pieces of
+  // What the Settings screen is told, computed in src/settings-view.ts. The two pieces of
   // state it reads are handed over as functions, because both change while the app runs.
   const settingsView = settingsViewFor({
     settings,

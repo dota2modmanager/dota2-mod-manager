@@ -20,12 +20,12 @@ the code, not in this page.
 | [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/diagnostics.js`](#srcdiagnosticsjs) | A support report a user can send instead of a round of screenshots: Dota's own path and |
-| [`src/discord-auth.js`](#srcdiscord-authjs) | Sign in with Discord, without a server of our own. |
+| [`src/discord-auth.ts`](#srcdiscord-authts) | Sign in with Discord, without a server of our own. |
 | [`src/discord-presence.ts`](#srcdiscord-presencets) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
 | [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
 | [`src/file-tx.ts`](#srcfile-txts) | All of it, or none of it. |
 | [`src/fingerprints.ts`](#srcfingerprintsts) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
-| [`src/game-icons.js`](#srcgame-iconsjs) | Item pictures taken from the installed game instead of scraped off a wiki. |
+| [`src/game-icons.ts`](#srcgame-iconsts) | Item pictures taken from the installed game instead of scraped off a wiki. |
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (main.js, installer.js, vpk.js). |
@@ -35,7 +35,7 @@ the code, not in this page.
 | [`src/item-builder.js`](#srcitem-builderjs) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
-| [`src/mod-id.js`](#srcmod-idjs) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
+| [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/net.ts`](#srcnetts) | Getting bytes from the internet, on a connection that may not want to cooperate. |
 | [`src/notice-text.js`](#srcnotice-textjs) | The game's anti-cheat notice, in words that say what to do. |
@@ -52,7 +52,7 @@ the code, not in this page.
 | [`src/schema-service.js`](#srcschema-servicejs) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
 | [`src/schema.ts`](#srcschemats) | Item-schema engine: the game's own scripts/items/items_game.txt is the only place |
 | [`src/settings.ts`](#srcsettingsts) | Simple JSON settings store in userData |
-| [`src/slot-zones.js`](#srcslot-zonesjs) | The load order in two parts. |
+| [`src/slot-zones.ts`](#srcslot-zonests) | The load order in two parts. |
 | [`src/steam.ts`](#srcsteamts) | Finding Steam, and then finding Dota inside it. |
 | [`src/terrain-age.ts`](#srcterrain-agets) | Terrains that replace the whole map, and whether the game's own map has moved on since. |
 | [`src/toolchain.ts`](#srctoolchaints) | Tools the app can borrow, fetched only when something actually needs them. |
@@ -128,7 +128,7 @@ impossible to follow. A beta channel is the other half of that argument. It is n
 everybody, it is a few people the maintainer picked himself, who know they are running the
 build that has not been released yet.
 
-Who: the accounts already signed in with Discord (src/discord-auth.js). The list lives in the
+Who: the accounts already signed in with Discord (src/discord-auth.ts). The list lives in the
 signed config/app.json, so it changes without a release, and it holds hashes rather than ids -
 that file is public, and a list of a dozen people's Discord accounts is not ours to publish.
 The salt sits next to the list: it does not make a hash unguessable for somebody who already
@@ -545,7 +545,7 @@ The same data with nothing left out, laid out to be read rather than parsed: who
 looking at this is trying to work out what happened, and JSON makes that harder than a
 heading and a table. report.json is still in the zip for anything that wants the raw shape.
 
-## src/discord-auth.js
+## src/discord-auth.ts
 
 Sign in with Discord, without a server of our own.
 
@@ -567,30 +567,18 @@ What that buys and what it costs, plainly:
    shared preset is just text; proving who made a preset needs a server that verifies
    the token with Discord, and that comes with the community catalog.
 
-### `signIn`
+### `DiscordUser`
 
-```js
-async function signIn()
+```ts
+export interface DiscordUser { id: string; username: string; avatar: string | null }
 ```
 
-Opens the system browser, waits for the redirect, and returns who signed in.
-
-```
-@returns {Promise<{id: string, username: string, avatar: string|null}>}
-```
-
-### `isConfigured`
-
-```js
-function isConfigured() { return !!CLIENT_ID; }
-```
-
-_No description in the source._
+Who signed in: the Discord account's id, the name it shows, and its avatar as a data URI.
 
 ### `CLIENT_ID`
 
-```js
-const CLIENT_ID = '1529830456697163867'
+```ts
+export const CLIENT_ID = '1529830456697163867'
 ```
 
 Public by design in OAuth2 — it identifies the app, it is not a secret, and it ships in
@@ -598,21 +586,41 @@ every OAuth request anyway. The client SECRET is a different thing and is never 
 here: the implicit grant doesn't use one, so none exists in this repo.
 REDIRECT_URI below must be listed verbatim under OAuth2 -> Redirects for this app.
 
+### `PORT`
+
+```ts
+export const PORT = 53174
+```
+
+Discord matches redirect URIs exactly, so the port can't be random.
+
 ### `REDIRECT_URI`
 
-```js
-const REDIRECT_URI = `http://${HOST}:${PORT}/callback`
+```ts
+export const REDIRECT_URI = `http://${HOST}:${PORT}/callback`
 ```
 
 _No description in the source._
 
-### `PORT`
+### `isConfigured`
 
-```js
-const PORT = 53174
+```ts
+export function isConfigured(): boolean { return !!CLIENT_ID; }
 ```
 
-Discord matches redirect URIs exactly, so the port can't be random.
+Whether this build carries an application id to sign in with.
+
+### `signIn`
+
+```ts
+export async function signIn(): Promise<DiscordUser>
+```
+
+Opens the system browser, waits for the redirect, and returns who signed in.
+
+```
+@returns {Promise<{id: string, username: string, avatar: string|null}>}
+```
 
 ## src/discord-presence.ts
 
@@ -767,7 +775,7 @@ export class Fingerprints
 The fingerprint map, cached in userData: tells which catalog mod a VPK is from the hash of its
 content, and which font mod a set of font files is.
 
-## src/game-icons.js
+## src/game-icons.ts
 
 Item pictures taken from the installed game instead of scraped off a wiki.
 
@@ -794,17 +802,11 @@ starting the program, not the icons - so misses are always fetched in one batch.
 
 ### `createGameIcons`
 
-```js
-function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} })
+```ts
+export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }: { userDataDir: string; toolchain: { pathOf: (name: string) => string | null }; getGamePath: () => string | null; log?: (msg: string) => void; })
 ```
 
-```
-@param {object} deps
-@param {string} deps.userDataDir
-@param {{ pathOf: (name: string) => string|null, ensure: (name: string) => Promise<string> }} deps.toolchain
-@param {() => string|null} deps.getGamePath
-@param {(msg: string) => void} [deps.log]
-```
+Item and hero pictures out of the installed game, cached in userData.
 
 ## src/gamelang.ts
 
@@ -1673,7 +1675,7 @@ Where Minify is, whether its folder is the one the game mounts, and whose mods a
 @param p.countMods  how many of the files in a folder are Minify's own, when the caller can look at them
 ```
 
-## src/mod-id.js
+## src/mod-id.ts
 
 What a mod actually replaces, asked of the game instead of guessed from folder names.
 
@@ -1693,17 +1695,21 @@ This needs no toolchain - items_game.txt is plain text inside the game's own pak
 reader has always been able to get it. Without a game path there is simply no answer and
 the caller keeps the guess.
 
+### `ModIdentityGuess`
+
+```ts
+export interface ModIdentityGuess { items: string[]; slots: string[]; heroNames: string[] }
+```
+
+Which of the game's items a mod replaces; see identify.
+
 ### `createModIdentity`
 
-```js
-function createModIdentity({ getGamePath, log = () => {} })
+```ts
+export function createModIdentity({ getGamePath, log = () => {} }: { getGamePath: () => string | null; log?: (msg: string) => void })
 ```
 
-```
-@param {object} deps
-@param {() => string|null} deps.getGamePath
-@param {(msg: string) => void} [deps.log]
-```
+Names a mod by the game's own items it replaces, read out of the installed item table.
 
 ## src/mod-preview.ts
 
@@ -2031,7 +2037,7 @@ replaces the four strings of that window with src/notice-texts.ts, in the langua
 shows, and names the one switch that takes every mod out.
 
 How: a localization file in the language folder the game mounts, inside the app's own pak
-(APP_PAK, src/slot-zones.js). Measured on a live game on 2026-09-25: the engine reads its
+(APP_PAK, src/slot-zones.ts). Measured on a live game on 2026-09-25: the engine reads its
 localization by a fixed list of names and ignores any other, and chat_<lang>.txt is read after
 dota_<lang>.txt, so a string defined in it replaces the one Valve ships. So the pak carries the
 chat file the game would have read anyway, with the four strings added at the end.
@@ -3491,7 +3497,7 @@ export class Settings
 
 _No description in the source._
 
-## src/slot-zones.js
+## src/slot-zones.ts
 
 The load order in two parts.
 
@@ -3509,10 +3515,26 @@ ran out after one shader, one set of trees, one river and a few items.
 The installer hands out slots through freeSlotIn; moving a mod between the two parts, and the
 one-time layout of an order from before, live here too so the rules sit in one place.
 
+### `Zone`
+
+```ts
+export type Zone = 'priority' | 'normal'
+```
+
+The two ranges a pak can sit in: early slots that load first, and everything after.
+
+### `SlotInstaller`
+
+```ts
+export interface SlotInstaller
+```
+
+What of the installer this asks: which slot a record's pak sits in, which slots are taken, and moving one.
+
 ### `PRIORITY_CATEGORIES`
 
-```js
-const PRIORITY_CATEGORIES = ['trees', 'river', 'shaders', 'herofx', 'ranged-attack', 'hero-items', 'optimization']
+```ts
+export const PRIORITY_CATEGORIES: readonly string[] = ['trees', 'river', 'shaders', 'herofx', 'ranged-attack', 'hero-items', 'optimization']
 ```
 
 The categories that load before every other mod. The Dota2PornFx cart zips mark them with a
@@ -3520,24 +3542,24 @@ The categories that load before every other mod. The Dota2PornFx cart zips mark 
 
 ### `PRIORITY_SLOTS`
 
-```js
-const PRIORITY_SLOTS = [2, 29]
+```ts
+export const PRIORITY_SLOTS: readonly [number, number] = [2, 29]
 ```
 
 The first and last slot of those categories.
 
 ### `NORMAL_FIRST`
 
-```js
-const NORMAL_FIRST = 30
+```ts
+export const NORMAL_FIRST = 30
 ```
 
 Where every other mod starts.
 
 ### `APP_PAK`
 
-```js
-const APP_PAK = 64
+```ts
+export const APP_PAK = 64
 ```
 
 The app's own pak, not a mod: the clearer text for the game's anti-cheat notice
@@ -3548,40 +3570,40 @@ by vacateAppPak.
 
 ### `isAppPak`
 
-```js
-const isAppPak = (baseLower) => baseLower === `pak${APP_PAK}_dir.vpk`
+```ts
+export const isAppPak = (baseLower: string): boolean => baseLower === `pak${APP_PAK}_dir.vpk`
 ```
 
 Whether a lowercased file name in the language folder is the app's own pak.
 
 ### `isPriorityCategory`
 
-```js
-const isPriorityCategory = (categoryId) => PRIORITY_CATEGORIES.includes(categoryId)
+```ts
+export const isPriorityCategory = (categoryId: string): boolean => PRIORITY_CATEGORIES.includes(categoryId)
 ```
 
 Whether a category is one of those that load first.
 
 ### `zoneFor`
 
-```js
-const zoneFor = (categoryId) => (isPriorityCategory(categoryId) ? 'priority' : 'normal')
+```ts
+export const zoneFor = (categoryId: string): Zone => (isPriorityCategory(categoryId) ? 'priority' : 'normal')
 ```
 
 Which part of the load order a category's mods belong in.
 
 ### `slotZone`
 
-```js
-const slotZone = (n) => (n >= PRIORITY_SLOTS[0] && n <= PRIORITY_SLOTS[1] ? 'priority' : 'normal')
+```ts
+export const slotZone = (n: number): Zone => (n >= PRIORITY_SLOTS[0] && n <= PRIORITY_SLOTS[1] ? 'priority' : 'normal')
 ```
 
 Which part of the load order a slot number is in.
 
 ### `freeSlotIn`
 
-```js
-function freeSlotIn(zone, used)
+```ts
+export function freeSlotIn(zone: Zone, used: Set<string>): string | null
 ```
 
 The first free slot of a part of the load order, as a file name, or null when it is full.
@@ -3593,8 +3615,8 @@ The first free slot of a part of the load order, as a file name, or null when it
 
 ### `moveToZone`
 
-```js
-function moveToZone(installer, rec)
+```ts
+export function moveToZone(installer: SlotInstaller, rec: LibRecord): LibFile[] | null
 ```
 
 Move a mod into the part of the load order its category belongs in, when it is not there.
@@ -3608,8 +3630,8 @@ category and took a slot among the rest.
 
 ### `migrateSlotZones`
 
-```js
-function migrateSlotZones(installer, library)
+```ts
+export function migrateSlotZones(installer: SlotInstaller, library: Pick<Library, 'list' | 'update'>): { moved: number } | null
 ```
 
 Lay an existing load order out in its two parts, once. The order within each part is kept;
@@ -3626,8 +3648,8 @@ renamed and throws; the caller tries again on the next start.
 
 ### `vacateAppPak`
 
-```js
-function vacateAppPak(installer, library)
+```ts
+export function vacateAppPak(installer: SlotInstaller, library: Pick<Library, 'list' | 'update'>): boolean
 ```
 
 Move a mod off the app's own slot. Until the notice claimed 64, a library of 34 mods or more

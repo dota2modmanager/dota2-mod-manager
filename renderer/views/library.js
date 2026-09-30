@@ -910,7 +910,7 @@ async function renderLibrary() {
   // is shown in it, and each row's arrows step through it (see orderBtnsHtml).
   const ordered = installedAll.filter((r) => slotOf(r) != null).sort((a, b) => slotOf(a) - slotOf(b));
   ordered.forEach((r, i) => { r.slot = slotOf(r); r.slotIndex = i; });
-  // the arrows stop at the ends of a mod's own part of the order (src/slot-zones.js)
+  // the arrows stop at the ends of a mod's own part of the order (src/slot-zones.ts)
   ordered.forEach((r, i) => { r.zoneFirst = ordered[i - 1]?.zone !== r.zone; r.zoneLast = ordered[i + 1]?.zone !== r.zone; });
 
   await paint(() => { viewRoot.innerHTML = `

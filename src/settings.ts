@@ -24,7 +24,7 @@ export interface StoredSettings {
   betaChannel?: boolean;
   /** remote notices put away (src/remote-config.ts) */
   seenNotices?: string[];
-  /** which layout of the load order this install was moved to, once (src/slot-zones.js) */
+  /** which layout of the load order this install was moved to, once (src/slot-zones.ts) */
   slotZones?: number;
   /** the build of the game last seen on disk (src/patch-watch.ts gameStamp) */
   gameStamp?: string | null;
@@ -54,7 +54,7 @@ const DEFAULTS: StoredSettings = {
   // sizes and folded state of the title bar, status bar and category rail
   panels: null,
   // Discord identity, when signed in: { id, username, avatar }. No token is ever kept —
-  // it is used once to read the name and dropped (see src/discord-auth.js).
+  // it is used once to read the name and dropped (see src/discord-auth.ts).
   account: null,
   // show "Playing Dota 2 Mod Manager" in Discord while the app is open
   discordPresence: true,

@@ -388,7 +388,7 @@ export async function renderItemCosmeticHub(restoreScrollTop = null) {
   if (restoreScrollTop !== null && $('#main')) $('#main').scrollTop = restoreScrollTop;
 }
 
-// A hero's portrait, read out of the installed game (src/game-icons.js heroPortraits): the game
+// A hero's portrait, read out of the installed game (src/game-icons.ts heroPortraits): the game
 // keeps them as plain PNG, so this needs no toolchain and no network. Keyed by the label the hub
 // shows. They used to ship inside the app, 132 of Valve's pictures in a GPL repository.
 const heroPortraits = new Map();

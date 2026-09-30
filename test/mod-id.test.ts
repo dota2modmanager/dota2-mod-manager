@@ -5,15 +5,15 @@
 // What is pinned is that a model path leads to the item that owns it, that the heroes come
 // from the table rather than from the folder a file happens to sit in, and that a machine
 // with no game keeps quiet instead of guessing.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const { crc32 } = require('node:zlib');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { crc32 } from 'node:zlib';
 
-const vpk = require('../src/vpk.ts');
-const { createModIdentity } = require('../src/mod-id.js');
+import * as vpk from '../src/vpk.ts';
+import { createModIdentity } from '../src/mod-id.ts';
 
 // Shaped like the real table: an item names its model and the heroes allowed to wear it.
 const ITEMS_GAME = `"items_game"
@@ -66,7 +66,7 @@ const ITEMS_GAME = `"items_game"
 `;
 
 /** One inline-data entry in the shape buildVpk() wants. */
-function entry(relPath, body) {
+function entry(relPath: string, body: string | Buffer) {
   const data = Buffer.isBuffer(body) ? body : Buffer.from(body, 'latin1');
   const norm = relPath.replace(/\\/g, '/').toLowerCase();
   const slash = norm.lastIndexOf('/');
@@ -83,7 +83,7 @@ function entry(relPath, body) {
 }
 
 /** A throwaway game folder with a pak01 that carries the table above. */
-function fakeGame(t) {
+function fakeGame(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-id-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   fs.mkdirSync(path.join(dir, 'dota'), { recursive: true });
@@ -100,17 +100,17 @@ test('a model path leads to the item that owns it', (t) => {
     'models/items/grimstroke/gs_armor/gs_armor.vmdl_c',
     'materials/models/items/grimstroke/gs_armor/gs_armor_color_png_1.vtex_c',
   ]);
-  assert.deepEqual(got.items, ["Grimstroke's Armor"]);
-  assert.deepEqual(got.slots, ['armor']);
-  assert.deepEqual(got.heroNames, ['Grimstroke']);
+  assert.deepEqual(got?.items, ["Grimstroke's Armor"]);
+  assert.deepEqual(got?.slots, ['armor']);
+  assert.deepEqual(got?.heroNames, ['Grimstroke']);
 });
 
 test('the hero comes from the table, not from the folder the file sits in', (t) => {
   // the archive says "bard"; the table says that item is worn by the hero the app calls Largo
   const id = createModIdentity({ getGamePath: () => fakeGame(t) });
   const got = id.identify(['models/items/bard/largo_lute/largo_lute.vmdl_c']);
-  assert.deepEqual(got.items, ["Largo's Instrument"]);
-  assert.equal(got.heroNames.length, 1, 'one hero, whatever the folder is called');
+  assert.deepEqual(got?.items, ["Largo's Instrument"]);
+  assert.equal(got?.heroNames.length, 1, 'one hero, whatever the folder is called');
 });
 
 test('several items come back named, sorted and without repeats', (t) => {
@@ -120,14 +120,14 @@ test('several items come back named, sorted and without repeats', (t) => {
     'models/items/grimstroke/gs_armor/gs_armor.vmdl_c',
     'models/items/grimstroke/gs_armor/gs_armor.vmdl_c',
   ]);
-  assert.deepEqual(got.items, ["Grimstroke's Armor", "Terrorblade's Wings"]);
+  assert.deepEqual(got?.items, ["Grimstroke's Armor", "Terrorblade's Wings"]);
 });
 
 test('a name with accents comes back readable', (t) => {
   // the table is read byte-exact as latin1, so anything shown to a person needs converting
   const id = createModIdentity({ getGamePath: () => fakeGame(t) });
   const got = id.identify(['models/items/pudge/hat/hat.vmdl_c']);
-  assert.deepEqual(got.items, ['Crème Brûlée Hat']);
+  assert.deepEqual(got?.items, ['Crème Brûlée Hat']);
 });
 
 test('a mod the table knows nothing about gets no answer, not a wrong one', (t) => {
@@ -162,5 +162,5 @@ test('the table is read once and then kept', (t) => {
   // 25k-block walk behind it is not repeated: clearing is what forces it again
   assert.ok(reads > afterFirst, 'the game is still checked on every call');
   id.clear();
-  assert.deepEqual(id.identify(paths).items, ["Grimstroke's Armor"], 'and it rebuilds cleanly');
+  assert.deepEqual(id.identify(paths)?.items, ["Grimstroke's Armor"], 'and it rebuilds cleanly');
 });

@@ -25,7 +25,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 
 const ELECTRON_USERS = [
-  'src/discord-auth.js',
+  'src/discord-auth.ts',
   'src/ipc-diagnostics.js',
   'src/ipc-game.js',
   'src/ipc-library.js',

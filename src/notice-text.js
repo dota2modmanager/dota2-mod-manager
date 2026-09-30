@@ -7,7 +7,7 @@
  * shows, and names the one switch that takes every mod out.
  *
  * How: a localization file in the language folder the game mounts, inside the app's own pak
- * (APP_PAK, src/slot-zones.js). Measured on a live game on 2026-09-25: the engine reads its
+ * (APP_PAK, src/slot-zones.ts). Measured on a live game on 2026-09-25: the engine reads its
  * localization by a fixed list of names and ignores any other, and chat_<lang>.txt is read after
  * dota_<lang>.txt, so a string defined in it replaces the one Valve ships. So the pak carries the
  * chat file the game would have read anyway, with the four strings added at the end.
@@ -22,7 +22,7 @@ const path = require('path');
 
 const vpk = require('./vpk.ts');
 const gamelang = require('./gamelang.ts');
-const { APP_PAK } = require('./slot-zones');
+const { APP_PAK } = require('./slot-zones.ts');
 const { NOTICE_TEXTS, NOTICE_KEYS } = require('./notice-texts.ts');
 
 /** The file name of the app's pak in the language folder. */

@@ -1,7 +1,7 @@
 /* Settings, the Discord account, and asking the catalog for a refresh.
  *
  * Both settings handlers answer with the whole view rather than the bare store, because the
- * renderer caches whatever it is handed - see src/settings-view.js for what that cost once.
+ * renderer caches whatever it is handed - see src/settings-view.ts for what that cost once.
  * Bodies unchanged from main.js.
  */
 const path = require('path');

@@ -14,7 +14,7 @@ const { fetchMirrored } = require('./net.ts');
 const { RAW_BASE } = require('./catalog.ts');
 const { createTerrainAges, TAIL_BYTES } = require('./terrain-age.ts');
 const { createNoticeText } = require('./notice-text');
-const zones = require('./slot-zones');
+const zones = require('./slot-zones.ts');
 
 /** @param {object} ctx  the services and main-process callbacks these channels use */
 function registerModsIpc({
@@ -145,7 +145,7 @@ function registerModsIpc({
   ipcMain.handle('mods:importBuffers', (e, items) => importVpkBuffers(items));
 
   ipcMain.handle('mods:list', () => {
-    // a mod still on the slot the notice text took moves off it (src/slot-zones.js)
+    // a mod still on the slot the notice text took moves off it (src/slot-zones.ts)
     try { if (zones.vacateAppPak(installer, library)) diag('a mod moved off the notice slot'); } catch (err) { diag(`notice slot not freed: ${err.message}`); }
     // folder sync: a mod deleted straight from the game folder drops out of the library
     try {

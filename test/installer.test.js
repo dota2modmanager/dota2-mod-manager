@@ -531,7 +531,7 @@ test('a layout that fails half way puts every file back where it was', (t) => {
 });
 
 test('a mod on the slot the notice text took moves to the first free one behind it, volumes and state kept', (t) => {
-  const { vacateAppPak } = require('../src/slot-zones.js');
+  const { vacateAppPak } = require('../src/slot-zones.ts');
   const s = stand(t);
   const library = new Library(path.join(s.dir, 'userdata'));
   placed(s, library, { base: 'pak64', categoryId: 'heroes', name: 'was on 64', suffix: '.off', volumes: 1 });
@@ -545,7 +545,7 @@ test('a mod on the slot the notice text took moves to the first free one behind 
 });
 
 test('a move off the notice slot that the game refuses puts the files back and changes no record', (t) => {
-  const { vacateAppPak } = require('../src/slot-zones.js');
+  const { vacateAppPak } = require('../src/slot-zones.ts');
   const s = stand(t);
   const library = new Library(path.join(s.dir, 'userdata'));
   placed(s, library, { base: 'pak64', categoryId: 'heroes', name: 'held open', volumes: 1 });

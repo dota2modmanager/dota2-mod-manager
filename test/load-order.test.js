@@ -1,6 +1,6 @@
 /* The load order in two parts, through the channels the window calls (src/ipc-library.js,
  * src/ipc-mods.js): moving a mod up or down, dragging it to a place, linking an import to the
- * catalog, and the list the screen draws. The rules themselves are src/slot-zones.js and are
+ * catalog, and the list the screen draws. The rules themselves are src/slot-zones.ts and are
  * tested in installer.test.js; this is whether the buttons keep to them.
  *
  * The rule: shaders, trees, river, hero effects and a few more load

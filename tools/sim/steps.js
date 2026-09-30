@@ -11,7 +11,7 @@ const path = require('path');
 const { lit } = require('./driver');
 const dota = require('./dota');
 const { listVpkPathCrcsFile } = require('../../src/vpk.ts');
-const { isAppPak } = require('../../src/slot-zones.js');
+const { isAppPak } = require('../../src/slot-zones.ts');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const MANIFEST = require('../sandbox-mods.json').mods;
