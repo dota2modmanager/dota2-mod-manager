@@ -2,19 +2,20 @@
 // safety story: a version, a URL that can only be that project's own release page, and a
 // SHA-256 that has to match. These tests are about what the app refuses, because that is
 // what stands between a moved URL and running somebody else's executable.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const http = require('http');
-const crypto = require('crypto');
-const AdmZip = require('adm-zip');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import http from 'node:http';
+import crypto from 'node:crypto';
+import type { AddressInfo } from 'node:net';
+import AdmZip from 'adm-zip';
 
-const net = require('../src/net.ts');
-const { createToolchain, BUILT_IN_PINS, validPin } = require('../src/toolchain.js');
+import * as net from '../src/net.ts';
+import { createToolchain, BUILT_IN_PINS, validPin, type ToolProgress } from '../src/toolchain.ts';
 
-function userDir(t) {
+function userDir(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-tool-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return dir;
@@ -29,7 +30,7 @@ function toolZip(exeName = 'Source2Viewer-CLI.exe') {
 }
 
 /** Serve `data` at any path, so the pin URL can point at a local server. */
-async function serve(t, data) {
+async function serve(t: TestContext, data: Buffer) {
   const server = http.createServer((req, res) => {
     const m = /^bytes=(\d+)-/.exec(req.headers.range || '');
     if (!m) { res.writeHead(200, { 'content-length': data.length }); res.end(data); return; }
@@ -40,7 +41,7 @@ async function serve(t, data) {
   server.listen(0, '127.0.0.1');
   await new Promise((r) => server.on('listening', r));
   t.after(() => { server.close(); net.setMirrors(null); });
-  const port = server.address().port;
+  const { port } = server.address() as AddressInfo;
   // the pin URL is a real github.com release address; the mirror table sends it here
   net.setMirrors([{ host: `127.0.0.1:${port}`, map: () => `http://127.0.0.1:${port}/tool.zip` }]);
   return port;
@@ -61,14 +62,14 @@ test('the pins travel with the release, not over the network', (t) => {
      validation with no anchors, and the first version of this test raised exactly that (#111).
      The same lesson as test/r2-purge.test.js. Only the code is checked, because the comment in
      that file explains this history on purpose. */
-  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'toolchain.js'), 'utf8');
+  const src = fs.readFileSync(path.join(import.meta.dirname, '..', 'src', 'toolchain.ts'), 'utf8');
   const address = ['https://raw.', 'githubusercontent.com'].join('');
-  assert.ok(!src.includes(address), 'toolchain.js has an address to fetch pins from again');
-  assert.ok(!src.includes('fetchText'), 'toolchain.js fetches something other than the archive it pinned');
+  assert.ok(!src.includes(address), 'toolchain.ts has an address to fetch pins from again');
+  assert.ok(!src.includes('fetchText'), 'toolchain.ts fetches something other than the archive it pinned');
   // a directory of its own, never the shared temp root: a predictable name there is somebody
   // else's to create first, and it flows into every write the toolchain makes (#112 to #114)
   const tc = createToolchain({ userDataDir: userDir(t) });
-  assert.equal(tc.refreshPins, undefined, 'createToolchain still hands out a pin refresher');
+  assert.equal('refreshPins' in tc, false, 'createToolchain still hands out a pin refresher');
 });
 
 test('both homes of the tool are accepted, and nothing that merely looks like them', () => {
@@ -80,7 +81,7 @@ test('both homes of the tool are accepted, and nothing that merely looks like th
    * Widening an allowlist is where a check stops meaning anything, so the near-misses are here
    * too: an owner whose name merely ends with the right one must still be refused. */
   const good = BUILT_IN_PINS.vrf;
-  const at = (url) => validPin({ ...good, url }, 'vrf');
+  const at = (url: string) => validPin({ ...good, url }, 'vrf');
   const rel = '/releases/download/20.0/cli-windows-x64.zip';
 
   assert.equal(at(`https://github.com/ValveResourceFormat/ValveResourceFormat${rel}`), true, 'where it lives now');
@@ -127,9 +128,9 @@ test('a tool downloads, unpacks and is found where it says', async (t) => {
   assert.match(exe, /Source2Viewer-CLI\.exe$/);
   assert.equal(tc.pathOf('vrf'), exe, 'and it is found again without downloading');
   const state = tc.state().find((s) => s.name === 'vrf');
-  assert.equal(state.ready, true);
-  assert.equal(state.version, BUILT_IN_PINS.vrf.version);
-  assert.ok(state.installedBytes > 0);
+  assert.equal(state?.ready, true);
+  assert.equal(state?.version, BUILT_IN_PINS.vrf.version);
+  assert.ok(state && state.installedBytes > 0);
 });
 
 test('an archive that hashes to something else is not unpacked at all', async (t) => {
@@ -170,7 +171,7 @@ test('deleting a tool leaves nothing behind', async (t) => {
   tc.remove('vrf');
   assert.equal(tc.pathOf('vrf'), null);
   assert.equal(fs.existsSync(path.join(dir, 'toolchain', 'vrf')), false);
-  assert.equal(tc.state().find((s) => s.name === 'vrf').ready, false);
+  assert.equal(tc.state().find((s) => s.name === 'vrf')?.ready, false);
 });
 
 // The progress bar hides only when it hears 'done' or 'error'. Neither was sent, so the
@@ -178,17 +179,18 @@ test('deleting a tool leaves nothing behind', async (t) => {
 test('a download tells the progress bar it is over, however it ends', async (t) => {
   const data = toolZip();
   await serve(t, data);
-  const events = [];
+  const events: ToolProgress[] = [];
   const tc = createToolchain({ userDataDir: userDir(t), onProgress: (e) => events.push(e) });
   BUILT_IN_PINS.vrf.sha256 = crypto.createHash('sha256').update(data).digest('hex');
   await tc.ensure('vrf');
-  assert.equal(events.at(-1).type, 'done');
-  assert.equal(events.at(-1).label, 'vrf');
+  assert.equal(events.at(-1)?.type, 'done');
+  assert.equal(events.at(-1)?.label, 'vrf');
 
-  const failed = [];
+  const failed: ToolProgress[] = [];
   const tc2 = createToolchain({ userDataDir: userDir(t), onProgress: (e) => failed.push(e) });
   BUILT_IN_PINS.vrf.sha256 = 'f'.repeat(64);
   await assert.rejects(() => tc2.ensure('vrf'), /checksum/);
-  assert.equal(failed.at(-1).type, 'error');
-  assert.match(failed.at(-1).message, /checksum/);
+  const last = failed.at(-1);
+  assert.equal(last?.type, 'error');
+  assert.match(last?.type === 'error' ? last.message : '', /checksum/);
 });

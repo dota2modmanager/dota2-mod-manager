@@ -12,7 +12,7 @@ const fs = require('fs');
 const { app, dialog, ipcMain } = require('electron');
 
 const { Library } = require('./library.ts');
-const { readPresetFile, writePresetFile } = require('./preset-share');
+const { readPresetFile, writePresetFile } = require('./preset-share.ts');
 const { encodePresetLink } = require('./preset-link.ts');
 const { installVpkBuffer } = require('./import');
 const { t } = require('./i18n.ts');

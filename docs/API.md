@@ -36,16 +36,16 @@ the code, not in this page.
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
 | [`src/mod-id.js`](#srcmod-idjs) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
-| [`src/mod-preview.js`](#srcmod-previewjs) | A picture for a mod that came with none, taken out of the mod itself. |
+| [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/net.ts`](#srcnetts) | Getting bytes from the internet, on a connection that may not want to cooperate. |
 | [`src/notice-text.js`](#srcnotice-textjs) | The game's anti-cheat notice, in words that say what to do. |
 | [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.js puts |
-| [`src/overlays.js`](#srcoverlaysjs) | Fonts and cursors: loose files written over the game's own. |
-| [`src/patch-watch.js`](#srcpatch-watchjs) | Noticing that Dota was patched, while the app is open. |
+| [`src/overlays.ts`](#srcoverlaysts) | Fonts and cursors: loose files written over the game's own. |
+| [`src/patch-watch.ts`](#srcpatch-watchts) | Noticing that Dota was patched, while the app is open. |
 | [`src/patcher.ts`](#srcpatcherts) | Search-path patch: registers an extra content folder ahead of the game's own, which |
 | [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
 | [`src/preset-link.ts`](#srcpreset-linkts) | Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed |
-| [`src/preset-share.js`](#srcpreset-sharejs) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
+| [`src/preset-share.ts`](#srcpreset-sharets) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
 | [`src/presets-service.js`](#srcpresets-servicejs) | Presets, and the two ways one travels to somebody else. |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
 | [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
@@ -55,7 +55,7 @@ the code, not in this page.
 | [`src/slot-zones.js`](#srcslot-zonesjs) | The load order in two parts. |
 | [`src/steam.ts`](#srcsteamts) | Finding Steam, and then finding Dota inside it. |
 | [`src/terrain-age.ts`](#srcterrain-agets) | Terrains that replace the whole map, and whether the game's own map has moved on since. |
-| [`src/toolchain.js`](#srctoolchainjs) | Tools the app can borrow, fetched only when something actually needs them. |
+| [`src/toolchain.ts`](#srctoolchaints) | Tools the app can borrow, fetched only when something actually needs them. |
 | [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
 | [`src/updater.ts`](#srcupdaterts) | Where an installed copy looks for a new version, and on which channel. |
@@ -784,7 +784,7 @@ by slicing the header off. Those cost one seek each and work offline, on a fresh
 with nothing downloaded.
 
 The rest are block-compressed, and reading those does need the Source 2 toolchain (see
-src/toolchain.js), 48 MB and fetched only if the user asks for it. Without it those few
+src/toolchain.ts), 48 MB and fetched only if the user asks for it. Without it those few
 fall back to the wiki, as everything used to.
 
 Measured on the real game (2026-08-07): 10 299 items carry a picture, every option in every
@@ -1705,7 +1705,7 @@ function createModIdentity({ getGamePath, log = () => {} })
 @param {(msg: string) => void} [deps.log]
 ```
 
-## src/mod-preview.js
+## src/mod-preview.ts
 
 A picture for a mod that came with none, taken out of the mod itself.
 
@@ -1729,42 +1729,66 @@ Two things this file exists to get right:
     before anything is cached.
 
 The picture inside a mod is a compiled Source 2 texture, so this needs the toolchain
-(src/toolchain.js). Without it nothing here answers and the old fallbacks stand.
+(src/toolchain.ts). Without it nothing here answers and the old fallbacks stand.
 
-### `createModPreviews`
+### `Bitmap`
 
-```js
-function createModPreviews({ userDataDir, toolchain, langFileOf, images = null, log = () => {} })
+```ts
+export interface Bitmap { width: number; height: number; data: Buffer | Uint8Array; img?: unknown }
 ```
 
+A decoded picture: 4 bytes a pixel, alpha last, and what the decoder needs to resize it.
+
+### `Images`
+
+```ts
+export interface Images { read(file: string): Bitmap | null; toSmallPng(bmp: Bitmap): Buffer }
 ```
-@param {object} deps
-@param {string} deps.userDataDir
-@param {{ pathOf: (name: string) => string|null }} deps.toolchain
-@param {(relPath: string) => string} deps.langFileOf where a mod's *_dir.vpk actually is
-@param {object} [deps.images] test seam for decode/resize
-@param {(msg: string) => void} [deps.log]
+
+Decoding and resizing, injected so this module runs under plain node in tests.
+
+### `VID`
+
+```ts
+export const VID = 'modvid:'
 ```
+
+Sources this module answers for, best first. Anything else is somebody else's key.
+
+### `ART`
+
+```ts
+export const ART = 'modart:'
+```
+
+The key prefix for a mod's drawn art.
+
+### `TEX`
+
+```ts
+export const TEX = 'modtex:'
+```
+
+The key prefix for a model texture out of a mod.
 
 ### `pickCandidate`
 
-```js
-function pickCandidate(paths, kind)
+```ts
+export function pickCandidate(paths: Iterable<string>, kind: Kind): string | null
 ```
 
 Which file inside a mod to show, for one of the three kinds.
 Pure, so the ranking can be held by tests against real path lists.
 
 ```
-@param {Iterable<string>} paths lowercased inner paths of the mod's VPK
-@param {'art'|'texture'|'video'} kind  video is a hero's animated portrait, a .webm
-@returns {string|null}
+@param paths lowercased inner paths of the mod's VPK
+@param kind  video is a hero's animated portrait, a .webm
 ```
 
 ### `worthShowing`
 
-```js
-function worthShowing({ width, height, data })
+```ts
+export function worthShowing({ width, height, data }: Bitmap): boolean
 ```
 
 Is this decoded picture worth showing? A mod that removes something ships a texture that
@@ -1772,33 +1796,21 @@ is empty or a single flat colour: it decodes fine and shows nothing.
 Pure, so tests can hand it pixels without an image library.
 
 ```
-@param {{width: number, height: number, data: Buffer|Uint8Array}} bmp 4 bytes per pixel, alpha last
-@returns {boolean}
+@param bmp 4 bytes per pixel, alpha last
 ```
 
-### `VID`
+### `createModPreviews`
 
-```js
-const VID = 'modvid:'
+```ts
+export function createModPreviews({ userDataDir, toolchain, langFileOf, images = null, log = () => {} }: { userDataDir: string; toolchain: { pathOf: (name: string) => string | null }; langFileOf: (relPath: string) => string | null; images?: Images | null; log?: (msg: string) => void; })
 ```
 
-Sources this module answers for, best first. Anything else is somebody else's key.
+Pictures for mods that came with none, cached in userData.
 
-### `ART`
-
-```js
-const ART = 'modart:'
 ```
-
-_No description in the source._
-
-### `TEX`
-
-```js
-const TEX = 'modtex:'
+@param deps.langFileOf where a mod's *_dir.vpk actually is
+@param deps.images test seam for decode/resize
 ```
-
-_No description in the source._
 
 ## src/net.ts
 
@@ -2165,7 +2177,7 @@ const NOTICE_KEYS =
 
 The game's own keys for the four strings: its localization files name them this way.
 
-## src/overlays.js
+## src/overlays.ts
 
 Fonts and cursors: loose files written over the game's own.
 
@@ -2188,31 +2200,31 @@ else it happens to match.
 Moved out of src/installer.js on 2026-09-17; test/installer.test.js and test/cursors.test.ts
 cover it through the installer.
 
-### `Overlays`
-
-```js
-class Overlays
-```
-
-The font and cursor files of one install: writing them, keeping the originals, putting them back.
-
 ### `FONTS_SUBDIR`
 
-```js
-const FONTS_SUBDIR = ['dota', 'panorama', 'fonts']
+```ts
+export const FONTS_SUBDIR: readonly string[] = ['dota', 'panorama', 'fonts']
 ```
 
 Where font mods go, under the game folder.
 
 ### `CURSOR_SUBDIR`
 
-```js
-const CURSOR_SUBDIR = ['dota', 'resource', 'cursor']
+```ts
+export const CURSOR_SUBDIR: readonly string[] = ['dota', 'resource', 'cursor']
 ```
 
 Where cursor sets go, under the game folder.
 
-## src/patch-watch.js
+### `Overlays`
+
+```ts
+export class Overlays
+```
+
+The font and cursor files of one install: writing them, keeping the originals, putting them back.
+
+## src/patch-watch.ts
 
 Noticing that Dota was patched, while the app is open.
 
@@ -2232,48 +2244,46 @@ never looks like a game update - otherwise the app would keep waking itself up.
 
 This module only decides "the game changed"; what to do about it lives in main.js.
 
+### `DEBOUNCE_MS`
+
+```ts
+export const DEBOUNCE_MS = 3000
+```
+
+A patch rewrites a lot of files at once, so the first event is never the last one.
+
+### `clientVersion`
+
+```ts
+export function clientVersion(gamePath: string): string | null
+```
+
+The build number every Dota patch bumps, from steam.inf.
+
 ### `gameStamp`
 
-```js
-function gameStamp(gamePath)
+```ts
+export function gameStamp(gamePath: string | null | undefined): string | null
 ```
 
 What build of the game is on disk right now, as one comparable string.
 
 ```
-@returns {string|null} null when there is no game to read (no path set, folder gone)
+@returns null when there is no game to read (no path set, folder gone)
 ```
-
-### `clientVersion`
-
-```js
-function clientVersion(gamePath)
-```
-
-_No description in the source._
 
 ### `createPatchWatcher`
 
-```js
-function createPatchWatcher({ getGamePath, onPatch, expectsPatch = () => false, log = () => {}, debounceMs = DEBOUNCE_MS })
+```ts
+export function createPatchWatcher({ getGamePath, onPatch, expectsPatch = () => false, log = () => {}, debounceMs = DEBOUNCE_MS }: { getGamePath: () => string | null; onPatch: (evt: { from: string | null; to: string; reason?: string }) => void; expectsPatch?: () => boolean; log?: (msg: string) => void; debounceMs?: number; })
 ```
 
-```
-@param {object} deps
-@param {() => string|null} deps.getGamePath
-@param {(evt: {from: string|null, to: string, reason?: string}) => void} deps.onPatch
-@param {() => boolean} [deps.expectsPatch] whether the app's search path should be in the game (safe mode off)
-@param {(msg: string) => void} [deps.log]
-@param {number} [deps.debounceMs] shortened by tests, which cannot wait out a real patch
-```
+Watches the game folder and says when Dota was patched, or its files checked, while the app is open.
 
-### `DEBOUNCE_MS`
-
-```js
-const DEBOUNCE_MS = 3000
 ```
-
-A patch rewrites a lot of files at once, so the first event is never the last one.
+@param deps.expectsPatch whether the app's search path should be in the game (safe mode off)
+@param deps.debounceMs shortened by tests, which cannot wait out a real patch
+```
 
 ## src/patcher.ts
 
@@ -2646,7 +2656,7 @@ export function decodePresetLink(input: unknown): { name: string; author: string
 A pasted link, in either form, back into a preset: its name, its author and its mods. Throws an
 error written for the user when the text is not a link, is damaged, or holds too much.
 
-## src/preset-share.js
+## src/preset-share.ts
 
 Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod
 the receiving app can't just fetch for itself.
@@ -2662,61 +2672,83 @@ Everything here treats the file as hostile input: it arrives from a stranger ove
 Discord. Nothing is read out of the zip that the manifest didn't ask for by an exact,
 pattern-checked name, and the caller installs only after showing the user the contents.
 
-### `FORMAT`
+### `PresetEntry`
 
-```js
-const FORMAT = 'dota2-mod-manager/preset'
+```ts
+export type PresetEntry =
 ```
 
-_No description in the source._
+One line of a preset's mod list, as the file carries it.
+
+### `PresetManifest`
+
+```ts
+export interface PresetManifest
+```
+
+preset.json once it has been checked: everything a receiver is shown before installing.
+
+### `EntryToWrite`
+
+```ts
+export interface EntryToWrite { kind: string; name: string; data?: Buffer; members?: EntryToWrite[]; [key: string]: unknown }
+```
+
+A line to write. An embedded mod carries its bytes in `data`, and they go into the zip in its place.
+
+### `FORMAT`
+
+```ts
+export const FORMAT = 'dota2-mod-manager/preset'
+```
+
+What preset.json says it is, so a stray zip is not taken for a preset.
 
 ### `VERSION`
 
-```js
-const VERSION = 1
+```ts
+export const VERSION = 1
 ```
 
-_No description in the source._
+The newest format this build writes and can read.
 
 ### `MAX_MODS`
 
-```js
-const MAX_MODS = 500
+```ts
+export const MAX_MODS = 500
 ```
 
-_No description in the source._
+More mods than anybody has; a list longer than this is refused before it is read.
+
+### `validateManifest`
+
+```ts
+export function validateManifest(raw: unknown): PresetManifest
+```
+
+preset.json checked field by field: what fails is refused, what is unknown is dropped.
 
 ### `writePresetFile`
 
-```js
-function writePresetFile(outPath, manifest, entries)
+```ts
+export function writePresetFile(outPath: string, manifest: Record<string, unknown>, entries: EntryToWrite[]): { path: string; size: number; mods: EntryToWrite[] }
 ```
 
+Write a .d2mm: the manifest, and the bytes of every embedded mod beside it.
+
 ```
-@param {string} outPath                       where to write the .d2mm
-@param {object} manifest                      everything but `mods` (name/note/author/app…)
-@param {Array<object>} entries                mod lines; embedded ones carry a `data` Buffer
+@param outPath   where to write the .d2mm
+@param manifest  everything but `mods` (name/note/author/app…)
+@param entries   mod lines; embedded ones carry a `data` Buffer
 ```
 
 ### `readPresetFile`
 
-```js
-function readPresetFile(filePath)
+```ts
+export function readPresetFile(filePath: string): { manifest: PresetManifest; readMod: (file: string) => Buffer }
 ```
 
 Parse and validate a .d2mm.
-
-```
-@returns {{ manifest: object, readMod: (file: string) => Buffer }}
-```
-
-### `validateManifest`
-
-```js
-function validateManifest(raw)
-```
-
-_No description in the source._
 
 ## src/presets-service.js
 
@@ -3756,7 +3788,7 @@ export function createTerrainAges({ downloadsDir, gamePath, storeFile, fetchTail
 @param deps.fetchTail     the last bytes of a catalog archive, for a terrain nobody has downloaded yet
 ```
 
-## src/toolchain.js
+## src/toolchain.ts
 
 Tools the app can borrow, fetched only when something actually needs them.
 
@@ -3780,50 +3812,44 @@ Rules this file exists to enforce:
     not a rollback plan, and an unsigned file that can redirect a fifty megabyte download is
     not one worth building. Removed 2026-09-16; a new tool version travels with a release.
 
-### `createToolchain`
+### `Pin`
 
-```js
-function createToolchain({ userDataDir, onProgress = () => {}, log = () => {} })
+```ts
+export interface Pin { version: string; url: string; sha256: string; bytes: number; exe: string; license: string; project: string }
 ```
 
+A tool pinned to a version, a URL, and the digest those bytes have to hash to.
+
+### `ToolProgress`
+
+```ts
+export type ToolProgress =
 ```
-@param {object} deps
-@param {string} deps.userDataDir
-@param {(evt: object) => void} [deps.onProgress]
-@param {(msg: string) => void} [deps.log]
-```
+
+How a download is going, for the bar at the bottom of the window.
 
 ### `BUILT_IN_PINS`
 
-```js
-const BUILT_IN_PINS =
+```ts
+export const BUILT_IN_PINS: Record<string, Pin> =
 ```
 
-The only pins there are: what the app was built knowing.
 Measured again 2026-09-07 for 20.0: the digest comes from GitHub's own release API and was
 confirmed by downloading the file and hashing it, and the archive was opened to check the
 executable is at its root under the name below.
 
-### `validPin`
-
-```js
-function validPin(pin, name)
-```
-
-_No description in the source._
-
 ### `TOOL_NAMES`
 
-```js
-const TOOL_NAMES = Object.keys(BUILT_IN_PINS)
+```ts
+export const TOOL_NAMES: readonly string[] = Object.keys(BUILT_IN_PINS)
 ```
 
-_No description in the source._
+Every tool the app knows how to fetch.
 
 ### `FALLBACK_BASE`
 
-```js
-const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/'
+```ts
+export const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/'
 ```
 
 A copy of the pinned archive in this project's own bucket.
@@ -3838,11 +3864,27 @@ hash to. The address is written here for the same reason the owner allowlist bel
 
 ### `fallbackUrl`
 
-```js
-const fallbackUrl = (name, version) => `${FALLBACK_BASE}${name}-${version}.zip`
+```ts
+export const fallbackUrl = (name: string, version: string): string => `${FALLBACK_BASE}${name}-${version}.zip`
 ```
 
 Where the copy of a pinned archive lives, keyed by the tool and the version pinned to it.
+
+### `validPin`
+
+```ts
+export function validPin(pin: unknown, name: string | null | undefined): boolean
+```
+
+Whether a pin names a version, an executable, a digest, and a release of an owner listed above.
+
+### `createToolchain`
+
+```ts
+export function createToolchain({ userDataDir, onProgress = () => {}, log = () => {} }: { userDataDir: string; onProgress?: (evt: ToolProgress) => void; log?: (msg: string) => void; })
+```
+
+The tools in userData: what is there, fetching one at its pin, and deleting it again.
 
 ## src/types.ts
 
@@ -3872,7 +3914,7 @@ One entry of the library: a mod, a pack of them, or a cosmetic pick.
 export interface ModIdentity
 ```
 
-A mod as a preset remembers it: what it is, not which installation of it (src/preset-share.js).
+A mod as a preset remembers it: what it is, not which installation of it (src/preset-share.ts).
 
 ### `Preset`
 

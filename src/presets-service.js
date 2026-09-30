@@ -17,7 +17,7 @@ const crypto = require('crypto');
 const { app } = require('electron');
 
 const { Library } = require('./library.ts');
-const { readPresetFile } = require('./preset-share');
+const { readPresetFile } = require('./preset-share.ts');
 const { decodePresetLink } = require('./preset-link.ts');
 const { t } = require('./i18n.ts');
 

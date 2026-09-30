@@ -143,7 +143,7 @@ A preset is the set of enabled mods, and it travels two ways.
 names change when their author renames them; the identity triple does not. The clickable form is
 an https page that hands the code to the app, because chat clients only linkify http and https.
 
-**As a file.** `src/preset-share.js` writes `.d2mm`, a zip holding the manifest and, for anything
+**As a file.** `src/preset-share.ts` writes `.d2mm`, a zip holding the manifest and, for anything
 with no catalog identity, the mod itself. It is parsed as if it came from a stranger over Discord,
 because it did: paths are matched against a strict pattern, a record that does not parse is
 dropped whole rather than half trusted, and a buffer is validated as a VPK before it reaches the
@@ -170,7 +170,7 @@ So each thing carries its own proof, and each has a different answer to a proof 
 | Catalog data: `mods.json`, `constants.json`, `guides.json`, `mod-hashes.json` | ed25519 signature by the catalog's author, public key pinned in `src/catalog-signature.ts` | keep the last good copy; on a first run, no catalog and an error |
 | A mod archive | sha256 from the signed `mod-hashes.json` | drop that mirror's copy, delete the part file and ask the next mirror; refuse the mod only when every mirror fails the same check |
 | `config/app.json`, the switches and notices this project can change after a release | ed25519 signature by this project's own key, pinned in `src/remote-config.ts` | ignore the file, exactly as if it were unreachable |
-| The Source 2 toolchain executable | version and sha256 pinned in `src/toolchain.js`, checked before anything is unpacked | do not unpack it; item icons fall back to the wiki |
+| The Source 2 toolchain executable | version and sha256 pinned in `src/toolchain.ts`, checked before anything is unpacked | do not unpack it; item icons fall back to the wiki |
 
 The three answers differ because what each file costs differs. Without a catalog there is nothing
 to show, so the app keeps yesterday's rather than nothing. Bytes that fail their hash never reach
@@ -279,7 +279,7 @@ that matters most to a new user: the installer itself carries no code-signing ce
 ## Surviving a patch
 
 A game update overwrites the search-path patch and moves the item table underneath the built
-schema. `src/patch-watch.js` notices the update while the app is open, because Steam patches in
+schema. `src/patch-watch.ts` notices the update while the app is open, because Steam patches in
 the background and most people press Play in Steam, and the repair runs by itself.
 
 ## Updates
@@ -359,7 +359,7 @@ that location is not writable.
 | `preload.js` | The `window.api` surface, and nothing else crosses |
 | `src/installer.js` | Download, slots, install, enable, remove, packs |
 | `src/beta.ts` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
-| `src/overlays.js` | Fonts and cursors: files written over the game's own, their kept originals, and putting them back after Steam's file check |
+| `src/overlays.ts` | Fonts and cursors: files written over the game's own, their kept originals, and putting them back after Steam's file check |
 | `src/import.js` | Taking a mod in: a `.vpk`, a `.zip`, an author's folder, or bytes off a drop |
 | `src/cursors.ts` | Which cursor set is live, which look a slot wears, and the repair at startup |
 | `src/adopt.ts` | What a VPK goes through before it counts as a mod: named, harvested, split |
@@ -376,9 +376,9 @@ that location is not writable.
 | `src/steam.ts` | Finding Steam and the game, and proving the folder is really a game |
 | `src/gamelang.ts` | Which folder Dota will mount, and moving mods across when that changes |
 | `src/patcher.ts`, `src/schema.ts`, `src/schema-service.js` | Search-path patch, signatures, item schema |
-| `src/patch-watch.js` | Noticing a game update and repairing after it |
+| `src/patch-watch.ts` | Noticing a game update and repairing after it |
 | `src/fingerprints.ts` | Recognising a file somebody else installed |
-| `src/preset-link.ts`, `src/preset-share.js` | Presets as a link and as a file |
+| `src/preset-link.ts`, `src/preset-share.ts` | Presets as a link and as a file |
 | `src/portable-update.ts` | Updating the portable build without self-overwrite |
 | `src/diagnostics.js` | The diagnostic archive a bug report should carry |
 | `src/i18n.ts`, `renderer/i18n.js` | Russian and English, for the main process and the window |

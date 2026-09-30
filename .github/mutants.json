@@ -596,24 +596,24 @@
     },
     {
       "name": "a font or cursor file the app wrote itself is taken for one a verify put back",
-      "file": "src/overlays.js",
-      "anchor": "vanillaIsBack(f, written = this.written()) {",
+      "file": "src/overlays.ts",
+      "anchor": "vanillaIsBack(f: LibFile, written: Record<string, string> = this.written()): boolean {",
       "from": "if (mine && sha1(now) === mine) return false;",
       "to": "",
       "test": "test/installer.test.js"
     },
     {
       "name": "the repair after a verify keeps the mod's own file as the game's original",
-      "file": "src/overlays.js",
-      "anchor": "keepOriginal(destAbs, backupAbs, mine) {",
+      "file": "src/overlays.ts",
+      "anchor": "keepOriginal(destAbs: string, backupAbs: string, mine: string | undefined): void {",
       "from": "if (mine && sha1(fs.readFileSync(destAbs)) === mine) return;",
       "to": "",
       "test": "test/installer.test.js"
     },
     {
       "name": "putting a cursor set back records nothing about what it wrote",
-      "file": "src/overlays.js",
-      "anchor": "\n  deployCursor(recId, files) {",
+      "file": "src/overlays.ts",
+      "anchor": "\n  deployCursor(recId: string, files: LibFile[] | null | undefined): number {",
       "from": "this.noteWritten('cursor', hashes);",
       "to": "",
       "test": "test/installer.test.js"

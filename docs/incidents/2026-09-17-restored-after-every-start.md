@@ -38,7 +38,7 @@ mod's file and Valve's are the same bytes, and when the kept original is the mod
 
 ## What catches it now
 
-- `src/overlays.js`: every font and cursor write is recorded by hash in `backups/written.json`.
+- `src/overlays.ts`: every font and cursor write is recorded by hash in `backups/written.json`.
   A file holding what the app wrote is the app's file, whatever else it matches, and the repair
   no longer keeps such a file as the game's original. An install from before the fix is reported
   once more, and putting it back writes the record.

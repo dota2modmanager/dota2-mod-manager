@@ -13,7 +13,7 @@
 // with nothing downloaded.
 //
 // The rest are block-compressed, and reading those does need the Source 2 toolchain (see
-// src/toolchain.js), 48 MB and fetched only if the user asks for it. Without it those few
+// src/toolchain.ts), 48 MB and fetched only if the user asks for it. Without it those few
 // fall back to the wiki, as everything used to.
 //
 // Measured on the real game (2026-08-07): 10 299 items carry a picture, every option in every

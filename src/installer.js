@@ -22,7 +22,7 @@ const { ensureLangFolder } = require('./gamelang.ts');
 const { openZip, safeJoin } = require('./safe-zip.ts');
 const { validateGamePath } = require('./steam.ts');
 const { FileTx, copyInto, writeInto } = require('./file-tx.ts');
-const { Overlays, FONTS_SUBDIR, CURSOR_SUBDIR } = require('./overlays');
+const { Overlays, FONTS_SUBDIR, CURSOR_SUBDIR } = require('./overlays.ts');
 const { RESERVED_PAKS, isMinifyFile, isMinifyPak } = require('./minify.ts');
 const { downloadFile } = require('./net.ts');
 const { t } = require('./i18n.ts');
@@ -131,7 +131,7 @@ class Installer {
     fs.mkdirSync(this.packsDir, { recursive: true });
     fs.mkdirSync(this.cursorsDir, { recursive: true });
     this.getGamePath = getGamePath;
-    // fonts and cursors, the files written over the game's own: src/overlays.js
+    // fonts and cursors, the files written over the game's own: src/overlays.ts
     this.overlays = new Overlays({
       getGamePath, backupsDir: this.backupsDir, cursorsDir: this.cursorsDir,
       cachedArchive: (categoryId, fileRef) => this.cachedArchive(categoryId, fileRef),
@@ -644,7 +644,7 @@ class Installer {
 
   // ---------- fonts and cursors ----------
 
-  // Loose files over the game's own live in src/overlays.js; these are the calls the rest of
+  // Loose files over the game's own live in src/overlays.ts; these are the calls the rest of
   // the app makes.
   cursorStoreDir(recId) { return this.overlays.cursorStoreDir(recId); }
   ensureCursorStore(recId, files) { return this.overlays.ensureCursorStore(recId, files); }

@@ -15,27 +15,28 @@
 // never looks like a game update - otherwise the app would keep waking itself up.
 //
 // This module only decides "the game changed"; what to do about it lives in main.js.
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const patcher = require('./patcher.ts');
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import * as patcher from './patcher.ts';
 
-// A patch rewrites a lot of files at once, so the first event is never the last one.
-const DEBOUNCE_MS = 3000;
+/** A patch rewrites a lot of files at once, so the first event is never the last one. */
+export const DEBOUNCE_MS = 3000;
 // A watch handle can die with the directory it was set on (Steam replaces folders during
 // big updates). Re-arm rather than go deaf for the rest of the session.
 const REARM_MS = 30000;
 
-const infPath = (gamePath) => path.join(gamePath, 'dota', 'steam.inf');
+const infPath = (gamePath: string) => path.join(gamePath, 'dota', 'steam.inf');
 
-function clientVersion(gamePath) {
+/** The build number every Dota patch bumps, from steam.inf. */
+export function clientVersion(gamePath: string): string | null {
   try {
     const m = /^ClientVersion=(\d+)/m.exec(fs.readFileSync(infPath(gamePath), 'latin1'));
     return m ? m[1] : null;
   } catch { return null; }
 }
 
-function signaturesDigest(gamePath) {
+function signaturesDigest(gamePath: string): string | null {
   try {
     const raw = fs.readFileSync(patcher.paths(gamePath).signatures, 'latin1');
     return crypto.createHash('sha1').update(patcher.stripSignatures(raw), 'latin1').digest('hex').slice(0, 16);
@@ -44,9 +45,9 @@ function signaturesDigest(gamePath) {
 
 /**
  * What build of the game is on disk right now, as one comparable string.
- * @returns {string|null} null when there is no game to read (no path set, folder gone)
+ * @returns null when there is no game to read (no path set, folder gone)
  */
-function gameStamp(gamePath) {
+export function gameStamp(gamePath: string | null | undefined): string | null {
   if (!gamePath) return null;
   const version = clientVersion(gamePath);
   const digest = signaturesDigest(gamePath);
@@ -67,35 +68,35 @@ function gameStamp(gamePath) {
  * off): is it? When it has gone, that is reported once, and not again until it is back, so the
  * repair it starts cannot wake the watcher up in a loop.
  */
-function searchPathGone(gamePath) {
+function searchPathGone(gamePath: string): boolean {
   try { return !fs.readFileSync(patcher.paths(gamePath).branch, 'latin1').includes(patcher.MARKER); } catch { return false; }
 }
 
 /**
- * @param {object} deps
- * @param {() => string|null} deps.getGamePath
- * @param {(evt: {from: string|null, to: string, reason?: string}) => void} deps.onPatch
- * @param {() => boolean} [deps.expectsPatch] whether the app's search path should be in the game (safe mode off)
- * @param {(msg: string) => void} [deps.log]
- * @param {number} [deps.debounceMs] shortened by tests, which cannot wait out a real patch
+ * Watches the game folder and says when Dota was patched, or its files checked, while the app is open.
+ * @param deps.expectsPatch whether the app's search path should be in the game (safe mode off)
+ * @param deps.debounceMs shortened by tests, which cannot wait out a real patch
  */
-function createPatchWatcher({ getGamePath, onPatch, expectsPatch = () => false, log = () => {}, debounceMs = DEBOUNCE_MS }) {
-  let handles = [];
-  let debounce = null;
-  let rearm = null;
-  let known = null;
+export function createPatchWatcher({ getGamePath, onPatch, expectsPatch = () => false, log = () => {}, debounceMs = DEBOUNCE_MS }: {
+  getGamePath: () => string | null; onPatch: (evt: { from: string | null; to: string; reason?: string }) => void;
+  expectsPatch?: () => boolean; log?: (msg: string) => void; debounceMs?: number;
+}) {
+  let handles: fs.FSWatcher[] = [];
+  let debounce: NodeJS.Timeout | undefined;
+  let rearm: NodeJS.Timeout | null = null;
+  let known: string | null = null;
   let running = false;
   let goneReported = false;
 
-  function look() {
+  function look(): void {
     const game = getGamePath();
     const stamp = gameStamp(game);
-    const gone = Boolean(stamp) && expectsPatch() && searchPathGone(game);
+    const gone = Boolean(stamp) && !!game && expectsPatch() && searchPathGone(game);
     if (!gone) goneReported = false;
     if (stamp && stamp === known && gone && !goneReported) {
       goneReported = true;
       log('the search path is gone at the same build: Steam checked the game\'s files');
-      try { onPatch({ from: known, to: stamp, reason: 'files-restored' }); } catch (err) { log('patch handler failed: ' + err.message); }
+      try { onPatch({ from: known, to: stamp, reason: 'files-restored' }); } catch (err) { log('patch handler failed: ' + (err as Error).message); }
       return;
     }
     if (!stamp || stamp === known) return;
@@ -104,10 +105,10 @@ function createPatchWatcher({ getGamePath, onPatch, expectsPatch = () => false, 
     // repair after it fails: retrying a failed repair is the caller's business, not ours.
     known = stamp;
     log(`game changed: ${from || 'unknown'} -> ${stamp}`);
-    try { onPatch({ from, to: stamp }); } catch (err) { log('patch handler failed: ' + err.message); }
+    try { onPatch({ from, to: stamp }); } catch (err) { log('patch handler failed: ' + (err as Error).message); }
   }
 
-  function ping() {
+  function ping(): void {
     clearTimeout(debounce);
     debounce = setTimeout(look, debounceMs);
   }
@@ -126,11 +127,11 @@ function createPatchWatcher({ getGamePath, onPatch, expectsPatch = () => false, 
    * is an 8.3 short path. A player's game folder reached through a short path or a junction is
    * the same shape of input, and one line here removes the whole class.
    */
-  const canonical = (dir) => {
+  const canonical = (dir: string): string => {
     try { return fs.realpathSync.native(dir); } catch { return dir; }
   };
 
-  function watchDir(rawDir) {
+  function watchDir(rawDir: string): void {
     if (!fs.existsSync(rawDir)) return;
     const dir = canonical(rawDir);
     try {
@@ -143,14 +144,14 @@ function createPatchWatcher({ getGamePath, onPatch, expectsPatch = () => false, 
       });
       handles.push(h);
     } catch (err) {
-      log(`cannot watch ${dir}: ${err.message}`);
+      log(`cannot watch ${dir}: ${(err as Error).message}`);
     }
   }
 
   // Watching the two directories rather than the two files: Steam replaces a file instead
   // of writing into it, and a watch set on the old inode goes quiet at exactly the moment
   // it matters. The extra events from neighbouring files cost one debounced stat.
-  function arm() {
+  function arm(): void {
     const game = getGamePath();
     if (!game) return;
     for (const h of handles) { try { h.close(); } catch { /* already gone */ } }
@@ -160,24 +161,24 @@ function createPatchWatcher({ getGamePath, onPatch, expectsPatch = () => false, 
   }
 
   return {
-    /** @param {string|null} stamp what the caller already knows to be current */
-    start(stamp) {
+    /** @param stamp what the caller already knows to be current */
+    start(stamp?: string | null): void {
       if (running) return;
       running = true;
       known = stamp || gameStamp(getGamePath());
       arm();
       log(`watching for Dota patches, current build ${known || 'unknown'}`);
     },
-    stop() {
+    stop(): void {
       running = false;
       clearTimeout(debounce);
-      clearTimeout(rearm);
+      if (rearm) clearTimeout(rearm);
       rearm = null;
       for (const h of handles) { try { h.close(); } catch { /* already gone */ } }
       handles = [];
     },
     /** The game path changed under us (found, or picked by hand): watch the new one. */
-    rearm() {
+    rearm(): void {
       if (!running) return;
       known = gameStamp(getGamePath());
       arm();
@@ -190,4 +191,3 @@ function createPatchWatcher({ getGamePath, onPatch, expectsPatch = () => false, 
   };
 }
 
-module.exports = { gameStamp, clientVersion, createPatchWatcher, DEBOUNCE_MS };

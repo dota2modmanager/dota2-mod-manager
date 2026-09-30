@@ -146,7 +146,7 @@ export class Library {
   }
 
   /* What a preset remembers about one mod: the same self-contained identity that already
-   * travels inside a .d2mm (see src/preset-share.js), so what is stored and what is shared
+   * travels inside a .d2mm (see src/preset-share.ts), so what is stored and what is shared
    * say the same thing. Not an id - an id belongs to one installation of one mod on one
    * machine, and a build outlives both. */
   static identityOf(rec: ModLike): ModIdentity {

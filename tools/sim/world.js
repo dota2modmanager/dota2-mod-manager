@@ -10,7 +10,7 @@
  *
  * Steam. An update bumps ClientVersion in dota/steam.inf and puts Valve's own branch file and
  * signature list back; the check of the game's files ("Verify integrity") puts the same two files
- * back without touching the version. The app's patch watcher (src/patch-watch.js) is what should
+ * back without touching the version. The app's patch watcher (src/patch-watch.ts) is what should
  * notice either one.
  *
  * Everything here writes only inside the game folder it is given, which in a simulation is the

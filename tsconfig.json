@@ -11,7 +11,10 @@
 //     value that could be null. A strict pass over thirty thousand lines written without types
 //     reports hundreds of theoretical nulls and teaches everyone to ignore the tool. Tighten it
 //     when the easy errors are gone, one flag at a time.
-//   module CommonJS, moduleResolution node10 - what the app actually is: require, not import.
+//   module preserve - the app is both now: main.js and the JS modules require, the modules moved
+//     to TypeScript import, and some of those use import.meta. CommonJS rejected the last, and
+//     preserve reads each file the way it is written. Resolution is bundler's, which finds a
+//     require('./x') the way Node does.
 //   resolveJsonModule - src/icons.js reads package.json for the version, which is real.
 //   allowImportingTsExtensions - the modules already moved to TypeScript are required by their
 //     .ts name, which is how Node finds them. Their own checking is src/tsconfig.json, strict.
@@ -28,8 +31,8 @@
     "checkJs": true,
     "noEmit": true,
     "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "node10",
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "esModuleInterop": true,

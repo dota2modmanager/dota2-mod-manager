@@ -19,17 +19,30 @@
 //     got a 404, and the pins below were used anyway. A channel that never carried anything is
 //     not a rollback plan, and an unsigned file that can redirect a fifty megabyte download is
 //     not one worth building. Removed 2026-09-16; a new tool version travels with a release.
-const fs = require('fs');
-const path = require('path');
-const { downloadFile } = require('./net.ts');
-const { openZip } = require('./safe-zip.ts');
-const { FileTx } = require('./file-tx.ts');
+import fs from 'node:fs';
+import path from 'node:path';
+import { downloadFile } from './net.ts';
+import { openZip } from './safe-zip.ts';
+import { FileTx } from './file-tx.ts';
 
-// The only pins there are: what the app was built knowing.
+/** A tool pinned to a version, a URL, and the digest those bytes have to hash to. */
+export interface Pin { version: string; url: string; sha256: string; bytes: number; exe: string; license: string; project: string }
+
+/** What installed.json records for a tool on disk. */
+type Installed = { version: string; exe: string; sha256: string; at: number };
+
+/** How a download is going, for the bar at the bottom of the window. */
+export type ToolProgress =
+  | { type: 'stage'; label: string; stage: string }
+  | { type: 'download'; label: string; loaded: number; total: number }
+  | { type: 'done'; label: string }
+  | { type: 'error'; label: string; message: string };
+
+/** The only pins there are: what the app was built knowing. */
 // Measured again 2026-09-07 for 20.0: the digest comes from GitHub's own release API and was
 // confirmed by downloading the file and hashing it, and the archive was opened to check the
 // executable is at its root under the name below.
-const BUILT_IN_PINS = {
+export const BUILT_IN_PINS: Record<string, Pin> = {
   vrf: {
     version: '20.0',
     url: 'https://github.com/ValveResourceFormat/ValveResourceFormat/releases/download/20.0/cli-windows-x64.zip',
@@ -41,7 +54,8 @@ const BUILT_IN_PINS = {
   },
 };
 
-const TOOL_NAMES = Object.keys(BUILT_IN_PINS);
+/** Every tool the app knows how to fetch. */
+export const TOOL_NAMES: readonly string[] = Object.keys(BUILT_IN_PINS);
 
 /* A copy of the pinned archive in this project's own bucket.
  *
@@ -53,9 +67,9 @@ const TOOL_NAMES = Object.keys(BUILT_IN_PINS);
  * travelling with the URL, so whoever hands the bytes over cannot also decide what they should
  * hash to. The address is written here for the same reason the owner allowlist below is.
  */
-const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/';
+export const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/';
 /** Where the copy of a pinned archive lives, keyed by the tool and the version pinned to it. */
-const fallbackUrl = (name, version) => `${FALLBACK_BASE}${name}-${version}.zip`;
+export const fallbackUrl = (name: string, version: string): string => `${FALLBACK_BASE}${name}-${version}.zip`;
 
 /* Whose releases a pin may point at.
  *
@@ -73,39 +87,38 @@ const fallbackUrl = (name, version) => `${FALLBACK_BASE}${name}-${version}.zip`;
  * Both are listed rather than the redirect being trusted. A redirect is a promise GitHub makes
  * today; the point of this list is that the owner is decided here.
  */
-const PIN_REPOS = {
+const PIN_REPOS: Record<string, string[]> = {
   vrf: ['ValveResourceFormat/ValveResourceFormat', 'SteamDatabase/ValveResourceFormat'],
 };
 
-function validPin(pin, name) {
-  const repos = PIN_REPOS[name] || [];
+/** Whether a pin names a version, an executable, a digest, and a release of an owner listed above. */
+export function validPin(pin: unknown, name: string | null | undefined): boolean {
+  const repos = (name && PIN_REPOS[name]) || [];
   const from = repos.length
     && new RegExp(`^https://github\\.com/(?:${repos.join('|')})/releases/download/`, 'i');
-  return !!(pin && typeof pin === 'object' && from
-    && typeof pin.version === 'string' && pin.version
-    && typeof pin.exe === 'string' && pin.exe && !pin.exe.includes('/') && !pin.exe.includes('\\')
-    && typeof pin.sha256 === 'string' && /^[a-f0-9]{64}$/i.test(pin.sha256)
-    && typeof pin.url === 'string' && from.test(pin.url));
+  if (!pin || typeof pin !== 'object' || !from) return false;
+  const p = pin as Record<string, unknown>;
+  return !!(typeof p.version === 'string' && p.version
+    && typeof p.exe === 'string' && p.exe && !p.exe.includes('/') && !p.exe.includes('\\')
+    && typeof p.sha256 === 'string' && /^[a-f0-9]{64}$/i.test(p.sha256)
+    && typeof p.url === 'string' && from.test(p.url));
 }
 
-/**
- * @param {object} deps
- * @param {string} deps.userDataDir
- * @param {(evt: object) => void} [deps.onProgress]
- * @param {(msg: string) => void} [deps.log]
- */
-function createToolchain({ userDataDir, onProgress = () => {}, log = () => {} }) {
+/** The tools in userData: what is there, fetching one at its pin, and deleting it again. */
+export function createToolchain({ userDataDir, onProgress = () => {}, log = () => {} }: {
+  userDataDir: string; onProgress?: (evt: ToolProgress) => void; log?: (msg: string) => void;
+}) {
   const root = path.join(userDataDir, 'toolchain');
   const pins = BUILT_IN_PINS;
 
-  const dirFor = (name, version) => path.join(root, name, version);
+  const dirFor = (name: string, version: string) => path.join(root, name, version);
   const stateFile = path.join(root, 'installed.json');
 
-  function installed() {
+  function installed(): Record<string, Installed> {
     try { return JSON.parse(fs.readFileSync(stateFile, 'utf-8')); } catch { return {}; }
   }
 
-  function remember(name, entry) {
+  function remember(name: string, entry: Installed | null): void {
     const all = installed();
     if (entry) all[name] = entry; else delete all[name];
     fs.mkdirSync(root, { recursive: true });
@@ -113,7 +126,7 @@ function createToolchain({ userDataDir, onProgress = () => {}, log = () => {} })
   }
 
   /** Where this tool's executable sits right now, or null if it is not downloaded. */
-  function pathOf(name) {
+  function pathOf(name: string): string | null {
     const entry = installed()[name];
     if (!entry) return null;
     const exe = path.join(dirFor(name, entry.version), entry.exe);
@@ -122,9 +135,9 @@ function createToolchain({ userDataDir, onProgress = () => {}, log = () => {} })
 
   /**
    * Make sure the tool is here, downloading it if it is not, and hand back the path to run.
-   * @returns {Promise<string>} absolute path of the executable
+   * @returns absolute path of the executable
    */
-  async function ensure(name) {
+  async function ensure(name: string): Promise<string> {
     if (!TOOL_NAMES.includes(name)) throw new Error(`unknown tool ${name}`);
     const pin = pins[name];
     const have = installed()[name];
@@ -143,30 +156,30 @@ function createToolchain({ userDataDir, onProgress = () => {}, log = () => {} })
       onProgress({ type: 'done', label: name });
       return exe;
     } catch (err) {
-      onProgress({ type: 'error', label: name, message: String(err.message || err) });
+      onProgress({ type: 'error', label: name, message: String((err as Error)?.message || err) });
       throw err;
     }
   }
 
-  async function fetchAndUnpack(name, pin) {
+  async function fetchAndUnpack(name: string, pin: Pin): Promise<string> {
     const dest = path.join(root, `${name}-${pin.version}.zip`);
     onProgress({ type: 'stage', label: name, stage: 'download' });
-    const onBytes = (loaded, total) => onProgress({ type: 'download', label: name, loaded, total });
+    const onBytes = (loaded: number, total: number) => onProgress({ type: 'download', label: name, loaded, total });
     let got;
     try {
       got = await downloadFile(pin.url, dest, { expectSha256: pin.sha256, onProgress: onBytes, log });
     } catch (err) {
-      // Every mirror in net.js is GitHub wearing another hostname, so a GitHub outage takes
+      // Every mirror in net.ts is GitHub wearing another hostname, so a GitHub outage takes
       // the whole chain. The bucket is the one copy that does not share its fate.
       const spare = fallbackUrl(name, pin.version);
-      log(`toolchain: ${name} not available from the release (${err.message || err}), trying ${spare}`);
+      log(`toolchain: ${name} not available from the release (${(err as Error)?.message || err}), trying ${spare}`);
       try {
         got = await downloadFile(spare, dest, { expectSha256: pin.sha256, onProgress: onBytes, log });
       } catch (spareErr) {
         /* The first error is the one worth having. If the release handed over bytes that did
          * not match the pin, that is what somebody needs to read - not a 404 from the copy
          * that was asked afterwards, which turns a tampering signal into a routine outage. */
-        log(`toolchain: ${name} not available from the copy either (${spareErr.message || spareErr})`);
+        log(`toolchain: ${name} not available from the copy either (${(spareErr as Error)?.message || spareErr})`);
         throw err;
       }
     }
@@ -217,7 +230,7 @@ function createToolchain({ userDataDir, onProgress = () => {}, log = () => {} })
     });
   }
 
-  function remove(name) {
+  function remove(name: string): void {
     fs.rmSync(path.join(root, name), { recursive: true, force: true });
     remember(name, null);
   }
@@ -225,4 +238,3 @@ function createToolchain({ userDataDir, onProgress = () => {}, log = () => {} })
   return { ensure, pathOf, state, remove, root, TOOL_NAMES };
 }
 
-module.exports = { createToolchain, BUILT_IN_PINS, validPin, TOOL_NAMES, FALLBACK_BASE, fallbackUrl };

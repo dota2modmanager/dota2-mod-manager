@@ -6,32 +6,38 @@
 // against 96 real mods in the ticket. What is tested is that nothing happens without that
 // program, that a cached picture survives the mod moving to another pak slot, and that a mod
 // whose only texture is empty is not decoded again on every scroll.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const crypto = require('crypto');
-const { crc32 } = require('node:zlib');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { crc32 } from 'node:zlib';
 
-const vpk = require('../src/vpk.ts');
-const { entry } = require('./helpers/vpk-entry.ts');
-const { createModPreviews, pickCandidate, worthShowing } = require('../src/mod-preview.js');
+import * as vpk from '../src/vpk.ts';
+import { entry } from './helpers/vpk-entry.ts';
+import { createModPreviews, pickCandidate, worthShowing, type Images } from '../src/mod-preview.ts';
 
-function userDir(t) {
+function userDir(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-mp-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 
 const noTool = { pathOf: () => null };
-const withTool = (exe) => ({ pathOf: () => exe });
+const withTool = (exe: string) => ({ pathOf: () => exe });
+
+/** For the tests where nothing may get as far as decoding: a call here fails the test. */
+const NO_DECODER: Images = {
+  read: () => { throw new Error('nothing should be decoded here'); },
+  toSmallPng: () => { throw new Error('nothing should be resized here'); },
+};
 
 // A picture cache file is named for what is in it, not where it came from.
-const stamp = (inner, crc) => crypto.createHash('sha1').update(`${inner}:${crc}`).digest('hex').slice(0, 16);
+const stamp = (inner: string, crc: number) => crypto.createHash('sha1').update(`${inner}:${crc}`).digest('hex').slice(0, 16);
 
 /** A four-channel picture, alpha last, that `worthShowing` can be handed. */
-function bitmap(width, height, pixel) {
+function bitmap(width: number, height: number, pixel: (x: number, y: number) => number[]) {
   const data = Buffer.alloc(width * height * 4);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -151,7 +157,7 @@ test('too small to look at is refused', () => {
 
 test('without the toolchain there are no pictures and no complaints', async (t) => {
   const previews = createModPreviews({
-    userDataDir: userDir(t), toolchain: noTool, langFileOf: (r) => r, images: {},
+    userDataDir: userDir(t), toolchain: noTool, langFileOf: (r) => r, images: NO_DECODER,
   });
   assert.equal(previews.ready(), false);
   assert.deepEqual(await previews.getMany(['modart:pak54_dir.vpk']), {});
@@ -160,7 +166,7 @@ test('without the toolchain there are no pictures and no complaints', async (t) 
 test('keys that belong to somebody else are left alone', async (t) => {
   const previews = createModPreviews({
     // an executable that would throw if it were ever run: nothing here may reach it
-    userDataDir: userDir(t), toolchain: withTool('C:/nowhere/tool.exe'), langFileOf: (r) => r, images: {},
+    userDataDir: userDir(t), toolchain: withTool('C:/nowhere/tool.exe'), langFileOf: (r) => r, images: NO_DECODER,
   });
   assert.deepEqual(await previews.getMany(['hero:Brewmaster', 'generic:cursor', 'Weather Ash']), {});
 });
@@ -178,7 +184,7 @@ test('a cached picture is found by content, so moving the mod to another slot ke
     userDataDir: dir,
     toolchain: withTool('C:/nowhere/tool.exe'),
     langFileOf: (rel) => path.join(lang, rel),
-    images: {},
+    images: NO_DECODER,
   });
   // the picture the decoder would have produced, already in the cache
   fs.mkdirSync(previews.root, { recursive: true });
@@ -206,7 +212,7 @@ test('a mod already known to have nothing is not looked at twice', async (t) => 
     userDataDir: dir,
     toolchain: withTool('C:/nowhere/tool.exe'),
     langFileOf: (rel) => path.join(lang, rel),
-    images: {},
+    images: NO_DECODER,
   });
   fs.mkdirSync(previews.root, { recursive: true });
   fs.writeFileSync(path.join(previews.root, `${stamp(inner, crc32(Buffer.from('empty texture')) >>> 0)}.none`), '');
@@ -226,11 +232,11 @@ test('a video is handed to the window without the toolchain being involved', asy
   fs.writeFileSync(path.join(lang, 'pak24_dir.vpk'), vpk.buildVpk([entry(inner, body)]));
 
   const previews = createModPreviews({
-    userDataDir: dir, toolchain: noTool, langFileOf: (rel) => path.join(lang, rel), images: {},
+    userDataDir: dir, toolchain: noTool, langFileOf: (rel) => path.join(lang, rel), images: NO_DECODER,
   });
   assert.equal(previews.ready(), false, 'no toolchain here');
   const got = previews.videoBytes('modvid:pak24_dir.vpk');
-  assert.equal(got.bytes.toString(), body);
+  assert.equal(got?.bytes.toString(), body);
   // and a mod without a video is not offered as one
   assert.equal(previews.videoBytes('modart:pak24_dir.vpk'), null, 'only the video key answers');
 });
@@ -256,7 +262,7 @@ test('a frame is kept only if it is worth looking at', async (t) => {
   // a mod whose frame did land keeps it, and it is what getMany answers with from then on
   previews.clear();
   next = bitmap(256, 256, (x, y) => [x % 256, y % 256, 90, 255]);
-  assert.match(previews.saveFrame(key, Buffer.from('a real frame')), /^data:image\/png;base64,/);
+  assert.match(previews.saveFrame(key, Buffer.from('a real frame')) ?? '', /^data:image\/png;base64,/);
   assert.match((await previews.getMany([key]))[key], /^data:image\/png;base64,/);
 });
 
@@ -267,7 +273,7 @@ test('a key is a file in the mod folder and cannot point anywhere else', async (
     userDataDir: dir,
     toolchain: withTool('C:/nowhere/tool.exe'),
     langFileOf: (rel) => { asked = rel; return path.join(dir, rel); },
-    images: {},
+    images: NO_DECODER,
   });
   for (const bad of ['../../../windows/win.ini', '..\\secrets.txt', 'C:/windows/win.ini', '/etc/passwd']) {
     assert.deepEqual(await previews.getMany([`modart:${bad}`]), {});
@@ -283,7 +289,7 @@ test('a key is a file in the mod folder and cannot point anywhere else', async (
 test('a mod whose file is gone is a miss, not a crash', async (t) => {
   const dir = userDir(t);
   const previews = createModPreviews({
-    userDataDir: dir, toolchain: withTool('C:/nowhere/tool.exe'), langFileOf: (rel) => path.join(dir, rel), images: {},
+    userDataDir: dir, toolchain: withTool('C:/nowhere/tool.exe'), langFileOf: (rel) => path.join(dir, rel), images: NO_DECODER,
   });
   assert.deepEqual(await previews.getMany(['modart:pak99_dir.vpk']), {});
   // and neither is a file that is not a VPK at all
@@ -294,7 +300,7 @@ test('a mod whose file is gone is a miss, not a crash', async (t) => {
 test('the cache reports what it holds and clears completely', (t) => {
   const dir = userDir(t);
   const previews = createModPreviews({
-    userDataDir: dir, toolchain: noTool, langFileOf: (r) => r, images: {},
+    userDataDir: dir, toolchain: noTool, langFileOf: (r) => r, images: NO_DECODER,
   });
   fs.mkdirSync(previews.root, { recursive: true });
   fs.writeFileSync(path.join(previews.root, 'abc.png'), Buffer.from('pretend png'));

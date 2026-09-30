@@ -2,16 +2,16 @@
 // it has to be exact in both directions: a real patch must register, and the app's own edit
 // to the signature list must not. Get the second one wrong and the app wakes itself up in a
 // loop, writing into the game folder for no reason at all.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const { gameStamp, clientVersion, createPatchWatcher } = require('../src/patch-watch.js');
-const patcher = require('../src/patcher.ts');
+import { gameStamp, clientVersion, createPatchWatcher } from '../src/patch-watch.ts';
+import * as patcher from '../src/patcher.ts';
 
-const INF = (version) => [
+const INF = (version: string | number) => [
   `ClientVersion=${version}`,
   `ServerVersion=${version}`,
   'ProductName=dota2_workshop',
@@ -28,10 +28,10 @@ const SIGNATURES = [
   'DIGEST:7860EACFC03971A8B84EE97E4DD73DC7EFA7F691FFBB83ED1E8E6',
 ].join('\r\n');
 
-function fakeGame(t, { version = '6888', signatures = SIGNATURES } = {}) {
+function fakeGame(t: TestContext, { version = '6888', signatures = SIGNATURES } = {}) {
   // realpath, because os.tmpdir() on the Windows CI runner is an 8.3 short path
   // (C:\Users\RUNNER~1\...) and fs.watch aborts the process when the events it gets back
-  // do not start with the directory it was given. See canonical() in src/patch-watch.js.
+  // do not start with the directory it was given. See canonical() in src/patch-watch.ts.
   const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-patch-')));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, 'dota'), { recursive: true });
@@ -46,8 +46,8 @@ function fakeGame(t, { version = '6888', signatures = SIGNATURES } = {}) {
   return root;
 }
 
-const setInf = (game, version) => fs.writeFileSync(path.join(game, 'dota', 'steam.inf'), INF(version));
-const setSignatures = (game, text) => fs.writeFileSync(patcher.paths(game).signatures, text);
+const setInf = (game: string, version: string | number) => fs.writeFileSync(path.join(game, 'dota', 'steam.inf'), INF(version));
+const setSignatures = (game: string, text: string) => fs.writeFileSync(patcher.paths(game).signatures, text);
 
 test('the build on disk reads back as one comparable string', (t) => {
   const game = fakeGame(t);
@@ -87,7 +87,7 @@ test('no game, no stamp', () => {
 
 test('a patch that lands while the app is open is reported once', async (t) => {
   const game = fakeGame(t);
-  const seen = [];
+  const seen: { from: string | null; to: string; reason?: string }[] = [];
   const watcher = createPatchWatcher({
     getGamePath: () => game,
     onPatch: (evt) => seen.push(evt),
@@ -109,7 +109,7 @@ test('a patch that lands while the app is open is reported once', async (t) => {
 
 test('touching nothing reports nothing', async (t) => {
   const game = fakeGame(t);
-  const seen = [];
+  const seen: { from: string | null; to: string; reason?: string }[] = [];
   const watcher = createPatchWatcher({ getGamePath: () => game, onPatch: (e) => seen.push(e), debounceMs: 20 });
   t.after(() => watcher.stop());
   watcher.start(gameStamp(game));
@@ -141,7 +141,7 @@ test('a repair that failed does not re-report the same patch', async (t) => {
 /* Steam's check of the game's files puts Valve's branch file and signatures back at the same
    build, and the stamp cannot see it: the simulation's game session found the mods staying off
    for as long as the app stayed open (2026-09-24). */
-const branchWith = (game, ours) => {
+const branchWith = (game: string, ours: boolean) => {
   const file = patcher.paths(game).branch;
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, `"GameInfo"\r\n{\r\n\tFileSystem\r\n\t{\r\n${ours ? `\t\tGame dota_mods // ${patcher.MARKER}\r\n` : ''}\t}\r\n}\r\n`, 'latin1');
@@ -150,7 +150,7 @@ const branchWith = (game, ours) => {
 test('Steam checking the files at the same build is reported once, while the app expects its search path', async (t) => {
   const game = fakeGame(t);
   branchWith(game, true);
-  const seen = [];
+  const seen: { from: string | null; to: string; reason?: string }[] = [];
   const watcher = createPatchWatcher({ getGamePath: () => game, onPatch: (e) => seen.push(e), expectsPatch: () => true, debounceMs: 20 });
   t.after(() => watcher.stop());
   watcher.start(gameStamp(game));
@@ -176,7 +176,7 @@ test('Steam checking the files at the same build is reported once, while the app
 test('with safe mode on, a branch file without our search path is how it should be', async (t) => {
   const game = fakeGame(t);
   branchWith(game, false);
-  const seen = [];
+  const seen: { from: string | null; to: string; reason?: string }[] = [];
   const watcher = createPatchWatcher({ getGamePath: () => game, onPatch: (e) => seen.push(e), expectsPatch: () => false, debounceMs: 20 });
   t.after(() => watcher.stop());
   watcher.start(gameStamp(game));

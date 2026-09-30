@@ -87,13 +87,13 @@
         "src/mod-id.js": {
           "lines": 100
         },
-        "src/mod-preview.js": {
+        "src/mod-preview.ts": {
           "lines": 75.3
         },
         "src/net.ts": {
           "lines": 99.2
         },
-        "src/patch-watch.js": {
+        "src/patch-watch.ts": {
           "lines": 93.9
         },
         "src/patcher.ts": {
@@ -105,7 +105,7 @@
         "src/preset-link.ts": {
           "lines": 100
         },
-        "src/preset-share.js": {
+        "src/preset-share.ts": {
           "lines": 88.7
         },
         "src/presets-service.js": {
@@ -126,7 +126,7 @@
         "src/steam.ts": {
           "lines": 79.7
         },
-        "src/toolchain.js": {
+        "src/toolchain.ts": {
           "lines": 98.1
         },
         "src/vpk.ts": {
@@ -281,16 +281,16 @@
         "src/mod-id.js": {
           "lines": 100
         },
-        "src/mod-preview.js": {
+        "src/mod-preview.ts": {
           "lines": 75.3
         },
         "src/net.ts": {
           "lines": 99.2
         },
-        "src/overlays.js": {
+        "src/overlays.ts": {
           "lines": 99.4
         },
-        "src/patch-watch.js": {
+        "src/patch-watch.ts": {
           "lines": 93.9
         },
         "src/patcher.ts": {
@@ -302,7 +302,7 @@
         "src/preset-link.ts": {
           "lines": 100
         },
-        "src/preset-share.js": {
+        "src/preset-share.ts": {
           "lines": 88.7
         },
         "src/presets-service.js": {
@@ -323,7 +323,7 @@
         "src/steam.ts": {
           "lines": 53.2
         },
-        "src/toolchain.js": {
+        "src/toolchain.ts": {
           "lines": 98.1
         },
         "src/vpk.ts": {

@@ -34,14 +34,14 @@ const { createSchemaService } = require('./src/schema-service');
 const { createRemoteConfig } = require('./src/remote-config.ts');
 // the download chain, so a mirror named in that signed file joins it (electron's own `net` is above)
 const { applyMirrors } = require('./src/net.ts');
-const { createToolchain } = require('./src/toolchain');
+const { createToolchain } = require('./src/toolchain.ts');
 const { createGameIcons } = require('./src/game-icons');
-const { createModPreviews } = require('./src/mod-preview');
+const { createModPreviews } = require('./src/mod-preview.ts');
 const { createModIdentity } = require('./src/mod-id');
 const portableUpdater = require('./src/portable-update.ts');
 const { createUpdater } = require('./src/updater.ts');
 const { channelFor } = require('./src/beta.ts');
-const { gameStamp, createPatchWatcher } = require('./src/patch-watch');
+const { gameStamp, createPatchWatcher } = require('./src/patch-watch.ts');
 const { Icons } = require('./src/icons');
 const gamelang = require('./src/gamelang.ts');
 // handed to src/ipc-settings.js by name, the same one it has always been passed under

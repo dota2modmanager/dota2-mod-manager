@@ -34,7 +34,7 @@ export interface LibRecord {
   [key: string]: unknown;
 }
 
-/** A mod as a preset remembers it: what it is, not which installation of it (src/preset-share.js). */
+/** A mod as a preset remembers it: what it is, not which installation of it (src/preset-share.ts). */
 export interface ModIdentity {
   categoryId: string;
   name: string;

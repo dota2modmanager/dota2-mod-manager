@@ -26,7 +26,7 @@ export interface StoredSettings {
   seenNotices?: string[];
   /** which layout of the load order this install was moved to, once (src/slot-zones.js) */
   slotZones?: number;
-  /** the build of the game last seen on disk (src/patch-watch.js gameStamp) */
+  /** the build of the game last seen on disk (src/patch-watch.ts gameStamp) */
   gameStamp?: string | null;
 }
 

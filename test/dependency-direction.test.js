@@ -35,7 +35,7 @@ const ELECTRON_USERS = [
   'src/ipc-presets.js',
   'src/ipc-settings.js',
   'src/ipc-window.js',
-  'src/mod-preview.js',
+  'src/mod-preview.ts',
   'src/presets-service.js',
   'src/uninstall-window.js',
 ];

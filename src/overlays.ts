@@ -19,43 +19,51 @@
  * Moved out of src/installer.js on 2026-09-17; test/installer.test.js and test/cursors.test.ts
  * cover it through the installer.
  */
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const AdmZip = require('adm-zip');
-const { openZip, safeJoin } = require('./safe-zip.ts');
-const { copyInto, writeInto } = require('./file-tx.ts');
-const { t } = require('./i18n.ts');
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import AdmZip from 'adm-zip';
+import { openZip, safeJoin } from './safe-zip.ts';
+import { copyInto, writeInto, type Writer } from './file-tx.ts';
+import { t } from './i18n.ts';
+import type { LibFile, LibRecord } from './types.ts';
+
+/** The two game folders loose files go into. */
+type Root = 'fonts' | 'cursor';
 
 /** Where font mods go, under the game folder. */
-const FONTS_SUBDIR = ['dota', 'panorama', 'fonts'];
+export const FONTS_SUBDIR: readonly string[] = ['dota', 'panorama', 'fonts'];
 /** Where cursor sets go, under the game folder. */
-const CURSOR_SUBDIR = ['dota', 'resource', 'cursor'];
+export const CURSOR_SUBDIR: readonly string[] = ['dota', 'resource', 'cursor'];
 const WRITTEN = 'written.json';
 
-const sha1 = (buf) => crypto.createHash('sha1').update(buf).digest('hex');
+const sha1 = (buf: Buffer) => crypto.createHash('sha1').update(buf).digest('hex');
 // Windows compares names without case, and a font mod names Radiance-Light.otf what Valve ships
 // as radiance-light.otf
-const writtenKey = (root, relPath) => `${root}/${String(relPath).replace(/\\/g, '/').toLowerCase()}`;
+const writtenKey = (root: string, relPath: string) => `${root}/${String(relPath).replace(/\\/g, '/').toLowerCase()}`;
 
 /** The font and cursor files of one install: writing them, keeping the originals, putting them back. */
-class Overlays {
+export class Overlays {
+  getGamePath: () => string | null;
+  backupsDir: string;
+  cursorsDir: string;
+  cachedArchive: (categoryId: string, fileRef: string | null | undefined) => string | null;
+
   /**
-   * @param {object} opts
-   * @param {() => string|null} opts.getGamePath
-   * @param {string} opts.backupsDir   the game's own copies, under fonts\ and cursor\
-   * @param {string} opts.cursorsDir   one copy of each installed cursor set, by record id
-   * @param {(categoryId: string, fileRef: string) => string|null} opts.cachedArchive
+   * @param opts.backupsDir   the game's own copies, under fonts\ and cursor\
+   * @param opts.cursorsDir   one copy of each installed cursor set, by record id
    */
-  constructor({ getGamePath, backupsDir, cursorsDir, cachedArchive }) {
+  constructor({ getGamePath, backupsDir, cursorsDir, cachedArchive }: {
+    getGamePath: () => string | null; backupsDir: string; cursorsDir: string;
+    cachedArchive: (categoryId: string, fileRef: string | null | undefined) => string | null;
+  }) {
     this.getGamePath = getGamePath;
     this.backupsDir = backupsDir;
     this.cursorsDir = cursorsDir;
     this.cachedArchive = cachedArchive;
   }
 
-  /** @param {'fonts'|'cursor'} root */
-  liveDir(root) {
+  liveDir(root: Root): string {
     const game = this.getGamePath();
     if (!game) throw new Error(t('Путь к Dota 2 не задан'));
     return path.join(game, ...(root === 'fonts' ? FONTS_SUBDIR : CURSOR_SUBDIR));
@@ -63,16 +71,15 @@ class Overlays {
 
   // ---------- what this app wrote ----------
 
-  /** @returns {Record<string, string>} sha1 of the last write, by "root/relpath" */
-  written() {
+  /** sha1 of the last write, by "root/relpath" */
+  written(): Record<string, string> {
     try { return JSON.parse(fs.readFileSync(path.join(this.backupsDir, WRITTEN), 'utf-8')); } catch { return {}; }
   }
 
   /**
-   * @param {string} root
-   * @param {Array<[string, string|null]>} entries  relPath and the sha1 written there; null forgets it
+   * @param entries  relPath and the sha1 written there; null forgets it
    */
-  noteWritten(root, entries) {
+  noteWritten(root: string, entries: [string, string | null][]): void {
     if (!entries.length) return;
     const map = this.written();
     for (const [relPath, hash] of entries) {
@@ -86,9 +93,9 @@ class Overlays {
   }
 
   /** Forget the writes behind these file records, once their files are gone or Valve's again. */
-  forgetWritten(files) {
+  forgetWritten(files: LibFile[] | null | undefined): void {
     for (const root of ['fonts', 'cursor']) {
-      this.noteWritten(root, (files || []).filter((f) => f.root === root).map((f) => [f.relPath, null]));
+      this.noteWritten(root, (files || []).filter((f) => f.root === root).map((f): [string, null] => [f.relPath, null]));
     }
   }
 
@@ -97,7 +104,7 @@ class Overlays {
    * app wrote there earlier is not the game's: a reinstall, and the repair after a verify, meet
    * their own write and used to keep it as the original.
    */
-  keepOriginal(destAbs, backupAbs, mine) {
+  keepOriginal(destAbs: string, backupAbs: string, mine: string | undefined): void {
     if (!fs.existsSync(destAbs) || fs.existsSync(backupAbs)) return;
     if (mine && sha1(fs.readFileSync(destAbs)) === mine) return;
     copyInto(destAbs, backupAbs);
@@ -107,17 +114,15 @@ class Overlays {
 
   /**
    * The files of one archive that match `pattern`, written over the game's folder for `root`.
-   * @returns {Array<{root: string, relPath: string}>}
    */
-  installLoose(root, localZip, modName, pattern, tx) {
+  installLoose(root: Root, localZip: string | Buffer, modName: string, pattern: RegExp, tx: Writer): LibFile[] {
     const target = this.liveDir(root);
     fs.mkdirSync(target, { recursive: true });
     const archive = openZip(localZip, { label: modName });
     const backupRoot = path.join(this.backupsDir, root);
     const before = this.written();
-    const records = [];
-    /** @type {Array<[string, string]>} */
-    const hashes = [];
+    const records: LibFile[] = [];
+    const hashes: [string, string][] = [];
     for (const file of archive.files) {
       const m = file.path.match(pattern);
       if (!m) continue;
@@ -135,14 +140,14 @@ class Overlays {
 
   // A font archive has <Name>/assets/custom (the mod) and <Name>/assets/default (Valve's files).
   // The custom files go to game\dota\panorama\fonts.
-  installFonts(localZip, modName, tx = null) {
+  installFonts(localZip: string | Buffer, modName: string, tx: Writer = null): LibFile[] {
     const records = this.installLoose('fonts', localZip, modName, /assets\/custom\/(.+)$/i, tx);
     if (!records.length) throw new Error(t('{0}: в архиве не найдено assets/custom', modName));
     return records;
   }
 
   // A cursor archive has <Name>/cursor/*, which goes to game\dota\resource\cursor.
-  installCursor(localZip, modName, tx = null) {
+  installCursor(localZip: string | Buffer, modName: string, tx: Writer = null): LibFile[] {
     const records = this.installLoose('cursor', localZip, modName, /(?:^|\/)cursor\/(.+)$/i, tx);
     if (!records.length) throw new Error(t('{0}: в архиве не найдена папка cursor', modName));
     return records;
@@ -158,18 +163,18 @@ class Overlays {
    * on/off means: write those files over the vanilla ones, or put the vanilla ones back.
    */
 
-  cursorStoreDir(recId) {
+  cursorStoreDir(recId: string): string {
     return path.join(this.cursorsDir, String(recId).replace(/[^A-Za-z0-9_-]/g, ''));
   }
 
-  cursorFiles(files) {
+  cursorFiles(files: LibFile[] | null | undefined): LibFile[] {
     return (files || []).filter((f) => f.root === 'cursor');
   }
 
   // Keep a copy of the set that is live right now. Only ever call this for the record that
   // actually owns what is on disk (the one being installed, adopted, or switched off) -
   // otherwise the copy would be some other mod's cursor.
-  ensureCursorStore(recId, files) {
+  ensureCursorStore(recId: string | null | undefined, files: LibFile[] | null | undefined): boolean {
     const own = this.cursorFiles(files);
     if (!recId || !own.length) return false;
     const store = this.cursorStoreDir(recId);
@@ -188,12 +193,11 @@ class Overlays {
   }
 
   // write the set over the game's cursor folder (vanilla files backed up once)
-  deployCursor(recId, files) {
+  deployCursor(recId: string, files: LibFile[] | null | undefined): number {
     const store = this.cursorStoreDir(recId);
     const live = this.liveDir('cursor');
     const backupRoot = path.join(this.backupsDir, 'cursor');
-    /** @type {Array<[string, string]>} */
-    const hashes = [];
+    const hashes: [string, string][] = [];
     for (const f of this.cursorFiles(files)) {
       const src = path.join(store, f.relPath);
       if (!fs.existsSync(src)) continue;
@@ -213,7 +217,7 @@ class Overlays {
   }
 
   // put the vanilla cursor back (or drop the file, if the set added one Valve has no copy of)
-  undeployCursor(recId, files) {
+  undeployCursor(recId: string, files: LibFile[] | null | undefined): void {
     this.ensureCursorStore(recId, files);
     const live = this.liveDir('cursor');
     const backupRoot = path.join(this.backupsDir, 'cursor');
@@ -228,7 +232,7 @@ class Overlays {
 
   // Pack the set back into the layout the catalog ships cursors in (<Name>/cursor/<file>),
   // so it can be handed to someone else or kept as a backup.
-  cursorZip(rec) {
+  cursorZip(rec: Pick<LibRecord, 'id' | 'name' | 'files'>): Buffer {
     const store = this.cursorStoreDir(rec.id);
     const live = this.liveDir('cursor');
     const folder = (rec.name || 'cursor').replace(/[<>:"/\\|?*]/g, '_');
@@ -244,21 +248,21 @@ class Overlays {
     return zip.toBuffer();
   }
 
-  dropCursorStore(recId) {
+  dropCursorStore(recId: string | null | undefined): void {
     if (!recId) return;
     try { fs.rmSync(this.cursorStoreDir(recId), { recursive: true, force: true }); } catch { /* ignore */ }
   }
 
   // basename -> sha1 of every file currently in panorama\fonts, for font subset matching
-  fontFolderHashes() {
+  fontFolderHashes(): Record<string, string> | null {
     const game = this.getGamePath();
     if (!game) return null;
     const dir = this.liveDir('fonts');
     if (!fs.existsSync(dir)) return null;
-    const out = {};
+    const out: Record<string, string> = {};
     // the entry's type comes with the listing, so nothing is looked at twice (CodeQL
     // js/file-system-race flagged a stat followed by a read of the same path)
-    const walk = (d) => {
+    const walk = (d: string): void => {
       for (const e of fs.readdirSync(d, { withFileTypes: true })) {
         const full = path.join(d, e.name);
         if (e.isDirectory()) walk(full);
@@ -275,10 +279,8 @@ class Overlays {
    * Did the game take this file back? A file that is gone did. A file with no kept original is
    * one Valve does not ship, and a verify leaves those alone. Otherwise the game's copy is back
    * when the file matches the kept original, and is not what this app last wrote there.
-   * @param {{root: string, relPath: string}} f
-   * @param {Record<string, string>} [written]
    */
-  vanillaIsBack(f, written = this.written()) {
+  vanillaIsBack(f: LibFile, written: Record<string, string> = this.written()): boolean {
     if (f.root !== 'fonts' && f.root !== 'cursor') return false;
     const deployed = path.join(this.liveDir(f.root), f.relPath);
     if (!fs.existsSync(deployed)) return true;
@@ -295,7 +297,7 @@ class Overlays {
   }
 
   /** Installed records whose files the game has taken back. */
-  lostToVerify(records) {
+  lostToVerify(records: LibRecord[] | null | undefined): LibRecord[] {
     if (!this.getGamePath()) return [];
     const written = this.written();
     return (records || []).filter((rec) => rec.enabled !== false
@@ -307,9 +309,9 @@ class Overlays {
    * a font has to come from the archive it arrived in, and if the download cache has been
    * cleared there is nothing here to restore from - that one needs the network, which is
    * not something to start behind the user's back at launch.
-   * @returns {'store'|'cache'|null} where it came from, or null if it could not be done
+   * @returns where it came from, or null if it could not be done
    */
-  restoreDeployed(rec) {
+  restoreDeployed(rec: LibRecord): 'store' | 'cache' | null {
     const isCursor = (rec.files || []).some((f) => f.root === 'cursor');
     if (isCursor && this.cursorFiles(rec.files).length && fs.existsSync(this.cursorStoreDir(rec.id))) {
       this.deployCursor(rec.id, rec.files);
@@ -323,4 +325,3 @@ class Overlays {
   }
 }
 
-module.exports = { Overlays, FONTS_SUBDIR, CURSOR_SUBDIR };
