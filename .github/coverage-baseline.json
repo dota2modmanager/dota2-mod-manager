@@ -27,7 +27,7 @@
         "src/diagnostics.js": {
           "lines": 72.4
         },
-        "src/feature-gate.js": {
+        "src/feature-gate.ts": {
           "lines": 100
         },
         "src/file-tx.ts": {
@@ -42,7 +42,7 @@
         "src/gamelang.js": {
           "lines": 98.5
         },
-        "src/i18n.js": {
+        "src/i18n.ts": {
           "lines": 96.8
         },
         "src/import.js": {
@@ -90,7 +90,7 @@
         "src/mod-preview.js": {
           "lines": 75.3
         },
-        "src/net.js": {
+        "src/net.ts": {
           "lines": 99.2
         },
         "src/patch-watch.js": {
@@ -221,7 +221,7 @@
         "src/diagnostics.js": {
           "lines": 72.4
         },
-        "src/feature-gate.js": {
+        "src/feature-gate.ts": {
           "lines": 100
         },
         "src/file-tx.ts": {
@@ -236,7 +236,7 @@
         "src/gamelang.js": {
           "lines": 99.4
         },
-        "src/i18n.js": {
+        "src/i18n.ts": {
           "lines": 96.8
         },
         "src/import.js": {
@@ -284,7 +284,7 @@
         "src/mod-preview.js": {
           "lines": 75.3
         },
-        "src/net.js": {
+        "src/net.ts": {
           "lines": 99.2
         },
         "src/overlays.js": {

@@ -9,9 +9,9 @@
 // Everything here is best-effort by design: Discord not running, a user who closed it
 // mid-session, a rejected payload — none of it may disturb the app. The worst outcome
 // allowed is "no status shown".
-const net = require('net');
-const path = require('path');
-const os = require('os');
+import net from 'node:net';
+import path from 'node:path';
+import os from 'node:os';
 
 const OP_HANDSHAKE = 0;
 const OP_FRAME = 1;
@@ -26,14 +26,14 @@ const MAX_PIPE = 10;          // discord-ipc-0 … discord-ipc-9
 // Discord listens on the first free slot, so the client may sit on any of them.
 // MM_DISCORD_PIPE pins a single path instead — for testing against a stand-in socket
 // without touching the Discord the developer actually has running.
-function socketPath(i) {
+function socketPath(i: number): string {
   if (process.env.MM_DISCORD_PIPE) return process.env.MM_DISCORD_PIPE;
   if (process.platform === 'win32') return `\\\\?\\pipe\\discord-ipc-${i}`;
   const base = process.env.XDG_RUNTIME_DIR || process.env.TMPDIR || os.tmpdir();
   return path.join(base, `discord-ipc-${i}`);
 }
 
-function encode(op, data) {
+function encode(op: number, data: unknown): Buffer {
   const json = Buffer.from(JSON.stringify(data), 'utf-8');
   const head = Buffer.alloc(8);
   head.writeInt32LE(op, 0);
@@ -41,42 +41,63 @@ function encode(op, data) {
   return Buffer.concat([head, json]);
 }
 
-class DiscordPresence {
-  /**
-   * @param {object} opts
-   * @param {string} opts.clientId  Discord application id (public)
-   * @param {(msg: string) => void} [opts.onDiag]
-   */
-  constructor({ clientId, onDiag }) {
+/** What Discord shows: two lines of text and up to two buttons. */
+export interface Activity {
+  details?: string;
+  state?: string;
+  buttons?: { label: string; url: string }[];
+}
+
+/** A frame Discord sends back: an event, and whatever it says about it. */
+interface Frame { evt?: string; data?: unknown; [key: string]: unknown }
+
+export class DiscordPresence {
+  clientId: string;
+  diag: (msg: string) => void;
+  socket: net.Socket | null;
+  ready: boolean;
+  enabled: boolean;
+  buffer: Buffer;
+  /** the latest activity Discord should show */
+  activity: Activity | null;
+  sentAt: number;
+  retryTimer: ReturnType<typeof setTimeout> | null;
+  flushTimer: ReturnType<typeof setTimeout> | null;
+  startedAt: number;
+  /** set if Discord ever rejects a payload carrying buttons */
+  dropButtons: boolean;
+
+  /** @param opts.clientId  Discord application id (public) */
+  constructor({ clientId, onDiag }: { clientId: string; onDiag?: (msg: string) => void }) {
     this.clientId = clientId;
     this.diag = onDiag || (() => {});
     this.socket = null;
     this.ready = false;
     this.enabled = false;
     this.buffer = Buffer.alloc(0);
-    this.activity = null;      // latest activity we want Discord to show
+    this.activity = null;
     this.sentAt = 0;
     this.retryTimer = null;
     this.flushTimer = null;
     this.startedAt = Date.now();
-    this.dropButtons = false;  // set if Discord ever rejects a payload carrying them
+    this.dropButtons = false;
   }
 
-  start() {
+  start(): void {
     if (!this.clientId || this.enabled) return;
     this.enabled = true;
     this.connect(0);
   }
 
-  stop() {
+  stop(): void {
     this.enabled = false;
-    clearTimeout(this.retryTimer);
-    clearTimeout(this.flushTimer);
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+    if (this.flushTimer) clearTimeout(this.flushTimer);
     this.retryTimer = this.flushTimer = null;
     this.teardown();
   }
 
-  teardown() {
+  teardown(): void {
     this.ready = false;
     this.buffer = Buffer.alloc(0);
     if (this.socket) {
@@ -86,13 +107,13 @@ class DiscordPresence {
     }
   }
 
-  retry() {
+  retry(): void {
     if (!this.enabled || this.retryTimer) return;
     this.retryTimer = setTimeout(() => { this.retryTimer = null; this.connect(0); }, RETRY_MS);
   }
 
   // Walk the pipes until one accepts us; if none does, Discord isn't running — try later.
-  connect(index) {
+  connect(index: number): void {
     if (!this.enabled) return;
     if (index >= MAX_PIPE) { this.retry(); return; }
     this.teardown();
@@ -109,13 +130,13 @@ class DiscordPresence {
     });
   }
 
-  onDisconnect() {
+  onDisconnect(): void {
     if (!this.enabled) return;
     this.teardown();
     this.retry();
   }
 
-  onData(chunk) {
+  onData(chunk: Buffer): void {
     this.buffer = Buffer.concat([this.buffer, chunk]);
     for (;;) {
       if (this.buffer.length < 8) return;
@@ -124,13 +145,13 @@ class DiscordPresence {
       if (len < 0 || this.buffer.length < 8 + len) return;
       const body = this.buffer.subarray(8, 8 + len).toString('utf-8');
       this.buffer = this.buffer.subarray(8 + len);
-      let msg = null;
+      let msg: Frame | null = null;
       try { msg = JSON.parse(body); } catch { /* not our business */ }
       this.onFrame(op, msg);
     }
   }
 
-  onFrame(op, msg) {
+  onFrame(op: number, msg: Frame | null): void {
     if (op === OP_PING) { this.socket?.write(encode(OP_PONG, msg)); return; }
     if (op === OP_CLOSE) { this.onDisconnect(); return; }
     if (op !== OP_FRAME || !msg) return;
@@ -151,14 +172,13 @@ class DiscordPresence {
 
   /**
    * What Discord should display. Coalesced: callers may fire this on every view change.
-   * @param {{details?: string, state?: string, buttons?: Array<{label: string, url: string}>}} activity
    */
-  set(activity) {
+  set(activity: Activity): void {
     this.activity = activity;
     this.push();
   }
 
-  push() {
+  push(): void {
     if (!this.ready || !this.socket || !this.activity) return;
     const wait = MIN_UPDATE_MS - (Date.now() - this.sentAt);
     if (wait > 0) {
@@ -170,7 +190,7 @@ class DiscordPresence {
     this.sentAt = Date.now();
 
     const a = this.activity;
-    const activity = {
+    const activity: { type: number; details?: string; state?: string; timestamps: { start: number }; buttons?: Activity['buttons'] } = {
       type: 0, // "Playing"
       details: a.details || undefined,
       state: a.state || undefined,
@@ -192,4 +212,3 @@ class DiscordPresence {
   }
 }
 
-module.exports = { DiscordPresence };

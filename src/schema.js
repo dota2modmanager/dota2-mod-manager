@@ -13,7 +13,7 @@
 const fs = require('fs');
 const path = require('path');
 const { readVpkEntryFile, buildVpk, crc32 } = require('./vpk');
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 
 const SCHEMA_REL = 'scripts/items/items_game.txt';
 // Our folder is registered ahead of "dota", so the first pak in it wins the MOD path.

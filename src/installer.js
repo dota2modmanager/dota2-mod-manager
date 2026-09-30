@@ -24,8 +24,8 @@ const { validateGamePath } = require('./steam.ts');
 const { FileTx, copyInto, writeInto } = require('./file-tx.ts');
 const { Overlays, FONTS_SUBDIR, CURSOR_SUBDIR } = require('./overlays');
 const { RESERVED_PAKS, isMinifyFile, isMinifyPak } = require('./minify');
-const { downloadFile } = require('./net');
-const { t } = require('./i18n');
+const { downloadFile } = require('./net.ts');
+const { t } = require('./i18n.ts');
 
 // The categories that load before the rest, and the slots they get: src/slot-zones.js.
 const zones = require('./slot-zones');

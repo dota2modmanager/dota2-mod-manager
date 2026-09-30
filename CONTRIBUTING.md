@@ -207,7 +207,7 @@ The interface ships in Russian and English. Russian text is the key and English 
 it, so a new string is two edits, not one:
 
 - `renderer/i18n.js` for anything in the window
-- `src/i18n.js` for native dialogs, menus and tray text
+- `src/i18n.ts` for native dialogs, menus and tray text
 
 A string with no English twin falls back to Russian, which means an English speaker sees Cyrillic
 in the middle of their app and nothing crashes to tell anybody. A checker finds those:

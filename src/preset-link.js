@@ -6,7 +6,7 @@
 // Thirty catalog mods land around a thousand characters, which pastes into a Discord
 // message; a .d2mm file stays the answer for anything with imports in it.
 const zlib = require('zlib');
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 
 const SCHEME = 'd2mm';
 /* The clickable wrapper for a d2mm:// link. Chat clients only linkify http(s), so a bare

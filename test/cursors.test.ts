@@ -19,12 +19,10 @@ import installerJs from '../src/installer.js';
 const { Installer } = installerJs;
 import { Library } from '../src/library.ts';
 import { createCursors } from '../src/cursors.ts';
-import type { Settings } from '../src/settings.ts';
+import { settingsWith } from './helpers/settings.ts';
 
 /** A settings store that answers only the game path, which is all the cursors ask it. */
-const gameAt = (game: string | null): Pick<Settings, 'get'> => ({
-  get: ((key: string) => (key === 'dotaGamePath' ? game : null)) as Settings['get'],
-});
+const gameAt = (game: string | null) => settingsWith({ dotaGamePath: game });
 
 const ARROW = 'arrow.ani';
 const VANILLA = 'valve\'s own arrow';

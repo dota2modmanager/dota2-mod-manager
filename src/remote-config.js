@@ -37,7 +37,7 @@
 // checking; this only reads the block and refuses anything that is not shaped like one.
 const fs = require('fs');
 const path = require('path');
-const { fetchText } = require('./net');
+const { fetchText } = require('./net.ts');
 const { verify } = require('./catalog-signature.ts');
 
 const CONFIG_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json';
@@ -170,7 +170,7 @@ function normalize(raw) {
 
   /* Another copy of the archives, named after the app shipped.
    *
-   * The built-in chain (src/net.js) is compiled in, so every new host used to need a release.
+   * The built-in chain (src/net.ts) is compiled in, so every new host used to need a release.
    * What a mirror can do is limited by what a mirror is asked for: the bytes are checked against
    * the hash the catalog publishes, and only the origin is believed when nothing matches, so a
    * host named here can serve a download or fail it and nothing else. https, no credentials and
@@ -267,7 +267,7 @@ function createRemoteConfig({ userDataDir, appVersion, log = () => {}, publicKey
   /** The beta list as the signed file gives it, or null when it says nothing about one. */
   const beta = () => read().beta;
 
-  /** Extra hosts the archives can be fetched from, for src/net.js to put in the chain. */
+  /** Extra hosts the archives can be fetched from, for src/net.ts to put in the chain. */
   const mirrors = () => read().mirrors;
 
   return { refresh, feature, notices, beta, mirrors, url: CONFIG_URL, SWITCHABLE };

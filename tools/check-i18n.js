@@ -198,7 +198,7 @@ function jsFiles(dir, skip) {
 
 const SIDES = [
   { name: 'renderer', dict: 'renderer/i18n.js', calls: ['L', 'tr'], files: jsFiles('renderer', ['renderer/i18n.js']) },
-  { name: 'main', dict: 'src/i18n.js', calls: ['t'], files: ['main.js', ...jsFiles('src', ['src/i18n.js'])] },
+  { name: 'main', dict: 'src/i18n.ts', calls: ['t'], files: ['main.js', ...jsFiles('src', ['src/i18n.ts'])] },
 ];
 
 /* A key written twice in one dictionary.

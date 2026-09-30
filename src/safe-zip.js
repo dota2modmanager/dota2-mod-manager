@@ -15,7 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 const AdmZip = require('adm-zip');
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 
 const MB = 1024 * 1024;
 

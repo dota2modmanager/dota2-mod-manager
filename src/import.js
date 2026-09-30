@@ -21,7 +21,7 @@ const { listVpkPaths, mergeVpkToSingle, findContentRoot, packFolder } = require(
 const { openZip, safeJoin } = require('./safe-zip');
 const { FileTx } = require('./file-tx.ts');
 const { MERGE_SIZE_CAP } = require('./installer');
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 
 // Every .vpk under a dropped folder. Skinchanger packs unzip to a whole game tree
 // (<pack>\game\Dota2SkinChanger\pak01_*.vpk), so the file we want sits a few levels in.

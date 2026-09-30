@@ -21,7 +21,7 @@
 //     not one worth building. Removed 2026-09-16; a new tool version travels with a release.
 const fs = require('fs');
 const path = require('path');
-const { downloadFile } = require('./net');
+const { downloadFile } = require('./net.ts');
 const { openZip } = require('./safe-zip');
 const { FileTx } = require('./file-tx.ts');
 
@@ -45,7 +45,7 @@ const TOOL_NAMES = Object.keys(BUILT_IN_PINS);
 
 /* A copy of the pinned archive in this project's own bucket.
  *
- * The primary URL is a GitHub release, and every mirror src/net.js knows is a proxy standing
+ * The primary URL is a GitHub release, and every mirror src/net.ts knows is a proxy standing
  * in front of GitHub, so all of them go down together. This one does not: tools/r2-toolchain.mjs
  * copies the pinned archive there, byte for byte, after checking it against the same digest.
  *

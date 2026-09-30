@@ -20,7 +20,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { fetchText, downloadFile } = require('./net');
+const { fetchText, downloadFile } = require('./net.ts');
 
 const REPO = 'dota2modmanager/dota2-mod-manager';
 const MANIFEST = 'portable.yml';

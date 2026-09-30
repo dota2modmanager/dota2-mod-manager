@@ -41,7 +41,7 @@ test('the line count it gives for main.js is roughly the line count main.js has'
 test('there are at least as many test files as the table claims', () => {
   // A floor, not a count. It answers "there are 25 test files" without needing an edit every
   // time somebody adds one, which happened three times in a day and failed the build each time.
-  const real = fs.readdirSync(path.join(root, 'test')).filter((f) => f.endsWith('.test.js')).length;
+  const real = fs.readdirSync(path.join(root, 'test')).filter((f) => /\.test\.(js|ts)$/.test(f)).length;
   const claimed = doc.match(/More than (\d+) of them, run on/);
   assert.ok(claimed, 'the corrections table no longer carries a test file count');
   assert.ok(real > Number(claimed[1]), `DECISIONS.md says more than ${claimed[1]} test files, test/ holds ${real}`);

@@ -8,7 +8,7 @@ const os = require('os');
 const path = require('path');
 const http = require('http');
 
-const net = require('../src/net.js');
+const net = require('../src/net.ts');
 const { createRemoteConfig, normalize, cmpVersion, CONFIG_URL } = require('../src/remote-config.js');
 
 function userDir(t, contents) {

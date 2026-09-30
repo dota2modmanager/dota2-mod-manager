@@ -25,7 +25,7 @@ const crypto = require('crypto');
 const AdmZip = require('adm-zip');
 const { openZip, safeJoin } = require('./safe-zip');
 const { copyInto, writeInto } = require('./file-tx.ts');
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 
 /** Where font mods go, under the game folder. */
 const FONTS_SUBDIR = ['dota', 'panorama', 'fonts'];

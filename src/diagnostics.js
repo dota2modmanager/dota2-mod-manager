@@ -9,7 +9,7 @@ const path = require('path');
 const os = require('os');
 const gamelang = require('./gamelang');
 const { validateGamePath } = require('./steam.ts');
-const { mirrorHealth } = require('./net');
+const { mirrorHealth } = require('./net.ts');
 
 // Nothing about a folder listing that matters for troubleshooting needs the file's bytes,
 // only its shape - names, sizes, when they last changed.

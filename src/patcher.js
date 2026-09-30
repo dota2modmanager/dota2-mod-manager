@@ -14,7 +14,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 
 const MARKER = 'Dota 2 Mod Manager';
 // Content folder we register next to the game's own "dota".

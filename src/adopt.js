@@ -16,7 +16,7 @@
  * cursors did: main.js cannot be required by a test, so none of this could be tested where it
  * was, and it decides what a user sees in their library.
  */
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 
 /**
  * @param {object} ctx

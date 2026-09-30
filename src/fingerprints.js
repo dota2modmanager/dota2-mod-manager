@@ -3,7 +3,7 @@
 // catalog mod (see tools/gen-fingerprints.js). Dormant until the map is hosted.
 const fs = require('fs');
 const path = require('path');
-const { fetchText } = require('./net');
+const { fetchText } = require('./net.ts');
 
 const FP_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/fingerprints.json';
 

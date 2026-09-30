@@ -145,7 +145,7 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 | `crypto_keylength` | Met: SHA-256 and Ed25519 | repo src/remote-config.js |
 | `crypto_working` | Met | repo src/remote-config.js |
 | `crypto_weaknesses` | Met | repo src/catalog.js |
-| `crypto_pfs` | Met: every connection is TLS 1.3 or 1.2 with ECDHE, provided by Node and Chromium | repo src/net.js |
+| `crypto_pfs` | Met: every connection is TLS 1.3 or 1.2 with ECDHE, provided by Node and Chromium | repo src/net.ts |
 | `crypto_password_storage` | N/A: the app stores no passwords | repo src/discord-auth.js |
 | `crypto_random` | Met: `crypto.randomBytes` for the OAuth state | repo src/discord-auth.js |
 | `delivery_mitm` | Met: downloads and updates are HTTPS from GitHub releases or the project's own CDN | repo SECURITY.md |

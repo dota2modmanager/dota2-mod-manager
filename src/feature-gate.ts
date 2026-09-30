@@ -13,15 +13,18 @@
  *
  * One definition, handed to whoever needs it, so there is no second copy to leave behind.
  */
-const { t } = require('./i18n');
+import { t } from './i18n.ts';
+import type { Settings } from './settings.ts';
 
-/**
- * @param {object} deps
- * @param {{feature: (name: string, lang: string) => {off: boolean, note?: string}}} deps.remoteConfig
- * @param {{get: (key: string) => any}} deps.settings
- * @returns {(name: string) => {error: string}|null} the answer to send back, or null to carry on
- */
-function createGate({ remoteConfig, settings }) {
+/** What of the remote config this asks: whether a feature is off, and why, in the user's language. */
+export interface FeatureSwitches {
+  feature(name: string, lang: 'ru' | 'en'): { off: boolean; note?: string };
+}
+
+/** @returns the answer to send back, or null to carry on */
+export function createGate({ remoteConfig, settings }: {
+  remoteConfig: FeatureSwitches; settings: Pick<Settings, 'get'>;
+}): (name: string) => { error: string } | null {
   const uiLang = () => (settings.get('uiLang') === 'ru' ? 'ru' : 'en');
   return (name) => {
     const f = remoteConfig.feature(name, uiLang());
@@ -29,4 +32,3 @@ function createGate({ remoteConfig, settings }) {
   };
 }
 
-module.exports = { createGate };

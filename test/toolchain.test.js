@@ -11,7 +11,7 @@ const http = require('http');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
 
-const net = require('../src/net.js');
+const net = require('../src/net.ts');
 const { createToolchain, BUILT_IN_PINS, validPin } = require('../src/toolchain.js');
 
 function userDir(t) {

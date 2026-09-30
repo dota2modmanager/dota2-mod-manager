@@ -21,14 +21,14 @@ the code, not in this page.
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/diagnostics.js`](#srcdiagnosticsjs) | A support report a user can send instead of a round of screenshots: Dota's own path and |
 | [`src/discord-auth.js`](#srcdiscord-authjs) | Sign in with Discord, without a server of our own. |
-| [`src/discord-presence.js`](#srcdiscord-presencejs) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
-| [`src/feature-gate.js`](#srcfeature-gatejs) | Is this feature switched off right now? |
+| [`src/discord-presence.ts`](#srcdiscord-presencets) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
+| [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
 | [`src/file-tx.ts`](#srcfile-txts) | All of it, or none of it. |
 | [`src/fingerprints.js`](#srcfingerprintsjs) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
 | [`src/game-icons.js`](#srcgame-iconsjs) | Item pictures taken from the installed game instead of scraped off a wiki. |
 | [`src/gamelang.js`](#srcgamelangjs) | Which dota_<lang> folder the game actually mounts. |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
-| [`src/i18n.js`](#srci18njs) | Minimal i18n for the main process (main.js, installer.js, vpk.js). |
+| [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (main.js, installer.js, vpk.js). |
 | [`src/icons.js`](#srciconsjs) | Pictures for the cosmetics picker, and for the Library where a picture can be found for |
 | [`src/import.js`](#srcimportjs) | Taking in a mod the user already has: a .vpk, a .zip, a folder, or bytes off a drop. |
 | [`src/installer.js`](#srcinstallerjs) | Installer engine: download, extract, pak allocation, per-category install/uninstall |
@@ -37,7 +37,7 @@ the code, not in this page.
 | [`src/minify.js`](#srcminifyjs) | Living next to Minify. |
 | [`src/mod-id.js`](#srcmod-idjs) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
 | [`src/mod-preview.js`](#srcmod-previewjs) | A picture for a mod that came with none, taken out of the mod itself. |
-| [`src/net.js`](#srcnetjs) | Getting bytes from the internet, on a connection that may not want to cooperate. |
+| [`src/net.ts`](#srcnetts) | Getting bytes from the internet, on a connection that may not want to cooperate. |
 | [`src/notice-text.js`](#srcnotice-textjs) | The game's anti-cheat notice, in words that say what to do. |
 | [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.js puts |
 | [`src/overlays.js`](#srcoverlaysjs) | Fonts and cursors: loose files written over the game's own. |
@@ -58,7 +58,7 @@ the code, not in this page.
 | [`src/toolchain.js`](#srctoolchainjs) | Tools the app can borrow, fetched only when something actually needs them. |
 | [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
-| [`src/updater.js`](#srcupdaterjs) | Where an installed copy looks for a new version, and on which channel. |
+| [`src/updater.ts`](#srcupdaterts) | Where an installed copy looks for a new version, and on which channel. |
 | [`src/vpk.js`](#srcvpkjs) | Minimal reader for the index of Source-engine VPK "_dir" files (v1/v2). |
 | [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
 
@@ -582,7 +582,7 @@ const PORT = 53174
 
 Discord matches redirect URIs exactly, so the port can't be random.
 
-## src/discord-presence.js
+## src/discord-presence.ts
 
 "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket.
 
@@ -596,15 +596,23 @@ Everything here is best-effort by design: Discord not running, a user who closed
 mid-session, a rejected payload — none of it may disturb the app. The worst outcome
 allowed is "no status shown".
 
+### `Activity`
+
+```ts
+export interface Activity
+```
+
+What Discord shows: two lines of text and up to two buttons.
+
 ### `DiscordPresence`
 
-```js
-class DiscordPresence
+```ts
+export class DiscordPresence
 ```
 
 _No description in the source._
 
-## src/feature-gate.js
+## src/feature-gate.ts
 
 Is this feature switched off right now?
 
@@ -621,17 +629,22 @@ the app said nothing - the renderer awaited a promise that rejected, so the butt
 
 One definition, handed to whoever needs it, so there is no second copy to leave behind.
 
+### `FeatureSwitches`
+
+```ts
+export interface FeatureSwitches
+```
+
+What of the remote config this asks: whether a feature is off, and why, in the user's language.
+
 ### `createGate`
 
-```js
-function createGate({ remoteConfig, settings })
+```ts
+export function createGate({ remoteConfig, settings }: { remoteConfig: FeatureSwitches; settings: Pick<Settings, 'get'>; }): (name: string) => { error: string } | null
 ```
 
 ```
-@param {object} deps
-@param {{feature: (name: string, lang: string) => {off: boolean, note?: string}}} deps.remoteConfig
-@param {{get: (key: string) => any}} deps.settings
-@returns {(name: string) => {error: string}|null} the answer to send back, or null to carry on
+@returns the answer to send back, or null to carry on
 ```
 
 ## src/file-tx.ts
@@ -1037,7 +1050,18 @@ Identity of a hero regardless of how the author spelled the folder. Authors mix
 used to count as a separate hero — which turned a single-hero skin into a "bundle of 3"
 and offered to split it into parts that make no sense.
 
-## src/i18n.js
+## src/i18n.ts
+
+Minimal i18n for the main process (main.js, installer.js, vpk.js).
+Russian is the source language; English strings are keyed by the exact Russian text
+(with {0},{1}... placeholders for interpolated values). A missing key falls back to
+the Russian source, so the app never shows an empty/undefined string.
+
+### `Lang`
+
+```ts
+export type Lang = 'en' | 'ru'
+```
 
 Minimal i18n for the main process (main.js, installer.js, vpk.js).
 Russian is the source language; English strings are keyed by the exact Russian text
@@ -1046,24 +1070,24 @@ the Russian source, so the app never shows an empty/undefined string.
 
 ### `setLang`
 
-```js
-function setLang(lang)
+```ts
+export function setLang(lang: unknown): void
 ```
 
 _No description in the source._
 
 ### `getLang`
 
-```js
-function getLang()
+```ts
+export function getLang(): Lang
 ```
 
 _No description in the source._
 
 ### `t`
 
-```js
-function t(ru, ...values)
+```ts
+export function t(ru: string, ...values: unknown[]): string
 ```
 
 t('Мод не найден') or t('HTTP {0} — не удалось скачать {1}', status, name)
@@ -1709,7 +1733,7 @@ const TEX = 'modtex:'
 
 _No description in the source._
 
-## src/net.js
+## src/net.ts
 
 Getting bytes from the internet, on a connection that may not want to cooperate.
 
@@ -1730,24 +1754,16 @@ is the whole reason the chain depends on what is being fetched.
 
 ### `RAW_HOST`
 
-```js
-const RAW_HOST = 'https://raw.githubusercontent.com/'
-```
-
-_No description in the source._
-
-### `DEFAULT_MIRRORS`
-
-```js
-const DEFAULT_MIRRORS = [
+```ts
+export const RAW_HOST = 'https://raw.githubusercontent.com/'
 ```
 
 _No description in the source._
 
 ### `FAIL_THRESHOLD`
 
-```js
-const FAIL_THRESHOLD = 3
+```ts
+export const FAIL_THRESHOLD = 3
 ```
 
 After this many failures a host is stood down, and for this long. A mirror that is down
@@ -1756,16 +1772,157 @@ timeouts before the first byte arrives.
 
 ### `COOLDOWN_MS`
 
-```js
-const COOLDOWN_MS = 120000
+```ts
+export const COOLDOWN_MS = 120000
 ```
 
 _No description in the source._
 
+### `Mirror`
+
+```ts
+export interface Mirror
+```
+
+A host that fetches GitHub for us, and how a URL is written for it; `origin` is the catalog's own.
+
+### `Entry`
+
+```ts
+export interface Entry { url: string; host: string; origin: boolean }
+```
+
+One URL worth trying for a file, and the mirror it came from.
+
+### `FetchOptions`
+
+```ts
+export interface FetchOptions
+```
+
+How a fetch walks the mirrors (see fetchMirrored).
+
+### `Download`
+
+```ts
+export interface Download
+```
+
+A file on disk, and how it got there.
+
+### `DEFAULT_MIRRORS`
+
+```ts
+export const DEFAULT_MIRRORS: readonly Mirror[] = [
+```
+
+_No description in the source._
+
+### `mirrorsFor`
+
+```ts
+export function mirrorsFor(url: string, opts: { small?: boolean; trustedOnly?: boolean } = {}): string[]
+```
+
+Every URL worth trying for this one, best first. A URL that is not on GitHub raw (a mod
+whose catalog entry points somewhere else entirely) has no mirrors - it is itself.
+
+```
+@param opts.small the file is JSON-sized, so size-capped mirrors may be used
+```
+
+### `entriesFor`
+
+```ts
+export function entriesFor(url: string, { small = false, trustedOnly = false }: { small?: boolean; trustedOnly?: boolean } = {}): Entry[]
+```
+
+The same list, each entry still knowing which mirror it came from.
+
+### `fetchMirrored`
+
+```ts
+export async function fetchMirrored(url: string, { small = false, trustedOnly = false, headers = {}, exclude = [], onMirror = () => {}, log = () => {}, }: FetchOptions = {}): Promise<Response>
+```
+
+Fetch, walking the mirrors. Returns the Response of the first mirror that answers.
+
+```
+@param url               the canonical (raw.githubusercontent.com) URL
+@param opts.small        allow size-capped mirrors
+@param opts.trustedOnly  the canonical host and nothing else, for a file that is only ever
+trusted from where it was published
+@param opts.exclude      hosts already tried for this file and found wanting; a mirror that
+answered with the wrong bytes must not be offered again on the retry
+@param opts.onMirror     which mirror is answering, called just before the response is handed back
+```
+
+### `fetchText`
+
+```ts
+export async function fetchText(url: string, opts: FetchOptions = {}): Promise<string>
+```
+
+Text from the first mirror that answers (catalog JSON, fingerprint map).
+
+### `sha256`
+
+```ts
+export const sha256 = (file: string): Promise<string> => new Promise((resolve, reject) => { const hash = crypto.createHash('sha256'); fs.createReadStream(file) .on('data', (chunk) => hash.update(chunk)) .on('error', reject) .on('end', () => resolve(hash.digest('hex'))); })
+```
+
+_No description in the source._
+
+### `downloadFile`
+
+```ts
+export async function downloadFile(url: string, dest: string, { onProgress = () => {}, expectSha256 = null, fromPublishedList = false, log = () => {}, }: { onProgress?: (loaded: number, total: number) => void; expectSha256?: string | null; fromPublishedList?: boolean; log?: (msg: string) => void; } = {}): Promise<Download>
+```
+
+Download to a file, resuming where an interrupted attempt stopped.
+
+The half-finished file is kept as <dest>.part and picked up with a Range request. Every
+mirror measured supports it, and a mod archive is up to 300 MB: starting a 60 MB download
+over because a train went into a tunnel is the difference between a mod and a shrug.
+
+```
+@param opts.expectSha256 what this file should hash to; a mirror handing over
+something else is dropped and the next one is asked
+@param opts.fromPublishedList the expectation above came from a list somebody
+else maintains (the catalog's `mod-hashes.json`, or what this machine saw last time),
+rather than from a hash pinned in this project. Such a list can simply be wrong, and when
+it is, the file it names outranks it. Never pass this for the app's own update or for the
+toolchain: those hashes are pinned here and a mismatch there is the thing being guarded.
+```
+
+### `mirrorHealth`
+
+```ts
+export function mirrorHealth(): { host: string; fails: number; standingDownFor: number; why?: string }[]
+```
+
+For the diagnostics report: which mirrors are currently standing down, and why.
+
+### `resetHealth`
+
+```ts
+export function resetHealth(): void
+```
+
+Tests reach in here; nothing in the app should need it.
+
+### `setMirrors`
+
+```ts
+export function setMirrors(list: readonly Mirror[] | null | undefined): void
+```
+
+Point the chain at local servers for a test. Pass nothing to put the real list back.
+
 ### `applyMirrors`
 
-```js
-function applyMirrors(list)
+```ts
+export function applyMirrors(list: unknown): number
 ```
 
 Put the hosts the signed config names into the chain, or take them out again.
@@ -1781,120 +1938,8 @@ A host that answers with nothing useful stands itself down after a few failures 
 other, which is also what happens to one that is named here after it stops existing.
 
 ```
-@param {Array<{id: string, base: string, host: string}>} list  from src/remote-config.js
+@param list  from src/remote-config.js
 ```
-
-### `mirrorsFor`
-
-```js
-function mirrorsFor(url, opts = {})
-```
-
-Every URL worth trying for this one, best first. A URL that is not on GitHub raw (a mod
-whose catalog entry points somewhere else entirely) has no mirrors - it is itself.
-
-```
-@param {object} [opts]
-@param {boolean} [opts.small] the file is JSON-sized, so size-capped mirrors may be used
-```
-
-### `entriesFor`
-
-```js
-function entriesFor(url, { small = false, trustedOnly = false } = {})
-```
-
-The same list, each entry still knowing which mirror it came from.
-
-### `fetchMirrored`
-
-```js
-async function fetchMirrored(url, { small = false, trustedOnly = false, headers = {}, exclude = [], onMirror = () => {}, log = () => {}, } = {})
-```
-
-Fetch, walking the mirrors. Returns the Response of the first mirror that answers.
-
-```
-@param {string} url            the canonical (raw.githubusercontent.com) URL
-@param {object} [opts]
-@param {boolean} [opts.small]  allow size-capped mirrors
-@param {boolean} [opts.trustedOnly]  the canonical host and nothing else, for a file that is
-only ever trusted from where it was published
-@param {object} [opts.headers]
-@param {string[]} [opts.exclude] hosts already tried for this file and found wanting; a
-mirror that answered with the wrong bytes must not be offered again on the retry
-@param {(m: {host: string, origin: boolean}) => void} [opts.onMirror] which mirror is
-answering, called just before the response is handed back
-@param {(msg: string) => void} [opts.log]
-```
-
-### `fetchText`
-
-```js
-async function fetchText(url, opts = {})
-```
-
-Text from the first mirror that answers (catalog JSON, fingerprint map).
-
-### `downloadFile`
-
-```js
-async function downloadFile(url, dest, { onProgress = () => {}, expectSha256 = null, fromPublishedList = false, log = () => {}, } = {})
-```
-
-Download to a file, resuming where an interrupted attempt stopped.
-
-The half-finished file is kept as <dest>.part and picked up with a Range request. Every
-mirror measured supports it, and a mod archive is up to 300 MB: starting a 60 MB download
-over because a train went into a tunnel is the difference between a mod and a shrug.
-
-```
-@param {string} url
-@param {string} dest
-@param {object} [opts]
-@param {(loaded: number, total: number) => void} [opts.onProgress]
-@param {string} [opts.expectSha256] what this file should hash to; a mirror handing over
-something else is dropped and the next one is asked
-@param {boolean} [opts.fromPublishedList] the expectation above came from a list somebody
-else maintains (the catalog's `mod-hashes.json`, or what this machine saw last time),
-rather than from a hash pinned in this project. Such a list can simply be wrong, and when
-it is, the file it names outranks it. Never pass this for the app's own update or for the
-toolchain: those hashes are pinned here and a mismatch there is the thing being guarded.
-@param {(msg: string) => void} [opts.log]
-@returns {Promise<{ path: string, bytes: number, sha256: string, resumedFrom: number, unverified?: boolean }>}
-```
-
-### `sha256`
-
-```js
-const sha256 = (file) => new Promise((resolve, reject) => { const hash = crypto.createHash('sha256'); fs.createReadStream(file) .on('data', (chunk) => hash.update(chunk)) .on('error', reject) .on('end', () => resolve(hash.digest('hex'))); })
-```
-
-_No description in the source._
-
-### `mirrorHealth`
-
-```js
-function mirrorHealth()
-```
-
-For the diagnostics report: which mirrors are currently standing down, and why.
-
-### `resetHealth`
-
-```js
-function resetHealth()
-```
-
-Tests reach in here; nothing in the app should need it.
-
-### `setMirrors`
-
-```js
-function setMirrors(list)
-```
-
-Point the chain at local servers for a test. Pass nothing to put the real list back.
 
 ## src/notice-text.js
 
@@ -3622,7 +3667,7 @@ const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/'
 
 A copy of the pinned archive in this project's own bucket.
 
-The primary URL is a GitHub release, and every mirror src/net.js knows is a proxy standing
+The primary URL is a GitHub release, and every mirror src/net.ts knows is a proxy standing
 in front of GitHub, so all of them go down together. This one does not: tools/r2-toolchain.mjs
 copies the pinned archive there, byte for byte, after checking it against the same digest.
 
@@ -3726,7 +3771,7 @@ export const isUninstallRun = (argv: readonly unknown[] = []): boolean => argv.i
 
 A person removing the program, which is the only case the window may open in.
 
-## src/updater.js
+## src/updater.ts
 
 Where an installed copy looks for a new version, and on which channel.
 
@@ -3749,46 +3794,59 @@ A portable copy cannot replace itself: electron-updater installs by handing the 
 NSIS installer, and a portable build has none, so it would download 100 MB and then fail
 quietly. It still looks, and says where the new copy lives.
 
-### `createUpdater`
+### `UpdaterLike`
 
-```js
-function createUpdater({ autoUpdater, isPortable = false, channel = () => 'latest', send = () => {}, log = () => {}, // ms first, to read as "every four hours, do this"; setInterval takes them the other way round every = (ms, fn) => setInterval(fn, ms), })
+```ts
+export interface UpdaterLike
 ```
 
-```
-@param {object} deps
-@param {object} deps.autoUpdater          electron-updater's, or a stand-in in the tests
-@param {boolean} deps.isPortable
-@param {() => string} deps.channel        'latest' or 'beta', read fresh on every check
-@param {(evt: object) => void} deps.send   tells the window an update exists
-@param {(msg: string) => void} deps.log
-@param {(ms: number, fn: () => void) => any} [deps.every]  so a test does not wait four hours
+What of electron-updater's AppUpdater this drives; the tests hand in a stand-in.
+
+### `UpdateNews`
+
+```ts
+export type UpdateNews = { type: 'available' | 'portable' | 'downloaded'; version: string }
 ```
 
-### `mirrorFor`
-
-```js
-const mirrorFor = () => MIRROR
-```
-
-One address for both channels: electron-updater asks for latest.yml or beta.yml by itself, and
-   the mirror carries both (tools/mirror-plan.js).
+What the window is told: a version exists, is fetched, or is to be fetched beside a portable copy.
 
 ### `MIRROR`
 
-```js
-const MIRROR = 'https://cdn.dota2modmanager.com/updates/'
+```ts
+export const MIRROR = 'https://cdn.dota2modmanager.com/updates/'
 ```
 
 The copy of each release this project keeps, for the hours GitHub is not answering.
 
 ### `EVERY`
 
-```js
-const EVERY = 4 * 60 * 60 * 1000
+```ts
+export const EVERY = 4 * 60 * 60 * 1000
 ```
 
 How often an open window looks again.
+
+### `mirrorFor`
+
+```ts
+export const mirrorFor = (): string => MIRROR
+```
+
+One address for both channels: electron-updater asks for latest.yml or beta.yml by itself, and
+   the mirror carries both (tools/mirror-plan.js).
+
+### `createUpdater`
+
+```ts
+export function createUpdater({ autoUpdater, isPortable = false, channel = () => 'latest', send = () => {}, log = () => {}, // ms first, to read as "every four hours, do this"; setInterval takes them the other way round every = (ms, fn) => setInterval(fn, ms), }: { autoUpdater: UpdaterLike; isPortable?: boolean; channel?: () => string
+```
+
+```
+@param deps.autoUpdater  electron-updater's, or a stand-in in the tests
+@param deps.channel      'latest' or 'beta', read fresh on every check
+@param deps.send         tells the window an update exists
+@param deps.every        so a test does not wait four hours
+```
 
 ## src/vpk.js
 

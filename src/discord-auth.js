@@ -20,7 +20,7 @@
 const http = require('http');
 const crypto = require('crypto');
 const { shell } = require('electron');
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 
 // Public by design in OAuth2 — it identifies the app, it is not a secret, and it ships in
 // every OAuth request anyway. The client SECRET is a different thing and is never needed

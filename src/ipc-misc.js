@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { ipcMain, shell } = require('electron');
 
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 
 /** @param {object} ctx  the services and main-process callbacks these channels use */
 function registerMiscIpc({

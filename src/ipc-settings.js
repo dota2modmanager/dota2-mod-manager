@@ -7,7 +7,7 @@
 const path = require('path');
 const { dialog, ipcMain } = require('electron');
 
-const i18n = require('./i18n');
+const i18n = require('./i18n.ts');
 const { t } = i18n;
 const { betaState } = require('./beta.ts');
 
@@ -23,7 +23,7 @@ function registerSettingsIpc({
    *
    * Read rather than remembered: an account taken off the list, or signed out of Discord, is back
    * on the stable channel at the next check without anybody touching their machine. src/beta.ts
-   * holds the rule, src/updater.js does the aiming, and neither is asked whether the user is
+   * holds the rule, src/updater.ts does the aiming, and neither is asked whether the user is
    * "allowed" anywhere else - this is who is offered the build, not who can run it. */
   const beta = () => betaState({
     discordId: (settings.get('account') || {}).id || null,
@@ -119,7 +119,7 @@ function registerSettingsIpc({
     } catch (err) {
       /* The kind of failure travels with the words. "fetch failed" is Node's way of saying it
          could not open a socket, and printing that at somebody who turned their wifi off is
-         the same as printing nothing. src/net.js marks a failure to connect; the screen turns
+         the same as printing nothing. src/net.ts marks a failure to connect; the screen turns
          that into a sentence and keeps the technical half for the diagnostics report. */
       return { error: String(err.message || err), offline: !!err.offline };
     }

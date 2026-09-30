@@ -20,7 +20,7 @@ const path = require('path');
 const http = require('http');
 const crypto = require('crypto');
 
-const net = require('../src/net.js');
+const net = require('../src/net.ts');
 const { Catalog } = require('../src/catalog.js');
 
 const DATA_FILES = ['mods.json', 'constants.json', 'guides.json', 'mod-hashes.json'];

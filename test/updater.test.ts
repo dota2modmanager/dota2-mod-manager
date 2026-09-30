@@ -4,30 +4,34 @@
  * it decides are worth holding: that a copy on the stable channel is never offered a prerelease,
  * and that the mirror is tried after GitHub fails rather than settled into.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
+import test from 'node:test';
+import assert from 'node:assert/strict';
 
-const { createUpdater, mirrorFor, MIRROR, EVERY } = require('../src/updater.js');
+import { createUpdater, mirrorFor, MIRROR, EVERY, type UpdaterLike, type UpdateNews } from '../src/updater.ts';
 
 /** A stand-in for electron-updater that records what it was told. */
 function fake() {
-  const on = new Map();
-  const feeds = [];
+  const on = new Map<string, (arg: never) => void>();
+  const feeds: Record<string, unknown>[] = [];
   let checks = 0;
+  const api: UpdaterLike = {
+    channel: null,
+    allowPrerelease: false,
+    autoDownload: false,
+    on: (evt: string, fn: (arg: never) => void) => on.set(evt, fn),
+    setFeedURL: (feed) => { feeds.push(feed); },
+    checkForUpdates: async () => { checks += 1; },
+  };
   return {
-    api: {
-      on: (evt, fn) => on.set(evt, fn),
-      setFeedURL: (feed) => feeds.push(feed),
-      checkForUpdates: async () => { checks += 1; },
-    },
+    api,
     feeds,
-    fire: (evt, arg) => on.get(evt)?.(arg),
+    fire: (evt: string, arg?: unknown) => (on.get(evt) as ((a: unknown) => void) | undefined)?.(arg),
     checks: () => checks,
-    knows: (evt) => on.has(evt),
+    knows: (evt: string) => on.has(evt),
   };
 }
 
-const build = (f, over = {}) => createUpdater({
+const build = (f: ReturnType<typeof fake>, over: Partial<Parameters<typeof createUpdater>[0]> = {}) => createUpdater({
   autoUpdater: f.api, channel: () => 'latest', every: () => {}, ...over,
 });
 
@@ -59,13 +63,13 @@ test('the mirror is tried when GitHub fails, once, and carries both channels', (
 
     assert.deepEqual(f.feeds[1], { provider: 'generic', url }, `${channel}: the second try is the mirror`);
     assert.equal(f.checks(), 2);
-    assert.match(u.lastError(), /ENOTFOUND/, 'the reason is remembered, because "it never updates" is a support question');
+    assert.match(u.lastError() ?? '', /ENOTFOUND/, 'the reason is remembered, because "it never updates" is a support question');
 
     f.fire('error', new Error('and again'));
     assert.equal(f.feeds.length, 2, 'the mirror is not re-pointed at itself on every error');
     assert.equal(f.checks(), 2);
   }
-  assert.equal(mirrorFor('beta'), MIRROR, 'the beta manifest lives beside the release one');
+  assert.equal(mirrorFor(), MIRROR, 'the beta manifest lives beside the release one');
 });
 
 test('looking again starts at GitHub, and re-reads which channel this copy is on', () => {
@@ -84,9 +88,9 @@ test('looking again starts at GitHub, and re-reads which channel this copy is on
 });
 
 test('a portable copy is told about an update rather than handed one', () => {
-  const sent = [];
+  const sent: UpdateNews[] = [];
   const f = fake();
-  const u = build(f, { isPortable: true, send: (evt) => sent.push(evt) });
+  const u = build(f, { isPortable: true, send: (evt) => { sent.push(evt); } });
   u.start();
 
   assert.equal(f.api.autoDownload, false, 'a portable build has no installer to hand the download to');
@@ -96,9 +100,9 @@ test('a portable copy is told about an update rather than handed one', () => {
 });
 
 test('an installed copy downloads by itself and says when it is ready', () => {
-  const sent = [];
+  const sent: UpdateNews[] = [];
   const f = fake();
-  const u = build(f, { send: (evt) => sent.push(evt) });
+  const u = build(f, { send: (evt) => { sent.push(evt); } });
   u.start();
 
   assert.equal(f.api.autoDownload, true);
@@ -113,8 +117,8 @@ test('the four-hourly round is handed to the timer the way a timer takes it', ()
      through as the default threw ERR_INVALID_ARG_TYPE in the built app and nowhere else,
      because every other test here hands in a stand-in. */
   const real = globalThis.setInterval;
-  const scheduled = [];
-  globalThis.setInterval = (fn, ms) => { scheduled.push([typeof fn, ms]); return 0; };
+  const scheduled: [string, number | undefined][] = [];
+  globalThis.setInterval = ((fn: unknown, ms?: number) => { scheduled.push([typeof fn, ms]); return 0; }) as unknown as typeof setInterval;
   try {
     createUpdater({ autoUpdater: fake().api }).start(); // no `every`: the production path
   } finally {

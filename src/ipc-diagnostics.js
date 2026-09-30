@@ -15,7 +15,7 @@ const fs = require('fs');
 const AdmZip = require('adm-zip');
 const { app, BrowserWindow, dialog, ipcMain, screen, shell } = require('electron');
 
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 const { buildReport, renderSummary, renderDetailed } = require('./diagnostics');
 
 /**

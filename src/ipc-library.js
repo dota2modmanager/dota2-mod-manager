@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const { ipcMain } = require('electron');
 
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 const { isMinifyPak } = require('./minify');
 const { touchesSchema } = require('./presets-service');
 

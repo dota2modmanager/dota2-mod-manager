@@ -28,18 +28,18 @@ const { Library } = require('./src/library.ts');
 const { Fingerprints } = require('./src/fingerprints');
 const { SCHEME } = require('./src/preset-link');
 const discordAuth = require('./src/discord-auth');
-const { DiscordPresence } = require('./src/discord-presence');
+const { DiscordPresence } = require('./src/discord-presence.ts');
 const { findDotaGamePath, validateGamePath } = require('./src/steam.ts');
 const { createSchemaService } = require('./src/schema-service');
 const { createRemoteConfig } = require('./src/remote-config');
 // the download chain, so a mirror named in that signed file joins it (electron's own `net` is above)
-const { applyMirrors } = require('./src/net');
+const { applyMirrors } = require('./src/net.ts');
 const { createToolchain } = require('./src/toolchain');
 const { createGameIcons } = require('./src/game-icons');
 const { createModPreviews } = require('./src/mod-preview');
 const { createModIdentity } = require('./src/mod-id');
 const portableUpdater = require('./src/portable-update');
-const { createUpdater } = require('./src/updater');
+const { createUpdater } = require('./src/updater.ts');
 const { channelFor } = require('./src/beta.ts');
 const { gameStamp, createPatchWatcher } = require('./src/patch-watch');
 const { Icons } = require('./src/icons');
@@ -51,7 +51,7 @@ const { isUninstallRun } = require('./src/uninstall-args.ts');
 const { presetsService } = require('./src/presets-service');
 const { registerPresetsIpc } = require('./src/ipc-presets');
 const { registerModsIpc } = require('./src/ipc-mods');
-const { createGate } = require('./src/feature-gate');
+const { createGate } = require('./src/feature-gate.ts');
 const { registerLibraryIpc } = require('./src/ipc-library');
 const { registerPacksIpc } = require('./src/ipc-packs');
 const { registerWindowIpc } = require('./src/ipc-window');
@@ -68,7 +68,7 @@ let presets;
 // filled in once the services exist, below; the ipc modules are handed these by name
 let isCursorRecord, disableOtherCursors, disableOtherCosmetics, applyMasterToCursors, reconcileCursors;
 let adoptImportedFiles, registerImportResults;
-const i18n = require('./src/i18n');
+const i18n = require('./src/i18n.ts');
 const { t } = i18n;
 
 /* Portable mode (issue #2).
@@ -664,7 +664,7 @@ app.whenReady().then(async () => {
 
 /* ---- auto-update (packaged builds only) ----
  *
- * src/updater.js holds it, including which channel this copy reads: the stable one, or the beta
+ * src/updater.ts holds it, including which channel this copy reads: the stable one, or the beta
  * for an account the signed config names. The channel is a function rather than a value, so a
  * tester taken off that list is back on stable at the next check.
  */

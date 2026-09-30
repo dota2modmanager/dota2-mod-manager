@@ -127,7 +127,7 @@ test('the prose and the machine-readable answers cover the same criteria', () =>
 test('the counted claims match what the repository counts', () => {
   /* Two numbers in the answers are measured elsewhere in this repository, and both have gone stale
      in documents before: the number of test files and the coverage the ratchet holds. */
-  const files = fs.readdirSync(path.join(ROOT, 'test')).filter((f) => f.endsWith('.test.js')).length;
+  const files = fs.readdirSync(path.join(ROOT, 'test')).filter((f) => /\.test\.(js|ts)$/.test(f)).length;
   // a floor, like ARCHITECTURE.md's: an exact number conflicted between every two open pull
   // requests that each added a test file
   const said = /more than (\d+) test files on node:test/.exec(why('test'));

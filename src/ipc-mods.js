@@ -9,8 +9,8 @@ const fs = require('fs');
 const path = require('path');
 const { dialog, ipcMain } = require('electron');
 
-const { t } = require('./i18n');
-const { fetchMirrored } = require('./net');
+const { t } = require('./i18n.ts');
+const { fetchMirrored } = require('./net.ts');
 const { RAW_BASE } = require('./catalog');
 const { createTerrainAges, TAIL_BYTES } = require('./terrain-age.ts');
 const { createNoticeText } = require('./notice-text');

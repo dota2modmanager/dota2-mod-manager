@@ -18,7 +18,7 @@
 const fs = require('fs');
 const path = require('path');
 const { openVpkIndex, crc32, heroDisplayName } = require('./vpk');
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 const {
   findItem, itemFields, listItems, toUtf8, eachChild, blockBounds, stripKeyBlocks, itemSearchText, inferredItemSlot,
 } = require('./schema');

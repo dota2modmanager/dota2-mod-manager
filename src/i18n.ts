@@ -3,13 +3,15 @@
 // (with {0},{1}... placeholders for interpolated values). A missing key falls back to
 // the Russian source, so the app never shows an empty/undefined string.
 
-let currentLang = 'en';
+export type Lang = 'en' | 'ru';
 
-function setLang(lang) {
+let currentLang: Lang = 'en';
+
+export function setLang(lang: unknown): void {
   currentLang = lang === 'ru' ? 'ru' : 'en';
 }
 
-function getLang() {
+export function getLang(): Lang {
   return currentLang;
 }
 
@@ -191,16 +193,19 @@ const EN = {
   // kind names (title-case)
   'Варды': 'Wards', 'Курьер': 'Courier', 'Интерфейс меню': 'Menu UI', 'Звуки': 'Sounds', 'Ландшафт': 'Terrain',
   'Сборка · {0} героев': 'Bundle · {0} heroes',
-};
+} satisfies Record<string, string>;
 
-function fill(tmpl, values) {
+/** The table as a lookup: any Russian string, its English or nothing. */
+const EN_BY_RU: Readonly<Record<string, string | undefined>> = EN;
+
+function fill(tmpl: string, values: unknown[]): string {
   return tmpl.replace(/\{(\d+)\}/g, (_, i) => (values[+i] != null ? String(values[+i]) : ''));
 }
 
 // t('Мод не найден') or t('HTTP {0} — не удалось скачать {1}', status, name)
-function t(ru, ...values) {
-  const tmpl = currentLang === 'en' && EN[ru] != null ? EN[ru] : ru;
+export function t(ru: string, ...values: unknown[]): string {
+  const en = EN_BY_RU[ru];
+  const tmpl = currentLang === 'en' && en != null ? en : ru;
   return values.length ? fill(tmpl, values) : tmpl;
 }
 
-module.exports = { setLang, getLang, t };

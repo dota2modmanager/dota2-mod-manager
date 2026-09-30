@@ -31,7 +31,7 @@
 //   }
 const fs = require('fs');
 const path = require('path');
-const { fetchText } = require('../../src/net');
+const { fetchText } = require('../../src/net.ts');
 const { verify } = require('../../src/catalog-signature.ts');
 
 const CONFIG_URL = 'https://raw.githubusercontent.com/TheFleece/dota2-mod-manager/main/config/app.json';

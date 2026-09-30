@@ -19,7 +19,7 @@ const { app } = require('electron');
 const { Library } = require('./library.ts');
 const { readPresetFile } = require('./preset-share');
 const { decodePresetLink } = require('./preset-link');
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 
 // The mods of one catalog category. Most categories are a flat array, but some (creeps,
 // towers, hero-items, item-effects, creep-deny) group theirs under `groups` - the same two

@@ -60,7 +60,7 @@ or turning mods back on would resurrect the ones you had deliberately switched o
 
 1. Resolve the catalog entry to a URL and a file name. The name comes from a repository we do not
    own, so it is treated as a name and can never become a path.
-2. Download through `src/net.js`, which tries mirrors when `raw.githubusercontent.com` is
+2. Download through `src/net.ts`, which tries mirrors when `raw.githubusercontent.com` is
    unreachable, and keeps the archive in the download cache keyed by that name. A second install of
    the same mod never leaves the disk. The built-in chain can be extended after a build has
    shipped: the signed `config/app.json` may name other places the archives are kept, which join
@@ -159,7 +159,7 @@ path. Who is allowed to have written the bytes in the first place is the next se
 ## Who is allowed to have written this
 
 Everything the app downloads travels a route it does not control. `raw.githubusercontent.com` is
-slow or blocked for a good part of the userbase, so `src/net.js` falls back to public proxies,
+slow or blocked for a good part of the userbase, so `src/net.ts` falls back to public proxies,
 and a proxy is a stranger handing over bytes that claim to be GitHub's. TLS proves you reached
 the proxy. It says nothing about where the proxy got the file.
 
@@ -189,13 +189,13 @@ their old versions - one of them since August. Anybody who cannot reach GitHub i
 bucket first, got the old bytes, and watched the install stop with a checksum error while three
 proxies carried the current file.
 
-So `downloadFile` in `src/net.js` now spends the mirror rather than the mod: a wrong checksum
+So `downloadFile` in `src/net.ts` now spends the mirror rather than the mod: a wrong checksum
 stands that host down for this file, the part file goes, and the next mirror is asked from the
 start. Only a file that every mirror disowns is refused. And the sync compares what is here
 against the size upstream reports, then measures the bytes it fetched against the published
 checksum before uploading, so this bucket cannot be the reason a check fails.
 
-*Check:* `test/net.test.js`, "a mirror serving a stale copy costs that mirror its turn".
+*Check:* `test/net.test.ts`, "a mirror serving a stale copy costs that mirror its turn".
 
 ### And the list can be wrong about the file
 
@@ -217,7 +217,7 @@ is the only thing tying those bytes to the catalog. Neither does the app's own u
 Source 2 toolchain: those hashes are pinned in this repository, and a mismatch there is the thing
 being guarded against.
 
-*Check:* `test/net.test.js`, "a published hash no copy matches is a stale list, and the origin
+*Check:* `test/net.test.ts`, "a published hash no copy matches is a stale list, and the origin
 wins", next to the three tests that say who does not get that treatment.
 
 ### And the cache in front of the mirror has its own copy
@@ -355,7 +355,7 @@ that location is not writable.
 |---|---|
 | `main.js` | Electron lifecycle, window, deep links, auto-update, and wiring the rest together |
 | `src/ipc-*.js` | The IPC handlers, one file per group of channels, each naming what it needs |
-| `src/feature-gate.js` | Whether a feature has been switched off from `config/app.json`, asked once |
+| `src/feature-gate.ts` | Whether a feature has been switched off from `config/app.json`, asked once |
 | `preload.js` | The `window.api` surface, and nothing else crosses |
 | `src/installer.js` | Download, slots, install, enable, remove, packs |
 | `src/beta.ts` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
@@ -363,13 +363,13 @@ that location is not writable.
 | `src/import.js` | Taking a mod in: a `.vpk`, a `.zip`, an author's folder, or bytes off a drop |
 | `src/cursors.ts` | Which cursor set is live, which look a slot wears, and the repair at startup |
 | `src/adopt.js` | What a VPK goes through before it counts as a mod: named, harvested, split |
-| `src/updater.js` | Where an installed copy looks for a new version: the two feeds, and the channel it reads |
+| `src/updater.ts` | Where an installed copy looks for a new version: the two feeds, and the channel it reads |
 | `src/vpk.js` | The VPK format: read, write, merge, split, combine, fingerprint |
 | `src/file-tx.ts` | One transaction per change to the game folder |
 | `src/library.ts` | `manifest.json`: installed records and presets |
 | `src/settings.ts` | `settings.json` and its defaults |
 | `src/catalog.js`, `src/catalog-signature.ts` | Catalog data and who is allowed to change it |
-| `src/net.js` | Downloads, mirrors, backoff |
+| `src/net.ts` | Downloads, mirrors, backoff |
 | `src/remote-config.js` | The switches and notices this project can change after a release, the version ranges a switch can be held to, and the signature over them |
 | `tools/sign-catalog.js` | The signing side, for whoever holds a private key |
 | `src/safe-zip.js` | Every foreign archive comes through here |
@@ -381,7 +381,7 @@ that location is not writable.
 | `src/preset-link.js`, `src/preset-share.js` | Presets as a link and as a file |
 | `src/portable-update.js` | Updating the portable build without self-overwrite |
 | `src/diagnostics.js` | The diagnostic archive a bug report should carry |
-| `src/i18n.js`, `renderer/i18n.js` | Russian and English, for the main process and the window |
+| `src/i18n.ts`, `renderer/i18n.js` | Russian and English, for the main process and the window |
 | `renderer/views/*` | Catalog, My mods, Presets, Settings |
 | `renderer/ui/*` | Dialogs, toasts, the media player, the install queue, shared chrome |
 | `tools/sandbox.js` | The throwaway game tree |

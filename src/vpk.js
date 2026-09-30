@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 const { HERO_DISPLAY, HERO_ALIAS, heroDisplayName, heroKey } = require('./hero-names.ts');
 
 const VPK_SIGNATURE = 0x55aa1234;

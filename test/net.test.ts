@@ -2,41 +2,49 @@
 // throttled gets a mod at all, and whether a 300 MB download survives a train tunnel. Pinned
 // against local servers that misbehave on purpose: one that is down, one that ignores Range,
 // one that hands over the wrong bytes.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const http = require('http');
-const crypto = require('crypto');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import http from 'node:http';
+import type { AddressInfo } from 'node:net';
+import crypto from 'node:crypto';
 
-const net = require('../src/net.js');
+import * as net from '../src/net.ts';
+import type { Mirror } from '../src/net.ts';
 const { RAW_HOST } = net;
 
 const RAW_URL = `${RAW_HOST}h6rd/Dota2PornFxWeb/main/assets/files/heroes/Mod.zip`;
 
-/** A server whose behaviour each test decides. Returns { port, hits, close }. */
-function serve(t, handler) {
+type Handler = (req: http.IncomingMessage, res: http.ServerResponse) => void;
+
+/** A server whose behaviour each test decides: how often it was asked, its port, and itself as a mirror. */
+interface Served { hits: number; port: number; mirror(): Mirror }
+
+function serve(t: TestContext, handler: Handler): Promise<Served> {
   const state = { hits: 0 };
   const server = http.createServer((req, res) => { state.hits++; handler(req, res); });
   server.listen(0, '127.0.0.1');
   t.after(() => server.close());
   return new Promise((resolve) => {
-    server.on('listening', () => resolve(Object.assign(state, {
-      port: server.address().port,
-      mirror() {
-        const port = server.address().port;
-        return { host: `127.0.0.1:${port}`, map: (u) => u.replace(RAW_HOST, `http://127.0.0.1:${port}/`) };
-      },
-    })));
+    server.on('listening', () => {
+      const { port } = server.address() as AddressInfo;
+      resolve(Object.assign(state, {
+        port,
+        mirror(): Mirror {
+          return { host: `127.0.0.1:${port}`, map: (u: string) => u.replace(RAW_HOST, `http://127.0.0.1:${port}/`) };
+        },
+      }));
+    });
   });
 }
 
-const body = (text) => (req, res) => { res.writeHead(200, { 'content-length': Buffer.byteLength(text) }); res.end(text); };
-const dead = (status) => (req, res) => { res.writeHead(status); res.end('no'); };
+const body = (text: string): Handler => (req, res) => { res.writeHead(200, { 'content-length': Buffer.byteLength(text) }); res.end(text); };
+const dead = (status: number): Handler => (req, res) => { res.writeHead(status); res.end('no'); };
 
 // A server that serves `data` and honours Range, the way every measured mirror does.
-const ranged = (data) => (req, res) => {
+const ranged = (data: Buffer): Handler => (req, res) => {
   const m = /^bytes=(\d+)-/.exec(req.headers.range || '');
   if (!m) { res.writeHead(200, { 'content-length': data.length, 'accept-ranges': 'bytes' }); res.end(data); return; }
   const from = Number(m[1]);
@@ -47,7 +55,7 @@ const ranged = (data) => (req, res) => {
   res.end(data.subarray(from));
 };
 
-function tempDir(t) {
+function tempDir(t: TestContext): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-net-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return dir;
@@ -276,7 +284,7 @@ test('half a file from a stale mirror is not resumed from the next one', async (
  *
  * The first mirror here is the canonical host, so `RAW_URL` maps to itself.
  */
-const asOrigin = (port) => ({ host: 'raw.githubusercontent.com', origin: true, map: (u) => u.replace(RAW_HOST, `http://127.0.0.1:${port}/`) });
+const asOrigin = (port: number): Mirror => ({ host: 'raw.githubusercontent.com', origin: true, map: (u: string) => u.replace(RAW_HOST, `http://127.0.0.1:${port}/`) });
 
 test('a published hash no copy matches is a stale list, and the origin wins', async (t) => {
   const real = crypto.randomBytes(4096);
@@ -377,7 +385,7 @@ test('a finished download reports the hash it should be remembered by', async (t
 /*
  * The site mirror is a promise made in two places at once.
  *
- * src/net.js says "ask dota2modmanager.com for this file", and site/tools/mirror.mjs is what
+ * src/net.ts says "ask dota2modmanager.com for this file", and site/tools/mirror.mjs is what
  * puts the file there. They live in different packages and nothing connected them, so the
  * signatures were added to one side and not the other: the app would have asked our own site
  * for mods.json.sig on the one day it matters, and Cloudflare would have answered 200 with the
@@ -386,8 +394,8 @@ test('a finished download reports the hash it should be remembered by', async (t
  * A missing file is not the failure mode to guard against here. A present, wrong one is.
  */
 test('every file the app expects from our own mirror is a file the site actually copies there', () => {
-  const netSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'net.js'), 'utf-8');
-  const mirrorTool = fs.readFileSync(path.join(__dirname, '..', 'site', 'tools', 'mirror.mjs'), 'utf-8');
+  const netSource = fs.readFileSync(path.join(import.meta.dirname, '..', 'src', 'net.ts'), 'utf-8');
+  const mirrorTool = fs.readFileSync(path.join(import.meta.dirname, '..', 'site', 'tools', 'mirror.mjs'), 'utf-8');
 
   // the MIRRORED map: 'owner/repo/branch/path': 'name-on-our-site'
   const promised = [...netSource.matchAll(/^\s*'([\w.\-\/]+)':\s*'([\w.\-]+)',$/gm)];
@@ -436,7 +444,7 @@ test('a server that answered is not called a missing connection', async (t) => {
   const server = http.createServer((req, res) => { res.writeHead(500); res.end('nope'); });
   server.listen(0, '127.0.0.1');
   await new Promise((r) => server.on('listening', r));
-  const port = server.address().port;
+  const { port } = server.address() as AddressInfo;
   net.setMirrors([{ host: `127.0.0.1:${port}`, map: () => `http://127.0.0.1:${port}/x.json` }]);
   t.after(() => { server.close(); net.setMirrors(null); });
 

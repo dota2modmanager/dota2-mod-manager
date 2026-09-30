@@ -10,7 +10,7 @@ export const RAW_BASE = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/m
 /* The same files, from a host that is not GitHub.
  *
  * Pictures are the one thing the renderer fetches itself, so they never went through the
- * mirror chain in src/net.js that everything else uses. For anybody who cannot reach GitHub
+ * mirror chain in src/net.ts that everything else uses. For anybody who cannot reach GitHub
  * that meant a catalog that loaded and a grid of empty squares: the app looked broken while
  * working. tools/r2-sync.mjs copies every preview here, and ui/media.js reaches for it when a
  * picture fails to arrive.

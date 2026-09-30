@@ -7,7 +7,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { ipcMain } = require('electron');
 
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 const { packableRecord } = require('./presets-service');
 
 /** @param {object} ctx  the services and main-process callbacks these channels use */

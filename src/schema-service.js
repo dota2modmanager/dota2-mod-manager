@@ -11,7 +11,7 @@ const path = require('path');
 const patcher = require('./patcher');
 const schema = require('./schema');
 const itemBuilder = require('./item-builder');
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 
 /**
  * @param {object} deps

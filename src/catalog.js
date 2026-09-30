@@ -1,7 +1,7 @@
 // Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo
 const fs = require('fs');
 const path = require('path');
-const { fetchText } = require('./net');
+const { fetchText } = require('./net.ts');
 const signature = require('./catalog-signature.ts');
 
 const RAW_BASE = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main';

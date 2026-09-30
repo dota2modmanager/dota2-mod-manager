@@ -19,38 +19,56 @@
  * NSIS installer, and a portable build has none, so it would download 100 MB and then fail
  * quietly. It still looks, and says where the new copy lives.
  */
-const { BETA_CHANNEL } = require('./beta.ts');
+import { BETA_CHANNEL } from './beta.ts';
+
+/** What of electron-updater's AppUpdater this drives; the tests hand in a stand-in. */
+export interface UpdaterLike {
+  channel: string | null;
+  allowPrerelease: boolean;
+  autoDownload: boolean;
+  setFeedURL(options: Record<string, unknown>): void;
+  checkForUpdates(): unknown;
+  on(event: 'update-available' | 'update-downloaded', fn: (info: { version: string }) => void): unknown;
+  on(event: 'error', fn: (err: unknown) => void): unknown;
+}
+
+/** What the window is told: a version exists, is fetched, or is to be fetched beside a portable copy. */
+export type UpdateNews = { type: 'available' | 'portable' | 'downloaded'; version: string };
 
 /** The copy of each release this project keeps, for the hours GitHub is not answering. */
-const MIRROR = 'https://cdn.dota2modmanager.com/updates/';
+export const MIRROR = 'https://cdn.dota2modmanager.com/updates/';
 const GITHUB = { provider: 'github', owner: 'dota2modmanager', repo: 'dota2-mod-manager' };
 /** How often an open window looks again. */
-const EVERY = 4 * 60 * 60 * 1000;
+export const EVERY = 4 * 60 * 60 * 1000;
 
 /* One address for both channels: electron-updater asks for latest.yml or beta.yml by itself, and
    the mirror carries both (tools/mirror-plan.js). */
-const mirrorFor = () => MIRROR;
+export const mirrorFor = (): string => MIRROR;
 
 /**
- * @param {object} deps
- * @param {object} deps.autoUpdater          electron-updater's, or a stand-in in the tests
- * @param {boolean} deps.isPortable
- * @param {() => string} deps.channel        'latest' or 'beta', read fresh on every check
- * @param {(evt: object) => void} deps.send   tells the window an update exists
- * @param {(msg: string) => void} deps.log
- * @param {(ms: number, fn: () => void) => any} [deps.every]  so a test does not wait four hours
+ * @param deps.autoUpdater  electron-updater's, or a stand-in in the tests
+ * @param deps.channel      'latest' or 'beta', read fresh on every check
+ * @param deps.send         tells the window an update exists
+ * @param deps.every        so a test does not wait four hours
  */
-function createUpdater({
+export function createUpdater({
   autoUpdater, isPortable = false, channel = () => 'latest', send = () => {}, log = () => {},
   // ms first, to read as "every four hours, do this"; setInterval takes them the other way round
   every = (ms, fn) => setInterval(fn, ms),
+}: {
+  autoUpdater: UpdaterLike;
+  isPortable?: boolean;
+  channel?: () => string;
+  send?: (news: UpdateNews) => void;
+  log?: (msg: string) => void;
+  every?: (ms: number, fn: () => void) => unknown;
 }) {
-  let lastError = null;
-  let portableVersion = null;
+  let lastError: string | null = null;
+  let portableVersion: string | null = null;
   let onMirror = false;
 
   /** Point electron-updater at a feed for this channel, and say which one it is. */
-  function aim(useMirror) {
+  function aim(useMirror: boolean): boolean {
     const name = channel();
     autoUpdater.channel = name;
     // a beta is a prerelease on GitHub, and the stable channel must never be offered one
@@ -58,7 +76,7 @@ function createUpdater({
     try {
       autoUpdater.setFeedURL(useMirror ? { provider: 'generic', url: mirrorFor() } : { ...GITHUB });
     } catch (err) {
-      log(`update feed unusable: ${err.message || err}`);
+      log(`update feed unusable: ${(err as Error)?.message || err}`);
       return false;
     }
     onMirror = useMirror;
@@ -82,7 +100,7 @@ function createUpdater({
     // Silent for the user - being offline is not something to interrupt anybody about - but
     // remembered, because "it never updates" is a support question and this is the answer to it.
     autoUpdater.on('error', (err) => {
-      lastError = String(err?.message || err).slice(0, 500);
+      lastError = String((err as Error)?.message || err).slice(0, 500);
       if (onMirror) return;
       log(`update check failed on GitHub, trying the mirror: ${lastError}`);
       if (aim(true)) Promise.resolve(autoUpdater.checkForUpdates()).catch(() => {});
@@ -115,4 +133,3 @@ function createUpdater({
   };
 }
 
-module.exports = { createUpdater, mirrorFor, MIRROR, EVERY };

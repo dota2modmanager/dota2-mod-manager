@@ -484,75 +484,75 @@
     },
     {
       "name": "a download with the wrong hash is kept",
-      "file": "src/net.js",
-      "anchor": "async function downloadFile(url, dest, {",
+      "file": "src/net.ts",
+      "anchor": "export async function downloadFile(url: string, dest: string, {",
       "from": "if (expectSha256 && digest !== expectSha256) {",
       "to": "if (false) {",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a mirror that ignored Range has its answer glued onto the old half",
-      "file": "src/net.js",
-      "anchor": "async function downloadFile(url, dest, {",
+      "file": "src/net.ts",
+      "anchor": "export async function downloadFile(url: string, dest: string, {",
       "from": "const resuming = res.status === 206 && have > 0;",
       "to": "const resuming = have > 0;",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a trusted-only file is fetched through mirrors",
-      "file": "src/net.js",
-      "anchor": "function entriesFor(url, { small = false, trustedOnly = false } = {}) {",
+      "file": "src/net.ts",
+      "anchor": "export function entriesFor(url: string, { small = false, trustedOnly = false }: { small?: boolean; trustedOnly?: boolean } = {}): Entry[] {",
       "from": "if (trustedOnly) return [{ url, host: hostOf(url), origin: false }];",
       "to": ";",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a mirror that keeps failing is never stood down",
-      "file": "src/net.js",
-      "anchor": "function noteFailure(host, why) {",
+      "file": "src/net.ts",
+      "anchor": "function noteFailure(host: string, why: string): void {",
       "from": "if (h.fails >= FAIL_THRESHOLD) { h.until = Date.now() + COOLDOWN_MS; h.fails = 0; }",
       "to": ";",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a missing file is held against the mirror",
-      "file": "src/net.js",
-      "anchor": "async function fetchMirrored(url, {",
+      "file": "src/net.ts",
+      "anchor": "export async function fetchMirrored(url: string, {",
       "from": "if (res.status === 404) { onMirror(candidate); return res; }",
       "to": ";",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a proxy's copy outranks the published hash",
-      "file": "src/net.js",
-      "anchor": "async function downloadFile(url, dest, {",
+      "file": "src/net.ts",
+      "anchor": "export async function downloadFile(url: string, dest: string, {",
       "from": "if (fromPublishedList && answered.origin) {",
       "to": "if (fromPublishedList) {",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a hash this project pinned is waived like a published one",
-      "file": "src/net.js",
-      "anchor": "async function downloadFile(url, dest, {",
+      "file": "src/net.ts",
+      "anchor": "export async function downloadFile(url: string, dest: string, {",
       "from": "if (fromPublishedList && answered.origin) {",
       "to": "if (answered.origin) {",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a mirror that served the wrong bytes is asked again",
-      "file": "src/net.js",
-      "anchor": "async function fetchMirrored(url, {",
+      "file": "src/net.ts",
+      "anchor": "export async function fetchMirrored(url: string, {",
       "from": ".filter((e) => !exclude.includes(e.host));",
       "to": ";",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a server that answered is called a missing connection",
-      "file": "src/net.js",
-      "anchor": "async function fetchMirrored(url, {",
+      "file": "src/net.ts",
+      "anchor": "export async function fetchMirrored(url: string, {",
       "from": "err.offline = !/HTTP \\d/.test(String(err.message || ''));",
       "to": "err.offline = true;",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a guard an incident names is renamed and the write-up still points at it",
@@ -692,19 +692,19 @@
     },
     {
       "name": "a copy on the stable channel is offered the unreleased build",
-      "file": "src/updater.js",
+      "file": "src/updater.ts",
       "anchor": "autoUpdater.channel = name;",
       "from": "autoUpdater.allowPrerelease = name === BETA_CHANNEL;",
       "to": "autoUpdater.allowPrerelease = true;",
-      "test": "test/updater.test.js"
+      "test": "test/updater.test.ts"
     },
     {
       "name": "an installed copy settles on the mirror instead of going back to GitHub",
-      "file": "src/updater.js",
+      "file": "src/updater.ts",
       "anchor": "  function recheck() {",
       "from": "onMirror = false;",
       "to": "/* stays on the mirror */",
-      "test": "test/updater.test.js"
+      "test": "test/updater.test.ts"
     },
     {
       "name": "the portable Download button is handed a version nobody looked up",

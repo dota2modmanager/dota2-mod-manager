@@ -14,7 +14,7 @@
 const fs = require('fs');
 const AdmZip = require('adm-zip');
 const { openZip } = require('./safe-zip');
-const { t } = require('./i18n');
+const { t } = require('./i18n.ts');
 
 const FORMAT = 'dota2-mod-manager/preset';
 const VERSION = 1;

@@ -22,7 +22,7 @@ app can reach is short and public ([PRIVACY.md](../PRIVACY.md)).
 
 | # | Boundary | What crosses it | Where it is enforced |
 |---|---|---|---|
-| 1 | The network and the app | Catalog data, mod archives, the switches file, one external tool | `src/net.js`, `src/catalog-signature.ts`, `src/remote-config.js`, `src/toolchain.js` |
+| 1 | The network and the app | Catalog data, mod archives, the switches file, one external tool | `src/net.ts`, `src/catalog-signature.ts`, `src/remote-config.js`, `src/toolchain.js` |
 | 2 | Foreign archives and the disk | Zip and VPK contents, file names, paths | `src/safe-zip.js`, `src/vpk.js`, `src/file-tx.ts` |
 | 3 | The main process and the window | Every action the UI can ask for | `preload.js` and the `src/ipc-*.js` modules |
 | 4 | The app and the game folder | Mod packs, loose fonts and cursors, one patched text file | `src/installer.js`, `src/overlays.js`, `src/patcher.js` |
@@ -42,13 +42,13 @@ signature by its author against a key pinned in the app, every mod archive is ch
 sha256 from that signed list, and the external tool is pinned by version and hash before anything
 is unpacked. What a failed check costs is decided per file and written out in ARCHITECTURE.md
 under "Who is allowed to have written this".
-*Check:* `test/catalog-signature.test.ts`, `test/net.test.js`, `test/toolchain.test.js`.
+*Check:* `test/catalog-signature.test.ts`, `test/net.test.ts`, `test/toolchain.test.js`.
 
 **A mirror that is wrong about one file.** A failed checksum means one host handed over the wrong
 bytes, not that the mod is bad. The download spends the mirror rather than the mod: that host is
 stood down for this file and the next one is asked from the start. Only a file every mirror
 disowns is refused.
-*Check:* `test/net.test.js`, "a mirror serving a stale copy costs that mirror its turn".
+*Check:* `test/net.test.ts`, "a mirror serving a stale copy costs that mirror its turn".
 
 **An archive that wants to write somewhere else.** A file name inside a zip is a name, never a
 path. Everything foreign comes through `src/safe-zip.js`, which refuses absolute paths, parent

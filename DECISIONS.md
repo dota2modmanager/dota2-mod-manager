@@ -407,7 +407,7 @@ a proxy are the ones the catalog's author signed for, and that is the part worth
 Mods the list has not caught up with at all are a smaller version of the same thing: they fall
 back to the hash remembered from the first download.
 
-*Check:* `src/net.js`, `downloadFile`, and `test/net.test.js` for the four cases it separates - a
+*Check:* `src/net.ts`, `downloadFile`, and `test/net.test.ts` for the four cases it separates - a
 stale mirror, a stale list, a proxy inventing bytes, and a hash pinned in this repository, which
 is never waived.
 
