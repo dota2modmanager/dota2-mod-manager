@@ -774,8 +774,8 @@
       "name": "the Discord status counts mods as on while the master switch is off",
       "file": "src/presence-status.ts",
       "anchor": "export function presenceActivity(",
-      "from": "  if (masterOff) state = t('Моды выключены');\n",
-      "to": "",
+      "from": "if (masterOff) state = t('Моды выключены');",
+      "to": "if (false) state = t('Моды выключены');",
       "test": "test/presence-status.test.ts"
     },
     {

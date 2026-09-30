@@ -35,6 +35,10 @@ test('a release is not its beta, and a heading may carry a date', () => {
   assert.equal(changelogSection(EN, '2.8.0-beta.1'), '- The beta');
   assert.equal(changelogSection(EN, '2.7.1'), '- A fix');
   assert.equal(changelogSection(EN, '2.8'), null, 'a prefix of a version is not that version');
+  // a beta section left above its release: the release's own heading is found, not the first
+  // one that starts with the same digits
+  const betaFirst = '## 2.8.0-beta.1\n\n- The beta\n\n## 2.8.0\n\n- The release\n';
+  assert.equal(changelogSection(betaFirst, '2.8.0'), '- The release');
 });
 
 test('no section, an empty section and no file all answer null', (t) => {
