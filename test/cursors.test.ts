@@ -14,7 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { crc32 } from 'node:zlib';
 
-import vpk from '../src/vpk.js';
+import { buildVpk } from '../src/vpk.ts';
 import installerJs from '../src/installer.js';
 const { Installer } = installerJs;
 import { Library } from '../src/library.ts';
@@ -187,7 +187,7 @@ test('with the master switch off the repair leaves the folder vanilla', (t) => {
   installer.deployCursor(rec.id, rec.files);
   // a mod pak has to exist for the master switch to have anything to rename
   const lang = installer.langFolder();
-  fs.writeFileSync(path.join(lang, 'pak10_dir.vpk'), vpk.buildVpk([{
+  fs.writeFileSync(path.join(lang, 'pak10_dir.vpk'), buildVpk([{
     ext: 'vmdl_c', folder: 'models', name: 'x', data: Buffer.from('m'), preload: Buffer.alloc(0), crc: crc32(Buffer.from('m')) >>> 0,
   }]));
   installer.setMasterEnabled(false);

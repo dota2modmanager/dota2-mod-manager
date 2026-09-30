@@ -42,7 +42,7 @@ the code, not in this page.
 | [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.js puts |
 | [`src/overlays.js`](#srcoverlaysjs) | Fonts and cursors: loose files written over the game's own. |
 | [`src/patch-watch.js`](#srcpatch-watchjs) | Noticing that Dota was patched, while the app is open. |
-| [`src/patcher.js`](#srcpatcherjs) | Search-path patch: registers an extra content folder ahead of the game's own, which |
+| [`src/patcher.ts`](#srcpatcherts) | Search-path patch: registers an extra content folder ahead of the game's own, which |
 | [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
 | [`src/preset-link.ts`](#srcpreset-linkts) | Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed |
 | [`src/preset-share.js`](#srcpreset-sharejs) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
@@ -59,7 +59,7 @@ the code, not in this page.
 | [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
 | [`src/updater.ts`](#srcupdaterts) | Where an installed copy looks for a new version, and on which channel. |
-| [`src/vpk.js`](#srcvpkjs) | Minimal reader for the index of Source-engine VPK "_dir" files (v1/v2). |
+| [`src/vpk.ts`](#srcvpkts) | Minimal reader for the index of Source-engine VPK "_dir" files (v1/v2). |
 | [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
 
 ## src/adopt.ts
@@ -1049,7 +1049,7 @@ current mod and this one is a leftover.
 
 Which hero a name means, in the three spellings this app meets: the game's folder id
 (queenofpain), what an author typed (queen_of_pain, qop), and what people read ("Queen of
-Pain"). Out of src/vpk.js, where it began, because the catalog asks too and vpk.js is at its
+Pain"). Out of src/vpk.ts, where it began, because the catalog asks too and vpk.ts is at its
 size budget.
 
 ### `HERO_DISPLAY`
@@ -2257,7 +2257,7 @@ const DEBOUNCE_MS = 3000
 
 A patch rewrites a lot of files at once, so the first event is never the last one.
 
-## src/patcher.js
+## src/patcher.ts
 
 Search-path patch: registers an extra content folder ahead of the game's own, which
 is the only way to override files the engine reads through the MOD path id -
@@ -2275,56 +2275,80 @@ Everything is backed up before the first write and revert() puts the originals b
 
 ### `MARKER`
 
-```js
-const MARKER = 'Dota 2 Mod Manager'
+```ts
+export const MARKER = 'Dota 2 Mod Manager'
 ```
 
-_No description in the source._
+Written beside every line this app adds, so its own edit can be found and taken out again.
 
 ### `FOLDER`
 
-```js
-const FOLDER = 'dota_mods'
+```ts
+export const FOLDER = 'dota_mods'
 ```
 
-Content folder we register next to the game's own "dota".
+The content folder registered next to the game's own "dota".
+
+### `Hashes`
+
+```ts
+export interface Hashes { sha1: string; crc: string }
+```
+
+A file's hashes as the signature list writes them, uppercase hex.
+
+### `PatchState`
+
+```ts
+export interface PatchState
+```
+
+What the install looks like right now; see state().
 
 ### `paths`
 
-```js
-function paths(gamePath)
+```ts
+export function paths(gamePath: string): { gameinfo: string; branch: string; signatures: string }
 ```
 
-_No description in the source._
+The three files the patch touches, for this platform's layout of the game.
+
+### `crc32`
+
+```ts
+export function crc32(buf: Buffer): number
+```
+
+CRC-32 as the signature list records it.
 
 ### `fileHashes`
 
-```js
-function fileHashes(buf)
+```ts
+export function fileHashes(buf: Buffer): { sha1: string; crc: string }
 ```
 
 The signature list stores the CRC little-endian, uppercase, like the SHA1 next to it.
 
 ### `signatureLine`
 
-```js
-function signatureLine(buf)
+```ts
+export function signatureLine(buf: Buffer): string
 ```
 
-_No description in the source._
+The line the signature list needs for the patched file.
 
 ### `searchPathsBlock`
 
-```js
-function searchPathsBlock(gameinfoText)
+```ts
+export function searchPathsBlock(gameinfoText: string): string
 ```
 
 Pull the SearchPaths block out of gameinfo.gi (branchspecific has none by default).
 
 ### `withModFolder`
 
-```js
-function withModFolder(block, folder)
+```ts
+export function withModFolder(block: string, folder: string): string
 ```
 
 Add our folder to a SearchPaths block: as the first Game path (which is also what the
@@ -2332,16 +2356,16 @@ engine turns into the MOD path) and as the first Mod path.
 
 ### `patchedBranch`
 
-```js
-function patchedBranch(branchText, block)
+```ts
+export function patchedBranch(branchText: string, block: string): string
 ```
 
 Put the block inside branchspecific's FileSystem section (its keys win over gameinfo.gi).
 
 ### `stripPatch`
 
-```js
-function stripPatch(text)
+```ts
+export function stripPatch(text: string): string
 ```
 
 Undo our own insertion in a gameinfo file, byte for byte.
@@ -2358,31 +2382,10 @@ Used wherever a patched file could be mistaken for an original: a backup taken w
 patch was already applied would otherwise be useless, and telling the user to go repair
 game files by hand is not an answer the app is allowed to give.
 
-### `stripSignatures`
-
-```js
-function stripSignatures(text)
-```
-
-Same for the signature list: our line is appended after the DIGEST line, so anything of
-ours past that point comes off and the file the game shipped is left behind.
-
-### `hasSignaturePatch`
-
-```js
-function hasSignaturePatch(text)
-```
-
-Is our line present in a signature list? Valve's own pristine file ALREADY carries an
-entry for gameinfo_branchspecific.gi (before DIGEST, with the vanilla hash), so merely
-finding the path proves nothing - only an entry appended AFTER the DIGEST line is ours.
-Getting this wrong makes a pristine list look patched, which freezes the backup at a
-pre-update build and lets apply() write those stale hashes over the live file.
-
 ### `vanillaBranchHashes`
 
-```js
-function vanillaBranchHashes(signaturesText)
+```ts
+export function vanillaBranchHashes(signaturesText: string): Hashes | null
 ```
 
 Valve's own recorded hash for the file we edit, read out of the signature list the game
@@ -2390,22 +2393,18 @@ ships with. Ground truth: whatever we put back has to hash to this, or the clien
 the install ("verify integrity of game files") and matchmaking stops. Their entry sits
 BEFORE the DIGEST line - ours, when present, is appended after it.
 
-```
-@returns {{sha1: string, crc: string} | null}
-```
-
 ### `matchesVanilla`
 
-```js
-function matchesVanilla(text, want)
+```ts
+export function matchesVanilla(text: string, want: Hashes | null): boolean
 ```
 
-_No description in the source._
+Whether a file hashes to what Valve recorded; with no record there is nothing to contradict.
 
 ### `restoreBranch`
 
-```js
-function restoreBranch(text, want)
+```ts
+export function restoreBranch(text: string, want: Hashes | null): { text: string; verified: boolean }
 ```
 
 The original branchspecific file, reconstructed and CHECKED against Valve's own list
@@ -2415,14 +2414,31 @@ the client quietly stops finding matches. The only thing a reconstruction can ge
 is the indent ahead of the FileSystem closing brace, so when the hash disagrees the few
 shapes that indent can take are tried and the one Valve signed is kept.
 
+### `hasSignaturePatch`
+
+```ts
+export function hasSignaturePatch(text: string): boolean
 ```
-@returns {{ text: string, verified: boolean }}
+
+Is our line present in a signature list? Valve's own pristine file ALREADY carries an
+entry for gameinfo_branchspecific.gi (before DIGEST, with the vanilla hash), so merely
+finding the path proves nothing - only an entry appended AFTER the DIGEST line is ours.
+Getting this wrong makes a pristine list look patched, which freezes the backup at a
+pre-update build and lets apply() write those stale hashes over the live file.
+
+### `stripSignatures`
+
+```ts
+export function stripSignatures(text: string): string
 ```
+
+Same for the signature list: our line is appended after the DIGEST line, so anything of
+ours past that point comes off and the file the game shipped is left behind.
 
 ### `state`
 
-```js
-function state(gamePath, folder)
+```ts
+export function state(gamePath: string, folder: string | null): PatchState
 ```
 
 What the install looks like right now.
@@ -2432,14 +2448,10 @@ ships no `dota.signatures`, so on Linux there is nothing to sign the patch into 
 to check it against - which is not the same as an unsigned patch, and callers have to tell
 the two apart or a Linux user gets a permanent warning about a file that was never there.
 
-```
-@returns {{ patched: boolean, signed: boolean, signable: boolean, folder: string|null, foreign: string|null, vanillaOk: boolean }}
-```
-
 ### `apply`
 
-```js
-function apply({ gamePath, folder, backupDir })
+```ts
+export function apply({ gamePath, folder, backupDir }: { gamePath: string; folder: string; backupDir: string }): PatchState
 ```
 
 Register the folder. Safe to call repeatedly: it rebuilds the patch from the current
@@ -2447,8 +2459,8 @@ vanilla files (restoring the backup first), so a game update just means running 
 
 ### `revert`
 
-```js
-function revert({ gamePath, folder, backupDir })
+```ts
+export function revert({ gamePath, folder, backupDir }: { gamePath: string; folder?: string | null; backupDir: string }): PatchState
 ```
 
 Put the originals back and drop the folder if it is empty.
@@ -2459,14 +2471,6 @@ leftover from an earlier one. What goes back in place of the patched file is ver
 against that list rather than taken on faith: this is the moment the game becomes vanilla
 again, and a copy that is even one byte off leaves the client refusing to matchmake with
 no mod in sight to blame.
-
-### `crc32`
-
-```js
-function crc32(buf)
-```
-
-_No description in the source._
 
 ## src/portable-update.ts
 
@@ -3612,7 +3616,7 @@ app's own log said "pak01_dir.vpk not found" a thousand times without anyone act
 
 So the test is Valve's own: the base content pak, or the executable. Either one is enough,
 and the leftovers of a move have neither. The executable has a different name and a
-different folder on Linux, and src/patcher.js already knows both.
+different folder on Linux, and src/patcher.ts already knows both.
 
 Two markers rather than one because a single file can be absent from a real install for a
 moment - mid-download, or while Steam verifies. Note which pak this is: game\dota\pak01_dir
@@ -3960,34 +3964,91 @@ export function createUpdater({ autoUpdater, isPortable = false, channel = () =>
 @param deps.every        so a test does not wait four hours
 ```
 
-## src/vpk.js
+## src/vpk.ts
 
 Minimal reader for the index of Source-engine VPK "_dir" files (v1/v2).
 Only walks the directory tree — enough to list which game files a mod overrides.
 
+### `VpkEntry`
+
+```ts
+export interface VpkEntry { ext: string; folder: string; name: string; crc: number; preload: Buffer; data: Buffer }
+```
+
+One file inside a VPK, with its bytes: what readVpkEntries hands out and buildVpk takes.
+
+### `VpkDirEntry`
+
+```ts
+export interface VpkDirEntry
+```
+
+An entry of a multi-part index: where its bytes sit in the _NNN volumes, not the bytes.
+
+### `HeroHit`
+
+```ts
+export interface HeroHit { id: string; name: string; slots: string[]; base: boolean; models: number }
+```
+
+A hero a mod touches: the equip slots it replaces, whether it swaps the base model, how many models it carries.
+
+### `Analysis`
+
+```ts
+export interface Analysis { heroes: HeroHit[]; kind: string; pathCount: number }
+```
+
+What a mod's paths say it changes; see analyzeVpkPaths.
+
+### `VpkIndex`
+
+```ts
+export interface VpkIndex { size: number; has(p: string): boolean; read(p: string): Buffer | null }
+```
+
+A reader over one index that seeks straight to a file; see openVpkIndex.
+
+### `readVpkIndexFile`
+
+```ts
+export function readVpkIndexFile(filePath: string): Buffer
+```
+
+Read only the header + directory tree of a *_dir.vpk off disk. A self-contained mod
+is tens of MB of payload sitting behind a few KB of index, and the index is all any
+of the listing/analysis/fingerprint helpers ever touch — so scanning a whole library
+never has to pull the payloads into memory.
+
+```
+@returns header + tree — what every listing / analysis helper here parses
+```
+
 ### `listVpkPaths`
 
-```js
-function listVpkPaths(buf)
+```ts
+export function listVpkPaths(buf: Buffer): string[]
 ```
 
+Every file a VPK holds, by path.
+
 ```
-@param {Buffer} buf contents of a *_dir.vpk file
-@returns {string[]} lowercased inner paths like "materials/water/water_ti10_000.vmat_c"
+@param buf contents of a *_dir.vpk file
+@returns lowercased inner paths like "materials/water/water_ti10_000.vmat_c"
 ```
 
 ### `listVpkPathsFile`
 
-```js
-function listVpkPathsFile(filePath)
+```ts
+export function listVpkPathsFile(filePath: string): string[]
 ```
 
-_No description in the source._
+listVpkPaths for a file on disk, reading only its index.
 
 ### `listVpkPathCrcs`
 
-```js
-function listVpkPathCrcs(buf)
+```ts
+export function listVpkPathCrcs(buf: Buffer): Map<string, number>
 ```
 
 Like listVpkPaths, but returns each inner path together with the CRC32 the VPK index
@@ -3995,30 +4056,37 @@ stores for it. Two mods that carry a byte-identical filler asset share the same 
 comparing CRCs (not just paths) tells a real override apart from a coincidental shared file.
 
 ```
-@param {Buffer} buf contents of a *_dir.vpk file
-@returns {Map<string, number>} lowercased inner path -> crc32
+@param buf contents of a *_dir.vpk file
+@returns lowercased inner path -> crc32
 ```
 
 ### `listVpkPathCrcsFile`
 
-```js
-function listVpkPathCrcsFile(filePath)
+```ts
+export function listVpkPathCrcsFile(filePath: string): Map<string, number>
 ```
 
-_No description in the source._
+listVpkPathCrcs for a file on disk, reading only its index.
 
-### `listVpkEntries`
+### `readVpkEntryFile`
 
-```js
-function listVpkEntries(buf)
+```ts
+export function readVpkEntryFile(dirPath: string, wanted: string): { data: Buffer; crc: number } | null
 ```
 
-Lightweight (path, crc) list — the mod's content signature, no archive reads.
+Read the bytes of ONE file out of a *_dir.vpk without touching the rest. The game's
+own pak01 is a 25 GB set behind a 22 MB index, so pulling items_game.txt out of it
+has to be a seek, not a walk: index (already memo-cached) -> offset -> single read.
+
+```
+@param dirPath  path to the *_dir.vpk
+@param wanted   lowercased inner path, e.g. "scripts/items/items_game.txt"
+```
 
 ### `openVpkIndex`
 
-```js
-function openVpkIndex(dirPath)
+```ts
+export function openVpkIndex(dirPath: string): VpkIndex
 ```
 
 The same seek, for callers with a list rather than one name.
@@ -4028,264 +4096,49 @@ written for and wrong for sixty: the game's index holds 384 001 entries and re-r
 per icon costs seconds. This walks it once and hands back a reader that seeks.
 
 ```
-@param {string} dirPath path to the *_dir.vpk
-@returns {{ size: number, has: (p: string) => boolean, read: (p: string) => Buffer|null }}
+@param dirPath path to the *_dir.vpk
 ```
 
-### `mergeVpkToSingle`
+### `slotDisplayName`
 
-```js
-function mergeVpkToSingle(dirPath, archivePathFor)
+```ts
+export function slotDisplayName(slot: string): string { return t(SLOT_DISPLAY[slot] || slot); }
 ```
 
-Rewrites a multi-part VPK (_dir.vpk + _000.vpk, _001.vpk…) into one self-contained
-single-file VPK v2 with every entry's data embedded — the format the Dota2PornFx
-catalog uses. Data is copied byte-for-byte; CRCs and preload are preserved.
-
-```
-@param {string} dirPath  path to the *_dir.vpk index file
-@param {(idx: number) => string} [archivePathFor]  resolves external archive N to a path
-@returns {Buffer} the merged single-file VPK
-```
-
-### `splitVpkByHero`
-
-```js
-function splitVpkByHero(dirPath, archivePathFor)
-```
-
-Split a merged multi-hero VPK into one self-contained VPK per detected hero — the
-inverse of tools that pack several skins into one file (e.g. Dota 2 Skinchanger).
-A file that clearly belongs to a hero (…/heroes/<hero>/… or …/hero_<hero>/…) goes to
-that hero; everything else (shared stock, cross-hero assets) is copied into every
-output so each result stands alone and installs/removes independently.
-
-```
-@returns {Array<{ id: string, name: string, buf: Buffer, paths: string[] }>} empty if <2 heroes.
-```
-
-### `readVpkEntries`
-
-```js
-function readVpkEntries(dirBuf, dirPath, archivePathFor)
-```
-
-Read every entry of a _dir.vpk (following external _NNN archives) into a flat list
-with its bytes: [{ ext, folder, name, crc, preload, data }], in on-disk tree order.
-
-### `readVpkIndexFile`
-
-```js
-function readVpkIndexFile(filePath)
-```
-
-Read only the header + directory tree of a *_dir.vpk off disk. A self-contained mod
-is tens of MB of payload sitting behind a few KB of index, and the index is all any
-of the listing/analysis/fingerprint helpers ever touch — so scanning a whole library
-never has to pull the payloads into memory.
-
-```
-@param {string} filePath
-@returns {Buffer} header + tree — what every listing / analysis helper here parses
-```
-
-### `readVpkEntryFile`
-
-```js
-function readVpkEntryFile(dirPath, wanted)
-```
-
-Read the bytes of ONE file out of a *_dir.vpk without touching the rest. The game's
-own pak01 is a 25 GB set behind a 22 MB index, so pulling items_game.txt out of it
-has to be a seek, not a walk: index (already memo-cached) -> offset -> single read.
-
-```
-@param {string} dirPath  path to the *_dir.vpk
-@param {string} wanted   lowercased inner path, e.g. "scripts/items/items_game.txt"
-@returns {{ data: Buffer, crc: number } | null}
-```
-
-### `buildVpk`
-
-```js
-function buildVpk(entries)
-```
-
-Build one self-contained single-file VPK v2 from a flat entry list. Groups entries
-by ext -> folder (first-seen order), embeds every entry's data inline (0x7fff).
-
-### `buildVpkDir`
-
-```js
-function buildVpkDir(entries)
-```
-
-Build a _dir.vpk index that references data in *external* archives (_NNN.vpk). Entries
-must already carry { archiveIndex, offset, length } pointing into those archives. Unlike
-buildVpk (single-file, inline 0x7fff) this holds no file data — the tree only.
-
-### `combineVpksToFiles`
-
-```js
-function combineVpksToFiles(members, outDir, outBase, { volumeCap = 1 << 30 } = {})
-```
-
-Combine several independent single-file VPK mods into ONE multi-part VPK
-(<base>_dir.vpk index + <base>_NNN.vpk data volumes) written straight to disk. This is
-how many mods share a single pakNN slot — the game caps usable pak numbers at 99, so
-packing lets a library grow past that. Data is streamed volume-by-volume (each capped at
-`volumeCap`) so a multi-GB pack never has to sit in memory at once.
-
-When two members provide the same inner path the first member wins and the later one's
-copy is dropped (recorded in `conflicts`) — a merged VPK can't hold two files at one path.
-
-```
-@param {Array<{key:string, buf:Buffer}>} members  self-contained VPK buffers, in priority order
-@param {string} outDir   directory to write <base>_dir.vpk and volumes into
-@param {string} outBase  slot base name, e.g. "pak10"
-@param {{volumeCap?:number}} [opts]
-@returns {{ dir:string, parts:string[], memberPaths:Record<string,string[]>, conflicts:Array }}
-```
-
-### `entryPath`
-
-```js
-function entryPath(en)
-```
-
-full inner path of a read entry, lowercased (" " means the root / no extension)
-
-### `findContentRoot`
-
-```js
-function findContentRoot(dir, depth = 0)
-```
-
-Where the mod's content actually starts under `dir`.
-
-An author points at "MyMod", but the tree underneath may be MyMod/models/..., or the
-game-shaped MyMod/game/dota_russian/models/..., or a single wrapper folder left by
-unzipping. Whatever it is, the archive root is the directory that holds the game's own
-folders - and everything beside them comes too: measured over 84 installed mods, 35 carry
-a top folder of the author's own (dota2pornfx/, amir4an/, models123/) next to the
-canonical ones, and three ship a readme.
-
-```
-@returns {string|null} absolute path, or null if nothing game-shaped is under there
-```
-
-### `packFolder`
-
-```js
-function packFolder(root)
-```
-
-Pack a folder of loose game files into a single self-contained VPK - the other half of
-importing, for the author who has the files but not the archive.
-
-```
-@param {string} root the content root (see findContentRoot)
-@returns {Buffer}
-```
-
-### `crc32`
-
-```js
-function crc32(buf)
-```
-
-_No description in the source._
-
-### `fingerprintVpk`
-
-```js
-function fingerprintVpk(buf)
-```
-
-_No description in the source._
-
-### `fingerprintEntries`
-
-```js
-function fingerprintEntries(entries)
-```
-
-Content fingerprint of a mod: sha1 over its sorted (path:crc) index. Independent of
-packaging (multi-part vs single, filename), so the same mod installed from the site,
-from another tool, or via this app all hash identically — the basis for recognising
-a foreign vpk as a specific catalog mod.
-
-### `fingerprintFiles`
-
-```js
-function fingerprintFiles(files)
-```
-
-Content fingerprint of a loose-file mod (cursors, fonts): sha1 over sorted
-"path:sha1(bytes)". Paths should already be normalized (top folder stripped,
-lowercased) so it reproduces from either the source zip or the installed files.
-
-### `analyzeVpk`
-
-```js
-function analyzeVpk(buf)
-```
-
-_No description in the source._
+An equip slot as the user reads it, in their language.
 
 ### `analyzeVpkPaths`
 
-```js
-function analyzeVpkPaths(paths)
+```ts
+export function analyzeVpkPaths(paths: string[]): Analysis
 ```
 
 Classify what a mod's inner path list actually changes.
 
 ```
-@param {string[]} paths lowercased inner VPK paths (from listVpkPaths)
-@returns {{ heroes: Array<{id,name,slots:string[],base:boolean,models:number}>, kind: string, pathCount: number }}
+@param paths lowercased inner VPK paths (from listVpkPaths)
 ```
 
-### `heroDisplayName`
+### `analyzeVpk`
 
-_No description in the source._
-
-### `slotDisplayName`
-
-```js
-function slotDisplayName(slot) { return t(SLOT_DISPLAY[slot] || slot); }
+```ts
+export function analyzeVpk(buf: Buffer): Analysis
 ```
 
-_No description in the source._
+analyzeVpkPaths over the paths of one VPK.
 
 ### `describeHero`
 
-```js
-function describeHero(h)
+```ts
+export function describeHero(h: HeroHit): string
 ```
 
 Human one-liner for a single detected hero, e.g. "Nyx Assassin (model, weapon)".
 
-### `describeAnalysis`
-
-```js
-function describeAnalysis(a)
-```
-
-Human summary of a whole analysis: hero skins, or a coarse content kind.
-
-### `nameFromAnalysis`
-
-```js
-function nameFromAnalysis(a)
-```
-
-_No description in the source._
-
 ### `subjectHeroes`
 
-```js
-function subjectHeroes(a)
+```ts
+export function subjectHeroes(a: Analysis): HeroHit[]
 ```
 
 The heroes a mod is actually about, as opposed to the ones it merely touches.
@@ -4304,6 +4157,194 @@ borrow a prop from another hero - a Clinkz set hangs a Phoenix immortal off its 
 one wears Disruptor's back piece - and that single model used to make the mod read as two
 heroes. It came in named "Clinkz, Phoenix", and an import of two to four heroes splits
 itself, so the set arrived in two halves with the bow in one of them.
+
+### `describeAnalysis`
+
+```ts
+export function describeAnalysis(a: Analysis): string
+```
+
+Human summary of a whole analysis: hero skins, or a coarse content kind.
+
+### `nameFromAnalysis`
+
+```ts
+export function nameFromAnalysis(a: Analysis): string | null
+```
+
+A short display NAME for a mod from its analysis — used to name imported VPKs by their
+content (a hero, a set, or a content kind) instead of a bare "pakNN" slot. Null if the
+content isn't recognisable enough to name.
+
+### `entryPath`
+
+```ts
+export function entryPath(en: { folder: string; name: string; ext: string }): string
+```
+
+Full inner path of a read entry, lowercased (" " means the root / no extension).
+
+### `readVpkEntries`
+
+```ts
+export function readVpkEntries(dirBuf: Buffer, dirPath: string, archivePathFor?: ArchivePathFor | null): VpkEntry[]
+```
+
+Read every entry of a _dir.vpk (following external _NNN archives) into a flat list
+with its bytes, in on-disk tree order.
+
+### `crc32`
+
+```ts
+export function crc32(buf: Buffer): number
+```
+
+CRC-32 as the VPK index records it for each entry.
+
+### `buildVpk`
+
+```ts
+export function buildVpk(entries: VpkEntry[]): Buffer
+```
+
+Build one self-contained single-file VPK v2 from a flat entry list. Groups entries
+by ext -> folder (first-seen order), embeds every entry's data inline (0x7fff).
+
+### `findContentRoot`
+
+```ts
+export function findContentRoot(dir: string, depth = 0): string | null
+```
+
+Where the mod's content actually starts under `dir`.
+
+An author points at "MyMod", but the tree underneath may be MyMod/models/..., or the
+game-shaped MyMod/game/dota_russian/models/..., or a single wrapper folder left by
+unzipping. Whatever it is, the archive root is the directory that holds the game's own
+folders - and everything beside them comes too: measured over 84 installed mods, 35 carry
+a top folder of the author's own (dota2pornfx/, amir4an/, models123/) next to the
+canonical ones, and three ship a readme.
+
+```
+@returns absolute path, or null if nothing game-shaped is under there
+```
+
+### `packFolder`
+
+```ts
+export function packFolder(root: string): Buffer
+```
+
+Pack a folder of loose game files into a single self-contained VPK - the other half of
+importing, for the author who has the files but not the archive.
+
+```
+@param root the content root (see findContentRoot)
+```
+
+### `buildVpkDir`
+
+```ts
+export function buildVpkDir(entries: VpkDirEntry[]): Buffer
+```
+
+Build a _dir.vpk index that references data in *external* archives (_NNN.vpk). Entries
+must already carry { archiveIndex, offset, length } pointing into those archives. Unlike
+buildVpk (single-file, inline 0x7fff) this holds no file data — the tree only.
+
+### `combineVpksToFiles`
+
+```ts
+export function combineVpksToFiles(members: { key: string; buf: Buffer }[], outDir: string, outBase: string, { volumeCap = 1 << 30 }: { volumeCap?: number } = {}):
+```
+
+Combine several independent single-file VPK mods into ONE multi-part VPK
+(<base>_dir.vpk index + <base>_NNN.vpk data volumes) written straight to disk. This is
+how many mods share a single pakNN slot — the game caps usable pak numbers at 99, so
+packing lets a library grow past that. Data is streamed volume-by-volume (each capped at
+`volumeCap`) so a multi-GB pack never has to sit in memory at once.
+
+When two members provide the same inner path the first member wins and the later one's
+copy is dropped (recorded in `conflicts`) — a merged VPK can't hold two files at one path.
+
+```
+@param members  self-contained VPK buffers, in priority order
+@param outDir   directory to write <base>_dir.vpk and volumes into
+@param outBase  slot base name, e.g. "pak10"
+```
+
+### `mergeVpkToSingle`
+
+```ts
+export function mergeVpkToSingle(dirPath: string, archivePathFor?: ArchivePathFor | null): Buffer
+```
+
+Rewrites a multi-part VPK (_dir.vpk + _000.vpk, _001.vpk…) into one self-contained
+single-file VPK v2 with every entry's data embedded — the format the Dota2PornFx
+catalog uses. Data is copied byte-for-byte; CRCs and preload are preserved.
+
+```
+@param dirPath  path to the *_dir.vpk index file
+@param archivePathFor  resolves external archive N to a path
+@returns the merged single-file VPK
+```
+
+### `splitVpkByHero`
+
+```ts
+export function splitVpkByHero(dirPath: string, archivePathFor?: ArchivePathFor | null): { id: string; name: string; buf: Buffer; paths: string[] }[]
+```
+
+Split a merged multi-hero VPK into one self-contained VPK per detected hero — the
+inverse of tools that pack several skins into one file (e.g. Dota 2 Skinchanger).
+A file that clearly belongs to a hero (…/heroes/<hero>/… or …/hero_<hero>/…) goes to
+that hero; everything else (shared stock, cross-hero assets) is copied into every
+output so each result stands alone and installs/removes independently.
+
+```
+@returns empty if <2 heroes.
+```
+
+### `fingerprintEntries`
+
+```ts
+export function fingerprintEntries(entries: { path: string; crc: number }[]): string
+```
+
+Content fingerprint of a mod: sha1 over its sorted (path:crc) index. Independent of
+packaging (multi-part vs single, filename), so the same mod installed from the site,
+from another tool, or via this app all hash identically — the basis for recognising
+a foreign vpk as a specific catalog mod.
+
+### `fingerprintVpk`
+
+```ts
+export function fingerprintVpk(buf: Buffer): string
+```
+
+fingerprintEntries over one VPK's index.
+
+### `fingerprintFiles`
+
+```ts
+export function fingerprintFiles(files: { path: string; data: Buffer }[]): string
+```
+
+Content fingerprint of a loose-file mod (cursors, fonts): sha1 over sorted
+"path:sha1(bytes)". Paths should already be normalized (top folder stripped,
+lowercased) so it reproduces from either the source zip or the installed files.
+
+### `listVpkEntries`
+
+```ts
+export function listVpkEntries(buf: Buffer): { path: string; crc: number }[]
+```
+
+Lightweight (path, crc) list — the mod's content signature, no archive reads.
+
+### `heroDisplayName`
+
+_No description in the source._
 
 ## src/vtex.ts
 

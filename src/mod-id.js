@@ -16,7 +16,7 @@
 // reader has always been able to get it. Without a game path there is simply no answer and
 // the caller keeps the guess.
 const schema = require('./schema');
-const { heroDisplayName } = require('./vpk');
+const { heroDisplayName } = require('./vpk.ts');
 
 /**
  * @param {object} deps

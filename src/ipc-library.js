@@ -314,7 +314,7 @@ function registerLibraryIpc({
       const onDisk = ['', '.off'].map((s) => path.join(lang, base + s)).find((p) => fs.existsSync(p));
       if (!onDisk) return { error: t('Файл не найден в папке модов') };
 
-      const { fingerprintVpk, readVpkIndexFile } = require('./vpk');
+      const { fingerprintVpk, readVpkIndexFile } = require('./vpk.ts');
       let matches = null;
       try { matches = fingerprints.match(fingerprintVpk(readVpkIndexFile(onDisk))); } catch { /* not a readable index */ }
 
@@ -373,7 +373,7 @@ function registerLibraryIpc({
         }
       };
       walk(cursorDir, '');
-      const { fingerprintFiles } = require('./vpk');
+      const { fingerprintFiles } = require('./vpk.ts');
       const matches = fingerprints.match(fingerprintFiles(files));
       if (!matches) return { error: t('Совпадение с каталогом не найдено') };
       const m = matches[0];

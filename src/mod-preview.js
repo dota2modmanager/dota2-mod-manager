@@ -26,7 +26,7 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 const { execFile } = require('child_process');
-const { readVpkIndexFile, listVpkPathCrcs, readVpkEntryFile } = require('./vpk');
+const { readVpkIndexFile, listVpkPathCrcs, readVpkEntryFile } = require('./vpk.ts');
 
 // One call decodes a whole folder, so a batch costs what a single file costs (258 ms for
 // five, measured). This caps how much work one screenful can ask for.

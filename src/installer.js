@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { RAW_BASE } = require('./catalog.ts');
 const { listVpkPaths, listVpkPathsFile, listVpkPathCrcs, readVpkIndexFile, readVpkEntries, entryPath, buildVpk, mergeVpkToSingle, splitVpkByHero, combineVpksToFiles, analyzeVpkPaths, describeAnalysis, nameFromAnalysis, subjectHeroes, fingerprintVpk, fingerprintFiles,
-  } = require('./vpk');
+  } = require('./vpk.ts');
 const { extractDeltas, deltaTable, crc32 } = require('./schema');
 // Whole-game tables and tool branding that packaging tools bake into EVERY export.
 // Dota 2 Skinchanger, for one, ships a full 47 MB scripts/items/items_game.txt plus the

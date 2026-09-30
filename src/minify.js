@@ -27,7 +27,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { listVpkPathsFile } = require('./vpk');
+const { listVpkPathsFile } = require('./vpk.ts');
 
 /** Its own locale, which is not a language Dota knows, and the real one it moved to. */
 const MINIFY_FOLDER = 'minify';

@@ -9,7 +9,7 @@ const os = require('os');
 const path = require('path');
 
 const schema = require('../src/schema.js');
-const vpk = require('../src/vpk.js');
+const vpk = require('../src/vpk.ts');
 
 const item = (id, name, extra = '') => `		"${id}"
 		{

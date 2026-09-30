@@ -74,7 +74,7 @@ test('a missing voice pack does not make an install invalid', (t) => {
 });
 
 // Same question on Linux, different file: the game ships as bin/linuxsteamrt64/dota2 there,
-// which is the name src/patcher.js already patches around.
+// which is the name src/patcher.ts already patches around.
 test('the Linux executable counts as an install too', (t) => {
   const dir = tmpDir(t);
   const game = movedAway(dir);

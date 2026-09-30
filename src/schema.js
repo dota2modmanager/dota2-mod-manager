@@ -12,7 +12,7 @@
 // works on latin1 strings: byte-exact in and out, no re-encoding surprises.
 const fs = require('fs');
 const path = require('path');
-const { readVpkEntryFile, buildVpk, crc32 } = require('./vpk');
+const { readVpkEntryFile, buildVpk, crc32 } = require('./vpk.ts');
 const { t } = require('./i18n.ts');
 
 const SCHEMA_REL = 'scripts/items/items_game.txt';
@@ -507,7 +507,7 @@ function validateSchema(text, baseText) {
   return { items, bytes: text.length };
 }
 
-// crc32 comes from src/vpk.js, where the VPK writer needs it too, and is re-exported below
+// crc32 comes from src/vpk.ts, where the VPK writer needs it too, and is re-exported below
 // for everything that was already taking it from here.
 
 // Pack the merged schema as a one-file VPK holding nothing but items_game.txt.

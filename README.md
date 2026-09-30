@@ -305,7 +305,7 @@ game folder on tens of thousands of machines.
 
 Valve's own `vpk.exe` is deliberately **not** here and must not be added: it is proprietary, and
 a project that bundles it is not open source in the sense SignPath's terms mean. Reading and
-writing VPK archives is done by this repository's own code, which is why `src/vpk.js` exists.
+writing VPK archives is done by this repository's own code, which is why `src/vpk.ts` exists.
 
 <br>
 

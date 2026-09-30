@@ -26,7 +26,7 @@ const os = require('os');
 const crypto = require('crypto');
 const { execFile } = require('child_process');
 const schema = require('./schema');
-const { openVpkIndex } = require('./vpk');
+const { openVpkIndex } = require('./vpk.ts');
 const { pngFromVtex } = require('./vtex.ts');
 
 // Enough to fill a screen of tiles in one go; the renderer asks in batches of 24.

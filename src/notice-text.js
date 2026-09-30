@@ -20,7 +20,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const vpk = require('./vpk');
+const vpk = require('./vpk.ts');
 const gamelang = require('./gamelang');
 const { APP_PAK } = require('./slot-zones');
 const { NOTICE_TEXTS, NOTICE_KEYS } = require('./notice-texts.ts');

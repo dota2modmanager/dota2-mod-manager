@@ -8,7 +8,7 @@
       "anchor": "removePackDeployed(pack) {",
       "lineStartsWith": "    const re = new RegExp(",
       "to": "    const re = new RegExp('^' + base + '(_dir|_[0-9]{3})[.]vpk$', 'i');",
-      "test": "test/packs.test.js"
+      "test": "test/packs.test.ts"
     },
     {
       "name": "deployPack ignores the enabled flag",
@@ -16,7 +16,7 @@
       "anchor": "deployPack(pack) {",
       "from": "(pack.members || []).filter((m) => m.enabled)",
       "to": "(pack.members || [])",
-      "test": "test/packs.test.js"
+      "test": "test/packs.test.ts"
     },
     {
       "name": "deployPack allocates a slot instead of reusing its own",
@@ -24,7 +24,7 @@
       "anchor": "deployPack(pack) {",
       "from": "let base = this.packBase(pack);",
       "to": "let base = null;",
-      "test": "test/packs.test.js"
+      "test": "test/packs.test.ts"
     },
     {
       "name": "deployPack ignores slots that are occupied",
@@ -32,7 +32,7 @@
       "anchor": "deployPack(pack) {",
       "from": "this.allocatePak(this.usedPakNames(), false).replace",
       "to": "this.allocatePak(new Set(), false).replace",
-      "test": "test/packs.test.js"
+      "test": "test/packs.test.ts"
     },
     {
       "name": "removePackFully keeps the member store",
@@ -40,7 +40,7 @@
       "anchor": "removePackFully(pack) {",
       "from": "fs.rmSync(this.packFolder(pack.id), { recursive: true, force: true });",
       "to": ";",
-      "test": "test/packs.test.js"
+      "test": "test/packs.test.ts"
     },
     {
       "name": "deployMemberAsMod writes over the pack it came from",
@@ -48,15 +48,15 @@
       "anchor": "deployMemberAsMod(pack, member) {",
       "from": "this.allocatePak(this.usedPakNames(), false)",
       "to": "(this.packBase(pack) + '_dir.vpk')",
-      "test": "test/packs.test.js"
+      "test": "test/packs.test.ts"
     },
     {
       "name": "combining drops a contested file without saying so",
-      "file": "src/vpk.js",
+      "file": "src/vpk.ts",
       "anchor": "function combineVpksToFiles(",
       "from": "conflicts.push({ key: m.key, path: p }); continue;",
       "to": "continue;",
-      "test": "test/packs.test.js"
+      "test": "test/packs.test.ts"
     },
     {
       "name": "importing leaves a multi-volume set as a set",
@@ -268,7 +268,7 @@
     },
     {
       "name": "the VPK reader starts needing Electron",
-      "file": "src/vpk.js",
+      "file": "src/vpk.ts",
       "anchor": "function combineVpksToFiles(",
       "from": "fs.mkdirSync(outDir, { recursive: true });",
       "to": "require('electron'); fs.mkdirSync(outDir, { recursive: true });",
@@ -388,99 +388,99 @@
     },
     {
       "name": "the VPK writer records the wrong CRC",
-      "file": "src/vpk.js",
+      "file": "src/vpk.ts",
       "anchor": "function buildVpk(",
       "from": "meta.writeUInt32LE(en.crc >>> 0, 0);",
       "to": "meta.writeUInt32LE(0, 0);",
-      "test": "test/vpk-fuzz.test.js"
+      "test": "test/vpk-fuzz.test.ts"
     },
     {
       "name": "the VPK writer points every entry at the start of the data",
-      "file": "src/vpk.js",
+      "file": "src/vpk.ts",
       "anchor": "function buildVpk(",
-      "from": "en._offset = dataLen;",
-      "to": "en._offset = 0;",
-      "test": "test/vpk-fuzz.test.js"
+      "from": "offsets.set(en, dataLen);",
+      "to": "offsets.set(en, 0);",
+      "test": "test/vpk-fuzz.test.ts"
     },
     {
       "name": "the signature records the CRC in the wrong byte order",
-      "file": "src/patcher.js",
-      "anchor": "function fileHashes(buf) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function fileHashes(buf: Buffer): { sha1: string; crc: string } {",
       "from": "le.writeUInt32LE(crc32(buf));",
       "to": "le.writeUInt32BE(crc32(buf));",
-      "test": "test/patcher.test.js"
+      "test": "test/patcher.test.ts"
     },
     {
       "name": "taking the patch off leaves the file a tab short of what Valve signed",
-      "file": "src/patcher.js",
-      "anchor": "function stripPatch(text) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function stripPatch(text: string): string {",
       "from": "const joiner = out[end] === '}' ? '\\r\\n\\t' : '\\r\\n';",
       "to": "const joiner = '\\r\\n';",
-      "test": "test/patcher.test.js"
+      "test": "test/patcher.test.ts"
     },
     {
       "name": "Valve's own signature line is taken for ours",
-      "file": "src/patcher.js",
-      "anchor": "function hasSignaturePatch(text) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function hasSignaturePatch(text: string): boolean {",
       "from": "return lines.slice(digest + 1).some((l) => l.startsWith(SIG_PREFIX + '~'));",
       "to": "return lines.some((l) => l.startsWith(SIG_PREFIX + '~'));",
-      "test": "test/patcher.test.js"
+      "test": "test/patcher.test.ts"
     },
     {
       "name": "taking our signature out takes Valve's out with it",
-      "file": "src/patcher.js",
-      "anchor": "function stripSignatures(text) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function stripSignatures(text: string): string {",
       "from": "const kept = lines.filter((l, i) => i <= digest || !l.startsWith(SIG_PREFIX + '~'));",
       "to": "const kept = lines.filter((l) => !l.startsWith(SIG_PREFIX + '~'));",
-      "test": "test/patcher.test.js"
+      "test": "test/patcher.test.ts"
     },
     {
       "name": "the vanilla hash is read from the line we appended",
-      "file": "src/patcher.js",
-      "anchor": "function vanillaBranchHashes(signaturesText) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function vanillaBranchHashes(signaturesText: string): Hashes | null {",
       "from": "const scope = digest === -1 ? lines : lines.slice(0, digest);",
       "to": "const scope = [...lines].reverse();",
-      "test": "test/patcher.test.js"
+      "test": "test/patcher.test.ts"
     },
     {
       "name": "a restored file is called verified without being checked",
-      "file": "src/patcher.js",
-      "anchor": "function restoreBranch(text, want) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function restoreBranch(text: string, want: Hashes | null): { text: string; verified: boolean } {",
       "from": "return { text: base, verified: false };",
       "to": "return { text: base, verified: true };",
-      "test": "test/patcher.test.js"
+      "test": "test/patcher.test.ts"
     },
     {
       "name": "the patch is signed into a stale copy of the list",
-      "file": "src/patcher.js",
-      "anchor": "function apply({ gamePath, folder, backupDir }) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function apply({ gamePath, folder, backupDir }: { gamePath: string; folder: string; backupDir: string }): PatchState {",
       "from": "const sigOrig = stripSignatures(fs.readFileSync(p.signatures, 'latin1'));",
       "to": "const sigOrig = stripSignatures(fs.readFileSync(path.join(backupDir, path.basename(p.signatures) + '.orig'), 'latin1'));",
-      "test": "test/patcher-tree.test.js"
+      "test": "test/patcher-tree.test.ts"
     },
     {
       "name": "applying the patch twice stacks it",
-      "file": "src/patcher.js",
-      "anchor": "function apply({ gamePath, folder, backupDir }) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function apply({ gamePath, folder, backupDir }: { gamePath: string; folder: string; backupDir: string }): PatchState {",
       "from": "const branchOrig = restoreBranch(fs.readFileSync(path.join(backupDir, path.basename(p.branch) + '.orig'), 'latin1'), want).text;",
       "to": "const branchOrig = fs.readFileSync(p.branch, 'latin1');",
-      "test": "test/patcher-tree.test.js"
+      "test": "test/patcher-tree.test.ts"
     },
     {
       "name": "an install with no signature list is refused",
-      "file": "src/patcher.js",
-      "anchor": "function apply({ gamePath, folder, backupDir }) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function apply({ gamePath, folder, backupDir }: { gamePath: string; folder: string; backupDir: string }): PatchState {",
       "from": "for (const f of [p.gameinfo, p.branch]) {",
       "to": "for (const f of [p.gameinfo, p.branch, p.signatures]) {",
-      "test": "test/patcher-tree.test.js"
+      "test": "test/patcher-tree.test.ts"
     },
     {
       "name": "a backup that no longer matches the game is kept anyway",
-      "file": "src/patcher.js",
-      "anchor": "function backupOnce(file, backupDir, clean, isOurs, isGood) {",
+      "file": "src/patcher.ts",
+      "anchor": "function backupOnce(file: string, backupDir: string, clean: (text: string) => string, isOurs: (text: string) => boolean, isGood?: (text: string) => boolean): string {",
       "from": "} else if (!fs.existsSync(dest) || stale) {",
       "to": "} else if (!fs.existsSync(dest)) {",
-      "test": "test/patcher-tree.test.js"
+      "test": "test/patcher-tree.test.ts"
     },
     {
       "name": "a download with the wrong hash is kept",
@@ -716,8 +716,8 @@
     },
     {
       "name": "the crc32 table is walked one bit off",
-      "file": "src/vpk.js",
-      "anchor": "function crc32(buf) {",
+      "file": "src/vpk.ts",
+      "anchor": "export function crc32(buf: Buffer): number {",
       "from": "c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);",
       "to": "c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 7);",
       "test": "test/properties.test.js"

@@ -2,31 +2,18 @@
 // contains, which hero it touches, and the content fingerprint used to recognise a foreign
 // file as a catalog mod. The writer is exercised against the reader, so a change that breaks
 // the round trip fails here instead of producing paks the game silently ignores.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const { crc32 } = require('node:zlib');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { crc32 } from 'node:zlib';
 
-const vpk = require('../src/vpk.js');
-const { heroIdFromName } = require('../src/hero-names.ts');
+import * as vpk from '../src/vpk.ts';
+import { entry } from './helpers/vpk-entry.ts';
+import { heroIdFromName } from '../src/hero-names.ts';
 
-/** One inline-data entry in the shape buildVpk() wants. */
-function entry(relPath, body) {
-  const data = Buffer.isBuffer(body) ? body : Buffer.from(body);
-  const norm = relPath.replace(/\\/g, '/').toLowerCase();
-  const slash = norm.lastIndexOf('/');
-  const file = slash === -1 ? norm : norm.slice(slash + 1);
-  const dot = file.lastIndexOf('.');
-  return {
-    ext: dot === -1 ? ' ' : file.slice(dot + 1),
-    folder: slash === -1 ? ' ' : norm.slice(0, slash),
-    name: dot === -1 ? file : file.slice(0, dot),
-    data,
-    preload: Buffer.alloc(0),
-    crc: crc32(data) >>> 0,
-  };
-}
-
-const SAMPLE = [
+const SAMPLE: [string, string][] = [
   ['models/heroes/crystal_maiden/crystal_maiden.vmdl_c', 'base model'],
   ['models/items/crystal_maiden/cm_screeauk/cm_screeauk_head.vmdl_c', 'head piece'],
   ['materials/models/heroes/crystal_maiden/crystal_maiden.vmat_c', 'material'],
@@ -43,7 +30,7 @@ test('a built VPK reads back with every path intact', () => {
 
 test('a built VPK reads back with every file byte for byte', () => {
   const buf = buildSample();
-  const entries = vpk.readVpkEntries(buf);
+  const entries = vpk.readVpkEntries(buf, 'mem');
   const byPath = new Map(entries.map((e) => [vpk.entryPath(e), e.data.toString()]));
 
   assert.equal(byPath.size, SAMPLE.length);
@@ -53,19 +40,21 @@ test('a built VPK reads back with every file byte for byte', () => {
 test('a file at the archive root survives the round trip', () => {
   const buf = vpk.buildVpk([entry('readme.txt', 'top level')]);
   assert.deepEqual(vpk.listVpkPaths(buf), ['readme.txt']);
-  assert.equal(vpk.readVpkEntries(buf)[0].data.toString(), 'top level');
+  assert.equal(vpk.readVpkEntries(buf, 'mem')[0].data.toString(), 'top level');
 });
 
 test('an empty file survives the round trip', () => {
   const buf = vpk.buildVpk([entry('materials/blank.vtex_c', '')]);
   assert.deepEqual(vpk.listVpkPaths(buf), ['materials/blank.vtex_c']);
-  assert.equal(vpk.readVpkEntries(buf)[0].data.length, 0);
+  assert.equal(vpk.readVpkEntries(buf, 'mem')[0].data.length, 0);
 });
 
 test('the recorded CRC is the CRC of the bytes', () => {
   const buf = buildSample();
   for (const e of vpk.listVpkEntries(buf)) {
-    const [, body] = SAMPLE.find(([p]) => p === e.path);
+    const hit = SAMPLE.find(([p]) => p === e.path);
+    assert.ok(hit, `${e.path} is not in the sample`);
+    const [, body] = hit;
     assert.equal(e.crc >>> 0, crc32(Buffer.from(body)) >>> 0, e.path);
   }
 });
@@ -179,9 +168,6 @@ test('splitting refuses a mod that only borrowed a prop from another hero', () =
   // The split decision has to agree with what the mod is about, or the two disagree and the
   // set comes apart anyway: naming said "Clinkz" while splitting still counted Phoenix and
   // cut the bow off into a mod of its own.
-  const os = require('node:os');
-  const fs = require('node:fs');
-  const path = require('node:path');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vpk-split-'));
   try {
     const one = path.join(dir, 'one_dir.vpk');
@@ -239,9 +225,6 @@ test('the seeking index answers exactly what the one-file reader does', () => {
   // tree holds 384 001 entries: walking it per picture costs seconds, so the index is built
   // once and read by seek. It has to agree with readVpkEntryFile down to the byte, or the
   // pictures come out of the wrong offsets and nobody can tell from the outside.
-  const os = require('node:os');
-  const fs = require('node:fs');
-  const path = require('node:path');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vpk-index-'));
   try {
     const file = path.join(dir, 'pak_dir.vpk');
@@ -257,11 +240,11 @@ test('the seeking index answers exactly what the one-file reader does', () => {
     assert.equal(ix.size, bodies.size);
     for (const [p, body] of bodies) {
       assert.ok(ix.has(p), `${p} should be in the index`);
-      assert.equal(ix.read(p).toString(), body, p);
-      assert.equal(Buffer.compare(ix.read(p), vpk.readVpkEntryFile(file, p).data), 0, p);
+      assert.equal(ix.read(p)?.toString(), body, p);
+      assert.deepEqual(ix.read(p), vpk.readVpkEntryFile(file, p)?.data, p);
     }
     // asked in the case the caller happens to have, not the case the tree stores
-    assert.equal(ix.read('SCRIPTS/Items/Items_Game.TXT').toString(), 'the item table');
+    assert.equal(ix.read('SCRIPTS/Items/Items_Game.TXT')?.toString(), 'the item table');
     assert.equal(ix.has('models/heroes/pudge/nothing.vmdl_c'), false);
     assert.equal(ix.read('models/heroes/pudge/nothing.vmdl_c'), null);
   } finally {

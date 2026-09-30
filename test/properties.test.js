@@ -1,7 +1,7 @@
 /* The promises that have to hold for every input, not for the inputs somebody thought of.
  *
  * The parsers already get seeded noise thrown at them (test/safe-zip-fuzz.test.js,
- * test/vpk-fuzz.test.js, tools/fuzz-parsers.mjs). Those generators are ours, and they only
+ * test/vpk-fuzz.test.ts, tools/fuzz-parsers.mjs). Those generators are ours, and they only
  * produce what we imagined; when one does find something, it hands over the 4 KB of rubbish that
  * broke it rather than the two bytes that mattered.
  *
@@ -16,7 +16,7 @@ const zlib = require('zlib');
 const fc = require('fast-check');
 
 const { safeJoin } = require('../src/safe-zip.ts');
-const { crc32 } = require('../src/vpk.js');
+const { crc32 } = require('../src/vpk.ts');
 const { encodePresetLink, decodePresetLink } = require('../src/preset-link.ts');
 
 const RUNS = { numRuns: 500 };

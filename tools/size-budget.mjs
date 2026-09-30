@@ -3,7 +3,7 @@
  * The big files may get smaller. They may not get bigger.
  *
  * Five files carry 7 155 lines between them while the median module in src/ is 171:
- * src/installer.js, renderer/views/catalog.js, renderer/views/library.js, main.js and src/vpk.js.
+ * src/installer.js, renderer/views/catalog.js, renderer/views/library.js, main.js and src/vpk.ts.
  * That is not a style, it is five outliers, and every one of them got there a hundred lines at a
  * time with nobody deciding to.
  *
@@ -35,7 +35,8 @@ export function appFiles(readdir = fs.readdirSync, exists = fs.existsSync) {
     const full = path.join(root, dir);
     if (!exists(full)) continue;
     for (const f of readdir(full)) {
-      if (f.endsWith('.js')) out.push(`${dir}/${f}`);
+      // the main process moves to TypeScript a module at a time, and a .ts module ships the same
+      if (/\.(js|ts|tsx)$/.test(f) && !f.endsWith('.d.ts')) out.push(`${dir}/${f}`);
     }
   }
   return out.filter((f) => exists(path.join(root, f))).sort();

@@ -56,9 +56,9 @@ test('the check would have caught the one that shipped', () => {
      whatever else changes around it. */
   const fromSrc = path.resolve(ROOT, 'src');
   assert.throws(
-    () => require.resolve(path.resolve(fromSrc, './src/vpk')),
+    () => require.resolve(path.resolve(fromSrc, './src/vpk.ts')),
     /Cannot find module/,
     'src/src/vpk resolves, so this test no longer describes the mistake it was written for',
   );
-  assert.ok(require.resolve(path.resolve(fromSrc, './vpk')), 'and the right path still resolves');
+  assert.ok(require.resolve(path.resolve(fromSrc, './vpk.ts')), 'and the right path still resolves');
 });

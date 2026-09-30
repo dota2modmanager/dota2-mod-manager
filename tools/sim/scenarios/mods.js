@@ -20,7 +20,7 @@ const fs = require('fs');
 const path = require('path');
 const dota = require('../dota');
 const { lit } = require('../driver');
-const { listVpkPathCrcsFile } = require('../../../src/vpk.js');
+const { listVpkPathCrcsFile } = require('../../../src/vpk.ts');
 const steps = require('../steps');
 
 // small, different kinds, and two that fight over the same files

@@ -402,7 +402,7 @@ class Icons {
 
   /**
    * A hero's own portrait, for an imported mod the app recognises as skinning exactly one
-   * hero (see src/vpk.js analyzeVpkPaths): a stand-in so an "Elder Titan" import shows Elder
+   * hero (see src/vpk.ts analyzeVpkPaths): a stand-in so an "Elder Titan" import shows Elder
    * Titan's own picture instead of an empty box in the Library.
    * @returns {Promise<string|null>}
    */

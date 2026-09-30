@@ -8,7 +8,7 @@
 //   - a mod's changes live in the library record (record.schema), never in its VPK;
 //   - nothing is written to the game unless the user turned the patch on.
 const path = require('path');
-const patcher = require('./patcher');
+const patcher = require('./patcher.ts');
 const schema = require('./schema');
 const itemBuilder = require('./item-builder');
 const { t } = require('./i18n.ts');

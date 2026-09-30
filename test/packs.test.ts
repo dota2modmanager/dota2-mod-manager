@@ -12,39 +12,23 @@
  * first, before that code moves into a module of its own, so the move has something to prove
  * itself against.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const { crc32 } = require('node:zlib');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const vpk = require('../src/vpk.js');
-const { Installer } = require('../src/installer.js');
-
-/** One inline-data entry in the shape buildVpk() wants. */
-function entry(relPath, body) {
-  const data = Buffer.isBuffer(body) ? body : Buffer.from(body);
-  const norm = relPath.replace(/\\/g, '/').toLowerCase();
-  const slash = norm.lastIndexOf('/');
-  const file = slash === -1 ? norm : norm.slice(slash + 1);
-  const dot = file.lastIndexOf('.');
-  return {
-    ext: dot === -1 ? ' ' : file.slice(dot + 1),
-    folder: slash === -1 ? ' ' : norm.slice(0, slash),
-    name: dot === -1 ? file : file.slice(0, dot),
-    data,
-    preload: Buffer.alloc(0),
-    crc: crc32(data) >>> 0,
-  };
-}
+import * as vpk from '../src/vpk.ts';
+import { entry } from './helpers/vpk-entry.ts';
+import installerJs from '../src/installer.js';
+const { Installer } = installerJs;
 
 /**
  * A game folder the installer accepts, with a language folder and an installer pointed at it.
  * Deploying needs a real game path (dota\pak01_dir.vpk is what validateGamePath looks for),
  * which is the difference from the stand in coverage.test.js.
  */
-function stand(t) {
+function stand(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-packs-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const game = path.join(dir, 'game');
@@ -60,7 +44,7 @@ function stand(t) {
   });
 
   /** An installed standalone mod: its file in the language folder, and its library record. */
-  const put = (slot, name, files) => {
+  const put = (slot: string, name: string, files: [string, string | Buffer][]) => {
     fs.writeFileSync(path.join(lang, `${slot}_dir.vpk`), vpk.buildVpk(files.map(([p, b]) => entry(p, b))));
     return {
       id: slot, name, categoryId: 'heroes', enabled: true,
@@ -69,7 +53,7 @@ function stand(t) {
   };
 
   /** What the game would find in a deployed pack: inner path -> bytes, volumes and all. */
-  const deployed = (dirRelPath) => {
+  const deployed = (dirRelPath: string) => {
     const base = dirRelPath.replace(/_dir\.vpk$/i, '');
     const merged = vpk.mergeVpkToSingle(
       path.join(lang, dirRelPath),
@@ -85,9 +69,10 @@ const HOOK = 'models/items/pudge/hook/hook.vmdl_c';
 const BLADE = 'models/items/juggernaut/blade/blade.vmdl_c';
 
 /** A pack of the given mods, stored and ready to deploy, in the order the app would add them. */
-function packOf(installer, recs, id = 'pack-1') {
+function packOf(installer: InstanceType<typeof Installer>, recs: object[], id = 'pack-1') {
   const members = recs.map((rec, i) => installer.addPackMemberFromRecord(id, rec, `m${i + 1}`));
-  return { id, name: 'Pack', kind: 'pack', files: [], members };
+  const files: { root: string; relPath: string }[] = [];
+  return { id, name: 'Pack', kind: 'pack', files, members };
 }
 
 test('two mods go into one slot, and every file of both is in it', (t) => {
@@ -215,7 +200,9 @@ test('the first member wins a contested path, and the second one is named', (t) 
   const { files, conflicts } = installer.deployPack(pack);
 
   assert.deepEqual(conflicts, [{ key: pack.members[1].id, path: HOOK }]);
-  const inside = deployed(files.find((f) => /_dir\.vpk$/i.test(f.relPath)).relPath);
+  const index = files.find((f) => /_dir\.vpk$/i.test(f.relPath));
+  assert.ok(index, 'the pack was deployed without an index');
+  const inside = deployed(index.relPath);
   assert.equal(inside.get(HOOK), 'the hook you see', 'the member listed first supplies the file');
 });
 

@@ -27,8 +27,8 @@
 const fs = require('fs');
 const path = require('path');
 const { crc32 } = require('zlib');
-const { openVpkIndex, listVpkPathCrcsFile } = require('../../src/vpk.js');
-const patcher = require('../../src/patcher.js');
+const { openVpkIndex, listVpkPathCrcsFile } = require('../../src/vpk.ts');
+const patcher = require('../../src/patcher.ts');
 const gamelang = require('../../src/gamelang.js');
 
 const SCHEMA_REL = 'scripts/items/items_game.txt';

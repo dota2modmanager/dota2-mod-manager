@@ -9,7 +9,7 @@ const os = require('os');
 const path = require('path');
 
 const { gameStamp, clientVersion, createPatchWatcher } = require('../src/patch-watch.js');
-const patcher = require('../src/patcher.js');
+const patcher = require('../src/patcher.ts');
 
 const INF = (version) => [
   `ClientVersion=${version}`,

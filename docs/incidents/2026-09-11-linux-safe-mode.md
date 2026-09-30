@@ -21,17 +21,17 @@ test or sandbox had ever built the way Valve ships it.
 
 ## Why nothing caught it
 
-- `test/patcher.test.js` pinned the text transforms byte for byte and never called `apply()`,
+- `test/patcher.test.ts` pinned the text transforms byte for byte and never called `apply()`,
   `state()` or `revert()`.
 - The sandbox wrote a signature list into `bin/linuxsteamrt64` as well, so the Linux CI job ran
   against the only Linux install in the world that had one.
 
 ## What catches it now
 
-- `test/patcher-tree.test.js` "an install that ships no signature list is still patched"
-- `test/patcher-tree.test.js` "an install with no list reports that, rather than reporting an
+- `test/patcher-tree.test.ts` "an install that ships no signature list is still patched"
+- `test/patcher-tree.test.ts` "an install with no list reports that, rather than reporting an
   unsigned patch": the status bar and the self-heal stop treating a missing list as a failure.
-- `test/patcher-tree.test.js` "reverting puts both files back exactly as they were": with a list
+- `test/patcher-tree.test.ts` "reverting puts both files back exactly as they were": with a list
   and without one.
 - `tools/sandbox.js` "Linux install in the world that had one": the sandbox writes the list only
   where the platform it runs on keeps one.

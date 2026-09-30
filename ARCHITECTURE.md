@@ -69,7 +69,7 @@ or turning mods back on would resurrect the ones you had deliberately switched o
 3. Open the archive through `src/safe-zip.ts`, the single door every foreign zip comes through.
 4. Compare its contents against what is already installed and report conflicts (see below).
 5. Pick a free slot: low ones for categories that must load early, otherwise the first free number
-   from 10 up. Combined packs exist for the same reason and are described in `src/vpk.js`.
+   from 10 up. Combined packs exist for the same reason and are described in `src/vpk.ts`.
 6. Write everything through `src/file-tx.ts`.
 7. Record it in `manifest.json` through `src/library.ts`.
 
@@ -88,7 +88,7 @@ forty three mods into the empty folder Steam left behind.
 
 ## VPK
 
-`src/vpk.js` is a full reader and writer for Valve's v1 and v2 pack format, written here rather
+`src/vpk.ts` is a full reader and writer for Valve's v1 and v2 pack format, written here rather
 than pulled in, and it is the piece most worth reading first. It parses the directory tree, reads
 entries with their CRCs, writes single and multi-volume archives, merges a multi-volume mod into
 one file, splits an archive that carries two heroes into one file per hero, and combines several
@@ -130,7 +130,7 @@ effects and the free cosmetics the game already ships do nothing from where mods
 Supporting them means registering another folder ahead of the game's content, which means editing
 `gameinfo_branchspecific.gi` and re-signing it in `dota.signatures`. That is a change to Valve's
 own files, so it is off until the user agrees to it once, which is what the safe mode switch in
-the status bar means. `src/patcher.js` performs it and reverses it byte for byte, and
+the status bar means. `src/patcher.ts` performs it and reverses it byte for byte, and
 `src/schema-service.js` decides when the schema is rebuilt: always from the installed game's own
 item table, never from a copy a mod happened to ship.
 
@@ -364,7 +364,7 @@ that location is not writable.
 | `src/cursors.ts` | Which cursor set is live, which look a slot wears, and the repair at startup |
 | `src/adopt.ts` | What a VPK goes through before it counts as a mod: named, harvested, split |
 | `src/updater.ts` | Where an installed copy looks for a new version: the two feeds, and the channel it reads |
-| `src/vpk.js` | The VPK format: read, write, merge, split, combine, fingerprint |
+| `src/vpk.ts` | The VPK format: read, write, merge, split, combine, fingerprint |
 | `src/file-tx.ts` | One transaction per change to the game folder |
 | `src/library.ts` | `manifest.json`: installed records and presets |
 | `src/settings.ts` | `settings.json` and its defaults |
@@ -375,7 +375,7 @@ that location is not writable.
 | `src/safe-zip.ts` | Every foreign archive comes through here |
 | `src/steam.ts` | Finding Steam and the game, and proving the folder is really a game |
 | `src/gamelang.js` | Which folder Dota will mount, and moving mods across when that changes |
-| `src/patcher.js`, `src/schema.js`, `src/schema-service.js` | Search-path patch, signatures, item schema |
+| `src/patcher.ts`, `src/schema.js`, `src/schema-service.js` | Search-path patch, signatures, item schema |
 | `src/patch-watch.js` | Noticing a game update and repairing after it |
 | `src/fingerprints.ts` | Recognising a file somebody else installed |
 | `src/preset-link.ts`, `src/preset-share.js` | Presets as a link and as a file |

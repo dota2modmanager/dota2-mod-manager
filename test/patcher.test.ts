@@ -3,10 +3,10 @@
 // both times because writing the patch and taking it back off were not exact inverses. These
 // tests pin that down byte for byte, which is the only standard that matters: a file that is
 // one tab short still loads, so nothing looks wrong until the client stops finding matches.
-const test = require('node:test');
-const assert = require('node:assert/strict');
+import test from 'node:test';
+import assert from 'node:assert/strict';
 
-const patcher = require('../src/patcher.js');
+import * as patcher from '../src/patcher.ts';
 const { MARKER, FOLDER } = patcher;
 
 // Valve's real gameinfo_branchspecific.gi, byte for byte (615 bytes, CRLF). Note the lone
@@ -148,7 +148,7 @@ test('the vanilla hashes come from before DIGEST, never from our appended line',
 
   const want = patcher.vanillaBranchHashes(signed);
   assert.equal(patcher.matchesVanilla(VANILLA_BRANCH, want), true);
-  assert.notEqual(want.sha1, decoy.sha1);
+  assert.notEqual(want?.sha1, decoy.sha1);
 });
 
 test('a signature line is the path, SHA1 and little-endian CRC the game expects', () => {

@@ -12,7 +12,7 @@ const os = require('os');
 const path = require('path');
 const { crc32 } = require('node:zlib');
 
-const vpk = require('../src/vpk.js');
+const vpk = require('../src/vpk.ts');
 const { createModIdentity } = require('../src/mod-id.js');
 
 // Shaped like the real table: an item names its model and the heroes allowed to wear it.

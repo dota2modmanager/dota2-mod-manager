@@ -12,17 +12,18 @@
  * The bar these tests hold: whatever the bytes are, a walker either parses them or refuses with
  * this project's own error, in bounded time. It never escapes with an error from Node's Buffer.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const { crc32 } = require('zlib');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import type { Thrown } from './helpers/thrown.ts';
+import { crc32 } from 'node:zlib';
 
-const {
+import {
   buildVpk, listVpkPaths, listVpkPathCrcs, listVpkEntries, readVpkEntries, entryPath,
-} = require('../src/vpk.js');
+} from '../src/vpk.ts';
 
 /** A small valid VPK with entries of different shapes, to cut up. */
 function sample() {
-  const file = (folder, name, ext, body) => {
+  const file = (folder: string, name: string, ext: string, body: string) => {
     const data = Buffer.from(body);
     return { ext, folder, name, data, preload: Buffer.alloc(0), crc: crc32(data) >>> 0 };
   };
@@ -35,7 +36,7 @@ function sample() {
 
 /* Deterministic noise. A seeded generator rather than Math.random: a failure has to be the same
    failure tomorrow, and a test that fails once a fortnight gets deleted rather than read. */
-function prng(seed) {
+function prng(seed: number) {
   let s = seed >>> 0;
   return () => {
     s ^= s << 13; s >>>= 0;
@@ -45,7 +46,7 @@ function prng(seed) {
   };
 }
 
-const WALKERS = [
+const WALKERS: [string, (buf: Buffer) => unknown][] = [
   ['listVpkPaths', listVpkPaths],
   ['listVpkPathCrcs', listVpkPathCrcs],
   ['listVpkEntries', listVpkEntries],
@@ -53,13 +54,13 @@ const WALKERS = [
 
 /**
  * Run one walker over one buffer and say what came out.
- * @returns {{ ok: true } | { ok: false, why: string }}
  */
-function attempt(fn, buf) {
+function attempt(fn: (buf: Buffer) => unknown, buf: Buffer): { ok: true } | { ok: false; why: string } {
   const started = Date.now();
   try {
     fn(buf);
-  } catch (err) {
+  } catch (thrown) {
+    const err = thrown as Thrown;
     // The app's own refusals are Error with a message it wrote. Anything else - RangeError from
     // a Buffer read, a TypeError from an undefined - is the app failing to refuse.
     const ours = err instanceof Error && !(err instanceof RangeError) && !(err instanceof TypeError)
@@ -131,7 +132,7 @@ test('any set of entries the writer is given reads back exactly, byte for byte',
      whatever they are handed: empty files, files at the archive root, a few thousand bytes, up to
      twenty entries at once, all from a seed so a failure replays exactly. */
   const random = prng(20260916);
-  const pick = (list) => list[Math.floor(random() * list.length)];
+  const pick = <T>(list: T[]): T => list[Math.floor(random() * list.length)];
   const FOLDERS = [' ', 'models', 'materials/models/heroes/wisp', 'panorama/images/heroes', 'particles/econ/items/pudge', 'scripts/items'];
   const EXTS = ['vtex_c', 'vmdl_c', 'vpcf_c', 'txt', 'vmat_c', 'vsnd_c'];
   for (let round = 0; round < 60; round++) {

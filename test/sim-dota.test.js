@@ -12,7 +12,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { crc32 } = require('zlib');
-const { buildVpk } = require('../src/vpk.js');
+const { buildVpk } = require('../src/vpk.ts');
 const dota = require('../tools/sim/dota.js');
 
 const SEARCH = `"GameInfo"

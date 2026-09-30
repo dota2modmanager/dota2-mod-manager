@@ -11,21 +11,37 @@
 //     because the client checks that file against the signature list.
 //
 // Everything is backed up before the first write and revert() puts the originals back.
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const { t } = require('./i18n.ts');
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { t } from './i18n.ts';
 
-const MARKER = 'Dota 2 Mod Manager';
-// Content folder we register next to the game's own "dota".
-const FOLDER = 'dota_mods';
-const BIN_DIRS = { win32: ['bin', 'win64'], linux: ['bin', 'linuxsteamrt64'] };
+/** Written beside every line this app adds, so its own edit can be found and taken out again. */
+export const MARKER = 'Dota 2 Mod Manager';
+/** The content folder registered next to the game's own "dota". */
+export const FOLDER = 'dota_mods';
+const BIN_DIRS: Record<'win32' | 'linux', string[]> = { win32: ['bin', 'win64'], linux: ['bin', 'linuxsteamrt64'] };
 const SIG_PREFIX = '...\\..\\..\\dota\\gameinfo_branchspecific.gi';
 
 // Folder names other patchers register, so we can spot one and not fight it.
 const KNOWN_FOREIGN = ['Dota2SkinChanger', 'DotaModdingCommunityMods', 'dota_tempcontent'];
 
-function paths(gamePath) {
+/** A file's hashes as the signature list writes them, uppercase hex. */
+export interface Hashes { sha1: string; crc: string }
+
+/** What the install looks like right now; see state(). */
+export interface PatchState {
+  patched: boolean; signed: boolean; signable: boolean;
+  /** our folder, when the patch is in */
+  folder: string | null;
+  /** another patcher's folder found registered beside ours */
+  foreign: string | null;
+  /** unpatched and exactly what Valve shipped, or no list to say otherwise */
+  vanillaOk: boolean;
+}
+
+/** The three files the patch touches, for this platform's layout of the game. */
+export function paths(gamePath: string): { gameinfo: string; branch: string; signatures: string } {
   const bin = BIN_DIRS[process.platform === 'linux' ? 'linux' : 'win32'];
   return {
     gameinfo: path.join(gamePath, 'dota', 'gameinfo.gi'),
@@ -34,10 +50,11 @@ function paths(gamePath) {
   };
 }
 
-/** @type {Uint32Array|null} built on the first call */
-let crcTable = null;
+/** built on the first call */
+let crcTable: Uint32Array | null = null;
 
-function crc32(buf) {
+/** CRC-32 as the signature list records it. */
+export function crc32(buf: Buffer): number {
   let table = crcTable;
   if (!table) {
     table = crcTable = new Uint32Array(256);
@@ -52,21 +69,22 @@ function crc32(buf) {
   return (c ^ 0xffffffff) >>> 0;
 }
 
-// The signature list stores the CRC little-endian, uppercase, like the SHA1 next to it.
-function fileHashes(buf) {
+/** The signature list stores the CRC little-endian, uppercase, like the SHA1 next to it. */
+export function fileHashes(buf: Buffer): { sha1: string; crc: string } {
   const sha1 = crypto.createHash('sha1').update(buf).digest('hex').toUpperCase();
   const le = Buffer.alloc(4);
   le.writeUInt32LE(crc32(buf));
   return { sha1, crc: le.toString('hex').toUpperCase() };
 }
 
-function signatureLine(buf) {
+/** The line the signature list needs for the patched file. */
+export function signatureLine(buf: Buffer): string {
   const { sha1, crc } = fileHashes(buf);
   return `${SIG_PREFIX}~SHA1:${sha1};CRC:${crc}`;
 }
 
-// Pull the SearchPaths block out of gameinfo.gi (branchspecific has none by default).
-function searchPathsBlock(gameinfoText) {
+/** Pull the SearchPaths block out of gameinfo.gi (branchspecific has none by default). */
+export function searchPathsBlock(gameinfoText: string): string {
   const at = gameinfoText.indexOf('SearchPaths');
   if (at === -1) throw new Error(t('gameinfo.gi: блок SearchPaths не найден'));
   const open = gameinfoText.indexOf('{', at);
@@ -82,9 +100,9 @@ function searchPathsBlock(gameinfoText) {
  * Add our folder to a SearchPaths block: as the first Game path (which is also what the
  * engine turns into the MOD path) and as the first Mod path.
  */
-function withModFolder(block, folder) {
+export function withModFolder(block: string, folder: string): string {
   const lines = block.split(/\r?\n/);
-  const out = [];
+  const out: string[] = [];
   let addedGame = false;
   let addedMod = false;
   for (const line of lines) {
@@ -104,8 +122,8 @@ function withModFolder(block, folder) {
   return out.join('\r\n');
 }
 
-// Put the block inside branchspecific's FileSystem section (its keys win over gameinfo.gi).
-function patchedBranch(branchText, block) {
+/** Put the block inside branchspecific's FileSystem section (its keys win over gameinfo.gi). */
+export function patchedBranch(branchText: string, block: string): string {
   const at = branchText.indexOf('FileSystem');
   if (at === -1) throw new Error(t('gameinfo_branchspecific.gi: блок FileSystem не найден'));
   const open = branchText.indexOf('{', at);
@@ -139,7 +157,7 @@ function patchedBranch(branchText, block) {
  * patch was already applied would otherwise be useless, and telling the user to go repair
  * game files by hand is not an answer the app is allowed to give.
  */
-function stripPatch(text) {
+export function stripPatch(text: string): string {
   let out = text;
   for (let guard = 0; guard < 8 && out.includes(MARKER); guard++) {
     const mark = out.indexOf(MARKER);
@@ -170,9 +188,8 @@ function stripPatch(text) {
  * ships with. Ground truth: whatever we put back has to hash to this, or the client refuses
  * the install ("verify integrity of game files") and matchmaking stops. Their entry sits
  * BEFORE the DIGEST line - ours, when present, is appended after it.
- * @returns {{sha1: string, crc: string} | null}
  */
-function vanillaBranchHashes(signaturesText) {
+export function vanillaBranchHashes(signaturesText: string): Hashes | null {
   const lines = signaturesText.split(/\r?\n/);
   const digest = lines.findIndex((l) => l.startsWith('DIGEST:'));
   const scope = digest === -1 ? lines : lines.slice(0, digest);
@@ -183,7 +200,8 @@ function vanillaBranchHashes(signaturesText) {
   return null;
 }
 
-function matchesVanilla(text, want) {
+/** Whether a file hashes to what Valve recorded; with no record there is nothing to contradict. */
+export function matchesVanilla(text: string, want: Hashes | null): boolean {
   if (!want) return true; // no list to check against - nothing to contradict
   const h = fileHashes(Buffer.from(text, 'latin1'));
   return h.sha1 === want.sha1 && h.crc === want.crc;
@@ -196,9 +214,8 @@ function matchesVanilla(text, want) {
  * the client quietly stops finding matches. The only thing a reconstruction can get wrong
  * is the indent ahead of the FileSystem closing brace, so when the hash disagrees the few
  * shapes that indent can take are tried and the one Valve signed is kept.
- * @returns {{ text: string, verified: boolean }}
  */
-function restoreBranch(text, want) {
+export function restoreBranch(text: string, want: Hashes | null): { text: string; verified: boolean } {
   const base = stripPatch(text);
   if (matchesVanilla(base, want)) return { text: base, verified: !!want };
   const at = base.lastIndexOf('\n', base.lastIndexOf('}', base.lastIndexOf('}') - 1));
@@ -220,16 +237,16 @@ function restoreBranch(text, want) {
  * Getting this wrong makes a pristine list look patched, which freezes the backup at a
  * pre-update build and lets apply() write those stale hashes over the live file.
  */
-function hasSignaturePatch(text) {
+export function hasSignaturePatch(text: string): boolean {
   const lines = text.split(/\r?\n/);
   const digest = lines.findIndex((l) => l.startsWith('DIGEST:'));
   if (digest === -1) return false;
   return lines.slice(digest + 1).some((l) => l.startsWith(SIG_PREFIX + '~'));
 }
 
-// Same for the signature list: our line is appended after the DIGEST line, so anything of
-// ours past that point comes off and the file the game shipped is left behind.
-function stripSignatures(text) {
+/** Same for the signature list: our line is appended after the DIGEST line, so anything of
+ * ours past that point comes off and the file the game shipped is left behind. */
+export function stripSignatures(text: string): string {
   const lines = text.split(/\r?\n/);
   const digest = lines.findIndex((l) => l.startsWith('DIGEST:'));
   if (digest === -1) return text;
@@ -246,11 +263,10 @@ function stripSignatures(text) {
  * to check it against - which is not the same as an unsigned patch, and callers have to tell
  * the two apart or a Linux user gets a permanent warning about a file that was never there.
  *
- * @returns {{ patched: boolean, signed: boolean, signable: boolean, folder: string|null, foreign: string|null, vanillaOk: boolean }}
  */
-function state(gamePath, folder) {
+export function state(gamePath: string, folder: string | null): PatchState {
   const p = paths(gamePath);
-  const out = { patched: false, signed: false, signable: false, folder: null, foreign: null, vanillaOk: true };
+  const out: PatchState = { patched: false, signed: false, signable: false, folder: null, foreign: null, vanillaOk: true };
   if (!fs.existsSync(p.branch)) return out;
   out.signable = fs.existsSync(p.signatures);
   const branch = fs.readFileSync(p.branch, 'latin1');
@@ -286,7 +302,7 @@ function state(gamePath, folder) {
 // the existing backup is left alone; if none exists yet it is reconstructed via clean() (a
 // backup lost between runs, a second tool, a crash mid-write) so the user has nothing to fix
 // by hand.
-function backupOnce(file, backupDir, clean, isOurs, isGood) {
+function backupOnce(file: string, backupDir: string, clean: (text: string) => string, isOurs: (text: string) => boolean, isGood?: (text: string) => boolean): string {
   fs.mkdirSync(backupDir, { recursive: true });
   const dest = path.join(backupDir, path.basename(file) + '.orig');
   const raw = fs.readFileSync(file, 'latin1');
@@ -305,14 +321,14 @@ function backupOnce(file, backupDir, clean, isOurs, isGood) {
 // Write via a temp file + rename: a half-written gameinfo means the game will not start.
 // Windows refuses to rename over a file another process has open (Steam holds gameinfo
 // while the app is up), so fall back to replacing the target in place.
-function writeAtomic(file, buf) {
+function writeAtomic(file: string, buf: Buffer): void {
   const tmp = file + '.mmtmp';
   fs.writeFileSync(tmp, buf);
   try {
     fs.renameSync(tmp, file);
     return;
   } catch (e) {
-    if (!['EPERM', 'EACCES', 'EEXIST', 'EBUSY'].includes(e.code)) { fs.rmSync(tmp, { force: true }); throw e; }
+    if (!['EPERM', 'EACCES', 'EEXIST', 'EBUSY'].includes((e as NodeJS.ErrnoException).code || '')) { fs.rmSync(tmp, { force: true }); throw e; }
   }
   try {
     fs.rmSync(file, { force: true });
@@ -327,7 +343,7 @@ function writeAtomic(file, buf) {
  * Register the folder. Safe to call repeatedly: it rebuilds the patch from the current
  * vanilla files (restoring the backup first), so a game update just means running it again.
  */
-function apply({ gamePath, folder, backupDir }) {
+export function apply({ gamePath, folder, backupDir }: { gamePath: string; folder: string; backupDir: string }): PatchState {
   const p = paths(gamePath);
   /* The two files every Dota install has. `dota.signatures` is not one of them: Valve's Linux
      build ships `bin/linuxsteamrt64/` without it, and requiring it here meant a Linux user
@@ -338,8 +354,8 @@ function apply({ gamePath, folder, backupDir }) {
   }
   const hasList = fs.existsSync(p.signatures);
   const want = hasList ? vanillaBranchHashes(fs.readFileSync(p.signatures, 'latin1')) : null;
-  const good = (text) => matchesVanilla(restoreBranch(text, want).text, want);
-  backupOnce(p.branch, backupDir, (t) => restoreBranch(t, want).text, (t) => t.includes(MARKER), good);
+  const good = (text: string) => matchesVanilla(restoreBranch(text, want).text, want);
+  backupOnce(p.branch, backupDir, (text) => restoreBranch(text, want).text, (text) => text.includes(MARKER), good);
   if (hasList) backupOnce(p.signatures, backupDir, stripSignatures, hasSignaturePatch);
 
   // Always start from the pristine copies so patches never stack. A backup that somehow
@@ -388,7 +404,7 @@ function apply({ gamePath, folder, backupDir }) {
  * again, and a copy that is even one byte off leaves the client refusing to matchmake with
  * no mod in sight to blame.
  */
-function revert({ gamePath, folder, backupDir }) {
+export function revert({ gamePath, folder, backupDir }: { gamePath: string; folder?: string | null; backupDir: string }): PatchState {
   const p = paths(gamePath);
   /* Same reasoning as apply(): what Valve shipped is the file the game has now, minus our line.
      The backup is the fallback for the one case the live file cannot answer - it is not there. */
@@ -407,26 +423,5 @@ function revert({ gamePath, folder, backupDir }) {
     const dir = path.join(gamePath, folder);
     if (fs.existsSync(dir) && !fs.readdirSync(dir).length) fs.rmdirSync(dir);
   }
-  return state(gamePath, folder);
+  return state(gamePath, folder || null);
 }
-
-module.exports = {
-  MARKER,
-  FOLDER,
-  paths,
-  fileHashes,
-  signatureLine,
-  searchPathsBlock,
-  withModFolder,
-  patchedBranch,
-  stripPatch,
-  stripSignatures,
-  hasSignaturePatch,
-  vanillaBranchHashes,
-  matchesVanilla,
-  restoreBranch,
-  state,
-  apply,
-  revert,
-  crc32,
-};

@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const { lit } = require('./driver');
 const dota = require('./dota');
-const { listVpkPathCrcsFile } = require('../../src/vpk.js');
+const { listVpkPathCrcsFile } = require('../../src/vpk.ts');
 const { isAppPak } = require('../../src/slot-zones.js');
 
 const ROOT = path.resolve(__dirname, '..', '..');

@@ -14,30 +14,14 @@ const path = require('path');
 const crypto = require('crypto');
 const { crc32 } = require('node:zlib');
 
-const vpk = require('../src/vpk.js');
+const vpk = require('../src/vpk.ts');
+const { entry } = require('./helpers/vpk-entry.ts');
 const { createModPreviews, pickCandidate, worthShowing } = require('../src/mod-preview.js');
 
 function userDir(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-mp-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return dir;
-}
-
-/** One inline-data entry in the shape buildVpk() wants. */
-function entry(relPath, body) {
-  const data = Buffer.isBuffer(body) ? body : Buffer.from(body);
-  const norm = relPath.replace(/\\/g, '/').toLowerCase();
-  const slash = norm.lastIndexOf('/');
-  const file = slash === -1 ? norm : norm.slice(slash + 1);
-  const dot = file.lastIndexOf('.');
-  return {
-    ext: dot === -1 ? ' ' : file.slice(dot + 1),
-    folder: slash === -1 ? ' ' : norm.slice(0, slash),
-    name: dot === -1 ? file : file.slice(0, dot),
-    data,
-    preload: Buffer.alloc(0),
-    crc: crc32(data) >>> 0,
-  };
 }
 
 const noTool = { pathOf: () => null };

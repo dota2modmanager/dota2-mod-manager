@@ -136,7 +136,7 @@ export async function findDotaGamePath(): Promise<string | null> {
  *
  * So the test is Valve's own: the base content pak, or the executable. Either one is enough,
  * and the leftovers of a move have neither. The executable has a different name and a
- * different folder on Linux, and src/patcher.js already knows both.
+ * different folder on Linux, and src/patcher.ts already knows both.
  *
  * Two markers rather than one because a single file can be absent from a real install for a
  * moment - mid-download, or while Steam verifies. Note which pak this is: game\dota\pak01_dir

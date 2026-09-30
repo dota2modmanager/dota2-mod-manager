@@ -90,7 +90,7 @@ and `npm run typecheck`
 It is proprietary, and a project that bundles it is not open source in the sense a code-signing
 programme means. Reading and writing VPK archives is this repository's own code.
 
-*Check:* `src/vpk.js`, and `test/vpk.test.js`, which runs the writer against the reader.
+*Check:* `src/vpk.ts`, and `test/vpk.test.ts`, which runs the writer against the reader.
 
 ### The renderer is plain JavaScript
 
@@ -421,7 +421,7 @@ language folder, which is still more than one file's worth of subject.
 
 It is one of five files carrying 6,754 lines between them while the median module in `src/` is
 171: `src/installer.js`, `renderer/views/catalog.js`, `renderer/views/library.js`, this one and
-`src/vpk.js`. None of them arrived that size; each grew a hundred lines at a time with nobody
+`src/vpk.ts`. None of them arrived that size; each grew a hundred lines at a time with nobody
 deciding to. Since 2026-09-16 each has its length written in `.github/size-budget.json`, and
 `tools/size-budget.mjs` fails a run where one grows, or where a file nobody listed crosses 800
 lines. The budget does not split anything: it stops the drift, and every split shows up in it as a

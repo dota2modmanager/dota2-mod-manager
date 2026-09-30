@@ -69,8 +69,8 @@ Four modules get special attention because they are the ones that write into the
 
 | Module | What its tests hold down |
 |---|---|
-| `src/patcher.js` | The search-path patch and the signature file, byte for byte, both directions |
-| `src/vpk.js` | The reader against the writer, round trips, fingerprints |
+| `src/patcher.ts` | The search-path patch and the signature file, byte for byte, both directions |
+| `src/vpk.ts` | The reader against the writer, round trips, fingerprints |
 | `src/gamelang.js` | Which folder the game will actually mount |
 | `src/schema.js` | Merging and validating `items_game.txt` |
 
@@ -115,7 +115,7 @@ npm run size
 
 Five files carry 7,155 lines between them while the median module in `src/` is 171:
 `src/installer.js`, `renderer/views/catalog.js`, `renderer/views/library.js`, `main.js` and
-`src/vpk.js`. Each is in `.github/size-budget.json` at its current length, and the check fails when
+`src/vpk.ts`. Each is in `.github/size-budget.json` at its current length, and the check fails when
 one grows, or when a file nobody listed crosses 800 lines.
 
 If your change makes one of them longer, split something out of it rather than raising the number.
@@ -152,7 +152,7 @@ npm run fuzz -- --seed 20260916 --iterations 500000
 
 A mod's VPK index is written by whoever made the mod, and the app reads it on every start. The
 walkers used to trust it: a file cut short came back as a `RangeError` from Buffer rather than a
-refusal, in paths that do not catch one. `test/vpk-fuzz.test.js` runs a few hundred cases on every
+refusal, in paths that do not catch one. `test/vpk-fuzz.test.ts` runs a few hundred cases on every
 push (truncations, a forged preload length, seeded byte noise, and random sets of entries that have
 to read back byte for byte) and the command above runs the same generator for as long as you like.
 

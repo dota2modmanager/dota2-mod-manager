@@ -21,7 +21,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { crc32 } = require('zlib');
 
-const { readVpkEntryFile, buildVpk } = require('../src/vpk.js');
+const { readVpkEntryFile, buildVpk } = require('../src/vpk.ts');
 const { Catalog, RAW_BASE } = require('../src/catalog.ts');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -44,7 +44,7 @@ const mkdir = (p) => fs.mkdirSync(p, { recursive: true });
 
 // ---------- files the fake game needs ----------
 
-// Valve's own SearchPaths block. src/patcher.js reads this out of gameinfo.gi to build the
+// Valve's own SearchPaths block. src/patcher.ts reads this out of gameinfo.gi to build the
 // patched branch file, and the Game_Language line is what makes dota_<audio lang> mount at
 // all (measured 2026-07-30) - so it has to be verbatim, not paraphrased.
 const GAMEINFO = `"GameInfo"
@@ -178,7 +178,7 @@ const BUILDER_SAMPLE = [
 ];
 
 function builderAssets(real, schemaText) {
-  const { openVpkIndex } = require('../src/vpk.js');
+  const { openVpkIndex } = require('../src/vpk.ts');
   const builder = require('../src/item-builder.js');
   const out = [];
   try {
@@ -213,7 +213,7 @@ function builderAssets(real, schemaText) {
 /* The chat file of every language the game ships, which src/notice-text.js builds the
  * anti-cheat notice on. Under half a kilobyte each. */
 function noticeAssets(real) {
-  const { openVpkIndex } = require('../src/vpk.js');
+  const { openVpkIndex } = require('../src/vpk.ts');
   const { DOTA_LANGUAGES } = require('../src/gamelang.js');
   const out = [];
   try {
@@ -309,7 +309,7 @@ function buildGameTree() {
      mode was on: the simulation's game session found that on 2026-09-24. Valve ships the file
      without it, so that is what the sandbox starts from. */
   const branchFile = path.join(GAME, 'dota', 'gameinfo_branchspecific.gi');
-  fs.writeFileSync(branchFile, require('../src/patcher.js').stripPatch(fs.readFileSync(branchFile, 'latin1')), 'latin1');
+  fs.writeFileSync(branchFile, require('../src/patcher.ts').stripPatch(fs.readFileSync(branchFile, 'latin1')), 'latin1');
 
   /* The signature list, in the one place a real installation keeps one.
    *

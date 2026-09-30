@@ -1,6 +1,6 @@
 /* Which hero a name means, in the three spellings this app meets: the game's folder id
  * (queenofpain), what an author typed (queen_of_pain, qop), and what people read ("Queen of
- * Pain"). Out of src/vpk.js, where it began, because the catalog asks too and vpk.js is at its
+ * Pain"). Out of src/vpk.ts, where it began, because the catalog asks too and vpk.ts is at its
  * size budget.
  */
 

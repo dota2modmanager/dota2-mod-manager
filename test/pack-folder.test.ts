@@ -8,23 +8,31 @@
 // The round trip is what proves it: every one of the 84 mods installed on the development
 // machine unpacks to a folder and packs back with identical paths and bytes (the three that
 // differ each lose one thumbs.db, which is Windows junk an author shipped by accident).
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const vpk = require('../src/vpk.js');
-const { Installer } = require('../src/installer.js');
+import * as vpk from '../src/vpk.ts';
+import installerJs from '../src/installer.js';
+const { Installer } = installerJs;
 
-function tmpDir(t) {
+/** Where the content starts under `dir`, failing the test when nothing game-shaped is there. */
+function rootOf(dir: string): string {
+  const root = vpk.findContentRoot(dir);
+  assert.ok(root, `no content root under ${dir}`);
+  return root;
+}
+
+function tmpDir(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-pack-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 
 /** Lay a tree of files out on disk: { 'models/a.vmdl_c': 'bytes', ... } */
-function tree(root, files) {
+function tree(root: string, files: Record<string, string | Buffer>) {
   for (const [rel, body] of Object.entries(files)) {
     const full = path.join(root, ...rel.split('/'));
     fs.mkdirSync(path.dirname(full), { recursive: true });
@@ -41,7 +49,7 @@ const MOD = {
 
 test('a folder of game files becomes a mod with the same files in it', (t) => {
   const dir = tree(tmpDir(t), MOD);
-  const buf = vpk.packFolder(vpk.findContentRoot(dir));
+  const buf = vpk.packFolder(rootOf(dir));
 
   const back = new Map(vpk.readVpkEntries(buf, 'mem').map((e) => [vpk.entryPath(e), e.data.toString()]));
   assert.deepEqual([...back.keys()].sort(), Object.keys(MOD).sort());
@@ -68,7 +76,7 @@ test('folders of the author\'s own travel with the game ones', (t) => {
     'dota2pornfx/materials/skin/skin_color_png_1.vtex_c': 'the author\'s own root',
     'readme.txt': 'how to install',
   });
-  const paths = vpk.listVpkPaths(vpk.packFolder(vpk.findContentRoot(dir)));
+  const paths = vpk.listVpkPaths(vpk.packFolder(rootOf(dir)));
   assert.ok(paths.includes('dota2pornfx/materials/skin/skin_color_png_1.vtex_c'));
   assert.ok(paths.includes('readme.txt'));
 });
@@ -87,13 +95,13 @@ test('what Windows leaves behind does not become part of the mod', (t) => {
     'materials/.DS_Store': 'finder junk',
     'desktop.ini': 'folder settings',
   });
-  const paths = vpk.listVpkPaths(vpk.packFolder(vpk.findContentRoot(dir)));
+  const paths = vpk.listVpkPaths(vpk.packFolder(rootOf(dir)));
   assert.deepEqual(paths, ['models/x.vmdl_c']);
 });
 
 test('paths go in lower case, the way the game looks them up', (t) => {
   const dir = tree(tmpDir(t), { 'Models/Items/Pudge/Hook.VMDL_C': 'model' });
-  const paths = vpk.listVpkPaths(vpk.packFolder(vpk.findContentRoot(dir)));
+  const paths = vpk.listVpkPaths(vpk.packFolder(rootOf(dir)));
   assert.deepEqual(paths, ['models/items/pudge/hook.vmdl_c']);
 });
 
@@ -117,7 +125,7 @@ test('a mod unpacks to a folder that packs back into the same mod', (t) => {
   });
 
   const source = tree(path.join(dir, 'source'), MOD);
-  fs.writeFileSync(path.join(lang, 'pak10_dir.vpk'), vpk.packFolder(vpk.findContentRoot(source)));
+  fs.writeFileSync(path.join(lang, 'pak10_dir.vpk'), vpk.packFolder(rootOf(source)));
 
   const dest = path.join(dir, 'unpacked');
   const out = installer.unpackToFolder(
@@ -127,7 +135,7 @@ test('a mod unpacks to a folder that packs back into the same mod', (t) => {
   assert.equal(out.files, 3);
   assert.equal(fs.readFileSync(path.join(dest, 'models/items/pudge/hook/hook.vmdl_c'), 'utf-8'), 'the hook model');
 
-  const again = vpk.listVpkPaths(vpk.packFolder(vpk.findContentRoot(dest)));
+  const again = vpk.listVpkPaths(vpk.packFolder(rootOf(dest)));
   assert.deepEqual(again.sort(), Object.keys(MOD).sort());
 });
 

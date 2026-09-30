@@ -19,7 +19,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const patcher = require('../../src/patcher.js');
+const patcher = require('../../src/patcher.ts');
 
 const BIN = process.platform === 'win32' ? ['bin', 'win64', 'dota2.exe'] : ['bin', 'linuxsteamrt64', 'dota2'];
 

@@ -1,12 +1,12 @@
 {
   "_why": "Lines each of the largest files is allowed. tools/size-budget.mjs fails a run where one grows, and where a file that is not listed crosses 800 lines. --update writes measurements back but never raises a number: raising one means editing this file by hand and saying why. Splitting these files shows up here as a number going down.",
-  "measured": "2026-09-24",
+  "measured": "2026-09-30",
   "watchAt": 800,
   "files": {
     "main.js": 1129,
     "renderer/views/catalog.js": 1699,
     "renderer/views/library.js": 1374,
     "src/installer.js": 1326,
-    "src/vpk.js": 901
+    "src/vpk.ts": 923
   }
 }

@@ -1,6 +1,6 @@
 /* The search-path patch against a real directory, rather than against strings.
  *
- * test/patcher.test.js pins the text transforms byte for byte and never calls apply(), state()
+ * test/patcher.test.ts pins the text transforms byte for byte and never calls apply(), state()
  * or revert(). That gap had a cost: apply() demanded `dota.signatures` before it would do
  * anything, and Valve's Linux build ships `bin/linuxsteamrt64/` without one. A Linux user
  * pressing "safe mode off" got "dota.signatures not found" and no way forward - reported on
@@ -10,13 +10,13 @@
  * So: both shapes of installation, built in a temporary directory, patched and reverted.
  * `paths()` decides where the list belongs, so this reads the same on either platform.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const patcher = require('../src/patcher.js');
+import * as patcher from '../src/patcher.ts';
 const { MARKER, FOLDER } = patcher;
 
 const GAMEINFO = `"GameInfo"
@@ -44,10 +44,9 @@ const SIGNATURES = 'somefile.dll~SHA1:' + 'A'.repeat(40) + ';CRC:' + 'B'.repeat(
 
 /**
  * A throwaway game tree.
- * @param {object} t
- * @param {boolean} withList  give it a dota.signatures, the way Windows ships one
+ * @param withList  give it a dota.signatures, the way Windows ships one
  */
-function tree(t, withList) {
+function tree(t: TestContext, withList: boolean) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-patch-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const game = path.join(root, 'game');
@@ -64,7 +63,7 @@ function tree(t, withList) {
   return { game, backupDir, sig };
 }
 
-const branchOf = (game) => fs.readFileSync(patcher.paths(game).branch, 'latin1');
+const branchOf = (game: string) => fs.readFileSync(patcher.paths(game).branch, 'latin1');
 
 test('an install that ships no signature list is still patched', (t) => {
   const { game, backupDir, sig } = tree(t, false);
@@ -159,16 +158,16 @@ test('a tree with no gameinfo at all is still refused, and says which file', (t)
  * dota2.exe~SHA1:0A281119…, the game's own list said 72ED2906…, and the next apply() would have
  * written the July one back over it.
  */
-const listFor = (build, branchBuf) => {
+const listFor = (build: string, branchBuf: Buffer) => {
   const h = patcher.fileHashes(branchBuf);
-  const dll = (name, seed) => `...\\${name}~SHA1:${seed.repeat(40).slice(0, 40)};CRC:${seed.repeat(8).slice(0, 8)}`;
+  const dll = (name: string, seed: string) => `...\\${name}~SHA1:${seed.repeat(40).slice(0, 40)};CRC:${seed.repeat(8).slice(0, 8)}`;
   return [
     `...\\..\\..\\dota\\gameinfo_branchspecific.gi~SHA1:${h.sha1};CRC:${h.crc}`,
     dll('client.dll', build), dll('dota2.exe', build),
     `DIGEST:${build.repeat(64).slice(0, 64)}`,
   ].join('\r\n') + '\r\n';
 };
-const exeHash = (text) => (text.match(/dota2\.exe~SHA1:(\w{40})/) || [])[1];
+const exeHash = (text: string) => (text.match(/dota2\.exe~SHA1:(\w{40})/) || [])[1];
 
 test('the patch is signed into the list the installed build shipped, not an older one', (t) => {
   const { game, backupDir, sig } = tree(t, true);

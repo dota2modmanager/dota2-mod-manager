@@ -96,7 +96,7 @@
         "src/patch-watch.js": {
           "lines": 93.9
         },
-        "src/patcher.js": {
+        "src/patcher.ts": {
           "lines": 97.2
         },
         "src/portable-update.ts": {
@@ -129,7 +129,7 @@
         "src/toolchain.js": {
           "lines": 98.1
         },
-        "src/vpk.js": {
+        "src/vpk.ts": {
           "lines": 98.4
         },
         "src/vtex.ts": {
@@ -293,7 +293,7 @@
         "src/patch-watch.js": {
           "lines": 93.9
         },
-        "src/patcher.js": {
+        "src/patcher.ts": {
           "lines": 97.7
         },
         "src/portable-update.ts": {
@@ -326,7 +326,7 @@
         "src/toolchain.js": {
           "lines": 98.1
         },
-        "src/vpk.js": {
+        "src/vpk.ts": {
           "lines": 98.2
         },
         "src/vtex.ts": {

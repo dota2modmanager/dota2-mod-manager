@@ -56,7 +56,7 @@ test('the cache is keyed by the picture path, so a second run finds what the fir
 
 test('hero portraits come out of pak01 by hero id: the landscape one, else the one from hero selection', async (t) => {
   // The item builder's hub shows them; they used to ship inside the app as Valve's pictures.
-  const { buildVpk, crc32 } = require('../src/vpk.js');
+  const { buildVpk, crc32 } = require('../src/vpk.ts');
   const dir = userDir(t);
   const game = path.join(dir, 'game');
   fs.mkdirSync(path.join(game, 'dota'), { recursive: true });

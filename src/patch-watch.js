@@ -18,7 +18,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const patcher = require('./patcher');
+const patcher = require('./patcher.ts');
 
 // A patch rewrites a lot of files at once, so the first event is never the last one.
 const DEBOUNCE_MS = 3000;
