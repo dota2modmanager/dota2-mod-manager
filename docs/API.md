@@ -15,11 +15,13 @@ the code, not in this page.
 |---|---|
 | [`src/adopt.ts`](#srcadoptts) | What a VPK has to go through before it counts as a mod. |
 | [`src/app-context.ts`](#srcapp-contextts) | Everything the running app hands its IPC modules: the services main.js builds at start, and the |
+| [`src/app-log.ts`](#srcapp-logts) | The app's own log: a small file every install keeps, so a support report (src/diagnostics.ts) |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
 | [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
+| [`src/deep-links.ts`](#srcdeep-linksts) | d2mm:// links: a preset link clicked anywhere on the system, and on Linux, telling the desktop |
 | [`src/diagnostics.ts`](#srcdiagnosticsts) | A support report a user can send instead of a round of screenshots: Dota's own path and |
 | [`src/discord-auth.ts`](#srcdiscord-authts) | Sign in with Discord, without a server of our own. |
 | [`src/discord-presence.ts`](#srcdiscord-presencets) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
@@ -53,9 +55,11 @@ the code, not in this page.
 | [`src/patch-watch.ts`](#srcpatch-watchts) | Noticing that Dota was patched, while the app is open. |
 | [`src/patcher.ts`](#srcpatcherts) | Search-path patch: registers an extra content folder ahead of the game's own, which |
 | [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
+| [`src/presence-status.ts`](#srcpresence-statusts) | What the user's Discord profile says while the app is open: which screen they are on, and how |
 | [`src/preset-link.ts`](#srcpreset-linkts) | Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed |
 | [`src/preset-share.ts`](#srcpreset-sharets) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
 | [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
+| [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
 | [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
 | [`src/schema-service.ts`](#srcschema-servicets) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
@@ -163,6 +167,42 @@ export interface AppContext
 ```
 
 _No description in the source._
+
+## src/app-log.ts
+
+The app's own log: a small file every install keeps, so a support report (src/diagnostics.ts)
+does not depend on reproducing the problem live.
+
+Past a megabyte the file moves aside to app.log.1 and a new one starts, so the two together
+stay near two. MM_DIAG mirrors every line to a path of its own, which the screenshot harness
+reads. Nothing here throws: logging is never the reason the app crashes.
+
+### `LOG_MAX_BYTES`
+
+```ts
+export const LOG_MAX_BYTES = 1024 * 1024
+```
+
+Past this size the log moves to app.log.1 and starts again.
+
+### `AppLog`
+
+```ts
+export interface AppLog
+```
+
+Where the log is, and the one call everything in the main process writes to it with.
+
+### `createAppLog`
+
+```ts
+export function createAppLog({ dir, mirror = null, now = () => new Date() }: { dir: () => string; mirror?: string | null; now?: () => Date; }): AppLog
+```
+
+```
+@param dir     the userData folder, asked for on first use: a portable copy moves it at start
+@param mirror  a second file to copy every line to (MM_DIAG), or nothing
+```
 
 ## src/beta.ts
 
@@ -502,6 +542,57 @@ export function createCursors({ installer, library, settings }: { installer: Cur
 @param ctx.library    the manifest of installed records
 @param ctx.settings   read for the game path, which the repair needs
 ```
+
+## src/deep-links.ts
+
+d2mm:// links: a preset link clicked anywhere on the system, and on Linux, telling the desktop
+that this program opens them.
+
+Nothing installs from a link. It parks in the Presets tab exactly like a dropped file, and the
+user decides. A link reaches the app three ways: on the command line of a cold start, from a
+second copy started with it, which hands it to the first and quits, and on macOS as an
+open-url event.
+
+### `firstLink`
+
+```ts
+export function firstLink(argv: readonly unknown[] | null | undefined): string | undefined
+```
+
+The first d2mm:// link on a command line, if there is one.
+
+### `presetCode`
+
+```ts
+export function presetCode(url: string): string
+```
+
+The part of a link the preset importer reads: what follows d2mm://preset/.
+
+### `handleDeepLink`
+
+```ts
+export function handleDeepLink(url: string | null | undefined, { importPresetLink, win }: { importPresetLink: (code: string) => unknown; win: () => LinkWindow | null | undefined; }): void
+```
+
+Take a link in: the preset is parked, and the window comes forward and is told what arrived.
+Anything that is not a d2mm:// link is ignored.
+
+### `desktopEntry`
+
+```ts
+export function desktopEntry(exe: string): string
+```
+
+The .desktop file for `exe`: the program, and the scheme and file type it opens.
+
+### `installDesktopEntry`
+
+```ts
+export function installDesktopEntry({ platform, exe, home, diag, refresh = defaultRefresh }: { platform: string; exe: string; home: string; diag: (msg: string) => void; /** tells the desktop to reread the folder; missing on a minimal system, and harmless then */ refresh?: (dir: string) => void; }): void
+```
+
+Write the .desktop file on Linux when it is missing or says something else; elsewhere, nothing.
 
 ## src/diagnostics.ts
 
@@ -3348,6 +3439,44 @@ Fetch the new build and leave it beside the current one.
 when the same build was fetched before
 ```
 
+## src/presence-status.ts
+
+What the user's Discord profile says while the app is open: which screen they are on, and how
+many mods are switched on.
+
+The status is written in the language the user chose for the app. Their friends read it, and
+that is the only language signal we have about them. The connection itself is
+src/discord-presence.ts; this decides what it says and when it is on at all.
+
+### `PRESENCE_VIEWS`
+
+```ts
+export const PRESENCE_VIEWS: Record<string, string> =
+```
+
+The first line of the status for each screen the window reports.
+
+### `presenceActivity`
+
+```ts
+export function presenceActivity({ view, mods, masterOff }: { view: string; mods: number; masterOff: boolean }): Activity
+```
+
+The status for one moment: the screen, and what is loading.
+
+```
+@param mods       switched-on mods
+@param masterOff  the master switch is off, so nothing loads whatever the records say
+```
+
+### `createPresenceStatus`
+
+```ts
+export function createPresenceStatus({ presence, settings, library, installer }: { presence: Pick<DiscordPresence, 'enabled' | 'set' | 'start' | 'stop'>; settings: Pick<Settings, 'get'>; library: Pick<Library, 'list'>; installer: Pick<Installer, 'masterIsOff'>; })
+```
+
+The status kept in step with the app: the setting that turns it off, and the screen it names.
+
 ## src/preset-link.ts
 
 Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed
@@ -3561,6 +3690,39 @@ Everything about presets that needs the running app's services.
 @param deps.library        the manifest of installed mods and saved presets
 @param deps.schemaService  rebuilds the item table when a preset changes it
 @param deps.deployAndApply  rebuilds one pack's VPK
+```
+
+## src/release-notes.ts
+
+The changelog section for one version, for the "What's new" window.
+
+The same files CI puts on the release page ship inside the build (package.json, build.files),
+so the window works offline and needs no GitHub call. A Russian interface reads
+CHANGELOG.ru.md first and falls back to the English one for a version it has no section for.
+
+A heading is "## <version>" followed by anything that cannot continue a version, so "2.8.0"
+does not find "## 2.8.0-beta.1". release.yml and tools/release-state.js look sections up the
+same way, and test/release-contract.test.js holds the three to it.
+
+### `changelogSection`
+
+```ts
+export function changelogSection(text: string, version: string): string | null
+```
+
+The section's text for `version` out of one changelog, or null when it has none.
+
+### `releaseNotes`
+
+```ts
+export function releaseNotes(version: string, lang: string, appPath: string): string | null
+```
+
+The notes for `version` in the interface's language when there is a translation.
+
+```
+@param appPath  where the build's files are (app.getAppPath())
+@returns markdown, or null when this version has no section anywhere
 ```
 
 ## src/remote-config.ts

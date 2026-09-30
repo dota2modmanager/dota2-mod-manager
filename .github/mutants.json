@@ -755,6 +755,38 @@
       "test": "test/ipc-settings.test.ts"
     },
     {
+      "name": "the log never moves aside, and grows for as long as the app is installed",
+      "file": "src/app-log.ts",
+      "anchor": "function append(line: string): void {",
+      "from": "size > LOG_MAX_BYTES)",
+      "to": "size > LOG_MAX_BYTES * 2)",
+      "test": "test/app-log.test.ts"
+    },
+    {
+      "name": "\"What's new\" for a release shows its beta's notes",
+      "file": "src/release-notes.ts",
+      "anchor": "export function changelogSection(text: string, version: string): string | null {",
+      "from": "(?:[^-0-9A-Za-z.].*)?$",
+      "to": "(?:[^0-9.].*)?$",
+      "test": "test/release-notes.test.ts"
+    },
+    {
+      "name": "the Discord status counts mods as on while the master switch is off",
+      "file": "src/presence-status.ts",
+      "anchor": "export function presenceActivity(",
+      "from": "  if (masterOff) state = t('Моды выключены');\n",
+      "to": "",
+      "test": "test/presence-status.test.ts"
+    },
+    {
+      "name": "the desktop entry is rewritten and the desktop reread on every start",
+      "file": "src/deep-links.ts",
+      "anchor": "export function installDesktopEntry(",
+      "from": "    if (fs.existsSync(file) && fs.readFileSync(file, 'utf-8') === entry) return;\n",
+      "to": "",
+      "test": "test/deep-links.test.ts"
+    },
+    {
       "name": "the crc32 table is walked one bit off",
       "file": "src/vpk-write.ts",
       "anchor": "export function crc32(buf: Buffer): number {",

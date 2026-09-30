@@ -415,17 +415,19 @@ is never waived.
 
 It went from 3,102 lines to about 1,300 when the IPC handlers moved into `src/ipc-*.ts`, and to
 about 1,150 on 2026-09-16, when the cursor rules went to `src/cursors.ts` and everything a freshly
-landed VPK goes through before it counts as a mod went to `src/adopt.ts`. What is left is the
-window, the log, auto-update, deep links, the import progress bar, Discord presence and the
-language folder, which is still more than one file's worth of subject.
+landed VPK goes through before it counts as a mod went to `src/adopt.ts`. On 2026-09-30 the log,
+the "What's new" text, the Discord status and d2mm:// links went to modules of their own, each with
+tests, which took it to about 1,000. What is left is the window, auto-update, the import progress
+bar and the upkeep of the game folder, which is still more than one file's worth of subject.
 
-It is one of five files carrying 6,754 lines between them while the median module in `src/` is
-171: `src/installer.ts`, `renderer/views/catalog.js`, `renderer/views/library.js`, this one and
-`src/vpk.ts`. None of them arrived that size; each grew a hundred lines at a time with nobody
-deciding to. Since 2026-09-16 each has its length written in `.github/size-budget.json`, and
-`tools/size-budget.mjs` fails a run where one grows, or where a file nobody listed crosses 800
-lines. The budget does not split anything: it stops the drift, and every split shows up in it as a
-number going down.
+On 2026-09-16 it was one of five files carrying 6,754 lines between them while the median module
+in `src/` was 171. `src/installer.ts` and `src/vpk.ts` have since been split along their subjects
+(393 and 17 lines, the rest in `src/installer-*.ts` and `src/vpk-*.ts`); the two biggest screens,
+`renderer/views/catalog.js` and `renderer/views/library.js`, have not. None of them arrived that
+size; each grew a hundred lines at a time with nobody deciding to. Each has its length written in
+`.github/size-budget.json`, and `tools/size-budget.mjs` fails a run where one grows, or where a
+file nobody listed crosses 800 lines. The budget does not split anything: it stops the drift, and
+every split shows up in it as a number going down.
 
 *Check:* `npm run size`, `.github/size-budget.json`, and `ARCHITECTURE.md` for what is supposed to
 live where.
@@ -485,7 +487,7 @@ Each of these has arrived in a review. Each is answered by one command.
 | Claim | What is true | Check |
 |---|---|---|
 | "The repository cannot be opened, so the open-source promise is unverifiable" | It is public and has been. A fetch failing at one moment is not a private repository | `gh repo view dota2modmanager/dota2-mod-manager --json visibility` |
-| "`main.js` is a 3,100 line monolith" | About 1,150 lines since 2026-09-06, with the IPC handlers in `src/ipc-*.ts` and three more jobs moved out since | `wc -l main.js` |
+| "`main.js` is a 3,100 line monolith" | About 1,000 lines since 2026-09-06, with the IPC handlers in `src/ipc-*.ts` and seven more jobs moved out since | `wc -l main.js` |
 | "The catalog counts on the site disagree between pages" | They are counted when each page is built. Two pages built an hour apart show two numbers, and both were right when they were made | `site/src/lib/stats.ts` |
 | "The state files in the root are why the repository is 61 MB" | The generated JSON at the root is 1.3 MB of the pack. The preview images are 47.3 MB of 57.2 MB | the command under the open question above |
 | "It is a Windows-only app" | Every release since 2.4.0 also carries a Linux AppImage | `gh release view --json assets` |

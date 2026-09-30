@@ -186,12 +186,15 @@ function scan(src, names, baseLine = 1) {
 }
 
 // ---- what to check --------------------------------------------------------
+/* JavaScript and TypeScript both. Until 2026-09-30 this took .js only, and by then every module
+ * in src/ had become .ts: the main side of the check was reading main.js and nothing else, and
+ * saying every string had its twin. */
 function jsFiles(dir, skip) {
   const out = [];
   for (const e of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
     const p = `${dir}/${e.name}`;
     if (e.isDirectory()) out.push(...jsFiles(p, skip));
-    else if (e.name.endsWith('.js') && !skip.includes(p)) out.push(p);
+    else if (/\.[jt]sx?$/.test(e.name) && !e.name.endsWith('.d.ts') && !skip.includes(p)) out.push(p);
   }
   return out;
 }
@@ -298,4 +301,4 @@ function main() {
 // Run as a command; required by a test, it only hands over the functions above.
 if (require.main === module) main();
 
-module.exports = { checkTranslations, translationReport };
+module.exports = { checkTranslations, translationReport, SIDES };

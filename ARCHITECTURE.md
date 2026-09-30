@@ -356,8 +356,13 @@ that location is not writable.
 
 | File | What it owns |
 |---|---|
-| `main.js` | Electron lifecycle, window, deep links, auto-update, and wiring the rest together |
+| `main.js` | Electron lifecycle, the window, auto-update, and wiring the rest together |
 | `src/ipc-*.ts` | The IPC handlers, one file per group of channels, each naming what it needs |
+| `src/app-context.ts`, `src/electron.ts` | What main.js hands the IPC modules, and Electron asked for when a module registers |
+| `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
+| `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
+| `src/presence-status.ts` | What the Discord status says, and whether it is on |
+| `src/release-notes.ts` | The "What's new" text, out of the changelogs shipped with the build |
 | `src/feature-gate.ts` | Whether a feature has been switched off from `config/app.json`, asked once |
 | `preload.js` | The `window.api` surface, and nothing else crosses |
 | `src/installer.ts` | Download, slots, install, enable, remove, packs |

@@ -221,6 +221,9 @@
         "src/adopt.ts": {
           "lines": 100
         },
+        "src/app-log.ts": {
+          "lines": 100
+        },
         "src/beta.ts": {
           "lines": 100
         },
@@ -235,6 +238,9 @@
         },
         "src/cursors.ts": {
           "lines": 100
+        },
+        "src/deep-links.ts": {
+          "lines": 96.9
         },
         "src/diagnostics.ts": {
           "lines": 94.6
@@ -353,6 +359,9 @@
         "src/portable-update.ts": {
           "lines": 98.7
         },
+        "src/presence-status.ts": {
+          "lines": 100
+        },
         "src/preset-link.ts": {
           "lines": 100
         },
@@ -361,6 +370,9 @@
         },
         "src/presets-service.ts": {
           "lines": 71.2
+        },
+        "src/release-notes.ts": {
+          "lines": 100
         },
         "src/remote-config.ts": {
           "lines": 100
@@ -399,7 +411,7 @@
           "lines": 96.3
         },
         "src/vpk-analyze.ts": {
-          "lines": 97.7
+          "lines": 99.1
         },
         "src/vpk-read.ts": {
           "lines": 99

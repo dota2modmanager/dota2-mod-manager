@@ -32,9 +32,9 @@ const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const sections = (rel) => [...read(rel).matchAll(new RegExp(`^## (${VERSION})\\s*$`, 'gm'))].map((m) => m[1]);
 
 test('the version in package.json has a section in both changelogs', () => {
-  /* Both, not either. releaseNotes() in main.js serves CHANGELOG.ru.md to a Russian UI and
-   * falls back to the English one, so a missing Russian section is invisible to anybody
-   * developing in English and is the only thing a Russian user sees. */
+  /* Both, not either. src/release-notes.ts serves CHANGELOG.ru.md to a Russian UI and falls
+   * back to the English one, so a missing Russian section is invisible to anybody developing in
+   * English and is the only thing a Russian user sees. */
   const v = version();
   assert.ok(sections('CHANGELOG.md').includes(v), `CHANGELOG.md has no "## ${v}"`);
   assert.ok(sections('CHANGELOG.ru.md').includes(v), `CHANGELOG.ru.md has no "## ${v}"`);
@@ -79,12 +79,13 @@ test('the version is one CI can turn into a tag', () => {
 });
 
 test('the lookups that read a section find a beta by its own heading', () => {
-  /* release.yml's awk and releaseNotes() in main.js both look for "## <version>" followed by
-   * anything that cannot continue a version. Until 2026-09-26 that was "anything but a digit or a
+  /* release.yml's awk and the app's "What's new" (src/release-notes.ts) both look for
+   * "## <version>" followed by anything that cannot continue a version. Until 2026-09-26 that was "anything but a digit or a
    * dot", so "## 2.8.0" also matched the heading "## 2.8.0-beta.1", and the right section came first
    * only while the newest was on top: a beta section left above the release would have gone out as
-   * the release's notes, on its page, in Discord and in the "What's new" window. Both are copied
-   * here and run against a changelog with the release above its beta, and with the beta above. */
+   * the release's notes, on its page, in Discord and in the "What's new" window. The awk is copied
+   * here, the app's own lookup is called, and both run against a changelog with the release above
+   * its beta, and with the beta above. */
   const texts = [
     '## 2.8.0\n\nthe release\n\n## 2.8.0-beta.1\n\nthe beta\n\n## 2.7.1\n\nthe one before\n',
     '## 2.8.0-beta.1\n\nthe beta\n\n## 2.8.0\n\nthe release\n\n## 2.7.1\n\nthe one before\n',
@@ -97,12 +98,7 @@ test('the lookups that read a section find a beta by its own heading', () => {
     const end = rest.findIndex((l) => /^## /.test(l));
     return rest.slice(0, end === -1 ? undefined : end).join('\n').trim();
   };
-  const popup = (v) => { // main.js releaseNotes; escaped whole here, where main.js escapes dots
-    const m = new RegExp(`^## ${escapeRe(v)}(?:[^-0-9A-Za-z.].*)?$`, 'm').exec(text);
-    const rest = text.slice(m.index + m[0].length);
-    const next = /^## /m.exec(rest);
-    return (next ? rest.slice(0, next.index) : rest).trim();
-  };
+  const popup = (v) => require('../src/release-notes.ts').changelogSection(text, v); // the app's "What's new"
   const { changelogSection } = require('../tools/release-state.js');
   const preflight = (v) => changelogSection(text, v); // what the gate checks before building
   for (text of texts) {
@@ -114,7 +110,6 @@ test('the lookups that read a section find a beta by its own heading', () => {
   }
   assert.match(read('.github/workflows/release.yml'), /\$0 ~ "\^## " v "\(\[\^-0-9A-Za-z\.\]\|\$\)"/,
     'release.yml looks a section up another way now: change the copy above');
-  assert.match(read('main.js'), /\(\?:\[\^-0-9A-Za-z\.\]\.\*\)\?\$/, 'releaseNotes looks a section up another way now');
 });
 
 test('both changelogs still reach the two places that read them', () => {
@@ -122,7 +117,7 @@ test('both changelogs still reach the two places that read them', () => {
    *
    * CI lifts the tagged section out of CHANGELOG.md for the release page and the Discord post.
    * The Russian one never goes near CI: it is packaged into the build by package.json, and
-   * releaseNotes() in main.js reads it off disk to fill the "what's new" popup for a Russian
+   * src/release-notes.ts reads it off disk to fill the "what's new" popup for a Russian
    * UI. Drop it from the packaged files and Russian users get an empty popup while every check
    * above still passes - which is the shape of the incident this file is named after. */
   assert.match(read('.github/workflows/release.yml'), /CHANGELOG\.md/,
@@ -132,6 +127,6 @@ test('both changelogs still reach the two places that read them', () => {
   for (const f of ['CHANGELOG.md', 'CHANGELOG.ru.md']) {
     assert.ok(packaged.includes(f), `${f} is not packaged, so the app cannot show its notes`);
   }
-  assert.match(read('main.js') + read('src/ipc-window.ts'), /CHANGELOG\.ru\.md/,
+  assert.match(read('src/release-notes.ts'), /CHANGELOG\.ru\.md/,
     'nothing reads the Russian changelog any more');
 });

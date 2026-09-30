@@ -73,7 +73,7 @@ test('every guard a write-up names is still in the repository, under the title i
       if (!fs.existsSync(full)) { problems.push(`${name}: ${g.file} is not in the repository`); continue; }
       if (!g.title) continue;
       const text = read(full);
-      if (/\.test\.js$/.test(g.file)) {
+      if (/\.test\.[jt]s$/.test(g.file)) {
         if (!testTitles(text).includes(g.title)) problems.push(`${name}: ${g.file} has no test called "${g.title}"`);
       } else if (!flat(text).includes(g.title)) {
         problems.push(`${name}: ${g.file} no longer says "${g.title}"`);

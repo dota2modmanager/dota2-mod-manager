@@ -19,6 +19,19 @@ test('every Russian string has an English twin', () => {
   assert.equal(run.status, 0, `\n${run.stdout}${run.stderr}`);
 });
 
+test('the check reads the main process\'s modules, whatever language they are written in', () => {
+  /* It read src/*.js only, and when src/ became TypeScript the main side shrank to main.js
+     without a word: "every string has a twin" held because nothing was being looked at. */
+  const { SIDES } = require('../tools/check-i18n');
+  const main = SIDES.find((s) => s.name === 'main').files;
+  const fs = require('fs');
+  const modules = fs.readdirSync(path.join(__dirname, '..', 'src'))
+    .filter((f) => /\.[jt]s$/.test(f) && !f.endsWith('.d.ts') && f !== 'i18n.ts')
+    .map((f) => `src/${f}`);
+  assert.ok(modules.length > 40, 'src/ was found');
+  assert.deepEqual(modules.filter((f) => !main.includes(f)), [], 'every src/ module is read');
+});
+
 test('rejects an unchanged English twin', () => {
   const { checkTranslations } = require('../tools/check-i18n');
 

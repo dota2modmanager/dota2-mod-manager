@@ -60,6 +60,10 @@ const { settingsViewFor } = require('./src/settings-view.ts');
 const { registerSettingsIpc } = require('./src/ipc-settings.ts');
 const { registerGameIpc } = require('./src/ipc-game.ts');
 const { registerDiagnosticsIpc } = require('./src/ipc-diagnostics.ts');
+const { createAppLog } = require('./src/app-log.ts');
+const { releaseNotes: notesFor } = require('./src/release-notes.ts');
+const { createPresenceStatus } = require('./src/presence-status.ts');
+const { firstLink, handleDeepLink: takeLink, installDesktopEntry } = require('./src/deep-links.ts');
 
 /* Presets and sharing, wired once the services they use exist. Assigned in whenReady
  * below; every call site reads it late, which is the same lifetime the bare functions had
@@ -110,7 +114,7 @@ let win;
 const theWindow = () => { if (!win) throw new Error('the main window is not open yet'); return win; };
 let settings, catalog, installer, library, fingerprints, presence, schemaService, icons, remoteConfig;
 let toolchain, gameIcons, modPreviews, modId;
-let presenceView = 'catalog';
+let presenceStatus = null; // src/presence-status.ts, once the library exists
 // The folder mods are installed into, decided by the game's own audio language rather than
 // by us: Korean audio means dota_koreana, Chinese means dota_schinese, and English borrows
 // dota_russian because it has no folder of its own (see keepModFolder).
@@ -422,34 +426,15 @@ function createWindow() {
   }
 }
 
-// A small rotating log every install keeps, so a support report (see src/diagnostics.ts and
-// the diag:export handler below) doesn't depend on reproducing the problem live. MM_DIAG is
-// a separate, opt-in mirror to an arbitrary path, used only by the screenshot test harness.
-let _logFile = null;
-function logFile() {
-  if (!_logFile) _logFile = path.join(app.getPath('userData'), 'logs', 'app.log');
-  return _logFile;
-}
-const LOG_MAX_BYTES = 1024 * 1024;
-function appendLog(line) {
-  try {
-    const file = logFile();
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    try { if (fs.statSync(file).size > LOG_MAX_BYTES) fs.renameSync(file, file + '.1'); } catch { /* first write */ }
-    fs.appendFileSync(file, line);
-  } catch { /* logging must never be why the app crashes */ }
-}
+// A small rotating log every install keeps, so a support report does not depend on reproducing
+// the problem live (src/app-log.ts). MM_DIAG mirrors it for the screenshot harness.
+const appLog = createAppLog({ dir: () => app.getPath('userData'), mirror: process.env.MM_DIAG || null });
+const diag = (msg) => appLog.diag(msg);
+const logFile = () => appLog.file();
 
 // The last few things the interface said went wrong, so a report can list them separately
 // from two thousand lines of ordinary log (see diag:rendererError).
 const rendererErrors = [];
-
-const DIAG = process.env.MM_DIAG;
-function diag(msg) {
-  const line = `${new Date().toISOString()} ${msg}\n`;
-  appendLog(line);
-  if (DIAG) { try { fs.appendFileSync(DIAG, line); } catch { /* noop */ } }
-}
 
 process.on('uncaughtException', (err) => diag('uncaughtException: ' + (err?.stack || err)));
 process.on('unhandledRejection', (reason) => diag('unhandledRejection: ' + (/** @type {{ stack?: string }} */ (reason)?.stack || reason)));
@@ -473,6 +458,7 @@ app.whenReady().then(async () => {
     publishedHash: (categoryId, file) => catalog.publishedHash(categoryId, file),
   });
   presence = new DiscordPresence({ clientId: discordAuth.CLIENT_ID, onDiag: diag });
+  presenceStatus = createPresenceStatus({ presence, settings, library, installer });
   schemaService = createSchemaService({ settings, library, installer, userDataDir: userData, log: diag });
   ({ isCursorRecord, disableOtherCursors, disableOtherCosmetics, applyMasterToCursors, reconcileCursors }
     = createCursors({ installer, library, settings }));
@@ -643,7 +629,9 @@ app.whenReady().then(async () => {
   // only the installed build claims the scheme — a dev run must not point the system's
   // d2mm:// handler at a local electron binary
   if (app.isPackaged) {
-    installDesktopEntry();
+    installDesktopEntry({
+      platform: process.platform, exe: process.env.APPIMAGE || process.execPath, home: app.getPath('home'), diag,
+    });
     app.setAsDefaultProtocolClient(SCHEME);
   }
   createWindow();
@@ -696,62 +684,12 @@ app.on('before-quit', () => {
 
 // ---------- d2mm:// links ----------
 
-/* Linux has to be told this program exists before it can send it a link.
- *
- * On Windows the installer registers the scheme and on macOS the bundle declares it, but an
- * AppImage is one file somebody copied into a folder, and the session knows nothing about it.
- * The convention is a .desktop file in ~/.local/share/applications describing the program and
- * the schemes it handles, pointing at the file the user actually ran, which is what $APPIMAGE
- * holds. setAsDefaultProtocolClient below then has something to point d2mm:// at.
- *
- * Best effort on purpose. A read-only home, a distribution with no update-desktop-database, a
- * desktop environment that ignores the directory: each of those ends with the app running
- * normally and preset links opening nothing, which is where Linux stood before this existed.
- */
-function installDesktopEntry() {
-  if (process.platform !== 'linux') return;
-  const exe = process.env.APPIMAGE || process.execPath;
-  try {
-    const dir = path.join(app.getPath('home'), '.local', 'share', 'applications');
-    const file = path.join(dir, 'dota2-mod-manager.desktop');
-    const entry = [
-      '[Desktop Entry]',
-      'Type=Application',
-      'Name=Dota 2 Mod Manager',
-      'Comment=Mods for Dota 2, without the file juggling',
-      // %u passes the clicked link through; the quotes are for a path with a space in it
-      `Exec="${exe}" %u`,
-      'Icon=dota2-mod-manager',
-      'Categories=Game;',
-      'Terminal=false',
-      `MimeType=x-scheme-handler/${SCHEME};application/x-d2mm;`,
-      '',
-    ].join('\n');
-
-    if (fs.existsSync(file) && fs.readFileSync(file, 'utf-8') === entry) return;
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(file, entry);
-    // Missing on a minimal system, and the file still counts on most desktops without it.
-    execFile('update-desktop-database', [dir], () => {});
-    diag('desktop entry written: ' + file);
-  } catch (e) {
-    diag('desktop entry skipped: ' + e.message);
-  }
-}
-
-// A preset link clicked anywhere on the system lands here. Nothing installs: it parks in
-// the Presets tab exactly like a dropped file, and the user decides.
-function handleDeepLink(url) {
-  if (!url || !url.startsWith(`${SCHEME}://`)) return;
-  const res = presets.importPresetLink(url.replace(new RegExp(`^${SCHEME}://preset/`), ''));
-  if (win && !win.isDestroyed()) {
-    win.show();
-    win.focus();
-    win.webContents.send('preset-link', res);
-  }
-}
-
-const firstLink = (argv) => (argv || []).find((a) => typeof a === 'string' && a.startsWith(`${SCHEME}://`));
+// A preset link clicked anywhere on the system (src/deep-links.ts): parked in Presets, never
+// installed from the link itself.
+const handleDeepLink = (url) => takeLink(url, {
+  importPresetLink: (code) => presets.importPresetLink(code),
+  win: () => win,
+});
 
 // One running copy only — two instances writing manifest.json would race each other, and
 // a link clicked while the app is open must reach the window that already exists.
@@ -769,28 +707,8 @@ if (!app.requestSingleInstanceLock()) {
   app.on('open-url', (e, url) => { e.preventDefault(); handleDeepLink(url); }); // macOS
 }
 
-// register what src/import.ts handed back into the library
-/**
- * The changelog section for one version, in the app's language when there is a translation.
- * The same file CI puts on the release page, shipped with the build so the screen works
- * offline and needs no GitHub call.
- * @returns {string|null} markdown, or null when this version has no section
- */
-function releaseNotes(version, lang) {
-  const files = lang === 'ru' ? ['CHANGELOG.ru.md', 'CHANGELOG.md'] : ['CHANGELOG.md'];
-  const head = new RegExp(`^## ${version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:[^-0-9A-Za-z.].*)?$`, 'm');
-  for (const name of files) {
-    let text;
-    try { text = fs.readFileSync(path.join(app.getAppPath(), name), 'utf-8'); } catch { continue; }
-    const m = head.exec(text);
-    if (!m) continue;
-    const rest = text.slice(m.index + m[0].length);
-    const next = /^## /m.exec(rest);
-    const body = (next ? rest.slice(0, next.index) : rest).trim();
-    if (body) return body;
-  }
-  return null;
-}
+// the "What's new" text for a version, out of the changelogs shipped with the build
+const releaseNotes = (version, lang) => notesFor(version, lang, app.getAppPath());
 
 // Two counted passes over the same batch: the files land, then each one is read. Both are
 // shown on the one bar, so a long import says which mod it is on instead of nothing at all.
@@ -840,49 +758,9 @@ function deployAndApply(pack) {
 
 // ---------- Discord presence ----------
 
-const PRESENCE_VIEWS = {
-  catalog: 'Смотрит каталог модов',
-  library: 'В своей библиотеке',
-  presets: 'Собирает пресет',
-  cosmetics: 'Выбирает косметику',
-  tools: 'В инструментах',
-  guides: 'Читает гайды',
-  settings: 'В настройках',
-};
-
-// The status is written in the language the user chose for the app: their friends read it,
-// and that is the only language signal we have about them.
-function presenceActivity() {
-  let mods = 0;
-  let masterOff = false;
-  try {
-    mods = library.list().filter((r) => r.enabled).length;
-    // the master switch renames files rather than clearing each record's own flag, so the
-    // per-mod count still reads "on" while nothing is actually loading
-    masterOff = installer.masterIsOff();
-  } catch { /* no library or no game path yet */ }
-  let state = t('Ещё без модов');
-  if (masterOff) state = t('Моды выключены');
-  else if (mods) state = t('{0} модов включено', mods);
-  return {
-    details: t(PRESENCE_VIEWS[presenceView] || PRESENCE_VIEWS.catalog),
-    state,
-    buttons: [{ label: t('Скачать Mod Manager'), url: 'https://dota2modmanager.com/' }],
-  };
-}
-
-function refreshPresence() {
-  if (presence && presence.enabled) presence.set(presenceActivity());
-}
-
-// Follows the setting: turning it off tears the connection down, not just the updates.
-function applyPresenceSetting() {
-  if (!presence) return;
-  if (settings.get('discordPresence') === false) { presence.stop(); return; }
-  presence.start();
-  refreshPresence();
-}
-
+const refreshPresence = () => presenceStatus?.refresh();
+// follows the setting: turning it off tears the connection down, not just the updates
+const applyPresenceSetting = () => presenceStatus?.apply();
 
 // Dota reads boot.vcfg once at startup and rewrites it on exit, so language changes must be
 // made while it is closed or the game would just overwrite them.
@@ -1064,7 +942,7 @@ function registerIpc() {
     updater: () => updater,
     langFolder: () => langFolder,
     patchWatcher: () => patchWatcher,
-    setPresenceView: (v) => { presenceView = v; },
+    setPresenceView: (v) => presenceStatus?.setView(v),
     win: theWindow,
   });
 
