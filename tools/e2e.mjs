@@ -38,6 +38,9 @@ import { spawn, execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
+import { NOTICE_PAK, MARKER } from '../src/notice-text.ts';
+import { listVpkPathsFile } from '../src/vpk.ts';
+
 const require = createRequire(import.meta.url);
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -115,6 +118,20 @@ export function snapshot(dir) {
 /** A file's contents, or null when it is not there. One read instead of an existence check and a read. */
 function readIfThere(file, encoding = 'utf8') {
   try { return fs.readFileSync(file, encoding); } catch { return null; }
+}
+
+/* The one pak the app writes that is not a mod: the game's anti-cheat notice in plain words
+ * (src/notice-text.ts). The app keeps it whenever the game has text for it to rewrite. The sandbox
+ * tools/sandbox.js seeds from a real game has that text and the one CI builds has none, so the pak
+ * comes and goes with the machine rather than with the mod, and every disk check here failed on a
+ * developer's machine from the day it arrived (2026-09-26) while CI stayed green. It is set aside
+ * from the comparisons, and from the ownership note, once it has shown it is the app's own: its
+ * index carries the marker entry. */
+export function setNoticeAside(d, isMarked = () => listVpkPathsFile(path.join(LANG_DIR, NOTICE_PAK)).includes(MARKER)) {
+  const touched = [...d.added, ...d.changed].includes(NOTICE_PAK);
+  if (touched && !isMarked()) return d; // somebody else's pak64: it stays in, and the check says so
+  const other = (list) => list.filter((n) => n !== NOTICE_PAK);
+  return { added: other(d.added), removed: d.removed, changed: other(d.changed) };
 }
 
 /** What changed between two snapshots. */
@@ -293,7 +310,7 @@ if (invokedDirectly) {
     try { return JSON.parse(fs.readFileSync(path.join(USERDATA, 'settings.json'), 'utf8')).langSuffix; } catch { return null; }
   };
   const claims = () => {
-    try { return JSON.parse(fs.readFileSync(path.join(LANG_DIR, OWNERSHIP), 'utf8')).files || []; } catch { return ['(no ownership note)']; }
+    try { return (JSON.parse(fs.readFileSync(path.join(LANG_DIR, OWNERSHIP), 'utf8')).files || []).filter((f) => f !== NOTICE_PAK); } catch { return ['(no ownership note)']; }
   };
 
   let passed = false;
@@ -301,13 +318,13 @@ if (invokedDirectly) {
   if (windowSteps(first, 'first launch')
     && check('the app installed into the sandbox language folder, dota_russian', langChosen() === 'russian',
       `it chose dota_${langChosen()}: a -language in Steam launch options outside the sandbox decides that`)) {
-    const d = difference(before, snapshot(LANG_DIR));
+    const d = setNoticeAside(difference(before, snapshot(LANG_DIR)));
     const pak = d.added.length === 1 && /^pak\d+_dir\.vpk\.off$/i.test(d.added[0]) ? d.added[0] : null;
     if (check('on disk: one new pak, renamed .off, and none of the files already there touched', pak && !d.removed.length && !d.changed.length, JSON.stringify(d))
       && check('the ownership note claims that pak and nothing else', JSON.stringify(claims()) === JSON.stringify([pak.replace(/\.off$/i, '')]), JSON.stringify(claims()))) {
       const second = await launch('2-remove', { MM_VIEW: 'library', MM_EVAL: EVAL_REMOVE });
       if (windowSteps(second, 'second launch')) {
-        const back = difference(before, snapshot(LANG_DIR));
+        const back = setNoticeAside(difference(before, snapshot(LANG_DIR)));
         passed = check('on disk: the language folder is exactly as it was before', !back.added.length && !back.removed.length && !back.changed.length, JSON.stringify(back))
           && check('the ownership note claims nothing any more', claims().length === 0, JSON.stringify(claims()));
       }
@@ -326,7 +343,7 @@ if (invokedDirectly) {
     const removal = await launch('4-uninstall', { MM_EVAL: EVAL_UNINSTALL_WINDOW }, 180000, ['--uninstall']);
     passed = windowSteps(removal, 'the removal window') && passed;
 
-    const after = difference(before, snapshot(LANG_DIR));
+    const after = setNoticeAside(difference(before, snapshot(LANG_DIR)));
     passed = check('opening the removal window changed nothing in the game folder',
       !after.added.length && !after.removed.length && !after.changed.length, JSON.stringify(after)) && passed;
   }

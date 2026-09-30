@@ -8,21 +8,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+// every test here describes a whole machine, so the developer's own Steam is out of the picture
+import { NO_STEAM } from './helpers/no-steam.ts';
 import * as gamelang from '../src/gamelang.ts';
-
-/* A game on a second drive keeps no userdata beside it, so launchLanguage() also looks where
- * Steam installs by default - which on a developer's machine is a real Steam with real launch
- * options. Every test here describes a whole machine, so for the length of this file that
- * lookup is pointed at an empty directory. Without it the suite passes or fails depending on
- * whether whoever is running it happens to have -language set in their own Dota. */
-const NO_STEAM = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-nosteam-'));
-const REAL_PF = [process.env['ProgramFiles(x86)'], process.env.ProgramFiles];
-process.env['ProgramFiles(x86)'] = NO_STEAM;
-process.env.ProgramFiles = NO_STEAM;
-process.on('exit', () => {
-  [process.env['ProgramFiles(x86)'], process.env.ProgramFiles] = REAL_PF;
-  try { fs.rmSync(NO_STEAM, { recursive: true, force: true }); } catch { /* going away anyway */ }
-});
 
 /** A throwaway ...\dota 2 beta\game tree. Returns the game path. */
 function fakeGame(t: TestContext, { boot, steamLang, folders = {} }: { boot?: string; steamLang?: string; folders?: Record<string, string[]> } = {}) {

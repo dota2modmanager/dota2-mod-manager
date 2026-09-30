@@ -9,7 +9,6 @@
 const { app, ipcMain, shell, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { execFile } = require('child_process');
 
 let autoUpdater = null;
 try {
@@ -40,11 +39,10 @@ const { createModIdentity } = require('./src/mod-id.ts');
 const portableUpdater = require('./src/portable-update.ts');
 const { createUpdater } = require('./src/updater.ts');
 const { channelFor } = require('./src/beta.ts');
-const { gameStamp, createPatchWatcher } = require('./src/patch-watch.ts');
+const { createPatchWatcher } = require('./src/patch-watch.ts');
 const { Icons } = require('./src/icons.ts');
-const gamelang = require('./src/gamelang.ts');
 // handed to src/ipc-settings.ts by name, the same one it has always been passed under
-const { moveLangFolder } = gamelang;
+const { moveLangFolder } = require('./src/gamelang.ts');
 const { uninstallFlow } = require('./src/uninstall-window.ts');
 const { isUninstallRun } = require('./src/uninstall-args.ts');
 const { presetsService } = require('./src/presets-service.ts');
@@ -65,6 +63,7 @@ const { createPresenceStatus } = require('./src/presence-status.ts');
 const { firstLink, handleDeepLink: takeLink, installDesktopEntry } = require('./src/deep-links.ts');
 const { createMainWindow, clampZoom, workAreaFrom } = require('./src/main-window.ts');
 const { attachDevHarness } = require('./src/dev-harness.ts');
+const { createGameUpkeep, dotaIsRunning } = require('./src/game-upkeep.ts');
 
 /* Presets and sharing, wired once the services they use exist. Assigned in whenReady
  * below; every call site reads it late, which is the same lifetime the bare functions had
@@ -116,23 +115,9 @@ const theWindow = () => { if (!win) throw new Error('the main window is not open
 let settings, catalog, installer, library, fingerprints, presence, schemaService, icons, remoteConfig;
 let toolchain, gameIcons, modPreviews, modId;
 let presenceStatus = null; // src/presence-status.ts, once the library exists
-// The folder mods are installed into, decided by the game's own audio language rather than
-// by us: Korean audio means dota_koreana, Chinese means dota_schinese, and English borrows
-// dota_russian because it has no folder of its own (see keepModFolder).
-let langFolder = gamelang.FALLBACK_FOLDER;
-// set when startup moved mods into that folder from wherever they were; the renderer
-// picks it up once with settings:get and tells the user what happened
-let langMigration = null;
-// how many mods the one-time layout of the load order moved (installer.migrateSlotZones)
-let slotMigration = null;
-// fonts and cursors Steam's file check took back and the app could not put back on its own
-// (the archive they came in is no longer cached), reported by mods:list
-let verifyStuck = [];
-// what the app did about the last Dota patch, shown as a banner in My mods
-/** @type {import('./src/app-context.ts').PatchRepair} */
-let patchRepair = { state: 'idle' };
+// the mod folder, the load-order layout, Steam's file check and Dota patches (src/game-upkeep.ts)
+let upkeep = null;
 let patchWatcher = null;
-let repairTimer = null;
 
 function sendProgress(evt) {
   if (win && !win.isDestroyed()) win.webContents.send('progress', evt);
@@ -213,130 +198,14 @@ app.whenReady().then(async () => {
     log: diag,
   });
 
-  // Auto-detect on first run, and re-detect whenever the saved path stopped being a Dota
-  // install - a library moved to another drive leaves the old tree behind, and writing mods
-  // into it looks like success and changes nothing in the game.
-  if (!validateGamePath(settings.get('dotaGamePath'))) {
-    const stale = settings.get('dotaGamePath');
-    const found = await findDotaGamePath();
-    if (found) {
-      if (stale && stale !== found) diag(`game path ${stale} is no longer an install, moved to ${found}`);
-      settings.set('dotaGamePath', found);
-    } else if (stale) {
-      // Nothing valid anywhere. Forget the dead path rather than keep it: every write below
-      // refuses without a path, and refusing is the honest answer here.
-      diag(`game path ${stale} is not an install and Dota was not found; clearing it`);
-      settings.set('dotaGamePath', null);
-    }
-  }
-
-  // put the mods where the game will look for them, and make the game look there
-  try {
-    await keepModFolder();
-  } catch (e) {
-    diag('lang folder sync skipped: ' + e.message);
-  }
-
-  // repair "!pakNN" files left by versions before 1.0.4 (the game ignored them)
-  try {
-    installer.migrateLegacyPriorityPaks(library);
-  } catch (e) {
-    diag('legacy pak migration skipped: ' + e.message);
-  }
-
-  // The load order in two parts, once: the categories that load first in 02-29, the rest from
-  // 30 (installer.js, PRIORITY_SLOTS). Renames files the game holds open while it runs, so it
-  // waits for a start with Dota closed; a failure puts everything back and tries next time.
-  if (settings.get('slotZones') !== 1) {
-    try {
-      if (await dotaIsRunning()) {
-        diag('load order layout: Dota is running, trying on the next start');
-      } else {
-        const r = installer.migrateSlotZones(library);
-        settings.set('slotZones', 1);
-        if (r && r.moved) {
-          slotMigration = { moved: r.moved };
-          diag(`load order layout: ${r.moved} mod(s) moved into their part of the order`);
-        }
-      }
-    } catch (e) {
-      diag('load order layout skipped: ' + e.message);
-    }
-  }
-
-  // fold imports that predate single-file merging (pakNN_dir.vpk + pakNN_000.vpk)
-  try {
-    installer.mergeMultiPartRecords(library);
-  } catch (e) {
-    diag('multi-part merge skipped: ' + e.message);
-  }
-
-  // put the switched-on cursor set back on disk, and stash a copy of sets installed before
-  // they could be switched off at all
-  try {
-    reconcileCursors();
-  } catch (e) {
-    diag('cursor reconcile skipped: ' + e.message);
-  }
-
-  // finish what a killed process could not: a file a transaction had parked while it worked
-  try {
-    const swept = installer.sweepStaged();
-    if (swept.restored || swept.dropped) diag(`staged files: ${swept.restored} restored, ${swept.dropped} dropped`);
-  } catch (e) {
-    diag('staged sweep skipped: ' + e.message);
-  }
-
-  // one-time sweep of mods installed before the schema engine existed: they still carry a
-  // stale item table and a stale localization copy inside their VPK
-  try {
-    const m = schemaService.migrate();
-    if (m.changed) diag(`schema migrate: ${m.changed}/${m.scanned} mods cleaned, ${m.deltas} blocks, ~${m.freedMB} MB freed`);
-  } catch (e) {
-    diag('schema migrate skipped: ' + e.message);
-  }
-  // cosmetic picks used to live in settings.json; move them into library records so they
-  // can be toggled, deleted and shared like any other mod
-  try {
-    schemaService.migrateCosmeticSettings();
-  } catch (e) {
-    diag('cosmetic migrate skipped: ' + e.message);
-  }
-
-  // a Dota update overwrites the patched gameinfo and moves the item table: put both
-  // back before the user gets a chance to launch the game with a half-applied setup
-  const startupHealed = [];
-  let startupError = null;
-  try {
-    const healed = schemaService.heal();
-    if (healed.healed && healed.healed.length) { startupHealed.push(...healed.healed); diag('schema healed: ' + healed.healed.join(',')); }
-    if (healed.error) { startupError = healed.error; diag('schema heal failed: ' + healed.error); }
-  } catch (e) {
-    startupError = e.message;
-    diag('schema heal skipped: ' + e.message);
-  }
-
-  // the same job for the two kinds of mod that overwrite files Valve ships
-  try {
-    if (restoreAfterVerify()) startupHealed.push('files');
-  } catch (e) {
-    diag('restore after verify skipped: ' + e.message);
-  }
-
-  // Did the game change while the app was closed? The repair for it has just run either
-  // way - this only decides whether the user is told about it, and hands the watcher the
-  // build to compare against.
-  try {
-    const stamp = gameStamp(settings.get('dotaGamePath'));
-    const known = settings.get('gameStamp');
-    if (stamp && known && stamp !== known) {
-      diag(`Dota changed while the app was closed: ${known} -> ${stamp}`);
-      patchRepair = { state: startupError ? 'failed' : 'done', healed: startupHealed, error: startupError, at: Date.now() };
-    }
-    if (stamp) settings.set('gameStamp', stamp);
-  } catch (e) {
-    diag('build check skipped: ' + e.message);
-  }
+  // Put the game folder right before anything is shown: where mods go, what Steam's file check
+  // and a patch took while the app was closed, and the migrations older versions left behind.
+  upkeep = createGameUpkeep({
+    settings, installer, library, schemaService, reconcileCursors, diag,
+    send: (repair) => { if (win && !win.isDestroyed()) win.webContents.send('patch-repair', repair); },
+    findGame: findDotaGamePath, validGame: validateGamePath,
+  });
+  await upkeep.atStart();
 
   // Run by the uninstaller rather than by a person: ask what to take along, do it, and go.
   // Nothing below this point belongs to that - no catalog, no auto-update, no patch watcher.
@@ -370,7 +239,7 @@ app.whenReady().then(async () => {
   // and from here on, notice a patch the moment it lands rather than at the next start
   patchWatcher = createPatchWatcher({
     getGamePath: () => settings.get('dotaGamePath'),
-    onPatch: (evt) => repairAfterPatch(evt),
+    onPatch: (evt) => upkeep.repairAfterPatch(evt),
     // safe mode off: our search path belongs in the game, so Steam's file check taking it out is a patch too
     expectsPatch: () => settings.get('schemaPatch') === true,
     log: diag,
@@ -403,7 +272,7 @@ function setupAutoUpdate() {
 
 app.on('window-all-closed', () => app.quit());
 app.on('before-quit', () => {
-  clearTimeout(repairTimer);
+  if (upkeep) upkeep.stop();
   if (patchWatcher) patchWatcher.stop();
 });
 
@@ -487,159 +356,6 @@ const refreshPresence = () => presenceStatus?.refresh();
 // follows the setting: turning it off tears the connection down, not just the updates
 const applyPresenceSetting = () => presenceStatus?.apply();
 
-// Dota reads boot.vcfg once at startup and rewrites it on exit, so language changes must be
-// made while it is closed or the game would just overwrite them.
-//
-// Two answers to one question, because Windows and Linux have nothing in common here: one
-// filters a table by image name, the other matches a process name exactly (pgrep -f would
-// also match the Steam command line that mentions the game, and every browser tab about it).
-// A missing tool answers "not running", which is what this returned on any non-Windows
-// machine before there was a second branch at all.
-function dotaIsRunning() {
-  const [cmd, args, hit] = process.platform === 'win32'
-    ? ['tasklist', ['/FI', 'IMAGENAME eq dota2.exe', '/NH'], /dota2\.exe/i]
-    : ['pgrep', ['-x', 'dota2'], /\d/];
-  return new Promise((resolve) => {
-    execFile(cmd, args, (err, stdout) => {
-      resolve(!err && hit.test(stdout || ''));
-    });
-  });
-}
-
-/* Mods follow the game's audio language instead of the game following us.
- *
- * The engine mounts the folder named by that language, so the mod folder is not a preference,
- * it is a consequence of a setting somewhere else. Three of Dota's four voice languages have a
- * folder, so somebody playing with Korean or Chinese speech keeps it and their mods go into
- * dota_koreana or dota_schinese. Nothing is asked and nothing is changed.
- *
- * English is the one that has to move, because it has no folder at all and Valve's gameinfo
- * mounts no language path for it. Those users get dota_russian written into the audio setting,
- * and they hear no difference: Steam decides what is downloaded and Dota decides what is
- * mounted, so a folder with no voice pack in it mounts with our mods and the speech keeps
- * coming out of dota/pak01, in English.
- *
- * The text language stays untouched. It is the one the user picked when they installed the
- * game, and nothing about mods depends on it.
- *
- * Dota rewrites boot.vcfg when it exits, so a running game means we try again next launch.
- */
-async function keepModFolder() {
-  const game = settings.get('dotaGamePath');
-  if (!game) return;
-  const lang = gamelang.detectLangSuffix(game);
-  const launched = gamelang.launchLanguage(game);
-  const chosen = gamelang.modFolderFor(launched, lang.suffix);
-  langFolder = chosen.suffix;
-
-  /* A launch option is not ours to overrule. While `-language X` is set the engine reads
-   * dota_X whatever boot.vcfg says, so the app follows it instead of setting the voice
-   * language back on every start and leaving mods in a folder nobody mounts. That is also the
-   * arrangement that lets this run alongside Minify: it puts the parameter there, and both
-   * sets of mods end up in the one folder the game reads. */
-  if (chosen.followed) {
-    diag(`launch option -language ${langFolder}: following it instead of setting the voice language`);
-  } else if (lang.suffix !== langFolder) {
-    if (await dotaIsRunning()) {
-      diag(`audio language is ${lang.suffix}, Dota is running - leaving boot.vcfg alone`);
-      return;
-    }
-    gamelang.writeBootLanguages(game, { audio: langFolder });
-    diag(`audio language ${lang.suffix} -> ${langFolder}`);
-  }
-  gamelang.ensureLangFolder(game, langFolder);
-  // whatever the mods were following before: our own last setting, and the folder the game
-  // was mounting until a moment ago
-  let moved = 0;
-  const from = new Set([settings.get('langSuffix'), lang.suffix].filter((s) => s && s !== langFolder));
-  for (const old of from) moved += moveLangFolder(game, old, langFolder);
-  if (moved) {
-    langMigration = { from: [...from][0], to: langFolder, moved };
-    diag(`mods moved into dota_${langFolder}: ${moved} files from ${[...from].join(', ')}`);
-  }
-  settings.set('langSuffix', langFolder);
-}
-
-/* Put back what Steam's file check took away.
- *
- * Only fonts and cursors can be taken: they overwrite files Valve ships. What can be restored
- * from what the app already holds is restored without a word - it is the state the user asked
- * for, and they did not ask Steam to undo it. What would need downloading is left alone and
- * reported instead: starting a download at launch because a file changed is not something to
- * do behind somebody's back.
- */
-function restoreAfterVerify() {
-  const lost = installer.lostToVerify(library.list());
-  if (!lost.length) return 0;
-  const stuck = [];
-  let restored = 0;
-  for (const rec of lost) {
-    try {
-      const from = installer.restoreDeployed(rec);
-      if (from) { restored++; diag(`restored after verify: ${rec.name} (from ${from})`); }
-      else stuck.push({ id: rec.id, name: rec.name });
-    } catch (err) {
-      diag(`restore failed for ${rec.name}: ${err.message}`);
-      stuck.push({ id: rec.id, name: rec.name });
-    }
-  }
-  verifyStuck = stuck;
-  return restored;
-}
-
-/* Everything the app puts back after the game changed underneath it.
- *
- * Not one line of the repair itself is new: heal() re-applies the search-path patch and
- * rebuilds the item schema and restoreAfterVerify() puts fonts and cursors back. What 4.1
- * adds is when this runs and
- * that somebody hears about it - before, it happened at startup and on our own Play button,
- * while Steam patches the game in the background and most people press Play in Steam.
- *
- * Nothing is written while Dota is running. It holds gameinfo and its paks open, so a write
- * would half-succeed, and the client has already read the files anyway. The app says it is
- * waiting and tries again after the game exits.
- */
-const REPAIR_RETRY_MS = 20000;
-
-function setPatchRepair(next) {
-  patchRepair = next;
-  if (win && !win.isDestroyed()) win.webContents.send('patch-repair', patchRepair);
-}
-
-async function repairAfterPatch(reason) {
-  const game = settings.get('dotaGamePath');
-  if (!game) return;
-  clearTimeout(repairTimer);
-  repairTimer = null;
-
-  if (await dotaIsRunning()) {
-    diag('Dota patched while the game is running - repair deferred');
-    setPatchRepair({ state: 'waiting', reason, at: Date.now() });
-    repairTimer = setTimeout(() => { repairAfterPatch(reason); }, REPAIR_RETRY_MS);
-    return;
-  }
-
-  const healed = [];
-  let error = null;
-  try {
-    const res = schemaService.heal();
-    if (res.healed) healed.push(...res.healed);
-    if (res.error) error = res.error;
-  } catch (err) {
-    error = String(err.message || err);
-  }
-  try {
-    if (restoreAfterVerify()) healed.push('files');
-  } catch (err) {
-    diag('restore after verify skipped: ' + err.message);
-  }
-  // remembered only now: a stamp stored before a failed repair would make the next start
-  // think there is nothing to fix
-  settings.set('gameStamp', gameStamp(game));
-  diag(`repair after patch: ${healed.join(',') || 'nothing to do'}${error ? ' error=' + error : ''}`);
-  setPatchRepair({ state: error ? 'failed' : 'done', healed, error, at: Date.now() });
-}
-
 function registerIpc() {
   // ----- window controls ----- (src/ipc-window.ts)
   registerWindowIpc({
@@ -655,9 +371,9 @@ function registerIpc() {
     library,
     discordAuth,
     validateGamePath,
-    langFolder: () => langFolder,
-    takeMigration: () => { const m = langMigration; langMigration = null; return m; },
-    takeSlotMigration: () => { const m = slotMigration; slotMigration = null; return m; },
+    langFolder: () => upkeep.langFolder(),
+    takeMigration: () => upkeep.takeLangMigration(),
+    takeSlotMigration: () => upkeep.takeSlotMigration(),
   });
 
   // ----- settings ----- (src/ipc-settings.ts)
@@ -665,7 +381,7 @@ function registerIpc() {
     applyPresenceSetting, catalog, discordAuth, findDotaGamePath, library, moveLangFolder,
     presence, refreshPresence, remoteConfig, settings, settingsView, validateGamePath,
     updater: () => updater,
-    langFolder: () => langFolder,
+    langFolder: () => upkeep.langFolder(),
     patchWatcher: () => patchWatcher,
     setPresenceView: (v) => presenceStatus?.setView(v),
     win: theWindow,
@@ -681,7 +397,7 @@ function registerIpc() {
     importVpkBuffers, importVpkPaths, installer, isCursorRecord, library, refreshPresence,
     schemaService, sendProgress, win: theWindow,
     // read late: Steam's verify rewrites this while the app is running
-    verifyStuck: () => verifyStuck,
+    verifyStuck: () => upkeep.verifyStuck(),
   });
 
   // ----- launch -----
@@ -698,9 +414,10 @@ function registerIpc() {
   // ----- what the app was told from the network ----- (src/ipc-game.ts)
   registerGameIpc({
     blocked, diag, dotaIsRunning, gameIcons, icons, library, modPreviews, remoteConfig,
-    repairAfterPatch, schemaService, settings, toolchain,
-    patchRepair: () => patchRepair,
-    setPatchRepair,
+    schemaService, settings, toolchain,
+    repairAfterPatch: (reason) => upkeep.repairAfterPatch(reason),
+    patchRepair: () => upkeep.patchRepair(),
+    setPatchRepair: (next) => upkeep.setPatchRepair(next),
   });
 
   // ----- managing what is installed ----- (src/ipc-library.ts)

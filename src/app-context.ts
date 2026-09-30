@@ -29,6 +29,7 @@ import type { createUpdater, UpdaterLike } from './updater.ts';
 import type { findDotaGamePath, validateGamePath } from './steam.ts';
 import type { moveLangFolder } from './gamelang.ts';
 import type { LibRecord } from './types.ts';
+import type { PatchRepair } from './game-upkeep.ts';
 import type * as discordAuthModule from './discord-auth.ts';
 import type * as portableUpdateModule from './portable-update.ts';
 
@@ -39,15 +40,6 @@ export type AppProgress =
   | { type: 'count'; label: string; done: number; total: number }
   | { type: 'done'; label?: string }
   | { type: 'error'; label: string; message: string };
-
-/** What the app did about the last Dota patch, shown as a banner in My mods. */
-export type PatchRepair = {
-  state: 'idle' | 'waiting' | 'done' | 'failed';
-  healed?: string[];
-  error?: string | null;
-  reason?: unknown;
-  at?: number;
-};
 
 type Cursors = ReturnType<typeof createCursors>;
 type Adopt = ReturnType<typeof createAdopt>;

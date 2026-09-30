@@ -266,6 +266,9 @@
         "src/game-icons.ts": {
           "lines": 64.9
         },
+        "src/game-upkeep.ts": {
+          "lines": 98
+        },
         "src/gamelang.ts": {
           "lines": 99.3
         },
@@ -444,7 +447,7 @@
           "lines": 70
         },
         "tools/e2e.mjs": {
-          "lines": 65.5
+          "lines": 67.1
         },
         "tools/gen-api-docs.js": {
           "lines": 92.9

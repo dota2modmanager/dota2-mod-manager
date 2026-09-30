@@ -80,6 +80,18 @@ test('a folder snapshot notices an added, a removed and a changed file', async (
   }
 });
 
+test('the app\'s own notice pak is set aside, and a pak64 that is not the app\'s is not', async () => {
+  /* The sandbox seeded from a real game gets the notice pak (src/notice-text.ts), the one CI
+     builds does not. Left in, it failed every disk check on a developer's machine; set aside
+     without looking, it would hide somebody else's pak64 just as well. */
+  const { setNoticeAside } = await load();
+  const d = { added: ['pak30_dir.vpk.off', 'pak64_dir.vpk'], removed: [], changed: [] };
+  assert.deepEqual(setNoticeAside(d, () => true), { added: ['pak30_dir.vpk.off'], removed: [], changed: [] });
+  assert.deepEqual(setNoticeAside(d, () => false), d, 'unmarked, it stays in and the check fails on it');
+  const rewritten = { added: [], removed: [], changed: ['pak64_dir.vpk'] };
+  assert.deepEqual(setNoticeAside(rewritten, () => true).changed, [], 'rewritten in another language is still the notice');
+});
+
 test('the fixture archive is the same bytes every time', async () => {
   const { fixtureArchive } = await load();
   const hash = (b) => crypto.createHash('sha256').update(b).digest('hex');

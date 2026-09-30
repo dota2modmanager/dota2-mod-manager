@@ -811,6 +811,38 @@
       "test": "test/dev-harness.test.ts"
     },
     {
+      "name": "a patch is repaired while Dota holds its files open",
+      "file": "src/game-upkeep.ts",
+      "anchor": "async function repairAfterPatch(reason?: unknown): Promise<void> {",
+      "from": "if (await isRunning()) {",
+      "to": "if (false) {",
+      "test": "test/game-upkeep.test.ts"
+    },
+    {
+      "name": "the voice language is rewritten under a running Dota, which writes it back on exit",
+      "file": "src/game-upkeep.ts",
+      "anchor": "async function keepModFolder(): Promise<void> {",
+      "from": "if (await isRunning()) {",
+      "to": "if (false) {",
+      "test": "test/game-upkeep.test.ts"
+    },
+    {
+      "name": "one step failing at start stops every step after it",
+      "file": "src/game-upkeep.ts",
+      "anchor": "export async function runSteps(",
+      "from": "diag(`${step.name} skipped: ${errorText(e)}`);",
+      "to": "throw e;",
+      "test": "test/game-upkeep.test.ts"
+    },
+    {
+      "name": "the load order is laid out again at every start",
+      "file": "src/game-upkeep.ts",
+      "anchor": "async function layoutSlotsOnce(): Promise<void> {",
+      "from": "if (settings.get('slotZones') === 1) return;",
+      "to": "",
+      "test": "test/game-upkeep.test.ts"
+    },
+    {
       "name": "the crc32 table is walked one bit off",
       "file": "src/vpk-write.ts",
       "anchor": "export function crc32(buf: Buffer): number {",

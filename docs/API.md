@@ -32,6 +32,7 @@ the code, not in this page.
 | [`src/file-tx.ts`](#srcfile-txts) | All of it, or none of it. |
 | [`src/fingerprints.ts`](#srcfingerprintsts) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
 | [`src/game-icons.ts`](#srcgame-iconsts) | Item pictures taken from the installed game instead of scraped off a wiki. |
+| [`src/game-upkeep.ts`](#srcgame-upkeepts) | Keeping the game folder the way the user left it, while other programs change it underneath. |
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (main.js, installer.js, vpk.js). |
@@ -153,14 +154,6 @@ export type AppProgress =
 ```
 
 Every kind of event the bar at the bottom of the window is sent.
-
-### `PatchRepair`
-
-```ts
-export type PatchRepair =
-```
-
-What the app did about the last Dota patch, shown as a banner in My mods.
 
 ### `AppContext`
 
@@ -1039,6 +1032,76 @@ export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () 
 ```
 
 Item and hero pictures out of the installed game, cached in userData.
+
+## src/game-upkeep.ts
+
+Keeping the game folder the way the user left it, while other programs change it underneath.
+
+Three things change a Dota install without asking the app. The game's audio language decides
+which folder the engine mounts, so mods have to follow it. Steam's file check puts back files a
+font or cursor mod replaced. A Dota patch overwrites the patched gameinfo and moves the item
+table. This module answers all three: once at start, before the window opens, and again the
+moment src/patch-watch.ts sees a patch land.
+
+Nothing is written while Dota is running. It holds gameinfo and its paks open, so a write would
+half-succeed, and the client has already read the files anyway. The app says it is waiting and
+tries again after the game exits.
+
+### `PatchRepair`
+
+```ts
+export type PatchRepair =
+```
+
+What the app did about the last Dota patch, shown as a banner in My mods.
+
+### `LangMigration`
+
+```ts
+export type LangMigration = { from: string; to: string; moved: number }
+```
+
+Mods moved into the folder the game mounts, told to the user once in Settings.
+
+### `Stuck`
+
+```ts
+export type Stuck = { id: string; name: string }
+```
+
+A mod Steam's file check took away that the app could not put back from what it holds.
+
+### `REPAIR_RETRY_MS`
+
+```ts
+export const REPAIR_RETRY_MS = 20000
+```
+
+How long a repair waits for Dota to close before it looks again.
+
+### `dotaIsRunning`
+
+```ts
+export function dotaIsRunning({ platform = process.platform, run = execFile as RunCommand } = {}): Promise<boolean>
+```
+
+Whether the Dota client is running on this machine right now.
+
+### `runSteps`
+
+```ts
+export async function runSteps(steps: Step[], diag: (msg: string) => void): Promise<void>
+```
+
+Run each step in order; one that throws is logged as skipped and the rest still run.
+
+### `createGameUpkeep`
+
+```ts
+export function createGameUpkeep({ settings, installer, library, schemaService, reconcileCursors, diag, send, isRunning = () => dotaIsRunning(), findGame, validGame, retryMs = REPAIR_RETRY_MS, now = Date.now, }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed' | 'migrateLegacyPriorityPaks' | 'migrateSlotZones' | 'mergeMultiPartRecords' | 'sweepStaged'>; library: Library; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal' | 'migrate' | 'migrateCosmeticSettings'>
+```
+
+_No description in the source._
 
 ## src/gamelang.ts
 
