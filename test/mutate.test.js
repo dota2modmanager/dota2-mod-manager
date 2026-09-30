@@ -102,7 +102,7 @@ test('a mutant that got past the tests fails the run, and so does one that never
 });
 
 test('a restore is not believed until the file has been read back', async () => {
-  /* On 2026-09-16 a run reported every mutant caught and left one of them in src/installer.ts.
+  /* On 2026-09-16 a run reported every mutant caught and left one of them in src/installer.js.
      The write that should have put the file back did not take, and each later mutant on that
      file read the broken copy as its own original and put THAT back. Nothing said a word. A
      write that does not take has to be a failure this can see. */
