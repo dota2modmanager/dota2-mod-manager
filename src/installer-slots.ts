@@ -12,6 +12,7 @@ import { RESERVED_PAKS } from './minify.ts';
 import * as zones from './slot-zones.ts';
 import { t } from './i18n.ts';
 import { MASTER_OFF, isOfficialLangFile } from './installer-files.ts';
+import { FileTx, type Writer } from './file-tx.ts';
 import type { Installer } from './installer.ts';
 import type { Library } from './library.ts';
 import type { LibFile, LibRecord, HasFiles } from './types.ts';
@@ -170,34 +171,28 @@ export function freeSlotBelow(inst: Installer, n: number, used: Set<string>): st
 /**
  * Rename every pak file of a record to another slot, keeping .off/.moff state and the
  * volume numbering of a multi-volume pack.
+ *
+ * All of a mod's files move, or none do. A pak and its volumes only load under one name, and a
+ * running game can refuse the rename of any one of them: until 2026-10-01 these renames were made
+ * one by one outside a transaction, and a refusal on the second file left a mod the game could not
+ * load and the library could not find. They go through a FileTx now, the caller's when it hands
+ * one in so a move of several mods undoes as one, otherwise one of their own.
  * @returns {Array<object>} the record's new files array (caller stores it)
  */
-export function moveToSlot(inst: Installer, rec: HasFiles, newBase: string, oldBase: string | null = inst.slotBase(rec)): LibFile[] {
+export function moveToSlot(inst: Installer, rec: HasFiles, newBase: string, oldBase: string | null = inst.slotBase(rec), tx: Writer = null): LibFile[] {
   const lang = inst.langFolder();
   if (!oldBase) throw new Error(t('У мода нет слота pakNN'));
   const mine = new RegExp(`^${oldBase}(_dir|_\\d{3})\\.vpk$`, 'i');
-  /* All of a mod's files move, or none do. A pak and its volumes only load under one name, and a
-     running game can refuse the rename of any one of them: until 2026-10-01 a refusal on the second
-     file left the first under the new name and the rest under the old, a mod the game could not
-     load and the library could not find. Whatever this call already renamed goes back first. */
-  const renamed: [string, string][] = [];
-  try {
-    return (rec.files || []).map((f) => {
-      if (f.root !== 'lang' || !mine.test(f.relPath)) return f;
-      const next = newBase + f.relPath.slice(oldBase.length);
-      for (const suf of ['', '.off', MASTER_OFF]) {
-        const from = path.join(lang, f.relPath + suf);
-        const to = path.join(lang, next + suf);
-        if (fs.existsSync(from)) { fs.renameSync(from, to); renamed.push([from, to]); }
-      }
-      return { ...f, relPath: next };
-    });
-  } catch (err) {
-    for (const [from, to] of renamed.reverse()) {
-      try { fs.renameSync(to, from); } catch { /* nothing else to try */ }
+  const move = (into: FileTx) => (rec.files || []).map((f) => {
+    if (f.root !== 'lang' || !mine.test(f.relPath)) return f;
+    const next = newBase + f.relPath.slice(oldBase.length);
+    for (const suf of ['', '.off', MASTER_OFF]) {
+      const from = path.join(lang, f.relPath + suf);
+      if (fs.existsSync(from)) into.move(from, path.join(lang, next + suf));
     }
-    throw err;
-  }
+    return { ...f, relPath: next };
+  });
+  return tx ? move(tx) : FileTx.run(move);
 }
 
 /**
@@ -210,21 +205,15 @@ export function swapSlots(inst: Installer, a: LibRecord, b: LibRecord): { id: st
   const aBase = inst.slotBase(a);
   const bBase = inst.slotBase(b);
   if (!aBase || !bBase) throw new Error(t('У мода нет слота pakNN'));
-  const parked = inst.moveToSlot(a, 'pak00');
-  let movedB: LibFile[] | null = null;
-  try {
-    movedB = inst.moveToSlot(b, aBase);
-    const movedA = inst.moveToSlot({ ...a, files: parked }, bBase);
+  /* The three moves are one transaction, undone in the reverse order they were made. Until
+     2026-10-01 each was its own, and a refusal on the last step put a back into its slot while b
+     still sat there; on Windows a rename replaces the file it lands on, and b was gone. */
+  return FileTx.run((tx) => {
+    const parked = inst.moveToSlot(a, 'pak00', aBase, tx);
+    const movedB = inst.moveToSlot(b, aBase, bBase, tx);
+    const movedA = inst.moveToSlot({ ...a, files: parked }, bBase, 'pak00', tx);
     return [{ id: a.id, files: movedA }, { id: b.id, files: movedB }];
-  } catch (err) {
-    /* Back the way it came, in order. If b already moved into a's slot, it goes home first: putting
-       a back before that renamed a over b, and on Windows a rename replaces the file it lands on.
-       Until 2026-10-01 a refusal on the last step lost b that way. Then a leaves pak00, where
-       nothing mounts it. */
-    if (movedB) { try { inst.moveToSlot({ ...b, files: movedB }, bBase, aBase); } catch { /* nothing else to try */ } }
-    try { inst.moveToSlot({ ...a, files: parked }, aBase, 'pak00'); } catch { /* nothing else to try */ }
-    throw err;
-  }
+  });
 }
 
 // Number of occupied pak slots (mod paks only, excluding the game's own pak01_*), used

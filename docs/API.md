@@ -2188,11 +2188,17 @@ The highest free slot strictly below `n`, as "pakNN".
 ### `moveToSlot`
 
 ```ts
-export function moveToSlot(inst: Installer, rec: HasFiles, newBase: string, oldBase: string | null = inst.slotBase(rec)): LibFile[]
+export function moveToSlot(inst: Installer, rec: HasFiles, newBase: string, oldBase: string | null = inst.slotBase(rec), tx: Writer = null): LibFile[]
 ```
 
 Rename every pak file of a record to another slot, keeping .off/.moff state and the
 volume numbering of a multi-volume pack.
+
+All of a mod's files move, or none do. A pak and its volumes only load under one name, and a
+running game can refuse the rename of any one of them: until 2026-10-01 these renames were made
+one by one outside a transaction, and a refusal on the second file left a mod the game could not
+load and the library could not find. They go through a FileTx now, the caller's when it hands
+one in so a move of several mods undoes as one, otherwise one of their own.
 
 ```
 @returns {Array<object>} the record's new files array (caller stores it)

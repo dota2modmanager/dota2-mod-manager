@@ -161,7 +161,7 @@ export function registerLibraryIpc({
    * amount of filtering told the two cases apart reliably. Which mod wins is a decision
    * only the person looking at the game can make.
    */
-  /* The load order has two parts (installer.js, PRIORITY_SLOTS): the categories that load first,
+  /* The load order has two parts (src/slot-zones.ts, PRIORITY_SLOTS): the categories that load first,
    * then everything else. A mod moves among its own part only, so "load earlier" on the first
    * mod after the shaders stops there instead of trading slots with a shader. */
   // mods that hold a pakNN slot, by that number; a mod without one is not in the order at all

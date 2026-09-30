@@ -10,7 +10,7 @@ Electron, three processes, one bridge.
 
 ```
 src/main.ts      Electron lifecycle and the order the app starts in; everything else is a module
-  └─ src/*.js    everything that touches disk, network or the game folder
+  └─ src/*.ts    everything that touches disk, network or the game folder
 preload.js       the only channel between the two sides: window.api, built with contextBridge
 renderer/        the interface: plain HTML, CSS and JavaScript, no build step, no framework
 ```
@@ -36,16 +36,19 @@ Miss the middle one and the button exists but does nothing. The renderer is spli
 Dota mounts one folder named after the language of its **voices**, and that folder is mounted
 before the game's own content, which is what makes mods possible at all. The name comes from
 `AudioLanguage` in `game/dota/cfg/boot.vcfg`, so `src/gamelang.ts` reads that file rather than
-guessing. A launch option cannot change it: `-language` sets a preference inside the game, and the
-invented values older guides recommend (`dota_123`, `-language mods`) stopped mounting anything in
-July 2026.
+guessing. A `-language X` in Steam's launch options overrides it: when X is a language Dota knows,
+the engine mounts `dota_X` whatever boot.vcfg says, and the app follows it rather than fight it
+(`modFolderFor` in `src/gamelang.ts`). The invented values older guides recommend (`dota_123`,
+`-language mods`) stopped mounting anything in July 2026.
 
 Inside that folder:
 
 | What | Where it goes |
 |---|---|
-| A normal mod | `pakNN_dir.vpk`, slots 10 to 99 |
-| A mod whose category must load early (trees, river, shaders, hero fx, ranged attack, hero items, optimization) | slots `pak02` to `pak09`, because a lower number wins |
+| A normal mod | `pakNN_dir.vpk`, slots 30 to 99 |
+| A mod whose category must load early (trees, river, shaders, hero fx, ranged attack, hero items, optimization) | slots `pak02` to `pak29`, because a lower number wins; when those are full, the first free slot after them |
+| The app's own pak | `pak64_dir.vpk`, the game's anti-cheat notice in plain words (`src/notice-text.ts`), never given to a mod |
+| Minify's | `pak65` to `pak67` stay Minify's, so the two apps can share one folder |
 | A terrain | its paks, plus the `maps/` folder it ships |
 | A font | `game/dota/panorama/fonts`, originals backed up |
 | A cursor | `game/dota/resource/cursor`, originals backed up |
@@ -68,8 +71,8 @@ or turning mods back on would resurrect the ones you had deliberately switched o
    host named there can do is serve a download or fail its checksum.
 3. Open the archive through `src/safe-zip.ts`, the single door every foreign zip comes through.
 4. Compare its contents against what is already installed and report conflicts (see below).
-5. Pick a free slot: low ones for categories that must load early, otherwise the first free number
-   from 10 up. Combined packs exist for the same reason and are described in `src/vpk-write.ts`.
+5. Pick a free slot: 02 to 29 for categories that must load early, otherwise the first free number
+   from 30 up (`src/slot-zones.ts`). Combined packs exist for the same reason and are described in `src/vpk-write.ts`.
 6. Write everything through `src/file-tx.ts`.
 7. Record it in `manifest.json` through `src/library.ts`.
 
@@ -80,11 +83,14 @@ six writes, a removal is as many deletes, and switching a mod off renames every 
 A failure halfway through, a locked file because Dota just started, a full disk, an antivirus
 holding a handle, used to leave the folder in a state the game would happily load half of.
 
-Every change to the game folder now goes through one transaction that either lands completely or
-rolls back completely, including files that were displaced to make room. Nothing writes there
-while `dota2.exe` is running, and the app checks that the game files are actually present before
-it downloads anything, after a user moved his Steam library and had the app cheerfully install
-forty three mods into the empty folder Steam left behind.
+Every install, removal, switch and move between slots goes through one transaction that either
+lands completely or rolls back completely, including files that were displaced to make room. Moves
+between slots joined on 2026-10-01, after a test that refused each rename in turn found a swap that
+could write one mod over another. The master switch is the one sweep outside: it only ever adds or
+strips its own suffix, so a sweep that stops half way is finished by the next press. Nothing writes
+there while `dota2.exe` is running, and the app checks that the game files are actually present
+before it downloads anything, after a user moved their Steam library and had the app cheerfully
+install forty three mods into the empty folder Steam left behind.
 
 ## VPK
 

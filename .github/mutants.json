@@ -894,16 +894,16 @@
       "name": "a rename the game refuses leaves a mod split across two slots",
       "file": "src/installer-slots.ts",
       "anchor": "export function moveToSlot(",
-      "from": "      try { fs.renameSync(to, from); } catch { /* nothing else to try */ }\n",
-      "to": "",
+      "from": "if (fs.existsSync(from)) into.move(from, path.join(lang, next + suf));",
+      "to": "if (fs.existsSync(from)) fs.renameSync(from, path.join(lang, next + suf));",
       "test": "test/installer.test.ts"
     },
     {
       "name": "a refused swap puts the first mod back over the second",
       "file": "src/installer-slots.ts",
       "anchor": "export function swapSlots(",
-      "from": "    if (movedB) { try { inst.moveToSlot({ ...b, files: movedB }, bBase, aBase); } catch { /* nothing else to try */ } }\n",
-      "to": "",
+      "from": "    const parked = inst.moveToSlot(a, 'pak00', aBase, tx);\n",
+      "to": "    const parked = inst.moveToSlot(a, 'pak00', aBase);\n",
       "test": "test/installer.test.ts"
     },
     {

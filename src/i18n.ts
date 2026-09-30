@@ -86,7 +86,7 @@ const EN = {
   'Сохранить отчёт для поддержки': 'Save the support report',
   'Отчёт диагностики': 'Diagnostics report',
 
-  // ---- installer.js ----
+  // ---- installer ----
   'Путь к Dota 2 не задан': 'Dota 2 path is not set',
   // ---- item schema / search-path patch ----
   'Закрой Dota 2 перед изменением файлов игры': 'Close Dota 2 before changing game files',
@@ -177,7 +177,7 @@ const EN = {
   'Моды выключены': 'Mods turned off',
   'Скачать Mod Manager': 'Get Mod Manager',
 
-  // ---- vpk.js (parse errors + content labels) ----
+  // ---- vpk (parse errors + content labels) ----
   'VPK: незакрытая строка в дереве': 'VPK: unterminated string in the tree',
   'VPK: неверная сигнатура': 'VPK: bad signature',
   'VPK: повреждённое дерево': 'VPK: damaged tree',

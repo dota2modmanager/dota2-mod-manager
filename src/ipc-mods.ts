@@ -9,7 +9,7 @@ import path from 'node:path';
 
 import { t } from './i18n.ts';
 import { fetchMirrored } from './net.ts';
-import { RAW_BASE } from './catalog.ts';
+import { fileUrl } from './installer-downloads.ts';
 import { createTerrainAges, TAIL_BYTES } from './terrain-age.ts';
 import { createNoticeText } from './notice-text.ts';
 import * as zones from './slot-zones.ts';
@@ -46,8 +46,8 @@ export function registerModsIpc({
     gamePath: () => (installer.getGamePath ? installer.getGamePath() : null),
     storeFile: installer.downloadsDir && path.join(path.dirname(installer.downloadsDir), 'terrain-ages.json'),
     fetchTail: async (categoryId, file) => {
-      const url = `${RAW_BASE}/assets/files/${categoryId}/${encodeURIComponent(file)}`; // as installer.js fileUrl
-      const res = await fetchMirrored(url, { headers: { Range: `bytes=-${TAIL_BYTES}` } });
+      // the same address an install downloads from
+      const res = await fetchMirrored(fileUrl(categoryId, file), { headers: { Range: `bytes=-${TAIL_BYTES}` } });
       return res.ok ? Buffer.from(await res.arrayBuffer()) : null;
     },
   });
@@ -275,7 +275,7 @@ export function registerModsIpc({
     // shows that a mod has them, and whether the patch that makes them work is on. Copies,
     // never the stored records — dropping the field off those would erase it on save.
     const schemaOn = schemaService.state().enabled;
-    // zone: which part of the load order the mod belongs in (installer.js, PRIORITY_SLOTS), so
+    // zone: which part of the load order the mod belongs in (src/slot-zones.ts, PRIORITY_SLOTS), so
     // the screen knows where "load earlier" stops
     const listed = installed.map((rec) => {
       const by = covered.get(rec.id);
