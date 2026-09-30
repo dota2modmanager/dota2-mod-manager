@@ -45,7 +45,7 @@
         "src/i18n.ts": {
           "lines": 96.8
         },
-        "src/import.js": {
+        "src/import.ts": {
           "lines": 93.9
         },
         "src/installer.ts": {
@@ -260,7 +260,7 @@
         "src/i18n.ts": {
           "lines": 98.1
         },
-        "src/import.js": {
+        "src/import.ts": {
           "lines": 93.9
         },
         "src/installer.ts": {

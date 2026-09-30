@@ -5,19 +5,19 @@
 // doing nothing - which used to look like the app breaking it. Measured over 84 installed
 // mods: 801 paths are carried by more than one mod, and only 84 of those hold different
 // bytes, so a shared path on its own proves nothing and the CRC has to decide.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const { crc32 } = require('node:zlib');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { crc32 } from 'node:zlib';
 
-const vpk = require('../src/vpk.ts');
-const { entry } = require('./helpers/vpk-entry.ts');
-const { Installer } = require('../src/installer.ts');
+import * as vpk from '../src/vpk.ts';
+import { entry } from './helpers/vpk-entry.ts';
+import { Installer } from '../src/installer.ts';
 
 /** A game folder with a language folder, and an installer pointed at it. */
-function stand(t) {
+function stand(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-cov-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const game = path.join(dir, 'game');
@@ -29,7 +29,7 @@ function stand(t) {
     getLangSuffix: () => 'russian',
     onProgress: () => {},
   });
-  const put = (slot, files) => {
+  const put = (slot: string, files: [string, string][]) => {
     fs.writeFileSync(path.join(lang, `${slot}_dir.vpk`), vpk.buildVpk(files.map(([p, b]) => entry(p, b))));
     return { key: slot, name: slot, files: [{ root: 'lang', relPath: `${slot}_dir.vpk` }] };
   };
@@ -150,7 +150,7 @@ test('the pak slots Minify writes are never handed to one of our mods', () => {
     getGamePath: () => null,
     getLangSuffix: () => 'russian',
   });
-  const used = new Set();
+  const used = new Set<string>();
   const handed = [];
   // 30-98, less Minify's three and the app's own pak64 (src/notice-text.ts)
   for (let i = 0; i < 65; i++) handed.push(installer.allocatePak(used, false));
@@ -191,7 +191,7 @@ test('the master switch and the foreign scan leave Minify alone', () => {
   assert.ok(after.includes('pak01_dir.vpk') && after.includes('gameinfo.gi'), 'the game keeps its own');
 
   const foreign = installer.externalFiles([{ root: 'lang', relPath: 'pak10_dir.vpk' }], { scanExtras: false });
-  assert.deepEqual(foreign.map((f) => f.relPath), [], 'nothing of Minify is offered as a loose file');
+  assert.deepEqual(foreign.map((f) => f.key), [], 'nothing of Minify is offered as a loose file');
   fs.rmSync(root, { recursive: true, force: true });
 });
 
@@ -203,7 +203,7 @@ test('reordering never drops a mod into a slot Minify writes', () => {
   });
   // everything below 70 taken except the three that are Minify's, on a machine where it is
   // installed but has not patched yet - so the folder cannot tell us they are spoken for
-  const used = new Set();
+  const used = new Set<string>();
   for (let i = 2; i < 70; i++) {
     if ([65, 66, 67, 99].includes(i)) continue;
     used.add(`pak${String(i).padStart(2, '0')}_dir.vpk`);
@@ -223,7 +223,7 @@ test('a map mod Minify built is left alone; a hand-installed terrain is not', ()
   const maps = path.join(root, 'game', 'dota_russian', 'maps');
   fs.mkdirSync(maps, { recursive: true });
 
-  const entry = (p, body) => {
+  const entry = (p: string, body: string) => {
     const data = Buffer.from(body);
     const norm = p.toLowerCase();
     const slash = norm.lastIndexOf('/');

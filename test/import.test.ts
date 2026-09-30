@@ -11,23 +11,23 @@
  * the fourteen had a test. Written before the section is split out, so the split has something to
  * prove itself against.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const AdmZip = require('adm-zip');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import AdmZip from 'adm-zip';
 
-const vpk = require('../src/vpk.ts');
-const { entry } = require('./helpers/vpk-entry.ts');
-const { Installer } = require('../src/installer.ts');
-const { importVpks, importVpkBuffers, installVpkBuffer } = require('../src/import.js');
+import * as vpk from '../src/vpk.ts';
+import { entry } from './helpers/vpk-entry.ts';
+import { Installer } from '../src/installer.ts';
+import { importVpks, importVpkBuffers, installVpkBuffer } from '../src/import.ts';
 
 /** A self-contained mod, the shape the catalog ships. */
-const mod = (files) => vpk.buildVpk(files.map(([p, b]) => entry(p, b)));
+const mod = (files: [string, string | Buffer][]) => vpk.buildVpk(files.map(([p, b]) => entry(p, b)));
 
 /** A game folder the installer accepts, an installer pointed at it, and a place to drop things. */
-function stand(t) {
+function stand(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-import-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const game = path.join(dir, 'game');
@@ -43,7 +43,7 @@ function stand(t) {
   });
 
   /** A folder outside the game to import from, with files laid out in it. */
-  const source = (name, files) => {
+  const source = (name: string, files: Record<string, string | Buffer>) => {
     const root = path.join(dir, name);
     for (const [rel, body] of Object.entries(files)) {
       const full = path.join(root, ...rel.split('/'));
@@ -57,7 +57,7 @@ function stand(t) {
   /** What is in the language folder now, mods only. */
   const installed = () => fs.readdirSync(lang).filter((f) => /\.vpk$/i.test(f)).sort();
   /** Inner paths of a mod sitting in the language folder. */
-  const inside = (relPath) => vpk.listVpkPaths(fs.readFileSync(path.join(lang, relPath))).sort();
+  const inside = (relPath: string) => vpk.listVpkPaths(fs.readFileSync(path.join(lang, relPath))).sort();
 
   return { dir, installer, lang, source, installed, inside };
 }
@@ -101,7 +101,7 @@ test('a folder holding nothing the game reads is refused by name', async (t) => 
 
   const [result] = await importVpks(installer,[notAMod]);
 
-  assert.match(result.error, /\.vpk/);
+  assert.match(result.error ?? '', /\.vpk/);
   assert.equal(result.source, 'holiday photos');
   assert.deepEqual(installed(), [], 'something was installed from a folder that holds no mod');
 });
@@ -132,7 +132,7 @@ test('a zip with no mod in it says so instead of quietly importing nothing', asy
 
   const [result] = await importVpks(installer,[file]);
 
-  assert.match(result.error, /\.vpk/);
+  assert.match(result.error ?? '', /\.vpk/);
   assert.deepEqual(installed(), []);
 });
 
@@ -162,7 +162,7 @@ test('data volumes with no index beside them are refused, not half-installed', a
   const results = await importVpks(installer,[from]);
 
   assert.equal(results.length, 1);
-  assert.match(results[0].error, /_dir\.vpk/);
+  assert.match(results[0].error ?? '', /_dir\.vpk/);
   assert.deepEqual(installed(), []);
 });
 
@@ -191,7 +191,7 @@ test('an import takes a free slot, never one that is occupied', async (t) => {
 
   const [result] = await importVpks(installer,[path.join(from, 'hook_dir.vpk')]);
 
-  assert.notEqual(result.files[0].relPath, 'pak10_dir.vpk', 'the import replaced a mod already there');
+  assert.notEqual(result.files?.[0].relPath, 'pak10_dir.vpk', 'the import replaced a mod already there');
   assert.equal(installed().length, 2);
 });
 
@@ -272,7 +272,7 @@ test('bytes dropped on the window go in through the same door as files', async (
   ]);
 
   assert.equal(results.length, 1, 'something other than a mod was taken in');
-  assert.deepEqual(inside(results[0].files[0].relPath), [HOOK]);
+  assert.deepEqual(inside(results[0].files?.[0].relPath ?? ''), [HOOK]);
   assert.equal(installed().length, 1);
   assert.equal(fs.readdirSync(os.tmpdir()).filter((f) => f.startsWith('mm-import-')).length, before,
     'the staging folder was left in the temp directory');

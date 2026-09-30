@@ -63,6 +63,23 @@ test('a TypeScript module is read by its export statements, its opening comment 
   assert.equal(doc.lang, 'ts');
 });
 
+test('a JavaScript module is read by its module.exports list, a renamed entry under its public name', () => {
+  // no module in src/ is written this way any more, but the reader still is, for as long as one could be
+  const doc = moduleDoc('old.js', [
+    '// What this module was for.',
+    'function first() {}',
+    '/** The second, with a comment. */',
+    'function second() {}',
+    'module.exports = {',
+    '  first, // the plain one',
+    '  public: second,',
+    '};',
+  ].join('\n'));
+  assert.deepEqual(doc.items.map((it) => it.name), ['first', 'public']);
+  assert.equal(doc.lang, 'js');
+  assert.equal(doc.header, 'What this module was for.');
+});
+
 test('a module that hands on names from another points there instead of counting them as gaps', () => {
   const doc = moduleDoc('door.ts', [
     '// The door everything comes through.',

@@ -1,6 +1,6 @@
 // What is already installed, read and rewritten: what a mod is, its files merged into one or
 // written out as a folder, the whole-game tables stripped out of it, a pack of heroes split.
-// Taking a mod IN - from a file, a zip, a folder or dropped bytes - is src/import.js.
+// Taking a mod IN - from a file, a zip, a folder or dropped bytes - is src/import.ts.
 // Behind src/installer.ts.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -99,7 +99,7 @@ export function mergeToSingleVpk(inst: Installer, rec: HasFiles, deltas?: { bloc
 
 //
 // Taking a mod IN - from a file, a zip, a folder or bytes off a drop - moved to
-// src/import.js. What is left here works on what the folder already holds.
+// src/import.ts. What is left here works on what the folder already holds.
 /**
  * The inverse of packing a folder: write a mod's own files out as a tree, so the author
  * who wants to change one texture can open it, edit it, and drop the folder back in.

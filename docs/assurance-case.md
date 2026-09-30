@@ -26,7 +26,7 @@ app can reach is short and public ([PRIVACY.md](../PRIVACY.md)).
 | 2 | Foreign archives and the disk | Zip and VPK contents, file names, paths | `src/safe-zip.ts`, `src/vpk.ts`, `src/file-tx.ts` |
 | 3 | The main process and the window | Every action the UI can ask for | `preload.js` and the `src/ipc-*.js` modules |
 | 4 | The app and the game folder | Mod packs, loose fonts and cursors, one patched text file | `src/installer.ts`, `src/overlays.ts`, `src/patcher.ts` |
-| 5 | The user and everything above | Files they drop, presets from other people | `src/import.js`, `src/preset-share.ts`, `src/adopt.ts` |
+| 5 | The user and everything above | Files they drop, presets from other people | `src/import.ts`, `src/preset-share.ts`, `src/adopt.ts` |
 
 Each boundary has one door. That is the design: there is a single place where a foreign zip is
 opened, a single place where a download is fetched, a single place where a mod becomes a record

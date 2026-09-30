@@ -8,33 +8,34 @@
 //
 // Everything here is about containment: whatever the name says, the bytes land under
 // userData/downloads and nowhere else.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const http = require('http');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import type { AddressInfo } from 'node:net';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import http from 'node:http';
 
-const { Installer } = require('../src/installer.ts');
+import { Installer } from '../src/installer.ts';
 
-function tmpDir(t) {
+function tmpDir(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-dl-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 
 /** A server that hands over the same bytes whatever is asked of it. */
-function serve(t, body = 'the mod') {
+function serve(t: TestContext, body = 'the mod') {
   const server = http.createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'application/zip', 'content-length': Buffer.byteLength(body) });
     res.end(body);
   });
   server.listen(0, '127.0.0.1');
   t.after(() => server.close());
-  return new Promise((resolve) => server.on('listening', () => resolve(server.address().port)));
+  return new Promise((resolve) => server.on('listening', () => resolve((server.address() as AddressInfo).port)));
 }
 
-function installer(t) {
+function installer(t: TestContext) {
   return new Installer({
     userDataDir: tmpDir(t),
     getGamePath: () => null,

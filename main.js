@@ -21,7 +21,7 @@ const { Settings } = require('./src/settings.ts');
 const { Catalog } = require('./src/catalog.ts');
 const { Installer } = require('./src/installer.ts');
 // under one name: main.js has a wrapper of its own called importVpkBuffers
-const importer = require('./src/import');
+const importer = require('./src/import.ts');
 const { createCursors } = require('./src/cursors.ts');
 const { createAdopt } = require('./src/adopt.ts');
 const { Library } = require('./src/library.ts');
@@ -766,7 +766,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('open-url', (e, url) => { e.preventDefault(); handleDeepLink(url); }); // macOS
 }
 
-// register what src/import.js handed back into the library
+// register what src/import.ts handed back into the library
 /**
  * The changelog section for one version, in the app's language when there is a translation.
  * The same file CI puts on the release page, shipped with the build so the screen works

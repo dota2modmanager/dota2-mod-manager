@@ -26,7 +26,7 @@ import type { Library } from './library.ts';
 import type { HasFiles, LibFile, LibRecord } from './types.ts';
 import type { ModIdentityGuess } from './mod-id.ts';
 
-// src/import.js takes these from here, as it always has
+// src/import.ts takes these from here, as it always has
 export { MERGE_SIZE_CAP } from './installer-files.ts';
 export { PRIORITY_CATEGORIES } from './slot-zones.ts';
 

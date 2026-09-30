@@ -363,7 +363,7 @@ that location is not writable.
 | `src/installer.ts` | Download, slots, install, enable, remove, packs |
 | `src/beta.ts` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
 | `src/overlays.ts` | Fonts and cursors: files written over the game's own, their kept originals, and putting them back after Steam's file check |
-| `src/import.js` | Taking a mod in: a `.vpk`, a `.zip`, an author's folder, or bytes off a drop |
+| `src/import.ts` | Taking a mod in: a `.vpk`, a `.zip`, an author's folder, or bytes off a drop |
 | `src/cursors.ts` | Which cursor set is live, which look a slot wears, and the repair at startup |
 | `src/adopt.ts` | What a VPK goes through before it counts as a mod: named, harvested, split |
 | `src/updater.ts` | Where an installed copy looks for a new version: the two feeds, and the channel it reads |

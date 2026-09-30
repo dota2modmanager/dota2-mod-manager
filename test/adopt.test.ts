@@ -8,7 +8,7 @@
  *
  * The library is the real one in a temp folder. The installer and the schema service are fakes
  * that record what they were asked, because the question here is what gets decided about a
- * record, not whether a VPK parses: that is tested in test/vpk.test.ts and test/import.test.js.
+ * record, not whether a VPK parses: that is tested in test/vpk.test.ts and test/import.test.ts.
  */
 import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';

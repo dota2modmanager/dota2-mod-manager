@@ -60,35 +60,35 @@
     },
     {
       "name": "importing leaves a multi-volume set as a set",
-      "file": "src/import.js",
-      "anchor": "async function importVpkFiles(installer, paths, onStep) {",
+      "file": "src/import.ts",
+      "anchor": "export async function importVpkFiles(installer: Installer, paths: string[], onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {",
       "from": "if (partFiles.length && partsBytes <= MERGE_SIZE_CAP) {",
       "to": "if (false) {",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "importing takes in a file that is not a mod",
-      "file": "src/import.js",
-      "anchor": "async function importVpkFiles(installer, paths, onStep) {",
+      "file": "src/import.ts",
+      "anchor": "export async function importVpkFiles(installer: Installer, paths: string[], onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {",
       "from": "results.push({ source: fileName, error: t('не .vpk файл') });",
       "to": "results.push({ source: fileName });",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "a folder with nothing in it is passed over in silence",
-      "file": "src/import.js",
-      "anchor": "function expandImportInputs(paths, staged) {",
+      "file": "src/import.ts",
+      "anchor": "export function expandImportInputs(paths: string[], staged: string[]): { files: string[]; errors: { source: string; error: string }[] } {",
       "from": "errors.push({ source: label, error: t('в папке нет ни .vpk, ни файлов игры') });",
       "to": ";",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "installVpkBuffer writes before it understands the bytes",
-      "file": "src/import.js",
-      "anchor": "function installVpkBuffer(installer, buf) {",
+      "file": "src/import.ts",
+      "anchor": "export function installVpkBuffer(installer: Installer, buf: Buffer): LibFile[] {",
       "from": "if (!listVpkPaths(buf).length) throw new Error(t('Пустой VPK'));",
       "to": ";",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "the ownership note stops matching the folder's own spelling",
@@ -96,7 +96,7 @@
       "anchor": "export function ownsFile(inst: Installer, relPath: string): boolean {",
       "from": ".some((f) => String(f).toLowerCase() === want)",
       "to": ".some((f) => String(f) === want)",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "harvestSchema keeps the whole-game tables it was meant to strip",
@@ -104,15 +104,15 @@
       "anchor": "export function harvestSchema(inst: Installer, records: LibFile[], vanillaText: string | null): { deltas: SchemaDelta[]; stripped: string[] } {",
       "from": "const keep = entries.filter((e) => !drop(e));",
       "to": "const keep = entries;",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "dropped bytes leave their staging folder behind",
-      "file": "src/import.js",
-      "anchor": "async function importVpkBuffers(installer, items, onStep) {",
+      "file": "src/import.ts",
+      "anchor": "export async function importVpkBuffers(installer: Installer, items: DroppedFile[] | null | undefined, onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {",
       "from": "try { fs.rmSync(tmp, { recursive: true, force: true }); } catch { /* noop */ }",
       "to": ";",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "a cursor set that was already off is reported as having given way",

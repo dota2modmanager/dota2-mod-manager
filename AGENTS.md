@@ -76,7 +76,7 @@ Four of them check the project against itself rather than checking code:
 - `test/ipc-contract.test.js` — every channel the renderer can call has a handler, every
   handler is reachable, none registered twice, every `src/ipc-*.js` wired into main.
 - `test/release-contract.test.js` — the version, both changelogs and what CI reads all agree.
-- `test/coverage.test.js` — which mod supplies a file when two carry the same path.
+- `test/coverage.test.ts` — which mod supplies a file when two carry the same path.
 - `tools/check-i18n.js` — no Russian string without an English one.
 
 If one of these fails, the fix is almost never the test.

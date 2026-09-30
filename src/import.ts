@@ -6,33 +6,39 @@
  * file per mod, so a half-folded set is exactly how a mod ends up half-loaded. An author's
  * working folder holds no archive at all, and is packed on the way in.
  *
- * Lifted out of src/installer.ts unchanged. It was 270 lines of a 1,783-line file, reachable
+ * Lifted out of src/installer.js unchanged. It was 270 lines of a 1,783-line file, reachable
  * only through the class that also downloads, allocates slots, patches the schema and manages
  * cursors. The bodies below are the same bodies; what changed is that the installer arrives as
- * an argument instead of as `this`. Its tests (test/import.test.js) and the mutants that check
+ * an argument instead of as `this`. Its tests (test/import.test.ts) and the mutants that check
  * those tests bite (.github/mutants.json) were written first, in #48, so this move had
  * something to prove itself against.
  */
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 
-const { listVpkPaths, mergeVpkToSingle, findContentRoot, packFolder } = require('./vpk.ts');
-const { openZip, safeJoin } = require('./safe-zip.ts');
-const { FileTx } = require('./file-tx.ts');
-const { MERGE_SIZE_CAP } = require('./installer.ts');
-const { t } = require('./i18n.ts');
+import { listVpkPaths, mergeVpkToSingle, findContentRoot, packFolder } from './vpk.ts';
+import { openZip, safeJoin } from './safe-zip.ts';
+import { FileTx } from './file-tx.ts';
+import { MERGE_SIZE_CAP } from './installer.ts';
+import { t } from './i18n.ts';
+import type { Installer } from './installer.ts';
+import type { ImportResult } from './adopt.ts';
+import type { LibFile } from './types.ts';
+
+/** Files dropped as bytes, when the drop could not name a path on disk. */
+export type DroppedFile = { name?: string; data: Uint8Array | ArrayBuffer };
 
 // Every .vpk under a dropped folder. Skinchanger packs unzip to a whole game tree
 // (<pack>\game\Dota2SkinChanger\pak01_*.vpk), so the file we want sits a few levels in.
-function scanVpkTree(root, depth = 0) {
-  const out = [];
+export function scanVpkTree(root: string, depth = 0): string[] {
+  const out: string[] = [];
   if (depth > 6) return out;
-  let names = [];
+  let names: string[] = [];
   try { names = fs.readdirSync(root); } catch { return out; }
   for (const f of names) {
     const full = path.join(root, f);
-    let st;
+    let st: fs.Stats;
     try { st = fs.statSync(full); } catch { continue; }
     if (st.isDirectory()) out.push(...scanVpkTree(full, depth + 1));
     else if (/\.vpk$/i.test(f)) out.push(full);
@@ -45,9 +51,9 @@ function scanVpkTree(root, depth = 0) {
  * find it. Staged rather than installed directly, so a folder goes through exactly the
  * same path a dropped .vpk does - slot allocation, the schema a mod carries, the
  * transaction, the naming.
- * @returns {string|null} path of the staged archive, or null if the folder holds no game files
+ * @returns path of the staged archive, or null if the folder holds no game files
  */
-function stageFolderAsVpk(dir, staged) {
+export function stageFolderAsVpk(dir: string, staged: string[]): string | null {
   const root = findContentRoot(dir);
   if (!root) return null;
   const buf = packFolder(root);
@@ -65,14 +71,13 @@ function stageFolderAsVpk(dir, staged) {
  * walked, a .zip is unpacked to a temp dir (keeping its layout so multi-part sets stay
  * side by side), a plain file passes through. Temp dirs are appended to `staged` for the
  * caller to delete once the import has read them.
- * @returns {{ files: string[], errors: Array<{source:string, error:string}> }}
  */
-function expandImportInputs(paths, staged) {
-  const files = [];
-  const errors = [];
+export function expandImportInputs(paths: string[], staged: string[]): { files: string[]; errors: { source: string; error: string }[] } {
+  const files: string[] = [];
+  const errors: { source: string; error: string }[] = [];
   for (const src of paths) {
     const label = path.basename(src);
-    let st = null;
+    let st: fs.Stats | null = null;
     try { st = fs.statSync(src); } catch { /* gone or unreadable */ }
 
     if (st && st.isDirectory()) {
@@ -85,7 +90,7 @@ function expandImportInputs(paths, staged) {
         const built = stageFolderAsVpk(src, staged);
         if (built) { files.push(built); continue; }
       } catch (err) {
-        errors.push({ source: label, error: String(err.message || err) });
+        errors.push({ source: label, error: String((err as Error)?.message || err) });
         continue;
       }
       errors.push({ source: label, error: t('в папке нет ни .vpk, ни файлов игры') });
@@ -105,7 +110,7 @@ function expandImportInputs(paths, staged) {
           found++;
         }
       } catch (err) {
-        errors.push({ source: label, error: String(err.message || err) });
+        errors.push({ source: label, error: String((err as Error)?.message || err) });
         continue;
       }
       if (!found) errors.push({ source: label, error: t('в архиве нет .vpk файлов') });
@@ -121,18 +126,19 @@ function expandImportInputs(paths, staged) {
 // and Dota2Changer packs ship as the latter, so the volumes are grouped with their index
 // and folded into a single file per mod on the way in.
 /**
- * @param {object} installer the installer engine: the game folder, the slots and the writes
- * @param {string[]} paths .vpk files to take in
- * @param {(done:number,total:number)=>void} [onStep] called after each mod lands
+ * Take these .vpk files in, one mod per set, each in its own transaction.
+ * @param installer the installer engine: the game folder, the slots and the writes
+ * @param paths .vpk files to take in
+ * @param onStep called after each mod lands
  */
-async function importVpkFiles(installer, paths, onStep) {
+export async function importVpkFiles(installer: Installer, paths: string[], onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {
   const lang = installer.langFolder();
   installer.ensureLangFolder();
   const used = installer.usedPakNames();
-  const results = [];
+  const results: ImportResult[] = [];
 
   // group selected files into sets keyed by source dir + base name
-  const sets = new Map(); // key -> { srcDir, base, dirFile, sourceLabel }
+  const sets = new Map<string, { srcDir: string; base: string; dirFile: string | null; sourceLabel: string; single?: boolean }>();
   for (const src of paths) {
     const fileName = path.basename(src);
     if (!/\.vpk$/i.test(fileName)) {
@@ -166,7 +172,7 @@ async function importVpkFiles(installer, paths, onStep) {
         // self-contained non-_dir vpk: copy as a fresh dir slot
         if (set.single) {
           const pakName = installer.allocatePak(used, false);
-          installer.copyInto(set.dirFile, path.join(lang, pakName), tx);
+          installer.copyInto(set.dirFile as string, path.join(lang, pakName), tx);
           results.push({ source: set.sourceLabel, name: set.base, files: [{ root: 'lang', relPath: pakName }] });
           return;
         }
@@ -186,7 +192,7 @@ async function importVpkFiles(installer, paths, onStep) {
         const partRe = new RegExp(`^${set.base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}_(\\d{3})\\.vpk$`, 'i');
         const partFiles = fs.readdirSync(set.srcDir)
           .map((f) => ({ f, m: f.match(partRe) }))
-          .filter((x) => x.m)
+          .filter((x): x is { f: string; m: RegExpMatchArray } => !!x.m)
           .sort((x, y) => x.m[1].localeCompare(y.m[1]));
 
         // Multi-volume set (a Skinchanger pack is pak01_dir.vpk + pak01_000.vpk): fold the
@@ -198,7 +204,7 @@ async function importVpkFiles(installer, paths, onStep) {
         if (partFiles.length && partsBytes <= MERGE_SIZE_CAP) {
           let merged = false;
           try {
-            const archiveFor = (idx) => path.join(set.srcDir, `${set.base}_${String(idx).padStart(3, '0')}.vpk`);
+            const archiveFor = (idx: number) => path.join(set.srcDir, `${set.base}_${String(idx).padStart(3, '0')}.vpk`);
             installer.writeInto(mergeVpkToSingle(dirSrc, archiveFor), path.join(lang, pakDir), tx);
             merged = true;
           } catch { /* unreadable index or missing volume — copy the set as it is */ }
@@ -212,7 +218,7 @@ async function importVpkFiles(installer, paths, onStep) {
         }
 
         installer.copyInto(dirSrc, path.join(lang, pakDir), tx);
-        const files = [{ root: 'lang', relPath: pakDir }];
+        const files: LibFile[] = [{ root: 'lang', relPath: pakDir }];
         for (const { f, m } of partFiles) {
           const partName = `${newBase}_${m[1]}.vpk`;
           installer.copyInto(path.join(set.srcDir, f), path.join(lang, partName), tx);
@@ -221,19 +227,19 @@ async function importVpkFiles(installer, paths, onStep) {
         results.push({ source: `${set.base}_dir.vpk`, name: set.base, files });
       });
     } catch (err) {
-      results.push({ source: set.sourceLabel, error: String(err.message || err) });
+      results.push({ source: set.sourceLabel, error: String((err as Error)?.message || err) });
     }
     done++;
     if (onStep) onStep(done, total);
-    await new Promise((r) => setImmediate(r));
+    await new Promise<void>((r) => setImmediate(r));
   }
   return results;
 }
 
-// Import whatever the user pointed at: .vpk files, a .zip, or a folder to walk.
-// Returns one result per mod: { source, name, files[], merged? } or { source, error }.
-async function importVpks(installer, paths, onStep) {
-  const staged = [];
+/** Import whatever the user pointed at: .vpk files, a .zip, or a folder to walk.
+ * Returns one result per mod: { source, name, files[], merged? } or { source, error }. */
+export async function importVpks(installer: Installer, paths: string[] | null | undefined, onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {
+  const staged: string[] = [];
   try {
     const { files, errors } = expandImportInputs(paths || [], staged);
     return [...errors, ...await importVpkFiles(installer, files, onStep)];
@@ -242,17 +248,17 @@ async function importVpks(installer, paths, onStep) {
   }
 }
 
-// Import dropped .vpk/.zip files given as raw bytes (used when the drop can't resolve a
-// real on-disk path). Bytes are staged in a temp folder so the normal path-based importer
-// handles grouping of multi-part sets, then the temp folder is removed.
-async function importVpkBuffers(installer, items, onStep) {
+/** Import dropped .vpk/.zip files given as raw bytes (used when the drop can't resolve a
+ * real on-disk path). Bytes are staged in a temp folder so the normal path-based importer
+ * handles grouping of multi-part sets, then the temp folder is removed. */
+export async function importVpkBuffers(installer: Installer, items: DroppedFile[] | null | undefined, onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-import-'));
   try {
-    const paths = [];
+    const paths: string[] = [];
     for (const it of items || []) {
       if (!it || !/\.(vpk|zip)$/i.test(it.name || '')) continue;
-      const p = path.join(tmp, path.basename(it.name));
-      fs.writeFileSync(p, Buffer.from(it.data));
+      const p = path.join(tmp, path.basename(it.name as string));
+      fs.writeFileSync(p, Buffer.from(it.data as Uint8Array));
       paths.push(p);
     }
     return await importVpks(installer, paths, onStep);
@@ -261,10 +267,10 @@ async function importVpkBuffers(installer, items, onStep) {
   }
 }
 
-// Install a VPK handed over as bytes (a mod embedded in a shared preset). The index is
-// parsed first: whatever a stranger put in that archive, only something that really is a
-// VPK ever reaches the game folder, and the slot name is ours, never theirs.
-function installVpkBuffer(installer, buf) {
+/** Install a VPK handed over as bytes (a mod embedded in a shared preset). The index is
+ * parsed first: whatever a stranger put in that archive, only something that really is a
+ * VPK ever reaches the game folder, and the slot name is ours, never theirs. */
+export function installVpkBuffer(installer: Installer, buf: Buffer): LibFile[] {
   if (!listVpkPaths(buf).length) throw new Error(t('Пустой VPK'));
   const lang = installer.langFolder();
   installer.ensureLangFolder();
@@ -272,8 +278,3 @@ function installVpkBuffer(installer, buf) {
   installer.writeInto(buf, path.join(lang, pakName));
   return [{ root: 'lang', relPath: pakName }];
 }
-
-module.exports = {
-  importVpks, importVpkFiles, importVpkBuffers, installVpkBuffer,
-  expandImportInputs, scanVpkTree, stageFolderAsVpk,
-};
