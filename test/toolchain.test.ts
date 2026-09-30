@@ -13,7 +13,7 @@ import type { AddressInfo } from 'node:net';
 import AdmZip from 'adm-zip';
 
 import * as net from '../src/net.ts';
-import { createToolchain, BUILT_IN_PINS, validPin, type ToolProgress } from '../src/toolchain.ts';
+import { createToolchain, BUILT_IN_PINS, validPin, runTool, type ToolProgress } from '../src/toolchain.ts';
 
 function userDir(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-tool-'));
@@ -193,4 +193,11 @@ test('a download tells the progress bar it is over, however it ends', async (t) 
   const last = failed.at(-1);
   assert.equal(last?.type, 'error');
   assert.match(last?.type === 'error' ? last.message : '', /checksum/);
+});
+
+test('a tool that exits 0 settles, one that fails or hangs is an error, not a wait', async () => {
+  await runTool(process.execPath, ['-e', 'process.exit(0)']);
+  await assert.rejects(() => runTool(process.execPath, ['-e', 'process.exit(3)']));
+  await assert.rejects(() => runTool(process.execPath, ['-e', 'setTimeout(() => {}, 10000)'], { timeoutMs: 300 }),
+    'a tool that never answers is given up on, so the picture it was asked for shows its placeholder');
 });

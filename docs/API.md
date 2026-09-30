@@ -31,6 +31,7 @@ the code, not in this page.
 | [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
 | [`src/file-tx.ts`](#srcfile-txts) | All of it, or none of it. |
 | [`src/fingerprints.ts`](#srcfingerprintsts) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
+| [`src/folder-size.ts`](#srcfolder-sizets) | Bytes under a folder: the number Settings shows beside each cache, and the one the removal |
 | [`src/game-icons.ts`](#srcgame-iconsts) | Item pictures taken from the installed game instead of scraped off a wiki. |
 | [`src/game-upkeep.ts`](#srcgame-upkeepts) | Keeping the game folder the way the user left it, while other programs change it underneath. |
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
@@ -999,6 +1000,23 @@ export class Fingerprints
 
 The fingerprint map, cached in userData: tells which catalog mod a VPK is from the hash of its
 content, and which font mod a set of font files is.
+
+## src/folder-size.ts
+
+Bytes under a folder: the number Settings shows beside each cache, and the one the removal
+window shows beside the app's data.
+
+Four modules walked a folder for this, each its own way, until 2026-10-01. One of them crashed on
+a file that disappeared between the listing and the stat, which a cache being cleared at the
+same moment makes likely. This one counts what it can read and skips what it cannot.
+
+### `folderSize`
+
+```ts
+export function folderSize(dir: string): number
+```
+
+Bytes under a folder, however deep. A folder that is not there holds nothing.
 
 ## src/game-icons.ts
 
@@ -5007,6 +5025,23 @@ export function validPin(pin: unknown, name: string | null | undefined): boolean
 ```
 
 Whether a pin names a version, an executable, a digest, and a release of an owner listed above.
+
+### `TOOL_TIMEOUT_MS`
+
+```ts
+export const TOOL_TIMEOUT_MS = 60000
+```
+
+A tool that has not answered by now is not going to. The user waits on this: the item picker
+and the library show placeholders until it returns.
+
+### `runTool`
+
+```ts
+export function runTool(exe: string, args: string[], { timeoutMs = TOOL_TIMEOUT_MS } = {}): Promise<void>
+```
+
+Run one of the tools, hidden, and settle when it exits: resolved on 0, rejected otherwise.
 
 ### `createToolchain`
 

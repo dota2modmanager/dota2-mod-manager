@@ -1,6 +1,7 @@
 // Writing a Source-engine VPK: one self-contained file from a list of entries or a folder of loose
 // files, a multi-part index over data volumes, and a merged pack split back by hero. Part of the
 // VPK code src/vpk.ts gathers; the format itself is read in src/vpk-read.ts.
+import { crc32 as zlibCrc32 } from 'node:zlib';
 import fs from 'node:fs';
 import path from 'node:path';
 import { t } from './i18n.ts';
@@ -10,23 +11,12 @@ import {
 } from './vpk-read.ts';
 import { analyzeVpkPaths, subjectHeroes } from './vpk-analyze.ts';
 
-// The VPK index carries a CRC32 per entry. Hand-rolled because Node's own zlib.crc32 is
-// newer than the Node inside our Electron; src/schema.ts re-exports this one.
-const CRC_TABLE = (() => {
-  const table = new Uint32Array(256);
-  for (let n = 0; n < 256; n++) {
-    let c = n;
-    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-    table[n] = c >>> 0;
-  }
-  return table;
-})();
-
+/* The VPK index carries a CRC32 per entry. It was a table written out by hand while the Node
+   inside Electron had no zlib.crc32; Electron 44 has Node 24, which does, and computes it natively.
+   src/schema.ts re-exports this one. */
 /** CRC-32 as the VPK index records it for each entry. */
 export function crc32(buf: Buffer): number {
-  let c = 0xffffffff;
-  for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
-  return (c ^ 0xffffffff) >>> 0;
+  return zlibCrc32(buf);
 }
 
 /**

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { RAW_BASE } from './catalog.ts';
 import { downloadFile } from './net.ts';
 import { t } from './i18n.ts';
+import { folderSize } from './folder-size.ts';
 import type { Installer } from './installer.ts';
 
 /** What a downloaded archive was when it arrived: its size and hash, and when. */
@@ -119,18 +120,7 @@ export function cachedArchive(inst: Installer, categoryId: string | null, fileRe
 
 /** Bytes the download cache holds. */
 export function downloadCacheSize(inst: Installer): number {
-  let total = 0;
-  const walk = (dir: string): void => {
-    if (!fs.existsSync(dir)) return;
-    for (const f of fs.readdirSync(dir)) {
-      const full = path.join(dir, f);
-      const st = fs.statSync(full);
-      if (st.isDirectory()) walk(full);
-      else total += st.size;
-    }
-  };
-  walk(inst.downloadsDir);
-  return total;
+  return folderSize(inst.downloadsDir);
 }
 
 /** Empty the download cache, keeping the folder. */

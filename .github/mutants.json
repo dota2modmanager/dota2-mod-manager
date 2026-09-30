@@ -851,14 +851,6 @@
       "test": "test/ipc-contract.test.js"
     },
     {
-      "name": "the crc32 table is walked one bit off",
-      "file": "src/vpk-write.ts",
-      "anchor": "export function crc32(buf: Buffer): number {",
-      "from": "c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);",
-      "to": "c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 7);",
-      "test": "test/properties.test.js"
-    },
-    {
       "name": "a preset link comes back with a name nobody chose",
       "file": "src/preset-link.ts",
       "anchor": "export function encodePresetLink({ name, author, mods }: { name: string; author?: string; mods: ModIn[] }): { code: string; web: string; direct: string } {",

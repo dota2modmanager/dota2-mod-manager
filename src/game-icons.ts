@@ -24,16 +24,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
-import { execFile } from 'node:child_process';
 import * as schema from './schema.ts';
 import { openVpkIndex, type VpkIndex } from './vpk.ts';
 import { pngFromVtex } from './vtex.ts';
+import { runTool } from './toolchain.ts';
+import { folderSize } from './folder-size.ts';
 
 // Enough to fill a screen of tiles in one go; the renderer asks in batches of 24.
 const MAX_PER_CALL = 60;
-// A tool that has not answered by now is not going to. The user waits on this: the picker
-// shows placeholders until it returns.
-const CALL_TIMEOUT_MS = 60000;
 
 const safeName = (imagePath: string) => `${crypto.createHash('sha1').update(imagePath).digest('hex').slice(0, 16)}.png`;
 
@@ -114,13 +112,6 @@ export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () 
     return !!(file && fs.existsSync(file));
   }
 
-  function runCli(exe: string, args: string[]): Promise<void> {
-    return new Promise((resolve, reject) => {
-      execFile(exe, args, { timeout: CALL_TIMEOUT_MS, windowsHide: true, maxBuffer: 8 * 1024 * 1024 },
-        (err) => (err ? reject(err) : resolve()));
-    });
-  }
-
   /**
    * Pull these pictures out of the game and into the cache.
    * @param imagePaths values of image_inventory, e.g. "econ/items/abaddon/..."
@@ -136,7 +127,7 @@ export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () 
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-icons-'));
     try {
       const filter = imagePathsLeft.map(texturePath).join(',');
-      await runCli(exe, ['-i', pakFile, '-o', tmp, '-d', '-f', filter]);
+      await runTool(exe, ['-i', pakFile, '-o', tmp, '-d', '-f', filter]);
       fs.mkdirSync(root, { recursive: true });
       for (const imagePath of imagePathsLeft) {
         // the tool keeps the archive's own layout, with the compiled extension resolved
@@ -214,11 +205,7 @@ export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () 
     return out;
   }
 
-  function size(): number {
-    let bytes = 0;
-    try { for (const f of fs.readdirSync(root)) bytes += fs.statSync(path.join(root, f)).size; } catch { /* nothing cached */ }
-    return bytes;
-  }
+  const size = (): number => folderSize(root);
 
   function clear(): void {
     fs.rmSync(root, { recursive: true, force: true });

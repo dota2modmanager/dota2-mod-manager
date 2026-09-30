@@ -25,6 +25,7 @@ import path from 'node:path';
 
 import { removeNotice } from './notice-text.ts';
 import { electron } from './electron.ts';
+import { folderSize } from './folder-size.ts';
 import type { Settings } from './settings.ts';
 import type { Library } from './library.ts';
 import type { LibFile, LibRecord } from './types.ts';
@@ -42,22 +43,6 @@ export interface UninstallInstaller {
 export const UNINSTALL_CANCELLED = 3;
 /** The exit code that tells it to take the app's own folder too. */
 export const UNINSTALL_WIPE_DATA = 4;
-
-/** Bytes under a folder, however deep. */
-export function folderSize(dir: string): number {
-  let bytes = 0;
-  const walk = (at: string) => {
-    let names: fs.Dirent[] = [];
-    try { names = fs.readdirSync(at, { withFileTypes: true }); } catch { return; }
-    for (const e of names) {
-      const full = path.join(at, e.name);
-      if (e.isDirectory()) walk(full);
-      else { try { bytes += fs.statSync(full).size; } catch { /* vanished mid-walk */ } }
-    }
-  };
-  walk(dir);
-  return bytes;
-}
 
 /**
  * The uninstall flow, given the app's own services.

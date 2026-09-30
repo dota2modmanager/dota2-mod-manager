@@ -69,7 +69,6 @@ const ITEM_EFFECTS: ItemEffect[] = [
     type: 'particle_create',
     modifier: 'particles/econ/seasonal/seasonal_ambient_snow.vpcf',
   },
-  
   {
     id: 'bubbles',
     name: 'Пузыри',
@@ -88,18 +87,6 @@ const ITEM_EFFECTS: ItemEffect[] = [
     type: 'particle_create',
     modifier: 'particles/econ/courier/courier_f2p/courier_f2p_10th_anniversary_ambient.vpcf',
   },
-  // {
-  //   id: 'candy_caster',
-  //   name: '_Candy Caster',
-  //   type: 'particle_create',
-  //   modifier: 'particles/econ/seasonal/seasonal_ambient_candy_mint.vpcf',
-  // },
-  // {
-  //   id: 'coins',
-  //   name: '_Coins',
-  //   type: 'particle_create',
-  //   modifier: 'pparticles/econ/seasonal/seasonal_ambient_fortune_coin.vpcf',
-  // }
 ];
 
 const ITEM_HIDDEN_HEROES = new Set(['wisp', 'io']);

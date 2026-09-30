@@ -25,9 +25,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
-import { execFile } from 'node:child_process';
 import type { NativeImage } from 'electron';
 import { electron } from './electron.ts';
+import { runTool } from './toolchain.ts';
+import { folderSize } from './folder-size.ts';
 import { readVpkIndexFile, listVpkPathCrcs, readVpkEntryFile } from './vpk.ts';
 
 
@@ -46,7 +47,6 @@ type Job = { file: string; inner: string; cache: string; miss: string };
 // One call decodes a whole folder, so a batch costs what a single file costs (258 ms for
 // five, measured). This caps how much work one screenful can ask for.
 const MAX_PER_CALL = 40;
-const CALL_TIMEOUT_MS = 60000;
 // Rows are 76x47 CSS pixels; 320 leaves room for a denser screen without caching megabytes.
 const MAX_SIDE = 320;
 
@@ -232,13 +232,6 @@ export function createModPreviews({ userDataDir, toolchain, langFileOf, images =
     return { file, inner, cache: path.join(root, `${stamp}.png`), miss: path.join(root, `${stamp}.none`) };
   }
 
-  function runCli(exe: string, args: string[]): Promise<void> {
-    return new Promise((resolve, reject) => {
-      execFile(exe, args, { timeout: CALL_TIMEOUT_MS, windowsHide: true, maxBuffer: 8 * 1024 * 1024 },
-        (err) => (err ? reject(err) : resolve()));
-    });
-  }
-
   /**
    * Decode these candidates into the cache. One temp folder, one call: the tool takes a
    * folder with --recursive, so a batch costs what one file costs.
@@ -261,7 +254,7 @@ export function createModPreviews({ userDataDir, toolchain, langFileOf, images =
         staged.push({ ...job, stem });
       }
       if (!staged.length) return;
-      await runCli(exe, ['-i', tmp, '-o', tmp, '-d', '--recursive']);
+      await runTool(exe, ['-i', tmp, '-o', tmp, '-d', '--recursive']);
 
       fs.mkdirSync(root, { recursive: true });
       for (const job of staged) {
@@ -387,11 +380,7 @@ export function createModPreviews({ userDataDir, toolchain, langFileOf, images =
     }
   }
 
-  function size(): number {
-    let bytes = 0;
-    try { for (const f of fs.readdirSync(root)) bytes += fs.statSync(path.join(root, f)).size; } catch { /* nothing cached */ }
-    return bytes;
-  }
+  const size = (): number => folderSize(root);
 
   function clear(): void {
     fs.rmSync(root, { recursive: true, force: true });

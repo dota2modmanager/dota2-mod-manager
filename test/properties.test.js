@@ -12,11 +12,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
-const zlib = require('zlib');
 const fc = require('fast-check');
 
 const { safeJoin } = require('../src/safe-zip.ts');
-const { crc32 } = require('../src/vpk.ts');
 const { encodePresetLink, decodePresetLink } = require('../src/preset-link.ts');
 
 const RUNS = { numRuns: 500 };
@@ -50,15 +48,6 @@ test('a path built out of several pieces cannot climb out either', () => {
     } catch {
       return true;
     }
-  }), RUNS);
-});
-
-test('our crc32 is the one everybody else means by crc32', () => {
-  /* The VPK index is checked against these. A table written out by hand agreeing with zlib on the
-     cases somebody picked is not the same as agreeing with it. */
-  fc.assert(fc.property(fc.uint8Array({ maxLength: 2048 }), (bytes) => {
-    const buf = Buffer.from(bytes);
-    return crc32(buf) === zlib.crc32(buf);
   }), RUNS);
 });
 

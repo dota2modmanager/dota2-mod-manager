@@ -21,6 +21,7 @@
 //     not one worth building. Removed 2026-09-16; a new tool version travels with a release.
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
 import { downloadFile } from './net.ts';
 import { openZip } from './safe-zip.ts';
 import { FileTx } from './file-tx.ts';
@@ -102,6 +103,18 @@ export function validPin(pin: unknown, name: string | null | undefined): boolean
     && typeof p.exe === 'string' && p.exe && !p.exe.includes('/') && !p.exe.includes('\\')
     && typeof p.sha256 === 'string' && /^[a-f0-9]{64}$/i.test(p.sha256)
     && typeof p.url === 'string' && from.test(p.url));
+}
+
+/* A tool that has not answered by now is not going to. The user waits on this: the item picker
+ * and the library show placeholders until it returns. */
+export const TOOL_TIMEOUT_MS = 60000;
+
+/** Run one of the tools, hidden, and settle when it exits: resolved on 0, rejected otherwise. */
+export function runTool(exe: string, args: string[], { timeoutMs = TOOL_TIMEOUT_MS } = {}): Promise<void> {
+  return new Promise((resolve, reject) => {
+    execFile(exe, args, { timeout: timeoutMs, windowsHide: true, maxBuffer: 8 * 1024 * 1024 },
+      (err) => (err ? reject(err) : resolve()));
+  });
 }
 
 /** The tools in userData: what is there, fetching one at its pin, and deleting it again. */
