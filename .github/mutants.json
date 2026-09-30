@@ -891,6 +891,22 @@
       "test": "test/release-state.test.js"
     },
     {
+      "name": "a rename the game refuses leaves a mod split across two slots",
+      "file": "src/installer-slots.ts",
+      "anchor": "export function moveToSlot(",
+      "from": "      try { fs.renameSync(to, from); } catch { /* nothing else to try */ }\n",
+      "to": "",
+      "test": "test/installer.test.ts"
+    },
+    {
+      "name": "a refused swap puts the first mod back over the second",
+      "file": "src/installer-slots.ts",
+      "anchor": "export function swapSlots(",
+      "from": "    if (movedB) { try { inst.moveToSlot({ ...b, files: movedB }, bBase, aBase); } catch { /* nothing else to try */ } }\n",
+      "to": "",
+      "test": "test/installer.test.ts"
+    },
+    {
       "name": "a line falls out of a run block and breaks the workflow file",
       "file": ".github/workflows/release.yml",
       "anchor": "- name: Note in the release that it was announced",

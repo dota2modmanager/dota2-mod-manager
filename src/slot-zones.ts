@@ -168,14 +168,8 @@ export function vacateAppPak(installer: SlotInstaller, library: Pick<Library, 'l
   if (!to) return false;
   const from = `pak${APP_PAK}`;
   const base = to.replace(/_dir\.vpk$/i, '');
-  try {
-    library.update(rec.id, { files: installer.moveToSlot(rec, base, from) });
-  } catch (err) {
-    // the files that did move carry the new name; moving the record from there takes them back
-    const moved = (rec.files || []).map((f) => (f.root === 'lang' && f.relPath.toLowerCase().startsWith(`${from}_`) ? { ...f, relPath: base + f.relPath.slice(from.length) } : f));
-    try { installer.moveToSlot({ ...rec, files: moved }, from, base); } catch { /* nothing else to try */ }
-    throw err;
-  }
+  // a refused rename puts back what already moved inside moveToSlot, so a throw here is clean
+  library.update(rec.id, { files: installer.moveToSlot(rec, base, from) });
   return true;
 }
 

@@ -176,15 +176,28 @@ export function moveToSlot(inst: Installer, rec: HasFiles, newBase: string, oldB
   const lang = inst.langFolder();
   if (!oldBase) throw new Error(t('У мода нет слота pakNN'));
   const mine = new RegExp(`^${oldBase}(_dir|_\\d{3})\\.vpk$`, 'i');
-  return (rec.files || []).map((f) => {
-    if (f.root !== 'lang' || !mine.test(f.relPath)) return f;
-    const next = newBase + f.relPath.slice(oldBase.length);
-    for (const suf of ['', '.off', MASTER_OFF]) {
-      const from = path.join(lang, f.relPath + suf);
-      if (fs.existsSync(from)) fs.renameSync(from, path.join(lang, next + suf));
+  /* All of a mod's files move, or none do. A pak and its volumes only load under one name, and a
+     running game can refuse the rename of any one of them: until 2026-10-01 a refusal on the second
+     file left the first under the new name and the rest under the old, a mod the game could not
+     load and the library could not find. Whatever this call already renamed goes back first. */
+  const renamed: [string, string][] = [];
+  try {
+    return (rec.files || []).map((f) => {
+      if (f.root !== 'lang' || !mine.test(f.relPath)) return f;
+      const next = newBase + f.relPath.slice(oldBase.length);
+      for (const suf of ['', '.off', MASTER_OFF]) {
+        const from = path.join(lang, f.relPath + suf);
+        const to = path.join(lang, next + suf);
+        if (fs.existsSync(from)) { fs.renameSync(from, to); renamed.push([from, to]); }
+      }
+      return { ...f, relPath: next };
+    });
+  } catch (err) {
+    for (const [from, to] of renamed.reverse()) {
+      try { fs.renameSync(to, from); } catch { /* nothing else to try */ }
     }
-    return { ...f, relPath: next };
-  });
+    throw err;
+  }
 }
 
 /**
@@ -198,13 +211,18 @@ export function swapSlots(inst: Installer, a: LibRecord, b: LibRecord): { id: st
   const bBase = inst.slotBase(b);
   if (!aBase || !bBase) throw new Error(t('У мода нет слота pakNN'));
   const parked = inst.moveToSlot(a, 'pak00');
+  let movedB: LibFile[] | null = null;
   try {
-    const movedB = inst.moveToSlot(b, aBase);
+    movedB = inst.moveToSlot(b, aBase);
     const movedA = inst.moveToSlot({ ...a, files: parked }, bBase);
     return [{ id: a.id, files: movedA }, { id: b.id, files: movedB }];
   } catch (err) {
-    // put ours back where it was rather than leave it parked in a slot nothing mounts
-    try { inst.moveToSlot({ ...a, files: parked }, aBase); } catch { /* nothing else to try */ }
+    /* Back the way it came, in order. If b already moved into a's slot, it goes home first: putting
+       a back before that renamed a over b, and on Windows a rename replaces the file it lands on.
+       Until 2026-10-01 a refusal on the last step lost b that way. Then a leaves pak00, where
+       nothing mounts it. */
+    if (movedB) { try { inst.moveToSlot({ ...b, files: movedB }, bBase, aBase); } catch { /* nothing else to try */ } }
+    try { inst.moveToSlot({ ...a, files: parked }, aBase, 'pak00'); } catch { /* nothing else to try */ }
     throw err;
   }
 }
