@@ -6,9 +6,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   listVpkPaths, listVpkPathsFile, readVpkIndexFile, readVpkEntries, entryPath, buildVpk, mergeVpkToSingle,
-  splitVpkByHero, analyzeVpkPaths, describeAnalysis, nameFromAnalysis, subjectHeroes, fingerprintVpk,
+  splitVpkByHero, analyzeVpkPaths, describeAnalysis, nameFromAnalysis, subjectHeroes, fingerprintVpk, entryAt,
 } from './vpk.ts';
-import { extractDeltas, deltaTable, crc32 } from './schema.ts';
+import { extractDeltas, deltaTable } from './schema.ts';
 import { safeJoin } from './safe-zip.ts';
 import { t } from './i18n.ts';
 import { MASTER_OFF, MERGE_SIZE_CAP } from './installer-files.ts';
@@ -93,7 +93,7 @@ export function mergeToSingleVpk(inst: Installer, rec: HasFiles, deltas?: { bloc
     .filter((e) => !/(^|\/)items_game\.txt"?$/.test(entryPath(e)));
   // latin1 keeps the blocks byte-exact, the way the whole schema path reads and writes them
   const data = Buffer.from(deltaTable(deltas), 'latin1');
-  entries.push({ ext: 'txt', folder: 'scripts/items', name: 'items_game', crc: crc32(data), preload: Buffer.alloc(0), data });
+  entries.push(entryAt('scripts/items/items_game.txt', data));
   return buildVpk(entries);
 }
 

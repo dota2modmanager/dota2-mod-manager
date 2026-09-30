@@ -907,6 +907,14 @@
       "test": "test/installer.test.ts"
     },
     {
+      "name": "a Discord answer to somebody else's request is taken as ours",
+      "file": "src/discord-auth.ts",
+      "anchor": "function awaitToken(state: string): Promise<string> {",
+      "from": "if (q.get('state') !== state) return finish(",
+      "to": "if (false) return finish(",
+      "test": "test/discord-auth.test.ts"
+    },
+    {
       "name": "a line falls out of a run block and breaks the workflow file",
       "file": ".github/workflows/release.yml",
       "anchor": "- name: Note in the release that it was announced",

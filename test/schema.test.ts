@@ -446,7 +446,7 @@ test("the game's own table must be where the game keeps it", (t) => {
   fs.mkdirSync(path.join(empty, 'dota'));
   const other = Buffer.from('not the item table');
   fs.writeFileSync(path.join(empty, 'dota', 'pak01_dir.vpk'), vpk.buildVpk([
-    { ext: 'txt', folder: 'scripts', name: 'other', crc: schema.crc32(other), preload: Buffer.alloc(0), data: other },
+    vpk.entryAt('scripts/other.txt', other),
   ]));
   assert.throws(() => schema.readGameSchema(empty), /items_game/);
 });

@@ -15,11 +15,17 @@
  * size. Each writes e2e-output/sim/<screen>--<renderer>/results.json, and this gathers them into
  * summary.json and index.html, the page to open when something went red.
  *
+ * Every launch starts from a reset sandbox (node tools/sandbox.js reset: the game tree back to
+ * pristine, the user data re-seeded, downloaded mods kept). A scenario installs and switches mods,
+ * and until 2026-10-01 the next launch started among whatever the last one left: a second screen
+ * in the same run, or the next run on the same machine, failed on a library it never made.
+ * The state after the last launch is left as it is, to look at.
+ *
  * Exit code 1 when any check failed, 2 when a launch produced no results at all.
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
@@ -135,6 +141,7 @@ async function main() {
   const electron = require('electron');
   const runs = [];
   for (const [i, [screen, renderer]] of pairs.entries()) {
+    execFileSync(process.execPath, [path.join(root, 'tools', 'sandbox.js'), 'reset'], { cwd: root, stdio: 'ignore' });
     const scenarios = scenariosFor(i, all, { explicit });
     const spec = launch(screen, renderer, { scenarios, app: arg('app'), electron });
     console.log(`\n=== ${screen} / ${renderer}: ${scenarios}`);

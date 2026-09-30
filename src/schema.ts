@@ -12,7 +12,7 @@
 // works on latin1 strings: byte-exact in and out, no re-encoding surprises.
 import fs from 'node:fs';
 import path from 'node:path';
-import { readVpkEntryFile, buildVpk, crc32, type VpkEntry } from './vpk.ts';
+import { readVpkEntryFile, buildVpk, entryAt, type VpkEntry } from './vpk.ts';
 import { t } from './i18n.ts';
 
 /** A block's braces in the text: [open, close + 1]. */
@@ -539,12 +539,11 @@ export function validateSchema(text: string, baseText?: string | null): { items:
 
 // crc32 comes from src/vpk.ts, where the VPK writer needs it too, and is re-exported here
 // for everything that was already taking it from here.
-export { crc32 };
 
 /** Pack the merged schema as a one-file VPK holding items_game.txt and the files its patches bring. */
 export function buildSchemaVpk(text: string, extraEntries: VpkEntry[] = []): Buffer {
   const data = Buffer.from(text, 'latin1');
-  return buildVpk([{ ext: 'txt', folder: 'scripts/items', name: 'items_game', crc: crc32(data), preload: Buffer.alloc(0), data }, ...extraEntries]);
+  return buildVpk([entryAt('scripts/items/items_game.txt', data), ...extraEntries]);
 }
 
 /**

@@ -248,6 +248,9 @@
         "src/diagnostics.ts": {
           "lines": 94.6
         },
+        "src/discord-auth.ts": {
+          "lines": 97.3
+        },
         "src/electron.ts": {
           "lines": 100
         },
@@ -263,8 +266,11 @@
         "src/fingerprints.ts": {
           "lines": 100
         },
+        "src/folder-size.ts": {
+          "lines": 100
+        },
         "src/game-icons.ts": {
-          "lines": 64.9
+          "lines": 65
         },
         "src/game-upkeep.ts": {
           "lines": 98
@@ -282,7 +288,7 @@
           "lines": 93.9
         },
         "src/installer-downloads.ts": {
-          "lines": 98.6
+          "lines": 98.5
         },
         "src/installer-files.ts": {
           "lines": 100
@@ -297,7 +303,7 @@
           "lines": 77.4
         },
         "src/installer-slots.ts": {
-          "lines": 89.6
+          "lines": 91.8
         },
         "src/installer.ts": {
           "lines": 98.5
@@ -330,7 +336,7 @@
           "lines": 94.4
         },
         "src/item-builder.ts": {
-          "lines": 98.9
+          "lines": 98.8
         },
         "src/library.ts": {
           "lines": 100
@@ -345,7 +351,7 @@
           "lines": 100
         },
         "src/mod-preview.ts": {
-          "lines": 75.9
+          "lines": 76.2
         },
         "src/net.ts": {
           "lines": 100
@@ -378,7 +384,7 @@
           "lines": 94.1
         },
         "src/presets-service.ts": {
-          "lines": 71.2
+          "lines": 71.1
         },
         "src/release-notes.ts": {
           "lines": 100
@@ -411,7 +417,7 @@
           "lines": 100
         },
         "src/toolchain.ts": {
-          "lines": 98.3
+          "lines": 98.4
         },
         "src/uninstall-args.ts": {
           "lines": 100
@@ -507,7 +513,7 @@
           "lines": 100
         },
         "tools/sim/run.mjs": {
-          "lines": 66.2
+          "lines": 67.1
         },
         "tools/size-budget.mjs": {
           "lines": 72.9
@@ -516,7 +522,7 @@
           "lines": 55.1
         },
         "tools/typecheck.mjs": {
-          "lines": 64.1
+          "lines": 65.4
         },
         "tools/virustotal.mjs": {
           "lines": 61.3

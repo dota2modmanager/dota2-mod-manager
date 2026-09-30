@@ -4599,10 +4599,6 @@ export function isDeployed(gamePath: string, folder: string): boolean
 
 Whether a built schema is in the mod folder.
 
-### `crc32`
-
-_No description in the source._
-
 ## src/settings.ts
 
 Simple JSON settings store in userData
