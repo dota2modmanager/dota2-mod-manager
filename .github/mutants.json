@@ -735,7 +735,7 @@
       "file": "src/uninstall-args.ts",
       "anchor": "/** A person removing the program, which is the only case the window may open in. */",
       "lineStartsWith": "const isUninstallRun = ",
-      "to": "const isUninstallRun = (argv = []) => argv.includes('--uninstall');",
+      "to": "export const isUninstallRun = (argv: readonly unknown[] = []): boolean => argv.includes('--uninstall');",
       "test": "test/uninstall-args.test.ts"
     },
     {
