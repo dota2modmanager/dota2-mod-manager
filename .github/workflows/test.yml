@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # Node 24 for the test runner, not the 20 Electron bundles: the tests use zlib.crc32
       # (Node 22+). Nothing under test/ or tools/ is packaged into the app - the build's file
-      # list is main.js, preload.js, src/, renderer/ - so this cannot drift into runtime code.
+      # list is preload.js, src/, renderer/ - so this cannot drift into runtime code.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24

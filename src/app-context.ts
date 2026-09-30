@@ -1,8 +1,8 @@
-/* Everything the running app hands its IPC modules: the services main.js builds at start, and the
+/* Everything the running app hands its IPC modules: the services src/main.ts builds at start, and the
  * callbacks over its own state.
  *
  * Each src/ipc-*.ts takes a Pick of this, so what a module can reach is written at the top of it.
- * Anything main.js keeps changing while the app runs (the window, the patch watcher, the updater,
+ * Anything src/main.ts keeps changing while the app runs (the window, the patch watcher, the updater,
  * the folder mods go into) is handed over as a function and read when it is needed: a value would
  * be the one the app had at registration, and answer for the wrong moment from then on.
  */
@@ -68,7 +68,7 @@ export interface AppContext {
   blocked: ReturnType<typeof createGate>;
   settingsView: ReturnType<typeof settingsViewFor>;
 
-  // ---- what the app does, as main.js does it ----
+  // ---- what the app does, as src/main.ts wires it ----
   diag: (msg: string) => void;
   sendProgress: (evt: AppProgress) => void;
   dotaIsRunning: () => Promise<boolean>;
@@ -92,7 +92,7 @@ export interface AppContext {
   validateGamePath: typeof validateGamePath;
   moveLangFolder: typeof moveLangFolder;
 
-  // ---- main.js's own state, read when it is needed ----
+  // ---- state that changes while the app runs, read when it is needed ----
   IS_PORTABLE: boolean;
   /** the main window; every channel is called from it, so it is open whenever a handler runs */
   win: () => BrowserWindow;

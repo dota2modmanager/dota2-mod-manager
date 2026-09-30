@@ -3,7 +3,7 @@
   "productName": "Dota 2 Mod Manager",
   "version": "2.8.0-beta.3",
   "description": "Desktop mod manager for Dota 2 — browse, install, toggle and preset 1100+ cosmetic mods from the D2PFX catalog",
-  "main": "main.js",
+  "main": "src/main.ts",
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --win",
@@ -50,7 +50,6 @@
     "productName": "Dota 2 Mod Manager",
     "icon": "build/icon.ico",
     "files": [
-      "main.js",
       "preload.js",
       "preload-uninstall.js",
       "src/**/*",

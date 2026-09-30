@@ -92,7 +92,7 @@ export function createGameUpkeep({
   /** looks for a Dota install on this machine (src/steam.ts) */
   findGame: () => Promise<string | null>;
   /** whether a folder really is one */
-  validGame: (p: unknown) => boolean;
+  validGame: (p: string | null | undefined) => boolean;
   retryMs?: number;
   now?: () => number;
 }) {

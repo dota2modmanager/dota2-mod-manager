@@ -14,7 +14,7 @@
 // The signature digest is taken with our own appended line stripped, so applying our patch
 // never looks like a game update - otherwise the app would keep waking itself up.
 //
-// This module only decides "the game changed"; what to do about it lives in main.js.
+// This module only decides "the game changed"; what to do about it lives in src/game-upkeep.ts.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';

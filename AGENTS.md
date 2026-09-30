@@ -14,7 +14,7 @@ renderer — **no bundler, no framework, no build step for the UI**. If a change
 webpack, TypeScript compilation or a component library, it is the wrong change.
 
 ```
-main.js            app lifecycle, window, auto-update. Nothing else belongs here
+src/main.ts        the order the app starts in, and auto-update. Nothing else belongs here
 preload.js         the only bridge the renderer gets. Every channel is listed once
 src/               everything that thinks: installer, vpk, schema, gamelang, catalog…
 src/ipc-*.ts       one file per group of channels, each naming what it needs
@@ -35,8 +35,8 @@ back after they stopped being true. Every entry carries a command that settles i
 here to review rather than to change something, that file is the whole brief.
 
 **Do not read whole source files to orient yourself.** Find the symbol, then read its slice.
-`main.js` and `src/installer.ts` are large and reading them end to end wastes more than it
-tells you.
+The two biggest screens, `renderer/views/catalog.js` and `renderer/views/library.js`, are large
+and reading them end to end wastes more than it tells you.
 
 **The domain is unusual and the obvious assumption is usually wrong.** Three examples that have
 each cost real time:

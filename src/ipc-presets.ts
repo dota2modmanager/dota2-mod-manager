@@ -1,7 +1,7 @@
 /* The preset channels: everything the Presets screen can ask for.
  *
  * Twelve handlers, and almost all of them are one line of validation over src/presets-service,
- * which is where the thinking lives. Keeping them here rather than in main.js means the whole
+ * which is where the thinking lives. Keeping them here rather than in src/main.ts means the whole
  * preset domain - what a preset is, how it travels, and how the screen reaches it - is three
  * files that name each other, instead of two of them being buried a thousand lines apart in
  * the file that starts the window.
@@ -20,7 +20,7 @@ import type { CatalogIndex, ShareEntry } from './presets-service.ts';
 import type { EntryToWrite } from './preset-share.ts';
 import type { LibRecord, ModIdentity, PresetEntry } from './types.ts';
 
-/** Register this module's channels, over the services and callbacks main.js hands it. */
+/** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerPresetsIpc({
   win, settings, catalog, installer, library, schemaService, presets,
   adoptImportedFiles, afterDeployMaster, disableOtherCursors, sendProgress,

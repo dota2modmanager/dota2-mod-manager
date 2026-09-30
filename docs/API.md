@@ -14,7 +14,7 @@ the code, not in this page.
 | Module | What it owns |
 |---|---|
 | [`src/adopt.ts`](#srcadoptts) | What a VPK has to go through before it counts as a mod. |
-| [`src/app-context.ts`](#srcapp-contextts) | Everything the running app hands its IPC modules: the services main.js builds at start, and the |
+| [`src/app-context.ts`](#srcapp-contextts) | Everything the running app hands its IPC modules: the services src/main.ts builds at start, and the |
 | [`src/app-log.ts`](#srcapp-logts) | The app's own log: a small file every install keeps, so a support report (src/diagnostics.ts) |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
@@ -35,7 +35,7 @@ the code, not in this page.
 | [`src/game-upkeep.ts`](#srcgame-upkeepts) | Keeping the game folder the way the user left it, while other programs change it underneath. |
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
-| [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (main.js, installer.js, vpk.js). |
+| [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (src/). |
 | [`src/icons.ts`](#srciconsts) | Pictures for the cosmetics picker, and for the Library where a picture can be found for |
 | [`src/import.ts`](#srcimportts) | Taking in a mod the user already has: a .vpk, a .zip, a folder, or bytes off a drop. |
 | [`src/installer-downloads.ts`](#srcinstaller-downloadsts) | Getting a catalog mod onto this machine: where its archive lives, what it is called on disk, |
@@ -139,11 +139,11 @@ export function createAdopt({ installer, library, schemaService }: { installer: 
 
 ## src/app-context.ts
 
-Everything the running app hands its IPC modules: the services main.js builds at start, and the
+Everything the running app hands its IPC modules: the services src/main.ts builds at start, and the
 callbacks over its own state.
 
 Each src/ipc-*.ts takes a Pick of this, so what a module can reach is written at the top of it.
-Anything main.js keeps changing while the app runs (the window, the patch watcher, the updater,
+Anything src/main.ts keeps changing while the app runs (the window, the patch watcher, the updater,
 the folder mods go into) is handed over as a function and read when it is needed: a value would
 be the one the app had at registration, and answer for the wrong moment from then on.
 
@@ -638,8 +638,8 @@ A support report a user can send instead of a round of screenshots: Dota's own p
 language settings, the app's settings and installed mods, the patch/schema state, a
 listing of the mod folder's pak files, and the app's own recent log.
 
-Pure data in, pure data out - no Electron here, no zip - so main.js decides how it is
-packaged (see the diag:export handler) and this stays exercisable on its own.
+Pure data in, pure data out - no Electron here, no zip - so src/ipc-diagnostics.ts decides how
+it is packaged (the diag:export handler) and this stays exercisable on its own.
 
 ### `Problem`
 
@@ -1413,7 +1413,7 @@ and offered to split it into parts that make no sense.
 
 ## src/i18n.ts
 
-Minimal i18n for the main process (main.js, installer.js, vpk.js).
+Minimal i18n for the main process (src/).
 Russian is the source language; English strings are keyed by the exact Russian text
 (with {0},{1}... placeholders for interpolated values). A missing key falls back to
 the Russian source, so the app never shows an empty/undefined string.
@@ -1424,7 +1424,7 @@ the Russian source, so the app never shows an empty/undefined string.
 export type Lang = 'en' | 'ru'
 ```
 
-Minimal i18n for the main process (main.js, installer.js, vpk.js).
+Minimal i18n for the main process (src/).
 Russian is the source language; English strings are keyed by the exact Russian text
 (with {0},{1}... placeholders for interpolated values). A missing key falls back to
 the Russian source, so the app never shows an empty/undefined string.
@@ -3253,7 +3253,7 @@ Two files tell the whole story and both are Valve's:
 The signature digest is taken with our own appended line stripped, so applying our patch
 never looks like a game update - otherwise the app would keep waking itself up.
 
-This module only decides "the game changed"; what to do about it lives in main.js.
+This module only decides "the game changed"; what to do about it lives in src/game-upkeep.ts.
 
 ### `DEBOUNCE_MS`
 
@@ -3582,7 +3582,7 @@ day and for everybody was three hours on 2026-08-17.
 
 The second entry is not a proxy. It is this project's own bucket, reached with credentials
 only this project holds, which is the same trust as the release page itself - and the same
-reasoning as the update feed fallback in main.js. Manifest and binary both come from
+reasoning as the update feed fallback in src/updater.ts. Manifest and binary both come from
 whichever source answered, so the hash and the file it describes are always from one place.
 
 ### `parseManifest`
@@ -4188,7 +4188,7 @@ Open a foreign archive with every claim in it checked first.
 ## src/schema-service.ts
 
 Orchestration around the item schema: what goes into it, when it is rebuilt, and how a
-game update is repaired. Kept out of main.js so the whole flow can be exercised without
+game update is repaired. Kept out of src/main.ts so the whole flow can be exercised without
 starting Electron.
 
 The rules it enforces:
@@ -5092,7 +5092,7 @@ coming back; the other half is in build/installer.nsh, which never starts the ap
 those command lines. Two cheap checks beat one clever one, and they are cheap only while they
 agree, so a test holds this list to the flags that script tests for.
 
-It lives in its own file rather than inline in main.js so it can be called with a command line
+It lives in its own file rather than inline in src/main.ts so it can be called with a command line
 instead of the one this process happens to have been given.
 
 ### `UPDATE_FLAGS`

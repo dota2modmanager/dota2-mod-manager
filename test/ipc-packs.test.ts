@@ -7,7 +7,7 @@
  * bytes sit in the store, or leaves two records claiming one file.
  *
  * The installer and the library are the real ones over a temporary game folder, and the pack is
- * deployed the way main.js deploys it.
+ * deployed the way src/main.ts deploys it.
  */
 import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
@@ -40,7 +40,7 @@ function stand(t: TestContext) {
   const library = new Library(userData);
   let masterSweeps = 0;
 
-  // as main.js does it: build the archive, keep what it wrote on the record
+  // as src/main.ts does it: build the archive, keep what it wrote on the record
   const deployAndApply = (pack: LibRecord) => {
     const { files, conflicts } = installer.deployPack(pack);
     library.update(pack.id, { files, members: pack.members });

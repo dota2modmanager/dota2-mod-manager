@@ -19,6 +19,9 @@ import crypto from 'node:crypto';
 // through require: package.json is read the same way inside the asar as outside it
 const pkg = createRequire(import.meta.url)('../package.json') as { version: string; homepage: string };
 
+/** What the pictures are fetched with: always a URL written out as text, which Electron's net.fetch takes too. */
+type IconFetch = (url: string, init?: RequestInit) => Promise<Response>;
+
 /** A picture fetched and checked: the bytes, and what kind of image they are. */
 type Picture = { buf: Buffer; mime: string };
 
@@ -134,7 +137,7 @@ function sniff(buf: Buffer): string | null {
 
 /** Cosmetic and hero pictures off the Dota wikis, cached on disk with the misses remembered. */
 export class Icons {
-  fetch: typeof fetch;
+  fetch: IconFetch;
   dir: string;
   missFile: string;
   /** name -> when the wikis last had no picture for it */
@@ -146,7 +149,7 @@ export class Icons {
    * @param fetchImpl  Electron's net.fetch in the app: the wiki sits behind
    *   a bot check that plain Node requests do not pass, while the browser stack does.
    */
-  constructor(userDataDir: string, fetchImpl?: typeof fetch) {
+  constructor(userDataDir: string, fetchImpl?: IconFetch) {
     this.fetch = fetchImpl || globalThis.fetch;
     this.dir = path.join(userDataDir, 'icons');
     fs.mkdirSync(this.dir, { recursive: true });

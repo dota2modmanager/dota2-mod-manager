@@ -72,8 +72,8 @@ export function compare(baseline, now) {
 
 /**
  * Run tsc through the local install over every project, and hand back whatever it printed.
- * tsconfig.json is the main process's JavaScript, checked through JSDoc against the baseline;
- * src/tsconfig.json is its TypeScript and test/tsconfig.json the tests written in it, both strict
+ * tsconfig.json is the two preload bridges, the JavaScript left, checked through JSDoc;
+ * src/tsconfig.json is the main process and test/tsconfig.json the tests written in TypeScript, strict
  * and with nothing in the baseline, so any error there is a file that appeared with errors and
  * fails the run.
  */

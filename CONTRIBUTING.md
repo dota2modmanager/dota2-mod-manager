@@ -113,10 +113,12 @@ node --test --experimental-test-coverage test/safe-zip.test.ts
 npm run size
 ```
 
-Five files carried 7,155 lines between them while the median module in `src/` is 171:
-`src/installer.ts`, `renderer/views/catalog.js`, `renderer/views/library.js`, `main.js` and
-`src/vpk.ts`, which has since been split into three. Each is in `.github/size-budget.json` at its current length, and the check fails when
-one grows, or when a file nobody listed crosses 800 lines.
+Five files carried 7,155 lines between them in September 2026, while the median module in `src/`
+was 171. Three have since been split along their subjects: `main.js` into `src/main.ts` and a
+module for each job it held, `src/installer.ts` into `src/installer-*.ts`, and `src/vpk.ts` into
+three. The two biggest screens, `renderer/views/catalog.js` and `renderer/views/library.js`, have
+not. Each watched file is in `.github/size-budget.json` at its current length, and the check fails
+when one grows, or when a file nobody listed crosses 800 lines.
 
 If your change makes one of them longer, split something out of it rather than raising the number.
 `node tools/size-budget.mjs --update` writes measurements back and refuses to raise any of them; a
@@ -128,10 +130,12 @@ budget only goes up by editing that file by hand, in a commit that says why.
 npm run typecheck
 ```
 
-The app is plain JavaScript and stays that way. Its JSDoc is checked against it: `tsc --checkJs`
-reads the annotations already in `main.js`, `preload.js` and `src/` and reports where the code and
-its own documentation disagree. The first run found a `require` that had never resolved, and three
-functions whose JSDoc described a different signature than the one underneath it.
+The main process is TypeScript with no build step: Node strips the types when it loads a file,
+so what you edit is what runs, in development and inside the installer. `src/tsconfig.json` checks
+it strictly, `test/tsconfig.json` the tests written in TypeScript, and a new error in either fails
+the run. The two preload bridges stay JavaScript, and `tsc --checkJs` reads their JSDoc. Before the
+main process moved, the same check over JavaScript found a `require` that had never resolved, and
+three functions whose JSDoc described a different signature than the one underneath it.
 
 Sixty-odd places are still wrong, mostly a factory's `@param` listing half of what it is handed.
 They are counted per file in `.github/typecheck-baseline.json`, and the check fails when a file

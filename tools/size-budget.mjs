@@ -30,7 +30,7 @@ export const WATCH_AT = 800;
 
 /** The app's own code: what ships in the build, plus the two preload bridges. */
 export function appFiles(readdir = fs.readdirSync, exists = fs.existsSync) {
-  const out = ['main.js', 'preload.js', 'preload-uninstall.js'];
+  const out = ['preload.js', 'preload-uninstall.js'];
   for (const dir of ['src', 'renderer', 'renderer/views', 'renderer/ui', 'renderer/core']) {
     const full = path.join(root, dir);
     if (!exists(full)) continue;

@@ -16,7 +16,7 @@ import { PANEL_DEFAULTS, PANEL_LIMITS, PANEL_ZOOM_LIMITS } from '../core/constan
 // Scale of the content — the catalog, the library, the settings — in percent. It is CSS zoom
 // on the content itself, deliberately not a window zoom: the panels have their own scale, and
 // a window zoom lands a frame after the CSS does, which made the whole layout shudder while
-// the wheel was turning. Ctrl +/-/0 come from main.js (there they also block Electron's own
+// the wheel was turning. Ctrl +/-/0 come from src/main-window.ts (there they also block Electron's own
 // zoom accelerators); Ctrl + wheel and the slider in Settings land here.
 const SCALE_MIN = 70;
 const SCALE_MAX = 160;
@@ -76,7 +76,7 @@ window.addEventListener('wheel', (e) => {
   savePanels();
 }, { passive: false });
 
-// main.js took a Ctrl +/-/0 press — keep the slider and the chrome honest
+// the main process took a Ctrl +/-/0 press — keep the slider and the chrome honest
 window.api.ui.onZoom((factor) => applyContentZoom(factor));
 
 // ---------- panels ----------

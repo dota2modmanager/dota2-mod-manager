@@ -92,7 +92,7 @@ module.exports = [
   },
   {
     // the main process, the preload bridge and everything they require
-    files: ['main.js', 'preload.js', 'src/**/*.js', 'test/**/*.js', 'tools/**/*.js'],
+    files: ['preload.js', 'src/**/*.js', 'test/**/*.js', 'tools/**/*.js'],
     languageOptions: { ecmaVersion: 2024, sourceType: 'commonjs', globals: NODE },
     rules,
   },

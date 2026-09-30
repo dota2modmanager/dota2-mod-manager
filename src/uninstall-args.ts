@@ -11,7 +11,7 @@
  * those command lines. Two cheap checks beat one clever one, and they are cheap only while they
  * agree, so a test holds this list to the flags that script tests for.
  *
- * It lives in its own file rather than inline in main.js so it can be called with a command line
+ * It lives in its own file rather than inline in src/main.ts so it can be called with a command line
  * instead of the one this process happens to have been given.
  */
 

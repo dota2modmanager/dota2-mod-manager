@@ -2,7 +2,7 @@
  * The things around the app that the app reacts to, played by the simulation: the game running
  * and quitting, and Steam updating the game or checking its files.
  *
- * The game. The app knows Dota is running by the process name alone (main.js dotaIsRunning:
+ * The game. The app knows Dota is running by the process name alone (src/game-upkeep.ts dotaIsRunning:
  * "dota2.exe" through tasklist on Windows, "dota2" through pgrep on Linux). So a harmless program
  * copied under that name into the game's bin folder is, to the app, the game: ping on Windows,
  * sleep on Linux, both of which sit quietly until killed. When the real game quits it rewrites

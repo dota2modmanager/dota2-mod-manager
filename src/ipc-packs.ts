@@ -16,7 +16,7 @@ import type { LibRecord } from './types.ts';
 /** A pack's member list; an old record written without one gets an empty list to fill. */
 const membersOf = (pack: LibRecord) => (pack.members ??= []);
 
-/** Register this module's channels, over the services and callbacks main.js hands it. */
+/** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerPacksIpc({
   afterDeployMaster, deployAndApply, installer, library,
 }: Pick<AppContext, 'afterDeployMaster' | 'deployAndApply' | 'installer' | 'library'>): void {

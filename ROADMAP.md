@@ -46,9 +46,6 @@ through it on every change, but Windows has a year of people using it and Linux 
 **The coverage floor measured on both platforms.** Today it is measured on one, which means a
 Windows-only path can lose its test without the floor noticing.
 
-**`main.js` broken up the rest of the way.** It has shed most of its jobs to modules that can be
-tested on their own. What is left is the window, the app lifecycle and the wiring.
-
 ## Not planned
 
 **Telemetry, analytics, crash reporting or any other phone home.** The app contacts the catalog,

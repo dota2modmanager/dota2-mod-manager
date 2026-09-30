@@ -1,9 +1,10 @@
 // DECISIONS.md, held to the repository it describes.
 //
-// That file answers reviews with numbers - how long main.js is, how many test files there are,
-// what the app depends on - and its whole argument is that a claim with a check next to it beats
-// a claim without one. A document like that going stale is worse than not having written it: the
-// next reviewer runs one command, finds it disagrees, and stops trusting the rest.
+// That file answers reviews with numbers - how long the main process's entry file is, how many
+// test files there are, what the app depends on - and its whole argument is that a claim with a
+// check next to it beats a claim without one. A document like that going stale is worse than not
+// having written it: the next reviewer runs one command, finds it disagrees, and stops trusting
+// the rest.
 //
 // So the countable claims are asserted here. Every failure message carries the current value, so
 // fixing one is copying a number across rather than going to find it.
@@ -23,18 +24,18 @@ const doc = fs.readFileSync(path.join(root, 'DECISIONS.md'), 'utf-8');
 /** How many lines a file in the repository has, counted the way `wc -l` counts them. */
 const lineCount = (file) => fs.readFileSync(path.join(root, file), 'utf-8').split('\n').length - 1;
 
-test('the line count it gives for main.js is roughly the line count main.js has', () => {
+test('the line count it gives for the main process is roughly the line count src/main.ts has', () => {
   /* "About 1,300" rather than an exact figure, and within a tenth rather than to the line. The
      claim being answered is "3,100 line monolith", which a rounded number settles just as well -
-     and an exact one turns every edit to main.js into a documentation chore, which is how the
+     and an exact one turns every edit to the entry file into a documentation chore, which is how the
      co-author count in this file came to fail a build for no reason anybody cared about. */
-  const real = lineCount('main.js');
-  const claimed = doc.match(/About ([\d,]+) lines since 2026-09-06/);
-  assert.ok(claimed, 'the corrections table no longer carries a line count for main.js');
+  const real = lineCount('src/main.ts');
+  const claimed = doc.match(/`src\/main\.ts`, about ([\d,]+) lines/);
+  assert.ok(claimed, 'the corrections table no longer carries a line count for the main process');
   const said = Number(claimed[1].replace(/,/g, ''));
   assert.ok(
     Math.abs(said - real) <= real / 10,
-    `DECISIONS.md says about ${claimed[1]} lines, main.js has ${real.toLocaleString('en-US')}`,
+    `DECISIONS.md says about ${claimed[1]} lines, src/main.ts has ${real.toLocaleString('en-US')}`,
   );
 });
 

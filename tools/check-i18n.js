@@ -2,7 +2,7 @@
    Russian is the source language and a missing key silently falls back to Russian,
    so an English user sees Russian text and nothing crashes. This finds those.
 
-   Scans call sites (L`...`, L('...'), tr('...') in renderer/, t('...') in main.js and src/)
+   Scans call sites (L`...`, L('...'), tr('...') in renderer/, t('...') in src/)
    and checks each canonical key against the EN dictionary of the matching i18n.js.
 
    `npm test` runs this through test/i18n.test.js, so a missing twin fails a pull request
@@ -201,7 +201,7 @@ function jsFiles(dir, skip) {
 
 const SIDES = [
   { name: 'renderer', dict: 'renderer/i18n.js', calls: ['L', 'tr'], files: jsFiles('renderer', ['renderer/i18n.js']) },
-  { name: 'main', dict: 'src/i18n.ts', calls: ['t'], files: ['main.js', ...jsFiles('src', ['src/i18n.ts'])] },
+  { name: 'main', dict: 'src/i18n.ts', calls: ['t'], files: jsFiles('src', ['src/i18n.ts']) },
 ];
 
 /* A key written twice in one dictionary.

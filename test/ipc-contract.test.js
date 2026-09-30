@@ -22,9 +22,9 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
-/** Files that register handlers: main.js and everything it hands the job to. */
+/** Files that register handlers: the main process and everything it hands the job to. */
 const HANDLER_FILES = [
-  'main.js',
+  'src/main.ts',
   ...fs.readdirSync(path.join(ROOT, 'src'))
     .filter((f) => /^ipc-.+\.[jt]s$/.test(f))
     .map((f) => `src/${f}`),
@@ -100,16 +100,16 @@ test('no channel is registered twice', () => {
 });
 
 test('the split left every ipc module wired into main', () => {
-  /* A module can be perfect and still never run. Every src/ipc-*.ts has to be required and
-   * called from main.js, or its whole set of channels quietly does not exist. */
-  const main = read('main.js');
+  /* A module can be perfect and still never run. Every src/ipc-*.ts has to be imported and
+   * called from src/main.ts, or its whole set of channels quietly does not exist. */
+  const main = read('src/main.ts');
   const missing = [];
   for (const file of HANDLER_FILES) {
     if (!file.startsWith('src/ipc-')) continue;
     const base = path.basename(file).replace(/\.[jt]s$/, '');
     const fn = (read(file).match(/^(?:export )?function (register\w+)/m) || [])[1];
     if (!fn) { missing.push(`${file}: no register function`); continue; }
-    if (!main.includes(`/${base}`)) missing.push(`${file}: not required by main.js`);
+    if (!main.includes(`/${base}`)) missing.push(`${file}: not imported by src/main.ts`);
     else if (!new RegExp(`${fn}\\s*\\(`).test(main)) missing.push(`${file}: ${fn} never called`);
   }
   assert.deepEqual(missing, [], missing.join('; '));
@@ -128,61 +128,28 @@ test('the channels are worth counting, so a silent emptying of this test is visi
  * modules as TypeScript for their coverage to count, and this file reads them as text. */
 
 /*
- * And that main.js hands each module everything the module unpacks.
+ * And that the main process hands each module everything the module unpacks.
  *
  * A name a module destructures out of its context and never receives is `undefined`, and the
  * first call on it throws "x is not a function". That is the same failure as `blocked is not
  * defined` wearing a different message, and no linter can see it: the name is a parameter, so
- * it is defined as far as the file is concerned. Only the two sides together tell the truth.
+ * it is defined as far as the file is concerned.
+ *
+ * This used to be read off the text of main.js, name by name. Since 2026-09-30 the type checker
+ * holds it: each module takes a Pick of AppContext (src/app-context.ts), so it cannot unpack a
+ * name outside that Pick, and src/main.ts builds one `ctx: AppContext` and hands the same object
+ * to every module, so it cannot leave a name out. What is read here is that the chain still has
+ * that shape; a module handed a hand-made object instead would slip past the checker's guarantee.
  */
 test('every ipc module is handed everything it unpacks', () => {
-  const main = read('main.js');
-
-  /** The text between the brace at `from` and the one that closes it. */
-  const braced = (src, from) => {
-    let depth = 0;
-    for (let i = from; i < src.length; i++) {
-      if (src[i] === '{') depth++;
-      else if (src[i] === '}') { depth -= 1; if (!depth) return src.slice(from + 1, i); }
-    }
-    return '';
-  };
-
-  /** Top-level keys of an object literal or a destructuring pattern. */
-  const keysOf = (raw) => {
-    // comments go first: one of these lists has a comma inside a comment, and splitting before
-    // stripping cut a name out of the list and hid it from this check while it was being written
-    const body = raw.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
-    const parts = [];
-    let depth = 0;
-    let cur = '';
-    for (const ch of body) {
-      if ('{[('.includes(ch)) depth++;
-      if ('}])'.includes(ch)) depth--;
-      if (ch === ',' && depth === 0) { parts.push(cur); cur = ''; continue; }
-      cur += ch;
-    }
-    parts.push(cur);
-    return parts
-      .map((s) => s.trim().split(/[:=]/)[0].trim())
-      .filter((s) => /^[A-Za-z_$][\w$]*$/.test(s));
-  };
-
+  const main = read('src/main.ts');
+  assert.match(main, /const ctx: AppContext = \{/, 'src/main.ts no longer builds one typed context');
   const gaps = [];
   for (const file of HANDLER_FILES.filter((f) => f.startsWith('src/ipc-'))) {
     const src = read(file);
-    const sig = src.match(/function\s+(register\w+)\s*\(\s*\{/);
-    assert.ok(sig, `${file}: no register function taking a context`);
-    const wants = keysOf(braced(src, src.indexOf('{', sig.index + sig[0].length - 1)));
-    assert.ok(wants.length > 0, `${file}: unpacked nothing, which means this test stopped reading`);
-
-    const callAt = main.indexOf(`${sig[1]}({`);
-    assert.ok(callAt > 0, `${file}: ${sig[1]} is never called from main.js`);
-    const gives = new Set(keysOf(braced(main, main.indexOf('{', callAt))));
-
-    for (const name of wants) {
-      if (!gives.has(name)) gaps.push(`${file} unpacks ${name}, main.js does not pass it`);
-    }
+    const sig = src.match(/export function (register\w+)\(\{[\s\S]*?\}: Pick<AppContext, [^>]+>\): void/);
+    if (!sig) { gaps.push(`${file}: its register function no longer takes a Pick of AppContext`); continue; }
+    if (!new RegExp(`${sig[1]}\\(ctx\\);`).test(main)) gaps.push(`${file}: src/main.ts does not hand ${sig[1]} the whole context`);
   }
   assert.deepEqual(gaps, [], gaps.join('; '));
 });

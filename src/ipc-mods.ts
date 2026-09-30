@@ -31,7 +31,7 @@ type ExternalRow = Omit<ForeignItem, 'kind'> & {
   coveredBy?: { name: string; files: number }[];
 };
 
-/** Register this module's channels, over the services and callbacks main.js hands it. */
+/** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerModsIpc({
   applyMasterToCursors, blocked, catalog, diag, disableOtherCursors, fingerprints, importVpkBuffers, importVpkPaths, installer, isCursorRecord, library, refreshPresence, schemaService, sendProgress, verifyStuck, win,
 }: Pick<AppContext, 'applyMasterToCursors' | 'blocked' | 'catalog' | 'diag' | 'disableOtherCursors' | 'fingerprints' | 'importVpkBuffers' | 'importVpkPaths' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService' | 'sendProgress' | 'verifyStuck' | 'win'>): void {

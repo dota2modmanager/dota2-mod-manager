@@ -27,7 +27,7 @@ const OUT = path.join(ROOT, 'docs', 'API.md');
 /** Files whose exports are an implementation detail of the app's own wiring. */
 const SKIP = (name) => {
   const base = name.replace(/\.[jt]s$/, '');
-  return base.startsWith('ipc-') || base === 'settings-view' || base === 'uninstall-window';
+  return base.startsWith('ipc-') || base === 'settings-view' || base === 'uninstall-window' || base === 'main';
 };
 
 /** A module the reference covers: JavaScript, or TypeScript that is not only declarations. */

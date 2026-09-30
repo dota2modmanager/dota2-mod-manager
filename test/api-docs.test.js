@@ -26,7 +26,7 @@ test('the committed reference is what the source says today', () => {
 
 test('every module that ships is in the reference', () => {
   const text = read(OUT);
-  const skipped = (f) => f.startsWith('ipc-') || /^(settings-view|uninstall-window)\.[jt]s$/.test(f);
+  const skipped = (f) => f.startsWith('ipc-') || /^(settings-view|uninstall-window|main)\.[jt]s$/.test(f);
   const files = fs.readdirSync(path.join(ROOT, 'src')).filter((f) => /\.(js|ts)$/.test(f) && !f.endsWith('.d.ts'));
   assert.ok(files.length > 20, 'src/ was found');
   for (const f of files.filter((f) => !skipped(f))) {

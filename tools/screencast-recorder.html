@@ -6,7 +6,7 @@
 
   It lives apart from the app's own renderer on purpose. Recording needs Node (to write the
   file) and an unlocked page (to hold a MediaStream), and the app's renderer has neither and
-  should not get either. Nothing here is shipped: main.js only loads this when MM_REC is set.
+  should not get either. Nothing here is shipped: src/dev-harness.ts only loads this when MM_REC is set.
 -->
 <body style="background:#111;color:#ccc;font:12px system-ui">recorder</body>
 <script>

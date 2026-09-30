@@ -21,7 +21,7 @@ import type { AppContext } from './app-context.ts';
 /** One graphics device as Chromium lists it under getGPUInfo("basic"). */
 type GpuDevice = { active?: boolean; vendorId?: number; deviceId?: number; driverVendor?: string; driverVersion?: string };
 
-/** Register this module's channels, over the services and callbacks main.js hands it. */
+/** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerDiagnosticsIpc({
   autoUpdater, catalog, diag, dotaIsRunning, icons, installer, library, logFile, remoteConfig,
   schemaService, settings, toolchain, win, rendererErrors, lastUpdateError,

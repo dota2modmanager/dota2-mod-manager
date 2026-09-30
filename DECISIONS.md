@@ -13,7 +13,7 @@ saying so is welcome.
 
 The countable claims are held to the code by `test/decisions.test.js`, and the wider ones by
 `test/docs-current.test.js`: between them they fail when this file and the repository disagree
-about how long `main.js` is, how many test files there are, what the app depends on, where the
+about how long the main process's entry file is, how many test files there are, what the app depends on, where the
 fingerprint index is fetched from, whether there is a linter, which npm scripts exist, or whether
 a link in any document points at a file that is gone. The date below is left out of that on
 purpose: it records when a person last read the whole file, and a test that kept it current would
@@ -418,8 +418,9 @@ handlers moved into `src/ipc-*.ts`, and to about 1,150 on 2026-09-16, when the c
 `src/cursors.ts` and everything a freshly landed VPK goes through before it counts as a mod went to
 `src/adopt.ts`. On 2026-09-30 the log, the "What's new" text, the Discord status, d2mm:// links,
 the window, the screenshot harness and the upkeep of the game folder went to modules of their own,
-each with tests, which took it to about 450. What is left is the order the app starts in: which
-services exist, what each one is handed, and auto-update. That is one subject.
+each with tests, which took it to about 450. What was left moved to `src/main.ts` the same day,
+TypeScript like the rest of the main process: the order the app starts in, which services exist,
+what each one is handed, and auto-update. That is one subject, and main.js no longer exists.
 
 On 2026-09-16 it was one of five files carrying 6,754 lines between them while the median module
 in `src/` was 171. `src/installer.ts` and `src/vpk.ts` have since been split along their subjects
@@ -488,7 +489,7 @@ Each of these has arrived in a review. Each is answered by one command.
 | Claim | What is true | Check |
 |---|---|---|
 | "The repository cannot be opened, so the open-source promise is unverifiable" | It is public and has been. A fetch failing at one moment is not a private repository | `gh repo view dota2modmanager/dota2-mod-manager --json visibility` |
-| "`main.js` is a 3,100 line monolith" | About 450 lines since 2026-09-06, with the IPC handlers in `src/ipc-*.ts` and every other job moved out since, each with tests | `wc -l main.js` |
+| "`main.js` is a 3,100 line monolith" | It is gone. The main process starts from `src/main.ts`, about 380 lines; since 2026-09-06 the IPC handlers went to `src/ipc-*.ts` and every other job to a module of its own, each with tests | `wc -l src/main.ts` |
 | "The catalog counts on the site disagree between pages" | They are counted when each page is built. Two pages built an hour apart show two numbers, and both were right when they were made | `site/src/lib/stats.ts` |
 | "The state files in the root are why the repository is 61 MB" | The generated JSON at the root is 1.3 MB of the pack. The preview images are 47.3 MB of 57.2 MB | the command under the open question above |
 | "It is a Windows-only app" | Every release since 2.4.0 also carries a Linux AppImage | `gh release view --json assets` |

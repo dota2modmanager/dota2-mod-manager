@@ -2,8 +2,8 @@
 // language settings, the app's settings and installed mods, the patch/schema state, a
 // listing of the mod folder's pak files, and the app's own recent log.
 //
-// Pure data in, pure data out - no Electron here, no zip - so main.js decides how it is
-// packaged (see the diag:export handler) and this stays exercisable on its own.
+// Pure data in, pure data out - no Electron here, no zip - so src/ipc-diagnostics.ts decides how
+// it is packaged (the diag:export handler) and this stays exercisable on its own.
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';

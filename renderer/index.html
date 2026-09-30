@@ -5,7 +5,7 @@
   <!-- form-action and base-uri do not fall back to default-src, so they are spelled out:
        the first stops injected markup from posting anywhere, the second stops it from
        moving every relative URL on the page to another host. Navigation itself is refused
-       in main.js (see createWindow), which is the part CSP has no say over. -->
+       in src/main-window.ts, which is the part CSP has no say over. -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' https://raw.githubusercontent.com https://cdn.dota2modmanager.com data:; media-src https://raw.githubusercontent.com https://cdn.dota2modmanager.com blob:; connect-src 'self'; object-src 'none'; frame-src 'none'; child-src 'none'; form-action 'none'; base-uri 'none'">
   <title>Dota 2 Mod Manager</title>

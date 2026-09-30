@@ -14,7 +14,7 @@
  *
  * Everything here is read off the code it describes: the pak slots from installer.js, the
  * search-path patch and what it touches from patcher.js, the language folder from gamelang.js,
- * the feature list from the IPC handlers in main.js. Nothing is aspirational.
+ * the feature list from the IPC handlers in src/ipc-*.ts. Nothing is aspirational.
  *
  * Placeholders {version} {mods} {categories} {releases} {downloads} are filled in Facts.astro.
  */

@@ -9,7 +9,7 @@ between them.
 Electron, three processes, one bridge.
 
 ```
-main.js          Electron lifecycle, the window, every ipcMain handler, auto-update, deep links
+src/main.ts      Electron lifecycle and the order the app starts in; everything else is a module
   └─ src/*.js    everything that touches disk, network or the game folder
 preload.js       the only channel between the two sides: window.api, built with contextBridge
 renderer/        the interface: plain HTML, CSS and JavaScript, no build step, no framework
@@ -24,7 +24,7 @@ control, so the renderer is treated as a place where hostile strings end up.
 
 Anything a user can do to a mod touches three files, in this order:
 
-1. `main.js` gets an `ipcMain.handle('mods:something', ...)` that calls into `src/`
+1. A `src/ipc-*.ts` module gets an `ipcMain.handle('mods:something', ...)` that calls into `src/`
 2. `preload.js` exposes it as `api.mods.something`
 3. `renderer/views/*.js` calls it and draws the result
 
@@ -300,7 +300,7 @@ because when it fails there is nothing below it worth reading.
 
 `npm test` is plain `node:test`, no framework, more than 80 files, run on every push and every pull request
 on Linux and on Windows. Five of them hold this project against itself rather than testing a
-module: the IPC contract (every channel has a handler, every handler runs, and `main.js` passes
+module: the IPC contract (every channel has a handler, every handler runs, and `src/main.ts` passes
 what each module unpacks), the renderer's imports, the release contract, `DECISIONS.md`
 against the repository it describes, and the write-ups in `docs/incidents/` against the tests
 and workflow steps they name as guards.
@@ -356,12 +356,12 @@ that location is not writable.
 
 | File | What it owns |
 |---|---|
-| `main.js` | Electron lifecycle, auto-update, and wiring the rest together |
+| `src/main.ts` | Electron lifecycle, auto-update, and wiring the rest together |
 | `src/main-window.ts` | The window: its size on the screen it opens on, the one page it may show, Ctrl +/-/0 |
 | `src/dev-harness.ts` | `MM_SHOT`, `MM_EVAL` and the other switches a script drives the window with |
 | `src/game-upkeep.ts` | The mod folder following the audio language, what Steam's file check took, repair after a Dota patch, and the work done at start |
 | `src/ipc-*.ts` | The IPC handlers, one file per group of channels, each naming what it needs |
-| `src/app-context.ts`, `src/electron.ts` | What main.js hands the IPC modules, and Electron asked for when a module registers |
+| `src/app-context.ts`, `src/electron.ts` | What src/main.ts hands the IPC modules, and Electron asked for when a module registers |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
 | `src/presence-status.ts` | What the Discord status says, and whether it is on |

@@ -16,7 +16,7 @@
  * nothing should be removed at all, anything else means carry on. 4 additionally means the
  * app's own folder goes with the program.
  *
- * It lives here rather than in main.js because it is a whole second application - its own
+ * It lives here rather than in src/main.ts because it is a whole second application - its own
  * window, its own preload, its own five IPC channels, its own exit protocol - that shares
  * nothing with the app except the services it borrows to do the removing.
  */

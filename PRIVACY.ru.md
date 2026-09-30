@@ -34,7 +34,7 @@ Dota 2 Mod Manager ничего не собирает, ничего о тебе 
 | Хост | Зачем | Где в коде |
 |---|---|---|
 | `raw.githubusercontent.com` | Каталог модов (`Dota2PornFxWeb`), карта отпечатков и удалённый конфиг, которым сломанную функцию можно выключить без релиза | `src/catalog.ts`, `src/fingerprints.ts`, `src/remote-config.ts` |
-| `github.com` | Проверка обновлений и скачивание новой версии из Releases | `electron-updater`, `main.js`, `src/portable-update.ts` |
+| `github.com` | Проверка обновлений и скачивание новой версии из Releases | `electron-updater`, `src/updater.ts`, `src/portable-update.ts` |
 | `cdn.dota2modmanager.com` | Копия архивов модов из каталога и их превью, закреплённый тулчейн, а с 2.6.5 и обновления самого приложения, чтобы всё это работало, когда GitHub недоступен | `src/net.ts`, `renderer/ui/media.js`, `src/portable-update.ts` |
 | `huggingface.co` | Ещё одна копия архивов модов из каталога, её держит автор каталога. К ней приложение идёт после `cdn.dota2modmanager.com`. Она указана в подписанном удалённом конфиге, а не в самом приложении, и скачанный с неё файл засчитывается, только если совпал с хэшем, который публикует каталог | `config/app.json`, `src/remote-config.ts`, `src/net.ts` |
 | `dota2modmanager.com` | Зеркало небольших файлов каталога, по той же причине, и единственная копия, где файл и его подпись всегда из одного момента | `src/net.ts`, `src/catalog.ts` |

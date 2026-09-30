@@ -1,5 +1,5 @@
 // Orchestration around the item schema: what goes into it, when it is rebuilt, and how a
-// game update is repaired. Kept out of main.js so the whole flow can be exercised without
+// game update is repaired. Kept out of src/main.ts so the whole flow can be exercised without
 // starting Electron.
 //
 // The rules it enforces:

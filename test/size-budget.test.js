@@ -63,7 +63,7 @@ test('an update picks up a new file only once it passes the watch mark', async (
 test('the app files it watches are the ones that ship', async () => {
   const { appFiles } = await load();
   const files = appFiles();
-  assert.ok(files.includes('main.js') && files.includes('preload.js'));
+  assert.ok(files.includes('src/main.ts') && files.includes('preload.js'));
   assert.ok(files.some((f) => f.startsWith('src/')) && files.some((f) => f.startsWith('renderer/')));
   assert.ok(!files.some((f) => f.startsWith('test/') || f.startsWith('tools/')),
     'tests and tools are not shipped and are not budgeted');

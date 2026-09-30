@@ -19,7 +19,7 @@ const ROOT = path.resolve(__dirname, '..');
 
 /** What the app loads at run time, plus the tools CI runs. */
 function sources() {
-  const out = ['main.js', 'preload.js', 'preload-uninstall.js'];
+  const out = ['preload.js', 'preload-uninstall.js'];
   for (const dir of ['src', 'tools']) {
     for (const f of fs.readdirSync(path.join(ROOT, dir))) {
       if (/\.(js|mjs)$/.test(f)) out.push(`${dir}/${f}`);

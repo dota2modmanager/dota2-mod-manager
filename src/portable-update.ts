@@ -53,7 +53,7 @@ export interface Source {
  *
  * The second entry is not a proxy. It is this project's own bucket, reached with credentials
  * only this project holds, which is the same trust as the release page itself - and the same
- * reasoning as the update feed fallback in main.js. Manifest and binary both come from
+ * reasoning as the update feed fallback in src/updater.ts. Manifest and binary both come from
  * whichever source answered, so the hash and the file it describes are always from one place.
  */
 export const SOURCES: readonly Source[] = [

@@ -11,7 +11,7 @@ import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
 import type { AppContext } from './app-context.ts';
 
-/** Register this module's channels, over the services and callbacks main.js hands it. */
+/** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerSettingsIpc({
   // The four read late are main-process state that changes while the app runs; setPresenceView
   // writes one back. Passing values here would freeze them at registration time.
