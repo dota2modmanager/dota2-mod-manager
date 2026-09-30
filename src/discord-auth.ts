@@ -19,12 +19,9 @@
 //    the token with Discord, and that comes with the community catalog.
 import http from 'node:http';
 import crypto from 'node:crypto';
-import { createRequire } from 'node:module';
 import { t } from './i18n.ts';
+import { electron } from './electron.ts';
 
-// electron through require, as before: under plain node, in tests, it is only a path and shell stays undefined
-const require = createRequire(import.meta.url);
-const { shell } = require('electron') as typeof import('electron');
 
 /** Who signed in: the Discord account's id, the name it shows, and its avatar as a data URI. */
 export interface DiscordUser { id: string; username: string; avatar: string | null }
@@ -133,7 +130,7 @@ export async function signIn(): Promise<DiscordUser> {
   });
 
   const pending = awaitToken(state);
-  await shell.openExternal(authUrl);
+  await electron().shell.openExternal(authUrl);
   const token = await pending;
 
   const res = await fetch('https://discord.com/api/v10/users/@me', { headers: { authorization: `Bearer ${token}` } });

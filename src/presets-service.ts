@@ -14,15 +14,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { createRequire } from 'node:module';
 
-// electron through require, as before: under plain node, in tests, it is only a path and app stays undefined
-const { app } = createRequire(import.meta.url)('electron') as typeof import('electron');
 
 import { Library } from './library.ts';
 import { readPresetFile } from './preset-share.ts';
 import { decodePresetLink } from './preset-link.ts';
 import { t } from './i18n.ts';
+import { electron } from './electron.ts';
 import type { Catalog } from './catalog.ts';
 import type { LibFile, LibRecord, PackMember, Preset, PresetEntry } from './types.ts';
 
@@ -98,7 +96,7 @@ export function presetsService({ catalog, installer, library, schemaService, dep
 
   // where an imported .d2mm waits until the user installs it
   function sharedPresetFile(presetId: string): string {
-    return path.join(app.getPath('userData'), 'shared-presets', `${presetId}.d2mm`);
+    return path.join(electron().app.getPath('userData'), 'shared-presets', `${presetId}.d2mm`);
   }
 
   function dropSharedPresetFile(preset: Preset | null | undefined): void {

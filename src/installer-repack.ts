@@ -14,7 +14,7 @@ import { t } from './i18n.ts';
 import { MASTER_OFF, MERGE_SIZE_CAP } from './installer-files.ts';
 import type { Installer } from './installer.ts';
 import type { Library } from './library.ts';
-import type { LibFile, LibRecord, HasFiles } from './types.ts';
+import type { LibFile, HasFiles } from './types.ts';
 import type { Analysis } from './vpk.ts';
 import type { SchemaDelta } from './schema.ts';
 

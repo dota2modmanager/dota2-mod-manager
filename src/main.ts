@@ -256,7 +256,7 @@ async function start(): Promise<void> {
      window, the updater, the patch watcher, the upkeep's state) is a function read when needed. */
   const ctx: AppContext = {
     settings, catalog, installer, library, fingerprints, schemaService, icons, gameIcons, modPreviews,
-    toolchain, remoteConfig, presets, presence, discordAuth, portableUpdater, autoUpdater,
+    toolchain, remoteConfig, presets, discordAuth, portableUpdater, autoUpdater,
     // One gate, handed to every module that guards a channel with it. Two copies is how installing
     // broke once: the call went to one file and the helper stayed in the other.
     blocked: createGate({ remoteConfig, settings }),

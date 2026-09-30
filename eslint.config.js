@@ -11,8 +11,9 @@
  * globals each corner of the codebase really has, so a real mistake is not buried in noise
  * about `document` in the main process.
  *
- * The TypeScript modules are outside this file. The type check (tools/typecheck.mjs) refuses a
- * name that is not there, which is the same rule with the types behind it.
+ * The TypeScript files are outside this file. The type check (tools/typecheck.mjs, over
+ * src/tsconfig.json) is their lint: it refuses a name that is not there, which is the same rule
+ * with the types behind it, and the flags there cover the rest of this list that it can.
  *
  * Style is not linted here on purpose. This is a check for code that cannot run, not a
  * argument about semicolons - and a lint run that people learn to skim is worth nothing.

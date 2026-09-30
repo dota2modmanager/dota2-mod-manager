@@ -1,14 +1,15 @@
-// Type checking for the main process's TypeScript (src/**/*.ts), through tools/typecheck.mjs.
+// Type checking for the main process (src/**/*.ts), through tools/typecheck.mjs.
 //
-// The same shape as renderer/tsconfig.json, for the same reasons. Strict from the first file, with
-// nothing in the baseline: the code checked here is TypeScript from the start. Nothing is compiled:
+// Strict, with nothing in the baseline: every module here is TypeScript. Nothing is compiled:
 // Electron's Node and the test runner strip the types themselves, which is why imports name the
 // .ts file, type-only imports say so (verbatimModuleSyntax), and only syntax that can simply be
 // erased is allowed (no enums, no namespaces).
 //
-// allowJs without checkJs: a TypeScript module can import a plain one that has not moved yet and
-// get the types TypeScript infers from it. The plain ones are held by ../tsconfig.json, against
-// its own baseline.
+// This is also the lint for these files. ESLint reads the JavaScript (eslint.config.js); for the
+// TypeScript the compiler holds the same rules, and the ones strict leaves out are switched on
+// below: a name nobody reads, code nothing reaches, a switch case that falls into the next, a
+// branch that returns nothing where the others return a value. Parameters are left alone, as the
+// JavaScript lint leaves them: an IPC handler takes the event first whether it reads it or not.
 {
   "compilerOptions": {
     "target": "ES2023",
@@ -16,9 +17,12 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
+    "noUnusedLocals": true,
+    "allowUnreachableCode": false,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
     "noEmit": true,
-    "allowJs": true,
-    "checkJs": false,
     "isolatedModules": true,
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,

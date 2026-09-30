@@ -19,9 +19,9 @@ import type { LibRecord } from './types.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerLibraryIpc({
-  applyMasterToCursors, catalog, disableOtherCosmetics, disableOtherCursors, fingerprints,
+  applyMasterToCursors, disableOtherCosmetics, disableOtherCursors, fingerprints,
   installer, isCursorRecord, library, refreshPresence, schemaService,
-}: Pick<AppContext, 'applyMasterToCursors' | 'catalog' | 'disableOtherCosmetics' | 'disableOtherCursors' | 'fingerprints' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService'>): void {
+}: Pick<AppContext, 'applyMasterToCursors' | 'disableOtherCosmetics' | 'disableOtherCursors' | 'fingerprints' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService'>): void {
   const { ipcMain } = electron();
   ipcMain.handle('mods:masterState', () => {
     try { return { off: installer.masterIsOff() }; } catch { return { off: false }; }

@@ -16,9 +16,9 @@ import type { AppContext } from './app-context.ts';
 export function registerGameIpc({
   // patchRepair() is read late and written through setPatchRepair: it changes while the app
   // runs, and a value captured at registration would answer for the wrong moment forever.
-  blocked, diag, dotaIsRunning, gameIcons, icons, library, modPreviews, remoteConfig,
+  blocked, diag, dotaIsRunning, gameIcons, icons, modPreviews, remoteConfig,
   repairAfterPatch, schemaService, settings, toolchain, patchRepair, setPatchRepair,
-}: Pick<AppContext, 'blocked' | 'diag' | 'dotaIsRunning' | 'gameIcons' | 'icons' | 'library' | 'modPreviews' | 'remoteConfig' | 'repairAfterPatch' | 'schemaService' | 'settings' | 'toolchain' | 'patchRepair' | 'setPatchRepair'>): void {
+}: Pick<AppContext, 'blocked' | 'diag' | 'dotaIsRunning' | 'gameIcons' | 'icons' | 'modPreviews' | 'remoteConfig' | 'repairAfterPatch' | 'schemaService' | 'settings' | 'toolchain' | 'patchRepair' | 'setPatchRepair'>): void {
   const { ipcMain } = electron();
 
   // A switch is honoured here rather than in the renderer: this is the boundary an old

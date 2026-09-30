@@ -77,6 +77,13 @@ export function compare(baseline, now) {
  * and with nothing in the baseline, so any error there is a file that appeared with errors and
  * fails the run.
  */
+/** The project that checks a file, which is the one to run to read its errors. */
+export function projectFor(file) {
+  if (file.startsWith('test/')) return 'test/tsconfig.json';
+  if (file.startsWith('src/')) return 'src/tsconfig.json';
+  return 'tsconfig.json';
+}
+
 function runTsc() {
   const tsc = require.resolve('typescript/bin/tsc');
   let out = '';
@@ -118,7 +125,8 @@ if (invokedDirectly) {
   for (const line of worse) console.log(`WORSE   ${line}`);
 
   if (worse.length) {
-    console.error(`\ntype errors went up in ${worse.length} file(s). Run "npx tsc -p tsconfig.json" to read them.`);
+    const projects = [...new Set(worse.map((line) => projectFor(line.split(':')[0])))];
+    console.error(`\ntype errors went up in ${worse.length} file(s). Read them with: ${projects.map((p) => `npx tsc -p ${p}`).join(' ; ')}`);
     process.exit(1);
   }
   if (better.length || gone.length) {

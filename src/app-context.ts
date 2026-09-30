@@ -13,7 +13,6 @@ import type { Installer, InstallProgress } from './installer.ts';
 import type { Library } from './library.ts';
 import type { Fingerprints } from './fingerprints.ts';
 import type { Icons } from './icons.ts';
-import type { DiscordPresence } from './discord-presence.ts';
 import type { ToolProgress, createToolchain } from './toolchain.ts';
 import type { createSchemaService } from './schema-service.ts';
 import type { createGameIcons } from './game-icons.ts';
@@ -59,7 +58,6 @@ export interface AppContext {
   toolchain: ReturnType<typeof createToolchain>;
   remoteConfig: ReturnType<typeof createRemoteConfig>;
   presets: ReturnType<typeof presetsService>;
-  presence: DiscordPresence;
   discordAuth: typeof discordAuthModule;
   portableUpdater: typeof portableUpdateModule;
   /** electron-updater, when the packaged build has it */

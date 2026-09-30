@@ -1,7 +1,14 @@
 // Type checking for the tests written in TypeScript, with the same strict settings as the code they
 // test (../src/tsconfig.json). A test is code that runs on every push: a mistyped argument in one is
 // a test that checks something other than what its name says.
+//
+// allowJs without checkJs: some tests import JavaScript (a tool under tools/, a fixture, a module
+// of the window) and get the types TypeScript infers from it. The main process imports none.
 {
   "extends": "../src/tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false
+  },
   "include": ["**/*.ts"]
 }

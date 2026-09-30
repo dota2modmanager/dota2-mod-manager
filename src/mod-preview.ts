@@ -26,12 +26,10 @@ import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
 import { execFile } from 'node:child_process';
-import { createRequire } from 'node:module';
 import type { NativeImage } from 'electron';
+import { electron } from './electron.ts';
 import { readVpkIndexFile, listVpkPathCrcs, readVpkEntryFile } from './vpk.ts';
 
-// electron is asked for only when the real decoder is, so the tests run under plain node
-const require = createRequire(import.meta.url);
 
 /** The three kinds of picture a mod can give: drawn art, a model's texture, an animated portrait. */
 type Kind = 'art' | 'texture' | 'video';
@@ -168,7 +166,8 @@ export function worthShowing({ width, height, data }: Bitmap): boolean {
 
 /** The real decoder: Electron's own image support. */
 function electronImages(): Images {
-  const { nativeImage } = require('electron') as typeof import('electron');
+  // asked for only when the real decoder is, so the tests run under plain node
+  const { nativeImage } = electron();
   return {
     read(file) {
       const img = nativeImage.createFromPath(file);

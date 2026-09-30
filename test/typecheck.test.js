@@ -72,3 +72,11 @@ test('the committed baseline is a measurement, not a wish', async () => {
     assert.ok(fs.existsSync(path.join(ROOT, file)), `${file} is in the baseline and not in the repository`);
   }
 });
+
+test('a failing file names the project that reads it', async () => {
+  // since the main process moved to TypeScript, the root project checks the two preloads only
+  const { projectFor } = await load();
+  assert.equal(projectFor('src/main.ts'), 'src/tsconfig.json');
+  assert.equal(projectFor('test/vpk.test.ts'), 'test/tsconfig.json');
+  assert.equal(projectFor('preload.js'), 'tsconfig.json');
+});

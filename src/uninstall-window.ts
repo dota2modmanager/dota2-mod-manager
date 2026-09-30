@@ -22,15 +22,13 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 
 import { removeNotice } from './notice-text.ts';
+import { electron } from './electron.ts';
 import type { Settings } from './settings.ts';
 import type { Library } from './library.ts';
 import type { LibFile, LibRecord } from './types.ts';
 
-// electron through require, as before: under plain node, in tests, it is only a path
-const { app, BrowserWindow, ipcMain } = createRequire(import.meta.url)('electron') as typeof import('electron');
 
 /** What of the installer the removal asks: sizes, the language folder, and taking mods out. */
 export interface UninstallInstaller {
@@ -73,6 +71,7 @@ export function uninstallFlow({ settings, library, installer, schemaService, dia
   settings: Pick<Settings, 'get'>; library: Pick<Library, 'list' | 'removeRecord'>; installer: UninstallInstaller;
   schemaService: { setEnabled(on: boolean): unknown }; diag: (msg: string) => void; appRoot: string;
 }): { open: () => Electron.BrowserWindow } {
+  const { app, BrowserWindow, ipcMain } = electron();
   let answered = false;
 
   /** What there is to remove, so the window can say it rather than ask in the abstract. */
