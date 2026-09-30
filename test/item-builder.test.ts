@@ -1,17 +1,37 @@
-// The item builder (src/item-builder.js): a hero's stock item built from one of its wearables,
+// The item builder (src/item-builder.ts): a hero's stock item built from one of its wearables,
 // with an effect on top. Written with the feature by h6rd (#117); moved here from
 // schema.test.js when the builder got a module of its own.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const schema = require('../src/schema.ts');
-const builder = require('../src/item-builder.js');
-const vpk = require('../src/vpk.ts');
+import * as schema from '../src/schema.ts';
+import * as builder from '../src/item-builder.ts';
+import * as vpk from '../src/vpk.ts';
+import { Library } from '../src/library.ts';
+import { createSchemaService, type SchemaInstaller } from '../src/schema-service.ts';
+import type { Settings } from '../src/settings.ts';
 
-const item = (id, name, extra = '') => `		"${id}"
+/** Settings kept in `values`; `onSet` sees every write. */
+function settingsIn(values: Record<string, unknown>, onSet: (key: string) => void = () => {}) {
+  return {
+    get: (k: string) => values[k],
+    set: (k: string, v: unknown) => { onSet(k); values[k] = v; },
+  } as unknown as Pick<Settings, 'get' | 'set'>;
+}
+
+/** For the tests that never reach the installer: a call here fails the test. */
+const NO_INSTALLER: SchemaInstaller = {
+  analyzeRecord: () => { throw new Error('the installer was not meant to be asked'); },
+  harvestSchema: () => { throw new Error('the installer was not meant to be asked'); },
+  splitVpkFile: () => { throw new Error('the installer was not meant to be asked'); },
+  remove: () => { throw new Error('the installer was not meant to be asked'); },
+  installedSize: () => { throw new Error('the installer was not meant to be asked'); },
+};
+
+const item = (id: string | number, name: string, extra = '') => `		"${id}"
 		{
 			"name"		"${name}"
 			"prefab"		"default_item"
@@ -33,7 +53,7 @@ function large(count = 1200, mark = 'Item') {
   return small(ids);
 }
 
-const table = (blocks) => `"items_game"
+const table = (blocks: string[]) => `"items_game"
 {
 	"items"
 	{
@@ -42,7 +62,7 @@ ${blocks.join('')}	}
 `;
 
 /** One inline-data entry in the shape buildVpk() wants. */
-function entry(relPath, body) {
+function entry(relPath: string, body: string | Buffer) {
   const data = Buffer.isBuffer(body) ? body : Buffer.from(body, 'latin1');
   const lower = relPath.toLowerCase();
   const slash = lower.lastIndexOf('/');
@@ -486,7 +506,7 @@ test('game asset entries read donor bytes from pak01 and buildSchemaVpk packs th
   assert.ok(paths.includes('particles/units/heroes/hero_sniper/sniper_headshot_slow.vpcf_c'));
   assert.ok(paths.includes('particles/units/heroes/hero_sniper/sniper_headshot_slow_caster.vpcf_c'));
 
-  const packed = new Map(vpk.readVpkEntries(buf).map((en) => [vpk.entryPath(en), en.data.toString('latin1')]));
+  const packed = new Map(vpk.readVpkEntries(buf, 'mem').map((en) => [vpk.entryPath(en), en.data.toString('latin1')]));
   assert.equal(packed.get('models/heroes/sniper/cape.vmdl_c'), 'donor model bytes');
   assert.equal(packed.get('particles/units/heroes/hero_sniper/sniper_headshot_slow.vpcf_c'), 'slow bytes');
   assert.equal(packed.get('particles/units/heroes/hero_sniper/sniper_headshot_slow_caster.vpcf_c'), 'caster bytes');
@@ -503,7 +523,7 @@ test('a pick carries several effects in one order, and an effect nobody offers r
   assert.equal(builder.effectKey(null), '');
 
   const both = builder.itemEffectPatch(text, '9455', 'snow,fire');
-  const count = (needle) => both.block.split(needle).length - 1;
+  const count = (needle: string) => both.block.split(needle).length - 1;
   assert.equal(count('courier_trail_lava.vpcf'), 1, 'fire, once');
   assert.equal(count('seasonal_ambient_snow.vpcf'), 1, 'snow, once');
   assert.throws(() => builder.itemEffectPatch(text, '9455', 'fire,sparkles'), /sparkles/);
@@ -512,14 +532,11 @@ test('a pick carries several effects in one order, and an effect nobody offers r
 test('choosing other effects for the same item changes its row instead of adding one', (t) => {
   // My mods showed three rows reading "Blightfall - Head" for one item picked with fire, then
   // snow, then nothing, and nothing on them said which was which.
-  const { createSchemaService } = require('../src/schema-service.js');
-  const { Library } = require('../src/library.ts');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-picks-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const library = new Library(dir);
-  const values = { dotaGamePath: null }; // no game: the pick is recorded, nothing is written
-  const settings = { get: (k) => values[k], set: (k, v) => { values[k] = v; } };
-  const service = createSchemaService({ settings, library, installer: {}, userDataDir: dir });
+  const settings = settingsIn({ dotaGamePath: null }); // no game: the pick is recorded, nothing is written
+  const service = createSchemaService({ settings, library, installer: NO_INSTALLER, userDataDir: dir });
   const slot = 'item:abaddon:head';
   const picks = () => library.list().filter((r) => r.categoryId === 'cosmetic');
 
@@ -527,7 +544,7 @@ test('choosing other effects for the same item changes its row instead of adding
   service.pickCosmetic(slot, '19416', 'Blightfall - Head', 'snow,fire');
   service.pickCosmetic(slot, '19416', 'Blightfall - Head', '');
   assert.equal(picks().length, 1, 'one row for one item');
-  assert.equal(picks()[0].id, first.id);
+  assert.equal(picks()[0].id, first?.id);
   assert.equal(picks()[0].effectId, undefined, 'its effects are the last ones chosen');
   service.pickCosmetic(slot, '19416', 'Blightfall - Head', 'snow,fire');
   assert.equal(picks()[0].effectId, 'fire,snow');
@@ -544,7 +561,7 @@ test('choosing other effects for the same item changes its row instead of adding
 
 /** The builder's table with sets on top: what a set holds, as items_game lists it. */
 function itemSetTable() {
-  const block = (id, name, prefab, hero, extra = '') => `\t\t"${id}"
+  const block = (id: string, name: string, prefab: string, hero: string, extra = '') => `\t\t"${id}"
 \t\t{
 \t\t\t"name"\t\t"${name}"
 \t\t\t"prefab"\t\t"${prefab}"
@@ -554,7 +571,7 @@ ${extra}\t\t\t"used_by_heroes"
 \t\t\t}
 \t\t}
 `;
-  const bundle = (id, name, hero, pieces) => block(id, name, 'bundle', hero,
+  const bundle = (id: string, name: string, hero: string, pieces: string[]) => block(id, name, 'bundle', hero,
     `\t\t\t"bundle"\n\t\t\t{\n${pieces.map((p) => `\t\t\t\t"${p}"\t\t"1"\n`).join('')}\t\t\t}\n`);
   return itemWearableTable().replace(/\t}\n}\n$/, [
     block('9951', 'Sniper Spare Cape', 'wearable', 'sniper', '\t\t\t"item_slot"\t\t"back"\n'),
@@ -579,7 +596,7 @@ test('a wearable that names no slot is a weapon, as the game reads it', () => {
   const wand = schema.listItems(text).find((i) => i.name === 'Bloodseeker Headmaster Wand');
   assert.equal(schema.inferredItemSlot(wand), 'weapon');
   const slot = builder.itemSlots(text).find((s) => s.options.some((o) => o.id === '9953'));
-  assert.equal(slot.slot, 'item:bloodseeker:weapon');
+  assert.equal(slot?.slot, 'item:bloodseeker:weapon');
 });
 
 test('a set lists the hero items the builder puts on, and says why it leaves one out', () => {
@@ -587,10 +604,11 @@ test('a set lists the hero items the builder puts on, and says why it leaves one
   assert.deepEqual(sets.map((s) => s.name), ['Bloodseeker Set', 'Sniper Set'],
     'left out: a set with nothing to put on, a bundle of several sets, one Valve marks DO NOT USE');
   const sniper = sets.find((s) => s.name === 'Sniper Set');
+  assert.ok(sniper, 'the Sniper set is not listed');
   assert.equal(sniper.heroLabel, 'Sniper');
   assert.equal(sniper.fit, 2);
   // the loading screen is not a hero item: not listed, not counted
-  assert.deepEqual(sniper.pieces.map((p) => [p.name, p.fits, p.slot || p.reason]), [
+  assert.deepEqual(sniper.pieces.map((p) => [p.name, p.fits, p.fits ? p.slot : p.reason]), [
     ['Golden Full-Bore Bonanza', true, 'item:sniper:back'],
     ['No visuals here', true, 'item:sniper:head'],
     ['Sniper Persona Gun', false, 'an arcana or persona: the builder leaves those alone'],
@@ -600,8 +618,6 @@ test('a set lists the hero items the builder puts on, and says why it leaves one
 });
 
 test('a whole set goes on in one write, a row per piece, and a piece already on keeps its effects', (t) => {
-  const { createSchemaService } = require('../src/schema-service.js');
-  const { Library } = require('../src/library.ts');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-sets-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const game = path.join(dir, 'game');
@@ -609,10 +625,9 @@ test('a whole set goes on in one write, a row per piece, and a piece already on 
   fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), vpk.buildVpk([entry(schema.SCHEMA_REL, itemSetTable())]));
   const library = new Library(path.join(dir, 'lib'));
   // schemaPatch off: every write the service makes takes the table away and clears the stamp
-  const values = { dotaGamePath: game, schemaPatch: false };
   let writes = 0;
-  const settings = { get: (k) => values[k], set: (k, v) => { if (k === 'schemaStamp') writes++; values[k] = v; } };
-  const service = createSchemaService({ settings, library, installer: {}, userDataDir: dir });
+  const settings = settingsIn({ dotaGamePath: game, schemaPatch: false }, (k) => { if (k === 'schemaStamp') writes++; });
+  const service = createSchemaService({ settings, library, installer: NO_INSTALLER, userDataDir: dir });
   const picks = () => library.list().filter((r) => r.categoryId === 'cosmetic' && r.enabled !== false);
 
   service.pickCosmetic('item:sniper:head', '9457', 'No visuals here', 'fire,snow');

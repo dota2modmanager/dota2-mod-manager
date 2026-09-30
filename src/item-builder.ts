@@ -4,7 +4,7 @@
  * block in items_game under the stock item's id, name and prefab=default_item, drops the styles
  * and unlocks a free base item cannot use, adds the chosen particle effect to its visuals, and
  * lists the model and particles to copy out of the game's pak01 under the stock paths, so the
- * game draws the wearable where the stock item was. src/schema-service.js applies it along with
+ * game draws the wearable where the stock item was. src/schema-service.ts applies it along with
  * the rest of the free cosmetics; src/schema.ts reads and merges the table.
  *
  * Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
@@ -15,15 +15,36 @@
  * The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
  * the credits of the program it goes into.
  */
-const fs = require('fs');
-const path = require('path');
-const { openVpkIndex, crc32, heroDisplayName } = require('./vpk.ts');
-const { t } = require('./i18n.ts');
-const {
+import fs from 'node:fs';
+import path from 'node:path';
+import { openVpkIndex, crc32, heroDisplayName, type VpkEntry } from './vpk.ts';
+import { t } from './i18n.ts';
+import {
   findItem, itemFields, listItems, toUtf8, eachChild, blockBounds, stripKeyBlocks, itemSearchText, inferredItemSlot,
-} = require('./schema.ts');
+  type SchemaItem,
+} from './schema.ts';
 
-const ITEM_EFFECTS = [
+/** An effect the builder can add to an item: a particle it creates. */
+type ItemEffect = { id: string; name: string; type: string; modifier: string };
+
+/** A slot of a hero the builder can dress, and the paid items that fit it. */
+export interface ItemSlot {
+  slot: string; kind: 'item-effect'; base: string; targetId: string; equipSlot: string; heroIds: string[];
+  heroLabel: string; slotLabel: string; label: string; icon: string; options: { id: string; name: string }[];
+}
+
+/** One piece of a set: where it goes, or why it does not. */
+type SetPiece =
+  | { name: string; itemId: string; fits: true; slot: string; slotLabel: string }
+  | { name: string; itemId: string; fits: false; reason: string };
+
+/** A set, as the builder puts it on; see itemSets. */
+export interface ItemSet { id: string; name: string; heroIds: string[]; fit: number; heroLabel: string; pieces: SetPiece[] }
+
+/** A file in the game's archive staged under another path in the built VPK. */
+export type AssetCopy = { from: string; to: string };
+
+const ITEM_EFFECTS: ItemEffect[] = [
   {
     id: 'fire',
     name: 'Огонь',
@@ -83,7 +104,7 @@ const ITEM_EFFECTS = [
 
 const ITEM_HIDDEN_HEROES = new Set(['wisp', 'io']);
 
-const ITEM_SLOT_MATCH_ALIAS = {
+const ITEM_SLOT_MATCH_ALIAS: Record<string, string> = {
   offhand_weapon: 'offhand',
   offhand: 'offhand',
   shoulder: 'shoulders',
@@ -92,7 +113,7 @@ const ITEM_SLOT_MATCH_ALIAS = {
   arms: 'arms',
 };
 
-const ITEM_SLOT_LABEL = {
+const ITEM_SLOT_LABEL: Record<string, string> = {
   head: 'голова', body_head: 'голова (2)', hair: 'волосы', weapon: 'оружие', offhand: 'оружие (2)', offhand_weapon: 'доп. оружие', shield: 'щит', armor: 'броня',
   shoulder: 'плечи', shoulders: 'плечи', neck: 'шея', belt: 'пояс', arm: 'руки', arms: 'руки', gloves: 'перчатки', back: 'спина',
   wings: 'крылья', tail: 'хвост', legs: 'ноги', mount: 'ездовое', costume: 'костюм', misc: 'разное', ambient: 'эффекты', ambient_effects: 'эффекты',
@@ -106,44 +127,44 @@ const ITEM_SLOT_ORDER = [
   'ability4', 'ability_ultimate', 'summon', 'voice', 'shapeshift', 'misc',
 ];
 
-function canonicalHeroId(hero) {
+function canonicalHeroId(hero: unknown): string {
   const clean = String(hero || '').toLowerCase().replace(/^npc_dota_hero_/, '');
   return clean === 'io' ? 'wisp' : clean;
 }
 
-function canonicalItemSlot(slot) {
+function canonicalItemSlot(slot: unknown): string {
   return String(slot || '').toLowerCase();
 }
 
-function matchItemSlot(slot) {
+function matchItemSlot(slot: unknown): string {
   const clean = canonicalItemSlot(slot);
   return ITEM_SLOT_MATCH_ALIAS[clean] || clean;
 }
 
-function hiddenItemHeroes(heroes) {
+function hiddenItemHeroes(heroes: string[]): boolean {
   return heroes.some((hero) => ITEM_HIDDEN_HEROES.has(canonicalHeroId(hero)));
 }
 
-function itemSlotId(heroIds, slot) {
+function itemSlotId(heroIds: string[], slot: string): string {
   return `item:${heroIds.join('+')}:${slot}`;
 }
 
-function titleLabel(text) {
+function titleLabel(text: unknown): string {
   const s = String(text || '');
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
-function slotDisplayLabel(slot) {
+function slotDisplayLabel(slot: string): string {
   const equipSlot = canonicalItemSlot(slot);
   return titleLabel(t(ITEM_SLOT_LABEL[equipSlot] || equipSlot.replace(/_/g, ' ')));
 }
 
-function itemSlotLabel(heroIds, slot) {
+function itemSlotLabel(heroIds: string[], slot: string): string {
   const heroes = heroIds.map((id) => heroDisplayName(canonicalHeroId(id))).join(' / ');
   return `${heroes} · ${slotDisplayLabel(slot)}`;
 }
 
-function isArcanaPersonaItem(item) {
+function isArcanaPersonaItem(item: Partial<SchemaItem> | null): boolean {
   const text = itemSearchText(item);
   const slot = canonicalItemSlot(inferredItemSlot(item));
   return text.includes('arcana')
@@ -156,31 +177,32 @@ function isArcanaPersonaItem(item) {
     || slot === 'shapeshift_persona_1';
 }
 
-function itemSlotIcon(slot) {
+function itemSlotIcon(slot: string): string {
   return ({
     head: 'face', body_head: 'face', hair: 'content_cut', neck: 'checkroom', weapon: 'swords', offhand: 'shield', offhand_weapon: 'shield', shield: 'shield', armor: 'security',
     shoulder: 'accessibility_new', shoulders: 'accessibility_new', belt: 'checkroom', arm: 'front_hand', arms: 'front_hand', gloves: 'front_hand', back: 'checkroom',
     wings: 'flutter_dash', tail: 'gesture', legs: 'directions_run', mount: 'pets', costume: 'checkroom', ambient: 'auto_awesome', ambient_effects: 'auto_awesome',
     ability1: 'auto_fix_high', ability2: 'auto_fix_high', ability3: 'auto_fix_high', ability4: 'auto_fix_high', ability_ultimate: 'flash_on',
     summon: 'pets', voice: 'mic', shapeshift: 'pets', misc: 'checkroom',
-  })[canonicalItemSlot(slot)] || 'checkroom';
+  } as Record<string, string>)[canonicalItemSlot(slot)] || 'checkroom';
 }
 
 /** The effect variants the synthetic cosmetics/items picker can apply. */
-function itemEffects() {
+export function itemEffects(): { id: string; name: string }[] {
   return [{ id: '', name: t('Без эффекта') }, ...ITEM_EFFECTS.map(({ id, name }) => ({ id, name: t(name) }))];
 }
 
 /** Hero item slots built from real default_item entries, with one donor list per hero part. */
-function itemSlots(text) {
+export function itemSlots(text: string): ItemSlot[] {
   const items = listItems(text);
-  const heroCache = new Map();
-  const heroesOf = (item) => {
-    if (!heroCache.has(item.id)) heroCache.set(item.id, itemHeroes(text, item));
-    return heroCache.get(item.id);
+  const heroCache = new Map<string, string[]>();
+  const heroesOf = (item: SchemaItem): string[] => {
+    let heroes = heroCache.get(item.id);
+    if (!heroes) { heroes = itemHeroes(text, item); heroCache.set(item.id, heroes); }
+    return heroes;
   };
-  const slots = new Map();
-  const matchSlots = new Map();
+  const slots = new Map<string, ItemSlot>();
+  const matchSlots = new Map<string, string[]>();
   for (const item of items) {
     const equipSlot = canonicalItemSlot(inferredItemSlot(item));
     if (item.prefab !== 'default_item' || !equipSlot || isArcanaPersonaItem(item)) continue;
@@ -213,7 +235,7 @@ function itemSlots(text) {
     if (!heroes.length || hiddenItemHeroes(heroes)) continue;
     const heroIds = heroes.map(canonicalHeroId);
     const slotId = itemSlotId(heroIds, equipSlot);
-    let target = slots.get(slotId);
+    let target: ItemSlot | null | undefined = slots.get(slotId);
     if (!target) {
       const hits = matchSlots.get(itemSlotId(heroIds, matchItemSlot(equipSlot))) || [];
       if (hits.length === 1) target = slots.get(hits[0]) || null;
@@ -248,22 +270,21 @@ function itemSlots(text) {
  * bundle of several sets ("Bounty Hunter's Big Bundle": 22 items, 7 slots): more of its pieces
  * want a taken slot than fit, and the first of each would dress the hero in a mix of sets that
  * are each listed on their own anyway. Valve's "DO NOT USE" is left out as well.
- * @param {string} text  items_game
- * @param {Array<{ slot: string, slotLabel: string, options: Array<{ id: string }> }>} [slots]
- *   itemSlots(text), when the caller has it already
+ * @param text  items_game
+ * @param slots  itemSlots(text), when the caller has it already
  */
-function itemSets(text, slots = itemSlots(text)) {
+export function itemSets(text: string, slots: Pick<ItemSlot, 'slot' | 'slotLabel' | 'options'>[] = itemSlots(text)): ItemSet[] {
   const items = listItems(text);
   const byName = new Map(items.map((i) => [i.name, i]));
-  const home = new Map(); // wearable id -> its slot in the builder
+  const home = new Map<string, Pick<ItemSlot, 'slot' | 'slotLabel'>>(); // wearable id -> its slot in the builder
   for (const s of slots) for (const o of s.options) home.set(o.id, s);
-  const out = [];
+  const out: ItemSet[] = [];
   for (const set of items) {
     if (set.prefab !== 'bundle' || !set.bundleItems || !set.bundleItems.length || /do not use/i.test(set.name)) continue;
     const heroes = itemHeroes(text, set);
     if (!heroes.length || hiddenItemHeroes(heroes)) continue;
-    const pieces = [];
-    const taken = new Set();
+    const pieces: SetPiece[] = [];
+    const taken = new Set<string>();
     let collide = 0;
     for (const name of set.bundleItems) {
       const it = byName.get(name);
@@ -292,16 +313,15 @@ function itemSets(text, slots = itemSlots(text)) {
 }
 
 /** Wearable items with visuals and a matching stock default_item, offered under cosmetics/items. */
-function itemOptions(text) {
+export function itemOptions(text: string): { id: string; name: string }[] {
   return itemSlots(text).flatMap((slot) => slot.options);
 }
 
 // ---------- reading the game's own schema ----------
 
-function setScalarField(blockText, key, value) {
+function setScalarField(blockText: string, key: string, value: string): string {
   const body = blockBounds(blockText, 0);
-  /** @type {{ start: number, end: number } | null} */
-  let hit = null;
+  let hit = null as { start: number; end: number } | null;
   eachChild(blockText, body, (c) => {
     if (!hit && !c.isBlock && c.key.toLowerCase() === key.toLowerCase()) hit = c;
   });
@@ -311,10 +331,9 @@ function setScalarField(blockText, key, value) {
   return close === -1 ? blockText : `${blockText.slice(0, close)}\r\n\t${line}\r\n${blockText.slice(close)}`;
 }
 
-function setVisualsBlock(blockText, visuals) {
+function setVisualsBlock(blockText: string, visuals: string): string {
   const body = blockBounds(blockText, 0);
-  /** @type {{ start: number, end: number } | null} */
-  let hit = null;
+  let hit = null as { start: number; end: number } | null;
   eachChild(blockText, body, (c) => {
     if (!hit && c.isBlock && c.key.toLowerCase() === 'visuals') hit = c;
   });
@@ -324,7 +343,7 @@ function setVisualsBlock(blockText, visuals) {
   return close === -1 ? blockText : `${blockText.slice(0, close)}\r\n\t${clean}\r\n${blockText.slice(close)}`;
 }
 
-function itemEffectById(effectId) {
+function itemEffectById(effectId: unknown): ItemEffect | null {
   const want = String(effectId || '').trim().toLowerCase();
   return ITEM_EFFECTS.find((e) => e.id === want) || null;
 }
@@ -334,9 +353,8 @@ function itemEffectById(effectId) {
  * comma separated, '' for none. A pick carries several (the window says "you can pick several"),
  * and this is how a record stores them and how two picks are told apart, so "fire,snow" and
  * "snow,fire" are the same pick.
- * @param {string|string[]|null|undefined} effectIds
  */
-function effectKey(effectIds) {
+export function effectKey(effectIds: string | string[] | null | undefined): string {
   const want = new Set((Array.isArray(effectIds) ? effectIds : String(effectIds || '').split(','))
     .map((id) => String(id).trim().toLowerCase())
     .filter(Boolean));
@@ -346,12 +364,12 @@ function effectKey(effectIds) {
   return [...known, ...unknown].join(',');
 }
 
-function setBlockId(blockText, id) {
+function setBlockId(blockText: string, id: string): string {
   return String(blockText).replace(/^\s*"\d+"/, `"${id}"`);
 }
 
-function itemHeroes(text, item) {
-  const out = [];
+function itemHeroes(text: string, item: { start: number }): string[] {
+  const out: string[] = [];
   eachChild(text, blockBounds(text, item.start), (c) => {
     if (!c.isBlock || c.key.toLowerCase() !== 'used_by_heroes') return;
     eachChild(text, c.body, (h) => {
@@ -362,28 +380,28 @@ function itemHeroes(text, item) {
   return out.sort();
 }
 
-function itemBlock(text, item) {
+function itemBlock(text: string, item: { start: number; end: number }): string {
   return text.slice(item.start, item.end);
 }
 
-function itemVisuals(text, item) {
-  let visuals = null;
+function itemVisuals(text: string, item: { start: number }): string | null {
+  let visuals = null as string | null;
   eachChild(text, blockBounds(text, item.start), (c) => {
     if (c.isBlock && c.key.toLowerCase() === 'visuals') visuals = text.slice(c.start, c.end);
   });
   return visuals;
 }
 
-function normalizeAssetPath(p) {
+function normalizeAssetPath(p: unknown): string {
   return String(p || '').toLowerCase().replace(/\\/g, '/').replace(/^\/+/, '');
 }
 
-function compiledAssetPath(p) {
+function compiledAssetPath(p: unknown): string {
   const clean = normalizeAssetPath(p);
   return clean.endsWith('_c') ? clean : `${clean}_c`;
 }
 
-function vpkEntryForPath(relPath, data) {
+function vpkEntryForPath(relPath: string, data: Buffer): VpkEntry {
   const lower = normalizeAssetPath(relPath);
   const slash = lower.lastIndexOf('/');
   const file = slash === -1 ? lower : lower.slice(slash + 1);
@@ -398,12 +416,12 @@ function vpkEntryForPath(relPath, data) {
   };
 }
 
-function sameHeroes(a, b) {
+function sameHeroes(a: string[], b: string[]): boolean {
   return a.length === b.length && a.every((h, i) => h === b[i]);
 }
 
 /** The stock default_item that matches a wearable by slot and by the hero(es) that can equip it. */
-function defaultItemForWearable(text, sourceId) {
+export function defaultItemForWearable(text: string, sourceId: string | number): SchemaItem | null {
   const source = findItem(text, sourceId);
   if (!source) throw new Error(t('items_game: предмет {0} не найден', sourceId));
   const sourceFields = itemFields(text, source);
@@ -428,11 +446,11 @@ function defaultItemForWearable(text, sourceId) {
     .sort((a, b) => Number(a.id) - Number(b.id))[0] || null;
 }
 
-function particleVisualCopies(visuals) {
-  const copies = [];
+function particleVisualCopies(visuals: string): AssetCopy[] {
+  const copies: AssetCopy[] = [];
   eachChild(visuals, blockBounds(visuals, 0), (c) => {
     if (!c.isBlock || c.key.toLowerCase() !== 'asset_modifier') return;
-    const fields = new Map();
+    const fields = new Map<string, string>();
     eachChild(visuals, c.body, (f) => { if (!f.isBlock) fields.set(f.key.toLowerCase(), f.value); });
     if ((fields.get('type') || '').toLowerCase() !== 'particle') return;
     const asset = fields.get('asset');
@@ -443,15 +461,16 @@ function particleVisualCopies(visuals) {
   return copies;
 }
 
-function appendItemEffect(visuals, effect) {
+function appendItemEffect(visuals: string, effect: ItemEffect): string {
   const needle = String(effect.modifier || '').toLowerCase();
   if (needle && visuals.toLowerCase().includes(needle)) return visuals;
   const block = `"asset_modifier"\r\n{\r\n\t"type"\t\t"${effect.type}"\r\n\t"modifier"\t\t"${effect.modifier}"\r\n}`;
-  let after = null;
-  let before = null;
+  // set from inside the walk, which is why they are widened by hand
+  let after = null as number | null;
+  let before = null as number | null;
   eachChild(visuals, blockBounds(visuals, 0), (c) => {
     if (!c.isBlock || c.key.toLowerCase() !== 'asset_modifier') return;
-    const fields = new Map();
+    const fields = new Map<string, string>();
     eachChild(visuals, c.body, (f) => { if (!f.isBlock) fields.set(f.key.toLowerCase(), f.value); });
     const type = (fields.get('type') || '').toLowerCase();
     if (type === 'particle_create') after = c.end;
@@ -460,7 +479,7 @@ function appendItemEffect(visuals, effect) {
   const close = visuals.lastIndexOf('}');
   const at = before ?? after ?? close;
   if (at === -1) return visuals;
-  const prefix = after === null ? '\r\n\t' : '\r\n\t';
+  const prefix = '\r\n\t';
   const suffix = before === null ? '\r\n' : '\r\n\t';
   return `${visuals.slice(0, at)}${prefix}${block}${suffix}${visuals.slice(at)}`;
 }
@@ -472,9 +491,8 @@ function appendItemEffect(visuals, effect) {
  * dropped, and the chosen effect is inserted into visuals. The donor model/particles stay named
  * as the paid item in items_game, while assetCopies still describe the stock-path overrides the
  * built VPK should carry.
- * @returns {{ id: string, block: string, assetCopies: Array<{from: string, to: string}> }}
  */
-function itemEffectPatch(baseText, itemId, effectIds) {
+export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined): { id: string; block: string; assetCopies: AssetCopy[] } {
   const source = findItem(baseText, itemId);
   if (!source) throw new Error(t('items_game: предмет {0} не найден', itemId));
   const target = defaultItemForWearable(baseText, itemId);
@@ -490,7 +508,7 @@ function itemEffectPatch(baseText, itemId, effectIds) {
   const targetFields = itemFields(baseText, target);
   let visuals = itemVisuals(baseText, source) || '"visuals"\r\n{\r\n}';
 
-  const assetCopies = [];
+  const assetCopies: AssetCopy[] = [];
   const sourceModel = sourceFields.get('model_player') || '';
   const targetModel = targetFields.get('model_player') || '';
   if (sourceModel && targetModel && normalizeAssetPath(sourceModel) !== normalizeAssetPath(targetModel)) {
@@ -510,12 +528,12 @@ function itemEffectPatch(baseText, itemId, effectIds) {
 }
 
 /** Read compiled asset bytes out of pak01 and stage them under the renamed path in our VPK. */
-function gameAssetEntries(gamePath, assetCopies) {
+export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | null | undefined): VpkEntry[] {
   const pak = path.join(gamePath, 'dota', 'pak01_dir.vpk');
   if (!fs.existsSync(pak)) throw new Error(t('Не найден {0}', pak));
   const ix = openVpkIndex(pak);
-  const out = [];
-  const seen = new Set();
+  const out: VpkEntry[] = [];
+  const seen = new Set<string>();
   for (const copy of assetCopies || []) {
     const from = compiledAssetPath(copy.from);
     const to = compiledAssetPath(copy.to);
@@ -528,15 +546,3 @@ function gameAssetEntries(gamePath, assetCopies) {
   return out;
 }
 
-// ---------- build ----------
-
-module.exports = {
-  effectKey,
-  itemEffects,
-  itemSets,
-  itemOptions,
-  itemSlots,
-  defaultItemForWearable,
-  itemEffectPatch,
-  gameAssetEntries,
-};

@@ -16,13 +16,9 @@ import AdmZip from 'adm-zip';
 import { openZip, type OpenedZip } from './safe-zip.ts';
 import { t } from './i18n.ts';
 
-/** One line of a preset's mod list, as the file carries it. */
-export type PresetEntry =
-  | { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null; fp: string | null }
-  | { kind: 'embedded'; name: string; file: string; categoryId: string; size: number; fp: string | null; info: string }
-  | { kind: 'cosmetic'; name: string; slot: string; itemId: string; effectId: string }
-  | { kind: 'pack'; name: string; members: PresetEntry[] }
-  | { kind: 'missing'; name: string; reason: string };
+import type { PresetEntry } from './types.ts';
+
+export type { PresetEntry };
 
 /** preset.json once it has been checked: everything a receiver is shown before installing. */
 export interface PresetManifest {

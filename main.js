@@ -30,7 +30,7 @@ const { SCHEME } = require('./src/preset-link.ts');
 const discordAuth = require('./src/discord-auth.ts');
 const { DiscordPresence } = require('./src/discord-presence.ts');
 const { findDotaGamePath, validateGamePath } = require('./src/steam.ts');
-const { createSchemaService } = require('./src/schema-service');
+const { createSchemaService } = require('./src/schema-service.ts');
 const { createRemoteConfig } = require('./src/remote-config.ts');
 // the download chain, so a mirror named in that signed file joins it (electron's own `net` is above)
 const { applyMirrors } = require('./src/net.ts');
@@ -42,13 +42,13 @@ const portableUpdater = require('./src/portable-update.ts');
 const { createUpdater } = require('./src/updater.ts');
 const { channelFor } = require('./src/beta.ts');
 const { gameStamp, createPatchWatcher } = require('./src/patch-watch.ts');
-const { Icons } = require('./src/icons');
+const { Icons } = require('./src/icons.ts');
 const gamelang = require('./src/gamelang.ts');
 // handed to src/ipc-settings.js by name, the same one it has always been passed under
 const { moveLangFolder } = gamelang;
 const { uninstallFlow } = require('./src/uninstall-window');
 const { isUninstallRun } = require('./src/uninstall-args.ts');
-const { presetsService } = require('./src/presets-service');
+const { presetsService } = require('./src/presets-service.ts');
 const { registerPresetsIpc } = require('./src/ipc-presets');
 const { registerModsIpc } = require('./src/ipc-mods');
 const { createGate } = require('./src/feature-gate.ts');
@@ -419,7 +419,7 @@ function createWindow() {
   }
 }
 
-// A small rotating log every install keeps, so a support report (see src/diagnostics.js and
+// A small rotating log every install keeps, so a support report (see src/diagnostics.ts and
 // the diag:export handler below) doesn't depend on reproducing the problem live. MM_DIAG is
 // a separate, opt-in mirror to an arbitrary path, used only by the screenshot test harness.
 let _logFile = null;
@@ -481,7 +481,7 @@ app.whenReady().then(async () => {
      after this build shipped is in the chain from the first download rather than the second run. */
   applyMirrors(remoteConfig.mirrors());
   remoteConfig.refresh().then(() => applyMirrors(remoteConfig.mirrors()));
-  // pictures for the cosmetics picker come through Electron's network stack (see src/icons.js)
+  // pictures for the cosmetics picker come through Electron's network stack (see src/icons.ts)
   icons = new Icons(userData, net.fetch);
   // ...unless the Source 2 toolchain is here, in which case they come out of the game itself
   toolchain = createToolchain({ userDataDir: userData, onProgress: sendProgress, log: diag });
@@ -816,7 +816,7 @@ const importVpkBuffers = (items) => runImport(importer.importVpkBuffers, Array.i
 // ---------- item schema (game/dota_mods) ----------
 // The engine reads scripts/items/items_game.txt through the MOD path - the game's own dota
 // folder - so nothing in a language folder can override it. Mods therefore never ship their
-// copy: src/schema-service.js lifts the blocks they changed and splices them into the game's
+// copy: src/schema-service.ts lifts the blocks they changed and splices them into the game's
 // CURRENT table. Everything below is a thin call into that service.
 
 // Whether toggling/removing this record can change what belongs in the built schema: a mod

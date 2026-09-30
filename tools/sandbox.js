@@ -179,7 +179,7 @@ const BUILDER_SAMPLE = [
 
 function builderAssets(real, schemaText) {
   const { openVpkIndex } = require('../src/vpk.ts');
-  const builder = require('../src/item-builder.js');
+  const builder = require('../src/item-builder.ts');
   const out = [];
   try {
     const ix = openVpkIndex(path.join(real, 'dota', 'pak01_dir.vpk'));

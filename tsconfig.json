@@ -15,7 +15,6 @@
 //     to TypeScript import, and some of those use import.meta. CommonJS rejected the last, and
 //     preserve reads each file the way it is written. Resolution is bundler's, which finds a
 //     require('./x') the way Node does.
-//   resolveJsonModule - src/icons.js reads package.json for the version, which is real.
 //   allowImportingTsExtensions - the modules already moved to TypeScript are required by their
 //     .ts name, which is how Node finds them. Their own checking is src/tsconfig.json, strict.
 //   esModuleInterop - those modules import Node's own the ES way (import fs from 'node:fs'), and
@@ -33,7 +32,6 @@
     "target": "ES2022",
     "module": "preserve",
     "moduleResolution": "bundler",
-    "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

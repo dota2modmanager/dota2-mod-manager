@@ -1,29 +1,17 @@
-/* The catalog index presets are measured against (src/presets-service.js catalogIndex).
+/* The catalog index presets are measured against (src/presets-service.ts catalogIndex).
  *
  * Listing, sharing and applying a preset all ask it cat.lookup(category, name, style). The method
  * used to be attached as the last step, after the catalog loaded, so a catalog that could not be
  * loaded at all (a first start with no network and nothing cached) returned a map without it, and
  * each of those calls threw. Found by the type checker, not by a report: rare, and total when hit.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const Module = require('module');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { presetsService } from '../src/presets-service.ts';
 
-/** presetsService with a catalog that answers `load`, and Electron stubbed out. */
-function serviceWith(load) {
-  const real = Module._load;
-  Module._load = function stubbed(request, ...rest) {
-    if (request === 'electron') return { app: { getPath: () => '' } };
-    return real.call(this, request, ...rest);
-  };
-  const file = require.resolve('../src/presets-service.js');
-  delete require.cache[file];
-  try {
-    const { presetsService } = require(file);
-    return presetsService({ catalog: { load }, installer: {}, library: {}, schemaService: {}, deployAndApply: () => [] });
-  } finally {
-    Module._load = real;
-  }
+/** presetsService with a catalog that answers `load`; nothing else it is handed is asked. */
+function serviceWith(load: () => Promise<unknown>) {
+  return presetsService({ catalog: { load }, installer: {}, library: {}, schemaService: {}, deployAndApply: () => [] } as unknown as Parameters<typeof presetsService>[0]);
 }
 
 test('with no catalog to load, the index still answers lookups, with nothing', async () => {

@@ -4,32 +4,40 @@
  * worse than no verdict - it sends whoever is helping down the wrong path - so the checks are
  * pinned here rather than eyeballed once when they were written.
  */
-const test = require('node:test');
-const assert = require('node:assert');
-const { buildReport, findProblems, renderSummary, renderDetailed } = require('../src/diagnostics');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const AdmZip = require('adm-zip');
+import test from 'node:test';
+import assert from 'node:assert';
+import { buildReport, findProblems, renderSummary, renderDetailed, type Report } from '../src/diagnostics.ts';
+import type { StoredSettings } from '../src/settings.ts';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import AdmZip from 'adm-zip';
+import * as net from '../src/net.ts';
 
 // A report with nothing wrong with it, which each test then breaks in exactly one way.
-const healthy = () => ({
+const healthy = (): Report => ({
   generatedAt: '2026-08-09T12:00:00.000Z',
-  app: { version: '2.0.0', platform: 'win32 10.0.26200 x64', uiLang: 'ru' },
-  settings: { langSuffix: 'russian' },
+  app: { version: '2.0.0', platform: 'win32 10.0.26200 x64', node: '24.21.0', uiLang: 'ru' },
+  settings: { langSuffix: 'russian', dotaGamePath: 'C:/dota/game' },
   dota: {
     path: 'C:/dota/game', pathValid: true,
-    detectedLang: { suffix: 'russian' },
-    langFolders: [{ suffix: 'russian', modFiles: 14 }],
+    detectedLang: { suffix: 'russian', source: 'boot', uiLanguage: 'russian', audio: 'russian' },
+    bootLanguages: { ui: 'russian', audio: 'russian' },
+    steamLanguage: 'russian',
+    langFolders: [{ suffix: 'russian', official: true, valveContent: true, modFiles: 14 }],
     activeVoiceInstalled: true,
+    minifyDetected: false,
   },
   patchAndSchema: { patched: true, schemaNeeded: false, schemaApplied: true },
-  mirrors: [{ host: 'raw.githubusercontent.com', failures: 0 }],
-  library: { totalRecords: 14, enabled: 14, disabled: 0, packs: 0, presets: 1, fileOverlaps: 0, byCategory: { heroes: 11 } },
-  catalogCache: {},
+  mirrors: [{ host: 'raw.githubusercontent.com', fails: 0, standingDownFor: 0 }],
+  library: { totalRecords: 14, enabled: 14, disabled: 0, packs: 0, withSchemaEdits: 0, presets: 1, fileOverlaps: 0, byCategory: { heroes: 11 } },
+  catalogCache: { fetchedAt: null },
   caches: { downloadCacheBytes: 1024, iconCacheBytes: 0 },
-  disk: { freeBytes: 40 * 1024 ** 3 },
+  disk: { freeBytes: 40 * 1024 ** 3, totalBytes: 100 * 1024 ** 3 },
+  installedMods: [],
   dotaRunning: false,
+  windows: null, rendererErrors: null, updater: null, remoteConfig: null, toolchain: null, displays: null, gpu: null,
+  problems: [],
 });
 
 test('a healthy install produces no verdicts at all', () => {
@@ -48,7 +56,7 @@ test('no game path is broken, not a note', () => {
 
 test('installing into a folder the game does not mount is broken', () => {
   const r = healthy();
-  r.dota.detectedLang.suffix = 'english';
+  r.dota.detectedLang = { suffix: 'english', source: 'boot', uiLanguage: 'english', audio: 'english' };
   const p = findProblems(r).filter((x) => x.level === 'broken');
   assert.strictEqual(p.length, 1);
   assert.match(p[0].detail, /dota_english/);
@@ -57,26 +65,40 @@ test('installing into a folder the game does not mount is broken', () => {
 
 test('an unpatched game is broken', () => {
   const r = healthy();
-  r.patchAndSchema.patched = false;
+  r.patchAndSchema = { ...r.patchAndSchema, patched: false };
   assert.ok(findProblems(r).some((x) => x.level === 'broken' && /not patched/i.test(x.what)));
 });
 
 test('mods left in another language folder are a note, not a failure', () => {
   const r = healthy();
-  r.dota.langFolders.push({ suffix: 'english', modFiles: 3 });
+  r.dota.langFolders.push({ suffix: 'english', official: false, valveContent: false, modFiles: 3 });
   const p = findProblems(r);
   assert.strictEqual(p.length, 1);
   assert.strictEqual(p[0].level, 'note');
   assert.match(p[0].what, /dota_english/);
 });
 
+test('mirrors that really failed this session are reported, in the shape net.ts keeps them', async (t) => {
+  /* The check read `failures` while net.ts has always kept `fails`, so from 2026-08-09 no report
+     ever said the mirrors were down, and the test above passed on a fixture that spelled it the
+     same wrong way. This one takes the list from the module that keeps it. */
+  net.resetHealth();
+  net.setMirrors([{ host: 'one.invalid', map: () => 'http://127.0.0.1:9/a' }, { host: 'two.invalid', map: () => 'http://127.0.0.1:9/b' }]);
+  t.after(() => { net.setMirrors(null); net.resetHealth(); });
+  await assert.rejects(() => net.fetchText('https://raw.githubusercontent.com/x/y/main/z.json'));
+
+  const report = { ...healthy(), mirrors: net.mirrorHealth() };
+  assert.ok(report.mirrors.length >= 2 && report.mirrors.every((m) => m.fails > 0), 'the mirrors did not record their failures');
+  assert.ok(findProblems(report).some((x) => x.level === 'broken' && /every download mirror/i.test(x.what)));
+});
+
 test('all mirrors down is broken; some down is a note', () => {
   const all = healthy();
-  all.mirrors = [{ host: 'a', failures: 3 }, { host: 'b', failures: 5 }];
+  all.mirrors = [{ host: 'a', fails: 3, standingDownFor: 0 }, { host: 'b', fails: 5, standingDownFor: 0 }];
   assert.ok(findProblems(all).some((x) => x.level === 'broken' && /every download mirror/i.test(x.what)));
 
   const some = healthy();
-  some.mirrors = [{ host: 'a', failures: 3 }, { host: 'b', failures: 0 }];
+  some.mirrors = [{ host: 'a', fails: 3, standingDownFor: 0 }, { host: 'b', fails: 0, standingDownFor: 0 }];
   const p = findProblems(some);
   assert.strictEqual(p.length, 1);
   assert.strictEqual(p[0].level, 'note');
@@ -84,7 +106,7 @@ test('all mirrors down is broken; some down is a note', () => {
 
 test('a nearly full drive is broken', () => {
   const r = healthy();
-  r.disk.freeBytes = 900 * 1024 ** 2;
+  r.disk = { freeBytes: 900 * 1024 ** 2, totalBytes: 100 * 1024 ** 3 };
   assert.ok(findProblems(r).some((x) => x.level === 'broken' && /free/i.test(x.what)));
 });
 
@@ -96,7 +118,7 @@ test('the summary leads with the verdict and never prints JSON', () => {
   assert.ok(!clean.includes('{'), 'the short report is for a human, not a parser');
 
   const bad = healthy();
-  bad.patchAndSchema.patched = false;
+  bad.patchAndSchema = { ...bad.patchAndSchema, patched: false };
   bad.problems = findProblems(bad);
   const text = renderSummary(bad);
   assert.match(text, /BROKEN \(1\)/);
@@ -105,7 +127,7 @@ test('the summary leads with the verdict and never prints JSON', () => {
 
 test('the detailed report carries every section and the mod list', () => {
   const r = healthy();
-  r.installedMods = [{ i: 1, slot: 10, name: 'Gopo Pudge', categoryId: 'heroes', enabled: true }];
+  r.installedMods = [{ i: 1, slot: 10, name: 'Gopo Pudge', categoryId: 'heroes', enabled: true, kind: 'mod', files: 1 }];
   r.problems = findProblems(r);
   const md = renderDetailed(r, { 'app.log': 'hello' });
   for (const heading of ['Verdicts', 'App and system', 'Settings', 'Dota', 'Library', 'Installed mods', 'Files in this archive']) {
@@ -122,11 +144,11 @@ test('diagnostic report does not expose the account name', () => {
   const game = path.join(home, 'Dota 2 Mod Manager');
 
   const { report, files } = buildReport({
-    settings: { all: () => ({ langSuffix: 'english', uiLang: 'en', dotaGamePath: game }) },
+    settings: { all: () => ({ langSuffix: 'english', uiLang: 'en', dotaGamePath: game }) as StoredSettings },
     library: { list: () => [], listPresets: () => [] },
     installer: { coverage: () => new Set(), downloadCacheSize: () => 0, slotNumber: () => 1 },
     schemaService: { state: () => ({}) },
-    catalog: { cacheInfo: () => ({}) },
+    catalog: { cacheInfo: () => ({ fetchedAt: null }) },
     app: { version: 'test', userDataDir: game },
     home,
   });
@@ -158,9 +180,9 @@ test('diagnostic report does not expose the account name', () => {
  * that the two lists of names agree.
  */
 test('every field the main process gathers for the report is copied into it', () => {
-  const read = (rel) => fs.readFileSync(path.join(__dirname, '..', rel), 'utf8');
+  const read = (rel: string) => fs.readFileSync(path.join(import.meta.dirname, '..', rel), 'utf8');
   const gatherer = read('src/ipc-diagnostics.js');
-  const builder = read('src/diagnostics.js');
+  const builder = read('src/diagnostics.ts');
 
   const at = gatherer.indexOf('extra: {');
   assert.ok(at > 0, 'ipc-diagnostics.js no longer passes an extra object; this test stopped reading');
@@ -203,7 +225,7 @@ test('the detailed report shows the screens and the graphics card when it has th
 
 test('a mod name with a pipe cannot break the table it is printed in', () => {
   const r = healthy();
-  r.installedMods = [{ i: 1, slot: 10, name: 'a | b', categoryId: 'heroes', enabled: true }];
+  r.installedMods = [{ i: 1, slot: 10, name: 'a | b', categoryId: 'heroes', enabled: true, kind: 'mod', files: 1 }];
   r.problems = [];
   const row = renderDetailed(r, {}).split('\n').find((l) => l.includes('a /'));
   assert.ok(row, 'the pipe should have been replaced');

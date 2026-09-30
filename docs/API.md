@@ -19,7 +19,7 @@ the code, not in this page.
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
 | [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
-| [`src/diagnostics.js`](#srcdiagnosticsjs) | A support report a user can send instead of a round of screenshots: Dota's own path and |
+| [`src/diagnostics.ts`](#srcdiagnosticsts) | A support report a user can send instead of a round of screenshots: Dota's own path and |
 | [`src/discord-auth.ts`](#srcdiscord-authts) | Sign in with Discord, without a server of our own. |
 | [`src/discord-presence.ts`](#srcdiscord-presencets) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
 | [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
@@ -29,10 +29,10 @@ the code, not in this page.
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (main.js, installer.js, vpk.js). |
-| [`src/icons.js`](#srciconsjs) | Pictures for the cosmetics picker, and for the Library where a picture can be found for |
+| [`src/icons.ts`](#srciconsts) | Pictures for the cosmetics picker, and for the Library where a picture can be found for |
 | [`src/import.js`](#srcimportjs) | Taking in a mod the user already has: a .vpk, a .zip, a folder, or bytes off a drop. |
 | [`src/installer.js`](#srcinstallerjs) | Installer engine: download, extract, pak allocation, per-category install/uninstall |
-| [`src/item-builder.js`](#srcitem-builderjs) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
+| [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
 | [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
@@ -46,10 +46,10 @@ the code, not in this page.
 | [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
 | [`src/preset-link.ts`](#srcpreset-linkts) | Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed |
 | [`src/preset-share.ts`](#srcpreset-sharets) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
-| [`src/presets-service.js`](#srcpresets-servicejs) | Presets, and the two ways one travels to somebody else. |
+| [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
 | [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
-| [`src/schema-service.js`](#srcschema-servicejs) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
+| [`src/schema-service.ts`](#srcschema-servicets) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
 | [`src/schema.ts`](#srcschemats) | Item-schema engine: the game's own scripts/items/items_game.txt is the only place |
 | [`src/settings.ts`](#srcsettingsts) | Simple JSON settings store in userData |
 | [`src/slot-zones.ts`](#srcslot-zonests) | The load order in two parts. |
@@ -78,7 +78,7 @@ instead, which is why a received build showed up unnamed, unrecognised and still
 that cannot happen again.
 
 Lifted out of main.js unchanged, with the services arriving as arguments the way
-src/cursors.ts and src/presets-service.js take them. It moved for the same reason the
+src/cursors.ts and src/presets-service.ts take them. It moved for the same reason the
 cursors did: main.js cannot be required by a test, so none of this could be tested where it
 was, and it decides what a user sees in their library.
 
@@ -416,7 +416,7 @@ renaming paks leaves them untouched, and a folder that drifted from the manifest
 put back at startup.
 
 Lifted out of main.js unchanged, with the services arriving as arguments the way
-src/presets-service.js takes them. It moved for a reason beyond size: main.js cannot be
+src/presets-service.ts takes them. It moved for a reason beyond size: main.js cannot be
 required by a test (it pulls in Electron), so the startup repair below - which decides
 whether a user's cursor comes back after a game update or a Steam verify - could not be
 tested where it was. test/cursors.test.ts is what the move is for.
@@ -457,7 +457,7 @@ export function createCursors({ installer, library, settings }: { installer: Cur
 @param ctx.settings   read for the game path, which the repair needs
 ```
 
-## src/diagnostics.js
+## src/diagnostics.ts
 
 A support report a user can send instead of a round of screenshots: Dota's own path and
 language settings, the app's settings and installed mods, the patch/schema state, a
@@ -466,34 +466,42 @@ listing of the mod folder's pak files, and the app's own recent log.
 Pure data in, pure data out - no Electron here, no zip - so main.js decides how it is
 packaged (see the diag:export handler) and this stays exercisable on its own.
 
-### `buildReport`
+### `Problem`
 
-```js
-function buildReport({ settings, library, installer, schemaService, catalog, icons, app, extra = {}, home })
+```ts
+export interface Problem { level: 'broken' | 'note'; what: string; detail: string }
 ```
 
+One thing the report says is wrong, and what to do about it. Two levels on purpose; see findProblems.
+
+### `ReportInstaller`
+
+```ts
+export interface ReportInstaller
 ```
-@param {object} deps
-@param {import('./settings').Settings} deps.settings
-@param {import('./library').Library} deps.library
-@param {import('./installer').Installer} deps.installer
-@param {ReturnType<import('./schema-service').createSchemaService>} deps.schemaService
-@param {import('./catalog').Catalog} deps.catalog
-@param {import('./icons').Icons} [deps.icons]
-@param {{version: string, logFile?: string, userDataDir?: string, updateError?: string}} deps.app
-@param {string} [deps.home]  the home directory to hide, for a test that cannot have one
-@param {object} [deps.extra] facts only the main process can answer: whether Dota is
-running, the open windows, errors the interface has reported, the updater's state, the
-remote config and the toolchain. Passed in so this module stays free of Electron.
-@returns {{report: object, files: object}}
-report: the structured data to write as report.json
-files: extra plain-text files to include verbatim, keyed by name inside the zip
+
+What of the installer a report asks: which mods are overruled, the download cache, a record's slot.
+
+### `ReportExtra`
+
+```ts
+export interface ReportExtra
 ```
+
+Facts only the main process can answer, handed in so this module stays free of Electron.
+
+### `Report`
+
+```ts
+export interface Report
+```
+
+The support report: what report.json holds, and what the two renderings read.
 
 ### `listFolder`
 
-```js
-function listFolder(dir)
+```ts
+export function listFolder(dir: string): Listed[] | null
 ```
 
 Nothing about a folder listing that matters for troubleshooting needs the file's bytes,
@@ -501,17 +509,33 @@ only its shape - names, sizes, when they last changed.
 
 ### `tailLog`
 
-```js
-function tailLog(file, maxBytes)
+```ts
+export function tailLog(file: string, maxBytes: number): string | null
 ```
 
-The last chunk of a log file - a support conversation is almost always about what just
-happened, not the file's whole history.
+The last `maxBytes` of a log file, or null when it cannot be read.
+
+### `buildReport`
+
+```ts
+export function buildReport({ settings, library, installer, schemaService, catalog, icons, app, extra = {}, home }: { settings: Pick<Settings, 'all'>; library: Pick<Library, 'list' | 'listPresets'>; installer: ReportInstaller; schemaService: { state(): PatchState }; catalog: Pick<Catalog, 'cacheInfo'>; icons?: Pick<Icons, 'size'> | null; app: { version: string; logFile?: string; userDataDir?: string; updateError?: string }; extra?: ReportExtra; home?: string; }): { report: Report; files: Record<string, string> }
+```
+
+Everything a support report carries, gathered from the running services.
+
+```
+@param deps.home  the home directory to hide, for a test that cannot have one
+@param deps.extra facts only the main process can answer: whether Dota is
+running, the open windows, errors the interface has reported, the updater's state, the
+remote config and the toolchain. Passed in so this module stays free of Electron.
+@returns report: the structured data to write as report.json;
+files: extra plain-text files to include verbatim, keyed by name inside the zip
+```
 
 ### `findProblems`
 
-```js
-function findProblems(r, { app } = /** @type {{app?: object}} */ ({}))
+```ts
+export function findProblems(r: Omit<Report, 'problems'>, { app }: { app?: { updateError?: string } } = {}): Problem[]
 ```
 
 ---------- what is wrong, said out loud ----------
@@ -522,28 +546,19 @@ or something is worth knowing. A third level would just be a place to hide thing
 
 ### `renderSummary`
 
-```js
-function renderSummary(r)
+```ts
+export function renderSummary(r: Report): string
 ```
 
----------- the short one ----------
-
-One screen, plain sentences, no JSON. It exists because the person who reads these first
-should not have to open four files to find out whether the game is even where the app
-thinks it is. If nothing is wrong it says so in the first line, which is the answer most
-of the time.
+The one-screen summary: what is wrong first, then the basics.
 
 ### `renderDetailed`
 
-```js
-function renderDetailed(r, files = {})
+```ts
+export function renderDetailed(r: Report, files: Record<string, string> = {}): string
 ```
 
----------- the long one ----------
-
-The same data with nothing left out, laid out to be read rather than parsed: whoever is
-looking at this is trying to work out what happened, and JSON makes that harder than a
-heading and a table. report.json is still in the zip for anything that wants the raw shape.
+Everything in the report, laid out to be read: REPORT.md.
 
 ## src/discord-auth.ts
 
@@ -1158,7 +1173,7 @@ export function t(ru: string, ...values: unknown[]): string
 
 t('Мод не найден') or t('HTTP {0} — не удалось скачать {1}', status, name)
 
-## src/icons.js
+## src/icons.ts
 
 Pictures for the cosmetics picker, and for the Library where a picture can be found for
 content that is not a cosmetic at all.
@@ -1177,11 +1192,11 @@ Everything is cached on disk, misses included: 2000 loading screens must not tur
 
 ### `Icons`
 
-```js
-class Icons
+```ts
+export class Icons
 ```
 
-_No description in the source._
+Cosmetic and hero pictures off the Dota wikis, cached on disk with the misses remembered.
 
 ## src/import.js
 
@@ -1306,7 +1321,7 @@ Merging a multi-volume import into one file holds the whole mod in memory once. 
 above any real skin pack (a Skinchanger export is ~70 MB), but a multi-GB set is left
 in its original volumes rather than risking the allocation.
 
-## src/item-builder.js
+## src/item-builder.ts
 
 The item builder: a hero's stock item built from one of its wearables, with an effect on top.
 
@@ -1314,7 +1329,7 @@ For each hero and slot the free cosmetics offer that hero's wearables. Picking o
 block in items_game under the stock item's id, name and prefab=default_item, drops the styles
 and unlocks a free base item cannot use, adds the chosen particle effect to its visuals, and
 lists the model and particles to copy out of the game's pak01 under the stock paths, so the
-game draws the wearable where the stock item was. src/schema-service.js applies it along with
+game draws the wearable where the stock item was. src/schema-service.ts applies it along with
 the rest of the free cosmetics; src/schema.ts reads and merges the table.
 
 Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
@@ -1325,33 +1340,50 @@ SPDX-License-Identifier: GPL-3.0-or-later
 The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
 the credits of the program it goes into.
 
-### `effectKey`
+### `ItemSlot`
 
-```js
-function effectKey(effectIds)
+```ts
+export interface ItemSlot
 ```
 
-The effects of one pick as one string: ids in the order ITEM_EFFECTS lists them, each once,
-comma separated, '' for none. A pick carries several (the window says "you can pick several"),
-and this is how a record stores them and how two picks are told apart, so "fire,snow" and
-"snow,fire" are the same pick.
+A slot of a hero the builder can dress, and the paid items that fit it.
 
+### `ItemSet`
+
+```ts
+export interface ItemSet { id: string; name: string; heroIds: string[]; fit: number; heroLabel: string; pieces: SetPiece[] }
 ```
-@param {string|string[]|null|undefined} effectIds
+
+A set, as the builder puts it on; see itemSets.
+
+### `AssetCopy`
+
+```ts
+export type AssetCopy = { from: string; to: string }
 ```
+
+A file in the game's archive staged under another path in the built VPK.
 
 ### `itemEffects`
 
-```js
-function itemEffects()
+```ts
+export function itemEffects(): { id: string; name: string }[]
 ```
 
 The effect variants the synthetic cosmetics/items picker can apply.
 
+### `itemSlots`
+
+```ts
+export function itemSlots(text: string): ItemSlot[]
+```
+
+Hero item slots built from real default_item entries, with one donor list per hero part.
+
 ### `itemSets`
 
-```js
-function itemSets(text, slots = itemSlots(text))
+```ts
+export function itemSets(text: string, slots: Pick<ItemSlot, 'slot' | 'slotLabel' | 'options'>[] = itemSlots(text)): ItemSet[]
 ```
 
 A hero's sets as the builder puts them on: every wearable of the set that has a slot in the
@@ -1370,39 +1402,41 @@ want a taken slot than fit, and the first of each would dress the hero in a mix 
 are each listed on their own anyway. Valve's "DO NOT USE" is left out as well.
 
 ```
-@param {string} text  items_game
-@param {Array<{ slot: string, slotLabel: string, options: Array<{ id: string }> }>} [slots]
-itemSlots(text), when the caller has it already
+@param text  items_game
+@param slots  itemSlots(text), when the caller has it already
 ```
 
 ### `itemOptions`
 
-```js
-function itemOptions(text)
+```ts
+export function itemOptions(text: string): { id: string; name: string }[]
 ```
 
 Wearable items with visuals and a matching stock default_item, offered under cosmetics/items.
 
-### `itemSlots`
+### `effectKey`
 
-```js
-function itemSlots(text)
+```ts
+export function effectKey(effectIds: string | string[] | null | undefined): string
 ```
 
-Hero item slots built from real default_item entries, with one donor list per hero part.
+The effects of one pick as one string: ids in the order ITEM_EFFECTS lists them, each once,
+comma separated, '' for none. A pick carries several (the window says "you can pick several"),
+and this is how a record stores them and how two picks are told apart, so "fire,snow" and
+"snow,fire" are the same pick.
 
 ### `defaultItemForWearable`
 
-```js
-function defaultItemForWearable(text, sourceId)
+```ts
+export function defaultItemForWearable(text: string, sourceId: string | number): SchemaItem | null
 ```
 
 The stock default_item that matches a wearable by slot and by the hero(es) that can equip it.
 
 ### `itemEffectPatch`
 
-```js
-function itemEffectPatch(baseText, itemId, effectIds)
+```ts
+export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined): { id: string; block: string; assetCopies: AssetCopy[] }
 ```
 
 Turn one paid wearable into the hero's stock item for that slot.
@@ -1413,14 +1447,10 @@ dropped, and the chosen effect is inserted into visuals. The donor model/particl
 as the paid item in items_game, while assetCopies still describe the stock-path overrides the
 built VPK should carry.
 
-```
-@returns {{ id: string, block: string, assetCopies: Array<{from: string, to: string}> }}
-```
-
 ### `gameAssetEntries`
 
-```js
-function gameAssetEntries(gamePath, assetCopies)
+```ts
+export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | null | undefined): VpkEntry[]
 ```
 
 Read compiled asset bytes out of pak01 and stage them under the renamed path in our VPK.
@@ -2678,14 +2708,6 @@ Everything here treats the file as hostile input: it arrives from a stranger ove
 Discord. Nothing is read out of the zip that the manifest didn't ask for by an exact,
 pattern-checked name, and the caller installs only after showing the user the contents.
 
-### `PresetEntry`
-
-```ts
-export type PresetEntry =
-```
-
-One line of a preset's mod list, as the file carries it.
-
 ### `PresetManifest`
 
 ```ts
@@ -2756,7 +2778,7 @@ export function readPresetFile(filePath: string): { manifest: PresetManifest; re
 
 Parse and validate a .d2mm.
 
-## src/presets-service.js
+## src/presets-service.ts
 
 Presets, and the two ways one travels to somebody else.
 
@@ -2771,27 +2793,34 @@ window, reachable only through the process that owns that window, and testable o
 launching the app. The bodies below are the same bodies; what changed is that the services
 they use arrive as arguments instead of as variables that happen to be in scope.
 
-### `presetsService`
+### `CatalogIndex`
 
-```js
-function presetsService({ catalog, installer, library, schemaService, deployAndApply })
+```ts
+export type CatalogIndex = Map<string, CatalogHit> & { lookup: (c: string, n: string, s?: string | null) => CatalogHit | null }
 ```
 
-Everything about presets that needs the running app's services.
+Every catalog mod by "<categoryId>|<name>|<styleLabel>", with a lookup that never throws.
 
+### `ShareEntry`
+
+```ts
+export type ShareEntry =
 ```
-@param {object} deps
-@param {object} deps.catalog        the catalog store, for turning a mod into an identity
-@param {object} deps.installer      reads and writes what is in the game folder
-@param {object} deps.library        the manifest of installed mods and saved presets
-@param {object} deps.schemaService  rebuilds the item table when a preset changes it
-@param {(pack: object) => Array} deps.deployAndApply  rebuilds one pack's VPK
+
+A mod as it would be shared: embedded ones read their bytes only when the file is written.
+
+### `PresetInstaller`
+
+```ts
+export interface PresetInstaller
 ```
+
+What of the installer presets ask: what a record is, where its files are, and packing.
 
 ### `categoryModList`
 
-```js
-function categoryModList(data)
+```ts
+export function categoryModList(data: unknown): CatalogMod[]
 ```
 
 The mods of one catalog category. Most categories are a flat array, but some (creeps,
@@ -2803,19 +2832,35 @@ a preset link dropped them entirely.
 
 ### `packableRecord`
 
-```js
-function packableRecord(rec)
+```ts
+export function packableRecord(rec: LibRecord | null | undefined): rec is LibRecord
 ```
 
 Can this record go into a pack? Packs, fonts and cursors cannot; a lang-folder VPK can.
 
 ### `touchesSchema`
 
-```js
-function touchesSchema(rec)
+```ts
+export function touchesSchema(rec: LibRecord): boolean
 ```
 
 Does changing this record mean the item table has to be rebuilt?
+
+### `presetsService`
+
+```ts
+export function presetsService({ catalog, installer, library, schemaService, deployAndApply }: { catalog: Pick<Catalog, 'load'>; installer: PresetInstaller; library: Library; schemaService: { refresh(): unknown }; deployAndApply: (pack: LibRecord) => unknown; })
+```
+
+Everything about presets that needs the running app's services.
+
+```
+@param deps.catalog        the catalog store, for turning a mod into an identity
+@param deps.installer      reads and writes what is in the game folder
+@param deps.library        the manifest of installed mods and saved presets
+@param deps.schemaService  rebuilds the item table when a preset changes it
+@param deps.deployAndApply  rebuilds one pack's VPK
+```
 
 ## src/remote-config.ts
 
@@ -3094,7 +3139,7 @@ Open a foreign archive with every claim in it checked first.
 @param opts.limits   override the budgets (tests)
 ```
 
-## src/schema-service.js
+## src/schema-service.ts
 
 Orchestration around the item schema: what goes into it, when it is rebuilt, and how a
 game update is repaired. Kept out of main.js so the whole flow can be exercised without
@@ -3106,20 +3151,37 @@ The rules it enforces:
   - a mod's changes live in the library record (record.schema), never in its VPK;
   - nothing is written to the game unless the user turned the patch on.
 
+### `SchemaInstaller`
+
+```ts
+export interface SchemaInstaller
+```
+
+What of the installer the schema needs: what a record is, its item blocks, splitting it, its size.
+
+### `SchemaState`
+
+```ts
+export interface SchemaState extends Partial<patcher.PatchState>
+```
+
+The patch and the built table as Settings shows them; the patcher's own state is merged in.
+
+### `CosmeticSlot`
+
+```ts
+export type CosmeticSlot =
+```
+
+A slot the free-cosmetics picker offers: its base item, what is on it, and what could be.
+
 ### `createSchemaService`
 
-```js
-function createSchemaService({ settings, library, installer, userDataDir, log = () => {} })
+```ts
+export function createSchemaService({ settings, library, installer, userDataDir, log = () => {} }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; })
 ```
 
-```
-@param {object} deps
-@param {import('./settings').Settings} deps.settings
-@param {import('./library').Library} deps.library
-@param {import('./installer').Installer} deps.installer
-@param {string} deps.userDataDir
-@param {(msg: string) => void} [deps.log]  the app's diagnostics log
-```
+The item table and the search-path patch, kept in step with the library and the installed game.
 
 ## src/schema.ts
 
@@ -3285,7 +3347,7 @@ and the builder offered a wand for a helmet.
 ### `baseItemFor`
 
 ```ts
-export function baseItemFor(text: string, slot: string): SchemaItem | null
+export function baseItemFor(text: string, slot: string | null | undefined): SchemaItem | null
 ```
 
 The free "base item" of a slot - the one every account owns (555 Default Weather,
@@ -3929,6 +3991,22 @@ export interface LibRecord
 ```
 
 One entry of the library: a mod, a pack of them, or a cosmetic pick.
+
+### `PackMember`
+
+```ts
+export interface PackMember
+```
+
+One mod inside a pack: its identity, whether it is on, and where its own copy is kept.
+
+### `PresetEntry`
+
+```ts
+export type PresetEntry =
+```
+
+One line of a preset that travels: what a .d2mm or a link says about one mod (src/preset-share.ts).
 
 ### `ModIdentity`
 

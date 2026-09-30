@@ -1,6 +1,6 @@
 /* The item builder in the catalog: a hero's items, each built from one of its wearables with an
  * effect on top. The hub lists heroes, a hero opens its item slots and its sets, and a slot opens
- * the picker of wearables and effects. What a pick does to the game is src/item-builder.js; this
+ * the picker of wearables and effects. What a pick does to the game is src/item-builder.ts; this
  * is the screen.
  *
  * Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
@@ -77,7 +77,7 @@ function effectKey(data, ids) {
   return (data.effects || []).map((fx) => fx.id).filter((id) => id && want.has(id)).join(',');
 }
 
-/** A record's effects as a list (a record keeps them comma separated, src/item-builder.js effectKey). */
+/** A record's effects as a list (a record keeps them comma separated, src/item-builder.ts effectKey). */
 function liveEffects(live) {
   return live?.effectId ? String(live.effectId).split(',').filter(Boolean) : [];
 }
@@ -409,7 +409,7 @@ function getHeroIconPath(label) {
   return heroPortraits.get(label) || null;
 }
 
-// The effects that have a picture. A fixed set, the same ids src/item-builder.js offers, so the
+// The effects that have a picture. A fixed set, the same ids src/item-builder.ts offers, so the
 // screen never has to ask what is in a folder.
 const EFFECT_PICTURES = new Set(['bubbles', 'fire', 'frostbloom', 'ghost', 'lightnings', 'sand-storm', 'snow']);
 
@@ -447,7 +447,7 @@ function itemHeroCardHtml(hero, slots, i) {
     </div>`;
 }
 
-// ---------- sets: every piece of one, put on in one write (src/item-builder.js itemSets) ----------
+// ---------- sets: every piece of one, put on in one write (src/item-builder.ts itemSets) ----------
 
 function heroSets(heroName) {
   return (state.cosmeticSets || []).filter((s) => s.heroLabel === heroName);

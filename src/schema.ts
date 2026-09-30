@@ -279,7 +279,7 @@ function slotOf(item: SchemaItem): string {
  * 590 Default Terrain, ...). Dressing it in another item's visuals is what makes a paid
  * cosmetic the default one.
  */
-export function baseItemFor(text: string, slot: string): SchemaItem | null {
+export function baseItemFor(text: string, slot: string | null | undefined): SchemaItem | null {
   return listItems(text).find((i) => i.baseitem && slotOf(i) === slot) || null;
 }
 

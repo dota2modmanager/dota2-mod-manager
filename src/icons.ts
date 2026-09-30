@@ -12,10 +12,30 @@
 //
 // Everything is cached on disk, misses included: 2000 loading screens must not turn into
 // 2000 requests every time the picker opens.
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const pkg = require('../package.json');
+import { createRequire } from 'node:module';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+// through require: package.json is read the same way inside the asar as outside it
+const pkg = createRequire(import.meta.url)('../package.json') as { version: string; homepage: string };
+
+/** A picture fetched and checked: the bytes, and what kind of image they are. */
+type Picture = { buf: Buffer; mime: string };
+
+/** Where a wiki keeps an item's picture, when the game's own name is not the file's. */
+type Found = { wiki: 'fandom'; file: string } | { wiki: 'liquipedia'; url: string };
+
+/** What the MediaWiki API answers, as far as the calls here read it. */
+type WikiAnswer = {
+  query?: {
+    allimages?: { name: unknown }[];
+    search?: { title: unknown }[];
+    pages?: Record<string, { missing?: unknown; thumbnail?: { source: unknown }; imageinfo?: { url: unknown }[] }>;
+  };
+};
+
+/** Runs a job in its turn; see rateGate. */
+type Gate = <T>(fn: () => Promise<T>) => Promise<T>;
 
 const WIKI = 'https://dota2.fandom.com/wiki/Special:FilePath/';
 const API = 'https://dota2.fandom.com/api.php';
@@ -38,9 +58,9 @@ const LIQ_MIN_GAP_MS = 2100;
 
 // Runs queued jobs one at a time, each starting no sooner than minGapMs after the previous
 // one finished. A job's own outcome is independent of the pacing that follows it.
-function rateGate(minGapMs) {
-  let queue = Promise.resolve();
-  return (fn) => {
+function rateGate(minGapMs: number): Gate {
+  let queue: Promise<unknown> = Promise.resolve();
+  return <T>(fn: () => Promise<T>): Promise<T> => {
     const result = queue.then(fn, fn);
     queue = result.catch(() => {}).then(() => new Promise((r) => setTimeout(r, minGapMs)));
     return result;
@@ -50,14 +70,14 @@ function rateGate(minGapMs) {
 // Names compared without spacing, punctuation or case: the wiki and the game write those
 // their own ways, and none of it changes which item is meant. Nor does the trailing "Skin"
 // the schema gives some HUDs and the wiki does not.
-const plain = (s) => String(s).replace(/\bHUD[ _]Skin$/i, 'HUD').toLowerCase().replace(/[^a-z0-9]+/g, '');
+const plain = (s: unknown) => String(s).replace(/\bHUD[ _]Skin$/i, 'HUD').toLowerCase().replace(/[^a-z0-9]+/g, '');
 
 // The parts a typo check must never forgive: "Loading Screen VI" and "Loading Screen IV"
 // are two different pictures one swapped letter apart.
-const numbering = (s) => (String(s).match(/\d+|\b[IVXLC]{1,6}\b/g) || []).join(' ');
+const numbering = (s: unknown) => (String(s).match(/\d+|\b[IVXLC]{1,6}\b/g) || []).join(' ');
 
 // Levenshtein distance, only ever asked about strings that are nearly the same already.
-function editDistance(a, b) {
+function editDistance(a: string, b: string): number {
   let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
   for (let i = 1; i <= a.length; i++) {
     const row = [i];
@@ -74,7 +94,7 @@ function editDistance(a, b) {
 // every slot it fills. Stripped of the suffix, the name is worth one more try against the
 // same two wikis - the outfit's own icon is still a recognisable stand-in for its own screen.
 const SCREEN_SUFFIX = /\s*-?\s*(?:Loading[ ]?Screen|Versus[ ]?Screen|LS)$/i;
-function stripScreenSuffix(name) {
+function stripScreenSuffix(name: string): string | null {
   const base = String(name).replace(SCREEN_SUFFIX, '').trim();
   return base && base !== String(name).trim() ? base : null;
 }
@@ -84,12 +104,11 @@ function stripScreenSuffix(name) {
  * shared by both wikis' listings. A title counts only when it is the same name give or take
  * a typo: a loose match would put a stranger's picture on the card, which is worse than an
  * empty tile, so an extra word ("… Bundle") or a different number is enough to rule it out.
- * @returns {(titles: string[]) => string|null}
  */
-function titlePicker(name) {
+function titlePicker(name: string): (titles: string[]) => string | null {
   const want = plain(name);
   return (titles) => {
-    let best = null;
+    let best: { d: number; file: string } | null = null;
     for (const rawTitle of titles) {
       const title = rawTitle.replace(/^File:/i, '');
       const m = /^Cosmetic[ _]icon[ _](.+)\.(?:png|jpe?g|webp)$/i.exec(title);
@@ -105,7 +124,7 @@ function titlePicker(name) {
 }
 
 // The wiki serves WebP to a browser and PNG to anything else; both render in the app.
-function sniff(buf) {
+function sniff(buf: Buffer): string | null {
   const hex = buf.slice(0, 4).toString('hex');
   if (hex === '89504e47') return 'image/png';
   if (hex === '52494646' && buf.slice(8, 12).toString('latin1') === 'WEBP') return 'image/webp';
@@ -113,13 +132,21 @@ function sniff(buf) {
   return null;
 }
 
-class Icons {
+/** Cosmetic and hero pictures off the Dota wikis, cached on disk with the misses remembered. */
+export class Icons {
+  fetch: typeof fetch;
+  dir: string;
+  missFile: string;
+  /** name -> when the wikis last had no picture for it */
+  misses: Map<string, number>;
+  inflight: Map<string, Promise<string | null>>;
+  liqGate: Gate;
+
   /**
-   * @param {string} userDataDir
-   * @param {typeof fetch} [fetchImpl]  Electron's net.fetch in the app: the wiki sits behind
+   * @param fetchImpl  Electron's net.fetch in the app: the wiki sits behind
    *   a bot check that plain Node requests do not pass, while the browser stack does.
    */
-  constructor(userDataDir, fetchImpl) {
+  constructor(userDataDir: string, fetchImpl?: typeof fetch) {
     this.fetch = fetchImpl || globalThis.fetch;
     this.dir = path.join(userDataDir, 'icons');
     fs.mkdirSync(this.dir, { recursive: true });
@@ -130,7 +157,7 @@ class Icons {
     this.inflight = new Map();
     this.liqGate = rateGate(LIQ_MIN_GAP_MS);
     try {
-      for (const [k, at] of Object.entries(JSON.parse(fs.readFileSync(this.missFile, 'utf8')))) this.misses.set(k, at);
+      for (const [k, at] of Object.entries(JSON.parse(fs.readFileSync(this.missFile, 'utf8')) as Record<string, number>)) this.misses.set(k, at);
     } catch { /* no misses recorded yet */ }
   }
 
@@ -140,11 +167,10 @@ class Icons {
    * punctuation the wiki spells its own way, so a couple of spellings follow before the
    * picture counts as missing. "Mega-Kills: Axe" is filed as both Mega-Kills_Axe and
    * Mega-Kills-_Axe, and the game's typographic apostrophe is a plain one there.
-   * @returns {string[]}
    */
-  static fileNames(name) {
+  static fileNames(name: string): string[] {
     const clean = String(name).replace(/[‘’]/g, "'").replace(/\s+/g, ' ').trim();
-    const out = [];
+    const out: string[] = [];
     for (const form of [clean, clean.replace(/:/g, ''), clean.replace(/:/g, '-'), String(name).trim()]) {
       const file = 'Cosmetic_icon_' + form.replace(/\s+/g, '_') + '.png';
       if (form && !out.includes(file)) out.push(file);
@@ -152,24 +178,24 @@ class Icons {
     return out;
   }
 
-  cachePath(name) {
+  cachePath(name: string): string {
     return path.join(this.dir, crypto.createHash('sha1').update(String(name)).digest('hex').slice(0, 16) + '.img');
   }
 
-  saveMisses() {
+  saveMisses(): void {
     try { fs.writeFileSync(this.missFile, JSON.stringify(Object.fromEntries(this.misses))); } catch { /* cache only */ }
   }
 
   /**
-   * @returns {Promise<object|undefined>} parsed answer, or undefined when the wiki did not
+   * @returns parsed answer, or undefined when the wiki did not
    *   answer at all (which is never a "no such file")
    */
-  async askWiki(api, ua, params, gate) {
-    const call = async () => {
+  async askWiki(api: string, ua: string, params: Record<string, string>, gate?: Gate): Promise<WikiAnswer | undefined> {
+    const call = async (): Promise<WikiAnswer | undefined> => {
       const res = await this.fetch(`${api}?${new URLSearchParams({ format: 'json', ...params })}`,
         { headers: { 'User-Agent': ua } });
       if (!res.ok) return undefined;
-      return res.json();
+      return (await res.json()) as WikiAnswer;
     };
     try {
       return await (gate ? gate(call) : call());
@@ -178,19 +204,19 @@ class Icons {
     }
   }
 
-  askFandom(params) { return this.askWiki(API, UA, params); }
-  askLiquipedia(params) { return this.askWiki(LIQ_API, LIQ_UA, params, this.liqGate); }
+  askFandom(params: Record<string, string>) { return this.askWiki(API, UA, params); }
+  askLiquipedia(params: Record<string, string>) { return this.askWiki(LIQ_API, LIQ_UA, params, this.liqGate); }
 
   /**
    * Files whose name starts with the item's first word or two. Exact and always answered,
    * unlike the search, which returns nothing at all for half of these names.
    */
-  static prefixOf(name) {
+  static prefixOf(name: string): string | null {
     const words = String(name).replace(/[^\w\s'.-]/g, '').split(/\s+/).filter(Boolean);
     return words.length ? words.slice(0, words[0].length < 5 ? 2 : 1).join('_') : null;
   }
 
-  async filesByPrefix(name) {
+  async filesByPrefix(name: string): Promise<string[] | undefined> {
     const head = Icons.prefixOf(name);
     if (!head) return [];
     const json = await this.askFandom({ action: 'query', list: 'allimages', aiprefix: `Cosmetic_icon_${head}`, ailimit: '100' });
@@ -198,7 +224,7 @@ class Icons {
   }
 
   /** The wiki's own full-text search, for names whose first word is spelled its own way. */
-  async filesBySearch(name) {
+  async filesBySearch(name: string): Promise<string[] | undefined> {
     const json = await this.askFandom({ action: 'query', list: 'search', srnamespace: '6', srlimit: '10', srsearch: `Cosmetic icon ${name}` });
     return json && (json.query?.search || []).map((s) => String(s.title));
   }
@@ -210,10 +236,10 @@ class Icons {
    * entirely, which no amount of guessing the file name would ever find. MediaWiki resolves
    * the title itself (case, spacing, real redirects), so this needs no typo tolerance of its
    * own - it only ever answers for the name the game already got right.
-   * @returns {Promise<string|null|undefined>} a ready-to-fetch image URL · null = no such
+   * @returns a ready-to-fetch image URL · null = no such
    *   page, or the page has no picture · undefined = the wiki never answered
    */
-  async pageImage(title) {
+  async pageImage(title: string): Promise<string | null | undefined> {
     const json = await this.askFandom({
       action: 'query', titles: title, prop: 'pageimages', piprop: 'thumbnail', pithumbsize: '512', redirects: '1',
     });
@@ -225,14 +251,14 @@ class Icons {
 
   // Liquipedia keeps every wiki's uploads on one shared image host ("commons"), same
   // listing shape as Fandom's - only the endpoint, the agent and the pacing differ.
-  async liqFilesByPrefix(name) {
+  async liqFilesByPrefix(name: string): Promise<string[] | undefined> {
     const head = Icons.prefixOf(name);
     if (!head) return [];
     const json = await this.askLiquipedia({ action: 'query', list: 'allimages', aiprefix: `Cosmetic_icon_${head}`, ailimit: '100' });
     return json && (json.query?.allimages || []).map((i) => String(i.name));
   }
 
-  async liqFilesBySearch(name) {
+  async liqFilesBySearch(name: string): Promise<string[] | undefined> {
     const json = await this.askLiquipedia({ action: 'query', list: 'search', srnamespace: '6', srlimit: '10', srsearch: `Cosmetic icon ${name}` });
     return json && (json.query?.search || []).map((s) => String(s.title));
   }
@@ -241,9 +267,8 @@ class Icons {
    * The raw image URL for a file name Liquipedia is known to have. Its terms rule out
    * automated fetches of rendered wiki pages, so the URL is asked for through the API
    * (imageinfo) rather than guessed at from the file name.
-   * @returns {Promise<string|null|undefined>}
    */
-  async liqResolveUrl(fileName) {
+  async liqResolveUrl(fileName: string): Promise<string | null | undefined> {
     const json = await this.askLiquipedia({
       action: 'query', titles: `File:${fileName.replace(/_/g, ' ')}`, prop: 'imageinfo', iiprop: 'url',
     });
@@ -254,9 +279,8 @@ class Icons {
 
   /**
    * One pass over both wikis (prefix listing, then full-text search) for one exact name.
-   * @returns {Promise<{wiki: 'fandom', file: string}|{wiki: 'liquipedia', url: string}|null|undefined>}
    */
-  async searchOneName(name) {
+  async searchOneName(name: string): Promise<Found | null | undefined> {
     const pick = titlePicker(name);
     let silent = false;
 
@@ -287,11 +311,10 @@ class Icons {
    * nothing at all for (a handful - old Battle Passes, some Mega-Kills). A "Loading Screen" /
    * "Versus Screen" name that comes up with nothing anywhere gets one more pass under its
    * outfit's own name (see stripScreenSuffix) - not the exact picture, but the same look.
-   * @returns {Promise<{wiki: 'fandom', file: string}|{wiki: 'liquipedia', url: string}|null|undefined>}
-   *   null = no wiki has this picture · undefined = one of them never answered, so nothing
+   * @returns null = no wiki has this picture · undefined = one of them never answered, so nothing
    *   here counts as a real "no" and it is worth asking again later
    */
-  async searchFileName(name) {
+  async searchFileName(name: string): Promise<Found | null | undefined> {
     const own = await this.searchOneName(name);
     if (own !== null) return own; // a hit, or a network hiccup worth retrying later - either way, done
 
@@ -299,9 +322,9 @@ class Icons {
     return base ? this.searchOneName(base) : null;
   }
 
-  fetchBytes(url, ua, gate) {
-    const call = async () => {
-      let res;
+  fetchBytes(url: string, ua: string, gate?: Gate): Promise<Picture | null | undefined> {
+    const call = async (): Promise<Picture | null | undefined> => {
+      let res: Response;
       try {
         res = await this.fetch(url, { headers: { 'User-Agent': ua } });
       } catch {
@@ -316,8 +339,8 @@ class Icons {
     return gate ? gate(call) : call();
   }
 
-  fetchFandomFile(fileName) { return this.fetchBytes(WIKI + encodeURIComponent(fileName), UA); }
-  fetchLiquipediaFile(url) { return this.fetchBytes(url, LIQ_UA, this.liqGate); }
+  fetchFandomFile(fileName: string) { return this.fetchBytes(WIKI + encodeURIComponent(fileName), UA); }
+  fetchLiquipediaFile(url: string) { return this.fetchBytes(url, LIQ_UA, this.liqGate); }
 
   /**
    * Disk cache + in-flight de-dup + miss bookkeeping, shared by every picture this class
@@ -325,12 +348,11 @@ class Icons {
    * returns `{buf, mime}` on a hit, `null` for a confirmed "no such picture", or `undefined`
    * when nothing answered either way (network hiccup) - which must never be remembered as a
    * miss, or a bad burst turns into a permanently half-empty picker.
-   * @param {string} key   cache/miss-list key - namespaced by caller so a cosmetic named
+   * @param key   cache/miss-list key - namespaced by caller so a cosmetic named
    *   the same as a hero can never collide with that hero's own portrait
-   * @param {() => Promise<{buf:Buffer,mime:string}|null|undefined>} resolve
-   * @returns {Promise<string|null>} data URI, or null when there is no such picture
+   * @returns data URI, or null when there is no such picture
    */
-  async cached(key, resolve) {
+  async cached(key: string, resolve: () => Promise<Picture | null | undefined>): Promise<string | null> {
     const file = this.cachePath(key);
     try {
       if (fs.existsSync(file)) {
@@ -342,7 +364,8 @@ class Icons {
 
     const missedAt = this.misses.get(key);
     if (missedAt && Date.now() - missedAt < MISS_TTL) return null;
-    if (this.inflight.has(key)) return this.inflight.get(key);
+    const pending = this.inflight.get(key);
+    if (pending) return pending;
 
     const job = (async () => {
       try {
@@ -368,9 +391,10 @@ class Icons {
   }
 
   /**
-   * @returns {Promise<string|null>} data URI, or null when the wiki has no such picture
+   * A cosmetic's picture by its name in the game.
+   * @returns data URI, or null when the wiki has no such picture
    */
-  async get(name) {
+  async get(name: string | null | undefined): Promise<string | null> {
     if (!name) return null;
     return this.cached(name, async () => {
       for (const wikiName of Icons.fileNames(name)) {
@@ -393,9 +417,8 @@ class Icons {
    * Wiki file names for a hero's own default portrait - not a cosmetic look, the hero
    * itself. Unlike a cosmetic's, this naming is exact (every hero has exactly one page,
    * named after the hero), so there is no search fallback to fall through to.
-   * @returns {string[]}
    */
-  static heroFileNames(heroName) {
+  static heroFileNames(heroName: string): string[] {
     const clean = String(heroName).replace(/\s+/g, '_');
     return [`${clean}_icon.png`, `${clean}_minimap_icon.png`];
   }
@@ -404,9 +427,8 @@ class Icons {
    * A hero's own portrait, for an imported mod the app recognises as skinning exactly one
    * hero (see src/vpk.ts analyzeVpkPaths): a stand-in so an "Elder Titan" import shows Elder
    * Titan's own picture instead of an empty box in the Library.
-   * @returns {Promise<string|null>}
    */
-  async getHero(heroName) {
+  async getHero(heroName: string | null | undefined): Promise<string | null> {
     if (!heroName) return null;
     return this.cached('hero:' + heroName, async () => {
       let answered = true;
@@ -424,17 +446,15 @@ class Icons {
   // reused so an import that is neither a single recognised hero nor a catalog match still
   // shows something truer than an empty box. Not a per-item lookup, so it never needs a
   // second wiki or a typo-tolerant search: the title is fixed and known to exist.
-  static GENERIC_PAGES = {
+  static GENERIC_PAGES: Record<string, string> = {
     // several heroes' worth of emoticons in one picture - the closest the wiki has to
     // "several heroes bundled into one thing", which is exactly what an unsplit import is
     pack: 'DAC Compendium 2015 Emoticon Pack',
     cursor: 'Cursor Pack',
   };
 
-  /**
-   * @returns {Promise<string|null>}
-   */
-  async getGeneric(kind) {
+  /** The stand-in picture for a kind of content; see GENERIC_PAGES. */
+  async getGeneric(kind: string): Promise<string | null> {
     const title = Icons.GENERIC_PAGES[kind];
     if (!title) return null;
     return this.cached('generic:' + kind, async () => {
@@ -450,12 +470,10 @@ class Icons {
    * for that hero's own portrait (see getHero), "generic:" for a category stand-in (see
    * getGeneric), instead of a cosmetic look - the same batch call and the same on-screen
    * loader cover all three, so the renderer needs only one pipeline.
-   * @returns {Promise<Record<string, string|null>>}
    */
-  async getMany(names) {
-    const list = [...new Set((Array.isArray(names) ? names : []).filter(Boolean))];
-    /** @type {Record<string, string|null>} */
-    const out = {};
+  async getMany(names: unknown): Promise<Record<string, string | null>> {
+    const list = [...new Set((Array.isArray(names) ? names : []).filter(Boolean) as string[])];
+    const out: Record<string, string | null> = {};
     let next = 0;
     const worker = async () => {
       while (next < list.length) {
@@ -469,7 +487,7 @@ class Icons {
     return out;
   }
 
-  size() {
+  size(): number {
     let total = 0;
     try {
       for (const f of fs.readdirSync(this.dir)) total += fs.statSync(path.join(this.dir, f)).size;
@@ -477,11 +495,10 @@ class Icons {
     return total;
   }
 
-  clear() {
+  clear(): void {
     try { fs.rmSync(this.dir, { recursive: true, force: true }); } catch { /* noop */ }
     fs.mkdirSync(this.dir, { recursive: true });
     this.misses.clear();
   }
 }
 
-module.exports = { Icons };

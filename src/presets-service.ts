@@ -11,15 +11,51 @@
  * launching the app. The bodies below are the same bodies; what changed is that the services
  * they use arrive as arguments instead of as variables that happen to be in scope.
  */
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const { app } = require('electron');
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
 
-const { Library } = require('./library.ts');
-const { readPresetFile } = require('./preset-share.ts');
-const { decodePresetLink } = require('./preset-link.ts');
-const { t } = require('./i18n.ts');
+// electron through require, as before: under plain node, in tests, it is only a path and app stays undefined
+const { app } = createRequire(import.meta.url)('electron') as typeof import('electron');
+
+import { Library } from './library.ts';
+import { readPresetFile } from './preset-share.ts';
+import { decodePresetLink } from './preset-link.ts';
+import { t } from './i18n.ts';
+import type { Catalog } from './catalog.ts';
+import type { LibFile, LibRecord, PackMember, Preset, PresetEntry } from './types.ts';
+
+/** A mod as a catalog category lists it, as far as a preset reads it. */
+type CatalogMod = { name?: string; file?: string; preview?: string; styles?: { label: string; file?: string; preview?: string }[] };
+
+/** What a catalog mod needs to be fetched again: the identity, and the archive and picture it comes with. */
+type CatalogHit = { categoryId: string; name: string; styleLabel: string | null; fileRef?: string; preview?: string };
+
+/** Every catalog mod by "<categoryId>|<name>|<styleLabel>", with a lookup that never throws. */
+export type CatalogIndex = Map<string, CatalogHit> & { lookup: (c: string, n: string, s?: string | null) => CatalogHit | null };
+
+/** A mod as it would be shared: embedded ones read their bytes only when the file is written. */
+export type ShareEntry =
+  | { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null; fp: string | null; size: number }
+  | { kind: 'missing'; name: string; reason: string }
+  | { kind: 'embedded'; name: string; categoryId: string; info: string; fp: string | null; size: number; loadData: () => Buffer }
+  | { kind: 'pack'; name: string; members: ShareEntry[] };
+
+/** A share entry without its loader, as the window is shown it; `key` is what it sends back to leave one out. */
+type PlanRow = { key: string; kind: string; name: string; size: number; info: string; reason: string; members?: PlanRow[] };
+
+/** What of the installer presets ask: what a record is, where its files are, and packing. */
+export interface PresetInstaller {
+  analyzeRecord(rec: LibRecord): { fp?: string | null; info?: string } | null;
+  langFolder(): string;
+  mergeToSingleVpk(rec: LibRecord, deltas: unknown): Buffer;
+  packMemberFile(packId: string, memberId: string): string;
+  packFolder(packId: string): string;
+  addPackMemberFromRecord(packId: string, rec: LibRecord, memberId: string): PackMember;
+  remove(files: LibFile[]): unknown;
+  setEnabled(files: LibFile[], on: boolean, recId: string): unknown;
+}
 
 // The mods of one catalog category. Most categories are a flat array, but some (creeps,
 // towers, hero-items, item-effects, creep-deny) group theirs under `groups` - the same two
@@ -27,42 +63,45 @@ const { t } = require('./i18n.ts');
 // flat ones meant every mod in a grouped category looked like it was not in the catalog:
 // the share dialog called them the user's own and packed them into the file as bytes, and
 // a preset link dropped them entirely.
-function categoryModList(data) {
+export function categoryModList(data: unknown): CatalogMod[] {
   if (Array.isArray(data)) return data;
-  if (data && Array.isArray(data.groups)) return data.groups.flatMap((g) => g.mods || []);
+  const grouped = data as { groups?: { mods?: CatalogMod[] }[] } | null;
+  if (grouped && Array.isArray(grouped.groups)) return grouped.groups.flatMap((g) => g.mods || []);
   return [];
 }
 
 /** Can this record go into a pack? Packs, fonts and cursors cannot; a lang-folder VPK can. */
-function packableRecord(rec) {
-  return rec && rec.kind !== 'pack'
+export function packableRecord(rec: LibRecord | null | undefined): rec is LibRecord {
+  return !!rec && rec.kind !== 'pack'
     && rec.categoryId !== 'fonts' && rec.categoryId !== 'cursors'
     && (rec.files || []).some((f) => f.root === 'lang' && /_dir\.vpk$/i.test(f.relPath));
 }
 
 /** Does changing this record mean the item table has to be rebuilt? */
-function touchesSchema(rec) {
+export function touchesSchema(rec: LibRecord): boolean {
   return rec.categoryId === 'cosmetic' || (Array.isArray(rec.schema) && rec.schema.length > 0);
 }
 
 /**
  * Everything about presets that needs the running app's services.
  *
- * @param {object} deps
- * @param {object} deps.catalog        the catalog store, for turning a mod into an identity
- * @param {object} deps.installer      reads and writes what is in the game folder
- * @param {object} deps.library        the manifest of installed mods and saved presets
- * @param {object} deps.schemaService  rebuilds the item table when a preset changes it
- * @param {(pack: object) => Array} deps.deployAndApply  rebuilds one pack's VPK
+ * @param deps.catalog        the catalog store, for turning a mod into an identity
+ * @param deps.installer      reads and writes what is in the game folder
+ * @param deps.library        the manifest of installed mods and saved presets
+ * @param deps.schemaService  rebuilds the item table when a preset changes it
+ * @param deps.deployAndApply  rebuilds one pack's VPK
  */
-function presetsService({ catalog, installer, library, schemaService, deployAndApply }) {
+export function presetsService({ catalog, installer, library, schemaService, deployAndApply }: {
+  catalog: Pick<Catalog, 'load'>; installer: PresetInstaller; library: Library;
+  schemaService: { refresh(): unknown }; deployAndApply: (pack: LibRecord) => unknown;
+}) {
 
   // where an imported .d2mm waits until the user installs it
-  function sharedPresetFile(presetId) {
+  function sharedPresetFile(presetId: string): string {
     return path.join(app.getPath('userData'), 'shared-presets', `${presetId}.d2mm`);
   }
 
-  function dropSharedPresetFile(preset) {
+  function dropSharedPresetFile(preset: Preset | null | undefined): void {
     const f = preset && preset.source && preset.source.file;
     if (f) { try { fs.rmSync(f, { force: true }); } catch { /* noop */ } }
   }
@@ -75,11 +114,10 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
    * map without it, and every caller asking cat.lookup() threw: a first start without a network
    * could not list, share or apply a preset. Empty now means "nothing in the catalog", which is
    * the truth, and a preset's own embedded mods still travel. */
-  /** @returns {Promise<Map<string, object> & { lookup: (c: string, n: string, s?: string|null) => object|null }>} */
-  async function catalogIndex() {
-    const key = (c, n, s) => `${c}|${n}|${s || ''}`;
-    const map = Object.assign(new Map(), {
-      lookup: (c, n, s) => map.get(key(c, n, s)) || null,
+  async function catalogIndex(): Promise<CatalogIndex> {
+    const key = (c: string, n: string, s?: string | null) => `${c}|${n}|${s || ''}`;
+    const map: CatalogIndex = Object.assign(new Map<string, CatalogHit>(), {
+      lookup: (c: string, n: string, s?: string | null) => map.get(key(c, n, s)) || null,
     });
     let data;
     try { data = await catalog.load(); } catch { return map; } // offline with no cache
@@ -101,7 +139,7 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
   // How one library record travels: as a catalog identity when the catalog can hand it to
   // the receiver, otherwise as its own bytes. `loadData` is deferred so building the plan
   // (which only needs sizes) doesn't merge tens of MB per mod.
-  function shareEntryFor(rec, cat) {
+  function shareEntryFor(rec: LibRecord, cat: CatalogIndex): ShareEntry {
     const hit = rec.categoryId !== 'imported' && cat.lookup(rec.categoryId, rec.name, rec.styleLabel);
     if (hit) {
       return {
@@ -130,8 +168,8 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
 
   // A pack travels as its members: each one keeps its own identity, and the receiver's app
   // rebuilds the pack from them. Member VPKs are already sitting flattened in packsDir.
-  function packShareEntry(rec, cat) {
-    const members = (rec.members || []).map((m) => {
+  function packShareEntry(rec: LibRecord, cat: CatalogIndex): ShareEntry {
+    const members = (rec.members || []).map((m): ShareEntry => {
       const hit = m.categoryId !== 'imported' && cat.lookup(m.categoryId, m.name, m.styleLabel);
       if (hit) {
         return { kind: 'catalog', categoryId: m.categoryId, name: m.name, styleLabel: m.styleLabel || null, fp: m.fp || null, size: 0 };
@@ -147,9 +185,9 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
   }
 
   // Every mod of a preset, described the way it would be shared.
-  async function presetShareEntries(preset) {
+  async function presetShareEntries(preset: Preset): Promise<ShareEntry[]> {
     const cat = await catalogIndex();
-    const out = [];
+    const out: ShareEntry[] = [];
     for (const id of library.presetModIds(preset)) {
       const rec = library.find(id);
       if (!rec) continue;
@@ -160,10 +198,10 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
 
   // strips the deferred loaders so the plan can cross the IPC boundary; `key` is what the
   // renderer sends back to leave an oversized mod out of the file
-  function planShape(entries) {
-    const plain = (e, key) => ({
-      key, kind: e.kind, name: e.name, size: e.size || 0, info: e.info || '', reason: e.reason || '',
-      ...(e.kind === 'cosmetic' ? { slot: e.slot } : {}),
+  function planShape(entries: ShareEntry[]): PlanRow[] {
+    const plain = (e: ShareEntry, key: string): PlanRow => ({
+      key, kind: e.kind, name: e.name,
+      size: ('size' in e && e.size) || 0, info: ('info' in e && e.info) || '', reason: ('reason' in e && e.reason) || '',
     });
     return entries.map((e, i) => (e.kind === 'pack'
       ? { ...plain(e, String(i)), members: e.members.map((m, j) => plain(m, `${i}.${j}`)) }
@@ -171,8 +209,8 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
   }
 
   // fingerprint -> installed record id, so a shared mod already on disk isn't written twice
-  function installedFpIndex() {
-    const map = new Map();
+  function installedFpIndex(): Map<string, string> {
+    const map = new Map<string, string>();
     for (const rec of library.list()) {
       if (rec.kind === 'pack') continue;
       const a = installer.analyzeRecord(rec);
@@ -190,13 +228,13 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
   // A pack flattens to its members: packing is a local storage choice, not part of the build.
   // A cosmetic pick travels too — slot + item id is a few bytes, and needs no catalog lookup
   // at all (both players' games carry the same Valve schema).
-  function presetLinkMods(preset, cat) {
-    const mods = [];
-    const skipped = [];
+  function presetLinkMods(preset: Preset, cat: CatalogIndex): { mods: { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null }[]; skipped: string[] } {
+    const mods: { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null }[] = [];
+    const skipped: string[] = [];
     for (const id of library.presetModIds(preset)) {
       const rec = library.find(id);
       if (!rec) continue;
-      for (const it of (rec.kind === 'pack' ? rec.members || [] : [rec])) {
+      for (const it of (rec.kind === 'pack' ? rec.members || [] : [rec]) as PackMember[]) {
         if (it.categoryId === 'imported' || !cat.lookup(it.categoryId, it.name, it.styleLabel)) {
           skipped.push(it.name);
           continue;
@@ -208,10 +246,10 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
   }
 
   // What installing a received preset would actually do, for the card in the Presets tab.
-  async function sharedPresetStatus(preset, cat) {
+  async function sharedPresetStatus(preset: Preset, cat: CatalogIndex) {
     const fpIndex = installedFpIndex();
-    const out = { installed: 0, download: 0, embedded: 0, free: 0, unavailable: [] };
-    const visit = (e) => {
+    const out = { installed: 0, download: 0, embedded: 0, free: 0, unavailable: [] as string[] };
+    const visit = (e: PresetEntry) => {
       if (e.kind === 'catalog') {
         if (library.findByKey(e.categoryId, e.name, e.styleLabel)) out.installed++;
         else if (cat.lookup(e.categoryId, e.name, e.styleLabel)) out.download++;
@@ -238,7 +276,7 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
 
   // Build a fresh pack out of standalone records (the subset of packs:combine a received
   // preset needs — it never absorbs packs the user already has).
-  function packFromRecords(name, recIds) {
+  function packFromRecords(name: string, recIds: string[]): LibRecord | null {
     const recs = recIds.map((id) => library.find(id)).filter(packableRecord);
     if (recs.length < 2) return null; // nothing to save by packing — leave them standalone
     const target = library.add({
@@ -247,7 +285,7 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
     });
     fs.mkdirSync(installer.packFolder(target.id), { recursive: true });
     for (const r of recs) {
-      target.members.push(installer.addPackMemberFromRecord(target.id, r, crypto.randomUUID()));
+      (target.members ??= []).push(installer.addPackMemberFromRecord(target.id, r, crypto.randomUUID()));
       try { installer.remove(r.files); } catch { /* noop */ }
       library.removeRecord(r.id);
     }
@@ -257,7 +295,7 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
 
   // Validate a received .d2mm and park it in the Presets tab as a not-yet-installed preset.
   // Nothing is written into the game folder here — the user sees the contents first.
-  function importPresetFile(filePath) {
+  function importPresetFile(filePath: string): { ok: true; preset: Preset } | { error: string } {
     try {
       const { manifest } = readPresetFile(filePath);
       if (!manifest.mods.length) return { error: t('В пресете нет модов') };
@@ -265,23 +303,23 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
         name: manifest.name, note: manifest.note, author: manifest.author, wanted: manifest.mods,
       });
       // the archive has to survive until "Install": its embedded VPKs live nowhere else
-      const embeds = (e) => e.kind === 'embedded' || (e.kind === 'pack' && e.members.some((m) => m.kind === 'embedded'));
+      const embeds = (e: PresetEntry): boolean => e.kind === 'embedded' || (e.kind === 'pack' && e.members.some((m) => m.kind === 'embedded'));
       if (manifest.mods.some(embeds)) {
         const dest = sharedPresetFile(preset.id);
         fs.mkdirSync(path.dirname(dest), { recursive: true });
         fs.copyFileSync(filePath, dest);
-        preset.source.file = dest;
+        if (preset.source) preset.source.file = dest;
         library.save();
       }
       return { ok: true, preset };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: String((err as Error)?.message || err) };
     }
   }
 
   // A pasted d2mm://preset/... link. Same landing as a file: it parks in the Presets tab as
   // a wish list and installs nothing until asked. No stash — a link has no payload to keep.
-  function importPresetLink(text) {
+  function importPresetLink(text: string): { ok: true; preset: Preset } | { error: string } {
     try {
       const decoded = decodePresetLink(text);
       if (!decoded.mods.length) return { error: t('В пресете нет модов') };
@@ -290,14 +328,14 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
       });
       return { ok: true, preset };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: String((err as Error)?.message || err) };
     }
   }
 
   // enable exactly the preset's mods, disable everything else
-  function applyPreset(preset) {
+  function applyPreset(preset: Preset): string[] {
     const wanted = new Set(library.presetModIds(preset));
-    const errors = [];
+    const errors: string[] = [];
     // Free cosmetics are not part of a build (see Library.inPreset): a preset that does not
     // name somebody's courier is not asking for it to be taken off.
     const recs = library.list().filter((r) => Library.inPreset(r));
@@ -313,7 +351,7 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
           library.setEnabled(rec.id, shouldEnable);
           if (touchesSchema(rec)) schemaTouched = true;
         } catch (err) {
-          errors.push(`${rec.name}: ${err.message}`);
+          errors.push(`${rec.name}: ${(err as Error).message}`);
         }
       }
     }
@@ -339,4 +377,3 @@ function presetsService({ catalog, installer, library, schemaService, deployAndA
   };
 }
 
-module.exports = { presetsService, categoryModList, packableRecord, touchesSchema };

@@ -8,7 +8,7 @@
  * put back at startup.
  *
  * Lifted out of main.js unchanged, with the services arriving as arguments the way
- * src/presets-service.js takes them. It moved for a reason beyond size: main.js cannot be
+ * src/presets-service.ts takes them. It moved for a reason beyond size: main.js cannot be
  * required by a test (it pulls in Electron), so the startup repair below - which decides
  * whether a user's cursor comes back after a game update or a Steam verify - could not be
  * tested where it was. test/cursors.test.ts is what the move is for.

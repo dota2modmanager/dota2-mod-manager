@@ -1,7 +1,7 @@
 /* The coverage ratchet in tools/coverage.mjs: per file, and only where it was measured.
  *
  * The floor used to be three numbers on the command line. An aggregate hides what is worth
- * catching: on 2026-09-16 it read 76.10% while src/presets-service.js sat at 13.8%, and a new
+ * catching: on 2026-09-16 it read 76.10% while src/presets-service.ts sat at 13.8%, and a new
  * module with no tests moves the aggregate by a fraction of a point. These hold the parsing and
  * the comparison, which is all of the judgement; running the suite is node's job.
  */

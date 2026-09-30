@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import type { LibFile, LibRecord, ModIdentity, Preset } from './types.ts';
+import type { LibFile, LibRecord, ModIdentity, Preset, PackMember, PresetEntry } from './types.ts';
 
 /** A record as far as telling mods apart goes. No category means an import. */
 type ModLike = { name: string; categoryId?: string; styleLabel?: string | null; fp?: string | null };
@@ -19,7 +19,7 @@ export interface NewRecord {
   preview?: string | null;
   files: LibFile[];
   kind?: string;
-  members?: Record<string, unknown>[];
+  members?: PackMember[];
 }
 
 export class Library {
@@ -197,7 +197,7 @@ export class Library {
   // A preset that arrived as a .d2mm and hasn't been installed yet: it holds the sender's
   // wish list (`wanted`) instead of local mod ids, plus where the file is stashed.
   addSharedPreset({ name, note, author, wanted, sourceFile }: {
-    name: string; note?: string; author?: string; wanted: Record<string, unknown>[]; sourceFile?: string | null;
+    name: string; note?: string; author?: string; wanted: PresetEntry[]; sourceFile?: string | null;
   }): Preset {
     const preset: Preset = {
       id: crypto.randomUUID(),

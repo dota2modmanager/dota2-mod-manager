@@ -12,7 +12,7 @@
  * that cannot happen again.
  *
  * Lifted out of main.js unchanged, with the services arriving as arguments the way
- * src/cursors.ts and src/presets-service.js take them. It moved for the same reason the
+ * src/cursors.ts and src/presets-service.ts take them. It moved for the same reason the
  * cursors did: main.js cannot be required by a test, so none of this could be tested where it
  * was, and it decides what a user sees in their library.
  */

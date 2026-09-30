@@ -16,7 +16,7 @@ const AdmZip = require('adm-zip');
 const { app, BrowserWindow, dialog, ipcMain, screen, shell } = require('electron');
 
 const { t } = require('./i18n.ts');
-const { buildReport, renderSummary, renderDetailed } = require('./diagnostics');
+const { buildReport, renderSummary, renderDetailed } = require('./diagnostics.ts');
 
 /**
  * @param {object} ctx  everything the report asks about, read late where it changes

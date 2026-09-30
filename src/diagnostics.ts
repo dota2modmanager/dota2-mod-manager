@@ -4,16 +4,74 @@
 //
 // Pure data in, pure data out - no Electron here, no zip - so main.js decides how it is
 // packaged (see the diag:export handler) and this stays exercisable on its own.
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const gamelang = require('./gamelang.ts');
-const { validateGamePath } = require('./steam.ts');
-const { mirrorHealth } = require('./net.ts');
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import * as gamelang from './gamelang.ts';
+import { validateGamePath } from './steam.ts';
+import { mirrorHealth } from './net.ts';
+import type { Settings } from './settings.ts';
+import type { Library } from './library.ts';
+import type { Catalog } from './catalog.ts';
+import type { Icons } from './icons.ts';
+import type { LibFile, LibRecord } from './types.ts';
+
+/** One thing the report says is wrong, and what to do about it. Two levels on purpose; see findProblems. */
+export interface Problem { level: 'broken' | 'note'; what: string; detail: string }
+
+/** What of the installer a report asks: which mods are overruled, the download cache, a record's slot. */
+export interface ReportInstaller {
+  coverage(mods: { key: string; name: string; files: LibFile[] }[]): { size: number };
+  downloadCacheSize(): number;
+  slotNumber(rec: LibRecord): number | null;
+}
+
+/** The patch and item-table state, as the schema service reports it. */
+type PatchState = { error?: string; patched?: boolean; schemaNeeded?: boolean; schemaApplied?: boolean; [key: string]: unknown };
+
+/** Facts only the main process can answer, handed in so this module stays free of Electron. */
+export interface ReportExtra {
+  dotaRunning?: boolean; windows?: unknown; rendererErrors?: unknown; updater?: unknown;
+  remoteConfig?: unknown; toolchain?: unknown; displays?: unknown; gpu?: unknown;
+}
+
+/** The support report: what report.json holds, and what the two renderings read. */
+export interface Report {
+  generatedAt: string;
+  app: { version: string; platform: string; electron?: string; chrome?: string; node: string; uiLang: string };
+  settings: Record<string, unknown> & { langSuffix?: string | null; dotaGamePath: string | null };
+  dota: {
+    path: string | null; pathValid: boolean;
+    detectedLang: gamelang.LangDetection | null;
+    bootLanguages: { ui: string | null; audio: string | null } | null;
+    steamLanguage: string | null;
+    langFolders: gamelang.LangFolder[];
+    activeVoiceInstalled: boolean;
+    minifyDetected: boolean;
+  };
+  patchAndSchema: PatchState | null;
+  /** the same shape net.ts keeps, so a check here cannot read a field it does not have */
+  mirrors: ReturnType<typeof mirrorHealth>;
+  library: {
+    totalRecords: number; byCategory: Record<string, number>; enabled: number; disabled: number;
+    packs: number; withSchemaEdits: number; presets: number; fileOverlaps: number | null;
+  };
+  catalogCache: { fetchedAt: number | null };
+  caches: { downloadCacheBytes: number | null; iconCacheBytes: number | null };
+  disk: { freeBytes: number; totalBytes: number } | null;
+  installedMods: { i: number; slot: number | null; name: string; categoryId: string | null; enabled: boolean; kind: string; files: number }[];
+  dotaRunning: boolean;
+  windows: unknown; rendererErrors: unknown; updater: unknown; remoteConfig: unknown; toolchain: unknown;
+  displays: unknown; gpu: unknown;
+  problems: Problem[];
+}
+
+/** One row of a folder listing: its shape, never its bytes. */
+type Listed = { name: string; size: number; mtime: number; dir: boolean };
 
 // Nothing about a folder listing that matters for troubleshooting needs the file's bytes,
 // only its shape - names, sizes, when they last changed.
-function listFolder(dir) {
+export function listFolder(dir: string): Listed[] | null {
   try {
     return fs.readdirSync(dir).map((name) => {
       const st = fs.statSync(path.join(dir, name));
@@ -24,7 +82,7 @@ function listFolder(dir) {
   }
 }
 
-function redactHome(dir, home = os.homedir()) {
+function redactHome<T extends string | null | undefined>(dir: T, home: string = os.homedir()): T | string {
   if (!dir || !home) return dir;
 
   const compareDir = process.platform === 'win32' ? dir.toLowerCase() : dir;
@@ -39,7 +97,7 @@ function redactHome(dir, home = os.homedir()) {
     : `~${dir.slice(home.length)}`;
 }
 
-function folderListingText(dir, filter, home) {
+function folderListingText(dir: string, filter?: ((f: Listed) => boolean) | null, home?: string): string {
   const list = listFolder(dir);
   if (!list) return `${redactHome(dir, home)}\n(not found or unreadable)`;
   const rows = filter ? list.filter(filter) : list;
@@ -50,7 +108,8 @@ function folderListingText(dir, filter, home) {
 
 // The last chunk of a log file - a support conversation is almost always about what just
 // happened, not the file's whole history.
-function tailLog(file, maxBytes) {
+/** The last `maxBytes` of a log file, or null when it cannot be read. */
+export function tailLog(file: string, maxBytes: number): string | null {
   try {
     const st = fs.statSync(file);
     const start = Math.max(0, st.size - maxBytes);
@@ -65,33 +124,29 @@ function tailLog(file, maxBytes) {
 }
 
 /**
- * @param {object} deps
- * @param {import('./settings').Settings} deps.settings
- * @param {import('./library').Library} deps.library
- * @param {import('./installer').Installer} deps.installer
- * @param {ReturnType<import('./schema-service').createSchemaService>} deps.schemaService
- * @param {import('./catalog').Catalog} deps.catalog
- * @param {import('./icons').Icons} [deps.icons]
- * @param {{version: string, logFile?: string, userDataDir?: string, updateError?: string}} deps.app
- * @param {string} [deps.home]  the home directory to hide, for a test that cannot have one
- * @param {object} [deps.extra] facts only the main process can answer: whether Dota is
+ * Everything a support report carries, gathered from the running services.
+ * @param deps.home  the home directory to hide, for a test that cannot have one
+ * @param deps.extra facts only the main process can answer: whether Dota is
  *   running, the open windows, errors the interface has reported, the updater's state, the
  *   remote config and the toolchain. Passed in so this module stays free of Electron.
- * @returns {{report: object, files: object}}
- *   report: the structured data to write as report.json
+ * @returns report: the structured data to write as report.json;
  *   files: extra plain-text files to include verbatim, keyed by name inside the zip
  */
-function buildReport({ settings, library, installer, schemaService, catalog, icons, app, extra = {}, home }) {
+export function buildReport({ settings, library, installer, schemaService, catalog, icons, app, extra = {}, home }: {
+  settings: Pick<Settings, 'all'>; library: Pick<Library, 'list' | 'listPresets'>; installer: ReportInstaller;
+  schemaService: { state(): PatchState }; catalog: Pick<Catalog, 'cacheInfo'>; icons?: Pick<Icons, 'size'> | null;
+  app: { version: string; logFile?: string; userDataDir?: string; updateError?: string }; extra?: ReportExtra; home?: string;
+}): { report: Report; files: Record<string, string> } {
   const s = settings.all();
   const game = s.dotaGamePath;
   const gameValid = validateGamePath(game);
   const active = s.langSuffix;
 
   const records = library.list();
-  const byCategory = {};
+  const byCategory: Record<string, number> = {};
   for (const r of records) byCategory[r.categoryId] = (byCategory[r.categoryId] || 0) + 1;
 
-  const report = {
+  const report: Omit<Report, 'problems'> = {
     generatedAt: new Date().toISOString(),
     app: {
       version: app.version,
@@ -103,7 +158,7 @@ function buildReport({ settings, library, installer, schemaService, catalog, ico
     },
     settings: {
       ...s,
-      // the OAuth token never touches disk (see discord-auth.js) - what's left is fine to
+      // the OAuth token never touches disk (see discord-auth.ts) - what's left is fine to
       // send, but the Discord id and the avatar picture add nothing to a bug report
       dotaGamePath: redactHome(s.dotaGamePath, home),
       account: s.account ? { signedIn: true, username: s.account.username || null } : null,
@@ -111,15 +166,15 @@ function buildReport({ settings, library, installer, schemaService, catalog, ico
     dota: {
       path: redactHome(game, home) || null,
       pathValid: gameValid,
-      detectedLang: gameValid ? gamelang.detectLangSuffix(game) : null,
+      detectedLang: gameValid && game ? gamelang.detectLangSuffix(game) : null,
       bootLanguages: gameValid ? gamelang.bootLanguages(game) : null,
       steamLanguage: gameValid ? gamelang.steamLanguage(game) : null,
       langFolders: gameValid ? gamelang.langFolders(game) : [],
-      activeVoiceInstalled: gameValid && !!active ? gamelang.voiceInstalled(game, active) : false,
-      minifyDetected: !!(gameValid && fs.existsSync(path.join(game, 'dota_minify'))),
+      activeVoiceInstalled: gameValid && !!game && !!active ? gamelang.voiceInstalled(game, active) : false,
+      minifyDetected: !!(gameValid && game && fs.existsSync(path.join(game, 'dota_minify'))),
     },
     patchAndSchema: (() => {
-      try { return schemaService.state(); } catch (err) { return { error: String(err.message || err) }; }
+      try { return schemaService.state(); } catch (err) { return { error: String((err as Error)?.message || err) }; }
     })(),
     // which download mirrors have been failing this session: "it won't download" is one of
     // the commonest reports, and this says whether the bytes or the route are the problem
@@ -157,7 +212,7 @@ function buildReport({ settings, library, installer, schemaService, catalog, ico
     // identical from the outside, and this tells the two apart in one line.
     disk: (() => {
       try {
-        const st = fs.statfsSync(gameValid ? game : os.homedir());
+        const st = fs.statfsSync(gameValid && game ? game : os.homedir());
         return { freeBytes: st.bavail * st.bsize, totalBytes: st.blocks * st.bsize };
       } catch { return null; }
     })(),
@@ -195,10 +250,10 @@ function buildReport({ settings, library, installer, schemaService, catalog, ico
 
   // What the app itself thinks is wrong, worked out here rather than left for a human to
   // spot in four hundred lines of JSON. This is the part of the report that is actually read.
-  report.problems = findProblems(report, { app });
+  const full: Report = { ...report, problems: findProblems(report, { app }) };
 
-  const files = {};
-  if (gameValid && active) {
+  const files: Record<string, string> = {};
+  if (gameValid && game && active) {
     files['mod-folder-listing.txt'] = folderListingText(path.join(game, `dota_${active}`));
     files['dota-pak-listing.txt'] = folderListingText(
       path.join(game, 'dota'),
@@ -230,7 +285,7 @@ function buildReport({ settings, library, installer, schemaService, catalog, ico
     files['backups-listing.txt'] = folderListingText(path.join(app.userDataDir, 'backups'), null, home);
   }
 
-  return { report, files };
+  return { report: full, files };
 }
 
 /* ---------- what is wrong, said out loud ----------
@@ -239,9 +294,9 @@ function buildReport({ settings, library, installer, schemaService, catalog, ico
  * carries what to do about it. Severity is only two levels on purpose: something is broken,
  * or something is worth knowing. A third level would just be a place to hide things in.
  */
-function findProblems(r, { app } = /** @type {{app?: object}} */ ({})) {
-  const out = [];
-  const add = (level, what, detail) => out.push({ level, what, detail });
+export function findProblems(r: Omit<Report, 'problems'>, { app }: { app?: { updateError?: string } } = {}): Problem[] {
+  const out: Problem[] = [];
+  const add = (level: Problem['level'], what: string, detail: string) => out.push({ level, what, detail });
 
   if (!r.dota.path) add('broken', 'Dota 2 not found', 'The app has no game path, so nothing can be installed.');
   else if (!r.dota.pathValid) add('broken', 'The game path does not point at Dota 2', `Set to ${r.dota.path}, which has no dota folder inside it.`);
@@ -275,11 +330,11 @@ function findProblems(r, { app } = /** @type {{app?: object}} */ ({})) {
     add('note', `${r.library.fileOverlaps} mod(s) are overruled by another mod`, 'Expected when mods share files; the load order decides.');
   }
 
-  const bad = (r.mirrors || []).filter((m) => m.failures > 0);
+  const bad = (r.mirrors || []).filter((m) => m.fails > 0);
   if (bad.length === (r.mirrors || []).length && bad.length) {
-    add('broken', 'Every download mirror is failing', bad.map((m) => `${m.host}: ${m.failures}`).join(', '));
+    add('broken', 'Every download mirror is failing', bad.map((m) => `${m.host}: ${m.fails}`).join(', '));
   } else if (bad.length) {
-    add('note', `${bad.length} download mirror(s) failing`, bad.map((m) => `${m.host}: ${m.failures}`).join(', '));
+    add('note', `${bad.length} download mirror(s) failing`, bad.map((m) => `${m.host}: ${m.fails}`).join(', '));
   }
 
   if (r.dotaRunning) add('note', 'Dota 2 is running', 'The app does not write to the game folder while it is.');
@@ -291,7 +346,7 @@ function findProblems(r, { app } = /** @type {{app?: object}} */ ({})) {
   return out;
 }
 
-const bytes = (n) => (n == null ? '?' : n > 1024 ** 3
+const bytes = (n: number | null | undefined) => (n == null ? '?' : n > 1024 ** 3
   ? `${(n / 1024 ** 3).toFixed(2)} GB`
   : n > 1024 ** 2 ? `${(n / 1024 ** 2).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
 
@@ -302,9 +357,10 @@ const bytes = (n) => (n == null ? '?' : n > 1024 ** 3
  * thinks it is. If nothing is wrong it says so in the first line, which is the answer most
  * of the time.
  */
-function renderSummary(r) {
-  const L = [];
-  const yn = (v) => (v ? 'yes' : 'no');
+/** The one-screen summary: what is wrong first, then the basics. */
+export function renderSummary(r: Report): string {
+  const L: string[] = [];
+  const yn = (v: unknown) => (v ? 'yes' : 'no');
   L.push('DOTA 2 MOD MANAGER - SUPPORT SUMMARY');
   L.push(`Generated ${r.generatedAt}`);
   L.push('');
@@ -356,9 +412,10 @@ function renderSummary(r) {
  * looking at this is trying to work out what happened, and JSON makes that harder than a
  * heading and a table. report.json is still in the zip for anything that wants the raw shape.
  */
-function renderDetailed(r, files = {}) {
-  const L = [];
-  const block = (title, obj) => {
+/** Everything in the report, laid out to be read: REPORT.md. */
+export function renderDetailed(r: Report, files: Record<string, string> = {}): string {
+  const L: string[] = [];
+  const block = (title: string, obj: unknown) => {
     L.push(`## ${title}`, '', '```json', JSON.stringify(obj, null, 2), '```', '');
   };
 
@@ -402,4 +459,3 @@ function renderDetailed(r, files = {}) {
   return L.join('\n');
 }
 
-module.exports = { buildReport, listFolder, tailLog, findProblems, renderSummary, renderDetailed };

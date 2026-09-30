@@ -131,7 +131,7 @@ Supporting them means registering another folder ahead of the game's content, wh
 `gameinfo_branchspecific.gi` and re-signing it in `dota.signatures`. That is a change to Valve's
 own files, so it is off until the user agrees to it once, which is what the safe mode switch in
 the status bar means. `src/patcher.ts` performs it and reverses it byte for byte, and
-`src/schema-service.js` decides when the schema is rebuilt: always from the installed game's own
+`src/schema-service.ts` decides when the schema is rebuilt: always from the installed game's own
 item table, never from a copy a mod happened to ship.
 
 ## Presets
@@ -375,12 +375,12 @@ that location is not writable.
 | `src/safe-zip.ts` | Every foreign archive comes through here |
 | `src/steam.ts` | Finding Steam and the game, and proving the folder is really a game |
 | `src/gamelang.ts` | Which folder Dota will mount, and moving mods across when that changes |
-| `src/patcher.ts`, `src/schema.ts`, `src/schema-service.js` | Search-path patch, signatures, item schema |
+| `src/patcher.ts`, `src/schema.ts`, `src/schema-service.ts` | Search-path patch, signatures, item schema |
 | `src/patch-watch.ts` | Noticing a game update and repairing after it |
 | `src/fingerprints.ts` | Recognising a file somebody else installed |
 | `src/preset-link.ts`, `src/preset-share.ts` | Presets as a link and as a file |
 | `src/portable-update.ts` | Updating the portable build without self-overwrite |
-| `src/diagnostics.js` | The diagnostic archive a bug report should carry |
+| `src/diagnostics.ts` | The diagnostic archive a bug report should carry |
 | `src/i18n.ts`, `renderer/i18n.js` | Russian and English, for the main process and the window |
 | `renderer/views/*` | Catalog, My mods, Presets, Settings |
 | `renderer/ui/*` | Dialogs, toasts, the media player, the install queue, shared chrome |

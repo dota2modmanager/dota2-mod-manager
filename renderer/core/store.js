@@ -18,7 +18,7 @@ export const state = {
   view: 'catalog',
   catalog: null,
   cosmeticSlots: null,     // free-cosmetics slots from the game's own schema (safe mode off)
-  cosmeticSets: null,      // the item builder's sets (src/item-builder.js itemSets)
+  cosmeticSets: null,      // the item builder's sets (src/item-builder.ts itemSets)
   patchState: null,        // src/patcher.ts + schema-service state: patched/signed/conflicts/foreign
   settings: null,
   activeCategory: 'all',   // written by the shell too: safe mode can retire the open category

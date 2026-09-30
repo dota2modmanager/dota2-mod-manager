@@ -24,7 +24,7 @@
         "src/cursors.ts": {
           "lines": 100
         },
-        "src/diagnostics.js": {
+        "src/diagnostics.ts": {
           "lines": 72.4
         },
         "src/feature-gate.ts": {
@@ -108,7 +108,7 @@
         "src/preset-share.ts": {
           "lines": 88.7
         },
-        "src/presets-service.js": {
+        "src/presets-service.ts": {
           "lines": 13.8
         },
         "src/remote-config.ts": {
@@ -218,7 +218,7 @@
         "src/cursors.ts": {
           "lines": 100
         },
-        "src/diagnostics.js": {
+        "src/diagnostics.ts": {
           "lines": 72.4
         },
         "src/feature-gate.ts": {
@@ -305,7 +305,7 @@
         "src/preset-share.ts": {
           "lines": 88.7
         },
-        "src/presets-service.js": {
+        "src/presets-service.ts": {
           "lines": 13.8
         },
         "src/remote-config.ts": {

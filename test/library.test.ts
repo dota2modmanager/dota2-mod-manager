@@ -199,7 +199,7 @@ test('saving over a name updates that build, and a received one of the same name
   assert.equal(store.listPresets().length, 1, 'one build, brought up to date');
   assert.equal(store.listPresets()[0].mods?.length, 2);
 
-  store.addSharedPreset({ name: 'Same', wanted: [{ categoryId: 'heroes', name: 'Theirs' }] });
+  store.addSharedPreset({ name: 'Same', wanted: [{ kind: 'catalog', categoryId: 'heroes', name: 'Theirs', styleLabel: null, fp: null }] });
   store.savePreset('Same');
   const own = store.listPresets().filter((p) => !p.wanted);
   const received = store.listPresets().filter((p) => p.wanted);

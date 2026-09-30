@@ -9,7 +9,7 @@
  */
 import { esc } from './format.js';
 
-// Item pictures come from the main process as data URIs (src/icons.js). A slot can hold two
+// Item pictures come from the main process as data URIs (src/icons.ts). A slot can hold two
 // thousand items, so only what is actually on screen is ever asked for: an observer collects
 // the tiles that scroll into view and fetches them in small batches.
 const cosIconCache = new Map();

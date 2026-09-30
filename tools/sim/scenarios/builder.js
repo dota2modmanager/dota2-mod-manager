@@ -4,7 +4,7 @@
  * tools/sim/dota.js asks whether the game would load the item table the app built, and every
  * model and particle a changed block points at.
  *
- * What the app promises (src/item-builder.js, src/schema-service.js pickSet):
+ * What the app promises (src/item-builder.ts, src/schema-service.ts pickSet):
  *   - a whole set goes on in one write, each piece as its own row in My mods;
  *   - a piece's effects change that piece's row, not add one;
  *   - the files the build points at are in the table's own pack or the game's.

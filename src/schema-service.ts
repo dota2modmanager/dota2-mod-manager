@@ -7,11 +7,38 @@
 //     never be the stale copy a mod happened to ship;
 //   - a mod's changes live in the library record (record.schema), never in its VPK;
 //   - nothing is written to the game unless the user turned the patch on.
-const path = require('path');
-const patcher = require('./patcher.ts');
-const schema = require('./schema.ts');
-const itemBuilder = require('./item-builder');
-const { t } = require('./i18n.ts');
+import path from 'node:path';
+import * as patcher from './patcher.ts';
+import * as schema from './schema.ts';
+import * as itemBuilder from './item-builder.ts';
+import { t } from './i18n.ts';
+import type { Settings } from './settings.ts';
+import type { Library } from './library.ts';
+import type { LibFile, LibRecord } from './types.ts';
+import type { ItemSet } from './item-builder.ts';
+
+/** What of the installer the schema needs: what a record is, its item blocks, splitting it, its size. */
+export interface SchemaInstaller {
+  analyzeRecord(rec: LibRecord): { fp?: string | null } | null;
+  harvestSchema(files: LibFile[], vanillaText: string): { deltas: schema.SchemaDelta[]; stripped: string[] };
+  splitVpkFile(relPath: string): { name: string; files: LibFile[]; paths?: string[] }[];
+  remove(files: LibFile[]): unknown;
+  installedSize(rec: LibRecord): number;
+}
+
+/** The patch and the built table as Settings shows them; the patcher's own state is merged in. */
+export interface SchemaState extends Partial<patcher.PatchState> {
+  enabled: boolean; folder: string | null; patched: boolean; signed: boolean; foreign: string | null;
+  deployed: boolean; stale: boolean; mods: number; cosmeticsPicked: number;
+  conflicts: { id: string; name: string; mods: string[] }[];
+  error?: string;
+}
+
+/** A slot the free-cosmetics picker offers: its base item, what is on it, and what could be. */
+export type CosmeticSlot = {
+  slot: string; base: string; picked: string | null | undefined; recordId: string | null;
+  options: { id: string; name: string }[]; [key: string]: unknown;
+};
 
 /**
  * @param {object} deps
@@ -21,18 +48,21 @@ const { t } = require('./i18n.ts');
  * @param {string} deps.userDataDir
  * @param {(msg: string) => void} [deps.log]  the app's diagnostics log
  */
-function createSchemaService({ settings, library, installer, userDataDir, log = () => {} }) {
+/** The item table and the search-path patch, kept in step with the library and the installed game. */
+export function createSchemaService({ settings, library, installer, userDataDir, log = () => {} }: {
+  settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void;
+}) {
   const backupDir = path.join(userDataDir, 'backups', 'patch');
   const gamePath = () => settings.get('dotaGamePath');
 
   // The game's table is 50 MB and walking its 25k items costs ~300 ms, while the picker
   // asks about a dozen slots in a row. Hold on to the text until the game itself changes:
   // the stamp is a stat() of the paks, so noticing an update stays cheap.
-  let cache = { stamp: null, base: null };
+  let cache: { stamp: string | null; base: schema.GameSchema | null } = { stamp: null, base: null };
   /** The game's own table, read once per build of the game. */
-  function vanillaBase() {
-    const game = gamePath();
-    let stamp = null;
+  function vanillaBase(): schema.GameSchema {
+    const game = gamePath() as string;
+    let stamp: string | null = null;
     try { stamp = schema.gameSchemaStamp(game); } catch { /* fall through to a fresh read */ }
     if (stamp && cache.stamp === stamp && cache.base) return cache.base;
     const base = schema.readGameSchema(game);
@@ -44,24 +74,24 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
   // Enabled mods' lifted item blocks + the free cosmetics the user picked. A cosmetic pick
   // is a library record like any other (categoryId 'cosmetic', slot + itemId of its own),
   // so toggling, deleting and sharing it in a preset all go through the normal machinery.
-  function patches(vanillaText, game) {
-    const out = [];
+  function patches(vanillaText: string, game: string): schema.SchemaPatch[] {
+    const out: schema.SchemaPatch[] = [];
     for (const rec of library.list()) {
       if (rec.enabled === false) continue;
       if (rec.categoryId === 'cosmetic') {
         try {
           if (rec.slot === 'items' || String(rec.slot || '').startsWith('item:')) {
-            const built = itemBuilder.itemEffectPatch(vanillaText, rec.itemId, rec.effectId);
+            const built = itemBuilder.itemEffectPatch(vanillaText, String(rec.itemId), rec.effectId);
             out.push({ id: built.id, block: built.block, assets: itemBuilder.gameAssetEntries(game, built.assetCopies), source: rec.name });
             continue;
           }
           const target = schema.baseItemFor(vanillaText, rec.slot);
           if (!target) continue;
-          out.push({ id: target.id, block: schema.baseItemPatch(vanillaText, target.id, rec.itemId), source: rec.name });
+          out.push({ id: target.id, block: schema.baseItemPatch(vanillaText, target.id, String(rec.itemId)), source: rec.name });
         } catch (err) {
           // A donor Valve removed drops out of the build, and so does a pick the builder refuses.
           // Said in the log, because the window cannot tell: it showed "installed" either way.
-          log(`schema: ${rec.name} left out of the build: ${err.message || err}`);
+          log(`schema: ${rec.name} left out of the build: ${(err as Error)?.message || err}`);
         }
         continue;
       }
@@ -91,7 +121,7 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
       settings.set('schemaStamp', res.stamp);
       return { ok: true, deployed: true, patches: res.applied.length, missing: res.missing, conflicts: res.conflicts, bytes: res.bytes };
     } catch (err) {
-      return { ok: false, error: String(err.message || err) };
+      return { ok: false, error: String((err as Error)?.message || err) };
     }
   }
 
@@ -109,10 +139,10 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
         patcher.revert({ gamePath: game, folder: patcher.FOLDER, backupDir });
         return { ok: true, healed: patcher.state(game, patcher.FOLDER).vanillaOk ? ['vanilla'] : [] };
       } catch (err) {
-        return { ok: false, error: String(err.message || err), healed: [] };
+        return { ok: false, error: String((err as Error)?.message || err), healed: [] };
       }
     }
-    const healed = [];
+    const healed: string[] = [];
     try {
       const st = patcher.state(game, patcher.FOLDER);
       // an install with no signature list has nothing to sign the patch into, so an unsigned
@@ -127,20 +157,21 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
         healed.push('schema');
       }
     } catch (err) {
-      return { ok: false, error: String(err.message || err), healed };
+      return { ok: false, error: String((err as Error)?.message || err), healed };
     }
     return { ok: true, healed };
   }
 
   // Turn the patch on or off. This is the only place that edits files of the game install
   // itself, and it is reached only from an explicit user action.
-  function setEnabled(on) {
+  function setEnabled(on: boolean) {
     const game = gamePath();
     if (!game) return { error: 'no-game-path' };
     if (on) {
       patcher.apply({ gamePath: game, folder: patcher.FOLDER, backupDir });
       settings.set('schemaPatch', true);
-      return { ok: true, ...refresh() };
+      // refresh answers with its own ok, which is the one that counts
+      return refresh();
     }
     settings.set('schemaPatch', false);
     schema.undeploy({ gamePath: game, folder: patcher.FOLDER });
@@ -151,17 +182,17 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
 
   // Lift the item blocks a freshly installed mod changed, drop the whole-game tables it
   // shipped, and remember the blocks on its record.
-  function harvest(rec) {
+  function harvest(rec: LibRecord | null | undefined): { deltas: number; stripped: number } | null {
     const game = gamePath();
     if (!game || !rec || !Array.isArray(rec.files)) return null;
     try {
       // Repacking changes the file, and with it the fingerprint the catalog is matched by.
       // Keep the original so a recognised mod does not turn into an unknown one.
-      let fpBefore = null;
+      let fpBefore: string | null = null;
       try { fpBefore = (installer.analyzeRecord(rec) || {}).fp || null; } catch { /* not a vpk record */ }
       const { deltas, stripped } = installer.harvestSchema(rec.files, vanilla());
       if (!deltas.length && !stripped.length) return null;
-      const fields = { files: rec.files };
+      const fields: Partial<LibRecord> = { files: rec.files };
       if (deltas.length) fields.schema = deltas;
       if (stripped.length && fpBefore) fields.fpOriginal = fpBefore;
       library.update(rec.id, fields);
@@ -174,9 +205,9 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
    * in the cart, so a "Grimstroke" pack may also carry Morphling's files and the item block
    * that goes with them. Split such a record into one mod per hero and hand each part the
    * blocks that talk about its own files.
-   * @returns {Array<object>|null} the new records, or null when there was nothing to split
+   * @returns the new records, or null when there was nothing to split
    */
-  function split(rec) {
+  function split(rec: LibRecord): LibRecord[] | null {
     const dir = (rec.files || []).find((f) => f.root === 'lang' && /_dir\.vpk$/i.test(f.relPath));
     if (!dir) return null;
     let parts;
@@ -184,7 +215,7 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
     if (!parts.length) return null;
 
     const blocks = Array.isArray(rec.schema) ? rec.schema : [];
-    const added = [];
+    const added: LibRecord[] = [];
     for (const part of parts) {
       const mine = blocks.filter((b) => schema.blockUsesAssets(b.block, part.paths || []));
       const created = library.add({
@@ -195,7 +226,7 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
         preview: null,
         files: part.files,
       });
-      const fields = { schemaChecked: true };
+      const fields: Partial<LibRecord> = { schemaChecked: true };
       if (mine.length) fields.schema = mine;
       if (rec.fpOriginal) fields.fpOriginal = rec.fpOriginal;
       library.update(created.id, fields);
@@ -210,9 +241,8 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
    * Mods installed before this existed still carry the whole-game tables inside their VPK:
    * a stale item schema (dead weight) and a stale localization copy (which outranks the
    * game's own and rolls UI text back to whenever the mod was built). Sweep them once.
-   * @returns {{ scanned: number, changed: number, deltas: number, freedMB: number }}
    */
-  function migrate() {
+  function migrate(): { scanned: number; changed: number; deltas: number; freedMB: number } {
     const game = gamePath();
     const out = { scanned: 0, changed: 0, deltas: 0, freedMB: 0 };
     if (!game) return out;
@@ -238,14 +268,14 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
   // table (the one installed later), so the library has to say so instead of quietly
   // dropping the other. Identical blocks are not a conflict at all - Skinchanger bundles
   // the whole cart into every export, so two of its packs routinely carry the same block.
-  function conflicts() {
-    const flat = (s) => s.replace(/\s+/g, ' ').trim();
-    const byId = new Map();
+  function conflicts(): SchemaState['conflicts'] {
+    const flat = (s: string) => s.replace(/\s+/g, ' ').trim();
+    const byId = new Map<string, { id: string; name: string; mods: string[]; texts: Set<string> }>();
     for (const rec of library.list()) {
       if (rec.enabled === false || !Array.isArray(rec.schema)) continue;
       for (const d of rec.schema) {
-        if (!byId.has(d.id)) byId.set(d.id, { id: d.id, name: d.name, mods: [], texts: new Set() });
-        const entry = byId.get(d.id);
+        let entry = byId.get(d.id);
+        if (!entry) { entry = { id: d.id, name: d.name, mods: [], texts: new Set() }; byId.set(d.id, entry); }
         entry.mods.push(rec.name);
         entry.texts.add(flat(d.block));
       }
@@ -255,9 +285,9 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
       .map(({ id, name, mods }) => ({ id, name, mods }));
   }
 
-  function state() {
+  function state(): SchemaState {
     const game = gamePath();
-    const out = {
+    const out: SchemaState = {
       enabled: !!settings.get('schemaPatch'),
       folder: patcher.FOLDER,
       patched: false,
@@ -275,14 +305,14 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
       out.deployed = schema.isDeployed(game, patcher.FOLDER);
       if (out.deployed) out.stale = schema.readGameSchema(game).stamp !== settings.get('schemaStamp');
     } catch (err) {
-      out.error = String(err.message || err);
+      out.error = String((err as Error)?.message || err);
     }
     return out;
   }
 
   // The live cosmetic record for a slot, if any — at most one is ever enabled at a time
   // (see pickCosmetic), the same rule the app already applies to cursor sets.
-  function cosmeticRecordFor(slot) {
+  function cosmeticRecordFor(slot: string): LibRecord | null {
     return library.list().find((r) => r.categoryId === 'cosmetic' && r.slot === slot && r.enabled !== false) || null;
   }
 
@@ -290,16 +320,15 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
    * Every slot that has both a free "base item" and something to put on it, in one call.
    * The list comes from the installed game, so a slot Valve adds later appears by itself.
    * With them, the item builder's sets (item-builder.js itemSets).
-   * @returns {{ slots: Array<{slot, base, picked, options}>, sets: Array<object>, error?: string }}
    */
-  function cosmeticSlots() {
+  function cosmeticSlots(): { slots: CosmeticSlot[]; sets: ItemSet[]; error?: string } {
     const game = gamePath();
     if (!game) return { slots: [], sets: [] };
     try {
       const text = vanilla();
       const bases = schema.listItems(text).filter((i) => i.baseitem);
-      const seen = new Set();
-      const slots = [];
+      const seen = new Set<string>();
+      const slots: CosmeticSlot[] = [];
       for (const base of bases) {
         const slot = base.slot || base.prefab || '';
         if (!slot || seen.has(slot)) continue;
@@ -329,7 +358,7 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
       }
       return { slots, sets };
     } catch (err) {
-      return { slots: [], sets: [], error: String(err.message || err) };
+      return { slots: [], sets: [], error: String((err as Error)?.message || err) };
     }
   }
 
@@ -341,7 +370,7 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
    * looks doesn't spawn a new row each time. Returns the now-live record. `write: false` leaves
    * the game alone, for a caller that picks several and writes once (pickSet).
    */
-  function pickCosmetic(slot, itemId, itemName, effectId = null, { write = true } = {}) {
+  function pickCosmetic(slot: string, itemId: string | number, itemName: string | null | undefined, effectId: string | string[] | null | undefined = null, { write = true } = {}): LibRecord | null {
     const id = String(itemId);
     const name = itemName || id;
     const isItem = slot === 'items' || String(slot || '').startsWith('item:');
@@ -362,9 +391,10 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
     if (live) library.setEnabled(live.id, false);
     const dormant = library.list().find((r) => r.categoryId === 'cosmetic'
       && r.slot === slot && r.itemId === id && (isItem || itemBuilder.effectKey(r.effectId) === effect));
-    const rec = dormant
+    // a record found a line above updates, so there is always one here
+    const rec = (dormant
       ? library.update(dormant.id, { name, enabled: true, effectId: effect || undefined })
-      : library.add({ name, categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [] });
+      : library.add({ name, categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [] })) as LibRecord;
     if (!dormant) library.update(rec.id, { slot, itemId: id, ...(effect ? { effectId: effect } : {}) });
     if (write) refresh();
     return library.find(rec.id);
@@ -375,7 +405,7 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
    * in My mods, and the game is written once. A set brings no effects, and a piece that is on
    * already keeps the ones it has.
    */
-  function pickSet(setId) {
+  function pickSet(setId: string | number): { applied: number; pieces: number } {
     const set = itemBuilder.itemSets(vanilla()).find((x) => x.id === String(setId));
     if (!set) throw new Error(t('Набор не найден'));
     let applied = 0;
@@ -401,7 +431,7 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
       for (const [slot, itemId] of Object.entries(picks)) {
         if (!itemId || cosmeticRecordFor(slot)) continue;
         const opt = schema.cosmeticOptions(text, slot).find((o) => o.id === String(itemId));
-        pickCosmetic(slot, itemId, opt ? opt.name : slot);
+        pickCosmetic(slot, String(itemId), opt ? opt.name : slot);
       }
     } catch { /* the game path may not be ready yet; nothing lost, just retried next start */ }
     settings.set('cosmetics', {});
@@ -413,4 +443,3 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
   };
 }
 
-module.exports = { createSchemaService };

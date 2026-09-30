@@ -94,7 +94,7 @@ measured: node reports only files a test loaded, so deleting the last test that 
 would otherwise pass quietly.
 
 Per file, because one number hides the answer: the aggregate read 76.10% on the day this was
-written, while `src/presets-service.js` sat at 13.8% of its lines. Write tests, then
+written, while `src/presets-service.ts` sat at 13.8% of its lines. Write tests, then
 `node tools/coverage.mjs --update` to raise the lines. Never lower one to make a run green.
 
 A drop in a file your change did not touch usually means the file's own tests never reached
