@@ -1,7 +1,7 @@
 /* Living next to Minify.
  *
  * The two apps reach the game by different routes, and the routes are not equivalent. The
- * rules underneath both are in src/gamelang.js, which is the one place they are written down.
+ * rules underneath both are in src/gamelang.ts, which is the one place they are written down.
  *
  * This app: set the voice language in Dota's own settings to one of the three that have a
  * folder, and fill that folder. The folders already exist on every install, English voices
@@ -24,14 +24,26 @@
  * whoever is looking at a game with no mods in it knows why.
  */
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const { listVpkPathsFile } = require('./vpk.ts');
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import { listVpkPathsFile } from './vpk.ts';
 
-/** Its own locale, which is not a language Dota knows, and the real one it moved to. */
-const MINIFY_FOLDER = 'minify';
-const MINIFY_BORROWED = 'dutch';
+/** What Minify's own config says about where it writes. */
+export interface MinifyConfig { outputPath: string | null; locale: string | null; folder: string | null }
+
+/** Minify as this app sees it; see readMinify. */
+export interface MinifyState {
+  present: boolean; folder: string | null; mods: number; mounts: boolean;
+  mounted: string | null; ourFolder: string; sharing: boolean;
+  live: 'ours' | 'minify' | 'both' | 'neither' | 'unknown'; declared: boolean; prelaunch: boolean;
+  reservedLabel: string;
+}
+
+/** Its own locale, which is not a language Dota knows. */
+export const MINIFY_FOLDER = 'minify';
+/** The real language it moved to, whose folder Dota does mount. */
+export const MINIFY_BORROWED = 'dutch';
 
 /* The pak slots Minify writes, and the smaller set we refuse to hand out.
  *
@@ -51,8 +63,8 @@ const MINIFY_BORROWED = 'dutch';
  * still on an older release has a pak99 on disk already, which the allocator reads off the
  * folder like any other occupied slot - and MINIFY_PAKS still knows whose it is. The author
  * asked for exactly this: detect the file rather than blindly reserve the number. */
-const MINIFY_PAKS = [65, 66, 67, 99];
-const RESERVED_PAKS = [65, 66, 67];
+export const MINIFY_PAKS: readonly number[] = [65, 66, 67, 99];
+export const RESERVED_PAKS: readonly number[] = [65, 66, 67];
 
 /* The reserved range as the interface says it out loud.
  *
@@ -60,7 +72,7 @@ const RESERVED_PAKS = [65, 66, 67];
  * being reserved, because the sentence carried its own copy of the numbers. Built from the list
  * instead, so the promise on screen and the slots the allocator actually skips cannot disagree
  * again. */
-const RESERVED_LABEL = RESERVED_PAKS.length > 1
+export const RESERVED_LABEL = RESERVED_PAKS.length > 1
   ? `pak${RESERVED_PAKS[0]}-${RESERVED_PAKS[RESERVED_PAKS.length - 1]}`
   : `pak${RESERVED_PAKS[0]}`;
 
@@ -75,9 +87,9 @@ const RESERVED_LABEL = RESERVED_PAKS.length > 1
  *
  * Matches the dir file and its data volumes: pak66_dir.vpk, pak66_000.vpk, and the same with
  * an .off or .moff already on the end.
- * @param {string} baseLower a file name, lowercased
+ * @param baseLower a file name, lowercased
  */
-function isMinifyFile(baseLower) {
+export function isMinifyFile(baseLower: string): boolean {
   const m = String(baseLower).match(/^pak(\d{2})_(?:dir|\d{3})\.vpk(?:\.off|\.moff)?$/);
   return !!m && MINIFY_PAKS.includes(Number(m[1]));
 }
@@ -91,13 +103,13 @@ function isMinifyFile(baseLower) {
  *
  * Reading their convention rather than proposing one costs nothing and needs no agreement.
  */
-const MINIFY_MARKERS = ['minify_mods.json', 'minify_vpk_mods.txt', 'minify_version.txt'];
+export const MINIFY_MARKERS: readonly string[] = ['minify_mods.json', 'minify_vpk_mods.txt', 'minify_version.txt'];
 
 /**
  * Was this VPK built by Minify? Reads the archive index only, never the content.
- * @param {string} file  full path to a *_dir.vpk
+ * @param file  full path to a *_dir.vpk
  */
-function isMinifyPak(file) {
+export function isMinifyPak(file: string): boolean {
   try {
     const names = listVpkPathsFile(file).map((n) => String(n).toLowerCase());
     return MINIFY_MARKERS.some((m) => names.includes(m));
@@ -107,7 +119,7 @@ function isMinifyPak(file) {
 }
 
 /** Where Minify keeps the settings it publishes about itself. */
-function configPath() {
+export function configPath(): string {
   const local = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
   return path.join(local, 'Dota2-Minify', 'config', 'minify_config.json');
 }
@@ -115,9 +127,8 @@ function configPath() {
 /**
  * What Minify says about itself, or null. Its own config beats anything we could infer: it
  * names the locale it sets, which is the whole question between the two apps.
- * @returns {{ outputPath: string|null, locale: string|null, folder: string|null }|null}
  */
-function readConfig(file = configPath()) {
+export function readConfig(file = configPath()): MinifyConfig | null {
   try {
     const raw = JSON.parse(fs.readFileSync(file, 'utf-8'));
     const outputPath = typeof raw.output_path === 'string' ? raw.output_path : null;
@@ -136,7 +147,7 @@ function readConfig(file = configPath()) {
  * dota_dutch, because Dutch is the folder it borrows to make English work. Reading the locale
  * had this app announce a folder called dota_english, which exists nowhere.
  */
-function folderOfPath(outputPath) {
+export function folderOfPath(outputPath: string | null | undefined): string | null {
   if (!outputPath) return null;
   const last = String(outputPath).replace(/[\\/]+$/, '').split(/[\\/]/).pop() || '';
   const m = last.match(/^dota_(.+)$/i);
@@ -160,39 +171,33 @@ function folderOfPath(outputPath) {
  * Matched on what the wrapper is rather than on one release's exact spelling: the word
  * `prelaunch` as a token, Minify named in the same line, and the `&&` that hands over to the
  * game. Nobody's own launch options are all three by accident.
- * @param {string|null} options  Steam's launch options for Dota, unescaped
+ * @param options  Steam's launch options for Dota, unescaped
  */
-function prelaunchHook(options) {
+export function prelaunchHook(options: string | null | undefined): boolean {
   const s = String(options || '');
   return /(?:^|[\s"])prelaunch(?:[\s"]|$)/i.test(s) && /minify/i.test(s) && s.includes('&&');
 }
 
 /**
- * @param {object} p
- * @param {Array<{suffix: string, official: boolean, valveContent: boolean, modFiles: number}>} p.folders
- *   every dota_* folder on disk, from gamelang.langFolders()
- * @param {string|null} p.audio  the voice language the game is set to, which names the folder
- *   it mounts
- * @param {string[]} p.gameLanguages  the languages Dota will accept for that setting
- * @param {string} p.ourFolder   the suffix this app installs into, from gamelang.folderFor()
- * @param {number} [p.ourMods]   how many mods this app has installed
- * @param {string|null} [p.launchOptions]  Steam's launch options for Dota, unescaped
- * @param {{ folder?: string|null, outputPath: string|null }|null} [p.config]  what Minify's own
- *   config says, read from disk unless a test hands one in
- * @param {((suffix: string) => number)|null} [p.countMods]  how many of the files in a folder
- *   are Minify's own, when the caller can look at them
- * @returns {{
- *   present: boolean, folder: string|null, mods: number, mounts: boolean,
- *   mounted: string|null, ourFolder: string, sharing: boolean,
- *   live: 'ours'|'minify'|'both'|'neither'|'unknown', declared: boolean, prelaunch: boolean,
- *   reservedLabel: string,
- * }}
+ * Where Minify is, whether its folder is the one the game mounts, and whose mods are live.
+ * @param p.folders  every dota_* folder on disk, from gamelang.langFolders()
+ * @param p.audio  the voice language the game is set to, which names the folder it mounts
+ * @param p.gameLanguages  the languages Dota will accept for that setting
+ * @param p.ourFolder   the suffix this app installs into, from gamelang.folderFor()
+ * @param p.ourMods     how many mods this app has installed
+ * @param p.launchOptions  Steam's launch options for Dota, unescaped
+ * @param p.config  what Minify's own config says, read from disk unless a test hands one in
+ * @param p.countMods  how many of the files in a folder are Minify's own, when the caller can look at them
  */
-function readMinify({
+export function readMinify({
   folders = [], audio = null, gameLanguages = [], ourFolder, ourMods = 0, config = readConfig(),
   countMods = null, launchOptions = null,
-}) {
-  const at = (suffix) => folders.find((f) => f.suffix === suffix) || null;
+}: {
+  folders?: { suffix: string; modFiles: number }[]; audio?: string | null; gameLanguages?: readonly string[];
+  ourFolder: string; ourMods?: number; config?: { folder?: string | null; outputPath?: string | null; locale?: string | null } | null;
+  countMods?: ((suffix: string) => number) | null; launchOptions?: string | null;
+}): MinifyState {
+  const at = (suffix: string) => folders.find((f) => f.suffix === suffix) || null;
   // where it writes, which is the question - not the language the player asked it for
   const declared = config ? (config.folder || folderOfPath(config.outputPath)) : null;
 
@@ -216,8 +221,7 @@ function readMinify({
   const mounted = audio ? String(audio).toLowerCase() : null;
   const sharing = present && folder === ourFolder;
 
-  /** @type {'ours'|'minify'|'both'|'neither'|'unknown'} */
-  let live = 'unknown';
+  let live: MinifyState['live'] = 'unknown';
   if (mounted) {
     const oursLive = mounted === ourFolder && ourMods > 0;
     const minifyLive = mounts && mounted === folder && mods > 0;
@@ -237,4 +241,3 @@ function readMinify({
   };
 }
 
-module.exports = { readMinify, readConfig, configPath, folderOfPath, isMinifyFile, isMinifyPak, MINIFY_MARKERS, MINIFY_FOLDER, MINIFY_BORROWED, RESERVED_PAKS, RESERVED_LABEL, MINIFY_PAKS, prelaunchHook };

@@ -29,7 +29,7 @@
  * parameters, no folder invented by hand, no VPK to fix the text back, and the player is
  * still free to set the text language to anything they like.
  *
- * The other route, for contrast (it is what Minify does, see src/minify.js): put
+ * The other route, for contrast (it is what Minify does, see src/minify.ts): put
  * `-language dutch` in Steam's launch options. Text becomes Dutch, voices fall back to
  * English, dota_dutch mounts - but the folder does not exist until somebody creates it with a
  * gameinfo.gi of its own, both language settings are locked while the parameter is there, so
@@ -38,9 +38,25 @@
  * folders; the languages with no voice pack of their own are the ones that could go the same
  * way, while these three cannot - the game has to mount them to play their voices.
  */
-const fs = require('fs');
-const path = require('path');
-const { isMinifyFile, isMinifyPak } = require('./minify');
+import fs from 'node:fs';
+import path from 'node:path';
+import { isMinifyFile, isMinifyPak } from './minify.ts';
+
+/** One dota_* folder on disk and what is in it; see langFolders. */
+export interface LangFolder {
+  suffix: string;
+  /** one of the three folders Valve ships */
+  official: boolean;
+  /** holds Valve's own voice paks */
+  valveContent: boolean;
+  /** pak files that are not Valve's */
+  modFiles: number;
+}
+
+/** The folder the game will mount, and where that answer came from; see detectLangSuffix. */
+export interface LangDetection {
+  suffix: string | null; source: 'launch' | 'boot' | 'steam' | null; uiLanguage: string | null; audio: string | null;
+}
 
 /* Languages Dota records VOICE in - four of them, and that is the list that matters here.
  *
@@ -49,7 +65,7 @@ const { isMinifyFile, isMinifyPak } = require('./minify');
  * of twenty-nine languages living in dota/pak01, and it has no bearing on any of this; reading
  * the wrong one of the two is how a mod ends up in a folder nobody mounts.
  */
-const VOICE_LANGUAGES = ['english', 'koreana', 'russian', 'schinese'];
+export const VOICE_LANGUAGES: readonly string[] = ['english', 'koreana', 'russian', 'schinese'];
 
 /* Three of those four get a folder on disk.
  *
@@ -58,10 +74,10 @@ const VOICE_LANGUAGES = ['english', 'koreana', 'russian', 'schinese'];
  * which English is not. A dota_english built by hand, correct gameinfo.gi and all, filled with
  * mods, is never read. Tested 2026-08-10 rather than assumed, twice.
  */
-const MOD_FOLDERS = ['koreana', 'russian', 'schinese'];
+export const MOD_FOLDERS: readonly string[] = ['koreana', 'russian', 'schinese'];
 
 /** Borrowed by English, and by anything unrecognised. */
-const FALLBACK_FOLDER = 'russian';
+export const FALLBACK_FOLDER = 'russian';
 
 /* Every language Dota will accept for that setting, which is a longer list than the four it
  * records voice in - text for all of them ships inside dota/pak01.
@@ -70,9 +86,9 @@ const FALLBACK_FOLDER = 'russian';
  * 2026-07-24 update the setting is where the mount path comes from, and it takes a language
  * rather than any string, so a folder named after something that is not on this list is never
  * read - which is the whole reason Minify moved off its own "minify" locale (see
- * src/minify.js). Cross-checked against Minify's own enumeration of the same set.
+ * src/minify.ts). Cross-checked against Minify's own enumeration of the same set.
  */
-const DOTA_LANGUAGES = [
+export const DOTA_LANGUAGES: readonly string[] = [
   'brazilian', 'bulgarian', 'czech', 'danish', 'dutch', 'english', 'finnish', 'french',
   'german', 'greek', 'hungarian', 'italian', 'japanese', 'koreana', 'latam', 'norwegian',
   'polish', 'portuguese', 'romanian', 'russian', 'schinese', 'spanish', 'swedish', 'tchinese',
@@ -92,11 +108,11 @@ const DOTA_LANGUAGES = [
  * only kind of folder the engine mounts; anything else falls back to the voice language, which
  * is the ordinary path and the one this app sets itself.
  *
- * @param {string|null} launched  a `-language` value, if one is set
- * @param {string|null} audio     the voice language from the game's own settings
- * @returns {{ suffix: string, followed: boolean }} the folder, and whether a parameter chose it
+ * @param launched  a `-language` value, if one is set
+ * @param audio     the voice language from the game's own settings
+ * @returns the folder, and whether a parameter chose it
  */
-function modFolderFor(launched, audio) {
+export function modFolderFor(launched: string | null | undefined, audio: string | null | undefined): { suffix: string; followed: boolean } {
   const forced = launched ? String(launched).toLowerCase() : null;
   if (forced && DOTA_LANGUAGES.includes(forced)) return { suffix: forced, followed: true };
   return { suffix: folderFor(audio), followed: false };
@@ -111,12 +127,12 @@ function modFolderFor(launched, audio) {
  * dota_russian holding nothing but mods, and keeps hearing the English speech out of
  * dota/pak01 without noticing anything happened.
  */
-function folderFor(audio) {
-  return MOD_FOLDERS.includes(audio) ? audio : FALLBACK_FOLDER;
+export function folderFor(audio: string | null | undefined): string {
+  return audio && MOD_FOLDERS.includes(audio) ? audio : FALLBACK_FOLDER;
 }
 
 // what Valve puts in every official language folder; mirrored when we have to create one
-const gameinfoStub = (suffix) => `"GameInfo"
+const gameinfoStub = (suffix: string) => `"GameInfo"
 {
 	LayeredOnMod	dota
 
@@ -140,7 +156,7 @@ const gameinfoStub = (suffix) => `"GameInfo"
 }
 `;
 
-const readKey = (text, key) => {
+const readKey = (text: string, key: string): string | null => {
   const m = text.match(new RegExp(`"${key}"\\s*"([^"]+)"`, 'i'));
   return m ? m[1].trim().toLowerCase() : null;
 };
@@ -157,10 +173,10 @@ const readKey = (text, key) => {
  * borrow. Which account that is comes from loginusers.vdf - MostRecent where the file has it,
  * newest Timestamp where it does not (this Steam build writes only the latter).
  */
-function currentSteamUser(root) {
-  let text = null;
+function currentSteamUser(root: string): string | null {
+  let text: string;
   try { text = fs.readFileSync(path.join(root, 'config', 'loginusers.vdf'), 'utf-8'); } catch { return null; }
-  let best = null;
+  let best: { id: string; rank: number } | null = null;
   for (const m of text.matchAll(/"(\d{17})"\s*\{([\s\S]*?)\n\t\}/g)) {
     const mostRecent = (m[2].match(/"MostRecent"\s*"(\d)"/) || [])[1];
     const stamp = Number((m[2].match(/"Timestamp"\s*"(\d+)"/) || [])[1] || 0);
@@ -187,14 +203,14 @@ function currentSteamUser(root) {
  *
  * A backslash escapes whatever follows it, so a quote ends the value only when it is not itself
  * escaped.
- * @returns {string|null} the value, or null when the file or the key is not there
+ * @returns the value, or null when the file or the key is not there
  */
-function readLaunchOptions(file) {
-  let text = null;
+function readLaunchOptions(file: string): string | null {
+  let text: string;
   try { text = fs.readFileSync(file, 'utf-8'); } catch { return null; }
   const app = text.match(/"570"\s*\{[\s\S]{0,4000}?"LaunchOptions"\s*"((?:\\.|[^"\\])*)"/);
   if (!app) return null;
-  const escapes = { n: '\n', t: '\t', v: '\v', b: '\b', r: '\r', f: '\f' };
+  const escapes: Record<string, string> = { n: '\n', t: '\t', v: '\v', b: '\b', r: '\r', f: '\f' };
   return app[1].replace(/\\(.)/g, (_, c) => (c in escapes ? escapes[c] : c));
 }
 
@@ -204,10 +220,10 @@ function readLaunchOptions(file) {
  * is no override, and another account's value is not ours to borrow. Where nobody can be
  * identified, an answer every account with one agrees on is safe to use and a disagreement is
  * not an answer.
- * @param {(raw: string|null) => string|null} pick what to take out of one account's options
+ * @param pick what to take out of one account's options
  */
-function fromLaunchOptions(gamePath, pick) {
-  const roots = [];
+function fromLaunchOptions(gamePath: string | null | undefined, pick: (raw: string | null) => string | null): string | null {
+  const roots: string[] = [];
   if (gamePath) {
     // <lib>/steamapps/common/dota 2 beta/game -> <lib>, which is the Steam root for a default install
     roots.push(path.resolve(gamePath, '..', '..', '..', '..'));
@@ -219,17 +235,17 @@ function fromLaunchOptions(gamePath, pick) {
   }
   for (const root of roots) {
     const userdata = path.join(root, 'userdata');
-    let ids = [];
+    let ids: string[] = [];
     try { ids = fs.readdirSync(userdata).filter((d) => /^\d+$/.test(d)); } catch { continue; }
     if (!ids.length) continue;
 
-    const valueOf = (id) => pick(readLaunchOptions(path.join(userdata, id, 'config', 'localconfig.vdf')));
+    const valueOf = (id: string) => pick(readLaunchOptions(path.join(userdata, id, 'config', 'localconfig.vdf')));
     const current = currentSteamUser(root);
     if (current && ids.includes(current)) {
       const own = valueOf(current);
       return own || null; // '' means launch options exist and say nothing about this question
     }
-    const values = new Set();
+    const values = new Set<string>();
     for (const id of ids) {
       const v = valueOf(id);
       if (v) values.add(v);
@@ -240,7 +256,7 @@ function fromLaunchOptions(gamePath, pick) {
 }
 
 /** The `-language X` Steam will start the game with, lowercased, or null. */
-function launchLanguage(gamePath) {
+export function launchLanguage(gamePath: string | null | undefined): string | null {
   return fromLaunchOptions(gamePath, (raw) => {
     if (raw === null) return null;
     const lang = raw.match(/-language\s+([A-Za-z]+)/);
@@ -249,12 +265,12 @@ function launchLanguage(gamePath) {
 }
 
 /** Everything Steam will start the game with, verbatim, or null. */
-function launchOptions(gamePath) {
+export function launchOptions(gamePath: string | null | undefined): string | null {
   return fromLaunchOptions(gamePath, (raw) => raw);
 }
 
 /** UI + audio language the game wrote at its last boot, or null if it never ran. */
-function bootLanguages(gamePath) {
+export function bootLanguages(gamePath: string | null | undefined): { ui: string | null; audio: string | null } | null {
   if (!gamePath) return null;
   try {
     const file = path.join(gamePath, 'dota', 'cfg', 'boot.vcfg');
@@ -269,7 +285,7 @@ function bootLanguages(gamePath) {
 }
 
 /** Language Steam has the game mounted as — the fallback before Dota has ever booted. */
-function steamLanguage(gamePath) {
+export function steamLanguage(gamePath: string | null | undefined): string | null {
   if (!gamePath) return null;
   try {
     // <lib>/steamapps/common/dota 2 beta/game -> <lib>/steamapps/appmanifest_570.acf
@@ -285,17 +301,17 @@ function steamLanguage(gamePath) {
 }
 
 /** Every dota_* folder on disk, with what is inside each. */
-function langFolders(gamePath) {
+export function langFolders(gamePath: string | null | undefined): LangFolder[] {
   if (!gamePath) return [];
-  const out = [];
-  let names = [];
+  const out: LangFolder[] = [];
+  let names: string[] = [];
   try { names = fs.readdirSync(gamePath, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name); } catch { return []; }
   for (const name of names) {
     const m = name.match(/^dota_(.+)$/i);
     if (!m) continue;
     const suffix = m[1].toLowerCase();
     if (['addons', 'lv', 'core', 'mods'].includes(suffix)) continue; // not language layers; dota_mods is ours
-    let files = [];
+    let files: string[] = [];
     try { files = fs.readdirSync(path.join(gamePath, name)); } catch { /* unreadable */ }
     out.push({
       suffix,
@@ -318,7 +334,7 @@ function langFolders(gamePath) {
  * dota_dutch and reads its mods out of it - and the folder Dota mounts follows that value
  * whether or not we recognise it. Anything asking "whose mods are live" needs the raw one.
  */
-function detectLangSuffix(gamePath) {
+export function detectLangSuffix(gamePath: string | null | undefined): LangDetection {
   const boot = bootLanguages(gamePath);
   const steam = steamLanguage(gamePath);
   // A launch option overrides and locks both settings, so it decides the folder no matter
@@ -351,14 +367,13 @@ function detectLangSuffix(gamePath) {
  * somebody reads the game in is their business, decided long before this app arrived. Only
  * the audio language is ours to set, because it is what names the folder the engine mounts
  * and therefore where a mod has to live.
- * @param {string} gamePath
- * @param {{ ui?: string, audio?: string }} langs  a setting left out is left as it is
+ * @param langs  a setting left out is left as it is
  */
-function writeBootLanguages(gamePath, { ui, audio }) {
+export function writeBootLanguages(gamePath: string, { ui, audio }: { ui?: string | null; audio?: string | null }): { ui?: string | null; audio?: string | null } {
   const file = path.join(gamePath, 'dota', 'cfg', 'boot.vcfg');
-  let text = null;
+  let text: string | null = null;
   try { text = fs.readFileSync(file, 'utf-8'); } catch { /* first write */ }
-  const pairs = [['UILanguage', ui], ['AudioLanguage', audio]].filter(([, v]) => v);
+  const pairs = ([['UILanguage', ui], ['AudioLanguage', audio]] as [string, string | null | undefined][]).filter(([, v]) => v);
   if (!text || !/"boot"/i.test(text)) {
     text = `"boot"\n{\n${pairs.map(([k, v]) => `\t"${k}"\t\t"${v}"\n`).join('')}}\n`;
   } else {
@@ -374,7 +389,7 @@ function writeBootLanguages(gamePath, { ui, audio }) {
 }
 
 /** Is Valve's voice pack for this language actually on disk? If not, voices stay English. */
-function voiceInstalled(gamePath, suffix) {
+export function voiceInstalled(gamePath: string, suffix: string): boolean {
   try {
     return fs.readdirSync(path.join(gamePath, `dota_${suffix}`)).some((f) => /^pak01_/i.test(f));
   } catch {
@@ -387,7 +402,7 @@ function voiceInstalled(gamePath, suffix) {
  * (English voice lives in dota/pak01), so for it we create the layer ourselves, shaped
  * exactly like Valve's own — never touching a gameinfo.gi that is already there.
  */
-function ensureLangFolder(gamePath, suffix) {
+export function ensureLangFolder(gamePath: string, suffix: string): string {
   const dir = path.join(gamePath, `dota_${suffix}`);
   const existed = fs.existsSync(dir);
   fs.mkdirSync(dir, { recursive: true });
@@ -402,7 +417,7 @@ function ensureLangFolder(gamePath, suffix) {
     try {
       fs.writeFileSync(gi, gameinfoStub(suffix), { flag: 'wx' });
     } catch (err) {
-      if (err.code !== 'EEXIST') throw err;
+      if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
     }
   }
   return dir;
@@ -419,9 +434,9 @@ function ensureLangFolder(gamePath, suffix) {
  * already taken in the destination is not overwritten, because the file there is somebody's
  * current mod and this one is a leftover.
  *
- * @returns {number} how many files were actually moved
+ * @returns how many files were actually moved
  */
-function moveLangFolder(gamePath, fromSuffix, toSuffix) {
+export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {
   if (!gamePath || !fromSuffix || !toSuffix || fromSuffix === toSuffix) return 0;
   const oldDir = path.join(gamePath, `dota_${fromSuffix}`);
   let moved = 0;
@@ -444,21 +459,3 @@ function moveLangFolder(gamePath, fromSuffix, toSuffix) {
   return moved;
 }
 
-module.exports = {
-  VOICE_LANGUAGES,
-  DOTA_LANGUAGES,
-  modFolderFor,
-  launchLanguage,
-  launchOptions,
-  MOD_FOLDERS,
-  FALLBACK_FOLDER,
-  folderFor,
-  bootLanguages,
-  steamLanguage,
-  langFolders,
-  detectLangSuffix,
-  writeBootLanguages,
-  voiceInstalled,
-  ensureLangFolder,
-  moveLangFolder,
-};

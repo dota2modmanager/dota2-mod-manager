@@ -21,7 +21,7 @@ const fs = require('fs');
 const path = require('path');
 
 const vpk = require('./vpk.ts');
-const gamelang = require('./gamelang');
+const gamelang = require('./gamelang.ts');
 const { APP_PAK } = require('./slot-zones');
 const { NOTICE_TEXTS, NOTICE_KEYS } = require('./notice-texts.ts');
 

@@ -25,7 +25,7 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 const { execFile } = require('child_process');
-const schema = require('./schema');
+const schema = require('./schema.ts');
 const { openVpkIndex } = require('./vpk.ts');
 const { pngFromVtex } = require('./vtex.ts');
 

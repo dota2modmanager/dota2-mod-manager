@@ -2,16 +2,16 @@
 // result does not degrade, it kills the game on load with ERROR PARSING SCRIPT, and a merge
 // that drops blocks silently removes cosmetics people paid for. So the merge is pinned on
 // both counts: what it splices in, and what it refuses to ship.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const schema = require('../src/schema.js');
-const vpk = require('../src/vpk.ts');
+import * as schema from '../src/schema.ts';
+import * as vpk from '../src/vpk.ts';
 
-const item = (id, name, extra = '') => `		"${id}"
+const item = (id: string | number, name: string, extra = '') => `		"${id}"
 		{
 			"name"		"${name}"
 			"prefab"		"default_item"
@@ -69,7 +69,7 @@ test('several blocks all land, not just the last one', () => {
   // The merge splices from the tail so earlier offsets stay valid; doing it head-first would
   // corrupt every edit after the first.
   const base = small();
-  const block = (id, name) => `"${id}"\n{\n\t"name"\t\t"${name}"\n}`;
+  const block = (id: string | number, name: string) => `"${id}"\n{\n\t"name"\t\t"${name}"\n}`;
 
   const out = schema.mergeSchema(base, [
     { id: '1', block: block('1', 'First'), source: 'a' },
@@ -162,7 +162,7 @@ test('merging into a real-sized table keeps it valid', () => {
 
 // ---------------------------------------------------------------- what counts as the mod's
 
-const withModel = (id, name, model) => `		"${id}"
+const withModel = (id: string | number, name: string, model: string) => `		"${id}"
 		{
 			"name"		"${name}"
 			"prefab"		"default_item"
@@ -170,7 +170,7 @@ const withModel = (id, name, model) => `		"${id}"
 		}
 `;
 
-const table = (blocks) => `"items_game"
+const table = (blocks: string[]) => `"items_game"
 {
 	"items"
 	{
@@ -227,20 +227,20 @@ test('the item list stays right when two tables are read in turn', () => {
   const b2 = schema.listItems(merged);
   const a2 = schema.listItems(game);
 
-  assert.equal(a1.find((i) => i.id === '1').name, 'only_in_game');
-  assert.equal(b1.find((i) => i.id === '1').name, 'renamed_in_merged');
-  assert.equal(a2.find((i) => i.id === '1').name, 'only_in_game', 'the game table came back as the merged one');
-  assert.equal(b2.find((i) => i.id === '1').name, 'renamed_in_merged');
+  assert.equal(a1.find((i) => i.id === '1')?.name, 'only_in_game');
+  assert.equal(b1.find((i) => i.id === '1')?.name, 'renamed_in_merged');
+  assert.equal(a2.find((i) => i.id === '1')?.name, 'only_in_game', 'the game table came back as the merged one');
+  assert.equal(b2.find((i) => i.id === '1')?.name, 'renamed_in_merged');
   assert.equal(a1, a2, 'the same text should hand back the same cached list');
 
   // findItem answers off that list now, so it has to be right about which table it read
-  assert.equal(schema.findItem(game, '1').text.includes('only_in_game'), true);
-  assert.equal(schema.findItem(merged, '1').text.includes('renamed_in_merged'), true);
+  assert.equal(schema.findItem(game, '1')?.text.includes('only_in_game'), true);
+  assert.equal(schema.findItem(merged, '1')?.text.includes('renamed_in_merged'), true);
   assert.equal(schema.findItem(game, '404'), null);
 });
 
 // ---------- the rest of the reader ----------
-// Added 2026-09-17: a fifth of src/schema.js had no test, including the free-cosmetics
+// Added 2026-09-17: a fifth of src/schema.ts had no test, including the free-cosmetics
 // picker, the block that dresses a base item, and writing the built table into the game.
 
 
@@ -263,7 +263,9 @@ test('comments and bare words are read the way the game reads them', () => {
   ].join('\n');
   const [only] = schema.listItems(text);
   assert.equal(only.name, 'Bare');
-  assert.deepEqual([...schema.itemFields(text, schema.findItem(text, '7'))], [['name', 'Bare'], ['prefab', 'default_item']]);
+  const seven = schema.findItem(text, '7');
+  assert.ok(seven);
+  assert.deepEqual([...schema.itemFields(text, seven)], [['name', 'Bare'], ['prefab', 'default_item']]);
 
   // a comment that runs to the end of the file ends the walk instead of reading past it
   const cut = '"items_game"\n{\n"items"\n{\n"1"\n{\n"name" "x" // no newline after this}}}';
@@ -337,7 +339,7 @@ const WEATHER = [
 ].join('\r\n');
 
 test('the free-cosmetics picker offers what the installed game has for that slot', () => {
-  assert.equal(schema.baseItemFor(WEATHER, 'weather').id, '555');
+  assert.equal(schema.baseItemFor(WEATHER, 'weather')?.id, '555');
   assert.equal(schema.baseItemFor(WEATHER, 'head'), null, 'no base item, no picker');
   assert.deepEqual(schema.cosmeticOptions(WEATHER, 'weather'), [
     { id: '4002', name: 'Weather Café' },
@@ -354,7 +356,7 @@ test("a base item is dressed in another item's visuals, without the paid style g
   assert.ok(!block.includes('"price"'));
 
   const dressed = schema.mergeSchema(WEATHER, [{ id: '555', block }]).text;
-  assert.equal(schema.listItems(dressed).find((i) => i.id === '555').hasVisuals, true);
+  assert.equal(schema.listItems(dressed).find((i) => i.id === '555')?.hasVisuals, true);
   // once dressed, the base item has visuals of its own, and is still not an option for itself
   assert.deepEqual(schema.cosmeticOptions(dressed, 'weather').map((o) => o.id), ['4002', '4000']);
 
@@ -388,7 +390,7 @@ test("a mod's lifted blocks travel as a table the game can read back", () => {
 // ---------- into the game ----------
 
 /** A game folder whose pak01 carries this items_game.txt. */
-function gameWith(t, text) {
+function gameWith(t: TestContext, text: string) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-schema-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   fs.mkdirSync(path.join(dir, 'dota'), { recursive: true });
@@ -408,6 +410,7 @@ test('the built table is written into the mod folder, read back the same, and ta
   assert.equal(schema.isDeployed(game, 'dota_mods'), true);
 
   const written = vpk.readVpkEntryFile(path.join(game, 'dota_mods', schema.SCHEMA_VPK), schema.SCHEMA_REL);
+  assert.ok(written, 'no table in the built pak');
   const text = written.data.toString('latin1');
   assert.ok(text.includes('"Patched"'));
   assert.equal(schema.listItems(text).length, 1200);
@@ -452,19 +455,19 @@ test('the built table carries the files the item builder copies, each once', (t)
   // Two picks can stage the same stock path (two wearables of one hero share a model): the pak
   // holds it once, and the first copy wins, as the builder staged them in the order of the picks.
   const game = gameWith(t, large(1200));
-  const data = (s) => Buffer.from(s);
-  const asset = (rel, body) => {
+  const data = (s: string) => Buffer.from(s);
+  const asset = (rel: string, body: string) => {
     const d = data(body);
     const slash = rel.lastIndexOf('/');
     const dot = rel.lastIndexOf('.');
     return { ext: rel.slice(dot + 1), folder: rel.slice(0, slash), name: rel.slice(slash + 1, dot), data: d, preload: Buffer.alloc(0), crc: vpk.crc32(d) };
   };
-  const block = (id) => `"${id}"\r\n{\r\n\t"name"\t\t"Built ${id}"\r\n\t"prefab"\t\t"default_item"\r\n}`;
+  const block = (id: string) => `"${id}"\r\n{\r\n\t"name"\t\t"Built ${id}"\r\n\t"prefab"\t\t"default_item"\r\n}`;
   schema.deploy({ gamePath: game, folder: 'dota_mods', patches: [
     { id: '2', block: block('2'), source: 'head', assets: [asset('models/heroes/abaddon/helmet.vmdl_c', 'first')] },
     { id: '3', block: block('3'), source: 'again', assets: [asset('models/heroes/abaddon/helmet.vmdl_c', 'second'), asset('models/heroes/abaddon/shoulders.vmdl_c', 'shoulders')] },
   ] });
-  const packed = vpk.readVpkEntries(fs.readFileSync(path.join(game, 'dota_mods', schema.SCHEMA_VPK)));
+  const packed = vpk.readVpkEntries(fs.readFileSync(path.join(game, 'dota_mods', schema.SCHEMA_VPK)), 'mem');
   const byPath = new Map(packed.map((en) => [vpk.entryPath(en), en.data.toString()]));
   assert.equal(packed.length, 3, 'the table and two models, the shared one once');
   assert.equal(byPath.get('models/heroes/abaddon/helmet.vmdl_c'), 'first');
@@ -486,5 +489,53 @@ test('a bundle lists the items it holds', () => {
 \t}
 }`);
   const set = schema.listItems(text).find((i) => i.id === '20010');
-  assert.deepEqual(set.bundleItems, ['Garments Head', 'Garments Arms']);
+  assert.deepEqual(set?.bundleItems, ['Garments Head', 'Garments Arms']);
+});
+
+// ---------- reading an item's slot and words ----------
+
+test('an item that names its slot is in that slot, and a wearable that names none is a weapon', () => {
+  /* The "wearable" and "default_item" prefabs both say "item_slot" "weapon" in items_game, and
+     1857 wearables and 96 stock items lean on that instead of writing it out. Guessing from the
+     name put Oblivion Headmaster Wand on the head. */
+  assert.equal(schema.inferredItemSlot({ slot: 'head', prefab: 'wearable' }), 'head');
+  assert.equal(schema.inferredItemSlot({ prefab: 'wearable', name: 'Oblivion Headmaster Wand' }), 'weapon');
+  assert.equal(schema.inferredItemSlot({ prefab: 'default_item' }), 'weapon');
+  assert.equal(schema.inferredItemSlot({ prefab: 'courier' }), '', 'a courier is in no hero slot at all');
+  assert.equal(schema.inferredItemSlot(null), '');
+});
+
+test('an item is searched by every word it carries, in lower case', () => {
+  const words = schema.itemSearchText({
+    slot: 'weapon', prefab: 'wearable', name: 'Fractal Horns of Inner Abysm', itemName: '#DOTA_Item_Fractal',
+    image: 'econ/items/terrorblade/arcana', typeName: '#DOTA_WearableType_Persona',
+  });
+  assert.match(words, /fractal horns of inner abysm/);
+  assert.match(words, /arcana/, 'the image path is where an arcana says what it is');
+  assert.match(words, /persona/);
+  assert.equal(schema.itemSearchText({ name: 'Only' }), 'only', 'a missing field leaves no gap behind');
+  assert.equal(schema.itemSearchText(undefined), '');
+});
+
+test('the game-update probe moves when the item table\'s paks change, and only then', (t) => {
+  const game = gameWith(t, large(1200));
+  fs.writeFileSync(path.join(game, 'dota', 'pak01_000.vpk'), 'a volume');
+  const before = schema.gameSchemaStamp(game);
+
+  fs.writeFileSync(path.join(game, 'dota', 'pak02_dir.vpk'), 'something else entirely');
+  fs.writeFileSync(path.join(game, 'dota', 'readme.txt'), 'not a pak');
+  assert.equal(schema.gameSchemaStamp(game), before, 'files that do not carry the table changed nothing');
+
+  fs.writeFileSync(path.join(game, 'dota', 'pak01_000.vpk'), 'a volume from the next update');
+  assert.notEqual(schema.gameSchemaStamp(game), before);
+});
+
+test('a table that cannot be moved into place leaves no half-written file behind', (t) => {
+  /* Written to a temp file and renamed, so the game never loads half a table. When the rename
+     fails - the game holding the old one open - the temp file goes and the error comes back. */
+  const game = gameWith(t, large(1200));
+  t.mock.method(fs, 'renameSync', () => { throw Object.assign(new Error('in use'), { code: 'EBUSY' }); });
+
+  assert.throws(() => schema.deploy({ gamePath: game, folder: 'dota_mods', patches: [] }), /in use/);
+  assert.deepEqual(fs.readdirSync(path.join(game, 'dota_mods')), [], 'the temp file stayed in the mod folder');
 });

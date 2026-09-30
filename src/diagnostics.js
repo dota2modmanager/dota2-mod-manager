@@ -7,7 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const gamelang = require('./gamelang');
+const gamelang = require('./gamelang.ts');
 const { validateGamePath } = require('./steam.ts');
 const { mirrorHealth } = require('./net.ts');
 

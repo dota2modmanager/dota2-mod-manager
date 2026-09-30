@@ -220,35 +220,35 @@
     },
     {
       "name": "the language move carries off the game's own files",
-      "file": "src/gamelang.js",
-      "anchor": "function moveLangFolder(gamePath, fromSuffix, toSuffix) {",
+      "file": "src/gamelang.ts",
+      "anchor": "export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {",
       "from": "if (/^pak01_/i.test(f) || f.toLowerCase() === 'gameinfo.gi') continue;",
       "to": "if (false) continue;",
-      "test": "test/gamelang.test.js"
+      "test": "test/gamelang.test.ts"
     },
     {
       "name": "the language move relocates another program's mods",
-      "file": "src/gamelang.js",
-      "anchor": "function moveLangFolder(gamePath, fromSuffix, toSuffix) {",
+      "file": "src/gamelang.ts",
+      "anchor": "export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {",
       "from": "if (isMinifyFile(f.toLowerCase()) || isMinifyPak(path.join(oldDir, f))) continue;",
       "to": ";",
-      "test": "test/gamelang.test.js"
+      "test": "test/gamelang.test.ts"
     },
     {
       "name": "the language move writes over a mod already in the destination",
-      "file": "src/gamelang.js",
-      "anchor": "function moveLangFolder(gamePath, fromSuffix, toSuffix) {",
+      "file": "src/gamelang.ts",
+      "anchor": "export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {",
       "from": "if (fs.existsSync(dst)) continue;",
       "to": ";",
-      "test": "test/gamelang.test.js"
+      "test": "test/gamelang.test.ts"
     },
     {
       "name": "the language move runs even when there is nowhere to move to",
-      "file": "src/gamelang.js",
-      "anchor": "function moveLangFolder(gamePath, fromSuffix, toSuffix) {",
+      "file": "src/gamelang.ts",
+      "anchor": "export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {",
       "from": "if (!gamePath || !fromSuffix || !toSuffix || fromSuffix === toSuffix) return 0;",
       "to": "if (!gamePath || !fromSuffix || !toSuffix) return 0;",
-      "test": "test/gamelang.test.js"
+      "test": "test/gamelang.test.ts"
     },
     {
       "name": "measuring coverage on one machine throws away every other machine's numbers",
@@ -588,11 +588,11 @@
     },
     {
       "name": "a new language folder writes its gameinfo over one that appeared meanwhile",
-      "file": "src/gamelang.js",
-      "anchor": "function ensureLangFolder(gamePath, suffix) {",
+      "file": "src/gamelang.ts",
+      "anchor": "export function ensureLangFolder(gamePath: string, suffix: string): string {",
       "from": "{ flag: 'wx' }",
       "to": "{}",
-      "test": "test/gamelang.test.js"
+      "test": "test/gamelang.test.ts"
     },
     {
       "name": "a font or cursor file the app wrote itself is taken for one a verify put back",
@@ -620,35 +620,35 @@
     },
     {
       "name": "a base item keeps the paid style gates of the item it is dressed as",
-      "file": "src/schema.js",
-      "anchor": "function baseItemPatch(baseText, targetId, sourceId) {",
+      "file": "src/schema.ts",
+      "anchor": "export function baseItemPatch(baseText: string, targetId: string | number, sourceId: string | number): string {",
       "from": "visuals = stripKeyBlocks(visuals, 'unlock');",
       "to": "",
-      "test": "test/schema.test.js"
+      "test": "test/schema.test.ts"
     },
     {
       "name": "the free-cosmetics picker offers the base item itself",
-      "file": "src/schema.js",
-      "anchor": "function cosmeticOptions(text, slot) {",
+      "file": "src/schema.ts",
+      "anchor": "export function cosmeticOptions(text: string, slot: string): { id: string; name: string }[] {",
       "from": "!i.baseitem && ",
       "to": "",
-      "test": "test/schema.test.js"
+      "test": "test/schema.test.ts"
     },
     {
       "name": "taking the schema away deletes a folder that holds somebody else's file",
-      "file": "src/schema.js",
-      "anchor": "function undeploy({ gamePath, folder }) {",
+      "file": "src/schema.ts",
+      "anchor": "export function undeploy({ gamePath, folder }: { gamePath: string; folder: string }): void {",
       "from": "if (fs.existsSync(dir) && !hasFiles(dir))",
       "to": "if (fs.existsSync(dir))",
-      "test": "test/schema.test.js"
+      "test": "test/schema.test.ts"
     },
     {
       "name": "a table that would crash the client is written into the game anyway",
-      "file": "src/schema.js",
-      "anchor": "function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath) }) {",
+      "file": "src/schema.ts",
+      "anchor": "export function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath) }: {",
       "from": "const checked = validateSchema(merged.text, base.text);",
       "to": "const checked = { bytes: merged.text.length, items: 0 };",
-      "test": "test/schema.test.js"
+      "test": "test/schema.test.ts"
     },
     {
       "name": "the beta list is hashed without its salt",

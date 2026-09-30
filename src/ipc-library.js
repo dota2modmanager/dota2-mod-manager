@@ -11,7 +11,7 @@ const path = require('path');
 const { ipcMain } = require('electron');
 
 const { t } = require('./i18n.ts');
-const { isMinifyPak } = require('./minify');
+const { isMinifyPak } = require('./minify.ts');
 const { touchesSchema } = require('./presets-service');
 
 /** @param {object} ctx  the services and main-process callbacks these channels use */

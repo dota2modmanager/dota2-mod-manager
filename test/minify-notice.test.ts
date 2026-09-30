@@ -1,15 +1,16 @@
-// Which note the My mods screen shows about Minify, fed with what src/minify.js really says
+// Which note the My mods screen shows about Minify, fed with what src/minify.ts really says
 // about each machine rather than with hand-made objects, so the two cannot drift apart.
-const test = require('node:test');
-const assert = require('node:assert/strict');
+import test from 'node:test';
+import assert from 'node:assert/strict';
 
-const { readMinify: read, MINIFY_FOLDER, MINIFY_BORROWED } = require('../src/minify.js');
-const { DOTA_LANGUAGES } = require('../src/gamelang.js');
+import { readMinify as  read, MINIFY_FOLDER, MINIFY_BORROWED } from '../src/minify.ts';
+import { DOTA_LANGUAGES } from '../src/gamelang.ts';
 
 const load = () => import('../renderer/core/minify-notice.js');
 // never the Minify installed on the machine running the tests
-const readMinify = (p) => read({ config: null, gameLanguages: DOTA_LANGUAGES, ...p });
-const folder = (suffix, modFiles = 0, official = false) => ({ suffix, official, valveContent: false, modFiles });
+// a test that names no folder of ours asks about a machine where this app has none
+const readMinify = (p: Partial<Parameters<typeof read>[0]>) => read({ config: null, gameLanguages: DOTA_LANGUAGES, ...p } as Parameters<typeof read>[0]);
+const folder = (suffix: string, modFiles = 0, official = false) => ({ suffix, official, valveContent: false, modFiles });
 
 test('no Minify, no note', async () => {
   const { minifyNotice } = await load();
@@ -25,7 +26,7 @@ test('the game reads our folder before any mod of ours is in it: a note, not a w
     folders: [folder('russian', 0, true), folder(MINIFY_BORROWED, 6)],
     audio: 'russian', ourFolder: 'russian', ourMods: 0,
   });
-  assert.equal(m.live, 'neither', 'src/minify.js calls this nobody\'s mods, which is true');
+  assert.equal(m.live, 'neither', 'src/minify.ts calls this nobody\'s mods, which is true');
   assert.deepEqual(minifyNotice(m, 0), { kind: 'info', case: 'ours-read' });
 });
 
@@ -53,7 +54,7 @@ test('one folder for both: they work side by side', async () => {
     folders: [folder(MINIFY_BORROWED, 9)],
     audio: MINIFY_BORROWED, ourFolder: MINIFY_BORROWED, ourMods: 3,
   });
-  assert.equal(minifyNotice(m, 3).case, 'shared');
+  assert.equal(minifyNotice(m, 3)?.case, 'shared');
 });
 
 test('the game\'s language is not known: no claim about which folder it reads', async () => {
@@ -68,7 +69,7 @@ test('the game\'s language is not known: no claim about which folder it reads', 
 
 test('the game reads Minify\'s folder and it is empty: a warning only when ours are the ones missing out', async () => {
   const { minifyNotice } = await load();
-  const at = (ourMods) => readMinify({
+  const at = (ourMods: number) => readMinify({
     folders: [folder('russian', ourMods, true), folder(MINIFY_BORROWED, 0)],
     audio: MINIFY_BORROWED, ourFolder: 'russian', ourMods,
     // an empty borrowed folder is not proof of Minify on its own; its config says where it writes

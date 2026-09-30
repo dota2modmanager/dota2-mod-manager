@@ -5,7 +5,7 @@
  * and unlocks a free base item cannot use, adds the chosen particle effect to its visuals, and
  * lists the model and particles to copy out of the game's pak01 under the stock paths, so the
  * game draws the wearable where the stock item was. src/schema-service.js applies it along with
- * the rest of the free cosmetics; src/schema.js reads and merges the table.
+ * the rest of the free cosmetics; src/schema.ts reads and merges the table.
  *
  * Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
  * (https://github.com/TheFleece).
@@ -21,7 +21,7 @@ const { openVpkIndex, crc32, heroDisplayName } = require('./vpk.ts');
 const { t } = require('./i18n.ts');
 const {
   findItem, itemFields, listItems, toUtf8, eachChild, blockBounds, stripKeyBlocks, itemSearchText, inferredItemSlot,
-} = require('./schema');
+} = require('./schema.ts');
 
 const ITEM_EFFECTS = [
   {

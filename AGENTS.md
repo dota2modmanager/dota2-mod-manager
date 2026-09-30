@@ -42,9 +42,9 @@ tells you.
 each cost real time:
 
 - Dota mounts **one** language folder, named after the **voice** language, and a `-language` in
-  Steam's launch options outranks the game's own setting. `src/gamelang.js` opens with the full
+  Steam's launch options outranks the game's own setting. `src/gamelang.ts` opens with the full
   rule. It is the rule, not a summary of one; change it only by measuring.
-- `items_game.txt` is ~50 MB with non-UTF8 bytes in it. `src/schema.js` works on latin1 strings
+- `items_game.txt` is ~50 MB with non-UTF8 bytes in it. `src/schema.ts` works on latin1 strings
   on purpose. A round trip through a "cleaner" encoding mangles it.
 - A pak slot decides which of two mods the game loads. Lower wins. `src/installer.js` allocates
   them, and 65 to 67 are never handed out because another program writes them.

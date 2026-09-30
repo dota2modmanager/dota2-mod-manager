@@ -4,7 +4,7 @@ const path = require('path');
 const { RAW_BASE } = require('./catalog.ts');
 const { listVpkPaths, listVpkPathsFile, listVpkPathCrcs, readVpkIndexFile, readVpkEntries, entryPath, buildVpk, mergeVpkToSingle, splitVpkByHero, combineVpksToFiles, analyzeVpkPaths, describeAnalysis, nameFromAnalysis, subjectHeroes, fingerprintVpk, fingerprintFiles,
   } = require('./vpk.ts');
-const { extractDeltas, deltaTable, crc32 } = require('./schema');
+const { extractDeltas, deltaTable, crc32 } = require('./schema.ts');
 // Whole-game tables and tool branding that packaging tools bake into EVERY export.
 // Dota 2 Skinchanger, for one, ships a full 47 MB scripts/items/items_game.txt plus the
 // localization files, its loadout stylesheets, its logo strip and a steam-id watermark in
@@ -18,12 +18,12 @@ const GLOBAL_TABLE_RE = new RegExp('^(?:' + [
   'panorama/images/(?:ds|tg|tt|wb|yu|remove|header_credits|footer_credits)[^/]*$',
   '(?:models/heroes|panorama)/\\d{8,}\\.vxml_c"?$',    // <steam id>.vxml_c watermark
 ].join('|') + ')');
-const { ensureLangFolder } = require('./gamelang');
+const { ensureLangFolder } = require('./gamelang.ts');
 const { openZip, safeJoin } = require('./safe-zip.ts');
 const { validateGamePath } = require('./steam.ts');
 const { FileTx, copyInto, writeInto } = require('./file-tx.ts');
 const { Overlays, FONTS_SUBDIR, CURSOR_SUBDIR } = require('./overlays');
-const { RESERVED_PAKS, isMinifyFile, isMinifyPak } = require('./minify');
+const { RESERVED_PAKS, isMinifyFile, isMinifyPak } = require('./minify.ts');
 const { downloadFile } = require('./net.ts');
 const { t } = require('./i18n.ts');
 

@@ -35,7 +35,7 @@ Miss the middle one and the button exists but does nothing. The renderer is spli
 
 Dota mounts one folder named after the language of its **voices**, and that folder is mounted
 before the game's own content, which is what makes mods possible at all. The name comes from
-`AudioLanguage` in `game/dota/cfg/boot.vcfg`, so `src/gamelang.js` reads that file rather than
+`AudioLanguage` in `game/dota/cfg/boot.vcfg`, so `src/gamelang.ts` reads that file rather than
 guessing. A launch option cannot change it: `-language` sets a preference inside the game, and the
 invented values older guides recommend (`dota_123`, `-language mods`) stopped mounting anything in
 July 2026.
@@ -374,8 +374,8 @@ that location is not writable.
 | `tools/sign-catalog.js` | The signing side, for whoever holds a private key |
 | `src/safe-zip.ts` | Every foreign archive comes through here |
 | `src/steam.ts` | Finding Steam and the game, and proving the folder is really a game |
-| `src/gamelang.js` | Which folder Dota will mount, and moving mods across when that changes |
-| `src/patcher.ts`, `src/schema.js`, `src/schema-service.js` | Search-path patch, signatures, item schema |
+| `src/gamelang.ts` | Which folder Dota will mount, and moving mods across when that changes |
+| `src/patcher.ts`, `src/schema.ts`, `src/schema-service.js` | Search-path patch, signatures, item schema |
 | `src/patch-watch.js` | Noticing a game update and repairing after it |
 | `src/fingerprints.ts` | Recognising a file somebody else installed |
 | `src/preset-link.ts`, `src/preset-share.js` | Presets as a link and as a file |

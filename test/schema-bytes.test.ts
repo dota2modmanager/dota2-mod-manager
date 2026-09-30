@@ -9,10 +9,10 @@
  * The answers turned out to be good ones, so these tests exist to keep them that way rather
  * than to report a bug.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
+import test from 'node:test';
+import assert from 'node:assert/strict';
 
-const schema = require('../src/schema.js');
+import * as schema from '../src/schema.ts';
 
 /** A table whose ids are prefixes of each other, which is the trap. */
 const collisionTable = [
@@ -53,7 +53,7 @@ test('listing sees each of them once, in the order the file has them', () => {
 // ---------- what happens to bytes a mod author's editor added ----------
 
 const base = '"items_game"\n{\n\t"items"\n\t{\n\t\t"12"\n\t\t{\n\t\t\t"name"\t\t"vanilla"\n\t\t}\n\t}\n}\n';
-const merged = (block) => schema.mergeSchema(base, [{ id: '12', block, source: 'mod' }]);
+const merged = (block: string) => schema.mergeSchema(base, [{ id: '12', block, source: 'mod' }]);
 
 test('a block a text editor gave CRLF endings still lands', () => {
   const r = merged('"12"\r\n{\r\n\t"name"\t\t"patched"\r\n}');

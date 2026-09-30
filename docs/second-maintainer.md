@@ -57,8 +57,8 @@ description and the diff, and ask:
 
 Read hardest where a mistake costs a user something:
 
-- anything that writes into the game folder (`src/patcher.ts`, `src/vpk.ts`, `src/gamelang.js`,
-  `src/schema.js`, `src/file-tx.ts`, `src/overlays.js`),
+- anything that writes into the game folder (`src/patcher.ts`, `src/vpk.ts`, `src/gamelang.ts`,
+  `src/schema.ts`, `src/file-tx.ts`, `src/overlays.js`),
 - anything that decides what gets downloaded or whether it is trusted (`src/net.ts`,
   `src/catalog-signature.ts`, `src/remote-config.ts`),
 - the workflows, the release workflow above all,

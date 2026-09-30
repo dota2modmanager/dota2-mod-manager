@@ -26,7 +26,7 @@ the code, not in this page.
 | [`src/file-tx.ts`](#srcfile-txts) | All of it, or none of it. |
 | [`src/fingerprints.ts`](#srcfingerprintsts) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
 | [`src/game-icons.js`](#srcgame-iconsjs) | Item pictures taken from the installed game instead of scraped off a wiki. |
-| [`src/gamelang.js`](#srcgamelangjs) | Which dota_<lang> folder the game actually mounts. |
+| [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (main.js, installer.js, vpk.js). |
 | [`src/icons.js`](#srciconsjs) | Pictures for the cosmetics picker, and for the Library where a picture can be found for |
@@ -34,7 +34,7 @@ the code, not in this page.
 | [`src/installer.js`](#srcinstallerjs) | Installer engine: download, extract, pak allocation, per-category install/uninstall |
 | [`src/item-builder.js`](#srcitem-builderjs) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
-| [`src/minify.js`](#srcminifyjs) | Living next to Minify. |
+| [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
 | [`src/mod-id.js`](#srcmod-idjs) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
 | [`src/mod-preview.js`](#srcmod-previewjs) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/net.ts`](#srcnetts) | Getting bytes from the internet, on a connection that may not want to cooperate. |
@@ -50,7 +50,7 @@ the code, not in this page.
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
 | [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
 | [`src/schema-service.js`](#srcschema-servicejs) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
-| [`src/schema.js`](#srcschemajs) | Item-schema engine: the game's own scripts/items/items_game.txt is the only place |
+| [`src/schema.ts`](#srcschemats) | Item-schema engine: the game's own scripts/items/items_game.txt is the only place |
 | [`src/settings.ts`](#srcsettingsts) | Simple JSON settings store in userData |
 | [`src/slot-zones.js`](#srcslot-zonesjs) | The load order in two parts. |
 | [`src/steam.ts`](#srcsteamts) | Finding Steam, and then finding Dota inside it. |
@@ -806,7 +806,7 @@ function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }
 @param {(msg: string) => void} [deps.log]
 ```
 
-## src/gamelang.js
+## src/gamelang.ts
 
 Which dota_<lang> folder the game actually mounts.
 
@@ -839,7 +839,7 @@ and they keep hearing English because that is what the base game plays. No launc
 parameters, no folder invented by hand, no VPK to fix the text back, and the player is
 still free to set the text language to anything they like.
 
-The other route, for contrast (it is what Minify does, see src/minify.js): put
+The other route, for contrast (it is what Minify does, see src/minify.ts): put
 `-language dutch` in Steam's launch options. Text becomes Dutch, voices fall back to
 English, dota_dutch mounts - but the folder does not exist until somebody creates it with a
 gameinfo.gi of its own, both language settings are locked while the parameter is there, so
@@ -848,10 +848,26 @@ write into Steam's own config to set it up. Valve have already stopped mounting 
 folders; the languages with no voice pack of their own are the ones that could go the same
 way, while these three cannot - the game has to mount them to play their voices.
 
+### `LangFolder`
+
+```ts
+export interface LangFolder
+```
+
+One dota_* folder on disk and what is in it; see langFolders.
+
+### `LangDetection`
+
+```ts
+export interface LangDetection
+```
+
+The folder the game will mount, and where that answer came from; see detectLangSuffix.
+
 ### `VOICE_LANGUAGES`
 
-```js
-const VOICE_LANGUAGES = ['english', 'koreana', 'russian', 'schinese']
+```ts
+export const VOICE_LANGUAGES: readonly string[] = ['english', 'koreana', 'russian', 'schinese']
 ```
 
 Languages Dota records VOICE in - four of them, and that is the list that matters here.
@@ -861,10 +877,31 @@ a mod has to live in is named by this setting and by nothing else. Text is a dif
 of twenty-nine languages living in dota/pak01, and it has no bearing on any of this; reading
 the wrong one of the two is how a mod ends up in a folder nobody mounts.
 
+### `MOD_FOLDERS`
+
+```ts
+export const MOD_FOLDERS: readonly string[] = ['koreana', 'russian', 'schinese']
+```
+
+Three of those four get a folder on disk.
+
+English speech ships inside dota/pak01 with the base game, so Valve makes no dota_english,
+and its own gameinfo.gi mounts the language path only "if running a specific language",
+which English is not. A dota_english built by hand, correct gameinfo.gi and all, filled with
+mods, is never read. Tested 2026-08-10 rather than assumed, twice.
+
+### `FALLBACK_FOLDER`
+
+```ts
+export const FALLBACK_FOLDER = 'russian'
+```
+
+Borrowed by English, and by anything unrecognised.
+
 ### `DOTA_LANGUAGES`
 
-```js
-const DOTA_LANGUAGES = [
+```ts
+export const DOTA_LANGUAGES: readonly string[] = [
 ```
 
 Every language Dota will accept for that setting, which is a longer list than the four it
@@ -874,12 +911,12 @@ Only used to answer "would the game mount a folder by this name at all". Since t
 2026-07-24 update the setting is where the mount path comes from, and it takes a language
 rather than any string, so a folder named after something that is not on this list is never
 read - which is the whole reason Minify moved off its own "minify" locale (see
-src/minify.js). Cross-checked against Minify's own enumeration of the same set.
+src/minify.ts). Cross-checked against Minify's own enumeration of the same set.
 
 ### `modFolderFor`
 
-```js
-function modFolderFor(launched, audio)
+```ts
+export function modFolderFor(launched: string | null | undefined, audio: string | null | undefined): { suffix: string; followed: boolean }
 ```
 
 The folder the game is going to mount, which is where mods have to go.
@@ -895,52 +932,15 @@ only kind of folder the engine mounts; anything else falls back to the voice lan
 is the ordinary path and the one this app sets itself.
 
 ```
-@param {string|null} launched  a `-language` value, if one is set
-@param {string|null} audio     the voice language from the game's own settings
-@returns {{ suffix: string, followed: boolean }} the folder, and whether a parameter chose it
+@param launched  a `-language` value, if one is set
+@param audio     the voice language from the game's own settings
+@returns the folder, and whether a parameter chose it
 ```
-
-### `launchLanguage`
-
-```js
-function launchLanguage(gamePath)
-```
-
-The `-language X` Steam will start the game with, lowercased, or null.
-
-### `launchOptions`
-
-```js
-function launchOptions(gamePath)
-```
-
-Everything Steam will start the game with, verbatim, or null.
-
-### `MOD_FOLDERS`
-
-```js
-const MOD_FOLDERS = ['koreana', 'russian', 'schinese']
-```
-
-Three of those four get a folder on disk.
-
-English speech ships inside dota/pak01 with the base game, so Valve makes no dota_english,
-and its own gameinfo.gi mounts the language path only "if running a specific language",
-which English is not. A dota_english built by hand, correct gameinfo.gi and all, filled with
-mods, is never read. Tested 2026-08-10 rather than assumed, twice.
-
-### `FALLBACK_FOLDER`
-
-```js
-const FALLBACK_FOLDER = 'russian'
-```
-
-Borrowed by English, and by anything unrecognised.
 
 ### `folderFor`
 
-```js
-function folderFor(audio)
+```ts
+export function folderFor(audio: string | null | undefined): string
 ```
 
 Where mods have to live for a given audio language.
@@ -951,34 +951,50 @@ Dota decides what is mounted, and they are separate. So an English speaker gets 
 dota_russian holding nothing but mods, and keeps hearing the English speech out of
 dota/pak01 without noticing anything happened.
 
+### `launchLanguage`
+
+```ts
+export function launchLanguage(gamePath: string | null | undefined): string | null
+```
+
+The `-language X` Steam will start the game with, lowercased, or null.
+
+### `launchOptions`
+
+```ts
+export function launchOptions(gamePath: string | null | undefined): string | null
+```
+
+Everything Steam will start the game with, verbatim, or null.
+
 ### `bootLanguages`
 
-```js
-function bootLanguages(gamePath)
+```ts
+export function bootLanguages(gamePath: string | null | undefined): { ui: string | null; audio: string | null } | null
 ```
 
 UI + audio language the game wrote at its last boot, or null if it never ran.
 
 ### `steamLanguage`
 
-```js
-function steamLanguage(gamePath)
+```ts
+export function steamLanguage(gamePath: string | null | undefined): string | null
 ```
 
 Language Steam has the game mounted as — the fallback before Dota has ever booted.
 
 ### `langFolders`
 
-```js
-function langFolders(gamePath)
+```ts
+export function langFolders(gamePath: string | null | undefined): LangFolder[]
 ```
 
 Every dota_* folder on disk, with what is inside each.
 
 ### `detectLangSuffix`
 
-```js
-function detectLangSuffix(gamePath)
+```ts
+export function detectLangSuffix(gamePath: string | null | undefined): LangDetection
 ```
 
 `suffix` is the audio language among the four Dota records voice in; `audio` is whatever
@@ -989,8 +1005,8 @@ whether or not we recognise it. Anything asking "whose mods are live" needs the 
 
 ### `writeBootLanguages`
 
-```js
-function writeBootLanguages(gamePath, { ui, audio })
+```ts
+export function writeBootLanguages(gamePath: string, { ui, audio }: { ui?: string | null; audio?: string | null }): { ui?: string | null; audio?: string | null }
 ```
 
 Set the game's language settings. Dota reads boot.vcfg at startup, so this has to happen
@@ -1003,22 +1019,21 @@ the audio language is ours to set, because it is what names the folder the engin
 and therefore where a mod has to live.
 
 ```
-@param {string} gamePath
-@param {{ ui?: string, audio?: string }} langs  a setting left out is left as it is
+@param langs  a setting left out is left as it is
 ```
 
 ### `voiceInstalled`
 
-```js
-function voiceInstalled(gamePath, suffix)
+```ts
+export function voiceInstalled(gamePath: string, suffix: string): boolean
 ```
 
 Is Valve's voice pack for this language actually on disk? If not, voices stay English.
 
 ### `ensureLangFolder`
 
-```js
-function ensureLangFolder(gamePath, suffix)
+```ts
+export function ensureLangFolder(gamePath: string, suffix: string): string
 ```
 
 Make sure the mod folder exists. English is the one language Valve ships no folder for
@@ -1027,8 +1042,8 @@ exactly like Valve's own — never touching a gameinfo.gi that is already there.
 
 ### `moveLangFolder`
 
-```js
-function moveLangFolder(gamePath, fromSuffix, toSuffix)
+```ts
+export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number
 ```
 
 Move installed mod files from one language folder to another, which is what has to happen
@@ -1042,7 +1057,7 @@ already taken in the destination is not overwritten, because the file there is s
 current mod and this one is a leftover.
 
 ```
-@returns {number} how many files were actually moved
+@returns how many files were actually moved
 ```
 
 ## src/hero-names.ts
@@ -1298,7 +1313,7 @@ block in items_game under the stock item's id, name and prefab=default_item, dro
 and unlocks a free base item cannot use, adds the chosen particle effect to its visuals, and
 lists the model and particles to copy out of the game's pak01 under the stock paths, so the
 game draws the wearable where the stock item was. src/schema-service.js applies it along with
-the rest of the free cosmetics; src/schema.js reads and merges the table.
+the rest of the free cosmetics; src/schema.ts reads and merges the table.
 
 Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
 (https://github.com/TheFleece).
@@ -1428,12 +1443,12 @@ export class Library
 
 _No description in the source._
 
-## src/minify.js
+## src/minify.ts
 
 Living next to Minify.
 
 The two apps reach the game by different routes, and the routes are not equivalent. The
-rules underneath both are in src/gamelang.js, which is the one place they are written down.
+rules underneath both are in src/gamelang.ts, which is the one place they are written down.
 
 This app: set the voice language in Dota's own settings to one of the three that have a
 folder, and fill that folder. The folders already exist on every install, English voices
@@ -1455,157 +1470,42 @@ answer to it, not an oversight to point out.
 None of which is a fight to win. It is a thing to be able to explain in a sentence, so
 whoever is looking at a game with no mods in it knows why.
 
-### `readMinify`
+### `MinifyConfig`
 
-```js
-function readMinify({ folders = [], audio = null, gameLanguages = [], ourFolder, ourMods = 0, config = readConfig(), countMods = null, launchOptions = null, })
+```ts
+export interface MinifyConfig { outputPath: string | null; locale: string | null; folder: string | null }
 ```
 
-```
-@param {object} p
-@param {Array<{suffix: string, official: boolean, valveContent: boolean, modFiles: number}>} p.folders
-every dota_* folder on disk, from gamelang.langFolders()
-@param {string|null} p.audio  the voice language the game is set to, which names the folder
-it mounts
-@param {string[]} p.gameLanguages  the languages Dota will accept for that setting
-@param {string} p.ourFolder   the suffix this app installs into, from gamelang.folderFor()
-@param {number} [p.ourMods]   how many mods this app has installed
-@param {string|null} [p.launchOptions]  Steam's launch options for Dota, unescaped
-@param {{ folder?: string|null, outputPath: string|null }|null} [p.config]  what Minify's own
-config says, read from disk unless a test hands one in
-@param {((suffix: string) => number)|null} [p.countMods]  how many of the files in a folder
-are Minify's own, when the caller can look at them
-@returns {{
-present: boolean, folder: string|null, mods: number, mounts: boolean,
-mounted: string|null, ourFolder: string, sharing: boolean,
-live: 'ours'|'minify'|'both'|'neither'|'unknown', declared: boolean, prelaunch: boolean,
-reservedLabel: string,
-}}
+What Minify's own config says about where it writes.
+
+### `MinifyState`
+
+```ts
+export interface MinifyState
 ```
 
-### `readConfig`
-
-```js
-function readConfig(file = configPath())
-```
-
-What Minify says about itself, or null. Its own config beats anything we could infer: it
-names the locale it sets, which is the whole question between the two apps.
-
-```
-@returns {{ outputPath: string|null, locale: string|null, folder: string|null }|null}
-```
-
-### `configPath`
-
-```js
-function configPath()
-```
-
-Where Minify keeps the settings it publishes about itself.
-
-### `folderOfPath`
-
-```js
-function folderOfPath(outputPath)
-```
-
-The suffix of the folder a path ends in: ...\\game\\dota_dutch -> "dutch".
-
-This is the field that matters, and it is not output_locale. Asked for English, Minify
-records output_locale "english" - the language the player chose - while writing into
-dota_dutch, because Dutch is the folder it borrows to make English work. Reading the locale
-had this app announce a folder called dota_english, which exists nowhere.
-
-### `isMinifyFile`
-
-```js
-function isMinifyFile(baseLower)
-```
-
-Is this file in the language folder one of Minify's paks?
-
-Reserving the slots keeps us from writing over its work, which is only half the bargain.
-The other half is not touching what it wrote: the master switch sweeps the folder and
-renames every mod file in it, and the foreign-file scan offers the user everything in there
-that is not ours to adopt, disable or delete. Sharing one folder is the arrangement we tell
-people to make, so in that arrangement both of those would reach into another program.
-
-Matches the dir file and its data volumes: pak66_dir.vpk, pak66_000.vpk, and the same with
-an .off or .moff already on the end.
-
-```
-@param {string} baseLower a file name, lowercased
-```
-
-### `isMinifyPak`
-
-```js
-function isMinifyPak(file)
-```
-
-Was this VPK built by Minify? Reads the archive index only, never the content.
-
-```
-@param {string} file  full path to a *_dir.vpk
-```
-
-### `MINIFY_MARKERS`
-
-```js
-const MINIFY_MARKERS = ['minify_mods.json', 'minify_vpk_mods.txt', 'minify_version.txt']
-```
-
-How Minify marks its own work, and how it recognises it again.
-
-It packs metadata files into every VPK it builds and checks for them before deleting one
-(Minify/patch/vpk_utils.py, is_minify_pak). Reading the same marker is better than reasoning
-from slot numbers: a slot says where a file sits, the marker says who made it, and it is the
-only thing that can identify its maps/dota.vpk - a path with no number to reserve.
-
-Reading their convention rather than proposing one costs nothing and needs no agreement.
+Minify as this app sees it; see readMinify.
 
 ### `MINIFY_FOLDER`
 
-```js
-const MINIFY_FOLDER = 'minify'
+```ts
+export const MINIFY_FOLDER = 'minify'
 ```
 
-Its own locale, which is not a language Dota knows, and the real one it moved to.
+Its own locale, which is not a language Dota knows.
 
 ### `MINIFY_BORROWED`
 
-```js
-const MINIFY_BORROWED = 'dutch'
+```ts
+export const MINIFY_BORROWED = 'dutch'
 ```
 
-_No description in the source._
-
-### `RESERVED_PAKS`
-
-```js
-const RESERVED_PAKS = [65, 66, 67]
-```
-
-_No description in the source._
-
-### `RESERVED_LABEL`
-
-```js
-const RESERVED_LABEL = RESERVED_PAKS.length > 1
-```
-
-The reserved range as the interface says it out loud.
-
-The Library told people "pak65-67 and pak99 are left to it" for a release after pak99 stopped
-being reserved, because the sentence carried its own copy of the numbers. Built from the list
-instead, so the promise on screen and the slots the allocator actually skips cannot disagree
-again.
+The real language it moved to, whose folder Dota does mount.
 
 ### `MINIFY_PAKS`
 
-```js
-const MINIFY_PAKS = [65, 66, 67, 99]
+```ts
+export const MINIFY_PAKS: readonly number[] = [65, 66, 67, 99]
 ```
 
 The pak slots Minify writes, and the smaller set we refuse to hand out.
@@ -1627,10 +1527,109 @@ still on an older release has a pak99 on disk already, which the allocator reads
 folder like any other occupied slot - and MINIFY_PAKS still knows whose it is. The author
 asked for exactly this: detect the file rather than blindly reserve the number.
 
+### `RESERVED_PAKS`
+
+```ts
+export const RESERVED_PAKS: readonly number[] = [65, 66, 67]
+```
+
+_No description in the source._
+
+### `RESERVED_LABEL`
+
+```ts
+export const RESERVED_LABEL = RESERVED_PAKS.length > 1
+```
+
+The reserved range as the interface says it out loud.
+
+The Library told people "pak65-67 and pak99 are left to it" for a release after pak99 stopped
+being reserved, because the sentence carried its own copy of the numbers. Built from the list
+instead, so the promise on screen and the slots the allocator actually skips cannot disagree
+again.
+
+### `isMinifyFile`
+
+```ts
+export function isMinifyFile(baseLower: string): boolean
+```
+
+Is this file in the language folder one of Minify's paks?
+
+Reserving the slots keeps us from writing over its work, which is only half the bargain.
+The other half is not touching what it wrote: the master switch sweeps the folder and
+renames every mod file in it, and the foreign-file scan offers the user everything in there
+that is not ours to adopt, disable or delete. Sharing one folder is the arrangement we tell
+people to make, so in that arrangement both of those would reach into another program.
+
+Matches the dir file and its data volumes: pak66_dir.vpk, pak66_000.vpk, and the same with
+an .off or .moff already on the end.
+
+```
+@param baseLower a file name, lowercased
+```
+
+### `MINIFY_MARKERS`
+
+```ts
+export const MINIFY_MARKERS: readonly string[] = ['minify_mods.json', 'minify_vpk_mods.txt', 'minify_version.txt']
+```
+
+How Minify marks its own work, and how it recognises it again.
+
+It packs metadata files into every VPK it builds and checks for them before deleting one
+(Minify/patch/vpk_utils.py, is_minify_pak). Reading the same marker is better than reasoning
+from slot numbers: a slot says where a file sits, the marker says who made it, and it is the
+only thing that can identify its maps/dota.vpk - a path with no number to reserve.
+
+Reading their convention rather than proposing one costs nothing and needs no agreement.
+
+### `isMinifyPak`
+
+```ts
+export function isMinifyPak(file: string): boolean
+```
+
+Was this VPK built by Minify? Reads the archive index only, never the content.
+
+```
+@param file  full path to a *_dir.vpk
+```
+
+### `configPath`
+
+```ts
+export function configPath(): string
+```
+
+Where Minify keeps the settings it publishes about itself.
+
+### `readConfig`
+
+```ts
+export function readConfig(file = configPath()): MinifyConfig | null
+```
+
+What Minify says about itself, or null. Its own config beats anything we could infer: it
+names the locale it sets, which is the whole question between the two apps.
+
+### `folderOfPath`
+
+```ts
+export function folderOfPath(outputPath: string | null | undefined): string | null
+```
+
+The suffix of the folder a path ends in: ...\\game\\dota_dutch -> "dutch".
+
+This is the field that matters, and it is not output_locale. Asked for English, Minify
+records output_locale "english" - the language the player chose - while writing into
+dota_dutch, because Dutch is the folder it borrows to make English work. Reading the locale
+had this app announce a folder called dota_english, which exists nowhere.
+
 ### `prelaunchHook`
 
-```js
-function prelaunchHook(options)
+```ts
+export function prelaunchHook(options: string | null | undefined): boolean
 ```
 
 Has Minify put itself in front of the game's own launch?
@@ -1652,7 +1651,26 @@ Matched on what the wrapper is rather than on one release's exact spelling: the 
 game. Nobody's own launch options are all three by accident.
 
 ```
-@param {string|null} options  Steam's launch options for Dota, unescaped
+@param options  Steam's launch options for Dota, unescaped
+```
+
+### `readMinify`
+
+```ts
+export function readMinify({ folders = [], audio = null, gameLanguages = [], ourFolder, ourMods = 0, config = readConfig(), countMods = null, launchOptions = null, }: { folders?: { suffix: string; modFiles: number }[]; audio?: string | null; gameLanguages?: readonly string[]; ourFolder: string; ourMods?: number; config?: { folder?: string | null; outputPath?: string | null; locale?: string | null } | null; countMods?: ((suffix: string) => number) | null; launchOptions?: string | null; }): MinifyState
+```
+
+Where Minify is, whether its folder is the one the game mounts, and whose mods are live.
+
+```
+@param p.folders  every dota_* folder on disk, from gamelang.langFolders()
+@param p.audio  the voice language the game is set to, which names the folder it mounts
+@param p.gameLanguages  the languages Dota will accept for that setting
+@param p.ourFolder   the suffix this app installs into, from gamelang.folderFor()
+@param p.ourMods     how many mods this app has installed
+@param p.launchOptions  Steam's launch options for Dota, unescaped
+@param p.config  what Minify's own config says, read from disk unless a test hands one in
+@param p.countMods  how many of the files in a folder are Minify's own, when the caller can look at them
 ```
 
 ## src/mod-id.js
@@ -3065,7 +3083,7 @@ function createSchemaService({ settings, library, installer, userDataDir, log = 
 @param {(msg: string) => void} [deps.log]  the app's diagnostics log
 ```
 
-## src/schema.js
+## src/schema.ts
 
 Item-schema engine: the game's own scripts/items/items_game.txt is the only place
 where a mod can attach new particles to a hero, redirect a stock effect, or turn a
@@ -3080,63 +3098,142 @@ Two rules shape everything here:
 The file is ~50 MB of KeyValues with a few non-UTF8 bytes in it, so everything here
 works on latin1 strings: byte-exact in and out, no re-encoding surprises.
 
+### `Bounds`
+
+```ts
+export type Bounds = [number, number]
+```
+
+A block's braces in the text: [open, close + 1].
+
+### `KvChild`
+
+```ts
+export type KvChild =
+```
+
+One direct child of a KeyValues block: a nested block, or a key with a value. See eachChild.
+
+### `SchemaItem`
+
+```ts
+export interface SchemaItem
+```
+
+An item of items_game as the pickers read it; see listItems.
+
+### `SchemaDelta`
+
+```ts
+export interface SchemaDelta { id: string; name: string; block: string }
+```
+
+An item block a mod changed, lifted out of the table it shipped.
+
+### `SchemaPatch`
+
+```ts
+export interface SchemaPatch { id: string | number; block: string; source?: string; assets?: VpkEntry[] }
+```
+
+One block to splice into the game's table, and the files that come with it.
+
+### `GameSchema`
+
+```ts
+export interface GameSchema { text: string; stamp: string }
+```
+
+The game's own table, and the marker that changes when an update replaces it.
+
+### `MergeResult`
+
+```ts
+export interface MergeResult
+```
+
+What a merge did with each patch; see mergeSchema.
+
+### `SCHEMA_REL`
+
+```ts
+export const SCHEMA_REL = 'scripts/items/items_game.txt'
+```
+
+Where the item table sits inside a VPK.
+
+### `SCHEMA_VPK`
+
+```ts
+export const SCHEMA_VPK = 'pak01_dir.vpk'
+```
+
+Our folder is registered ahead of "dota", so the first pak in it wins the MOD path.
+
+### `blockBounds`
+
+```ts
+export function blockBounds(text: string, i: number): Bounds
+```
+
+Bounds of the { ... } block that starts at (or after) i.
+
 ### `eachChild`
 
-```js
-function eachChild(text, bounds, fn)
+```ts
+export function eachChild(text: string, bounds: Bounds, fn: (child: KvChild) => void): void
 ```
 
 Walk the direct children of a block.
 
 ```
-@param {string} text
-@param {[number, number]} bounds  from blockBounds()
-@param {(child: {key: string, start: number, end: number, isBlock: boolean, value: string|null, body: [number, number]|null}) => void} fn
+@param bounds  from blockBounds()
 ```
 
-### `blockBounds`
+### `findItem`
 
-```js
-function blockBounds(text, i)
+```ts
+export function findItem(text: string, id: string | number, section?: Bounds | null): { id: string; start: number; end: number; text: string } | null
 ```
 
-Bounds of the { ... } block that starts at (or after) i.
+One item definition, by id. Returns the exact source range so a splice is byte-exact.
 
-```
-@returns {[number, number]} [open, close+1]
-```
+### `itemFields`
 
-### `stripKeyBlocks`
-
-```js
-function stripKeyBlocks(text, key)
+```ts
+export function itemFields(text: string, item: { start: number }): Map<string, string>
 ```
 
-Remove every "<key> { … }" sub-block from a KV fragment, with the whitespace in front
-of it, so the result still reads like the file it came from.
+Direct scalar fields of an item block ("name", "prefab", "item_slot"...).
+
+### `listItems`
+
+```ts
+export function listItems(text: string): SchemaItem[]
+```
+
+_No description in the source._
 
 ### `toUtf8`
 
-```js
-function toUtf8(s)
+```ts
+export function toUtf8(s: string): string
 ```
 
-The table is read as latin1 so every splice stays byte-exact, which leaves names with
-non-ASCII characters (curly quotes, accents) as raw UTF-8 bytes. Anything shown to a
-person goes back through UTF-8 first.
+A name out of the latin1 table, as the person should read it.
 
 ### `itemSearchText`
 
-```js
-function itemSearchText(item)
+```ts
+export function itemSearchText(item: Partial<SchemaItem> | null | undefined): string
 ```
 
 An item's words in one lowercase string, for telling an arcana or persona by its name.
 
 ### `inferredItemSlot`
 
-```js
-function inferredItemSlot(item)
+```ts
+export function inferredItemSlot(item: Partial<SchemaItem> | null | undefined): string
 ```
 
 A hero item's slot as the game reads it. A wearable or stock item that names no item_slot is
@@ -3147,94 +3244,10 @@ It used to be guessed from the item's words, which put Oblivion Headmaster Wand 
 Emerald Frenzy Flail on the back and 99 other weapons nowhere, so a set carried two heads
 and the builder offered a wand for a helmet.
 
-### `SCHEMA_REL`
-
-```js
-const SCHEMA_REL = 'scripts/items/items_game.txt'
-```
-
-_No description in the source._
-
-### `SCHEMA_VPK`
-
-```js
-const SCHEMA_VPK = 'pak01_dir.vpk'
-```
-
-Our folder is registered ahead of "dota", so the first pak in it wins the MOD path.
-
-### `deploy`
-
-```js
-function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath) })
-```
-
-Build the schema and put it in the mod folder. Always rebuilt from the installed
-game, so a Dota update is repaired by calling this again - never by shipping a copy.
-
-`base` is the game's own table, which the caller has usually just read: it is 50 MB out of
-a VPK and reading it twice for one deploy was most of what removing a mod cost. Left out,
-it is read here as before.
-
-```
-@param {object} opts
-@param {string} opts.gamePath
-@param {string} opts.folder            the mod folder the schema VPK is written into
-@param {Array} opts.patches
-@param {{ text: string, stamp: string }} [opts.base]  the game's own table, if already read
-@returns {{ applied: Array, missing: string[], conflicts: Array, stamp: string, bytes: number, items: number }}
-```
-
-### `undeploy`
-
-```js
-function undeploy({ gamePath, folder })
-```
-
-Drop the built schema, and the folder with it once nothing of ours is left there.
-
-### `isDeployed`
-
-```js
-function isDeployed(gamePath, folder)
-```
-
-_No description in the source._
-
-### `readGameSchema`
-
-```js
-function readGameSchema(gamePath)
-```
-
-Pull scripts/items/items_game.txt out of the game's pak01. This is the base every
-build starts from, so a game update simply means a rebuild, never a stale schema.
-
-```
-@param {string} gamePath  ...\dota 2 beta\game
-@returns {{ text: string, stamp: string }}  stamp = version marker of the base file
-```
-
-### `gameSchemaStamp`
-
-```js
-function gameSchemaStamp(gamePath)
-```
-
-Cheap "did the game update?" probe: size+mtime of the paks that carry the schema.
-
-### `listItems`
-
-```js
-function listItems(text)
-```
-
-_No description in the source._
-
 ### `baseItemFor`
 
-```js
-function baseItemFor(text, slot)
+```ts
+export function baseItemFor(text: string, slot: string): SchemaItem | null
 ```
 
 The free "base item" of a slot - the one every account owns (555 Default Weather,
@@ -3243,59 +3256,75 @@ cosmetic the default one.
 
 ### `cosmeticOptions`
 
-```js
-function cosmeticOptions(text, slot)
+```ts
+export function cosmeticOptions(text: string, slot: string): { id: string; name: string }[]
 ```
 
 What can be put on that base item, read straight out of the installed game: anything Valve
 adds to the schema later shows up on its own, without an app update.
 
 ```
-@returns {Array<{id, name}>}  name is the schema's own English name, sorted A-Z
+@returns name is the schema's own English name, sorted A-Z
 ```
 
-### `findItem`
+### `readGameSchema`
 
-```js
-function findItem(text, id, section)
+```ts
+export function readGameSchema(gamePath: string): GameSchema
 ```
 
-One item definition, by id. Returns the exact source range so a splice is byte-exact.
+Pull scripts/items/items_game.txt out of the game's pak01. This is the base every
+build starts from, so a game update simply means a rebuild, never a stale schema.
 
 ```
-@returns {{ id: string, start: number, end: number, text: string } | null}
+@param gamePath  ...\dota 2 beta\game
+@returns stamp = version marker of the base file
 ```
 
-### `itemFields`
+### `gameSchemaStamp`
 
-```js
-function itemFields(text, item)
+```ts
+export function gameSchemaStamp(gamePath: string): string
 ```
 
-Direct scalar fields of an item block ("name", "prefab", "item_slot"...).
+Cheap "did the game update?" probe: size+mtime of the paks that carry the schema.
 
-### `extractDeltas`
+### `reindent`
 
-```js
-function extractDeltas(modText, vpkPaths, baseText)
+```ts
+export function reindent(block: string, indent: string): string
 ```
 
-Which item blocks a mod actually changed. Diffing two schemas line by line is
-useless (the mod's copy is months behind the game's), so instead: a real change
-always names a file the mod itself ships. Blocks that mention one of those, and
-differ from the installed schema, are the delta.
+Skinchanger exports are written as one endless line; re-indent so the merged file
+stays readable (and diffable) when someone opens it.
+
+### `ownedAssetNeedles`
+
+```ts
+export function ownedAssetNeedles(vpkPaths: string[], opts: { roots?: boolean } = {}): string[]
+```
+
+Asset paths a mod ships, in the form items_game refers to them: lowercase, no _c.
 
 ```
-@param {string} modText     items_game.txt taken out of the mod
-@param {string[]} vpkPaths  every path inside that mod's VPK
-@param {string} baseText    the game's current schema (to drop no-op blocks)
-@returns {Array<{ id: string, name: string, block: string }>}
+@param opts.roots  also match Skinchanger's numeric content
+root as a whole. Right for "did this mod change that block", wrong when splitting a
+pack per hero — there the root is shared by every hero in it.
 ```
+
+### `blockUsesAssets`
+
+```ts
+export function blockUsesAssets(blockText: string, vpkPaths: string[]): boolean
+```
+
+Does an item block talk about any of these files? Used when a multi-hero pack is split:
+each part keeps only the blocks that belong to its own assets.
 
 ### `deltaTable`
 
-```js
-function deltaTable(deltas)
+```ts
+export function deltaTable(deltas: { id?: string; name?: string; block: string }[] | null | undefined): string
 ```
 
 The blocks a mod changed, written back out as a table of their own: the shape items_game
@@ -3307,39 +3336,36 @@ a file leaving it. A mod exported or shared without those blocks travels without
 effects and icons, so anything built for somewhere else carries this instead: small, and
 read straight back by the same harvest on the other side.
 
-```
-@param {Array<{id, name, block}>} deltas
-@returns {string}
-```
+### `extractDeltas`
 
-### `ownedAssetNeedles`
-
-```js
-function ownedAssetNeedles(vpkPaths, opts = {})
+```ts
+export function extractDeltas(modText: string, vpkPaths: string[], baseText?: string | null): SchemaDelta[]
 ```
 
-Asset paths a mod ships, in the form items_game refers to them: lowercase, no _c.
+Which item blocks a mod actually changed. Diffing two schemas line by line is
+useless (the mod's copy is months behind the game's), so instead: a real change
+always names a file the mod itself ships. Blocks that mention one of those, and
+differ from the installed schema, are the delta.
 
 ```
-@param {string[]} vpkPaths
-@param {{ roots?: boolean }} [opts]  roots: also match Skinchanger's numeric content
-root as a whole. Right for "did this mod change that block", wrong when splitting a
-pack per hero — there the root is shared by every hero in it.
+@param modText     items_game.txt taken out of the mod
+@param vpkPaths    every path inside that mod's VPK
+@param baseText    the game's current schema (to drop no-op blocks)
 ```
 
-### `blockUsesAssets`
+### `stripKeyBlocks`
 
-```js
-function blockUsesAssets(blockText, vpkPaths)
+```ts
+export function stripKeyBlocks(text: string, key: string): string
 ```
 
-Does an item block talk about any of these files? Used when a multi-hero pack is split:
-each part keeps only the blocks that belong to its own assets.
+Remove every "<key> { … }" sub-block from a KV fragment, with the whitespace in front
+of it, so the result still reads like the file it came from.
 
 ### `baseItemPatch`
 
-```js
-function baseItemPatch(baseText, targetId, sourceId)
+```ts
+export function baseItemPatch(baseText: string, targetId: string | number, sourceId: string | number): string
 ```
 
 Free cosmetics: copy the visuals of a real item onto a "base item" everyone owns
@@ -3351,23 +3377,17 @@ button, so those gates come off.
 
 ### `mergeSchema`
 
-```js
-function mergeSchema(baseText, patches)
+```ts
+export function mergeSchema(baseText: string, patches: SchemaPatch[]): MergeResult
 ```
 
 Splice blocks into the base schema. Later entries win; every patch is applied to the
 game's current text, so nothing Valve ships is rolled back except the patched blocks.
 
-```
-@param {string} baseText
-@param {Array<{id: string, block: string, source?: string}>} patches
-@returns {{ text: string, applied: Array, missing: Array, conflicts: Array }}
-```
-
 ### `validateSchema`
 
-```js
-function validateSchema(text, baseText)
+```ts
+export function validateSchema(text: string, baseText?: string | null): { items: number; bytes: number }
 ```
 
 Refuse to ship a schema that could crash the client on load. Cheap structural checks
@@ -3375,20 +3395,45 @@ only: a malformed file is what makes the game die with "ERROR PARSING SCRIPT".
 
 ### `buildSchemaVpk`
 
-```js
-function buildSchemaVpk(text, extraEntries = [])
+```ts
+export function buildSchemaVpk(text: string, extraEntries: VpkEntry[] = []): Buffer
 ```
 
-Pack the merged schema as a one-file VPK holding nothing but items_game.txt.
+Pack the merged schema as a one-file VPK holding items_game.txt and the files its patches bring.
 
-### `reindent`
+### `deploy`
 
-```js
-function reindent(block, indent)
+```ts
+export function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath) }: { gamePath: string; folder: string; patches: SchemaPatch[]; base?: GameSchema; }): MergeResult & { stamp: string; bytes: number; items: number }
 ```
 
-Skinchanger exports are written as one endless line; re-indent so the merged file
-stays readable (and diffable) when someone opens it.
+Build the schema and put it in the mod folder. Always rebuilt from the installed
+game, so a Dota update is repaired by calling this again - never by shipping a copy.
+
+`base` is the game's own table, which the caller has usually just read: it is 50 MB out of
+a VPK and reading it twice for one deploy was most of what removing a mod cost. Left out,
+it is read here as before.
+
+```
+@param opts.folder  the mod folder the schema VPK is written into
+@param opts.base    the game's own table, if already read
+```
+
+### `undeploy`
+
+```ts
+export function undeploy({ gamePath, folder }: { gamePath: string; folder: string }): void
+```
+
+Drop the built schema, and the folder with it once nothing of ours is left there.
+
+### `isDeployed`
+
+```ts
+export function isDeployed(gamePath: string, folder: string): boolean
+```
+
+Whether a built schema is in the mod folder.
 
 ### `crc32`
 

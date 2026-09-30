@@ -2,13 +2,13 @@
 // single most common cause of "my mods do nothing": the engine substitutes the AUDIO language
 // into its Game_Language search path and mounts nothing at all for English, so a mod sitting
 // in a folder the game never mounts is invisible with no error anywhere.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const os = require('node:os');
-const path = require('node:path');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const gamelang = require('../src/gamelang.js');
+import * as gamelang from '../src/gamelang.ts';
 
 /* A game on a second drive keeps no userdata beside it, so launchLanguage() also looks where
  * Steam installs by default - which on a developer's machine is a real Steam with real launch
@@ -25,7 +25,7 @@ process.on('exit', () => {
 });
 
 /** A throwaway ...\dota 2 beta\game tree. Returns the game path. */
-function fakeGame(t, { boot, steamLang, folders = {} } = {}) {
+function fakeGame(t: TestContext, { boot, steamLang, folders = {} }: { boot?: string; steamLang?: string; folders?: Record<string, string[]> } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-lang-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
 
@@ -46,7 +46,7 @@ function fakeGame(t, { boot, steamLang, folders = {} } = {}) {
   return game;
 }
 
-const bootFile = (ui, audio) =>
+const bootFile = (ui: string, audio: string) =>
   `"boot"\n{\n\t"UILanguage"\t\t"${ui}"\n\t"AudioLanguage"\t\t"${audio}"\n}\n`;
 
 test('the two language settings are read separately', (t) => {
@@ -100,7 +100,7 @@ test('with nothing official to go on the suffix is null, not a default', (t) => 
     uiLanguage: 'klingon',
     // unrecognised, but still reported: this is the value the engine builds its mount path
     // from, and another mod manager setting it is exactly how mods end up somewhere we do
-    // not look (see src/minify.js)
+    // not look (see src/minify.ts)
     audio: 'klingon',
   });
 });
@@ -238,7 +238,7 @@ test('creating a mod folder mirrors Valve and never overwrites an existing gamei
 
 /* A Steam root beside the fake game: accounts, their launch options, and who is logged in.
  * `users` is [{ id32, launchOptions, timestamp, mostRecent }]. */
-function fakeSteam(game, users) {
+function fakeSteam(game: string, users: { id32: number; launchOptions?: string; timestamp?: number; mostRecent?: boolean }[]) {
   const root = path.resolve(game, '..', '..', '..', '..');
   fs.mkdirSync(path.join(root, 'config'), { recursive: true });
   const blocks = users.map((u) => {
@@ -288,7 +288,7 @@ test('a launch option survives another program putting a quoted path in front of
 test('the whole launch line comes back unescaped, so it can be recognised', (t) => {
   const game = fakeGame(t, { boot: bootFile('russian', 'russian') });
   fakeSteam(game, [{ id32: 111, launchOptions: RC7_OPTIONS, timestamp: 5 }]);
-  const raw = gamelang.launchOptions(game);
+  const raw = gamelang.launchOptions(game) ?? '';
   assert.match(raw, /^cmd \/c "C:\\Users\\me\\Desktop\\Dota2-Minify\\Dota2-Minify\.exe" prelaunch &&/);
   assert.ok(raw.endsWith('-novid -language dutch'), 'and nothing after the quotes is lost');
 });
@@ -406,7 +406,7 @@ test('a language folder that already exists is not written into', (t) => {
  * that was never ours belongs to Valve or to another program. Lived in main.js until 2026-09-16,
  * where nothing could test it.
  */
-const inFolder = (game, suffix) => fs.readdirSync(path.join(game, `dota_${suffix}`)).sort();
+const inFolder = (game: string, suffix: string) => fs.readdirSync(path.join(game, `dota_${suffix}`)).sort();
 
 test('mods follow the folder the game mounts, and the game\'s own files stay where they are', (t) => {
   const game = fakeGame(t, {
@@ -486,7 +486,7 @@ test('a gameinfo another program writes just before ours is not written over', (
   const game = fakeGame(t, {});
   const theirs = 'written by another program';
   const realWrite = fs.writeFileSync;
-  t.mock.method(fs, 'writeFileSync', (file, data, opts) => {
+  t.mock.method(fs, 'writeFileSync', (file: fs.PathOrFileDescriptor, data: string | NodeJS.ArrayBufferView, opts?: fs.WriteFileOptions) => {
     if (path.basename(String(file)) === 'gameinfo.gi' && data !== theirs) realWrite(file, theirs);
     return realWrite(file, data, opts);
   });
@@ -498,7 +498,7 @@ test('a gameinfo another program writes just before ours is not written over', (
 test('a gameinfo that cannot be written is still an error, not taken for one already there', (t) => {
   const game = fakeGame(t, {});
   const realWrite = fs.writeFileSync;
-  t.mock.method(fs, 'writeFileSync', (file, data, opts) => {
+  t.mock.method(fs, 'writeFileSync', (file: fs.PathOrFileDescriptor, data: string | NodeJS.ArrayBufferView, opts?: fs.WriteFileOptions) => {
     if (path.basename(String(file)) === 'gameinfo.gi') throw Object.assign(new Error('access denied'), { code: 'EACCES' });
     return realWrite(file, data, opts);
   });

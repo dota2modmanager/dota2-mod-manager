@@ -801,7 +801,7 @@ function launchLangBannerHtml(lang, ourFolder) {
  * nothing happens, and "your mod manager broke my game" is where that lands otherwise.
  *
  * Description, not a complaint: what is set, whose setting it is, and the switch that turns it
- * off. See src/minify.js for how the wrapper is recognised.
+ * off. See src/minify.ts for how the wrapper is recognised.
  */
 function prelaunchBannerHtml(m) {
   if (!m || !m.prelaunch) return '';
@@ -825,7 +825,7 @@ function prelaunchBannerHtml(m) {
  * What this banner may never do is guess. It said "the game reads our folder" for a machine
  * where the game was reading neither, and told an English speaker to set Minify to Russian -
  * which would have hardcoded their game to Russian text. Each branch below says only what is
- * known, and the fix that belongs to it. See src/minify.js and src/gamelang.js.
+ * known, and the fix that belongs to it. See src/minify.ts and src/gamelang.ts.
  */
 function minifyBannerHtml(m, ourMods = 0) {
   const note = minifyNotice(m, ourMods);

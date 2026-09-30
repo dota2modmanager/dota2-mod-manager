@@ -71,8 +71,8 @@ Four modules get special attention because they are the ones that write into the
 |---|---|
 | `src/patcher.ts` | The search-path patch and the signature file, byte for byte, both directions |
 | `src/vpk.ts` | The reader against the writer, round trips, fingerprints |
-| `src/gamelang.js` | Which folder the game will actually mount |
-| `src/schema.js` | Merging and validating `items_game.txt` |
+| `src/gamelang.ts` | Which folder the game will actually mount |
+| `src/schema.ts` | Merging and validating `items_game.txt` |
 
 If your change touches any of them, start by finding the test that covers the behaviour you are
 about to change, and make new behaviour bring its own test. A red `npm test` is not a formality

@@ -14,7 +14,7 @@
  * The installer hands out slots through freeSlotIn; moving a mod between the two parts, and the
  * one-time layout of an order from before, live here too so the rules sit in one place.
  */
-const { RESERVED_PAKS } = require('./minify');
+const { RESERVED_PAKS } = require('./minify.ts');
 
 /** The categories that load before every other mod. The Dota2PornFx cart zips mark them with a
  *  "!pak" prefix, a merge-order hint for VPKMerge; the game only mounts pakNN_dir.vpk. */
@@ -52,7 +52,7 @@ function freeSlotIn(zone, used) {
   for (let n = from; n <= to; n++) {
     // Minify writes 65, 66 and 67 into whichever language folder it is set to, and if that is
     // ours, whoever writes second replaces the other's mod. Three slots out of ninety buys never
-    // having to coordinate - see src/minify.js. A pak it has already written needs no
+    // having to coordinate - see src/minify.ts. A pak it has already written needs no
     // reserving: it is in `used`, read off the folder.
     if (RESERVED_PAKS.includes(n) || n === APP_PAK) continue;
     const name = `pak${String(n).padStart(2, '0')}_dir.vpk`;

@@ -46,7 +46,7 @@ export const CAT_ICON = {
   sites: 'language', tools: 'build', news: 'newspaper',
 };
 
-// Free cosmetics: each is a slot in the game's own item schema (see src/schema.js), read
+// Free cosmetics: each is a slot in the game's own item schema (see src/schema.ts), read
 // live from the installed game — so a slot Valve adds later just shows up. This only maps
 // the ones we know a nice label/icon for; an unknown one still works, titled from its id.
 export const COSMETIC_SLOTS = {

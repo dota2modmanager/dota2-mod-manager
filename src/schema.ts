@@ -10,19 +10,59 @@
 //
 // The file is ~50 MB of KeyValues with a few non-UTF8 bytes in it, so everything here
 // works on latin1 strings: byte-exact in and out, no re-encoding surprises.
-const fs = require('fs');
-const path = require('path');
-const { readVpkEntryFile, buildVpk, crc32 } = require('./vpk.ts');
-const { t } = require('./i18n.ts');
+import fs from 'node:fs';
+import path from 'node:path';
+import { readVpkEntryFile, buildVpk, crc32, type VpkEntry } from './vpk.ts';
+import { t } from './i18n.ts';
 
-const SCHEMA_REL = 'scripts/items/items_game.txt';
-// Our folder is registered ahead of "dota", so the first pak in it wins the MOD path.
-const SCHEMA_VPK = 'pak01_dir.vpk';
+/** A block's braces in the text: [open, close + 1]. */
+export type Bounds = [number, number];
+
+/** One direct child of a KeyValues block: a nested block, or a key with a value. See eachChild. */
+export type KvChild =
+  | { key: string; start: number; end: number; isBlock: true; value: null; body: Bounds }
+  | { key: string; start: number; end: number; isBlock: false; value: string; body: null };
+
+/** An item of items_game as the pickers read it; see listItems. */
+export interface SchemaItem {
+  id: string; name: string; slot: string; prefab: string; itemName: string; itemDescription: string;
+  image: string; model: string; typeName: string;
+  /** the free item of its slot that every account owns */
+  baseitem: boolean;
+  hasVisuals: boolean;
+  bundleItems: string[];
+  /** where its block starts and ends in the table, for a byte-exact splice */
+  start: number; end: number;
+}
+
+/** An item block a mod changed, lifted out of the table it shipped. */
+export interface SchemaDelta { id: string; name: string; block: string }
+
+/** One block to splice into the game's table, and the files that come with it. */
+export interface SchemaPatch { id: string | number; block: string; source?: string; assets?: VpkEntry[] }
+
+/** The game's own table, and the marker that changes when an update replaces it. */
+export interface GameSchema { text: string; stamp: string }
+
+/** What a merge did with each patch; see mergeSchema. */
+export interface MergeResult {
+  text: string;
+  applied: { id: string; source: string }[];
+  /** ids the game's table does not have */
+  missing: string[];
+  /** the same id changed differently by two sources */
+  conflicts: { id: string; a: string; b: string }[];
+}
+
+/** Where the item table sits inside a VPK. */
+export const SCHEMA_REL = 'scripts/items/items_game.txt';
+/** Our folder is registered ahead of "dota", so the first pak in it wins the MOD path. */
+export const SCHEMA_VPK = 'pak01_dir.vpk';
 
 // ---------- KeyValues navigation (no full parse: 50 MB, and we only need blocks) ----------
 
 // Skip whitespace and // line comments starting at i.
-function skipGap(text, i) {
+function skipGap(text: string, i: number): number {
   for (;;) {
     while (i < text.length && /\s/.test(text[i])) i++;
     if (text[i] === '/' && text[i + 1] === '/') {
@@ -36,7 +76,7 @@ function skipGap(text, i) {
 }
 
 // Read a token (quoted or bare) at i. Returns { value, start, next } or null at a closing brace.
-function readToken(text, i) {
+function readToken(text: string, i: number): { value: string; start: number; next: number } | null {
   i = skipGap(text, i);
   if (i >= text.length || text[i] === '}') return null;
   if (text[i] === '"') {
@@ -51,9 +91,8 @@ function readToken(text, i) {
 
 /**
  * Bounds of the { ... } block that starts at (or after) i.
- * @returns {[number, number]} [open, close+1]
  */
-function blockBounds(text, i) {
+export function blockBounds(text: string, i: number): Bounds {
   const open = text.indexOf('{', i);
   if (open === -1) throw new Error(t('items_game: не найдено открытие блока'));
   let depth = 0;
@@ -68,11 +107,9 @@ function blockBounds(text, i) {
 
 /**
  * Walk the direct children of a block.
- * @param {string} text
- * @param {[number, number]} bounds  from blockBounds()
- * @param {(child: {key: string, start: number, end: number, isBlock: boolean, value: string|null, body: [number, number]|null}) => void} fn
+ * @param bounds  from blockBounds()
  */
-function eachChild(text, bounds, fn) {
+export function eachChild(text: string, bounds: Bounds, fn: (child: KvChild) => void): void {
   let i = bounds[0] + 1;
   const end = bounds[1] - 1;
   while (i < end) {
@@ -93,9 +130,10 @@ function eachChild(text, bounds, fn) {
 }
 
 // The "items" section of items_game.txt (all item definitions live directly under it).
-function itemsSection(text) {
+function itemsSection(text: string): Bounds {
   const root = blockBounds(text, 0);
-  let found = null;
+  // set from inside the walk, which is why it is widened by hand
+  let found = null as Bounds | null;
   eachChild(text, root, (c) => {
     if (!found && c.isBlock && c.key.toLowerCase() === 'items') found = c.body;
   });
@@ -105,9 +143,8 @@ function itemsSection(text) {
 
 /**
  * One item definition, by id. Returns the exact source range so a splice is byte-exact.
- * @returns {{ id: string, start: number, end: number, text: string } | null}
  */
-function findItem(text, id, section) {
+export function findItem(text: string, id: string | number, section?: Bounds | null): { id: string; start: number; end: number; text: string } | null {
   // The parsed list already knows where every item begins and ends, and callers that hand in
   // no section are asking about the whole table - which is the one that is usually warm.
   // Walking all 25 000 children instead cost about 200 ms a call, and dressing one cosmetic
@@ -119,7 +156,7 @@ function findItem(text, id, section) {
   }
   // A named section, or an id the item list does not carry (it keeps numbered items only).
   const bounds = section || itemsSection(text);
-  let hit = null;
+  let hit = null as { id: string; start: number; end: number; text: string } | null;
   eachChild(text, bounds, (c) => {
     if (!hit && c.isBlock && c.key === String(id)) {
       hit = { id: c.key, start: c.start, end: c.end, text: text.slice(c.start, c.end) };
@@ -128,9 +165,9 @@ function findItem(text, id, section) {
   return hit;
 }
 
-// Direct scalar fields of an item block ("name", "prefab", "item_slot"...).
-function itemFields(text, item) {
-  const out = new Map();
+/** Direct scalar fields of an item block ("name", "prefab", "item_slot"...). */
+export function itemFields(text: string, item: { start: number }): Map<string, string> {
+  const out = new Map<string, string>();
   eachChild(text, blockBounds(text, item.start), (c) => {
     if (!c.isBlock) out.set(c.key.toLowerCase(), c.value);
   });
@@ -141,7 +178,6 @@ function itemFields(text, item) {
  * Every item in the schema, as light records. Used for the free-cosmetics picker
  * (weather / terrain / HUD / killstreak...) which is generated from the live schema
  * rather than hardcoded, so anything Valve adds later shows up on its own.
- * @returns {Array<{id, name, slot, prefab, itemName, image, baseitem, start, end}>}
  */
 // Walking 25k item blocks costs ~300 ms, and a rebuild asks for the list several times
 // over the same string, so keep the last result around.
@@ -156,18 +192,18 @@ function itemFields(text, item) {
  * Two is the number the work actually alternates between; a third would only hold a table
  * nothing is going to ask for again. */
 const ITEMS_CACHE_SIZE = 2;
-let itemsCache = [];
+let itemsCache: { text: string; list: SchemaItem[] }[] = [];
 
-function listItems(text) {
+export function listItems(text: string): SchemaItem[] {
   const hit = itemsCache.find((e) => e.text === text);
   if (hit) return hit.list;
   const section = itemsSection(text);
-  const out = [];
+  const out: SchemaItem[] = [];
   eachChild(text, section, (c) => {
     if (!c.isBlock || !/^\d+$/.test(c.key)) return;
-    const fields = new Map();
+    const fields = new Map<string, string>();
     let hasVisuals = false;
-    let bundleItems = [];
+    const bundleItems: string[] = [];
     eachChild(text, c.body, (f) => {
       if (!f.isBlock) fields.set(f.key.toLowerCase(), f.value);
       else if (f.key.toLowerCase() === 'visuals') hasVisuals = true;
@@ -204,12 +240,13 @@ function listItems(text) {
 // The table is read as latin1 so every splice stays byte-exact, which leaves names with
 // non-ASCII characters (curly quotes, accents) as raw UTF-8 bytes. Anything shown to a
 // person goes back through UTF-8 first.
-function toUtf8(s) {
+/** A name out of the latin1 table, as the person should read it. */
+export function toUtf8(s: string): string {
   return /[\x80-\xff]/.test(s) ? Buffer.from(s, 'latin1').toString('utf8') : s;
 }
 
 /** An item's words in one lowercase string, for telling an arcana or persona by its name. */
-function itemSearchText(item) {
+export function itemSearchText(item: Partial<SchemaItem> | null | undefined): string {
   return [item?.slot, item?.prefab, item?.name, item?.itemName, item?.itemDescription, item?.image, item?.model, item?.typeName]
     .filter(Boolean)
     .join(' ')
@@ -225,7 +262,7 @@ function itemSearchText(item) {
  * Emerald Frenzy Flail on the back and 99 other weapons nowhere, so a set carried two heads
  * and the builder offered a wand for a helmet.
  */
-function inferredItemSlot(item) {
+export function inferredItemSlot(item: Partial<SchemaItem> | null | undefined): string {
   if (item?.slot) return item.slot;
   return item?.prefab === 'wearable' || item?.prefab === 'default_item' ? 'weapon' : '';
 }
@@ -233,7 +270,7 @@ function inferredItemSlot(item) {
 // Which slot an item belongs to. Wearables say it outright; the whole-match cosmetics
 // (weather, terrain, HUD...) leave item_slot out and only name their prefab. No guessing here:
 // the guess moved 22 loading screens, their default among them, into "back" (2026-09-24).
-function slotOf(item) {
+function slotOf(item: SchemaItem): string {
   return item.slot || item.prefab || '';
 }
 
@@ -242,16 +279,16 @@ function slotOf(item) {
  * 590 Default Terrain, ...). Dressing it in another item's visuals is what makes a paid
  * cosmetic the default one.
  */
-function baseItemFor(text, slot) {
+export function baseItemFor(text: string, slot: string): SchemaItem | null {
   return listItems(text).find((i) => i.baseitem && slotOf(i) === slot) || null;
 }
 
 /**
  * What can be put on that base item, read straight out of the installed game: anything Valve
  * adds to the schema later shows up on its own, without an app update.
- * @returns {Array<{id, name}>}  name is the schema's own English name, sorted A-Z
+ * @returns name is the schema's own English name, sorted A-Z
  */
-function cosmeticOptions(text, slot) {
+export function cosmeticOptions(text: string, slot: string): { id: string; name: string }[] {
   return listItems(text)
     .filter((i) => slotOf(i) === slot && !i.baseitem && i.hasVisuals && i.name)
     .map((i) => ({ id: i.id, name: toUtf8(i.name) }))
@@ -261,10 +298,10 @@ function cosmeticOptions(text, slot) {
 /**
  * Pull scripts/items/items_game.txt out of the game's pak01. This is the base every
  * build starts from, so a game update simply means a rebuild, never a stale schema.
- * @param {string} gamePath  ...\dota 2 beta\game
- * @returns {{ text: string, stamp: string }}  stamp = version marker of the base file
+ * @param gamePath  ...\dota 2 beta\game
+ * @returns stamp = version marker of the base file
  */
-function readGameSchema(gamePath) {
+export function readGameSchema(gamePath: string): GameSchema {
   const pak = path.join(gamePath, 'dota', 'pak01_dir.vpk');
   if (!fs.existsSync(pak)) throw new Error(t('Не найден {0}', pak));
   const hit = readVpkEntryFile(pak, SCHEMA_REL);
@@ -272,10 +309,10 @@ function readGameSchema(gamePath) {
   return { text: hit.data.toString('latin1'), stamp: `${hit.data.length}:${hit.crc >>> 0}` };
 }
 
-// Cheap "did the game update?" probe: size+mtime of the paks that carry the schema.
-function gameSchemaStamp(gamePath) {
+/** Cheap "did the game update?" probe: size+mtime of the paks that carry the schema. */
+export function gameSchemaStamp(gamePath: string): string {
   const dir = path.join(gamePath, 'dota');
-  const parts = [];
+  const parts: string[] = [];
   for (const f of fs.readdirSync(dir)) {
     if (!/^pak01_(dir|\d{3})\.vpk$/i.test(f)) continue;
     const st = fs.statSync(path.join(dir, f));
@@ -286,16 +323,16 @@ function gameSchemaStamp(gamePath) {
 
 // ---------- mod deltas ----------
 
-// Skinchanger exports are written as one endless line; re-indent so the merged file
-// stays readable (and diffable) when someone opens it.
-function reindent(block, indent) {
+/** Skinchanger exports are written as one endless line; re-indent so the merged file
+ * stays readable (and diffable) when someone opens it. */
+export function reindent(block: string, indent: string): string {
   const first = readToken(block, 0);
   if (!first) return '';
   const at = skipGap(block, first.next);
   if (block[at] !== '{') return String(block).trim();
   const nl = '\r\n';
-  const formatBlock = (text, key, bounds, pad) => {
-    const rows = [];
+  const formatBlock = (text: string, key: string, bounds: Bounds, pad: string): string => {
+    const rows: string[] = [];
     eachChild(text, bounds, (c) => {
       if (c.isBlock) rows.push(formatBlock(text, c.key, c.body, pad + '\t'));
       else rows.push(`${pad}\t"${c.key}"\t\t"${c.value}"`);
@@ -307,14 +344,13 @@ function reindent(block, indent) {
 
 /**
  * Asset paths a mod ships, in the form items_game refers to them: lowercase, no _c.
- * @param {string[]} vpkPaths
- * @param {{ roots?: boolean }} [opts]  roots: also match Skinchanger's numeric content
+ * @param opts.roots  also match Skinchanger's numeric content
  *   root as a whole. Right for "did this mod change that block", wrong when splitting a
  *   pack per hero — there the root is shared by every hero in it.
  */
-function ownedAssetNeedles(vpkPaths, opts = {}) {
+export function ownedAssetNeedles(vpkPaths: string[], opts: { roots?: boolean } = {}): string[] {
   const withRoots = opts.roots !== false;
-  const out = new Set();
+  const out = new Set<string>();
   for (const p of vpkPaths) {
     const clean = p.toLowerCase().replace(/"+$/, '').replace(/_c$/, '');
     if (!clean || clean.length < 8) continue;
@@ -333,9 +369,9 @@ function ownedAssetNeedles(vpkPaths, opts = {}) {
   return [...out];
 }
 
-// Does an item block talk about any of these files? Used when a multi-hero pack is split:
-// each part keeps only the blocks that belong to its own assets.
-function blockUsesAssets(blockText, vpkPaths) {
+/** Does an item block talk about any of these files? Used when a multi-hero pack is split:
+ * each part keeps only the blocks that belong to its own assets. */
+export function blockUsesAssets(blockText: string, vpkPaths: string[]): boolean {
   const hay = blockText.toLowerCase();
   return ownedAssetNeedles(vpkPaths, { roots: false }).some((n) => hay.includes(n));
 }
@@ -349,10 +385,8 @@ function blockUsesAssets(blockText, vpkPaths) {
  * a file leaving it. A mod exported or shared without those blocks travels without its
  * effects and icons, so anything built for somewhere else carries this instead: small, and
  * read straight back by the same harvest on the other side.
- * @param {Array<{id, name, block}>} deltas
- * @returns {string}
  */
-function deltaTable(deltas) {
+export function deltaTable(deltas: { id?: string; name?: string; block: string }[] | null | undefined): string {
   const nl = '\r\n';
   // verbatim, not reindented: the block is already valid KV, and keeping its own bytes is
   // what makes the trip out and back byte-identical to what was lifted in the first place
@@ -365,17 +399,16 @@ function deltaTable(deltas) {
  * useless (the mod's copy is months behind the game's), so instead: a real change
  * always names a file the mod itself ships. Blocks that mention one of those, and
  * differ from the installed schema, are the delta.
- * @param {string} modText     items_game.txt taken out of the mod
- * @param {string[]} vpkPaths  every path inside that mod's VPK
- * @param {string} baseText    the game's current schema (to drop no-op blocks)
- * @returns {Array<{ id: string, name: string, block: string }>}
+ * @param modText     items_game.txt taken out of the mod
+ * @param vpkPaths    every path inside that mod's VPK
+ * @param baseText    the game's current schema (to drop no-op blocks)
  */
-function extractDeltas(modText, vpkPaths, baseText) {
+export function extractDeltas(modText: string, vpkPaths: string[], baseText?: string | null): SchemaDelta[] {
   const needles = ownedAssetNeedles(vpkPaths);
   if (!needles.length) return [];
   const section = itemsSection(modText);
   const baseSection = baseText ? itemsSection(baseText) : null;
-  const deltas = [];
+  const deltas: SchemaDelta[] = [];
   eachChild(modText, section, (c) => {
     if (!c.isBlock || !/^\d+$/.test(c.key)) return;
     const raw = modText.slice(c.start, c.end);
@@ -392,9 +425,9 @@ function extractDeltas(modText, vpkPaths, baseText) {
   return deltas;
 }
 
-// Remove every "<key> { … }" sub-block from a KV fragment, with the whitespace in front
-// of it, so the result still reads like the file it came from.
-function stripKeyBlocks(text, key) {
+/** Remove every "<key> { … }" sub-block from a KV fragment, with the whitespace in front
+ * of it, so the result still reads like the file it came from. */
+export function stripKeyBlocks(text: string, key: string): string {
   let out = text;
   for (;;) {
     const at = out.indexOf(`"${key}"`);
@@ -422,13 +455,13 @@ function stripKeyBlocks(text, key) {
  * "unlock { price, item_def }" - on a base item that only produces a "style locked"
  * button, so those gates come off.
  */
-function baseItemPatch(baseText, targetId, sourceId) {
+export function baseItemPatch(baseText: string, targetId: string | number, sourceId: string | number): string {
   const target = findItem(baseText, targetId);
   if (!target) throw new Error(t('items_game: предмет {0} не найден', targetId));
   const source = findItem(baseText, sourceId);
   if (!source) throw new Error(t('items_game: предмет {0} не найден', sourceId));
 
-  let visuals = null;
+  let visuals = null as string | null;
   eachChild(baseText, blockBounds(baseText, source.start), (c) => {
     if (c.isBlock && c.key.toLowerCase() === 'visuals') visuals = baseText.slice(c.start, c.end);
   });
@@ -450,20 +483,17 @@ function baseItemPatch(baseText, targetId, sourceId) {
 /**
  * Splice blocks into the base schema. Later entries win; every patch is applied to the
  * game's current text, so nothing Valve ships is rolled back except the patched blocks.
- * @param {string} baseText
- * @param {Array<{id: string, block: string, source?: string}>} patches
- * @returns {{ text: string, applied: Array, missing: Array, conflicts: Array }}
  */
-function mergeSchema(baseText, patches) {
-  const applied = [];
-  const missing = [];
-  const conflicts = [];
-  const seen = new Map();
-  const edits = [];
+export function mergeSchema(baseText: string, patches: SchemaPatch[]): MergeResult {
+  const applied: MergeResult['applied'] = [];
+  const missing: string[] = [];
+  const conflicts: MergeResult['conflicts'] = [];
+  const seen = new Map<string, SchemaPatch>();
+  const edits: { start: number; end: number; text: string }[] = [];
 
   // Same block from two sources is not a conflict: Skinchanger bakes the whole cart into
   // every export, so its packs routinely carry a byte-identical copy of each other's blocks.
-  const flat = (s) => s.replace(/\s+/g, ' ').trim();
+  const flat = (s: string) => s.replace(/\s+/g, ' ').trim();
   for (const p of patches) {
     const prev = seen.get(String(p.id));
     if (prev && flat(prev.block) !== flat(p.block)) {
@@ -489,7 +519,7 @@ function mergeSchema(baseText, patches) {
  * Refuse to ship a schema that could crash the client on load. Cheap structural checks
  * only: a malformed file is what makes the game die with "ERROR PARSING SCRIPT".
  */
-function validateSchema(text, baseText) {
+export function validateSchema(text: string, baseText?: string | null): { items: number; bytes: number } {
   let depth = 0;
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
@@ -507,11 +537,12 @@ function validateSchema(text, baseText) {
   return { items, bytes: text.length };
 }
 
-// crc32 comes from src/vpk.ts, where the VPK writer needs it too, and is re-exported below
+// crc32 comes from src/vpk.ts, where the VPK writer needs it too, and is re-exported here
 // for everything that was already taking it from here.
+export { crc32 };
 
-// Pack the merged schema as a one-file VPK holding nothing but items_game.txt.
-function buildSchemaVpk(text, extraEntries = []) {
+/** Pack the merged schema as a one-file VPK holding items_game.txt and the files its patches bring. */
+export function buildSchemaVpk(text: string, extraEntries: VpkEntry[] = []): Buffer {
   const data = Buffer.from(text, 'latin1');
   return buildVpk([{ ext: 'txt', folder: 'scripts/items', name: 'items_game', crc: crc32(data), preload: Buffer.alloc(0), data }, ...extraEntries]);
 }
@@ -523,18 +554,16 @@ function buildSchemaVpk(text, extraEntries = []) {
  * `base` is the game's own table, which the caller has usually just read: it is 50 MB out of
  * a VPK and reading it twice for one deploy was most of what removing a mod cost. Left out,
  * it is read here as before.
- * @param {object} opts
- * @param {string} opts.gamePath
- * @param {string} opts.folder            the mod folder the schema VPK is written into
- * @param {Array} opts.patches
- * @param {{ text: string, stamp: string }} [opts.base]  the game's own table, if already read
- * @returns {{ applied: Array, missing: string[], conflicts: Array, stamp: string, bytes: number, items: number }}
+ * @param opts.folder  the mod folder the schema VPK is written into
+ * @param opts.base    the game's own table, if already read
  */
-function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath) }) {
+export function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath) }: {
+  gamePath: string; folder: string; patches: SchemaPatch[]; base?: GameSchema;
+}): MergeResult & { stamp: string; bytes: number; items: number } {
   const merged = mergeSchema(base.text, patches);
   const checked = validateSchema(merged.text, base.text);
-  const extras = [];
-  const seen = new Set();
+  const extras: VpkEntry[] = [];
+  const seen = new Set<string>();
   for (const p of patches || []) {
     for (const en of p.assets || []) {
       const key = `${en.folder}/${en.name}.${en.ext}`.toLowerCase();
@@ -561,7 +590,7 @@ function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath) }) 
 
 // Any real file left in a directory tree (the engine drops empty rpt/ and save/ folders
 // into every mounted content path, and those must not keep the folder alive).
-function hasFiles(dir) {
+function hasFiles(dir: string): boolean {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     if (e.isDirectory()) { if (hasFiles(path.join(dir, e.name))) return true; }
     else return true;
@@ -569,45 +598,16 @@ function hasFiles(dir) {
   return false;
 }
 
-// Drop the built schema, and the folder with it once nothing of ours is left there.
-function undeploy({ gamePath, folder }) {
+/** Drop the built schema, and the folder with it once nothing of ours is left there. */
+export function undeploy({ gamePath, folder }: { gamePath: string; folder: string }): void {
   const dir = path.join(gamePath, folder);
   const dest = path.join(dir, SCHEMA_VPK);
   if (fs.existsSync(dest)) fs.rmSync(dest, { force: true });
   if (fs.existsSync(dir) && !hasFiles(dir)) fs.rmSync(dir, { recursive: true, force: true });
 }
 
-function isDeployed(gamePath, folder) {
+/** Whether a built schema is in the mod folder. */
+export function isDeployed(gamePath: string, folder: string): boolean {
   return fs.existsSync(path.join(gamePath, folder, SCHEMA_VPK));
 }
 
-module.exports = {
-  eachChild,
-  blockBounds,
-  stripKeyBlocks,
-  toUtf8,
-  itemSearchText,
-  inferredItemSlot,
-  SCHEMA_REL,
-  SCHEMA_VPK,
-  deploy,
-  undeploy,
-  isDeployed,
-  readGameSchema,
-  gameSchemaStamp,
-  listItems,
-  baseItemFor,
-  cosmeticOptions,
-  findItem,
-  itemFields,
-  extractDeltas,
-  deltaTable,
-  ownedAssetNeedles,
-  blockUsesAssets,
-  baseItemPatch,
-  mergeSchema,
-  validateSchema,
-  buildSchemaVpk,
-  reindent,
-  crc32,
-};

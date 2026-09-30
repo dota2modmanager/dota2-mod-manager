@@ -15,7 +15,7 @@
 // This needs no toolchain - items_game.txt is plain text inside the game's own pak and our
 // reader has always been able to get it. Without a game path there is simply no answer and
 // the caller keeps the guess.
-const schema = require('./schema');
+const schema = require('./schema.ts');
 const { heroDisplayName } = require('./vpk.ts');
 
 /**

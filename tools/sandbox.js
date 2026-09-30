@@ -9,7 +9,7 @@
  *   node tools/sandbox.js status   what is on disk right now
  *
  * The layout mirrors a real Steam library, because the app derives things from it: the game
- * path ends in ...\dota 2 beta\game (src/steam.ts) and src/gamelang.js walks three levels up
+ * path ends in ...\dota 2 beta\game (src/steam.ts) and src/gamelang.ts walks three levels up
  * looking for appmanifest_570.acf.
  *
  * Nothing here changes app code. The app is pointed at the sandbox purely through
@@ -100,7 +100,7 @@ const BRANCHSPECIFIC = `"GameInfo"
 }
 `;
 
-// Valve's shape for a language folder (mirrors gameinfoStub in src/gamelang.js).
+// Valve's shape for a language folder (mirrors gameinfoStub in src/gamelang.ts).
 const LANG_GAMEINFO = (suffix) => `"GameInfo"
 {
 	LayeredOnMod	dota
@@ -214,7 +214,7 @@ function builderAssets(real, schemaText) {
  * anti-cheat notice on. Under half a kilobyte each. */
 function noticeAssets(real) {
   const { openVpkIndex } = require('../src/vpk.ts');
-  const { DOTA_LANGUAGES } = require('../src/gamelang.js');
+  const { DOTA_LANGUAGES } = require('../src/gamelang.ts');
   const out = [];
   try {
     const ix = openVpkIndex(path.join(real, 'dota', 'pak01_dir.vpk'));
@@ -247,7 +247,7 @@ function entry(relPath, data) {
 }
 
 // Minimal but structurally real items_game.txt, used only when the real game is not
-// installed. Enough for src/schema.js to parse, find an items block and patch a base item.
+// installed. Enough for src/schema.ts to parse, find an items block and patch a base item.
 const FALLBACK_SCHEMA = `"items_game"
 {
 	"items"
@@ -455,7 +455,7 @@ const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file
 
 /* The Steam account the sandbox library belongs to.
  *
- * src/gamelang.js takes -language from the launch options of whoever is logged in, looking first
+ * src/gamelang.ts takes -language from the launch options of whoever is logged in, looking first
  * at the Steam root the game path implies (sandbox/ here) and, on Windows, going on to
  * Program Files\Steam when that root has no account. With no account of its own, a sandbox run
  * on a machine where Dota starts with -language dutch (Minify sets exactly that) installed into
@@ -539,7 +539,7 @@ function status() {
   if (!fs.existsSync(SANDBOX)) return;
   log('game      ', fs.existsSync(path.join(GAME, 'dota')) ? GAME : '(missing)');
   log('pristine  ', fs.existsSync(PRISTINE) ? 'yes' : 'no');
-  // pak01_* is Valve's voice-over, not a mod - same exclusion langFolders() in src/gamelang.js makes
+  // pak01_* is Valve's voice-over, not a mod - same exclusion langFolders() in src/gamelang.ts makes
   const isMod = (f) => /^pak\d+_dir\.vpk(\.off|\.moff)?$/i.test(f) && !/^pak01_/i.test(f);
   log('mods in dota_russian:', count(path.join(GAME, 'dota_russian'), { test: isMod }));
   log('downloaded mods:     ', count(MODS, /\.(vpk|zip)$/i));

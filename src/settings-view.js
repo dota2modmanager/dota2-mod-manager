@@ -14,8 +14,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const gamelang = require('./gamelang');
-const { readMinify, isMinifyFile, isMinifyPak } = require('./minify');
+const gamelang = require('./gamelang.ts');
+const { readMinify, isMinifyFile, isMinifyPak } = require('./minify.ts');
 
 /**
  * @param {object} deps
@@ -45,8 +45,8 @@ function settingsViewFor({ settings, library, discordAuth, validateGamePath, lan
     const game = settings.get('dotaGamePath');
     const folders = gamelang.langFolders(game);
     // Whose mods the game is actually going to read. Both managers name a language folder and
-    // Dota mounts exactly one, so this is a question with a definite answer - see src/minify.js.
-    const lang = game ? gamelang.detectLangSuffix(game) : { suffix: null, audio: null };
+    // Dota mounts exactly one, so this is a question with a definite answer - see src/minify.ts.
+    const lang = game ? gamelang.detectLangSuffix(game) : { suffix: null, source: null, uiLanguage: null, audio: null };
     /* How many of the files in its folder are its own. Once both apps share one folder,
      * counting everything there would report our mods as Minify's - and the answer has to be
      * a fact about who wrote what, which is what the marker is for. */
@@ -98,7 +98,7 @@ function settingsViewFor({ settings, library, discordAuth, validateGamePath, lan
          * change. Never another tool's: the screen offers to move these into our folder, and
          * taking Minify's compiled pak out of the folder it just built it in would break its
          * install to fix nothing. Its files are its business, and where they are is a thing
-         * to explain rather than to correct (see src/minify.js). */
+         * to explain rather than to correct (see src/minify.ts). */
         stranded: folders
           .filter((f) => f.suffix !== langFolder() && f.modFiles > 0 && f.suffix !== minify.folder)
           .map((f) => ({ suffix: f.suffix, modFiles: f.modFiles })),

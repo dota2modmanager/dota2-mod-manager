@@ -3,19 +3,20 @@
 // question worth answering is whose mods the game is going to read. Getting that answer wrong in either direction is worse than saying nothing: telling
 // somebody their mods are dark when they are fine sends them reinstalling over a working
 // setup, and the opposite leaves them staring at a game with no mods in it.
-const test = require('node:test');
-const assert = require('node:assert/strict');
+import test from 'node:test';
+import assert from 'node:assert/strict';
 
-const { readMinify: read, readConfig, MINIFY_FOLDER, MINIFY_BORROWED, RESERVED_PAKS, RESERVED_LABEL, isMinifyFile, prelaunchHook } = require('../src/minify.js');
+import { readMinify as  read, readConfig, MINIFY_FOLDER, MINIFY_BORROWED, RESERVED_PAKS, RESERVED_LABEL, isMinifyFile, prelaunchHook } from '../src/minify.ts';
 
 /* Every case below describes a whole machine, so none of them may read the Minify that is
  * installed on the one running the tests: without this the suite passes or fails depending on
  * whether the developer happens to use it. */
-const DOTA_LANGUAGES = require('../src/gamelang.js').DOTA_LANGUAGES;
-const readMinify = (p) => read({ config: null, gameLanguages: DOTA_LANGUAGES, ...p });
+import { DOTA_LANGUAGES } from '../src/gamelang.ts';
+// a test that names no folder of ours asks about a machine where this app has none
+const readMinify = (p: Partial<Parameters<typeof read>[0]>) => read({ config: null, gameLanguages: DOTA_LANGUAGES, ...p } as Parameters<typeof read>[0]);
 
 /** One entry of gamelang.langFolders(). */
-const folder = (suffix, modFiles = 0, official = false) => ({
+const folder = (suffix: string, modFiles = 0, official = false) => ({
   suffix, official, valveContent: false, modFiles,
 });
 
@@ -74,7 +75,7 @@ test('the Dutch it moved to is a real language, and that one does mount', () => 
 test("Minify's Dutch trick for English is recognised as its doing", () => {
   // Not the same move this app makes. It sets Dutch through a Steam launch option, which
   // locks both language settings, creates a folder that did not exist, and needs a VPK of
-  // English localization to give the text back. See src/gamelang.js for the rules.
+  // English localization to give the text back. See src/gamelang.ts for the rules.
   const got = readMinify({
     folders: [folder('russian', 7, true), folder(MINIFY_BORROWED, 2)],
     audio: MINIFY_BORROWED,
@@ -267,7 +268,7 @@ test('in a shared folder its mods are counted by who wrote them, not by what is 
  * stay the same thing.
  */
 test('the slots the interface promises are the slots that are reserved', () => {
-  const numbers = RESERVED_LABEL.match(/\d+/g).map(Number);
+  const numbers = (RESERVED_LABEL.match(/\d+/g) || []).map(Number);
   assert.equal(numbers[0], RESERVED_PAKS[0], 'the label starts where the reserved range does');
   assert.equal(numbers[numbers.length - 1], RESERVED_PAKS[RESERVED_PAKS.length - 1], 'and ends where it ends');
   assert.ok(!/99/.test(RESERVED_LABEL), 'pak99 has not been reserved since 2.6.4');

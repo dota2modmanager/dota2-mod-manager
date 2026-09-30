@@ -1,7 +1,7 @@
 /* What the VPK tree walkers do with a file somebody else wrote.
  *
  * The index of a mod is read straight off disk: src/installer.js scans the whole mod folder on
- * every start, src/minify.js reads another tool's files, and neither wraps the call. The walkers
+ * every start, src/minify.ts reads another tool's files, and neither wraps the call. The walkers
  * checked the signature and then trusted the tree: each entry's 18 bytes were read with
  * readUInt32LE/readUInt16LE at whatever offset the tree said, and a truncated or forged record
  * came back as a Node RangeError - not a refusal this app makes, and not one the callers catch.

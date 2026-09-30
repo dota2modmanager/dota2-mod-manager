@@ -8,7 +8,7 @@
  * clicks. This does, as a model of the loader:
  *
  *   1. mounts: the search paths from gameinfo_branchspecific.gi (or gameinfo.gi), in order, with
- *      *LANGUAGE* resolved the way src/gamelang.js resolves it for the app, keeping the folders
+ *      *LANGUAGE* resolved the way src/gamelang.ts resolves it for the app, keeping the folders
  *      that exist;
  *   2. packs: every pakNN_dir.vpk in every mounted folder opens, and in the ones that are ours
  *      (not Valve's pak01) every file's bytes match the CRC its index claims;
@@ -29,7 +29,7 @@ const path = require('path');
 const { crc32 } = require('zlib');
 const { openVpkIndex, listVpkPathCrcsFile } = require('../../src/vpk.ts');
 const patcher = require('../../src/patcher.ts');
-const gamelang = require('../../src/gamelang.js');
+const gamelang = require('../../src/gamelang.ts');
 
 const SCHEMA_REL = 'scripts/items/items_game.txt';
 const VALVE_PAK = /^pak01_dir\.vpk$/i;

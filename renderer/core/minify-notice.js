@@ -1,7 +1,7 @@
 /* Which note about Minify fits this machine, decided apart from the markup so it can be
- * tested without a window (test/minify-notice.test.js). The words live in views/library.js.
+ * tested without a window (test/minify-notice.test.ts). The words live in views/library.js.
  *
- * src/minify.js answers whose mods the game reads right now: 'ours', 'minify', 'both',
+ * src/minify.ts answers whose mods the game reads right now: 'ours', 'minify', 'both',
  * 'neither' or 'unknown'. 'neither' covers three different machines, and the banner used to
  * say the same sentence to all of them:
  *   - the game reads our folder, which simply holds none of our mods yet;
@@ -14,7 +14,7 @@
  */
 
 /**
- * @param {object|null} m  the minify block of the settings (src/minify.js readMinify)
+ * @param {object|null} m  the minify block of the settings (src/minify.ts readMinify)
  * @param {number} [ourMods] how many mods this app has installed
  * @returns {{ kind: 'info'|'warn', case: 'unmountable'|'minify-live'|'shared'|'unknown'|'ours-read'|'minify-empty'|'elsewhere' }|null}
  */

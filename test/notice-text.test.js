@@ -12,7 +12,7 @@ const os = require('os');
 const path = require('path');
 
 const vpk = require('../src/vpk.ts');
-const gamelang = require('../src/gamelang');
+const gamelang = require('../src/gamelang.ts');
 const notice = require('../src/notice-text');
 const { NOTICE_TEXTS, NOTICE_KEYS } = require('../src/notice-texts.ts');
 

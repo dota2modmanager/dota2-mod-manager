@@ -39,7 +39,7 @@
         "src/game-icons.js": {
           "lines": 48.1
         },
-        "src/gamelang.js": {
+        "src/gamelang.ts": {
           "lines": 98.5
         },
         "src/i18n.ts": {
@@ -81,7 +81,7 @@
         "src/library.ts": {
           "lines": 100
         },
-        "src/minify.js": {
+        "src/minify.ts": {
           "lines": 97.9
         },
         "src/mod-id.js": {
@@ -117,7 +117,7 @@
         "src/safe-zip.ts": {
           "lines": 100
         },
-        "src/schema.js": {
+        "src/schema.ts": {
           "lines": 78.7
         },
         "src/settings.ts": {
@@ -233,7 +233,7 @@
         "src/game-icons.js": {
           "lines": 48.1
         },
-        "src/gamelang.js": {
+        "src/gamelang.ts": {
           "lines": 99.4
         },
         "src/i18n.ts": {
@@ -275,7 +275,7 @@
         "src/library.ts": {
           "lines": 100
         },
-        "src/minify.js": {
+        "src/minify.ts": {
           "lines": 97.9
         },
         "src/mod-id.js": {
@@ -314,7 +314,7 @@
         "src/safe-zip.ts": {
           "lines": 100
         },
-        "src/schema.js": {
+        "src/schema.ts": {
           "lines": 99.5
         },
         "src/settings.ts": {

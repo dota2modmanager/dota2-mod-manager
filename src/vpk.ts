@@ -42,7 +42,7 @@ function readCString(buf: Buffer, pos: number): { str: string; next: number } {
  * whatever offset the tree claimed, and a file cut short - or one whose preload length was a
  * fiction - came back as a RangeError from Buffer. That is not a refusal this app makes, and the
  * callers do not catch it: src/installer.js walks the mod folder on every start and
- * src/minify.js reads another tool's files, neither inside a try. Measured on a three-entry VPK:
+ * src/minify.ts reads another tool's files, neither inside a try. Measured on a three-entry VPK:
  * 54 of its truncations escaped that way (test/vpk-fuzz.test.ts).
  *
  * `next` is always at least 18 bytes past `pos`, so a tree cannot stall a walker either.
@@ -550,7 +550,7 @@ export function readVpkEntries(dirBuf: Buffer, dirPath: string, archivePathFor?:
 }
 
 // The VPK index carries a CRC32 per entry. Hand-rolled because Node's own zlib.crc32 is
-// newer than the Node inside our Electron; src/schema.js re-exports this one.
+// newer than the Node inside our Electron; src/schema.ts re-exports this one.
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
   for (let n = 0; n < 256; n++) {

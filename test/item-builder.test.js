@@ -7,7 +7,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const schema = require('../src/schema.js');
+const schema = require('../src/schema.ts');
 const builder = require('../src/item-builder.js');
 const vpk = require('../src/vpk.ts');
 

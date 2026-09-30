@@ -43,7 +43,7 @@ const { createUpdater } = require('./src/updater.ts');
 const { channelFor } = require('./src/beta.ts');
 const { gameStamp, createPatchWatcher } = require('./src/patch-watch');
 const { Icons } = require('./src/icons');
-const gamelang = require('./src/gamelang');
+const gamelang = require('./src/gamelang.ts');
 // handed to src/ipc-settings.js by name, the same one it has always been passed under
 const { moveLangFolder } = gamelang;
 const { uninstallFlow } = require('./src/uninstall-window');
