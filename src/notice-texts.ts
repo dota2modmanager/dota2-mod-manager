@@ -1,5 +1,5 @@
 /**
- * The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.js puts
+ * The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts
  * them in). Keyed by the name Dota gives a language in its own files: dota_<name>.txt.
  *
  * Four strings. `header` titles both windows ("Valve Anti-Cheat (VAC)" in Valve's words),

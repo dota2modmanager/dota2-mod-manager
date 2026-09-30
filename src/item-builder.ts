@@ -17,7 +17,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { openVpkIndex, crc32, heroDisplayName, type VpkEntry } from './vpk.ts';
+import { openVpkIndex, entryAt, heroDisplayName, type VpkEntry } from './vpk.ts';
 import { t } from './i18n.ts';
 import {
   findItem, itemFields, listItems, toUtf8, eachChild, blockBounds, stripKeyBlocks, itemSearchText, inferredItemSlot,
@@ -401,21 +401,6 @@ function compiledAssetPath(p: unknown): string {
   return clean.endsWith('_c') ? clean : `${clean}_c`;
 }
 
-function vpkEntryForPath(relPath: string, data: Buffer): VpkEntry {
-  const lower = normalizeAssetPath(relPath);
-  const slash = lower.lastIndexOf('/');
-  const file = slash === -1 ? lower : lower.slice(slash + 1);
-  const dot = file.lastIndexOf('.');
-  return {
-    ext: dot === -1 ? ' ' : file.slice(dot + 1),
-    folder: slash === -1 ? ' ' : lower.slice(0, slash),
-    name: dot === -1 ? file : file.slice(0, dot),
-    data,
-    preload: Buffer.alloc(0),
-    crc: crc32(data),
-  };
-}
-
 function sameHeroes(a: string[], b: string[]): boolean {
   return a.length === b.length && a.every((h, i) => h === b[i]);
 }
@@ -540,7 +525,7 @@ export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | nu
     if (!from || !to || seen.has(to)) continue;
     const data = ix.read(from);
     if (!data) throw new Error(t('Не найден {0}', from));
-    out.push(vpkEntryForPath(to, data));
+    out.push(entryAt(to, data));
     seen.add(to);
   }
   return out;

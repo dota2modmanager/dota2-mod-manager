@@ -266,7 +266,7 @@ function gameLoads(sim, game, when) {
 }
 
 /** Our mods' packs the game mounts in the language folder right now. The app's own pak64 (the
- *  anti-cheat notice, src/notice-text.js) is not a mod: the master switch leaves it on by design. */
+ *  anti-cheat notice, src/notice-text.ts) is not a mod: the master switch leaves it on by design. */
 function mountedOurs(game, folder) {
   return dota.load(game).paks.filter((p) => p.folder === folder && !p.valve && !isAppPak(String(p.name).toLowerCase())).map((p) => p.name);
 }

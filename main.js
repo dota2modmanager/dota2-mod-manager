@@ -46,7 +46,7 @@ const { Icons } = require('./src/icons.ts');
 const gamelang = require('./src/gamelang.ts');
 // handed to src/ipc-settings.js by name, the same one it has always been passed under
 const { moveLangFolder } = gamelang;
-const { uninstallFlow } = require('./src/uninstall-window');
+const { uninstallFlow } = require('./src/uninstall-window.ts');
 const { isUninstallRun } = require('./src/uninstall-args.ts');
 const { presetsService } = require('./src/presets-service.ts');
 const { registerPresetsIpc } = require('./src/ipc-presets');

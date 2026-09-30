@@ -152,7 +152,7 @@ test('the pak slots Minify writes are never handed to one of our mods', () => {
   });
   const used = new Set();
   const handed = [];
-  // 30-98, less Minify's three and the app's own pak64 (src/notice-text.js)
+  // 30-98, less Minify's three and the app's own pak64 (src/notice-text.ts)
   for (let i = 0; i < 65; i++) handed.push(installer.allocatePak(used, false));
   for (const n of [65, 66, 67, 99]) {
     assert.equal(handed.includes(`pak${n}_dir.vpk`), false, `pak${n} belongs to Minify`);

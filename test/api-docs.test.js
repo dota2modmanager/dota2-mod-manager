@@ -63,6 +63,20 @@ test('a TypeScript module is read by its export statements, its opening comment 
   assert.equal(doc.lang, 'ts');
 });
 
+test('a module that hands on names from another points there instead of counting them as gaps', () => {
+  const doc = moduleDoc('door.ts', [
+    '// The door everything comes through.',
+    "export { read, list } from './door-read.ts';",
+    "export type { Entry } from './door-read.ts';",
+    "export {\n  build,\n} from './door-write.ts';",
+  ].join('\n'));
+  assert.deepEqual(doc.items, [], 'nothing of its own');
+  assert.deepEqual(doc.reexports, [
+    { from: 'door-read.ts', names: ['read', 'list', 'Entry'] },
+    { from: 'door-write.ts', names: ['build'] },
+  ]);
+});
+
 /* A ratchet, not a target. Every export with no comment above it is a gap in the source, and
  * this number is only ever allowed to go down: lower it when you document something, never
  * raise it to make a new undocumented export fit. */

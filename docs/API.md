@@ -38,8 +38,8 @@ the code, not in this page.
 | [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/net.ts`](#srcnetts) | Getting bytes from the internet, on a connection that may not want to cooperate. |
-| [`src/notice-text.js`](#srcnotice-textjs) | The game's anti-cheat notice, in words that say what to do. |
-| [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.js puts |
+| [`src/notice-text.ts`](#srcnotice-textts) | The game's anti-cheat notice, in words that say what to do. |
+| [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts |
 | [`src/overlays.ts`](#srcoverlaysts) | Fonts and cursors: loose files written over the game's own. |
 | [`src/patch-watch.ts`](#srcpatch-watchts) | Noticing that Dota was patched, while the app is open. |
 | [`src/patcher.ts`](#srcpatcherts) | Search-path patch: registers an extra content folder ahead of the game's own, which |
@@ -59,7 +59,10 @@ the code, not in this page.
 | [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
 | [`src/updater.ts`](#srcupdaterts) | Where an installed copy looks for a new version, and on which channel. |
-| [`src/vpk.ts`](#srcvpkts) | Minimal reader for the index of Source-engine VPK "_dir" files (v1/v2). |
+| [`src/vpk-analyze.ts`](#srcvpk-analyzets) | What a mod changes, read from the paths inside it: which heroes, which equip slots, or which |
+| [`src/vpk-read.ts`](#srcvpk-readts) | Reading a Source-engine VPK: the index of a "_dir" file (v1/v2), the files it lists and their |
+| [`src/vpk-write.ts`](#srcvpk-writets) | Writing a Source-engine VPK: one self-contained file from a list of entries or a folder of loose |
+| [`src/vpk.ts`](#srcvpkts) | The VPK format, in one place for everything that reads or writes one: the reader |
 | [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
 
 ## src/adopt.ts
@@ -2056,7 +2059,7 @@ other, which is also what happens to one that is named here after it stops exist
 @param list  from src/remote-config.ts
 ```
 
-## src/notice-text.js
+## src/notice-text.ts
 
 The game's anti-cheat notice, in words that say what to do.
 
@@ -2079,103 +2082,79 @@ alone when somebody else's file already holds its name.
 
 ### `NOTICE_PAK`
 
-```js
-const NOTICE_PAK = `pak${APP_PAK}_dir.vpk`
+```ts
+export const NOTICE_PAK = `pak${APP_PAK}_dir.vpk`
 ```
 
 The file name of the app's pak in the language folder.
 
 ### `MARKER`
 
-```js
-const MARKER = 'dota2modmanager/notice.json'
+```ts
+export const MARKER = 'dota2modmanager/notice.json'
 ```
 
 An entry that marks the pak as ours: a pak64 without it belongs to somebody else.
 
 ### `uiLanguage`
 
-```js
-function uiLanguage(gamePath)
+```ts
+export function uiLanguage(gamePath: string): string
 ```
 
-The language the game shows its interface in: a launch option, then its own setting, then Steam's.
+The language the game shows its text in, from what overrides what.
 
 ### `declaredLanguage`
 
-```js
-function declaredLanguage(text)
+```ts
+export function declaredLanguage(text: string): string | null
 ```
 
-The `"Language"` a localization file declares, lowercased, or null.
+The language a localization file says it is, from its header.
 
 ### `withTokens`
 
-```js
-function withTokens(text, tokens)
+```ts
+export function withTokens(text: string, tokens: Record<string, string>): string | null
 ```
 
-A localization file with our strings at the end of its Tokens block, in the file's own line
-ending. Any earlier definition of the same keys is taken out first, so the file says each
-thing once. Returns null for a file with no Tokens block, which is not one to build on.
-
-```
-@param {string} text
-@param {Record<string, string>} tokens  key -> value, no double quotes in either
-```
+A localization file with these tokens set, or null when it has no Tokens block to put them in.
 
 ### `plan`
 
-```js
-function plan({ gamePath, langDir })
+```ts
+export function plan({ gamePath, langDir }: { gamePath: string; langDir: string }): Plan
 ```
 
-What the language folder should hold, worked out from the game as it is.
-
-```
-@returns {{ action: 'write', bytes: Buffer, language: string }
-| { action: 'remove', why: string } | { action: 'skip', why: string }}
-```
+What the notice pak should be for this game and folder, worked out without writing anything.
 
 ### `removeNotice`
 
-```js
-function removeNotice(langDir)
+```ts
+export function removeNotice(langDir: string): boolean
 ```
 
-Take the pak out of a language folder, if it is ours.
+Take our pak out of the folder, and only ours.
 
 ### `applyNotice`
 
-```js
-function applyNotice({ gamePath, langDir })
+```ts
+export function applyNotice({ gamePath, langDir }: { gamePath: string | null; langDir: string | null }): string
 ```
 
-Bring the language folder in line with the plan. Writes only when the bytes differ, and
-through a temporary name, so the game never meets half a file. A pak the running game holds
-open cannot be replaced: that is an error the caller logs, and the next refresh tries again.
-
-```
-@returns {string} what happened, for the log
-```
+Bring the notice pak in line with the game, and say in a few words what was done.
 
 ### `createNoticeText`
 
-```js
-function createNoticeText({ gamePath, langDir, diag, retryMs = 60_000 })
+```ts
+export function createNoticeText({ gamePath, langDir, diag, retryMs = 60_000 }: { gamePath: () => string | null; langDir: () => string; diag: (msg: string) => void; retryMs?: number; })
 ```
 
-The notice kept current from a place that runs often. Rebuilding reads the game's 23 MB index,
-so it only happens when something it depends on changed: the game's settings, its main pak,
-or any pak in the language folder.
-
-```
-@param {{ gamePath: () => string|null, langDir: () => string, diag: (msg: string) => void, retryMs?: number }} ctx
-```
+The notice text kept up to date: checked cheaply, rebuilt when the game or the paks change.
 
 ## src/notice-texts.ts
 
-The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.js puts
+The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts
 them in). Keyed by the name Dota gives a language in its own files: dota_<name>.txt.
 
 Four strings. `header` titles both windows ("Valve Anti-Cheat (VAC)" in Valve's words),
@@ -2193,7 +2172,7 @@ No ASCII double quote may appear in a string: they are written into a quoted Key
 const NOTICE_TEXTS =
 ```
 
-The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.js puts
+The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts
 them in). Keyed by the name Dota gives a language in its own files: dota_<name>.txt.
 
 Four strings. `header` titles both windows ("Valve Anti-Cheat (VAC)" in Valve's words),
@@ -3625,7 +3604,7 @@ export const APP_PAK = 64
 ```
 
 The app's own pak, not a mod: the clearer text for the game's anti-cheat notice
-(src/notice-text.js). One below Minify's 65-67, so that it wins over a Minify "English fix"
+(src/notice-text.ts). One below Minify's 65-67, so that it wins over a Minify "English fix"
 carrying the same localization file, and never handed to a mod, counted as a slot, listed as
 somebody else's file or renamed by the master switch. A mod that had it before is moved off
 by vacateAppPak.
@@ -4151,26 +4130,10 @@ export function createUpdater({ autoUpdater, isPortable = false, channel = () =>
 @param deps.every        so a test does not wait four hours
 ```
 
-## src/vpk.ts
+## src/vpk-analyze.ts
 
-Minimal reader for the index of Source-engine VPK "_dir" files (v1/v2).
-Only walks the directory tree — enough to list which game files a mod overrides.
-
-### `VpkEntry`
-
-```ts
-export interface VpkEntry { ext: string; folder: string; name: string; crc: number; preload: Buffer; data: Buffer }
-```
-
-One file inside a VPK, with its bytes: what readVpkEntries hands out and buildVpk takes.
-
-### `VpkDirEntry`
-
-```ts
-export interface VpkDirEntry
-```
-
-An entry of a multi-part index: where its bytes sit in the _NNN volumes, not the bytes.
+What a mod changes, read from the paths inside it: which heroes, which equip slots, or which
+kind of content, and a name for it. Part of the VPK code src/vpk.ts gathers.
 
 ### `HeroHit`
 
@@ -4188,6 +4151,113 @@ export interface Analysis { heroes: HeroHit[]; kind: string; pathCount: number }
 
 What a mod's paths say it changes; see analyzeVpkPaths.
 
+### `slotDisplayName`
+
+```ts
+export function slotDisplayName(slot: string): string { return t(SLOT_DISPLAY[slot] || slot); }
+```
+
+An equip slot as the user reads it, in their language.
+
+### `analyzeVpkPaths`
+
+```ts
+export function analyzeVpkPaths(paths: string[]): Analysis
+```
+
+Classify what a mod's inner path list actually changes.
+
+```
+@param paths lowercased inner VPK paths (from listVpkPaths)
+```
+
+### `analyzeVpk`
+
+```ts
+export function analyzeVpk(buf: Buffer): Analysis
+```
+
+analyzeVpkPaths over the paths of one VPK.
+
+### `describeHero`
+
+```ts
+export function describeHero(h: HeroHit): string
+```
+
+Human one-liner for a single detected hero, e.g. "Nyx Assassin (model, weapon)".
+
+### `subjectHeroes`
+
+```ts
+export function subjectHeroes(a: Analysis): HeroHit[]
+```
+
+The heroes a mod is actually about, as opposed to the ones it merely touches.
+
+A hero's folder is also where authors borrow generic lookup textures from - fresnel warps,
+colourwarps, detail masks - and one borrowed file used to count as a whole hero. That is
+how a set that dresses Grimstroke alone announced itself as a bundle of eight heroes, and
+how a Dazzle skin claimed to also change Bane and Slardar (measured over 84 installed
+mods: 12 heroes invented across 5 of them).
+
+A hero the mod carries no model for is not the subject. When none of them has a model the
+mod is a plain recolour, and then every hero it touches is as good an answer as there is.
+
+Nor is a hero the mod carries one model for while carrying eight of somebody else's. Skins
+borrow a prop from another hero - a Clinkz set hangs a Phoenix immortal off its bow, a Sven
+one wears Disruptor's back piece - and that single model used to make the mod read as two
+heroes. It came in named "Clinkz, Phoenix", and an import of two to four heroes splits
+itself, so the set arrived in two halves with the bow in one of them.
+
+### `describeAnalysis`
+
+```ts
+export function describeAnalysis(a: Analysis): string
+```
+
+Human summary of a whole analysis: hero skins, or a coarse content kind.
+
+### `nameFromAnalysis`
+
+```ts
+export function nameFromAnalysis(a: Analysis): string | null
+```
+
+A short display NAME for a mod from its analysis — used to name imported VPKs by their
+content (a hero, a set, or a content kind) instead of a bare "pakNN" slot. Null if the
+content isn't recognisable enough to name.
+
+## src/vpk-read.ts
+
+Reading a Source-engine VPK: the index of a "_dir" file (v1/v2), the files it lists and their
+bytes, and the content fingerprint that recognises a mod whatever it is packed as. Part of the
+VPK code src/vpk.ts gathers; writing is src/vpk-write.ts, what a mod changes src/vpk-analyze.ts.
+
+### `VPK_SIGNATURE`
+
+```ts
+export const VPK_SIGNATURE = 0x55aa1234
+```
+
+The first four bytes of every VPK index.
+
+### `VpkEntry`
+
+```ts
+export interface VpkEntry { ext: string; folder: string; name: string; crc: number; preload: Buffer; data: Buffer }
+```
+
+One file inside a VPK, with its bytes: what readVpkEntries hands out and buildVpk takes.
+
+### `VpkDirEntry`
+
+```ts
+export interface VpkDirEntry
+```
+
+An entry of a multi-part index: where its bytes sit in the _NNN volumes, not the bytes.
+
 ### `VpkIndex`
 
 ```ts
@@ -4195,6 +4265,14 @@ export interface VpkIndex { size: number; has(p: string): boolean; read(p: strin
 ```
 
 A reader over one index that seeks straight to a file; see openVpkIndex.
+
+### `ArchivePathFor`
+
+```ts
+export type ArchivePathFor = (idx: number) => string
+```
+
+Resolves external archive N of a multi-part VPK to its path on disk.
 
 ### `readVpkIndexFile`
 
@@ -4286,82 +4364,21 @@ per icon costs seconds. This walks it once and hands back a reader that seeks.
 @param dirPath path to the *_dir.vpk
 ```
 
-### `slotDisplayName`
+### `EMPTY`
 
 ```ts
-export function slotDisplayName(slot: string): string { return t(SLOT_DISPLAY[slot] || slot); }
+export const EMPTY = Buffer.alloc(0)
 ```
 
-An equip slot as the user reads it, in their language.
+A preload or data section with nothing in it.
 
-### `analyzeVpkPaths`
+### `INLINE`
 
 ```ts
-export function analyzeVpkPaths(paths: string[]): Analysis
+export const INLINE = 0x7fff
 ```
 
-Classify what a mod's inner path list actually changes.
-
-```
-@param paths lowercased inner VPK paths (from listVpkPaths)
-```
-
-### `analyzeVpk`
-
-```ts
-export function analyzeVpk(buf: Buffer): Analysis
-```
-
-analyzeVpkPaths over the paths of one VPK.
-
-### `describeHero`
-
-```ts
-export function describeHero(h: HeroHit): string
-```
-
-Human one-liner for a single detected hero, e.g. "Nyx Assassin (model, weapon)".
-
-### `subjectHeroes`
-
-```ts
-export function subjectHeroes(a: Analysis): HeroHit[]
-```
-
-The heroes a mod is actually about, as opposed to the ones it merely touches.
-
-A hero's folder is also where authors borrow generic lookup textures from - fresnel warps,
-colourwarps, detail masks - and one borrowed file used to count as a whole hero. That is
-how a set that dresses Grimstroke alone announced itself as a bundle of eight heroes, and
-how a Dazzle skin claimed to also change Bane and Slardar (measured over 84 installed
-mods: 12 heroes invented across 5 of them).
-
-A hero the mod carries no model for is not the subject. When none of them has a model the
-mod is a plain recolour, and then every hero it touches is as good an answer as there is.
-
-Nor is a hero the mod carries one model for while carrying eight of somebody else's. Skins
-borrow a prop from another hero - a Clinkz set hangs a Phoenix immortal off its bow, a Sven
-one wears Disruptor's back piece - and that single model used to make the mod read as two
-heroes. It came in named "Clinkz, Phoenix", and an import of two to four heroes splits
-itself, so the set arrived in two halves with the bow in one of them.
-
-### `describeAnalysis`
-
-```ts
-export function describeAnalysis(a: Analysis): string
-```
-
-Human summary of a whole analysis: hero skins, or a coarse content kind.
-
-### `nameFromAnalysis`
-
-```ts
-export function nameFromAnalysis(a: Analysis): string | null
-```
-
-A short display NAME for a mod from its analysis — used to name imported VPKs by their
-content (a hero, a set, or a content kind) instead of a bare "pakNN" slot. Null if the
-content isn't recognisable enough to name.
+The archiveIndex meaning "data lives in the _dir file itself".
 
 ### `entryPath`
 
@@ -4380,6 +4397,49 @@ export function readVpkEntries(dirBuf: Buffer, dirPath: string, archivePathFor?:
 Read every entry of a _dir.vpk (following external _NNN archives) into a flat list
 with its bytes, in on-disk tree order.
 
+### `fingerprintEntries`
+
+```ts
+export function fingerprintEntries(entries: { path: string; crc: number }[]): string
+```
+
+Content fingerprint of a mod: sha1 over its sorted (path:crc) index. Independent of
+packaging (multi-part vs single, filename), so the same mod installed from the site,
+from another tool, or via this app all hash identically — the basis for recognising
+a foreign vpk as a specific catalog mod.
+
+### `fingerprintVpk`
+
+```ts
+export function fingerprintVpk(buf: Buffer): string
+```
+
+fingerprintEntries over one VPK's index.
+
+### `fingerprintFiles`
+
+```ts
+export function fingerprintFiles(files: { path: string; data: Buffer }[]): string
+```
+
+Content fingerprint of a loose-file mod (cursors, fonts): sha1 over sorted
+"path:sha1(bytes)". Paths should already be normalized (top folder stripped,
+lowercased) so it reproduces from either the source zip or the installed files.
+
+### `listVpkEntries`
+
+```ts
+export function listVpkEntries(buf: Buffer): { path: string; crc: number }[]
+```
+
+Lightweight (path, crc) list — the mod's content signature, no archive reads.
+
+## src/vpk-write.ts
+
+Writing a Source-engine VPK: one self-contained file from a list of entries or a folder of loose
+files, a multi-part index over data volumes, and a merged pack split back by hero. Part of the
+VPK code src/vpk.ts gathers; the format itself is read in src/vpk-read.ts.
+
 ### `crc32`
 
 ```ts
@@ -4387,6 +4447,16 @@ export function crc32(buf: Buffer): number
 ```
 
 CRC-32 as the VPK index records it for each entry.
+
+### `entryAt`
+
+```ts
+export function entryAt(relPath: string, data: Buffer): VpkEntry
+```
+
+One file for buildVpk, from its path inside the archive and its bytes. The path is read the
+way the game reads it: forward slashes, lower case, no leading slash, and " " for a file at the
+root or one with no extension.
 
 ### `buildVpk`
 
@@ -4492,46 +4562,19 @@ output so each result stands alone and installs/removes independently.
 @returns empty if <2 heroes.
 ```
 
-### `fingerprintEntries`
+## src/vpk.ts
 
-```ts
-export function fingerprintEntries(entries: { path: string; crc: number }[]): string
-```
+The VPK format, in one place for everything that reads or writes one: the reader
+(src/vpk-read.ts), the writer (src/vpk-write.ts) and what a mod's paths say it changes
+(src/vpk-analyze.ts). Callers import from here; the three files are how it is kept readable.
 
-Content fingerprint of a mod: sha1 over its sorted (path:crc) index. Independent of
-packaging (multi-part vs single, filename), so the same mod installed from the site,
-from another tool, or via this app all hash identically — the basis for recognising
-a foreign vpk as a specific catalog mod.
+Hands on from [`src/vpk-read.ts`](#srcvpk-readts): `readVpkIndexFile`, `listVpkPaths`, `listVpkPathsFile`, `listVpkPathCrcs`, `listVpkPathCrcsFile`, `readVpkEntryFile`, `openVpkIndex`, `entryPath`, `readVpkEntries`, `listVpkEntries`, `fingerprintEntries`, `fingerprintVpk`, `fingerprintFiles`, `VpkEntry`, `VpkDirEntry`, `VpkIndex`.
 
-### `fingerprintVpk`
+Hands on from [`src/vpk-analyze.ts`](#srcvpk-analyzets): `analyzeVpkPaths`, `analyzeVpk`, `slotDisplayName`, `describeHero`, `subjectHeroes`, `describeAnalysis`, `nameFromAnalysis`, `HeroHit`, `Analysis`.
 
-```ts
-export function fingerprintVpk(buf: Buffer): string
-```
+Hands on from [`src/vpk-write.ts`](#srcvpk-writets): `crc32`, `entryAt`, `buildVpk`, `findContentRoot`, `packFolder`, `buildVpkDir`, `combineVpksToFiles`, `mergeVpkToSingle`, `splitVpkByHero`.
 
-fingerprintEntries over one VPK's index.
-
-### `fingerprintFiles`
-
-```ts
-export function fingerprintFiles(files: { path: string; data: Buffer }[]): string
-```
-
-Content fingerprint of a loose-file mod (cursors, fonts): sha1 over sorted
-"path:sha1(bytes)". Paths should already be normalized (top folder stripped,
-lowercased) so it reproduces from either the source zip or the installed files.
-
-### `listVpkEntries`
-
-```ts
-export function listVpkEntries(buf: Buffer): { path: string; crc: number }[]
-```
-
-Lightweight (path, crc) list — the mod's content signature, no archive reads.
-
-### `heroDisplayName`
-
-_No description in the source._
+Hands on from [`src/hero-names.ts`](#srchero-namests): `heroDisplayName`.
 
 ## src/vtex.ts
 

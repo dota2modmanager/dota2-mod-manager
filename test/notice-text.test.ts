@@ -1,38 +1,32 @@
-/* The anti-cheat notice in plain words (src/notice-text.js, src/notice-texts.ts).
+/* The anti-cheat notice in plain words (src/notice-text.ts, src/notice-texts.ts).
  *
  * A throwaway game tree with Valve's localization in dota/pak01 and a language folder beside
  * it: the pak the app writes has to carry the chat file the game would have read, with the four
  * strings in the language the player sees, and it has to stay out of the way of every file that
  * is not ours.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const vpk = require('../src/vpk.ts');
-const gamelang = require('../src/gamelang.ts');
-const notice = require('../src/notice-text');
-const { NOTICE_TEXTS, NOTICE_KEYS } = require('../src/notice-texts.ts');
+import * as vpk from '../src/vpk.ts';
+import * as gamelang from '../src/gamelang.ts';
+import * as notice from '../src/notice-text.ts';
+import { NOTICE_TEXTS, NOTICE_KEYS } from '../src/notice-texts.ts';
 
 const BOM = '﻿';
-const chatFile = (language, extra = '') =>
+const chatFile = (language: string, extra = '') =>
   `${BOM}"lang"\r\n{\r\n"Language" "${language}"\r\n"Tokens"\r\n{\r\n"chat_filterbutton"\t"Filters"\r\n"chat_brace"\t"a } in a value"\r\n${extra}}\r\n}\r\n`;
 
 /** A VPK holding `files` (inner path -> text). */
-function pak(files) {
-  return vpk.buildVpk(Object.entries(files).map(([rel, text]) => {
-    const data = Buffer.from(text, 'utf8');
-    const slash = rel.lastIndexOf('/');
-    const file = rel.slice(slash + 1);
-    const dot = file.lastIndexOf('.');
-    return { ext: file.slice(dot + 1), folder: rel.slice(0, slash), name: file.slice(0, dot), data, preload: Buffer.alloc(0), crc: vpk.crc32(data) };
-  }));
+function pak(files: Record<string, string>) {
+  return vpk.buildVpk(Object.entries(files).map(([rel, text]) => vpk.entryAt(rel, Buffer.from(text, 'utf8'))));
 }
 
 /** A game with Valve's chat files, the game's own language setting, and a language folder. */
-function stand(t, { ui = 'russian', folder = 'russian' } = {}) {
+function stand(t: TestContext, { ui = 'russian', folder = 'russian' } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-notice-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   // a Steam with one account and no launch options, so nothing is read off the machine's own
@@ -50,7 +44,7 @@ function stand(t, { ui = 'russian', folder = 'russian' } = {}) {
   fs.mkdirSync(langDir, { recursive: true });
   const target = path.join(langDir, notice.NOTICE_PAK);
   /** The chat file inside what the app wrote. */
-  const written = (lang = ui) => vpk.openVpkIndex(target).read(`resource/localization/chat_${lang}.txt`).toString('utf8');
+  const written = (lang = ui) => vpk.openVpkIndex(target).read(`resource/localization/chat_${lang}.txt`)?.toString('utf8') ?? '';
   return { game, langDir, target, written };
 }
 
@@ -61,7 +55,7 @@ test('the pak carries the game\'s own chat file with the four strings added, in 
   assert.ok(text.startsWith(`${BOM}"lang"`), 'the byte order mark stays where Valve put it');
   assert.ok(text.includes('"chat_filterbutton"\t"Filters"') && text.includes('"a } in a value"'), 'everything the file said before is still there');
   for (const [what, key] of Object.entries(NOTICE_KEYS)) {
-    assert.ok(text.includes(`"${key}"\t"${NOTICE_TEXTS.russian[what]}"\r\n`), `${key} in Russian, in the file's own line ending`);
+    assert.ok(text.includes(`"${key}"\t"${NOTICE_TEXTS.russian[what as keyof typeof NOTICE_TEXTS.russian]}"\r\n`), `${key} in Russian, in the file's own line ending`);
   }
   assert.ok(/"DOTA_VAC_Verification_Header_Party"\t"[^"]*"\r\n}\r\n}\r\n$/.test(text), 'inside the Tokens block, at its end');
   assert.equal(notice.applyNotice({ gamePath: s.game, langDir: s.langDir }), 'up to date (russian)', 'the same game gives the same bytes, and nothing is rewritten');
@@ -107,7 +101,7 @@ test('a language the game has no chat file for writes nothing, and the uninstall
 
 test('the kept notice rebuilds only when something it reads changed, and retries a refused write later', (t) => {
   const s = stand(t);
-  const log = [];
+  const log: string[] = [];
   const kept = notice.createNoticeText({ gamePath: () => s.game, langDir: () => s.langDir, diag: (m) => log.push(m), retryMs: 0 });
   assert.equal(kept.refresh(), 'written (russian)');
   assert.equal(kept.refresh(), null, 'nothing changed, nothing read');
@@ -121,7 +115,7 @@ test('the kept notice rebuilds only when something it reads changed, and retries
   const real = fs.renameSync;
   t.after(() => { fs.renameSync = real; });
   fs.renameSync = () => { throw Object.assign(new Error('EBUSY: resource busy or locked'), { code: 'EBUSY' }); };
-  assert.match(kept.refresh(), /^failed: EBUSY/);
+  assert.match(kept.refresh() ?? '', /^failed: EBUSY/);
   assert.ok(!fs.existsSync(`${s.target}.tmp`), 'no half-written file is left behind');
   fs.renameSync = real;
   assert.equal(kept.refresh(), 'written (russian)');

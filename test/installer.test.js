@@ -449,7 +449,7 @@ test('the categories that load first get 02-29, the rest start at 30, and a full
   assert.equal(s.installer.allocatePak(used, true), 'pak30_dir.vpk', 'the 29th still installs, in the first slot after them');
   assert.equal(s.installer.allocatePak(used, false), 'pak31_dir.vpk');
   const rest = new Set();
-  // 30-99 is seventy slots: Minify keeps 65-67 and the app's own pak64 (src/notice-text.js)
+  // 30-99 is seventy slots: Minify keeps 65-67 and the app's own pak64 (src/notice-text.ts)
   for (let i = 0; i < 66; i++) {
     const n = Number(s.installer.allocatePak(rest, false).slice(3, 5));
     assert.ok(n >= 30 && n !== 64, 'the rest never take 02-29, nor pak64');

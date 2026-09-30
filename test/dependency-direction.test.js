@@ -37,7 +37,7 @@ const ELECTRON_USERS = [
   'src/ipc-window.js',
   'src/mod-preview.ts',
   'src/presets-service.ts',
-  'src/uninstall-window.js',
+  'src/uninstall-window.ts',
 ];
 
 // require('x'), and the ESM forms the TypeScript modules use: import ... from 'x', import('x')
@@ -113,7 +113,7 @@ test('the parsers and everything that writes the game folder are nowhere near th
   /* The list could in principle grow to take one of these in. These are named so that it cannot
      happen by editing a single array: each of them reading or writing files is the reason the
      tests exist. */
-  const core = ['src/vpk.ts', 'src/safe-zip.ts', 'src/installer.js', 'src/import.js', 'src/schema.ts',
+  const core = ['src/vpk.ts', 'src/vpk-read.ts', 'src/vpk-write.ts', 'src/vpk-analyze.ts', 'src/safe-zip.ts', 'src/installer.js', 'src/import.js', 'src/schema.ts',
     'src/patcher.ts', 'src/gamelang.ts', 'src/file-tx.ts', 'src/net.ts', 'src/adopt.ts', 'src/cursors.ts'];
   for (const file of core) {
     assert.ok(!ELECTRON_USERS.includes(file), `${file} is on the Electron list`);

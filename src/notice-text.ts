@@ -17,34 +17,42 @@
  * game, its language or a pak in that folder changes, removed by the uninstaller, and left
  * alone when somebody else's file already holds its name.
  */
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
-const vpk = require('./vpk.ts');
-const gamelang = require('./gamelang.ts');
-const { APP_PAK } = require('./slot-zones.ts');
-const { NOTICE_TEXTS, NOTICE_KEYS } = require('./notice-texts.ts');
+import * as vpk from './vpk.ts';
+import * as gamelang from './gamelang.ts';
+import { APP_PAK } from './slot-zones.ts';
+import { NOTICE_TEXTS, NOTICE_KEYS } from './notice-texts.ts';
+
+/** What refresh decided about the notice pak: leave somebody else's alone, take ours out, or write it. */
+type Plan =
+  | { action: 'skip'; why: string }
+  | { action: 'remove'; why: string }
+  | { action: 'write'; bytes: Buffer; language: string };
 
 /** The file name of the app's pak in the language folder. */
-const NOTICE_PAK = `pak${APP_PAK}_dir.vpk`;
+export const NOTICE_PAK = `pak${APP_PAK}_dir.vpk`;
 /** An entry that marks the pak as ours: a pak64 without it belongs to somebody else. */
-const MARKER = 'dota2modmanager/notice.json';
+export const MARKER = 'dota2modmanager/notice.json';
 const MARKER_BODY = Buffer.from(JSON.stringify({
   app: 'Dota 2 Mod Manager',
   url: 'https://dota2modmanager.com',
   note: 'Clearer text for the game\'s anti-cheat notice. Not a mod: the app keeps it up to date and its uninstaller removes it.',
 }, null, 2));
 
-const localization = (name, lang) => `resource/localization/${name}_${lang}.txt`;
+const localization = (name: string, lang: string) => `resource/localization/${name}_${lang}.txt`;
 
 /** The language the game shows its interface in: a launch option, then its own setting, then Steam's. */
-function uiLanguage(gamePath) {
+/** The language the game shows its text in, from what overrides what. */
+export function uiLanguage(gamePath: string): string {
   const lang = gamelang.launchLanguage(gamePath) || gamelang.bootLanguages(gamePath)?.ui || gamelang.steamLanguage(gamePath) || 'english';
   return String(lang).toLowerCase();
 }
 
 /** The `"Language"` a localization file declares, lowercased, or null. */
-function declaredLanguage(text) {
+/** The language a localization file says it is, from its header. */
+export function declaredLanguage(text: string): string | null {
   const m = /"Language"\s+"([^"]+)"/i.exec(text.slice(0, 512));
   return m ? m[1].toLowerCase() : null;
 }
@@ -55,8 +63,9 @@ function declaredLanguage(text) {
  * English files under the Dutch names, and a Dutch notice in an English game would be the odd
  * one out.
  */
-function textsFor(language, ui) {
-  return NOTICE_TEXTS[language] || NOTICE_TEXTS[ui] || NOTICE_TEXTS.english;
+function textsFor(language: string, ui: string) {
+  const all: Record<string, typeof NOTICE_TEXTS.english | undefined> = NOTICE_TEXTS;
+  return all[language] || all[ui] || NOTICE_TEXTS.english;
 }
 
 /**
@@ -66,7 +75,8 @@ function textsFor(language, ui) {
  * @param {string} text
  * @param {Record<string, string>} tokens  key -> value, no double quotes in either
  */
-function withTokens(text, tokens) {
+/** A localization file with these tokens set, or null when it has no Tokens block to put them in. */
+export function withTokens(text: string, tokens: Record<string, string>): string | null {
   const eol = text.includes('\r\n') ? '\r\n' : '\n';
   let out = text;
   for (const key of Object.keys(tokens)) {
@@ -76,7 +86,7 @@ function withTokens(text, tokens) {
   // nothing, and the brace that closes the block opened after "Tokens" is where ours go.
   let depth = 0;
   let tokensDepth = -1;
-  let last = null;
+  let last: string | null = null;
   for (let i = 0; i < out.length; i++) {
     const c = out[i];
     if (c === '"') {
@@ -103,26 +113,19 @@ function withTokens(text, tokens) {
 }
 
 /** One file for buildVpk. */
-function entryFor(relPath, data) {
-  const slash = relPath.lastIndexOf('/');
-  const file = relPath.slice(slash + 1);
-  const dot = file.lastIndexOf('.');
-  return { ext: file.slice(dot + 1), folder: relPath.slice(0, slash), name: file.slice(0, dot), data, preload: Buffer.alloc(0), crc: vpk.crc32(data) };
-}
-
 /** The live paks of a language folder other than ours, in the order the game reads them. */
-function livePaks(langDir) {
-  let names = [];
+function livePaks(langDir: string): { file: string; n: number }[] {
+  let names: string[] = [];
   try { names = fs.readdirSync(langDir); } catch { return []; }
   return names
     .map((f) => ({ f, m: /^pak(\d+)_dir\.vpk$/i.exec(f) }))
-    .filter((x) => x.m && Number(x.m[1]) !== APP_PAK)
+    .filter((x): x is { f: string; m: RegExpExecArray } => !!x.m && Number(x.m[1]) !== APP_PAK)
     .map((x) => ({ file: path.join(langDir, x.f), n: Number(x.m[1]) }))
     .sort((a, b) => a.n - b.n);
 }
 
 /** Whether the pak at `file` is ours, by its marker. */
-function isOurs(file) {
+function isOurs(file: string): boolean {
   try { return vpk.openVpkIndex(file).has(MARKER); } catch { return false; }
 }
 
@@ -131,7 +134,8 @@ function isOurs(file) {
  * @returns {{ action: 'write', bytes: Buffer, language: string }
  *   | { action: 'remove', why: string } | { action: 'skip', why: string }}
  */
-function plan({ gamePath, langDir }) {
+/** What the notice pak should be for this game and folder, worked out without writing anything. */
+export function plan({ gamePath, langDir }: { gamePath: string; langDir: string }): Plan {
   const target = path.join(langDir, NOTICE_PAK);
   if (fs.existsSync(target) && !isOurs(target)) return { action: 'skip', why: `${NOTICE_PAK} is somebody else's` };
   const ui = uiLanguage(gamePath);
@@ -139,12 +143,12 @@ function plan({ gamePath, langDir }) {
   const dotaRel = localization('dota', ui);
   const paks = livePaks(langDir).map((p) => {
     try { return { ...p, index: vpk.openVpkIndex(p.file) }; } catch { return null; }
-  }).filter(Boolean);
+  }).filter((p): p is { file: string; n: number; index: vpk.VpkIndex } => p !== null);
   // A pak read before ours that carries the same file wins over it: nothing to add then.
   const ahead = paks.find((p) => p.n < APP_PAK && p.index.has(chatRel));
   if (ahead) return { action: 'remove', why: `${path.basename(ahead.file)} carries ${chatRel}` };
 
-  let chat = paks.find((p) => p.index.has(chatRel))?.index.read(chatRel) || null;
+  let chat: Buffer | null = paks.find((p) => p.index.has(chatRel))?.index.read(chatRel) || null;
   if (!chat) {
     const valve = path.join(gamePath, 'dota', 'pak01_dir.vpk');
     try { chat = vpk.openVpkIndex(valve).read(chatRel); } catch { chat = null; }
@@ -152,17 +156,18 @@ function plan({ gamePath, langDir }) {
   if (!chat) return { action: 'remove', why: `the game has no ${chatRel}` };
 
   const main = paks.find((p) => p.index.has(dotaRel));
-  const language = (main && declaredLanguage(main.index.read(dotaRel).toString('utf8'))) || ui;
+  const language = (main && declaredLanguage(main.index.read(dotaRel)?.toString('utf8') || '')) || ui;
   const texts = textsFor(language, ui);
-  const tokens = Object.fromEntries(Object.entries(NOTICE_KEYS).map(([what, key]) => [key, texts[what]]));
+  const tokens: Record<string, string> = Object.fromEntries(Object.entries(NOTICE_KEYS).map(([what, key]) => [key, texts[what as keyof typeof texts]]));
   const text = withTokens(chat.toString('utf8'), tokens);
   if (text === null) return { action: 'remove', why: `${chatRel} has no Tokens block` };
-  const bytes = vpk.buildVpk([entryFor(chatRel, Buffer.from(text, 'utf8')), entryFor(MARKER, MARKER_BODY)]);
+  const bytes = vpk.buildVpk([vpk.entryAt(chatRel, Buffer.from(text, 'utf8')), vpk.entryAt(MARKER, MARKER_BODY)]);
   return { action: 'write', bytes, language };
 }
 
 /** Take the pak out of a language folder, if it is ours. */
-function removeNotice(langDir) {
+/** Take our pak out of the folder, and only ours. */
+export function removeNotice(langDir: string): boolean {
   const target = path.join(langDir, NOTICE_PAK);
   if (!fs.existsSync(target) || !isOurs(target)) return false;
   fs.rmSync(target, { force: true });
@@ -175,13 +180,14 @@ function removeNotice(langDir) {
  * open cannot be replaced: that is an error the caller logs, and the next refresh tries again.
  * @returns {string} what happened, for the log
  */
-function applyNotice({ gamePath, langDir }) {
+/** Bring the notice pak in line with the game, and say in a few words what was done. */
+export function applyNotice({ gamePath, langDir }: { gamePath: string | null; langDir: string | null }): string {
   if (!gamePath || !langDir || !fs.existsSync(langDir)) return 'no language folder';
   const p = plan({ gamePath, langDir });
   if (p.action === 'skip') return `skipped: ${p.why}`;
   if (p.action === 'remove') return removeNotice(langDir) ? `removed: ${p.why}` : `not needed: ${p.why}`;
   const target = path.join(langDir, NOTICE_PAK);
-  let current = null;
+  let current: Buffer | null = null;
   try { current = fs.readFileSync(target); } catch { /* not written yet */ }
   if (current && current.equals(p.bytes)) return `up to date (${p.language})`;
   const tmp = `${target}.tmp`;
@@ -201,14 +207,17 @@ function applyNotice({ gamePath, langDir }) {
  * or any pak in the language folder.
  * @param {{ gamePath: () => string|null, langDir: () => string, diag: (msg: string) => void, retryMs?: number }} ctx
  */
-function createNoticeText({ gamePath, langDir, diag, retryMs = 60_000 }) {
-  let lastKey = null;
+/** The notice text kept up to date: checked cheaply, rebuilt when the game or the paks change. */
+export function createNoticeText({ gamePath, langDir, diag, retryMs = 60_000 }: {
+  gamePath: () => string | null; langDir: () => string; diag: (msg: string) => void; retryMs?: number;
+}) {
+  let lastKey: string | null = null;
   let failedAt = 0;
-  const stamp = (file) => {
+  const stamp = (file: string) => {
     try { const s = fs.statSync(file); return `${s.size}:${s.mtimeMs}`; } catch { return '-'; }
   };
-  const keyOf = (game, dir) => {
-    let names = [];
+  const keyOf = (game: string, dir: string) => {
+    let names: string[] = [];
     try { names = fs.readdirSync(dir).filter((f) => /^pak\d+_dir\.vpk$/i.test(f)).sort(); } catch { /* no folder */ }
     return [
       game, dir, uiLanguage(game),
@@ -220,9 +229,9 @@ function createNoticeText({ gamePath, langDir, diag, retryMs = 60_000 }) {
     /**
      * Check, and rebuild when something changed. Never throws. A failed write (the running
      * game holds the pak open) is tried again once a minute, not on every call.
-     * @returns {string|null} what happened, or null when nothing needed doing
+     * @returns what happened, or null when nothing needed doing
      */
-    refresh() {
+    refresh(): string | null {
       try {
         const game = gamePath();
         if (!game) return null;
@@ -238,17 +247,14 @@ function createNoticeText({ gamePath, langDir, diag, retryMs = 60_000 }) {
         return result;
       } catch (err) {
         failedAt = Date.now();
-        diag(`notice text skipped: ${err.message}`);
-        return `failed: ${err.message}`;
+        diag(`notice text skipped: ${(err as Error).message}`);
+        return `failed: ${(err as Error).message}`;
       }
     },
     /** The pak's relPath when the folder holds ours, for the note of files that are ours. */
-    ownedFiles() {
+    ownedFiles(): string[] {
       try { return isOurs(path.join(langDir(), NOTICE_PAK)) ? [NOTICE_PAK] : []; } catch { return []; }
     },
   };
 }
 
-module.exports = {
-  NOTICE_PAK, MARKER, uiLanguage, declaredLanguage, withTokens, plan, removeNotice, applyNotice, createNoticeText,
-};

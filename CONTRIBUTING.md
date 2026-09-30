@@ -113,9 +113,9 @@ node --test --experimental-test-coverage test/safe-zip.test.ts
 npm run size
 ```
 
-Five files carry 7,155 lines between them while the median module in `src/` is 171:
+Five files carried 7,155 lines between them while the median module in `src/` is 171:
 `src/installer.js`, `renderer/views/catalog.js`, `renderer/views/library.js`, `main.js` and
-`src/vpk.ts`. Each is in `.github/size-budget.json` at its current length, and the check fails when
+`src/vpk.ts`, which has since been split into three. Each is in `.github/size-budget.json` at its current length, and the check fails when
 one grows, or when a file nobody listed crosses 800 lines.
 
 If your change makes one of them longer, split something out of it rather than raising the number.

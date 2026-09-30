@@ -13,7 +13,7 @@ const { t } = require('./i18n.ts');
 const { fetchMirrored } = require('./net.ts');
 const { RAW_BASE } = require('./catalog.ts');
 const { createTerrainAges, TAIL_BYTES } = require('./terrain-age.ts');
-const { createNoticeText } = require('./notice-text');
+const { createNoticeText } = require('./notice-text.ts');
 const zones = require('./slot-zones.ts');
 
 /** @param {object} ctx  the services and main-process callbacks these channels use */
@@ -36,7 +36,7 @@ function registerModsIpc({
     },
   });
   const switchOff = (rec) => { installer.setEnabled(rec.files, false, rec.id); library.setEnabled(rec.id, false); };
-  // the anti-cheat notice in plain words (src/notice-text.js)
+  // the anti-cheat notice in plain words (src/notice-text.ts)
   const notice = createNoticeText({ gamePath: () => (installer.getGamePath ? installer.getGamePath() : null), langDir: () => installer.langFolder(), diag });
   ipcMain.handle('mods:install', async (e, payload) => {
     // payload: { categoryId, name, styleLabel, fileRef, preview }
@@ -247,7 +247,7 @@ function registerModsIpc({
       try { installer.writeOwnership([...library.knownLangRelPaths(), ...notice.ownedFiles()]); } catch (err) { diag(`ownership note skipped: ${err.message}`); }
     };
     noteOwnership();
-    // The anti-cheat notice in plain words (src/notice-text.js), kept current from here for the
+    // The anti-cheat notice in plain words (src/notice-text.ts), kept current from here for the
     // same reason. After the reply: a rebuild reads the game's own index, and the list is what
     // the screen is waiting for. A rebuild that wrote or removed the pak writes the note again,
     // or the note would miss it until the next listing.

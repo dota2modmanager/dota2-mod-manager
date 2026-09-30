@@ -69,7 +69,7 @@ or turning mods back on would resurrect the ones you had deliberately switched o
 3. Open the archive through `src/safe-zip.ts`, the single door every foreign zip comes through.
 4. Compare its contents against what is already installed and report conflicts (see below).
 5. Pick a free slot: low ones for categories that must load early, otherwise the first free number
-   from 10 up. Combined packs exist for the same reason and are described in `src/vpk.ts`.
+   from 10 up. Combined packs exist for the same reason and are described in `src/vpk-write.ts`.
 6. Write everything through `src/file-tx.ts`.
 7. Record it in `manifest.json` through `src/library.ts`.
 
@@ -89,7 +89,10 @@ forty three mods into the empty folder Steam left behind.
 ## VPK
 
 `src/vpk.ts` is a full reader and writer for Valve's v1 and v2 pack format, written here rather
-than pulled in, and it is the piece most worth reading first. It parses the directory tree, reads
+than pulled in, and it is the piece most worth reading first. Every caller imports it from there;
+the code sits in three files behind it: `src/vpk-read.ts` (the index, entries, fingerprints),
+`src/vpk-write.ts` (building, packing a folder, combining, merging, splitting) and
+`src/vpk-analyze.ts` (which heroes and slots a mod's paths touch). It parses the directory tree, reads
 entries with their CRCs, writes single and multi-volume archives, merges a multi-volume mod into
 one file, splits an archive that carries two heroes into one file per hero, and combines several
 mods into a single pak so a hundred mods can share the slots.
@@ -364,7 +367,7 @@ that location is not writable.
 | `src/cursors.ts` | Which cursor set is live, which look a slot wears, and the repair at startup |
 | `src/adopt.ts` | What a VPK goes through before it counts as a mod: named, harvested, split |
 | `src/updater.ts` | Where an installed copy looks for a new version: the two feeds, and the channel it reads |
-| `src/vpk.ts` | The VPK format: read, write, merge, split, combine, fingerprint |
+| `src/vpk.ts` | The VPK format, gathered from `vpk-read.ts`, `vpk-write.ts` and `vpk-analyze.ts` |
 | `src/file-tx.ts` | One transaction per change to the game folder |
 | `src/library.ts` | `manifest.json`: installed records and presets |
 | `src/settings.ts` | `settings.json` and its defaults |

@@ -40,7 +40,7 @@ export const PRIORITY_SLOTS: readonly [number, number] = [2, 29];
 /** Where every other mod starts. */
 export const NORMAL_FIRST = 30;
 /* The app's own pak, not a mod: the clearer text for the game's anti-cheat notice
- * (src/notice-text.js). One below Minify's 65-67, so that it wins over a Minify "English fix"
+ * (src/notice-text.ts). One below Minify's 65-67, so that it wins over a Minify "English fix"
  * carrying the same localization file, and never handed to a mod, counted as a slot, listed as
  * somebody else's file or renamed by the master switch. A mod that had it before is moved off
  * by vacateAppPak. */

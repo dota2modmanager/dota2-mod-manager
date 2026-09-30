@@ -20,19 +20,36 @@
  * window, its own preload, its own five IPC channels, its own exit protocol - that shares
  * nothing with the app except the services it borrows to do the removing.
  */
-const fs = require('fs');
-const path = require('path');
-const { app, BrowserWindow, ipcMain } = require('electron');
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
 
-const { removeNotice } = require('./notice-text');
+import { removeNotice } from './notice-text.ts';
+import type { Settings } from './settings.ts';
+import type { Library } from './library.ts';
+import type { LibFile, LibRecord } from './types.ts';
 
-const UNINSTALL_CANCELLED = 3;
-const UNINSTALL_WIPE_DATA = 4;
+// electron through require, as before: under plain node, in tests, it is only a path
+const { app, BrowserWindow, ipcMain } = createRequire(import.meta.url)('electron') as typeof import('electron');
 
-function folderSize(dir) {
+/** What of the installer the removal asks: sizes, the language folder, and taking mods out. */
+export interface UninstallInstaller {
+  installedSize(rec: LibRecord): number;
+  langFolder(): string;
+  removePackFully(rec: LibRecord): unknown;
+  remove(files: LibFile[], opts: { recId: string; deployed: boolean }): unknown;
+}
+
+/** The exit code that tells the uninstaller to stop and remove nothing. */
+export const UNINSTALL_CANCELLED = 3;
+/** The exit code that tells it to take the app's own folder too. */
+export const UNINSTALL_WIPE_DATA = 4;
+
+/** Bytes under a folder, however deep. */
+export function folderSize(dir: string): number {
   let bytes = 0;
-  const walk = (at) => {
-    let names = [];
+  const walk = (at: string) => {
+    let names: fs.Dirent[] = [];
     try { names = fs.readdirSync(at, { withFileTypes: true }); } catch { return; }
     for (const e of names) {
       const full = path.join(at, e.name);
@@ -47,16 +64,15 @@ function folderSize(dir) {
 /**
  * The uninstall flow, given the app's own services.
  *
- * @param {object} deps
- * @param {object} deps.settings      the settings store
- * @param {object} deps.library       the manifest of installed mods
- * @param {object} deps.installer     removes files the way the Library does
- * @param {object} deps.schemaService reverts the search-path patch the way the switch does
- * @param {(msg: string) => void} deps.diag  the app's log line
- * @param {string} deps.appRoot       where preload-uninstall.js and renderer/ live
- * @returns {{ open: () => Electron.BrowserWindow }}
+ * @param deps.installer     removes files the way the Library does
+ * @param deps.schemaService reverts the search-path patch the way the switch does
+ * @param deps.diag          the app's log line
+ * @param deps.appRoot       where preload-uninstall.js and renderer/ live
  */
-function uninstallFlow({ settings, library, installer, schemaService, diag, appRoot }) {
+export function uninstallFlow({ settings, library, installer, schemaService, diag, appRoot }: {
+  settings: Pick<Settings, 'get'>; library: Pick<Library, 'list' | 'removeRecord'>; installer: UninstallInstaller;
+  schemaService: { setEnabled(on: boolean): unknown }; diag: (msg: string) => void; appRoot: string;
+}): { open: () => Electron.BrowserWindow } {
   let answered = false;
 
   /** What there is to remove, so the window can say it rather than ask in the abstract. */
@@ -85,13 +101,13 @@ function uninstallFlow({ settings, library, installer, schemaService, diag, appR
    * at the worst possible moment. The uninstaller can do it cleanly a second later, once this
    * has exited, and it already knows how - so the answer travels back as the exit code and
    * build/installer.nsh does the removing. */
-  const run = async ({ revert, mods }) => {
-    const errors = [];
+  const run = async ({ revert, mods }: { revert: boolean; mods: boolean }): Promise<string[]> => {
+    const errors: string[] = [];
     // Order matters. The patch goes first because reverting reads the backups in the app's own
     // folder, and mods go before that folder is wiped for the same reason: the manifest is the
     // only record of which files in the game folder were ours.
     if (revert && settings.get('schemaPatch')) {
-      try { schemaService.setEnabled(false); } catch (err) { errors.push(`patch: ${err.message || err}`); }
+      try { schemaService.setEnabled(false); } catch (err) { errors.push(`patch: ${(err as Error)?.message || err}`); }
     }
     if (mods) {
       for (const rec of [...library.list()]) {
@@ -100,19 +116,19 @@ function uninstallFlow({ settings, library, installer, schemaService, diag, appR
           else installer.remove(rec.files, { recId: rec.id, deployed: rec.enabled !== false });
           library.removeRecord(rec.id);
         } catch (err) {
-          errors.push(`${rec.name}: ${err.message || err}`);
+          errors.push(`${rec.name}: ${(err as Error)?.message || err}`);
         }
       }
     }
     // The notice text goes whatever the answer: it names this app's switch, and the app is going.
     if (settings.get('dotaGamePath')) {
-      try { removeNotice(installer.langFolder()); } catch (err) { errors.push(`notice: ${err.message || err}`); }
+      try { removeNotice(installer.langFolder()); } catch (err) { errors.push(`notice: ${(err as Error)?.message || err}`); }
     }
     diag(`uninstall: revert=${revert} mods=${mods} errors=${errors.length}`);
     return errors;
   };
 
-  const createWindow = () => {
+  const createWindow = (): Electron.BrowserWindow => {
     const w = new BrowserWindow({
       width: 560,
       height: 520,
@@ -131,15 +147,16 @@ function uninstallFlow({ settings, library, installer, schemaService, diag, appR
     // dev: this window only ever opens from the uninstaller, so without a way to look at it
     // it cannot be checked at all. Same MM_SHOT/MM_EVAL contract as the main window.
     if (process.env.MM_SHOT) {
+      const shot = process.env.MM_SHOT;
       w.webContents.once('did-finish-load', () => setTimeout(async () => {
         try {
           if (process.env.MM_EVAL) {
             const out = await w.webContents.executeJavaScript(`(async () => { ${process.env.MM_EVAL} })()`);
-            fs.writeFileSync(`${process.env.MM_SHOT}.eval.json`, JSON.stringify(out, null, 1));
+            fs.writeFileSync(`${shot}.eval.json`, JSON.stringify(out, null, 1));
           }
-          fs.writeFileSync(process.env.MM_SHOT, (await w.webContents.capturePage()).toPNG());
+          fs.writeFileSync(shot, (await w.webContents.capturePage()).toPNG());
         } catch (e) {
-          fs.writeFileSync(process.env.MM_SHOT + '.err.txt', String(e));
+          fs.writeFileSync(shot + '.err.txt', String(e));
         }
       }, 2500));
     }
@@ -150,14 +167,14 @@ function uninstallFlow({ settings, library, installer, schemaService, diag, appR
 
   const registerIpc = () => {
     ipcMain.handle('uninstall:plan', () => plan());
-    ipcMain.handle('uninstall:run', async (e, choices) => {
+    ipcMain.handle('uninstall:run', async (_e, choices: { revert?: boolean; mods?: boolean } | null) => {
       answered = true;
       const errors = await run({ revert: !!choices?.revert, mods: !!choices?.mods });
       return { ok: true, errors };
     });
     // The exit code is the whole answer to the uninstaller: whether to stop, and whether the
     // app's folder goes with the program.
-    ipcMain.handle('uninstall:done', (e, wipeData) => {
+    ipcMain.handle('uninstall:done', (_e, wipeData: boolean) => {
       answered = true;
       app.exit(wipeData ? UNINSTALL_WIPE_DATA : 0);
     });
@@ -174,4 +191,3 @@ function uninstallFlow({ settings, library, installer, schemaService, diag, appR
   };
 }
 
-module.exports = { uninstallFlow, folderSize, UNINSTALL_CANCELLED, UNINSTALL_WIPE_DATA };

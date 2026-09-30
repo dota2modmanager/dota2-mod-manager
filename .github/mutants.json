@@ -52,7 +52,7 @@
     },
     {
       "name": "combining drops a contested file without saying so",
-      "file": "src/vpk.ts",
+      "file": "src/vpk-write.ts",
       "anchor": "function combineVpksToFiles(",
       "from": "conflicts.push({ key: m.key, path: p }); continue;",
       "to": "continue;",
@@ -268,7 +268,7 @@
     },
     {
       "name": "the VPK reader starts needing Electron",
-      "file": "src/vpk.ts",
+      "file": "src/vpk-write.ts",
       "anchor": "function combineVpksToFiles(",
       "from": "fs.mkdirSync(outDir, { recursive: true });",
       "to": "require('electron'); fs.mkdirSync(outDir, { recursive: true });",
@@ -388,7 +388,7 @@
     },
     {
       "name": "the VPK writer records the wrong CRC",
-      "file": "src/vpk.ts",
+      "file": "src/vpk-write.ts",
       "anchor": "function buildVpk(",
       "from": "meta.writeUInt32LE(en.crc >>> 0, 0);",
       "to": "meta.writeUInt32LE(0, 0);",
@@ -396,7 +396,7 @@
     },
     {
       "name": "the VPK writer points every entry at the start of the data",
-      "file": "src/vpk.ts",
+      "file": "src/vpk-write.ts",
       "anchor": "function buildVpk(",
       "from": "offsets.set(en, dataLen);",
       "to": "offsets.set(en, 0);",
@@ -716,7 +716,7 @@
     },
     {
       "name": "the crc32 table is walked one bit off",
-      "file": "src/vpk.ts",
+      "file": "src/vpk-write.ts",
       "anchor": "export function crc32(buf: Buffer): number {",
       "from": "c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);",
       "to": "c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 7);",

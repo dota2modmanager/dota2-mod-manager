@@ -330,7 +330,7 @@ to do next, and turning it off would put back the wording that caused the issues
 never listed as a mod either, so nobody removes it by accident; the site says it is there, and
 the uninstaller takes it out.
 
-*Check:* `node --test test/notice-text.test.js`, and `src/notice-texts.ts` for every word of it.
+*Check:* `node --test test/notice-text.test.ts`, and `src/notice-texts.ts` for every word of it.
 
 ---
 

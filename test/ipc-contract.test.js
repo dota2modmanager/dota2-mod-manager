@@ -28,7 +28,7 @@ const HANDLER_FILES = [
   ...fs.readdirSync(path.join(ROOT, 'src'))
     .filter((f) => f.startsWith('ipc-') && f.endsWith('.js'))
     .map((f) => `src/${f}`),
-  'src/uninstall-window.js',
+  'src/uninstall-window.ts',
 ];
 
 const CHANNEL = /['"]([a-z][a-zA-Z]*:[a-zA-Z]+)['"]/;

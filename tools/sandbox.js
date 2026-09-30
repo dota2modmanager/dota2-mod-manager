@@ -210,7 +210,7 @@ function builderAssets(real, schemaText) {
   return out;
 }
 
-/* The chat file of every language the game ships, which src/notice-text.js builds the
+/* The chat file of every language the game ships, which src/notice-text.ts builds the
  * anti-cheat notice on. Under half a kilobyte each. */
 function noticeAssets(real) {
   const { openVpkIndex } = require('../src/vpk.ts');
