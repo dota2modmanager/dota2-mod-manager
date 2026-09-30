@@ -433,7 +433,7 @@ export function setMirrors(list: readonly Mirror[] | null | undefined): void {
  * A host that answers with nothing useful stands itself down after a few failures like any
  * other, which is also what happens to one that is named here after it stops existing.
  *
- * @param list  from src/remote-config.js
+ * @param list  from src/remote-config.ts
  */
 export function applyMirrors(list: unknown): number {
   const extra: Mirror[] = (Array.isArray(list) ? list : [])

@@ -6,7 +6,7 @@
  * and its cards reuse the same markup, the same star and the same modal frame. Splitting
  * them apart would only mean two modules importing each other.
  *
- * What is offered comes from the upstream catalog (src/catalog.js via loadCatalog below),
+ * What is offered comes from the upstream catalog (src/catalog.ts via loadCatalog below),
  * which is why the mod index is built here: it is a reading of the same data.
  */
 import { $ } from '../core/dom.js';

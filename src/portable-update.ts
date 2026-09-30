@@ -18,21 +18,31 @@
  * the download is then checked against it. A file that does not match is deleted rather than
  * offered.
  */
-const fs = require('fs');
-const path = require('path');
-const { fetchText, downloadFile } = require('./net.ts');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fetchText, downloadFile } from './net.ts';
 
 const REPO = 'dota2modmanager/dota2-mod-manager';
-const MANIFEST = 'portable.yml';
+/** The release asset that names the portable binary, its size and its sha256. */
+export const MANIFEST = 'portable.yml';
 
-const releaseUrl = (version, file) =>
+/** The download address of a file attached to a GitHub release of this app. */
+export const releaseUrl = (version: string, file: string): string =>
   `https://github.com/${REPO}/releases/download/v${version}/${file}`;
 
 /* The bucket the mods already come from, carrying the current release as well since
  * 2026-09-10 (tools/r2-release.mjs). It holds one version, which is why the manifest's own
  * version is checked below rather than assumed.
  */
-const MIRROR = 'https://cdn.dota2modmanager.com/updates/';
+export const MIRROR = 'https://cdn.dota2modmanager.com/updates/';
+
+/** Where a portable build can come from: its manifest, the binary it names, and whether only that host is trusted. */
+export interface Source {
+  name: string;
+  manifest: (version: string) => string;
+  asset: (version: string, file: string) => string;
+  trustedOnly: boolean;
+}
 
 /* Where to look, in order.
  *
@@ -46,7 +56,7 @@ const MIRROR = 'https://cdn.dota2modmanager.com/updates/';
  * reasoning as the update feed fallback in main.js. Manifest and binary both come from
  * whichever source answered, so the hash and the file it describes are always from one place.
  */
-const SOURCES = [
+export const SOURCES: readonly Source[] = [
   { name: 'github', manifest: (v) => releaseUrl(v, MANIFEST), asset: (v, f) => releaseUrl(v, f), trustedOnly: true },
   { name: 'mirror', manifest: () => `${MIRROR}${MANIFEST}`, asset: (v, f) => `${MIRROR}${f}`, trustedOnly: false },
 ];
@@ -54,11 +64,10 @@ const SOURCES = [
 /**
  * The three fields the app needs out of portable.yml, without pulling in a YAML parser for a
  * file this project writes itself. Anything missing or malformed is a manifest we refuse.
- * @returns {{ file: string, size: number, sha256: string, version: string }}  version is '' when
- *   the manifest does not say
+ * @returns version is '' when the manifest does not say
  */
-function parseManifest(text) {
-  const field = (name) => {
+export function parseManifest(text: unknown): { file: string; size: number; sha256: string; version: string } {
+  const field = (name: string) => {
     const m = new RegExp(`^${name}:\\s*(.+)$`, 'm').exec(String(text || ''));
     return m ? m[1].trim().replace(/^['"]|['"]$/g, '') : '';
   };
@@ -74,23 +83,25 @@ function parseManifest(text) {
 }
 
 /** Where the running portable exe actually lives, or null when this is not a portable copy. */
-function portableDir() {
+export function portableDir(): string | null {
   return process.env.PORTABLE_EXECUTABLE_DIR || null;
 }
 
 /**
  * Fetch the new build and leave it beside the current one.
  *
- * @param {string} version           the version to fetch, without the leading v
- * @param {object} [opts]
- * @param {(loaded: number, total: number) => void} [opts.onProgress]
- * @param {string} [opts.dir]        where to put it; defaults to the folder holding the exe
- * @param {(msg: string) => void} [opts.log]
- * @param {Array} [opts.sources]     where to look and in what order; SOURCES unless a test says
- * @returns {Promise<{ path: string, name: string, bytes: number, already?: boolean }>}  already
+ * @param version       the version to fetch, without the leading v
+ * @param opts.dir      where to put it; defaults to the folder holding the exe
+ * @param opts.sources  where to look and in what order; SOURCES unless a test says
+ * @returns where it landed; already
  *   when the same build was fetched before
  */
-async function fetchBeside(version, { onProgress = () => {}, dir = portableDir(), log = () => {}, sources = SOURCES } = {}) {
+export async function fetchBeside(version: string, { onProgress = () => {}, dir = portableDir(), log = () => {}, sources = SOURCES }: {
+  onProgress?: (loaded: number, total: number) => void;
+  dir?: string | null;
+  log?: (msg: string) => void;
+  sources?: readonly Source[];
+} = {}): Promise<{ path: string; name: string; bytes: number; already?: boolean }> {
   if (!dir) throw new Error('not a portable copy');
   if (!/^\d+\.\d+\.\d+$/.test(String(version || ''))) throw new Error(`bad version ${version}`);
 
@@ -101,7 +112,7 @@ async function fetchBeside(version, { onProgress = () => {}, dir = portableDir()
       manifest = parseManifest(await fetchText(source.manifest(version), { trustedOnly: source.trustedOnly }));
     } catch (err) {
       last = err;
-      log(`portable update: no manifest from ${source.name} (${err.message || err})`);
+      log(`portable update: no manifest from ${source.name} (${(err as Error)?.message || err})`);
       continue;
     }
 
@@ -133,10 +144,9 @@ async function fetchBeside(version, { onProgress = () => {}, dir = portableDir()
       return { path: got.path, name, bytes: got.bytes };
     } catch (err) {
       last = err;
-      log(`portable update: ${source.name} could not hand over the build (${err.message || err})`);
+      log(`portable update: ${source.name} could not hand over the build (${(err as Error)?.message || err})`);
     }
   }
   throw last || new Error('no source had this version');
 }
 
-module.exports = { parseManifest, fetchBeside, portableDir, releaseUrl, MANIFEST, MIRROR, SOURCES };

@@ -5,17 +5,18 @@
 // size and the hash of the exe that release actually produced. So the manifest is what these
 // tests are about, and mostly about the cases where it should be refused - a manifest that is
 // trusted when it should not be is a downloaded exe nobody checked.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const crypto = require('crypto');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
 
-const { parseManifest, releaseUrl } = require('../src/portable-update.js');
-const { build } = require('../tools/portable-manifest.js');
+import { parseManifest, releaseUrl } from '../src/portable-update.ts';
+import portableManifestJs from '../tools/portable-manifest.js';
+const { build } = portableManifestJs;
 
-function tmpDir(t) {
+function tmpDir(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-portable-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return dir;
@@ -47,7 +48,7 @@ test('a manifest missing any of the three fields is refused', () => {
 });
 
 test('a file name that is a path, or not an exe, is refused', () => {
-  const withFile = (f) => `file: ${f}\nsize: 12\nsha256: ${'a'.repeat(64)}`;
+  const withFile = (f: string) => `file: ${f}\nsize: 12\nsha256: ${'a'.repeat(64)}`;
   for (const bad of ['../evil.exe', 'sub/dir.exe', 'C:\\evil.exe', 'evil.bat', 'evil.exe.txt', '']) {
     assert.throws(() => parseManifest(withFile(bad)), /file name/, `refused: ${JSON.stringify(bad)}`);
   }
@@ -55,7 +56,7 @@ test('a file name that is a path, or not an exe, is refused', () => {
 });
 
 test('a hash that is not a sha256 is refused', () => {
-  const withHash = (h) => `file: a.exe\nsize: 12\nsha256: ${h}`;
+  const withHash = (h: string) => `file: a.exe\nsize: 12\nsha256: ${h}`;
   for (const bad of ['nope', 'a'.repeat(63), 'a'.repeat(65), 'z'.repeat(64), '']) {
     assert.throws(() => parseManifest(withHash(bad)), /sha256/, `refused: ${JSON.stringify(bad)}`);
   }
@@ -63,7 +64,7 @@ test('a hash that is not a sha256 is refused', () => {
 });
 
 test('a size that is not a positive number is refused', () => {
-  const withSize = (s) => `file: a.exe\nsize: ${s}\nsha256: ${'a'.repeat(64)}`;
+  const withSize = (s: string) => `file: a.exe\nsize: ${s}\nsha256: ${'a'.repeat(64)}`;
   for (const bad of ['0', '-5', 'lots', '']) {
     assert.throws(() => parseManifest(withSize(bad)), /size/, `refused: ${JSON.stringify(bad)}`);
   }

@@ -33,6 +33,7 @@ export const CATALOG_PUBLIC_KEY = 'MCowBQYDK2VwAyEAkzP+iIJLaFlc20Uj3OyLnDX4arcki
 // Where the signatures live in the catalog repository, and what they are called there:
 // assets/signatures/mods.json.sig for assets/data/mods.json.
 export const SIG_DIR = 'assets/signatures';
+/** Appended to a data file's name to get its signature's: mods.json -> mods.json.sig. */
 export const SIG_SUFFIX = '.sig';
 
 /** Is there a key to check against at all? */

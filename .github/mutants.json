@@ -172,51 +172,51 @@
     },
     {
       "name": "a name somebody meant is overwritten by the file's own",
-      "file": "src/adopt.js",
-      "anchor": "function adoptImportedFiles({ files, name, fileRef, identity }) {",
+      "file": "src/adopt.ts",
+      "anchor": "function adoptImportedFiles({ files, name, fileRef, identity }: {",
       "from": "name: (useContentName && contentName) || name || contentName || t('Мод'),",
       "to": "name: contentName || name || t('Мод'),",
-      "test": "test/adopt.test.js"
+      "test": "test/adopt.test.ts"
     },
     {
       "name": "a catalog identity is rebuilt from the bytes instead of kept",
-      "file": "src/adopt.js",
-      "anchor": "function adoptImportedFiles({ files, name, fileRef, identity }) {",
-      "from": "const base = identity || {",
-      "to": "const base = {",
-      "test": "test/adopt.test.js"
+      "file": "src/adopt.ts",
+      "anchor": "function adoptImportedFiles({ files, name, fileRef, identity }: {",
+      "from": "const base: Identity = identity || {",
+      "to": "const base: Identity = {",
+      "test": "test/adopt.test.ts"
     },
     {
       "name": "a collection of any size splits itself into pak slots",
-      "file": "src/adopt.js",
-      "anchor": "function adoptImportedFiles({ files, name, fileRef, identity }) {",
+      "file": "src/adopt.ts",
+      "anchor": "function adoptImportedFiles({ files, name, fileRef, identity }: {",
       "from": "if (subjects >= 2 && subjects <= 4) parts = schemaService.split(fresh);",
       "to": "if (subjects >= 2) parts = schemaService.split(fresh);",
-      "test": "test/adopt.test.js"
+      "test": "test/adopt.test.ts"
     },
     {
       "name": "the progress bar counts the failures in with the mods",
-      "file": "src/adopt.js",
-      "anchor": "async function registerImportResults(results, onStep) {",
+      "file": "src/adopt.ts",
+      "anchor": "async function registerImportResults(results: ImportResult[], onStep?: (done: number, total: number) => void) {",
       "from": "const toRead = results.filter((r) => !r.error).length;",
       "to": "const toRead = results.length;",
-      "test": "test/adopt.test.js"
+      "test": "test/adopt.test.ts"
     },
     {
       "name": "a mod lands live while the master switch is off",
-      "file": "src/adopt.js",
-      "anchor": "async function registerImportResults(results, onStep) {",
+      "file": "src/adopt.ts",
+      "anchor": "async function registerImportResults(results: ImportResult[], onStep?: (done: number, total: number) => void) {",
       "from": "if (imported.length && installer.masterIsOff()) { try { installer.setMasterEnabled(false); } catch { /* noop */ } }",
       "to": ";",
-      "test": "test/adopt.test.js"
+      "test": "test/adopt.test.ts"
     },
     {
       "name": "the item table is never rebuilt after a batch",
-      "file": "src/adopt.js",
-      "anchor": "async function registerImportResults(results, onStep) {",
+      "file": "src/adopt.ts",
+      "anchor": "async function registerImportResults(results: ImportResult[], onStep?: (done: number, total: number) => void) {",
       "from": "if (needSchema) schemaService.refresh();",
       "to": ";",
-      "test": "test/adopt.test.js"
+      "test": "test/adopt.test.ts"
     },
     {
       "name": "the language move carries off the game's own files",
@@ -276,27 +276,27 @@
     },
     {
       "name": "a block switches a feature off in every version",
-      "file": "src/remote-config.js",
-      "anchor": "function feature(name, lang = 'en') {",
+      "file": "src/remote-config.ts",
+      "anchor": "function feature(name: string, lang = 'en'): { off: boolean; note: string } {",
       "from": "cfg.blocks.find((b) => b.feature === name && applies(b, appVersion(), today()))",
       "to": "cfg.blocks.find((b) => b.feature === name)",
-      "test": "test/rollback.test.js"
+      "test": "test/rollback.test.ts"
     },
     {
       "name": "a block never lets go after its last day",
-      "file": "src/remote-config.js",
-      "anchor": "function applies(entry, version, today) {",
+      "file": "src/remote-config.ts",
+      "anchor": "export function applies(entry: { minVersion?: string | null; maxVersion?: string | null; until?: string | null }, version: string, today: string): boolean {",
       "from": "&& (!entry.until || today <= entry.until);",
       "to": "&& true;",
-      "test": "test/rollback.test.js"
+      "test": "test/rollback.test.ts"
     },
     {
       "name": "a block with a damaged day is held forever",
-      "file": "src/remote-config.js",
-      "anchor": "function normalize(raw) {",
-      "from": "if (!id || !SWITCHABLE.includes(b.feature) || !until) continue;",
-      "to": "if (!id || !SWITCHABLE.includes(b.feature)) continue;",
-      "test": "test/rollback.test.js"
+      "file": "src/remote-config.ts",
+      "anchor": "export function normalize(raw: unknown): RemoteConfig {",
+      "from": "if (!id || typeof b.feature !== 'string' || !SWITCHABLE.includes(b.feature) || !until) continue;",
+      "to": "if (!id || typeof b.feature !== 'string' || !SWITCHABLE.includes(b.feature)) continue;",
+      "test": "test/rollback.test.ts"
     },
     {
       "name": "a block leaks into the switches old copies act on",
@@ -304,7 +304,7 @@
       "anchor": "export function addBlock(config, { feature, versions, until, en, ru, url = null }, today) {",
       "from": "next.blocks.push({ id, feature, minVersion, maxVersion, until, en, ru });",
       "to": "next.features = { ...(next.features || {}), [feature]: { off: true, en, ru } }; next.blocks.push({ id, feature, minVersion, maxVersion, until, en, ru });",
-      "test": "test/rollback.test.js"
+      "test": "test/rollback.test.ts"
     },
     {
       "name": "a block is written for versions that cannot read it",
@@ -312,7 +312,7 @@
       "anchor": "export function addBlock(config, { feature, versions, until, en, ru, url = null }, today) {",
       "from": "if (cmpVersion(minVersion, BLOCKS_SINCE) < 0) {",
       "to": "if (false) {",
-      "test": "test/rollback.test.js"
+      "test": "test/rollback.test.ts"
     },
     {
       "name": "the config is signed with a key the app does not pin",
@@ -320,19 +320,19 @@
       "anchor": "export function signFor(bytes, privatePem, pinned = CONFIG_PUBLIC_KEY) {",
       "from": "if (!verify(bytes, sig, pinned)) {",
       "to": "if (false) {",
-      "test": "test/rollback.test.js"
+      "test": "test/rollback.test.ts"
     },
     {
       "name": "archive entry names are handed out unchecked",
-      "file": "src/safe-zip.js",
-      "anchor": "function isUnsafeName(rel) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function isUnsafeName(rel: string): boolean {",
       "from": "return rel.split('/').some((part) => part === '..' || windowsRefuses(part));",
       "to": "return false;",
-      "test": "test/safe-zip.test.js"
+      "test": "test/safe-zip.test.ts"
     },
     {
       "name": "reserved device names are handed out",
-      "file": "src/safe-zip.js",
+      "file": "src/safe-zip.ts",
       "anchor": "const RESERVED =",
       "from": "(/[. ]$/.test(part) || RESERVED.test(part))",
       "to": "/[. ]$/.test(part)",
@@ -340,51 +340,51 @@
     },
     {
       "name": "an absolute name is handed out",
-      "file": "src/safe-zip.js",
-      "anchor": "function isUnsafeName(rel) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function isUnsafeName(rel: string): boolean {",
       "from": "if (!rel || rel.startsWith('/')) return true;",
       "to": "if (!rel) return true;",
-      "test": "test/safe-zip.test.js"
+      "test": "test/safe-zip.test.ts"
     },
     {
       "name": "a drive letter is handed out",
-      "file": "src/safe-zip.js",
-      "anchor": "function isUnsafeName(rel) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function isUnsafeName(rel: string): boolean {",
       "from": "if (/^[a-z]:/i.test(rel)) return true;",
       "to": ";",
-      "test": "test/safe-zip.test.js"
+      "test": "test/safe-zip.test.ts"
     },
     {
       "name": "safeJoin lets the folder next door through",
-      "file": "src/safe-zip.js",
-      "anchor": "function safeJoin(rootAbs, rel) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function safeJoin(rootAbs: string, rel: string): string {",
       "from": "!dest.startsWith(root + path.sep)",
       "to": "!dest.startsWith(root)",
-      "test": "test/safe-zip.test.js"
+      "test": "test/safe-zip.test.ts"
     },
     {
       "name": "a damaged archive reaches the user in the library's words",
-      "file": "src/safe-zip.js",
-      "anchor": "function openZip(source, { label, limits } = {}) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function openZip(source: string | Buffer, { label, limits }: { label?: string; limits?: Partial<ZipLimits> } = {}): OpenedZip {",
       "from": "throw damaged();",
       "to": "throw new Error('ADM-ZIP: Invalid or unsupported zip format');",
       "test": "test/safe-zip-fuzz.test.js"
     },
     {
       "name": "a damaged file inside reaches the user in the library's words",
-      "file": "src/safe-zip.js",
-      "anchor": "function openZip(source, { label, limits } = {}) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function openZip(source: string | Buffer, { label, limits }: { label?: string; limits?: Partial<ZipLimits> } = {}): OpenedZip {",
       "from": "try { return entry.getData(); } catch { throw damaged(rel); }",
       "to": "return entry.getData();",
       "test": "test/safe-zip-fuzz.test.js"
     },
     {
       "name": "an honest bomb is unpacked",
-      "file": "src/safe-zip.js",
-      "anchor": "function openZip(source, { label, limits } = {}) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function openZip(source: string | Buffer, { label, limits }: { label?: string; limits?: Partial<ZipLimits> } = {}): OpenedZip {",
       "from": "if (size >= lim.ratioFloor && packed > 0 && size / packed > lim.ratio) {",
       "to": "if (false) {",
-      "test": "test/safe-zip.test.js"
+      "test": "test/safe-zip.test.ts"
     },
     {
       "name": "the VPK writer records the wrong CRC",
@@ -668,8 +668,8 @@
     },
     {
       "name": "anything in the beta list counts as an account",
-      "file": "src/remote-config.js",
-      "anchor": "const beta = raw.beta && typeof raw.beta === 'object' ? raw.beta : null;",
+      "file": "src/remote-config.ts",
+      "anchor": "const beta = isObject(raw.beta) ? raw.beta : null;",
       "from": "typeof id === 'string' && /^[0-9a-f]{64}$/i.test(id.trim())",
       "to": "typeof id === 'string'",
       "test": "test/beta.test.ts"
@@ -724,8 +724,8 @@
     },
     {
       "name": "a preset link comes back with a name nobody chose",
-      "file": "src/preset-link.js",
-      "anchor": "function encodePresetLink({ name, author, mods }) {",
+      "file": "src/preset-link.ts",
+      "anchor": "export function encodePresetLink({ name, author, mods }: { name: string; author?: string; mods: ModIn[] }): { code: string; web: string; direct: string } {",
       "from": "n: String(name || '').slice(0, 120),",
       "to": "n: String(name || '').slice(0, 20),",
       "test": "test/properties.test.js"

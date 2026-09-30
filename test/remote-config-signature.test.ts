@@ -2,7 +2,7 @@
 //
 // config/app.json can turn a feature off after a release and put a notice in front of everyone
 // who opens the app. It is fetched through the same public proxies as everything else, so it is
-// signed, and src/remote-config.js ignores a copy that does not verify.
+// signed, and src/remote-config.ts ignores a copy that does not verify.
 //
 // That makes an unsigned edit silent in the worst way: the file would go out, every client would
 // quietly refuse it, and the switch nobody could see not working is the one you reached for in
@@ -14,15 +14,15 @@
 //
 // The private key is not in this repository and must never be. It lives outside the working
 // tree on the maintainer's machine.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const path = require('path');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const { verify } = require('../src/catalog-signature.ts');
-const { CONFIG_PUBLIC_KEY, CONFIG_URL, CONFIG_SIG_URL } = require('../src/remote-config.js');
+import { verify } from '../src/catalog-signature.ts';
+import { CONFIG_PUBLIC_KEY, CONFIG_URL, CONFIG_SIG_URL } from '../src/remote-config.ts';
 
-const root = path.join(__dirname, '..');
+const root = path.join(import.meta.dirname, '..');
 const configFile = path.join(root, 'config', 'app.json');
 const sigFile = `${configFile}.sig`;
 

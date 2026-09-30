@@ -64,8 +64,8 @@ test('the dependencies it names are the dependencies package.json declares', () 
 test('the fingerprint index is still fetched from the path the entry says it cannot leave', () => {
   // The claim is that the file cannot move out of the repository root because installed copies
   // fetch it from main. If the URL ever changes, the entry becomes an argument for nothing.
-  const { FP_URL } = require('../src/fingerprints.js');
-  assert.match(FP_URL, /\/main\/fingerprints\.json$/, `src/fingerprints.js now fetches ${FP_URL}`);
+  const { FP_URL } = require('../src/fingerprints.ts');
+  assert.match(FP_URL, /\/main\/fingerprints\.json$/, `src/fingerprints.ts now fetches ${FP_URL}`);
   assert.ok(doc.includes('`FP_URL`'), 'the entry no longer points at the constant that proves it');
 });
 

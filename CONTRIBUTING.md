@@ -99,12 +99,12 @@ written, while `src/presets-service.js` sat at 13.8% of its lines. Write tests, 
 
 A drop in a file your change did not touch usually means the file's own tests never reached
 those lines. Node merges coverage from every test process, and a line that no test runs can
-still come out covered in one run and uncovered in the next. `src/safe-zip.js` did this in
+still come out covered in one run and uncovered in the next. `src/safe-zip.ts` did this in
 September 2026: 100% on one Linux run, 98.8% on the next, and no test at all for an archive in
 memory that is over the size limit. To see what a file's own tests cover, run them alone:
 
 ```bash
-node --test --experimental-test-coverage test/safe-zip.test.js
+node --test --experimental-test-coverage test/safe-zip.test.ts
 ```
 
 ## File size
@@ -156,7 +156,7 @@ refusal, in paths that do not catch one. `test/vpk-fuzz.test.js` runs a few hund
 push (truncations, a forged preload length, seeded byte noise, and random sets of entries that have
 to read back byte for byte) and the command above runs the same generator for as long as you like.
 
-Every zip the app opens comes through `src/safe-zip.js`, and `--target zip` fuzzes that door.
+Every zip the app opens comes through `src/safe-zip.ts`, and `--target zip` fuzzes that door.
 `test/safe-zip-fuzz.test.js` holds two things on every push: a damaged archive is refused in this
 project's words rather than a library's, and no entry name, however it is built, puts a file
 outside the folder or hands out a name Windows itself would refuse. The name check writes to the

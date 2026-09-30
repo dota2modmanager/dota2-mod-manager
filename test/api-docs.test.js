@@ -66,7 +66,7 @@ test('a TypeScript module is read by its export statements, its opening comment 
 /* A ratchet, not a target. Every export with no comment above it is a gap in the source, and
  * this number is only ever allowed to go down: lower it when you document something, never
  * raise it to make a new undocumented export fit. */
-const UNDOCUMENTED_CEILING = 57;
+const UNDOCUMENTED_CEILING = 45;
 
 test('the number of exports nobody has explained does not grow', () => {
   const text = read(OUT);

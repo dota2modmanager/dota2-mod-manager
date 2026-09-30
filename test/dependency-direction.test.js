@@ -113,8 +113,8 @@ test('the parsers and everything that writes the game folder are nowhere near th
   /* The list could in principle grow to take one of these in. These are named so that it cannot
      happen by editing a single array: each of them reading or writing files is the reason the
      tests exist. */
-  const core = ['src/vpk.js', 'src/safe-zip.js', 'src/installer.js', 'src/import.js', 'src/schema.js',
-    'src/patcher.js', 'src/gamelang.js', 'src/file-tx.ts', 'src/net.ts', 'src/adopt.js', 'src/cursors.ts'];
+  const core = ['src/vpk.js', 'src/safe-zip.ts', 'src/installer.js', 'src/import.js', 'src/schema.js',
+    'src/patcher.js', 'src/gamelang.js', 'src/file-tx.ts', 'src/net.ts', 'src/adopt.ts', 'src/cursors.ts'];
   for (const file of core) {
     assert.ok(!ELECTRON_USERS.includes(file), `${file} is on the Electron list`);
     assert.equal(pathToElectron(ROOT, file), null, `${file} reaches Electron`);

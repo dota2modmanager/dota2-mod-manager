@@ -10,22 +10,26 @@
  * that record what they were asked, because the question here is what gets decided about a
  * record, not whether a VPK parses: that is tested in test/vpk.test.js and test/import.test.js.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const { Library } = require('../src/library.ts');
-const { createAdopt } = require('../src/adopt.js');
+import { Library } from '../src/library.ts';
+import { createAdopt, type AdoptSchema } from '../src/adopt.ts';
 
-const LANG = (slot) => [{ root: 'lang', relPath: `${slot}_dir.vpk` }];
+/** What the fakes answer: a name read from the file, how many heroes it holds, what the schema
+ * service lifts out or splits it into, and the state of the master switch. */
+type How = {
+  contentName?: string | null; subjects?: number; harvest?: { deltas?: number } | null;
+  splitInto?: unknown[] | null; masterOff?: boolean; analyzeThrows?: boolean;
+};
 
-/**
- * A real library, fake services, and the adoption over both.
- * @param {object} how  what the fakes should answer
- */
-function stand(t, how = {}) {
+const LANG = (slot: string) => [{ root: 'lang', relPath: `${slot}_dir.vpk` }];
+
+/** A real library, fake services, and the adoption over both. */
+function stand(t: TestContext, how: How = {}) {
   const {
     contentName = null, subjects = 0, harvest = null, splitInto = null,
     masterOff = false, analyzeThrows = false,
@@ -33,16 +37,16 @@ function stand(t, how = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-adopt-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const library = new Library(dir);
-  const log = [];
+  const log: string[] = [];
 
   const installer = {
-    displayNameForFile: (relPath) => { log.push(`name ${relPath}`); return contentName; },
+    displayNameForFile: (relPath: string) => { log.push(`name ${relPath}`); return contentName; },
     analyzeRecord: () => {
       if (analyzeThrows) throw new Error('not a vpk this machine can read');
       return { subjects };
     },
     masterIsOff: () => masterOff,
-    setMasterEnabled: (on) => log.push(`master ${on}`),
+    setMasterEnabled: (on: boolean) => log.push(`master ${on}`),
   };
   const schemaService = {
     harvest: () => { log.push('harvest'); return harvest; },
@@ -50,7 +54,8 @@ function stand(t, how = {}) {
     refresh: () => log.push('refresh'),
   };
 
-  return { ...createAdopt({ installer, library, schemaService }), library, log };
+  // a split answers bare records on purpose: the test is about what gets decided, not their fields
+  return { ...createAdopt({ installer, library, schemaService: schemaService as unknown as AdoptSchema }), library, log };
 }
 
 test('a slot name is replaced by what the file turns out to hold', (t) => {
@@ -131,7 +136,7 @@ test('a pack that cannot be read stays one mod instead of failing the import', (
 });
 
 test('the item blocks a mod changed are lifted on the way in', (t) => {
-  const { adoptImportedFiles, log } = stand(t, { harvest: { deltas: [{ id: 1 }] } });
+  const { adoptImportedFiles, log } = stand(t, { harvest: { deltas: 1 } });
 
   const out = adoptImportedFiles({ files: LANG('pak10'), name: 'skin' });
 
@@ -156,7 +161,7 @@ test('the bar counts the mods it has to read, not the ones that failed', async (
   /* The count is what the user watches during a long import. Counting the failures in would
      leave the bar short of its own total and looking stuck. */
   const { registerImportResults } = stand(t);
-  const steps = [];
+  const steps: string[] = [];
 
   await registerImportResults([
     { source: 'a.vpk', error: 'no' },
@@ -168,7 +173,7 @@ test('the bar counts the mods it has to read, not the ones that failed', async (
 });
 
 test('the item table is rebuilt once for a batch, not once per mod', async (t) => {
-  const { registerImportResults, log } = stand(t, { harvest: { deltas: [{ id: 1 }] } });
+  const { registerImportResults, log } = stand(t, { harvest: { deltas: 1 } });
 
   await registerImportResults([
     { source: 'a.vpk', name: 'a', files: LANG('pak10') },

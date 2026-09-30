@@ -66,7 +66,7 @@ or turning mods back on would resurrect the ones you had deliberately switched o
    shipped: the signed `config/app.json` may name other places the archives are kept, which join
    the chain after our own copy and before the proxies. None of them is ever the origin, so what a
    host named there can do is serve a download or fail its checksum.
-3. Open the archive through `src/safe-zip.js`, the single door every foreign zip comes through.
+3. Open the archive through `src/safe-zip.ts`, the single door every foreign zip comes through.
 4. Compare its contents against what is already installed and report conflicts (see below).
 5. Pick a free slot: low ones for categories that must load early, otherwise the first free number
    from 10 up. Combined packs exist for the same reason and are described in `src/vpk.js`.
@@ -138,7 +138,7 @@ item table, never from a copy a mod happened to ship.
 
 A preset is the set of enabled mods, and it travels two ways.
 
-**As a link.** `src/preset-link.js` encodes catalog identities, not file names, into
+**As a link.** `src/preset-link.ts` encodes catalog identities, not file names, into
 `d2mm://preset/<code>`: deflate, base64url, a code short enough for a chat message. Catalog file
 names change when their author renames them; the identity triple does not. The clickable form is
 an https page that hands the code to the app, because chat clients only linkify http and https.
@@ -169,7 +169,7 @@ So each thing carries its own proof, and each has a different answer to a proof 
 |---|---|---|
 | Catalog data: `mods.json`, `constants.json`, `guides.json`, `mod-hashes.json` | ed25519 signature by the catalog's author, public key pinned in `src/catalog-signature.ts` | keep the last good copy; on a first run, no catalog and an error |
 | A mod archive | sha256 from the signed `mod-hashes.json` | drop that mirror's copy, delete the part file and ask the next mirror; refuse the mod only when every mirror fails the same check |
-| `config/app.json`, the switches and notices this project can change after a release | ed25519 signature by this project's own key, pinned in `src/remote-config.js` | ignore the file, exactly as if it were unreachable |
+| `config/app.json`, the switches and notices this project can change after a release | ed25519 signature by this project's own key, pinned in `src/remote-config.ts` | ignore the file, exactly as if it were unreachable |
 | The Source 2 toolchain executable | version and sha256 pinned in `src/toolchain.js`, checked before anything is unpacked | do not unpack it; item icons fall back to the wiki |
 
 The three answers differ because what each file costs differs. Without a catalog there is nothing
@@ -270,7 +270,7 @@ half was ever committed. `tools/sign-catalog.js` is the whole signing side, has 
 and is what the catalog's author runs.
 
 Editing `config/app.json` without re-signing it would publish a file every client quietly
-refuses, and nobody would notice until a switch was needed. `test/remote-config-signature.test.js`
+refuses, and nobody would notice until a switch was needed. `test/remote-config-signature.test.ts`
 fails the build instead, and prints the command that re-signs it.
 
 What none of this covers is in [DECISIONS.md](DECISIONS.md) under Known gaps, including the one
@@ -287,7 +287,7 @@ the background and most people press Play in Steam, and the repair runs by itsel
 The installed build updates through `electron-updater` from GitHub Releases. The portable build
 deliberately does not: an unsigned executable that renames and relaunches itself is the shape
 antivirus vendors flag, and this project has already had one false positive. It downloads the new
-build next to the old one instead and says so (`src/portable-update.js`).
+build next to the old one instead and says so (`src/portable-update.ts`).
 
 ## Checks, tests and the sandbox
 
@@ -362,24 +362,24 @@ that location is not writable.
 | `src/overlays.js` | Fonts and cursors: files written over the game's own, their kept originals, and putting them back after Steam's file check |
 | `src/import.js` | Taking a mod in: a `.vpk`, a `.zip`, an author's folder, or bytes off a drop |
 | `src/cursors.ts` | Which cursor set is live, which look a slot wears, and the repair at startup |
-| `src/adopt.js` | What a VPK goes through before it counts as a mod: named, harvested, split |
+| `src/adopt.ts` | What a VPK goes through before it counts as a mod: named, harvested, split |
 | `src/updater.ts` | Where an installed copy looks for a new version: the two feeds, and the channel it reads |
 | `src/vpk.js` | The VPK format: read, write, merge, split, combine, fingerprint |
 | `src/file-tx.ts` | One transaction per change to the game folder |
 | `src/library.ts` | `manifest.json`: installed records and presets |
 | `src/settings.ts` | `settings.json` and its defaults |
-| `src/catalog.js`, `src/catalog-signature.ts` | Catalog data and who is allowed to change it |
+| `src/catalog.ts`, `src/catalog-signature.ts` | Catalog data and who is allowed to change it |
 | `src/net.ts` | Downloads, mirrors, backoff |
-| `src/remote-config.js` | The switches and notices this project can change after a release, the version ranges a switch can be held to, and the signature over them |
+| `src/remote-config.ts` | The switches and notices this project can change after a release, the version ranges a switch can be held to, and the signature over them |
 | `tools/sign-catalog.js` | The signing side, for whoever holds a private key |
-| `src/safe-zip.js` | Every foreign archive comes through here |
+| `src/safe-zip.ts` | Every foreign archive comes through here |
 | `src/steam.ts` | Finding Steam and the game, and proving the folder is really a game |
 | `src/gamelang.js` | Which folder Dota will mount, and moving mods across when that changes |
 | `src/patcher.js`, `src/schema.js`, `src/schema-service.js` | Search-path patch, signatures, item schema |
 | `src/patch-watch.js` | Noticing a game update and repairing after it |
-| `src/fingerprints.js` | Recognising a file somebody else installed |
-| `src/preset-link.js`, `src/preset-share.js` | Presets as a link and as a file |
-| `src/portable-update.js` | Updating the portable build without self-overwrite |
+| `src/fingerprints.ts` | Recognising a file somebody else installed |
+| `src/preset-link.ts`, `src/preset-share.js` | Presets as a link and as a file |
+| `src/portable-update.ts` | Updating the portable build without self-overwrite |
 | `src/diagnostics.js` | The diagnostic archive a bug report should carry |
 | `src/i18n.ts`, `renderer/i18n.js` | Russian and English, for the main process and the window |
 | `renderer/views/*` | Catalog, My mods, Presets, Settings |

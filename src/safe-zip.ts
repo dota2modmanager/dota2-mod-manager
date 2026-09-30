@@ -12,10 +12,25 @@
 // Callers get a flat list of files with forward-slash paths, already stripped of anything
 // that could escape a folder, and write through safeJoin so a name can never resolve
 // outside the folder it was meant for.
-const fs = require('fs');
-const path = require('path');
-const AdmZip = require('adm-zip');
-const { t } = require('./i18n.ts');
+import fs from 'node:fs';
+import path from 'node:path';
+import AdmZip from 'adm-zip';
+import { t } from './i18n.ts';
+import type { Writer } from './file-tx.ts';
+
+/** A file inside an archive that passed every check: its path, its size, and its bytes on demand. */
+export interface ZipFile { path: string; size: number; read(): Buffer }
+
+/** A foreign archive, opened: what is safe to hand out of it, and a way to unpack it. */
+export interface OpenedZip {
+  label: string;
+  files: ZipFile[];
+  get(rel: string): ZipFile | null;
+  extractTo(destRoot: string, tx?: Writer): number;
+}
+
+/** The budgets an archive is held to; tests lower them. */
+export type ZipLimits = typeof LIMITS;
 
 const MB = 1024 * 1024;
 
@@ -25,7 +40,7 @@ const MB = 1024 * 1024;
 // Every limit sits several times above that, so a legitimate archive never meets one.
 // The ratio is only judged on entries big enough to matter — a 20 KB text file that packs
 // 500x is not a threat, and small assets compress hard all the time.
-const LIMITS = {
+export const LIMITS = {
   archiveBytes: 1024 * MB,   // adm-zip reads the whole file into memory before parsing
   entries: 20000,
   entryBytes: 768 * MB,
@@ -34,12 +49,12 @@ const LIMITS = {
   ratioFloor: 1 * MB,
 };
 
-const toPosix = (name) => String(name).replace(/\\/g, '/');
+const toPosix = (name: unknown): string => String(name).replace(/\\/g, '/');
 
 // Marked so a caller that turns "could not read this file" into its own wording can still
 // let a refusal through with its reason intact.
-function refuse(message) {
-  const err = /** @type {Error & { safeZip?: boolean }} */ (new Error(message));
+function refuse(message: string): Error & { safeZip?: boolean } {
+  const err: Error & { safeZip?: boolean } = new Error(message);
   err.safeZip = true;
   return err;
 }
@@ -51,11 +66,11 @@ function refuse(message) {
  * "." on its own is left alone: it is the folder itself, and some packers write "./name". None of
  * the 415 names in 147 real archives on the maintainer's machine is refused by this. */
 const RESERVED = /^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³]|conin\$|conout\$)(\..*)?$/i;
-const windowsRefuses = (part) => part !== '.' && (/[. ]$/.test(part) || RESERVED.test(part));
+const windowsRefuses = (part: string): boolean => part !== '.' && (/[. ]$/.test(part) || RESERVED.test(part));
 
 // An entry name is data, not a path we agreed to. Absolute names, drive letters, any ".."
 // segment and any segment Windows refuses are dropped before a caller ever sees them.
-function isUnsafeName(rel) {
+export function isUnsafeName(rel: string): boolean {
   if (!rel || rel.startsWith('/')) return true;
   if (/^[a-z]:/i.test(rel)) return true;
   return rel.split('/').some((part) => part === '..' || windowsRefuses(part));
@@ -66,7 +81,7 @@ function isUnsafeName(rel) {
  * that resolves outside. Second lock after isUnsafeName: the first decides what to hand
  * over, this one guards the actual write.
  */
-function safeJoin(rootAbs, rel) {
+export function safeJoin(rootAbs: string, rel: string): string {
   const root = path.resolve(rootAbs);
   const dest = path.resolve(root, rel);
   if (dest !== root && !dest.startsWith(root + path.sep)) {
@@ -77,15 +92,11 @@ function safeJoin(rootAbs, rel) {
 
 /**
  * Open a foreign archive with every claim in it checked first.
- * @param {string|Buffer} source        path on disk, or the bytes themselves
- * @param {object} [opts]
- * @param {string} [opts.label]         what to call the archive in an error the user reads
- * @param {object} [opts.limits]        override the budgets (tests)
- * @returns {{ label: string, files: Array<{path: string, size: number, read: () => Buffer}>,
- *            get: (rel: string) => object|null,
- *            extractTo: (destRoot: string, tx?: object|null) => number }}
+ * @param source        path on disk, or the bytes themselves
+ * @param opts.label    what to call the archive in an error the user reads
+ * @param opts.limits   override the budgets (tests)
  */
-function openZip(source, { label, limits } = {}) {
+export function openZip(source: string | Buffer, { label, limits }: { label?: string; limits?: Partial<ZipLimits> } = {}): OpenedZip {
   const lim = { ...LIMITS, ...(limits || {}) };
   const name = label || (typeof source === 'string' ? path.basename(source) : t('архив'));
   const tooBig = () => refuse(t('{0}: архив слишком большой', name));
@@ -101,10 +112,10 @@ function openZip(source, { label, limits } = {}) {
    * whatever language the window is in, and zlib now and then as a RangeError. Measured on
    * 2026-09-16: of 5000 damaged archives, 23 came out as this project's refusal and the rest as
    * those. test/safe-zip-fuzz.test.js holds the line. */
-  const damaged = (inside) => refuse(inside
+  const damaged = (inside?: string) => refuse(inside
     ? t('{0}: файл {1} в архиве повреждён', name, inside)
     : t('{0}: архив повреждён или не докачан', name));
-  let all;
+  let all: AdmZip.IZipEntry[];
   try {
     all = new AdmZip(source).getEntries();
   } catch {
@@ -113,7 +124,7 @@ function openZip(source, { label, limits } = {}) {
   if (all.length > lim.entries) throw refuse(t('{0}: в архиве слишком много файлов', name));
 
   let total = 0;
-  const files = [];
+  const files: ZipFile[] = [];
   for (const entry of all) {
     if (entry.isDirectory) continue;
     const size = entry.header.size;
@@ -139,13 +150,13 @@ function openZip(source, { label, limits } = {}) {
   return {
     label: name,
     files,
-    get(rel) {
+    get(rel: string) {
       const wanted = toPosix(rel);
       return files.find((f) => f.path === wanted) || null;
     },
     // Unpack everything, keeping the archive's own layout under destRoot. With a FileTx the
     // whole unpack is one change: a tool that fails on its last file leaves nothing behind.
-    extractTo(destRoot, tx = null) {
+    extractTo(destRoot: string, tx: Writer = null) {
       for (const file of files) {
         const dest = safeJoin(destRoot, file.path);
         if (tx) { tx.write(dest, file.read()); continue; }
@@ -157,4 +168,3 @@ function openZip(source, { label, limits } = {}) {
   };
 }
 
-module.exports = { openZip, safeJoin, isUnsafeName, LIMITS };

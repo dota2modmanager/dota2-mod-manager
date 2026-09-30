@@ -15,9 +15,9 @@ const path = require('path');
 const zlib = require('zlib');
 const fc = require('fast-check');
 
-const { safeJoin } = require('../src/safe-zip.js');
+const { safeJoin } = require('../src/safe-zip.ts');
 const { crc32 } = require('../src/vpk.js');
-const { encodePresetLink, decodePresetLink } = require('../src/preset-link.js');
+const { encodePresetLink, decodePresetLink } = require('../src/preset-link.ts');
 
 const RUNS = { numRuns: 500 };
 const ROOT = path.resolve('C:/game/dota_russian');

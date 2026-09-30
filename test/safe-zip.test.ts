@@ -3,44 +3,48 @@
 // so these tests pin what happens when it lies (a few KB claiming to unpack to 4 GB, the
 // GHSA-xcpc-8h2w-3j85 shape), when it tells the truth but the truth is a bomb, and when it
 // names a file so that writing it would land outside the folder we meant.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const AdmZip = require('adm-zip');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import type { Thrown } from './helpers/thrown.ts';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import AdmZip from 'adm-zip';
 
-const { openZip, safeJoin, isUnsafeName } = require('../src/safe-zip.js');
-const { rawZip } = require('./fixtures/raw-zip.js');
+import { openZip, safeJoin, isUnsafeName } from '../src/safe-zip.ts';
+import { FileTx } from '../src/file-tx.ts';
+import rawZipJs from './fixtures/raw-zip.js';
+const { rawZip } = rawZipJs;
 
 const MB = 1024 * 1024;
 
-function tempDir(t) {
+function tempDir(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-zip-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 
 /** An ordinary archive, written the way any tool would write it. */
-function makeZip(entries /* Array<[string, Buffer|string]> */) {
+function makeZip(entries: [string, Buffer | string][]) {
   const zip = new AdmZip();
   for (const [name, body] of entries) zip.addFile(name, Buffer.isBuffer(body) ? body : Buffer.from(body));
   return zip.toBuffer();
 }
 
 
-const file = (name, body, declaredSize) => ({ name, data: Buffer.from(body), declaredSize });
+const file = (name: string, body: string | Buffer, declaredSize?: number) => ({ name, data: Buffer.from(body), declaredSize });
 
 test('a normal archive lists its files and hands back their bytes', () => {
   const archive = openZip(makeZip([['mod/pak01_dir.vpk', 'payload'], ['mod/readme.txt', 'hi']]));
   assert.deepEqual(archive.files.map((f) => f.path), ['mod/pak01_dir.vpk', 'mod/readme.txt']);
-  assert.equal(archive.get('mod/pak01_dir.vpk').read().toString(), 'payload');
+  assert.equal(archive.get('mod/pak01_dir.vpk')?.read().toString(), 'payload');
   assert.equal(archive.get('nothing/here.vpk'), null);
 });
 
 test('an archive that claims 4 GB in its header is refused, not allocated', () => {
   const buf = rawZip([file('pak01_dir.vpk', 'a few bytes pretending to be four gigabytes', 4_000_000_000)]);
-  assert.throws(() => openZip(buf, { label: 'Nude Drow' }), (err) => {
+  assert.throws(() => openZip(buf, { label: 'Nude Drow' }), (err: Thrown) => {
     assert.equal(err.safeZip, true);
     assert.match(err.message, /Nude Drow/);
     return true;
@@ -55,12 +59,12 @@ test('a truthful archive is read even when the same file is stored uncompressed'
 test('a bomb that tells the truth is refused too', () => {
   // 4 MB of zeros deflate to a couple of KB: nothing legitimate packs that tight at that size
   const archive = () => openZip(makeZip([['bomb.bin', Buffer.alloc(4 * MB)]]));
-  assert.throws(archive, (err) => err.safeZip === true);
+  assert.throws(archive, (err: Thrown) => err.safeZip === true);
 });
 
 test('a file that is big but compresses like a real mod passes', () => {
   // a VPK is already-compressed game assets: it barely shrinks, the way this noise does not
-  const archive = openZip(makeZip([['pak01_dir.vpk', require('crypto').randomBytes(2 * MB)]]));
+  const archive = openZip(makeZip([['pak01_dir.vpk', crypto.randomBytes(2 * MB)]]));
   assert.equal(archive.files.length, 1);
   assert.equal(archive.files[0].read().length, 2 * MB);
 });
@@ -95,7 +99,6 @@ test('unpacking writes under the target folder and nothing outside it', (t) => {
 test('unpacking inside a transaction can be taken back whole', (t) => {
   /* Installs and tool downloads unpack through a FileTx, so a failure halfway leaves nothing
      behind. The plain unpack above never takes that path. */
-  const { FileTx } = require('../src/file-tx.ts');
   const dest = path.join(tempDir(t), 'SomeTool');
   fs.mkdirSync(dest, { recursive: true });
   fs.writeFileSync(path.join(dest, 'readme.txt'), 'old');
@@ -113,15 +116,15 @@ test('unpacking inside a transaction can be taken back whole', (t) => {
 test('safeJoin keeps a path inside its root and refuses one that climbs out', (t) => {
   const root = tempDir(t);
   assert.equal(safeJoin(root, 'a/b/c.vpk'), path.join(root, 'a', 'b', 'c.vpk'));
-  assert.throws(() => safeJoin(root, '../outside.vpk'), (err) => err.safeZip === true);
-  assert.throws(() => safeJoin(root, 'a/../../outside.vpk'), (err) => err.safeZip === true);
+  assert.throws(() => safeJoin(root, '../outside.vpk'), (err: Thrown) => err.safeZip === true);
+  assert.throws(() => safeJoin(root, 'a/../../outside.vpk'), (err: Thrown) => err.safeZip === true);
   assert.equal(isUnsafeName('a/../b'), true);
   assert.equal(isUnsafeName('a/b/c.vpk'), false);
 });
 
 test('each budget refuses on its own', (t) => {
   const three = makeZip([['a.txt', 'aaa'], ['b.txt', 'bbb'], ['c.txt', 'ccc']]);
-  const refusal = (err) => err.safeZip === true;
+  const refusal = (err: Thrown) => err.safeZip === true;
 
   assert.throws(() => openZip(three, { limits: { entries: 2 } }), refusal);
   assert.throws(() => openZip(three, { limits: { entryBytes: 2 } }), refusal);
@@ -143,8 +146,8 @@ test('safeJoin refuses the folder next door whose name starts the same way', (t)
   /* The textbook form of this bug: with "…/tools" as the root, "…/tools-evil/a.exe" passes a check
      that only asks whether the path starts with the root's text. */
   const root = path.join(tempDir(t), 'tools');
-  assert.throws(() => safeJoin(root, '../tools-evil/a.exe'), (err) => err.safeZip === true);
-  assert.throws(() => safeJoin(root, '../toolsX'), (err) => err.safeZip === true);
+  assert.throws(() => safeJoin(root, '../tools-evil/a.exe'), (err: Thrown) => err.safeZip === true);
+  assert.throws(() => safeJoin(root, '../toolsX'), (err: Thrown) => err.safeZip === true);
   assert.equal(safeJoin(root, '.'), path.resolve(root), 'the root itself is not outside the root');
 });
 
@@ -169,7 +172,7 @@ test('names Windows itself refuses never reach the caller', () => {
 });
 
 test('an archive that is not really one is refused as damaged, by its name', () => {
-  assert.throws(() => openZip(Buffer.from('PK not really a zip at all'), { label: 'Broken Mod' }), (err) => {
+  assert.throws(() => openZip(Buffer.from('PK not really a zip at all'), { label: 'Broken Mod' }), (err: Thrown) => {
     assert.equal(err.safeZip, true, `came out as ${err.constructor.name}: ${err.message}`);
     assert.match(err.message, /Broken Mod/);
     return true;
@@ -181,7 +184,7 @@ test('a file whose bytes do not match their checksum is refused when it is read'
   const buf = rawZip([{ name, data: Buffer.from('payload bytes') }]);
   buf[30 + name.length] ^= 0xff; // the first byte of the stored data, after the local header and name
   const archive = openZip(buf, { label: 'Broken Mod' });
-  assert.throws(() => archive.files[0].read(), (err) => {
+  assert.throws(() => archive.files[0].read(), (err: Thrown) => {
     assert.equal(err.safeZip, true, `came out as ${err.constructor.name}: ${err.message}`);
     assert.match(err.message, /Broken Mod/);
     assert.match(err.message, /pak01_dir\.vpk/);

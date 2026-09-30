@@ -13,18 +13,18 @@ the code, not in this page.
 
 | Module | What it owns |
 |---|---|
-| [`src/adopt.js`](#srcadoptjs) | What a VPK has to go through before it counts as a mod. |
+| [`src/adopt.ts`](#srcadoptts) | What a VPK has to go through before it counts as a mod. |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
-| [`src/catalog.js`](#srccatalogjs) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
+| [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/diagnostics.js`](#srcdiagnosticsjs) | A support report a user can send instead of a round of screenshots: Dota's own path and |
 | [`src/discord-auth.js`](#srcdiscord-authjs) | Sign in with Discord, without a server of our own. |
 | [`src/discord-presence.ts`](#srcdiscord-presencets) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
 | [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
 | [`src/file-tx.ts`](#srcfile-txts) | All of it, or none of it. |
-| [`src/fingerprints.js`](#srcfingerprintsjs) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
+| [`src/fingerprints.ts`](#srcfingerprintsts) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
 | [`src/game-icons.js`](#srcgame-iconsjs) | Item pictures taken from the installed game instead of scraped off a wiki. |
 | [`src/gamelang.js`](#srcgamelangjs) | Which dota_<lang> folder the game actually mounts. |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
@@ -43,12 +43,12 @@ the code, not in this page.
 | [`src/overlays.js`](#srcoverlaysjs) | Fonts and cursors: loose files written over the game's own. |
 | [`src/patch-watch.js`](#srcpatch-watchjs) | Noticing that Dota was patched, while the app is open. |
 | [`src/patcher.js`](#srcpatcherjs) | Search-path patch: registers an extra content folder ahead of the game's own, which |
-| [`src/portable-update.js`](#srcportable-updatejs) | Updating a copy that was never installed. |
-| [`src/preset-link.js`](#srcpreset-linkjs) | Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed |
+| [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
+| [`src/preset-link.ts`](#srcpreset-linkts) | Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed |
 | [`src/preset-share.js`](#srcpreset-sharejs) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
 | [`src/presets-service.js`](#srcpresets-servicejs) | Presets, and the two ways one travels to somebody else. |
-| [`src/remote-config.js`](#srcremote-configjs) | The one thing the app can be told after it has shipped. |
-| [`src/safe-zip.js`](#srcsafe-zipjs) | The one door every foreign archive comes through. |
+| [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
+| [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
 | [`src/schema-service.js`](#srcschema-servicejs) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
 | [`src/schema.js`](#srcschemajs) | Item-schema engine: the game's own scripts/items/items_game.txt is the only place |
 | [`src/settings.ts`](#srcsettingsts) | Simple JSON settings store in userData |
@@ -62,7 +62,7 @@ the code, not in this page.
 | [`src/vpk.js`](#srcvpkjs) | Minimal reader for the index of Source-engine VPK "_dir" files (v1/v2). |
 | [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
 
-## src/adopt.js
+## src/adopt.ts
 
 What a VPK has to go through before it counts as a mod.
 
@@ -82,17 +82,40 @@ src/cursors.ts and src/presets-service.js take them. It moved for the same reaso
 cursors did: main.js cannot be required by a test, so none of this could be tested where it
 was, and it decides what a user sees in their library.
 
+### `AdoptInstaller`
+
+```ts
+export interface AdoptInstaller
+```
+
+What of the installer this asks: a name from the file, what the file is, and the master switch.
+
+### `AdoptSchema`
+
+```ts
+export interface AdoptSchema
+```
+
+What of the schema service this asks: the item blocks lifted out, and a pack split by hero.
+
+### `ImportResult`
+
+```ts
+export type ImportResult =
+```
+
+One file or set of files the importer put in the game folder, or why it could not.
+
 ### `createAdopt`
 
-```js
-function createAdopt({ installer, library, schemaService })
+```ts
+export function createAdopt({ installer, library, schemaService }: { installer: AdoptInstaller; library: Pick<Library, 'add' | 'find'>; schemaService: AdoptSchema; })
 ```
 
 ```
-@param {object} ctx
-@param {object} ctx.installer      reads the file to name and analyse it, and the master switch
-@param {object} ctx.library        the manifest the record is written into
-@param {object} ctx.schemaService  lifts the item blocks out, and splits a multi-hero pack
+@param ctx.installer      reads the file to name and analyse it, and the master switch
+@param ctx.library        the manifest the record is written into
+@param ctx.schemaService  lifts the item blocks out, and splits a multi-hero pack
 ```
 
 ## src/beta.ts
@@ -303,7 +326,7 @@ assets/signatures/mods.json.sig for assets/data/mods.json.
 export const SIG_SUFFIX = '.sig'
 ```
 
-_No description in the source._
+Appended to a data file's name to get its signature's: mods.json -> mods.json.sig.
 
 ### `configured`
 
@@ -326,30 +349,22 @@ export function verify(payload: string | Buffer, signatureB64: unknown, key: str
 @returns true when the signature is this key's signature over this payload
 ```
 
-## src/catalog.js
+## src/catalog.ts
 
 Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo
 
-### `Catalog`
-
-```js
-class Catalog
-```
-
-_No description in the source._
-
 ### `RAW_BASE`
 
-```js
-const RAW_BASE = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main'
+```ts
+export const RAW_BASE = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main'
 ```
 
-_No description in the source._
+The upstream catalog repository, read raw: where the data files and their signatures are fetched first.
 
 ### `HASH_FILE`
 
-```js
-const HASH_FILE = 'mod-hashes.json'
+```ts
+export const HASH_FILE = 'mod-hashes.json'
 ```
 
 The published sha256 of every archive in the catalog, signed like the data.
@@ -360,10 +375,18 @@ checked against that first copy afterwards, which catches a substitution on ever
 except the one that matters. So it is fetched beside them and a failure costs the old
 behaviour rather than the catalog.
 
+### `CatalogFiles`
+
+```ts
+export interface CatalogFiles
+```
+
+The catalog as the window is handed it: the three files, when they were fetched, and why they are old if they are.
+
 ### `normalizeCatalog`
 
-```js
-function normalizeCatalog(mods)
+```ts
+export function normalizeCatalog<T extends RawMods>(mods: T): T
 ```
 
 The catalog describes a mod's links two ways: a `links` array, and an older pair of fields
@@ -371,6 +394,15 @@ on the mod itself. 32 mods still carry the old pair and 26 of those are previews
 whole TI battle-pass row - so a reader that knows only the array shows them with no
 preview at all. The site reads both; folding one into the other here means the rest of the
 app only ever sees the array. The cache on disk keeps whatever the author wrote.
+
+### `Catalog`
+
+```ts
+export class Catalog
+```
+
+The catalog on disk and on the wire: fetches the three data files, checks their signatures,
+keeps the last good copy, and says which archive hash the catalog published for a mod.
 
 ## src/cursors.ts
 
@@ -696,27 +728,44 @@ export function writeInto(buf: string | NodeJS.ArrayBufferView, dest: string, tx
 
 Write bytes into place: through the transaction when there is one, directly when not.
 
-## src/fingerprints.js
+## src/fingerprints.ts
 
 Fingerprint index: fetch + cache the fp -> mod identity map published alongside the
 app, so a foreign vpk sitting in the game folder can be recognised as a specific
 catalog mod (see tools/gen-fingerprints.js). Dormant until the map is hosted.
 
-### `Fingerprints`
-
-```js
-class Fingerprints
-```
-
-_No description in the source._
-
 ### `FP_URL`
 
-```js
-const FP_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/fingerprints.json'
+```ts
+export const FP_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/fingerprints.json'
 ```
 
-_No description in the source._
+Where the fingerprint map is published, next to the app's own source.
+
+### `CatalogIdentity`
+
+```ts
+export interface CatalogIdentity { name: string; categoryId: string; styleLabel?: string | null }
+```
+
+A catalog mod a fingerprint points at.
+
+### `FontMod`
+
+```ts
+export interface FontMod extends CatalogIdentity { files: Record<string, string> }
+```
+
+A font mod, known by the hash of every file it puts in panorama/fonts.
+
+### `Fingerprints`
+
+```ts
+export class Fingerprints
+```
+
+The fingerprint map, cached in userData: tells which catalog mod a VPK is from the hash of its
+content, and which font mod a set of font files is.
 
 ## src/game-icons.js
 
@@ -1938,7 +1987,7 @@ A host that answers with nothing useful stands itself down after a few failures 
 other, which is also what happens to one that is named here after it stops existing.
 
 ```
-@param list  from src/remote-config.js
+@param list  from src/remote-config.ts
 ```
 
 ## src/notice-text.js
@@ -2419,7 +2468,7 @@ function crc32(buf)
 
 _No description in the source._
 
-## src/portable-update.js
+## src/portable-update.ts
 
 Updating a copy that was never installed.
 
@@ -2441,77 +2490,44 @@ itself with no mirrors in the way (a mirror could rewrite both the hash and the 
 the download is then checked against it. A file that does not match is deleted rather than
 offered.
 
-### `parseManifest`
+### `MANIFEST`
 
-```js
-function parseManifest(text)
+```ts
+export const MANIFEST = 'portable.yml'
 ```
 
-The three fields the app needs out of portable.yml, without pulling in a YAML parser for a
-file this project writes itself. Anything missing or malformed is a manifest we refuse.
-
-```
-@returns {{ file: string, size: number, sha256: string, version: string }}  version is '' when
-the manifest does not say
-```
-
-### `fetchBeside`
-
-```js
-async function fetchBeside(version, { onProgress = () => {}, dir = portableDir(), log = () => {}, sources = SOURCES } = {})
-```
-
-Fetch the new build and leave it beside the current one.
-
-```
-@param {string} version           the version to fetch, without the leading v
-@param {object} [opts]
-@param {(loaded: number, total: number) => void} [opts.onProgress]
-@param {string} [opts.dir]        where to put it; defaults to the folder holding the exe
-@param {(msg: string) => void} [opts.log]
-@param {Array} [opts.sources]     where to look and in what order; SOURCES unless a test says
-@returns {Promise<{ path: string, name: string, bytes: number, already?: boolean }>}  already
-when the same build was fetched before
-```
-
-### `portableDir`
-
-```js
-function portableDir()
-```
-
-Where the running portable exe actually lives, or null when this is not a portable copy.
+The release asset that names the portable binary, its size and its sha256.
 
 ### `releaseUrl`
 
-```js
-const releaseUrl = (version, file)
+```ts
+export const releaseUrl = (version: string, file: string): string
 ```
 
-_No description in the source._
-
-### `MANIFEST`
-
-```js
-const MANIFEST = 'portable.yml'
-```
-
-_No description in the source._
+The download address of a file attached to a GitHub release of this app.
 
 ### `MIRROR`
 
-```js
-const MIRROR = 'https://cdn.dota2modmanager.com/updates/'
+```ts
+export const MIRROR = 'https://cdn.dota2modmanager.com/updates/'
 ```
 
 The bucket the mods already come from, carrying the current release as well since
 2026-09-10 (tools/r2-release.mjs). It holds one version, which is why the manifest's own
 version is checked below rather than assumed.
 
+### `Source`
+
+```ts
+export interface Source
+```
+
+Where a portable build can come from: its manifest, the binary it names, and whether only that host is trusted.
+
 ### `SOURCES`
 
-```js
-const SOURCES = [
+```ts
+export const SOURCES: readonly Source[] = [
 ```
 
 Where to look, in order.
@@ -2526,7 +2542,44 @@ only this project holds, which is the same trust as the release page itself - an
 reasoning as the update feed fallback in main.js. Manifest and binary both come from
 whichever source answered, so the hash and the file it describes are always from one place.
 
-## src/preset-link.js
+### `parseManifest`
+
+```ts
+export function parseManifest(text: unknown): { file: string; size: number; sha256: string; version: string }
+```
+
+The three fields the app needs out of portable.yml, without pulling in a YAML parser for a
+file this project writes itself. Anything missing or malformed is a manifest we refuse.
+
+```
+@returns version is '' when the manifest does not say
+```
+
+### `portableDir`
+
+```ts
+export function portableDir(): string | null
+```
+
+Where the running portable exe actually lives, or null when this is not a portable copy.
+
+### `fetchBeside`
+
+```ts
+export async function fetchBeside(version: string, { onProgress = () => {}, dir = portableDir(), log = () => {}, sources = SOURCES }: { onProgress?: (loaded: number, total: number) => void; dir?: string | null; log?: (msg: string) => void; sources?: readonly Source[]; } = {}): Promise<{ path: string; name: string; bytes: number; already?: boolean }>
+```
+
+Fetch the new build and leave it beside the current one.
+
+```
+@param version       the version to fetch, without the leading v
+@param opts.dir      where to put it; defaults to the folder holding the exe
+@param opts.sources  where to look and in what order; SOURCES unless a test says
+@returns where it landed; already
+when the same build was fetched before
+```
+
+## src/preset-link.ts
 
 Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed
 into a pasteable string. Only a preset made purely of catalog mods can travel this way —
@@ -2538,30 +2591,38 @@ message; a .d2mm file stays the answer for anything with imports in it.
 
 ### `SCHEME`
 
-```js
-const SCHEME = 'd2mm'
+```ts
+export const SCHEME = 'd2mm'
 ```
 
-_No description in the source._
+The URL scheme the app registers with Windows, so d2mm://preset/... opens it.
+
+### `LinkMod`
+
+```ts
+export type LinkMod =
+```
+
+A mod as a link carries it: a catalog mod by name and style, or a cosmetic pick by slot and item.
 
 ### `encodePresetLink`
 
-```js
-function encodePresetLink({ name, author, mods })
+```ts
+export function encodePresetLink({ name, author, mods }: { name: string; author?: string; mods: ModIn[] }): { code: string; web: string; direct: string }
 ```
 
 ```
-@param {{name: string, author?: string, mods: Array<{kind?, categoryId, name, styleLabel, slot, itemId, effectId}>}} preset
-@returns {{code: string, web: string, direct: string}} the clickable form and the raw one
+@returns the clickable form and the raw one
 ```
 
 ### `decodePresetLink`
 
-```js
-function decodePresetLink(input)
+```ts
+export function decodePresetLink(input: unknown): { name: string; author: string; mods: LinkMod[] }
 ```
 
-_No description in the source._
+A pasted link, in either form, back into a preset: its name, its author and its mods. Throws an
+error written for the user when the text is not a link, is damaged, or holds too much.
 
 ## src/preset-share.js
 
@@ -2696,7 +2757,7 @@ function touchesSchema(rec)
 
 Does changing this record mean the item table has to be rebuilt?
 
-## src/remote-config.js
+## src/remote-config.ts
 
 The one thing the app can be told after it has shipped.
 
@@ -2736,105 +2797,26 @@ tools/rollback.mjs writes both, signs the file and refuses the mistakes.
 public and a list of a dozen people's accounts is not ours to publish. src/beta.ts does the
 checking; this only reads the block and refuses anything that is not shaped like one.
 
-### `createRemoteConfig`
-
-```js
-function createRemoteConfig({ userDataDir, appVersion, log = () => {}, publicKey = CONFIG_PUBLIC_KEY, now = () => Date.now() })
-```
-
-```
-@param {object} opts
-@param {string} opts.userDataDir  where the last good copy is kept between starts
-@param {() => string} opts.appVersion  used to decide which notices apply
-@param {(msg: string) => void} [opts.log]
-@param {string} [opts.publicKey]  whose signature to accept; the pinned one unless a test
-wants to sign its own fixture, which it cannot do with a private key that is not here
-@param {() => number} [opts.now]  the clock a notice's until date is read against
-```
-
-### `normalize`
-
-```js
-function normalize(raw)
-```
-
-_No description in the source._
-
-### `cmpVersion`
-
-```js
-function cmpVersion(a, b)
-```
-
-_No description in the source._
-
-### `applies`
-
-```js
-function applies(entry, version, today)
-```
-
-Does an entry with optional version bounds and a last day hold for this build today?
-
-### `SWITCHABLE`
-
-```js
-const SWITCHABLE = ['install', 'cosmetics', 'voice']
-```
-
-What the app is willing to be told to switch off. A name that is not on this list is
-ignored: a typo in the config must not disable something at random, and this list is the
-contract between the file and the code that honours it.
-
-### `BLOCKS_SINCE`
-
-```js
-const BLOCKS_SINCE = '2.6.13'
-```
-
-The first version that reads `blocks`. Everything before it ignores the key entirely, which is
-what makes adding it safe, and also what makes a block aimed at those versions do nothing, so
-tools/rollback.mjs refuses one. 2.6.12 is the last release without it; whichever version
-ships next is at least this one.
-
-### `MAX_TESTERS`
-
-```js
-const MAX_TESTERS = 100
-```
-
-A beta is a handful of people the maintainer picked, not a rollout: a list longer than this is
-a sign the file was edited by something other than a person.
-
-### `MAX_MIRRORS`
-
-```js
-const MAX_MIRRORS = 4
-```
-
-Somewhere else the archives can be fetched from. A handful at most: the chain is walked in
-   order on every download, and a host that is not really there costs a request each time.
-
 ### `CONFIG_URL`
 
-```js
-const CONFIG_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json'
+```ts
+export const CONFIG_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json'
 ```
 
-_No description in the source._
+The config every copy of the app reads, on main in this repository.
 
 ### `CONFIG_SIG_URL`
 
-```js
-const CONFIG_SIG_URL = `${CONFIG_URL}.sig`
+```ts
+export const CONFIG_SIG_URL = `${CONFIG_URL}.sig`
 ```
 
 The signature, always the config's own address with .sig on the end.
 
 ### `CONFIG_PUBLIC_KEY`
 
-```js
-const CONFIG_PUBLIC_KEY = 'MCowBQYDK2VwAyEA8M9IOVLfxK6V1n2fHAHlE9zzCsXFoUAJki8RdqLPBdA='
+```ts
+export const CONFIG_PUBLIC_KEY = 'MCowBQYDK2VwAyEA8M9IOVLfxK6V1n2fHAHlE9zzCsXFoUAJki8RdqLPBdA='
 ```
 
 This file is signed, and by us rather than by the catalog's author.
@@ -2852,10 +2834,120 @@ and they could already do that by dropping the request. What they no longer get 
 words on the screen.
 
 Signed with tools/sign-catalog.js. The private half is not in this repository and never will
-be; test/remote-config-signature.test.js fails the build if the committed file and its
+be; test/remote-config-signature.test.ts fails the build if the committed file and its
 signature ever stop agreeing.
 
-## src/safe-zip.js
+### `SWITCHABLE`
+
+```ts
+export const SWITCHABLE: readonly string[] = ['install', 'cosmetics', 'voice']
+```
+
+What the app is willing to be told to switch off. A name that is not on this list is
+ignored: a typo in the config must not disable something at random, and this list is the
+contract between the file and the code that honours it.
+
+### `BLOCKS_SINCE`
+
+```ts
+export const BLOCKS_SINCE = '2.6.13'
+```
+
+The first version that reads `blocks`. Everything before it ignores the key entirely, which is
+what makes adding it safe, and also what makes a block aimed at those versions do nothing, so
+tools/rollback.mjs refuses one. 2.6.12 is the last release without it; whichever version
+ships next is at least this one.
+
+### `MAX_TESTERS`
+
+```ts
+export const MAX_TESTERS = 100
+```
+
+A beta is a handful of people the maintainer picked, not a rollout: a list longer than this is
+a sign the file was edited by something other than a person.
+
+### `MAX_MIRRORS`
+
+```ts
+export const MAX_MIRRORS = 4
+```
+
+Somewhere else the archives can be fetched from. A handful at most: the chain is walked in
+   order on every download, and a host that is not really there costs a request each time.
+
+### `RemoteNotice`
+
+```ts
+export interface RemoteNotice
+```
+
+Something a build or a range of them is told, until a day or for good.
+
+### `RemoteBlock`
+
+```ts
+export interface RemoteBlock
+```
+
+A feature switched off for a range of builds until a day.
+
+### `RemoteMirror`
+
+```ts
+export interface RemoteMirror { id: string; base: string; host: string }
+```
+
+Another host the archives can be fetched from.
+
+### `RemoteConfig`
+
+```ts
+export interface RemoteConfig
+```
+
+The signed config, as far as it passed the checks below.
+
+### `cmpVersion`
+
+```ts
+export function cmpVersion(a: unknown, b: unknown): -1 | 0 | 1
+```
+
+Two versions compared part by part as numbers, so 10.0.0 comes after 2.0.0.
+
+### `applies`
+
+```ts
+export function applies(entry: { minVersion?: string | null; maxVersion?: string | null; until?: string | null }, version: string, today: string): boolean
+```
+
+Does an entry with optional version bounds and a last day hold for this build today?
+
+### `normalize`
+
+```ts
+export function normalize(raw: unknown): RemoteConfig
+```
+
+The fetched JSON cut down to what this build can act on: anything malformed, too long or aimed
+at a feature that cannot be switched is dropped rather than trusted.
+
+### `createRemoteConfig`
+
+```ts
+export function createRemoteConfig({ userDataDir, appVersion, log = () => {}, publicKey = CONFIG_PUBLIC_KEY, now = () => Date.now() }: { userDataDir: string; appVersion: () => string; log?: (msg: string) => void; publicKey?: string; now?: () => number; })
+```
+
+```
+@param opts.userDataDir  where the last good copy is kept between starts
+@param opts.appVersion   used to decide which notices apply
+@param opts.publicKey    whose signature to accept; the pinned one unless a test
+wants to sign its own fixture, which it cannot do with a private key that is not here
+@param opts.now          the clock a notice's until date is read against
+```
+
+## src/safe-zip.ts
 
 The one door every foreign archive comes through.
 
@@ -2872,47 +2964,34 @@ Callers get a flat list of files with forward-slash paths, already stripped of a
 that could escape a folder, and write through safeJoin so a name can never resolve
 outside the folder it was meant for.
 
-### `openZip`
+### `ZipFile`
 
-```js
-function openZip(source, { label, limits } = {})
+```ts
+export interface ZipFile { path: string; size: number; read(): Buffer }
 ```
 
-Open a foreign archive with every claim in it checked first.
+A file inside an archive that passed every check: its path, its size, and its bytes on demand.
 
-```
-@param {string|Buffer} source        path on disk, or the bytes themselves
-@param {object} [opts]
-@param {string} [opts.label]         what to call the archive in an error the user reads
-@param {object} [opts.limits]        override the budgets (tests)
-@returns {{ label: string, files: Array<{path: string, size: number, read: () => Buffer}>,
-get: (rel: string) => object|null,
-extractTo: (destRoot: string, tx?: object|null) => number }}
+### `OpenedZip`
+
+```ts
+export interface OpenedZip
 ```
 
-### `safeJoin`
+A foreign archive, opened: what is safe to hand out of it, and a way to unpack it.
 
-```js
-function safeJoin(rootAbs, rel)
+### `ZipLimits`
+
+```ts
+export type ZipLimits = typeof LIMITS
 ```
 
-Join a path that came out of an archive to the folder it belongs in, refusing anything
-that resolves outside. Second lock after isUnsafeName: the first decides what to hand
-over, this one guards the actual write.
-
-### `isUnsafeName`
-
-```js
-function isUnsafeName(rel)
-```
-
-An entry name is data, not a path we agreed to. Absolute names, drive letters, any ".."
-segment and any segment Windows refuses are dropped before a caller ever sees them.
+The budgets an archive is held to; tests lower them.
 
 ### `LIMITS`
 
-```js
-const LIMITS =
+```ts
+export const LIMITS =
 ```
 
 Measured against the 104 real archives on disk (catalog mods, fonts, cursors, packs),
@@ -2921,6 +3000,39 @@ fullest archive holds 111 files, and the tightest compression is 80x (cursor bit
 Every limit sits several times above that, so a legitimate archive never meets one.
 The ratio is only judged on entries big enough to matter — a 20 KB text file that packs
 500x is not a threat, and small assets compress hard all the time.
+
+### `isUnsafeName`
+
+```ts
+export function isUnsafeName(rel: string): boolean
+```
+
+An entry name is data, not a path we agreed to. Absolute names, drive letters, any ".."
+segment and any segment Windows refuses are dropped before a caller ever sees them.
+
+### `safeJoin`
+
+```ts
+export function safeJoin(rootAbs: string, rel: string): string
+```
+
+Join a path that came out of an archive to the folder it belongs in, refusing anything
+that resolves outside. Second lock after isUnsafeName: the first decides what to hand
+over, this one guards the actual write.
+
+### `openZip`
+
+```ts
+export function openZip(source: string | Buffer, { label, limits }: { label?: string; limits?: Partial<ZipLimits> } = {}): OpenedZip
+```
+
+Open a foreign archive with every claim in it checked first.
+
+```
+@param source        path on disk, or the bytes themselves
+@param opts.label    what to call the archive in an error the user reads
+@param opts.limits   override the budgets (tests)
+```
 
 ## src/schema-service.js
 

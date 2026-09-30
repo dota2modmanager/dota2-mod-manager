@@ -1,10 +1,11 @@
 // Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo
-const fs = require('fs');
-const path = require('path');
-const { fetchText } = require('./net.ts');
-const signature = require('./catalog-signature.ts');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fetchText } from './net.ts';
+import * as signature from './catalog-signature.ts';
 
-const RAW_BASE = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main';
+/** The upstream catalog repository, read raw: where the data files and their signatures are fetched first. */
+export const RAW_BASE = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main';
 const DATA_FILES = ['mods.json', 'constants.json', 'guides.json'];
 
 /* The published sha256 of every archive in the catalog, signed like the data.
@@ -15,14 +16,35 @@ const DATA_FILES = ['mods.json', 'constants.json', 'guides.json'];
  * except the one that matters. So it is fetched beside them and a failure costs the old
  * behaviour rather than the catalog.
  */
-const HASH_FILE = 'mod-hashes.json';
+export const HASH_FILE = 'mod-hashes.json';
 
 /** The site's own copy, which goes out in one deploy and so is never half-updated. */
 const SNAPSHOT_BASE = 'https://dota2modmanager.com/mirror/';
 
+/** A link the catalog gives a mod: a preview, the author, where it came from. */
+type RawLink = { type?: string; url?: string; name?: string };
+
+/** A mod as mods.json writes it; only the fields read here are named. */
+type RawMod = { links?: RawLink[]; linkType?: string; linkUrl?: string; senderName?: string; [key: string]: unknown };
+
+/** A category of mods.json: a plain list, or groups of lists for the categories sorted by hero. */
+type RawCategory = RawMod[] | { groups?: { mods?: RawMod[] }[]; mods?: RawMod[] } | null | undefined;
+
+/** mods.json as far as this module reads it. */
+type RawMods = { modsData?: Record<string, RawCategory> } | null | undefined;
+
+/** The catalog as the window is handed it: the three files, when they were fetched, and why they are old if they are. */
+export interface CatalogFiles {
+  fetchedAt: number | null;
+  stale?: string;
+  mods?: RawMods;
+  constants?: unknown;
+  guides?: unknown;
+}
+
 // Walk every mod in a mods.json, whatever shape its category is in: a plain array, or a
 // group list for the categories that are sorted by hero.
-function eachMod(modsData, fn) {
+function eachMod(modsData: Record<string, RawCategory> | null | undefined, fn: (mod: RawMod) => void): void {
   for (const category of Object.values(modsData || {})) {
     if (!category) continue;
     const lists = Array.isArray(category)
@@ -43,10 +65,10 @@ function eachMod(modsData, fn) {
  * preview at all. The site reads both; folding one into the other here means the rest of the
  * app only ever sees the array. The cache on disk keeps whatever the author wrote.
  */
-function normalizeCatalog(mods) {
+export function normalizeCatalog<T extends RawMods>(mods: T): T {
   eachMod(mods && mods.modsData, (mod) => {
     if (!mod.linkType || !mod.linkUrl) return;
-    const link = { type: mod.linkType, url: mod.linkUrl };
+    const link: RawLink = { type: mod.linkType, url: mod.linkUrl };
     if (mod.senderName) link.name = mod.senderName;
     if (!Array.isArray(mod.links)) mod.links = [link];
     else if (!mod.links.some((l) => l.type === link.type && l.url === link.url)) mod.links.push(link);
@@ -54,27 +76,33 @@ function normalizeCatalog(mods) {
   return mods;
 }
 
-class Catalog {
+/** The catalog on disk and on the wire: fetches the three data files, checks their signatures,
+ * keeps the last good copy, and says which archive hash the catalog published for a mod. */
+export class Catalog {
+  cacheDir: string;
+  snapshotBase: string;
+  publicKey: string;
+  /** the published archive hashes: undefined until read, null when there are none */
+  hashes: Record<string, unknown> | null | undefined;
+
   /**
-   * @param {string} userDataDir
-   * @param {object} [opts]
-   * @param {string} [opts.snapshotBase]  where to look for a data-and-signature pair that is
+   * @param opts.snapshotBase  where to look for a data-and-signature pair that is
    *   guaranteed to be from one moment; the site's own copy unless a test says otherwise
-   * @param {string} [opts.publicKey]  the key the catalog is signed with; the pinned one unless a
+   * @param opts.publicKey  the key the catalog is signed with; the pinned one unless a
    *   test signs its own catalog
    */
-  constructor(userDataDir, { snapshotBase = SNAPSHOT_BASE, publicKey = signature.CATALOG_PUBLIC_KEY } = {}) {
+  constructor(userDataDir: string, { snapshotBase = SNAPSHOT_BASE, publicKey = signature.CATALOG_PUBLIC_KEY }: { snapshotBase?: string; publicKey?: string } = {}) {
     this.cacheDir = path.join(userDataDir, 'catalog-cache');
     this.snapshotBase = snapshotBase;
     this.publicKey = publicKey;
     fs.mkdirSync(this.cacheDir, { recursive: true });
   }
 
-  cachePath(name) {
+  cachePath(name: string): string {
     return path.join(this.cacheDir, name);
   }
 
-  cacheInfo() {
+  cacheInfo(): { fetchedAt: number | null } {
     const metaFile = this.cachePath('meta.json');
     try {
       return JSON.parse(fs.readFileSync(metaFile, 'utf-8'));
@@ -83,7 +111,7 @@ class Catalog {
     }
   }
 
-  hasCache() {
+  hasCache(): boolean {
     return DATA_FILES.every((f) => fs.existsSync(this.cachePath(f)));
   }
 
@@ -96,7 +124,7 @@ class Catalog {
    * day, which is why this is built from a path and not from a suffix glued onto the data URL:
    * a layout that has already moved once can move again.
    */
-  async fetchSigned(name) {
+  async fetchSigned(name: string): Promise<string> {
     const dataUrl = `${RAW_BASE}/assets/data/${name}`;
     const sigUrl = `${RAW_BASE}/${signature.SIG_DIR}/${name}${signature.SIG_SUFFIX}`;
     const text = await fetchText(dataUrl);
@@ -137,7 +165,7 @@ class Catalog {
     return consistent;
   }
 
-  async refresh() {
+  async refresh(): Promise<void> {
     for (const name of DATA_FILES) {
       // through the mirrors: this is the one fetch that has to work before the app can show
       // anything at all, and raw.githubusercontent is not reachable everywhere.
@@ -158,8 +186,8 @@ class Catalog {
     fs.writeFileSync(this.cachePath('meta.json'), JSON.stringify({ fetchedAt: Date.now() }));
   }
 
-  async load({ forceRefresh = false } = {}) {
-    let stale = null;
+  async load({ forceRefresh = false }: { forceRefresh?: boolean } = {}): Promise<CatalogFiles> {
+    let stale: string | null = null;
     if (forceRefresh || !this.hasCache()) {
       try {
         await this.refresh();
@@ -169,13 +197,13 @@ class Catalog {
         // had passed half an hour, when yesterday's list of mods would have done fine. With
         // nothing on disk there is still nothing to show, and that error goes up as before.
         if (!this.hasCache()) throw e;
-        stale = String(e.message || e);
+        stale = e instanceof Error ? e.message : String(e);
       }
     }
-    const out = { fetchedAt: this.cacheInfo().fetchedAt };
+    const out: CatalogFiles = { fetchedAt: this.cacheInfo().fetchedAt };
     if (stale) out.stale = stale;
     for (const name of DATA_FILES) {
-      out[name.replace('.json', '')] = JSON.parse(fs.readFileSync(this.cachePath(name), 'utf-8'));
+      (out as unknown as Record<string, unknown>)[name.replace('.json', '')] = JSON.parse(fs.readFileSync(this.cachePath(name), 'utf-8'));
     }
     normalizeCatalog(out.mods);
     return out;
@@ -187,11 +215,11 @@ class Catalog {
    * day this was written - and it means the old behaviour, not a refusal. A list that has not
    * caught up must never be a reason a mod cannot be installed.
    *
-   * @param {string} categoryId  e.g. "heroes"
-   * @param {string} file        the archive's name in the catalog, e.g. "Bare Brewmaster.zip"
-   * @returns {string|null} sha256 in lower-case hex
+   * @param categoryId  e.g. "heroes"
+   * @param file        the archive's name in the catalog, e.g. "Bare Brewmaster.zip"
+   * @returns sha256 in lower-case hex
    */
-  publishedHash(categoryId, file) {
+  publishedHash(categoryId: string, file: string): string | null {
     if (this.hashes === undefined) {
       try { this.hashes = JSON.parse(fs.readFileSync(this.cachePath(HASH_FILE), 'utf-8')); } catch { this.hashes = null; }
     }
@@ -201,4 +229,3 @@ class Catalog {
   }
 }
 
-module.exports = { Catalog, RAW_BASE, HASH_FILE, normalizeCatalog };

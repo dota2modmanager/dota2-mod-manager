@@ -9,7 +9,7 @@
     "linux": {
       "measured": "2026-09-16",
       "files": {
-        "src/adopt.js": {
+        "src/adopt.ts": {
           "lines": 100
         },
         "src/capture.ts": {
@@ -18,7 +18,7 @@
         "src/catalog-signature.ts": {
           "lines": 100
         },
-        "src/catalog.js": {
+        "src/catalog.ts": {
           "lines": 96.5
         },
         "src/cursors.ts": {
@@ -33,7 +33,7 @@
         "src/file-tx.ts": {
           "lines": 100
         },
-        "src/fingerprints.js": {
+        "src/fingerprints.ts": {
           "lines": 48.6
         },
         "src/game-icons.js": {
@@ -99,10 +99,10 @@
         "src/patcher.js": {
           "lines": 97.2
         },
-        "src/portable-update.js": {
+        "src/portable-update.ts": {
           "lines": 97.8
         },
-        "src/preset-link.js": {
+        "src/preset-link.ts": {
           "lines": 100
         },
         "src/preset-share.js": {
@@ -111,10 +111,10 @@
         "src/presets-service.js": {
           "lines": 13.8
         },
-        "src/remote-config.js": {
+        "src/remote-config.ts": {
           "lines": 100
         },
-        "src/safe-zip.js": {
+        "src/safe-zip.ts": {
           "lines": 100
         },
         "src/schema.js": {
@@ -200,7 +200,7 @@
     "win32": {
       "measured": "2026-09-19",
       "files": {
-        "src/adopt.js": {
+        "src/adopt.ts": {
           "lines": 100
         },
         "src/beta.ts": {
@@ -212,7 +212,7 @@
         "src/catalog-signature.ts": {
           "lines": 100
         },
-        "src/catalog.js": {
+        "src/catalog.ts": {
           "lines": 96.5
         },
         "src/cursors.ts": {
@@ -227,7 +227,7 @@
         "src/file-tx.ts": {
           "lines": 100
         },
-        "src/fingerprints.js": {
+        "src/fingerprints.ts": {
           "lines": 48.6
         },
         "src/game-icons.js": {
@@ -296,10 +296,10 @@
         "src/patcher.js": {
           "lines": 97.7
         },
-        "src/portable-update.js": {
+        "src/portable-update.ts": {
           "lines": 97.8
         },
-        "src/preset-link.js": {
+        "src/preset-link.ts": {
           "lines": 100
         },
         "src/preset-share.js": {
@@ -308,10 +308,10 @@
         "src/presets-service.js": {
           "lines": 13.8
         },
-        "src/remote-config.js": {
+        "src/remote-config.ts": {
           "lines": 100
         },
-        "src/safe-zip.js": {
+        "src/safe-zip.ts": {
           "lines": 100
         },
         "src/schema.js": {

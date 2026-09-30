@@ -1,24 +1,26 @@
 // The one thing that can change how the app behaves without a release, which is exactly why
 // it has to fail open: no file, no network, garbage in the file - everything stays on. A
 // remote switch that fails closed is an outage you cannot fix from the user's side.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const http = require('http');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import http from 'node:http';
+import type { AddressInfo } from 'node:net';
+import crypto from 'node:crypto';
 
-const net = require('../src/net.ts');
-const { createRemoteConfig, normalize, cmpVersion, CONFIG_URL } = require('../src/remote-config.js');
+import * as net from '../src/net.ts';
+import { createRemoteConfig, normalize, cmpVersion, CONFIG_URL, MAX_MIRRORS } from '../src/remote-config.ts';
 
-function userDir(t, contents) {
+function userDir(t: TestContext, contents?: string) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-cfg-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   if (contents != null) fs.writeFileSync(path.join(dir, 'remote-config.json'), contents);
   return dir;
 }
 
-const make = (dir, version = '2.0.0') => createRemoteConfig({ userDataDir: dir, appVersion: () => version });
+const make = (dir: string, version = '2.0.0') => createRemoteConfig({ userDataDir: dir, appVersion: () => version });
 
 test('nothing configured means nothing is off and nobody is told anything', (t) => {
   const cfg = make(userDir(t));
@@ -101,7 +103,7 @@ test('a notice with an until date stops showing after that day', (t) => {
       { id: 'broken', date: '2026-08-21', until: 'soon', en: 'an until that is not a date' },
     ],
   }));
-  const at = (iso) => createRemoteConfig({ userDataDir: dir, appVersion: () => '2.0.0', now: () => Date.parse(iso) });
+  const at = (iso: string) => createRemoteConfig({ userDataDir: dir, appVersion: () => '2.0.0', now: () => Date.parse(iso) });
   assert.deepEqual(at('2026-08-29T23:59:00Z').notices().map((n) => n.id), ['week', 'broken'], 'the last day still counts');
   assert.deepEqual(at('2026-08-30T00:00:01Z').notices().map((n) => n.id), ['broken'], 'the day after, it is gone');
   // like a broken version bound, a broken date never hides a notice
@@ -113,7 +115,7 @@ test('every notice in config/app.json says when it stops showing', () => {
      comes from outlived its week by more than a fortnight. Copies older than the until field
      ignore it, so a notice past its date still has to leave the file; this only makes sure no
      notice is written as permanent by leaving the date off. */
-  const file = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'config', 'app.json'), 'utf8'));
+  const file: { notices?: { id: string; until?: string }[] } = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '..', 'config', 'app.json'), 'utf8'));
   const open = (file.notices || []).filter((n) => !/^\d{4}-\d{2}-\d{2}$/.test(n.until || '')).map((n) => n.id);
   assert.deepEqual(open, [], `notices in config/app.json with no until date: ${open.join(', ')}`);
 });
@@ -131,21 +133,20 @@ test('a fetched file is used and kept; a missing one changes nothing', async (t)
   // The config is signed, so the fixture has to be too. The real private key is not in this
   // repository, which is the point of it, so the test makes a key of its own and tells the
   // module to accept that one instead.
-  const crypto = require('crypto');
   const { privateKey, publicKey } = crypto.generateKeyPairSync('ed25519');
   const signature = crypto.sign(null, Buffer.from(payload), privateKey).toString('base64');
   const pub = publicKey.export({ type: 'spki', format: 'der' }).toString('base64');
   let serve404 = false;
   const server = http.createServer((req, res) => {
     if (serve404) { res.writeHead(404); res.end('no'); return; }
-    const body = req.url.endsWith('.sig') ? signature : payload;
+    const body = (req.url || '').endsWith('.sig') ? signature : payload;
     res.writeHead(200, { 'content-length': Buffer.byteLength(body) });
     res.end(body);
   });
   server.listen(0, '127.0.0.1');
   await new Promise((r) => server.on('listening', r));
   t.after(() => { server.close(); net.setMirrors(null); });
-  const port = server.address().port;
+  const { port } = server.address() as AddressInfo;
   // the signature keeps its own address, or the module would ask for it and be handed the data
   net.setMirrors([{ host: `127.0.0.1:${port}`, map: (u) => `http://127.0.0.1:${port}/config.json${u.endsWith('.sig') ? '.sig' : ''}` }]);
 
@@ -165,7 +166,6 @@ test('a fetched file is used and kept; a missing one changes nothing', async (t)
 /* ---------- another place the archives can be fetched from ---------- */
 
 test('a mirror the file names is taken, and only if it could be a mirror', () => {
-  const { normalize } = require('../src/remote-config.js');
   const good = 'https://gitlab.com/rotten/mirror/-/raw/main/assets/files/';
 
   const out = normalize({
@@ -185,7 +185,6 @@ test('a mirror the file names is taken, and only if it could be a mirror', () =>
 });
 
 test('a mirror with no id of its own is known by its host, and the list has an end', () => {
-  const { normalize, MAX_MIRRORS } = require('../src/remote-config.js');
   const many = Array.from({ length: MAX_MIRRORS + 3 }, (_, i) => ({ base: `https://m${i}.example/files/` }));
 
   const out = normalize({ mirrors: many });
@@ -194,7 +193,6 @@ test('a mirror with no id of its own is known by its host, and the list has an e
 });
 
 test('a file that says nothing about mirrors leaves the built-in chain alone', () => {
-  const { normalize } = require('../src/remote-config.js');
   assert.deepEqual(normalize({}).mirrors, []);
   assert.deepEqual(normalize(null).mirrors, []);
   assert.deepEqual(normalize({ mirrors: 'gitlab' }).mirrors, []);

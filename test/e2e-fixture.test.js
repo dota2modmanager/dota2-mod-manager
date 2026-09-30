@@ -18,7 +18,7 @@ const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
 
 test('the fixture archive is a zip the installer opens, holding one VPK', async () => {
   const { fixtureArchive } = await load();
-  const { openZip } = require('../src/safe-zip.js');
+  const { openZip } = require('../src/safe-zip.ts');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-fixture-'));
   try {
     const file = path.join(tmp, 'mod.zip');

@@ -10,9 +10,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 
 import * as beta from '../src/beta.ts';
-import remoteConfig from '../src/remote-config.js';
-
-const { normalize } = remoteConfig;
+import { normalize } from '../src/remote-config.ts';
 /** The beta block normalize() keeps, as the tests below read it. */
 const betaOf = (raw: unknown) => normalize(raw).beta as { salt: string; ids: string[] } | null;
 

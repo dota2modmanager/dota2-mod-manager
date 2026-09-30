@@ -116,7 +116,7 @@ cannot go: installed copies of the app fetch it from `raw.githubusercontent.com`
 has in `main`. Moving it breaks every copy already on somebody's machine, and no release fixes
 the ones already out there.
 
-*Check:* `src/fingerprints.js`, the `FP_URL` constant.
+*Check:* `src/fingerprints.ts`, the `FP_URL` constant.
 
 ### A quarter of the commits are made by a scheduled job, and they stay
 
@@ -237,14 +237,14 @@ where one `git add` stages the data and the signatures.
 
 `config/app.json` can turn a feature off after a release and put a notice in front of everyone
 who opens the app, and it travels the same public proxies as everything else. It is signed with a
-key of this project's own, pinned in `src/remote-config.js`.
+key of this project's own, pinned in `src/remote-config.ts`.
 
 A copy that does not verify is treated as no file at all, which is what that module already does
 with every other failure. Refusing to start would be the wrong trade: the worst an attacker gets
 from breaking the signature is that the notices stop arriving, and dropping the request achieved
 that already. What they no longer get is to put words on the screen in this project's name.
 
-*Check:* `test/remote-config-signature.test.js`, which fails the build when the committed file
+*Check:* `test/remote-config-signature.test.ts`, which fails the build when the committed file
 and its signature disagree - the failure an unsigned edit would otherwise cause in silence, on
 the day somebody reached for a switch and it did not work.
 
@@ -415,7 +415,7 @@ is never waived.
 
 It went from 3,102 lines to about 1,300 when the IPC handlers moved into `src/ipc-*.js`, and to
 about 1,150 on 2026-09-16, when the cursor rules went to `src/cursors.ts` and everything a freshly
-landed VPK goes through before it counts as a mod went to `src/adopt.js`. What is left is the
+landed VPK goes through before it counts as a mod went to `src/adopt.ts`. What is left is the
 window, the log, auto-update, deep links, the import progress bar, Discord presence and the
 language folder, which is still more than one file's worth of subject.
 

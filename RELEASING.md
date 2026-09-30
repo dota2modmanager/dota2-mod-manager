@@ -156,7 +156,7 @@ CATALOG_KEY=/path/to/config-key.pem npm run rollback -- restore install
 `lift <id>` takes a block out early, `prune` takes out everything past its day, and `sign` signs the
 file as it stands. A key that is not the one the app pins is refused before anything is written,
 because every copy would ignore what it signed. Without `CATALOG_KEY` the tool writes the file and
-says it is unsigned; `test/remote-config-signature.test.js` then fails the pull request, so an
+says it is unsigned; `test/remote-config-signature.test.ts` then fails the pull request, so an
 unsigned file cannot go out.
 
 `config/app.json` and `config/app.json.sig` go in one pull request, merged through the checks. A

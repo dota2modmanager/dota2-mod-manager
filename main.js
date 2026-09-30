@@ -18,27 +18,27 @@ try {
 } catch { /* dev environment without the dependency installed yet */ }
 
 const { Settings } = require('./src/settings.ts');
-const { Catalog } = require('./src/catalog');
+const { Catalog } = require('./src/catalog.ts');
 const { Installer } = require('./src/installer');
 // under one name: main.js has a wrapper of its own called importVpkBuffers
 const importer = require('./src/import');
 const { createCursors } = require('./src/cursors.ts');
-const { createAdopt } = require('./src/adopt');
+const { createAdopt } = require('./src/adopt.ts');
 const { Library } = require('./src/library.ts');
-const { Fingerprints } = require('./src/fingerprints');
-const { SCHEME } = require('./src/preset-link');
+const { Fingerprints } = require('./src/fingerprints.ts');
+const { SCHEME } = require('./src/preset-link.ts');
 const discordAuth = require('./src/discord-auth');
 const { DiscordPresence } = require('./src/discord-presence.ts');
 const { findDotaGamePath, validateGamePath } = require('./src/steam.ts');
 const { createSchemaService } = require('./src/schema-service');
-const { createRemoteConfig } = require('./src/remote-config');
+const { createRemoteConfig } = require('./src/remote-config.ts');
 // the download chain, so a mirror named in that signed file joins it (electron's own `net` is above)
 const { applyMirrors } = require('./src/net.ts');
 const { createToolchain } = require('./src/toolchain');
 const { createGameIcons } = require('./src/game-icons');
 const { createModPreviews } = require('./src/mod-preview');
 const { createModIdentity } = require('./src/mod-id');
-const portableUpdater = require('./src/portable-update');
+const portableUpdater = require('./src/portable-update.ts');
 const { createUpdater } = require('./src/updater.ts');
 const { channelFor } = require('./src/beta.ts');
 const { gameStamp, createPatchWatcher } = require('./src/patch-watch');

@@ -1,7 +1,7 @@
 // Installer engine: download, extract, pak allocation, per-category install/uninstall
 const fs = require('fs');
 const path = require('path');
-const { RAW_BASE } = require('./catalog');
+const { RAW_BASE } = require('./catalog.ts');
 const { listVpkPaths, listVpkPathsFile, listVpkPathCrcs, readVpkIndexFile, readVpkEntries, entryPath, buildVpk, mergeVpkToSingle, splitVpkByHero, combineVpksToFiles, analyzeVpkPaths, describeAnalysis, nameFromAnalysis, subjectHeroes, fingerprintVpk, fingerprintFiles,
   } = require('./vpk');
 const { extractDeltas, deltaTable, crc32 } = require('./schema');
@@ -19,7 +19,7 @@ const GLOBAL_TABLE_RE = new RegExp('^(?:' + [
   '(?:models/heroes|panorama)/\\d{8,}\\.vxml_c"?$',    // <steam id>.vxml_c watermark
 ].join('|') + ')');
 const { ensureLangFolder } = require('./gamelang');
-const { openZip, safeJoin } = require('./safe-zip');
+const { openZip, safeJoin } = require('./safe-zip.ts');
 const { validateGamePath } = require('./steam.ts');
 const { FileTx, copyInto, writeInto } = require('./file-tx.ts');
 const { Overlays, FONTS_SUBDIR, CURSOR_SUBDIR } = require('./overlays');
@@ -141,7 +141,7 @@ class Installer {
     // asks the game which of its own items a path list replaces (src/mod-id.js); optional,
     // because without a game path there is nothing to ask and the path guess still answers
     this.identify = identify || (() => null);
-    // what the catalog says an archive should hash to (src/catalog.js); optional and often
+    // what the catalog says an archive should hash to (src/catalog.ts); optional and often
     // null, which means the download is checked the way it always was
     this.publishedHash = publishedHash || (() => null);
   }
@@ -814,7 +814,7 @@ class Installer {
     for (const en of entries) {
       const rel = entryPath(en);
       // the archive names the file, so the archive could name a path outside the folder;
-      // safeJoin is the same guard foreign zips go through (see src/safe-zip.js)
+      // safeJoin is the same guard foreign zips go through (see src/safe-zip.ts)
       const out = safeJoin(dest, rel);
       fs.mkdirSync(path.dirname(out), { recursive: true });
       const data = en.data.length ? en.data : en.preload;

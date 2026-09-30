@@ -23,7 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
-const { openZip, safeJoin } = require('./safe-zip');
+const { openZip, safeJoin } = require('./safe-zip.ts');
 const { copyInto, writeInto } = require('./file-tx.ts');
 const { t } = require('./i18n.ts');
 

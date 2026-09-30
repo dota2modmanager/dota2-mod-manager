@@ -9,44 +9,46 @@
 // cannot be installed. On the day it was written the list knew 971 of the 992 archives in the
 // catalog, and the 21 it did not know were the newest ones. Refusing those would mean the
 // freshest mods break for everybody until a bot on somebody else's repository catches up.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const http = require('http');
-const crypto = require('crypto');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import http from 'node:http';
+import crypto from 'node:crypto';
+import type { AddressInfo } from 'node:net';
 
-const { Catalog, HASH_FILE } = require('../src/catalog.js');
-const { Installer } = require('../src/installer.js');
+import { Catalog, HASH_FILE } from '../src/catalog.ts';
+import installerJs from '../src/installer.js';
+const { Installer } = installerJs;
 
-function tmpDir(t) {
+function tmpDir(t: TestContext) {
   const dir = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-hash-')));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 
 /** A catalog whose cache already holds the given hash list. */
-function catalogWith(t, hashes) {
+function catalogWith(t: TestContext, hashes: Record<string, unknown> | null) {
   const cat = new Catalog(tmpDir(t));
   if (hashes) fs.writeFileSync(cat.cachePath(HASH_FILE), JSON.stringify(hashes));
   return cat;
 }
 
-const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex');
+const sha256 = (s: string | Buffer) => crypto.createHash('sha256').update(s).digest('hex');
 
 /** Serves one body at any path, so a download can be pointed at known bytes. */
-function serve(t, body) {
+function serve(t: TestContext, body: string | Buffer): Promise<number> {
   const server = http.createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'application/zip', 'content-length': Buffer.byteLength(body) });
     res.end(body);
   });
   server.listen(0, '127.0.0.1');
   t.after(() => server.close());
-  return new Promise((r) => server.on('listening', () => r(server.address().port)));
+  return new Promise((r) => server.on('listening', () => r((server.address() as AddressInfo).port)));
 }
 
-function installer(t, publishedHash) {
+function installer(t: TestContext, publishedHash: (categoryId: string, file: string) => string | null) {
   return new Installer({
     userDataDir: tmpDir(t),
     getGamePath: () => null,

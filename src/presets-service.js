@@ -18,7 +18,7 @@ const { app } = require('electron');
 
 const { Library } = require('./library.ts');
 const { readPresetFile } = require('./preset-share');
-const { decodePresetLink } = require('./preset-link');
+const { decodePresetLink } = require('./preset-link.ts');
 const { t } = require('./i18n.ts');
 
 // The mods of one catalog category. Most categories are a flat array, but some (creeps,

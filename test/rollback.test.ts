@@ -6,21 +6,27 @@
  * the feature off for all of them. So those copies are tested with their own code:
  * test/fixtures/remote-config-2.6.12.js is the module exactly as 2.6.12 shipped it.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const crypto = require('crypto');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-const current = require('../src/remote-config.js');
-const shipped = require('./fixtures/remote-config-2.6.12.js');
-const { verify } = require('../src/catalog-signature.ts');
+import * as current from '../src/remote-config.ts';
+import shipped from './fixtures/remote-config-2.6.12.js';
+import { verify } from '../src/catalog-signature.ts';
+import { isTester } from '../src/beta.ts';
 
 const load = () => import('../tools/rollback.mjs');
 const TODAY = '2026-09-16';
-const EMPTY = { features: {}, notices: [] };
-const at = (day) => () => Date.parse(`${day}T12:00:00Z`);
+/** The config as tools/rollback.mjs writes it, as far as these tests read it back. */
+type Config = {
+  features: Record<string, unknown>; notices: { id: string }[];
+  blocks?: { id: string; feature: string }[]; beta?: { salt: string; ids: string[] }; mirrors?: { id: string }[];
+};
+const EMPTY: Config = { features: {}, notices: [] };
+const at = (day: string) => () => Date.parse(`${day}T12:00:00Z`);
 
 const INSTALL_270 = {
   feature: 'install',
@@ -30,8 +36,15 @@ const INSTALL_270 = {
   ru: 'В 2.7.0 установка на паузе. Обнови до 2.7.1.',
 };
 
+/** What every generation of the module answers, the one 2.6.12 shipped included. */
+type Copy = {
+  feature(name: string, lang?: string): { off: boolean; note: string };
+  notices(lang?: string): { id: string; text: string; level: string }[];
+};
+type Generation = { createRemoteConfig(opts: { userDataDir: string; appVersion: () => string; now: () => number }): Copy };
+
 /** One copy of the app, of one version and one module generation, reading a config it has cached. */
-function copyOf(t, lib, config, version, day = TODAY) {
+function copyOf(t: TestContext, lib: Generation, config: object, version: string, day = TODAY): Copy {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-rollback-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   fs.writeFileSync(path.join(dir, 'remote-config.json'), JSON.stringify(config));
@@ -42,7 +55,7 @@ test('a block switches a feature off for the broken versions and nowhere else', 
   const { addBlock } = await load();
   const { config } = addBlock(EMPTY, { ...INSTALL_270, versions: '2.7.0-2.7.1' }, TODAY);
 
-  for (const [version, off] of [['2.6.13', false], ['2.7.0', true], ['2.7.1', true], ['2.7.2', false]]) {
+  for (const [version, off] of [['2.6.13', false], ['2.7.0', true], ['2.7.1', true], ['2.7.2', false]] as [string, boolean][]) {
     assert.equal(copyOf(t, current, config, version).feature('install').off, off, `install in ${version}`);
   }
   assert.equal(copyOf(t, current, config, '2.7.0').feature('cosmetics').off, false,
@@ -109,9 +122,9 @@ test('lifting a block takes its notice with it and leaves the others', async () 
   const { config: both, id } = addBlock(config, { ...INSTALL_270, feature: 'cosmetics' }, TODAY);
   config = both;
 
-  const lifted = liftBlock(config, id);
-  assert.deepEqual(lifted.blocks.map((b) => b.feature), ['install']);
-  assert.deepEqual(lifted.notices.map((n) => n.id), [lifted.blocks[0].id]);
+  const lifted: Config = liftBlock(config, id);
+  assert.deepEqual(lifted.blocks?.map((b) => b.feature), ['install']);
+  assert.deepEqual(lifted.notices.map((n) => n.id), [lifted.blocks?.[0].id]);
   assert.throws(() => liftBlock(lifted, id), /nothing has the id/);
 });
 
@@ -120,15 +133,15 @@ test('pruning takes out only what is past its day', async () => {
   let config = addBlock(EMPTY, { ...INSTALL_270, until: '2026-09-20' }, TODAY).config;
   config = addBlock(config, { ...INSTALL_270, feature: 'cosmetics', until: '2026-10-20' }, TODAY).config;
 
-  const { config: pruned, gone } = pruneExpired(config, '2026-09-25');
-  assert.deepEqual(pruned.blocks.map((b) => b.feature), ['cosmetics']);
+  const { config: pruned, gone }: { config: Config; gone: unknown[] } = pruneExpired(config, '2026-09-25');
+  assert.deepEqual(pruned.blocks?.map((b) => b.feature), ['cosmetics']);
   assert.equal(pruned.notices.length, 1);
   assert.equal(gone.length, 1);
 });
 
 test('nonsense is refused before anything is written', async () => {
   const { addBlock } = await load();
-  for (const [bad, why] of [
+  const cases: [object, RegExp][] = [
     [{ feature: 'selfDestruct' }, /not a switch/],
     [{ ru: '  ' }, /--en and --ru/],
     [{ until: 'next week' }, /--until must be a day/],
@@ -136,7 +149,8 @@ test('nonsense is refused before anything is written', async () => {
     [{ versions: '2.7.1-2.7.0' }, /comes after/],
     [{ versions: 'latest' }, /--versions must look like/],
     [{ url: 'http://example.com' }, /https/],
-  ]) {
+  ];
+  for (const [bad, why] of cases) {
     assert.throws(() => addBlock(EMPTY, { ...INSTALL_270, ...bad }, TODAY), why, JSON.stringify(bad));
   }
 });
@@ -218,7 +232,6 @@ test('the salt is made once: a second invitation does not throw the first one of
 test('what the tool writes is what the app lets in', async () => {
   // the whole point of the file: hashed here, hashed the same way in src/beta.ts
   const { invite, serialize } = await load();
-  const { isTester } = require('../src/beta.ts');
   const written = JSON.parse(serialize(invite(EMPTY, TESTER).config));
   const read = current.normalize(written).beta;
 
@@ -236,13 +249,13 @@ test('a typo is refused rather than written as somebody who will never match', a
 });
 
 test('the tool stops where the app stops reading', async () => {
-  /* src/remote-config.js keeps the first MAX_TESTERS and drops the rest without a word, so a list
+  /* src/remote-config.ts keeps the first MAX_TESTERS and drops the rest without a word, so a list
      past that point would leave somebody on it who is never offered anything. */
   const { invite } = await load();
   let config = EMPTY;
   for (let i = 0; i < current.MAX_TESTERS; i++) config = invite(config, String(100000000000000000n + BigInt(i))).config;
 
-  assert.equal(config.beta.ids.length, current.MAX_TESTERS);
+  assert.equal((config as Config).beta?.ids.length, current.MAX_TESTERS);
   assert.throws(() => invite(config, '999999999999999999'), /take somebody off/);
 });
 
@@ -288,7 +301,7 @@ test('the tool stops where the app stops reading mirrors', async () => {
   let config = EMPTY;
   for (let i = 0; i < 4; i++) config = addMirror(config, `https://m${i}.example/files/`).config;
 
-  assert.equal(config.mirrors.length, 4);
+  assert.equal((config as Config).mirrors?.length, 4);
   assert.throws(() => addMirror(config, 'https://one-more.example/files/'), /take one out first/);
 });
 
@@ -302,10 +315,10 @@ test('a mirror comes out by its id or by its host, and the last one leaves no ke
     'mirror          other.example: https://other.example/files/',
   ]);
 
-  const byId = dropMirror(config, 'rotten');
-  assert.deepEqual(byId.mirrors.map((m) => m.id), ['other.example']);
+  const byId: Config = dropMirror(config, 'rotten');
+  assert.deepEqual(byId.mirrors?.map((m) => m.id), ['other.example']);
   assert.equal('mirrors' in dropMirror(byId, 'other.example'), false);
-  assert.deepEqual(dropMirror(config, 'gitlab.com').mirrors.map((m) => m.id), ['other.example'],
+  assert.deepEqual((dropMirror(config, 'gitlab.com') as Config).mirrors?.map((m) => m.id), ['other.example'],
     'the host works as well as the id, because the host is what somebody reads off the list');
   assert.throws(() => dropMirror(EMPTY, 'rotten'), /no mirror here/);
 });

@@ -22,7 +22,7 @@ export interface StoredSettings {
   lastSeenVersion: string | null;
   /** the beta switch; it only counts for an account on the signed list (src/beta.ts) */
   betaChannel?: boolean;
-  /** remote notices put away (src/remote-config.js) */
+  /** remote notices put away (src/remote-config.ts) */
   seenNotices?: string[];
   /** which layout of the load order this install was moved to, once (src/slot-zones.js) */
   slotZones?: number;

@@ -1,5 +1,5 @@
 /* A zip written byte by byte, for archives no well-behaved library will write: names with
- * "../" left in them, and headers that lie about sizes. Shared by test/safe-zip.test.js,
+ * "../" left in them, and headers that lie about sizes. Shared by test/safe-zip.test.ts,
  * test/safe-zip-fuzz.test.js and tools/fuzz-parsers.mjs, so all three build the same bytes.
  */
 const zlib = require('zlib');

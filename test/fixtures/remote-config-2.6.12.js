@@ -1,7 +1,7 @@
 /* src/remote-config.js exactly as it shipped in v2.6.12, the last release that reads only
  * `features` and `notices`.
  *
- * Kept so test/rollback.test.js can prove, with the code actually running on people's machines,
+ * Kept so test/rollback.test.ts can prove, with the code actually running on people's machines,
  * that a block written for newer versions switches nothing off in these. An argument from how
  * the old code "should" behave is not proof; running it is. The only change from the tag is the
  * two require paths, pointed back at src/.

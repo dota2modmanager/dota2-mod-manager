@@ -18,7 +18,7 @@ const path = require('path');
 const os = require('os');
 
 const { listVpkPaths, mergeVpkToSingle, findContentRoot, packFolder } = require('./vpk');
-const { openZip, safeJoin } = require('./safe-zip');
+const { openZip, safeJoin } = require('./safe-zip.ts');
 const { FileTx } = require('./file-tx.ts');
 const { MERGE_SIZE_CAP } = require('./installer');
 const { t } = require('./i18n.ts');

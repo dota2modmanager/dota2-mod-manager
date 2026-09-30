@@ -5,10 +5,11 @@
 // The payload is deliberately tiny: short keys, mods as bare arrays, deflate, base64url.
 // Thirty catalog mods land around a thousand characters, which pastes into a Discord
 // message; a .d2mm file stays the answer for anything with imports in it.
-const zlib = require('zlib');
-const { t } = require('./i18n.ts');
+import zlib from 'node:zlib';
+import { t } from './i18n.ts';
 
-const SCHEME = 'd2mm';
+/** The URL scheme the app registers with Windows, so d2mm://preset/... opens it. */
+export const SCHEME = 'd2mm';
 /* The clickable wrapper for a d2mm:// link. Chat clients only linkify http(s), so a bare
  * d2mm:// link sits in Discord as dead text; the web form is a static page that hands the code
  * to the app. The code rides in the FRAGMENT, which browsers never send to a server, so the page
@@ -29,12 +30,19 @@ const MAX_MODS = 500;
 // compact `m` array can carry both kinds — no real categoryId is ever "$cos".
 const COSMETIC_TAG = '$cos';
 
+/** A mod as a link carries it: a catalog mod by name and style, or a cosmetic pick by slot and item. */
+export type LinkMod =
+  | { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null; fp: null }
+  | { kind: 'cosmetic'; slot: string; itemId: string; name: string; effectId: string };
+
+/** What goes into a link: anything with a kind, or a plain catalog mod. */
+type ModIn = { kind?: string; categoryId?: string; name: string; styleLabel?: string | null; slot?: string; itemId?: string | number; effectId?: string };
+
 /**
- * @param {{name: string, author?: string, mods: Array<{kind?, categoryId, name, styleLabel, slot, itemId, effectId}>}} preset
- * @returns {{code: string, web: string, direct: string}} the clickable form and the raw one
+ * @returns the clickable form and the raw one
  */
-function encodePresetLink({ name, author, mods }) {
-  const payload = {
+export function encodePresetLink({ name, author, mods }: { name: string; author?: string; mods: ModIn[] }): { code: string; web: string; direct: string } {
+  const payload: { v: number; n: string; m: unknown[][]; a?: string } = {
     v: 1,
     n: String(name || '').slice(0, 120),
     m: mods.map((m) => (m.kind === 'cosmetic'
@@ -49,32 +57,34 @@ function encodePresetLink({ name, author, mods }) {
 // Pull the code out of whatever got pasted: the web link, the d2mm:// link, or the bare
 // code. Chat clients love to wrap things in spaces, angle brackets and backticks, and
 // Windows hands a clicked link over with a trailing slash.
-function codeFrom(input) {
+function codeFrom(input: unknown): string {
   let s = String(input || '').trim().replace(/^[<`'"]+|[>`'"]+$/g, '').trim();
   if (s.includes('#')) s = s.slice(s.lastIndexOf('#') + 1);          // web form
   else s = s.replace(new RegExp(`^${SCHEME}://preset/`, 'i'), '');   // direct form
   return s.replace(/\/+$/, '').trim();
 }
 
-function decodePresetLink(input) {
+/** A pasted link, in either form, back into a preset: its name, its author and its mods. Throws an
+ * error written for the user when the text is not a link, is damaged, or holds too much. */
+export function decodePresetLink(input: unknown): { name: string; author: string; mods: LinkMod[] } {
   const code = codeFrom(input);
   if (!CODE_RE.test(code)) throw new Error(t('Это не похоже на ссылку на пресет'));
   if (code.length > MAX_CODE) throw new Error(t('Ссылка слишком длинная'));
 
-  let json;
+  let json: string;
   try {
     json = zlib.inflateRawSync(Buffer.from(code, 'base64url'), { maxOutputLength: MAX_JSON }).toString('utf-8');
   } catch {
     throw new Error(t('Ссылка повреждена'));
   }
-  let raw;
+  let raw: { v?: unknown; n?: unknown; a?: unknown; m?: unknown };
   try { raw = JSON.parse(json); } catch { throw new Error(t('Ссылка повреждена')); }
   if (!raw || raw.v !== 1 || !Array.isArray(raw.m)) throw new Error(t('Ссылка повреждена'));
   if (raw.m.length > MAX_MODS) throw new Error(t('Слишком много модов в пресете'));
 
-  const mods = raw.m
-    .filter((e) => Array.isArray(e) && typeof e[0] === 'string' && typeof e[1] === 'string')
-    .map((e) => (e[0] === COSMETIC_TAG
+  const mods = (raw.m as unknown[])
+    .filter((e): e is [string, string, ...unknown[]] => Array.isArray(e) && typeof e[0] === 'string' && typeof e[1] === 'string')
+    .map((e): LinkMod => (e[0] === COSMETIC_TAG
       ? {
         kind: 'cosmetic',
         slot: e[1].slice(0, 60),
@@ -97,4 +107,3 @@ function decodePresetLink(input) {
   };
 }
 
-module.exports = { SCHEME, encodePresetLink, decodePresetLink };

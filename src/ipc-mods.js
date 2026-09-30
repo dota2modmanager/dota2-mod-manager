@@ -11,7 +11,7 @@ const { dialog, ipcMain } = require('electron');
 
 const { t } = require('./i18n.ts');
 const { fetchMirrored } = require('./net.ts');
-const { RAW_BASE } = require('./catalog');
+const { RAW_BASE } = require('./catalog.ts');
 const { createTerrainAges, TAIL_BYTES } = require('./terrain-age.ts');
 const { createNoticeText } = require('./notice-text');
 const zones = require('./slot-zones');

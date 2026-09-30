@@ -16,30 +16,56 @@
  * cursors did: main.js cannot be required by a test, so none of this could be tested where it
  * was, and it decides what a user sees in their library.
  */
-const { t } = require('./i18n.ts');
+import { t } from './i18n.ts';
+import type { Library } from './library.ts';
+import type { LibFile, LibRecord } from './types.ts';
+
+/** What of the installer this asks: a name from the file, what the file is, and the master switch. */
+export interface AdoptInstaller {
+  displayNameForFile(relPath: string): string | null;
+  analyzeRecord(rec: LibRecord): { subjects?: number } | null;
+  masterIsOff(): boolean;
+  setMasterEnabled(on: boolean): unknown;
+}
+
+/** What of the schema service this asks: the item blocks lifted out, and a pack split by hero. */
+export interface AdoptSchema {
+  harvest(rec: LibRecord): { deltas?: number } | null | undefined;
+  split(rec: LibRecord): LibRecord[] | null;
+  refresh(): unknown;
+}
+
+/** One file or set of files the importer put in the game folder, or why it could not. */
+export type ImportResult =
+  | { source?: string; files: LibFile[]; name: string; merged?: number; error?: undefined }
+  | { source: string; error: string; files?: undefined; name?: undefined; merged?: undefined };
+
+/** What a mod is called and filed as, when the caller knows (a catalog mod, a name a sender meant). */
+type Identity = { name: string; categoryId: string; styleLabel: string | null; preview: string | null };
 
 /**
- * @param {object} ctx
- * @param {object} ctx.installer      reads the file to name and analyse it, and the master switch
- * @param {object} ctx.library        the manifest the record is written into
- * @param {object} ctx.schemaService  lifts the item blocks out, and splits a multi-hero pack
+ * @param ctx.installer      reads the file to name and analyse it, and the master switch
+ * @param ctx.library        the manifest the record is written into
+ * @param ctx.schemaService  lifts the item blocks out, and splits a multi-hero pack
  */
-function createAdopt({ installer, library, schemaService }) {
+export function createAdopt({ installer, library, schemaService }: {
+  installer: AdoptInstaller; library: Pick<Library, 'add' | 'find'>; schemaService: AdoptSchema;
+}) {
   /**
    * Everything a VPK that just landed in the game folder needs before it counts as a mod:
    * a name that says what is in it, the item blocks lifted out of it, a split when it turns
    * out to be several heroes in one file, and a match against the catalog fingerprints.
    *
-   * @param {{files: Array, name?: string, fileRef?: string, identity?: object}} input
-   * @returns {{ records: Array<object>, schema: boolean, split: boolean }}
    */
-  function adoptImportedFiles({ files, name, fileRef, identity }) {
+  function adoptImportedFiles({ files, name, fileRef, identity }: {
+    files: LibFile[]; name?: string | null; fileRef?: string | null; identity?: Identity | null;
+  }): { records: LibRecord[]; schema: boolean; split: boolean } {
     const dirRel = (files.find((f) => /_dir\.vpk$/i.test(f.relPath)) || files[0])?.relPath;
     // a name from the file's own content beats "pak42" and beats a sender's slot name; a
     // real identity (a catalog mod, or a name the sender meant) is kept as it is
     const contentName = (dirRel && installer.displayNameForFile(dirRel)) || null;
     const useContentName = !name || /^!?pak\d+(_dir)?$/i.test(name);
-    const base = identity || {
+    const base: Identity = identity || {
       name: (useContentName && contentName) || name || contentName || t('Мод'),
       categoryId: 'imported',
       styleLabel: null,
@@ -54,7 +80,7 @@ function createAdopt({ installer, library, schemaService }) {
 
     // …and they can hold several heroes at once. One mod per hero, each with its own files
     // and its own item blocks, so they can be turned on and off separately.
-    let parts = null;
+    let parts: LibRecord[] | null = null;
     try {
       const fresh = library.find(rec.id) || rec;
       const subjects = (installer.analyzeRecord(fresh) || {}).subjects || 0;
@@ -74,13 +100,13 @@ function createAdopt({ installer, library, schemaService }) {
    * of those in a row is minutes of work, so the loop reports where it is and hands the event
    * loop back between mods - otherwise the window stops pumping messages and Windows calls the
    * app dead while it is busy. */
-  async function registerImportResults(results, onStep) {
-    const imported = [];
+  async function registerImportResults(results: ImportResult[], onStep?: (done: number, total: number) => void) {
+    const imported: { name: string; relPath: string; merged: number; fromSplit?: string }[] = [];
     let needSchema = false;
     let read = 0;
     const toRead = results.filter((r) => !r.error).length;
     for (const r of results) {
-      if (r.error) continue;
+      if (r.error !== undefined) continue;
       const { records, schema, split } = adoptImportedFiles({ files: r.files, name: r.name, fileRef: r.source });
       if (schema) needSchema = true;
       for (const rec of records) {
@@ -93,7 +119,7 @@ function createAdopt({ installer, library, schemaService }) {
       }
       read++;
       if (onStep) onStep(read, toRead);
-      await new Promise((r) => setImmediate(r));
+      await new Promise<void>((r) => setImmediate(r));
     }
     if (imported.length && installer.masterIsOff()) { try { installer.setMasterEnabled(false); } catch { /* noop */ } }
     if (needSchema) schemaService.refresh();
@@ -103,4 +129,3 @@ function createAdopt({ installer, library, schemaService }) {
   return { adoptImportedFiles, registerImportResults };
 }
 
-module.exports = { createAdopt };

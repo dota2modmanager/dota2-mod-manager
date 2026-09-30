@@ -12,26 +12,27 @@
 //
 // What these tests hold down: the fallback happens, the manifest and the binary always come
 // from the same place, and a mirror holding an older release cannot pass it off as the new one.
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const http = require('http');
-const crypto = require('crypto');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import http from 'node:http';
+import crypto from 'node:crypto';
+import type { AddressInfo } from 'node:net';
 
-const { fetchBeside } = require('../src/portable-update.js');
+import { fetchBeside, type Source } from '../src/portable-update.ts';
 
 const BUILD = 'the new build, all 101 MB of it';
-const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex');
+const sha256 = (s: string) => crypto.createHash('sha256').update(s).digest('hex');
 
-function tmpDir(t) {
+function tmpDir(t: TestContext) {
   const dir = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-pm-')));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 
-const manifest = (version, body = BUILD) => [
+const manifest = (version: string, body = BUILD) => [
   `version: ${version}`,
   'file: Dota-2-Mod-Manager-Portable.exe',
   `size: ${Buffer.byteLength(body)}`,
@@ -43,34 +44,35 @@ const manifest = (version, body = BUILD) => [
  * Two publishers on one server. `/github/...` can be told to fail, `/mirror/...` answers, and
  * the log records who was asked for what so a test can prove where a file came from.
  */
-async function publishers(t, { githubDown = false, mirrorVersion = '2.7.0', mirrorBody = BUILD, mirrorSends = null } = {}) {
-  const asked = [];
+async function publishers(t: TestContext, { githubDown = false, mirrorVersion = '2.7.0', mirrorBody = BUILD, mirrorSends = null }: {
+  githubDown?: boolean; mirrorVersion?: string; mirrorBody?: string; mirrorSends?: string | null;
+} = {}) {
+  const asked: string[] = [];
   const server = http.createServer((req, res) => {
-    asked.push(req.url);
-    const down = githubDown && req.url.startsWith('/github/');
+    const url = req.url || '';
+    asked.push(url);
+    const down = githubDown && url.startsWith('/github/');
     if (down) { res.writeHead(503); res.end('no'); return; }
-    if (req.url.endsWith('portable.yml')) {
-      const body = req.url.startsWith('/github/') ? manifest('2.7.0') : manifest(mirrorVersion, mirrorBody);
+    if (url.endsWith('portable.yml')) {
+      const body = url.startsWith('/github/') ? manifest('2.7.0') : manifest(mirrorVersion, mirrorBody);
       res.writeHead(200, { 'content-length': Buffer.byteLength(body) });
       res.end(body);
       return;
     }
-    const body = req.url.startsWith('/github/') ? BUILD : (mirrorSends ?? mirrorBody);
+    const body = url.startsWith('/github/') ? BUILD : (mirrorSends ?? mirrorBody);
     res.writeHead(200, { 'content-length': Buffer.byteLength(body) });
     res.end(body);
   });
   server.listen(0, '127.0.0.1');
   await new Promise((r) => server.on('listening', r));
   t.after(() => server.close());
-  const base = `http://127.0.0.1:${server.address().port}`;
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 
-  return {
-    asked,
-    sources: [
-      { name: 'github', manifest: () => `${base}/github/portable.yml`, asset: (v, f) => `${base}/github/${f}`, trustedOnly: true },
-      { name: 'mirror', manifest: () => `${base}/mirror/portable.yml`, asset: (v, f) => `${base}/mirror/${f}`, trustedOnly: false },
-    ],
-  };
+  const sources: Source[] = [
+    { name: 'github', manifest: () => `${base}/github/portable.yml`, asset: (v, f) => `${base}/github/${f}`, trustedOnly: true },
+    { name: 'mirror', manifest: () => `${base}/mirror/portable.yml`, asset: (v, f) => `${base}/mirror/${f}`, trustedOnly: false },
+  ];
+  return { asked, sources };
 }
 
 test('GitHub answering means the mirror is never asked', async (t) => {

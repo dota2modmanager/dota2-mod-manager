@@ -18,7 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
-const { RAW_BASE } = require('../src/catalog');
+const { RAW_BASE } = require('../src/catalog.ts');
 const { fingerprintVpk, fingerprintFiles, listVpkPaths, analyzeVpkPaths, subjectHeroes } = require('../src/vpk');
 const { jsonLinesFile } = require('./json-lines');
 

@@ -7,11 +7,13 @@
  * the length caps, the inflate-bomb limit, the shape check - exists because the alternative is
  * trusting that.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const zlib = require('zlib');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import zlib from 'node:zlib';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const { SCHEME, encodePresetLink, decodePresetLink } = require('../src/preset-link.js');
+import { SCHEME, encodePresetLink, decodePresetLink, type LinkMod } from '../src/preset-link.ts';
 
 /* The errors are user-facing strings, and src/i18n answers in English unless the app has told
  * it otherwise, which nothing here does. Matched by their English wording rather than by a
@@ -21,7 +23,15 @@ const NOT_A_LINK = /does not look like a preset link/i;
 const DAMAGED = /link is damaged/i;
 const TOO_MANY = /too many mods/i;
 
-const catalogMod = (name, over = {}) => ({ kind: 'catalog', categoryId: 'heroes', name, styleLabel: null, ...over });
+/** The mods of a decoded build as catalog mods, failing the test on any that came back as a cosmetic. */
+function catalogOnly(mods: LinkMod[]) {
+  return mods.map((m) => {
+    assert.ok(m.kind === 'catalog', `a ${m.kind} mod came back where a catalog one was sent`);
+    return m;
+  });
+}
+
+const catalogMod = (name: string, over: { categoryId?: string; styleLabel?: string | null } = {}) => ({ kind: 'catalog', categoryId: 'heroes', name, styleLabel: null, ...over });
 
 test('a build survives the round trip, and comes back in the same order', () => {
   const mods = [
@@ -38,7 +48,7 @@ test('a build survives the round trip, and comes back in the same order', () => 
   const back = decodePresetLink(direct);
   assert.equal(back.name, 'My build');
   assert.equal(back.author, 'misha');
-  assert.deepEqual(back.mods.map((m) => [m.categoryId, m.name, m.styleLabel]), [
+  assert.deepEqual(catalogOnly(back.mods).map((m) => [m.categoryId, m.name, m.styleLabel]), [
     ['heroes', 'Crystal Maiden', null],
     ['heroes', 'Juggernaut', 'Red'],
     ['river', 'River of Blood', null],
@@ -102,7 +112,7 @@ test('something that is not a link says so, rather than throwing something unrea
 });
 
 test('a code of the right shape but the wrong contents is refused', () => {
-  const ofJson = (obj) => zlib.deflateRawSync(Buffer.from(JSON.stringify(obj))).toString('base64url');
+  const ofJson = (obj: unknown) => zlib.deflateRawSync(Buffer.from(JSON.stringify(obj))).toString('base64url');
   assert.throws(() => decodePresetLink('bm90IGRlZmxhdGVk'), DAMAGED, 'not deflate');
   assert.throws(() => decodePresetLink(zlib.deflateRawSync(Buffer.from('{not json')).toString('base64url')), DAMAGED);
   assert.throws(() => decodePresetLink(ofJson({ v: 2, m: [] })), DAMAGED, 'a version we do not know');
@@ -133,9 +143,10 @@ test('long strings are cut rather than carried, however they arrived', () => {
   const back = decodePresetLink(code);
   assert.equal(back.name.length, 120);
   assert.equal(back.author.length, 80);
-  assert.equal(back.mods[0].categoryId.length, 60);
-  assert.equal(back.mods[0].name.length, 300);
-  assert.equal(back.mods[0].styleLabel.length, 300);
+  const [first] = catalogOnly(back.mods);
+  assert.equal(first.categoryId.length, 60);
+  assert.equal(first.name.length, 300);
+  assert.equal(first.styleLabel?.length, 300);
 });
 
 test('entries that are not two strings are dropped, not guessed at', () => {
@@ -167,12 +178,9 @@ test('the shared link points at a page this project actually serves', () => {
   // GitHub is not a shared preset. Three things have to agree or a shared link goes nowhere:
   // the address the app writes, the page in the repository, and the build step that deploys
   // it to that address.
-  const fs = require('fs');
-  const path = require('path');
-  const root = path.join(__dirname, '..');
+  const root = path.join(import.meta.dirname, '..');
 
-  const link = require('../src/preset-link.js');
-  const url = link.encodePresetLink({ name: 'x', mods: [{ categoryId: 'heroes', name: 'A' }] }).web || '';
+  const url = encodePresetLink({ name: 'x', mods: [{ categoryId: 'heroes', name: 'A' }] }).web || '';
   const host = /^https:\/\/([^/]+)\//.exec(url)?.[1];
   assert.ok(host, `no shareable link came back: ${url}`);
 

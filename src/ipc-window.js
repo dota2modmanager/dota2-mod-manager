@@ -26,7 +26,7 @@ function registerWindowIpc({
   ipcMain.handle('win:isMaximized', () => win().isMaximized());
 
   // ----- updates -----
-  // Portable copies cannot install over themselves (see src/portable-update.js). This puts the
+  // Portable copies cannot install over themselves (see src/portable-update.ts). This puts the
   // new build next to the current one and hands back where it landed, so the user closes this
   // window and double-clicks that instead of visiting the site.
   ipcMain.handle('update:fetchPortable', async () => {

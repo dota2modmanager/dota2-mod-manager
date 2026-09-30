@@ -144,7 +144,7 @@ test('a URL that is not on GitHub raw is its own only mirror', () => {
 });
 
 // A proxy hands over bytes claiming they are GitHub's, which is a fair trade for a mod archive
-// and not for a file that says which bytes to trust. src/portable-update.js asks for the portable
+// and not for a file that says which bytes to trust. src/portable-update.ts asks for the portable
 // build's manifest this way: it carries the hash the downloaded exe is checked against.
 test('a file asked for trusted-only goes to GitHub itself or nowhere', () => {
   assert.deepEqual(net.mirrorsFor(RAW_URL, { small: true, trustedOnly: true }), [RAW_URL]);

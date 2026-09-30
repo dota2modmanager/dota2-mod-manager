@@ -9,7 +9,7 @@
  * budget, is written to fuzz-output/ with the seed that produced it, so it can be replayed exactly.
  *
  *   node tools/fuzz-parsers.mjs                        20000 VPK cases from a random seed
- *   node tools/fuzz-parsers.mjs --target zip           the same for the archive door, src/safe-zip.js
+ *   node tools/fuzz-parsers.mjs --target zip           the same for the archive door, src/safe-zip.ts
  *   node tools/fuzz-parsers.mjs --seed 20260916        the same cases every time
  *   node tools/fuzz-parsers.mjs --iterations 500000    a long run
  *
@@ -27,7 +27,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(root, 'fuzz-output');
 
 const { buildVpk, listVpkPaths, listVpkPathCrcs, listVpkEntries } = require('../src/vpk.js');
-const { openZip } = require('../src/safe-zip.js');
+const { openZip } = require('../src/safe-zip.ts');
 const AdmZip = require('adm-zip');
 
 const arg = (name, fallback) => {

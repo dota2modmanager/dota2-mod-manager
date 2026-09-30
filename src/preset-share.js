@@ -13,7 +13,7 @@
 // pattern-checked name, and the caller installs only after showing the user the contents.
 const fs = require('fs');
 const AdmZip = require('adm-zip');
-const { openZip } = require('./safe-zip');
+const { openZip } = require('./safe-zip.ts');
 const { t } = require('./i18n.ts');
 
 const FORMAT = 'dota2-mod-manager/preset';

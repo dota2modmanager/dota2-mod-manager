@@ -22,11 +22,11 @@ app can reach is short and public ([PRIVACY.md](../PRIVACY.md)).
 
 | # | Boundary | What crosses it | Where it is enforced |
 |---|---|---|---|
-| 1 | The network and the app | Catalog data, mod archives, the switches file, one external tool | `src/net.ts`, `src/catalog-signature.ts`, `src/remote-config.js`, `src/toolchain.js` |
-| 2 | Foreign archives and the disk | Zip and VPK contents, file names, paths | `src/safe-zip.js`, `src/vpk.js`, `src/file-tx.ts` |
+| 1 | The network and the app | Catalog data, mod archives, the switches file, one external tool | `src/net.ts`, `src/catalog-signature.ts`, `src/remote-config.ts`, `src/toolchain.js` |
+| 2 | Foreign archives and the disk | Zip and VPK contents, file names, paths | `src/safe-zip.ts`, `src/vpk.js`, `src/file-tx.ts` |
 | 3 | The main process and the window | Every action the UI can ask for | `preload.js` and the `src/ipc-*.js` modules |
 | 4 | The app and the game folder | Mod packs, loose fonts and cursors, one patched text file | `src/installer.js`, `src/overlays.js`, `src/patcher.js` |
-| 5 | The user and everything above | Files they drop, presets from other people | `src/import.js`, `src/preset-share.js`, `src/adopt.js` |
+| 5 | The user and everything above | Files they drop, presets from other people | `src/import.js`, `src/preset-share.js`, `src/adopt.ts` |
 
 Each boundary has one door. That is the design: there is a single place where a foreign zip is
 opened, a single place where a download is fetched, a single place where a mod becomes a record
@@ -51,10 +51,10 @@ disowns is refused.
 *Check:* `test/net.test.ts`, "a mirror serving a stale copy costs that mirror its turn".
 
 **An archive that wants to write somewhere else.** A file name inside a zip is a name, never a
-path. Everything foreign comes through `src/safe-zip.js`, which refuses absolute paths, parent
+path. Everything foreign comes through `src/safe-zip.ts`, which refuses absolute paths, parent
 traversal, links, and sizes that do not fit the budget it was given. A mod's own catalog record
 cannot turn into a path either.
-*Check:* `test/safe-zip.test.js` and `test/safe-zip-fuzz.test.js`, which throws malformed
+*Check:* `test/safe-zip.test.ts` and `test/safe-zip-fuzz.test.js`, which throws malformed
 archives at it rather than only the ones somebody thought of.
 
 **An install that stops half way.** Power cuts, full disks and antivirus locks all land in the
@@ -82,7 +82,7 @@ new version is `config/app.json`: a feature switched off, a notice, the beta lis
 is signed with this project's own key against a key pinned in the app, and a file that does not
 verify is ignored exactly as if it were unreachable. It can only take capability away or point at
 a host whose bytes are checked anyway; it cannot add code.
-*Check:* `test/remote-config-signature.test.js`, `test/remote-config.test.js`.
+*Check:* `test/remote-config-signature.test.ts`, `test/remote-config.test.ts`.
 
 **A release that is not ours.** Each release carries `SHA256SUMS` and a Sigstore provenance
 attestation over that list, signed by the release workflow at the tagged commit, so

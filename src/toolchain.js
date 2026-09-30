@@ -22,7 +22,7 @@
 const fs = require('fs');
 const path = require('path');
 const { downloadFile } = require('./net.ts');
-const { openZip } = require('./safe-zip');
+const { openZip } = require('./safe-zip.ts');
 const { FileTx } = require('./file-tx.ts');
 
 // The only pins there are: what the app was built knowing.
