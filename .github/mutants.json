@@ -708,11 +708,51 @@
     },
     {
       "name": "the portable Download button is handed a version nobody looked up",
-      "file": "src/ipc-window.js",
+      "file": "src/ipc-window.ts",
       "anchor": "ipcMain.handle('update:fetchPortable', async () => {",
       "from": "const version = portableUpdate();",
       "to": "const version = portableUpdate;",
-      "test": "test/ipc-window.test.js"
+      "test": "test/ipc-window.test.ts"
+    },
+    {
+      "name": "the support report asks the toolchain for a function it never had",
+      "file": "src/ipc-diagnostics.ts",
+      "anchor": "toolchain: (() => {",
+      "from": "try { return toolchain.state(); }",
+      "to": "try { return toolchain.installed(); }",
+      "test": "test/ipc-diagnostics.test.ts"
+    },
+    {
+      "name": "combining mods leaves their standalone records in the library",
+      "file": "src/ipc-packs.ts",
+      "anchor": "// standalone mods -> new members (their own deployment is removed)",
+      "from": "        library.removeRecord(r.id);",
+      "to": "",
+      "test": "test/ipc-packs.test.ts"
+    },
+    {
+      "name": "a pack left with no members stays in the list",
+      "file": "src/ipc-packs.ts",
+      "anchor": "ipcMain.handle('packs:removeMember', (e, packId, memberId) => {",
+      "from": "if (!members.length) {",
+      "to": "if (members.length < 0) {",
+      "test": "test/ipc-packs.test.ts"
+    },
+    {
+      "name": "a resolved preset folds the cosmetic picks into the build",
+      "file": "src/ipc-presets.ts",
+      "anchor": "ipcMain.handle('presets:resolve', async (e, id) => {",
+      "from": ".filter((r): r is LibRecord => Library.inPreset(r));",
+      "to": ".filter((r): r is LibRecord => !!r);",
+      "test": "test/ipc-presets.test.ts"
+    },
+    {
+      "name": "picking the Steam folder saves it instead of game inside it",
+      "file": "src/ipc-settings.ts",
+      "anchor": "ipcMain.handle('settings:browseDota', async () => {",
+      "from": "if (!validateGamePath(p) && validateGamePath(path.join(p, 'game'))) p = path.join(p, 'game');",
+      "to": "",
+      "test": "test/ipc-settings.test.ts"
     },
     {
       "name": "the crc32 table is walked one bit off",

@@ -2,18 +2,21 @@
  * the download cache weighs.
  *
  * openExternal is the one with teeth. The renderer can ask for any address, so this is the
- * boundary that decides which ones the system is allowed to be handed. Bodies unchanged.
+ * boundary that decides which ones the system is allowed to be handed.
  */
-const fs = require('fs');
-const path = require('path');
-const { ipcMain, shell } = require('electron');
+import fs from 'node:fs';
+import path from 'node:path';
 
-const { t } = require('./i18n.ts');
+import { t } from './i18n.ts';
+import { electron } from './electron.ts';
+import { errorText } from './error-text.ts';
+import type { AppContext } from './app-context.ts';
 
-/** @param {object} ctx  the services and main-process callbacks these channels use */
-function registerMiscIpc({
+/** Register this module's channels, over the services and callbacks main.js hands it. */
+export function registerMiscIpc({
   installer, library,
-}) {
+}: Pick<AppContext, 'installer' | 'library'>): void {
+  const { ipcMain, shell } = electron();
   ipcMain.handle('misc:openLangFolder', () => {
     try {
       const lang = installer.langFolder();
@@ -21,7 +24,7 @@ function registerMiscIpc({
       shell.openPath(lang);
       return { ok: true };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -54,7 +57,7 @@ function registerMiscIpc({
       if (!known) return { error: t('Инструмент не найден') };
       const dir = path.join(installer.toolsDir, name);
       if (path.dirname(dir) !== path.resolve(installer.toolsDir)) return { error: t('Инструмент не найден') };
-      const findExe = (d) => {
+      const findExe = (d: string): string | null => {
         for (const f of fs.readdirSync(d)) {
           const full = path.join(d, f);
           if (fs.statSync(full).isDirectory()) {
@@ -71,9 +74,7 @@ function registerMiscIpc({
       shell.openPath(exe);
       return { ok: true };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 }
-
-module.exports = { registerMiscIpc };

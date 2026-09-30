@@ -51,31 +51,31 @@
         "src/installer.ts": {
           "lines": 67.7
         },
-        "src/ipc-diagnostics.js": {
+        "src/ipc-diagnostics.ts": {
           "lines": 80.8
         },
-        "src/ipc-game.js": {
+        "src/ipc-game.ts": {
           "lines": 87
         },
-        "src/ipc-library.js": {
+        "src/ipc-library.ts": {
           "lines": 63.8
         },
-        "src/ipc-misc.js": {
+        "src/ipc-misc.ts": {
           "lines": 77.2
         },
-        "src/ipc-mods.js": {
+        "src/ipc-mods.ts": {
           "lines": 56.6
         },
-        "src/ipc-packs.js": {
+        "src/ipc-packs.ts": {
           "lines": 44.5
         },
-        "src/ipc-presets.js": {
+        "src/ipc-presets.ts": {
           "lines": 62.4
         },
-        "src/ipc-settings.js": {
+        "src/ipc-settings.ts": {
           "lines": 89.4
         },
-        "src/ipc-window.js": {
+        "src/ipc-window.ts": {
           "lines": 91.7
         },
         "src/library.ts": {
@@ -237,7 +237,13 @@
           "lines": 100
         },
         "src/diagnostics.ts": {
-          "lines": 87.6
+          "lines": 94.6
+        },
+        "src/electron.ts": {
+          "lines": 100
+        },
+        "src/error-text.ts": {
+          "lines": 100
         },
         "src/feature-gate.ts": {
           "lines": 100
@@ -252,46 +258,64 @@
           "lines": 64.9
         },
         "src/gamelang.ts": {
-          "lines": 99.4
+          "lines": 99.3
         },
         "src/hero-names.ts": {
           "lines": 100
         },
         "src/i18n.ts": {
-          "lines": 98.1
+          "lines": 100
         },
         "src/import.ts": {
           "lines": 93.9
         },
+        "src/installer-downloads.ts": {
+          "lines": 98.6
+        },
+        "src/installer-files.ts": {
+          "lines": 100
+        },
+        "src/installer-folder.ts": {
+          "lines": 97.6
+        },
+        "src/installer-packs.ts": {
+          "lines": 100
+        },
+        "src/installer-repack.ts": {
+          "lines": 77.4
+        },
+        "src/installer-slots.ts": {
+          "lines": 89.6
+        },
         "src/installer.ts": {
-          "lines": 91.9
+          "lines": 98.5
         },
-        "src/ipc-diagnostics.js": {
-          "lines": 82.1
+        "src/ipc-diagnostics.ts": {
+          "lines": 94.2
         },
-        "src/ipc-game.js": {
-          "lines": 87.8
+        "src/ipc-game.ts": {
+          "lines": 87.9
         },
-        "src/ipc-library.js": {
-          "lines": 76.6
+        "src/ipc-library.ts": {
+          "lines": 76.3
         },
-        "src/ipc-misc.js": {
+        "src/ipc-misc.ts": {
+          "lines": 77.5
+        },
+        "src/ipc-mods.ts": {
           "lines": 77.2
         },
-        "src/ipc-mods.js": {
-          "lines": 77.1
+        "src/ipc-packs.ts": {
+          "lines": 92.3
         },
-        "src/ipc-packs.js": {
-          "lines": 44.5
+        "src/ipc-presets.ts": {
+          "lines": 88.4
         },
-        "src/ipc-presets.js": {
-          "lines": 62.4
+        "src/ipc-settings.ts": {
+          "lines": 100
         },
-        "src/ipc-settings.js": {
-          "lines": 91.5
-        },
-        "src/ipc-window.js": {
-          "lines": 94.3
+        "src/ipc-window.ts": {
+          "lines": 94.4
         },
         "src/item-builder.ts": {
           "lines": 98.9
@@ -357,7 +381,7 @@
           "lines": 100
         },
         "src/slot-zones.ts": {
-          "lines": 57.2
+          "lines": 100
         },
         "src/steam.ts": {
           "lines": 53.2

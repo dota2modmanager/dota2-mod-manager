@@ -3,7 +3,7 @@
  * updating the game while it runs, and Steam checking the game's files while the app is open.
  * After each, tools/sim/dota.js asks whether the game would load what the app left.
  *
- * What the app promises (main.js, src/ipc-game.js, src/patch-watch.ts):
+ * What the app promises (main.js, src/ipc-game.ts, src/patch-watch.ts):
  *   - it does not write gameinfo while the game holds it open, and says so;
  *   - an update that lands while the game runs is noticed, the repair waits for the game to
  *     close, and My mods says why the mods are off until then;

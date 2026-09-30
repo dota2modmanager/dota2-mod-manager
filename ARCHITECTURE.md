@@ -357,7 +357,7 @@ that location is not writable.
 | File | What it owns |
 |---|---|
 | `main.js` | Electron lifecycle, window, deep links, auto-update, and wiring the rest together |
-| `src/ipc-*.js` | The IPC handlers, one file per group of channels, each naming what it needs |
+| `src/ipc-*.ts` | The IPC handlers, one file per group of channels, each naming what it needs |
 | `src/feature-gate.ts` | Whether a feature has been switched off from `config/app.json`, asked once |
 | `preload.js` | The `window.api` surface, and nothing else crosses |
 | `src/installer.ts` | Download, slots, install, enable, remove, packs |

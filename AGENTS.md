@@ -17,7 +17,7 @@ webpack, TypeScript compilation or a component library, it is the wrong change.
 main.js            app lifecycle, window, auto-update. Nothing else belongs here
 preload.js         the only bridge the renderer gets. Every channel is listed once
 src/               everything that thinks: installer, vpk, schema, gamelang, catalog…
-src/ipc-*.js       one file per group of channels, each naming what it needs
+src/ipc-*.ts       one file per group of channels, each naming what it needs
 renderer/          the UI. views/ draw screens, ui/ are shared pieces, core/ is state
 test/              node:test, no framework, no mocks library
 tools/             scripts that are not shipped: fingerprints, i18n check, sandbox
@@ -74,7 +74,7 @@ state, and it is the one that catches real bugs.
 Four of them check the project against itself rather than checking code:
 
 - `test/ipc-contract.test.js` — every channel the renderer can call has a handler, every
-  handler is reachable, none registered twice, every `src/ipc-*.js` wired into main.
+  handler is reachable, none registered twice, every `src/ipc-*.ts` wired into main.
 - `test/release-contract.test.js` — the version, both changelogs and what CI reads all agree.
 - `test/coverage.test.ts` — which mod supplies a file when two carry the same path.
 - `tools/check-i18n.js` — no Russian string without an English one.

@@ -3,20 +3,23 @@
  * mod previews, and the Source 2 toolchain.
  *
  * These are the channels that answer "what is the game like right now" rather than "do this to
- * a mod". Bodies unchanged from main.js.
+ * a mod".
  */
-const { ipcMain } = require('electron');
 
-const { t } = require('./i18n.ts');
-const { heroIdFromName } = require('./hero-names.ts');
+import { t } from './i18n.ts';
+import { heroIdFromName } from './hero-names.ts';
+import { electron } from './electron.ts';
+import { errorText } from './error-text.ts';
+import type { AppContext } from './app-context.ts';
 
-/** @param {object} ctx  the services and main-process callbacks these channels use */
-function registerGameIpc({
+/** Register this module's channels, over the services and callbacks main.js hands it. */
+export function registerGameIpc({
   // patchRepair() is read late and written through setPatchRepair: it changes while the app
   // runs, and a value captured at registration would answer for the wrong moment forever.
   blocked, diag, dotaIsRunning, gameIcons, icons, library, modPreviews, remoteConfig,
   repairAfterPatch, schemaService, settings, toolchain, patchRepair, setPatchRepair,
-}) {
+}: Pick<AppContext, 'blocked' | 'diag' | 'dotaIsRunning' | 'gameIcons' | 'icons' | 'library' | 'modPreviews' | 'remoteConfig' | 'repairAfterPatch' | 'schemaService' | 'settings' | 'toolchain' | 'patchRepair' | 'setPatchRepair'>): void {
+  const { ipcMain } = electron();
 
   // A switch is honoured here rather than in the renderer: this is the boundary an old
   // window, a stale screen or a replayed click all have to come through. `blocked` arrives
@@ -66,7 +69,7 @@ function registerGameIpc({
     try {
       return schemaService.setEnabled(!!enabled);
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -91,7 +94,7 @@ function registerGameIpc({
     try {
       return await gameIcons.heroPortraits((Array.isArray(ids) ? ids : []).slice(0, 300));
     } catch (err) {
-      diag('hero portraits failed: ' + err.message);
+      diag('hero portraits failed: ' + errorText(err));
       return {};
     }
   });
@@ -101,12 +104,12 @@ function registerGameIpc({
     try {
       const list = (Array.isArray(names) ? names : []).slice(0, 300).map(String);
       const idOf = new Map(list.map((n) => [n, heroIdFromName(n)]));
-      const got = await gameIcons.heroPortraits([...new Set(idOf.values())].filter(Boolean));
-      const out = {};
-      for (const [n, id] of idOf) if (got[id]) out[n] = got[id];
+      const got = await gameIcons.heroPortraits([...new Set(idOf.values())].filter((id) => id));
+      const out: Record<string, string> = {};
+      for (const [n, id] of idOf) if (id && got[id]) out[n] = got[id];
       return out;
     } catch (err) {
-      diag('hero portraits by name failed: ' + err.message);
+      diag('hero portraits by name failed: ' + errorText(err));
       return {};
     }
   });
@@ -116,26 +119,26 @@ function registerGameIpc({
     const chains = new Map(wanted.map((n) => [n, String(n).split('|').filter(Boolean)]));
     const sources = [...new Set([...chains.values()].flat())];
 
-    const isMod = (s) => s.startsWith(modPreviews.VID) || s.startsWith(modPreviews.ART) || s.startsWith(modPreviews.TEX);
-    const found = {};
+    const isMod = (s: string) => s.startsWith(modPreviews.VID) || s.startsWith(modPreviews.ART) || s.startsWith(modPreviews.TEX);
+    const found: Record<string, string | null> = {};
     try {
       Object.assign(found, await modPreviews.getMany(sources.filter(isMod)));
     } catch (err) {
-      diag('mod previews failed, falling back to the usual pictures: ' + err.message);
+      diag('mod previews failed, falling back to the usual pictures: ' + errorText(err));
     }
     const forIcons = sources.filter((s) => !isMod(s) && !found[s]);
     if (forIcons.length) {
-      let fromGame = {};
+      let fromGame: Record<string, string> = {};
       try {
         fromGame = await gameIcons.getMany(forIcons);
       } catch (err) {
-        diag('game icons failed, falling back to the wiki: ' + err.message);
+        diag('game icons failed, falling back to the wiki: ' + errorText(err));
       }
       const left = forIcons.filter((n) => !fromGame[n]);
       Object.assign(found, left.length ? await icons.getMany(left) : {}, fromGame);
     }
 
-    const pictures = {};
+    const pictures: Record<string, string | null> = {};
     for (const [key, chain] of chains) {
       const hit = chain.find((s) => found[s]);
       if (hit) pictures[key] = found[hit];
@@ -143,7 +146,7 @@ function registerGameIpc({
     // A clip beats everything else a mod can be pictured by, but only the window can open
     // one. So the answer also says where a frame is still worth taking: the tile shows
     // whatever was found meanwhile, and swaps it for the frame when that arrives.
-    const decode = new Set();
+    const decode = new Set<string>();
     for (const [, chain] of chains) {
       const clip = chain.find((s) => s.startsWith(modPreviews.VID));
       if (clip && !found[clip] && modPreviews.hasVideo(clip)) decode.add(clip);
@@ -160,7 +163,7 @@ function registerGameIpc({
       const got = modPreviews.videoBytes(String(key || ''));
       return got ? got.bytes : null;
     } catch (err) {
-      diag('mod preview video failed: ' + err.message);
+      diag('mod preview video failed: ' + errorText(err));
       return null;
     }
   });
@@ -169,7 +172,7 @@ function registerGameIpc({
     try {
       return modPreviews.saveFrame(String(key || ''), Buffer.from(png || []));
     } catch (err) {
-      diag('mod preview frame failed: ' + err.message);
+      diag('mod preview frame failed: ' + errorText(err));
       return null;
     }
   });
@@ -182,7 +185,7 @@ function registerGameIpc({
       await toolchain.ensure(String(name || 'vrf'));
       return { ok: true, tools: toolchain.state() };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -203,7 +206,7 @@ function registerGameIpc({
       const rec = schemaService.pickCosmetic(slot, itemId, itemName, effectId);
       return { ok: true, record: rec };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -214,9 +217,7 @@ function registerGameIpc({
     try {
       return { ok: true, ...schemaService.pickSet(setId) };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 }
-
-module.exports = { registerGameIpc };

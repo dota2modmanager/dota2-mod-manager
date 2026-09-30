@@ -15,6 +15,10 @@
  * module reaches it through another. The list below is that measurement. It may shrink - a
  * module that stops needing Electron should come off it - and it may not grow without somebody
  * editing it and saying why.
+ *
+ * Since 2026-09-30 the ipc-* modules ask for Electron through src/electron.ts, when a channel is
+ * registered rather than when the file loads, so each of them reaches it through that one
+ * neighbour. The chain check below follows it there.
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -26,15 +30,16 @@ const ROOT = path.resolve(__dirname, '..');
 
 const ELECTRON_USERS = [
   'src/discord-auth.ts',
-  'src/ipc-diagnostics.js',
-  'src/ipc-game.js',
-  'src/ipc-library.js',
-  'src/ipc-misc.js',
-  'src/ipc-mods.js',
-  'src/ipc-packs.js',
-  'src/ipc-presets.js',
-  'src/ipc-settings.js',
-  'src/ipc-window.js',
+  'src/electron.ts',
+  'src/ipc-diagnostics.ts',
+  'src/ipc-game.ts',
+  'src/ipc-library.ts',
+  'src/ipc-misc.ts',
+  'src/ipc-mods.ts',
+  'src/ipc-packs.ts',
+  'src/ipc-presets.ts',
+  'src/ipc-settings.ts',
+  'src/ipc-window.ts',
   'src/mod-preview.ts',
   'src/presets-service.ts',
   'src/uninstall-window.ts',
@@ -42,11 +47,17 @@ const ELECTRON_USERS = [
 
 // require('x'), and the ESM forms the TypeScript modules use: import ... from 'x', import('x')
 const REQUIRE = /(?:require\(\s*|\bfrom\s+|\bimport\s*\(\s*|^import\s+)['"]([^'"]+)['"]/gm;
+// Types are erased before the code runs: `import type` and `typeof import('x')` load nothing.
+const TYPE_ONLY = /^import type [^;]+;|typeof import\(\s*['"][^'"]+['"]\s*\)/gm;
+// Electron through a require made by hand (createRequire, src/electron.ts): a call with its name.
+const ELECTRON_CALL = /\(\s*['"]electron['"]\s*\)/;
 
 /** What one file requires: 'electron', or repository-relative paths of local modules. */
 function requiresOf(root, file) {
   const out = [];
-  for (const m of fs.readFileSync(path.join(root, file), 'utf8').matchAll(REQUIRE)) {
+  const text = fs.readFileSync(path.join(root, file), 'utf8').replace(TYPE_ONLY, '');
+  if (ELECTRON_CALL.test(text)) out.push('electron');
+  for (const m of text.matchAll(REQUIRE)) {
     const spec = m[1];
     if (spec === 'electron') { out.push('electron'); continue; }
     if (!spec.startsWith('.')) continue;
@@ -82,9 +93,15 @@ test('the detection finds a chain two modules long, and reports it', () => {
     fs.writeFileSync(path.join(dir, 'src', 'parser.js'), "const { save } = require('./paths');\n");
     fs.writeFileSync(path.join(dir, 'src', 'paths.js'), "const { app } = require('electron');\n");
     fs.writeFileSync(path.join(dir, 'src', 'plain.js'), "const fs = require('fs');\n");
+    // a type names Electron and loads nothing; a require made by hand loads it all the same
+    fs.writeFileSync(path.join(dir, 'src', 'shape.ts'), "import type { BrowserWindow } from 'electron';\nexport type E = typeof import('electron');\n");
+    fs.writeFileSync(path.join(dir, 'src', 'door.ts'), "const load = createRequire(import.meta.url);\nexport const e = () => load('electron');\n");
+    fs.writeFileSync(path.join(dir, 'src', 'user.ts'), "import { e } from './door.ts';\n");
 
     assert.deepEqual(pathToElectron(dir, 'src/parser.js'), ['src/parser.js', 'src/paths.js', 'electron']);
     assert.equal(pathToElectron(dir, 'src/plain.js'), null);
+    assert.equal(pathToElectron(dir, 'src/shape.ts'), null, 'types only');
+    assert.deepEqual(pathToElectron(dir, 'src/user.ts'), ['src/user.ts', 'src/door.ts', 'electron']);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

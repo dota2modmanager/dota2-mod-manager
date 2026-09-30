@@ -14,6 +14,7 @@ import type { Settings } from './settings.ts';
 import type { Library } from './library.ts';
 import type { Catalog } from './catalog.ts';
 import type { Icons } from './icons.ts';
+import type { SchemaState } from './schema-service.ts';
 import type { LibFile, LibRecord } from './types.ts';
 
 /** One thing the report says is wrong, and what to do about it. Two levels on purpose; see findProblems. */
@@ -26,8 +27,8 @@ export interface ReportInstaller {
   slotNumber(rec: LibRecord): number | null;
 }
 
-/** The patch and item-table state, as the schema service reports it. */
-type PatchState = { error?: string; patched?: boolean; schemaNeeded?: boolean; schemaApplied?: boolean; [key: string]: unknown };
+/** The patch and item-table state, as the schema service reports it, or why it could not be read. */
+type PatchState = Partial<SchemaState>;
 
 /** Facts only the main process can answer, handed in so this module stays free of Electron. */
 export interface ReportExtra {
@@ -135,7 +136,7 @@ export function tailLog(file: string, maxBytes: number): string | null {
 export function buildReport({ settings, library, installer, schemaService, catalog, icons, app, extra = {}, home }: {
   settings: Pick<Settings, 'all'>; library: Pick<Library, 'list' | 'listPresets'>; installer: ReportInstaller;
   schemaService: { state(): PatchState }; catalog: Pick<Catalog, 'cacheInfo'>; icons?: Pick<Icons, 'size'> | null;
-  app: { version: string; logFile?: string; userDataDir?: string; updateError?: string }; extra?: ReportExtra; home?: string;
+  app: { version: string; logFile?: string; userDataDir?: string; updateError?: string | null }; extra?: ReportExtra; home?: string;
 }): { report: Report; files: Record<string, string> } {
   const s = settings.all();
   const game = s.dotaGamePath;
@@ -294,7 +295,7 @@ export function buildReport({ settings, library, installer, schemaService, catal
  * carries what to do about it. Severity is only two levels on purpose: something is broken,
  * or something is worth knowing. A third level would just be a place to hide things in.
  */
-export function findProblems(r: Omit<Report, 'problems'>, { app }: { app?: { updateError?: string } } = {}): Problem[] {
+export function findProblems(r: Omit<Report, 'problems'>, { app }: { app?: { updateError?: string | null } } = {}): Problem[] {
   const out: Problem[] = [];
   const add = (level: Problem['level'], what: string, detail: string) => out.push({ level, what, detail });
 
@@ -321,7 +322,9 @@ export function findProblems(r: Omit<Report, 'problems'>, { app }: { app?: { upd
   if (ps.error) add('broken', 'The patch/schema state could not be read', String(ps.error));
   else {
     if (ps.patched === false) add('broken', 'The game is not patched', 'Search paths are untouched, so no mod folder is mounted.');
-    if (ps.schemaNeeded && ps.schemaApplied === false) {
+    /* Mods with item-table edits are on, and the table in the game is missing or older than the
+       one they need. This used to ask for two fields nothing ever set, so it never fired. */
+    if (ps.enabled && ps.mods && (!ps.deployed || ps.stale)) {
       add('note', 'Item-table edits are pending', 'Mods that add effects or icons will show the model only.');
     }
   }

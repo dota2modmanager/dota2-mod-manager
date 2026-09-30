@@ -38,8 +38,10 @@ runs, so the file loaded and every handler registered.
 
 - `src/feature-gate.ts`: the remote switch has one definition, handed to every module that asks
   it, so there is no second copy to leave behind.
-- `eslint.config.js` "no-undef": an undefined name fails `npm run verify` and CI.
-- `test/ipc-contract.test.js` "every handler runs far enough to prove its own names exist":
+- `eslint.config.js` "no-undef": an undefined name in a JavaScript file fails `npm run verify` and CI.
+- `tools/typecheck.mjs`: the same for the TypeScript modules, the IPC handlers among them. A name
+  that is not there does not type-check, and a new type error fails `npm run verify` and CI.
+- `test/ipc-handlers-run.test.ts` "every handler runs far enough to prove its own names exist":
   registers every handler for real and calls it.
 - `test/ipc-contract.test.js` "every ipc module is handed everything it unpacks"
 - `tools/e2e.mjs`: installs, switches off, switches on and removes a mod by clicking, and checks

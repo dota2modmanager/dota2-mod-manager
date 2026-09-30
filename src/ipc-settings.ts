@@ -2,23 +2,24 @@
  *
  * Both settings handlers answer with the whole view rather than the bare store, because the
  * renderer caches whatever it is handed - see src/settings-view.ts for what that cost once.
- * Bodies unchanged from main.js.
  */
-const path = require('path');
-const { dialog, ipcMain } = require('electron');
+import path from 'node:path';
 
-const i18n = require('./i18n.ts');
-const { t } = i18n;
-const { betaState } = require('./beta.ts');
+import { setLang, t } from './i18n.ts';
+import { betaState } from './beta.ts';
+import { electron } from './electron.ts';
+import { errorText } from './error-text.ts';
+import type { AppContext } from './app-context.ts';
 
-/** @param {object} ctx  the services and main-process callbacks these channels use */
-function registerSettingsIpc({
+/** Register this module's channels, over the services and callbacks main.js hands it. */
+export function registerSettingsIpc({
   // The four read late are main-process state that changes while the app runs; setPresenceView
   // writes one back. Passing values here would freeze them at registration time.
   applyPresenceSetting, catalog, discordAuth, findDotaGamePath, library, moveLangFolder,
   presence, refreshPresence, remoteConfig, settings, settingsView, validateGamePath,
   langFolder, patchWatcher, setPresenceView, updater, win,
-}) {
+}: Pick<AppContext, 'applyPresenceSetting' | 'catalog' | 'discordAuth' | 'findDotaGamePath' | 'library' | 'moveLangFolder' | 'presence' | 'refreshPresence' | 'remoteConfig' | 'settings' | 'settingsView' | 'validateGamePath' | 'langFolder' | 'patchWatcher' | 'setPresenceView' | 'updater' | 'win'>): void {
+  const { dialog, ipcMain } = electron();
   /* The beta channel, from the switch in settings and the list in the signed config.
    *
    * Read rather than remembered: an account taken off the list, or signed out of Discord, is back
@@ -45,7 +46,7 @@ function registerSettingsIpc({
 
   ipcMain.handle('settings:set', (e, key, value) => {
     // keep main-process strings (dialogs, errors) in sync with the UI language
-    if (key === 'uiLang') i18n.setLang(value);
+    if (key === 'uiLang') setLang(value);
     settings.set(key, value);
     // the status text is localized, so a language change has to redraw it too
     if (key === 'discordPresence' || key === 'uiLang') applyPresenceSetting();
@@ -64,10 +65,11 @@ function registerSettingsIpc({
     try {
       const account = await discordAuth.signIn();
       settings.set('account', account);
-      if (win() && !win().isDestroyed()) { win().show(); win().focus(); }
+      const w = win();
+      if (!w.isDestroyed()) { w.show(); w.focus(); }
       return { ok: true, account };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -121,9 +123,7 @@ function registerSettingsIpc({
          could not open a socket, and printing that at somebody who turned their wifi off is
          the same as printing nothing. src/net.ts marks a failure to connect; the screen turns
          that into a sentence and keeps the technical half for the diagnostics report. */
-      return { error: String(err.message || err), offline: !!err.offline };
+      return { error: errorText(err), offline: !!(err as { offline?: boolean }).offline };
     }
   });
 }
-
-module.exports = { registerSettingsIpc };

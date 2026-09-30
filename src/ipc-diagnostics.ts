@@ -8,38 +8,25 @@
  * MM_DIAG_OUT writes the archive straight to a path instead of asking, because a report that
  * can only be produced by a human clicking through a save dialog is a report nobody checks
  * after changing it.
- *
- * Bodies unchanged from main.js.
  */
-const fs = require('fs');
-const AdmZip = require('adm-zip');
-const { app, BrowserWindow, dialog, ipcMain, screen, shell } = require('electron');
+import fs from 'node:fs';
+import AdmZip from 'adm-zip';
 
-const { t } = require('./i18n.ts');
-const { buildReport, renderSummary, renderDetailed } = require('./diagnostics.ts');
+import { t } from './i18n.ts';
+import { buildReport, renderSummary, renderDetailed } from './diagnostics.ts';
+import { electron } from './electron.ts';
+import { errorText } from './error-text.ts';
+import type { AppContext } from './app-context.ts';
 
-/**
- * @param {object} ctx  everything the report asks about, read late where it changes
- * @param {any} ctx.autoUpdater       electron-updater, for the channel and the feed
- * @param {any} ctx.catalog
- * @param {(msg: string) => void} ctx.diag
- * @param {() => Promise<boolean>} ctx.dotaIsRunning
- * @param {any} ctx.icons
- * @param {any} ctx.installer
- * @param {any} ctx.library
- * @param {() => string|null} ctx.logFile
- * @param {any} ctx.remoteConfig
- * @param {any} ctx.schemaService
- * @param {any} ctx.settings
- * @param {any} ctx.toolchain
- * @param {() => Electron.BrowserWindow} ctx.win
- * @param {() => Array<{ at: string, text: string }>} ctx.rendererErrors  what the window reported, newest last
- * @param {() => string|null} ctx.lastUpdateError
- */
-function registerDiagnosticsIpc({
+/** One graphics device as Chromium lists it under getGPUInfo("basic"). */
+type GpuDevice = { active?: boolean; vendorId?: number; deviceId?: number; driverVendor?: string; driverVersion?: string };
+
+/** Register this module's channels, over the services and callbacks main.js hands it. */
+export function registerDiagnosticsIpc({
   autoUpdater, catalog, diag, dotaIsRunning, icons, installer, library, logFile, remoteConfig,
   schemaService, settings, toolchain, win, rendererErrors, lastUpdateError,
-}) {
+}: Pick<AppContext, 'autoUpdater' | 'catalog' | 'diag' | 'dotaIsRunning' | 'icons' | 'installer' | 'library' | 'logFile' | 'remoteConfig' | 'schemaService' | 'settings' | 'toolchain' | 'win' | 'rendererErrors' | 'lastUpdateError'>): void {
+  const { app, BrowserWindow, dialog, ipcMain, screen, shell } = electron();
   // fire-and-forget: a renderer crash it can't recover from still lands in the log a support
   // report is built from, instead of vanishing with the window
   ipcMain.on('diag:rendererError', (e, msg) => {
@@ -101,7 +88,7 @@ function registerDiagnosticsIpc({
                 workArea: d.workArea,
                 scaleFactor: d.scaleFactor,
               }));
-            } catch (err) { return { error: String(err.message || err) }; }
+            } catch (err) { return { error: errorText(err) }; }
           })(),
           // The UI scale is not gathered here: the report already carries it under settings,
           // and a second copy under extra was one more field for buildReport to drop.
@@ -113,7 +100,7 @@ function registerDiagnosticsIpc({
            * had no way to answer it. */
           gpu: await (async () => {
             try {
-              const info = /** @type {{ gpuDevice?: any[] }} */ (await app.getGPUInfo('basic'));
+              const info = await app.getGPUInfo('basic') as { gpuDevice?: GpuDevice[] };
               return {
                 featureStatus: app.getGPUFeatureStatus(),
                 devices: (info.gpuDevice || []).map((d) => ({
@@ -121,7 +108,7 @@ function registerDiagnosticsIpc({
                   driverVendor: d.driverVendor, driverVersion: d.driverVersion,
                 })),
               };
-            } catch (err) { return { error: String(err.message || err) }; }
+            } catch (err) { return { error: errorText(err) }; }
           })(),
           updater: { available: !!autoUpdater, lastError: lastUpdateError() },
           remoteConfig: (() => {
@@ -131,10 +118,12 @@ function registerDiagnosticsIpc({
                 switches: Object.fromEntries(remoteConfig.SWITCHABLE.map((k) => [k, remoteConfig.feature(k)])),
                 notices: remoteConfig.notices(settings.get('uiLang') || 'en').length,
               };
-            } catch (err) { return { error: String(err.message || err) }; }
+            } catch (err) { return { error: errorText(err) }; }
           })(),
           toolchain: (() => {
-            try { return toolchain.installed(); } catch (err) { return { error: String(err.message || err) }; }
+            // state(), not installed(): the toolchain never had an installed(), and this section
+            // of every report said so instead of saying what was on disk
+            try { return toolchain.state(); } catch (err) { return { error: errorText(err) }; }
           })(),
         },
       });
@@ -160,9 +149,7 @@ function registerDiagnosticsIpc({
       if (!process.env.MM_DIAG_OUT) shell.showItemInFolder(res.filePath);
       return { ok: true, path: res.filePath };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 }
-
-module.exports = { registerDiagnosticsIpc };

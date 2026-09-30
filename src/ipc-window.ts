@@ -1,18 +1,21 @@
 /* The window and the build: the title bar's three buttons, the update channels, the release
  * notes and the content zoom.
  *
- * Nothing here touches the game folder or the catalog. Bodies unchanged from main.js.
+ * Nothing here touches the game folder or the catalog.
  */
-const path = require('path');
-const { app, ipcMain, shell } = require('electron');
+import path from 'node:path';
 
-const { t } = require('./i18n.ts');
+import { t } from './i18n.ts';
+import { electron } from './electron.ts';
+import { errorText } from './error-text.ts';
+import type { AppContext } from './app-context.ts';
 
-/** @param {object} ctx  the services and main-process callbacks these channels use */
-function registerWindowIpc({
+/** Register this module's channels, over the services and callbacks main.js hands it. */
+export function registerWindowIpc({
   IS_PORTABLE, autoUpdater, clampZoom, diag, portableUpdate, portableUpdater,
   releaseNotes, sendProgress, settings, win,
-}) {
+}: Pick<AppContext, 'IS_PORTABLE' | 'autoUpdater' | 'clampZoom' | 'diag' | 'portableUpdate' | 'portableUpdater' | 'releaseNotes' | 'sendProgress' | 'settings' | 'win'>): void {
+  const { app, ipcMain, shell } = electron();
   // `win` arrives as a getter, not as the window. These are registered before the window
   // is created, so a value captured here would be undefined forever - which is exactly
   // what win:isMaximized did on the first run after this file was split out.
@@ -45,8 +48,8 @@ function registerWindowIpc({
       diag(`portable update fetched: ${got.name}`);
       return { ok: true, name: got.name, path: got.path, already: !!got.already };
     } catch (err) {
-      sendProgress({ type: 'error', label: `v${version}`, message: String(err.message || err) });
-      return { error: String(err.message || err) };
+      sendProgress({ type: 'error', label: `v${version}`, message: errorText(err) });
+      return { error: errorText(err) };
     }
   });
 
@@ -84,5 +87,3 @@ function registerWindowIpc({
     return { ok: true, uiScale: z };
   });
 }
-
-module.exports = { registerWindowIpc };

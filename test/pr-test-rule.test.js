@@ -13,7 +13,7 @@ test('a fix that changes no test is refused, with what to do about it', async ()
   const r = judge({
     title: 'Fix the install handler after the IPC split',
     commits: [{ message: 'Fix the install handler after the IPC split' }],
-    files: ['src/ipc-mods.js'],
+    files: ['src/ipc-mods.ts'],
   });
   assert.equal(r.ok, false);
   assert.match(r.reason, /nothing under test\/ changed/);
@@ -25,7 +25,7 @@ test('the same fix with its test passes', async () => {
   const r = judge({
     title: 'Fix the install handler after the IPC split',
     commits: [{ message: 'Fix the install handler after the IPC split' }],
-    files: ['src/ipc-mods.js', 'test/ipc-contract.test.js'],
+    files: ['src/ipc-mods.ts', 'test/ipc-contract.test.js'],
   });
   assert.equal(r.ok, true);
 });

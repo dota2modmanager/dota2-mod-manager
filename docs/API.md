@@ -14,6 +14,7 @@ the code, not in this page.
 | Module | What it owns |
 |---|---|
 | [`src/adopt.ts`](#srcadoptts) | What a VPK has to go through before it counts as a mod. |
+| [`src/app-context.ts`](#srcapp-contextts) | Everything the running app hands its IPC modules: the services main.js builds at start, and the |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
@@ -22,6 +23,8 @@ the code, not in this page.
 | [`src/diagnostics.ts`](#srcdiagnosticsts) | A support report a user can send instead of a round of screenshots: Dota's own path and |
 | [`src/discord-auth.ts`](#srcdiscord-authts) | Sign in with Discord, without a server of our own. |
 | [`src/discord-presence.ts`](#srcdiscord-presencets) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
+| [`src/electron.ts`](#srcelectronts) | Electron's main-process API, asked for at the moment it is used. |
+| [`src/error-text.ts`](#srcerror-textts) | What a caught error says, as one line of text. |
 | [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
 | [`src/file-tx.ts`](#srcfile-txts) | All of it, or none of it. |
 | [`src/fingerprints.ts`](#srcfingerprintsts) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
@@ -126,6 +129,40 @@ export function createAdopt({ installer, library, schemaService }: { installer: 
 @param ctx.library        the manifest the record is written into
 @param ctx.schemaService  lifts the item blocks out, and splits a multi-hero pack
 ```
+
+## src/app-context.ts
+
+Everything the running app hands its IPC modules: the services main.js builds at start, and the
+callbacks over its own state.
+
+Each src/ipc-*.ts takes a Pick of this, so what a module can reach is written at the top of it.
+Anything main.js keeps changing while the app runs (the window, the patch watcher, the updater,
+the folder mods go into) is handed over as a function and read when it is needed: a value would
+be the one the app had at registration, and answer for the wrong moment from then on.
+
+### `AppProgress`
+
+```ts
+export type AppProgress =
+```
+
+Every kind of event the bar at the bottom of the window is sent.
+
+### `PatchRepair`
+
+```ts
+export type PatchRepair =
+```
+
+What the app did about the last Dota patch, shown as a banner in My mods.
+
+### `AppContext`
+
+```ts
+export interface AppContext
+```
+
+_No description in the source._
 
 ## src/beta.ts
 
@@ -527,7 +564,7 @@ The last `maxBytes` of a log file, or null when it cannot be read.
 ### `buildReport`
 
 ```ts
-export function buildReport({ settings, library, installer, schemaService, catalog, icons, app, extra = {}, home }: { settings: Pick<Settings, 'all'>; library: Pick<Library, 'list' | 'listPresets'>; installer: ReportInstaller; schemaService: { state(): PatchState }; catalog: Pick<Catalog, 'cacheInfo'>; icons?: Pick<Icons, 'size'> | null; app: { version: string; logFile?: string; userDataDir?: string; updateError?: string }; extra?: ReportExtra; home?: string; }): { report: Report; files: Record<string, string> }
+export function buildReport({ settings, library, installer, schemaService, catalog, icons, app, extra = {}, home }: { settings: Pick<Settings, 'all'>; library: Pick<Library, 'list' | 'listPresets'>; installer: ReportInstaller; schemaService: { state(): PatchState }; catalog: Pick<Catalog, 'cacheInfo'>; icons?: Pick<Icons, 'size'> | null; app: { version: string; logFile?: string; userDataDir?: string; updateError?: string | null }; extra?: ReportExtra; home?: string; }): { report: Report; files: Record<string, string> }
 ```
 
 Everything a support report carries, gathered from the running services.
@@ -544,7 +581,7 @@ files: extra plain-text files to include verbatim, keyed by name inside the zip
 ### `findProblems`
 
 ```ts
-export function findProblems(r: Omit<Report, 'problems'>, { app }: { app?: { updateError?: string } } = {}): Problem[]
+export function findProblems(r: Omit<Report, 'problems'>, { app }: { app?: { updateError?: string | null } } = {}): Problem[]
 ```
 
 ---------- what is wrong, said out loud ----------
@@ -675,6 +712,41 @@ export class DiscordPresence
 ```
 
 _No description in the source._
+
+## src/electron.ts
+
+Electron's main-process API, asked for at the moment it is used.
+
+A module that imported electron at its top would take whatever it got the first time it was
+loaded, and an ES module is loaded once. The tests stand a small fake Electron under the IPC
+modules (test/load-order.test.js); read at load, every test after the first would register
+its channels into the first test's fake. Asked for through require on each use, it is whatever
+is standing there now: the real one in the app, the fake in a test, and under plain node, where
+the electron package is only a path to the binary, nothing that anything here calls.
+
+### `electron`
+
+```ts
+export function electron(): typeof import('electron')
+```
+
+The electron module, as it stands when this is called.
+
+## src/error-text.ts
+
+What a caught error says, as one line of text.
+
+A catch block gets `unknown`: usually an Error, sometimes a string somebody threw, now and then
+nothing at all. Every IPC answer and log line that reports a failure wants the same thing out of
+it, the message when there is one and the thrown value itself when there is not.
+
+### `errorText`
+
+```ts
+export function errorText(err: unknown): string
+```
+
+The error's message, or the thrown value as text when it carries none.
 
 ## src/feature-gate.ts
 

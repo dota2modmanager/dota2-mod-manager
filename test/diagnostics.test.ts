@@ -28,7 +28,7 @@ const healthy = (): Report => ({
     activeVoiceInstalled: true,
     minifyDetected: false,
   },
-  patchAndSchema: { patched: true, schemaNeeded: false, schemaApplied: true },
+  patchAndSchema: { patched: true, enabled: true, mods: 2, deployed: true, stale: false },
   mirrors: [{ host: 'raw.githubusercontent.com', fails: 0, standingDownFor: 0 }],
   library: { totalRecords: 14, enabled: 14, disabled: 0, packs: 0, withSchemaEdits: 0, presets: 1, fileOverlaps: 0, byCategory: { heroes: 11 } },
   catalogCache: { fetchedAt: null },
@@ -67,6 +67,19 @@ test('an unpatched game is broken', () => {
   const r = healthy();
   r.patchAndSchema = { ...r.patchAndSchema, patched: false };
   assert.ok(findProblems(r).some((x) => x.level === 'broken' && /not patched/i.test(x.what)));
+});
+
+test('item-table edits the game does not have yet are a note', () => {
+  const pending = (patch: object) => {
+    const r = healthy();
+    r.patchAndSchema = { ...r.patchAndSchema, ...patch };
+    return findProblems(r).filter((x) => /Item-table/.test(x.what));
+  };
+  assert.deepEqual(pending({}), [], 'the table is in the game and current');
+  assert.equal(pending({ deployed: false })[0]?.level, 'note', 'never written');
+  assert.equal(pending({ stale: true }).length, 1, 'written for an older set of mods');
+  assert.deepEqual(pending({ deployed: false, mods: 0 }), [], 'no mod needs it');
+  assert.deepEqual(pending({ deployed: false, enabled: false }), [], 'the user turned item-table edits off');
 });
 
 test('mods left in another language folder are a note, not a failure', () => {
@@ -181,7 +194,7 @@ test('diagnostic report does not expose the account name', () => {
  */
 test('every field the main process gathers for the report is copied into it', () => {
   const read = (rel: string) => fs.readFileSync(path.join(import.meta.dirname, '..', rel), 'utf8');
-  const gatherer = read('src/ipc-diagnostics.js');
+  const gatherer = read('src/ipc-diagnostics.ts');
   const builder = read('src/diagnostics.ts');
 
   const at = gatherer.indexOf('extra: {');

@@ -5,36 +5,27 @@
  * preset domain - what a preset is, how it travels, and how the screen reaches it - is three
  * files that name each other, instead of two of them being buried a thousand lines apart in
  * the file that starts the window.
- *
- * The bodies are unchanged from where they were.
  */
-const fs = require('fs');
-const { app, dialog, ipcMain } = require('electron');
+import fs from 'node:fs';
 
-const { Library } = require('./library.ts');
-const { readPresetFile, writePresetFile } = require('./preset-share.ts');
-const { encodePresetLink } = require('./preset-link.ts');
-const { installVpkBuffer } = require('./import.ts');
-const { t } = require('./i18n.ts');
+import { Library } from './library.ts';
+import { readPresetFile, writePresetFile } from './preset-share.ts';
+import { encodePresetLink } from './preset-link.ts';
+import { installVpkBuffer } from './import.ts';
+import { t } from './i18n.ts';
+import { electron } from './electron.ts';
+import { errorText } from './error-text.ts';
+import type { AppContext } from './app-context.ts';
+import type { CatalogIndex, ShareEntry } from './presets-service.ts';
+import type { EntryToWrite } from './preset-share.ts';
+import type { LibRecord, ModIdentity, PresetEntry } from './types.ts';
 
-/**
- * @param {object} ctx  the app's services and the few main-process callbacks these need
- * @param {() => Electron.BrowserWindow} ctx.win  read late; see the note below
- * @param {object} ctx.settings
- * @param {object} ctx.catalog
- * @param {object} ctx.installer
- * @param {object} ctx.library
- * @param {object} ctx.schemaService
- * @param {object} ctx.presets  from presetsService()
- * @param {Function} ctx.adoptImportedFiles
- * @param {Function} ctx.afterDeployMaster
- * @param {Function} ctx.disableOtherCursors
- * @param {Function} ctx.sendProgress
- */
-function registerPresetsIpc({
+/** Register this module's channels, over the services and callbacks main.js hands it. */
+export function registerPresetsIpc({
   win, settings, catalog, installer, library, schemaService, presets,
   adoptImportedFiles, afterDeployMaster, disableOtherCursors, sendProgress,
-}) {
+}: Pick<AppContext, 'win' | 'settings' | 'catalog' | 'installer' | 'library' | 'schemaService' | 'presets' | 'adoptImportedFiles' | 'afterDeployMaster' | 'disableOtherCursors' | 'sendProgress'>): void {
+  const { app, dialog, ipcMain } = electron();
   // `win` arrives as a getter, not as the window. These are registered before the window
   // is created, so a value captured here would be undefined forever - which is exactly
   // what win:isMaximized did on the first run after this file was split out.
@@ -45,11 +36,16 @@ function registerPresetsIpc({
    * A received preset being installed and an own preset whose mods have gone both need this,
    * and it was written once, inside the first of them. Two copies of "install from the
    * catalog" is how one of them ends up without the rule that only one cursor set is live. */
-  async function installFromCatalog({ categoryId, name, styleLabel }, cat, errors) {
+  async function installFromCatalog(
+    { categoryId, name, styleLabel }: Pick<ModIdentity, 'categoryId' | 'name' | 'styleLabel'>,
+    cat: CatalogIndex,
+    errors: string[],
+  ): Promise<LibRecord | null> {
     const have = library.findByKey(categoryId, name, styleLabel);
     if (have) return have;
     const hit = cat.lookup(categoryId, name, styleLabel);
-    if (!hit) { errors.push(`${name}: ${t('нет в каталоге')}`); return null; }
+    // an entry with no file to fetch is as good as absent, and saying so beats a download of "undefined"
+    if (!hit?.fileRef) { errors.push(`${name}: ${t('нет в каталоге')}`); return null; }
     if (hit.categoryId === 'cursors') disableOtherCursors(null); // one cursor at a time
     const files = await installer.install({ categoryId: hit.categoryId, modName: hit.name, fileRef: hit.fileRef });
     const rec = library.add({
@@ -74,7 +70,7 @@ function registerPresetsIpc({
       const members = library.presetMembers(p);
       return {
         ...p,
-        modIds: members.filter((m) => m.rec).map((m) => m.rec.id),
+        modIds: members.flatMap((m) => (m.rec ? [m.rec.id] : [])),
         absent: members.filter((m) => !m.rec).map((m) => m.identity),
         link: { count: mods.length, skipped },
       };
@@ -117,8 +113,8 @@ function registerPresetsIpc({
     const preset = library.getPreset(id);
     if (!preset) return { error: t('Пресет не найден') };
     const absent = library.presetMembers(preset).filter((m) => !m.rec).map((m) => m.identity);
-    const missing = [];
-    const errors = [];
+    const missing: string[] = [];
+    const errors: string[] = [];
     let installed = 0;
     if (absent.length) {
       const cat = await presets.catalogIndex();
@@ -128,7 +124,7 @@ function registerPresetsIpc({
           sendProgress({ type: 'stage', label: identity.name, stage: t('установка') });
           if (await installFromCatalog(identity, cat, errors)) installed++;
         } catch (err) {
-          errors.push(`${identity.name}: ${String(err.message || err)}`);
+          errors.push(`${identity.name}: ${errorText(err)}`);
         }
       }
     }
@@ -151,7 +147,7 @@ function registerPresetsIpc({
     try {
       return { name: preset.name, entries: presets.planShape(await presets.presetShareEntries(preset)) };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -169,11 +165,11 @@ function registerPresetsIpc({
       const skip = new Set((opts && opts.skip) || []);
       sendProgress({ type: 'stage', label: preset.name, stage: t('сборка пресета') });
       // pull the bytes only now, and only for what the user kept ticked
-      const prep = (entry, key) => {
+      const prep = (entry: ShareEntry, key: string): EntryToWrite => {
         if (entry.kind === 'pack') return { ...entry, members: entry.members.map((m, j) => prep(m, `${key}.${j}`)) };
-        const { loadData, ...rest } = entry;
-        if (entry.kind !== 'embedded') return rest;
+        if (entry.kind !== 'embedded') return entry;
         if (skip.has(key)) return { kind: 'missing', name: entry.name, reason: t('отправитель не вложил файл') };
+        const { loadData, ...rest } = entry;
         return { ...rest, data: loadData() };
       };
       const entries = (await presets.presetShareEntries(preset)).map((entry, i) => prep(entry, String(i)));
@@ -187,8 +183,8 @@ function registerPresetsIpc({
       sendProgress({ type: 'done', label: preset.name });
       return { ok: true, path: written.path, size: written.size };
     } catch (err) {
-      sendProgress({ type: 'error', label: preset.name, message: String(err.message || err) });
-      return { error: String(err.message || err) };
+      sendProgress({ type: 'error', label: preset.name, message: errorText(err) });
+      return { error: errorText(err) };
     }
   });
 
@@ -199,10 +195,10 @@ function registerPresetsIpc({
       const { mods, skipped } = presets.presetLinkMods(preset, await presets.catalogIndex());
       if (!mods.length) return { error: t('В пресете только свои моды — ссылка их не донесёт, отправь файлом') };
       const account = settings.get('account');
-      const link = encodePresetLink({ name: preset.name, author: account && account.username, mods });
+      const link = encodePresetLink({ name: preset.name, author: account?.username, mods });
       return { ok: true, ...link, count: mods.length, skipped };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -224,23 +220,24 @@ function registerPresetsIpc({
     const stash = preset.source && preset.source.file;
     let bundle = null;
     if (stash && fs.existsSync(stash)) {
-      try { bundle = readPresetFile(stash); } catch (err) { return { error: String(err.message || err) }; }
+      try { bundle = readPresetFile(stash); } catch (err) { return { error: errorText(err) }; }
     }
     const cat = await presets.catalogIndex();
     const fpIndex = presets.installedFpIndex();
-    const errors = [];
+    const errors: string[] = [];
     let schemaTouched = false;
 
     // -> ids of the library records that now provide this mod (a multi-hero bundle splits
     // into several), or an empty list when it could not be resolved at all
-    const resolveEntry = async (entry) => {
+    const resolveEntry = async (entry: PresetEntry): Promise<string[]> => {
       try {
         if (entry.kind === 'catalog') {
           const rec = await installFromCatalog(entry, cat, errors);
           return rec ? [rec.id] : [];
         }
         if (entry.kind === 'embedded') {
-          if (entry.fp && fpIndex.has(entry.fp)) return [fpIndex.get(entry.fp)]; // already on disk
+          const onDisk = entry.fp && fpIndex.get(entry.fp);
+          if (onDisk) return [onDisk]; // already on disk
           if (!bundle) { errors.push(`${entry.name}: ${t('файл пресета недоступен')}`); return []; }
           sendProgress({ type: 'stage', label: entry.name, stage: t('установка') });
           const files = installVpkBuffer(installer, bundle.readMod(entry.file));
@@ -255,18 +252,19 @@ function registerPresetsIpc({
           const rec = schemaService.pickCosmetic(entry.slot, entry.itemId, entry.name, entry.effectId);
           return rec ? [rec.id] : [];
         }
-        errors.push(`${entry.name}: ${entry.reason || t('нет в файле')}`);
+        const why = entry.kind === 'missing' ? entry.reason : '';
+        errors.push(`${entry.name}: ${why || t('нет в файле')}`);
         return [];
       } catch (err) {
-        errors.push(`${entry.name}: ${String(err.message || err)}`);
+        errors.push(`${entry.name}: ${errorText(err)}`);
         return [];
       }
     };
 
-    const ids = [];
+    const ids: string[] = [];
     for (const entry of preset.wanted) {
       if (entry.kind === 'pack') {
-        const memberIds = [];
+        const memberIds: string[] = [];
         for (const m of entry.members) memberIds.push(...await resolveEntry(m));
         const built = presets.packFromRecords(entry.name, memberIds);
         if (built) ids.push(built.id); else ids.push(...memberIds);
@@ -277,7 +275,7 @@ function registerPresetsIpc({
 
     // the picks a sender's file asked for are made, but they do not join the build: from
     // here this is an ordinary preset, and those hold mods only
-    const landed = [...new Set(ids)].map((id) => library.find(id)).filter((r) => Library.inPreset(r));
+    const landed = [...new Set(ids)].map((id) => library.find(id)).filter((r): r is LibRecord => Library.inPreset(r));
     preset.mods = landed.map(Library.identityOf);
     delete preset.modIds;
     delete preset.wanted;                       // resolved: it's an ordinary preset now
@@ -294,5 +292,3 @@ function registerPresetsIpc({
     return { ok: true, installed: preset.mods.length, errors };
   });
 }
-
-module.exports = { registerPresetsIpc };

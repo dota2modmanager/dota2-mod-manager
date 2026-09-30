@@ -2,23 +2,27 @@
  * removal one at a time and in batches, adopting files somebody put in the folder by hand, and
  * splitting a multi-volume archive back apart.
  *
- * Twenty-one channels and the largest block registerIpc() held. Bodies unchanged; what they
- * reach for is now a list at the top of the function instead of whatever the enclosing file
- * happened to have in scope.
+ * Twenty-one channels and the largest block registerIpc() held. What they reach for is a list
+ * at the top of the function instead of whatever the enclosing file happened to have in scope.
  */
-const fs = require('fs');
-const path = require('path');
-const { ipcMain } = require('electron');
+import fs from 'node:fs';
+import path from 'node:path';
 
-const { t } = require('./i18n.ts');
-const { isMinifyPak } = require('./minify.ts');
-const { touchesSchema } = require('./presets-service.ts');
+import { t } from './i18n.ts';
+import { isMinifyPak } from './minify.ts';
+import { touchesSchema } from './presets-service.ts';
+import { electron } from './electron.ts';
+import { errorText } from './error-text.ts';
+import { fingerprintFiles, fingerprintVpk, readVpkIndexFile } from './vpk.ts';
+import type { AppContext } from './app-context.ts';
+import type { LibRecord } from './types.ts';
 
-/** @param {object} ctx  the services and main-process callbacks these channels use */
-function registerLibraryIpc({
+/** Register this module's channels, over the services and callbacks main.js hands it. */
+export function registerLibraryIpc({
   applyMasterToCursors, catalog, disableOtherCosmetics, disableOtherCursors, fingerprints,
   installer, isCursorRecord, library, refreshPresence, schemaService,
-}) {
+}: Pick<AppContext, 'applyMasterToCursors' | 'catalog' | 'disableOtherCosmetics' | 'disableOtherCursors' | 'fingerprints' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService'>): void {
+  const { ipcMain } = electron();
   ipcMain.handle('mods:masterState', () => {
     try { return { off: installer.masterIsOff() }; } catch { return { off: false }; }
   });
@@ -30,7 +34,7 @@ function registerLibraryIpc({
       refreshPresence();
       return { ok: true, ...r };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -47,7 +51,7 @@ function registerLibraryIpc({
       if (touchesSchema(rec)) schemaService.refresh();
       return { ok: true, replaced };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -61,7 +65,7 @@ function registerLibraryIpc({
    * milliseconds each.
    */
   ipcMain.handle('mods:removeMany', (e, ids) => {
-    const errors = [];
+    const errors: string[] = [];
     let removed = 0;
     let schemaTouched = false;
     for (const id of Array.isArray(ids) ? ids : []) {
@@ -74,7 +78,7 @@ function registerLibraryIpc({
         if (touchesSchema(rec)) schemaTouched = true;
         removed++;
       } catch (err) {
-        errors.push(`${rec.name}: ${String(err.message || err)}`);
+        errors.push(`${rec.name}: ${errorText(err)}`);
       }
     }
     if (schemaTouched) schemaService.refresh();
@@ -85,7 +89,7 @@ function registerLibraryIpc({
   // per mod. Cursors and cosmetics are left out because only one of each can be live and
   // the screen never offers them here.
   ipcMain.handle('mods:setEnabledMany', (e, ids, enabled) => {
-    const errors = [];
+    const errors: string[] = [];
     let changed = 0;
     let schemaTouched = false;
     for (const id of Array.isArray(ids) ? ids : []) {
@@ -97,7 +101,7 @@ function registerLibraryIpc({
         if (touchesSchema(rec)) schemaTouched = true;
         changed++;
       } catch (err) {
-        errors.push(`${rec.name}: ${String(err.message || err)}`);
+        errors.push(`${rec.name}: ${errorText(err)}`);
       }
     }
     if (schemaTouched) schemaService.refresh();
@@ -142,7 +146,7 @@ function registerLibraryIpc({
       if (touchesSchema(rec)) schemaService.refresh();
       return { ok: true };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -160,11 +164,13 @@ function registerLibraryIpc({
   /* The load order has two parts (installer.js, PRIORITY_SLOTS): the categories that load first,
    * then everything else. A mod moves among its own part only, so "load earlier" on the first
    * mod after the shaders stops there instead of trading slots with a shader. */
-  const orderOf = (rec) => library.list()
-    .filter((r) => installer.zoneFor(r.categoryId) === installer.zoneFor(rec.categoryId))
+  // mods that hold a pakNN slot, by that number; a mod without one is not in the order at all
+  const numbered = (list: LibRecord[]) => list
     .map((r) => ({ r, n: installer.slotNumber(r) }))
-    .filter((x) => x.n != null)
+    .filter((x): x is { r: LibRecord; n: number } => x.n != null)
     .sort((a, b) => a.n - b.n);
+  const orderOf = (rec: LibRecord) => numbered(library.list()
+    .filter((r) => installer.zoneFor(r.categoryId) === installer.zoneFor(rec.categoryId)));
 
   ipcMain.handle('mods:move', (e, id, dir) => {
     const rec = library.find(id);
@@ -179,7 +185,7 @@ function registerLibraryIpc({
       for (const m of installer.swapSlots(rec, other)) library.update(m.id, { files: m.files });
       return { ok: true, moved: 1, with: other.name };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -200,10 +206,7 @@ function registerLibraryIpc({
     const rec = library.find(id);
     if (!rec) return { error: t('Мод не найден') };
     // toIndex counts the whole list, as the screen shows it; the walk stays inside the mod's part
-    const all = () => library.list()
-      .map((r) => ({ r, n: installer.slotNumber(r) }))
-      .filter((x) => x.n != null)
-      .sort((a, b) => a.n - b.n);
+    const all = () => numbered(library.list());
     const orderNow = () => orderOf(rec);
     try {
       let ordered = orderNow();
@@ -226,7 +229,7 @@ function registerLibraryIpc({
       }
       return { ok: true, moved: steps };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -240,7 +243,7 @@ function registerLibraryIpc({
       if (!enabled && fs.existsSync(on)) fs.renameSync(on, off);
       return { ok: true };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -258,7 +261,7 @@ function registerLibraryIpc({
       }
       return { ok: true };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -276,7 +279,7 @@ function registerLibraryIpc({
       if (parts.some((p) => Array.isArray(p.schema) && p.schema.length)) schemaService.refresh();
       return { ok: true, count: parts.length, names: parts.map((p) => p.name) };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -289,7 +292,7 @@ function registerLibraryIpc({
     const matches = a && fingerprints.match(a.fp);
     if (!matches) return { error: t('Совпадение с каталогом не найдено') };
     const m = matches[0]; // identical-content entries are interchangeable; take the first
-    const fields = { name: m.name, categoryId: m.categoryId, styleLabel: m.styleLabel || null };
+    const fields: Partial<LibRecord> = { name: m.name, categoryId: m.categoryId, styleLabel: m.styleLabel || null };
     if (preview) fields.preview = preview; // catalog thumbnail resolved by the renderer
     library.update(id, fields);
     // now that its category is known, into its part of the load order (installer.moveToZone)
@@ -313,8 +316,6 @@ function registerLibraryIpc({
       const base = fileName.replace(/\.off$/i, '');
       const onDisk = ['', '.off'].map((s) => path.join(lang, base + s)).find((p) => fs.existsSync(p));
       if (!onDisk) return { error: t('Файл не найден в папке модов') };
-
-      const { fingerprintVpk, readVpkIndexFile } = require('./vpk.ts');
       let matches = null;
       try { matches = fingerprints.match(fingerprintVpk(readVpkIndexFile(onDisk))); } catch { /* not a readable index */ }
 
@@ -339,7 +340,7 @@ function registerLibraryIpc({
       if (/\.off$/i.test(fileName)) library.setEnabled(rec.id, false);
       return { ok: true, name: identity.name, matched: !!m };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -352,18 +353,20 @@ function registerLibraryIpc({
       library.add({ name: m.name, categoryId: m.categoryId, styleLabel: m.styleLabel || null, fileRef: m.name, preview: preview || null, files: Object.keys(m.files).map((bn) => ({ root: 'fonts', relPath: bn })) });
       return { ok: true, name: m.name };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
   // adopt a foreign cursor set (resource\cursor) recognised as a catalog mod
   ipcMain.handle('mods:adoptCursor', (e, preview) => {
     try {
-      const cursorDir = path.join(installer.getGamePath(), 'dota', 'resource', 'cursor');
+      const game = installer.getGamePath();
+      if (!game) return { error: t('Путь к Dota 2 не задан') };
+      const cursorDir = path.join(game, 'dota', 'resource', 'cursor');
       if (!fs.existsSync(cursorDir)) return { error: t('Папка курсора не найдена') };
-      const files = [];
-      const rels = [];
-      const walk = (d, pre) => {
+      const files: { path: string; data: Buffer }[] = [];
+      const rels: string[] = [];
+      const walk = (d: string, pre: string) => {
         // the entry type comes with the listing: no stat before the read (js/file-system-race)
         for (const e of fs.readdirSync(d, { withFileTypes: true })) {
           const full = path.join(d, e.name);
@@ -373,7 +376,6 @@ function registerLibraryIpc({
         }
       };
       walk(cursorDir, '');
-      const { fingerprintFiles } = require('./vpk.ts');
       const matches = fingerprints.match(fingerprintFiles(files));
       if (!matches) return { error: t('Совпадение с каталогом не найдено') };
       const m = matches[0];
@@ -382,7 +384,7 @@ function registerLibraryIpc({
       try { installer.ensureCursorStore(rec.id, rec.files); } catch { /* noop */ }
       return { ok: true, name: m.name };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -406,9 +408,7 @@ function registerLibraryIpc({
       }
       return { ok: true, count: parts.length, names: parts.map((p) => p.name) };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 }
-
-module.exports = { registerLibraryIpc };

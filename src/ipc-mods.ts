@@ -1,25 +1,41 @@
 /* Installing, removing, switching and importing mods: the channels the Library screen and
  * the catalog's install buttons reach for.
  *
- * The bodies are unchanged from where they were in main.js. What changed is that everything
- * they use arrives as an argument, so the list at the top of the function is an honest answer
- * to "what does managing a mod actually touch".
+ * Everything the handlers use arrives as an argument, so the list at the top of the function is
+ * an honest answer to "what does managing a mod actually touch".
  */
-const fs = require('fs');
-const path = require('path');
-const { dialog, ipcMain } = require('electron');
+import fs from 'node:fs';
+import path from 'node:path';
 
-const { t } = require('./i18n.ts');
-const { fetchMirrored } = require('./net.ts');
-const { RAW_BASE } = require('./catalog.ts');
-const { createTerrainAges, TAIL_BYTES } = require('./terrain-age.ts');
-const { createNoticeText } = require('./notice-text.ts');
-const zones = require('./slot-zones.ts');
+import { t } from './i18n.ts';
+import { fetchMirrored } from './net.ts';
+import { RAW_BASE } from './catalog.ts';
+import { createTerrainAges, TAIL_BYTES } from './terrain-age.ts';
+import { createNoticeText } from './notice-text.ts';
+import * as zones from './slot-zones.ts';
+import { electron } from './electron.ts';
+import { errorText } from './error-text.ts';
+import type { AppContext } from './app-context.ts';
+import type { ForeignItem } from './installer-folder.ts';
+import type { CatalogIdentity } from './fingerprints.ts';
+import type { LibRecord } from './types.ts';
 
-/** @param {object} ctx  the services and main-process callbacks these channels use */
-function registerModsIpc({
+/** A file in the language folder the app did not put there, as My mods lists it. */
+type ExternalRow = Omit<ForeignItem, 'kind'> & {
+  /** a font set is found by matching the fonts folder against the catalog, not by a pak */
+  kind: ForeignItem['kind'] | 'font';
+  /** the catalog mods this file is byte for byte */
+  match?: CatalogIdentity[] | null;
+  /** the library mod it is a leftover copy of */
+  duplicateOf?: string;
+  coveredBy?: { name: string; files: number }[];
+};
+
+/** Register this module's channels, over the services and callbacks main.js hands it. */
+export function registerModsIpc({
   applyMasterToCursors, blocked, catalog, diag, disableOtherCursors, fingerprints, importVpkBuffers, importVpkPaths, installer, isCursorRecord, library, refreshPresence, schemaService, sendProgress, verifyStuck, win,
-}) {
+}: Pick<AppContext, 'applyMasterToCursors' | 'blocked' | 'catalog' | 'diag' | 'disableOtherCursors' | 'fingerprints' | 'importVpkBuffers' | 'importVpkPaths' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService' | 'sendProgress' | 'verifyStuck' | 'win'>): void {
+  const { dialog, ipcMain } = electron();
   // `win` arrives as a getter, not as the window. These are registered before the window
   // is created, so a value captured here would be undefined forever - which is exactly
   // what win:isMaximized did on the first run after this file was split out.
@@ -35,7 +51,7 @@ function registerModsIpc({
       return res.ok ? Buffer.from(await res.arrayBuffer()) : null;
     },
   });
-  const switchOff = (rec) => { installer.setEnabled(rec.files, false, rec.id); library.setEnabled(rec.id, false); };
+  const switchOff = (rec: LibRecord) => { installer.setEnabled(rec.files, false, rec.id); library.setEnabled(rec.id, false); };
   // the anti-cheat notice in plain words (src/notice-text.ts)
   const notice = createNoticeText({ gamePath: () => (installer.getGamePath ? installer.getGamePath() : null), langDir: () => installer.langFolder(), diag });
   ipcMain.handle('mods:install', async (e, payload) => {
@@ -71,8 +87,8 @@ function registerModsIpc({
       sendProgress({ type: 'done', label: payload.name });
       return { ok: true, record: rec, replaced };
     } catch (err) {
-      sendProgress({ type: 'error', label: payload.name, message: String(err.message || err) });
-      return { error: String(err.message || err) };
+      sendProgress({ type: 'error', label: payload.name, message: errorText(err) });
+      return { error: errorText(err) };
     }
   });
 
@@ -95,7 +111,7 @@ function registerModsIpc({
       fs.writeFileSync(res.filePath, buf);
       return { ok: true, path: res.filePath, size: buf.length };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -116,7 +132,7 @@ function registerModsIpc({
       const out = installer.unpackToFolder(rec, dest);
       return { ok: true, path: dest, ...out };
     } catch (err) {
-      return { error: String(err.message || err) };
+      return { error: errorText(err) };
     }
   });
 
@@ -146,7 +162,7 @@ function registerModsIpc({
 
   ipcMain.handle('mods:list', () => {
     // a mod still on the slot the notice text took moves off it (src/slot-zones.ts)
-    try { if (zones.vacateAppPak(installer, library)) diag('a mod moved off the notice slot'); } catch (err) { diag(`notice slot not freed: ${err.message}`); }
+    try { if (zones.vacateAppPak(installer, library)) diag('a mod moved off the notice slot'); } catch (err) { diag(`notice slot not freed: ${errorText(err)}`); }
     // folder sync: a mod deleted straight from the game folder drops out of the library
     try {
       for (const rec of [...library.list()]) {
@@ -161,10 +177,10 @@ function registerModsIpc({
       }
     } catch { /* no game path yet — nothing to sync */ }
 
-    let external = [];
+    let external: ExternalRow[] = [];
     // fingerprint -> a mod already in the library, so a file that is byte-identical to
     // something managed can be called what it is (a leftover copy) instead of a mystery
-    const installedFps = new Map();
+    const installedFps = new Map<string, string>();
     try {
       for (const rec of library.list()) {
         if (rec.kind === 'pack') continue;
@@ -199,10 +215,10 @@ function registerModsIpc({
     const installed = library.list().map((rec) => {
       if (rec.categoryId !== 'imported') return rec;
       try {
-        const a = installer.analyzeRecord(rec) || {};
+        const a = installer.analyzeRecord(rec);
         // fpOriginal: the file was repacked to drop the whole-game tables it shipped, so
         // match on what it hashed to before that, or a recognised mod becomes unknown
-        const matches = fingerprints.match(rec.fpOriginal || a.fp);
+        const matches = fingerprints.match(rec.fpOriginal || a?.fp);
         // one-time: give bare "pakNN" imports a real name — the catalog name if the file
         // is recognised, otherwise the content (hero / set / kind)
         if (/^!?pak\d+$/i.test(rec.name)) {
@@ -244,7 +260,7 @@ function registerModsIpc({
      * preset and bulk action, so it is the one place that keeps the note honest without
      * hooking a dozen handlers - the same reason refreshPresence() sits here. */
     const noteOwnership = () => {
-      try { installer.writeOwnership([...library.knownLangRelPaths(), ...notice.ownedFiles()]); } catch (err) { diag(`ownership note skipped: ${err.message}`); }
+      try { installer.writeOwnership([...library.knownLangRelPaths(), ...notice.ownedFiles()]); } catch (err) { diag(`ownership note skipped: ${errorText(err)}`); }
     };
     noteOwnership();
     // The anti-cheat notice in plain words (src/notice-text.ts), kept current from here for the
@@ -278,7 +294,7 @@ function registerModsIpc({
     try {
       return { names: terrainAges.switchOffStale(library.list(), switchOff) };
     } catch (err) {
-      return { names: [], error: String(err.message || err) };
+      return { names: [], error: errorText(err) };
     }
   });
 
@@ -286,12 +302,11 @@ function registerModsIpc({
   ipcMain.handle('catalog:terrainAges', async () => {
     try {
       const c = await catalog.load();
-      const terrains = (c.mods && (c.mods.modsData || c.mods).terrains) || [];
+      const data = (c.mods?.modsData || c.mods || {}) as Record<string, unknown>;
+      const terrains = (data.terrains as { file?: string }[] | undefined) || [];
       return await terrainAges.forCatalog(terrains, (file) => catalog.publishedHash('terrains', file));
     } catch (err) {
-      return { mapAt: null, ages: {}, stale: {}, error: String(err.message || err) };
+      return { mapAt: null, ages: {}, stale: {}, error: errorText(err) };
     }
   });
 }
-
-module.exports = { registerModsIpc };

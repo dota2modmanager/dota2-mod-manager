@@ -50,6 +50,9 @@ export interface PackMember {
   categoryId: string;
   styleLabel?: string | null;
   enabled?: boolean;
+  preview?: string | null;
+  /** how many heroes its files touch, for the row's summary */
+  heroes?: number;
   fp?: string | null;
   info?: string;
   [key: string]: unknown;

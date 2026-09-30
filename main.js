@@ -44,22 +44,22 @@ const { channelFor } = require('./src/beta.ts');
 const { gameStamp, createPatchWatcher } = require('./src/patch-watch.ts');
 const { Icons } = require('./src/icons.ts');
 const gamelang = require('./src/gamelang.ts');
-// handed to src/ipc-settings.js by name, the same one it has always been passed under
+// handed to src/ipc-settings.ts by name, the same one it has always been passed under
 const { moveLangFolder } = gamelang;
 const { uninstallFlow } = require('./src/uninstall-window.ts');
 const { isUninstallRun } = require('./src/uninstall-args.ts');
 const { presetsService } = require('./src/presets-service.ts');
-const { registerPresetsIpc } = require('./src/ipc-presets');
-const { registerModsIpc } = require('./src/ipc-mods');
+const { registerPresetsIpc } = require('./src/ipc-presets.ts');
+const { registerModsIpc } = require('./src/ipc-mods.ts');
 const { createGate } = require('./src/feature-gate.ts');
-const { registerLibraryIpc } = require('./src/ipc-library');
-const { registerPacksIpc } = require('./src/ipc-packs');
-const { registerWindowIpc } = require('./src/ipc-window');
-const { registerMiscIpc } = require('./src/ipc-misc');
+const { registerLibraryIpc } = require('./src/ipc-library.ts');
+const { registerPacksIpc } = require('./src/ipc-packs.ts');
+const { registerWindowIpc } = require('./src/ipc-window.ts');
+const { registerMiscIpc } = require('./src/ipc-misc.ts');
 const { settingsViewFor } = require('./src/settings-view.ts');
-const { registerSettingsIpc } = require('./src/ipc-settings');
-const { registerGameIpc } = require('./src/ipc-game');
-const { registerDiagnosticsIpc } = require('./src/ipc-diagnostics');
+const { registerSettingsIpc } = require('./src/ipc-settings.ts');
+const { registerGameIpc } = require('./src/ipc-game.ts');
+const { registerDiagnosticsIpc } = require('./src/ipc-diagnostics.ts');
 
 /* Presets and sharing, wired once the services they use exist. Assigned in whenReady
  * below; every call site reads it late, which is the same lifetime the bare functions had
@@ -105,6 +105,9 @@ if (IS_PORTABLE) {
 }
 
 let win;
+// what the IPC modules read the window through: every channel is called from it, so it is open
+// whenever one runs, and if that ever stops being true this says so by name
+const theWindow = () => { if (!win) throw new Error('the main window is not open yet'); return win; };
 let settings, catalog, installer, library, fingerprints, presence, schemaService, icons, remoteConfig;
 let toolchain, gameIcons, modPreviews, modId;
 let presenceView = 'catalog';
@@ -120,8 +123,8 @@ let slotMigration = null;
 // fonts and cursors Steam's file check took back and the app could not put back on its own
 // (the archive they came in is no longer cached), reported by mods:list
 let verifyStuck = [];
-// what the app did about the last Dota patch, shown as a banner in My mods:
-// { state: 'idle' | 'waiting' | 'done' | 'failed', healed: string[], error?, at }
+// what the app did about the last Dota patch, shown as a banner in My mods
+/** @type {import('./src/app-context.ts').PatchRepair} */
 let patchRepair = { state: 'idle' };
 let patchWatcher = null;
 let repairTimer = null;
@@ -1035,11 +1038,11 @@ async function repairAfterPatch(reason) {
 }
 
 function registerIpc() {
-  // ----- window controls ----- (src/ipc-window.js)
+  // ----- window controls ----- (src/ipc-window.ts)
   registerWindowIpc({
     IS_PORTABLE, autoUpdater, clampZoom, diag, portableUpdater,
     portableUpdate: () => (updater ? updater.portableVersion() : null),
-    releaseNotes, sendProgress, settings, win: () => win,
+    releaseNotes, sendProgress, settings, win: theWindow,
   });
 
   // What the Settings screen is told, computed in src/settings-view.ts. The two pieces of
@@ -1054,7 +1057,7 @@ function registerIpc() {
     takeSlotMigration: () => { const m = slotMigration; slotMigration = null; return m; },
   });
 
-  // ----- settings ----- (src/ipc-settings.js)
+  // ----- settings ----- (src/ipc-settings.ts)
   registerSettingsIpc({
     applyPresenceSetting, catalog, discordAuth, findDotaGamePath, library, moveLangFolder,
     presence, refreshPresence, remoteConfig, settings, settingsView, validateGamePath,
@@ -1062,24 +1065,23 @@ function registerIpc() {
     langFolder: () => langFolder,
     patchWatcher: () => patchWatcher,
     setPresenceView: (v) => { presenceView = v; },
-    win: () => win,
+    win: theWindow,
   });
 
   // One gate, handed to both of the modules that guard a channel with it. Two copies is how
   // installing broke: the call went to one file and the helper stayed in the other.
   const blocked = createGate({ remoteConfig, settings });
 
-  // ----- install/manage ----- (src/ipc-mods.js)
+  // ----- install/manage ----- (src/ipc-mods.ts)
   registerModsIpc({
     applyMasterToCursors, blocked, catalog, diag, disableOtherCursors, fingerprints,
     importVpkBuffers, importVpkPaths, installer, isCursorRecord, library, refreshPresence,
-    schemaService, sendProgress, win: () => win,
+    schemaService, sendProgress, win: theWindow,
     // read late: Steam's verify rewrites this while the app is running
     verifyStuck: () => verifyStuck,
   });
 
-  // ----- launch + master mods switch -----
-
+  // ----- launch -----
   // Launch Dota via Steam so the user's own launch options apply (-novid, -fps max,
   // -language russian … differ per user). rungameid mirrors clicking Play in Steam.
   ipcMain.handle('game:launch', () => {
@@ -1090,9 +1092,7 @@ function registerIpc() {
     return { ok: true };
   });
 
-  // ---------- item schema / search-path patch ----------
-
-  // ----- what the app was told from the network ----- (src/ipc-game.js)
+  // ----- what the app was told from the network ----- (src/ipc-game.ts)
   registerGameIpc({
     blocked, diag, dotaIsRunning, gameIcons, icons, library, modPreviews, remoteConfig,
     repairAfterPatch, schemaService, settings, toolchain,
@@ -1100,29 +1100,29 @@ function registerIpc() {
     setPatchRepair,
   });
 
-  // ----- managing what is installed ----- (src/ipc-library.js)
+  // ----- managing what is installed ----- (src/ipc-library.ts)
   registerLibraryIpc({
     applyMasterToCursors, catalog, disableOtherCosmetics, disableOtherCursors, fingerprints,
     installer, isCursorRecord, library, refreshPresence, schemaService,
   });
 
-  // ----- combined packs ----- (src/ipc-packs.js)
+  // ----- combined packs ----- (src/ipc-packs.ts)
   registerPacksIpc({ afterDeployMaster, deployAndApply, installer, library });
 
-  // ----- presets ----- (src/ipc-presets.js)
+  // ----- presets ----- (src/ipc-presets.ts)
   registerPresetsIpc({
-    win: () => win, settings, catalog, installer, library, schemaService, presets,
+    win: theWindow, settings, catalog, installer, library, schemaService, presets,
     adoptImportedFiles, afterDeployMaster, disableOtherCursors, sendProgress,
   });
 
-  // ----- misc ----- (src/ipc-misc.js)
+  // ----- misc ----- (src/ipc-misc.ts)
   registerMiscIpc({ installer, library });
 
-  // ----- diagnostics ----- (src/ipc-diagnostics.js)
+  // ----- diagnostics ----- (src/ipc-diagnostics.ts)
   registerDiagnosticsIpc({
     autoUpdater, catalog, diag, dotaIsRunning, icons, installer, library, logFile, remoteConfig,
     schemaService, settings, toolchain,
-    win: () => win,
+    win: theWindow,
     rendererErrors: () => rendererErrors,
     lastUpdateError: () => (updater ? updater.lastError() : null),
   });

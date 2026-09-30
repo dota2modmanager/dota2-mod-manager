@@ -11,75 +11,60 @@
  * because the question here is what the handler decides to install and in what order, not
  * whether a zip unpacks.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const Module = require('module');
-
-const { Library } = require('../src/library.ts');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { Library } from '../src/library.ts';
+import { registerPresetsIpc } from '../src/ipc-presets.ts';
+import type { ModIdentity, Preset } from '../src/types.ts';
+import { registerAgainst } from './helpers/fake-electron.ts';
 
 /** Register presets:apply with fakes around a real library; answer the handler and the log. */
-function harness(t, { catalogHas = [], toggleErrors = [] } = {}) {
+function harness(t: TestContext, { catalogHas = [] as string[], toggleErrors = [] as string[] } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-preset-apply-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const library = new Library(dir);
 
-  const log = [];
-  const registered = new Map();
-  const load = Module._load;
-  Module._load = function stubbed(request, ...rest) {
-    if (request === 'electron') {
-      return { ipcMain: { handle: (c, f) => registered.set(c, f) }, dialog: {}, app: {} };
-    }
-    return load.call(this, request, ...rest);
-  };
-  const file = require.resolve('../src/ipc-presets.js');
-  delete require.cache[file];
-  try {
-    const { registerPresetsIpc } = require(file);
-    registerPresetsIpc({
-      win: () => null, settings: { get: () => null }, catalog: {}, library,
-      installer: {
-        install: async ({ categoryId, modName, fileRef }) => {
-          log.push(`install ${categoryId}/${modName}`);
-          return [{ root: 'lang', relPath: `${fileRef}.vpk` }];
-        },
-        ensureCursorStore: () => {},
+  const log: string[] = [];
+  const registered = registerAgainst(() => registerPresetsIpc({
+    win: () => null, settings: { get: () => null }, catalog: {}, library,
+    installer: {
+      install: async ({ categoryId, modName, fileRef }: { categoryId: string; modName: string; fileRef: string }) => {
+        log.push(`install ${categoryId}/${modName}`);
+        return [{ root: 'lang', relPath: `${fileRef}.vpk` }];
       },
-      schemaService: {},
-      presets: {
-        catalogIndex: async () => {
-          log.push('catalog');
-          return {
-            lookup: (categoryId, name, styleLabel) => (catalogHas.includes(name)
-              ? { categoryId, name, styleLabel: styleLabel || null, fileRef: `${name}.zip`, preview: null }
-              : null),
-          };
-        },
-        applyPreset: (preset) => { log.push(`apply ${preset.name}`); return toggleErrors; },
+      ensureCursorStore: () => {},
+    },
+    schemaService: {},
+    presets: {
+      catalogIndex: async () => {
+        log.push('catalog');
+        return {
+          lookup: (categoryId: string, name: string, styleLabel?: string | null) => (catalogHas.includes(name)
+            ? { categoryId, name, styleLabel: styleLabel || null, fileRef: `${name}.zip`, preview: null }
+            : null),
+        };
       },
-      adoptImportedFiles: () => ({ records: [] }),
-      afterDeployMaster: () => log.push('master'),
-      disableOtherCursors: () => log.push('cursors'),
-      sendProgress: () => {},
-    });
-  } finally {
-    Module._load = load;
-    delete require.cache[file];
-  }
+      applyPreset: (preset: Preset) => { log.push(`apply ${preset.name}`); return toggleErrors; },
+    },
+    adoptImportedFiles: () => ({ records: [] }),
+    afterDeployMaster: () => log.push('master'),
+    disableOtherCursors: () => log.push('cursors'),
+    sendProgress: () => {},
+  } as never));
 
-  const preset = (name, mods) => {
-    const p = { id: `p-${name}`, name, mods };
+  const preset = (name: string, mods: ModIdentity[]) => {
+    const p: Preset = { id: `p-${name}`, name, mods, updatedAt: 0 };
     library.data.presets.push(p);
     return p;
   };
-  const apply = (p) => registered.get('presets:apply')({}, p.id);
+  const apply = (p: { id: string }) => registered.get('presets:apply')!({}, p.id);
   return { library, log, preset, apply };
 }
 
-const mod = (name, categoryId = 'heroes') => ({ categoryId, name, styleLabel: null, fp: null });
+const mod = (name: string, categoryId = 'heroes'): ModIdentity => ({ categoryId, name, styleLabel: null, fp: null });
 
 test('a member the catalog still has is installed before the preset is applied', async (t) => {
   const h = harness(t, { catalogHas: ['Bare Brewmaster'] });

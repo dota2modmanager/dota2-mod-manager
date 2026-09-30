@@ -132,6 +132,6 @@ test('both changelogs still reach the two places that read them', () => {
   for (const f of ['CHANGELOG.md', 'CHANGELOG.ru.md']) {
     assert.ok(packaged.includes(f), `${f} is not packaged, so the app cannot show its notes`);
   }
-  assert.match(read('main.js') + read('src/ipc-window.js'), /CHANGELOG\.ru\.md/,
+  assert.match(read('main.js') + read('src/ipc-window.ts'), /CHANGELOG\.ru\.md/,
     'nothing reads the Russian changelog any more');
 });
