@@ -787,6 +787,30 @@
       "test": "test/deep-links.test.ts"
     },
     {
+      "name": "the window follows a link to another page and hands it window.api",
+      "file": "src/main-window.ts",
+      "anchor": "win.webContents.on('will-navigate', (event, url) => {",
+      "from": "    event.preventDefault();\n    diag(`blocked navigation",
+      "to": "    diag(`blocked navigation",
+      "test": "test/main-window.test.ts"
+    },
+    {
+      "name": "the window is as tall as it was designed, whatever the screen",
+      "file": "src/main-window.ts",
+      "anchor": "export function windowFit(",
+      "from": "height: Math.min(DESIGNED.height, ah),",
+      "to": "height: DESIGNED.height,",
+      "test": "test/main-window.test.ts"
+    },
+    {
+      "name": "the release check's screenshot misses the text it was asked about",
+      "file": "src/dev-harness.ts",
+      "anchor": "if (env.MM_EVAL) {",
+      "from": "fs.writeFileSync(`${shot}.eval.json`, JSON.stringify(out, null, 1));",
+      "to": "void out;",
+      "test": "test/dev-harness.test.ts"
+    },
+    {
       "name": "the crc32 table is walked one bit off",
       "file": "src/vpk-write.ts",
       "anchor": "export function crc32(buf: Buffer): number {",

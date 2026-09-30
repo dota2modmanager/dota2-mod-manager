@@ -18,7 +18,9 @@
  *
  * Since 2026-09-30 the ipc-* modules ask for Electron through src/electron.ts, when a channel is
  * registered rather than when the file loads, so each of them reaches it through that one
- * neighbour. The chain check below follows it there.
+ * neighbour. The chain check below follows it there. src/main-window.ts joined the list the same
+ * day: it is the window main.js used to build itself, moved out so its navigation lock and its
+ * zoom keys could be tested, and a window cannot be made without Electron.
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -40,6 +42,7 @@ const ELECTRON_USERS = [
   'src/ipc-presets.ts',
   'src/ipc-settings.ts',
   'src/ipc-window.ts',
+  'src/main-window.ts',
   'src/mod-preview.ts',
   'src/presets-service.ts',
   'src/uninstall-window.ts',

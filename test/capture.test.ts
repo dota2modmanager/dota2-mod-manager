@@ -43,8 +43,8 @@ test('a capture that works the first time is not delayed', async () => {
   assert.equal(waited, 0);
 });
 
-test('main.js takes its screenshots through the retry', () => {
-  const main = fs.readFileSync(path.join(import.meta.dirname, '..', 'main.js'), 'utf8');
-  assert.match(main, /captureWithRetry\(\(\) => win\.webContents\.capturePage\(\)/,
+test('the screenshot harness takes its pictures through the retry', () => {
+  const harness = fs.readFileSync(path.join(import.meta.dirname, '..', 'src', 'dev-harness.ts'), 'utf8');
+  assert.match(harness, /captureWithRetry\(\(\) => win\.webContents\.capturePage\(\)/,
     'the harness calls capturePage directly again, and one missing frame fails the check');
 });

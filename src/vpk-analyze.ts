@@ -2,7 +2,6 @@
 // kind of content, and a name for it. Part of the VPK code src/vpk.ts gathers.
 import { t } from './i18n.ts';
 import { HERO_DISPLAY, HERO_ALIAS, heroDisplayName, heroKey } from './hero-names.ts';
-import { listVpkPaths } from './vpk-read.ts';
 
 /** A hero a mod touches: the equip slots it replaces, whether it swaps the base model, how many models it carries. */
 export interface HeroHit { id: string; name: string; slots: string[]; base: boolean; models: number }
@@ -145,11 +144,6 @@ export function analyzeVpkPaths(paths: string[]): Analysis {
   else if (paths.some((p) => p.startsWith('maps/'))) kind = 'terrain';
 
   return { heroes: list, kind, pathCount: paths.length };
-}
-
-/** analyzeVpkPaths over the paths of one VPK. */
-export function analyzeVpk(buf: Buffer): Analysis {
-  return analyzeVpkPaths(listVpkPaths(buf));
 }
 
 /** Human one-liner for a single detected hero, e.g. "Nyx Assassin (model, weapon)". */

@@ -12,8 +12,8 @@
  * ends with results.json beside them: the machine it ran on as the GPU process describes it, the
  * window and the work area it had, and every check. tools/sim/run.mjs reads that file.
  *
- * Dev-only. main.js loads this only when MM_SIM is set, and it lives under tools/, which the
- * installer does not carry.
+ * Dev-only. src/dev-harness.ts loads this only when MM_SIM is set, and it lives under tools/,
+ * which the installer does not carry.
  */
 const { app, screen } = require('electron');
 const fs = require('fs');
@@ -423,8 +423,8 @@ async function run(win, list, { out }) {
 }
 
 /**
- * What main.js starts when MM_SIM is set: once the page has loaded and settled, the scenarios it
- * names, then quit. The results go to MM_SIM_OUT (e2e-output/sim by default).
+ * What src/dev-harness.ts starts when MM_SIM is set: once the page has loaded and settled, the
+ * scenarios it names, then quit. The results go to MM_SIM_OUT (e2e-output/sim by default).
  * @param {import('electron').BrowserWindow} win
  */
 function attach(win) {

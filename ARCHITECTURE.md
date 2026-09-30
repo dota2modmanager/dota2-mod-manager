@@ -356,7 +356,9 @@ that location is not writable.
 
 | File | What it owns |
 |---|---|
-| `main.js` | Electron lifecycle, the window, auto-update, and wiring the rest together |
+| `main.js` | Electron lifecycle, auto-update, and wiring the rest together |
+| `src/main-window.ts` | The window: its size on the screen it opens on, the one page it may show, Ctrl +/-/0 |
+| `src/dev-harness.ts` | `MM_SHOT`, `MM_EVAL` and the other switches a script drives the window with |
 | `src/ipc-*.ts` | The IPC handlers, one file per group of channels, each naming what it needs |
 | `src/app-context.ts`, `src/electron.ts` | What main.js hands the IPC modules, and Electron asked for when a module registers |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |

@@ -7,7 +7,7 @@ export {
 } from './vpk-read.ts';
 export type { VpkEntry, VpkDirEntry, VpkIndex } from './vpk-read.ts';
 export {
-  analyzeVpkPaths, analyzeVpk, slotDisplayName, describeHero, subjectHeroes, describeAnalysis, nameFromAnalysis,
+  analyzeVpkPaths, slotDisplayName, describeHero, subjectHeroes, describeAnalysis, nameFromAnalysis,
 } from './vpk-analyze.ts';
 export type { HeroHit, Analysis } from './vpk-analyze.ts';
 export {

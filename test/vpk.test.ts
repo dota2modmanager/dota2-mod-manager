@@ -263,3 +263,20 @@ test('a hero named the way the catalog names it finds the game id', () => {
   for (const [name, id] of Object.entries(cases)) assert.equal(heroIdFromName(name), id, name);
   assert.equal(heroIdFromName(''), null);
 });
+
+test('two spellings of one hero are one hero, under the name the game uses, whichever comes first', () => {
+  /* An author's own folder name ("crystalmaiden") and the game's ("crystal_maiden") in one pack.
+     Merged, the hero keeps the game's id, because splitting a pack looks for the hero's files by
+     it. Written in both orders: the one where the author's spelling comes first was reached only
+     by the random paths of vpk-fuzz.test.ts, so it was covered on some runs and not on others. */
+  const alias = 'models/heroes/crystalmaiden/crystalmaiden_arms.vmdl_c';
+  const canonical = 'models/heroes/crystal_maiden/crystal_maiden.vmdl_c';
+  for (const paths of [[alias, canonical], [canonical, alias]]) {
+    const { heroes, kind } = vpk.analyzeVpkPaths(paths);
+    assert.equal(kind, 'hero');
+    assert.equal(heroes.length, 1, `one hero from ${paths.join(' + ')}`);
+    assert.equal(heroes[0].id, 'crystal_maiden');
+    assert.equal(heroes[0].name, 'Crystal Maiden');
+    assert.equal(heroes[0].models, 2);
+  }
+});

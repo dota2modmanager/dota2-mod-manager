@@ -65,8 +65,8 @@ mistake is expensive: `sandbox/` is a disposable copy of the game's folder shape
 `npm run start:sandbox` runs against it with its own user data.
 
 For a UI change, `MM_SHOT=<path>` takes a screenshot after load; `MM_EVAL=<js>` writes the
-answer to a question about the finished DOM beside it. Both are dev-only and documented at the
-top of `main.js`. A screenshot proves a layout; `MM_EVAL` proves the text, the language and the
+answer to a question about the finished DOM beside it. Both are dev-only and documented in
+`src/dev-harness.ts`. A screenshot proves a layout; `MM_EVAL` proves the text, the language and the
 state, and it is the one that catches real bugs.
 
 ## What the tests will not let you do

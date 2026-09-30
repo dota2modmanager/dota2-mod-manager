@@ -23,7 +23,7 @@
  * encoder, so the recording happens in a second, hidden window that captures the first one and
  * writes the bytes itself.
  *
- * Dev-only. main.js loads this only when MM_REC is set.
+ * Dev-only. src/dev-harness.ts loads this only when MM_REC is set.
  */
 const { BrowserWindow } = require('electron');
 const path = require('path');

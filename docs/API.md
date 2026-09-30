@@ -22,6 +22,7 @@ the code, not in this page.
 | [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/deep-links.ts`](#srcdeep-linksts) | d2mm:// links: a preset link clicked anywhere on the system, and on Linux, telling the desktop |
+| [`src/dev-harness.ts`](#srcdev-harnessts) | The switches that let a script drive the window: a screenshot after some clicks (MM_SHOT and |
 | [`src/diagnostics.ts`](#srcdiagnosticsts) | A support report a user can send instead of a round of screenshots: Dota's own path and |
 | [`src/discord-auth.ts`](#srcdiscord-authts) | Sign in with Discord, without a server of our own. |
 | [`src/discord-presence.ts`](#srcdiscord-presencets) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
@@ -45,6 +46,7 @@ the code, not in this page.
 | [`src/installer.ts`](#srcinstallerts) | The installer: everything that writes a mod into the game folder or takes it out again. The |
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
+| [`src/main-window.ts`](#srcmain-windowts) | The one window the app has: its size on the screen it opens on, the single page it may show, |
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
 | [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
@@ -593,6 +595,49 @@ export function installDesktopEntry({ platform, exe, home, diag, refresh = defau
 ```
 
 Write the .desktop file on Linux when it is missing or says something else; elsewhere, nothing.
+
+## src/dev-harness.ts
+
+The switches that let a script drive the window: a screenshot after some clicks (MM_SHOT and
+the switches around it), a scenario run (MM_SIM) and a recording for the site (MM_REC).
+
+None of it does anything unless its variable is set, and a person running the app never sets
+one. It ships with the build all the same, because the release checks the installer it built by
+starting it with MM_SHOT and MM_EVAL (tools/e2e.mjs) before anybody downloads it. MM_SIM and
+MM_REC load their drivers out of tools/, which only a checkout has.
+
+### `DrivenWindow`
+
+```ts
+export type DrivenWindow = Pick<BrowserWindow, 'show' | 'focus'> &
+```
+
+The part of a window the harness drives.
+
+### `attachDevHarness`
+
+```ts
+export function attachDevHarness(win: DrivenWindow, { env = process.env, diag, appRoot, quit, wait = sleep }: { env?: Env; diag: (msg: string) => void; appRoot: string; quit: () => void; wait?: Wait; }): void
+```
+
+Wire whichever of the switches is set to the window, once its page has loaded.
+
+```
+@param appRoot  where tools/ is, for MM_SIM and MM_REC
+@param quit     ends the app when a recording is done
+```
+
+### `takeShot`
+
+```ts
+export async function takeShot(win: DrivenWindow, env: Env, { diag, wait = sleep }: { diag: (msg: string) => void; wait?: Wait }): Promise<void>
+```
+
+Walk the page to the state the switches describe, then save a picture of it at MM_SHOT: the
+view, the catalog category, a search, clicks, a hover, a drag, wheel ticks, an update bar, a
+scroll, a mod's card. MM_EVAL reads the finished page and writes the answer beside the picture,
+because a picture cannot say whether a fold opened with the right text in the right language.
+Whatever goes wrong is written to MM_SHOT.err.txt instead.
 
 ## src/diagnostics.ts
 
@@ -2290,6 +2335,81 @@ export class Library
 ```
 
 _No description in the source._
+
+## src/main-window.ts
+
+The one window the app has: its size on the screen it opens on, the single page it may show,
+and the keys that scale its content.
+
+The window shows one page and never another. A preload script is attached to the webContents,
+not to the document, so a page the window navigated to would inherit window.api: the whole IPC
+surface, install and runTool included. Nothing in the app navigates anywhere, but the catalog's
+own HTML lands in the interface (guides), and one <meta http-equiv="refresh"> in it would be
+enough to hand that surface to whoever wrote the markup. CSP does not cover navigation, so this
+does: the app's own file is the only thing the window may load, and a link that wants a browser
+gets the browser.
+
+### `ZOOM_MIN`
+
+```ts
+export const ZOOM_MIN = 0.7
+```
+
+The UI scale, kept inside a range where the layout still holds together.
+
+### `ZOOM_MAX`
+
+```ts
+export const ZOOM_MAX = 1.6
+```
+
+_No description in the source._
+
+### `clampZoom`
+
+```ts
+export function clampZoom(v: unknown): number
+```
+
+A scale the layout can take: anything else, including nonsense, becomes the nearest one or 1.
+
+### `windowFit`
+
+```ts
+export function windowFit(workArea: { width: number; height: number } | null | undefined): typeof DESIGNED
+```
+
+The window's size and minimums for a work area, or the designed size when there is none.
+
+### `workAreaFrom`
+
+```ts
+export function workAreaFrom(spec: string | undefined): { width: number; height: number } | null
+```
+
+A work area written "1366x728" (MM_WORKAREA, tools/sim profiles), standing in for a smaller screen.
+
+### `zoomFor`
+
+```ts
+export function zoomFor(key: string, current: number): number | null
+```
+
+The key a Ctrl chord turns into a new scale, or null for any other key.
+
+### `createMainWindow`
+
+```ts
+export function createMainWindow({ appRoot, settings, diag, workArea = null, quiet = false }: { appRoot: string; settings: Pick<Settings, 'get' | 'set'>; diag: (msg: string) => void; workArea?: { width: number; height: number } | null; quiet?: boolean; }): BrowserWindow
+```
+
+Open the window on the app's page, locked to it, with Ctrl +/-/0 scaling the content.
+
+```
+@param appRoot    where index.html and preload.js are
+@param workArea   stands in for the screen's (MM_WORKAREA); otherwise the primary display is asked
+@param quiet      created hidden (MM_QUIET), so a measuring run never takes over the screen
+```
 
 ## src/minify.ts
 
@@ -5063,14 +5183,6 @@ Classify what a mod's inner path list actually changes.
 @param paths lowercased inner VPK paths (from listVpkPaths)
 ```
 
-### `analyzeVpk`
-
-```ts
-export function analyzeVpk(buf: Buffer): Analysis
-```
-
-analyzeVpkPaths over the paths of one VPK.
-
 ### `describeHero`
 
 ```ts
@@ -5462,7 +5574,7 @@ The VPK format, in one place for everything that reads or writes one: the reader
 
 Hands on from [`src/vpk-read.ts`](#srcvpk-readts): `readVpkIndexFile`, `listVpkPaths`, `listVpkPathsFile`, `listVpkPathCrcs`, `listVpkPathCrcsFile`, `readVpkEntryFile`, `openVpkIndex`, `entryPath`, `readVpkEntries`, `listVpkEntries`, `fingerprintEntries`, `fingerprintVpk`, `fingerprintFiles`, `VpkEntry`, `VpkDirEntry`, `VpkIndex`.
 
-Hands on from [`src/vpk-analyze.ts`](#srcvpk-analyzets): `analyzeVpkPaths`, `analyzeVpk`, `slotDisplayName`, `describeHero`, `subjectHeroes`, `describeAnalysis`, `nameFromAnalysis`, `HeroHit`, `Analysis`.
+Hands on from [`src/vpk-analyze.ts`](#srcvpk-analyzets): `analyzeVpkPaths`, `slotDisplayName`, `describeHero`, `subjectHeroes`, `describeAnalysis`, `nameFromAnalysis`, `HeroHit`, `Analysis`.
 
 Hands on from [`src/vpk-write.ts`](#srcvpk-writets): `crc32`, `entryAt`, `buildVpk`, `findContentRoot`, `packFolder`, `buildVpkDir`, `combineVpksToFiles`, `mergeVpkToSingle`, `splitVpkByHero`.
 

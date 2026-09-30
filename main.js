@@ -6,10 +6,9 @@
  * warranty whatsoever. LICENSE holds the terms; NOTICE holds the additional terms this
  * repository adds under section 7 of that License, about credit and the program's name.
  */
-const { app, BrowserWindow, ipcMain, shell, net, screen } = require('electron');
+const { app, ipcMain, shell, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { pathToFileURL } = require('url');
 const { execFile } = require('child_process');
 
 let autoUpdater = null;
@@ -64,6 +63,8 @@ const { createAppLog } = require('./src/app-log.ts');
 const { releaseNotes: notesFor } = require('./src/release-notes.ts');
 const { createPresenceStatus } = require('./src/presence-status.ts');
 const { firstLink, handleDeepLink: takeLink, installDesktopEntry } = require('./src/deep-links.ts');
+const { createMainWindow, clampZoom, workAreaFrom } = require('./src/main-window.ts');
+const { attachDevHarness } = require('./src/dev-harness.ts');
 
 /* Presets and sharing, wired once the services they use exist. Assigned in whenReady
  * below; every call site reads it late, which is the same lifetime the bare functions had
@@ -137,293 +138,17 @@ function sendProgress(evt) {
   if (win && !win.isDestroyed()) win.webContents.send('progress', evt);
 }
 
-// UI scale, kept inside a range where the layout still holds together
-const ZOOM_MIN = 0.7;
-const ZOOM_MAX = 1.6;
-function clampZoom(v) {
-  const z = Number(v);
-  if (!Number.isFinite(z) || z <= 0) return 1;
-  return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
-}
-
-/* The window has to fit the screen it opens on.
- *
- * 1360x860 is the size this is designed at, and on a 1366x768 laptop - still one of the most
- * common screens there is - a window 860 tall does not fit a work area about 730 tall. Windows
- * places it anyway and the bottom of it sits under the taskbar or past the edge of the screen,
- * where the launch bar and the last rows of a list are. Nothing is broken and nothing scrolls
- * wrong; the part of the window holding them is simply not on the screen, which reads exactly
- * like a page that stops scrolling partway. A restart does not help, because the size is not
- * remembered from the last run - it is asked for again every time.
- *
- * Display scaling makes it worse rather than better: at 150% a 1080p screen reports a work area
- * around 1280x680, so a machine whose specification looks roomy has less room than the laptop.
- *
- * The minimums are clamped too. A minimum taller than the screen is not a floor, it is a
- * guarantee of the same overflow, and it takes away the one thing the person can do about it.
- */
-function windowFit() {
-  const fallback = { width: 1360, height: 860, minWidth: 1020, minHeight: 640 };
-  try {
-    // dev: MM_WORKAREA=1366x728 stands in for a smaller screen (tools/sim profiles)
-    const fake = /^(\d+)x(\d+)$/.exec(process.env.MM_WORKAREA || '');
-    const { width: aw, height: ah } = fake ? { width: +fake[1], height: +fake[2] } : screen.getPrimaryDisplay().workAreaSize;
-    if (!(aw > 0 && ah > 0)) return fallback;
-    return {
-      width: Math.min(fallback.width, aw),
-      height: Math.min(fallback.height, ah),
-      minWidth: Math.min(fallback.minWidth, aw),
-      minHeight: Math.min(fallback.minHeight, ah),
-    };
-  } catch {
-    return fallback; // no display info: better the designed size than no window at all
-  }
-}
-
+// The window (src/main-window.ts): sized to the screen, locked to the app's page, Ctrl +/-/0
+// scaling its content. Then whichever dev switch is set (src/dev-harness.ts).
 function createWindow() {
-  win = new BrowserWindow({
-    ...windowFit(),
-    backgroundColor: '#050506',
-    autoHideMenuBar: true,
-    frame: false,
-    // dev: MM_QUIET=1 keeps an automated run off the screen of whoever is using the machine.
-    // Undefined anywhere but a measuring run, so the app opens exactly as it always did.
-    //
-    // A window that was never shown produces no frames, and a view transition waits for one:
-    // time-from-click-to-visible reads in seconds here and means nothing. Measure the main
-    // thread (the gap between timer ticks) instead, which is what a frozen window actually is.
-    show: !process.env.MM_QUIET,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      backgroundThrottling: false,
-    },
+  win = createMainWindow({
+    appRoot: __dirname, settings, diag,
+    // dev: MM_WORKAREA=1366x728 stands in for a smaller screen (tools/sim profiles), and
+    // MM_QUIET=1 keeps an automated run off the screen of whoever is using the machine
+    workArea: workAreaFrom(process.env.MM_WORKAREA),
+    quiet: !!process.env.MM_QUIET,
   });
-  const appPage = path.join(__dirname, 'renderer', 'index.html');
-  win.loadFile(appPage);
-
-  /* The window shows one page and never another.
-   *
-   * A preload script is attached to the webContents, not to the document, so a page the
-   * window navigates to inherits window.api - the whole IPC surface, install and runTool
-   * included. Nothing in the app navigates anywhere, but the catalog's own HTML lands in
-   * the interface (guides), and one <meta http-equiv="refresh"> in it would be enough to
-   * hand that surface to whoever wrote the markup. CSP does not cover navigation, so this
-   * does: the app's own file is the only thing this window is allowed to load, and a link
-   * that wants a browser gets the browser.
-   */
-  const appUrl = pathToFileURL(appPage).href;
-  const leavesForBrowser = (url) => {
-    if (/^https?:\/\//i.test(url)) shell.openExternal(url).catch(() => {});
-  };
-  win.webContents.on('will-navigate', (event, url) => {
-    if (url === appUrl) return; // a reload of the page itself
-    event.preventDefault();
-    diag(`blocked navigation to ${String(url).slice(0, 200)}`);
-    leavesForBrowser(url);
-  });
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    diag(`blocked window.open to ${String(url).slice(0, 200)}`);
-    leavesForBrowser(url);
-    return { action: 'deny' };
-  });
-  // A webview or a nested frame would be a second way in with the same preload on it.
-  win.webContents.on('will-attach-webview', (event) => event.preventDefault());
-
-  win.on('maximize', () => win.webContents.send('win:maximized', true));
-  win.on('unmaximize', () => win.webContents.send('win:maximized', false));
-
-  // Ctrl +/-/0 scale the content. Handled here rather than in the renderer because
-  // preventDefault() at this point also swallows Electron's built-in zoom accelerators —
-  // those zoom the whole window, panels included, which is exactly what we don't want.
-  win.webContents.on('before-input-event', (event, input) => {
-    if (input.type !== 'keyDown' || !input.control || input.alt) return;
-    const cur = clampZoom(settings.get('uiScale'));
-    let z = null;
-    if (input.key === '=' || input.key === '+') z = clampZoom(cur + 0.05);
-    else if (input.key === '-' || input.key === '_') z = clampZoom(cur - 0.05);
-    else if (input.key === '0') z = 1;
-    if (z === null) return;
-    event.preventDefault();
-    settings.set('uiScale', z);
-    win.webContents.send('ui:zoom', z); // the renderer owns the scale itself
-  });
-
-  // dev: MM_SHOT=<path> saves a screenshot after load (used for automated UI checks)
-  if (process.env.MM_SHOT) {
-    win.webContents.once('did-finish-load', () => {
-      diag('did-finish-load');
-      setTimeout(async () => {
-        diag('capture start');
-        try {
-          // MM_QUIET=1: measure without the window jumping in front of whatever the person
-          // at the keyboard is doing. The window is created hidden in that mode, so a run
-          // after numbers rather than a picture never takes over the screen.
-          if (!process.env.MM_QUIET) {
-            win.show();
-            win.focus();
-          }
-          if (process.env.MM_VIEW) {
-            await win.webContents.executeJavaScript(
-              `document.querySelector('[data-view="${process.env.MM_VIEW}"]')?.click()`);
-            await new Promise((r) => setTimeout(r, 2500));
-          }
-          if (process.env.MM_CAT) {
-            await win.webContents.executeJavaScript(
-              `document.querySelector('.rail-item[data-cat="${process.env.MM_CAT}"]')?.click()`);
-            await new Promise((r) => setTimeout(r, 2500));
-          }
-          if (process.env.MM_SEARCH) {
-            // dev-only: type into the title-bar search (its handler is debounced)
-            await win.webContents.executeJavaScript(`(() => {
-              const el = document.getElementById('globalSearch');
-              if (!el) return;
-              el.value = ${JSON.stringify(process.env.MM_SEARCH)};
-              el.dispatchEvent(new Event('input', { bubbles: true }));
-            })()`);
-            await new Promise((r) => setTimeout(r, 2500));
-          }
-          if (process.env.MM_CLICK) {
-            // dev-only: click a comma-separated list of CSS selectors before capture
-            for (const sel of process.env.MM_CLICK.split('||')) {
-              await win.webContents.executeJavaScript(`document.querySelector(${JSON.stringify(sel)})?.click()`);
-              await new Promise((r) => setTimeout(r, 700));
-            }
-          }
-          if (process.env.MM_HOVER) {
-            // dev-only: park the pointer over a selector (or "x,y") so the shot shows the
-            // hover state. Half of what a card does only exists under the cursor, and a
-            // screenshot of the resting state cannot show a control that slides on hover.
-            const spec = process.env.MM_HOVER;
-            let point = null;
-            if (/^\d+\s*,\s*\d+$/.test(spec)) {
-              const [x, y] = spec.split(',').map(Number);
-              point = { x, y };
-            } else {
-              point = await win.webContents.executeJavaScript(`(() => {
-                const el = document.querySelector(${JSON.stringify(spec)});
-                if (!el) return null;
-                const r = el.getBoundingClientRect();
-                return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
-              })()`);
-            }
-            if (point) {
-              // two moves: the first lands, the second keeps the pointer there after any
-              // relayout the first one caused
-              win.webContents.sendInputEvent({ type: 'mouseMove', x: point.x, y: point.y });
-              await new Promise((r) => setTimeout(r, 250));
-              win.webContents.sendInputEvent({ type: 'mouseMove', x: point.x, y: point.y });
-              await new Promise((r) => setTimeout(r, 600));
-            }
-          }
-          if (process.env.MM_DRAG) {
-            // dev-only: press, move, release — "x1,y1,x2,y2" (drags a grip, swipes a strip)
-            const [x1, y1, x2, y2] = process.env.MM_DRAG.split(',').map(Number);
-            win.webContents.sendInputEvent({ type: 'mouseDown', x: x1, y: y1, button: 'left', clickCount: 1 });
-            for (let i = 1; i <= 12; i++) {
-              win.webContents.sendInputEvent({
-                type: 'mouseMove', button: 'left',
-                x: Math.round(x1 + ((x2 - x1) * i) / 12), y: Math.round(y1 + ((y2 - y1) * i) / 12),
-              });
-              await new Promise((r) => setTimeout(r, 30));
-            }
-            win.webContents.sendInputEvent({ type: 'mouseUp', x: x2, y: y2, button: 'left', clickCount: 1 });
-            await new Promise((r) => setTimeout(r, 500));
-          }
-          if (process.env.MM_WHEEL) {
-            // dev-only: wheel ticks at a point — "x,y,deltaY[,ctrl]", several split by ";"
-            for (const spec of process.env.MM_WHEEL.split(';')) {
-              const [x, y, dy, mod] = spec.split(',').map((v) => v.trim());
-              win.webContents.sendInputEvent({
-                type: 'mouseWheel', x: Number(x), y: Number(y),
-                deltaX: 0, deltaY: Number(dy), canScroll: true,
-                modifiers: mod === 'ctrl' ? ['control'] : [],
-              });
-              await new Promise((r) => setTimeout(r, 400));
-            }
-          }
-          if (process.env.MM_UPDATE) {
-            // dev-only: MM_UPDATE=portable:2.3.0 raises the update bar without waiting for a
-            // real release, so the three states it can be in stay checkable from a screenshot
-            const [type, version] = String(process.env.MM_UPDATE).split(':');
-            win.webContents.send('update', { type, version: version || '0.0.0' });
-            await new Promise((r) => setTimeout(r, 900));
-          }
-          if (process.env.MM_SCROLL) {
-            // dev-only: scroll the scrollable pane by N px before capture (long views)
-            await win.webContents.executeJavaScript(`(() => {
-              const el = [...document.querySelectorAll('#main, *')].find((e) =>
-                e.scrollHeight > e.clientHeight + 40 && /auto|scroll/.test(getComputedStyle(e).overflowY));
-              (el || document.scrollingElement).scrollBy(0, ${Number(process.env.MM_SCROLL) || 0});
-            })()`);
-            await new Promise((r) => setTimeout(r, 600));
-          }
-          if (process.env.MM_MODAL) {
-            await win.webContents.executeJavaScript(`
-              [...document.querySelectorAll('.card .card-name')]
-                .find(n => n.textContent.trim() === ${JSON.stringify(process.env.MM_MODAL)})
-                ?.closest('.card')?.click()`);
-            await new Promise((r) => setTimeout(r, 1500));
-            if (process.env.MM_PREVIEW) {
-              await win.webContents.executeJavaScript(`document.getElementById('previewPlayBtn')?.click()`);
-              await new Promise((r) => setTimeout(r, 2500));
-            }
-          }
-          if (process.env.MM_EVAL) {
-            // dev-only: read the finished DOM and write the answer beside the screenshot.
-            // A picture cannot say whether a fold opened with the right text in the right
-            // language, and that is exactly the kind of thing that ships broken.
-            const out = await win.webContents.executeJavaScript(`(async () => {
-              ${process.env.MM_EVAL}
-            })()`);
-            fs.writeFileSync(`${process.env.MM_SHOT}.eval.json`, JSON.stringify(out, null, 1));
-          }
-          await new Promise((r) => setTimeout(r, 500));
-          // a runner's xvfb sometimes has no frame to hand over yet (UnknownVizError): src/capture.ts
-          const { captureWithRetry } = require('./src/capture.ts');
-          const img = await captureWithRetry(() => win.webContents.capturePage(), { log: diag });
-          fs.writeFileSync(process.env.MM_SHOT, img.toPNG());
-          diag('capture done ' + img.getSize().width + 'x' + img.getSize().height);
-        } catch (e) {
-          fs.writeFileSync(process.env.MM_SHOT + '.err.txt', String(e));
-        }
-      }, 7000);
-    });
-  }
-
-  // dev: MM_SIM=<scenarios> drives the window through tools/sim (tools/sim/driver.js attach)
-  if (process.env.MM_SIM) require('./tools/sim/driver').attach(win);
-  // dev: MM_REC=<dir> films the app running a scripted scene, one webm per scene. The site
-  // needs a clip of the app working and will need a fresh one every release, so it is a
-  // script rather than something recorded by hand. MM_SCENE picks scenes by name.
-  // Everything it needs lives in tools/screencast.js, loaded only on this branch.
-  if (process.env.MM_REC) {
-    win.webContents.once('did-finish-load', () => {
-      setTimeout(async () => {
-        const log = (m) => process.stdout.write(`${m}\n`);
-        let cast = null;
-        try {
-          const { Cast } = require('./tools/screencast');
-          const scenes = require('./tools/screencast-scenes');
-          win.show();
-          win.focus();
-          cast = new Cast(win, { out: process.env.MM_REC });
-          log(`cast ready ${JSON.stringify(await cast.setup())}`);
-          const only = process.env.MM_SCENE ? process.env.MM_SCENE.split(',') : null;
-          for (const [name, build] of Object.entries(scenes)) {
-            if (only && !only.includes(name)) continue;
-            const steps = typeof build === 'function' ? await build(cast, log) : build;
-            await cast.scene(name, steps, log);
-          }
-        } catch (e) {
-          log(`cast failed: ${(e && e.stack) || e}`);
-        }
-        if (cast) cast.close();
-        app.quit();
-      }, 9000);
-    });
-  }
+  attachDevHarness(win, { diag, appRoot: __dirname, quit: () => app.quit() });
 }
 
 // A small rotating log every install keeps, so a support report does not depend on reproducing

@@ -242,6 +242,9 @@
         "src/deep-links.ts": {
           "lines": 96.9
         },
+        "src/dev-harness.ts": {
+          "lines": 66.7
+        },
         "src/diagnostics.ts": {
           "lines": 94.6
         },
@@ -329,6 +332,9 @@
         "src/library.ts": {
           "lines": 100
         },
+        "src/main-window.ts": {
+          "lines": 100
+        },
         "src/minify.ts": {
           "lines": 99.6
         },
@@ -411,7 +417,7 @@
           "lines": 96.3
         },
         "src/vpk-analyze.ts": {
-          "lines": 99.1
+          "lines": 100
         },
         "src/vpk-read.ts": {
           "lines": 99
