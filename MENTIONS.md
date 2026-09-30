@@ -4,32 +4,39 @@ Links to Dota 2 Mod Manager from outside this repository. This file exists so th
 
 Two lists, and the difference matters. The first is pages other people wrote. The second is pages the maintainer wrote, each one said openly where it was published. Nothing from the second list is presented as independent.
 
-Every link below was opened on **2026-09-15**. Counts are as of that day. For how far the app itself reaches (downloads, update checks, visits from search, week by week), see [issue #3](https://github.com/dota2modmanager/dota2-mod-manager/issues/3).
+The links were first opened on **2026-09-15**. The catalog, the lists, the videos, the Discord server, the projects built from this one and the forks were checked again on **2026-09-30**, and their counts are as of that day; every other count is as of the first date. For how far the app itself reaches (downloads, update checks, visits from search, week by week), see [issue #3](https://github.com/dota2modmanager/dota2-mod-manager/issues/3).
 
 ## Written by other people
 
 ### The D2PFX catalog, which the app is built on
 
-[h6rd](https://github.com/h6rd) runs D2PFX, the open catalog of Dota 2 mods the app reads. The catalog links to this project in four places.
+[h6rd](https://github.com/h6rd) runs D2PFX, the open catalog of Dota 2 mods the app reads. The catalog and its community link to this project in five places.
 
 | Where | What it says or does |
 |---|---|
 | [Catalog README, Credits](https://github.com/h6rd/Dota2PornFxWeb#readme) | Lists [Fleece](https://github.com/TheFleece) for creating Dota 2 Mod Manager, linked to this repository |
 | [Catalog site](https://h6rd.github.io/Dota2PornFxWeb/) | Footer link "Mod Manager", pointing at [dota2modmanager.com](https://dota2modmanager.com/) |
-| [The catalog's list of tool versions](https://github.com/h6rd/Dota2PornFxWeb/blob/main/assets/data/tool-versions.json) | Tracks this project's releases with a sha256 for every release file, next to h6rd's own tools (2.6.9 on the day of checking). The site's `script.js` puts this repository on the same list of tools it checks hashes for |
+| [The catalog's list of tool versions](https://github.com/h6rd/Dota2PornFxWeb/blob/main/assets/data/tool-versions.json) | Tracks this project's releases with a sha256 for every release file, next to h6rd's own tools (v2.7.1 on 2026-09-30). The site's `script.js` puts this repository on the same list of tools it checks hashes for |
 | [D2PFX wiki, installing mods](https://d2pfxwiki.pages.dev/en/install) ([Russian](https://d2pfxwiki.pages.dev/ru/install)) | Section 5, "Automatic installation via Mod Manager", sends readers to this app |
+| [The catalog's Discord server](https://discord.gg/PBvG8D9MxT) | 2,915 members on 2026-09-30. The server gives the app a channel of its own, #mod-manager, where new versions are announced, and a Mod Manager post under #utilities where people ask for help. The maintainer is there as Fleece, with the Dota 2 Mod Manager Dev role. The server belongs to the catalog, not to this project |
+
+### Lists
+
+| List | Who keeps it | What it says |
+|---|---|---|
+| [awesome-game-file-format-reversing](https://github.com/VelocityRa/awesome-game-file-format-reversing#dota-2), a curated list of tools and research on game file formats, 219 stars | [VelocityRa](https://github.com/VelocityRa) | Lists the project in its Dota 2 section as a mod manager working with the game's own VPK format. The list's maintainer added it on 2026-08-20, unasked, in [a batch of new finds](https://github.com/VelocityRa/awesome-game-file-format-reversing/commit/c608479) |
 
 ### Videos
 
-All in Russian. View counts here were read again on 2026-09-22; the rest of this file is still as of the date above.
+All in Russian. View counts were read on 2026-09-30.
 
 | Video | Who | Published | Notes |
 |---|---|---|---|
-| [Как ставить любые моды, шмотки и карты в Dota 2 еще легче? \| Dota 2 Mod Manager](https://www.youtube.com/watch?v=Z_yalpuP6pA) | [hanta](https://www.youtube.com/@hqnta), YouTube | 2026-08-21 | A walkthrough of the app. 9,189 views |
-| [Ставлю моды на Dota 2 за 5 минут \| Dota 2 Mod Manager](https://www.youtube.com/watch?v=RWBGYSjN-Ow) | [dricsy66](https://www.youtube.com/@dricsy66), YouTube | 2026-08-18 | Installing mods with the app, four minutes. 1,259 views |
-| [Бесплатные скины, звуки и курьеры в Dota 2 \| Dota 2 Mod Manager в ПАРУ кликов](https://www.youtube.com/watch?v=xS-KDa670yQ) | [wwwwex](https://www.youtube.com/@wex.w66), YouTube | 2026-08-20 | Skins, sounds and couriers put on with the app, five minutes. 199 views, read on 2026-09-26 |
-| [Short clip](https://www.tiktok.com/@romantic_9991/video/7683011914242313492) | [romantic_9991](https://www.tiktok.com/@romantic_9991), TikTok | 2026-09-08 | The app's catalog on screen, tagged as a guide to replacement skins |
-| [Short clip](https://www.tiktok.com/@romantic_9991/video/7682934300328660245) | [romantic_9991](https://www.tiktok.com/@romantic_9991), TikTok | 2026-09-07 | A second clip from the same account |
+| [Как ставить любые моды, шмотки и карты в Dota 2 еще легче? \| Dota 2 Mod Manager](https://www.youtube.com/watch?v=Z_yalpuP6pA) | [hanta](https://www.youtube.com/@hqnta), YouTube | 2026-08-21 | A walkthrough of the app. 11,345 views |
+| [Ставлю моды на Dota 2 за 5 минут \| Dota 2 Mod Manager](https://www.youtube.com/watch?v=RWBGYSjN-Ow) | [dricsy66](https://www.youtube.com/@dricsy66), YouTube | 2026-08-18 | Installing mods with the app, four minutes. 1,569 views |
+| [Бесплатные скины, звуки и курьеры в Dota 2 \| Dota 2 Mod Manager в ПАРУ кликов](https://www.youtube.com/watch?v=xS-KDa670yQ) | [wwwwex](https://www.youtube.com/@wex.w66), YouTube | 2026-08-20 | Skins, sounds and couriers put on with the app, five minutes. 245 views. Its description is word for word the one under the dricsy66 video, and the two are most likely one author uploading twice, so count them as one voice rather than two |
+| [Short clip](https://www.tiktok.com/@romantic_9991/video/7683011914242313492) | [romantic_9991](https://www.tiktok.com/@romantic_9991), TikTok | 2026-09-08 | The app's catalog on screen, tagged as a guide to replacement skins. 2,158 views |
+| [Short clip](https://www.tiktok.com/@romantic_9991/video/7682934300328660245) | [romantic_9991](https://www.tiktok.com/@romantic_9991), TikTok | 2026-09-07 | A second clip from the same account. 1,572 views |
 
 ### Discussions
 
@@ -50,12 +57,14 @@ The code is GPL-3.0, so anyone may take it. These did and say so.
 
 | Project | Author | Credit given |
 |---|---|---|
-| [VANTA DOTA2 HUB](https://github.com/artem-prime42/VANTA-DOTA2-HUB), formerly Dota2Skins Manager | [artem-prime42](https://github.com/artem-prime42) | Until 2026-09-25 the README's Credits section named this project as the code it modified, dated 2026-07-21, with a link. That day the repository started over with a new history, and its README now calls VANTA "an independent implementation" that does not run or import this app. The project's site, [dota2skins.vercel.app](https://dota2skins.vercel.app/), still says the manager was "created based on Dota 2 Mod Manager by Mykhailo Lynnyk". Its launch post on Reddit, [r/DotA2Mods](https://www.reddit.com/r/DotA2Mods/comments/1vgi58s/after_4_months_of_work_i_made_a_free_dota_2_mod/) (August 2026), says the same and links this repository as the original project |
+| [VANTA DOTA2 HUB](https://github.com/artem-prime42/VANTA-DOTA2-HUB), formerly Dota2Skins Manager | [artem-prime42](https://github.com/artem-prime42) | The project's first history lives on as [VANTA-DOTA2-HUB-LEGACY](https://github.com/artem-prime42/VANTA-DOTA2-HUB-LEGACY), 50 releases and 11 stars: its README's Credits section and its NOTICE file name this project as the code it modified, taken on 2026-07-21, with a link. On 2026-09-25 the main repository started over with a new history, and its README now calls VANTA "an independent implementation" that does not run or import this app. The project's site, [dota2skins.vercel.app](https://dota2skins.vercel.app/), still says on 2026-09-30 that the manager was "created based on Dota 2 Mod Manager by Mykhailo Lynnyk". Its launch post on Reddit, [r/DotA2Mods](https://www.reddit.com/r/DotA2Mods/comments/1vgi58s/after_4_months_of_work_i_made_a_free_dota_2_mod/) (August 2026), says the same and links this repository as the original project |
 
 ### Forks on GitHub
 
 | Fork | Created |
 |---|---|
+| [Anabol1ks/dota2-mod-manager](https://github.com/Anabol1ks/dota2-mod-manager) | 2026-09-23 |
+| [chenzeyan54-commits/dota2-mod-manager](https://github.com/chenzeyan54-commits/dota2-mod-manager) | 2026-09-22 |
 | [h6rd/dota2-mod-manager](https://github.com/h6rd/dota2-mod-manager) | 2026-09-14 |
 | [Omkar-git-hub/dota2-mod-manager](https://github.com/Omkar-git-hub/dota2-mod-manager) | 2026-09-09, the source of merged pull request [#15](https://github.com/dota2modmanager/dota2-mod-manager/pull/15) |
 | [tufukap/celestial_vpk](https://github.com/tufukap/celestial_vpk) | 2026-09-08 |
