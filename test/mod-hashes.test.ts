@@ -19,8 +19,7 @@ import crypto from 'node:crypto';
 import type { AddressInfo } from 'node:net';
 
 import { Catalog, HASH_FILE } from '../src/catalog.ts';
-import installerJs from '../src/installer.js';
-const { Installer } = installerJs;
+import { Installer } from '../src/installer.ts';
 
 function tmpDir(t: TestContext) {
   const dir = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-hash-')));

@@ -13,7 +13,7 @@
  *   2. packs: every pakNN_dir.vpk in every mounted folder opens, and in the ones that are ours
  *      (not Valve's pak01) every file's bytes match the CRC its index claims;
  *   3. winners: for each path, the first mounted folder that has it, and inside a folder the
- *      lowest pak number, which is the rule src/installer.js places mods by;
+ *      lowest pak number, which is the rule src/installer.ts places mods by;
  *   4. schema: the items_game.txt the game would read parses, and every model, particle and
  *      material a changed block points at exists somewhere the game can load it from;
  *   5. signatures: when the search paths are ours, dota.signatures carries a line for the

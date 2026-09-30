@@ -15,7 +15,7 @@ const os = require('os');
 const path = require('path');
 const http = require('http');
 
-const { Installer } = require('../src/installer.js');
+const { Installer } = require('../src/installer.ts');
 
 function tmpDir(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-dl-'));

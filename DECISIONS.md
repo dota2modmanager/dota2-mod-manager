@@ -385,7 +385,7 @@ to the aggregate and nothing else, and says so. The Linux numbers are taken by r
 that is manual because a baseline that rewrites itself on every push is not a ratchet.
 
 Per file, because the aggregate hid the thing worth catching: it read 76.10% on the day this
-changed, while `src/presets-service.ts` sat at 13.8% of its lines and `src/installer.js` at 48.5%,
+changed, while `src/presets-service.ts` sat at 13.8% of its lines and `src/installer.ts` at 48.5%,
 and a new module with no tests at all moves the aggregate by a fraction of a point.
 
 *Check:* `.github/coverage-baseline.json`, `tools/coverage.mjs`, and the `test:coverage` script in
@@ -420,7 +420,7 @@ window, the log, auto-update, deep links, the import progress bar, Discord prese
 language folder, which is still more than one file's worth of subject.
 
 It is one of five files carrying 6,754 lines between them while the median module in `src/` is
-171: `src/installer.js`, `renderer/views/catalog.js`, `renderer/views/library.js`, this one and
+171: `src/installer.ts`, `renderer/views/catalog.js`, `renderer/views/library.js`, this one and
 `src/vpk.ts`. None of them arrived that size; each grew a hundred lines at a time with nobody
 deciding to. Since 2026-09-16 each has its length written in `.github/size-budget.json`, and
 `tools/size-budget.mjs` fails a run where one grows, or where a file nobody listed crosses 800

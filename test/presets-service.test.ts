@@ -2,7 +2,7 @@
  *
  * A real library in a temp folder; the installer, the catalog and the schema service are stand-ins
  * that record what they were asked, because the question here is what gets decided about the
- * records, not whether a VPK is written (test/packs.test.ts and test/installer.test.js do that).
+ * records, not whether a VPK is written (test/packs.test.ts and test/installer.test.ts do that).
  */
 import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';

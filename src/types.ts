@@ -40,6 +40,9 @@ export interface LibRecord {
   [key: string]: unknown;
 }
 
+/** Anything shaped like a record that owns files: what the installer's file work needs of one. */
+export type HasFiles = Partial<LibRecord> & Pick<LibRecord, 'files'>;
+
 /** One mod inside a pack: its identity, whether it is on, and where its own copy is kept. */
 export interface PackMember {
   id: string;

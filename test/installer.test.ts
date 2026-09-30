@@ -1,4 +1,4 @@
-/* The part of src/installer.js that writes a mod into the game and takes it out again.
+/* The part of src/installer.ts that writes a mod into the game and takes it out again.
  *
  * On 2026-09-16 a third of this file had no unit test at all: installInto, the font, cursor and
  * tool installs, switching a mod off, removing it, the clean-up after a killed transaction, and
@@ -6,22 +6,26 @@
  * catalog install, so the common path was covered from outside; everything that path does not
  * reach was covered by nothing. These call the same methods against a throwaway game folder.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const AdmZip = require('adm-zip');
+import test, { type TestContext } from 'node:test';
+import assert from 'node:assert/strict';
+import type { Thrown } from './helpers/thrown.ts';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import AdmZip from 'adm-zip';
 
-const { Installer } = require('../src/installer.js');
-const { FileTx } = require('../src/file-tx.ts');
-const { rawZip } = require('./fixtures/raw-zip.js');
+import { Installer } from '../src/installer.ts';
+import { FileTx } from '../src/file-tx.ts';
+import { Library } from '../src/library.ts';
+import { vacateAppPak } from '../src/slot-zones.ts';
+import rawZipJs from './fixtures/raw-zip.js';
+const { rawZip } = rawZipJs;
 
 const FONTS = ['dota', 'panorama', 'fonts'];
 const CURSOR = ['dota', 'resource', 'cursor'];
 
 /** A game folder the installer accepts, and an installer pointed at it. */
-function stand(t, { game: withGame = true } = {}) {
+function stand(t: TestContext, { game: withGame = true } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-installer-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const game = path.join(dir, 'game');
@@ -37,22 +41,25 @@ function stand(t, { game: withGame = true } = {}) {
   const incoming = path.join(dir, 'incoming');
   fs.mkdirSync(incoming);
   /** A file as the download step would leave it. */
-  const arrive = (name, body) => {
+  const arrive = (name: string, body: string | Buffer) => {
     const p = path.join(incoming, name);
     fs.writeFileSync(p, body);
     return p;
   };
-  const zip = (name, entries) => {
+  const zip = (name: string, entries: [string, string][]) => {
     const z = new AdmZip();
     for (const [inner, body] of entries) z.addFile(inner, Buffer.from(body));
     return arrive(name, z.toBuffer());
   };
-  const read = (...parts) => fs.readFileSync(path.join(game, ...parts), 'utf-8');
-  const has = (...parts) => fs.existsSync(path.join(game, ...parts));
+  const read = (...parts: string[]) => fs.readFileSync(path.join(game, ...parts), 'utf-8');
+  const has = (...parts: string[]) => fs.existsSync(path.join(game, ...parts));
   return { dir, game, lang, installer, arrive, zip, read, has };
 }
 
-const install = (installer, categoryId, local, modName = 'Test Mod') =>
+/** What stand() hands a test. */
+type Stand = ReturnType<typeof stand>;
+
+const install = (installer: Installer, categoryId: string, local: string, modName = 'Test Mod') =>
   FileTx.run((tx) => installer.installInto(tx, { categoryId, modName, local }));
 
 // ---------- into the language folder ----------
@@ -112,7 +119,7 @@ test('an archive that breaks halfway leaves nothing behind', (t) => {
   buf[30 + first.name.length + first.data.length + 30 + second.name.length] ^= 0xff;
   const local = s.arrive('Broken.zip', buf);
 
-  assert.throws(() => install(s.installer, 'heroes', local, 'Broken'), (err) => err.safeZip === true);
+  assert.throws(() => install(s.installer, 'heroes', local, 'Broken'), (err: Thrown) => err.safeZip === true);
   assert.deepEqual(fs.readdirSync(s.lang).filter((f) => f !== 'gameinfo.gi'), []);
 });
 
@@ -286,7 +293,7 @@ test("a font Steam's verify replaced is noticed, and put back from the download 
   // what a verify does: Valve's file back, ours untouched where Valve has none
   fs.copyFileSync(path.join(s.installer.backupsDir, 'fonts', 'radiance.ttf'), path.join(s.game, ...FONTS, 'radiance.ttf'));
   assert.deepEqual(s.installer.lostToVerify([rec, off]).map((r) => r.id), ['a'], 'a switched-off mod is not missing anything');
-  const back = (f) => s.installer.overlays.vanillaIsBack(f);
+  const back = (f: { root: string; relPath: string }) => s.installer.overlays.vanillaIsBack(f);
   assert.equal(back({ root: 'fonts', relPath: 'extra.ttf' }), false, 'a file with no original cannot be one');
   assert.equal(back({ root: 'lang', relPath: 'pak10_dir.vpk' }), false);
 
@@ -421,12 +428,13 @@ test('a cursor set another program put in the game is found, folders and all, un
 // ---------- the load order in two parts ----------
 //
 // Slots 02-29 belong to the categories that must load first, everything else starts at 30
-// (PRIORITY_SLOTS in src/installer.js).
+// (PRIORITY_SLOTS in src/slot-zones.ts).
 
-const { Library } = require('../src/library.ts');
 
 /** A pak file of ours on disk and the record that owns it. */
-function placed(s, library, { base, categoryId, name = base, suffix = '', volumes = 0 }) {
+function placed(s: Stand, library: Library, { base, categoryId, name = base, suffix = '', volumes = 0 }: {
+  base: string; categoryId: string; name?: string; suffix?: string; volumes?: number;
+}) {
   fs.mkdirSync(s.lang, { recursive: true });
   fs.writeFileSync(path.join(s.lang, `${base}_dir.vpk${suffix}`), name);
   const files = [{ root: 'lang', relPath: `${base}_dir.vpk` }];
@@ -438,17 +446,17 @@ function placed(s, library, { base, categoryId, name = base, suffix = '', volume
   return library.add({ name, categoryId, fileRef: name, files });
 }
 
-const paksIn = (s) => fs.readdirSync(s.lang).filter((f) => f.startsWith('pak') || f.startsWith('mmslot')).sort();
+const paksIn = (s: Stand) => fs.readdirSync(s.lang).filter((f) => f.startsWith('pak') || f.startsWith('mmslot')).sort();
 
 test('the categories that load first get 02-29, the rest start at 30, and a full front spills behind', (t) => {
   const s = stand(t);
-  const used = new Set();
+  const used = new Set<string>();
   const front = Array.from({ length: 28 }, () => s.installer.allocatePak(used, true));
   assert.equal(front[0], 'pak02_dir.vpk');
   assert.equal(front[27], 'pak29_dir.vpk');
   assert.equal(s.installer.allocatePak(used, true), 'pak30_dir.vpk', 'the 29th still installs, in the first slot after them');
   assert.equal(s.installer.allocatePak(used, false), 'pak31_dir.vpk');
-  const rest = new Set();
+  const rest = new Set<string>();
   // 30-99 is seventy slots: Minify keeps 65-67 and the app's own pak64 (src/notice-text.ts)
   for (let i = 0; i < 66; i++) {
     const n = Number(s.installer.allocatePak(rest, false).slice(3, 5));
@@ -531,7 +539,6 @@ test('a layout that fails half way puts every file back where it was', (t) => {
 });
 
 test('a mod on the slot the notice text took moves to the first free one behind it, volumes and state kept', (t) => {
-  const { vacateAppPak } = require('../src/slot-zones.ts');
   const s = stand(t);
   const library = new Library(path.join(s.dir, 'userdata'));
   placed(s, library, { base: 'pak64', categoryId: 'heroes', name: 'was on 64', suffix: '.off', volumes: 1 });
@@ -540,12 +547,11 @@ test('a mod on the slot the notice text took moves to the first free one behind 
   assert.equal(vacateAppPak(s.installer, library), true);
   assert.deepEqual(paksIn(s), ['pak65_dir.vpk', 'pak68_dir.vpk', 'pak69_000.vpk.off', 'pak69_dir.vpk.off']);
   const rec = library.list().find((r) => r.name === 'was on 64');
-  assert.deepEqual(rec.files.map((f) => f.relPath), ['pak69_dir.vpk', 'pak69_000.vpk']);
+  assert.deepEqual(rec?.files.map((f) => f.relPath), ['pak69_dir.vpk', 'pak69_000.vpk']);
   assert.equal(vacateAppPak(s.installer, library), false, 'nothing left on 64');
 });
 
 test('a move off the notice slot that the game refuses puts the files back and changes no record', (t) => {
-  const { vacateAppPak } = require('../src/slot-zones.ts');
   const s = stand(t);
   const library = new Library(path.join(s.dir, 'userdata'));
   placed(s, library, { base: 'pak64', categoryId: 'heroes', name: 'held open', volumes: 1 });

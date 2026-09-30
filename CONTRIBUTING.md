@@ -114,7 +114,7 @@ npm run size
 ```
 
 Five files carried 7,155 lines between them while the median module in `src/` is 171:
-`src/installer.js`, `renderer/views/catalog.js`, `renderer/views/library.js`, `main.js` and
+`src/installer.ts`, `renderer/views/catalog.js`, `renderer/views/library.js`, `main.js` and
 `src/vpk.ts`, which has since been split into three. Each is in `.github/size-budget.json` at its current length, and the check fails when
 one grows, or when a file nobody listed crosses 800 lines.
 

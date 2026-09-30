@@ -15,8 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import * as vpk from '../src/vpk.ts';
-import installerJs from '../src/installer.js';
-const { Installer } = installerJs;
+import { Installer } from '../src/installer.ts';
 
 /** Where the content starts under `dir`, failing the test when nothing game-shaped is there. */
 function rootOf(dir: string): string {

@@ -13,7 +13,7 @@ const os = require('os');
 const path = require('path');
 const Module = require('module');
 
-const { Installer } = require('../src/installer.js');
+const { Installer } = require('../src/installer.ts');
 const { Library } = require('../src/library.ts');
 
 const ROOT = path.resolve(__dirname, '..');

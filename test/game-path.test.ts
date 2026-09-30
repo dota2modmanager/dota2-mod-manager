@@ -13,8 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { validateGamePath, findDotaGamePath } from '../src/steam.ts';
-import installerJs from '../src/installer.js';
-const { Installer } = installerJs;
+import { Installer } from '../src/installer.ts';
 
 function tmpDir(t: TestContext): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-gamepath-'));

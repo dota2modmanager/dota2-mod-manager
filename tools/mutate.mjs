@@ -19,7 +19,7 @@
  * holds every mutant against today's source on every push, without running any of them.
  *
  * Putting the file back is checked rather than assumed. On 2026-09-16 a run reported every
- * mutant caught and left one of them in src/installer.js: the write that should have restored it
+ * mutant caught and left one of them in src/installer.ts: the write that should have restored it
  * did not take, and each later mutant on that file then read the broken copy as its own original
  * and faithfully put THAT back. Nothing said a word, and the branch was one push away from
  * carrying a deliberately broken installer. So a restore is read back and compared, a file that
@@ -42,7 +42,7 @@ export const CONFIG = path.join(root, '.github', 'mutants.json');
  *
  * Every mutant is anchored to the function it belongs to and applied to the first match after
  * that anchor: `this.allocatePak(this.usedPakNames(), false)` appears in three places in
- * src/installer.js, and mutating the wrong one tests a different feature while claiming to test
+ * src/installer.ts, and mutating the wrong one tests a different feature while claiming to test
  * this one.
  *
  * @param {string} src  the file as it is today

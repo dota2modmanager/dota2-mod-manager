@@ -7,7 +7,7 @@
  * working folder holds no archive at all. And whatever arrives, the language folder it lands in
  * belongs to the game and to other tools too, so what the app writes there has to be its own.
  *
- * Four hundred and fifty lines of src/installer.js carry that, and until this file one method of
+ * Four hundred and fifty lines of src/installer.ts carry that, and until this file one method of
  * the fourteen had a test. Written before the section is split out, so the split has something to
  * prove itself against.
  */
@@ -20,7 +20,7 @@ const AdmZip = require('adm-zip');
 
 const vpk = require('../src/vpk.ts');
 const { entry } = require('./helpers/vpk-entry.ts');
-const { Installer } = require('../src/installer.js');
+const { Installer } = require('../src/installer.ts');
 const { importVpks, importVpkBuffers, installVpkBuffer } = require('../src/import.js');
 
 /** A self-contained mod, the shape the catalog ships. */

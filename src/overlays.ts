@@ -16,7 +16,7 @@
  * backups\written.json, and a file that holds what this app wrote is this app's file, whatever
  * else it happens to match.
  *
- * Moved out of src/installer.js on 2026-09-17; test/installer.test.js and test/cursors.test.ts
+ * Moved out of src/installer.ts on 2026-09-17; test/installer.test.ts and test/cursors.test.ts
  * cover it through the installer.
  */
 import fs from 'node:fs';
@@ -26,7 +26,7 @@ import AdmZip from 'adm-zip';
 import { openZip, safeJoin } from './safe-zip.ts';
 import { copyInto, writeInto, type Writer } from './file-tx.ts';
 import { t } from './i18n.ts';
-import type { LibFile, LibRecord } from './types.ts';
+import type { HasFiles, LibFile, LibRecord } from './types.ts';
 
 /** The two game folders loose files go into. */
 type Root = 'fonts' | 'cursor';
@@ -47,7 +47,7 @@ export class Overlays {
   getGamePath: () => string | null;
   backupsDir: string;
   cursorsDir: string;
-  cachedArchive: (categoryId: string, fileRef: string | null | undefined) => string | null;
+  cachedArchive: (categoryId: string | null, fileRef: string | null | undefined) => string | null;
 
   /**
    * @param opts.backupsDir   the game's own copies, under fonts\ and cursor\
@@ -55,7 +55,7 @@ export class Overlays {
    */
   constructor({ getGamePath, backupsDir, cursorsDir, cachedArchive }: {
     getGamePath: () => string | null; backupsDir: string; cursorsDir: string;
-    cachedArchive: (categoryId: string, fileRef: string | null | undefined) => string | null;
+    cachedArchive: (categoryId: string | null, fileRef: string | null | undefined) => string | null;
   }) {
     this.getGamePath = getGamePath;
     this.backupsDir = backupsDir;
@@ -297,7 +297,7 @@ export class Overlays {
   }
 
   /** Installed records whose files the game has taken back. */
-  lostToVerify(records: LibRecord[] | null | undefined): LibRecord[] {
+  lostToVerify<R extends HasFiles>(records: R[] | null | undefined): R[] {
     if (!this.getGamePath()) return [];
     const written = this.written();
     return (records || []).filter((rec) => rec.enabled !== false
@@ -311,13 +311,13 @@ export class Overlays {
    * not something to start behind the user's back at launch.
    * @returns where it came from, or null if it could not be done
    */
-  restoreDeployed(rec: LibRecord): 'store' | 'cache' | null {
+  restoreDeployed(rec: HasFiles & Pick<LibRecord, 'id' | 'name'>): 'store' | 'cache' | null {
     const isCursor = (rec.files || []).some((f) => f.root === 'cursor');
     if (isCursor && this.cursorFiles(rec.files).length && fs.existsSync(this.cursorStoreDir(rec.id))) {
       this.deployCursor(rec.id, rec.files);
       return 'store';
     }
-    const local = this.cachedArchive(rec.categoryId, rec.fileRef);
+    const local = this.cachedArchive(rec.categoryId ?? null, rec.fileRef);
     if (!local) return null;
     if (isCursor) this.installCursor(local, rec.name);
     else this.installFonts(local, rec.name);

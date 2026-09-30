@@ -16,7 +16,7 @@
  */
 import { RESERVED_PAKS } from './minify.ts';
 import type { Library } from './library.ts';
-import type { LibFile, LibRecord } from './types.ts';
+import type { LibFile, LibRecord, HasFiles } from './types.ts';
 
 /** The two ranges a pak can sit in: early slots that load first, and everything after. */
 export type Zone = 'priority' | 'normal';
@@ -24,9 +24,9 @@ export type Zone = 'priority' | 'normal';
 /** What of the installer this asks: which slot a record's pak sits in, which slots are taken, and moving one. */
 export interface SlotInstaller {
   slotNumber(rec: LibRecord): number | null;
-  slotBase(rec: LibRecord): string;
+  slotBase(rec: HasFiles): string | null;
   usedPakNames(): Set<string>;
-  moveToSlot(rec: LibRecord, base: string, from?: string): LibFile[];
+  moveToSlot(rec: HasFiles, base: string, from?: string | null): LibFile[];
 }
 
 /** One record on its way to another slot, parked under a temporary name in between. */
@@ -125,7 +125,8 @@ export function migrateSlotZones(installer: SlotInstaller, library: Pick<Library
   const moving: Move[] = plan
     .filter((p) => `${installer.slotBase(p.r)}_dir.vpk` !== p.to)
     // every plan has a slot by now: a missing one returned above
-    .map((p) => ({ ...p, from: installer.slotBase(p.r), park: `mmslot${p.n}`, to: (p.to as string).replace(/_dir\.vpk$/i, ''), parked: [], files: [] }));
+    // every record here has a slot: the ones without were filtered out above
+    .map((p) => ({ ...p, from: installer.slotBase(p.r) as string, park: `mmslot${p.n}`, to: (p.to as string).replace(/_dir\.vpk$/i, ''), parked: [], files: [] }));
   if (!moving.length) return { moved: 0 };
 
   const done: { p: Move; files: LibFile[]; from: string; to: string }[] = [];

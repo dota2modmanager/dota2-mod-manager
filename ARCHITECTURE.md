@@ -56,7 +56,7 @@ or turning mods back on would resurrect the ones you had deliberately switched o
 
 ## Installing one mod
 
-`src/installer.js`, roughly in order:
+`src/installer.ts`, roughly in order:
 
 1. Resolve the catalog entry to a URL and a file name. The name comes from a repository we do not
    own, so it is treated as a name and can never become a path.
@@ -360,7 +360,7 @@ that location is not writable.
 | `src/ipc-*.js` | The IPC handlers, one file per group of channels, each naming what it needs |
 | `src/feature-gate.ts` | Whether a feature has been switched off from `config/app.json`, asked once |
 | `preload.js` | The `window.api` surface, and nothing else crosses |
-| `src/installer.js` | Download, slots, install, enable, remove, packs |
+| `src/installer.ts` | Download, slots, install, enable, remove, packs |
 | `src/beta.ts` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
 | `src/overlays.ts` | Fonts and cursors: files written over the game's own, their kept originals, and putting them back after Steam's file check |
 | `src/import.js` | Taking a mod in: a `.vpk`, a `.zip`, an author's folder, or bytes off a drop |

@@ -4,7 +4,7 @@
  *
  * The floor used to be three numbers on the command line: lines 74, branches 76, functions 72.
  * An aggregate hides the thing worth catching. On 2026-09-16 the aggregate was 76.10% while
- * src/presets-service.js sat at 13.8% and src/installer.js at 48.5%, and a new module with no
+ * src/presets-service.js sat at 13.8% and src/installer.ts at 48.5%, and a new module with no
  * tests at all moves the aggregate by a fraction of a point: well inside the slack, invisible.
  *
  * So the numbers are kept per file, and a run fails when a file drops more than half a point

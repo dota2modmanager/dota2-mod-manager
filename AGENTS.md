@@ -35,7 +35,7 @@ back after they stopped being true. Every entry carries a command that settles i
 here to review rather than to change something, that file is the whole brief.
 
 **Do not read whole source files to orient yourself.** Find the symbol, then read its slice.
-`main.js` and `src/installer.js` are large and reading them end to end wastes more than it
+`main.js` and `src/installer.ts` are large and reading them end to end wastes more than it
 tells you.
 
 **The domain is unusual and the obvious assumption is usually wrong.** Three examples that have
@@ -46,7 +46,7 @@ each cost real time:
   rule. It is the rule, not a summary of one; change it only by measuring.
 - `items_game.txt` is ~50 MB with non-UTF8 bytes in it. `src/schema.ts` works on latin1 strings
   on purpose. A round trip through a "cleaner" encoding mangles it.
-- A pak slot decides which of two mods the game loads. Lower wins. `src/installer.js` allocates
+- A pak slot decides which of two mods the game loads. Lower wins. `src/installer.ts` allocates
   them, and 65 to 67 are never handed out because another program writes them.
 
 ## How to know your change works

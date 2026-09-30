@@ -31,7 +31,13 @@ the code, not in this page.
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (main.js, installer.js, vpk.js). |
 | [`src/icons.ts`](#srciconsts) | Pictures for the cosmetics picker, and for the Library where a picture can be found for |
 | [`src/import.js`](#srcimportjs) | Taking in a mod the user already has: a .vpk, a .zip, a folder, or bytes off a drop. |
-| [`src/installer.js`](#srcinstallerjs) | Installer engine: download, extract, pak allocation, per-category install/uninstall |
+| [`src/installer-downloads.ts`](#srcinstaller-downloadsts) | Getting a catalog mod onto this machine: where its archive lives, what it is called on disk, |
+| [`src/installer-files.ts`](#srcinstaller-filests) | The language folder's own vocabulary, shared by the installer and the modules behind it: the |
+| [`src/installer-folder.ts`](#srcinstaller-folderts) | The language folder as a whole: the "mods off" switch, the note of which files are ours, the |
+| [`src/installer-packs.ts`](#srcinstaller-packsts) | Combined packs: several mods in one pak slot, each kept as its own file in userData and rebuilt |
+| [`src/installer-repack.ts`](#srcinstaller-repackts) | What is already installed, read and rewritten: what a mod is, its files merged into one or |
+| [`src/installer-slots.ts`](#srcinstaller-slotsts) | The load order: which pak slot a mod sits in, moving and swapping slots, and which mods are |
+| [`src/installer.ts`](#srcinstallerts) | The installer: everything that writes a mod into the game folder or takes it out again. The |
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
@@ -1211,7 +1217,7 @@ Dota2Changer mod arrives as an index plus data volumes, and the rest of the app 
 file per mod, so a half-folded set is exactly how a mod ends up half-loaded. An author's
 working folder holds no archive at all, and is packed on the way in.
 
-Lifted out of src/installer.js unchanged. It was 270 lines of a 1,783-line file, reachable
+Lifted out of src/installer.ts unchanged. It was 270 lines of a 1,783-line file, reachable
 only through the class that also downloads, allocates slots, patches the schema and manages
 cursors. The bodies below are the same bodies; what changed is that the installer arrives as
 an argument instead of as `this`. Its tests (test/import.test.js) and the mutants that check
@@ -1298,31 +1304,669 @@ transaction, the naming.
 @returns {string|null} path of the staged archive, or null if the folder holds no game files
 ```
 
-## src/installer.js
+## src/installer-downloads.ts
 
-Installer engine: download, extract, pak allocation, per-category install/uninstall
+Getting a catalog mod onto this machine: where its archive lives, what it is called on disk,
+and the cache of what was downloaded and what each file hashed to. Behind src/installer.ts.
 
-### `Installer`
+### `DownloadEntry`
 
-```js
-class Installer
+```ts
+export type DownloadEntry = { size: number; sha256: string; at: number }
+```
+
+What a downloaded archive was when it arrived: its size and hash, and when.
+
+### `fileUrl`
+
+```ts
+export function fileUrl(categoryId: string, fileRef: string): string
+```
+
+Where a catalog file is fetched from: its own URL, or the catalog's files folder.
+
+### `safeFileName`
+
+```ts
+export function safeFileName(raw: unknown, fallback: string): string
+```
+
+A name from the catalog is a name, never a path.
+
+What a mod is called on disk used to be decodeURIComponent(last segment of the URL), and
+a catalog entry pointing at ".../..%2F..%2F..%2Fsomething" decoded straight back into
+"../../../something" - a file the app then wrote wherever that landed. Slashes cannot
+survive this, so nothing here can climb out of the folder it was given.
+
+Spaces, brackets and Cyrillic are left alone on purpose: real catalog files are called
+things like "Red Abaddon (v2).zip", they are the keys of the download cache, and
+scrubbing them would re-download every mod on disk to no benefit.
+
+### `downloadIndex`
+
+```ts
+export function downloadIndex(inst: Installer): Record<string, DownloadEntry>
+```
+
+What each downloaded archive hashed to, so a cached copy can be trusted and a mirror
+cannot hand over a different file under the same name.
+
+### `rememberDownload`
+
+```ts
+export function rememberDownload(inst: Installer, key: string, entry: DownloadEntry): void
 ```
 
 _No description in the source._
 
-### `PRIORITY_CATEGORIES`
+### `download`
 
-_No description in the source._
+```ts
+export async function download(inst: Installer, categoryId: string, fileRef: string, label?: string | null): Promise<string>
+```
+
+The archive of a catalog mod on disk: from the cache when it is still what arrived, downloaded otherwise.
+
+### `cachedArchive`
+
+```ts
+export function cachedArchive(inst: Installer, categoryId: string | null, fileRef: string | null | undefined): string | null
+```
+
+The archive this mod was installed from, if it is still in the download cache.
+
+### `downloadCacheSize`
+
+```ts
+export function downloadCacheSize(inst: Installer): number
+```
+
+Bytes the download cache holds.
+
+### `clearDownloadCache`
+
+```ts
+export function clearDownloadCache(inst: Installer): void
+```
+
+Empty the download cache, keeping the folder.
+
+## src/installer-files.ts
+
+The language folder's own vocabulary, shared by the installer and the modules behind it: the
+name a file switched off by the master switch carries, the note that says which files are ours,
+what an unfinished transaction leaves behind, and how much a repack may hold in memory.
 
 ### `MERGE_SIZE_CAP`
 
-```js
-const MERGE_SIZE_CAP = 1200 * 1024 * 1024
+```ts
+export const MERGE_SIZE_CAP = 1200 * 1024 * 1024
 ```
 
 Merging a multi-volume import into one file holds the whole mod in memory once. Well
 above any real skin pack (a Skinchanger export is ~70 MB), but a multi-GB set is left
 in its original volumes rather than risking the allocation.
+
+### `MASTER_OFF`
+
+```ts
+export const MASTER_OFF = '.moff'
+```
+
+Master "mods off" switch: every active mod pak is renamed <file>.moff so the game
+ignores it (it only mounts pakNN_dir.vpk). Distinct from the per-mod ".off" state so
+the two never clobber each other. Official localization (pak01_*) / gameinfo.gi are
+never touched — turning mods off must not strip the game's own language files.
+
+### `OWNERSHIP_FILE`
+
+```ts
+export const OWNERSHIP_FILE = 'dota2modmanager.json'
+```
+
+Which files in the language folder are ours, written where another program can read it.
+
+Minify marks its work by packing metadata into the VPKs it builds, and checks for that
+before deleting one. The same courtesy in the other direction cannot be done the same way:
+mods from the catalog are copied byte for byte and identified by a hash of their contents,
+and the project is building integrity guarantees on the file being exactly what the catalog
+published - sha256 on download, a signed catalog after that. Repacking every install to
+insert a marker is cheap enough (35ms against 15ms for a plain copy of a 46 MB mod, and the
+hash survives if marker names are left out of it), but it would end byte-identity, which is
+worth more than the convenience.
+
+So the marker is one file beside the mods instead of a marker inside each one. Anything
+reading it learns which files in the folder belong to this app, which is the question a
+second mod manager actually needs answered before it deletes anything.
+
+### `isOfficialLangFile`
+
+```ts
+export function isOfficialLangFile(baseLower: string): boolean
+```
+
+The game's own files in the language folder, and our notice pak: never a mod to touch.
+
+### `STAGED_RE`
+
+```ts
+export const STAGED_RE = /\.[a-z0-9]+\.mmtx$/i
+```
+
+What a FileTx parks next to a file it is about to replace or delete (see src/file-tx.ts).
+Nothing should outlive its transaction; one that does means the app died mid-write, and
+sweepStaged() cleans up after that on the next start.
+
+## src/installer-folder.ts
+
+The language folder as a whole: the "mods off" switch, the note of which files are ours, the
+leftovers of a transaction the app died in, and the files nobody installed through the app.
+Behind src/installer.ts.
+
+### `ForeignItem`
+
+```ts
+export type ForeignItem =
+```
+
+A file in the game folder nobody installed through the app, as the library lists it.
+
+### `isTogglableModFile`
+
+```ts
+export function isTogglableModFile(inst: Installer, baseLower: string): boolean
+```
+
+What the master switch is allowed to rename.
+
+Not the game's own files, and not Minify's: the switch sweeps the folder rather than
+asking the library, so in the arrangement we recommend - both apps sharing one language
+folder - "mods off" would rename pak65 to pak67 out from under it and Minify would find
+its own work missing. Ours are the only mods this switch has any business touching.
+
+### `masterIsOff`
+
+```ts
+export function masterIsOff(inst: Installer): boolean
+```
+
+true when the master switch is currently "off" (any .moff file present in lang root)
+
+### `setMasterEnabled`
+
+```ts
+export function setMasterEnabled(inst: Installer, enabled: boolean): { changed: number }
+```
+
+Enable/disable every mod pak at once without losing per-mod state:
+ off -> rename each active mod file <f> to <f>.moff (skips .off and official files)
+ on  -> rename each <f>.moff back to <f>
+Also covers the language\maps folder (terrain mods live there as dota.vpk).
+
+### `writeOwnership`
+
+```ts
+export function writeOwnership(inst: Installer, relPaths: string[] | null | undefined): void
+```
+
+Say on disk which files in the language folder are this app's.
+
+Rewritten from the library rather than appended to, so a mod removed outside the app
+drops out on the next write instead of lingering as a claim on a file we do not have.
+Never fails an operation: an unwritable game folder is a problem for installing, not for
+a note about installing.
+
+```
+@param {string[]} relPaths every lang-root relPath the library holds
+```
+
+### `ownsFile`
+
+```ts
+export function ownsFile(inst: Installer, relPath: string): boolean
+```
+
+Whether this app installed the file at `relPath`, according to what is on disk.
+
+### `sweepStaged`
+
+```ts
+export function sweepStaged(inst: Installer, maxAgeMs = 7 * 24 * 60 * 60 * 1000): { restored: number; dropped: number }
+```
+
+Clean up after a transaction that never finished, which can only mean the app was killed
+mid-write. Two cases, and they need opposite answers:
+  the original is missing → the parked copy IS the file, put it back (an interrupted
+    remove or rename, e.g. switching a mod off);
+  the original is there   → the write went through and the parked copy is the old
+    version commit would have deleted. Left alone for a week in case somebody wants it,
+    then dropped so the folder does not collect them.
+
+```
+@returns {{ restored: number, dropped: number }}
+```
+
+### `langPrimaryPresent`
+
+```ts
+export function langPrimaryPresent(inst: Installer, rec: LibRecord): boolean
+```
+
+Does a record's primary VPK still exist on disk (active/.off/.moff)? Used to sync the
+library with the folder — a mod deleted from the folder should drop out of the library.
+
+### `vpkItem`
+
+```ts
+export function vpkItem(inst: Installer, abs: string, relPath: string, displayName: string, primary: boolean): ForeignItem
+```
+
+Build a foreign VPK item: read enough of the file to name it, illustrate it and
+recognise it. A file dropped into the folder by hand is the same kind of thing as an
+import, and the library shows it that way — a bare "pak90_dir.vpk" told the user
+nothing about what was in it, which is exactly why it looked broken.
+
+### `siblingParts`
+
+```ts
+export function siblingParts(inst: Installer, dirRelPath: string): string[]
+```
+
+"<base>_NNN.vpk" volumes sitting next to a "<base>_dir.vpk" in the lang folder
+
+### `externalFiles`
+
+```ts
+export function externalFiles(inst: Installer, knownFiles: LibFile[], { scanExtras = true }: { scanExtras?: boolean } = {}): ForeignItem[]
+```
+
+Foreign content — files not installed through the app — across every place a mod
+can live: the language folder root (skins, imported), language\maps (terrains), and
+resource\cursor (a cursor set, treated as one item). Each carries a fingerprint so
+the caller can recognise it as a specific catalog mod. `primary` items (lang root)
+are always listed; maps/cursor items are only worth showing when they match, so the
+caller passes scanExtras=false to skip that scan when it has nothing to match against.
+
+## src/installer-packs.ts
+
+Combined packs: several mods in one pak slot, each kept as its own file in userData and rebuilt
+into the slot from the ones that are on. Behind src/installer.ts.
+
+### `packFolder`
+
+```ts
+export function packFolder(inst: Installer, packId: string): string { return path.join(inst.packsDir, packId); }
+```
+
+Where a pack keeps its members' own files.
+
+### `packMemberFile`
+
+```ts
+export function packMemberFile(inst: Installer, packId: string, memberId: string): string { return path.join(inst.packFolder(packId), `${memberId}.vpk`); }
+```
+
+One member's own file.
+
+### `addPackMemberFromRecord`
+
+```ts
+export function addPackMemberFromRecord(inst: Installer, packId: string, rec: LibRecord, memberId: string): PackMember
+```
+
+Flatten a library record into one self-contained VPK and store it as a pack member.
+Returns the member descriptor (identity + a content summary for the UI) to record in
+the pack manifest. The record's own deployed files are left for the caller to remove.
+
+### `removePackDeployed`
+
+```ts
+export function removePackDeployed(inst: Installer, pack: HasFiles): void
+```
+
+Remove a pack's currently deployed files (index + every data volume, in any state:
+active, .off or .moff) from the language folder, so it can be rebuilt cleanly.
+
+### `packBase`
+
+```ts
+export function packBase(inst: Installer, pack: HasFiles): string | null
+```
+
+The pak slot base ("pak10") a pack deploys to — reused across rebuilds so the slot
+stays stable. Taken from the pack's recorded files, else null (allocate on deploy).
+
+### `deployPack`
+
+```ts
+export function deployPack(inst: Installer, pack: Pick<LibRecord, 'id' | 'files' | 'members'>): { files: LibFile[]; conflicts: { key: string; path: string }[] }
+```
+
+(Re)build a pack's single deployed VPK from its enabled members. Removes the old
+deployment first, then combines enabled member sources into the pack's slot. Returns
+{ files, conflicts } — caller stores files on the record and re-applies enabled/master
+state. With no enabled members nothing is written (files: []).
+
+### `removePackFully`
+
+```ts
+export function removePackFully(inst: Installer, pack: Pick<LibRecord, 'id' | 'files'>): void
+```
+
+Fully delete a pack: its deployed VPK and every stored member source.
+
+### `deployMemberAsMod`
+
+```ts
+export function deployMemberAsMod(inst: Installer, pack: Pick<LibRecord, 'id'>, member: Pick<PackMember, 'id'>): { files: LibFile[] }
+```
+
+Turn a stored pack member back into a standalone deployed mod in a fresh pak slot.
+Returns { files } for a new library record; caller deletes the member from the pack.
+
+## src/installer-repack.ts
+
+What is already installed, read and rewritten: what a mod is, its files merged into one or
+written out as a folder, the whole-game tables stripped out of it, a pack of heroes split.
+Taking a mod IN - from a file, a zip, a folder or dropped bytes - is src/import.js.
+Behind src/installer.ts.
+
+### `RecordAnalysis`
+
+```ts
+export type RecordAnalysis =
+```
+
+What a record's own file is: a summary, the heroes it is about, the game's names for it, its fingerprint.
+
+### `describePaths`
+
+```ts
+export function describePaths(inst: Installer, paths: string[], analysis: Analysis): { info: string; heroNames: string[]; items?: string[] }
+```
+
+What a path list is, told as precisely as this machine allows: the game's own item names
+when it recognises them, the guess from the paths otherwise. The two are merged rather
+than one replacing the other - a mod can dress a hero in named items AND replace another
+hero's bare body, and only the guess sees the second.
+
+### `mergeToSingleVpk`
+
+```ts
+export function mergeToSingleVpk(inst: Installer, rec: HasFiles, deltas?: { block: string }[] | null): Buffer
+```
+
+A mod's lang files (including multi-part _dir + _NNN sets) merged into one
+self-contained VPK buffer - the single-file format the catalog uses, e.g. for sharing
+an imported Dota2Changer pack with a catalog author.
+
+```
+@param {object} rec
+@param {Array<{id, name, block}>} [deltas]  the record's lifted item blocks, for a file
+headed somewhere other than this install (an export, a shared preset). Installing
+strips the table a mod ships and keeps its blocks on the record instead, so without
+these the copy leaves without its effects - see harvestSchema / schema.deltaTable.
+```
+
+### `unpackToFolder`
+
+```ts
+export function unpackToFolder(inst: Installer, rec: HasFiles, dest: string): { files: number; bytes: number }
+```
+
+The inverse of packing a folder: write a mod's own files out as a tree, so the author
+who wants to change one texture can open it, edit it, and drop the folder back in.
+Multi-volume sets are followed, exactly as exporting to one file does.
+
+```
+@returns {{ files: number, bytes: number }}
+```
+
+### `displayNameForFile`
+
+```ts
+export function displayNameForFile(inst: Installer, relPath: string): string | null
+```
+
+A content-derived display name for a lang VPK (hero / set / kind), or null if the
+content isn't recognisable — used to name imported files instead of a bare "pakNN".
+
+### `harvestSchema`
+
+```ts
+export function harvestSchema(inst: Installer, records: LibFile[], vanillaText: string | null): { deltas: SchemaDelta[]; stripped: string[] }
+```
+
+Take the whole-game tables out of a freshly installed mod and keep what they meant.
+
+Skinchanger-style packs ship a full copy of scripts/items/items_game.txt and of the
+localization files - tens of MB of stale game data per mod. The schema copy is dead
+weight in a language folder (the engine reads that file through the MOD path only),
+and the localization copy is worse than dead: it outranks the game's own and rolls
+text back to whenever the pack was built. So: lift the item blocks the mod actually
+changed, then repack the VPK without any of those tables.
+
+```
+@param {Array<{root: string, relPath: string}>} records  install records, edited in place
+@param {string} vanillaText  the game's current items_game.txt
+@returns {{ deltas: Array<{id, name, block}>, stripped: string[] }}
+```
+
+### `installedSize`
+
+```ts
+export function installedSize(inst: Installer, rec: HasFiles): number
+```
+
+Bytes a record occupies in the language folder (its pak plus any data volumes).
+
+### `analyzeRecord`
+
+```ts
+export function analyzeRecord(inst: Installer, rec: HasFiles): RecordAnalysis | null
+```
+
+What a stored library record (or a foreign vpk) actually changes — hero(es) and
+slots — read from its _dir.vpk on disk. Returns { info, heroes } or null.
+
+### `splitVpkFile`
+
+```ts
+export function splitVpkFile(inst: Installer, sourceRelPath: string): { hero: string; name: string; paths: string[]; files: LibFile[] }[]
+```
+
+Split a merged multi-hero VPK sitting in the lang folder into one managed VPK per
+hero, each written to a fresh pak slot. Returns [{ hero, name, files }]; caller
+registers them and deletes the source. Empty if fewer than 2 heroes are found.
+
+### `mergeMultiPartRecords`
+
+```ts
+export function mergeMultiPartRecords(inst: Installer, library: Pick<Library, 'list' | 'update'>): void
+```
+
+Imports made before multi-volume sets were folded on the way in still sit in the
+folder as pakNN_dir.vpk + pakNN_000.vpk. Fold them now so every managed mod is one
+file. Combined packs are left alone — their volumes are how deployPack writes them.
+
+## src/installer-slots.ts
+
+The load order: which pak slot a mod sits in, moving and swapping slots, and which mods are
+covered by which. Behind src/installer.ts.
+
+The game mounts pakNN_dir.vpk in numeric order and the FIRST copy of a file wins, so a
+mod's pak number is its priority: a smaller number sits on top. That is what makes
+"put these arms over that hero set" a real thing rather than a conflict - both mods
+load, and the one on top supplies the files they share.
+
+### `CoverageMod`
+
+```ts
+export type CoverageMod = { key: string; name: string; files: LibFile[] }
+```
+
+A switched-on mod as coverage reads it: keyed, because two copies of one mod share a name.
+
+### `usedPakNames`
+
+```ts
+export function usedPakNames(inst: Installer): Set<string>
+```
+
+Every slot name the folder holds, whatever state its file is in.
+
+### `allocatePak`
+
+```ts
+export function allocatePak(inst: Installer, used: Set<string>, priority: boolean): string
+```
+
+The next free slot for a mod, in the part of the order it belongs in; taken from `used`.
+
+### `planPakNames`
+
+```ts
+export function planPakNames(inst: Installer, relPaths: string[], used: Set<string>, priority: boolean): Map<string, string>
+```
+
+Map the .vpk files of an archive onto slots of ours: one slot per volume set - a
+"<base>_dir.vpk" index plus its "<base>_NNN.vpk" data archives - so a set stays whole
+and no foreign name reaches the game folder. It has to be a plan made up front rather
+than a rename per file, because the volumes only work under the index's own name.
+
+This is what the "!pakNN" prefix in Dota2PornFx cart archives runs into: it is a merge
+hint for VPKMerge, and a file called "!pak51_000.vpk" is one the game never mounts.
+
+```
+@param {string[]} relPaths  .vpk paths inside the archive
+@returns {Map<string, string>} archive path -> file name in the language folder
+```
+
+### `slotBase`
+
+```ts
+export function slotBase(inst: Installer, rec: HasFiles): string | null
+```
+
+The slot a record occupies ("pak07"), or null for mods that live outside a numbered
+pak (terrain maps, fonts, cursors).
+
+### `slotNumber`
+
+```ts
+export function slotNumber(inst: Installer, rec: HasFiles): number | null
+```
+
+A record's slot as a number, or null for a mod that lives outside a numbered pak.
+
+### `coverage`
+
+```ts
+export function coverage(inst: Installer, mods: CoverageMod[]): Map<string, { name: string; files: number }[]>
+```
+
+Which mods are quietly covering which, file by file.
+
+Two mods can carry the same file, and then only one of them is the one the game loads -
+the lower pak number, as above. Nothing said so, so a mod that had been overruled looked
+installed and switched on while doing nothing, and the usual conclusion was that the app
+had broken it. Measured on 84 installed mods: 801 paths are carried by more than one mod,
+but only 84 of those hold *different* bytes. The rest is filler both authors happened to
+ship, which is why the CRC decides and a shared path on its own does not.
+
+```
+@param {Array<{key: string, name: string, files: Array<{root: string, relPath: string}>}>} mods
+enabled mods only - a switched-off mod is renamed on disk and the game never sees it.
+Keyed rather than named, because two copies of the same mod in two slots share a name
+and are exactly the case worth reporting.
+@returns {Map<string, Array<{name: string, files: number}>>} mod key -> who covers it
+```
+
+### `freeSlotBelow`
+
+```ts
+export function freeSlotBelow(inst: Installer, n: number, used: Set<string>): string | null
+```
+
+The highest free slot strictly below `n`, as "pakNN".
+
+### `moveToSlot`
+
+```ts
+export function moveToSlot(inst: Installer, rec: HasFiles, newBase: string, oldBase: string | null = inst.slotBase(rec)): LibFile[]
+```
+
+Rename every pak file of a record to another slot, keeping .off/.moff state and the
+volume numbering of a multi-volume pack.
+
+```
+@returns {Array<object>} the record's new files array (caller stores it)
+```
+
+### `swapSlots`
+
+```ts
+export function swapSlots(inst: Installer, a: LibRecord, b: LibRecord): { id: string; files: LibFile[] }[]
+```
+
+Trade two records' slots, which is how a mod moves up or down the load order.
+pak00 is the parking spot for the swap - the game never mounts it, so a crash
+mid-swap leaves a file that is merely inactive, not one fighting for a name in use.
+
+```
+@returns {Array<{ id: string, files: Array<object> }>} records to save
+```
+
+### `usedModSlots`
+
+```ts
+export function usedModSlots(inst: Installer): number
+```
+
+Number of occupied pak slots (mod paks only, excluding the game's own pak01_*), used
+to warn/suggest combining when the library approaches the 99-slot ceiling.
+
+### `migrateLegacyPriorityPaks`
+
+```ts
+export function migrateLegacyPriorityPaks(inst: Installer, library: Pick<Library, 'list' | 'save'>): void
+```
+
+Older app versions wrote priority mods as "!pakNN_dir.vpk" — a name the game
+never mounts, so those mods silently did nothing. Rename them to real low
+pak slots and fix the matching manifest records.
+
+## src/installer.ts
+
+The installer: everything that writes a mod into the game folder or takes it out again. The
+class is the one door the rest of the app uses; the work behind it is in files of its own:
+  src/installer-downloads.ts  getting a catalog archive onto this machine
+  src/installer-slots.ts      the load order: pak slots, moving and swapping, who covers whom
+  src/installer-packs.ts      several mods in one pak slot
+  src/installer-repack.ts     what is installed, read, merged, unpacked, stripped and split
+  src/installer-folder.ts     the folder as a whole: master switch, ownership note, foreign files
+  src/installer-files.ts      the names and limits those share
+Fonts and cursors, the files written over the game's own, are src/overlays.ts.
+
+Hands on from [`src/installer-files.ts`](#srcinstaller-filests): `MERGE_SIZE_CAP`.
+
+Hands on from [`src/slot-zones.ts`](#srcslot-zonests): `PRIORITY_CATEGORIES`.
+
+### `InstallProgress`
+
+```ts
+export type InstallProgress =
+```
+
+How an install is going, for the bar at the bottom of the window.
+
+### `Installer`
+
+```ts
+export class Installer
+```
+
+_No description in the source._
 
 ## src/item-builder.ts
 
@@ -2212,7 +2856,7 @@ and a later removal put them back. So every write here is recorded by hash in
 backups\written.json, and a file that holds what this app wrote is this app's file, whatever
 else it happens to match.
 
-Moved out of src/installer.js on 2026-09-17; test/installer.test.js and test/cursors.test.ts
+Moved out of src/installer.ts on 2026-09-17; test/installer.test.ts and test/cursors.test.ts
 cover it through the installer.
 
 ### `FONTS_SUBDIR`
@@ -3970,6 +4614,14 @@ export interface LibRecord
 ```
 
 One entry of the library: a mod, a pack of them, or a cosmetic pick.
+
+### `HasFiles`
+
+```ts
+export type HasFiles = Partial<LibRecord> & Pick<LibRecord, 'files'>
+```
+
+Anything shaped like a record that owns files: what the installer's file work needs of one.
 
 ### `PackMember`
 

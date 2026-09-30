@@ -15,8 +15,7 @@ import path from 'node:path';
 import { crc32 } from 'node:zlib';
 
 import { buildVpk } from '../src/vpk.ts';
-import installerJs from '../src/installer.js';
-const { Installer } = installerJs;
+import { Installer } from '../src/installer.ts';
 import { Library } from '../src/library.ts';
 import { createCursors } from '../src/cursors.ts';
 import { settingsWith } from './helpers/settings.ts';

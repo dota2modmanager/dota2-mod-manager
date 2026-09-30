@@ -19,7 +19,7 @@ try {
 
 const { Settings } = require('./src/settings.ts');
 const { Catalog } = require('./src/catalog.ts');
-const { Installer } = require('./src/installer');
+const { Installer } = require('./src/installer.ts');
 // under one name: main.js has a wrapper of its own called importVpkBuffers
 const importer = require('./src/import');
 const { createCursors } = require('./src/cursors.ts');

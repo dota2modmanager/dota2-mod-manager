@@ -1,7 +1,7 @@
 /* Fonts and cursors: loose files written over the game's own, and everything that keeps that
  * reversible.
  *
- * test/installer.test.js covers the same ground through the installer, which is how the app
+ * test/installer.test.ts covers the same ground through the installer, which is how the app
  * reaches it. These hold src/overlays.ts on its own: what is kept as the game's original, what
  * counts as undone by Steam's file check, and how a cursor set is put on and taken off.
  */

@@ -6,7 +6,7 @@
  * file per mod, so a half-folded set is exactly how a mod ends up half-loaded. An author's
  * working folder holds no archive at all, and is packed on the way in.
  *
- * Lifted out of src/installer.js unchanged. It was 270 lines of a 1,783-line file, reachable
+ * Lifted out of src/installer.ts unchanged. It was 270 lines of a 1,783-line file, reachable
  * only through the class that also downloads, allocates slots, patches the schema and manages
  * cursors. The bodies below are the same bodies; what changed is that the installer arrives as
  * an argument instead of as `this`. Its tests (test/import.test.js) and the mutants that check
@@ -20,7 +20,7 @@ const os = require('os');
 const { listVpkPaths, mergeVpkToSingle, findContentRoot, packFolder } = require('./vpk.ts');
 const { openZip, safeJoin } = require('./safe-zip.ts');
 const { FileTx } = require('./file-tx.ts');
-const { MERGE_SIZE_CAP } = require('./installer');
+const { MERGE_SIZE_CAP } = require('./installer.ts');
 const { t } = require('./i18n.ts');
 
 // Every .vpk under a dropped folder. Skinchanger packs unzip to a whole game tree

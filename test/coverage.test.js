@@ -14,7 +14,7 @@ const { crc32 } = require('node:zlib');
 
 const vpk = require('../src/vpk.ts');
 const { entry } = require('./helpers/vpk-entry.ts');
-const { Installer } = require('../src/installer.js');
+const { Installer } = require('../src/installer.ts');
 
 /** A game folder with a language folder, and an installer pointed at it. */
 function stand(t) {

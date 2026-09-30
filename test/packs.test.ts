@@ -8,7 +8,7 @@
  * index no longer describes, and a store that outlives its pack costs hundreds of megabytes
  * nobody can see or delete.
  *
- * Four hundred lines of src/installer.js do this and no test touched any of it. These come
+ * Four hundred lines of src/installer.ts do this and no test touched any of it. These come
  * first, before that code moves into a module of its own, so the move has something to prove
  * itself against.
  */
@@ -20,8 +20,8 @@ import path from 'node:path';
 
 import * as vpk from '../src/vpk.ts';
 import { entry } from './helpers/vpk-entry.ts';
-import installerJs from '../src/installer.js';
-const { Installer } = installerJs;
+import { Installer } from '../src/installer.ts';
+import type { LibRecord } from '../src/types.ts';
 
 /**
  * A game folder the installer accepts, with a language folder and an installer pointed at it.
@@ -44,7 +44,7 @@ function stand(t: TestContext) {
   });
 
   /** An installed standalone mod: its file in the language folder, and its library record. */
-  const put = (slot: string, name: string, files: [string, string | Buffer][]) => {
+  const put = (slot: string, name: string, files: [string, string | Buffer][]): LibRecord => {
     fs.writeFileSync(path.join(lang, `${slot}_dir.vpk`), vpk.buildVpk(files.map(([p, b]) => entry(p, b))));
     return {
       id: slot, name, categoryId: 'heroes', enabled: true,
@@ -69,7 +69,7 @@ const HOOK = 'models/items/pudge/hook/hook.vmdl_c';
 const BLADE = 'models/items/juggernaut/blade/blade.vmdl_c';
 
 /** A pack of the given mods, stored and ready to deploy, in the order the app would add them. */
-function packOf(installer: InstanceType<typeof Installer>, recs: object[], id = 'pack-1') {
+function packOf(installer: InstanceType<typeof Installer>, recs: LibRecord[], id = 'pack-1') {
   const members = recs.map((rec, i) => installer.addPackMemberFromRecord(id, rec, `m${i + 1}`));
   const files: { root: string; relPath: string }[] = [];
   return { id, name: 'Pack', kind: 'pack', files, members };
@@ -179,6 +179,7 @@ test('with nothing switched on the pack deploys no files', (t) => {
   const pack = packOf(installer, [put('pak10', 'Hook', [[HOOK, 'a']])]);
   pack.files = installer.deployPack(pack).files;
   const base = installer.packBase(pack);
+  assert.ok(base, 'the pack has no slot');
 
   pack.members[0].enabled = false;
   const { files } = installer.deployPack(pack);
@@ -238,6 +239,7 @@ test('deleting a pack takes its stored member sources with it', (t) => {
   ]);
   pack.files = installer.deployPack(pack).files;
   const base = installer.packBase(pack);
+  assert.ok(base, 'the pack has no slot');
   assert.ok(fs.existsSync(installer.packFolder(pack.id)));
 
   installer.removePackFully(pack);

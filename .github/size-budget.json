@@ -6,7 +6,7 @@
     "main.js": 1129,
     "renderer/views/catalog.js": 1699,
     "renderer/views/library.js": 1374,
-    "src/installer.js": 1326,
+    "src/installer.ts": 393,
     "src/vpk.ts": 17
   }
 }

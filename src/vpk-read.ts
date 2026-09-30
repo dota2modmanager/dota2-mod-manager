@@ -35,7 +35,7 @@ function readCString(buf: Buffer, pos: number): { str: string; next: number } {
  * preload block. The six walkers below used to read those fields straight out of the buffer at
  * whatever offset the tree claimed, and a file cut short - or one whose preload length was a
  * fiction - came back as a RangeError from Buffer. That is not a refusal this app makes, and the
- * callers do not catch it: src/installer.js walks the mod folder on every start and
+ * callers do not catch it: src/installer.ts walks the mod folder on every start and
  * src/minify.ts reads another tool's files, neither inside a try. Measured on a three-entry VPK:
  * 54 of its truncations escaped that way (test/vpk-fuzz.test.ts).
  *

@@ -4,50 +4,50 @@
   "mutants": [
     {
       "name": "removePackDeployed forgets .off and .moff copies",
-      "file": "src/installer.js",
-      "anchor": "removePackDeployed(pack) {",
-      "lineStartsWith": "    const re = new RegExp(",
-      "to": "    const re = new RegExp('^' + base + '(_dir|_[0-9]{3})[.]vpk$', 'i');",
+      "file": "src/installer-packs.ts",
+      "anchor": "export function removePackDeployed(inst: Installer, pack: HasFiles): void {",
+      "lineStartsWith": "  const re = new RegExp(",
+      "to": "  const re = new RegExp('^' + base + '(_dir|_[0-9]{3})[.]vpk$', 'i');",
       "test": "test/packs.test.ts"
     },
     {
       "name": "deployPack ignores the enabled flag",
-      "file": "src/installer.js",
-      "anchor": "deployPack(pack) {",
+      "file": "src/installer-packs.ts",
+      "anchor": "export function deployPack(inst: Installer, pack: Pick<LibRecord, 'id' | 'files' | 'members'>): { files: LibFile[]; conflicts: { key: string; path: string }[] } {",
       "from": "(pack.members || []).filter((m) => m.enabled)",
       "to": "(pack.members || [])",
       "test": "test/packs.test.ts"
     },
     {
       "name": "deployPack allocates a slot instead of reusing its own",
-      "file": "src/installer.js",
-      "anchor": "deployPack(pack) {",
-      "from": "let base = this.packBase(pack);",
+      "file": "src/installer-packs.ts",
+      "anchor": "export function deployPack(inst: Installer, pack: Pick<LibRecord, 'id' | 'files' | 'members'>): { files: LibFile[]; conflicts: { key: string; path: string }[] } {",
+      "from": "let base = inst.packBase(pack);",
       "to": "let base = null;",
       "test": "test/packs.test.ts"
     },
     {
       "name": "deployPack ignores slots that are occupied",
-      "file": "src/installer.js",
-      "anchor": "deployPack(pack) {",
-      "from": "this.allocatePak(this.usedPakNames(), false).replace",
-      "to": "this.allocatePak(new Set(), false).replace",
+      "file": "src/installer-packs.ts",
+      "anchor": "export function deployPack(inst: Installer, pack: Pick<LibRecord, 'id' | 'files' | 'members'>): { files: LibFile[]; conflicts: { key: string; path: string }[] } {",
+      "from": "inst.allocatePak(inst.usedPakNames(), false).replace",
+      "to": "inst.allocatePak(new Set(), false).replace",
       "test": "test/packs.test.ts"
     },
     {
       "name": "removePackFully keeps the member store",
-      "file": "src/installer.js",
-      "anchor": "removePackFully(pack) {",
-      "from": "fs.rmSync(this.packFolder(pack.id), { recursive: true, force: true });",
+      "file": "src/installer-packs.ts",
+      "anchor": "export function removePackFully(inst: Installer, pack: Pick<LibRecord, 'id' | 'files'>): void {",
+      "from": "fs.rmSync(inst.packFolder(pack.id), { recursive: true, force: true });",
       "to": ";",
       "test": "test/packs.test.ts"
     },
     {
       "name": "deployMemberAsMod writes over the pack it came from",
-      "file": "src/installer.js",
-      "anchor": "deployMemberAsMod(pack, member) {",
-      "from": "this.allocatePak(this.usedPakNames(), false)",
-      "to": "(this.packBase(pack) + '_dir.vpk')",
+      "file": "src/installer-packs.ts",
+      "anchor": "export function deployMemberAsMod(inst: Installer, pack: Pick<LibRecord, 'id'>, member: Pick<PackMember, 'id'>): { files: LibFile[] } {",
+      "from": "inst.allocatePak(inst.usedPakNames(), false)",
+      "to": "(inst.packBase(pack) + '_dir.vpk')",
       "test": "test/packs.test.ts"
     },
     {
@@ -92,16 +92,16 @@
     },
     {
       "name": "the ownership note stops matching the folder's own spelling",
-      "file": "src/installer.js",
-      "anchor": "ownsFile(relPath) {",
+      "file": "src/installer-folder.ts",
+      "anchor": "export function ownsFile(inst: Installer, relPath: string): boolean {",
       "from": ".some((f) => String(f).toLowerCase() === want)",
       "to": ".some((f) => String(f) === want)",
       "test": "test/import.test.js"
     },
     {
       "name": "harvestSchema keeps the whole-game tables it was meant to strip",
-      "file": "src/installer.js",
-      "anchor": "harvestSchema(records, vanillaText) {",
+      "file": "src/installer-repack.ts",
+      "anchor": "export function harvestSchema(inst: Installer, records: LibFile[], vanillaText: string | null): { deltas: SchemaDelta[]; stripped: string[] } {",
       "from": "const keep = entries.filter((e) => !drop(e));",
       "to": "const keep = entries;",
       "test": "test/import.test.js"
@@ -600,7 +600,7 @@
       "anchor": "vanillaIsBack(f: LibFile, written: Record<string, string> = this.written()): boolean {",
       "from": "if (mine && sha1(now) === mine) return false;",
       "to": "",
-      "test": "test/installer.test.js"
+      "test": "test/installer.test.ts"
     },
     {
       "name": "the repair after a verify keeps the mod's own file as the game's original",
@@ -608,7 +608,7 @@
       "anchor": "keepOriginal(destAbs: string, backupAbs: string, mine: string | undefined): void {",
       "from": "if (mine && sha1(fs.readFileSync(destAbs)) === mine) return;",
       "to": "",
-      "test": "test/installer.test.js"
+      "test": "test/installer.test.ts"
     },
     {
       "name": "putting a cursor set back records nothing about what it wrote",
@@ -616,7 +616,7 @@
       "anchor": "\n  deployCursor(recId: string, files: LibFile[] | null | undefined): number {",
       "from": "this.noteWritten('cursor', hashes);",
       "to": "",
-      "test": "test/installer.test.js"
+      "test": "test/installer.test.ts"
     },
     {
       "name": "a base item keeps the paid style gates of the item it is dressed as",
