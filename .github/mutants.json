@@ -774,8 +774,8 @@
       "name": "a refused swap puts the first mod back over the second",
       "file": "src/installer.js",
       "anchor": "  swapSlots(a, b) {",
-      "from": "      const parked = this.moveToSlot(a, 'pak00', aBase, tx);\n",
-      "to": "      const parked = this.moveToSlot(a, 'pak00', aBase);\n",
+      "from": "const parked = this.moveToSlot(a, 'pak00', aBase, tx);",
+      "to": "const parked = this.moveToSlot(a, 'pak00', aBase);",
       "test": "test/installer.test.js"
     },
     {
