@@ -16,17 +16,17 @@
     "src/installer.ts": 393,
     "src/ipc-library.ts": 414,
     "src/ipc-mods.ts": 312,
-    "src/item-builder.ts": 533,
+    "src/item-builder.ts": 520,
     "src/main.ts": 382,
-    "src/mod-preview.ts": 403,
+    "src/mod-preview.ts": 391,
     "src/net.ts": 454,
     "src/overlays.ts": 327,
     "src/patcher.ts": 427,
-    "src/presets-service.ts": 379,
+    "src/presets-service.ts": 377,
     "src/remote-config.ts": 305,
     "src/schema-service.ts": 445,
-    "src/schema.ts": 613,
+    "src/schema.ts": 612,
     "src/vpk-read.ts": 385,
-    "src/vpk-write.ts": 358
+    "src/vpk-write.ts": 348
   }
 }
