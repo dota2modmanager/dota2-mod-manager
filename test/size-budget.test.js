@@ -73,7 +73,8 @@ test('a module moved to TypeScript is still counted', async () => {
   /* The list used to take .js alone. Every module the main process moved to .ts left the watch
      without anyone deciding it should, src/vpk.ts at 923 lines among them. */
   const { appFiles } = await load();
-  const files = appFiles((dir) => (dir.endsWith(`${path.sep}src`) ? ['big.ts', 'types.d.ts', 'old.js'] : []), () => true);
+  const dirent = (name) => ({ name, isDirectory: () => false });
+  const files = appFiles((dir) => (dir.endsWith(`${path.sep}src`) ? ['big.ts', 'types.d.ts', 'old.js'].map(dirent) : []), () => true);
   assert.ok(files.includes('src/big.ts'), 'a .ts module went unwatched');
   assert.ok(files.includes('src/old.js'));
   assert.ok(!files.includes('src/types.d.ts'), 'a declaration file ships nothing');
