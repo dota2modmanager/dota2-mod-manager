@@ -1,6 +1,6 @@
 {
   "_why": "Lines each of the largest files is allowed. tools/size-budget.mjs fails a run where one grows, and where a file that is not listed crosses 300 lines. --update writes measurements back but never raises a number: raising one means editing this file by hand and saying why. Splitting these files shows up here as a number going down.",
-  "measured": "2026-09-27",
+  "measured": "2026-10-01",
   "watchAt": 300,
   "files": {
     "main.js": 1129,
@@ -13,7 +13,7 @@
     "src/diagnostics.js": 405,
     "src/gamelang.js": 464,
     "src/icons.js": 487,
-    "src/installer.js": 1326,
+    "src/installer.js": 1325,
     "src/ipc-library.js": 414,
     "src/item-builder.js": 542,
     "src/mod-preview.js": 393,

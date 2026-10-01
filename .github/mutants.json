@@ -763,6 +763,30 @@
       "test": "test/release-state.test.js"
     },
     {
+      "name": "a rename the game refuses leaves a mod split across two slots",
+      "file": "src/installer-slots.ts",
+      "anchor": "export function moveToSlot(",
+      "from": "if (fs.existsSync(from)) into.move(from, path.join(lang, next + suf));",
+      "to": "if (fs.existsSync(from)) fs.renameSync(from, path.join(lang, next + suf));",
+      "test": "test/installer.test.ts"
+    },
+    {
+      "name": "a refused swap puts the first mod back over the second",
+      "file": "src/installer-slots.ts",
+      "anchor": "export function swapSlots(",
+      "from": "const parked = inst.moveToSlot(a, 'pak00', aBase, tx);",
+      "to": "const parked = inst.moveToSlot(a, 'pak00', aBase);",
+      "test": "test/installer.test.ts"
+    },
+    {
+      "name": "the load-order layout parks mods outside its transaction, so a refusal strands them",
+      "file": "src/slot-zones.ts",
+      "anchor": "export function migrateSlotZones(",
+      "from": "p.parked = installer.moveToSlot({ ...p.r, files: p.r.files }, p.park, p.from, tx);",
+      "to": "p.parked = installer.moveToSlot({ ...p.r, files: p.r.files }, p.park, p.from);",
+      "test": "test/installer.test.ts"
+    },
+    {
       "name": "a line falls out of a run block and breaks the workflow file",
       "file": ".github/workflows/release.yml",
       "anchor": "- name: Note in the release that it was announced",
