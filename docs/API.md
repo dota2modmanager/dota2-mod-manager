@@ -13,56 +13,66 @@ the code, not in this page.
 
 | Module | What it owns |
 |---|---|
-| [`src/adopt.js`](#srcadoptjs) | What a VPK has to go through before it counts as a mod. |
+| [`src/adopt.ts`](#srcadoptts) | What a VPK has to go through before it counts as a mod. |
 | [`src/app-page.js`](#srcapp-pagejs) | The page the main window loads. |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
-| [`src/catalog.js`](#srccatalogjs) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
-| [`src/cursors.js`](#srccursorsjs) | Which cursor set is live, and which look a slot is wearing. |
-| [`src/diagnostics.js`](#srcdiagnosticsjs) | A support report a user can send instead of a round of screenshots: Dota's own path and |
-| [`src/discord-auth.js`](#srcdiscord-authjs) | Sign in with Discord, without a server of our own. |
-| [`src/discord-presence.js`](#srcdiscord-presencejs) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
-| [`src/feature-gate.js`](#srcfeature-gatejs) | Is this feature switched off right now? |
-| [`src/file-tx.js`](#srcfile-txjs) | All of it, or none of it. |
-| [`src/fingerprints.js`](#srcfingerprintsjs) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
-| [`src/game-icons.js`](#srcgame-iconsjs) | Item pictures taken from the installed game instead of scraped off a wiki. |
-| [`src/gamelang.js`](#srcgamelangjs) | Which dota_<lang> folder the game actually mounts. |
+| [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
+| [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
+| [`src/diagnostics.ts`](#srcdiagnosticsts) | A support report a user can send instead of a round of screenshots: Dota's own path and |
+| [`src/discord-auth.ts`](#srcdiscord-authts) | Sign in with Discord, without a server of our own. |
+| [`src/discord-presence.ts`](#srcdiscord-presencets) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
+| [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
+| [`src/file-tx.ts`](#srcfile-txts) | All of it, or none of it. |
+| [`src/fingerprints.ts`](#srcfingerprintsts) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
+| [`src/game-icons.ts`](#srcgame-iconsts) | Item pictures taken from the installed game instead of scraped off a wiki. |
+| [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
-| [`src/i18n.js`](#srci18njs) | Minimal i18n for the main process (main.js, installer.js, vpk.js). |
-| [`src/icons.js`](#srciconsjs) | Pictures for the cosmetics picker, and for the Library where a picture can be found for |
-| [`src/import.js`](#srcimportjs) | Taking in a mod the user already has: a .vpk, a .zip, a folder, or bytes off a drop. |
-| [`src/installer.js`](#srcinstallerjs) | Installer engine: download, extract, pak allocation, per-category install/uninstall |
-| [`src/item-builder.js`](#srcitem-builderjs) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
-| [`src/library.js`](#srclibraryjs) | Library: manifest of installed mods + presets |
-| [`src/minify.js`](#srcminifyjs) | Living next to Minify. |
-| [`src/mod-id.js`](#srcmod-idjs) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
-| [`src/mod-preview.js`](#srcmod-previewjs) | A picture for a mod that came with none, taken out of the mod itself. |
-| [`src/net.js`](#srcnetjs) | Getting bytes from the internet, on a connection that may not want to cooperate. |
-| [`src/notice-text.js`](#srcnotice-textjs) | The game's anti-cheat notice, in words that say what to do. |
-| [`src/notice-texts.js`](#srcnotice-textsjs) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.js puts |
-| [`src/overlays.js`](#srcoverlaysjs) | Fonts and cursors: loose files written over the game's own. |
-| [`src/patch-watch.js`](#srcpatch-watchjs) | Noticing that Dota was patched, while the app is open. |
-| [`src/patcher.js`](#srcpatcherjs) | Search-path patch: registers an extra content folder ahead of the game's own, which |
-| [`src/portable-update.js`](#srcportable-updatejs) | Updating a copy that was never installed. |
-| [`src/preset-link.js`](#srcpreset-linkjs) | Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed |
-| [`src/preset-share.js`](#srcpreset-sharejs) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
-| [`src/presets-service.js`](#srcpresets-servicejs) | Presets, and the two ways one travels to somebody else. |
-| [`src/remote-config.js`](#srcremote-configjs) | The one thing the app can be told after it has shipped. |
-| [`src/safe-zip.js`](#srcsafe-zipjs) | The one door every foreign archive comes through. |
-| [`src/schema-service.js`](#srcschema-servicejs) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
-| [`src/schema.js`](#srcschemajs) | Item-schema engine: the game's own scripts/items/items_game.txt is the only place |
-| [`src/settings.js`](#srcsettingsjs) | Simple JSON settings store in userData |
-| [`src/slot-zones.js`](#srcslot-zonesjs) | The load order in two parts. |
-| [`src/steam.js`](#srcsteamjs) | Finding Steam, and then finding Dota inside it. |
-| [`src/terrain-age.js`](#srcterrain-agejs) | Terrains that replace the whole map, and whether the game's own map has moved on since. |
-| [`src/toolchain.js`](#srctoolchainjs) | Tools the app can borrow, fetched only when something actually needs them. |
+| [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (main.js, installer.js, vpk.js). |
+| [`src/icons.ts`](#srciconsts) | Pictures for the cosmetics picker, and for the Library where a picture can be found for |
+| [`src/import.ts`](#srcimportts) | Taking in a mod the user already has: a .vpk, a .zip, a folder, or bytes off a drop. |
+| [`src/installer-downloads.ts`](#srcinstaller-downloadsts) | Getting a catalog mod onto this machine: where its archive lives, what it is called on disk, |
+| [`src/installer-files.ts`](#srcinstaller-filests) | The language folder's own vocabulary, shared by the installer and the modules behind it: the |
+| [`src/installer-folder.ts`](#srcinstaller-folderts) | The language folder as a whole: the "mods off" switch, the note of which files are ours, the |
+| [`src/installer-packs.ts`](#srcinstaller-packsts) | Combined packs: several mods in one pak slot, each kept as its own file in userData and rebuilt |
+| [`src/installer-repack.ts`](#srcinstaller-repackts) | What is already installed, read and rewritten: what a mod is, its files merged into one or |
+| [`src/installer-slots.ts`](#srcinstaller-slotsts) | The load order: which pak slot a mod sits in, moving and swapping slots, and which mods are |
+| [`src/installer.ts`](#srcinstallerts) | The installer: everything that writes a mod into the game folder or takes it out again. The |
+| [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
+| [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
+| [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
+| [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
+| [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
+| [`src/net.ts`](#srcnetts) | Getting bytes from the internet, on a connection that may not want to cooperate. |
+| [`src/notice-text.ts`](#srcnotice-textts) | The game's anti-cheat notice, in words that say what to do. |
+| [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts |
+| [`src/overlays.ts`](#srcoverlaysts) | Fonts and cursors: loose files written over the game's own. |
+| [`src/patch-watch.ts`](#srcpatch-watchts) | Noticing that Dota was patched, while the app is open. |
+| [`src/patcher.ts`](#srcpatcherts) | Search-path patch: registers an extra content folder ahead of the game's own, which |
+| [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
+| [`src/preset-link.ts`](#srcpreset-linkts) | Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed |
+| [`src/preset-share.ts`](#srcpreset-sharets) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
+| [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
+| [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
+| [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
+| [`src/schema-service.ts`](#srcschema-servicets) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
+| [`src/schema.ts`](#srcschemats) | Item-schema engine: the game's own scripts/items/items_game.txt is the only place |
+| [`src/settings.ts`](#srcsettingsts) | Simple JSON settings store in userData |
+| [`src/slot-zones.ts`](#srcslot-zonests) | The load order in two parts. |
+| [`src/steam.ts`](#srcsteamts) | Finding Steam, and then finding Dota inside it. |
+| [`src/terrain-age.ts`](#srcterrain-agets) | Terrains that replace the whole map, and whether the game's own map has moved on since. |
+| [`src/toolchain.ts`](#srctoolchaints) | Tools the app can borrow, fetched only when something actually needs them. |
+| [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
-| [`src/updater.js`](#srcupdaterjs) | Where an installed copy looks for a new version, and on which channel. |
-| [`src/vpk.js`](#srcvpkjs) | Minimal reader for the index of Source-engine VPK "_dir" files (v1/v2). |
+| [`src/updater.ts`](#srcupdaterts) | Where an installed copy looks for a new version, and on which channel. |
+| [`src/vpk-analyze.ts`](#srcvpk-analyzets) | What a mod changes, read from the paths inside it: which heroes, which equip slots, or which |
+| [`src/vpk-read.ts`](#srcvpk-readts) | Reading a Source-engine VPK: the index of a "_dir" file (v1/v2), the files it lists and their |
+| [`src/vpk-write.ts`](#srcvpk-writets) | Writing a Source-engine VPK: one self-contained file from a list of entries or a folder of loose |
+| [`src/vpk.ts`](#srcvpkts) | The VPK format, in one place for everything that reads or writes one: the reader |
 | [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
 
-## src/adopt.js
+## src/adopt.ts
 
 What a VPK has to go through before it counts as a mod.
 
@@ -78,21 +88,44 @@ instead, which is why a received build showed up unnamed, unrecognised and still
 that cannot happen again.
 
 Lifted out of main.js unchanged, with the services arriving as arguments the way
-src/cursors.js and src/presets-service.js take them. It moved for the same reason the
+src/cursors.ts and src/presets-service.ts take them. It moved for the same reason the
 cursors did: main.js cannot be required by a test, so none of this could be tested where it
 was, and it decides what a user sees in their library.
 
+### `AdoptInstaller`
+
+```ts
+export interface AdoptInstaller
+```
+
+What of the installer this asks: a name from the file, what the file is, and the master switch.
+
+### `AdoptSchema`
+
+```ts
+export interface AdoptSchema
+```
+
+What of the schema service this asks: the item blocks lifted out, and a pack split by hero.
+
+### `ImportResult`
+
+```ts
+export type ImportResult =
+```
+
+One file or set of files the importer put in the game folder, or why it could not.
+
 ### `createAdopt`
 
-```js
-function createAdopt({ installer, library, schemaService })
+```ts
+export function createAdopt({ installer, library, schemaService }: { installer: AdoptInstaller; library: Pick<Library, 'add' | 'find'>; schemaService: AdoptSchema; })
 ```
 
 ```
-@param {object} ctx
-@param {object} ctx.installer      reads the file to name and analyse it, and the master switch
-@param {object} ctx.library        the manifest the record is written into
-@param {object} ctx.schemaService  lifts the item blocks out, and splits a multi-hero pack
+@param ctx.installer      reads the file to name and analyse it, and the master switch
+@param ctx.library        the manifest the record is written into
+@param ctx.schemaService  lifts the item blocks out, and splits a multi-hero pack
 ```
 
 ## src/app-page.js
@@ -149,7 +182,7 @@ impossible to follow. A beta channel is the other half of that argument. It is n
 everybody, it is a few people the maintainer picked himself, who know they are running the
 build that has not been released yet.
 
-Who: the accounts already signed in with Discord (src/discord-auth.js). The list lives in the
+Who: the accounts already signed in with Discord (src/discord-auth.ts). The list lives in the
 signed config/app.json, so it changes without a release, and it holds hashes rather than ids -
 that file is public, and a list of a dozen people's Discord accounts is not ours to publish.
 The salt sits next to the list: it does not make a hash unguessable for somebody who already
@@ -179,6 +212,30 @@ export const STABLE_CHANNEL = 'latest'
 ```
 
 What everybody else reads: latest.yml, the release channel.
+
+### `Channel`
+
+```ts
+export type Channel = typeof BETA_CHANNEL | typeof STABLE_CHANNEL
+```
+
+_No description in the source._
+
+### `BetaList`
+
+```ts
+export interface BetaList { salt?: string; ids?: unknown[] }
+```
+
+The `beta` block of the signed config: a salt and the hashed ids let in.
+
+### `BetaAsk`
+
+```ts
+export interface BetaAsk { discordId?: string | null; beta?: BetaList | null; wanted?: boolean }
+```
+
+Who is asking and whether they switched the beta on.
 
 ### `idHash`
 
@@ -323,7 +380,7 @@ assets/signatures/mods.json.sig for assets/data/mods.json.
 export const SIG_SUFFIX = '.sig'
 ```
 
-_No description in the source._
+Appended to a data file's name to get its signature's: mods.json -> mods.json.sig.
 
 ### `configured`
 
@@ -346,30 +403,22 @@ export function verify(payload: string | Buffer, signatureB64: unknown, key: str
 @returns true when the signature is this key's signature over this payload
 ```
 
-## src/catalog.js
+## src/catalog.ts
 
 Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo
 
-### `Catalog`
-
-```js
-class Catalog
-```
-
-_No description in the source._
-
 ### `RAW_BASE`
 
-```js
-const RAW_BASE = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main'
+```ts
+export const RAW_BASE = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main'
 ```
 
-_No description in the source._
+The upstream catalog repository, read raw: where the data files and their signatures are fetched first.
 
 ### `HASH_FILE`
 
-```js
-const HASH_FILE = 'mod-hashes.json'
+```ts
+export const HASH_FILE = 'mod-hashes.json'
 ```
 
 The published sha256 of every archive in the catalog, signed like the data.
@@ -380,10 +429,18 @@ checked against that first copy afterwards, which catches a substitution on ever
 except the one that matters. So it is fetched beside them and a failure costs the old
 behaviour rather than the catalog.
 
+### `CatalogFiles`
+
+```ts
+export interface CatalogFiles
+```
+
+The catalog as the window is handed it: the three files, when they were fetched, and why they are old if they are.
+
 ### `normalizeCatalog`
 
-```js
-function normalizeCatalog(mods)
+```ts
+export function normalizeCatalog<T extends RawMods>(mods: T): T
 ```
 
 The catalog describes a mod's links two ways: a `links` array, and an older pair of fields
@@ -392,7 +449,16 @@ whole TI battle-pass row - so a reader that knows only the array shows them with
 preview at all. The site reads both; folding one into the other here means the rest of the
 app only ever sees the array. The cache on disk keeps whatever the author wrote.
 
-## src/cursors.js
+### `Catalog`
+
+```ts
+export class Catalog
+```
+
+The catalog on disk and on the wire: fetches the three data files, checks their signatures,
+keeps the last good copy, and says which archive hash the catalog published for a mod.
+
+## src/cursors.ts
 
 Which cursor set is live, and which look a slot is wearing.
 
@@ -404,33 +470,48 @@ renaming paks leaves them untouched, and a folder that drifted from the manifest
 put back at startup.
 
 Lifted out of main.js unchanged, with the services arriving as arguments the way
-src/presets-service.js takes them. It moved for a reason beyond size: main.js cannot be
+src/presets-service.ts takes them. It moved for a reason beyond size: main.js cannot be
 required by a test (it pulls in Electron), so the startup repair below - which decides
 whether a user's cursor comes back after a game update or a Steam verify - could not be
-tested where it was. test/cursors.test.js is what the move is for.
+tested where it was. test/cursors.test.ts is what the move is for.
 
-### `createCursors`
+### `CursorInstaller`
 
-```js
-function createCursors({ installer, library, settings })
+```ts
+export interface CursorInstaller
 ```
 
+What of the installer this needs: the cursor store, deploy and undeploy.
+
+### `CursorLibrary`
+
+```ts
+export interface CursorLibrary
 ```
-@param {object} ctx
-@param {object} ctx.installer  the installer engine: the cursor store, deploy and undeploy
-@param {object} ctx.library    the manifest of installed records
-@param {object} ctx.settings   read for the game path, which the repair needs
-```
+
+What of the library this needs: the records, and switching one.
 
 ### `isCursorRecord`
 
-```js
-function isCursorRecord(rec)
+```ts
+export function isCursorRecord(rec: Pick<LibRecord, 'files'> | null | undefined): boolean
 ```
 
 A record that owns cursor files, whatever else it holds.
 
-## src/diagnostics.js
+### `createCursors`
+
+```ts
+export function createCursors({ installer, library, settings }: { installer: CursorInstaller; library: CursorLibrary; settings: Pick<Settings, 'get'>; })
+```
+
+```
+@param ctx.installer  the installer engine: the cursor store, deploy and undeploy
+@param ctx.library    the manifest of installed records
+@param ctx.settings   read for the game path, which the repair needs
+```
+
+## src/diagnostics.ts
 
 A support report a user can send instead of a round of screenshots: Dota's own path and
 language settings, the app's settings and installed mods, the patch/schema state, a
@@ -439,34 +520,42 @@ listing of the mod folder's pak files, and the app's own recent log.
 Pure data in, pure data out - no Electron here, no zip - so main.js decides how it is
 packaged (see the diag:export handler) and this stays exercisable on its own.
 
-### `buildReport`
+### `Problem`
 
-```js
-function buildReport({ settings, library, installer, schemaService, catalog, icons, app, extra = {}, home })
+```ts
+export interface Problem { level: 'broken' | 'note'; what: string; detail: string }
 ```
 
+One thing the report says is wrong, and what to do about it. Two levels on purpose; see findProblems.
+
+### `ReportInstaller`
+
+```ts
+export interface ReportInstaller
 ```
-@param {object} deps
-@param {import('./settings').Settings} deps.settings
-@param {import('./library').Library} deps.library
-@param {import('./installer').Installer} deps.installer
-@param {ReturnType<import('./schema-service').createSchemaService>} deps.schemaService
-@param {import('./catalog').Catalog} deps.catalog
-@param {import('./icons').Icons} [deps.icons]
-@param {{version: string, logFile?: string, userDataDir?: string, updateError?: string}} deps.app
-@param {string} [deps.home]  the home directory to hide, for a test that cannot have one
-@param {object} [deps.extra] facts only the main process can answer: whether Dota is
-running, the open windows, errors the interface has reported, the updater's state, the
-remote config and the toolchain. Passed in so this module stays free of Electron.
-@returns {{report: object, files: object}}
-report: the structured data to write as report.json
-files: extra plain-text files to include verbatim, keyed by name inside the zip
+
+What of the installer a report asks: which mods are overruled, the download cache, a record's slot.
+
+### `ReportExtra`
+
+```ts
+export interface ReportExtra
 ```
+
+Facts only the main process can answer, handed in so this module stays free of Electron.
+
+### `Report`
+
+```ts
+export interface Report
+```
+
+The support report: what report.json holds, and what the two renderings read.
 
 ### `listFolder`
 
-```js
-function listFolder(dir)
+```ts
+export function listFolder(dir: string): Listed[] | null
 ```
 
 Nothing about a folder listing that matters for troubleshooting needs the file's bytes,
@@ -474,17 +563,33 @@ only its shape - names, sizes, when they last changed.
 
 ### `tailLog`
 
-```js
-function tailLog(file, maxBytes)
+```ts
+export function tailLog(file: string, maxBytes: number): string | null
 ```
 
-The last chunk of a log file - a support conversation is almost always about what just
-happened, not the file's whole history.
+The last `maxBytes` of a log file, or null when it cannot be read.
+
+### `buildReport`
+
+```ts
+export function buildReport({ settings, library, installer, schemaService, catalog, icons, app, extra = {}, home }: { settings: Pick<Settings, 'all'>; library: Pick<Library, 'list' | 'listPresets'>; installer: ReportInstaller; schemaService: { state(): PatchState }; catalog: Pick<Catalog, 'cacheInfo'>; icons?: Pick<Icons, 'size'> | null; app: { version: string; logFile?: string; userDataDir?: string; updateError?: string }; extra?: ReportExtra; home?: string; }): { report: Report; files: Record<string, string> }
+```
+
+Everything a support report carries, gathered from the running services.
+
+```
+@param deps.home  the home directory to hide, for a test that cannot have one
+@param deps.extra facts only the main process can answer: whether Dota is
+running, the open windows, errors the interface has reported, the updater's state, the
+remote config and the toolchain. Passed in so this module stays free of Electron.
+@returns report: the structured data to write as report.json;
+files: extra plain-text files to include verbatim, keyed by name inside the zip
+```
 
 ### `findProblems`
 
-```js
-function findProblems(r, { app } = /** @type {{app?: object}} */ ({}))
+```ts
+export function findProblems(r: Omit<Report, 'problems'>, { app }: { app?: { updateError?: string } } = {}): Problem[]
 ```
 
 ---------- what is wrong, said out loud ----------
@@ -495,30 +600,21 @@ or something is worth knowing. A third level would just be a place to hide thing
 
 ### `renderSummary`
 
-```js
-function renderSummary(r)
+```ts
+export function renderSummary(r: Report): string
 ```
 
----------- the short one ----------
-
-One screen, plain sentences, no JSON. It exists because the person who reads these first
-should not have to open four files to find out whether the game is even where the app
-thinks it is. If nothing is wrong it says so in the first line, which is the answer most
-of the time.
+The one-screen summary: what is wrong first, then the basics.
 
 ### `renderDetailed`
 
-```js
-function renderDetailed(r, files = {})
+```ts
+export function renderDetailed(r: Report, files: Record<string, string> = {}): string
 ```
 
----------- the long one ----------
+Everything in the report, laid out to be read: REPORT.md.
 
-The same data with nothing left out, laid out to be read rather than parsed: whoever is
-looking at this is trying to work out what happened, and JSON makes that harder than a
-heading and a table. report.json is still in the zip for anything that wants the raw shape.
-
-## src/discord-auth.js
+## src/discord-auth.ts
 
 Sign in with Discord, without a server of our own.
 
@@ -540,10 +636,53 @@ What that buys and what it costs, plainly:
    shared preset is just text; proving who made a preset needs a server that verifies
    the token with Discord, and that comes with the community catalog.
 
+### `DiscordUser`
+
+```ts
+export interface DiscordUser { id: string; username: string; avatar: string | null }
+```
+
+Who signed in: the Discord account's id, the name it shows, and its avatar as a data URI.
+
+### `CLIENT_ID`
+
+```ts
+export const CLIENT_ID = '1529830456697163867'
+```
+
+Public by design in OAuth2 — it identifies the app, it is not a secret, and it ships in
+every OAuth request anyway. The client SECRET is a different thing and is never needed
+here: the implicit grant doesn't use one, so none exists in this repo.
+REDIRECT_URI below must be listed verbatim under OAuth2 -> Redirects for this app.
+
+### `PORT`
+
+```ts
+export const PORT = 53174
+```
+
+Discord matches redirect URIs exactly, so the port can't be random.
+
+### `REDIRECT_URI`
+
+```ts
+export const REDIRECT_URI = `http://${HOST}:${PORT}/callback`
+```
+
+_No description in the source._
+
+### `isConfigured`
+
+```ts
+export function isConfigured(): boolean { return !!CLIENT_ID; }
+```
+
+Whether this build carries an application id to sign in with.
+
 ### `signIn`
 
-```js
-async function signIn()
+```ts
+export async function signIn(): Promise<DiscordUser>
 ```
 
 Opens the system browser, waits for the redirect, and returns who signed in.
@@ -552,42 +691,7 @@ Opens the system browser, waits for the redirect, and returns who signed in.
 @returns {Promise<{id: string, username: string, avatar: string|null}>}
 ```
 
-### `isConfigured`
-
-```js
-function isConfigured() { return !!CLIENT_ID; }
-```
-
-_No description in the source._
-
-### `CLIENT_ID`
-
-```js
-const CLIENT_ID = '1529830456697163867'
-```
-
-Public by design in OAuth2 — it identifies the app, it is not a secret, and it ships in
-every OAuth request anyway. The client SECRET is a different thing and is never needed
-here: the implicit grant doesn't use one, so none exists in this repo.
-REDIRECT_URI below must be listed verbatim under OAuth2 -> Redirects for this app.
-
-### `REDIRECT_URI`
-
-```js
-const REDIRECT_URI = `http://${HOST}:${PORT}/callback`
-```
-
-_No description in the source._
-
-### `PORT`
-
-```js
-const PORT = 53174
-```
-
-Discord matches redirect URIs exactly, so the port can't be random.
-
-## src/discord-presence.js
+## src/discord-presence.ts
 
 "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket.
 
@@ -601,15 +705,23 @@ Everything here is best-effort by design: Discord not running, a user who closed
 mid-session, a rejected payload — none of it may disturb the app. The worst outcome
 allowed is "no status shown".
 
+### `Activity`
+
+```ts
+export interface Activity
+```
+
+What Discord shows: two lines of text and up to two buttons.
+
 ### `DiscordPresence`
 
-```js
-class DiscordPresence
+```ts
+export class DiscordPresence
 ```
 
 _No description in the source._
 
-## src/feature-gate.js
+## src/feature-gate.ts
 
 Is this feature switched off right now?
 
@@ -626,20 +738,25 @@ the app said nothing - the renderer awaited a promise that rejected, so the butt
 
 One definition, handed to whoever needs it, so there is no second copy to leave behind.
 
+### `FeatureSwitches`
+
+```ts
+export interface FeatureSwitches
+```
+
+What of the remote config this asks: whether a feature is off, and why, in the user's language.
+
 ### `createGate`
 
-```js
-function createGate({ remoteConfig, settings })
+```ts
+export function createGate({ remoteConfig, settings }: { remoteConfig: FeatureSwitches; settings: Pick<Settings, 'get'>; }): (name: string) => { error: string } | null
 ```
 
 ```
-@param {object} deps
-@param {{feature: (name: string, lang: string) => {off: boolean, note?: string}}} deps.remoteConfig
-@param {{get: (key: string) => any}} deps.settings
-@returns {(name: string) => {error: string}|null} the answer to send back, or null to carry on
+@returns the answer to send back, or null to carry on
 ```
 
-## src/file-tx.js
+## src/file-tx.ts
 
 All of it, or none of it.
 
@@ -656,53 +773,78 @@ itself with a .mmtx suffix, which is atomic, costs nothing for a 300 MB pak, and
 the cross-volume copy that staging in %APPDATA% would (the game usually lives on another
 drive). Commit deletes those; rollback renames them back.
 
+### `Writer`
+
+```ts
+export type Writer = FileTx | null | undefined
+```
+
+Something to write a file through: a transaction, or nothing, which writes directly.
+
 ### `FileTx`
 
-```js
-class FileTx
+```ts
+export class FileTx
 ```
 
 _No description in the source._
 
 ### `copyInto`
 
-```js
-function copyInto(src, dest, tx = null)
+```ts
+export function copyInto(src: string, dest: string, tx: Writer = null): void
 ```
 
 Copy a file into place: through the transaction when there is one, directly when not.
 
 ### `writeInto`
 
-```js
-function writeInto(buf, dest, tx = null)
+```ts
+export function writeInto(buf: string | NodeJS.ArrayBufferView, dest: string, tx: Writer = null): void
 ```
 
 Write bytes into place: through the transaction when there is one, directly when not.
 
-## src/fingerprints.js
+## src/fingerprints.ts
 
 Fingerprint index: fetch + cache the fp -> mod identity map published alongside the
 app, so a foreign vpk sitting in the game folder can be recognised as a specific
 catalog mod (see tools/gen-fingerprints.js). Dormant until the map is hosted.
 
-### `Fingerprints`
-
-```js
-class Fingerprints
-```
-
-_No description in the source._
-
 ### `FP_URL`
 
-```js
-const FP_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/fingerprints.json'
+```ts
+export const FP_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/fingerprints.json'
 ```
 
-_No description in the source._
+Where the fingerprint map is published, next to the app's own source.
 
-## src/game-icons.js
+### `CatalogIdentity`
+
+```ts
+export interface CatalogIdentity { name: string; categoryId: string; styleLabel?: string | null }
+```
+
+A catalog mod a fingerprint points at.
+
+### `FontMod`
+
+```ts
+export interface FontMod extends CatalogIdentity { files: Record<string, string> }
+```
+
+A font mod, known by the hash of every file it puts in panorama/fonts.
+
+### `Fingerprints`
+
+```ts
+export class Fingerprints
+```
+
+The fingerprint map, cached in userData: tells which catalog mod a VPK is from the hash of its
+content, and which font mod a set of font files is.
+
+## src/game-icons.ts
 
 Item pictures taken from the installed game instead of scraped off a wiki.
 
@@ -719,7 +861,7 @@ by slicing the header off. Those cost one seek each and work offline, on a fresh
 with nothing downloaded.
 
 The rest are block-compressed, and reading those does need the Source 2 toolchain (see
-src/toolchain.js), 48 MB and fetched only if the user asks for it. Without it those few
+src/toolchain.ts), 48 MB and fetched only if the user asks for it. Without it those few
 fall back to the wiki, as everything used to.
 
 Measured on the real game (2026-08-07): 10 299 items carry a picture, every option in every
@@ -729,19 +871,13 @@ starting the program, not the icons - so misses are always fetched in one batch.
 
 ### `createGameIcons`
 
-```js
-function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} })
+```ts
+export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () => {} }: { userDataDir: string; toolchain: { pathOf: (name: string) => string | null }; getGamePath: () => string | null; log?: (msg: string) => void; })
 ```
 
-```
-@param {object} deps
-@param {string} deps.userDataDir
-@param {{ pathOf: (name: string) => string|null, ensure: (name: string) => Promise<string> }} deps.toolchain
-@param {() => string|null} deps.getGamePath
-@param {(msg: string) => void} [deps.log]
-```
+Item and hero pictures out of the installed game, cached in userData.
 
-## src/gamelang.js
+## src/gamelang.ts
 
 Which dota_<lang> folder the game actually mounts.
 
@@ -774,7 +910,7 @@ and they keep hearing English because that is what the base game plays. No launc
 parameters, no folder invented by hand, no VPK to fix the text back, and the player is
 still free to set the text language to anything they like.
 
-The other route, for contrast (it is what Minify does, see src/minify.js): put
+The other route, for contrast (it is what Minify does, see src/minify.ts): put
 `-language dutch` in Steam's launch options. Text becomes Dutch, voices fall back to
 English, dota_dutch mounts - but the folder does not exist until somebody creates it with a
 gameinfo.gi of its own, both language settings are locked while the parameter is there, so
@@ -783,10 +919,26 @@ write into Steam's own config to set it up. Valve have already stopped mounting 
 folders; the languages with no voice pack of their own are the ones that could go the same
 way, while these three cannot - the game has to mount them to play their voices.
 
+### `LangFolder`
+
+```ts
+export interface LangFolder
+```
+
+One dota_* folder on disk and what is in it; see langFolders.
+
+### `LangDetection`
+
+```ts
+export interface LangDetection
+```
+
+The folder the game will mount, and where that answer came from; see detectLangSuffix.
+
 ### `VOICE_LANGUAGES`
 
-```js
-const VOICE_LANGUAGES = ['english', 'koreana', 'russian', 'schinese']
+```ts
+export const VOICE_LANGUAGES: readonly string[] = ['english', 'koreana', 'russian', 'schinese']
 ```
 
 Languages Dota records VOICE in - four of them, and that is the list that matters here.
@@ -796,10 +948,31 @@ a mod has to live in is named by this setting and by nothing else. Text is a dif
 of twenty-nine languages living in dota/pak01, and it has no bearing on any of this; reading
 the wrong one of the two is how a mod ends up in a folder nobody mounts.
 
+### `MOD_FOLDERS`
+
+```ts
+export const MOD_FOLDERS: readonly string[] = ['koreana', 'russian', 'schinese']
+```
+
+Three of those four get a folder on disk.
+
+English speech ships inside dota/pak01 with the base game, so Valve makes no dota_english,
+and its own gameinfo.gi mounts the language path only "if running a specific language",
+which English is not. A dota_english built by hand, correct gameinfo.gi and all, filled with
+mods, is never read. Tested 2026-08-10 rather than assumed, twice.
+
+### `FALLBACK_FOLDER`
+
+```ts
+export const FALLBACK_FOLDER = 'russian'
+```
+
+Borrowed by English, and by anything unrecognised.
+
 ### `DOTA_LANGUAGES`
 
-```js
-const DOTA_LANGUAGES = [
+```ts
+export const DOTA_LANGUAGES: readonly string[] = [
 ```
 
 Every language Dota will accept for that setting, which is a longer list than the four it
@@ -809,12 +982,12 @@ Only used to answer "would the game mount a folder by this name at all". Since t
 2026-07-24 update the setting is where the mount path comes from, and it takes a language
 rather than any string, so a folder named after something that is not on this list is never
 read - which is the whole reason Minify moved off its own "minify" locale (see
-src/minify.js). Cross-checked against Minify's own enumeration of the same set.
+src/minify.ts). Cross-checked against Minify's own enumeration of the same set.
 
 ### `modFolderFor`
 
-```js
-function modFolderFor(launched, audio)
+```ts
+export function modFolderFor(launched: string | null | undefined, audio: string | null | undefined): { suffix: string; followed: boolean }
 ```
 
 The folder the game is going to mount, which is where mods have to go.
@@ -830,52 +1003,15 @@ only kind of folder the engine mounts; anything else falls back to the voice lan
 is the ordinary path and the one this app sets itself.
 
 ```
-@param {string|null} launched  a `-language` value, if one is set
-@param {string|null} audio     the voice language from the game's own settings
-@returns {{ suffix: string, followed: boolean }} the folder, and whether a parameter chose it
+@param launched  a `-language` value, if one is set
+@param audio     the voice language from the game's own settings
+@returns the folder, and whether a parameter chose it
 ```
-
-### `launchLanguage`
-
-```js
-function launchLanguage(gamePath)
-```
-
-The `-language X` Steam will start the game with, lowercased, or null.
-
-### `launchOptions`
-
-```js
-function launchOptions(gamePath)
-```
-
-Everything Steam will start the game with, verbatim, or null.
-
-### `MOD_FOLDERS`
-
-```js
-const MOD_FOLDERS = ['koreana', 'russian', 'schinese']
-```
-
-Three of those four get a folder on disk.
-
-English speech ships inside dota/pak01 with the base game, so Valve makes no dota_english,
-and its own gameinfo.gi mounts the language path only "if running a specific language",
-which English is not. A dota_english built by hand, correct gameinfo.gi and all, filled with
-mods, is never read. Tested 2026-08-10 rather than assumed, twice.
-
-### `FALLBACK_FOLDER`
-
-```js
-const FALLBACK_FOLDER = 'russian'
-```
-
-Borrowed by English, and by anything unrecognised.
 
 ### `folderFor`
 
-```js
-function folderFor(audio)
+```ts
+export function folderFor(audio: string | null | undefined): string
 ```
 
 Where mods have to live for a given audio language.
@@ -886,34 +1022,50 @@ Dota decides what is mounted, and they are separate. So an English speaker gets 
 dota_russian holding nothing but mods, and keeps hearing the English speech out of
 dota/pak01 without noticing anything happened.
 
+### `launchLanguage`
+
+```ts
+export function launchLanguage(gamePath: string | null | undefined): string | null
+```
+
+The `-language X` Steam will start the game with, lowercased, or null.
+
+### `launchOptions`
+
+```ts
+export function launchOptions(gamePath: string | null | undefined): string | null
+```
+
+Everything Steam will start the game with, verbatim, or null.
+
 ### `bootLanguages`
 
-```js
-function bootLanguages(gamePath)
+```ts
+export function bootLanguages(gamePath: string | null | undefined): { ui: string | null; audio: string | null } | null
 ```
 
 UI + audio language the game wrote at its last boot, or null if it never ran.
 
 ### `steamLanguage`
 
-```js
-function steamLanguage(gamePath)
+```ts
+export function steamLanguage(gamePath: string | null | undefined): string | null
 ```
 
 Language Steam has the game mounted as — the fallback before Dota has ever booted.
 
 ### `langFolders`
 
-```js
-function langFolders(gamePath)
+```ts
+export function langFolders(gamePath: string | null | undefined): LangFolder[]
 ```
 
 Every dota_* folder on disk, with what is inside each.
 
 ### `detectLangSuffix`
 
-```js
-function detectLangSuffix(gamePath)
+```ts
+export function detectLangSuffix(gamePath: string | null | undefined): LangDetection
 ```
 
 `suffix` is the audio language among the four Dota records voice in; `audio` is whatever
@@ -924,8 +1076,8 @@ whether or not we recognise it. Anything asking "whose mods are live" needs the 
 
 ### `writeBootLanguages`
 
-```js
-function writeBootLanguages(gamePath, { ui, audio })
+```ts
+export function writeBootLanguages(gamePath: string, { ui, audio }: { ui?: string | null; audio?: string | null }): { ui?: string | null; audio?: string | null }
 ```
 
 Set the game's language settings. Dota reads boot.vcfg at startup, so this has to happen
@@ -938,22 +1090,21 @@ the audio language is ours to set, because it is what names the folder the engin
 and therefore where a mod has to live.
 
 ```
-@param {string} gamePath
-@param {{ ui?: string, audio?: string }} langs  a setting left out is left as it is
+@param langs  a setting left out is left as it is
 ```
 
 ### `voiceInstalled`
 
-```js
-function voiceInstalled(gamePath, suffix)
+```ts
+export function voiceInstalled(gamePath: string, suffix: string): boolean
 ```
 
 Is Valve's voice pack for this language actually on disk? If not, voices stay English.
 
 ### `ensureLangFolder`
 
-```js
-function ensureLangFolder(gamePath, suffix)
+```ts
+export function ensureLangFolder(gamePath: string, suffix: string): string
 ```
 
 Make sure the mod folder exists. English is the one language Valve ships no folder for
@@ -962,8 +1113,8 @@ exactly like Valve's own — never touching a gameinfo.gi that is already there.
 
 ### `moveLangFolder`
 
-```js
-function moveLangFolder(gamePath, fromSuffix, toSuffix)
+```ts
+export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number
 ```
 
 Move installed mod files from one language folder to another, which is what has to happen
@@ -977,14 +1128,14 @@ already taken in the destination is not overwritten, because the file there is s
 current mod and this one is a leftover.
 
 ```
-@returns {number} how many files were actually moved
+@returns how many files were actually moved
 ```
 
 ## src/hero-names.ts
 
 Which hero a name means, in the three spellings this app meets: the game's folder id
 (queenofpain), what an author typed (queen_of_pain, qop), and what people read ("Queen of
-Pain"). Out of src/vpk.js, where it began, because the catalog asks too and vpk.js is at its
+Pain"). Out of src/vpk.ts, where it began, because the catalog asks too and vpk.ts is at its
 size budget.
 
 ### `HERO_DISPLAY`
@@ -1034,7 +1185,18 @@ Identity of a hero regardless of how the author spelled the folder. Authors mix
 used to count as a separate hero — which turned a single-hero skin into a "bundle of 3"
 and offered to split it into parts that make no sense.
 
-## src/i18n.js
+## src/i18n.ts
+
+Minimal i18n for the main process (main.js, installer.js, vpk.js).
+Russian is the source language; English strings are keyed by the exact Russian text
+(with {0},{1}... placeholders for interpolated values). A missing key falls back to
+the Russian source, so the app never shows an empty/undefined string.
+
+### `Lang`
+
+```ts
+export type Lang = 'en' | 'ru'
+```
 
 Minimal i18n for the main process (main.js, installer.js, vpk.js).
 Russian is the source language; English strings are keyed by the exact Russian text
@@ -1043,29 +1205,29 @@ the Russian source, so the app never shows an empty/undefined string.
 
 ### `setLang`
 
-```js
-function setLang(lang)
+```ts
+export function setLang(lang: unknown): void
 ```
 
 _No description in the source._
 
 ### `getLang`
 
-```js
-function getLang()
+```ts
+export function getLang(): Lang
 ```
 
 _No description in the source._
 
 ### `t`
 
-```js
-function t(ru, ...values)
+```ts
+export function t(ru: string, ...values: unknown[]): string
 ```
 
 t('Мод не найден') or t('HTTP {0} — не удалось скачать {1}', status, name)
 
-## src/icons.js
+## src/icons.ts
 
 Pictures for the cosmetics picker, and for the Library where a picture can be found for
 content that is not a cosmetic at all.
@@ -1084,13 +1246,13 @@ Everything is cached on disk, misses included: 2000 loading screens must not tur
 
 ### `Icons`
 
-```js
-class Icons
+```ts
+export class Icons
 ```
 
-_No description in the source._
+Cosmetic and hero pictures off the Dota wikis, cached on disk with the misses remembered.
 
-## src/import.js
+## src/import.ts
 
 Taking in a mod the user already has: a .vpk, a .zip, a folder, or bytes off a drop.
 
@@ -1103,70 +1265,22 @@ working folder holds no archive at all, and is packed on the way in.
 Lifted out of src/installer.js unchanged. It was 270 lines of a 1,783-line file, reachable
 only through the class that also downloads, allocates slots, patches the schema and manages
 cursors. The bodies below are the same bodies; what changed is that the installer arrives as
-an argument instead of as `this`. Its tests (test/import.test.js) and the mutants that check
+an argument instead of as `this`. Its tests (test/import.test.ts) and the mutants that check
 those tests bite (.github/mutants.json) were written first, in #48, so this move had
 something to prove itself against.
 
-### `importVpks`
+### `DroppedFile`
 
-```js
-async function importVpks(installer, paths, onStep)
+```ts
+export type DroppedFile = { name?: string; data: Uint8Array | ArrayBuffer }
 ```
 
-Import whatever the user pointed at: .vpk files, a .zip, or a folder to walk.
-Returns one result per mod: { source, name, files[], merged? } or { source, error }.
-
-### `importVpkFiles`
-
-```js
-async function importVpkFiles(installer, paths, onStep)
-```
-
-```
-@param {object} installer the installer engine: the game folder, the slots and the writes
-@param {string[]} paths .vpk files to take in
-@param {(done:number,total:number)=>void} [onStep] called after each mod lands
-```
-
-### `importVpkBuffers`
-
-```js
-async function importVpkBuffers(installer, items, onStep)
-```
-
-Import dropped .vpk/.zip files given as raw bytes (used when the drop can't resolve a
-real on-disk path). Bytes are staged in a temp folder so the normal path-based importer
-handles grouping of multi-part sets, then the temp folder is removed.
-
-### `installVpkBuffer`
-
-```js
-function installVpkBuffer(installer, buf)
-```
-
-Install a VPK handed over as bytes (a mod embedded in a shared preset). The index is
-parsed first: whatever a stranger put in that archive, only something that really is a
-VPK ever reaches the game folder, and the slot name is ours, never theirs.
-
-### `expandImportInputs`
-
-```js
-function expandImportInputs(paths, staged)
-```
-
-Turn whatever the user dropped or picked into a flat list of .vpk paths: a folder is
-walked, a .zip is unpacked to a temp dir (keeping its layout so multi-part sets stay
-side by side), a plain file passes through. Temp dirs are appended to `staged` for the
-caller to delete once the import has read them.
-
-```
-@returns {{ files: string[], errors: Array<{source:string, error:string}> }}
-```
+Files dropped as bytes, when the drop could not name a path on disk.
 
 ### `scanVpkTree`
 
-```js
-function scanVpkTree(root, depth = 0)
+```ts
+export function scanVpkTree(root: string, depth = 0): string[]
 ```
 
 Every .vpk under a dropped folder. Skinchanger packs unzip to a whole game tree
@@ -1174,8 +1288,8 @@ Every .vpk under a dropped folder. Skinchanger packs unzip to a whole game tree
 
 ### `stageFolderAsVpk`
 
-```js
-function stageFolderAsVpk(dir, staged)
+```ts
+export function stageFolderAsVpk(dir: string, staged: string[]): string | null
 ```
 
 Pack an author's working folder into a VPK and park it where the normal importer will
@@ -1184,36 +1298,734 @@ same path a dropped .vpk does - slot allocation, the schema a mod carries, the
 transaction, the naming.
 
 ```
-@returns {string|null} path of the staged archive, or null if the folder holds no game files
+@returns path of the staged archive, or null if the folder holds no game files
 ```
 
-## src/installer.js
+### `expandImportInputs`
 
-Installer engine: download, extract, pak allocation, per-category install/uninstall
+```ts
+export function expandImportInputs(paths: string[], staged: string[]): { files: string[]; errors: { source: string; error: string }[] }
+```
 
-### `Installer`
+Turn whatever the user dropped or picked into a flat list of .vpk paths: a folder is
+walked, a .zip is unpacked to a temp dir (keeping its layout so multi-part sets stay
+side by side), a plain file passes through. Temp dirs are appended to `staged` for the
+caller to delete once the import has read them.
 
-```js
-class Installer
+### `importVpkFiles`
+
+```ts
+export async function importVpkFiles(installer: Installer, paths: string[], onStep?: (done: number, total: number) => void): Promise<ImportResult[]>
+```
+
+Take these .vpk files in, one mod per set, each in its own transaction.
+
+```
+@param installer the installer engine: the game folder, the slots and the writes
+@param paths .vpk files to take in
+@param onStep called after each mod lands
+```
+
+### `importVpks`
+
+```ts
+export async function importVpks(installer: Installer, paths: string[] | null | undefined, onStep?: (done: number, total: number) => void): Promise<ImportResult[]>
+```
+
+Import whatever the user pointed at: .vpk files, a .zip, or a folder to walk.
+Returns one result per mod: { source, name, files[], merged? } or { source, error }.
+
+### `importVpkBuffers`
+
+```ts
+export async function importVpkBuffers(installer: Installer, items: DroppedFile[] | null | undefined, onStep?: (done: number, total: number) => void): Promise<ImportResult[]>
+```
+
+Import dropped .vpk/.zip files given as raw bytes (used when the drop can't resolve a
+real on-disk path). Bytes are staged in a temp folder so the normal path-based importer
+handles grouping of multi-part sets, then the temp folder is removed.
+
+### `installVpkBuffer`
+
+```ts
+export function installVpkBuffer(installer: Installer, buf: Buffer): LibFile[]
+```
+
+Install a VPK handed over as bytes (a mod embedded in a shared preset). The index is
+parsed first: whatever a stranger put in that archive, only something that really is a
+VPK ever reaches the game folder, and the slot name is ours, never theirs.
+
+## src/installer-downloads.ts
+
+Getting a catalog mod onto this machine: where its archive lives, what it is called on disk,
+and the cache of what was downloaded and what each file hashed to. Behind src/installer.ts.
+
+### `DownloadEntry`
+
+```ts
+export type DownloadEntry = { size: number; sha256: string; at: number }
+```
+
+What a downloaded archive was when it arrived: its size and hash, and when.
+
+### `fileUrl`
+
+```ts
+export function fileUrl(categoryId: string, fileRef: string): string
+```
+
+Where a catalog file is fetched from: its own URL, or the catalog's files folder.
+
+### `safeFileName`
+
+```ts
+export function safeFileName(raw: unknown, fallback: string): string
+```
+
+A name from the catalog is a name, never a path.
+
+What a mod is called on disk used to be decodeURIComponent(last segment of the URL), and
+a catalog entry pointing at ".../..%2F..%2F..%2Fsomething" decoded straight back into
+"../../../something" - a file the app then wrote wherever that landed. Slashes cannot
+survive this, so nothing here can climb out of the folder it was given.
+
+Spaces, brackets and Cyrillic are left alone on purpose: real catalog files are called
+things like "Red Abaddon (v2).zip", they are the keys of the download cache, and
+scrubbing them would re-download every mod on disk to no benefit.
+
+### `downloadIndex`
+
+```ts
+export function downloadIndex(inst: Installer): Record<string, DownloadEntry>
+```
+
+What each downloaded archive hashed to, so a cached copy can be trusted and a mirror
+cannot hand over a different file under the same name.
+
+### `rememberDownload`
+
+```ts
+export function rememberDownload(inst: Installer, key: string, entry: DownloadEntry): void
 ```
 
 _No description in the source._
 
-### `PRIORITY_CATEGORIES`
+### `download`
 
-_No description in the source._
+```ts
+export async function download(inst: Installer, categoryId: string, fileRef: string, label?: string | null): Promise<string>
+```
+
+The archive of a catalog mod on disk: from the cache when it is still what arrived, downloaded otherwise.
+
+### `cachedArchive`
+
+```ts
+export function cachedArchive(inst: Installer, categoryId: string | null, fileRef: string | null | undefined): string | null
+```
+
+The archive this mod was installed from, if it is still in the download cache.
+
+### `downloadCacheSize`
+
+```ts
+export function downloadCacheSize(inst: Installer): number
+```
+
+Bytes the download cache holds.
+
+### `clearDownloadCache`
+
+```ts
+export function clearDownloadCache(inst: Installer): void
+```
+
+Empty the download cache, keeping the folder.
+
+## src/installer-files.ts
+
+The language folder's own vocabulary, shared by the installer and the modules behind it: the
+name a file switched off by the master switch carries, the note that says which files are ours,
+what an unfinished transaction leaves behind, and how much a repack may hold in memory.
 
 ### `MERGE_SIZE_CAP`
 
-```js
-const MERGE_SIZE_CAP = 1200 * 1024 * 1024
+```ts
+export const MERGE_SIZE_CAP = 1200 * 1024 * 1024
 ```
 
 Merging a multi-volume import into one file holds the whole mod in memory once. Well
 above any real skin pack (a Skinchanger export is ~70 MB), but a multi-GB set is left
 in its original volumes rather than risking the allocation.
 
-## src/item-builder.js
+### `MASTER_OFF`
+
+```ts
+export const MASTER_OFF = '.moff'
+```
+
+Master "mods off" switch: every active mod pak is renamed <file>.moff so the game
+ignores it (it only mounts pakNN_dir.vpk). Distinct from the per-mod ".off" state so
+the two never clobber each other. Official localization (pak01_*) / gameinfo.gi are
+never touched — turning mods off must not strip the game's own language files.
+
+### `OWNERSHIP_FILE`
+
+```ts
+export const OWNERSHIP_FILE = 'dota2modmanager.json'
+```
+
+Which files in the language folder are ours, written where another program can read it.
+
+Minify marks its work by packing metadata into the VPKs it builds, and checks for that
+before deleting one. The same courtesy in the other direction cannot be done the same way:
+mods from the catalog are copied byte for byte and identified by a hash of their contents,
+and the project is building integrity guarantees on the file being exactly what the catalog
+published - sha256 on download, a signed catalog after that. Repacking every install to
+insert a marker is cheap enough (35ms against 15ms for a plain copy of a 46 MB mod, and the
+hash survives if marker names are left out of it), but it would end byte-identity, which is
+worth more than the convenience.
+
+So the marker is one file beside the mods instead of a marker inside each one. Anything
+reading it learns which files in the folder belong to this app, which is the question a
+second mod manager actually needs answered before it deletes anything.
+
+### `isOfficialLangFile`
+
+```ts
+export function isOfficialLangFile(baseLower: string): boolean
+```
+
+The game's own files in the language folder, and our notice pak: never a mod to touch.
+
+### `STAGED_RE`
+
+```ts
+export const STAGED_RE = /\.[a-z0-9]+\.mmtx$/i
+```
+
+What a FileTx parks next to a file it is about to replace or delete (see src/file-tx.ts).
+Nothing should outlive its transaction; one that does means the app died mid-write, and
+sweepStaged() cleans up after that on the next start.
+
+## src/installer-folder.ts
+
+The language folder as a whole: the "mods off" switch, the note of which files are ours, the
+leftovers of a transaction the app died in, and the files nobody installed through the app.
+Behind src/installer.ts.
+
+### `ForeignItem`
+
+```ts
+export type ForeignItem =
+```
+
+A file in the game folder nobody installed through the app, as the library lists it.
+
+### `isTogglableModFile`
+
+```ts
+export function isTogglableModFile(inst: Installer, baseLower: string): boolean
+```
+
+What the master switch is allowed to rename.
+
+Not the game's own files, and not Minify's: the switch sweeps the folder rather than
+asking the library, so in the arrangement we recommend - both apps sharing one language
+folder - "mods off" would rename pak65 to pak67 out from under it and Minify would find
+its own work missing. Ours are the only mods this switch has any business touching.
+
+### `masterIsOff`
+
+```ts
+export function masterIsOff(inst: Installer): boolean
+```
+
+true when the master switch is currently "off" (any .moff file present in lang root)
+
+### `setMasterEnabled`
+
+```ts
+export function setMasterEnabled(inst: Installer, enabled: boolean): { changed: number }
+```
+
+Enable/disable every mod pak at once without losing per-mod state:
+ off -> rename each active mod file <f> to <f>.moff (skips .off and official files)
+ on  -> rename each <f>.moff back to <f>
+Also covers the language\maps folder (terrain mods live there as dota.vpk).
+
+### `writeOwnership`
+
+```ts
+export function writeOwnership(inst: Installer, relPaths: string[] | null | undefined): void
+```
+
+Say on disk which files in the language folder are this app's.
+
+Rewritten from the library rather than appended to, so a mod removed outside the app
+drops out on the next write instead of lingering as a claim on a file we do not have.
+Never fails an operation: an unwritable game folder is a problem for installing, not for
+a note about installing.
+
+```
+@param {string[]} relPaths every lang-root relPath the library holds
+```
+
+### `ownsFile`
+
+```ts
+export function ownsFile(inst: Installer, relPath: string): boolean
+```
+
+Whether this app installed the file at `relPath`, according to what is on disk.
+
+### `sweepStaged`
+
+```ts
+export function sweepStaged(inst: Installer, maxAgeMs = 7 * 24 * 60 * 60 * 1000): { restored: number; dropped: number }
+```
+
+Clean up after a transaction that never finished, which can only mean the app was killed
+mid-write. Two cases, and they need opposite answers:
+  the original is missing → the parked copy IS the file, put it back (an interrupted
+    remove or rename, e.g. switching a mod off);
+  the original is there   → the write went through and the parked copy is the old
+    version commit would have deleted. Left alone for a week in case somebody wants it,
+    then dropped so the folder does not collect them.
+
+```
+@returns {{ restored: number, dropped: number }}
+```
+
+### `langPrimaryPresent`
+
+```ts
+export function langPrimaryPresent(inst: Installer, rec: LibRecord): boolean
+```
+
+Does a record's primary VPK still exist on disk (active/.off/.moff)? Used to sync the
+library with the folder — a mod deleted from the folder should drop out of the library.
+
+### `vpkItem`
+
+```ts
+export function vpkItem(inst: Installer, abs: string, relPath: string, displayName: string, primary: boolean): ForeignItem
+```
+
+Build a foreign VPK item: read enough of the file to name it, illustrate it and
+recognise it. A file dropped into the folder by hand is the same kind of thing as an
+import, and the library shows it that way — a bare "pak90_dir.vpk" told the user
+nothing about what was in it, which is exactly why it looked broken.
+
+### `siblingParts`
+
+```ts
+export function siblingParts(inst: Installer, dirRelPath: string): string[]
+```
+
+"<base>_NNN.vpk" volumes sitting next to a "<base>_dir.vpk" in the lang folder
+
+### `externalFiles`
+
+```ts
+export function externalFiles(inst: Installer, knownFiles: LibFile[], { scanExtras = true }: { scanExtras?: boolean } = {}): ForeignItem[]
+```
+
+Foreign content — files not installed through the app — across every place a mod
+can live: the language folder root (skins, imported), language\maps (terrains), and
+resource\cursor (a cursor set, treated as one item). Each carries a fingerprint so
+the caller can recognise it as a specific catalog mod. `primary` items (lang root)
+are always listed; maps/cursor items are only worth showing when they match, so the
+caller passes scanExtras=false to skip that scan when it has nothing to match against.
+
+## src/installer-packs.ts
+
+Combined packs: several mods in one pak slot, each kept as its own file in userData and rebuilt
+into the slot from the ones that are on. Behind src/installer.ts.
+
+### `packFolder`
+
+```ts
+export function packFolder(inst: Installer, packId: string): string { return path.join(inst.packsDir, packId); }
+```
+
+Where a pack keeps its members' own files.
+
+### `packMemberFile`
+
+```ts
+export function packMemberFile(inst: Installer, packId: string, memberId: string): string { return path.join(inst.packFolder(packId), `${memberId}.vpk`); }
+```
+
+One member's own file.
+
+### `addPackMemberFromRecord`
+
+```ts
+export function addPackMemberFromRecord(inst: Installer, packId: string, rec: LibRecord, memberId: string): PackMember
+```
+
+Flatten a library record into one self-contained VPK and store it as a pack member.
+Returns the member descriptor (identity + a content summary for the UI) to record in
+the pack manifest. The record's own deployed files are left for the caller to remove.
+
+### `removePackDeployed`
+
+```ts
+export function removePackDeployed(inst: Installer, pack: HasFiles): void
+```
+
+Remove a pack's currently deployed files (index + every data volume, in any state:
+active, .off or .moff) from the language folder, so it can be rebuilt cleanly.
+
+### `packBase`
+
+```ts
+export function packBase(inst: Installer, pack: HasFiles): string | null
+```
+
+The pak slot base ("pak10") a pack deploys to — reused across rebuilds so the slot
+stays stable. Taken from the pack's recorded files, else null (allocate on deploy).
+
+### `deployPack`
+
+```ts
+export function deployPack(inst: Installer, pack: Pick<LibRecord, 'id' | 'files' | 'members'>): { files: LibFile[]; conflicts: { key: string; path: string }[] }
+```
+
+(Re)build a pack's single deployed VPK from its enabled members. Removes the old
+deployment first, then combines enabled member sources into the pack's slot. Returns
+{ files, conflicts } — caller stores files on the record and re-applies enabled/master
+state. With no enabled members nothing is written (files: []).
+
+### `removePackFully`
+
+```ts
+export function removePackFully(inst: Installer, pack: Pick<LibRecord, 'id' | 'files'>): void
+```
+
+Fully delete a pack: its deployed VPK and every stored member source.
+
+### `deployMemberAsMod`
+
+```ts
+export function deployMemberAsMod(inst: Installer, pack: Pick<LibRecord, 'id'>, member: Pick<PackMember, 'id'>): { files: LibFile[] }
+```
+
+Turn a stored pack member back into a standalone deployed mod in a fresh pak slot.
+Returns { files } for a new library record; caller deletes the member from the pack.
+
+## src/installer-repack.ts
+
+What is already installed, read and rewritten: what a mod is, its files merged into one or
+written out as a folder, the whole-game tables stripped out of it, a pack of heroes split.
+Taking a mod IN - from a file, a zip, a folder or dropped bytes - is src/import.ts.
+Behind src/installer.ts.
+
+### `RecordAnalysis`
+
+```ts
+export type RecordAnalysis =
+```
+
+What a record's own file is: a summary, the heroes it is about, the game's names for it, its fingerprint.
+
+### `describePaths`
+
+```ts
+export function describePaths(inst: Installer, paths: string[], analysis: Analysis): { info: string; heroNames: string[]; items?: string[] }
+```
+
+What a path list is, told as precisely as this machine allows: the game's own item names
+when it recognises them, the guess from the paths otherwise. The two are merged rather
+than one replacing the other - a mod can dress a hero in named items AND replace another
+hero's bare body, and only the guess sees the second.
+
+### `mergeToSingleVpk`
+
+```ts
+export function mergeToSingleVpk(inst: Installer, rec: HasFiles, deltas?: { block: string }[] | null): Buffer
+```
+
+A mod's lang files (including multi-part _dir + _NNN sets) merged into one
+self-contained VPK buffer - the single-file format the catalog uses, e.g. for sharing
+an imported Dota2Changer pack with a catalog author.
+
+```
+@param {object} rec
+@param {Array<{id, name, block}>} [deltas]  the record's lifted item blocks, for a file
+headed somewhere other than this install (an export, a shared preset). Installing
+strips the table a mod ships and keeps its blocks on the record instead, so without
+these the copy leaves without its effects - see harvestSchema / schema.deltaTable.
+```
+
+### `unpackToFolder`
+
+```ts
+export function unpackToFolder(inst: Installer, rec: HasFiles, dest: string): { files: number; bytes: number }
+```
+
+The inverse of packing a folder: write a mod's own files out as a tree, so the author
+who wants to change one texture can open it, edit it, and drop the folder back in.
+Multi-volume sets are followed, exactly as exporting to one file does.
+
+```
+@returns {{ files: number, bytes: number }}
+```
+
+### `displayNameForFile`
+
+```ts
+export function displayNameForFile(inst: Installer, relPath: string): string | null
+```
+
+A content-derived display name for a lang VPK (hero / set / kind), or null if the
+content isn't recognisable — used to name imported files instead of a bare "pakNN".
+
+### `harvestSchema`
+
+```ts
+export function harvestSchema(inst: Installer, records: LibFile[], vanillaText: string | null): { deltas: SchemaDelta[]; stripped: string[] }
+```
+
+Take the whole-game tables out of a freshly installed mod and keep what they meant.
+
+Skinchanger-style packs ship a full copy of scripts/items/items_game.txt and of the
+localization files - tens of MB of stale game data per mod. The schema copy is dead
+weight in a language folder (the engine reads that file through the MOD path only),
+and the localization copy is worse than dead: it outranks the game's own and rolls
+text back to whenever the pack was built. So: lift the item blocks the mod actually
+changed, then repack the VPK without any of those tables.
+
+```
+@param {Array<{root: string, relPath: string}>} records  install records, edited in place
+@param {string} vanillaText  the game's current items_game.txt
+@returns {{ deltas: Array<{id, name, block}>, stripped: string[] }}
+```
+
+### `installedSize`
+
+```ts
+export function installedSize(inst: Installer, rec: HasFiles): number
+```
+
+Bytes a record occupies in the language folder (its pak plus any data volumes).
+
+### `analyzeRecord`
+
+```ts
+export function analyzeRecord(inst: Installer, rec: HasFiles): RecordAnalysis | null
+```
+
+What a stored library record (or a foreign vpk) actually changes — hero(es) and
+slots — read from its _dir.vpk on disk. Returns { info, heroes } or null.
+
+### `splitVpkFile`
+
+```ts
+export function splitVpkFile(inst: Installer, sourceRelPath: string): { hero: string; name: string; paths: string[]; files: LibFile[] }[]
+```
+
+Split a merged multi-hero VPK sitting in the lang folder into one managed VPK per
+hero, each written to a fresh pak slot. Returns [{ hero, name, files }]; caller
+registers them and deletes the source. Empty if fewer than 2 heroes are found.
+
+### `mergeMultiPartRecords`
+
+```ts
+export function mergeMultiPartRecords(inst: Installer, library: Pick<Library, 'list' | 'update'>): void
+```
+
+Imports made before multi-volume sets were folded on the way in still sit in the
+folder as pakNN_dir.vpk + pakNN_000.vpk. Fold them now so every managed mod is one
+file. Combined packs are left alone — their volumes are how deployPack writes them.
+
+## src/installer-slots.ts
+
+The load order: which pak slot a mod sits in, moving and swapping slots, and which mods are
+covered by which. Behind src/installer.ts.
+
+The game mounts pakNN_dir.vpk in numeric order and the FIRST copy of a file wins, so a
+mod's pak number is its priority: a smaller number sits on top. That is what makes
+"put these arms over that hero set" a real thing rather than a conflict - both mods
+load, and the one on top supplies the files they share.
+
+### `CoverageMod`
+
+```ts
+export type CoverageMod = { key: string; name: string; files: LibFile[] }
+```
+
+A switched-on mod as coverage reads it: keyed, because two copies of one mod share a name.
+
+### `usedPakNames`
+
+```ts
+export function usedPakNames(inst: Installer): Set<string>
+```
+
+Every slot name the folder holds, whatever state its file is in.
+
+### `allocatePak`
+
+```ts
+export function allocatePak(inst: Installer, used: Set<string>, priority: boolean): string
+```
+
+The next free slot for a mod, in the part of the order it belongs in; taken from `used`.
+
+### `planPakNames`
+
+```ts
+export function planPakNames(inst: Installer, relPaths: string[], used: Set<string>, priority: boolean): Map<string, string>
+```
+
+Map the .vpk files of an archive onto slots of ours: one slot per volume set - a
+"<base>_dir.vpk" index plus its "<base>_NNN.vpk" data archives - so a set stays whole
+and no foreign name reaches the game folder. It has to be a plan made up front rather
+than a rename per file, because the volumes only work under the index's own name.
+
+This is what the "!pakNN" prefix in Dota2PornFx cart archives runs into: it is a merge
+hint for VPKMerge, and a file called "!pak51_000.vpk" is one the game never mounts.
+
+```
+@param {string[]} relPaths  .vpk paths inside the archive
+@returns {Map<string, string>} archive path -> file name in the language folder
+```
+
+### `slotBase`
+
+```ts
+export function slotBase(inst: Installer, rec: HasFiles): string | null
+```
+
+The slot a record occupies ("pak07"), or null for mods that live outside a numbered
+pak (terrain maps, fonts, cursors).
+
+### `slotNumber`
+
+```ts
+export function slotNumber(inst: Installer, rec: HasFiles): number | null
+```
+
+A record's slot as a number, or null for a mod that lives outside a numbered pak.
+
+### `coverage`
+
+```ts
+export function coverage(inst: Installer, mods: CoverageMod[]): Map<string, { name: string; files: number }[]>
+```
+
+Which mods are quietly covering which, file by file.
+
+Two mods can carry the same file, and then only one of them is the one the game loads -
+the lower pak number, as above. Nothing said so, so a mod that had been overruled looked
+installed and switched on while doing nothing, and the usual conclusion was that the app
+had broken it. Measured on 84 installed mods: 801 paths are carried by more than one mod,
+but only 84 of those hold *different* bytes. The rest is filler both authors happened to
+ship, which is why the CRC decides and a shared path on its own does not.
+
+```
+@param {Array<{key: string, name: string, files: Array<{root: string, relPath: string}>}>} mods
+enabled mods only - a switched-off mod is renamed on disk and the game never sees it.
+Keyed rather than named, because two copies of the same mod in two slots share a name
+and are exactly the case worth reporting.
+@returns {Map<string, Array<{name: string, files: number}>>} mod key -> who covers it
+```
+
+### `freeSlotBelow`
+
+```ts
+export function freeSlotBelow(inst: Installer, n: number, used: Set<string>): string | null
+```
+
+The highest free slot strictly below `n`, as "pakNN".
+
+### `moveToSlot`
+
+```ts
+export function moveToSlot(inst: Installer, rec: HasFiles, newBase: string, oldBase: string | null = inst.slotBase(rec), tx: Writer = null): LibFile[]
+```
+
+Rename every pak file of a record to another slot, keeping .off/.moff state and the
+volume numbering of a multi-volume pack.
+
+All of a mod's files move, or none do. A pak and its volumes only load under one name, and a
+running game can refuse the rename of any one of them: until 2026-10-01 these renames were made
+one by one outside a transaction, and a refusal on the second file left a mod the game could not
+load and the library could not find. They go through a FileTx now, the caller's when it hands
+one in so a move of several mods undoes as one, otherwise one of their own.
+
+```
+@returns {Array<object>} the record's new files array (caller stores it)
+```
+
+### `swapSlots`
+
+```ts
+export function swapSlots(inst: Installer, a: LibRecord, b: LibRecord): { id: string; files: LibFile[] }[]
+```
+
+Trade two records' slots, which is how a mod moves up or down the load order.
+pak00 is the parking spot for the swap - the game never mounts it, so a crash
+mid-swap leaves a file that is merely inactive, not one fighting for a name in use.
+
+```
+@returns {Array<{ id: string, files: Array<object> }>} records to save
+```
+
+### `usedModSlots`
+
+```ts
+export function usedModSlots(inst: Installer): number
+```
+
+Number of occupied pak slots (mod paks only, excluding the game's own pak01_*), used
+to warn/suggest combining when the library approaches the 99-slot ceiling.
+
+### `migrateLegacyPriorityPaks`
+
+```ts
+export function migrateLegacyPriorityPaks(inst: Installer, library: Pick<Library, 'list' | 'save'>): void
+```
+
+Older app versions wrote priority mods as "!pakNN_dir.vpk" — a name the game
+never mounts, so those mods silently did nothing. Rename them to real low
+pak slots and fix the matching manifest records.
+
+## src/installer.ts
+
+The installer: everything that writes a mod into the game folder or takes it out again. The
+class is the one door the rest of the app uses; the work behind it is in files of its own:
+  src/installer-downloads.ts  getting a catalog archive onto this machine
+  src/installer-slots.ts      the load order: pak slots, moving and swapping, who covers whom
+  src/installer-packs.ts      several mods in one pak slot
+  src/installer-repack.ts     what is installed, read, merged, unpacked, stripped and split
+  src/installer-folder.ts     the folder as a whole: master switch, ownership note, foreign files
+  src/installer-files.ts      the names and limits those share
+Fonts and cursors, the files written over the game's own, are src/overlays.ts.
+
+Hands on from [`src/installer-files.ts`](#srcinstaller-filests): `MERGE_SIZE_CAP`.
+
+Hands on from [`src/slot-zones.ts`](#srcslot-zonests): `PRIORITY_CATEGORIES`.
+
+### `InstallProgress`
+
+```ts
+export type InstallProgress =
+```
+
+How an install is going, for the bar at the bottom of the window.
+
+### `Installer`
+
+```ts
+export class Installer
+```
+
+_No description in the source._
+
+## src/item-builder.ts
 
 The item builder: a hero's stock item built from one of its wearables, with an effect on top.
 
@@ -1221,8 +2033,8 @@ For each hero and slot the free cosmetics offer that hero's wearables. Picking o
 block in items_game under the stock item's id, name and prefab=default_item, drops the styles
 and unlocks a free base item cannot use, adds the chosen particle effect to its visuals, and
 lists the model and particles to copy out of the game's pak01 under the stock paths, so the
-game draws the wearable where the stock item was. src/schema-service.js applies it along with
-the rest of the free cosmetics; src/schema.js reads and merges the table.
+game draws the wearable where the stock item was. src/schema-service.ts applies it along with
+the rest of the free cosmetics; src/schema.ts reads and merges the table.
 
 Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
 (https://github.com/TheFleece).
@@ -1232,33 +2044,50 @@ SPDX-License-Identifier: GPL-3.0-or-later
 The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
 the credits of the program it goes into.
 
-### `effectKey`
+### `ItemSlot`
 
-```js
-function effectKey(effectIds)
+```ts
+export interface ItemSlot
 ```
 
-The effects of one pick as one string: ids in the order ITEM_EFFECTS lists them, each once,
-comma separated, '' for none. A pick carries several (the window says "you can pick several"),
-and this is how a record stores them and how two picks are told apart, so "fire,snow" and
-"snow,fire" are the same pick.
+A slot of a hero the builder can dress, and the paid items that fit it.
 
+### `ItemSet`
+
+```ts
+export interface ItemSet { id: string; name: string; heroIds: string[]; fit: number; heroLabel: string; pieces: SetPiece[] }
 ```
-@param {string|string[]|null|undefined} effectIds
+
+A set, as the builder puts it on; see itemSets.
+
+### `AssetCopy`
+
+```ts
+export type AssetCopy = { from: string; to: string }
 ```
+
+A file in the game's archive staged under another path in the built VPK.
 
 ### `itemEffects`
 
-```js
-function itemEffects()
+```ts
+export function itemEffects(): { id: string; name: string }[]
 ```
 
 The effect variants the synthetic cosmetics/items picker can apply.
 
+### `itemSlots`
+
+```ts
+export function itemSlots(text: string): ItemSlot[]
+```
+
+Hero item slots built from real default_item entries, with one donor list per hero part.
+
 ### `itemSets`
 
-```js
-function itemSets(text, slots = itemSlots(text))
+```ts
+export function itemSets(text: string, slots: Pick<ItemSlot, 'slot' | 'slotLabel' | 'options'>[] = itemSlots(text)): ItemSet[]
 ```
 
 A hero's sets as the builder puts them on: every wearable of the set that has a slot in the
@@ -1277,39 +2106,41 @@ want a taken slot than fit, and the first of each would dress the hero in a mix 
 are each listed on their own anyway. Valve's "DO NOT USE" is left out as well.
 
 ```
-@param {string} text  items_game
-@param {Array<{ slot: string, slotLabel: string, options: Array<{ id: string }> }>} [slots]
-itemSlots(text), when the caller has it already
+@param text  items_game
+@param slots  itemSlots(text), when the caller has it already
 ```
 
 ### `itemOptions`
 
-```js
-function itemOptions(text)
+```ts
+export function itemOptions(text: string): { id: string; name: string }[]
 ```
 
 Wearable items with visuals and a matching stock default_item, offered under cosmetics/items.
 
-### `itemSlots`
+### `effectKey`
 
-```js
-function itemSlots(text)
+```ts
+export function effectKey(effectIds: string | string[] | null | undefined): string
 ```
 
-Hero item slots built from real default_item entries, with one donor list per hero part.
+The effects of one pick as one string: ids in the order ITEM_EFFECTS lists them, each once,
+comma separated, '' for none. A pick carries several (the window says "you can pick several"),
+and this is how a record stores them and how two picks are told apart, so "fire,snow" and
+"snow,fire" are the same pick.
 
 ### `defaultItemForWearable`
 
-```js
-function defaultItemForWearable(text, sourceId)
+```ts
+export function defaultItemForWearable(text: string, sourceId: string | number): SchemaItem | null
 ```
 
 The stock default_item that matches a wearable by slot and by the hero(es) that can equip it.
 
 ### `itemEffectPatch`
 
-```js
-function itemEffectPatch(baseText, itemId, effectIds)
+```ts
+export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined): { id: string; block: string; assetCopies: AssetCopy[] }
 ```
 
 Turn one paid wearable into the hero's stock item for that slot.
@@ -1320,36 +2151,40 @@ dropped, and the chosen effect is inserted into visuals. The donor model/particl
 as the paid item in items_game, while assetCopies still describe the stock-path overrides the
 built VPK should carry.
 
-```
-@returns {{ id: string, block: string, assetCopies: Array<{from: string, to: string}> }}
-```
-
 ### `gameAssetEntries`
 
-```js
-function gameAssetEntries(gamePath, assetCopies)
+```ts
+export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | null | undefined): VpkEntry[]
 ```
 
 Read compiled asset bytes out of pak01 and stage them under the renamed path in our VPK.
 
-## src/library.js
+## src/library.ts
 
 Library: manifest of installed mods + presets
 
+### `NewRecord`
+
+```ts
+export interface NewRecord
+```
+
+What adding a record takes; the id, the switch and the time are the library's own.
+
 ### `Library`
 
-```js
-class Library
+```ts
+export class Library
 ```
 
 _No description in the source._
 
-## src/minify.js
+## src/minify.ts
 
 Living next to Minify.
 
 The two apps reach the game by different routes, and the routes are not equivalent. The
-rules underneath both are in src/gamelang.js, which is the one place they are written down.
+rules underneath both are in src/gamelang.ts, which is the one place they are written down.
 
 This app: set the voice language in Dota's own settings to one of the three that have a
 folder, and fill that folder. The folders already exist on every install, English voices
@@ -1371,157 +2206,42 @@ answer to it, not an oversight to point out.
 None of which is a fight to win. It is a thing to be able to explain in a sentence, so
 whoever is looking at a game with no mods in it knows why.
 
-### `readMinify`
+### `MinifyConfig`
 
-```js
-function readMinify({ folders = [], audio = null, gameLanguages = [], ourFolder, ourMods = 0, config = readConfig(), countMods = null, launchOptions = null, })
+```ts
+export interface MinifyConfig { outputPath: string | null; locale: string | null; folder: string | null }
 ```
 
-```
-@param {object} p
-@param {Array<{suffix: string, official: boolean, valveContent: boolean, modFiles: number}>} p.folders
-every dota_* folder on disk, from gamelang.langFolders()
-@param {string|null} p.audio  the voice language the game is set to, which names the folder
-it mounts
-@param {string[]} p.gameLanguages  the languages Dota will accept for that setting
-@param {string} p.ourFolder   the suffix this app installs into, from gamelang.folderFor()
-@param {number} [p.ourMods]   how many mods this app has installed
-@param {string|null} [p.launchOptions]  Steam's launch options for Dota, unescaped
-@param {{ folder?: string|null, outputPath: string|null }|null} [p.config]  what Minify's own
-config says, read from disk unless a test hands one in
-@param {((suffix: string) => number)|null} [p.countMods]  how many of the files in a folder
-are Minify's own, when the caller can look at them
-@returns {{
-present: boolean, folder: string|null, mods: number, mounts: boolean,
-mounted: string|null, ourFolder: string, sharing: boolean,
-live: 'ours'|'minify'|'both'|'neither'|'unknown', declared: boolean, prelaunch: boolean,
-reservedLabel: string,
-}}
+What Minify's own config says about where it writes.
+
+### `MinifyState`
+
+```ts
+export interface MinifyState
 ```
 
-### `readConfig`
-
-```js
-function readConfig(file = configPath())
-```
-
-What Minify says about itself, or null. Its own config beats anything we could infer: it
-names the locale it sets, which is the whole question between the two apps.
-
-```
-@returns {{ outputPath: string|null, locale: string|null, folder: string|null }|null}
-```
-
-### `configPath`
-
-```js
-function configPath()
-```
-
-Where Minify keeps the settings it publishes about itself.
-
-### `folderOfPath`
-
-```js
-function folderOfPath(outputPath)
-```
-
-The suffix of the folder a path ends in: ...\\game\\dota_dutch -> "dutch".
-
-This is the field that matters, and it is not output_locale. Asked for English, Minify
-records output_locale "english" - the language the player chose - while writing into
-dota_dutch, because Dutch is the folder it borrows to make English work. Reading the locale
-had this app announce a folder called dota_english, which exists nowhere.
-
-### `isMinifyFile`
-
-```js
-function isMinifyFile(baseLower)
-```
-
-Is this file in the language folder one of Minify's paks?
-
-Reserving the slots keeps us from writing over its work, which is only half the bargain.
-The other half is not touching what it wrote: the master switch sweeps the folder and
-renames every mod file in it, and the foreign-file scan offers the user everything in there
-that is not ours to adopt, disable or delete. Sharing one folder is the arrangement we tell
-people to make, so in that arrangement both of those would reach into another program.
-
-Matches the dir file and its data volumes: pak66_dir.vpk, pak66_000.vpk, and the same with
-an .off or .moff already on the end.
-
-```
-@param {string} baseLower a file name, lowercased
-```
-
-### `isMinifyPak`
-
-```js
-function isMinifyPak(file)
-```
-
-Was this VPK built by Minify? Reads the archive index only, never the content.
-
-```
-@param {string} file  full path to a *_dir.vpk
-```
-
-### `MINIFY_MARKERS`
-
-```js
-const MINIFY_MARKERS = ['minify_mods.json', 'minify_vpk_mods.txt', 'minify_version.txt']
-```
-
-How Minify marks its own work, and how it recognises it again.
-
-It packs metadata files into every VPK it builds and checks for them before deleting one
-(Minify/patch/vpk_utils.py, is_minify_pak). Reading the same marker is better than reasoning
-from slot numbers: a slot says where a file sits, the marker says who made it, and it is the
-only thing that can identify its maps/dota.vpk - a path with no number to reserve.
-
-Reading their convention rather than proposing one costs nothing and needs no agreement.
+Minify as this app sees it; see readMinify.
 
 ### `MINIFY_FOLDER`
 
-```js
-const MINIFY_FOLDER = 'minify'
+```ts
+export const MINIFY_FOLDER = 'minify'
 ```
 
-Its own locale, which is not a language Dota knows, and the real one it moved to.
+Its own locale, which is not a language Dota knows.
 
 ### `MINIFY_BORROWED`
 
-```js
-const MINIFY_BORROWED = 'dutch'
+```ts
+export const MINIFY_BORROWED = 'dutch'
 ```
 
-_No description in the source._
-
-### `RESERVED_PAKS`
-
-```js
-const RESERVED_PAKS = [65, 66, 67]
-```
-
-_No description in the source._
-
-### `RESERVED_LABEL`
-
-```js
-const RESERVED_LABEL = RESERVED_PAKS.length > 1
-```
-
-The reserved range as the interface says it out loud.
-
-The Library told people "pak65-67 and pak99 are left to it" for a release after pak99 stopped
-being reserved, because the sentence carried its own copy of the numbers. Built from the list
-instead, so the promise on screen and the slots the allocator actually skips cannot disagree
-again.
+The real language it moved to, whose folder Dota does mount.
 
 ### `MINIFY_PAKS`
 
-```js
-const MINIFY_PAKS = [65, 66, 67, 99]
+```ts
+export const MINIFY_PAKS: readonly number[] = [65, 66, 67, 99]
 ```
 
 The pak slots Minify writes, and the smaller set we refuse to hand out.
@@ -1543,10 +2263,109 @@ still on an older release has a pak99 on disk already, which the allocator reads
 folder like any other occupied slot - and MINIFY_PAKS still knows whose it is. The author
 asked for exactly this: detect the file rather than blindly reserve the number.
 
+### `RESERVED_PAKS`
+
+```ts
+export const RESERVED_PAKS: readonly number[] = [65, 66, 67]
+```
+
+_No description in the source._
+
+### `RESERVED_LABEL`
+
+```ts
+export const RESERVED_LABEL = RESERVED_PAKS.length > 1
+```
+
+The reserved range as the interface says it out loud.
+
+The Library told people "pak65-67 and pak99 are left to it" for a release after pak99 stopped
+being reserved, because the sentence carried its own copy of the numbers. Built from the list
+instead, so the promise on screen and the slots the allocator actually skips cannot disagree
+again.
+
+### `isMinifyFile`
+
+```ts
+export function isMinifyFile(baseLower: string): boolean
+```
+
+Is this file in the language folder one of Minify's paks?
+
+Reserving the slots keeps us from writing over its work, which is only half the bargain.
+The other half is not touching what it wrote: the master switch sweeps the folder and
+renames every mod file in it, and the foreign-file scan offers the user everything in there
+that is not ours to adopt, disable or delete. Sharing one folder is the arrangement we tell
+people to make, so in that arrangement both of those would reach into another program.
+
+Matches the dir file and its data volumes: pak66_dir.vpk, pak66_000.vpk, and the same with
+an .off or .moff already on the end.
+
+```
+@param baseLower a file name, lowercased
+```
+
+### `MINIFY_MARKERS`
+
+```ts
+export const MINIFY_MARKERS: readonly string[] = ['minify_mods.json', 'minify_vpk_mods.txt', 'minify_version.txt']
+```
+
+How Minify marks its own work, and how it recognises it again.
+
+It packs metadata files into every VPK it builds and checks for them before deleting one
+(Minify/patch/vpk_utils.py, is_minify_pak). Reading the same marker is better than reasoning
+from slot numbers: a slot says where a file sits, the marker says who made it, and it is the
+only thing that can identify its maps/dota.vpk - a path with no number to reserve.
+
+Reading their convention rather than proposing one costs nothing and needs no agreement.
+
+### `isMinifyPak`
+
+```ts
+export function isMinifyPak(file: string): boolean
+```
+
+Was this VPK built by Minify? Reads the archive index only, never the content.
+
+```
+@param file  full path to a *_dir.vpk
+```
+
+### `configPath`
+
+```ts
+export function configPath(): string
+```
+
+Where Minify keeps the settings it publishes about itself.
+
+### `readConfig`
+
+```ts
+export function readConfig(file = configPath()): MinifyConfig | null
+```
+
+What Minify says about itself, or null. Its own config beats anything we could infer: it
+names the locale it sets, which is the whole question between the two apps.
+
+### `folderOfPath`
+
+```ts
+export function folderOfPath(outputPath: string | null | undefined): string | null
+```
+
+The suffix of the folder a path ends in: ...\\game\\dota_dutch -> "dutch".
+
+This is the field that matters, and it is not output_locale. Asked for English, Minify
+records output_locale "english" - the language the player chose - while writing into
+dota_dutch, because Dutch is the folder it borrows to make English work. Reading the locale
+had this app announce a folder called dota_english, which exists nowhere.
+
 ### `prelaunchHook`
 
-```js
-function prelaunchHook(options)
+```ts
+export function prelaunchHook(options: string | null | undefined): boolean
 ```
 
 Has Minify put itself in front of the game's own launch?
@@ -1568,10 +2387,29 @@ Matched on what the wrapper is rather than on one release's exact spelling: the 
 game. Nobody's own launch options are all three by accident.
 
 ```
-@param {string|null} options  Steam's launch options for Dota, unescaped
+@param options  Steam's launch options for Dota, unescaped
 ```
 
-## src/mod-id.js
+### `readMinify`
+
+```ts
+export function readMinify({ folders = [], audio = null, gameLanguages = [], ourFolder, ourMods = 0, config = readConfig(), countMods = null, launchOptions = null, }: { folders?: { suffix: string; modFiles: number }[]; audio?: string | null; gameLanguages?: readonly string[]; ourFolder: string; ourMods?: number; config?: { folder?: string | null; outputPath?: string | null; locale?: string | null } | null; countMods?: ((suffix: string) => number) | null; launchOptions?: string | null; }): MinifyState
+```
+
+Where Minify is, whether its folder is the one the game mounts, and whose mods are live.
+
+```
+@param p.folders  every dota_* folder on disk, from gamelang.langFolders()
+@param p.audio  the voice language the game is set to, which names the folder it mounts
+@param p.gameLanguages  the languages Dota will accept for that setting
+@param p.ourFolder   the suffix this app installs into, from gamelang.folderFor()
+@param p.ourMods     how many mods this app has installed
+@param p.launchOptions  Steam's launch options for Dota, unescaped
+@param p.config  what Minify's own config says, read from disk unless a test hands one in
+@param p.countMods  how many of the files in a folder are Minify's own, when the caller can look at them
+```
+
+## src/mod-id.ts
 
 What a mod actually replaces, asked of the game instead of guessed from folder names.
 
@@ -1591,19 +2429,23 @@ This needs no toolchain - items_game.txt is plain text inside the game's own pak
 reader has always been able to get it. Without a game path there is simply no answer and
 the caller keeps the guess.
 
+### `ModIdentityGuess`
+
+```ts
+export interface ModIdentityGuess { items: string[]; slots: string[]; heroNames: string[] }
+```
+
+Which of the game's items a mod replaces; see identify.
+
 ### `createModIdentity`
 
-```js
-function createModIdentity({ getGamePath, log = () => {} })
+```ts
+export function createModIdentity({ getGamePath, log = () => {} }: { getGamePath: () => string | null; log?: (msg: string) => void })
 ```
 
-```
-@param {object} deps
-@param {() => string|null} deps.getGamePath
-@param {(msg: string) => void} [deps.log]
-```
+Names a mod by the game's own items it replaces, read out of the installed item table.
 
-## src/mod-preview.js
+## src/mod-preview.ts
 
 A picture for a mod that came with none, taken out of the mod itself.
 
@@ -1627,42 +2469,66 @@ Two things this file exists to get right:
     before anything is cached.
 
 The picture inside a mod is a compiled Source 2 texture, so this needs the toolchain
-(src/toolchain.js). Without it nothing here answers and the old fallbacks stand.
+(src/toolchain.ts). Without it nothing here answers and the old fallbacks stand.
 
-### `createModPreviews`
+### `Bitmap`
 
-```js
-function createModPreviews({ userDataDir, toolchain, langFileOf, images = null, log = () => {} })
+```ts
+export interface Bitmap { width: number; height: number; data: Buffer | Uint8Array; img?: unknown }
 ```
 
+A decoded picture: 4 bytes a pixel, alpha last, and what the decoder needs to resize it.
+
+### `Images`
+
+```ts
+export interface Images { read(file: string): Bitmap | null; toSmallPng(bmp: Bitmap): Buffer }
 ```
-@param {object} deps
-@param {string} deps.userDataDir
-@param {{ pathOf: (name: string) => string|null }} deps.toolchain
-@param {(relPath: string) => string} deps.langFileOf where a mod's *_dir.vpk actually is
-@param {object} [deps.images] test seam for decode/resize
-@param {(msg: string) => void} [deps.log]
+
+Decoding and resizing, injected so this module runs under plain node in tests.
+
+### `VID`
+
+```ts
+export const VID = 'modvid:'
 ```
+
+Sources this module answers for, best first. Anything else is somebody else's key.
+
+### `ART`
+
+```ts
+export const ART = 'modart:'
+```
+
+The key prefix for a mod's drawn art.
+
+### `TEX`
+
+```ts
+export const TEX = 'modtex:'
+```
+
+The key prefix for a model texture out of a mod.
 
 ### `pickCandidate`
 
-```js
-function pickCandidate(paths, kind)
+```ts
+export function pickCandidate(paths: Iterable<string>, kind: Kind): string | null
 ```
 
 Which file inside a mod to show, for one of the three kinds.
 Pure, so the ranking can be held by tests against real path lists.
 
 ```
-@param {Iterable<string>} paths lowercased inner paths of the mod's VPK
-@param {'art'|'texture'|'video'} kind  video is a hero's animated portrait, a .webm
-@returns {string|null}
+@param paths lowercased inner paths of the mod's VPK
+@param kind  video is a hero's animated portrait, a .webm
 ```
 
 ### `worthShowing`
 
-```js
-function worthShowing({ width, height, data })
+```ts
+export function worthShowing({ width, height, data }: Bitmap): boolean
 ```
 
 Is this decoded picture worth showing? A mod that removes something ships a texture that
@@ -1670,35 +2536,23 @@ is empty or a single flat colour: it decodes fine and shows nothing.
 Pure, so tests can hand it pixels without an image library.
 
 ```
-@param {{width: number, height: number, data: Buffer|Uint8Array}} bmp 4 bytes per pixel, alpha last
-@returns {boolean}
+@param bmp 4 bytes per pixel, alpha last
 ```
 
-### `VID`
+### `createModPreviews`
 
-```js
-const VID = 'modvid:'
+```ts
+export function createModPreviews({ userDataDir, toolchain, langFileOf, images = null, log = () => {} }: { userDataDir: string; toolchain: { pathOf: (name: string) => string | null }; langFileOf: (relPath: string) => string | null; images?: Images | null; log?: (msg: string) => void; })
 ```
 
-Sources this module answers for, best first. Anything else is somebody else's key.
+Pictures for mods that came with none, cached in userData.
 
-### `ART`
-
-```js
-const ART = 'modart:'
+```
+@param deps.langFileOf where a mod's *_dir.vpk actually is
+@param deps.images test seam for decode/resize
 ```
 
-_No description in the source._
-
-### `TEX`
-
-```js
-const TEX = 'modtex:'
-```
-
-_No description in the source._
-
-## src/net.js
+## src/net.ts
 
 Getting bytes from the internet, on a connection that may not want to cooperate.
 
@@ -1719,24 +2573,16 @@ is the whole reason the chain depends on what is being fetched.
 
 ### `RAW_HOST`
 
-```js
-const RAW_HOST = 'https://raw.githubusercontent.com/'
-```
-
-_No description in the source._
-
-### `DEFAULT_MIRRORS`
-
-```js
-const DEFAULT_MIRRORS = [
+```ts
+export const RAW_HOST = 'https://raw.githubusercontent.com/'
 ```
 
 _No description in the source._
 
 ### `FAIL_THRESHOLD`
 
-```js
-const FAIL_THRESHOLD = 3
+```ts
+export const FAIL_THRESHOLD = 3
 ```
 
 After this many failures a host is stood down, and for this long. A mirror that is down
@@ -1745,16 +2591,157 @@ timeouts before the first byte arrives.
 
 ### `COOLDOWN_MS`
 
-```js
-const COOLDOWN_MS = 120000
+```ts
+export const COOLDOWN_MS = 120000
 ```
 
 _No description in the source._
 
+### `Mirror`
+
+```ts
+export interface Mirror
+```
+
+A host that fetches GitHub for us, and how a URL is written for it; `origin` is the catalog's own.
+
+### `Entry`
+
+```ts
+export interface Entry { url: string; host: string; origin: boolean }
+```
+
+One URL worth trying for a file, and the mirror it came from.
+
+### `FetchOptions`
+
+```ts
+export interface FetchOptions
+```
+
+How a fetch walks the mirrors (see fetchMirrored).
+
+### `Download`
+
+```ts
+export interface Download
+```
+
+A file on disk, and how it got there.
+
+### `DEFAULT_MIRRORS`
+
+```ts
+export const DEFAULT_MIRRORS: readonly Mirror[] = [
+```
+
+_No description in the source._
+
+### `mirrorsFor`
+
+```ts
+export function mirrorsFor(url: string, opts: { small?: boolean; trustedOnly?: boolean } = {}): string[]
+```
+
+Every URL worth trying for this one, best first. A URL that is not on GitHub raw (a mod
+whose catalog entry points somewhere else entirely) has no mirrors - it is itself.
+
+```
+@param opts.small the file is JSON-sized, so size-capped mirrors may be used
+```
+
+### `entriesFor`
+
+```ts
+export function entriesFor(url: string, { small = false, trustedOnly = false }: { small?: boolean; trustedOnly?: boolean } = {}): Entry[]
+```
+
+The same list, each entry still knowing which mirror it came from.
+
+### `fetchMirrored`
+
+```ts
+export async function fetchMirrored(url: string, { small = false, trustedOnly = false, headers = {}, exclude = [], onMirror = () => {}, log = () => {}, }: FetchOptions = {}): Promise<Response>
+```
+
+Fetch, walking the mirrors. Returns the Response of the first mirror that answers.
+
+```
+@param url               the canonical (raw.githubusercontent.com) URL
+@param opts.small        allow size-capped mirrors
+@param opts.trustedOnly  the canonical host and nothing else, for a file that is only ever
+trusted from where it was published
+@param opts.exclude      hosts already tried for this file and found wanting; a mirror that
+answered with the wrong bytes must not be offered again on the retry
+@param opts.onMirror     which mirror is answering, called just before the response is handed back
+```
+
+### `fetchText`
+
+```ts
+export async function fetchText(url: string, opts: FetchOptions = {}): Promise<string>
+```
+
+Text from the first mirror that answers (catalog JSON, fingerprint map).
+
+### `sha256`
+
+```ts
+export const sha256 = (file: string): Promise<string> => new Promise((resolve, reject) => { const hash = crypto.createHash('sha256'); fs.createReadStream(file) .on('data', (chunk) => hash.update(chunk)) .on('error', reject) .on('end', () => resolve(hash.digest('hex'))); })
+```
+
+_No description in the source._
+
+### `downloadFile`
+
+```ts
+export async function downloadFile(url: string, dest: string, { onProgress = () => {}, expectSha256 = null, fromPublishedList = false, log = () => {}, }: { onProgress?: (loaded: number, total: number) => void; expectSha256?: string | null; fromPublishedList?: boolean; log?: (msg: string) => void; } = {}): Promise<Download>
+```
+
+Download to a file, resuming where an interrupted attempt stopped.
+
+The half-finished file is kept as <dest>.part and picked up with a Range request. Every
+mirror measured supports it, and a mod archive is up to 300 MB: starting a 60 MB download
+over because a train went into a tunnel is the difference between a mod and a shrug.
+
+```
+@param opts.expectSha256 what this file should hash to; a mirror handing over
+something else is dropped and the next one is asked
+@param opts.fromPublishedList the expectation above came from a list somebody
+else maintains (the catalog's `mod-hashes.json`, or what this machine saw last time),
+rather than from a hash pinned in this project. Such a list can simply be wrong, and when
+it is, the file it names outranks it. Never pass this for the app's own update or for the
+toolchain: those hashes are pinned here and a mismatch there is the thing being guarded.
+```
+
+### `mirrorHealth`
+
+```ts
+export function mirrorHealth(): { host: string; fails: number; standingDownFor: number; why?: string }[]
+```
+
+For the diagnostics report: which mirrors are currently standing down, and why.
+
+### `resetHealth`
+
+```ts
+export function resetHealth(): void
+```
+
+Tests reach in here; nothing in the app should need it.
+
+### `setMirrors`
+
+```ts
+export function setMirrors(list: readonly Mirror[] | null | undefined): void
+```
+
+Point the chain at local servers for a test. Pass nothing to put the real list back.
+
 ### `applyMirrors`
 
-```js
-function applyMirrors(list)
+```ts
+export function applyMirrors(list: unknown): number
 ```
 
 Put the hosts the signed config names into the chain, or take them out again.
@@ -1770,133 +2757,21 @@ A host that answers with nothing useful stands itself down after a few failures 
 other, which is also what happens to one that is named here after it stops existing.
 
 ```
-@param {Array<{id: string, base: string, host: string}>} list  from src/remote-config.js
+@param list  from src/remote-config.ts
 ```
 
-### `mirrorsFor`
-
-```js
-function mirrorsFor(url, opts = {})
-```
-
-Every URL worth trying for this one, best first. A URL that is not on GitHub raw (a mod
-whose catalog entry points somewhere else entirely) has no mirrors - it is itself.
-
-```
-@param {object} [opts]
-@param {boolean} [opts.small] the file is JSON-sized, so size-capped mirrors may be used
-```
-
-### `entriesFor`
-
-```js
-function entriesFor(url, { small = false, trustedOnly = false } = {})
-```
-
-The same list, each entry still knowing which mirror it came from.
-
-### `fetchMirrored`
-
-```js
-async function fetchMirrored(url, { small = false, trustedOnly = false, headers = {}, exclude = [], onMirror = () => {}, log = () => {}, } = {})
-```
-
-Fetch, walking the mirrors. Returns the Response of the first mirror that answers.
-
-```
-@param {string} url            the canonical (raw.githubusercontent.com) URL
-@param {object} [opts]
-@param {boolean} [opts.small]  allow size-capped mirrors
-@param {boolean} [opts.trustedOnly]  the canonical host and nothing else, for a file that is
-only ever trusted from where it was published
-@param {object} [opts.headers]
-@param {string[]} [opts.exclude] hosts already tried for this file and found wanting; a
-mirror that answered with the wrong bytes must not be offered again on the retry
-@param {(m: {host: string, origin: boolean}) => void} [opts.onMirror] which mirror is
-answering, called just before the response is handed back
-@param {(msg: string) => void} [opts.log]
-```
-
-### `fetchText`
-
-```js
-async function fetchText(url, opts = {})
-```
-
-Text from the first mirror that answers (catalog JSON, fingerprint map).
-
-### `downloadFile`
-
-```js
-async function downloadFile(url, dest, { onProgress = () => {}, expectSha256 = null, fromPublishedList = false, log = () => {}, } = {})
-```
-
-Download to a file, resuming where an interrupted attempt stopped.
-
-The half-finished file is kept as <dest>.part and picked up with a Range request. Every
-mirror measured supports it, and a mod archive is up to 300 MB: starting a 60 MB download
-over because a train went into a tunnel is the difference between a mod and a shrug.
-
-```
-@param {string} url
-@param {string} dest
-@param {object} [opts]
-@param {(loaded: number, total: number) => void} [opts.onProgress]
-@param {string} [opts.expectSha256] what this file should hash to; a mirror handing over
-something else is dropped and the next one is asked
-@param {boolean} [opts.fromPublishedList] the expectation above came from a list somebody
-else maintains (the catalog's `mod-hashes.json`, or what this machine saw last time),
-rather than from a hash pinned in this project. Such a list can simply be wrong, and when
-it is, the file it names outranks it. Never pass this for the app's own update or for the
-toolchain: those hashes are pinned here and a mismatch there is the thing being guarded.
-@param {(msg: string) => void} [opts.log]
-@returns {Promise<{ path: string, bytes: number, sha256: string, resumedFrom: number, unverified?: boolean }>}
-```
-
-### `sha256`
-
-```js
-const sha256 = (file) => new Promise((resolve, reject) => { const hash = crypto.createHash('sha256'); fs.createReadStream(file) .on('data', (chunk) => hash.update(chunk)) .on('error', reject) .on('end', () => resolve(hash.digest('hex'))); })
-```
-
-_No description in the source._
-
-### `mirrorHealth`
-
-```js
-function mirrorHealth()
-```
-
-For the diagnostics report: which mirrors are currently standing down, and why.
-
-### `resetHealth`
-
-```js
-function resetHealth()
-```
-
-Tests reach in here; nothing in the app should need it.
-
-### `setMirrors`
-
-```js
-function setMirrors(list)
-```
-
-Point the chain at local servers for a test. Pass nothing to put the real list back.
-
-## src/notice-text.js
+## src/notice-text.ts
 
 The game's anti-cheat notice, in words that say what to do.
 
 When Dota cannot verify the game before matchmaking it says "Valve Anti-Cheat was unable to
 verify that your machine is secure", and a player with mods reads that as a ban on the way.
 It is not one: the usual cause is a damaged install or a Steam that needs a restart. The app
-replaces the four strings of that window with src/notice-texts.js, in the language the game
+replaces the four strings of that window with src/notice-texts.ts, in the language the game
 shows, and names the one switch that takes every mod out.
 
 How: a localization file in the language folder the game mounts, inside the app's own pak
-(APP_PAK, src/slot-zones.js). Measured on a live game on 2026-09-25: the engine reads its
+(APP_PAK, src/slot-zones.ts). Measured on a live game on 2026-09-25: the engine reads its
 localization by a fixed list of names and ignores any other, and chat_<lang>.txt is read after
 dota_<lang>.txt, so a string defined in it replaces the one Valve ships. So the pak carries the
 chat file the game would have read anyway, with the four strings added at the end.
@@ -1908,103 +2783,79 @@ alone when somebody else's file already holds its name.
 
 ### `NOTICE_PAK`
 
-```js
-const NOTICE_PAK = `pak${APP_PAK}_dir.vpk`
+```ts
+export const NOTICE_PAK = `pak${APP_PAK}_dir.vpk`
 ```
 
 The file name of the app's pak in the language folder.
 
 ### `MARKER`
 
-```js
-const MARKER = 'dota2modmanager/notice.json'
+```ts
+export const MARKER = 'dota2modmanager/notice.json'
 ```
 
 An entry that marks the pak as ours: a pak64 without it belongs to somebody else.
 
 ### `uiLanguage`
 
-```js
-function uiLanguage(gamePath)
+```ts
+export function uiLanguage(gamePath: string): string
 ```
 
-The language the game shows its interface in: a launch option, then its own setting, then Steam's.
+The language the game shows its text in, from what overrides what.
 
 ### `declaredLanguage`
 
-```js
-function declaredLanguage(text)
+```ts
+export function declaredLanguage(text: string): string | null
 ```
 
-The `"Language"` a localization file declares, lowercased, or null.
+The language a localization file says it is, from its header.
 
 ### `withTokens`
 
-```js
-function withTokens(text, tokens)
+```ts
+export function withTokens(text: string, tokens: Record<string, string>): string | null
 ```
 
-A localization file with our strings at the end of its Tokens block, in the file's own line
-ending. Any earlier definition of the same keys is taken out first, so the file says each
-thing once. Returns null for a file with no Tokens block, which is not one to build on.
-
-```
-@param {string} text
-@param {Record<string, string>} tokens  key -> value, no double quotes in either
-```
+A localization file with these tokens set, or null when it has no Tokens block to put them in.
 
 ### `plan`
 
-```js
-function plan({ gamePath, langDir })
+```ts
+export function plan({ gamePath, langDir }: { gamePath: string; langDir: string }): Plan
 ```
 
-What the language folder should hold, worked out from the game as it is.
-
-```
-@returns {{ action: 'write', bytes: Buffer, language: string }
-| { action: 'remove', why: string } | { action: 'skip', why: string }}
-```
+What the notice pak should be for this game and folder, worked out without writing anything.
 
 ### `removeNotice`
 
-```js
-function removeNotice(langDir)
+```ts
+export function removeNotice(langDir: string): boolean
 ```
 
-Take the pak out of a language folder, if it is ours.
+Take our pak out of the folder, and only ours.
 
 ### `applyNotice`
 
-```js
-function applyNotice({ gamePath, langDir })
+```ts
+export function applyNotice({ gamePath, langDir }: { gamePath: string | null; langDir: string | null }): string
 ```
 
-Bring the language folder in line with the plan. Writes only when the bytes differ, and
-through a temporary name, so the game never meets half a file. A pak the running game holds
-open cannot be replaced: that is an error the caller logs, and the next refresh tries again.
-
-```
-@returns {string} what happened, for the log
-```
+Bring the notice pak in line with the game, and say in a few words what was done.
 
 ### `createNoticeText`
 
-```js
-function createNoticeText({ gamePath, langDir, diag, retryMs = 60_000 })
+```ts
+export function createNoticeText({ gamePath, langDir, diag, retryMs = 60_000 }: { gamePath: () => string | null; langDir: () => string; diag: (msg: string) => void; retryMs?: number; })
 ```
 
-The notice kept current from a place that runs often. Rebuilding reads the game's 23 MB index,
-so it only happens when something it depends on changed: the game's settings, its main pak,
-or any pak in the language folder.
+The notice text kept up to date: checked cheaply, rebuilt when the game or the paks change.
 
-```
-@param {{ gamePath: () => string|null, langDir: () => string, diag: (msg: string) => void, retryMs?: number }} ctx
-```
+## src/notice-texts.ts
 
-## src/notice-texts.js
-
-The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.js puts
+The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts
 them in). Keyed by the name Dota gives a language in its own files: dota_<name>.txt.
 
 Four strings. `header` titles both windows ("Valve Anti-Cheat (VAC)" in Valve's words),
@@ -2018,11 +2869,11 @@ No ASCII double quote may appear in a string: they are written into a quoted Key
 
 ### `NOTICE_TEXTS`
 
-```js
+```ts
 const NOTICE_TEXTS =
 ```
 
-The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.js puts
+The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts
 them in). Keyed by the name Dota gives a language in its own files: dota_<name>.txt.
 
 Four strings. `header` titles both windows ("Valve Anti-Cheat (VAC)" in Valve's words),
@@ -2036,13 +2887,13 @@ No ASCII double quote may appear in a string: they are written into a quoted Key
 
 ### `NOTICE_KEYS`
 
-```js
+```ts
 const NOTICE_KEYS =
 ```
 
 The game's own keys for the four strings: its localization files name them this way.
 
-## src/overlays.js
+## src/overlays.ts
 
 Fonts and cursors: loose files written over the game's own.
 
@@ -2062,34 +2913,34 @@ and a later removal put them back. So every write here is recorded by hash in
 backups\written.json, and a file that holds what this app wrote is this app's file, whatever
 else it happens to match.
 
-Moved out of src/installer.js on 2026-09-17; test/installer.test.js and test/cursors.test.js
+Moved out of src/installer.ts on 2026-09-17; test/installer.test.ts and test/cursors.test.ts
 cover it through the installer.
-
-### `Overlays`
-
-```js
-class Overlays
-```
-
-The font and cursor files of one install: writing them, keeping the originals, putting them back.
 
 ### `FONTS_SUBDIR`
 
-```js
-const FONTS_SUBDIR = ['dota', 'panorama', 'fonts']
+```ts
+export const FONTS_SUBDIR: readonly string[] = ['dota', 'panorama', 'fonts']
 ```
 
 Where font mods go, under the game folder.
 
 ### `CURSOR_SUBDIR`
 
-```js
-const CURSOR_SUBDIR = ['dota', 'resource', 'cursor']
+```ts
+export const CURSOR_SUBDIR: readonly string[] = ['dota', 'resource', 'cursor']
 ```
 
 Where cursor sets go, under the game folder.
 
-## src/patch-watch.js
+### `Overlays`
+
+```ts
+export class Overlays
+```
+
+The font and cursor files of one install: writing them, keeping the originals, putting them back.
+
+## src/patch-watch.ts
 
 Noticing that Dota was patched, while the app is open.
 
@@ -2109,50 +2960,48 @@ never looks like a game update - otherwise the app would keep waking itself up.
 
 This module only decides "the game changed"; what to do about it lives in main.js.
 
+### `DEBOUNCE_MS`
+
+```ts
+export const DEBOUNCE_MS = 3000
+```
+
+A patch rewrites a lot of files at once, so the first event is never the last one.
+
+### `clientVersion`
+
+```ts
+export function clientVersion(gamePath: string): string | null
+```
+
+The build number every Dota patch bumps, from steam.inf.
+
 ### `gameStamp`
 
-```js
-function gameStamp(gamePath)
+```ts
+export function gameStamp(gamePath: string | null | undefined): string | null
 ```
 
 What build of the game is on disk right now, as one comparable string.
 
 ```
-@returns {string|null} null when there is no game to read (no path set, folder gone)
+@returns null when there is no game to read (no path set, folder gone)
 ```
-
-### `clientVersion`
-
-```js
-function clientVersion(gamePath)
-```
-
-_No description in the source._
 
 ### `createPatchWatcher`
 
-```js
-function createPatchWatcher({ getGamePath, onPatch, expectsPatch = () => false, log = () => {}, debounceMs = DEBOUNCE_MS })
+```ts
+export function createPatchWatcher({ getGamePath, onPatch, expectsPatch = () => false, log = () => {}, debounceMs = DEBOUNCE_MS }: { getGamePath: () => string | null; onPatch: (evt: { from: string | null; to: string; reason?: string }) => void; expectsPatch?: () => boolean; log?: (msg: string) => void; debounceMs?: number; })
 ```
 
+Watches the game folder and says when Dota was patched, or its files checked, while the app is open.
+
 ```
-@param {object} deps
-@param {() => string|null} deps.getGamePath
-@param {(evt: {from: string|null, to: string, reason?: string}) => void} deps.onPatch
-@param {() => boolean} [deps.expectsPatch] whether the app's search path should be in the game (safe mode off)
-@param {(msg: string) => void} [deps.log]
-@param {number} [deps.debounceMs] shortened by tests, which cannot wait out a real patch
+@param deps.expectsPatch whether the app's search path should be in the game (safe mode off)
+@param deps.debounceMs shortened by tests, which cannot wait out a real patch
 ```
 
-### `DEBOUNCE_MS`
-
-```js
-const DEBOUNCE_MS = 3000
-```
-
-A patch rewrites a lot of files at once, so the first event is never the last one.
-
-## src/patcher.js
+## src/patcher.ts
 
 Search-path patch: registers an extra content folder ahead of the game's own, which
 is the only way to override files the engine reads through the MOD path id -
@@ -2170,56 +3019,80 @@ Everything is backed up before the first write and revert() puts the originals b
 
 ### `MARKER`
 
-```js
-const MARKER = 'Dota 2 Mod Manager'
+```ts
+export const MARKER = 'Dota 2 Mod Manager'
 ```
 
-_No description in the source._
+Written beside every line this app adds, so its own edit can be found and taken out again.
 
 ### `FOLDER`
 
-```js
-const FOLDER = 'dota_mods'
+```ts
+export const FOLDER = 'dota_mods'
 ```
 
-Content folder we register next to the game's own "dota".
+The content folder registered next to the game's own "dota".
+
+### `Hashes`
+
+```ts
+export interface Hashes { sha1: string; crc: string }
+```
+
+A file's hashes as the signature list writes them, uppercase hex.
+
+### `PatchState`
+
+```ts
+export interface PatchState
+```
+
+What the install looks like right now; see state().
 
 ### `paths`
 
-```js
-function paths(gamePath)
+```ts
+export function paths(gamePath: string): { gameinfo: string; branch: string; signatures: string }
 ```
 
-_No description in the source._
+The three files the patch touches, for this platform's layout of the game.
+
+### `crc32`
+
+```ts
+export function crc32(buf: Buffer): number
+```
+
+CRC-32 as the signature list records it.
 
 ### `fileHashes`
 
-```js
-function fileHashes(buf)
+```ts
+export function fileHashes(buf: Buffer): { sha1: string; crc: string }
 ```
 
 The signature list stores the CRC little-endian, uppercase, like the SHA1 next to it.
 
 ### `signatureLine`
 
-```js
-function signatureLine(buf)
+```ts
+export function signatureLine(buf: Buffer): string
 ```
 
-_No description in the source._
+The line the signature list needs for the patched file.
 
 ### `searchPathsBlock`
 
-```js
-function searchPathsBlock(gameinfoText)
+```ts
+export function searchPathsBlock(gameinfoText: string): string
 ```
 
 Pull the SearchPaths block out of gameinfo.gi (branchspecific has none by default).
 
 ### `withModFolder`
 
-```js
-function withModFolder(block, folder)
+```ts
+export function withModFolder(block: string, folder: string): string
 ```
 
 Add our folder to a SearchPaths block: as the first Game path (which is also what the
@@ -2227,16 +3100,16 @@ engine turns into the MOD path) and as the first Mod path.
 
 ### `patchedBranch`
 
-```js
-function patchedBranch(branchText, block)
+```ts
+export function patchedBranch(branchText: string, block: string): string
 ```
 
 Put the block inside branchspecific's FileSystem section (its keys win over gameinfo.gi).
 
 ### `stripPatch`
 
-```js
-function stripPatch(text)
+```ts
+export function stripPatch(text: string): string
 ```
 
 Undo our own insertion in a gameinfo file, byte for byte.
@@ -2253,31 +3126,10 @@ Used wherever a patched file could be mistaken for an original: a backup taken w
 patch was already applied would otherwise be useless, and telling the user to go repair
 game files by hand is not an answer the app is allowed to give.
 
-### `stripSignatures`
-
-```js
-function stripSignatures(text)
-```
-
-Same for the signature list: our line is appended after the DIGEST line, so anything of
-ours past that point comes off and the file the game shipped is left behind.
-
-### `hasSignaturePatch`
-
-```js
-function hasSignaturePatch(text)
-```
-
-Is our line present in a signature list? Valve's own pristine file ALREADY carries an
-entry for gameinfo_branchspecific.gi (before DIGEST, with the vanilla hash), so merely
-finding the path proves nothing - only an entry appended AFTER the DIGEST line is ours.
-Getting this wrong makes a pristine list look patched, which freezes the backup at a
-pre-update build and lets apply() write those stale hashes over the live file.
-
 ### `vanillaBranchHashes`
 
-```js
-function vanillaBranchHashes(signaturesText)
+```ts
+export function vanillaBranchHashes(signaturesText: string): Hashes | null
 ```
 
 Valve's own recorded hash for the file we edit, read out of the signature list the game
@@ -2285,22 +3137,18 @@ ships with. Ground truth: whatever we put back has to hash to this, or the clien
 the install ("verify integrity of game files") and matchmaking stops. Their entry sits
 BEFORE the DIGEST line - ours, when present, is appended after it.
 
-```
-@returns {{sha1: string, crc: string} | null}
-```
-
 ### `matchesVanilla`
 
-```js
-function matchesVanilla(text, want)
+```ts
+export function matchesVanilla(text: string, want: Hashes | null): boolean
 ```
 
-_No description in the source._
+Whether a file hashes to what Valve recorded; with no record there is nothing to contradict.
 
 ### `restoreBranch`
 
-```js
-function restoreBranch(text, want)
+```ts
+export function restoreBranch(text: string, want: Hashes | null): { text: string; verified: boolean }
 ```
 
 The original branchspecific file, reconstructed and CHECKED against Valve's own list
@@ -2310,14 +3158,31 @@ the client quietly stops finding matches. The only thing a reconstruction can ge
 is the indent ahead of the FileSystem closing brace, so when the hash disagrees the few
 shapes that indent can take are tried and the one Valve signed is kept.
 
+### `hasSignaturePatch`
+
+```ts
+export function hasSignaturePatch(text: string): boolean
 ```
-@returns {{ text: string, verified: boolean }}
+
+Is our line present in a signature list? Valve's own pristine file ALREADY carries an
+entry for gameinfo_branchspecific.gi (before DIGEST, with the vanilla hash), so merely
+finding the path proves nothing - only an entry appended AFTER the DIGEST line is ours.
+Getting this wrong makes a pristine list look patched, which freezes the backup at a
+pre-update build and lets apply() write those stale hashes over the live file.
+
+### `stripSignatures`
+
+```ts
+export function stripSignatures(text: string): string
 ```
+
+Same for the signature list: our line is appended after the DIGEST line, so anything of
+ours past that point comes off and the file the game shipped is left behind.
 
 ### `state`
 
-```js
-function state(gamePath, folder)
+```ts
+export function state(gamePath: string, folder: string | null): PatchState
 ```
 
 What the install looks like right now.
@@ -2327,14 +3192,10 @@ ships no `dota.signatures`, so on Linux there is nothing to sign the patch into 
 to check it against - which is not the same as an unsigned patch, and callers have to tell
 the two apart or a Linux user gets a permanent warning about a file that was never there.
 
-```
-@returns {{ patched: boolean, signed: boolean, signable: boolean, folder: string|null, foreign: string|null, vanillaOk: boolean }}
-```
-
 ### `apply`
 
-```js
-function apply({ gamePath, folder, backupDir })
+```ts
+export function apply({ gamePath, folder, backupDir }: { gamePath: string; folder: string; backupDir: string }): PatchState
 ```
 
 Register the folder. Safe to call repeatedly: it rebuilds the patch from the current
@@ -2342,8 +3203,8 @@ vanilla files (restoring the backup first), so a game update just means running 
 
 ### `revert`
 
-```js
-function revert({ gamePath, folder, backupDir })
+```ts
+export function revert({ gamePath, folder, backupDir }: { gamePath: string; folder?: string | null; backupDir: string }): PatchState
 ```
 
 Put the originals back and drop the folder if it is empty.
@@ -2355,15 +3216,7 @@ against that list rather than taken on faith: this is the moment the game become
 again, and a copy that is even one byte off leaves the client refusing to matchmake with
 no mod in sight to blame.
 
-### `crc32`
-
-```js
-function crc32(buf)
-```
-
-_No description in the source._
-
-## src/portable-update.js
+## src/portable-update.ts
 
 Updating a copy that was never installed.
 
@@ -2385,77 +3238,44 @@ itself with no mirrors in the way (a mirror could rewrite both the hash and the 
 the download is then checked against it. A file that does not match is deleted rather than
 offered.
 
-### `parseManifest`
+### `MANIFEST`
 
-```js
-function parseManifest(text)
+```ts
+export const MANIFEST = 'portable.yml'
 ```
 
-The three fields the app needs out of portable.yml, without pulling in a YAML parser for a
-file this project writes itself. Anything missing or malformed is a manifest we refuse.
-
-```
-@returns {{ file: string, size: number, sha256: string, version: string }}  version is '' when
-the manifest does not say
-```
-
-### `fetchBeside`
-
-```js
-async function fetchBeside(version, { onProgress = () => {}, dir = portableDir(), log = () => {}, sources = SOURCES } = {})
-```
-
-Fetch the new build and leave it beside the current one.
-
-```
-@param {string} version           the version to fetch, without the leading v
-@param {object} [opts]
-@param {(loaded: number, total: number) => void} [opts.onProgress]
-@param {string} [opts.dir]        where to put it; defaults to the folder holding the exe
-@param {(msg: string) => void} [opts.log]
-@param {Array} [opts.sources]     where to look and in what order; SOURCES unless a test says
-@returns {Promise<{ path: string, name: string, bytes: number, already?: boolean }>}  already
-when the same build was fetched before
-```
-
-### `portableDir`
-
-```js
-function portableDir()
-```
-
-Where the running portable exe actually lives, or null when this is not a portable copy.
+The release asset that names the portable binary, its size and its sha256.
 
 ### `releaseUrl`
 
-```js
-const releaseUrl = (version, file)
+```ts
+export const releaseUrl = (version: string, file: string): string
 ```
 
-_No description in the source._
-
-### `MANIFEST`
-
-```js
-const MANIFEST = 'portable.yml'
-```
-
-_No description in the source._
+The download address of a file attached to a GitHub release of this app.
 
 ### `MIRROR`
 
-```js
-const MIRROR = 'https://cdn.dota2modmanager.com/updates/'
+```ts
+export const MIRROR = 'https://cdn.dota2modmanager.com/updates/'
 ```
 
 The bucket the mods already come from, carrying the current release as well since
 2026-09-10 (tools/r2-release.mjs). It holds one version, which is why the manifest's own
 version is checked below rather than assumed.
 
+### `Source`
+
+```ts
+export interface Source
+```
+
+Where a portable build can come from: its manifest, the binary it names, and whether only that host is trusted.
+
 ### `SOURCES`
 
-```js
-const SOURCES = [
+```ts
+export const SOURCES: readonly Source[] = [
 ```
 
 Where to look, in order.
@@ -2470,7 +3290,44 @@ only this project holds, which is the same trust as the release page itself - an
 reasoning as the update feed fallback in main.js. Manifest and binary both come from
 whichever source answered, so the hash and the file it describes are always from one place.
 
-## src/preset-link.js
+### `parseManifest`
+
+```ts
+export function parseManifest(text: unknown): { file: string; size: number; sha256: string; version: string }
+```
+
+The three fields the app needs out of portable.yml, without pulling in a YAML parser for a
+file this project writes itself. Anything missing or malformed is a manifest we refuse.
+
+```
+@returns version is '' when the manifest does not say
+```
+
+### `portableDir`
+
+```ts
+export function portableDir(): string | null
+```
+
+Where the running portable exe actually lives, or null when this is not a portable copy.
+
+### `fetchBeside`
+
+```ts
+export async function fetchBeside(version: string, { onProgress = () => {}, dir = portableDir(), log = () => {}, sources = SOURCES }: { onProgress?: (loaded: number, total: number) => void; dir?: string | null; log?: (msg: string) => void; sources?: readonly Source[]; } = {}): Promise<{ path: string; name: string; bytes: number; already?: boolean }>
+```
+
+Fetch the new build and leave it beside the current one.
+
+```
+@param version       the version to fetch, without the leading v
+@param opts.dir      where to put it; defaults to the folder holding the exe
+@param opts.sources  where to look and in what order; SOURCES unless a test says
+@returns where it landed; already
+when the same build was fetched before
+```
+
+## src/preset-link.ts
 
 Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed
 into a pasteable string. Only a preset made purely of catalog mods can travel this way —
@@ -2482,32 +3339,40 @@ message; a .d2mm file stays the answer for anything with imports in it.
 
 ### `SCHEME`
 
-```js
-const SCHEME = 'd2mm'
+```ts
+export const SCHEME = 'd2mm'
 ```
 
-_No description in the source._
+The URL scheme the app registers with Windows, so d2mm://preset/... opens it.
+
+### `LinkMod`
+
+```ts
+export type LinkMod =
+```
+
+A mod as a link carries it: a catalog mod by name and style, or a cosmetic pick by slot and item.
 
 ### `encodePresetLink`
 
-```js
-function encodePresetLink({ name, author, mods })
+```ts
+export function encodePresetLink({ name, author, mods }: { name: string; author?: string; mods: ModIn[] }): { code: string; web: string; direct: string }
 ```
 
 ```
-@param {{name: string, author?: string, mods: Array<{kind?, categoryId, name, styleLabel, slot, itemId, effectId}>}} preset
-@returns {{code: string, web: string, direct: string}} the clickable form and the raw one
+@returns the clickable form and the raw one
 ```
 
 ### `decodePresetLink`
 
-```js
-function decodePresetLink(input)
+```ts
+export function decodePresetLink(input: unknown): { name: string; author: string; mods: LinkMod[] }
 ```
 
-_No description in the source._
+A pasted link, in either form, back into a preset: its name, its author and its mods. Throws an
+error written for the user when the text is not a link, is damaged, or holds too much.
 
-## src/preset-share.js
+## src/preset-share.ts
 
 Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod
 the receiving app can't just fetch for itself.
@@ -2523,63 +3388,77 @@ Everything here treats the file as hostile input: it arrives from a stranger ove
 Discord. Nothing is read out of the zip that the manifest didn't ask for by an exact,
 pattern-checked name, and the caller installs only after showing the user the contents.
 
-### `FORMAT`
+### `PresetManifest`
 
-```js
-const FORMAT = 'dota2-mod-manager/preset'
+```ts
+export interface PresetManifest
 ```
 
-_No description in the source._
+preset.json once it has been checked: everything a receiver is shown before installing.
+
+### `EntryToWrite`
+
+```ts
+export interface EntryToWrite { kind: string; name: string; data?: Buffer; members?: EntryToWrite[]; [key: string]: unknown }
+```
+
+A line to write. An embedded mod carries its bytes in `data`, and they go into the zip in its place.
+
+### `FORMAT`
+
+```ts
+export const FORMAT = 'dota2-mod-manager/preset'
+```
+
+What preset.json says it is, so a stray zip is not taken for a preset.
 
 ### `VERSION`
 
-```js
-const VERSION = 1
+```ts
+export const VERSION = 1
 ```
 
-_No description in the source._
+The newest format this build writes and can read.
 
 ### `MAX_MODS`
 
-```js
-const MAX_MODS = 500
+```ts
+export const MAX_MODS = 500
 ```
 
-_No description in the source._
+More mods than anybody has; a list longer than this is refused before it is read.
+
+### `validateManifest`
+
+```ts
+export function validateManifest(raw: unknown): PresetManifest
+```
+
+preset.json checked field by field: what fails is refused, what is unknown is dropped.
 
 ### `writePresetFile`
 
-```js
-function writePresetFile(outPath, manifest, entries)
+```ts
+export function writePresetFile(outPath: string, manifest: Record<string, unknown>, entries: EntryToWrite[]): { path: string; size: number; mods: EntryToWrite[] }
 ```
 
+Write a .d2mm: the manifest, and the bytes of every embedded mod beside it.
+
 ```
-@param {string} outPath                       where to write the .d2mm
-@param {object} manifest                      everything but `mods` (name/note/author/app…)
-@param {Array<object>} entries                mod lines; embedded ones carry a `data` Buffer
+@param outPath   where to write the .d2mm
+@param manifest  everything but `mods` (name/note/author/app…)
+@param entries   mod lines; embedded ones carry a `data` Buffer
 ```
 
 ### `readPresetFile`
 
-```js
-function readPresetFile(filePath)
+```ts
+export function readPresetFile(filePath: string): { manifest: PresetManifest; readMod: (file: string) => Buffer }
 ```
 
 Parse and validate a .d2mm.
 
-```
-@returns {{ manifest: object, readMod: (file: string) => Buffer }}
-```
-
-### `validateManifest`
-
-```js
-function validateManifest(raw)
-```
-
-_No description in the source._
-
-## src/presets-service.js
+## src/presets-service.ts
 
 Presets, and the two ways one travels to somebody else.
 
@@ -2594,27 +3473,34 @@ window, reachable only through the process that owns that window, and testable o
 launching the app. The bodies below are the same bodies; what changed is that the services
 they use arrive as arguments instead of as variables that happen to be in scope.
 
-### `presetsService`
+### `CatalogIndex`
 
-```js
-function presetsService({ catalog, installer, library, schemaService, deployAndApply })
+```ts
+export type CatalogIndex = Map<string, CatalogHit> & { lookup: (c: string, n: string, s?: string | null) => CatalogHit | null }
 ```
 
-Everything about presets that needs the running app's services.
+Every catalog mod by "<categoryId>|<name>|<styleLabel>", with a lookup that never throws.
 
+### `ShareEntry`
+
+```ts
+export type ShareEntry =
 ```
-@param {object} deps
-@param {object} deps.catalog        the catalog store, for turning a mod into an identity
-@param {object} deps.installer      reads and writes what is in the game folder
-@param {object} deps.library        the manifest of installed mods and saved presets
-@param {object} deps.schemaService  rebuilds the item table when a preset changes it
-@param {(pack: object) => Array} deps.deployAndApply  rebuilds one pack's VPK
+
+A mod as it would be shared: embedded ones read their bytes only when the file is written.
+
+### `PresetInstaller`
+
+```ts
+export interface PresetInstaller
 ```
+
+What of the installer presets ask: what a record is, where its files are, and packing.
 
 ### `categoryModList`
 
-```js
-function categoryModList(data)
+```ts
+export function categoryModList(data: unknown): CatalogMod[]
 ```
 
 The mods of one catalog category. Most categories are a flat array, but some (creeps,
@@ -2626,21 +3512,37 @@ a preset link dropped them entirely.
 
 ### `packableRecord`
 
-```js
-function packableRecord(rec)
+```ts
+export function packableRecord(rec: LibRecord | null | undefined): rec is LibRecord
 ```
 
 Can this record go into a pack? Packs, fonts and cursors cannot; a lang-folder VPK can.
 
 ### `touchesSchema`
 
-```js
-function touchesSchema(rec)
+```ts
+export function touchesSchema(rec: LibRecord): boolean
 ```
 
 Does changing this record mean the item table has to be rebuilt?
 
-## src/remote-config.js
+### `presetsService`
+
+```ts
+export function presetsService({ catalog, installer, library, schemaService, deployAndApply }: { catalog: Pick<Catalog, 'load'>; installer: PresetInstaller; library: Library; schemaService: { refresh(): unknown }; deployAndApply: (pack: LibRecord) => unknown; })
+```
+
+Everything about presets that needs the running app's services.
+
+```
+@param deps.catalog        the catalog store, for turning a mod into an identity
+@param deps.installer      reads and writes what is in the game folder
+@param deps.library        the manifest of installed mods and saved presets
+@param deps.schemaService  rebuilds the item table when a preset changes it
+@param deps.deployAndApply  rebuilds one pack's VPK
+```
+
+## src/remote-config.ts
 
 The one thing the app can be told after it has shipped.
 
@@ -2680,105 +3582,26 @@ tools/rollback.mjs writes both, signs the file and refuses the mistakes.
 public and a list of a dozen people's accounts is not ours to publish. src/beta.ts does the
 checking; this only reads the block and refuses anything that is not shaped like one.
 
-### `createRemoteConfig`
-
-```js
-function createRemoteConfig({ userDataDir, appVersion, log = () => {}, publicKey = CONFIG_PUBLIC_KEY, now = () => Date.now() })
-```
-
-```
-@param {object} opts
-@param {string} opts.userDataDir  where the last good copy is kept between starts
-@param {() => string} opts.appVersion  used to decide which notices apply
-@param {(msg: string) => void} [opts.log]
-@param {string} [opts.publicKey]  whose signature to accept; the pinned one unless a test
-wants to sign its own fixture, which it cannot do with a private key that is not here
-@param {() => number} [opts.now]  the clock a notice's until date is read against
-```
-
-### `normalize`
-
-```js
-function normalize(raw)
-```
-
-_No description in the source._
-
-### `cmpVersion`
-
-```js
-function cmpVersion(a, b)
-```
-
-_No description in the source._
-
-### `applies`
-
-```js
-function applies(entry, version, today)
-```
-
-Does an entry with optional version bounds and a last day hold for this build today?
-
-### `SWITCHABLE`
-
-```js
-const SWITCHABLE = ['install', 'cosmetics', 'voice']
-```
-
-What the app is willing to be told to switch off. A name that is not on this list is
-ignored: a typo in the config must not disable something at random, and this list is the
-contract between the file and the code that honours it.
-
-### `BLOCKS_SINCE`
-
-```js
-const BLOCKS_SINCE = '2.6.13'
-```
-
-The first version that reads `blocks`. Everything before it ignores the key entirely, which is
-what makes adding it safe, and also what makes a block aimed at those versions do nothing, so
-tools/rollback.mjs refuses one. 2.6.12 is the last release without it; whichever version
-ships next is at least this one.
-
-### `MAX_TESTERS`
-
-```js
-const MAX_TESTERS = 100
-```
-
-A beta is a handful of people the maintainer picked, not a rollout: a list longer than this is
-a sign the file was edited by something other than a person.
-
-### `MAX_MIRRORS`
-
-```js
-const MAX_MIRRORS = 4
-```
-
-Somewhere else the archives can be fetched from. A handful at most: the chain is walked in
-   order on every download, and a host that is not really there costs a request each time.
-
 ### `CONFIG_URL`
 
-```js
-const CONFIG_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json'
+```ts
+export const CONFIG_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json'
 ```
 
-_No description in the source._
+The config every copy of the app reads, on main in this repository.
 
 ### `CONFIG_SIG_URL`
 
-```js
-const CONFIG_SIG_URL = `${CONFIG_URL}.sig`
+```ts
+export const CONFIG_SIG_URL = `${CONFIG_URL}.sig`
 ```
 
 The signature, always the config's own address with .sig on the end.
 
 ### `CONFIG_PUBLIC_KEY`
 
-```js
-const CONFIG_PUBLIC_KEY = 'MCowBQYDK2VwAyEA8M9IOVLfxK6V1n2fHAHlE9zzCsXFoUAJki8RdqLPBdA='
+```ts
+export const CONFIG_PUBLIC_KEY = 'MCowBQYDK2VwAyEA8M9IOVLfxK6V1n2fHAHlE9zzCsXFoUAJki8RdqLPBdA='
 ```
 
 This file is signed, and by us rather than by the catalog's author.
@@ -2796,10 +3619,120 @@ and they could already do that by dropping the request. What they no longer get 
 words on the screen.
 
 Signed with tools/sign-catalog.js. The private half is not in this repository and never will
-be; test/remote-config-signature.test.js fails the build if the committed file and its
+be; test/remote-config-signature.test.ts fails the build if the committed file and its
 signature ever stop agreeing.
 
-## src/safe-zip.js
+### `SWITCHABLE`
+
+```ts
+export const SWITCHABLE: readonly string[] = ['install', 'cosmetics', 'voice']
+```
+
+What the app is willing to be told to switch off. A name that is not on this list is
+ignored: a typo in the config must not disable something at random, and this list is the
+contract between the file and the code that honours it.
+
+### `BLOCKS_SINCE`
+
+```ts
+export const BLOCKS_SINCE = '2.6.13'
+```
+
+The first version that reads `blocks`. Everything before it ignores the key entirely, which is
+what makes adding it safe, and also what makes a block aimed at those versions do nothing, so
+tools/rollback.mjs refuses one. 2.6.12 is the last release without it; whichever version
+ships next is at least this one.
+
+### `MAX_TESTERS`
+
+```ts
+export const MAX_TESTERS = 100
+```
+
+A beta is a handful of people the maintainer picked, not a rollout: a list longer than this is
+a sign the file was edited by something other than a person.
+
+### `MAX_MIRRORS`
+
+```ts
+export const MAX_MIRRORS = 4
+```
+
+Somewhere else the archives can be fetched from. A handful at most: the chain is walked in
+   order on every download, and a host that is not really there costs a request each time.
+
+### `RemoteNotice`
+
+```ts
+export interface RemoteNotice
+```
+
+Something a build or a range of them is told, until a day or for good.
+
+### `RemoteBlock`
+
+```ts
+export interface RemoteBlock
+```
+
+A feature switched off for a range of builds until a day.
+
+### `RemoteMirror`
+
+```ts
+export interface RemoteMirror { id: string; base: string; host: string }
+```
+
+Another host the archives can be fetched from.
+
+### `RemoteConfig`
+
+```ts
+export interface RemoteConfig
+```
+
+The signed config, as far as it passed the checks below.
+
+### `cmpVersion`
+
+```ts
+export function cmpVersion(a: unknown, b: unknown): -1 | 0 | 1
+```
+
+Two versions compared part by part as numbers, so 10.0.0 comes after 2.0.0.
+
+### `applies`
+
+```ts
+export function applies(entry: { minVersion?: string | null; maxVersion?: string | null; until?: string | null }, version: string, today: string): boolean
+```
+
+Does an entry with optional version bounds and a last day hold for this build today?
+
+### `normalize`
+
+```ts
+export function normalize(raw: unknown): RemoteConfig
+```
+
+The fetched JSON cut down to what this build can act on: anything malformed, too long or aimed
+at a feature that cannot be switched is dropped rather than trusted.
+
+### `createRemoteConfig`
+
+```ts
+export function createRemoteConfig({ userDataDir, appVersion, log = () => {}, publicKey = CONFIG_PUBLIC_KEY, now = () => Date.now() }: { userDataDir: string; appVersion: () => string; log?: (msg: string) => void; publicKey?: string; now?: () => number; })
+```
+
+```
+@param opts.userDataDir  where the last good copy is kept between starts
+@param opts.appVersion   used to decide which notices apply
+@param opts.publicKey    whose signature to accept; the pinned one unless a test
+wants to sign its own fixture, which it cannot do with a private key that is not here
+@param opts.now          the clock a notice's until date is read against
+```
+
+## src/safe-zip.ts
 
 The one door every foreign archive comes through.
 
@@ -2816,47 +3749,34 @@ Callers get a flat list of files with forward-slash paths, already stripped of a
 that could escape a folder, and write through safeJoin so a name can never resolve
 outside the folder it was meant for.
 
-### `openZip`
+### `ZipFile`
 
-```js
-function openZip(source, { label, limits } = {})
+```ts
+export interface ZipFile { path: string; size: number; read(): Buffer }
 ```
 
-Open a foreign archive with every claim in it checked first.
+A file inside an archive that passed every check: its path, its size, and its bytes on demand.
 
-```
-@param {string|Buffer} source        path on disk, or the bytes themselves
-@param {object} [opts]
-@param {string} [opts.label]         what to call the archive in an error the user reads
-@param {object} [opts.limits]        override the budgets (tests)
-@returns {{ label: string, files: Array<{path: string, size: number, read: () => Buffer}>,
-get: (rel: string) => object|null,
-extractTo: (destRoot: string, tx?: object|null) => number }}
+### `OpenedZip`
+
+```ts
+export interface OpenedZip
 ```
 
-### `safeJoin`
+A foreign archive, opened: what is safe to hand out of it, and a way to unpack it.
 
-```js
-function safeJoin(rootAbs, rel)
+### `ZipLimits`
+
+```ts
+export type ZipLimits = typeof LIMITS
 ```
 
-Join a path that came out of an archive to the folder it belongs in, refusing anything
-that resolves outside. Second lock after isUnsafeName: the first decides what to hand
-over, this one guards the actual write.
-
-### `isUnsafeName`
-
-```js
-function isUnsafeName(rel)
-```
-
-An entry name is data, not a path we agreed to. Absolute names, drive letters, any ".."
-segment and any segment Windows refuses are dropped before a caller ever sees them.
+The budgets an archive is held to; tests lower them.
 
 ### `LIMITS`
 
-```js
-const LIMITS =
+```ts
+export const LIMITS =
 ```
 
 Measured against the 104 real archives on disk (catalog mods, fonts, cursors, packs),
@@ -2866,7 +3786,40 @@ Every limit sits several times above that, so a legitimate archive never meets o
 The ratio is only judged on entries big enough to matter — a 20 KB text file that packs
 500x is not a threat, and small assets compress hard all the time.
 
-## src/schema-service.js
+### `isUnsafeName`
+
+```ts
+export function isUnsafeName(rel: string): boolean
+```
+
+An entry name is data, not a path we agreed to. Absolute names, drive letters, any ".."
+segment and any segment Windows refuses are dropped before a caller ever sees them.
+
+### `safeJoin`
+
+```ts
+export function safeJoin(rootAbs: string, rel: string): string
+```
+
+Join a path that came out of an archive to the folder it belongs in, refusing anything
+that resolves outside. Second lock after isUnsafeName: the first decides what to hand
+over, this one guards the actual write.
+
+### `openZip`
+
+```ts
+export function openZip(source: string | Buffer, { label, limits }: { label?: string; limits?: Partial<ZipLimits> } = {}): OpenedZip
+```
+
+Open a foreign archive with every claim in it checked first.
+
+```
+@param source        path on disk, or the bytes themselves
+@param opts.label    what to call the archive in an error the user reads
+@param opts.limits   override the budgets (tests)
+```
+
+## src/schema-service.ts
 
 Orchestration around the item schema: what goes into it, when it is rebuilt, and how a
 game update is repaired. Kept out of main.js so the whole flow can be exercised without
@@ -2878,22 +3831,39 @@ The rules it enforces:
   - a mod's changes live in the library record (record.schema), never in its VPK;
   - nothing is written to the game unless the user turned the patch on.
 
+### `SchemaInstaller`
+
+```ts
+export interface SchemaInstaller
+```
+
+What of the installer the schema needs: what a record is, its item blocks, splitting it, its size.
+
+### `SchemaState`
+
+```ts
+export interface SchemaState extends Partial<patcher.PatchState>
+```
+
+The patch and the built table as Settings shows them; the patcher's own state is merged in.
+
+### `CosmeticSlot`
+
+```ts
+export type CosmeticSlot =
+```
+
+A slot the free-cosmetics picker offers: its base item, what is on it, and what could be.
+
 ### `createSchemaService`
 
-```js
-function createSchemaService({ settings, library, installer, userDataDir, log = () => {} })
+```ts
+export function createSchemaService({ settings, library, installer, userDataDir, log = () => {} }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; })
 ```
 
-```
-@param {object} deps
-@param {import('./settings').Settings} deps.settings
-@param {import('./library').Library} deps.library
-@param {import('./installer').Installer} deps.installer
-@param {string} deps.userDataDir
-@param {(msg: string) => void} [deps.log]  the app's diagnostics log
-```
+The item table and the search-path patch, kept in step with the library and the installed game.
 
-## src/schema.js
+## src/schema.ts
 
 Item-schema engine: the game's own scripts/items/items_game.txt is the only place
 where a mod can attach new particles to a hero, redirect a stock effect, or turn a
@@ -2908,63 +3878,142 @@ Two rules shape everything here:
 The file is ~50 MB of KeyValues with a few non-UTF8 bytes in it, so everything here
 works on latin1 strings: byte-exact in and out, no re-encoding surprises.
 
+### `Bounds`
+
+```ts
+export type Bounds = [number, number]
+```
+
+A block's braces in the text: [open, close + 1].
+
+### `KvChild`
+
+```ts
+export type KvChild =
+```
+
+One direct child of a KeyValues block: a nested block, or a key with a value. See eachChild.
+
+### `SchemaItem`
+
+```ts
+export interface SchemaItem
+```
+
+An item of items_game as the pickers read it; see listItems.
+
+### `SchemaDelta`
+
+```ts
+export interface SchemaDelta { id: string; name: string; block: string }
+```
+
+An item block a mod changed, lifted out of the table it shipped.
+
+### `SchemaPatch`
+
+```ts
+export interface SchemaPatch { id: string | number; block: string; source?: string; assets?: VpkEntry[] }
+```
+
+One block to splice into the game's table, and the files that come with it.
+
+### `GameSchema`
+
+```ts
+export interface GameSchema { text: string; stamp: string }
+```
+
+The game's own table, and the marker that changes when an update replaces it.
+
+### `MergeResult`
+
+```ts
+export interface MergeResult
+```
+
+What a merge did with each patch; see mergeSchema.
+
+### `SCHEMA_REL`
+
+```ts
+export const SCHEMA_REL = 'scripts/items/items_game.txt'
+```
+
+Where the item table sits inside a VPK.
+
+### `SCHEMA_VPK`
+
+```ts
+export const SCHEMA_VPK = 'pak01_dir.vpk'
+```
+
+Our folder is registered ahead of "dota", so the first pak in it wins the MOD path.
+
+### `blockBounds`
+
+```ts
+export function blockBounds(text: string, i: number): Bounds
+```
+
+Bounds of the { ... } block that starts at (or after) i.
+
 ### `eachChild`
 
-```js
-function eachChild(text, bounds, fn)
+```ts
+export function eachChild(text: string, bounds: Bounds, fn: (child: KvChild) => void): void
 ```
 
 Walk the direct children of a block.
 
 ```
-@param {string} text
-@param {[number, number]} bounds  from blockBounds()
-@param {(child: {key: string, start: number, end: number, isBlock: boolean, value: string|null, body: [number, number]|null}) => void} fn
+@param bounds  from blockBounds()
 ```
 
-### `blockBounds`
+### `findItem`
 
-```js
-function blockBounds(text, i)
+```ts
+export function findItem(text: string, id: string | number, section?: Bounds | null): { id: string; start: number; end: number; text: string } | null
 ```
 
-Bounds of the { ... } block that starts at (or after) i.
+One item definition, by id. Returns the exact source range so a splice is byte-exact.
 
-```
-@returns {[number, number]} [open, close+1]
-```
+### `itemFields`
 
-### `stripKeyBlocks`
-
-```js
-function stripKeyBlocks(text, key)
+```ts
+export function itemFields(text: string, item: { start: number }): Map<string, string>
 ```
 
-Remove every "<key> { … }" sub-block from a KV fragment, with the whitespace in front
-of it, so the result still reads like the file it came from.
+Direct scalar fields of an item block ("name", "prefab", "item_slot"...).
+
+### `listItems`
+
+```ts
+export function listItems(text: string): SchemaItem[]
+```
+
+_No description in the source._
 
 ### `toUtf8`
 
-```js
-function toUtf8(s)
+```ts
+export function toUtf8(s: string): string
 ```
 
-The table is read as latin1 so every splice stays byte-exact, which leaves names with
-non-ASCII characters (curly quotes, accents) as raw UTF-8 bytes. Anything shown to a
-person goes back through UTF-8 first.
+A name out of the latin1 table, as the person should read it.
 
 ### `itemSearchText`
 
-```js
-function itemSearchText(item)
+```ts
+export function itemSearchText(item: Partial<SchemaItem> | null | undefined): string
 ```
 
 An item's words in one lowercase string, for telling an arcana or persona by its name.
 
 ### `inferredItemSlot`
 
-```js
-function inferredItemSlot(item)
+```ts
+export function inferredItemSlot(item: Partial<SchemaItem> | null | undefined): string
 ```
 
 A hero item's slot as the game reads it. A wearable or stock item that names no item_slot is
@@ -2975,94 +4024,10 @@ It used to be guessed from the item's words, which put Oblivion Headmaster Wand 
 Emerald Frenzy Flail on the back and 99 other weapons nowhere, so a set carried two heads
 and the builder offered a wand for a helmet.
 
-### `SCHEMA_REL`
-
-```js
-const SCHEMA_REL = 'scripts/items/items_game.txt'
-```
-
-_No description in the source._
-
-### `SCHEMA_VPK`
-
-```js
-const SCHEMA_VPK = 'pak01_dir.vpk'
-```
-
-Our folder is registered ahead of "dota", so the first pak in it wins the MOD path.
-
-### `deploy`
-
-```js
-function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath) })
-```
-
-Build the schema and put it in the mod folder. Always rebuilt from the installed
-game, so a Dota update is repaired by calling this again - never by shipping a copy.
-
-`base` is the game's own table, which the caller has usually just read: it is 50 MB out of
-a VPK and reading it twice for one deploy was most of what removing a mod cost. Left out,
-it is read here as before.
-
-```
-@param {object} opts
-@param {string} opts.gamePath
-@param {string} opts.folder            the mod folder the schema VPK is written into
-@param {Array} opts.patches
-@param {{ text: string, stamp: string }} [opts.base]  the game's own table, if already read
-@returns {{ applied: Array, missing: string[], conflicts: Array, stamp: string, bytes: number, items: number }}
-```
-
-### `undeploy`
-
-```js
-function undeploy({ gamePath, folder })
-```
-
-Drop the built schema, and the folder with it once nothing of ours is left there.
-
-### `isDeployed`
-
-```js
-function isDeployed(gamePath, folder)
-```
-
-_No description in the source._
-
-### `readGameSchema`
-
-```js
-function readGameSchema(gamePath)
-```
-
-Pull scripts/items/items_game.txt out of the game's pak01. This is the base every
-build starts from, so a game update simply means a rebuild, never a stale schema.
-
-```
-@param {string} gamePath  ...\dota 2 beta\game
-@returns {{ text: string, stamp: string }}  stamp = version marker of the base file
-```
-
-### `gameSchemaStamp`
-
-```js
-function gameSchemaStamp(gamePath)
-```
-
-Cheap "did the game update?" probe: size+mtime of the paks that carry the schema.
-
-### `listItems`
-
-```js
-function listItems(text)
-```
-
-_No description in the source._
-
 ### `baseItemFor`
 
-```js
-function baseItemFor(text, slot)
+```ts
+export function baseItemFor(text: string, slot: string | null | undefined): SchemaItem | null
 ```
 
 The free "base item" of a slot - the one every account owns (555 Default Weather,
@@ -3071,59 +4036,75 @@ cosmetic the default one.
 
 ### `cosmeticOptions`
 
-```js
-function cosmeticOptions(text, slot)
+```ts
+export function cosmeticOptions(text: string, slot: string): { id: string; name: string }[]
 ```
 
 What can be put on that base item, read straight out of the installed game: anything Valve
 adds to the schema later shows up on its own, without an app update.
 
 ```
-@returns {Array<{id, name}>}  name is the schema's own English name, sorted A-Z
+@returns name is the schema's own English name, sorted A-Z
 ```
 
-### `findItem`
+### `readGameSchema`
 
-```js
-function findItem(text, id, section)
+```ts
+export function readGameSchema(gamePath: string): GameSchema
 ```
 
-One item definition, by id. Returns the exact source range so a splice is byte-exact.
+Pull scripts/items/items_game.txt out of the game's pak01. This is the base every
+build starts from, so a game update simply means a rebuild, never a stale schema.
 
 ```
-@returns {{ id: string, start: number, end: number, text: string } | null}
+@param gamePath  ...\dota 2 beta\game
+@returns stamp = version marker of the base file
 ```
 
-### `itemFields`
+### `gameSchemaStamp`
 
-```js
-function itemFields(text, item)
+```ts
+export function gameSchemaStamp(gamePath: string): string
 ```
 
-Direct scalar fields of an item block ("name", "prefab", "item_slot"...).
+Cheap "did the game update?" probe: size+mtime of the paks that carry the schema.
 
-### `extractDeltas`
+### `reindent`
 
-```js
-function extractDeltas(modText, vpkPaths, baseText)
+```ts
+export function reindent(block: string, indent: string): string
 ```
 
-Which item blocks a mod actually changed. Diffing two schemas line by line is
-useless (the mod's copy is months behind the game's), so instead: a real change
-always names a file the mod itself ships. Blocks that mention one of those, and
-differ from the installed schema, are the delta.
+Skinchanger exports are written as one endless line; re-indent so the merged file
+stays readable (and diffable) when someone opens it.
+
+### `ownedAssetNeedles`
+
+```ts
+export function ownedAssetNeedles(vpkPaths: string[], opts: { roots?: boolean } = {}): string[]
+```
+
+Asset paths a mod ships, in the form items_game refers to them: lowercase, no _c.
 
 ```
-@param {string} modText     items_game.txt taken out of the mod
-@param {string[]} vpkPaths  every path inside that mod's VPK
-@param {string} baseText    the game's current schema (to drop no-op blocks)
-@returns {Array<{ id: string, name: string, block: string }>}
+@param opts.roots  also match Skinchanger's numeric content
+root as a whole. Right for "did this mod change that block", wrong when splitting a
+pack per hero — there the root is shared by every hero in it.
 ```
+
+### `blockUsesAssets`
+
+```ts
+export function blockUsesAssets(blockText: string, vpkPaths: string[]): boolean
+```
+
+Does an item block talk about any of these files? Used when a multi-hero pack is split:
+each part keeps only the blocks that belong to its own assets.
 
 ### `deltaTable`
 
-```js
-function deltaTable(deltas)
+```ts
+export function deltaTable(deltas: { id?: string; name?: string; block: string }[] | null | undefined): string
 ```
 
 The blocks a mod changed, written back out as a table of their own: the shape items_game
@@ -3135,39 +4116,36 @@ a file leaving it. A mod exported or shared without those blocks travels without
 effects and icons, so anything built for somewhere else carries this instead: small, and
 read straight back by the same harvest on the other side.
 
-```
-@param {Array<{id, name, block}>} deltas
-@returns {string}
-```
+### `extractDeltas`
 
-### `ownedAssetNeedles`
-
-```js
-function ownedAssetNeedles(vpkPaths, opts = {})
+```ts
+export function extractDeltas(modText: string, vpkPaths: string[], baseText?: string | null): SchemaDelta[]
 ```
 
-Asset paths a mod ships, in the form items_game refers to them: lowercase, no _c.
+Which item blocks a mod actually changed. Diffing two schemas line by line is
+useless (the mod's copy is months behind the game's), so instead: a real change
+always names a file the mod itself ships. Blocks that mention one of those, and
+differ from the installed schema, are the delta.
 
 ```
-@param {string[]} vpkPaths
-@param {{ roots?: boolean }} [opts]  roots: also match Skinchanger's numeric content
-root as a whole. Right for "did this mod change that block", wrong when splitting a
-pack per hero — there the root is shared by every hero in it.
+@param modText     items_game.txt taken out of the mod
+@param vpkPaths    every path inside that mod's VPK
+@param baseText    the game's current schema (to drop no-op blocks)
 ```
 
-### `blockUsesAssets`
+### `stripKeyBlocks`
 
-```js
-function blockUsesAssets(blockText, vpkPaths)
+```ts
+export function stripKeyBlocks(text: string, key: string): string
 ```
 
-Does an item block talk about any of these files? Used when a multi-hero pack is split:
-each part keeps only the blocks that belong to its own assets.
+Remove every "<key> { … }" sub-block from a KV fragment, with the whitespace in front
+of it, so the result still reads like the file it came from.
 
 ### `baseItemPatch`
 
-```js
-function baseItemPatch(baseText, targetId, sourceId)
+```ts
+export function baseItemPatch(baseText: string, targetId: string | number, sourceId: string | number): string
 ```
 
 Free cosmetics: copy the visuals of a real item onto a "base item" everyone owns
@@ -3179,23 +4157,17 @@ button, so those gates come off.
 
 ### `mergeSchema`
 
-```js
-function mergeSchema(baseText, patches)
+```ts
+export function mergeSchema(baseText: string, patches: SchemaPatch[]): MergeResult
 ```
 
 Splice blocks into the base schema. Later entries win; every patch is applied to the
 game's current text, so nothing Valve ships is rolled back except the patched blocks.
 
-```
-@param {string} baseText
-@param {Array<{id: string, block: string, source?: string}>} patches
-@returns {{ text: string, applied: Array, missing: Array, conflicts: Array }}
-```
-
 ### `validateSchema`
 
-```js
-function validateSchema(text, baseText)
+```ts
+export function validateSchema(text: string, baseText?: string | null): { items: number; bytes: number }
 ```
 
 Refuse to ship a schema that could crash the client on load. Cheap structural checks
@@ -3203,38 +4175,71 @@ only: a malformed file is what makes the game die with "ERROR PARSING SCRIPT".
 
 ### `buildSchemaVpk`
 
-```js
-function buildSchemaVpk(text, extraEntries = [])
+```ts
+export function buildSchemaVpk(text: string, extraEntries: VpkEntry[] = []): Buffer
 ```
 
-Pack the merged schema as a one-file VPK holding nothing but items_game.txt.
+Pack the merged schema as a one-file VPK holding items_game.txt and the files its patches bring.
 
-### `reindent`
+### `deploy`
 
-```js
-function reindent(block, indent)
+```ts
+export function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath) }: { gamePath: string; folder: string; patches: SchemaPatch[]; base?: GameSchema; }): MergeResult & { stamp: string; bytes: number; items: number }
 ```
 
-Skinchanger exports are written as one endless line; re-indent so the merged file
-stays readable (and diffable) when someone opens it.
+Build the schema and put it in the mod folder. Always rebuilt from the installed
+game, so a Dota update is repaired by calling this again - never by shipping a copy.
+
+`base` is the game's own table, which the caller has usually just read: it is 50 MB out of
+a VPK and reading it twice for one deploy was most of what removing a mod cost. Left out,
+it is read here as before.
+
+```
+@param opts.folder  the mod folder the schema VPK is written into
+@param opts.base    the game's own table, if already read
+```
+
+### `undeploy`
+
+```ts
+export function undeploy({ gamePath, folder }: { gamePath: string; folder: string }): void
+```
+
+Drop the built schema, and the folder with it once nothing of ours is left there.
+
+### `isDeployed`
+
+```ts
+export function isDeployed(gamePath: string, folder: string): boolean
+```
+
+Whether a built schema is in the mod folder.
 
 ### `crc32`
 
 _No description in the source._
 
-## src/settings.js
+## src/settings.ts
 
 Simple JSON settings store in userData
 
+### `StoredSettings`
+
+```ts
+export interface StoredSettings
+```
+
+What settings.json holds. The window has the same shape (renderer/api/app.ts StoredSettings).
+
 ### `Settings`
 
-```js
-class Settings
+```ts
+export class Settings
 ```
 
 _No description in the source._
 
-## src/slot-zones.js
+## src/slot-zones.ts
 
 The load order in two parts.
 
@@ -3252,10 +4257,26 @@ ran out after one shader, one set of trees, one river and a few items.
 The installer hands out slots through freeSlotIn; moving a mod between the two parts, and the
 one-time layout of an order from before, live here too so the rules sit in one place.
 
+### `Zone`
+
+```ts
+export type Zone = 'priority' | 'normal'
+```
+
+The two ranges a pak can sit in: early slots that load first, and everything after.
+
+### `SlotInstaller`
+
+```ts
+export interface SlotInstaller
+```
+
+What of the installer this asks: which slot a record's pak sits in, which slots are taken, and moving one.
+
 ### `PRIORITY_CATEGORIES`
 
-```js
-const PRIORITY_CATEGORIES = ['trees', 'river', 'shaders', 'herofx', 'ranged-attack', 'hero-items', 'optimization']
+```ts
+export const PRIORITY_CATEGORIES: readonly string[] = ['trees', 'river', 'shaders', 'herofx', 'ranged-attack', 'hero-items', 'optimization']
 ```
 
 The categories that load before every other mod. The Dota2PornFx cart zips mark them with a
@@ -3263,68 +4284,68 @@ The categories that load before every other mod. The Dota2PornFx cart zips mark 
 
 ### `PRIORITY_SLOTS`
 
-```js
-const PRIORITY_SLOTS = [2, 29]
+```ts
+export const PRIORITY_SLOTS: readonly [number, number] = [2, 29]
 ```
 
 The first and last slot of those categories.
 
 ### `NORMAL_FIRST`
 
-```js
-const NORMAL_FIRST = 30
+```ts
+export const NORMAL_FIRST = 30
 ```
 
 Where every other mod starts.
 
 ### `APP_PAK`
 
-```js
-const APP_PAK = 64
+```ts
+export const APP_PAK = 64
 ```
 
 The app's own pak, not a mod: the clearer text for the game's anti-cheat notice
-(src/notice-text.js). One below Minify's 65-67, so that it wins over a Minify "English fix"
+(src/notice-text.ts). One below Minify's 65-67, so that it wins over a Minify "English fix"
 carrying the same localization file, and never handed to a mod, counted as a slot, listed as
 somebody else's file or renamed by the master switch. A mod that had it before is moved off
 by vacateAppPak.
 
 ### `isAppPak`
 
-```js
-const isAppPak = (baseLower) => baseLower === `pak${APP_PAK}_dir.vpk`
+```ts
+export const isAppPak = (baseLower: string): boolean => baseLower === `pak${APP_PAK}_dir.vpk`
 ```
 
 Whether a lowercased file name in the language folder is the app's own pak.
 
 ### `isPriorityCategory`
 
-```js
-const isPriorityCategory = (categoryId) => PRIORITY_CATEGORIES.includes(categoryId)
+```ts
+export const isPriorityCategory = (categoryId: string): boolean => PRIORITY_CATEGORIES.includes(categoryId)
 ```
 
 Whether a category is one of those that load first.
 
 ### `zoneFor`
 
-```js
-const zoneFor = (categoryId) => (isPriorityCategory(categoryId) ? 'priority' : 'normal')
+```ts
+export const zoneFor = (categoryId: string): Zone => (isPriorityCategory(categoryId) ? 'priority' : 'normal')
 ```
 
 Which part of the load order a category's mods belong in.
 
 ### `slotZone`
 
-```js
-const slotZone = (n) => (n >= PRIORITY_SLOTS[0] && n <= PRIORITY_SLOTS[1] ? 'priority' : 'normal')
+```ts
+export const slotZone = (n: number): Zone => (n >= PRIORITY_SLOTS[0] && n <= PRIORITY_SLOTS[1] ? 'priority' : 'normal')
 ```
 
 Which part of the load order a slot number is in.
 
 ### `freeSlotIn`
 
-```js
-function freeSlotIn(zone, used)
+```ts
+export function freeSlotIn(zone: Zone, used: Set<string>): string | null
 ```
 
 The first free slot of a part of the load order, as a file name, or null when it is full.
@@ -3336,8 +4357,8 @@ The first free slot of a part of the load order, as a file name, or null when it
 
 ### `moveToZone`
 
-```js
-function moveToZone(installer, rec)
+```ts
+export function moveToZone(installer: SlotInstaller, rec: LibRecord): LibFile[] | null
 ```
 
 Move a mod into the part of the load order its category belongs in, when it is not there.
@@ -3351,8 +4372,8 @@ category and took a slot among the rest.
 
 ### `migrateSlotZones`
 
-```js
-function migrateSlotZones(installer, library)
+```ts
+export function migrateSlotZones(installer: SlotInstaller, library: Pick<Library, 'list' | 'update'>): { moved: number } | null
 ```
 
 Lay an existing load order out in its two parts, once. The order within each part is kept;
@@ -3369,8 +4390,8 @@ renamed and throws; the caller tries again on the next start.
 
 ### `vacateAppPak`
 
-```js
-function vacateAppPak(installer, library)
+```ts
+export function vacateAppPak(installer: SlotInstaller, library: Pick<Library, 'list' | 'update'>): boolean
 ```
 
 Move a mod off the app's own slot. Until the notice claimed 64, a library of 34 mods or more
@@ -3382,7 +4403,7 @@ game refuses puts back what already moved and throws; the next call tries again.
 @returns {boolean} whether a mod moved
 ```
 
-## src/steam.js
+## src/steam.ts
 
 Finding Steam, and then finding Dota inside it.
 
@@ -3392,18 +4413,38 @@ plausible ones. Everything after that is Steam's own layout rather than the plat
 libraryfolders.vdf lists the other drives, the game sits under steamapps/common, and both
 read the same on either system.
 
+### `parseLibraryFolders`
+
+```ts
+export function parseLibraryFolders(vdfText: string): string[]
+```
+
+parseLibraryFolders and steamappsDir are exported for the tests and used nowhere else.
+Both read files Valve writes, in formats Valve changes without telling anybody, and a wrong
+answer from either sends the app looking for the game on the wrong drive - which is the kind
+of thing that is hard to notice and easy to pin down with a fixture.
+
+### `steamappsDir`
+
+```ts
+export function steamappsDir(lib: string): string
+```
+
+Steam spelled it SteamApps for years and steamapps after that. Windows does not care and
+Linux does, so the folder that is actually on disk decides.
+
 ### `findDotaGamePath`
 
-```js
-async function findDotaGamePath()
+```ts
+export async function findDotaGamePath(): Promise<string | null>
 ```
 
 _No description in the source._
 
 ### `validateGamePath`
 
-```js
-function validateGamePath(p)
+```ts
+export function validateGamePath(p: string | null | undefined): boolean
 ```
 
 A folder called "dota" is not a Dota install.
@@ -3416,7 +4457,7 @@ app's own log said "pak01_dir.vpk not found" a thousand times without anyone act
 
 So the test is Valve's own: the base content pak, or the executable. Either one is enough,
 and the leftovers of a move have neither. The executable has a different name and a
-different folder on Linux, and src/patcher.js already knows both.
+different folder on Linux, and src/patcher.ts already knows both.
 
 Two markers rather than one because a single file can be absent from a real install for a
 moment - mid-download, or while Steam verifies. Note which pak this is: game\dota\pak01_dir
@@ -3424,24 +4465,7 @@ is the game's own content and is always there. The pak01 files in game\dota_<lan
 the voice pack, which plenty of people never download, and testing for those would call a
 working install broken.
 
-### `parseLibraryFolders`
-
-```js
-function parseLibraryFolders(vdfText)
-```
-
-_No description in the source._
-
-### `steamappsDir`
-
-```js
-function steamappsDir(lib)
-```
-
-Steam spelled it SteamApps for years and steamapps after that. Windows does not care and
-Linux does, so the folder that is actually on disk decides.
-
-## src/terrain-age.js
+## src/terrain-age.ts
 
 Terrains that replace the whole map, and whether the game's own map has moved on since.
 
@@ -3459,16 +4483,16 @@ marked, in the catalog and in My mods, and switched off once when the game's map
 
 ### `MAP_REL`
 
-```js
-const MAP_REL = 'maps/dota.vpk'
+```ts
+export const MAP_REL = 'maps/dota.vpk'
 ```
 
 Where a whole-map terrain puts its map, under the language folder.
 
 ### `TAIL_BYTES`
 
-```js
-const TAIL_BYTES = 64 * 1024
+```ts
+export const TAIL_BYTES = 64 * 1024
 ```
 
 The end of a zip holds its table of contents. A terrain archive has two or three files, so
@@ -3476,66 +4500,59 @@ The end of a zip holds its table of contents. A terrain archive has two or three
 
 ### `mapFileOf`
 
-```js
-function mapFileOf(rec)
+```ts
+export function mapFileOf(rec: Pick<LibRecord, 'files'> | null | undefined): LibFile | null
 ```
 
 The record's map file, when the record is a whole-map terrain.
 
 ### `gameMapTime`
 
-```js
-function gameMapTime(gamePath)
+```ts
+export function gameMapTime(gamePath: string | null | undefined): number | null
 ```
 
 When Steam last wrote the game's own map, or null with no game or no map.
 
 ### `mapTimeInZip`
 
-```js
-function mapTimeInZip(buf)
+```ts
+export function mapTimeInZip(buf: unknown): number | null
 ```
 
 When the map inside a zip was packed, read from the zip's table of contents, which sits at the
 end: `buf` may be the whole archive or only its last bytes. null when there is no map in it or
 the bytes are not a zip.
 
-```
-@param {Buffer} buf
-```
-
 ### `mapTimeInArchive`
 
-```js
-function mapTimeInArchive(file)
+```ts
+export function mapTimeInArchive(file: string): number | null
 ```
 
 The same, for an archive on disk: only its tail is read.
 
 ### `isStale`
 
-```js
-function isStale(builtAt, mapAt)
+```ts
+export function isStale(builtAt: unknown, mapAt: unknown): boolean
 ```
 
 Built for a map older than the one the game has. Unknown either way is not old.
 
 ### `createTerrainAges`
 
-```js
-function createTerrainAges({ downloadsDir, gamePath, storeFile, fetchTail = async () => null })
+```ts
+export function createTerrainAges({ downloadsDir, gamePath, storeFile, fetchTail = async () => null }: { downloadsDir?: string; gamePath: () => string | null; storeFile?: string; fetchTail?: (categoryId: string, fileRef: string) => Promise<Buffer | null>; })
 ```
 
 ```
-@param {object} deps
-@param {string} [deps.downloadsDir]       where downloaded archives are kept, <category>/<file>
-@param {() => string|null} deps.gamePath
-@param {string} [deps.storeFile]          a small JSON file of what has been worked out
-@param {(categoryId: string, fileRef: string) => Promise<Buffer|null>} [deps.fetchTail]
-the last bytes of a catalog archive, for a terrain nobody has downloaded yet
+@param deps.downloadsDir  where downloaded archives are kept, <category>/<file>
+@param deps.storeFile     a small JSON file of what has been worked out
+@param deps.fetchTail     the last bytes of a catalog archive, for a terrain nobody has downloaded yet
 ```
 
-## src/toolchain.js
+## src/toolchain.ts
 
 Tools the app can borrow, fetched only when something actually needs them.
 
@@ -3559,55 +4576,49 @@ Rules this file exists to enforce:
     not a rollback plan, and an unsigned file that can redirect a fifty megabyte download is
     not one worth building. Removed 2026-09-16; a new tool version travels with a release.
 
-### `createToolchain`
+### `Pin`
 
-```js
-function createToolchain({ userDataDir, onProgress = () => {}, log = () => {} })
+```ts
+export interface Pin { version: string; url: string; sha256: string; bytes: number; exe: string; license: string; project: string }
 ```
 
+A tool pinned to a version, a URL, and the digest those bytes have to hash to.
+
+### `ToolProgress`
+
+```ts
+export type ToolProgress =
 ```
-@param {object} deps
-@param {string} deps.userDataDir
-@param {(evt: object) => void} [deps.onProgress]
-@param {(msg: string) => void} [deps.log]
-```
+
+How a download is going, for the bar at the bottom of the window.
 
 ### `BUILT_IN_PINS`
 
-```js
-const BUILT_IN_PINS =
+```ts
+export const BUILT_IN_PINS: Record<string, Pin> =
 ```
 
-The only pins there are: what the app was built knowing.
 Measured again 2026-09-07 for 20.0: the digest comes from GitHub's own release API and was
 confirmed by downloading the file and hashing it, and the archive was opened to check the
 executable is at its root under the name below.
 
-### `validPin`
-
-```js
-function validPin(pin, name)
-```
-
-_No description in the source._
-
 ### `TOOL_NAMES`
 
-```js
-const TOOL_NAMES = Object.keys(BUILT_IN_PINS)
+```ts
+export const TOOL_NAMES: readonly string[] = Object.keys(BUILT_IN_PINS)
 ```
 
-_No description in the source._
+Every tool the app knows how to fetch.
 
 ### `FALLBACK_BASE`
 
-```js
-const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/'
+```ts
+export const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/'
 ```
 
 A copy of the pinned archive in this project's own bucket.
 
-The primary URL is a GitHub release, and every mirror src/net.js knows is a proxy standing
+The primary URL is a GitHub release, and every mirror src/net.ts knows is a proxy standing
 in front of GitHub, so all of them go down together. This one does not: tools/r2-toolchain.mjs
 copies the pinned archive there, byte for byte, after checking it against the same digest.
 
@@ -3617,11 +4628,89 @@ hash to. The address is written here for the same reason the owner allowlist bel
 
 ### `fallbackUrl`
 
-```js
-const fallbackUrl = (name, version) => `${FALLBACK_BASE}${name}-${version}.zip`
+```ts
+export const fallbackUrl = (name: string, version: string): string => `${FALLBACK_BASE}${name}-${version}.zip`
 ```
 
 Where the copy of a pinned archive lives, keyed by the tool and the version pinned to it.
+
+### `validPin`
+
+```ts
+export function validPin(pin: unknown, name: string | null | undefined): boolean
+```
+
+Whether a pin names a version, an executable, a digest, and a release of an owner listed above.
+
+### `createToolchain`
+
+```ts
+export function createToolchain({ userDataDir, onProgress = () => {}, log = () => {} }: { userDataDir: string; onProgress?: (evt: ToolProgress) => void; log?: (msg: string) => void; })
+```
+
+The tools in userData: what is there, fetching one at its pin, and deleting it again.
+
+## src/types.ts
+
+The shapes the main process hands between its modules: a record of the library and the files it
+owns. src/library.ts writes them to manifest.json; the window reads the same records over IPC and
+keeps its own copy of the shape (renderer/library/types.ts).
+
+### `LibFile`
+
+```ts
+export interface LibFile
+```
+
+A file a record owns, under one of the folders the app writes into.
+
+### `LibRecord`
+
+```ts
+export interface LibRecord
+```
+
+One entry of the library: a mod, a pack of them, or a cosmetic pick.
+
+### `HasFiles`
+
+```ts
+export type HasFiles = Partial<LibRecord> & Pick<LibRecord, 'files'>
+```
+
+Anything shaped like a record that owns files: what the installer's file work needs of one.
+
+### `PackMember`
+
+```ts
+export interface PackMember
+```
+
+One mod inside a pack: its identity, whether it is on, and where its own copy is kept.
+
+### `PresetEntry`
+
+```ts
+export type PresetEntry =
+```
+
+One line of a preset that travels: what a .d2mm or a link says about one mod (src/preset-share.ts).
+
+### `ModIdentity`
+
+```ts
+export interface ModIdentity
+```
+
+A mod as a preset remembers it: what it is, not which installation of it (src/preset-share.ts).
+
+### `Preset`
+
+```ts
+export interface Preset
+```
+
+A saved build, or one received as a .d2mm and not installed yet (`wanted`).
 
 ## src/uninstall-args.ts
 
@@ -3673,7 +4762,7 @@ export const isUninstallRun = (argv: readonly unknown[] = []): boolean => argv.i
 
 A person removing the program, which is the only case the window may open in.
 
-## src/updater.js
+## src/updater.ts
 
 Where an installed copy looks for a new version, and on which channel.
 
@@ -3696,373 +4785,121 @@ A portable copy cannot replace itself: electron-updater installs by handing the 
 NSIS installer, and a portable build has none, so it would download 100 MB and then fail
 quietly. It still looks, and says where the new copy lives.
 
-### `createUpdater`
+### `UpdaterLike`
 
-```js
-function createUpdater({ autoUpdater, isPortable = false, channel = () => 'latest', send = () => {}, log = () => {}, // ms first, to read as "every four hours, do this"; setInterval takes them the other way round every = (ms, fn) => setInterval(fn, ms), })
+```ts
+export interface UpdaterLike
 ```
 
-```
-@param {object} deps
-@param {object} deps.autoUpdater          electron-updater's, or a stand-in in the tests
-@param {boolean} deps.isPortable
-@param {() => string} deps.channel        'latest' or 'beta', read fresh on every check
-@param {(evt: object) => void} deps.send   tells the window an update exists
-@param {(msg: string) => void} deps.log
-@param {(ms: number, fn: () => void) => any} [deps.every]  so a test does not wait four hours
+What of electron-updater's AppUpdater this drives; the tests hand in a stand-in.
+
+### `UpdateNews`
+
+```ts
+export type UpdateNews = { type: 'available' | 'portable' | 'downloaded'; version: string }
 ```
 
-### `mirrorFor`
-
-```js
-const mirrorFor = () => MIRROR
-```
-
-One address for both channels: electron-updater asks for latest.yml or beta.yml by itself, and
-   the mirror carries both (tools/mirror-plan.js).
+What the window is told: a version exists, is fetched, or is to be fetched beside a portable copy.
 
 ### `MIRROR`
 
-```js
-const MIRROR = 'https://cdn.dota2modmanager.com/updates/'
+```ts
+export const MIRROR = 'https://cdn.dota2modmanager.com/updates/'
 ```
 
 The copy of each release this project keeps, for the hours GitHub is not answering.
 
 ### `EVERY`
 
-```js
-const EVERY = 4 * 60 * 60 * 1000
+```ts
+export const EVERY = 4 * 60 * 60 * 1000
 ```
 
 How often an open window looks again.
 
-## src/vpk.js
+### `mirrorFor`
 
-Minimal reader for the index of Source-engine VPK "_dir" files (v1/v2).
-Only walks the directory tree — enough to list which game files a mod overrides.
+```ts
+export const mirrorFor = (): string => MIRROR
+```
 
-### `listVpkPaths`
+One address for both channels: electron-updater asks for latest.yml or beta.yml by itself, and
+   the mirror carries both (tools/mirror-plan.js).
 
-```js
-function listVpkPaths(buf)
+### `createUpdater`
+
+```ts
+export function createUpdater({ autoUpdater, isPortable = false, channel = () => 'latest', send = () => {}, log = () => {}, // ms first, to read as "every four hours, do this"; setInterval takes them the other way round every = (ms, fn) => setInterval(fn, ms), }: { autoUpdater: UpdaterLike; isPortable?: boolean; channel?: () => string
 ```
 
 ```
-@param {Buffer} buf contents of a *_dir.vpk file
-@returns {string[]} lowercased inner paths like "materials/water/water_ti10_000.vmat_c"
+@param deps.autoUpdater  electron-updater's, or a stand-in in the tests
+@param deps.channel      'latest' or 'beta', read fresh on every check
+@param deps.send         tells the window an update exists
+@param deps.every        so a test does not wait four hours
 ```
 
-### `listVpkPathsFile`
+## src/vpk-analyze.ts
 
-```js
-function listVpkPathsFile(filePath)
+What a mod changes, read from the paths inside it: which heroes, which equip slots, or which
+kind of content, and a name for it. Part of the VPK code src/vpk.ts gathers.
+
+### `HeroHit`
+
+```ts
+export interface HeroHit { id: string; name: string; slots: string[]; base: boolean; models: number }
 ```
 
-_No description in the source._
+A hero a mod touches: the equip slots it replaces, whether it swaps the base model, how many models it carries.
 
-### `listVpkPathCrcs`
+### `Analysis`
 
-```js
-function listVpkPathCrcs(buf)
+```ts
+export interface Analysis { heroes: HeroHit[]; kind: string; pathCount: number }
 ```
 
-Like listVpkPaths, but returns each inner path together with the CRC32 the VPK index
-stores for it. Two mods that carry a byte-identical filler asset share the same CRC, so
-comparing CRCs (not just paths) tells a real override apart from a coincidental shared file.
+What a mod's paths say it changes; see analyzeVpkPaths.
 
-```
-@param {Buffer} buf contents of a *_dir.vpk file
-@returns {Map<string, number>} lowercased inner path -> crc32
-```
+### `slotDisplayName`
 
-### `listVpkPathCrcsFile`
-
-```js
-function listVpkPathCrcsFile(filePath)
+```ts
+export function slotDisplayName(slot: string): string { return t(SLOT_DISPLAY[slot] || slot); }
 ```
 
-_No description in the source._
-
-### `listVpkEntries`
-
-```js
-function listVpkEntries(buf)
-```
-
-Lightweight (path, crc) list — the mod's content signature, no archive reads.
-
-### `openVpkIndex`
-
-```js
-function openVpkIndex(dirPath)
-```
-
-The same seek, for callers with a list rather than one name.
-
-readVpkEntryFile walks the tree on every call, which is right for the one file it was
-written for and wrong for sixty: the game's index holds 384 001 entries and re-reading it
-per icon costs seconds. This walks it once and hands back a reader that seeks.
-
-```
-@param {string} dirPath path to the *_dir.vpk
-@returns {{ size: number, has: (p: string) => boolean, read: (p: string) => Buffer|null }}
-```
-
-### `mergeVpkToSingle`
-
-```js
-function mergeVpkToSingle(dirPath, archivePathFor)
-```
-
-Rewrites a multi-part VPK (_dir.vpk + _000.vpk, _001.vpk…) into one self-contained
-single-file VPK v2 with every entry's data embedded — the format the Dota2PornFx
-catalog uses. Data is copied byte-for-byte; CRCs and preload are preserved.
-
-```
-@param {string} dirPath  path to the *_dir.vpk index file
-@param {(idx: number) => string} [archivePathFor]  resolves external archive N to a path
-@returns {Buffer} the merged single-file VPK
-```
-
-### `splitVpkByHero`
-
-```js
-function splitVpkByHero(dirPath, archivePathFor)
-```
-
-Split a merged multi-hero VPK into one self-contained VPK per detected hero — the
-inverse of tools that pack several skins into one file (e.g. Dota 2 Skinchanger).
-A file that clearly belongs to a hero (…/heroes/<hero>/… or …/hero_<hero>/…) goes to
-that hero; everything else (shared stock, cross-hero assets) is copied into every
-output so each result stands alone and installs/removes independently.
-
-```
-@returns {Array<{ id: string, name: string, buf: Buffer, paths: string[] }>} empty if <2 heroes.
-```
-
-### `readVpkEntries`
-
-```js
-function readVpkEntries(dirBuf, dirPath, archivePathFor)
-```
-
-Read every entry of a _dir.vpk (following external _NNN archives) into a flat list
-with its bytes: [{ ext, folder, name, crc, preload, data }], in on-disk tree order.
-
-### `readVpkIndexFile`
-
-```js
-function readVpkIndexFile(filePath)
-```
-
-Read only the header + directory tree of a *_dir.vpk off disk. A self-contained mod
-is tens of MB of payload sitting behind a few KB of index, and the index is all any
-of the listing/analysis/fingerprint helpers ever touch — so scanning a whole library
-never has to pull the payloads into memory.
-
-```
-@param {string} filePath
-@returns {Buffer} header + tree — what every listing / analysis helper here parses
-```
-
-### `readVpkEntryFile`
-
-```js
-function readVpkEntryFile(dirPath, wanted)
-```
-
-Read the bytes of ONE file out of a *_dir.vpk without touching the rest. The game's
-own pak01 is a 25 GB set behind a 22 MB index, so pulling items_game.txt out of it
-has to be a seek, not a walk: index (already memo-cached) -> offset -> single read.
-
-```
-@param {string} dirPath  path to the *_dir.vpk
-@param {string} wanted   lowercased inner path, e.g. "scripts/items/items_game.txt"
-@returns {{ data: Buffer, crc: number } | null}
-```
-
-### `buildVpk`
-
-```js
-function buildVpk(entries)
-```
-
-Build one self-contained single-file VPK v2 from a flat entry list. Groups entries
-by ext -> folder (first-seen order), embeds every entry's data inline (0x7fff).
-
-### `buildVpkDir`
-
-```js
-function buildVpkDir(entries)
-```
-
-Build a _dir.vpk index that references data in *external* archives (_NNN.vpk). Entries
-must already carry { archiveIndex, offset, length } pointing into those archives. Unlike
-buildVpk (single-file, inline 0x7fff) this holds no file data — the tree only.
-
-### `combineVpksToFiles`
-
-```js
-function combineVpksToFiles(members, outDir, outBase, { volumeCap = 1 << 30 } = {})
-```
-
-Combine several independent single-file VPK mods into ONE multi-part VPK
-(<base>_dir.vpk index + <base>_NNN.vpk data volumes) written straight to disk. This is
-how many mods share a single pakNN slot — the game caps usable pak numbers at 99, so
-packing lets a library grow past that. Data is streamed volume-by-volume (each capped at
-`volumeCap`) so a multi-GB pack never has to sit in memory at once.
-
-When two members provide the same inner path the first member wins and the later one's
-copy is dropped (recorded in `conflicts`) — a merged VPK can't hold two files at one path.
-
-```
-@param {Array<{key:string, buf:Buffer}>} members  self-contained VPK buffers, in priority order
-@param {string} outDir   directory to write <base>_dir.vpk and volumes into
-@param {string} outBase  slot base name, e.g. "pak10"
-@param {{volumeCap?:number}} [opts]
-@returns {{ dir:string, parts:string[], memberPaths:Record<string,string[]>, conflicts:Array }}
-```
-
-### `entryPath`
-
-```js
-function entryPath(en)
-```
-
-full inner path of a read entry, lowercased (" " means the root / no extension)
-
-### `findContentRoot`
-
-```js
-function findContentRoot(dir, depth = 0)
-```
-
-Where the mod's content actually starts under `dir`.
-
-An author points at "MyMod", but the tree underneath may be MyMod/models/..., or the
-game-shaped MyMod/game/dota_russian/models/..., or a single wrapper folder left by
-unzipping. Whatever it is, the archive root is the directory that holds the game's own
-folders - and everything beside them comes too: measured over 84 installed mods, 35 carry
-a top folder of the author's own (dota2pornfx/, amir4an/, models123/) next to the
-canonical ones, and three ship a readme.
-
-```
-@returns {string|null} absolute path, or null if nothing game-shaped is under there
-```
-
-### `packFolder`
-
-```js
-function packFolder(root)
-```
-
-Pack a folder of loose game files into a single self-contained VPK - the other half of
-importing, for the author who has the files but not the archive.
-
-```
-@param {string} root the content root (see findContentRoot)
-@returns {Buffer}
-```
-
-### `crc32`
-
-```js
-function crc32(buf)
-```
-
-_No description in the source._
-
-### `fingerprintVpk`
-
-```js
-function fingerprintVpk(buf)
-```
-
-_No description in the source._
-
-### `fingerprintEntries`
-
-```js
-function fingerprintEntries(entries)
-```
-
-Content fingerprint of a mod: sha1 over its sorted (path:crc) index. Independent of
-packaging (multi-part vs single, filename), so the same mod installed from the site,
-from another tool, or via this app all hash identically — the basis for recognising
-a foreign vpk as a specific catalog mod.
-
-### `fingerprintFiles`
-
-```js
-function fingerprintFiles(files)
-```
-
-Content fingerprint of a loose-file mod (cursors, fonts): sha1 over sorted
-"path:sha1(bytes)". Paths should already be normalized (top folder stripped,
-lowercased) so it reproduces from either the source zip or the installed files.
-
-### `analyzeVpk`
-
-```js
-function analyzeVpk(buf)
-```
-
-_No description in the source._
+An equip slot as the user reads it, in their language.
 
 ### `analyzeVpkPaths`
 
-```js
-function analyzeVpkPaths(paths)
+```ts
+export function analyzeVpkPaths(paths: string[]): Analysis
 ```
 
 Classify what a mod's inner path list actually changes.
 
 ```
-@param {string[]} paths lowercased inner VPK paths (from listVpkPaths)
-@returns {{ heroes: Array<{id,name,slots:string[],base:boolean,models:number}>, kind: string, pathCount: number }}
+@param paths lowercased inner VPK paths (from listVpkPaths)
 ```
 
-### `heroDisplayName`
+### `analyzeVpk`
 
-_No description in the source._
-
-### `slotDisplayName`
-
-```js
-function slotDisplayName(slot) { return t(SLOT_DISPLAY[slot] || slot); }
+```ts
+export function analyzeVpk(buf: Buffer): Analysis
 ```
 
-_No description in the source._
+analyzeVpkPaths over the paths of one VPK.
 
 ### `describeHero`
 
-```js
-function describeHero(h)
+```ts
+export function describeHero(h: HeroHit): string
 ```
 
 Human one-liner for a single detected hero, e.g. "Nyx Assassin (model, weapon)".
 
-### `describeAnalysis`
-
-```js
-function describeAnalysis(a)
-```
-
-Human summary of a whole analysis: hero skins, or a coarse content kind.
-
-### `nameFromAnalysis`
-
-```js
-function nameFromAnalysis(a)
-```
-
-_No description in the source._
-
 ### `subjectHeroes`
 
-```js
-function subjectHeroes(a)
+```ts
+export function subjectHeroes(a: Analysis): HeroHit[]
 ```
 
 The heroes a mod is actually about, as opposed to the ones it merely touches.
@@ -4081,6 +4918,372 @@ borrow a prop from another hero - a Clinkz set hangs a Phoenix immortal off its 
 one wears Disruptor's back piece - and that single model used to make the mod read as two
 heroes. It came in named "Clinkz, Phoenix", and an import of two to four heroes splits
 itself, so the set arrived in two halves with the bow in one of them.
+
+### `describeAnalysis`
+
+```ts
+export function describeAnalysis(a: Analysis): string
+```
+
+Human summary of a whole analysis: hero skins, or a coarse content kind.
+
+### `nameFromAnalysis`
+
+```ts
+export function nameFromAnalysis(a: Analysis): string | null
+```
+
+A short display NAME for a mod from its analysis — used to name imported VPKs by their
+content (a hero, a set, or a content kind) instead of a bare "pakNN" slot. Null if the
+content isn't recognisable enough to name.
+
+## src/vpk-read.ts
+
+Reading a Source-engine VPK: the index of a "_dir" file (v1/v2), the files it lists and their
+bytes, and the content fingerprint that recognises a mod whatever it is packed as. Part of the
+VPK code src/vpk.ts gathers; writing is src/vpk-write.ts, what a mod changes src/vpk-analyze.ts.
+
+### `VPK_SIGNATURE`
+
+```ts
+export const VPK_SIGNATURE = 0x55aa1234
+```
+
+The first four bytes of every VPK index.
+
+### `VpkEntry`
+
+```ts
+export interface VpkEntry { ext: string; folder: string; name: string; crc: number; preload: Buffer; data: Buffer }
+```
+
+One file inside a VPK, with its bytes: what readVpkEntries hands out and buildVpk takes.
+
+### `VpkDirEntry`
+
+```ts
+export interface VpkDirEntry
+```
+
+An entry of a multi-part index: where its bytes sit in the _NNN volumes, not the bytes.
+
+### `VpkIndex`
+
+```ts
+export interface VpkIndex { size: number; has(p: string): boolean; read(p: string): Buffer | null }
+```
+
+A reader over one index that seeks straight to a file; see openVpkIndex.
+
+### `ArchivePathFor`
+
+```ts
+export type ArchivePathFor = (idx: number) => string
+```
+
+Resolves external archive N of a multi-part VPK to its path on disk.
+
+### `readVpkIndexFile`
+
+```ts
+export function readVpkIndexFile(filePath: string): Buffer
+```
+
+Read only the header + directory tree of a *_dir.vpk off disk. A self-contained mod
+is tens of MB of payload sitting behind a few KB of index, and the index is all any
+of the listing/analysis/fingerprint helpers ever touch — so scanning a whole library
+never has to pull the payloads into memory.
+
+```
+@returns header + tree — what every listing / analysis helper here parses
+```
+
+### `listVpkPaths`
+
+```ts
+export function listVpkPaths(buf: Buffer): string[]
+```
+
+Every file a VPK holds, by path.
+
+```
+@param buf contents of a *_dir.vpk file
+@returns lowercased inner paths like "materials/water/water_ti10_000.vmat_c"
+```
+
+### `listVpkPathsFile`
+
+```ts
+export function listVpkPathsFile(filePath: string): string[]
+```
+
+listVpkPaths for a file on disk, reading only its index.
+
+### `listVpkPathCrcs`
+
+```ts
+export function listVpkPathCrcs(buf: Buffer): Map<string, number>
+```
+
+Like listVpkPaths, but returns each inner path together with the CRC32 the VPK index
+stores for it. Two mods that carry a byte-identical filler asset share the same CRC, so
+comparing CRCs (not just paths) tells a real override apart from a coincidental shared file.
+
+```
+@param buf contents of a *_dir.vpk file
+@returns lowercased inner path -> crc32
+```
+
+### `listVpkPathCrcsFile`
+
+```ts
+export function listVpkPathCrcsFile(filePath: string): Map<string, number>
+```
+
+listVpkPathCrcs for a file on disk, reading only its index.
+
+### `readVpkEntryFile`
+
+```ts
+export function readVpkEntryFile(dirPath: string, wanted: string): { data: Buffer; crc: number } | null
+```
+
+Read the bytes of ONE file out of a *_dir.vpk without touching the rest. The game's
+own pak01 is a 25 GB set behind a 22 MB index, so pulling items_game.txt out of it
+has to be a seek, not a walk: index (already memo-cached) -> offset -> single read.
+
+```
+@param dirPath  path to the *_dir.vpk
+@param wanted   lowercased inner path, e.g. "scripts/items/items_game.txt"
+```
+
+### `openVpkIndex`
+
+```ts
+export function openVpkIndex(dirPath: string): VpkIndex
+```
+
+The same seek, for callers with a list rather than one name.
+
+readVpkEntryFile walks the tree on every call, which is right for the one file it was
+written for and wrong for sixty: the game's index holds 384 001 entries and re-reading it
+per icon costs seconds. This walks it once and hands back a reader that seeks.
+
+```
+@param dirPath path to the *_dir.vpk
+```
+
+### `EMPTY`
+
+```ts
+export const EMPTY = Buffer.alloc(0)
+```
+
+A preload or data section with nothing in it.
+
+### `INLINE`
+
+```ts
+export const INLINE = 0x7fff
+```
+
+The archiveIndex meaning "data lives in the _dir file itself".
+
+### `entryPath`
+
+```ts
+export function entryPath(en: { folder: string; name: string; ext: string }): string
+```
+
+Full inner path of a read entry, lowercased (" " means the root / no extension).
+
+### `readVpkEntries`
+
+```ts
+export function readVpkEntries(dirBuf: Buffer, dirPath: string, archivePathFor?: ArchivePathFor | null): VpkEntry[]
+```
+
+Read every entry of a _dir.vpk (following external _NNN archives) into a flat list
+with its bytes, in on-disk tree order.
+
+### `fingerprintEntries`
+
+```ts
+export function fingerprintEntries(entries: { path: string; crc: number }[]): string
+```
+
+Content fingerprint of a mod: sha1 over its sorted (path:crc) index. Independent of
+packaging (multi-part vs single, filename), so the same mod installed from the site,
+from another tool, or via this app all hash identically — the basis for recognising
+a foreign vpk as a specific catalog mod.
+
+### `fingerprintVpk`
+
+```ts
+export function fingerprintVpk(buf: Buffer): string
+```
+
+fingerprintEntries over one VPK's index.
+
+### `fingerprintFiles`
+
+```ts
+export function fingerprintFiles(files: { path: string; data: Buffer }[]): string
+```
+
+Content fingerprint of a loose-file mod (cursors, fonts): sha1 over sorted
+"path:sha1(bytes)". Paths should already be normalized (top folder stripped,
+lowercased) so it reproduces from either the source zip or the installed files.
+
+### `listVpkEntries`
+
+```ts
+export function listVpkEntries(buf: Buffer): { path: string; crc: number }[]
+```
+
+Lightweight (path, crc) list — the mod's content signature, no archive reads.
+
+## src/vpk-write.ts
+
+Writing a Source-engine VPK: one self-contained file from a list of entries or a folder of loose
+files, a multi-part index over data volumes, and a merged pack split back by hero. Part of the
+VPK code src/vpk.ts gathers; the format itself is read in src/vpk-read.ts.
+
+### `crc32`
+
+```ts
+export function crc32(buf: Buffer): number
+```
+
+CRC-32 as the VPK index records it for each entry.
+
+### `entryAt`
+
+```ts
+export function entryAt(relPath: string, data: Buffer): VpkEntry
+```
+
+One file for buildVpk, from its path inside the archive and its bytes. The path is read the
+way the game reads it: forward slashes, lower case, no leading slash, and " " for a file at the
+root or one with no extension.
+
+### `buildVpk`
+
+```ts
+export function buildVpk(entries: VpkEntry[]): Buffer
+```
+
+Build one self-contained single-file VPK v2 from a flat entry list. Groups entries
+by ext -> folder (first-seen order), embeds every entry's data inline (0x7fff).
+
+### `findContentRoot`
+
+```ts
+export function findContentRoot(dir: string, depth = 0): string | null
+```
+
+Where the mod's content actually starts under `dir`.
+
+An author points at "MyMod", but the tree underneath may be MyMod/models/..., or the
+game-shaped MyMod/game/dota_russian/models/..., or a single wrapper folder left by
+unzipping. Whatever it is, the archive root is the directory that holds the game's own
+folders - and everything beside them comes too: measured over 84 installed mods, 35 carry
+a top folder of the author's own (dota2pornfx/, amir4an/, models123/) next to the
+canonical ones, and three ship a readme.
+
+```
+@returns absolute path, or null if nothing game-shaped is under there
+```
+
+### `packFolder`
+
+```ts
+export function packFolder(root: string): Buffer
+```
+
+Pack a folder of loose game files into a single self-contained VPK - the other half of
+importing, for the author who has the files but not the archive.
+
+```
+@param root the content root (see findContentRoot)
+```
+
+### `buildVpkDir`
+
+```ts
+export function buildVpkDir(entries: VpkDirEntry[]): Buffer
+```
+
+Build a _dir.vpk index that references data in *external* archives (_NNN.vpk). Entries
+must already carry { archiveIndex, offset, length } pointing into those archives. Unlike
+buildVpk (single-file, inline 0x7fff) this holds no file data — the tree only.
+
+### `combineVpksToFiles`
+
+```ts
+export function combineVpksToFiles(members: { key: string; buf: Buffer }[], outDir: string, outBase: string, { volumeCap = 1 << 30 }: { volumeCap?: number } = {}):
+```
+
+Combine several independent single-file VPK mods into ONE multi-part VPK
+(<base>_dir.vpk index + <base>_NNN.vpk data volumes) written straight to disk. This is
+how many mods share a single pakNN slot — the game caps usable pak numbers at 99, so
+packing lets a library grow past that. Data is streamed volume-by-volume (each capped at
+`volumeCap`) so a multi-GB pack never has to sit in memory at once.
+
+When two members provide the same inner path the first member wins and the later one's
+copy is dropped (recorded in `conflicts`) — a merged VPK can't hold two files at one path.
+
+```
+@param members  self-contained VPK buffers, in priority order
+@param outDir   directory to write <base>_dir.vpk and volumes into
+@param outBase  slot base name, e.g. "pak10"
+```
+
+### `mergeVpkToSingle`
+
+```ts
+export function mergeVpkToSingle(dirPath: string, archivePathFor?: ArchivePathFor | null): Buffer
+```
+
+Rewrites a multi-part VPK (_dir.vpk + _000.vpk, _001.vpk…) into one self-contained
+single-file VPK v2 with every entry's data embedded — the format the Dota2PornFx
+catalog uses. Data is copied byte-for-byte; CRCs and preload are preserved.
+
+```
+@param dirPath  path to the *_dir.vpk index file
+@param archivePathFor  resolves external archive N to a path
+@returns the merged single-file VPK
+```
+
+### `splitVpkByHero`
+
+```ts
+export function splitVpkByHero(dirPath: string, archivePathFor?: ArchivePathFor | null): { id: string; name: string; buf: Buffer; paths: string[] }[]
+```
+
+Split a merged multi-hero VPK into one self-contained VPK per detected hero — the
+inverse of tools that pack several skins into one file (e.g. Dota 2 Skinchanger).
+A file that clearly belongs to a hero (…/heroes/<hero>/… or …/hero_<hero>/…) goes to
+that hero; everything else (shared stock, cross-hero assets) is copied into every
+output so each result stands alone and installs/removes independently.
+
+```
+@returns empty if <2 heroes.
+```
+
+## src/vpk.ts
+
+The VPK format, in one place for everything that reads or writes one: the reader
+(src/vpk-read.ts), the writer (src/vpk-write.ts) and what a mod's paths say it changes
+(src/vpk-analyze.ts). Callers import from here; the three files are how it is kept readable.
+
+Hands on from [`src/vpk-read.ts`](#srcvpk-readts): `readVpkIndexFile`, `listVpkPaths`, `listVpkPathsFile`, `listVpkPathCrcs`, `listVpkPathCrcsFile`, `readVpkEntryFile`, `openVpkIndex`, `entryPath`, `readVpkEntries`, `listVpkEntries`, `fingerprintEntries`, `fingerprintVpk`, `fingerprintFiles`, `VpkEntry`, `VpkDirEntry`, `VpkIndex`.
+
+Hands on from [`src/vpk-analyze.ts`](#srcvpk-analyzets): `analyzeVpkPaths`, `analyzeVpk`, `slotDisplayName`, `describeHero`, `subjectHeroes`, `describeAnalysis`, `nameFromAnalysis`, `HeroHit`, `Analysis`.
+
+Hands on from [`src/vpk-write.ts`](#srcvpk-writets): `crc32`, `entryAt`, `buildVpk`, `findContentRoot`, `packFolder`, `buildVpkDir`, `combineVpksToFiles`, `mergeVpkToSingle`, `splitVpkByHero`.
+
+Hands on from [`src/hero-names.ts`](#srchero-namests): `heroDisplayName`.
 
 ## src/vtex.ts
 
