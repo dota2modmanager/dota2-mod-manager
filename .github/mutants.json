@@ -782,16 +782,16 @@
       "name": "the desktop entry is rewritten and the desktop reread on every start",
       "file": "src/deep-links.ts",
       "anchor": "export function installDesktopEntry(",
-      "from": "    if (fs.existsSync(file) && fs.readFileSync(file, 'utf-8') === entry) return;\n",
-      "to": "",
+      "from": "if (fs.existsSync(file) && fs.readFileSync(file, 'utf-8') === entry) return;",
+      "to": "if (false) return;",
       "test": "test/deep-links.test.ts"
     },
     {
       "name": "the window follows a link to another page and hands it window.api",
       "file": "src/main-window.ts",
       "anchor": "win.webContents.on('will-navigate', (event, url) => {",
-      "from": "    event.preventDefault();\n    diag(`blocked navigation",
-      "to": "    diag(`blocked navigation",
+      "from": "event.preventDefault();",
+      "to": "void event;",
       "test": "test/main-window.test.ts"
     },
     {
@@ -846,8 +846,8 @@
       "name": "a module's channels are never registered, so every button it serves does nothing",
       "file": "src/main.ts",
       "anchor": "  registerPacksIpc(ctx);",
-      "from": "  registerMiscIpc(ctx);\n",
-      "to": "",
+      "from": "registerMiscIpc(ctx);",
+      "to": "void 0;",
       "test": "test/ipc-contract.test.js"
     },
     {
