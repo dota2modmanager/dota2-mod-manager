@@ -15,6 +15,7 @@
  * one-time layout of an order from before, live here too so the rules sit in one place.
  */
 const { RESERVED_PAKS } = require('./minify');
+const { FileTx } = require('./file-tx');
 
 /** The categories that load before every other mod. The Dota2PornFx cart zips mark them with a
  *  "!pak" prefix, a merge-order hint for VPKMerge; the game only mounts pakNN_dir.vpk. */
@@ -111,21 +112,11 @@ function migrateSlotZones(installer, library) {
     .map((p) => ({ ...p, from: installer.slotBase(p.r), park: `mmslot${p.n}`, to: p.to.replace(/_dir\.vpk$/i, '') }));
   if (!moving.length) return { moved: 0 };
 
-  const done = [];
-  const step = (p, files, from, to) => {
-    const out = installer.moveToSlot({ ...p.r, files }, to, from);
-    done.push({ p, files: out, from, to });
-    return out;
-  };
-  try {
-    for (const p of moving) p.parked = step(p, p.r.files, p.from, p.park);
-    for (const p of moving) p.files = step(p, p.parked, p.park, p.to);
-  } catch (err) {
-    for (const d of done.reverse()) {
-      try { installer.moveToSlot({ ...d.p.r, files: d.files }, d.from, d.to); } catch { /* nothing else to try */ }
-    }
-    throw err;
-  }
+  // one transaction for the whole layout: a refusal anywhere puts every file back
+  FileTx.run((tx) => {
+    for (const p of moving) p.parked = installer.moveToSlot({ ...p.r, files: p.r.files }, p.park, p.from, tx);
+    for (const p of moving) p.files = installer.moveToSlot({ ...p.r, files: p.parked }, p.to, p.park, tx);
+  }, installer.log);
   for (const p of moving) library.update(p.r.id, { files: p.files });
   return { moved: moving.length };
 }
@@ -150,14 +141,8 @@ function vacateAppPak(installer, library) {
   if (!to) return false;
   const from = `pak${APP_PAK}`;
   const base = to.replace(/_dir\.vpk$/i, '');
-  try {
-    library.update(rec.id, { files: installer.moveToSlot(rec, base, from) });
-  } catch (err) {
-    // the files that did move carry the new name; moving the record from there takes them back
-    const moved = (rec.files || []).map((f) => (f.root === 'lang' && f.relPath.toLowerCase().startsWith(`${from}_`) ? { ...f, relPath: base + f.relPath.slice(from.length) } : f));
-    try { installer.moveToSlot({ ...rec, files: moved }, from, base); } catch { /* nothing else to try */ }
-    throw err;
-  }
+  // a refused rename puts back what already moved inside moveToSlot's transaction
+  library.update(rec.id, { files: installer.moveToSlot(rec, base, from) });
   return true;
 }
 
