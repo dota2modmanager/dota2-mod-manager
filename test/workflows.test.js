@@ -517,3 +517,23 @@ test('the old address is published only when docs/ changes, and never cancelled 
   assert.match(text, /actions\/upload-pages-artifact@[0-9a-f]{40}[^\n]*\n\s+with:\n\s+path: docs\n/, 'something other than docs/ would be published');
 });
 
+
+test('a step that waits on a package mirror gives up on its own', () => {
+  /* On 2026-10-01 "Install xvfb" sat in apt-get update for two hours: a mirror took the connection
+     and never answered, and a step with no limit waits for the job's six-hour one. The pull request
+     looked stuck rather than failed, so nobody knew to run it again. */
+  const missing = [];
+  let seen = 0;
+  for (const f of workflows) {
+    // a step starts at "- name:", "- uses:" or "- run:" and runs to the next one
+    for (const step of read(f).split(/\n\s*- (?=name:|uses:|run:)/).slice(1)) {
+      if (!/\bapt-get\b/.test(step)) continue;
+      seen += 1;
+      const name = (/^name: ([^\n]*)/.exec(step) || [])[1] || step.split('\n')[0];
+      if (!/\n\s*timeout-minutes: \d+/.test(step)) missing.push(`${f}: ${name}`);
+      if (!/Acquire::http::Timeout=\d+/.test(step)) missing.push(`${f}: ${name} (apt waits on a silent mirror forever)`);
+    }
+  }
+  assert.ok(seen >= 4, `only ${seen} apt-get steps found, so the split stopped finding steps`);
+  assert.deepEqual(missing, [], `give these a timeout-minutes and Acquire::http::Timeout: ${missing.join('; ')}`);
+});
