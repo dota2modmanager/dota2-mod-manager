@@ -39,18 +39,18 @@ back after they stopped being true. Every entry carries a command that settles i
 here to review rather than to change something, that file is the whole brief.
 
 **Do not read whole source files to orient yourself.** Find the symbol, then read its slice.
-`main.js` and `src/installer.js` are large and reading them end to end wastes more than it
+`main.js` and `src/installer.ts` are large and reading them end to end wastes more than it
 tells you.
 
 **The domain is unusual and the obvious assumption is usually wrong.** Three examples that have
 each cost real time:
 
 - Dota mounts **one** language folder, named after the **voice** language, and a `-language` in
-  Steam's launch options outranks the game's own setting. `src/gamelang.js` opens with the full
+  Steam's launch options outranks the game's own setting. `src/gamelang.ts` opens with the full
   rule. It is the rule, not a summary of one; change it only by measuring.
-- `items_game.txt` is ~50 MB with non-UTF8 bytes in it. `src/schema.js` works on latin1 strings
+- `items_game.txt` is ~50 MB with non-UTF8 bytes in it. `src/schema.ts` works on latin1 strings
   on purpose. A round trip through a "cleaner" encoding mangles it.
-- A pak slot decides which of two mods the game loads. Lower wins. `src/installer.js` allocates
+- A pak slot decides which of two mods the game loads. Lower wins. `src/installer.ts` allocates
   them, and 65 to 67 are never handed out because another program writes them.
 
 ## How to know your change works
@@ -80,7 +80,7 @@ Four of them check the project against itself rather than checking code:
 - `test/ipc-contract.test.js` — every channel the renderer can call has a handler, every
   handler is reachable, none registered twice, every `src/ipc-*.js` wired into main.
 - `test/release-contract.test.js` — the version, both changelogs and what CI reads all agree.
-- `test/coverage.test.js` — which mod supplies a file when two carry the same path.
+- `test/coverage.test.ts` — which mod supplies a file when two carry the same path.
 - `tools/check-i18n.js` — no Russian string without an English one.
 
 If one of these fails, the fix is almost never the test.
@@ -94,7 +94,7 @@ If one of these fails, the fix is almost never the test.
 - **Errors are for people.** "Свободных слотов pakNN не осталось" beats "ENOENT".
 - **Anything that needs the network fails quietly.** The app has to work offline with what it
   cached. A feature that throws because GitHub is unreachable is a bug.
-- **Writing into the game folder is a transaction.** `src/file-tx.js`. If a step fails,
+- **Writing into the game folder is a transaction.** `src/file-tx.ts`. If a step fails,
   everything goes back, including files displaced to make room.
 - No emoji in code, comments, commits, UI or documentation.
 

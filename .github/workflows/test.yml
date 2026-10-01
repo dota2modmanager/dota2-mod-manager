@@ -81,7 +81,7 @@ jobs:
       # this changed, while src/presets-service.js sat at 13.8%, and a new module with no tests
       # moves the aggregate by a fraction of a point.
       #
-      # The figure differs by platform and the floor has to clear the lower one. src/steam.js
+      # The figure differs by platform and the floor has to clear the lower one. src/steam.ts
       # asks which operating system it is on and takes a different half of itself on each, so
       # this runner reports 75.2 lines / 77.4 branches / 73.6 functions where a Windows machine
       # reports 74.8 / 77.7 / 73.0 (measured 2026-09-10, both). A floor calibrated on one of
@@ -112,7 +112,7 @@ jobs:
   # gate would then wait forever for a check that no longer exists.
   #
   # No coverage floor here on purpose. Coverage is a property of the suite, not of the machine
-  # running it, and the two platforms genuinely report different figures because src/steam.js
+  # running it, and the two platforms genuinely report different figures because src/steam.ts
   # takes a different half of itself on each. One floor, enforced once, on the runner it was
   # calibrated against. This job is here to catch what only breaks on Windows: a path separator,
   # a case-insensitive filesystem, a locked file.

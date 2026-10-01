@@ -30,14 +30,14 @@ about you beyond what any HTTP request unavoidably reveals to the host it is sen
 
 | Host | What for | Where in the code |
 |---|---|---|
-| `raw.githubusercontent.com` | The mod catalog (`Dota2PornFxWeb`), the fingerprint map, and the remote config that lets a broken feature be switched off without a release | `src/catalog.js`, `src/fingerprints.js`, `src/remote-config.js` |
-| `github.com` | Update checks and downloading a new version from Releases | `electron-updater`, `main.js`, `src/portable-update.js` |
-| `cdn.dota2modmanager.com` | A copy of the catalog's mod archives and their preview pictures, the pinned toolchain, and since 2.6.5 the app's own updates, so all of that still works when GitHub is unreachable | `src/net.js`, `renderer/ui/media.js`, `src/portable-update.js` |
-| `huggingface.co` | Another copy of the catalog's mod archives, kept by the catalog's author, tried after `cdn.dota2modmanager.com`. It is named in the signed remote config rather than in the app, and a download from it counts only if it matches the hash the catalog publishes | `config/app.json`, `src/remote-config.js`, `src/net.js` |
-| `dota2modmanager.com` | A mirror of the small catalog files, same reason, and the one copy where a file and its signature are always from the same moment | `src/net.js`, `src/catalog.js` |
-| `cdn.jsdelivr.net`, `ghproxy.net`, `gh-proxy.com`, `ghfast.top` | Public GitHub mirrors, tried only when the ones above fail. The list itself is remote config, so a mirror that misbehaves can be dropped without a release | `src/net.js` |
-| `dota2.fandom.com`, `liquipedia.net` | Item and hero pictures for the free-cosmetics screen, when the game's own files do not have one | `src/icons.js` |
-| `discord.com`, `cdn.discordapp.com` | **Only** if you press *Sign in with Discord*, and only to read your name and avatar | `src/discord-auth.js` |
+| `raw.githubusercontent.com` | The mod catalog (`Dota2PornFxWeb`), the fingerprint map, and the remote config that lets a broken feature be switched off without a release | `src/catalog.ts`, `src/fingerprints.ts`, `src/remote-config.ts` |
+| `github.com` | Update checks and downloading a new version from Releases | `electron-updater`, `main.js`, `src/portable-update.ts` |
+| `cdn.dota2modmanager.com` | A copy of the catalog's mod archives and their preview pictures, the pinned toolchain, and since 2.6.5 the app's own updates, so all of that still works when GitHub is unreachable | `src/net.ts`, `renderer/ui/media.js`, `src/portable-update.ts` |
+| `huggingface.co` | Another copy of the catalog's mod archives, kept by the catalog's author, tried after `cdn.dota2modmanager.com`. It is named in the signed remote config rather than in the app, and a download from it counts only if it matches the hash the catalog publishes | `config/app.json`, `src/remote-config.ts`, `src/net.ts` |
+| `dota2modmanager.com` | A mirror of the small catalog files, same reason, and the one copy where a file and its signature are always from the same moment | `src/net.ts`, `src/catalog.ts` |
+| `cdn.jsdelivr.net`, `ghproxy.net`, `gh-proxy.com`, `ghfast.top` | Public GitHub mirrors, tried only when the ones above fail. The list itself is remote config, so a mirror that misbehaves can be dropped without a release | `src/net.ts` |
+| `dota2.fandom.com`, `liquipedia.net` | Item and hero pictures for the free-cosmetics screen, when the game's own files do not have one | `src/icons.ts` |
+| `discord.com`, `cdn.discordapp.com` | **Only** if you press *Sign in with Discord*, and only to read your name and avatar | `src/discord-auth.ts` |
 
 The app never contacts Valve or Steam, and never touches your Steam account. It reads Steam's
 own configuration files on disk to find where Dota is installed and which language it is set
@@ -64,7 +64,7 @@ started, and a button that opens dota2modmanager.com. The app sends that over th
 connection Discord opens for games (a named pipe on Windows, a socket on Linux), not over the
 internet. Discord then shows it to the people who can see your profile, the way it shows any game
 you play. It is on unless you switch it off in Settings, and switching it off closes the
-connection. The code is `src/discord-presence.js`.
+connection. The code is `src/discord-presence.ts`.
 
 ## Preset links
 

@@ -57,6 +57,6 @@ test('the report names the dictionary, each untranslated twin, and counts them',
     '\n1 English twin(s) in renderer/i18n.js still contain Cyrillic:',
     '  "Установить": "Установить мод"',
   ]);
-  assert.deepEqual(translationReport({ Моды: 'Mods' }, 'src/i18n.js'), { count: 0, lines: [] });
+  assert.deepEqual(translationReport({ Моды: 'Mods' }, 'src/i18n.ts'), { count: 0, lines: [] });
 });
 

@@ -37,7 +37,7 @@ import { handlePresetImport } from './views/presets.js';
 import './views/settings.js';
 
 // A crash the user can't explain is the hardest kind to fix from a support chat. Both land
-// in the app's own log (see main.js diag:rendererError / src/diagnostics.js), so "it broke"
+// in the app's own log (see main.js diag:rendererError / src/diagnostics.ts), so "it broke"
 // turns into a report the user can export instead of a guessing game over Discord.
 window.addEventListener('error', (e) => {
   window.api.diag.reportError(`window.onerror: ${e.message} @ ${e.filename}:${e.lineno}:${e.colno}`);

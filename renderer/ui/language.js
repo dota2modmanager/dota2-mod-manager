@@ -5,7 +5,7 @@
  * hand either way - a grip's label and a tab's width both depend on the words in them.
  *
  * The language of this app has nothing to do with Dota's own, nor with which mods folder is
- * used: that follows the game's audio language (see src/gamelang.js).
+ * used: that follows the game's audio language (see src/gamelang.ts).
  */
 import { state } from '../core/store.js';
 import { render } from '../core/router.js';

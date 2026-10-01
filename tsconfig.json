@@ -11,8 +11,14 @@
 //     value that could be null. A strict pass over thirty thousand lines written without types
 //     reports hundreds of theoretical nulls and teaches everyone to ignore the tool. Tighten it
 //     when the easy errors are gone, one flag at a time.
-//   module CommonJS, moduleResolution node10 - what the app actually is: require, not import.
-//   resolveJsonModule - src/icons.js reads package.json for the version, which is real.
+//   module preserve - the app is both now: main.js and the JS modules require, the modules moved
+//     to TypeScript import, and some of those use import.meta. CommonJS rejected the last, and
+//     preserve reads each file the way it is written. Resolution is bundler's, which finds a
+//     require('./x') the way Node does.
+//   allowImportingTsExtensions - the modules already moved to TypeScript are required by their
+//     .ts name, which is how Node finds them. Their own checking is src/tsconfig.json, strict.
+//   esModuleInterop - those modules import Node's own the ES way (import fs from 'node:fs'), and
+//     this project reads them too, through the requires that reach them.
 //   skipLibCheck - Electron's own .d.ts is not this project's to fix.
 //
 // Not covered: renderer/ and tools/. The renderer is ES modules against the DOM, the tools are a
@@ -24,9 +30,10 @@
     "checkJs": true,
     "noEmit": true,
     "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "node10",
-    "resolveJsonModule": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": false,
     "types": ["node"]

@@ -36,7 +36,7 @@ export async function refreshMasterSwitch() {
 //
 // Off (safe, default) leaves the game untouched; on registers game/dota_mods in
 // gameinfo_branchspecific.gi and re-signs it in dota.signatures, which is what lets Dota
-// read the item-schema effects mods carry and the free cosmetics catalog. See src/patcher.js.
+// read the item-schema effects mods carry and the free cosmetics catalog. See src/patcher.ts.
 
 export function paintSafeModeSwitch() {
   const btn = $('#safeModeBtn');

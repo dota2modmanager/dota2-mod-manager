@@ -36,7 +36,7 @@ runs, so the file loaded and every handler registered.
 
 ## What catches it now
 
-- `src/feature-gate.js`: the remote switch has one definition, handed to every module that asks
+- `src/feature-gate.ts`: the remote switch has one definition, handed to every module that asks
   it, so there is no second copy to leave behind.
 - `eslint.config.js` "no-undef": an undefined name fails `npm run verify` and CI.
 - `test/ipc-contract.test.js` "every handler runs far enough to prove its own names exist":

@@ -18,8 +18,8 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
-const { RAW_BASE } = require('../src/catalog');
-const { fingerprintVpk, fingerprintFiles, listVpkPaths, analyzeVpkPaths, subjectHeroes } = require('../src/vpk');
+const { RAW_BASE } = require('../src/catalog.ts');
+const { fingerprintVpk, fingerprintFiles, listVpkPaths, analyzeVpkPaths, subjectHeroes } = require('../src/vpk.ts');
 const { jsonLinesFile } = require('./json-lines');
 
 // tools aren't mods (they're utilities/programs) — never fingerprint them

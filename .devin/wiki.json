@@ -10,7 +10,7 @@
       "content": "The project makes no promise about bans. Its stated position (the site's safety page, DECISIONS.md) is that bans are for cheats and cosmetic mods are not cheats, that Valve has published no rule naming cosmetic mods, that the maintainers know of no ban for them, and that the risk is the user's. Do not call the app or the mods safe from bans, VAC-safe or undetectable."
     },
     {
-      "content": "src/notice-text.js changes the words of the game's anti-cheat notice window: it puts the DOTA_VAC_* strings, rewritten as advice (verify the game files, restart Steam, turn mods off), into chat_<language>.txt inside the app's own pak64. It changes what the window says, not any check the game makes."
+      "content": "src/notice-text.ts changes the words of the game's anti-cheat notice window: it puts the DOTA_VAC_* strings, rewritten as advice (verify the game files, restart Steam, turn mods off), into chat_<language>.txt inside the app's own pak64. It changes what the window says, not any check the game makes."
     },
     {
       "content": "The licence is GPL-3.0-or-later (NOTICE: version 3 of the License, or any later version), with two additional terms under section 7: 7(b) attribution and 7(e) the project's name, icon and domain. It is not GPL-3.0-only."

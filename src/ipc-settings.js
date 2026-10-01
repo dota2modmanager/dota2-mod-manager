@@ -1,15 +1,15 @@
 /* Settings, the Discord account, and asking the catalog for a refresh.
  *
  * Both settings handlers answer with the whole view rather than the bare store, because the
- * renderer caches whatever it is handed - see src/settings-view.js for what that cost once.
+ * renderer caches whatever it is handed - see src/settings-view.ts for what that cost once.
  * Bodies unchanged from main.js.
  */
 const path = require('path');
 const { dialog, ipcMain } = require('electron');
 
-const i18n = require('./i18n');
+const i18n = require('./i18n.ts');
 const { t } = i18n;
-const { betaState } = require('./beta');
+const { betaState } = require('./beta.ts');
 
 /** @param {object} ctx  the services and main-process callbacks these channels use */
 function registerSettingsIpc({
@@ -22,8 +22,8 @@ function registerSettingsIpc({
   /* The beta channel, from the switch in settings and the list in the signed config.
    *
    * Read rather than remembered: an account taken off the list, or signed out of Discord, is back
-   * on the stable channel at the next check without anybody touching their machine. src/beta.js
-   * holds the rule, src/updater.js does the aiming, and neither is asked whether the user is
+   * on the stable channel at the next check without anybody touching their machine. src/beta.ts
+   * holds the rule, src/updater.ts does the aiming, and neither is asked whether the user is
    * "allowed" anywhere else - this is who is offered the build, not who can run it. */
   const beta = () => betaState({
     discordId: (settings.get('account') || {}).id || null,
@@ -119,7 +119,7 @@ function registerSettingsIpc({
     } catch (err) {
       /* The kind of failure travels with the words. "fetch failed" is Node's way of saying it
          could not open a socket, and printing that at somebody who turned their wifi off is
-         the same as printing nothing. src/net.js marks a failure to connect; the screen turns
+         the same as printing nothing. src/net.ts marks a failure to connect; the screen turns
          that into a sentence and keeps the technical half for the diagnostics report. */
       return { error: String(err.message || err), offline: !!err.offline };
     }

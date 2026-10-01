@@ -2,14 +2,14 @@
 /**
  * Throw broken files at the parsers that read other people's files, for as long as you like.
  *
- * test/vpk-fuzz.test.js and test/safe-zip-fuzz.test.js run a few hundred cases on every push,
+ * test/vpk-fuzz.test.ts and test/safe-zip-fuzz.test.js run a few hundred cases on every push,
  * which is the right size for a gate. This is the same generators with the brakes off: give it a
  * seed and a number of iterations and leave it running. Anything that escapes as a Node or
  * library error rather than one of this project's own refusals, or that takes longer than the
  * budget, is written to fuzz-output/ with the seed that produced it, so it can be replayed exactly.
  *
  *   node tools/fuzz-parsers.mjs                        20000 VPK cases from a random seed
- *   node tools/fuzz-parsers.mjs --target zip           the same for the archive door, src/safe-zip.js
+ *   node tools/fuzz-parsers.mjs --target zip           the same for the archive door, src/safe-zip.ts
  *   node tools/fuzz-parsers.mjs --seed 20260916        the same cases every time
  *   node tools/fuzz-parsers.mjs --iterations 500000    a long run
  *
@@ -26,8 +26,8 @@ const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(root, 'fuzz-output');
 
-const { buildVpk, listVpkPaths, listVpkPathCrcs, listVpkEntries } = require('../src/vpk.js');
-const { openZip } = require('../src/safe-zip.js');
+const { buildVpk, listVpkPaths, listVpkPathCrcs, listVpkEntries } = require('../src/vpk.ts');
+const { openZip } = require('../src/safe-zip.ts');
 const AdmZip = require('adm-zip');
 
 const arg = (name, fallback) => {
@@ -55,7 +55,7 @@ function prng(seed) {
   };
 }
 
-/* ---------- VPK: the same sample and damage as test/vpk-fuzz.test.js ---------- */
+/* ---------- VPK: the same sample and damage as test/vpk-fuzz.test.ts ---------- */
 
 function sampleVpk() {
   const file = (folder, name, ext, body) => {
@@ -115,7 +115,7 @@ const TARGETS = {
     calls: [['listVpkPaths', listVpkPaths], ['listVpkPathCrcs', listVpkPathCrcs], ['listVpkEntries', listVpkEntries]],
     ours: ourVpkRefusal,
     ext: 'vpk',
-    test: 'test/vpk-fuzz.test.js',
+    test: 'test/vpk-fuzz.test.ts',
   },
   zip: {
     base: sampleZip,

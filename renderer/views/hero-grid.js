@@ -50,7 +50,7 @@ export function heroGridWanted(filters) {
   return !filters.hero && filters.sort === 'default' && heroLayout() === 'grid';
 }
 
-// Portraits come out of the player's own game (src/game-icons.js heroPortraits), keyed by the
+// Portraits come out of the player's own game (src/game-icons.ts heroPortraits), keyed by the
 // name the catalog prints. null means asked and not found, so the tile keeps its stand-in.
 const heroArt = new Map();
 

@@ -38,15 +38,15 @@ mod's file and Valve's are the same bytes, and when the kept original is the mod
 
 ## What catches it now
 
-- `src/overlays.js`: every font and cursor write is recorded by hash in `backups/written.json`.
+- `src/overlays.ts`: every font and cursor write is recorded by hash in `backups/written.json`.
   A file holding what the app wrote is the app's file, whatever else it matches, and the repair
   no longer keeps such a file as the game's original. An install from before the fix is reported
   once more, and putting it back writes the record.
-- `test/installer.test.js` "a font that ships some of Valve's files unchanged is not taken for one
+- `test/installer.test.ts` "a font that ships some of Valve's files unchanged is not taken for one
   a verify undid"
-- `test/installer.test.js` "a font Steam's verify replaced is noticed, and put back from the
+- `test/installer.test.ts` "a font Steam's verify replaced is noticed, and put back from the
   download cache": includes the removal afterwards leaving no file of the mod behind.
-- `test/installer.test.js` "a cursor set installed before the app recorded its writes stops being
+- `test/installer.test.ts` "a cursor set installed before the app recorded its writes stops being
   reported once it is put back"
 - `.github/mutants.json` "a font or cursor file the app wrote itself is taken for one a verify put
   back": the weekly mutation run puts the old check back and expects these tests to fail.

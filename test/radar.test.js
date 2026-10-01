@@ -58,7 +58,7 @@ test('the week of 2026-09-15, replayed: what the radar would have said', async (
       { number: 20, title: 'Work in progress', html_url: 'https://github.com/x/y/pull/20', created_at: ago(9 * 24), draft: true, user: { login: 'TheFleece' } },
     ],
     issues: [{ number: 26, title: 'Terrain does not install', html_url: 'https://github.com/x/y/issues/26', waitingSince: ago(80) }],
-    codeScanning: [{ number: 85, rule: { id: 'js/http-to-file-access', severity: 'warning' }, html_url: 'https://github.com/x/y/security/code-scanning/85', created_at: ago(5 * 24), most_recent_instance: { location: { path: 'src/catalog.js' } } }],
+    codeScanning: [{ number: 85, rule: { id: 'js/http-to-file-access', severity: 'warning' }, html_url: 'https://github.com/x/y/security/code-scanning/85', created_at: ago(5 * 24), most_recent_instance: { location: { path: 'src/catalog.ts' } } }],
     privateReporting: false,
     workflows: [
       { name: 'SEO report', state: 'active', intervalHours: 168, url: 'u', lastRun: { conclusion: 'success', created_at: ago(15 * 24), url: 'r' } },

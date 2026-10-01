@@ -8,12 +8,12 @@
  * clicks. This does, as a model of the loader:
  *
  *   1. mounts: the search paths from gameinfo_branchspecific.gi (or gameinfo.gi), in order, with
- *      *LANGUAGE* resolved the way src/gamelang.js resolves it for the app, keeping the folders
+ *      *LANGUAGE* resolved the way src/gamelang.ts resolves it for the app, keeping the folders
  *      that exist;
  *   2. packs: every pakNN_dir.vpk in every mounted folder opens, and in the ones that are ours
  *      (not Valve's pak01) every file's bytes match the CRC its index claims;
  *   3. winners: for each path, the first mounted folder that has it, and inside a folder the
- *      lowest pak number, which is the rule src/installer.js places mods by;
+ *      lowest pak number, which is the rule src/installer.ts places mods by;
  *   4. schema: the items_game.txt the game would read parses, and every model, particle and
  *      material a changed block points at exists somewhere the game can load it from;
  *   5. signatures: when the search paths are ours, dota.signatures carries a line for the
@@ -27,9 +27,9 @@
 const fs = require('fs');
 const path = require('path');
 const { crc32 } = require('zlib');
-const { openVpkIndex, listVpkPathCrcsFile } = require('../../src/vpk.js');
-const patcher = require('../../src/patcher.js');
-const gamelang = require('../../src/gamelang.js');
+const { openVpkIndex, listVpkPathCrcsFile } = require('../../src/vpk.ts');
+const patcher = require('../../src/patcher.ts');
+const gamelang = require('../../src/gamelang.ts');
 
 const SCHEMA_REL = 'scripts/items/items_game.txt';
 const VALVE_PAK = /^pak01_dir\.vpk$/i;

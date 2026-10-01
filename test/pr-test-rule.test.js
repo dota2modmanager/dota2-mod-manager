@@ -45,7 +45,7 @@ test('a fix with nothing to test says why, in a commit or in the description', a
 
 test('a label marks a fix even when the words do not', async () => {
   const { judge } = await load();
-  const r = judge({ title: 'Put the signature list back together from the live file', labels: ['regression'], commits: [{ message: 'Put the signature list back together' }], files: ['src/patcher.js'] });
+  const r = judge({ title: 'Put the signature list back together from the live file', labels: ['regression'], commits: [{ message: 'Put the signature list back together' }], files: ['src/patcher.ts'] });
   assert.equal(r.ok, false);
   assert.match(r.reason, /labelled regression/);
 });

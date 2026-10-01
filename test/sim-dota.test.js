@@ -12,7 +12,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { crc32 } = require('zlib');
-const { buildVpk } = require('../src/vpk.js');
+const { buildVpk } = require('../src/vpk.ts');
 const dota = require('../tools/sim/dota.js');
 
 const SEARCH = `"GameInfo"
@@ -38,7 +38,7 @@ function entry(rel, text) {
   return { ext, folder: path.dirname(rel), name: path.basename(rel, `.${ext}`), data, preload: Buffer.alloc(0), crc: crc32(data) >>> 0 };
 }
 
-/* A whole Steam library, not just a game folder. src/gamelang.js looks for launch options four
+/* A whole Steam library, not just a game folder. src/gamelang.ts looks for launch options four
    levels above the game, and when it finds no Steam user there it asks the Steam installed on the
    machine; the first draft of this test built a bare folder and read the developer's own
    "-language dutch" out of their real Steam. */

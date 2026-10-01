@@ -25,7 +25,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 
 const ELECTRON_USERS = [
-  'src/discord-auth.js',
+  'src/discord-auth.ts',
   'src/ipc-diagnostics.js',
   'src/ipc-game.js',
   'src/ipc-library.js',
@@ -35,22 +35,29 @@ const ELECTRON_USERS = [
   'src/ipc-presets.js',
   'src/ipc-settings.js',
   'src/ipc-window.js',
-  'src/mod-preview.js',
-  'src/presets-service.js',
-  'src/uninstall-window.js',
+  'src/mod-preview.ts',
+  'src/presets-service.ts',
+  'src/uninstall-window.ts',
 ];
 
-const REQUIRE = /require\(\s*['"]([^'"]+)['"]\s*\)/g;
+// require('x'), and the ESM forms the TypeScript modules use: import ... from 'x', import('x')
+const REQUIRE = /(?:require\(\s*|\bfrom\s+|\bimport\s*\(\s*|^import\s+)['"]([^'"]+)['"]/gm;
+
+// Comments load nothing: a JSDoc type such as {import('electron').BrowserWindow} is not a require.
+// A "//" right after a colon is a URL, not a comment, and stays.
+const COMMENTS = /\/\*[\s\S]*?\*\/|(^|[^:])\/\/[^\n]*/g;
 
 /** What one file requires: 'electron', or repository-relative paths of local modules. */
 function requiresOf(root, file) {
   const out = [];
-  for (const m of fs.readFileSync(path.join(root, file), 'utf8').matchAll(REQUIRE)) {
+  const text = fs.readFileSync(path.join(root, file), 'utf8').replace(COMMENTS, '$1');
+  for (const m of text.matchAll(REQUIRE)) {
     const spec = m[1];
     if (spec === 'electron') { out.push('electron'); continue; }
     if (!spec.startsWith('.')) continue;
-    let target = path.posix.normalize(path.posix.join(path.posix.dirname(file), spec));
-    if (!target.endsWith('.js')) target += '.js';
+    const base = path.posix.normalize(path.posix.join(path.posix.dirname(file), spec));
+    // named with its extension, or without one, which CommonJS resolves to the .js
+    const target = /\.(js|ts)$/.test(base) ? base : `${base}.js`;
     if (fs.existsSync(path.join(root, target))) out.push(target);
   }
   return out;
@@ -69,7 +76,7 @@ function pathToElectron(root, file, seen = new Set()) {
 }
 
 const srcFiles = () => fs.readdirSync(path.join(ROOT, 'src'))
-  .filter((f) => f.endsWith('.js')).map((f) => `src/${f}`).sort();
+  .filter((f) => /\.(js|ts)$/.test(f) && !f.endsWith('.d.ts')).map((f) => `src/${f}`).sort();
 
 test('the detection finds a chain two modules long, and reports it', () => {
   /* Proof that the check below is not empty: a module that reaches Electron only through a
@@ -80,9 +87,12 @@ test('the detection finds a chain two modules long, and reports it', () => {
     fs.writeFileSync(path.join(dir, 'src', 'parser.js'), "const { save } = require('./paths');\n");
     fs.writeFileSync(path.join(dir, 'src', 'paths.js'), "const { app } = require('electron');\n");
     fs.writeFileSync(path.join(dir, 'src', 'plain.js'), "const fs = require('fs');\n");
+    // Electron named only in a JSDoc type, as src/app-page.js does: nothing is loaded
+    fs.writeFileSync(path.join(dir, 'src', 'typed.js'), "/** @param {import('electron').BrowserWindow} win */\nconst fs = require('fs');\n");
 
     assert.deepEqual(pathToElectron(dir, 'src/parser.js'), ['src/parser.js', 'src/paths.js', 'electron']);
     assert.equal(pathToElectron(dir, 'src/plain.js'), null);
+    assert.equal(pathToElectron(dir, 'src/typed.js'), null, 'a type in a comment is not a require');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -111,8 +121,9 @@ test('the parsers and everything that writes the game folder are nowhere near th
   /* The list could in principle grow to take one of these in. These are named so that it cannot
      happen by editing a single array: each of them reading or writing files is the reason the
      tests exist. */
-  const core = ['src/vpk.js', 'src/safe-zip.js', 'src/installer.js', 'src/import.js', 'src/schema.js',
-    'src/patcher.js', 'src/gamelang.js', 'src/file-tx.js', 'src/net.js', 'src/adopt.js', 'src/cursors.js'];
+  const core = ['src/vpk.ts', 'src/vpk-read.ts', 'src/vpk-write.ts', 'src/vpk-analyze.ts', 'src/safe-zip.ts', 'src/installer.ts', 'src/installer-files.ts', 'src/installer-downloads.ts', 'src/installer-slots.ts',
+    'src/installer-packs.ts', 'src/installer-repack.ts', 'src/installer-folder.ts', 'src/import.ts', 'src/schema.ts',
+    'src/patcher.ts', 'src/gamelang.ts', 'src/file-tx.ts', 'src/net.ts', 'src/adopt.ts', 'src/cursors.ts'];
   for (const file of core) {
     assert.ok(!ELECTRON_USERS.includes(file), `${file} is on the Electron list`);
     assert.equal(pathToElectron(ROOT, file), null, `${file} reaches Electron`);

@@ -22,7 +22,7 @@
  *   node tools/rollback.mjs sign                                      sign the file as it stands
  *
  * A block goes under `blocks`, which copies before BLOCKS_SINCE never read (see
- * src/remote-config.js), and comes with a notice for the same versions and days, so the people
+ * src/remote-config.ts), and comes with a notice for the same versions and days, so the people
  * it affects are told why. The beta list goes under `beta` and holds hashes rather than ids,
  * because this file is public and a list of a dozen people's Discord accounts is not ours to
  * publish. Anything that writes the file signs it when CATALOG_KEY points at the private key,
@@ -37,9 +37,9 @@ import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 const {
   normalize, cmpVersion, SWITCHABLE, BLOCKS_SINCE, MAX_TESTERS, MAX_MIRRORS, CONFIG_PUBLIC_KEY,
-} = require('../src/remote-config.js');
-const { idHash } = require('../src/beta.js');
-const { verify } = require('../src/catalog-signature.js');
+} = require('../src/remote-config.ts');
+const { idHash } = require('../src/beta.ts');
+const { verify } = require('../src/catalog-signature.ts');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const CONFIG = path.join(root, 'config', 'app.json');
@@ -288,7 +288,7 @@ export function serialize(config) {
 export function signFor(bytes, privatePem, pinned = CONFIG_PUBLIC_KEY) {
   const sig = crypto.sign(null, bytes, crypto.createPrivateKey(privatePem)).toString('base64');
   if (!verify(bytes, sig, pinned)) {
-    throw new Error('this key is not the one the app pins (CONFIG_PUBLIC_KEY in src/remote-config.js): '
+    throw new Error('this key is not the one the app pins (CONFIG_PUBLIC_KEY in src/remote-config.ts): '
       + 'every copy would ignore what it signed');
   }
   return `${sig}\n`;

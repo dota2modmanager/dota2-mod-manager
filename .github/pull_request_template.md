@@ -18,6 +18,6 @@ saves twenty minutes of hunting.
 
 - [ ] `npm test` is green
 - [ ] Tried it in the sandbox (`npm run sandbox:seed`, `npm run start:sandbox`), not against a real Dota install
-- [ ] New user-facing strings exist in both Russian and English (`renderer/i18n.js`, `src/i18n.js`)
+- [ ] New user-facing strings exist in both Russian and English (`renderer/i18n.js`, `src/i18n.ts`)
 - [ ] Screenshots below, if anything visual changed
 - [ ] Behaviour in `patcher`, `vpk`, `gamelang` or `schema` brings its own test

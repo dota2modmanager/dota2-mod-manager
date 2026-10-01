@@ -1,4 +1,4 @@
-/* Whole-map terrains built for an older map than the game's own (src/terrain-age.js): the mark on
+/* Whole-map terrains built for an older map than the game's own (src/terrain-age.ts): the mark on
  * a catalog card and on a My mods row, and the one toast when the app switched some off.
  *
  * Such a terrain is the whole map as it was on the day it was built. Once Valve changes the map,

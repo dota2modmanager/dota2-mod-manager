@@ -35,7 +35,7 @@ Miss the middle one and the button exists but does nothing. The renderer is spli
 
 Dota mounts one folder named after the language of its **voices**, and that folder is mounted
 before the game's own content, which is what makes mods possible at all. The name comes from
-`AudioLanguage` in `game/dota/cfg/boot.vcfg`, so `src/gamelang.js` reads that file rather than
+`AudioLanguage` in `game/dota/cfg/boot.vcfg`, so `src/gamelang.ts` reads that file rather than
 guessing. A launch option cannot change it: `-language` sets a preference inside the game, and the
 invented values older guides recommend (`dota_123`, `-language mods`) stopped mounting anything in
 July 2026.
@@ -56,26 +56,26 @@ or turning mods back on would resurrect the ones you had deliberately switched o
 
 ## Installing one mod
 
-`src/installer.js`, roughly in order:
+`src/installer.ts`, roughly in order:
 
 1. Resolve the catalog entry to a URL and a file name. The name comes from a repository we do not
    own, so it is treated as a name and can never become a path.
-2. Download through `src/net.js`, which tries mirrors when `raw.githubusercontent.com` is
+2. Download through `src/net.ts`, which tries mirrors when `raw.githubusercontent.com` is
    unreachable, and keeps the archive in the download cache keyed by that name. A second install of
    the same mod never leaves the disk. The built-in chain can be extended after a build has
    shipped: the signed `config/app.json` may name other places the archives are kept, which join
    the chain after our own copy and before the proxies. None of them is ever the origin, so what a
    host named there can do is serve a download or fail its checksum.
-3. Open the archive through `src/safe-zip.js`, the single door every foreign zip comes through.
+3. Open the archive through `src/safe-zip.ts`, the single door every foreign zip comes through.
 4. Compare its contents against what is already installed and report conflicts (see below).
 5. Pick a free slot: low ones for categories that must load early, otherwise the first free number
-   from 10 up. Combined packs exist for the same reason and are described in `src/vpk.js`.
-6. Write everything through `src/file-tx.js`.
-7. Record it in `manifest.json` through `src/library.js`.
+   from 10 up. Combined packs exist for the same reason and are described in `src/vpk-write.ts`.
+6. Write everything through `src/file-tx.ts`.
+7. Record it in `manifest.json` through `src/library.ts`.
 
 ## All of it or none of it
 
-`src/file-tx.js` is the reason the app can be trusted with a game folder. One install is five or
+`src/file-tx.ts` is the reason the app can be trusted with a game folder. One install is five or
 six writes, a removal is as many deletes, and switching a mod off renames every file it owns.
 A failure halfway through, a locked file because Dota just started, a full disk, an antivirus
 holding a handle, used to leave the folder in a state the game would happily load half of.
@@ -88,8 +88,11 @@ forty three mods into the empty folder Steam left behind.
 
 ## VPK
 
-`src/vpk.js` is a full reader and writer for Valve's v1 and v2 pack format, written here rather
-than pulled in, and it is the piece most worth reading first. It parses the directory tree, reads
+`src/vpk.ts` is a full reader and writer for Valve's v1 and v2 pack format, written here rather
+than pulled in, and it is the piece most worth reading first. Every caller imports it from there;
+the code sits in three files behind it: `src/vpk-read.ts` (the index, entries, fingerprints),
+`src/vpk-write.ts` (building, packing a folder, combining, merging, splitting) and
+`src/vpk-analyze.ts` (which heroes and slots a mod's paths touch). It parses the directory tree, reads
 entries with their CRCs, writes single and multi-volume archives, merges a multi-volume mod into
 one file, splits an archive that carries two heroes into one file per hero, and combines several
 mods into a single pak so a hundred mods can share the slots.
@@ -130,20 +133,20 @@ effects and the free cosmetics the game already ships do nothing from where mods
 Supporting them means registering another folder ahead of the game's content, which means editing
 `gameinfo_branchspecific.gi` and re-signing it in `dota.signatures`. That is a change to Valve's
 own files, so it is off until the user agrees to it once, which is what the safe mode switch in
-the status bar means. `src/patcher.js` performs it and reverses it byte for byte, and
-`src/schema-service.js` decides when the schema is rebuilt: always from the installed game's own
+the status bar means. `src/patcher.ts` performs it and reverses it byte for byte, and
+`src/schema-service.ts` decides when the schema is rebuilt: always from the installed game's own
 item table, never from a copy a mod happened to ship.
 
 ## Presets
 
 A preset is the set of enabled mods, and it travels two ways.
 
-**As a link.** `src/preset-link.js` encodes catalog identities, not file names, into
+**As a link.** `src/preset-link.ts` encodes catalog identities, not file names, into
 `d2mm://preset/<code>`: deflate, base64url, a code short enough for a chat message. Catalog file
 names change when their author renames them; the identity triple does not. The clickable form is
 an https page that hands the code to the app, because chat clients only linkify http and https.
 
-**As a file.** `src/preset-share.js` writes `.d2mm`, a zip holding the manifest and, for anything
+**As a file.** `src/preset-share.ts` writes `.d2mm`, a zip holding the manifest and, for anything
 with no catalog identity, the mod itself. It is parsed as if it came from a stranger over Discord,
 because it did: paths are matched against a strict pattern, a record that does not parse is
 dropped whole rather than half trusted, and a buffer is validated as a VPK before it reaches the
@@ -159,7 +162,7 @@ path. Who is allowed to have written the bytes in the first place is the next se
 ## Who is allowed to have written this
 
 Everything the app downloads travels a route it does not control. `raw.githubusercontent.com` is
-slow or blocked for a good part of the userbase, so `src/net.js` falls back to public proxies,
+slow or blocked for a good part of the userbase, so `src/net.ts` falls back to public proxies,
 and a proxy is a stranger handing over bytes that claim to be GitHub's. TLS proves you reached
 the proxy. It says nothing about where the proxy got the file.
 
@@ -167,10 +170,10 @@ So each thing carries its own proof, and each has a different answer to a proof 
 
 | What | Proof | A failed check means |
 |---|---|---|
-| Catalog data: `mods.json`, `constants.json`, `guides.json`, `mod-hashes.json` | ed25519 signature by the catalog's author, public key pinned in `src/catalog-signature.js` | keep the last good copy; on a first run, no catalog and an error |
+| Catalog data: `mods.json`, `constants.json`, `guides.json`, `mod-hashes.json` | ed25519 signature by the catalog's author, public key pinned in `src/catalog-signature.ts` | keep the last good copy; on a first run, no catalog and an error |
 | A mod archive | sha256 from the signed `mod-hashes.json` | drop that mirror's copy, delete the part file and ask the next mirror; refuse the mod only when every mirror fails the same check |
-| `config/app.json`, the switches and notices this project can change after a release | ed25519 signature by this project's own key, pinned in `src/remote-config.js` | ignore the file, exactly as if it were unreachable |
-| The Source 2 toolchain executable | version and sha256 pinned in `src/toolchain.js`, checked before anything is unpacked | do not unpack it; item icons fall back to the wiki |
+| `config/app.json`, the switches and notices this project can change after a release | ed25519 signature by this project's own key, pinned in `src/remote-config.ts` | ignore the file, exactly as if it were unreachable |
+| The Source 2 toolchain executable | version and sha256 pinned in `src/toolchain.ts`, checked before anything is unpacked | do not unpack it; item icons fall back to the wiki |
 
 The three answers differ because what each file costs differs. Without a catalog there is nothing
 to show, so the app keeps yesterday's rather than nothing. Bytes that fail their hash never reach
@@ -189,13 +192,13 @@ their old versions - one of them since August. Anybody who cannot reach GitHub i
 bucket first, got the old bytes, and watched the install stop with a checksum error while three
 proxies carried the current file.
 
-So `downloadFile` in `src/net.js` now spends the mirror rather than the mod: a wrong checksum
+So `downloadFile` in `src/net.ts` now spends the mirror rather than the mod: a wrong checksum
 stands that host down for this file, the part file goes, and the next mirror is asked from the
 start. Only a file that every mirror disowns is refused. And the sync compares what is here
 against the size upstream reports, then measures the bytes it fetched against the published
 checksum before uploading, so this bucket cannot be the reason a check fails.
 
-*Check:* `test/net.test.js`, "a mirror serving a stale copy costs that mirror its turn".
+*Check:* `test/net.test.ts`, "a mirror serving a stale copy costs that mirror its turn".
 
 ### And the list can be wrong about the file
 
@@ -217,7 +220,7 @@ is the only thing tying those bytes to the catalog. Neither does the app's own u
 Source 2 toolchain: those hashes are pinned in this repository, and a mismatch there is the thing
 being guarded against.
 
-*Check:* `test/net.test.js`, "a published hash no copy matches is a stale list, and the origin
+*Check:* `test/net.test.ts`, "a published hash no copy matches is a stale list, and the origin
 wins", next to the three tests that say who does not get that treatment.
 
 ### And the cache in front of the mirror has its own copy
@@ -270,7 +273,7 @@ half was ever committed. `tools/sign-catalog.js` is the whole signing side, has 
 and is what the catalog's author runs.
 
 Editing `config/app.json` without re-signing it would publish a file every client quietly
-refuses, and nobody would notice until a switch was needed. `test/remote-config-signature.test.js`
+refuses, and nobody would notice until a switch was needed. `test/remote-config-signature.test.ts`
 fails the build instead, and prints the command that re-signs it.
 
 What none of this covers is in [DECISIONS.md](DECISIONS.md) under Known gaps, including the one
@@ -279,7 +282,7 @@ that matters most to a new user: the installer itself carries no code-signing ce
 ## Surviving a patch
 
 A game update overwrites the search-path patch and moves the item table underneath the built
-schema. `src/patch-watch.js` notices the update while the app is open, because Steam patches in
+schema. `src/patch-watch.ts` notices the update while the app is open, because Steam patches in
 the background and most people press Play in Steam, and the repair runs by itself.
 
 ## Updates
@@ -287,7 +290,7 @@ the background and most people press Play in Steam, and the repair runs by itsel
 The installed build updates through `electron-updater` from GitHub Releases. The portable build
 deliberately does not: an unsigned executable that renames and relaunches itself is the shape
 antivirus vendors flag, and this project has already had one false positive. It downloads the new
-build next to the old one instead and says so (`src/portable-update.js`).
+build next to the old one instead and says so (`src/portable-update.ts`).
 
 ## Checks, tests and the sandbox
 
@@ -355,33 +358,33 @@ that location is not writable.
 |---|---|
 | `main.js` | Electron lifecycle, window, deep links, auto-update, and wiring the rest together |
 | `src/ipc-*.js` | The IPC handlers, one file per group of channels, each naming what it needs |
-| `src/feature-gate.js` | Whether a feature has been switched off from `config/app.json`, asked once |
+| `src/feature-gate.ts` | Whether a feature has been switched off from `config/app.json`, asked once |
 | `preload.js` | The `window.api` surface, and nothing else crosses |
-| `src/installer.js` | Download, slots, install, enable, remove, packs |
-| `src/beta.js` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
-| `src/overlays.js` | Fonts and cursors: files written over the game's own, their kept originals, and putting them back after Steam's file check |
-| `src/import.js` | Taking a mod in: a `.vpk`, a `.zip`, an author's folder, or bytes off a drop |
-| `src/cursors.js` | Which cursor set is live, which look a slot wears, and the repair at startup |
-| `src/adopt.js` | What a VPK goes through before it counts as a mod: named, harvested, split |
-| `src/updater.js` | Where an installed copy looks for a new version: the two feeds, and the channel it reads |
-| `src/vpk.js` | The VPK format: read, write, merge, split, combine, fingerprint |
-| `src/file-tx.js` | One transaction per change to the game folder |
-| `src/library.js` | `manifest.json`: installed records and presets |
-| `src/settings.js` | `settings.json` and its defaults |
-| `src/catalog.js`, `src/catalog-signature.js` | Catalog data and who is allowed to change it |
-| `src/net.js` | Downloads, mirrors, backoff |
-| `src/remote-config.js` | The switches and notices this project can change after a release, the version ranges a switch can be held to, and the signature over them |
+| `src/installer.ts` | Download, slots, install, enable, remove, packs |
+| `src/beta.ts` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
+| `src/overlays.ts` | Fonts and cursors: files written over the game's own, their kept originals, and putting them back after Steam's file check |
+| `src/import.ts` | Taking a mod in: a `.vpk`, a `.zip`, an author's folder, or bytes off a drop |
+| `src/cursors.ts` | Which cursor set is live, which look a slot wears, and the repair at startup |
+| `src/adopt.ts` | What a VPK goes through before it counts as a mod: named, harvested, split |
+| `src/updater.ts` | Where an installed copy looks for a new version: the two feeds, and the channel it reads |
+| `src/vpk.ts` | The VPK format, gathered from `vpk-read.ts`, `vpk-write.ts` and `vpk-analyze.ts` |
+| `src/file-tx.ts` | One transaction per change to the game folder |
+| `src/library.ts` | `manifest.json`: installed records and presets |
+| `src/settings.ts` | `settings.json` and its defaults |
+| `src/catalog.ts`, `src/catalog-signature.ts` | Catalog data and who is allowed to change it |
+| `src/net.ts` | Downloads, mirrors, backoff |
+| `src/remote-config.ts` | The switches and notices this project can change after a release, the version ranges a switch can be held to, and the signature over them |
 | `tools/sign-catalog.js` | The signing side, for whoever holds a private key |
-| `src/safe-zip.js` | Every foreign archive comes through here |
-| `src/steam.js` | Finding Steam and the game, and proving the folder is really a game |
-| `src/gamelang.js` | Which folder Dota will mount, and moving mods across when that changes |
-| `src/patcher.js`, `src/schema.js`, `src/schema-service.js` | Search-path patch, signatures, item schema |
-| `src/patch-watch.js` | Noticing a game update and repairing after it |
-| `src/fingerprints.js` | Recognising a file somebody else installed |
-| `src/preset-link.js`, `src/preset-share.js` | Presets as a link and as a file |
-| `src/portable-update.js` | Updating the portable build without self-overwrite |
-| `src/diagnostics.js` | The diagnostic archive a bug report should carry |
-| `src/i18n.js`, `renderer/i18n.js` | Russian and English, for the main process and the window |
+| `src/safe-zip.ts` | Every foreign archive comes through here |
+| `src/steam.ts` | Finding Steam and the game, and proving the folder is really a game |
+| `src/gamelang.ts` | Which folder Dota will mount, and moving mods across when that changes |
+| `src/patcher.ts`, `src/schema.ts`, `src/schema-service.ts` | Search-path patch, signatures, item schema |
+| `src/patch-watch.ts` | Noticing a game update and repairing after it |
+| `src/fingerprints.ts` | Recognising a file somebody else installed |
+| `src/preset-link.ts`, `src/preset-share.ts` | Presets as a link and as a file |
+| `src/portable-update.ts` | Updating the portable build without self-overwrite |
+| `src/diagnostics.ts` | The diagnostic archive a bug report should carry |
+| `src/i18n.ts`, `renderer/i18n.js` | Russian and English, for the main process and the window |
 | `renderer/views/*` | Catalog, My mods, Presets, Settings |
 | `renderer/ui/*` | Dialogs, toasts, the media player, the install queue, shared chrome |
 | `tools/sandbox.js` | The throwaway game tree |

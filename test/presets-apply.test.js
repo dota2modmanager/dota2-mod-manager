@@ -18,7 +18,7 @@ const os = require('os');
 const path = require('path');
 const Module = require('module');
 
-const { Library } = require('../src/library.js');
+const { Library } = require('../src/library.ts');
 
 /** Register presets:apply with fakes around a real library; answer the handler and the log. */
 function harness(t, { catalogHas = [], toggleErrors = [] } = {}) {

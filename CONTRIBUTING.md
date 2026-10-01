@@ -71,10 +71,10 @@ Four modules get special attention because they are the ones that write into the
 
 | Module | What its tests hold down |
 |---|---|
-| `src/patcher.js` | The search-path patch and the signature file, byte for byte, both directions |
-| `src/vpk.js` | The reader against the writer, round trips, fingerprints |
-| `src/gamelang.js` | Which folder the game will actually mount |
-| `src/schema.js` | Merging and validating `items_game.txt` |
+| `src/patcher.ts` | The search-path patch and the signature file, byte for byte, both directions |
+| `src/vpk.ts` | The reader against the writer, round trips, fingerprints |
+| `src/gamelang.ts` | Which folder the game will actually mount |
+| `src/schema.ts` | Merging and validating `items_game.txt` |
 
 If your change touches any of them, start by finding the test that covers the behaviour you are
 about to change, and make new behaviour bring its own test. A red `npm test` is not a formality
@@ -96,17 +96,17 @@ measured: node reports only files a test loaded, so deleting the last test that 
 would otherwise pass quietly.
 
 Per file, because one number hides the answer: the aggregate read 76.10% on the day this was
-written, while `src/presets-service.js` sat at 13.8% of its lines. Write tests, then
+written, while `src/presets-service.ts` sat at 13.8% of its lines. Write tests, then
 `node tools/coverage.mjs --update` to raise the lines. Never lower one to make a run green.
 
 A drop in a file your change did not touch usually means the file's own tests never reached
 those lines. Node merges coverage from every test process, and a line that no test runs can
-still come out covered in one run and uncovered in the next. `src/safe-zip.js` did this in
+still come out covered in one run and uncovered in the next. `src/safe-zip.ts` did this in
 September 2026: 100% on one Linux run, 98.8% on the next, and no test at all for an archive in
 memory that is over the size limit. To see what a file's own tests cover, run them alone:
 
 ```bash
-node --test --experimental-test-coverage test/safe-zip.test.js
+node --test --experimental-test-coverage test/safe-zip.test.ts
 ```
 
 ## File size
@@ -115,9 +115,9 @@ node --test --experimental-test-coverage test/safe-zip.test.js
 npm run size
 ```
 
-Five files carry 7,155 lines between them while the median module in `src/` is 171:
-`src/installer.js`, `renderer/views/catalog.js`, `renderer/views/library.js`, `main.js` and
-`src/vpk.js`. Each is in `.github/size-budget.json` at its current length, and the check fails when
+Five files carried 7,155 lines between them while the median module in `src/` is 171:
+`src/installer.ts`, `renderer/views/catalog.js`, `renderer/views/library.js`, `main.js` and
+`src/vpk.ts`, which has since been split into three. Each is in `.github/size-budget.json` at its current length, and the check fails when
 one grows, or when a file nobody listed crosses 800 lines.
 
 If your change makes one of them longer, split something out of it rather than raising the number.
@@ -156,11 +156,11 @@ npm run fuzz -- --seed 20260916 --iterations 500000
 
 A mod's VPK index is written by whoever made the mod, and the app reads it on every start. The
 walkers used to trust it: a file cut short came back as a `RangeError` from Buffer rather than a
-refusal, in paths that do not catch one. `test/vpk-fuzz.test.js` runs a few hundred cases on every
+refusal, in paths that do not catch one. `test/vpk-fuzz.test.ts` runs a few hundred cases on every
 push (truncations, a forged preload length, seeded byte noise, and random sets of entries that have
 to read back byte for byte) and the command above runs the same generator for as long as you like.
 
-Every zip the app opens comes through `src/safe-zip.js`, and `--target zip` fuzzes that door.
+Every zip the app opens comes through `src/safe-zip.ts`, and `--target zip` fuzzes that door.
 `test/safe-zip-fuzz.test.js` holds two things on every push: a damaged archive is refused in this
 project's words rather than a library's, and no entry name, however it is built, puts a file
 outside the folder or hands out a name Windows itself would refuse. The name check writes to the
@@ -211,7 +211,7 @@ The interface ships in Russian and English. Russian text is the key and English 
 it, so a new string is two edits, not one:
 
 - `renderer/i18n.js` for anything in the window
-- `src/i18n.js` for native dialogs, menus and tray text
+- `src/i18n.ts` for native dialogs, menus and tray text
 
 A string with no English twin falls back to Russian, which means an English speaker sees Cyrillic
 in the middle of their app and nothing crashes to tell anybody. A checker finds those:

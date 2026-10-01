@@ -45,7 +45,7 @@ jobs:
           node-version: 24
 
       # The sync itself needs nothing but Node. The toolchain step below reaches into
-      # src/toolchain.js, which unpacks a zip through src/safe-zip.js, which needs adm-zip -
+      # src/toolchain.ts, which unpacks a zip through src/safe-zip.ts, which needs adm-zip -
       # so without this the run copied every archive and then went red on its last step. It
       # had been failing that way since the step was added, and a job that always fails is a
       # job nobody reads: that is how the bucket went a night without anybody noticing.

@@ -11,7 +11,7 @@
  */
 const { betaName } = require('./mirror-plan.js');
 
-/** What electron-updater reads on each channel, and what src/portable-update.js reads. */
+/** What electron-updater reads on each channel, and what src/portable-update.ts reads. */
 const FEEDS = ['latest.yml', 'latest-linux.yml', 'portable.yml', 'beta.yml', 'beta-linux.yml'];
 /** What those feeds point at. */
 const BINARIES = ['Dota-2-Mod-Manager-Setup.exe', 'Dota-2-Mod-Manager-Portable.exe', 'Dota-2-Mod-Manager.AppImage'];

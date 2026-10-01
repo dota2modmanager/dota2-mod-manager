@@ -2,8 +2,8 @@
 /*
  * A copy of the pinned toolchain that does not share GitHub's fate.
  *
- * src/toolchain.js downloads Source 2 Viewer from its own project's GitHub release, pinned by
- * version and SHA-256, to read item icons out of the game's own files. Every mirror src/net.js
+ * src/toolchain.ts downloads Source 2 Viewer from its own project's GitHub release, pinned by
+ * version and SHA-256, to read item icons out of the game's own files. Every mirror src/net.ts
  * knows is a proxy standing in front of GitHub, so when GitHub is down the whole chain is, and
  * the feature falls back to scraping the wiki.
  *
@@ -21,7 +21,7 @@ import { createRequire } from 'node:module';
 import { createR2 } from './r2-client.js';
 
 const require = createRequire(import.meta.url);
-const { BUILT_IN_PINS } = require('../src/toolchain.js');
+const { BUILT_IN_PINS } = require('../src/toolchain.ts');
 
 const dry = process.argv.includes('--dry');
 const PREFIX = 'tools/';

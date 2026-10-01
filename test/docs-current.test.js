@@ -110,7 +110,7 @@ test('there are more test files than ARCHITECTURE.md says there are at least', (
      the first had moved. A floor, as DECISIONS.md already has: raise it now and then. */
   const m = read('ARCHITECTURE.md').match(/no framework, more than (\d+) files/);
   assert.ok(m, 'ARCHITECTURE.md no longer says how many test files there are');
-  const real = fs.readdirSync(path.join(ROOT, 'test')).filter((f) => f.endsWith('.test.js')).length;
+  const real = fs.readdirSync(path.join(ROOT, 'test')).filter((f) => /\.test\.(js|ts)$/.test(f)).length;
   assert.ok(real > Number(m[1]), `ARCHITECTURE.md says more than ${m[1]} test files and test/ has ${real}`);
 });
 

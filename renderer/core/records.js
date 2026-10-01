@@ -32,7 +32,7 @@ export function isPackableRec(rec) {
 }
 
 /** An item builder pick's effects by name, after its slot: " · Fire, Snow", or '' for none.
- *  One item keeps one record whatever its effects (src/item-builder.js effectKey), so this is
+ *  One item keeps one record whatever its effects (src/item-builder.ts effectKey), so this is
  *  what tells two picks of it apart on screen. */
 export function effectNames(rec) {
   if (!rec || !rec.effectId) return '';

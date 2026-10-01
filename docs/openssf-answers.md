@@ -139,15 +139,15 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 | --- | --- | --- |
 | `know_secure_design` | Met | repo ARCHITECTURE.md, "Who is allowed to have written this" |
 | `know_common_errors` | Met | repo docs/incidents/ |
-| `crypto_published` | Met: SHA-256 and Ed25519 from Node's own crypto, TLS from the platform | repo src/catalog.js |
-| `crypto_call` | Met: node:crypto only, no cryptography of the project's own | repo src/catalog.js |
+| `crypto_published` | Met: SHA-256 and Ed25519 from Node's own crypto, TLS from the platform | repo src/catalog.ts |
+| `crypto_call` | Met: node:crypto only, no cryptography of the project's own | repo src/catalog.ts |
 | `crypto_floss` | Met | repo package.json |
-| `crypto_keylength` | Met: SHA-256 and Ed25519 | repo src/remote-config.js |
-| `crypto_working` | Met | repo src/remote-config.js |
-| `crypto_weaknesses` | Met | repo src/catalog.js |
-| `crypto_pfs` | Met: every connection is TLS 1.3 or 1.2 with ECDHE, provided by Node and Chromium | repo src/net.js |
-| `crypto_password_storage` | N/A: the app stores no passwords | repo src/discord-auth.js |
-| `crypto_random` | Met: `crypto.randomBytes` for the OAuth state | repo src/discord-auth.js |
+| `crypto_keylength` | Met: SHA-256 and Ed25519 | repo src/remote-config.ts |
+| `crypto_working` | Met | repo src/remote-config.ts |
+| `crypto_weaknesses` | Met | repo src/catalog.ts |
+| `crypto_pfs` | Met: every connection is TLS 1.3 or 1.2 with ECDHE, provided by Node and Chromium | repo src/net.ts |
+| `crypto_password_storage` | N/A: the app stores no passwords | repo src/discord-auth.ts |
+| `crypto_random` | Met: `crypto.randomBytes` for the OAuth state | repo src/discord-auth.ts |
 | `delivery_mitm` | Met: downloads and updates are HTTPS from GitHub releases or the project's own CDN | repo SECURITY.md |
 | `delivery_unsigned` | Met | repo SECURITY.md |
 | `vulnerabilities_fixed_60_days` | Met | repo security advisories |

@@ -22,11 +22,11 @@ app can reach is short and public ([PRIVACY.md](../PRIVACY.md)).
 
 | # | Boundary | What crosses it | Where it is enforced |
 |---|---|---|---|
-| 1 | The network and the app | Catalog data, mod archives, the switches file, one external tool | `src/net.js`, `src/catalog-signature.js`, `src/remote-config.js`, `src/toolchain.js` |
-| 2 | Foreign archives and the disk | Zip and VPK contents, file names, paths | `src/safe-zip.js`, `src/vpk.js`, `src/file-tx.js` |
+| 1 | The network and the app | Catalog data, mod archives, the switches file, one external tool | `src/net.ts`, `src/catalog-signature.ts`, `src/remote-config.ts`, `src/toolchain.ts` |
+| 2 | Foreign archives and the disk | Zip and VPK contents, file names, paths | `src/safe-zip.ts`, `src/vpk.ts`, `src/file-tx.ts` |
 | 3 | The main process and the window | Every action the UI can ask for | `preload.js` and the `src/ipc-*.js` modules |
-| 4 | The app and the game folder | Mod packs, loose fonts and cursors, one patched text file | `src/installer.js`, `src/overlays.js`, `src/patcher.js` |
-| 5 | The user and everything above | Files they drop, presets from other people | `src/import.js`, `src/preset-share.js`, `src/adopt.js` |
+| 4 | The app and the game folder | Mod packs, loose fonts and cursors, one patched text file | `src/installer.ts`, `src/overlays.ts`, `src/patcher.ts` |
+| 5 | The user and everything above | Files they drop, presets from other people | `src/import.ts`, `src/preset-share.ts`, `src/adopt.ts` |
 
 Each boundary has one door. That is the design: there is a single place where a foreign zip is
 opened, a single place where a download is fetched, a single place where a mod becomes a record
@@ -42,26 +42,26 @@ signature by its author against a key pinned in the app, every mod archive is ch
 sha256 from that signed list, and the external tool is pinned by version and hash before anything
 is unpacked. What a failed check costs is decided per file and written out in ARCHITECTURE.md
 under "Who is allowed to have written this".
-*Check:* `test/catalog-signature.test.js`, `test/net.test.js`, `test/toolchain.test.js`.
+*Check:* `test/catalog-signature.test.ts`, `test/net.test.ts`, `test/toolchain.test.ts`.
 
 **A mirror that is wrong about one file.** A failed checksum means one host handed over the wrong
 bytes, not that the mod is bad. The download spends the mirror rather than the mod: that host is
 stood down for this file and the next one is asked from the start. Only a file every mirror
 disowns is refused.
-*Check:* `test/net.test.js`, "a mirror serving a stale copy costs that mirror its turn".
+*Check:* `test/net.test.ts`, "a mirror serving a stale copy costs that mirror its turn".
 
 **An archive that wants to write somewhere else.** A file name inside a zip is a name, never a
-path. Everything foreign comes through `src/safe-zip.js`, which refuses absolute paths, parent
+path. Everything foreign comes through `src/safe-zip.ts`, which refuses absolute paths, parent
 traversal, links, and sizes that do not fit the budget it was given. A mod's own catalog record
 cannot turn into a path either.
-*Check:* `test/safe-zip.test.js` and `test/safe-zip-fuzz.test.js`, which throws malformed
+*Check:* `test/safe-zip.test.ts` and `test/safe-zip-fuzz.test.js`, which throws malformed
 archives at it rather than only the ones somebody thought of.
 
 **An install that stops half way.** Power cuts, full disks and antivirus locks all land in the
-middle of writing. Writes go through `src/file-tx.js`, which stages and then commits, so the game
+middle of writing. Writes go through `src/file-tx.ts`, which stages and then commits, so the game
 folder is either as it was or as it should be. Valve's own files are copied before the first
 write and put back byte for byte on revert.
-*Check:* `test/file-tx.test.js`, `test/patcher.test.js` (the patch round-trips byte for byte).
+*Check:* `test/file-tx.test.ts`, `test/patcher.test.ts` (the patch round-trips byte for byte).
 
 **Catalog text rendered as code.** Guides are HTML written by people who are not us. They go
 through an allowlist of tags, and the window runs under a content security policy with no remote
@@ -82,7 +82,7 @@ new version is `config/app.json`: a feature switched off, a notice, the beta lis
 is signed with this project's own key against a key pinned in the app, and a file that does not
 verify is ignored exactly as if it were unreachable. It can only take capability away or point at
 a host whose bytes are checked anyway; it cannot add code.
-*Check:* `test/remote-config-signature.test.js`, `test/remote-config.test.js`.
+*Check:* `test/remote-config-signature.test.ts`, `test/remote-config.test.ts`.
 
 **A release that is not ours.** Each release carries `SHA256SUMS` and a Sigstore provenance
 attestation over that list, signed by the release workflow at the tagged commit, so

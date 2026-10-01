@@ -9,12 +9,12 @@ const fs = require('fs');
 const path = require('path');
 const { dialog, ipcMain } = require('electron');
 
-const { t } = require('./i18n');
-const { fetchMirrored } = require('./net');
-const { RAW_BASE } = require('./catalog');
-const { createTerrainAges, TAIL_BYTES } = require('./terrain-age');
-const { createNoticeText } = require('./notice-text');
-const zones = require('./slot-zones');
+const { t } = require('./i18n.ts');
+const { fetchMirrored } = require('./net.ts');
+const { RAW_BASE } = require('./catalog.ts');
+const { createTerrainAges, TAIL_BYTES } = require('./terrain-age.ts');
+const { createNoticeText } = require('./notice-text.ts');
+const zones = require('./slot-zones.ts');
 
 /** @param {object} ctx  the services and main-process callbacks these channels use */
 function registerModsIpc({
@@ -24,7 +24,7 @@ function registerModsIpc({
   // is created, so a value captured here would be undefined forever - which is exactly
   // what win:isMaximized did on the first run after this file was split out.
 
-  // whole-map terrains against the game's own map (src/terrain-age.js)
+  // whole-map terrains against the game's own map (src/terrain-age.ts)
   const terrainAges = createTerrainAges({
     downloadsDir: installer.downloadsDir,
     gamePath: () => (installer.getGamePath ? installer.getGamePath() : null),
@@ -36,7 +36,7 @@ function registerModsIpc({
     },
   });
   const switchOff = (rec) => { installer.setEnabled(rec.files, false, rec.id); library.setEnabled(rec.id, false); };
-  // the anti-cheat notice in plain words (src/notice-text.js)
+  // the anti-cheat notice in plain words (src/notice-text.ts)
   const notice = createNoticeText({ gamePath: () => (installer.getGamePath ? installer.getGamePath() : null), langDir: () => installer.langFolder(), diag });
   ipcMain.handle('mods:install', async (e, payload) => {
     // payload: { categoryId, name, styleLabel, fileRef, preview }
@@ -145,7 +145,7 @@ function registerModsIpc({
   ipcMain.handle('mods:importBuffers', (e, items) => importVpkBuffers(items));
 
   ipcMain.handle('mods:list', () => {
-    // a mod still on the slot the notice text took moves off it (src/slot-zones.js)
+    // a mod still on the slot the notice text took moves off it (src/slot-zones.ts)
     try { if (zones.vacateAppPak(installer, library)) diag('a mod moved off the notice slot'); } catch (err) { diag(`notice slot not freed: ${err.message}`); }
     // folder sync: a mod deleted straight from the game folder drops out of the library
     try {
@@ -247,7 +247,7 @@ function registerModsIpc({
       try { installer.writeOwnership([...library.knownLangRelPaths(), ...notice.ownedFiles()]); } catch (err) { diag(`ownership note skipped: ${err.message}`); }
     };
     noteOwnership();
-    // The anti-cheat notice in plain words (src/notice-text.js), kept current from here for the
+    // The anti-cheat notice in plain words (src/notice-text.ts), kept current from here for the
     // same reason. After the reply: a rebuild reads the game's own index, and the list is what
     // the screen is waiting for. A rebuild that wrote or removed the pak writes the note again,
     // or the note would miss it until the next listing.

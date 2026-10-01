@@ -59,7 +59,7 @@ export const MOD = { categoryId: 'heroes', hero: 'Brewmaster', name: 'Brewmaster
 
 /** A zip holding one pak01_dir.vpk with one small file in it: the shape most catalog mods have. */
 export function fixtureArchive() {
-  const { buildVpk } = require('../src/vpk.js');
+  const { buildVpk } = require('../src/vpk.ts');
   const AdmZip = require('adm-zip');
   const data = Buffer.from('dota2-mod-manager end-to-end fixture\n');
   const vpk = buildVpk([{

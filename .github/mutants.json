@@ -4,251 +4,251 @@
   "mutants": [
     {
       "name": "removePackDeployed forgets .off and .moff copies",
-      "file": "src/installer.js",
-      "anchor": "removePackDeployed(pack) {",
-      "lineStartsWith": "    const re = new RegExp(",
-      "to": "    const re = new RegExp('^' + base + '(_dir|_[0-9]{3})[.]vpk$', 'i');",
-      "test": "test/packs.test.js"
+      "file": "src/installer-packs.ts",
+      "anchor": "export function removePackDeployed(inst: Installer, pack: HasFiles): void {",
+      "lineStartsWith": "  const re = new RegExp(",
+      "to": "  const re = new RegExp('^' + base + '(_dir|_[0-9]{3})[.]vpk$', 'i');",
+      "test": "test/packs.test.ts"
     },
     {
       "name": "deployPack ignores the enabled flag",
-      "file": "src/installer.js",
-      "anchor": "deployPack(pack) {",
+      "file": "src/installer-packs.ts",
+      "anchor": "export function deployPack(inst: Installer, pack: Pick<LibRecord, 'id' | 'files' | 'members'>): { files: LibFile[]; conflicts: { key: string; path: string }[] } {",
       "from": "(pack.members || []).filter((m) => m.enabled)",
       "to": "(pack.members || [])",
-      "test": "test/packs.test.js"
+      "test": "test/packs.test.ts"
     },
     {
       "name": "deployPack allocates a slot instead of reusing its own",
-      "file": "src/installer.js",
-      "anchor": "deployPack(pack) {",
-      "from": "let base = this.packBase(pack);",
+      "file": "src/installer-packs.ts",
+      "anchor": "export function deployPack(inst: Installer, pack: Pick<LibRecord, 'id' | 'files' | 'members'>): { files: LibFile[]; conflicts: { key: string; path: string }[] } {",
+      "from": "let base = inst.packBase(pack);",
       "to": "let base = null;",
-      "test": "test/packs.test.js"
+      "test": "test/packs.test.ts"
     },
     {
       "name": "deployPack ignores slots that are occupied",
-      "file": "src/installer.js",
-      "anchor": "deployPack(pack) {",
-      "from": "this.allocatePak(this.usedPakNames(), false).replace",
-      "to": "this.allocatePak(new Set(), false).replace",
-      "test": "test/packs.test.js"
+      "file": "src/installer-packs.ts",
+      "anchor": "export function deployPack(inst: Installer, pack: Pick<LibRecord, 'id' | 'files' | 'members'>): { files: LibFile[]; conflicts: { key: string; path: string }[] } {",
+      "from": "inst.allocatePak(inst.usedPakNames(), false).replace",
+      "to": "inst.allocatePak(new Set(), false).replace",
+      "test": "test/packs.test.ts"
     },
     {
       "name": "removePackFully keeps the member store",
-      "file": "src/installer.js",
-      "anchor": "removePackFully(pack) {",
-      "from": "fs.rmSync(this.packFolder(pack.id), { recursive: true, force: true });",
+      "file": "src/installer-packs.ts",
+      "anchor": "export function removePackFully(inst: Installer, pack: Pick<LibRecord, 'id' | 'files'>): void {",
+      "from": "fs.rmSync(inst.packFolder(pack.id), { recursive: true, force: true });",
       "to": ";",
-      "test": "test/packs.test.js"
+      "test": "test/packs.test.ts"
     },
     {
       "name": "deployMemberAsMod writes over the pack it came from",
-      "file": "src/installer.js",
-      "anchor": "deployMemberAsMod(pack, member) {",
-      "from": "this.allocatePak(this.usedPakNames(), false)",
-      "to": "(this.packBase(pack) + '_dir.vpk')",
-      "test": "test/packs.test.js"
+      "file": "src/installer-packs.ts",
+      "anchor": "export function deployMemberAsMod(inst: Installer, pack: Pick<LibRecord, 'id'>, member: Pick<PackMember, 'id'>): { files: LibFile[] } {",
+      "from": "inst.allocatePak(inst.usedPakNames(), false)",
+      "to": "(inst.packBase(pack) + '_dir.vpk')",
+      "test": "test/packs.test.ts"
     },
     {
       "name": "combining drops a contested file without saying so",
-      "file": "src/vpk.js",
+      "file": "src/vpk-write.ts",
       "anchor": "function combineVpksToFiles(",
       "from": "conflicts.push({ key: m.key, path: p }); continue;",
       "to": "continue;",
-      "test": "test/packs.test.js"
+      "test": "test/packs.test.ts"
     },
     {
       "name": "importing leaves a multi-volume set as a set",
-      "file": "src/import.js",
-      "anchor": "async function importVpkFiles(installer, paths, onStep) {",
+      "file": "src/import.ts",
+      "anchor": "export async function importVpkFiles(installer: Installer, paths: string[], onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {",
       "from": "if (partFiles.length && partsBytes <= MERGE_SIZE_CAP) {",
       "to": "if (false) {",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "importing takes in a file that is not a mod",
-      "file": "src/import.js",
-      "anchor": "async function importVpkFiles(installer, paths, onStep) {",
+      "file": "src/import.ts",
+      "anchor": "export async function importVpkFiles(installer: Installer, paths: string[], onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {",
       "from": "results.push({ source: fileName, error: t('не .vpk файл') });",
       "to": "results.push({ source: fileName });",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "a folder with nothing in it is passed over in silence",
-      "file": "src/import.js",
-      "anchor": "function expandImportInputs(paths, staged) {",
+      "file": "src/import.ts",
+      "anchor": "export function expandImportInputs(paths: string[], staged: string[]): { files: string[]; errors: { source: string; error: string }[] } {",
       "from": "errors.push({ source: label, error: t('в папке нет ни .vpk, ни файлов игры') });",
       "to": ";",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "installVpkBuffer writes before it understands the bytes",
-      "file": "src/import.js",
-      "anchor": "function installVpkBuffer(installer, buf) {",
+      "file": "src/import.ts",
+      "anchor": "export function installVpkBuffer(installer: Installer, buf: Buffer): LibFile[] {",
       "from": "if (!listVpkPaths(buf).length) throw new Error(t('Пустой VPK'));",
       "to": ";",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "the ownership note stops matching the folder's own spelling",
-      "file": "src/installer.js",
-      "anchor": "ownsFile(relPath) {",
+      "file": "src/installer-folder.ts",
+      "anchor": "export function ownsFile(inst: Installer, relPath: string): boolean {",
       "from": ".some((f) => String(f).toLowerCase() === want)",
       "to": ".some((f) => String(f) === want)",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "harvestSchema keeps the whole-game tables it was meant to strip",
-      "file": "src/installer.js",
-      "anchor": "harvestSchema(records, vanillaText) {",
+      "file": "src/installer-repack.ts",
+      "anchor": "export function harvestSchema(inst: Installer, records: LibFile[], vanillaText: string | null): { deltas: SchemaDelta[]; stripped: string[] } {",
       "from": "const keep = entries.filter((e) => !drop(e));",
       "to": "const keep = entries;",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "dropped bytes leave their staging folder behind",
-      "file": "src/import.js",
-      "anchor": "async function importVpkBuffers(installer, items, onStep) {",
+      "file": "src/import.ts",
+      "anchor": "export async function importVpkBuffers(installer: Installer, items: DroppedFile[] | null | undefined, onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {",
       "from": "try { fs.rmSync(tmp, { recursive: true, force: true }); } catch { /* noop */ }",
       "to": ";",
-      "test": "test/import.test.js"
+      "test": "test/import.test.ts"
     },
     {
       "name": "a cursor set that was already off is reported as having given way",
-      "file": "src/cursors.js",
-      "anchor": "function disableOtherCursors(exceptId) {",
+      "file": "src/cursors.ts",
+      "anchor": "function disableOtherCursors(exceptId: string | null | undefined): string[] {",
       "from": "if (rec.id === exceptId || rec.enabled === false || !isCursorRecord(rec)) continue;",
       "to": "if (rec.id === exceptId || !isCursorRecord(rec)) continue;",
-      "test": "test/cursors.test.js"
+      "test": "test/cursors.test.ts"
     },
     {
       "name": "a cosmetic pick switches off every slot instead of its own",
-      "file": "src/cursors.js",
-      "anchor": "function disableOtherCosmetics(rec) {",
+      "file": "src/cursors.ts",
+      "anchor": "function disableOtherCosmetics(rec: Pick<LibRecord, 'id' | 'slot'>): string[] {",
       "from": "if (other.categoryId !== 'cosmetic' || other.slot !== rec.slot) continue;",
       "to": "if (other.categoryId !== 'cosmetic') continue;",
-      "test": "test/cursors.test.js"
+      "test": "test/cursors.test.ts"
     },
     {
       "name": "mods off leaves the cursor on screen",
-      "file": "src/cursors.js",
-      "anchor": "function applyMasterToCursors(enabled) {",
+      "file": "src/cursors.ts",
+      "anchor": "function applyMasterToCursors(enabled: boolean): void {",
       "from": "else installer.undeployCursor(rec.id, rec.files);",
       "to": "else { /* mutant */ }",
-      "test": "test/cursors.test.js"
+      "test": "test/cursors.test.ts"
     },
     {
       "name": "the repair lets more than one set claim the live files",
-      "file": "src/cursors.js",
-      "anchor": "function reconcileCursors() {",
+      "file": "src/cursors.ts",
+      "anchor": "function reconcileCursors(): void {",
       "from": "const adopted = rec.enabled !== false && !liveClaimed && installer.ensureCursorStore(rec.id, rec.files);",
       "to": "const adopted = rec.enabled !== false && installer.ensureCursorStore(rec.id, rec.files);",
-      "test": "test/cursors.test.js"
+      "test": "test/cursors.test.ts"
     },
     {
       "name": "a set with no copy anywhere goes on claiming to be on",
-      "file": "src/cursors.js",
-      "anchor": "function reconcileCursors() {",
+      "file": "src/cursors.ts",
+      "anchor": "function reconcileCursors(): void {",
       "from": "if (rec.enabled !== false) library.setEnabled(rec.id, false);",
       "to": ";",
-      "test": "test/cursors.test.js"
+      "test": "test/cursors.test.ts"
     },
     {
       "name": "the repair deploys cursors while the master switch is off",
-      "file": "src/cursors.js",
-      "anchor": "function reconcileCursors() {",
+      "file": "src/cursors.ts",
+      "anchor": "function reconcileCursors(): void {",
       "from": "if (rec.enabled === false || masterOff) installer.undeployCursor(rec.id, rec.files);",
       "to": "if (rec.enabled === false) installer.undeployCursor(rec.id, rec.files);",
-      "test": "test/cursors.test.js"
+      "test": "test/cursors.test.ts"
     },
     {
       "name": "the repair runs with no game path set",
-      "file": "src/cursors.js",
-      "anchor": "function reconcileCursors() {",
+      "file": "src/cursors.ts",
+      "anchor": "function reconcileCursors(): void {",
       "from": "if (!settings.get('dotaGamePath')) return;",
       "to": ";",
-      "test": "test/cursors.test.js"
+      "test": "test/cursors.test.ts"
     },
     {
       "name": "a name somebody meant is overwritten by the file's own",
-      "file": "src/adopt.js",
-      "anchor": "function adoptImportedFiles({ files, name, fileRef, identity }) {",
+      "file": "src/adopt.ts",
+      "anchor": "function adoptImportedFiles({ files, name, fileRef, identity }: {",
       "from": "name: (useContentName && contentName) || name || contentName || t('Мод'),",
       "to": "name: contentName || name || t('Мод'),",
-      "test": "test/adopt.test.js"
+      "test": "test/adopt.test.ts"
     },
     {
       "name": "a catalog identity is rebuilt from the bytes instead of kept",
-      "file": "src/adopt.js",
-      "anchor": "function adoptImportedFiles({ files, name, fileRef, identity }) {",
-      "from": "const base = identity || {",
-      "to": "const base = {",
-      "test": "test/adopt.test.js"
+      "file": "src/adopt.ts",
+      "anchor": "function adoptImportedFiles({ files, name, fileRef, identity }: {",
+      "from": "const base: Identity = identity || {",
+      "to": "const base: Identity = {",
+      "test": "test/adopt.test.ts"
     },
     {
       "name": "a collection of any size splits itself into pak slots",
-      "file": "src/adopt.js",
-      "anchor": "function adoptImportedFiles({ files, name, fileRef, identity }) {",
+      "file": "src/adopt.ts",
+      "anchor": "function adoptImportedFiles({ files, name, fileRef, identity }: {",
       "from": "if (subjects >= 2 && subjects <= 4) parts = schemaService.split(fresh);",
       "to": "if (subjects >= 2) parts = schemaService.split(fresh);",
-      "test": "test/adopt.test.js"
+      "test": "test/adopt.test.ts"
     },
     {
       "name": "the progress bar counts the failures in with the mods",
-      "file": "src/adopt.js",
-      "anchor": "async function registerImportResults(results, onStep) {",
+      "file": "src/adopt.ts",
+      "anchor": "async function registerImportResults(results: ImportResult[], onStep?: (done: number, total: number) => void) {",
       "from": "const toRead = results.filter((r) => !r.error).length;",
       "to": "const toRead = results.length;",
-      "test": "test/adopt.test.js"
+      "test": "test/adopt.test.ts"
     },
     {
       "name": "a mod lands live while the master switch is off",
-      "file": "src/adopt.js",
-      "anchor": "async function registerImportResults(results, onStep) {",
+      "file": "src/adopt.ts",
+      "anchor": "async function registerImportResults(results: ImportResult[], onStep?: (done: number, total: number) => void) {",
       "from": "if (imported.length && installer.masterIsOff()) { try { installer.setMasterEnabled(false); } catch { /* noop */ } }",
       "to": ";",
-      "test": "test/adopt.test.js"
+      "test": "test/adopt.test.ts"
     },
     {
       "name": "the item table is never rebuilt after a batch",
-      "file": "src/adopt.js",
-      "anchor": "async function registerImportResults(results, onStep) {",
+      "file": "src/adopt.ts",
+      "anchor": "async function registerImportResults(results: ImportResult[], onStep?: (done: number, total: number) => void) {",
       "from": "if (needSchema) schemaService.refresh();",
       "to": ";",
-      "test": "test/adopt.test.js"
+      "test": "test/adopt.test.ts"
     },
     {
       "name": "the language move carries off the game's own files",
-      "file": "src/gamelang.js",
-      "anchor": "function moveLangFolder(gamePath, fromSuffix, toSuffix) {",
+      "file": "src/gamelang.ts",
+      "anchor": "export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {",
       "from": "if (/^pak01_/i.test(f) || f.toLowerCase() === 'gameinfo.gi') continue;",
       "to": "if (false) continue;",
-      "test": "test/gamelang.test.js"
+      "test": "test/gamelang.test.ts"
     },
     {
       "name": "the language move relocates another program's mods",
-      "file": "src/gamelang.js",
-      "anchor": "function moveLangFolder(gamePath, fromSuffix, toSuffix) {",
+      "file": "src/gamelang.ts",
+      "anchor": "export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {",
       "from": "if (isMinifyFile(f.toLowerCase()) || isMinifyPak(path.join(oldDir, f))) continue;",
       "to": ";",
-      "test": "test/gamelang.test.js"
+      "test": "test/gamelang.test.ts"
     },
     {
       "name": "the language move writes over a mod already in the destination",
-      "file": "src/gamelang.js",
-      "anchor": "function moveLangFolder(gamePath, fromSuffix, toSuffix) {",
+      "file": "src/gamelang.ts",
+      "anchor": "export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {",
       "from": "if (fs.existsSync(dst)) continue;",
       "to": ";",
-      "test": "test/gamelang.test.js"
+      "test": "test/gamelang.test.ts"
     },
     {
       "name": "the language move runs even when there is nowhere to move to",
-      "file": "src/gamelang.js",
-      "anchor": "function moveLangFolder(gamePath, fromSuffix, toSuffix) {",
+      "file": "src/gamelang.ts",
+      "anchor": "export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {",
       "from": "if (!gamePath || !fromSuffix || !toSuffix || fromSuffix === toSuffix) return 0;",
       "to": "if (!gamePath || !fromSuffix || !toSuffix) return 0;",
-      "test": "test/gamelang.test.js"
+      "test": "test/gamelang.test.ts"
     },
     {
       "name": "measuring coverage on one machine throws away every other machine's numbers",
@@ -268,7 +268,7 @@
     },
     {
       "name": "the VPK reader starts needing Electron",
-      "file": "src/vpk.js",
+      "file": "src/vpk-write.ts",
       "anchor": "function combineVpksToFiles(",
       "from": "fs.mkdirSync(outDir, { recursive: true });",
       "to": "require('electron'); fs.mkdirSync(outDir, { recursive: true });",
@@ -276,27 +276,27 @@
     },
     {
       "name": "a block switches a feature off in every version",
-      "file": "src/remote-config.js",
-      "anchor": "function feature(name, lang = 'en') {",
+      "file": "src/remote-config.ts",
+      "anchor": "function feature(name: string, lang = 'en'): { off: boolean; note: string } {",
       "from": "cfg.blocks.find((b) => b.feature === name && applies(b, appVersion(), today()))",
       "to": "cfg.blocks.find((b) => b.feature === name)",
-      "test": "test/rollback.test.js"
+      "test": "test/rollback.test.ts"
     },
     {
       "name": "a block never lets go after its last day",
-      "file": "src/remote-config.js",
-      "anchor": "function applies(entry, version, today) {",
+      "file": "src/remote-config.ts",
+      "anchor": "export function applies(entry: { minVersion?: string | null; maxVersion?: string | null; until?: string | null }, version: string, today: string): boolean {",
       "from": "&& (!entry.until || today <= entry.until);",
       "to": "&& true;",
-      "test": "test/rollback.test.js"
+      "test": "test/rollback.test.ts"
     },
     {
       "name": "a block with a damaged day is held forever",
-      "file": "src/remote-config.js",
-      "anchor": "function normalize(raw) {",
-      "from": "if (!id || !SWITCHABLE.includes(b.feature) || !until) continue;",
-      "to": "if (!id || !SWITCHABLE.includes(b.feature)) continue;",
-      "test": "test/rollback.test.js"
+      "file": "src/remote-config.ts",
+      "anchor": "export function normalize(raw: unknown): RemoteConfig {",
+      "from": "if (!id || typeof b.feature !== 'string' || !SWITCHABLE.includes(b.feature) || !until) continue;",
+      "to": "if (!id || typeof b.feature !== 'string' || !SWITCHABLE.includes(b.feature)) continue;",
+      "test": "test/rollback.test.ts"
     },
     {
       "name": "a block leaks into the switches old copies act on",
@@ -304,7 +304,7 @@
       "anchor": "export function addBlock(config, { feature, versions, until, en, ru, url = null }, today) {",
       "from": "next.blocks.push({ id, feature, minVersion, maxVersion, until, en, ru });",
       "to": "next.features = { ...(next.features || {}), [feature]: { off: true, en, ru } }; next.blocks.push({ id, feature, minVersion, maxVersion, until, en, ru });",
-      "test": "test/rollback.test.js"
+      "test": "test/rollback.test.ts"
     },
     {
       "name": "a block is written for versions that cannot read it",
@@ -312,7 +312,7 @@
       "anchor": "export function addBlock(config, { feature, versions, until, en, ru, url = null }, today) {",
       "from": "if (cmpVersion(minVersion, BLOCKS_SINCE) < 0) {",
       "to": "if (false) {",
-      "test": "test/rollback.test.js"
+      "test": "test/rollback.test.ts"
     },
     {
       "name": "the config is signed with a key the app does not pin",
@@ -320,19 +320,19 @@
       "anchor": "export function signFor(bytes, privatePem, pinned = CONFIG_PUBLIC_KEY) {",
       "from": "if (!verify(bytes, sig, pinned)) {",
       "to": "if (false) {",
-      "test": "test/rollback.test.js"
+      "test": "test/rollback.test.ts"
     },
     {
       "name": "archive entry names are handed out unchecked",
-      "file": "src/safe-zip.js",
-      "anchor": "function isUnsafeName(rel) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function isUnsafeName(rel: string): boolean {",
       "from": "return rel.split('/').some((part) => part === '..' || windowsRefuses(part));",
       "to": "return false;",
-      "test": "test/safe-zip.test.js"
+      "test": "test/safe-zip.test.ts"
     },
     {
       "name": "reserved device names are handed out",
-      "file": "src/safe-zip.js",
+      "file": "src/safe-zip.ts",
       "anchor": "const RESERVED =",
       "from": "(/[. ]$/.test(part) || RESERVED.test(part))",
       "to": "/[. ]$/.test(part)",
@@ -340,219 +340,219 @@
     },
     {
       "name": "an absolute name is handed out",
-      "file": "src/safe-zip.js",
-      "anchor": "function isUnsafeName(rel) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function isUnsafeName(rel: string): boolean {",
       "from": "if (!rel || rel.startsWith('/')) return true;",
       "to": "if (!rel) return true;",
-      "test": "test/safe-zip.test.js"
+      "test": "test/safe-zip.test.ts"
     },
     {
       "name": "a drive letter is handed out",
-      "file": "src/safe-zip.js",
-      "anchor": "function isUnsafeName(rel) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function isUnsafeName(rel: string): boolean {",
       "from": "if (/^[a-z]:/i.test(rel)) return true;",
       "to": ";",
-      "test": "test/safe-zip.test.js"
+      "test": "test/safe-zip.test.ts"
     },
     {
       "name": "safeJoin lets the folder next door through",
-      "file": "src/safe-zip.js",
-      "anchor": "function safeJoin(rootAbs, rel) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function safeJoin(rootAbs: string, rel: string): string {",
       "from": "!dest.startsWith(root + path.sep)",
       "to": "!dest.startsWith(root)",
-      "test": "test/safe-zip.test.js"
+      "test": "test/safe-zip.test.ts"
     },
     {
       "name": "a damaged archive reaches the user in the library's words",
-      "file": "src/safe-zip.js",
-      "anchor": "function openZip(source, { label, limits } = {}) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function openZip(source: string | Buffer, { label, limits }: { label?: string; limits?: Partial<ZipLimits> } = {}): OpenedZip {",
       "from": "throw damaged();",
       "to": "throw new Error('ADM-ZIP: Invalid or unsupported zip format');",
       "test": "test/safe-zip-fuzz.test.js"
     },
     {
       "name": "a damaged file inside reaches the user in the library's words",
-      "file": "src/safe-zip.js",
-      "anchor": "function openZip(source, { label, limits } = {}) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function openZip(source: string | Buffer, { label, limits }: { label?: string; limits?: Partial<ZipLimits> } = {}): OpenedZip {",
       "from": "try { return entry.getData(); } catch { throw damaged(rel); }",
       "to": "return entry.getData();",
       "test": "test/safe-zip-fuzz.test.js"
     },
     {
       "name": "an honest bomb is unpacked",
-      "file": "src/safe-zip.js",
-      "anchor": "function openZip(source, { label, limits } = {}) {",
+      "file": "src/safe-zip.ts",
+      "anchor": "export function openZip(source: string | Buffer, { label, limits }: { label?: string; limits?: Partial<ZipLimits> } = {}): OpenedZip {",
       "from": "if (size >= lim.ratioFloor && packed > 0 && size / packed > lim.ratio) {",
       "to": "if (false) {",
-      "test": "test/safe-zip.test.js"
+      "test": "test/safe-zip.test.ts"
     },
     {
       "name": "the VPK writer records the wrong CRC",
-      "file": "src/vpk.js",
+      "file": "src/vpk-write.ts",
       "anchor": "function buildVpk(",
       "from": "meta.writeUInt32LE(en.crc >>> 0, 0);",
       "to": "meta.writeUInt32LE(0, 0);",
-      "test": "test/vpk-fuzz.test.js"
+      "test": "test/vpk-fuzz.test.ts"
     },
     {
       "name": "the VPK writer points every entry at the start of the data",
-      "file": "src/vpk.js",
+      "file": "src/vpk-write.ts",
       "anchor": "function buildVpk(",
-      "from": "en._offset = dataLen;",
-      "to": "en._offset = 0;",
-      "test": "test/vpk-fuzz.test.js"
+      "from": "offsets.set(en, dataLen);",
+      "to": "offsets.set(en, 0);",
+      "test": "test/vpk-fuzz.test.ts"
     },
     {
       "name": "the signature records the CRC in the wrong byte order",
-      "file": "src/patcher.js",
-      "anchor": "function fileHashes(buf) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function fileHashes(buf: Buffer): { sha1: string; crc: string } {",
       "from": "le.writeUInt32LE(crc32(buf));",
       "to": "le.writeUInt32BE(crc32(buf));",
-      "test": "test/patcher.test.js"
+      "test": "test/patcher.test.ts"
     },
     {
       "name": "taking the patch off leaves the file a tab short of what Valve signed",
-      "file": "src/patcher.js",
-      "anchor": "function stripPatch(text) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function stripPatch(text: string): string {",
       "from": "const joiner = out[end] === '}' ? '\\r\\n\\t' : '\\r\\n';",
       "to": "const joiner = '\\r\\n';",
-      "test": "test/patcher.test.js"
+      "test": "test/patcher.test.ts"
     },
     {
       "name": "Valve's own signature line is taken for ours",
-      "file": "src/patcher.js",
-      "anchor": "function hasSignaturePatch(text) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function hasSignaturePatch(text: string): boolean {",
       "from": "return lines.slice(digest + 1).some((l) => l.startsWith(SIG_PREFIX + '~'));",
       "to": "return lines.some((l) => l.startsWith(SIG_PREFIX + '~'));",
-      "test": "test/patcher.test.js"
+      "test": "test/patcher.test.ts"
     },
     {
       "name": "taking our signature out takes Valve's out with it",
-      "file": "src/patcher.js",
-      "anchor": "function stripSignatures(text) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function stripSignatures(text: string): string {",
       "from": "const kept = lines.filter((l, i) => i <= digest || !l.startsWith(SIG_PREFIX + '~'));",
       "to": "const kept = lines.filter((l) => !l.startsWith(SIG_PREFIX + '~'));",
-      "test": "test/patcher.test.js"
+      "test": "test/patcher.test.ts"
     },
     {
       "name": "the vanilla hash is read from the line we appended",
-      "file": "src/patcher.js",
-      "anchor": "function vanillaBranchHashes(signaturesText) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function vanillaBranchHashes(signaturesText: string): Hashes | null {",
       "from": "const scope = digest === -1 ? lines : lines.slice(0, digest);",
       "to": "const scope = [...lines].reverse();",
-      "test": "test/patcher.test.js"
+      "test": "test/patcher.test.ts"
     },
     {
       "name": "a restored file is called verified without being checked",
-      "file": "src/patcher.js",
-      "anchor": "function restoreBranch(text, want) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function restoreBranch(text: string, want: Hashes | null): { text: string; verified: boolean } {",
       "from": "return { text: base, verified: false };",
       "to": "return { text: base, verified: true };",
-      "test": "test/patcher.test.js"
+      "test": "test/patcher.test.ts"
     },
     {
       "name": "the patch is signed into a stale copy of the list",
-      "file": "src/patcher.js",
-      "anchor": "function apply({ gamePath, folder, backupDir }) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function apply({ gamePath, folder, backupDir }: { gamePath: string; folder: string; backupDir: string }): PatchState {",
       "from": "const sigOrig = stripSignatures(fs.readFileSync(p.signatures, 'latin1'));",
       "to": "const sigOrig = stripSignatures(fs.readFileSync(path.join(backupDir, path.basename(p.signatures) + '.orig'), 'latin1'));",
-      "test": "test/patcher-tree.test.js"
+      "test": "test/patcher-tree.test.ts"
     },
     {
       "name": "applying the patch twice stacks it",
-      "file": "src/patcher.js",
-      "anchor": "function apply({ gamePath, folder, backupDir }) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function apply({ gamePath, folder, backupDir }: { gamePath: string; folder: string; backupDir: string }): PatchState {",
       "from": "const branchOrig = restoreBranch(fs.readFileSync(path.join(backupDir, path.basename(p.branch) + '.orig'), 'latin1'), want).text;",
       "to": "const branchOrig = fs.readFileSync(p.branch, 'latin1');",
-      "test": "test/patcher-tree.test.js"
+      "test": "test/patcher-tree.test.ts"
     },
     {
       "name": "an install with no signature list is refused",
-      "file": "src/patcher.js",
-      "anchor": "function apply({ gamePath, folder, backupDir }) {",
+      "file": "src/patcher.ts",
+      "anchor": "export function apply({ gamePath, folder, backupDir }: { gamePath: string; folder: string; backupDir: string }): PatchState {",
       "from": "for (const f of [p.gameinfo, p.branch]) {",
       "to": "for (const f of [p.gameinfo, p.branch, p.signatures]) {",
-      "test": "test/patcher-tree.test.js"
+      "test": "test/patcher-tree.test.ts"
     },
     {
       "name": "a backup that no longer matches the game is kept anyway",
-      "file": "src/patcher.js",
-      "anchor": "function backupOnce(file, backupDir, clean, isOurs, isGood) {",
+      "file": "src/patcher.ts",
+      "anchor": "function backupOnce(file: string, backupDir: string, clean: (text: string) => string, isOurs: (text: string) => boolean, isGood?: (text: string) => boolean): string {",
       "from": "} else if (!fs.existsSync(dest) || stale) {",
       "to": "} else if (!fs.existsSync(dest)) {",
-      "test": "test/patcher-tree.test.js"
+      "test": "test/patcher-tree.test.ts"
     },
     {
       "name": "a download with the wrong hash is kept",
-      "file": "src/net.js",
-      "anchor": "async function downloadFile(url, dest, {",
+      "file": "src/net.ts",
+      "anchor": "export async function downloadFile(url: string, dest: string, {",
       "from": "if (expectSha256 && digest !== expectSha256) {",
       "to": "if (false) {",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a mirror that ignored Range has its answer glued onto the old half",
-      "file": "src/net.js",
-      "anchor": "async function downloadFile(url, dest, {",
+      "file": "src/net.ts",
+      "anchor": "export async function downloadFile(url: string, dest: string, {",
       "from": "const resuming = res.status === 206 && have > 0;",
       "to": "const resuming = have > 0;",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a trusted-only file is fetched through mirrors",
-      "file": "src/net.js",
-      "anchor": "function entriesFor(url, { small = false, trustedOnly = false } = {}) {",
+      "file": "src/net.ts",
+      "anchor": "export function entriesFor(url: string, { small = false, trustedOnly = false }: { small?: boolean; trustedOnly?: boolean } = {}): Entry[] {",
       "from": "if (trustedOnly) return [{ url, host: hostOf(url), origin: false }];",
       "to": ";",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a mirror that keeps failing is never stood down",
-      "file": "src/net.js",
-      "anchor": "function noteFailure(host, why) {",
+      "file": "src/net.ts",
+      "anchor": "function noteFailure(host: string, why: string): void {",
       "from": "if (h.fails >= FAIL_THRESHOLD) { h.until = Date.now() + COOLDOWN_MS; h.fails = 0; }",
       "to": ";",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a missing file is held against the mirror",
-      "file": "src/net.js",
-      "anchor": "async function fetchMirrored(url, {",
+      "file": "src/net.ts",
+      "anchor": "export async function fetchMirrored(url: string, {",
       "from": "if (res.status === 404) { onMirror(candidate); return res; }",
       "to": ";",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a proxy's copy outranks the published hash",
-      "file": "src/net.js",
-      "anchor": "async function downloadFile(url, dest, {",
+      "file": "src/net.ts",
+      "anchor": "export async function downloadFile(url: string, dest: string, {",
       "from": "if (fromPublishedList && answered.origin) {",
       "to": "if (fromPublishedList) {",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a hash this project pinned is waived like a published one",
-      "file": "src/net.js",
-      "anchor": "async function downloadFile(url, dest, {",
+      "file": "src/net.ts",
+      "anchor": "export async function downloadFile(url: string, dest: string, {",
       "from": "if (fromPublishedList && answered.origin) {",
       "to": "if (answered.origin) {",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a mirror that served the wrong bytes is asked again",
-      "file": "src/net.js",
-      "anchor": "async function fetchMirrored(url, {",
+      "file": "src/net.ts",
+      "anchor": "export async function fetchMirrored(url: string, {",
       "from": ".filter((e) => !exclude.includes(e.host));",
       "to": ";",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a server that answered is called a missing connection",
-      "file": "src/net.js",
-      "anchor": "async function fetchMirrored(url, {",
+      "file": "src/net.ts",
+      "anchor": "export async function fetchMirrored(url: string, {",
       "from": "err.offline = !/HTTP \\d/.test(String(err.message || ''));",
       "to": "err.offline = true;",
-      "test": "test/net.test.js"
+      "test": "test/net.test.ts"
     },
     {
       "name": "a guard an incident names is renamed and the write-up still points at it",
@@ -588,91 +588,91 @@
     },
     {
       "name": "a new language folder writes its gameinfo over one that appeared meanwhile",
-      "file": "src/gamelang.js",
-      "anchor": "function ensureLangFolder(gamePath, suffix) {",
+      "file": "src/gamelang.ts",
+      "anchor": "export function ensureLangFolder(gamePath: string, suffix: string): string {",
       "from": "{ flag: 'wx' }",
       "to": "{}",
-      "test": "test/gamelang.test.js"
+      "test": "test/gamelang.test.ts"
     },
     {
       "name": "a font or cursor file the app wrote itself is taken for one a verify put back",
-      "file": "src/overlays.js",
-      "anchor": "vanillaIsBack(f, written = this.written()) {",
+      "file": "src/overlays.ts",
+      "anchor": "vanillaIsBack(f: LibFile, written: Record<string, string> = this.written()): boolean {",
       "from": "if (mine && sha1(now) === mine) return false;",
       "to": "",
-      "test": "test/installer.test.js"
+      "test": "test/installer.test.ts"
     },
     {
       "name": "the repair after a verify keeps the mod's own file as the game's original",
-      "file": "src/overlays.js",
-      "anchor": "keepOriginal(destAbs, backupAbs, mine) {",
+      "file": "src/overlays.ts",
+      "anchor": "keepOriginal(destAbs: string, backupAbs: string, mine: string | undefined): void {",
       "from": "if (mine && sha1(fs.readFileSync(destAbs)) === mine) return;",
       "to": "",
-      "test": "test/installer.test.js"
+      "test": "test/installer.test.ts"
     },
     {
       "name": "putting a cursor set back records nothing about what it wrote",
-      "file": "src/overlays.js",
-      "anchor": "\n  deployCursor(recId, files) {",
+      "file": "src/overlays.ts",
+      "anchor": "\n  deployCursor(recId: string, files: LibFile[] | null | undefined): number {",
       "from": "this.noteWritten('cursor', hashes);",
       "to": "",
-      "test": "test/installer.test.js"
+      "test": "test/installer.test.ts"
     },
     {
       "name": "a base item keeps the paid style gates of the item it is dressed as",
-      "file": "src/schema.js",
-      "anchor": "function baseItemPatch(baseText, targetId, sourceId) {",
+      "file": "src/schema.ts",
+      "anchor": "export function baseItemPatch(baseText: string, targetId: string | number, sourceId: string | number): string {",
       "from": "visuals = stripKeyBlocks(visuals, 'unlock');",
       "to": "",
-      "test": "test/schema.test.js"
+      "test": "test/schema.test.ts"
     },
     {
       "name": "the free-cosmetics picker offers the base item itself",
-      "file": "src/schema.js",
-      "anchor": "function cosmeticOptions(text, slot) {",
+      "file": "src/schema.ts",
+      "anchor": "export function cosmeticOptions(text: string, slot: string): { id: string; name: string }[] {",
       "from": "!i.baseitem && ",
       "to": "",
-      "test": "test/schema.test.js"
+      "test": "test/schema.test.ts"
     },
     {
       "name": "taking the schema away deletes a folder that holds somebody else's file",
-      "file": "src/schema.js",
-      "anchor": "function undeploy({ gamePath, folder }) {",
+      "file": "src/schema.ts",
+      "anchor": "export function undeploy({ gamePath, folder }: { gamePath: string; folder: string }): void {",
       "from": "if (fs.existsSync(dir) && !hasFiles(dir))",
       "to": "if (fs.existsSync(dir))",
-      "test": "test/schema.test.js"
+      "test": "test/schema.test.ts"
     },
     {
       "name": "a table that would crash the client is written into the game anyway",
-      "file": "src/schema.js",
-      "anchor": "function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath) }) {",
+      "file": "src/schema.ts",
+      "anchor": "export function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath) }: {",
       "from": "const checked = validateSchema(merged.text, base.text);",
       "to": "const checked = { bytes: merged.text.length, items: 0 };",
-      "test": "test/schema.test.js"
+      "test": "test/schema.test.ts"
     },
     {
       "name": "the beta list is hashed without its salt",
-      "file": "src/beta.js",
-      "anchor": "function idHash(id, salt) {",
+      "file": "src/beta.ts",
+      "anchor": "export function idHash(id: string | number, salt: string | undefined): string {",
       "from": "update(`${String(salt || '')}:${String(id || '').trim()}`)",
       "to": "update(`${String(id || '').trim()}`)",
-      "test": "test/beta.test.js"
+      "test": "test/beta.test.ts"
     },
     {
       "name": "the beta switch alone decides the channel",
-      "file": "src/beta.js",
-      "anchor": "function channelFor({ discordId = null, beta = null, wanted = false } = {}) {",
+      "file": "src/beta.ts",
+      "anchor": "export function channelFor({ discordId = null, beta = null, wanted = false }: BetaAsk = {}): Channel {",
       "from": "wanted && isTester(discordId, beta)",
       "to": "wanted",
-      "test": "test/beta.test.js"
+      "test": "test/beta.test.ts"
     },
     {
       "name": "anything in the beta list counts as an account",
-      "file": "src/remote-config.js",
-      "anchor": "const beta = raw.beta && typeof raw.beta === 'object' ? raw.beta : null;",
+      "file": "src/remote-config.ts",
+      "anchor": "const beta = isObject(raw.beta) ? raw.beta : null;",
       "from": "typeof id === 'string' && /^[0-9a-f]{64}$/i.test(id.trim())",
       "to": "typeof id === 'string'",
-      "test": "test/beta.test.js"
+      "test": "test/beta.test.ts"
     },
     {
       "name": "a beta's binaries are mirrored under the release's own names",
@@ -692,19 +692,19 @@
     },
     {
       "name": "a copy on the stable channel is offered the unreleased build",
-      "file": "src/updater.js",
+      "file": "src/updater.ts",
       "anchor": "autoUpdater.channel = name;",
       "from": "autoUpdater.allowPrerelease = name === BETA_CHANNEL;",
       "to": "autoUpdater.allowPrerelease = true;",
-      "test": "test/updater.test.js"
+      "test": "test/updater.test.ts"
     },
     {
       "name": "an installed copy settles on the mirror instead of going back to GitHub",
-      "file": "src/updater.js",
+      "file": "src/updater.ts",
       "anchor": "  function recheck() {",
       "from": "onMirror = false;",
       "to": "/* stays on the mirror */",
-      "test": "test/updater.test.js"
+      "test": "test/updater.test.ts"
     },
     {
       "name": "the portable Download button is handed a version nobody looked up",
@@ -716,27 +716,27 @@
     },
     {
       "name": "the crc32 table is walked one bit off",
-      "file": "src/vpk.js",
-      "anchor": "function crc32(buf) {",
+      "file": "src/vpk-write.ts",
+      "anchor": "export function crc32(buf: Buffer): number {",
       "from": "c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);",
       "to": "c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 7);",
       "test": "test/properties.test.js"
     },
     {
       "name": "a preset link comes back with a name nobody chose",
-      "file": "src/preset-link.js",
-      "anchor": "function encodePresetLink({ name, author, mods }) {",
+      "file": "src/preset-link.ts",
+      "anchor": "export function encodePresetLink({ name, author, mods }: { name: string; author?: string; mods: ModIn[] }): { code: string; web: string; direct: string } {",
       "from": "n: String(name || '').slice(0, 120),",
       "to": "n: String(name || '').slice(0, 20),",
       "test": "test/properties.test.js"
     },
     {
       "name": "the removal window opens during an update too",
-      "file": "src/uninstall-args.js",
+      "file": "src/uninstall-args.ts",
       "anchor": "/** A person removing the program, which is the only case the window may open in. */",
       "lineStartsWith": "const isUninstallRun = ",
-      "to": "const isUninstallRun = (argv = []) => argv.includes('--uninstall');",
-      "test": "test/uninstall-args.test.js"
+      "to": "export const isUninstallRun = (argv: readonly unknown[] = []): boolean => argv.includes('--uninstall');",
+      "test": "test/uninstall-args.test.ts"
     },
     {
       "name": "the Discord post waits for the mirror to succeed",
@@ -764,27 +764,27 @@
     },
     {
       "name": "a rename the game refuses leaves a mod split across two slots",
-      "file": "src/installer.js",
-      "anchor": "  moveToSlot(rec, newBase, oldBase = this.slotBase(rec), tx = null) {",
+      "file": "src/installer-slots.ts",
+      "anchor": "export function moveToSlot(",
       "from": "if (fs.existsSync(from)) into.move(from, path.join(lang, next + suf));",
       "to": "if (fs.existsSync(from)) fs.renameSync(from, path.join(lang, next + suf));",
-      "test": "test/installer.test.js"
+      "test": "test/installer.test.ts"
     },
     {
       "name": "a refused swap puts the first mod back over the second",
-      "file": "src/installer.js",
-      "anchor": "  swapSlots(a, b) {",
-      "from": "const parked = this.moveToSlot(a, 'pak00', aBase, tx);",
-      "to": "const parked = this.moveToSlot(a, 'pak00', aBase);",
-      "test": "test/installer.test.js"
+      "file": "src/installer-slots.ts",
+      "anchor": "export function swapSlots(",
+      "from": "const parked = inst.moveToSlot(a, 'pak00', aBase, tx);",
+      "to": "const parked = inst.moveToSlot(a, 'pak00', aBase);",
+      "test": "test/installer.test.ts"
     },
     {
       "name": "the load-order layout parks mods outside its transaction, so a refusal strands them",
-      "file": "src/slot-zones.js",
-      "anchor": "function migrateSlotZones(",
+      "file": "src/slot-zones.ts",
+      "anchor": "export function migrateSlotZones(",
       "from": "p.parked = installer.moveToSlot({ ...p.r, files: p.r.files }, p.park, p.from, tx);",
       "to": "p.parked = installer.moveToSlot({ ...p.r, files: p.r.files }, p.park, p.from);",
-      "test": "test/installer.test.js"
+      "test": "test/installer.test.ts"
     },
     {
       "name": "a line falls out of a run block and breaks the workflow file",

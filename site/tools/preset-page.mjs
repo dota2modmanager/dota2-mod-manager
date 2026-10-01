@@ -2,14 +2,14 @@
  * The preset page, served from here as well as from GitHub Pages.
  *
  * A shared preset is a d2mm:// link, and chat clients only make http(s) clickable, so
- * src/preset-link.js wraps it in a page that hands the code to the app. That page has lived at
+ * src/preset-link.ts wraps it in a page that hands the code to the app. That page has lived at
  * thefleece.github.io since presets could be shared, which means a link somebody pastes into
  * Discord does not open for anyone who cannot reach GitHub - and a preset is exactly the thing
  * people paste to each other.
  *
  * docs/p/index.html stays the one copy. This puts it in the site's deploy too, so the same page
  * answers on both hosts and every link ever shared keeps working. New links point here
- * (WEB_BASE in src/preset-link.js); the old ones keep resolving where they always did.
+ * (WEB_BASE in src/preset-link.ts); the old ones keep resolving where they always did.
  *
  * The preset code travels in the URL fragment, which browsers never send to a server. Neither
  * host learns which mods anybody shares, and that is worth keeping true of the second one.

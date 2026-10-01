@@ -7,8 +7,8 @@
  */
 const { ipcMain } = require('electron');
 
-const { t } = require('./i18n');
-const { heroIdFromName } = require('./hero-names');
+const { t } = require('./i18n.ts');
+const { heroIdFromName } = require('./hero-names.ts');
 
 /** @param {object} ctx  the services and main-process callbacks these channels use */
 function registerGameIpc({
@@ -20,7 +20,7 @@ function registerGameIpc({
 
   // A switch is honoured here rather than in the renderer: this is the boundary an old
   // window, a stale screen or a replayed click all have to come through. `blocked` arrives
-  // from src/feature-gate.js, because the copy that used to live here got left behind when
+  // from src/feature-gate.ts, because the copy that used to live here got left behind when
   // its only other caller moved to another file.
   const uiLang = () => (settings.get('uiLang') === 'ru' ? 'ru' : 'en');
 

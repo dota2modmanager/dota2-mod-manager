@@ -33,13 +33,13 @@ export const WATCH_AT = 300;
 export function appFiles(readdir = fs.readdirSync, exists = fs.existsSync) {
   const out = ['main.js', 'preload.js', 'preload-uninstall.js'];
   // every source file under src/ and renderer/, at any depth and in either language the window is
-  // written in; renderer/public holds pictures, and nothing in it is code
+  // written in; renderer/public holds pictures, and nothing in it is code; a .d.ts ships nothing
   const walk = (dir) => {
     for (const e of readdir(path.join(root, dir), { withFileTypes: true })) {
       const rel = `${dir}/${e.name}`;
       if (e.isDirectory()) {
         if (rel !== 'renderer/public') walk(rel);
-      } else if (/\.[cm]?[jt]sx?$/.test(e.name)) out.push(rel);
+      } else if (/\.[cm]?[jt]sx?$/.test(e.name) && !e.name.endsWith('.d.ts')) out.push(rel);
     }
   };
   for (const dir of ['src', 'renderer']) if (exists(path.join(root, dir))) walk(dir);

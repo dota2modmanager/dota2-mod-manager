@@ -2,7 +2,7 @@
  * Write portable.yml beside the built portable exe.
  *
  * The portable build cannot install over itself, so the app downloads the new one and leaves
- * it next to the old one (src/portable-update.js). That download needs something to be checked
+ * it next to the old one (src/portable-update.ts). That download needs something to be checked
  * against, and this is it: the name, the size and the SHA-256 of the exe this release built.
  * CI uploads it to the release, the app fetches it from GitHub directly and refuses anything
  * that does not match.
