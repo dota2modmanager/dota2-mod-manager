@@ -32,3 +32,6 @@ credentials-status.json
 e2e-output/
 # inputs tools/fuzz-parsers.mjs kept because a parser mishandled them; the seed reproduces them
 fuzz-output/
+
+# The window page Vite builds (npm run build:ui); main.js loads it from here.
+out/

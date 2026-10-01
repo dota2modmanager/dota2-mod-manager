@@ -14,6 +14,7 @@ the code, not in this page.
 | Module | What it owns |
 |---|---|
 | [`src/adopt.js`](#srcadoptjs) | What a VPK has to go through before it counts as a mod. |
+| [`src/app-page.js`](#srcapp-pagejs) | The page the main window loads. |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
@@ -93,6 +94,50 @@ function createAdopt({ installer, library, schemaService })
 @param {object} ctx.library        the manifest the record is written into
 @param {object} ctx.schemaService  lifts the item blocks out, and splits a multi-hero pack
 ```
+
+## src/app-page.js
+
+The page the main window loads.
+
+Normally the one Vite builds into out/renderer (vite.config.mjs). An unpackaged run under
+`npm run dev` loads it from the Vite server on this machine instead, so an edit shows without
+a restart. A packaged app ignores MM_DEV_URL whatever it says: the variable would otherwise be
+a way to hand window.api to any page at all.
+
+### `appPage`
+
+```js
+function appPage({ root, isPackaged, devUrl, exists = fs.existsSync })
+```
+
+Where the window's page is, and whether there is one.
+
+```
+@param {{ root: string, isPackaged: boolean, devUrl?: string, exists?: (p: string) => boolean }} o
+@returns {{ kind: 'url' | 'file' | 'missing', page: string, url: string }}
+```
+
+### `loadAppPage`
+
+```js
+function loadAppPage(win, { app, dialog, root, env = process.env })
+```
+
+Loads the page into the window and returns its address, the one the navigation guard lets
+through, or null when a checkout was never built (an installer always carries the page).
+
+```
+@param {import('electron').BrowserWindow} win
+@param {{ app: import('electron').App, dialog: import('electron').Dialog, root: string, env?: NodeJS.ProcessEnv }} deps
+```
+
+### `LOCAL_DEV_URL`
+
+```js
+const LOCAL_DEV_URL = /^http:\/\/(127\.0\.0\.1|localhost):\d+\/$/
+```
+
+The only address `npm run dev` serves from (tools/dev.mjs, vite.config.mjs).
 
 ## src/beta.ts
 

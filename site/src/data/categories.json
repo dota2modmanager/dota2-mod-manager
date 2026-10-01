@@ -3,6 +3,14 @@
     {
       "id": "hero-items",
       "mods": [
+        {
+          "name": "Phantom Lancer Ravenblight",
+          "styleLabel": null,
+          "image": {"src":"/mods/phantom-lancer-ravenblight.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790809354
+        },
         {"name":"Keeper Of The Light BMW","styleLabel":null,"image":{"src":"/mods/keeper-of-the-light-bmw.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1790528261},
         {
           "name": "Phantom Lancer Immortal Frost",
@@ -709,6 +717,16 @@
     {
       "id": "backgrounds",
       "mods": [
+        {
+          "name": "Gwardjan Tad Dawl Perfezzjoni",
+          "styleLabel": null,
+          "image": {"src":"/mods/gwardjan-tad-dawl-perfezzjoni.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1790709328
+        },
+        {"name":"The Great Awakening","styleLabel":null,"image":{"src":"/mods/the-great-awakening.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790709328},
+        {"name":"Xvii","styleLabel":null,"image":{"src":"/mods/xvii.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790709328},
         {"name":"Bliss","styleLabel":null,"image":{"src":"/mods/bliss.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
         {"name":"Taghmel Ix-Xita","styleLabel":null,"image":{"src":"/mods/taghmel-ix-xita.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737},
         {"name":"Dark Tree","styleLabel":null,"image":{"src":"/mods/dark-tree.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790299521},
@@ -793,63 +811,16 @@
       ]
     },
     {
-      "id": "mega-kill",
-      "mods": [
-        {
-          "name": "Stariy Bog Mega-Kill",
-          "styleLabel": null,
-          "image": {"src":"/mods/stariy-bog-mega-kill.webp","width":854,"height":480},
-          "author": "rasstegai",
-          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
-          "date": 1790528664
-        },
-        {"name":"CS 1.6 Mega-Kill","styleLabel":null,"image":{"src":"/mods/cs-1-6-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1785081533},
-        {"name":"Umbrella Mega-Kill","styleLabel":null,"image":{"src":"/mods/umbrella-mega-kill.webp","width":854,"height":480},"author":"HiddenPool","authorUrl":"https://t.me/hiddenpoolcm","date":1777663732},
-        {"name":"Stray228 Mega-Kill","styleLabel":null,"image":{"src":"/mods/stray228-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1766279803},
-        {"name":"Hestia","styleLabel":null,"image":{"src":"/mods/hestia.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764898483},
-        {"name":"Chitoge Kirisaki","styleLabel":null,"image":{"src":"/mods/chitoge-kirisaki.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764657298},
-        {"name":"Iroha Isshiki","styleLabel":null,"image":{"src":"/mods/iroha-isshiki.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764657298},
-        {"name":"Axe","styleLabel":null,"image":{"src":"/mods/axe.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Bristleback","styleLabel":null,"image":{"src":"/mods/bristleback.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Clockwerk","styleLabel":null,"image":{"src":"/mods/clockwerk.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Crystal Maiden","styleLabel":null,"image":{"src":"/mods/crystal-maiden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Dark Willow","styleLabel":null,"image":{"src":"/mods/dark-willow.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Darkest Dungeon","styleLabel":null,"image":{"src":"/mods/darkest-dungeon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Defense Grid","styleLabel":null,"image":{"src":"/mods/defense-grid.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Deus Ex","styleLabel":null,"image":{"src":"/mods/deus-ex.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Diretide","styleLabel":null,"image":{"src":"/mods/diretide.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Fallout 4","styleLabel":null,"image":{"src":"/mods/fallout-4.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Gabe Newell","styleLabel":null,"image":{"src":"/mods/gabe-newell.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"GLaDOS","styleLabel":null,"image":{"src":"/mods/glados.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Juggernaut","styleLabel":null,"image":{"src":"/mods/juggernaut.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Kunkka & Tidehunter","styleLabel":null,"image":{"src":"/mods/kunkka-tidehunter.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Lina","styleLabel":null,"image":{"src":"/mods/lina.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Meepo","styleLabel":null,"image":{"src":"/mods/meepo.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Monkey King","styleLabel":null,"image":{"src":"/mods/monkey-king.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Natures Prophet","styleLabel":null,"image":{"src":"/mods/natures-prophet.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Nedotrax Mega-Kill","styleLabel":null,"image":{"src":"/mods/nedotrax-mega-kill.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Pirate Cap","styleLabel":null,"image":{"src":"/mods/pirate-cap.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Pyrion Flax","styleLabel":null,"image":{"src":"/mods/pyrion-flax.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Rick & Morty","styleLabel":null,"image":{"src":"/mods/rick-morty.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {
-          "name": "Ru GLaDOS",
-          "styleLabel": null,
-          "image": {"src":"/mods/ru-glados.webp","width":854,"height":480},
-          "author": "Vpotokwe",
-          "authorUrl": "https://steamcommunity.com/sharedfiles/filedetails/?id=3766199700",
-          "date": 1763202238
-        },
-        {"name":"Siega Mega-Kill","styleLabel":null,"image":{"src":"/mods/siega-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1763202238},
-        {"name":"Stanley Parable","styleLabel":null,"image":{"src":"/mods/stanley-parable.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Storm Spirit","styleLabel":null,"image":{"src":"/mods/storm-spirit.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Techies","styleLabel":null,"image":{"src":"/mods/techies.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Trine","styleLabel":null,"image":{"src":"/mods/trine.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Voice of The International","styleLabel":null,"image":{"src":"/mods/voice-of-the-international.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238}
-      ]
-    },
-    {
       "id": "hero-sounds",
       "mods": [
+        {
+          "name": "Naga Siren Growth Correction",
+          "styleLabel": null,
+          "image": {"src":"/mods/naga-siren-growth-correction.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1790809354
+        },
         {
           "name": "Shadow Fiend Desire Requiem",
           "styleLabel": null,
@@ -1046,6 +1017,61 @@
           "authorUrl": "https://steamcommunity.com/profiles/76561199220865017",
           "date": 1782990543
         }
+      ]
+    },
+    {
+      "id": "mega-kill",
+      "mods": [
+        {
+          "name": "Stariy Bog Mega-Kill",
+          "styleLabel": null,
+          "image": {"src":"/mods/stariy-bog-mega-kill.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1790528664
+        },
+        {"name":"CS 1.6 Mega-Kill","styleLabel":null,"image":{"src":"/mods/cs-1-6-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1785081533},
+        {"name":"Umbrella Mega-Kill","styleLabel":null,"image":{"src":"/mods/umbrella-mega-kill.webp","width":854,"height":480},"author":"HiddenPool","authorUrl":"https://t.me/hiddenpoolcm","date":1777663732},
+        {"name":"Stray228 Mega-Kill","styleLabel":null,"image":{"src":"/mods/stray228-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1766279803},
+        {"name":"Hestia","styleLabel":null,"image":{"src":"/mods/hestia.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764898483},
+        {"name":"Chitoge Kirisaki","styleLabel":null,"image":{"src":"/mods/chitoge-kirisaki.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764657298},
+        {"name":"Iroha Isshiki","styleLabel":null,"image":{"src":"/mods/iroha-isshiki.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764657298},
+        {"name":"Axe","styleLabel":null,"image":{"src":"/mods/axe.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Bristleback","styleLabel":null,"image":{"src":"/mods/bristleback.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Clockwerk","styleLabel":null,"image":{"src":"/mods/clockwerk.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Crystal Maiden","styleLabel":null,"image":{"src":"/mods/crystal-maiden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Dark Willow","styleLabel":null,"image":{"src":"/mods/dark-willow.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Darkest Dungeon","styleLabel":null,"image":{"src":"/mods/darkest-dungeon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Defense Grid","styleLabel":null,"image":{"src":"/mods/defense-grid.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Deus Ex","styleLabel":null,"image":{"src":"/mods/deus-ex.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Diretide","styleLabel":null,"image":{"src":"/mods/diretide.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Fallout 4","styleLabel":null,"image":{"src":"/mods/fallout-4.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Gabe Newell","styleLabel":null,"image":{"src":"/mods/gabe-newell.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"GLaDOS","styleLabel":null,"image":{"src":"/mods/glados.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Juggernaut","styleLabel":null,"image":{"src":"/mods/juggernaut.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Kunkka & Tidehunter","styleLabel":null,"image":{"src":"/mods/kunkka-tidehunter.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Lina","styleLabel":null,"image":{"src":"/mods/lina.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Meepo","styleLabel":null,"image":{"src":"/mods/meepo.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Monkey King","styleLabel":null,"image":{"src":"/mods/monkey-king.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Natures Prophet","styleLabel":null,"image":{"src":"/mods/natures-prophet.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Nedotrax Mega-Kill","styleLabel":null,"image":{"src":"/mods/nedotrax-mega-kill.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Pirate Cap","styleLabel":null,"image":{"src":"/mods/pirate-cap.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Pyrion Flax","styleLabel":null,"image":{"src":"/mods/pyrion-flax.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Rick & Morty","styleLabel":null,"image":{"src":"/mods/rick-morty.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {
+          "name": "Ru GLaDOS",
+          "styleLabel": null,
+          "image": {"src":"/mods/ru-glados.webp","width":854,"height":480},
+          "author": "Vpotokwe",
+          "authorUrl": "https://steamcommunity.com/sharedfiles/filedetails/?id=3766199700",
+          "date": 1763202238
+        },
+        {"name":"Siega Mega-Kill","styleLabel":null,"image":{"src":"/mods/siega-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1763202238},
+        {"name":"Stanley Parable","styleLabel":null,"image":{"src":"/mods/stanley-parable.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Storm Spirit","styleLabel":null,"image":{"src":"/mods/storm-spirit.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Techies","styleLabel":null,"image":{"src":"/mods/techies.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Trine","styleLabel":null,"image":{"src":"/mods/trine.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Voice of The International","styleLabel":null,"image":{"src":"/mods/voice-of-the-international.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238}
       ]
     },
     {
@@ -1398,113 +1424,16 @@
       ]
     },
     {
-      "id": "sounds",
-      "mods": [
-        {"name":"Dagon Cobra Kick","styleLabel":null,"image":{"src":"/mods/dagon-cobra-kick.webp","width":854,"height":480},"author":"Новомодный","authorUrl":null,"date":1789727816},
-        {"name":"Dagon Revolver","styleLabel":null,"image":{"src":"/mods/dagon-revolver.webp","width":854,"height":480},"author":"keeper","authorUrl":"https://t.me/eternalsadism","date":1789192305},
-        {
-          "name": "1st September Horn",
-          "styleLabel": null,
-          "image": {"src":"/mods/1st-september-horn.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1788365172
-        },
-        {"name":"Dagon AWP","styleLabel":null,"image":{"src":"/mods/dagon-awp.webp","width":1280,"height":720},"author":"SuperStas0","authorUrl":"https://t.me/SuperStas0","date":1786250017},
-        {"name":"Flash Step Blink","styleLabel":null,"image":{"src":"/mods/flash-step-blink.webp","width":736,"height":411},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1786250017},
-        {"name":"Tormentor Amor","styleLabel":null,"image":{"src":"/mods/tormentor-amor.webp","width":1280,"height":720},"author":"SuperStas0","authorUrl":"https://t.me/SuperStas0","date":1786250017},
-        {"name":"Dark Carnival Dora","styleLabel":null,"image":{"src":"/mods/dark-carnival-dora.webp","width":854,"height":480},"author":"Senop","authorUrl":"https://t.me/senopD2","date":1784454434},
-        {
-          "name": "Dark Carnival Serega Pirat",
-          "styleLabel": null,
-          "image": {"src":"/mods/dark-carnival-serega-pirat.webp","width":854,"height":480},
-          "author": "Senop",
-          "authorUrl": "https://t.me/senopD2",
-          "date": 1784454434
-        },
-        {
-          "name": "Dark Carnival Team Spirit",
-          "styleLabel": null,
-          "image": {"src":"/mods/dark-carnival-team-spirit.webp","width":854,"height":480},
-          "author": "Senop",
-          "authorUrl": "https://t.me/senopD2",
-          "date": 1784454434
-        },
-        {
-          "name": "ReZero Subaru Phone Horn",
-          "styleLabel": null,
-          "image": {"src":"/mods/rezero-subaru-phone-horn.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1780816909
-        },
-        {
-          "name": "ReZero Respawn Sound",
-          "styleLabel": null,
-          "image": {"src":"/mods/rezero-respawn-sound.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1780653646
-        },
-        {
-          "name": "ReZero Respawn Sound",
-          "styleLabel": null,
-          "image": {"src":"/mods/rezero-respawn-sound.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1780653646
-        },
-        {"name":"Sora Main Menu","styleLabel":null,"image":{"src":"/mods/sora-main-menu.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780653646},
-        {
-          "name": "Stairs Guy Main Menu",
-          "styleLabel": null,
-          "image": {"src":"/mods/stairs-guy-main-menu.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1780653646
-        },
-        {
-          "name": "USSR and Germany Horn",
-          "styleLabel": null,
-          "image": {"src":"/mods/ussr-and-germany-horn.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1780653646
-        },
-        {
-          "name": "Warcraft III / AllStars Voices",
-          "styleLabel": null,
-          "image": {"src":"/mods/warcraft-iii-allstars-voices.webp","width":854,"height":480},
-          "author": "Fr0dech",
-          "authorUrl": "https://t.me/fr0dech_vpk",
-          "date": null
-        }
-      ]
-    },
-    {
-      "id": "ti-bp-effects",
-      "mods": [
-        {"name":"Aghanims Labyrinth Battle Pass","styleLabel":null,"image":{"src":"/mods/aghanims-labyrinth-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Battle Pass 2022","styleLabel":null,"image":{"src":"/mods/battle-pass-2022.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Darkness Pack","styleLabel":null,"image":{"src":"/mods/darkness-pack.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
-        {"name":"Nemestice 2021 Battle Pass","styleLabel":null,"image":{"src":"/mods/nemestice-2021-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Purple Quarteros Curios","styleLabel":null,"image":{"src":"/mods/purple-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Quarteros Curios","styleLabel":null,"image":{"src":"/mods/quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Spring Quarteros Curios","styleLabel":null,"image":{"src":"/mods/spring-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Summer Quarteros Curios","styleLabel":null,"image":{"src":"/mods/summer-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"TI 2010 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2010-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"TI 2016 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2016-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"TI 2017 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2017-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"TI 2018 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2018-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"TI 2019 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2019-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Winter Quarteros Curios","styleLabel":null,"image":{"src":"/mods/winter-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Remove Seasonal Effects","styleLabel":null,"image":{"src":"/mods/remove-seasonal-effects.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662},
-        {"name":"Winter 2016 Battle Pass","styleLabel":null,"image":{"src":"/mods/winter-2016-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662}
-      ]
-    },
-    {
       "id": "other",
       "mods": [
+        {
+          "name": "Techies Minimap-Hero Mine Icon",
+          "styleLabel": null,
+          "image": {"src":"/mods/techies-minimap-hero-mine-icon.webp","width":854,"height":480},
+          "author": "hanfukj",
+          "authorUrl": "https://t.me/hanfukj",
+          "date": 1790818573
+        },
         {"name":"All Grandmasters","styleLabel":null,"image":{"src":"/mods/all-grandmasters.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790030268},
         {"name":"Black Click","styleLabel":null,"image":{"src":"/mods/black-click.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1788815201},
         {"name":"Light Brown Click","styleLabel":null,"image":{"src":"/mods/light-brown-click.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788762686},
@@ -1558,6 +1487,103 @@
       ]
     },
     {
+      "id": "ti-bp-effects",
+      "mods": [
+        {"name":"Aghanims Labyrinth Battle Pass","styleLabel":null,"image":{"src":"/mods/aghanims-labyrinth-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Battle Pass 2022","styleLabel":null,"image":{"src":"/mods/battle-pass-2022.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Darkness Pack","styleLabel":null,"image":{"src":"/mods/darkness-pack.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
+        {"name":"Nemestice 2021 Battle Pass","styleLabel":null,"image":{"src":"/mods/nemestice-2021-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Purple Quarteros Curios","styleLabel":null,"image":{"src":"/mods/purple-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Quarteros Curios","styleLabel":null,"image":{"src":"/mods/quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Spring Quarteros Curios","styleLabel":null,"image":{"src":"/mods/spring-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Summer Quarteros Curios","styleLabel":null,"image":{"src":"/mods/summer-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2010 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2010-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2016 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2016-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2017 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2017-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2018 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2018-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2019 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2019-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Winter Quarteros Curios","styleLabel":null,"image":{"src":"/mods/winter-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Remove Seasonal Effects","styleLabel":null,"image":{"src":"/mods/remove-seasonal-effects.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662},
+        {"name":"Winter 2016 Battle Pass","styleLabel":null,"image":{"src":"/mods/winter-2016-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662}
+      ]
+    },
+    {
+      "id": "sounds",
+      "mods": [
+        {"name":"Dagon Cobra Kick","styleLabel":null,"image":{"src":"/mods/dagon-cobra-kick.webp","width":854,"height":480},"author":"Новомодный","authorUrl":null,"date":1789727816},
+        {"name":"Dagon Revolver","styleLabel":null,"image":{"src":"/mods/dagon-revolver.webp","width":854,"height":480},"author":"keeper","authorUrl":"https://t.me/eternalsadism","date":1789192305},
+        {
+          "name": "1st September Horn",
+          "styleLabel": null,
+          "image": {"src":"/mods/1st-september-horn.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1788365172
+        },
+        {"name":"Dagon AWP","styleLabel":null,"image":{"src":"/mods/dagon-awp.webp","width":1280,"height":720},"author":"SuperStas0","authorUrl":"https://t.me/SuperStas0","date":1786250017},
+        {"name":"Flash Step Blink","styleLabel":null,"image":{"src":"/mods/flash-step-blink.webp","width":736,"height":411},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1786250017},
+        {"name":"Tormentor Amor","styleLabel":null,"image":{"src":"/mods/tormentor-amor.webp","width":1280,"height":720},"author":"SuperStas0","authorUrl":"https://t.me/SuperStas0","date":1786250017},
+        {"name":"Dark Carnival Dora","styleLabel":null,"image":{"src":"/mods/dark-carnival-dora.webp","width":854,"height":480},"author":"Senop","authorUrl":"https://t.me/senopD2","date":1784454434},
+        {
+          "name": "Dark Carnival Serega Pirat",
+          "styleLabel": null,
+          "image": {"src":"/mods/dark-carnival-serega-pirat.webp","width":854,"height":480},
+          "author": "Senop",
+          "authorUrl": "https://t.me/senopD2",
+          "date": 1784454434
+        },
+        {
+          "name": "Dark Carnival Team Spirit",
+          "styleLabel": null,
+          "image": {"src":"/mods/dark-carnival-team-spirit.webp","width":854,"height":480},
+          "author": "Senop",
+          "authorUrl": "https://t.me/senopD2",
+          "date": 1784454434
+        },
+        {
+          "name": "ReZero Subaru Phone Horn",
+          "styleLabel": null,
+          "image": {"src":"/mods/rezero-subaru-phone-horn.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1780816909
+        },
+        {
+          "name": "ReZero Respawn Sound",
+          "styleLabel": null,
+          "image": {"src":"/mods/rezero-respawn-sound.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1780653646
+        },
+        {"name":"Sora Main Menu","styleLabel":null,"image":{"src":"/mods/sora-main-menu.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780653646},
+        {
+          "name": "Stairs Guy Main Menu",
+          "styleLabel": null,
+          "image": {"src":"/mods/stairs-guy-main-menu.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1780653646
+        },
+        {
+          "name": "USSR and Germany Horn",
+          "styleLabel": null,
+          "image": {"src":"/mods/ussr-and-germany-horn.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1780653646
+        },
+        {
+          "name": "Warcraft III / AllStars Voices",
+          "styleLabel": null,
+          "image": {"src":"/mods/warcraft-iii-allstars-voices.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": null
+        }
+      ]
+    },
+    {
       "id": "huds",
       "mods": [
         {"name":"Horror Black Hud","styleLabel":null,"image":{"src":"/mods/horror-black-hud.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1789988579},
@@ -1600,23 +1626,9 @@
       ]
     },
     {
-      "id": "fonts",
-      "mods": [
-        {"name":"Pusia","styleLabel":null,"image":{"src":"/mods/pusia.webp","width":854,"height":480},"author":"Timmyone","authorUrl":"https://t.me/timmyone","date":1784463072},
-        {"name":"Warcraft III","styleLabel":null,"image":{"src":"/mods/warcraft-iii.webp","width":854,"height":480},"author":"YMOM77","authorUrl":"https://t.me/mod_dota","date":1778224820},
-        {"name":"Nothing","styleLabel":null,"image":{"src":"/mods/nothing.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1774532493},
-        {"name":"HondaC","styleLabel":null,"image":{"src":"/mods/hondac.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203},
-        {"name":"Audex","styleLabel":null,"image":{"src":"/mods/audex.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771821325},
-        {"name":"Correction Tape","styleLabel":null,"image":{"src":"/mods/correction-tape.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771770813},
-        {"name":"Mason","styleLabel":null,"image":{"src":"/mods/mason.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771535904},
-        {"name":"DM Mono","styleLabel":null,"image":{"src":"/mods/dm-mono.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770937816},
-        {"name":"Divagon","styleLabel":null,"image":{"src":"/mods/divagon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770389710},
-        {"name":"Monocraft","styleLabel":null,"image":{"src":"/mods/monocraft.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770383220}
-      ]
-    },
-    {
       "id": "pedestal",
       "mods": [
+        {"name":"Pedestal Shadow Fiend","styleLabel":null,"image":{"src":"/mods/pedestal-shadow-fiend.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790809354},
         {
           "name": "Dark Carnaval Pedestal",
           "styleLabel": null,
@@ -1669,6 +1681,50 @@
         {"name":"Earthshaker Pedestal","styleLabel":null,"image":{"src":"/mods/earthshaker-pedestal.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788940775},
         {"name":"Snow Pedestal","styleLabel":null,"image":{"src":"/mods/snow-pedestal.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788940775},
         {"name":"Windranger Pedestal","styleLabel":null,"image":{"src":"/mods/windranger-pedestal.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788940775}
+      ]
+    },
+    {
+      "id": "fonts",
+      "mods": [
+        {"name":"Pusia","styleLabel":null,"image":{"src":"/mods/pusia.webp","width":854,"height":480},"author":"Timmyone","authorUrl":"https://t.me/timmyone","date":1784463072},
+        {"name":"Warcraft III","styleLabel":null,"image":{"src":"/mods/warcraft-iii.webp","width":854,"height":480},"author":"YMOM77","authorUrl":"https://t.me/mod_dota","date":1778224820},
+        {"name":"Nothing","styleLabel":null,"image":{"src":"/mods/nothing.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1774532493},
+        {"name":"HondaC","styleLabel":null,"image":{"src":"/mods/hondac.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203},
+        {"name":"Audex","styleLabel":null,"image":{"src":"/mods/audex.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771821325},
+        {"name":"Correction Tape","styleLabel":null,"image":{"src":"/mods/correction-tape.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771770813},
+        {"name":"Mason","styleLabel":null,"image":{"src":"/mods/mason.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771535904},
+        {"name":"DM Mono","styleLabel":null,"image":{"src":"/mods/dm-mono.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770937816},
+        {"name":"Divagon","styleLabel":null,"image":{"src":"/mods/divagon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770389710},
+        {"name":"Monocraft","styleLabel":null,"image":{"src":"/mods/monocraft.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770383220}
+      ]
+    },
+    {
+      "id": "parts",
+      "mods": [
+        {"name":"Grey Minimap","styleLabel":null,"image":{"src":"/mods/grey-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790825298},
+        {"name":"Grey Search Bar","styleLabel":null,"image":{"src":"/mods/grey-search-bar.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {"name":"Larger Minimap","styleLabel":null,"image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {"name":"Larger Timer","styleLabel":null,"image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {"name":"Windows Xp Top Bar","styleLabel":null,"image":{"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
+        {"name":"Hypergamy Search Bar","styleLabel":null,"image":{"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737},
+        {
+          "name": "Sematary Search Bar",
+          "styleLabel": null,
+          "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1790213331
+        },
+        {"name":"Black Top Bar","styleLabel":null,"image":{"src":"/mods/black-top-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790084006},
+        {"name":"Kaneki Search Bar","styleLabel":null,"image":{"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790084006},
+        {
+          "name": "Scolopendra Search Bar",
+          "styleLabel": null,
+          "image": {"src":"/mods/scolopendra-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1790084006
+        }
       ]
     },
     {
@@ -1805,31 +1861,6 @@
       ]
     },
     {
-      "id": "parts",
-      "mods": [
-        {"name":"Windows Xp Top Bar","styleLabel":null,"image":{"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
-        {"name":"Hypergamy Search Bar","styleLabel":null,"image":{"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737},
-        {
-          "name": "Sematary Search Bar",
-          "styleLabel": null,
-          "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1790213331
-        },
-        {"name":"Black Top Bar","styleLabel":null,"image":{"src":"/mods/black-top-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790084006},
-        {"name":"Kaneki Search Bar","styleLabel":null,"image":{"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790084006},
-        {
-          "name": "Scolopendra Search Bar",
-          "styleLabel": null,
-          "image": {"src":"/mods/scolopendra-search-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1790084006
-        }
-      ]
-    },
-    {
       "id": "pings",
       "mods": [
         {"name":"Love Ping","styleLabel":null,"image":{"src":"/mods/love-ping.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790213331},
@@ -1881,7 +1912,7 @@
     {
       "id": "ancient",
       "mods": [
-        {"name":"Ancient Dragon King","styleLabel":null,"image":{"src":"/mods/ancient-dragon-king.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1784792710},
+        {"name":"Ancient Dragon King","styleLabel":null,"image":{"src":"/mods/ancient-dragon-king.webp","width":854,"height":480},"author":"Kisilev","authorUrl":"https://vk.com/id363951132","date":1784792710},
         {"name":"Frostivus Ancient","styleLabel":null,"image":{"src":"/mods/frostivus-ancient.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1784792710}
       ]
     },

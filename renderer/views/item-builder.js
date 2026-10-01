@@ -19,13 +19,11 @@ import { state } from '../core/store.js';
 import { COSMETIC_PREFIX } from '../core/constants.js';
 import { catName, catIcon } from '../core/categories.js';
 import { pickedIn, refreshCosmeticSlots } from '../core/installed.js';
-import { pane } from '../core/router.js';
+import { legacyLayer } from '../catalog/layers.ts';
 import { esc, plural } from '../ui/format.js';
 import { paint } from '../ui/transitions.js';
 import { toast } from '../ui/toast.js';
 import { cosmeticIcon, loadCosmeticIcons, paintCosmeticIcons, watchCosmeticIcons } from '../ui/cosmetic-icons.js';
-
-const viewRoot = pane('catalog');
 
 /** What the catalog hands over; set once by bindItemBuilder before anything here runs. */
 let cat = null;
@@ -316,7 +314,7 @@ async function applyItemSlot(act, chosen) {
 }
 
 export async function renderItemCosmeticHub(restoreScrollTop = null) {
-  await paint(() => { viewRoot.innerHTML = `<div class="view-header"><h1 class="view-title">${esc(catName(COSMETIC_PREFIX + 'items'))}</h1></div><div class="empty-note">${L`Читаем схему игры…`}</div>`; });
+  await paint(() => { legacyLayer().innerHTML = `<div class="view-header"><h1 class="view-title">${esc(catName(COSMETIC_PREFIX + 'items'))}</h1></div><div class="empty-note">${L`Читаем схему игры…`}</div>`; });
   if (!state.cosmeticSlots) await refreshCosmeticSlots();
   if (state.activeCategory !== COSMETIC_PREFIX + 'items') return;
 
@@ -329,7 +327,7 @@ export async function renderItemCosmeticHub(restoreScrollTop = null) {
   const list = [...heroes.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   await loadHeroPortraits(list);
   if (!list.length) {
-    await paint(() => { viewRoot.innerHTML = `<div class="view-header"><h1 class="view-title">${esc(catName(COSMETIC_PREFIX + 'items'))}</h1></div><div class="empty-note">${L`Схема игры не прочиталась — проверь путь к Dota 2 в настройках.`}</div>`; });
+    await paint(() => { legacyLayer().innerHTML = `<div class="view-header"><h1 class="view-title">${esc(catName(COSMETIC_PREFIX + 'items'))}</h1></div><div class="empty-note">${L`Схема игры не прочиталась — проверь путь к Dota 2 в настройках.`}</div>`; });
     return;
   }
 
@@ -341,7 +339,7 @@ export async function renderItemCosmeticHub(restoreScrollTop = null) {
     $('#itemHub').innerHTML = filteredList.length
       ? `<div class="grid">${filteredList.map(([hero, slots], i) => itemHeroCardHtml(hero, slots, i)).join('')}</div>`
       : `<div class="empty-note">${L`Ничего не найдено — сбрось фильтры`}</div>`;
-    viewRoot.querySelectorAll('[data-item-hero]').forEach((btn) => {
+    legacyLayer().querySelectorAll('[data-item-hero]').forEach((btn) => {
       const heroName = btn.dataset.itemHero;
       const heroSlots = heroes.get(heroName) || [];
       btn.addEventListener('click', () => openItemHeroModal(heroName, heroSlots, btn));
@@ -362,7 +360,7 @@ export async function renderItemCosmeticHub(restoreScrollTop = null) {
     paintHub(filtered);
   };
 
-  await paint(() => { viewRoot.innerHTML = `
+  await paint(() => { legacyLayer().innerHTML = `
     <div class="view-header">
       <h1 class="view-title">${esc(catName(COSMETIC_PREFIX + 'items'))}</h1>
     </div>
@@ -652,14 +650,11 @@ export function forgetItemSlotModal() {
 }
 
 /** The rail's entry for the builder, when the game has items to build: '' otherwise. */
-export function itemRailHtml(activeCategory) {
-  if (!itemCosmeticSlots().length) return '';
+/** The builder's one entry in the catalog rail (catalog/rail/Rail.tsx), or null with no item slots. */
+export function itemRailEntry() {
+  if (!itemCosmeticSlots().length) return null;
   const id = COSMETIC_PREFIX + 'items';
-  return `
-        <button class="rail-item ${activeCategory === id ? 'active' : ''}" data-cat="${esc(id)}">
-          <span class="ms">${catIcon(id)}</span>${esc(catName(id))}
-          ${hasItemCosmeticPick() ? '<span class="rail-dot"></span>' : ''}
-        </button>`;
+  return { id, icon: catIcon(id), name: catName(id), dot: hasItemCosmeticPick() };
 }
 
 /** Draw the hub again after a pick, where it was scrolled to, when it is the screen on show. */
