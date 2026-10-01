@@ -8,7 +8,7 @@
 //
 // Almost all of them need no decoding at all. Panorama's images are authored as PNG and
 // compiled with the format left as PNG, so the .vtex_c is a short header with the PNG file
-// appended (see src/vtex.js): of 3000 item icons in the installed game, 2877 come out whole
+// appended (see src/vtex.ts): of 3000 item icons in the installed game, 2877 come out whole
 // by slicing the header off. Those cost one seek each and work offline, on a fresh install,
 // with nothing downloaded.
 //
@@ -27,7 +27,7 @@ const crypto = require('crypto');
 const { execFile } = require('child_process');
 const schema = require('./schema');
 const { openVpkIndex } = require('./vpk');
-const { pngFromVtex } = require('./vtex');
+const { pngFromVtex } = require('./vtex.ts');
 
 // Enough to fill a screen of tiles in one go; the renderer asks in batches of 24.
 const MAX_PER_CALL = 60;

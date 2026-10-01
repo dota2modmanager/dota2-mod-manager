@@ -9,7 +9,7 @@ const { dialog, ipcMain } = require('electron');
 
 const i18n = require('./i18n');
 const { t } = i18n;
-const { betaState } = require('./beta');
+const { betaState } = require('./beta.ts');
 
 /** @param {object} ctx  the services and main-process callbacks these channels use */
 function registerSettingsIpc({
@@ -22,7 +22,7 @@ function registerSettingsIpc({
   /* The beta channel, from the switch in settings and the list in the signed config.
    *
    * Read rather than remembered: an account taken off the list, or signed out of Discord, is back
-   * on the stable channel at the next check without anybody touching their machine. src/beta.js
+   * on the stable channel at the next check without anybody touching their machine. src/beta.ts
    * holds the rule, src/updater.js does the aiming, and neither is asked whether the user is
    * "allowed" anywhere else - this is who is offered the build, not who can run it. */
   const beta = () => betaState({

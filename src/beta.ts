@@ -21,30 +21,37 @@
  * Signing out of Discord takes the beta with it: without an id there is nobody to check against,
  * so the channel falls back to the stable one on the next check.
  */
-const crypto = require('crypto');
+import { createHash } from 'node:crypto';
 
 /** The channel name electron-updater reads, and the file it looks for: beta.yml. */
-const BETA_CHANNEL = 'beta';
+export const BETA_CHANNEL = 'beta';
 /** What everybody else reads: latest.yml, the release channel. */
-const STABLE_CHANNEL = 'latest';
+export const STABLE_CHANNEL = 'latest';
+
+export type Channel = typeof BETA_CHANNEL | typeof STABLE_CHANNEL;
+
+/** The `beta` block of the signed config: a salt and the hashed ids let in. */
+export interface BetaList { salt?: string; ids?: unknown[] }
+
+/** Who is asking and whether they switched the beta on. */
+export interface BetaAsk { discordId?: string | null; beta?: BetaList | null; wanted?: boolean }
 
 /**
  * How an id becomes a line in the public list.
- * @param {string|number} id  the Discord account id
- * @param {string} salt       from the same block of the config
+ * @param id    the Discord account id
+ * @param salt  from the same block of the config
  */
-function idHash(id, salt) {
-  return crypto.createHash('sha256').update(`${String(salt || '')}:${String(id || '').trim()}`).digest('hex');
+export function idHash(id: string | number, salt: string | undefined): string {
+  return createHash('sha256').update(`${String(salt || '')}:${String(id || '').trim()}`).digest('hex');
 }
 
 /**
  * Is this account on the list? A missing list, a missing id or a damaged entry all mean no,
  * because the honest answer to "should this person be offered an unreleased build" is no
  * until something says otherwise.
- * @param {string|null} discordId
- * @param {{salt?: string, ids?: string[]}|null} beta  the `beta` block of the signed config
+ * @param beta  the `beta` block of the signed config
  */
-function isTester(discordId, beta) {
+export function isTester(discordId: string | null | undefined, beta: BetaList | null | undefined): boolean {
   if (!discordId || !beta || !Array.isArray(beta.ids) || !beta.ids.length) return false;
   const want = idHash(discordId, beta.salt);
   return beta.ids.some((entry) => typeof entry === 'string' && entry.toLowerCase() === want);
@@ -57,10 +64,8 @@ function isTester(discordId, beta) {
  * owner was taken off the list, or who signed out of Discord, goes back to the stable channel
  * with the switch still on, and turns beta again by itself if they are let back in.
  *
- * @param {{discordId?: string|null, beta?: object|null, wanted?: boolean}} state
- * @returns {'latest'|'beta'}
  */
-function channelFor({ discordId = null, beta = null, wanted = false } = {}) {
+export function channelFor({ discordId = null, beta = null, wanted = false }: BetaAsk = {}): Channel {
   return wanted && isTester(discordId, beta) ? BETA_CHANNEL : STABLE_CHANNEL;
 }
 
@@ -68,11 +73,8 @@ function channelFor({ discordId = null, beta = null, wanted = false } = {}) {
  * What the settings screen needs to draw: whether to show the switch at all, and where it sits.
  * Somebody who is not on the list is not told there is a list - a switch they cannot use is
  * noise, and "you are not invited" is a worse thing to read than nothing.
- * @returns {{eligible: boolean, on: boolean, channel: 'latest'|'beta'}}
  */
-function betaState({ discordId = null, beta = null, wanted = false } = {}) {
+export function betaState({ discordId = null, beta = null, wanted = false }: BetaAsk = {}): { eligible: boolean; on: boolean; channel: Channel } {
   const eligible = isTester(discordId, beta);
   return { eligible, on: eligible && Boolean(wanted), channel: channelFor({ discordId, beta, wanted }) };
 }
-
-module.exports = { BETA_CHANNEL, STABLE_CHANNEL, idHash, isTester, channelFor, betaState };

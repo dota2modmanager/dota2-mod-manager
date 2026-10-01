@@ -11,7 +11,7 @@
  * GitHub again: the mirror is for the hours it is down, not a place to settle into.
  *
  * Two channels. Everybody reads `latest`; the testers the maintainer picked read `beta`, which is
- * a different manifest (beta.yml) in the same place. src/beta.js decides who is on which, and the
+ * a different manifest (beta.yml) in the same place. src/beta.ts decides who is on which, and the
  * decision is re-read rather than remembered: a tester taken off the list is back on the stable
  * channel at the next check, without anybody touching their machine.
  *
@@ -19,7 +19,7 @@
  * NSIS installer, and a portable build has none, so it would download 100 MB and then fail
  * quietly. It still looks, and says where the new copy lives.
  */
-const { BETA_CHANNEL } = require('./beta');
+const { BETA_CHANNEL } = require('./beta.ts');
 
 /** The copy of each release this project keeps, for the hours GitHub is not answering. */
 const MIRROR = 'https://cdn.dota2modmanager.com/updates/';

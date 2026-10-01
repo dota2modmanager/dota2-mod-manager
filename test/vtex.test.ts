@@ -2,10 +2,10 @@
 // format left as PNG, so almost every item icon comes out of the game whole - but only when
 // the bytes really are a whole PNG, which is what these check. Guessing wrong here would put
 // a corrupt file in the icon cache and keep serving it.
-const test = require('node:test');
-const assert = require('node:assert/strict');
+import test from 'node:test';
+import assert from 'node:assert/strict';
 
-const { pngFromVtex } = require('../src/vtex.js');
+import { pngFromVtex } from '../src/vtex.ts';
 
 const SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
@@ -21,7 +21,7 @@ function png(width = 4, height = 3) {
 }
 
 /** A resource whose first field is the size of the header part, with `tail` appended. */
-function vtex(headerBytes, tail) {
+function vtex(headerBytes: number, tail: Buffer): Buffer {
   const head = Buffer.alloc(headerBytes);
   head.writeUInt32LE(headerBytes, 0);
   return Buffer.concat([head, tail]);
@@ -31,7 +31,8 @@ test('a texture that carries a PNG gives back exactly that PNG', () => {
   const file = png();
   const got = pngFromVtex(vtex(64, file));
   assert.ok(got, 'expected the picture to be found');
-  assert.equal(Buffer.compare(got, file), 0);
+  assert.ok(got, 'a PNG after the header is found');
+  assert.equal(Buffer.compare(got as Buffer, file), 0);
 });
 
 test('the header size is trusted over a stray signature earlier in the file', () => {
@@ -41,7 +42,8 @@ test('the header size is trusted over a stray signature earlier in the file', ()
   SIGNATURE.copy(head, 20);
   const file = png(8, 8);
   const got = pngFromVtex(Buffer.concat([head, file]));
-  assert.equal(Buffer.compare(got, file), 0);
+  assert.ok(got, 'the PNG after the real header is found');
+  assert.equal(Buffer.compare(got as Buffer, file), 0);
 });
 
 test('a block-compressed texture is refused rather than guessed at', () => {

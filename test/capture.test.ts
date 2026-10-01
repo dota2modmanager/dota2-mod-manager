@@ -1,21 +1,21 @@
-/* The screenshot harness trying again when the compositor has no frame yet (src/capture.js).
+/* The screenshot harness trying again when the compositor has no frame yet (src/capture.ts).
  *
  * The Linux start check failed once with UnknownVizError on a change that did not touch the app.
  * These hold the retry to what it promises: a picture when a later try works, the real error when
  * none does, a log line for every failure, and no delay when the first try works.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const path = require('path');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const { captureWithRetry } = require('../src/capture.js');
+import { captureWithRetry } from '../src/capture.ts';
 
 const noWait = () => Promise.resolve();
 
 test('a capture that fails twice with UnknownVizError and then works returns the picture', async () => {
   let calls = 0;
-  const said = [];
+  const said: string[] = [];
   const img = await captureWithRetry(async () => {
     calls++;
     if (calls < 3) throw new Error('UnknownVizError');
@@ -44,7 +44,7 @@ test('a capture that works the first time is not delayed', async () => {
 });
 
 test('main.js takes its screenshots through the retry', () => {
-  const main = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
+  const main = fs.readFileSync(path.join(import.meta.dirname, '..', 'main.js'), 'utf8');
   assert.match(main, /captureWithRetry\(\(\) => win\.webContents\.capturePage\(\)/,
     'the harness calls capturePage directly again, and one missing frame fails the check');
 });

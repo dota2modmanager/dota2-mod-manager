@@ -489,22 +489,24 @@ class Installer {
 
   /**
    * Rename every pak file of a record to another slot, keeping .off/.moff state and the
-   * volume numbering of a multi-volume pack.
+   * volume numbering of a multi-volume pack. All of them move or none: a refused rename undoes the
+   * rest (the caller's FileTx when it passes one, else its own), or a pak splits from its volumes.
    * @returns {Array<object>} the record's new files array (caller stores it)
    */
-  moveToSlot(rec, newBase, oldBase = this.slotBase(rec)) {
+  moveToSlot(rec, newBase, oldBase = this.slotBase(rec), tx = null) {
     const lang = this.langFolder();
     if (!oldBase) throw new Error(t('У мода нет слота pakNN'));
     const mine = new RegExp(`^${oldBase}(_dir|_\\d{3})\\.vpk$`, 'i');
-    return (rec.files || []).map((f) => {
+    const move = (into) => (rec.files || []).map((f) => {
       if (f.root !== 'lang' || !mine.test(f.relPath)) return f;
       const next = newBase + f.relPath.slice(oldBase.length);
       for (const suf of ['', '.off', MASTER_OFF]) {
         const from = path.join(lang, f.relPath + suf);
-        if (fs.existsSync(from)) fs.renameSync(from, path.join(lang, next + suf));
+        if (fs.existsSync(from)) into.move(from, path.join(lang, next + suf));
       }
       return { ...f, relPath: next };
     });
+    return tx ? move(tx) : FileTx.run(move);
   }
 
   /**
@@ -517,16 +519,13 @@ class Installer {
     const aBase = this.slotBase(a);
     const bBase = this.slotBase(b);
     if (!aBase || !bBase) throw new Error(t('У мода нет слота pakNN'));
-    const parked = this.moveToSlot(a, 'pak00');
-    try {
-      const movedB = this.moveToSlot(b, aBase);
-      const movedA = this.moveToSlot({ ...a, files: parked }, bBase);
+    // one transaction, undone in reverse: undoing a before b once renamed a over b and lost it
+    return FileTx.run((tx) => {
+      const parked = this.moveToSlot(a, 'pak00', aBase, tx);
+      const movedB = this.moveToSlot(b, aBase, bBase, tx);
+      const movedA = this.moveToSlot({ ...a, files: parked }, bBase, 'pak00', tx);
       return [{ id: a.id, files: movedA }, { id: b.id, files: movedB }];
-    } catch (err) {
-      // put ours back where it was rather than leave it parked in a slot nothing mounts
-      try { this.moveToSlot({ ...a, files: parked }, aBase); } catch { /* nothing else to try */ }
-      throw err;
-    }
+    });
   }
 
   // ---------- helpers ----------

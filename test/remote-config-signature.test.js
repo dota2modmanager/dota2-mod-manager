@@ -19,7 +19,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 
-const { verify } = require('../src/catalog-signature.js');
+const { verify } = require('../src/catalog-signature.ts');
 const { CONFIG_PUBLIC_KEY, CONFIG_URL, CONFIG_SIG_URL } = require('../src/remote-config.js');
 
 const root = path.join(__dirname, '..');

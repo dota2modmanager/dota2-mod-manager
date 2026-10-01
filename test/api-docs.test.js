@@ -12,7 +12,7 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT = path.join(ROOT, 'docs', 'API.md');
-const { build } = require('../tools/gen-api-docs.js');
+const { build, moduleDoc } = require('../tools/gen-api-docs.js');
 
 /* Windows checks the file out with CRLF, CI reads it with LF, and the generator emits LF.
  * Comparing the raw bytes would fail on one platform and pass on the other, which is a test
@@ -26,8 +26,8 @@ test('the committed reference is what the source says today', () => {
 
 test('every module that ships is in the reference', () => {
   const text = read(OUT);
-  const skipped = (f) => f.startsWith('ipc-') || f === 'settings-view.js' || f === 'uninstall-window.js';
-  const files = fs.readdirSync(path.join(ROOT, 'src')).filter((f) => f.endsWith('.js'));
+  const skipped = (f) => f.startsWith('ipc-') || /^(settings-view|uninstall-window)\.[jt]s$/.test(f);
+  const files = fs.readdirSync(path.join(ROOT, 'src')).filter((f) => /\.(js|ts)$/.test(f) && !f.endsWith('.d.ts'));
   assert.ok(files.length > 20, 'src/ was found');
   for (const f of files.filter((f) => !skipped(f))) {
     assert.ok(text.includes(`## src/${f}`), `${f} has a section`);
@@ -35,6 +35,31 @@ test('every module that ships is in the reference', () => {
   for (const f of files.filter(skipped)) {
     assert.ok(!text.includes(`## src/${f}`), `${f} is wiring, not API`);
   }
+});
+
+test('a TypeScript module is read by its export statements, its opening comment first', () => {
+  const doc = moduleDoc('sample.ts', [
+    '// What this module is for,',
+    '// in two lines.',
+    "import { x } from './x.ts';",
+    '',
+    '/** The first export, with a comment of its own. */',
+    'export const FIRST: number = 1;',
+    'export interface Shape { a: number }',
+    '/** Called with a type parameter. */',
+    'export function pick<T>(list: T[]): T {',
+    '  return list[0];',
+    '}',
+    'export class Box {}',
+    'const hidden = 2;',
+    'const late = 3;',
+    'export { hidden as shown, late };',
+  ].join('\n'));
+  assert.equal(doc.header, 'What this module is for,\nin two lines.', 'the opening comment, not the first export\'s');
+  assert.deepEqual(doc.items.map((it) => it.name), ['FIRST', 'pick', 'Box', 'shown', 'late'], 'types are not listed');
+  assert.equal(doc.items[1].sig, 'export function pick<T>(list: T[]): T');
+  assert.equal(doc.items[1].doc, 'Called with a type parameter.');
+  assert.equal(doc.lang, 'ts');
 });
 
 /* A ratchet, not a target. Every export with no comment above it is a gap in the source, and

@@ -9,7 +9,8 @@
  * committed file and the source disagree. Nobody has to remember to run it; CI remembers.
  *
  * What it takes from each module: the header comment (the "why" at the top of the file), and
- * every name in module.exports with its own comment and signature. What it deliberately does
+ * every name it exports (module.exports in JavaScript, export in TypeScript) with its own comment
+ * and signature. What it deliberately does
  * not do is describe behaviour in its own words - if an export has no comment, that is what
  * the reference says, and the fix is a comment in the source rather than a paragraph here.
  *
@@ -24,7 +25,13 @@ const SRC = path.join(ROOT, 'src');
 const OUT = path.join(ROOT, 'docs', 'API.md');
 
 /** Files whose exports are an implementation detail of the app's own wiring. */
-const SKIP = (name) => name.startsWith('ipc-') || name === 'settings-view.js' || name === 'uninstall-window.js';
+const SKIP = (name) => {
+  const base = name.replace(/\.[jt]s$/, '');
+  return base.startsWith('ipc-') || base === 'settings-view' || base === 'uninstall-window';
+};
+
+/** A module the reference covers: JavaScript, or TypeScript that is not only declarations. */
+const isModule = (f) => /\.(js|ts)$/.test(f) && !f.endsWith('.d.ts');
 
 /** The comment block immediately above a line, as plain prose. */
 function commentAbove(lines, at) {
@@ -62,8 +69,18 @@ function splitDoc(doc) {
   return { prose: lines.slice(0, at).join('\n').trim(), tags: lines.slice(at).map((l) => l.trim()) };
 }
 
-/** Everything a module says it exports, in the order module.exports lists them. */
+/** Everything a module says it exports: in the order module.exports lists them, or, for a module
+ *  written with export, in the order they appear. Types are left out: the reference is about what
+ *  can be called. */
 function exportsOf(text) {
+  const named = [...text.matchAll(/^export\s+(?:async\s+)?(?:function\*?|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);
+  for (const list of text.matchAll(/^export\s*\{([^}]*)\}/gm)) {
+    for (const part of list[1].split(',')) {
+      const name = part.trim().split(/\s+as\s+/).pop();
+      if (name && /^[A-Za-z_$][\w$]*$/.test(name)) named.push(name);
+    }
+  }
+  if (named.length) return named;
   const m = text.match(/module\.exports\s*=\s*\{([\s\S]*?)\}\s*;/);
   if (!m) return [];
   return m[1]
@@ -76,10 +93,10 @@ function exportsOf(text) {
 /** Where a name is defined in this file, and how it is written there. */
 function defineOf(lines, name) {
   const patterns = [
-    new RegExp(`^(?:async\\s+)?function\\s+${name}\\s*\\(`),
-    new RegExp(`^class\\s+${name}\\b`),
-    new RegExp(`^const\\s+${name}\\s*=`),
-    new RegExp(`^let\\s+${name}\\s*=`),
+    new RegExp(`^(?:export\\s+)?(?:async\\s+)?function\\s+${name}\\s*[(<]`),
+    new RegExp(`^(?:export\\s+)?class\\s+${name}\\b`),
+    new RegExp(`^(?:export\\s+)?const\\s+${name}\\s*[=:]`),
+    new RegExp(`^(?:export\\s+)?let\\s+${name}\\s*[=:]`),
   ];
   for (let i = 0; i < lines.length; i++) {
     if (patterns.some((re) => re.test(lines[i]))) return i;
@@ -99,13 +116,24 @@ function signature(lines, at) {
   return sig.replace(/\s*\{\s*$/, '').replace(/\s*=>\s*\{?\s*$/, '').replace(/;\s*$/, '').trim();
 }
 
-function moduleDoc(file) {
+/** One module's part of the reference: its header and its exports. `source` is read from src/
+ *  unless a test hands one in. */
+function moduleDoc(file, source = fs.readFileSync(path.join(SRC, file), 'utf8')) {
   // Windows checks this repository out with CRLF and CI reads it with LF. Without normalising,
   // the same source generates two different files and the check below fails on whichever
   // machine did not write the committed one.
-  const text = fs.readFileSync(path.join(SRC, file), 'utf8').replace(/\r\n/g, '\n');
+  const text = source.replace(/\r\n/g, '\n');
   const lines = text.split('\n');
-  const header = commentAbove(lines, lines.findIndex((l) => /^(const|let|class|function|'use strict')/.test(l)));
+  // The comment the file opens with, when it opens with one: that is where a module says what it is
+  // for. Found by where it starts rather than by what follows it, since what follows can be a
+  // require, an import, 'use strict' or the first export with a comment of its own.
+  const first = lines.findIndex((l) => l.trim() !== '');
+  const opens = first >= 0 && /^\s*(\/\*|\/\/)/.test(lines[first]);
+  const firstCode = lines.findIndex((l) => /^(const|let|class|function|'use strict'|import|export|module\.exports|async)/.test(l));
+  const leadEnd = opens ? (/^\s*\/\*/.test(lines[first])
+    ? lines.findIndex((l, i) => i >= first && /\*\/\s*$/.test(l))
+    : lines.findIndex((l, i) => i > first && !/^\s*\/\//.test(l)) - 1) : -1;
+  const header = opens && leadEnd >= first ? commentAbove(lines, leadEnd + 1) : commentAbove(lines, firstCode);
 
   const names = exportsOf(text);
   const items = [];
@@ -114,7 +142,7 @@ function moduleDoc(file) {
     if (at === -1) { items.push({ name, sig: null, doc: '' }); continue; }
     items.push({ name, sig: signature(lines, at), doc: commentAbove(lines, at), line: at + 1 });
   }
-  return { file, header, items };
+  return { file, header, items, lang: file.endsWith('.ts') ? 'ts' : 'js' };
 }
 
 function render(mods) {
@@ -151,7 +179,7 @@ function render(mods) {
     for (const it of m.items) {
       out.push(`### \`${it.name}\``);
       out.push('');
-      if (it.sig) { out.push('```js'); out.push(it.sig); out.push('```'); out.push(''); }
+      if (it.sig) { out.push(`\`\`\`${m.lang}`); out.push(it.sig); out.push('```'); out.push(''); }
       const { prose, tags } = splitDoc(it.doc);
       if (prose) { out.push(prose); out.push(''); }
       if (tags.length) { out.push('```'); out.push(...tags.map((t) => t.trim())); out.push('```'); out.push(''); }
@@ -162,8 +190,8 @@ function render(mods) {
 }
 
 function build() {
-  const files = fs.readdirSync(SRC).filter((f) => f.endsWith('.js') && !SKIP(f)).sort();
-  return render(files.map(moduleDoc));
+  const files = fs.readdirSync(SRC).filter((f) => isModule(f) && !SKIP(f)).sort();
+  return render(files.map((f) => moduleDoc(f)));
 }
 
 /* Only when run as a command. Required as a module - which is how test/api-docs.test.js
@@ -189,4 +217,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { build };
+module.exports = { build, moduleDoc };

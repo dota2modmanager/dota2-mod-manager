@@ -171,7 +171,7 @@ So each thing carries its own proof, and each has a different answer to a proof 
 
 | What | Proof | A failed check means |
 |---|---|---|
-| Catalog data: `mods.json`, `constants.json`, `guides.json`, `mod-hashes.json` | ed25519 signature by the catalog's author, public key pinned in `src/catalog-signature.js` | keep the last good copy; on a first run, no catalog and an error |
+| Catalog data: `mods.json`, `constants.json`, `guides.json`, `mod-hashes.json` | ed25519 signature by the catalog's author, public key pinned in `src/catalog-signature.ts` | keep the last good copy; on a first run, no catalog and an error |
 | A mod archive | sha256 from the signed `mod-hashes.json` | drop that mirror's copy, delete the part file and ask the next mirror; refuse the mod only when every mirror fails the same check |
 | `config/app.json`, the switches and notices this project can change after a release | ed25519 signature by this project's own key, pinned in `src/remote-config.js` | ignore the file, exactly as if it were unreachable |
 | The Source 2 toolchain executable | version and sha256 pinned in `src/toolchain.js`, checked before anything is unpacked | do not unpack it; item icons fall back to the wiki |
@@ -362,7 +362,7 @@ that location is not writable.
 | `src/feature-gate.js` | Whether a feature has been switched off from `config/app.json`, asked once |
 | `preload.js` | The `window.api` surface, and nothing else crosses |
 | `src/installer.js` | Download, slots, install, enable, remove, packs |
-| `src/beta.js` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
+| `src/beta.ts` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
 | `src/overlays.js` | Fonts and cursors: files written over the game's own, their kept originals, and putting them back after Steam's file check |
 | `src/import.js` | Taking a mod in: a `.vpk`, a `.zip`, an author's folder, or bytes off a drop |
 | `src/cursors.js` | Which cursor set is live, which look a slot wears, and the repair at startup |
@@ -372,7 +372,7 @@ that location is not writable.
 | `src/file-tx.js` | One transaction per change to the game folder |
 | `src/library.js` | `manifest.json`: installed records and presets |
 | `src/settings.js` | `settings.json` and its defaults |
-| `src/catalog.js`, `src/catalog-signature.js` | Catalog data and who is allowed to change it |
+| `src/catalog.js`, `src/catalog-signature.ts` | Catalog data and who is allowed to change it |
 | `src/net.js` | Downloads, mirrors, backoff |
 | `src/remote-config.js` | The switches and notices this project can change after a release, the version ranges a switch can be held to, and the signature over them |
 | `tools/sign-catalog.js` | The signing side, for whoever holds a private key |

@@ -10,14 +10,14 @@
  * below are real command lines, and the last test holds the two lists to each other - a flag
  * added on one side only is this bug coming back quietly.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const path = require('path');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const { UPDATE_FLAGS, isUpdateRun, isUninstallRun } = require('../src/uninstall-args');
+import { UPDATE_FLAGS, isUpdateRun, isUninstallRun } from '../src/uninstall-args.ts';
 
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(import.meta.dirname, '..');
 
 test('a person removing the program gets the questions', () => {
   assert.equal(isUninstallRun(['C:\\App\\Dota 2 Mod Manager.exe', '--uninstall']), true);
@@ -60,7 +60,7 @@ test('the installer script tests for the same flags as the app', () => {
   assert.deepEqual(
     [...inScript].sort(),
     [...UPDATE_FLAGS].sort(),
-    'build/installer.nsh and src/uninstall-args.js no longer stop on the same command lines',
+    'build/installer.nsh and src/uninstall-args.ts no longer stop on the same command lines',
   );
 });
 

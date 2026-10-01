@@ -5,16 +5,20 @@
  * off the list, signed out of Discord - and it must never offer an unreleased build to somebody
  * the list does not name.
  */
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const crypto = require('crypto');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 
-const beta = require('../src/beta.js');
-const { normalize } = require('../src/remote-config.js');
+import * as beta from '../src/beta.ts';
+import remoteConfig from '../src/remote-config.js';
+
+const { normalize } = remoteConfig;
+/** The beta block normalize() keeps, as the tests below read it. */
+const betaOf = (raw: unknown) => normalize(raw).beta as { salt: string; ids: string[] } | null;
 
 const SALT = 'd2mm-beta-1';
-const sha = (text) => crypto.createHash('sha256').update(text).digest('hex');
-const listFor = (...ids) => ({ salt: SALT, ids: ids.map((id) => beta.idHash(id, SALT)) });
+const sha = (text: string) => crypto.createHash('sha256').update(text).digest('hex');
+const listFor = (...ids: string[]) => ({ salt: SALT, ids: ids.map((id) => beta.idHash(id, SALT)) });
 
 test('the list holds hashes, and the hash is the salt and the id', () => {
   assert.equal(beta.idHash('123456789012345678', SALT), sha(`${SALT}:123456789012345678`));
@@ -69,8 +73,8 @@ test('the config reads a beta list, and refuses anything that is not one', () =>
   const ids = listFor('111', '222').ids;
   assert.deepEqual(normalize({ beta: { salt: SALT, ids } }).beta, { salt: SALT, ids });
 
-  const mixed = normalize({ beta: { salt: SALT, ids: [ids[0], 'not a hash', 42, null, ids[1].toUpperCase()] } }).beta;
-  assert.deepEqual(mixed.ids, [ids[0], ids[1]], 'entries that are not hashes are dropped, case is levelled');
+  const mixed = betaOf({ beta: { salt: SALT, ids: [ids[0], 'not a hash', 42, null, ids[1].toUpperCase()] } });
+  assert.deepEqual(mixed?.ids, [ids[0], ids[1]], 'entries that are not hashes are dropped, case is levelled');
 
   for (const raw of [{}, { beta: null }, { beta: 'yes' }, { beta: { ids: [] } }, { beta: { ids: ['nope'] } }, { beta: { salt: SALT } }]) {
     assert.equal(normalize(raw).beta, null, `${JSON.stringify(raw)} is not a list`);
@@ -79,11 +83,11 @@ test('the config reads a beta list, and refuses anything that is not one', () =>
 
 test('a list longer than a beta could plausibly be is cut', () => {
   const many = Array.from({ length: 150 }, (_, i) => beta.idHash(String(i), SALT));
-  assert.equal(normalize({ beta: { salt: SALT, ids: many } }).beta.ids.length, 100);
+  assert.equal(betaOf({ beta: { salt: SALT, ids: many } })?.ids.length, 100);
 });
 
 test('a config that says nothing about a beta leaves every other key alone', () => {
   const out = normalize({ features: { install: { off: true, ru: 'нет', en: 'no' } }, notices: [], blocks: [] });
   assert.equal(out.beta, null);
-  assert.deepEqual(out.features.install, { off: true, ru: 'нет', en: 'no' });
+  assert.deepEqual((out.features as Record<string, unknown>).install, { off: true, ru: 'нет', en: 'no' });
 });

@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
 const { crc32 } = require('node:zlib');
 
 const vpk = require('../src/vpk.js');
-const { heroIdFromName } = require('../src/hero-names.js');
+const { heroIdFromName } = require('../src/hero-names.ts');
 
 /** One inline-data entry in the shape buildVpk() wants. */
 function entry(relPath, body) {

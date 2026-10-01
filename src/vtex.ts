@@ -17,10 +17,10 @@ const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0
 const IEND = Buffer.from('IEND', 'ascii');
 
 /**
- * @param {Buffer} buf contents of a .vtex_c
- * @returns {Buffer|null} the PNG file it carries, or null when it carries pixels instead
+ * @param buf contents of a .vtex_c
+ * @returns the PNG file it carries, or null when it carries pixels instead
  */
-function pngFromVtex(buf) {
+export function pngFromVtex(buf: unknown): Buffer | null {
   // fileSize is the first field of every Source 2 resource, and the picture is what follows
   if (!Buffer.isBuffer(buf) || buf.length < 16) return null;
   const headerBytes = buf.readUInt32LE(0);
@@ -34,5 +34,3 @@ function pngFromVtex(buf) {
   if (end < 0 || end + 8 !== png.length) return null;
   return png;
 }
-
-module.exports = { pngFromVtex };

@@ -38,8 +38,8 @@ const require = createRequire(import.meta.url);
 const {
   normalize, cmpVersion, SWITCHABLE, BLOCKS_SINCE, MAX_TESTERS, MAX_MIRRORS, CONFIG_PUBLIC_KEY,
 } = require('../src/remote-config.js');
-const { idHash } = require('../src/beta.js');
-const { verify } = require('../src/catalog-signature.js');
+const { idHash } = require('../src/beta.ts');
+const { verify } = require('../src/catalog-signature.ts');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const CONFIG = path.join(root, 'config', 'app.json');

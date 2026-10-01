@@ -49,18 +49,18 @@ entry in Windows' own list of installed programs passes no arguments at all.
 
 ## What catches it now
 
-- `src/uninstall-args.js`: the decision takes a command line instead of reading the process, and
+- `src/uninstall-args.ts`: the decision takes a command line instead of reading the process, and
   names the three flags that mean an update rather than a removal.
 - `build/installer.nsh`, `customUnInit`: the NSIS side does not start the app at all on those
   command lines, so the app being wrong about it is not enough on its own.
 - `renderer/uninstall.js`: deleting mods and deleting app data are no longer ticked in advance.
   Putting the game's files back still is, because a game left carrying an edit after the program
   that undoes it is gone is the one outcome nobody can fix afterwards.
-- `test/uninstall-args.test.js` "the command line an update actually uses asks nothing"
-- `test/uninstall-args.test.js` "the installer script tests for the same flags as the app": the
+- `test/uninstall-args.test.ts` "the command line an update actually uses asks nothing"
+- `test/uninstall-args.test.ts` "the installer script tests for the same flags as the app": the
   two locks are only cheap while they agree, so the flags in the NSIS script are read out and
   compared with the list in the module.
-- `test/uninstall-args.test.js` "nothing destructive is ticked for the person in advance"
+- `test/uninstall-args.test.ts` "nothing destructive is ticked for the person in advance"
 - `tools/e2e.mjs` "an update does not get the removal window": the end-to-end run starts the
   built app on the command line electron-builder uses and looks at which window comes up.
 - `tools/e2e.mjs` "deleting the mods is not ticked for the person": the same run opens the real
