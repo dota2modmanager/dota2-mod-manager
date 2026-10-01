@@ -76,7 +76,8 @@ those promises.
 
 ## Third-party components
 
-The app ships two runtime dependencies from npm and three typefaces, all listed in
+The app ships two runtime dependencies from npm, React compiled into its window, and three
+typefaces, all listed in
 [NOTICE](../NOTICE) with their licences, and a CycloneDX SBOM of what each release contains is
 published beside the installer. One external tool, Source2Viewer-CLI (MIT), is downloaded only
 when a feature needs it, pinned by version and SHA-256, and never bundled.

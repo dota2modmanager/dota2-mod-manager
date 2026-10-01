@@ -8,8 +8,9 @@
  * time with nobody deciding to.
  *
  * So each of them has its size written down, and a run fails when one grows. Any file that is not
- * on the list fails when it crosses 800 lines, which is how a sixth outlier would have to announce
- * itself rather than arrive. `--update` writes the measurements back, and refuses to raise a
+ * on the list fails when it crosses 300 lines, which is how a new outlier would have to announce
+ * itself rather than arrive. The mark was 800 until 2026-09-27, when the window started moving to
+ * one component per file: every file already past 300 then was written down at the size it had. `--update` writes the measurements back, and refuses to raise a
  * number: the only way a budget goes up is by editing the file by hand and saying why in the
  * commit, which is exactly the conversation that never happened the first five times.
  *
@@ -25,20 +26,23 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BUDGET = path.join(root, '.github', 'size-budget.json');
-/** Where a file stops being ordinary. Nothing in src/ was near it until these five. */
-export const WATCH_AT = 800;
+/** Where a file stops being ordinary: one component, one job. */
+export const WATCH_AT = 300;
 
 /** The app's own code: what ships in the build, plus the two preload bridges. */
 export function appFiles(readdir = fs.readdirSync, exists = fs.existsSync) {
   const out = ['main.js', 'preload.js', 'preload-uninstall.js'];
-  for (const dir of ['src', 'renderer', 'renderer/views', 'renderer/ui', 'renderer/core']) {
-    const full = path.join(root, dir);
-    if (!exists(full)) continue;
-    for (const f of readdir(full)) {
-      // the main process moves to TypeScript a module at a time, and a .ts module ships the same
-      if (/\.(js|ts|tsx)$/.test(f) && !f.endsWith('.d.ts')) out.push(`${dir}/${f}`);
+  // every source file under src/ and renderer/, at any depth and in either language the window is
+  // written in; renderer/public holds pictures, and nothing in it is code
+  const walk = (dir) => {
+    for (const e of readdir(path.join(root, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${e.name}`;
+      if (e.isDirectory()) {
+        if (rel !== 'renderer/public') walk(rel);
+      } else if (/\.[cm]?[jt]sx?$/.test(e.name)) out.push(rel);
     }
-  }
+  };
+  for (const dir of ['src', 'renderer']) if (exists(path.join(root, dir))) walk(dir);
   return out.filter((f) => exists(path.join(root, f))).sort();
 }
 

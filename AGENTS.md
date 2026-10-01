@@ -9,9 +9,13 @@ read nothing else.
 
 ## What this is
 
-A desktop mod manager for Dota 2. Electron 44 on Node 24, plain HTML, CSS and JavaScript in the
-renderer — **no bundler, no framework, no build step for the UI**. If a change would need
-webpack, TypeScript compilation or a component library, it is the wrong change.
+A desktop mod manager for Dota 2. Electron 44 on Node 24. The window's page is built by Vite
+(`vite.config.mjs`, into `out/renderer`) and moves screen by screen from plain JavaScript to
+**TypeScript and React, with Motion for animation**. New screens and components are written that
+way: one component per file, logic that decides things in plain modules with tests, and no file
+past 300 lines (`npm run size` fails one). The main process, `preload.js` and `src/` stay
+CommonJS JavaScript checked through their JSDoc. DECISIONS.md, "The window is built by Vite",
+says why.
 
 ```
 main.js            app lifecycle, window, auto-update. Nothing else belongs here

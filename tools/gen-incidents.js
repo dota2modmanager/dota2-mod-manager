@@ -63,14 +63,19 @@ function buildTable() {
   return lines.join('\n');
 }
 
-function build() {
-  const text = read(OUT);
-  const table = buildTable();
+// The table and its rows, up to the heading that follows it.
+const TABLE = /\| Found \| Incident \| Versions \| Fixed in \|\n\| --- \| --- \| --- \| --- \|\n[\s\S]*?(?=\n## Writing one)/;
 
-  return text.replace(
-    /\| Found \| Incident \| Versions \| Fixed in \|\n\| --- \| --- \| --- \| --- \|\n[\s\S]*?(?=\n## Writing one)/,
-    `${table}`,
-  );
+/**
+ * The README with its table rebuilt from the write-ups. A README where the table cannot be found
+ * is refused: handed back unchanged, it would still equal what the test compares it with, and the
+ * index would quietly stop following the folder.
+ * @param {string} [text] the README as it is
+ */
+function build(text = read(OUT)) {
+  if (!TABLE.test(text)) throw new Error('docs/incidents/README.md: no incident table before "## Writing one"');
+  // the match ends before the blank line that separates the table from the heading, so it goes back
+  return text.replace(TABLE, `${buildTable()}\n`);
 }
 
 function main() {

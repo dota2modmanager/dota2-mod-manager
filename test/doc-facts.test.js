@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const { render, apply, FILES } = require('../tools/gen-doc-facts.js');
+const { render, apply, bundledPackages, FILES } = require('../tools/gen-doc-facts.js');
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
 test('every facts block in the READMEs says what the repository says', () => {
@@ -49,4 +49,21 @@ test('a README checked out on Windows is still read, not skipped', () => {
   assert.ok(out.includes(`<!-- facts:deps-en -->\r\n${facts['deps-en']}\r\n<!-- /facts:deps-en -->`), 'the block was not rewritten with the file\'s own line endings');
   const current = apply(out, facts);
   assert.equal(apply(current, facts), current, 'rewriting a current block changed it again');
+});
+
+test('a package the window imports is named as part of the app, not as a build tool', () => {
+  /* react and motion are devDependencies because Vite bundles them into out/renderer, so the
+     installer carries their code without the packages. Sorting by package.json alone called them
+     build tools, which is the one thing a reader checking what runs on their machine must not
+     be told. */
+  const dir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'mm-facts-'));
+  fs.mkdirSync(path.join(dir, 'views'));
+  fs.writeFileSync(path.join(dir, 'views', 'a.tsx'), "import { motion } from 'motion/react';\nimport x from './local.js';\n");
+  fs.writeFileSync(path.join(dir, 'b.js'), "import '@scope/pkg/sub';\nimport { createRoot } from 'react-dom/client';\n");
+  assert.deepEqual(bundledPackages(dir).sort(), ['@scope/pkg', 'motion', 'react-dom']);
+  fs.rmSync(dir, { recursive: true, force: true });
+
+  const facts = render({ dependencies: { 'adm-zip': '1' }, devDependencies: { react: '1', vite: '1' } }, ['react']);
+  assert.equal(facts['deps-en'], '`package.json` lists three: `adm-zip` ship inside the app, `react` are built into its window, `vite` only build or check it.');
+  assert.match(facts['deps-ru'], /`react` собраны в его окно, `vite` только собирают/);
 });

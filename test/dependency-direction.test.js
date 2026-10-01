@@ -43,10 +43,15 @@ const ELECTRON_USERS = [
 // require('x'), and the ESM forms the TypeScript modules use: import ... from 'x', import('x')
 const REQUIRE = /(?:require\(\s*|\bfrom\s+|\bimport\s*\(\s*|^import\s+)['"]([^'"]+)['"]/gm;
 
+// Comments load nothing: a JSDoc type such as {import('electron').BrowserWindow} is not a require.
+// A "//" right after a colon is a URL, not a comment, and stays.
+const COMMENTS = /\/\*[\s\S]*?\*\/|(^|[^:])\/\/[^\n]*/g;
+
 /** What one file requires: 'electron', or repository-relative paths of local modules. */
 function requiresOf(root, file) {
   const out = [];
-  for (const m of fs.readFileSync(path.join(root, file), 'utf8').matchAll(REQUIRE)) {
+  const text = fs.readFileSync(path.join(root, file), 'utf8').replace(COMMENTS, '$1');
+  for (const m of text.matchAll(REQUIRE)) {
     const spec = m[1];
     if (spec === 'electron') { out.push('electron'); continue; }
     if (!spec.startsWith('.')) continue;
@@ -82,9 +87,12 @@ test('the detection finds a chain two modules long, and reports it', () => {
     fs.writeFileSync(path.join(dir, 'src', 'parser.js'), "const { save } = require('./paths');\n");
     fs.writeFileSync(path.join(dir, 'src', 'paths.js'), "const { app } = require('electron');\n");
     fs.writeFileSync(path.join(dir, 'src', 'plain.js'), "const fs = require('fs');\n");
+    // Electron named only in a JSDoc type, as src/app-page.js does: nothing is loaded
+    fs.writeFileSync(path.join(dir, 'src', 'typed.js'), "/** @param {import('electron').BrowserWindow} win */\nconst fs = require('fs');\n");
 
     assert.deepEqual(pathToElectron(dir, 'src/parser.js'), ['src/parser.js', 'src/paths.js', 'electron']);
     assert.equal(pathToElectron(dir, 'src/plain.js'), null);
+    assert.equal(pathToElectron(dir, 'src/typed.js'), null, 'a type in a comment is not a require');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

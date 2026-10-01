@@ -292,14 +292,16 @@ section 7 of the GPL.
 | [Electron](https://github.com/electron/electron) | The window and the process behind it | MIT |
 | [electron-updater](https://github.com/electron-userland/electron-builder) | Update checks and installing them | MIT |
 | [adm-zip](https://github.com/cthackers/adm-zip) | Reading mod archives, behind our own size and path guards | MIT |
+| [React](https://github.com/facebook/react) | The window's screens, compiled into its page | MIT |
+| [Motion](https://github.com/motiondivision/motion) | How the window's screens move, compiled into its page | MIT |
 | [Source 2 Viewer](https://github.com/ValveResourceFormat/ValveResourceFormat) | Decoding Dota's own textures for item icons. Downloaded on demand, never bundled | MIT |
 | [Inter](https://github.com/rsms/inter), [Exo 2](https://github.com/NDISCOVER/Exo-2.0), [Material Symbols](https://github.com/google/material-design-icons) | The typefaces and icons, shipped inside the app rather than fetched | OFL-1.1, Apache-2.0 |
 | [Astro](https://github.com/withastro/astro) | The documentation site, not the app | MIT |
 
 <!-- facts:deps-en -->
-`package.json` lists seven: `adm-zip` and `electron-updater` ship inside the app, `electron`, `electron-builder`, `eslint`, `fast-check` and `typescript` only build or check it.
+`package.json` lists 14: `adm-zip` and `electron-updater` ship inside the app, `motion`, `react` and `react-dom` are built into its window, `@types/react`, `@types/react-dom`, `@vitejs/plugin-react`, `electron`, `electron-builder`, `eslint`, `fast-check`, `typescript` and `vite` only build or check it.
 <!-- /facts:deps-en -->
-The tests and everything under `tools/` use no dependencies at all. The VPK reader and writer, the KeyValues parser, the zip guards and the
+The tests use no dependencies at all, and `tools/` uses one, `vite`, to build the window. The VPK reader and writer, the KeyValues parser, the zip guards and the
 update logic are written here, because every dependency is a stranger with write access to a
 game folder on tens of thousands of machines.
 

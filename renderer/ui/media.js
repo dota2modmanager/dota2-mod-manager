@@ -67,14 +67,27 @@ export function mediaHtml(url, { hoverPlay = false, autoplay = false, controls =
  *
  * @param {(msg: string) => void} onTrouble  called once when pictures keep failing
  */
-export function watchMedia(onTrouble = () => {}) {
-  let failures = 0;
-  let told = false;
+let failures = 0;
+let told = false;
+let trouble = () => {};
 
+/** Counts a picture that failed from both hosts, and tells the user once after a handful. A
+ *  picture drawn by React (catalog/card/Media.tsx) retries and gives up on its own, then calls
+ *  this, because the listener below must not swap out an element React owns. */
+export function mediaGaveUp() {
+  failures += 1;
+  if (failures >= 3 && !told) {
+    told = true;
+    trouble();
+  }
+}
+
+export function watchMedia(onTrouble = () => {}) {
+  trouble = onTrouble;
   document.addEventListener('error', (e) => {
     const el = e.target;
     if (!(el instanceof HTMLImageElement) && !(el instanceof HTMLVideoElement)) return;
-    if (el.dataset.mediaGaveUp) return;
+    if (el.dataset.mediaGaveUp || el.dataset.owned === 'react') return;
 
     const spare = el.dataset.mediaRetried ? null : mirrorOf(el.currentSrc || el.src);
     if (spare) {
@@ -91,11 +104,6 @@ export function watchMedia(onTrouble = () => {}) {
     icon.textContent = 'image_not_supported';
     box.appendChild(icon);
     el.replaceWith(box);
-
-    failures += 1;
-    if (failures >= 3 && !told) {
-      told = true;
-      onTrouble();
-    }
+    mediaGaveUp();
   }, true);
 }

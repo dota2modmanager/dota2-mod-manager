@@ -11,6 +11,8 @@
  * before any screen exists.
  */
 'use strict';
+// first, before any module that calls L or tr: i18n.js puts them on window
+import './i18n.js';
 import { $ } from './core/dom.js';
 import { COSMETIC_PREFIX } from './core/constants.js';
 import { esc, fmtMB } from './ui/format.js';

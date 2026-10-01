@@ -6,10 +6,10 @@
  * warranty whatsoever. LICENSE holds the terms; NOTICE holds the additional terms this
  * repository adds under section 7 of that License, about credit and the program's name.
  */
-const { app, BrowserWindow, ipcMain, shell, net, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, net, screen, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { pathToFileURL } = require('url');
+const { loadAppPage } = require('./src/app-page');
 const { execFile } = require('child_process');
 
 let autoUpdater = null;
@@ -193,8 +193,9 @@ function createWindow() {
       backgroundThrottling: false,
     },
   });
-  const appPage = path.join(__dirname, 'renderer', 'index.html');
-  win.loadFile(appPage);
+  // out/renderer, or the Vite server under `npm run dev` (src/app-page.js)
+  const appUrl = loadAppPage(win, { app, dialog, root: __dirname });
+  if (!appUrl) return;
 
   /* The window shows one page and never another.
    *
@@ -206,7 +207,6 @@ function createWindow() {
    * does: the app's own file is the only thing this window is allowed to load, and a link
    * that wants a browser gets the browser.
    */
-  const appUrl = pathToFileURL(appPage).href;
   const leavesForBrowser = (url) => {
     if (/^https?:\/\//i.test(url)) shell.openExternal(url).catch(() => {});
   };
