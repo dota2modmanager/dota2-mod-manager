@@ -36,11 +36,14 @@ class FakeWindow {
   on(name: string, fn: Listener) { this.events.set(name, fn); }
 }
 
-function open({ uiScale = 1 as unknown, workArea = null as { width: number; height: number } | null, noScreen = false } = {}) {
+function open({ uiScale = 1 as unknown, workArea = null as { width: number; height: number } | null, noScreen = false, built = true } = {}) {
   const store = new Map<string, unknown>([['uiScale', uiScale]]);
   const opened: string[] = [];
   const said: string[] = [];
+  const quits: string[] = [];
   withElectron({
+    app: { isPackaged: true, quit: () => { quits.push('quit'); } },
+    dialog: { showErrorBox: (_title: string, text: string) => { quits.push(text); } },
     BrowserWindow: FakeWindow,
     screen: { getPrimaryDisplay: () => { if (noScreen) throw new Error('no display'); return { workAreaSize: { width: 1366, height: 728 } }; } },
     shell: { openExternal: async (url: string) => { opened.push(url); } },
@@ -49,6 +52,7 @@ function open({ uiScale = 1 as unknown, workArea = null as { width: number; heig
     settings: { get: ((k: string) => store.get(k)) as never, set: ((k: string, v: unknown) => { store.set(k, v); }) as never },
     diag: (m) => said.push(m),
     workArea,
+    pageExists: () => built,
   }));
   const w = FakeWindow.last;
   /** Fire a page event with a preventable event object; answers whether it was prevented. */
@@ -57,20 +61,29 @@ function open({ uiScale = 1 as unknown, workArea = null as { width: number; heig
     w.page.get(name)!({ preventDefault: () => { prevented = true; } }, ...args);
     return prevented;
   };
-  return { w, fire, store, opened, said };
+  return { w, fire, store, opened, said, quits };
 }
 
 test('the window opens on the app page, with the preload isolated from it', () => {
   const { w } = open();
-  assert.equal(w.loaded, path.join(ROOT, 'renderer', 'index.html'));
+  assert.equal(w.loaded, path.join(ROOT, 'out', 'renderer', 'index.html'));
   assert.equal(w.options.webPreferences.preload, path.join(ROOT, 'preload.js'));
   assert.equal(w.options.webPreferences.contextIsolation, true);
   assert.equal(w.options.webPreferences.nodeIntegration, false);
 });
 
+test('a checkout nobody built says so and quits, with no page to guard', () => {
+  const { w, quits } = open({ built: false });
+  assert.equal(w.loaded, '', 'nothing is loaded');
+  assert.equal(quits.length, 2);
+  assert.match(quits[0], /npm run build:ui/);
+  assert.equal(quits[1], 'quit');
+  assert.equal(w.page.size, 0, 'no guard is set on a window that is closing');
+});
+
 test('the window cannot be navigated away, and a web link goes to the browser instead', () => {
   const { fire, opened, said } = open();
-  const self = pathToFileURL(path.join(ROOT, 'renderer', 'index.html')).href;
+  const self = pathToFileURL(path.join(ROOT, 'out', 'renderer', 'index.html')).href;
   assert.equal(fire('will-navigate', self), false, 'a reload of its own page is allowed');
   assert.equal(fire('will-navigate', 'https://example.com/guide'), true);
   assert.equal(fire('will-navigate', 'file:///C:/somewhere/else.html'), true);

@@ -11,6 +11,7 @@
 import { $ } from '../core/dom.js';
 import { state } from '../core/store.js';
 import { RAW_BASE } from '../core/constants.js';
+import { tokenMs } from '../core/css-time.js';
 
 export const THEMES = ['ursa', 'brew', 'fura', 'storm', 'invoker', 'meepo', 'bh', 'axe'];
 
@@ -76,7 +77,4 @@ export function initTheme() {
 }
 
 // the length of the spin, read from the stylesheet so the two cannot drift apart
-function spinMs() {
-  const v = getComputedStyle(document.documentElement).getPropertyValue('--dur-medium-long');
-  return parseFloat(v) || 0;
-}
+const spinMs = () => tokenMs('--dur-medium-long');

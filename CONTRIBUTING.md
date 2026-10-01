@@ -21,12 +21,14 @@ git clone https://github.com/dota2modmanager/dota2-mod-manager.git
 cd dota2-mod-manager
 npm install
 npm start          # the app, against your real settings
+npm run dev        # the same, with the window served by Vite: an edit shows without a restart
 npm test           # the unit tests
 npm run dist       # the Windows installer, if you need to check packaging
 ```
 
-The renderer has no build step. HTML, CSS and JavaScript are loaded as written, so a UI change is
-visible on reload with nothing to compile.
+The window's page is built by Vite into `out/renderer`. `npm start` rebuilds it when a source file
+is newer than the build, and `npm run dev` serves it with hot reload, so a change to a style, a
+component or an animation shows in the open window.
 
 ## Do not test against your own game
 
@@ -133,9 +135,11 @@ npm run typecheck
 The main process is TypeScript with no build step: Node strips the types when it loads a file,
 so what you edit is what runs, in development and inside the installer. `src/tsconfig.json` checks
 it strictly, `test/tsconfig.json` the tests written in TypeScript, and a new error in either fails
-the run. The two preload bridges stay JavaScript, and `tsc --checkJs` reads their JSDoc. Before the
-main process moved, the same check over JavaScript found a `require` that had never resolved, and
-three functions whose JSDoc described a different signature than the one underneath it.
+the run. The window moves to TypeScript and React one screen at a time (DECISIONS.md, "The window
+is built by Vite"), checked by `renderer/tsconfig.json`. The two preload bridges stay JavaScript,
+and `tsc --checkJs` reads their JSDoc. Before the main process moved, the same check over
+JavaScript found a `require` that had never resolved, and three functions whose JSDoc described a
+different signature than the one underneath it.
 
 Sixty-odd places are still wrong, mostly a factory's `@param` listing half of what it is handed.
 They are counted per file in `.github/typecheck-baseline.json`, and the check fails when a file
@@ -254,7 +258,9 @@ parser and writer, the KeyValues reader and the update logic, is written here, b
 dependency is a stranger with write access to a game folder on 27,000 machines.
 
 That is a bias, not a ban. A pull request that adds one needs to say what it replaces and why
-writing it ourselves is worse. Tools under `tools/` and the tests use no dependencies at all.
+writing it ourselves is worse. The tests use no dependencies at all, and `tools/` uses one, `vite`,
+to build the window. `react`, `react-dom` and `motion` are devDependencies because Vite copies
+their code into the page, so the installer carries that code without the packages.
 
 Dependabot proposes updates every Monday. A minor or patch update queues itself to merge and goes
 in once every required check has passed and a maintainer has approved it. A major one gets the

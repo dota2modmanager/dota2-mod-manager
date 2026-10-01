@@ -155,3 +155,12 @@ test('the committed mutants are whole, and each names a test to judge them', asy
   assert.equal(new Set(mutants.map((m) => m.name)).size, mutants.length, 'two mutants share a name');
   assert.match(JSON.parse(fs.readFileSync(CONFIG, 'utf8')).measured, /^\d{4}-\d{2}-\d{2}$/);
 });
+
+test('no mutant looks for a line break, which a Windows checkout writes differently', async () => {
+  /* Git on the Windows runner checks files out with CRLF. A mutant whose text ends in "\n" finds
+     nothing there and fails the run on one platform only, which is how #178 went red on Windows
+     while passing everywhere else. The replacement may carry line breaks; the text to find may not. */
+  const { readMutants } = await load();
+  const spanning = readMutants().filter((m) => typeof m.from === 'string' && m.from.includes('\n')).map((m) => m.name);
+  assert.deepEqual(spanning, [], `write these as one line: ${spanning.join('; ')}`);
+});

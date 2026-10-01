@@ -353,9 +353,17 @@
 .rail-item .ms { font-size: 17px; color: var(--text-faint); transition: color 0.2s; }
 .rail-item:hover { background: var(--surface); color: var(--text); transform: translateX(3px); }
 .rail-item:hover .ms { color: var(--primary-soft); }
-.rail-item.active {
+.rail-item.active { color: var(--primary-soft); }
+/* The highlight is one element that travels between items (catalog/rail/Rail.tsx, layoutId),
+   drawn under the item's own icon and label: isolation gives each item a stacking context of
+   its own, so z-index -1 lands behind the text and still in front of the rail. */
+.rail-item { position: relative; isolation: isolate; }
+.rail-active {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
   background: var(--primary-dim);
-  color: var(--primary-soft);
   box-shadow: 0 0 16px color-mix(in srgb, var(--md-primary) 15%, transparent);
 }
 .rail-item.active .ms { color: var(--primary-soft); }

@@ -88,3 +88,28 @@ test('the committed budget is a measurement of files that are there', async () =
     assert.ok(fs.existsSync(path.join(ROOT, file)), `${file} is budgeted and not in the repository`);
   }
 });
+
+test('a component in a folder of its own is counted, in TypeScript as much as JavaScript', async () => {
+  /* The window moves to one component per file, in folders per screen. A walk of four fixed
+     folders and *.js would have waved every one of them through at any size. */
+  const { appFiles } = await load();
+  const tree = {
+    src: ['a.js'],
+    renderer: ['app.js', 'catalog/', 'public/'],
+    'renderer/catalog': ['Grid.tsx', 'filters.ts', 'cards/'],
+    'renderer/catalog/cards': ['Card.tsx', 'card.css'],
+    'renderer/public': ['assets/'],
+    'renderer/public/assets': ['x.js'],
+  };
+  const dirent = (name) => ({ name: name.replace(/\/$/, ''), isDirectory: () => name.endsWith('/') });
+  const readdir = (full) => {
+    const rel = path.relative(ROOT, full).split(path.sep).join('/');
+    return (tree[rel] || []).map(dirent);
+  };
+  const files = appFiles(readdir, () => true);
+  for (const f of ['renderer/catalog/Grid.tsx', 'renderer/catalog/filters.ts', 'renderer/catalog/cards/Card.tsx', 'src/a.js']) {
+    assert.ok(files.includes(f), `${f} is not budgeted`);
+  }
+  assert.ok(!files.some((f) => f.startsWith('renderer/public/')), 'pictures copied as they are are not code');
+  assert.ok(!files.some((f) => f.endsWith('.css')));
+});

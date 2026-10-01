@@ -538,6 +538,89 @@ test('a layout that fails half way puts every file back where it was', (t) => {
   assert.equal(JSON.stringify(library.list()), records, 'and no record was changed');
 });
 
+test('a mod whose second file the game holds open stays whole under its old slot', (t) => {
+  /* A pak and its volumes load only under one name. Moving one up the order while Dota runs used
+     to rename the index, fail on the volume, and leave the mod split across two slots. */
+  const s = stand(t);
+  const library = new Library(path.join(s.dir, 'userdata'));
+  const rec = placed(s, library, { base: 'pak40', categoryId: 'heroes', name: 'with a volume', volumes: 2 });
+  const before = paksIn(s);
+  const real = fs.renameSync;
+  t.after(() => { fs.renameSync = real; });
+  let calls = 0;
+  fs.renameSync = (from, to) => {
+    if (++calls === 2) throw Object.assign(new Error('EBUSY: resource busy or locked'), { code: 'EBUSY' });
+    return real(from, to);
+  };
+  assert.throws(() => s.installer.moveToSlot(rec, 'pak41'), /EBUSY/);
+  fs.renameSync = real;
+  assert.deepEqual(paksIn(s), before, 'the index came back to join its volumes');
+});
+
+test('a swap the game refuses half way leaves both mods whole in their own slots', (t) => {
+  /* A swap parks one mod on pak00, moves the other into its slot, then the first into the
+     other's. Refuse the last step and the first mod has to go home, into a slot the second mod
+     now fills: putting it back before moving the second out would write one mod over the other. */
+  const s = stand(t);
+  const library = new Library(path.join(s.dir, 'userdata'));
+  const a = placed(s, library, { base: 'pak30', categoryId: 'heroes', name: 'first' });
+  const b = placed(s, library, { base: 'pak31', categoryId: 'heroes', name: 'second' });
+  const real = fs.renameSync;
+  t.after(() => { fs.renameSync = real; });
+  for (let refuse = 1; refuse <= 3; refuse++) {
+    let calls = 0;
+    fs.renameSync = (from, to) => {
+      if (++calls === refuse) throw Object.assign(new Error('EBUSY: resource busy or locked'), { code: 'EBUSY' });
+      return real(from, to);
+    };
+    assert.throws(() => s.installer.swapSlots(a, b), /EBUSY/, `rename ${refuse} refused`);
+    fs.renameSync = real;
+    assert.deepEqual(paksIn(s), ['pak30_dir.vpk', 'pak31_dir.vpk'], `rename ${refuse} refused: both slots are back`);
+    assert.equal(s.read('dota_russian', 'pak30_dir.vpk'), 'first', `rename ${refuse} refused: nothing was written over`);
+    assert.equal(s.read('dota_russian', 'pak31_dir.vpk'), 'second');
+  }
+});
+
+test('wherever the game refuses a rename during the layout, every file and record ends as it began', (t) => {
+  /* The test above fails the fourth rename, in the second pass. A game holding a file open can
+     refuse any of them, the first included and the last, so each one is refused in turn. */
+  const setUp = () => {
+    const s = stand(t);
+    const library = new Library(path.join(s.dir, 'userdata'));
+    placed(s, library, { base: 'pak02', categoryId: 'heroes', name: 'a', volumes: 1 });
+    placed(s, library, { base: 'pak10', categoryId: 'heroes', name: 'b', suffix: '.off' });
+    placed(s, library, { base: 'pak11', categoryId: 'river', name: 'c' });
+    return { s, library };
+  };
+  const real = fs.renameSync;
+  t.after(() => { fs.renameSync = real; });
+  // how many renames a layout that succeeds makes
+  const counted = (() => {
+    const { s, library } = setUp();
+    let n = 0;
+    fs.renameSync = (from, to) => { n++; return real(from, to); };
+    s.installer.migrateSlotZones(library);
+    fs.renameSync = real;
+    return n;
+  })();
+  assert.ok(counted >= 6, `a layout of three mods renames ${counted} files, so every pass is exercised`);
+
+  for (let refuse = 1; refuse <= counted; refuse++) {
+    const { s, library } = setUp();
+    const before = paksIn(s);
+    const records = JSON.stringify(library.list());
+    let calls = 0;
+    fs.renameSync = (from, to) => {
+      if (++calls === refuse) throw Object.assign(new Error('EBUSY: resource busy or locked'), { code: 'EBUSY' });
+      return real(from, to);
+    };
+    assert.throws(() => s.installer.migrateSlotZones(library), /EBUSY/, `rename ${refuse} refused`);
+    fs.renameSync = real;
+    assert.deepEqual(paksIn(s), before, `rename ${refuse} refused: every file is back under its old name`);
+    assert.equal(JSON.stringify(library.list()), records, `rename ${refuse} refused: no record changed`);
+  }
+});
+
 test('a mod on the slot the notice text took moves to the first free one behind it, volumes and state kept', (t) => {
   const s = stand(t);
   const library = new Library(path.join(s.dir, 'userdata'));

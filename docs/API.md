@@ -16,6 +16,7 @@ the code, not in this page.
 | [`src/adopt.ts`](#srcadoptts) | What a VPK has to go through before it counts as a mod. |
 | [`src/app-context.ts`](#srcapp-contextts) | Everything the running app hands its IPC modules: the services src/main.ts builds at start, and the |
 | [`src/app-log.ts`](#srcapp-logts) | The app's own log: a small file every install keeps, so a support report (src/diagnostics.ts) |
+| [`src/app-page.ts`](#srcapp-pagets) | The page the main window loads. |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
@@ -198,6 +199,40 @@ export function createAppLog({ dir, mirror = null, now = () => new Date() }: { d
 @param dir     the userData folder, asked for on first use: a portable copy moves it at start
 @param mirror  a second file to copy every line to (MM_DIAG), or nothing
 ```
+
+## src/app-page.ts
+
+The page the main window loads.
+
+Normally the one Vite builds into out/renderer (vite.config.mjs). An unpackaged run under
+`npm run dev` loads it from the Vite server on this machine instead, so an edit shows without
+a restart. A packaged app ignores MM_DEV_URL whatever it says: the variable would otherwise be
+a way to hand window.api to any page at all.
+
+### `LOCAL_DEV_URL`
+
+```ts
+export const LOCAL_DEV_URL = /^http:\/\/(127\.0\.0\.1|localhost):\d+\/$/
+```
+
+The only address `npm run dev` serves from (tools/dev.mjs, vite.config.mjs).
+
+### `appPage`
+
+```ts
+export function appPage({ root, isPackaged, devUrl, exists = fs.existsSync }: { root: string; isPackaged: boolean; devUrl?: string; exists?: Exists; }): { kind: 'url' | 'file' | 'missing'; page: string; url: string }
+```
+
+Where the window's page is, and whether there is one.
+
+### `loadAppPage`
+
+```ts
+export function loadAppPage(win: Pick<BrowserWindow, 'loadURL' | 'loadFile'>, { app, dialog, root, env = process.env, exists }: { app: Pick<App, 'isPackaged' | 'quit'>; dialog: Pick<Dialog, 'showErrorBox'>; root: string; env?: NodeJS.ProcessEnv; exists?: Exists; }): string | null
+```
+
+Loads the page into the window and returns its address, the one the navigation guard lets
+through, or null when a checkout was never built (an installer always carries the page).
 
 ## src/beta.ts
 
@@ -2170,11 +2205,17 @@ The highest free slot strictly below `n`, as "pakNN".
 ### `moveToSlot`
 
 ```ts
-export function moveToSlot(inst: Installer, rec: HasFiles, newBase: string, oldBase: string | null = inst.slotBase(rec)): LibFile[]
+export function moveToSlot(inst: Installer, rec: HasFiles, newBase: string, oldBase: string | null = inst.slotBase(rec), tx: Writer = null): LibFile[]
 ```
 
 Rename every pak file of a record to another slot, keeping .off/.moff state and the
 volume numbering of a multi-volume pack.
+
+All of a mod's files move, or none do. A pak and its volumes only load under one name, and a
+running game can refuse the rename of any one of them: until 2026-10-01 these renames were made
+one by one outside a transaction, and a refusal on the second file left a mod the game could not
+load and the library could not find. They go through a FileTx now, the caller's when it hands
+one in so a move of several mods undoes as one, otherwise one of their own.
 
 ```
 @returns {Array<object>} the record's new files array (caller stores it)
@@ -2463,15 +2504,16 @@ The key a Ctrl chord turns into a new scale, or null for any other key.
 ### `createMainWindow`
 
 ```ts
-export function createMainWindow({ appRoot, settings, diag, workArea = null, quiet = false }: { appRoot: string; settings: Pick<Settings, 'get' | 'set'>; diag: (msg: string) => void; workArea?: { width: number; height: number } | null; quiet?: boolean; }): BrowserWindow
+export function createMainWindow({ appRoot, settings, diag, workArea = null, quiet = false, pageExists }: { appRoot: string; settings: Pick<Settings, 'get' | 'set'>; diag: (msg: string) => void; workArea?: { width: number; height: number } | null; quiet?: boolean; pageExists?: (p: string) => boolean; }): BrowserWindow
 ```
 
 Open the window on the app's page, locked to it, with Ctrl +/-/0 scaling the content.
 
 ```
-@param appRoot    where index.html and preload.js are
+@param appRoot    where out/renderer and preload.js are
 @param workArea   stands in for the screen's (MM_WORKAREA); otherwise the primary display is asked
 @param quiet      created hidden (MM_QUIET), so a measuring run never takes over the screen
+@param pageExists stands in for the disk when a test asks whether the page was built
 ```
 
 ## src/minify.ts

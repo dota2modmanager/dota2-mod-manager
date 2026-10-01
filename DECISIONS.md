@@ -82,6 +82,13 @@ It also flips a check on the OpenSSF Scorecard, which recognises fuzzing in Java
 through a short list of libraries and not through generators of our own. That is a real reason and
 not the reason: the shrinking is.
 
+Seven more came on 2026-09-27 with the decision below, twelve devDependencies in all. `vite` and
+`@vitejs/plugin-react` build the window's page. `react`, `react-dom` and `motion` are written into
+that page once a screen imports them, which makes them part of the app in every sense but the
+installer's: Vite copies their code into `out/renderer`, and the packages themselves stay behind.
+`@types/react` and `@types/react-dom` only check it. The facts block in the README names which of
+them the window imports (`tools/gen-doc-facts.js` reads `renderer/` for that).
+
 *Check:* `node -e "const p=require('./package.json');console.log(p.dependencies,p.devDependencies)"`
 and `npm run typecheck`
 
@@ -92,14 +99,36 @@ programme means. Reading and writing VPK archives is this repository's own code.
 
 *Check:* `src/vpk.ts`, and `test/vpk.test.ts`, which runs the writer against the reader.
 
-### The renderer is plain JavaScript
+### The window is built by Vite, and moves to TypeScript and React
 
-No framework, no bundler, no transpiler, and no TypeScript in the app. What ships is what is in
-the repository, so a reviewer reading `renderer/app.js` is reading the program rather than its
-input. The documentation site under `site/` is a separate package and does use Astro and
-TypeScript.
+Until 2026-09-27 the renderer was plain JavaScript with no build step, so that a reviewer reading
+`renderer/app.js` read the program itself. That cost more every month. The catalog screen reached
+1,699 lines and the library 1,374, a redesign meant editing strings of HTML inside them, and an
+animation meant timing code written by hand. The size budget stopped the growth; it could not
+undo it.
 
-*Check:* `npm start` runs Electron against the source directly. There is no build step to read.
+The page is now built by Vite into `out/renderer`, and the screens move to TypeScript and React
+one at a time, with Motion for animation: one component per file, and no new file past 300 lines.
+Types catch a wrong property before a run does, and the model that writes most of this code makes
+fewer mistakes in TypeScript and React than in anything else, because that is what it has read the
+most of. `npm run dev` serves the page with hot reload.
+
+Tauri was weighed and not taken. On Windows its window is the same Chromium, but its back end is
+Rust: the VPK writer, the patcher and everything else that writes to a game folder would be
+rewritten, with 900 tests and the release pipeline, to make a 108 MB download about ten times
+smaller. 97% of downloads are the Windows installer, and nobody has asked for a smaller one.
+
+The build had to show first that it costs nothing. The same window built by Vite and loaded as
+written, on the same Electron, three runs each in the sandbox, alternating: opening Heroes (611
+cards), scrolling 14,400 px, a search and memory came out the same within noise, about 40 ms,
+150 fps, 190 ms and 690 MB for both. Each screen that moves is measured the same way before it
+reaches `main`.
+
+The uninstall window still loads `renderer/uninstall.html` as written. The documentation site
+under `site/` is a separate package, built by Astro.
+
+*Check:* `npm run build:ui`, `vite.config.mjs`, and `src/app-page.ts`, which names the only page the
+window loads.
 
 ### The documentation site lives in this repository
 

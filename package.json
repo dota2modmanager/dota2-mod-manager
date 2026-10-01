@@ -5,7 +5,9 @@
   "description": "Desktop mod manager for Dota 2 — browse, install, toggle and preset 1100+ cosmetic mods from the D2PFX catalog",
   "main": "src/main.ts",
   "scripts": {
-    "start": "electron .",
+    "start": "node tools/ui-build.mjs && electron .",
+    "dev": "node tools/dev.mjs",
+    "build:ui": "node tools/ui-build.mjs --force",
     "dist": "electron-builder --win",
     "dist:linux": "electron-builder --linux",
     "test": "node --test \"test/**/*.test.js\" \"test/**/*.test.ts\"",
@@ -17,7 +19,7 @@
     "sandbox:seed": "node tools/sandbox.js seed",
     "sandbox:reset": "node tools/sandbox.js reset",
     "sandbox:status": "node tools/sandbox.js status",
-    "start:sandbox": "electron . --user-data-dir=sandbox/userdata",
+    "start:sandbox": "node tools/ui-build.mjs && electron . --user-data-dir=sandbox/userdata",
     "e2e": "node tools/e2e.mjs",
     "sim": "node tools/sim/run.mjs",
     "fuzz": "node tools/fuzz-parsers.mjs",
@@ -35,11 +37,18 @@
   "license": "GPL-3.0-or-later",
   "homepage": "https://github.com/dota2modmanager/dota2-mod-manager",
   "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
     "electron": "^44.4.5",
     "electron-builder": "^26.15.3",
     "eslint": "^10.11.0",
     "fast-check": "^4.10.2",
-    "typescript": "^5.9.3"
+    "motion": "^13.4.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.1"
   },
   "dependencies": {
     "adm-zip": "^0.6.1",
@@ -55,12 +64,14 @@
       "src/**/*",
       "!src/tsconfig.json",
       "renderer/**/*",
+      "out/renderer/**/*",
       "package.json",
       "CHANGELOG.md",
       "CHANGELOG.ru.md",
       "LICENSE",
       "NOTICE"
     ],
+    "beforePack": "./tools/before-pack.cjs",
     "protocols": [
       {
         "name": "Dota 2 Mod Manager preset",

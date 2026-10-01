@@ -18,12 +18,20 @@ const why = () => L`Ландшафт собран под карту старше
  * grid used to be drawn again instead, and a new render replays every card's entrance: the answer
  * lands a moment after the terrains open, so the whole grid came in twice. tools/sim waits for no
  * [data-awaiting] to be left before it looks at a screen. */
+const listeners = new Set();
+
+/** A card drawn by React follows the answer through here; the sweep below skips its marks. */
+export function onTerrainAges(fn) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
 function askCatalog() {
   if (asked) return;
   asked = true;
   const answer = (r) => {
     state.terrainAges = r || { stale: {} };
-    for (const el of document.querySelectorAll('[data-awaiting="old-map"]')) {
+    for (const el of document.querySelectorAll('[data-awaiting="old-map"]:not([data-owned])')) {
       if (state.terrainAges.stale?.[el.dataset.file]) {
         el.hidden = false;
         el.removeAttribute('data-awaiting');
@@ -31,17 +39,30 @@ function askCatalog() {
         el.remove();
       }
     }
+    for (const fn of listeners) fn();
   };
   window.api.catalog.terrainAges().then(answer).catch(() => answer(null));
 }
 
+/**
+ * Whether a card carries the mark: null for anything but a whole-map terrain, 'stale' for one
+ * built for an older map, and 'awaiting' until the answer arrives (asked here, once).
+ */
+export function terrainMark(categoryId, m) {
+  if (categoryId !== 'terrains' || !m || !/\.zip$/i.test(m.file || '')) return null;
+  if (!state.terrainAges) { askCatalog(); return 'awaiting'; }
+  return state.terrainAges.stale?.[m.file] ? 'stale' : null;
+}
+
+/** What the mark says when pointed at. */
+export const staleTerrainWhy = () => why();
+
 /** The mark on a catalog card: '' for anything but a whole-map terrain older than the game's map. */
 export function staleTerrainPillHtml(categoryId, m) {
-  if (categoryId !== 'terrains' || !m || !/\.zip$/i.test(m.file || '')) return '';
-  const pill = (awaiting) => `<span class="mtag warn" title="${esc(why())}"${awaiting
+  const mark = terrainMark(categoryId, m);
+  if (!mark) return '';
+  return `<span class="mtag warn" title="${esc(why())}"${mark === 'awaiting'
     ? ` data-awaiting="old-map" data-file="${esc(m.file)}" hidden` : ''}>${L`старая карта`}</span>`;
-  if (!state.terrainAges) { askCatalog(); return pill(true); }
-  return state.terrainAges.stale?.[m.file] ? pill(false) : '';
 }
 
 /** The same mark on a My mods row, which main works out when it lists the mods (staleMap). */

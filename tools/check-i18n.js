@@ -186,9 +186,9 @@ function scan(src, names, baseLine = 1) {
 }
 
 // ---- what to check --------------------------------------------------------
-/* JavaScript and TypeScript both. Until 2026-09-30 this took .js only, and by then every module
- * in src/ had become .ts: the main side of the check was reading main.js and nothing else, and
- * saying every string had its twin. */
+/* JavaScript and TypeScript both, .tsx included for the window's React screens. Until 2026-09-30
+ * this took .js only, and by then every module in src/ had become .ts: the main side of the check
+ * was reading main.js and nothing else, and saying every string had its twin. */
 function jsFiles(dir, skip) {
   const out = [];
   for (const e of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {

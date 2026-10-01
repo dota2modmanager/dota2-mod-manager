@@ -59,7 +59,7 @@ test('the dependencies it names are the dependencies package.json declares', () 
     assert.ok(doc.includes(`\`${name}\``), `DECISIONS.md does not mention the dependency ${name}`);
   }
   assert.equal(ships.length, 2, `the entry says the app ships two dependencies, package.json declares ${ships.length}`);
-  assert.equal(builds.length, 5, `the entry says five more build and check it, package.json declares ${builds.length}`);
+  assert.equal(builds.length, 12, `the entry says twelve devDependencies in all, package.json declares ${builds.length}`);
 });
 
 test('the fingerprint index is still fetched from the path the entry says it cannot leave', () => {

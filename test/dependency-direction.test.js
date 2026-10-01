@@ -57,10 +57,14 @@ const TYPE_ONLY = /^import type [^;]+;|typeof import\(\s*['"][^'"]+['"]\s*\)/gm;
 // Electron through a require made by hand (createRequire, src/electron.ts): a call with its name.
 const ELECTRON_CALL = /\(\s*['"]electron['"]\s*\)/;
 
+// Comments load nothing: a JSDoc type such as {import('electron').BrowserWindow} is not a require.
+// A "//" right after a colon is a URL, not a comment, and stays.
+const COMMENTS = /\/\*[\s\S]*?\*\/|(^|[^:])\/\/[^\n]*/g;
+
 /** What one file requires: 'electron', or repository-relative paths of local modules. */
 function requiresOf(root, file) {
   const out = [];
-  const text = fs.readFileSync(path.join(root, file), 'utf8').replace(TYPE_ONLY, '');
+  const text = fs.readFileSync(path.join(root, file), 'utf8').replace(COMMENTS, '$1').replace(TYPE_ONLY, '');
   if (ELECTRON_CALL.test(text)) out.push('electron');
   for (const m of text.matchAll(REQUIRE)) {
     const spec = m[1];
@@ -99,14 +103,24 @@ test('the detection finds a chain two modules long, and reports it', () => {
     fs.writeFileSync(path.join(dir, 'src', 'paths.js'), "const { app } = require('electron');\n");
     fs.writeFileSync(path.join(dir, 'src', 'plain.js'), "const fs = require('fs');\n");
     // a type names Electron and loads nothing; a require made by hand loads it all the same
-    fs.writeFileSync(path.join(dir, 'src', 'shape.ts'), "import type { BrowserWindow } from 'electron';\nexport type E = typeof import('electron');\n");
-    fs.writeFileSync(path.join(dir, 'src', 'door.ts'), "const load = createRequire(import.meta.url);\nexport const e = () => load('electron');\n");
-    fs.writeFileSync(path.join(dir, 'src', 'user.ts'), "import { e } from './door.ts';\n");
+    fs.writeFileSync(path.join(dir, 'src', 'shape.ts'), "import type { BrowserWindow } from 'electron';
+export type E = typeof import('electron');
+");
+    fs.writeFileSync(path.join(dir, 'src', 'door.ts'), "const load = createRequire(import.meta.url);
+export const e = () => load('electron');
+");
+    fs.writeFileSync(path.join(dir, 'src', 'user.ts'), "import { e } from './door.ts';
+");
+    // Electron named only in a JSDoc type: nothing is loaded
+    fs.writeFileSync(path.join(dir, 'src', 'typed.js'), "/** @param {import('electron').BrowserWindow} win */
+const fs = require('fs');
+");
 
     assert.deepEqual(pathToElectron(dir, 'src/parser.js'), ['src/parser.js', 'src/paths.js', 'electron']);
     assert.equal(pathToElectron(dir, 'src/plain.js'), null);
     assert.equal(pathToElectron(dir, 'src/shape.ts'), null, 'types only');
     assert.deepEqual(pathToElectron(dir, 'src/user.ts'), ['src/user.ts', 'src/door.ts', 'electron']);
+    assert.equal(pathToElectron(dir, 'src/typed.js'), null, 'a type in a comment is not a require');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

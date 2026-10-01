@@ -15,6 +15,7 @@
  * one-time layout of an order from before, live here too so the rules sit in one place.
  */
 import { RESERVED_PAKS } from './minify.ts';
+import { FileTx, type Writer } from './file-tx.ts';
 import type { Library } from './library.ts';
 import type { LibFile, LibRecord, HasFiles } from './types.ts';
 
@@ -26,7 +27,7 @@ export interface SlotInstaller {
   slotNumber(rec: LibRecord): number | null;
   slotBase(rec: HasFiles): string | null;
   usedPakNames(): Set<string>;
-  moveToSlot(rec: HasFiles, base: string, from?: string | null): LibFile[];
+  moveToSlot(rec: HasFiles, base: string, from?: string | null, tx?: Writer): LibFile[];
 }
 
 /** One record on its way to another slot, parked under a temporary name in between. */
@@ -129,21 +130,11 @@ export function migrateSlotZones(installer: SlotInstaller, library: Pick<Library
     .map((p) => ({ ...p, from: installer.slotBase(p.r) as string, park: `mmslot${p.n}`, to: (p.to as string).replace(/_dir\.vpk$/i, ''), parked: [], files: [] }));
   if (!moving.length) return { moved: 0 };
 
-  const done: { p: Move; files: LibFile[]; from: string; to: string }[] = [];
-  const step = (p: Move, files: LibFile[], from: string, to: string) => {
-    const out = installer.moveToSlot({ ...p.r, files }, to, from);
-    done.push({ p, files: out, from, to });
-    return out;
-  };
-  try {
-    for (const p of moving) p.parked = step(p, p.r.files, p.from, p.park);
-    for (const p of moving) p.files = step(p, p.parked, p.park, p.to);
-  } catch (err) {
-    for (const d of done.reverse()) {
-      try { installer.moveToSlot({ ...d.p.r, files: d.files }, d.from, d.to); } catch { /* nothing else to try */ }
-    }
-    throw err;
-  }
+  // one transaction for the whole layout: a refusal anywhere puts every file back
+  FileTx.run((tx) => {
+    for (const p of moving) p.parked = installer.moveToSlot({ ...p.r, files: p.r.files }, p.park, p.from, tx);
+    for (const p of moving) p.files = installer.moveToSlot({ ...p.r, files: p.parked }, p.to, p.park, tx);
+  });
   for (const p of moving) library.update(p.r.id, { files: p.files });
   return { moved: moving.length };
 }
@@ -168,14 +159,8 @@ export function vacateAppPak(installer: SlotInstaller, library: Pick<Library, 'l
   if (!to) return false;
   const from = `pak${APP_PAK}`;
   const base = to.replace(/_dir\.vpk$/i, '');
-  try {
-    library.update(rec.id, { files: installer.moveToSlot(rec, base, from) });
-  } catch (err) {
-    // the files that did move carry the new name; moving the record from there takes them back
-    const moved = (rec.files || []).map((f) => (f.root === 'lang' && f.relPath.toLowerCase().startsWith(`${from}_`) ? { ...f, relPath: base + f.relPath.slice(from.length) } : f));
-    try { installer.moveToSlot({ ...rec, files: moved }, from, base); } catch { /* nothing else to try */ }
-    throw err;
-  }
+  // a refused rename puts back what already moved inside moveToSlot, so a throw here is clean
+  library.update(rec.id, { files: installer.moveToSlot(rec, base, from) });
   return true;
 }
 

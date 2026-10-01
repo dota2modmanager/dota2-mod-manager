@@ -73,14 +73,14 @@ export function compare(baseline, now) {
 /**
  * Run tsc through the local install over every project, and hand back whatever it printed.
  * tsconfig.json is the two preload bridges, the JavaScript left, checked through JSDoc;
- * src/tsconfig.json is the main process and test/tsconfig.json the tests written in TypeScript, strict
- * and with nothing in the baseline, so any error there is a file that appeared with errors and
- * fails the run.
+ * src/tsconfig.json is the main process, test/tsconfig.json the tests written in TypeScript, and
+ * renderer/tsconfig.json the window's TypeScript, all three strict and with nothing in the
+ * baseline, so any error there is a file that appeared with errors and fails the run.
  */
 function runTsc() {
   const tsc = require.resolve('typescript/bin/tsc');
   let out = '';
-  for (const project of ['tsconfig.json', 'src/tsconfig.json', 'test/tsconfig.json']) {
+  for (const project of ['tsconfig.json', 'src/tsconfig.json', 'test/tsconfig.json', 'renderer/tsconfig.json']) {
     try {
       execFileSync(process.execPath, [tsc, '-p', project], { cwd: root, encoding: 'utf8' });
     } catch (err) {
