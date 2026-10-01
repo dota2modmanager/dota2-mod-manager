@@ -103,18 +103,11 @@ test('the detection finds a chain two modules long, and reports it', () => {
     fs.writeFileSync(path.join(dir, 'src', 'paths.js'), "const { app } = require('electron');\n");
     fs.writeFileSync(path.join(dir, 'src', 'plain.js'), "const fs = require('fs');\n");
     // a type names Electron and loads nothing; a require made by hand loads it all the same
-    fs.writeFileSync(path.join(dir, 'src', 'shape.ts'), "import type { BrowserWindow } from 'electron';
-export type E = typeof import('electron');
-");
-    fs.writeFileSync(path.join(dir, 'src', 'door.ts'), "const load = createRequire(import.meta.url);
-export const e = () => load('electron');
-");
-    fs.writeFileSync(path.join(dir, 'src', 'user.ts'), "import { e } from './door.ts';
-");
+    fs.writeFileSync(path.join(dir, 'src', 'shape.ts'), "import type { BrowserWindow } from 'electron';\nexport type E = typeof import('electron');\n");
+    fs.writeFileSync(path.join(dir, 'src', 'door.ts'), "const load = createRequire(import.meta.url);\nexport const e = () => load('electron');\n");
+    fs.writeFileSync(path.join(dir, 'src', 'user.ts'), "import { e } from './door.ts';\n");
     // Electron named only in a JSDoc type: nothing is loaded
-    fs.writeFileSync(path.join(dir, 'src', 'typed.js'), "/** @param {import('electron').BrowserWindow} win */
-const fs = require('fs');
-");
+    fs.writeFileSync(path.join(dir, 'src', 'typed.js'), "/** @param {import('electron').BrowserWindow} win */\nconst fs = require('fs');\n");
 
     assert.deepEqual(pathToElectron(dir, 'src/parser.js'), ['src/parser.js', 'src/paths.js', 'electron']);
     assert.equal(pathToElectron(dir, 'src/plain.js'), null);
