@@ -187,4 +187,27 @@ async function mine(cast, log) {
   return steps;
 }
 
-module.exports = { showcase, browse, filter, collect, install, mine };
+/* The three motions on the catalog, filmed for a person to judge: the rail's highlight travelling
+ * between categories, the cards of a category moving to their places as chips narrow it, and a mod
+ * window growing out of the card it was opened from. Not part of the story above (MM_SCENE=motion). */
+const motion = [
+  { wait: 700 },
+  { click: '.rail-item[data-cat="terrains"]', after: 1100 },
+  { click: '.rail-item[data-cat="hero-items"]', after: 1100 },
+  { click: '.rail-item[data-cat="couriers"]', after: 1100 },
+  { click: '.rail-item[data-cat="hero-items"]', after: 1300 },
+  { click: '.rail-item[data-cat="heroes"]', after: 1300 },
+  { click: '.fchip[data-tag="anime"]', after: 1600 },
+  { click: '.fchip[data-tag="anime"]', after: 1600 },
+  { click: '#installedChip', after: 1600 },
+  { click: '#installedChip', after: 1600 },
+  { click: '.rail-item[data-cat="terrains"]', after: 1300 },
+  { hover: '.grid .card:nth-child(2 of .card)', hold: 500 },
+  { click: '.grid .card:nth-child(2 of .card) .card-name', after: 1600 },
+  { eval: "document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))", after: 800 },
+  { hover: '.grid .card:nth-child(9 of .card)', hold: 400 },
+  { click: '.grid .card:nth-child(9 of .card) .card-name', after: 1600 },
+  { eval: "document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))", after: 900 },
+];
+
+module.exports = { showcase, browse, filter, collect, install, mine, motion };

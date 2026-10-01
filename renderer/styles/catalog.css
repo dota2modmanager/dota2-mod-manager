@@ -81,6 +81,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: 14px;
+  /* a card on its way out is lifted out of the flow and faded where it stood (ModGrid.tsx) */
+  position: relative;
 }
 /* Heroes is 463 cards and the window shows about fifteen. Left to itself the browser lays
    out and paints all of them on every frame of a scroll; this lets it skip whatever is far
@@ -258,15 +260,21 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  transition: transform 0.25s var(--ease), border-color 0.25s, box-shadow 0.25s var(--ease), background 0.25s;
+  /* The lift under the pointer is written with translate and scale rather than transform, and
+     the entrance lets go of transform once it has played (backwards, not both): transform is
+     what a card in the first screenful slides on when a chip reorders the grid (ModGrid.tsx),
+     and a stylesheet holding it would pin the card where it stood. The two compose, so a card
+     can slide and lift at once. */
+  transition: translate 0.25s var(--ease), scale 0.25s var(--ease), border-color 0.25s, box-shadow 0.25s var(--ease), background 0.25s;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  animation: cardIn 0.4s var(--ease) both;
+  animation: cardIn 0.4s var(--ease) backwards;
   animation-delay: calc(var(--i) * 22ms);
 }
 .card:hover {
-  transform: translateY(-5px) scale(1.015);
+  translate: 0 -5px;
+  scale: 1.015;
   border-color: color-mix(in srgb, var(--md-primary) 50%, transparent);
   background: var(--surface-hover);
   box-shadow: 0 14px 40px rgba(5, 3, 12, 0.55), 0 0 32px color-mix(in srgb, var(--md-primary) 18%, transparent);

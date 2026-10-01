@@ -25,14 +25,41 @@ const RU = ['ни одной', 'одна', 'две', 'три', 'четыре', '
 const code = (name) => `\`${name}\``;
 const list = (items, and) => (items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} ${and} ${items[items.length - 1]}`);
 
+/**
+ * The packages the window's own code imports. They are devDependencies, because Vite bundles
+ * them into out/renderer and the installer has no use for the packages themselves, but their
+ * code runs in the app all the same, and a sentence calling them build tools would be false.
+ */
+function bundledPackages(dir = path.join(ROOT, 'renderer')) {
+  const found = new Set();
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (/\.(m?js|jsx|tsx?)$/.test(e.name)) {
+        for (const m of fs.readFileSync(p, 'utf8').matchAll(/(?:from|import)\s*['"]([^'"./][^'"]*)['"]/g)) {
+          const parts = m[1].split('/');
+          found.add(m[1].startsWith('@') ? parts.slice(0, 2).join('/') : parts[0]);
+        }
+      }
+    }
+  };
+  walk(dir);
+  return [...found];
+}
+
 /** Every generated sentence, by block name. */
-function render(pkg) {
+function render(pkg, bundled = bundledPackages()) {
+  const dev = Object.keys(pkg.devDependencies || {}).sort();
   const ship = Object.keys(pkg.dependencies || {}).sort().map(code);
-  const build = Object.keys(pkg.devDependencies || {}).sort().map(code);
-  const total = ship.length + build.length;
+  const window = dev.filter((n) => bundled.includes(n)).map(code);
+  const build = dev.filter((n) => !bundled.includes(n)).map(code);
+  const total = ship.length + window.length + build.length;
+  const inWindowEn = window.length ? ` ${list(window, 'and')} are built into its window,` : '';
+  const inWindowRu = window.length ? ` ${list(window, 'и')} собраны в его окно,` : '';
   return {
-    'deps-en': `\`package.json\` lists ${EN[total] || total}: ${list(ship, 'and')} ship inside the app, ${list(build, 'and')} only build or check it.`,
-    'deps-ru': `В \`package.json\` их ${RU[total] || total}: ${list(ship, 'и')} едут внутри приложения, ${list(build, 'и')} только собирают или проверяют его.`,
+    'deps-en': `\`package.json\` lists ${EN[total] || total}: ${list(ship, 'and')} ship inside the app,${inWindowEn} ${list(build, 'and')} only build or check it.`,
+    'deps-ru': `В \`package.json\` их ${RU[total] || total}: ${list(ship, 'и')} едут внутри приложения,${inWindowRu} ${list(build, 'и')} только собирают или проверяют его.`,
   };
 }
 
@@ -50,7 +77,7 @@ function apply(text, facts) {
   ));
 }
 
-module.exports = { render, apply, FILES };
+module.exports = { render, apply, bundledPackages, FILES };
 
 if (require.main === module) {
   const check = process.argv.includes('--check');

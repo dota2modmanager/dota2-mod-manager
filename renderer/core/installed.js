@@ -7,11 +7,9 @@
 import { state } from './store.js';
 import { $ } from './dom.js';
 import { invalidateViews } from './router.js';
+import { keyOf } from './keys.js';
 
-/** How a mod is identified across the catalog and the library: category, name, style. */
-export function keyOf(categoryId, name, styleLabel) {
-  return `${categoryId}|${name}|${styleLabel || ''}`;
-}
+export { keyOf };
 
 // label for a fingerprint match (array of catalog identities that share the content)
 export function matchLabel(matches) {
