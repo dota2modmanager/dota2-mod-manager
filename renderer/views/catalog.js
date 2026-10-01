@@ -25,15 +25,26 @@ import { openPlayer } from '../ui/player.js';
 import { thumbHtml } from '../ui/thumb.js';
 import { loadCosmeticIcons, paintCosmeticIcons, watchCosmeticIcons, cosmeticIcon, cosmeticIconKnown } from '../ui/cosmetic-icons.js';
 import { paint } from '../ui/transitions.js';
-import { isQueued, toggleQueued, dropFromQueue, useInstaller } from '../ui/queue.js';
+import { isQueued, dropFromQueue, useInstaller } from '../ui/queue.js';
 import { refreshSidebarStatus } from '../ui/statusbar.js';
 import { modGuidesHtml, bindGuides } from '../ui/guide.js';
 import { refreshNotices, noticeBannerHtml, bindNotice } from '../ui/notice.js';
-import { bindItemBuilder, itemRailHtml, isItemCosmeticSlot, cosmeticFavValue, renderItemCosmeticHub, refreshItemHub,
+import { bindItemBuilder, itemRailEntry, isItemCosmeticSlot, cosmeticFavValue, renderItemCosmeticHub, refreshItemHub,
   forgetItemHub, forgetItemSlotModal, redrawItemSlotModal, openItemSlotModal } from './item-builder.js';
-import { heroOf, heroMatches, heroGridWanted, renderHeroGrid, heroBackHtml, layoutToggleHtml, bindHeroControls } from './hero-grid.js';
-import { staleTerrainPillHtml } from '../core/terrain-age.js';
+import { heroOf, heroMatches, heroGridWanted, heroTiles, heroLayout, setHeroLayout } from './hero-grid.js';
 import { shownMods, isAdult, adultShown } from '../core/adult.js';
+import { tokenMs } from '../core/css-time.js';
+import { modsOf, isGrouped as grouped, canBeInstalled, modIndexOf } from '../catalog/mods.ts';
+import { tagLabel as labelOfTag, collectTags, collectSlots as slotsOf, collectGroups } from '../catalog/tags.ts';
+import { applyFilters as filterMods, sortMods, narrowed as filtersNarrowed } from '../catalog/filters.ts';
+import { favKey, isFav, toggleFavorite } from '../catalog/favorites.ts';
+import { styleIndex, pickStyle, isInstalled } from '../catalog/looks.ts';
+import { flatColor } from '../catalog/colors.ts';
+import { playablePreview } from '../catalog/preview.ts';
+import { showScreen, redrawScreen } from '../catalog/screen/root.tsx';
+import { renderRail as drawRail } from '../catalog/rail/Rail.tsx';
+import { bannerLayer, legacyLayer } from '../catalog/layers.ts';
+import { growFrom, shrinkAway } from '../catalog/modal-motion.ts';
 
 const viewRoot = pane('catalog');
 
@@ -45,17 +56,6 @@ const installing = new Set();   // mods with a download in flight, so a card can
 registerView('catalog', () => renderCatalog());
 
 // ---------- favorites ----------
-
-const favKey = (cat, name) => `${cat}|${name}`;
-const isFav = (cat, name) => state.favorites.has(favKey(cat, name));
-
-async function toggleFavorite(cat, name) {
-  const key = favKey(cat, name);
-  if (state.favorites.has(key)) state.favorites.delete(key);
-  else state.favorites.add(key);
-  state.settings = await window.api.settings.set('favorites', [...state.favorites]);
-  return state.favorites.has(key);
-}
 
 // starred mods resolved back to catalog entries (a mod dropped from the catalog is skipped)
 function favoriteMods() {
@@ -117,9 +117,7 @@ function filterCosmetics(list) {
   const f = filters;
   let out = f.installedOnly ? list.filter(({ slot, o }) => pickedIn(slot)?.itemId === o.id) : list;
   if (f.favOnly) out = out.filter(({ slot, o }) => isFav(COSMETIC_PREFIX + slot, cosmeticFavValue(slot, o)));
-  if (f.sort === 'name') out = [...out].sort((a, b) => a.o.name.localeCompare(b.o.name));
-  else if (f.sort === 'name-desc') out = [...out].sort((a, b) => b.o.name.localeCompare(a.o.name));
-  return out;
+  return sortMods(out, f.sort, ({ o }) => o.name);
 }
 
 // ---------- catalog data helpers ----------
@@ -137,159 +135,35 @@ function saveCustomPacks(packs) {
   localStorage.setItem('customPacks', JSON.stringify(packs));
 }
 
-function allCategoryMods(categoryId) {
-  const data = state.catalog?.mods?.modsData?.[categoryId];
-  if (!data) return [];
-  if (Array.isArray(data)) {
-    const mods = data
-      .filter((m) => categoryId !== 'tools' || !TOOLS_HIDDEN.some((re) => re.test(m.name || '')))
-      .map((m) => ({ ...m, _group: null }));
-    if (categoryId === 'packs') {
-      for (const p of customPacks()) {
-        mods.push({ name: p.name, type: 'pack', mods: p.mods, _group: null, _custom: true });
-      }
-    }
-    return mods;
-  }
-  if (data.groups) {
-    const out = [];
-    for (const g of data.groups) {
-      for (const m of g.mods || []) out.push({ ...m, _group: g.name, _groupId: g.id });
-    }
-    return out;
-  }
-  return [];
-}
+const modsData = (categoryId) => state.catalog?.mods?.modsData?.[categoryId];
+const allCategoryMods = (categoryId) => modsOf(modsData(categoryId), categoryId, { toolsHidden: TOOLS_HIDDEN, customPacks: customPacks() });
 // what browsing shows: without the adult mods until the user said yes (core/adult.js)
 const categoryMods = (categoryId) => shownMods(allCategoryMods(categoryId));
-
-function isGrouped(categoryId) {
-  const data = state.catalog?.mods?.modsData?.[categoryId];
-  return !!(data && !Array.isArray(data) && data.groups);
-}
+const isGrouped = (categoryId) => grouped(modsData(categoryId));
 
 function visibleCategories() {
   const cats = state.catalog?.constants?.categories || [];
   return cats.filter((c) => !CATALOG_EXCLUDE.includes(c.id) && categoryMods(c.id).length);
 }
 
+// state.modIndex is filled in place: other screens hold the same Map
 function buildModIndex() {
+  const index = modIndexOf(state.catalog?.constants?.categories || [], allCategoryMods);
   state.modIndex.clear();
-  for (const c of state.catalog?.constants?.categories || []) {
-    for (const m of allCategoryMods(c.id)) {
-      if (m.name) state.modIndex.set(m.name.toLowerCase(), { categoryId: c.id, mod: m });
-    }
-  }
+  for (const [name, hit] of index) state.modIndex.set(name, hit);
 }
 
-function installTarget(mod) {
-  const f = mod.file;
-  if (!f) return null;
-  if (/\.(vpk|zip)$/i.test(f)) return f;
-  return null;
-}
+const tagLabel = (categoryId, tag) => labelOfTag(tag, state.catalog?.constants?.TAG_CONFIGS?.[categoryId]?.map);
+const collectSlots = (mods, categoryId) => slotsOf(mods, (t) => tagLabel(categoryId, t));
 
-/* Tags in the catalog answer two different questions, and only one of them is a filter you
- * flip. "What does this mod change" - effects, icons, sounds - can be true at once and stays
- * a chip. The rest of hero-items names the slot the item sits in: one answer at a time out of
- * fourteen, which as chips was a second toolbar under the first, six of them finding one mod
- * each. Heroes are already a dropdown for the same reason. */
-const SLOT_TAGS = new Set(['weapon', 'shoulders', 'head', 'arms', 'arm', 'armor', 'back', 'mount', 'shield', 'totem', 'hair']);
-// the catalog spells one slot both ways
-const TAG_ALIAS = { arm: 'arms' };
-export const canonTag = (t) => TAG_ALIAS[t] || t;
-
-// Our own words for what the catalog ships in English. Keys are Russian, like everywhere
-// else in the app, so tr() carries them into English by the same table as the rest.
-const TAG_WORD = {
-  effects: 'Эффекты', icons: 'Иконки', sounds: 'Звуки', anime: 'Аниме', adult: '18+',
-  video: 'Видео', image: 'Картинка', lowres: 'Плохое качество',
-  meta: 'Мета', stats: 'Статистика', fun: 'Развлечения', 'source-code': 'Исходный код',
-  weapon: 'Оружие', shoulders: 'Наплечники', head: 'Голова', arms: 'Руки', armor: 'Броня',
-  back: 'Спина', mount: 'Ездовое', shield: 'Щит', totem: 'Тотем', hair: 'Волосы',
-};
-
-function tagLabel(categoryId, tag) {
-  const known = TAG_WORD[canonTag(tag)];
-  if (known) return tr(known);
-  // a tag we have never seen: the catalog's own label if it has one, else the raw key, and
-  // either way it starts with a capital rather than looking like a leftover id
-  const cfg = state.catalog?.constants?.TAG_CONFIGS?.[categoryId];
-  const raw = String(cfg?.map?.[tag] || tag);
-  return raw.charAt(0).toUpperCase() + raw.slice(1);
-}
-
-function isInstalled(categoryId, m) {
-  return state.installedIndex.has(keyOf(categoryId, m.name, null)) ||
-    (m.styles || []).some((s) => state.installedIndex.has(keyOf(categoryId, m.name, s.label)));
-}
-
-// can this mod ever carry the "Установлен" badge? (guides/sites are link-only)
-function canBeInstalled(m) {
-  return !!installTarget(m) || (m.styles || []).some((s) => s.file && /\.(vpk|zip)$/i.test(s.file));
-}
-
-// ---------- filtering / sorting ----------
-
-// Chips: what the mod changes, commonest first. A chip that finds one mod today is kept -
-// the catalog grows, and "which courier has effects" is worth asking even of a list of one.
-function collectTags(mods) {
-  const tags = new Map(); // tag -> count
-  for (const m of mods) {
-    for (const [k, v] of Object.entries(m.tags || {})) {
-      if (v && !SLOT_TAGS.has(k)) tags.set(k, (tags.get(k) || 0) + 1);
-    }
-  }
-  return [...tags.entries()].sort((a, b) => b[1] - a[1]).map(([tag]) => tag);
-}
-
-// The dropdown beside it: which slot the item goes in, A-Z by the word the user reads.
-function collectSlots(mods, categoryId) {
-  const seen = new Set();
-  for (const m of mods) {
-    for (const [k, v] of Object.entries(m.tags || {})) {
-      if (v && SLOT_TAGS.has(k)) seen.add(canonTag(k));
-    }
-  }
-  return [...seen].sort((a, b) => tagLabel(categoryId, a).localeCompare(tagLabel(categoryId, b)));
-}
-
-function collectGroups(mods) {
-  const seen = new Set();
-  const out = [];
-  for (const m of mods) {
-    if (m._group && !seen.has(m._group)) {
-      seen.add(m._group);
-      out.push(m._group);
-    }
-  }
-  return out;
-}
+// ---------- filtering / sorting (catalog/filters.ts) ----------
 
 function applyFilters(mods, catForInstalled) {
-  const f = filters;
-  let out = mods;
-  if (f.group) out = out.filter((m) => m._group === f.group);
-  if (f.hero) out = out.filter((m) => heroMatches(f.hero, m.name));
-  if (f.tags.size) {
-    out = out.filter((m) => [...f.tags].every((t) => m.tags?.[t]));
-  }
-  if (f.slot) {
-    out = out.filter((m) => Object.entries(m.tags || {}).some(([k, v]) => v && canonTag(k) === f.slot));
-  }
-  if (f.installedOnly) {
-    out = out.filter((m) => isInstalled(m._cat || catForInstalled, m));
-  }
-  if (f.favOnly) {
-    out = out.filter((m) => isFav(m._cat || catForInstalled, m.name));
-  }
-  const dateOf = (m) => m.meta?.date || 0;
-  switch (f.sort) {
-    case 'date': out = [...out].sort((a, b) => dateOf(b) - dateOf(a)); break;
-    case 'name': out = [...out].sort((a, b) => a.name.localeCompare(b.name)); break;
-    case 'name-desc': out = [...out].sort((a, b) => b.name.localeCompare(a.name)); break;
-  }
-  return out;
+  return filterMods(mods, filters, {
+    isInstalled: (m) => isInstalled(m._cat || catForInstalled, m),
+    isFav: (m) => isFav(m._cat || catForInstalled, m.name),
+    heroMatches,
+  });
 }
 
 function favButtonHtml(cat, name) {
@@ -299,100 +173,105 @@ function favButtonHtml(cat, name) {
     aria-label="${on ? L`Убрать из избранного` : L`В избранное`}"><span class="ms">${on ? 'favorite' : 'favorite_border'}</span></button>`;
 }
 
-// media the built-in player can show: only a dedicated "preview"-type link.
-// Mods whose card preview is itself a video already play it on hover/in the modal.
-function modPreviewMedia(categoryId, mod) {
-  const link = (mod.links || []).find((l) => l.type === 'preview' && isMedia(l.url));
-  return link ? resolveUrl(link.url) : null;
-}
+// ===== Category rail (catalog/rail/Rail.tsx) =====
 
-// ===== Category rail =====
-
-function renderRail() {
-  const rail = $('#catRail');
+function railModel() {
   const cats = new Set(visibleCategories().map((c) => c.id));
   const favCount = favoriteMods().length + favoriteCosmetics().length;
-  let html = `
-    <button class="rail-item ${state.activeCategory === 'all' ? 'active' : ''}" data-cat="all">
-      <span class="ms">apps</span>${L`Все категории`}
-    </button>
-    <button class="rail-item fav ${state.activeCategory === 'favorites' ? 'active' : ''}" data-cat="favorites">
-      <span class="ms">favorite</span>${L`Избранное`}
-      ${favCount ? `<span class="rail-cnt">${favCount}</span>` : ''}
-    </button>`;
+  const sections = [{ label: null, items: [
+    { id: 'all', icon: 'apps', name: L`Все категории` },
+    { id: 'favorites', icon: 'favorite', name: L`Избранное`, count: favCount, fav: true },
+  ] }];
   for (const [label, ids] of RAIL_SECTIONS) {
     const present = ids.filter((id) => cats.has(id));
-    if (!present.length) continue;
-    html += `<div class="rail-section">${esc(tr(label))}</div>`;
-    for (const id of present) {
-      html += `
-        <button class="rail-item ${state.activeCategory === id ? 'active' : ''}" data-cat="${esc(id)}">
-          <span class="ms">${catIcon(id)}</span>${esc(catName(id))}
-        </button>`;
-    }
+    if (present.length) sections.push({ label: tr(label), items: present.map((id) => ({ id, icon: catIcon(id), name: catName(id) })) });
   }
-  // Free cosmetics only work once safe mode is off (the patch is what lets the game read
-  // them at all) — showing the section without that would just be a list of dead buttons.
+  // Free cosmetics only work once safe mode is off (the patch is what lets the game read them at
+  // all): showing the section without that would just be a list of dead buttons.
   const cos = cosmeticSlotList();
   if (cos.length) {
-    html += `<div class="rail-section">${L`Косметика`}</div>`;
-    for (const s of cos.filter((x) => !isItemCosmeticSlot(x.slot))) { // the builder's slots have one entry of their own
-      const id = COSMETIC_PREFIX + s.slot;
-      html += `
-        <button class="rail-item ${state.activeCategory === id ? 'active' : ''}" data-cat="${esc(id)}">
-          <span class="ms">${catIcon(id)}</span>${esc(catName(id))}
-          ${pickedIn(s.slot) ? '<span class="rail-dot"></span>' : ''}
-        </button>`;
-    }
-    html += itemRailHtml(state.activeCategory);
+    const items = cos
+      .filter((x) => !isItemCosmeticSlot(x.slot)) // the builder's slots have one entry of their own
+      .map((s) => {
+        const id = COSMETIC_PREFIX + s.slot;
+        return { id, icon: catIcon(id), name: catName(id), dot: Boolean(pickedIn(s.slot)) };
+      });
+    const builder = itemRailEntry();
+    if (builder) items.push(builder);
+    sections.push({ label: L`Косметика`, items });
   }
-  rail.innerHTML = html;
-  rail.querySelectorAll('.rail-item').forEach((b) => {
-    b.addEventListener('click', () => {
-      state.activeCategory = b.dataset.cat;
-      filters = freshFilters();
-      cosSearch = '';
-      if (state.search) {
-        state.search = '';
-        $('#globalSearch').value = '';
-        $('#clearSearch').classList.add('hidden');
-      }
-      renderCatalog();
-    });
-  });
+  return { active: state.activeCategory, sections };
 }
 
-// ===== Catalog =====
+function pickCategory(id) {
+  state.activeCategory = id;
+  filters = freshFilters();
+  cosSearch = '';
+  if (state.search) {
+    state.search = '';
+    $('#globalSearch').value = '';
+    $('#clearSearch').classList.add('hidden');
+  }
+  renderCatalog();
+}
+
+function renderRail() {
+  drawRail($('#catRail'), railModel(), pickCategory);
+}
+
+// ===== Catalog (catalog/screen/) =====
+
+/** What the screen can ask for (catalog/screen/model.ts, ScreenActions). */
+const actions = {
+  openCategory: async (id) => {
+    state.activeCategory = id;
+    filters = freshFilters();
+    await renderCatalog(); // the grid has to exist before it can be scrolled to the top
+    $('#main').scrollTop = 0;
+  },
+  filter: (patch) => {
+    Object.assign(filters, patch);
+    renderCatalog();
+  },
+  toggleTag: (tag) => {
+    if (filters.tags.has(tag)) filters.tags.delete(tag);
+    else filters.tags.add(tag);
+    renderCatalog();
+  },
+  // the way back and the grid/list switch both end on the whole category, unpicked
+  allHeroes: () => {
+    filters.hero = '';
+    renderCatalog();
+  },
+  layout: (v) => {
+    setHeroLayout(v);
+    actions.allHeroes();
+  },
+  pickHero: (hero) => {
+    // the mods no hero claims have no entry in the hero dropdown: they sit last in the list
+    if (!hero) setHeroLayout('list');
+    filters.hero = hero;
+    renderCatalog();
+    $('#main')?.scrollTo({ top: 0 });
+  },
+  retry: () => loadCatalog(true),
+  openMod: (mod, card) => openModModal(mod._cat, mod, card),
+  favChanged: () => {
+    if (state.view !== 'catalog') return;
+    // in a list that IS the favourites, the card has to leave it
+    if (state.activeCategory === 'favorites' || filters.favOnly) renderCatalog();
+    else renderRail();
+  },
+  bindCosmetics: (grid) => bindCosmeticCards(grid),
+};
 
 async function renderCatalog() {
   forgetItemHub();
-  if (!state.catalog) {
-    await paint(() => { viewRoot.innerHTML = `<div class="empty-note">${L`Загрузка каталога…`}</div>`; });
-    return;
-  }
-  if (state.catalog.error) {
-    /* Two failures that need different sentences.
-     *
-     * Not being able to open a socket is what happens when the wifi is off or the whole route
-     * to the catalog is blocked, and it used to print "fetch failed" - Node's words, at a
-     * player, on the screen where the mods should be. Anything else is a server that answered
-     * with something, and telling that person to check their connection sends them to fix
-     * what is not broken.
-     *
-     * Either way the app itself is fine and the mods already installed are still installed,
-     * which is the part worth saying out loud on an otherwise empty screen. */
-    const offline = state.catalog.offline;
-    await paint(() => { viewRoot.innerHTML = `
-      <div class="empty-note offline-note">
-        <span class="ms offline-icon">${offline ? 'wifi_off' : 'cloud_off'}</span>
-        <b>${offline ? L`Нет соединения с интернетом` : L`Каталог сейчас недоступен`}</b>
-        <span>${offline
-          ? L`Моды, которые уже стоят, работают. Каталог появится, как только связь вернётся.`
-          : L`Моды, которые уже стоят, работают. Попробуй ещё раз через минуту.`}</span>
-        <button class="btn btn-primary" id="retryCat">${L`Повторить`}</button>
-        <span class="offline-detail">${esc(state.catalog.error)}</span>
-      </div>`; });
-    $('#retryCat').addEventListener('click', () => loadCatalog(true));
+  if (!state.catalog || state.catalog.error) {
+    bannerLayer().replaceChildren();
+    await paint(() => showScreen(state.catalog
+      ? { kind: 'offline', offline: Boolean(state.catalog.offline), error: String(state.catalog.error) }
+      : { kind: 'loading' }, actions));
     return;
   }
 
@@ -407,19 +286,21 @@ async function renderCatalog() {
   else await renderCategory(state.activeCategory);
   // the no-game banner goes on last so it ends up on top: a user with no Dota has a more
   // pressing problem than whatever the network wanted to say
-  showNoticeBanner();
-  showNoGameBanner();
+  const banners = bannerLayer();
+  banners.replaceChildren();
+  showNoticeBanner(banners);
+  showNoGameBanner(banners);
 }
 
-/* A notice that arrived from the network (see ui/notice.js). Prepended after the screen has
- * drawn, the same way the no-game banner is, so no category screen has to know about it. */
-function showNoticeBanner() {
+/* A notice that arrived from the network (see ui/notice.js). Drawn after the screen, the same way
+ * the no-game banner is, so no category screen has to know about it. */
+function showNoticeBanner(banners) {
   const html = noticeBannerHtml();
   if (!html) return;
   const holder = document.createElement('div');
   holder.innerHTML = html;
-  viewRoot.prepend(holder.firstElementChild);
-  bindNotice(viewRoot, () => renderCatalog());
+  banners.prepend(holder.firstElementChild);
+  bindNotice(banners, () => renderCatalog());
 }
 
 /* Without Dota there is a catalog and no way to install from it, and the only sign of that
@@ -427,7 +308,7 @@ function showNoticeBanner() {
  * The banner says it before that, on whichever catalog screen the user is standing on, and
  * carries the two answers with it so nobody has to go looking through Settings.
  */
-function showNoGameBanner() {
+function showNoGameBanner(banners) {
   if (state.settings?.dotaPathValid) return;
   const el = document.createElement('div');
   el.className = 'banner warn';
@@ -436,7 +317,7 @@ function showNoGameBanner() {
     <div class="banner-body"><b>${L`Dota 2 не найдена`}</b>${L` — моды ставить некуда. Проверь, что игра установлена, или укажи её папку вручную.`}</div>
     <button class="btn btn-sm" id="findDotaBtn"><span class="ms">search</span>${L`Искать снова`}</button>
     <button class="btn btn-sm btn-primary" id="pickDotaBtn"><span class="ms">folder_open</span>${L`Указать папку`}</button>`;
-  viewRoot.prepend(el);
+  banners.prepend(el);
 
   const settled = async (found) => {
     state.settings = await window.api.settings.get();
@@ -456,6 +337,9 @@ function showNoGameBanner() {
   });
 }
 
+const NOTHING = () => L`Ничего не найдено — сбрось фильтры`;
+const cosmeticCards = (list) => list.map(({ slot, o }, i) => cosmeticCardHtml(slot, o, i, true)).join('');
+
 // --- favorites ---
 
 async function renderFavorites() {
@@ -468,32 +352,20 @@ async function renderFavorites() {
   const installable = all.some(canBeInstalled) || cosAll.length > 0;
   const empty = !all.length && !cosAll.length;
 
-  await paint(() => { viewRoot.innerHTML = `
-    <div class="view-header">
-      <h1 class="view-title">${L`Избранное`}</h1>
-    </div>
-    ${empty ? '' : toolbarHtml(mods.length + cos.length, { installable, fav: false })}
-    ${empty ? `<div class="empty-note">${L`Здесь пусто — жми на сердечко у мода в каталоге`}</div>` : ''}
-    ${all.length ? `
-      ${cosAll.length ? `<div class="section-h"><span class="ms">extension</span>${L`Моды`}</div>` : ''}
-      <div class="grid" id="modGrid">
-        ${mods.length ? mods.map((m, i) => cardHtml(m, i, { cat: true })).join('') : `<div class="empty-note">${L`Ничего не найдено — сбрось фильтры`}</div>`}
-      </div>` : ''}
-    ${cosAll.length ? `
-      <div class="section-h spaced"><span class="ms">auto_awesome</span>${L`Косметика`}</div>
-      <div class="grid" id="cosGrid">
-        ${cos.length ? cos.map(({ slot, o }, i) => cosmeticCardHtml(slot, o, i, true)).join('') : `<div class="empty-note">${L`Ничего не найдено — сбрось фильтры`}</div>`}
-      </div>` : ''}
-  `; });
-  if (!empty) bindToolbar();
-  bindCards($('#modGrid'), mods);
-  bindCosmeticCards($('#cosGrid'));
+  await paint(() => showScreen({
+    kind: 'list',
+    key: 'favorites',
+    title: L`Избранное`,
+    toolbar: empty ? null : toolbarModel(mods.length + cos.length, { installable, fav: false }),
+    note: empty ? L`Здесь пусто — жми на сердечко у мода в каталоге` : undefined,
+    mods: all.length ? { heading: cosAll.length > 0, mods, withCat: true, emptyText: NOTHING() } : null,
+    cosmetics: cosAll.length ? { html: cos.length ? cosmeticCards(cos) : `<div class="empty-note">${NOTHING()}</div>` } : null,
+  }, actions));
 }
 
 // --- home (all categories) ---
 
 async function renderHome() {
-  const cats = visibleCategories();
   const recent = (state.catalog.mods.recentlyAddedMods || [])
     .map((r) => {
       const hit = state.modIndex.get(r.name.toLowerCase());
@@ -503,38 +375,12 @@ async function renderHome() {
     })
     .filter((m) => m && (adultShown() || !isAdult(m)))
     .slice(0, 12);
-
-  // No heading over any of it: the window says Каталог in the tab strip, and a title
-  // repeating that would push the first mods below the fold to say nothing.
-  await paint(() => { viewRoot.innerHTML = `
-    ${recent.length ? `
-      <div class="section-h"><span class="ms">new_releases</span>${L`Недавно добавленные`}</div>
-      <div class="recent-row">${recent.map((m, i) => cardHtml(m, i, { cat: true })).join('')}</div>` : ''}
-    <div class="section-h"><span class="ms">apps</span>${L`Категории`}</div>
-    <div class="cat-tiles">
-      ${cats.map((c, i) => {
-        const prev = c.preview ? `${RAW_BASE}/assets/previews/categories/${encodeURIComponent(c.preview)}` : null;
-        return `
-        <div class="cat-tile" data-cat="${esc(c.id)}" style="--i:${Math.min(i, 24)}">
-          ${prev ? mediaHtml(prev) : ''}
-          <div class="ct-shade"></div>
-          <div class="ct-label">
-            <span class="ct-name">${esc(catName(c.id))}</span>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-  `; });
-
-  viewRoot.querySelectorAll('.cat-tile').forEach((t) => {
-    t.addEventListener('click', async () => {
-      state.activeCategory = t.dataset.cat;
-      filters = freshFilters();
-      await renderCatalog(); // the grid has to exist before it can be scrolled to the top
-      $('#main').scrollTop = 0;
-    });
-  });
-  bindCards(viewRoot);
+  const tiles = visibleCategories().map((c) => ({
+    id: c.id,
+    name: catName(c.id),
+    preview: c.preview ? `${RAW_BASE}/assets/previews/categories/${encodeURIComponent(c.preview)}` : null,
+  }));
+  await paint(() => showScreen({ kind: 'home', recent, tiles }, actions));
 }
 
 // --- search results ---
@@ -545,39 +391,34 @@ const COS_SEARCH_LIMIT = 120;
 
 async function renderSearchResults() {
   const q = state.search.trim().toLowerCase();
-  const cats = visibleCategories();
   let mods = [];
-  for (const c of cats) {
+  for (const c of visibleCategories()) {
     for (const m of categoryMods(c.id)) {
       if (m.name && m.name.toLowerCase().includes(q)) mods.push({ ...m, _cat: c.id });
     }
   }
   // the search reaches the free cosmetics too, in their own section below the mods
   const cosAll = searchCosmetics(q);
-  // whether the "Установленные" chip makes sense at all — decided before filtering, or
-  // the chip would vanish once it filtered everything out and could never be undone
+  // whether the "Установленные" chip makes sense at all - decided before filtering, or the chip
+  // would vanish once it filtered everything out and could never be undone
   const installable = mods.some(canBeInstalled) || cosAll.length > 0;
   mods = applyFilters(mods);
   const cos = filterCosmetics(cosAll);
   const shownCos = cos.slice(0, COS_SEARCH_LIMIT);
 
-  await paint(() => { viewRoot.innerHTML = `
-    <div class="view-header">
-      <h1 class="view-title">${L`Поиск:`} <span class="accent">${esc(state.search.trim())}</span></h1>
-    </div>
-    ${toolbarHtml(mods.length + cos.length, { tags: [], groups: [], installable })}
-    ${!mods.length && !cos.length ? `<div class="empty-note">${L`Ничего не найдено`}</div>` : ''}
-    ${mods.length ? `
-      ${cos.length ? `<div class="section-h"><span class="ms">extension</span>${L`Моды`}</div>` : ''}
-      <div class="grid" id="modGrid">${mods.map((m, i) => cardHtml(m, i, { cat: true })).join('')}</div>` : ''}
-    ${cos.length ? `
-      <div class="section-h spaced"><span class="ms">auto_awesome</span>${L`Косметика`}</div>
-      <div class="grid" id="cosGrid">${shownCos.map(({ slot, o }, i) => cosmeticCardHtml(slot, o, i, true)).join('')}</div>
-      ${cos.length > shownCos.length ? `<div class="search-more">${L`…и ещё ${cos.length - shownCos.length} — уточни запрос`}</div>` : ''}` : ''}
-  `; });
-  bindToolbar();
-  bindCards($('#modGrid'), mods);
-  bindCosmeticCards($('#cosGrid'));
+  await paint(() => showScreen({
+    kind: 'list',
+    key: 'search',
+    title: L`Поиск:`,
+    accent: state.search.trim(),
+    toolbar: toolbarModel(mods.length + cos.length, { installable }),
+    note: !mods.length && !cos.length ? L`Ничего не найдено` : undefined,
+    mods: mods.length ? { heading: cos.length > 0, mods, withCat: true } : null,
+    cosmetics: cos.length ? {
+      html: cosmeticCards(shownCos),
+      more: cos.length > shownCos.length ? L`…и ещё ${cos.length - shownCos.length} — уточни запрос` : undefined,
+    } : null,
+  }, actions));
 }
 
 // --- single category ---
@@ -590,20 +431,21 @@ async function renderCategory(categoryId) {
   if (byHero) for (const m of all) m._group = heroOf(m.name);
   const tags = collectTags(all);
   const slots = collectSlots(all, categoryId);
-  // hero dropdowns are long enough that catalog order is useless — sort them A-Z
+  // hero dropdowns are long enough that catalog order is useless - sort them A-Z
   const groups = isGrouped(categoryId) ? collectGroups(all) : [];
   if (categoryId === 'hero-items') groups.sort((a, b) => a.localeCompare(b));
-  const heroes = categoryId === 'heroes'
+  const heroes = byHero
     ? (state.catalog?.constants?.HEROES_LIST || [])
       .filter((h) => all.some((m) => heroMatches(h, m.name)))
       .sort((a, b) => a.localeCompare(b))
     : [];
   const mods = applyFilters(all, categoryId);
   const installable = all.some(canBeInstalled);
+  const toolbar = toolbarModel(mods.length, { tags, slots, groups, heroes, categoryId, installable });
   if (byHero && heroGridWanted(filters)) {
-    await renderHeroGrid(viewRoot, catName(categoryId), toolbarHtml(mods.length, { tags, slots, heroes, categoryId, installable }), mods,
-      { isInstalled, pick: (hero) => { filters.hero = hero; renderCatalog(); } });
-    return bindToolbar();
+    const tiles = await heroTiles(mods, isInstalled);
+    await paint(() => showScreen({ kind: 'heroes', key: `cat:${categoryId}:heroes`, title: catName(categoryId), toolbar, tiles }, actions));
+    return;
   }
 
   // Picking one hero out of the dropdown already answers the question the headings answer,
@@ -613,359 +455,47 @@ async function renderCategory(categoryId) {
   // the mod that names no hero at the end rather than in the middle of the alphabet
   if (grouped && byHero) mods.sort((a, b) => (a._group ? 0 : 1) - (b._group ? 0 : 1) || a._group.localeCompare(b._group));
 
-  let gridHtml = '';
-  if (!mods.length) {
-    gridHtml = `<div class="empty-note">${L`Ничего не найдено — сбрось фильтры`}</div>`;
-  } else if (grouped) {
-    let lastGroup = null;
-    mods.forEach((m, i) => {
-      if (m._group !== lastGroup) {
-        gridHtml += `<div class="group-title">${esc(m._group || tr('Прочее'))}</div>`;
-        lastGroup = m._group;
-      }
-      gridHtml += cardHtml(m, i);
-    });
-  } else {
-    gridHtml = mods.map((m, i) => cardHtml(m, i)).join('');
-  }
-
-  await paint(() => { viewRoot.innerHTML = `
-    <div class="view-header">
-      ${byHero && filters.hero ? heroBackHtml() : ''}<h1 class="view-title">${esc((byHero && filters.hero) || catName(categoryId))}</h1>
-    </div>
-    ${toolbarHtml(mods.length, { tags, slots, groups, heroes, categoryId, installable })}
-    <div class="grid" id="modGrid">${gridHtml}</div>
-  `; });
-  bindToolbar();
-  bindCards(viewRoot, mods);
+  await paint(() => showScreen({
+    kind: 'list',
+    key: `cat:${categoryId}`,
+    title: (byHero && filters.hero) || catName(categoryId),
+    back: byHero && Boolean(filters.hero),
+    toolbar,
+    mods: { heading: false, mods, grouped, emptyText: NOTHING() },
+    cosmetics: null,
+  }, actions));
 }
 
-// --- toolbar ---
+// --- toolbar (catalog/screen/Toolbar.tsx) ---
 
 const GROUP_LABEL = { 'hero-items': 'Все герои', 'item-effects': 'Все предметы', creeps: 'Все крипы', towers: 'Все башни', 'creep-deny': 'Все типы' };
 
 // Is the list in front of you shorter than the category itself? That, and only that, is when
 // a number of results is worth printing: it answers "did that chip do anything". Sorting is
 // not narrowing - the same mods come back in another order - so it does not count.
-function narrowed() {
+const narrowed = () => filtersNarrowed(filters) || Boolean(state.search.trim());
+
+function toolbarModel(resultCount, { tags = [], slots = [], groups = [], heroes = [], categoryId = null, installable = true, fav = true }) {
   const f = filters;
-  return !!(f.tags.size || f.slot || f.installedOnly || f.favOnly || f.group || f.hero || state.search.trim());
-}
-
-// Two lines, on purpose. The top one is how to look at the category - what order, whose
-// heroes, which slot, and the two answers about your own library - and it is the same
-// everywhere. Tags belong to this category alone, so they sit under it, quieter. Nothing
-// folds any more: the longest row left is four chips, now that slots are a dropdown.
-function toolbarHtml(resultCount, { tags = [], slots = [], groups = [], heroes = [], categoryId = null, installable = true, fav = true }) {
-  const f = filters;
-  return `
-    <div class="toolbar">
-      <div class="tb-line">
-        <div class="select-wrap">
-          <span class="ms">sort</span>
-          <select id="sortSelect">
-            ${SORTS.map((s) => `<option value="${s.key}" ${f.sort === s.key ? 'selected' : ''}>${esc(tr(s.label))}</option>`).join('')}
-          </select>
-        </div>
-        ${heroes.length ? `
-          <div class="select-wrap">
-            <span class="ms">person</span>
-            <select id="heroSelect">
-              <option value="">${L`Все герои`}</option>
-              ${heroes.map((h) => `<option value="${esc(h)}" ${f.hero === h ? 'selected' : ''}>${esc(h)}</option>`).join('')}
-            </select>
-          </div>` : ''}
-        ${groups.length ? `
-          <div class="select-wrap">
-            <span class="ms">${categoryId === 'hero-items' ? 'person' : catIcon(categoryId) || 'group'}</span>
-            <select id="groupSelect">
-              <option value="">${esc(tr(GROUP_LABEL[categoryId] || 'Все группы'))}</option>
-              ${groups.map((g) => `<option value="${esc(g)}" ${f.group === g ? 'selected' : ''}>${esc(g)}</option>`).join('')}
-            </select>
-          </div>` : ''}
-        ${slots.length ? `
-          <div class="select-wrap">
-            <span class="ms">checkroom</span>
-            <select id="slotSelect">
-              <option value="">${L`Все слоты`}</option>
-              ${slots.map((s) => `<option value="${esc(s)}" ${f.slot === s ? 'selected' : ''}>${esc(tagLabel(categoryId, s))}</option>`).join('')}
-            </select>
-          </div>` : ''}
-        ${installable || fav ? '<div class="sep"></div>' : ''}
-        ${installable ? `
-        <button class="fchip ${f.installedOnly ? 'active' : ''}" id="installedChip">
-          <span class="ms">check_circle</span>${L`Установленные`}
-        </button>` : ''}
-        ${fav ? `
-        <button class="fchip ${f.favOnly ? 'active' : ''}" id="favChip">
-          <span class="ms">favorite</span>${L`Избранное`}
-        </button>` : ''}
-        ${categoryId === 'heroes' ? layoutToggleHtml() : ''}
-        ${narrowed() ? `<span class="count">${resultCount} ${plural(resultCount, 'результат', 'результата', 'результатов')}</span>` : ''}
-      </div>
-      ${tags.length ? `
-        <div class="tb-line tb-tags">
-          ${tags.map((tag) => `
-            <button class="fchip ${f.tags.has(tag) ? 'active' : ''}" data-tag="${esc(tag)}">
-              ${esc(tagLabel(categoryId, tag))}
-            </button>`).join('')}
-        </div>` : ''}
-    </div>`;
-}
-
-function bindToolbar() {
-  bindHeroControls(() => { filters.hero = ''; renderCatalog(); });
-  $('#sortSelect')?.addEventListener('change', (e) => {
-    filters.sort = e.target.value;
-    renderCatalog();
-  });
-  $('#groupSelect')?.addEventListener('change', (e) => {
-    filters.group = e.target.value;
-    renderCatalog();
-  });
-  $('#heroSelect')?.addEventListener('change', (e) => {
-    filters.hero = e.target.value;
-    renderCatalog();
-  });
-  $('#slotSelect')?.addEventListener('change', (e) => {
-    filters.slot = e.target.value;
-    renderCatalog();
-  });
-  $('#installedChip')?.addEventListener('click', () => {
-    filters.installedOnly = !filters.installedOnly;
-    renderCatalog();
-  });
-  $('#favChip')?.addEventListener('click', () => {
-    filters.favOnly = !filters.favOnly;
-    renderCatalog();
-  });
-  document.querySelectorAll('.fchip[data-tag]').forEach((c) => {
-    c.addEventListener('click', () => {
-      const t = c.dataset.tag;
-      if (filters.tags.has(t)) filters.tags.delete(t);
-      else filters.tags.add(t);
-      renderCatalog();
-    });
-  });
-}
-
-// --- cards ---
-
-/* Which look of a mod the grid is showing. Picked on the card itself, because that is where
- * the question comes up: scrolling past a mod in three colours, the one you want to see is
- * not always the one the catalog lists first, and opening the window to find out is a detour.
- * The site this catalog comes from works the same way and keeps the choice; here it lasts the
- * session, which is as long as a grid does. */
-const pickedStyle = new Map(); // "cat|name" -> index
-
-const styleKey = (cat, name) => `${cat}|${name}`;
-
-function styleIndex(cat, mod) {
-  const i = pickedStyle.get(styleKey(cat, mod.name)) || 0;
-  return mod.styles && i < mod.styles.length ? i : 0;
-}
-
-/** The look the card is standing on: its own file, picture and name inside the catalog. */
-function shownStyle(cat, mod) {
-  return mod.styles ? mod.styles[styleIndex(cat, mod)] : null;
-}
-
-/* Which mods can go in the install list. Guides and tools are not mods, a pack is a list
- * already, and two categories only allow a handful of theirs - all of which the catalog says
- * itself in addToCartRules, the same rules its own site follows. */
-function canQueue(cat, mod) {
-  const rules = state.catalog?.constants?.addToCartRules || {};
-  if ((rules.hiddenCategories || []).includes(cat)) return false;
-  if (mod.type === 'guide' || mod.type === 'pack') return false;
-  const allowed = rules.allowedMods?.[cat];
-  if (allowed && !allowed.some((n) => String(n).toLowerCase() === mod.name.toLowerCase())) return false;
-  return canBeInstalled(mod);
-}
-
-/** What the list needs to know about a mod: the look on show, not the mod in general. */
-function queueEntry(cat, mod) {
-  const style = shownStyle(cat, mod);
   return {
-    key: keyOf(cat, mod.name, style?.label || null),
-    cat,
-    catName: catName(cat),
-    name: mod.name,
-    label: style?.label || null,
-    title: style?.label ? `${mod.name} · ${style.label}` : mod.name,
-    file: style?.file || mod.file,
-    preview: previewUrl(cat, style?.preview || mod.preview),
+    resultCount,
+    showCount: narrowed(),
+    sort: f.sort,
+    heroes,
+    hero: f.hero,
+    groups,
+    group: f.group,
+    groupLabel: tr(GROUP_LABEL[categoryId] || 'Все группы'),
+    groupIcon: categoryId === 'hero-items' ? 'person' : (categoryId && catIcon(categoryId)) || 'group',
+    slots: slots.map((s) => ({ id: s, label: tagLabel(categoryId, s) })),
+    slot: f.slot,
+    installable,
+    installedOnly: f.installedOnly,
+    fav,
+    favOnly: f.favOnly,
+    tags: tags.map((t) => ({ id: t, label: tagLabel(categoryId, t), on: f.tags.has(t) })),
+    layout: categoryId === 'heroes' ? heroLayout() : null,
   };
-}
-
-// A card is its picture. Everything else on it has to earn the room it takes, so what shows
-// depends on the list: a grid inside one category needs neither the category's own name nor
-// a date, while a search result and the "recently added" strip have to say where the mod
-// was found. Not even the recent strip prints its date - the strip's own heading already
-// says these are the new ones, and the modal has the date for anyone who wants it.
-function cardHtml(m, i, { cat: withCat = false } = {}) {
-  const cat = m._cat;
-  const style = shownStyle(cat, m);
-  // the badge answers for the look on show, not for "one of these is installed somewhere"
-  const installed = style
-    ? state.installedIndex.has(keyOf(cat, m.name, style.label))
-    : isInstalled(cat, m);
-  const author = m.author || m.sender;
-  // built up rather than left as an empty row: a grid that shows none of these would
-  // otherwise hold a line of nothing open under every name
-  const meta = [
-    withCat ? `<span>${esc(catName(cat))}</span>` : '',
-    author ? `<span class="author-chip"><span class="ms">person</span>${esc(author)}</span>` : '',
-  ].join('');
-  return `
-    <div class="card ${installed ? 'installed' : ''}" data-key="${esc(keyOf(cat, m.name, null))}" style="--i:${Math.min(i, 28)}">
-      <div class="card-media">${cardMediaHtml(cat, m)}</div>
-      <div class="card-body">
-        <div class="card-name">${esc(m.name)}</div>
-        ${cat === 'tools'
-          ? toolMetaHtml(m, installed)
-          : (meta ? `<div class="card-meta">${meta}</div>` : '')}
-      </div>
-    </div>`;
-}
-
-/* A tool says different things than a mod, so its line under the name says them: what the
- * card leads to on the left, and what comes with it on the right. This is the shape the
- * catalog's own site gives these cards, and there is no reason for ours to differ - the
- * pictures are the same pictures. An installed one drops the verb: the green frame and the
- * tick have already answered it. */
-function toolMetaHtml(m, installed) {
-  // the catalog hangs its safety warning on the tool as a guide; the author paints that one
-  // red instead of calling it a guide, and it is the one thing worth reading before a download
-  const unsafe = m.guideId === 'warning';
-  const pills = [];
-  if (!unsafe && (m.links || []).some((l) => l.type === 'source-code')) pills.push(`<span class="mtag soft">${L`Исходники`}</span>`);
-  if (unsafe) pills.push(`<span class="mtag danger">${L`Небезопасно`}</span>`);
-  else if (m.guideId && state.catalog?.guides?.[m.guideId]) pills.push(`<span class="mtag soft">${L`Гайд`}</span>`);
-
-  /* One line, and 190px of it, so the pills are served first: a warning shortened to "НЕБЕЗ..."
-   * is worse than no warning at all. The warning takes the row on its own, and the verb goes
-   * as soon as two pills are there - the window repeats the verb in full and does not repeat
-   * the pills. Measured in both languages: Russian runs the longer of the two here. */
-  const verb = installed || pills.length > 1 || unsafe
-    ? '' : (installTarget(m) ? tr('Скачать') : tr('Открыть'));
-  if (!verb && !pills.length) return '';
-  return `
-    <div class="card-meta card-meta-split">
-      ${verb ? `<span>${esc(verb)}</span>` : ''}
-      ${pills.length ? `<span class="card-pills">${pills.join('')}</span>` : ''}
-    </div>`;
-}
-
-// Everything inside the picture. Split out because switching a look redraws exactly this and
-// nothing else: rebuilding the grid would restart every card's entrance and lose the scroll.
-function cardMediaHtml(cat, m) {
-  const style = shownStyle(cat, m);
-  const prev = previewUrl(cat, style?.preview || m.preview);
-  const installed = style
-    ? state.installedIndex.has(keyOf(cat, m.name, style.label))
-    : isInstalled(cat, m);
-  const isPack = m.type === 'pack';
-  // a tool that is only a link says so under its name, in the row that also carries its
-  // pills - saying it twice would cost the picture a chip for nothing
-  const external = !installTarget(m) && !m.styles && !isPack && cat !== 'tools';
-  // Two, not three. The row is one line now (see .media-tags), and a third chip only ever
-  // arrived to be cut off: a 190px picture holding the looks as well has room for about two
-  // words. Effects and icons come before the slot the item sits in - what a mod does is what
-  // the eye is after while scrolling, and the slot is a dropdown above the grid anyway.
-  const looks = m.styles ? Math.min(m.styles.length, 5) : 0;
-  // Пак / Свой / Ссылка stand in the same row and are about the mod itself, so they are
-  // counted first and the tags take what is left. Measured: the sites cards carry Ссылка and
-  // two tags, and all three came out with an ellipsis through them.
-  const badges = (isPack ? 1 : 0) + (m._custom ? 1 : 0) + (external ? 1 : 0);
-  const room = Math.max(0, (looks > 2 ? 1 : 2) - badges);
-  const tags = [...new Set(Object.entries(m.tags || {}).filter(([, v]) => v).map(([k]) => canonTag(k)))]
-    .sort((a, b) => (SLOT_TAGS.has(a) ? 1 : 0) - (SLOT_TAGS.has(b) ? 1 : 0))
-    .slice(0, room);
-  const playable = modPreviewMedia(cat, m);
-  const entry = canQueue(cat, m) && !installed ? queueEntry(cat, m) : null;
-  const queuedNow = entry && isQueued(entry.key);
-  return `
-    ${mediaHtml(prev, { hoverPlay: true, fallbackIcon: catIcon(cat) })}
-    <div class="card-actions">
-      ${favButtonHtml(cat, m.name)}
-      ${entry ? `
-        <button class="card-add ${queuedNow ? 'on' : ''}" data-add="${esc(entry.key)}"
-                title="${queuedNow ? L`В списке установки` : L`Добавить в список`}"
-                aria-label="${queuedNow ? L`В списке установки` : L`Добавить в список`}">
-          <span class="ms">${queuedNow ? 'check' : 'add'}</span>
-        </button>` : ''}
-    </div>
-    ${playable ? `
-      <button class="mtag-play" data-play="${esc(playable)}" data-title="${esc(m.name)}" aria-label="${L`Смотреть превью`}">
-        <span class="ms">play_arrow</span>${L`Превью`}
-      </button>` : ''}
-    <div class="media-tags" style="--looks:${looks}">
-      ${isPack ? `<span class="mtag">${L`Пак`}</span>` : ''}${staleTerrainPillHtml(cat, m)}
-      ${m._custom ? `<span class="mtag custom">${L`Свой`}</span>` : ''}
-      ${external ? `<span class="mtag">${L`Ссылка`}</span>` : ''}
-      ${tags.map((t) => `<span class="mtag soft">${esc(tagLabel(cat, t))}</span>`).join('')}
-    </div>
-    ${m.styles ? `
-      <div class="media-swatches">
-        ${m.styles.slice(0, 5).map((s, si) => `
-          <button class="swatch-dot ${si === styleIndex(cat, m) ? 'active' : ''}" data-style-dot="${si}"
-                  style="background:${cssColor(s.color)}"
-                  title="${esc(s.label || tr('Обычный'))}"
-                  aria-label="${esc(s.label || tr('Обычный'))}"></button>`).join('')}
-      </div>` : ''}`;
-}
-
-function bindCards(root, modsList) {
-  if (!root) return;
-  root.querySelectorAll('.card[data-key]').forEach((card) => {
-    const key = card.dataset.key;
-    const [cat, name] = key.split('|');
-    const mod = (modsList && modsList.find((m) => keyOf(m._cat, m.name, null) === key)) || findModByName(cat, name);
-    card.addEventListener('click', () => {
-      if (mod) openModModal(mod._cat || cat, mod, card);
-    });
-    bindCardMedia(card, cat, mod);
-  });
-}
-
-// The controls that live on the picture, bound to one card. Called again after a look is
-// switched, because that redraws the picture and everything standing on it.
-function bindCardMedia(card, cat, mod) {
-  const fav = card.querySelector('.fav-btn');
-  if (fav) bindFavButton(fav);
-
-  // on the video itself rather than the card: the picture is redrawn when a look is switched
-  // and its listeners go with it, where a listener on the card would pile up
-  const v = card.querySelector('video[data-hoverplay]');
-  if (v) {
-    v.addEventListener('mouseenter', () => { v.play().catch(() => {}); });
-    v.addEventListener('mouseleave', () => { v.pause(); });
-  }
-  const playBtn = card.querySelector('.mtag-play');
-  if (playBtn) {
-    playBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openPlayer(playBtn.dataset.play, playBtn.dataset.title);
-    });
-  }
-  const add = card.querySelector('.card-add');
-  if (add && mod) {
-    add.addEventListener('click', (e) => {
-      e.stopPropagation();
-      // the list repaints every plus on screen, this one included
-      toggleQueued(queueEntry(cat, mod));
-    });
-  }
-  card.querySelectorAll('[data-style-dot]').forEach((dot) => {
-    dot.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!mod) return;
-      pickedStyle.set(styleKey(cat, mod.name), Number(dot.dataset.styleDot));
-      const media = card.querySelector('.card-media');
-      media.innerHTML = cardMediaHtml(cat, mod);
-      bindCardMedia(card, cat, mod);
-    });
-  });
 }
 
 // star button on a card or in the modal: flips the star without disturbing the grid,
@@ -998,24 +528,8 @@ function findModByName(cat, name) {
   return hit ? { ...hit.mod, _cat: hit.categoryId } : null;
 }
 
-// toggle "Установлен" badges on visible cards in place — keeps grid scroll position
-function refreshCardBadges() {
-  viewRoot.querySelectorAll('.card[data-key]').forEach((card) => {
-    const [cat, name] = card.dataset.key.split('|');
-    const mod = findModByName(cat, name);
-    if (!mod) return;
-    const style = shownStyle(cat, mod);
-    const installed = style
-      ? state.installedIndex.has(keyOf(cat, mod.name, style.label))
-      : isInstalled(cat, mod);
-    if (card.classList.contains('installed') === installed) return;
-    // the whole card says it, so there is nothing to insert or remove - and an installed mod
-    // can no longer be queued, so the plus goes with it
-    card.classList.toggle('installed', installed);
-    card.querySelector('.card-media').innerHTML = cardMediaHtml(cat, mod);
-    bindCardMedia(card, cat, mod);
-  });
-}
+// the "Установлен" badges follow the library: every grid on screen draws again, in place
+const refreshCardBadges = () => redrawScreen();
 
 // ---------- mod modal ----------
 
@@ -1029,34 +543,15 @@ let closingTimer = null;
 
 // read rather than repeated, so the stylesheet stays the one place the tempo is set - and so
 // the system's reduced-motion setting, which flattens it to 1ms, is honoured for free
-function exitMs() {
-  const v = getComputedStyle(document.documentElement).getPropertyValue('--dur-base');
-  return parseFloat(v) || 0;
-}
-
-/* Where the window comes from. A window that appears in the middle no matter what was
- * clicked is a window with no cause; one that grows out of the thing you pressed keeps the
- * two connected, the way Windows does it. The panel is centred by the overlay, so the only
- * thing the stylesheet needs is how far the card was from that centre. */
-function openFrom(el) {
-  const panel = $('#modalContent');
-  if (!el) {
-    panel.style.removeProperty('--from-x');
-    panel.style.removeProperty('--from-y');
-    return;
-  }
-  const r = el.getBoundingClientRect();
-  panel.style.setProperty('--from-x', `${Math.round(r.left + r.width / 2 - window.innerWidth / 2)}px`);
-  panel.style.setProperty('--from-y', `${Math.round(r.top + r.height / 2 - window.innerHeight / 2)}px`);
-}
+const exitMs = () => tokenMs('--dur-base');
 
 function openModal(draw, from) {
   const overlay = $('#modalOverlay');
   clearTimeout(closingTimer);
   overlay.classList.remove('closing');
   draw();
-  openFrom(from);
   overlay.classList.remove('hidden');
+  growFrom($('#modalContent'), from); // catalog/modal-motion.ts
 }
 
 function openModModal(categoryId, mod, from) {
@@ -1071,6 +566,7 @@ function closeModal() {
   const overlay = $('#modalOverlay');
   if (overlay.classList.contains('hidden')) return;
   overlay.classList.add('closing');
+  shrinkAway($('#modalContent'));
   clearTimeout(closingTimer);
   closingTimer = setTimeout(() => {
     // reopened while it was falling: that pass owns the overlay now
@@ -1100,21 +596,6 @@ const LINK_LABEL = {
 // a colour and nothing else. Two mods ship a gradient there rather than a hex, which is why
 // this passes anything a colour or gradient is made of and stops at the characters that
 // would end the declaration and start another one.
-function cssColor(v) {
-  const s = String(v || '').trim();
-  return /^[#\w(),.%\s-]+$/.test(s) ? s : 'transparent';
-}
-
-// Washes, rings and glows are mixed from the look's colour, and a mix needs a colour rather
-// than a picture: two mods ship a two-stop gradient there. Its first stop stands in for the
-// whole thing wherever a flat value is required; the dot on the card keeps the gradient.
-function flatColor(v) {
-  const s = String(v || '');
-  const hex = (s.match(/#[0-9a-f]{3,8}\b/i) || [])[0];
-  if (hex) return hex;
-  return /gradient|[;{}]/i.test(s) || !s.trim() ? 'var(--md-primary)' : cssColor(s);
-}
-
 // A pack's `mods` entry is usually a mod-name string, but the catalog also ships
 // entries shaped like { name, style } — treat both, or the modal crashes on open.
 function packMemberName(entry) {
@@ -1163,7 +644,7 @@ function drawModal() {
   const guides = modGuidesHtml(mod);
 
   const links = mod.links || [];
-  const playable = modPreviewMedia(categoryId, mod);
+  const playable = playablePreview(mod);
   const mediaUrl = previewUrl(categoryId, cur.preview || mod.preview);
 
   // everybody the catalog credits, not only the first author (core/credits.js says why)
@@ -1292,7 +773,8 @@ function drawModal() {
     b.addEventListener('click', () => {
       modalState.styleIdx = Number(b.dataset.style);
       // the card behind the window is showing a look too; they agree from here on
-      pickedStyle.set(styleKey(categoryId, mod.name), modalState.styleIdx);
+      pickStyle(categoryId, mod, modalState.styleIdx);
+      redrawScreen();
       drawModal();
     });
   });
@@ -1599,13 +1081,13 @@ async function afterCosmeticPick() {
 async function renderCosmeticCategory(slot) {
   if (slot === 'items') return renderItemCosmeticHub();
   const meta = cosmeticMeta(slot);
-  await paint(() => { viewRoot.innerHTML = `<div class="view-header"><h1 class="view-title">${esc(tr(meta.label))}</h1></div><div class="empty-note">${L`Читаем схему игры…`}</div>`; });
+  await paint(() => { legacyLayer().innerHTML = `<div class="view-header"><h1 class="view-title">${esc(tr(meta.label))}</h1></div><div class="empty-note">${L`Читаем схему игры…`}</div>`; });
   if (!state.cosmeticSlots) await refreshCosmeticSlots();
   if (state.activeCategory !== COSMETIC_PREFIX + slot) return; // moved on while reading
 
   const data = (state.cosmeticSlots || []).find((s) => s.slot === slot);
   if (!data) {
-    await paint(() => { viewRoot.innerHTML = `<div class="view-header"><h1 class="view-title">${esc(tr(meta.label))}</h1></div><div class="empty-note">${L`Схема игры не прочиталась — проверь путь к Dota 2 в настройках.`}</div>`; });
+    await paint(() => { legacyLayer().innerHTML = `<div class="view-header"><h1 class="view-title">${esc(tr(meta.label))}</h1></div><div class="empty-note">${L`Схема игры не прочиталась — проверь путь к Dota 2 в настройках.`}</div>`; });
     return;
   }
 
@@ -1635,7 +1117,7 @@ async function renderCosmeticCategory(slot) {
     io = bindCosmeticCards(grid);
   };
 
-  await paint(() => { viewRoot.innerHTML = `
+  await paint(() => { legacyLayer().innerHTML = `
     <div class="view-header">
       <h1 class="view-title">${esc(tr(meta.label))}</h1>
     </div>
