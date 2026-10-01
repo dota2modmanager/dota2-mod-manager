@@ -10,8 +10,8 @@
  * gets the browser.
  */
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 
+import { loadAppPage } from './app-page.ts';
 import { electron } from './electron.ts';
 import type { BrowserWindow } from 'electron';
 import type { Settings } from './settings.ts';
@@ -74,18 +74,20 @@ export function zoomFor(key: string, current: number): number | null {
 
 /**
  * Open the window on the app's page, locked to it, with Ctrl +/-/0 scaling the content.
- * @param appRoot    where index.html and preload.js are
+ * @param appRoot    where out/renderer and preload.js are
  * @param workArea   stands in for the screen's (MM_WORKAREA); otherwise the primary display is asked
  * @param quiet      created hidden (MM_QUIET), so a measuring run never takes over the screen
+ * @param pageExists stands in for the disk when a test asks whether the page was built
  */
-export function createMainWindow({ appRoot, settings, diag, workArea = null, quiet = false }: {
+export function createMainWindow({ appRoot, settings, diag, workArea = null, quiet = false, pageExists }: {
   appRoot: string;
   settings: Pick<Settings, 'get' | 'set'>;
   diag: (msg: string) => void;
   workArea?: { width: number; height: number } | null;
   quiet?: boolean;
+  pageExists?: (p: string) => boolean;
 }): BrowserWindow {
-  const { BrowserWindow, screen, shell } = electron();
+  const { app, BrowserWindow, dialog, screen, shell } = electron();
   let area = workArea;
   // no display info: better the designed size than no window at all
   if (!area) { try { area = screen.getPrimaryDisplay().workAreaSize; } catch { area = null; } }
@@ -106,10 +108,11 @@ export function createMainWindow({ appRoot, settings, diag, workArea = null, qui
       backgroundThrottling: false,
     },
   });
-  const appPage = path.join(appRoot, 'renderer', 'index.html');
-  win.loadFile(appPage);
+  // out/renderer, or the Vite server under `npm run dev` (src/app-page.ts)
+  const appUrl = loadAppPage(win, { app, dialog, root: appRoot, exists: pageExists });
+  // a checkout nobody built: the app is quitting, and there is no page to guard
+  if (!appUrl) return win;
 
-  const appUrl = pathToFileURL(appPage).href;
   const leavesForBrowser = (url: string) => {
     if (/^https?:\/\//i.test(url)) shell.openExternal(url).catch(() => {});
   };

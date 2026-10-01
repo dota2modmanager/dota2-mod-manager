@@ -89,6 +89,10 @@ jobs:
       - name: Seed the sandbox
         run: node tools/sandbox.js seed --no-mods
 
+      # main.js loads the page Vite builds into out/renderer, and a checkout has none yet
+      - name: Build the window's page
+        run: node tools/ui-build.mjs
+
       # MM_SHOT is the app's own screenshot harness: it draws, saves the window and leaves the
       # process running, so the wait is for the file rather than for the exit.
       - name: Start the app and photograph it

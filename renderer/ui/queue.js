@@ -20,6 +20,14 @@ import { thumbHtml } from './thumb.js';
 const items = new Map(); // key -> { key, cat, name, label, file, preview, title }
 let installer = null;
 let busy = false;
+const listeners = new Set();
+
+/** A card drawn by React follows the list through here: paintCards() below reaches into the
+ *  DOM, and must not touch an element React owns. Returns the unsubscribe. */
+export function onQueueChange(fn) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
 
 /** The catalog registers what to do with the list once the user commits to it. */
 export function useInstaller(fn) { installer = fn; }
@@ -64,7 +72,8 @@ function paintBadge() {
  * mod is installed on its own. One sweep after every change is what keeps the two from
  * disagreeing - which they did, leaving ticks on cards after the list had been cleared. */
 function paintCards() {
-  document.querySelectorAll('[data-add]').forEach((btn) => {
+  for (const fn of listeners) fn();
+  document.querySelectorAll('[data-add]:not([data-owned])').forEach((btn) => {
     const on = items.has(btn.dataset.add);
     const label = on ? L`В списке установки` : L`Добавить в список`;
     btn.classList.toggle('on', on);

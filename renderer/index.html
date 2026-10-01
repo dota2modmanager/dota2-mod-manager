@@ -155,9 +155,8 @@
     </div>
   </div>
 
-  <!-- i18n stays a classic script: it publishes L/tr on window and everything else,
-       including the modules below, reads them from there. -->
-  <script src="i18n.js"></script>
+  <!-- app.js imports i18n.js first: it publishes L/tr on window, and every module after it
+       reads them from there. -->
   <script type="module" src="app.js"></script>
 </body>
 </html>

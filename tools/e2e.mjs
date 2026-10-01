@@ -37,6 +37,7 @@ import { crc32 } from 'node:zlib';
 import { spawn, execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { ensureUi } from './ui-build.mjs';
 
 import { NOTICE_PAK, MARKER } from '../src/notice-text.ts';
 import { listVpkPathsFile } from '../src/vpk.ts';
@@ -278,6 +279,8 @@ async function launch(label, env, timeoutMs = 180000, extraArgs = []) {
 
 const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (invokedDirectly) {
+  // a checkout runs the page Vite built (an installed app carries its own)
+  if (!APP) await ensureUi();
   const keep = process.argv.includes('--keep');
   const node = process.execPath;
   const report = { steps: [] };

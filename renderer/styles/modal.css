@@ -46,6 +46,13 @@
   }
 }
 @keyframes windowOut { to { opacity: 0; transform: scale(0.97); } }
+/* Opened from a card, the window is the card, grown: it starts as the card's own box, picture
+   where the card's picture was, and opens out to its place on one clock (catalog/modal-motion.ts).
+   The two CSS entrances above step aside for it: the frame's, and the picture's own grow, which
+   would be the second motion the old version was taken out for. */
+.modal-content.grows { animation: none; transform-origin: 0 0; }
+.modal-overlay.grows { animation: none; }
+.grows .modal-media img, .grows .modal-media video { animation: none; }
 
 .modal-media {
   aspect-ratio: 16 / 9;

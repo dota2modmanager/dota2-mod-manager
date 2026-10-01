@@ -73,7 +73,8 @@ test('a module moved to TypeScript is still counted', async () => {
   /* The list used to take .js alone. Every module the main process moved to .ts left the watch
      without anyone deciding it should, src/vpk.ts at 923 lines among them. */
   const { appFiles } = await load();
-  const files = appFiles((dir) => (dir.endsWith(`${path.sep}src`) ? ['big.ts', 'types.d.ts', 'old.js'] : []), () => true);
+  const dirent = (name) => ({ name, isDirectory: () => false });
+  const files = appFiles((dir) => (dir.endsWith(`${path.sep}src`) ? ['big.ts', 'types.d.ts', 'old.js'].map(dirent) : []), () => true);
   assert.ok(files.includes('src/big.ts'), 'a .ts module went unwatched');
   assert.ok(files.includes('src/old.js'));
   assert.ok(!files.includes('src/types.d.ts'), 'a declaration file ships nothing');
@@ -87,4 +88,29 @@ test('the committed budget is a measurement of files that are there', async () =
     assert.ok(Number.isInteger(lines) && lines > 0, `${file}: ${lines} is not a line count`);
     assert.ok(fs.existsSync(path.join(ROOT, file)), `${file} is budgeted and not in the repository`);
   }
+});
+
+test('a component in a folder of its own is counted, in TypeScript as much as JavaScript', async () => {
+  /* The window moves to one component per file, in folders per screen. A walk of four fixed
+     folders and *.js would have waved every one of them through at any size. */
+  const { appFiles } = await load();
+  const tree = {
+    src: ['a.js'],
+    renderer: ['app.js', 'catalog/', 'public/'],
+    'renderer/catalog': ['Grid.tsx', 'filters.ts', 'cards/'],
+    'renderer/catalog/cards': ['Card.tsx', 'card.css'],
+    'renderer/public': ['assets/'],
+    'renderer/public/assets': ['x.js'],
+  };
+  const dirent = (name) => ({ name: name.replace(/\/$/, ''), isDirectory: () => name.endsWith('/') });
+  const readdir = (full) => {
+    const rel = path.relative(ROOT, full).split(path.sep).join('/');
+    return (tree[rel] || []).map(dirent);
+  };
+  const files = appFiles(readdir, () => true);
+  for (const f of ['renderer/catalog/Grid.tsx', 'renderer/catalog/filters.ts', 'renderer/catalog/cards/Card.tsx', 'src/a.js']) {
+    assert.ok(files.includes(f), `${f} is not budgeted`);
+  }
+  assert.ok(!files.some((f) => f.startsWith('renderer/public/')), 'pictures copied as they are are not code');
+  assert.ok(!files.some((f) => f.endsWith('.css')));
 });

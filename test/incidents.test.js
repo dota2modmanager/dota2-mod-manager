@@ -99,6 +99,16 @@ test('the committed incident index is exactly what the generator produces', () =
   assert.equal(actual, expected, 'docs/incidents/README.md is out of date. Run: npm run docs');
 });
 
+test('the rebuilt index keeps the blank line before the heading after it', () => {
+  assert.match(require('../tools/gen-incidents').build(), /\|\n\n## Writing one/);
+});
+
+test('a README whose table cannot be found is refused, not handed back unchanged', () => {
+  // unchanged, it would equal what the test above compares it with, and pass on nothing
+  const { build } = require('../tools/gen-incidents');
+  assert.throws(() => build('# Incidents\n\n## Writing one\n'), /no incident table/);
+});
+
 test('the test-title reader sees the titles node:test prints', () => {
   const titles = testTitles([
     "test('plain', () => {});",

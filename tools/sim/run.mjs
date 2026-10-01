@@ -28,6 +28,7 @@ import path from 'node:path';
 import { spawn, execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { ensureUi } from '../ui-build.mjs';
 
 const require = createRequire(import.meta.url);
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -135,6 +136,8 @@ async function main() {
     console.error('The sandbox is not seeded. Run npm run sandbox:seed first.');
     process.exit(2);
   }
+  // a checkout runs the page Vite built: a stale one would simulate yesterday's interface
+  if (!arg('app')) await ensureUi();
   const pairs = plan({ only: arg('only'), set: arg('set', 'pr') });
   const all = scenarioList();
   const explicit = Boolean(arg('scenario'));
