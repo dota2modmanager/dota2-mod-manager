@@ -5191,7 +5191,7 @@ Linux does, so the folder that is actually on disk decides.
 ### `pickSteamRoot`
 
 ```ts
-export function pickSteamRoot(candidates: (string | null)[], windows = WINDOWS): string | null
+export function pickSteamRoot(candidates: (string | null)[], windows = WINDOWS, exists: (p: string) => boolean = fs.existsSync): string | null
 ```
 
 The first of the places Steam may live that is there.
