@@ -332,6 +332,15 @@
         "src/i18n.ts": {
           "lines": 100
         },
+        "src/icon-match.ts": {
+          "lines": 100
+        },
+        "src/icon-wiki.ts": {
+          "lines": 98.6
+        },
+        "src/icons.ts": {
+          "lines": 99.1
+        },
         "src/import.ts": {
           "lines": 93.9
         },
