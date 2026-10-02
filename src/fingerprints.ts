@@ -5,8 +5,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fetchText } from './net.ts';
 
-/** Where the fingerprint map is published, next to the app's own source. */
-export const FP_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/fingerprints.json';
+/**
+ * Where the fingerprint map is published: the catalog-data branch the catalog job commits to.
+ * Copies before 2.8.0 read it from main, where the job keeps writing it until they have updated
+ * (DECISIONS.md, "The catalog job commits to a branch of its own").
+ */
+export const FP_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/catalog-data/fingerprints.json';
 
 /** A catalog mod a fingerprint points at. */
 export interface CatalogIdentity { name: string; categoryId: string; styleLabel?: string | null }

@@ -83,6 +83,8 @@ const MIRRORED: Record<string, string | undefined> = {
   'h6rd/Dota2PornFxWeb/main/assets/data/mods.json': 'mods.json',
   'h6rd/Dota2PornFxWeb/main/assets/data/constants.json': 'constants.json',
   'h6rd/Dota2PornFxWeb/main/assets/data/guides.json': 'guides.json',
+  'dota2modmanager/dota2-mod-manager/catalog-data/fingerprints.json': 'fingerprints.json',
+  // where copies before 2.8.0 still ask for it
   'dota2modmanager/dota2-mod-manager/main/fingerprints.json': 'fingerprints.json',
   // the switches and notices, which matter most on the day GitHub is the thing that is down
   'dota2modmanager/dota2-mod-manager/main/config/app.json': 'app.json',

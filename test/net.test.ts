@@ -110,8 +110,10 @@ test('a GitHub raw URL gets mirrors, and a size-capped one only for small files'
 // which is deployed elsewhere, and it carries the four files the app cannot start without.
 test('the four startup files can also come from the site, and nothing else can', () => {
   const catalog = `${RAW_HOST}h6rd/Dota2PornFxWeb/main/assets/data/mods.json`;
-  const prints = `${RAW_HOST}dota2modmanager/dota2-mod-manager/main/fingerprints.json`;
-  for (const url of [catalog, prints]) {
+  const prints = `${RAW_HOST}dota2modmanager/dota2-mod-manager/catalog-data/fingerprints.json`;
+  // copies before 2.8.0 ask for it on main, and the site answers them too
+  const oldPrints = `${RAW_HOST}dota2modmanager/dota2-mod-manager/main/fingerprints.json`;
+  for (const url of [catalog, prints, oldPrints]) {
     const list = net.mirrorsFor(url, { small: true });
     assert.ok(list.includes(`https://dota2modmanager.com/mirror/${url.split('/').pop()}`), url);
     assert.equal(list[0], url, 'GitHub is still asked first');

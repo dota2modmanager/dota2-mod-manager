@@ -1011,10 +1011,12 @@ catalog mod (see tools/gen-fingerprints.js). Dormant until the map is hosted.
 ### `FP_URL`
 
 ```ts
-export const FP_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/fingerprints.json'
+export const FP_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/catalog-data/fingerprints.json'
 ```
 
-Where the fingerprint map is published, next to the app's own source.
+Where the fingerprint map is published: the catalog-data branch the catalog job commits to.
+Copies before 2.8.0 read it from main, where the job keeps writing it until they have updated
+(DECISIONS.md, "The catalog job commits to a branch of its own").
 
 ### `CatalogIdentity`
 

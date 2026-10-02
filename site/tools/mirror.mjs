@@ -42,7 +42,7 @@ const SOURCES = [
   ['guides.json.sig', `${SIGNATURES}guides.json.sig`],
   ['mod-hashes.json', `${CATALOG}mod-hashes.json`],
   ['mod-hashes.json.sig', `${SIGNATURES}mod-hashes.json.sig`],
-  ['fingerprints.json', 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/fingerprints.json'],
+  ['fingerprints.json', 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/catalog-data/fingerprints.json'],
   ['app.json', 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json'],
   ['app.json.sig', 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json.sig'],
 ];

@@ -1,9 +1,9 @@
 name: Fingerprints
 
 # Keeps fingerprints.json in sync with the catalog: new/changed mods are fetched and
-# fingerprinted, unchanged ones are skipped (state is checkpointed in the repo), and the
-# result is committed only when it actually changes. Pushes to main here don't build a
-# release (that workflow triggers on v* tags only).
+# fingerprinted, unchanged ones are skipped (state is checkpointed in the job's cache), and the
+# result is committed to the catalog-data branch only when it actually changes. Nothing here
+# builds a release (that workflow triggers on v* tags only).
 #
 # It also rebuilds the site's hero pages, because they are made of the same downloads. The job
 # already opens every archive to fingerprint it and works out which heroes each one is about;
@@ -42,6 +42,21 @@ jobs:
           # bypass list (GitHub answers that only an organisation can), so a key that never
           # expires and reaches one repository is the narrowest thing that works.
           ssh-key: ${{ secrets.FINGERPRINTS_DEPLOY_KEY }}
+
+      # What this job writes lives on the catalog-data branch (DECISIONS.md, "The catalog job
+      # commits to a branch of its own"), at the paths it has here. Checked out beside the code
+      # with the same key, and the job starts from it rather than from main's copy.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: catalog-data
+          path: data
+          ssh-key: ${{ secrets.FINGERPRINTS_DEPLOY_KEY }}
+
+      - name: Start from the catalog data branch
+        run: |
+          cp data/fingerprints.json data/hero-index.json .
+          cp data/site/src/data/heroes.json data/site/src/data/categories.json site/src/data/
+          rsync -a --delete data/site/public/mods/ site/public/mods/
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
@@ -82,7 +97,28 @@ jobs:
       - name: Rebuild the hero and category pages
         run: npm run catalog --prefix site
 
-      - name: Commit if changed
+      - name: Commit to catalog-data if changed
+        working-directory: data
+        run: |
+          cp ../fingerprints.json ../hero-index.json .
+          cp ../site/src/data/heroes.json ../site/src/data/categories.json site/src/data/
+          rsync -a --delete ../site/public/mods/ site/public/mods/
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "catalog unchanged"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git show HEAD:fingerprints.json > /tmp/fp-data-before.json 2>/dev/null || true
+            subject="$(node ../tools/index-delta.js /tmp/fp-data-before.json fingerprints.json)"
+            git commit -m "$subject [skip ci]"
+            git push
+          fi
+
+      # Copies of the app before 2.8.0 read fingerprints.json from main, so main gets the same
+      # commit until they have updated. Then this step goes, the deploy key comes off main's
+      # bypass list, and main holds code and documents only.
+      - name: Commit to main if changed, for copies before 2.8.0
         run: |
           paths="fingerprints.json hero-index.json site/src/data/heroes.json site/src/data/categories.json site/public/mods"
           if git diff --quiet -- $paths && [ -z "$(git ls-files --others --exclude-standard -- $paths)" ]; then

@@ -138,23 +138,34 @@ in August 2026, when the landing said 1,150 mods against a catalog holding 1,090
 
 *Check:* `site/src/lib/stats.ts`, and the fact sheet at <https://dota2modmanager.com/facts/>.
 
-### `fingerprints.json` sits at the repository root and cannot move
+### The catalog job commits to a branch of its own
 
-Reviews suggest moving the generated files to a data branch or to build artifacts. That one
-cannot go: installed copies of the app fetch it from `raw.githubusercontent.com` at the path it
-has in `main`. Moving it breaks every copy already on somebody's machine, and no release fixes
-the ones already out there.
+A workflow checks the upstream catalog every thirty minutes and writes what it found:
+`fingerprints.json`, `hero-index.json`, and the site's hero and category data with the mod
+previews. Until October 2026 it committed them to `main`, more than a quarter of all commits,
+through a deploy key on the branch rule's bypass list. Those commits went through no pull request,
+which is what OpenSSF Scorecard's Code-Review check counts against, and the bypass is what its
+Branch-Protection check reads as a rule that does not hold for everybody.
 
-*Check:* `src/fingerprints.ts`, the `FP_URL` constant.
+Since 2.8.0 it commits to `catalog-data`, a branch that holds those files at the same paths and
+nothing else. The app reads `fingerprints.json` from there, the site's mirror copies it from
+there, and the site build copies the rest in before it builds. Copies of the app before 2.8.0
+read the file from `main`, so the job keeps writing it there too until they have updated; then
+it stops, the deploy key comes off the bypass list, and `main` holds code and documents only.
+A copy that never updates keeps the last fingerprints it got and still runs: it only stops
+recognising mods added to the catalog after that.
 
-### A quarter of the commits are made by a scheduled job, and they stay
+*Check:* `src/fingerprints.ts`, the `FP_URL` constant, and `ref: catalog-data` in
+`.github/workflows/fingerprints.yml`.
 
-A workflow checks the upstream catalog every thirty minutes and commits when it moved, which is
-127 of the 517 commits here. They are not squashed away and the interval is not lowered:
-freshness is the point, and since 2026-09-08 the files are written one record per line with a
-subject naming what arrived or left, so the commits can be read like any other.
+### The catalog job commits every thirty minutes, and its commits stay readable
 
-*Check:* `git log --oneline` for the subjects, `tools/json-lines.js` and `tools/index-delta.js`
+The job above commits when the catalog moved. They are not squashed away and the interval is not
+lowered: freshness is the point, and since 2026-09-08 the files are written one record per line
+with a subject naming what arrived or left, so the commits can be read like any other. They live
+on `catalog-data` now, and `git log catalog-data` reads them.
+
+*Check:* `git log --oneline catalog-data` for the subjects, `tools/json-lines.js` and `tools/index-delta.js`
 for how they are produced, and `test/json-lines.test.js` for what the formatter guarantees.
 
 ### The source is mirrored, and the workflow does not name where

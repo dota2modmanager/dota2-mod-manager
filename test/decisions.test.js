@@ -62,12 +62,14 @@ test('the dependencies it names are the dependencies package.json declares', () 
   assert.equal(builds.length, 12, `the entry says twelve devDependencies in all, package.json declares ${builds.length}`);
 });
 
-test('the fingerprint index is still fetched from the path the entry says it cannot leave', () => {
-  // The claim is that the file cannot move out of the repository root because installed copies
-  // fetch it from main. If the URL ever changes, the entry becomes an argument for nothing.
+test('the fingerprint index is fetched from the branch the entry says the catalog job writes', () => {
+  // The entry says the job commits to catalog-data and the app reads from there. If the URL moves
+  // again, the entry is describing a branch nothing reads.
   const { FP_URL } = require('../src/fingerprints.ts');
-  assert.match(FP_URL, /\/main\/fingerprints\.json$/, `src/fingerprints.ts now fetches ${FP_URL}`);
+  assert.match(FP_URL, /\/catalog-data\/fingerprints\.json$/, `src/fingerprints.ts now fetches ${FP_URL}`);
   assert.ok(doc.includes('`FP_URL`'), 'the entry no longer points at the constant that proves it');
+  const job = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'fingerprints.yml'), 'utf8');
+  assert.match(job, /ref: catalog-data/, 'the catalog job no longer checks out the branch the app reads');
 });
 
 test('the three places that say how this is written still say it', () => {

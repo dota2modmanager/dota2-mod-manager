@@ -57,6 +57,14 @@ jobs:
           # its "no history here" state instead of the chart.
           fetch-depth: 0
 
+      # The hero and category pages and their previews are written by the catalog job to the
+      # catalog-data branch (DECISIONS.md, "The catalog job commits to a branch of its own"),
+      # at the paths they take here.
+      - name: Bring in the catalog data
+        run: |
+          git fetch --no-tags --depth=1 origin catalog-data
+          git checkout FETCH_HEAD -- site/src/data/heroes.json site/src/data/categories.json site/public/mods
+
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
