@@ -1,0 +1,1951 @@
+{
+  "categories": [
+    {
+      "id": "hero-items",
+      "mods": [
+        {
+          "name": "Timbersaw Claw Frostbloom",
+          "styleLabel": null,
+          "image": {"src":"/mods/timbersaw-claw-frostbloom.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790895746
+        },
+        {
+          "name": "Magnus Shock of the Anvil Crimson",
+          "styleLabel": null,
+          "image": {"src":"/mods/magnus-shock-of-the-anvil-crimson.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1790894654
+        },
+        {
+          "name": "Phantom Lancer Ravenblight",
+          "styleLabel": null,
+          "image": {"src":"/mods/phantom-lancer-ravenblight.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790809354
+        },
+        {"name":"Keeper Of The Light BMW","styleLabel":null,"image":{"src":"/mods/keeper-of-the-light-bmw.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1790528261},
+        {
+          "name": "Phantom Lancer Immortal Frost",
+          "styleLabel": null,
+          "image": {"src":"/mods/phantom-lancer-immortal-frost.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790424886
+        },
+        {
+          "name": "Techies Arcana Shanachnetsya",
+          "styleLabel": null,
+          "image": {"src":"/mods/techies-arcana-shanachnetsya.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790392857
+        },
+        {
+          "name": "Keeper Of The Light - Snowdrift",
+          "styleLabel": null,
+          "image": {"src":"/mods/keeper-of-the-light-snowdrift.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790294865
+        },
+        {
+          "name": "Kunkka Saltworn Mariner",
+          "styleLabel": "I",
+          "image": {"src":"/mods/kunkka-saltworn-mariner-i.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790294026
+        },
+        {
+          "name": "Kunkka Saltworn Mariner",
+          "styleLabel": "II",
+          "image": {"src":"/mods/kunkka-saltworn-mariner-ii.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790294026
+        },
+        {
+          "name": "Terrorblade Wings Foulfell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-wings-foulfell.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790281615
+        },
+        {
+          "name": "Batrider Verna Frostbloom",
+          "styleLabel": null,
+          "image": {"src":"/mods/batrider-verna-frostbloom.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790259721
+        },
+        {
+          "name": "Phantom Lancer Concord Revers",
+          "styleLabel": null,
+          "image": {"src":"/mods/phantom-lancer-concord-revers.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790216964
+        },
+        {
+          "name": "Invoker Esl Relics Forge",
+          "styleLabel": null,
+          "image": {"src":"/mods/invoker-esl-relics-forge.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1790202267
+        },
+        {"name":"Invoker Kid Forge","styleLabel":null,"image":{"src":"/mods/invoker-kid-forge.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790202267},
+        {"name":"Invoker Frostbloom","styleLabel":null,"image":{"src":"/mods/invoker-frostbloom.webp","width":854,"height":480},"author":"Harlord","authorUrl":"https://t.me/harlord_mods","date":1790170612},
+        {
+          "name": "Lycan Frostbloom Claws",
+          "styleLabel": null,
+          "image": {"src":"/mods/lycan-frostbloom-claws.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790170612
+        },
+        {
+          "name": "Primal Beast Frostbloom",
+          "styleLabel": null,
+          "image": {"src":"/mods/primal-beast-frostbloom.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790170612
+        },
+        {
+          "name": "Primal Beast Temple Guardian",
+          "styleLabel": null,
+          "image": {"src":"/mods/primal-beast-temple-guardian.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790170612
+        },
+        {"name":"Mops Lone Druid Bear","styleLabel":null,"image":{"src":"/mods/mops-lone-druid-bear.webp","width":854,"height":480},"author":"depex","authorUrl":"https://t.me/depexfx","date":1789745325},
+        {"name":"Chen Green Infernal","styleLabel":null,"image":{"src":"/mods/chen-green-infernal.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789398422},
+        {
+          "name": "Keeper of the Light Wings of Daybreak",
+          "styleLabel": null,
+          "image": {"src":"/mods/keeper-of-the-light-wings-of-daybreak.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/eternalsadism",
+          "date": 1788815201
+        },
+        {
+          "name": "Bane Origin of the Unmaking",
+          "styleLabel": null,
+          "image": {"src":"/mods/bane-origin-of-the-unmaking.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/eternalsadism",
+          "date": 1788762686
+        },
+        {"name":"Shadow Demon Grim Facade","styleLabel":null,"image":{"src":"/mods/shadow-demon-grim-facade.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788587043},
+        {"name":"Shadow Demon Grim Facade","styleLabel":"Golden","image":{"src":"/mods/shadow-demon-grim-facade-golden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788587043},
+        {
+          "name": "Keeper of the Light Prominence",
+          "styleLabel": null,
+          "image": {"src":"/mods/keeper-of-the-light-prominence.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/eternalsadism",
+          "date": 1788365172
+        },
+        {
+          "name": "Beastmaster Primal Paean Crimson",
+          "styleLabel": null,
+          "image": {"src":"/mods/beastmaster-primal-paean-crimson.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788205090
+        },
+        {
+          "name": "Puck Wanderers Brush Crimson",
+          "styleLabel": null,
+          "image": {"src":"/mods/puck-wanderers-brush-crimson.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788205090
+        },
+        {
+          "name": "Storm Spirit Lightning Orchid Tyrian",
+          "styleLabel": null,
+          "image": {"src":"/mods/storm-spirit-lightning-orchid-tyrian.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788091261
+        },
+        {"name":"Timbersaw Rectifier","styleLabel":null,"image":{"src":"/mods/timbersaw-rectifier.webp","width":854,"height":480},"author":"depex","authorUrl":"https://t.me/depexfx","date":1788091261},
+        {
+          "name": "Timbersaw Rectifier",
+          "styleLabel": "Golden",
+          "image": {"src":"/mods/timbersaw-rectifier-golden.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788091261
+        },
+        {
+          "name": "Timbersaw Rectifier",
+          "styleLabel": "Tyrian",
+          "image": {"src":"/mods/timbersaw-rectifier-tyrian.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788091261
+        },
+        {
+          "name": "Disruptor Resistive Pinfold",
+          "styleLabel": null,
+          "image": {"src":"/mods/disruptor-resistive-pinfold.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
+        },
+        {
+          "name": "Disruptor Resistive Pinfold",
+          "styleLabel": "Tyrian",
+          "image": {"src":"/mods/disruptor-resistive-pinfold-tyrian.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
+        },
+        {"name":"Drow Ranger Silent Wake","styleLabel":null,"image":{"src":"/mods/drow-ranger-silent-wake.webp","width":854,"height":480},"author":"depex","authorUrl":"https://t.me/depexfx","date":1788042221},
+        {
+          "name": "Drow Ranger Silent Wake",
+          "styleLabel": "Golden",
+          "image": {"src":"/mods/drow-ranger-silent-wake-golden.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
+        },
+        {
+          "name": "Drow Ranger Silent Wake",
+          "styleLabel": "Crimson",
+          "image": {"src":"/mods/drow-ranger-silent-wake-crimson.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
+        },
+        {
+          "name": "Drow Ranger Silent Wake",
+          "styleLabel": "Tyrian",
+          "image": {"src":"/mods/drow-ranger-silent-wake-tyrian.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
+        },
+        {
+          "name": "Nyx Assassin Latticean Hierarchy",
+          "styleLabel": null,
+          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
+        },
+        {
+          "name": "Nyx Assassin Latticean Hierarchy",
+          "styleLabel": "Crimson",
+          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy-crimson.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
+        },
+        {
+          "name": "Nyx Assassin Latticean Hierarchy",
+          "styleLabel": "Tyrian",
+          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy-tyrian.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
+        },
+        {"name":"Sniper Full-Bore Bonanza","styleLabel":null,"image":{"src":"/mods/sniper-full-bore-bonanza.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787925089},
+        {"name":"Sniper Full-Bore Bonanza","styleLabel":"Golden","image":{"src":"/mods/sniper-full-bore-bonanza-golden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787925089},
+        {"name":"Sniper Full-Bore Bonanza","styleLabel":"Crimson","image":{"src":"/mods/sniper-full-bore-bonanza-crimson.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787925089},
+        {"name":"Sniper Occultists Pursuit","styleLabel":null,"image":{"src":"/mods/sniper-occultists-pursuit.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787925089},
+        {
+          "name": "Terrorblade Span Of Sorrow",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-span-of-sorrow.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1787912370
+        },
+        {"name":"Techies Arcana","styleLabel":null,"image":{"src":"/mods/techies-arcana.webp","width":854,"height":480},"author":"Ромчик","authorUrl":"https://watchmy.bio/shidehara","date":1787848064},
+        {
+          "name": "Techies Frostbloom Weapon",
+          "styleLabel": null,
+          "image": {"src":"/mods/techies-frostbloom-weapon.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/eternalsadism",
+          "date": 1787848064
+        },
+        {
+          "name": "Terrorblade Foulfell Corruptor",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-foulfell-corruptor.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1787826635
+        },
+        {
+          "name": "Terrorblade Scythes of Sorrow",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-scythes-of-sorrow.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1787826635
+        },
+        {"name":"Phantom Lancer Pose","styleLabel":null,"image":{"src":"/mods/phantom-lancer-pose.webp","width":854,"height":480},"author":"Dota2VPK","authorUrl":"https://t.me/dota2freevpk","date":1787730188},
+        {"name":"Lion Hell-Spar Anathema","styleLabel":null,"image":{"src":"/mods/lion-hell-spar-anathema.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787602307},
+        {"name":"Lion Hell-Spar Anathema","styleLabel":"Obsidian","image":{"src":"/mods/lion-hell-spar-anathema-obsidian.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787602307},
+        {"name":"Lion Hell-Spar Anathema","styleLabel":"Crimson","image":{"src":"/mods/lion-hell-spar-anathema-crimson.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787602307},
+        {"name":"Lion Hell-Spar Anathema","styleLabel":"Purple","image":{"src":"/mods/lion-hell-spar-anathema-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787602307},
+        {"name":"Lion Fin Kings Charm","styleLabel":null,"image":{"src":"/mods/lion-fin-kings-charm.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787598535},
+        {"name":"Lion Fin Kings Charm","styleLabel":"Retro","image":{"src":"/mods/lion-fin-kings-charm-retro.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787598535},
+        {"name":"Lion Fin Kings Charm","styleLabel":"Exceptional","image":{"src":"/mods/lion-fin-kings-charm-exceptional.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787598535},
+        {"name":"Lion Fin Kings Charm","styleLabel":"Purple","image":{"src":"/mods/lion-fin-kings-charm-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787598535},
+        {
+          "name": "Keeper of the Light Frostbloom",
+          "styleLabel": null,
+          "image": {"src":"/mods/keeper-of-the-light-frostbloom.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/eternalsadism",
+          "date": 1787500706
+        },
+        {"name":"Clockwerk Paraflare Cannon","styleLabel":null,"image":{"src":"/mods/clockwerk-paraflare-cannon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787135218},
+        {"name":"Clockwerk Rabid Watchcog","styleLabel":null,"image":{"src":"/mods/clockwerk-rabid-watchcog.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1787135218},
+        {"name":"Mirana Pulsar Remnant","styleLabel":null,"image":{"src":"/mods/mirana-pulsar-remnant.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787135218},
+        {"name":"Spirit Breaker Iron Surge","styleLabel":null,"image":{"src":"/mods/spirit-breaker-iron-surge.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787135218},
+        {"name":"Spirit Breaker Iron Surge","styleLabel":"Tyrian","image":{"src":"/mods/spirit-breaker-iron-surge-tyrian.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787135218},
+        {"name":"Windranger Peregrine Flight","styleLabel":null,"image":{"src":"/mods/windranger-peregrine-flight.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787135218},
+        {"name":"Wraith King Blistering Crimson","styleLabel":null,"image":{"src":"/mods/wraith-king-blistering-crimson.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787040057},
+        {
+          "name": "Lina Wyrmwrought Flame",
+          "styleLabel": null,
+          "image": {"src":"/mods/lina-wyrmwrought-flame.webp","width":854,"height":480},
+          "author": "Mopsyara",
+          "authorUrl": "https://t.me/+AM_aLD0x2TcwY2My",
+          "date": 1787031170
+        },
+        {
+          "name": "Clinkz Maraxiforms Fate",
+          "styleLabel": null,
+          "image": {"src":"/mods/clinkz-maraxiforms-fate.webp","width":1280,"height":720},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1786953206
+        },
+        {
+          "name": "Clinkz Maraxiforms Ire",
+          "styleLabel": null,
+          "image": {"src":"/mods/clinkz-maraxiforms-ire.webp","width":1280,"height":720},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1786953206
+        },
+        {
+          "name": "Wraith King Radiance",
+          "styleLabel": null,
+          "image": {"src":"/mods/wraith-king-radiance.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1786760922
+        },
+        {"name":"Kez 200","styleLabel":null,"image":{"src":"/mods/kez-200.webp","width":1280,"height":720},"author":"CeoMods","authorUrl":"https://t.me/modsceo","date":1786407605},
+        {"name":"Naga Siren Snickers","styleLabel":null,"image":{"src":"/mods/naga-siren-snickers.webp","width":854,"height":480},"author":"Arthas","authorUrl":"https://t.me/ArthasModMaker","date":1785412684},
+        {
+          "name": "Alchemist Radiance Blades",
+          "styleLabel": null,
+          "image": {"src":"/mods/alchemist-radiance-blades.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1783977013
+        },
+        {"name":"Crystal Maiden Ice Blossom","styleLabel":null,"image":{"src":"/mods/crystal-maiden-ice-blossom.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783354875},
+        {"name":"Crystal Maiden Ice Blossom","styleLabel":"Golden","image":{"src":"/mods/crystal-maiden-ice-blossom-golden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783354875},
+        {"name":"Crystal Maiden Yulsarias Glacier","styleLabel":null,"image":{"src":"/mods/crystal-maiden-yulsarias-glacier.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783354875},
+        {"name":"Crystal Maiden Yulsarias Mantle","styleLabel":null,"image":{"src":"/mods/crystal-maiden-yulsarias-mantle.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783354875},
+        {"name":"Centaur Infernal Cavalcade","styleLabel":null,"image":{"src":"/mods/centaur-infernal-cavalcade.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781354613},
+        {"name":"Centaur Infernal Cavalcade","styleLabel":"Golden","image":{"src":"/mods/centaur-infernal-cavalcade-golden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781354613},
+        {"name":"Centaur Infernal Cavalcade","styleLabel":"Crimson","image":{"src":"/mods/centaur-infernal-cavalcade-crimson.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781354613},
+        {"name":"Centaur Infernal Chieftain","styleLabel":null,"image":{"src":"/mods/centaur-infernal-chieftain.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781354613},
+        {"name":"Centaur Infernal Chieftain","styleLabel":"Golden","image":{"src":"/mods/centaur-infernal-chieftain-golden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781354613},
+        {"name":"Centaur Infernal Chieftain","styleLabel":"Crimson","image":{"src":"/mods/centaur-infernal-chieftain-crimson.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781354613},
+        {"name":"Centaur Infernal Menace","styleLabel":null,"image":{"src":"/mods/centaur-infernal-menace.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781354613},
+        {"name":"Monkey King Staff of Gun-Yu","styleLabel":null,"image":{"src":"/mods/monkey-king-staff-of-gun-yu.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781348535},
+        {"name":"Monkey King Staff of Gun-Yu","styleLabel":"Golden","image":{"src":"/mods/monkey-king-staff-of-gun-yu-golden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781348535},
+        {
+          "name": "Monkey King Staff of Gun-Yu",
+          "styleLabel": "Anniversary",
+          "image": {"src":"/mods/monkey-king-staff-of-gun-yu-anniversary.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1781348535
+        },
+        {"name":"Monkey King Staff of Gun-Yu","styleLabel":"Crimson","image":{"src":"/mods/monkey-king-staff-of-gun-yu-crimson.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781348535},
+        {"name":"Undying Hallows Within","styleLabel":null,"image":{"src":"/mods/undying-hallows-within.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781027597},
+        {"name":"Mars Progenitors Bane","styleLabel":null,"image":{"src":"/mods/mars-progenitors-bane.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781012938},
+        {"name":"Mars Progenitors Bane","styleLabel":"Crimson","image":{"src":"/mods/mars-progenitors-bane-crimson.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781012938},
+        {"name":"Dark Seer Forlorn Precipice","styleLabel":null,"image":{"src":"/mods/dark-seer-forlorn-precipice.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780941032},
+        {"name":"Dark Seer Forlorn Precipice","styleLabel":"Golden","image":{"src":"/mods/dark-seer-forlorn-precipice-golden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780941032},
+        {"name":"Invoker Magus Accord","styleLabel":null,"image":{"src":"/mods/invoker-magus-accord.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780741566},
+        {"name":"Invoker Magus Accord","styleLabel":"White","image":{"src":"/mods/invoker-magus-accord-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780741566},
+        {"name":"Phantom Assassin Avowance","styleLabel":null,"image":{"src":"/mods/phantom-assassin-avowance.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780692007},
+        {"name":"Phantom Assassin Avowance","styleLabel":"Crimson","image":{"src":"/mods/phantom-assassin-avowance-crimson.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780692007},
+        {"name":"Phantom Assassin Codicil","styleLabel":null,"image":{"src":"/mods/phantom-assassin-codicil.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780692007},
+        {"name":"Shadow Fiend Arms of Desolation","styleLabel":null,"image":{"src":"/mods/shadow-fiend-arms-of-desolation.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780692007},
+        {"name":"Shadow Fiend Eternal Harvest","styleLabel":null,"image":{"src":"/mods/shadow-fiend-eternal-harvest-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780692007},
+        {"name":"Bloodseeker Thirst of Eztzhok","styleLabel":null,"image":{"src":"/mods/bloodseeker-thirst-of-eztzhok.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780230946},
+        {"name":"Luna Moonfall","styleLabel":null,"image":{"src":"/mods/luna-moonfall.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780230946},
+        {"name":"Luna Moonfall","styleLabel":"Golden","image":{"src":"/mods/luna-moonfall-golden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780230946},
+        {"name":"Luna Twilight Schism","styleLabel":null,"image":{"src":"/mods/luna-twilight-schism.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780230946},
+        {"name":"Luna Twilight Schism","styleLabel":"Golden","image":{"src":"/mods/luna-twilight-schism-golden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780230946},
+        {"name":"Luna Twilight Schism","styleLabel":"Crimson","image":{"src":"/mods/luna-twilight-schism-crimson.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780230946},
+        {"name":"Wraith King Winterblight","styleLabel":null,"image":{"src":"/mods/wraith-king-winterblight.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780226470},
+        {"name":"Faceless Void Battlefury","styleLabel":null,"image":{"src":"/mods/faceless-void-battlefury.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1780214981},
+        {
+          "name": "Phantom Lancer Concord Dominion",
+          "styleLabel": null,
+          "image": {"src":"/mods/phantom-lancer-concord-dominion.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1780059063
+        },
+        {
+          "name": "Pudge Hood of Defiance",
+          "styleLabel": null,
+          "image": {"src":"/mods/pudge-hood-of-defiance.webp","width":854,"height":480},
+          "author": "apathydxd",
+          "authorUrl": "https://discord.com/users/538760177470668810",
+          "date": 1779803304
+        },
+        {"name":"Bounty Hunter Hunters Hoard","styleLabel":null,"image":{"src":"/mods/bounty-hunter-hunters-hoard.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1779535888},
+        {"name":"Bounty Hunter Hunters Hoard","styleLabel":"Crimson","image":{"src":"/mods/bounty-hunter-hunters-hoard-crimson.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1779535888},
+        {"name":"Bounty Hunter Tines of Tybara","styleLabel":null,"image":{"src":"/mods/bounty-hunter-tines-of-tybara.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1779535888},
+        {"name":"Beastmaster Primal Paean","styleLabel":null,"image":{"src":"/mods/beastmaster-primal-paean.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1778407359},
+        {"name":"Beastmaster Primal Peacemaker","styleLabel":null,"image":{"src":"/mods/beastmaster-primal-peacemaker.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1778407359},
+        {
+          "name": "Beastmaster Primal Peacemaker",
+          "styleLabel": "Crimson",
+          "image": {"src":"/mods/beastmaster-primal-peacemaker-crimson.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1778407359
+        },
+        {"name":"Invoker Magus Apex","styleLabel":null,"image":{"src":"/mods/invoker-magus-apex.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1778075019},
+        {"name":"Lone Druid Cauldron of Xahryx","styleLabel":null,"image":{"src":"/mods/lone-druid-cauldron-of-xahryx.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1777750466},
+        {"name":"Lone Druid Cauldron of Xahryx","styleLabel":"Retro","image":{"src":"/mods/lone-druid-cauldron-of-xahryx-retro.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1777750466},
+        {
+          "name": "Lone Druid Cauldron of Xahryx",
+          "styleLabel": "Retro v2",
+          "image": {"src":"/mods/lone-druid-cauldron-of-xahryx-retro-v2.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1777750466
+        },
+        {"name":"Lone Druid Claws of Nuranu","styleLabel":null,"image":{"src":"/mods/lone-druid-claws-of-nuranu.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1777750466},
+        {"name":"Magnus Eyes of Ardenok","styleLabel":null,"image":{"src":"/mods/magnus-eyes-of-ardenok.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1777037538},
+        {"name":"Magnus Eyes of Ardenok","styleLabel":"Crimson","image":{"src":"/mods/magnus-eyes-of-ardenok-crimson.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1777037538},
+        {"name":"Magnus Shock of the Anvil","styleLabel":null,"image":{"src":"/mods/magnus-shock-of-the-anvil.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1777037538},
+        {"name":"Ursa Swift Claw","styleLabel":null,"image":{"src":"/mods/ursa-swift-claw.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1777037538},
+        {"name":"Dazzle Gates of Nothl","styleLabel":null,"image":{"src":"/mods/dazzle-gates-of-nothl.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1777011527},
+        {"name":"Dazzle Gates of Nothl","styleLabel":"Crimson","image":{"src":"/mods/dazzle-gates-of-nothl-crimson.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1777011527},
+        {"name":"Storm Spirit Stormborn Mandate","styleLabel":null,"image":{"src":"/mods/storm-spirit-stormborn-mandate.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776836841},
+        {
+          "name": "Storm Spirit Stormborn Mandate",
+          "styleLabel": "Golden",
+          "image": {"src":"/mods/storm-spirit-stormborn-mandate-golden.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1776836841
+        },
+        {"name":"Storm Spirit Corridan Maestro","styleLabel":null,"image":{"src":"/mods/storm-spirit-corridan-maestro-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776836491},
+        {"name":"Storm Spirit Lightning Orchid","styleLabel":null,"image":{"src":"/mods/storm-spirit-lightning-orchid.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776836491},
+        {"name":"Storm Spirit Lightning Orchid","styleLabel":"Retro","image":{"src":"/mods/storm-spirit-lightning-orchid-retro.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776836491},
+        {
+          "name": "Storm Spirit Lightning Orchid",
+          "styleLabel": "Retro v2",
+          "image": {"src":"/mods/storm-spirit-lightning-orchid-retro-v2.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1776836491
+        },
+        {"name":"Lion Mulctant Pall","styleLabel":null,"image":{"src":"/mods/lion-mulctant-pall.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776439861},
+        {"name":"Lion Mulctant Pall","styleLabel":"Crimson","image":{"src":"/mods/lion-mulctant-pall-crimson.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776439861},
+        {"name":"Lion Mulctant Pall","styleLabel":"Purple","image":{"src":"/mods/lion-mulctant-pall-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776439861},
+        {"name":"Tinker Cripple","styleLabel":null,"image":{"src":"/mods/tinker-cripple.webp","width":854,"height":480},"author":"Amir4an","authorUrl":"https://vk.com/amir4an","date":1776304745},
+        {"name":"Spirit Breaker Savage Mettle","styleLabel":null,"image":{"src":"/mods/spirit-breaker-savage-mettle.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776169497},
+        {"name":"Kez Zangetsu Sword","styleLabel":null,"image":{"src":"/mods/kez-zangetsu-sword.webp","width":854,"height":480},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1775573454},
+        {"name":"Kunkka Whale Blade","styleLabel":null,"image":{"src":"/mods/kunkka-whale-blade.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1775195016},
+        {"name":"Kunkka Whale Blade","styleLabel":"Eminent Revival","image":{"src":"/mods/kunkka-whale-blade-eminent-revival.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1775195016},
+        {
+          "name": "Kunkka Whale Blade",
+          "styleLabel": "Eminent Revival Exceptional",
+          "image": {"src":"/mods/kunkka-whale-blade-eminent-revival-exceptional.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1775195016
+        },
+        {"name":"Kunkka Shadow Blade","styleLabel":null,"image":{"src":"/mods/kunkka-shadow-blade.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1775190022},
+        {
+          "name": "Disruptor Faceless Rex",
+          "styleLabel": null,
+          "image": {"src":"/mods/disruptor-faceless-rex.webp","width":854,"height":480},
+          "author": "Pinkie",
+          "authorUrl": "https://steamcommunity.com/profiles/76561198142595363",
+          "date": 1773556978
+        },
+        {"name":"Kez Guts Sword","styleLabel":null,"image":{"src":"/mods/kez-guts-sword.webp","width":854,"height":480},"author":"laskotdota","authorUrl":"https://t.me/laskotdota","date":1770564664},
+        {"name":"Sven Guts Sword","styleLabel":null,"image":{"src":"/mods/sven-guts-sword.webp","width":854,"height":480},"author":"laskotdota","authorUrl":"https://t.me/laskotdota","date":1769078589},
+        {"name":"Disruptor Tractor","styleLabel":null,"image":{"src":"/mods/disruptor-tractor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768637892},
+        {"name":"Earthshaker Carrot","styleLabel":null,"image":{"src":"/mods/earthshaker-carrot.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768637892},
+        {"name":"Sniper Dragon Lore","styleLabel":null,"image":{"src":"/mods/sniper-dragon-lore.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768637892},
+        {"name":"Tiny Banana","styleLabel":null,"image":{"src":"/mods/tiny-banana.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768637892}
+      ]
+    },
+    {
+      "id": "item-effects",
+      "mods": [
+        {"name":"BP 2022 Aghanim Aura I","styleLabel":null,"image":{"src":"/mods/bp-2022-aghanim-aura-i.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Aghanim Aura II","styleLabel":null,"image":{"src":"/mods/bp-2022-aghanim-aura-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Blink Dagger","styleLabel":null,"image":{"src":"/mods/bp-2022-blink-dagger.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Bottle","styleLabel":null,"image":{"src":"/mods/bp-2022-bottle.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Eul","styleLabel":null,"image":{"src":"/mods/bp-2022-eul.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Force Staff","styleLabel":null,"image":{"src":"/mods/bp-2022-force-staff.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Fountain Regen I","styleLabel":null,"image":{"src":"/mods/bp-2022-fountain-regen-i.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Fountain Regen II","styleLabel":null,"image":{"src":"/mods/bp-2022-fountain-regen-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Fountain Regen III","styleLabel":null,"image":{"src":"/mods/bp-2022-fountain-regen-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Lvl Up","styleLabel":null,"image":{"src":"/mods/bp-2022-lvl-up.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Mekanism","styleLabel":null,"image":{"src":"/mods/bp-2022-mekanism.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Mjollnir","styleLabel":null,"image":{"src":"/mods/bp-2022-mjollnir.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Phase Boots","styleLabel":null,"image":{"src":"/mods/bp-2022-phase-boots.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Radiance","styleLabel":null,"image":{"src":"/mods/bp-2022-radiance.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Shiva","styleLabel":null,"image":{"src":"/mods/bp-2022-shiva.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Teleport I","styleLabel":null,"image":{"src":"/mods/bp-2022-teleport-i.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Teleport II","styleLabel":null,"image":{"src":"/mods/bp-2022-teleport-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"BP 2022 Teleport III","styleLabel":null,"image":{"src":"/mods/bp-2022-teleport-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {
+          "name": "Darkness Blink Dagger",
+          "styleLabel": null,
+          "image": {"src":"/mods/darkness-blink-dagger.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1789310506
+        },
+        {"name":"Darkness Bottle","styleLabel":null,"image":{"src":"/mods/darkness-bottle.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
+        {
+          "name": "Darkness Euls Scepter",
+          "styleLabel": null,
+          "image": {"src":"/mods/darkness-euls-scepter.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1789310506
+        },
+        {"name":"Darkness Lvl Up","styleLabel":null,"image":{"src":"/mods/darkness-lvl-up.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
+        {"name":"Darkness Mekanism","styleLabel":null,"image":{"src":"/mods/darkness-mekanism.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
+        {"name":"Darkness Mjollnir","styleLabel":null,"image":{"src":"/mods/darkness-mjollnir.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
+        {
+          "name": "Darkness Phase Boots",
+          "styleLabel": null,
+          "image": {"src":"/mods/darkness-phase-boots.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1789310506
+        },
+        {"name":"Darkness Radiance","styleLabel":null,"image":{"src":"/mods/darkness-radiance.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
+        {"name":"Darkness Shiva","styleLabel":null,"image":{"src":"/mods/darkness-shiva.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
+        {
+          "name": "Devotions of Dragonus Atos",
+          "styleLabel": null,
+          "image": {"src":"/mods/devotions-of-dragonus-atos.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
+        },
+        {
+          "name": "Devotions of Dragonus Atos II",
+          "styleLabel": null,
+          "image": {"src":"/mods/devotions-of-dragonus-atos-ii.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
+        },
+        {
+          "name": "Devotions of Dragonus Phylactery",
+          "styleLabel": null,
+          "image": {"src":"/mods/devotions-of-dragonus-phylactery.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
+        },
+        {
+          "name": "Devotions of Dragonus Phylactery II",
+          "styleLabel": null,
+          "image": {"src":"/mods/devotions-of-dragonus-phylactery-ii.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
+        },
+        {
+          "name": "Earthshaker Blink Dagger",
+          "styleLabel": null,
+          "image": {"src":"/mods/earthshaker-blink-dagger.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
+        },
+        {
+          "name": "Earthshaker Gold Blink Dagger",
+          "styleLabel": null,
+          "image": {"src":"/mods/earthshaker-gold-blink-dagger.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
+        },
+        {
+          "name": "Phantom Adven Blademail Red",
+          "styleLabel": null,
+          "image": {"src":"/mods/phantom-adven-blademail-red.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
+        },
+        {
+          "name": "Phantom Adven Blademail White",
+          "styleLabel": null,
+          "image": {"src":"/mods/phantom-adven-blademail-white.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
+        },
+        {"name":"Red Bottle","styleLabel":null,"image":{"src":"/mods/red-bottle.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
+        {"name":"RPG Lvl Up","styleLabel":null,"image":{"src":"/mods/rpg-lvl-up.webp","width":854,"height":480},"author":"Pinkpapa","authorUrl":"https://www.patreon.com/Pinkpapa","date":1789310506},
+        {"name":"TI10 Aghanim Aura","styleLabel":null,"image":{"src":"/mods/ti10-aghanim-aura.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Blink Dagger","styleLabel":null,"image":{"src":"/mods/ti10-blink-dagger.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Blink Dagger II","styleLabel":null,"image":{"src":"/mods/ti10-blink-dagger-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Bottle","styleLabel":null,"image":{"src":"/mods/ti10-bottle.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Euls Scepter","styleLabel":null,"image":{"src":"/mods/ti10-euls-scepter.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Force Staff","styleLabel":null,"image":{"src":"/mods/ti10-force-staff.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Fountain Regen","styleLabel":null,"image":{"src":"/mods/ti10-fountain-regen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Fountain Regen II","styleLabel":null,"image":{"src":"/mods/ti10-fountain-regen-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Fountain Regen III","styleLabel":null,"image":{"src":"/mods/ti10-fountain-regen-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Lvl Up","styleLabel":null,"image":{"src":"/mods/ti10-lvl-up.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Maelstrom Mjollnir","styleLabel":null,"image":{"src":"/mods/ti10-maelstrom-mjollnir.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Mekanism","styleLabel":null,"image":{"src":"/mods/ti10-mekanism.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Phase Boots","styleLabel":null,"image":{"src":"/mods/ti10-phase-boots.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Radiance","styleLabel":null,"image":{"src":"/mods/ti10-radiance.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Shiva","styleLabel":null,"image":{"src":"/mods/ti10-shiva.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Teleport","styleLabel":null,"image":{"src":"/mods/ti10-teleport.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI10 Teleport II","styleLabel":null,"image":{"src":"/mods/ti10-teleport-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Blink Dagger","styleLabel":null,"image":{"src":"/mods/ti6-blink-dagger.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Blink Dagger II","styleLabel":null,"image":{"src":"/mods/ti6-blink-dagger-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Bottle","styleLabel":null,"image":{"src":"/mods/ti6-bottle.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Euls Scepter","styleLabel":null,"image":{"src":"/mods/ti6-euls-scepter.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Force Staff","styleLabel":null,"image":{"src":"/mods/ti6-force-staff.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Fountain Regen","styleLabel":null,"image":{"src":"/mods/ti6-fountain-regen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Fountain Regen II","styleLabel":null,"image":{"src":"/mods/ti6-fountain-regen-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Fountain Regen III","styleLabel":null,"image":{"src":"/mods/ti6-fountain-regen-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Lvl Up","styleLabel":null,"image":{"src":"/mods/ti6-lvl-up.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Maelstrom Mjollnir","styleLabel":null,"image":{"src":"/mods/ti6-maelstrom-mjollnir.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Mekanism","styleLabel":null,"image":{"src":"/mods/ti6-mekanism.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Phase Boots","styleLabel":null,"image":{"src":"/mods/ti6-phase-boots.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Radiance","styleLabel":null,"image":{"src":"/mods/ti6-radiance.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Teleport","styleLabel":null,"image":{"src":"/mods/ti6-teleport.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Teleport II","styleLabel":null,"image":{"src":"/mods/ti6-teleport-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI6 Teleport III","styleLabel":null,"image":{"src":"/mods/ti6-teleport-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Blink Dagger","styleLabel":null,"image":{"src":"/mods/ti7-blink-dagger.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Blink Dagger II","styleLabel":null,"image":{"src":"/mods/ti7-blink-dagger-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Bottle","styleLabel":null,"image":{"src":"/mods/ti7-bottle.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Euls Scepter","styleLabel":null,"image":{"src":"/mods/ti7-euls-scepter.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Force Staff","styleLabel":null,"image":{"src":"/mods/ti7-force-staff.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Fountain Regen","styleLabel":null,"image":{"src":"/mods/ti7-fountain-regen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Fountain Regen II","styleLabel":null,"image":{"src":"/mods/ti7-fountain-regen-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Fountain Regen III","styleLabel":null,"image":{"src":"/mods/ti7-fountain-regen-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Lvl Up","styleLabel":null,"image":{"src":"/mods/ti7-lvl-up.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Maelstrom Mjollnir","styleLabel":null,"image":{"src":"/mods/ti7-maelstrom-mjollnir.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Mekanism","styleLabel":null,"image":{"src":"/mods/ti7-mekanism.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Phase Boots","styleLabel":null,"image":{"src":"/mods/ti7-phase-boots.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Radiance","styleLabel":null,"image":{"src":"/mods/ti7-radiance.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Shiva","styleLabel":null,"image":{"src":"/mods/ti7-shiva.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Teleport","styleLabel":null,"image":{"src":"/mods/ti7-teleport.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Teleport II","styleLabel":null,"image":{"src":"/mods/ti7-teleport-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI7 Teleport III","styleLabel":null,"image":{"src":"/mods/ti7-teleport-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Blink Dagger","styleLabel":null,"image":{"src":"/mods/ti8-blink-dagger.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Blink Dagger II","styleLabel":null,"image":{"src":"/mods/ti8-blink-dagger-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Bottle","styleLabel":null,"image":{"src":"/mods/ti8-bottle.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Euls Scepter","styleLabel":null,"image":{"src":"/mods/ti8-euls-scepter.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Force Staff","styleLabel":null,"image":{"src":"/mods/ti8-force-staff.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Fountain Regen","styleLabel":null,"image":{"src":"/mods/ti8-fountain-regen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Fountain Regen II","styleLabel":null,"image":{"src":"/mods/ti8-fountain-regen-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Fountain Regen III","styleLabel":null,"image":{"src":"/mods/ti8-fountain-regen-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Lvl Up","styleLabel":null,"image":{"src":"/mods/ti8-lvl-up.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Maelstrom Mjollnir","styleLabel":null,"image":{"src":"/mods/ti8-maelstrom-mjollnir.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Mekanism","styleLabel":null,"image":{"src":"/mods/ti8-mekanism.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Phase Boots","styleLabel":null,"image":{"src":"/mods/ti8-phase-boots.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Radiance","styleLabel":null,"image":{"src":"/mods/ti8-radiance.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Shiva","styleLabel":null,"image":{"src":"/mods/ti8-shiva.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Teleport","styleLabel":null,"image":{"src":"/mods/ti8-teleport.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Teleport II","styleLabel":null,"image":{"src":"/mods/ti8-teleport-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI8 Teleport III","styleLabel":null,"image":{"src":"/mods/ti8-teleport-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Blink Dagger","styleLabel":null,"image":{"src":"/mods/ti9-blink-dagger.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Blink Dagger II","styleLabel":null,"image":{"src":"/mods/ti9-blink-dagger-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Bottle","styleLabel":null,"image":{"src":"/mods/ti9-bottle.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Euls Scepter","styleLabel":null,"image":{"src":"/mods/ti9-euls-scepter.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Force Staff","styleLabel":null,"image":{"src":"/mods/ti9-force-staff.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Fountain Regen","styleLabel":null,"image":{"src":"/mods/ti9-fountain-regen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Fountain Regen II","styleLabel":null,"image":{"src":"/mods/ti9-fountain-regen-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Fountain Regen III","styleLabel":null,"image":{"src":"/mods/ti9-fountain-regen-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Lvl Up","styleLabel":null,"image":{"src":"/mods/ti9-lvl-up.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Maelstrom Mjollnir","styleLabel":null,"image":{"src":"/mods/ti9-maelstrom-mjollnir.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Mekanism","styleLabel":null,"image":{"src":"/mods/ti9-mekanism.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Phase Boots","styleLabel":null,"image":{"src":"/mods/ti9-phase-boots.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Radiance","styleLabel":null,"image":{"src":"/mods/ti9-radiance.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Shiva","styleLabel":null,"image":{"src":"/mods/ti9-shiva.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Teleport","styleLabel":null,"image":{"src":"/mods/ti9-teleport.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Teleport II","styleLabel":null,"image":{"src":"/mods/ti9-teleport-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI9 Teleport III","styleLabel":null,"image":{"src":"/mods/ti9-teleport-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Winter 2016 Blink Dagger","styleLabel":null,"image":{"src":"/mods/winter-2016-blink-dagger.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Winter 2016 Euls Scepter","styleLabel":null,"image":{"src":"/mods/winter-2016-euls-scepter.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Winter 2016 Force Staff","styleLabel":null,"image":{"src":"/mods/winter-2016-force-staff.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Winter 2016 Fountain Regen","styleLabel":null,"image":{"src":"/mods/winter-2016-fountain-regen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Winter 2016 Fountain Regen II","styleLabel":null,"image":{"src":"/mods/winter-2016-fountain-regen-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Winter 2016 Fountain Regen III","styleLabel":null,"image":{"src":"/mods/winter-2016-fountain-regen-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Winter 2016 Teleport","styleLabel":null,"image":{"src":"/mods/winter-2016-teleport.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Winter 2016 Teleport II","styleLabel":null,"image":{"src":"/mods/winter-2016-teleport-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Winter 2016 Teleport III","styleLabel":null,"image":{"src":"/mods/winter-2016-teleport-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Christmas Iron Branch","styleLabel":null,"image":{"src":"/mods/christmas-iron-branch.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662},
+        {"name":"Custom Runes","styleLabel":null,"image":{"src":"/mods/custom-runes.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1788999662},
+        {"name":"Dark Bounty Rune","styleLabel":null,"image":{"src":"/mods/dark-bounty-rune.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767204615},
+        {"name":"Purple Hex","styleLabel":null,"image":{"src":"/mods/purple-hex.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766555595},
+        {"name":"Winter Hex","styleLabel":null,"image":{"src":"/mods/winter-hex.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766555595},
+        {"name":"White Ethereal","styleLabel":null,"image":{"src":"/mods/white-ethereal.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756478099},
+        {"name":"Aegis Hearts","styleLabel":null,"image":{"src":"/mods/aegis-hearts.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Blue Dagon","styleLabel":null,"image":{"src":"/mods/blue-dagon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"GG Iron Branch","styleLabel":null,"image":{"src":"/mods/gg-iron-branch.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Green Dagon","styleLabel":null,"image":{"src":"/mods/green-dagon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Purple Dagon","styleLabel":null,"image":{"src":"/mods/purple-dagon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Snow Dagon","styleLabel":null,"image":{"src":"/mods/snow-dagon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"White Dagon","styleLabel":null,"image":{"src":"/mods/white-dagon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282}
+      ]
+    },
+    {
+      "id": "backgrounds",
+      "mods": [
+        {
+          "name": "Gwardjan Tad Dawl Perfezzjoni",
+          "styleLabel": null,
+          "image": {"src":"/mods/gwardjan-tad-dawl-perfezzjoni.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1790709328
+        },
+        {"name":"The Great Awakening","styleLabel":null,"image":{"src":"/mods/the-great-awakening.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790709328},
+        {"name":"Xvii","styleLabel":null,"image":{"src":"/mods/xvii.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790709328},
+        {"name":"Bliss","styleLabel":null,"image":{"src":"/mods/bliss.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
+        {"name":"Taghmel Ix-Xita","styleLabel":null,"image":{"src":"/mods/taghmel-ix-xita.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737},
+        {"name":"Dark Tree","styleLabel":null,"image":{"src":"/mods/dark-tree.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790299521},
+        {"name":"Sematary","styleLabel":null,"image":{"src":"/mods/sematary.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790299521},
+        {"name":"Amor Endscreen","styleLabel":null,"image":{"src":"/mods/amor-endscreen.webp","width":1280,"height":720},"author":"SuperStas0","authorUrl":"https://t.me/SuperStas0","date":1786250017},
+        {"name":"Illidan Stormrage","styleLabel":null,"image":{"src":"/mods/illidan-stormrage.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783266827},
+        {"name":"Beneath the Seventh","styleLabel":null,"image":{"src":"/mods/beneath-the-seventh.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782990543},
+        {"name":"Malenia","styleLabel":null,"image":{"src":"/mods/malenia.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782990543},
+        {"name":"Last Match","styleLabel":null,"image":{"src":"/mods/last-match.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782551052},
+        {"name":"Sora","styleLabel":null,"image":{"src":"/mods/sora.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780653646},
+        {
+          "name": "Watermelons",
+          "styleLabel": null,
+          "image": {"src":"/mods/watermelons.webp","width":1280,"height":720},
+          "author": "deathrun",
+          "authorUrl": "https://steamcommunity.com/profiles/76561198351884277",
+          "date": 1780247600
+        },
+        {"name":"Ken Kaneki","styleLabel":null,"image":{"src":"/mods/ken-kaneki.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780059063},
+        {
+          "name": "Sea Of Flowers",
+          "styleLabel": null,
+          "image": {"src":"/mods/sea-of-flowers.webp","width":854,"height":480},
+          "author": "yoshimura",
+          "authorUrl": "https://sites.google.com/view/yosh1mur2",
+          "date": 1780059063
+        },
+        {"name":"Experiments Lain","styleLabel":null,"image":{"src":"/mods/experiments-lain.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1779483604},
+        {"name":"Froglings","styleLabel":null,"image":{"src":"/mods/froglings.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1779483604},
+        {"name":"Light Yagami","styleLabel":null,"image":{"src":"/mods/light-yagami.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1779483604},
+        {"name":"River Vials","styleLabel":null,"image":{"src":"/mods/river-vials.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1779483604},
+        {"name":"Shadow Fiend","styleLabel":null,"image":{"src":"/mods/shadow-fiend.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1779483604},
+        {"name":"Windranger","styleLabel":null,"image":{"src":"/mods/windranger.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1779483604},
+        {"name":"Grave of the Fireflies","styleLabel":null,"image":{"src":"/mods/grave-of-the-fireflies.webp","width":854,"height":480},"author":"dabaqz","authorUrl":null,"date":1779363086},
+        {"name":"Nemestice","styleLabel":null,"image":{"src":"/mods/nemestice.webp","width":854,"height":480},"author":"dabaqz","authorUrl":null,"date":1779363086},
+        {"name":"Sky Trees","styleLabel":null,"image":{"src":"/mods/sky-trees.webp","width":854,"height":480},"author":"dabaqz","authorUrl":null,"date":1779363086},
+        {"name":"Stars","styleLabel":null,"image":{"src":"/mods/stars.webp","width":854,"height":480},"author":"dabaqz","authorUrl":null,"date":1779363086},
+        {"name":"Guts","styleLabel":null,"image":{"src":"/mods/guts.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1770815074},
+        {"name":"Knight Artorias","styleLabel":null,"image":{"src":"/mods/knight-artorias.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1770815074},
+        {"name":"Minecraft Rain","styleLabel":null,"image":{"src":"/mods/minecraft-rain.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1770815074},
+        {"name":"Old Bus Stop","styleLabel":null,"image":{"src":"/mods/old-bus-stop.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1770815074},
+        {"name":"Pine Forest","styleLabel":null,"image":{"src":"/mods/pine-forest.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1770815074},
+        {"name":"Sakura","styleLabel":null,"image":{"src":"/mods/sakura.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1770815074},
+        {"name":"Station","styleLabel":null,"image":{"src":"/mods/station.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1770815074},
+        {"name":"Winter Forest","styleLabel":null,"image":{"src":"/mods/winter-forest.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1770815074},
+        {"name":"Cat Under Rain","styleLabel":null,"image":{"src":"/mods/cat-under-rain.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1767801281},
+        {"name":"Corgi Sleeping","styleLabel":null,"image":{"src":"/mods/corgi-sleeping.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1767801281},
+        {"name":"Fallen Paladin","styleLabel":null,"image":{"src":"/mods/fallen-paladin.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1767801281},
+        {"name":"Floating Dog","styleLabel":null,"image":{"src":"/mods/floating-dog.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1767801281},
+        {"name":"Garden of Quiet Days","styleLabel":null,"image":{"src":"/mods/garden-of-quiet-days.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1767801281},
+        {"name":"Nikaido Hiro","styleLabel":null,"image":{"src":"/mods/nikaido-hiro.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1767801281},
+        {"name":"Blossom Rem","styleLabel":null,"image":{"src":"/mods/blossom-rem.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Brewmaster","styleLabel":null,"image":{"src":"/mods/brewmaster.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Cloudy Tree","styleLabel":null,"image":{"src":"/mods/cloudy-tree.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Code Geass","styleLabel":null,"image":{"src":"/mods/code-geass.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Cyrene Song","styleLabel":null,"image":{"src":"/mods/cyrene-song.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Dead Eyes","styleLabel":null,"image":{"src":"/mods/dead-eyes.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Depressed SpongeBob","styleLabel":null,"image":{"src":"/mods/depressed-spongebob.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Field Grass","styleLabel":null,"image":{"src":"/mods/field-grass.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Forgotten Sword","styleLabel":null,"image":{"src":"/mods/forgotten-sword.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Ichigo","styleLabel":null,"image":{"src":"/mods/ichigo.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Kakehashi Subaru","styleLabel":null,"image":{"src":"/mods/kakehashi-subaru.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Katana In Forest","styleLabel":null,"image":{"src":"/mods/katana-in-forest.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Kira and Ryuk","styleLabel":null,"image":{"src":"/mods/kira-and-ryuk.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Kurumi Tokisaki","styleLabel":null,"image":{"src":"/mods/kurumi-tokisaki.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Lelouch Lamperouge","styleLabel":null,"image":{"src":"/mods/lelouch-lamperouge.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Liberalio Nikke","styleLabel":null,"image":{"src":"/mods/liberalio-nikke.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Lonely Quay","styleLabel":null,"image":{"src":"/mods/lonely-quay.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Moonflower Field","styleLabel":null,"image":{"src":"/mods/moonflower-field.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Nier Automata","styleLabel":null,"image":{"src":"/mods/nier-automata.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Rainy Girl","styleLabel":null,"image":{"src":"/mods/rainy-girl.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Rei Ayanami","styleLabel":null,"image":{"src":"/mods/rei-ayanami.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Sad Maomao","styleLabel":null,"image":{"src":"/mods/sad-maomao.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Sajin Komamura","styleLabel":null,"image":{"src":"/mods/sajin-komamura.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Shadow Wreck","styleLabel":null,"image":{"src":"/mods/shadow-wreck.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Snowfall In Forest","styleLabel":null,"image":{"src":"/mods/snowfall-in-forest.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Ulquiorra","styleLabel":null,"image":{"src":"/mods/ulquiorra.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Ulquiorra Purple","styleLabel":null,"image":{"src":"/mods/ulquiorra-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Winter Solitude","styleLabel":null,"image":{"src":"/mods/winter-solitude.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Yuno Gasai","styleLabel":null,"image":{"src":"/mods/yuno-gasai.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308},
+        {"name":"Zenitsu White","styleLabel":null,"image":{"src":"/mods/zenitsu-white.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1766153308}
+      ]
+    },
+    {
+      "id": "hero-sounds",
+      "mods": [
+        {
+          "name": "Naga Siren Growth Correction",
+          "styleLabel": null,
+          "image": {"src":"/mods/naga-siren-growth-correction.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1790809354
+        },
+        {
+          "name": "Shadow Fiend Desire Requiem",
+          "styleLabel": null,
+          "image": {"src":"/mods/shadow-fiend-desire-requiem.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1790424886
+        },
+        {
+          "name": "Dili Tili Bom Pudge",
+          "styleLabel": null,
+          "image": {"src":"/mods/dili-tili-bom-pudge.webp","width":854,"height":480},
+          "author": "Gibus",
+          "authorUrl": "https://steamcommunity.com/id/nqkln/",
+          "date": 1790207087
+        },
+        {"name":"Centaur Otday","styleLabel":null,"image":{"src":"/mods/centaur-otday.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789234312},
+        {"name":"Enigma Black Hole Kate Scream","styleLabel":null,"image":{"src":"/mods/enigma-black-hole-kate-scream.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788904050},
+        {
+          "name": "Techies Bismillah Blast Off!",
+          "styleLabel": null,
+          "image": {"src":"/mods/techies-bismillah-blast-off.webp","width":854,"height":480},
+          "author": "hanfukj",
+          "authorUrl": "https://t.me/hanfukj",
+          "date": 1787826635
+        },
+        {
+          "name": "Brewmaster Kishmesh Amor",
+          "styleLabel": null,
+          "image": {"src":"/mods/brewmaster-kishmesh-amor.webp","width":1280,"height":720},
+          "author": "Aven",
+          "authorUrl": "https://t.me/Aven1337",
+          "date": 1786405804
+        },
+        {
+          "name": "Axe Ultimate Clap Clap",
+          "styleLabel": null,
+          "image": {"src":"/mods/axe-ultimate-clap-clap.webp","width":1280,"height":720},
+          "author": "SuperStas0",
+          "authorUrl": "https://t.me/SuperStas0",
+          "date": 1786250017
+        },
+        {
+          "name": "Hirako Shinji Mars Arena",
+          "styleLabel": null,
+          "image": {"src":"/mods/hirako-shinji-mars-arena.webp","width":426,"height":402},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1786250017
+        },
+        {
+          "name": "Mars Spear I Forgive You",
+          "styleLabel": null,
+          "image": {"src":"/mods/mars-spear-i-forgive-you.webp","width":1280,"height":720},
+          "author": "SuperStas0",
+          "authorUrl": "https://t.me/SuperStas0",
+          "date": 1786250017
+        },
+        {
+          "name": "Sniper Ultimate Headshot",
+          "styleLabel": null,
+          "image": {"src":"/mods/sniper-ultimate-headshot.webp","width":1280,"height":720},
+          "author": "SuperStas0",
+          "authorUrl": "https://t.me/SuperStas0",
+          "date": 1786250017
+        },
+        {
+          "name": "Tusk Shards Got Taunt",
+          "styleLabel": null,
+          "image": {"src":"/mods/tusk-shards-got-taunt.webp","width":480,"height":360},
+          "author": "SuperStas0",
+          "authorUrl": "https://t.me/SuperStas0",
+          "date": 1786250017
+        },
+        {
+          "name": "Ogre Magi Taunt",
+          "styleLabel": null,
+          "image": {"src":"/mods/ogre-magi-taunt.webp","width":854,"height":480},
+          "author": "ПАПАНЯ НА ШАМАНЕ",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199483735695/",
+          "date": 1785323948
+        },
+        {
+          "name": "Anti-Mage Taunt",
+          "styleLabel": null,
+          "image": {"src":"/mods/anti-mage-taunt.webp","width":854,"height":480},
+          "author": "ПАПАНЯ НА ШАМАНЕ",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199483735695/",
+          "date": 1785232049
+        },
+        {
+          "name": "Shadow Fiend Taunt",
+          "styleLabel": null,
+          "image": {"src":"/mods/shadow-fiend-taunt.webp","width":854,"height":480},
+          "author": "ПАПАНЯ НА ШАМАНЕ",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199483735695/",
+          "date": 1785232049
+        },
+        {
+          "name": "Bane Sleep Mimimi",
+          "styleLabel": null,
+          "image": {"src":"/mods/bane-sleep-mimimi.webp","width":854,"height":480},
+          "author": "ПАПАНЯ НА ШАМАНЕ",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199483735695/",
+          "date": 1785157081
+        },
+        {
+          "name": "Bounty Hunter Taunt",
+          "styleLabel": null,
+          "image": {"src":"/mods/bounty-hunter-taunt.webp","width":854,"height":480},
+          "author": "ПАПАНЯ НА ШАМАНЕ",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199483735695/",
+          "date": 1785157081
+        },
+        {
+          "name": "Hoodwink Taunt",
+          "styleLabel": null,
+          "image": {"src":"/mods/hoodwink-taunt.webp","width":854,"height":480},
+          "author": "ПАПАНЯ НА ШАМАНЕ",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199483735695/",
+          "date": 1785157081
+        },
+        {
+          "name": "Invoker Andrey Sun Strike",
+          "styleLabel": null,
+          "image": {"src":"/mods/invoker-andrey-sun-strike.webp","width":854,"height":480},
+          "author": "Senop",
+          "authorUrl": "https://t.me/senopD2",
+          "date": 1785157081
+        },
+        {
+          "name": "IO Relocate Rocket",
+          "styleLabel": null,
+          "image": {"src":"/mods/io-relocate-rocket.webp","width":854,"height":480},
+          "author": "ПАПАНЯ НА ШАМАНЕ",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199483735695/",
+          "date": 1785157081
+        },
+        {
+          "name": "Terrorblade Cursed Metamorphosis",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-cursed-metamorphosis.webp","width":854,"height":480},
+          "author": "Senop",
+          "authorUrl": "https://t.me/senopD2",
+          "date": 1785157081
+        },
+        {"name":"Largo Serega Pirat","styleLabel":null,"image":{"src":"/mods/largo-serega-pirat.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1784792710},
+        {"name":"Largo Serega Pirat v2","styleLabel":null,"image":{"src":"/mods/largo-serega-pirat-v2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1784792710},
+        {"name":"Lion Taunt","styleLabel":null,"image":{"src":"/mods/lion-taunt.webp","width":854,"height":480},"author":"Fr0dech","authorUrl":"https://t.me/fr0dech_vpk","date":1784792710},
+        {
+          "name": "Naga Siren Serega Pirat",
+          "styleLabel": null,
+          "image": {"src":"/mods/naga-siren-serega-pirat.webp","width":854,"height":480},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1784792710
+        },
+        {"name":"Shadow Shaman Taunt","styleLabel":null,"image":{"src":"/mods/shadow-shaman-taunt.webp","width":854,"height":480},"author":"Fr0dech","authorUrl":"https://t.me/fr0dech_vpk","date":1784792710},
+        {"name":"Undying Taunt","styleLabel":null,"image":{"src":"/mods/undying-taunt.webp","width":854,"height":480},"author":"Fr0dech","authorUrl":"https://t.me/fr0dech_vpk","date":1784792710},
+        {"name":"Witch Doctor True Maledict","styleLabel":null,"image":{"src":"/mods/witch-doctor-true-maledict.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1784792710},
+        {"name":"Axe Rip Your Head","styleLabel":null,"image":{"src":"/mods/axe-rip-your-head.webp","width":854,"height":480},"author":"qizlik","authorUrl":"https://t.me/qizlikmod","date":1784711927},
+        {"name":"Sven Already Red","styleLabel":null,"image":{"src":"/mods/sven-already-red.webp","width":854,"height":480},"author":"qizlik","authorUrl":"https://t.me/qizlikmod","date":1784711927},
+        {"name":"Ursa Already Red","styleLabel":null,"image":{"src":"/mods/ursa-already-red.webp","width":854,"height":480},"author":"qizlik","authorUrl":"https://t.me/qizlikmod","date":1784711927},
+        {"name":"Spirit Breaker Beer","styleLabel":null,"image":{"src":"/mods/spirit-breaker-beer.webp","width":854,"height":480},"author":"Senop","authorUrl":"https://t.me/senopD2","date":1784703279},
+        {
+          "name": "Kunkka Sailor Taunt",
+          "styleLabel": null,
+          "image": {"src":"/mods/kunkka-sailor-taunt.webp","width":854,"height":480},
+          "author": "buba43",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199220865017",
+          "date": 1784328560
+        },
+        {
+          "name": "Nature Prophet Taunt",
+          "styleLabel": null,
+          "image": {"src":"/mods/nature-prophet-taunt.webp","width":854,"height":480},
+          "author": "buba43",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199220865017",
+          "date": 1784328560
+        },
+        {
+          "name": "Witch Doctor Death Ward",
+          "styleLabel": null,
+          "image": {"src":"/mods/witch-doctor-death-ward.webp","width":854,"height":480},
+          "author": "buba43",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199220865017",
+          "date": 1784328560
+        },
+        {
+          "name": "Enigma Black Hole Kate",
+          "styleLabel": null,
+          "image": {"src":"/mods/enigma-black-hole-kate.webp","width":854,"height":480},
+          "author": "buba43",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199220865017",
+          "date": 1782990543
+        }
+      ]
+    },
+    {
+      "id": "mega-kill",
+      "mods": [
+        {
+          "name": "Stariy Bog Mega-Kill",
+          "styleLabel": null,
+          "image": {"src":"/mods/stariy-bog-mega-kill.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1790528664
+        },
+        {"name":"CS 1.6 Mega-Kill","styleLabel":null,"image":{"src":"/mods/cs-1-6-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1785081533},
+        {"name":"Umbrella Mega-Kill","styleLabel":null,"image":{"src":"/mods/umbrella-mega-kill.webp","width":854,"height":480},"author":"HiddenPool","authorUrl":"https://t.me/hiddenpoolcm","date":1777663732},
+        {"name":"Stray228 Mega-Kill","styleLabel":null,"image":{"src":"/mods/stray228-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1766279803},
+        {"name":"Hestia","styleLabel":null,"image":{"src":"/mods/hestia.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764898483},
+        {"name":"Chitoge Kirisaki","styleLabel":null,"image":{"src":"/mods/chitoge-kirisaki.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764657298},
+        {"name":"Iroha Isshiki","styleLabel":null,"image":{"src":"/mods/iroha-isshiki.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764657298},
+        {"name":"Axe","styleLabel":null,"image":{"src":"/mods/axe.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Bristleback","styleLabel":null,"image":{"src":"/mods/bristleback.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Clockwerk","styleLabel":null,"image":{"src":"/mods/clockwerk.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Crystal Maiden","styleLabel":null,"image":{"src":"/mods/crystal-maiden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Dark Willow","styleLabel":null,"image":{"src":"/mods/dark-willow.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Darkest Dungeon","styleLabel":null,"image":{"src":"/mods/darkest-dungeon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Defense Grid","styleLabel":null,"image":{"src":"/mods/defense-grid.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Deus Ex","styleLabel":null,"image":{"src":"/mods/deus-ex.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Diretide","styleLabel":null,"image":{"src":"/mods/diretide.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Fallout 4","styleLabel":null,"image":{"src":"/mods/fallout-4.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Gabe Newell","styleLabel":null,"image":{"src":"/mods/gabe-newell.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"GLaDOS","styleLabel":null,"image":{"src":"/mods/glados.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Juggernaut","styleLabel":null,"image":{"src":"/mods/juggernaut.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Kunkka & Tidehunter","styleLabel":null,"image":{"src":"/mods/kunkka-tidehunter.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Lina","styleLabel":null,"image":{"src":"/mods/lina.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Meepo","styleLabel":null,"image":{"src":"/mods/meepo.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Monkey King","styleLabel":null,"image":{"src":"/mods/monkey-king.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Natures Prophet","styleLabel":null,"image":{"src":"/mods/natures-prophet.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Nedotrax Mega-Kill","styleLabel":null,"image":{"src":"/mods/nedotrax-mega-kill.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Pirate Cap","styleLabel":null,"image":{"src":"/mods/pirate-cap.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Pyrion Flax","styleLabel":null,"image":{"src":"/mods/pyrion-flax.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Rick & Morty","styleLabel":null,"image":{"src":"/mods/rick-morty.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {
+          "name": "Ru GLaDOS",
+          "styleLabel": null,
+          "image": {"src":"/mods/ru-glados.webp","width":854,"height":480},
+          "author": "Vpotokwe",
+          "authorUrl": "https://steamcommunity.com/sharedfiles/filedetails/?id=3766199700",
+          "date": 1763202238
+        },
+        {"name":"Siega Mega-Kill","styleLabel":null,"image":{"src":"/mods/siega-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1763202238},
+        {"name":"Stanley Parable","styleLabel":null,"image":{"src":"/mods/stanley-parable.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Storm Spirit","styleLabel":null,"image":{"src":"/mods/storm-spirit.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Techies","styleLabel":null,"image":{"src":"/mods/techies.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Trine","styleLabel":null,"image":{"src":"/mods/trine.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Voice of The International","styleLabel":null,"image":{"src":"/mods/voice-of-the-international.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238}
+      ]
+    },
+    {
+      "id": "cursors",
+      "mods": [
+        {"name":"Purple Bts3 Cursor","styleLabel":null,"image":{"src":"/mods/purple-bts3-cursor.webp","width":854,"height":480},"author":"Timmyone","authorUrl":"https://t.me/timmyone","date":1784360373},
+        {"name":"Purple Demon Cursor","styleLabel":null,"image":{"src":"/mods/purple-demon-cursor.webp","width":854,"height":480},"author":"Timmyone","authorUrl":"https://t.me/timmyone","date":1784360373},
+        {"name":"Purple TI8 Cursor","styleLabel":null,"image":{"src":"/mods/purple-ti8-cursor.webp","width":854,"height":480},"author":"Timmyone","authorUrl":"https://t.me/timmyone","date":1784360373},
+        {
+          "name": "Demon Cursor",
+          "styleLabel": null,
+          "image": {"src":"/mods/demon-cursor.webp","width":854,"height":480},
+          "author": "yoshimura",
+          "authorUrl": "https://sites.google.com/view/yosh1mur2",
+          "date": 1778939730
+        },
+        {"name":"Pepepains Cursor","styleLabel":null,"image":{"src":"/mods/pepepains-cursor.webp","width":854,"height":480},"author":"Timmyone","authorUrl":"https://t.me/timmyone","date":1777733026},
+        {"name":"Old Cursor","styleLabel":null,"image":{"src":"/mods/old-cursor.webp","width":854,"height":480},"author":"Timmyone","authorUrl":"https://t.me/timmyone","date":1777663732},
+        {"name":"Human Cursor","styleLabel":null,"image":{"src":"/mods/human-cursor.webp","width":854,"height":480},"author":"YMOM77","authorUrl":"https://t.me/mod_dota","date":1777641425},
+        {"name":"Night Elf Cursor","styleLabel":null,"image":{"src":"/mods/night-elf-cursor.webp","width":854,"height":480},"author":"YMOM77","authorUrl":"https://t.me/mod_dota","date":1777641425},
+        {"name":"Undead Cursor","styleLabel":null,"image":{"src":"/mods/undead-cursor.webp","width":854,"height":480},"author":"YMOM77","authorUrl":"https://t.me/mod_dota","date":1777641425},
+        {"name":"SpearMa Cursor","styleLabel":null,"image":{"src":"/mods/spearma-cursor.webp","width":854,"height":480},"author":"ya_lyosha","authorUrl":"https://www.twitch.tv/ya_lyosha","date":1775906972},
+        {
+          "name": "White Necronub Cursor",
+          "styleLabel": null,
+          "image": {"src":"/mods/white-necronub-cursor.webp","width":854,"height":480},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1775906972
+        },
+        {"name":"Azur Lane Cursor","styleLabel":null,"image":{"src":"/mods/azur-lane-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768005424},
+        {"name":"Simple Cursor","styleLabel":null,"image":{"src":"/mods/simple-cursor.webp","width":854,"height":480},"author":"Slipersone","authorUrl":"https://t.me/slipersone","date":1765283745},
+        {"name":"Bts3 Cursor","styleLabel":null,"image":{"src":"/mods/bts3-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Centaur Cursor","styleLabel":null,"image":{"src":"/mods/centaur-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Chaos Knight Cursor","styleLabel":null,"image":{"src":"/mods/chaos-knight-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Clockwerk Cursor","styleLabel":null,"image":{"src":"/mods/clockwerk-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Crystal Maiden Cursor","styleLabel":null,"image":{"src":"/mods/crystal-maiden-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Dcveno Cursor","styleLabel":null,"image":{"src":"/mods/dcveno-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Default Cursor","styleLabel":null,"image":{"src":"/mods/default-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Diretide Cursor","styleLabel":null,"image":{"src":"/mods/diretide-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Earthshaker Cursor","styleLabel":null,"image":{"src":"/mods/earthshaker-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Emerald Cursor","styleLabel":null,"image":{"src":"/mods/emerald-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Holy Flame Cursor","styleLabel":null,"image":{"src":"/mods/holy-flame-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Mirana Cursor","styleLabel":null,"image":{"src":"/mods/mirana-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Necronub Cursor","styleLabel":null,"image":{"src":"/mods/necronub-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Skywrath Mage Cursor","styleLabel":null,"image":{"src":"/mods/skywrath-mage-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"TI5 Cursor","styleLabel":null,"image":{"src":"/mods/ti5-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"TI6 Cursor","styleLabel":null,"image":{"src":"/mods/ti6-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"TI7 Cursor","styleLabel":null,"image":{"src":"/mods/ti7-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"TI8 Cursor","styleLabel":null,"image":{"src":"/mods/ti8-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"TI9 Cursor","styleLabel":null,"image":{"src":"/mods/ti9-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Timbersaw Cursor","styleLabel":null,"image":{"src":"/mods/timbersaw-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
+        {"name":"Vengeful Spirit Cursor","styleLabel":null,"image":{"src":"/mods/vengeful-spirit-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943}
+      ]
+    },
+    {
+      "id": "shaders",
+      "mods": [
+        {"name":"Simple Minify Shader","styleLabel":null,"image":{"src":"/mods/simple-minify-shader.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772737722},
+        {"name":"Wave Lite Purple","styleLabel":null,"image":{"src":"/mods/wave-lite-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771195327},
+        {"name":"Cartoon Shader","styleLabel":null,"image":{"src":"/mods/cartoon-shader.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769364096},
+        {"name":"Purple Outline","styleLabel":null,"image":{"src":"/mods/purple-outline.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769364096},
+        {"name":"Diretide (outline)","styleLabel":null,"image":{"src":"/mods/diretide-outline.webp","width":601,"height":301},"author":null,"authorUrl":null,"date":1767325919},
+        {"name":"Aghanim Green Lite","styleLabel":null,"image":{"src":"/mods/aghanim-green-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim Purple Lite","styleLabel":null,"image":{"src":"/mods/aghanim-purple-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim Red Lite","styleLabel":null,"image":{"src":"/mods/aghanim-red-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim White Lite","styleLabel":null,"image":{"src":"/mods/aghanim-white-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim Yellow Lite","styleLabel":null,"image":{"src":"/mods/aghanim-yellow-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim Green","styleLabel":null,"image":{"src":"/mods/aghanim-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim Peach","styleLabel":null,"image":{"src":"/mods/aghanim-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim Purple","styleLabel":null,"image":{"src":"/mods/aghanim-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim Red","styleLabel":null,"image":{"src":"/mods/aghanim-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim White","styleLabel":null,"image":{"src":"/mods/aghanim-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Ancient","styleLabel":null,"image":{"src":"/mods/ancient.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1766992965},
+        {"name":"Haze","styleLabel":null,"image":{"src":"/mods/haze.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1766992965},
+        {"name":"Purple Ancient","styleLabel":null,"image":{"src":"/mods/purple-ancient.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1766992965},
+        {"name":"Wave Green","styleLabel":null,"image":{"src":"/mods/wave-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Aqua","styleLabel":null,"image":{"src":"/mods/wave-lite-aqua.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Blue","styleLabel":null,"image":{"src":"/mods/wave-lite-blue.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Green","styleLabel":null,"image":{"src":"/mods/wave-lite-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Peach","styleLabel":null,"image":{"src":"/mods/wave-lite-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Pink","styleLabel":null,"image":{"src":"/mods/wave-lite-pink.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Red","styleLabel":null,"image":{"src":"/mods/wave-lite-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite White","styleLabel":null,"image":{"src":"/mods/wave-lite-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Yellow","styleLabel":null,"image":{"src":"/mods/wave-lite-yellow.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Peach","styleLabel":null,"image":{"src":"/mods/wave-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Purple","styleLabel":null,"image":{"src":"/mods/wave-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Red","styleLabel":null,"image":{"src":"/mods/wave-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave White","styleLabel":null,"image":{"src":"/mods/wave-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim Labyrinth","styleLabel":null,"image":{"src":"/mods/aghanim-labyrinth.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282}
+      ]
+    },
+    {
+      "id": "couriers",
+      "mods": [
+        {
+          "name": "Courier Gonjubasik",
+          "styleLabel": null,
+          "image": {"src":"/mods/courier-gonjubasik.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1790375737
+        },
+        {
+          "name": "Mega Greevil Courier",
+          "styleLabel": null,
+          "image": {"src":"/mods/mega-greevil-courier.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1790086853
+        },
+        {"name":"Onibi","styleLabel":null,"image":{"src":"/mods/onibi.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1779436367},
+        {
+          "name": "Honey Heist Baby Roshan",
+          "styleLabel": null,
+          "image": {"src":"/mods/honey-heist-baby-roshan.webp","width":854,"height":480},
+          "author": "apathydxd",
+          "authorUrl": "https://discord.com/users/538760177470668810",
+          "date": 1779092133
+        },
+        {"name":"Pudgling","styleLabel":"Style I","image":{"src":"/mods/pudgling-style-i.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769787537},
+        {"name":"Pudgling","styleLabel":"Style II","image":{"src":"/mods/pudgling-style-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769787537},
+        {"name":"Baby Roshan 2017","styleLabel":null,"image":{"src":"/mods/baby-roshan-2017.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768204602},
+        {"name":"Desert Sands Baby Roshan","styleLabel":null,"image":{"src":"/mods/desert-sands-baby-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768204602},
+        {"name":"Golden Doomling","styleLabel":null,"image":{"src":"/mods/golden-doomling.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768204602},
+        {"name":"Golden Flopjaw the Boxhound","styleLabel":null,"image":{"src":"/mods/golden-flopjaw-the-boxhound.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768204602},
+        {"name":"Golden Huntling","styleLabel":null,"image":{"src":"/mods/golden-huntling.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768204602},
+        {"name":"Golden Seekling","styleLabel":null,"image":{"src":"/mods/golden-seekling.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768204602},
+        {"name":"Golden Venoling","styleLabel":null,"image":{"src":"/mods/golden-venoling.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768204602},
+        {"name":"Jadehoof","styleLabel":null,"image":{"src":"/mods/jadehoof.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768204602},
+        {"name":"Nian Courier","styleLabel":null,"image":{"src":"/mods/nian-courier.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768204602},
+        {"name":"Strongback the Swift","styleLabel":null,"image":{"src":"/mods/strongback-the-swift.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768204602},
+        {"name":"Aghanim Baby Roshan Dire","styleLabel":null,"image":{"src":"/mods/aghanim-baby-roshan-dire.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768192211},
+        {"name":"Aghanim Baby Roshan Radiant","styleLabel":null,"image":{"src":"/mods/aghanim-baby-roshan-radiant.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768192211},
+        {"name":"Baby Roshan 2018","styleLabel":null,"image":{"src":"/mods/baby-roshan-2018.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768190482},
+        {"name":"Gingerbread Baby Roshan","styleLabel":null,"image":{"src":"/mods/gingerbread-baby-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768190482},
+        {"name":"Jade Baby Roshan","styleLabel":null,"image":{"src":"/mods/jade-baby-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768190482},
+        {"name":"Dark Moon Baby Roshan","styleLabel":null,"image":{"src":"/mods/dark-moon-baby-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768186828},
+        {"name":"Baby Roshan","styleLabel":null,"image":{"src":"/mods/baby-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766901706},
+        {"name":"Ice Baby Roshan","styleLabel":null,"image":{"src":"/mods/ice-baby-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766901706},
+        {"name":"Palico Odogaron","styleLabel":null,"image":{"src":"/mods/palico-odogaron.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331},
+        {"name":"Baby Roshan Crownfall","styleLabel":null,"image":{"src":"/mods/baby-roshan-crownfall.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763698532},
+        {"name":"Billy Bounceback","styleLabel":null,"image":{"src":"/mods/billy-bounceback.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763698532},
+        {"name":"Waldi the Faithful","styleLabel":null,"image":{"src":"/mods/waldi-the-faithful.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763698532}
+      ]
+    },
+    {
+      "id": "creeps",
+      "mods": [
+        {"name":"Dark Carnival Dire Creeps","styleLabel":null,"image":{"src":"/mods/dark-carnival-dire-creeps.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782468853},
+        {"name":"Dark Carnival Dire Siege","styleLabel":null,"image":{"src":"/mods/dark-carnival-dire-siege.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782468853},
+        {"name":"Dark Carnival Radiant Creeps","styleLabel":null,"image":{"src":"/mods/dark-carnival-radiant-creeps.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782468853},
+        {"name":"Dark Carnival Radiant Siege","styleLabel":null,"image":{"src":"/mods/dark-carnival-radiant-siege.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782468853},
+        {"name":"Nemestice Dire Creeps","styleLabel":null,"image":{"src":"/mods/nemestice-dire-creeps.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768070949},
+        {"name":"Nemestice Radiant Creeps","styleLabel":null,"image":{"src":"/mods/nemestice-radiant-creeps.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768070949},
+        {"name":"Pine Dire Creeps","styleLabel":null,"image":{"src":"/mods/pine-dire-creeps.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766624100},
+        {"name":"Pine Radiant Creeps","styleLabel":null,"image":{"src":"/mods/pine-radiant-creeps.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766624100},
+        {"name":"USSR Radiant Creeps","styleLabel":null,"image":{"src":"/mods/ussr-radiant-creeps.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766624100},
+        {"name":"Reptilian Dire Creeps","styleLabel":"Style I","image":{"src":"/mods/reptilian-dire-creeps-style-i.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765103201},
+        {"name":"Reptilian Dire Creeps","styleLabel":"Style II","image":{"src":"/mods/reptilian-dire-creeps-style-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765103201},
+        {"name":"Reptilian Radiant Creeps","styleLabel":"Style I","image":{"src":"/mods/reptilian-radiant-creeps-style-i.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765103201},
+        {"name":"Reptilian Radiant Creeps","styleLabel":"Style II","image":{"src":"/mods/reptilian-radiant-creeps-style-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765103201},
+        {"name":"Crownfall Dire Creeps","styleLabel":null,"image":{"src":"/mods/crownfall-dire-creeps.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331},
+        {"name":"Crownfall Dire Siege","styleLabel":null,"image":{"src":"/mods/crownfall-dire-siege.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331},
+        {"name":"Crownfall Radiant Creeps","styleLabel":null,"image":{"src":"/mods/crownfall-radiant-creeps.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331},
+        {"name":"Crownfall Radiant Siege","styleLabel":null,"image":{"src":"/mods/crownfall-radiant-siege.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331},
+        {"name":"Diretide Dire Creeps","styleLabel":null,"image":{"src":"/mods/diretide-dire-creeps.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331},
+        {"name":"Diretide Radiant Creeps","styleLabel":null,"image":{"src":"/mods/diretide-radiant-creeps.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331},
+        {"name":"Woodland Dire Creeps","styleLabel":null,"image":{"src":"/mods/woodland-dire-creeps.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331},
+        {"name":"Woodland Dire Siege","styleLabel":null,"image":{"src":"/mods/woodland-dire-siege.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331},
+        {"name":"Woodland Radiant Creeps","styleLabel":null,"image":{"src":"/mods/woodland-radiant-creeps.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331},
+        {"name":"Woodland Radiant Siege","styleLabel":null,"image":{"src":"/mods/woodland-radiant-siege.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331}
+      ]
+    },
+    {
+      "id": "terrains",
+      "mods": [
+        {"name":"Crownfall","styleLabel":null,"image":{"src":"/mods/crownfall.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1790352634},
+        {"name":"Dota+ Autumn","styleLabel":null,"image":{"src":"/mods/dota-autumn.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1790352634},
+        {"name":"Dota+ Spring","styleLabel":null,"image":{"src":"/mods/dota-spring.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1790352634},
+        {"name":"Dota+ Summer","styleLabel":null,"image":{"src":"/mods/dota-summer.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1790352634},
+        {"name":"Dota+ Winter","styleLabel":null,"image":{"src":"/mods/dota-winter.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1790352634},
+        {"name":"The Kings New Journey","styleLabel":null,"image":{"src":"/mods/the-kings-new-journey.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1790352634},
+        {"name":"TI10 Sanctum of the Divine","styleLabel":null,"image":{"src":"/mods/ti10-sanctum-of-the-divine.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1790352634},
+        {"name":"TI5 Desert Terrain","styleLabel":null,"image":{"src":"/mods/ti5-desert-terrain.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1790352634},
+        {"name":"TI6 Immortal Gardens","styleLabel":null,"image":{"src":"/mods/ti6-immortal-gardens.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1790352634},
+        {"name":"TI7 Reefs Edge","styleLabel":null,"image":{"src":"/mods/ti7-reefs-edge.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1790352634},
+        {"name":"TI8 Emerald Abyss","styleLabel":null,"image":{"src":"/mods/ti8-emerald-abyss.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1790352634},
+        {"name":"TI9 Overgrown Empire","styleLabel":null,"image":{"src":"/mods/ti9-overgrown-empire.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1790352634},
+        {"name":"Simple Dark Terrain Minify","styleLabel":null,"image":null,"author":"Robbyz","authorUrl":"https://github.com/robbyz512","date":1785323948},
+        {"name":"Simple Dark Terrain Minify","styleLabel":"Green","image":null,"author":"Robbyz","authorUrl":"https://github.com/robbyz512","date":1785323948},
+        {"name":"Bedrock","styleLabel":null,"image":{"src":"/mods/bedrock.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782296453},
+        {
+          "name": "Dark Terrain Minify",
+          "styleLabel": null,
+          "image": {"src":"/mods/dark-terrain-minify.webp","width":854,"height":480},
+          "author": "Robbyz",
+          "authorUrl": "https://github.com/robbyz512",
+          "date": 1782296453
+        },
+        {"name":"DarkPoly","styleLabel":null,"image":{"src":"/mods/darkpoly.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1782296453},
+        {"name":"DarkPoly & Trees","styleLabel":null,"image":{"src":"/mods/darkpoly-trees.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1782296453},
+        {"name":"LowPoly","styleLabel":null,"image":{"src":"/mods/lowpoly.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1782296453},
+        {"name":"LowPoly & Trees","styleLabel":null,"image":{"src":"/mods/lowpoly-trees.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1782296453},
+        {"name":"Mossy Cobblestone","styleLabel":null,"image":{"src":"/mods/mossy-cobblestone.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782296453}
+      ]
+    },
+    {
+      "id": "river",
+      "mods": [
+        {"name":"Black River","styleLabel":null,"image":{"src":"/mods/black-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771535597},
+        {"name":"Blood River","styleLabel":null,"image":{"src":"/mods/blood-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Blue River","styleLabel":null,"image":{"src":"/mods/blue-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Boiling Blood River","styleLabel":null,"image":{"src":"/mods/boiling-blood-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Boiling River","styleLabel":null,"image":{"src":"/mods/boiling-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Chrome River","styleLabel":null,"image":{"src":"/mods/chrome-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Cola River","styleLabel":null,"image":{"src":"/mods/cola-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Dry River","styleLabel":null,"image":{"src":"/mods/dry-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Electric River","styleLabel":null,"image":{"src":"/mods/electric-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Frozen River","styleLabel":null,"image":{"src":"/mods/frozen-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Gold River","styleLabel":null,"image":{"src":"/mods/gold-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Green River","styleLabel":null,"image":{"src":"/mods/green-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Oil River","styleLabel":null,"image":{"src":"/mods/oil-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Orange River","styleLabel":null,"image":{"src":"/mods/orange-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Pink River","styleLabel":null,"image":{"src":"/mods/pink-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Potion River","styleLabel":null,"image":{"src":"/mods/potion-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Purple River","styleLabel":null,"image":{"src":"/mods/purple-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Red River","styleLabel":null,"image":{"src":"/mods/red-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Slime River","styleLabel":null,"image":{"src":"/mods/slime-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998},
+        {"name":"Yellow River","styleLabel":null,"image":{"src":"/mods/yellow-river.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1762709998}
+      ]
+    },
+    {
+      "id": "trees",
+      "mods": [
+        {"name":"Virus Trees","styleLabel":null,"image":{"src":"/mods/virus-trees.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788762686},
+        {"name":"Deathrun Eggs","styleLabel":null,"image":{"src":"/mods/deathrun-eggs.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1787931189},
+        {"name":"Catbuns Trees","styleLabel":null,"image":{"src":"/mods/catbuns-trees.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1783400379},
+        {"name":"Cone Trees","styleLabel":null,"image":{"src":"/mods/cone-trees.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783400379},
+        {"name":"Gravestones Trees","styleLabel":null,"image":{"src":"/mods/gravestones-trees.webp","width":854,"height":480},"author":"CeoMods","authorUrl":"https://t.me/modsceo","date":1783400379},
+        {"name":"LowPoly Barrel Trees","styleLabel":null,"image":{"src":"/mods/lowpoly-barrel-trees.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783400379},
+        {"name":"LowPoly Shrub Trees","styleLabel":null,"image":{"src":"/mods/lowpoly-shrub-trees.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783400379},
+        {"name":"LowPoly Skull Trees","styleLabel":null,"image":{"src":"/mods/lowpoly-skull-trees.webp","width":854,"height":480},"author":"CeoMods","authorUrl":"https://t.me/modsceo","date":1783400379},
+        {"name":"LowPoly Stumps Trees","styleLabel":null,"image":{"src":"/mods/lowpoly-stumps-trees.webp","width":854,"height":480},"author":"CeoMods","authorUrl":"https://t.me/modsceo","date":1783400379},
+        {"name":"LowPoly Trees v1","styleLabel":null,"image":{"src":"/mods/lowpoly-trees-v1.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783400379},
+        {"name":"Metal Barrel Trees","styleLabel":null,"image":{"src":"/mods/metal-barrel-trees.webp","width":854,"height":480},"author":"CeoMods","authorUrl":"https://t.me/modsceo","date":1783400379},
+        {"name":"Pine Cone Trees","styleLabel":null,"image":{"src":"/mods/pine-cone-trees.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783400379},
+        {"name":"Small Trees Minify","styleLabel":null,"image":{"src":"/mods/small-trees-minify.webp","width":854,"height":480},"author":"Robbyz","authorUrl":"https://github.com/robbyz512","date":1783400379},
+        {"name":"Logs Trees","styleLabel":null,"image":{"src":"/mods/logs-trees.webp","width":854,"height":480},"author":"CeoMods","authorUrl":"https://t.me/modsceo","date":1782662668},
+        {"name":"Cartoon Trees","styleLabel":null,"image":{"src":"/mods/cartoon-trees.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1771821325},
+        {"name":"Crystals Trees","styleLabel":null,"image":{"src":"/mods/crystals-trees.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771821325},
+        {"name":"LowPoly Trees","styleLabel":null,"image":{"src":"/mods/lowpoly-trees-2.webp","width":1280,"height":720},"author":"Lenz","authorUrl":"https://www.youtube.com/@Lenz13377","date":1771821325},
+        {"name":"Pumpkin Trees","styleLabel":null,"image":{"src":"/mods/pumpkin-trees.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771821325},
+        {"name":"Stone Trees","styleLabel":null,"image":{"src":"/mods/stone-trees.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771821325},
+        {"name":"Wooden Trees","styleLabel":null,"image":{"src":"/mods/wooden-trees.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771821325}
+      ]
+    },
+    {
+      "id": "music",
+      "mods": [
+        {"name":"Broodskoe","styleLabel":null,"image":{"src":"/mods/broodskoe.webp","width":854,"height":480},"author":"rasstegai","authorUrl":"https://steamcommunity.com/id/rasstegai/","date":1789902229},
+        {
+          "name": "Rory in early 20s Music",
+          "styleLabel": null,
+          "image": {"src":"/mods/rory-in-early-20s-music.webp","width":854,"height":480},
+          "author": "мс яйцо",
+          "authorUrl": "https://steamcommunity.com/id/mcegg/",
+          "date": 1789754338
+        },
+        {
+          "name": "Terraria Music",
+          "styleLabel": null,
+          "image": {"src":"/mods/terraria-music.webp","width":854,"height":480},
+          "author": "buba43",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199220865017",
+          "date": 1789547063
+        },
+        {"name":"Magic Sticks of Dynamite","styleLabel":null,"image":{"src":"/mods/magic-sticks-of-dynamite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1785236208},
+        {"name":"Northern Winds","styleLabel":null,"image":{"src":"/mods/northern-winds.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1781266231},
+        {
+          "name": "The International 10",
+          "styleLabel": null,
+          "image": {"src":"/mods/the-international-10.webp","width":854,"height":480},
+          "author": "SkippingHades",
+          "authorUrl": "https://www.youtube.com/@skippinghadesofficialmc",
+          "date": 1780648482
+        },
+        {"name":"The International 2014","styleLabel":null,"image":{"src":"/mods/the-international-2014.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765999001},
+        {"name":"The International 2015","styleLabel":null,"image":{"src":"/mods/the-international-2015.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765999001},
+        {"name":"The International 2016","styleLabel":null,"image":{"src":"/mods/the-international-2016.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765999001},
+        {"name":"The International 2017","styleLabel":null,"image":{"src":"/mods/the-international-2017.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765999001},
+        {"name":"The International 2019","styleLabel":null,"image":{"src":"/mods/the-international-2019.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765926561},
+        {"name":"Dire Shred","styleLabel":null,"image":{"src":"/mods/dire-shred.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764954164},
+        {"name":"deadmau5 dieback","styleLabel":null,"image":{"src":"/mods/deadmau5-dieback.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764486398},
+        {"name":"Elemental Fury","styleLabel":null,"image":{"src":"/mods/elemental-fury.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764486398},
+        {"name":"Heroes Within","styleLabel":null,"image":{"src":"/mods/heroes-within.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764486398},
+        {"name":"Humanity Last Breath","styleLabel":null,"image":{"src":"/mods/humanity-last-breath.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764486398},
+        {"name":"JJ Lin Timekeeper","styleLabel":null,"image":{"src":"/mods/jj-lin-timekeeper.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764486398},
+        {"name":"TheFatRat Warrior","styleLabel":null,"image":{"src":"/mods/thefatrat-warrior.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764459882},
+        {"name":"Sewerslvt Music","styleLabel":null,"image":{"src":"/mods/sewerslvt-music.webp","width":854,"height":480},"author":"мс яйцо","authorUrl":"https://steamcommunity.com/id/mcegg/","date":null}
+      ]
+    },
+    {
+      "id": "creep-deny",
+      "mods": [
+        {"name":"Drow Ranger Deny","styleLabel":null,"image":{"src":"/mods/drow-ranger-deny.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783594076},
+        {"name":"Drow Ranger Deny","styleLabel":"II","image":{"src":"/mods/drow-ranger-deny-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783594076},
+        {"name":"Queen of Pain Deny","styleLabel":null,"image":{"src":"/mods/queen-of-pain-deny.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783594076},
+        {"name":"Queen of Pain Deny","styleLabel":"II","image":{"src":"/mods/queen-of-pain-deny-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783594076},
+        {"name":"Razor Deny","styleLabel":null,"image":{"src":"/mods/razor-deny.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783594076},
+        {"name":"Razor Deny","styleLabel":"II","image":{"src":"/mods/razor-deny-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783594076},
+        {"name":"Spectre Deny","styleLabel":null,"image":{"src":"/mods/spectre-deny.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783594076},
+        {"name":"Spectre Deny","styleLabel":"II","image":{"src":"/mods/spectre-deny-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783594076},
+        {"name":"Serega Pirat Deny","styleLabel":null,"image":{"src":"/mods/serega-pirat-deny.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780226470},
+        {"name":"Deny Fall 2021","styleLabel":null,"image":{"src":"/mods/deny-fall-2021.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Deny Fall 2022","styleLabel":null,"image":{"src":"/mods/deny-fall-2022.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Deny Spring","styleLabel":null,"image":{"src":"/mods/deny-spring.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Fuck Deny","styleLabel":null,"image":{"src":"/mods/fuck-deny.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Huh Deny","styleLabel":null,"image":{"src":"/mods/huh-deny.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"lasthit Golden Shards","styleLabel":null,"image":{"src":"/mods/lasthit-golden-shards.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Soul Deny","styleLabel":null,"image":{"src":"/mods/soul-deny.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282}
+      ]
+    },
+    {
+      "id": "emblems",
+      "mods": [
+        {
+          "name": "Emblem Lsq Black Star",
+          "styleLabel": null,
+          "image": {"src":"/mods/emblem-lsq-black-star.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1782819311
+        },
+        {"name":"Crimson Chains Emblem","styleLabel":null,"image":{"src":"/mods/crimson-chains-emblem.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1775819130},
+        {"name":"Bard Frog Emblem","styleLabel":null,"image":{"src":"/mods/bard-frog-emblem.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766335374},
+        {"name":"Bard Frog Emblem v2","styleLabel":null,"image":{"src":"/mods/bard-frog-emblem-v2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766335374},
+        {"name":"Aghanims Emblem","styleLabel":null,"image":{"src":"/mods/aghanims-emblem.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Battle Pass 2022 Emblem","styleLabel":null,"image":{"src":"/mods/battle-pass-2022-emblem.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Emblem Darkness","styleLabel":null,"image":{"src":"/mods/emblem-darkness.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1756459282},
+        {"name":"Emblem of Divinity","styleLabel":null,"image":{"src":"/mods/emblem-of-divinity.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Emblem of the Crystal Echelon","styleLabel":null,"image":{"src":"/mods/emblem-of-the-crystal-echelon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Emblem of the Diretide Blue","styleLabel":null,"image":{"src":"/mods/emblem-of-the-diretide-blue.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Emblem of the Diretide Green","styleLabel":null,"image":{"src":"/mods/emblem-of-the-diretide-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Emblem of the Diretide Red","styleLabel":null,"image":{"src":"/mods/emblem-of-the-diretide-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Emblem of the Diretide Yellow","styleLabel":null,"image":{"src":"/mods/emblem-of-the-diretide-yellow.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Nemestice Emblem","styleLabel":null,"image":{"src":"/mods/nemestice-emblem.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Overgrown Emblem","styleLabel":null,"image":{"src":"/mods/overgrown-emblem.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
+        {"name":"Sunken Emblem","styleLabel":null,"image":{"src":"/mods/sunken-emblem.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282}
+      ]
+    },
+    {
+      "id": "other",
+      "mods": [
+        {
+          "name": "Techies Minimap-Hero Mine Icon",
+          "styleLabel": null,
+          "image": {"src":"/mods/techies-minimap-hero-mine-icon.webp","width":854,"height":480},
+          "author": "hanfukj",
+          "authorUrl": "https://t.me/hanfukj",
+          "date": 1790818573
+        },
+        {"name":"All Grandmasters","styleLabel":null,"image":{"src":"/mods/all-grandmasters.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790030268},
+        {"name":"Black Click","styleLabel":null,"image":{"src":"/mods/black-click.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1788815201},
+        {"name":"Light Brown Click","styleLabel":null,"image":{"src":"/mods/light-brown-click.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788762686},
+        {"name":"Sapphire Click","styleLabel":null,"image":{"src":"/mods/sapphire-click.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788762686},
+        {
+          "name": "White Click",
+          "styleLabel": null,
+          "image": {"src":"/mods/white-click.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1788095311
+        },
+        {
+          "name": "Profile Graffiti & Phrases",
+          "styleLabel": null,
+          "image": {"src":"/mods/profile-graffiti-phrases.webp","width":854,"height":480},
+          "author": "DotaMiniProfile",
+          "authorUrl": "https://t.me/DotaMiniProfile",
+          "date": 1785640852
+        },
+        {"name":"Blue Click","styleLabel":null,"image":{"src":"/mods/blue-click.webp","width":854,"height":480},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1785081533},
+        {
+          "name": "Dummy In Profile",
+          "styleLabel": null,
+          "image": {"src":"/mods/dummy-in-profile.webp","width":854,"height":480},
+          "author": "DotaMiniProfile",
+          "authorUrl": "https://t.me/DotaMiniProfile",
+          "date": 1784702480
+        },
+        {
+          "name": "Unlock Hidden Profile Animations",
+          "styleLabel": null,
+          "image": {"src":"/mods/unlock-hidden-profile-animations.webp","width":854,"height":480},
+          "author": "DotaMiniProfile",
+          "authorUrl": "https://t.me/DotaMiniProfile",
+          "date": 1784562310
+        },
+        {"name":"Purple Click","styleLabel":null,"image":{"src":"/mods/purple-click.webp","width":854,"height":480},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1778331617},
+        {
+          "name": "Tower re-aggro Radius",
+          "styleLabel": null,
+          "image": {"src":"/mods/tower-re-aggro-radius.webp","width":854,"height":480},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1776801533
+        },
+        {"name":"Gabe Shopkeeper","styleLabel":null,"image":{"src":"/mods/gabe-shopkeeper.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203},
+        {"name":"Rage Voice Icon","styleLabel":null,"image":{"src":"/mods/rage-voice-icon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203},
+        {"name":"Showcase Rotation","styleLabel":null,"image":{"src":"/mods/showcase-rotation.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203},
+        {"name":"Techies Mine Radius","styleLabel":null,"image":{"src":"/mods/techies-mine-radius.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203}
+      ]
+    },
+    {
+      "id": "ti-bp-effects",
+      "mods": [
+        {"name":"Aghanims Labyrinth Battle Pass","styleLabel":null,"image":{"src":"/mods/aghanims-labyrinth-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Battle Pass 2022","styleLabel":null,"image":{"src":"/mods/battle-pass-2022.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Darkness Pack","styleLabel":null,"image":{"src":"/mods/darkness-pack.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
+        {"name":"Nemestice 2021 Battle Pass","styleLabel":null,"image":{"src":"/mods/nemestice-2021-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Purple Quarteros Curios","styleLabel":null,"image":{"src":"/mods/purple-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Quarteros Curios","styleLabel":null,"image":{"src":"/mods/quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Spring Quarteros Curios","styleLabel":null,"image":{"src":"/mods/spring-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Summer Quarteros Curios","styleLabel":null,"image":{"src":"/mods/summer-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2010 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2010-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2016 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2016-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2017 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2017-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2018 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2018-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2019 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2019-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Winter Quarteros Curios","styleLabel":null,"image":{"src":"/mods/winter-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Remove Seasonal Effects","styleLabel":null,"image":{"src":"/mods/remove-seasonal-effects.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662},
+        {"name":"Winter 2016 Battle Pass","styleLabel":null,"image":{"src":"/mods/winter-2016-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662}
+      ]
+    },
+    {
+      "id": "sounds",
+      "mods": [
+        {"name":"Dagon Cobra Kick","styleLabel":null,"image":{"src":"/mods/dagon-cobra-kick.webp","width":854,"height":480},"author":"Новомодный","authorUrl":null,"date":1789727816},
+        {"name":"Dagon Revolver","styleLabel":null,"image":{"src":"/mods/dagon-revolver.webp","width":854,"height":480},"author":"keeper","authorUrl":"https://t.me/eternalsadism","date":1789192305},
+        {
+          "name": "1st September Horn",
+          "styleLabel": null,
+          "image": {"src":"/mods/1st-september-horn.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1788365172
+        },
+        {"name":"Dagon AWP","styleLabel":null,"image":{"src":"/mods/dagon-awp.webp","width":1280,"height":720},"author":"SuperStas0","authorUrl":"https://t.me/SuperStas0","date":1786250017},
+        {"name":"Flash Step Blink","styleLabel":null,"image":{"src":"/mods/flash-step-blink.webp","width":736,"height":411},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1786250017},
+        {"name":"Tormentor Amor","styleLabel":null,"image":{"src":"/mods/tormentor-amor.webp","width":1280,"height":720},"author":"SuperStas0","authorUrl":"https://t.me/SuperStas0","date":1786250017},
+        {"name":"Dark Carnival Dora","styleLabel":null,"image":{"src":"/mods/dark-carnival-dora.webp","width":854,"height":480},"author":"Senop","authorUrl":"https://t.me/senopD2","date":1784454434},
+        {
+          "name": "Dark Carnival Serega Pirat",
+          "styleLabel": null,
+          "image": {"src":"/mods/dark-carnival-serega-pirat.webp","width":854,"height":480},
+          "author": "Senop",
+          "authorUrl": "https://t.me/senopD2",
+          "date": 1784454434
+        },
+        {
+          "name": "Dark Carnival Team Spirit",
+          "styleLabel": null,
+          "image": {"src":"/mods/dark-carnival-team-spirit.webp","width":854,"height":480},
+          "author": "Senop",
+          "authorUrl": "https://t.me/senopD2",
+          "date": 1784454434
+        },
+        {
+          "name": "ReZero Subaru Phone Horn",
+          "styleLabel": null,
+          "image": {"src":"/mods/rezero-subaru-phone-horn.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1780816909
+        },
+        {
+          "name": "ReZero Respawn Sound",
+          "styleLabel": null,
+          "image": {"src":"/mods/rezero-respawn-sound.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1780653646
+        },
+        {"name":"Sora Main Menu","styleLabel":null,"image":{"src":"/mods/sora-main-menu.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780653646},
+        {
+          "name": "Stairs Guy Main Menu",
+          "styleLabel": null,
+          "image": {"src":"/mods/stairs-guy-main-menu.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1780653646
+        },
+        {
+          "name": "USSR and Germany Horn",
+          "styleLabel": null,
+          "image": {"src":"/mods/ussr-and-germany-horn.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1780653646
+        },
+        {
+          "name": "Warcraft III / AllStars Voices",
+          "styleLabel": null,
+          "image": {"src":"/mods/warcraft-iii-allstars-voices.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": null
+        }
+      ]
+    },
+    {
+      "id": "huds",
+      "mods": [
+        {"name":"Horror Black Hud","styleLabel":null,"image":{"src":"/mods/horror-black-hud.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1789988579},
+        {"name":"Gotohouse Hud","styleLabel":null,"image":{"src":"/mods/gotohouse-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789396660},
+        {"name":"Void Hud","styleLabel":null,"image":{"src":"/mods/void-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1789278465},
+        {"name":"Total Black Hud","styleLabel":null,"image":{"src":"/mods/total-black-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789234312},
+        {"name":"Ken Kaneki Hud","styleLabel":null,"image":{"src":"/mods/ken-kaneki-hud.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788726574},
+        {"name":"Anime Hud","styleLabel":null,"image":{"src":"/mods/anime-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788640214},
+        {"name":"Kawaii Hud","styleLabel":null,"image":{"src":"/mods/kawaii-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1788365172},
+        {"name":"Crimson Hud","styleLabel":null,"image":{"src":"/mods/crimson-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788180009},
+        {"name":"Twilight Hud","styleLabel":null,"image":{"src":"/mods/twilight-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1787864667},
+        {"name":"Purple Hud","styleLabel":null,"image":{"src":"/mods/purple-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1787413498},
+        {"name":"White Sora Hud","styleLabel":null,"image":{"src":"/mods/white-sora-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780226470},
+        {"name":"Green Hud","styleLabel":null,"image":{"src":"/mods/green-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1780143296},
+        {"name":"Black Hud","styleLabel":null,"image":{"src":"/mods/black-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1776610659},
+        {"name":"Blue Web Hud","styleLabel":null,"image":{"src":"/mods/blue-web-hud.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776610659}
+      ]
+    },
+    {
+      "id": "item-icons",
+      "mods": [
+        {"name":"Whatsapp Tranquill","styleLabel":null,"image":{"src":"/mods/whatsapp-tranquill.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
+        {"name":"Reflow Radiance","styleLabel":null,"image":{"src":"/mods/reflow-radiance.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790171120},
+        {"name":"Old Items","styleLabel":null,"image":{"src":"/mods/old-items.webp","width":854,"height":480},"author":"lebensinhalt","authorUrl":"https://t.me/turnoffyourlebensinhalt","date":1788922344},
+        {"name":"Purple Icons","styleLabel":null,"image":{"src":"/mods/purple-icons.webp","width":854,"height":480},"author":"palekid666","authorUrl":"https://t.me/ubiycasmerty","date":1781856687},
+        {"name":"White Items","styleLabel":null,"image":{"src":"/mods/white-items.webp","width":993,"height":526},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1781786024},
+        {"name":"Meme Media Items","styleLabel":null,"image":{"src":"/mods/meme-media-items.webp","width":993,"height":526},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1777037538},
+        {"name":"Dark Items","styleLabel":null,"image":{"src":"/mods/dark-items.webp","width":993,"height":526},"author":"lebensinhalt","authorUrl":"https://t.me/turnoffyourlebensinhalt","date":1768823390},
+        {"name":"Allstars Items","styleLabel":null,"image":{"src":"/mods/allstars-items.webp","width":993,"height":526},"author":null,"authorUrl":null,"date":1765193630},
+        {"name":"Nyash Items","styleLabel":null,"image":{"src":"/mods/nyash-items.webp","width":993,"height":526},"author":null,"authorUrl":null,"date":1764752659},
+        {
+          "name": "Arcanas Items",
+          "styleLabel": null,
+          "image": {"src":"/mods/arcanas-items.webp","width":993,"height":526},
+          "author": "lebensinhalt",
+          "authorUrl": "https://t.me/turnoffyourlebensinhalt",
+          "date": 1763215402
+        },
+        {"name":"Beer Bottle","styleLabel":null,"image":{"src":"/mods/beer-bottle.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763215402}
+      ]
+    },
+    {
+      "id": "pedestal",
+      "mods": [
+        {"name":"Pedestal Shadow Fiend","styleLabel":null,"image":{"src":"/mods/pedestal-shadow-fiend.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790809354},
+        {
+          "name": "Dark Carnaval Pedestal",
+          "styleLabel": null,
+          "image": {"src":"/mods/dark-carnaval-pedestal.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790475709
+        },
+        {
+          "name": "Pedestal Feast Abscession",
+          "styleLabel": null,
+          "image": {"src":"/mods/pedestal-feast-abscession.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790392857
+        },
+        {
+          "name": "Pedestal Grand Abscession",
+          "styleLabel": null,
+          "image": {"src":"/mods/pedestal-grand-abscession.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790375737
+        },
+        {
+          "name": "Spectre Arcana Pedestal",
+          "styleLabel": "Style I",
+          "image": {"src":"/mods/spectre-arcana-pedestal-style-i.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1790118406
+        },
+        {
+          "name": "Spectre Arcana Pedestal",
+          "styleLabel": "Style II",
+          "image": {"src":"/mods/spectre-arcana-pedestal-style-ii.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1790118406
+        },
+        {
+          "name": "Earthshaker Burning Pedestal",
+          "styleLabel": null,
+          "image": {"src":"/mods/earthshaker-burning-pedestal.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1789805764
+        },
+        {"name":"Drow Ranger Pedestal","styleLabel":null,"image":{"src":"/mods/drow-ranger-pedestal.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788940775},
+        {"name":"Earthshaker Pedestal","styleLabel":null,"image":{"src":"/mods/earthshaker-pedestal.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788940775},
+        {"name":"Snow Pedestal","styleLabel":null,"image":{"src":"/mods/snow-pedestal.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788940775},
+        {"name":"Windranger Pedestal","styleLabel":null,"image":{"src":"/mods/windranger-pedestal.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788940775}
+      ]
+    },
+    {
+      "id": "fonts",
+      "mods": [
+        {"name":"Pusia","styleLabel":null,"image":{"src":"/mods/pusia.webp","width":854,"height":480},"author":"Timmyone","authorUrl":"https://t.me/timmyone","date":1784463072},
+        {"name":"Warcraft III","styleLabel":null,"image":{"src":"/mods/warcraft-iii.webp","width":854,"height":480},"author":"YMOM77","authorUrl":"https://t.me/mod_dota","date":1778224820},
+        {"name":"Nothing","styleLabel":null,"image":{"src":"/mods/nothing.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1774532493},
+        {"name":"HondaC","styleLabel":null,"image":{"src":"/mods/hondac.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203},
+        {"name":"Audex","styleLabel":null,"image":{"src":"/mods/audex.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771821325},
+        {"name":"Correction Tape","styleLabel":null,"image":{"src":"/mods/correction-tape.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771770813},
+        {"name":"Mason","styleLabel":null,"image":{"src":"/mods/mason.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771535904},
+        {"name":"DM Mono","styleLabel":null,"image":{"src":"/mods/dm-mono.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770937816},
+        {"name":"Divagon","styleLabel":null,"image":{"src":"/mods/divagon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770389710},
+        {"name":"Monocraft","styleLabel":null,"image":{"src":"/mods/monocraft.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770383220}
+      ]
+    },
+    {
+      "id": "parts",
+      "mods": [
+        {"name":"Larger Minimap","styleLabel":null,"image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790894654},
+        {"name":"Grey Minimap","styleLabel":null,"image":{"src":"/mods/grey-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790825298},
+        {"name":"Grey Search Bar","styleLabel":null,"image":{"src":"/mods/grey-search-bar.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {"name":"Larger Timer","styleLabel":null,"image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {"name":"Windows Xp Top Bar","styleLabel":null,"image":{"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
+        {"name":"Hypergamy Search Bar","styleLabel":null,"image":{"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737},
+        {
+          "name": "Sematary Search Bar",
+          "styleLabel": null,
+          "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1790213331
+        },
+        {"name":"Black Top Bar","styleLabel":null,"image":{"src":"/mods/black-top-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790084006},
+        {"name":"Kaneki Search Bar","styleLabel":null,"image":{"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790084006},
+        {
+          "name": "Scolopendra Search Bar",
+          "styleLabel": null,
+          "image": {"src":"/mods/scolopendra-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1790084006
+        }
+      ]
+    },
+    {
+      "id": "ranks",
+      "mods": [
+        {"name":"Battle Icons","styleLabel":null,"image":{"src":"/mods/battle-icons.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790263250},
+        {"name":"Immortal Ranks","styleLabel":null,"image":{"src":"/mods/immortal-ranks.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1789988579},
+        {"name":"Normis Rank Icons","styleLabel":null,"image":{"src":"/mods/normis-rank-icons.webp","width":854,"height":480},"author":"palekid666","authorUrl":"https://t.me/ubiycasmerty","date":1781873451},
+        {"name":"Umbrella Medals","styleLabel":null,"image":{"src":"/mods/umbrella-medals.webp","width":854,"height":480},"author":"kebabmaker","authorUrl":null,"date":1777387078},
+        {
+          "name": "Slates of the Damned",
+          "styleLabel": null,
+          "image": {"src":"/mods/slates-of-the-damned.webp","width":854,"height":480},
+          "author": "ya_lyosha",
+          "authorUrl": "https://www.twitch.tv/ya_lyosha",
+          "date": 1775190022
+        },
+        {"name":"Azur Lane Medals","styleLabel":null,"image":{"src":"/mods/azur-lane-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768005424},
+        {"name":"Bear Medals","styleLabel":null,"image":{"src":"/mods/bear-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764543573},
+        {"name":"Void Medals","styleLabel":null,"image":{"src":"/mods/void-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764541283},
+        {"name":"Flaming Medals","styleLabel":null,"image":{"src":"/mods/flaming-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763129369},
+        {"name":"Imperial Medals","styleLabel":null,"image":{"src":"/mods/imperial-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763129369}
+      ]
+    },
+    {
+      "id": "roshan",
+      "mods": [
+        {"name":"Cosmic Roshan","styleLabel":null,"image":{"src":"/mods/cosmic-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770899849},
+        {"name":"Santa Hat Roshan","styleLabel":null,"image":{"src":"/mods/santa-hat-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766555595},
+        {"name":"Aghanims Roshan","styleLabel":null,"image":{"src":"/mods/aghanims-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756467101},
+        {"name":"Desert Roshan","styleLabel":null,"image":{"src":"/mods/desert-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756467101},
+        {"name":"Gardens Roshan","styleLabel":null,"image":{"src":"/mods/gardens-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756467101},
+        {"name":"Golden Roshan","styleLabel":null,"image":{"src":"/mods/golden-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756467101},
+        {"name":"Greevil Grief Roshan","styleLabel":null,"image":{"src":"/mods/greevil-grief-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756467101},
+        {"name":"Journey Roshan","styleLabel":null,"image":{"src":"/mods/journey-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756467101},
+        {"name":"Reef Roshan","styleLabel":null,"image":{"src":"/mods/reef-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756467101},
+        {"name":"Winter Roshan","styleLabel":null,"image":{"src":"/mods/winter-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756467101}
+      ]
+    },
+    {
+      "id": "ranged-attack",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","styleLabel":null,"image":{"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {"name":"Blue Diretide Ranged Attack","styleLabel":null,"image":{"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {"name":"Green Diretide Ranged Attack","styleLabel":null,"image":{"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {"name":"Nemestice Ranged Attack","styleLabel":null,"image":{"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {"name":"Red Diretide Ranged Attack","styleLabel":null,"image":{"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {"name":"TI10 Ranged Attack","styleLabel":null,"image":{"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {"name":"TI12 Ranged Attack","styleLabel":null,"image":{"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {"name":"TI9 Ranged Attack","styleLabel":null,"image":{"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {"name":"Yellow Diretide Ranged Attack","styleLabel":null,"image":{"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644}
+      ]
+    },
+    {
+      "id": "announcers",
+      "mods": [
+        {"name":"Tusk","styleLabel":null,"image":{"src":"/mods/tusk.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764638549},
+        {"name":"Dark Willow","styleLabel":null,"image":{"src":"/mods/dark-willow-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763897201},
+        {"name":"Darkest Dungeon","styleLabel":null,"image":{"src":"/mods/darkest-dungeon-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763897201},
+        {"name":"Kunkka & Tidehunter","styleLabel":null,"image":{"src":"/mods/kunkka-tidehunter-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763897201},
+        {"name":"Lina","styleLabel":null,"image":{"src":"/mods/lina-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763897201},
+        {"name":"Meepo","styleLabel":null,"image":{"src":"/mods/meepo-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763897201},
+        {"name":"Voice of The International","styleLabel":null,"image":{"src":"/mods/voice-of-the-international-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763897201}
+      ]
+    },
+    {
+      "id": "herofx",
+      "mods": [
+        {
+          "name": "Ancient Apparition Shatterblast",
+          "styleLabel": null,
+          "image": {"src":"/mods/ancient-apparition-shatterblast.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1790113207
+        },
+        {
+          "name": "Keeper of the Light Northlight Illuminance",
+          "styleLabel": null,
+          "image": {"src":"/mods/keeper-of-the-light-northlight-illuminance.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1788180009
+        },
+        {
+          "name": "Lifestealer Golden Effects",
+          "styleLabel": null,
+          "image": {"src":"/mods/lifestealer-golden-effects.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1784702480
+        },
+        {
+          "name": "Tinker Peashooter Turrets",
+          "styleLabel": null,
+          "image": {"src":"/mods/tinker-peashooter-turrets.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1779386733
+        },
+        {
+          "name": "Huskar White Screen Effect",
+          "styleLabel": null,
+          "image": {"src":"/mods/huskar-white-screen-effect.webp","width":854,"height":480},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1778935876
+        },
+        {"name":"Enigma World Chasm Artifact","styleLabel":null,"image":{"src":"/mods/enigma-world-chasm-artifact.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766284079},
+        {"name":"Sniper Ardalan Interdictor","styleLabel":null,"image":{"src":"/mods/sniper-ardalan-interdictor-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765442943}
+      ]
+    },
+    {
+      "id": "versus-screens",
+      "mods": [
+        {"name":"Diretide Versus Screen","styleLabel":null,"image":{"src":"/mods/diretide-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
+        {"name":"Muerta Versus Screen","styleLabel":null,"image":{"src":"/mods/muerta-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
+        {"name":"Nemestice Versus Screen","styleLabel":null,"image":{"src":"/mods/nemestice-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
+        {"name":"TI 2024 Versus Screen","styleLabel":null,"image":{"src":"/mods/ti-2024-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
+        {"name":"TI9 Versus Screen I","styleLabel":null,"image":{"src":"/mods/ti9-versus-screen-i.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
+        {"name":"TI9 Versus Screen II","styleLabel":null,"image":{"src":"/mods/ti9-versus-screen-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
+        {"name":"Winter Versus Screen","styleLabel":null,"image":{"src":"/mods/winter-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295}
+      ]
+    },
+    {
+      "id": "packs",
+      "mods": [
+        {"name":"Autumn Pack","styleLabel":null,"image":{"src":"/mods/autumn-pack.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":null},
+        {"name":"Black & White Pack","styleLabel":null,"image":{"src":"/mods/black-white-pack.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":null},
+        {"name":"Lite Optimization Pack","styleLabel":null,"image":{"src":"/mods/lite-optimization-pack.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":null},
+        {"name":"Purple Pack","styleLabel":null,"image":{"src":"/mods/purple-pack.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":null},
+        {"name":"Umbrella Pack","styleLabel":null,"image":{"src":"/mods/umbrella-pack.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":null},
+        {"name":"Winter Pack","styleLabel":null,"image":{"src":"/mods/winter-pack.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":null}
+      ]
+    },
+    {
+      "id": "pings",
+      "mods": [
+        {"name":"Love Ping","styleLabel":null,"image":{"src":"/mods/love-ping.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790213331},
+        {"name":"Love Ping II","styleLabel":null,"image":{"src":"/mods/love-ping-ii.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790213331},
+        {
+          "name": "Skeleton Black Ping",
+          "styleLabel": null,
+          "image": {"src":"/mods/skeleton-black-ping.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1765193630
+        },
+        {
+          "name": "Skeleton Blue Ping",
+          "styleLabel": null,
+          "image": {"src":"/mods/skeleton-blue-ping.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1765193630
+        },
+        {
+          "name": "Skeleton Purple Ping",
+          "styleLabel": null,
+          "image": {"src":"/mods/skeleton-purple-ping.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1765193630
+        }
+      ]
+    },
+    {
+      "id": "wards",
+      "mods": [
+        {"name":"Monty","styleLabel":null,"image":{"src":"/mods/monty.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331},
+        {"name":"Portal","styleLabel":null,"image":{"src":"/mods/portal.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331},
+        {"name":"Trailgazer","styleLabel":null,"image":{"src":"/mods/trailgazer.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763798331},
+        {"name":"Curious Snaptrap","styleLabel":null,"image":{"src":"/mods/curious-snaptrap.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763698532},
+        {"name":"Floes Tower","styleLabel":null,"image":{"src":"/mods/floes-tower.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763698532}
+      ]
+    },
+    {
+      "id": "optimization",
+      "mods": [
+        {"name":"Tinker Lite Machines","styleLabel":null,"image":{"src":"/mods/tinker-lite-machines.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1773596942},
+        {"name":"Default Wards","styleLabel":null,"image":{"src":"/mods/default-wards.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769787537},
+        {"name":"Commands","styleLabel":null,"image":null,"author":null,"authorUrl":null,"date":null}
+      ]
+    },
+    {
+      "id": "ancient",
+      "mods": [
+        {"name":"Ancient Dragon King","styleLabel":null,"image":{"src":"/mods/ancient-dragon-king.webp","width":854,"height":480},"author":"Kisilev","authorUrl":"https://vk.com/id363951132","date":1784792710},
+        {"name":"Frostivus Ancient","styleLabel":null,"image":{"src":"/mods/frostivus-ancient.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1784792710}
+      ]
+    },
+    {
+      "id": "high-five",
+      "mods": [
+        {"name":"High Five Aghanim Puppet","styleLabel":null,"image":{"src":"/mods/high-five-aghanim-puppet.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782925485},
+        {"name":"High Five Crownfall","styleLabel":null,"image":{"src":"/mods/high-five-crownfall.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782925485}
+      ]
+    },
+    {
+      "id": "tormentor",
+      "mods": [
+        {"name":"10th Anniversary Tormentor","styleLabel":null,"image":{"src":"/mods/10th-anniversary-tormentor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788932483},
+        {"name":"Frostivus Tormentor","styleLabel":null,"image":{"src":"/mods/frostivus-tormentor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788932483}
+      ]
+    },
+    {"id":"towers","mods":[{"name":"Holiday Radiant Tower","styleLabel":null,"image":{"src":"/mods/holiday-radiant-tower.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766624100}]}
+  ]
+}

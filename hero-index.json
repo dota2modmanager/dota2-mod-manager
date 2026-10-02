@@ -1,0 +1,2112 @@
+{
+  "heroes": 147,
+  "mods": 1452,
+  "byHero": {
+    "abaddon": {
+      "name": "Abaddon",
+      "mods": [
+        {"name":"Abaddon Bloody Fallen King","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
+        {"name":"Abaddon Endless Night","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
+        {"name":"Abaddon Endless Night Reborn","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
+        {"name":"Abaddon Fallen King","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
+        {"name":"Abaddon Sayaka Miki","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","mount","shoulder","weapon","wings"]},
+        {"name":"Red Abaddon","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]}
+      ]
+    },
+    "abyssal_underlord": {"name":"Underlord","mods":[{"name":"Underlord Immortal Ravenous","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc"]}]},
+    "alchemist": {
+      "name": "Alchemist",
+      "mods": [
+        {"name":"Alchemist Darkbrew Enforcer","categoryId":"heroes","styleLabel":null,"slots":["misc","head","shoulder","weapon"]},
+        {"name":"Alchemist Radiance Blades","categoryId":"hero-items","styleLabel":null,"slots":["misc","weapon"]},
+        {"name":"Cosmic Alchemist","categoryId":"heroes","styleLabel":null,"slots":["misc","head","shoulder"]},
+        {"name":"Frostivus Alchemist","categoryId":"heroes","styleLabel":null,"slots":["misc","head","shoulder","weapon"]},
+        {"name":"Wraith King Radiance","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]}
+      ]
+    },
+    "ancient_apparition": {
+      "name": "Ancient Apparition",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Ancient Apparition Shatterblast","categoryId":"herofx","styleLabel":null,"slots":[]},
+        {"name":"Ancient Apparition Yoshino","categoryId":"heroes","styleLabel":null,"slots":["shoulder","tail","misc","arms","head"]},
+        {"name":"Bloody Ancient Apparition","categoryId":"heroes","styleLabel":null,"slots":["shoulder","tail"]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Immortal Ancient Apparition","categoryId":"heroes","styleLabel":null,"slots":["shoulder","tail"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "antimage": {
+      "name": "Anti-Mage",
+      "mods": [
+        {"name":"Anti-Mage Bloody Reaper","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
+        {"name":"Anti-Mage Blue Illidan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
+        {"name":"Anti-Mage Creep","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head"]},
+        {"name":"Anti-Mage Fervent Conscript","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","shoulder","offhand"]},
+        {"name":"Anti-Mage Forgotten Planes","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","shoulder"]},
+        {"name":"Anti-Mage Guilt Survivor","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
+        {"name":"Anti-Mage Illidan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","legs","offhand","shoulder"]},
+        {"name":"Anti-Mage Illidan v2","categoryId":"heroes","styleLabel":null,"slots":["head","weapon","arms","misc","belt"]},
+        {"name":"Anti-Mage Manta","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
+        {"name":"Anti-Mage Persona Sakura","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
+        {"name":"Anti-Mage Prime","categoryId":"heroes","styleLabel":null,"slots":["weapon","misc","head","arms","belt"]},
+        {"name":"Anti-Mage Ronin Warrior","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
+        {"name":"Anti-Mage Shadow Slayer","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
+        {"name":"Anti-Mage Turstarkuri Pilgrim","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","legs","shoulder"]},
+        {"name":"Curseding Anti-Mage","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
+        {"name":"Immortal Anti-Mage","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","offhand"]}
+      ]
+    },
+    "arc_warden": {
+      "name": "Arc Warden",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Arc Warden Ancient Gaoler","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
+        {"name":"Arc Warden Black Hole","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
+        {"name":"Arc Warden Frosty Toy","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
+        {"name":"Arc Warden Sakura Winter","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
+        {"name":"Arc Warden Yin Yang","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
+        {"name":"Ashes Arc Warden","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "axe": {
+      "name": "Axe",
+      "mods": [
+        {"name":"Axe Automaton","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon"]},
+        {"name":"Axe Automaton Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","back","base"]},
+        {"name":"Axe Gawr Gura","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"]},
+        {"name":"Axe Heracles","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"]},
+        {"name":"Axe Immortal Bootblack","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","misc","head"]},
+        {"name":"Axe Immortal Bootblack Brawler","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon"]},
+        {"name":"Axe Kratos","categoryId":"heroes","styleLabel":null,"slots":["weapon","tail","head","belt","arms"]},
+        {"name":"Axe Unleashed","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","misc","head"]}
+      ]
+    },
+    "bane": {
+      "name": "Bane",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Bane Immortal","categoryId":"heroes","styleLabel":null,"slots":["head","shoulder"]},
+        {"name":"Bane Komeiji Koishi","categoryId":"heroes","styleLabel":null,"slots":["head","shoulder","misc","arms","back"]},
+        {"name":"Bane Origin of the Unmaking","categoryId":"hero-items","styleLabel":null,"slots":["head","misc"]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "bard": {
+      "name": "Largo",
+      "mods": [{"name":"Custom Largo","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]},{"name":"Largo Largling","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]}]
+    },
+    "batrider": {
+      "name": "Batrider",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Batrider Chubzarik Prime","categoryId":"heroes","styleLabel":null,"slots":["belt","back","head","mount","misc","shoulder"]},
+        {"name":"Batrider Night Marauder","categoryId":"heroes","styleLabel":null,"slots":["belt","back","head","mount"]},
+        {"name":"Batrider Night Snotty","categoryId":"heroes","styleLabel":null,"slots":["belt","back","head","mount"]},
+        {"name":"Batrider Verna Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["mount"]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "beastmaster": {
+      "name": "Beastmaster",
+      "mods": [
+        {"name":"Beastmaster Bone Armor","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","belt","head","shoulder","weapon"]},
+        {"name":"Beastmaster Egxrdemxn","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","belt","head","shoulder","weapon"]},
+        {"name":"Beastmaster Primal Paean","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
+        {"name":"Beastmaster Primal Paean Crimson","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
+        {"name":"Beastmaster Primal Peacemaker","categoryId":"hero-items","styleLabel":"Crimson","slots":["weapon"]},
+        {"name":"Beastmaster Primal Peacemaker","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Beastmaster Prismatic Bone","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","belt","head","shoulder","weapon"]},
+        {"name":"Beastmaster Yuuki Yuuna","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","belt","head","shoulder","weapon","legs","back"]},
+        {"name":"Immortal Beastmaster","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","shoulder","weapon"]}
+      ]
+    },
+    "blood_seeker": {
+      "name": "Bloodseeker",
+      "mods": [
+        {"name":"Bloodseeker Harvest Hound","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","misc","weapon","offhand"]},
+        {"name":"Bloodseeker Immortal","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","misc","weapon","offhand"]},
+        {"name":"Bloodseeker Strygwyr","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","weapon","offhand"]},
+        {"name":"Bloodseeker Thirst of Eztzhok","categoryId":"hero-items","styleLabel":null,"slots":["weapon","offhand"]}
+      ]
+    },
+    "bounty_hunter": {
+      "name": "Bounty Hunter",
+      "mods": [
+        {"name":"Bounty Hunter Golden Rat","categoryId":"heroes","styleLabel":null,"slots":["back","misc","weapon","head","arms","shoulder"]},
+        {"name":"Bounty Hunter Hei","categoryId":"heroes","styleLabel":null,"slots":["back","misc","weapon","arms","head","shoulder","offhand"]},
+        {"name":"Bounty Hunter Hunters Hoard","categoryId":"hero-items","styleLabel":"Crimson","slots":["back","weapon"]},
+        {"name":"Bounty Hunter Hunters Hoard","categoryId":"hero-items","styleLabel":null,"slots":["back","weapon"]},
+        {"name":"Bounty Hunter M1A2 Abrams","categoryId":"heroes","styleLabel":null,"slots":["weapon","shoulder","offhand","head","back","arms","misc"]},
+        {"name":"Bounty Hunter Old Man","categoryId":"heroes","styleLabel":"Night","slots":["back","misc","weapon"]},
+        {"name":"Bounty Hunter Old Man","categoryId":"heroes","styleLabel":null,"slots":["back","misc","weapon"]},
+        {"name":"Bounty Hunter Old Verminator","categoryId":"heroes","styleLabel":null,"slots":["back","misc","weapon"]},
+        {"name":"Bounty Hunter Tines of Tybara","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]}
+      ]
+    },
+    "brewmaster": {
+      "name": "Brewmaster",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Bare Brewmaster","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Brewmaster Aghanim","categoryId":"heroes","styleLabel":null,"slots":["back","misc","arms","shoulder","weapon"]},
+        {"name":"Brewmaster Jousting Panda","categoryId":"heroes","styleLabel":null,"slots":["back","misc","arms","shoulder","weapon","head"]},
+        {"name":"Brewmaster Military Saint","categoryId":"heroes","styleLabel":null,"slots":["back","misc","arms","shoulder","weapon","head"]},
+        {"name":"Brewmaster Snowdrift Pirat","categoryId":"heroes","styleLabel":null,"slots":["back","misc","arms","shoulder","weapon"]},
+        {"name":"Brewmaster Wilding Tiger","categoryId":"heroes","styleLabel":null,"slots":["back","misc","arms","head","shoulder","weapon"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "bristleback": {
+      "name": "Bristleback",
+      "mods": [
+        {"name":"Bristleback Automaton","categoryId":"heroes","styleLabel":null,"slots":["back","arms","head","weapon","misc"]},
+        {"name":"Bristleback Crimson Ring","categoryId":"heroes","styleLabel":null,"slots":["back","arms","head","misc","weapon"]},
+        {"name":"Crystal Bristleback","categoryId":"heroes","styleLabel":null,"slots":["misc","back","weapon","head","arms"]}
+      ]
+    },
+    "broodmother": {
+      "name": "Broodmother",
+      "mods": [
+        {"name":"Broodmother Epoch of the Abysm","categoryId":"heroes","styleLabel":null,"slots":["head","misc","legs"]},
+        {"name":"Broodmother Golden Orbweaver","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
+        {"name":"Broodmother Immortal Antiquity","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
+        {"name":"Broodmother Redan","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
+        {"name":"Broodmother Silken Queen","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
+        {"name":"Broodmother Undermount Candles","categoryId":"heroes","styleLabel":null,"slots":["misc","legs","head","back"]},
+        {"name":"Broodmother Undermount Gloom","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
+        {"name":"Broodmother White Widow","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
+        {"name":"Goffren Broodmother","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
+        {"name":"Purple Witch Broodmother","categoryId":"heroes","styleLabel":null,"slots":["head","misc","legs"]},
+        {"name":"Reverse Broodmother","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
+        {"name":"SF Broodmother","categoryId":"heroes","styleLabel":null,"slots":["legs"]}
+      ]
+    },
+    "centaur": {
+      "name": "Centaur Warrunner",
+      "mods": [
+        {"name":"Centaur Chaos Chosen","categoryId":"heroes","styleLabel":"Eternal","slots":["belt","arms","head","shield","shoulder","tail","weapon"]},
+        {"name":"Centaur Chaos Chosen","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shield","shoulder","tail","weapon"]},
+        {"name":"Centaur Cunning Counterfeit","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shield","shoulder","tail","weapon"]},
+        {"name":"Centaur Emerald Marauder","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shield","shoulder","tail","weapon"]},
+        {"name":"Centaur Infernal Cavalcade","categoryId":"hero-items","styleLabel":"Crimson","slots":["shoulder"]},
+        {"name":"Centaur Infernal Cavalcade","categoryId":"hero-items","styleLabel":"Golden","slots":["shoulder"]},
+        {"name":"Centaur Infernal Cavalcade","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
+        {"name":"Centaur Infernal Chieftain","categoryId":"hero-items","styleLabel":"Crimson","slots":["head"]},
+        {"name":"Centaur Infernal Chieftain","categoryId":"hero-items","styleLabel":"Golden","slots":["head"]},
+        {"name":"Centaur Infernal Chieftain","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Centaur Infernal Menace","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]}
+      ]
+    },
+    "chaos_knight": {
+      "name": "Chaos Knight",
+      "mods": [
+        {"name":"Chaos Knight Celestial Sentine","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]},
+        {"name":"Chaos Knight Flandre Scarlet","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder","arms","offhand","weapon","legs"]},
+        {"name":"Chaos Knight Unities Of Discord","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]},
+        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Ice Chaos Knight","categoryId":"heroes","styleLabel":null,"slots":["misc","shoulder","head","mount","shield"]},
+        {"name":"Nightmare Chaos Knight","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]}
+      ]
+    },
+    "chen": {
+      "name": "Chen",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Chen Green Infernal","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Chen Infernal Psychic","categoryId":"heroes","styleLabel":null,"slots":["arms","head","mount","shoulder","weapon"]},
+        {"name":"Chen Lelouch","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","mount","shoulder","weapon"]},
+        {"name":"Chen Perils Of The Red Banks","categoryId":"heroes","styleLabel":null,"slots":["arms","head","mount","shoulder","weapon"]},
+        {"name":"Chen Seed of Strife","categoryId":"heroes","styleLabel":null,"slots":["arms","head","mount","shoulder","weapon"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "clinkz": {
+      "name": "Clinkz",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Clinkz Black & White","categoryId":"heroes","styleLabel":null,"slots":["misc","back","weapon","arms","head"]},
+        {"name":"Clinkz Leader of the Molten Army","categoryId":"heroes","styleLabel":null,"slots":["misc","back","weapon","arms","head"]},
+        {"name":"Clinkz Maraxiforms Fate","categoryId":"hero-items","styleLabel":null,"slots":["weapon","misc"]},
+        {"name":"Clinkz Maraxiforms Ire","categoryId":"hero-items","styleLabel":null,"slots":["misc","back"]},
+        {"name":"Clinkz Silver Metall Pink","categoryId":"heroes","styleLabel":null,"slots":["back","weapon","arms","head","misc"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "crystal_maiden": {
+      "name": "Crystal Maiden",
+      "mods": [
+        {"name":"Crystal Maiden Cirno","categoryId":"heroes","styleLabel":null,"slots":["misc","back","shoulder","weapon","head","arms","tail"]},
+        {"name":"Crystal Maiden Ice Blossom","categoryId":"hero-items","styleLabel":"Golden","slots":["weapon"]},
+        {"name":"Crystal Maiden Ice Blossom","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Crystal Maiden Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["back","misc","shoulder","weapon","head"]},
+        {"name":"Crystal Maiden Tamamo no Mae","categoryId":"heroes","styleLabel":null,"slots":["misc","back","shoulder","weapon","head","arms","tail","legs"]},
+        {"name":"Crystal Maiden Yulsarias Glacier","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Crystal Maiden Yulsarias Mantle","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
+        {"name":"Sherman Crystal Maiden","categoryId":"heroes","styleLabel":null,"slots":["misc","back","shoulder","weapon","head"]}
+      ]
+    },
+    "crystalmaiden": {
+      "name": "Crystalmaiden",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "dark_seer": {
+      "name": "Dark Seer",
+      "mods": [
+        {"name":"Dark Seer Forlorn Precipice","categoryId":"hero-items","styleLabel":"Golden","slots":["arms"]},
+        {"name":"Dark Seer Forlorn Precipice","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
+        {"name":"Immortal Dark Seer","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head"]},
+        {"name":"Mars Progenitors Bane","categoryId":"hero-items","styleLabel":"Crimson","slots":["head"]}
+      ]
+    },
+    "dark_willow": {
+      "name": "Dark Willow",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Dark Willow Fairy Godmummer","categoryId":"heroes","styleLabel":"Bare","slots":["arms","misc","head","offhand","wings"]},
+        {"name":"Dark Willow Fairy Godmummer","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","offhand","wings"]},
+        {"name":"Dark Willow Saccharine Saboteur","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","offhand","wings"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Immortal Crimson Dark Willow","categoryId":"heroes","styleLabel":null,"slots":["misc","head","offhand"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "dawnbreaker": {
+      "name": "Dawnbreaker",
+      "mods": [
+        {"name":"Dawnbreaker Death Knight","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
+        {"name":"Dawnbreaker Moonbreaker","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head"]},
+        {"name":"Dawnbreaker Starlorn Adjudicator","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]}
+      ]
+    },
+    "dazzle": {
+      "name": "Dazzle",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Bloody Dazzle","categoryId":"heroes","styleLabel":null,"slots":["misc","shoulder","weapon","back"]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Dazzle Darkclaw","categoryId":"heroes","styleLabel":null,"slots":["misc","shoulder","weapon","back"]},
+        {"name":"Dazzle Gates of Nothl","categoryId":"hero-items","styleLabel":"Crimson","slots":["misc"]},
+        {"name":"Dazzle Gates of Nothl","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Dazzle Graveman","categoryId":"heroes","styleLabel":null,"slots":["misc","shoulder","weapon","back","arms","legs"]},
+        {"name":"Dazzle Lifeless Devotion","categoryId":"heroes","styleLabel":null,"slots":["misc","shoulder","weapon"]},
+        {"name":"Dazzle Needlepoint Necromance","categoryId":"heroes","styleLabel":null,"slots":["misc","shoulder","weapon"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "death_prophet": {
+      "name": "Death Prophet",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Bloody Death Prophet","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Death Prophet BB","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","belt","legs","weapon"]},
+        {"name":"Death Prophet Unicorn","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","belt","legs","weapon"]},
+        {"name":"Death Prophet Yuyuko","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs","belt"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "disruptor": {
+      "name": "Disruptor",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Defiree Disruptor","categoryId":"heroes","styleLabel":null,"slots":["back","arms","misc","head","mount","shoulder","weapon"]},
+        {"name":"Disruptor Faceless Rex","categoryId":"hero-items","styleLabel":null,"slots":["mount"]},
+        {"name":"Disruptor Resistive Pinfold","categoryId":"hero-items","styleLabel":null,"slots":["back"]},
+        {"name":"Disruptor Resistive Pinfold","categoryId":"hero-items","styleLabel":"Tyrian","slots":["back"]},
+        {"name":"Disruptor Tandem Storm","categoryId":"heroes","styleLabel":null,"slots":["back","arms","head","mount","shoulder","weapon"]},
+        {"name":"Disruptor Tractor","categoryId":"hero-items","styleLabel":null,"slots":["mount"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "doom": {
+      "name": "Doom",
+      "mods": [
+        {"name":"Doom Fallen Khorne","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon","shoulder","tail","wings"]},
+        {"name":"Doom Jeanne Alter","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon","shoulder","tail","wings","back","misc"]},
+        {"name":"Doom Sematary","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon","shoulder","tail","wings"]}
+      ]
+    },
+    "dragon_knight": {
+      "name": "Dragon Knight",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Dragon Knight Burning Scale","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon"]},
+        {"name":"Dragon Knight Dragon Hold","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon"]},
+        {"name":"Dragon Knight Fire","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon"]},
+        {"name":"Dragon Knight Persona Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon"]},
+        {"name":"Dragon Knight Silverwurm Sacrifice","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon"]},
+        {"name":"Emerald Dragon Knight","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shield","shoulder","legs","weapon"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "drow": {
+      "name": "Drow Ranger",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Drow Ranger Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon","shoulder"]},
+        {"name":"Drow Ranger Diretide","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
+        {"name":"Drow Ranger Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
+        {"name":"Drow Ranger Master Of Madness","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
+        {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":"Crimson","slots":["back"]},
+        {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":"Golden","slots":["back"]},
+        {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":null,"slots":["back"]},
+        {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":"Tyrian","slots":["back"]},
+        {"name":"Drow Ranger Stranger Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon","shoulder"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nude Drow Ranger","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","misc"]},
+        {"name":"Nude Drow Ranger v2","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon","shoulder"]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "earth_spirit": {
+      "name": "Earth Spirit",
+      "mods": [
+        {"name":"Earth Spirit Slitehering Stone","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","weapon","misc"]},
+        {"name":"Green Earth Spirit","categoryId":"heroes","styleLabel":null,"slots":["belt","weapon","misc"]}
+      ]
+    },
+    "earthshaker": {
+      "name": "Earthshaker",
+      "mods": [
+        {"name":"Cosmic Earthshaker","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc"]},
+        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Earthshaker Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc"]},
+        {"name":"Earthshaker Blink Dagger","categoryId":"item-effects","styleLabel":null,"slots":[]},
+        {"name":"Earthshaker Burning Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc"]},
+        {"name":"Earthshaker Carrot","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Earthshaker Deep Magma","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head","weapon"]},
+        {"name":"Earthshaker Gold Blink Dagger","categoryId":"item-effects","styleLabel":null,"slots":[]},
+        {"name":"Earthshaker Planetfall Burning","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
+        {"name":"Earthshaker Planetfall Reborn","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
+        {"name":"Earthshaker Purple Arcana","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc"]},
+        {"name":"Earthshaker Red Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","belt"]}
+      ]
+    },
+    "ember_spirit": {
+      "name": "Ember Spirit",
+      "mods": [
+        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Ember Spirit Cinder Sensei","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","head","shoulder","weapon"]},
+        {"name":"Ember Spirit Green Samurai","categoryId":"heroes","styleLabel":null,"slots":["belt","weapon","shoulder","arms","back"]},
+        {"name":"Ember Spirit Immortal Fire","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon"]},
+        {"name":"Ember Spirit Mai Shiranui","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","misc","head","legs","shoulder","weapon","offhand"]},
+        {"name":"Ember Spirit Master of Searing Path","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon"]},
+        {"name":"Ember Spirit Shana","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","head","shoulder","weapon","wings","offhand","misc"]},
+        {"name":"Ember Spirit Vanishing Flame","categoryId":"heroes","styleLabel":null,"slots":["back","belt","shoulder","weapon"]},
+        {"name":"Fog Ember Spirit","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon"]},
+        {"name":"Winter Ember Spirit","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon"]}
+      ]
+    },
+    "enchantress": {
+      "name": "Enchantress",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Enchantress Darkwood Witness","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Enchantress Diretide Shimmer","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Enchantress Golubika","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Enchantress Sematary","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Enchantress Shiro","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","belt","shoulder","legs"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "enigma": {
+      "name": "Enigma",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Bloody Enigma","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Cosmic Enigma","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Enigma Angel of the Abyss","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Enigma Blackhole Chan","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
+        {"name":"Enigma Infinity Space","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head"]},
+        {"name":"Enigma World Chasm Artifact","categoryId":"herofx","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "faceless_void": {
+      "name": "Faceless Void",
+      "mods": [
+        {"name":"Cosmic Faceless Void","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","belt","weapon","arms"]},
+        {"name":"Faceless Void Arcana","categoryId":"heroes","styleLabel":"Style I","slots":["belt","arms","head","shoulder","weapon","misc","legs"]},
+        {"name":"Faceless Void Arcana","categoryId":"heroes","styleLabel":"Style II","slots":["belt","arms","head","shoulder","weapon","misc","legs"]},
+        {"name":"Faceless Void Battlefury","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Faceless Void Esdeath","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","misc","weapon","mount","legs"]},
+        {"name":"Faceless Void Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","weapon"]},
+        {"name":"Faceless Void Rita","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","misc","weapon","mount","legs"]}
+      ]
+    },
+    "furion": {
+      "name": "Nature's Prophet",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Bare Natures Prophet","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","misc","weapon"]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Fire Natures Prophet","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
+        {"name":"Golden Natures Prophet","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","shoulder","head","legs","weapon"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Natures Prophet Allfather","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
+        {"name":"Natures Prophet Farm Champion","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
+        {"name":"Natures Prophet Immortal Allfather","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
+        {"name":"Natures Prophet Saya","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","shoulder","legs"]},
+        {"name":"Natures Prophet Spectral Sage","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"White Natures Prophet","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","back","arms"]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "grimstroke": {
+      "name": "Grimstroke",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Grimstroke Arong","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","legs","weapon","belt"]},
+        {"name":"Grimstroke Gloom Shroud","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","weapon"]},
+        {"name":"Grimstroke Purple","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","weapon","misc","belt"]},
+        {"name":"Immortal Grimstroke","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","weapon","misc","belt"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "gyro": {"name":"Gyrocopter","mods":[{"name":"Gyrocopter Kongou","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","back","offhand","weapon"]}]},
+    "gyrocopter": {
+      "name": "Gyrocopter",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "hoodwink": {
+      "name": "Hoodwink",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Bare Hoodwink","categoryId":"heroes","styleLabel":null,"slots":["misc","head","arms","back"]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Hoodwink Bilge Rat Buccaneer","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","tail"]},
+        {"name":"Hoodwink Immortal Fire","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","tail"]},
+        {"name":"Hoodwink Tomokan Footsoldier","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","tail"]},
+        {"name":"Immortal Hoodwink","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","tail"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "huskar": {
+      "name": "Huskar",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Bedrock","categoryId":"terrains","styleLabel":null,"slots":["misc"]},
+        {"name":"Black Huskar","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder"]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Soul Huskar","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder"]},
+        {"name":"Dark Terrain Minify","categoryId":"terrains","styleLabel":null,"slots":["misc"]},
+        {"name":"DarkPoly","categoryId":"terrains","styleLabel":null,"slots":["misc"]},
+        {"name":"DarkPoly & Trees","categoryId":"terrains","styleLabel":null,"slots":["misc"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Huskar Bleeding Edge","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder"]},
+        {"name":"Huskar Cthugha","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder","offhand","weapon"]},
+        {"name":"Huskar Flashpoint Proselyte","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","shoulder","head"]},
+        {"name":"Mossy Cobblestone","categoryId":"terrains","styleLabel":null,"slots":["misc"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Simple Dark Terrain Minify","categoryId":"terrains","styleLabel":"Green","slots":["misc"]},
+        {"name":"Simple Dark Terrain Minify","categoryId":"terrains","styleLabel":null,"slots":["misc"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "invoker": {
+      "name": "Invoker",
+      "mods": [
+        {"name":"Avice Aura Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Chaos Invoker","categoryId":"heroes","styleLabel":null,"slots":["shoulder","arms","head","back","belt","misc"]},
+        {"name":"Dark Reaper Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Homelander Invoker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
+        {"name":"Ice Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Invoker Blackguard Magus","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Invoker Bloody Wizard","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Invoker Dark Artistry","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
+        {"name":"Invoker Dark Artistry v2","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
+        {"name":"Invoker Dark Artistry v3","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","belt"]},
+        {"name":"Invoker Dark Artistry V4","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Invoker Dark Divine","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","belt"]},
+        {"name":"Invoker Depths Covenant","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Invoker Esl Relics Forge","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Invoker Fate Meridian","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Invoker Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Invoker Kid Forge","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Invoker Magus Accord","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
+        {"name":"Invoker Magus Apex","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Invoker Magus Mimicry","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Invoker MaryDay","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Invoker Patchouli","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","shield","belt","legs"]},
+        {"name":"Japan Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","legs"]},
+        {"name":"Sakura Pink Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Sasuke Invoker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","misc","belt","shield","legs"]},
+        {"name":"Young Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","shield","belt","legs"]},
+        {"name":"Young Invoker Dark Artistry","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","shield","belt","legs"]}
+      ]
+    },
+    "invoker_kid": {
+      "name": "Invoker",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Invoker Magus Accord","categoryId":"hero-items","styleLabel":"White","slots":["arms"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "jakiro": {
+      "name": "Jakiro",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Immortal Jakiro","categoryId":"heroes","styleLabel":null,"slots":["wings"]},
+        {"name":"Jakiro Himera","categoryId":"heroes","styleLabel":null,"slots":["wings","misc"]},
+        {"name":"Jakiro Kiyohime","categoryId":"heroes","styleLabel":null,"slots":["wings","head","tail","back","misc"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "juggernaut": {
+      "name": "Juggernaut",
+      "mods": [
+        {"name":"Juggernaut Ancient Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
+        {"name":"Juggernaut Ancient Exile","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
+        {"name":"Juggernaut Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
+        {"name":"Juggernaut Arcana Golden Edge","categoryId":"heroes","styleLabel":null,"slots":["head","misc","arms","back","weapon"]},
+        {"name":"Juggernaut Arcana Purple","categoryId":"heroes","styleLabel":null,"slots":["head","misc","weapon","back","arms"]},
+        {"name":"Juggernaut Aura","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
+        {"name":"Juggernaut Bladeform Aesthete","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
+        {"name":"Juggernaut Fireborn Assault","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
+        {"name":"Juggernaut Ice and Fire","categoryId":"heroes","styleLabel":null,"slots":["misc","back","arms","head","weapon"]},
+        {"name":"Juggernaut Jagged Honor","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
+        {"name":"Juggernaut Lineage Kantusa","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
+        {"name":"Juggernaut Okita Souji","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
+        {"name":"Juggernaut Provocation Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
+        {"name":"Juggernaut Samurai of Wind","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","weapon","arms"]},
+        {"name":"Lollipop Juggernaut","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]}
+      ]
+    },
+    "keeper_of_the_light": {
+      "name": "Keeper of the Light",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Camel Keeper of the Light","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Keeper Of The Light - Snowdrift","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Keeper Of The Light BMW","categoryId":"hero-items","styleLabel":null,"slots":["mount"]},
+        {"name":"Keeper of the Light Darklord","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon","belt","arms","misc"]},
+        {"name":"Keeper of the Light Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Keeper of the Light Northlight Illuminance","categoryId":"herofx","styleLabel":null,"slots":[]},
+        {"name":"Keeper of the Light Prominence","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Keeper of the Light Renegade","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
+        {"name":"Keeper of the Light Sematary","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
+        {"name":"Keeper of the Light Tamamo","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","legs","weapon","arms","belt"]},
+        {"name":"Keeper of the Light Waitureally","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
+        {"name":"Keeper of the Light Wings of Daybreak","categoryId":"hero-items","styleLabel":null,"slots":["mount"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Scarlet Keeper of the Light","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"White Keeper of the Light","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon","belt"]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "kez": {
+      "name": "Kez",
+      "mods": [
+        {"name":"Bare Kez","categoryId":"heroes","styleLabel":null,"slots":["shoulder"]},
+        {"name":"Bloody Kez","categoryId":"heroes","styleLabel":null,"slots":["head","offhand","misc","weapon"]},
+        {"name":"Hollow Kez","categoryId":"heroes","styleLabel":null,"slots":["head","offhand","misc","weapon"]},
+        {"name":"Kez 200","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Kez Bersexer","categoryId":"heroes","styleLabel":null,"slots":["belt","head","shoulder","weapon"]},
+        {"name":"Kez Captain Anchorbeak","categoryId":"heroes","styleLabel":null,"slots":["belt","head","offhand","shoulder","weapon"]},
+        {"name":"Kez Chickez","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","offhand","shoulder","weapon"]},
+        {"name":"Kez Guts Sword","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Kez Nanami Yachiyo Kai","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","offhand","shoulder","weapon","back"]},
+        {"name":"Kez Peacock","categoryId":"heroes","styleLabel":null,"slots":["belt","head","offhand","shoulder","weapon","arms"]},
+        {"name":"Kez Tensura","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
+        {"name":"Kez Zangetsu","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","offhand","misc","shoulder","weapon"]},
+        {"name":"Kez Zangetsu Sword","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Purple Kez","categoryId":"heroes","styleLabel":null,"slots":["head","offhand","misc","weapon"]}
+      ]
+    },
+    "kunkka": {
+      "name": "Kunkka",
+      "mods": [
+        {"name":"Immortal Kunkka","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","shoulder","misc","weapon"]},
+        {"name":"Kunkka Inquisitor Tide","categoryId":"heroes","styleLabel":null,"slots":["misc","legs","head","arms","shoulder","weapon","back","belt"]},
+        {"name":"Kunkka Saltworn Mariner","categoryId":"hero-items","styleLabel":"I","slots":["misc","shoulder"]},
+        {"name":"Kunkka Saltworn Mariner","categoryId":"hero-items","styleLabel":"II","slots":["misc","shoulder"]},
+        {"name":"Kunkka Sea Spirit","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","shoulder","misc","weapon","back","belt"]},
+        {"name":"Kunkka Shadow Blade","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Kunkka Whale Blade","categoryId":"hero-items","styleLabel":"Eminent Revival","slots":["weapon"]},
+        {"name":"Kunkka Whale Blade","categoryId":"hero-items","styleLabel":"Eminent Revival Exceptional","slots":["weapon"]},
+        {"name":"Kunkka Whale Blade","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]}
+      ]
+    },
+    "lanaya": {
+      "name": "Templar Assassin",
+      "mods": [
+        {"name":"Immortal Templar Assassin","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head","misc"]},
+        {"name":"Templar Assassin PlayBoy","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head"]},
+        {"name":"Templar Assassin Royal Squire","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head","weapon"]},
+        {"name":"Templar Assassin Whisper Gates","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head"]}
+      ]
+    },
+    "legion_commander": {
+      "name": "Legion Commander",
+      "mods": [
+        {"name":"Devil Legion Commander","categoryId":"heroes","styleLabel":null,"slots":["head","shoulder","back","arms","weapon"]},
+        {"name":"Legion Commander Automaton","categoryId":"heroes","styleLabel":null,"slots":["back","head","shoulder","weapon"]},
+        {"name":"Legion Commander Chen","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon","legs","misc"]},
+        {"name":"Legion Commander Crimson Black","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Legion Commander Holy Paladin","categoryId":"heroes","styleLabel":null,"slots":["head","legs","shoulder","back","arms","weapon"]},
+        {"name":"Legion Commander Nero","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon","misc","legs"]},
+        {"name":"Legion Commander Persona","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon","legs"]},
+        {"name":"Purple Legion Commander","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon","legs"]}
+      ]
+    },
+    "leshrac": {
+      "name": "Leshrac",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Immortal Leshrac","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","back","misc","weapon"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "lich": {
+      "name": "Lich",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Immortal Lich","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
+        {"name":"Lich Miyuki Shiba","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","back","belt"]},
+        {"name":"Lich Shokuhou Misaki","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","back","belt"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "life_stealer": {
+      "name": "Lifestealer",
+      "mods": [
+        {"name":"Gothic Lifestealer","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Lifestealer Cong Yu","categoryId":"heroes","styleLabel":null,"slots":["misc","head","arms","back","belt","legs","wings"]},
+        {"name":"Lifestealer Diretide Shimmer","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Lifestealer Red Immortal","categoryId":"heroes","styleLabel":null,"slots":["misc","back","belt","head","arms"]}
+      ]
+    },
+    "lifestealer": {
+      "name": "Lifestealer",
+      "mods": [{"name":"Lifestealer Golden Effects","categoryId":"herofx","styleLabel":null,"slots":[]},{"name":"Lifestealer Golden Maw","categoryId":"heroes","styleLabel":null,"slots":["misc","back"]}]
+    },
+    "lina": {
+      "name": "Lina",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Ancients Lina","categoryId":"heroes","styleLabel":null,"slots":["head","misc","belt","arms"]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Immortal Lina","categoryId":"heroes","styleLabel":null,"slots":["belt","head","misc"]},
+        {"name":"Lina Aerial Aphrodite Flame","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc"]},
+        {"name":"Lina Crystal Empress","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","belt","head"]},
+        {"name":"Lina Fire Flame of Origin","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc"]},
+        {"name":"Lina Sharm Lady","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc"]},
+        {"name":"Lina Soul Slayer Immortal","categoryId":"heroes","styleLabel":null,"slots":["head","misc","arms","belt"]},
+        {"name":"Lina Wyrmwrought Flame","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "lion": {
+      "name": "Lion",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Lion Cannonroar Confessor","categoryId":"heroes","styleLabel":null,"slots":["shoulder","back","weapon","arms","misc"]},
+        {"name":"Lion Fin Kings Charm","categoryId":"hero-items","styleLabel":"Exceptional","slots":["weapon"]},
+        {"name":"Lion Fin Kings Charm","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Lion Fin Kings Charm","categoryId":"hero-items","styleLabel":"Purple","slots":["weapon"]},
+        {"name":"Lion Fin Kings Charm","categoryId":"hero-items","styleLabel":"Retro","slots":["weapon"]},
+        {"name":"Lion Hell-Spar Anathema","categoryId":"hero-items","styleLabel":"Crimson","slots":["arms"]},
+        {"name":"Lion Hell-Spar Anathema","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
+        {"name":"Lion Hell-Spar Anathema","categoryId":"hero-items","styleLabel":"Obsidian","slots":["arms"]},
+        {"name":"Lion Hell-Spar Anathema","categoryId":"hero-items","styleLabel":"Purple","slots":["arms"]},
+        {"name":"Lion Immortal Chimera","categoryId":"heroes","styleLabel":null,"slots":["back","arms","head","shoulder","weapon","misc"]},
+        {"name":"Lion Mulctant Pall","categoryId":"hero-items","styleLabel":"Crimson","slots":["back"]},
+        {"name":"Lion Mulctant Pall","categoryId":"hero-items","styleLabel":null,"slots":["back"]},
+        {"name":"Lion Mulctant Pall","categoryId":"hero-items","styleLabel":"Purple","slots":["back"]},
+        {"name":"Lion Witcher","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","weapon"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "lone_druid": {
+      "name": "Lone Druid",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Lone Druid Cauldron of Xahryx","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Lone Druid Cauldron of Xahryx","categoryId":"hero-items","styleLabel":"Retro","slots":["weapon"]},
+        {"name":"Lone Druid Cauldron of Xahryx","categoryId":"hero-items","styleLabel":"Retro v2","slots":["weapon"]},
+        {"name":"Lone Druid Claws of Nuranu","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
+        {"name":"Lone Druid Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","misc","weapon"]},
+        {"name":"Mops Lone Druid Bear","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Reverse Lone Druid","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","misc","weapon"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "luna": {
+      "name": "Luna",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Luna Bloodmoon Stalker","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
+        {"name":"Luna Crescent Wheel","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
+        {"name":"Luna Dark Moonfall","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
+        {"name":"Luna Moon Stalker","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
+        {"name":"Luna Moonfall","categoryId":"hero-items","styleLabel":"Golden","slots":["shield"]},
+        {"name":"Luna Moonfall","categoryId":"hero-items","styleLabel":null,"slots":["shield"]},
+        {"name":"Luna Sematary Rainbow Bridge III","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
+        {"name":"Luna Twilight Schism","categoryId":"hero-items","styleLabel":"Crimson","slots":["weapon"]},
+        {"name":"Luna Twilight Schism","categoryId":"hero-items","styleLabel":"Golden","slots":["weapon"]},
+        {"name":"Luna Twilight Schism","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Luna Winged Sentinel","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "lycan": {
+      "name": "Lycan",
+      "mods": [
+        {"name":"Better Lycan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc","head"]},
+        {"name":"Lycan Blood Beast","categoryId":"heroes","styleLabel":null,"slots":["belt","weapon"]},
+        {"name":"Lycan Blood Moon","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc"]},
+        {"name":"Lycan Collector 2021","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc","head"]},
+        {"name":"Lycan Frostbloom Claws","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Lycan Furrytrop","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc","head"]},
+        {"name":"Lycan Red Wolf Clan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc","head"]},
+        {"name":"Winter Lycan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc"]}
+      ]
+    },
+    "magnataur": {
+      "name": "Magnus",
+      "mods": [
+        {"name":"Magnus Collapse","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon"]},
+        {"name":"Magnus Eyes of Ardenok","categoryId":"hero-items","styleLabel":"Crimson","slots":["head"]},
+        {"name":"Magnus Eyes of Ardenok","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Magnus Kirito","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms","head","weapon","legs"]},
+        {"name":"Magnus Magnataur","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon"]},
+        {"name":"Magnus Ornate Cruelty","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon"]},
+        {"name":"Magnus Shock of the Anvil","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Magnus Shock of the Anvil Crimson","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Magnus Vortexbull","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon","misc","legs"]},
+        {"name":"Magnus White Tiger","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon"]}
+      ]
+    },
+    "marci": {
+      "name": "Marci",
+      "mods": [
+        {"name":"Cosmic Cartographer","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
+        {"name":"Maid Marci","categoryId":"heroes","styleLabel":null,"slots":["shoulder","misc","back"]},
+        {"name":"Marci Atri","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","shoulder","arms"]},
+        {"name":"Marci Bloomjewel Brawler","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
+        {"name":"Marci Bloomjewel Unusual","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
+        {"name":"Marci Faithful Fortune","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
+        {"name":"Marci Laurels of the Downstar","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
+        {"name":"Marci School of the Solar Fang","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
+        {"name":"Nude Marci","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
+        {"name":"Snowing Marci","categoryId":"heroes","styleLabel":null,"slots":["shoulder","misc","head","back"]}
+      ]
+    },
+    "mars": {
+      "name": "Mars",
+      "mods": [
+        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Mars Crimson Set","categoryId":"heroes","styleLabel":null,"slots":["misc","shield","weapon"]},
+        {"name":"Mars Diretide Shimmer","categoryId":"heroes","styleLabel":null,"slots":["misc","shield"]},
+        {"name":"Mars Progenitors Bane","categoryId":"hero-items","styleLabel":"Crimson","slots":["misc"]},
+        {"name":"Mars Progenitors Bane","categoryId":"hero-items","styleLabel":null,"slots":["misc"]}
+      ]
+    },
+    "medusa": {
+      "name": "Medusa",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Immortal Medusa","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","tail","misc"]},
+        {"name":"Medusa Gilgamesh","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","weapon","tail","head","base","shoulder"]},
+        {"name":"Medusa Gorgon","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","tail","misc"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "meepo": {
+      "name": "Meepo",
+      "mods": [
+        {"name":"Bunshinjutsu Meepo","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder"]},
+        {"name":"Kai Meepo","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]},
+        {"name":"Meepo Blueness","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]},
+        {"name":"Meepo Diretide","categoryId":"heroes","styleLabel":null,"slots":["head","misc","weapon","shoulder","back"]},
+        {"name":"Meepo Fractured Haul","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]},
+        {"name":"Meepo Lotus Bear","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]},
+        {"name":"Meepo Mocking Bird","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]}
+      ]
+    },
+    "mirana": {
+      "name": "Mirana",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Mirana Pulsar Remnant","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Mirana Purple","categoryId":"heroes","styleLabel":null,"slots":["weapon","arms","back","head","mount","misc","shoulder"]},
+        {"name":"Mirana Sacred Grove","categoryId":"heroes","styleLabel":null,"slots":["weapon","arms","back","head","mount","misc","shoulder"]},
+        {"name":"Mirana Suigintou","categoryId":"heroes","styleLabel":null,"slots":["weapon","arms","back","misc","head","mount","shoulder","legs"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "mirana_persona": {"name":"Mirana","mods":[{"name":"Mirana of Nightsilver","categoryId":"heroes","styleLabel":null,"slots":["weapon","arms","back","head","misc","mount","shoulder"]}]},
+    "monkey_king": {
+      "name": "Monkey King",
+      "mods": [
+        {"name":"Ifrit Monkey King","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head","shoulder"]},
+        {"name":"Monkey King Arcana","categoryId":"heroes","styleLabel":"Death","slots":["head"]},
+        {"name":"Monkey King Arcana","categoryId":"heroes","styleLabel":"Fire","slots":["head"]},
+        {"name":"Monkey King Arcana","categoryId":"heroes","styleLabel":null,"slots":["head"]},
+        {"name":"Monkey King Arcana","categoryId":"heroes","styleLabel":"Water","slots":["head"]},
+        {"name":"Monkey King Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head","shoulder"]},
+        {"name":"Monkey King Simian Sovereign","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head","shoulder"]},
+        {"name":"Monkey King Staff of Gun-Yu","categoryId":"hero-items","styleLabel":"Anniversary","slots":["weapon"]},
+        {"name":"Monkey King Staff of Gun-Yu","categoryId":"hero-items","styleLabel":"Crimson","slots":["weapon"]},
+        {"name":"Monkey King Staff of Gun-Yu","categoryId":"hero-items","styleLabel":"Golden","slots":["weapon"]},
+        {"name":"Monkey King Staff of Gun-Yu","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Monkey King Water Demon","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head","shoulder"]},
+        {"name":"Red Monkey King","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head","shoulder"]}
+      ]
+    },
+    "morphling": {
+      "name": "Morphling",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Flameling Morphling","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Morphling Abyss Revenge","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Morphling Akulenok","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Morphling Automaton","categoryId":"heroes","styleLabel":null,"slots":["misc","arms"]},
+        {"name":"Morphling Blade Of Tears","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
+        {"name":"Morphling Darktrench Purple","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Morphling Darktrench Tears","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
+        {"name":"Morphling Fluid Frenzy","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Morphling Green Immortal","categoryId":"heroes","styleLabel":null,"slots":["head","weapon"]},
+        {"name":"Morphling Immortal Electro Gem","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Morphling Megalodon","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Void Morphling","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "muerta": {
+      "name": "Muerta",
+      "mods": [
+        {"name":"Blue Muerta","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Hell Muerta","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","misc","weapon"]},
+        {"name":"Muerta Blackwing Bandolera","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","misc","weapon"]},
+        {"name":"Muerta Soul Warden","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","misc","weapon"]}
+      ]
+    },
+    "naga": {"name":"Naga","mods":[{"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]}]},
+    "necrolyte": {
+      "name": "Necrophos",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Immortal Necrophos","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs","shoulder"]},
+        {"name":"Necrophos Eucliwood Halsace","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs","weapon","shoulder","arms","wings","tail"]},
+        {"name":"Necrophos Serpent Spite","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs","shoulder"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "nerubian_assassin": {
+      "name": "Nyx Assassin",
+      "mods": [
+        {"name":"Nyx Assassin - Mecha Nyx","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","weapon"]},
+        {"name":"Nyx Assassin Dalbaeb","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
+        {"name":"Nyx Assassin Latticean Hierarchy","categoryId":"hero-items","styleLabel":"Crimson","slots":["arms"]},
+        {"name":"Nyx Assassin Latticean Hierarchy","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
+        {"name":"Nyx Assassin Latticean Hierarchy","categoryId":"hero-items","styleLabel":"Tyrian","slots":["arms"]}
+      ]
+    },
+    "nevermore": {
+      "name": "Shadow Fiend",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Shadow Fiend 7.28","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","arms","wings","misc"]},
+        {"name":"Shadow Fiend King of Vipers","categoryId":"heroes","styleLabel":"Style II","slots":["arms","head","shoulder"]},
+        {"name":"Shadow Fiend King of Vipers","categoryId":"heroes","styleLabel":"Style III","slots":["arms","head","shoulder"]},
+        {"name":"Shadow Fiend Lightning Soul","categoryId":"heroes","styleLabel":null,"slots":["head","wings","shoulder","arms"]},
+        {"name":"Shadow Fiend White","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","arms","misc"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "night_stalker": {
+      "name": "Night Stalker",
+      "mods": [
+        {"name":"Night Stalker Dark Oath","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","wings"]},
+        {"name":"Night Stalker Remilia","categoryId":"heroes","styleLabel":"Style II","slots":["arms","misc","tail","wings","back","head","legs"]}
+      ]
+    },
+    "nightstalker": {
+      "name": "Nightstalker",
+      "mods": [
+        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Night Stalker Feasts of Forever","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","tail","wings"]},
+        {"name":"Night Stalker Frost Walker","categoryId":"heroes","styleLabel":null,"slots":["arms","tail","wings","back","head","legs"]},
+        {"name":"Night Stalker Relict","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","tail","wings"]},
+        {"name":"Night Stalker Remilia","categoryId":"heroes","styleLabel":"Style I","slots":["arms","misc","tail","wings"]},
+        {"name":"Phite Phantom Assassin","categoryId":"heroes","styleLabel":null,"slots":["head"]}
+      ]
+    },
+    "nightstlaker": {"name":"Nightstlaker","mods":[{"name":"Night Stalker Remilia","categoryId":"heroes","styleLabel":"Style I","slots":["arms","back","misc","head","legs","tail"]}]},
+    "nyx": {"name":"Nyx Assassin","mods":[{"name":"Alien Nyx Assassin","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]}]},
+    "nyx_assassin": {"name":"Nyx Assassin","mods":[{"name":"Pink Nyx Assassin","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]}]},
+    "obsidian_destroyer": {
+      "name": "Outworld Destroyer",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Joker Ringmaster","categoryId":"heroes","styleLabel":null,"slots":["head"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Outworld Destroyer Dark Metter","categoryId":"heroes","styleLabel":null,"slots":["weapon","wings"]},
+        {"name":"Outworld Destroyer Tatsumaki","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings","arms","back"]},
+        {"name":"Outworld Destroyer Ulqiorra","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings","arms","back"]},
+        {"name":"Outworld Destroyer Yukari","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings","arms","back"]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "ogre_magi": {
+      "name": "Ogre Magi",
+      "mods": [
+        {"name":"Ogre Magi Amakusa Shiro","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","weapon","misc","legs","tail"]},
+        {"name":"Ogre Magi Arcana","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","weapon"]},
+        {"name":"Ogre Magi Custom Arcana","categoryId":"heroes","styleLabel":null,"slots":["head","weapon","belt","back"]},
+        {"name":"Ogre Magi Freeboot Fortunes","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","weapon"]},
+        {"name":"Ogre Magi Pyrexae Polymorph","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","weapon"]}
+      ]
+    },
+    "omniknight": {
+      "name": "Omniknight",
+      "mods": [
+        {"name":"Omniknight Akashi","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","weapon","shoulder","wings","misc"]},
+        {"name":"Omniknight Blinding Bastion","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","weapon","shoulder"]},
+        {"name":"Omniknight Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","weapon","shoulder","misc"]}
+      ]
+    },
+    "oracle": {
+      "name": "Oracle",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Oracle Automaton","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","weapon"]},
+        {"name":"Oracle Automaton Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","weapon","base"]},
+        {"name":"Oracle Immortal Silence","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","weapon"]},
+        {"name":"Oracle Irisviel von Einzbern","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","weapon"]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Shaolin Master Oracle","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","weapon"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "pangolier": {
+      "name": "Pangolier",
+      "mods": [
+        {"name":"Bare Pangolier","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
+        {"name":"Pangolier Gentleman","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
+        {"name":"Pangolier Windward Rogue","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]}
+      ]
+    },
+    "phantom_assassin": {
+      "name": "Phantom Assassin",
+      "mods": [
+        {"name":"Phantom Assassin Arcana","categoryId":"heroes","styleLabel":null,"slots":["weapon","back","misc","head","shoulder","belt"]},
+        {"name":"Phantom Assassin Athena","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
+        {"name":"Phantom Assassin Avowance","categoryId":"hero-items","styleLabel":"Crimson","slots":["shoulder"]},
+        {"name":"Phantom Assassin Avowance","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
+        {"name":"Phantom Assassin Codicil","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Phantom Assassin Gothic","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
+        {"name":"Phantom Assassin Persona","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","shoulder","weapon","belt","arms"]},
+        {"name":"Phantom Assassin Rory","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","back","head","shoulder","belt"]},
+        {"name":"Phantom Assassin Skull Arcana","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
+        {"name":"Phantom Assassin Yor Forger","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","weapon","back","head","shoulder","belt"]},
+        {"name":"Phite Phantom Assassin","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
+        {"name":"Warden Phantom Assassin","categoryId":"heroes","styleLabel":null,"slots":["weapon","back","misc","head","shoulder","belt"]}
+      ]
+    },
+    "phantom_lancer": {
+      "name": "Phantom Lancer",
+      "mods": [
+        {"name":"Anubis Phantom Lancer","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
+        {"name":"Crimson Phantom Lancer","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
+        {"name":"Immortal Phantom Lancer","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
+        {"name":"Phantom Lancer Ame","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon","arms"]},
+        {"name":"Phantom Lancer Concord Dominion","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
+        {"name":"Phantom Lancer Concord Revers","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Phantom Lancer Crimson v2","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
+        {"name":"Phantom Lancer Dark Carnival","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
+        {"name":"Phantom Lancer Epileptick1d Mod","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
+        {"name":"Phantom Lancer Humble Drifter","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","shoulder","weapon"]},
+        {"name":"Phantom Lancer Immortal Avilliva","categoryId":"heroes","styleLabel":null,"slots":["head","shoulder","weapon"]},
+        {"name":"Phantom Lancer Immortal Felidae","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
+        {"name":"Phantom Lancer Immortal Fire","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
+        {"name":"Phantom Lancer Immortal Frost","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Phantom Lancer Pose","categoryId":"hero-items","styleLabel":null,"slots":[]},
+        {"name":"Phantom Lancer Purple Avilliva","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
+        {"name":"Phantom Lancer Ravenblight","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Phantom Lancer Sun Warrior","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","shoulder","weapon"]}
+      ]
+    },
+    "pheonix": {"name":"Pheonix","mods":[{"name":"Ice Phoenix","categoryId":"heroes","styleLabel":null,"slots":[]}]},
+    "phoenix": {
+      "name": "Phoenix",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Black Phoenix","categoryId":"heroes","styleLabel":null,"slots":["head","misc","wings"]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Ice Phoenix","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Phoenix Vermillion Crucible","categoryId":"heroes","styleLabel":null,"slots":["misc","head","wings"]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Star Sage Phoenix","categoryId":"heroes","styleLabel":null,"slots":["misc","head","wings"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "primal_beast": {
+      "name": "Primal Beast",
+      "mods": [
+        {"name":"Immortal Primal Beast","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","legs"]},
+        {"name":"Primal Beast Dark Behemoth","categoryId":"heroes","styleLabel":null,"slots":["arms","back","legs","head"]},
+        {"name":"Primal Beast Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["legs"]},
+        {"name":"Primal Beast Prehistoric Predator","categoryId":"heroes","styleLabel":null,"slots":["arms","back","legs","head"]},
+        {"name":"Primal Beast Snowbeast","categoryId":"heroes","styleLabel":null,"slots":["arms","legs","back","head"]},
+        {"name":"Primal Beast Temple Guardian","categoryId":"hero-items","styleLabel":null,"slots":["arms"]}
+      ]
+    },
+    "puck": {
+      "name": "Puck",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Dragon Puck","categoryId":"heroes","styleLabel":null,"slots":["wings","tail","head"]},
+        {"name":"Fire Puck","categoryId":"heroes","styleLabel":null,"slots":["head","tail"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Immortal Puck","categoryId":"heroes","styleLabel":null,"slots":["head","tail","wings"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Puck Wanderers Brush Crimson","categoryId":"hero-items","styleLabel":null,"slots":["tail"]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "pudge": {
+      "name": "Pudge",
+      "mods": [
+        {"name":"Gopo Pudge","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head"]},
+        {"name":"Pudge Abscession Immortal","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","shoulder"]},
+        {"name":"Pudge Arcana Elephant","categoryId":"heroes","styleLabel":null,"slots":["weapon","belt","misc","head","back","arms"]},
+        {"name":"Pudge Candy Cat","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
+        {"name":"Pudge CM","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon"]},
+        {"name":"Pudge Dendi Arcana","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
+        {"name":"Pudge Feast Immortal","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
+        {"name":"Pudge Gol0vach","categoryId":"heroes","styleLabel":null,"slots":["back","belt","head","arms","weapon","misc"]},
+        {"name":"Pudge Hood of Defiance","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Pudge Immortal Gold","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
+        {"name":"Pudge Iron Hog","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
+        {"name":"Pudge Mindless Slaughter","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
+        {"name":"Pudge Rotzo the Clown","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
+        {"name":"Pudge Toy Butcher","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","base","shoulder"]},
+        {"name":"Pudge Toy Woodcutter","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","base","shoulder"]}
+      ]
+    },
+    "pudge_cute": {"name":"Pudge","mods":[{"name":"Pudge Clown Toy","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","shoulder"]}]},
+    "pugna": {
+      "name": "Pugna",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Pugna Nightwither Revenant","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","shoulder","misc","weapon"]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "queenofpain": {
+      "name": "Queen of Pain",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Cursed Queen of Pain","categoryId":"heroes","styleLabel":null,"slots":["arms","shoulder","head","wings","legs","misc","weapon"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Immortal Queen of Pain","categoryId":"heroes","styleLabel":null,"slots":["head","legs","weapon","shoulder","wings"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nude Queen of Pain","categoryId":"heroes","styleLabel":null,"slots":["head","legs","weapon","shoulder","wings","arms","misc"]},
+        {"name":"Purple Queen of Pain","categoryId":"heroes","styleLabel":null,"slots":["head","legs","weapon","shoulder","wings","arms","misc"]},
+        {"name":"Queen of Pain Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","wings","shoulder","weapon","legs","head"]},
+        {"name":"Queen of Pain Blue Arcana","categoryId":"heroes","styleLabel":null,"slots":["head","legs","weapon","shoulder","wings","misc"]},
+        {"name":"Queen of Pain Rose","categoryId":"heroes","styleLabel":null,"slots":["head","legs","weapon","shoulder","wings"]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "rattletrap": {
+      "name": "Clockwerk",
+      "mods": [
+        {"name":"Clockwerk Apex Automated","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Clockwerk Cogwerk","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Clockwerk Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Clockwerk Paraflare Cannon","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Clockwerk Rabid Watchcog","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Clockwerk Seadog Stash","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Nuclear Clockwerk","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]}
+      ]
+    },
+    "razor": {
+      "name": "Razor",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Dark Souls Razor","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","misc","weapon"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Razor Rainbow Statics","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc","weapon"]},
+        {"name":"Razor Rizelencer","categoryId":"heroes","styleLabel":null,"slots":["head","weapon","arms","misc"]},
+        {"name":"Razor Silver Rrevenant","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc","weapon"]},
+        {"name":"Razor Stormlord Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc","weapon","belt","shield"]},
+        {"name":"Razor Voidstorm Asylum","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc","weapon","belt","shield"]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "riki": {"name":"Riki","mods":[{"name":"Riki Hunger Howling Wilds","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","tail","weapon"]}]},
+    "ringmaster": {
+      "name": "Ringmaster",
+      "mods": [
+        {"name":"Harrows Harvest Ringmaster","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","weapon"]},
+        {"name":"Joker Ringmaster","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
+        {"name":"Ringmaster Ibalai","categoryId":"heroes","styleLabel":null,"slots":["belt"]}
+      ]
+    },
+    "rubick": {
+      "name": "Rubick",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Rubick Ancient Magus","categoryId":"heroes","styleLabel":null,"slots":["back","head","weapon","shoulder"]},
+        {"name":"Rubick Arcana","categoryId":"heroes","styleLabel":null,"slots":["back","misc"]},
+        {"name":"Rubick Caloedick Mage","categoryId":"heroes","styleLabel":null,"slots":["back","head","weapon","shoulder","base","misc"]},
+        {"name":"Rubick Dark Mage","categoryId":"heroes","styleLabel":null,"slots":["back","head","weapon","shoulder"]},
+        {"name":"Rubick Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["back","head","weapon","shoulder","misc"]},
+        {"name":"Rubick Plagueroad Apothacary","categoryId":"heroes","styleLabel":null,"slots":["back","head","weapon","shoulder"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "sand_king": {
+      "name": "Sand King",
+      "mods": [
+        {"name":"Sand King Black Sands","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","shoulder","misc","tail"]},
+        {"name":"Steel Sand King","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","shoulder","tail"]}
+      ]
+    },
+    "shadow_demon": {
+      "name": "Shadow Demon",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Shadow Demon Grim Facade","categoryId":"hero-items","styleLabel":"Golden","slots":["back"]},
+        {"name":"Shadow Demon Grim Facade","categoryId":"hero-items","styleLabel":null,"slots":["back"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "shadow_fiend": {
+      "name": "Shadow Fiend",
+      "mods": [
+        {"name":"Cardboard Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["head"]},
+        {"name":"Cursed Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
+        {"name":"Diabolical Shadow Fiend","categoryId":"heroes","styleLabel":"Desolation","slots":["arms","head","shoulder"]},
+        {"name":"Diabolical Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
+        {"name":"Emerald Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["head","misc","arms","shoulder"]},
+        {"name":"Ghost Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["shoulder","arms","head"]},
+        {"name":"Old Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["wings","head","misc","arms","shoulder"]},
+        {"name":"Pink Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
+        {"name":"Shadow Fiend 1000-7","categoryId":"heroes","styleLabel":null,"slots":["head","wings"]},
+        {"name":"Shadow Fiend Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","wings"]},
+        {"name":"Shadow Fiend Arms of Desolation","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
+        {"name":"Shadow Fiend Avice Mod","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
+        {"name":"Shadow Fiend Black","categoryId":"heroes","styleLabel":null,"slots":["wings","misc","arms","head","shoulder"]},
+        {"name":"Shadow Fiend Desolation","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","shoulder"]},
+        {"name":"Shadow Fiend Eternal Harvest","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
+        {"name":"Shadow Fiend Eternal Harvest","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
+        {"name":"Shadow Fiend Eternal Harvest","categoryId":"heroes","styleLabel":"Spring","slots":["arms","head","shoulder"]},
+        {"name":"Shadow Fiend King of Vipers","categoryId":"heroes","styleLabel":"Style I","slots":["arms","head","shoulder"]},
+        {"name":"Shadow Fiend Souls Tyrant","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
+        {"name":"Shadow Fiend Sundered Souls","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","wings"]},
+        {"name":"Shadow Fiend Trenbolone","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]}
+      ]
+    },
+    "shadowshaman": {
+      "name": "Shadow Shaman",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Shadow Shaman Immortal Crimson","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc","weapon","offhand"]},
+        {"name":"Shadow Shaman Purple","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc","weapon","offhand"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"White Shadow Shaman","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc","weapon","offhand"]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "shopkeeper": {"name":"Shopkeeper","mods":[{"name":"Gabe Shopkeeper","categoryId":"other","styleLabel":null,"slots":[]}]},
+    "shopkeeper_dire": {"name":"Shopkeeper Dire","mods":[{"name":"Gabe Shopkeeper","categoryId":"other","styleLabel":null,"slots":[]}]},
+    "shredder": {
+      "name": "Timbersaw",
+      "mods": [
+        {"name":"Shadow Timbersaw","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder"]},
+        {"name":"Timbersaw Claw Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Timbersaw Clearcut Cavalier","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","misc","head","shoulder","back","offhand"]},
+        {"name":"Timbersaw Rectifier","categoryId":"hero-items","styleLabel":"Golden","slots":["misc"]},
+        {"name":"Timbersaw Rectifier","categoryId":"hero-items","styleLabel":null,"slots":["misc","offhand"]},
+        {"name":"Timbersaw Rectifier","categoryId":"hero-items","styleLabel":"Tyrian","slots":["misc"]},
+        {"name":"ToxicPunk Timbersaw","categoryId":"heroes","styleLabel":null,"slots":["head","misc","arms","shoulder"]}
+      ]
+    },
+    "silencer": {
+      "name": "Silencer",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Bloodelf Silencer","categoryId":"heroes","styleLabel":null,"slots":["head","misc","shield","shoulder","weapon","arms","belt","offhand"]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Silencer Oscilla Immortal","categoryId":"heroes","styleLabel":null,"slots":["head","misc","shield","shoulder","weapon","arms","belt"]},
+        {"name":"Silencer Whispered Wing","categoryId":"heroes","styleLabel":null,"slots":["head","misc","shield","shoulder","weapon","arms"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "siren": {
+      "name": "Naga Siren",
+      "mods": [
+        {"name":"Ancient Sand Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
+        {"name":"Aquamarine Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand","misc"]},
+        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Darkness Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
+        {"name":"Naga Siren 42 Bratuha","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand","legs","misc"]},
+        {"name":"Naga Siren Allure of the Deep","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
+        {"name":"Naga Siren Izayoi Miku","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","tail","weapon","offhand","legs"]},
+        {"name":"Naga Siren Snickers","categoryId":"hero-items","styleLabel":null,"slots":["weapon","offhand"]},
+        {"name":"Nude Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Princess Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
+        {"name":"Purple Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["offhand","weapon","tail","head","arms"]}
+      ]
+    },
+    "skywrath_mage": {
+      "name": "Skywrath Mage",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Devil Skywrath Mage","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","weapon","wings"]},
+        {"name":"Devotions of Dragonus Atos","categoryId":"item-effects","styleLabel":null,"slots":[]},
+        {"name":"Devotions of Dragonus Atos II","categoryId":"item-effects","styleLabel":null,"slots":[]},
+        {"name":"Devotions of Dragonus Phylactery","categoryId":"item-effects","styleLabel":null,"slots":[]},
+        {"name":"Devotions of Dragonus Phylactery II","categoryId":"item-effects","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Skywrath Mage Arcana","categoryId":"heroes","styleLabel":"Style I","slots":["belt","arms","head","shoulder","weapon","wings","misc","back"]},
+        {"name":"Skywrath Mage Arcana","categoryId":"heroes","styleLabel":"Style II","slots":["belt","arms","head","shoulder","weapon","wings","misc","back"]},
+        {"name":"Skywrath Mage Thanatos","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","weapon","wings"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "slardar": {
+      "name": "Slardar",
+      "mods": [
+        {"name":"Immortal Slardar","categoryId":"heroes","styleLabel":null,"slots":["back","weapon"]},
+        {"name":"Slardar Diretide Shimmer","categoryId":"heroes","styleLabel":null,"slots":["arms","back","weapon"]},
+        {"name":"Slardar Naga Guardian","categoryId":"heroes","styleLabel":null,"slots":["back","weapon","misc","head","arms"]}
+      ]
+    },
+    "slark": {
+      "name": "Slark",
+      "mods": [
+        {"name":"Custom Slark","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Dark Ancient Slark","categoryId":"heroes","styleLabel":null,"slots":["shoulder","weapon","head","back","arms","misc"]},
+        {"name":"Ghosty Slark","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Immortal Slark","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Slark Barracuda Re","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Slark Shadow in the Deep","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Slark Tellurian Trespass","categoryId":"heroes","styleLabel":"Style I","slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Slark Tellurian Trespass","categoryId":"heroes","styleLabel":"Style II","slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Slark Tellurian Trespass","categoryId":"heroes","styleLabel":"Style III","slots":["arms","back","head","shoulder","weapon"]}
+      ]
+    },
+    "snapfire": {
+      "name": "Snapfire",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Snapfire Desert Ardalan","categoryId":"heroes","styleLabel":null,"slots":["arms","head","mount","weapon"]},
+        {"name":"Snapfire Whippersnapper","categoryId":"heroes","styleLabel":null,"slots":["arms","head","mount","weapon"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "sniper": {
+      "name": "Sniper",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Sniper Ardalan Interdictor","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Sniper Ardalan Interdictor","categoryId":"herofx","styleLabel":null,"slots":[]},
+        {"name":"Sniper Blacksail Cannoneer","categoryId":"heroes","styleLabel":null,"slots":["weapon","shoulder","head","back","arms"]},
+        {"name":"Sniper Dragon Lore","categoryId":"hero-items","styleLabel":null,"slots":["weapon","misc"]},
+        {"name":"Sniper Full-Bore Bonanza","categoryId":"hero-items","styleLabel":"Crimson","slots":["back"]},
+        {"name":"Sniper Full-Bore Bonanza","categoryId":"hero-items","styleLabel":"Golden","slots":["back"]},
+        {"name":"Sniper Full-Bore Bonanza","categoryId":"hero-items","styleLabel":null,"slots":["back"]},
+        {"name":"Sniper Howling Wolf","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Sniper Occultists Pursuit","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Sniper Odogaron Armor","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","weapon","back"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "spectre": {
+      "name": "Spectre",
+      "mods": [
+        {"name":"Bloody Gore Spectre","categoryId":"heroes","styleLabel":null,"slots":["head","misc","weapon","wings"]},
+        {"name":"Bloody Spectre","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings"]},
+        {"name":"Phantom Adven Blademail Red","categoryId":"item-effects","styleLabel":null,"slots":[]},
+        {"name":"Phantom Adven Blademail White","categoryId":"item-effects","styleLabel":null,"slots":[]},
+        {"name":"Spectre Arcana","categoryId":"heroes","styleLabel":"Style I","slots":["misc","head","weapon","wings"]},
+        {"name":"Spectre Arcana","categoryId":"heroes","styleLabel":"Style II","slots":["misc","head","weapon","wings"]},
+        {"name":"Spectre Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings"]},
+        {"name":"Spectre Phantom Advent","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings"]},
+        {"name":"Spectre Shadowveil","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings"]},
+        {"name":"Spectre Toxin","categoryId":"heroes","styleLabel":null,"slots":["misc","wings","weapon","head"]}
+      ]
+    },
+    "spirit_breaker": {
+      "name": "Spirit Breaker",
+      "mods": [
+        {"name":"Cosmic Spirit Breaker","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","tail","weapon"]},
+        {"name":"Spirit Breaker Crystal Colossus","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","tail","weapon"]},
+        {"name":"Spirit Breaker Elemental Imperator","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","tail","weapon"]},
+        {"name":"Spirit Breaker Ghost Monster","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","tail","weapon"]},
+        {"name":"Spirit Breaker Iron Surge","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Spirit Breaker Iron Surge","categoryId":"hero-items","styleLabel":"Tyrian","slots":["head"]},
+        {"name":"Spirit Breaker Savage Mettle","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]}
+      ]
+    },
+    "storm_spirit": {
+      "name": "Storm Spirit",
+      "mods": [
+        {"name":"Immortal Storm Spirit","categoryId":"heroes","styleLabel":null,"slots":["head","misc","shoulder","arms"]},
+        {"name":"Old Storm Spirit","categoryId":"heroes","styleLabel":null,"slots":["head","misc","shoulder","arms"]},
+        {"name":"Storm Spirit Avice","categoryId":"heroes","styleLabel":null,"slots":["head","misc","shoulder"]},
+        {"name":"Storm Spirit Beast of Thunder","categoryId":"heroes","styleLabel":null,"slots":["head","misc","shoulder"]},
+        {"name":"Storm Spirit Corridan Maestro","categoryId":"heroes","styleLabel":null,"slots":["head","misc","shoulder"]},
+        {"name":"Storm Spirit Corridan Maestro","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Storm Spirit Gay","categoryId":"heroes","styleLabel":null,"slots":["head","misc","shoulder","arms"]},
+        {"name":"Storm Spirit Lightning Orchid","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Storm Spirit Lightning Orchid","categoryId":"hero-items","styleLabel":"Retro","slots":["head"]},
+        {"name":"Storm Spirit Lightning Orchid","categoryId":"hero-items","styleLabel":"Retro v2","slots":["head"]},
+        {"name":"Storm Spirit Lightning Orchid Tyrian","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Storm Spirit Stormborn Mandate","categoryId":"hero-items","styleLabel":"Golden","slots":["shoulder"]},
+        {"name":"Storm Spirit Stormborn Mandate","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]}
+      ]
+    },
+    "stormspirit": {
+      "name": "Stormspirit",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "sven": {
+      "name": "Sven",
+      "mods": [
+        {"name":"Pinkie Sven","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
+        {"name":"Sven Berseker","categoryId":"heroes","styleLabel":null,"slots":["shoulder","back","misc","head","belt","weapon"]},
+        {"name":"Sven Blue Angel","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
+        {"name":"Sven Guts Sword","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Sven Holy Paladin","categoryId":"heroes","styleLabel":null,"slots":["arms","shield","belt","misc","back","head","shoulder","weapon"]},
+        {"name":"Sven Immortal Indomitable Legacy","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
+        {"name":"Sven Indomitable Legacy","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
+        {"name":"Sven Yatogami Tohka","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","head","shoulder","weapon","back","legs","shield","arms"]},
+        {"name":"Sven Yatogami Tohka v2","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","head","shoulder","weapon","back","legs","shield","arms"]},
+        {"name":"Team Spirit Visage","categoryId":"heroes","styleLabel":null,"slots":[]}
+      ]
+    },
+    "techies": {
+      "name": "Techies",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Techies Alien","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]},
+        {"name":"Techies Arab","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]},
+        {"name":"Techies Arcana","categoryId":"hero-items","styleLabel":null,"slots":["misc","mount","arms"]},
+        {"name":"Techies Arcana Shanachnetsya","categoryId":"hero-items","styleLabel":null,"slots":["misc","mount","arms"]},
+        {"name":"Techies Frostbloom Weapon","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Techies Mine Radius","categoryId":"other","styleLabel":null,"slots":[]},
+        {"name":"Techies Sodbustin Saboteurs","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]},
+        {"name":"Techies Sunken Galley","categoryId":"heroes","styleLabel":null,"slots":["mount","misc","arms"]},
+        {"name":"Techies War Rig Pachyderm","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "templar_assassin": {
+      "name": "Templar Assassin",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "terrorblade": {
+      "name": "Terrorblade",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Terrorblade 666 Fractal Horns","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
+        {"name":"Terrorblade Arcana Midnight Blue","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
+        {"name":"Terrorblade Arcana Plushy Shag","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
+        {"name":"Terrorblade Arcana Sunrise","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
+        {"name":"Terrorblade Arcana White","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
+        {"name":"Terrorblade Fire","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Terrorblade Foulfell Corruptor","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Terrorblade Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","wings"]},
+        {"name":"Terrorblade Scythes of Sorrow","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Terrorblade Span Of Sorrow","categoryId":"hero-items","styleLabel":null,"slots":["wings"]},
+        {"name":"Terrorblade Unblinking Horror","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","wings"]},
+        {"name":"Terrorblade Wings Foulfell","categoryId":"hero-items","styleLabel":null,"slots":["wings"]},
+        {"name":"Terrorblade Wrong Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","wings"]},
+        {"name":"Terrorblade Yatoro Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "tidehunter": {
+      "name": "Tidehunter",
+      "mods": [
+        {"name":"Gopo Tidehunter","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms"]},
+        {"name":"Tidehunter Insatiable Seas","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms"]},
+        {"name":"Tidehunter Squid Girl","categoryId":"heroes","styleLabel":null,"slots":["weapon","arms","head","belt","back","misc","offhand"]}
+      ]
+    },
+    "tinker": {
+      "name": "Tinker",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Cosmic Immortal Tinker","categoryId":"heroes","styleLabel":null,"slots":["back","head","arms","shoulder"]},
+        {"name":"Cosmic Tinker","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","arms","shoulder"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"LenS Tinker","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","arms","shoulder"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Reverse Tinker","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","arms","shoulder"]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Tinker Alexander Prime","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","arms","shoulder","legs","weapon","offhand"]},
+        {"name":"Tinker Cripple","categoryId":"hero-items","styleLabel":null,"slots":[]},
+        {"name":"Tinker Deathsman","categoryId":"heroes","styleLabel":null,"slots":["back","head","arms","shoulder"]},
+        {"name":"Tinker Deep Hornet","categoryId":"heroes","styleLabel":null,"slots":["back","head","arms","shoulder"]},
+        {"name":"Tinker Flame","categoryId":"heroes","styleLabel":null,"slots":["head","back","arms","shoulder"]},
+        {"name":"Tinker Fortified Fabricator","categoryId":"heroes","styleLabel":null,"slots":["back","head","arms","shoulder"]},
+        {"name":"Tinker Frusy","categoryId":"heroes","styleLabel":null,"slots":["back","head","arms","shoulder","legs","weapon","misc"]},
+        {"name":"Tinker Immortal","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","arms","shoulder"]},
+        {"name":"Tinker Lite Machines","categoryId":"optimization","styleLabel":null,"slots":[]},
+        {"name":"Tinker Peashooter Turrets","categoryId":"herofx","styleLabel":null,"slots":["misc"]},
+        {"name":"Tinker Sakuya","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","arms","shoulder","legs"]},
+        {"name":"Tinker Submerged Hazard","categoryId":"heroes","styleLabel":null,"slots":["back","head","arms","shoulder","weapon"]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "tiny": {
+      "name": "Tiny",
+      "mods": [
+        {"name":"Tiny Banana","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Tiny Majesty of the Colossus","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Tiny Stone Giant Stronghold","categoryId":"heroes","styleLabel":null,"slots":["misc"]}
+      ]
+    },
+    "treant_protector": {
+      "name": "Treant Protector",
+      "mods": [
+        {"name":"Halloween Treant Protector","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
+        {"name":"Treant Protector Diretide","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
+        {"name":"Treant Protector Frost Hideaway","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","misc"]}
+      ]
+    },
+    "troll_warlord": {
+      "name": "Troll Warlord",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Immortal Troll Warlord","categoryId":"heroes","styleLabel":null,"slots":["weapon","head","shoulder"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Troll Warlord Reimu","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","arms","head","shoulder"]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Zuljin Troll Warlord","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","weapon"]}
+      ]
+    },
+    "tuskarr": {
+      "name": "Tusk",
+      "mods": [
+        {"name":"Tusk Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Tusk King Kong","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Tusk Odobenus Footman","categoryId":"heroes","styleLabel":null,"slots":["weapon","misc","head","arms"]},
+        {"name":"Tusk Odobenus Frost Mage","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]}
+      ]
+    },
+    "undying": {
+      "name": "Undying",
+      "mods": [
+        {"name":"Undying Archange","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
+        {"name":"Undying Grim Reformation","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head"]},
+        {"name":"Undying Hallows Within","categoryId":"hero-items","styleLabel":null,"slots":["head","misc"]}
+      ]
+    },
+    "ursa": {
+      "name": "Ursa",
+      "mods": [
+        {"name":"Night Ursa","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","legs"]},
+        {"name":"Russian Ursa","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","legs","back"]},
+        {"name":"Ursa Alpine Stalker","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","legs"]},
+        {"name":"Ursa Crystal Drift","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","legs"]},
+        {"name":"Ursa Feast of the Damned","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","legs"]},
+        {"name":"Ursa Immortal Hallowed Hunt","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","legs"]},
+        {"name":"Ursa Roshan Hunter","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","legs"]},
+        {"name":"Ursa Swift Claw","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
+        {"name":"Ursa White and Red","categoryId":"heroes","styleLabel":null,"slots":["legs","misc","arms","head"]}
+      ]
+    },
+    "vengeful": {
+      "name": "Vengeful Spirit",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Vengeful Spirit Queen Imperia","categoryId":"heroes","styleLabel":null,"slots":["head","misc","weapon"]},
+        {"name":"Vengeful Spirit Seraph Scion","categoryId":"heroes","styleLabel":null,"slots":["head","misc","weapon"]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "vengefulspirit": {"name":"Vengeful Spirit","mods":[{"name":"Vengeful Spirit Arcana","categoryId":"heroes","styleLabel":null,"slots":["head","misc","weapon"]}]},
+    "venomancer": {
+      "name": "Venomancer",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Ice Venomancer","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","shoulder","tail"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Venomancer Peashooter","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Venomancer Poisonous Assassin","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","shoulder","tail"]},
+        {"name":"Venomancer Poisonous Assassin","categoryId":"heroes","styleLabel":"Purple","slots":["arms","misc","shoulder","tail"]},
+        {"name":"Venomancer Zuzik","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","shoulder","tail"]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "viper": {
+      "name": "Viper",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Viper Butch Dog","categoryId":"heroes","styleLabel":null,"slots":["back"]},
+        {"name":"Viper Elephant Hawk Moth","categoryId":"heroes","styleLabel":null,"slots":["back"]},
+        {"name":"Viper Stuffed Menace","categoryId":"heroes","styleLabel":null,"slots":["back"]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "visage": {
+      "name": "Visage",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Team Spirit Visage","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Visage Azure Phantom","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
+        {"name":"Visage Grimfeather Сorpse","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
+        {"name":"Visage Vulture Wraith","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "void_spirit": {
+      "name": "Void Spirit",
+      "mods": [
+        {"name":"Ghost Void Spirit","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","weapon"]},
+        {"name":"Void Spirit Hidden Vector","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","weapon"]},
+        {"name":"Void Spirit Keqing","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc","weapon"]}
+      ]
+    },
+    "warlock": {
+      "name": "Warlock",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warlock Puppet Bear","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","shoulder","weapon"]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "weaver": {
+      "name": "Weaver",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Darkness Weaver","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Weaver Kurumi","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs","back"]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "windrunner": {
+      "name": "Windranger",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Windranger Arcana Prismatic","categoryId":"heroes","styleLabel":null,"slots":["weapon","back","head","misc","shoulder"]},
+        {"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","back","head","shoulder"]},
+        {"name":"Windranger Compass Rising Gale","categoryId":"heroes","styleLabel":null,"slots":["weapon","back","head","misc","shoulder"]},
+        {"name":"Windranger Papizi","categoryId":"heroes","styleLabel":null,"slots":["head","weapon","back","misc","shoulder","offhand"]},
+        {"name":"Windranger Peregrine Flight","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Windranger Reflections Of Gale","categoryId":"heroes","styleLabel":null,"slots":["weapon","back","head","misc","shoulder"]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "winter_wyvern": {
+      "name": "Winter Wyvern",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Immortal Winter Wyvern","categoryId":"heroes","styleLabel":null,"slots":["back","head"]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "wisp": {
+      "name": "Io",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Chaos IO","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Galactic IO","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"IO Benevolent Companion","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"IO Histoire","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"IO Madame Scrio","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"IO Pink Arcana","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"IO Purple","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "witch_doctor": {"name":"Witch Doctor","mods":[{"name":"Black Witch Doctor","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","belt"]}]},
+    "witchdoctor": {
+      "name": "Witchdoctor",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    },
+    "wraith_king": {
+      "name": "Wraith King",
+      "mods": [
+        {"name":"Wraith King Arcana","categoryId":"heroes","styleLabel":"Style I","slots":["back","misc","head","shoulder","weapon"]},
+        {"name":"Wraith King Arcana","categoryId":"heroes","styleLabel":"Style II","slots":["back","misc","head","shoulder","weapon"]},
+        {"name":"Wraith King Blistering Crimson","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Wraith King Grim Destiny","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
+        {"name":"Wraith King Itsuka Kotori","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","shoulder","weapon","arms"]},
+        {"name":"Wraith King Papizi","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","weapon"]},
+        {"name":"Wraith King Pizdec","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
+        {"name":"Wraith King Radiance","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Wraith King Skeleton","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon","arms"]},
+        {"name":"Wraith King Unbroken Arcana","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
+        {"name":"Wraith King Veil Tyrant","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
+        {"name":"Wraith King Winterblight","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]}
+      ]
+    },
+    "zeus": {
+      "name": "Zeus",
+      "mods": [
+        {"name":"Cosmic Zeus","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","misc"]},
+        {"name":"Zeus Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc"]},
+        {"name":"Zeus Thundervolt","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","misc"]}
+      ]
+    },
+    "zmdl": {"name":"Zmdl","mods":[{"name":"Drow Ranger Diretide","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","legs","weapon"]}]},
+    "zuus": {
+      "name": "Zeus",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
+      ]
+    }
+  }
+}
