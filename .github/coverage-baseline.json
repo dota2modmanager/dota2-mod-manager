@@ -200,24 +200,6 @@
     "win32": {
       "measured": "2026-09-30",
       "files": {
-        "renderer/core/adult.js": {
-          "lines": 57.6
-        },
-        "renderer/core/constants.js": {
-          "lines": 90.8
-        },
-        "renderer/core/credits.js": {
-          "lines": 100
-        },
-        "renderer/core/minify-notice.js": {
-          "lines": 100
-        },
-        "renderer/core/store.js": {
-          "lines": 100
-        },
-        "renderer/ui/format.js": {
-          "lines": 48.1
-        },
         "src/adopt.ts": {
           "lines": 100
         },

@@ -43,8 +43,8 @@ back after they stopped being true. Every entry carries a command that settles i
 here to review rather than to change something, that file is the whole brief.
 
 **Do not read whole source files to orient yourself.** Find the symbol, then read its slice.
-The two biggest screens, `renderer/views/catalog.js` and `renderer/views/library.js`, are large
-and reading them end to end wastes more than it tells you.
+`src/schema.ts`, `src/item-builder.ts` and `src/icons.ts` are over 500 lines, and reading one end
+to end wastes more than it tells you.
 
 **The domain is unusual and the obvious assumption is usually wrong.** Three examples that have
 each cost real time:
