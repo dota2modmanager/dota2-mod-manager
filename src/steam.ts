@@ -71,12 +71,12 @@ export function steamappsDir(lib: string): string {
 }
 
 /** The first of the places Steam may live that is there. */
-export function pickSteamRoot(candidates: (string | null)[], windows = WINDOWS): string | null {
+export function pickSteamRoot(candidates: (string | null)[], windows = WINDOWS, exists: (p: string) => boolean = fs.existsSync): string | null {
   for (let c of candidates) {
     if (!c) continue;
     // The registry answers with either slash; a POSIX path must be left exactly as it is.
     if (windows) c = c.replace(/\//g, '\\');
-    if (fs.existsSync(c)) return c;
+    if (exists(c)) return c;
   }
   return null;
 }

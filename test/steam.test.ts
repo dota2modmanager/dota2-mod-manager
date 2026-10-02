@@ -157,9 +157,13 @@ test('the first root that is there wins, a missing one is passed over, and a POS
   const steam = tree(t, ['steam.exe']);
   assert.equal(pickSteamRoot([null, path.join(steam, 'gone'), steam], false), steam);
   assert.equal(pickSteamRoot([null, path.join(steam, 'gone')], false), null);
-  // the registry writes forward slashes; on Windows they become the separator the rest expects
-  const forward = steam.replace(/\\/g, '/');
-  assert.equal(pickSteamRoot([forward], true), forward.replace(/\//g, '\\'));
+  // The registry writes forward slashes; on Windows they become the separator the rest expects.
+  // Asked of a stand-in for the disk, because a backslash path exists on no Linux runner.
+  const asked: string[] = [];
+  const seen = (p: string) => { asked.push(p); return true; };
+  assert.equal(pickSteamRoot(['c:/program files (x86)/steam'], true, seen), 'c:\\program files (x86)\\steam');
+  assert.equal(pickSteamRoot(['/home/u/.steam/steam'], false, seen), '/home/u/.steam/steam');
+  assert.deepEqual(asked, ['c:\\program files (x86)\\steam', '/home/u/.steam/steam']);
 });
 
 test('without an answer from Steam the usual places are tried, on every drive or under home', () => {
