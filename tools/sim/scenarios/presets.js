@@ -28,7 +28,6 @@ module.exports = async function presets(sim) {
   if (!sim.check('the three mods the preset run needs are available', picked.length === 3, `${picked.length} of 3`)) return;
   const mod = (name) => picked.find((m) => m.name === name);
 
-  const toasts = () => sim.js(`[...document.querySelectorAll('#toasts .toast')].map((t) => t.textContent.trim()).join(' | ')`);
   // the pack each mod has now, read off My mods, and what the game mounts, as names
   const state = async () => {
     await steps.openSection(sim, 'library');
@@ -66,11 +65,16 @@ module.exports = async function presets(sim) {
     JSON.stringify(moved), moved);
 
   // ---- applied: exactly A and B ----
+  /* Only a toast that appears after the click answers it. The second apply used to find the
+     first one's "Preset applied" still on screen, read it before its own arrived, and fail
+     for a missing "installed 1" on a run where the app had installed it (Windows CI, #175). */
   const apply = async () => {
     await steps.openSection(sim, 'presets');
+    await sim.js(`document.querySelectorAll('#toasts .toast').forEach((t) => { t.dataset.simSeen = '1'; })`);
     await sim.click(`[data-apply="${saved.id}"]`);
-    await sim.until(`/Пресет применён|Preset applied/.test([...document.querySelectorAll('#toasts .toast')].map((t) => t.textContent).join(' '))`, 60000);
-    const said = await toasts();
+    const fresh = `[...document.querySelectorAll('#toasts .toast:not([data-sim-seen])')]`;
+    await sim.until(`/Пресет применён|Preset applied/.test(${fresh}.map((t) => t.textContent).join(' '))`, 60000);
+    const said = await sim.js(`${fresh}.map((t) => t.textContent.trim()).join(' | ')`);
     await sim.settle(800);
     return said;
   };
