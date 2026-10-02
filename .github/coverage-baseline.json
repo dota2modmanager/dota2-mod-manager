@@ -198,12 +198,78 @@
       }
     },
     "win32": {
-      "measured": "2026-09-30",
+      "measured": "2026-10-02",
       "files": {
+        "renderer/catalog/builder/logic.ts": {
+          "lines": 98.1
+        },
+        "renderer/catalog/data.ts": {
+          "lines": 100
+        },
+        "renderer/catalog/favorites.ts": {
+          "lines": 100
+        },
+        "renderer/catalog/filters.ts": {
+          "lines": 100
+        },
+        "renderer/catalog/looks.ts": {
+          "lines": 100
+        },
+        "renderer/catalog/mods.ts": {
+          "lines": 100
+        },
+        "renderer/catalog/queueing.ts": {
+          "lines": 100
+        },
+        "renderer/catalog/tags.ts": {
+          "lines": 100
+        },
+        "renderer/core/adult.ts": {
+          "lines": 58.3
+        },
+        "renderer/core/categories.ts": {
+          "lines": 66.7
+        },
+        "renderer/core/constants.ts": {
+          "lines": 91.4
+        },
+        "renderer/core/credits.ts": {
+          "lines": 100
+        },
+        "renderer/core/css-time.ts": {
+          "lines": 85
+        },
+        "renderer/core/keys.ts": {
+          "lines": 100
+        },
+        "renderer/core/minify-notice.ts": {
+          "lines": 100
+        },
+        "renderer/core/records.ts": {
+          "lines": 86.7
+        },
+        "renderer/core/store.ts": {
+          "lines": 100
+        },
+        "renderer/library/order.ts": {
+          "lines": 100
+        },
+        "renderer/library/selection.ts": {
+          "lines": 100
+        },
+        "renderer/ui/format.ts": {
+          "lines": 69
+        },
+        "renderer/ui/media.ts": {
+          "lines": 60
+        },
         "src/adopt.ts": {
           "lines": 100
         },
         "src/app-log.ts": {
+          "lines": 100
+        },
+        "src/app-page.ts": {
           "lines": 100
         },
         "src/beta.ts": {
@@ -377,6 +443,15 @@
         "src/safe-zip.ts": {
           "lines": 100
         },
+        "src/schema-items.ts": {
+          "lines": 100
+        },
+        "src/schema-kv.ts": {
+          "lines": 100
+        },
+        "src/schema-merge.ts": {
+          "lines": 100
+        },
         "src/schema-service.ts": {
           "lines": 46.5
         },
@@ -441,10 +516,10 @@
           "lines": 92.9
         },
         "tools/gen-doc-facts.js": {
-          "lines": 78.6
+          "lines": 84.5
         },
         "tools/gen-incidents.js": {
-          "lines": 95.2
+          "lines": 95.5
         },
         "tools/google-auth.mjs": {
           "lines": 27.9
@@ -495,16 +570,19 @@
           "lines": 100
         },
         "tools/sim/run.mjs": {
-          "lines": 65.6
+          "lines": 66.5
         },
         "tools/size-budget.mjs": {
-          "lines": 72.9
+          "lines": 73.7
         },
         "tools/sync-labels.mjs": {
           "lines": 55.1
         },
         "tools/typecheck.mjs": {
           "lines": 65.4
+        },
+        "tools/ui-build.mjs": {
+          "lines": 54.2
         },
         "tools/virustotal.mjs": {
           "lines": 61.3
