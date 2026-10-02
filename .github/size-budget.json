@@ -1,6 +1,6 @@
 {
   "_why": "Lines each of the largest files is allowed. tools/size-budget.mjs fails a run where one grows, and where a file that is not listed crosses 300 lines. --update writes measurements back but never raises a number: raising one means editing this file by hand and saying why. Splitting these files shows up here as a number going down.",
-  "measured": "2026-10-01",
+  "measured": "2026-10-02",
   "watchAt": 300,
   "files": {
     "renderer/i18n.js": 787,
@@ -20,7 +20,7 @@
     "src/presets-service.ts": 377,
     "src/remote-config.ts": 305,
     "src/schema-service.ts": 445,
-    "src/schema.ts": 612,
+    "src/schema.ts": 107,
     "src/vpk-read.ts": 385,
     "src/vpk-write.ts": 348
   }
