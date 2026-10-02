@@ -318,7 +318,7 @@
           "lines": 100
         },
         "src/game-icons.ts": {
-          "lines": 65
+          "lines": 94.7
         },
         "src/game-upkeep.ts": {
           "lines": 98
@@ -447,7 +447,7 @@
           "lines": 94.1
         },
         "src/presets-service.ts": {
-          "lines": 71.2
+          "lines": 98.9
         },
         "src/release-notes.ts": {
           "lines": 100
