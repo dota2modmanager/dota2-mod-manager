@@ -10,6 +10,9 @@
 // The tests import these files straight into Node, which strips the types and runs the rest.
 // That is why imports name the .ts file, type-only imports say so (verbatimModuleSyntax), and
 // nothing here needs compiling to run (erasableSyntaxOnly: no enums, no namespaces).
+//
+// This is also the lint for these files, as src/tsconfig.json is for the main process: ESLint
+// reads only the JavaScript. The rules strict leaves out are switched on below, the same five.
 {
   "compilerOptions": {
     "target": "ES2023",
@@ -18,6 +21,11 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "strict": true,
+    "noUnusedLocals": true,
+    "allowUnreachableCode": false,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
     "noEmit": true,
     "allowJs": true,
     "checkJs": false,

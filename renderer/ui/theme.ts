@@ -8,7 +8,6 @@
  * fetch them the same way as every other picture in the app, so the first switch after a
  * fresh install needs the network and everything after it comes out of the cache.
  */
-import { $ } from '../core/dom.ts';
 import { state } from '../core/store.ts';
 import { RAW_BASE } from '../core/constants.ts';
 import { tokenMs } from '../core/css-time.ts';

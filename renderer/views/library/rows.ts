@@ -11,7 +11,7 @@ import { extThumb, recThumb } from '../../library/thumbs.ts';
 import { memberKey } from '../../library/selection.ts';
 import { pakFileName } from '../../library/order.ts';
 import type { ExternalRowModel, PackRowModel, RowModel, Tag } from '../../library/model.ts';
-import type { Cover, ExternalFile, LibRecord, Member } from '../../library/types.ts';
+import type { Cover, ExternalFile, LibRecord } from '../../library/types.ts';
 import { lib } from './state.ts';
 
 /* Mods that carry item-schema changes: their model installs like any other, but the effects and
