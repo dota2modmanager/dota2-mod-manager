@@ -223,10 +223,11 @@ test('a picture filed under another name is found through the listing, then the 
     urls: { 'https://liquipedia.net/commons/images/axe.png': JPEG },
   });
   assert.equal(await liq.ic.get('Mega-Kills Axe'), dataUri('image/jpeg', JPEG));
-  const liqAsks = liq.asked.filter((r) => r.url.includes('liquipedia.net'));
+  const host = (r: { url: string }) => new URL(r.url).hostname;
+  const liqAsks = liq.asked.filter((r) => host(r) === 'liquipedia.net');
   assert.ok(liqAsks.length >= 2);
   assert.ok(liqAsks.every((r) => /^Dota2ModManager\//.test(r.ua)), 'Liquipedia is asked as this project');
-  assert.ok(liq.asked.filter((r) => r.url.includes('fandom.com')).every((r) => /Mozilla/.test(r.ua)), 'Fandom as a browser');
+  assert.ok(liq.asked.filter((r) => host(r) === 'dota2.fandom.com').every((r) => /Mozilla/.test(r.ua)), 'Fandom as a browser');
 });
 
 test('a loading screen with no picture of its own shows its outfit\'s', async (t) => {
