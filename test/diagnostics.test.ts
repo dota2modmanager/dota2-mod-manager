@@ -4,6 +4,8 @@
  * worse than no verdict - it sends whoever is helping down the wrong path - so the checks are
  * pinned here rather than eyeballed once when they were written.
  */
+// first: the game folder built below must not meet this machine's own Steam
+import './helpers/no-steam.ts';
 import test from 'node:test';
 import assert from 'node:assert';
 import { buildReport, findProblems, renderSummary, renderDetailed, type Report } from '../src/diagnostics.ts';
@@ -243,4 +245,50 @@ test('a mod name with a pipe cannot break the table it is printed in', () => {
   const row = renderDetailed(r, {}).split('\n').find((l) => l.includes('a /'));
   assert.ok(row, 'the pipe should have been replaced');
   assert.strictEqual(row.split('|').length, 7, 'six columns plus the closing bar');
+});
+
+test('with a game, the report carries the mod folder, the files the patch edits, and the game\'s own logs', () => {
+  /* When mods mount but do nothing, the answer is almost always in gameinfo or boot.vcfg, and
+     describing them second-hand never once was enough. Nothing tested that they reach the zip. */
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-diag-'));
+  try {
+    const game = path.join(root, 'game');
+    const put = (rel: string, body: string | Buffer) => {
+      const f = path.join(game, ...rel.split('/'));
+      fs.mkdirSync(path.dirname(f), { recursive: true });
+      fs.writeFileSync(f, body);
+    };
+    put('dota/pak01_dir.vpk', 'the game\'s own archive');
+    put('dota/readme.txt', 'not a pak');
+    put('dota/gameinfo.gi', '"GameInfo" { patched }');
+    put('dota/gameinfo_branchspecific.gi', '"GameInfo" { branch }');
+    put('dota/cfg/boot.vcfg', 'language russian');
+    put('dota/console.log', Buffer.concat([Buffer.alloc(300 * 1024, 'x'), Buffer.from('the last line Dota wrote')]));
+    put('dota_russian/pak30_dir.vpk', 'a mod');
+    const logFile = path.join(root, 'app.log');
+    fs.writeFileSync(logFile, 'the app said this');
+
+    const { files } = buildReport({
+      settings: { all: () => ({ langSuffix: 'russian', uiLang: 'en', dotaGamePath: game }) as StoredSettings },
+      library: { list: () => [], listPresets: () => [] },
+      installer: { coverage: () => new Set(), downloadCacheSize: () => 0, slotNumber: () => 1 },
+      schemaService: { state: () => ({}) },
+      catalog: { cacheInfo: () => ({ fetchedAt: null }) },
+      app: { version: 'test', userDataDir: root, logFile },
+      home: root,
+    });
+
+    assert.match(files['mod-folder-listing.txt'], /pak30_dir\.vpk/);
+    assert.match(files['dota-pak-listing.txt'], /pak01_dir\.vpk/);
+    assert.match(files['dota-pak-listing.txt'], /gameinfo\.gi/);
+    assert.doesNotMatch(files['dota-pak-listing.txt'], /readme\.txt/, 'the game folder listing keeps to paks and gameinfo');
+    assert.equal(files['dota/gameinfo.gi'], '"GameInfo" { patched }');
+    assert.equal(files['dota/gameinfo_branchspecific.gi'], '"GameInfo" { branch }');
+    assert.equal(files['dota/boot.vcfg'], 'language russian');
+    assert.ok(files['dota/console.log'].endsWith('the last line Dota wrote'));
+    assert.equal(files['dota/console.log'].length, 256 * 1024, 'a long console log is cut to its end');
+    assert.equal(files['app.log'], 'the app said this');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });

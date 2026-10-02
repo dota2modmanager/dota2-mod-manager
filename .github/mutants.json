@@ -1065,6 +1065,14 @@
       "from": "if (windows) c = c.replace(/\\//g, '\\\\');",
       "to": "void windows;",
       "test": "test/steam.test.ts"
+    },
+    {
+      "name": "the support report leaves out gameinfo, boot.vcfg and the mod folder",
+      "file": "src/diagnostics.ts",
+      "anchor": "export function buildReport(",
+      "from": "if (gameValid && game && active) {",
+      "to": "if (false) {",
+      "test": "test/diagnostics.test.ts"
     }
   ]
 }
