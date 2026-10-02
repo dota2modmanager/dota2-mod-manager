@@ -642,3 +642,50 @@ test('a whole set goes on in one write, a row per piece, and a piece already on 
   ]);
   assert.throws(() => service.pickSet('404'), /Set not found/);
 });
+
+test('an arcana in an ordinary slot is neither offered nor dressed as the stock item', () => {
+  /* The arcanas and personas in the table above sit in persona slots, which have no stock item to
+     match, so they were left out before the arcana rule was ever asked. An arcana can also sit in
+     a plain weapon slot beside a stock weapon; only the rule keeps it out of the picker. */
+  const text = table([
+    `\t\t"500"
+\t\t{
+\t\t\t"name"\t\t"Bloodseeker weapon default"
+\t\t\t"prefab"\t\t"default_item"
+\t\t\t"item_slot"\t\t"weapon"
+\t\t\t"used_by_heroes"
+\t\t\t{
+\t\t\t\t"npc_dota_hero_bloodseeker"\t\t"1"
+\t\t\t}
+\t\t}`,
+    `\t\t"9600"
+\t\t{
+\t\t\t"name"\t\t"Bloodseeker main blade"
+\t\t\t"prefab"\t\t"wearable"
+\t\t\t"item_slot"\t\t"weapon"
+\t\t\t"used_by_heroes"
+\t\t\t{
+\t\t\t\t"npc_dota_hero_bloodseeker"\t\t"1"
+\t\t\t}
+\t\t\t"visuals"
+\t\t\t{
+\t\t\t}
+\t\t}`,
+    `\t\t"9650"
+\t\t{
+\t\t\t"name"\t\t"Bloodseeker Arcana Blade"
+\t\t\t"prefab"\t\t"wearable"
+\t\t\t"item_slot"\t\t"weapon"
+\t\t\t"used_by_heroes"
+\t\t\t{
+\t\t\t\t"npc_dota_hero_bloodseeker"\t\t"1"
+\t\t\t}
+\t\t\t"visuals"
+\t\t\t{
+\t\t\t}
+\t\t}`,
+  ]);
+  assert.deepEqual(builder.itemOptions(text).map((o) => o.id), ['9600'], 'the plain blade is offered, the arcana is not');
+  assert.equal(builder.defaultItemForWearable(text, '9600')?.id, '500');
+  assert.equal(builder.defaultItemForWearable(text, '9650'), null, 'the arcana does not dress the stock weapon');
+});
