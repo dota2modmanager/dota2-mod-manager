@@ -49,6 +49,8 @@ the code, not in this page.
 | [`src/installer-repack.ts`](#srcinstaller-repackts) | What is already installed, read and rewritten: what a mod is, its files merged into one or |
 | [`src/installer-slots.ts`](#srcinstaller-slotsts) | The load order: which pak slot a mod sits in, moving and swapping slots, and which mods are |
 | [`src/installer.ts`](#srcinstallerts) | The installer: everything that writes a mod into the game folder or takes it out again. The |
+| [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
+| [`src/item-builder-slots.ts`](#srcitem-builder-slotsts) | The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit |
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
 | [`src/main-window.ts`](#srcmain-windowts) | The one window the app has: its size on the screen it opens on, the single page it may show, |
@@ -2442,16 +2444,49 @@ export class Installer
 
 _No description in the source._
 
-## src/item-builder.ts
+## src/item-builder-effects.ts
 
-The item builder: a hero's stock item built from one of its wearables, with an effect on top.
+The particle effects the item builder can put on top of an item: the effect's id, its name in
+the picker, and the particle the game creates for it. What a pick then writes is
+src/item-builder.ts, which callers import this through.
 
-For each hero and slot the free cosmetics offer that hero's wearables. Picking one rewrites its
-block in items_game under the stock item's id, name and prefab=default_item, drops the styles
-and unlocks a free base item cannot use, adds the chosen particle effect to its visuals, and
-lists the model and particles to copy out of the game's pak01 under the stock paths, so the
-game draws the wearable where the stock item was. src/schema-service.ts applies it along with
-the rest of the free cosmetics; src/schema.ts reads and merges the table.
+Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
+(https://github.com/TheFleece).
+Copyright (C) 2026 h6rd
+Copyright (C) 2026 TheFleece
+SPDX-License-Identifier: GPL-3.0-or-later
+The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
+the credits of the program it goes into.
+
+### `ItemEffect`
+
+```ts
+export type ItemEffect = { id: string; name: string; type: string; modifier: string }
+```
+
+An effect the builder can add to an item: a particle it creates.
+
+### `ITEM_EFFECTS`
+
+```ts
+export const ITEM_EFFECTS: ItemEffect[] = [
+```
+
+Every effect the builder offers, in the order the picker lists them.
+
+### `itemEffects`
+
+```ts
+export function itemEffects(): { id: string; name: string }[]
+```
+
+The effect variants the synthetic cosmetics/items picker can apply.
+
+## src/item-builder-slots.ts
+
+The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit
+each one, the sets they belong to, and the particle effects that can go on top. What a pick
+then writes into items_game is src/item-builder.ts, which callers import this through.
 
 Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
 (https://github.com/TheFleece).
@@ -2485,13 +2520,29 @@ export type AssetCopy = { from: string; to: string }
 
 A file in the game's archive staged under another path in the built VPK.
 
-### `itemEffects`
+### `canonicalItemSlot`
 
 ```ts
-export function itemEffects(): { id: string; name: string }[]
+export function canonicalItemSlot(slot: unknown): string
 ```
 
-The effect variants the synthetic cosmetics/items picker can apply.
+A slot name as the table writes it, lower-cased; empty for none.
+
+### `matchItemSlot`
+
+```ts
+export function matchItemSlot(slot: unknown): string
+```
+
+A slot name with its aliases folded together (offhand_weapon is offhand, shoulder is shoulders).
+
+### `isArcanaPersonaItem`
+
+```ts
+export function isArcanaPersonaItem(item: Partial<SchemaItem> | null): boolean
+```
+
+An arcana, a persona or a hero's base model, by its name or its slot: the builder leaves these alone.
 
 ### `itemSlots`
 
@@ -2534,6 +2585,40 @@ export function itemOptions(text: string): { id: string; name: string }[]
 ```
 
 Wearable items with visuals and a matching stock default_item, offered under cosmetics/items.
+
+### `itemHeroes`
+
+```ts
+export function itemHeroes(text: string, item: { start: number }): string[]
+```
+
+The heroes an item block says it is used by, as npc_dota_hero_* ids.
+
+## src/item-builder.ts
+
+The item builder: a hero's stock item built from one of its wearables, with an effect on top.
+
+For each hero and slot the free cosmetics offer that hero's wearables. Picking one rewrites its
+block in items_game under the stock item's id, name and prefab=default_item, drops the styles
+and unlocks a free base item cannot use, adds the chosen particle effect to its visuals, and
+lists the model and particles to copy out of the game's pak01 under the stock paths, so the
+game draws the wearable where the stock item was. src/schema-service.ts applies it along with
+the rest of the free cosmetics; src/schema.ts reads and merges the table.
+
+What the builder offers (slots, sets, effects) is src/item-builder-slots.ts, re-exported here;
+this file is what a pick writes.
+
+Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
+(https://github.com/TheFleece).
+Copyright (C) 2026 h6rd
+Copyright (C) 2026 TheFleece
+SPDX-License-Identifier: GPL-3.0-or-later
+The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
+the credits of the program it goes into.
+
+Hands on from [`src/item-builder-slots.ts`](#srcitem-builder-slotsts): `itemSlots`, `itemSets`, `itemOptions`, `ItemSlot`, `ItemSet`, `AssetCopy`.
+
+Hands on from [`src/item-builder-effects.ts`](#srcitem-builder-effectsts): `itemEffects`.
 
 ### `effectKey`
 

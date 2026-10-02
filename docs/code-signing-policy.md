@@ -20,7 +20,7 @@ project's name.
 | Role | Who | What they do |
 |---|---|---|
 | Committers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Write changes. A change reaches `main` only through a pull request, the maintainers' own included |
-| Reviewers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Approve pull requests. The author's own approval does not count, and a new push dismisses an approval that came before it. A change from outside the project is reviewed by a maintainer |
+| Reviewers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Review a pull request from outside the project before merging it: a merge needs write access, so such a change always passes a maintainer. The maintainers' own changes merge once the required checks pass |
 | Approvers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Tag a release on a commit of `main`, and approve each signing request once signing is in place |
 
 Both are owners of the [dota2modmanager](https://github.com/dota2modmanager) organization, which

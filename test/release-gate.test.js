@@ -90,9 +90,8 @@ test('the release list is read from the file the ruleset follows', async () => {
 });
 
 test('a commit that is not on main is refused, however green its checks', async () => {
-  /* Checks run on pull request branches too, so a green commit is not yet an approved one. Since
-     main wants an approval from a maintainer who did not write the change, a tag on a branch
-     would be the one way to ship code nobody reviewed. */
+  /* Checks run on pull request branches too, so a green commit is not yet a merged one. A tag on
+     a branch would be the one way to ship code that never went through the merge queue. */
   const { onMain } = await load();
   assert.equal(onMain('identical'), true, "main's own head is on main");
   assert.equal(onMain('behind'), true, 'a commit main already contains is on main');

@@ -392,8 +392,14 @@
         "src/ipc-window.ts": {
           "lines": 94.4
         },
+        "src/item-builder-effects.ts": {
+          "lines": 100
+        },
+        "src/item-builder-slots.ts": {
+          "lines": 100
+        },
         "src/item-builder.ts": {
-          "lines": 98.9
+          "lines": 100
         },
         "src/library.ts": {
           "lines": 100

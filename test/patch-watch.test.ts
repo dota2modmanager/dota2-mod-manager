@@ -88,10 +88,15 @@ test('no game, no stamp', () => {
 test('a patch that lands while the app is open is reported once', async (t) => {
   const game = fakeGame(t);
   const seen: { from: string | null; to: string; reason?: string }[] = [];
+  /* The two writes below are one burst, and the debounce has to hold them together. At 20 ms it
+     did not on a loaded Windows runner, where the second file's event can arrive later than that
+     and makes a second report. 150 ms is still far below the real one; the wait is for the
+     report itself, then long enough again that a second one would have shown. */
+  const debounceMs = 150;
   const watcher = createPatchWatcher({
     getGamePath: () => game,
     onPatch: (evt) => seen.push(evt),
-    debounceMs: 20,
+    debounceMs,
   });
   t.after(() => watcher.stop());
   watcher.start(gameStamp(game));
@@ -100,7 +105,8 @@ test('a patch that lands while the app is open is reported once', async (t) => {
   setInf(game, '6889');
   // a real patch rewrites many files, so the burst has to collapse into one report
   setSignatures(game, `${SIGNATURES}\r\n...\\..\\..\\dota\\other.vpk~SHA1:DDDD;CRC:4444`);
-  await new Promise((r) => setTimeout(r, 200));
+  for (const until = Date.now() + 5000; !seen.length && Date.now() < until;) await new Promise((r) => setTimeout(r, 25));
+  await new Promise((r) => setTimeout(r, debounceMs * 3));
 
   assert.equal(seen.length, 1, 'one patch, one report');
   assert.equal(seen[0].from, before);

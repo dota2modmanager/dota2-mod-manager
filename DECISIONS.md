@@ -203,12 +203,15 @@ request #62 had merged itself the day before with one, because the rule asked fo
 run and nothing about what it found. The deploy key the catalog bot pushes its index with is the
 one bypass: those commits are data, and they never touch code.
 
-Since 23 September it also requires an approving review from a maintainer who did not write the
-change, and a fresh one after every new push. Until then an approval was welcome and never a
-gate, so that one person working alone would not wait on anybody for a typo. A second maintainer
-changed the sum: every change now gets a reader besides its author, and OpenSSF Scorecard's
-Code-Review and Branch-Protection checks measure exactly that. The cost is pace. A pull request
-waits for the other maintainer, and so does a Dependabot update that used to merge itself.
+From 23 September to 2 October it also required an approving review from a maintainer who did not
+write the change, and a fresh one after every new push. A second maintainer had joined, and OpenSSF
+Scorecard's Code-Review and Branch-Protection checks measure exactly that. It cost more than it
+caught. One person writes nearly all of the code, so every change waited a day or more for the
+other maintainer, and a conflict fixed after an approval threw that approval away: the same pull
+request was approved two and three times before it merged. Since 2 October no approval is
+required. The checks above still gate every merge, a pull request is still the only way into
+main, and a change from outside the project still needs a maintainer to merge it. The two
+Scorecard checks that count approvals score lower for it, and that is the price.
 
 A pull request also goes through a merge queue since the repository moved into an organization,
 which is where GitHub offers one. The queue puts the change on top of the newest main, runs the
@@ -220,8 +223,8 @@ going through the queue on its own, with CodeQL, the code scanning rule and a sk
 pull-request-only check in the way.
 
 The same day the release gate started refusing a tag on a commit that is not on main. Checks run
-on pull request branches as well, so without that a tag on a green, unapproved branch would ship
-it.
+on pull request branches as well, so without that a tag on a green branch that never merged
+would ship it.
 
 *Check:* `curl https://api.github.com/repos/dota2modmanager/dota2-mod-manager/rules/branches/main`, which
 needs no token, or `gh api repos/dota2modmanager/dota2-mod-manager/rulesets`. `tools/radar.mjs` compares
@@ -391,9 +394,10 @@ in the release assets.
 
 ### Two maintainers, and one of them holds the keys
 
-One person writes most of it. Since 2026-09-23 a second maintainer reviews every change before it
-merges, and both own the [dota2modmanager](https://github.com/dota2modmanager) organization the
-repository moved into that day, so either can release without the other. What still sits with one
+One person writes nearly all of it. Since 2026-09-23 a second maintainer co-owns the
+[dota2modmanager](https://github.com/dota2modmanager) organization the repository moved into that
+day, so either can release without the other. They read changes when they choose to; since
+2026-10-02 a merge needs no approval (see the branch rule above). What still sits with one
 person: the knowledge of how the app keeps up with a game update, and the keys outside GitHub
 (the `config/app.json` signing key, the domain, the mirror bucket).
 [GOVERNANCE.md](GOVERNANCE.md) says what losing those costs.

@@ -234,7 +234,7 @@ is loading a tracker, and nothing has to be committed for the picture to move.
 | [Radar](.github/workflows/radar.yml) | Daily, not per push: rewrites the pinned "Project status" issue with what waits on a decision, what is red and what is about to expire, and messages the maintainer about anything overdue |
 | [Pull request rules](.github/workflows/pull-request.yml) | On every pull request: a change that fixes something changes a test too, or says in a `No-Test-Because:` line why it cannot |
 | [Labels](.github/workflows/labels.yml) | Keeps the repository's labels equal to `.github/labels.json` |
-| [Dependency updates](.github/workflows/dependency-updates.yml) | On Dependabot's pull requests: a minor or patch update queues itself to merge, and goes in once every required check passes and a maintainer approves it; anything bigger gets a label and waits for the maintainer |
+| [Dependency updates](.github/workflows/dependency-updates.yml) | On Dependabot's pull requests: a minor or patch update queues itself to merge, and goes in once every required check passes; anything bigger gets a label and waits for the maintainer |
 | [Scorecard](.github/workflows/scorecard.yml) | Weekly and on every change to main: OpenSSF Scorecard grades how the repository is kept (pinned actions, token permissions, branch protection, signed releases) and publishes the score behind the badge above |
 
 Nothing here commits back to `main`. Workflows that need to remember something between runs

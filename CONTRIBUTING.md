@@ -264,7 +264,7 @@ to build the window. `react`, `react-dom` and `motion` are devDependencies becau
 their code into the page, so the installer carries that code without the packages.
 
 Dependabot proposes updates every Monday. A minor or patch update queues itself to merge and goes
-in once every required check has passed and a maintainer has approved it. A major one gets the
+in once every required check has passed. A major one gets the
 `major-update` label and waits for the maintainer's decision, because a new major version of Electron or of the site generator can pass every check and still
 ship something broken.
 
@@ -305,10 +305,11 @@ dialog nobody can act on.
 
 ## How a change reaches main
 
-Through a pull request, the maintainers' own changes included. It needs an approving review from
-a maintainer who did not write it, and a fresh one after any later push; the maintainers review
-each other. Once that approval is on it and the required checks are green, it joins a merge queue,
-which runs the checks again on top of the newest main and then lands it. The checks: the suite on
+Through a pull request, the maintainers' own changes included. Once the required checks are green
+it joins a merge queue, which runs the checks again on top of the newest main and then lands it.
+No approval is required: the checks are the gate (DECISIONS.md, "Every change reaches `main`
+through a pull request"). A pull request from outside the project still needs a maintainer to
+merge it, and that is when it is read. The checks: the suite on
 Linux and on Windows, CodeQL, the Linux build and its start-up run,
 installing a mod through the window on Linux and on Windows, and one rule of its own. CodeQL has
 to come back clean as well: a pull request that adds an alert at High or higher does not merge. A pull
