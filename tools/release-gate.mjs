@@ -13,10 +13,10 @@
  * the same file the branch ruleset is kept in line with, so "what a merge needs" and "what a
  * release needs" cannot drift apart by being written down twice.
  *
- * Before any of that it asks whether the commit is on main at all. Since 2026-09-23 a change
- * reaches main only with an approval from a maintainer who did not write it, and checks also run
- * on pull request branches, so a green commit is not yet a reviewed one. Anybody who can push a
- * tag could otherwise ship a branch nobody approved.
+ * Before any of that it asks whether the commit is on main at all. A change reaches main only
+ * through a pull request and the merge queue, and checks also run on pull request branches, so a
+ * green commit is not yet a merged one. Anybody who can push a tag could otherwise ship a branch
+ * that never went through the queue.
  *
  * Usage:
  *   GH_TOKEN=... GITHUB_REPOSITORY=owner/repo node tools/release-gate.mjs <sha>

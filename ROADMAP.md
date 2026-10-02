@@ -30,8 +30,8 @@ than one place, and where is still open.
 **The OpenSSF gold badge.** Silver was awarded on 2026-09-23, the day two maintainers came to own
 the organization the repository lives in. Gold stands at 30%, and its answers are not written
 yet: it asks for a bus factor of two, a second significant contributor who is not associated
-with the first, reviews on at least half of all changes, and a licence and copyright line in every
-source file.
+with the first, reviews on at least half of all changes (not required here since 2026-10-02),
+and a licence and copyright line in every source file.
 
 ## Later
 

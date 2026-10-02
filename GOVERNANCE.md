@@ -12,9 +12,9 @@ Every change to the program goes through a pull request against `main`, includin
 maintainers' own. A branch rule closes direct pushes to `main`, and the same checks run for
 everybody: tests on Linux and Windows, lint, the type-error ceiling, the coverage floor, the size
 budget, CodeQL, the English twin for every Russian string, and the rule that a fix carries a test
-or says in the commit why it does not. Since 2026-09-23 the rule also wants an approving review
-from a maintainer who did not write the change. A pull request merges when the checks are green
-and that approval is on it.
+or says in the commit why it does not. A pull request merges when those checks are green. No
+approval is required since 2026-10-02, and [DECISIONS.md](DECISIONS.md) says why; a pull request
+from outside the project still needs a maintainer to merge it.
 
 Decisions that shape the project, rather than the code, go in [DECISIONS.md](DECISIONS.md) with
 the reason and the date. A decision you can read is a decision you can argue with.
@@ -30,8 +30,9 @@ key for `config/app.json`, the domain and the mirror bucket. Nobody else has tho
 **Second maintainer: Nersaa ([@Nersaa](https://github.com/Nersaa)).** An owner of the
 [dota2modmanager](https://github.com/dota2modmanager) organization the repository lives in, with
 the same rights on GitHub as the maintainer: merge, tag, release, change the repository's
-settings and replace its secrets. They review the maintainer's pull requests, and the maintainer
-reviews theirs, because the branch rule wants an approval from somebody other than the author. They are also the answer to the question "what happens if one person stops".
+settings and replace its secrets. They read the maintainer's pull requests when they want to and
+send their own; neither needs the other's approval to merge. They are also the answer to the
+question "what happens if one person stops".
 [docs/second-maintainer.md](docs/second-maintainer.md) is the whole of it, including what to do on
 the day it matters.
 
@@ -88,8 +89,7 @@ an unreachable one, and the app falls back to GitHub when the mirror does not an
 
 So "can this project keep releasing if one person disappears" gets a yes, and the project's
 [OpenSSF Best Practices entry](https://www.bestpractices.dev/en/projects/14721) answers it that
-way. The branch rule still wants an approval from somebody other than the author; a maintainer
-left alone switches that off in the ruleset, says so in an issue, and releases.
+way. A maintainer left alone needs nobody's approval to merge or to release.
 
 The knowledge of how the app keeps up with a game update still sits mostly with one person as
-well. Reading every change before it lands is how that moves.
+well. Reading the changes as they land is how that moves.

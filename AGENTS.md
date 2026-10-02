@@ -112,9 +112,8 @@ A pull request should say what broke and how you know it is fixed. "Fixes the th
 reproduction is a change nobody can review.
 
 Work on a branch of your own, from main, and open your own pull request. Do not push to a
-branch that has a pull request you did not open: main takes a change only after the other
-maintainer approves its last push, so your push throws away an approval somebody already gave,
-and a push from an assistant's account needs one more approval on top.
+branch that has a pull request you did not open: it merges by itself once its checks pass, and
+your commit would land under a description somebody else wrote.
 
 ## Attribution
 
