@@ -35,6 +35,8 @@ the code, not in this page.
 | [`src/folder-size.ts`](#srcfolder-sizets) | Bytes under a folder: the number Settings shows beside each cache, and the one the removal |
 | [`src/game-icons.ts`](#srcgame-iconsts) | Item pictures taken from the installed game instead of scraped off a wiki. |
 | [`src/game-upkeep.ts`](#srcgame-upkeepts) | Keeping the game folder the way the user left it, while other programs change it underneath. |
+| [`src/gamelang-folders.ts`](#srcgamelang-foldersts) | Making and moving the dota_<lang> folders (src/gamelang.ts has the rule): whether a voice pack is |
+| [`src/gamelang-steam.ts`](#srcgamelang-steamts) | What Steam says about the game's language (src/gamelang.ts has the rule): the -language in the |
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (src/). |
@@ -1167,6 +1169,88 @@ export function createGameUpkeep({ settings, installer, library, schemaService, 
 
 _No description in the source._
 
+## src/gamelang-folders.ts
+
+Making and moving the dota_<lang> folders (src/gamelang.ts has the rule): whether a voice pack is
+on disk, a folder created the way Valve ships one when the game would mount it empty, and the
+app's mods carried from one folder to another when the audio language changes.
+
+### `voiceInstalled`
+
+```ts
+export function voiceInstalled(gamePath: string, suffix: string): boolean
+```
+
+Is Valve's voice pack for this language actually on disk? If not, voices stay English.
+
+### `ensureLangFolder`
+
+```ts
+export function ensureLangFolder(gamePath: string, suffix: string): string
+```
+
+Make sure the mod folder exists. English is the one language Valve ships no folder for
+(English voice lives in dota/pak01), so for it we create the layer ourselves, shaped
+exactly like Valve's own — never touching a gameinfo.gi that is already there.
+
+### `moveLangFolder`
+
+```ts
+export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number
+```
+
+Move installed mod files from one language folder to another, which is what has to happen
+when the game's audio language changes: the folder the engine mounts changes with it, and
+mods left behind are invisible with no error anywhere.
+
+Three kinds of file are left where they are. Valve's own - `pak01_*` voice paks and the
+`gameinfo.gi` that defines the layer - belong to the folder rather than to anybody's mods.
+Another program's work is not ours to relocate, whatever folder it is sitting in. And a name
+already taken in the destination is not overwritten, because the file there is somebody's
+current mod and this one is a leftover.
+
+```
+@returns how many files were actually moved
+```
+
+## src/gamelang-steam.ts
+
+What Steam says about the game's language (src/gamelang.ts has the rule): the -language in the
+launch options of whoever is signed in, and the language set in the game's properties. Read
+out of Steam's own files beside the game, or where Steam installs by default.
+
+### `readKey`
+
+```ts
+export const readKey = (text: string, key: string): string | null
+```
+
+One "key" "value" pair out of a Valve KeyValues text, the first one that matches.
+
+### `launchLanguage`
+
+```ts
+export function launchLanguage(gamePath: string | null | undefined): string | null
+```
+
+The `-language X` Steam will start the game with, lowercased, or null.
+
+### `launchOptions`
+
+```ts
+export function launchOptions(gamePath: string | null | undefined): string | null
+```
+
+Everything Steam will start the game with, verbatim, or null.
+
+### `steamLanguage`
+
+```ts
+export function steamLanguage(gamePath: string | null | undefined): string | null
+```
+
+Language Steam has the game mounted as — the fallback before Dota has ever booted.
+
 ## src/gamelang.ts
 
 Which dota_<lang> folder the game actually mounts.
@@ -1208,6 +1292,10 @@ getting English text back needs a VPK carrying the English localization, and the
 write into Steam's own config to set it up. Valve have already stopped mounting invented
 folders; the languages with no voice pack of their own are the ones that could go the same
 way, while these three cannot - the game has to mount them to play their voices.
+
+Hands on from [`src/gamelang-steam.ts`](#srcgamelang-steamts): `launchLanguage`, `launchOptions`, `steamLanguage`.
+
+Hands on from [`src/gamelang-folders.ts`](#srcgamelang-foldersts): `voiceInstalled`, `ensureLangFolder`, `moveLangFolder`.
 
 ### `LangFolder`
 
@@ -1312,22 +1400,6 @@ Dota decides what is mounted, and they are separate. So an English speaker gets 
 dota_russian holding nothing but mods, and keeps hearing the English speech out of
 dota/pak01 without noticing anything happened.
 
-### `launchLanguage`
-
-```ts
-export function launchLanguage(gamePath: string | null | undefined): string | null
-```
-
-The `-language X` Steam will start the game with, lowercased, or null.
-
-### `launchOptions`
-
-```ts
-export function launchOptions(gamePath: string | null | undefined): string | null
-```
-
-Everything Steam will start the game with, verbatim, or null.
-
 ### `bootLanguages`
 
 ```ts
@@ -1335,14 +1407,6 @@ export function bootLanguages(gamePath: string | null | undefined): { ui: string
 ```
 
 UI + audio language the game wrote at its last boot, or null if it never ran.
-
-### `steamLanguage`
-
-```ts
-export function steamLanguage(gamePath: string | null | undefined): string | null
-```
-
-Language Steam has the game mounted as — the fallback before Dota has ever booted.
 
 ### `langFolders`
 
@@ -1381,44 +1445,6 @@ and therefore where a mod has to live.
 
 ```
 @param langs  a setting left out is left as it is
-```
-
-### `voiceInstalled`
-
-```ts
-export function voiceInstalled(gamePath: string, suffix: string): boolean
-```
-
-Is Valve's voice pack for this language actually on disk? If not, voices stay English.
-
-### `ensureLangFolder`
-
-```ts
-export function ensureLangFolder(gamePath: string, suffix: string): string
-```
-
-Make sure the mod folder exists. English is the one language Valve ships no folder for
-(English voice lives in dota/pak01), so for it we create the layer ourselves, shaped
-exactly like Valve's own — never touching a gameinfo.gi that is already there.
-
-### `moveLangFolder`
-
-```ts
-export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number
-```
-
-Move installed mod files from one language folder to another, which is what has to happen
-when the game's audio language changes: the folder the engine mounts changes with it, and
-mods left behind are invisible with no error anywhere.
-
-Three kinds of file are left where they are. Valve's own - `pak01_*` voice paks and the
-`gameinfo.gi` that defines the layer - belong to the folder rather than to anybody's mods.
-Another program's work is not ours to relocate, whatever folder it is sitting in. And a name
-already taken in the destination is not overwritten, because the file there is somebody's
-current mod and this one is a leftover.
-
-```
-@returns how many files were actually moved
 ```
 
 ## src/hero-names.ts

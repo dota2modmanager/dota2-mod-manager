@@ -40,7 +40,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { isMinifyFile, isMinifyPak } from './minify.ts';
+import { launchLanguage, readKey, steamLanguage } from './gamelang-steam.ts';
 
 /** One dota_* folder on disk and what is in it; see langFolders. */
 export interface LangFolder {
@@ -131,143 +131,6 @@ export function folderFor(audio: string | null | undefined): string {
   return audio && MOD_FOLDERS.includes(audio) ? audio : FALLBACK_FOLDER;
 }
 
-// what Valve puts in every official language folder; mirrored when we have to create one
-const gameinfoStub = (suffix: string) => `"GameInfo"
-{
-	LayeredOnMod	dota
-
-	FileSystem
-	{
-		SearchPaths
-		{
-			Game				dota_${suffix}
-			Game				dota
-			Game				core
-
-			Mod					dota_${suffix}
-			Mod					dota
-
-			AddonRoot			dota_addons
-
-			// Note: addon content is included in publiccontent by default.
-			PublicContent		core
-		}
-	}
-}
-`;
-
-const readKey = (text: string, key: string): string | null => {
-  const m = text.match(new RegExp(`"${key}"\\s*"([^"]+)"`, 'i'));
-  return m ? m[1].trim().toLowerCase() : null;
-};
-
-/* A `-language X` in Steam's launch options, which beats everything the game wrote itself.
- *
- * While it is set, both language settings are locked to it and the mount follows it - which is
- * how Minify gets dota_dutch mounted. So a machine can be pointed at a folder that boot.vcfg
- * knows nothing about, and reading only boot.vcfg would have this app confidently name the
- * wrong folder.
- *
- * Steam keeps launch options per account, so the answer belongs to whoever is logged in: that
- * account having none means there is no override, and another account's value is not ours to
- * borrow. Which account that is comes from loginusers.vdf - MostRecent where the file has it,
- * newest Timestamp where it does not (this Steam build writes only the latter).
- */
-function currentSteamUser(root: string): string | null {
-  let text: string;
-  try { text = fs.readFileSync(path.join(root, 'config', 'loginusers.vdf'), 'utf-8'); } catch { return null; }
-  let best: { id: string; rank: number } | null = null;
-  for (const m of text.matchAll(/"(\d{17})"\s*\{([\s\S]*?)\n\t\}/g)) {
-    const mostRecent = (m[2].match(/"MostRecent"\s*"(\d)"/) || [])[1];
-    const stamp = Number((m[2].match(/"Timestamp"\s*"(\d+)"/) || [])[1] || 0);
-    const rank = mostRecent === '1' ? Infinity : stamp;
-    if (!best || rank > best.rank) best = { id: m[1], rank };
-  }
-  // userdata folders are the 32-bit account id
-  try { return best ? String(BigInt(best.id) - 76561197960265728n) : null; } catch { return null; }
-}
-
-/* Dota's launch options as Steam stores them, with the escapes of the format undone.
- *
- * `[^"]*` was good enough while launch options were a handful of flags, and stopped being good
- * enough the moment another program put a quoted path in one. Minify v1.14rc7 prepends
- *
- *   cmd /c "<...>\Dota2-Minify.exe" prelaunch && %command%
- *
- * so it can patch before the game starts, and writes the file back with python-vdf, which
- * escapes the quotes it just introduced. Reading up to the first quote character then captured
- * `cmd /c \` and discarded everything after it - including the `-language` that decides which
- * folder this app installs into. The app concluded there was no launch option at all, went back
- * to the folder named by the voice setting, and put mods where the game does not look. That is
- * the whole 2.6.1 failure walking back in, for everybody running the new Minify.
- *
- * A backslash escapes whatever follows it, so a quote ends the value only when it is not itself
- * escaped.
- * @returns the value, or null when the file or the key is not there
- */
-function readLaunchOptions(file: string): string | null {
-  let text: string;
-  try { text = fs.readFileSync(file, 'utf-8'); } catch { return null; }
-  const app = text.match(/"570"\s*\{[\s\S]{0,4000}?"LaunchOptions"\s*"((?:\\.|[^"\\])*)"/);
-  if (!app) return null;
-  const escapes: Record<string, string> = { n: '\n', t: '\t', v: '\v', b: '\b', r: '\r', f: '\f' };
-  return app[1].replace(/\\(.)/g, (_, c) => (c in escapes ? escapes[c] : c));
-}
-
-/* Ask the launch options one question, on behalf of whoever is logged in.
- *
- * Steam keeps them per account, so the answer belongs to that account: having none means there
- * is no override, and another account's value is not ours to borrow. Where nobody can be
- * identified, an answer every account with one agrees on is safe to use and a disagreement is
- * not an answer.
- * @param pick what to take out of one account's options
- */
-function fromLaunchOptions(gamePath: string | null | undefined, pick: (raw: string | null) => string | null): string | null {
-  const roots: string[] = [];
-  if (gamePath) {
-    // <lib>/steamapps/common/dota 2 beta/game -> <lib>, which is the Steam root for a default install
-    roots.push(path.resolve(gamePath, '..', '..', '..', '..'));
-  }
-  if (process.platform === 'win32') {
-    for (const base of [process.env['ProgramFiles(x86)'], process.env.ProgramFiles]) {
-      if (base) roots.push(path.join(base, 'Steam'));
-    }
-  }
-  for (const root of roots) {
-    const userdata = path.join(root, 'userdata');
-    let ids: string[] = [];
-    try { ids = fs.readdirSync(userdata).filter((d) => /^\d+$/.test(d)); } catch { continue; }
-    if (!ids.length) continue;
-
-    const valueOf = (id: string) => pick(readLaunchOptions(path.join(userdata, id, 'config', 'localconfig.vdf')));
-    const current = currentSteamUser(root);
-    if (current && ids.includes(current)) {
-      const own = valueOf(current);
-      return own || null; // '' means launch options exist and say nothing about this question
-    }
-    const values = new Set<string>();
-    for (const id of ids) {
-      const v = valueOf(id);
-      if (v) values.add(v);
-    }
-    return values.size === 1 ? [...values][0] : null;
-  }
-  return null;
-}
-
-/** The `-language X` Steam will start the game with, lowercased, or null. */
-export function launchLanguage(gamePath: string | null | undefined): string | null {
-  return fromLaunchOptions(gamePath, (raw) => {
-    if (raw === null) return null;
-    const lang = raw.match(/-language\s+([A-Za-z]+)/);
-    return lang ? lang[1].toLowerCase() : '';
-  });
-}
-
-/** Everything Steam will start the game with, verbatim, or null. */
-export function launchOptions(gamePath: string | null | undefined): string | null {
-  return fromLaunchOptions(gamePath, (raw) => raw);
-}
 
 /** UI + audio language the game wrote at its last boot, or null if it never ran. */
 export function bootLanguages(gamePath: string | null | undefined): { ui: string | null; audio: string | null } | null {
@@ -282,22 +145,6 @@ export function bootLanguages(gamePath: string | null | undefined): { ui: string
   } catch {
     return null;
   }
-}
-
-/** Language Steam has the game mounted as — the fallback before Dota has ever booted. */
-export function steamLanguage(gamePath: string | null | undefined): string | null {
-  if (!gamePath) return null;
-  try {
-    // <lib>/steamapps/common/dota 2 beta/game -> <lib>/steamapps/appmanifest_570.acf
-    const acf = path.resolve(gamePath, '..', '..', '..', 'appmanifest_570.acf');
-    const text = fs.readFileSync(acf, 'utf-8');
-    for (const block of ['MountedConfig', 'UserConfig']) {
-      const m = text.match(new RegExp(`"${block}"\\s*\\{([^}]*)\\}`, 'i'));
-      const lang = m && readKey(m[1], 'language');
-      if (lang) return lang;
-    }
-  } catch { /* not a Steam layout, or no manifest */ }
-  return null;
 }
 
 /** Every dota_* folder on disk, with what is inside each. */
@@ -388,74 +235,5 @@ export function writeBootLanguages(gamePath: string, { ui, audio }: { ui?: strin
   return { ui, audio };
 }
 
-/** Is Valve's voice pack for this language actually on disk? If not, voices stay English. */
-export function voiceInstalled(gamePath: string, suffix: string): boolean {
-  try {
-    return fs.readdirSync(path.join(gamePath, `dota_${suffix}`)).some((f) => /^pak01_/i.test(f));
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Make sure the mod folder exists. English is the one language Valve ships no folder for
- * (English voice lives in dota/pak01), so for it we create the layer ourselves, shaped
- * exactly like Valve's own — never touching a gameinfo.gi that is already there.
- */
-export function ensureLangFolder(gamePath: string, suffix: string): string {
-  const dir = path.join(gamePath, `dota_${suffix}`);
-  const existed = fs.existsSync(dir);
-  fs.mkdirSync(dir, { recursive: true });
-  const gi = path.join(dir, 'gameinfo.gi');
-  /* Only into a folder we are creating. A folder that was already here belongs to whoever
-   * made it - another mod manager, or Valve - and it plainly works without anything from us,
-   * so adding a file to it would be littering in somebody else's room.
-   *
-   * 'wx' creates the file or fails because one is there, in a single call. Looking first and
-   * writing second left a gap in which another program's gameinfo.gi was replaced by ours. */
-  if (!existed) {
-    try {
-      fs.writeFileSync(gi, gameinfoStub(suffix), { flag: 'wx' });
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
-    }
-  }
-  return dir;
-}
-
-/**
- * Move installed mod files from one language folder to another, which is what has to happen
- * when the game's audio language changes: the folder the engine mounts changes with it, and
- * mods left behind are invisible with no error anywhere.
- *
- * Three kinds of file are left where they are. Valve's own - `pak01_*` voice paks and the
- * `gameinfo.gi` that defines the layer - belong to the folder rather than to anybody's mods.
- * Another program's work is not ours to relocate, whatever folder it is sitting in. And a name
- * already taken in the destination is not overwritten, because the file there is somebody's
- * current mod and this one is a leftover.
- *
- * @returns how many files were actually moved
- */
-export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {
-  if (!gamePath || !fromSuffix || !toSuffix || fromSuffix === toSuffix) return 0;
-  const oldDir = path.join(gamePath, `dota_${fromSuffix}`);
-  let moved = 0;
-  try {
-    if (!fs.existsSync(oldDir)) return 0;
-    const newDir = ensureLangFolder(gamePath, toSuffix);
-    for (const f of fs.readdirSync(oldDir)) {
-      if (/^pak01_/i.test(f) || f.toLowerCase() === 'gameinfo.gi') continue;
-      if (isMinifyFile(f.toLowerCase()) || isMinifyPak(path.join(oldDir, f))) continue;
-      const dst = path.join(newDir, f);
-      if (fs.existsSync(dst)) continue;
-      fs.renameSync(path.join(oldDir, f), dst);
-      moved++;
-    }
-    // a folder we no longer use and that holds nothing else goes away
-    if (!fs.readdirSync(oldDir).length) fs.rmdirSync(oldDir);
-  } catch (err) {
-    console.error('lang folder migration failed:', err);
-  }
-  return moved;
-}
-
+export { launchLanguage, launchOptions, steamLanguage } from './gamelang-steam.ts';
+export { voiceInstalled, ensureLangFolder, moveLangFolder } from './gamelang-folders.ts';

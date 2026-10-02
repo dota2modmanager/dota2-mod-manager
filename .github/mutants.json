@@ -220,7 +220,7 @@
     },
     {
       "name": "the language move carries off the game's own files",
-      "file": "src/gamelang.ts",
+      "file": "src/gamelang-folders.ts",
       "anchor": "export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {",
       "from": "if (/^pak01_/i.test(f) || f.toLowerCase() === 'gameinfo.gi') continue;",
       "to": "if (false) continue;",
@@ -228,7 +228,7 @@
     },
     {
       "name": "the language move relocates another program's mods",
-      "file": "src/gamelang.ts",
+      "file": "src/gamelang-folders.ts",
       "anchor": "export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {",
       "from": "if (isMinifyFile(f.toLowerCase()) || isMinifyPak(path.join(oldDir, f))) continue;",
       "to": ";",
@@ -236,7 +236,7 @@
     },
     {
       "name": "the language move writes over a mod already in the destination",
-      "file": "src/gamelang.ts",
+      "file": "src/gamelang-folders.ts",
       "anchor": "export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {",
       "from": "if (fs.existsSync(dst)) continue;",
       "to": ";",
@@ -244,7 +244,7 @@
     },
     {
       "name": "the language move runs even when there is nowhere to move to",
-      "file": "src/gamelang.ts",
+      "file": "src/gamelang-folders.ts",
       "anchor": "export function moveLangFolder(gamePath: string | null | undefined, fromSuffix: string | null | undefined, toSuffix: string | null | undefined): number {",
       "from": "if (!gamePath || !fromSuffix || !toSuffix || fromSuffix === toSuffix) return 0;",
       "to": "if (!gamePath || !fromSuffix || !toSuffix) return 0;",
@@ -588,7 +588,7 @@
     },
     {
       "name": "a new language folder writes its gameinfo over one that appeared meanwhile",
-      "file": "src/gamelang.ts",
+      "file": "src/gamelang-folders.ts",
       "anchor": "export function ensureLangFolder(gamePath: string, suffix: string): string {",
       "from": "{ flag: 'wx' }",
       "to": "{}",
