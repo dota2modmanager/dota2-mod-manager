@@ -11,20 +11,13 @@ import path from 'node:path';
 import * as patcher from './patcher.ts';
 import * as schema from './schema.ts';
 import * as itemBuilder from './item-builder.ts';
-import { t } from './i18n.ts';
+import { createHarvest, type SchemaInstaller } from './schema-harvest.ts';
+import { createCosmetics } from './schema-cosmetics.ts';
 import type { Settings } from './settings.ts';
 import type { Library } from './library.ts';
-import type { LibFile, LibRecord } from './types.ts';
-import type { ItemSet } from './item-builder.ts';
 
-/** What of the installer the schema needs: what a record is, its item blocks, splitting it, its size. */
-export interface SchemaInstaller {
-  analyzeRecord(rec: LibRecord): { fp?: string | null } | null;
-  harvestSchema(files: LibFile[], vanillaText: string): { deltas: schema.SchemaDelta[]; stripped: string[] };
-  splitVpkFile(relPath: string): { name: string; files: LibFile[]; paths?: string[] }[];
-  remove(files: LibFile[]): unknown;
-  installedSize(rec: LibRecord): number;
-}
+export type { SchemaInstaller } from './schema-harvest.ts';
+export type { CosmeticSlot } from './schema-cosmetics.ts';
 
 /** The patch and the built table as Settings shows them; the patcher's own state is merged in. */
 export interface SchemaState extends Partial<patcher.PatchState> {
@@ -33,12 +26,6 @@ export interface SchemaState extends Partial<patcher.PatchState> {
   conflicts: { id: string; name: string; mods: string[] }[];
   error?: string;
 }
-
-/** A slot the free-cosmetics picker offers: its base item, what is on it, and what could be. */
-export type CosmeticSlot = {
-  slot: string; base: string; picked: string | null | undefined; recordId: string | null;
-  options: { id: string; name: string }[]; [key: string]: unknown;
-};
 
 /**
  * @param {object} deps
@@ -180,90 +167,6 @@ export function createSchemaService({ settings, library, installer, userDataDir,
     return { ok: true, deployed: false };
   }
 
-  // Lift the item blocks a freshly installed mod changed, drop the whole-game tables it
-  // shipped, and remember the blocks on its record.
-  function harvest(rec: LibRecord | null | undefined): { deltas: number; stripped: number } | null {
-    const game = gamePath();
-    if (!game || !rec || !Array.isArray(rec.files)) return null;
-    try {
-      // Repacking changes the file, and with it the fingerprint the catalog is matched by.
-      // Keep the original so a recognised mod does not turn into an unknown one.
-      let fpBefore: string | null = null;
-      try { fpBefore = (installer.analyzeRecord(rec) || {}).fp || null; } catch { /* not a vpk record */ }
-      const { deltas, stripped } = installer.harvestSchema(rec.files, vanilla());
-      if (!deltas.length && !stripped.length) return null;
-      const fields: Partial<LibRecord> = { files: rec.files };
-      if (deltas.length) fields.schema = deltas;
-      if (stripped.length && fpBefore) fields.fpOriginal = fpBefore;
-      library.update(rec.id, fields);
-      return { deltas: deltas.length, stripped: stripped.length };
-    } catch { return null; }
-  }
-
-  /**
-   * A Skinchanger export can hold several heroes at once - its packer bundles whatever was
-   * in the cart, so a "Grimstroke" pack may also carry Morphling's files and the item block
-   * that goes with them. Split such a record into one mod per hero and hand each part the
-   * blocks that talk about its own files.
-   * @returns the new records, or null when there was nothing to split
-   */
-  function split(rec: LibRecord): LibRecord[] | null {
-    const dir = (rec.files || []).find((f) => f.root === 'lang' && /_dir\.vpk$/i.test(f.relPath));
-    if (!dir) return null;
-    let parts;
-    try { parts = installer.splitVpkFile(dir.relPath); } catch { return null; }
-    if (!parts.length) return null;
-
-    const blocks = Array.isArray(rec.schema) ? rec.schema : [];
-    const added: LibRecord[] = [];
-    for (const part of parts) {
-      const mine = blocks.filter((b) => schema.blockUsesAssets(b.block, part.paths || []));
-      const created = library.add({
-        name: part.name,
-        categoryId: 'imported',
-        styleLabel: null,
-        fileRef: rec.fileRef || rec.name,
-        preview: null,
-        files: part.files,
-      });
-      const fields: Partial<LibRecord> = { schemaChecked: true };
-      if (mine.length) fields.schema = mine;
-      if (rec.fpOriginal) fields.fpOriginal = rec.fpOriginal;
-      library.update(created.id, fields);
-      added.push({ ...created, ...fields });
-    }
-    installer.remove(rec.files);
-    library.removeRecord(rec.id);
-    return added;
-  }
-
-  /**
-   * Mods installed before this existed still carry the whole-game tables inside their VPK:
-   * a stale item schema (dead weight) and a stale localization copy (which outranks the
-   * game's own and rolls UI text back to whenever the mod was built). Sweep them once.
-   */
-  function migrate(): { scanned: number; changed: number; deltas: number; freedMB: number } {
-    const game = gamePath();
-    const out = { scanned: 0, changed: 0, deltas: 0, freedMB: 0 };
-    if (!game) return out;
-    for (const rec of library.list()) {
-      if (rec.kind === 'pack' || Array.isArray(rec.schema) || rec.schemaChecked) continue;
-      if (!Array.isArray(rec.files) || !rec.files.some((f) => f.root === 'lang' && /_dir\.vpk$/i.test(f.relPath))) continue;
-      out.scanned++;
-      let before = 0;
-      try { before = installer.installedSize(rec); } catch { /* size is only for the log line */ }
-      const res = harvest(rec);
-      // remember that this record was looked at, so a clean mod is not re-scanned every start
-      if (!res) { library.update(rec.id, { schemaChecked: true }); continue; }
-      out.changed++;
-      out.deltas += res.deltas;
-      try { out.freedMB += Math.max(0, before - installer.installedSize(rec)) / 1048576; } catch { /* noop */ }
-      library.update(rec.id, { schemaChecked: true });
-    }
-    out.freedMB = Math.round(out.freedMB);
-    return out;
-  }
-
   // Two mods changing the same item block DIFFERENTLY: only one of them can be in the built
   // table (the one installed later), so the library has to say so instead of quietly
   // dropping the other. Identical blocks are not a conflict at all - Skinchanger bundles
@@ -310,136 +213,13 @@ export function createSchemaService({ settings, library, installer, userDataDir,
     return out;
   }
 
-  // The live cosmetic record for a slot, if any — at most one is ever enabled at a time
-  // (see pickCosmetic), the same rule the app already applies to cursor sets.
-  function cosmeticRecordFor(slot: string): LibRecord | null {
-    return library.list().find((r) => r.categoryId === 'cosmetic' && r.slot === slot && r.enabled !== false) || null;
-  }
-
-  /**
-   * Every slot that has both a free "base item" and something to put on it, in one call.
-   * The list comes from the installed game, so a slot Valve adds later appears by itself.
-   * With them, the item builder's sets (item-builder.js itemSets).
-   */
-  function cosmeticSlots(): { slots: CosmeticSlot[]; sets: ItemSet[]; error?: string } {
-    const game = gamePath();
-    if (!game) return { slots: [], sets: [] };
-    try {
-      const text = vanilla();
-      const bases = schema.listItems(text).filter((i) => i.baseitem);
-      const seen = new Set<string>();
-      const slots: CosmeticSlot[] = [];
-      for (const base of bases) {
-        const slot = base.slot || base.prefab || '';
-        if (!slot || seen.has(slot)) continue;
-        seen.add(slot);
-        const options = schema.cosmeticOptions(text, slot);
-        if (!options.length) continue;
-        const rec = cosmeticRecordFor(slot);
-        slots.push({ slot, base: base.id, picked: rec ? rec.itemId : null, recordId: rec ? rec.id : null, options });
-      }
-      const itemSlots = itemBuilder.itemSlots(text);
-      const sets = itemBuilder.itemSets(text, itemSlots);
-      const effects = itemBuilder.itemEffects();
-      if (itemSlots.length && effects.length) {
-        const entries = itemSlots.map((it) => {
-          const rec = cosmeticRecordFor(it.slot);
-          return {
-            ...it,
-            picked: rec ? rec.itemId : null,
-            pickedEffect: rec ? (rec.effectId || '') : '',
-            recordId: rec ? rec.id : null,
-            effects,
-          };
-        });
-        const at = slots.findIndex((s) => s.slot === 'weather');
-        if (at === -1) slots.unshift(...entries);
-        else slots.splice(at + 1, 0, ...entries);
-      }
-      return { slots, sets };
-    } catch (err) {
-      return { slots: [], sets: [], error: String((err as Error)?.message || err) };
-    }
-  }
-
-  /**
-   * Pick a look for a slot. Switching to a genuinely new item disables whatever was live for
-   * that slot (never deletes it: a preset saved earlier may still point at that record,
-   * exactly like disabling a regular mod doesn't erase it) and creates a fresh record — or
-   * reactivates a dormant one for that same item, so flipping back and forth between two
-   * looks doesn't spawn a new row each time. Returns the now-live record. `write: false` leaves
-   * the game alone, for a caller that picks several and writes once (pickSet).
-   */
-  function pickCosmetic(slot: string, itemId: string | number, itemName: string | null | undefined, effectId: string | string[] | null | undefined = null, { write = true } = {}): LibRecord | null {
-    const id = String(itemId);
-    const name = itemName || id;
-    const isItem = slot === 'items' || String(slot || '').startsWith('item:');
-    // the item builder's effects, as one string in one order (item-builder.js effectKey)
-    const effect = isItem ? itemBuilder.effectKey(effectId) : '';
-    const live = cosmeticRecordFor(slot);
-    if (live && live.itemId === id && itemBuilder.effectKey(live.effectId) === effect) return live; // already this
-
-    // Other effects on the same item are that pick changed, not another pick. Each combination
-    // used to become a record of its own, and My mods filled with rows of one item's name that
-    // told nobody which was which. One row per item, its effects a property of it.
-    if (isItem && live && live.itemId === id) {
-      library.update(live.id, { name, effectId: effect || undefined });
-      if (write) refresh();
-      return library.find(live.id);
-    }
-
-    if (live) library.setEnabled(live.id, false);
-    const dormant = library.list().find((r) => r.categoryId === 'cosmetic'
-      && r.slot === slot && r.itemId === id && (isItem || itemBuilder.effectKey(r.effectId) === effect));
-    // a record found a line above updates, so there is always one here
-    const rec = (dormant
-      ? library.update(dormant.id, { name, enabled: true, effectId: effect || undefined })
-      : library.add({ name, categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [] })) as LibRecord;
-    if (!dormant) library.update(rec.id, { slot, itemId: id, ...(effect ? { effectId: effect } : {}) });
-    if (write) refresh();
-    return library.find(rec.id);
-  }
-
-  /**
-   * Put a whole set on: each piece the builder has a slot for takes that slot, a row of its own
-   * in My mods, and the game is written once. A set brings no effects, and a piece that is on
-   * already keeps the ones it has.
-   */
-  function pickSet(setId: string | number): { applied: number; pieces: number } {
-    const set = itemBuilder.itemSets(vanilla()).find((x) => x.id === String(setId));
-    if (!set) throw new Error(t('Набор не найден'));
-    let applied = 0;
-    for (const p of set.pieces) {
-      if (!p.fits || !p.slot) continue;
-      const live = cosmeticRecordFor(p.slot);
-      pickCosmetic(p.slot, p.itemId, p.name, live && live.itemId === p.itemId ? live.effectId : '', { write: false });
-      applied++;
-    }
-    refresh();
-    return { applied, pieces: set.pieces.length };
-  }
-
-  // One-time move of picks that used to live in settings.json into library records, from
-  // before cosmetics could be toggled/deleted/shared like any other mod.
-  function migrateCosmeticSettings() {
-    const picks = settings.get('cosmetics');
-    if (!picks || !Object.keys(picks).length) return;
-    const game = gamePath();
-    if (!game) return;
-    try {
-      const text = vanilla();
-      for (const [slot, itemId] of Object.entries(picks)) {
-        if (!itemId || cosmeticRecordFor(slot)) continue;
-        const opt = schema.cosmeticOptions(text, slot).find((o) => o.id === String(itemId));
-        pickCosmetic(slot, String(itemId), opt ? opt.name : slot);
-      }
-    } catch { /* the game path may not be ready yet; nothing lost, just retried next start */ }
-    settings.set('cosmetics', {});
-  }
+  const { harvest, split, migrate } = createHarvest({ library, installer, gamePath, vanilla });
+  const { cosmeticSlots, pickCosmetic, pickSet, migrateCosmeticSettings } = createCosmetics({
+    library, settings, gamePath, vanilla, refresh,
+  });
 
   return {
     backupDir, patches, refresh, heal, setEnabled, harvest, split, migrate, state,
     cosmeticSlots, pickCosmetic, pickSet, migrateCosmeticSettings,
   };
 }
-

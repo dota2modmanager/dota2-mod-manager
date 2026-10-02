@@ -1020,7 +1020,7 @@
     },
     {
       "name": "each part of a split pack keeps every block of the pack",
-      "file": "src/schema-service.ts",
+      "file": "src/schema-harvest.ts",
       "anchor": "  function split(rec: LibRecord): LibRecord[] | null {",
       "from": "const mine = blocks.filter((b) => schema.blockUsesAssets(b.block, part.paths || []));",
       "to": "const mine = blocks;",

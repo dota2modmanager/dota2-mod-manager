@@ -71,6 +71,8 @@ the code, not in this page.
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
 | [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
+| [`src/schema-cosmetics.ts`](#srcschema-cosmeticsts) | The free cosmetics (src/schema-service.ts): the slots the game has a free base item for and what |
+| [`src/schema-harvest.ts`](#srcschema-harvestts) | A mod's own item tables (src/schema-service.ts): the blocks it changed, lifted out on install and |
 | [`src/schema-items.ts`](#srcschema-itemsts) | Reading items_game.txt (src/schema.ts): the items section, one item's fields, the list the |
 | [`src/schema-kv.ts`](#srcschema-kvts) | KeyValues navigation for items_game.txt (src/schema.ts): finding a block's braces and walking |
 | [`src/schema-merge.ts`](#srcschema-mergets) | Mod deltas and the merge (src/schema.ts): which item blocks a mod changed, lifted out of the |
@@ -4470,6 +4472,51 @@ Open a foreign archive with every claim in it checked first.
 @param opts.limits   override the budgets (tests)
 ```
 
+## src/schema-cosmetics.ts
+
+The free cosmetics (src/schema-service.ts): the slots the game has a free base item for and what
+can go on each, the look picked for one, a whole set put on at once, and the one-time move of
+picks that used to live in settings.json. A pick is a library record like any other mod.
+
+### `CosmeticSlot`
+
+```ts
+export type CosmeticSlot =
+```
+
+A slot the free-cosmetics picker offers: its base item, what is on it, and what could be.
+
+### `createCosmetics`
+
+```ts
+export function createCosmetics({ library, settings, gamePath, vanilla, refresh }: { library: Library; settings: Pick<Settings, 'get' | 'set'>; gamePath: () => string | null; vanilla: () => string; refresh: () => unknown; })
+```
+
+Picks and the slots they go in, over the library, the game's table and the service's rebuild.
+
+## src/schema-harvest.ts
+
+A mod's own item tables (src/schema-service.ts): the blocks it changed, lifted out on install and
+kept on its record; the whole-game tables it shipped, dropped; a pack of several heroes, split
+into one mod per hero with the blocks about its own files; and the one-time sweep of mods
+installed before any of this existed.
+
+### `SchemaInstaller`
+
+```ts
+export interface SchemaInstaller
+```
+
+What of the installer the schema needs: what a record is, its item blocks, splitting it, its size.
+
+### `createHarvest`
+
+```ts
+export function createHarvest({ library, installer, gamePath, vanilla }: { library: Library; installer: SchemaInstaller; gamePath: () => string | null; vanilla: () => string; })
+```
+
+Lifting, splitting and sweeping, over the library and the installer the service holds.
+
 ## src/schema-items.ts
 
 Reading items_game.txt (src/schema.ts): the items section, one item's fields, the list the
@@ -4811,13 +4858,9 @@ The rules it enforces:
   - a mod's changes live in the library record (record.schema), never in its VPK;
   - nothing is written to the game unless the user turned the patch on.
 
-### `SchemaInstaller`
+Hands on from [`src/schema-harvest.ts`](#srcschema-harvestts): `SchemaInstaller`.
 
-```ts
-export interface SchemaInstaller
-```
-
-What of the installer the schema needs: what a record is, its item blocks, splitting it, its size.
+Hands on from [`src/schema-cosmetics.ts`](#srcschema-cosmeticsts): `CosmeticSlot`.
 
 ### `SchemaState`
 
@@ -4826,14 +4869,6 @@ export interface SchemaState extends Partial<patcher.PatchState>
 ```
 
 The patch and the built table as Settings shows them; the patcher's own state is merged in.
-
-### `CosmeticSlot`
-
-```ts
-export type CosmeticSlot =
-```
-
-A slot the free-cosmetics picker offers: its base item, what is on it, and what could be.
 
 ### `createSchemaService`
 
