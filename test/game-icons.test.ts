@@ -94,3 +94,103 @@ test('hero portraits come out of pak01 by hero id: the landscape one, else the o
   const none = createGameIcons({ userDataDir: userDir(t), toolchain: noTool, getGamePath: () => null });
   assert.deepEqual(await none.heroPortraits(['axe']), {}, 'no game, no portraits, no error');
 });
+
+// ---------- item pictures out of the game ----------
+
+/** A PNG of this size: a signature, a header with the dimensions, and an end. */
+const pngSized = (w: number, h: number) => {
+  const ihdr = Buffer.alloc(25);
+  ihdr.writeUInt32BE(13, 0);
+  ihdr.write('IHDR', 4);
+  ihdr.writeUInt32BE(w, 8);
+  ihdr.writeUInt32BE(h, 12);
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), ihdr, Buffer.from([0, 0, 0, 0, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82])]);
+};
+/** A compiled texture: a header, then the PNG it was authored as (or block-compressed pixels). */
+const vtex = (body: Buffer) => { const head = Buffer.alloc(64); head.writeUInt32LE(64, 0); return Buffer.concat([head, body]); };
+const entry = (rel: string, data: Buffer) => {
+  const slash = rel.lastIndexOf('/');
+  const file = rel.slice(slash + 1);
+  const dot = file.lastIndexOf('.');
+  return { ext: file.slice(dot + 1), folder: rel.slice(0, slash), name: file.slice(0, dot), data, preload: Buffer.alloc(0), crc: crc32(data) };
+};
+const itemsTable = (items: [string, string, string][]) => ['"items_game"', '{', '\t"items"', '\t{',
+  ...items.flatMap(([id, name, image]) => [`\t\t"${id}"`, '\t\t{', `\t\t\t"name"\t\t"${name}"`, `\t\t\t"image_inventory"\t\t"${image}"`, '\t\t}']),
+  '\t}', '}', ''].join('\n');
+
+/** A game whose pak01 holds an item table and the pictures it names. */
+function gameWithItems(t: TestContext, pictures: Record<string, Buffer>, items: [string, string, string][]) {
+  const dir = userDir(t);
+  const game = path.join(dir, 'game');
+  fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+  const write = (pics: Record<string, Buffer>, its: [string, string, string][]) => fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk([
+    entry('scripts/items/items_game.txt', Buffer.from(itemsTable(its), 'latin1')),
+    ...Object.entries(pics).map(([image, body]) => entry(`panorama/images/${image}_png.vtex_c`, vtex(body))),
+  ]));
+  write(pictures, items);
+  return { dir, game, write };
+}
+const dims = (uri: string) => { const b = Buffer.from(uri.split(',')[1], 'base64'); return `${b.readUInt32BE(16)}x${b.readUInt32BE(20)}`; };
+
+test('an item\'s picture comes out of the game by the path its own table gives, once, then from the cache', async (t) => {
+  const g = gameWithItems(t, {
+    'econ/items/axe/blade': pngSized(256, 170),
+    'econ/items/lina/arcana': Buffer.from('DXT5 blocks, not a picture'),
+  }, [
+    ['1', 'Axe Blade', 'econ/items/axe/blade'],
+    ['2', 'Same Picture, Other Name', 'econ/items/axe/blade'],
+    ['3', 'Lina Arcana', 'econ/items/lina/arcana'],
+  ]);
+  const said: string[] = [];
+  const icons = createGameIcons({ userDataDir: g.dir, toolchain: noTool, getGamePath: () => g.game, log: (m) => said.push(m) });
+
+  const got = await icons.getMany(['Axe Blade', 'Same Picture, Other Name', 'Lina Arcana', 'Not An Item']);
+  assert.deepEqual(Object.keys(got).sort(), ['Axe Blade', 'Same Picture, Other Name'],
+    'a compressed picture with no toolchain, and a name the game does not have, are left to the wiki');
+  assert.equal(dims(got['Axe Blade']), '256x170');
+  assert.equal(got['Same Picture, Other Name'], got['Axe Blade']);
+  assert.ok(said.some((m) => /3 items know where their picture is/.test(m)));
+
+  // one file for the two names that share a picture, and the second ask is read from it
+  assert.equal(fs.readdirSync(icons.root).filter((f) => f.endsWith('.png')).length, 1);
+  assert.equal((await icons.getMany(['Axe Blade']))['Axe Blade'], got['Axe Blade']);
+});
+
+test('a new build of the game throws the old pictures away and reads its own', async (t) => {
+  const g = gameWithItems(t, { 'econ/items/axe/blade': pngSized(10, 10) }, [['1', 'Axe Blade', 'econ/items/axe/blade']]);
+  const icons = createGameIcons({ userDataDir: g.dir, toolchain: noTool, getGamePath: () => g.game });
+  assert.equal(dims((await icons.getMany(['Axe Blade']))['Axe Blade']), '10x10');
+
+  // the update: a new picture for the same item, in a pak of another size
+  await new Promise((r) => setTimeout(r, 20));
+  g.write({ 'econ/items/axe/blade': pngSized(20, 20), 'econ/items/axe/head': pngSized(30, 30) },
+    [['1', 'Axe Blade', 'econ/items/axe/blade'], ['2', 'Axe Head', 'econ/items/axe/head']]);
+  const after = await icons.getMany(['Axe Blade', 'Axe Head']);
+  assert.equal(dims(after['Axe Blade']), '20x20', 'the old build\'s picture is not shown for the new one');
+  assert.equal(dims(after['Axe Head']), '30x30', 'and an item the update added is known');
+});
+
+test('an item table the game cannot give is logged, and the wiki answers for everything', async (t) => {
+  const dir = userDir(t);
+  const game = path.join(dir, 'game');
+  fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+  fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk([entry('panorama/images/x_png.vtex_c', vtex(pngSized(1, 1)))]));
+  const said: string[] = [];
+  const icons = createGameIcons({ userDataDir: dir, toolchain: noTool, getGamePath: () => game, log: (m) => said.push(m) });
+  assert.deepEqual(await icons.getMany(['Axe Blade']), {});
+  assert.ok(said.some((m) => /item table unreadable/.test(m)));
+});
+
+test('a toolchain that fails is logged, and the pictures the game stores whole still come back', async (t) => {
+  const g = gameWithItems(t, {
+    'econ/items/axe/blade': pngSized(64, 64),
+    'econ/items/lina/arcana': Buffer.from('DXT5 blocks, not a picture'),
+  }, [['1', 'Axe Blade', 'econ/items/axe/blade'], ['2', 'Lina Arcana', 'econ/items/lina/arcana']]);
+  const said: string[] = [];
+  const icons = createGameIcons({
+    userDataDir: g.dir, toolchain: withTool(path.join(g.dir, 'no-such-tool.exe')), getGamePath: () => g.game, log: (m) => said.push(m),
+  });
+  const got = await icons.getMany(['Axe Blade', 'Lina Arcana']);
+  assert.deepEqual(Object.keys(got), ['Axe Blade']);
+  assert.ok(said.some((m) => /extraction failed/.test(m)), said.join(' | '));
+});

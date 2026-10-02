@@ -1067,6 +1067,70 @@
       "test": "test/steam.test.ts"
     },
     {
+      "name": "showing the share plan merges every one of the user's own mods",
+      "file": "src/presets-service.ts",
+      "anchor": "  function shareEntryFor(rec: LibRecord, cat: CatalogIndex): ShareEntry {",
+      "from": "const a = installer.analyzeRecord(rec) || {};",
+      "to": "const a = installer.analyzeRecord(rec) || {}; installer.mergeToSingleVpk(rec, rec.schema);",
+      "test": "test/presets-service.test.ts"
+    },
+    {
+      "name": "a switched-off mod is shared at a size of nothing",
+      "file": "src/presets-service.ts",
+      "anchor": "  function shareEntryFor(rec: LibRecord, cat: CatalogIndex): ShareEntry {",
+      "from": "const p = ['', '.off', '.moff'].map",
+      "to": "const p = [''].map",
+      "test": "test/presets-service.test.ts"
+    },
+    {
+      "name": "a received mod already installed is counted as one to unpack again",
+      "file": "src/presets-service.ts",
+      "anchor": "  async function sharedPresetStatus(preset: Preset, cat: CatalogIndex) {",
+      "from": "if (e.fp && fpIndex.has(e.fp)) out.installed++;",
+      "to": "if (false) out.installed++;",
+      "test": "test/presets-service.test.ts"
+    },
+    {
+      "name": "a single received mod is wrapped in a pack of one",
+      "file": "src/presets-service.ts",
+      "anchor": "  function packFromRecords(name: string, recIds: string[]): LibRecord | null {",
+      "from": "if (recs.length < 2) return null;",
+      "to": "if (!recs.length) return null;",
+      "test": "test/presets-service.test.ts"
+    },
+    {
+      "name": "a received file's own mods are lost before Install, the archive not kept",
+      "file": "src/presets-service.ts",
+      "anchor": "  function importPresetFile(filePath: string): { ok: true; preset: Preset } | { error: string } {",
+      "from": "if (manifest.mods.some(embeds)) {",
+      "to": "if (false) {",
+      "test": "test/presets-service.test.ts"
+    },
+    {
+      "name": "a new build of the game keeps showing the old build's item pictures",
+      "file": "src/game-icons.ts",
+      "anchor": "  function nameIndex(): Map<string, string> | null {",
+      "from": "if (old !== stamp) {",
+      "to": "if (false) {",
+      "test": "test/game-icons.test.ts"
+    },
+    {
+      "name": "two items sharing one picture leave the first without it",
+      "file": "src/game-icons.ts",
+      "anchor": "  async function getMany(names: string[]): Promise<Record<string, string>> {",
+      "from": "if (asking) asking.push(name); else wanted.set(imagePath, [name]);",
+      "to": "wanted.set(imagePath, [name]);",
+      "test": "test/game-icons.test.ts"
+    },
+    {
+      "name": "a picture the game stores whole is never copied out of it",
+      "file": "src/game-icons.ts",
+      "anchor": "  function takeReadyMade(imagePaths: string[]): string[] {",
+      "from": "if (png) fs.writeFileSync(cacheFile(imagePath), png);",
+      "to": "if (false) fs.writeFileSync(cacheFile(imagePath), png);",
+      "test": "test/game-icons.test.ts"
+    },
+    {
       "name": "the support report leaves out gameinfo, boot.vcfg and the mod folder",
       "file": "src/diagnostics.ts",
       "anchor": "export function buildReport(",
