@@ -16,6 +16,7 @@ import AdmZip from 'adm-zip';
 
 import { Installer } from '../src/installer.ts';
 import { FileTx } from '../src/file-tx.ts';
+import type { LibFile } from '../src/types.ts';
 import { Library } from '../src/library.ts';
 import { vacateAppPak } from '../src/slot-zones.ts';
 import rawZipJs from './fixtures/raw-zip.js';
@@ -25,7 +26,7 @@ const FONTS = ['dota', 'panorama', 'fonts'];
 const CURSOR = ['dota', 'resource', 'cursor'];
 
 /** A game folder the installer accepts, and an installer pointed at it. */
-function stand(t: TestContext, { game: withGame = true } = {}) {
+function stand(t: TestContext, { game: withGame = true, log = undefined as ((msg: string) => void) | undefined } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-installer-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const game = path.join(dir, 'game');
@@ -36,6 +37,7 @@ function stand(t: TestContext, { game: withGame = true } = {}) {
     getGamePath: () => (withGame ? game : null),
     getLangSuffix: () => 'russian',
     onProgress: () => {},
+    log,
   });
   const lang = path.join(game, 'dota_russian');
   const incoming = path.join(dir, 'incoming');
@@ -61,6 +63,33 @@ type Stand = ReturnType<typeof stand>;
 
 const install = (installer: Installer, categoryId: string, local: string, modName = 'Test Mod') =>
   FileTx.run((tx) => installer.installInto(tx, { categoryId, modName, local }));
+
+/** Every log FileTx.run is handed while `fn` runs. */
+function logsHandedToTx(t: TestContext, fn: () => void): unknown[] {
+  const handed: unknown[] = [];
+  const run = FileTx.run;
+  FileTx.run = ((body, log) => { handed.push(log); return run.call(FileTx, body, log); }) as typeof FileTx.run;
+  t.after(() => { FileTx.run = run; });
+  fn();
+  FileTx.run = run;
+  return handed;
+}
+
+test('switching a mod and removing it tell the diagnostics log what could not be undone', (t) => {
+  // A transaction puts the files back when a step fails, and logs any it cannot: a pak Dota holds
+  // open is the usual one. The installer handed its transactions no log, so that line went nowhere.
+  const log = () => {};
+  const s = stand(t, { log });
+  install(s.installer, 'heroes', s.arrive('Axe.vpk', 'axe'));
+  const files: LibFile[] = [{ root: 'lang', relPath: 'pak30_dir.vpk' }];
+  const handed = logsHandedToTx(t, () => {
+    s.installer.setEnabled(files, false);
+    s.installer.setEnabled(files, true);
+    s.installer.remove(files);
+  });
+  assert.deepEqual(handed, [log, log, log]);
+  assert.equal(s.has('dota_russian', 'pak30_dir.vpk'), false);
+});
 
 // ---------- into the language folder ----------
 

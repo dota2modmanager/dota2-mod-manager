@@ -192,7 +192,7 @@ export function moveToSlot(inst: Installer, rec: HasFiles, newBase: string, oldB
     }
     return { ...f, relPath: next };
   });
-  return tx ? move(tx) : FileTx.run(move);
+  return tx ? move(tx) : FileTx.run(move, inst.log);
 }
 
 /**
@@ -213,7 +213,7 @@ export function swapSlots(inst: Installer, a: LibRecord, b: LibRecord): { id: st
     const movedB = inst.moveToSlot(b, aBase, bBase, tx);
     const movedA = inst.moveToSlot({ ...a, files: parked }, bBase, 'pak00', tx);
     return [{ id: a.id, files: movedA }, { id: b.id, files: movedB }];
-  });
+  }, inst.log);
 }
 
 // Number of occupied pak slots (mod paks only, excluding the game's own pak01_*), used

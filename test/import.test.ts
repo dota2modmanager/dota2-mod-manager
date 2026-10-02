@@ -22,6 +22,7 @@ import * as vpk from '../src/vpk.ts';
 import { entry } from './helpers/vpk-entry.ts';
 import { Installer } from '../src/installer.ts';
 import { importVpks, importVpkBuffers, installVpkBuffer } from '../src/import.ts';
+import { FileTx } from '../src/file-tx.ts';
 
 /** A self-contained mod, the shape the catalog ships. */
 const mod = (files: [string, string | Buffer][]) => vpk.buildVpk(files.map(([p, b]) => entry(p, b)));
@@ -64,6 +65,21 @@ function stand(t: TestContext) {
 
 const HOOK = 'models/items/pudge/hook/hook.vmdl_c';
 const BLADE = 'models/items/juggernaut/blade/blade.vmdl_c';
+
+test('an import hands its transaction the installer\'s log, for what could not be undone', async (t) => {
+  const { installer, source } = stand(t);
+  const log = () => {};
+  installer.log = log;
+  const handed: unknown[] = [];
+  const run = FileTx.run;
+  FileTx.run = ((body, l) => { handed.push(l); return run.call(FileTx, body, l); }) as typeof FileTx.run;
+  t.after(() => { FileTx.run = run; });
+  const dropped = source('one', { 'one/hook_dir.vpk': mod([[HOOK, 'the hook']]) });
+  const [result] = await importVpks(installer, [dropped]);
+  FileTx.run = run;
+  assert.equal(result.error, undefined, result.error);
+  assert.deepEqual(handed, [log]);
+});
 
 test('a mod several folders down in what was dropped is still found', async (t) => {
   // a Skinchanger pack unzips to a whole game tree; the archive is never at the top

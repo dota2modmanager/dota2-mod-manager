@@ -225,7 +225,7 @@ export async function importVpkFiles(installer: Installer, paths: string[], onSt
           files.push({ root: 'lang', relPath: partName });
         }
         results.push({ source: `${set.base}_dir.vpk`, name: set.base, files });
-      });
+      }, installer.log);
     } catch (err) {
       results.push({ source: set.sourceLabel, error: String((err as Error)?.message || err) });
     }

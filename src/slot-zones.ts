@@ -28,6 +28,8 @@ export interface SlotInstaller {
   slotBase(rec: HasFiles): string | null;
   usedPakNames(): Set<string>;
   moveToSlot(rec: HasFiles, base: string, from?: string | null, tx?: Writer): LibFile[];
+  /** told what a failed layout could not put back (src/file-tx.ts) */
+  log?: (msg: string) => void;
 }
 
 /** One record on its way to another slot, parked under a temporary name in between. */
@@ -134,7 +136,7 @@ export function migrateSlotZones(installer: SlotInstaller, library: Pick<Library
   FileTx.run((tx) => {
     for (const p of moving) p.parked = installer.moveToSlot({ ...p.r, files: p.r.files }, p.park, p.from, tx);
     for (const p of moving) p.files = installer.moveToSlot({ ...p.r, files: p.parked }, p.to, p.park, tx);
-  });
+  }, installer.log);
   for (const p of moving) library.update(p.r.id, { files: p.files });
   return { moved: moving.length };
 }

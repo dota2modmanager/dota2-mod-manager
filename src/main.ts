@@ -179,6 +179,7 @@ async function start(): Promise<void> {
     onProgress: sendProgress,
     identify: (paths) => modId.identify(paths),
     publishedHash: (categoryId, file) => catalog.publishedHash(categoryId, file),
+    log: diag,
   });
   const presence = new DiscordPresence({ clientId: discordAuth.CLIENT_ID, onDiag: diag });
   const presenceStatus = createPresenceStatus({ presence, settings, library, installer });

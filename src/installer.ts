@@ -57,18 +57,22 @@ export class Installer {
   /** what the catalog says an archive should hash to (src/catalog.ts); optional and often
    *  null, which means the download is checked the way it always was */
   publishedHash: (categoryId: string, file: string) => string | null;
+  /** told what a failed change could not put back, usually a pak Dota holds open (src/file-tx.ts) */
+  log: (msg: string) => void;
 
   /**
    * @param opts.getGamePath    e.g. ...\dota 2 beta\game
    * @param opts.getLangSuffix  e.g. "russian"
    * @param opts.identify       catalog mods these files are
    * @param opts.publishedHash  an archive's sha256 as the catalog published it
+   * @param opts.log            the diagnostics log, told when a change could not be undone
    */
-  constructor({ userDataDir, getGamePath, getLangSuffix, onProgress, identify = null, publishedHash = null }: {
+  constructor({ userDataDir, getGamePath, getLangSuffix, onProgress, identify = null, publishedHash = null, log = () => {} }: {
     userDataDir: string; getGamePath: () => string | null; getLangSuffix: () => string;
     onProgress?: ((evt: InstallProgress) => void) | null;
     identify?: ((paths: string[]) => ModIdentityGuess | null) | null;
     publishedHash?: ((categoryId: string, file: string) => string | null) | null;
+    log?: (msg: string) => void;
   }) {
     this.downloadsDir = path.join(userDataDir, 'downloads');
     this.toolsDir = path.join(userDataDir, 'tools');
@@ -87,6 +91,7 @@ export class Installer {
     this.onProgress = onProgress || (() => {});
     this.identify = identify || (() => null);
     this.publishedHash = publishedHash || (() => null);
+    this.log = log;
   }
 
   // ---------- where things go ----------
@@ -167,7 +172,7 @@ export class Installer {
     // A mod is rarely one file, and everything below writes into somebody else's game
     // folder. One transaction around the lot: a failure on the fourth file takes the first
     // three with it, instead of leaving paks nothing in the library points at.
-    return FileTx.run((tx) => this.installInto(tx, { categoryId, modName, local }));
+    return FileTx.run((tx) => this.installInto(tx, { categoryId, modName, local }), this.log);
   }
 
   /** The writing half of install, inside the transaction it is handed. */
@@ -279,7 +284,7 @@ export class Installer {
         if (enabled && fs.existsSync(off)) tx.move(off, abs);
         if (!enabled && fs.existsSync(abs)) tx.move(abs, off);
       }
-    });
+    }, this.log);
   }
 
   /**
@@ -311,7 +316,7 @@ export class Installer {
           if (fs.existsSync(backupAbs)) this.copyInto(backupAbs, abs, tx);
         }
       }
-    });
+    }, this.log);
     this.overlays.forgetWritten(files);
   }
 
