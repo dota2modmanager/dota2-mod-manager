@@ -13,6 +13,8 @@ import path from 'node:path';
 import { Library } from '../src/library.ts';
 import { presetsService, packableRecord, touchesSchema, type PresetInstaller } from '../src/presets-service.ts';
 import { encodePresetLink } from '../src/preset-link.ts';
+import { writePresetFile } from '../src/preset-share.ts';
+import { withElectron } from './helpers/fake-electron.ts';
 import type { LibRecord } from '../src/types.ts';
 
 const CATALOG = {
@@ -129,4 +131,157 @@ test('what can go into a pack, and what makes the item table rebuild', () => {
   assert.equal(touchesSchema(rec({ categoryId: 'cosmetic' })), true);
   assert.equal(touchesSchema(rec({ schema: [{ id: '1', name: 'a', block: '"1"{}' }] })), true);
   assert.equal(touchesSchema(rec({})), false);
+});
+
+// ---------- what goes into a shared file ----------
+
+/** A library over a real language folder and pack folder, with an installer that answers from them. */
+function shareStand(t: TestContext) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-share-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const lang = path.join(dir, 'game', 'dota_russian');
+  const packs = path.join(dir, 'userdata', 'packs');
+  fs.mkdirSync(lang, { recursive: true });
+  const library = new Library(path.join(dir, 'userdata'));
+  const merged: string[] = [];
+  const deployed: string[] = [];
+  const removed: string[] = [];
+  const fps: Record<string, string> = {};
+  const installer: PresetInstaller = {
+    analyzeRecord: (rec) => ({ fp: fps[rec.name] || null, info: `${rec.name} info` }),
+    langFolder: () => lang,
+    mergeToSingleVpk: (rec) => { merged.push(rec.name); return Buffer.from('merged'); },
+    packMemberFile: (packId, memberId) => path.join(packs, packId, `${memberId}.vpk`),
+    packFolder: (packId) => path.join(packs, packId),
+    addPackMemberFromRecord: (_packId, rec, memberId) => ({ id: memberId, name: rec.name, categoryId: rec.categoryId, styleLabel: rec.styleLabel }),
+    remove: (files) => { removed.push(...files.map((f) => f.relPath)); },
+    setEnabled: () => {},
+  };
+  const svc = presetsService({
+    catalog: { load: async () => CATALOG } as never, installer, library,
+    schemaService: { refresh: () => {} }, deployAndApply: (pack) => { deployed.push(pack.name); return []; },
+  });
+  const add = (name: string, categoryId: string, rel: string | null) => library.add({
+    name, categoryId, styleLabel: null, fileRef: null, preview: null,
+    files: rel ? [{ root: rel.endsWith('.ttf') ? 'fonts' : 'lang', relPath: rel }] : [],
+  });
+  return { dir, lang, packs, library, svc, merged, deployed, removed, fps, add };
+}
+
+test('a shared preset sends catalog mods by name, the user\'s own as bytes, and names what it cannot send', async (t) => {
+  const s = shareStand(t);
+  s.fps['Alien Nyx Assassin'] = 'fp-nyx';
+  s.add('Alien Nyx Assassin', 'heroes', 'pak30_dir.vpk');
+  s.add('My Own Import', 'imported', 'pak31_dir.vpk');
+  // switched off, so the bytes sit under .off: the size is read from there
+  fs.writeFileSync(path.join(s.lang, 'pak31_dir.vpk.off'), Buffer.alloc(1234));
+  s.add('A Font', 'fonts', 'radiance.ttf');
+  const pack = s.library.add({ name: 'My pack', categoryId: 'combined', styleLabel: null, fileRef: null, preview: null, files: [], kind: 'pack',
+    members: [
+      { id: 'm1', name: 'Pumpkin Trees', categoryId: 'trees', styleLabel: null, fp: 'fp-trees' },
+      { id: 'm2', name: 'Own Member', categoryId: 'imported', info: 'one hero' },
+      { id: 'm3', name: 'Lost Member', categoryId: 'imported' },
+    ] });
+  fs.mkdirSync(path.join(s.packs, pack.id), { recursive: true });
+  fs.writeFileSync(path.join(s.packs, pack.id, 'm2.vpk'), Buffer.alloc(50));
+  s.library.savePreset('Everything');
+
+  const entries = await s.svc.presetShareEntries(s.library.listPresets()[0]);
+  const byName = new Map(entries.map((e) => [e.name, e]));
+  assert.deepEqual(byName.get('Alien Nyx Assassin'), { kind: 'catalog', categoryId: 'heroes', name: 'Alien Nyx Assassin', styleLabel: null, fp: 'fp-nyx', size: 0 });
+  const own = byName.get('My Own Import');
+  assert.equal(own?.kind, 'embedded');
+  assert.equal(own?.kind === 'embedded' && own.size, 1234);
+  assert.deepEqual(s.merged, [], 'nothing is merged just to show the plan');
+  assert.equal(own?.kind === 'embedded' && own.loadData().toString(), 'merged');
+  assert.deepEqual(s.merged, ['My Own Import'], 'the bytes are made when the file is written');
+  assert.equal(byName.get('A Font')?.kind, 'missing', 'a font is not in the catalog and is no VPK to carry');
+
+  const packed = byName.get('My pack');
+  assert.equal(packed?.kind, 'pack');
+  assert.deepEqual(packed?.kind === 'pack' && packed.members.map((m) => [m.kind, m.name, 'size' in m ? m.size : null]), [
+    ['catalog', 'Pumpkin Trees', 0], ['embedded', 'Own Member', 50], ['missing', 'Lost Member', null],
+  ]);
+
+  // what the window is shown: no loaders, and a key per row to leave one out by
+  const plan = s.svc.planShape(entries);
+  assert.ok(plan.every((row) => !('loadData' in row)));
+  const packRow = plan.find((row) => row.name === 'My pack');
+  assert.deepEqual(packRow?.members?.map((m) => m.key), [`${packRow?.key}.0`, `${packRow?.key}.1`, `${packRow?.key}.2`]);
+  assert.equal(plan.find((row) => row.name === 'My Own Import')?.size, 1234);
+});
+
+test('a received preset says what is already here, what downloads, what it carries and what is free', async (t) => {
+  const s = shareStand(t);
+  s.add('Alien Nyx Assassin', 'heroes', 'pak30_dir.vpk');
+  const own = s.add('Already Here', 'imported', 'pak31_dir.vpk');
+  s.fps[own.name] = 'fp-here';
+  const cosmetic = s.library.add({ name: 'Snow', categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [] });
+  s.library.update(cosmetic.id, { slot: 'weather', itemId: '4000' });
+
+  const preset = s.library.addSharedPreset({ name: 'From a friend', note: '', author: 'friend', wanted: [
+    { kind: 'catalog', categoryId: 'heroes', name: 'Alien Nyx Assassin', styleLabel: null },
+    { kind: 'catalog', categoryId: 'trees', name: 'Pumpkin Trees', styleLabel: null },
+    { kind: 'catalog', categoryId: 'river', name: 'Gone From The Catalog', styleLabel: null },
+    { kind: 'embedded', name: 'Theirs, which I have', categoryId: 'imported', fp: 'fp-here', file: 'a.vpk' },
+    { kind: 'embedded', name: 'Theirs, new to me', categoryId: 'imported', fp: 'fp-new', file: 'b.vpk' },
+    { kind: 'cosmetic', name: 'Snow', slot: 'weather', itemId: '4000' },
+    { kind: 'cosmetic', name: 'Rain', slot: 'weather', itemId: '4001' },
+    { kind: 'pack', name: 'Their pack', members: [{ kind: 'catalog', categoryId: 'trees', name: 'Pumpkin Trees', styleLabel: null }] },
+  ] as never });
+
+  assert.deepEqual(await s.svc.sharedPresetStatus(preset, await s.svc.catalogIndex()), {
+    installed: 3, download: 2, embedded: 1, free: 1, unavailable: ['Gone From The Catalog'],
+  });
+});
+
+test('received mods are packed into one slot only when there are two or more that can be', (t) => {
+  const s = shareStand(t);
+  const a = s.add('First', 'imported', 'pak30_dir.vpk');
+  const b = s.add('Second', 'imported', 'pak31_dir.vpk');
+  const font = s.add('A Font', 'fonts', 'radiance.ttf');
+  assert.equal(s.svc.packFromRecords('Alone', [a.id, font.id]), null, 'one packable mod is left standalone');
+
+  const pack = s.svc.packFromRecords('From a friend', [a.id, b.id]) as LibRecord;
+  assert.deepEqual(pack.members?.map((m) => m.name), ['First', 'Second']);
+  assert.equal(s.library.find(a.id), null);
+  assert.equal(s.library.find(b.id), null);
+  assert.deepEqual(s.removed, ['pak30_dir.vpk', 'pak31_dir.vpk'], 'the standalone files go once they are in the pack');
+  assert.deepEqual(s.deployed, ['From a friend']);
+  assert.ok(fs.existsSync(path.join(s.packs, pack.id)));
+});
+
+test('a received file parks as a preset, keeping the archive only when it carries mods of its own', (t) => {
+  const s = shareStand(t);
+  const userData = path.join(s.dir, 'userdata');
+  const fakeElectron = { app: { getPath: () => userData } };
+  const file = (name: string, mods: unknown[]) => {
+    const out = path.join(s.dir, `${name}.d2mm`);
+    writePresetFile(out, { name, author: { name: 'friend' } }, mods as never);
+    return out;
+  };
+  const withOwn = file('With own', [
+    { kind: 'catalog', categoryId: 'heroes', name: 'Alien Nyx Assassin', styleLabel: null, fp: null },
+    { kind: 'embedded', name: 'Their mod', categoryId: 'imported', data: Buffer.from('vpk bytes') },
+  ]);
+  const got = withElectron(fakeElectron, () => s.svc.importPresetFile(withOwn));
+  assert.ok('ok' in got, 'error' in got ? got.error : '');
+  const kept = got.preset.source?.file as string;
+  assert.ok(kept && kept.startsWith(path.join(userData, 'shared-presets')), 'the archive is kept: its bytes live nowhere else');
+  assert.ok(fs.existsSync(kept));
+  s.svc.dropSharedPresetFile(got.preset);
+  assert.equal(fs.existsSync(kept), false);
+
+  const byName = withElectron(fakeElectron, () => s.svc.importPresetFile(file('By name', [
+    { kind: 'catalog', categoryId: 'heroes', name: 'Alien Nyx Assassin', styleLabel: null, fp: null },
+  ])));
+  assert.ok('ok' in byName);
+  assert.ok(!byName.preset.source?.file, 'nothing to keep for mods the catalog has');
+
+  const empty = withElectron(fakeElectron, () => s.svc.importPresetFile(file('Empty', [])));
+  assert.ok('error' in empty && empty.error.length > 0);
+  fs.writeFileSync(path.join(s.dir, 'junk.d2mm'), 'not a zip');
+  const junk = withElectron(fakeElectron, () => s.svc.importPresetFile(path.join(s.dir, 'junk.d2mm')));
+  assert.ok('error' in junk && junk.error.length > 0, 'a broken file is an error the window can show');
+  assert.equal(s.library.listPresets().length, 2, 'only the two good files became presets');
 });
