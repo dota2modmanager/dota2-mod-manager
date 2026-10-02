@@ -689,3 +689,47 @@ test('an arcana in an ordinary slot is neither offered nor dressed as the stock 
   assert.equal(builder.defaultItemForWearable(text, '9600')?.id, '500');
   assert.equal(builder.defaultItemForWearable(text, '9650'), null, 'the arcana does not dress the stock weapon');
 });
+
+test('a wearable finds its stock item under the other spelling of its slot', () => {
+  /* The table writes some slots two ways: a wearable on "shoulder" belongs where the stock item says
+     "shoulders". With no stock item under the wearable's own spelling, the alias is what finds it. */
+  const pudge = `\t\t\t"used_by_heroes"
+\t\t\t{
+\t\t\t\t"npc_dota_hero_pudge"\t\t"1"
+\t\t\t}`;
+  const text = table([
+    `\t\t"600"
+\t\t{
+\t\t\t"name"\t\t"Pudge shoulders default"
+\t\t\t"prefab"\t\t"default_item"
+\t\t\t"item_slot"\t\t"shoulders"
+${pudge}
+\t\t}`,
+    `\t\t"9700"
+\t\t{
+\t\t\t"name"\t\t"Pudge shoulder chains"
+\t\t\t"prefab"\t\t"wearable"
+\t\t\t"item_slot"\t\t"shoulder"
+${pudge}
+\t\t\t"visuals"
+\t\t\t{
+\t\t\t}
+\t\t}`,
+    `\t\t"9701"
+\t\t{
+\t\t\t"name"\t\t"Pudge shoulder hooks"
+\t\t\t"item_slot"\t\t"shoulder"
+${pudge}
+\t\t\t"visuals"
+\t\t\t{
+\t\t\t}
+\t\t}`,
+  ]);
+  assert.equal(builder.defaultItemForWearable(text, '9700')?.id, '600');
+
+  // a donor block that names no prefab gets one, written before its closing brace
+  const { block } = builder.itemEffectPatch(text, '9701', '');
+  assert.equal(block.split('"prefab"').length - 1, 1, 'the prefab is added once');
+  assert.match(block, /"prefab"\t\t"default_item"\r?\n\}\s*$/);
+  assert.match(block, /^"600"/, 'under the stock item\'s id');
+});
