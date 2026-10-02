@@ -7,7 +7,7 @@
     "src/diagnostics.ts": 464,
     "src/game-upkeep.ts": 349,
     "src/gamelang.ts": 461,
-    "src/icons.ts": 507,
+    "src/icons.ts": 212,
     "src/installer.ts": 398,
     "src/ipc-library.ts": 414,
     "src/ipc-mods.ts": 312,

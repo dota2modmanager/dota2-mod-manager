@@ -929,6 +929,46 @@
       "from": "{ echo; echo; echo '<!-- announced in Discord -->'; } >> body.md",
       "to": "printf '\n<!-- announced in Discord -->\n' >> body.md",
       "test": "test/workflows.test.js"
+    },
+    {
+      "name": "a card shows another item's picture one number apart",
+      "file": "src/icon-match.ts",
+      "anchor": "export function titlePicker(name: string): (titles: string[]) => string | null {",
+      "from": "if (!m || numbering(m[1]) !== numbering(name)) continue;",
+      "to": "if (!m) continue;",
+      "test": "test/icons.test.ts"
+    },
+    {
+      "name": "a dropped request is remembered as no picture for a week",
+      "file": "src/icons.ts",
+      "anchor": "async cached(key: string, resolve: () => Promise<Picture | null | undefined>): Promise<string | null> {",
+      "from": "if (hit === null) {",
+      "to": "if (!hit) {",
+      "test": "test/icons.test.ts"
+    },
+    {
+      "name": "two cards asking at once fetch the same picture twice",
+      "file": "src/icons.ts",
+      "anchor": "async cached(key: string, resolve: () => Promise<Picture | null | undefined>): Promise<string | null> {",
+      "from": "if (pending) return pending;",
+      "to": "void pending;",
+      "test": "test/icons.test.ts"
+    },
+    {
+      "name": "a wiki's error page counts as no such picture",
+      "file": "src/icon-wiki.ts",
+      "anchor": "fetchBytes(url: string, ua: string, gate?: Gate): Promise<Picture | null | undefined> {",
+      "from": "if (res.status === 404) return null;",
+      "to": "if (!res.ok) return null;",
+      "test": "test/icons.test.ts"
+    },
+    {
+      "name": "Liquipedia is asked with a browser agent its terms treat as abuse",
+      "file": "src/icon-wiki.ts",
+      "anchor": "askLiquipedia(params: Record<string, string>) {",
+      "from": "return this.askWiki(LIQ_API, LIQ_UA, params, this.liqGate);",
+      "to": "return this.askWiki(LIQ_API, UA, params, this.liqGate);",
+      "test": "test/icons.test.ts"
     }
   ]
 }

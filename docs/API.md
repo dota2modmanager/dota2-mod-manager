@@ -38,6 +38,8 @@ the code, not in this page.
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (src/). |
+| [`src/icon-match.ts`](#srcicon-matchts) | Which wiki file is an item's picture: the file names to try first, and how a wiki's listing is |
+| [`src/icon-wiki.ts`](#srcicon-wikits) | The two wikis the pictures come from. The Dota wiki on Fandom hosts a PNG for most cosmetics |
 | [`src/icons.ts`](#srciconsts) | Pictures for the cosmetics picker, and for the Library where a picture can be found for |
 | [`src/import.ts`](#srcimportts) | Taking in a mod the user already has: a .vpk, a .zip, a folder, or bytes off a drop. |
 | [`src/installer-downloads.ts`](#srcinstaller-downloadsts) | Getting a catalog mod onto this machine: where its archive lives, what it is called on disk, |
@@ -1509,6 +1511,136 @@ export function t(ru: string, ...values: unknown[]): string
 
 t('Мод не найден') or t('HTTP {0} — не удалось скачать {1}', status, name)
 
+## src/icon-match.ts
+
+Which wiki file is an item's picture: the file names to try first, and how a wiki's listing is
+matched against the game's name, give or take a typo but never a different number or an extra
+word. Pure functions; src/icon-wiki.ts asks the wikis and src/icons.ts keeps what they answer.
+
+### `plain`
+
+```ts
+export const plain = (s: unknown) => String(s).replace(/\bHUD[ _]Skin$/i, 'HUD').toLowerCase().replace(/[^a-z0-9]+/g, '')
+```
+
+Names compared without spacing, punctuation or case: the wiki and the game write those
+their own ways, and none of it changes which item is meant. Nor does the trailing "Skin"
+the schema gives some HUDs and the wiki does not.
+
+### `numbering`
+
+```ts
+export const numbering = (s: unknown) => (String(s).match(/\d+|\b[IVXLC]{1,6}\b/g) || []).join(' ')
+```
+
+The parts a typo check must never forgive: "Loading Screen VI" and "Loading Screen IV"
+are two different pictures one swapped letter apart.
+
+### `editDistance`
+
+```ts
+export function editDistance(a: string, b: string): number
+```
+
+Levenshtein distance, only ever asked about strings that are nearly the same already.
+
+### `stripScreenSuffix`
+
+```ts
+export function stripScreenSuffix(name: string): string | null
+```
+
+_No description in the source._
+
+### `titlePicker`
+
+```ts
+export function titlePicker(name: string): (titles: string[]) => string | null
+```
+
+Which of a list of "File:..." / "Cosmetic_icon_....png" titles is this item's picture,
+shared by both wikis' listings. A title counts only when it is the same name give or take
+a typo: a loose match would put a stranger's picture on the card, which is worse than an
+empty tile, so an extra word ("… Bundle") or a different number is enough to rule it out.
+
+### `sniff`
+
+```ts
+export function sniff(buf: Buffer): string | null
+```
+
+The wiki serves WebP to a browser and PNG to anything else; both render in the app.
+
+### `cosmeticFileNames`
+
+```ts
+export function cosmeticFileNames(name: string): string[]
+```
+
+Wiki file names to try for a cosmetic: "Weather Rain" -> Cosmetic_icon_Weather_Rain.png.
+The schema's own name is right about nine times out of ten; the rest differ by
+punctuation the wiki spells its own way, so a couple of spellings follow before the
+picture counts as missing. "Mega-Kills: Axe" is filed as both Mega-Kills_Axe and
+Mega-Kills-_Axe, and the game's typographic apostrophe is a plain one there.
+
+### `prefixOf`
+
+```ts
+export function prefixOf(name: string): string | null
+```
+
+Files whose name starts with the item's first word or two. Exact and always answered,
+unlike the search, which returns nothing at all for half of these names.
+
+### `heroFileNames`
+
+```ts
+export function heroFileNames(heroName: string): string[]
+```
+
+Wiki file names for a hero's own default portrait - not a cosmetic look, the hero
+itself. Unlike a cosmetic's, this naming is exact (every hero has exactly one page,
+named after the hero), so there is no search fallback to fall through to.
+
+## src/icon-wiki.ts
+
+The two wikis the pictures come from. The Dota wiki on Fandom hosts a PNG for most cosmetics
+under a name built from the item's own, and answers only a browser's agent; Liquipedia, asked
+only when Fandom has nothing at all, wants an agent naming the project and one request every two
+seconds. Everything here asks or fetches; src/icons.ts decides what to keep.
+
+### `IconFetch`
+
+```ts
+export type IconFetch = (url: string, init?: RequestInit) => Promise<Response>
+```
+
+What the pictures are fetched with: always a URL written out as text, which Electron's net.fetch takes too.
+
+### `Picture`
+
+```ts
+export type Picture = { buf: Buffer; mime: string }
+```
+
+A picture fetched and checked: the bytes, and what kind of image they are.
+
+### `Found`
+
+```ts
+export type Found = { wiki: 'fandom'; file: string } | { wiki: 'liquipedia'; url: string }
+```
+
+Where a wiki keeps an item's picture, when the game's own name is not the file's.
+
+### `IconWiki`
+
+```ts
+export class IconWiki
+```
+
+Asks the Dota wikis for a picture's file and fetches its bytes, paced the way each wiki asks.
+
 ## src/icons.ts
 
 Pictures for the cosmetics picker, and for the Library where a picture can be found for
@@ -1525,6 +1657,9 @@ mirrors the same file naming on its own image host.
 
 Everything is cached on disk, misses included: 2000 loading screens must not turn into
 2000 requests every time the picker opens.
+
+Three files: src/icon-match.ts names the files to try and matches a wiki's listing,
+src/icon-wiki.ts asks the two wikis and fetches, and this one keeps the answers on disk.
 
 ### `Icons`
 
