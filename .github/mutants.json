@@ -620,7 +620,7 @@
     },
     {
       "name": "a base item keeps the paid style gates of the item it is dressed as",
-      "file": "src/schema.ts",
+      "file": "src/schema-merge.ts",
       "anchor": "export function baseItemPatch(baseText: string, targetId: string | number, sourceId: string | number): string {",
       "from": "visuals = stripKeyBlocks(visuals, 'unlock');",
       "to": "",
@@ -628,7 +628,7 @@
     },
     {
       "name": "the free-cosmetics picker offers the base item itself",
-      "file": "src/schema.ts",
+      "file": "src/schema-items.ts",
       "anchor": "export function cosmeticOptions(text: string, slot: string): { id: string; name: string }[] {",
       "from": "!i.baseitem && ",
       "to": "",

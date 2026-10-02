@@ -69,6 +69,9 @@ the code, not in this page.
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
 | [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
+| [`src/schema-items.ts`](#srcschema-itemsts) | Reading items_game.txt (src/schema.ts): the items section, one item's fields, the list the |
+| [`src/schema-kv.ts`](#srcschema-kvts) | KeyValues navigation for items_game.txt (src/schema.ts): finding a block's braces and walking |
+| [`src/schema-merge.ts`](#srcschema-mergets) | Mod deltas and the merge (src/schema.ts): which item blocks a mod changed, lifted out of the |
 | [`src/schema-service.ts`](#srcschema-servicets) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
 | [`src/schema.ts`](#srcschemats) | Item-schema engine: the game's own scripts/items/items_game.txt is the only place |
 | [`src/settings.ts`](#srcsettingsts) | Simple JSON settings store in userData |
@@ -4330,80 +4333,11 @@ Open a foreign archive with every claim in it checked first.
 @param opts.limits   override the budgets (tests)
 ```
 
-## src/schema-service.ts
+## src/schema-items.ts
 
-Orchestration around the item schema: what goes into it, when it is rebuilt, and how a
-game update is repaired. Kept out of src/main.ts so the whole flow can be exercised without
-starting Electron.
-
-The rules it enforces:
-  - the schema is ALWAYS rebuilt from the installed game's own items_game.txt, so it can
-    never be the stale copy a mod happened to ship;
-  - a mod's changes live in the library record (record.schema), never in its VPK;
-  - nothing is written to the game unless the user turned the patch on.
-
-### `SchemaInstaller`
-
-```ts
-export interface SchemaInstaller
-```
-
-What of the installer the schema needs: what a record is, its item blocks, splitting it, its size.
-
-### `SchemaState`
-
-```ts
-export interface SchemaState extends Partial<patcher.PatchState>
-```
-
-The patch and the built table as Settings shows them; the patcher's own state is merged in.
-
-### `CosmeticSlot`
-
-```ts
-export type CosmeticSlot =
-```
-
-A slot the free-cosmetics picker offers: its base item, what is on it, and what could be.
-
-### `createSchemaService`
-
-```ts
-export function createSchemaService({ settings, library, installer, userDataDir, log = () => {} }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; })
-```
-
-The item table and the search-path patch, kept in step with the library and the installed game.
-
-## src/schema.ts
-
-Item-schema engine: the game's own scripts/items/items_game.txt is the only place
-where a mod can attach new particles to a hero, redirect a stock effect, or turn a
-free "base item" (default weather / terrain / HUD...) into a paid one.
-
-Two rules shape everything here:
-  1. Only one items_game.txt may be live, so mods never ship theirs — we lift the
-     changed item blocks out of them and splice those into the game's CURRENT file.
-  2. The result is rebuilt from the installed game every time, so it can never go
-     stale the way a schema shipped inside a mod does.
-
-The file is ~50 MB of KeyValues with a few non-UTF8 bytes in it, so everything here
-works on latin1 strings: byte-exact in and out, no re-encoding surprises.
-
-### `Bounds`
-
-```ts
-export type Bounds = [number, number]
-```
-
-A block's braces in the text: [open, close + 1].
-
-### `KvChild`
-
-```ts
-export type KvChild =
-```
-
-One direct child of a KeyValues block: a nested block, or a key with a value. See eachChild.
+Reading items_game.txt (src/schema.ts): the items section, one item's fields, the list the
+pickers show, the free item of a slot, and the game's own table out of its pak01. Text is latin1,
+byte for byte, so a block found here can be spliced back without re-encoding.
 
 ### `SchemaItem`
 
@@ -4413,22 +4347,6 @@ export interface SchemaItem
 
 An item of items_game as the pickers read it; see listItems.
 
-### `SchemaDelta`
-
-```ts
-export interface SchemaDelta { id: string; name: string; block: string }
-```
-
-An item block a mod changed, lifted out of the table it shipped.
-
-### `SchemaPatch`
-
-```ts
-export interface SchemaPatch { id: string | number; block: string; source?: string; assets?: VpkEntry[] }
-```
-
-One block to splice into the game's table, and the files that come with it.
-
 ### `GameSchema`
 
 ```ts
@@ -4436,14 +4354,6 @@ export interface GameSchema { text: string; stamp: string }
 ```
 
 The game's own table, and the marker that changes when an update replaces it.
-
-### `MergeResult`
-
-```ts
-export interface MergeResult
-```
-
-What a merge did with each patch; see mergeSchema.
 
 ### `SCHEMA_REL`
 
@@ -4453,33 +4363,13 @@ export const SCHEMA_REL = 'scripts/items/items_game.txt'
 
 Where the item table sits inside a VPK.
 
-### `SCHEMA_VPK`
+### `itemsSection`
 
 ```ts
-export const SCHEMA_VPK = 'pak01_dir.vpk'
+export function itemsSection(text: string): Bounds
 ```
 
-Our folder is registered ahead of "dota", so the first pak in it wins the MOD path.
-
-### `blockBounds`
-
-```ts
-export function blockBounds(text: string, i: number): Bounds
-```
-
-Bounds of the { ... } block that starts at (or after) i.
-
-### `eachChild`
-
-```ts
-export function eachChild(text: string, bounds: Bounds, fn: (child: KvChild) => void): void
-```
-
-Walk the direct children of a block.
-
-```
-@param bounds  from blockBounds()
-```
+The "items" section of items_game.txt (all item definitions live directly under it).
 
 ### `findItem`
 
@@ -4579,6 +4469,94 @@ export function gameSchemaStamp(gamePath: string): string
 ```
 
 Cheap "did the game update?" probe: size+mtime of the paks that carry the schema.
+
+## src/schema-kv.ts
+
+KeyValues navigation for items_game.txt (src/schema.ts): finding a block's braces and walking
+its children without parsing the whole file. The table is 50 MB and only a few blocks of it are
+ever needed, so nothing here builds a tree. Text is latin1, byte for byte.
+
+### `Bounds`
+
+```ts
+export type Bounds = [number, number]
+```
+
+A block's braces in the text: [open, close + 1].
+
+### `KvChild`
+
+```ts
+export type KvChild =
+```
+
+One direct child of a KeyValues block: a nested block, or a key with a value. See eachChild.
+
+### `skipGap`
+
+```ts
+export function skipGap(text: string, i: number): number
+```
+
+Skip whitespace and // line comments starting at i.
+
+### `readToken`
+
+```ts
+export function readToken(text: string, i: number): { value: string; start: number; next: number } | null
+```
+
+Read a token (quoted or bare) at i. Returns { value, start, next } or null at a closing brace.
+
+### `blockBounds`
+
+```ts
+export function blockBounds(text: string, i: number): Bounds
+```
+
+Bounds of the { ... } block that starts at (or after) i.
+
+### `eachChild`
+
+```ts
+export function eachChild(text: string, bounds: Bounds, fn: (child: KvChild) => void): void
+```
+
+Walk the direct children of a block.
+
+```
+@param bounds  from blockBounds()
+```
+
+## src/schema-merge.ts
+
+Mod deltas and the merge (src/schema.ts): which item blocks a mod changed, lifted out of the
+table it shipped, and those blocks spliced into the game's current table, with the result
+checked before anything is written.
+
+### `SchemaDelta`
+
+```ts
+export interface SchemaDelta { id: string; name: string; block: string }
+```
+
+An item block a mod changed, lifted out of the table it shipped.
+
+### `SchemaPatch`
+
+```ts
+export interface SchemaPatch { id: string | number; block: string; source?: string; assets?: VpkEntry[] }
+```
+
+One block to splice into the game's table, and the files that come with it.
+
+### `MergeResult`
+
+```ts
+export interface MergeResult
+```
+
+What a merge did with each patch; see mergeSchema.
 
 ### `reindent`
 
@@ -4683,6 +4661,83 @@ export function validateSchema(text: string, baseText?: string | null): { items:
 
 Refuse to ship a schema that could crash the client on load. Cheap structural checks
 only: a malformed file is what makes the game die with "ERROR PARSING SCRIPT".
+
+## src/schema-service.ts
+
+Orchestration around the item schema: what goes into it, when it is rebuilt, and how a
+game update is repaired. Kept out of src/main.ts so the whole flow can be exercised without
+starting Electron.
+
+The rules it enforces:
+  - the schema is ALWAYS rebuilt from the installed game's own items_game.txt, so it can
+    never be the stale copy a mod happened to ship;
+  - a mod's changes live in the library record (record.schema), never in its VPK;
+  - nothing is written to the game unless the user turned the patch on.
+
+### `SchemaInstaller`
+
+```ts
+export interface SchemaInstaller
+```
+
+What of the installer the schema needs: what a record is, its item blocks, splitting it, its size.
+
+### `SchemaState`
+
+```ts
+export interface SchemaState extends Partial<patcher.PatchState>
+```
+
+The patch and the built table as Settings shows them; the patcher's own state is merged in.
+
+### `CosmeticSlot`
+
+```ts
+export type CosmeticSlot =
+```
+
+A slot the free-cosmetics picker offers: its base item, what is on it, and what could be.
+
+### `createSchemaService`
+
+```ts
+export function createSchemaService({ settings, library, installer, userDataDir, log = () => {} }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; })
+```
+
+The item table and the search-path patch, kept in step with the library and the installed game.
+
+## src/schema.ts
+
+Item-schema engine: the game's own scripts/items/items_game.txt is the only place
+where a mod can attach new particles to a hero, redirect a stock effect, or turn a
+free "base item" (default weather / terrain / HUD...) into a paid one.
+
+Two rules shape everything here:
+  1. Only one items_game.txt may be live, so mods never ship theirs — we lift the
+     changed item blocks out of them and splice those into the game's CURRENT file.
+  2. The result is rebuilt from the installed game every time, so it can never go
+     stale the way a schema shipped inside a mod does.
+
+The file is ~50 MB of KeyValues with a few non-UTF8 bytes in it, so everything here
+works on latin1 strings: byte-exact in and out, no re-encoding surprises.
+
+The code is kept readable as four files: src/schema-kv.ts walks the KeyValues text,
+src/schema-items.ts reads items out of it, src/schema-merge.ts lifts a mod's deltas and merges
+them, and this file builds the result and writes it into the game. Callers import from here.
+
+Hands on from [`src/schema-kv.ts`](#srcschema-kvts): `blockBounds`, `eachChild`, `Bounds`, `KvChild`.
+
+Hands on from [`src/schema-items.ts`](#srcschema-itemsts): `SCHEMA_REL`, `findItem`, `itemFields`, `listItems`, `toUtf8`, `itemSearchText`, `inferredItemSlot`, `baseItemFor`, `cosmeticOptions`, `readGameSchema`, `gameSchemaStamp`, `SchemaItem`, `GameSchema`.
+
+Hands on from [`src/schema-merge.ts`](#srcschema-mergets): `reindent`, `ownedAssetNeedles`, `blockUsesAssets`, `deltaTable`, `extractDeltas`, `stripKeyBlocks`, `baseItemPatch`, `mergeSchema`, `validateSchema`, `SchemaDelta`, `SchemaPatch`, `MergeResult`.
+
+### `SCHEMA_VPK`
+
+```ts
+export const SCHEMA_VPK = 'pak01_dir.vpk'
+```
+
+Our folder is registered ahead of "dota", so the first pak in it wins the MOD path.
 
 ### `buildSchemaVpk`
 

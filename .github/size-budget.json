@@ -20,7 +20,7 @@
     "src/presets-service.ts": 377,
     "src/remote-config.ts": 305,
     "src/schema-service.ts": 445,
-    "src/schema.ts": 612,
+    "src/schema.ts": 107,
     "src/vpk-read.ts": 385,
     "src/vpk-write.ts": 348
   }

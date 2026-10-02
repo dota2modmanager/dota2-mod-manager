@@ -449,6 +449,15 @@
         "src/safe-zip.ts": {
           "lines": 100
         },
+        "src/schema-items.ts": {
+          "lines": 100
+        },
+        "src/schema-kv.ts": {
+          "lines": 100
+        },
+        "src/schema-merge.ts": {
+          "lines": 100
+        },
         "src/schema-service.ts": {
           "lines": 46.5
         },

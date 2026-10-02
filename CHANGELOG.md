@@ -2,6 +2,50 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.8.0-beta.4
+
+A fourth beta for the testers on the list. Everything in it, and in the betas before it, reaches
+everybody with 2.8.0.
+
+### The window moves
+
+Every screen was redrawn on new foundations, and things now move to where they go instead of
+jumping there:
+
+- In the catalog, the highlight slides to the category you pick. A chip or a filter slides the
+  cards that stay into their new places and fades the rest. A mod window opens out of its card.
+- In My mods, a mod you move up or down the load order slides to its new place, passing over its
+  neighbour. A mod you remove, or that the search leaves out, folds away and the rows below close
+  the gap. A pack's contents open and close instead of popping in.
+- A deleted preset folds away, a preset's contents open to their height, and a setting you change
+  swaps its value in place.
+
+A drag in My mods drops without an extra animation. If Windows is set to show fewer animations,
+the app keeps still. A switched-off mod in My mods is now dimmed, so you can see at a glance what
+the game will load.
+
+Apart from the motion, nothing should look different. If something does, tell us in Discord.
+
+### Fixes
+
+- Moving a mod in the load order while Dota or an antivirus held one of its files could leave the
+  mod split between two slots, where neither the game nor My mods could find it. Swapping two mods
+  in that moment could delete one of them. A move now happens whole or not at all.
+- On a first start with no internet and nothing cached, presets could not be listed, shared or
+  applied. They work now.
+- On a short window, such as a 1366x768 laptop at 125%, the safe mode window cut off its title and
+  both buttons. It fits now.
+- When Minify builds into the same folder as the app, the My mods banner could name that folder
+  "dota_null". It names the right one.
+- A preview paused in its first second started playing anyway. It stays paused.
+- The support report you send from Settings now says whether download mirrors are failing, which
+  tools are installed, and whether item-table changes wait for a rebuild. Those parts were missing
+  or showed an error.
+- Applying a preset with a mod the catalog lists without a file no longer tries to download a file
+  called "undefined".
+- When a failed change cannot put a file back, usually because Dota holds it open, the app writes
+  that to its log, so a support report shows it.
+
 ## 2.8.0-beta.3
 
 A third beta for the testers on the list. Everything in it, and in the two betas before it,
