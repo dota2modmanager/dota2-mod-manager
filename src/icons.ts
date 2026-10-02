@@ -116,18 +116,25 @@ export class Icons {
   async get(name: string | null | undefined): Promise<string | null> {
     if (!name) return null;
     return this.cached(name, async () => {
+      /* Every step has to have answered for the end to be a "no". A file under the item's own
+         name that came back 503 may be its picture all the same, and remembering a miss for it
+         would leave the card empty for a week after one busy minute on the wiki. */
+      let answered = true;
       for (const wikiName of cosmeticFileNames(name)) {
         const hit = await this.wiki.fetchFandomFile(wikiName);
         if (hit) return hit;
+        if (hit === undefined) answered = false;
       }
       const pageUrl = await this.wiki.pageImage(name);
+      if (pageUrl === undefined) answered = false;
       if (pageUrl) {
         const hit = await this.wiki.fetchFandomUrl(pageUrl);
         if (hit) return hit;
+        if (hit === undefined) answered = false;
       }
       const found = await this.wiki.searchFileName(name);
       if (found === undefined) return undefined;
-      if (found === null) return null;
+      if (found === null) return answered ? null : undefined;
       return found.wiki === 'fandom' ? this.wiki.fetchFandomFile(found.file) : this.wiki.fetchLiquipediaFile(found.url);
     });
   }

@@ -40,6 +40,8 @@ type Wiki = {
   urls?: Record<string, Buffer>;
   /** every request fails, as with no network */
   down?: boolean;
+  /** the file host answers 503 while the API still answers */
+  filesBusy?: boolean;
 };
 
 /** A fetch that answers like the two wikis, and keeps every URL it was asked for. */
@@ -52,6 +54,7 @@ function wikis(w: Wiki) {
     if (w.down) throw new Error('getaddrinfo ENOTFOUND');
     const u = new URL(url);
     if (u.pathname.startsWith('/wiki/Special:FilePath/')) {
+      if (w.filesBusy) return new Response('busy', { status: 503 });
       return bytes(w.fandomFiles?.[decodeURIComponent(u.pathname.slice('/wiki/Special:FilePath/'.length))]);
     }
     const q = u.searchParams;
@@ -178,6 +181,17 @@ test('a confirmed "no such picture" is remembered, across restarts, and a droppe
   flaky.ic.wiki.fetch = async () => new Response('busy', { status: 503 });
   assert.equal(await flaky.ic.get('Weather Rain'), null);
   assert.equal(flaky.ic.misses.size, 0);
+});
+
+test('a busy file host with an empty listing is not a "no": the card asks again next time', async (t) => {
+  /* The picture may well be under the item's own name; the host just did not hand it over. The
+     listing and the search answering "nothing" do not settle that, so nothing is remembered. */
+  const { ic, asked } = icons(t, { filesBusy: true });
+  assert.equal(await ic.get('Weather Rain'), null);
+  assert.equal(ic.misses.size, 0, 'no miss recorded');
+  const first = asked.length;
+  await ic.get('Weather Rain');
+  assert.ok(asked.length > first, 'asked again');
 });
 
 test('two cards asking for the same picture at once cost one lookup', async (t) => {
