@@ -4,6 +4,22 @@
       "id": "hero-items",
       "mods": [
         {
+          "name": "Timbersaw Claw Frostbloom",
+          "styleLabel": null,
+          "image": {"src":"/mods/timbersaw-claw-frostbloom.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790895746
+        },
+        {
+          "name": "Magnus Shock of the Anvil Crimson",
+          "styleLabel": null,
+          "image": {"src":"/mods/magnus-shock-of-the-anvil-crimson.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1790894654
+        },
+        {
           "name": "Phantom Lancer Ravenblight",
           "styleLabel": null,
           "image": {"src":"/mods/phantom-lancer-ravenblight.webp","width":854,"height":480},
@@ -1701,9 +1717,9 @@
     {
       "id": "parts",
       "mods": [
+        {"name":"Larger Minimap","styleLabel":null,"image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790894654},
         {"name":"Grey Minimap","styleLabel":null,"image":{"src":"/mods/grey-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790825298},
         {"name":"Grey Search Bar","styleLabel":null,"image":{"src":"/mods/grey-search-bar.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
-        {"name":"Larger Minimap","styleLabel":null,"image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
         {"name":"Larger Timer","styleLabel":null,"image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
         {"name":"Windows Xp Top Bar","styleLabel":null,"image":{"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
         {"name":"Hypergamy Search Bar","styleLabel":null,"image":{"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737},

@@ -1,6 +1,6 @@
 {
   "heroes": 147,
-  "mods": 1439,
+  "mods": 1450,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -236,6 +236,7 @@
     "chaos_knight": {
       "name": "Chaos Knight",
       "mods": [
+        {"name":"Chaos Knight Celestial Sentine","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]},
         {"name":"Chaos Knight Flandre Scarlet","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder","arms","offhand","weapon","legs"]},
         {"name":"Chaos Knight Unities Of Discord","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]},
         {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
@@ -501,6 +502,7 @@
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Enchantress Darkwood Witness","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Enchantress Diretide Shimmer","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
         {"name":"Enchantress Golubika","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
         {"name":"Enchantress Sematary","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
         {"name":"Enchantress Shiro","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","belt","shoulder","legs"]},
@@ -522,6 +524,7 @@
         {"name":"Cosmic Enigma","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Enigma Angel of the Abyss","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Enigma Blackhole Chan","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
+        {"name":"Enigma Infinity Space","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head"]},
         {"name":"Enigma World Chasm Artifact","categoryId":"herofx","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -781,6 +784,7 @@
       "name": "Kunkka",
       "mods": [
         {"name":"Immortal Kunkka","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","shoulder","misc","weapon"]},
+        {"name":"Kunkka Inquisitor Tide","categoryId":"heroes","styleLabel":null,"slots":["misc","legs","head","arms","shoulder","weapon","back","belt"]},
         {"name":"Kunkka Saltworn Mariner","categoryId":"hero-items","styleLabel":"I","slots":["misc","shoulder"]},
         {"name":"Kunkka Saltworn Mariner","categoryId":"hero-items","styleLabel":"II","slots":["misc","shoulder"]},
         {"name":"Kunkka Sea Spirit","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","shoulder","misc","weapon","back","belt"]},
@@ -968,12 +972,14 @@
     "magnataur": {
       "name": "Magnus",
       "mods": [
+        {"name":"Magnus Collapse","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon"]},
         {"name":"Magnus Eyes of Ardenok","categoryId":"hero-items","styleLabel":"Crimson","slots":["head"]},
         {"name":"Magnus Eyes of Ardenok","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Magnus Kirito","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms","head","weapon","legs"]},
         {"name":"Magnus Magnataur","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon"]},
         {"name":"Magnus Ornate Cruelty","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon"]},
         {"name":"Magnus Shock of the Anvil","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Magnus Shock of the Anvil Crimson","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Magnus Vortexbull","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon","misc","legs"]},
         {"name":"Magnus White Tiger","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon"]}
       ]
@@ -1140,6 +1146,7 @@
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Shadow Fiend 7.28","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","arms","wings","misc"]},
         {"name":"Shadow Fiend King of Vipers","categoryId":"heroes","styleLabel":"Style II","slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend King of Vipers","categoryId":"heroes","styleLabel":"Style III","slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend Lightning Soul","categoryId":"heroes","styleLabel":null,"slots":["head","wings","shoulder","arms"]},
@@ -1216,6 +1223,7 @@
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Oracle Automaton","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","weapon"]},
+        {"name":"Oracle Automaton Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","weapon","base"]},
         {"name":"Oracle Immortal Silence","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","weapon"]},
         {"name":"Oracle Irisviel von Einzbern","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","weapon"]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -1512,6 +1520,7 @@
       "name": "Timbersaw",
       "mods": [
         {"name":"Shadow Timbersaw","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder"]},
+        {"name":"Timbersaw Claw Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Timbersaw Clearcut Cavalier","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","misc","head","shoulder","back","offhand"]},
         {"name":"Timbersaw Rectifier","categoryId":"hero-items","styleLabel":"Golden","slots":["misc"]},
         {"name":"Timbersaw Rectifier","categoryId":"hero-items","styleLabel":null,"slots":["misc","offhand"]},
@@ -1824,6 +1833,7 @@
       "name": "Treant Protector",
       "mods": [
         {"name":"Halloween Treant Protector","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
+        {"name":"Treant Protector Diretide","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
         {"name":"Treant Protector Frost Hideaway","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","misc"]}
       ]
     },
@@ -1942,6 +1952,7 @@
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Visage Azure Phantom","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Visage Grimfeather Сorpse","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
+        {"name":"Visage Vulture Wraith","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },
