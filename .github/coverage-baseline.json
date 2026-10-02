@@ -458,6 +458,12 @@
         "src/safe-zip.ts": {
           "lines": 100
         },
+        "src/schema-cosmetics.ts": {
+          "lines": 89.4
+        },
+        "src/schema-harvest.ts": {
+          "lines": 100
+        },
         "src/schema-items.ts": {
           "lines": 100
         },
@@ -468,7 +474,7 @@
           "lines": 100
         },
         "src/schema-service.ts": {
-          "lines": 46.5
+          "lines": 96.4
         },
         "src/schema.ts": {
           "lines": 100
