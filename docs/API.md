@@ -24,6 +24,8 @@ the code, not in this page.
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/deep-links.ts`](#srcdeep-linksts) | d2mm:// links: a preset link clicked anywhere on the system, and on Linux, telling the desktop |
 | [`src/dev-harness.ts`](#srcdev-harnessts) | The switches that let a script drive the window: a screenshot after some clicks (MM_SHOT and |
+| [`src/diagnostics-files.ts`](#srcdiagnostics-filests) | What a support report reads off the disk: a folder's listing (names, sizes, dates, never the |
+| [`src/diagnostics-render.ts`](#srcdiagnostics-renderts) | A support report laid out as text (src/diagnostics.ts gathers it): the one-screen summary, |
 | [`src/diagnostics.ts`](#srcdiagnosticsts) | A support report a user can send instead of a round of screenshots: Dota's own path and |
 | [`src/discord-auth.ts`](#srcdiscord-authts) | Sign in with Discord, without a server of our own. |
 | [`src/discord-presence.ts`](#srcdiscord-presencets) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
@@ -677,6 +679,74 @@ scroll, a mod's card. MM_EVAL reads the finished page and writes the answer besi
 because a picture cannot say whether a fold opened with the right text in the right language.
 Whatever goes wrong is written to MM_SHOT.err.txt instead.
 
+## src/diagnostics-files.ts
+
+What a support report reads off the disk: a folder's listing (names, sizes, dates, never the
+bytes) and the last part of a log. The user's home folder is written as ~ or %USERPROFILE%, so
+a report says where a file is without saying whose machine it came from.
+
+### `Listed`
+
+```ts
+export type Listed = { name: string; size: number; mtime: number; dir: boolean }
+```
+
+One row of a folder listing: its shape, never its bytes.
+
+### `listFolder`
+
+```ts
+export function listFolder(dir: string): Listed[] | null
+```
+
+Nothing about a folder listing that matters for troubleshooting needs the file's bytes,
+only its shape - names, sizes, when they last changed.
+
+### `redactHome`
+
+```ts
+export function redactHome<T extends string | null | undefined>(dir: T, home: string = os.homedir()): T | string
+```
+
+A folder with the home directory written as ~ (or %USERPROFILE% on Windows).
+
+### `folderListingText`
+
+```ts
+export function folderListingText(dir: string, filter?: ((f: Listed) => boolean) | null, home?: string): string
+```
+
+A folder's listing as the text file the report carries.
+
+### `tailLog`
+
+```ts
+export function tailLog(file: string, maxBytes: number): string | null
+```
+
+The last `maxBytes` of a log file, or null when it cannot be read.
+
+## src/diagnostics-render.ts
+
+A support report laid out as text (src/diagnostics.ts gathers it): the one-screen summary,
+with what is wrong first, and REPORT.md with everything in it.
+
+### `renderSummary`
+
+```ts
+export function renderSummary(r: Report): string
+```
+
+The one-screen summary: what is wrong first, then the basics.
+
+### `renderDetailed`
+
+```ts
+export function renderDetailed(r: Report, files: Record<string, string> = {}): string
+```
+
+Everything in the report, laid out to be read: REPORT.md.
+
 ## src/diagnostics.ts
 
 A support report a user can send instead of a round of screenshots: Dota's own path and
@@ -685,6 +755,8 @@ listing of the mod folder's pak files, and the app's own recent log.
 
 Pure data in, pure data out - no Electron here, no zip - so src/ipc-diagnostics.ts decides how
 it is packaged (the diag:export handler) and this stays exercisable on its own.
+
+Hands on from [`src/diagnostics-render.ts`](#srcdiagnostics-renderts): `renderSummary`, `renderDetailed`.
 
 ### `Problem`
 
@@ -718,23 +790,6 @@ export interface Report
 
 The support report: what report.json holds, and what the two renderings read.
 
-### `listFolder`
-
-```ts
-export function listFolder(dir: string): Listed[] | null
-```
-
-Nothing about a folder listing that matters for troubleshooting needs the file's bytes,
-only its shape - names, sizes, when they last changed.
-
-### `tailLog`
-
-```ts
-export function tailLog(file: string, maxBytes: number): string | null
-```
-
-The last `maxBytes` of a log file, or null when it cannot be read.
-
 ### `buildReport`
 
 ```ts
@@ -763,22 +818,6 @@ export function findProblems(r: Omit<Report, 'problems'>, { app }: { app?: { upd
 Every check answers one question a support conversation actually starts with, and each one
 carries what to do about it. Severity is only two levels on purpose: something is broken,
 or something is worth knowing. A third level would just be a place to hide things in.
-
-### `renderSummary`
-
-```ts
-export function renderSummary(r: Report): string
-```
-
-The one-screen summary: what is wrong first, then the basics.
-
-### `renderDetailed`
-
-```ts
-export function renderDetailed(r: Report, files: Record<string, string> = {}): string
-```
-
-Everything in the report, laid out to be read: REPORT.md.
 
 ## src/discord-auth.ts
 

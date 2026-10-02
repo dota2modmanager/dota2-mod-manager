@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { folderListingText, redactHome, tailLog } from './diagnostics-files.ts';
 import * as gamelang from './gamelang.ts';
 import { validateGamePath } from './steam.ts';
 import { mirrorHealth } from './net.ts';
@@ -65,63 +66,6 @@ export interface Report {
   windows: unknown; rendererErrors: unknown; updater: unknown; remoteConfig: unknown; toolchain: unknown;
   displays: unknown; gpu: unknown;
   problems: Problem[];
-}
-
-/** One row of a folder listing: its shape, never its bytes. */
-type Listed = { name: string; size: number; mtime: number; dir: boolean };
-
-// Nothing about a folder listing that matters for troubleshooting needs the file's bytes,
-// only its shape - names, sizes, when they last changed.
-export function listFolder(dir: string): Listed[] | null {
-  try {
-    return fs.readdirSync(dir).map((name) => {
-      const st = fs.statSync(path.join(dir, name));
-      return { name, size: st.size, mtime: st.mtimeMs, dir: st.isDirectory() };
-    }).sort((a, b) => a.name.localeCompare(b.name));
-  } catch {
-    return null; // missing or unreadable folder is itself worth knowing
-  }
-}
-
-function redactHome<T extends string | null | undefined>(dir: T, home: string = os.homedir()): T | string {
-  if (!dir || !home) return dir;
-
-  const compareDir = process.platform === 'win32' ? dir.toLowerCase() : dir;
-  const compareHome = process.platform === 'win32' ? home.toLowerCase() : home;
-
-  if (compareDir !== compareHome && !compareDir.startsWith(`${compareHome}${path.sep}`)) {
-    return dir;
-  }
-
-  return process.platform === 'win32'
-    ? `%USERPROFILE%${dir.slice(home.length)}`
-    : `~${dir.slice(home.length)}`;
-}
-
-function folderListingText(dir: string, filter?: ((f: Listed) => boolean) | null, home?: string): string {
-  const list = listFolder(dir);
-  if (!list) return `${redactHome(dir, home)}\n(not found or unreadable)`;
-  const rows = filter ? list.filter(filter) : list;
-  const lines = rows.map((f) =>
-    `${f.dir ? 'DIR ' : '    '}${String(f.size).padStart(10)}  ${new Date(f.mtime).toISOString()}  ${f.name}`);
-  return `${redactHome(dir, home)}\n\n${lines.join('\n') || '(empty)'}`;
-}
-
-// The last chunk of a log file - a support conversation is almost always about what just
-// happened, not the file's whole history.
-/** The last `maxBytes` of a log file, or null when it cannot be read. */
-export function tailLog(file: string, maxBytes: number): string | null {
-  try {
-    const st = fs.statSync(file);
-    const start = Math.max(0, st.size - maxBytes);
-    const fd = fs.openSync(file, 'r');
-    const buf = Buffer.alloc(st.size - start);
-    fs.readSync(fd, buf, 0, buf.length, start);
-    fs.closeSync(fd);
-    return buf.toString('utf-8');
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -349,116 +293,4 @@ export function findProblems(r: Omit<Report, 'problems'>, { app }: { app?: { upd
   return out;
 }
 
-const bytes = (n: number | null | undefined) => (n == null ? '?' : n > 1024 ** 3
-  ? `${(n / 1024 ** 3).toFixed(2)} GB`
-  : n > 1024 ** 2 ? `${(n / 1024 ** 2).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
-
-/* ---------- the short one ----------
- *
- * One screen, plain sentences, no JSON. It exists because the person who reads these first
- * should not have to open four files to find out whether the game is even where the app
- * thinks it is. If nothing is wrong it says so in the first line, which is the answer most
- * of the time.
- */
-/** The one-screen summary: what is wrong first, then the basics. */
-export function renderSummary(r: Report): string {
-  const L: string[] = [];
-  const yn = (v: unknown) => (v ? 'yes' : 'no');
-  L.push('DOTA 2 MOD MANAGER - SUPPORT SUMMARY');
-  L.push(`Generated ${r.generatedAt}`);
-  L.push('');
-
-  const broken = r.problems.filter((p) => p.level === 'broken');
-  const notes = r.problems.filter((p) => p.level === 'note');
-  if (!broken.length && !notes.length) L.push('NOTHING LOOKS WRONG. Every check below passed.');
-  else {
-    if (broken.length) {
-      L.push(`BROKEN (${broken.length}):`);
-      for (const p of broken) L.push(`  ! ${p.what}\n      ${p.detail}`);
-    }
-    if (notes.length) {
-      L.push(`${broken.length ? '\n' : ''}WORTH KNOWING (${notes.length}):`);
-      for (const p of notes) L.push(`  - ${p.what}\n      ${p.detail}`);
-    }
-  }
-
-  L.push('');
-  L.push('THE BASICS');
-  L.push(`  App version      ${r.app.version} on ${r.app.platform}`);
-  L.push(`  Interface        ${r.app.uiLang}`);
-  L.push(`  Dota found       ${yn(r.dota.pathValid)}${r.dota.path ? `  (${r.dota.path})` : ''}`);
-  L.push(`  Mods folder      dota_${r.settings.langSuffix || '?'}`);
-  L.push(`  Game mounts      dota_${r.dota.detectedLang?.suffix || '?'}`);
-  L.push(`  Game patched     ${yn(r.patchAndSchema?.patched)}`);
-  L.push(`  Dota running     ${yn(r.dotaRunning)}`);
-  L.push('');
-  L.push('WHAT IS INSTALLED');
-  L.push(`  Mods             ${r.library.totalRecords} (${r.library.enabled} on, ${r.library.disabled} off)`);
-  L.push(`  Packs            ${r.library.packs}`);
-  L.push(`  Presets          ${r.library.presets}`);
-  L.push(`  Overruled        ${r.library.fileOverlaps ?? '?'}`);
-  const cats = Object.entries(r.library.byCategory || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  if (cats.length) L.push(`  By category      ${cats.map(([c, n]) => `${c} ${n}`).join(', ')}`);
-  L.push('');
-  L.push('STORAGE');
-  L.push(`  Download cache   ${bytes(r.caches.downloadCacheBytes)}`);
-  L.push(`  Icon cache       ${bytes(r.caches.iconCacheBytes)}`);
-  if (r.disk) L.push(`  Free on drive    ${bytes(r.disk.freeBytes)}`);
-  L.push('');
-  L.push('Everything above, in full, is in REPORT.md. Send that one to the developer.');
-  return L.join('\n');
-}
-
-/* ---------- the long one ----------
- *
- * The same data with nothing left out, laid out to be read rather than parsed: whoever is
- * looking at this is trying to work out what happened, and JSON makes that harder than a
- * heading and a table. report.json is still in the zip for anything that wants the raw shape.
- */
-/** Everything in the report, laid out to be read: REPORT.md. */
-export function renderDetailed(r: Report, files: Record<string, string> = {}): string {
-  const L: string[] = [];
-  const block = (title: string, obj: unknown) => {
-    L.push(`## ${title}`, '', '```json', JSON.stringify(obj, null, 2), '```', '');
-  };
-
-  L.push(`# Diagnostic report - Dota 2 Mod Manager ${r.app.version}`, '');
-  L.push(`Generated ${r.generatedAt}`, '');
-
-  L.push('## Verdicts', '');
-  if (!r.problems.length) L.push('Every check passed.', '');
-  for (const p of r.problems) L.push(`- **${p.level === 'broken' ? 'BROKEN' : 'note'}** - ${p.what}. ${p.detail}`);
-  L.push('');
-
-  block('App and system', r.app);
-  block('Settings', r.settings);
-  block('Dota', r.dota);
-  block('Patch and item table', r.patchAndSchema);
-  block('Library', r.library);
-  block('Catalog cache', r.catalogCache);
-  block('Caches and disk', { ...r.caches, disk: r.disk });
-  block('Download mirrors', r.mirrors);
-  if (r.windows) block('Windows', r.windows);
-  if (r.displays) block('Displays', r.displays);
-  if (r.gpu) block('Graphics card', r.gpu);
-  if (r.rendererErrors) block('Errors reported by the interface', r.rendererErrors);
-  if (r.updater) block('Updater', r.updater);
-  if (r.remoteConfig) block('Remote config', r.remoteConfig);
-  if (r.toolchain) block('Source 2 toolchain', r.toolchain);
-  if (r.installedMods) {
-    L.push('## Installed mods', '', '| # | slot | on | category | name |', '|---|---|---|---|---|');
-    for (const m of r.installedMods) {
-      L.push(`| ${m.i} | ${m.slot ?? '-'} | ${m.enabled ? 'on' : 'off'} | ${m.categoryId || '-'} | ${String(m.name).replace(/\|/g, '/')} |`);
-    }
-    L.push('');
-  }
-
-  const names = Object.keys(files);
-  if (names.length) {
-    L.push('## Files in this archive', '');
-    for (const n of names) L.push(`- \`${n}\` (${bytes(Buffer.byteLength(files[n], 'utf-8'))})`);
-    L.push('');
-  }
-  return L.join('\n');
-}
-
+export { renderSummary, renderDetailed } from './diagnostics-render.ts';
