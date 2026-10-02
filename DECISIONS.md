@@ -102,7 +102,7 @@ programme means. Reading and writing VPK archives is this repository's own code.
 ### The window is built by Vite, and moves to TypeScript and React
 
 Until 2026-09-27 the renderer was plain JavaScript with no build step, so that a reviewer reading
-`renderer/app.js` read the program itself. That cost more every month. The catalog screen reached
+renderer/app.js read the program itself. That cost more every month. The catalog screen reached
 1,699 lines and the library 1,374, a redesign meant editing strings of HTML inside them, and an
 animation meant timing code written by hand. The size budget stopped the growth; it could not
 undo it.
@@ -449,7 +449,7 @@ back to the hash remembered from the first download.
 stale mirror, a stale list, a proxy inventing bytes, and a hash pinned in this repository, which
 is never waived.
 
-### The two biggest screens are still one file each
+### The five biggest files are split, and a budget keeps them that way
 
 `main.js` was the first file on this list. It went from 3,102 lines to about 1,300 when the IPC
 handlers moved into `src/ipc-*.ts`, and to about 1,150 on 2026-09-16, when the cursor rules went to
@@ -461,13 +461,14 @@ TypeScript like the rest of the main process: the order the app starts in, which
 what each one is handed, and auto-update. That is one subject, and main.js no longer exists.
 
 On 2026-09-16 it was one of five files carrying 6,754 lines between them while the median module
-in `src/` was 171. `src/installer.ts` and `src/vpk.ts` have since been split along their subjects
-(393 and 17 lines, the rest in `src/installer-*.ts` and `src/vpk-*.ts`); the two biggest screens,
-`renderer/views/catalog.js` and `renderer/views/library.js`, have not. None of them arrived that
-size; each grew a hundred lines at a time with nobody deciding to. Each has its length written in
-`.github/size-budget.json`, and `tools/size-budget.mjs` fails a run where one grows, or where a
-file nobody listed crosses 800 lines. The budget does not split anything: it stops the drift, and
-every split shows up in it as a number going down.
+in `src/` was 171: src/installer.js, renderer/views/catalog.js, renderer/views/library.js, this one
+and src/vpk.js. All five have since been split along their subjects: the installer into
+`src/installer.ts` and `src/installer-*.ts`, the VPK code into `src/vpk-*.ts`, the two screens into
+`renderer/views/catalog/` and `renderer/views/library/` on 2026-09-28, and this file as told above.
+None of them arrived that size; each grew a hundred lines at a time with nobody deciding to. Each
+has its length written in `.github/size-budget.json`, and `tools/size-budget.mjs` fails a run
+where one grows, or where a file nobody listed crosses 300 lines. The budget does not split
+anything: it stops the drift, and every split shows up in it as a number going down.
 
 *Check:* `npm run size`, `.github/size-budget.json`, and `ARCHITECTURE.md` for what is supposed to
 live where.

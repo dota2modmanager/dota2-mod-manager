@@ -1,10 +1,10 @@
 /* The category rail down the left: everything, the favourites, then the catalog's sections and the
- * free cosmetics. views/catalog.js works out what is in it; this draws it, in the element the
+ * free cosmetics. views/catalog.ts works out what is in it; this draws it, in the element the
  * window already has for it (#catRail). */
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { MotionConfig, motion } from 'motion/react';
-import { dur, ease } from '../motion.ts';
+import { dur, ease } from '../../motion/tokens.ts';
 
 export interface RailItem {
   id: string;

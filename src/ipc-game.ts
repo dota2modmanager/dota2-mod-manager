@@ -84,7 +84,7 @@ export function registerGameIpc({
   // A tile asks with a chain of sources, best first ("modart:pak54_dir.vpk|hero:Brewmaster"),
   // and gets back the first one that has a picture. That is how "the mod's own art beats the
   // wiki's portrait of the vanilla hero, but a raw model texture does not" stays written down
-  // in one place - renderer/ui/thumb.js, which composes the chain - instead of being spread
+  // in one place - renderer/ui/thumb.ts, which composes the chain - instead of being spread
   // across three. A plain name is simply a chain of one, which is what the picker sends.
   //
   // Sources: the mod's own files and the game's own pictures when the toolchain is here

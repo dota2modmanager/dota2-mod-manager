@@ -3,7 +3,7 @@
  * a mod it was looking at instead of finding it again in a grid drawn from scratch. A card coming
  * in plays the entrance it always had (cardIn in catalog.css). Read once: every card shares it. */
 import type { Transition, TargetAndTransition } from 'motion/react';
-import { dur, ease } from '../motion.ts';
+import { dur, ease } from '../../motion/tokens.ts';
 
 let cached: { transition: Transition; exit: TargetAndTransition } | null = null;
 

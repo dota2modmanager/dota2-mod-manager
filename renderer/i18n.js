@@ -70,7 +70,7 @@ const EN = {
   // The catalog ships these in English; these are our own words for them. 'Эффекты' and
   // 'Звуки' are already above as category names, with the same English.
   'Иконки': 'Icons', 'Аниме': 'Anime', '18+': '18+',
-  // the 18+ question and its switch (core/adult.js)
+  // the 18+ question and its switch (core/adult.ts)
   'Моды 18+': '18+ mods',
   'Показывать моды 18+?': 'Show 18+ mods?',
   'Спрашиваем один раз, ответ можно поменять в настройках': 'Asked once. You can change the answer in Settings',
@@ -90,7 +90,7 @@ const EN = {
   'Убрать из избранного': 'Remove from favorites',
   'Здесь пусто — жми на сердечко у мода в каталоге': 'Nothing here yet — tap the heart on a mod in the catalog',
   'Превью': 'Preview', 'Источник': 'Source', 'Автор': 'Author', 'Баг': 'Bug', 'Гайд': 'Guide',
-  // who made a mod, in the mod window (core/credits.js)
+  // who made a mod, in the mod window (core/credits.ts)
   'моддер': 'modder', 'отправитель': 'sender',
   'Автор: {0}': 'Author: {0}', 'Моддер: {0}': 'Modder: {0}', 'Отправитель: {0}': 'Sender: {0}',
 
@@ -102,7 +102,7 @@ const EN = {
   'Безопасно:': 'Safe:',
   'Безопасный режим: моды из патча (эффекты, косметика) скрыты и не работают. Выключи, чтобы их включить — приложение впишет свою папку в файлы игры.':
     'Safe mode: patch-only mods (effects, cosmetics) are hidden and inactive. Turn it off to enable them — the app will register its folder in the game files.',
-  // the dialog that asks before the app is let into the game's files (renderer/ui/dialog.js)
+  // the dialog that asks before the app is let into the game's files (renderer/ui/dialog.ts)
   'Выключить безопасный режим': 'Turn safe mode off',
   'Оставить безопасный режим': 'Keep safe mode',
   'Сейчас': 'Now',
@@ -501,7 +501,7 @@ const EN = {
   'Удалить пресет «{0}»?': 'Delete preset «{0}»?',
 
   // ---------- tools ----------
-  // the one-time offer on first run (renderer/ui/dialog.js, toolchainDialog)
+  // the one-time offer on first run (renderer/ui/dialog.ts, toolchainDialog)
   'Скачать Source 2 Viewer?': 'Download Source 2 Viewer?',
   'Открытая программа (MIT) от ValveResourceFormat, не наша': 'An open-source program (MIT) by ValveResourceFormat, not ours',
   'Дота хранит почти всё в сжатых форматах Source 2. Простую половину приложение читает само, а остальное разбирает эта программа.':

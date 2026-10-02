@@ -83,7 +83,7 @@ module.exports = async function browse(sim) {
   await sim.until(calm, 3000);
   const cats = await sim.js(`[...document.querySelectorAll('.rail-item[data-cat]')].map((b) => b.dataset.cat)`);
   sim.check('the rail lists categories', cats.length > 3, `only ${cats.length}`, { cats });
-  // mods tagged adult are left out until the user said yes to them (renderer/core/adult.js)
+  // mods tagged adult are left out until the user said yes to them (renderer/core/adult.ts)
   const counted = await sim.js(`(async () => {
     const c = await window.api.catalog.load(false);
     const adult = (await window.api.settings.get()).showAdult === true;

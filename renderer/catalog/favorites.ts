@@ -1,5 +1,5 @@
 /* Starred mods and looks, kept in settings as "<categoryId>|<name>" keys (state.favorites). */
-import { state } from '../core/store.js';
+import { state } from '../core/store.ts';
 
 export const favKey = (cat: string, name: string): string => `${cat}|${name}`;
 export const isFav = (cat: string, name: string): boolean => state.favorites.has(favKey(cat, name));
@@ -12,3 +12,6 @@ export async function toggleFavorite(cat: string, name: string): Promise<boolean
   state.settings = await window.api.settings.set('favorites', [...state.favorites]);
   return state.favorites.has(key);
 }
+
+/** Whether a star is on, by its whole key ("<categoryId>|<name>"). */
+export const isFavKey = (key: string): boolean => state.favorites.has(key);

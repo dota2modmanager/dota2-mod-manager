@@ -116,11 +116,12 @@ npm run size
 ```
 
 Five files carried 7,155 lines between them in September 2026, while the median module in `src/`
-was 171. Three have since been split along their subjects: `main.js` into `src/main.ts` and a
-module for each job it held, `src/installer.ts` into `src/installer-*.ts`, and `src/vpk.ts` into
-three. The two biggest screens, `renderer/views/catalog.js` and `renderer/views/library.js`, have
-not. Each watched file is in `.github/size-budget.json` at its current length, and the check fails
-when one grows, or when a file nobody listed crosses 800 lines.
+was 171. All five have since been split along their subjects: `main.js` into `src/main.ts` and a
+module for each job it held, `src/installer.ts` into `src/installer-*.ts`, `src/vpk.ts` into
+three, and the two biggest screens into `renderer/views/catalog/` and `renderer/views/library/`.
+A file in `src/` or `renderer/` fails the check once it crosses 300 lines. The files that were
+already longer when that mark came down from 800, on 2026-09-27, are in `.github/size-budget.json`
+at their length, and the check fails when one of them grows.
 
 If your change makes one of them longer, split something out of it rather than raising the number.
 `node tools/size-budget.mjs --update` writes measurements back and refuses to raise any of them; a

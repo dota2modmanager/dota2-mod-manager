@@ -1,17 +1,19 @@
 /* A preview: a picture, a looping clip, a sound, or the category's icon when there is none.
- * The same four answers as mediaHtml() in ui/media.js, drawn by React. A picture that fails asks
+ * The same four answers as mediaHtml() in ui/media.ts, drawn by React. A picture that fails asks
  * the mirror once, then gives up to the placeholder and counts towards the one warning.
  * Give it key={url}: a new address is a new picture, with its own retry. */
 import { useState } from 'react';
-import { isVideo, isAudio, mirrorOf, mediaGaveUp } from '../../ui/media.js';
+import { isVideo, isAudio, mirrorOf, mediaGaveUp } from '../../ui/media.ts';
 
 interface Props {
   url: string | null;
   hoverPlay?: boolean;
+  /** a window's picture plays on its own, loaded whole rather than from its first frame */
+  autoplay?: boolean;
   fallbackIcon?: string;
 }
 
-export function Media({ url, hoverPlay = false, fallbackIcon = 'image' }: Props) {
+export function Media({ url, hoverPlay = false, autoplay = false, fallbackIcon = 'image' }: Props) {
   const [src, setSrc] = useState(url);
   const [gaveUp, setGaveUp] = useState(false);
 
@@ -26,7 +28,7 @@ export function Media({ url, hoverPlay = false, fallbackIcon = 'image' }: Props)
   if (isVideo(src)) {
     return (
       <video
-        src={src} muted loop playsInline preload="metadata" data-owned="react"
+        src={src} muted loop playsInline preload={autoplay ? 'auto' : 'metadata'} autoPlay={autoplay} data-owned="react"
         data-hoverplay={hoverPlay ? '1' : undefined}
         onMouseEnter={hoverPlay ? (e) => { e.currentTarget.play().catch(() => {}); } : undefined}
         onMouseLeave={hoverPlay ? (e) => e.currentTarget.pause() : undefined}

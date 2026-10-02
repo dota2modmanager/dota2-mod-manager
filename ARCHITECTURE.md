@@ -22,14 +22,18 @@ control, so the renderer is treated as a place where hostile strings end up.
 
 ## Where a feature lives
 
-Anything a user can do to a mod touches three files, in this order:
+Anything a user can do to a mod touches four files, in this order:
 
 1. A `src/ipc-*.ts` module gets an `ipcMain.handle('mods:something', ...)` that calls into `src/`
 2. `preload.js` exposes it as `api.mods.something`
-3. `renderer/views/*.js` calls it and draws the result
+3. `renderer/api/` gives it a type: what it takes and what its handler answers
+4. `renderer/views/` calls it and draws the result
 
-Miss the middle one and the button exists but does nothing. The renderer is split by view
-(`catalog.js`, `library.js`, `presets.js`, `settings.js`) with shared pieces under `renderer/ui/`.
+Miss the second and the button exists but does nothing; miss the third and TypeScript refuses the
+call. `test/ipc-contract.test.js` and `test/api-types.test.js` hold the four together. The renderer is split by view
+(`catalog.ts`, `library.ts`, `presets.ts` and `settings.ts`, the larger ones with their parts in a
+folder of the same name) with shared pieces under `renderer/ui/`. Each draws with React components
+from the folder of its name under `renderer/`: `catalog/`, `library/`, `presets/`, `settings/`.
 
 ## Where mods end up
 

@@ -79,7 +79,7 @@ const DEFAULTS: StoredSettings = {
   toolsPromptSeen: false,
   // Mods the catalog tags adult (18+): true once the user said they are 18 and want them,
   // false once they said no, null until they answer the one-time question
-  // (renderer/core/adult.js). Hidden until then.
+  // (renderer/core/adult.ts). Hidden until then.
   showAdult: null,
   // last version whose release notes the user was shown. Null on a fresh install, which is
   // why nobody gets a "what's new" popup for a version they just installed by hand.

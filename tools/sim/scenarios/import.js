@@ -64,7 +64,8 @@ module.exports = async function importMods(sim) {
     await sim.until(`document.querySelectorAll('.lib-row[data-row]').length >= 2`, 8000);
     await sim.settle(600);
     let rows = await steps.libraryRows(sim);
-    const recognised = await sim.until(`document.getElementById('adoptAllBtn') && document.querySelector('.banner.info')?.textContent.replace(/\\s+/g, ' ').trim()`, 8000);
+    // the words of the banner that carries "Link all", not the icon's ligature beside them
+    const recognised = await sim.until(`document.getElementById('adoptAllBtn')?.closest('.banner')?.querySelector('.banner-body')?.textContent.replace(/\\s+/g, ' ').trim()`, 8000);
     sim.check('the imported files are recognised as catalog mods, and the app offers to link them', recognised && /\b2\b/.test(recognised),
       `banner: ${recognised || 'none'}`);
     for (const r of rows) {

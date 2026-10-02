@@ -154,13 +154,15 @@ test('the parsers and everything that writes the game folder are nowhere near th
 
 test('the window never reaches into the main process', () => {
   /* renderer/ is ES modules loaded by the page. An import that leaves renderer/ lands in code
-     written for Node: at best the screen stays blank, at worst main-process code runs in it. */
+     written for Node: at best the screen stays blank, at worst main-process code runs in it.
+     TypeScript too: reading only .js, this looked at fewer files with every screen that moved,
+     until it found almost nothing to read. */
   const files = [];
   const walk = (dir) => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
       const p = path.join(dir, e.name);
       if (e.isDirectory()) walk(p);
-      else if (e.name.endsWith('.js')) files.push(p);
+      else if (/\.(js|ts|tsx)$/.test(e.name)) files.push(p);
     }
   };
   walk(path.join(ROOT, 'renderer'));

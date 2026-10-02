@@ -67,7 +67,7 @@ write and put back byte for byte on revert.
 through an allowlist of tags, and the window runs under a content security policy with no remote
 scripts, no node integration and context isolation on, so text that got through would still have
 nothing to reach.
-*Check:* `renderer/ui/guide.js` (`sanitizeGuideHtml`), `renderer/index.html` (the policy itself),
+*Check:* `renderer/ui/guide.ts` (`sanitizeGuideHtml`), `renderer/index.html` (the policy itself),
 `main.js` (`contextIsolation: true`, `nodeIntegration: false`).
 
 **The window asking for something the app should not do.** The renderer cannot touch the

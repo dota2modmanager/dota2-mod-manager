@@ -102,10 +102,10 @@ test('the sandbox answers every question the app asks once on first run', () => 
   /* The Source 2 Viewer offer arrived after the sandbox settings were written. Nobody added its
      answer, so every sandbox launch opened with that dialog in front, and the end-to-end run
      pressed its button while meaning to confirm a removal. */
-  const app = fs.readFileSync(path.join(ROOT, 'renderer', 'app.js'), 'utf8');
+  const app = fs.readFileSync(path.join(ROOT, 'renderer', 'app.ts'), 'utf8');
   const sandbox = fs.readFileSync(path.join(ROOT, 'tools', 'sandbox.js'), 'utf8');
   const asked = [...app.matchAll(/if \(!cfg\.(\w+)\) await /g)].map((m) => m[1]);
-  assert.ok(asked.length >= 2, 'renderer/app.js no longer asks its first-run questions the way this test reads them');
+  assert.ok(asked.length >= 2, 'renderer/app.ts no longer asks its first-run questions the way this test reads them');
   const unanswered = asked.filter((key) => !new RegExp(`\\b${key}: true\\b`).test(sandbox));
   assert.deepEqual(unanswered, [], `tools/sandbox.js does not pre-answer: ${unanswered.join(', ')}`);
 });

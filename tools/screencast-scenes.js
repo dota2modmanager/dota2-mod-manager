@@ -210,4 +210,30 @@ const motion = [
   { eval: "document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))", after: 900 },
 ];
 
-module.exports = { showcase, browse, filter, collect, install, mine, motion };
+/* The motions of My mods, filmed for a person to judge (MM_SCENE=library): a mod moved in the load
+ * order from its menu, and back; a search that narrows the list and lets it go; a pack opened and
+ * closed; a mod removed. Needs a library to show: the sandbox seeded with a few mods and a pack. */
+const rowMenu = (n) => `(() => { const r = document.querySelectorAll('#libList .lib-row[data-row]')[${n}].getBoundingClientRect();
+  document.querySelectorAll('#libList .lib-row[data-row]')[${n}].dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: r.left + 360, clientY: r.top + 24 })); })()`;
+const library = [
+  { wait: 600 },
+  { click: '.tb-tab[data-view="library"]', after: 1500 },
+  { hover: '#libList .lib-row[data-row]:nth-child(3 of .lib-row)', hold: 400 },
+  { eval: rowMenu(2), after: 500 },
+  { click: '.ctx-menu .ctx-item:nth-child(1 of .ctx-item)', after: 1300 },
+  { hover: '#libList .lib-row[data-row]:nth-child(2 of .lib-row)', hold: 400 },
+  { eval: rowMenu(1), after: 500 },
+  { click: '.ctx-menu .ctx-item:nth-child(2 of .ctx-item)', after: 1400 },
+  { click: '#libSearch', after: 300 },
+  { type: 'emblem', gap: 90, after: 1500 },
+  { click: '#libSearchClear', after: 1500 },
+  { eval: "document.querySelector('#libList .pack-row').scrollIntoView({ block: 'center', behavior: 'smooth' })", after: 900 },
+  { click: '.pack-expand', after: 1400 },
+  { click: '.pack-expand', after: 1200 },
+  { eval: "document.getElementById('main').scrollTo({ top: 0, behavior: 'smooth' })", after: 900 },
+  { hover: '#libList .lib-row[data-row]:nth-child(3 of .lib-row) [data-del]', hold: 400 },
+  { click: '#libList .lib-row[data-row]:nth-child(3 of .lib-row) [data-del]', after: 700 },
+  { click: '.confirm-box [data-c="yes"]', after: 1800 },
+];
+
+module.exports = { showcase, browse, filter, collect, install, mine, motion, library };

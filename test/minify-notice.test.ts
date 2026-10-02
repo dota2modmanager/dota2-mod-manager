@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { readMinify as  read, MINIFY_FOLDER, MINIFY_BORROWED } from '../src/minify.ts';
 import { DOTA_LANGUAGES } from '../src/gamelang.ts';
 
-const load = () => import('../renderer/core/minify-notice.js');
+const load = () => import('../renderer/core/minify-notice.ts');
 // never the Minify installed on the machine running the tests
 // a test that names no folder of ours asks about a machine where this app has none
 const readMinify = (p: Partial<Parameters<typeof read>[0]>) => read({ config: null, gameLanguages: DOTA_LANGUAGES, ...p } as Parameters<typeof read>[0]);

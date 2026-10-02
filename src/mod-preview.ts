@@ -60,7 +60,7 @@ export const TEX = 'modtex:';
 // A mod that replaces a hero's animated portrait carries the best picture of itself there is:
 // the author's own showcase of the thing, in motion. Getting a still out of it needs a video
 // decoder, and the app is one - Electron carries ffmpeg inside, which is why no copy of it is
-// downloaded here. The decoding happens in the window (see renderer/ui/cosmetic-icons.js);
+// downloaded here. The decoding happens in the window (see renderer/ui/cosmetic-icons.ts);
 // this file hands over the bytes and judges and keeps what comes back.
 const VIDEO_RANKS: [RegExp, number][] = [
   [/^panorama\/videos\/heroes\/[^/]+\.webm$/, 100],

@@ -11,12 +11,12 @@
 import { useReducer, type CSSProperties, type MouseEvent, type Ref } from 'react';
 import type { Mod } from '../types.ts';
 import { catalogConstants } from '../data.ts';
-import { keyOf } from '../../core/keys.js';
-import { catName, catIcon } from '../../core/categories.js';
-import { previewUrl } from '../../ui/media.js';
-import { openPlayer } from '../../ui/player.js';
-import { toggleQueued } from '../../ui/queue.js';
-import { staleTerrainWhy } from '../../core/terrain-age.js';
+import { keyOf } from '../../core/keys.ts';
+import { catName, catIcon } from '../../core/categories.ts';
+import { previewUrl } from '../../ui/media.ts';
+import { openPlayer } from '../../ui/player.ts';
+import { toggleQueued } from '../../ui/queue.ts';
+import { staleTerrainWhy } from '../../core/terrain-age.ts';
 import { installTarget } from '../mods.ts';
 import { SLOT_TAGS, modTags, tagLabel } from '../tags.ts';
 import { styleIndex, pickStyle, lookInstalled } from '../looks.ts';

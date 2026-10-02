@@ -289,7 +289,7 @@ export function registerModsIpc({
   });
 
   /* Once per map the game has: a whole-map terrain older than it goes off, and the window says
-   * which. Asked at start and after the game updates (renderer/core/terrain-age.js). */
+   * which. Asked at start and after the game updates (renderer/core/terrain-age.ts). */
   ipcMain.handle('mods:switchOffStaleTerrains', () => {
     try {
       return { names: terrainAges.switchOffStale(library.list(), switchOff) };

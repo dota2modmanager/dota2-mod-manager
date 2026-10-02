@@ -1,5 +1,5 @@
 /* The shapes the catalog screen works with: a mod as the upstream catalog ships it
- * (src/catalog.js fetches mods.json and constants.json), plus the few fields this app adds. */
+ * (src/catalog.ts fetches mods.json and constants.json), plus the few fields this app adds. */
 
 export interface ModStyle {
   label: string;
@@ -38,7 +38,45 @@ export interface Mod {
 /** A category's data in mods.json: a flat list, or groups of lists. */
 export type CategoryData = Mod[] | { groups?: { name: string; id?: string; mods?: Mod[] }[] };
 
-/** What the toolbar above a grid narrows by (core/constants.js FILTER_DEFAULTS). */
+/** A look for one slot, out of the game's own item schema. */
+export interface CosmeticOption {
+  id: string;
+  name: string;
+  tags?: string[];
+}
+
+/** A slot of free cosmetics, or one of the item builder's (kind 'item-effect', slot 'item:...'). */
+export interface CosmeticSlot {
+  slot: string;
+  kind?: string;
+  label?: string;
+  slotLabel?: string;
+  heroLabel?: string;
+  heroIds?: string[];
+  icon?: string;
+  options: CosmeticOption[];
+  effects?: { id: string; name: string }[];
+}
+
+/** One piece of an item set, and whether the builder can put it on (src/item-builder.ts itemSets). */
+export interface SetPiece {
+  slot: string;
+  itemId: string;
+  name: string;
+  fits: boolean;
+  reason?: string;
+  slotLabel?: string;
+}
+
+export interface CosmeticSet {
+  id: string;
+  name: string;
+  heroLabel: string;
+  fit: number;
+  pieces: SetPiece[];
+}
+
+/** What the toolbar above a grid narrows by (core/constants.ts FILTER_DEFAULTS). */
 export interface Filters {
   sort: string;
   tags: Set<string>;

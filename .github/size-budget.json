@@ -3,12 +3,7 @@
   "measured": "2026-10-01",
   "watchAt": 300,
   "files": {
-    "renderer/app.js": 426,
     "renderer/i18n.js": 787,
-    "renderer/views/catalog.js": 1181,
-    "renderer/views/item-builder.js": 669,
-    "renderer/views/library.js": 1374,
-    "renderer/views/presets.js": 433,
     "src/diagnostics.ts": 464,
     "src/game-upkeep.ts": 349,
     "src/gamelang.ts": 461,
