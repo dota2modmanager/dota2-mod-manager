@@ -5147,6 +5147,14 @@ plausible ones. Everything after that is Steam's own layout rather than the plat
 libraryfolders.vdf lists the other drives, the game sits under steamapps/common, and both
 read the same on either system.
 
+### `regValue`
+
+```ts
+export function regValue(stdout: string): string | null
+```
+
+The value `reg query` printed for one entry, or null when it printed none.
+
 ### `parseLibraryFolders`
 
 ```ts
@@ -5158,6 +5166,19 @@ Both read files Valve writes, in formats Valve changes without telling anybody, 
 answer from either sends the app looking for the game on the wrong drive - which is the kind
 of thing that is hard to notice and easy to pin down with a fixture.
 
+### `linuxSteamRoots`
+
+```ts
+export function linuxSteamRoots(home = os.homedir(), env: NodeJS.ProcessEnv = process.env): string[]
+```
+
+Where Steam lives on Linux, in the order worth trying.
+
+~/.steam/steam is a symlink Steam maintains for exactly this question and it survives the
+moves Valve has made over the years. ~/.local/share/Steam is where the files actually are on
+a current install, and XDG_DATA_HOME moves that for the people who set it. The flatpak build
+sees none of the above: it has its own home under ~/.var/app.
+
 ### `steamappsDir`
 
 ```ts
@@ -5167,13 +5188,40 @@ export function steamappsDir(lib: string): string
 Steam spelled it SteamApps for years and steamapps after that. Windows does not care and
 Linux does, so the folder that is actually on disk decides.
 
+### `pickSteamRoot`
+
+```ts
+export function pickSteamRoot(candidates: (string | null)[], windows = WINDOWS, exists: (p: string) => boolean = fs.existsSync): string | null
+```
+
+The first of the places Steam may live that is there.
+
+### `fallbackLibraries`
+
+```ts
+export function fallbackLibraries(windows = WINDOWS, home = os.homedir()): string[]
+```
+
+Libraries to look through when Steam itself did not tell us, in the places people put them.
+On Windows that is every drive letter; on Linux the roots are the same handful as above,
+plus the one folder a second library usually ends up in.
+
 ### `findDotaGamePath`
 
 ```ts
 export async function findDotaGamePath(): Promise<string | null>
 ```
 
-_No description in the source._
+Where Dota is: the libraries Steam names first, then the usual places, the first real install.
+
+### `findDotaIn`
+
+```ts
+export function findDotaIn(steamRoot: string | null, fallbacks: string[]): string | null
+```
+
+The game folder of the first library that holds a real install: Steam's own root, the
+libraries its libraryfolders.vdf lists, then the fallbacks, each looked at once.
 
 ### `validateGamePath`
 

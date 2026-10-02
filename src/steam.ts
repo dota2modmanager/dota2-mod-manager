@@ -12,12 +12,17 @@ import path from 'node:path';
 
 const WINDOWS = process.platform === 'win32';
 
+/** The value `reg query` printed for one entry, or null when it printed none. */
+export function regValue(stdout: string): string | null {
+  const m = stdout.match(/REG_SZ\s+(.+)/);
+  return m ? m[1].trim() : null;
+}
+
 function regQuery(hive: string, key: string, value: string): Promise<string | null> {
   return new Promise((resolve) => {
     execFile('reg', ['query', `${hive}\\${key}`, '/v', value], (err, stdout) => {
       if (err || !stdout) return resolve(null);
-      const m = stdout.match(/REG_SZ\s+(.+)/);
-      resolve(m ? m[1].trim() : null);
+      resolve(regValue(stdout));
     });
   });
 }
@@ -44,9 +49,8 @@ export function parseLibraryFolders(vdfText: string): string[] {
  * a current install, and XDG_DATA_HOME moves that for the people who set it. The flatpak build
  * sees none of the above: it has its own home under ~/.var/app.
  */
-function linuxSteamRoots(): string[] {
-  const home = os.homedir();
-  const xdg = process.env.XDG_DATA_HOME || path.join(home, '.local', 'share');
+export function linuxSteamRoots(home = os.homedir(), env: NodeJS.ProcessEnv = process.env): string[] {
+  const xdg = env.XDG_DATA_HOME || path.join(home, '.local', 'share');
   return [
     path.join(home, '.steam', 'steam'),
     path.join(home, '.steam', 'root'),
@@ -66,29 +70,33 @@ export function steamappsDir(lib: string): string {
   return path.join(lib, 'steamapps');
 }
 
+/** The first of the places Steam may live that is there. */
+export function pickSteamRoot(candidates: (string | null)[], windows = WINDOWS, exists: (p: string) => boolean = fs.existsSync): string | null {
+  for (let c of candidates) {
+    if (!c) continue;
+    // The registry answers with either slash; a POSIX path must be left exactly as it is.
+    if (windows) c = c.replace(/\//g, '\\');
+    if (exists(c)) return c;
+  }
+  return null;
+}
+
 async function findSteamRoot(): Promise<string | null> {
-  const candidates: (string | null)[] = WINDOWS
+  return pickSteamRoot(WINDOWS
     ? [
         await regQuery('HKCU', 'SOFTWARE\\Valve\\Steam', 'SteamPath'),
         await regQuery('HKLM', 'SOFTWARE\\WOW6432Node\\Valve\\Steam', 'InstallPath'),
         await regQuery('HKLM', 'SOFTWARE\\Valve\\Steam', 'InstallPath'),
       ]
-    : linuxSteamRoots();
-  for (let c of candidates) {
-    if (!c) continue;
-    // The registry answers with either slash; a POSIX path must be left exactly as it is.
-    if (WINDOWS) c = c.replace(/\//g, '\\');
-    if (fs.existsSync(c)) return c;
-  }
-  return null;
+    : linuxSteamRoots());
 }
 
 /* Libraries to look through when Steam itself did not tell us, in the places people put them.
  * On Windows that is every drive letter; on Linux the roots are the same handful as above,
  * plus the one folder a second library usually ends up in.
  */
-function fallbackLibraries(): string[] {
-  if (!WINDOWS) return [...linuxSteamRoots(), path.join(os.homedir(), 'Games', 'SteamLibrary')];
+export function fallbackLibraries(windows = WINDOWS, home = os.homedir()): string[] {
+  if (!windows) return [...linuxSteamRoots(home), path.join(home, 'Games', 'SteamLibrary')];
   const libs = [];
   for (const drive of 'CDEFGH') {
     libs.push(
@@ -102,8 +110,16 @@ function fallbackLibraries(): string[] {
   return libs;
 }
 
+/** Where Dota is: the libraries Steam names first, then the usual places, the first real install. */
 export async function findDotaGamePath(): Promise<string | null> {
-  const steamRoot = await findSteamRoot();
+  return findDotaIn(await findSteamRoot(), fallbackLibraries());
+}
+
+/**
+ * The game folder of the first library that holds a real install: Steam's own root, the
+ * libraries its libraryfolders.vdf lists, then the fallbacks, each looked at once.
+ */
+export function findDotaIn(steamRoot: string | null, fallbacks: string[]): string | null {
   const libs: string[] = [];
   if (steamRoot) {
     libs.push(steamRoot);
@@ -114,7 +130,7 @@ export async function findDotaGamePath(): Promise<string | null> {
       } catch { /* ignore parse errors, fall back to scan */ }
     }
   }
-  libs.push(...fallbackLibraries());
+  libs.push(...fallbacks);
 
   const seen = new Set<string>();
   for (const lib of libs) {
