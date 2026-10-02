@@ -985,6 +985,38 @@
       "from": "return this.askWiki(LIQ_API, LIQ_UA, params, this.liqGate);",
       "to": "return this.askWiki(LIQ_API, UA, params, this.liqGate);",
       "test": "test/icons.test.ts"
+    },
+    {
+      "name": "the empty tree a moved library leaves behind is taken for the game",
+      "file": "src/steam.ts",
+      "anchor": "export function findDotaIn(steamRoot: string | null, fallbacks: string[]): string | null {",
+      "from": "if (validateGamePath(game)) return game;",
+      "to": "if (fs.existsSync(game)) return game;",
+      "test": "test/steam.test.ts"
+    },
+    {
+      "name": "the libraries Steam lists in libraryfolders.vdf are never searched",
+      "file": "src/steam.ts",
+      "anchor": "export function findDotaIn(steamRoot: string | null, fallbacks: string[]): string | null {",
+      "from": "libs.push(...parseLibraryFolders(fs.readFileSync(vdf, 'utf-8')));",
+      "to": "void vdf;",
+      "test": "test/steam.test.ts"
+    },
+    {
+      "name": "a library named twice is searched twice",
+      "file": "src/steam.ts",
+      "anchor": "export function findDotaIn(steamRoot: string | null, fallbacks: string[]): string | null {",
+      "from": "if (!lib || seen.has(lib.toLowerCase())) continue;",
+      "to": "if (!lib) continue;",
+      "test": "test/steam.test.ts"
+    },
+    {
+      "name": "the registry's forward slashes reach a Windows path as they are",
+      "file": "src/steam.ts",
+      "anchor": "export function pickSteamRoot(",
+      "from": "if (windows) c = c.replace(/\\//g, '\\\\');",
+      "to": "void windows;",
+      "test": "test/steam.test.ts"
     }
   ]
 }
