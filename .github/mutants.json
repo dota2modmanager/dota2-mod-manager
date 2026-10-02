@@ -1073,6 +1073,30 @@
       "from": "if (manifest.mods.some(embeds)) {",
       "to": "if (false) {",
       "test": "test/presets-service.test.ts"
+    },
+    {
+      "name": "a new build of the game keeps showing the old build's item pictures",
+      "file": "src/game-icons.ts",
+      "anchor": "  function nameIndex(): Map<string, string> | null {",
+      "from": "if (old !== stamp) {",
+      "to": "if (false) {",
+      "test": "test/game-icons.test.ts"
+    },
+    {
+      "name": "two items sharing one picture leave the first without it",
+      "file": "src/game-icons.ts",
+      "anchor": "  async function getMany(names: string[]): Promise<Record<string, string>> {",
+      "from": "if (asking) asking.push(name); else wanted.set(imagePath, [name]);",
+      "to": "wanted.set(imagePath, [name]);",
+      "test": "test/game-icons.test.ts"
+    },
+    {
+      "name": "a picture the game stores whole is never copied out of it",
+      "file": "src/game-icons.ts",
+      "anchor": "  function takeReadyMade(imagePaths: string[]): string[] {",
+      "from": "if (png) fs.writeFileSync(cacheFile(imagePath), png);",
+      "to": "if (false) fs.writeFileSync(cacheFile(imagePath), png);",
+      "test": "test/game-icons.test.ts"
     }
   ]
 }
