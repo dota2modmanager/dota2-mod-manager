@@ -10,7 +10,6 @@
     "src/installer.ts": 398,
     "src/ipc-library.ts": 414,
     "src/ipc-mods.ts": 312,
-    "src/item-builder.ts": 239,
     "src/main.ts": 383,
     "src/mod-preview.ts": 391,
     "src/net.ts": 456,
@@ -18,8 +17,6 @@
     "src/patcher.ts": 427,
     "src/presets-service.ts": 377,
     "src/remote-config.ts": 305,
-    "src/schema-service.ts": 445,
-    "src/schema.ts": 107,
     "src/vpk-read.ts": 385,
     "src/vpk-write.ts": 348
   }

@@ -987,6 +987,54 @@
       "test": "test/icons.test.ts"
     },
     {
+      "name": "the item table is written into the game with the patch switched off",
+      "file": "src/schema-service.ts",
+      "anchor": "  function refresh() {",
+      "from": "if (!settings.get('schemaPatch')) return drop();",
+      "to": "if (false) return drop();",
+      "test": "test/schema-service.test.ts"
+    },
+    {
+      "name": "switching the patch off leaves our line in Valve's files",
+      "file": "src/schema-service.ts",
+      "anchor": "  function setEnabled(on: boolean) {",
+      "from": "patcher.revert({ gamePath: game, folder: patcher.FOLDER, backupDir });",
+      "to": "void backupDir;",
+      "test": "test/schema-service.test.ts"
+    },
+    {
+      "name": "a game update leaves the built table on the old one",
+      "file": "src/schema-service.ts",
+      "anchor": "  function heal() {",
+      "from": "if (stamp !== settings.get('schemaStamp') || !schema.isDeployed(game, patcher.FOLDER)) {",
+      "to": "if (!schema.isDeployed(game, patcher.FOLDER)) {",
+      "test": "test/schema-service.test.ts"
+    },
+    {
+      "name": "two packs carrying the same block are reported as a conflict",
+      "file": "src/schema-service.ts",
+      "anchor": "  function conflicts(",
+      "from": ".filter((c) => c.texts.size > 1)",
+      "to": ".filter((c) => c.mods.length > 1)",
+      "test": "test/schema-service.test.ts"
+    },
+    {
+      "name": "each part of a split pack keeps every block of the pack",
+      "file": "src/schema-harvest.ts",
+      "anchor": "  function split(rec: LibRecord): LibRecord[] | null {",
+      "from": "const mine = blocks.filter((b) => schema.blockUsesAssets(b.block, part.paths || []));",
+      "to": "const mine = blocks;",
+      "test": "test/schema-service.test.ts"
+    },
+    {
+      "name": "a switched-off mod still goes into the item table",
+      "file": "src/schema-service.ts",
+      "anchor": "  function patches(vanillaText: string, game: string): schema.SchemaPatch[] {",
+      "from": "if (rec.enabled === false) continue;",
+      "to": "void 0;",
+      "test": "test/schema-service.test.ts"
+    },
+    {
       "name": "the empty tree a moved library leaves behind is taken for the game",
       "file": "src/steam.ts",
       "anchor": "export function findDotaIn(steamRoot: string | null, fallbacks: string[]): string | null {",
