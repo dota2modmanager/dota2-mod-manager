@@ -91,6 +91,7 @@ the code, not in this page.
 | [`src/schema-merge.ts`](#srcschema-mergets) | Mod deltas and the merge (src/schema.ts): which item blocks a mod changed, lifted out of the |
 | [`src/schema-service.ts`](#srcschema-servicets) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
 | [`src/schema.ts`](#srcschemats) | Item-schema engine: the game's own scripts/items/items_game.txt is the only place |
+| [`src/services.ts`](#srcservicests) | What the app is built from: every long-lived service, created once in the order they depend on |
 | [`src/settings.ts`](#srcsettingsts) | Simple JSON settings store in userData |
 | [`src/slot-zones.ts`](#srcslot-zonests) | The load order in two parts. |
 | [`src/steam.ts`](#srcsteamts) | Finding Steam, and then finding Dota inside it. |
@@ -5181,6 +5182,23 @@ export function isDeployed(gamePath: string, folder: string): boolean
 ```
 
 Whether a built schema is in the mod folder.
+
+## src/services.ts
+
+What the app is built from: every long-lived service, created once in the order they depend on
+each other. src/main.ts calls this when the app is ready, then puts the game folder right and
+hands the services to the IPC modules.
+
+Two things start in the background here and are not waited for: the fingerprint list and the
+remote config. Both answer from their cached copies until the network does.
+
+### `createServices`
+
+```ts
+export function createServices({ userData, appVersion, sendProgress, diag, fetchIcons }: { userData: string; appVersion: () => string; /** the bar at the bottom of the window */ sendProgress: (evt: AppProgress) => void; diag: (msg: string) => void; /** Electron's network stack, which the wiki's pictures come through (see src/icons.ts) */ fetchIcons: ConstructorParameters<typeof Icons>[1]
+```
+
+Build every service over this userData folder.
 
 ## src/settings.ts
 

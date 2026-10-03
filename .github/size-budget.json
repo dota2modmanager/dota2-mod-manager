@@ -6,7 +6,6 @@
     "renderer/i18n.js": 787,
     "src/game-upkeep.ts": 349,
     "src/installer.ts": 398,
-    "src/main.ts": 367,
     "src/overlays.ts": 327,
     "src/presets-service.ts": 377
   }

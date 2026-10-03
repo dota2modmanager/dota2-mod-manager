@@ -49,6 +49,7 @@ const ELECTRON_USERS = [
   'src/main.ts',
   'src/mod-preview.ts',
   'src/presets-service.ts',
+  'src/services.ts',
   'src/uninstall-window.ts',
 ];
 

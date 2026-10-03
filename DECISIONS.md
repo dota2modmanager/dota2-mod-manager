@@ -543,7 +543,7 @@ Each of these has arrived in a review. Each is answered by one command.
 | Claim | What is true | Check |
 |---|---|---|
 | "The repository cannot be opened, so the open-source promise is unverifiable" | It is public and has been. A fetch failing at one moment is not a private repository | `gh repo view dota2modmanager/dota2-mod-manager --json visibility` |
-| "`main.js` is a 3,100 line monolith" | It is gone. The main process starts from `src/main.ts`, about 380 lines; since 2026-09-06 the IPC handlers went to `src/ipc-*.ts` and every other job to a module of its own, each with tests | `wc -l src/main.ts` |
+| "`main.js` is a 3,100 line monolith" | It is gone. The main process starts from `src/main.ts`, about 290 lines; since 2026-09-06 the IPC handlers went to `src/ipc-*.ts` and every other job to a module of its own, each with tests | `wc -l src/main.ts` |
 | "The catalog counts on the site disagree between pages" | They are counted when each page is built. Two pages built an hour apart show two numbers, and both were right when they were made | `site/src/lib/stats.ts` |
 | "The state files in the root are why the repository is 61 MB" | The generated JSON at the root is 1.3 MB of the pack. The preview images are 47.3 MB of 57.2 MB | the command under the open question above |
 | "It is a Windows-only app" | Every release since 2.4.0 also carries a Linux AppImage | `gh release view --json assets` |
