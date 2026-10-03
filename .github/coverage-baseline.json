@@ -380,11 +380,14 @@
         "src/ipc-diagnostics.ts": {
           "lines": 94.2
         },
+        "src/ipc-foreign.ts": {
+          "lines": 99
+        },
         "src/ipc-game.ts": {
           "lines": 87.9
         },
         "src/ipc-library.ts": {
-          "lines": 76.3
+          "lines": 78.7
         },
         "src/ipc-misc.ts": {
           "lines": 77.5
@@ -428,6 +431,15 @@
         "src/mod-preview.ts": {
           "lines": 76.2
         },
+        "src/net-download.ts": {
+          "lines": 100
+        },
+        "src/net-fetch.ts": {
+          "lines": 100
+        },
+        "src/net-mirrors.ts": {
+          "lines": 100
+        },
         "src/net.ts": {
           "lines": 100
         },
@@ -443,8 +455,14 @@
         "src/patch-watch.ts": {
           "lines": 94.8
         },
+        "src/patcher-gameinfo.ts": {
+          "lines": 99.2
+        },
+        "src/patcher-signatures.ts": {
+          "lines": 100
+        },
         "src/patcher.ts": {
-          "lines": 97.7
+          "lines": 100
         },
         "src/portable-update.ts": {
           "lines": 98.7

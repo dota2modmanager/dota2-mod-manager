@@ -229,3 +229,30 @@ test('a backup from an older build is replaced, or reverting would put the old b
   assert.equal(branchOf(game), BRANCH, 'reverting put the old build back');
   assert.equal(patcher.state(game, FOLDER).vanillaOk, true);
 });
+
+test('a file Steam holds open is still written, and the temporary copy does not stay behind', (t) => {
+  /* Windows refuses to rename over a file another process has open, and Steam holds gameinfo
+     while it runs. The write falls back to replacing the file in place; until this test nothing
+     ran that path, so a mistake in it would have surfaced as a game folder with a stray .mmtmp
+     beside a gameinfo that never changed. */
+  const { game, backupDir } = tree(t, true);
+  const busy = (code: string) => Object.assign(new Error(code), { code });
+  const rename = t.mock.method(fs, 'renameSync', () => { throw busy('EPERM'); });
+
+  patcher.apply({ gamePath: game, folder: FOLDER, backupDir });
+  assert.ok(rename.mock.callCount() >= 2, 'the rename was tried, and tried again after clearing the way');
+  assert.ok(branchOf(game).includes(MARKER), 'the file was replaced in place');
+  assert.deepEqual(fs.readdirSync(path.join(game, 'dota')).filter((f) => f.endsWith('.mmtmp')), []);
+  rename.mock.restore();
+  assert.equal(patcher.state(game, FOLDER).signed, true, 'and the list written the same way names it');
+});
+
+test('a write that fails for any other reason stops the patch and leaves no temporary copy', (t) => {
+  const { game, backupDir } = tree(t, true);
+  const before = branchOf(game);
+  t.mock.method(fs, 'renameSync', () => { throw Object.assign(new Error('disk full'), { code: 'ENOSPC' }); });
+
+  assert.throws(() => patcher.apply({ gamePath: game, folder: FOLDER, backupDir }), /disk full/);
+  assert.equal(branchOf(game), before, 'the game file is as it was');
+  assert.deepEqual(fs.readdirSync(path.join(game, 'dota')).filter((f) => f.endsWith('.mmtmp')), []);
+});
