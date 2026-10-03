@@ -387,7 +387,7 @@ test('a finished download reports the hash it should be remembered by', async (t
 /*
  * The site mirror is a promise made in two places at once.
  *
- * src/net.ts says "ask dota2modmanager.com for this file", and site/tools/mirror.mjs is what
+ * src/net-mirrors.ts says "ask dota2modmanager.com for this file", and site/tools/mirror.mjs is what
  * puts the file there. They live in different packages and nothing connected them, so the
  * signatures were added to one side and not the other: the app would have asked our own site
  * for mods.json.sig on the one day it matters, and Cloudflare would have answered 200 with the
@@ -396,7 +396,7 @@ test('a finished download reports the hash it should be remembered by', async (t
  * A missing file is not the failure mode to guard against here. A present, wrong one is.
  */
 test('every file the app expects from our own mirror is a file the site actually copies there', () => {
-  const netSource = fs.readFileSync(path.join(import.meta.dirname, '..', 'src', 'net.ts'), 'utf-8');
+  const netSource = fs.readFileSync(path.join(import.meta.dirname, '..', 'src', 'net-mirrors.ts'), 'utf-8');
   const mirrorTool = fs.readFileSync(path.join(import.meta.dirname, '..', 'site', 'tools', 'mirror.mjs'), 'utf-8');
 
   // the MIRRORED map: 'owner/repo/branch/path': 'name-on-our-site'

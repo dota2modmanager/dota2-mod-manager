@@ -57,6 +57,9 @@ the code, not in this page.
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
 | [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
+| [`src/net-download.ts`](#srcnet-downloadts) | A file downloaded to disk across the mirror chain (src/net.ts explains it): resumed where a |
+| [`src/net-fetch.ts`](#srcnet-fetchts) | A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a |
+| [`src/net-mirrors.ts`](#srcnet-mirrorsts) | The mirror chain (src/net.ts explains it): which hosts carry a copy of a GitHub file and how a |
 | [`src/net.ts`](#srcnetts) | Getting bytes from the internet, on a connection that may not want to cooperate. |
 | [`src/notice-text.ts`](#srcnotice-textts) | The game's anti-cheat notice, in words that say what to do. |
 | [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts |
@@ -3134,24 +3137,94 @@ Pictures for mods that came with none, cached in userData.
 @param deps.images test seam for decode/resize
 ```
 
-## src/net.ts
+## src/net-download.ts
 
-Getting bytes from the internet, on a connection that may not want to cooperate.
+A file downloaded to disk across the mirror chain (src/net.ts explains it): resumed where a
+partial download stopped, checked against the hash the catalog published, and a mirror whose
+bytes do not match is treated as a mirror that failed.
 
-Everything the app downloads - the catalog JSON, the fingerprint map, every mod archive -
-sits in a GitHub repository, and raw.githubusercontent.com is exactly the host that is
-slow, throttled or plainly unreachable for a good part of the userbase. So each URL has
-mirrors of the same bytes, tried in order, and a host that keeps failing is stood down for
-a while instead of being asked again on every single file.
+### `Download`
 
-Which mirrors, measured rather than copied from another project (2026-08-07, from here):
-  raw.githubusercontent.com   210 ms, Range supported            - first choice
-  ghproxy.net                 300 ms, Range supported
-  gh-proxy.com                230 ms, Range supported
-  ghfast.top                 1100 ms, Range supported            - last, it is the slowest
-  cdn.jsdelivr.net            300 ms, Range supported, but 403 on a 64 MB file
-jsDelivr caps file size on /gh/, so it serves the small JSON and never the archives. That
-is the whole reason the chain depends on what is being fetched.
+```ts
+export interface Download
+```
+
+A file on disk, and how it got there.
+
+### `sha256`
+
+```ts
+export const sha256 = (file: string): Promise<string> => new Promise((resolve, reject) => { const hash = crypto.createHash('sha256'); fs.createReadStream(file) .on('data', (chunk) => hash.update(chunk)) .on('error', reject) .on('end', () => resolve(hash.digest('hex'))); })
+```
+
+_No description in the source._
+
+### `downloadFile`
+
+```ts
+export async function downloadFile(url: string, dest: string, { onProgress = () => {}, expectSha256 = null, fromPublishedList = false, log = () => {}, }: { onProgress?: (loaded: number, total: number) => void; expectSha256?: string | null; fromPublishedList?: boolean; log?: (msg: string) => void; } = {}): Promise<Download>
+```
+
+Download to a file, resuming where an interrupted attempt stopped.
+
+The half-finished file is kept as <dest>.part and picked up with a Range request. Every
+mirror measured supports it, and a mod archive is up to 300 MB: starting a 60 MB download
+over because a train went into a tunnel is the difference between a mod and a shrug.
+
+```
+@param opts.expectSha256 what this file should hash to; a mirror handing over
+something else is dropped and the next one is asked
+@param opts.fromPublishedList the expectation above came from a list somebody
+else maintains (the catalog's `mod-hashes.json`, or what this machine saw last time),
+rather than from a hash pinned in this project. Such a list can simply be wrong, and when
+it is, the file it names outranks it. Never pass this for the app's own update or for the
+toolchain: those hashes are pinned here and a mismatch there is the thing being guarded.
+```
+
+## src/net-fetch.ts
+
+A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a
+failure noted against its host, and the first good answer returned.
+
+### `FetchOptions`
+
+```ts
+export interface FetchOptions
+```
+
+How a fetch walks the mirrors (see fetchMirrored).
+
+### `fetchMirrored`
+
+```ts
+export async function fetchMirrored(url: string, { small = false, trustedOnly = false, headers = {}, exclude = [], onMirror = () => {}, log = () => {}, }: FetchOptions = {}): Promise<Response>
+```
+
+Fetch, walking the mirrors. Returns the Response of the first mirror that answers.
+
+```
+@param url               the canonical (raw.githubusercontent.com) URL
+@param opts.small        allow size-capped mirrors
+@param opts.trustedOnly  the canonical host and nothing else, for a file that is only ever
+trusted from where it was published
+@param opts.exclude      hosts already tried for this file and found wanting; a mirror that
+answered with the wrong bytes must not be offered again on the retry
+@param opts.onMirror     which mirror is answering, called just before the response is handed back
+```
+
+### `fetchText`
+
+```ts
+export async function fetchText(url: string, opts: FetchOptions = {}): Promise<string>
+```
+
+Text from the first mirror that answers (catalog JSON, fingerprint map).
+
+## src/net-mirrors.ts
+
+The mirror chain (src/net.ts explains it): which hosts carry a copy of a GitHub file and how a
+URL is written for each, which of them a file may come from, and how each host has been doing.
+A host that keeps failing is stood down for a while; that state lives here and nowhere else.
 
 ### `RAW_HOST`
 
@@ -3159,7 +3232,9 @@ is the whole reason the chain depends on what is being fetched.
 export const RAW_HOST = 'https://raw.githubusercontent.com/'
 ```
 
-_No description in the source._
+The mirror chain (src/net.ts explains it): which hosts carry a copy of a GitHub file and how a
+URL is written for each, which of them a file may come from, and how each host has been doing.
+A host that keeps failing is stood down for a while; that state lives here and nowhere else.
 
 ### `FAIL_THRESHOLD`
 
@@ -3195,26 +3270,42 @@ export interface Entry { url: string; host: string; origin: boolean }
 
 One URL worth trying for a file, and the mirror it came from.
 
-### `FetchOptions`
-
-```ts
-export interface FetchOptions
-```
-
-How a fetch walks the mirrors (see fetchMirrored).
-
-### `Download`
-
-```ts
-export interface Download
-```
-
-A file on disk, and how it got there.
-
 ### `DEFAULT_MIRRORS`
 
 ```ts
 export const DEFAULT_MIRRORS: readonly Mirror[] = [
+```
+
+_No description in the source._
+
+### `hostOf`
+
+```ts
+export function hostOf(url: string): string
+```
+
+_No description in the source._
+
+### `stoodDown`
+
+```ts
+export function stoodDown(host: string): boolean
+```
+
+_No description in the source._
+
+### `noteFailure`
+
+```ts
+export function noteFailure(host: string, why: string): void
+```
+
+_No description in the source._
+
+### `noteSuccess`
+
+```ts
+export function noteSuccess(host: string): void
 ```
 
 _No description in the source._
@@ -3240,61 +3331,13 @@ export function entriesFor(url: string, { small = false, trustedOnly = false }: 
 
 The same list, each entry still knowing which mirror it came from.
 
-### `fetchMirrored`
+### `liveOrder`
 
 ```ts
-export async function fetchMirrored(url: string, { small = false, trustedOnly = false, headers = {}, exclude = [], onMirror = () => {}, log = () => {}, }: FetchOptions = {}): Promise<Response>
+export function liveOrder(entries: Entry[]): Entry[]
 ```
 
-Fetch, walking the mirrors. Returns the Response of the first mirror that answers.
-
-```
-@param url               the canonical (raw.githubusercontent.com) URL
-@param opts.small        allow size-capped mirrors
-@param opts.trustedOnly  the canonical host and nothing else, for a file that is only ever
-trusted from where it was published
-@param opts.exclude      hosts already tried for this file and found wanting; a mirror that
-answered with the wrong bytes must not be offered again on the retry
-@param opts.onMirror     which mirror is answering, called just before the response is handed back
-```
-
-### `fetchText`
-
-```ts
-export async function fetchText(url: string, opts: FetchOptions = {}): Promise<string>
-```
-
-Text from the first mirror that answers (catalog JSON, fingerprint map).
-
-### `sha256`
-
-```ts
-export const sha256 = (file: string): Promise<string> => new Promise((resolve, reject) => { const hash = crypto.createHash('sha256'); fs.createReadStream(file) .on('data', (chunk) => hash.update(chunk)) .on('error', reject) .on('end', () => resolve(hash.digest('hex'))); })
-```
-
-_No description in the source._
-
-### `downloadFile`
-
-```ts
-export async function downloadFile(url: string, dest: string, { onProgress = () => {}, expectSha256 = null, fromPublishedList = false, log = () => {}, }: { onProgress?: (loaded: number, total: number) => void; expectSha256?: string | null; fromPublishedList?: boolean; log?: (msg: string) => void; } = {}): Promise<Download>
-```
-
-Download to a file, resuming where an interrupted attempt stopped.
-
-The half-finished file is kept as <dest>.part and picked up with a Range request. Every
-mirror measured supports it, and a mod archive is up to 300 MB: starting a 60 MB download
-over because a train went into a tunnel is the difference between a mod and a shrug.
-
-```
-@param opts.expectSha256 what this file should hash to; a mirror handing over
-something else is dropped and the next one is asked
-@param opts.fromPublishedList the expectation above came from a list somebody
-else maintains (the catalog's `mod-hashes.json`, or what this machine saw last time),
-rather than from a hash pinned in this project. Such a list can simply be wrong, and when
-it is, the file it names outranks it. Never pass this for the app's own update or for the
-toolchain: those hashes are pinned here and a mismatch there is the thing being guarded.
-```
+The mirrors in the order they should actually be tried right now: rested hosts first.
 
 ### `mirrorHealth`
 
@@ -3341,6 +3384,35 @@ other, which is also what happens to one that is named here after it stops exist
 ```
 @param list  from src/remote-config.ts
 ```
+
+## src/net.ts
+
+Getting bytes from the internet, on a connection that may not want to cooperate.
+
+Everything the app downloads - the catalog JSON, the fingerprint map, every mod archive -
+sits in a GitHub repository, and raw.githubusercontent.com is exactly the host that is
+slow, throttled or plainly unreachable for a good part of the userbase. So each URL has
+mirrors of the same bytes, tried in order, and a host that keeps failing is stood down for
+a while instead of being asked again on every single file.
+
+Which mirrors, measured rather than copied from another project (2026-08-07, from here):
+  raw.githubusercontent.com   210 ms, Range supported            - first choice
+  ghproxy.net                 300 ms, Range supported
+  gh-proxy.com                230 ms, Range supported
+  ghfast.top                 1100 ms, Range supported            - last, it is the slowest
+  cdn.jsdelivr.net            300 ms, Range supported, but 403 on a 64 MB file
+jsDelivr caps file size on /gh/, so it serves the small JSON and never the archives. That
+is the whole reason the chain depends on what is being fetched.
+
+The code is kept as three files: src/net-mirrors.ts is the chain and how each host is doing,
+src/net-fetch.ts asks along it, and src/net-download.ts brings a file to disk through it.
+Callers import from here.
+
+Hands on from [`src/net-mirrors.ts`](#srcnet-mirrorsts): `RAW_HOST`, `FAIL_THRESHOLD`, `COOLDOWN_MS`, `DEFAULT_MIRRORS`, `mirrorsFor`, `entriesFor`, `mirrorHealth`, `resetHealth`, `setMirrors`, `applyMirrors`, `Mirror`, `Entry`.
+
+Hands on from [`src/net-fetch.ts`](#srcnet-fetchts): `fetchMirrored`, `fetchText`, `FetchOptions`.
+
+Hands on from [`src/net-download.ts`](#srcnet-downloadts): `sha256`, `downloadFile`, `Download`.
 
 ## src/notice-text.ts
 

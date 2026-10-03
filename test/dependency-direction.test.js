@@ -144,7 +144,7 @@ test('the parsers and everything that writes the game folder are nowhere near th
      tests exist. */
   const core = ['src/vpk.ts', 'src/vpk-read.ts', 'src/vpk-write.ts', 'src/vpk-analyze.ts', 'src/safe-zip.ts', 'src/installer.ts', 'src/installer-files.ts', 'src/installer-downloads.ts', 'src/installer-slots.ts',
     'src/installer-packs.ts', 'src/installer-repack.ts', 'src/installer-folder.ts', 'src/import.ts', 'src/schema.ts',
-    'src/patcher.ts', 'src/gamelang.ts', 'src/file-tx.ts', 'src/net.ts', 'src/adopt.ts', 'src/cursors.ts',
+    'src/patcher.ts', 'src/gamelang.ts', 'src/file-tx.ts', 'src/net.ts', 'src/net-mirrors.ts', 'src/net-fetch.ts', 'src/net-download.ts', 'src/adopt.ts', 'src/cursors.ts',
     'src/game-upkeep.ts'];
   for (const file of core) {
     assert.ok(!ELECTRON_USERS.includes(file), `${file} is on the Electron list`);

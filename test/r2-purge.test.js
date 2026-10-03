@@ -136,6 +136,6 @@ test('the purge URLs use the address the app downloads from, not a secret that c
   const HOST = 'https://cdn.dota2modmanager.com';
   assert.ok(sync.includes(`const PUBLIC_BASE = '${HOST}';`), 'r2-sync no longer writes the public address in');
   assert.ok(!sync.includes('process.env.R2_PUBLIC_BASE'), 'r2-sync reads the public address from a secret again');
-  const net = fs.readFileSync(path.join(__dirname, '..', 'src', 'net.ts'), 'utf8');
+  const net = fs.readFileSync(path.join(__dirname, '..', 'src', 'net-mirrors.ts'), 'utf8');
   assert.ok(net.includes(HOST.replace('https://', '')), 'the app no longer downloads from the address the purge uses');
 });
