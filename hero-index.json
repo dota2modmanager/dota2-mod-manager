@@ -1,6 +1,6 @@
 {
   "heroes": 147,
-  "mods": 1453,
+  "mods": 1456,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -71,6 +71,7 @@
         {"name":"Arc Warden Black Hole","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
         {"name":"Arc Warden Frosty Toy","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden Sakura Winter","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
+        {"name":"Arc Warden The Last Survivor","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","misc","head"]},
         {"name":"Arc Warden Yin Yang","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
         {"name":"Ashes Arc Warden","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -673,6 +674,7 @@
         {"name":"Invoker Magus Mimicry","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker MaryDay","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Patchouli","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","shield","belt","legs"]},
+        {"name":"Invoker Wyrdwing Exort","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Japan Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","legs"]},
         {"name":"Sakura Pink Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Sasuke Invoker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","misc","belt","shield","legs"]},
@@ -1094,6 +1096,7 @@
         {"name":"Morphling Green Immortal","categoryId":"heroes","styleLabel":null,"slots":["head","weapon"]},
         {"name":"Morphling Immortal Electro Gem","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Morphling Megalodon","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Morphling Yatoro Burning","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},

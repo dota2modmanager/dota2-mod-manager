@@ -1,5 +1,5 @@
 {
-  "count": 1493,
+  "count": 1497,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -320,6 +320,7 @@
     "387eb31049af99a18b135bcf025c69afbc9b3855": [{"name":"Necronub Cursor","categoryId":"cursors","styleLabel":null,"type":"files"}],
     "38bf7357ef164a9ce6a885104a0a82efc2b2d5fa": [{"name":"Crystal Maiden Ice Blossom","categoryId":"hero-items","styleLabel":"Golden","type":"vpk"}],
     "38c7181bb3fbd25cc4c6d5843c5db0ff828e073c": [{"name":"Techies War Rig Pachyderm","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "391ab0b0ea1b0f6b212e9ed7c56022b3df0ec480": [{"name":"Invoker Wyrdwing Exort","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "3924b58ac9a420de15d84fd26224c1534b4333d8": [{"name":"Chen Infernal Psychic","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "39b8c30ea9f1a2d0255407eec0e8ed801ac49b19": [{"name":"Chaos Knight Flandre Scarlet","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "39d63184b0c92538b0ce25b92897205a320b5f01": [{"name":"Wave Peach","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
@@ -447,6 +448,7 @@
     "4eb0930e0e3799ce5838645582c5f124b48c364c": [{"name":"Japan Invoker","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "4f2047b71934da13355e90790d814620566475fb": [{"name":"Invoker Esl Relics Forge","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "4f4ba476293ca1ea5efab472f223b9e237c8a297": [{"name":"Windows Xp Top Bar","categoryId":"parts","styleLabel":null,"type":"vpk"}],
+    "4f9c4a70d57563352d7006912e7a95e6599ad41a": [{"name":"Morphling Yatoro Burning","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "4fa25b341059a977d1076ce6e642e25d254916c1": [{"name":"Russian Ursa","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "4fc65f6edccb3fb36c688af00b0b3be9cfaf0b91": [{"name":"Dark Souls Razor","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "4ff8288c7392f7f242e32ed2a1e765de9a4e2afd": [{"name":"Kunkka Whale Blade","categoryId":"hero-items","styleLabel":"Eminent Revival Exceptional","type":"vpk"}],
@@ -825,6 +827,7 @@
     "8f959a121f02048ae83442572ba49a01c576b92e": [{"name":"Bloody Kez","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "8fc15a380ebc88f8408e49b1457f7f6ee33f822c": [{"name":"Tinker Sakuya","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "8fe5e95ff394d086705737713b4aeb137789eeb0": [{"name":"Axe Ultimate Clap Clap","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
+    "901d817914b158b3781ddb8d95311397b17896d3": [{"name":"Arc Warden The Last Survivor","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "902e654876b3573671f494b0ef3a50121989729a": [{"name":"Journey Roshan","categoryId":"roshan","styleLabel":null,"type":"vpk"}],
     "906fd2cf750db498e2b7db31b9c0bbcdcf26c77e": [{"name":"Warcraft III / AllStars Voices","categoryId":"sounds","styleLabel":null,"type":"vpk"}],
     "90a15fe45dbd8ba5d32baa0707182efb013f8f45": [{"name":"Jade Baby Roshan","categoryId":"couriers","styleLabel":null,"type":"vpk"}],
@@ -972,6 +975,7 @@
     "aab80b69617d7d1d8bda849dbc0c65196a880b09": [{"name":"Enigma Black Hole Kate Scream","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
     "aaf1eb92a7d1c7bfdb2aa659b5d2465dde960200": [{"name":"Monkey King Staff of Gun-Yu","categoryId":"hero-items","styleLabel":"Anniversary","type":"vpk"}],
     "ab29b38c528f8c19b4b2ea436a65da8d88c71fb5": [{"name":"TI8 Fountain Regen III","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
+    "ab5329dc56a1a2a4583a66efd868053e0dee5248": [{"name":"Default Lite Hud","categoryId":"huds","styleLabel":null,"type":"vpk"}],
     "ab81625289fb8dcdfb4b48c5882504df6c9007d8": [{"name":"Sapphire Click","categoryId":"other","styleLabel":null,"type":"vpk"}],
     "ab8cfe6af59f4e0c0eee2a94b9852df0149eadf1": [{"name":"Lina Fire Flame of Origin","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "ab8e158c532f320a435dcbc54120baf3de4c89c9": [{"name":"Clockwerk","categoryId":"mega-kill","styleLabel":null,"type":"vpk"}],
