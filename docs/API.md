@@ -36,6 +36,7 @@ the code, not in this page.
 | [`src/fingerprints.ts`](#srcfingerprintsts) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
 | [`src/folder-size.ts`](#srcfolder-sizets) | Bytes under a folder: the number Settings shows beside each cache, and the one the removal |
 | [`src/game-icons.ts`](#srcgame-iconsts) | Item pictures taken from the installed game instead of scraped off a wiki. |
+| [`src/game-repair.ts`](#srcgame-repairts) | Putting the game back after something else changed it (src/game-upkeep.ts runs this at start |
 | [`src/game-upkeep.ts`](#srcgame-upkeepts) | Keeping the game folder the way the user left it, while other programs change it underneath. |
 | [`src/gamelang-folders.ts`](#srcgamelang-foldersts) | Making and moving the dota_<lang> folders (src/gamelang.ts has the rule): whether a voice pack is |
 | [`src/gamelang-steam.ts`](#srcgamelang-steamts) | What Steam says about the game's language (src/gamelang.ts has the rule): the -language in the |
@@ -1148,19 +1149,14 @@ export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () 
 
 Item and hero pictures out of the installed game, cached in userData.
 
-## src/game-upkeep.ts
+## src/game-repair.ts
 
-Keeping the game folder the way the user left it, while other programs change it underneath.
-
-Three things change a Dota install without asking the app. The game's audio language decides
-which folder the engine mounts, so mods have to follow it. Steam's file check puts back files a
-font or cursor mod replaced. A Dota patch overwrites the patched gameinfo and moves the item
-table. This module answers all three: once at start, before the window opens, and again the
-moment src/patch-watch.ts sees a patch land.
-
-Nothing is written while Dota is running. It holds gameinfo and its paks open, so a write would
-half-succeed, and the client has already read the files anyway. The app says it is waiting and
-tries again after the game exits.
+Putting the game back after something else changed it (src/game-upkeep.ts runs this at start
+and hands it to the patch watcher). A Dota patch overwrites the patched gameinfo and moves the
+item table; Steam's file check puts back files a font or cursor mod replaced. Repaired once at
+start for a game that changed while the app was closed, and again the moment
+src/patch-watch.ts sees a patch land. Never while Dota is running: it holds those files open,
+so a write would half-succeed. The app says it is waiting and tries again after the game exits.
 
 ### `PatchRepair`
 
@@ -1169,14 +1165,6 @@ export type PatchRepair =
 ```
 
 What the app did about the last Dota patch, shown as a banner in My mods.
-
-### `LangMigration`
-
-```ts
-export type LangMigration = { from: string; to: string; moved: number }
-```
-
-Mods moved into the folder the game mounts, told to the user once in Settings.
 
 ### `Stuck`
 
@@ -1193,6 +1181,38 @@ export const REPAIR_RETRY_MS = 20000
 ```
 
 How long a repair waits for Dota to close before it looks again.
+
+### `createGameRepair`
+
+```ts
+export function createGameRepair({ settings, installer, library, schemaService, diag, send, isRunning, retryMs = REPAIR_RETRY_MS, now = Date.now }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed'>; library: Pick<Library, 'list'>; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal'>; diag: (msg: string) => void; /** tells the window what the repair did */ send: (repair: PatchRepair) => void
+```
+
+The repair, over the services src/game-upkeep.ts already holds.
+
+## src/game-upkeep.ts
+
+Keeping the game folder the way the user left it, while other programs change it underneath.
+
+Three things change a Dota install without asking the app. The game's audio language decides
+which folder the engine mounts, so mods have to follow it. Steam's file check puts back files a
+font or cursor mod replaced. A Dota patch overwrites the patched gameinfo and moves the item
+table. This module answers all three: once at start, before the window opens, and again the
+moment src/patch-watch.ts sees a patch land.
+
+Nothing is written while Dota is running. It holds gameinfo and its paks open, so a write would
+half-succeed, and the client has already read the files anyway. The app says it is waiting and
+tries again after the game exits.
+
+Hands on from [`src/game-repair.ts`](#srcgame-repairts): `REPAIR_RETRY_MS`, `PatchRepair`, `Stuck`.
+
+### `LangMigration`
+
+```ts
+export type LangMigration = { from: string; to: string; moved: number }
+```
+
+Mods moved into the folder the game mounts, told to the user once in Settings.
 
 ### `dotaIsRunning`
 

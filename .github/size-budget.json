@@ -4,7 +4,6 @@
   "watchAt": 300,
   "files": {
     "renderer/i18n.js": 787,
-    "src/game-upkeep.ts": 349,
     "src/ipc-mods.ts": 312,
     "src/main.ts": 367,
     "src/mod-preview.ts": 391,

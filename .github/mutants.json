@@ -812,7 +812,7 @@
     },
     {
       "name": "a patch is repaired while Dota holds its files open",
-      "file": "src/game-upkeep.ts",
+      "file": "src/game-repair.ts",
       "anchor": "async function repairAfterPatch(reason?: unknown): Promise<void> {",
       "from": "if (await isRunning()) {",
       "to": "if (false) {",

@@ -149,7 +149,7 @@ test('the parsers and everything that writes the game folder are nowhere near th
     'src/patcher.ts', 'src/patcher-gameinfo.ts', 'src/patcher-signatures.ts', 'src/gamelang.ts', 'src/gamelang-steam.ts',
     'src/gamelang-folders.ts', 'src/file-tx.ts', 'src/net.ts', 'src/net-mirrors.ts', 'src/net-fetch.ts', 'src/net-download.ts',
     'src/adopt.ts', 'src/cursors.ts',
-    'src/game-upkeep.ts'];
+    'src/game-upkeep.ts', 'src/game-repair.ts'];
   for (const file of core) {
     assert.ok(!ELECTRON_USERS.includes(file), `${file} is on the Electron list`);
     assert.equal(pathToElectron(ROOT, file), null, `${file} reaches Electron`);
