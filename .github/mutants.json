@@ -1201,6 +1201,38 @@
       "from": "try { installer.setMasterEnabled(false); } catch { /* noop */ }",
       "to": "try { /* left on */ } catch { /* noop */ }",
       "test": "test/mods-channels.test.ts"
+    },
+    {
+      "name": "a normal map is offered as the mod's picture",
+      "file": "src/mod-preview-pick.ts",
+      "anchor": "function textureRank(",
+      "from": "if (DATA_MAP.test(p)) return 0;",
+      "to": "if (DATA_MAP.test(p)) return 50;",
+      "test": "test/mod-preview.test.ts"
+    },
+    {
+      "name": "one flat colour passes as a picture",
+      "file": "src/mod-preview-pick.ts",
+      "anchor": "export function worthShowing(",
+      "from": "max[2] - min[2]) >= 12;",
+      "to": "max[2] - min[2]) >= 0;",
+      "test": "test/mod-preview.test.ts"
+    },
+    {
+      "name": "a texture the tool could not decode is decoded again on every scroll",
+      "file": "src/mod-preview.ts",
+      "anchor": "async function decodeInto(",
+      "from": "if (!fs.existsSync(produced)) { fs.writeFileSync(job.miss, ''); continue; }",
+      "to": "if (!fs.existsSync(produced)) { continue; }",
+      "test": "test/mod-preview.test.ts"
+    },
+    {
+      "name": "a whole library is sent to the texture tool in one call",
+      "file": "src/mod-preview.ts",
+      "anchor": "const MAX_PER_CALL",
+      "from": "const MAX_PER_CALL = 40;",
+      "to": "const MAX_PER_CALL = 4000;",
+      "test": "test/mod-preview.test.ts"
     }
   ]
 }
