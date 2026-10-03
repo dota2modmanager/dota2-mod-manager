@@ -9,6 +9,7 @@ import './helpers/no-steam.ts';
 import test from 'node:test';
 import assert from 'node:assert';
 import { buildReport, findProblems, renderSummary, renderDetailed, type Report } from '../src/diagnostics.ts';
+import { redactHome, tailLog } from '../src/diagnostics-files.ts';
 import type { StoredSettings } from '../src/settings.ts';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -290,5 +291,29 @@ test('with a game, the report carries the mod folder, the files the patch edits,
     assert.equal(files['app.log'], 'the app said this');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('a path inside home is written without the user\'s name, and one outside it is left alone', () => {
+  const home = path.join(os.tmpdir(), 'SomeUser');
+  const inside = path.join(home, 'Games', 'Steam');
+  const hidden = redactHome(inside, home);
+  assert.ok(!String(hidden).includes('SomeUser'), String(hidden));
+  assert.ok(String(hidden).endsWith(path.join('Games', 'Steam')));
+  const outside = path.join(os.tmpdir(), 'SomeUserElse', 'Steam');
+  assert.equal(redactHome(outside, home), outside, 'a folder that only starts with the same letters is not home');
+  assert.equal(redactHome(null, home), null);
+});
+
+test('the tail of a log is its last bytes, and a log that cannot be read is null', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-tail-'));
+  try {
+    const log = path.join(dir, 'app.log');
+    fs.writeFileSync(log, 'first line\nlast line');
+    assert.equal(tailLog(log, 9), 'last line');
+    assert.equal(tailLog(log, 1000), 'first line\nlast line');
+    assert.equal(tailLog(path.join(dir, 'missing.log'), 10), null);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 });
