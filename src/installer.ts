@@ -1,6 +1,7 @@
 // The installer: everything that writes a mod into the game folder or takes it out again. The
 // class is the one door the rest of the app uses; the work behind it is in files of its own:
 //   src/installer-downloads.ts  getting a catalog archive onto this machine
+//   src/installer-write.ts      writing that archive into the folder, switching it, removing it
 //   src/installer-slots.ts      the load order: pak slots, moving and swapping, who covers whom
 //   src/installer-packs.ts      several mods in one pak slot
 //   src/installer-repack.ts     what is installed, read, merged, unpacked, stripped and split
@@ -10,7 +11,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ensureLangFolder } from './gamelang.ts';
-import { openZip, safeJoin } from './safe-zip.ts';
 import { validateGamePath } from './steam.ts';
 import { FileTx, copyInto, writeInto, type Writer } from './file-tx.ts';
 import { Overlays, FONTS_SUBDIR, CURSOR_SUBDIR } from './overlays.ts';
@@ -22,6 +22,7 @@ import * as slots from './installer-slots.ts';
 import * as packs from './installer-packs.ts';
 import * as repack from './installer-repack.ts';
 import * as folder from './installer-folder.ts';
+import * as write from './installer-write.ts';
 import type { Library } from './library.ts';
 import type { HasFiles, LibFile, LibRecord } from './types.ts';
 import type { ModIdentityGuess } from './mod-id.ts';
@@ -175,150 +176,14 @@ export class Installer {
     return FileTx.run((tx) => this.installInto(tx, { categoryId, modName, local }), this.log);
   }
 
-  /** The writing half of install, inside the transaction it is handed. */
-  installInto(tx: Writer, { categoryId, modName, local }: { categoryId: string; modName: string; local: string }): LibFile[] {
-    const isPriority = zones.PRIORITY_CATEGORIES.includes(categoryId);
-    if (categoryId === 'fonts') return this.overlays.installFonts(local, modName, tx);
-    if (categoryId === 'cursors') return this.overlays.installCursor(local, modName, tx);
-    if (categoryId === 'tools') return this.installTool(local, modName, tx);
+  // the writing: src/installer-write.ts
+  installInto(...a: Rest<typeof write.installInto>) { return write.installInto(this, ...a); }
+  installTool(...a: Rest<typeof write.installTool>) { return write.installTool(this, ...a); }
 
-    const lang = this.langFolder();
-    this.ensureLangFolder();
-    const used = this.usedPakNames();
-    const records: LibFile[] = [];
+  // ---------- on, off, gone: src/installer-write.ts ----------
 
-    if (local.toLowerCase().endsWith('.vpk')) {
-      const pakName = this.allocatePak(used, isPriority);
-      this.copyInto(local, path.join(lang, pakName), tx);
-      records.push({ root: 'lang', relPath: pakName });
-      return records;
-    }
-
-    if (!local.toLowerCase().endsWith('.zip')) {
-      // unknown single file — drop into lang folder as-is
-      const base = path.basename(local);
-      this.copyInto(local, path.join(lang, base), tx);
-      records.push({ root: 'lang', relPath: base });
-      return records;
-    }
-
-    const archive = openZip(local, { label: modName });
-    const kept = archive.files.filter((file) => {
-      const lower = file.path.toLowerCase();
-      const baseName = lower.split('/').pop();
-      return !!baseName && !lower.includes('!guide')
-        && !/(^|\/)(guide\.txt|install\.bat|uninstall\.bat|readme[^/]*)$/i.test(lower);
-    });
-    // slots for the archive's VPKs, decided before a byte is written (see planPakNames).
-    // A "maps/..." payload is not a pak: terrains and the mods that come with them replace
-    // the map file itself, which only works from maps\dota.vpk (the same rule the importer
-    // reads by), so those keep their path.
-    const isMapsPath = (l: string) => /(^|\/)maps\//.test(l);
-    const pakPlan = this.planPakNames(
-      kept.map((f) => f.path).filter((rel) => /\.vpk$/i.test(rel) && !isMapsPath(rel.toLowerCase())),
-      used, isPriority,
-    );
-
-    for (const file of kept) {
-      const rel = file.path;
-      const lower = rel.toLowerCase();
-      const pakName = pakPlan.get(rel);
-
-      if (isMapsPath(lower)) {
-        // keep maps/... structure inside the language folder
-        const parts = rel.split('/');
-        const mapsIdx = parts.findIndex((p) => p.toLowerCase() === 'maps');
-        const relPath = parts.slice(mapsIdx).join('/');
-        this.writeInto(file.read(), safeJoin(lang, relPath), tx);
-        records.push({ root: 'lang', relPath });
-      } else if (pakName) {
-        this.writeInto(file.read(), safeJoin(lang, pakName), tx);
-        records.push({ root: 'lang', relPath: pakName });
-      } else {
-        // any other payload file — preserve relative path inside lang folder,
-        // stripping the zip's top-level "<Mod Name>/" wrapper if present
-        const parts = rel.split('/');
-        const relPath = parts.length > 1 ? parts.slice(1).join('/') : rel;
-        if (!relPath) continue;
-        this.writeInto(file.read(), safeJoin(lang, relPath), tx);
-        records.push({ root: 'lang', relPath });
-      }
-    }
-    return records;
-  }
-
-  /** A tool from the catalog, unpacked into the app's own folder rather than the game's. */
-  installTool(localZip: string, modName: string, tx: Writer = null): LibFile[] {
-    const dest = path.join(this.toolsDir, modName.replace(/[<>:"/\\|?*]/g, '_'));
-    fs.mkdirSync(dest, { recursive: true });
-    if (localZip.toLowerCase().endsWith('.zip')) {
-      openZip(localZip, { label: modName }).extractTo(dest, tx);
-    } else {
-      this.copyInto(localZip, path.join(dest, path.basename(localZip)), tx);
-    }
-    return [{ root: 'tools', relPath: path.basename(dest) }];
-  }
-
-  // ---------- on, off, gone ----------
-
-  /**
-   * Switch a mod's files on or off. recId is needed for cursor sets (see src/overlays.ts);
-   * without it a cursor record is left alone.
-   *
-   * A mod switched half off is worse than either state: the game mounts the paks that kept
-   * their name and loads a mod that is missing pieces. So the renames are one transaction -
-   * if Dota grabs the third file, the first two go back to how they were.
-   */
-  setEnabled(files: LibFile[], enabled: boolean, recId: string | null = null): void {
-    if (recId && this.overlays.cursorFiles(files).length) {
-      if (enabled) this.overlays.deployCursor(recId, files);
-      else this.overlays.undeployCursor(recId, files);
-      return;
-    }
-    FileTx.run((tx) => {
-      for (const f of files) {
-        if (f.root === 'tools') continue;
-        if (f.root === 'fonts' || f.root === 'cursor') continue; // handled by reinstall/restore
-        const abs = path.join(this.rootAbs(f.root), f.relPath);
-        const off = abs + '.off';
-        if (enabled && fs.existsSync(off)) tx.move(off, abs);
-        if (!enabled && fs.existsSync(abs)) tx.move(abs, off);
-      }
-    }, this.log);
-  }
-
-  /**
-   * Take a mod's files out. opts.recId drops the record's stored cursor copy; opts.deployed=false
-   * says its files are not the ones on disk right now (it was switched off), so vanilla must not
-   * be restored over whatever cursor took its place.
-   */
-  remove(files: LibFile[], opts: { recId?: string | null; deployed?: boolean } = {}): void {
-    const { recId = null, deployed = true } = opts;
-    this.overlays.dropCursorStore(recId);
-    if (!deployed) files = files.filter((f) => f.root !== 'cursor');
-    // Removing is deleting files AND putting Valve's own back where a font or cursor sat on
-    // top of one. Half of that leaves a mod that is gone from the library but still on disk,
-    // or a game missing a font it shipped with, so it is all one change.
-    FileTx.run((tx) => {
-      for (const f of files) {
-        const rootAbs = this.rootAbs(f.root);
-        if (f.root === 'tools') {
-          tx.remove(path.join(rootAbs, f.relPath));
-          continue;
-        }
-        const abs = path.join(rootAbs, f.relPath);
-        for (const p of [abs, abs + '.off', abs + MASTER_OFF]) {
-          if (fs.existsSync(p)) tx.remove(p);
-        }
-        if (f.root === 'fonts' || f.root === 'cursor') {
-          // restore vanilla file from backup if we have one
-          const backupAbs = path.join(this.backupsDir, f.root === 'fonts' ? 'fonts' : 'cursor', f.relPath);
-          if (fs.existsSync(backupAbs)) this.copyInto(backupAbs, abs, tx);
-        }
-      }
-    }, this.log);
-    this.overlays.forgetWritten(files);
-  }
+  setEnabled(...a: Rest<typeof write.setEnabled>) { return write.setEnabled(this, ...a); }
+  remove(...a: Rest<typeof write.remove>) { return write.remove(this, ...a); }
 
   // ---------- fonts and cursors: src/overlays.ts ----------
 

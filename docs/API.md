@@ -52,6 +52,7 @@ the code, not in this page.
 | [`src/installer-packs.ts`](#srcinstaller-packsts) | Combined packs: several mods in one pak slot, each kept as its own file in userData and rebuilt |
 | [`src/installer-repack.ts`](#srcinstaller-repackts) | What is already installed, read and rewritten: what a mod is, its files merged into one or |
 | [`src/installer-slots.ts`](#srcinstaller-slotsts) | The load order: which pak slot a mod sits in, moving and swapping slots, and which mods are |
+| [`src/installer-write.ts`](#srcinstaller-writets) | Writing a mod into the game folder and taking it out again (src/installer.ts is the door): a |
 | [`src/installer.ts`](#srcinstallerts) | The installer: everything that writes a mod into the game folder or takes it out again. The |
 | [`src/ipc.ts`](#srcipcts) | Every IPC module, registered in one place over the context src/main.ts builds. A new |
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
@@ -2489,11 +2490,58 @@ Older app versions wrote priority mods as "!pakNN_dir.vpk" — a name the game
 never mounts, so those mods silently did nothing. Rename them to real low
 pak slots and fix the matching manifest records.
 
+## src/installer-write.ts
+
+Writing a mod into the game folder and taking it out again (src/installer.ts is the door): a
+catalog archive unpacked into the language folder, a tool into the app's own folder, a mod's
+files switched on and off, and removed with Valve's own put back where a font or cursor sat.
+Whatever touches several files runs as one transaction (src/file-tx.ts).
+
+### `installInto`
+
+```ts
+export function installInto(inst: Installer, tx: Writer, { categoryId, modName, local }: { categoryId: string; modName: string; local: string }): LibFile[]
+```
+
+The writing half of install, inside the transaction it is handed.
+
+### `installTool`
+
+```ts
+export function installTool(inst: Installer, localZip: string, modName: string, tx: Writer = null): LibFile[]
+```
+
+A tool from the catalog, unpacked into the app's own folder rather than the game's.
+
+### `setEnabled`
+
+```ts
+export function setEnabled(inst: Installer, files: LibFile[], enabled: boolean, recId: string | null = null): void
+```
+
+Switch a mod's files on or off. recId is needed for cursor sets (see src/overlays.ts);
+without it a cursor record is left alone.
+
+A mod switched half off is worse than either state: the game mounts the paks that kept
+their name and loads a mod that is missing pieces. So the renames are one transaction -
+if Dota grabs the third file, the first two go back to how they were.
+
+### `remove`
+
+```ts
+export function remove(inst: Installer, files: LibFile[], opts: { recId?: string | null; deployed?: boolean } = {}): void
+```
+
+Take a mod's files out. opts.recId drops the record's stored cursor copy; opts.deployed=false
+says its files are not the ones on disk right now (it was switched off), so vanilla must not
+be restored over whatever cursor took its place.
+
 ## src/installer.ts
 
 The installer: everything that writes a mod into the game folder or takes it out again. The
 class is the one door the rest of the app uses; the work behind it is in files of its own:
   src/installer-downloads.ts  getting a catalog archive onto this machine
+  src/installer-write.ts      writing that archive into the folder, switching it, removing it
   src/installer-slots.ts      the load order: pak slots, moving and swapping, who covers whom
   src/installer-packs.ts      several mods in one pak slot
   src/installer-repack.ts     what is installed, read, merged, unpacked, stripped and split

@@ -1169,6 +1169,46 @@
       "from": "padStart(3, '0')",
       "to": "padStart(2, '0')",
       "test": "test/vpk.test.ts"
+    },
+    {
+      "name": "switching a mod off leaves its files mounted",
+      "file": "src/installer-write.ts",
+      "anchor": "export function setEnabled(",
+      "from": "if (!enabled && fs.existsSync(abs)) tx.move(abs, off);",
+      "to": "if (!enabled && fs.existsSync(abs)) tx.move(abs, abs);",
+      "test": "test/installer.test.ts"
+    },
+    {
+      "name": "removing a switched-off mod leaves its renamed files behind",
+      "file": "src/installer-write.ts",
+      "anchor": "export function remove(",
+      "from": "for (const p of [abs, abs + '.off', abs + MASTER_OFF]) {",
+      "to": "for (const p of [abs]) {",
+      "test": "test/installer.test.ts"
+    },
+    {
+      "name": "removing a font leaves the game without the one Valve shipped",
+      "file": "src/installer-write.ts",
+      "anchor": "export function remove(",
+      "from": "if (fs.existsSync(backupAbs)) inst.copyInto(backupAbs, abs, tx);",
+      "to": "if (fs.existsSync(backupAbs)) fs.existsSync(abs);",
+      "test": "test/installer.test.ts"
+    },
+    {
+      "name": "an archive's install.bat and readme land in the game folder",
+      "file": "src/installer-write.ts",
+      "anchor": "export function installInto(",
+      "from": "&& !/(^|\\/)(guide\\.txt|install\\.bat|uninstall\\.bat|readme[^/]*)$/i.test(lower);",
+      "to": "&& true;",
+      "test": "test/installer.test.ts"
+    },
+    {
+      "name": "a terrain keeps the folder it was zipped in and never mounts",
+      "file": "src/installer-write.ts",
+      "anchor": "export function installInto(",
+      "from": "const relPath = parts.slice(mapsIdx).join('/');",
+      "to": "const relPath = parts.join('/');",
+      "test": "test/installer.test.ts"
     }
   ]
 }
