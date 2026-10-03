@@ -1305,6 +1305,46 @@
       "from": "const relPath = parts.slice(mapsIdx).join('/');",
       "to": "const relPath = parts.join('/');",
       "test": "test/installer.test.ts"
+    },
+    {
+      "name": "folding old imports folds a pack into one file",
+      "file": "src/installer-repack.ts",
+      "anchor": "export function mergeMultiPartRecords(",
+      "from": "if (rec.kind === 'pack') continue;",
+      "to": "if (rec.kind === 'none') continue;",
+      "test": "test/installer-repack.test.ts"
+    },
+    {
+      "name": "folding a switched-off import leaves its renamed volumes behind",
+      "file": "src/installer-repack.ts",
+      "anchor": "export function mergeMultiPartRecords(",
+      "from": "for (const suf of ['', '.off', MASTER_OFF]) fs.rmSync(path.join(lang, f.relPath) + suf, { force: true });",
+      "to": "for (const suf of ['']) fs.rmSync(path.join(lang, f.relPath) + suf, { force: true });",
+      "test": "test/installer-repack.test.ts"
+    },
+    {
+      "name": "cutting a pack by hero writes over a slot somebody holds",
+      "file": "src/installer-repack.ts",
+      "anchor": "export function splitVpkFile(",
+      "from": "const pakName = inst.allocatePak(used, false);",
+      "to": "const pakName = 'pak30_dir.vpk';",
+      "test": "test/installer-repack.test.ts"
+    },
+    {
+      "name": "an exported mod carries two item tables",
+      "file": "src/installer-repack.ts",
+      "anchor": "export function mergeToSingleVpk(",
+      "from": ".filter((e) => !/(^|\\/)items_game\\.txt\"?$/.test(entryPath(e)));",
+      "to": ".filter(() => true);",
+      "test": "test/installer-repack.test.ts"
+    },
+    {
+      "name": "three named items are cut short to two and a count",
+      "file": "src/installer-repack.ts",
+      "anchor": "export function describePaths(",
+      "from": "out.info = named.items.length <= 3",
+      "to": "out.info = named.items.length < 3",
+      "test": "test/installer-repack.test.ts"
     }
   ]
 }
