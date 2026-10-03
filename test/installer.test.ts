@@ -682,3 +682,43 @@ test('a move off the notice slot that the game refuses puts the files back and c
   assert.deepEqual(paksIn(s), before);
   assert.equal(JSON.stringify(library.list()), records);
 });
+
+// ---------- install(): the download step, then the writing ----------
+
+/** An archive put where a finished download leaves it, so install() takes it from the cache. */
+function cached(s: Stand, categoryId: string, name: string, body: string | Buffer) {
+  const dir = path.join(s.installer.downloadsDir, categoryId);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, name), body);
+}
+
+test('install takes a cached archive, writes it into the first free slot and says it is installing', async (t) => {
+  const s = stand(t);
+  const said: { type: string; stage?: string }[] = [];
+  s.installer.onProgress = (evt) => said.push(evt);
+  cached(s, 'heroes', 'arcana.vpk', 'a hero mod');
+
+  const files = await s.installer.install({ categoryId: 'heroes', modName: 'Arcana', fileRef: 'arcana.vpk' });
+  assert.equal(files.length, 1);
+  assert.equal(files[0].root, 'lang');
+  assert.equal(s.read('dota_russian', files[0].relPath), 'a hero mod');
+  assert.deepEqual(said.map((e) => e.type), ['stage']);
+});
+
+test('install refuses before downloading anything when the saved game folder is not a game', async (t) => {
+  const s = stand(t);
+  fs.rmSync(path.join(s.game, 'dota', 'pak01_dir.vpk'));
+  // nothing cached: a download would have to go to the network, and must not be tried
+  await assert.rejects(s.installer.install({ categoryId: 'heroes', modName: 'Arcana', fileRef: 'arcana.vpk' }), /Dota 2/);
+  assert.equal(fs.existsSync(path.join(s.installer.downloadsDir, 'heroes', 'arcana.vpk')), false);
+});
+
+test('a tool installs without a game, into the app\'s own folder', async (t) => {
+  const s = stand(t, { game: false });
+  const z = new AdmZip();
+  z.addFile('tool.exe', Buffer.from('a program'));
+  cached(s, 'tools', 'tool.zip', z.toBuffer());
+  const files = await s.installer.install({ categoryId: 'tools', modName: 'Some Tool', fileRef: 'tool.zip' });
+  assert.deepEqual(files, [{ root: 'tools', relPath: 'Some Tool' }]);
+  assert.equal(fs.readFileSync(path.join(s.installer.toolsDir, 'Some Tool', 'tool.exe'), 'utf8'), 'a program');
+});
