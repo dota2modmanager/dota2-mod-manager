@@ -23,6 +23,11 @@ export interface VpkIndex { size: number; has(p: string): boolean; read(p: strin
 /** Resolves external archive N of a multi-part VPK to its path on disk. */
 export type ArchivePathFor = (idx: number) => string;
 
+/** A preload or data section with nothing in it. */
+export const EMPTY = Buffer.alloc(0);
+/** The archiveIndex meaning "data lives in the _dir file itself". */
+export const INLINE = 0x7fff;
+
 function readCString(buf: Buffer, pos: number): { str: string; next: number } {
   const end = buf.indexOf(0, pos);
   if (end === -1) throw new Error(t('VPK: незакрытая строка в дереве'));
@@ -32,8 +37,8 @@ function readCString(buf: Buffer, pos: number): { str: string; next: number } {
 /* One entry of the tree, read only when all of it is there.
  *
  * Layout: crc(4) preloadBytes(2) archiveIndex(2) offset(4) length(4) terminator(2), then the
- * preload block. The six walkers below used to read those fields straight out of the buffer at
- * whatever offset the tree claimed, and a file cut short - or one whose preload length was a
+ * preload block. The six walkers this file had used to read those fields straight out of the buffer
+ * at whatever offset the tree claimed, and a file cut short - or one whose preload length was a
  * fiction - came back as a RangeError from Buffer. That is not a refusal this app makes, and the
  * callers do not catch it: src/installer.ts walks the mod folder on every start and
  * src/minify.ts reads another tool's files, neither inside a try. Measured on a three-entry VPK:
@@ -65,6 +70,60 @@ function joinPath(folder: string, name: string, ext: string): string {
   const dir = folder === ' ' ? '' : folder + '/';
   const suffix = ext === ' ' ? '' : '.' + ext;
   return `${dir}${name}${suffix}`.toLowerCase();
+}
+
+/** Where the tree starts and how long it is, once the signature says this is a VPK at all. */
+function header(buf: Buffer): { headerSize: number; treeSize: number } {
+  if (buf.length < 12 || buf.readUInt32LE(0) !== VPK_SIGNATURE) throw new Error(t('VPK: неверная сигнатура'));
+  // v2 carries 16 more bytes of section sizes before the tree
+  return { headerSize: buf.readUInt32LE(4) === 2 ? 28 : 12, treeSize: buf.readUInt32LE(8) };
+}
+
+type EntryRecord = ReturnType<typeof readEntryRecord>;
+
+/* Every entry of the tree, in the order it is stored: extensions, each holding folders, each
+ * holding names, every list closed by an empty string. Six functions here used to carry their
+ * own copy of this loop; `visit` returning false stops the walk early. */
+function eachEntry(buf: Buffer, visit: (ext: string, folder: string, name: string, rec: EntryRecord) => boolean | void): void {
+  let pos = header(buf).headerSize;
+  for (;;) {
+    const ext = readCString(buf, pos); pos = ext.next; if (!ext.str) return;
+    for (;;) {
+      const folder = readCString(buf, pos); pos = folder.next; if (!folder.str) break;
+      for (;;) {
+        const name = readCString(buf, pos); pos = name.next; if (!name.str) break;
+        const rec = readEntryRecord(buf, pos);
+        pos = rec.next;
+        if (visit(ext.str, folder.str, name.str, rec) === false) return;
+      }
+    }
+  }
+}
+
+/** The file holding archive `idx` of a multi-part VPK: pak01_dir.vpk -> pak01_007.vpk. */
+function volumePath(dirPath: string, idx: number): string {
+  return dirPath.replace(/_dir\.vpk$/i, `_${String(idx).padStart(3, '0')}.vpk`);
+}
+
+/** One entry's bytes, its preload out of the index and the rest read at its offset on disk. */
+function entryBytes(index: Buffer, dirPath: string, inlineBase: number, rec: EntryRecord): Buffer {
+  const preload = rec.preloadBytes ? Buffer.from(index.subarray(rec.preloadAt, rec.preloadAt + rec.preloadBytes)) : EMPTY;
+  if (!rec.length) return preload;
+  const src = rec.archiveIndex === INLINE ? dirPath : volumePath(dirPath, rec.archiveIndex);
+  const base = rec.archiveIndex === INLINE ? inlineBase : 0;
+  const body = Buffer.alloc(rec.length);
+  const fd = fs.openSync(src, 'r');
+  try {
+    let got = 0;
+    while (got < rec.length) {
+      const n = fs.readSync(fd, body, got, rec.length - got, base + rec.offset + got);
+      if (!n) break;
+      got += n;
+    }
+  } finally {
+    fs.closeSync(fd);
+  }
+  return rec.preloadBytes ? Buffer.concat([preload, body]) : body;
 }
 
 /**
@@ -100,30 +159,8 @@ export function readVpkIndexFile(filePath: string): Buffer {
  * @returns lowercased inner paths like "materials/water/water_ti10_000.vmat_c"
  */
 export function listVpkPaths(buf: Buffer): string[] {
-  if (buf.length < 12 || buf.readUInt32LE(0) !== VPK_SIGNATURE) {
-    throw new Error(t('VPK: неверная сигнатура'));
-  }
-  const version = buf.readUInt32LE(4);
-  let pos = version === 2 ? 28 : 12; // v2 header carries 16 extra bytes of section sizes
-
   const paths: string[] = [];
-  for (;;) {
-    const ext = readCString(buf, pos);
-    pos = ext.next;
-    if (!ext.str) break;
-    for (;;) {
-      const folder = readCString(buf, pos);
-      pos = folder.next;
-      if (!folder.str) break;
-      for (;;) {
-        const name = readCString(buf, pos);
-        pos = name.next;
-        if (!name.str) break;
-        pos = readEntryRecord(buf, pos).next;
-        paths.push(joinPath(folder.str, name.str, ext.str));
-      }
-    }
-  }
+  eachEntry(buf, (ext, folder, name) => { paths.push(joinPath(folder, name, ext)); });
   return paths;
 }
 
@@ -140,30 +177,8 @@ export function listVpkPathsFile(filePath: string): string[] {
  * @returns lowercased inner path -> crc32
  */
 export function listVpkPathCrcs(buf: Buffer): Map<string, number> {
-  if (buf.length < 12 || buf.readUInt32LE(0) !== VPK_SIGNATURE) {
-    throw new Error(t('VPK: неверная сигнатура'));
-  }
-  const version = buf.readUInt32LE(4);
-  let pos = version === 2 ? 28 : 12;
   const map = new Map<string, number>();
-  for (;;) {
-    const ext = readCString(buf, pos);
-    pos = ext.next;
-    if (!ext.str) break;
-    for (;;) {
-      const folder = readCString(buf, pos);
-      pos = folder.next;
-      if (!folder.str) break;
-      for (;;) {
-        const name = readCString(buf, pos);
-        pos = name.next;
-        if (!name.str) break;
-        const rec = readEntryRecord(buf, pos);
-        pos = rec.next;
-        map.set(joinPath(folder.str, name.str, ext.str), rec.crc);
-      }
-    }
-  }
+  eachEntry(buf, (ext, folder, name, rec) => { map.set(joinPath(folder, name, ext), rec.crc); });
   return map;
 }
 
@@ -181,44 +196,15 @@ export function listVpkPathCrcsFile(filePath: string): Map<string, number> {
  */
 export function readVpkEntryFile(dirPath: string, wanted: string): { data: Buffer; crc: number } | null {
   const buf = readVpkIndexFile(dirPath);
-  const version = buf.readUInt32LE(4);
-  const treeSize = buf.readUInt32LE(8);
-  const headerSize = version === 2 ? 28 : 12;
+  const { headerSize, treeSize } = header(buf);
   const want = wanted.toLowerCase();
-  let pos = headerSize;
-  for (;;) {
-    const ext = readCString(buf, pos); pos = ext.next; if (!ext.str) break;
-    for (;;) {
-      const folder = readCString(buf, pos); pos = folder.next; if (!folder.str) break;
-      for (;;) {
-        const name = readCString(buf, pos); pos = name.next; if (!name.str) break;
-        const { crc, preloadBytes, archiveIndex, offset, length, preloadAt, next } = readEntryRecord(buf, pos);
-        pos = next;
-        if (joinPath(folder.str, name.str, ext.str) !== want) continue;
-
-        const preload = preloadBytes ? Buffer.from(buf.subarray(preloadAt, preloadAt + preloadBytes)) : EMPTY;
-        if (!length) return { data: preload, crc };
-        const src = archiveIndex === INLINE
-          ? dirPath
-          : dirPath.replace(/_dir\.vpk$/i, `_${String(archiveIndex).padStart(3, '0')}.vpk`);
-        const base = archiveIndex === INLINE ? headerSize + treeSize : 0;
-        const body = Buffer.alloc(length);
-        const fd = fs.openSync(src, 'r');
-        try {
-          let read = 0;
-          while (read < length) {
-            const got = fs.readSync(fd, body, read, length - read, base + offset + read);
-            if (!got) break;
-            read += got;
-          }
-        } finally {
-          fs.closeSync(fd);
-        }
-        return { data: preloadBytes ? Buffer.concat([preload, body]) : body, crc };
-      }
-    }
-  }
-  return null;
+  let found: { data: Buffer; crc: number } | null = null;
+  eachEntry(buf, (ext, folder, name, rec) => {
+    if (joinPath(folder, name, ext) !== want) return true;
+    found = { data: entryBytes(buf, dirPath, headerSize + treeSize, rec), crc: rec.crc };
+    return false;
+  });
+  return found;
 }
 
 /**
@@ -231,58 +217,18 @@ export function readVpkEntryFile(dirPath: string, wanted: string): { data: Buffe
  */
 export function openVpkIndex(dirPath: string): VpkIndex {
   const buf = readVpkIndexFile(dirPath);
-  const version = buf.readUInt32LE(4);
-  const treeSize = buf.readUInt32LE(8);
-  const headerSize = version === 2 ? 28 : 12;
-  const inlineBase = headerSize + treeSize;
-  const entries = new Map<string, { preloadAt: number; preloadBytes: number; archiveIndex: number; offset: number; length: number }>();
-  let pos = headerSize;
-  for (;;) {
-    const ext = readCString(buf, pos); pos = ext.next; if (!ext.str) break;
-    for (;;) {
-      const folder = readCString(buf, pos); pos = folder.next; if (!folder.str) break;
-      for (;;) {
-        const name = readCString(buf, pos); pos = name.next; if (!name.str) break;
-        const { preloadBytes, archiveIndex, offset, length, preloadAt, next } = readEntryRecord(buf, pos);
-        pos = next;
-        entries.set(joinPath(folder.str, name.str, ext.str), { preloadAt, preloadBytes, archiveIndex, offset, length });
-      }
-    }
-  }
-  const read = (wanted: string): Buffer | null => {
-    const e = entries.get(String(wanted).toLowerCase());
-    if (!e) return null;
-    const preload = e.preloadBytes ? Buffer.from(buf.subarray(e.preloadAt, e.preloadAt + e.preloadBytes)) : EMPTY;
-    if (!e.length) return preload;
-    const src = e.archiveIndex === INLINE
-      ? dirPath
-      : dirPath.replace(/_dir\.vpk$/i, `_${String(e.archiveIndex).padStart(3, '0')}.vpk`);
-    const base = e.archiveIndex === INLINE ? inlineBase : 0;
-    const body = Buffer.alloc(e.length);
-    const fd = fs.openSync(src, 'r');
-    try {
-      let got = 0;
-      while (got < e.length) {
-        const n = fs.readSync(fd, body, got, e.length - got, base + e.offset + got);
-        if (!n) break;
-        got += n;
-      }
-    } finally {
-      fs.closeSync(fd);
-    }
-    return e.preloadBytes ? Buffer.concat([preload, body]) : body;
-  };
+  const { headerSize, treeSize } = header(buf);
+  const entries = new Map<string, EntryRecord>();
+  eachEntry(buf, (ext, folder, name, rec) => { entries.set(joinPath(folder, name, ext), rec); });
   return {
     size: entries.size,
     has: (p: string) => entries.has(String(p).toLowerCase()),
-    read,
+    read: (wanted: string) => {
+      const rec = entries.get(String(wanted).toLowerCase());
+      return rec ? entryBytes(buf, dirPath, headerSize + treeSize, rec) : null;
+    },
   };
 }
-
-/** A preload or data section with nothing in it. */
-export const EMPTY = Buffer.alloc(0);
-/** The archiveIndex meaning "data lives in the _dir file itself". */
-export const INLINE = 0x7fff;
 
 /** Full inner path of a read entry, lowercased (" " means the root / no extension). */
 export function entryPath(en: { folder: string; name: string; ext: string }): string {
@@ -292,12 +238,7 @@ export function entryPath(en: { folder: string; name: string; ext: string }): st
 /** Read every entry of a _dir.vpk (following external _NNN archives) into a flat list
  * with its bytes, in on-disk tree order. */
 export function readVpkEntries(dirBuf: Buffer, dirPath: string, archivePathFor?: ArchivePathFor | null): VpkEntry[] {
-  if (dirBuf.length < 12 || dirBuf.readUInt32LE(0) !== VPK_SIGNATURE) {
-    throw new Error(t('VPK: неверная сигнатура'));
-  }
-  const version = dirBuf.readUInt32LE(4);
-  const treeSize = dirBuf.readUInt32LE(8);
-  const headerSize = version === 2 ? 28 : 12;
+  const { headerSize, treeSize } = header(dirBuf);
   const embeddedBase = headerSize + treeSize; // where inline (0x7fff) data sits
 
   const archiveCache = new Map<number, Buffer>();
@@ -305,39 +246,22 @@ export function readVpkEntries(dirBuf: Buffer, dirPath: string, archivePathFor?:
     if (idx === INLINE) return dirBuf;
     let archive = archiveCache.get(idx);
     if (!archive) {
-      const p = archivePathFor
-        ? archivePathFor(idx)
-        : dirPath.replace(/_dir\.vpk$/i, `_${String(idx).padStart(3, '0')}.vpk`);
-      archive = fs.readFileSync(p);
+      archive = fs.readFileSync(archivePathFor ? archivePathFor(idx) : volumePath(dirPath, idx));
       archiveCache.set(idx, archive);
     }
     return archive;
   };
 
   const entries: VpkEntry[] = [];
-  let pos = headerSize;
-  for (;;) {
-    const ext = readCString(dirBuf, pos); pos = ext.next; if (!ext.str) break;
-    for (;;) {
-      const folder = readCString(dirBuf, pos); pos = folder.next; if (!folder.str) break;
-      for (;;) {
-        const name = readCString(dirBuf, pos); pos = name.next; if (!name.str) break;
-        const rec = readEntryRecord(dirBuf, pos);
-        const { crc, preloadBytes, archiveIndex, preloadAt } = rec;
-        const entryOffset = rec.offset;
-        const entryLength = rec.length;
-        pos = rec.next;
-        const preload = preloadBytes ? Buffer.from(dirBuf.subarray(preloadAt, preloadAt + preloadBytes)) : EMPTY;
-        let data: Buffer = EMPTY;
-        if (entryLength > 0) {
-          const src = readArchive(archiveIndex);
-          const base = archiveIndex === INLINE ? embeddedBase : 0;
-          data = src.subarray(base + entryOffset, base + entryOffset + entryLength);
-        }
-        entries.push({ ext: ext.str, folder: folder.str, name: name.str, crc, preload, data });
-      }
+  eachEntry(dirBuf, (ext, folder, name, rec) => {
+    const preload = rec.preloadBytes ? Buffer.from(dirBuf.subarray(rec.preloadAt, rec.preloadAt + rec.preloadBytes)) : EMPTY;
+    let data: Buffer = EMPTY;
+    if (rec.length > 0) {
+      const base = rec.archiveIndex === INLINE ? embeddedBase : 0;
+      data = readArchive(rec.archiveIndex).subarray(base + rec.offset, base + rec.offset + rec.length);
     }
-  }
+    entries.push({ ext, folder, name, crc: rec.crc, preload, data });
+  });
   return entries;
 }
 
@@ -365,21 +289,7 @@ export function fingerprintFiles(files: { path: string; data: Buffer }[]): strin
 
 /** Lightweight (path, crc) list — the mod's content signature, no archive reads. */
 export function listVpkEntries(buf: Buffer): { path: string; crc: number }[] {
-  if (buf.length < 12 || buf.readUInt32LE(0) !== VPK_SIGNATURE) throw new Error(t('VPK: неверная сигнатура'));
-  const version = buf.readUInt32LE(4);
-  let pos = version === 2 ? 28 : 12;
   const out: { path: string; crc: number }[] = [];
-  for (;;) {
-    const ext = readCString(buf, pos); pos = ext.next; if (!ext.str) break;
-    for (;;) {
-      const folder = readCString(buf, pos); pos = folder.next; if (!folder.str) break;
-      for (;;) {
-        const name = readCString(buf, pos); pos = name.next; if (!name.str) break;
-        const rec = readEntryRecord(buf, pos);
-        pos = rec.next;
-        out.push({ path: joinPath(folder.str, name.str, ext.str), crc: rec.crc >>> 0 });
-      }
-    }
-  }
+  eachEntry(buf, (ext, folder, name, rec) => { out.push({ path: joinPath(folder, name, ext), crc: rec.crc }); });
   return out;
 }

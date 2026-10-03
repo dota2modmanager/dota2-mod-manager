@@ -284,7 +284,7 @@
     },
     {
       "name": "a block never lets go after its last day",
-      "file": "src/remote-config.ts",
+      "file": "src/remote-config-format.ts",
       "anchor": "export function applies(entry: { minVersion?: string | null; maxVersion?: string | null; until?: string | null }, version: string, today: string): boolean {",
       "from": "&& (!entry.until || today <= entry.until);",
       "to": "&& true;",
@@ -292,7 +292,7 @@
     },
     {
       "name": "a block with a damaged day is held forever",
-      "file": "src/remote-config.ts",
+      "file": "src/remote-config-format.ts",
       "anchor": "export function normalize(raw: unknown): RemoteConfig {",
       "from": "if (!id || typeof b.feature !== 'string' || !SWITCHABLE.includes(b.feature) || !until) continue;",
       "to": "if (!id || typeof b.feature !== 'string' || !SWITCHABLE.includes(b.feature)) continue;",
@@ -389,7 +389,7 @@
     {
       "name": "the VPK writer records the wrong CRC",
       "file": "src/vpk-write.ts",
-      "anchor": "function buildVpk(",
+      "anchor": "function treeBytes<",
       "from": "meta.writeUInt32LE(en.crc >>> 0, 0);",
       "to": "meta.writeUInt32LE(0, 0);",
       "test": "test/vpk-fuzz.test.ts"
@@ -668,7 +668,7 @@
     },
     {
       "name": "anything in the beta list counts as an account",
-      "file": "src/remote-config.ts",
+      "file": "src/remote-config-format.ts",
       "anchor": "const beta = isObject(raw.beta) ? raw.beta : null;",
       "from": "typeof id === 'string' && /^[0-9a-f]{64}$/i.test(id.trim())",
       "to": "typeof id === 'string'",

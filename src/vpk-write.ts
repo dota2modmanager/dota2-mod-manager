@@ -1,10 +1,10 @@
-// Writing a Source-engine VPK: one self-contained file from a list of entries or a folder of loose
-// files, a multi-part index over data volumes, and a merged pack split back by hero. Part of the
-// VPK code src/vpk.ts gathers; the format itself is read in src/vpk-read.ts.
+// Writing a Source-engine VPK: one self-contained file from a list of entries, a multi-part index
+// over data volumes, and a merged pack split back by hero. Part of the VPK code src/vpk.ts
+// gathers; the format itself is read in src/vpk-read.ts, and a folder of loose files is packed
+// in src/vpk-pack.ts.
 import { crc32 as zlibCrc32 } from 'node:zlib';
 import fs from 'node:fs';
 import path from 'node:path';
-import { t } from './i18n.ts';
 import {
   VPK_SIGNATURE, EMPTY, INLINE, readVpkEntries, entryPath,
   type VpkEntry, type VpkDirEntry, type ArchivePathFor,
@@ -39,24 +39,21 @@ export function entryAt(relPath: string, data: Buffer): VpkEntry {
   };
 }
 
-/** Build one self-contained single-file VPK v2 from a flat entry list. Groups entries
- * by ext -> folder (first-seen order), embeds every entry's data inline (0x7fff). */
-export function buildVpk(entries: VpkEntry[]): Buffer {
-  const tree = new Map<string, Map<string, VpkEntry[]>>();
+type Tree<E> = Map<string, Map<string, E[]>>;
+
+/** Entries grouped the way the index stores them: by extension, then folder, in first-seen order. */
+function groupTree<E extends { ext: string; folder: string }>(entries: E[]): Tree<E> {
+  const tree: Tree<E> = new Map();
   for (const en of entries) {
     let folders = tree.get(en.ext); if (!folders) { folders = new Map(); tree.set(en.ext, folders); }
     let names = folders.get(en.folder); if (!names) { names = []; folders.set(en.folder, names); }
     names.push(en);
   }
+  return tree;
+}
 
-  const dataChunks: Buffer[] = [];
-  const offsets = new Map<VpkEntry, number>();
-  let dataLen = 0;
-  for (const [, folders] of tree) for (const [, names] of folders) for (const en of names) {
-    offsets.set(en, dataLen);
-    if (en.data.length) { dataChunks.push(en.data); dataLen += en.data.length; }
-  }
-
+/** The index tree in bytes; `place` says where each entry's data lives: [archiveIndex, offset, length]. */
+function treeBytes<E extends { name: string; crc: number; preload: Buffer }>(tree: Tree<E>, place: (en: E) => [number, number, number]): Buffer {
   const z = Buffer.from([0]);
   const cstr = (s: string) => Buffer.concat([Buffer.from(s, 'utf-8'), z]);
   const parts: Buffer[] = [];
@@ -65,13 +62,14 @@ export function buildVpk(entries: VpkEntry[]): Buffer {
     for (const [folder, names] of folders) {
       parts.push(cstr(folder));
       for (const en of names) {
+        const [archiveIndex, offset, length] = place(en);
         parts.push(cstr(en.name));
         const meta = Buffer.alloc(18);
         meta.writeUInt32LE(en.crc >>> 0, 0);
         meta.writeUInt16LE(en.preload.length, 4);
-        meta.writeUInt16LE(INLINE, 6);
-        meta.writeUInt32LE((offsets.get(en) ?? 0) >>> 0, 8);
-        meta.writeUInt32LE(en.data.length >>> 0, 12);
+        meta.writeUInt16LE(archiveIndex & 0xffff, 6);
+        meta.writeUInt32LE(offset >>> 0, 8);
+        meta.writeUInt32LE(length >>> 0, 12);
         meta.writeUInt16LE(0xffff, 16);
         parts.push(meta);
         if (en.preload.length) parts.push(en.preload);
@@ -81,146 +79,41 @@ export function buildVpk(entries: VpkEntry[]): Buffer {
     parts.push(z); // end of folders for this ext
   }
   parts.push(z); // end of extensions
-  const treeBuf = Buffer.concat(parts);
+  return Buffer.concat(parts);
+}
 
+/** A v2 header; the MD5 and signature sections are left at 0. */
+function vpkHeader(treeSize: number, dataSize: number): Buffer {
   const header = Buffer.alloc(28);
   header.writeUInt32LE(VPK_SIGNATURE, 0);
   header.writeUInt32LE(2, 4);
-  header.writeUInt32LE(treeBuf.length, 8);
-  header.writeUInt32LE(dataLen, 12); // fileDataSectionSize; MD5/signature sections left at 0
-  return Buffer.concat([header, treeBuf, ...dataChunks]);
+  header.writeUInt32LE(treeSize, 8);
+  header.writeUInt32LE(dataSize, 12); // fileDataSectionSize
+  return header;
 }
 
-// ---------- packing a folder of loose files into a mod ----------
-
-// The folders the game itself mounts. A mod author's working copy is a tree of these, and
-// finding which directory they sit directly under is what tells us where the archive's root
-// is - get that wrong and the mod installs, mounts, and changes nothing, because every path
-// inside it is off by a folder.
-const GAME_ROOTS = new Set([
-  'models', 'materials', 'particles', 'panorama', 'sounds', 'soundevents',
-  'scripts', 'resource', 'maps', 'vscripts', 'shaders', 'expressions',
-]);
-
-// Not content, and not something an author means to ship.
-const JUNK = /^(thumbs\.db|desktop\.ini|\.ds_store|\.git|\.gitignore|\.svn|__macosx)$/i;
-
-/**
- * Where the mod's content actually starts under `dir`.
- *
- * An author points at "MyMod", but the tree underneath may be MyMod/models/..., or the
- * game-shaped MyMod/game/dota_russian/models/..., or a single wrapper folder left by
- * unzipping. Whatever it is, the archive root is the directory that holds the game's own
- * folders - and everything beside them comes too: measured over 84 installed mods, 35 carry
- * a top folder of the author's own (dota2pornfx/, amir4an/, models123/) next to the
- * canonical ones, and three ship a readme.
- *
- * @returns absolute path, or null if nothing game-shaped is under there
- */
-export function findContentRoot(dir: string, depth = 0): string | null {
-  if (depth > 6) return null;
-  let names: fs.Dirent[];
-  try { names = fs.readdirSync(dir, { withFileTypes: true }); } catch { return null; }
-  const dirs = names.filter((e) => e.isDirectory() && !JUNK.test(e.name));
-  if (dirs.some((e) => GAME_ROOTS.has(e.name.toLowerCase()))) return dir;
-  // no game folder here: follow the wrappers down, and only while they are unambiguous
-  for (const e of dirs) {
-    const hit = findContentRoot(path.join(dir, e.name), depth + 1);
-    if (hit) return hit;
+/** Build one self-contained single-file VPK v2 from a flat entry list. Groups entries
+ * by ext -> folder (first-seen order), embeds every entry's data inline (0x7fff). */
+export function buildVpk(entries: VpkEntry[]): Buffer {
+  const tree = groupTree(entries);
+  const dataChunks: Buffer[] = [];
+  const offsets = new Map<VpkEntry, number>();
+  let dataLen = 0;
+  for (const folders of tree.values()) for (const names of folders.values()) for (const en of names) {
+    offsets.set(en, dataLen);
+    if (en.data.length) { dataChunks.push(en.data); dataLen += en.data.length; }
   }
-  return null;
-}
-
-// One buffer holds the whole archive while it is being built, so this is where a folder
-// stops being something we can pack in one piece. The largest real mod measured is 46 MB;
-// a gigabyte is twenty times that and still far below what a Buffer can hold.
-const MAX_FOLDER_BYTES = 1024 * 1024 * 1024;
-
-/**
- * Pack a folder of loose game files into a single self-contained VPK - the other half of
- * importing, for the author who has the files but not the archive.
- * @param root the content root (see findContentRoot)
- */
-export function packFolder(root: string): Buffer {
-  const entries: VpkEntry[] = [];
-  let total = 0;
-  const walk = (dir: string, prefix: string): void => {
-    let names: fs.Dirent[];
-    try { names = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
-    for (const e of names) {
-      if (JUNK.test(e.name)) continue;
-      // a symlink is somebody else's file, and following one can walk in a circle
-      if (e.isSymbolicLink()) continue;
-      const full = path.join(dir, e.name);
-      const rel = prefix ? `${prefix}/${e.name}` : e.name;
-      if (e.isDirectory()) { walk(full, rel); continue; }
-      if (!e.isFile()) continue;
-      let data: Buffer;
-      try { data = fs.readFileSync(full); } catch { continue; }
-      total += data.length;
-      if (total > MAX_FOLDER_BYTES) throw new Error(t('Папка слишком большая, чтобы собрать её в один VPK'));
-      // the game looks files up in lower case, and so does every reader here
-      const lower = rel.toLowerCase();
-      const slash = lower.lastIndexOf('/');
-      const file = slash === -1 ? lower : lower.slice(slash + 1);
-      const dot = file.lastIndexOf('.');
-      entries.push({
-        ext: dot === -1 ? ' ' : file.slice(dot + 1),
-        folder: slash === -1 ? ' ' : lower.slice(0, slash),
-        name: dot === -1 ? file : file.slice(0, dot),
-        data,
-        preload: EMPTY,
-        crc: crc32(data),
-      });
-    }
-  };
-  walk(root, '');
-  if (!entries.length) throw new Error(t('В папке нет файлов'));
-  return buildVpk(entries);
+  const treeBuf = treeBytes(tree, (en) => [INLINE, offsets.get(en) ?? 0, en.data.length]);
+  return Buffer.concat([vpkHeader(treeBuf.length, dataLen), treeBuf, ...dataChunks]);
 }
 
 /** Build a _dir.vpk index that references data in *external* archives (_NNN.vpk). Entries
  * must already carry { archiveIndex, offset, length } pointing into those archives. Unlike
  * buildVpk (single-file, inline 0x7fff) this holds no file data — the tree only. */
 export function buildVpkDir(entries: VpkDirEntry[]): Buffer {
-  const tree = new Map<string, Map<string, VpkDirEntry[]>>();
-  for (const en of entries) {
-    let folders = tree.get(en.ext); if (!folders) { folders = new Map(); tree.set(en.ext, folders); }
-    let names = folders.get(en.folder); if (!names) { names = []; folders.set(en.folder, names); }
-    names.push(en);
-  }
-  const z = Buffer.from([0]);
-  const cstr = (s: string) => Buffer.concat([Buffer.from(s, 'utf-8'), z]);
-  const parts: Buffer[] = [];
-  for (const [ext, folders] of tree) {
-    parts.push(cstr(ext));
-    for (const [folder, names] of folders) {
-      parts.push(cstr(folder));
-      for (const en of names) {
-        parts.push(cstr(en.name));
-        const meta = Buffer.alloc(18);
-        meta.writeUInt32LE(en.crc >>> 0, 0);
-        meta.writeUInt16LE(en.preload.length, 4);
-        meta.writeUInt16LE(en.archiveIndex & 0xffff, 6);
-        meta.writeUInt32LE(en.offset >>> 0, 8);
-        meta.writeUInt32LE(en.length >>> 0, 12);
-        meta.writeUInt16LE(0xffff, 16);
-        parts.push(meta);
-        if (en.preload.length) parts.push(en.preload);
-      }
-      parts.push(z); // end of names
-    }
-    parts.push(z); // end of folders
-  }
-  parts.push(z); // end of extensions
-  const treeBuf = Buffer.concat(parts);
-
-  const header = Buffer.alloc(28);
-  header.writeUInt32LE(VPK_SIGNATURE, 0);
-  header.writeUInt32LE(2, 4);
-  header.writeUInt32LE(treeBuf.length, 8);
-  header.writeUInt32LE(0, 12); // no inline data section — all data lives in _NNN archives
-  return Buffer.concat([header, treeBuf]);
+  const treeBuf = treeBytes(groupTree(entries), (en) => [en.archiveIndex, en.offset, en.length]);
+  // no inline data section: all data lives in the _NNN archives
+  return Buffer.concat([vpkHeader(treeBuf.length, 0), treeBuf]);
 }
 
 /**
