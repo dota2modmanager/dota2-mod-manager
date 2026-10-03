@@ -1068,7 +1068,7 @@
     },
     {
       "name": "showing the share plan merges every one of the user's own mods",
-      "file": "src/presets-service.ts",
+      "file": "src/preset-plan.ts",
       "anchor": "  function shareEntryFor(rec: LibRecord, cat: CatalogIndex): ShareEntry {",
       "from": "const a = installer.analyzeRecord(rec) || {};",
       "to": "const a = installer.analyzeRecord(rec) || {}; installer.mergeToSingleVpk(rec, rec.schema);",
@@ -1076,7 +1076,7 @@
     },
     {
       "name": "a switched-off mod is shared at a size of nothing",
-      "file": "src/presets-service.ts",
+      "file": "src/preset-plan.ts",
       "anchor": "  function shareEntryFor(rec: LibRecord, cat: CatalogIndex): ShareEntry {",
       "from": "const p = ['', '.off', '.moff'].map",
       "to": "const p = [''].map",
@@ -1084,7 +1084,7 @@
     },
     {
       "name": "a received mod already installed is counted as one to unpack again",
-      "file": "src/presets-service.ts",
+      "file": "src/preset-plan.ts",
       "anchor": "  async function sharedPresetStatus(preset: Preset, cat: CatalogIndex) {",
       "from": "if (e.fp && fpIndex.has(e.fp)) out.installed++;",
       "to": "if (false) out.installed++;",

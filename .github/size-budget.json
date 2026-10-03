@@ -6,7 +6,6 @@
     "renderer/i18n.js": 787,
     "src/ipc-mods.ts": 312,
     "src/main.ts": 367,
-    "src/mod-preview.ts": 391,
-    "src/presets-service.ts": 377
+    "src/mod-preview.ts": 391
   }
 }

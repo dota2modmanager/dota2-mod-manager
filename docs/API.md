@@ -79,6 +79,7 @@ the code, not in this page.
 | [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
 | [`src/presence-status.ts`](#srcpresence-statusts) | What the user's Discord profile says while the app is open: which screen they are on, and how |
 | [`src/preset-link.ts`](#srcpreset-linkts) | Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed |
+| [`src/preset-plan.ts`](#srcpreset-plants) | How a preset travels to somebody else (src/presets-service.ts applies, packs and receives |
 | [`src/preset-share.ts`](#srcpreset-sharets) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
 | [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
@@ -4301,6 +4302,51 @@ export function decodePresetLink(input: unknown): { name: string; author: string
 A pasted link, in either form, back into a preset: its name, its author and its mods. Throws an
 error written for the user when the text is not a link, is damaged, or holds too much.
 
+## src/preset-plan.ts
+
+How a preset travels to somebody else (src/presets-service.ts applies, packs and receives
+them). A mod the catalog can hand the receiver goes as its identity, a few bytes; one it cannot
+goes as its own bytes, packed into the file; one with neither is named and left out. This is
+where that is decided, for the share dialog's plan, for a link, and for the card that says
+what installing a received preset would actually do.
+
+### `CatalogIndex`
+
+```ts
+export type CatalogIndex = Map<string, CatalogHit> & { lookup: (c: string, n: string, s?: string | null) => CatalogHit | null }
+```
+
+Every catalog mod by "<categoryId>|<name>|<styleLabel>", with a lookup that never throws.
+
+### `ShareEntry`
+
+```ts
+export type ShareEntry =
+```
+
+A mod as it would be shared: embedded ones read their bytes only when the file is written.
+
+### `categoryModList`
+
+```ts
+export function categoryModList(data: unknown): CatalogMod[]
+```
+
+The mods of one catalog category. Most categories are a flat array, but some (creeps,
+towers, hero-items, item-effects, creep-deny) group theirs under `groups` - the same two
+shapes the catalog view walks (see categoryMods in renderer/views/catalog/lists.ts). Reading only the
+flat ones meant every mod in a grouped category looked like it was not in the catalog:
+the share dialog called them the user's own and packed them into the file as bytes, and
+a preset link dropped them entirely.
+
+### `createPresetPlan`
+
+```ts
+export function createPresetPlan({ catalog, installer, library }: { catalog: Pick<Catalog, 'load'>; installer: PlanInstaller; library: Library; })
+```
+
+The plan, over the catalog, the installer and the library src/presets-service.ts holds.
+
 ## src/preset-share.ts
 
 Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod
@@ -4397,26 +4443,15 @@ from the catalog on the other end, while one that has to carry a mod's own bytes
 hundreds of megabytes. Which of the two a given preset is depends on where its mods came
 from, so everything here is built around answering that before anything is written.
 
+How a preset travels (the share plan, the link, what a received one would do) is
+src/preset-plan.ts; this file applies, packs and receives them.
+
 Lifted out of main.js unchanged. It was 268 lines in the middle of the file that starts the
 window, reachable only through the process that owns that window, and testable only by
 launching the app. The bodies below are the same bodies; what changed is that the services
 they use arrive as arguments instead of as variables that happen to be in scope.
 
-### `CatalogIndex`
-
-```ts
-export type CatalogIndex = Map<string, CatalogHit> & { lookup: (c: string, n: string, s?: string | null) => CatalogHit | null }
-```
-
-Every catalog mod by "<categoryId>|<name>|<styleLabel>", with a lookup that never throws.
-
-### `ShareEntry`
-
-```ts
-export type ShareEntry =
-```
-
-A mod as it would be shared: embedded ones read their bytes only when the file is written.
+Hands on from [`src/preset-plan.ts`](#srcpreset-plants): `categoryModList`, `CatalogIndex`, `ShareEntry`.
 
 ### `PresetInstaller`
 
@@ -4425,19 +4460,6 @@ export interface PresetInstaller
 ```
 
 What of the installer presets ask: what a record is, where its files are, and packing.
-
-### `categoryModList`
-
-```ts
-export function categoryModList(data: unknown): CatalogMod[]
-```
-
-The mods of one catalog category. Most categories are a flat array, but some (creeps,
-towers, hero-items, item-effects, creep-deny) group theirs under `groups` - the same two
-shapes the catalog view walks (see categoryMods in renderer/views/catalog/lists.ts). Reading only the
-flat ones meant every mod in a grouped category looked like it was not in the catalog:
-the share dialog called them the user's own and packed them into the file as bytes, and
-a preset link dropped them entirely.
 
 ### `packableRecord`
 
