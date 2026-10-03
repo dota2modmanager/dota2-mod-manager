@@ -8,9 +8,6 @@
     "src/installer.ts": 398,
     "src/main.ts": 367,
     "src/overlays.ts": 327,
-    "src/presets-service.ts": 377,
-    "src/remote-config.ts": 305,
-    "src/vpk-read.ts": 385,
-    "src/vpk-write.ts": 348
+    "src/presets-service.ts": 377
   }
 }

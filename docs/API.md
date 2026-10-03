@@ -81,6 +81,7 @@ the code, not in this page.
 | [`src/preset-share.ts`](#srcpreset-sharets) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
 | [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
+| [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
 | [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
 | [`src/schema-cosmetics.ts`](#srcschema-cosmeticsts) | The free cosmetics (src/schema-service.ts): the slots the game has a free base item for and what |
@@ -99,8 +100,9 @@ the code, not in this page.
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
 | [`src/updater.ts`](#srcupdaterts) | Where an installed copy looks for a new version, and on which channel. |
 | [`src/vpk-analyze.ts`](#srcvpk-analyzets) | What a mod changes, read from the paths inside it: which heroes, which equip slots, or which |
+| [`src/vpk-pack.ts`](#srcvpk-packts) | Packing a folder of loose game files into a mod: where the content starts under the folder an |
 | [`src/vpk-read.ts`](#srcvpk-readts) | Reading a Source-engine VPK: the index of a "_dir" file (v1/v2), the files it lists and their |
-| [`src/vpk-write.ts`](#srcvpk-writets) | Writing a Source-engine VPK: one self-contained file from a list of entries or a folder of loose |
+| [`src/vpk-write.ts`](#srcvpk-writets) | Writing a Source-engine VPK: one self-contained file from a list of entries, a multi-part index |
 | [`src/vpk.ts`](#srcvpkts) | The VPK format, in one place for everything that reads or writes one: the reader |
 | [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
 
@@ -4404,20 +4406,11 @@ The notes for `version` in the interface's language when there is a translation.
 @returns markdown, or null when this version has no section anywhere
 ```
 
-## src/remote-config.ts
+## src/remote-config-format.ts
 
-The one thing the app can be told after it has shipped.
-
-A Dota patch can break a whole category of mods in an afternoon, and the app in front of
-the user was built weeks ago. Waiting for a release to say "don't install cosmetics today,
-the game crashes" is too slow, and answering it forty times in Discord is not a plan. So
-there is one small file on the same repository the catalog comes from, fetched through the
-same mirrors, that can do two things: turn a feature off with a reason, and put a dated
-notice in front of people.
-
-Everything about it is default-safe. No file, no network, malformed JSON, a field of the
-wrong type: the app behaves exactly as it does today, with everything on and nothing to
-say. A remote switch that fails open is a feature; one that fails closed is an outage.
+The remote config's format (src/remote-config.ts fetches it and answers from it): what the
+file may say, and the checks that cut whatever was fetched down to that. Anything malformed,
+too long or aimed at something that cannot be switched is dropped rather than trusted.
 
 Shape:
   {
@@ -4443,46 +4436,6 @@ tools/rollback.mjs writes both, signs the file and refuses the mistakes.
 `beta` is the list of Discord accounts the beta channel is offered to, as hashes: the file is
 public and a list of a dozen people's accounts is not ours to publish. src/beta.ts does the
 checking; this only reads the block and refuses anything that is not shaped like one.
-
-### `CONFIG_URL`
-
-```ts
-export const CONFIG_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json'
-```
-
-The config every copy of the app reads, on main in this repository.
-
-### `CONFIG_SIG_URL`
-
-```ts
-export const CONFIG_SIG_URL = `${CONFIG_URL}.sig`
-```
-
-The signature, always the config's own address with .sig on the end.
-
-### `CONFIG_PUBLIC_KEY`
-
-```ts
-export const CONFIG_PUBLIC_KEY = 'MCowBQYDK2VwAyEA8M9IOVLfxK6V1n2fHAHlE9zzCsXFoUAJki8RdqLPBdA='
-```
-
-This file is signed, and by us rather than by the catalog's author.
-
-It travels the same public proxies as everything else (see net.js), and it is the file that
-can switch a feature off after a release and put a notice in front of people. A proxy
-operator rewriting it means taking a feature away from somebody, or saying something in this
-project's name. Both halves of this key are ours, so unlike the catalog there was nobody to
-wait for.
-
-A failed check is treated as no file at all, which is what the rest of this module already
-does with every other kind of failure. That is not a weaker choice than refusing to start:
-the worst an attacker gets from breaking the signature is that the notices stop arriving,
-and they could already do that by dropping the request. What they no longer get is to put
-words on the screen.
-
-Signed with tools/sign-catalog.js. The private half is not in this repository and never will
-be; test/remote-config-signature.test.ts fails the build if the committed file and its
-signature ever stop agreeing.
 
 ### `SWITCHABLE`
 
@@ -4522,6 +4475,14 @@ export const MAX_MIRRORS = 4
 
 Somewhere else the archives can be fetched from. A handful at most: the chain is walked in
    order on every download, and a host that is not really there costs a request each time.
+
+### `Off`
+
+```ts
+export interface Off { off: true; ru: string; en: string }
+```
+
+A feature switched off everywhere, with what to tell the user.
 
 ### `RemoteNotice`
 
@@ -4579,6 +4540,65 @@ export function normalize(raw: unknown): RemoteConfig
 
 The fetched JSON cut down to what this build can act on: anything malformed, too long or aimed
 at a feature that cannot be switched is dropped rather than trusted.
+
+## src/remote-config.ts
+
+The one thing the app can be told after it has shipped.
+
+A Dota patch can break a whole category of mods in an afternoon, and the app in front of
+the user was built weeks ago. Waiting for a release to say "don't install cosmetics today,
+the game crashes" is too slow, and answering it forty times in Discord is not a plan. So
+there is one small file on the same repository the catalog comes from, fetched through the
+same mirrors, that can do two things: turn a feature off with a reason, and put a dated
+notice in front of people.
+
+Everything about it is default-safe. No file, no network, malformed JSON, a field of the
+wrong type: the app behaves exactly as it does today, with everything on and nothing to
+say. A remote switch that fails open is a feature; one that fails closed is an outage.
+
+The format and its checks are src/remote-config-format.ts.
+
+Hands on from [`src/remote-config-format.ts`](#srcremote-config-formatts): `SWITCHABLE`, `BLOCKS_SINCE`, `MAX_TESTERS`, `MAX_MIRRORS`, `cmpVersion`, `applies`, `normalize`, `Off`, `RemoteNotice`, `RemoteBlock`, `RemoteMirror`, `RemoteConfig`.
+
+### `CONFIG_URL`
+
+```ts
+export const CONFIG_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json'
+```
+
+The config every copy of the app reads, on main in this repository.
+
+### `CONFIG_SIG_URL`
+
+```ts
+export const CONFIG_SIG_URL = `${CONFIG_URL}.sig`
+```
+
+The signature, always the config's own address with .sig on the end.
+
+### `CONFIG_PUBLIC_KEY`
+
+```ts
+export const CONFIG_PUBLIC_KEY = 'MCowBQYDK2VwAyEA8M9IOVLfxK6V1n2fHAHlE9zzCsXFoUAJki8RdqLPBdA='
+```
+
+This file is signed, and by us rather than by the catalog's author.
+
+It travels the same public proxies as everything else (see src/net.ts), and it is the file that
+can switch a feature off after a release and put a notice in front of people. A proxy
+operator rewriting it means taking a feature away from somebody, or saying something in this
+project's name. Both halves of this key are ours, so unlike the catalog there was nobody to
+wait for.
+
+A failed check is treated as no file at all, which is what the rest of this module already
+does with every other kind of failure. That is not a weaker choice than refusing to start:
+the worst an attacker gets from breaking the signature is that the notices stop arriving,
+and they could already do that by dropping the request. What they no longer get is to put
+words on the screen.
+
+Signed with tools/sign-catalog.js. The private half is not in this repository and never will
+be; test/remote-config-signature.test.ts fails the build if the committed file and its
+signature ever stop agreeing.
 
 ### `createRemoteConfig`
 
@@ -5937,6 +5957,44 @@ A short display NAME for a mod from its analysis — used to name imported VPKs 
 content (a hero, a set, or a content kind) instead of a bare "pakNN" slot. Null if the
 content isn't recognisable enough to name.
 
+## src/vpk-pack.ts
+
+Packing a folder of loose game files into a mod: where the content starts under the folder an
+author points at, and one self-contained VPK built from everything under it. Part of the VPK
+code src/vpk.ts gathers; the archive itself is written by src/vpk-write.ts.
+
+### `findContentRoot`
+
+```ts
+export function findContentRoot(dir: string, depth = 0): string | null
+```
+
+Where the mod's content actually starts under `dir`.
+
+An author points at "MyMod", but the tree underneath may be MyMod/models/..., or the
+game-shaped MyMod/game/dota_russian/models/..., or a single wrapper folder left by
+unzipping. Whatever it is, the archive root is the directory that holds the game's own
+folders - and everything beside them comes too: measured over 84 installed mods, 35 carry
+a top folder of the author's own (dota2pornfx/, amir4an/, models123/) next to the
+canonical ones, and three ship a readme.
+
+```
+@returns absolute path, or null if nothing game-shaped is under there
+```
+
+### `packFolder`
+
+```ts
+export function packFolder(root: string): Buffer
+```
+
+Pack a folder of loose game files into a single self-contained VPK - the other half of
+importing, for the author who has the files but not the archive.
+
+```
+@param root the content root (see findContentRoot)
+```
+
 ## src/vpk-read.ts
 
 Reading a Source-engine VPK: the index of a "_dir" file (v1/v2), the files it lists and their
@@ -5982,6 +6040,22 @@ export type ArchivePathFor = (idx: number) => string
 ```
 
 Resolves external archive N of a multi-part VPK to its path on disk.
+
+### `EMPTY`
+
+```ts
+export const EMPTY = Buffer.alloc(0)
+```
+
+A preload or data section with nothing in it.
+
+### `INLINE`
+
+```ts
+export const INLINE = 0x7fff
+```
+
+The archiveIndex meaning "data lives in the _dir file itself".
 
 ### `readVpkIndexFile`
 
@@ -6073,22 +6147,6 @@ per icon costs seconds. This walks it once and hands back a reader that seeks.
 @param dirPath path to the *_dir.vpk
 ```
 
-### `EMPTY`
-
-```ts
-export const EMPTY = Buffer.alloc(0)
-```
-
-A preload or data section with nothing in it.
-
-### `INLINE`
-
-```ts
-export const INLINE = 0x7fff
-```
-
-The archiveIndex meaning "data lives in the _dir file itself".
-
 ### `entryPath`
 
 ```ts
@@ -6145,9 +6203,10 @@ Lightweight (path, crc) list — the mod's content signature, no archive reads.
 
 ## src/vpk-write.ts
 
-Writing a Source-engine VPK: one self-contained file from a list of entries or a folder of loose
-files, a multi-part index over data volumes, and a merged pack split back by hero. Part of the
-VPK code src/vpk.ts gathers; the format itself is read in src/vpk-read.ts.
+Writing a Source-engine VPK: one self-contained file from a list of entries, a multi-part index
+over data volumes, and a merged pack split back by hero. Part of the VPK code src/vpk.ts
+gathers; the format itself is read in src/vpk-read.ts, and a folder of loose files is packed
+in src/vpk-pack.ts.
 
 ### `crc32`
 
@@ -6175,38 +6234,6 @@ export function buildVpk(entries: VpkEntry[]): Buffer
 
 Build one self-contained single-file VPK v2 from a flat entry list. Groups entries
 by ext -> folder (first-seen order), embeds every entry's data inline (0x7fff).
-
-### `findContentRoot`
-
-```ts
-export function findContentRoot(dir: string, depth = 0): string | null
-```
-
-Where the mod's content actually starts under `dir`.
-
-An author points at "MyMod", but the tree underneath may be MyMod/models/..., or the
-game-shaped MyMod/game/dota_russian/models/..., or a single wrapper folder left by
-unzipping. Whatever it is, the archive root is the directory that holds the game's own
-folders - and everything beside them comes too: measured over 84 installed mods, 35 carry
-a top folder of the author's own (dota2pornfx/, amir4an/, models123/) next to the
-canonical ones, and three ship a readme.
-
-```
-@returns absolute path, or null if nothing game-shaped is under there
-```
-
-### `packFolder`
-
-```ts
-export function packFolder(root: string): Buffer
-```
-
-Pack a folder of loose game files into a single self-contained VPK - the other half of
-importing, for the author who has the files but not the archive.
-
-```
-@param root the content root (see findContentRoot)
-```
 
 ### `buildVpkDir`
 
@@ -6274,14 +6301,17 @@ output so each result stands alone and installs/removes independently.
 ## src/vpk.ts
 
 The VPK format, in one place for everything that reads or writes one: the reader
-(src/vpk-read.ts), the writer (src/vpk-write.ts) and what a mod's paths say it changes
-(src/vpk-analyze.ts). Callers import from here; the three files are how it is kept readable.
+(src/vpk-read.ts), the writer (src/vpk-write.ts), packing a folder into one (src/vpk-pack.ts)
+and what a mod's paths say it changes (src/vpk-analyze.ts). Callers import from here; the four
+files are how it is kept readable.
 
 Hands on from [`src/vpk-read.ts`](#srcvpk-readts): `readVpkIndexFile`, `listVpkPaths`, `listVpkPathsFile`, `listVpkPathCrcs`, `listVpkPathCrcsFile`, `readVpkEntryFile`, `openVpkIndex`, `entryPath`, `readVpkEntries`, `listVpkEntries`, `fingerprintEntries`, `fingerprintVpk`, `fingerprintFiles`, `VpkEntry`, `VpkDirEntry`, `VpkIndex`.
 
 Hands on from [`src/vpk-analyze.ts`](#srcvpk-analyzets): `analyzeVpkPaths`, `slotDisplayName`, `describeHero`, `subjectHeroes`, `describeAnalysis`, `nameFromAnalysis`, `HeroHit`, `Analysis`.
 
-Hands on from [`src/vpk-write.ts`](#srcvpk-writets): `crc32`, `entryAt`, `buildVpk`, `findContentRoot`, `packFolder`, `buildVpkDir`, `combineVpksToFiles`, `mergeVpkToSingle`, `splitVpkByHero`.
+Hands on from [`src/vpk-write.ts`](#srcvpk-writets): `crc32`, `entryAt`, `buildVpk`, `buildVpkDir`, `combineVpksToFiles`, `mergeVpkToSingle`, `splitVpkByHero`.
+
+Hands on from [`src/vpk-pack.ts`](#srcvpk-packts): `findContentRoot`, `packFolder`.
 
 Hands on from [`src/hero-names.ts`](#srchero-namests): `heroDisplayName`.
 
