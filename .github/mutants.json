@@ -1393,6 +1393,70 @@
       "from": "e.kind === 'embedded' && !present.has(e.file)",
       "to": "e.kind === 'embedded' && false",
       "test": "test/preset-file-hostile.test.ts"
+    },
+    {
+      "name": "a tool record naming a path out of the tools folder is run",
+      "file": "src/ipc-misc.ts",
+      "anchor": "ipcMain.handle('misc:runTool'",
+      "from": "if (path.dirname(dir) !== path.resolve(installer.toolsDir)) return { error: t('Инструмент не найден') };",
+      "to": "",
+      "test": "test/run-tool.test.ts"
+    },
+    {
+      "name": "any folder name is run as a tool",
+      "file": "src/ipc-misc.ts",
+      "anchor": "ipcMain.handle('misc:runTool'",
+      "from": "if (!known) return { error: t('Инструмент не найден') };",
+      "to": "",
+      "test": "test/run-tool.test.ts"
+    },
+    {
+      "name": "removing a selection rebuilds the item table once per mod",
+      "file": "src/ipc-library.ts",
+      "anchor": "ipcMain.handle('mods:removeMany'",
+      "from": "if (touchesSchema(rec)) schemaTouched = true;",
+      "to": "if (touchesSchema(rec)) schemaService.refresh();",
+      "test": "test/library-channels.test.ts"
+    },
+    {
+      "name": "Minify's map archive is named as somebody unknown's",
+      "file": "src/ipc-library.ts",
+      "anchor": "ipcMain.handle('mods:mapsOwner'",
+      "from": "if (isMinifyPak(path.join(dir, f))) return { present: true, owner: 'minify', file: f };",
+      "to": "",
+      "test": "test/library-channels.test.ts"
+    },
+    {
+      "name": "the patch is written while Dota holds gameinfo open",
+      "file": "src/ipc-game.ts",
+      "anchor": "ipcMain.handle('patch:setEnabled'",
+      "from": "if (await dotaIsRunning()) return { error: t('Закрой Dota 2 перед изменением файлов игры') };",
+      "to": "",
+      "test": "test/game-channels.test.ts"
+    },
+    {
+      "name": "a remote switch traps people with the patch on",
+      "file": "src/ipc-game.ts",
+      "anchor": "ipcMain.handle('patch:setEnabled'",
+      "from": "if (enabled) { const stop = blocked('cosmetics'); if (stop) return stop; }",
+      "to": "{ const stop = blocked('cosmetics'); if (stop) return stop; }",
+      "test": "test/game-channels.test.ts"
+    },
+    {
+      "name": "a mod the sender unticked is packed into the preset file anyway",
+      "file": "src/ipc-presets.ts",
+      "anchor": "ipcMain.handle('presets:export'",
+      "from": "if (skip.has(key)) return { kind: 'missing', name: entry.name, reason: t('отправитель не вложил файл') };",
+      "to": "",
+      "test": "test/presets-export.test.ts"
+    },
+    {
+      "name": "a mod is saved under a name with characters a file cannot hold",
+      "file": "src/ipc-mods.ts",
+      "anchor": "ipcMain.handle('mods:exportSingle'",
+      "from": "const safe = rec.name.replace(/[<>:\"/\\\\|?*]/g, '_') || 'mod';",
+      "to": "const safe = rec.name || 'mod';",
+      "test": "test/mods-dialogs.test.ts"
     }
   ]
 }
