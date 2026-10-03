@@ -12,4 +12,6 @@
     "enabled": true
   }
   // DISCORD_WEBHOOK is a secret, not a var: npx wrangler secret put DISCORD_WEBHOOK
+  // FORWARD_ALSO is a secret too: the other maintainers' mailboxes, comma-separated, each a
+  // verified destination. Kept out of this file so their personal addresses are not published.
 }

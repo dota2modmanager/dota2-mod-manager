@@ -21,6 +21,7 @@
  * Deploy:
  *   npx wrangler deploy                      # from this folder
  *   npx wrangler secret put DISCORD_WEBHOOK  # the private channel's webhook
+ *   npx wrangler secret put FORWARD_ALSO     # the other maintainers, comma-separated
  * Then in Cloudflare, Email Routing, Routes: send hello@ and security@ to this worker.
  */
 
@@ -39,7 +40,9 @@ async function ring(env, fields) {
         '',
         fields.forwarded === false
           ? `**Not forwarded**: ${fields.forwardError || 'no reason given'}. The message is only here.`
-          : 'The message itself is in the mailbox it was forwarded to.',
+          : fields.forwardError
+            ? `**Not every copy went**: ${fields.forwardError}. The others are in their mailboxes.`
+            : 'The message itself is in the mailboxes it was forwarded to.',
       ].filter(Boolean).join('\n'),
       color: fields.suspect ? 0xe0533d : 0x8b6ff0,
       timestamp: new Date().toISOString(),
@@ -56,6 +59,15 @@ async function ring(env, fields) {
 
 /** A header, trimmed to something a chat message can hold. */
 const head = (message, name, max = 200) => String(message.headers.get(name) || '').slice(0, max);
+
+/** Every mailbox a letter goes to: FORWARD_TO, then each address in FORWARD_ALSO. */
+export function recipientsOf(env) {
+  return [env.FORWARD_TO, ...String(env.FORWARD_ALSO || '').split(',')]
+    .map((s) => String(s || '').trim())
+    .filter(Boolean);
+}
+
+const errorText = (err) => String(err && err.message ? err.message : err).slice(0, 200);
 
 export default {
   /**
@@ -74,16 +86,17 @@ export default {
        One failure this cannot see: a copy sent from the same mailbox it forwards to arrives with
        a Message-ID that mailbox already has, and Gmail drops it without a word. The forward
        succeeded; the inbox simply refuses to show it twice. Test from somewhere else. */
-    let forwarded = true;
-    let forwardError = '';
-    if (env.FORWARD_TO) {
-      try {
-        await message.forward(env.FORWARD_TO);
-      } catch (err) {
-        forwarded = false;
-        forwardError = String(err && err.message ? err.message : err).slice(0, 200);
-      }
-    }
+    // FORWARD_TO is the maintainer's mailbox; FORWARD_ALSO, a secret, lists the other maintainers,
+    // comma-separated, so their personal addresses stay out of this public repository. Cloudflare
+    // forwards to one address per call, and every one has to be a verified destination.
+    const recipients = [...new Set(recipientsOf(env))];
+    const results = await Promise.allSettled(recipients.map((to) => message.forward(to)));
+    const failures = results
+      .map((r, i) => (r.status === 'rejected' ? `${recipients[i]}: ${errorText(r.reason)}` : null))
+      .filter(Boolean);
+    // "forwarded" means the letter is in at least one mailbox; a copy that did not arrive is still named
+    const forwarded = !recipients.length || failures.length < recipients.length;
+    const forwardError = failures.join('; ').slice(0, 300);
 
     // announced after it, and in the background: Discord being slow is not a reason to delay mail
     ctx.waitUntil(ring(env, {
@@ -92,7 +105,7 @@ export default {
       subject: head(message, 'subject'),
       auth: auth ? auth.split(';')[0] : '',
       size: message.rawSize ? `${Math.round(message.rawSize / 1024)} KB` : '',
-      suspect: suspect || !forwarded,
+      suspect: suspect || !!forwardError,
       forwarded,
       forwardError,
     }));

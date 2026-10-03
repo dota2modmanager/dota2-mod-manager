@@ -21,6 +21,16 @@ and a worker that handles a few messages a day stays inside the free plan.
 
    The webhook is the one for the private channel the mail should ring in. Make a channel nobody
    else can read: a message to `security@` can describe a hole before it is fixed.
+
+   Every maintainer gets a copy. `FORWARD_TO` in `wrangler.jsonc` is the first mailbox; the others
+   go in a secret, comma-separated, so their personal addresses are not published here:
+
+   ```bash
+   npx wrangler email routing addresses create someone@example.com   # they confirm the email it sends
+   npx wrangler secret put FORWARD_ALSO
+   ```
+
+   A copy that could not be sent is named on the Discord line, and the others still go.
 3. **Email Routing, Routes, Create address.** Two of them, `hello` and `security`, each with the
    action *Send to a Worker* and this worker as the destination.
 4. **Catch-all: Drop.** Everything else at the domain goes nowhere, which keeps the address list
