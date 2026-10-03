@@ -484,7 +484,7 @@
     },
     {
       "name": "a download with the wrong hash is kept",
-      "file": "src/net.ts",
+      "file": "src/net-download.ts",
       "anchor": "export async function downloadFile(url: string, dest: string, {",
       "from": "if (expectSha256 && digest !== expectSha256) {",
       "to": "if (false) {",
@@ -492,7 +492,7 @@
     },
     {
       "name": "a mirror that ignored Range has its answer glued onto the old half",
-      "file": "src/net.ts",
+      "file": "src/net-download.ts",
       "anchor": "export async function downloadFile(url: string, dest: string, {",
       "from": "const resuming = res.status === 206 && have > 0;",
       "to": "const resuming = have > 0;",
@@ -500,7 +500,7 @@
     },
     {
       "name": "a trusted-only file is fetched through mirrors",
-      "file": "src/net.ts",
+      "file": "src/net-mirrors.ts",
       "anchor": "export function entriesFor(url: string, { small = false, trustedOnly = false }: { small?: boolean; trustedOnly?: boolean } = {}): Entry[] {",
       "from": "if (trustedOnly) return [{ url, host: hostOf(url), origin: false }];",
       "to": ";",
@@ -508,7 +508,7 @@
     },
     {
       "name": "a mirror that keeps failing is never stood down",
-      "file": "src/net.ts",
+      "file": "src/net-mirrors.ts",
       "anchor": "function noteFailure(host: string, why: string): void {",
       "from": "if (h.fails >= FAIL_THRESHOLD) { h.until = Date.now() + COOLDOWN_MS; h.fails = 0; }",
       "to": ";",
@@ -516,7 +516,7 @@
     },
     {
       "name": "a missing file is held against the mirror",
-      "file": "src/net.ts",
+      "file": "src/net-fetch.ts",
       "anchor": "export async function fetchMirrored(url: string, {",
       "from": "if (res.status === 404) { onMirror(candidate); return res; }",
       "to": ";",
@@ -524,7 +524,7 @@
     },
     {
       "name": "a proxy's copy outranks the published hash",
-      "file": "src/net.ts",
+      "file": "src/net-download.ts",
       "anchor": "export async function downloadFile(url: string, dest: string, {",
       "from": "if (fromPublishedList && answered.origin) {",
       "to": "if (fromPublishedList) {",
@@ -532,7 +532,7 @@
     },
     {
       "name": "a hash this project pinned is waived like a published one",
-      "file": "src/net.ts",
+      "file": "src/net-download.ts",
       "anchor": "export async function downloadFile(url: string, dest: string, {",
       "from": "if (fromPublishedList && answered.origin) {",
       "to": "if (answered.origin) {",
@@ -540,7 +540,7 @@
     },
     {
       "name": "a mirror that served the wrong bytes is asked again",
-      "file": "src/net.ts",
+      "file": "src/net-fetch.ts",
       "anchor": "export async function fetchMirrored(url: string, {",
       "from": ".filter((e) => !exclude.includes(e.host));",
       "to": ";",
@@ -548,7 +548,7 @@
     },
     {
       "name": "a server that answered is called a missing connection",
-      "file": "src/net.ts",
+      "file": "src/net-fetch.ts",
       "anchor": "export async function fetchMirrored(url: string, {",
       "from": "err.offline = !/HTTP \\d/.test(String(err.message || ''));",
       "to": "err.offline = true;",
