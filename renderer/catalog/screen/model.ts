@@ -26,7 +26,7 @@ export interface ToolbarModel {
   layout: 'grid' | 'list' | null;
 }
 
-export interface GridModel {
+interface GridModel {
   mods: Mod[];
   grouped?: boolean;
   withCat?: boolean;

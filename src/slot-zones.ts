@@ -23,7 +23,7 @@ import type { LibFile, LibRecord, HasFiles } from './types.ts';
 export type Zone = 'priority' | 'normal';
 
 /** What of the installer this asks: which slot a record's pak sits in, which slots are taken, and moving one. */
-export interface SlotInstaller {
+interface SlotInstaller {
   slotNumber(rec: LibRecord): number | null;
   slotBase(rec: HasFiles): string | null;
   usedPakNames(): Set<string>;
@@ -41,7 +41,7 @@ export const PRIORITY_CATEGORIES: readonly string[] = ['trees', 'river', 'shader
 /** The first and last slot of those categories. */
 export const PRIORITY_SLOTS: readonly [number, number] = [2, 29];
 /** Where every other mod starts. */
-export const NORMAL_FIRST = 30;
+const NORMAL_FIRST = 30;
 /* The app's own pak, not a mod: the clearer text for the game's anti-cheat notice
  * (src/notice-text.ts). One below Minify's 65-67, so that it wins over a Minify "English fix"
  * carrying the same localization file, and never handed to a mod, counted as a slot, listed as
@@ -53,13 +53,13 @@ export const APP_PAK = 64;
 export const isAppPak = (baseLower: string): boolean => baseLower === `pak${APP_PAK}_dir.vpk`;
 
 /** Whether a category is one of those that load first. */
-export const isPriorityCategory = (categoryId: string): boolean => PRIORITY_CATEGORIES.includes(categoryId);
+const isPriorityCategory = (categoryId: string): boolean => PRIORITY_CATEGORIES.includes(categoryId);
 
 /** Which part of the load order a category's mods belong in. */
 export const zoneFor = (categoryId: string): Zone => (isPriorityCategory(categoryId) ? 'priority' : 'normal');
 
 /** Which part of the load order a slot number is in. */
-export const slotZone = (n: number): Zone => (n >= PRIORITY_SLOTS[0] && n <= PRIORITY_SLOTS[1] ? 'priority' : 'normal');
+const slotZone = (n: number): Zone => (n >= PRIORITY_SLOTS[0] && n <= PRIORITY_SLOTS[1] ? 'priority' : 'normal');
 
 /**
  * The first free slot of a part of the load order, as a file name, or null when it is full.

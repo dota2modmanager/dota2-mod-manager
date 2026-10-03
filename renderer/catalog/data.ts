@@ -3,7 +3,7 @@
 import type { CategoryData } from './types.ts';
 import { state } from '../core/store.ts';
 
-export interface CatalogConstants {
+interface CatalogConstants {
   categories?: { id: string; preview?: string }[];
   TAG_CONFIGS?: Record<string, { map?: Record<string, string> } | undefined>;
   addToCartRules?: { hiddenCategories?: string[]; allowedMods?: Record<string, unknown[] | undefined> };

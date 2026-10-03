@@ -34,7 +34,7 @@ export interface StoredSettings {
 
 /** What main reports while it works, for the bar over the status bar (shell/progress.ts): bytes
  *  of a download, a batch counted in items, a named step, and the end either way. */
-export type ProgressEvent =
+type ProgressEvent =
   | { type: 'download'; label: string; loaded: number; total: number }
   | { type: 'count'; label: string; done: number; total: number }
   | { type: 'stage'; label: string; stage: string }
@@ -42,7 +42,7 @@ export type ProgressEvent =
   | { type: 'error'; label: string; message: string };
 
 /** A new version of the app (src/updater.ts): found, to fetch beside a portable copy, or ready. */
-export type UpdateEvent = { type: 'available' | 'portable' | 'downloaded'; version: string };
+type UpdateEvent = { type: 'available' | 'portable' | 'downloaded'; version: string };
 
 /** What the window calls settings: the stored values plus a few facts only main can answer (src/settings-view.ts). */
 export interface AppSettings extends StoredSettings {
@@ -64,7 +64,7 @@ export interface AppSettings extends StoredSettings {
   slotMigration: unknown;
 }
 
-export interface WinApi {
+interface WinApi {
   minimize: () => Promise<void>;
   maximize: () => Promise<void>;
   close: () => Promise<void>;
@@ -72,7 +72,7 @@ export interface WinApi {
   onMaximized: (cb: (maximized: boolean) => void) => void;
 }
 
-export interface SettingsApi {
+interface SettingsApi {
   get: () => Promise<AppSettings>;
   set: <K extends keyof StoredSettings>(key: K, value: StoredSettings[K]) => Promise<AppSettings>;
   /** the folder found, or a falsy answer when there is none */
@@ -81,12 +81,12 @@ export interface SettingsApi {
   moveLangFiles: (fromSuffix: string | undefined) => Promise<Reply<{ moved: number; to: string }>>;
 }
 
-export interface UiApi {
+interface UiApi {
   setZoom: (factor: number) => Promise<Reply<{ uiScale: number }>>;
   onZoom: (cb: (factor: number) => void) => void;
 }
 
-export interface MiscApi {
+interface MiscApi {
   openLangFolder: () => Promise<Reply>;
   openToolsFolder: (sub?: string) => Promise<Reply>;
   openExternal: (url: string | undefined) => Promise<Reply>;
@@ -95,7 +95,7 @@ export interface MiscApi {
   runTool: (dirName: string) => Promise<Reply>;
 }
 
-export interface UpdateApi {
+interface UpdateApi {
   install: () => Promise<void>;
   fetchPortable: () => Promise<Reply<{ name: string; path: string; already: boolean }>>;
   revealPortable: (p: string) => Promise<Reply>;

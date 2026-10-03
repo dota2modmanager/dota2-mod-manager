@@ -2,7 +2,7 @@
 import type { Thumb } from '../library/model.ts';
 
 /** A category of mods in a preset: its glyph, its name, how many. */
-export interface PresetCategory {
+interface PresetCategory {
   id: string;
   icon: string;
   name: string;

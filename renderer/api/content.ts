@@ -44,7 +44,7 @@ export interface PatchApi {
   onRepair: (cb: (st: RepairState) => void) => void;
 }
 
-export interface ToolState { name: string; ready: boolean; installedBytes: number; downloadBytes: number; [key: string]: unknown }
+interface ToolState { name: string; ready: boolean; installedBytes: number; downloadBytes: number; [key: string]: unknown }
 
 export interface ToolsApi {
   state: () => Promise<{ tools: ToolState[]; iconCacheBytes: number }>;

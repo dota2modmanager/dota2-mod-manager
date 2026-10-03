@@ -7,9 +7,9 @@ import { state } from '../../core/store.ts';
 import { esc, fmtMB, plural } from '../../ui/format.ts';
 import type { ShareEntry } from '../../api/content.ts';
 
-export interface SharePlan { name: string; entries: ShareEntry[] }
-export interface ShareLink { web?: string; count: number; skipped: unknown[] }
-export interface ShareOptions { skip: string[]; author: string; note: string }
+interface SharePlan { name: string; entries: ShareEntry[] }
+interface ShareLink { web?: string; count: number; skipped: unknown[] }
+interface ShareOptions { skip: string[]; author: string; note: string }
 
 // Pre-flight for sharing: shows what travels as a catalog reference (free) and what has to
 // go in as bytes, so a 190 MB file is a choice and not a surprise. Returns the export

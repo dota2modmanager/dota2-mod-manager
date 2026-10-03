@@ -27,11 +27,11 @@ import type { ImportResult } from './adopt.ts';
 import type { LibFile } from './types.ts';
 
 /** Files dropped as bytes, when the drop could not name a path on disk. */
-export type DroppedFile = { name?: string; data: Uint8Array | ArrayBuffer };
+type DroppedFile = { name?: string; data: Uint8Array | ArrayBuffer };
 
 // Every .vpk under a dropped folder. Skinchanger packs unzip to a whole game tree
 // (<pack>\game\Dota2SkinChanger\pak01_*.vpk), so the file we want sits a few levels in.
-export function scanVpkTree(root: string, depth = 0): string[] {
+function scanVpkTree(root: string, depth = 0): string[] {
   const out: string[] = [];
   if (depth > 6) return out;
   let names: string[] = [];
@@ -53,7 +53,7 @@ export function scanVpkTree(root: string, depth = 0): string[] {
  * transaction, the naming.
  * @returns path of the staged archive, or null if the folder holds no game files
  */
-export function stageFolderAsVpk(dir: string, staged: string[]): string | null {
+function stageFolderAsVpk(dir: string, staged: string[]): string | null {
   const root = findContentRoot(dir);
   if (!root) return null;
   const buf = packFolder(root);
@@ -72,7 +72,7 @@ export function stageFolderAsVpk(dir: string, staged: string[]): string | null {
  * side by side), a plain file passes through. Temp dirs are appended to `staged` for the
  * caller to delete once the import has read them.
  */
-export function expandImportInputs(paths: string[], staged: string[]): { files: string[]; errors: { source: string; error: string }[] } {
+function expandImportInputs(paths: string[], staged: string[]): { files: string[]; errors: { source: string; error: string }[] } {
   const files: string[] = [];
   const errors: { source: string; error: string }[] = [];
   for (const src of paths) {
@@ -131,7 +131,7 @@ export function expandImportInputs(paths: string[], staged: string[]): { files: 
  * @param paths .vpk files to take in
  * @param onStep called after each mod lands
  */
-export async function importVpkFiles(installer: Installer, paths: string[], onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {
+async function importVpkFiles(installer: Installer, paths: string[], onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {
   const lang = installer.langFolder();
   installer.ensureLangFolder();
   const used = installer.usedPakNames();

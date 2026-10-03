@@ -21,7 +21,7 @@ import type { Library } from './library.ts';
 import type { LibFile, LibRecord } from './types.ts';
 
 /** What of the installer this asks: a name from the file, what the file is, and the master switch. */
-export interface AdoptInstaller {
+interface AdoptInstaller {
   displayNameForFile(relPath: string): string | null;
   analyzeRecord(rec: LibRecord): { subjects?: number } | null;
   masterIsOff(): boolean;

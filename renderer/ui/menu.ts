@@ -24,13 +24,13 @@ export interface MenuItem {
 
 let host: HTMLElement | null = null;
 
-export function closeMenu(): void {
+function closeMenu(): void {
   host?.remove();
   host = null;
 }
 
 /** x and y are the viewport coordinates of the click. A falsy entry is a row left out. */
-export function openMenu(items: (MenuItem | false | null | undefined)[], x: number, y: number): void {
+function openMenu(items: (MenuItem | false | null | undefined)[], x: number, y: number): void {
   closeMenu();
   const live = items.filter((item): item is MenuItem => Boolean(item));
   if (!live.length) return;

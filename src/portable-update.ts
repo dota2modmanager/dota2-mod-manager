@@ -56,7 +56,7 @@ export interface Source {
  * reasoning as the update feed fallback in src/updater.ts. Manifest and binary both come from
  * whichever source answered, so the hash and the file it describes are always from one place.
  */
-export const SOURCES: readonly Source[] = [
+const SOURCES: readonly Source[] = [
   { name: 'github', manifest: (v) => releaseUrl(v, MANIFEST), asset: (v, f) => releaseUrl(v, f), trustedOnly: true },
   { name: 'mirror', manifest: () => `${MIRROR}${MANIFEST}`, asset: (v, f) => `${MIRROR}${f}`, trustedOnly: false },
 ];

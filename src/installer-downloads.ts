@@ -9,7 +9,7 @@ import { folderSize } from './folder-size.ts';
 import type { Installer } from './installer.ts';
 
 /** What a downloaded archive was when it arrived: its size and hash, and when. */
-export type DownloadEntry = { size: number; sha256: string; at: number };
+type DownloadEntry = { size: number; sha256: string; at: number };
 
 /** Where a catalog file is fetched from: its own URL, or the catalog's files folder. */
 export function fileUrl(categoryId: string, fileRef: string): string {
@@ -28,7 +28,7 @@ export function fileUrl(categoryId: string, fileRef: string): string {
  * things like "Red Abaddon (v2).zip", they are the keys of the download cache, and
  * scrubbing them would re-download every mod on disk to no benefit.
  */
-export function safeFileName(raw: unknown, fallback: string): string {
+function safeFileName(raw: unknown, fallback: string): string {
   const flat = String(raw || '').replace(/\\/g, '/');
   const last = flat.slice(flat.lastIndexOf('/') + 1);
   const cleaned = [...last]

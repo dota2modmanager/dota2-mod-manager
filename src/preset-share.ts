@@ -21,7 +21,7 @@ import type { PresetEntry } from './types.ts';
 export type { PresetEntry };
 
 /** preset.json once it has been checked: everything a receiver is shown before installing. */
-export interface PresetManifest {
+interface PresetManifest {
   format: string; version: number; name: string; note: string; author: string;
   createdAt: number | null; app: string; catalogFetchedAt: number | null; mods: PresetEntry[];
 }
@@ -85,7 +85,7 @@ function normalizeEntry(raw: unknown, { allowPack = true } = {}): PresetEntry | 
 }
 
 /** preset.json checked field by field: what fails is refused, what is unknown is dropped. */
-export function validateManifest(raw: unknown): PresetManifest {
+function validateManifest(raw: unknown): PresetManifest {
   if (!isObject(raw)) throw new Error(t('preset.json повреждён'));
   if (raw.format !== FORMAT) throw new Error(t('Это не файл пресета Mod Manager'));
   if (!((raw.version as number) <= VERSION)) throw new Error(t('Файл собран более новой версией приложения'));

@@ -27,7 +27,7 @@ let key = 0;
 
 registerView('settings', () => renderSettings(true));
 
-export async function renderSettings(fresh = false): Promise<void> {
+async function renderSettings(fresh = false): Promise<void> {
   const s = await window.api.settings.get();
   state.settings = s;
   const cacheSize = await window.api.misc.cacheSize();

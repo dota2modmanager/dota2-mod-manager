@@ -13,9 +13,9 @@ import { keyOf } from '../../core/keys.ts';
 import { ModCard } from './ModCard.tsx';
 
 /** Cards drawn in the first pass: more than a 4K window shows at the smallest card size. */
-export const FIRST_PASS = 60;
+const FIRST_PASS = 60;
 
-export interface GridProps {
+interface GridProps {
   mods: Mod[];
   /** a heading above each run of one group (a hero, a creep type) */
   grouped?: boolean;

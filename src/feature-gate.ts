@@ -17,7 +17,7 @@ import { t } from './i18n.ts';
 import type { Settings } from './settings.ts';
 
 /** What of the remote config this asks: whether a feature is off, and why, in the user's language. */
-export interface FeatureSwitches {
+interface FeatureSwitches {
   feature(name: string, lang: 'ru' | 'en'): { off: boolean; note?: string };
 }
 

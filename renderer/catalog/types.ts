@@ -8,7 +8,7 @@ export interface ModStyle {
   [key: string]: unknown;
 }
 
-export interface ModLink {
+interface ModLink {
   type?: string;
   url: string;
   [key: string]: unknown;

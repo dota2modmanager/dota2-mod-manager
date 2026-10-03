@@ -16,7 +16,7 @@ export const FP_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-m
 export interface CatalogIdentity { name: string; categoryId: string; styleLabel?: string | null }
 
 /** A font mod, known by the hash of every file it puts in panorama/fonts. */
-export interface FontMod extends CatalogIdentity { files: Record<string, string> }
+interface FontMod extends CatalogIdentity { files: Record<string, string> }
 
 /** What fingerprints.json holds: the older files carry one identity per print instead of a list. */
 interface FingerprintData { mods?: Record<string, CatalogIdentity | CatalogIdentity[]>; fonts?: FontMod[] }

@@ -30,7 +30,7 @@ import os from 'node:os';
 import { listVpkPathsFile } from './vpk.ts';
 
 /** What Minify's own config says about where it writes. */
-export interface MinifyConfig { outputPath: string | null; locale: string | null; folder: string | null }
+interface MinifyConfig { outputPath: string | null; locale: string | null; folder: string | null }
 
 /** Minify as this app sees it; see readMinify. */
 export interface MinifyState {
@@ -63,7 +63,7 @@ export const MINIFY_BORROWED = 'dutch';
  * still on an older release has a pak99 on disk already, which the allocator reads off the
  * folder like any other occupied slot - and MINIFY_PAKS still knows whose it is. The author
  * asked for exactly this: detect the file rather than blindly reserve the number. */
-export const MINIFY_PAKS: readonly number[] = [65, 66, 67, 99];
+const MINIFY_PAKS: readonly number[] = [65, 66, 67, 99];
 export const RESERVED_PAKS: readonly number[] = [65, 66, 67];
 
 /* The reserved range as the interface says it out loud.
@@ -103,7 +103,7 @@ export function isMinifyFile(baseLower: string): boolean {
  *
  * Reading their convention rather than proposing one costs nothing and needs no agreement.
  */
-export const MINIFY_MARKERS: readonly string[] = ['minify_mods.json', 'minify_vpk_mods.txt', 'minify_version.txt'];
+const MINIFY_MARKERS: readonly string[] = ['minify_mods.json', 'minify_vpk_mods.txt', 'minify_version.txt'];
 
 /**
  * Was this VPK built by Minify? Reads the archive index only, never the content.
@@ -119,7 +119,7 @@ export function isMinifyPak(file: string): boolean {
 }
 
 /** Where Minify keeps the settings it publishes about itself. */
-export function configPath(): string {
+function configPath(): string {
   const local = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
   return path.join(local, 'Dota2-Minify', 'config', 'minify_config.json');
 }
@@ -147,7 +147,7 @@ export function readConfig(file = configPath()): MinifyConfig | null {
  * dota_dutch, because Dutch is the folder it borrows to make English work. Reading the locale
  * had this app announce a folder called dota_english, which exists nowhere.
  */
-export function folderOfPath(outputPath: string | null | undefined): string | null {
+function folderOfPath(outputPath: string | null | undefined): string | null {
   if (!outputPath) return null;
   const last = String(outputPath).replace(/[\\/]+$/, '').split(/[\\/]/).pop() || '';
   const m = last.match(/^dota_(.+)$/i);

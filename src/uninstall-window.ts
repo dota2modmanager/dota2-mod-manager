@@ -32,7 +32,7 @@ import type { LibFile, LibRecord } from './types.ts';
 
 
 /** What of the installer the removal asks: sizes, the language folder, and taking mods out. */
-export interface UninstallInstaller {
+interface UninstallInstaller {
   installedSize(rec: LibRecord): number;
   langFolder(): string;
   removePackFully(rec: LibRecord): unknown;
@@ -40,9 +40,9 @@ export interface UninstallInstaller {
 }
 
 /** The exit code that tells the uninstaller to stop and remove nothing. */
-export const UNINSTALL_CANCELLED = 3;
+const UNINSTALL_CANCELLED = 3;
 /** The exit code that tells it to take the app's own folder too. */
-export const UNINSTALL_WIPE_DATA = 4;
+const UNINSTALL_WIPE_DATA = 4;
 
 /**
  * The uninstall flow, given the app's own services.

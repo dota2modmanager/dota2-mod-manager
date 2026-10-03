@@ -18,7 +18,7 @@ import type { Library } from './library.ts';
 import type { LibFile, LibRecord, HasFiles } from './types.ts';
 
 /** A switched-on mod as coverage reads it: keyed, because two copies of one mod share a name. */
-export type CoverageMod = { key: string; name: string; files: LibFile[] };
+type CoverageMod = { key: string; name: string; files: LibFile[] };
 
 // Engine stock that packing tools drop into every export they build: reflection cubemaps,
 // the basic particle set, the error placeholder, the transparency helper, the default

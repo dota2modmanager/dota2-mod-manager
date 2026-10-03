@@ -12,7 +12,7 @@ import { pathToFileURL } from 'node:url';
 import type { App, BrowserWindow, Dialog } from 'electron';
 
 /** The only address `npm run dev` serves from (tools/dev.mjs, vite.config.mjs). */
-export const LOCAL_DEV_URL = /^http:\/\/(127\.0\.0\.1|localhost):\d+\/$/;
+const LOCAL_DEV_URL = /^http:\/\/(127\.0\.0\.1|localhost):\d+\/$/;
 
 type Exists = (p: string) => boolean;
 

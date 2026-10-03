@@ -50,9 +50,9 @@ export const CAT_ICON: Record<string, string> = {
 // Free cosmetics: each is a slot in the game's own item schema (see src/schema.ts), read
 // live from the installed game — so a slot Valve adds later just shows up. This only maps
 // the ones we know a nice label/icon for; an unknown one still works, titled from its id.
-export interface SlotMeta { label: string; icon: string }
+interface SlotMeta { label: string; icon: string }
 
-export const COSMETIC_SLOTS: Record<string, SlotMeta> = {
+const COSMETIC_SLOTS: Record<string, SlotMeta> = {
   weather: { label: 'Погода', icon: 'rainy' },
   items: { label: 'Предметы', icon: 'checkroom' },
   terrain: { label: 'Ландшафт', icon: 'terrain' },

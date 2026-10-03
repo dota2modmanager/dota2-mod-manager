@@ -18,7 +18,7 @@ import type { Settings } from './settings.ts';
 import type { LibFile, LibRecord } from './types.ts';
 
 /** What of the installer this needs: the cursor store, deploy and undeploy. */
-export interface CursorInstaller {
+interface CursorInstaller {
   setEnabled(files: LibFile[], enabled: boolean, recId?: string | null): unknown;
   deployCursor(recId: string, files: LibFile[]): unknown;
   undeployCursor(recId: string, files: LibFile[]): unknown;
@@ -28,7 +28,7 @@ export interface CursorInstaller {
 }
 
 /** What of the library this needs: the records, and switching one. */
-export interface CursorLibrary {
+interface CursorLibrary {
   list(): LibRecord[];
   setEnabled(id: string, enabled: boolean): unknown;
 }

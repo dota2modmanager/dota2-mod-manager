@@ -29,7 +29,7 @@ import { ToolMeta } from './ToolMeta.tsx';
 import { useQueued, useTerrainMark } from './hooks.ts';
 import { CardShell } from './CardShell.tsx';
 
-export interface CardProps {
+interface CardProps {
   mod: Mod;
   index: number;
   /** say which category the mod is from: search results, favourites, the recent strip */

@@ -27,7 +27,7 @@ import { openZip } from './safe-zip.ts';
 import { FileTx } from './file-tx.ts';
 
 /** A tool pinned to a version, a URL, and the digest those bytes have to hash to. */
-export interface Pin { version: string; url: string; sha256: string; bytes: number; exe: string; license: string; project: string }
+interface Pin { version: string; url: string; sha256: string; bytes: number; exe: string; license: string; project: string }
 
 /** What installed.json records for a tool on disk. */
 type Installed = { version: string; exe: string; sha256: string; at: number };
@@ -56,7 +56,7 @@ export const BUILT_IN_PINS: Record<string, Pin> = {
 };
 
 /** Every tool the app knows how to fetch. */
-export const TOOL_NAMES: readonly string[] = Object.keys(BUILT_IN_PINS);
+const TOOL_NAMES: readonly string[] = Object.keys(BUILT_IN_PINS);
 
 /* A copy of the pinned archive in this project's own bucket.
  *
@@ -68,9 +68,9 @@ export const TOOL_NAMES: readonly string[] = Object.keys(BUILT_IN_PINS);
  * travelling with the URL, so whoever hands the bytes over cannot also decide what they should
  * hash to. The address is written here for the same reason the owner allowlist below is.
  */
-export const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/';
+const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/';
 /** Where the copy of a pinned archive lives, keyed by the tool and the version pinned to it. */
-export const fallbackUrl = (name: string, version: string): string => `${FALLBACK_BASE}${name}-${version}.zip`;
+const fallbackUrl = (name: string, version: string): string => `${FALLBACK_BASE}${name}-${version}.zip`;
 
 /* Whose releases a pin may point at.
  *
@@ -107,7 +107,7 @@ export function validPin(pin: unknown, name: string | null | undefined): boolean
 
 /* A tool that has not answered by now is not going to. The user waits on this: the item picker
  * and the library show placeholders until it returns. */
-export const TOOL_TIMEOUT_MS = 60000;
+const TOOL_TIMEOUT_MS = 60000;
 
 /** Run one of the tools, hidden, and settle when it exits: resolved on 0, rejected otherwise. */
 export function runTool(exe: string, args: string[], { timeoutMs = TOOL_TIMEOUT_MS } = {}): Promise<void> {

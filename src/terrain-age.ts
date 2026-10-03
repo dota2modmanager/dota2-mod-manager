@@ -18,7 +18,7 @@ import path from 'node:path';
 import type { LibFile, LibRecord } from './types.ts';
 
 /** Where a whole-map terrain puts its map, under the language folder. */
-export const MAP_REL = 'maps/dota.vpk';
+const MAP_REL = 'maps/dota.vpk';
 const MAP_IN_ARCHIVE = /(^|\/)maps\/dota\.vpk$/i;
 /* A zip keeps the local time of whoever packed it, in no named zone, and the game's file carries
    the moment Steam wrote it. A day either way covers every zone there is; a terrain packed the
@@ -38,12 +38,12 @@ interface Store {
 type TerrainRecord = Pick<LibRecord, 'id' | 'name' | 'files' | 'enabled' | 'categoryId' | 'fileRef'> & { mapBuiltAt?: unknown };
 
 /** The record's map file, when the record is a whole-map terrain. */
-export function mapFileOf(rec: Pick<LibRecord, 'files'> | null | undefined): LibFile | null {
+function mapFileOf(rec: Pick<LibRecord, 'files'> | null | undefined): LibFile | null {
   return (rec && rec.files || []).find((f) => f.root === 'lang' && String(f.relPath).toLowerCase() === MAP_REL) || null;
 }
 
 /** When Steam last wrote the game's own map, or null with no game or no map. */
-export function gameMapTime(gamePath: string | null | undefined): number | null {
+function gameMapTime(gamePath: string | null | undefined): number | null {
   if (!gamePath) return null;
   try { return fs.statSync(path.join(gamePath, 'dota', 'maps', 'dota.vpk')).mtimeMs; } catch { return null; }
 }

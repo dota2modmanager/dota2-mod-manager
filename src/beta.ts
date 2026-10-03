@@ -26,15 +26,15 @@ import { createHash } from 'node:crypto';
 /** The channel name electron-updater reads, and the file it looks for: beta.yml. */
 export const BETA_CHANNEL = 'beta';
 /** What everybody else reads: latest.yml, the release channel. */
-export const STABLE_CHANNEL = 'latest';
+const STABLE_CHANNEL = 'latest';
 
-export type Channel = typeof BETA_CHANNEL | typeof STABLE_CHANNEL;
+type Channel = typeof BETA_CHANNEL | typeof STABLE_CHANNEL;
 
 /** The `beta` block of the signed config: a salt and the hashed ids let in. */
-export interface BetaList { salt?: string; ids?: unknown[] }
+interface BetaList { salt?: string; ids?: unknown[] }
 
 /** Who is asking and whether they switched the beta on. */
-export interface BetaAsk { discordId?: string | null; beta?: BetaList | null; wanted?: boolean }
+interface BetaAsk { discordId?: string | null; beta?: BetaList | null; wanted?: boolean }
 
 /**
  * How an id becomes a line in the public list.

@@ -12,7 +12,7 @@ import { state } from '../core/store.ts';
 import { RAW_BASE } from '../core/constants.ts';
 import { tokenMs } from '../core/css-time.ts';
 
-export const THEMES = ['ursa', 'brew', 'fura', 'storm', 'invoker', 'meepo', 'bh', 'axe'];
+const THEMES = ['ursa', 'brew', 'fura', 'storm', 'invoker', 'meepo', 'bh', 'axe'];
 
 function mascotUrl(theme: string): string {
   const cfg = state.catalog?.constants?.GIF_CONFIG;
@@ -23,7 +23,7 @@ function mascotUrl(theme: string): string {
 }
 
 /** Put a theme on the window. Unknown names fall back to the one the app ships on. */
-export function applyTheme(name: unknown): string {
+function applyTheme(name: unknown): string {
   const theme = typeof name === 'string' && THEMES.includes(name) ? name : THEMES[0];
   document.documentElement.dataset.theme = theme;
   const img = document.querySelector<HTMLImageElement>('#themeMascot img');

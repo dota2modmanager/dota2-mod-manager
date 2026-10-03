@@ -19,7 +19,7 @@ import { t } from './i18n.ts';
 import type { Writer } from './file-tx.ts';
 
 /** A file inside an archive that passed every check: its path, its size, and its bytes on demand. */
-export interface ZipFile { path: string; size: number; read(): Buffer }
+interface ZipFile { path: string; size: number; read(): Buffer }
 
 /** A foreign archive, opened: what is safe to hand out of it, and a way to unpack it. */
 export interface OpenedZip {
@@ -30,7 +30,7 @@ export interface OpenedZip {
 }
 
 /** The budgets an archive is held to; tests lower them. */
-export type ZipLimits = typeof LIMITS;
+type ZipLimits = typeof LIMITS;
 
 const MB = 1024 * 1024;
 
@@ -40,7 +40,7 @@ const MB = 1024 * 1024;
 // Every limit sits several times above that, so a legitimate archive never meets one.
 // The ratio is only judged on entries big enough to matter — a 20 KB text file that packs
 // 500x is not a threat, and small assets compress hard all the time.
-export const LIMITS = {
+const LIMITS = {
   archiveBytes: 1024 * MB,   // adm-zip reads the whole file into memory before parsing
   entries: 20000,
   entryBytes: 768 * MB,

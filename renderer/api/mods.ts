@@ -4,7 +4,7 @@
 import type { ExternalFile, LibRecord } from '../library/types.ts';
 import type { Dialog, ImportReply, Reply } from './reply.ts';
 
-export interface InstallRequest {
+interface InstallRequest {
   categoryId: string;
   name: string;
   styleLabel: string | null | undefined;
@@ -12,7 +12,7 @@ export interface InstallRequest {
   preview: string | undefined;
 }
 
-export interface ModsList {
+interface ModsList {
   installed: LibRecord[];
   external: ExternalFile[];
   /** paks taken, out of the ceiling the game loads */

@@ -13,7 +13,7 @@ import type { QueueEntry } from '../../catalog/queueing.ts';
 import { findModByName } from './lists.ts';
 import { installing } from './state.ts';
 
-export interface InstallResult {
+interface InstallResult {
   ok?: boolean;
   error?: string;
   already?: boolean;

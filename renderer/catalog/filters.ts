@@ -3,7 +3,7 @@
 import type { Filters, Mod } from './types.ts';
 import { canonTag } from './tags.ts';
 
-export interface FilterChecks {
+interface FilterChecks {
   isInstalled: (m: Mod) => boolean;
   isFav: (m: Mod) => boolean;
   heroMatches: (hero: string, name: string) => boolean;

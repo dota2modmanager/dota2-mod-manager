@@ -435,7 +435,7 @@ that location is not writable.
 | `renderer/core/*` | What the screens share: the store, the router, the records, the categories, the 18+ question |
 | `renderer/motion/*` | How things move: travel, fold, swap, reveal |
 | `renderer/styles/*`, `renderer/fonts/*` | The tokens every size and colour comes from, and the faces |
-| `renderer/uninstall.html`, `renderer/uninstall.js` | The removal window |
+| `renderer/uninstall.html`, `renderer/uninstall.js`, `renderer/uninstall-bridge.d.ts` | The removal window, a classic script loaded without a build, and the types of the bridge its preload gives it |
 | `tools/sandbox.js` | The throwaway game tree |
 | `tools/e2e.mjs`, `test/fixtures/e2e/*` | Installing, switching and removing a mod by clicking through the real window, offline, in the sandbox |
 | `tools/r2-sync.mjs`, `tools/r2-release.mjs`, `tools/r2-client.js`, `tools/mirror-plan.js` | The archive mirror, the update mirror, the signing they share, and which archives the mirror copies again or refuses |

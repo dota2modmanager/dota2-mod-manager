@@ -18,7 +18,7 @@ export function firstLink(argv: readonly unknown[] | null | undefined): string |
 }
 
 /** The part of a link the preset importer reads: what follows d2mm://preset/. */
-export function presetCode(url: string): string {
+function presetCode(url: string): string {
   return url.replace(new RegExp(`^${SCHEME}://preset/`), '');
 }
 

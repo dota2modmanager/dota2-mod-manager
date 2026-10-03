@@ -21,7 +21,7 @@ import type { createSchemaService } from './schema-service.ts';
 import { createGameRepair, REPAIR_RETRY_MS, type PatchRepair } from './game-repair.ts';
 
 /** Mods moved into the folder the game mounts, told to the user once in Settings. */
-export type LangMigration = { from: string; to: string; moved: number };
+type LangMigration = { from: string; to: string; moved: number };
 
 /* Dota reads boot.vcfg once at startup and rewrites it on exit, so language changes must be made
  * while it is closed or the game would just overwrite them.

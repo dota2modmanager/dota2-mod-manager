@@ -19,7 +19,7 @@ import type { Analysis } from './vpk.ts';
 import type { SchemaDelta } from './schema.ts';
 
 /** What a record's own file is: a summary, the heroes it is about, the game's names for it, its fingerprint. */
-export type RecordAnalysis = {
+type RecordAnalysis = {
   info: string; heroes: number; subjects: number; items?: string[]; heroNames: string[]; fp: string;
 };
 

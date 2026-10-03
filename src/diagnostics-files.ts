@@ -6,11 +6,11 @@ import path from 'node:path';
 import os from 'node:os';
 
 /** One row of a folder listing: its shape, never its bytes. */
-export type Listed = { name: string; size: number; mtime: number; dir: boolean };
+type Listed = { name: string; size: number; mtime: number; dir: boolean };
 
 // Nothing about a folder listing that matters for troubleshooting needs the file's bytes,
 // only its shape - names, sizes, when they last changed.
-export function listFolder(dir: string): Listed[] | null {
+function listFolder(dir: string): Listed[] | null {
   try {
     return fs.readdirSync(dir).map((name) => {
       const st = fs.statSync(path.join(dir, name));

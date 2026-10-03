@@ -19,10 +19,10 @@ import type { SchemaState } from './schema-service.ts';
 import type { LibFile, LibRecord } from './types.ts';
 
 /** One thing the report says is wrong, and what to do about it. Two levels on purpose; see findProblems. */
-export interface Problem { level: 'broken' | 'note'; what: string; detail: string }
+interface Problem { level: 'broken' | 'note'; what: string; detail: string }
 
 /** What of the installer a report asks: which mods are overruled, the download cache, a record's slot. */
-export interface ReportInstaller {
+interface ReportInstaller {
   coverage(mods: { key: string; name: string; files: LibFile[] }[]): { size: number };
   downloadCacheSize(): number;
   slotNumber(rec: LibRecord): number | null;
@@ -32,7 +32,7 @@ export interface ReportInstaller {
 type PatchState = Partial<SchemaState>;
 
 /** Facts only the main process can answer, handed in so this module stays free of Electron. */
-export interface ReportExtra {
+interface ReportExtra {
   dotaRunning?: boolean; windows?: unknown; rendererErrors?: unknown; updater?: unknown;
   remoteConfig?: unknown; toolchain?: unknown; displays?: unknown; gpu?: unknown;
 }

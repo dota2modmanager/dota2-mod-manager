@@ -12,7 +12,7 @@ import type { Library } from './library.ts';
 import type { Installer } from './installer.ts';
 
 /** The first line of the status for each screen the window reports. */
-export const PRESENCE_VIEWS: Record<string, string> = {
+const PRESENCE_VIEWS: Record<string, string> = {
   catalog: 'Смотрит каталог модов',
   library: 'В своей библиотеке',
   presets: 'Собирает пресет',

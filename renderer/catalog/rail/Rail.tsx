@@ -6,7 +6,7 @@ import { flushSync } from 'react-dom';
 import { MotionConfig, motion } from 'motion/react';
 import { dur, ease } from '../../motion/tokens.ts';
 
-export interface RailItem {
+interface RailItem {
   id: string;
   icon: string;
   name: string;

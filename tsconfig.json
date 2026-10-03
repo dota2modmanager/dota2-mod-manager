@@ -1,22 +1,25 @@
-// Type checking for the two preload bridges, the last JavaScript the app ships outside the window.
+// Type checking for the JavaScript the app still ships: the two preload bridges and the removal window.
 //
-// Nothing is compiled and nothing is emitted: this reads preload.js and preload-uninstall.js with
-// the JSDoc they carry and says where the code and its own documentation disagree. It used to read
-// main.js and every module in src/ the same way, which is how it found a require that had never
-// resolved and two handlers that answered every call with "Cannot find module". Since 2026-09-30
-// the main process is TypeScript and src/tsconfig.json checks it, strict.
+// Nothing is compiled and nothing is emitted: this reads preload.js, preload-uninstall.js and
+// renderer/uninstall.js with the JSDoc they carry and says where the code and its own
+// documentation disagree. It used to read main.js and every module in src/ the same way, which is
+// how it found a require that had never resolved and two handlers that answered every call with
+// "Cannot find module". Since 2026-09-30 the main process is TypeScript and src/tsconfig.json
+// checks it, strict.
 //
 // The preloads stay JavaScript on purpose: Electron runs them in the sandbox, as CommonJS, before
 // the page, and a preload that failed to load would leave the window with no window.api at all.
+// The removal window is a classic script loaded without a build (vite.config.mjs says why), and
+// renderer/uninstall-bridge.d.ts describes what its preload gives it.
 //
 // Why these settings:
 //   checkJs with strict off - the point is to catch what is wrong, not to fail on every value that
-//     could be null in two files that only pass messages through.
+//     could be null in files that only pass messages through.
 //   module preserve - each file is read the way it is written.
 //   skipLibCheck - Electron's own .d.ts is not this project's to fix.
 //
-// Not covered: renderer/ and tools/. The renderer is ES modules against the DOM, the tools are a
-// mix of both module systems, and each needs its own settings.
+// The rest of renderer/ is TypeScript with a tsconfig of its own. Not covered: tools/, a mix of both
+// module systems that needs its own settings.
 {
   "compilerOptions": {
     "allowJs": true,
@@ -29,5 +32,5 @@
     "strict": false,
     "types": ["node"]
   },
-  "include": ["preload.js", "preload-uninstall.js"]
+  "include": ["preload.js", "preload-uninstall.js", "renderer/uninstall.js", "renderer/uninstall-bridge.d.ts"]
 }

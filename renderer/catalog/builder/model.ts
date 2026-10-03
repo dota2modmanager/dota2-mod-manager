@@ -9,7 +9,7 @@ export interface BuilderAction {
   remove?: boolean;
 }
 
-export interface OptionCard {
+interface OptionCard {
   id: string;
   name: string;
   tags: string;
@@ -17,7 +17,7 @@ export interface OptionCard {
   on: boolean;
 }
 
-export interface EffectCard {
+interface EffectCard {
   id: string;
   name: string;
   picture: string | null;
@@ -46,7 +46,7 @@ export interface SlotPickerActions {
   apply: () => void;
 }
 
-export interface SlotTile {
+interface SlotTile {
   slot: string;
   label: string;
   icon: string;
@@ -69,7 +69,7 @@ export interface HeroModalActions {
   openSlot: (slot: string) => void;
 }
 
-export interface SetCard {
+interface SetCard {
   id: string;
   name: string;
   on: boolean;
@@ -90,7 +90,7 @@ export interface SetsModalActions {
   open: (id: string) => void;
 }
 
-export interface PieceCard {
+interface PieceCard {
   index: number;
   name: string;
   fits: boolean;

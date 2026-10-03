@@ -6,7 +6,7 @@ import * as signature from './catalog-signature.ts';
 
 /** The upstream catalog repository, read raw: where the data files and their signatures are fetched first. */
 export const RAW_BASE = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main';
-const DATA_FILES = ['mods.json', 'constants.json', 'guides.json'];
+const DATA_FILES = ['mods.json', 'constants.json', 'guides.json'] as const;
 
 /* The published sha256 of every archive in the catalog, signed like the data.
  *
@@ -34,7 +34,7 @@ type RawCategory = RawMod[] | { groups?: { mods?: RawMod[] }[]; mods?: RawMod[] 
 type RawMods = { modsData?: Record<string, RawCategory> } | null | undefined;
 
 /** The catalog as the window is handed it: the three files, when they were fetched, and why they are old if they are. */
-export interface CatalogFiles {
+interface CatalogFiles {
   fetchedAt: number | null;
   stale?: string;
   mods?: RawMods;
@@ -200,11 +200,12 @@ export class Catalog {
         stale = e instanceof Error ? e.message : String(e);
       }
     }
-    const out: CatalogFiles = { fetchedAt: this.cacheInfo().fetchedAt };
+    const read = (name: (typeof DATA_FILES)[number]) => JSON.parse(fs.readFileSync(this.cachePath(name), 'utf-8'));
+    const out: CatalogFiles = {
+      fetchedAt: this.cacheInfo().fetchedAt,
+      mods: read('mods.json'), constants: read('constants.json'), guides: read('guides.json'),
+    };
     if (stale) out.stale = stale;
-    for (const name of DATA_FILES) {
-      (out as unknown as Record<string, unknown>)[name.replace('.json', '')] = JSON.parse(fs.readFileSync(this.cachePath(name), 'utf-8'));
-    }
     normalizeCatalog(out.mods);
     return out;
   }

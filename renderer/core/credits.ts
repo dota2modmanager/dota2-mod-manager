@@ -12,7 +12,7 @@
  */
 
 /** The roles, in the order they are shown: whoever made it before whoever changed or sent it. */
-export const CREDIT_ROLES = ['author', 'modded', 'sender'] as const;
+const CREDIT_ROLES = ['author', 'modded', 'sender'] as const;
 export type CreditRole = typeof CREDIT_ROLES[number];
 export const isCreditRole = (t: unknown): t is CreditRole => (CREDIT_ROLES as readonly unknown[]).includes(t);
 

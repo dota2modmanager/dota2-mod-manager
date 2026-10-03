@@ -21,7 +21,7 @@ import crypto from 'node:crypto';
 import * as patcher from './patcher.ts';
 
 /** A patch rewrites a lot of files at once, so the first event is never the last one. */
-export const DEBOUNCE_MS = 3000;
+const DEBOUNCE_MS = 3000;
 // A watch handle can die with the directory it was set on (Steam replaces folders during
 // big updates). Re-arm rather than go deaf for the rest of the session.
 const REARM_MS = 30000;

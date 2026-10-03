@@ -88,7 +88,7 @@ function sharedCard(p: Preset): SharedPreset {
   };
 }
 
-export async function renderPresets(fresh = false): Promise<void> {
+async function renderPresets(fresh = false): Promise<void> {
   presets = await window.api.presets.list();
   const { installed } = await window.api.mods.list();
   const byId = new Map<string, LibRecord>((installed as LibRecord[]).map((m) => [m.id, m]));

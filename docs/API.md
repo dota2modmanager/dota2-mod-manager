@@ -131,14 +131,6 @@ src/cursors.ts and src/presets-service.ts take them. It moved for the same reaso
 cursors did: main.js cannot be required by a test, so none of this could be tested where it
 was, and it decides what a user sees in their library.
 
-### `AdoptInstaller`
-
-```ts
-export interface AdoptInstaller
-```
-
-What of the installer this asks: a name from the file, what the file is, and the master switch.
-
 ### `AdoptSchema`
 
 ```ts
@@ -210,14 +202,6 @@ export const LOG_MAX_BYTES = 1024 * 1024
 
 Past this size the log moves to app.log.1 and starts again.
 
-### `AppLog`
-
-```ts
-export interface AppLog
-```
-
-Where the log is, and the one call everything in the main process writes to it with.
-
 ### `createAppLog`
 
 ```ts
@@ -237,14 +221,6 @@ Normally the one Vite builds into out/renderer (vite.config.mjs). An unpackaged 
 `npm run dev` loads it from the Vite server on this machine instead, so an edit shows without
 a restart. A packaged app ignores MM_DEV_URL whatever it says: the variable would otherwise be
 a way to hand window.api to any page at all.
-
-### `LOCAL_DEV_URL`
-
-```ts
-export const LOCAL_DEV_URL = /^http:\/\/(127\.0\.0\.1|localhost):\d+\/$/
-```
-
-The only address `npm run dev` serves from (tools/dev.mjs, vite.config.mjs).
 
 ### `appPage`
 
@@ -295,38 +271,6 @@ export const BETA_CHANNEL = 'beta'
 ```
 
 The channel name electron-updater reads, and the file it looks for: beta.yml.
-
-### `STABLE_CHANNEL`
-
-```ts
-export const STABLE_CHANNEL = 'latest'
-```
-
-What everybody else reads: latest.yml, the release channel.
-
-### `Channel`
-
-```ts
-export type Channel = typeof BETA_CHANNEL | typeof STABLE_CHANNEL
-```
-
-_No description in the source._
-
-### `BetaList`
-
-```ts
-export interface BetaList { salt?: string; ids?: unknown[] }
-```
-
-The `beta` block of the signed config: a salt and the hashed ids let in.
-
-### `BetaAsk`
-
-```ts
-export interface BetaAsk { discordId?: string | null; beta?: BetaList | null; wanted?: boolean }
-```
-
-Who is asking and whether they switched the beta on.
 
 ### `idHash`
 
@@ -520,14 +464,6 @@ checked against that first copy afterwards, which catches a substitution on ever
 except the one that matters. So it is fetched beside them and a failure costs the old
 behaviour rather than the catalog.
 
-### `CatalogFiles`
-
-```ts
-export interface CatalogFiles
-```
-
-The catalog as the window is handed it: the three files, when they were fetched, and why they are old if they are.
-
 ### `normalizeCatalog`
 
 ```ts
@@ -566,22 +502,6 @@ required by a test (it pulls in Electron), so the startup repair below - which d
 whether a user's cursor comes back after a game update or a Steam verify - could not be
 tested where it was. test/cursors.test.ts is what the move is for.
 
-### `CursorInstaller`
-
-```ts
-export interface CursorInstaller
-```
-
-What of the installer this needs: the cursor store, deploy and undeploy.
-
-### `CursorLibrary`
-
-```ts
-export interface CursorLibrary
-```
-
-What of the library this needs: the records, and switching one.
-
 ### `isCursorRecord`
 
 ```ts
@@ -619,14 +539,6 @@ export function firstLink(argv: readonly unknown[] | null | undefined): string |
 ```
 
 The first d2mm:// link on a command line, if there is one.
-
-### `presetCode`
-
-```ts
-export function presetCode(url: string): string
-```
-
-The part of a link the preset importer reads: what follows d2mm://preset/.
 
 ### `handleDeepLink`
 
@@ -702,23 +614,6 @@ What a support report reads off the disk: a folder's listing (names, sizes, date
 bytes) and the last part of a log. The user's home folder is written as ~ or %USERPROFILE%, so
 a report says where a file is without saying whose machine it came from.
 
-### `Listed`
-
-```ts
-export type Listed = { name: string; size: number; mtime: number; dir: boolean }
-```
-
-One row of a folder listing: its shape, never its bytes.
-
-### `listFolder`
-
-```ts
-export function listFolder(dir: string): Listed[] | null
-```
-
-Nothing about a folder listing that matters for troubleshooting needs the file's bytes,
-only its shape - names, sizes, when they last changed.
-
 ### `redactHome`
 
 ```ts
@@ -774,30 +669,6 @@ Pure data in, pure data out - no Electron here, no zip - so src/ipc-diagnostics.
 it is packaged (the diag:export handler) and this stays exercisable on its own.
 
 Hands on from [`src/diagnostics-render.ts`](#srcdiagnostics-renderts): `renderSummary`, `renderDetailed`.
-
-### `Problem`
-
-```ts
-export interface Problem { level: 'broken' | 'note'; what: string; detail: string }
-```
-
-One thing the report says is wrong, and what to do about it. Two levels on purpose; see findProblems.
-
-### `ReportInstaller`
-
-```ts
-export interface ReportInstaller
-```
-
-What of the installer a report asks: which mods are overruled, the download cache, a record's slot.
-
-### `ReportExtra`
-
-```ts
-export interface ReportExtra
-```
-
-Facts only the main process can answer, handed in so this module stays free of Electron.
 
 ### `Report`
 
@@ -857,14 +728,6 @@ What that buys and what it costs, plainly:
  - the identity this produces is trusted by THIS app only. A nickname written into a
    shared preset is just text; proving who made a preset needs a server that verifies
    the token with Discord, and that comes with the community catalog.
-
-### `DiscordUser`
-
-```ts
-export interface DiscordUser { id: string; username: string; avatar: string | null }
-```
-
-Who signed in: the Discord account's id, the name it shows, and its avatar as a data URI.
 
 ### `CLIENT_ID`
 
@@ -995,14 +858,6 @@ the app said nothing - the renderer awaited a promise that rejected, so the butt
 
 One definition, handed to whoever needs it, so there is no second copy to leave behind.
 
-### `FeatureSwitches`
-
-```ts
-export interface FeatureSwitches
-```
-
-What of the remote config this asks: whether a feature is off, and why, in the user's language.
-
 ### `createGate`
 
 ```ts
@@ -1085,14 +940,6 @@ export interface CatalogIdentity { name: string; categoryId: string; styleLabel?
 ```
 
 A catalog mod a fingerprint points at.
-
-### `FontMod`
-
-```ts
-export interface FontMod extends CatalogIdentity { files: Record<string, string> }
-```
-
-A font mod, known by the hash of every file it puts in panorama/fonts.
 
 ### `Fingerprints`
 
@@ -1209,14 +1056,6 @@ half-succeed, and the client has already read the files anyway. The app says it 
 tries again after the game exits.
 
 Hands on from [`src/game-repair.ts`](#srcgame-repairts): `REPAIR_RETRY_MS`, `PatchRepair`, `Stuck`.
-
-### `LangMigration`
-
-```ts
-export type LangMigration = { from: string; to: string; moved: number }
-```
-
-Mods moved into the folder the game mounts, told to the user once in Settings.
 
 ### `dotaIsRunning`
 
@@ -1791,63 +1630,6 @@ an argument instead of as `this`. Its tests (test/import.test.ts) and the mutant
 those tests bite (.github/mutants.json) were written first, in #48, so this move had
 something to prove itself against.
 
-### `DroppedFile`
-
-```ts
-export type DroppedFile = { name?: string; data: Uint8Array | ArrayBuffer }
-```
-
-Files dropped as bytes, when the drop could not name a path on disk.
-
-### `scanVpkTree`
-
-```ts
-export function scanVpkTree(root: string, depth = 0): string[]
-```
-
-Every .vpk under a dropped folder. Skinchanger packs unzip to a whole game tree
-(<pack>\game\Dota2SkinChanger\pak01_*.vpk), so the file we want sits a few levels in.
-
-### `stageFolderAsVpk`
-
-```ts
-export function stageFolderAsVpk(dir: string, staged: string[]): string | null
-```
-
-Pack an author's working folder into a VPK and park it where the normal importer will
-find it. Staged rather than installed directly, so a folder goes through exactly the
-same path a dropped .vpk does - slot allocation, the schema a mod carries, the
-transaction, the naming.
-
-```
-@returns path of the staged archive, or null if the folder holds no game files
-```
-
-### `expandImportInputs`
-
-```ts
-export function expandImportInputs(paths: string[], staged: string[]): { files: string[]; errors: { source: string; error: string }[] }
-```
-
-Turn whatever the user dropped or picked into a flat list of .vpk paths: a folder is
-walked, a .zip is unpacked to a temp dir (keeping its layout so multi-part sets stay
-side by side), a plain file passes through. Temp dirs are appended to `staged` for the
-caller to delete once the import has read them.
-
-### `importVpkFiles`
-
-```ts
-export async function importVpkFiles(installer: Installer, paths: string[], onStep?: (done: number, total: number) => void): Promise<ImportResult[]>
-```
-
-Take these .vpk files in, one mod per set, each in its own transaction.
-
-```
-@param installer the installer engine: the game folder, the slots and the writes
-@param paths .vpk files to take in
-@param onStep called after each mod lands
-```
-
 ### `importVpks`
 
 ```ts
@@ -1882,14 +1664,6 @@ VPK ever reaches the game folder, and the slot name is ours, never theirs.
 Getting a catalog mod onto this machine: where its archive lives, what it is called on disk,
 and the cache of what was downloaded and what each file hashed to. Behind src/installer.ts.
 
-### `DownloadEntry`
-
-```ts
-export type DownloadEntry = { size: number; sha256: string; at: number }
-```
-
-What a downloaded archive was when it arrived: its size and hash, and when.
-
 ### `fileUrl`
 
 ```ts
@@ -1897,23 +1671,6 @@ export function fileUrl(categoryId: string, fileRef: string): string
 ```
 
 Where a catalog file is fetched from: its own URL, or the catalog's files folder.
-
-### `safeFileName`
-
-```ts
-export function safeFileName(raw: unknown, fallback: string): string
-```
-
-A name from the catalog is a name, never a path.
-
-What a mod is called on disk used to be decodeURIComponent(last segment of the URL), and
-a catalog entry pointing at ".../..%2F..%2F..%2Fsomething" decoded straight back into
-"../../../something" - a file the app then wrote wherever that landed. Slashes cannot
-survive this, so nothing here can climb out of the folder it was given.
-
-Spaces, brackets and Cyrillic are left alone on purpose: real catalog files are called
-things like "Red Abaddon (v2).zip", they are the keys of the download cache, and
-scrubbing them would re-download every mod on disk to no benefit.
 
 ### `downloadIndex`
 
@@ -2244,14 +2001,6 @@ written out as a folder, the whole-game tables stripped out of it, a pack of her
 Taking a mod IN - from a file, a zip, a folder or dropped bytes - is src/import.ts.
 Behind src/installer.ts.
 
-### `RecordAnalysis`
-
-```ts
-export type RecordAnalysis =
-```
-
-What a record's own file is: a summary, the heroes it is about, the game's names for it, its fingerprint.
-
 ### `describePaths`
 
 ```ts
@@ -2371,14 +2120,6 @@ The game mounts pakNN_dir.vpk in numeric order and the FIRST copy of a file wins
 mod's pak number is its priority: a smaller number sits on top. That is what makes
 "put these arms over that hero set" a real thing rather than a conflict - both mods
 load, and the one on top supplies the files they share.
-
-### `CoverageMod`
-
-```ts
-export type CoverageMod = { key: string; name: string; files: LibFile[] }
-```
-
-A switched-on mod as coverage reads it: keyed, because two copies of one mod share a name.
 
 ### `usedPakNames`
 
@@ -2897,14 +2638,6 @@ export function workAreaFrom(spec: string | undefined): { width: number; height:
 
 A work area written "1366x728" (MM_WORKAREA, tools/sim profiles), standing in for a smaller screen.
 
-### `zoomFor`
-
-```ts
-export function zoomFor(key: string, current: number): number | null
-```
-
-The key a Ctrl chord turns into a new scale, or null for any other key.
-
 ### `createMainWindow`
 
 ```ts
@@ -2947,14 +2680,6 @@ answer to it, not an oversight to point out.
 None of which is a fight to win. It is a thing to be able to explain in a sentence, so
 whoever is looking at a game with no mods in it knows why.
 
-### `MinifyConfig`
-
-```ts
-export interface MinifyConfig { outputPath: string | null; locale: string | null; folder: string | null }
-```
-
-What Minify's own config says about where it writes.
-
 ### `MinifyState`
 
 ```ts
@@ -2978,31 +2703,6 @@ export const MINIFY_BORROWED = 'dutch'
 ```
 
 The real language it moved to, whose folder Dota does mount.
-
-### `MINIFY_PAKS`
-
-```ts
-export const MINIFY_PAKS: readonly number[] = [65, 66, 67, 99]
-```
-
-The pak slots Minify writes, and the smaller set we refuse to hand out.
-
-MINIFY_PAKS is recognition: a pak sitting in one of these slots is its work, so the master
-switch does not rename it and the foreign-file scan does not offer it up. 65 is its merged
-VPK mods, 66 what it compiles and 67 what its d2pfx browser installs, all three from its
-ARCHITECTURE.md; 99 is where releases up to v1.14rc6 wrote the English fix.
-
-RESERVED is smaller, and the difference is the point. We hand out pak02 to pak99, and a
-slot only has to be kept empty when Minify might write it LATER - reading the folder today
-cannot see a program that gets installed next week. That is why 65 to 67 stay blocked
-whether or not it is on the machine.
-
-99 no longer belongs in that set. Minify merged the English localization into pak66 in
-v1.14rc7 (commit 9ffc8e4, "Include the swap into main vpk"; #English Fix/manifest.json is
-gone with it), so nothing will write there in future and the slot is ours to use. Anybody
-still on an older release has a pak99 on disk already, which the allocator reads off the
-folder like any other occupied slot - and MINIFY_PAKS still knows whose it is. The author
-asked for exactly this: detect the file rather than blindly reserve the number.
 
 ### `RESERVED_PAKS`
 
@@ -3046,21 +2746,6 @@ an .off or .moff already on the end.
 @param baseLower a file name, lowercased
 ```
 
-### `MINIFY_MARKERS`
-
-```ts
-export const MINIFY_MARKERS: readonly string[] = ['minify_mods.json', 'minify_vpk_mods.txt', 'minify_version.txt']
-```
-
-How Minify marks its own work, and how it recognises it again.
-
-It packs metadata files into every VPK it builds and checks for them before deleting one
-(Minify/patch/vpk_utils.py, is_minify_pak). Reading the same marker is better than reasoning
-from slot numbers: a slot says where a file sits, the marker says who made it, and it is the
-only thing that can identify its maps/dota.vpk - a path with no number to reserve.
-
-Reading their convention rather than proposing one costs nothing and needs no agreement.
-
 ### `isMinifyPak`
 
 ```ts
@@ -3073,14 +2758,6 @@ Was this VPK built by Minify? Reads the archive index only, never the content.
 @param file  full path to a *_dir.vpk
 ```
 
-### `configPath`
-
-```ts
-export function configPath(): string
-```
-
-Where Minify keeps the settings it publishes about itself.
-
 ### `readConfig`
 
 ```ts
@@ -3089,19 +2766,6 @@ export function readConfig(file = configPath()): MinifyConfig | null
 
 What Minify says about itself, or null. Its own config beats anything we could infer: it
 names the locale it sets, which is the whole question between the two apps.
-
-### `folderOfPath`
-
-```ts
-export function folderOfPath(outputPath: string | null | undefined): string | null
-```
-
-The suffix of the folder a path ends in: ...\\game\\dota_dutch -> "dutch".
-
-This is the field that matters, and it is not output_locale. Asked for English, Minify
-records output_locale "english" - the language the player chose - while writing into
-dota_dutch, because Dutch is the folder it borrows to make English work. Reading the locale
-had this app announce a folder called dota_english, which exists nowhere.
 
 ### `prelaunchHook`
 
@@ -3877,14 +3541,6 @@ never looks like a game update - otherwise the app would keep waking itself up.
 
 This module only decides "the game changed"; what to do about it lives in src/game-upkeep.ts.
 
-### `DEBOUNCE_MS`
-
-```ts
-export const DEBOUNCE_MS = 3000
-```
-
-A patch rewrites a lot of files at once, so the first event is never the last one.
-
 ### `clientVersion`
 
 ```ts
@@ -4205,24 +3861,6 @@ export interface Source
 
 Where a portable build can come from: its manifest, the binary it names, and whether only that host is trusted.
 
-### `SOURCES`
-
-```ts
-export const SOURCES: readonly Source[] = [
-```
-
-Where to look, in order.
-
-GitHub first and without mirrors: the manifest carries the hash everything else is checked
-against, so a public proxy must not be able to touch it. That rule cost the portable build
-its update entirely whenever GitHub was unreachable, which for part of the userbase is every
-day and for everybody was three hours on 2026-08-17.
-
-The second entry is not a proxy. It is this project's own bucket, reached with credentials
-only this project holds, which is the same trust as the release page itself - and the same
-reasoning as the update feed fallback in src/updater.ts. Manifest and binary both come from
-whichever source answered, so the hash and the file it describes are always from one place.
-
 ### `parseManifest`
 
 ```ts
@@ -4268,14 +3906,6 @@ many mods are switched on.
 The status is written in the language the user chose for the app. Their friends read it, and
 that is the only language signal we have about them. The connection itself is
 src/discord-presence.ts; this decides what it says and when it is on at all.
-
-### `PRESENCE_VIEWS`
-
-```ts
-export const PRESENCE_VIEWS: Record<string, string> =
-```
-
-The first line of the status for each screen the window reports.
 
 ### `presenceActivity`
 
@@ -4404,14 +4034,6 @@ Everything here treats the file as hostile input: it arrives from a stranger ove
 Discord. Nothing is read out of the zip that the manifest didn't ask for by an exact,
 pattern-checked name, and the caller installs only after showing the user the contents.
 
-### `PresetManifest`
-
-```ts
-export interface PresetManifest
-```
-
-preset.json once it has been checked: everything a receiver is shown before installing.
-
 ### `EntryToWrite`
 
 ```ts
@@ -4443,14 +4065,6 @@ export const MAX_MODS = 500
 ```
 
 More mods than anybody has; a list longer than this is refused before it is read.
-
-### `validateManifest`
-
-```ts
-export function validateManifest(raw: unknown): PresetManifest
-```
-
-preset.json checked field by field: what fails is refused, what is unknown is dropped.
 
 ### `writePresetFile`
 
@@ -4792,14 +4406,6 @@ Callers get a flat list of files with forward-slash paths, already stripped of a
 that could escape a folder, and write through safeJoin so a name can never resolve
 outside the folder it was meant for.
 
-### `ZipFile`
-
-```ts
-export interface ZipFile { path: string; size: number; read(): Buffer }
-```
-
-A file inside an archive that passed every check: its path, its size, and its bytes on demand.
-
 ### `OpenedZip`
 
 ```ts
@@ -4807,27 +4413,6 @@ export interface OpenedZip
 ```
 
 A foreign archive, opened: what is safe to hand out of it, and a way to unpack it.
-
-### `ZipLimits`
-
-```ts
-export type ZipLimits = typeof LIMITS
-```
-
-The budgets an archive is held to; tests lower them.
-
-### `LIMITS`
-
-```ts
-export const LIMITS =
-```
-
-Measured against the 104 real archives on disk (catalog mods, fonts, cursors, packs),
-not guessed: the heaviest zip is 64 MB, the largest single entry unpacks to 301 MB, the
-fullest archive holds 111 files, and the tightest compression is 80x (cursor bitmaps).
-Every limit sits several times above that, so a legitimate archive never meets one.
-The ratio is only judged on entries big enough to matter — a 20 KB text file that packs
-500x is not a threat, and small assets compress hard all the time.
 
 ### `isUnsafeName`
 
@@ -5406,14 +4991,6 @@ export type Zone = 'priority' | 'normal'
 
 The two ranges a pak can sit in: early slots that load first, and everything after.
 
-### `SlotInstaller`
-
-```ts
-export interface SlotInstaller
-```
-
-What of the installer this asks: which slot a record's pak sits in, which slots are taken, and moving one.
-
 ### `PRIORITY_CATEGORIES`
 
 ```ts
@@ -5430,14 +5007,6 @@ export const PRIORITY_SLOTS: readonly [number, number] = [2, 29]
 ```
 
 The first and last slot of those categories.
-
-### `NORMAL_FIRST`
-
-```ts
-export const NORMAL_FIRST = 30
-```
-
-Where every other mod starts.
 
 ### `APP_PAK`
 
@@ -5459,14 +5028,6 @@ export const isAppPak = (baseLower: string): boolean => baseLower === `pak${APP_
 
 Whether a lowercased file name in the language folder is the app's own pak.
 
-### `isPriorityCategory`
-
-```ts
-export const isPriorityCategory = (categoryId: string): boolean => PRIORITY_CATEGORIES.includes(categoryId)
-```
-
-Whether a category is one of those that load first.
-
 ### `zoneFor`
 
 ```ts
@@ -5474,14 +5035,6 @@ export const zoneFor = (categoryId: string): Zone => (isPriorityCategory(categor
 ```
 
 Which part of the load order a category's mods belong in.
-
-### `slotZone`
-
-```ts
-export const slotZone = (n: number): Zone => (n >= PRIORITY_SLOTS[0] && n <= PRIORITY_SLOTS[1] ? 'priority' : 'normal')
-```
-
-Which part of the load order a slot number is in.
 
 ### `freeSlotIn`
 
@@ -5670,14 +5223,6 @@ Nothing inside a map pack says which build of the map it was made from, so the d
 carries in the archive stands in for it. A terrain built before the game's current map is
 marked, in the catalog and in My mods, and switched off once when the game's map changes.
 
-### `MAP_REL`
-
-```ts
-export const MAP_REL = 'maps/dota.vpk'
-```
-
-Where a whole-map terrain puts its map, under the language folder.
-
 ### `TAIL_BYTES`
 
 ```ts
@@ -5686,22 +5231,6 @@ export const TAIL_BYTES = 64 * 1024
 
 The end of a zip holds its table of contents. A terrain archive has two or three files, so
  the table is a few hundred bytes; this much reaches it even behind a long archive comment.
-
-### `mapFileOf`
-
-```ts
-export function mapFileOf(rec: Pick<LibRecord, 'files'> | null | undefined): LibFile | null
-```
-
-The record's map file, when the record is a whole-map terrain.
-
-### `gameMapTime`
-
-```ts
-export function gameMapTime(gamePath: string | null | undefined): number | null
-```
-
-When Steam last wrote the game's own map, or null with no game or no map.
 
 ### `mapTimeInZip`
 
@@ -5765,14 +5294,6 @@ Rules this file exists to enforce:
     not a rollback plan, and an unsigned file that can redirect a fifty megabyte download is
     not one worth building. Removed 2026-09-16; a new tool version travels with a release.
 
-### `Pin`
-
-```ts
-export interface Pin { version: string; url: string; sha256: string; bytes: number; exe: string; license: string; project: string }
-```
-
-A tool pinned to a version, a URL, and the digest those bytes have to hash to.
-
 ### `ToolProgress`
 
 ```ts
@@ -5791,38 +5312,6 @@ Measured again 2026-09-07 for 20.0: the digest comes from GitHub's own release A
 confirmed by downloading the file and hashing it, and the archive was opened to check the
 executable is at its root under the name below.
 
-### `TOOL_NAMES`
-
-```ts
-export const TOOL_NAMES: readonly string[] = Object.keys(BUILT_IN_PINS)
-```
-
-Every tool the app knows how to fetch.
-
-### `FALLBACK_BASE`
-
-```ts
-export const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/'
-```
-
-A copy of the pinned archive in this project's own bucket.
-
-The primary URL is a GitHub release, and every mirror src/net.ts knows is a proxy standing
-in front of GitHub, so all of them go down together. This one does not: tools/r2-toolchain.mjs
-copies the pinned archive there, byte for byte, after checking it against the same digest.
-
-Safe from anywhere, and that is the point of a pin: the digest lives in this file rather than
-travelling with the URL, so whoever hands the bytes over cannot also decide what they should
-hash to. The address is written here for the same reason the owner allowlist below is.
-
-### `fallbackUrl`
-
-```ts
-export const fallbackUrl = (name: string, version: string): string => `${FALLBACK_BASE}${name}-${version}.zip`
-```
-
-Where the copy of a pinned archive lives, keyed by the tool and the version pinned to it.
-
 ### `validPin`
 
 ```ts
@@ -5830,15 +5319,6 @@ export function validPin(pin: unknown, name: string | null | undefined): boolean
 ```
 
 Whether a pin names a version, an executable, a digest, and a release of an owner listed above.
-
-### `TOOL_TIMEOUT_MS`
-
-```ts
-export const TOOL_TIMEOUT_MS = 60000
-```
-
-A tool that has not answered by now is not going to. The user waits on this: the item picker
-and the library show placeholders until it returns.
 
 ### `runTool`
 

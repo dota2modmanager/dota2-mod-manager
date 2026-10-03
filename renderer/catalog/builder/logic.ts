@@ -9,9 +9,9 @@ type ItemSlot = CosmeticSlot;
 type ItemSet = CosmeticSet;
 type ItemEffect = { id: string; name: string };
 /** What the game shows on a slot now (core/installed.ts pickedIn). */
-export interface LivePick { itemId?: string; name?: string; effectId?: string }
+interface LivePick { itemId?: string; name?: string; effectId?: string }
 
-export type PickedIn = (slot: string) => LivePick | null | undefined;
+type PickedIn = (slot: string) => LivePick | null | undefined;
 
 /** The effects of a pick in the order the slot offers them, as one string: 'fire,snow'. */
 export function effectKey(effects: ItemEffect[] | undefined, ids: string[] | undefined): string {

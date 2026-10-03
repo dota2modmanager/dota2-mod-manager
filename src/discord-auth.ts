@@ -24,7 +24,7 @@ import { electron } from './electron.ts';
 
 
 /** Who signed in: the Discord account's id, the name it shows, and its avatar as a data URI. */
-export interface DiscordUser { id: string; username: string; avatar: string | null }
+interface DiscordUser { id: string; username: string; avatar: string | null }
 
 // Public by design in OAuth2 — it identifies the app, it is not a secret, and it ships in
 // every OAuth request anyway. The client SECRET is a different thing and is never needed

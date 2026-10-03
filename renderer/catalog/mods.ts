@@ -8,7 +8,7 @@ export interface CustomPack {
   mods: unknown[];
 }
 
-export interface ModsOptions {
+interface ModsOptions {
   /** tools the catalog lists that this app does the job of itself (core/constants.ts TOOLS_HIDDEN) */
   toolsHidden?: RegExp[];
   /** the user's own packs, listed after the catalog's in 'packs' */

@@ -65,7 +65,7 @@ export function workAreaFrom(spec: string | undefined): { width: number; height:
 }
 
 /** The key a Ctrl chord turns into a new scale, or null for any other key. */
-export function zoomFor(key: string, current: number): number | null {
+function zoomFor(key: string, current: number): number | null {
   if (key === '=' || key === '+') return clampZoom(current + 0.05);
   if (key === '-' || key === '_') return clampZoom(current - 0.05);
   if (key === '0') return 1;

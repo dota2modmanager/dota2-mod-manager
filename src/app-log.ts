@@ -12,7 +12,7 @@ import path from 'node:path';
 export const LOG_MAX_BYTES = 1024 * 1024;
 
 /** Where the log is, and the one call everything in the main process writes to it with. */
-export interface AppLog {
+interface AppLog {
   /** the log file, placed on first use */
   file(): string;
   /** one line, stamped with the time, into the log and into the mirror when there is one */

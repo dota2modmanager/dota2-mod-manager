@@ -61,7 +61,7 @@
     {
       "name": "importing leaves a multi-volume set as a set",
       "file": "src/import.ts",
-      "anchor": "export async function importVpkFiles(installer: Installer, paths: string[], onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {",
+      "anchor": "async function importVpkFiles(installer: Installer, paths: string[], onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {",
       "from": "if (partFiles.length && partsBytes <= MERGE_SIZE_CAP) {",
       "to": "if (false) {",
       "test": "test/import.test.ts"
@@ -69,7 +69,7 @@
     {
       "name": "importing takes in a file that is not a mod",
       "file": "src/import.ts",
-      "anchor": "export async function importVpkFiles(installer: Installer, paths: string[], onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {",
+      "anchor": "async function importVpkFiles(installer: Installer, paths: string[], onStep?: (done: number, total: number) => void): Promise<ImportResult[]> {",
       "from": "results.push({ source: fileName, error: t('не .vpk файл') });",
       "to": "results.push({ source: fileName });",
       "test": "test/import.test.ts"
@@ -77,7 +77,7 @@
     {
       "name": "a folder with nothing in it is passed over in silence",
       "file": "src/import.ts",
-      "anchor": "export function expandImportInputs(paths: string[], staged: string[]): { files: string[]; errors: { source: string; error: string }[] } {",
+      "anchor": "function expandImportInputs(paths: string[], staged: string[]): { files: string[]; errors: { source: string; error: string }[] } {",
       "from": "errors.push({ source: label, error: t('в папке нет ни .vpk, ни файлов игры') });",
       "to": ";",
       "test": "test/import.test.ts"

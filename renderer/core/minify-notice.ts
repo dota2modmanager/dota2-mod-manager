@@ -29,7 +29,7 @@ export interface MinifyState {
   prelaunch?: boolean;
 }
 
-export interface MinifyNotice {
+interface MinifyNotice {
   kind: 'info' | 'warn';
   case: 'unmountable' | 'minify-live' | 'shared' | 'unknown' | 'ours-read' | 'minify-empty' | 'elsewhere';
 }
