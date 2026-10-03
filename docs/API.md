@@ -62,6 +62,7 @@ the code, not in this page.
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
 | [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
+| [`src/mods-listing.ts`](#srcmods-listingts) | What My mods is drawn from: the answer to mods:list (src/ipc-mods.ts), which every screen asks |
 | [`src/net-download.ts`](#srcnet-downloadts) | A file downloaded to disk across the mirror chain (src/net.ts explains it): resumed where a |
 | [`src/net-fetch.ts`](#srcnet-fetchts) | A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a |
 | [`src/net-mirrors.ts`](#srcnet-mirrorsts) | The mirror chain (src/net.ts explains it): which hosts carry a copy of a GitHub file and how a |
@@ -3217,6 +3218,26 @@ Pictures for mods that came with none, cached in userData.
 @param deps.langFileOf where a mod's *_dir.vpk actually is
 @param deps.images test seam for decode/resize
 ```
+
+## src/mods-listing.ts
+
+What My mods is drawn from: the answer to mods:list (src/ipc-mods.ts), which every screen asks
+for again after anything changes.
+
+It does more than list. A mod whose files were deleted from the game folder drops out of the
+library; a foreign file is named as a copy of a library mod when it is one, and as a catalog
+mod when the catalog knows it; an import still called "pakNN" gets a real name once; every row
+says which switched-on mod hides its files; the item blocks stay in the main process; and the
+ownership note and the anti-cheat notice are kept current, because this is the one call that
+follows every change.
+
+### `createModsListing`
+
+```ts
+export function createModsListing({ installer, library, fingerprints, schemaService, terrainAges, notice, diag, refreshPresence, verifyStuck }: ListingDeps)
+```
+
+The mods:list answer, built over the services src/ipc-mods.ts hands it.
 
 ## src/net-download.ts
 

@@ -1137,6 +1137,70 @@
       "from": "if (gameValid && game && active) {",
       "to": "if (false) {",
       "test": "test/diagnostics.test.ts"
+    },
+    {
+      "name": "listing drops the mods whose files are there instead of the ones that are gone",
+      "file": "src/mods-listing.ts",
+      "anchor": "export function createModsListing(",
+      "from": "} else if (!installer.langPrimaryPresent(rec)) {",
+      "to": "} else if (installer.langPrimaryPresent(rec)) {",
+      "test": "test/mods-channels.test.ts"
+    },
+    {
+      "name": "a leftover copy of a library mod is listed as a stranger",
+      "file": "src/mods-listing.ts",
+      "anchor": "export function createModsListing(",
+      "from": "if (installedFps.has(f.fp)) f.duplicateOf = installedFps.get(f.fp);",
+      "to": "if (installedFps.has(f.fp)) f.duplicateOf = undefined;",
+      "test": "test/mods-channels.test.ts"
+    },
+    {
+      "name": "a switched-off mod is said to hide the files of others",
+      "file": "src/mods-listing.ts",
+      "anchor": "export function createModsListing(",
+      "from": "...installed.filter((r) => r.enabled).map(",
+      "to": "...installed.map(",
+      "test": "test/mods-channels.test.ts"
+    },
+    {
+      "name": "an import somebody named is renamed after its content",
+      "file": "src/mods-listing.ts",
+      "anchor": "export function createModsListing(",
+      "from": "if (/^!?pak\\d+$/i.test(rec.name)) {",
+      "to": "if (rec.name) {",
+      "test": "test/mods-channels.test.ts"
+    },
+    {
+      "name": "the item blocks are sent to the window with every row",
+      "file": "src/mods-listing.ts",
+      "anchor": "export function createModsListing(",
+      "from": "return { ...rest, zone, staleMap, schemaCount: schema.length,",
+      "to": "return { ...rec, zone, staleMap, schemaCount: schema.length,",
+      "test": "test/mods-channels.test.ts"
+    },
+    {
+      "name": "the ownership note forgets the library's own files",
+      "file": "src/mods-listing.ts",
+      "anchor": "export function createModsListing(",
+      "from": "installer.writeOwnership([...library.knownLangRelPaths(), ...notice.ownedFiles()]);",
+      "to": "installer.writeOwnership([...notice.ownedFiles()]);",
+      "test": "test/mods-channels.test.ts"
+    },
+    {
+      "name": "installing what is already installed downloads it again",
+      "file": "src/ipc-mods.ts",
+      "anchor": "ipcMain.handle('mods:install'",
+      "from": "if (existing) return { error: t('Уже установлено'), already: true };",
+      "to": "if (existing) library.removeRecord(existing.id);",
+      "test": "test/mods-channels.test.ts"
+    },
+    {
+      "name": "a mod installed while every mod is off stays on",
+      "file": "src/ipc-mods.ts",
+      "anchor": "ipcMain.handle('mods:install'",
+      "from": "try { installer.setMasterEnabled(false); } catch { /* noop */ }",
+      "to": "try { /* left on */ } catch { /* noop */ }",
+      "test": "test/mods-channels.test.ts"
     }
   ]
 }
