@@ -51,15 +51,19 @@ export function folderListingText(dir: string, filter?: ((f: Listed) => boolean)
 // happened, not the file's whole history.
 /** The last `maxBytes` of a log file, or null when it cannot be read. */
 export function tailLog(file: string, maxBytes: number): string | null {
+  // The size comes from the open file rather than from a look before opening it, so a log that
+  // grows or is replaced in between cannot hand over a length that is not this file's.
+  let fd: number;
+  try { fd = fs.openSync(file, 'r'); } catch { return null; }
   try {
-    const st = fs.statSync(file);
-    const start = Math.max(0, st.size - maxBytes);
-    const fd = fs.openSync(file, 'r');
-    const buf = Buffer.alloc(st.size - start);
+    const size = fs.fstatSync(fd).size;
+    const start = Math.max(0, size - maxBytes);
+    const buf = Buffer.alloc(size - start);
     fs.readSync(fd, buf, 0, buf.length, start);
-    fs.closeSync(fd);
     return buf.toString('utf-8');
   } catch {
     return null;
+  } finally {
+    fs.closeSync(fd);
   }
 }
