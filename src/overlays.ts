@@ -22,14 +22,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import AdmZip from 'adm-zip';
 import { openZip, safeJoin } from './safe-zip.ts';
 import { copyInto, writeInto, type Writer } from './file-tx.ts';
 import { t } from './i18n.ts';
+import * as cursor from './overlays-cursor.ts';
 import type { HasFiles, LibFile, LibRecord } from './types.ts';
 
 /** The two game folders loose files go into. */
 type Root = 'fonts' | 'cursor';
+
+/** What a function over the overlays takes, without the overlays: the method's parameters. */
+type Rest<F> = F extends (o: Overlays, ...rest: infer R) => unknown ? R : never;
 
 /** Where font mods go, under the game folder. */
 export const FONTS_SUBDIR: readonly string[] = ['dota', 'panorama', 'fonts'];
@@ -153,105 +156,15 @@ export class Overlays {
     return records;
   }
 
-  // ---------- cursor sets ----------
+  // ---------- cursor sets: src/overlays-cursor.ts ----------
 
-  /*
-   * A cursor set is not a pak: it is loose files written straight over Valve's own in
-   * game\dota\resource\cursor, and every set overwrites the same names. So it cannot be
-   * switched off by renaming (nothing would be left to draw the cursor) and two sets
-   * cannot be on at once. Instead each installed set keeps its own copy here, and
-   * on/off means: write those files over the vanilla ones, or put the vanilla ones back.
-   */
-
-  cursorStoreDir(recId: string): string {
-    return path.join(this.cursorsDir, String(recId).replace(/[^A-Za-z0-9_-]/g, ''));
-  }
-
-  cursorFiles(files: LibFile[] | null | undefined): LibFile[] {
-    return (files || []).filter((f) => f.root === 'cursor');
-  }
-
-  // Keep a copy of the set that is live right now. Only ever call this for the record that
-  // actually owns what is on disk (the one being installed, adopted, or switched off) -
-  // otherwise the copy would be some other mod's cursor.
-  ensureCursorStore(recId: string | null | undefined, files: LibFile[] | null | undefined): boolean {
-    const own = this.cursorFiles(files);
-    if (!recId || !own.length) return false;
-    const store = this.cursorStoreDir(recId);
-    try {
-      if (fs.existsSync(store) && fs.readdirSync(store).length) return true; // already stashed
-    } catch { /* unreadable - restash */ }
-    const live = this.liveDir('cursor');
-    let n = 0;
-    for (const f of own) {
-      const src = path.join(live, f.relPath);
-      if (!fs.existsSync(src)) continue;
-      copyInto(src, path.join(store, f.relPath));
-      n++;
-    }
-    return n > 0;
-  }
-
-  // write the set over the game's cursor folder (vanilla files backed up once)
-  deployCursor(recId: string, files: LibFile[] | null | undefined): number {
-    const store = this.cursorStoreDir(recId);
-    const live = this.liveDir('cursor');
-    const backupRoot = path.join(this.backupsDir, 'cursor');
-    const hashes: [string, string][] = [];
-    for (const f of this.cursorFiles(files)) {
-      const src = path.join(store, f.relPath);
-      if (!fs.existsSync(src)) continue;
-      const bytes = fs.readFileSync(src);
-      hashes.push([f.relPath, sha1(bytes)]);
-      const dest = path.join(live, f.relPath);
-      // already ours (a re-deploy after a restart): backing it up now would record the mod
-      // itself as the vanilla file and there would be nothing left to switch back to
-      if (fs.existsSync(dest) && fs.readFileSync(dest).equals(bytes)) continue;
-      const backup = path.join(backupRoot, f.relPath);
-      if (fs.existsSync(dest) && !fs.existsSync(backup)) copyInto(dest, backup);
-      copyInto(src, dest);
-    }
-    if (!hashes.length) throw new Error(t('Файлы курсора не сохранены — переустанови мод'));
-    this.noteWritten('cursor', hashes);
-    return hashes.length;
-  }
-
-  // put the vanilla cursor back (or drop the file, if the set added one Valve has no copy of)
-  undeployCursor(recId: string, files: LibFile[] | null | undefined): void {
-    this.ensureCursorStore(recId, files);
-    const live = this.liveDir('cursor');
-    const backupRoot = path.join(this.backupsDir, 'cursor');
-    for (const f of this.cursorFiles(files)) {
-      const dest = path.join(live, f.relPath);
-      const backup = path.join(backupRoot, f.relPath);
-      if (fs.existsSync(backup)) copyInto(backup, dest);
-      else if (fs.existsSync(dest)) fs.rmSync(dest, { force: true });
-    }
-    this.forgetWritten(files);
-  }
-
-  // Pack the set back into the layout the catalog ships cursors in (<Name>/cursor/<file>),
-  // so it can be handed to someone else or kept as a backup.
-  cursorZip(rec: Pick<LibRecord, 'id' | 'name' | 'files'>): Buffer {
-    const store = this.cursorStoreDir(rec.id);
-    const live = this.liveDir('cursor');
-    const folder = (rec.name || 'cursor').replace(/[<>:"/\\|?*]/g, '_');
-    const zip = new AdmZip();
-    let n = 0;
-    for (const f of this.cursorFiles(rec.files)) {
-      const src = [path.join(store, f.relPath), path.join(live, f.relPath)].find((p) => fs.existsSync(p));
-      if (!src) continue;
-      zip.addFile(`${folder}/cursor/${f.relPath}`, fs.readFileSync(src));
-      n++;
-    }
-    if (!n) throw new Error(t('Файлы курсора не сохранены — переустанови мод'));
-    return zip.toBuffer();
-  }
-
-  dropCursorStore(recId: string | null | undefined): void {
-    if (!recId) return;
-    try { fs.rmSync(this.cursorStoreDir(recId), { recursive: true, force: true }); } catch { /* ignore */ }
-  }
+  cursorStoreDir(...a: Rest<typeof cursor.cursorStoreDir>) { return cursor.cursorStoreDir(this, ...a); }
+  cursorFiles(files: LibFile[] | null | undefined) { return cursor.cursorFiles(files); }
+  ensureCursorStore(...a: Rest<typeof cursor.ensureCursorStore>) { return cursor.ensureCursorStore(this, ...a); }
+  deployCursor(...a: Rest<typeof cursor.deployCursor>) { return cursor.deployCursor(this, ...a); }
+  undeployCursor(...a: Rest<typeof cursor.undeployCursor>) { return cursor.undeployCursor(this, ...a); }
+  cursorZip(...a: Rest<typeof cursor.cursorZip>) { return cursor.cursorZip(this, ...a); }
+  dropCursorStore(...a: Rest<typeof cursor.dropCursorStore>) { return cursor.dropCursorStore(this, ...a); }
 
   // basename -> sha1 of every file currently in panorama\fonts, for font subset matching
   fontFolderHashes(): Record<string, string> | null {

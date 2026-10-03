@@ -612,9 +612,9 @@
     },
     {
       "name": "putting a cursor set back records nothing about what it wrote",
-      "file": "src/overlays.ts",
-      "anchor": "\n  deployCursor(recId: string, files: LibFile[] | null | undefined): number {",
-      "from": "this.noteWritten('cursor', hashes);",
+      "file": "src/overlays-cursor.ts",
+      "anchor": "export function deployCursor(",
+      "from": "o.noteWritten('cursor', hashes);",
       "to": "",
       "test": "test/installer.test.ts"
     },
@@ -812,7 +812,7 @@
     },
     {
       "name": "a patch is repaired while Dota holds its files open",
-      "file": "src/game-upkeep.ts",
+      "file": "src/game-repair.ts",
       "anchor": "async function repairAfterPatch(reason?: unknown): Promise<void> {",
       "from": "if (await isRunning()) {",
       "to": "if (false) {",
@@ -1068,7 +1068,7 @@
     },
     {
       "name": "showing the share plan merges every one of the user's own mods",
-      "file": "src/presets-service.ts",
+      "file": "src/preset-plan.ts",
       "anchor": "  function shareEntryFor(rec: LibRecord, cat: CatalogIndex): ShareEntry {",
       "from": "const a = installer.analyzeRecord(rec) || {};",
       "to": "const a = installer.analyzeRecord(rec) || {}; installer.mergeToSingleVpk(rec, rec.schema);",
@@ -1076,7 +1076,7 @@
     },
     {
       "name": "a switched-off mod is shared at a size of nothing",
-      "file": "src/presets-service.ts",
+      "file": "src/preset-plan.ts",
       "anchor": "  function shareEntryFor(rec: LibRecord, cat: CatalogIndex): ShareEntry {",
       "from": "const p = ['', '.off', '.moff'].map",
       "to": "const p = [''].map",
@@ -1084,7 +1084,7 @@
     },
     {
       "name": "a received mod already installed is counted as one to unpack again",
-      "file": "src/presets-service.ts",
+      "file": "src/preset-plan.ts",
       "anchor": "  async function sharedPresetStatus(preset: Preset, cat: CatalogIndex) {",
       "from": "if (e.fp && fpIndex.has(e.fp)) out.installed++;",
       "to": "if (false) out.installed++;",
@@ -1265,6 +1265,46 @@
       "from": "const MAX_PER_CALL = 40;",
       "to": "const MAX_PER_CALL = 4000;",
       "test": "test/mod-preview.test.ts"
+    },
+    {
+      "name": "switching a mod off leaves its files mounted",
+      "file": "src/installer-write.ts",
+      "anchor": "export function setEnabled(",
+      "from": "if (!enabled && fs.existsSync(abs)) tx.move(abs, off);",
+      "to": "if (!enabled && fs.existsSync(abs)) tx.move(abs, abs);",
+      "test": "test/installer.test.ts"
+    },
+    {
+      "name": "removing a switched-off mod leaves its renamed files behind",
+      "file": "src/installer-write.ts",
+      "anchor": "export function remove(",
+      "from": "for (const p of [abs, abs + '.off', abs + MASTER_OFF]) {",
+      "to": "for (const p of [abs]) {",
+      "test": "test/installer.test.ts"
+    },
+    {
+      "name": "removing a font leaves the game without the one Valve shipped",
+      "file": "src/installer-write.ts",
+      "anchor": "export function remove(",
+      "from": "if (fs.existsSync(backupAbs)) inst.copyInto(backupAbs, abs, tx);",
+      "to": "if (fs.existsSync(backupAbs)) fs.existsSync(abs);",
+      "test": "test/installer.test.ts"
+    },
+    {
+      "name": "an archive's install.bat and readme land in the game folder",
+      "file": "src/installer-write.ts",
+      "anchor": "export function installInto(",
+      "from": "&& !/(^|\\/)(guide\\.txt|install\\.bat|uninstall\\.bat|readme[^/]*)$/i.test(lower);",
+      "to": "&& true;",
+      "test": "test/installer.test.ts"
+    },
+    {
+      "name": "a terrain keeps the folder it was zipped in and never mounts",
+      "file": "src/installer-write.ts",
+      "anchor": "export function installInto(",
+      "from": "const relPath = parts.slice(mapsIdx).join('/');",
+      "to": "const relPath = parts.join('/');",
+      "test": "test/installer.test.ts"
     }
   ]
 }

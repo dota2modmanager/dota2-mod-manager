@@ -326,8 +326,11 @@
         "src/game-icons.ts": {
           "lines": 94.7
         },
+        "src/game-repair.ts": {
+          "lines": 96.1
+        },
         "src/game-upkeep.ts": {
-          "lines": 98
+          "lines": 99.6
         },
         "src/gamelang-folders.ts": {
           "lines": 98
@@ -374,8 +377,11 @@
         "src/installer-slots.ts": {
           "lines": 91.8
         },
+        "src/installer-write.ts": {
+          "lines": 100
+        },
         "src/installer.ts": {
-          "lines": 98.5
+          "lines": 100
         },
         "src/ipc-diagnostics.ts": {
           "lines": 94.2
@@ -455,6 +461,9 @@
         "src/notice-texts.ts": {
           "lines": 100
         },
+        "src/overlays-cursor.ts": {
+          "lines": 100
+        },
         "src/overlays.ts": {
           "lines": 99.4
         },
@@ -479,11 +488,14 @@
         "src/preset-link.ts": {
           "lines": 100
         },
+        "src/preset-plan.ts": {
+          "lines": 98.2
+        },
         "src/preset-share.ts": {
           "lines": 94.1
         },
         "src/presets-service.ts": {
-          "lines": 98.9
+          "lines": 100
         },
         "src/release-notes.ts": {
           "lines": 100

@@ -1,12 +1,8 @@
 {
   "_why": "Lines each of the largest files is allowed. tools/size-budget.mjs fails a run where one grows, and where a file that is not listed crosses 300 lines. --update writes measurements back but never raises a number: raising one means editing this file by hand and saying why. Splitting these files shows up here as a number going down.",
-  "measured": "2026-10-02",
+  "measured": "2026-10-03",
   "watchAt": 300,
   "files": {
-    "renderer/i18n.js": 787,
-    "src/game-upkeep.ts": 349,
-    "src/installer.ts": 398,
-    "src/overlays.ts": 327,
-    "src/presets-service.ts": 377
+    "renderer/i18n.js": 787
   }
 }

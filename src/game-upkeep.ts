@@ -13,30 +13,15 @@
 import { execFile } from 'node:child_process';
 
 import * as gamelang from './gamelang.ts';
-import { gameStamp } from './patch-watch.ts';
 import { errorText } from './error-text.ts';
 import type { Settings } from './settings.ts';
 import type { Installer } from './installer.ts';
 import type { Library } from './library.ts';
 import type { createSchemaService } from './schema-service.ts';
-
-/** What the app did about the last Dota patch, shown as a banner in My mods. */
-export type PatchRepair = {
-  state: 'idle' | 'waiting' | 'done' | 'failed';
-  healed?: string[];
-  error?: string | null;
-  reason?: unknown;
-  at?: number;
-};
+import { createGameRepair, REPAIR_RETRY_MS, type PatchRepair } from './game-repair.ts';
 
 /** Mods moved into the folder the game mounts, told to the user once in Settings. */
 export type LangMigration = { from: string; to: string; moved: number };
-
-/** A mod Steam's file check took away that the app could not put back from what it holds. */
-export type Stuck = { id: string; name: string };
-
-/** How long a repair waits for Dota to close before it looks again. */
-export const REPAIR_RETRY_MS = 20000;
 
 /* Dota reads boot.vcfg once at startup and rewrites it on exit, so language changes must be made
  * while it is closed or the game would just overwrite them.
@@ -102,9 +87,7 @@ export function createGameUpkeep({
   let langFolder = gamelang.FALLBACK_FOLDER;
   let langMigration: LangMigration | null = null;
   let slotMigration: { moved: number } | null = null;
-  let verifyStuck: Stuck[] = [];
-  let patchRepair: PatchRepair = { state: 'idle' };
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  const repair = createGameRepair({ settings, installer, library, schemaService, diag, send, isRunning, retryMs, now });
 
   /* Auto-detect on first run, and re-detect whenever the saved path stopped being a Dota install:
    * a library moved to another drive leaves the old tree behind, and writing mods into it looks
@@ -194,103 +177,6 @@ export function createGameUpkeep({
     }
   }
 
-  /* Put back what Steam's file check took away.
-   *
-   * Only fonts and cursors can be taken: they overwrite files Valve ships. What can be restored
-   * from what the app already holds is restored without a word: it is the state the user asked
-   * for, and they did not ask Steam to undo it. What would need downloading is left alone and
-   * reported instead. Starting a download at launch because a file changed is not something to do
-   * behind somebody's back. */
-  /** Restore what can be restored; answers how many mods came back. */
-  function restoreAfterVerify(): number {
-    const lost = installer.lostToVerify(library.list());
-    if (!lost.length) return 0;
-    const stuck: Stuck[] = [];
-    let restored = 0;
-    for (const rec of lost) {
-      try {
-        const from = installer.restoreDeployed(rec);
-        if (from) { restored++; diag(`restored after verify: ${rec.name} (from ${from})`); }
-        else stuck.push({ id: rec.id, name: rec.name });
-      } catch (err) {
-        diag(`restore failed for ${rec.name}: ${errorText(err)}`);
-        stuck.push({ id: rec.id, name: rec.name });
-      }
-    }
-    verifyStuck = stuck;
-    return restored;
-  }
-
-  /** The item table and the search-path patch put back, and the files Steam took; what came of it. */
-  function heal(): { healed: string[]; error: string | null } {
-    const healed: string[] = [];
-    let error: string | null = null;
-    try {
-      const res = schemaService.heal();
-      if (res.healed) healed.push(...res.healed);
-      if (res.error) error = res.error;
-    } catch (err) {
-      error = errorText(err);
-    }
-    try {
-      if (restoreAfterVerify()) healed.push('files');
-    } catch (err) {
-      diag(`restore after verify skipped: ${errorText(err)}`);
-    }
-    return { healed, error };
-  }
-
-  function setPatchRepair(next: PatchRepair): void {
-    patchRepair = next;
-    send(patchRepair);
-  }
-
-  /* Everything the app puts back after the game changed underneath it: the patch and the item
-   * table (schemaService.heal), and fonts and cursors (restoreAfterVerify). The watcher calls this
-   * when a patch lands, which is the moment that matters: Steam patches the game in the
-   * background, and most people press Play in Steam rather than here. */
-  /** Repair after a patch, or wait for Dota to close first. */
-  async function repairAfterPatch(reason?: unknown): Promise<void> {
-    const game = settings.get('dotaGamePath');
-    if (!game) return;
-    if (timer) clearTimeout(timer);
-    timer = null;
-
-    if (await isRunning()) {
-      diag('Dota patched while the game is running - repair deferred');
-      setPatchRepair({ state: 'waiting', reason, at: now() });
-      timer = setTimeout(() => { void repairAfterPatch(reason); }, retryMs);
-      return;
-    }
-
-    const { healed, error } = heal();
-    // remembered only now: a stamp stored before a failed repair would make the next start think
-    // there is nothing to fix
-    settings.set('gameStamp', gameStamp(game));
-    diag(`repair after patch: ${healed.join(',') || 'nothing to do'}${error ? ` error=${error}` : ''}`);
-    setPatchRepair({ state: error ? 'failed' : 'done', healed, error, at: now() });
-  }
-
-  /* The same repair at start, before the window exists, for a game patched while the app was
-   * closed. It runs either way; the build stamp only decides whether the user is told about it,
-   * and is handed to the watcher to compare against. */
-  function repairAtStart(): void {
-    const { healed, error } = heal();
-    if (healed.some((h) => h !== 'files')) diag(`schema healed: ${healed.filter((h) => h !== 'files').join(',')}`);
-    if (error) diag(`schema heal failed: ${error}`);
-    try {
-      const stamp = gameStamp(settings.get('dotaGamePath'));
-      const known = settings.get('gameStamp');
-      if (stamp && known && stamp !== known) {
-        diag(`Dota changed while the app was closed: ${known} -> ${stamp}`);
-        patchRepair = { state: error ? 'failed' : 'done', healed, error, at: now() };
-      }
-      if (stamp) settings.set('gameStamp', stamp);
-    } catch (e) {
-      diag(`build check skipped: ${errorText(e)}`);
-    }
-  }
-
   /** Everything put right before the window opens, each step on its own. */
   async function atStart(): Promise<void> {
     await checkGamePath();
@@ -327,23 +213,26 @@ export function createGameUpkeep({
       { name: 'cosmetic migrate', run: () => schemaService.migrateCosmeticSettings() },
       // a Dota update overwrites the patched gameinfo and moves the item table: put both back
       // before the user gets a chance to launch the game with a half-applied setup
-      { name: 'repair at start', run: repairAtStart },
+      { name: 'repair at start', run: repair.repairAtStart },
     ], diag);
   }
 
   return {
     atStart,
     keepModFolder,
-    restoreAfterVerify,
-    repairAfterPatch,
-    setPatchRepair,
+    restoreAfterVerify: repair.restoreAfterVerify,
+    repairAfterPatch: repair.repairAfterPatch,
+    setPatchRepair: repair.setPatchRepair,
     /** stop waiting for Dota to close, when the app is quitting */
-    stop: () => { if (timer) clearTimeout(timer); timer = null; },
+    stop: repair.stop,
     langFolder: () => langFolder,
     /** the move Settings tells the user about, handed over once */
     takeLangMigration: () => { const m = langMigration; langMigration = null; return m; },
     takeSlotMigration: () => { const m = slotMigration; slotMigration = null; return m; },
-    verifyStuck: () => verifyStuck,
-    patchRepair: () => patchRepair,
+    verifyStuck: repair.verifyStuck,
+    patchRepair: repair.patchRepair,
   };
 }
+
+export { REPAIR_RETRY_MS } from './game-repair.ts';
+export type { PatchRepair, Stuck } from './game-repair.ts';

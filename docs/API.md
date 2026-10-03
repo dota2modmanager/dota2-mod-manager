@@ -36,6 +36,7 @@ the code, not in this page.
 | [`src/fingerprints.ts`](#srcfingerprintsts) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
 | [`src/folder-size.ts`](#srcfolder-sizets) | Bytes under a folder: the number Settings shows beside each cache, and the one the removal |
 | [`src/game-icons.ts`](#srcgame-iconsts) | Item pictures taken from the installed game instead of scraped off a wiki. |
+| [`src/game-repair.ts`](#srcgame-repairts) | Putting the game back after something else changed it (src/game-upkeep.ts runs this at start |
 | [`src/game-upkeep.ts`](#srcgame-upkeepts) | Keeping the game folder the way the user left it, while other programs change it underneath. |
 | [`src/gamelang-folders.ts`](#srcgamelang-foldersts) | Making and moving the dota_<lang> folders (src/gamelang.ts has the rule): whether a voice pack is |
 | [`src/gamelang-steam.ts`](#srcgamelang-steamts) | What Steam says about the game's language (src/gamelang.ts has the rule): the -language in the |
@@ -52,6 +53,7 @@ the code, not in this page.
 | [`src/installer-packs.ts`](#srcinstaller-packsts) | Combined packs: several mods in one pak slot, each kept as its own file in userData and rebuilt |
 | [`src/installer-repack.ts`](#srcinstaller-repackts) | What is already installed, read and rewritten: what a mod is, its files merged into one or |
 | [`src/installer-slots.ts`](#srcinstaller-slotsts) | The load order: which pak slot a mod sits in, moving and swapping slots, and which mods are |
+| [`src/installer-write.ts`](#srcinstaller-writets) | Writing a mod into the game folder and taking it out again (src/installer.ts is the door): a |
 | [`src/installer.ts`](#srcinstallerts) | The installer: everything that writes a mod into the game folder or takes it out again. The |
 | [`src/ipc.ts`](#srcipcts) | Every IPC module, registered in one place over the context src/main.ts builds. A new |
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
@@ -70,6 +72,7 @@ the code, not in this page.
 | [`src/net.ts`](#srcnetts) | Getting bytes from the internet, on a connection that may not want to cooperate. |
 | [`src/notice-text.ts`](#srcnotice-textts) | The game's anti-cheat notice, in words that say what to do. |
 | [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts |
+| [`src/overlays-cursor.ts`](#srcoverlays-cursorts) | Cursor sets (src/overlays.ts is the door for fonts and cursors). |
 | [`src/overlays.ts`](#srcoverlaysts) | Fonts and cursors: loose files written over the game's own. |
 | [`src/patch-watch.ts`](#srcpatch-watchts) | Noticing that Dota was patched, while the app is open. |
 | [`src/patcher-gameinfo.ts`](#srcpatcher-gameinfots) | The two gameinfo files (src/patcher.ts explains the patch): the SearchPaths block read out of |
@@ -78,6 +81,7 @@ the code, not in this page.
 | [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
 | [`src/presence-status.ts`](#srcpresence-statusts) | What the user's Discord profile says while the app is open: which screen they are on, and how |
 | [`src/preset-link.ts`](#srcpreset-linkts) | Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed |
+| [`src/preset-plan.ts`](#srcpreset-plants) | How a preset travels to somebody else (src/presets-service.ts applies, packs and receives |
 | [`src/preset-share.ts`](#srcpreset-sharets) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
 | [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
@@ -1149,19 +1153,14 @@ export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () 
 
 Item and hero pictures out of the installed game, cached in userData.
 
-## src/game-upkeep.ts
+## src/game-repair.ts
 
-Keeping the game folder the way the user left it, while other programs change it underneath.
-
-Three things change a Dota install without asking the app. The game's audio language decides
-which folder the engine mounts, so mods have to follow it. Steam's file check puts back files a
-font or cursor mod replaced. A Dota patch overwrites the patched gameinfo and moves the item
-table. This module answers all three: once at start, before the window opens, and again the
-moment src/patch-watch.ts sees a patch land.
-
-Nothing is written while Dota is running. It holds gameinfo and its paks open, so a write would
-half-succeed, and the client has already read the files anyway. The app says it is waiting and
-tries again after the game exits.
+Putting the game back after something else changed it (src/game-upkeep.ts runs this at start
+and hands it to the patch watcher). A Dota patch overwrites the patched gameinfo and moves the
+item table; Steam's file check puts back files a font or cursor mod replaced. Repaired once at
+start for a game that changed while the app was closed, and again the moment
+src/patch-watch.ts sees a patch land. Never while Dota is running: it holds those files open,
+so a write would half-succeed. The app says it is waiting and tries again after the game exits.
 
 ### `PatchRepair`
 
@@ -1170,14 +1169,6 @@ export type PatchRepair =
 ```
 
 What the app did about the last Dota patch, shown as a banner in My mods.
-
-### `LangMigration`
-
-```ts
-export type LangMigration = { from: string; to: string; moved: number }
-```
-
-Mods moved into the folder the game mounts, told to the user once in Settings.
 
 ### `Stuck`
 
@@ -1194,6 +1185,38 @@ export const REPAIR_RETRY_MS = 20000
 ```
 
 How long a repair waits for Dota to close before it looks again.
+
+### `createGameRepair`
+
+```ts
+export function createGameRepair({ settings, installer, library, schemaService, diag, send, isRunning, retryMs = REPAIR_RETRY_MS, now = Date.now }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed'>; library: Pick<Library, 'list'>; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal'>; diag: (msg: string) => void; /** tells the window what the repair did */ send: (repair: PatchRepair) => void
+```
+
+The repair, over the services src/game-upkeep.ts already holds.
+
+## src/game-upkeep.ts
+
+Keeping the game folder the way the user left it, while other programs change it underneath.
+
+Three things change a Dota install without asking the app. The game's audio language decides
+which folder the engine mounts, so mods have to follow it. Steam's file check puts back files a
+font or cursor mod replaced. A Dota patch overwrites the patched gameinfo and moves the item
+table. This module answers all three: once at start, before the window opens, and again the
+moment src/patch-watch.ts sees a patch land.
+
+Nothing is written while Dota is running. It holds gameinfo and its paks open, so a write would
+half-succeed, and the client has already read the files anyway. The app says it is waiting and
+tries again after the game exits.
+
+Hands on from [`src/game-repair.ts`](#srcgame-repairts): `REPAIR_RETRY_MS`, `PatchRepair`, `Stuck`.
+
+### `LangMigration`
+
+```ts
+export type LangMigration = { from: string; to: string; moved: number }
+```
+
+Mods moved into the folder the game mounts, told to the user once in Settings.
 
 ### `dotaIsRunning`
 
@@ -2492,11 +2515,58 @@ Older app versions wrote priority mods as "!pakNN_dir.vpk" — a name the game
 never mounts, so those mods silently did nothing. Rename them to real low
 pak slots and fix the matching manifest records.
 
+## src/installer-write.ts
+
+Writing a mod into the game folder and taking it out again (src/installer.ts is the door): a
+catalog archive unpacked into the language folder, a tool into the app's own folder, a mod's
+files switched on and off, and removed with Valve's own put back where a font or cursor sat.
+Whatever touches several files runs as one transaction (src/file-tx.ts).
+
+### `installInto`
+
+```ts
+export function installInto(inst: Installer, tx: Writer, { categoryId, modName, local }: { categoryId: string; modName: string; local: string }): LibFile[]
+```
+
+The writing half of install, inside the transaction it is handed.
+
+### `installTool`
+
+```ts
+export function installTool(inst: Installer, localZip: string, modName: string, tx: Writer = null): LibFile[]
+```
+
+A tool from the catalog, unpacked into the app's own folder rather than the game's.
+
+### `setEnabled`
+
+```ts
+export function setEnabled(inst: Installer, files: LibFile[], enabled: boolean, recId: string | null = null): void
+```
+
+Switch a mod's files on or off. recId is needed for cursor sets (see src/overlays.ts);
+without it a cursor record is left alone.
+
+A mod switched half off is worse than either state: the game mounts the paks that kept
+their name and loads a mod that is missing pieces. So the renames are one transaction -
+if Dota grabs the third file, the first two go back to how they were.
+
+### `remove`
+
+```ts
+export function remove(inst: Installer, files: LibFile[], opts: { recId?: string | null; deployed?: boolean } = {}): void
+```
+
+Take a mod's files out. opts.recId drops the record's stored cursor copy; opts.deployed=false
+says its files are not the ones on disk right now (it was switched off), so vanilla must not
+be restored over whatever cursor took its place.
+
 ## src/installer.ts
 
 The installer: everything that writes a mod into the game folder or takes it out again. The
 class is the one door the rest of the app uses; the work behind it is in files of its own:
   src/installer-downloads.ts  getting a catalog archive onto this machine
+  src/installer-write.ts      writing that archive into the folder, switching it, removing it
   src/installer-slots.ts      the load order: pak slots, moving and swapping, who covers whom
   src/installer-packs.ts      several mods in one pak slot
   src/installer-repack.ts     what is installed, read, merged, unpacked, stripped and split
@@ -3671,6 +3741,75 @@ const NOTICE_KEYS =
 
 The game's own keys for the four strings: its localization files name them this way.
 
+## src/overlays-cursor.ts
+
+Cursor sets (src/overlays.ts is the door for fonts and cursors).
+
+A cursor set is not a pak: it is loose files written straight over Valve's own in
+game\dota\resource\cursor, and every set overwrites the same names. So it cannot be
+switched off by renaming (nothing would be left to draw the cursor) and two sets
+cannot be on at once. Instead each installed set keeps its own copy here, and
+on/off means: write those files over the vanilla ones, or put the vanilla ones back.
+
+### `cursorStoreDir`
+
+```ts
+export function cursorStoreDir(o: Overlays, recId: string): string
+```
+
+Where a cursor set keeps its own copy, by record id.
+
+### `cursorFiles`
+
+```ts
+export function cursorFiles(files: LibFile[] | null | undefined): LibFile[]
+```
+
+The cursor files among a record's files.
+
+### `ensureCursorStore`
+
+```ts
+export function ensureCursorStore(o: Overlays, recId: string | null | undefined, files: LibFile[] | null | undefined): boolean
+```
+
+Keep a copy of the set that is live right now. Only ever call this for the record that
+actually owns what is on disk (the one being installed, adopted, or switched off) -
+otherwise the copy would be some other mod's cursor.
+
+### `deployCursor`
+
+```ts
+export function deployCursor(o: Overlays, recId: string, files: LibFile[] | null | undefined): number
+```
+
+write the set over the game's cursor folder (vanilla files backed up once)
+
+### `undeployCursor`
+
+```ts
+export function undeployCursor(o: Overlays, recId: string, files: LibFile[] | null | undefined): void
+```
+
+put the vanilla cursor back (or drop the file, if the set added one Valve has no copy of)
+
+### `cursorZip`
+
+```ts
+export function cursorZip(o: Overlays, rec: Pick<LibRecord, 'id' | 'name' | 'files'>): Buffer
+```
+
+Pack the set back into the layout the catalog ships cursors in (<Name>/cursor/<file>),
+so it can be handed to someone else or kept as a backup.
+
+### `dropCursorStore`
+
+```ts
+export function dropCursorStore(o: Overlays, recId: string | null | undefined): void
+```
+
+_No description in the source._
+
 ## src/overlays.ts
 
 Fonts and cursors: loose files written over the game's own.
@@ -4204,6 +4343,51 @@ export function decodePresetLink(input: unknown): { name: string; author: string
 A pasted link, in either form, back into a preset: its name, its author and its mods. Throws an
 error written for the user when the text is not a link, is damaged, or holds too much.
 
+## src/preset-plan.ts
+
+How a preset travels to somebody else (src/presets-service.ts applies, packs and receives
+them). A mod the catalog can hand the receiver goes as its identity, a few bytes; one it cannot
+goes as its own bytes, packed into the file; one with neither is named and left out. This is
+where that is decided, for the share dialog's plan, for a link, and for the card that says
+what installing a received preset would actually do.
+
+### `CatalogIndex`
+
+```ts
+export type CatalogIndex = Map<string, CatalogHit> & { lookup: (c: string, n: string, s?: string | null) => CatalogHit | null }
+```
+
+Every catalog mod by "<categoryId>|<name>|<styleLabel>", with a lookup that never throws.
+
+### `ShareEntry`
+
+```ts
+export type ShareEntry =
+```
+
+A mod as it would be shared: embedded ones read their bytes only when the file is written.
+
+### `categoryModList`
+
+```ts
+export function categoryModList(data: unknown): CatalogMod[]
+```
+
+The mods of one catalog category. Most categories are a flat array, but some (creeps,
+towers, hero-items, item-effects, creep-deny) group theirs under `groups` - the same two
+shapes the catalog view walks (see categoryMods in renderer/views/catalog/lists.ts). Reading only the
+flat ones meant every mod in a grouped category looked like it was not in the catalog:
+the share dialog called them the user's own and packed them into the file as bytes, and
+a preset link dropped them entirely.
+
+### `createPresetPlan`
+
+```ts
+export function createPresetPlan({ catalog, installer, library }: { catalog: Pick<Catalog, 'load'>; installer: PlanInstaller; library: Library; })
+```
+
+The plan, over the catalog, the installer and the library src/presets-service.ts holds.
+
 ## src/preset-share.ts
 
 Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod
@@ -4300,26 +4484,15 @@ from the catalog on the other end, while one that has to carry a mod's own bytes
 hundreds of megabytes. Which of the two a given preset is depends on where its mods came
 from, so everything here is built around answering that before anything is written.
 
+How a preset travels (the share plan, the link, what a received one would do) is
+src/preset-plan.ts; this file applies, packs and receives them.
+
 Lifted out of main.js unchanged. It was 268 lines in the middle of the file that starts the
 window, reachable only through the process that owns that window, and testable only by
 launching the app. The bodies below are the same bodies; what changed is that the services
 they use arrive as arguments instead of as variables that happen to be in scope.
 
-### `CatalogIndex`
-
-```ts
-export type CatalogIndex = Map<string, CatalogHit> & { lookup: (c: string, n: string, s?: string | null) => CatalogHit | null }
-```
-
-Every catalog mod by "<categoryId>|<name>|<styleLabel>", with a lookup that never throws.
-
-### `ShareEntry`
-
-```ts
-export type ShareEntry =
-```
-
-A mod as it would be shared: embedded ones read their bytes only when the file is written.
+Hands on from [`src/preset-plan.ts`](#srcpreset-plants): `categoryModList`, `CatalogIndex`, `ShareEntry`.
 
 ### `PresetInstaller`
 
@@ -4328,19 +4501,6 @@ export interface PresetInstaller
 ```
 
 What of the installer presets ask: what a record is, where its files are, and packing.
-
-### `categoryModList`
-
-```ts
-export function categoryModList(data: unknown): CatalogMod[]
-```
-
-The mods of one catalog category. Most categories are a flat array, but some (creeps,
-towers, hero-items, item-effects, creep-deny) group theirs under `groups` - the same two
-shapes the catalog view walks (see categoryMods in renderer/views/catalog/lists.ts). Reading only the
-flat ones meant every mod in a grouped category looked like it was not in the catalog:
-the share dialog called them the user's own and packed them into the file as bytes, and
-a preset link dropped them entirely.
 
 ### `packableRecord`
 
