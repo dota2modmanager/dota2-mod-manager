@@ -13,21 +13,16 @@
 // Everything is backed up before the first write and revert() puts the originals back.
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { t } from './i18n.ts';
+import { MARKER, searchPathsBlock, withModFolder, patchedBranch, restoreBranch } from './patcher-gameinfo.ts';
+import { signatureLine, vanillaBranchHashes, matchesVanilla, hasSignaturePatch, stripSignatures } from './patcher-signatures.ts';
 
-/** Written beside every line this app adds, so its own edit can be found and taken out again. */
-export const MARKER = 'Dota 2 Mod Manager';
 /** The content folder registered next to the game's own "dota". */
 export const FOLDER = 'dota_mods';
 const BIN_DIRS: Record<'win32' | 'linux', string[]> = { win32: ['bin', 'win64'], linux: ['bin', 'linuxsteamrt64'] };
-const SIG_PREFIX = '...\\..\\..\\dota\\gameinfo_branchspecific.gi';
 
 // Folder names other patchers register, so we can spot one and not fight it.
 const KNOWN_FOREIGN = ['Dota2SkinChanger', 'DotaModdingCommunityMods', 'dota_tempcontent'];
-
-/** A file's hashes as the signature list writes them, uppercase hex. */
-export interface Hashes { sha1: string; crc: string }
 
 /** What the install looks like right now; see state(). */
 export interface PatchState {
@@ -48,211 +43,6 @@ export function paths(gamePath: string): { gameinfo: string; branch: string; sig
     branch: path.join(gamePath, 'dota', 'gameinfo_branchspecific.gi'),
     signatures: path.join(gamePath, ...bin, 'dota.signatures'),
   };
-}
-
-/** built on the first call */
-let crcTable: Uint32Array | null = null;
-
-/** CRC-32 as the signature list records it. */
-export function crc32(buf: Buffer): number {
-  let table = crcTable;
-  if (!table) {
-    table = crcTable = new Uint32Array(256);
-    for (let n = 0; n < 256; n++) {
-      let c = n;
-      for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-      table[n] = c >>> 0;
-    }
-  }
-  let c = 0xffffffff;
-  for (let i = 0; i < buf.length; i++) c = table[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
-  return (c ^ 0xffffffff) >>> 0;
-}
-
-/** The signature list stores the CRC little-endian, uppercase, like the SHA1 next to it. */
-export function fileHashes(buf: Buffer): { sha1: string; crc: string } {
-  const sha1 = crypto.createHash('sha1').update(buf).digest('hex').toUpperCase();
-  const le = Buffer.alloc(4);
-  le.writeUInt32LE(crc32(buf));
-  return { sha1, crc: le.toString('hex').toUpperCase() };
-}
-
-/** The line the signature list needs for the patched file. */
-export function signatureLine(buf: Buffer): string {
-  const { sha1, crc } = fileHashes(buf);
-  return `${SIG_PREFIX}~SHA1:${sha1};CRC:${crc}`;
-}
-
-/** Pull the SearchPaths block out of gameinfo.gi (branchspecific has none by default). */
-export function searchPathsBlock(gameinfoText: string): string {
-  const at = gameinfoText.indexOf('SearchPaths');
-  if (at === -1) throw new Error(t('gameinfo.gi: блок SearchPaths не найден'));
-  const open = gameinfoText.indexOf('{', at);
-  let depth = 0;
-  for (let i = open; i < gameinfoText.length; i++) {
-    if (gameinfoText[i] === '{') depth++;
-    else if (gameinfoText[i] === '}') { depth--; if (!depth) return gameinfoText.slice(at, i + 1); }
-  }
-  throw new Error(t('gameinfo.gi: блок SearchPaths не закрыт'));
-}
-
-/**
- * Add our folder to a SearchPaths block: as the first Game path (which is also what the
- * engine turns into the MOD path) and as the first Mod path.
- */
-export function withModFolder(block: string, folder: string): string {
-  const lines = block.split(/\r?\n/);
-  const out: string[] = [];
-  let addedGame = false;
-  let addedMod = false;
-  for (const line of lines) {
-    const game = /^(\s*)Game(\s+)dota\s*$/.exec(line);
-    if (game && !addedGame) {
-      out.push(`${game[1]}Game${game[2]}${folder}\t\t// ${MARKER}`);
-      addedGame = true;
-    }
-    const mod = /^(\s*)Mod(\s+)dota\s*$/.exec(line);
-    if (mod && !addedMod) {
-      out.push(`${mod[1]}Mod${mod[2]}${folder}\t\t// ${MARKER}`);
-      addedMod = true;
-    }
-    out.push(line);
-  }
-  if (!addedGame || !addedMod) throw new Error(t('gameinfo.gi: не найдены строки Game/Mod dota'));
-  return out.join('\r\n');
-}
-
-/** Put the block inside branchspecific's FileSystem section (its keys win over gameinfo.gi). */
-export function patchedBranch(branchText: string, block: string): string {
-  const at = branchText.indexOf('FileSystem');
-  if (at === -1) throw new Error(t('gameinfo_branchspecific.gi: блок FileSystem не найден'));
-  const open = branchText.indexOf('{', at);
-  let depth = 0;
-  let close = -1;
-  for (let i = open; i < branchText.length; i++) {
-    if (branchText[i] === '{') depth++;
-    else if (branchText[i] === '}') { depth--; if (!depth) { close = i; break; } }
-  }
-  if (close === -1) throw new Error(t('gameinfo_branchspecific.gi: блок FileSystem не закрыт'));
-  // The original file ends its FileSystem body with a lone indent tab meant for its closing
-  // brace ("...\r\n\t}") - strip it before splicing in our own block, or the two indents stack
-  // into a stray extra tab ahead of "SearchPaths".
-  const head = branchText.slice(0, close).replace(/[ \t]+$/, '');
-  const indented = block.split(/\r?\n/).map((l) => (l.trim() ? '\t\t' + l.trim() : l)).join('\r\n');
-  return head + indented + '\r\n\t' + branchText.slice(close);
-}
-
-/**
- * Undo our own insertion in a gameinfo file, byte for byte.
- *
- * patchedBranch() writes <body> + "\t\t" + <SearchPaths block> + "\r\n\t" + "}", having
- * first stripped the indent the original had before that closing brace. The inverse has to
- * put that indent back, so the whitespace on BOTH sides of the block is taken out and the
- * one shape the original always has - "\r\n\t" before the closing brace - is written in its
- * place. Cutting only the block and the whitespace after it (what this used to do) returned
- * a file one tab shorter than the one Valve shipped: close enough to load, but no longer
- * matching the hash the client checks it against, which is what stops matchmaking.
- *
- * Used wherever a patched file could be mistaken for an original: a backup taken while the
- * patch was already applied would otherwise be useless, and telling the user to go repair
- * game files by hand is not an answer the app is allowed to give.
- */
-export function stripPatch(text: string): string {
-  let out = text;
-  for (let guard = 0; guard < 8 && out.includes(MARKER); guard++) {
-    const mark = out.indexOf(MARKER);
-    const kw = out.lastIndexOf('SearchPaths', mark);
-    if (kw === -1) break;
-    const open = out.indexOf('{', kw);
-    if (open === -1) break;
-    let depth = 0;
-    let end = -1;
-    for (let i = open; i < out.length; i++) {
-      if (out[i] === '{') depth++;
-      else if (out[i] === '}') { depth--; if (!depth) { end = i + 1; break; } }
-    }
-    if (end === -1) break;
-    let start = kw;
-    while (start > 0 && /[ \t\r\n]/.test(out[start - 1])) start--;
-    while (end < out.length && /[ \t\r\n]/.test(out[end])) end++;
-    // the block always sits at the end of the FileSystem body, so what follows is that
-    // body's closing brace and the indent it wants is a single tab
-    const joiner = out[end] === '}' ? '\r\n\t' : '\r\n';
-    out = out.slice(0, start) + joiner + out.slice(end);
-  }
-  return out;
-}
-
-/**
- * Valve's own recorded hash for the file we edit, read out of the signature list the game
- * ships with. Ground truth: whatever we put back has to hash to this, or the client refuses
- * the install ("verify integrity of game files") and matchmaking stops. Their entry sits
- * BEFORE the DIGEST line - ours, when present, is appended after it.
- */
-export function vanillaBranchHashes(signaturesText: string): Hashes | null {
-  const lines = signaturesText.split(/\r?\n/);
-  const digest = lines.findIndex((l) => l.startsWith('DIGEST:'));
-  const scope = digest === -1 ? lines : lines.slice(0, digest);
-  for (const l of scope) {
-    const m = /gameinfo_branchspecific\.gi~SHA1:([0-9A-Fa-f]{40});CRC:([0-9A-Fa-f]{8})\s*$/.exec(l);
-    if (m) return { sha1: m[1].toUpperCase(), crc: m[2].toUpperCase() };
-  }
-  return null;
-}
-
-/** Whether a file hashes to what Valve recorded; with no record there is nothing to contradict. */
-export function matchesVanilla(text: string, want: Hashes | null): boolean {
-  if (!want) return true; // no list to check against - nothing to contradict
-  const h = fileHashes(Buffer.from(text, 'latin1'));
-  return h.sha1 === want.sha1 && h.crc === want.crc;
-}
-
-/**
- * The original branchspecific file, reconstructed and CHECKED against Valve's own list
- * rather than trusted. A copy this app made in an older version can be a tab short of the
- * real thing, and a wrong copy is worse than none: it loads, so nothing looks broken until
- * the client quietly stops finding matches. The only thing a reconstruction can get wrong
- * is the indent ahead of the FileSystem closing brace, so when the hash disagrees the few
- * shapes that indent can take are tried and the one Valve signed is kept.
- */
-export function restoreBranch(text: string, want: Hashes | null): { text: string; verified: boolean } {
-  const base = stripPatch(text);
-  if (matchesVanilla(base, want)) return { text: base, verified: !!want };
-  const at = base.lastIndexOf('\n', base.lastIndexOf('}', base.lastIndexOf('}') - 1));
-  if (at !== -1) {
-    let end = at + 1;
-    while (end < base.length && /[ \t]/.test(base[end])) end++;
-    for (const indent of ['\t', '', '\t\t']) {
-      const candidate = base.slice(0, at + 1) + indent + base.slice(end);
-      if (matchesVanilla(candidate, want)) return { text: candidate, verified: true };
-    }
-  }
-  return { text: base, verified: false };
-}
-
-/**
- * Is our line present in a signature list? Valve's own pristine file ALREADY carries an
- * entry for gameinfo_branchspecific.gi (before DIGEST, with the vanilla hash), so merely
- * finding the path proves nothing - only an entry appended AFTER the DIGEST line is ours.
- * Getting this wrong makes a pristine list look patched, which freezes the backup at a
- * pre-update build and lets apply() write those stale hashes over the live file.
- */
-export function hasSignaturePatch(text: string): boolean {
-  const lines = text.split(/\r?\n/);
-  const digest = lines.findIndex((l) => l.startsWith('DIGEST:'));
-  if (digest === -1) return false;
-  return lines.slice(digest + 1).some((l) => l.startsWith(SIG_PREFIX + '~'));
-}
-
-/** Same for the signature list: our line is appended after the DIGEST line, so anything of
- * ours past that point comes off and the file the game shipped is left behind. */
-export function stripSignatures(text: string): string {
-  const lines = text.split(/\r?\n/);
-  const digest = lines.findIndex((l) => l.startsWith('DIGEST:'));
-  if (digest === -1) return text;
-  const kept = lines.filter((l, i) => i <= digest || !l.startsWith(SIG_PREFIX + '~'));
-  while (kept.length && !kept[kept.length - 1].trim()) kept.pop();
-  return kept.join('\r\n') + '\r\n';
 }
 
 /**
@@ -425,3 +215,9 @@ export function revert({ gamePath, folder, backupDir }: { gamePath: string; fold
   }
   return state(gamePath, folder || null);
 }
+
+// The text work is kept as two files: src/patcher-gameinfo.ts for the gameinfo files and
+// src/patcher-signatures.ts for the signature list. Callers import from here.
+export { MARKER, searchPathsBlock, withModFolder, patchedBranch, stripPatch, restoreBranch } from './patcher-gameinfo.ts';
+export { crc32, fileHashes, signatureLine, vanillaBranchHashes, matchesVanilla, hasSignaturePatch, stripSignatures } from './patcher-signatures.ts';
+export type { Hashes } from './patcher-signatures.ts';

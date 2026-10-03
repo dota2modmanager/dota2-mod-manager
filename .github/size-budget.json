@@ -13,7 +13,6 @@
     "src/mod-preview.ts": 391,
     "src/net.ts": 456,
     "src/overlays.ts": 327,
-    "src/patcher.ts": 427,
     "src/presets-service.ts": 377,
     "src/remote-config.ts": 305,
     "src/vpk-read.ts": 385,

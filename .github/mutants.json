@@ -404,7 +404,7 @@
     },
     {
       "name": "the signature records the CRC in the wrong byte order",
-      "file": "src/patcher.ts",
+      "file": "src/patcher-signatures.ts",
       "anchor": "export function fileHashes(buf: Buffer): { sha1: string; crc: string } {",
       "from": "le.writeUInt32LE(crc32(buf));",
       "to": "le.writeUInt32BE(crc32(buf));",
@@ -412,7 +412,7 @@
     },
     {
       "name": "taking the patch off leaves the file a tab short of what Valve signed",
-      "file": "src/patcher.ts",
+      "file": "src/patcher-gameinfo.ts",
       "anchor": "export function stripPatch(text: string): string {",
       "from": "const joiner = out[end] === '}' ? '\\r\\n\\t' : '\\r\\n';",
       "to": "const joiner = '\\r\\n';",
@@ -420,7 +420,7 @@
     },
     {
       "name": "Valve's own signature line is taken for ours",
-      "file": "src/patcher.ts",
+      "file": "src/patcher-signatures.ts",
       "anchor": "export function hasSignaturePatch(text: string): boolean {",
       "from": "return lines.slice(digest + 1).some((l) => l.startsWith(SIG_PREFIX + '~'));",
       "to": "return lines.some((l) => l.startsWith(SIG_PREFIX + '~'));",
@@ -428,7 +428,7 @@
     },
     {
       "name": "taking our signature out takes Valve's out with it",
-      "file": "src/patcher.ts",
+      "file": "src/patcher-signatures.ts",
       "anchor": "export function stripSignatures(text: string): string {",
       "from": "const kept = lines.filter((l, i) => i <= digest || !l.startsWith(SIG_PREFIX + '~'));",
       "to": "const kept = lines.filter((l) => !l.startsWith(SIG_PREFIX + '~'));",
@@ -436,7 +436,7 @@
     },
     {
       "name": "the vanilla hash is read from the line we appended",
-      "file": "src/patcher.ts",
+      "file": "src/patcher-signatures.ts",
       "anchor": "export function vanillaBranchHashes(signaturesText: string): Hashes | null {",
       "from": "const scope = digest === -1 ? lines : lines.slice(0, digest);",
       "to": "const scope = [...lines].reverse();",
@@ -444,7 +444,7 @@
     },
     {
       "name": "a restored file is called verified without being checked",
-      "file": "src/patcher.ts",
+      "file": "src/patcher-gameinfo.ts",
       "anchor": "export function restoreBranch(text: string, want: Hashes | null): { text: string; verified: boolean } {",
       "from": "return { text: base, verified: false };",
       "to": "return { text: base, verified: true };",

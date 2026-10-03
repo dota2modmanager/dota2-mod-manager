@@ -175,3 +175,24 @@ test('the people who can merge are the same list in both places', () => {
     'in the GOVERNANCE.md table and not in CODEOWNERS');
 });
 
+
+test('every path CODEOWNERS names is a file or folder the repository has', () => {
+  /* The lines that single out the game-folder modules named src/patcher.js and four other .js
+     files for weeks after the main process moved to TypeScript. GitHub does not complain about a
+     pattern that matches nothing, it just stops asking anyone to read the file twice. */
+  const patterns = read('.github/CODEOWNERS').split(/\r?\n/)
+    .map((l) => l.trim().split(/\s+/)[0])
+    .filter((p) => p && !p.startsWith('#') && p !== '*');
+  const files = [];
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
+      if (['node_modules', '.git', 'dist', 'sandbox'].includes(e.name)) continue;
+      const rel = dir ? `${dir}/${e.name}` : e.name;
+      if (e.isDirectory()) { files.push(`${rel}/`); walk(rel); } else files.push(rel);
+    }
+  };
+  walk('');
+  const toRe = (p) => new RegExp(`^${p.replace(/^\//, '').replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*')}`);
+  const dead = patterns.filter((p) => !files.some((f) => toRe(p).test(f)));
+  assert.deepEqual(dead, [], `CODEOWNERS names paths that are not there: ${dead.join(', ')}`);
+});

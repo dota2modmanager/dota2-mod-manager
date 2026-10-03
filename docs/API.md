@@ -64,6 +64,8 @@ the code, not in this page.
 | [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts |
 | [`src/overlays.ts`](#srcoverlaysts) | Fonts and cursors: loose files written over the game's own. |
 | [`src/patch-watch.ts`](#srcpatch-watchts) | Noticing that Dota was patched, while the app is open. |
+| [`src/patcher-gameinfo.ts`](#srcpatcher-gameinfots) | The two gameinfo files (src/patcher.ts explains the patch): the SearchPaths block read out of |
+| [`src/patcher-signatures.ts`](#srcpatcher-signaturests) | The signature list, dota.signatures (src/patcher.ts explains the patch): the hashes the client |
 | [`src/patcher.ts`](#srcpatcherts) | Search-path patch: registers an extra content folder ahead of the game's own, which |
 | [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
 | [`src/presence-status.ts`](#srcpresence-statusts) | What the user's Discord profile says while the app is open: which screen they are on, and how |
@@ -3622,21 +3624,11 @@ Watches the game folder and says when Dota was patched, or its files checked, wh
 @param deps.debounceMs shortened by tests, which cannot wait out a real patch
 ```
 
-## src/patcher.ts
+## src/patcher-gameinfo.ts
 
-Search-path patch: registers an extra content folder ahead of the game's own, which
-is the only way to override files the engine reads through the MOD path id -
-scripts/items/items_game.txt above all. Mods in a language folder can replace any
-ordinary asset, but never the item schema: MOD resolves to game/dota alone.
-
-Mechanics (same shape the community patchers use, rebuilt from the local files):
-  game/dota/gameinfo_branchspecific.gi  gets a FileSystem/SearchPaths block whose
-    content is derived from the CURRENT gameinfo.gi plus our folder, so a Valve
-    change to the search paths is carried over instead of silently dropped;
-  game/bin/win64/dota.signatures        gets a line with the patched file's SHA1+CRC,
-    because the client checks that file against the signature list.
-
-Everything is backed up before the first write and revert() puts the originals back.
+The two gameinfo files (src/patcher.ts explains the patch): the SearchPaths block read out of
+gameinfo.gi with our folder added, that block spliced into gameinfo_branchspecific.gi, and the
+same file taken back to what Valve shipped, byte for byte.
 
 ### `MARKER`
 
@@ -3645,62 +3637,6 @@ export const MARKER = 'Dota 2 Mod Manager'
 ```
 
 Written beside every line this app adds, so its own edit can be found and taken out again.
-
-### `FOLDER`
-
-```ts
-export const FOLDER = 'dota_mods'
-```
-
-The content folder registered next to the game's own "dota".
-
-### `Hashes`
-
-```ts
-export interface Hashes { sha1: string; crc: string }
-```
-
-A file's hashes as the signature list writes them, uppercase hex.
-
-### `PatchState`
-
-```ts
-export interface PatchState
-```
-
-What the install looks like right now; see state().
-
-### `paths`
-
-```ts
-export function paths(gamePath: string): { gameinfo: string; branch: string; signatures: string }
-```
-
-The three files the patch touches, for this platform's layout of the game.
-
-### `crc32`
-
-```ts
-export function crc32(buf: Buffer): number
-```
-
-CRC-32 as the signature list records it.
-
-### `fileHashes`
-
-```ts
-export function fileHashes(buf: Buffer): { sha1: string; crc: string }
-```
-
-The signature list stores the CRC little-endian, uppercase, like the SHA1 next to it.
-
-### `signatureLine`
-
-```ts
-export function signatureLine(buf: Buffer): string
-```
-
-The line the signature list needs for the patched file.
 
 ### `searchPathsBlock`
 
@@ -3747,6 +3683,57 @@ Used wherever a patched file could be mistaken for an original: a backup taken w
 patch was already applied would otherwise be useless, and telling the user to go repair
 game files by hand is not an answer the app is allowed to give.
 
+### `restoreBranch`
+
+```ts
+export function restoreBranch(text: string, want: Hashes | null): { text: string; verified: boolean }
+```
+
+The original branchspecific file, reconstructed and CHECKED against Valve's own list
+rather than trusted. A copy this app made in an older version can be a tab short of the
+real thing, and a wrong copy is worse than none: it loads, so nothing looks broken until
+the client quietly stops finding matches. The only thing a reconstruction can get wrong
+is the indent ahead of the FileSystem closing brace, so when the hash disagrees the few
+shapes that indent can take are tried and the one Valve signed is kept.
+
+## src/patcher-signatures.ts
+
+The signature list, dota.signatures (src/patcher.ts explains the patch): the hashes the client
+checks gameinfo_branchspecific.gi against, Valve's own entry for it, and the one line this app
+appends after the DIGEST and takes off again.
+
+### `Hashes`
+
+```ts
+export interface Hashes { sha1: string; crc: string }
+```
+
+A file's hashes as the signature list writes them, uppercase hex.
+
+### `crc32`
+
+```ts
+export function crc32(buf: Buffer): number
+```
+
+CRC-32 as the signature list records it.
+
+### `fileHashes`
+
+```ts
+export function fileHashes(buf: Buffer): { sha1: string; crc: string }
+```
+
+The signature list stores the CRC little-endian, uppercase, like the SHA1 next to it.
+
+### `signatureLine`
+
+```ts
+export function signatureLine(buf: Buffer): string
+```
+
+The line the signature list needs for the patched file.
+
 ### `vanillaBranchHashes`
 
 ```ts
@@ -3765,19 +3752,6 @@ export function matchesVanilla(text: string, want: Hashes | null): boolean
 ```
 
 Whether a file hashes to what Valve recorded; with no record there is nothing to contradict.
-
-### `restoreBranch`
-
-```ts
-export function restoreBranch(text: string, want: Hashes | null): { text: string; verified: boolean }
-```
-
-The original branchspecific file, reconstructed and CHECKED against Valve's own list
-rather than trusted. A copy this app made in an older version can be a tab short of the
-real thing, and a wrong copy is worse than none: it loads, so nothing looks broken until
-the client quietly stops finding matches. The only thing a reconstruction can get wrong
-is the indent ahead of the FileSystem closing brace, so when the hash disagrees the few
-shapes that indent can take are tried and the one Valve signed is kept.
 
 ### `hasSignaturePatch`
 
@@ -3799,6 +3773,50 @@ export function stripSignatures(text: string): string
 
 Same for the signature list: our line is appended after the DIGEST line, so anything of
 ours past that point comes off and the file the game shipped is left behind.
+
+## src/patcher.ts
+
+Search-path patch: registers an extra content folder ahead of the game's own, which
+is the only way to override files the engine reads through the MOD path id -
+scripts/items/items_game.txt above all. Mods in a language folder can replace any
+ordinary asset, but never the item schema: MOD resolves to game/dota alone.
+
+Mechanics (same shape the community patchers use, rebuilt from the local files):
+  game/dota/gameinfo_branchspecific.gi  gets a FileSystem/SearchPaths block whose
+    content is derived from the CURRENT gameinfo.gi plus our folder, so a Valve
+    change to the search paths is carried over instead of silently dropped;
+  game/bin/win64/dota.signatures        gets a line with the patched file's SHA1+CRC,
+    because the client checks that file against the signature list.
+
+Everything is backed up before the first write and revert() puts the originals back.
+
+Hands on from [`src/patcher-gameinfo.ts`](#srcpatcher-gameinfots): `MARKER`, `searchPathsBlock`, `withModFolder`, `patchedBranch`, `stripPatch`, `restoreBranch`.
+
+Hands on from [`src/patcher-signatures.ts`](#srcpatcher-signaturests): `crc32`, `fileHashes`, `signatureLine`, `vanillaBranchHashes`, `matchesVanilla`, `hasSignaturePatch`, `stripSignatures`, `Hashes`.
+
+### `FOLDER`
+
+```ts
+export const FOLDER = 'dota_mods'
+```
+
+The content folder registered next to the game's own "dota".
+
+### `PatchState`
+
+```ts
+export interface PatchState
+```
+
+What the install looks like right now; see state().
+
+### `paths`
+
+```ts
+export function paths(gamePath: string): { gameinfo: string; branch: string; signatures: string }
+```
+
+The three files the patch touches, for this platform's layout of the game.
 
 ### `state`
 
