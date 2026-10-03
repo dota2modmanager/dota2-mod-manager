@@ -2,6 +2,112 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.8.0
+
+Everything the four 2.8.0 betas brought, now for everybody.
+
+### Items: a hero's default items in the look of any of its wearables
+
+Cosmetics → Items lists every hero. Open one, pick a slot and choose any of that hero's
+wearables: the default item in that slot takes its look. Only you see it, and no mod file
+changes. You can add particle effects on top, one or several: fire, lightnings, frostbloom, snow,
+bubbles, sand storm and ghost. Frostbloom and snow do not hold on every model.
+
+Nothing reaches the game until you press Equip. Each item you put on is a row in My mods with its
+effects named, and turns off like any mod. A hero's window opens with Sets: Equip the whole set
+puts every piece on at once, each as its own row. A piece the builder leaves alone, such as an
+arcana, stays in the window, dimmed, with the reason.
+
+### Heroes opens on a grid of heroes
+
+Heroes in the catalog used to be 463 mod cards in one run. It now opens on one tile per hero,
+with the hero's portrait, how many mods it has and whether you have one installed. Press a hero
+to see its mods. The switch in the toolbar brings the list back.
+
+### The window moves
+
+Every screen was redrawn on new foundations, and things now move to where they go instead of
+jumping there. In the catalog the highlight slides to the category you pick, and a mod window
+opens out of its card. In My mods a mod you move up or down the load order slides to its new
+place, a removed mod folds away, and a pack's contents open instead of popping in. A switched-off
+mod is dimmed, so you can see at a glance what the game will load. If Windows is set to show fewer
+animations, the app keeps still.
+
+### Shaders, trees and river load first
+
+Slots 02-29 now belong to shaders, trees, river, hero effects, ranged attacks, hero items and
+optimization, and every other mod starts at 30. Before, moving a hero mod above a shader could
+trade their slots. Moving and dragging now keep a mod inside its own part. If your order comes
+from an earlier version, the app lays it out once at start, while Dota is closed: it keeps your
+order inside each part and tells you the order changed.
+
+### The anti-cheat notice says what to do
+
+When Dota cannot check the game before matchmaking, it shows a Valve Anti-Cheat window saying your
+machine could not be verified, and with mods installed that reads like a ban on the way. Usually
+the cause is a damaged install or a Steam that needs a restart. The app now replaces the text of
+that window with the steps that fix it: verify the game files in Steam, restart Steam, and turn
+mods off with the Mods switch. The text follows the language the game shows, in all 28 of them.
+
+It lives in one file of the app's own, pak64 in the language folder. It is not a mod: My mods does
+not list it, the Mods switch leaves it on, and uninstalling the app removes it. If one of your mods
+sat in slot 64, it moves to the next free slot.
+
+### Whole-map terrains built for an older map
+
+Some catalog terrains, the TI and Dota+ ones among them, replace the whole map, so each carries
+Valve's map as it was on the day it was built. After Valve updates the map, such a terrain can
+remove trees, cost frames and get matchmaking refused. The catalog and My mods now mark these
+terrains "old map". When the game's map changes, the app switches an old one off once and tells
+you. If you turn it back on, it stays on until the next map update.
+
+### 18+ mods stay hidden until you say yes
+
+The catalog marks five mods 18+: explicit hero models. The app asks once whether you are 18 and
+want them shown. Until you say yes, they are hidden from the catalog, the search, Recently added
+and Favorites. Settings → Catalog has a switch to change the answer. Mods you already installed
+stay in My mods as they are.
+
+### Every author of a mod
+
+A mod's window credits everybody the catalog names on it: its authors, the people who reworked it
+and the people who sent it in, each linked to their page. Before, it named the first author, and
+the other two links opened a page that does not exist.
+
+### Fixes
+
+- Checking the game's files in Steam while the app was open turned your mods off until a restart.
+  The app now notices the check and puts its patch back.
+- Moving a mod in the load order while Dota or an antivirus held one of its files could leave the
+  mod split between two slots, and swapping two mods in that moment could delete one of them. A
+  move now happens whole or not at all.
+- A settings file saved with a byte order mark, as Notepad saves it, lost every setting on the
+  next start, the game path included. It now loads.
+- On a first start with no internet and nothing cached, presets could not be listed, shared or
+  applied. They work now.
+- Next to Minify, My mods showed a yellow warning that contradicted itself even when nothing was
+  wrong, and could name the folder "dota_null". It now names the folder the game reads, and warns
+  only when your mods are the ones not loading.
+- When the wiki answered with a server error for a cosmetic's picture, the app took that for "no
+  picture" and showed none for a week. It asks again next time now.
+- On a short window, such as a 1366x768 laptop at 125%, the safe mode window cut off its title and
+  both buttons. It fits now.
+- After switching to English, the sign-in button and the mods switch stayed in Russian until a
+  restart.
+- A tab pressed right after switching screens could do nothing, and a search typed on another
+  screen opened the home screen with no results.
+- The download bar stayed on screen after Source 2 Viewer finished downloading.
+- A preview paused in its first second started playing anyway. It stays paused.
+- Applying a preset with a mod the catalog lists without a file no longer tries to download a file
+  called "undefined".
+- The support report you send from Settings now says whether download mirrors are failing, which
+  tools are installed, and whether item-table changes wait for a rebuild.
+
+### Thanks
+
+h6rd wrote the item builder, and develops it further with TheFleece. Thanks to the testers who ran
+the four betas.
+
 ## 2.8.0-beta.4
 
 A fourth beta for the testers on the list. Everything in it, and in the betas before it, reaches
