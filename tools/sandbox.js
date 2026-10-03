@@ -7,6 +7,7 @@
  *   node tools/sandbox.js seed     build the tree, download real mods, seed userData
  *   node tools/sandbox.js reset    restore the tree to pristine, wipe userData, keep mods
  *   node tools/sandbox.js status   what is on disk right now
+ *   node tools/sandbox.js pin      point the settings at the sandbox game (start:sandbox runs it)
  *
  * The layout mirrors a real Steam library, because the app derives things from it: the game
  * path ends in ...\dota 2 beta\game (src/steam.ts) and src/gamelang.ts walks three levels up
@@ -23,6 +24,7 @@ const { crc32 } = require('zlib');
 
 const { readVpkEntryFile, buildVpk } = require('../src/vpk.ts');
 const { Catalog, RAW_BASE } = require('../src/catalog.ts');
+const { pinGamePath } = require('./sandbox-pin.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const SANDBOX = path.join(ROOT, 'sandbox');
@@ -531,6 +533,15 @@ function reset() {
   log('reset: game tree restored, userData wiped, downloaded mods kept');
 }
 
+// the sandbox game, written into the settings before every start (tools/sandbox-pin.js says why)
+function pin() {
+  const refused = pinGamePath(USERDATA, GAME, log);
+  if (refused) {
+    log(`refusing to start: ${refused}`);
+    process.exitCode = 1;
+  }
+}
+
 function status() {
   const count = (dir, re) => {
     try { return fs.readdirSync(dir).filter((f) => re.test(f)).length; } catch { return 0; }
@@ -547,9 +558,9 @@ function status() {
 }
 
 const cmd = process.argv[2] || 'status';
-const commands = { seed, reset, status };
+const commands = { seed, reset, status, pin };
 if (!commands[cmd]) {
-  log('usage: node tools/sandbox.js <seed|reset|status>');
+  log('usage: node tools/sandbox.js <seed|reset|status|pin>');
   process.exitCode = 1;
 } else {
   Promise.resolve(commands[cmd]()).catch((e) => {
