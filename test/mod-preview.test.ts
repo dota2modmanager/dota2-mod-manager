@@ -309,3 +309,92 @@ test('the cache reports what it holds and clears completely', (t) => {
   assert.equal(previews.size(), 0);
   assert.equal(fs.existsSync(previews.root), false);
 });
+
+// ---------- decoding, with the texture tool played by the test ----------
+
+/** A mod folder of `count` mods, each with drawn art whose bytes say which mod it is. */
+function modsWithArt(t: TestContext, count: number) {
+  const dir = userDir(t);
+  const lang = path.join(dir, 'lang');
+  fs.mkdirSync(lang, { recursive: true });
+  const keys: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const slot = `pak${String(30 + i).padStart(2, '0')}_dir.vpk`;
+    fs.writeFileSync(path.join(lang, slot), vpk.buildVpk([entry('panorama/images/heroes/selection/npc_dota_hero_wisp_png.vtex_c', `art of mod ${i}`)]));
+    keys.push(`modart:${slot}`);
+  }
+  return { dir, lang, keys };
+}
+
+/** The tool: writes <stem>.png beside each staged texture whose bytes `decodes` accepts, holding those bytes. */
+function fakeTool(decodes: (bytes: string) => boolean = () => true) {
+  const calls: string[][] = [];
+  const run = async (_exe: string, args: string[]) => {
+    calls.push(args);
+    const folder = args[args.indexOf('-i') + 1];
+    for (const f of fs.readdirSync(folder)) {
+      if (!f.endsWith('.vtex_c')) continue;
+      const bytes = fs.readFileSync(path.join(folder, f), 'utf8');
+      if (decodes(bytes)) fs.writeFileSync(path.join(folder, f.replace(/\.vtex_c$/, '.png')), bytes);
+    }
+  };
+  return { run, calls };
+}
+
+/** Pictures whose pixels are busy unless the file says "flat"; resizing keeps the text so the cache can be read back. */
+const DECODER: Images = {
+  read: (file) => {
+    const text = fs.readFileSync(file, 'utf8');
+    return { ...bitmap(64, 64, (x, y) => (text.includes('flat') ? [10, 10, 10, 255] : [x * 4, y * 4, 128, 255])), img: text };
+  },
+  toSmallPng: (bmp) => Buffer.from(`small ${bmp.img}`),
+};
+
+test('a screenful of mods is decoded in one call, and each picture is its own mod\'s', async (t) => {
+  const m = modsWithArt(t, 3);
+  const tool = fakeTool();
+  const previews = createModPreviews({ userDataDir: m.dir, toolchain: withTool('C:/tool.exe'), langFileOf: (rel) => path.join(m.lang, rel), images: DECODER, run: tool.run });
+
+  // the same key twice wants one picture, decoded once
+  const got = await previews.getMany([...m.keys, m.keys[0]]);
+  assert.equal(tool.calls.length, 1, 'one call for the whole batch');
+  m.keys.forEach((key, i) => {
+    assert.equal(Buffer.from(got[key].split(',')[1], 'base64').toString(), `small art of mod ${i}`, key);
+  });
+  // cached: asked again, nothing is decoded
+  await previews.getMany(m.keys);
+  assert.equal(tool.calls.length, 1);
+});
+
+test('what the tool could not decode, or decoded to one flat colour, is remembered and not decoded again', async (t) => {
+  const m = modsWithArt(t, 2);
+  fs.writeFileSync(path.join(m.lang, 'pak30_dir.vpk'), vpk.buildVpk([entry('panorama/images/heroes/selection/npc_dota_hero_wisp_png.vtex_c', 'flat art')]));
+  const tool = fakeTool((bytes) => bytes !== 'art of mod 1');
+  const previews = createModPreviews({ userDataDir: m.dir, toolchain: withTool('C:/tool.exe'), langFileOf: (rel) => path.join(m.lang, rel), images: DECODER, run: tool.run });
+
+  assert.deepEqual(await previews.getMany(m.keys), {});
+  assert.deepEqual(await previews.getMany(m.keys), {});
+  assert.equal(tool.calls.length, 1, 'both misses are on disk now');
+});
+
+test('a tool that fails is logged, nothing is marked as missing, and the next ask tries again', async (t) => {
+  const m = modsWithArt(t, 1);
+  const said: string[] = [];
+  let fail = true;
+  const tool = fakeTool();
+  const run = async (exe: string, args: string[]) => { if (fail) throw new Error('vrf crashed'); return tool.run(exe, args); };
+  const previews = createModPreviews({ userDataDir: m.dir, toolchain: withTool('C:/tool.exe'), langFileOf: (rel) => path.join(m.lang, rel), images: DECODER, run, log: (s) => said.push(s) });
+
+  assert.deepEqual(await previews.getMany(m.keys), {});
+  assert.ok(said.some((s) => /extraction failed.*vrf crashed/.test(s)), said.join('; '));
+  fail = false;
+  assert.equal(Object.keys(await previews.getMany(m.keys)).length, 1, 'a crash is not a verdict on the mod');
+});
+
+test('more than forty pictures go to the tool forty at a time', async (t) => {
+  const m = modsWithArt(t, 41);
+  const tool = fakeTool();
+  const previews = createModPreviews({ userDataDir: m.dir, toolchain: withTool('C:/tool.exe'), langFileOf: (rel) => path.join(m.lang, rel), images: DECODER, run: tool.run });
+  assert.equal(Object.keys(await previews.getMany(m.keys)).length, 41);
+  assert.equal(tool.calls.length, 2);
+});

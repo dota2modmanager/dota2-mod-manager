@@ -63,7 +63,9 @@ the code, not in this page.
 | [`src/main-window.ts`](#srcmain-windowts) | The one window the app has: its size on the screen it opens on, the single page it may show, |
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
 | [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
+| [`src/mod-preview-pick.ts`](#srcmod-preview-pickts) | Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
+| [`src/mods-listing.ts`](#srcmods-listingts) | What My mods is drawn from: the answer to mods:list (src/ipc-mods.ts), which every screen asks |
 | [`src/net-download.ts`](#srcnet-downloadts) | A file downloaded to disk across the mirror chain (src/net.ts explains it): resumed where a |
 | [`src/net-fetch.ts`](#srcnet-fetchts) | A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a |
 | [`src/net-mirrors.ts`](#srcnet-mirrorsts) | The mirror chain (src/net.ts explains it): which hosts carry a copy of a GitHub file and how a |
@@ -3183,6 +3185,63 @@ export function createModIdentity({ getGamePath, log = () => {} }: { getGamePath
 
 Names a mod by the game's own items it replaces, read out of the installed item table.
 
+## src/mod-preview-pick.ts
+
+Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches
+it and hands it to the window). Pure: path lists and pixels in, answers out, so the two
+judgements this feature rests on are held by tests against real path lists.
+
+  what to show - art that was drawn to be looked at (panorama) beats a model's texture,
+    which is a UV layout and reads as a coloured smear. The two are kept apart as "art" and
+    "texture" so the caller can put the wiki's hero portrait between them;
+  whether it is worth showing at all - a mod that strips a hero's armour ships an *empty*
+    texture. It decodes perfectly and shows nothing, so the decoded pixels are judged
+    before anything is cached.
+
+### `Kind`
+
+```ts
+export type Kind = 'art' | 'texture' | 'video'
+```
+
+The three kinds of picture a mod can give: drawn art, a model's texture, an animated portrait.
+
+### `Bitmap`
+
+```ts
+export interface Bitmap { width: number; height: number; data: Buffer | Uint8Array; img?: unknown }
+```
+
+A decoded picture: 4 bytes a pixel, alpha last, and what the decoder needs to resize it.
+
+### `pickCandidate`
+
+```ts
+export function pickCandidate(paths: Iterable<string>, kind: Kind): string | null
+```
+
+Which file inside a mod to show, for one of the three kinds.
+Pure, so the ranking can be held by tests against real path lists.
+
+```
+@param paths lowercased inner paths of the mod's VPK
+@param kind  video is a hero's animated portrait, a .webm
+```
+
+### `worthShowing`
+
+```ts
+export function worthShowing({ width, height, data }: Bitmap): boolean
+```
+
+Is this decoded picture worth showing? A mod that removes something ships a texture that
+is empty or a single flat colour: it decodes fine and shows nothing.
+Pure, so tests can hand it pixels without an image library.
+
+```
+@param bmp 4 bytes per pixel, alpha last
+```
+
 ## src/mod-preview.ts
 
 A picture for a mod that came with none, taken out of the mod itself.
@@ -3198,24 +3257,12 @@ there. Measured over 96 real mods (2026-08-07): 50 of them can be given a pictur
 and the 46 that cannot are packs of particles, sounds and bare models - there is genuinely
 nothing to show.
 
-Two things this file exists to get right:
-  what to show - art that was drawn to be looked at (panorama) beats a model's texture,
-    which is a UV layout and reads as a coloured smear. The two are kept apart as "art" and
-    "texture" so the caller can put the wiki's hero portrait between them;
-  whether it is worth showing at all - a mod that strips a hero's armour ships an *empty*
-    texture. It decodes perfectly and shows nothing, so the decoded pixels are judged
-    before anything is cached.
+Which file to show and whether it is worth showing are src/mod-preview-pick.ts.
 
 The picture inside a mod is a compiled Source 2 texture, so this needs the toolchain
 (src/toolchain.ts). Without it nothing here answers and the old fallbacks stand.
 
-### `Bitmap`
-
-```ts
-export interface Bitmap { width: number; height: number; data: Buffer | Uint8Array; img?: unknown }
-```
-
-A decoded picture: 4 bytes a pixel, alpha last, and what the decoder needs to resize it.
+Hands on from [`src/mod-preview-pick.ts`](#srcmod-preview-pickts): `pickCandidate`, `worthShowing`, `Bitmap`, `Kind`.
 
 ### `Images`
 
@@ -3249,38 +3296,10 @@ export const TEX = 'modtex:'
 
 The key prefix for a model texture out of a mod.
 
-### `pickCandidate`
-
-```ts
-export function pickCandidate(paths: Iterable<string>, kind: Kind): string | null
-```
-
-Which file inside a mod to show, for one of the three kinds.
-Pure, so the ranking can be held by tests against real path lists.
-
-```
-@param paths lowercased inner paths of the mod's VPK
-@param kind  video is a hero's animated portrait, a .webm
-```
-
-### `worthShowing`
-
-```ts
-export function worthShowing({ width, height, data }: Bitmap): boolean
-```
-
-Is this decoded picture worth showing? A mod that removes something ships a texture that
-is empty or a single flat colour: it decodes fine and shows nothing.
-Pure, so tests can hand it pixels without an image library.
-
-```
-@param bmp 4 bytes per pixel, alpha last
-```
-
 ### `createModPreviews`
 
 ```ts
-export function createModPreviews({ userDataDir, toolchain, langFileOf, images = null, log = () => {} }: { userDataDir: string; toolchain: { pathOf: (name: string) => string | null }; langFileOf: (relPath: string) => string | null; images?: Images | null; log?: (msg: string) => void; })
+export function createModPreviews({ userDataDir, toolchain, langFileOf, images = null, run = runTool, log = () => {} }: { userDataDir: string; toolchain: { pathOf: (name: string) => string | null }; langFileOf: (relPath: string) => string | null; images?: Images | null; run?: (exe: string, args: string[]) => Promise<void>; log?: (msg: string) => void; })
 ```
 
 Pictures for mods that came with none, cached in userData.
@@ -3288,7 +3307,28 @@ Pictures for mods that came with none, cached in userData.
 ```
 @param deps.langFileOf where a mod's *_dir.vpk actually is
 @param deps.images test seam for decode/resize
+@param deps.run test seam for the texture tool, which is somebody else's program
 ```
+
+## src/mods-listing.ts
+
+What My mods is drawn from: the answer to mods:list (src/ipc-mods.ts), which every screen asks
+for again after anything changes.
+
+It does more than list. A mod whose files were deleted from the game folder drops out of the
+library; a foreign file is named as a copy of a library mod when it is one, and as a catalog
+mod when the catalog knows it; an import still called "pakNN" gets a real name once; every row
+says which switched-on mod hides its files; the item blocks stay in the main process; and the
+ownership note and the anti-cheat notice are kept current, because this is the one call that
+follows every change.
+
+### `createModsListing`
+
+```ts
+export function createModsListing({ installer, library, fingerprints, schemaService, terrainAges, notice, diag, refreshPresence, verifyStuck }: ListingDeps)
+```
+
+The mods:list answer, built over the services src/ipc-mods.ts hands it.
 
 ## src/net-download.ts
 

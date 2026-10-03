@@ -363,7 +363,7 @@
           "lines": 100
         },
         "src/installer-folder.ts": {
-          "lines": 97.6
+          "lines": 98.6
         },
         "src/installer-packs.ts": {
           "lines": 100
@@ -393,7 +393,7 @@
           "lines": 77.5
         },
         "src/ipc-mods.ts": {
-          "lines": 77.2
+          "lines": 88.6
         },
         "src/ipc-packs.ts": {
           "lines": 92.3
@@ -428,8 +428,14 @@
         "src/mod-id.ts": {
           "lines": 100
         },
+        "src/mod-preview-pick.ts": {
+          "lines": 99.1
+        },
         "src/mod-preview.ts": {
-          "lines": 76.2
+          "lines": 87
+        },
+        "src/mods-listing.ts": {
+          "lines": 92.7
         },
         "src/net-download.ts": {
           "lines": 100
