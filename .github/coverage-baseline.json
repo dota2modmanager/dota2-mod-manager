@@ -390,22 +390,22 @@
           "lines": 99
         },
         "src/ipc-game.ts": {
-          "lines": 87.9
+          "lines": 100
         },
         "src/ipc-library.ts": {
-          "lines": 78.7
+          "lines": 98.3
         },
         "src/ipc-misc.ts": {
-          "lines": 77.5
+          "lines": 100
         },
         "src/ipc-mods.ts": {
-          "lines": 88.6
+          "lines": 97.1
         },
         "src/ipc-packs.ts": {
-          "lines": 92.3
+          "lines": 98.9
         },
         "src/ipc-presets.ts": {
-          "lines": 88.4
+          "lines": 94.9
         },
         "src/ipc-settings.ts": {
           "lines": 100
@@ -492,7 +492,7 @@
           "lines": 98.2
         },
         "src/preset-share.ts": {
-          "lines": 94.1
+          "lines": 98.8
         },
         "src/presets-service.ts": {
           "lines": 100
@@ -586,6 +586,9 @@
         },
         "tools/e2e.mjs": {
           "lines": 67.1
+        },
+        "tools/email-worker/worker.js": {
+          "lines": 100
         },
         "tools/gen-api-docs.js": {
           "lines": 92.9
