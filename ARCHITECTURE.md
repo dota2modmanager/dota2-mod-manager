@@ -9,10 +9,12 @@ between them.
 Electron, three processes, one bridge.
 
 ```
-src/main.ts      Electron lifecycle and the order the app starts in; everything else is a module
-  └─ src/*.ts    everything that touches disk, network or the game folder
-preload.js       the only channel between the two sides: window.api, built with contextBridge
-renderer/        the interface: plain HTML, CSS and JavaScript, no build step, no framework
+src/main.ts        Electron lifecycle and the order the app starts in; everything else is a module
+  ├─ src/services.ts   every long-lived service, built once
+  ├─ src/ipc.ts        every IPC module, registered over one AppContext
+  └─ src/*.ts          everything that touches disk, network or the game folder
+preload.js         the only channel between the two sides: window.api, built with contextBridge
+renderer/          the window: TypeScript and React, built by Vite into out/renderer
 ```
 
 The renderer can do nothing on its own. It has no Node integration, no file access and no network
@@ -311,8 +313,8 @@ because when it fails there is nothing below it worth reading.
 
 `npm test` is plain `node:test`, no framework, more than 80 files, run on every push and every pull request
 on Linux and on Windows. Five of them hold this project against itself rather than testing a
-module: the IPC contract (every channel has a handler, every handler runs, and `src/main.ts` passes
-what each module unpacks), the renderer's imports, the release contract, `DECISIONS.md`
+module: the IPC contract (every channel has a handler, every handler runs, and `src/ipc.ts` hands each
+module what it unpacks), the renderer's imports, the release contract, `DECISIONS.md`
 against the repository it describes, and the write-ups in `docs/incidents/` against the tests
 and workflow steps they name as guards.
 
@@ -367,45 +369,73 @@ that location is not writable.
 
 | File | What it owns |
 |---|---|
-| `src/main.ts` | Electron lifecycle, auto-update, and wiring the rest together |
-| `src/main-window.ts` | The window: its size on the screen it opens on, the one page it may show, Ctrl +/-/0 |
-| `src/dev-harness.ts` | `MM_SHOT`, `MM_EVAL` and the other switches a script drives the window with |
-| `src/game-upkeep.ts` | The mod folder following the audio language, what Steam's file check took, repair after a Dota patch, and the work done at start |
-| `src/ipc-*.ts` | The IPC handlers, one file per group of channels, each naming what it needs |
-| `src/app-context.ts`, `src/electron.ts` | What src/main.ts hands the IPC modules, and Electron asked for when a module registers |
+| `src/main.ts` | Electron lifecycle, auto-update, and the order the app starts in |
+| `src/services.ts` | Every long-lived service, built once in the order they depend on each other |
+| `src/ipc.ts`, `src/ipc-*.ts` | Every IPC module registered in one place, and the handlers themselves, one file per group of channels, each naming what it needs |
+| `src/app-context.ts`, `src/electron.ts` | What the IPC modules are handed, and Electron asked for when a module registers |
+| `src/main-window.ts`, `src/app-page.ts` | The window: its size on the screen it opens on, the one page it may show, Ctrl +/-/0 |
+| `src/dev-harness.ts`, `src/capture.ts` | `MM_SHOT`, `MM_EVAL` and the other switches a script drives the window with, and the screenshot they take |
+| `src/game-upkeep.ts` | The work done at start: the game path, the mod folder following the audio language, the load-order layout, the migrations |
+| `src/game-repair.ts` | Putting the game back after something else changed it: a Dota patch, Steam's file check, waiting while Dota runs |
+| `src/patch-watch.ts` | Noticing a game update the moment it lands |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
-| `src/presence-status.ts` | What the Discord status says, and whether it is on |
+| `src/discord-auth.ts`, `src/discord-presence.ts`, `src/presence-status.ts` | Signing in with Discord, and what the Discord status says and whether it is on |
 | `src/release-notes.ts` | The "What's new" text, out of the changelogs shipped with the build |
 | `src/feature-gate.ts` | Whether a feature has been switched off from `config/app.json`, asked once |
 | `preload.js` | The `window.api` surface, and nothing else crosses |
-| `src/installer.ts` | Download, slots, install, enable, remove, packs |
-| `src/beta.ts` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
-| `src/overlays.ts` | Fonts and cursors: files written over the game's own, their kept originals, and putting them back after Steam's file check |
+| `src/installer.ts` | The door to everything below that writes a mod into the game folder or takes it out |
+| `src/installer-downloads.ts` | Getting a catalog archive onto this machine |
+| `src/installer-write.ts` | Writing a mod into the folder, switching its files on and off, removing them |
+| `src/installer-slots.ts`, `src/slot-zones.ts` | The load order: pak slots, moving and swapping them, its two parts, and which mod hides whose files |
+| `src/installer-packs.ts` | Several mods in one pak slot |
+| `src/installer-repack.ts` | What is already installed, read and rewritten: merged, unpacked, folded, split by hero |
+| `src/installer-folder.ts`, `src/installer-files.ts` | The language folder as a whole: the mods-off switch, the note of which files are ours, foreign files, and the names they share |
+| `src/overlays.ts`, `src/overlays-cursor.ts` | Fonts and cursors: files written over the game's own, their kept originals, putting them back after Steam's file check, and each cursor set's own copy |
 | `src/import.ts` | Taking a mod in: a `.vpk`, a `.zip`, an author's folder, or bytes off a drop |
 | `src/cursors.ts` | Which cursor set is live, which look a slot wears, and the repair at startup |
 | `src/adopt.ts` | What a VPK goes through before it counts as a mod: named, harvested, split |
-| `src/updater.ts` | Where an installed copy looks for a new version: the two feeds, and the channel it reads |
-| `src/vpk.ts` | The VPK format, gathered from `vpk-read.ts`, `vpk-write.ts` and `vpk-analyze.ts` |
+| `src/mods-listing.ts` | What My mods is drawn from: the library squared with the folder, foreign files named, which mod hides whose files |
+| `src/minify.ts` | Living next to Minify: its paks, its marker, the folder it builds into |
+| `src/updater.ts`, `src/portable-update.ts` | Where an installed copy looks for a new version, and updating the portable build without self-overwrite |
+| `src/beta.ts` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
+| `src/vpk.ts`, `src/vpk-read.ts`, `src/vpk-write.ts`, `src/vpk-pack.ts`, `src/vpk-analyze.ts` | The VPK format: reading one, writing one, packing a folder into one, and what a mod's paths say it changes |
 | `src/file-tx.ts` | One transaction per change to the game folder |
 | `src/library.ts` | `manifest.json`: installed records and presets |
-| `src/settings.ts` | `settings.json` and its defaults |
+| `src/settings.ts`, `src/settings-view.ts` | `settings.json` and its defaults, and everything the Settings screen is told in one answer |
 | `src/catalog.ts`, `src/catalog-signature.ts` | Catalog data and who is allowed to change it |
-| `src/net.ts` | Downloads, mirrors, backoff |
-| `src/remote-config.ts` | The switches and notices this project can change after a release, the version ranges a switch can be held to, and the signature over them |
+| `src/net.ts`, `src/net-mirrors.ts`, `src/net-fetch.ts`, `src/net-download.ts` | Downloads across the mirror chain: the hosts and how each is doing, a request along it, a file to disk checked against its hash |
+| `src/remote-config.ts`, `src/remote-config-format.ts` | The switches and notices this project can change after a release, the version ranges a switch can be held to, the signature over them, and the checks the fetched file goes through |
 | `tools/sign-catalog.js` | The signing side, for whoever holds a private key |
 | `src/safe-zip.ts` | Every foreign archive comes through here |
 | `src/steam.ts` | Finding Steam and the game, and proving the folder is really a game |
-| `src/gamelang.ts` | Which folder Dota will mount, and moving mods across when that changes |
-| `src/patcher.ts`, `src/schema.ts`, `src/schema-service.ts` | Search-path patch, signatures, item schema |
-| `src/patch-watch.ts` | Noticing a game update and repairing after it |
-| `src/fingerprints.ts` | Recognising a file somebody else installed |
+| `src/gamelang.ts`, `src/gamelang-steam.ts`, `src/gamelang-folders.ts` | Which folder Dota will mount, what Steam says about the game's language, and moving mods across when that changes |
+| `src/patcher.ts`, `src/patcher-gameinfo.ts`, `src/patcher-signatures.ts` | The search-path patch: the two gameinfo files and the signature list, byte for byte, both directions |
+| `src/schema.ts`, `src/schema-kv.ts`, `src/schema-items.ts`, `src/schema-merge.ts` | `items_game.txt`: walking it, reading its items, merging a mod's blocks, building the item pak |
+| `src/schema-service.ts`, `src/schema-cosmetics.ts`, `src/schema-harvest.ts` | The item table as the app keeps it: the build and the repair, the free cosmetics, and a mod's own blocks |
+| `src/item-builder.ts`, `src/item-builder-slots.ts`, `src/item-builder-effects.ts` | The item builder: what it offers each hero and slot, the effects, and what a pick writes |
+| `src/notice-text.ts`, `src/notice-texts.ts` | The game's anti-cheat notice in words that say what to do, in every language Dota ships |
+| `src/terrain-age.ts` | Terrains that replace the whole map, and whether the game's map has moved on since |
+| `src/mod-id.ts`, `src/fingerprints.ts`, `src/hero-names.ts` | What a mod replaces, asked of the game; recognising a file somebody else installed; which hero a name means |
+| `src/icons.ts`, `src/icon-match.ts`, `src/icon-wiki.ts` | Pictures off the Dota wikis: the cache and its misses, which file is an item's picture, and asking the two wikis |
+| `src/game-icons.ts`, `src/vtex.ts`, `src/toolchain.ts` | Item pictures out of the installed game, and the Source 2 tools fetched only when something needs them |
+| `src/mod-preview.ts`, `src/mod-preview-pick.ts` | A picture for a mod that came with none, taken out of the mod itself, and which one is worth showing |
 | `src/preset-link.ts`, `src/preset-share.ts` | Presets as a link and as a file |
-| `src/portable-update.ts` | Updating the portable build without self-overwrite |
-| `src/diagnostics.ts` | The diagnostic archive a bug report should carry |
+| `src/presets-service.ts`, `src/preset-plan.ts` | Presets: applying, packing and receiving one, and how one travels to somebody else |
+| `src/diagnostics.ts`, `src/diagnostics-files.ts`, `src/diagnostics-render.ts` | The support report: what it gathers, what it reads off the disk, and how it is laid out |
+| `src/uninstall-args.ts`, `src/uninstall-window.ts` | Whether this run is the uninstaller asking what to take along, and the window that asks |
+| `src/folder-size.ts` | Bytes under a folder, for the caches in Settings and the removal window |
+| `src/types.ts` | The shapes the main process hands between its modules |
 | `src/i18n.ts`, `renderer/i18n.js` | Russian and English, for the main process and the window |
-| `renderer/views/*` | Catalog, My mods, Presets, Settings |
+| `renderer/app.ts`, `renderer/shell/*` | The window's start, and its own elements every screen reaches: the title bar, search, the switches, progress, drops, updates |
+| `renderer/api/*` | What every channel the window calls takes and answers |
+| `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*` | The four screens, in React |
+| `renderer/views/*` | What each screen reads and does around its components |
 | `renderer/ui/*` | Dialogs, toasts, the media player, the install queue, shared chrome |
+| `renderer/core/*` | What the screens share: the store, the router, the records, the categories, the 18+ question |
+| `renderer/motion/*` | How things move: travel, fold, swap, reveal |
+| `renderer/styles/*`, `renderer/fonts/*` | The tokens every size and colour comes from, and the faces |
+| `renderer/uninstall.html`, `renderer/uninstall.js` | The removal window |
 | `tools/sandbox.js` | The throwaway game tree |
 | `tools/e2e.mjs`, `test/fixtures/e2e/*` | Installing, switching and removing a mod by clicking through the real window, offline, in the sandbox |
 | `tools/r2-sync.mjs`, `tools/r2-release.mjs`, `tools/r2-client.js`, `tools/mirror-plan.js` | The archive mirror, the update mirror, the signing they share, and which archives the mirror copies again or refuses |
@@ -418,9 +448,9 @@ that location is not writable.
 | `tools/pr-test-rule.mjs` | The pull request check that a fix changes a test or says why it cannot |
 | `tools/gen-doc-facts.js` | Writes the sentences in the READMEs that come from `package.json`, between `facts:` markers |
 | `tools/sync-labels.mjs` | Makes the repository's labels match `.github/labels.json` |
-| `tools/typecheck.mjs` | Runs `tsc --checkJs` over the JSDoc and holds the error count per file at or below `.github/typecheck-baseline.json` |
+| `tools/typecheck.mjs` | Runs `tsc` over the four projects (the two preloads through their JSDoc, then the main process, the tests and the window, all three strict) and holds the error count per file at or below `.github/typecheck-baseline.json` |
 | `tools/fuzz-parsers.mjs` | Throws damaged VPK indexes at the tree walkers and damaged zips at the archive door for as long as you let it, from a seed, and keeps anything they mishandle |
 | `tools/coverage.mjs` | Runs the suite and holds coverage per file and per platform against `.github/coverage-baseline.json`, plus the aggregate floor everywhere |
-| `tools/size-budget.mjs` | Holds the five largest files at the length in `.github/size-budget.json`, and stops a sixth crossing 800 lines unnoticed |
+| `tools/size-budget.mjs` | Holds the files listed in `.github/size-budget.json` at their length, and stops any other file crossing 300 lines unnoticed |
 | `tools/mutate.mjs` | Breaks one promise at a time from `.github/mutants.json` and fails where no test goes red, or where the mutant no longer applies to the code it names |
 | `tools/rollback.mjs` | Switches a feature off for the broken releases only, or everywhere, writes and signs `config/app.json`, and refuses a range old copies cannot read or a key the app does not pin |

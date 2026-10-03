@@ -196,3 +196,21 @@ test('every path CODEOWNERS names is a file or folder the repository has', () =>
   const dead = patterns.filter((p) => !files.some((f) => toRe(p).test(f)));
   assert.deepEqual(dead, [], `CODEOWNERS names paths that are not there: ${dead.join(', ')}`);
 });
+
+test('every module in src/ and every part of the window is on the file map in ARCHITECTURE.md', () => {
+  /* The map went a week behind once already: eighteen modules split out between 2026-09-30 and
+     2026-10-04, and the page still said the window was plain JavaScript with no build step. The
+     header comment of each file stays the fine detail; this only asks that each file has a line. */
+  const map = read('ARCHITECTURE.md').split('## File map')[1] || '';
+  const named = [...map.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+  const covers = (rel) => named.some((n) => (n.includes('*')
+    ? new RegExp(`^${n.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]+')}$`).test(rel)
+    : n === rel));
+  const missing = fs.readdirSync(path.join(ROOT, 'src')).filter((f) => f.endsWith('.ts')).map((f) => `src/${f}`).filter((f) => !covers(f));
+  for (const e of fs.readdirSync(path.join(ROOT, 'renderer'), { withFileTypes: true })) {
+    if (['public', 'index.html', 'tsconfig.json', 'globals.d.ts'].includes(e.name)) continue;
+    const rel = e.isDirectory() ? `renderer/${e.name}/x` : `renderer/${e.name}`;
+    if (!covers(rel)) missing.push(e.isDirectory() ? `renderer/${e.name}/` : rel);
+  }
+  assert.deepEqual(missing, [], `not on the file map: ${missing.join(', ')}`);
+});

@@ -136,20 +136,19 @@ npm run typecheck
 The main process is TypeScript with no build step: Node strips the types when it loads a file,
 so what you edit is what runs, in development and inside the installer. `src/tsconfig.json` checks
 it strictly, `test/tsconfig.json` the tests written in TypeScript, and a new error in either fails
-the run. The window moves to TypeScript and React one screen at a time (DECISIONS.md, "The window
-is built by Vite"), checked by `renderer/tsconfig.json`. The two preload bridges stay JavaScript,
+the run. The window is TypeScript and React (DECISIONS.md, "The window is built by Vite"),
+checked as strictly by `renderer/tsconfig.json`. The two preload bridges stay JavaScript,
 and `tsc --checkJs` reads their JSDoc. Before the main process moved, the same check over
 JavaScript found a `require` that had never resolved, and three functions whose JSDoc described a
 different signature than the one underneath it.
 
-Sixty-odd places are still wrong, mostly a factory's `@param` listing half of what it is handed.
-They are counted per file in `.github/typecheck-baseline.json`, and the check fails when a file
-goes above its line or when a file that was clean starts reporting. Fewer is always fine: fix some,
+Errors are counted per file in `.github/typecheck-baseline.json`, which has stood at zero since
+2026-09-28, and the check fails when a file goes above its line or when a file that was clean
+starts reporting. Fewer is always fine: fix some,
 then run `node tools/typecheck.mjs --update` to lower the line. Never raise one to make a run pass.
 
-`renderer/` and `tools/` are not covered yet. The renderer is ES modules against the DOM and the
-tools are a mix of both; each needs settings of its own, and one configuration that fits neither
-would report noise instead of mistakes.
+`tools/` is not covered: the tools are a mix of both module systems, and one configuration that
+fits neither would report noise instead of mistakes.
 
 ## Fuzzing the parsers
 
@@ -283,10 +282,10 @@ ship something broken.
 
 ## Style
 
-Plain JavaScript, no framework, no transpiler. Comments explain why a thing is the way it is,
-especially when it looks wrong: most of them exist because a game update, a VPK edge case or a
-user's report made the obvious version fail. Match the surrounding code and the surrounding
-comment density.
+TypeScript in `src/`, `renderer/` and most of `test/`, React for the window, JavaScript for the
+tools. Comments explain why a thing is the way it is, especially when it looks wrong: most of them
+exist because a game update, a VPK edge case or a user's report made the obvious version fail.
+Match the surrounding code and the surrounding comment density.
 
 `.editorconfig` covers indentation and `.gitattributes` covers line endings. `npm run lint` runs
 eslint, and its config carries no style rules on purpose - only rules that answer whether a line

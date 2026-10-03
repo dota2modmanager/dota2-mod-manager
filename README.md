@@ -255,7 +255,8 @@ npm run sandbox:seed      # a throwaway game tree with real mods in it
 npm run start:sandbox     # the app against it, never your own game
 ```
 
-Node 24, Electron 44, no bundler — the renderer is plain HTML, CSS and JavaScript. Every release
+Node 24, Electron 44. The main process is TypeScript that Node runs without a build, and the
+window is TypeScript and React, built by Vite. Every release
 is produced by [`release.yml`](.github/workflows/release.yml) from the commit its tag names.
 
 **Open an issue before building anything larger than a fix.** It costs one message and saves the

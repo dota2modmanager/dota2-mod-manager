@@ -9,16 +9,18 @@ read nothing else.
 
 ## What this is
 
-A desktop mod manager for Dota 2. Electron 44 on Node 24. The window's page is built by Vite
-(`vite.config.mjs`, into `out/renderer`) and moves screen by screen from plain JavaScript to
-**TypeScript and React, with Motion for animation**. New screens and components are written that
-way: one component per file, logic that decides things in plain modules with tests, and no file
-past 300 lines (`npm run size` fails one). The main process, `preload.js` and `src/` stay
-CommonJS JavaScript checked through their JSDoc. DECISIONS.md, "The window is built by Vite",
-says why.
+A desktop mod manager for Dota 2. Electron 44 on Node 24. The window is **TypeScript and React,
+with Motion for animation**, built by Vite (`vite.config.mjs`, into `out/renderer`). New screens
+and components are written that way: one component per file, logic that decides things in plain
+modules with tests, and no file past 300 lines (`npm run size` fails one). The main process in
+`src/` is TypeScript too, run without a build: Node strips the types when it loads a file.
+`preload.js` stays CommonJS JavaScript checked through its JSDoc. DECISIONS.md, "The window is
+built by Vite", says why.
 
 ```
 src/main.ts        the order the app starts in, and auto-update. Nothing else belongs here
+src/services.ts    every long-lived service, built once in the order they depend on each other
+src/ipc.ts         every IPC module, registered in one place
 preload.js         the only bridge the renderer gets. Every channel is listed once
 renderer/api/      its types: every name on window.api, and what each handler answers
 src/               everything that thinks: installer, vpk, schema, gamelang, catalog…

@@ -68,7 +68,7 @@ through an allowlist of tags, and the window runs under a content security polic
 scripts, no node integration and context isolation on, so text that got through would still have
 nothing to reach.
 *Check:* `renderer/ui/guide.ts` (`sanitizeGuideHtml`), `renderer/index.html` (the policy itself),
-`main.js` (`contextIsolation: true`, `nodeIntegration: false`).
+`src/main-window.ts` (`contextIsolation: true`, `nodeIntegration: false`).
 
 **The window asking for something the app should not do.** The renderer cannot touch the
 filesystem or start a process, and the policy limits what it may fetch to pictures from two
