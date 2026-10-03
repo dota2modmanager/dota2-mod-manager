@@ -482,6 +482,9 @@
         "src/release-notes.ts": {
           "lines": 100
         },
+        "src/remote-config-format.ts": {
+          "lines": 100
+        },
         "src/remote-config.ts": {
           "lines": 100
         },
@@ -536,11 +539,14 @@
         "src/vpk-analyze.ts": {
           "lines": 100
         },
+        "src/vpk-pack.ts": {
+          "lines": 100
+        },
         "src/vpk-read.ts": {
-          "lines": 99
+          "lines": 100
         },
         "src/vpk-write.ts": {
-          "lines": 98.9
+          "lines": 100
         },
         "src/vpk.ts": {
           "lines": 100
@@ -607,6 +613,9 @@
         },
         "tools/rollback.mjs": {
           "lines": 80.2
+        },
+        "tools/sandbox-pin.js": {
+          "lines": 100
         },
         "tools/seo-state.mjs": {
           "lines": 99
