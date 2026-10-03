@@ -844,7 +844,7 @@
     },
     {
       "name": "a module's channels are never registered, so every button it serves does nothing",
-      "file": "src/main.ts",
+      "file": "src/ipc.ts",
       "anchor": "  registerPacksIpc(ctx);",
       "from": "registerMiscIpc(ctx);",
       "to": "void 0;",

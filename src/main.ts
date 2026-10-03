@@ -51,15 +51,7 @@ import { isUninstallRun } from './uninstall-args.ts';
 import { presetsService } from './presets-service.ts';
 import { createGate } from './feature-gate.ts';
 import { settingsViewFor } from './settings-view.ts';
-import { registerPresetsIpc } from './ipc-presets.ts';
-import { registerModsIpc } from './ipc-mods.ts';
-import { registerLibraryIpc } from './ipc-library.ts';
-import { registerPacksIpc } from './ipc-packs.ts';
-import { registerWindowIpc } from './ipc-window.ts';
-import { registerMiscIpc } from './ipc-misc.ts';
-import { registerSettingsIpc } from './ipc-settings.ts';
-import { registerGameIpc } from './ipc-game.ts';
-import { registerDiagnosticsIpc } from './ipc-diagnostics.ts';
+import { registerIpc } from './ipc.ts';
 import { createAppLog } from './app-log.ts';
 import { releaseNotes } from './release-notes.ts';
 import { createPresenceStatus } from './presence-status.ts';
@@ -304,15 +296,7 @@ async function start(): Promise<void> {
     lastUpdateError: () => (updater ? updater.lastError() : null),
   };
 
-  registerWindowIpc(ctx);
-  registerSettingsIpc(ctx);
-  registerModsIpc(ctx);
-  registerGameIpc(ctx);
-  registerLibraryIpc(ctx);
-  registerPacksIpc(ctx);
-  registerPresetsIpc(ctx);
-  registerMiscIpc(ctx);
-  registerDiagnosticsIpc(ctx);
+  registerIpc(ctx);
   // Launch Dota through Steam so the user's own launch options apply (-novid, -fps max, -language
   // russian all differ per user). rungameid is what pressing Play in Steam does.
   ipcMain.handle('game:launch', () => {

@@ -1,7 +1,7 @@
 /* The load order in two parts, through the channels the window calls (src/ipc-library.ts,
- * src/ipc-mods.ts): moving a mod up or down, dragging it to a place, linking an import to the
- * catalog, and the list the screen draws. The rules themselves are src/slot-zones.ts and are
- * tested in installer.test.js; this is whether the buttons keep to them.
+ * ipc-foreign.ts, src/ipc-mods.ts): moving a mod up or down, dragging it to a place, linking an
+ * import to the catalog, and the list the screen draws. The rules themselves are
+ * src/slot-zones.ts and are tested in installer.test.js; this is whether the buttons keep to them.
  *
  * The rule: shaders, trees, river, hero effects and a few more load
  * before everything else, in slots 02-29, and nothing a user does puts another mod among them.
@@ -14,6 +14,7 @@ import path from 'node:path';
 import { Installer } from '../src/installer.ts';
 import { Library } from '../src/library.ts';
 import { registerLibraryIpc } from '../src/ipc-library.ts';
+import { registerForeignIpc } from '../src/ipc-foreign.ts';
 import { registerModsIpc } from '../src/ipc-mods.ts';
 import type { CatalogIdentity } from '../src/fingerprints.ts';
 import type { HasFiles } from '../src/types.ts';
@@ -32,11 +33,12 @@ function stand(t: TestContext) {
   const matches = new Map<string, CatalogIdentity[]>(); // what the catalog would recognise a file as, by its fingerprint
   const fingerprints = { hasData: () => false, match: (fp: string) => matches.get(fp) || null, fonts: [] };
   const noop = () => {};
+  const schemaService = { harvest: () => null, refresh: noop, state: () => ({ enabled: false }) };
   const lib = registerAgainst(() => registerLibraryIpc({
-    applyMasterToCursors: noop, catalog: {}, disableOtherCosmetics: () => [], disableOtherCursors: () => [],
-    fingerprints, installer, isCursorRecord: () => false, library, refreshPresence: noop,
-    schemaService: { harvest: () => null, refresh: noop, state: () => ({ enabled: false }) },
+    applyMasterToCursors: noop, disableOtherCosmetics: () => [], disableOtherCursors: () => [],
+    installer, isCursorRecord: () => false, library, refreshPresence: noop, schemaService,
   } as never));
+  const foreign = registerAgainst(() => registerForeignIpc({ fingerprints, installer, library, schemaService } as never));
   const mods = registerAgainst(() => registerModsIpc({
     applyMasterToCursors: noop, blocked: () => null, catalog: {}, diag: noop, disableOtherCursors: () => [], fingerprints,
     importVpkBuffers: noop, importVpkPaths: noop, installer, isCursorRecord: () => false, library, refreshPresence: noop,
@@ -49,7 +51,7 @@ function stand(t: TestContext) {
   };
   const slotOf = (id: string) => library.find(id)!.files[0].relPath.slice(0, 5);
   const call = (channels: Map<string, Handler>, ch: string, ...args: unknown[]) => channels.get(ch)!({}, ...args);
-  return { lang, installer, library, matches, lib, mods, put, slotOf, call };
+  return { lang, installer, library, matches, lib, foreign, mods, put, slotOf, call };
 }
 
 test('"load earlier" stops at the first mod after the ones that load first, instead of taking a shader\'s slot', async (t) => {
@@ -92,7 +94,7 @@ test('linking an import to the catalog moves a shader into the first part, and a
   const imported = s.put('pak30', 'imported', 'download (1)');
   s.installer.analyzeRecord = (rec: HasFiles) => ({ fp: rec.name } as never);
   s.matches.set('download (1)', [{ name: 'Aghanim Labyrinth', categoryId: 'shaders' }]);
-  const r = await s.call(s.lib, 'mods:adoptMod', imported.id, null);
+  const r = await s.call(s.foreign, 'mods:adoptMod', imported.id, null);
   assert.deepEqual(r, { ok: true, name: 'Aghanim Labyrinth' });
   assert.equal(s.slotOf(imported.id), 'pak02');
   assert.ok(fs.existsSync(path.join(s.lang, 'pak02_dir.vpk')));
@@ -100,7 +102,7 @@ test('linking an import to the catalog moves a shader into the first part, and a
 
   // a file somebody dropped into the folder as pak05, taken in: not one of the first categories
   fs.writeFileSync(path.join(s.lang, 'pak05_dir.vpk'), 'not a vpk the catalog knows');
-  const taken = await s.call(s.lib, 'mods:adoptExternal', 'pak05_dir.vpk', null);
+  const taken = await s.call(s.foreign, 'mods:adoptExternal', 'pak05_dir.vpk', null);
   assert.equal(taken.ok, true);
   const rec = s.library.list().find((x) => x.fileRef === 'pak05_dir.vpk');
   assert.equal(s.slotOf(rec!.id), 'pak30', 'into the rest, where an unknown file belongs');

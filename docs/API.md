@@ -51,6 +51,7 @@ the code, not in this page.
 | [`src/installer-repack.ts`](#srcinstaller-repackts) | What is already installed, read and rewritten: what a mod is, its files merged into one or |
 | [`src/installer-slots.ts`](#srcinstaller-slotsts) | The load order: which pak slot a mod sits in, moving and swapping slots, and which mods are |
 | [`src/installer.ts`](#srcinstallerts) | The installer: everything that writes a mod into the game folder or takes it out again. The |
+| [`src/ipc.ts`](#srcipcts) | Every IPC module, registered in one place over the context src/main.ts builds. A new |
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
 | [`src/item-builder-slots.ts`](#srcitem-builder-slotsts) | The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit |
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
@@ -2488,6 +2489,19 @@ export class Installer
 ```
 
 _No description in the source._
+
+## src/ipc.ts
+
+Every IPC module, registered in one place over the context src/main.ts builds. A new
+src/ipc-*.ts module is imported and called here; test/ipc-contract.test.js fails until it is.
+
+### `registerIpc`
+
+```ts
+export function registerIpc(ctx: AppContext): void
+```
+
+Register every channel the window can call.
 
 ## src/item-builder-effects.ts
 

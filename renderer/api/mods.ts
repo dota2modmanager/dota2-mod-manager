@@ -1,5 +1,6 @@
-/* The mods channels (src/ipc-mods.ts, ipc-library.ts, ipc-packs.ts): what is installed, putting
- * mods in and out of the game, the load order, the files found in the mods folder, and packs. */
+/* The mods channels (src/ipc-mods.ts, ipc-library.ts, ipc-foreign.ts, ipc-packs.ts): what is
+ * installed, putting mods in and out of the game, the load order, the files found in the mods
+ * folder, and packs. */
 import type { ExternalFile, LibRecord } from '../library/types.ts';
 import type { Dialog, ImportReply, Reply } from './reply.ts';
 

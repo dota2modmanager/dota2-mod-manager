@@ -101,16 +101,20 @@ test('no channel is registered twice', () => {
 
 test('the split left every ipc module wired into main', () => {
   /* A module can be perfect and still never run. Every src/ipc-*.ts has to be imported and
-   * called from src/main.ts, or its whole set of channels quietly does not exist. */
-  const main = read('src/main.ts');
+   * called from src/ipc.ts, and src/main.ts has to call that, or a whole set of channels quietly
+   * does not exist. */
+  const registry = read('src/ipc.ts');
   const missing = [];
+  if (!/^import \{ registerIpc \} from '\.\/ipc\.ts';/m.test(read('src/main.ts')) || !/registerIpc\(ctx\)/.test(read('src/main.ts'))) {
+    missing.push('src/main.ts does not import and call registerIpc');
+  }
   for (const file of HANDLER_FILES) {
     if (!file.startsWith('src/ipc-')) continue;
     const base = path.basename(file).replace(/\.[jt]s$/, '');
     const fn = (read(file).match(/^(?:export )?function (register\w+)/m) || [])[1];
     if (!fn) { missing.push(`${file}: no register function`); continue; }
-    if (!main.includes(`/${base}`)) missing.push(`${file}: not imported by src/main.ts`);
-    else if (!new RegExp(`${fn}\\s*\\(`).test(main)) missing.push(`${file}: ${fn} never called`);
+    if (!registry.includes(`/${base}.ts'`)) missing.push(`${file}: not imported by src/ipc.ts`);
+    else if (!new RegExp(`${fn}\\s*\\(`).test(registry)) missing.push(`${file}: ${fn} never called`);
   }
   assert.deepEqual(missing, [], missing.join('; '));
 });
@@ -138,18 +142,22 @@ test('the channels are worth counting, so a silent emptying of this test is visi
  * This used to be read off the text of main.js, name by name. Since 2026-09-30 the type checker
  * holds it: each module takes a Pick of AppContext (src/app-context.ts), so it cannot unpack a
  * name outside that Pick, and src/main.ts builds one `ctx: AppContext` and hands the same object
- * to every module, so it cannot leave a name out. What is read here is that the chain still has
- * that shape; a module handed a hand-made object instead would slip past the checker's guarantee.
+ * to src/ipc.ts, which hands it to every module, so it cannot leave a name out. What is read here
+ * is that the chain still has that shape; a module handed a hand-made object instead would slip
+ * past the checker's guarantee.
  */
 test('every ipc module is handed everything it unpacks', () => {
   const main = read('src/main.ts');
   assert.match(main, /const ctx: AppContext = \{/, 'src/main.ts no longer builds one typed context');
+  assert.match(main, /registerIpc\(ctx\);/, 'src/main.ts does not hand src/ipc.ts the whole context');
+  const registry = read('src/ipc.ts');
+  assert.match(registry, /export function registerIpc\(ctx: AppContext\): void/, 'src/ipc.ts no longer takes the whole context');
   const gaps = [];
   for (const file of HANDLER_FILES.filter((f) => f.startsWith('src/ipc-'))) {
     const src = read(file);
     const sig = src.match(/export function (register\w+)\(\{[\s\S]*?\}: Pick<AppContext, [^>]+>\): void/);
     if (!sig) { gaps.push(`${file}: its register function no longer takes a Pick of AppContext`); continue; }
-    if (!new RegExp(`${sig[1]}\\(ctx\\);`).test(main)) gaps.push(`${file}: src/main.ts does not hand ${sig[1]} the whole context`);
+    if (!new RegExp(`${sig[1]}\\(ctx\\);`).test(registry)) gaps.push(`${file}: src/ipc.ts does not hand ${sig[1]} the whole context`);
   }
   assert.deepEqual(gaps, [], gaps.join('; '));
 });
