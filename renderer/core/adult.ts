@@ -53,7 +53,7 @@ export function adultHint(): string {
  * outside answer nothing: they stay hidden and the question comes back on the next start.
  *
  * Resolves true to show them, false not to, null when the window was closed without an answer. */
-function adultDialog(count: number): Promise<boolean | null> {
+export function adultDialog(count: number): Promise<boolean | null> {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
