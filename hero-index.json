@@ -1,6 +1,6 @@
 {
   "heroes": 147,
-  "mods": 1452,
+  "mods": 1453,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -810,6 +810,7 @@
         {"name":"Legion Commander Automaton","categoryId":"heroes","styleLabel":null,"slots":["back","head","shoulder","weapon"]},
         {"name":"Legion Commander Chen","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon","legs","misc"]},
         {"name":"Legion Commander Crimson Black","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Legion Commander Diretide","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon","legs"]},
         {"name":"Legion Commander Holy Paladin","categoryId":"heroes","styleLabel":null,"slots":["head","legs","shoulder","back","arms","weapon"]},
         {"name":"Legion Commander Nero","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon","misc","legs"]},
         {"name":"Legion Commander Persona","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon","legs"]},

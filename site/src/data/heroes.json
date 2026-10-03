@@ -13063,6 +13063,103 @@
       ]
     },
     {
+      "id": "legion_commander",
+      "name": "Legion Commander",
+      "slug": "legion-commander",
+      "mods": [
+        {
+          "name": "Legion Commander Chen",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","head","shoulder","weapon","legs","misc"],
+          "image": {"src":"/mods/legion-commander-chen.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771195327
+        },
+        {
+          "name": "Legion Commander Nero",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","head","shoulder","weapon","misc","legs"],
+          "image": {"src":"/mods/legion-commander-nero.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1767093656
+        },
+        {
+          "name": "Legion Commander Diretide",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","head","shoulder","weapon","legs"],
+          "image": {"src":"/mods/legion-commander-diretide.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1790986277
+        },
+        {
+          "name": "Legion Commander Holy Paladin",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","legs","shoulder","back","arms","weapon"],
+          "image": {"src":"/mods/legion-commander-holy-paladin.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1764847617
+        },
+        {
+          "name": "Legion Commander Persona",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","head","shoulder","weapon","legs"],
+          "image": {"src":"/mods/legion-commander-persona.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1775454991
+        },
+        {
+          "name": "Purple Legion Commander",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","head","shoulder","weapon","legs"],
+          "image": {"src":"/mods/purple-legion-commander.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1775104089
+        },
+        {
+          "name": "Devil Legion Commander",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","shoulder","back","arms","weapon"],
+          "image": {"src":"/mods/devil-legion-commander.webp","width":854,"height":480},
+          "author": "Skratch",
+          "authorUrl": "https://www.youtube.com/@skratch",
+          "date": 1765446533
+        },
+        {
+          "name": "Legion Commander Crimson Black",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","head","shoulder","weapon"],
+          "image": {"src":"/mods/legion-commander-crimson-black.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1756539017
+        },
+        {
+          "name": "Legion Commander Automaton",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","head","shoulder","weapon"],
+          "image": {"src":"/mods/legion-commander-automaton.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1787499382
+        }
+      ]
+    },
+    {
       "id": "slark",
       "name": "Slark",
       "slug": "slark",
@@ -13340,93 +13437,6 @@
           "author": "Defiree",
           "authorUrl": "https://vk.com/defiree2mods",
           "date": 1789090758
-        }
-      ]
-    },
-    {
-      "id": "legion_commander",
-      "name": "Legion Commander",
-      "slug": "legion-commander",
-      "mods": [
-        {
-          "name": "Legion Commander Chen",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","head","shoulder","weapon","legs","misc"],
-          "image": {"src":"/mods/legion-commander-chen.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771195327
-        },
-        {
-          "name": "Legion Commander Nero",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","head","shoulder","weapon","misc","legs"],
-          "image": {"src":"/mods/legion-commander-nero.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1767093656
-        },
-        {
-          "name": "Legion Commander Holy Paladin",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","legs","shoulder","back","arms","weapon"],
-          "image": {"src":"/mods/legion-commander-holy-paladin.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1764847617
-        },
-        {
-          "name": "Legion Commander Persona",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","head","shoulder","weapon","legs"],
-          "image": {"src":"/mods/legion-commander-persona.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1775454991
-        },
-        {
-          "name": "Purple Legion Commander",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","head","shoulder","weapon","legs"],
-          "image": {"src":"/mods/purple-legion-commander.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1775104089
-        },
-        {
-          "name": "Devil Legion Commander",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","shoulder","back","arms","weapon"],
-          "image": {"src":"/mods/devil-legion-commander.webp","width":854,"height":480},
-          "author": "Skratch",
-          "authorUrl": "https://www.youtube.com/@skratch",
-          "date": 1765446533
-        },
-        {
-          "name": "Legion Commander Crimson Black",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","head","shoulder","weapon"],
-          "image": {"src":"/mods/legion-commander-crimson-black.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1756539017
-        },
-        {
-          "name": "Legion Commander Automaton",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","head","shoulder","weapon"],
-          "image": {"src":"/mods/legion-commander-automaton.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1787499382
         }
       ]
     },

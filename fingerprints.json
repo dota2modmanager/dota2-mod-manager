@@ -1,5 +1,5 @@
 {
-  "count": 1492,
+  "count": 1493,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -402,6 +402,7 @@
     "47431a9e70021612fd3330d0f8564ec4ffdb84d0": [{"name":"Terrorblade Wings Foulfell","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "4774c08682b1c51bd24955cb3ec127e978b3cfc7": [{"name":"TI10 Blink Dagger II","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "477eec44dc8ebc911457e65f085d2652211f1f35": [{"name":"Ursa Alpine Stalker","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "47a5a8679f1565aaf95d42a6b940121499cb9938": [{"name":"Legion Commander Diretide","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "47acc8499a8375e4e87a580cd1b8fa554c00e753": [{"name":"Twilight Hud","categoryId":"huds","styleLabel":null,"type":"vpk"}],
     "47e71775b9db8dd70f66672a8c2aeba08989cc51": [{"name":"Snapfire Desert Ardalan","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "47f3d7417d443563f30bf356387eb6513ea21430": [{"name":"Storm Spirit Stormborn Mandate","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
