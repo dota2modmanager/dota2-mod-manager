@@ -69,6 +69,7 @@ the code, not in this page.
 | [`src/net.ts`](#srcnetts) | Getting bytes from the internet, on a connection that may not want to cooperate. |
 | [`src/notice-text.ts`](#srcnotice-textts) | The game's anti-cheat notice, in words that say what to do. |
 | [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts |
+| [`src/overlays-cursor.ts`](#srcoverlays-cursorts) | Cursor sets (src/overlays.ts is the door for fonts and cursors). |
 | [`src/overlays.ts`](#srcoverlaysts) | Fonts and cursors: loose files written over the game's own. |
 | [`src/patch-watch.ts`](#srcpatch-watchts) | Noticing that Dota was patched, while the app is open. |
 | [`src/patcher-gameinfo.ts`](#srcpatcher-gameinfots) | The two gameinfo files (src/patcher.ts explains the patch): the SearchPaths block read out of |
@@ -3677,6 +3678,75 @@ const NOTICE_KEYS =
 ```
 
 The game's own keys for the four strings: its localization files name them this way.
+
+## src/overlays-cursor.ts
+
+Cursor sets (src/overlays.ts is the door for fonts and cursors).
+
+A cursor set is not a pak: it is loose files written straight over Valve's own in
+game\dota\resource\cursor, and every set overwrites the same names. So it cannot be
+switched off by renaming (nothing would be left to draw the cursor) and two sets
+cannot be on at once. Instead each installed set keeps its own copy here, and
+on/off means: write those files over the vanilla ones, or put the vanilla ones back.
+
+### `cursorStoreDir`
+
+```ts
+export function cursorStoreDir(o: Overlays, recId: string): string
+```
+
+Where a cursor set keeps its own copy, by record id.
+
+### `cursorFiles`
+
+```ts
+export function cursorFiles(files: LibFile[] | null | undefined): LibFile[]
+```
+
+The cursor files among a record's files.
+
+### `ensureCursorStore`
+
+```ts
+export function ensureCursorStore(o: Overlays, recId: string | null | undefined, files: LibFile[] | null | undefined): boolean
+```
+
+Keep a copy of the set that is live right now. Only ever call this for the record that
+actually owns what is on disk (the one being installed, adopted, or switched off) -
+otherwise the copy would be some other mod's cursor.
+
+### `deployCursor`
+
+```ts
+export function deployCursor(o: Overlays, recId: string, files: LibFile[] | null | undefined): number
+```
+
+write the set over the game's cursor folder (vanilla files backed up once)
+
+### `undeployCursor`
+
+```ts
+export function undeployCursor(o: Overlays, recId: string, files: LibFile[] | null | undefined): void
+```
+
+put the vanilla cursor back (or drop the file, if the set added one Valve has no copy of)
+
+### `cursorZip`
+
+```ts
+export function cursorZip(o: Overlays, rec: Pick<LibRecord, 'id' | 'name' | 'files'>): Buffer
+```
+
+Pack the set back into the layout the catalog ships cursors in (<Name>/cursor/<file>),
+so it can be handed to someone else or kept as a backup.
+
+### `dropCursorStore`
+
+```ts
+export function dropCursorStore(o: Overlays, recId: string | null | undefined): void
+```
+
+_No description in the source._
 
 ## src/overlays.ts
 

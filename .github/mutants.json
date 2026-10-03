@@ -612,9 +612,9 @@
     },
     {
       "name": "putting a cursor set back records nothing about what it wrote",
-      "file": "src/overlays.ts",
-      "anchor": "\n  deployCursor(recId: string, files: LibFile[] | null | undefined): number {",
-      "from": "this.noteWritten('cursor', hashes);",
+      "file": "src/overlays-cursor.ts",
+      "anchor": "export function deployCursor(",
+      "from": "o.noteWritten('cursor', hashes);",
       "to": "",
       "test": "test/installer.test.ts"
     },
