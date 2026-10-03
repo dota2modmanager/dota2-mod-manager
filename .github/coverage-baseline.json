@@ -198,7 +198,7 @@
       }
     },
     "win32": {
-      "measured": "2026-10-02",
+      "measured": "2026-10-03",
       "files": {
         "renderer/catalog/builder/logic.ts": {
           "lines": 98.1
@@ -293,8 +293,14 @@
         "src/dev-harness.ts": {
           "lines": 66.7
         },
+        "src/diagnostics-files.ts": {
+          "lines": 98.6
+        },
+        "src/diagnostics-render.ts": {
+          "lines": 97.4
+        },
         "src/diagnostics.ts": {
-          "lines": 94.6
+          "lines": 99.3
         },
         "src/discord-auth.ts": {
           "lines": 97.3

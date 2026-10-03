@@ -1129,6 +1129,14 @@
       "from": "if (png) fs.writeFileSync(cacheFile(imagePath), png);",
       "to": "if (false) fs.writeFileSync(cacheFile(imagePath), png);",
       "test": "test/game-icons.test.ts"
+    },
+    {
+      "name": "the support report leaves out gameinfo, boot.vcfg and the mod folder",
+      "file": "src/diagnostics.ts",
+      "anchor": "export function buildReport(",
+      "from": "if (gameValid && game && active) {",
+      "to": "if (false) {",
+      "test": "test/diagnostics.test.ts"
     }
   ]
 }
