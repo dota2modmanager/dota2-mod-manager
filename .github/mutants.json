@@ -1345,6 +1345,54 @@
       "from": "out.info = named.items.length <= 3",
       "to": "out.info = named.items.length < 3",
       "test": "test/installer-repack.test.ts"
+    },
+    {
+      "name": "a received preset can name a file anywhere in its archive, or outside it",
+      "file": "src/preset-share.ts",
+      "anchor": "const MOD_FILE_RE",
+      "from": "const MOD_FILE_RE = /^mods\\/[A-Za-z0-9_-]{1,64}\\.vpk$/;",
+      "to": "const MOD_FILE_RE = /mods\\/.+\\.vpk/;",
+      "test": "test/preset-file-hostile.test.ts"
+    },
+    {
+      "name": "a pack inside a received pack is kept",
+      "file": "src/preset-share.ts",
+      "anchor": "if (raw.kind === 'pack' && allowPack) {",
+      "from": ".map((m) => normalizeEntry(m, { allowPack: false }))",
+      "to": ".map((m) => normalizeEntry(m))",
+      "test": "test/preset-file-hostile.test.ts"
+    },
+    {
+      "name": "a manifest of any size is parsed",
+      "file": "src/preset-share.ts",
+      "anchor": "export function readPresetFile(",
+      "from": "if (head.size > MAX_MANIFEST_BYTES) throw new Error(t('preset.json повреждён'));",
+      "to": "",
+      "test": "test/preset-file-hostile.test.ts"
+    },
+    {
+      "name": "a manifest with no version is read as an old one",
+      "file": "src/preset-share.ts",
+      "anchor": "export function validateManifest(",
+      "from": "if (!((raw.version as number) <= VERSION))",
+      "to": "if ((raw.version as number) > VERSION)",
+      "test": "test/preset-file-hostile.test.ts"
+    },
+    {
+      "name": "a received preset can read any file out of its archive",
+      "file": "src/preset-share.ts",
+      "anchor": "readMod(file: string) {",
+      "from": "if (!MOD_FILE_RE.test(file)) throw new Error(t('Недопустимое имя файла в архиве'));",
+      "to": "",
+      "test": "test/preset-file-hostile.test.ts"
+    },
+    {
+      "name": "a mod the archive does not carry is still offered for install",
+      "file": "src/preset-share.ts",
+      "anchor": "const check = (e: PresetEntry)",
+      "from": "e.kind === 'embedded' && !present.has(e.file)",
+      "to": "e.kind === 'embedded' && false",
+      "test": "test/preset-file-hostile.test.ts"
     }
   ]
 }
