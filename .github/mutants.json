@@ -1137,6 +1137,38 @@
       "from": "if (gameValid && game && active) {",
       "to": "if (false) {",
       "test": "test/diagnostics.test.ts"
+    },
+    {
+      "name": "a file asked for by path comes back as some other file",
+      "file": "src/vpk-read.ts",
+      "anchor": "export function readVpkEntryFile(",
+      "from": "if (joinPath(folder, name, ext) !== want) return true;",
+      "to": "if (joinPath(folder, name, ext) === want) return true;",
+      "test": "test/vpk.test.ts"
+    },
+    {
+      "name": "bytes stored inside the index are read from the start of the file",
+      "file": "src/vpk-read.ts",
+      "anchor": "function entryBytes(",
+      "from": "const base = rec.archiveIndex === INLINE ? inlineBase : 0;",
+      "to": "const base = 0;",
+      "test": "test/vpk.test.ts"
+    },
+    {
+      "name": "a file with no extension is listed with a stray dot",
+      "file": "src/vpk-read.ts",
+      "anchor": "function joinPath(",
+      "from": "const suffix = ext === ' ' ? '' : '.' + ext;",
+      "to": "const suffix = '.' + ext;",
+      "test": "test/vpk.test.ts"
+    },
+    {
+      "name": "a data volume is looked for under the wrong number",
+      "file": "src/vpk-read.ts",
+      "anchor": "function volumePath(",
+      "from": "padStart(3, '0')",
+      "to": "padStart(2, '0')",
+      "test": "test/vpk.test.ts"
     }
   ]
 }

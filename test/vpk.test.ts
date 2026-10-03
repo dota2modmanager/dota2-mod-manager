@@ -43,6 +43,38 @@ test('a file at the archive root survives the round trip', () => {
   assert.equal(vpk.readVpkEntries(buf, 'mem')[0].data.toString(), 'top level');
 });
 
+test('a file with no extension is listed by its bare name, not with a stray dot', () => {
+  /* The tree stores "no extension" as a single space. Dota 2 Skinchanger writes whole decoy trees
+     of extension-less entries, and before the space was read as empty every one of them came out
+     as "name. ", a path no game file has. */
+  const buf = vpk.buildVpk([entry('models/heroes/pudge/decoy', 'x'), entry('LICENSE', 'y')]);
+  assert.deepEqual(vpk.listVpkPaths(buf).sort(), ['license', 'models/heroes/pudge/decoy']);
+  assert.deepEqual([...vpk.listVpkPathCrcs(buf).keys()].sort(), ['license', 'models/heroes/pudge/decoy']);
+  assert.deepEqual(vpk.listVpkEntries(buf).map((e) => e.path).sort(), ['license', 'models/heroes/pudge/decoy']);
+});
+
+test('a multi-part VPK is read out of its numbered volumes, by every reader', () => {
+  /* The game's own pak01 and most packs keep their bytes in <base>_000.vpk, _001.vpk and on,
+     named with three digits. A reader that looks for any other name finds nothing and throws. */
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vpk-volumes-'));
+  try {
+    const a = vpk.buildVpk([entry('models/heroes/pudge/pudge.vmdl_c', 'first volume')]);
+    const b = vpk.buildVpk([entry('models/heroes/axe/axe.vmdl_c', 'second volume')]);
+    // a cap smaller than either file puts each one in a volume of its own
+    const out = vpk.combineVpksToFiles([{ key: 'a', buf: a }, { key: 'b', buf: b }], dir, 'pak07', { volumeCap: 4 });
+    assert.deepEqual(out.parts, ['pak07_000.vpk', 'pak07_001.vpk']);
+    const index = path.join(dir, out.dir);
+
+    assert.equal(vpk.readVpkEntryFile(index, 'models/heroes/axe/axe.vmdl_c')?.data.toString(), 'second volume');
+    assert.equal(vpk.openVpkIndex(index).read('models/heroes/pudge/pudge.vmdl_c')?.toString(), 'first volume');
+    const all = vpk.readVpkEntries(fs.readFileSync(index), index);
+    assert.deepEqual(all.map((e) => e.data.toString()).sort(), ['first volume', 'second volume']);
+    assert.deepEqual(vpk.listVpkPaths(vpk.mergeVpkToSingle(index)).sort(), ['models/heroes/axe/axe.vmdl_c', 'models/heroes/pudge/pudge.vmdl_c']);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('an empty file survives the round trip', () => {
   const buf = vpk.buildVpk([entry('materials/blank.vtex_c', '')]);
   assert.deepEqual(vpk.listVpkPaths(buf), ['materials/blank.vtex_c']);
