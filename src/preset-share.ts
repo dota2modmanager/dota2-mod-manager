@@ -85,7 +85,7 @@ function normalizeEntry(raw: unknown, { allowPack = true } = {}): PresetEntry | 
 }
 
 /** preset.json checked field by field: what fails is refused, what is unknown is dropped. */
-function validateManifest(raw: unknown): PresetManifest {
+export function validateManifest(raw: unknown): PresetManifest {
   if (!isObject(raw)) throw new Error(t('preset.json повреждён'));
   if (raw.format !== FORMAT) throw new Error(t('Это не файл пресета Mod Manager'));
   if (!((raw.version as number) <= VERSION)) throw new Error(t('Файл собран более новой версией приложения'));

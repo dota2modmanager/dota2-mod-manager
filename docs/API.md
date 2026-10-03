@@ -4066,6 +4066,14 @@ export const MAX_MODS = 500
 
 More mods than anybody has; a list longer than this is refused before it is read.
 
+### `validateManifest`
+
+```ts
+export function validateManifest(raw: unknown): PresetManifest
+```
+
+preset.json checked field by field: what fails is refused, what is unknown is dropped.
+
 ### `writePresetFile`
 
 ```ts
