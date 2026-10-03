@@ -329,8 +329,14 @@
         "src/game-upkeep.ts": {
           "lines": 98
         },
+        "src/gamelang-folders.ts": {
+          "lines": 98
+        },
+        "src/gamelang-steam.ts": {
+          "lines": 100
+        },
         "src/gamelang.ts": {
-          "lines": 99.3
+          "lines": 99.6
         },
         "src/hero-names.ts": {
           "lines": 100
