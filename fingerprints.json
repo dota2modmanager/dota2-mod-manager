@@ -1,5 +1,5 @@
 {
-  "count": 1497,
+  "count": 1498,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -376,6 +376,7 @@
     "41186df226ee463de4584e953912430411064c53": [{"name":"Watermelons","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "41324c1eea3fc6c84c33a48c81525ce51b37bfb4": [{"name":"Ancient Apparition Shatterblast","categoryId":"herofx","styleLabel":null,"type":"vpk"}],
     "4187b3bbb0d5f574b90a451abbb415c840f9974c": [{"name":"TI8 Teleport III","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
+    "418cb98bdd86b55cbcb79c6dfe5d1798e6fae22b": [{"name":"Broodmother Shaker Spiderlings","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "419b3bd9cd022e14d43550da392fda54027524a4": [{"name":"Ursa Already Red","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
     "41f044f1c32258e6b77f287a1e4bb0046c8eff79": [{"name":"Galactic IO","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "41faff190f0bc1b072e993c341a75563d37b8cf8": [{"name":"Sakura Pink Invoker","categoryId":"heroes","styleLabel":null,"type":"vpk"}],

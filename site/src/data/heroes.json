@@ -8048,6 +8048,143 @@
       ]
     },
     {
+      "id": "broodmother",
+      "name": "Broodmother",
+      "slug": "broodmother",
+      "mods": [
+        {
+          "name": "Broodmother Undermount Candles",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","legs","head","back"],
+          "image": {"src":"/mods/broodmother-undermount-candles.webp","width":854,"height":480},
+          "author": "apathydxd",
+          "authorUrl": "https://discord.com/users/538760177470668810",
+          "date": 1778149447
+        },
+        {
+          "name": "Broodmother Epoch of the Abysm",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","misc","legs"],
+          "image": {"src":"/mods/broodmother-epoch-of-the-abysm.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1766145785
+        },
+        {
+          "name": "Broodmother Golden Orbweaver",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","head","legs"],
+          "image": {"src":"/mods/broodmother-golden-orbweaver.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1780692007
+        },
+        {
+          "name": "Broodmother Immortal Antiquity",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","head","legs"],
+          "image": {"src":"/mods/broodmother-immortal-antiquity.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1789927392
+        },
+        {
+          "name": "Broodmother Redan",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","head","legs"],
+          "image": {"src":"/mods/broodmother-redan.webp","width":854,"height":480},
+          "author": "arti4e",
+          "authorUrl": "https://t.me/d2modsreborn",
+          "date": 1756539017
+        },
+        {
+          "name": "Broodmother Silken Queen",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","head","legs"],
+          "image": {"src":"/mods/broodmother-silken-queen.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1770736101
+        },
+        {
+          "name": "Broodmother Undermount Gloom",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","head","legs"],
+          "image": {"src":"/mods/broodmother-undermount-gloom.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1776821710
+        },
+        {
+          "name": "Broodmother White Widow",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","head","legs"],
+          "image": {"src":"/mods/broodmother-white-widow.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1766177291
+        },
+        {
+          "name": "Goffren Broodmother",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","head","legs"],
+          "image": {"src":"/mods/goffren-broodmother.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1781266231
+        },
+        {
+          "name": "Purple Witch Broodmother",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","misc","legs"],
+          "image": {"src":"/mods/purple-witch-broodmother.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1764938743
+        },
+        {
+          "name": "Reverse Broodmother",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","head","legs"],
+          "image": {"src":"/mods/reverse-broodmother.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1789907693
+        },
+        {
+          "name": "SF Broodmother",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["legs"],
+          "image": {"src":"/mods/sf-broodmother.webp","width":854,"height":480},
+          "author": "laskotdota",
+          "authorUrl": "https://t.me/laskotdota",
+          "date": 1768065827
+        },
+        {
+          "name": "Broodmother Shaker Spiderlings",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/broodmother-shaker-spiderlings.webp","width":854,"height":480},
+          "author": "Новомодный",
+          "authorUrl": null,
+          "date": 1791084718
+        }
+      ]
+    },
+    {
       "id": "dark_willow",
       "name": "Dark Willow",
       "slug": "dark-willow",
@@ -9258,133 +9395,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "broodmother",
-      "name": "Broodmother",
-      "slug": "broodmother",
-      "mods": [
-        {
-          "name": "Broodmother Undermount Candles",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","legs","head","back"],
-          "image": {"src":"/mods/broodmother-undermount-candles.webp","width":854,"height":480},
-          "author": "apathydxd",
-          "authorUrl": "https://discord.com/users/538760177470668810",
-          "date": 1778149447
-        },
-        {
-          "name": "Broodmother Epoch of the Abysm",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","misc","legs"],
-          "image": {"src":"/mods/broodmother-epoch-of-the-abysm.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1766145785
-        },
-        {
-          "name": "Broodmother Golden Orbweaver",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","head","legs"],
-          "image": {"src":"/mods/broodmother-golden-orbweaver.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1780692007
-        },
-        {
-          "name": "Broodmother Immortal Antiquity",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","head","legs"],
-          "image": {"src":"/mods/broodmother-immortal-antiquity.webp","width":854,"height":480},
-          "author": "твавт",
-          "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1789927392
-        },
-        {
-          "name": "Broodmother Redan",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","head","legs"],
-          "image": {"src":"/mods/broodmother-redan.webp","width":854,"height":480},
-          "author": "arti4e",
-          "authorUrl": "https://t.me/d2modsreborn",
-          "date": 1756539017
-        },
-        {
-          "name": "Broodmother Silken Queen",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","head","legs"],
-          "image": {"src":"/mods/broodmother-silken-queen.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1770736101
-        },
-        {
-          "name": "Broodmother Undermount Gloom",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","head","legs"],
-          "image": {"src":"/mods/broodmother-undermount-gloom.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1776821710
-        },
-        {
-          "name": "Broodmother White Widow",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","head","legs"],
-          "image": {"src":"/mods/broodmother-white-widow.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1766177291
-        },
-        {
-          "name": "Goffren Broodmother",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","head","legs"],
-          "image": {"src":"/mods/goffren-broodmother.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1781266231
-        },
-        {
-          "name": "Purple Witch Broodmother",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","misc","legs"],
-          "image": {"src":"/mods/purple-witch-broodmother.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1764938743
-        },
-        {
-          "name": "Reverse Broodmother",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","head","legs"],
-          "image": {"src":"/mods/reverse-broodmother.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1789907693
-        },
-        {
-          "name": "SF Broodmother",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["legs"],
-          "image": {"src":"/mods/sf-broodmother.webp","width":854,"height":480},
-          "author": "laskotdota",
-          "authorUrl": "https://t.me/laskotdota",
-          "date": 1768065827
         }
       ]
     },

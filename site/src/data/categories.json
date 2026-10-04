@@ -4,6 +4,14 @@
       "id": "hero-items",
       "mods": [
         {
+          "name": "Broodmother Shaker Spiderlings",
+          "styleLabel": null,
+          "image": {"src":"/mods/broodmother-shaker-spiderlings.webp","width":854,"height":480},
+          "author": "Новомодный",
+          "authorUrl": null,
+          "date": 1791084718
+        },
+        {
           "name": "Timbersaw Claw Frostbloom",
           "styleLabel": null,
           "image": {"src":"/mods/timbersaw-claw-frostbloom.webp","width":854,"height":480},

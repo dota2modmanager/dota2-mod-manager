@@ -1,6 +1,6 @@
 {
   "heroes": 147,
-  "mods": 1456,
+  "mods": 1457,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -208,6 +208,7 @@
         {"name":"Broodmother Golden Orbweaver","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Immortal Antiquity","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Redan","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
+        {"name":"Broodmother Shaker Spiderlings","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Broodmother Silken Queen","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Undermount Candles","categoryId":"heroes","styleLabel":null,"slots":["misc","legs","head","back"]},
         {"name":"Broodmother Undermount Gloom","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
