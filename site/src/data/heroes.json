@@ -14556,6 +14556,54 @@
       ]
     },
     {
+      "id": "tiny",
+      "name": "Tiny",
+      "slug": "tiny",
+      "mods": [
+        {
+          "name": "Tiny Cherepashka",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/tiny-cherepashka.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1791104398
+        },
+        {
+          "name": "Tiny Frostivus",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/tiny-frostivus.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1791104398
+        },
+        {
+          "name": "Tiny Majesty of the Colossus",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/tiny-majesty-of-the-colossus.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1763230049
+        },
+        {
+          "name": "Tiny Stone Giant Stronghold",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/tiny-stone-giant-stronghold.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1765893248
+        },
+        {"name":"Tiny Banana","categoryId":"hero-items","styleLabel":null,"slots":["misc"],"image":{"src":"/mods/tiny-banana.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768637892}
+      ]
+    },
+    {
       "id": "blood_seeker",
       "name": "Bloodseeker",
       "slug": "bloodseeker",
@@ -15037,34 +15085,6 @@
           "authorUrl": "https://vk.com/id363951132",
           "date": 1766625145
         }
-      ]
-    },
-    {
-      "id": "tiny",
-      "name": "Tiny",
-      "slug": "tiny",
-      "mods": [
-        {
-          "name": "Tiny Majesty of the Colossus",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/tiny-majesty-of-the-colossus.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1763230049
-        },
-        {
-          "name": "Tiny Stone Giant Stronghold",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/tiny-stone-giant-stronghold.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1765893248
-        },
-        {"name":"Tiny Banana","categoryId":"hero-items","styleLabel":null,"slots":["misc"],"image":{"src":"/mods/tiny-banana.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768637892}
       ]
     },
     {

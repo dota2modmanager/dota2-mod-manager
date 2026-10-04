@@ -1,6 +1,6 @@
 {
-  "heroes": 147,
-  "mods": 1457,
+  "heroes": 148,
+  "mods": 1460,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1832,10 +1832,13 @@
       "name": "Tiny",
       "mods": [
         {"name":"Tiny Banana","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Tiny Cherepashka","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Tiny Frostivus","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Tiny Majesty of the Colossus","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Tiny Stone Giant Stronghold","categoryId":"heroes","styleLabel":null,"slots":["misc"]}
       ]
     },
+    "tiny_01": {"name":"Tiny 01","mods":[{"name":"Tiny Cherepashka","categoryId":"heroes","styleLabel":null,"slots":["head","arms"]}]},
     "treant_protector": {
       "name": "Treant Protector",
       "mods": [

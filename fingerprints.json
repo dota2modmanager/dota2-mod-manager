@@ -1,5 +1,5 @@
 {
-  "count": 1498,
+  "count": 1500,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -1404,6 +1404,7 @@
     "f05e091fcd11e895d82dd0c76315b1862194c9e5": [{"name":"Morphling Fluid Frenzy","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "f0737a48b1141ff42f7491d43182d8b24b777d14": [{"name":"Cardboard Shadow Fiend","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "f0a4f00fdb59dfd26d953eee5dc5a50b5ff5bf5c": [{"name":"Wave Green","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
+    "f102623e3695038c8aed00a447a4a67c12548c2d": [{"name":"Tiny Cherepashka","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "f120c35866eee438b673ad6fe5e7026ca7669275": [{"name":"Pepepains Cursor","categoryId":"cursors","styleLabel":null,"type":"files"}],
     "f12d473f892a4b894f993bfb1d9b9f09057ccb73": [{"name":"Darkness Weaver","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "f13979f3f2b42ea8d8247c223db046879202f423": [{"name":"Beastmaster Primal Peacemaker","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
@@ -1498,7 +1499,8 @@
     "ff752c85e3504906fc95e6194a7b76653a1a8aab": [{"name":"Queen of Pain Deny","categoryId":"creep-deny","styleLabel":null,"type":"vpk"}],
     "ffa30d8f05dd5ea034162b28c6183476744272b9": [{"name":"Void Hud","categoryId":"huds","styleLabel":null,"type":"vpk"}],
     "ffd33ba9b45b0dae57e863cdf9dc43a881a5528c": [{"name":"Blossom Rem","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
-    "fff4b08164276d99f04ca0b72c7d0d41aecf1e40": [{"name":"Legion Commander Automaton","categoryId":"heroes","styleLabel":null,"type":"vpk"}]
+    "fff4b08164276d99f04ca0b72c7d0d41aecf1e40": [{"name":"Legion Commander Automaton","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "fff6e68408f4be0450fe72039805a763656ee79f": [{"name":"Tiny Frostivus","categoryId":"heroes","styleLabel":null,"type":"vpk"}]
   },
   "fonts": [
     {
