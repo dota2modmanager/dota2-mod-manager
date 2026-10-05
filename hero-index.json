@@ -1,6 +1,6 @@
 {
   "heroes": 148,
-  "mods": 1464,
+  "mods": 1465,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -2102,6 +2102,7 @@
       "mods": [
         {"name":"Cosmic Zeus","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","misc"]},
         {"name":"Zeus Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc"]},
+        {"name":"Zeus Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms","head","weapon"]},
         {"name":"Zeus Thundervolt","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","misc"]}
       ]
     },

@@ -1,5 +1,5 @@
 {
-  "count": 1505,
+  "count": 1506,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -574,6 +574,7 @@
     "661a9cc3c760595fb4f2d06c555fec3577407616": [{"name":"Nuclear Clockwerk","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "663cf5febba424455394465e431cbd9e622fec21": [{"name":"Mars Progenitors Bane","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "665da88c4ce2863832fafc4c8594a593931b0585": [{"name":"Dark Carnival Dire Creeps","categoryId":"creeps","styleLabel":null,"type":"vpk"}],
+    "667ac44307d24e0dd16bfafe425dd21c38ea7ceb": [{"name":"Zeus Immortal Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "667bf5ba3bce89785a9095ac5b10c8330be3124b": [{"name":"Wave Red","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
     "66d0a9a855e98299821f20401eb338188be567eb": [{"name":"Red Bottle","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "6723c9491505d0f79b5abcf2d407b17af80d6b6f": [{"name":"Death Prophet Unicorn","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
