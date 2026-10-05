@@ -4591,6 +4591,173 @@
       ]
     },
     {
+      "id": "enigma",
+      "name": "Enigma",
+      "slug": "enigma",
+      "mods": [
+        {
+          "name": "Enigma Blackhole Chan",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","head","legs"],
+          "image": {"src":"/mods/enigma-blackhole-chan.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771195327
+        },
+        {
+          "name": "Enigma Infinity Space",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","head"],
+          "image": {"src":"/mods/enigma-infinity-space.webp","width":854,"height":480},
+          "author": "александр",
+          "authorUrl": "https://t.me/+VY-_XaaDg00wYmI6",
+          "date": 1790894654
+        },
+        {
+          "name": "Twisted Maelstrom Enigma",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","head"],
+          "image": {"src":"/mods/twisted-maelstrom-enigma.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1791203792
+        },
+        {
+          "name": "Cosmic Enigma",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/cosmic-enigma.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1758258715
+        },
+        {
+          "name": "Bloody Enigma",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/bloody-enigma.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1756539017
+        },
+        {
+          "name": "Enigma Angel of the Abyss",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/enigma-angel-of-the-abyss.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1766177291
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Enigma World Chasm Artifact",
+          "categoryId": "herofx",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/enigma-world-chasm-artifact.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1766284079
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "wisp",
       "name": "Io",
       "slug": "io",
@@ -5611,163 +5778,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "enigma",
-      "name": "Enigma",
-      "slug": "enigma",
-      "mods": [
-        {
-          "name": "Enigma Blackhole Chan",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","head","legs"],
-          "image": {"src":"/mods/enigma-blackhole-chan.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771195327
-        },
-        {
-          "name": "Enigma Infinity Space",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","head"],
-          "image": {"src":"/mods/enigma-infinity-space.webp","width":854,"height":480},
-          "author": "александр",
-          "authorUrl": "https://t.me/+VY-_XaaDg00wYmI6",
-          "date": 1790894654
-        },
-        {
-          "name": "Cosmic Enigma",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/cosmic-enigma.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1758258715
-        },
-        {
-          "name": "Bloody Enigma",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/bloody-enigma.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1756539017
-        },
-        {
-          "name": "Enigma Angel of the Abyss",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/enigma-angel-of-the-abyss.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1766177291
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Enigma World Chasm Artifact",
-          "categoryId": "herofx",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/enigma-world-chasm-artifact.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1766284079
         },
         {
           "name": "Green Diretide Ranged Attack",
@@ -11187,6 +11197,123 @@
       ]
     },
     {
+      "id": "marci",
+      "name": "Marci",
+      "slug": "marci",
+      "mods": [
+        {
+          "name": "Marci Atri",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","back","head","shoulder","arms"],
+          "image": {"src":"/mods/marci-atri.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771195327
+        },
+        {
+          "name": "Cosmic Cartographer",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","misc","head","shoulder"],
+          "image": {"src":"/mods/cosmic-cartographer.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1779803304
+        },
+        {
+          "name": "Marci Bloomjewel Brawler",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","misc","head","shoulder"],
+          "image": {"src":"/mods/marci-bloomjewel-brawler.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1779803304
+        },
+        {
+          "name": "Marci Bloomjewel Unusual",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","misc","head","shoulder"],
+          "image": {"src":"/mods/marci-bloomjewel-unusual.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1789985397
+        },
+        {
+          "name": "Marci Faithful Fortune",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","misc","head","shoulder"],
+          "image": {"src":"/mods/marci-faithful-fortune.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1779803304
+        },
+        {
+          "name": "Marci Laurels of the Downstar",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","misc","head","shoulder"],
+          "image": {"src":"/mods/marci-laurels-of-the-downstar.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1766284079
+        },
+        {
+          "name": "Marci School of the Solar Fang",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","misc","head","shoulder"],
+          "image": {"src":"/mods/marci-school-of-the-solar-fang.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1779803304
+        },
+        {
+          "name": "Nude Marci",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","misc","head","shoulder"],
+          "image": {"src":"/mods/nude-marci.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1773747879
+        },
+        {
+          "name": "Snowing Marci",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["shoulder","misc","head","back"],
+          "image": {"src":"/mods/snowing-marci.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1766145785
+        },
+        {
+          "name": "Vodolaska Marci",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","misc","head","shoulder"],
+          "image": {"src":"/mods/vodolaska-marci.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1791203792
+        },
+        {
+          "name": "Maid Marci",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["shoulder","misc","back"],
+          "image": {"src":"/mods/maid-marci.webp","width":854,"height":480},
+          "author": "Kliromin",
+          "authorUrl": "https://www.youtube.com/@mrkliromin7723",
+          "date": 1763042018
+        }
+      ]
+    },
+    {
       "id": "naga",
       "name": "Naga Siren",
       "slug": "naga-siren",
@@ -12186,113 +12313,6 @@
           "author": "depex",
           "authorUrl": "https://t.me/depexfx",
           "date": 1790894654
-        }
-      ]
-    },
-    {
-      "id": "marci",
-      "name": "Marci",
-      "slug": "marci",
-      "mods": [
-        {
-          "name": "Marci Atri",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","back","head","shoulder","arms"],
-          "image": {"src":"/mods/marci-atri.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771195327
-        },
-        {
-          "name": "Cosmic Cartographer",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","misc","head","shoulder"],
-          "image": {"src":"/mods/cosmic-cartographer.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1779803304
-        },
-        {
-          "name": "Marci Bloomjewel Brawler",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","misc","head","shoulder"],
-          "image": {"src":"/mods/marci-bloomjewel-brawler.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1779803304
-        },
-        {
-          "name": "Marci Bloomjewel Unusual",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","misc","head","shoulder"],
-          "image": {"src":"/mods/marci-bloomjewel-unusual.webp","width":854,"height":480},
-          "author": "твавт",
-          "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1789985397
-        },
-        {
-          "name": "Marci Faithful Fortune",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","misc","head","shoulder"],
-          "image": {"src":"/mods/marci-faithful-fortune.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1779803304
-        },
-        {
-          "name": "Marci Laurels of the Downstar",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","misc","head","shoulder"],
-          "image": {"src":"/mods/marci-laurels-of-the-downstar.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1766284079
-        },
-        {
-          "name": "Marci School of the Solar Fang",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","misc","head","shoulder"],
-          "image": {"src":"/mods/marci-school-of-the-solar-fang.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1779803304
-        },
-        {
-          "name": "Nude Marci",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","misc","head","shoulder"],
-          "image": {"src":"/mods/nude-marci.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1773747879
-        },
-        {
-          "name": "Snowing Marci",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["shoulder","misc","head","back"],
-          "image": {"src":"/mods/snowing-marci.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1766145785
-        },
-        {
-          "name": "Maid Marci",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["shoulder","misc","back"],
-          "image": {"src":"/mods/maid-marci.webp","width":854,"height":480},
-          "author": "Kliromin",
-          "authorUrl": "https://www.youtube.com/@mrkliromin7723",
-          "date": 1763042018
         }
       ]
     },
@@ -14822,6 +14842,53 @@
       ]
     },
     {
+      "id": "treant_protector",
+      "name": "Treant Protector",
+      "slug": "treant-protector",
+      "mods": [
+        {
+          "name": "Treant Protector Aura",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","head","legs","back"],
+          "image": {"src":"/mods/treant-protector-aura.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1791195093
+        },
+        {
+          "name": "Halloween Treant Protector",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","head","legs"],
+          "image": {"src":"/mods/halloween-treant-protector.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1779111814
+        },
+        {
+          "name": "Treant Protector Diretide",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","head","legs"],
+          "image": {"src":"/mods/treant-protector-diretide.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1790895746
+        },
+        {
+          "name": "Treant Protector Frost Hideaway",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["legs","head","arms","misc"],
+          "image": {"src":"/mods/treant-protector-frost-hideaway.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1766145785
+        }
+      ]
+    },
+    {
       "id": "tuskarr",
       "name": "Tusk",
       "slug": "tusk",
@@ -15171,43 +15238,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1783633485
-        }
-      ]
-    },
-    {
-      "id": "treant_protector",
-      "name": "Treant Protector",
-      "slug": "treant-protector",
-      "mods": [
-        {
-          "name": "Halloween Treant Protector",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","head","legs"],
-          "image": {"src":"/mods/halloween-treant-protector.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1779111814
-        },
-        {
-          "name": "Treant Protector Diretide",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","head","legs"],
-          "image": {"src":"/mods/treant-protector-diretide.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1790895746
-        },
-        {
-          "name": "Treant Protector Frost Hideaway",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["legs","head","arms","misc"],
-          "image": {"src":"/mods/treant-protector-frost-hideaway.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1766145785
         }
       ]
     },

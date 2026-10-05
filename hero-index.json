@@ -1,6 +1,6 @@
 {
   "heroes": 148,
-  "mods": 1465,
+  "mods": 1468,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -534,6 +534,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Twisted Maelstrom Enigma","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head"]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },
@@ -1003,7 +1004,8 @@
         {"name":"Marci Laurels of the Downstar","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
         {"name":"Marci School of the Solar Fang","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
         {"name":"Nude Marci","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
-        {"name":"Snowing Marci","categoryId":"heroes","styleLabel":null,"slots":["shoulder","misc","head","back"]}
+        {"name":"Snowing Marci","categoryId":"heroes","styleLabel":null,"slots":["shoulder","misc","head","back"]},
+        {"name":"Vodolaska Marci","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]}
       ]
     },
     "mars": {
@@ -1846,6 +1848,7 @@
       "name": "Treant Protector",
       "mods": [
         {"name":"Halloween Treant Protector","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
+        {"name":"Treant Protector Aura","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs","back"]},
         {"name":"Treant Protector Diretide","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
         {"name":"Treant Protector Frost Hideaway","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","misc"]}
       ]
