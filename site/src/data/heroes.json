@@ -2589,6 +2589,16 @@
       "slug": "luna",
       "mods": [
         {
+          "name": "Luna Cosmic",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","shield","shoulder","weapon","misc"],
+          "image": {"src":"/mods/luna-cosmic.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1791162755
+        },
+        {
           "name": "Luna Bloodmoon Stalker",
           "categoryId": "heroes",
           "styleLabel": null,
@@ -11849,6 +11859,113 @@
       ]
     },
     {
+      "id": "kunkka",
+      "name": "Kunkka",
+      "slug": "kunkka",
+      "mods": [
+        {
+          "name": "Kunkka Inquisitor Tide",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","legs","head","arms","shoulder","weapon","back","belt"],
+          "image": {"src":"/mods/kunkka-inquisitor-tide.webp","width":854,"height":480},
+          "author": "александр",
+          "authorUrl": "https://t.me/+VY-_XaaDg00wYmI6",
+          "date": 1790894654
+        },
+        {
+          "name": "Kunkka Sea Spirit",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["legs","head","arms","shoulder","misc","weapon","back","belt"],
+          "image": {"src":"/mods/kunkka-sea-spirit.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790424886
+        },
+        {
+          "name": "Immortal Kunkka",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["legs","head","arms","shoulder","misc","weapon"],
+          "image": {"src":"/mods/immortal-kunkka.webp","width":854,"height":480},
+          "author": "Arthas",
+          "authorUrl": "https://t.me/ArthasModMaker",
+          "date": 1785232049
+        },
+        {
+          "name": "Kunkka Leviathan",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["legs","head","shoulder","misc","weapon"],
+          "image": {"src":"/mods/kunkka-leviathan.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1791162755
+        },
+        {
+          "name": "Kunkka Saltworn Mariner",
+          "categoryId": "hero-items",
+          "styleLabel": "I",
+          "slots": ["misc","shoulder"],
+          "image": {"src":"/mods/kunkka-saltworn-mariner-i.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790294026
+        },
+        {
+          "name": "Kunkka Saltworn Mariner",
+          "categoryId": "hero-items",
+          "styleLabel": "II",
+          "slots": ["misc","shoulder"],
+          "image": {"src":"/mods/kunkka-saltworn-mariner-ii.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790294026
+        },
+        {
+          "name": "Kunkka Shadow Blade",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/kunkka-shadow-blade.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1775190022
+        },
+        {
+          "name": "Kunkka Whale Blade",
+          "categoryId": "hero-items",
+          "styleLabel": "Eminent Revival",
+          "slots": ["weapon"],
+          "image": {"src":"/mods/kunkka-whale-blade-eminent-revival.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1775195016
+        },
+        {
+          "name": "Kunkka Whale Blade",
+          "categoryId": "hero-items",
+          "styleLabel": "Eminent Revival Exceptional",
+          "slots": ["weapon"],
+          "image": {"src":"/mods/kunkka-whale-blade-eminent-revival-exceptional.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1775195016
+        },
+        {
+          "name": "Kunkka Whale Blade",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/kunkka-whale-blade.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1775195016
+        }
+      ]
+    },
+    {
       "id": "leshrac",
       "name": "Leshrac",
       "slug": "leshrac",
@@ -13002,103 +13119,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1779535888
-        }
-      ]
-    },
-    {
-      "id": "kunkka",
-      "name": "Kunkka",
-      "slug": "kunkka",
-      "mods": [
-        {
-          "name": "Kunkka Inquisitor Tide",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","legs","head","arms","shoulder","weapon","back","belt"],
-          "image": {"src":"/mods/kunkka-inquisitor-tide.webp","width":854,"height":480},
-          "author": "александр",
-          "authorUrl": "https://t.me/+VY-_XaaDg00wYmI6",
-          "date": 1790894654
-        },
-        {
-          "name": "Kunkka Sea Spirit",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["legs","head","arms","shoulder","misc","weapon","back","belt"],
-          "image": {"src":"/mods/kunkka-sea-spirit.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790424886
-        },
-        {
-          "name": "Immortal Kunkka",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["legs","head","arms","shoulder","misc","weapon"],
-          "image": {"src":"/mods/immortal-kunkka.webp","width":854,"height":480},
-          "author": "Arthas",
-          "authorUrl": "https://t.me/ArthasModMaker",
-          "date": 1785232049
-        },
-        {
-          "name": "Kunkka Saltworn Mariner",
-          "categoryId": "hero-items",
-          "styleLabel": "I",
-          "slots": ["misc","shoulder"],
-          "image": {"src":"/mods/kunkka-saltworn-mariner-i.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790294026
-        },
-        {
-          "name": "Kunkka Saltworn Mariner",
-          "categoryId": "hero-items",
-          "styleLabel": "II",
-          "slots": ["misc","shoulder"],
-          "image": {"src":"/mods/kunkka-saltworn-mariner-ii.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790294026
-        },
-        {
-          "name": "Kunkka Shadow Blade",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/kunkka-shadow-blade.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1775190022
-        },
-        {
-          "name": "Kunkka Whale Blade",
-          "categoryId": "hero-items",
-          "styleLabel": "Eminent Revival",
-          "slots": ["weapon"],
-          "image": {"src":"/mods/kunkka-whale-blade-eminent-revival.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1775195016
-        },
-        {
-          "name": "Kunkka Whale Blade",
-          "categoryId": "hero-items",
-          "styleLabel": "Eminent Revival Exceptional",
-          "slots": ["weapon"],
-          "image": {"src":"/mods/kunkka-whale-blade-eminent-revival-exceptional.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1775195016
-        },
-        {
-          "name": "Kunkka Whale Blade",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/kunkka-whale-blade.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1775195016
         }
       ]
     },
@@ -14745,6 +14765,53 @@
       ]
     },
     {
+      "id": "tidehunter",
+      "name": "Tidehunter",
+      "slug": "tidehunter",
+      "mods": [
+        {
+          "name": "Tidehunter Squid Girl",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","arms","head","belt","back","misc","offhand"],
+          "image": {"src":"/mods/tidehunter-squid-girl.webp","width":854,"height":480},
+          "author": "Pinkpapa",
+          "authorUrl": "https://www.patreon.com/Pinkpapa",
+          "date": 1780160766
+        },
+        {
+          "name": "Gopo Tidehunter",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","belt","arms"],
+          "image": {"src":"/mods/gopo-tidehunter.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1756539017
+        },
+        {
+          "name": "Tidehunter Golden Diretide",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","belt","arms"],
+          "image": {"src":"/mods/tidehunter-golden-diretide.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1791162755
+        },
+        {
+          "name": "Tidehunter Insatiable Seas",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","belt","arms"],
+          "image": {"src":"/mods/tidehunter-insatiable-seas.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1766625145
+        }
+      ]
+    },
+    {
       "id": "tuskarr",
       "name": "Tusk",
       "slug": "tusk",
@@ -14788,6 +14855,53 @@
           "author": null,
           "authorUrl": null,
           "date": 1765100855
+        }
+      ]
+    },
+    {
+      "id": "undying",
+      "name": "Undying",
+      "slug": "undying",
+      "mods": [
+        {
+          "name": "Undying Grim Reformation",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head"],
+          "image": {"src":"/mods/undying-grim-reformation.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1781027597
+        },
+        {
+          "name": "Immortal Love Undying",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head"],
+          "image": {"src":"/mods/immortal-love-undying.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1791162755
+        },
+        {
+          "name": "Undying Archange",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head"],
+          "image": {"src":"/mods/undying-archange.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1767706409
+        },
+        {
+          "name": "Undying Hallows Within",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["head","misc"],
+          "image": {"src":"/mods/undying-hallows-within.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1781027597
         }
       ]
     },
@@ -15051,43 +15165,6 @@
       ]
     },
     {
-      "id": "tidehunter",
-      "name": "Tidehunter",
-      "slug": "tidehunter",
-      "mods": [
-        {
-          "name": "Tidehunter Squid Girl",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","arms","head","belt","back","misc","offhand"],
-          "image": {"src":"/mods/tidehunter-squid-girl.webp","width":854,"height":480},
-          "author": "Pinkpapa",
-          "authorUrl": "https://www.patreon.com/Pinkpapa",
-          "date": 1780160766
-        },
-        {
-          "name": "Gopo Tidehunter",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","belt","arms"],
-          "image": {"src":"/mods/gopo-tidehunter.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1756539017
-        },
-        {
-          "name": "Tidehunter Insatiable Seas",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","belt","arms"],
-          "image": {"src":"/mods/tidehunter-insatiable-seas.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1766625145
-        }
-      ]
-    },
-    {
       "id": "treant_protector",
       "name": "Treant Protector",
       "slug": "treant-protector",
@@ -15121,43 +15198,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1766145785
-        }
-      ]
-    },
-    {
-      "id": "undying",
-      "name": "Undying",
-      "slug": "undying",
-      "mods": [
-        {
-          "name": "Undying Grim Reformation",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head"],
-          "image": {"src":"/mods/undying-grim-reformation.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1781027597
-        },
-        {
-          "name": "Undying Archange",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head"],
-          "image": {"src":"/mods/undying-archange.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1767706409
-        },
-        {
-          "name": "Undying Hallows Within",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["head","misc"],
-          "image": {"src":"/mods/undying-hallows-within.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1781027597
         }
       ]
     },

@@ -838,6 +838,14 @@
       "id": "hero-sounds",
       "mods": [
         {
+          "name": "Shadow Fiend Ult Miura Xm Aura",
+          "styleLabel": null,
+          "image": {"src":"/mods/shadow-fiend-ult-miura-xm-aura.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1791162755
+        },
+        {
           "name": "Naga Siren Growth Correction",
           "styleLabel": null,
           "image": {"src":"/mods/naga-siren-growth-correction.webp","width":854,"height":480},

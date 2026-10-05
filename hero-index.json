@@ -1,6 +1,6 @@
 {
   "heroes": 148,
-  "mods": 1460,
+  "mods": 1464,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -788,6 +788,7 @@
       "mods": [
         {"name":"Immortal Kunkka","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","shoulder","misc","weapon"]},
         {"name":"Kunkka Inquisitor Tide","categoryId":"heroes","styleLabel":null,"slots":["misc","legs","head","arms","shoulder","weapon","back","belt"]},
+        {"name":"Kunkka Leviathan","categoryId":"heroes","styleLabel":null,"slots":["legs","head","shoulder","misc","weapon"]},
         {"name":"Kunkka Saltworn Mariner","categoryId":"hero-items","styleLabel":"I","slots":["misc","shoulder"]},
         {"name":"Kunkka Saltworn Mariner","categoryId":"hero-items","styleLabel":"II","slots":["misc","shoulder"]},
         {"name":"Kunkka Sea Spirit","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","shoulder","misc","weapon","back","belt"]},
@@ -943,6 +944,7 @@
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Luna Bloodmoon Stalker","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
+        {"name":"Luna Cosmic","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon","misc"]},
         {"name":"Luna Crescent Wheel","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Dark Moonfall","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Moon Stalker","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
@@ -1794,6 +1796,7 @@
       "name": "Tidehunter",
       "mods": [
         {"name":"Gopo Tidehunter","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms"]},
+        {"name":"Tidehunter Golden Diretide","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms"]},
         {"name":"Tidehunter Insatiable Seas","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms"]},
         {"name":"Tidehunter Squid Girl","categoryId":"heroes","styleLabel":null,"slots":["weapon","arms","head","belt","back","misc","offhand"]}
       ]
@@ -1876,6 +1879,7 @@
     "undying": {
       "name": "Undying",
       "mods": [
+        {"name":"Immortal Love Undying","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Undying Archange","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Undying Grim Reformation","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head"]},
         {"name":"Undying Hallows Within","categoryId":"hero-items","styleLabel":null,"slots":["head","misc"]}
