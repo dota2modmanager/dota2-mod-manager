@@ -1,5 +1,5 @@
 {
-  "count": 1517,
+  "count": 1520,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -1096,6 +1096,7 @@
     "bf940678709b530e10586e166551392ecd2326ce": [{"name":"Lone Druid Cauldron of Xahryx","categoryId":"hero-items","styleLabel":"Retro","type":"vpk"}],
     "c000517de4bfc35a0eb5cd19eb1de85585466386": [{"name":"Pudge Immortal Gold","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "c002a9a782a5c191d2a3c0e430e493821300670e": [{"name":"Clockwerk Rabid Watchcog","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
+    "c006956b9286a578f46cd9110dbe0045861bc6a4": [{"name":"Pudge Toy Inc Boss","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "c00e822ef82f200983518058cad72745c784ccbe": [{"name":"Immortal Lina","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "c02ff7f621c86ccbba1ea30c2e0f7f5192620980": [{"name":"Ice Invoker","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "c0546a94110efe408d9d8bf7b7eeaba566299871": [{"name":"Visage Vulture Wraith","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -1125,6 +1126,7 @@
     "c33e16660645fb963dfa922b1b05b7388a01232b": [{"name":"Sniper Full-Bore Bonanza","categoryId":"hero-items","styleLabel":"Golden","type":"vpk"}],
     "c3701c75b3c3ddce3d6d6f0fd3b04b2d4633fed8": [{"name":"Nude Naga Siren","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "c37d308dd116dfe2b9c86b4e00c71991862b5e7a": [{"name":"Bounty Hunter Old Verminator","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "c39df8309c5ccb35135bd938dcae9cd98638e332": [{"name":"Outworld Destroyer Exile","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "c3e57af9324d5c41093348306b48b1f6413928e8": [{"name":"Venomancer Zuzik","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "c3fde8435ad6d40934a967f2106187a891f1fcc2": [{"name":"Emblem of the Diretide Red","categoryId":"emblems","styleLabel":null,"type":"vpk"}],
     "c41fcee0f6d0da8907c6bb0e8206d5d7f0a280e5": [{"name":"Logs Trees","categoryId":"trees","styleLabel":null,"type":"vpk"}],
@@ -1284,6 +1286,7 @@
     "dd8e68877d2bec70c3aaa44de0fe543762f9ef5a": [{"name":"Terrorblade Cursed Metamorphosis","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
     "ddc633fa135fea8b737e0ba1ea0bf9245d08c7f5": [{"name":"Cosmic Tinker","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "ddfabde4d760f60cfd2faf6f33212836c91831be": [{"name":"Green Hud","categoryId":"huds","styleLabel":null,"type":"vpk"}],
+    "ddfd307571ed1583a1b26a018584ac4d70aa3d5e": [{"name":"Drow Ranger Japan Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "de51903064f243fc2ebe8d1912afaa462c445481": [{"name":"Trine","categoryId":"mega-kill","styleLabel":null,"type":"vpk"}],
     "de7361b5c8605243992af7f5d18d9f6141262615": [{"name":"Wave Lite Purple","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
     "de7963c2031289ba955719b639d5d2ddc1735637": [{"name":"BP 2022 Blink Dagger","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],

@@ -1,6 +1,6 @@
 {
   "heroes": 148,
-  "mods": 1475,
+  "mods": 1478,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -443,6 +443,7 @@
         {"name":"Drow Ranger Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon","shoulder"]},
         {"name":"Drow Ranger Diretide","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
         {"name":"Drow Ranger Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
+        {"name":"Drow Ranger Japan Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
         {"name":"Drow Ranger Master Of Madness","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
         {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":"Crimson","slots":["back"]},
         {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":"Golden","slots":["back"]},
@@ -1200,6 +1201,7 @@
         {"name":"Joker Ringmaster","categoryId":"heroes","styleLabel":null,"slots":["head"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Outworld Destroyer Dark Metter","categoryId":"heroes","styleLabel":null,"slots":["weapon","wings"]},
+        {"name":"Outworld Destroyer Exile","categoryId":"heroes","styleLabel":null,"slots":["head","misc","weapon","wings"]},
         {"name":"Outworld Destroyer Tatsumaki","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings","arms","back"]},
         {"name":"Outworld Destroyer Ulqiorra","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings","arms","back"]},
         {"name":"Outworld Destroyer Yukari","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings","arms","back"]},
@@ -1362,6 +1364,7 @@
         {"name":"Pudge Mindless Slaughter","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Rotzo the Clown","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Toy Butcher","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","base","shoulder"]},
+        {"name":"Pudge Toy Inc Boss","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","offhand"]},
         {"name":"Pudge Toy Woodcutter","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","base","shoulder"]}
       ]
     },
