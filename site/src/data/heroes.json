@@ -5430,6 +5430,173 @@
       ]
     },
     {
+      "id": "windrunner",
+      "name": "Windranger",
+      "slug": "windranger",
+      "mods": [
+        {
+          "name": "Windranger Papizi",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","weapon","back","misc","shoulder","offhand"],
+          "image": {"src":"/mods/windranger-papizi.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1790005464
+        },
+        {
+          "name": "Windranger Arcana Prismatic",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","back","head","misc","shoulder"],
+          "image": {"src":"/mods/windranger-arcana-prismatic.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790294865
+        },
+        {
+          "name": "Windranger Autumn Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon","back","head","shoulder"],
+          "image": {"src":"/mods/windranger-autumn-arcana.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1780143296
+        },
+        {
+          "name": "Windranger Compass Rising Gale",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","back","head","misc","shoulder"],
+          "image": {"src":"/mods/windranger-compass-rising-gale.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790281615
+        },
+        {
+          "name": "Windranger Papizi V2",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","back","head","misc","shoulder"],
+          "image": {"src":"/mods/windranger-papizi-v2.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1791282085
+        },
+        {
+          "name": "Windranger Reflections Of Gale",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","back","head","misc","shoulder"],
+          "image": {"src":"/mods/windranger-reflections-of-gale.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790281615
+        },
+        {
+          "name": "Windranger Peregrine Flight",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/windranger-peregrine-flight.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1787135218
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "brewmaster",
       "name": "Brewmaster",
       "slug": "brewmaster",
@@ -6269,163 +6436,6 @@
           "author": "Ромчик",
           "authorUrl": "https://watchmy.bio/shidehara",
           "date": 1786494204
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "windrunner",
-      "name": "Windranger",
-      "slug": "windranger",
-      "mods": [
-        {
-          "name": "Windranger Papizi",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","weapon","back","misc","shoulder","offhand"],
-          "image": {"src":"/mods/windranger-papizi.webp","width":854,"height":480},
-          "author": "rasstegai",
-          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
-          "date": 1790005464
-        },
-        {
-          "name": "Windranger Arcana Prismatic",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","back","head","misc","shoulder"],
-          "image": {"src":"/mods/windranger-arcana-prismatic.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790294865
-        },
-        {
-          "name": "Windranger Autumn Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","weapon","back","head","shoulder"],
-          "image": {"src":"/mods/windranger-autumn-arcana.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1780143296
-        },
-        {
-          "name": "Windranger Compass Rising Gale",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","back","head","misc","shoulder"],
-          "image": {"src":"/mods/windranger-compass-rising-gale.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790281615
-        },
-        {
-          "name": "Windranger Reflections Of Gale",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","back","head","misc","shoulder"],
-          "image": {"src":"/mods/windranger-reflections-of-gale.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790281615
-        },
-        {
-          "name": "Windranger Peregrine Flight",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/windranger-peregrine-flight.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1787135218
         },
         {
           "name": "Aghanim Ranged Attack",

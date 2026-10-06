@@ -1,6 +1,6 @@
 {
   "heroes": 148,
-  "mods": 1474,
+  "mods": 1475,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -2033,6 +2033,7 @@
         {"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","back","head","shoulder"]},
         {"name":"Windranger Compass Rising Gale","categoryId":"heroes","styleLabel":null,"slots":["weapon","back","head","misc","shoulder"]},
         {"name":"Windranger Papizi","categoryId":"heroes","styleLabel":null,"slots":["head","weapon","back","misc","shoulder","offhand"]},
+        {"name":"Windranger Papizi V2","categoryId":"heroes","styleLabel":null,"slots":["weapon","back","head","misc","shoulder"]},
         {"name":"Windranger Peregrine Flight","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Windranger Reflections Of Gale","categoryId":"heroes","styleLabel":null,"slots":["weapon","back","head","misc","shoulder"]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}

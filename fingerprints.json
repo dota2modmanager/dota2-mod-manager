@@ -1,5 +1,5 @@
 {
-  "count": 1516,
+  "count": 1517,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -883,6 +883,7 @@
     "9be350d9e84aa1ad8975bb616aea477b85b303d7": [{"name":"Dota+ Autumn","categoryId":"terrains","styleLabel":null,"type":"vpk"}],
     "9beabe4062cfc62858940691424283edbad4966d": [{"name":"Morphling Blade Of Tears","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "9bf37eb9e21308ce8fc2668a00f81d3dff4140fe": [{"name":"Blood River","categoryId":"river","styleLabel":null,"type":"vpk"}],
+    "9bff711c506b432395747b218c4a706ffb698d5a": [{"name":"Windranger Papizi V2","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "9c13b01fa13e0513ae8391513c0b2476605ce0e7": [{"name":"Morphling Darktrench Purple","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "9c5aad0572ba3df20178c7c473e002a453586f89": [{"name":"Tidehunter Insatiable Seas","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "9cc0e8d8c4183abd404754dd96663bdf30a04c98": [{"name":"Abaddon Endless Night","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
