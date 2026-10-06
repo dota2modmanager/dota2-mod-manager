@@ -870,7 +870,7 @@
           "date": 1790207087
         },
         {"name":"Centaur Otday","styleLabel":null,"image":{"src":"/mods/centaur-otday.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789234312},
-        {"name":"Enigma Black Hole Kate Scream","styleLabel":null,"image":{"src":"/mods/enigma-black-hole-kate-scream.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788904050},
+        {"name":"Enigma Black Hole Kate Scream","styleLabel":null,"image":{"src":"/mods/enigma-black-hole-kate-scream.webp","width":854,"height":480},"author":"Anonymous","authorUrl":null,"date":1788904050},
         {
           "name": "Techies Bismillah Blast Off!",
           "styleLabel": null,
@@ -1456,6 +1456,27 @@
       ]
     },
     {
+      "id": "huds",
+      "mods": [
+        {"name":"One Piece Hud","styleLabel":null,"image":{"src":"/mods/one-piece-hud.webp","width":854,"height":480},"author":"Harlord","authorUrl":"https://t.me/harlord_mods","date":1791253117},
+        {"name":"Default Lite Hud","styleLabel":null,"image":{"src":"/mods/default-lite-hud.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790997589},
+        {"name":"Horror Black Hud","styleLabel":null,"image":{"src":"/mods/horror-black-hud.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1789988579},
+        {"name":"Gotohouse Hud","styleLabel":null,"image":{"src":"/mods/gotohouse-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789396660},
+        {"name":"Void Hud","styleLabel":null,"image":{"src":"/mods/void-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1789278465},
+        {"name":"Total Black Hud","styleLabel":null,"image":{"src":"/mods/total-black-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789234312},
+        {"name":"Ken Kaneki Hud","styleLabel":null,"image":{"src":"/mods/ken-kaneki-hud.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788726574},
+        {"name":"Anime Hud","styleLabel":null,"image":{"src":"/mods/anime-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788640214},
+        {"name":"Kawaii Hud","styleLabel":null,"image":{"src":"/mods/kawaii-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1788365172},
+        {"name":"Crimson Hud","styleLabel":null,"image":{"src":"/mods/crimson-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788180009},
+        {"name":"Twilight Hud","styleLabel":null,"image":{"src":"/mods/twilight-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1787864667},
+        {"name":"Purple Hud","styleLabel":null,"image":{"src":"/mods/purple-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1787413498},
+        {"name":"White Sora Hud","styleLabel":null,"image":{"src":"/mods/white-sora-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780226470},
+        {"name":"Green Hud","styleLabel":null,"image":{"src":"/mods/green-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1780143296},
+        {"name":"Black Hud","styleLabel":null,"image":{"src":"/mods/black-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1776610659},
+        {"name":"Blue Web Hud","styleLabel":null,"image":{"src":"/mods/blue-web-hud.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776610659}
+      ]
+    },
+    {
       "id": "other",
       "mods": [
         {
@@ -1537,26 +1558,6 @@
         {"name":"Winter Quarteros Curios","styleLabel":null,"image":{"src":"/mods/winter-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
         {"name":"Remove Seasonal Effects","styleLabel":null,"image":{"src":"/mods/remove-seasonal-effects.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662},
         {"name":"Winter 2016 Battle Pass","styleLabel":null,"image":{"src":"/mods/winter-2016-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662}
-      ]
-    },
-    {
-      "id": "huds",
-      "mods": [
-        {"name":"Default Lite Hud","styleLabel":null,"image":{"src":"/mods/default-lite-hud.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790997589},
-        {"name":"Horror Black Hud","styleLabel":null,"image":{"src":"/mods/horror-black-hud.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1789988579},
-        {"name":"Gotohouse Hud","styleLabel":null,"image":{"src":"/mods/gotohouse-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789396660},
-        {"name":"Void Hud","styleLabel":null,"image":{"src":"/mods/void-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1789278465},
-        {"name":"Total Black Hud","styleLabel":null,"image":{"src":"/mods/total-black-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789234312},
-        {"name":"Ken Kaneki Hud","styleLabel":null,"image":{"src":"/mods/ken-kaneki-hud.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788726574},
-        {"name":"Anime Hud","styleLabel":null,"image":{"src":"/mods/anime-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788640214},
-        {"name":"Kawaii Hud","styleLabel":null,"image":{"src":"/mods/kawaii-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1788365172},
-        {"name":"Crimson Hud","styleLabel":null,"image":{"src":"/mods/crimson-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788180009},
-        {"name":"Twilight Hud","styleLabel":null,"image":{"src":"/mods/twilight-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1787864667},
-        {"name":"Purple Hud","styleLabel":null,"image":{"src":"/mods/purple-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1787413498},
-        {"name":"White Sora Hud","styleLabel":null,"image":{"src":"/mods/white-sora-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780226470},
-        {"name":"Green Hud","styleLabel":null,"image":{"src":"/mods/green-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1780143296},
-        {"name":"Black Hud","styleLabel":null,"image":{"src":"/mods/black-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1776610659},
-        {"name":"Blue Web Hud","styleLabel":null,"image":{"src":"/mods/blue-web-hud.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776610659}
       ]
     },
     {

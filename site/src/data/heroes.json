@@ -236,6 +236,16 @@
           "date": 1762508518
         },
         {
+          "name": "Wyrdwing Exaltation Invoker",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","back","head","shoulder"],
+          "image": {"src":"/mods/wyrdwing-exaltation-invoker.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1791253117
+        },
+        {
           "name": "Darkness Crimson Naga Siren",
           "categoryId": "heroes",
           "styleLabel": null,
@@ -3372,6 +3382,193 @@
       ]
     },
     {
+      "id": "pudge",
+      "name": "Pudge",
+      "slug": "pudge",
+      "mods": [
+        {
+          "name": "Pudge Toy Butcher",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc","base","shoulder"],
+          "image": {"src":"/mods/pudge-toy-butcher.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1765448898
+        },
+        {
+          "name": "Pudge Toy Woodcutter",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc","base","shoulder"],
+          "image": {"src":"/mods/pudge-toy-woodcutter.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1788726574
+        },
+        {
+          "name": "Pudge Abscession Immortal",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc","shoulder"],
+          "image": {"src":"/mods/pudge-abscession-immortal.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790376941
+        },
+        {
+          "name": "Pudge Clown Toy",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc","shoulder"],
+          "image": {"src":"/mods/pudge-clown-toy.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1765283745
+        },
+        {
+          "name": "Aberrant Observer Pudge",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc"],
+          "image": {"src":"/mods/aberrant-observer-pudge.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1791253117
+        },
+        {
+          "name": "Pudge Arcana Diretide",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc"],
+          "image": {"src":"/mods/pudge-arcana-diretide.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1791253117
+        },
+        {
+          "name": "Pudge Arcana Elephant",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","belt","misc","head","back","arms"],
+          "image": {"src":"/mods/pudge-arcana-elephant.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1756539017
+        },
+        {
+          "name": "Pudge Candy Cat",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc"],
+          "image": {"src":"/mods/pudge-candy-cat.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771681325
+        },
+        {
+          "name": "Pudge Dendi Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc"],
+          "image": {"src":"/mods/pudge-dendi-arcana.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1790267079
+        },
+        {
+          "name": "Pudge Feast Immortal",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc"],
+          "image": {"src":"/mods/pudge-feast-immortal.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790392857
+        },
+        {
+          "name": "Pudge Gol0vach",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","head","arms","weapon","misc"],
+          "image": {"src":"/mods/pudge-gol0vach.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1789931584
+        },
+        {
+          "name": "Pudge Immortal Gold",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc"],
+          "image": {"src":"/mods/pudge-immortal-gold.webp","width":854,"height":480},
+          "author": "Tenkay",
+          "authorUrl": "https://t.me/dota2Tenkay",
+          "date": 1786848392
+        },
+        {
+          "name": "Pudge Iron Hog",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc"],
+          "image": {"src":"/mods/pudge-iron-hog.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771681325
+        },
+        {
+          "name": "Pudge Mindless Slaughter",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc"],
+          "image": {"src":"/mods/pudge-mindless-slaughter.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771681325
+        },
+        {
+          "name": "Pudge Rotzo the Clown",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc"],
+          "image": {"src":"/mods/pudge-rotzo-the-clown.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771681325
+        },
+        {
+          "name": "Pudge CM",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon"],
+          "image": {"src":"/mods/pudge-cm.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1756539017
+        },
+        {
+          "name": "Gopo Pudge",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head"],
+          "image": {"src":"/mods/gopo-pudge.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1756539017
+        },
+        {
+          "name": "Pudge Hood of Defiance",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["head"],
+          "image": {"src":"/mods/pudge-hood-of-defiance.webp","width":854,"height":480},
+          "author": "apathydxd",
+          "authorUrl": "https://discord.com/users/538760177470668810",
+          "date": 1779803304
+        }
+      ]
+    },
+    {
       "id": "techies",
       "name": "Techies",
       "slug": "techies",
@@ -3515,6 +3712,183 @@
           "author": null,
           "authorUrl": null,
           "date": 1772534203
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
+      "id": "arc_warden",
+      "name": "Arc Warden",
+      "slug": "arc-warden",
+      "mods": [
+        {
+          "name": "Arc Warden The Last Survivor",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","misc","head"],
+          "image": {"src":"/mods/arc-warden-the-last-survivor.webp","width":854,"height":480},
+          "author": "Schizo",
+          "authorUrl": "https://t.me/schizo_workshop",
+          "date": 1790988499
+        },
+        {
+          "name": "Arc Warden Frosty Toy",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","head"],
+          "image": {"src":"/mods/arc-warden-frosty-toy.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790558987
+        },
+        {
+          "name": "Arc Warden Magician",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","head"],
+          "image": {"src":"/mods/arc-warden-magician.webp","width":854,"height":480},
+          "author": "Schizo",
+          "authorUrl": "https://t.me/schizo_workshop",
+          "date": 1791253117
+        },
+        {
+          "name": "Arc Warden Sakura Winter",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","head"],
+          "image": {"src":"/mods/arc-warden-sakura-winter.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1756539017
+        },
+        {
+          "name": "Arc Warden Ancient Gaoler",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder"],
+          "image": {"src":"/mods/arc-warden-ancient-gaoler.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1778935876
+        },
+        {
+          "name": "Arc Warden Black Hole",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder"],
+          "image": {"src":"/mods/arc-warden-black-hole.webp","width":854,"height":480},
+          "author": "Amir4an",
+          "authorUrl": "https://vk.com/amir4an",
+          "date": 1756539017
+        },
+        {
+          "name": "Arc Warden Yin Yang",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder"],
+          "image": {"src":"/mods/arc-warden-yin-yang.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1766265248
+        },
+        {
+          "name": "Ashes Arc Warden",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder"],
+          "image": {"src":"/mods/ashes-arc-warden.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1775106039
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
         },
         {
           "name": "TI10 Ranged Attack",
@@ -4257,173 +4631,6 @@
       ]
     },
     {
-      "id": "arc_warden",
-      "name": "Arc Warden",
-      "slug": "arc-warden",
-      "mods": [
-        {
-          "name": "Arc Warden The Last Survivor",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder","misc","head"],
-          "image": {"src":"/mods/arc-warden-the-last-survivor.webp","width":854,"height":480},
-          "author": "Schizo",
-          "authorUrl": "https://t.me/N0t_Nero",
-          "date": 1790988499
-        },
-        {
-          "name": "Arc Warden Frosty Toy",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder","head"],
-          "image": {"src":"/mods/arc-warden-frosty-toy.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790558987
-        },
-        {
-          "name": "Arc Warden Sakura Winter",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder","head"],
-          "image": {"src":"/mods/arc-warden-sakura-winter.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1756539017
-        },
-        {
-          "name": "Arc Warden Ancient Gaoler",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder"],
-          "image": {"src":"/mods/arc-warden-ancient-gaoler.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1778935876
-        },
-        {
-          "name": "Arc Warden Black Hole",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder"],
-          "image": {"src":"/mods/arc-warden-black-hole.webp","width":854,"height":480},
-          "author": "Amir4an",
-          "authorUrl": "https://vk.com/amir4an",
-          "date": 1756539017
-        },
-        {
-          "name": "Arc Warden Yin Yang",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder"],
-          "image": {"src":"/mods/arc-warden-yin-yang.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1766265248
-        },
-        {
-          "name": "Ashes Arc Warden",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder"],
-          "image": {"src":"/mods/ashes-arc-warden.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1775106039
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
       "id": "dazzle",
       "name": "Dazzle",
       "slug": "dazzle",
@@ -5052,173 +5259,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "pudge",
-      "name": "Pudge",
-      "slug": "pudge",
-      "mods": [
-        {
-          "name": "Pudge Toy Butcher",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","arms","head","weapon","misc","base","shoulder"],
-          "image": {"src":"/mods/pudge-toy-butcher.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1765448898
-        },
-        {
-          "name": "Pudge Toy Woodcutter",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","arms","head","weapon","misc","base","shoulder"],
-          "image": {"src":"/mods/pudge-toy-woodcutter.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1788726574
-        },
-        {
-          "name": "Pudge Abscession Immortal",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","arms","head","weapon","misc","shoulder"],
-          "image": {"src":"/mods/pudge-abscession-immortal.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790376941
-        },
-        {
-          "name": "Pudge Clown Toy",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","arms","head","weapon","misc","shoulder"],
-          "image": {"src":"/mods/pudge-clown-toy.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1765283745
-        },
-        {
-          "name": "Pudge Arcana Elephant",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","belt","misc","head","back","arms"],
-          "image": {"src":"/mods/pudge-arcana-elephant.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1756539017
-        },
-        {
-          "name": "Pudge Candy Cat",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","arms","head","weapon","misc"],
-          "image": {"src":"/mods/pudge-candy-cat.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771681325
-        },
-        {
-          "name": "Pudge Dendi Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","arms","head","weapon","misc"],
-          "image": {"src":"/mods/pudge-dendi-arcana.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1790267079
-        },
-        {
-          "name": "Pudge Feast Immortal",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","arms","head","weapon","misc"],
-          "image": {"src":"/mods/pudge-feast-immortal.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790392857
-        },
-        {
-          "name": "Pudge Gol0vach",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","head","arms","weapon","misc"],
-          "image": {"src":"/mods/pudge-gol0vach.webp","width":854,"height":480},
-          "author": "твавт",
-          "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1789931584
-        },
-        {
-          "name": "Pudge Immortal Gold",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","arms","head","weapon","misc"],
-          "image": {"src":"/mods/pudge-immortal-gold.webp","width":854,"height":480},
-          "author": "Tenkay",
-          "authorUrl": "https://t.me/dota2Tenkay",
-          "date": 1786848392
-        },
-        {
-          "name": "Pudge Iron Hog",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","arms","head","weapon","misc"],
-          "image": {"src":"/mods/pudge-iron-hog.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771681325
-        },
-        {
-          "name": "Pudge Mindless Slaughter",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","arms","head","weapon","misc"],
-          "image": {"src":"/mods/pudge-mindless-slaughter.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771681325
-        },
-        {
-          "name": "Pudge Rotzo the Clown",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","arms","head","weapon","misc"],
-          "image": {"src":"/mods/pudge-rotzo-the-clown.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771681325
-        },
-        {
-          "name": "Pudge CM",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","arms","head","weapon"],
-          "image": {"src":"/mods/pudge-cm.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1756539017
-        },
-        {
-          "name": "Gopo Pudge",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","arms","head"],
-          "image": {"src":"/mods/gopo-pudge.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1756539017
-        },
-        {
-          "name": "Pudge Hood of Defiance",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["head"],
-          "image": {"src":"/mods/pudge-hood-of-defiance.webp","width":854,"height":480},
-          "author": "apathydxd",
-          "authorUrl": "https://discord.com/users/538760177470668810",
-          "date": 1779803304
         }
       ]
     },
@@ -8479,6 +8519,143 @@
       ]
     },
     {
+      "id": "earthshaker",
+      "name": "Earthshaker",
+      "slug": "earthshaker",
+      "mods": [
+        {
+          "name": "Earthshaker Deep Magma",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc","head","weapon"],
+          "image": {"src":"/mods/earthshaker-deep-magma.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1775124421
+        },
+        {
+          "name": "Earthshaker Tectonic",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc","head","weapon"],
+          "image": {"src":"/mods/earthshaker-tectonic.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791253117
+        },
+        {
+          "name": "Earthshaker Planetfall Burning",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc","head"],
+          "image": {"src":"/mods/earthshaker-planetfall-burning.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790224749
+        },
+        {
+          "name": "Earthshaker Planetfall Reborn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc","head"],
+          "image": {"src":"/mods/earthshaker-planetfall-reborn.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790216247
+        },
+        {
+          "name": "Cosmic Earthshaker",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc"],
+          "image": {"src":"/mods/cosmic-earthshaker.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1777007944
+        },
+        {
+          "name": "Earthshaker Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","misc"],
+          "image": {"src":"/mods/earthshaker-arcana.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1789836072
+        },
+        {
+          "name": "Earthshaker Burning Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","misc"],
+          "image": {"src":"/mods/earthshaker-burning-arcana.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1789836072
+        },
+        {
+          "name": "Earthshaker Purple Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc"],
+          "image": {"src":"/mods/earthshaker-purple-arcana.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1774882421
+        },
+        {
+          "name": "Earthshaker Red Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","belt"],
+          "image": {"src":"/mods/earthshaker-red-arcana.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1756539017
+        },
+        {
+          "name": "Darkness Crimson Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/darkness-crimson-naga-siren.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1776456530
+        },
+        {
+          "name": "Earthshaker Carrot",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/earthshaker-carrot.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1768637892
+        },
+        {
+          "name": "Earthshaker Blink Dagger",
+          "categoryId": "item-effects",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/earthshaker-blink-dagger.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
+        },
+        {
+          "name": "Earthshaker Gold Blink Dagger",
+          "categoryId": "item-effects",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/earthshaker-gold-blink-dagger.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
+        }
+      ]
+    },
+    {
       "id": "grimstroke",
       "name": "Grimstroke",
       "slug": "grimstroke",
@@ -9556,133 +9733,6 @@
       ]
     },
     {
-      "id": "earthshaker",
-      "name": "Earthshaker",
-      "slug": "earthshaker",
-      "mods": [
-        {
-          "name": "Earthshaker Deep Magma",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head","weapon"],
-          "image": {"src":"/mods/earthshaker-deep-magma.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1775124421
-        },
-        {
-          "name": "Earthshaker Planetfall Burning",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head"],
-          "image": {"src":"/mods/earthshaker-planetfall-burning.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790224749
-        },
-        {
-          "name": "Earthshaker Planetfall Reborn",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head"],
-          "image": {"src":"/mods/earthshaker-planetfall-reborn.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790216247
-        },
-        {
-          "name": "Cosmic Earthshaker",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc"],
-          "image": {"src":"/mods/cosmic-earthshaker.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1777007944
-        },
-        {
-          "name": "Earthshaker Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","misc"],
-          "image": {"src":"/mods/earthshaker-arcana.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1789836072
-        },
-        {
-          "name": "Earthshaker Burning Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","misc"],
-          "image": {"src":"/mods/earthshaker-burning-arcana.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1789836072
-        },
-        {
-          "name": "Earthshaker Purple Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc"],
-          "image": {"src":"/mods/earthshaker-purple-arcana.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1774882421
-        },
-        {
-          "name": "Earthshaker Red Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","belt"],
-          "image": {"src":"/mods/earthshaker-red-arcana.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1756539017
-        },
-        {
-          "name": "Darkness Crimson Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/darkness-crimson-naga-siren.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1776456530
-        },
-        {
-          "name": "Earthshaker Carrot",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/earthshaker-carrot.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1768637892
-        },
-        {
-          "name": "Earthshaker Blink Dagger",
-          "categoryId": "item-effects",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/earthshaker-blink-dagger.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1789310506
-        },
-        {
-          "name": "Earthshaker Gold Blink Dagger",
-          "categoryId": "item-effects",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/earthshaker-gold-blink-dagger.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1789310506
-        }
-      ]
-    },
-    {
       "id": "jakiro",
       "name": "Jakiro",
       "slug": "jakiro",
@@ -10060,6 +10110,133 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
+        }
+      ]
+    },
+    {
+      "id": "naga",
+      "name": "Naga Siren",
+      "slug": "naga-siren",
+      "mods": [
+        {
+          "name": "Naga Siren 42 Bratuha",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","tail","weapon","offhand","legs","misc"],
+          "image": {"src":"/mods/naga-siren-42-bratuha.webp","width":1280,"height":720},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1786848392
+        },
+        {
+          "name": "Naga Siren Izayoi Miku",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","head","tail","weapon","offhand","legs"],
+          "image": {"src":"/mods/naga-siren-izayoi-miku.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1772755574
+        },
+        {
+          "name": "Aquamarine Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","tail","weapon","offhand","misc"],
+          "image": {"src":"/mods/aquamarine-naga-siren.webp","width":854,"height":480},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1782925485
+        },
+        {
+          "name": "Ancient Sand Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","tail","weapon","offhand"],
+          "image": {"src":"/mods/ancient-sand-naga-siren.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1767797001
+        },
+        {
+          "name": "Darkness Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","tail","weapon","offhand"],
+          "image": {"src":"/mods/darkness-naga-siren.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1768363987
+        },
+        {
+          "name": "Naga Siren Allure of the Deep",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","tail","weapon","offhand"],
+          "image": {"src":"/mods/naga-siren-allure-of-the-deep.webp","width":854,"height":480},
+          "author": "Haruma",
+          "authorUrl": "https://t.me/DotA_2_Mods",
+          "date": 1779092133
+        },
+        {
+          "name": "Naga Siren Diretide",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","tail","weapon","offhand"],
+          "image": {"src":"/mods/naga-siren-diretide.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1791253117
+        },
+        {
+          "name": "Princess Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","tail","weapon","offhand"],
+          "image": {"src":"/mods/princess-naga-siren.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1790202695
+        },
+        {
+          "name": "Purple Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["offhand","weapon","tail","head","arms"],
+          "image": {"src":"/mods/purple-naga-siren.webp","width":854,"height":480},
+          "author": "zitock",
+          "authorUrl": "https://steamcommunity.com/profiles/76561198790474721/",
+          "date": 1787950241
+        },
+        {
+          "name": "Darkness Crimson Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/darkness-crimson-naga-siren.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1776456530
+        },
+        {
+          "name": "Nude Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nude-naga-siren.webp","width":854,"height":480},
+          "author": "Pinkpapa",
+          "authorUrl": "https://www.patreon.com/Pinkpapa",
+          "date": 1767120602
+        },
+        {
+          "name": "Naga Siren Snickers",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon","offhand"],
+          "image": {"src":"/mods/naga-siren-snickers.webp","width":854,"height":480},
+          "author": "Arthas",
+          "authorUrl": "https://t.me/ArthasModMaker",
+          "date": 1785412684
         }
       ]
     },
@@ -11310,123 +11487,6 @@
           "author": "Kliromin",
           "authorUrl": "https://www.youtube.com/@mrkliromin7723",
           "date": 1763042018
-        }
-      ]
-    },
-    {
-      "id": "naga",
-      "name": "Naga Siren",
-      "slug": "naga-siren",
-      "mods": [
-        {
-          "name": "Naga Siren 42 Bratuha",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","tail","weapon","offhand","legs","misc"],
-          "image": {"src":"/mods/naga-siren-42-bratuha.webp","width":1280,"height":720},
-          "author": "NahuiToSay",
-          "authorUrl": "https://t.me/NahuiToSay",
-          "date": 1786848392
-        },
-        {
-          "name": "Naga Siren Izayoi Miku",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","head","tail","weapon","offhand","legs"],
-          "image": {"src":"/mods/naga-siren-izayoi-miku.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1772755574
-        },
-        {
-          "name": "Aquamarine Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","tail","weapon","offhand","misc"],
-          "image": {"src":"/mods/aquamarine-naga-siren.webp","width":854,"height":480},
-          "author": "NahuiToSay",
-          "authorUrl": "https://t.me/NahuiToSay",
-          "date": 1782925485
-        },
-        {
-          "name": "Ancient Sand Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","tail","weapon","offhand"],
-          "image": {"src":"/mods/ancient-sand-naga-siren.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1767797001
-        },
-        {
-          "name": "Darkness Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","tail","weapon","offhand"],
-          "image": {"src":"/mods/darkness-naga-siren.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1768363987
-        },
-        {
-          "name": "Naga Siren Allure of the Deep",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","tail","weapon","offhand"],
-          "image": {"src":"/mods/naga-siren-allure-of-the-deep.webp","width":854,"height":480},
-          "author": "Haruma",
-          "authorUrl": "https://t.me/DotA_2_Mods",
-          "date": 1779092133
-        },
-        {
-          "name": "Princess Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","tail","weapon","offhand"],
-          "image": {"src":"/mods/princess-naga-siren.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1790202695
-        },
-        {
-          "name": "Purple Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["offhand","weapon","tail","head","arms"],
-          "image": {"src":"/mods/purple-naga-siren.webp","width":854,"height":480},
-          "author": "zitock",
-          "authorUrl": "https://steamcommunity.com/profiles/76561198790474721/",
-          "date": 1787950241
-        },
-        {
-          "name": "Darkness Crimson Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/darkness-crimson-naga-siren.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1776456530
-        },
-        {
-          "name": "Nude Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nude-naga-siren.webp","width":854,"height":480},
-          "author": "Pinkpapa",
-          "authorUrl": "https://www.patreon.com/Pinkpapa",
-          "date": 1767120602
-        },
-        {
-          "name": "Naga Siren Snickers",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon","offhand"],
-          "image": {"src":"/mods/naga-siren-snickers.webp","width":854,"height":480},
-          "author": "Arthas",
-          "authorUrl": "https://t.me/ArthasModMaker",
-          "date": 1785412684
         }
       ]
     },

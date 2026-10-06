@@ -1,6 +1,6 @@
 {
   "heroes": 148,
-  "mods": 1468,
+  "mods": 1474,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -70,6 +70,7 @@
         {"name":"Arc Warden Ancient Gaoler","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
         {"name":"Arc Warden Black Hole","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
         {"name":"Arc Warden Frosty Toy","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
+        {"name":"Arc Warden Magician","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden Sakura Winter","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden The Last Survivor","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","misc","head"]},
         {"name":"Arc Warden Yin Yang","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
@@ -480,7 +481,8 @@
         {"name":"Earthshaker Planetfall Burning","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
         {"name":"Earthshaker Planetfall Reborn","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
         {"name":"Earthshaker Purple Arcana","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc"]},
-        {"name":"Earthshaker Red Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","belt"]}
+        {"name":"Earthshaker Red Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","belt"]},
+        {"name":"Earthshaker Tectonic","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head","weapon"]}
       ]
     },
     "ember_spirit": {
@@ -680,6 +682,7 @@
         {"name":"Japan Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","legs"]},
         {"name":"Sakura Pink Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Sasuke Invoker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","misc","belt","shield","legs"]},
+        {"name":"Wyrdwing Exaltation Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Young Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","shield","belt","legs"]},
         {"name":"Young Invoker Dark Artistry","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","shield","belt","legs"]}
       ]
@@ -1343,8 +1346,10 @@
     "pudge": {
       "name": "Pudge",
       "mods": [
+        {"name":"Aberrant Observer Pudge","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Gopo Pudge","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head"]},
         {"name":"Pudge Abscession Immortal","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","shoulder"]},
+        {"name":"Pudge Arcana Diretide","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Arcana Elephant","categoryId":"heroes","styleLabel":null,"slots":["weapon","belt","misc","head","back","arms"]},
         {"name":"Pudge Candy Cat","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge CM","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon"]},
@@ -1564,6 +1569,7 @@
         {"name":"Darkness Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
         {"name":"Naga Siren 42 Bratuha","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand","legs","misc"]},
         {"name":"Naga Siren Allure of the Deep","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
+        {"name":"Naga Siren Diretide","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
         {"name":"Naga Siren Izayoi Miku","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","tail","weapon","offhand","legs"]},
         {"name":"Naga Siren Snickers","categoryId":"hero-items","styleLabel":null,"slots":["weapon","offhand"]},
         {"name":"Nude Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
