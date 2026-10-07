@@ -46,6 +46,34 @@ export function withModFolder(block: string, folder: string): string {
   return out.join('\r\n');
 }
 
+/**
+ * The lines of a SearchPaths block the engine acts on: comments and blank lines dropped,
+ * whitespace inside a line collapsed. Two blocks with the same lines mount the same folders.
+ */
+export function searchPathLines(block: string): string[] {
+  return block.split(/\r?\n/)
+    .map((l) => l.replace(/\/\/.*$/, '').trim().replace(/\s+/g, ' '))
+    .filter((l) => l && l !== 'SearchPaths' && l !== '{' && l !== '}');
+}
+
+/**
+ * Whether the search paths our patch put in the branch file are still the ones the game's
+ * current gameinfo.gi gives, plus our folder.
+ *
+ * The block is a copy, and a copy goes stale. Steam updates only the files a build changed, and
+ * Valve has not touched gameinfo_branchspecific.gi since 2025, so a patch written before an
+ * update stays on disk through it while gameinfo.gi moves on. Build 6946 (2026-10-07) renamed
+ * the language path key, `Game_Language` to `Game_AudioLanguage`, and the engine stopped
+ * reading the old name: a patch from the day before still mounted our folder and silently
+ * dropped dota_<language>, so every mod there stopped loading. Comparing the meaningful lines,
+ * not the bytes, keeps a Valve edit to a comment from counting as a change.
+ */
+export function patchIsCurrent(branchText: string, gameinfoText: string, folder: string): boolean {
+  const ours = searchPathLines(searchPathsBlock(branchText));
+  const want = searchPathLines(withModFolder(searchPathsBlock(gameinfoText), folder));
+  return ours.length === want.length && ours.every((l, i) => l === want[i]);
+}
+
 /** Put the block inside branchspecific's FileSystem section (its keys win over gameinfo.gi). */
 export function patchedBranch(branchText: string, block: string): string {
   const at = branchText.indexOf('FileSystem');

@@ -21,7 +21,7 @@ const SEARCH = `"GameInfo"
 	{
 		SearchPaths
 		{
-			Game_Language		dota_*LANGUAGE*
+			Game_AudioLanguage	dota_*LANGUAGE*
 			Game_LowViolence	dota_lv
 			Game				dota
 			Game				core
@@ -60,6 +60,25 @@ function game(t) {
 test('the language folder mounts first, then the ones gameinfo names, and only folders that exist', (t) => {
   const { root } = game(t);
   assert.deepEqual(dota.mountOrder(root), ['dota_russian', 'dota', 'core']);
+});
+
+test('a branch file naming a language key the engine no longer reads mounts no language folder', (t) => {
+  // Build 6946 renamed Game_Language to Game_AudioLanguage. A search path copied before the
+  // update keeps the old name, and the engine skips that line: mods in dota_russian go unread.
+  const { root, g } = game(t);
+  fs.writeFileSync(g('dota/gameinfo_branchspecific.gi'), SEARCH.replace('Game_AudioLanguage\t', 'Game_Language\t\t'));
+  assert.deepEqual(dota.mountOrder(root), ['dota', 'core']);
+  assert.deepEqual(dota.unknownLanguageKeys(root), ['Game_Language']);
+  assert.ok(dota.checkGame(root).problems.some((p) => p.includes('Game_Language')), 'and the check says why');
+});
+
+test('the language key the engine reads is the one in Valve\'s own gameinfo.gi', (t) => {
+  const { root, g } = game(t);
+  const old = SEARCH.replace('Game_AudioLanguage\t', 'Game_Language\t\t');
+  fs.writeFileSync(g('dota/gameinfo.gi'), old);
+  fs.writeFileSync(g('dota/gameinfo_branchspecific.gi'), old);
+  assert.deepEqual(dota.mountOrder(root), ['dota_russian', 'dota', 'core'], 'an older build still mounts by the older key');
+  assert.deepEqual(dota.unknownLanguageKeys(root), []);
 });
 
 test('inside a folder the lowest pak number wins, and an earlier folder wins over a later one', (t) => {

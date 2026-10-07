@@ -25,7 +25,7 @@ const GAMEINFO = `"GameInfo"
 	{
 		SearchPaths
 		{
-			Game_Language		dota_*LANGUAGE*
+			Game_AudioLanguage	dota_*LANGUAGE*
 			Game				dota
 			Game				core
 			Mod					dota
@@ -101,6 +101,35 @@ test('an install with a list gets the patch signed into it', (t) => {
   const text = fs.readFileSync(sig, 'latin1');
   assert.ok(text.includes('gameinfo_branchspecific.gi~SHA1:'), 'our line is in the list');
   assert.ok(text.includes('DIGEST:'), "and Valve's own lines are still there");
+});
+
+test('a patch from before a gameinfo.gi change reads as outdated, and applying again brings it up to date', (t) => {
+  const { game, backupDir } = tree(t, true);
+  const gameinfo = patcher.paths(game).gameinfo;
+  // build 6944: the language key was still Game_Language
+  fs.writeFileSync(gameinfo, GAMEINFO.replace('Game_AudioLanguage\t', 'Game_Language\t\t'));
+  patcher.apply({ gamePath: game, folder: FOLDER, backupDir });
+  assert.equal(patcher.state(game, FOLDER).outdated, false, 'current against the file it was built from');
+
+  // build 6946 rewrites gameinfo.gi and leaves the branch file and our signed line alone
+  fs.writeFileSync(gameinfo, GAMEINFO);
+  const st = patcher.state(game, FOLDER);
+  assert.equal(st.patched, true);
+  assert.equal(st.signed, true, 'nothing about the signature gives it away');
+  assert.equal(st.outdated, true);
+
+  patcher.apply({ gamePath: game, folder: FOLDER, backupDir });
+  assert.equal(patcher.state(game, FOLDER).outdated, false);
+  assert.match(branchOf(game), /Game_AudioLanguage/);
+  assert.doesNotMatch(branchOf(game), /Game_Language/);
+  assert.equal(patcher.state(game, FOLDER).signed, true, 'and the rebuilt file is signed in turn');
+});
+
+test('an unreadable gameinfo.gi does not make a patch look outdated', (t) => {
+  const { game, backupDir } = tree(t, true);
+  patcher.apply({ gamePath: game, folder: FOLDER, backupDir });
+  fs.writeFileSync(patcher.paths(game).gameinfo, '"GameInfo"\n{\n}\n');
+  assert.equal(patcher.state(game, FOLDER).outdated, false);
 });
 
 test('reverting puts both files back exactly as they were', (t) => {

@@ -1181,8 +1181,9 @@ Dota keeps both settings in game/dota/cfg/boot.vcfg:
 
   "boot" { "UILanguage" "russian"  "AudioLanguage" "russian" }
 
-and builds the Game_Language search path (dota_*LANGUAGE* in gameinfo.gi) out of the AUDIO
-one. Since the 2026-07-24 update that value has to be a real language: a made-up folder
+and builds the language search path (dota_*LANGUAGE* in gameinfo.gi) out of the AUDIO
+one; build 6946 (2026-10-07) renamed its key from Game_Language to Game_AudioLanguage, which
+now says so in the file itself. Since the 2026-07-24 update that value has to be a real language: a made-up folder
 like dota_123 is mounted by nothing.
 
 Steam decides which voice pack is on disk, from the game's language in its properties, and
@@ -1233,7 +1234,7 @@ export const VOICE_LANGUAGES: readonly string[] = ['english', 'koreana', 'russia
 
 Languages Dota records VOICE in - four of them, and that is the list that matters here.
 
-The engine substitutes the audio language into its Game_Language search path, so the folder
+The engine substitutes the audio language into its Game_AudioLanguage search path, so the folder
 a mod has to live in is named by this setting and by nothing else. Text is a different list
 of twenty-nine languages living in dota/pak01, and it has no bearing on any of this; reading
 the wrong one of the two is how a mod ends up in a folder nobody mounts.
@@ -3538,6 +3539,9 @@ Two files tell the whole story and both are Valve's:
                          Steam's file check.
 The signature digest is taken with our own appended line stripped, so applying our patch
 never looks like a game update - otherwise the app would keep waking itself up.
+Two more questions are asked at the same build, because the stamp cannot see them: has
+Steam's file check taken the search path out, and was it built from a gameinfo.gi the game
+has since replaced.
 
 This module only decides "the game changed"; what to do about it lives in src/game-upkeep.ts.
 
@@ -3604,6 +3608,32 @@ export function withModFolder(block: string, folder: string): string
 
 Add our folder to a SearchPaths block: as the first Game path (which is also what the
 engine turns into the MOD path) and as the first Mod path.
+
+### `searchPathLines`
+
+```ts
+export function searchPathLines(block: string): string[]
+```
+
+The lines of a SearchPaths block the engine acts on: comments and blank lines dropped,
+whitespace inside a line collapsed. Two blocks with the same lines mount the same folders.
+
+### `patchIsCurrent`
+
+```ts
+export function patchIsCurrent(branchText: string, gameinfoText: string, folder: string): boolean
+```
+
+Whether the search paths our patch put in the branch file are still the ones the game's
+current gameinfo.gi gives, plus our folder.
+
+The block is a copy, and a copy goes stale. Steam updates only the files a build changed, and
+Valve has not touched gameinfo_branchspecific.gi since 2025, so a patch written before an
+update stays on disk through it while gameinfo.gi moves on. Build 6946 (2026-10-07) renamed
+the language path key, `Game_Language` to `Game_AudioLanguage`, and the engine stopped
+reading the old name: a patch from the day before still mounted our folder and silently
+dropped dota_<language>, so every mod there stopped loading. Comparing the meaningful lines,
+not the bytes, keeps a Valve edit to a comment from counting as a change.
 
 ### `patchedBranch`
 
@@ -3740,7 +3770,7 @@ Mechanics (same shape the community patchers use, rebuilt from the local files):
 
 Everything is backed up before the first write and revert() puts the originals back.
 
-Hands on from [`src/patcher-gameinfo.ts`](#srcpatcher-gameinfots): `MARKER`, `searchPathsBlock`, `withModFolder`, `patchedBranch`, `stripPatch`, `restoreBranch`.
+Hands on from [`src/patcher-gameinfo.ts`](#srcpatcher-gameinfots): `MARKER`, `searchPathsBlock`, `searchPathLines`, `patchIsCurrent`, `withModFolder`, `patchedBranch`, `stripPatch`, `restoreBranch`.
 
 Hands on from [`src/patcher-signatures.ts`](#srcpatcher-signaturests): `crc32`, `fileHashes`, `signatureLine`, `vanillaBranchHashes`, `matchesVanilla`, `hasSignaturePatch`, `stripSignatures`, `Hashes`.
 

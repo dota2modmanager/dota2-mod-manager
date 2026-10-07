@@ -13,6 +13,9 @@
 //                          Steam's file check.
 // The signature digest is taken with our own appended line stripped, so applying our patch
 // never looks like a game update - otherwise the app would keep waking itself up.
+// Two more questions are asked at the same build, because the stamp cannot see them: has
+// Steam's file check taken the search path out, and was it built from a gameinfo.gi the game
+// has since replaced.
 //
 // This module only decides "the game changed"; what to do about it lives in src/game-upkeep.ts.
 import fs from 'node:fs';
@@ -73,6 +76,19 @@ function searchPathGone(gamePath: string): boolean {
 }
 
 /**
+ * The search path is there, but copied from a gameinfo.gi the game has since replaced.
+ *
+ * Also a change the build stamp cannot see when it comes on its own. Steam writes a patch's files
+ * one at a time, so the repair the stamp starts can run between the signature list and a new
+ * gameinfo.gi, and rebuild the patch from the old one; that is how build 6946 left people with a
+ * block naming a search-path key the engine had just stopped reading (see patcher.patchIsCurrent).
+ * gameinfo.gi sits in the folder already watched for steam.inf, so its arrival wakes look() up.
+ */
+function searchPathOutdated(gamePath: string): boolean {
+  try { return patcher.state(gamePath, patcher.FOLDER).outdated; } catch { return false; }
+}
+
+/**
  * Watches the game folder and says when Dota was patched, or its files checked, while the app is open.
  * @param deps.expectsPatch whether the app's search path should be in the game (safe mode off)
  * @param deps.debounceMs shortened by tests, which cannot wait out a real patch
@@ -87,16 +103,26 @@ export function createPatchWatcher({ getGamePath, onPatch, expectsPatch = () => 
   let known: string | null = null;
   let running = false;
   let goneReported = false;
+  let outdatedReported = false;
 
   function look(): void {
     const game = getGamePath();
     const stamp = gameStamp(game);
-    const gone = Boolean(stamp) && !!game && expectsPatch() && searchPathGone(game);
+    const watched = Boolean(stamp) && !!game && expectsPatch();
+    const gone = watched && searchPathGone(game!);
+    const outdated = watched && !gone && searchPathOutdated(game!);
     if (!gone) goneReported = false;
+    if (!outdated) outdatedReported = false;
     if (stamp && stamp === known && gone && !goneReported) {
       goneReported = true;
       log('the search path is gone at the same build: Steam checked the game\'s files');
       try { onPatch({ from: known, to: stamp, reason: 'files-restored' }); } catch (err) { log('patch handler failed: ' + (err as Error).message); }
+      return;
+    }
+    if (stamp && stamp === known && outdated && !outdatedReported) {
+      outdatedReported = true;
+      log('the search path was built from an older gameinfo.gi');
+      try { onPatch({ from: known, to: stamp, reason: 'search-path-outdated' }); } catch (err) { log('patch handler failed: ' + (err as Error).message); }
       return;
     }
     if (!stamp || stamp === known) return;

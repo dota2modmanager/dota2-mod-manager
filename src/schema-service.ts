@@ -133,8 +133,10 @@ export function createSchemaService({ settings, library, installer, userDataDir,
     try {
       const st = patcher.state(game, patcher.FOLDER);
       // an install with no signature list has nothing to sign the patch into, so an unsigned
-      // patch there is finished rather than half-done (Linux; see patcher.state)
-      if (!st.patched || (st.signable && !st.signed)) {
+      // patch there is finished rather than half-done (Linux; see patcher.state). A patch built
+      // from an older gameinfo.gi is rebuilt even when signed: Steam leaves the branch file alone
+      // when a build does not change it, and the stale copy can unmount the language folder.
+      if (!st.patched || st.outdated || (st.signable && !st.signed)) {
         patcher.apply({ gamePath: game, folder: patcher.FOLDER, backupDir });
         healed.push('patch');
       }

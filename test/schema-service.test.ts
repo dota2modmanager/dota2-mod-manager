@@ -27,7 +27,7 @@ const GAMEINFO = `"GameInfo"
 	{
 		SearchPaths
 		{
-			Game_Language		dota_*LANGUAGE*
+			Game_AudioLanguage	dota_*LANGUAGE*
 			Game				dota
 			Game				core
 			Mod					dota
@@ -194,6 +194,23 @@ test('a game update is noticed, and repaired: the patch put back and the table r
   assert.match(built, /models\/mod\/rifle\.vmdl/, 'and the mod still in it');
 
   assert.deepEqual(s.svc.heal(), { ok: true, healed: [] }, 'a second look finds nothing to do');
+});
+
+test('a signed patch built from an older gameinfo.gi is rebuilt from the new one', (t) => {
+  // Build 6946: gameinfo.gi renamed the language key, the branch file was not in the update, and
+  // the signature list did not lose our line. Nothing but the search paths themselves changed.
+  const s = service(t, { values: { schemaPatch: true } });
+  fs.writeFileSync(path.join(s.game, 'dota', 'gameinfo.gi'), GAMEINFO.replace('Game_AudioLanguage\t', 'Game_Language\t\t'));
+  modWith(s.library, 'Rifle mod', [riflePatch('models/mod/rifle.vmdl')]);
+  s.svc.setEnabled(true);
+  fs.writeFileSync(path.join(s.game, 'dota', 'gameinfo.gi'), GAMEINFO);
+  assert.equal(s.svc.state().signed, true);
+  assert.equal(patcher.state(s.game, patcher.FOLDER).outdated, true);
+
+  assert.deepEqual(s.svc.heal(), { ok: true, healed: ['patch'] });
+  assert.match(fs.readFileSync(patcher.paths(s.game).branch, 'latin1'), /Game_AudioLanguage/);
+  assert.equal(patcher.state(s.game, patcher.FOLDER).outdated, false);
+  assert.deepEqual(s.svc.heal(), { ok: true, healed: [] }, 'and then there is nothing left to do');
 });
 
 test('in safe mode a branch file that is not what Valve signed is put back from the backup', (t) => {

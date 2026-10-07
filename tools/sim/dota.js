@@ -59,13 +59,37 @@ function mountedLanguage(gamePath) {
   return gamelang.modFolderFor(gamelang.launchLanguage(gamePath), detected.audio || detected.suffix).suffix;
 }
 
+/**
+ * The search-path keys this build of the engine mounts a language folder by.
+ *
+ * Read from Valve's own gameinfo.gi rather than written down here. Build 6946 (2026-10-07)
+ * renamed Game_Language to Game_AudioLanguage and the engine stopped reading the old name, so a
+ * branch file still carrying it mounted no language folder at all. Valve's file is written for
+ * the engine it ships with, which makes it the one answer that keeps up.
+ */
+function languageKeys(gamePath) {
+  try {
+    const block = patcher.searchPathsBlock(fs.readFileSync(patcher.paths(gamePath).gameinfo, 'latin1'));
+    const keys = patcher.searchPathLines(block).map((l) => l.split(' ')[0]).filter((k) => /^Game_\w*Language$/.test(k));
+    if (keys.length) return new Set(keys);
+  } catch { /* no gameinfo to ask */ }
+  return new Set(['Game_AudioLanguage']);
+}
+
+/** Language path keys in the effective block that this engine does not read. */
+function unknownLanguageKeys(gamePath) {
+  const known = languageKeys(gamePath);
+  return [...new Set(searchPaths(gamePath).map((e) => e.key).filter((k) => /^Game_\w*Language$/.test(k) && !known.has(k)))];
+}
+
 /** Game folders in mount order, existing ones only. Low violence is never mounted by default. */
 function mountOrder(gamePath) {
   const lang = mountedLanguage(gamePath);
+  const langKeys = languageKeys(gamePath);
   const seen = new Set();
   const out = [];
   for (const { key, value } of searchPaths(gamePath)) {
-    if (key !== 'Game' && key !== 'Game_Language') continue;
+    if (key !== 'Game' && !langKeys.has(key)) continue;
     const folder = value.replace('*LANGUAGE*', lang);
     if (seen.has(folder) || !fs.existsSync(path.join(gamePath, folder))) continue;
     seen.add(folder);
@@ -202,13 +226,15 @@ function checkGame(gamePath, { vanillaSchema = null } = {}) {
   }
 
   const st = patcher.state(gamePath, null);
-  report.signatures = { patched: st.patched, signed: st.signed, signable: st.signable };
+  report.signatures = { patched: st.patched, signed: st.signed, signable: st.signable, outdated: st.outdated };
   if (st.patched && st.signable && !st.signed) report.problems.push('the search paths are ours but dota.signatures has no line for the branch file: matchmaking would refuse');
+  if (st.outdated) report.problems.push('the search paths are ours but were built from an older gameinfo.gi than the game has');
+  for (const key of unknownLanguageKeys(gamePath)) report.problems.push(`the search paths use ${key}, which this engine does not read: no language folder is mounted`);
   report.ok = !report.problems.length;
   return report;
 }
 
-module.exports = { searchPaths, mountedLanguage, mountOrder, paksIn, inspectPak, load, assetRefs, blocksOf, checkGame };
+module.exports = { searchPaths, mountedLanguage, languageKeys, unknownLanguageKeys, mountOrder, paksIn, inspectPak, load, assetRefs, blocksOf, checkGame };
 
 if (require.main === module) {
   const game = process.argv[2] && !process.argv[2].startsWith('--')

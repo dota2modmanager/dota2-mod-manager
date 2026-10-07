@@ -14,7 +14,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { t } from './i18n.ts';
-import { MARKER, searchPathsBlock, withModFolder, patchedBranch, restoreBranch } from './patcher-gameinfo.ts';
+import { MARKER, searchPathsBlock, withModFolder, patchedBranch, restoreBranch, patchIsCurrent } from './patcher-gameinfo.ts';
 import { signatureLine, vanillaBranchHashes, matchesVanilla, hasSignaturePatch, stripSignatures } from './patcher-signatures.ts';
 
 /** The content folder registered next to the game's own "dota". */
@@ -29,6 +29,8 @@ export interface PatchState {
   patched: boolean; signed: boolean; signable: boolean;
   /** our folder, when the patch is in */
   folder: string | null;
+  /** the patch is in, but built from a gameinfo.gi the game no longer has (see patchIsCurrent) */
+  outdated: boolean;
   /** another patcher's folder found registered beside ours */
   foreign: string | null;
   /** unpatched and exactly what Valve shipped, or no list to say otherwise */
@@ -56,13 +58,15 @@ export function paths(gamePath: string): { gameinfo: string; branch: string; sig
  */
 export function state(gamePath: string, folder: string | null): PatchState {
   const p = paths(gamePath);
-  const out: PatchState = { patched: false, signed: false, signable: false, folder: null, foreign: null, vanillaOk: true };
+  const out: PatchState = { patched: false, signed: false, signable: false, folder: null, outdated: false, foreign: null, vanillaOk: true };
   if (!fs.existsSync(p.branch)) return out;
   out.signable = fs.existsSync(p.signatures);
   const branch = fs.readFileSync(p.branch, 'latin1');
   if (branch.includes(MARKER)) {
     out.patched = true;
     out.folder = folder;
+    // a gameinfo.gi that cannot be read or parsed says nothing either way; apply() reports it
+    try { out.outdated = !patchIsCurrent(branch, fs.readFileSync(p.gameinfo, 'latin1'), folder || FOLDER); } catch { /* see above */ }
   }
   for (const name of KNOWN_FOREIGN) {
     if (new RegExp(`^\\s*(Game|Mod)\\s+${name}\\s*$`, 'm').test(branch)) out.foreign = name;
@@ -218,6 +222,6 @@ export function revert({ gamePath, folder, backupDir }: { gamePath: string; fold
 
 // The text work is kept as two files: src/patcher-gameinfo.ts for the gameinfo files and
 // src/patcher-signatures.ts for the signature list. Callers import from here.
-export { MARKER, searchPathsBlock, withModFolder, patchedBranch, stripPatch, restoreBranch } from './patcher-gameinfo.ts';
+export { MARKER, searchPathsBlock, searchPathLines, patchIsCurrent, withModFolder, patchedBranch, stripPatch, restoreBranch } from './patcher-gameinfo.ts';
 export { crc32, fileHashes, signatureLine, vanillaBranchHashes, matchesVanilla, hasSignaturePatch, stripSignatures } from './patcher-signatures.ts';
 export type { Hashes } from './patcher-signatures.ts';

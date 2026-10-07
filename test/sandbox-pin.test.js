@@ -46,6 +46,17 @@ test('settings already on the sandbox game are left alone', (t) => {
   assert.equal(fs.statSync(s.file).mtimeMs, before, 'not rewritten');
 });
 
+test('a sandbox seeded before a version bump does not open on "What\'s new"', (t) => {
+  // a scripted run never clicks the window away, so it covered every screenshot after a bump
+  const s = sandbox(t);
+  fs.writeFileSync(s.file, JSON.stringify({ dotaGamePath: s.gameDir, lastSeenVersion: '2.7.1' }));
+  assert.equal(pinGamePath(s.userData, s.gameDir, () => {}, '2.8.0'), null);
+  assert.equal(s.read().lastSeenVersion, '2.8.0');
+  const before = fs.statSync(s.file).mtimeMs;
+  assert.equal(pinGamePath(s.userData, s.gameDir, () => {}, '2.8.0'), null);
+  assert.equal(fs.statSync(s.file).mtimeMs, before, 'already current, not rewritten');
+});
+
 test('a sandbox with no game in it refuses the run instead of letting the app look for one', (t) => {
   const s = sandbox(t, { game: false, settings: { dotaGamePath: null } });
   assert.match(pinGamePath(s.userData, s.gameDir), /sandbox:seed/);

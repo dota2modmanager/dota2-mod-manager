@@ -14,8 +14,9 @@
  *
  *   "boot" { "UILanguage" "russian"  "AudioLanguage" "russian" }
  *
- * and builds the Game_Language search path (dota_*LANGUAGE* in gameinfo.gi) out of the AUDIO
- * one. Since the 2026-07-24 update that value has to be a real language: a made-up folder
+ * and builds the language search path (dota_*LANGUAGE* in gameinfo.gi) out of the AUDIO
+ * one; build 6946 (2026-10-07) renamed its key from Game_Language to Game_AudioLanguage, which
+ * now says so in the file itself. Since the 2026-07-24 update that value has to be a real language: a made-up folder
  * like dota_123 is mounted by nothing.
  *
  * Steam decides which voice pack is on disk, from the game's language in its properties, and
@@ -60,7 +61,7 @@ export interface LangDetection {
 
 /* Languages Dota records VOICE in - four of them, and that is the list that matters here.
  *
- * The engine substitutes the audio language into its Game_Language search path, so the folder
+ * The engine substitutes the audio language into its Game_AudioLanguage search path, so the folder
  * a mod has to live in is named by this setting and by nothing else. Text is a different list
  * of twenty-nine languages living in dota/pak01, and it has no bearing on any of this; reading
  * the wrong one of the two is how a mod ends up in a folder nobody mounts.

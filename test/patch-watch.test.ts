@@ -179,6 +179,36 @@ test('Steam checking the files at the same build is reported once, while the app
   assert.equal(seen.length, 2, 'a second file check is a second report');
 });
 
+test('a gameinfo.gi that lands after the repair is reported once, and the rebuilt patch quiets it', async (t) => {
+  // Steam writes a patch's files one by one. The repair the new build number starts can run
+  // before gameinfo.gi arrives and rebuild the search path from the old one - the stamp then
+  // already matches, and only the search path itself tells that it is behind.
+  const game = fakeGame(t);
+  const searchPaths = (key: string) => `"GameInfo"\r\n{\r\n\tFileSystem\r\n\t{\r\n\t\tSearchPaths\r\n\t\t{\r\n\t\t\t${key}\tdota_*LANGUAGE*\r\n\t\t\tGame\t\t\t\tdota\r\n\t\t\tMod\t\t\t\t\tdota\r\n\t\t}\r\n\t}\r\n}\r\n`;
+  const gameinfo = patcher.paths(game).gameinfo;
+  fs.writeFileSync(gameinfo, searchPaths('Game_Language\t'));
+  branchWith(game, false);
+  const backupDir = path.join(game, '..', path.basename(game) + '-backups');
+  t.after(() => fs.rmSync(backupDir, { recursive: true, force: true }));
+  patcher.apply({ gamePath: game, folder: patcher.FOLDER, backupDir });
+
+  const seen: { from: string | null; to: string; reason?: string }[] = [];
+  const watcher = createPatchWatcher({ getGamePath: () => game, onPatch: (e) => seen.push(e), expectsPatch: () => true, debounceMs: 20 });
+  t.after(() => watcher.stop());
+  watcher.start(gameStamp(game));
+
+  fs.writeFileSync(gameinfo, searchPaths('Game_AudioLanguage'));
+  await new Promise((r) => setTimeout(r, 200));
+  assert.equal(seen.length, 1, 'the new gameinfo.gi is noticed without a new build number');
+  assert.equal(seen[0].reason, 'search-path-outdated');
+  watcher.check();
+  assert.equal(seen.length, 1, 'once, not on every look while the repair runs');
+
+  patcher.apply({ gamePath: game, folder: patcher.FOLDER, backupDir });
+  watcher.check();
+  assert.equal(seen.length, 1, 'the rebuilt patch is current, so there is nothing more to say');
+});
+
 test('with safe mode on, a branch file without our search path is how it should be', async (t) => {
   const game = fakeGame(t);
   branchWith(game, false);

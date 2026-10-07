@@ -47,8 +47,9 @@ const mkdir = (p) => fs.mkdirSync(p, { recursive: true });
 // ---------- files the fake game needs ----------
 
 // Valve's own SearchPaths block. src/patcher.ts reads this out of gameinfo.gi to build the
-// patched branch file, and the Game_Language line is what makes dota_<audio lang> mount at
-// all (measured 2026-07-30) - so it has to be verbatim, not paraphrased.
+// patched branch file, and the language line is what makes dota_<audio lang> mount at all
+// (measured 2026-07-30) - so it has to be verbatim, not paraphrased. Its key has been
+// Game_AudioLanguage since build 6946 (2026-10-07); the engine no longer reads Game_Language.
 const GAMEINFO = `"GameInfo"
 {
 	game 		"Dota 2"
@@ -62,7 +63,7 @@ const GAMEINFO = `"GameInfo"
 		{
 			// These are optional language paths. They must be mounted first, which is why there are first in the list.
 			// *LANGUAGE* will be replaced with the actual language name. If not running a specific language, these paths will not be mounted
-			Game_Language		dota_*LANGUAGE*
+			Game_AudioLanguage	dota_*LANGUAGE*
 
 			// These are optional low-violence paths. They will only get mounted if you're in a low-violence mode.
 			Game_LowViolence	dota_lv
@@ -74,7 +75,7 @@ const GAMEINFO = `"GameInfo"
 
 			Write				dota
 
-			AddonRoot_Language	dota_*LANGUAGE*_addons
+			AddonRoot_AudioLanguage	dota_*LANGUAGE*_addons
 
 			AddonRoot			dota_addons
 
@@ -535,7 +536,7 @@ function reset() {
 
 // the sandbox game, written into the settings before every start (tools/sandbox-pin.js says why)
 function pin() {
-  const refused = pinGamePath(USERDATA, GAME, log);
+  const refused = pinGamePath(USERDATA, GAME, log, require('../package.json').version);
   if (refused) {
     log(`refusing to start: ${refused}`);
     process.exitCode = 1;

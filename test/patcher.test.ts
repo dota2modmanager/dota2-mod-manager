@@ -20,7 +20,7 @@ const VANILLA_GAMEINFO = `"GameInfo"
 	{
 		SearchPaths
 		{
-			Game_Language		dota_*LANGUAGE*
+			Game_AudioLanguage	dota_*LANGUAGE*
 			Game_LowViolence	dota_lv
 
 			Game				dota
@@ -37,6 +37,9 @@ const VANILLA_GAMEINFO = `"GameInfo"
 `;
 
 const patchedBlock = () => patcher.withModFolder(patcher.searchPathsBlock(VANILLA_GAMEINFO), FOLDER);
+
+// The same block as Valve shipped it up to build 6944, before the language key was renamed.
+const GAMEINFO_6944 = VANILLA_GAMEINFO.replace('Game_AudioLanguage\t', 'Game_Language\t\t');
 
 // The signature list Valve ships: one entry per checked file, closed by DIGEST. Their own
 // entry for gameinfo_branchspecific.gi is already in there, which is exactly what made a
@@ -67,6 +70,28 @@ test('stripping is idempotent and survives a doubly applied patch', () => {
 
   assert.equal(patcher.stripPatch(twice), VANILLA_BRANCH);
   assert.equal(patcher.stripPatch(patcher.stripPatch(once)), VANILLA_BRANCH);
+});
+
+test('a patch built from the gameinfo.gi on disk is current', () => {
+  const branch = patcher.patchedBranch(VANILLA_BRANCH, patchedBlock());
+  assert.equal(patcher.patchIsCurrent(branch, VANILLA_GAMEINFO, FOLDER), true);
+});
+
+test('a patch built before Valve renamed the language key is not current', () => {
+  // Build 6946 renamed Game_Language to Game_AudioLanguage and left the branch file alone, so
+  // a patch from the day before sat on disk naming a key the engine no longer reads.
+  const old = patcher.patchedBranch(VANILLA_BRANCH, patcher.withModFolder(patcher.searchPathsBlock(GAMEINFO_6944), FOLDER));
+  assert.equal(patcher.patchIsCurrent(old, GAMEINFO_6944, FOLDER), true, 'it was current against the file it came from');
+  assert.equal(patcher.patchIsCurrent(old, VANILLA_GAMEINFO, FOLDER), false);
+});
+
+test('a comment Valve rewords does not make the patch outdated, a moved line does', () => {
+  const branch = patcher.patchedBranch(VANILLA_BRANCH, patchedBlock());
+  const reworded = VANILLA_GAMEINFO.replace('Game_LowViolence', '// low-violence paths, reworded\n\t\t\tGame_LowViolence');
+  assert.equal(patcher.patchIsCurrent(branch, reworded, FOLDER), true);
+  const reordered = VANILLA_GAMEINFO.replace('\t\t\tGame\t\t\t\tdota\n\t\t\tGame\t\t\t\tcore', '\t\t\tGame\t\t\t\tcore\n\t\t\tGame\t\t\t\tdota');
+  assert.notEqual(reordered, VANILLA_GAMEINFO, 'the fixture really moved the line');
+  assert.equal(patcher.patchIsCurrent(branch, reordered, FOLDER), false);
 });
 
 test('stripping a file that was never patched leaves it alone', () => {

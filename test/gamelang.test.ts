@@ -1,6 +1,6 @@
 // Which dota_<lang> folder the game mounts, and therefore where mods have to go. This is the
 // single most common cause of "my mods do nothing": the engine substitutes the AUDIO language
-// into its Game_Language search path and mounts nothing at all for English, so a mod sitting
+// into its Game_AudioLanguage search path and mounts nothing at all for English, so a mod sitting
 // in a folder the game never mounts is invisible with no error anywhere.
 import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
