@@ -64,6 +64,17 @@ function LaunchLang({ lang, followed }: { lang: string; followed: boolean }) {
     );
 }
 
+/* The mods whose files the patch changed: they put the old versions back over the new ones, and
+ * carry a "pre-patch" mark in the list. Three by name, the rest counted. */
+function touchedText(mods: string[] | undefined): string {
+  if (!mods || !mods.length) return '';
+  const shown = mods.slice(0, 3).map((n) => `«${n}»`).join(', ');
+  const names = mods.length > 3 ? `${shown} ${L`и ещё ${mods.length - 3}`}` : shown;
+  return mods.length === 1
+    ? L`. Патч поменял файлы, которые подменяет мод ${names}. Он помечен «до патча»: если в игре что-то выглядит не так, начни с него.`
+    : L`. Патч поменял файлы, которые подменяют моды ${names}. Они помечены «до патча»: если в игре что-то выглядит не так, начни с них.`;
+}
+
 function Repair({ b, actions }: { b: BannersModel; actions: LibraryActions }) {
   const [busy, setBusy] = useState(false);
   const r = b.repair;
@@ -89,7 +100,7 @@ function Repair({ b, actions }: { b: BannersModel; actions: LibraryActions }) {
     const what = (r.healed || []).length ? L`, моды и настройки вернули на место` : L`, менять ничего не пришлось`;
     return (
       <Banner kind="info" icon="update" action={<BannerButton id="repairSeenBtn" label={L`Понятно`} ghost onClick={() => actions.banner('repairSeen')} />}>
-        <b>{L`Dota обновилась`}</b>{`${what}${L`. Можно играть.`}`}
+        <b>{L`Dota обновилась`}</b>{`${what}${touchedText(r.touched?.mods) || L`. Можно играть.`}`}
       </Banner>
     );
   }

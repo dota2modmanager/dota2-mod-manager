@@ -34,6 +34,18 @@ function coveredTag(x: { coveredBy?: Cover[]; enabled: boolean }): Tag | null {
     title: L`Файлов перекрыто: ${total} — ${who}. Побеждает мод, который загружается раньше; порядок меняется правой кнопкой.` };
 }
 
+/* A Dota update changed files this mod replaces, so the mod now puts the old versions back over
+ * the new ones. Most of the time nothing shows; when something does, this is the mod to look at,
+ * and its author the one to rebuild it. */
+function prePatchTag(rec: LibRecord): Tag | null {
+  const p = rec.prePatch;
+  if (!p || (!p.changed && !p.removed)) return null;
+  const build = p.since ? ` ${p.since}` : '';
+  const changed = p.changed ? L`Dota${build} поменяла файлы, которые подменяет этот мод: ${p.changed}. Мод возвращает их старые версии, и если в игре что-то выглядит не так, начни с него. Автору пора пересобрать мод.` : '';
+  const removed = p.removed ? L`Dota${build} убрала файлы, которые подменяет этот мод: ${p.removed}. Эта часть мода больше ни на что не действует.` : '';
+  return { cls: 'stale', icon: 'history', text: L`до патча`, title: [changed, removed].filter(Boolean).join(' ') };
+}
+
 const known = <T>(list: (T | null)[]): T[] => list.filter((x): x is T => x !== null);
 
 export function modRow(rec: LibRecord, index: number): RowModel {
@@ -57,6 +69,7 @@ export function modRow(rec: LibRecord, index: number): RowModel {
       schemaTag(rec),
       coveredTag(rec),
       rec.staleMap ? { cls: 'stale', icon: 'history', text: L`старая карта`, title: staleTerrainWhy() } : null,
+      prePatchTag(rec),
     ]),
     meta: cosmetic ? catName(COSMETIC_PREFIX + rec.slot) + effectNames(rec) : catName(rec.categoryId),
     pakFile: pakFileName(rec),

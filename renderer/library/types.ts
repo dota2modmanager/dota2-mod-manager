@@ -53,6 +53,8 @@ export interface LibRecord {
   schemaLive?: boolean;
   coveredBy?: Cover[];
   staleMap?: boolean;
+  /** a Dota update changed files this mod replaces since it was installed (src/update-impact.ts) */
+  prePatch?: { since: string | null; changed: number; removed: number };
   fileRef?: string;
   preview?: string;
   [key: string]: unknown;
@@ -82,4 +84,6 @@ export interface RepairState {
   state: 'idle' | 'waiting' | 'failed' | 'done' | string;
   error?: string;
   healed?: unknown[];
+  /** the mods whose files the patch changed, by name */
+  touched?: { build: string | null; mods: string[] };
 }

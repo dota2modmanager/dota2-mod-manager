@@ -29,12 +29,14 @@ type ExternalRow = Omit<ForeignItem, 'kind'> & {
 
 /** The services the listing reads, and the two helpers src/ipc-mods.ts builds over them. */
 type ListingDeps = Pick<AppContext, 'installer' | 'library' | 'fingerprints' | 'schemaService' | 'diag' | 'refreshPresence' | 'verifyStuck'> & {
+  /** which mods a Dota update reached (src/update-impact.ts); left out, none are marked */
+  updateImpact?: Pick<AppContext['updateImpact'], 'marked'> | null;
   terrainAges: ReturnType<typeof createTerrainAges>;
   notice: ReturnType<typeof createNoticeText>;
 };
 
 /** The mods:list answer, built over the services src/ipc-mods.ts hands it. */
-export function createModsListing({ installer, library, fingerprints, schemaService, terrainAges, notice, diag, refreshPresence, verifyStuck }: ListingDeps) {
+export function createModsListing({ installer, library, fingerprints, schemaService, updateImpact = null, terrainAges, notice, diag, refreshPresence, verifyStuck }: ListingDeps) {
   return function listMods() {
     // a mod still on the slot the notice text took moves off it (src/slot-zones.ts)
     try { if (zones.vacateAppPak(installer, library)) diag('a mod moved off the notice slot'); } catch (err) { diag(`notice slot not freed: ${errorText(err)}`); }
@@ -128,6 +130,12 @@ export function createModsListing({ installer, library, fingerprints, schemaServ
       }
     } catch { /* no game path */ }
 
+    // a mod whose copies of Valve's files a Dota update changed since: it brings the old ones back
+    let prePatch = new Map<string, { since: string | null; changed: number; removed: number }>();
+    try {
+      if (updateImpact) for (const [id, m] of updateImpact.marked()) prePatch.set(id, { since: m.since, changed: m.changed.length, removed: m.removed.length });
+    } catch (err) { diag(`update impact not read: ${errorText(err)}`); prePatch = new Map(); }
+
     let slots = 0;
     try { slots = installer.usedModSlots(); } catch { /* no game path */ }
     /* Leave a note on disk saying which files here are ours. This handler already reconciles
@@ -156,9 +164,11 @@ export function createModsListing({ installer, library, fingerprints, schemaServ
       const by = covered.get(rec.id);
       const zone = installer.zoneFor(rec.categoryId);
       const staleMap = !!terrains.get(rec.id)?.stale;
-      if (!Array.isArray(rec.schema)) return { ...rec, zone, staleMap, ...(by ? { coveredBy: by } : {}) };
+      const pre = prePatch.get(rec.id);
+      const extra = { ...(by ? { coveredBy: by } : {}), ...(pre ? { prePatch: pre } : {}) };
+      if (!Array.isArray(rec.schema)) return { ...rec, zone, staleMap, ...extra };
       const { schema, ...rest } = rec;
-      return { ...rest, zone, staleMap, schemaCount: schema.length, schemaLive: schemaOn, ...(by ? { coveredBy: by } : {}) };
+      return { ...rest, zone, staleMap, schemaCount: schema.length, schemaLive: schemaOn, ...extra };
     });
     return { installed: listed, external, slots, slotCeil: 98, verifyStuck: verifyStuck() };
   };
