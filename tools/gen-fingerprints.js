@@ -13,6 +13,9 @@
 //   node tools/gen-fingerprints.js --conc 8        # 8 parallel downloads (default 5)
 //   node tools/gen-fingerprints.js --fresh         # ignore state, rebuild from scratch
 //   node tools/gen-fingerprints.js --out p.json --progress p.state.json
+//
+// It also writes mod-paths.json: every file each pak mod replaces, grouped by folder, which
+// tools/dota-watch.mjs reads to say which catalog mods a Dota update reached.
 
 const fs = require('fs');
 const path = require('path');
@@ -40,6 +43,7 @@ function parseArgs(argv) {
 const args = parseArgs(process.argv.slice(2));
 const OUT = path.resolve(args.out || path.join(__dirname, '..', 'fingerprints.json'));
 const HEROES_OUT = path.resolve(args.heroes || path.join(__dirname, '..', 'hero-index.json'));
+const PATHS_OUT = path.resolve(args.paths || path.join(__dirname, '..', 'mod-paths.json'));
 const PROGRESS = path.resolve(args.progress || path.join(__dirname, '..', 'fingerprints.state.json'));
 const LIMIT = args.limit ? Number(args.limit) : Infinity;
 const CONC = Math.max(1, Number(args.conc || 5));
@@ -113,9 +117,19 @@ function heroesOf(vpkBuf) {
   }
 }
 
+/**
+ * The files a pak mod puts in the language folder, for tools/dota-watch.mjs to hold against what a
+ * Dota update changed. A whole-map terrain (maps/dota.vpk) replaces one file outside pak01, and the
+ * paths inside it are the map's own, so it has none: null, which also marks it as read.
+ */
+function pathsOf(vpkBuf, isPak) {
+  if (!isPak) return null;
+  try { return listVpkPaths(vpkBuf).sort(); } catch { return null; }
+}
+
 function fingerprintBuf(buf, fileRef, categoryId) {
   const lower = fileRef.toLowerCase();
-  if (lower.endsWith('.vpk')) return { fp: fingerprintVpk(buf), type: 'vpk', ...heroesOf(buf) };
+  if (lower.endsWith('.vpk')) return { fp: fingerprintVpk(buf), type: 'vpk', ...heroesOf(buf), paths: pathsOf(buf, true) };
   if (!lower.endsWith('.zip')) return null;
 
   const zip = new AdmZip(buf);
@@ -125,7 +139,7 @@ function fingerprintBuf(buf, fileRef, categoryId) {
   if (vpkEntry) {
     try {
       const inner = vpkEntry.getData();
-      return { fp: fingerprintVpk(inner), type: 'vpk', ...heroesOf(inner) };
+      return { fp: fingerprintVpk(inner), type: 'vpk', ...heroesOf(inner), paths: pathsOf(inner, vpkEntry.entryName.toLowerCase().endsWith('_dir.vpk')) };
     } catch { /* fall through */ }
   }
   const files = looseFiles(entries, categoryId);
@@ -193,7 +207,8 @@ async function main() {
     // State written before this job learned to read heroes: that archive has to come back
     // once. Spread over the scheduled runs rather than forced into one, which is what the
     // resume behaviour already exists for.
-    return rec.type === 'vpk' && rec.subjects === undefined;
+    // The same once more for the file lists mod-paths.json is made of (2026-10-07).
+    return rec.type === 'vpk' && (rec.subjects === undefined || rec.paths === undefined);
   });
   console.log(`mods with vpk/zip: ${all.length}; this run: ${targets.length}; up-to-date: ${targets.length - pending.length}; to (re)fetch: ${pending.length}`);
   console.log(`state: ${PROGRESS}\noutput: ${OUT}\nheroes: ${HEROES_OUT}
@@ -226,6 +241,29 @@ concurrency: ${CONC}\n`);
     }
     const mods = Object.values(byHero).reduce((n, e) => n + e.mods.length, 0);
     fs.writeFileSync(HEROES_OUT, jsonLinesFile({ heroes: Object.keys(byHero).length, mods, byHero }));
+  };
+
+  /**
+   * mod-paths.json: the files each pak mod replaces, by folder, for tools/dota-watch.mjs.
+   * Sorted and timeless like the files beside it, one mod per line and one folder per line inside
+   * it, so a commit shows the mods that changed.
+   */
+  const writePaths = () => {
+    const mods = {};
+    for (const rec of Object.values(progress.processed)) {
+      if (!Array.isArray(rec.paths) || !rec.paths.length) continue;
+      const dirs = {};
+      for (const p of rec.paths) {
+        const at = p.lastIndexOf('/');
+        (dirs[at === -1 ? '' : p.slice(0, at)] ||= []).push(at === -1 ? p : p.slice(at + 1));
+      }
+      const key = `${rec.categoryId}/${rec.name}${rec.styleLabel ? ` [${rec.styleLabel}]` : ''}`;
+      mods[key] = { name: rec.name, categoryId: rec.categoryId, styleLabel: rec.styleLabel || null, dirs };
+    }
+    const sorted = {};
+    for (const k of Object.keys(mods).sort()) sorted[k] = mods[k];
+    // a folder's files stay on one line up to a few kilobytes: the record is a list, not a table
+    fs.writeFileSync(PATHS_OUT, jsonLinesFile({ count: Object.keys(sorted).length, mods: sorted }, { inlineAt: 4000 }));
   };
 
   const save = () => {
@@ -262,6 +300,7 @@ concurrency: ${CONC}\n`);
     fs.mkdirSync(path.dirname(PROGRESS), { recursive: true });
     fs.writeFileSync(PROGRESS, JSON.stringify(progress));
     writeHeroIndex();
+    writePaths();
     sinceSave = 0;
   };
 
@@ -274,7 +313,7 @@ concurrency: ${CONC}\n`);
       try {
         const buf = await fetchBuf(fileUrl(t.categoryId, t.fileRef));
         const r = fingerprintBuf(buf, t.fileRef, t.categoryId);
-        progress.processed[keyOf(t)] = { ...base, fp: r ? r.fp : null, type: r ? r.type : null, hashes: r && t.categoryId === 'fonts' ? r.hashes : undefined, subjects: r ? r.subjects : undefined, kind: r ? r.kind : undefined, error: r ? null : 'no content to fingerprint' };
+        progress.processed[keyOf(t)] = { ...base, fp: r ? r.fp : null, type: r ? r.type : null, hashes: r && t.categoryId === 'fonts' ? r.hashes : undefined, subjects: r ? r.subjects : undefined, kind: r ? r.kind : undefined, paths: r ? (r.paths ?? null) : null, error: r ? null : 'no content to fingerprint' };
         if (r) { ok++; console.log(`[${n}/${pending.length}] ok   ${r.fp.slice(0, 8)} ${r.type === 'files' ? '(files)' : '       '} ${t.name}${t.styleLabel ? ` [${t.styleLabel}]` : ''}`); }
         else { skip++; console.log(`[${n}/${pending.length}] skip (empty)  ${t.name}`); }
       } catch (e) {

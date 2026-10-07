@@ -19,6 +19,8 @@ seo-report.md
 # now. Every one of the three tools already treats a missing state file as "first run", so a
 # cache that expires costs one slower run and nothing else.
 fingerprints.state.json
+# Written next to them by the same job and published to the catalog-data branch only.
+mod-paths.json
 indexnow.state.json
 seo-state.json
 

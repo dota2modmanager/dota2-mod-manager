@@ -1,0 +1,65 @@
+name: Dota updates
+
+# Every thirty minutes: is there a Dota build the "Dota updates" issue has not seen? If so, a
+# comment there says what changed, starting with what the app's patch is built from, and which
+# catalog mods replace files the update touched. tools/dota-watch.mjs says why this exists (build
+# 6946 renamed a search-path key and mods stopped loading; the rename was public the same hour).
+#
+# A no-op most of the time: one call for the newest build, one for the issue.
+
+on:
+  schedule:
+    - cron: '15,45 * * * *'   # twice an hour, off the fingerprint job's minute
+  workflow_dispatch:
+    inputs:
+      dry:
+        description: 'Print the comment and the Discord message, change nothing'
+        type: boolean
+        default: false
+
+# The token reads the repository and nothing more. The job below asks for the one thing it writes.
+permissions:
+  contents: read
+
+concurrency:
+  group: dota-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    # Comments on and edits one issue. Nothing here pushes, labels or closes.
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # The catalog's file lists, written by the fingerprint job (tools/gen-fingerprints.js). Read
+      # only: the branch is checked out beside the code and nothing goes back to it from here.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: catalog-data
+          path: data
+          persist-credentials: false
+          sparse-checkout: mod-paths.json
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+
+      # The webhook address is a credential. The script never prints it, including in an error.
+      - name: Report a new Dota build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RADAR_DISCORD_WEBHOOK: ${{ secrets.RADAR_DISCORD_WEBHOOK }}
+          DRY: ${{ inputs.dry }}
+        run: |
+          if [ "$DRY" = "true" ]; then
+            node tools/dota-watch.mjs --dry --catalog data/mod-paths.json
+          else
+            node tools/dota-watch.mjs --catalog data/mod-paths.json
+          fi

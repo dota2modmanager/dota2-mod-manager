@@ -5,6 +5,9 @@ name: Fingerprints
 # result is committed to the catalog-data branch only when it actually changes. Nothing here
 # builds a release (that workflow triggers on v* tags only).
 #
+# It also publishes mod-paths.json, every file each pak mod replaces, which the Dota update watcher
+# (dota-watch.yml) holds against what a new build changed. Same downloads again.
+#
 # It also rebuilds the site's hero pages, because they are made of the same downloads. The job
 # already opens every archive to fingerprint it and works out which heroes each one is about;
 # the site then needs the catalog's preview for those same mods. Doing it anywhere else means
@@ -97,7 +100,7 @@ jobs:
       - name: Commit to catalog-data if changed
         working-directory: data
         run: |
-          cp ../fingerprints.json ../hero-index.json .
+          cp ../fingerprints.json ../hero-index.json ../mod-paths.json .
           cp ../site/src/data/heroes.json ../site/src/data/categories.json site/src/data/
           rsync -a --delete ../site/public/mods/ site/public/mods/
           if [ -z "$(git status --porcelain)" ]; then

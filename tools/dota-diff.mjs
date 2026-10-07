@@ -176,7 +176,7 @@ async function github(url) {
 }
 
 /** GameTracking commits that are builds ("6952 | 6 files | ..."), newest first. */
-async function buildCommits(pages = 2) {
+export async function buildCommits(pages = 2) {
   const out = [];
   for (let page = 1; page <= pages; page++) {
     const list = await github(`https://api.github.com/repos/${REPO}/commits?per_page=100&page=${page}`);
@@ -249,8 +249,12 @@ async function modsReport(targets, diff) {
 
 // ---------- the report ----------
 
-export async function compare(fromRef, toRef, { mods = [] } = {}) {
-  const commits = await buildCommits();
+/**
+ * Two builds compared. `keepDiff` adds the full path lists (report.diff), which tools/dota-watch.mjs
+ * holds against the catalog; the printed report needs only the counts.
+ */
+export async function compare(fromRef, toRef, { mods = [], keepDiff = false, commits: known = null } = {}) {
+  const commits = known || await buildCommits();
   if (!commits.length) throw new Error('no build commits found in GameTracking');
   const to = toRef ? await resolve(toRef, commits) : commits[0];
   const from = fromRef ? await resolve(fromRef, commits) : commits.find((c) => c.build !== null && c.build < to.build);
@@ -283,6 +287,7 @@ export async function compare(fromRef, toRef, { mods = [] } = {}) {
     },
   };
   if (mods.length) report.mods = await modsReport(mods, diff);
+  if (keepDiff) report.diff = diff;
   return report;
 }
 
