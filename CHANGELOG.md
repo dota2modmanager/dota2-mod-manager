@@ -2,6 +2,25 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.8.1
+
+### Mods load again after Dota's 7 October update
+
+With safe mode off, Dota's 7 October update could stop the mods in your language folder from
+loading. Weather and items kept working, the rest did not.
+
+To let mods change items, the app adds its own folder to the list of places Dota reads, and it
+copies that list from Dota's own file. The update renamed one line in Dota's file. The copy the
+app had written before the update kept the old name, and the game skipped your language folder.
+
+The app now compares its copy with Dota's file at every start and while it is open, and writes it
+again when they differ. Opening this version is enough. With safe mode on, nothing broke.
+
+### What's new keeps paragraphs apart
+
+This window ran a section's second paragraph into the first, as you could see in the 2.8.0
+notes. Each paragraph now stands on its own.
+
 ## 2.8.0
 
 Everything the four 2.8.0 betas brought, now for everybody.
