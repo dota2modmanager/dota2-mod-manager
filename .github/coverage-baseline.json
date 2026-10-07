@@ -198,7 +198,7 @@
       }
     },
     "win32": {
-      "measured": "2026-10-03",
+      "measured": "2026-10-07",
       "files": {
         "renderer/catalog/builder/logic.ts": {
           "lines": 98.1
@@ -258,10 +258,13 @@
           "lines": 100
         },
         "renderer/ui/format.ts": {
-          "lines": 69
+          "lines": 75.9
         },
         "renderer/ui/media.ts": {
           "lines": 60
+        },
+        "renderer/ui/notes-markdown.ts": {
+          "lines": 100
         },
         "src/adopt.ts": {
           "lines": 100
