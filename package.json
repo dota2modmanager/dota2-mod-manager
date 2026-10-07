@@ -22,6 +22,7 @@
     "start:sandbox": "node tools/ui-build.mjs && node tools/sandbox.js pin && electron . --user-data-dir=sandbox/userdata",
     "e2e": "node tools/e2e.mjs",
     "sim": "node tools/sim/run.mjs",
+    "dota:diff": "node tools/dota-diff.mjs",
     "fuzz": "node tools/fuzz-parsers.mjs",
     "mutate": "node tools/mutate.mjs",
     "rollback": "node tools/rollback.mjs",
