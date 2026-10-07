@@ -5,6 +5,7 @@
  * Two things start in the background here and are not waited for: the fingerprint list and the
  * remote config. Both answer from their cached copies until the network does.
  */
+import path from 'node:path';
 import { Settings } from './settings.ts';
 import { Catalog } from './catalog.ts';
 import { Installer } from './installer.ts';
@@ -16,6 +17,8 @@ import { Fingerprints } from './fingerprints.ts';
 import * as discordAuth from './discord-auth.ts';
 import { DiscordPresence } from './discord-presence.ts';
 import { createSchemaService } from './schema-service.ts';
+import { createUpdateImpact, impactMods } from './update-impact.ts';
+import { clientVersion } from './patch-watch.ts';
 import { createRemoteConfig } from './remote-config.ts';
 // the download chain, so a mirror named in that signed file joins it
 import { applyMirrors } from './net.ts';
@@ -60,6 +63,14 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   const presence = new DiscordPresence({ clientId: discordAuth.CLIENT_ID, onDiag: diag });
   const presenceStatus = createPresenceStatus({ presence, settings, library, installer });
   const schemaService = createSchemaService({ settings, library, installer, userDataDir: userData, log: diag });
+  // which installed mods a Dota update reached (src/update-impact.ts)
+  const updateImpact = createUpdateImpact({
+    file: path.join(userData, 'update-impact.json'),
+    gamePath: () => settings.get('dotaGamePath'),
+    mods: () => impactMods(library.list(), (rel) => installer.langFileOnDisk(rel)),
+    build: clientVersion,
+    log: diag,
+  });
   const cursors = createCursors({ installer, library, settings });
   const adopt = createAdopt({ installer, library, schemaService });
   // what the app can be told after it shipped: a feature switched off with a reason, and dated
@@ -110,7 +121,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   const importVpkBuffers: AppContext['importVpkBuffers'] = (items) => runImport((onStep) => importer.importVpkBuffers(installer, Array.isArray(items) ? items : [], onStep));
 
   return {
-    settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, cursors, adopt,
+    settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
     remoteConfig, icons, toolchain, gameIcons, modPreviews,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers,
   };

@@ -40,6 +40,7 @@ function stand(t: TestContext) {
   const progress: { type: string; label: string }[] = [];
   const calls: string[] = [];
   let blockedWith: { error: string } | null = null;
+  const reached = new Map<string, { since: string | null; changed: string[]; removed: string[]; sig: string }>();
   const channels = registerAgainst(() => registerModsIpc({
     applyMasterToCursors: (on: boolean) => calls.push(`cursors ${on}`), blocked: () => blockedWith, catalog: {},
     diag: () => {}, disableOtherCursors: () => { calls.push('other cursors off'); return ['Old cursors']; }, fingerprints,
@@ -47,6 +48,7 @@ function stand(t: TestContext) {
     refreshPresence: () => calls.push('presence'),
     schemaService: { state: () => ({ enabled: schemaOn }), harvest: () => harvest, refresh: () => { refreshed++; } },
     sendProgress: (p: { type: string; label: string }) => progress.push(p), verifyStuck: () => [], win: () => null,
+    updateImpact: { marked: () => reached },
   } as never));
   const call = (ch: string, ...args: unknown[]) => channels.get(ch)!({}, ...args);
   /** A pak in the language folder holding these files, and (unless `foreign`) the record that owns it. */
@@ -63,6 +65,7 @@ function stand(t: TestContext) {
     harvestGives: (h: typeof harvest) => { harvest = h; },
     refreshed: () => refreshed,
     block: (b: typeof blockedWith) => { blockedWith = b; },
+    reached,
   };
 }
 
@@ -150,6 +153,16 @@ test('the item blocks stay in the main process: the row says how many there are 
   assert.equal(row.schemaCount, 2);
   assert.equal(row.schemaLive, true);
   assert.equal((s.library.find(rec.id) as unknown as { schema: string[] }).schema.length, 2, 'the stored record keeps them');
+});
+
+test('a mod a Dota update reached carries how many of its files changed and how many are gone', async (t) => {
+  const s = stand(t);
+  const hud = s.pak('pak30', [['panorama/layout/hud/dota_hud.vxml_c', 'old hud']])!;
+  const axe = s.pak('pak31', [['models/heroes/axe/axe.vmdl_c', 'an axe model']])!;
+  s.reached.set(hud.id, { since: '6946', changed: ['a', 'b'], removed: ['c'], sig: 'x' });
+  const rows = (await s.list()).installed;
+  assert.deepEqual(rows.find((r) => r.id === hud.id)?.prePatch, { since: '6946', changed: 2, removed: 1 });
+  assert.equal('prePatch' in (rows.find((r) => r.id === axe.id) || {}), false);
 });
 
 test('listing rewrites the ownership note with exactly the library\'s files, and the status line hears about it', async (t) => {

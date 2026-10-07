@@ -296,7 +296,13 @@ that matters most to a new user: the installer itself carries no code-signing ce
 
 A game update overwrites the search-path patch and moves the item table underneath the built
 schema. `src/patch-watch.ts` notices the update while the app is open, because Steam patches in
-the background and most people press Play in Steam, and the repair runs by itself.
+the background and most people press Play in Steam, and the repair runs by itself. The patch is
+also rebuilt when it was copied from an older `gameinfo.gi` than the game has: build 6946 renamed
+the language path key, and a patch from the day before stopped mounting the language folder.
+
+After the repair, `src/update-impact.ts` compares Valve's files that installed mods replace with
+what the update shipped. A mod whose copies the patch changed or removed is marked "pre-patch" in
+My mods and named in the banner about the update: it now puts old files back over new ones.
 
 ## Updates
 
@@ -378,6 +384,7 @@ that location is not writable.
 | `src/game-upkeep.ts` | The work done at start: the game path, the mod folder following the audio language, the load-order layout, the migrations |
 | `src/game-repair.ts` | Putting the game back after something else changed it: a Dota patch, Steam's file check, waiting while Dota runs |
 | `src/patch-watch.ts` | Noticing a game update the moment it lands |
+| `src/update-impact.ts` | Which installed mods a game update reached: Valve's files they replace that the patch changed or removed |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
 | `src/discord-auth.ts`, `src/discord-presence.ts`, `src/presence-status.ts` | Signing in with Discord, and what the Discord status says and whether it is on |

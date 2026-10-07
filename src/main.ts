@@ -136,14 +136,14 @@ async function start(): Promise<void> {
 
   const services = createServices({ userData, appVersion: () => app.getVersion(), sendProgress, diag, fetchIcons: net.fetch });
   const {
-    settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, cursors, adopt,
+    settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
     remoteConfig, icons, toolchain, gameIcons, modPreviews,
   } = services;
 
   // Put the game folder right before anything is shown: where mods go, what Steam's file check
   // and a patch took while the app was closed, and the migrations older versions left behind.
   const upkeep = createGameUpkeep({
-    settings, installer, library, schemaService, reconcileCursors: cursors.reconcileCursors, diag,
+    settings, installer, library, schemaService, updateImpact, reconcileCursors: cursors.reconcileCursors, diag,
     send: (repair) => windowOpen()?.webContents.send('patch-repair', repair),
     findGame: findDotaGamePath, validGame: validateGamePath,
   });
@@ -168,7 +168,7 @@ async function start(): Promise<void> {
   /* Everything the IPC modules may ask for, in one place. What changes while the app runs (the
      window, the updater, the patch watcher, the upkeep's state) is a function read when needed. */
   const ctx: AppContext = {
-    settings, catalog, installer, library, fingerprints, schemaService, icons, gameIcons, modPreviews,
+    settings, catalog, installer, library, fingerprints, schemaService, updateImpact, icons, gameIcons, modPreviews,
     toolchain, remoteConfig, presets, discordAuth, portableUpdater, autoUpdater,
     // One gate, handed to every module that guards a channel with it. Two copies is how installing
     // broke once: the call went to one file and the helper stayed in the other.

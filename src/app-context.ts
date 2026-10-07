@@ -15,6 +15,7 @@ import type { Fingerprints } from './fingerprints.ts';
 import type { Icons } from './icons.ts';
 import type { ToolProgress, createToolchain } from './toolchain.ts';
 import type { createSchemaService } from './schema-service.ts';
+import type { createUpdateImpact } from './update-impact.ts';
 import type { createGameIcons } from './game-icons.ts';
 import type { createModPreviews } from './mod-preview.ts';
 import type { createRemoteConfig } from './remote-config.ts';
@@ -52,6 +53,8 @@ export interface AppContext {
   library: Library;
   fingerprints: Fingerprints;
   schemaService: ReturnType<typeof createSchemaService>;
+  /** which installed mods a Dota update reached */
+  updateImpact: ReturnType<typeof createUpdateImpact>;
   icons: Icons;
   gameIcons: ReturnType<typeof createGameIcons>;
   modPreviews: ReturnType<typeof createModPreviews>;

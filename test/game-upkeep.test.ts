@@ -37,7 +37,8 @@ type Rec = { id: string; name: string };
 
 function stand({ game = null as string | null, running = false, stored = {} as Record<string, unknown>, lost = [] as Rec[],
   restore = (_r: Rec): string | null => null, heal = () => ({ healed: [] as string[], error: null as string | null }),
-  failLegacy = false, slotsMoved = 0, findGame = async (): Promise<string | null> => null } = {}) {
+  failLegacy = false, slotsMoved = 0, findGame = async (): Promise<string | null> => null,
+  reach = null as (() => { from: string | null; to: string | null; ids: string[] } | null) | null, mods = [] as Rec[] } = {}) {
   const store = new Map<string, unknown>(Object.entries({ dotaGamePath: game, ...stored }));
   const said: string[] = [];
   const sent: PatchRepair[] = [];
@@ -53,12 +54,13 @@ function stand({ game = null as string | null, running = false, stored = {} as R
       mergeMultiPartRecords: () => { asked.push('merge'); },
       sweepStaged: () => { asked.push('sweep'); return { restored: 0, dropped: 0 }; },
     } as never,
-    library: { list: () => [] } as never,
+    library: { list: () => mods } as never,
     schemaService: {
       heal: () => { asked.push('heal'); return heal(); },
       migrate: () => ({ changed: 0 }),
       migrateCosmeticSettings: () => { asked.push('cosmetics'); },
     } as never,
+    updateImpact: reach ? { check: reach } : null,
     reconcileCursors: () => { asked.push('cursors'); },
     diag: (m) => said.push(m),
     send: (r) => sent.push(r),
@@ -170,6 +172,30 @@ test('a game patched while the app was closed is repaired at start and reported 
   const same = stand({ game, stored: { gameStamp: gameStamp(game) } });
   await same.upkeep.atStart();
   assert.equal(same.upkeep.patchRepair().state, 'idle', 'the same build is nothing to tell');
+});
+
+test('the mods a patch reached are named in the repair, at start and while the app is open', async (t) => {
+  const game = fakeGame(t, { build: '6946' });
+  const reached = { from: '6944', to: '6946', ids: ['hud', 'removed-since'] };
+  const mods = [{ id: 'hud', name: 'Golden HUD' }];
+
+  const start = stand({ game, stored: { gameStamp: gameStamp(game) }, reach: () => reached, mods });
+  await start.upkeep.atStart();
+  assert.deepEqual(start.upkeep.patchRepair().touched, { build: '6946', mods: ['Golden HUD', 'removed-since'] },
+    'told even when the build stamp did not move: the index did');
+
+  const live = stand({ game, reach: () => reached, mods });
+  await live.upkeep.repairAfterPatch();
+  assert.deepEqual(live.sent.at(-1)?.touched, { build: '6946', mods: ['Golden HUD', 'removed-since'] });
+
+  const quiet = stand({ game, reach: () => null });
+  await quiet.upkeep.repairAfterPatch();
+  assert.equal('touched' in (quiet.sent.at(-1) || {}), false, 'a patch that reached nothing adds nothing');
+
+  const broken = stand({ game, reach: () => { throw new Error('pak01 unreadable'); } });
+  await broken.upkeep.repairAfterPatch();
+  assert.equal(broken.sent.at(-1)?.state, 'done', 'the repair stands without it');
+  assert.ok(broken.said.some((m) => m.includes('update impact skipped')));
 });
 
 test('a step that fails at start is logged and the ones after it still run', async (t) => {

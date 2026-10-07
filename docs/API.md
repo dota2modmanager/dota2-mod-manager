@@ -103,6 +103,7 @@ the code, not in this page.
 | [`src/toolchain.ts`](#srctoolchaints) | Tools the app can borrow, fetched only when something actually needs them. |
 | [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
+| [`src/update-impact.ts`](#srcupdate-impactts) | Which installed mods a Dota update reached. |
 | [`src/updater.ts`](#srcupdaterts) | Where an installed copy looks for a new version, and on which channel. |
 | [`src/vpk-analyze.ts`](#srcvpk-analyzets) | What a mod changes, read from the paths inside it: which heroes, which equip slots, or which |
 | [`src/vpk-pack.ts`](#srcvpk-packts) | Packing a folder of loose game files into a mod: where the content starts under the folder an |
@@ -1036,7 +1037,7 @@ How long a repair waits for Dota to close before it looks again.
 ### `createGameRepair`
 
 ```ts
-export function createGameRepair({ settings, installer, library, schemaService, diag, send, isRunning, retryMs = REPAIR_RETRY_MS, now = Date.now }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed'>; library: Pick<Library, 'list'>; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal'>; diag: (msg: string) => void; /** tells the window what the repair did */ send: (repair: PatchRepair) => void
+export function createGameRepair({ settings, installer, library, schemaService, updateImpact = null, diag, send, isRunning, retryMs = REPAIR_RETRY_MS, now = Date.now }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed'>; library: Pick<Library, 'list'>; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal'>; /** which mods the patch reached; left out, nobody is told */ updateImpact?: Pick<ReturnType<typeof createUpdateImpact>, 'check'> | null; diag: (msg: string) => void
 ```
 
 The repair, over the services src/game-upkeep.ts already holds.
@@ -1076,7 +1077,7 @@ Run each step in order; one that throws is logged as skipped and the rest still 
 ### `createGameUpkeep`
 
 ```ts
-export function createGameUpkeep({ settings, installer, library, schemaService, reconcileCursors, diag, send, isRunning = () => dotaIsRunning(), findGame, validGame, retryMs = REPAIR_RETRY_MS, now = Date.now, }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed' | 'migrateLegacyPriorityPaks' | 'migrateSlotZones' | 'mergeMultiPartRecords' | 'sweepStaged'>; library: Library; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal' | 'migrate' | 'migrateCosmeticSettings'>
+export function createGameUpkeep({ settings, installer, library, schemaService, updateImpact = null, reconcileCursors, diag, send, isRunning = () => dotaIsRunning(), findGame, validGame, retryMs = REPAIR_RETRY_MS, now = Date.now, }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed' | 'migrateLegacyPriorityPaks' | 'migrateSlotZones' | 'mergeMultiPartRecords' | 'sweepStaged'>; library: Library; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal' | 'migrate' | 'migrateCosmeticSettings'>
 ```
 
 _No description in the source._
@@ -2991,7 +2992,7 @@ follows every change.
 ### `createModsListing`
 
 ```ts
-export function createModsListing({ installer, library, fingerprints, schemaService, terrainAges, notice, diag, refreshPresence, verifyStuck }: ListingDeps)
+export function createModsListing({ installer, library, fingerprints, schemaService, updateImpact = null, terrainAges, notice, diag, refreshPresence, verifyStuck }: ListingDeps)
 ```
 
 The mods:list answer, built over the services src/ipc-mods.ts hands it.
@@ -5485,6 +5486,70 @@ export const isUninstallRun = (argv: readonly unknown[] = []): boolean => argv.i
 ```
 
 A person removing the program, which is the only case the window may open in.
+
+## src/update-impact.ts
+
+Which installed mods a Dota update reached.
+
+A mod replaces some of Valve's files with its own copies. When an update changes one of those
+files, the mod keeps serving the copy it was built from, and the game gets the old version back
+on top of the new one. Most of the time nothing shows; sometimes a HUD loses a new element or a
+versus screen breaks. Build 6946 (2026-10-07) changed 221 HUD layouts, and a HUD mod in daily
+use replaced 15 of them. Nothing told its owner which mod to look at.
+
+The game's pak01 index says what each of Valve's files is (path and CRC), but only for the build
+on disk: the build before is gone the moment Steam writes the new one. So this keeps a note of
+Valve's CRC for every path an installed mod replaces, taken while the game is unchanged, and
+after an update compares the note with the new index. That is thousands of paths, not the
+388 000 in the index, and the index is read only when the game or the set of paths changed.
+
+A mod stays marked until its own file changes (an update of the mod, a reinstall) or it is
+removed: an older patch does not make a stale copy fresh again.
+
+### `ImpactMod`
+
+```ts
+export interface ImpactMod { id: string; name: string; dir: string }
+```
+
+A mod as this module reads it: who it is, and its index on disk.
+
+### `ModImpact`
+
+```ts
+export interface ModImpact
+```
+
+What an update did to one mod's files.
+
+### `Reached`
+
+```ts
+export interface Reached { from: string | null; to: string | null; ids: string[] }
+```
+
+The update a check just found, and the mods it reached: what the banner after a patch says.
+
+### `impactMods`
+
+```ts
+export function impactMods(records: Pick<LibRecord, 'id' | 'name' | 'files'>[], fileOnDisk: (relPath: string) => string): ImpactMod[]
+```
+
+The library's mods as this module reads them: every record with a pak of its own in the language folder.
+
+### `createUpdateImpact`
+
+```ts
+export function createUpdateImpact({ file, gamePath, mods, build, log = () => {} }: { file: string; gamePath: () => string | null; mods: () => ImpactMod[]; build: (game: string) => string | null; log?: (msg: string) => void; })
+```
+
+```
+@param file     where the note lives (userData)
+@param gamePath the game folder, or null when there is none
+@param mods     the installed mods, read when asked
+@param build    the game's build number, for the words on the screen
+```
 
 ## src/updater.ts
 

@@ -176,6 +176,15 @@ const EN = {
   '{0} из {1} {2}': '{0} of {1} {2}',
   'Надеть весь набор': 'Equip the whole set',
   'старая карта': 'old map',
+  'до патча': 'pre-patch',
+  'Dota{0} поменяла файлы, которые подменяет этот мод: {1}. Мод возвращает их старые версии, и если в игре что-то выглядит не так, начни с него. Автору пора пересобрать мод.':
+    'Dota{0} changed files this mod replaces: {1}. The mod puts their old versions back, so if something in the game looks off, start with it. Its author needs to rebuild it.',
+  'Dota{0} убрала файлы, которые подменяет этот мод: {1}. Эта часть мода больше ни на что не действует.':
+    'Dota{0} removed files this mod replaces: {1}. That part of the mod no longer does anything.',
+  '. Патч поменял файлы, которые подменяет мод {0}. Он помечен «до патча»: если в игре что-то выглядит не так, начни с него.':
+    '. The patch changed files that {0} replaces. It is marked pre-patch: if something in the game looks off, start with it.',
+  '. Патч поменял файлы, которые подменяют моды {0}. Они помечены «до патча»: если в игре что-то выглядит не так, начни с них.':
+    '. The patch changed files that {0} replace. They are marked pre-patch: if something in the game looks off, start with them.',
   'Ландшафт собран под карту старше той, что сейчас в игре. С ним могут пропасть деревья, упасть FPS и заблокироваться поиск матча, пока автор его не обновит.':
     'This terrain was built for an older map than the one in the game. Until its author updates it, it can remove trees, cost frames and get matchmaking refused.',
   'Выключено: {0}. Игра обновила карту, а этот ландшафт собран под прежнюю: с ним пропадают деревья и может не работать поиск матча.':

@@ -18,6 +18,7 @@ import type { Settings } from './settings.ts';
 import type { Installer } from './installer.ts';
 import type { Library } from './library.ts';
 import type { createSchemaService } from './schema-service.ts';
+import type { createUpdateImpact } from './update-impact.ts';
 import { createGameRepair, REPAIR_RETRY_MS, type PatchRepair } from './game-repair.ts';
 
 /** Mods moved into the folder the game mounts, told to the user once in Settings. */
@@ -61,13 +62,15 @@ export async function runSteps(steps: Step[], diag: (msg: string) => void): Prom
 }
 
 export function createGameUpkeep({
-  settings, installer, library, schemaService, reconcileCursors, diag, send,
+  settings, installer, library, schemaService, updateImpact = null, reconcileCursors, diag, send,
   isRunning = () => dotaIsRunning(), findGame, validGame, retryMs = REPAIR_RETRY_MS, now = Date.now,
 }: {
   settings: Pick<Settings, 'get' | 'set'>;
   installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed' | 'migrateLegacyPriorityPaks' | 'migrateSlotZones' | 'mergeMultiPartRecords' | 'sweepStaged'>;
   library: Library;
   schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal' | 'migrate' | 'migrateCosmeticSettings'>;
+  /** which mods a patch reached (src/update-impact.ts) */
+  updateImpact?: Pick<ReturnType<typeof createUpdateImpact>, 'check'> | null;
   /** puts the switched-on cursor set back on disk (src/cursors.ts) */
   reconcileCursors: () => void;
   diag: (msg: string) => void;
@@ -87,7 +90,7 @@ export function createGameUpkeep({
   let langFolder = gamelang.FALLBACK_FOLDER;
   let langMigration: LangMigration | null = null;
   let slotMigration: { moved: number } | null = null;
-  const repair = createGameRepair({ settings, installer, library, schemaService, diag, send, isRunning, retryMs, now });
+  const repair = createGameRepair({ settings, installer, library, schemaService, updateImpact, diag, send, isRunning, retryMs, now });
 
   /* Auto-detect on first run, and re-detect whenever the saved path stopped being a Dota install:
    * a library moved to another drive leaves the old tree behind, and writing mods into it looks
