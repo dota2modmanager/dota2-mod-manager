@@ -29,15 +29,13 @@
  *   node tools/dota-diff.mjs --json                 the same, as JSON
  *
  * GH_TOKEN or GITHUB_TOKEN lifts GitHub's limit of 60 API calls an hour; a run makes two or three.
- * Downloads are cached by commit in the system temp folder, so a second run is instant.
+ * Nothing is cached: a run fetches about 80 MB and takes a few seconds.
  */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const REPO = 'SteamTracking/GameTracking-Dota2';
-const CACHE = path.join(os.tmpdir(), 'd2mm-dota-diff');
 const FILES = {
   inf: 'game/dota/steam.inf',
   gameinfo: 'game/dota/gameinfo.gi',
@@ -203,17 +201,17 @@ async function resolve(ref, commits) {
   return { sha: c.sha, build: m ? Number(m[1]) : null, date: c.commit.author.date };
 }
 
-/** A tracked file at a commit, from the cache or raw.githubusercontent; null when it is not there. */
+/**
+ * A tracked file at a commit, from raw.githubusercontent; null when it is not there. Nothing is
+ * kept on disk: a run downloads about 80 MB in a few seconds, and a cache of network bytes in a
+ * shared temp folder is a thing to defend rather than a saving.
+ */
 async function file(sha, rel) {
-  const cached = path.join(CACHE, sha, rel.replace(/[\\/]/g, '__'));
-  if (fs.existsSync(cached)) return fs.readFileSync(cached, 'latin1');
+  if (!/^[0-9a-f]{40}$/.test(sha)) throw new Error(`not a commit: ${sha}`);
   const res = await fetch(`https://raw.githubusercontent.com/${REPO}/${sha}/${rel}`, { headers: { 'User-Agent': 'dota2-mod-manager/dota-diff' } });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`${rel} at ${sha.slice(0, 7)}: HTTP ${res.status}`);
-  const text = Buffer.from(await res.arrayBuffer()).toString('latin1');
-  fs.mkdirSync(path.dirname(cached), { recursive: true });
-  fs.writeFileSync(cached, text, 'latin1');
-  return text;
+  return Buffer.from(await res.arrayBuffer()).toString('latin1');
 }
 
 // ---------- mods ----------
