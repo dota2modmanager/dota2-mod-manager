@@ -2,7 +2,7 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
-## 2.8.1
+## 2.9.0
 
 ### Mods load again after Dota's 7 October update
 
@@ -15,6 +15,16 @@ app had written before the update kept the old name, and the game skipped your l
 
 The app now compares its copy with Dota's file at every start and while it is open, and writes it
 again when they differ. Opening this version is enough. With safe mode on, nothing broke.
+
+### My mods names the mods a Dota update reached
+
+A mod replaces some of Dota's files with its own copies. When an update changes one of those files,
+the mod keeps putting its old copy back, and sometimes a HUD or a screen breaks.
+
+From this version on, the app notes which of Dota's files your mods replace. After the next Dota
+update, a mod whose files the update changed or removed gets a pre-patch mark in My mods, and the
+banner about the update names it. If something in the game looks off after a patch, start with
+those mods. The mark goes away once the mod's author updates it and you install the new version.
 
 ### What's new keeps paragraphs apart
 
