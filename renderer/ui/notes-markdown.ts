@@ -4,7 +4,7 @@
  * paragraphs separated by a blank line, and **bold** or `code` inside a line. A full parser would
  * be a library for nothing. A blank line ends a paragraph as well as a list: until 2.8.0 it only
  * ended a list, and a section's second paragraph ran on into its first. */
-import { esc } from './format.ts';
+import { esc } from './escape.ts';
 
 export function notesHtml(md: string): string {
   const inline = (s: string) => esc(s)

@@ -257,8 +257,11 @@
         "renderer/library/selection.ts": {
           "lines": 100
         },
+        "renderer/ui/escape.ts": {
+          "lines": 100
+        },
         "renderer/ui/format.ts": {
-          "lines": 75.9
+          "lines": 70.8
         },
         "renderer/ui/media.ts": {
           "lines": 60

@@ -1,14 +1,9 @@
 /* Turning values into text for the interface.
  *
- * esc() is the one that matters: every template literal that interpolates a mod name, an
- * author or a file path runs through it, because catalog data is third-party content and
- * lands in innerHTML. Forgetting it is an injection, not a typo. */
+ * esc() is the one that matters, and lives in renderer/ui/escape.ts so the pure readers can use it
+ * without the window; it is handed on from here, where every screen already imports it. */
 
-const ENTITY: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-
-export function esc(s: unknown): string {
-  return String(s ?? '').replace(/[&<>"']/g, (c) => ENTITY[c] || c);
-}
+export { esc } from './escape.ts';
 
 export function fmtMB(bytes: number): string { return (bytes / 1024 / 1024).toFixed(1); }
 
