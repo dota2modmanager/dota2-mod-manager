@@ -18,9 +18,10 @@ on:
     - cron: '*/30 * * * *'   # every 30 min; a no-op unless the catalog changed
   workflow_dispatch:
 
-# Read only. The commit goes back over SSH with the deploy key below, which carries its own write
-# access to this one repository, and the checkpoint cache has a token of its own. Nothing in the job
-# writes with the workflow token, so it no longer gets to (OpenSSF Scorecard, 2026-09-15).
+# Read only. The commit goes to the catalog-data branch over SSH with the deploy key below, which
+# carries its own write access to this one repository, and the checkpoint cache has a token of its
+# own. Nothing in the job writes with the workflow token, so it no longer gets to (OpenSSF
+# Scorecard, 2026-09-15), and nothing in it writes to main at all since 2026-10-07.
 permissions:
   contents: read
 
@@ -32,20 +33,16 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
+      # The code, read only: the tools and the site the job runs. Nothing goes back to main.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          # Pushed back over SSH with a deploy key that can write to this repository and nothing
-          # else. main's ruleset refuses a push that has not passed the tests, and deploy keys
-          # are on its bypass list. This used to be the owner's personal access token, which
-          # could write to every repository on the account and expired on 2026-09-15, taking
-          # the job with it. A personal repository cannot put the workflow's own token on a
-          # bypass list (GitHub answers that only an organisation can), so a key that never
-          # expires and reaches one repository is the narrowest thing that works.
-          ssh-key: ${{ secrets.FINGERPRINTS_DEPLOY_KEY }}
+          persist-credentials: false
 
       # What this job writes lives on the catalog-data branch (DECISIONS.md, "The catalog job
       # commits to a branch of its own"), at the paths it has here. Checked out beside the code
-      # with the same key, and the job starts from it rather than from main's copy.
+      # and pushed back over SSH with a deploy key that can write to this repository and nothing
+      # else. It used to be the owner's personal access token, which could write to every
+      # repository on the account and expired on 2026-09-15, taking the job with it.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: catalog-data
@@ -111,30 +108,6 @@ jobs:
             git add -A
             git show HEAD:fingerprints.json > /tmp/fp-data-before.json 2>/dev/null || true
             subject="$(node ../tools/index-delta.js /tmp/fp-data-before.json fingerprints.json)"
-            git commit -m "$subject [skip ci]"
-            git push
-          fi
-
-      # Copies of the app before 2.8.0 read fingerprints.json from main, so main gets the same
-      # commit until they have updated. Then this step goes, the deploy key comes off main's
-      # bypass list, and main holds code and documents only.
-      - name: Commit to main if changed, for copies before 2.8.0
-        run: |
-          paths="fingerprints.json hero-index.json site/src/data/heroes.json site/src/data/categories.json site/public/mods"
-          if git diff --quiet -- $paths && [ -z "$(git ls-files --others --exclude-standard -- $paths)" ]; then
-            echo "catalog unchanged"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add $paths
-            # Say what moved. Every commit this job has ever made was called "Update mod
-            # fingerprints and hero pages", which is a quarter of the history saying nothing;
-            # tools/index-delta.js counts the mods between the two versions and names them.
-            # The old index comes from HEAD because $paths is already staged.
-            git show HEAD:fingerprints.json > /tmp/fp-before.json 2>/dev/null || true
-            subject="$(node tools/index-delta.js /tmp/fp-before.json fingerprints.json)"
-            # [skip ci] because a push made with a real token starts workflows and the
-            # default one never did. Nothing here is worth a run of anything.
             git commit -m "$subject [skip ci]"
             git push
           fi

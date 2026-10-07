@@ -68,8 +68,17 @@ test('the fingerprint index is fetched from the branch the entry says the catalo
   const { FP_URL } = require('../src/fingerprints.ts');
   assert.match(FP_URL, /\/catalog-data\/fingerprints\.json$/, `src/fingerprints.ts now fetches ${FP_URL}`);
   assert.ok(doc.includes('`FP_URL`'), 'the entry no longer points at the constant that proves it');
-  const job = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'fingerprints.yml'), 'utf8');
+  const job = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'fingerprints.yml'), 'utf8').replace(/\r\n/g, '\n');
   assert.match(job, /ref: catalog-data/, 'the catalog job no longer checks out the branch the app reads');
+  // and nothing it does reaches main: one push, from the catalog-data checkout, and the code is
+  // checked out without credentials it could push with (the entry: "no longer writes to main")
+  const pushes = job.split('\n').filter((l) => /^\s*git push\b/.test(l));
+  assert.equal(pushes.length, 1, `the catalog job pushes ${pushes.length} times`);
+  const pushStep = job.slice(job.lastIndexOf('- name:', job.indexOf('git push')), job.indexOf('git push'));
+  assert.match(pushStep, /working-directory: data\n/, 'the push is not made from the catalog-data checkout');
+  const codeCheckout = job.slice(job.indexOf('uses: actions/checkout'), job.indexOf('ref: catalog-data'));
+  assert.match(codeCheckout, /persist-credentials: false/, 'the code checkout keeps credentials a push to main could use');
+  assert.doesNotMatch(codeCheckout, /ssh-key/, 'the code checkout carries the deploy key');
 });
 
 test('the three places that say how this is written still say it', () => {

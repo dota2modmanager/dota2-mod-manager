@@ -150,13 +150,15 @@ Branch-Protection check reads as a rule that does not hold for everybody.
 Since 2.8.0 it commits to `catalog-data`, a branch that holds those files at the same paths and
 nothing else. The app reads `fingerprints.json` from there, the site's mirror copies it from
 there, and the site build copies the rest in before it builds. Copies of the app before 2.8.0
-read the file from `main`, so the job keeps writing it there too until they have updated; then
-it stops, the deploy key comes off the bypass list, and `main` holds code and documents only.
-A copy that never updates keeps the last fingerprints it got and still runs: it only stops
+read the file from `main`, so for the first days after that release the job wrote it there too.
+That stopped on 2026-10-07: the job no longer writes to `main` at all, the deploy key came off
+the bypass list, and `main` holds code and documents only. The copies on `main` stay as they
+were that day, so a copy that never updates keeps reading them and still runs: it only stops
 recognising mods added to the catalog after that.
 
-*Check:* `src/fingerprints.ts`, the `FP_URL` constant, and `ref: catalog-data` in
-`.github/workflows/fingerprints.yml`.
+*Check:* `src/fingerprints.ts`, the `FP_URL` constant, `ref: catalog-data` in
+`.github/workflows/fingerprints.yml`, and `test/decisions.test.js`, which fails if that job
+pushes from anywhere but the catalog-data checkout.
 
 ### The catalog job commits every thirty minutes, and its commits stay readable
 

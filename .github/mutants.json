@@ -1457,6 +1457,14 @@
       "from": "const safe = rec.name.replace(/[<>:\"/\\\\|?*]/g, '_') || 'mod';",
       "to": "const safe = rec.name || 'mod';",
       "test": "test/mods-dialogs.test.ts"
+    },
+    {
+      "name": "a blank line in the release notes ends a list but not a paragraph",
+      "file": "renderer/ui/notes-markdown.ts",
+      "anchor": "export function notesHtml(",
+      "from": "if (!line) { closeList(); para = false; continue; }",
+      "to": "if (!line) { closeList(); continue; }",
+      "test": "test/notes-markdown.test.ts"
     }
   ]
 }

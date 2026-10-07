@@ -4,36 +4,13 @@
  * the next dialog rather than itself, which is why they are together. */
 import { esc } from './format.ts';
 import { toast } from './toast.ts';
+import { notesHtml } from './notes-markdown.ts';
 import type { Notice } from '../api/content.ts';
 
 /* Every dialog here is markup this file just wrote, so the parts it wires are there. */
 const part = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) => root.querySelector(sel) as T;
 
 // ---------- "what's new" after an update ----------
-
-// The changelog is markdown, but only ever the three shapes this app writes: "### heading",
-// "- bullet" and **bold** inside a line. A full parser would be a library for nothing.
-function notesHtml(md: string): string {
-  const inline = (s: string) => esc(s)
-    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>');
-  const out: string[] = [];
-  let list: string[] | null = null;
-  const closeList = () => { if (list) { out.push(`<ul>${list.join('')}</ul>`); list = null; } };
-  for (const raw of String(md).split('\n')) {
-    const line = raw.trim();
-    if (!line) { closeList(); continue; }
-    if (line.startsWith('###')) { closeList(); out.push(`<h4>${inline(line.replace(/^#+\s*/, ''))}</h4>`); continue; }
-    if (line.startsWith('- ')) { (list = list || []).push(`<li>${inline(line.slice(2))}</li>`); continue; }
-    // a wrapped bullet or paragraph line continues whatever came before it
-    if (list) list[list.length - 1] = list[list.length - 1].replace('</li>', ' ' + inline(line) + '</li>');
-    else if (out.length && out[out.length - 1].startsWith('<p>')) {
-      out[out.length - 1] = out[out.length - 1].replace('</p>', ' ' + inline(line) + '</p>');
-    } else out.push(`<p>${inline(line)}</p>`);
-  }
-  closeList();
-  return out.join('');
-}
 
 /* Anything the app was told from the network since it shipped, above the release notes.
  * A notice is dismissed from its banner and stays here afterwards, which is where somebody
