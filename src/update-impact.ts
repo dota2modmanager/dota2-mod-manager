@@ -186,5 +186,18 @@ export function createUpdateImpact({ file, gamePath, mods, build, log = () => {}
     return out;
   }
 
-  return { check, marked };
+  /**
+   * Take one mod's mark off: its owner checked it in the game and it works. The note of Valve's
+   * files is kept, so a later patch that reaches the mod again marks it again.
+   * @returns whether the mod was marked
+   */
+  function clear(id: string): boolean {
+    const s = load();
+    if (!s.mods[id]) return false;
+    delete s.mods[id];
+    save(s);
+    return true;
+  }
+
+  return { check, marked, clear };
 }

@@ -48,7 +48,7 @@ function stand(t: TestContext) {
     refreshPresence: () => calls.push('presence'),
     schemaService: { state: () => ({ enabled: schemaOn }), harvest: () => harvest, refresh: () => { refreshed++; } },
     sendProgress: (p: { type: string; label: string }) => progress.push(p), verifyStuck: () => [], win: () => null,
-    updateImpact: { marked: () => reached },
+    updateImpact: { marked: () => reached, clear: (id: string) => reached.delete(id) },
   } as never));
   const call = (ch: string, ...args: unknown[]) => channels.get(ch)!({}, ...args);
   /** A pak in the language folder holding these files, and (unless `foreign`) the record that owns it. */
@@ -163,6 +163,15 @@ test('a mod a Dota update reached carries how many of its files changed and how 
   const rows = (await s.list()).installed;
   assert.deepEqual(rows.find((r) => r.id === hud.id)?.prePatch, { since: '6946', changed: 2, removed: 1 });
   assert.equal('prePatch' in (rows.find((r) => r.id === axe.id) || {}), false);
+});
+
+test('the pre-patch mark comes off one mod by hand, and an unknown id is refused', async (t) => {
+  const s = stand(t);
+  const hud = s.pak('pak30', [['panorama/layout/hud/dota_hud.vxml_c', 'old hud']])!;
+  s.reached.set(hud.id, { since: '6946', changed: ['a'], removed: [], sig: 'x' });
+  assert.deepEqual(await s.call('mods:clearPrePatch', hud.id), { ok: true });
+  assert.equal('prePatch' in ((await s.list()).installed.find((r) => r.id === hud.id) || {}), false);
+  assert.ok(((await s.call('mods:clearPrePatch', 'nobody')) as { error?: string }).error);
 });
 
 test('listing rewrites the ownership note with exactly the library\'s files, and the status line hears about it', async (t) => {

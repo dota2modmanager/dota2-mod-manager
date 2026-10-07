@@ -134,6 +134,25 @@ test('a second patch keeps the build that first reached the mod', (t) => {
   assert.equal(w.impact.marked().get('hud')?.since, '6946');
 });
 
+test('a mark taken off by hand stays off until a later patch reaches the mod again', (t) => {
+  const w = world(t);
+  w.valve(V6944);
+  w.mod('hud', 'Golden HUD', [HUD, TIMER]);
+  w.impact.check();
+  w.valve(V6946, '6946');
+  w.impact.check();
+
+  assert.equal(w.impact.clear('hud'), true);
+  assert.equal(w.impact.marked().has('hud'), false);
+  assert.equal(w.impact.check(), null, 'the same build does not bring it back');
+  assert.equal(w.impact.marked().has('hud'), false);
+  assert.equal(w.impact.clear('hud'), false, 'nothing left to take off');
+
+  w.valve({ ...V6946, [HUD]: 'hud 6952' }, '6952');
+  w.impact.check();
+  assert.equal(w.impact.marked().get('hud')?.since, '6952', 'the next patch that reaches it marks it again, from that patch');
+});
+
 test('no game, no answer, and nothing written', (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-impact-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

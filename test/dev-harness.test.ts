@@ -68,6 +68,15 @@ test('a quiet run never brings the window forward', async (t) => {
   assert.ok(!w.log.includes('show'));
 });
 
+test('a menu is opened with the right button where the selector is', async (t) => {
+  const w = fakeWindow({ evalAnswer: null });
+  const seen: { type: string; button?: string; x?: number }[] = [];
+  (w.win.webContents as unknown as { sendInputEvent: (e: { type: string; button?: string; x?: number }) => void }).sendInputEvent = (e) => seen.push(e);
+  (w.win.webContents as unknown as { executeJavaScript: (js: string) => Promise<unknown> }).executeJavaScript = async (js) => (js.includes('.lib-row') ? { x: 40, y: 12 } : null);
+  await takeShot(w.win, { MM_SHOT: path.join(tmp(t), 's.png'), MM_MENU: '.lib-row' }, { diag: () => {}, wait: now });
+  assert.deepEqual(seen.map((e) => `${e.type} ${e.button} ${e.x}`), ['mouseDown right 40', 'mouseUp right 40']);
+});
+
 test('a drag presses, moves in twelve steps and releases', async (t) => {
   const w = fakeWindow();
   await takeShot(w.win, { MM_SHOT: path.join(tmp(t), 's.png'), MM_DRAG: '0,0,120,0' }, { diag: () => {}, wait: now });

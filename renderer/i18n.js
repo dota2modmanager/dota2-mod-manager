@@ -177,6 +177,7 @@ const EN = {
   'Надеть весь набор': 'Equip the whole set',
   'старая карта': 'old map',
   'до патча': 'pre-patch',
+  'Убрать метку «до патча»': 'Remove the pre-patch mark',
   'Dota{0} поменяла файлы, которые подменяет этот мод: {1}. Мод возвращает их старые версии, и если в игре что-то выглядит не так, начни с него. Автору пора пересобрать мод.':
     'Dota{0} changed files this mod replaces: {1}. The mod puts their old versions back, so if something in the game looks off, start with it. Its author needs to rebuild it.',
   'Dota{0} убрала файлы, которые подменяет этот мод: {1}. Эта часть мода больше ни на что не действует.':

@@ -119,6 +119,22 @@ export async function takeShot(win: DrivenWindow, env: Env, { diag, wait = sleep
         await wait(600);
       }
     }
+    if (env.MM_MENU) {
+      // the right button on a selector, so the shot shows the menu it opens: the rare actions of a
+      // row live there (ui/menu.ts), and nothing else in the harness could open it
+      const at = await run(`(() => {
+        const el = document.querySelector(${JSON.stringify(env.MM_MENU)});
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
+      })()`);
+      if (at) {
+        win.webContents.sendInputEvent({ type: 'mouseDown', x: at.x, y: at.y, button: 'right', clickCount: 1 });
+        await wait(60);
+        win.webContents.sendInputEvent({ type: 'mouseUp', x: at.x, y: at.y, button: 'right', clickCount: 1 });
+        await wait(600);
+      }
+    }
     if (env.MM_DRAG) {
       // press, move, release: "x1,y1,x2,y2" (drags a grip, swipes a strip)
       const [x1, y1, x2, y2] = env.MM_DRAG.split(',').map(Number);

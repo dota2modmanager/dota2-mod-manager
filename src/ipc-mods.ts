@@ -43,6 +43,12 @@ export function registerModsIpc({
   // the anti-cheat notice in plain words (src/notice-text.ts)
   const notice = createNoticeText({ gamePath: () => (installer.getGamePath ? installer.getGamePath() : null), langDir: () => installer.langFolder(), diag });
   const listMods = createModsListing({ installer, library, fingerprints, schemaService, updateImpact, terrainAges, notice, diag, refreshPresence, verifyStuck });
+  // the pre-patch mark taken off one mod by hand (src/update-impact.ts)
+  ipcMain.handle('mods:clearPrePatch', (e, id) => {
+    if (typeof id !== 'string' || !library.find(id)) return { error: t('Мод не найден') };
+    updateImpact.clear(id);
+    return { ok: true };
+  });
   ipcMain.handle('mods:install', async (e, payload) => {
     // payload: { categoryId, name, styleLabel, fileRef, preview }
     const stop = blocked('install');

@@ -108,6 +108,14 @@ export async function combineSelection(ids: string[] | null): Promise<void> {
   await screen.reload();
 }
 
+/* The pre-patch mark off one mod: whoever owns it looked in the game and it works. A later patch
+ * that reaches it again puts the mark back. */
+async function clearPrePatch(id: string) {
+  const r = await window.api.mods.clearPrePatch(id);
+  if (r.error) toast(r.error, 'error', 6000);
+  await screen.reload();
+}
+
 const langDir = (rec: LibRecord) => (rec.files || []).some((f) => f.root === 'lang' && /_dir\.vpk$/i.test(f.relPath));
 
 /* The load order is on offer for every mod, not only the ones the app thinks are in conflict:
@@ -143,6 +151,7 @@ export function menuFor(id: string): MenuItem[] | null {
     },
     langDir(rec) && { label: L`Распаковать в папку`, icon: 'folder_open', onPick: () => unpackRecord(rec.id) },
     (rec.subjects || 0) >= 2 && { label: L`Разобрать по героям`, icon: 'call_split', onPick: () => splitRecord(rec.id) },
+    rec.prePatch && { label: L`Убрать метку «до патча»`, icon: 'done', onPick: () => clearPrePatch(rec.id) },
     { separator: true },
     remove,
   ];

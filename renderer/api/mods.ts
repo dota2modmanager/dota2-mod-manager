@@ -43,6 +43,8 @@ export interface ModsApi {
   externalRemove: (fileName: string) => Promise<Reply>;
   exportSingle: (id: string) => Promise<Dialog<{ path: string; size: number }>>;
   unpackToFolder: (id: string) => Promise<Dialog<{ path: string; files: number; bytes: number }>>;
+  /** the pre-patch mark off one mod, once its owner checked it in the game */
+  clearPrePatch: (id: string) => Promise<Reply>;
   importDialog: () => Promise<ImportReply>;
   importFolderDialog: () => Promise<ImportReply>;
   importPaths: (paths: string[]) => Promise<ImportReply>;
