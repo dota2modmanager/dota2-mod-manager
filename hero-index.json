@@ -1,6 +1,6 @@
 {
   "heroes": 148,
-  "mods": 1478,
+  "mods": 1480,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -474,6 +474,7 @@
         {"name":"Cosmic Earthshaker","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc"]},
         {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Earthshaker Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc"]},
+        {"name":"Earthshaker Aura Derevni","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
         {"name":"Earthshaker Blink Dagger","categoryId":"item-effects","styleLabel":null,"slots":[]},
         {"name":"Earthshaker Burning Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc"]},
         {"name":"Earthshaker Carrot","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
@@ -1573,6 +1574,7 @@
         {"name":"Naga Siren 42 Bratuha","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand","legs","misc"]},
         {"name":"Naga Siren Allure of the Deep","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
         {"name":"Naga Siren Diretide","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
+        {"name":"Naga Siren Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
         {"name":"Naga Siren Izayoi Miku","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","tail","weapon","offhand","legs"]},
         {"name":"Naga Siren Snickers","categoryId":"hero-items","styleLabel":null,"slots":["weapon","offhand"]},
         {"name":"Nude Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
