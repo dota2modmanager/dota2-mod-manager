@@ -2035,6 +2035,16 @@
           "date": 1791162755
         },
         {
+          "name": "Luna Blood Moon",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","shield","shoulder","weapon"],
+          "image": {"src":"/mods/luna-blood-moon.webp","width":854,"height":480},
+          "author": "qizlik",
+          "authorUrl": "https://t.me/qizlikmod",
+          "date": 1791449984
+        },
+        {
           "name": "Luna Bloodmoon Stalker",
           "categoryId": "heroes",
           "styleLabel": null,
@@ -3026,6 +3036,16 @@
           "date": 1789931584
         },
         {
+          "name": "Pudge Greasepaint Gutbuster",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","arms","head","weapon","misc"],
+          "image": {"src":"/mods/pudge-greasepaint-gutbuster.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791449984
+        },
+        {
           "name": "Pudge Immortal Gold",
           "categoryId": "heroes",
           "styleLabel": null,
@@ -3492,6 +3512,193 @@
       ]
     },
     {
+      "id": "antimage",
+      "name": "Anti-Mage",
+      "slug": "anti-mage",
+      "mods": [
+        {
+          "name": "Anti-Mage Illidan",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon","legs","offhand","shoulder"],
+          "image": {"src":"/mods/anti-mage-illidan.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1769918621
+        },
+        {
+          "name": "Anti-Mage Fervent Conscript",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon","shoulder","offhand"],
+          "image": {"src":"/mods/anti-mage-fervent-conscript.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790630988
+        },
+        {
+          "name": "Anti-Mage Turstarkuri Pilgrim",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon","legs","shoulder"],
+          "image": {"src":"/mods/anti-mage-turstarkuri-pilgrim.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1766149492
+        },
+        {
+          "name": "Anti-Mage Forgotten Planes",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon","shoulder"],
+          "image": {"src":"/mods/anti-mage-forgotten-planes.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790294865
+        },
+        {
+          "name": "Anti-Mage Mod Rotten",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","offhand","weapon"],
+          "image": {"src":"/mods/anti-mage-mod-rotten.webp","width":854,"height":480},
+          "author": "Mopsyara",
+          "authorUrl": "https://t.me/+AM_aLD0x2TcwY2My",
+          "date": 1791383152
+        },
+        {
+          "name": "Immortal Anti-Mage",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon","offhand"],
+          "image": {"src":"/mods/immortal-anti-mage.webp","width":854,"height":480},
+          "author": "Haruma",
+          "authorUrl": "https://t.me/DotA_2_Mods",
+          "date": 1781266231
+        },
+        {
+          "name": "Anti-Mage Bloody Reaper",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-bloody-reaper.webp","width":1280,"height":720},
+          "author": "CeoMods",
+          "authorUrl": "https://t.me/modsceo",
+          "date": 1786250017
+        },
+        {
+          "name": "Anti-Mage Blue Illidan",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-blue-illidan.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1771574066
+        },
+        {
+          "name": "Anti-Mage Daemon Hunter",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-daemon-hunter.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791449984
+        },
+        {
+          "name": "Anti-Mage Guilt Survivor",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-guilt-survivor.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/drainAngel",
+          "date": 1790809354
+        },
+        {
+          "name": "Anti-Mage Illidan v2",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","weapon","arms","misc","belt"],
+          "image": {"src":"/mods/anti-mage-illidan-v2.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1765372546
+        },
+        {
+          "name": "Anti-Mage Manta",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-manta.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1789935592
+        },
+        {
+          "name": "Anti-Mage Persona Sakura",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-persona-sakura.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790709328
+        },
+        {
+          "name": "Anti-Mage Prime",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","misc","head","arms","belt"],
+          "image": {"src":"/mods/anti-mage-prime.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1787851451
+        },
+        {
+          "name": "Anti-Mage Ronin Warrior",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-ronin-warrior.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1769787537
+        },
+        {
+          "name": "Anti-Mage Shadow Slayer",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-shadow-slayer.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1756923920
+        },
+        {
+          "name": "Curseding Anti-Mage",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/curseding-anti-mage.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1775819130
+        },
+        {
+          "name": "Anti-Mage Creep",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head"],
+          "image": {"src":"/mods/anti-mage-creep.webp","width":854,"height":480},
+          "author": "laskotdota",
+          "authorUrl": "https://t.me/laskotdota",
+          "date": 1768093343
+        }
+      ]
+    },
+    {
       "id": "furion",
       "name": "Natures Prophet",
       "slug": "natures-prophet",
@@ -3862,183 +4069,6 @@
           "author": "Dota2VPK",
           "authorUrl": "https://t.me/dota2freevpk",
           "date": 1787730188
-        }
-      ]
-    },
-    {
-      "id": "antimage",
-      "name": "Anti-Mage",
-      "slug": "anti-mage",
-      "mods": [
-        {
-          "name": "Anti-Mage Illidan",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon","legs","offhand","shoulder"],
-          "image": {"src":"/mods/anti-mage-illidan.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1769918621
-        },
-        {
-          "name": "Anti-Mage Fervent Conscript",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon","shoulder","offhand"],
-          "image": {"src":"/mods/anti-mage-fervent-conscript.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790630988
-        },
-        {
-          "name": "Anti-Mage Turstarkuri Pilgrim",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon","legs","shoulder"],
-          "image": {"src":"/mods/anti-mage-turstarkuri-pilgrim.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1766149492
-        },
-        {
-          "name": "Anti-Mage Forgotten Planes",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon","shoulder"],
-          "image": {"src":"/mods/anti-mage-forgotten-planes.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790294865
-        },
-        {
-          "name": "Anti-Mage Mod Rotten",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","offhand","weapon"],
-          "image": {"src":"/mods/anti-mage-mod-rotten.webp","width":854,"height":480},
-          "author": "Mopsyara",
-          "authorUrl": "https://t.me/+AM_aLD0x2TcwY2My",
-          "date": 1791383152
-        },
-        {
-          "name": "Immortal Anti-Mage",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon","offhand"],
-          "image": {"src":"/mods/immortal-anti-mage.webp","width":854,"height":480},
-          "author": "Haruma",
-          "authorUrl": "https://t.me/DotA_2_Mods",
-          "date": 1781266231
-        },
-        {
-          "name": "Anti-Mage Bloody Reaper",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-bloody-reaper.webp","width":1280,"height":720},
-          "author": "CeoMods",
-          "authorUrl": "https://t.me/modsceo",
-          "date": 1786250017
-        },
-        {
-          "name": "Anti-Mage Blue Illidan",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-blue-illidan.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1771574066
-        },
-        {
-          "name": "Anti-Mage Guilt Survivor",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-guilt-survivor.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/drainAngel",
-          "date": 1790809354
-        },
-        {
-          "name": "Anti-Mage Illidan v2",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","weapon","arms","misc","belt"],
-          "image": {"src":"/mods/anti-mage-illidan-v2.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1765372546
-        },
-        {
-          "name": "Anti-Mage Manta",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-manta.webp","width":854,"height":480},
-          "author": "твавт",
-          "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1789935592
-        },
-        {
-          "name": "Anti-Mage Persona Sakura",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-persona-sakura.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790709328
-        },
-        {
-          "name": "Anti-Mage Prime",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","misc","head","arms","belt"],
-          "image": {"src":"/mods/anti-mage-prime.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1787851451
-        },
-        {
-          "name": "Anti-Mage Ronin Warrior",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-ronin-warrior.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1769787537
-        },
-        {
-          "name": "Anti-Mage Shadow Slayer",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-shadow-slayer.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1756923920
-        },
-        {
-          "name": "Curseding Anti-Mage",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/curseding-anti-mage.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1775819130
-        },
-        {
-          "name": "Anti-Mage Creep",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head"],
-          "image": {"src":"/mods/anti-mage-creep.webp","width":854,"height":480},
-          "author": "laskotdota",
-          "authorUrl": "https://t.me/laskotdota",
-          "date": 1768093343
         }
       ]
     },
@@ -7405,6 +7435,153 @@
       ]
     },
     {
+      "id": "death_prophet",
+      "name": "Death Prophet",
+      "slug": "death-prophet",
+      "mods": [
+        {
+          "name": "Death Prophet BB",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","belt","legs","weapon"],
+          "image": {"src":"/mods/death-prophet-bb.webp","width":854,"height":480},
+          "author": "SanyaBane",
+          "authorUrl": "https://steamcommunity.com/profiles/76561198072955043",
+          "date": 1771195327
+        },
+        {
+          "name": "Death Prophet Unicorn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","belt","legs","weapon"],
+          "image": {"src":"/mods/death-prophet-unicorn.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771195327
+        },
+        {
+          "name": "Death Prophet Yuyuko",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","head","legs","belt"],
+          "image": {"src":"/mods/death-prophet-yuyuko.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1767093656
+        },
+        {
+          "name": "Death Prophet Silken Sibyl",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","head","belt","legs"],
+          "image": {"src":"/mods/death-prophet-silken-sibyl.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791449984
+        },
+        {
+          "name": "Bloody Death Prophet",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head"],
+          "image": {"src":"/mods/bloody-death-prophet.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1756923920
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "earthshaker",
       "name": "Earthshaker",
       "slug": "earthshaker",
@@ -8742,143 +8919,6 @@
           "author": "rasstegai",
           "authorUrl": "https://steamcommunity.com/id/rasstegai/",
           "date": 1790261721
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "death_prophet",
-      "name": "Death Prophet",
-      "slug": "death-prophet",
-      "mods": [
-        {
-          "name": "Death Prophet BB",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head","belt","legs","weapon"],
-          "image": {"src":"/mods/death-prophet-bb.webp","width":854,"height":480},
-          "author": "SanyaBane",
-          "authorUrl": "https://steamcommunity.com/profiles/76561198072955043",
-          "date": 1771195327
-        },
-        {
-          "name": "Death Prophet Unicorn",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head","belt","legs","weapon"],
-          "image": {"src":"/mods/death-prophet-unicorn.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771195327
-        },
-        {
-          "name": "Death Prophet Yuyuko",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","head","legs","belt"],
-          "image": {"src":"/mods/death-prophet-yuyuko.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1767093656
-        },
-        {
-          "name": "Bloody Death Prophet",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head"],
-          "image": {"src":"/mods/bloody-death-prophet.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1756923920
         },
         {
           "name": "Aghanim Ranged Attack",
@@ -14852,6 +14892,73 @@
       ]
     },
     {
+      "id": "undying",
+      "name": "Undying",
+      "slug": "undying",
+      "mods": [
+        {
+          "name": "Undying Grim Reformation",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head"],
+          "image": {"src":"/mods/undying-grim-reformation.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1781027597
+        },
+        {
+          "name": "Immortal Love Undying",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head"],
+          "image": {"src":"/mods/immortal-love-undying.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1791162755
+        },
+        {
+          "name": "Undying Archange",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head"],
+          "image": {"src":"/mods/undying-archange.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1767706409
+        },
+        {
+          "name": "Undying Desecration Reborn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head"],
+          "image": {"src":"/mods/undying-desecration-reborn.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791449984
+        },
+        {
+          "name": "Undying Direstone Desecration",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head"],
+          "image": {"src":"/mods/undying-direstone-desecration.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1791379892
+        },
+        {
+          "name": "Undying Hallows Within",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["head","misc"],
+          "image": {"src":"/mods/undying-hallows-within.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1781027597
+        }
+      ]
+    },
+    {
       "id": "alchemist",
       "name": "Alchemist",
       "slug": "alchemist",
@@ -15124,63 +15231,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1766145785
-        }
-      ]
-    },
-    {
-      "id": "undying",
-      "name": "Undying",
-      "slug": "undying",
-      "mods": [
-        {
-          "name": "Undying Grim Reformation",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head"],
-          "image": {"src":"/mods/undying-grim-reformation.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1781027597
-        },
-        {
-          "name": "Immortal Love Undying",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head"],
-          "image": {"src":"/mods/immortal-love-undying.webp","width":854,"height":480},
-          "author": "rasstegai",
-          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
-          "date": 1791162755
-        },
-        {
-          "name": "Undying Archange",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head"],
-          "image": {"src":"/mods/undying-archange.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1767706409
-        },
-        {
-          "name": "Undying Direstone Desecration",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head"],
-          "image": {"src":"/mods/undying-direstone-desecration.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1791379892
-        },
-        {
-          "name": "Undying Hallows Within",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["head","misc"],
-          "image": {"src":"/mods/undying-hallows-within.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1781027597
         }
       ]
     },

@@ -1,6 +1,6 @@
 {
   "heroes": 149,
-  "mods": 1509,
+  "mods": 1514,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -48,6 +48,7 @@
         {"name":"Anti-Mage Bloody Reaper","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Blue Illidan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Creep","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head"]},
+        {"name":"Anti-Mage Daemon Hunter","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Fervent Conscript","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","shoulder","offhand"]},
         {"name":"Anti-Mage Forgotten Planes","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","shoulder"]},
         {"name":"Anti-Mage Guilt Survivor","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
@@ -378,6 +379,7 @@
         {"name":"Bloody Death Prophet","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Death Prophet BB","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","belt","legs","weapon"]},
+        {"name":"Death Prophet Silken Sibyl","categoryId":"heroes","styleLabel":null,"slots":["misc","head","belt","legs"]},
         {"name":"Death Prophet Unicorn","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","belt","legs","weapon"]},
         {"name":"Death Prophet Yuyuko","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs","belt"]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -959,6 +961,7 @@
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Luna Blood Moon","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Bloodmoon Stalker","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Cosmic","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon","misc"]},
         {"name":"Luna Crescent Wheel","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
@@ -1378,6 +1381,7 @@
         {"name":"Pudge Dendi Arcana","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Feast Immortal","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Gol0vach","categoryId":"heroes","styleLabel":null,"slots":["back","belt","head","arms","weapon","misc"]},
+        {"name":"Pudge Greasepaint Gutbuster","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Hood of Defiance","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Pudge Immortal Gold","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Iron Hog","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
@@ -1923,6 +1927,7 @@
       "mods": [
         {"name":"Immortal Love Undying","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Undying Archange","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
+        {"name":"Undying Desecration Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Undying Direstone Desecration","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Undying Grim Reformation","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head"]},
         {"name":"Undying Hallows Within","categoryId":"hero-items","styleLabel":null,"slots":["head","misc"]}
