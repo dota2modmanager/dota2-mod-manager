@@ -1,6 +1,6 @@
 {
   "heroes": 149,
-  "mods": 1514,
+  "mods": 1526,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -209,6 +209,7 @@
       "name": "Broodmother",
       "mods": [
         {"name":"Broodmother Anathema","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
+        {"name":"Broodmother Anathema Reborn","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Epoch of the Abysm","categoryId":"heroes","styleLabel":null,"slots":["head","misc","legs"]},
         {"name":"Broodmother Golden Orbweaver","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Immortal Antiquity","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
@@ -247,6 +248,7 @@
         {"name":"Chaos Knight Flandre Scarlet","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder","arms","offhand","weapon","legs"]},
         {"name":"Chaos Knight Unities Of Discord","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]},
         {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Endless Storm Chaos Knight","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]},
         {"name":"Ice Chaos Knight","categoryId":"heroes","styleLabel":null,"slots":["misc","shoulder","head","mount","shield"]},
         {"name":"Nightmare Chaos Knight","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]}
       ]
@@ -452,8 +454,8 @@
         {"name":"Drow Ranger Madness Stalker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
         {"name":"Drow Ranger Madness Stealth","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
         {"name":"Drow Ranger Master Of Madness","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
-        {"name":"Drow Ranger Sepulchral Stalker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon","shoulder"]},
-        {"name":"Drow Ranger Sepulchral Stealth","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon","shoulder"]},
+        {"name":"Drow Ranger Sepulchral Stalker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
+        {"name":"Drow Ranger Sepulchral Stealth","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
         {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":"Crimson","slots":["back"]},
         {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":"Golden","slots":["back"]},
         {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":null,"slots":["back"]},
@@ -483,6 +485,7 @@
         {"name":"Cosmic Earthshaker","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc"]},
         {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Earthshaker Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc"]},
+        {"name":"Earthshaker Arcana Reborn","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
         {"name":"Earthshaker Aura Derevni","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
         {"name":"Earthshaker Blink Dagger","categoryId":"item-effects","styleLabel":null,"slots":[]},
         {"name":"Earthshaker Burning Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc"]},
@@ -742,6 +745,7 @@
         {"name":"Juggernaut Arcana Purple","categoryId":"heroes","styleLabel":null,"slots":["head","misc","weapon","back","arms"]},
         {"name":"Juggernaut Aura","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Juggernaut Bladeform Aesthete","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
+        {"name":"Juggernaut Bladeform Legacy","categoryId":"heroes","styleLabel":null,"slots":["head"]},
         {"name":"Juggernaut Fireborn Assault","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
         {"name":"Juggernaut Ice and Fire","categoryId":"heroes","styleLabel":null,"slots":["misc","back","arms","head","weapon"]},
         {"name":"Juggernaut Jagged Honor","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
@@ -1023,6 +1027,7 @@
         {"name":"Marci Faithful Fortune","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
         {"name":"Marci Laurels of the Downstar","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
         {"name":"Marci Patchwork","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
+        {"name":"Marci Patchwork Reborn","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
         {"name":"Marci School of the Solar Fang","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
         {"name":"Marci Silent Comedy","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
         {"name":"Nude Marci","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
@@ -1260,6 +1265,7 @@
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Oracle Automaton","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","weapon"]},
         {"name":"Oracle Automaton Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","weapon","base"]},
+        {"name":"Oracle Clairvoyant","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","weapon"]},
         {"name":"Oracle Immortal Silence","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","weapon"]},
         {"name":"Oracle Irisviel von Einzbern","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","weapon"]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -1346,6 +1352,7 @@
         {"name":"Primal Beast Prehistoric Predator","categoryId":"heroes","styleLabel":null,"slots":["arms","back","legs","head"]},
         {"name":"Primal Beast Snowbeast","categoryId":"heroes","styleLabel":null,"slots":["arms","legs","back","head"]},
         {"name":"Primal Beast Strongbox","categoryId":"heroes","styleLabel":null,"slots":["arms","back","legs","head"]},
+        {"name":"Primal Beast Strongbox Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","back","legs","head"]},
         {"name":"Primal Beast Temple Guardian","categoryId":"hero-items","styleLabel":null,"slots":["arms"]}
       ]
     },
@@ -1821,6 +1828,9 @@
         {"name":"Terrorblade Fire","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Terrorblade Foulfell Corruptor","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Terrorblade Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","wings"]},
+        {"name":"Terrorblade Rictus Blade","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
+        {"name":"Terrorblade Rictus Manta","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
+        {"name":"Terrorblade Rictus Skadi","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
         {"name":"Terrorblade Scythes of Sorrow","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Terrorblade Span Of Sorrow","categoryId":"hero-items","styleLabel":null,"slots":["wings"]},
         {"name":"Terrorblade Unblinking Horror","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","wings"]},
@@ -1882,7 +1892,8 @@
         {"name":"Tiny Cherepashka","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Tiny Frostivus","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Tiny Majesty of the Colossus","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
-        {"name":"Tiny Stone Giant Stronghold","categoryId":"heroes","styleLabel":null,"slots":["misc"]}
+        {"name":"Tiny Stone Giant Stronghold","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Tiny Stoneback Sovereign","categoryId":"heroes","styleLabel":null,"slots":["misc"]}
       ]
     },
     "tiny_01": {"name":"Tiny 01","mods":[{"name":"Tiny Cherepashka","categoryId":"heroes","styleLabel":null,"slots":["head","arms"]}]},
@@ -1892,6 +1903,7 @@
         {"name":"Halloween Treant Protector","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
         {"name":"Treant Protector Aura","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs","back"]},
         {"name":"Treant Protector Calabash","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
+        {"name":"Treant Protector Calabash V2","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
         {"name":"Treant Protector Diretide","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
         {"name":"Treant Protector Frost Hideaway","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","misc"]}
       ]

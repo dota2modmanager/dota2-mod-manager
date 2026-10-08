@@ -749,6 +749,7 @@
     {
       "id": "backgrounds",
       "mods": [
+        {"name":"Anime","styleLabel":null,"image":{"src":"/mods/anime.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791469531},
         {
           "name": "Gwardjan Tad Dawl Perfezzjoni",
           "styleLabel": null,
