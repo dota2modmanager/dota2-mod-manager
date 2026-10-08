@@ -59,6 +59,7 @@ the code, not in this page.
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
 | [`src/item-builder-slots.ts`](#srcitem-builder-slotsts) | The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit |
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
+| [`src/kv3.ts`](#srckv3ts) | Binary KV3, the format Source 2 compiles particles and most other resources into: read far |
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
 | [`src/main-window.ts`](#srcmain-windowts) | The one window the app has: its size on the screen it opens on, the single page it may show, |
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
@@ -85,6 +86,7 @@ the code, not in this page.
 | [`src/preset-plan.ts`](#srcpreset-plants) | How a preset travels to somebody else (src/presets-service.ts applies, packs and receives |
 | [`src/preset-share.ts`](#srcpreset-sharets) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
 | [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
+| [`src/recolor.ts`](#srcrecolorts) | An item's effects in a colour of the user's choosing, built from the game's own particles. |
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
@@ -2568,6 +2570,87 @@ export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | nu
 
 Read compiled asset bytes out of pak01 and stage them under the renamed path in our VPK.
 
+## src/kv3.ts
+
+Binary KV3, the format Source 2 compiles particles and most other resources into: read far
+enough to find every number in it, change a number where it lies, and write the block back.
+
+Not a general reader. Recolouring a particle (src/recolor.ts, issue #118) needs the colours and
+nothing else, and a colour in a compiled particle is a typed array of four INT32s
+(`m_ConstantColor = [ 0, 210, 255, 255 ]`). Those sit in a lane of fixed-width values, so a new
+colour is the same number of bytes in the same place and nothing else in the block moves. The
+walk still visits every value, because the lanes are read in order and a value skipped is a
+value misplaced; reaching the end of every lane exactly is how a file this misreads gets refused
+instead of patched.
+
+The layout follows ValveResourceFormat's BinaryKV3.cs (MIT), versions 1 to 5. Of the 339
+Terrorblade particles in the game on 2026-10-08, 290 are version 2, 39 version 5, 8 version 4
+and 2 version 3, all LZ4. Files with binary blobs are refused; no particle here has one.
+
+### `lz4Decode`
+
+```ts
+export function lz4Decode(src: Buffer, size: number): Buffer
+```
+
+LZ4 block format: literals and back-references, the one Valve's KV3 writer uses.
+
+### `lz4Literals`
+
+```ts
+export function lz4Literals(src: Buffer): Buffer
+```
+
+The same bytes as one LZ4 block of literals only: valid LZ4, a little larger than the input.
+
+### `Kv3Cell`
+
+```ts
+export interface Kv3Cell { buffer: 0 | 1; offset: number; width: 1 | 2 | 4 | 8; signed: boolean }
+```
+
+Where one number lives: which decompressed buffer, and the byte offset in it.
+
+### `Kv3Array`
+
+```ts
+export interface Kv3Array { key: string; path: string; cells: (Kv3Cell | null)[] }
+```
+
+An array the walk found, with the member name it was under and a cell per element (null: no storage).
+
+### `Kv3Block`
+
+```ts
+export interface Kv3Block
+```
+
+A parsed block: its decompressed buffers, the arrays in it, and how to put it back together.
+
+### `readKv3`
+
+```ts
+export function readKv3(block: Buffer): Kv3Block
+```
+
+Read a KV3 block (a resource's DATA block, magic included).
+
+### `readCell`
+
+```ts
+export function readCell(kv: Kv3Block, c: Kv3Cell): number
+```
+
+A number's value.
+
+### `writeCell`
+
+```ts
+export function writeCell(kv: Kv3Block, c: Kv3Cell, v: number): void
+```
+
+Change a number where it lies.
+
 ## src/library.ts
 
 Library: manifest of installed mods + presets
@@ -4238,6 +4321,70 @@ Everything about presets that needs the running app's services.
 @param deps.schemaService  rebuilds the item table when a preset changes it
 @param deps.deployAndApply  rebuilds one pack's VPK
 ```
+
+## src/recolor.ts
+
+An item's effects in a colour of the user's choosing, built from the game's own particles.
+
+Issue #118 asked for Terrorblade's arcana in any RGB. Its glow, eyes, mouth and kill effect are
+particles whose colours are numbers in the compiled file (`m_ConstantColor = [ 0, 210, 255, 255 ]`)
+over textures that are white, so changing the numbers is changing the colour. The files are read
+out of Valve's pak01, recoloured where the numbers lie (src/kv3.ts) and packed as one mod.
+
+The colour is moved, not painted over. Every colour in the set takes the chosen hue, and keeps
+its own brightness and saturation scaled by the chosen colour's: the arcana's main cyan becomes
+exactly the colour picked, its dark teals become dark shades of it, and black, white and greys,
+which carry no hue, stay as they are.
+
+### `Rgb`
+
+```ts
+export type Rgb = [number, number, number]
+```
+
+_No description in the source._
+
+### `RECOLOR_SETS`
+
+```ts
+export const RECOLOR_SETS: Record<string, { name: string; folders: string[] }> =
+```
+
+What can be recoloured, and the files each is made of (folders of compiled particles in pak01).
+
+### `shade`
+
+```ts
+export function shade(color: Rgb, target: Rgb): Rgb
+```
+
+One colour moved to the chosen one. A colour with almost no saturation has no hue to move and is
+left alone; anything else takes the target's hue, with saturation and brightness scaled by it.
+
+### `dataBlock`
+
+```ts
+export function dataBlock(file: Buffer): { data: Buffer; replace(next: Buffer): Buffer }
+```
+
+The DATA block of a compiled resource, and the file with a new one in its place.
+
+### `recolorResource`
+
+```ts
+export function recolorResource(file: Buffer, target: Rgb): { file: Buffer; changed: number; skipped: number }
+```
+
+One compiled resource with its colours moved; `changed` counts the colours, `skipped` those with no room.
+
+### `buildRecolor`
+
+```ts
+export function buildRecolor({ pak01, set, target }: { pak01: string; set: string; target: Rgb }):
+```
+
+A set recoloured into one VPK, from the game's pak01. Files that fail to read are reported and
+left out, so the mod carries Valve's own version of them.
 
 ## src/release-notes.ts
 
