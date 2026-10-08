@@ -11,16 +11,24 @@
  * exactly the colour picked, its dark teals become dark shades of it, and black, white and greys,
  * which carry no hue, stay as they are.
  */
-import { readKv3, readCell, writeCell } from './kv3.ts';
+import { readKv3, readCell, writeCell, numberOf, setNumber, type Kv3Block, type Kv3Node } from './kv3.ts';
 import { buildVpk, entryAt, listVpkPathsFile, openVpkIndex, type VpkEntry } from './vpk.ts';
 
 export type Rgb = [number, number, number];
 
-/** What can be recoloured, and the files each is made of (folders of compiled particles in pak01). */
-export const RECOLOR_SETS: Record<string, { name: string; folders: string[] }> = {
+/**
+ * What can be recoloured: the particle folders in pak01, and the colour tables (`textures`, path
+ * prefixes) its materials read, with the hue the item shows in the game (`hue`, degrees), which is
+ * the one a table is turned away from. The arcana is red in the game although its particles say
+ * cyan: the game tints them through control point 15, and its body goes through a colour-warp
+ * table that is red where the arcana glows.
+ */
+export const RECOLOR_SETS: Record<string, { name: string; folders: string[]; textures: string[]; hue: number }> = {
   'terrorblade-arcana': {
     name: 'Fractal Horns of Inner Abysm',
     folders: ['particles/econ/items/terrorblade/terrorblade_horns_arcana/'],
+    textures: ['materials/models/heroes/statuseffects/colorwarp_tb_arcana_colorwarp3d'],
+    hue: 0,
   },
 };
 
@@ -60,6 +68,13 @@ export function shade(color: Rgb, target: Rgb): Rgb {
   return fromHsv([th, Math.min(1, s * ts), Math.min(1, v * tv)]);
 }
 
+/** One colour turned round the colour wheel by `degrees`, its saturation and brightness kept. */
+export function rotateHue(color: Rgb, degrees: number): Rgb {
+  const [h, s, v] = toHsv(color);
+  if (s < 0.05) return color;
+  return fromHsv([((h + degrees) % 360 + 360) % 360, s, v]);
+}
+
 /** The DATA block of a compiled resource, and the file with a new one in its place. */
 export function dataBlock(file: Buffer): { data: Buffer; replace(next: Buffer): Buffer } {
   const table = 8 + file.readUInt32LE(8);
@@ -87,6 +102,71 @@ export function dataBlock(file: Buffer): { data: Buffer; replace(next: Buffer): 
   };
 }
 
+/** The operators that colour a particle from control point 15, which the game fills in at run time. */
+const TINT_OPS = /^C_(INIT|OP)_RemapCPtoVector$/;
+
+/**
+ * Turn off the game's own tint, so a particle shows the colour written in it. Such an operator
+ * maps control point 15 into the colour field (6), as strong as control point 16 says; with its
+ * strength at zero it changes nothing, and the recoloured `m_ConstantColor` is what is drawn.
+ * @returns how many operators were turned off
+ */
+function untint(kv: Kv3Block): number {
+  let n = 0;
+  const visit = (node: Kv3Node) => {
+    if (node.kind === 'array') { node.items.forEach(visit); return; }
+    if (node.kind !== 'object') return;
+    const m = node.members;
+    const cls = m.get('_class');
+    const cp = m.get('m_nCPInput');
+    const field = m.get('m_nFieldOutput');
+    if (cls?.kind === 'string' && TINT_OPS.test(cls.value) && cp?.kind === 'number' && numberOf(kv, cp) === 15
+      && field?.kind === 'number' && numberOf(kv, field) === 6) {
+      const strength = m.get('m_flOpStrength');
+      const zero = (x: Kv3Node | undefined) => x?.kind === 'number' && setNumber(kv, x, 0);
+      let done = false;
+      if (strength?.kind === 'number') done = zero(strength);
+      else if (strength?.kind === 'object') {
+        for (const k of ['m_flLiteralValue', 'm_flOutput0', 'm_flOutput1']) if (zero(strength.members.get(k))) done = true;
+      }
+      if (done) n++;
+    }
+    m.forEach(visit);
+  };
+  visit(kv.root);
+  return n;
+}
+
+/**
+ * A colour-warp table turned round the colour wheel: an uncompressed RGBA8888 texture with one mip,
+ * its pixels right after the DATA block. Anything else comes back unchanged.
+ */
+export function recolorTexture(file: Buffer, degrees: number): { file: Buffer; changed: number } {
+  const table = 8 + file.readUInt32LE(8);
+  let data = -1;
+  let size = 0;
+  for (let k = 0; k < file.readUInt32LE(12); k++) {
+    const e = table + k * 12;
+    if (file.toString('ascii', e, e + 4) === 'DATA') { data = e + 4 + file.readUInt32LE(e + 4); size = file.readUInt32LE(e + 8); }
+  }
+  if (data === -1 || size < 28) return { file, changed: 0 };
+  const [w, h, d] = [file.readUInt16LE(data + 20), file.readUInt16LE(data + 22), file.readUInt16LE(data + 24)];
+  const format = file[data + 26];
+  const mips = file[data + 27];
+  const pixels = data + size;
+  if (format !== 4 || mips !== 1 || file.length - pixels !== w * h * d * 4) return { file, changed: 0 };
+  const out = Buffer.from(file);
+  let changed = 0;
+  for (let i = pixels; i < out.length; i += 4) {
+    const rgb = [out[i], out[i + 1], out[i + 2]] as Rgb;
+    const next = rotateHue(rgb, degrees);
+    if (next.every((x, j) => x === rgb[j])) continue;
+    [out[i], out[i + 1], out[i + 2]] = next;
+    changed++;
+  }
+  return { file: changed ? out : file, changed };
+}
+
 /** One compiled resource with its colours moved; `changed` counts the colours, `skipped` those with no room. */
 export function recolorResource(file: Buffer, target: Rgb): { file: Buffer; changed: number; skipped: number } {
   const block = dataBlock(file);
@@ -95,6 +175,7 @@ export function recolorResource(file: Buffer, target: Rgb): { file: Buffer; chan
   let skipped = 0;
   for (const a of kv.arrays) {
     if (!COLOR_KEY.test(a.key) || (a.cells.length !== 3 && a.cells.length !== 4)) continue;
+    if (a.cells.some((c) => c && c.float)) continue; // a colour is whole numbers; floats here are scales
     // a zero written as "zero" has no bytes to change; recolouring the other channels alone would
     // give a hue nobody chose
     if (a.cells.some((c) => c === null)) { skipped++; continue; }
@@ -106,7 +187,8 @@ export function recolorResource(file: Buffer, target: Rgb): { file: Buffer; chan
     next.forEach((n, i) => writeCell(kv, cells[i], n));
     changed++;
   }
-  return { file: changed ? block.replace(kv.encode()) : file, changed, skipped };
+  const untinted = untint(kv);
+  return { file: changed || untinted ? block.replace(kv.encode()) : file, changed: changed + untinted, skipped };
 }
 
 /**
@@ -123,7 +205,13 @@ export function buildRecolor({ pak01, set, target }: { pak01: string; set: strin
   const failed: { path: string; error: string }[] = [];
   let changed = 0;
   let skipped = 0;
-  for (const p of listVpkPathsFile(pak01).filter((x) => x.endsWith('.vpcf_c') && def.folders.some((f) => x.startsWith(f)))) {
+  const all = listVpkPathsFile(pak01);
+  const degrees = toHsv(target)[0] - def.hue;
+  for (const p of all.filter((x) => x.endsWith('.vtex_c') && def.textures.some((f) => x.startsWith(f)))) {
+    const r = recolorTexture(index.read(p) as Buffer, degrees);
+    if (r.changed) { entries.push(entryAt(p, r.file)); changed++; }
+  }
+  for (const p of all.filter((x) => x.endsWith('.vpcf_c') && def.folders.some((f) => x.startsWith(f)))) {
     try {
       const r = recolorResource(index.read(p) as Buffer, target);
       changed += r.changed;

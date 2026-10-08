@@ -56,20 +56,35 @@ export function lz4Literals(src: Buffer): Buffer {
   return Buffer.concat([Buffer.from(head), src]);
 }
 
-/** Where one number lives: which decompressed buffer, and the byte offset in it. */
-export interface Kv3Cell { buffer: 0 | 1; offset: number; width: 1 | 2 | 4 | 8; signed: boolean }
+/** Where one number lives: which decompressed buffer, the byte offset in it, and how wide it is. */
+export interface Kv3Cell { buffer: 0 | 1; offset: number; width: 1 | 2 | 4 | 8; signed: boolean; float?: boolean }
 
-/** An array the walk found, with the member name it was under and a cell per element (null: no storage). */
+/**
+ * A value in the tree the walk builds. A number keeps where it lies (`cell`), or null when the
+ * type alone says what it is (0 and 1 written as INT64_ZERO, DOUBLE_ONE...), and where its type
+ * byte is, which is the one place such a number can be changed. Elements of a typed array share
+ * one type byte, so theirs is null.
+ */
+export type Kv3Node =
+  | { kind: 'object'; members: Map<string, Kv3Node> }
+  | { kind: 'array'; items: Kv3Node[] }
+  | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null }
+  | { kind: 'string'; value: string }
+  | { kind: 'other' };
+
+/** An array of numbers the walk found, with the member name it was under and a cell per element (null: no storage). */
 export interface Kv3Array { key: string; path: string; cells: (Kv3Cell | null)[] }
 
-/** A parsed block: its decompressed buffers, the arrays in it, and how to put it back together. */
+/** A parsed block: its decompressed buffers, its tree, the arrays of numbers in it, and how to put it back together. */
 export interface Kv3Block {
   version: number;
   buffers: Buffer[];
+  root: Kv3Node;
   arrays: Kv3Array[];
   /** the block with the buffers as they are now, compressed the way it came */
   encode(): Buffer;
 }
+
 
 interface Lane { buf: 0 | 1; at: number; end: number }
 const lane = (buf: 0 | 1, at: number, size: number): Lane => ({ buf, at, end: at + size });
@@ -153,8 +168,10 @@ export function readKv3(block: Buffer): Kv3Block {
 
   const buf = (l: Lane) => buffers[l.buf];
   const take = (l: Lane, width: number): number => { const at = l.at; l.at += width; if (l.at > l.end) throw new Error('kv3: a lane ran out'); return at; };
-  const cell = (l: Lane, width: 1 | 2 | 4 | 8, signed: boolean): Kv3Cell => ({ buffer: l.buf, offset: take(l, width), width, signed });
-  const readType = (): number => {
+  const cell = (l: Lane, width: 1 | 2 | 4 | 8, signed: boolean, float = false): Kv3Cell => ({ buffer: l.buf, offset: take(l, width), width, signed, ...(float ? { float } : {}) });
+  /** the next type, and where its byte is */
+  const readType = (): [number, Kv3Cell] => {
+    const at: Kv3Cell = { buffer: types.buf, offset: types.at, width: 1, signed: false };
     let t = buf(types)[take(types, 1)];
     if (version >= 3) {
       if (t & 0x80) take(types, 1);
@@ -164,57 +181,59 @@ export function readKv3(block: Buffer): Kv3Block {
       if (t & 0x80) take(types, 1);
       t &= 0x7f;
     }
-    return t;
+    return [t, at];
   };
   const int4 = (l: Lane) => buf(l).readInt32LE(take(l, 4));
   const arrays: Kv3Array[] = [];
+  const num = (type: number, c: Kv3Cell | null, typeAt: Kv3Cell | null): Kv3Node => ({ kind: 'number', type, cell: c, typeAt });
 
-  // one value; returns a cell for numbers with storage, null for those without, undefined otherwise
-  const value = (t: number, lanes: typeof main, key: string, path: string): Kv3Cell | null | undefined => {
+  const value = (t: number, typeAt: Kv3Cell | null, lanes: typeof main, key: string, path: string): Kv3Node => {
     switch (t) {
-      case 1: case 13: case 14: case 15: case 16: case 17: case 18: return null; // stored in the type alone
-      case 2: take(lanes.l1, 1); return undefined;
-      case 22: case 23: return cell(lanes.l1, 1, t === 22);
-      case 20: case 21: return cell(lanes.l2, 2, t === 20);
-      case 11: case 12: return cell(lanes.l4, 4, t === 11);
-      case 19: take(lanes.l4, 4); return undefined; // float
-      case 3: case 4: return cell(lanes.l8, 8, t === 3);
-      case 5: take(lanes.l8, 8); return undefined; // double
-      case 6: take(main.l4, 4); return undefined; // string id
-      case 8: {
-        const n = int4(main.l4);
-        const cells: (Kv3Cell | null)[] = [];
-        for (let k = 0; k < n; k++) { const c = value(readType(), main, key, `${path}[${k}]`); if (c !== undefined) cells.push(c); }
-        if (cells.length === n) arrays.push({ key, path, cells });
-        return undefined;
-      }
-      case 10: case 24: case 25: {
-        const n = t === 10 ? int4(main.l4) : buf(main.l1)[take(main.l1, 1)];
-        const sub = readType();
-        const elementLanes = t === 25 ? aux : main;
-        const cells: (Kv3Cell | null)[] = [];
-        for (let k = 0; k < n; k++) { const c = value(sub, elementLanes, key, `${path}[${k}]`); if (c !== undefined) cells.push(c); }
-        if (cells.length === n) arrays.push({ key, path, cells });
-        return undefined;
+      case 15: case 16: case 17: case 18: return num(t, null, typeAt); // 0 or 1, stored in the type alone
+      case 1: case 13: case 14: return { kind: 'other' };
+      case 2: take(lanes.l1, 1); return { kind: 'other' };
+      case 22: case 23: return num(t, cell(lanes.l1, 1, t === 22), typeAt);
+      case 20: case 21: return num(t, cell(lanes.l2, 2, t === 20), typeAt);
+      case 11: case 12: return num(t, cell(lanes.l4, 4, t === 11), typeAt);
+      case 19: return num(t, cell(lanes.l4, 4, true, true), typeAt);
+      case 3: case 4: return num(t, cell(lanes.l8, 8, t === 3), typeAt);
+      case 5: return num(t, cell(lanes.l8, 8, true, true), typeAt);
+      case 6: return { kind: 'string', value: strings[int4(main.l4)] ?? '' };
+      case 8: case 10: case 24: case 25: {
+        const n = t === 8 || t === 10 ? int4(main.l4) : buf(main.l1)[take(main.l1, 1)];
+        const items: Kv3Node[] = [];
+        if (t === 8) {
+          for (let k = 0; k < n; k++) { const [et, eat] = readType(); items.push(value(et, eat, main, key, `${path}[${k}]`)); }
+        } else {
+          const [sub] = readType();
+          const elementLanes = t === 25 ? aux : main;
+          for (let k = 0; k < n; k++) items.push(value(sub, null, elementLanes, key, `${path}[${k}]`));
+        }
+        if (items.every((x) => x.kind === 'number')) arrays.push({ key, path, cells: items.map((x) => (x as { cell: Kv3Cell | null }).cell) });
+        return { kind: 'array', items };
       }
       case 9: {
         const n = objectLengths ? int4(objectLengths) : int4(main.l4);
+        const members = new Map<string, Kv3Node>();
         for (let k = 0; k < n; k++) {
-          const ty = readType();
+          const [ty, tat] = readType();
           const name = strings[int4(main.l4)] ?? '';
-          value(ty, main, name, `${path}.${name}`);
+          members.set(name, value(ty, tat, main, name, `${path}.${name}`));
         }
-        return undefined;
+        return { kind: 'object', members };
       }
       default: throw new Error(`kv3: value type ${t} at ${path || 'the root'}`);
     }
   };
-  value(readType(), main, '', '');
-  for (const l of [main.l1, main.l2, main.l4, main.l8, types]) if (l.at !== l.end) throw new Error('kv3: the walk did not end where the data does');
+  const [rootType, rootAt] = readType();
+  const root = value(rootType, rootAt, main, '', '');
+  const lanes = version >= 5 ? [main.l1, main.l2, main.l4, main.l8, types, aux.l1, aux.l2, aux.l4, aux.l8] : [main.l1, main.l2, main.l4, main.l8, types];
+  for (const l of lanes) if (l.at !== l.end) throw new Error('kv3: the walk did not end where the data does');
 
   return {
     version,
     buffers,
+    root,
     arrays,
     encode() {
       const head = Buffer.from(block.subarray(0, headerEnd));
@@ -236,6 +255,7 @@ export function readKv3(block: Buffer): Kv3Block {
 /** A number's value. */
 export function readCell(kv: Kv3Block, c: Kv3Cell): number {
   const b = kv.buffers[c.buffer];
+  if (c.float) return c.width === 4 ? b.readFloatLE(c.offset) : b.readDoubleLE(c.offset);
   if (c.width === 1) return c.signed ? b.readInt8(c.offset) : b.readUInt8(c.offset);
   if (c.width === 2) return c.signed ? b.readInt16LE(c.offset) : b.readUInt16LE(c.offset);
   if (c.width === 4) return c.signed ? b.readInt32LE(c.offset) : b.readUInt32LE(c.offset);
@@ -245,8 +265,32 @@ export function readCell(kv: Kv3Block, c: Kv3Cell): number {
 /** Change a number where it lies. */
 export function writeCell(kv: Kv3Block, c: Kv3Cell, v: number): void {
   const b = kv.buffers[c.buffer];
+  if (c.float) { if (c.width === 4) b.writeFloatLE(v, c.offset); else b.writeDoubleLE(v, c.offset); return; }
   if (c.width === 1) { if (c.signed) b.writeInt8(v, c.offset); else b.writeUInt8(v, c.offset); return; }
   if (c.width === 2) { if (c.signed) b.writeInt16LE(v, c.offset); else b.writeUInt16LE(v, c.offset); return; }
   if (c.width === 4) { if (c.signed) b.writeInt32LE(v, c.offset); else b.writeUInt32LE(v, c.offset); return; }
   if (c.signed) b.writeBigInt64LE(BigInt(v), c.offset); else b.writeBigUInt64LE(BigInt(v), c.offset);
+}
+
+/** A number node's value: from its bytes, or from its type for the 0s and 1s stored as a type alone. */
+export function numberOf(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' }>): number {
+  if (node.cell) return readCell(kv, node.cell);
+  return node.type === 16 || node.type === 18 ? 1 : 0;
+}
+
+/**
+ * Set a number node where it lies. A number with bytes takes any value its width holds; one stored
+ * as a type alone can only turn into the other of 0 and 1, by rewriting that type byte, which keeps
+ * every lane the length it was.
+ * @returns whether the value could be set
+ */
+export function setNumber(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' }>, v: number): boolean {
+  if (node.cell) { writeCell(kv, node.cell, v); return true; }
+  if (!node.typeAt || (v !== 0 && v !== 1)) return false;
+  const want = node.type <= 16 ? (v ? 16 : 15) : (v ? 18 : 17);
+  const b = kv.buffers[node.typeAt.buffer];
+  const mask = kv.version >= 3 ? 0x3f : 0x7f;
+  b[node.typeAt.offset] = (b[node.typeAt.offset] & ~mask) | want;
+  node.type = want;
+  return true;
 }

@@ -2606,10 +2606,21 @@ The same bytes as one LZ4 block of literals only: valid LZ4, a little larger tha
 ### `Kv3Cell`
 
 ```ts
-export interface Kv3Cell { buffer: 0 | 1; offset: number; width: 1 | 2 | 4 | 8; signed: boolean }
+export interface Kv3Cell { buffer: 0 | 1; offset: number; width: 1 | 2 | 4 | 8; signed: boolean; float?: boolean }
 ```
 
-Where one number lives: which decompressed buffer, and the byte offset in it.
+Where one number lives: which decompressed buffer, the byte offset in it, and how wide it is.
+
+### `Kv3Node`
+
+```ts
+export type Kv3Node =
+```
+
+A value in the tree the walk builds. A number keeps where it lies (`cell`), or null when the
+type alone says what it is (0 and 1 written as INT64_ZERO, DOUBLE_ONE...), and where its type
+byte is, which is the one place such a number can be changed. Elements of a typed array share
+one type byte, so theirs is null.
 
 ### `Kv3Array`
 
@@ -2617,7 +2628,7 @@ Where one number lives: which decompressed buffer, and the byte offset in it.
 export interface Kv3Array { key: string; path: string; cells: (Kv3Cell | null)[] }
 ```
 
-An array the walk found, with the member name it was under and a cell per element (null: no storage).
+An array of numbers the walk found, with the member name it was under and a cell per element (null: no storage).
 
 ### `Kv3Block`
 
@@ -2625,7 +2636,7 @@ An array the walk found, with the member name it was under and a cell per elemen
 export interface Kv3Block
 ```
 
-A parsed block: its decompressed buffers, the arrays in it, and how to put it back together.
+A parsed block: its decompressed buffers, its tree, the arrays of numbers in it, and how to put it back together.
 
 ### `readKv3`
 
@@ -2650,6 +2661,28 @@ export function writeCell(kv: Kv3Block, c: Kv3Cell, v: number): void
 ```
 
 Change a number where it lies.
+
+### `numberOf`
+
+```ts
+export function numberOf(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' }>): number
+```
+
+A number node's value: from its bytes, or from its type for the 0s and 1s stored as a type alone.
+
+### `setNumber`
+
+```ts
+export function setNumber(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' }>, v: number): boolean
+```
+
+Set a number node where it lies. A number with bytes takes any value its width holds; one stored
+as a type alone can only turn into the other of 0 and 1, by rewriting that type byte, which keeps
+every lane the length it was.
+
+```
+@returns whether the value could be set
+```
 
 ## src/library.ts
 
@@ -4347,10 +4380,14 @@ _No description in the source._
 ### `RECOLOR_SETS`
 
 ```ts
-export const RECOLOR_SETS: Record<string, { name: string; folders: string[] }> =
+export const RECOLOR_SETS: Record<string, { name: string; folders: string[]; textures: string[]; hue: number }> =
 ```
 
-What can be recoloured, and the files each is made of (folders of compiled particles in pak01).
+What can be recoloured: the particle folders in pak01, and the colour tables (`textures`, path
+prefixes) its materials read, with the hue the item shows in the game (`hue`, degrees), which is
+the one a table is turned away from. The arcana is red in the game although its particles say
+cyan: the game tints them through control point 15, and its body goes through a colour-warp
+table that is red where the arcana glows.
 
 ### `shade`
 
@@ -4361,6 +4398,14 @@ export function shade(color: Rgb, target: Rgb): Rgb
 One colour moved to the chosen one. A colour with almost no saturation has no hue to move and is
 left alone; anything else takes the target's hue, with saturation and brightness scaled by it.
 
+### `rotateHue`
+
+```ts
+export function rotateHue(color: Rgb, degrees: number): Rgb
+```
+
+One colour turned round the colour wheel by `degrees`, its saturation and brightness kept.
+
 ### `dataBlock`
 
 ```ts
@@ -4368,6 +4413,15 @@ export function dataBlock(file: Buffer): { data: Buffer; replace(next: Buffer): 
 ```
 
 The DATA block of a compiled resource, and the file with a new one in its place.
+
+### `recolorTexture`
+
+```ts
+export function recolorTexture(file: Buffer, degrees: number): { file: Buffer; changed: number }
+```
+
+A colour-warp table turned round the colour wheel: an uncompressed RGBA8888 texture with one mip,
+its pixels right after the DATA block. Anything else comes back unchanged.
 
 ### `recolorResource`
 
