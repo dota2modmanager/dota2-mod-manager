@@ -148,6 +148,10 @@ Nothing is injected into Dota's process, and no file of the game is opened while
   one line to `gameinfo_branchspecific.gi` and a signature to `dota.signatures` — both backed up
   before the first edit, both restored byte for byte when it goes back on.
   [What that buys and costs](https://dota2modmanager.com/docs/safe/)
+- After a Dota update the app checks its own work. If Valve changed the search paths that line
+  is copied from, it writes the line again. It also compares the game files your mods replace
+  with the new build, and a mod whose files the update changed gets a pre-patch mark in My mods:
+  if something in the game looks wrong after a patch, that is where to look first
 
 Downloads live in `%APPDATA%/dota2-mod-manager/downloads`, the install manifest beside them.
 The full picture is in [ARCHITECTURE.md](ARCHITECTURE.md), and every module is listed in
@@ -253,6 +257,7 @@ npm run test:coverage     # the same with the floor CI enforces
 npm run docs              # regenerate docs/API.md from src/
 npm run sandbox:seed      # a throwaway game tree with real mods in it
 npm run start:sandbox     # the app against it, never your own game
+npm run dota:diff         # what changed between two Dota builds (6944 6952, or the last two)
 ```
 
 Node 24, Electron 44. The main process is TypeScript that Node runs without a build, and the
@@ -284,9 +289,9 @@ what the project asks for in return.
 
 ## What it is built on
 
-Everything third-party the app ships or fetches, with the licence it comes under. The
-[NOTICE](NOTICE) file has the full text and the two additional terms this project adds under
-section 7 of the GPL.
+Everything third-party the app ships or fetches, and the one outside source this repository's
+checks read, with the licence each comes under. The [NOTICE](NOTICE) file has the full text and
+the two additional terms this project adds under section 7 of the GPL.
 
 | | What for | Licence |
 |---|---|---|
@@ -298,6 +303,7 @@ section 7 of the GPL.
 | [Source 2 Viewer](https://github.com/ValveResourceFormat/ValveResourceFormat) | Decoding Dota's own textures for item icons. Downloaded on demand, never bundled | MIT |
 | [Inter](https://github.com/rsms/inter), [Exo 2](https://github.com/NDISCOVER/Exo-2.0), [Material Symbols](https://github.com/google/material-design-icons) | The typefaces and icons, shipped inside the app rather than fetched | OFL-1.1, Apache-2.0 |
 | [Astro](https://github.com/withastro/astro) | The documentation site, not the app | MIT |
+| [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2) | Every Dota build as text, read by this repository's checks to report what an update changed. Not the app | None stated. Read over the network; nothing from it is copied here |
 
 <!-- facts:deps-en -->
 `package.json` lists 14: `adm-zip` and `electron-updater` ship inside the app, `motion`, `react` and `react-dom` are built into its window, `@types/react`, `@types/react-dom`, `@vitejs/plugin-react`, `electron`, `electron-builder`, `eslint`, `fast-check`, `typescript` and `vite` only build or check it.
@@ -319,6 +325,10 @@ writing VPK archives is done by this repository's own code, which is why `src/vp
   and the Dota 2 modding community. This app is a desktop client for their catalog, and every mod
   card in it credits its author.
 - Community tools (VPKMerge, Background Changer, Compiler, ItemsFix) belong to their authors.
+- **Dota's updates** are read from [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2)
+  by [SteamTracking](https://github.com/SteamTracking), which commits every Dota build as text within
+  the hour. The [Dota updates](https://github.com/dota2modmanager/dota2-mod-manager/issues/225)
+  issue, the report on each new build, is built on it.
 - **[hanta](https://www.youtube.com/@hqnta)** filmed a
   [walkthrough](https://www.youtube.com/watch?v=Z_yalpuP6pA) in Russian, which answers more
   questions than this page does for anyone who would rather watch than read.

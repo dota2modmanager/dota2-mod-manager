@@ -304,6 +304,37 @@ After the repair, `src/update-impact.ts` compares Valve's files that installed m
 what the update shipped. A mod whose copies the patch changed or removed is marked "pre-patch" in
 My mods and named in the banner about the update: it now puts old files back over new ones.
 
+The game's own index only describes the build on disk: the one before it is gone the moment Steam
+writes the new one. So the module keeps a note, `update-impact.json` in userData, of Valve's CRC
+for every path an installed mod replaces. That is thousands of paths, not the 388 000 in the index,
+and the index is read again only when it changed or a new mod brought paths the note lacks. The
+mark stays until the mod's own file changes, or until its owner takes it off from the row's menu.
+Nothing here goes over the network.
+
+## Watching Dota updates
+
+The app learns about a patch when it lands on the player's disk. This repository learns about it
+when it ships, from [SteamTracking/GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2),
+which commits every Dota build as text within the hour: `steam.inf` with the build number,
+`gameinfo.gi`, a listing of every file in `pak01` with its CRC and size, and the strings of the
+game's binaries. Build 6946 renamed a search-path key in a public commit there the same hour;
+this project heard about it from a Discord announcement that evening.
+
+- `tools/dota-diff.mjs` (`npm run dota:diff`) compares two builds. It leads with what the app's
+  patch depends on: the search paths in `gameinfo.gi`, the search-path keys the engine reads
+  (`engine2_strings.txt`), `gameinfo_branchspecific.gi` and the item table. Then the `pak01` diff
+  by folder and by hero, and with `--mods`, which files of the given mods the update reached.
+- `.github/workflows/dota-watch.yml` runs `tools/dota-watch.mjs` twice an hour. A build the
+  [Dota updates](https://github.com/dota2modmanager/dota2-mod-manager/issues/225) issue has not
+  reported becomes a comment there, and the issue body remembers the last one. A change to what
+  the patch is built from also messages the maintainer on Discord.
+- The comment names the catalog mods that replace files the build changed or removed. Their file
+  lists come from `mod-paths.json`, which the fingerprint job (`tools/gen-fingerprints.js`) writes
+  to the `catalog-data` branch out of the archives it already downloads.
+
+The app never asks GameTracking anything. If it goes away, the issue goes quiet and nothing a
+player has changes ([DECISIONS.md](DECISIONS.md)).
+
 ## Updates
 
 The installed build updates through `electron-updater` from GitHub Releases. The portable build
@@ -446,7 +477,8 @@ that location is not writable.
 | `tools/sandbox.js` | The throwaway game tree |
 | `tools/e2e.mjs`, `test/fixtures/e2e/*` | Installing, switching and removing a mod by clicking through the real window, offline, in the sandbox |
 | `tools/r2-sync.mjs`, `tools/r2-release.mjs`, `tools/r2-client.js`, `tools/mirror-plan.js` | The archive mirror, the update mirror, the signing they share, and which archives the mirror copies again or refuses |
-| `tools/gen-fingerprints.js` | Regenerating the published fingerprint map |
+| `tools/gen-fingerprints.js` | Regenerating the published fingerprint map, and `mod-paths.json`, the files each pak mod replaces |
+| `tools/dota-diff.mjs`, `tools/dota-watch.mjs` | What a Dota build changed, read from GameTracking-Dota2: by hand with `npm run dota:diff`, and twice an hour in the "Dota updates" issue |
 | `tools/seo-report.mjs`, `tools/seo-state.mjs` | The weekly reach and search report posted to [issue #3](https://github.com/dota2modmanager/dota2-mod-manager/issues/3), and the numbers it carries from one week to the next inside the comment |
 | `tools/release-gate.mjs` | First job of every release: waits until the tagged commit has passed the checks in `.github/required-checks.json`, and refuses it otherwise |
 | `tools/check-credentials.mjs`, `tools/google-auth.mjs` | Every morning before the radar: tries each secret against its service and writes what works, what fails and when each expires, for the radar to report |

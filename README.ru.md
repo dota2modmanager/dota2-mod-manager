@@ -146,6 +146,10 @@ sha256sum --check --ignore-missing SHA256SUMS
   его выключить, добавляется одна строка в `gameinfo_branchspecific.gi` и подпись в
   `dota.signatures` — обе сохраняются до первой правки и возвращаются байт в байт.
   [Что это даёт и чего стоит](https://dota2modmanager.com/ru/docs/safe/)
+- После обновления Доты приложение перепроверяет себя. Если Valve поменяли пути поиска, с которых
+  списана эта строка, оно пишет её заново. А ещё сверяет файлы игры, которые подменяют твои моды,
+  с новой сборкой: мод, чьи файлы обновление поменяло, получает в «Моих модах» метку «до патча».
+  Если после патча в игре что-то выглядит не так, начинать стоит с него
 
 Загрузки лежат в `%APPDATA%/dota2-mod-manager/downloads`, манифест установки рядом. Полная
 картина — в [ARCHITECTURE.md](ARCHITECTURE.md), а все модули перечислены в
@@ -252,6 +256,7 @@ npm run test:coverage     # то же с порогом, который держ
 npm run docs              # пересобрать docs/API.md из src/
 npm run sandbox:seed      # одноразовое дерево игры с настоящими модами
 npm run start:sandbox     # приложение против него, а не против своей игры
+npm run dota:diff         # что поменялось между двумя сборками Доты (6944 6952 или две последние)
 ```
 
 Node 24, Electron 44. Главный процесс на TypeScript, Node запускает его без сборки, а окно на
@@ -282,8 +287,9 @@ TypeScript и React, его собирает Vite. Каждый релиз
 
 ## На чём построено
 
-Всё стороннее, что приложение везёт с собой или качает, с лицензией. Полные тексты и две добавки
-по седьмой секции GPL — в [NOTICE](NOTICE).
+Всё стороннее, что приложение везёт с собой или качает, и единственный внешний источник, который
+читают проверки этого репозитория, с лицензиями. Полные тексты и две добавки по седьмой секции
+GPL — в [NOTICE](NOTICE).
 
 | | Зачем | Лицензия |
 |---|---|---|
@@ -295,6 +301,7 @@ TypeScript и React, его собирает Vite. Каждый релиз
 | [Source 2 Viewer](https://github.com/ValveResourceFormat/ValveResourceFormat) | Расшифровка текстур игры для иконок предметов. Качается по требованию, в сборку не входит | MIT |
 | [Inter](https://github.com/rsms/inter), [Exo 2](https://github.com/NDISCOVER/Exo-2.0), [Material Symbols](https://github.com/google/material-design-icons) | Шрифты и иконки, лежат внутри приложения, а не тянутся из сети | OFL-1.1, Apache-2.0 |
 | [Astro](https://github.com/withastro/astro) | Сайт документации, не приложение | MIT |
+| [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2) | Каждая сборка Доты текстом. Её читают проверки репозитория, чтобы сказать, что поменял патч. Не приложение | Не указана. Читается по сети, ничего из неё сюда не копируется |
 
 <!-- facts:deps-ru -->
 В `package.json` их 14: `adm-zip` и `electron-updater` едут внутри приложения, `motion`, `react` и `react-dom` собраны в его окно, `@types/react`, `@types/react-dom`, `@vitejs/plugin-react`, `electron`, `electron-builder`, `eslint`, `fast-check`, `typescript` и `vite` только собирают или проверяют его.
@@ -315,6 +322,12 @@ TypeScript и React, его собирает Vite. Каждый релиз
 [**D2PFX**](https://github.com/h6rd/Dota2PornFxWeb) от [h6rd](https://github.com/h6rd) и
 сообщества моддеров Доты. Это приложение — десктопный клиент к их каталогу, и каждая карточка
 мода в нём называет автора.
+
+**Обновления Доты** читаются из [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2)
+от [SteamTracking](https://github.com/SteamTracking): там каждая сборка Доты появляется текстом в
+течение часа после выхода. На этом построен issue
+[Dota updates](https://github.com/dota2modmanager/dota2-mod-manager/issues/225) с отчётом о каждой
+новой сборке.
 
 **[hanta](https://www.youtube.com/@hqnta)** снял
 [разбор приложения](https://www.youtube.com/watch?v=Z_yalpuP6pA) — там ответов больше, чем на

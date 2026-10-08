@@ -170,6 +170,33 @@ on `catalog-data` now, and `git log catalog-data` reads them.
 *Check:* `git log --oneline catalog-data` for the subjects, `tools/json-lines.js` and `tools/index-delta.js`
 for how they are produced, and `test/json-lines.test.js` for what the formatter guarantees.
 
+### Dota's builds are read from GameTracking-Dota2, and only by this repository's checks
+
+Dota build 6946 (2026-10-07) renamed the search-path key the language folder is mounted by,
+`Game_Language` to `Game_AudioLanguage`. Search-path patches written before it kept the old name,
+and mods in the language folder stopped loading behind them. SteamTracking's
+[GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2) had the change in a
+public commit within the hour. This project heard about it from a Discord announcement that
+evening.
+
+So the project reads that repository instead of building a tracker of its own. It is the one
+public source with every build as text: the `pak01` listing with CRCs, `gameinfo.gi`, the strings
+of the binaries, a commit per build. SteamDB has build numbers but no file contents and no API.
+Fetching the depots in CI ourselves would put a Steam account into a workflow secret.
+
+Only the checks depend on it: the [Dota updates](https://github.com/dota2modmanager/dota2-mod-manager/issues/225)
+issue and `npm run dota:diff`. The app reads the game on the player's disk and never asks
+GameTracking anything: the patch is rebuilt from the `gameinfo.gi` it finds there, and the
+pre-patch mark works from the game's own index. If GameTracking stops, the issue goes quiet and no
+player notices.
+
+GameTracking states no licence. Nothing from it is copied into this repository. The tools read it
+over the network, and the issue quotes counts, folder names and the few search-path lines that
+changed.
+
+*Check:* `tools/dota-diff.mjs`, `tools/dota-watch.mjs` and `.github/workflows/dota-watch.yml`
+are the only code that reads GameTracking, and nothing under `src/` names it.
+
 ### The source is mirrored, and the workflow does not name where
 
 A copy of `main` and every tag goes to <https://gitlab.com/TheFleece/dota2-mod-manager>. This is
