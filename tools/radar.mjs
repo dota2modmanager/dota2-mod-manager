@@ -195,6 +195,63 @@ export function auditFindings(report) {
 }
 
 /**
+ * The advisories this project decided to live with, from an osv-scanner.toml beside a lockfile.
+ *
+ * One list answers two readers. OpenSSF Scorecard's Vulnerabilities check runs OSV-Scanner, which
+ * skips what that file lists, and the radar stops asking for a decision on the same entries. Each
+ * entry has a date it runs out on, so an accepted risk comes back as a question by itself rather
+ * than staying accepted because nobody looked again. Only what the radar needs from the format is
+ * read: [[IgnoredVulns]] tables with id, ignoreUntil and reason.
+ * @param {string|null} toml
+ * @returns {Array<{id: string, until: string|null, reason: string}>}
+ */
+export function acceptedAdvisories(toml) {
+  const out = [];
+  for (const block of String(toml || '').split(/^\s*\[\[IgnoredVulns\]\]\s*$/m).slice(1)) {
+    const table = block.split(/^\s*\[/m)[0];
+    const get = (key) => {
+      const m = new RegExp(`^\\s*${key}\\s*=\\s*(?:"([^"]*)"|([^\\s#]+))`, 'm').exec(table);
+      return m ? (m[1] ?? m[2]) : null;
+    };
+    const id = get('id');
+    if (id) out.push({ id, until: get('ignoreUntil'), reason: get('reason') || '' });
+  }
+  return out;
+}
+
+/**
+ * Which findings an accepted advisory covers: the package it names, and every package that is
+ * vulnerable only through covered ones (npm audit lists the whole chain up to a direct dependency).
+ * @returns {Map<string, {id: string, until: string|null, reason: string, expired: boolean}>} package name -> the entry
+ */
+export function acceptedFindings(found, accepted, now = Date.now()) {
+  const byName = new Map(found.map((f) => [f.name, f]));
+  const own = new Map();
+  for (const f of found) {
+    const entry = accepted.find((a) => f.url && f.url.endsWith(`/${a.id}`));
+    if (entry) own.set(f.name, { ...entry, expired: Boolean(entry.until) && Date.parse(entry.until) < now });
+  }
+  /* The advisories a package is vulnerable through, followed down the chain. npm audit's chain can
+     loop (app-builder-lib through dmg-builder, dmg-builder through app-builder-lib), so each name is
+     visited once. A name the report does not list is a root nobody accepted. */
+  const roots = (name, seen) => {
+    if (seen.has(name)) return [];
+    seen.add(name);
+    const f = byName.get(name);
+    if (!f) return [name];
+    return [...(f.url ? [f.name] : []), ...f.through.flatMap((n) => roots(n, seen))];
+  };
+  const out = new Map();
+  for (const f of found) {
+    const r = roots(f.name, new Set());
+    if (!r.length || !r.every((n) => own.has(n))) continue;
+    const entries = r.map((n) => own.get(n));
+    out.set(f.name, { ...entries[0], expired: entries.some((e) => e.expired) });
+  }
+  return out;
+}
+
+/**
  * What the branch rule on main enforces, set against what the repository says it should.
  * @param {Array<{type: string, parameters?: any}>} rules  GET repos/:repo/rules/branches/main
  * @param {string[]} listed  the "branch" list in .github/required-checks.json
@@ -365,12 +422,18 @@ export function evaluate(data, now = Date.now(), policy = POLICY) {
     }
     const found = auditFindings(report);
     const minor = found.filter((f) => f.severity === 'low' || f.severity === 'info');
+    const covered = acceptedFindings(found, (data.accepted && data.accepted[where]) || [], now);
     for (const f of found.filter((x) => !minor.includes(x))) {
+      const ok = covered.get(f.name);
+      if (ok && !ok.expired) {
+        r.fine.push(`${f.name} (${where}): ${ok.id} accepted until ${ok.until || 'further notice'} in osv-scanner.toml`);
+        continue;
+      }
       const what = f.title || `through ${f.through.join(', ')}`;
       r.decide.push({
         title: `${f.name} has a ${f.severity} vulnerability (${where})`,
         url: f.url,
-        detail: `${what}; ${f.direct ? 'a direct dependency' : 'pulled in by another package'}; ${f.fix ? `fixed by ${f.fix}` : 'no fixed version yet'}`,
+        detail: `${what}; ${f.direct ? 'a direct dependency' : 'pulled in by another package'}; ${f.fix ? `fixed by ${f.fix}` : 'no fixed version yet'}${ok ? `; accepted in osv-scanner.toml until ${ok.until}, which has passed` : ''}`,
         overdue: false,
       });
     }
@@ -589,6 +652,9 @@ async function api(pathname, { method = 'GET', body, token, allow = [] } = {}) {
   return res.status === 204 ? {} : res.json();
 }
 
+/** A file's text, or null when it is not there. */
+const readOr = (file) => { try { return fs.readFileSync(file, 'utf8'); } catch { return null; } };
+
 /** npm audit from the lockfile alone: nothing installed, no token. 'unreadable' when npm could not answer. */
 function audit(dir) {
   const args = ['audit', '--json', '--package-lock-only'];
@@ -700,6 +766,7 @@ async function gather(repo, token, now) {
       rulesUrl: `https://github.com/${repo}/settings/rules`,
       codeScanning,
       audit: { app: audit(root), site: audit(path.join(root, 'site')) },
+      accepted: { app: acceptedAdvisories(readOr(path.join(root, 'osv-scanner.toml'))), site: acceptedAdvisories(readOr(path.join(root, 'site', 'osv-scanner.toml'))) },
       scorecardUrl: `https://github.com/${repo}/security/code-scanning?query=tool%3AScorecard+is%3Aopen`,
       badge,
       answers,

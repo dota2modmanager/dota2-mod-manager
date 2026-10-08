@@ -420,6 +420,23 @@ the uninstaller takes it out.
 Real ones. Listed here so a review does not have to find them and so the answer is the same
 whoever asks.
 
+### One advisory in the build tools has no fix, and is accepted until a date
+
+`sprintf-js` (GHSA-hp3w-g68c-fv3c, moderate) has no fixed version: 1.1.3 is the newest and is
+affected. It reaches this repository only through the build: `electron-builder` asks for
+`@electron/get` 3, which brings `global-agent` 3 and `roarr`, which formats its own log lines with
+it. The flaw needs a format string an attacker writes, nothing here passes one in, and none of the
+chain ships inside the app. `@electron/get` 5 drops the chain, and `electron-builder` takes it from
+version 27, in alpha on 2026-10-08. Forcing it into the release build ahead of that is a bigger
+risk than a log formatter that never sees outside input.
+
+The acceptance is written in `osv-scanner.toml` with a date it runs out on, 2027-01-08. OpenSSF
+Scorecard reads that file, and so does the radar: until the date the advisory is settled, after
+it the radar asks again.
+
+*Check:* `osv-scanner.toml`, `npm ls sprintf-js`, and `acceptedAdvisories` in `tools/radar.mjs`
+with its test in `test/radar.test.js`.
+
 ### The installer is not signed
 
 Windows SmartScreen says "unknown publisher" on first run. SignPath Foundation, which signs open

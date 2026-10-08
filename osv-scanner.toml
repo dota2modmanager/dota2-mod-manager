@@ -1,0 +1,16 @@
+# Advisories this project lives with, and until when.
+#
+# OSV-Scanner reads this file, and OpenSSF Scorecard's Vulnerabilities check runs OSV-Scanner, so
+# an entry here is not counted against the project. The radar (tools/radar.mjs) reads it too and
+# stops asking for a decision until the date runs out, when the advisory comes back as a question.
+# DECISIONS.md, under Known gaps, says why each one is here.
+
+# sprintf-js has no fixed version: 1.1.3 is the newest and is affected. It reaches this repository
+# only through the build: electron-builder -> app-builder-lib -> @electron/get 3 -> global-agent 3
+# -> roarr, which formats its own log messages with it. The flaw needs a format string an attacker
+# controls; none comes from outside here, and nothing of this chain ships inside the app.
+# @electron/get 5 drops the chain, and app-builder-lib asks for ^3 until electron-builder 27.
+[[IgnoredVulns]]
+id = "GHSA-hp3w-g68c-fv3c"
+ignoreUntil = 2027-01-08
+reason = "Build-time only (electron-builder -> @electron/get 3 -> global-agent -> roarr); no fixed sprintf-js exists, and no format string comes from outside. Gone with electron-builder 27."

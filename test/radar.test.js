@@ -264,6 +264,39 @@ test('known vulnerabilities in the app and the site reach the radar, and a faile
   assert.ok(!blind.fine.includes('npm audit finds nothing in the app'), 'an audit that did not run is not a clean one');
 });
 
+test('an advisory accepted in osv-scanner.toml is settled until its date, the chain above it with it', async () => {
+  // sprintf-js on 2026-10-08: no fixed version, reached only through the build tools, so the
+  // packages npm audit lists above it are the same decision and not five more questions
+  const { evaluate, acceptedAdvisories } = await load();
+  const report = {
+    auditReportVersion: 2,
+    vulnerabilities: {
+      'sprintf-js': { name: 'sprintf-js', severity: 'moderate', isDirect: false, via: [{ title: 'DoS through precision specifiers', url: 'https://github.com/advisories/GHSA-hp3w-g68c-fv3c' }], fixAvailable: false },
+      roarr: { name: 'roarr', severity: 'moderate', isDirect: false, via: ['sprintf-js'], fixAvailable: false },
+      'global-agent': { name: 'global-agent', severity: 'moderate', isDirect: false, via: ['roarr'], fixAvailable: false },
+      // the real chain loops: each of these is "through" the other
+      'app-builder-lib': { name: 'app-builder-lib', severity: 'moderate', isDirect: false, via: ['global-agent', 'dmg-builder'], fixAvailable: false },
+      'dmg-builder': { name: 'dmg-builder', severity: 'moderate', isDirect: false, via: ['app-builder-lib'], fixAvailable: false },
+      'mixed-up': { name: 'mixed-up', severity: 'high', isDirect: false, via: ['roarr', 'something-else'], fixAvailable: false },
+      'something-else': { name: 'something-else', severity: 'high', isDirect: false, via: [{ title: 'Not accepted', url: 'https://github.com/advisories/GHSA-1111-1111-1111' }], fixAvailable: true },
+    },
+  };
+  const toml = fs.readFileSync(path.join(ROOT, 'osv-scanner.toml'), 'utf8');
+  const accepted = acceptedAdvisories(toml);
+  assert.ok(accepted.some((a) => a.id === 'GHSA-hp3w-g68c-fv3c' && a.until && a.reason), 'the repository\'s own file names sprintf-js, with a date and a reason');
+
+  const before = evaluate({ audit: { app: report }, accepted: { app: accepted } }, Date.parse('2026-10-08'));
+  assert.deepEqual(before.decide.map((x) => x.title), [
+    'mixed-up has a high vulnerability (app)',
+    'something-else has a high vulnerability (app)',
+  ], 'a package also vulnerable through something not accepted is still a question');
+  assert.deepEqual(before.fine.filter((l) => l.includes('accepted')).length, 5, 'a loop in the chain is followed, not stuck on');
+
+  const after = evaluate({ audit: { app: report }, accepted: { app: accepted } }, Date.parse('2027-02-01'));
+  assert.ok(after.decide.some((x) => x.title === 'sprintf-js has a moderate vulnerability (app)' && /which has passed/.test(x.detail)),
+    'past its date the acceptance is a question again, and says so');
+});
+
 test('both places the radar audits have a lockfile for npm audit to read', () => {
   for (const dir of ['.', 'site']) {
     assert.ok(fs.existsSync(path.join(ROOT, dir, 'package-lock.json')), dir + ' has no package-lock.json');
