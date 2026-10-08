@@ -55,6 +55,8 @@ export interface LibRecord {
   staleMap?: boolean;
   /** a Dota update changed files this mod replaces since it was installed (src/update-impact.ts) */
   prePatch?: { since: string | null; changed: number; removed: number };
+  /** the catalog has a newer version of this mod than the one installed (src/mod-update.ts) */
+  updateAvailable?: boolean;
   fileRef?: string;
   preview?: string;
   [key: string]: unknown;

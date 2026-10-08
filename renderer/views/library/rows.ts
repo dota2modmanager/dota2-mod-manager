@@ -70,6 +70,7 @@ export function modRow(rec: LibRecord, index: number): RowModel {
       coveredTag(rec),
       rec.staleMap ? { cls: 'stale', icon: 'history', text: L`старая карта`, title: staleTerrainWhy() } : null,
       prePatchTag(rec),
+      rec.updateAvailable ? { cls: 'update', icon: 'upgrade', text: L`новая версия`, title: L`Автор выложил новую версию мода. Обнови его правой кнопкой: файл скачается заново, а место в порядке загрузки и включённость останутся.` } : null,
     ]),
     meta: cosmetic ? catName(COSMETIC_PREFIX + rec.slot) + effectNames(rec) : catName(rec.categoryId),
     pakFile: pakFileName(rec),

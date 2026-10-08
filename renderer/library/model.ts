@@ -110,6 +110,8 @@ export interface BannersModel {
   prelaunch: boolean;
   /** fonts and cursors Steam put back, with no archive left to reinstall from */
   stuck: string[];
+  /** catalog mods whose author published a new version, by name (src/mod-update.ts) */
+  updates: string[];
   repair: RepairState;
 }
 

@@ -38,6 +38,7 @@ function banners(): BannersModel {
     } : null,
     prelaunch: Boolean(m?.prelaunch),
     stuck: lib.stuck.map((x) => x.name),
+    updates: lib.records.filter((r) => r.updateAvailable).map((r) => r.name),
     repair: lib.repair,
   };
 }

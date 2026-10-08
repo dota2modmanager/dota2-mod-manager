@@ -33,7 +33,11 @@ function stand(t: TestContext) {
   const installer = new Installer({ userDataDir: path.join(dir, 'userdata'), getGamePath: () => game, getLangSuffix: () => 'russian', onProgress: () => {} });
   const library = new Library(path.join(dir, 'userdata'));
   const matches = new Map<string, CatalogIdentity[]>();
-  const fingerprints = { hasData: () => true, match: (fp?: string | null) => (fp && matches.get(fp)) || null, fonts: [], matchFonts: () => [] };
+  const prints = new Map<string, Set<string>>();
+  const fingerprints = {
+    hasData: () => true, match: (fp?: string | null) => (fp && matches.get(fp)) || null, fonts: [], matchFonts: () => [],
+    printsOf: (id: { categoryId: string; name: string; styleLabel?: string | null }) => prints.get(`${id.categoryId}/${id.name}`) || null,
+  };
   let schemaOn = false;
   let harvest: { deltas: number } | null = null;
   let refreshed = 0;
@@ -66,6 +70,7 @@ function stand(t: TestContext) {
     refreshed: () => refreshed,
     block: (b: typeof blockedWith) => { blockedWith = b; },
     reached,
+    prints,
   };
 }
 
@@ -174,6 +179,55 @@ test('the pre-patch mark comes off one mod by hand, and an unknown id is refused
   assert.ok(((await s.call('mods:clearPrePatch', 'nobody')) as { error?: string }).error);
 });
 
+test('a catalog mod the catalog has replaced says so, and the update keeps its slot', async (t) => {
+  const s = stand(t);
+  const hud = s.pak('pak34', [['panorama/layout/hud/dota_hud.vxml_c', 'hud for 6944']], { categoryId: 'huds', name: 'Gotohouse Hud', fileRef: 'Gotohouse Hud.vpk' })!;
+  const axe = s.pak('pak35', [['models/heroes/axe/axe.vmdl_c', 'an axe model']], { categoryId: 'heroes', name: 'Axe', fileRef: 'Axe.vpk' })!;
+  s.prints.set('huds/Gotohouse Hud', new Set(['a print the installed file does not have']));
+  s.prints.set('heroes/Axe', new Set([s.fpOf('pak35')]));
+  const rows = (await s.list()).installed;
+  assert.equal(rows.find((r) => r.id === hud.id)?.updateAvailable, true);
+  assert.equal('updateAvailable' in (rows.find((r) => r.id === axe.id) || {}), false, 'a file the same as the catalog one is current');
+
+  const newer = path.join(path.dirname(s.lang), 'newer.vpk');
+  fs.writeFileSync(newer, buildVpk([entry('panorama/layout/hud/dota_hud.vxml_c', 'hud for 6952')]));
+  // an install asks that the folder is a game
+  fs.writeFileSync(path.join(path.dirname(s.lang), 'dota', 'pak01_dir.vpk'), buildVpk([entry('scripts/items/items_game.txt', 'the game')]));
+  s.installer.download = async () => newer;
+  const r = await s.call('mods:update', hud.id) as { ok?: boolean; record?: { files: unknown[] } };
+  assert.equal(r.ok, true, JSON.stringify(r));
+  assert.deepEqual(r.record?.files, [{ root: 'lang', relPath: 'pak34_dir.vpk' }]);
+  assert.ok(((await s.call('mods:update', 'nobody')) as { error?: string }).error);
+});
+
+test('an update rebuilds the item table the old file fed, and a failed download says so and keeps the mod', async (t) => {
+  const s = stand(t);
+  fs.writeFileSync(path.join(path.dirname(s.lang), 'dota', 'pak01_dir.vpk'), buildVpk([entry('scripts/items/items_game.txt', 'the game')]));
+  const hud = s.pak('pak34', [['panorama/layout/hud/dota_hud.vxml_c', 'hud for 6944']], { categoryId: 'huds', name: 'Gotohouse Hud', fileRef: 'Gotohouse Hud.vpk' })!;
+  s.library.update(hud.id, { schema: [{ id: '587', name: 'Default Hud Skin', block: '"587" {}' }] });
+
+  s.block({ error: 'switched off remotely' });
+  assert.deepEqual(await s.call('mods:update', hud.id), { error: 'switched off remotely' }, 'the install switch covers updates too');
+  s.block(null);
+
+  s.installer.download = async () => { throw new Error('offline'); };
+  const failed = await s.call('mods:update', hud.id) as { error?: string };
+  assert.match(failed.error || '', /offline/);
+  assert.equal(s.progress.at(-1)?.type, 'error', 'the bar hears it failed');
+  assert.equal(s.refreshed(), 0, 'nothing was rebuilt for an update that did not happen');
+
+  const newer = path.join(path.dirname(s.lang), 'newer.vpk');
+  fs.writeFileSync(newer, buildVpk([entry('panorama/layout/hud/dota_hud.vxml_c', 'hud for 6952')]));
+  s.installer.download = async () => newer;
+  // with every mod switched off, the new file goes off with them
+  let masterOff = 0;
+  s.installer.masterIsOff = () => true;
+  s.installer.setMasterEnabled = () => { masterOff++; return { changed: 1 }; };
+  assert.equal(((await s.call('mods:update', hud.id)) as { ok?: boolean }).ok, true);
+  assert.equal(masterOff, 1);
+  assert.equal(s.refreshed(), 1, 'the item blocks of the old file leave the table');
+});
+
 test('listing rewrites the ownership note with exactly the library\'s files, and the status line hears about it', async (t) => {
   const s = stand(t);
   s.pak('pak30', PUDGE);
@@ -211,7 +265,7 @@ test('a cursor set steps the one that is on aside first, and keeps a copy of its
   let stored: string | null = null;
   s.installer.ensureCursorStore = ((id: string) => { stored = id; }) as never;
   const r = await s.call('mods:install', { categoryId: 'cursors', name: 'Gold', fileRef: 'gold.zip' });
-  assert.equal(r.ok, true);
+  assert.equal(r.ok, true, JSON.stringify(r));
   assert.deepEqual(r.replaced, ['Old cursors']);
   assert.equal(s.calls[0], 'other cursors off', 'before the new set is written over it');
   assert.equal(stored, r.record.id);

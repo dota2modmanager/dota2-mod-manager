@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { t } from './i18n.ts';
+import { updateMod } from './mod-update.ts';
 import { fetchMirrored } from './net.ts';
 import { fileUrl } from './installer-downloads.ts';
 import { createTerrainAges, TAIL_BYTES } from './terrain-age.ts';
@@ -48,6 +49,29 @@ export function registerModsIpc({
     if (typeof id !== 'string' || !library.find(id)) return { error: t('Мод не найден') };
     updateImpact.clear(id);
     return { ok: true };
+  });
+  /* A catalog mod brought to the version the catalog has now (src/mod-update.ts), in its own slot
+     and with its own switch. The item blocks it lifted belonged to the old file, so they are lifted
+     again from the new one and the table is rebuilt. */
+  ipcMain.handle('mods:update', async (e, id) => {
+    const stop = blocked('install');
+    if (stop) return stop;
+    const rec = typeof id === 'string' ? library.find(id) : null;
+    if (!rec) return { error: t('Мод не найден') };
+    try {
+      const hadSchema = Array.isArray(rec.schema) && rec.schema.length > 0;
+      const updated = await updateMod({ installer, library, rec, log: diag });
+      const harvest = schemaService.harvest(updated);
+      if (hadSchema || (harvest && harvest.deltas)) schemaService.refresh();
+      if (installer.masterIsOff()) {
+        try { installer.setMasterEnabled(false); } catch { /* noop */ }
+      }
+      sendProgress({ type: 'done', label: rec.name });
+      return { ok: true, record: library.find(rec.id) };
+    } catch (err) {
+      sendProgress({ type: 'error', label: rec.name, message: errorText(err) });
+      return { error: errorText(err) };
+    }
   });
   ipcMain.handle('mods:install', async (e, payload) => {
     // payload: { categoryId, name, styleLabel, fileRef, preview }

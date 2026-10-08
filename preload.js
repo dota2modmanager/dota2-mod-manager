@@ -42,6 +42,8 @@ contextBridge.exposeInMainWorld('api', {
     unpackToFolder: (id) => ipcRenderer.invoke('mods:unpackToFolder', id),
     // the pre-patch mark off one mod, once its owner checked it in the game
     clearPrePatch: (id) => ipcRenderer.invoke('mods:clearPrePatch', id),
+    // a catalog mod brought to the catalog's current version, in its own slot
+    update: (id) => ipcRenderer.invoke('mods:update', id),
     importDialog: () => ipcRenderer.invoke('mods:importDialog'),
     importFolderDialog: () => ipcRenderer.invoke('mods:importFolderDialog'),
     importPaths: (paths) => ipcRenderer.invoke('mods:importPaths', paths),

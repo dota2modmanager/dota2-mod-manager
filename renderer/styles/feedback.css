@@ -224,12 +224,15 @@ html[lang="ru"] body.dropping::after {
   border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 14px;
   font-size: 13px; animation: cardIn 0.3s var(--ease) both;
 }
-.banner .ms { font-size: 20px; flex-shrink: 0; }
+/* the banner's own icon, its first child: a button inside the banner keeps the colour and size
+   of a button's icon, where this used to paint it the banner's colour, lavender on a lavender
+   button, so "Link all" and "Update" showed an empty gap */
+.banner > .ms { font-size: 20px; flex-shrink: 0; }
 .banner .banner-body { flex: 1; min-width: 0; }
 .banner .banner-body b { color: var(--text); }
 .banner.warn { background: rgba(251, 191, 36, 0.11); border: 1px solid rgba(251, 191, 36, 0.32); color: var(--text-muted); }
-.banner.warn .ms { color: var(--warning); }
+.banner.warn > .ms { color: var(--warning); }
 .banner.off { background: rgba(251, 113, 133, 0.1); border: 1px solid rgba(251, 113, 133, 0.3); color: var(--text-muted); }
-.banner.off .ms { color: var(--danger); }
+.banner.off > .ms { color: var(--danger); }
 .banner.info { background: var(--primary-dim); border: 1px solid var(--primary); color: var(--text-muted); }
-.banner.info .ms { color: var(--primary-soft); }
+.banner.info > .ms { color: var(--primary-soft); }

@@ -45,6 +45,8 @@ export interface ModsApi {
   unpackToFolder: (id: string) => Promise<Dialog<{ path: string; files: number; bytes: number }>>;
   /** the pre-patch mark off one mod, once its owner checked it in the game */
   clearPrePatch: (id: string) => Promise<Reply>;
+  /** a catalog mod brought to the catalog's current version, in its own slot */
+  update: (id: string) => Promise<Reply<{ record: LibRecord }>>;
   importDialog: () => Promise<ImportReply>;
   importFolderDialog: () => Promise<ImportReply>;
   importPaths: (paths: string[]) => Promise<ImportReply>;

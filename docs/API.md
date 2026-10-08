@@ -65,6 +65,7 @@ the code, not in this page.
 | [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
 | [`src/mod-preview-pick.ts`](#srcmod-preview-pickts) | Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
+| [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
 | [`src/mods-listing.ts`](#srcmods-listingts) | What My mods is drawn from: the answer to mods:list (src/ipc-mods.ts), which every screen asks |
 | [`src/net-download.ts`](#srcnet-downloadts) | A file downloaded to disk across the mirror chain (src/net.ts explains it): resumed where a |
 | [`src/net-fetch.ts`](#srcnet-fetchts) | A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a |
@@ -2975,6 +2976,57 @@ Pictures for mods that came with none, cached in userData.
 @param deps.langFileOf where a mod's *_dir.vpk actually is
 @param deps.images test seam for decode/resize
 @param deps.run test seam for the texture tool, which is somebody else's program
+```
+
+## src/mod-update.ts
+
+A catalog mod brought to the version the catalog has now, in the place it already had.
+
+Authors fix and rebuild their mods, and the catalog replaces the archive under the same name.
+Until issue #171 the way to the new version was to delete the mod and install it again, which
+also cost its place in the load order and its switch, and nothing said a new version existed.
+
+Knowing needs nothing new on disk. Every installed pak has a content fingerprint (src/vpk.ts),
+and the catalog's index lists the fingerprints each of its mods has today (src/fingerprints.ts).
+A catalog mod whose installed fingerprint is not among its own was replaced upstream. Checked
+against a real library of four catalog mods on 2026-10-08: all four matched, none was flagged.
+
+### `updatable`
+
+```ts
+export function updatable(rec: Pick<LibRecord, 'fileRef' | 'kind' | 'categoryId'>): boolean
+```
+
+The kind of mod this can update: a pak installed from the catalog. Fonts and cursors are loose
+files the catalog matches another way, and a pack, a pick or an import has no catalog file.
+
+### `behindCatalog`
+
+```ts
+export function behindCatalog( rec: Pick<LibRecord, 'fileRef' | 'kind' | 'categoryId' | 'name' | 'styleLabel' | 'fpOriginal'>, installedFp: string | null | undefined, printsOf: (id: CatalogIdentity) => Set<string> | null, ): boolean
+```
+
+Whether the catalog has another version of this mod than the one installed.
+
+```
+@param installedFp the fingerprint of the pak on disk (installer.analyzeRecord)
+@param printsOf    the catalog's fingerprints for one of its mods, or null when it has none
+```
+
+### `updateMod`
+
+```ts
+export async function updateMod({ installer, library, rec, log = () => {} }: { installer: Pick<Installer, 'download' | 'remove' | 'installInto' | 'slotBase' | 'moveToSlot' | 'setEnabled'>; library: Pick<Library, 'update'>; rec: LibRecord; log?: (msg: string) => void; }): Promise<LibRecord>
+```
+
+Replace an installed mod with the catalog's current version: same record, same slot, same switch.
+
+The new archive is fetched before anything is touched, so a download that fails leaves the
+installed version as it was. Paks go in beside the old ones and then take the old slot; only a
+file with a fixed path (a terrain's maps/dota.vpk) has to make room first.
+
+```
+@returns the record, updated
 ```
 
 ## src/mods-listing.ts

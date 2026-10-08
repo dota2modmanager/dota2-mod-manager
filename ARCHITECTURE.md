@@ -416,6 +416,7 @@ that location is not writable.
 | `src/game-repair.ts` | Putting the game back after something else changed it: a Dota patch, Steam's file check, waiting while Dota runs |
 | `src/patch-watch.ts` | Noticing a game update the moment it lands |
 | `src/update-impact.ts` | Which installed mods a game update reached: Valve's files they replace that the patch changed or removed |
+| `src/mod-update.ts` | Whether the catalog has another version of an installed mod (its fingerprint is not among the catalog's), and replacing it in its own slot ([#171](https://github.com/dota2modmanager/dota2-mod-manager/issues/171)) |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
 | `src/discord-auth.ts`, `src/discord-presence.ts`, `src/presence-status.ts` | Signing in with Discord, and what the Discord status says and whether it is on |

@@ -28,15 +28,19 @@ export class Fingerprints {
   /** fingerprint -> the catalog mods that file is; null until read */
   map: Record<string, CatalogIdentity | CatalogIdentity[]> | null;
   fonts: FontMod[];
+  /** the map turned round: a catalog mod -> its fingerprints; built when first asked */
+  byMod: Map<string, Set<string>> | null;
 
   constructor(userDataDir: string) {
     this.file = path.join(userDataDir, 'fingerprints.json');
     this.map = null;
     this.fonts = [];
+    this.byMod = null;
   }
 
   apply(data: FingerprintData): Record<string, CatalogIdentity | CatalogIdentity[]> {
     this.map = data.mods || {};
+    this.byMod = null;
     this.fonts = data.fonts || [];
     return this.map;
   }
@@ -76,6 +80,26 @@ export class Fingerprints {
     const v = this.ensure()[fp];
     if (!v) return null;
     return Array.isArray(v) ? v : [v]; // tolerate the older object-valued format
+  }
+
+  /**
+   * The fingerprints a catalog mod's file has today, or null when the index does not know the mod.
+   * Several, when the catalog keeps one name over a few files. src/mod-update.ts holds an installed
+   * mod against this to tell that its author replaced the archive.
+   */
+  printsOf(id: CatalogIdentity): Set<string> | null {
+    const key = (x: CatalogIdentity) => `${x.categoryId}\u0000${x.name}\u0000${x.styleLabel || ''}`;
+    if (!this.byMod) {
+      this.byMod = new Map();
+      for (const [fp, v] of Object.entries(this.ensure())) {
+        for (const x of (Array.isArray(v) ? v : [v])) {
+          const k = key(x);
+          if (!this.byMod.has(k)) this.byMod.set(k, new Set());
+          this.byMod.get(k)!.add(fp);
+        }
+      }
+    }
+    return this.byMod.get(key(id)) || null;
   }
 
   // Font mods share panorama\fonts with vanilla files, so they can't be matched by an

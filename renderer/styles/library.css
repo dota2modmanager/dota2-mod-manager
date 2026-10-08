@@ -77,8 +77,10 @@
   background: rgba(74, 222, 128, 0.12);
   border-color: rgba(74, 222, 128, 0.4);
 }
-/* mod carries item-schema changes: live (effects assembled) vs waiting for the patch */
-.lib-tag.schema {
+/* mod carries item-schema changes: live (effects assembled) vs waiting for the patch; and a
+   catalog mod whose author has published a new version (src/mod-update.ts) */
+.lib-tag.schema,
+.lib-tag.update {
   color: var(--primary-soft);
   background: var(--primary-dim);
   border-color: color-mix(in srgb, var(--md-primary) 45%, transparent);

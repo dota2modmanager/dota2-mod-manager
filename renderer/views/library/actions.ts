@@ -10,7 +10,7 @@ import type { LibraryActions } from '../../library/model.ts';
 import { external } from './external.ts';
 import { handleImportResult } from './import.ts';
 import { pickModsDialog } from './pick-mods.ts';
-import { combineSelection, deleteRecord, menuFor, standalonePackable } from './record-actions.ts';
+import { combineSelection, deleteRecord, menuFor, standalonePackable, updateRecord } from './record-actions.ts';
 import { lib, recById, screen } from './state.ts';
 
 const tick = (ids: string[], on: boolean) => { for (const id of ids) { if (on) lib.sel.add(id); else lib.sel.delete(id); } screen.draw(); };
@@ -122,8 +122,22 @@ function combineTicked() {
   combineSelection(tops.filter((k) => { const r = recById(k); return r && (isPackableRec(r) || r.kind === 'pack'); }));
 }
 
+// every mod the catalog has a new version of, one after another; one run at a time
+let updating = false;
+async function updateAll() {
+  if (updating) return;
+  updating = true;
+  try {
+    for (const r of lib.records.filter((x) => x.updateAvailable)) await updateRecord(r.id);
+    await screen.reload();
+  } finally {
+    updating = false;
+  }
+}
+
 async function banner(what: string, data?: string) {
   if (what === 'adoptAll') return adoptAll();
+  if (what === 'updateAll') return updateAll();
   if (what === 'combine') {
     const ids = await pickModsDialog(standalonePackable(), { title: L`Выбери моды для объединения в пак`, okLabel: L`Далее` });
     if (ids) await combineSelection(ids);

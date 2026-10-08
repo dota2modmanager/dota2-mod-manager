@@ -14,6 +14,7 @@ import type { AppContext } from './app-context.ts';
 import type { ForeignItem } from './installer-folder.ts';
 import type { CatalogIdentity } from './fingerprints.ts';
 import type { createTerrainAges } from './terrain-age.ts';
+import { behindCatalog } from './mod-update.ts';
 import type { createNoticeText } from './notice-text.ts';
 
 /** A file in the language folder the app did not put there, as My mods lists it. */
@@ -58,11 +59,14 @@ export function createModsListing({ installer, library, fingerprints, schemaServ
     // fingerprint -> a mod already in the library, so a file that is byte-identical to
     // something managed can be called what it is (a leftover copy) instead of a mystery
     const installedFps = new Map<string, string>();
+    // a catalog mod whose author replaced the archive since it was installed (src/mod-update.ts)
+    const behind = new Set<string>();
     try {
       for (const rec of library.list()) {
         if (rec.kind === 'pack') continue;
         const a = installer.analyzeRecord(rec);
         if (a && a.fp && !installedFps.has(a.fp)) installedFps.set(a.fp, rec.name);
+        if (fingerprints.printsOf && behindCatalog(rec, a?.fp, (id) => fingerprints.printsOf(id))) behind.add(rec.id);
       }
     } catch { /* no game path — nothing to compare against */ }
     try {
@@ -165,7 +169,7 @@ export function createModsListing({ installer, library, fingerprints, schemaServ
       const zone = installer.zoneFor(rec.categoryId);
       const staleMap = !!terrains.get(rec.id)?.stale;
       const pre = prePatch.get(rec.id);
-      const extra = { ...(by ? { coveredBy: by } : {}), ...(pre ? { prePatch: pre } : {}) };
+      const extra = { ...(by ? { coveredBy: by } : {}), ...(pre ? { prePatch: pre } : {}), ...(behind.has(rec.id) ? { updateAvailable: true } : {}) };
       if (!Array.isArray(rec.schema)) return { ...rec, zone, staleMap, ...extra };
       const { schema, ...rest } = rec;
       return { ...rest, zone, staleMap, schemaCount: schema.length, schemaLive: schemaOn, ...extra };

@@ -108,6 +108,17 @@ export async function combineSelection(ids: string[] | null): Promise<void> {
   await screen.reload();
 }
 
+/* The catalog's new version of a mod, in its own slot and with its own switch (src/mod-update.ts).
+ * The download shows on the bar at the bottom like an install. */
+export async function updateRecord(id: string): Promise<boolean> {
+  const rec = recById(id);
+  if (!rec) return false;
+  const r = await window.api.mods.update(id);
+  if (r.error) { toast(`${rec.name}: ${r.error}`, 'error', 6000); return false; }
+  toast(L`«${rec.name}» обновлён`, 'ok');
+  return true;
+}
+
 /* The pre-patch mark off one mod: whoever owns it looked in the game and it works. A later patch
  * that reaches it again puts the mark back. */
 async function clearPrePatch(id: string) {
@@ -144,6 +155,8 @@ export function menuFor(id: string): MenuItem[] | null {
     { separator: true },
     remove,
   ] : [
+    rec.updateAvailable && { label: L`Обновить до новой версии`, icon: 'upgrade', onPick: async () => { await updateRecord(rec.id); await screen.reload(); } },
+    rec.updateAvailable && { separator: true },
     ...orderItems(rec),
     ordered && { separator: true },
     (isCursorRec(rec) || langDir(rec)) && {
