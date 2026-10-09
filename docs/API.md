@@ -17,6 +17,7 @@ the code, not in this page.
 | [`src/app-context.ts`](#srcapp-contextts) | Everything the running app hands its IPC modules: the services src/main.ts builds at start, and the |
 | [`src/app-log.ts`](#srcapp-logts) | The app's own log: a small file every install keeps, so a support report (src/diagnostics.ts) |
 | [`src/app-page.ts`](#srcapp-pagets) | The page the main window loads. |
+| [`src/arcana-service.ts`](#srcarcana-servicets) | The arcana window's side in the main process (issue #118): what the window shows, and the mod it |
 | [`src/arcana.ts`](#srcarcanats) | An arcana as a mod, built from the game's own files: the look of an item a player has not got, |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
@@ -249,6 +250,69 @@ export function loadAppPage(win: Pick<BrowserWindow, 'loadURL' | 'loadFile'>, { 
 
 Loads the page into the window and returns its address, the one the navigation guard lets
 through, or null when a checkout was never built (an installer always carries the page).
+
+## src/arcana-service.ts
+
+The arcana window's side in the main process (issue #118): what the window shows, and the mod it
+builds out of the player's own game files, installed like any other.
+
+Two builds: the whole arcana for a player who has not got it (src/arcana.ts), and only its
+colour for one who has (src/recolor.ts), whose arcana brings its gem. Either is one record in
+My mods, marked `generated` with what it was built from, so choosing again rebuilds it in its
+place, and a Dota update that changes the files it was built from rebuilds it with the same
+colour instead of leaving it behind the game.
+
+Its pak goes in the early part of the load order, with the hero items (src/slot-zones.ts):
+an arcana from the catalog is a hero mod, so it loads later and this wins over it, which is
+what a colour chosen on purpose should do.
+
+### `ArcanaMode`
+
+```ts
+export type ArcanaMode = 'mod' | 'recolor'
+```
+
+The whole arcana, or only its colour over one the player has.
+
+### `Generated`
+
+```ts
+export interface Generated { set: string; color: Rgb; mode: ArcanaMode }
+```
+
+What a generated record was built from, kept on it to build it again.
+
+### `ArcanaState`
+
+```ts
+export interface ArcanaState
+```
+
+What the window shows.
+
+### `hex`
+
+```ts
+export const hex = (c: Rgb) => `#${c.map((n) => n.toString(16).padStart(2, '0')).join('')}`
+```
+
+"#ff3c28" for a colour.
+
+### `validColor`
+
+```ts
+export function validColor(c: unknown): Rgb | null
+```
+
+A colour from the window: three whole numbers 0-255, or nothing.
+
+### `createArcanaService`
+
+```ts
+export function createArcanaService({ gamePath, installer, library, log = () => {} }: { gamePath: () => string | null | undefined; installer: Pick<Installer, 'langFolder' | 'ensureLangFolder' | 'usedPakNames' | 'allocatePak' | 'writeInto' | 'remove' | 'slotBase' | 'moveToSlot' | 'setEnabled'>; library: Pick<Library, 'list' | 'add' | 'update'>; log?: (msg: string) => void; })
+```
+
+_No description in the source._
 
 ## src/arcana.ts
 
@@ -1110,7 +1174,7 @@ How long a repair waits for Dota to close before it looks again.
 ### `createGameRepair`
 
 ```ts
-export function createGameRepair({ settings, installer, library, schemaService, updateImpact = null, diag, send, isRunning, retryMs = REPAIR_RETRY_MS, now = Date.now }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed'>; library: Pick<Library, 'list'>; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal'>; /** which mods the patch reached; left out, nobody is told */ updateImpact?: Pick<ReturnType<typeof createUpdateImpact>, 'check'> | null; diag: (msg: string) => void
+export function createGameRepair({ settings, installer, library, schemaService, updateImpact = null, rebuildGenerated, diag, send, isRunning, retryMs = REPAIR_RETRY_MS, now = Date.now }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed'>; library: Pick<Library, 'list'>; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal'>; /** which mods the patch reached; left out, nobody is told */ updateImpact?: Pick<ReturnType<typeof createUpdateImpact>, 'check' | 'clear'> | null; /** builds again the mods the app built out of the game's files; returns the ids it built */
 ```
 
 The repair, over the services src/game-upkeep.ts already holds.
@@ -1150,7 +1214,7 @@ Run each step in order; one that throws is logged as skipped and the rest still 
 ### `createGameUpkeep`
 
 ```ts
-export function createGameUpkeep({ settings, installer, library, schemaService, updateImpact = null, reconcileCursors, diag, send, isRunning = () => dotaIsRunning(), findGame, validGame, retryMs = REPAIR_RETRY_MS, now = Date.now, }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed' | 'migrateLegacyPriorityPaks' | 'migrateSlotZones' | 'mergeMultiPartRecords' | 'sweepStaged'>; library: Library; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal' | 'migrate' | 'migrateCosmeticSettings'>
+export function createGameUpkeep({ settings, installer, library, schemaService, updateImpact = null, rebuildGenerated, reconcileCursors, diag, send, isRunning = () => dotaIsRunning(), findGame, validGame, retryMs = REPAIR_RETRY_MS, now = Date.now, }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed' | 'migrateLegacyPriorityPaks' | 'migrateSlotZones' | 'mergeMultiPartRecords' | 'sweepStaged'>; library: Library; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal' | 'migrate' | 'migrateCosmeticSettings'>
 ```
 
 _No description in the source._

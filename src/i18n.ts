@@ -22,6 +22,8 @@ const EN = {
   'В этой папке не найдена Dota 2 (нет подпапки dota)': 'No Dota 2 here (there is no "dota" subfolder)',
   'Уже установлено': 'Already installed',
   'Мод не найден': 'Mod not found',
+  'Не указана папка игры': 'No game folder is set',
+  'Не тот цвет': 'Not a colour',
   'Этот мод нельзя обновить из каталога': 'This mod cannot be updated from the catalog',
   'Сохранить мод одним .vpk файлом': 'Save the mod as a single .vpk file',
   'Куда распаковать мод': 'Where to unpack the mod',

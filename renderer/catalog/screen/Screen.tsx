@@ -9,6 +9,7 @@ import { CosmeticScreen } from './CosmeticScreen.tsx';
 import { BuilderHub } from './BuilderHub.tsx';
 import { CosmeticGrid } from '../cosmetic/CosmeticCard.tsx';
 import { ModGrid } from '../card/ModGrid.tsx';
+import { ArcanaCard } from '../arcana/ArcanaCard.tsx';
 
 interface Props { model: ScreenModel; actions: ScreenActions }
 
@@ -54,7 +55,8 @@ function List({ model: m, actions }: { model: Extract<ScreenModel, { kind: 'list
         <>
           {m.mods.heading && <div className="section-h"><span className="ms">extension</span>{L`Моды`}</div>}
           <div className="grid" id="modGrid">
-            <ModGrid mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.mods.emptyText}
+            {m.lead && <ArcanaCard m={m.lead} onOpen={actions.openArcana} />}
+            <ModGrid mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead ? undefined : m.mods.emptyText}
               onOpen={actions.openMod} onFavChanged={actions.favChanged} />
           </div>
         </>

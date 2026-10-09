@@ -31,13 +31,15 @@ export type Stuck = { id: string; name: string };
 export const REPAIR_RETRY_MS = 20000;
 
 /** The repair, over the services src/game-upkeep.ts already holds. */
-export function createGameRepair({ settings, installer, library, schemaService, updateImpact = null, diag, send, isRunning, retryMs = REPAIR_RETRY_MS, now = Date.now }: {
+export function createGameRepair({ settings, installer, library, schemaService, updateImpact = null, rebuildGenerated, diag, send, isRunning, retryMs = REPAIR_RETRY_MS, now = Date.now }: {
   settings: Pick<Settings, 'get' | 'set'>;
   installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed'>;
   library: Pick<Library, 'list'>;
   schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal'>;
   /** which mods the patch reached; left out, nobody is told */
-  updateImpact?: Pick<ReturnType<typeof createUpdateImpact>, 'check'> | null;
+  updateImpact?: Pick<ReturnType<typeof createUpdateImpact>, 'check' | 'clear'> | null;
+  /** builds again the mods the app built out of the game's files; returns the ids it built */
+  rebuildGenerated?: (ids: string[]) => string[];
   diag: (msg: string) => void;
   /** tells the window what the repair did */
   send: (repair: PatchRepair) => void;
@@ -103,8 +105,14 @@ export function createGameRepair({ settings, installer, library, schemaService, 
     try {
       const reached = updateImpact.check();
       if (!reached) return undefined;
+      // a mod the app built out of the game's files is built again out of the new ones: it is
+      // not behind the patch any more, so it gets no mark and no line in the banner
+      const rebuilt = new Set(rebuildGenerated ? rebuildGenerated(reached.ids) : []);
+      for (const id of rebuilt) updateImpact.clear(id);
+      const ids = reached.ids.filter((id) => !rebuilt.has(id));
+      if (!ids.length) return undefined;
       const names = new Map(library.list().map((r) => [r.id, r.name]));
-      return { build: reached.to, mods: reached.ids.map((id) => names.get(id) || id) };
+      return { build: reached.to, mods: ids.map((id) => names.get(id) || id) };
     } catch (err) {
       diag(`update impact skipped: ${errorText(err)}`);
       return undefined;

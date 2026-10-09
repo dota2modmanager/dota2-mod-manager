@@ -9,6 +9,8 @@ const picture = (url: string): Thumb => ({ url, video: isVideo(url) });
 
 /** A record's own picture, else the catalog's, else one fetched out of the mod or the wiki (ui/thumb.ts). */
 export function recThumb(rec: LibRecord | Member): Thumb {
+  const built = (rec as { generated?: { color?: [number, number, number] } }).generated;
+  if (built?.color) return { arcana: built.color };
   const url = recPreviewUrl(rec);
   if (url) return picture(url);
   const fb = wikiFallbackKey(rec);

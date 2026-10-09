@@ -232,6 +232,33 @@ function noticeAssets(real) {
   return out;
 }
 
+/* What the arcana window builds from (src/arcana.ts, src/recolor.ts): Terrorblade's particles and
+ * materials, the arcana's models, its pictures and the plain ones they stand in for. About 450
+ * files, a few MB, so the window shows its card in the sandbox and builds a real mod there. */
+function arcanaAssets(real) {
+  const { openVpkIndex, listVpkPathsFile } = require('../src/vpk.ts');
+  const { RECOLOR_SETS } = require('../src/recolor.ts');
+  const { ARCANA_SETS } = require('../src/arcana.ts');
+  const out = [];
+  try {
+    const pak = path.join(real, 'dota', 'pak01_dir.vpk');
+    const ix = openVpkIndex(pak);
+    const set = RECOLOR_SETS['terrorblade-arcana'];
+    const arcana = ARCANA_SETS['terrorblade-arcana'];
+    const prefixes = [...set.own, ...set.shared, ...set.materials];
+    const wanted = (p) => (/\.(vpcf_c|vmat_c)$/.test(p) && prefixes.some((f) => p.startsWith(f)))
+      || Object.values(arcana.copies).includes(p) || Object.keys(arcana.copies).includes(p)
+      || (p.startsWith('panorama/images/') && p.includes('terrorblade') && (p.includes('_alt1') || p.includes('arcana') || !p.includes('/econ/')));
+    for (const rel of listVpkPathsFile(pak).filter(wanted)) {
+      const data = ix.read(rel);
+      if (data) out.push(entry(rel, data));
+    }
+  } catch (e) {
+    log('  could not copy the arcana files:', e.message);
+  }
+  return out;
+}
+
 /** One inline-data VPK entry in the shape buildVpk() wants. */
 function entry(relPath, data) {
   const norm = relPath.replace(/\\/g, '/').toLowerCase();
@@ -346,13 +373,13 @@ function buildGameTree() {
       log('  could not read the real schema, using the stub:', e.message);
     }
   }
-  const extras = real && origin !== 'fallback stub' ? [...builderAssets(real, schema), ...noticeAssets(real)] : [];
+  const extras = real && origin !== 'fallback stub' ? [...builderAssets(real, schema), ...noticeAssets(real), ...arcanaAssets(real)] : [];
   fs.writeFileSync(
     path.join(GAME, 'dota', 'pak01_dir.vpk'),
     buildVpk([entry(SCHEMA_REL, Buffer.from(schema, 'latin1')), ...extras])
   );
   log(`  items_game.txt from ${origin}`);
-  if (extras.length) log(`  ${extras.length} files for the item builder and the anti-cheat notice (portraits, sample wearables, effects, chat files)`);
+  if (extras.length) log(`  ${extras.length} files for the item builder, the anti-cheat notice and the arcana (portraits, sample wearables, effects, chat files, Terrorblade)`);
 
   // dota_russian: Valve's gameinfo plus stand-ins for the voice paks. langFolders() decides
   // "this folder holds Valve content" by the presence of pak01_*, and the 2.0 feature

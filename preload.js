@@ -88,6 +88,11 @@ contextBridge.exposeInMainWorld('api', {
     pick: (slot, itemId, itemName, effectId) => ipcRenderer.invoke('cosmetics:pick', slot, itemId, itemName, effectId),
     pickSet: (setId) => ipcRenderer.invoke('cosmetics:pickSet', setId),
   },
+  // the arcana built out of the game's own files, in a colour of the user's
+  arcana: {
+    state: () => ipcRenderer.invoke('arcana:state'),
+    install: (color, mode) => ipcRenderer.invoke('arcana:install', color, mode),
+  },
   // a mod's own video, and the still the window decodes out of it
   preview: {
     video: (key) => ipcRenderer.invoke('preview:video', key),
