@@ -12,49 +12,19 @@
  *
  * The layout follows ValveResourceFormat's BinaryKV3.cs (MIT), versions 1 to 5. Of the 339
  * Terrorblade particles in the game on 2026-10-08, 290 are version 2, 39 version 5, 8 version 4
- * and 2 version 3, all LZ4. Files with binary blobs are refused; no particle here has one.
+ * and 2 version 3, all LZ4. Materials keep their expressions (`$GemColor`, issue #118) in binary
+ * blobs, which can be given new bytes of another length (src/kv3-blobs.ts). The compression is
+ * src/lz4.ts, reading and changing a number src/kv3-cells.ts.
  */
+
+import { lz4Decode, lz4Literals } from './lz4.ts';
+import { blobTable, readBlobs, rewriteBlobs, relaidInline } from './kv3-blobs.ts';
+
+export { readCell, writeCell, numberOf, setNumber } from './kv3-cells.ts';
 
 const MAGIC = 0x4b563300;
 const LZ4 = 1;
 const NONE = 0;
-
-/** LZ4 block format: literals and back-references, the one Valve's KV3 writer uses. */
-export function lz4Decode(src: Buffer, size: number): Buffer {
-  const out = Buffer.alloc(size);
-  let i = 0;
-  let o = 0;
-  const len = (n: number) => { let b; do { b = src[i++]; n += b; } while (b === 255); return n; };
-  while (i < src.length) {
-    const token = src[i++];
-    let lit = token >> 4;
-    if (lit === 15) lit = len(lit);
-    src.copy(out, o, i, i + lit);
-    i += lit;
-    o += lit;
-    if (i >= src.length) break;
-    const back = src[i] | (src[i + 1] << 8);
-    i += 2;
-    let match = token & 15;
-    if (match === 15) match = len(match);
-    match += 4;
-    if (!back || back > o) throw new Error('kv3: LZ4 reference outside the output');
-    for (let from = o - back, k = 0; k < match; k++) out[o++] = out[from++];
-  }
-  if (o !== size) throw new Error(`kv3: LZ4 gave ${o} bytes, expected ${size}`);
-  return out;
-}
-
-/** The same bytes as one LZ4 block of literals only: valid LZ4, a little larger than the input. */
-export function lz4Literals(src: Buffer): Buffer {
-  const head = [src.length >= 15 ? 0xf0 : src.length << 4];
-  if (src.length >= 15) {
-    let rest = src.length - 15;
-    for (; rest >= 255; rest -= 255) head.push(255);
-    head.push(rest);
-  }
-  return Buffer.concat([Buffer.from(head), src]);
-}
 
 /** Where one number lives: which decompressed buffer, the byte offset in it, and how wide it is. */
 export interface Kv3Cell { buffer: 0 | 1; offset: number; width: 1 | 2 | 4 | 8; signed: boolean; float?: boolean }
@@ -70,6 +40,7 @@ export type Kv3Node =
   | { kind: 'array'; items: Kv3Node[] }
   | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null }
   | { kind: 'string'; value: string }
+  | { kind: 'blob'; data: Buffer }
   | { kind: 'other' };
 
 /** An array of numbers the walk found, with the member name it was under and a cell per element (null: no storage). */
@@ -81,7 +52,9 @@ export interface Kv3Block {
   buffers: Buffer[];
   root: Kv3Node;
   arrays: Kv3Array[];
-  /** the block with the buffers as they are now, compressed the way it came */
+  /** the blob nodes, in the order they are stored; give one new `data` and encode() writes it */
+  blobs: Extract<Kv3Node, { kind: 'blob' }>[];
+  /** the block with the buffers and blobs as they are now, compressed the way it came */
   encode(): Buffer;
 }
 
@@ -110,7 +83,7 @@ export function readKv3(block: Buffer): Kv3Block {
   }
   if (version >= 4) { field('c2', 4); field('blockSizes', 4); }
   if (version >= 5) for (const f of ['unc1', 'cmp1', 'unc2', 'cmp2', 'b2c1', 'b2c2', 'b2c4', 'b2c8', 'nodes', 'b2objects', 'b2arrays', 'elements']) field(f, 4);
-  if (h.blocks) throw new Error('kv3: binary blobs are not handled');
+  if (h.dict) throw new Error('kv3: a compression dictionary is not handled');
   const headerEnd = p;
 
   const unpack = (size: number, csize: number): Buffer => {
@@ -121,7 +94,7 @@ export function readKv3(block: Buffer): Kv3Block {
   const buffers = version >= 5
     ? [unpack(h.unc1, h.cmp1), unpack(h.unc2, h.cmp2)]
     : [unpack(h.unc, version === 1 ? block.length - headerEnd : h.cmp)];
-  const tail = block.subarray(p);
+  const blobsAt = p;
 
   // the lanes of the first buffer: 1-byte, 2-byte, 4-byte (string count first), 8-byte
   const b0 = buffers[0];
@@ -147,7 +120,6 @@ export function readKv3(block: Buffer): Kv3Block {
   let types: Lane;
   let objectLengths: Lane | null = null;
   if (version >= 5) {
-    const b1 = buffers[1];
     objectLengths = lane(1, 0, h.b2objects * 4);
     let q = objectLengths.end;
     const m1 = lane(1, q, h.b2c1); q = m1.end;
@@ -159,12 +131,20 @@ export function readKv3(block: Buffer): Kv3Block {
     const m8 = lane(1, q, h.b2c8 * 8); q = m8.end;
     main = { l1: m1, l2: m2, l4: m4, l8: m8 };
     types = lane(1, q, h.types);
-    if (b1.readUInt32LE(types.end) !== 0xffeedd00) throw new Error('kv3: no trailer after the types');
   } else {
     const typesLength = version === 1 ? b0.length - text.at - 4 : h.types - (text.at - off);
     types = lane(0, text.at, typesLength);
-    if (b0.readUInt32LE(types.end) !== 0xffeedd00) throw new Error('kv3: no trailer after the types');
   }
+
+  // binary blobs from version 2: described after the types, their frames after the buffers
+  const typesBuf = buffers[types.buf];
+  const table = blobTable(typesBuf, types.end, version >= 2 ? h.blocks : 0, method === LZ4, h.frame);
+  const blobLengths = table ? lane(types.buf, table.lengthsAt, table.count * 4) : null;
+  let blobData: Buffer = Buffer.alloc(0);
+  p = blobsAt;
+  if (table) ({ data: blobData, end: p } = readBlobs(block, p, table, h.blobs));
+  const blobsEnd = p;
+  const tail = block.subarray(p);
 
   const buf = (l: Lane) => buffers[l.buf];
   const take = (l: Lane, width: number): number => { const at = l.at; l.at += width; if (l.at > l.end) throw new Error('kv3: a lane ran out'); return at; };
@@ -185,6 +165,11 @@ export function readKv3(block: Buffer): Kv3Block {
   };
   const int4 = (l: Lane) => buf(l).readInt32LE(take(l, 4));
   const arrays: Kv3Array[] = [];
+  const blobs: Extract<Kv3Node, { kind: 'blob' }>[] = [];
+  const originals: Buffer[] = [];
+  /** before version 2: where each blob's bytes and its length lie in the first buffer */
+  const inline: { at: number; lengthAt: number }[] = [];
+  let blobRead = 0;
   const num = (type: number, c: Kv3Cell | null, typeAt: Kv3Cell | null): Kv3Node => ({ kind: 'number', type, cell: c, typeAt });
 
   const value = (t: number, typeAt: Kv3Cell | null, lanes: typeof main, key: string, path: string): Kv3Node => {
@@ -199,6 +184,24 @@ export function readKv3(block: Buffer): Kv3Block {
       case 3: case 4: return num(t, cell(lanes.l8, 8, t === 3), typeAt);
       case 5: return num(t, cell(lanes.l8, 8, true, true), typeAt);
       case 6: return { kind: 'string', value: strings[int4(main.l4)] ?? '' };
+      case 7: {
+        let data: Buffer;
+        if (version < 2) {
+          const n = int4(main.l4);
+          const at = take(main.l1, n);
+          data = Buffer.from(buf(main.l1).subarray(at, at + n));
+          inline.push({ at, lengthAt: main.l4.at - 4 });
+        } else {
+          if (!blobLengths) throw new Error('kv3: a blob with no blob table');
+          const n = typesBuf.readInt32LE(take(blobLengths, 4));
+          data = Buffer.from(blobData.subarray(blobRead, blobRead + n));
+          blobRead += n;
+        }
+        const node = { kind: 'blob' as const, data };
+        blobs.push(node);
+        originals.push(data);
+        return node;
+      }
       case 8: case 10: case 24: case 25: {
         const n = t === 8 || t === 10 ? int4(main.l4) : buf(main.l1)[take(main.l1, 1)];
         const items: Kv3Node[] = [];
@@ -228,16 +231,31 @@ export function readKv3(block: Buffer): Kv3Block {
   const [rootType, rootAt] = readType();
   const root = value(rootType, rootAt, main, '', '');
   const lanes = version >= 5 ? [main.l1, main.l2, main.l4, main.l8, types, aux.l1, aux.l2, aux.l4, aux.l8] : [main.l1, main.l2, main.l4, main.l8, types];
+  if (blobLengths) lanes.push(blobLengths);
   for (const l of lanes) if (l.at !== l.end) throw new Error('kv3: the walk did not end where the data does');
+  if (blobRead !== blobData.length) throw new Error('kv3: blob bytes left over');
 
   return {
     version,
     buffers,
     root,
     arrays,
+    blobs,
     encode() {
       const head = Buffer.from(block.subarray(0, headerEnd));
-      const packed = buffers.map((b) => (method === LZ4 ? lz4Literals(b) : b));
+      let out = buffers;
+      let blobPart = block.subarray(blobsAt, blobsEnd);
+      if (blobs.some((b, i) => !b.data.equals(originals[i]))) {
+        if (version < 2) {
+          out = [relaidInline(buffers[0], h.c1, h.c4, inline, originals, blobs.map((b) => b.data))];
+          head.writeInt32LE(h.c1 + blobs.reduce((a, b, i) => a + b.data.length - originals[i].length, 0), h['@c1']);
+          head.writeInt32LE(out[0].length, h['@unc']);
+        } else {
+          blobPart = rewriteBlobs(table!, blobs.map((b) => b.data));
+          head.writeInt32LE(blobs.reduce((a, b) => a + b.data.length, 0), h['@blobs']);
+        }
+      }
+      const packed = out.map((b) => (method === LZ4 ? lz4Literals(b) : b));
       if (method === LZ4) {
         if (version >= 5) {
           head.writeInt32LE(packed[0].length, h['@cmp1']);
@@ -247,50 +265,7 @@ export function readKv3(block: Buffer): Kv3Block {
           head.writeInt32LE(packed[0].length, h['@cmp']);
         }
       }
-      return Buffer.concat([head, ...packed, tail]);
+      return Buffer.concat([head, ...packed, blobPart, tail]);
     },
   };
-}
-
-/** A number's value. */
-export function readCell(kv: Kv3Block, c: Kv3Cell): number {
-  const b = kv.buffers[c.buffer];
-  if (c.float) return c.width === 4 ? b.readFloatLE(c.offset) : b.readDoubleLE(c.offset);
-  if (c.width === 1) return c.signed ? b.readInt8(c.offset) : b.readUInt8(c.offset);
-  if (c.width === 2) return c.signed ? b.readInt16LE(c.offset) : b.readUInt16LE(c.offset);
-  if (c.width === 4) return c.signed ? b.readInt32LE(c.offset) : b.readUInt32LE(c.offset);
-  return Number(c.signed ? b.readBigInt64LE(c.offset) : b.readBigUInt64LE(c.offset));
-}
-
-/** Change a number where it lies. */
-export function writeCell(kv: Kv3Block, c: Kv3Cell, v: number): void {
-  const b = kv.buffers[c.buffer];
-  if (c.float) { if (c.width === 4) b.writeFloatLE(v, c.offset); else b.writeDoubleLE(v, c.offset); return; }
-  if (c.width === 1) { if (c.signed) b.writeInt8(v, c.offset); else b.writeUInt8(v, c.offset); return; }
-  if (c.width === 2) { if (c.signed) b.writeInt16LE(v, c.offset); else b.writeUInt16LE(v, c.offset); return; }
-  if (c.width === 4) { if (c.signed) b.writeInt32LE(v, c.offset); else b.writeUInt32LE(v, c.offset); return; }
-  if (c.signed) b.writeBigInt64LE(BigInt(v), c.offset); else b.writeBigUInt64LE(BigInt(v), c.offset);
-}
-
-/** A number node's value: from its bytes, or from its type for the 0s and 1s stored as a type alone. */
-export function numberOf(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' }>): number {
-  if (node.cell) return readCell(kv, node.cell);
-  return node.type === 16 || node.type === 18 ? 1 : 0;
-}
-
-/**
- * Set a number node where it lies. A number with bytes takes any value its width holds; one stored
- * as a type alone can only turn into the other of 0 and 1, by rewriting that type byte, which keeps
- * every lane the length it was.
- * @returns whether the value could be set
- */
-export function setNumber(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' }>, v: number): boolean {
-  if (node.cell) { writeCell(kv, node.cell, v); return true; }
-  if (!node.typeAt || (v !== 0 && v !== 1)) return false;
-  const want = node.type <= 16 ? (v ? 16 : 15) : (v ? 18 : 17);
-  const b = kv.buffers[node.typeAt.buffer];
-  const mask = kv.version >= 3 ? 0x3f : 0x7f;
-  b[node.typeAt.offset] = (b[node.typeAt.offset] & ~mask) | want;
-  node.type = want;
-  return true;
 }

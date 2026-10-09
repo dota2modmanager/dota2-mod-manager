@@ -1,34 +1,47 @@
 /**
- * An item's effects in a colour of the user's choosing, built from the game's own particles.
+ * An item's effects in a colour of the user's choosing, built from the game's own files.
  *
- * Issue #118 asked for Terrorblade's arcana in any RGB. Its glow, eyes, mouth and kill effect are
- * particles whose colours are numbers in the compiled file (`m_ConstantColor = [ 0, 210, 255, 255 ]`)
- * over textures that are white, so changing the numbers is changing the colour. The files are read
- * out of Valve's pak01, recoloured where the numbers lie (src/kv3.ts) and packed as one mod.
+ * Issue #118 asked for Terrorblade's arcana in any RGB. The arcana is red because it comes with a
+ * gem, Reflection's Shade (#FF3C28), and the game passes a gem's colour to the hero's particles
+ * through control point 15 and to its materials as `$GemColor`. Neither can be set from a mod, so
+ * the mod changes what the files do with the gem's colour instead:
  *
- * The colour is moved, not painted over. Every colour in the set takes the chosen hue, and keeps
- * its own brightness and saturation scaled by the chosen colour's: the arcana's main cyan becomes
- * exactly the colour picked, its dark teals become dark shades of it, and black, white and greys,
- * which carry no hue, stay as they are.
+ * - a particle that takes its colour from control point 15 scales it, channel by channel, into a
+ *   range (`m_vOutputMax`); the range is scaled again by chosen / gem, so the arcana's gem comes
+ *   out as the chosen colour. Plain Terrorblade has no gem, the game turns that tint off for him
+ *   (control point 16), and he looks as he did;
+ * - a material reads `exists($GemColor) ? $GemColor : <its own colour>`; the read becomes the
+ *   chosen colour (src/material.ts) and the other branch stays;
+ * - a particle only the arcana uses, with colours written in it and no gem tint, has those colours
+ *   moved to the chosen one: every colour takes the chosen hue and keeps its own brightness and
+ *   saturation scaled by the chosen colour's; black, white and greys stay as they are.
  */
-import { readKv3, readCell, writeCell, numberOf, setNumber, type Kv3Block, type Kv3Node } from './kv3.ts';
+import { readKv3, readCell, writeCell, numberOf, type Kv3Block, type Kv3Node } from './kv3.ts';
+import { attributeToken, dataBlock, rewriteExpressions, withConstant } from './material.ts';
 import { buildVpk, entryAt, listVpkPathsFile, openVpkIndex, type VpkEntry } from './vpk.ts';
 
 export type Rgb = [number, number, number];
 
-/**
- * What can be recoloured: the particle folders in pak01, and the colour tables (`textures`, path
- * prefixes) its materials read, with the hue the item shows in the game (`hue`, degrees), which is
- * the one a table is turned away from. The arcana is red in the game although its particles say
- * cyan: the game tints them through control point 15, and its body goes through a colour-warp
- * table that is red where the arcana glows.
- */
-export const RECOLOR_SETS: Record<string, { name: string; folders: string[]; textures: string[]; hue: number }> = {
+/** What can be recoloured, by path prefix in pak01, and the colour of the gem the item comes with. */
+export interface RecolorSet {
+  name: string;
+  gem: Rgb;
+  /** particles only this item uses: colours written in them follow the chosen one */
+  own: string[];
+  /** particles it shares with the hero and his other items: only the gem's tint changes */
+  shared: string[];
+  /** materials that read the gem's colour */
+  materials: string[];
+}
+
+export const RECOLOR_SETS: Record<string, RecolorSet> = {
   'terrorblade-arcana': {
     name: 'Fractal Horns of Inner Abysm',
-    folders: ['particles/econ/items/terrorblade/terrorblade_horns_arcana/'],
-    textures: ['materials/models/heroes/statuseffects/colorwarp_tb_arcana_colorwarp3d'],
-    hue: 0,
+    // items_game, colors: unusual_terrorblade_abysm, "Reflection's Shade"
+    gem: [255, 60, 40],
+    own: ['particles/econ/items/terrorblade/terrorblade_horns_arcana/'],
+    shared: ['particles/units/heroes/hero_terrorblade/', 'particles/models/heroes/terrorblade/', 'particles/econ/items/terrorblade/'],
+    materials: ['materials/models/heroes/terrorblade/', 'materials/models/items/terrorblade/'],
   },
 };
 
@@ -68,51 +81,21 @@ export function shade(color: Rgb, target: Rgb): Rgb {
   return fromHsv([th, Math.min(1, s * ts), Math.min(1, v * tv)]);
 }
 
-/** One colour turned round the colour wheel by `degrees`, its saturation and brightness kept. */
-export function rotateHue(color: Rgb, degrees: number): Rgb {
-  const [h, s, v] = toHsv(color);
-  if (s < 0.05) return color;
-  return fromHsv([((h + degrees) % 360 + 360) % 360, s, v]);
-}
-
-/** The DATA block of a compiled resource, and the file with a new one in its place. */
-export function dataBlock(file: Buffer): { data: Buffer; replace(next: Buffer): Buffer } {
-  const table = 8 + file.readUInt32LE(8);
-  const count = file.readUInt32LE(12);
-  let entry = -1;
-  let off = 0;
-  let size = 0;
-  let last = 0;
-  for (let k = 0; k < count; k++) {
-    const e = table + k * 12;
-    const at = e + 4 + file.readUInt32LE(e + 4);
-    last = Math.max(last, at);
-    if (file.toString('ascii', e, e + 4) === 'DATA') { entry = e; off = at; size = file.readUInt32LE(e + 8); }
-  }
-  if (entry === -1) throw new Error('resource: no DATA block');
-  if (off !== last) throw new Error('resource: DATA is not the last block');
-  return {
-    data: file.subarray(off, off + size),
-    replace(next) {
-      const out = Buffer.concat([file.subarray(0, off), next, file.subarray(off + size)]);
-      out.writeUInt32LE(next.length, entry + 8);
-      out.writeUInt32LE(out.length, 0);
-      return out;
-    },
-  };
-}
-
-/** The operators that colour a particle from control point 15, which the game fills in at run time. */
-const TINT_OPS = /^C_(INIT|OP)_RemapCPtoVector$/;
+/** The operators that colour a particle from control point 15, where the game puts a gem's colour. */
+const GEM_TINT = /^C_(INIT|OP)_RemapCPtoVector$/;
 
 /**
- * Turn off the game's own tint, so a particle shows the colour written in it. Such an operator
- * maps control point 15 into the colour field (6), as strong as control point 16 says; with its
- * strength at zero it changes nothing, and the recoloured `m_ConstantColor` is what is drawn.
- * @returns how many operators were turned off
+ * Make the gem's tint give the chosen colour. Such an operator maps control point 15 from
+ * [0, m_vInputMax] to [m_vOutputMin, m_vOutputMax] into the colour field (6); scaling each
+ * channel's range by chosen / gem turns the gem's colour into the chosen one, at the strength the
+ * game gives the tint.
+ * @returns how many operators were changed, and how many could not be (no bytes to write to)
  */
-function untint(kv: Kv3Block): number {
-  let n = 0;
+function retarget(kv: Kv3Block, gem: Rgb, target: Rgb): { changed: number; skipped: number } {
+  let changed = 0;
+  let skipped = 0;
+  const vector = (n: Kv3Node | undefined) => (n?.kind === 'array' && n.items.length >= 3 && n.items.every((x) => x.kind === 'number')
+    ? n.items as Extract<Kv3Node, { kind: 'number' }>[] : null);
   const visit = (node: Kv3Node) => {
     if (node.kind === 'array') { node.items.forEach(visit); return; }
     if (node.kind !== 'object') return;
@@ -120,57 +103,29 @@ function untint(kv: Kv3Block): number {
     const cls = m.get('_class');
     const cp = m.get('m_nCPInput');
     const field = m.get('m_nFieldOutput');
-    if (cls?.kind === 'string' && TINT_OPS.test(cls.value) && cp?.kind === 'number' && numberOf(kv, cp) === 15
+    if (cls?.kind === 'string' && GEM_TINT.test(cls.value) && cp?.kind === 'number' && numberOf(kv, cp) === 15
       && field?.kind === 'number' && numberOf(kv, field) === 6) {
-      const strength = m.get('m_flOpStrength');
-      const zero = (x: Kv3Node | undefined) => x?.kind === 'number' && setNumber(kv, x, 0);
-      let done = false;
-      if (strength?.kind === 'number') done = zero(strength);
-      else if (strength?.kind === 'object') {
-        for (const k of ['m_flLiteralValue', 'm_flOutput0', 'm_flOutput1']) if (zero(strength.members.get(k))) done = true;
+      const hi = vector(m.get('m_vOutputMax'));
+      const lo = vector(m.get('m_vOutputMin'));
+      const from = vector(m.get('m_vInputMin'));
+      if (!hi || hi.some((x) => !x.cell) || from?.some((x) => numberOf(kv, x) !== 0)) skipped++;
+      else {
+        for (let c = 0; c < 3; c++) {
+          if (!gem[c]) continue; // a channel the gem has none of cannot be scaled into anything
+          const low = lo ? numberOf(kv, lo[c]) : 0;
+          writeCell(kv, hi[c].cell!, low + (readCell(kv, hi[c].cell!) - low) * (target[c] / gem[c]));
+        }
+        changed++;
       }
-      if (done) n++;
     }
     m.forEach(visit);
   };
   visit(kv.root);
-  return n;
+  return { changed, skipped };
 }
 
-/**
- * A colour-warp table turned round the colour wheel: an uncompressed RGBA8888 texture with one mip,
- * its pixels right after the DATA block. Anything else comes back unchanged.
- */
-export function recolorTexture(file: Buffer, degrees: number): { file: Buffer; changed: number } {
-  const table = 8 + file.readUInt32LE(8);
-  let data = -1;
-  let size = 0;
-  for (let k = 0; k < file.readUInt32LE(12); k++) {
-    const e = table + k * 12;
-    if (file.toString('ascii', e, e + 4) === 'DATA') { data = e + 4 + file.readUInt32LE(e + 4); size = file.readUInt32LE(e + 8); }
-  }
-  if (data === -1 || size < 28) return { file, changed: 0 };
-  const [w, h, d] = [file.readUInt16LE(data + 20), file.readUInt16LE(data + 22), file.readUInt16LE(data + 24)];
-  const format = file[data + 26];
-  const mips = file[data + 27];
-  const pixels = data + size;
-  if (format !== 4 || mips !== 1 || file.length - pixels !== w * h * d * 4) return { file, changed: 0 };
-  const out = Buffer.from(file);
-  let changed = 0;
-  for (let i = pixels; i < out.length; i += 4) {
-    const rgb = [out[i], out[i + 1], out[i + 2]] as Rgb;
-    const next = rotateHue(rgb, degrees);
-    if (next.every((x, j) => x === rgb[j])) continue;
-    [out[i], out[i + 1], out[i + 2]] = next;
-    changed++;
-  }
-  return { file: changed ? out : file, changed };
-}
-
-/** One compiled resource with its colours moved; `changed` counts the colours, `skipped` those with no room. */
-export function recolorResource(file: Buffer, target: Rgb): { file: Buffer; changed: number; skipped: number } {
-  const block = dataBlock(file);
-  const kv = readKv3(block.data);
+/** The colours written in a particle moved to the chosen one; `skipped` counts those with no room. */
+function shadeColors(kv: Kv3Block, target: Rgb): { changed: number; skipped: number } {
   let changed = 0;
   let skipped = 0;
   for (const a of kv.arrays) {
@@ -187,8 +142,30 @@ export function recolorResource(file: Buffer, target: Rgb): { file: Buffer; chan
     next.forEach((n, i) => writeCell(kv, cells[i], n));
     changed++;
   }
-  const untinted = untint(kv);
-  return { file: changed || untinted ? block.replace(kv.encode()) : file, changed: changed + untinted, skipped };
+  return { changed, skipped };
+}
+
+/**
+ * One compiled particle in the chosen colour. With `gem`, the gem's tint is pointed at the chosen
+ * colour; with `own` (the default), a particle the gem does not tint has its written colours moved.
+ */
+export function recolorResource(file: Buffer, target: Rgb, { gem, own = true }: { gem?: Rgb; own?: boolean } = {}): {
+  file: Buffer; changed: number; skipped: number;
+} {
+  const block = dataBlock(file);
+  const kv = readKv3(block.data);
+  const tint = gem ? retarget(kv, gem, target) : { changed: 0, skipped: 0 };
+  const written = own && !tint.changed ? shadeColors(kv, target) : { changed: 0, skipped: 0 };
+  const changed = tint.changed + written.changed;
+  return { file: changed ? block.replace(kv.encode()) : file, changed, skipped: tint.skipped + written.skipped };
+}
+
+const GEM_COLOR = attributeToken('$GemColor');
+
+/** One material with its reads of the gem's colour replaced by the chosen colour. */
+export function recolorMaterial(file: Buffer, target: Rgb): { file: Buffer; changed: number } {
+  const value = target.map((n) => n / 255);
+  return rewriteExpressions(file, (e) => withConstant(e.code, GEM_COLOR, value));
 }
 
 /**
@@ -205,15 +182,14 @@ export function buildRecolor({ pak01, set, target }: { pak01: string; set: strin
   const failed: { path: string; error: string }[] = [];
   let changed = 0;
   let skipped = 0;
-  const all = listVpkPathsFile(pak01);
-  const degrees = toHsv(target)[0] - def.hue;
-  for (const p of all.filter((x) => x.endsWith('.vtex_c') && def.textures.some((f) => x.startsWith(f)))) {
-    const r = recolorTexture(index.read(p) as Buffer, degrees);
-    if (r.changed) { entries.push(entryAt(p, r.file)); changed++; }
-  }
-  for (const p of all.filter((x) => x.endsWith('.vpcf_c') && def.folders.some((f) => x.startsWith(f)))) {
+  const under = (p: string, prefixes: string[]) => prefixes.some((f) => p.startsWith(f));
+  for (const p of listVpkPathsFile(pak01)) {
+    const particle = p.endsWith('.vpcf_c') && (under(p, def.own) || under(p, def.shared));
+    const material = p.endsWith('.vmat_c') && under(p, def.materials);
+    if (!particle && !material) continue;
     try {
-      const r = recolorResource(index.read(p) as Buffer, target);
+      const file = index.read(p) as Buffer;
+      const r = particle ? recolorResource(file, target, { gem: def.gem, own: under(p, def.own) }) : { skipped: 0, ...recolorMaterial(file, target) };
       changed += r.changed;
       skipped += r.skipped;
       if (r.changed) entries.push(entryAt(p, r.file));

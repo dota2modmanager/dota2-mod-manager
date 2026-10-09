@@ -417,8 +417,12 @@ that location is not writable.
 | `src/patch-watch.ts` | Noticing a game update the moment it lands |
 | `src/update-impact.ts` | Which installed mods a game update reached: Valve's files they replace that the patch changed or removed |
 | `src/mod-update.ts` | Whether the catalog has another version of an installed mod (its fingerprint is not among the catalog's), and replacing it in its own slot ([#171](https://github.com/dota2modmanager/dota2-mod-manager/issues/171)) |
-| `src/kv3.ts` | Binary KV3, versions 1 to 5: every number in a compiled resource found where it lies, changed there, and the block written back |
-| `src/recolor.ts` | An item's particles in a chosen colour, out of the game's own pak01, as one VPK ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118)) |
+| `src/kv3.ts` | Binary KV3, versions 1 to 5: every number in a compiled resource found where it lies, changed there, binary blobs given new bytes, and the block written back |
+| `src/kv3-blobs.ts` | Binary blobs in a KV3 block: read, and written back at a new length |
+| `src/kv3-cells.ts` | The numbers in a parsed KV3 block: read and changed where they lie |
+| `src/lz4.ts` | LZ4 block format: decoding, chained frames, and literals-only encoding |
+| `src/material.ts` | Compiled resources at the block level, and a material's expressions (KV3 blobs or NTRO): a read of `$GemColor` swapped for a constant |
+| `src/recolor.ts` | An item's particles and materials in a chosen colour, out of the game's own pak01, as one VPK: what its gem colours, pointed at the chosen colour ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118)) |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
 | `src/discord-auth.ts`, `src/discord-presence.ts`, `src/presence-status.ts` | Signing in with Discord, and what the Discord status says and whether it is on |

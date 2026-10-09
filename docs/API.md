@@ -59,9 +59,13 @@ the code, not in this page.
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
 | [`src/item-builder-slots.ts`](#srcitem-builder-slotsts) | The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit |
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
+| [`src/kv3-blobs.ts`](#srckv3-blobsts) | Binary blobs in a KV3 block (src/kv3.ts): where they lie, how they are read, and how they are |
+| [`src/kv3-cells.ts`](#srckv3-cellsts) | The numbers in a parsed KV3 block (src/kv3.ts): read one where it lies, change it there, and the |
 | [`src/kv3.ts`](#srckv3ts) | Binary KV3, the format Source 2 compiles particles and most other resources into: read far |
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
+| [`src/lz4.ts`](#srclz4ts) | LZ4 block format: literals and back-references, the compression Valve's KV3 writer uses |
 | [`src/main-window.ts`](#srcmain-windowts) | The one window the app has: its size on the screen it opens on, the single page it may show, |
+| [`src/material.ts`](#srcmaterialts) | Compiled resources at the block level, and a material's expressions: what an item's gem colours. |
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
 | [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
 | [`src/mod-preview-pick.ts`](#srcmod-preview-pickts) | Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches |
@@ -86,7 +90,7 @@ the code, not in this page.
 | [`src/preset-plan.ts`](#srcpreset-plants) | How a preset travels to somebody else (src/presets-service.ts applies, packs and receives |
 | [`src/preset-share.ts`](#srcpreset-sharets) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
 | [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
-| [`src/recolor.ts`](#srcrecolorts) | An item's effects in a colour of the user's choosing, built from the game's own particles. |
+| [`src/recolor.ts`](#srcrecolorts) | An item's effects in a colour of the user's choosing, built from the game's own files. |
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
@@ -2570,6 +2574,108 @@ export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | nu
 
 Read compiled asset bytes out of pak01 and stage them under the renamed path in our VPK.
 
+## src/kv3-blobs.ts
+
+Binary blobs in a KV3 block (src/kv3.ts): where they lie, how they are read, and how they are
+written back at a new length. Materials keep their expressions in them (src/material.ts).
+
+Before version 2 a blob is in the 1-byte lane, its length in the 4-byte lane. From version 2 the
+buffer with the types goes on with every blob's length (int32), a trailer and the compressed size
+of every LZ4 frame (uint16); the frames come after the buffers, chained so a later one can
+reference an earlier blob, and a trailer closes them. The layout follows ValveResourceFormat's
+BinaryKV3.cs (MIT).
+
+### `BlobTable`
+
+```ts
+export interface BlobTable
+```
+
+Where a block from version 2 describes its blobs, in the buffer that holds its types.
+
+### `blobTable`
+
+```ts
+export function blobTable(buf: Buffer, typesEnd: number, count: number, lz4: boolean, frameSize: number): BlobTable | null
+```
+
+The blob table after the types, or null when there are no blobs; either way the trailer that
+follows the types (and the lengths) is checked.
+
+### `readBlobs`
+
+```ts
+export function readBlobs(block: Buffer, at: number, t: BlobTable, total: number): { data: Buffer; end: number }
+```
+
+Every blob's bytes, one after another, read from the block at `at`; and where they end.
+
+### `rewriteBlobs`
+
+```ts
+export function rewriteBlobs(t: BlobTable, blobs: Buffer[]): Buffer
+```
+
+The blobs written as frames of literals, their lengths and frame sizes put in the table where
+they were. The table keeps its length, so the buffer that holds it does too: a blob that would
+take another number of frames is refused.
+
+```
+@returns the frames and the trailer, to go after the buffers
+```
+
+### `relaidInline`
+
+```ts
+export function relaidInline(old: Buffer, c1: number, c4: number, inline: { at: number; lengthAt: number }[], originals: Buffer[], blobs: Buffer[]): Buffer
+```
+
+Before version 2: the first buffer laid out again with every blob's new bytes in the 1-byte lane
+(`inline`: where each blob's bytes and its length were), the lanes after it realigned.
+
+## src/kv3-cells.ts
+
+The numbers in a parsed KV3 block (src/kv3.ts): read one where it lies, change it there, and the
+0s and 1s stored as a type alone, which can only become each other.
+
+### `readCell`
+
+```ts
+export function readCell(kv: Kv3Block, c: Kv3Cell): number
+```
+
+A number's value.
+
+### `writeCell`
+
+```ts
+export function writeCell(kv: Kv3Block, c: Kv3Cell, v: number): void
+```
+
+Change a number where it lies.
+
+### `numberOf`
+
+```ts
+export function numberOf(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' }>): number
+```
+
+A number node's value: from its bytes, or from its type for the 0s and 1s stored as a type alone.
+
+### `setNumber`
+
+```ts
+export function setNumber(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' }>, v: number): boolean
+```
+
+Set a number node where it lies. A number with bytes takes any value its width holds; one stored
+as a type alone can only turn into the other of 0 and 1, by rewriting that type byte, which keeps
+every lane the length it was.
+
+```
+@returns whether the value could be set
+```
+
 ## src/kv3.ts
 
 Binary KV3, the format Source 2 compiles particles and most other resources into: read far
@@ -2585,23 +2691,11 @@ instead of patched.
 
 The layout follows ValveResourceFormat's BinaryKV3.cs (MIT), versions 1 to 5. Of the 339
 Terrorblade particles in the game on 2026-10-08, 290 are version 2, 39 version 5, 8 version 4
-and 2 version 3, all LZ4. Files with binary blobs are refused; no particle here has one.
+and 2 version 3, all LZ4. Materials keep their expressions (`$GemColor`, issue #118) in binary
+blobs, which can be given new bytes of another length (src/kv3-blobs.ts). The compression is
+src/lz4.ts, reading and changing a number src/kv3-cells.ts.
 
-### `lz4Decode`
-
-```ts
-export function lz4Decode(src: Buffer, size: number): Buffer
-```
-
-LZ4 block format: literals and back-references, the one Valve's KV3 writer uses.
-
-### `lz4Literals`
-
-```ts
-export function lz4Literals(src: Buffer): Buffer
-```
-
-The same bytes as one LZ4 block of literals only: valid LZ4, a little larger than the input.
+Hands on from [`src/kv3-cells.ts`](#srckv3-cellsts): `readCell`, `writeCell`, `numberOf`, `setNumber`.
 
 ### `Kv3Cell`
 
@@ -2646,44 +2740,6 @@ export function readKv3(block: Buffer): Kv3Block
 
 Read a KV3 block (a resource's DATA block, magic included).
 
-### `readCell`
-
-```ts
-export function readCell(kv: Kv3Block, c: Kv3Cell): number
-```
-
-A number's value.
-
-### `writeCell`
-
-```ts
-export function writeCell(kv: Kv3Block, c: Kv3Cell, v: number): void
-```
-
-Change a number where it lies.
-
-### `numberOf`
-
-```ts
-export function numberOf(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' }>): number
-```
-
-A number node's value: from its bytes, or from its type for the 0s and 1s stored as a type alone.
-
-### `setNumber`
-
-```ts
-export function setNumber(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' }>, v: number): boolean
-```
-
-Set a number node where it lies. A number with bytes takes any value its width holds; one stored
-as a type alone can only turn into the other of 0 and 1, by rewriting that type byte, which keeps
-every lane the length it was.
-
-```
-@returns whether the value could be set
-```
-
 ## src/library.ts
 
 Library: manifest of installed mods + presets
@@ -2703,6 +2759,41 @@ export class Library
 ```
 
 _No description in the source._
+
+## src/lz4.ts
+
+LZ4 block format: literals and back-references, the compression Valve's KV3 writer uses
+(src/kv3.ts). Decoding is the whole format; encoding writes literals only, which any decoder
+reads and which is all a rewritten block needs.
+
+### `lz4Decode`
+
+```ts
+export function lz4Decode(src: Buffer, size: number): Buffer
+```
+
+One LZ4 block of exactly `size` bytes.
+
+### `lz4DecodeInto`
+
+```ts
+export function lz4DecodeInto(src: Buffer, out: Buffer, start: number, max: number): number
+```
+
+One LZ4 block decoded into `out` at `start`, at most `max` bytes. A reference may reach back past
+`start` into what is already there: that is how the frames of a KV3 file's binary blobs are chained.
+
+```
+@returns how many bytes it gave
+```
+
+### `lz4Literals`
+
+```ts
+export function lz4Literals(src: Buffer): Buffer
+```
+
+The same bytes as one LZ4 block of literals only: valid LZ4, a little larger than the input.
 
 ## src/main-window.ts
 
@@ -2770,6 +2861,86 @@ Open the window on the app's page, locked to it, with Ctrl +/-/0 scaling the con
 @param workArea   stands in for the screen's (MM_WORKAREA); otherwise the primary display is asked
 @param quiet      created hidden (MM_QUIET), so a measuring run never takes over the screen
 @param pageExists stands in for the disk when a test asks whether the page was built
+```
+
+## src/material.ts
+
+Compiled resources at the block level, and a material's expressions: what an item's gem colours.
+
+A material can set a parameter from an expression the game evaluates, such as Terrorblade's
+`g_vDetail1ColorTint = exists($GemColor) ? $GemColor : float3(0.35, 0.74, 1.0)`, compiled to the
+bytecode ValveResourceFormat's VfxEval.cs (MIT) reads. The arcana's red glow is its gem's colour
+coming in that way (issue #118). Putting a constant where the expression reads `$GemColor` gives
+the arcana the chosen colour and leaves the other branch, the hero with no gem, as it was.
+
+Materials come in two containers: KV3, with the expressions in binary blobs (src/kv3.ts), and
+the older NTRO, a C struct its own NTRO block describes, where a new expression is added at the
+end of the data and pointed to.
+
+### `resourceBlocks`
+
+```ts
+export function resourceBlocks(file: Buffer): Block[]
+```
+
+The blocks of a compiled resource: name, where its table entry is, where its data is and how long.
+
+### `dataBlock`
+
+```ts
+export function dataBlock(file: Buffer): { data: Buffer; replace(next: Buffer): Buffer }
+```
+
+The DATA block of a compiled resource, and the file with a new one in its place. Blocks stored
+after it move by a multiple of 16 bytes, so they stay aligned the way they were.
+
+### `attributeToken`
+
+```ts
+export function attributeToken(name: string): number
+```
+
+Valve's hash of a name the expressions read (MurmurHash2 of the lowercased name, their seed).
+
+### `withConstant`
+
+```ts
+export function withConstant(code: Buffer, token: number, value: number[]): Buffer | null
+```
+
+An expression with every read of one attribute replaced by a constant (three or four numbers),
+its jumps moved to where their targets now are.
+
+```
+@returns the new bytecode, or null when it reads no such attribute or holds an opcode not known
+```
+
+### `Expression`
+
+```ts
+export interface Expression { name: string; code: Buffer }
+```
+
+A material parameter set by an expression: its name and bytecode.
+
+### `materialExpressions`
+
+```ts
+export function materialExpressions(file: Buffer): Expression[]
+```
+
+A material's expressions, whichever container it is in.
+
+### `rewriteExpressions`
+
+```ts
+export function rewriteExpressions(file: Buffer, change: (e: Expression) => Buffer | null): { file: Buffer; changed: number }
+```
+
+The material with some expressions rewritten (`change` returns new bytecode, or null to keep one).
+
+```
+@returns the new file and how many expressions changed
 ```
 
 ## src/minify.ts
@@ -4357,17 +4528,22 @@ Everything about presets that needs the running app's services.
 
 ## src/recolor.ts
 
-An item's effects in a colour of the user's choosing, built from the game's own particles.
+An item's effects in a colour of the user's choosing, built from the game's own files.
 
-Issue #118 asked for Terrorblade's arcana in any RGB. Its glow, eyes, mouth and kill effect are
-particles whose colours are numbers in the compiled file (`m_ConstantColor = [ 0, 210, 255, 255 ]`)
-over textures that are white, so changing the numbers is changing the colour. The files are read
-out of Valve's pak01, recoloured where the numbers lie (src/kv3.ts) and packed as one mod.
+Issue #118 asked for Terrorblade's arcana in any RGB. The arcana is red because it comes with a
+gem, Reflection's Shade (#FF3C28), and the game passes a gem's colour to the hero's particles
+through control point 15 and to its materials as `$GemColor`. Neither can be set from a mod, so
+the mod changes what the files do with the gem's colour instead:
 
-The colour is moved, not painted over. Every colour in the set takes the chosen hue, and keeps
-its own brightness and saturation scaled by the chosen colour's: the arcana's main cyan becomes
-exactly the colour picked, its dark teals become dark shades of it, and black, white and greys,
-which carry no hue, stay as they are.
+- a particle that takes its colour from control point 15 scales it, channel by channel, into a
+  range (`m_vOutputMax`); the range is scaled again by chosen / gem, so the arcana's gem comes
+  out as the chosen colour. Plain Terrorblade has no gem, the game turns that tint off for him
+  (control point 16), and he looks as he did;
+- a material reads `exists($GemColor) ? $GemColor : <its own colour>`; the read becomes the
+  chosen colour (src/material.ts) and the other branch stays;
+- a particle only the arcana uses, with colours written in it and no gem tint, has those colours
+  moved to the chosen one: every colour takes the chosen hue and keeps its own brightness and
+  saturation scaled by the chosen colour's; black, white and greys stay as they are.
 
 ### `Rgb`
 
@@ -4377,17 +4553,21 @@ export type Rgb = [number, number, number]
 
 _No description in the source._
 
+### `RecolorSet`
+
+```ts
+export interface RecolorSet
+```
+
+What can be recoloured, by path prefix in pak01, and the colour of the gem the item comes with.
+
 ### `RECOLOR_SETS`
 
 ```ts
-export const RECOLOR_SETS: Record<string, { name: string; folders: string[]; textures: string[]; hue: number }> =
+export const RECOLOR_SETS: Record<string, RecolorSet> =
 ```
 
-What can be recoloured: the particle folders in pak01, and the colour tables (`textures`, path
-prefixes) its materials read, with the hue the item shows in the game (`hue`, degrees), which is
-the one a table is turned away from. The arcana is red in the game although its particles say
-cyan: the game tints them through control point 15, and its body goes through a colour-warp
-table that is red where the arcana glows.
+_No description in the source._
 
 ### `shade`
 
@@ -4398,38 +4578,22 @@ export function shade(color: Rgb, target: Rgb): Rgb
 One colour moved to the chosen one. A colour with almost no saturation has no hue to move and is
 left alone; anything else takes the target's hue, with saturation and brightness scaled by it.
 
-### `rotateHue`
-
-```ts
-export function rotateHue(color: Rgb, degrees: number): Rgb
-```
-
-One colour turned round the colour wheel by `degrees`, its saturation and brightness kept.
-
-### `dataBlock`
-
-```ts
-export function dataBlock(file: Buffer): { data: Buffer; replace(next: Buffer): Buffer }
-```
-
-The DATA block of a compiled resource, and the file with a new one in its place.
-
-### `recolorTexture`
-
-```ts
-export function recolorTexture(file: Buffer, degrees: number): { file: Buffer; changed: number }
-```
-
-A colour-warp table turned round the colour wheel: an uncompressed RGBA8888 texture with one mip,
-its pixels right after the DATA block. Anything else comes back unchanged.
-
 ### `recolorResource`
 
 ```ts
-export function recolorResource(file: Buffer, target: Rgb): { file: Buffer; changed: number; skipped: number }
+export function recolorResource(file: Buffer, target: Rgb, { gem, own = true }: { gem?: Rgb; own?: boolean } = {}):
 ```
 
-One compiled resource with its colours moved; `changed` counts the colours, `skipped` those with no room.
+One compiled particle in the chosen colour. With `gem`, the gem's tint is pointed at the chosen
+colour; with `own` (the default), a particle the gem does not tint has its written colours moved.
+
+### `recolorMaterial`
+
+```ts
+export function recolorMaterial(file: Buffer, target: Rgb): { file: Buffer; changed: number }
+```
+
+One material with its reads of the gem's colour replaced by the chosen colour.
 
 ### `buildRecolor`
 
