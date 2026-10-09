@@ -33,15 +33,17 @@ export interface Kv3Cell { buffer: 0 | 1; offset: number; width: 1 | 2 | 4 | 8; 
  * A value in the tree the walk builds. A number keeps where it lies (`cell`), or null when the
  * type alone says what it is (0 and 1 written as INT64_ZERO, DOUBLE_ONE...), and where its type
  * byte is, which is the one place such a number can be changed. Elements of a typed array share
- * one type byte, so theirs is null.
+ * one type byte, so theirs is null; the array keeps that type as `element`. `flag` is the byte
+ * that can follow a type (a string that names a resource, for one), kept as the file had it.
  */
-export type Kv3Node =
+export type Kv3Node = (
   | { kind: 'object'; members: Map<string, Kv3Node> }
-  | { kind: 'array'; items: Kv3Node[] }
+  | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number } }
   | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null }
   | { kind: 'string'; value: string }
   | { kind: 'blob'; data: Buffer }
-  | { kind: 'other' };
+  | { kind: 'other'; type: number; value?: number }
+) & { flag?: number };
 
 /** An array of numbers the walk found, with the member name it was under and a cell per element (null: no storage). */
 export interface Kv3Array { key: string; path: string; cells: (Kv3Cell | null)[] }
@@ -49,6 +51,8 @@ export interface Kv3Array { key: string; path: string; cells: (Kv3Cell | null)[]
 /** A parsed block: its decompressed buffers, its tree, the arrays of numbers in it, and how to put it back together. */
 export interface Kv3Block {
   version: number;
+  /** the 16 bytes after the magic that name the format */
+  format: Buffer;
   buffers: Buffer[];
   root: Kv3Node;
   arrays: Kv3Array[];
@@ -149,19 +153,16 @@ export function readKv3(block: Buffer): Kv3Block {
   const buf = (l: Lane) => buffers[l.buf];
   const take = (l: Lane, width: number): number => { const at = l.at; l.at += width; if (l.at > l.end) throw new Error('kv3: a lane ran out'); return at; };
   const cell = (l: Lane, width: 1 | 2 | 4 | 8, signed: boolean, float = false): Kv3Cell => ({ buffer: l.buf, offset: take(l, width), width, signed, ...(float ? { float } : {}) });
-  /** the next type, and where its byte is */
-  const readType = (): [number, Kv3Cell] => {
+  /** the next type, where its byte is, and the flag after it (0: none) */
+  const readType = (): [number, Kv3Cell, number] => {
     const at: Kv3Cell = { buffer: types.buf, offset: types.at, width: 1, signed: false };
     let t = buf(types)[take(types, 1)];
+    const flag = t & 0x80 ? buf(types)[take(types, 1)] : 0;
     if (version >= 3) {
-      if (t & 0x80) take(types, 1);
-      if (t & 0x40) take(types, 1);
+      if (t & 0x40) take(types, 1); // no known writer sets this; readers skip the byte after it
       t &= 0x3f;
-    } else {
-      if (t & 0x80) take(types, 1);
-      t &= 0x7f;
-    }
-    return [t, at];
+    } else t &= 0x7f;
+    return [t, at, flag];
   };
   const int4 = (l: Lane) => buf(l).readInt32LE(take(l, 4));
   const arrays: Kv3Array[] = [];
@@ -172,11 +173,16 @@ export function readKv3(block: Buffer): Kv3Block {
   let blobRead = 0;
   const num = (type: number, c: Kv3Cell | null, typeAt: Kv3Cell | null): Kv3Node => ({ kind: 'number', type, cell: c, typeAt });
 
-  const value = (t: number, typeAt: Kv3Cell | null, lanes: typeof main, key: string, path: string): Kv3Node => {
+  const value = (t: number, typeAt: Kv3Cell | null, lanes: typeof main, key: string, path: string, flag = 0): Kv3Node => {
+    const node = read(t, typeAt, lanes, key, path);
+    if (flag) node.flag = flag;
+    return node;
+  };
+  const read = (t: number, typeAt: Kv3Cell | null, lanes: typeof main, key: string, path: string): Kv3Node => {
     switch (t) {
       case 15: case 16: case 17: case 18: return num(t, null, typeAt); // 0 or 1, stored in the type alone
-      case 1: case 13: case 14: return { kind: 'other' };
-      case 2: take(lanes.l1, 1); return { kind: 'other' };
+      case 1: case 13: case 14: return { kind: 'other', type: t };
+      case 2: return { kind: 'other', type: t, value: buf(lanes.l1)[take(lanes.l1, 1)] };
       case 22: case 23: return num(t, cell(lanes.l1, 1, t === 22), typeAt);
       case 20: case 21: return num(t, cell(lanes.l2, 2, t === 20), typeAt);
       case 11: case 12: return num(t, cell(lanes.l4, 4, t === 11), typeAt);
@@ -205,31 +211,33 @@ export function readKv3(block: Buffer): Kv3Block {
       case 8: case 10: case 24: case 25: {
         const n = t === 8 || t === 10 ? int4(main.l4) : buf(main.l1)[take(main.l1, 1)];
         const items: Kv3Node[] = [];
+        let element: { type: number; flag?: number } | undefined;
         if (t === 8) {
-          for (let k = 0; k < n; k++) { const [et, eat] = readType(); items.push(value(et, eat, main, key, `${path}[${k}]`)); }
+          for (let k = 0; k < n; k++) { const [et, eat, ef] = readType(); items.push(value(et, eat, main, key, `${path}[${k}]`, ef)); }
         } else {
-          const [sub] = readType();
+          const [sub, , sf] = readType();
+          element = sf ? { type: sub, flag: sf } : { type: sub };
           const elementLanes = t === 25 ? aux : main;
           for (let k = 0; k < n; k++) items.push(value(sub, null, elementLanes, key, `${path}[${k}]`));
         }
         if (items.every((x) => x.kind === 'number')) arrays.push({ key, path, cells: items.map((x) => (x as { cell: Kv3Cell | null }).cell) });
-        return { kind: 'array', items };
+        return element ? { kind: 'array', items, element } : { kind: 'array', items };
       }
       case 9: {
         const n = objectLengths ? int4(objectLengths) : int4(main.l4);
         const members = new Map<string, Kv3Node>();
         for (let k = 0; k < n; k++) {
-          const [ty, tat] = readType();
+          const [ty, tat, tf] = readType();
           const name = strings[int4(main.l4)] ?? '';
-          members.set(name, value(ty, tat, main, name, `${path}.${name}`));
+          members.set(name, value(ty, tat, main, name, `${path}.${name}`, tf));
         }
         return { kind: 'object', members };
       }
       default: throw new Error(`kv3: value type ${t} at ${path || 'the root'}`);
     }
   };
-  const [rootType, rootAt] = readType();
-  const root = value(rootType, rootAt, main, '', '');
+  const [rootType, rootAt, rootFlag] = readType();
+  const root = value(rootType, rootAt, main, '', '', rootFlag);
   const lanes = version >= 5 ? [main.l1, main.l2, main.l4, main.l8, types, aux.l1, aux.l2, aux.l4, aux.l8] : [main.l1, main.l2, main.l4, main.l8, types];
   if (blobLengths) lanes.push(blobLengths);
   for (const l of lanes) if (l.at !== l.end) throw new Error('kv3: the walk did not end where the data does');
@@ -237,6 +245,7 @@ export function readKv3(block: Buffer): Kv3Block {
 
   return {
     version,
+    format: Buffer.from(block.subarray(4, 20)),
     buffers,
     root,
     arrays,

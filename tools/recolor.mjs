@@ -6,9 +6,10 @@
  *   npm run recolor -- 255,193,220                  Terrorblade's arcana in that colour
  *   npm run recolor -- #ffc1dc --out tb.vpk         the same, written where you say
  *   npm run recolor -- 255,193,220 --game "<...>\dota 2 beta\game"
+ *   npm run recolor -- ff3c28 --arcana             the arcana itself, for a player who has not got it
  *
- * The files come out of the game's own pak01 (src/recolor.ts). Without --game, the game folder the
- * app has in its settings is used. Import the VPK in My mods like any other.
+ * The files come out of the game's own pak01 (src/recolor.ts, src/arcana.ts). Without --game, the
+ * game folder the app has in its settings is used. Import the VPK in My mods like any other.
  */
 import fs from 'node:fs';
 import os from 'node:os';
@@ -33,15 +34,18 @@ async function main(argv) {
   const opt = (name) => { const i = argv.indexOf(name); return i === -1 ? null : argv[i + 1]; };
   const target = parseColor(argv.find((a, i) => !a.startsWith('--') && !['--out', '--game', '--set'].includes(argv[i - 1])));
   if (!target) throw new Error('give a colour: 255,193,220 or #ffc1dc');
+  const arcana = argv.includes('--arcana');
   const game = opt('--game') || appGame();
   if (!game) throw new Error('no game folder: pass --game "<...>\\dota 2 beta\\game"');
   const set = opt('--set') || 'terrorblade-arcana';
   const { buildRecolor, RECOLOR_SETS } = await import('../src/recolor.ts');
+  const { buildArcana } = await import('../src/arcana.ts');
   const hex = target.map((n) => n.toString(16).padStart(2, '0')).join('');
-  const out = path.resolve(opt('--out') || `${set}-${hex}_dir.vpk`);
-  const r = buildRecolor({ pak01: path.join(game, 'dota', 'pak01_dir.vpk'), set, target });
+  const out = path.resolve(opt('--out') || `${set}${arcana ? '-mod' : ''}-${hex}_dir.vpk`);
+  const pak01 = path.join(game, 'dota', 'pak01_dir.vpk');
+  const r = arcana ? { skipped: 0, ...buildArcana({ pak01, set, target }) } : buildRecolor({ pak01, set, target });
   fs.writeFileSync(out, r.vpk);
-  console.log(`${RECOLOR_SETS[set].name} in #${hex}: ${r.changed} colours in ${r.files} files -> ${out}`);
+  console.log(`${RECOLOR_SETS[set].name}${arcana ? ' as a mod' : ''} in #${hex}: ${r.changed} colours in ${r.files} files -> ${out}`);
   if (r.skipped) console.log(`${r.skipped} colours left as they were: a channel with no bytes of its own`);
   for (const f of r.failed) console.log(`not read, left as Valve ships it: ${f.path} (${f.error})`);
 }

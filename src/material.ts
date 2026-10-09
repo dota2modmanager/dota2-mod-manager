@@ -9,49 +9,10 @@
  *
  * Materials come in two containers: KV3, with the expressions in binary blobs (src/kv3.ts), and
  * the older NTRO, a C struct its own NTRO block describes, where a new expression is added at the
- * end of the data and pointed to.
+ * end of the data and pointed to. The blocks themselves are src/resource.ts.
  */
 import { readKv3, type Kv3Node } from './kv3.ts';
-
-interface Block { name: string; entry: number; at: number; size: number }
-
-/** The blocks of a compiled resource: name, where its table entry is, where its data is and how long. */
-export function resourceBlocks(file: Buffer): Block[] {
-  const table = 8 + file.readUInt32LE(8);
-  const out: Block[] = [];
-  for (let k = 0; k < file.readUInt32LE(12); k++) {
-    const e = table + k * 12;
-    out.push({ name: file.toString('ascii', e, e + 4), entry: e, at: e + 4 + file.readUInt32LE(e + 4), size: file.readUInt32LE(e + 8) });
-  }
-  return out;
-}
-
-const align16 = (n: number) => Math.ceil(n / 16) * 16;
-
-/**
- * The DATA block of a compiled resource, and the file with a new one in its place. Blocks stored
- * after it move by a multiple of 16 bytes, so they stay aligned the way they were.
- */
-export function dataBlock(file: Buffer): { data: Buffer; replace(next: Buffer): Buffer } {
-  const blocks = resourceBlocks(file);
-  const data = blocks.find((b) => b.name === 'DATA');
-  if (!data) throw new Error('resource: no DATA block');
-  const after = blocks.filter((b) => b.at > data.at);
-  const end = after.length ? Math.min(...after.map((b) => b.at)) : data.at + data.size;
-  return {
-    data: file.subarray(data.at, data.at + data.size),
-    replace(next) {
-      const gap = end - data.at;
-      const room = after.length ? gap + align16(next.length - gap) : next.length;
-      const body = Buffer.concat([next, Buffer.alloc(room - next.length)]);
-      const out = Buffer.concat([file.subarray(0, data.at), body, file.subarray(end)]);
-      out.writeUInt32LE(next.length, data.entry + 8);
-      for (const b of after) out.writeUInt32LE(out.readUInt32LE(b.entry + 4) + room - gap, b.entry + 4);
-      out.writeUInt32LE(out.length, 0);
-      return out;
-    },
-  };
-}
+import { dataBlock, resourceBlocks, type Block } from './resource.ts';
 
 /** Valve's hash of a name the expressions read (MurmurHash2 of the lowercased name, their seed). */
 export function attributeToken(name: string): number {
@@ -79,6 +40,7 @@ const OPERANDS: Record<number, number> = {
   0x0c: 0, 0x0d: 0, 0x0e: 0, 0x0f: 0, 0x10: 0, 0x11: 0, 0x12: 0, 0x13: 0, 0x14: 0, 0x15: 0, 0x16: 0, 0x17: 0, 0x18: 0,
   0x19: 4, 0x1a: 1, 0x1d: 4, 0x1e: 1, 0x1f: 4, 0x22: 1,
 };
+const RETURN = 0x00;
 const JUMP = 0x02;
 const BRANCH = 0x04;
 const FUNC = 0x06;
@@ -86,6 +48,17 @@ const FLOAT = 0x07;
 const ATTRIBUTE = 0x19;
 const FLOAT3 = 0x19;
 const FLOAT4 = 0x18;
+
+/** The code that puts a constant (three or four numbers) on the stack. */
+const constantValue = (value: number[]) => Buffer.concat([
+  ...value.map((v) => { const b = Buffer.alloc(5); b[0] = FLOAT; b.writeFloatLE(v, 1); return b; }),
+  Buffer.from([FUNC, value.length === 4 ? FLOAT4 : FLOAT3, 0]),
+]);
+
+/** An expression that is a constant (three or four numbers) and nothing else. */
+export function constantExpression(value: number[]): Buffer {
+  return Buffer.concat([constantValue(value), Buffer.from([RETURN])]);
+}
 
 /**
  * An expression with every read of one attribute replaced by a constant (three or four numbers),
@@ -100,10 +73,7 @@ export function withConstant(code: Buffer, token: number, value: number[]): Buff
     ops.push({ at: i, bytes: code.subarray(i, i + 1 + n) });
     i += 1 + n;
   }
-  const constant = Buffer.concat([
-    ...value.map((v) => { const b = Buffer.alloc(5); b[0] = FLOAT; b.writeFloatLE(v, 1); return b; }),
-    Buffer.from([FUNC, value.length === 4 ? FLOAT4 : FLOAT3, 0]),
-  ]);
+  const constant = constantValue(value);
   let found = false;
   const next = ops.map((o) => {
     if (o.bytes[0] !== ATTRIBUTE || o.bytes.readUInt32LE(1) !== token) return Buffer.from(o.bytes);

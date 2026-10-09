@@ -420,9 +420,12 @@ that location is not writable.
 | `src/kv3.ts` | Binary KV3, versions 1 to 5: every number in a compiled resource found where it lies, changed there, binary blobs given new bytes, and the block written back |
 | `src/kv3-blobs.ts` | Binary blobs in a KV3 block: read, and written back at a new length |
 | `src/kv3-cells.ts` | The numbers in a parsed KV3 block: read and changed where they lie |
+| `src/kv3-write.ts` | A KV3 block written anew from its tree, for changes bigger than a number (an array element added) |
 | `src/lz4.ts` | LZ4 block format: decoding, chained frames, and literals-only encoding |
-| `src/material.ts` | Compiled resources at the block level, and a material's expressions (KV3 blobs or NTRO): a read of `$GemColor` swapped for a constant |
+| `src/material.ts` | A material's expressions (KV3 blobs or NTRO): a read of `$GemColor` swapped for a constant |
+| `src/resource.ts` | Compiled resources at the block level: a block replaced, the resources a file names (RERL) added to |
 | `src/recolor.ts` | An item's particles and materials in a chosen colour, out of the game's own pak01, as one VPK: what its gem colours, pointed at the chosen colour ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118)) |
+| `src/arcana.ts` | An arcana as a mod built from the game's own files, for a player who has not got it: its models, glow and pictures under the plain hero's names, its colour written in |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
 | `src/discord-auth.ts`, `src/discord-presence.ts`, `src/presence-status.ts` | Signing in with Discord, and what the Discord status says and whether it is on |
@@ -486,7 +489,7 @@ that location is not writable.
 | `tools/r2-sync.mjs`, `tools/r2-release.mjs`, `tools/r2-client.js`, `tools/mirror-plan.js` | The archive mirror, the update mirror, the signing they share, and which archives the mirror copies again or refuses |
 | `tools/gen-fingerprints.js` | Regenerating the published fingerprint map, and `mod-paths.json`, the files each pak mod replaces |
 | `tools/dota-diff.mjs`, `tools/dota-watch.mjs` | What a Dota build changed, read from GameTracking-Dota2: by hand with `npm run dota:diff`, and twice an hour in the "Dota updates" issue |
-| `tools/recolor.mjs` | `npm run recolor`: the recolour as a VPK to import, before the window offers it |
+| `tools/recolor.mjs` | `npm run recolor`: the recolour, or with `--arcana` the whole arcana, as a VPK to import, before the window offers it |
 | `tools/seo-report.mjs`, `tools/seo-state.mjs` | The weekly reach and search report posted to [issue #3](https://github.com/dota2modmanager/dota2-mod-manager/issues/3), and the numbers it carries from one week to the next inside the comment |
 | `tools/release-gate.mjs` | First job of every release: waits until the tagged commit has passed the checks in `.github/required-checks.json`, and refuses it otherwise |
 | `tools/check-credentials.mjs`, `tools/google-auth.mjs` | Every morning before the radar: tries each secret against its service and writes what works, what fails and when each expires, for the radar to report |

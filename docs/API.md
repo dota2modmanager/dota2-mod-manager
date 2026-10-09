@@ -17,6 +17,7 @@ the code, not in this page.
 | [`src/app-context.ts`](#srcapp-contextts) | Everything the running app hands its IPC modules: the services src/main.ts builds at start, and the |
 | [`src/app-log.ts`](#srcapp-logts) | The app's own log: a small file every install keeps, so a support report (src/diagnostics.ts) |
 | [`src/app-page.ts`](#srcapp-pagets) | The page the main window loads. |
+| [`src/arcana.ts`](#srcarcanats) | An arcana as a mod, built from the game's own files: the look of an item a player has not got, |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
@@ -61,6 +62,7 @@ the code, not in this page.
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
 | [`src/kv3-blobs.ts`](#srckv3-blobsts) | Binary blobs in a KV3 block (src/kv3.ts): where they lie, how they are read, and how they are |
 | [`src/kv3-cells.ts`](#srckv3-cellsts) | The numbers in a parsed KV3 block (src/kv3.ts): read one where it lies, change it there, and the |
+| [`src/kv3-write.ts`](#srckv3-writets) | A KV3 block written anew from its tree (src/kv3.ts), for changes that are more than a number: |
 | [`src/kv3.ts`](#srckv3ts) | Binary KV3, the format Source 2 compiles particles and most other resources into: read far |
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
 | [`src/lz4.ts`](#srclz4ts) | LZ4 block format: literals and back-references, the compression Valve's KV3 writer uses |
@@ -94,6 +96,7 @@ the code, not in this page.
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
+| [`src/resource.ts`](#srcresourcets) | Compiled Source 2 resources at the block level: the blocks of a file, one replaced by new bytes, |
 | [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
 | [`src/schema-cosmetics.ts`](#srcschema-cosmeticsts) | The free cosmetics (src/schema-service.ts): the slots the game has a free base item for and what |
 | [`src/schema-harvest.ts`](#srcschema-harvestts) | A mod's own item tables (src/schema-service.ts): the blocks it changed, lifted out on install and |
@@ -246,6 +249,57 @@ export function loadAppPage(win: Pick<BrowserWindow, 'loadURL' | 'loadFile'>, { 
 
 Loads the page into the window and returns its address, the one the navigation guard lets
 through, or null when a checkout was never built (an installer always carries the page).
+
+## src/arcana.ts
+
+An arcana as a mod, built from the game's own files: the look of an item a player has not got,
+in a colour they choose, in safe mode (issue #118, starting with Terrorblade).
+
+In the game the arcana is an item: the hero's model is swapped for the arcana's, the item creates
+its own particles, and a gem tints the rest (src/recolor.ts). A mod cannot give an item, so it
+puts the arcana's files where the plain hero's are:
+- the arcana's models under the names of the hero's own;
+- a particle the hero already creates, taken from the arcana's version and given the arcana's
+  own particles as children, since nothing else would create them; the children are named in
+  the file's RERL block too, as the compiler names them;
+- the arcana's portraits and ability icons under the plain ones' names;
+- no gem, so its tint is off: the colour is written into the particles and materials instead
+  (`bake`). Built once from Valve's files and kept in the mod, it is the same after a patch only
+  until the files it was built from change, so the app builds it again then.
+Not here: the kill effect (a modifier the item adds), the arcana's sounds and voice lines.
+
+### `ArcanaSet`
+
+```ts
+export interface ArcanaSet
+```
+
+_No description in the source._
+
+### `ARCANA_SETS`
+
+```ts
+export const ARCANA_SETS: Record<string, ArcanaSet> =
+```
+
+_No description in the source._
+
+### `withChildren`
+
+```ts
+export function withChildren(file: Buffer, children: string[]): Buffer
+```
+
+A particle with more children: each new entry in `m_Children` is a copy of the first one there,
+pointing at another file, and the file names them in RERL.
+
+### `buildArcana`
+
+```ts
+export function buildArcana({ pak01, set, target }: { pak01: string; set: string; target: Rgb }):
+```
+
+The arcana in the chosen colour, as one VPK from the game's pak01.
 
 ## src/beta.ts
 
@@ -2676,6 +2730,25 @@ every lane the length it was.
 @returns whether the value could be set
 ```
 
+## src/kv3-write.ts
+
+A KV3 block written anew from its tree (src/kv3.ts), for changes that are more than a number:
+a member or an array element added, a string of another length. Numbers are copied as the bytes
+they were, so nothing is rounded on the way.
+
+The block comes out in one buffer, the layout of versions 2 to 4: a file read as version 1 or 2
+is written as 2, 3 as 3, 4 and 5 as 4, so a type's flag byte means what it meant (versions 1 and
+2 keep flags as bits, 3 and later as one value). Typed arrays are all written as ARRAY_TYPED,
+which every version reads, and an empty one as a plain array, which version 2 and later require.
+
+### `writeKv3`
+
+```ts
+export function writeKv3(kv: Kv3Block): Buffer
+```
+
+The block, written from `kv.root`, with the source's format GUID.
+
 ## src/kv3.ts
 
 Binary KV3, the format Source 2 compiles particles and most other resources into: read far
@@ -2708,13 +2781,14 @@ Where one number lives: which decompressed buffer, the byte offset in it, and ho
 ### `Kv3Node`
 
 ```ts
-export type Kv3Node =
+export type Kv3Node = ( | { kind: 'object'; members: Map<string, Kv3Node> } | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number } } | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null } | { kind: 'string'; value: string } | { kind: 'blob'; data: Buffer } | { kind: 'other'; type: number; value?: number } ) & { flag?: number }
 ```
 
 A value in the tree the walk builds. A number keeps where it lies (`cell`), or null when the
 type alone says what it is (0 and 1 written as INT64_ZERO, DOUBLE_ONE...), and where its type
 byte is, which is the one place such a number can be changed. Elements of a typed array share
-one type byte, so theirs is null.
+one type byte, so theirs is null; the array keeps that type as `element`. `flag` is the byte
+that can follow a type (a string that names a resource, for one), kept as the file had it.
 
 ### `Kv3Array`
 
@@ -2875,24 +2949,7 @@ the arcana the chosen colour and leaves the other branch, the hero with no gem, 
 
 Materials come in two containers: KV3, with the expressions in binary blobs (src/kv3.ts), and
 the older NTRO, a C struct its own NTRO block describes, where a new expression is added at the
-end of the data and pointed to.
-
-### `resourceBlocks`
-
-```ts
-export function resourceBlocks(file: Buffer): Block[]
-```
-
-The blocks of a compiled resource: name, where its table entry is, where its data is and how long.
-
-### `dataBlock`
-
-```ts
-export function dataBlock(file: Buffer): { data: Buffer; replace(next: Buffer): Buffer }
-```
-
-The DATA block of a compiled resource, and the file with a new one in its place. Blocks stored
-after it move by a multiple of 16 bytes, so they stay aligned the way they were.
+end of the data and pointed to. The blocks themselves are src/resource.ts.
 
 ### `attributeToken`
 
@@ -2901,6 +2958,14 @@ export function attributeToken(name: string): number
 ```
 
 Valve's hash of a name the expressions read (MurmurHash2 of the lowercased name, their seed).
+
+### `constantExpression`
+
+```ts
+export function constantExpression(value: number[]): Buffer
+```
+
+An expression that is a constant (three or four numbers) and nothing else.
 
 ### `withConstant`
 
@@ -4581,19 +4646,33 @@ left alone; anything else takes the target's hue, with saturation and brightness
 ### `recolorResource`
 
 ```ts
-export function recolorResource(file: Buffer, target: Rgb, { gem, own = true }: { gem?: Rgb; own?: boolean } = {}):
+export function recolorResource(file: Buffer, target: Rgb, { gem, own = true, bake = false }: { gem?: Rgb; own?: boolean; bake?: boolean } = {}):
 ```
 
 One compiled particle in the chosen colour. With `gem`, the gem's tint is pointed at the chosen
 colour; with `own` (the default), a particle the gem does not tint has its written colours moved.
+With `bake`, for a hero who has no gem (src/arcana.ts), that tint is off and what is written is
+what shows: a particle the gem would tint starts from what the tint would have given, and its
+other colours move to the chosen one.
 
 ### `recolorMaterial`
 
 ```ts
-export function recolorMaterial(file: Buffer, target: Rgb): { file: Buffer; changed: number }
+export function recolorMaterial(file: Buffer, target: Rgb, { bake = false }: { bake?: boolean } = {}): { file: Buffer; changed: number }
 ```
 
-One material with its reads of the gem's colour replaced by the chosen colour.
+One material with its reads of the gem's colour replaced by the chosen colour. With `bake`, an
+expression that reads the gem becomes the chosen colour whole: with no gem, the other branch is
+the one that shows.
+
+### `recolorFiles`
+
+```ts
+export function recolorFiles({ pak01, set, target, bake = false }: { pak01: string; set: string; target: Rgb; bake?: boolean }):
+```
+
+The files of a set in the chosen colour, read from the game's pak01 (`bake`: as above). Files
+that fail to read are reported and left out, so a mod carries Valve's own version of them.
 
 ### `buildRecolor`
 
@@ -4601,8 +4680,7 @@ One material with its reads of the gem's colour replaced by the chosen colour.
 export function buildRecolor({ pak01, set, target }: { pak01: string; set: string; target: Rgb }):
 ```
 
-A set recoloured into one VPK, from the game's pak01. Files that fail to read are reported and
-left out, so the mod carries Valve's own version of them.
+A set recoloured into one VPK, from the game's pak01, for a hero whose item brings its gem.
 
 ## src/release-notes.ts
 
@@ -4844,6 +4922,79 @@ export function createRemoteConfig({ userDataDir, appVersion, log = () => {}, pu
 wants to sign its own fixture, which it cannot do with a private key that is not here
 @param opts.now          the clock a notice's until date is read against
 ```
+
+## src/resource.ts
+
+Compiled Source 2 resources at the block level: the blocks of a file, one replaced by new bytes,
+and the list of other resources a file names (RERL), which can be added to.
+
+A resource is a header, a table of blocks (name, offset from the entry, size) and the blocks.
+A block replaced in the middle moves the ones after it by a multiple of 16 bytes, so they keep
+the alignment they had. RERL entries are a 64-bit id, MurmurHash64B of the path with Valve's
+seed, and the path; a particle that gains a child names it there too, as the compiler would.
+
+### `Block`
+
+```ts
+export interface Block { name: string; entry: number; at: number; size: number }
+```
+
+Compiled Source 2 resources at the block level: the blocks of a file, one replaced by new bytes,
+and the list of other resources a file names (RERL), which can be added to.
+
+A resource is a header, a table of blocks (name, offset from the entry, size) and the blocks.
+A block replaced in the middle moves the ones after it by a multiple of 16 bytes, so they keep
+the alignment they had. RERL entries are a 64-bit id, MurmurHash64B of the path with Valve's
+seed, and the path; a particle that gains a child names it there too, as the compiler would.
+
+### `resourceBlocks`
+
+```ts
+export function resourceBlocks(file: Buffer): Block[]
+```
+
+The blocks of a compiled resource: name, where its table entry is, where its data is and how long.
+
+### `resourceBlock`
+
+```ts
+export function resourceBlock(file: Buffer, name: string): { data: Buffer; replace(next: Buffer): Buffer }
+```
+
+One block of a compiled resource, and the file with new bytes in its place.
+
+### `dataBlock`
+
+```ts
+export const dataBlock = (file: Buffer) => resourceBlock(file, 'DATA')
+```
+
+The DATA block of a compiled resource, and the file with a new one in its place.
+
+### `resourceId`
+
+```ts
+export function resourceId(path: string): bigint
+```
+
+The id a resource is named by in RERL: MurmurHash64B of its path, seed 0xEDABCDEF.
+
+### `references`
+
+```ts
+export function references(file: Buffer): string[]
+```
+
+The resources a file names in its RERL block (none when it has no such block).
+
+### `withReferences`
+
+```ts
+export function withReferences(file: Buffer, paths: string[]): Buffer
+```
+
+The file with `paths` added to the resources its RERL block names (those already there are kept
+once). A file with no RERL block is refused: adding a block is not done here.
 
 ## src/safe-zip.ts
 
