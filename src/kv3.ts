@@ -34,12 +34,13 @@ export interface Kv3Cell { buffer: 0 | 1; offset: number; width: 1 | 2 | 4 | 8; 
  * type alone says what it is (0 and 1 written as INT64_ZERO, DOUBLE_ONE...), and where its type
  * byte is, which is the one place such a number can be changed. Elements of a typed array share
  * one type byte, so theirs is null; the array keeps that type as `element`. `flag` is the byte
- * that can follow a type (a string that names a resource, for one), kept as the file had it.
+ * that can follow a type (a string that names a resource, for one), kept as the file had it. A
+ * number made rather than read has its bytes in `raw`, for src/kv3-write.ts.
  */
 export type Kv3Node = (
   | { kind: 'object'; members: Map<string, Kv3Node> }
   | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number } }
-  | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null }
+  | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null; raw?: Buffer }
   | { kind: 'string'; value: string }
   | { kind: 'blob'; data: Buffer }
   | { kind: 'other'; type: number; value?: number }

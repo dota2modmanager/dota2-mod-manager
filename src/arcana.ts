@@ -8,14 +8,16 @@
  * - the arcana's models under the names of the hero's own;
  * - a particle the hero already creates, taken from the arcana's version and given the arcana's
  *   own particles as children, since nothing else would create them; the children are named in
- *   the file's RERL block too, as the compiler names them;
+ *   the file's RERL block too, as the compiler names them. A child is drawn at the control points
+ *   its parent hands it, so a new one gets a point of its own on the attachment it needs (the
+ *   glow of the body on the chest, where the eyes would put it at the right eye);
  * - the arcana's portraits and ability icons under the plain ones' names;
  * - no gem, so its tint is off: the colour is written into the particles and materials instead
  *   (`bake`). Built once from Valve's files and kept in the mod, it is the same after a patch only
  *   until the files it was built from change, so the app builds it again then.
  * Not here: the kill effect (a modifier the item adds), the arcana's sounds and voice lines.
  */
-import { readKv3, type Kv3Node } from './kv3.ts';
+import { readKv3, numberOf, type Kv3Node } from './kv3.ts';
 import { writeKv3 } from './kv3-write.ts';
 import { recolorFiles, recolorResource, RECOLOR_SETS, type Rgb } from './recolor.ts';
 import { dataBlock, withReferences } from './resource.ts';
@@ -29,8 +31,11 @@ export interface ArcanaSet {
   /** images whose name with this removed is the plain one (`_alt1`) */
   images: { under: string[]; mark: string; hero: string };
   /** a particle the hero creates, the arcana's version of it, and the arcana's own particles to hang on it */
-  host: { at: string; from: string; children: string[] };
+  host: { at: string; from: string; children: Child[] };
 }
+
+/** A particle to hang on another, and the model attachment it is drawn at (none: its parent's first point). */
+export interface Child { path: string; attachment?: string }
 
 const TB = 'particles/units/heroes/hero_terrorblade';
 const ARCANA = 'particles/econ/items/terrorblade/terrorblade_horns_arcana';
@@ -46,28 +51,58 @@ export const ARCANA_SETS: Record<string, ArcanaSet> = {
     host: {
       at: `${TB}/terrorblade_ambient_eyes.vpcf_c`,
       from: `${ARCANA}/terrorblade_ambient_eyes_arcana_horns.vpcf_c`,
-      children: [`${ARCANA}/terrorblade_ambient_body_arcana_horns.vpcf`],
+      // its own preview puts it on the horns' attach_hitloc, the chest
+      children: [{ path: `${ARCANA}/terrorblade_ambient_body_arcana_horns.vpcf`, attachment: 'attach_hitloc' }],
     },
   },
 };
 
+type Obj = Extract<Kv3Node, { kind: 'object' }>;
+type Arr = Extract<Kv3Node, { kind: 'array' }>;
+
+/** A whole number made, not read: an INT32 with its bytes. */
+const int32 = (n: number): Kv3Node => { const raw = Buffer.alloc(4); raw.writeInt32LE(n); return { kind: 'number', type: 11, cell: null, typeAt: null, raw }; };
+
 /**
  * A particle with more children: each new entry in `m_Children` is a copy of the first one there,
- * pointing at another file, and the file names them in RERL.
+ * pointing at another file, and the file names them in RERL. A child with an attachment gets a
+ * control point of its own: the parent hands point k to child k (C_OP_SetParentControlPointsToChildCP)
+ * and binds its points to attachments in its first configuration, so both grow by one.
  */
-export function withChildren(file: Buffer, children: string[]): Buffer {
+export function withChildren(file: Buffer, children: Child[]): Buffer {
   const block = dataBlock(file);
   const kv = readKv3(block.data);
-  const list = kv.root.kind === 'object' ? kv.root.members.get('m_Children') : undefined;
+  const root = kv.root.kind === 'object' ? kv.root.members : null;
+  const list = root?.get('m_Children');
   const first = list?.kind === 'array' ? list.items[0] : undefined;
   const ref = first?.kind === 'object' ? first.members.get('m_ChildRef') : undefined;
-  if (list?.kind !== 'array' || first?.kind !== 'object' || ref?.kind !== 'string') throw new Error('arcana: the host has no children to copy');
-  for (const path of children) {
+  if (!root || list?.kind !== 'array' || first?.kind !== 'object' || ref?.kind !== 'string') throw new Error('arcana: the host has no children to copy');
+  for (const child of children) {
+    if (child.attachment) {
+      const config = (root.get('m_controlPointConfigurations') as Arr | undefined)?.items[0] as Obj | undefined;
+      const drivers = config?.members.get('m_drivers') as Arr | undefined;
+      const spread = ((root.get('m_PreEmissionOperators') as Arr | undefined)?.items ?? [])
+        .find((o) => o.kind === 'object' && (o.members.get('_class') as { value?: string })?.value === 'C_OP_SetParentControlPointsToChildCP') as Obj | undefined;
+      const count = spread?.members.get('m_nNumControlPoints');
+      const k = list.items.length;
+      if (!drivers || count?.kind !== 'number' || numberOf(kv, count) !== k || drivers.items.length !== k) {
+        throw new Error('arcana: the host does not hand its children control points one by one');
+      }
+      const binds = (d: Kv3Node, ...keys: string[]) => d.kind === 'object' && keys.every((x) => d.members.has(x));
+      const like = (drivers.items.find((d) => binds(d, 'm_attachmentName', 'm_iControlPoint')) ?? drivers.items.find((d) => binds(d, 'm_attachmentName'))) as Obj | undefined;
+      const name = like?.members.get('m_attachmentName');
+      if (!like || name?.kind !== 'string') throw new Error('arcana: the host binds no control point to an attachment');
+      const driver = new Map(like.members);
+      driver.set('m_iControlPoint', int32(k));
+      driver.set('m_attachmentName', { ...name, value: child.attachment });
+      drivers.items.push({ kind: 'object', members: driver } as Kv3Node);
+      spread!.members.set('m_nNumControlPoints', int32(k + 1));
+    }
     const members = new Map(first.members);
-    members.set('m_ChildRef', { ...ref, value: path });
+    members.set('m_ChildRef', { ...ref, value: child.path });
     list.items.push({ kind: 'object', members } as Kv3Node);
   }
-  return withReferences(block.replace(writeKv3(kv)), children);
+  return withReferences(block.replace(writeKv3(kv)), children.map((c) => c.path));
 }
 
 /** The arcana in the chosen colour, as one VPK from the game's pak01. */

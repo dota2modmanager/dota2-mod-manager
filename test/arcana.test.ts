@@ -107,24 +107,47 @@ test('a resource named in RERL is added once, with its id, and the blocks after 
   assert.deepEqual(references(resource([['DATA', data]])), [], 'a file with no RERL names nothing');
 });
 
-/** A particle with one child, named in RERL, the way the arcana's eyes are. */
+/**
+ * A particle with children, named in RERL, the way the arcana's eyes are: it binds a control point
+ * to an attachment per child and hands point k to child k.
+ */
 const host = (children = ['particles/eye.vpcf']) => resource([
   ['RERL', rerl(children)],
   ['DATA', encodeKv3({ obj: [
     ['m_ConstantColor', { i32s: [0, 210, 255, 255] }],
     ['m_Children', { arr: children.map((c): V => ({ obj: [['m_ChildRef', { ref: c }], ['m_flDelay', { dbl: 0.5 }]] })) }],
+    ['m_controlPointConfigurations', { arr: [{ obj: [['m_name', { str: 'preview' }], ['m_drivers', { arr: children.map((_, k): V => ({ obj: [
+      ...(k ? [['m_iControlPoint', { int: k }] as [string, V]] : []),
+      ['m_iAttachType', { str: 'PATTACH_POINT_FOLLOW' }], ['m_entityName', { str: 'parent' }], ['m_attachmentName', { str: `attach_${k}` }],
+    ] })) }]] }] }],
+    ['m_PreEmissionOperators', { arr: [{ obj: [['_class', { str: 'C_OP_SetParentControlPointsToChildCP' }], ['m_nNumControlPoints', { int: children.length }]] }] }],
   ] })],
 ]);
 
 test('a particle is given another child, copied from its first, and names it in RERL', () => {
-  const next = withChildren(host(), ['particles/body.vpcf']);
+  const next = withChildren(host(), [{ path: 'particles/body.vpcf' }]);
   const kv = readKv3(dataBlock(next).data);
   const items = (at(kv.root, 'm_Children') as Extract<Kv3Node, { kind: 'array' }>).items;
   assert.deepEqual(items.map((x) => (at(x, 'm_ChildRef') as { value: string }).value), ['particles/eye.vpcf', 'particles/body.vpcf']);
   assert.equal((at(items[1], 'm_ChildRef') as { flag?: number }).flag, 1);
   assert.equal(readCell(kv, (at(items[1], 'm_flDelay') as { cell: NonNullable<Parameters<typeof readCell>[1]> }).cell), 0.5);
   assert.deepEqual(references(next), ['particles/eye.vpcf', 'particles/body.vpcf']);
-  assert.throws(() => withChildren(particle(encodeKv3({ obj: [['m_nCount', { int: 1 }]] })), ['particles/body.vpcf']), /no children/);
+  assert.throws(() => withChildren(particle(encodeKv3({ obj: [['m_nCount', { int: 1 }]] })), [{ path: 'particles/body.vpcf' }]), /no children/);
+});
+
+test("a child hung on with an attachment gets a control point of its own there, not at its parent's first", () => {
+  // the arcana's body glow on the eyes was drawn at the right eye until it had one
+  const next = withChildren(host(['particles/eye.vpcf', 'particles/eye.vpcf']), [{ path: 'particles/body.vpcf', attachment: 'attach_hitloc' }]);
+  const kv = readKv3(dataBlock(next).data);
+  const config = at(kv.root, 'm_controlPointConfigurations', 0, 'm_drivers') as Extract<Kv3Node, { kind: 'array' }>;
+  assert.equal(config.items.length, 3);
+  const driver = config.items[2];
+  assert.equal(numberOf(kv, at(driver, 'm_iControlPoint') as Extract<Kv3Node, { kind: 'number' }>), 2);
+  assert.equal((at(driver, 'm_attachmentName') as { value: string }).value, 'attach_hitloc');
+  assert.equal((at(driver, 'm_entityName') as { value: string }).value, 'parent', 'bound the way its siblings are');
+  assert.equal(numberOf(kv, at(kv.root, 'm_PreEmissionOperators', 0, 'm_nNumControlPoints') as Extract<Kv3Node, { kind: 'number' }>), 3);
+  const loose = particle(encodeKv3({ obj: [['m_Children', { arr: [{ obj: [['m_ChildRef', { ref: 'particles/eye.vpcf' }]] }] }]] }));
+  assert.throws(() => withChildren(loose, [{ path: 'particles/body.vpcf', attachment: 'attach_hitloc' }]), /one by one/);
 });
 
 const GEM: Rgb = [255, 60, 40];
@@ -185,6 +208,8 @@ test('the arcana becomes one VPK: its models and pictures under the plain names,
   assert.ok(!read('panorama/images/spellicons/terrorblade_unused_png.vtex_c'), 'an icon with no plain one is not made up');
   const eyes = read(`${hero}/terrorblade_ambient_eyes.vpcf_c`);
   assert.deepEqual(references(eyes), [`${arcana}/terrorblade_ambient_eye_arcana_horns.vpcf`, `${arcana}/terrorblade_ambient_body_arcana_horns.vpcf`]);
+  const drivers = at(readKv3(dataBlock(eyes).data).root, 'm_controlPointConfigurations', 0, 'm_drivers') as Extract<Kv3Node, { kind: 'array' }>;
+  assert.equal((at(drivers.items[1], 'm_attachmentName') as { value: string }).value, 'attach_hitloc', 'the glow of the body on the chest');
   const feet = readKv3(dataBlock(read(`${hero}/terrorblade_feet_effects.vpcf_c`)).data);
   assert.deepEqual(feet.arrays.find((a) => a.key === 'm_ConstantColor')!.cells.slice(0, 3).map((c) => readCell(feet, c!)), GEM, 'the gem\'s colour, written in');
   const [expression] = materialExpressions(read('materials/models/heroes/terrorblade/terrorblade_arcana_color.vmat_c'));

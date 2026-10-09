@@ -60,9 +60,8 @@ export function writeKv3(kv: Kv3Block): Buffer {
   const write = (n: Kv3Node): void => {
     switch (n.kind) {
       case 'number': {
-        if (!n.cell) return;
-        const raw = kv.buffers[n.cell.buffer].subarray(n.cell.offset, n.cell.offset + n.cell.width);
-        ({ 1: l1, 2: l2, 4: l4, 8: l8 } as const)[n.cell.width].push(Buffer.from(raw));
+        const raw = n.raw ?? (n.cell && kv.buffers[n.cell.buffer].subarray(n.cell.offset, n.cell.offset + n.cell.width));
+        if (raw) ({ 1: l1, 2: l2, 4: l4, 8: l8 } as Record<number, Lane>)[raw.length].push(Buffer.from(raw));
         return;
       }
       case 'other': if (n.type === 2) l1.push(Buffer.from([n.value ?? 0])); return;

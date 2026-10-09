@@ -261,7 +261,9 @@ puts the arcana's files where the plain hero's are:
 - the arcana's models under the names of the hero's own;
 - a particle the hero already creates, taken from the arcana's version and given the arcana's
   own particles as children, since nothing else would create them; the children are named in
-  the file's RERL block too, as the compiler names them;
+  the file's RERL block too, as the compiler names them. A child is drawn at the control points
+  its parent hands it, so a new one gets a point of its own on the attachment it needs (the
+  glow of the body on the chest, where the eyes would put it at the right eye);
 - the arcana's portraits and ability icons under the plain ones' names;
 - no gem, so its tint is off: the colour is written into the particles and materials instead
   (`bake`). Built once from Valve's files and kept in the mod, it is the same after a patch only
@@ -276,6 +278,14 @@ export interface ArcanaSet
 
 _No description in the source._
 
+### `Child`
+
+```ts
+export interface Child { path: string; attachment?: string }
+```
+
+A particle to hang on another, and the model attachment it is drawn at (none: its parent's first point).
+
 ### `ARCANA_SETS`
 
 ```ts
@@ -287,11 +297,13 @@ _No description in the source._
 ### `withChildren`
 
 ```ts
-export function withChildren(file: Buffer, children: string[]): Buffer
+export function withChildren(file: Buffer, children: Child[]): Buffer
 ```
 
 A particle with more children: each new entry in `m_Children` is a copy of the first one there,
-pointing at another file, and the file names them in RERL.
+pointing at another file, and the file names them in RERL. A child with an attachment gets a
+control point of its own: the parent hands point k to child k (C_OP_SetParentControlPointsToChildCP)
+and binds its points to attachments in its first configuration, so both grow by one.
 
 ### `buildArcana`
 
@@ -2781,14 +2793,15 @@ Where one number lives: which decompressed buffer, the byte offset in it, and ho
 ### `Kv3Node`
 
 ```ts
-export type Kv3Node = ( | { kind: 'object'; members: Map<string, Kv3Node> } | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number } } | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null } | { kind: 'string'; value: string } | { kind: 'blob'; data: Buffer } | { kind: 'other'; type: number; value?: number } ) & { flag?: number }
+export type Kv3Node = ( | { kind: 'object'; members: Map<string, Kv3Node> } | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number } } | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null; raw?: Buffer } | { kind: 'string'; value: string } | { kind: 'blob'; data: Buffer } | { kind: 'other'; type: number; value?: number } ) & { flag?: number }
 ```
 
 A value in the tree the walk builds. A number keeps where it lies (`cell`), or null when the
 type alone says what it is (0 and 1 written as INT64_ZERO, DOUBLE_ONE...), and where its type
 byte is, which is the one place such a number can be changed. Elements of a typed array share
 one type byte, so theirs is null; the array keeps that type as `element`. `flag` is the byte
-that can follow a type (a string that names a resource, for one), kept as the file had it.
+that can follow a type (a string that names a resource, for one), kept as the file had it. A
+number made rather than read has its bytes in `raw`, for src/kv3-write.ts.
 
 ### `Kv3Array`
 
