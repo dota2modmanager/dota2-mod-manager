@@ -4457,6 +4457,183 @@
       ]
     },
     {
+      "id": "juggernaut",
+      "name": "Juggernaut",
+      "slug": "juggernaut",
+      "mods": [
+        {
+          "name": "Juggernaut Ancient Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","back","head","weapon","legs"],
+          "image": {"src":"/mods/juggernaut-ancient-arcana.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790528664
+        },
+        {
+          "name": "Juggernaut Jagged Honor",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","back","head","weapon","legs"],
+          "image": {"src":"/mods/juggernaut-jagged-honor.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790260681
+        },
+        {
+          "name": "Juggernaut Lineage Kantusa",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","back","head","weapon","legs"],
+          "image": {"src":"/mods/juggernaut-lineage-kantusa.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790558987
+        },
+        {
+          "name": "Juggernaut Okita Souji",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","back","head","weapon","legs"],
+          "image": {"src":"/mods/juggernaut-okita-souji.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771195327
+        },
+        {
+          "name": "Juggernaut Ancient Exile",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","back","head","weapon"],
+          "image": {"src":"/mods/juggernaut-ancient-exile.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1779803304
+        },
+        {
+          "name": "Juggernaut Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","back","head","weapon"],
+          "image": {"src":"/mods/juggernaut-arcana.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1787381478
+        },
+        {
+          "name": "Juggernaut Arcana Golden Edge",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","misc","arms","back","weapon"],
+          "image": {"src":"/mods/juggernaut-arcana-golden-edge.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1789915216
+        },
+        {
+          "name": "Juggernaut Arcana Purple",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","misc","weapon","back","arms"],
+          "image": {"src":"/mods/juggernaut-arcana-purple.webp","width":854,"height":480},
+          "author": "CeoMods",
+          "authorUrl": "https://t.me/modsceo",
+          "date": 1787156742
+        },
+        {
+          "name": "Juggernaut Aura",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","back","head","weapon"],
+          "image": {"src":"/mods/juggernaut-aura.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1790623547
+        },
+        {
+          "name": "Juggernaut Bladeform Aesthete",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","back","head","weapon"],
+          "image": {"src":"/mods/juggernaut-bladeform-aesthete.webp","width":854,"height":480},
+          "author": "Tenkay",
+          "authorUrl": "https://t.me/dota2Tenkay",
+          "date": 1786848392
+        },
+        {
+          "name": "Juggernaut Ice and Fire",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","back","arms","head","weapon"],
+          "image": {"src":"/mods/juggernaut-ice-and-fire.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1763212289
+        },
+        {
+          "name": "Juggernaut Provocation Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","back","head","weapon"],
+          "image": {"src":"/mods/juggernaut-provocation-arcana.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790375737
+        },
+        {
+          "name": "Juggernaut Samurai of Wind",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","head","back","weapon","arms"],
+          "image": {"src":"/mods/juggernaut-samurai-of-wind.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1763624686
+        },
+        {
+          "name": "Lollipop Juggernaut",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","back","head","weapon"],
+          "image": {"src":"/mods/lollipop-juggernaut.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1768632223
+        },
+        {
+          "name": "Juggernaut Bladeform Legacy",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head"],
+          "image": {"src":"/mods/juggernaut-bladeform-legacy.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791470872
+        },
+        {
+          "name": "Juggernaut Bladeform Origins",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head"],
+          "image": {"src":"/mods/juggernaut-bladeform-origins.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791520425
+        },
+        {
+          "name": "Juggernaut Fireborn Assault",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/juggernaut-fireborn-assault.webp","width":854,"height":480},
+          "author": "ibcsz",
+          "authorUrl": "http://t.me/nixwaretop",
+          "date": 1789278465
+        }
+      ]
+    },
+    {
       "id": "lina",
       "name": "Lina",
       "slug": "lina",
@@ -4978,6 +5155,173 @@
       ]
     },
     {
+      "id": "earthshaker",
+      "name": "Earthshaker",
+      "slug": "earthshaker",
+      "mods": [
+        {
+          "name": "Earthshaker Deep Magma",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc","head","weapon"],
+          "image": {"src":"/mods/earthshaker-deep-magma.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1775124421
+        },
+        {
+          "name": "Earthshaker Tectonic",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc","head","weapon"],
+          "image": {"src":"/mods/earthshaker-tectonic.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791253117
+        },
+        {
+          "name": "Earthshaker Arcana Reborn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc","head"],
+          "image": {"src":"/mods/earthshaker-arcana-reborn.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791469531
+        },
+        {
+          "name": "Earthshaker Arcana V2 Reborn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc","head"],
+          "image": {"src":"/mods/earthshaker-arcana-v2-reborn.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791520425
+        },
+        {
+          "name": "Earthshaker Aura Derevni",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc","head"],
+          "image": {"src":"/mods/earthshaker-aura-derevni.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1791342818
+        },
+        {
+          "name": "Earthshaker Planetfall Burning",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc","head"],
+          "image": {"src":"/mods/earthshaker-planetfall-burning.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790224749
+        },
+        {
+          "name": "Earthshaker Planetfall Reborn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc","head"],
+          "image": {"src":"/mods/earthshaker-planetfall-reborn.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790216247
+        },
+        {
+          "name": "Cosmic Earthshaker",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc"],
+          "image": {"src":"/mods/cosmic-earthshaker.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1777007944
+        },
+        {
+          "name": "Earthshaker Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","misc"],
+          "image": {"src":"/mods/earthshaker-arcana.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1789836072
+        },
+        {
+          "name": "Earthshaker Burning Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","misc"],
+          "image": {"src":"/mods/earthshaker-burning-arcana.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1789836072
+        },
+        {
+          "name": "Earthshaker Purple Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc"],
+          "image": {"src":"/mods/earthshaker-purple-arcana.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1774882421
+        },
+        {
+          "name": "Earthshaker Red Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","belt"],
+          "image": {"src":"/mods/earthshaker-red-arcana.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1756539017
+        },
+        {
+          "name": "Darkness Crimson Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/darkness-crimson-naga-siren.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1776456530
+        },
+        {
+          "name": "Earthshaker Carrot",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/earthshaker-carrot.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1768637892
+        },
+        {
+          "name": "Earthshaker Blink Dagger",
+          "categoryId": "item-effects",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/earthshaker-blink-dagger.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
+        },
+        {
+          "name": "Earthshaker Gold Blink Dagger",
+          "categoryId": "item-effects",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/earthshaker-gold-blink-dagger.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
+        }
+      ]
+    },
+    {
       "id": "enigma",
       "name": "Enigma",
       "slug": "enigma",
@@ -5272,173 +5616,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "juggernaut",
-      "name": "Juggernaut",
-      "slug": "juggernaut",
-      "mods": [
-        {
-          "name": "Juggernaut Ancient Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","back","head","weapon","legs"],
-          "image": {"src":"/mods/juggernaut-ancient-arcana.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790528664
-        },
-        {
-          "name": "Juggernaut Jagged Honor",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","back","head","weapon","legs"],
-          "image": {"src":"/mods/juggernaut-jagged-honor.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790260681
-        },
-        {
-          "name": "Juggernaut Lineage Kantusa",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","back","head","weapon","legs"],
-          "image": {"src":"/mods/juggernaut-lineage-kantusa.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790558987
-        },
-        {
-          "name": "Juggernaut Okita Souji",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","back","head","weapon","legs"],
-          "image": {"src":"/mods/juggernaut-okita-souji.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771195327
-        },
-        {
-          "name": "Juggernaut Ancient Exile",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","back","head","weapon"],
-          "image": {"src":"/mods/juggernaut-ancient-exile.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1779803304
-        },
-        {
-          "name": "Juggernaut Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","back","head","weapon"],
-          "image": {"src":"/mods/juggernaut-arcana.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1787381478
-        },
-        {
-          "name": "Juggernaut Arcana Golden Edge",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","misc","arms","back","weapon"],
-          "image": {"src":"/mods/juggernaut-arcana-golden-edge.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1789915216
-        },
-        {
-          "name": "Juggernaut Arcana Purple",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","misc","weapon","back","arms"],
-          "image": {"src":"/mods/juggernaut-arcana-purple.webp","width":854,"height":480},
-          "author": "CeoMods",
-          "authorUrl": "https://t.me/modsceo",
-          "date": 1787156742
-        },
-        {
-          "name": "Juggernaut Aura",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","back","head","weapon"],
-          "image": {"src":"/mods/juggernaut-aura.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1790623547
-        },
-        {
-          "name": "Juggernaut Bladeform Aesthete",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","back","head","weapon"],
-          "image": {"src":"/mods/juggernaut-bladeform-aesthete.webp","width":854,"height":480},
-          "author": "Tenkay",
-          "authorUrl": "https://t.me/dota2Tenkay",
-          "date": 1786848392
-        },
-        {
-          "name": "Juggernaut Ice and Fire",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","back","arms","head","weapon"],
-          "image": {"src":"/mods/juggernaut-ice-and-fire.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1763212289
-        },
-        {
-          "name": "Juggernaut Provocation Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","back","head","weapon"],
-          "image": {"src":"/mods/juggernaut-provocation-arcana.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790375737
-        },
-        {
-          "name": "Juggernaut Samurai of Wind",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","head","back","weapon","arms"],
-          "image": {"src":"/mods/juggernaut-samurai-of-wind.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1763624686
-        },
-        {
-          "name": "Lollipop Juggernaut",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","back","head","weapon"],
-          "image": {"src":"/mods/lollipop-juggernaut.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1768632223
-        },
-        {
-          "name": "Juggernaut Bladeform Legacy",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head"],
-          "image": {"src":"/mods/juggernaut-bladeform-legacy.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1791470872
-        },
-        {
-          "name": "Juggernaut Fireborn Assault",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/juggernaut-fireborn-assault.webp","width":854,"height":480},
-          "author": "ibcsz",
-          "authorUrl": "http://t.me/nixwaretop",
-          "date": 1789278465
         }
       ]
     },
@@ -6559,163 +6736,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "earthshaker",
-      "name": "Earthshaker",
-      "slug": "earthshaker",
-      "mods": [
-        {
-          "name": "Earthshaker Deep Magma",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head","weapon"],
-          "image": {"src":"/mods/earthshaker-deep-magma.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1775124421
-        },
-        {
-          "name": "Earthshaker Tectonic",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head","weapon"],
-          "image": {"src":"/mods/earthshaker-tectonic.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1791253117
-        },
-        {
-          "name": "Earthshaker Arcana Reborn",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head"],
-          "image": {"src":"/mods/earthshaker-arcana-reborn.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1791469531
-        },
-        {
-          "name": "Earthshaker Aura Derevni",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head"],
-          "image": {"src":"/mods/earthshaker-aura-derevni.webp","width":854,"height":480},
-          "author": "твавт",
-          "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1791342818
-        },
-        {
-          "name": "Earthshaker Planetfall Burning",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head"],
-          "image": {"src":"/mods/earthshaker-planetfall-burning.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790224749
-        },
-        {
-          "name": "Earthshaker Planetfall Reborn",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head"],
-          "image": {"src":"/mods/earthshaker-planetfall-reborn.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790216247
-        },
-        {
-          "name": "Cosmic Earthshaker",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc"],
-          "image": {"src":"/mods/cosmic-earthshaker.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1777007944
-        },
-        {
-          "name": "Earthshaker Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","misc"],
-          "image": {"src":"/mods/earthshaker-arcana.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1789836072
-        },
-        {
-          "name": "Earthshaker Burning Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","misc"],
-          "image": {"src":"/mods/earthshaker-burning-arcana.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1789836072
-        },
-        {
-          "name": "Earthshaker Purple Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc"],
-          "image": {"src":"/mods/earthshaker-purple-arcana.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1774882421
-        },
-        {
-          "name": "Earthshaker Red Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","belt"],
-          "image": {"src":"/mods/earthshaker-red-arcana.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1756539017
-        },
-        {
-          "name": "Darkness Crimson Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/darkness-crimson-naga-siren.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1776456530
-        },
-        {
-          "name": "Earthshaker Carrot",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/earthshaker-carrot.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1768637892
-        },
-        {
-          "name": "Earthshaker Blink Dagger",
-          "categoryId": "item-effects",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/earthshaker-blink-dagger.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1789310506
-        },
-        {
-          "name": "Earthshaker Gold Blink Dagger",
-          "categoryId": "item-effects",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/earthshaker-gold-blink-dagger.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1789310506
         }
       ]
     },
@@ -9504,6 +9524,143 @@
       ]
     },
     {
+      "id": "phantom_assassin",
+      "name": "Phantom Assassin",
+      "slug": "phantom-assassin",
+      "mods": [
+        {
+          "name": "Phantom Assassin Persona",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","back","head","shoulder","weapon","belt","arms"],
+          "image": {"src":"/mods/phantom-assassin-persona.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1766149492
+        },
+        {
+          "name": "Phantom Assassin Yor Forger",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","weapon","back","head","shoulder","belt"],
+          "image": {"src":"/mods/phantom-assassin-yor-forger.webp","width":854,"height":480},
+          "author": "Pinkpapa",
+          "authorUrl": "https://www.patreon.com/Pinkpapa",
+          "date": null
+        },
+        {
+          "name": "Phantom Assassin Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","back","misc","head","shoulder","belt"],
+          "image": {"src":"/mods/phantom-assassin-arcana.webp","width":854,"height":480},
+          "author": "Haruma",
+          "authorUrl": "https://t.me/DotA_2_Mods",
+          "date": 1778331617
+        },
+        {
+          "name": "Phantom Assassin Rory",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon","back","head","shoulder","belt"],
+          "image": {"src":"/mods/phantom-assassin-rory.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1767093656
+        },
+        {
+          "name": "Warden Phantom Assassin",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","back","misc","head","shoulder","belt"],
+          "image": {"src":"/mods/warden-phantom-assassin.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1773556978
+        },
+        {
+          "name": "Phantom Assassin Athena",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","misc","head","shoulder","weapon"],
+          "image": {"src":"/mods/phantom-assassin-athena.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1790424886
+        },
+        {
+          "name": "Phantom Assassin Gothic",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","misc","head","shoulder","weapon"],
+          "image": {"src":"/mods/phantom-assassin-gothic.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1790709328
+        },
+        {
+          "name": "Phantom Assassin Skull Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","misc","head","shoulder","weapon"],
+          "image": {"src":"/mods/phantom-assassin-skull-arcana.webp","width":1280,"height":720},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1764105388
+        },
+        {
+          "name": "Phite Phantom Assassin",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","misc","head","shoulder","weapon"],
+          "image": {"src":"/mods/phite-phantom-assassin.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1775454991
+        },
+        {
+          "name": "Phantom Assassin Arcana V1",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/phantom-assassin-arcana-v1.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791520425
+        },
+        {
+          "name": "Phantom Assassin Avowance",
+          "categoryId": "hero-items",
+          "styleLabel": "Crimson",
+          "slots": ["shoulder"],
+          "image": {"src":"/mods/phantom-assassin-avowance-crimson.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1780692007
+        },
+        {
+          "name": "Phantom Assassin Avowance",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["shoulder"],
+          "image": {"src":"/mods/phantom-assassin-avowance.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1780692007
+        },
+        {
+          "name": "Phantom Assassin Codicil",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["head"],
+          "image": {"src":"/mods/phantom-assassin-codicil.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1780692007
+        }
+      ]
+    },
+    {
       "id": "pheonix",
       "name": "Phoenix",
       "slug": "phoenix",
@@ -10948,133 +11105,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "phantom_assassin",
-      "name": "Phantom Assassin",
-      "slug": "phantom-assassin",
-      "mods": [
-        {
-          "name": "Phantom Assassin Persona",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","back","head","shoulder","weapon","belt","arms"],
-          "image": {"src":"/mods/phantom-assassin-persona.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1766149492
-        },
-        {
-          "name": "Phantom Assassin Yor Forger",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","weapon","back","head","shoulder","belt"],
-          "image": {"src":"/mods/phantom-assassin-yor-forger.webp","width":854,"height":480},
-          "author": "Pinkpapa",
-          "authorUrl": "https://www.patreon.com/Pinkpapa",
-          "date": null
-        },
-        {
-          "name": "Phantom Assassin Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","back","misc","head","shoulder","belt"],
-          "image": {"src":"/mods/phantom-assassin-arcana.webp","width":854,"height":480},
-          "author": "Haruma",
-          "authorUrl": "https://t.me/DotA_2_Mods",
-          "date": 1778331617
-        },
-        {
-          "name": "Phantom Assassin Rory",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","weapon","back","head","shoulder","belt"],
-          "image": {"src":"/mods/phantom-assassin-rory.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1767093656
-        },
-        {
-          "name": "Warden Phantom Assassin",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","back","misc","head","shoulder","belt"],
-          "image": {"src":"/mods/warden-phantom-assassin.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1773556978
-        },
-        {
-          "name": "Phantom Assassin Athena",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","misc","head","shoulder","weapon"],
-          "image": {"src":"/mods/phantom-assassin-athena.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://github.com/J0nathan550",
-          "date": 1790424886
-        },
-        {
-          "name": "Phantom Assassin Gothic",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","misc","head","shoulder","weapon"],
-          "image": {"src":"/mods/phantom-assassin-gothic.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1790709328
-        },
-        {
-          "name": "Phantom Assassin Skull Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","misc","head","shoulder","weapon"],
-          "image": {"src":"/mods/phantom-assassin-skull-arcana.webp","width":1280,"height":720},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1764105388
-        },
-        {
-          "name": "Phite Phantom Assassin",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","misc","head","shoulder","weapon"],
-          "image": {"src":"/mods/phite-phantom-assassin.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1775454991
-        },
-        {
-          "name": "Phantom Assassin Avowance",
-          "categoryId": "hero-items",
-          "styleLabel": "Crimson",
-          "slots": ["shoulder"],
-          "image": {"src":"/mods/phantom-assassin-avowance-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1780692007
-        },
-        {
-          "name": "Phantom Assassin Avowance",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["shoulder"],
-          "image": {"src":"/mods/phantom-assassin-avowance.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1780692007
-        },
-        {
-          "name": "Phantom Assassin Codicil",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["head"],
-          "image": {"src":"/mods/phantom-assassin-codicil.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1780692007
         }
       ]
     },

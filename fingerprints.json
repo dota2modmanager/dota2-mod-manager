@@ -1,5 +1,5 @@
 {
-  "count": 1581,
+  "count": 1584,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -199,6 +199,7 @@
     "21611e629314b7246af520bfc5a2dc1ad641d79c": [{"name":"Terrorblade Span Of Sorrow","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "21eaf72206a64aa4a6bef023b1f24a5928eb0727": [{"name":"Doom Sematary","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "220c96ef1c7bf0e38d056dbb395dcf2871292f07": [{"name":"Metal Barrel Trees","categoryId":"trees","styleLabel":null,"type":"vpk"}],
+    "2214622a1b1dbdd16e47f13f6e7cbf2f2556eef7": [{"name":"Juggernaut Bladeform Origins","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "223558547782d785ed23241b42a435c6f3c6aaff": [{"name":"Keeper Of The Light BMW","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "22395d7d0f5e1fe6ad4be94a6acdf18156a4e671": [{"name":"Old Storm Spirit","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "22a77e3de45e07fe841805e0ea3d42237199ec55": [{"name":"Keeper of the Light Northlight Illuminance","categoryId":"herofx","styleLabel":null,"type":"vpk"}],
@@ -568,6 +569,7 @@
     "623c46da6ae4da3d9264db9d3e02b763942e53c8": [{"name":"Storm Spirit Lightning Orchid","categoryId":"hero-items","styleLabel":"Retro","type":"vpk"}],
     "6251a322ba01cd25009775ab4803fae467cafc8b": [{"name":"Aghanims Labyrinth Battle Pass","categoryId":"ti-bp-effects","styleLabel":null,"type":"vpk"}],
     "62521a86d8834e7b3f7fb9b1ba05d7a6c98b9ee3": [{"name":"Immortal Dark Seer","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "6275ba5accffa8635af6c7650c05a5d119297526": [{"name":"Phantom Assassin Arcana V1","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "6298f6f2940fabc5d37dd288b26c5ad5fa1a1dea": [{"name":"Shadow Fiend Avice Mod","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "62b24ef016207417862df86c35f36c3b57377bf7": [{"name":"Aghanims Roshan","categoryId":"roshan","styleLabel":null,"type":"vpk"}],
     "62c638a9660adca5c284c2b02a0588ef02b511fd": [{"name":"Immortal Hoodwink","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -1091,6 +1093,7 @@
     "b6647e23eb45952071fc9de8e82130e57ed1786e": [{"name":"Kez Captain Anchorbeak","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "b6796d756ab1fc10d616faabc9ef812015ec0751": [{"name":"Luna Midnight Stalker","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "b6834f31b74ce31a6b90daa35eece6bb683011c5": [{"name":"Luna Moon Stalker","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "b6870f70f18f7b22c3b9173aa69f0b354dea0ed8": [{"name":"Earthshaker Arcana V2 Reborn","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "b6883ea78d9d3e9690f2222730c75f32872b97eb": [{"name":"Aegis Hearts","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "b76a3fc31dd3b10dc9a6dffe8c2add44800bb19c": [{"name":"Arc Warden Ancient Gaoler","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "b78d290adac60a8c1cf690f68d3206cded03ced1": [{"name":"Anti-Mage Bloody Reaper","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
