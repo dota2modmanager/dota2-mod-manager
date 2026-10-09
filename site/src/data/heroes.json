@@ -790,6 +790,36 @@
           "date": 1791372988
         },
         {
+          "name": "Terrorblade Arcana Blades",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","weapon","wings"],
+          "image": {"src":"/mods/terrorblade-arcana-blades.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791549623
+        },
+        {
+          "name": "Terrorblade Arcana Manta",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","weapon","wings"],
+          "image": {"src":"/mods/terrorblade-arcana-manta.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791549623
+        },
+        {
+          "name": "Terrorblade Arcana Skadi",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","weapon","wings"],
+          "image": {"src":"/mods/terrorblade-arcana-skadi.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791549623
+        },
+        {
           "name": "Terrorblade Rictus Blade",
           "categoryId": "heroes",
           "styleLabel": null,
@@ -1576,6 +1606,253 @@
       ]
     },
     {
+      "id": "luna",
+      "name": "Luna",
+      "slug": "luna",
+      "mods": [
+        {
+          "name": "Luna Cosmic",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","shield","shoulder","weapon","misc"],
+          "image": {"src":"/mods/luna-cosmic.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1791162755
+        },
+        {
+          "name": "Luna Blood Moon",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","shield","shoulder","weapon"],
+          "image": {"src":"/mods/luna-blood-moon.webp","width":854,"height":480},
+          "author": "qizlik",
+          "authorUrl": "https://t.me/qizlikmod",
+          "date": 1791449984
+        },
+        {
+          "name": "Luna Bloodmoon Stalker",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","shield","shoulder","weapon"],
+          "image": {"src":"/mods/luna-bloodmoon-stalker.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1772641602
+        },
+        {
+          "name": "Luna Crescent Wheel",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","shield","shoulder","weapon"],
+          "image": {"src":"/mods/luna-crescent-wheel.webp","width":854,"height":480},
+          "author": "Tenkay",
+          "authorUrl": "https://t.me/dota2Tenkay",
+          "date": 1787030118
+        },
+        {
+          "name": "Luna Dark Moonfall",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","shield","shoulder","weapon"],
+          "image": {"src":"/mods/luna-dark-moonfall.webp","width":1280,"height":720},
+          "author": "Tenkay",
+          "authorUrl": "https://t.me/dota2Tenkay",
+          "date": 1786605629
+        },
+        {
+          "name": "Luna Golden Immortal Stalker",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","shield","shoulder","weapon"],
+          "image": {"src":"/mods/luna-golden-immortal-stalker.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://github.com/J0nathan550",
+          "date": 1791549623
+        },
+        {
+          "name": "Luna Midnight Stalker",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","shield","shoulder","weapon"],
+          "image": {"src":"/mods/luna-midnight-stalker.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1791369985
+        },
+        {
+          "name": "Luna Moon Stalker",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","shield","shoulder","weapon"],
+          "image": {"src":"/mods/luna-moon-stalker.webp","width":854,"height":480},
+          "author": "CeoMods",
+          "authorUrl": "https://t.me/modsceo",
+          "date": 1784146575
+        },
+        {
+          "name": "Luna Sematary Rainbow Bridge III",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","shield","shoulder","weapon"],
+          "image": {"src":"/mods/luna-sematary-rainbow-bridge-iii.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1790528261
+        },
+        {
+          "name": "Luna Winged Sentinel",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","shield","shoulder","weapon"],
+          "image": {"src":"/mods/luna-winged-sentinel.webp","width":854,"height":480},
+          "author": "Mopsyara",
+          "authorUrl": "https://t.me/+AM_aLD0x2TcwY2My",
+          "date": 1784328560
+        },
+        {
+          "name": "Luna Moonfall",
+          "categoryId": "hero-items",
+          "styleLabel": "Golden",
+          "slots": ["shield"],
+          "image": {"src":"/mods/luna-moonfall-golden.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1780230946
+        },
+        {
+          "name": "Luna Moonfall",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["shield"],
+          "image": {"src":"/mods/luna-moonfall.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1780230946
+        },
+        {
+          "name": "Luna Twilight Schism",
+          "categoryId": "hero-items",
+          "styleLabel": "Crimson",
+          "slots": ["weapon"],
+          "image": {"src":"/mods/luna-twilight-schism-crimson.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1780230946
+        },
+        {
+          "name": "Luna Twilight Schism",
+          "categoryId": "hero-items",
+          "styleLabel": "Golden",
+          "slots": ["weapon"],
+          "image": {"src":"/mods/luna-twilight-schism-golden.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1780230946
+        },
+        {
+          "name": "Luna Twilight Schism",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/luna-twilight-schism.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1780230946
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "keeper_of_the_light",
       "name": "Keeper of the Light",
       "slug": "keeper-of-the-light",
@@ -1956,243 +2233,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1776439861
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "luna",
-      "name": "Luna",
-      "slug": "luna",
-      "mods": [
-        {
-          "name": "Luna Cosmic",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","shield","shoulder","weapon","misc"],
-          "image": {"src":"/mods/luna-cosmic.webp","width":854,"height":480},
-          "author": "твавт",
-          "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1791162755
-        },
-        {
-          "name": "Luna Blood Moon",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","shield","shoulder","weapon"],
-          "image": {"src":"/mods/luna-blood-moon.webp","width":854,"height":480},
-          "author": "qizlik",
-          "authorUrl": "https://t.me/qizlikmod",
-          "date": 1791449984
-        },
-        {
-          "name": "Luna Bloodmoon Stalker",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","shield","shoulder","weapon"],
-          "image": {"src":"/mods/luna-bloodmoon-stalker.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1772641602
-        },
-        {
-          "name": "Luna Crescent Wheel",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","shield","shoulder","weapon"],
-          "image": {"src":"/mods/luna-crescent-wheel.webp","width":854,"height":480},
-          "author": "Tenkay",
-          "authorUrl": "https://t.me/dota2Tenkay",
-          "date": 1787030118
-        },
-        {
-          "name": "Luna Dark Moonfall",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","shield","shoulder","weapon"],
-          "image": {"src":"/mods/luna-dark-moonfall.webp","width":1280,"height":720},
-          "author": "Tenkay",
-          "authorUrl": "https://t.me/dota2Tenkay",
-          "date": 1786605629
-        },
-        {
-          "name": "Luna Midnight Stalker",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","shield","shoulder","weapon"],
-          "image": {"src":"/mods/luna-midnight-stalker.webp","width":854,"height":480},
-          "author": "драг",
-          "authorUrl": "https://t.me/dragvpk",
-          "date": 1791369985
-        },
-        {
-          "name": "Luna Moon Stalker",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","shield","shoulder","weapon"],
-          "image": {"src":"/mods/luna-moon-stalker.webp","width":854,"height":480},
-          "author": "CeoMods",
-          "authorUrl": "https://t.me/modsceo",
-          "date": 1784146575
-        },
-        {
-          "name": "Luna Sematary Rainbow Bridge III",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","shield","shoulder","weapon"],
-          "image": {"src":"/mods/luna-sematary-rainbow-bridge-iii.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1790528261
-        },
-        {
-          "name": "Luna Winged Sentinel",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","shield","shoulder","weapon"],
-          "image": {"src":"/mods/luna-winged-sentinel.webp","width":854,"height":480},
-          "author": "Mopsyara",
-          "authorUrl": "https://t.me/+AM_aLD0x2TcwY2My",
-          "date": 1784328560
-        },
-        {
-          "name": "Luna Moonfall",
-          "categoryId": "hero-items",
-          "styleLabel": "Golden",
-          "slots": ["shield"],
-          "image": {"src":"/mods/luna-moonfall-golden.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1780230946
-        },
-        {
-          "name": "Luna Moonfall",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["shield"],
-          "image": {"src":"/mods/luna-moonfall.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1780230946
-        },
-        {
-          "name": "Luna Twilight Schism",
-          "categoryId": "hero-items",
-          "styleLabel": "Crimson",
-          "slots": ["weapon"],
-          "image": {"src":"/mods/luna-twilight-schism-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1780230946
-        },
-        {
-          "name": "Luna Twilight Schism",
-          "categoryId": "hero-items",
-          "styleLabel": "Golden",
-          "slots": ["weapon"],
-          "image": {"src":"/mods/luna-twilight-schism-golden.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1780230946
-        },
-        {
-          "name": "Luna Twilight Schism",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/luna-twilight-schism.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1780230946
         },
         {
           "name": "Aghanim Ranged Attack",

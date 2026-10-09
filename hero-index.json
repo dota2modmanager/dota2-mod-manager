@@ -1,6 +1,6 @@
 {
   "heroes": 149,
-  "mods": 1529,
+  "mods": 1533,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -972,6 +972,7 @@
         {"name":"Luna Cosmic","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon","misc"]},
         {"name":"Luna Crescent Wheel","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Dark Moonfall","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
+        {"name":"Luna Golden Immortal Stalker","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Midnight Stalker","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Moon Stalker","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Moonfall","categoryId":"hero-items","styleLabel":"Golden","slots":["shield"]},
@@ -1824,8 +1825,11 @@
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Rictus Ripper Terrorblade","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
         {"name":"Terrorblade 666 Fractal Horns","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
+        {"name":"Terrorblade Arcana Blades","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
+        {"name":"Terrorblade Arcana Manta","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
         {"name":"Terrorblade Arcana Midnight Blue","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
         {"name":"Terrorblade Arcana Plushy Shag","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
+        {"name":"Terrorblade Arcana Skadi","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
         {"name":"Terrorblade Arcana Sunrise","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
         {"name":"Terrorblade Arcana White","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
         {"name":"Terrorblade Fire","categoryId":"heroes","styleLabel":null,"slots":[]},

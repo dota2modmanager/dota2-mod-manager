@@ -1,5 +1,5 @@
 {
-  "count": 1584,
+  "count": 1588,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -371,6 +371,7 @@
     "3ef27447b95b7c33eeac9cbc72a261748c785c80": [{"name":"Sea Of Flowers","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "3ef4fcce52c2cc80248c9d61cd1310100d71e986": [{"name":"White Necronub Cursor","categoryId":"cursors","styleLabel":null,"type":"files"}],
     "3ef515e99f03f47545428de97eeb37df9c67acb8": [{"name":"Naga Siren Growth Correction","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
+    "3efecfcea86af5c9b811d4e548103fbe7f251d2a": [{"name":"Terrorblade Arcana Blades","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "3f0011e815dd96736d1670c223e87df2f6d441ae": [{"name":"Shadow Fiend Desire Requiem","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
     "3f0eb23a2c3678196a50632825f74fe3f9761808": [{"name":"Abaddon Fallen King","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "3f5c617eae9ab55791407b8b0adf6b2269145f97": [{"name":"Cosmic Zeus","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -504,6 +505,7 @@
     "54be55079f6f148c266f685da3ce4b7e2bada2c2": [{"name":"Treant Protector Calabash","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "54bf31279fa7a494e53787938df6b00ad6f94c84": [{"name":"Ghosty Slark","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "54d0622b83cec525a14a9b73308b6bef31871b7c": [{"name":"Dark Carnival Radiant Siege","categoryId":"creeps","styleLabel":null,"type":"vpk"}],
+    "5528c1cc29811d135ad0aceca9139ffcb69bd492": [{"name":"Terrorblade Arcana Skadi","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "554c38c86ff64c9c5d4912d41ca7034d4e3a3818": [{"name":"Dark Reaper Invoker","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "55a73c46426ff810be0c2c325e966c52dee78849": [{"name":"TI7 Reefs Edge","categoryId":"terrains","styleLabel":null,"type":"vpk"}],
     "562e6c4dfa5c399b3b9bd874effcb3b41c658ed7": [{"name":"Invoker Magus Accord","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
@@ -911,6 +913,7 @@
     "98187f069ae4309d3e451e561b03a278e4b2245c": [{"name":"Phantom Adven Blademail Red","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "9873af5cf87c66fbaac14259cd1c617461a1d843": [{"name":"Terrorblade Rictus Manta","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "98b4f5b9b494fb60f8a93b8346200c3eedf1b173": [{"name":"Gopo Tidehunter","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "98f1d01a8f85fdcf4cd4be2c58b4a91020915256": [{"name":"Terrorblade Arcana Manta","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "9903db5306b825c16a16690dce974a6c51b05877": [{"name":"Slobbering Strongbox","categoryId":"wards","styleLabel":null,"type":"vpk"}],
     "996886c2eb329f68ff15fe5fda9e4bfe28aa24af": [{"name":"Centaur Infernal Chieftain","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "99bd7441df104c8e25a84c2408e17c0eddd4275c": [{"name":"Pudge Arcana Elephant","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -966,6 +969,7 @@
     "a1dd1248a8c480c292e70ee3536536adffb38d2c": [{"name":"Invoker Fate Meridian","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a202634fd6ad78d2c59dffcfe4802b58cc31eb78": [{"name":"TI7 Fountain Regen","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "a23c69bb01749abc04d6908fc41fd226cadc2a3d": [{"name":"Clinkz Black & White","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "a27f39c10cac03d9d5df9fb82e68a5a0e8aefbe0": [{"name":"Luna Golden Immortal Stalker","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a2e077ec47749c34103edb72763f89b7d2722dcc": [{"name":"Primal Beast Prehistoric Predator","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a2ef8deae4f1b36c753e5b7eec91b3f73bc3a0ef": [{"name":"Abaddon Bloody Fallen King","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a2f87417636dce54de7cf49fce9a1b35a1e8c7be": [{"name":"Axe Immortal Bootblack Brawler","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
