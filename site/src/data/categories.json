@@ -1077,6 +1077,69 @@
       ]
     },
     {
+      "id": "mega-kill",
+      "mods": [
+        {
+          "name": "10000Weeping Choirs Mega-Kill",
+          "styleLabel": null,
+          "image": {"src":"/mods/10000weeping-choirs-mega-kill.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1791566552
+        },
+        {
+          "name": "Stariy Bog Mega-Kill",
+          "styleLabel": null,
+          "image": {"src":"/mods/stariy-bog-mega-kill.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1790528664
+        },
+        {"name":"CS 1.6 Mega-Kill","styleLabel":null,"image":{"src":"/mods/cs-1-6-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1785081533},
+        {"name":"Umbrella Mega-Kill","styleLabel":null,"image":{"src":"/mods/umbrella-mega-kill.webp","width":854,"height":480},"author":"HiddenPool","authorUrl":"https://t.me/hiddenpoolcm","date":1777663732},
+        {"name":"Stray228 Mega-Kill","styleLabel":null,"image":{"src":"/mods/stray228-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1766279803},
+        {"name":"Hestia","styleLabel":null,"image":{"src":"/mods/hestia.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764898483},
+        {"name":"Chitoge Kirisaki","styleLabel":null,"image":{"src":"/mods/chitoge-kirisaki.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764657298},
+        {"name":"Iroha Isshiki","styleLabel":null,"image":{"src":"/mods/iroha-isshiki.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764657298},
+        {"name":"Axe","styleLabel":null,"image":{"src":"/mods/axe.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Bristleback","styleLabel":null,"image":{"src":"/mods/bristleback.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Clockwerk","styleLabel":null,"image":{"src":"/mods/clockwerk.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Crystal Maiden","styleLabel":null,"image":{"src":"/mods/crystal-maiden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Dark Willow","styleLabel":null,"image":{"src":"/mods/dark-willow.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Darkest Dungeon","styleLabel":null,"image":{"src":"/mods/darkest-dungeon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Defense Grid","styleLabel":null,"image":{"src":"/mods/defense-grid.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Deus Ex","styleLabel":null,"image":{"src":"/mods/deus-ex.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Diretide","styleLabel":null,"image":{"src":"/mods/diretide.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Fallout 4","styleLabel":null,"image":{"src":"/mods/fallout-4.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Gabe Newell","styleLabel":null,"image":{"src":"/mods/gabe-newell.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"GLaDOS","styleLabel":null,"image":{"src":"/mods/glados.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Juggernaut","styleLabel":null,"image":{"src":"/mods/juggernaut.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Kunkka & Tidehunter","styleLabel":null,"image":{"src":"/mods/kunkka-tidehunter.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Lina","styleLabel":null,"image":{"src":"/mods/lina.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Meepo","styleLabel":null,"image":{"src":"/mods/meepo.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Monkey King","styleLabel":null,"image":{"src":"/mods/monkey-king.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Natures Prophet","styleLabel":null,"image":{"src":"/mods/natures-prophet.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Nedotrax Mega-Kill","styleLabel":null,"image":{"src":"/mods/nedotrax-mega-kill.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Pirate Cap","styleLabel":null,"image":{"src":"/mods/pirate-cap.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Pyrion Flax","styleLabel":null,"image":{"src":"/mods/pyrion-flax.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Rick & Morty","styleLabel":null,"image":{"src":"/mods/rick-morty.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {
+          "name": "Ru GLaDOS",
+          "styleLabel": null,
+          "image": {"src":"/mods/ru-glados.webp","width":854,"height":480},
+          "author": "Vpotokwe",
+          "authorUrl": "https://steamcommunity.com/sharedfiles/filedetails/?id=3766199700",
+          "date": 1763202238
+        },
+        {"name":"Siega Mega-Kill","styleLabel":null,"image":{"src":"/mods/siega-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1763202238},
+        {"name":"Stanley Parable","styleLabel":null,"image":{"src":"/mods/stanley-parable.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Storm Spirit","styleLabel":null,"image":{"src":"/mods/storm-spirit.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Techies","styleLabel":null,"image":{"src":"/mods/techies.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Trine","styleLabel":null,"image":{"src":"/mods/trine.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
+        {"name":"Voice of The International","styleLabel":null,"image":{"src":"/mods/voice-of-the-international.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238}
+      ]
+    },
+    {
       "id": "cursors",
       "mods": [
         {"name":"Megalodon Cursor","styleLabel":null,"image":{"src":"/mods/megalodon-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1791386142},
@@ -1129,61 +1192,6 @@
         {"name":"TI9 Cursor","styleLabel":null,"image":{"src":"/mods/ti9-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
         {"name":"Timbersaw Cursor","styleLabel":null,"image":{"src":"/mods/timbersaw-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943},
         {"name":"Vengeful Spirit Cursor","styleLabel":null,"image":{"src":"/mods/vengeful-spirit-cursor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765183943}
-      ]
-    },
-    {
-      "id": "mega-kill",
-      "mods": [
-        {
-          "name": "Stariy Bog Mega-Kill",
-          "styleLabel": null,
-          "image": {"src":"/mods/stariy-bog-mega-kill.webp","width":854,"height":480},
-          "author": "rasstegai",
-          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
-          "date": 1790528664
-        },
-        {"name":"CS 1.6 Mega-Kill","styleLabel":null,"image":{"src":"/mods/cs-1-6-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1785081533},
-        {"name":"Umbrella Mega-Kill","styleLabel":null,"image":{"src":"/mods/umbrella-mega-kill.webp","width":854,"height":480},"author":"HiddenPool","authorUrl":"https://t.me/hiddenpoolcm","date":1777663732},
-        {"name":"Stray228 Mega-Kill","styleLabel":null,"image":{"src":"/mods/stray228-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1766279803},
-        {"name":"Hestia","styleLabel":null,"image":{"src":"/mods/hestia.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764898483},
-        {"name":"Chitoge Kirisaki","styleLabel":null,"image":{"src":"/mods/chitoge-kirisaki.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764657298},
-        {"name":"Iroha Isshiki","styleLabel":null,"image":{"src":"/mods/iroha-isshiki.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764657298},
-        {"name":"Axe","styleLabel":null,"image":{"src":"/mods/axe.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Bristleback","styleLabel":null,"image":{"src":"/mods/bristleback.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Clockwerk","styleLabel":null,"image":{"src":"/mods/clockwerk.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Crystal Maiden","styleLabel":null,"image":{"src":"/mods/crystal-maiden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Dark Willow","styleLabel":null,"image":{"src":"/mods/dark-willow.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Darkest Dungeon","styleLabel":null,"image":{"src":"/mods/darkest-dungeon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Defense Grid","styleLabel":null,"image":{"src":"/mods/defense-grid.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Deus Ex","styleLabel":null,"image":{"src":"/mods/deus-ex.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Diretide","styleLabel":null,"image":{"src":"/mods/diretide.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Fallout 4","styleLabel":null,"image":{"src":"/mods/fallout-4.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Gabe Newell","styleLabel":null,"image":{"src":"/mods/gabe-newell.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"GLaDOS","styleLabel":null,"image":{"src":"/mods/glados.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Juggernaut","styleLabel":null,"image":{"src":"/mods/juggernaut.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Kunkka & Tidehunter","styleLabel":null,"image":{"src":"/mods/kunkka-tidehunter.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Lina","styleLabel":null,"image":{"src":"/mods/lina.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Meepo","styleLabel":null,"image":{"src":"/mods/meepo.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Monkey King","styleLabel":null,"image":{"src":"/mods/monkey-king.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Natures Prophet","styleLabel":null,"image":{"src":"/mods/natures-prophet.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Nedotrax Mega-Kill","styleLabel":null,"image":{"src":"/mods/nedotrax-mega-kill.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Pirate Cap","styleLabel":null,"image":{"src":"/mods/pirate-cap.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Pyrion Flax","styleLabel":null,"image":{"src":"/mods/pyrion-flax.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Rick & Morty","styleLabel":null,"image":{"src":"/mods/rick-morty.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {
-          "name": "Ru GLaDOS",
-          "styleLabel": null,
-          "image": {"src":"/mods/ru-glados.webp","width":854,"height":480},
-          "author": "Vpotokwe",
-          "authorUrl": "https://steamcommunity.com/sharedfiles/filedetails/?id=3766199700",
-          "date": 1763202238
-        },
-        {"name":"Siega Mega-Kill","styleLabel":null,"image":{"src":"/mods/siega-mega-kill.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1763202238},
-        {"name":"Stanley Parable","styleLabel":null,"image":{"src":"/mods/stanley-parable.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Storm Spirit","styleLabel":null,"image":{"src":"/mods/storm-spirit.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Techies","styleLabel":null,"image":{"src":"/mods/techies.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Trine","styleLabel":null,"image":{"src":"/mods/trine.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238},
-        {"name":"Voice of The International","styleLabel":null,"image":{"src":"/mods/voice-of-the-international.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763202238}
       ]
     },
     {

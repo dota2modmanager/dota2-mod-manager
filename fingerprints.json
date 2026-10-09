@@ -1,5 +1,5 @@
 {
-  "count": 1588,
+  "count": 1589,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -959,6 +959,7 @@
     "9fd5743e6fbcaf336b3dfde30f25e597efce5880": [{"name":"Legion Commander Hell Origin","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "9fd5af9c5185f948a5e450bac11bc09ec15aa078": [{"name":"Terrorblade 666 Fractal Horns","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a006c0fc7a70c5ed2335af8de828d183f05f37aa": [{"name":"Snowing Marci","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "a0338bedcef6b9449364992c96e9dae0315f3795": [{"name":"10000Weeping Choirs Mega-Kill","categoryId":"mega-kill","styleLabel":null,"type":"vpk"}],
     "a04dd3a8fd83a9fc7e5d482caf7a220f59643a43": [{"name":"Anti-Mage Manta","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a0aa37bffdfb3741c26eccc36bc3d3aedcdc165c": [{"name":"Guts","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "a10ca98a1ab643b95be29ab48eb355de14cc1d00": [{"name":"Keeper of the Light Tamamo","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
