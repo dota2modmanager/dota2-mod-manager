@@ -87,8 +87,11 @@ const GEM_TINT = /^C_(INIT|OP)_RemapCPtoVector$/;
 
 type Num = Extract<Kv3Node, { kind: 'number' }>;
 
-/** A gem tint in a particle: its range, whether it scales the colour or replaces it, and its bytes. */
-interface Tint { hi: Num[] | null; lo: Num[] | null; from: Num[] | null; scale: boolean }
+/**
+ * A gem tint in a particle: its range, whether it scales the colour or replaces it, its bytes, and
+ * when it runs (0: an initializer, as a particle is born; 1: an operator, every frame after).
+ */
+interface Tint { hi: Num[] | null; lo: Num[] | null; from: Num[] | null; scale: boolean; stage: 0 | 1 }
 
 /** The operators in a particle that colour it from control point 15, where the game puts a gem's colour. */
 function gemTints(kv: Kv3Block): Tint[] {
@@ -105,7 +108,10 @@ function gemTints(kv: Kv3Block): Tint[] {
     const method = m.get('m_nSetMethod');
     if (cls?.kind === 'string' && GEM_TINT.test(cls.value) && cp?.kind === 'number' && numberOf(kv, cp) === 15
       && field?.kind === 'number' && numberOf(kv, field) === 6) {
-      out.push({ hi: vector(m.get('m_vOutputMax')), lo: vector(m.get('m_vOutputMin')), from: vector(m.get('m_vInputMin')), scale: method?.kind === 'string' && method.value === 'PARTICLE_SET_SCALE_INITIAL_VALUE' });
+      out.push({
+        hi: vector(m.get('m_vOutputMax')), lo: vector(m.get('m_vOutputMin')), from: vector(m.get('m_vInputMin')),
+        scale: method?.kind === 'string' && method.value === 'PARTICLE_SET_SCALE_INITIAL_VALUE', stage: cls.value.startsWith('C_INIT_') ? 0 : 1,
+      });
     }
     m.forEach(visit);
   };
@@ -144,25 +150,33 @@ function retarget(kv: Kv3Block, tints: Tint[], gem: Rgb, target: Rgb): { changed
 /** The colours a particle starts from, which a gem's tint replaces or scales. */
 const INITIAL = /^m_(ConstantColor|ColorMin|ColorMax)$/;
 
+/** A colour brought into 0..255 with its hue kept: a channel over 255 takes the others down with it. */
+function fit(rgb: number[]): Rgb {
+  const over = Math.max(255, ...rgb) / 255;
+  return rgb.map((n) => Math.max(0, Math.round(n / over))) as Rgb;
+}
+
 /**
- * For a hero with no gem: write into the colours a particle starts from what the gem's tint would
- * have made of them in the chosen colour, the colour times the tint's range (or, for a tint that
- * scales, times the colour that was there).
+ * For a hero with no gem: write into the colours a particle starts from what the gem's tints would
+ * have made of them in the chosen colour. The tints run as the game runs them, initializers then
+ * operators, each one the colour times its range (or, for a tint that scales, times the colour that
+ * was there), so a later one that sets the colour wins: a blade scaled from its blue and then set
+ * to the gem came out brown in red and blue in pink when only the first was read (issue #118). A
+ * channel over 255 takes the others down with it, so the hue stays.
  */
-function bakeTint(kv: Kv3Block, tint: Tint, target: Rgb): { changed: number; skipped: number } {
-  const span = range(kv, tint);
-  if (!span) return { changed: 0, skipped: 1 };
+function bakeTint(kv: Kv3Block, tints: Tint[], target: Rgb): { changed: number; skipped: number } {
+  const ordered = [...tints].sort((a, b) => a.stage - b.stage);
+  const spans = ordered.map((t) => range(kv, t));
+  if (spans.some((s) => !s)) return { changed: 0, skipped: 1 };
   let changed = 0;
   let skipped = 0;
   for (const a of kv.arrays) {
     if (!INITIAL.test(a.key) || (a.cells.length !== 3 && a.cells.length !== 4) || a.cells.some((c) => c && c.float)) continue;
     if (a.cells.some((c) => c === null)) { skipped++; continue; }
     const cells = a.cells as NonNullable<(typeof a.cells)[number]>[];
-    for (let c = 0; c < 3; c++) {
-      const was = readCell(kv, cells[c]);
-      const tinted = target[c] * span[c] * (tint.scale ? was / 255 : 1);
-      writeCell(kv, cells[c], Math.max(0, Math.min(255, Math.round(tinted))));
-    }
+    let rgb = [0, 1, 2].map((c) => readCell(kv, cells[c]));
+    ordered.forEach((t, i) => { rgb = rgb.map((was, c) => target[c] * spans[i]![c] * (t.scale ? was / 255 : 1)); });
+    fit(rgb).forEach((n, c) => writeCell(kv, cells[c], n));
     changed++;
   }
   return { changed, skipped };
@@ -203,7 +217,7 @@ export function recolorResource(file: Buffer, target: Rgb, { gem, own = true, ba
   const kv = readKv3(block.data);
   const none = { changed: 0, skipped: 0 };
   const tints = gemTints(kv);
-  const baked = bake && tints.length ? bakeTint(kv, tints[0], target) : none;
+  const baked = bake && tints.length ? bakeTint(kv, tints, target) : none;
   const tint = gem ? retarget(kv, tints, gem, target) : none;
   const written = bake && tints.length ? shadeColors(kv, target, INITIAL) : (bake ? own : own && !tint.changed) ? shadeColors(kv, target) : none;
   const changed = baked.changed + tint.changed + written.changed;
