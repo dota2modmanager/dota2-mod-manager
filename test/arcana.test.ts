@@ -51,6 +51,7 @@ const EVERYTHING: V = { obj: [
   ['m_vRange', { f64s: [1, 1.2, 2] }],
   ['m_code', { blob: Buffer.from('an expression') }],
   ['m_list', { arr: [{ obj: [['m_name', { str: 'x' }]] }, { int: 3 }, { arr: [] }] }],
+  ['m_sequences', { objs: [[['m_sName', { str: 'attack' }]], [['m_sName', { str: 'idle' }], ['m_flags', { int: 2 }]]] }],
 ] };
 
 for (const version of [1, 2] as const) {
@@ -64,14 +65,25 @@ for (const version of [1, 2] as const) {
   });
 }
 
-test('a written block carries an element added to an array, and an empty typed array as a plain one', () => {
+test('a written block carries an element added to an array, and an empty typed array still typed', () => {
   const kv = readKv3(encodeKv3({ obj: [['m_Children', { arr: [{ obj: [['m_ChildRef', { ref: 'particles/a.vpcf' }]] }] }], ['m_none', { i32s: [] }]] }));
   const list = at(kv.root, 'm_Children') as Extract<Kv3Node, { kind: 'array' }>;
   list.items.push({ kind: 'object', members: new Map([['m_ChildRef', { kind: 'string', value: 'particles/b.vpcf', flag: 1 }]]) } as Kv3Node);
   const back = readKv3(writeKv3(kv));
   assert.deepEqual((at(back.root, 'm_Children') as Extract<Kv3Node, { kind: 'array' }>).items.map((x) => (at(x, 'm_ChildRef') as { value: string }).value),
     ['particles/a.vpcf', 'particles/b.vpcf']);
-  assert.equal((at(back.root, 'm_none') as Extract<Kv3Node, { kind: 'array' }>).element, undefined);
+  assert.deepEqual((at(back.root, 'm_none') as Extract<Kv3Node, { kind: 'array' }>).element, { type: 11 });
+});
+
+test("a typed array of arrays with a one-byte length comes back with the same numbers, as the game's bones are", () => {
+  const kv = readKv3(encodeKv3({ obj: [['m_bones', { i32rows: [[1, 2, 3], [-4, 5, 6], []] }], ['m_after', { int: 7 }]] }));
+  const bones = (k: Kv3Block) => (at(k.root, 'm_bones') as Extract<Kv3Node, { kind: 'array' }>);
+  assert.deepEqual(bones(kv).element, { type: 24 });
+  const back = readKv3(writeKv3(kv));
+  assert.deepEqual(bones(back).element, { type: 10 }, 'with a four-byte length, which every version has');
+  assert.deepEqual(bones(back).items.map((row) => (row as Extract<Kv3Node, { kind: 'array' }>).items.map((n) => numberOf(back, n as Extract<Kv3Node, { kind: 'number' }>))),
+    [[1, 2, 3], [-4, 5, 6], []]);
+  assert.equal(numberOf(back, at(back.root, 'm_after') as Extract<Kv3Node, { kind: 'number' }>), 7, 'and what comes after it read where it lies');
 });
 
 test('a resource is named in RERL by the id the game gives it', () => {
@@ -143,12 +155,11 @@ test('with no gem, a particle the gem would tint starts from the colour the tint
     'a shared particle with no tint is left as it is');
 });
 
-/** A model's own name, and its sequences with what each plays. */
-const modelName = (file: Buffer) => (at(readKv3(dataBlock(file).data).root, 'm_name') as { value: string }).value;
+/** A model's sequences, with what each plays. */
 const sequences = (file: Buffer) => (at(readKv3(resourceBlock(file, 'ASEQ').data).root, 'm_localS1SeqDescArray') as Extract<Kv3Node, { kind: 'array' }>).items
   .map((sq) => [(at(sq, 'm_sName') as { value: string }).value, (at(sq, 'm_activityArray') as Extract<Kv3Node, { kind: 'array' }>).items.map((a) => (at(a, 'm_name') as { value: string }).value)]);
 
-test('a model under another path takes its name, and plays without the item what it played with it', () => {
+test("a model under another path plays without the item what it played with it, every byte but string indexes the game's", () => {
   // without the arcana item's "abysm" the game played the injured attack (issue #118)
   const arcana = model('models/heroes/terrorblade/terrorblade_arcana.vmdl', [
     ['attack', ['ACT_DOTA_ATTACK', 'abysm']],
@@ -157,19 +168,28 @@ test('a model under another path takes its name, and plays without the item what
     ['arcana_death', ['ACT_DOTA_DIE', 'abysm']],
     ['run', ['ACT_DOTA_RUN']],
   ]);
-  const out = asModel(arcana, 'models/heroes/terrorblade/terrorblade.vmdl_c', 'abysm');
-  assert.equal(modelName(out), 'models/heroes/terrorblade/terrorblade.vmdl');
+  const out = asModel(arcana, 'abysm');
   assert.deepEqual(sequences(out), [
-    ['attack', ['ACT_DOTA_ATTACK']],
+    ['attack', ['ACT_DOTA_ATTACK', 'ACT_DOTA_ATTACK']],
     ['attack_injured', ['ACT_DOTA_ATTACK', 'injured']],
-    ['death', []],
-    ['arcana_death', ['ACT_DOTA_DIE']],
+    ['death', ['death']],
+    ['arcana_death', ['ACT_DOTA_DIE', 'ACT_DOTA_DIE']],
     ['run', ['ACT_DOTA_RUN']],
   ]);
-  assert.equal(numberOf(readKv3(dataBlock(out).data), at(readKv3(dataBlock(out).data).root, 'm_nFlags') as Extract<Kv3Node, { kind: 'number' }>), 3, 'the rest of it as it was');
+  // written anew from the tree, typed or not, the sequences were read and the game played none of
+  // them: only the indexes of the three names pointed elsewhere may differ
+  const before = readKv3(resourceBlock(arcana, 'ASEQ').data).buffers[0];
+  const after = readKv3(resourceBlock(out, 'ASEQ').data).buffers[0];
+  assert.equal(after.length, before.length);
+  const words = new Set<number>();
+  for (let i = 0; i < before.length; i++) if (before[i] !== after[i]) words.add(i >> 2);
+  assert.equal(words.size, 3, 'one four-byte index for each name pointed elsewhere');
+  // written back from the tree, the skeleton's typed arrays came out as plain ones and the game
+  // played none of the model's animations
+  assert.deepEqual(dataBlock(out).data, dataBlock(arcana).data, 'the DATA block byte for byte');
   assert.equal(out.readUInt32LE(0), out.length);
-  const horns = asModel(model('models/heroes/terrorblade/horns_arcana.vmdl', [['idle', ['ACT_DOTA_IDLE', 'abysm']]]), 'models/heroes/terrorblade/horns.vmdl_c');
-  assert.deepEqual(sequences(horns), [['idle', ['ACT_DOTA_IDLE', 'abysm']]], 'with no modifier asked for, only the name changes');
+  const horns = model('models/heroes/terrorblade/horns_arcana.vmdl', [['idle', ['ACT_DOTA_IDLE', 'abysm']]]);
+  assert.equal(asModel(horns), horns, 'with no modifier asked for, the model as it is');
 });
 
 test('the arcana becomes one VPK: its models and pictures under the plain names, its glow hung on the eyes, its colour written in', (t) => {
@@ -199,8 +219,8 @@ test('the arcana becomes one VPK: its models and pictures under the plain names,
   const mod = path.join(dir, 'mod_dir.vpk');
   fs.writeFileSync(mod, out.vpk);
   const read = (p: string) => openVpkIndex(mod).read(p) as Buffer;
-  assert.deepEqual(sequences(read('models/heroes/terrorblade/terrorblade.vmdl_c')), [['attack', ['ACT_DOTA_ATTACK']]], "the arcana's model, its attack playing without the item");
-  assert.equal(modelName(read('models/heroes/terrorblade/horns.vmdl_c')), 'models/heroes/terrorblade/horns.vmdl', "the arcana's horns, named for their place");
+  assert.deepEqual(sequences(read('models/heroes/terrorblade/terrorblade.vmdl_c')), [['attack', ['ACT_DOTA_ATTACK', 'ACT_DOTA_ATTACK']]], "the arcana's model, its attack playing without the item");
+  assert.ok(read('models/heroes/terrorblade/horns.vmdl_c').equals(model('models/heroes/terrorblade/horns_arcana.vmdl')), "the arcana's horns, as the game has them");
   assert.equal(read('panorama/images/heroes/npc_dota_hero_terrorblade_png.vtex_c').toString(), 'arcana portrait');
   assert.ok(!read('panorama/images/spellicons/terrorblade_unused_png.vtex_c'), 'an icon with no plain one is not made up');
   const eyes = read(`${hero}/terrorblade_ambient_eyes.vpcf_c`);

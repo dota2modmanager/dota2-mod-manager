@@ -20,7 +20,7 @@
 import { lz4Decode, lz4Literals } from './lz4.ts';
 import { blobTable, readBlobs, rewriteBlobs, relaidInline } from './kv3-blobs.ts';
 
-export { readCell, writeCell, numberOf, setNumber } from './kv3-cells.ts';
+export { readCell, writeCell, numberOf, setNumber, setString } from './kv3-cells.ts';
 
 const MAGIC = 0x4b563300;
 const LZ4 = 1;
@@ -35,13 +35,14 @@ export interface Kv3Cell { buffer: 0 | 1; offset: number; width: 1 | 2 | 4 | 8; 
  * byte is, which is the one place such a number can be changed. Elements of a typed array share
  * one type byte, so theirs is null; the array keeps that type as `element`. `flag` is the byte
  * that can follow a type (a string that names a resource, for one), kept as the file had it. A
- * number made rather than read has its bytes in `raw`, for src/kv3-write.ts.
+ * number made rather than read has its bytes in `raw`, for src/kv3-write.ts. A string read keeps
+ * where its index into the string table lies (`at`).
  */
 export type Kv3Node = (
   | { kind: 'object'; members: Map<string, Kv3Node> }
   | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number } }
   | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null; raw?: Buffer }
-  | { kind: 'string'; value: string }
+  | { kind: 'string'; value: string; at?: Kv3Cell }
   | { kind: 'blob'; data: Buffer }
   | { kind: 'other'; type: number; value?: number }
 ) & { flag?: number };
@@ -55,6 +56,8 @@ export interface Kv3Block {
   /** the 16 bytes after the magic that name the format */
   format: Buffer;
   buffers: Buffer[];
+  /** the string table, which string nodes index */
+  strings: string[];
   root: Kv3Node;
   arrays: Kv3Array[];
   /** the blob nodes, in the order they are stored; give one new `data` and encode() writes it */
@@ -190,7 +193,7 @@ export function readKv3(block: Buffer): Kv3Block {
       case 19: return num(t, cell(lanes.l4, 4, true, true), typeAt);
       case 3: case 4: return num(t, cell(lanes.l8, 8, t === 3), typeAt);
       case 5: return num(t, cell(lanes.l8, 8, true, true), typeAt);
-      case 6: return { kind: 'string', value: strings[int4(main.l4)] ?? '' };
+      case 6: { const at = cell(main.l4, 4, true); return { kind: 'string', value: strings[buf(main.l4).readInt32LE(at.offset)] ?? '', at }; }
       case 7: {
         let data: Buffer;
         if (version < 2) {
@@ -248,6 +251,7 @@ export function readKv3(block: Buffer): Kv3Block {
     version,
     format: Buffer.from(block.subarray(4, 20)),
     buffers,
+    strings,
     root,
     arrays,
     blobs,

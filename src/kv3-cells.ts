@@ -1,6 +1,7 @@
 /**
  * The numbers in a parsed KV3 block (src/kv3.ts): read one where it lies, change it there, and the
- * 0s and 1s stored as a type alone, which can only become each other.
+ * 0s and 1s stored as a type alone, which can only become each other. A string is a number too, its
+ * place in the block's string table, and can be pointed at another string the table has.
  */
 import type { Kv3Block, Kv3Cell, Kv3Node } from './kv3.ts';
 
@@ -44,5 +45,18 @@ export function setNumber(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' 
   const mask = kv.version >= 3 ? 0x3f : 0x7f;
   b[node.typeAt.offset] = (b[node.typeAt.offset] & ~mask) | want;
   node.type = want;
+  return true;
+}
+
+/**
+ * Point a string node at another string of the block's table, where its index lies: every lane
+ * keeps its length and every other byte stays as it was. Only a string the table already has.
+ * @returns whether it could be pointed there
+ */
+export function setString(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'string' }>, value: string): boolean {
+  const index = kv.strings.indexOf(value);
+  if (!node.at || index === -1) return false;
+  writeCell(kv, node.at, index);
+  node.value = value;
   return true;
 }

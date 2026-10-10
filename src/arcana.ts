@@ -20,7 +20,7 @@
  *   until the files it was built from change, so the app builds it again then.
  * Not here: the kill effect (a modifier the item adds), the arcana's sounds and voice lines.
  */
-import { readKv3, numberOf, type Kv3Node } from './kv3.ts';
+import { readKv3, numberOf, setString, type Kv3Node } from './kv3.ts';
 import { writeKv3 } from './kv3-write.ts';
 import { recolorFiles, recolorResource, RECOLOR_SETS, type Rgb } from './recolor.ts';
 import { dataBlock, resourceBlock, withReferences } from './resource.ts';
@@ -115,51 +115,54 @@ const nameOf = (n: Kv3Node | undefined) => {
 };
 
 /**
- * A model put under another path: its own name inside made that path (the game knows a model by
- * it), and with `modifier`, its animations that need it made the ones its activities play.
+ * A model put under another path that plays without the item what it played with it: its
+ * animations that need `modifier` made the ones its activities play.
  *
- * A sequence lists the activities it plays (ACT_DOTA_ATTACK) and the modifiers it needs ("abysm").
- * The game picks, for an activity, the sequence whose modifiers match the ones on: with "abysm"
- * never on, the arcana's attacks lost to "attack_injured". So the modifier is taken off the
- * sequences that need it, and their activity off the plain ones beside them (death, sunder,
- * loadout), which is the choice the game makes when the modifier is on.
+ * A sequence lists the activities it plays (ACT_DOTA_ATTACK) and the modifiers it needs ("abysm"),
+ * told apart by name alone. The game picks, for an activity, the sequence whose modifiers match the
+ * ones on: with "abysm" never on, the arcana's attacks lost to "attack_injured". So the modifier's
+ * entry is pointed at the sequence's activity instead, and the activity of the plain ones beside
+ * them (death, sunder, loadout) at their own name, which no activity is: the choice the game makes
+ * when the modifier is on.
+ *
+ * Only string indexes change, where they lie; every other byte stays the game's. Written anew from
+ * the tree, typed or not, the sequences were still read and the game played none of them, and the
+ * skeleton's arrays in DATA the same: the arcana stood still through its attacks (issue #118).
  */
-export function asModel(file: Buffer, path: string, modifier?: string): Buffer {
-  let out = file;
-  const data = dataBlock(out);
-  const kv = readKv3(data.data);
-  const root = kv.root.kind === 'object' ? kv.root.members : null;
-  const name = root?.get('m_name');
-  if (root && name?.kind === 'string') {
-    root.set('m_name', { ...name, value: path.replace(/_c$/, '') });
-    out = data.replace(writeKv3(kv));
-  }
-  if (!modifier) return out;
-  const block = resourceBlock(out, 'ASEQ');
+export function asModel(file: Buffer, modifier?: string): Buffer {
+  if (!modifier) return file;
+  const block = resourceBlock(file, 'ASEQ');
   const seqs = readKv3(block.data);
   const list = seqs.root.kind === 'object' ? seqs.root.members.get('m_localS1SeqDescArray') : undefined;
-  if (list?.kind !== 'array') return out;
+  if (list?.kind !== 'array') return file;
   const activities = (sq: Kv3Node) => {
     const a = sq.kind === 'object' ? sq.members.get('m_activityArray') : undefined;
-    return a?.kind === 'array' ? a : null;
+    return a?.kind === 'array' ? a.items : [];
+  };
+  const point = (entry: Kv3Node, to: string) => {
+    const name = entry.kind === 'object' ? entry.members.get('m_name') : undefined;
+    if (name?.kind !== 'string' || !setString(seqs, name, to)) throw new Error(`arcana: "${nameOf(entry)}" cannot be pointed at "${to}"`);
   };
   const isAct = (a: Kv3Node) => nameOf(a).startsWith('ACT_');
   const needed = new Set<Kv3Node>();
   const taken = new Set<string>();
   for (const sq of list.items) {
     const acts = activities(sq);
-    if (!acts?.items.some((a) => nameOf(a) === modifier)) continue;
+    const act = acts.find(isAct);
+    const mod = acts.find((a) => nameOf(a) === modifier);
+    if (!act || !mod) continue;
     needed.add(sq);
-    for (const a of acts.items) if (isAct(a)) taken.add(nameOf(a));
-    acts.items = acts.items.filter((a) => nameOf(a) !== modifier);
+    for (const a of acts) if (isAct(a)) taken.add(nameOf(a));
+    point(mod, nameOf(act));
   }
   // the plain ones beside them, with no modifier of their own: their activity is the arcana's now
   for (const sq of list.items) {
     const acts = activities(sq);
-    if (!acts || needed.has(sq) || acts.items.some((a) => !isAct(a))) continue;
-    acts.items = acts.items.filter((a) => !taken.has(nameOf(a)));
+    if (needed.has(sq) || acts.some((a) => !isAct(a))) continue;
+    const own = sq.kind === 'object' ? sq.members.get('m_sName') : undefined;
+    for (const a of acts) if (taken.has(nameOf(a)) && own?.kind === 'string') point(a, own.value);
   }
-  return block.replace(writeKv3(seqs));
+  return block.replace(seqs.encode());
 }
 
 /** The arcana in the chosen colour, as one VPK from the game's pak01. */
@@ -173,7 +176,7 @@ export function buildArcana({ pak01, set, target }: { pak01: string; set: string
   const have = new Set(all);
   const r = recolorFiles({ pak01, set: def.recolor, target, bake: true });
   const files = r.files;
-  for (const [to, { from, modifier }] of Object.entries(def.models)) files.set(to, asModel(index.read(from) as Buffer, to, modifier));
+  for (const [to, { from, modifier }] of Object.entries(def.models)) files.set(to, asModel(index.read(from) as Buffer, modifier));
   const { under, mark, hero } = def.images;
   for (const p of all) {
     if (!under.some((u) => p.startsWith(u)) || !p.includes(hero) || !p.includes(mark)) continue;
