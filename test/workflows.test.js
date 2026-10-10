@@ -537,3 +537,37 @@ test('a step that waits on a package mirror gives up on its own', () => {
   assert.ok(seen >= 4, `only ${seen} apt-get steps found, so the split stopped finding steps`);
   assert.deepEqual(missing, [], `give these a timeout-minutes and Acquire::http::Timeout: ${missing.join('; ')}`);
 });
+
+test('every job gives up on its own, well before the six hours GitHub would wait', () => {
+  /* A step that waits on a mirror has its own limit (above); the job around it did not. Every job
+     but four ran with GitHub's default of 360 minutes, so anything that hung - a window that never
+     closed, a network call nobody answered - left a check "pending" for six hours, which reads as
+     "still running" on the pull request and blocks the merge queue behind it. Each job now says how
+     long it may take, with room over what it really takes (a minute or two for most). */
+  const missing = [];
+  let jobs = 0;
+  for (const f of workflows) {
+    const lines = read(f).split('\n');
+    const start = lines.indexOf('jobs:');
+    if (start < 0) continue;
+    let job = null;
+    const check = () => {
+      if (!job || job.reusable) return;
+      jobs += 1;
+      if (job.minutes === null) missing.push(`${f}: ${job.id} has no timeout-minutes`);
+      else if (job.minutes > 360 || job.minutes < 1) missing.push(`${f}: ${job.id} waits ${job.minutes} minutes`);
+    };
+    for (const line of lines.slice(start + 1)) {
+      if (/^\S/.test(line)) break;
+      const id = /^ {2}([\w-]+):\s*$/.exec(line);
+      if (id) { check(); job = { id: id[1], minutes: null, reusable: false }; continue; }
+      if (!job) continue;
+      const t = /^ {4}timeout-minutes: (\d+)/.exec(line);
+      if (t) job.minutes = Number(t[1]);
+      if (/^ {4}uses:/.test(line)) job.reusable = true; // a reusable workflow takes no timeout of its own
+    }
+    check();
+  }
+  assert.ok(jobs >= 30, `only ${jobs} jobs found, so the walk stopped finding them`);
+  assert.deepEqual(missing, [], missing.join('\n'));
+});

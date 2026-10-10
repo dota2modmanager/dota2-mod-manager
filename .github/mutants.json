@@ -1641,6 +1641,14 @@
       "from": "if (!p || !insideJail(p)) return false;",
       "to": "if (!p) return false;",
       "test": "test/write-jail.test.ts"
+    },
+    {
+      "name": "a job waits six hours for a hung step",
+      "file": ".github/workflows/codeql.yml",
+      "anchor": "jobs:",
+      "from": "    timeout-minutes: 30",
+      "to": "",
+      "test": "test/workflows.test.js"
     }
   ]
 }

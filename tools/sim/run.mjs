@@ -112,6 +112,19 @@ function runOne(spec, timeoutMs) {
   });
 }
 
+/**
+ * What one launch got wrong besides its failed checks: a scenario it was asked for that wrote no
+ * check at all, or a launch with no checks. A scenario that stops being run (a renamed step, an
+ * exception swallowed before the first check) used to leave the run green with fewer checks in it.
+ */
+export function silentScenarios(asked, checks) {
+  const wrote = new Set((checks || []).map((c) => c.scenario));
+  const names = String(asked || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const silent = names.filter((n) => !wrote.has(n)).map((n) => `${n}: wrote no check at all`);
+  if (!(checks || []).length) silent.push('the launch wrote no checks');
+  return silent;
+}
+
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 /** One page with every run, every failed check and its pictures. */
@@ -150,11 +163,11 @@ async function main() {
     const spec = launch(screen, renderer, { scenarios, app: arg('app'), electron });
     console.log(`\n=== ${screen} / ${renderer}: ${scenarios}`);
     const result = await runOne(spec, Number(arg('timeout', 900)) * 1000);
-    runs.push({ screen, renderer, dir: path.basename(spec.out), result });
+    runs.push({ screen, renderer, dir: path.basename(spec.out), result, silent: result ? silentScenarios(scenarios, result.checks) : [] });
   }
   fs.mkdirSync(OUT, { recursive: true });
-  const summary = runs.map((r) => ({ screen: r.screen, renderer: r.renderer, passed: r.result?.passed ?? false,
-    failed: r.result ? r.result.checks.filter((c) => !c.ok).map((c) => `${c.scenario}: ${c.name}: ${c.detail}`) : ['no results'] }));
+  const summary = runs.map((r) => ({ screen: r.screen, renderer: r.renderer, passed: (r.result?.passed ?? false) && !r.silent.length,
+    failed: r.result ? [...r.result.checks.filter((c) => !c.ok).map((c) => `${c.scenario}: ${c.name}: ${c.detail}`), ...r.silent] : ['no results'] }));
   fs.writeFileSync(path.join(OUT, 'summary.json'), JSON.stringify(summary, null, 1));
   fs.writeFileSync(path.join(OUT, 'index.html'), reportHtml(runs));
   const bad = summary.filter((s) => !s.passed);

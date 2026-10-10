@@ -308,6 +308,8 @@ if (invokedDirectly) {
   };
   const windowSteps = (launched, label) => {
     if (!launched.result) return check(`${label}: the window script ran`, false, launched.error || (launched.timedOut ? 'the window never finished' : 'no result was written'));
+    // a script that reported nothing checked nothing, and a run of nothing is not a pass
+    if (!launched.result.steps?.length) return check(`${label}: the window script reported its steps`, false, 'it reported none');
     let ok = true;
     for (const s of launched.result.steps) ok = check(s.name, s.ok, s.detail) && ok;
     return ok;

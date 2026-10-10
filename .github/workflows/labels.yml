@@ -15,6 +15,7 @@ permissions:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     # labels are issue metadata, so this needs issues: write and nothing else
     permissions:
       contents: read

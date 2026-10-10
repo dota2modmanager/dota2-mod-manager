@@ -35,6 +35,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       # The code, read only: the tools and the site the job runs. Nothing goes back to main.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
