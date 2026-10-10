@@ -5,8 +5,10 @@ import type { Api } from './api/index.ts';
 declare global {
   interface Window {
     api: Api;
-    I18N_LANG: 'ru' | 'en';
-    i18nLocale: () => 'ru' | 'en';
+    I18N_LANG: 'ru' | 'en' | 'zh-CN';
+    i18nLocale: () => 'ru' | 'en' | 'zh-CN';
+    ZH_CN: Record<string, string | undefined>;
+    ZH_CN_PLURAL: Record<string, string | undefined>;
     /** English singular and plural, keyed by the Russian "many" form plural() is given */
     EN_PLURAL: Record<string, [string, string] | undefined>;
   }

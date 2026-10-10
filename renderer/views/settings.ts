@@ -82,7 +82,7 @@ const actions: SettingsActions = {
   // the app language, and only the app: what somebody reads Dota in was decided when they installed it
   language: async (lang) => {
     await applyLanguage(lang);
-    toast(lang === 'ru' ? L`Язык переключён на Русский` : L`Язык переключён на English`);
+    toast(lang === 'ru' ? L`Язык переключён на Русский` : lang === 'zh-CN' ? L`Язык переключён на 简体中文` : L`Язык переключён на English`);
     renderSettings();
   },
   scale: (pct, live) => { if (live) paintScale(clampScale(pct)); else setEverything(pct); },

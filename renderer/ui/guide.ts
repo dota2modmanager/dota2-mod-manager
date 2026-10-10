@@ -47,7 +47,7 @@ function guideIds(mod: Mod | null | undefined): string[] {
 // there is, which is how the old screen behaved too.
 function blocksOf(guide: Guide | undefined): Block[] {
   const c = guide?.content || {};
-  return (window.I18N_LANG === 'en' ? (c.en || c.ru) : (c.ru || c.en)) || [];
+  return (window.I18N_LANG !== 'ru' ? (c.en || c.ru) : (c.ru || c.en)) || [];
 }
 
 /* What a guide is allowed to be made of.

@@ -209,13 +209,13 @@ points at it, so removing a guard means saying in the same change what replaced 
 An issue labelled `regression` gets a write-up with its number in the `Issue` row. The radar lists
 a closed one that no write-up names.
 
-## Every user-facing string exists twice
+## Every user-facing string has a translation
 
-The interface ships in Russian and English. Russian text is the key and English is looked up from
-it, so a new string is two edits, not one:
+The interface ships in Russian, English and Simplified Chinese. Russian text remains the key:
 
 - `renderer/i18n.js` for anything in the window
 - `src/i18n.ts` for native dialogs, menus and tray text
+- `renderer/locales/zh-CN-*.js` and `src/i18n-zh-CN.ts` for the matching Chinese text
 
 A string with no English twin falls back to Russian, which means an English speaker sees Cyrillic
 in the middle of their app and nothing crashes to tell anybody. A checker finds those:
@@ -224,7 +224,9 @@ in the middle of their app and nothing crashes to tell anybody. A checker finds 
 node tools/check-i18n.js
 ```
 
-`npm test` runs it too, so a missing translation fails the pull request rather than shipping.
+`npm test` runs it too, and `test/chinese.test.js` checks Chinese coverage and placeholders, so a
+missing translation fails the pull request rather than shipping. The catalog's original names
+stay unchanged; guides and release notes use English when no Chinese text is available.
 
 New languages are welcome. Say so in an issue first, so two people do not translate the same file
 in the same week.

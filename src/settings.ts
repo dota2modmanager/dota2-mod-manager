@@ -6,7 +6,7 @@ import path from 'node:path';
 export interface StoredSettings {
   dotaGamePath: string | null;
   langSuffix: string;
-  uiLang: 'en' | 'ru' | string;
+  uiLang: 'en' | 'ru' | 'zh-CN' | string;
   langPromptSeen: boolean;
   uiScale: number;
   theme: string;

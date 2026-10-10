@@ -36,7 +36,7 @@ async function main() {
     return;
   }
   // the language the app was being used in, not whatever this window happens to boot with
-  window.I18N_LANG = plan.lang === 'ru' ? 'ru' : 'en';
+  window.I18N_LANG = plan.lang === 'ru' || plan.lang === 'zh-CN' ? plan.lang : 'en';
   document.documentElement.lang = window.I18N_LANG;
 
   $('#title').textContent = L`Удалить Dota 2 Mod Manager`;

@@ -9,7 +9,7 @@ import type { Panels } from '../core/constants.ts';
 export interface StoredSettings {
   dotaGamePath: string | null;
   langSuffix: string;
-  uiLang: 'en' | 'ru';
+  uiLang: 'en' | 'ru' | 'zh-CN';
   langPromptSeen: boolean;
   uiScale: number;
   theme: string;

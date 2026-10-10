@@ -33,7 +33,7 @@ export function applyStaticI18n(): void {
 // which is exactly what broke when Dota stopped mounting made-up folders — the folder now
 // follows the game's audio language and has nothing to do with the language of this app.
 export async function applyLanguage(want: unknown): Promise<void> {
-  const lang = want === 'ru' ? 'ru' : 'en';
+  const lang = want === 'ru' || want === 'zh-CN' ? want : 'en';
   window.I18N_LANG = lang;
   try { localStorage.setItem('uiLang', lang); } catch { /* ignore */ }
   await window.api.settings.set('uiLang', lang);
@@ -61,7 +61,7 @@ export function showLanguagePicker(): Promise<void> {
           <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 4v8l-7 8-7-8V6z"/><path d="M12 8v6"/><path d="M9 11h6"/></svg>
         </div>
         <h2>Choose your language</h2>
-        <p>Выберите язык · you can change this anytime in Settings</p>
+        <p>Выберите язык · 可随时在设置中更改 · you can change this anytime in Settings</p>
         <div class="lang-pick-opts">
           <button class="lang-pick-btn" data-lang="en">
             <span class="lp-flag">EN</span>
@@ -71,6 +71,11 @@ export function showLanguagePicker(): Promise<void> {
           <button class="lang-pick-btn" data-lang="ru">
             <span class="lp-flag">RU</span>
             <span class="lp-text"><b>Русский</b><small>Только язык приложения</small></span>
+            <span class="ms lp-go">chevron_right</span>
+          </button>
+          <button class="lang-pick-btn" data-lang="zh-CN">
+            <span class="lp-flag">ZH</span>
+            <span class="lp-text"><b>简体中文</b><small>仅更改程序界面语言</small></span>
             <span class="ms lp-go">chevron_right</span>
           </button>
         </div>

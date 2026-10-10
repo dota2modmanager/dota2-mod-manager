@@ -44,6 +44,7 @@ the code, not in this page.
 | [`src/gamelang-steam.ts`](#srcgamelang-steamts) | What Steam says about the game's language (src/gamelang.ts has the rule): the -language in the |
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
+| [`src/i18n-zh-CN.ts`](#srci18n-zh-CNts) | Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key. |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (src/). |
 | [`src/icon-match.ts`](#srcicon-matchts) | Which wiki file is an item's picture: the file names to try first, and how a wiki's listing is |
 | [`src/icon-wiki.ts`](#srcicon-wikits) | The two wikis the pictures come from. The Dota wiki on Fandom hosts a PNG for most cosmetics |
@@ -1552,6 +1553,12 @@ Identity of a hero regardless of how the author spelled the folder. Authors mix
 used to count as a separate hero — which turned a single-hero skin into a "bundle of 3"
 and offered to split it into parts that make no sense.
 
+## src/i18n-zh-CN.ts
+
+Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key.
+
+_Exports nothing._
+
 ## src/i18n.ts
 
 Minimal i18n for the main process (src/).
@@ -1562,13 +1569,10 @@ the Russian source, so the app never shows an empty/undefined string.
 ### `Lang`
 
 ```ts
-export type Lang = 'en' | 'ru'
+export type Lang = 'en' | 'ru' | 'zh-CN'
 ```
 
-Minimal i18n for the main process (src/).
-Russian is the source language; English strings are keyed by the exact Russian text
-(with {0},{1}... placeholders for interpolated values). A missing key falls back to
-the Russian source, so the app never shows an empty/undefined string.
+_No description in the source._
 
 ### `setLang`
 

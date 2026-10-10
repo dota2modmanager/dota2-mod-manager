@@ -7,6 +7,9 @@
  * way. What is left here is the order: the translations first, then the pieces, then boot().
  */
 // first, before any module that calls L or tr: i18n.js puts them on window
+import './locales/zh-CN-catalog.js';
+import './locales/zh-CN-library.js';
+import './locales/zh-CN-app.js';
 import './i18n.js';
 import './shell/errors.ts';
 import { paintAccount, paintMaximized } from './shell/titlebar.ts';
@@ -60,7 +63,7 @@ async function offerToolchain(): Promise<void> {
   state.favorites = new Set(Array.isArray(cfg.favorites) ? cfg.favorites : []);
   state.panels = readPanels(cfg.panels);
   applyContentZoom(Number(cfg.uiScale) || 1);
-  window.I18N_LANG = cfg.uiLang === 'ru' ? 'ru' : 'en';
+  window.I18N_LANG = cfg.uiLang === 'ru' || cfg.uiLang === 'zh-CN' ? cfg.uiLang : 'en';
   try { localStorage.setItem('uiLang', window.I18N_LANG); } catch { /* ignore */ }
   applyStaticI18n();
   initTheme();

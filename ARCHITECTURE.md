@@ -475,7 +475,7 @@ that location is not writable.
 | `src/uninstall-args.ts`, `src/uninstall-window.ts` | Whether this run is the uninstaller asking what to take along, and the window that asks |
 | `src/folder-size.ts` | Bytes under a folder, for the caches in Settings and the removal window |
 | `src/types.ts` | The shapes the main process hands between its modules |
-| `src/i18n.ts`, `renderer/i18n.js` | Russian and English, for the main process and the window |
+| `src/i18n.ts`, `src/i18n-zh-CN.ts`, `renderer/i18n.js`, `renderer/locales/*` | Russian, English and Simplified Chinese, for the main process and the window |
 | `renderer/app.ts`, `renderer/shell/*` | The window's start, and its own elements every screen reaches: the title bar, search, the switches, progress, drops, updates |
 | `renderer/api/*` | What every channel the window calls takes and answers |
 | `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*` | The four screens, in React |

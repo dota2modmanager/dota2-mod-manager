@@ -13,6 +13,7 @@ export function fmtDate(unix: number | null | undefined): string {
 }
 
 export function plural(n: number, one: string, few: string, many: string): string {
+  if (window.I18N_LANG === 'zh-CN') return window.ZH_CN_PLURAL[many] ?? many;
   if (window.I18N_LANG === 'en') {
     const pair = window.EN_PLURAL[many];
     return pair ? (n === 1 ? pair[0] : pair[1]) : many;

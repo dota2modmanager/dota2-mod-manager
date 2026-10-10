@@ -13,7 +13,7 @@ declare global {
     patched: boolean;
     gamePath: string | null;
     dataBytes: number;
-    lang: 'ru' | 'en';
+    lang: 'ru' | 'en' | 'zh-CN';
   }
 
   /** L`Текст ${x}`, published by i18n.js, which uninstall.html loads first. */
@@ -21,7 +21,7 @@ declare global {
 
   interface Window {
     /** the language the app was being used in, set from the plan */
-    I18N_LANG: 'ru' | 'en';
+    I18N_LANG: 'ru' | 'en' | 'zh-CN';
     uninstall: {
       plan(): Promise<UninstallPlan>;
       run(choices: { revert: boolean; mods: boolean; data: boolean }): Promise<{ ok: true; errors: string[] }>;
