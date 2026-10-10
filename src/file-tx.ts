@@ -99,6 +99,11 @@ export class FileTx {
     fs.mkdirSync(dir, { recursive: true });
   }
 
+  /** The name the original at `target` will be parked under, or null when there is none to park. */
+  #parkingFor(target: string): string | null {
+    return fs.existsSync(target) ? this.#stagedName(target) : null;
+  }
+
   /** Park whatever is at `target`, under the name the step already recorded. */
   #displace(target: string, parked: string | null): void {
     if (!parked) return;
@@ -108,20 +113,23 @@ export class FileTx {
   /** Write a file, over an existing one or not. */
   write(dest: string, buf: string | NodeJS.ArrayBufferView): string {
     this.#ensureDir(path.dirname(dest));
-    const parked = fs.existsSync(dest) ? this.#stagedName(dest) : null;
+    const parked = this.#parkingFor(dest);
     this.#record({ what: 'unwrite', dest, parked });
     this.#displace(dest, parked);
-    fs.writeFileSync(dest, buf);
+    // dest is empty now, so the write creates it and fails rather than writes over something
+    // that appeared in between: what the undo would then delete would not be ours
+    // (js/file-system-race)
+    fs.writeFileSync(dest, buf, { flag: 'wx' });
     return dest;
   }
 
   /** Copy a file in, over an existing one or not. */
   copy(src: string, dest: string): string {
     this.#ensureDir(path.dirname(dest));
-    const parked = fs.existsSync(dest) ? this.#stagedName(dest) : null;
+    const parked = this.#parkingFor(dest);
     this.#record({ what: 'unwrite', dest, parked });
     this.#displace(dest, parked);
-    fs.copyFileSync(src, dest);
+    fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL);
     return dest;
   }
 
@@ -133,7 +141,7 @@ export class FileTx {
       throw Object.assign(new Error(`ENOENT: no such file or directory, rename '${from}' -> '${to}'`), { code: 'ENOENT', path: from });
     }
     this.#ensureDir(path.dirname(to));
-    const parked = fs.existsSync(to) ? this.#stagedName(to) : null;
+    const parked = this.#parkingFor(to);
     this.#record({ what: 'unmove', from, to, parked });
     this.#displace(to, parked);
     fs.renameSync(from, to);

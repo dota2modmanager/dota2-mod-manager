@@ -1470,8 +1470,8 @@
       "name": "a write that fails keeps no undo for the original it parked",
       "file": "src/file-tx.ts",
       "anchor": "  write(dest: string, buf: string | NodeJS.ArrayBufferView): string {",
-      "lineStartsWith": "    fs.writeFileSync(dest, buf);",
-      "to": "    try { fs.writeFileSync(dest, buf); } catch (err) { this.undo.pop(); throw err; }",
+      "lineStartsWith": "    fs.writeFileSync(dest, buf, { flag: 'wx' });",
+      "to": "    try { fs.writeFileSync(dest, buf, { flag: 'wx' }); } catch (err) { this.undo.pop(); throw err; }",
       "test": "test/file-tx.test.ts"
     },
     {
