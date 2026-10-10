@@ -2,6 +2,29 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.10.0
+
+### Terrorblade's arcana in any colour
+
+Catalog → Tools now opens with Terrorblade's arcana. Point at a colour and the arcana's picture
+takes it before anything is built. Install the whole arcana puts it in My mods. The app builds it
+from your own game files: the model, the horns, the glow and the ability icons, so you see the
+arcana without owning it. If you own it, Own the arcana? Colour only recolours yours.
+
+The kill effect and the arcana's sounds come with the item itself, so the mod has neither. The mod
+loads before the catalog's hero mods, so an arcana mod from there does not cover your colour. If a
+Dota update changes the files it is built from, the app builds it again in the same colour. To
+pick another colour later, use Recolour in its menu in My mods.
+
+### Catalog mods say when a new version is out
+
+When an author replaces a mod in the catalog, My mods marks yours as a new version and offers
+Update all. An update keeps the mod's place in the load order, and keeps it on or off as it was.
+
+### The pre-patch mark comes off from the menu
+
+If a mod marked pre-patch works fine for you, remove the mark from its menu in My mods.
+
 ## 2.9.0
 
 ### Mods load again after Dota's 7 October update
