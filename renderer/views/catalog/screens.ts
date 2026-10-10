@@ -8,6 +8,7 @@ import { pickedIn, refreshCosmeticSlots } from '../../core/installed.ts';
 import { catName, catIcon } from '../../core/categories.ts';
 import { isAdult, adultShown } from '../../core/adult.ts';
 import { plural } from '../../ui/format.ts';
+import { heroName } from '../../ui/hero-name.ts';
 import { paint } from '../../ui/transitions.ts';
 import { heroOf, heroMatches, heroGridWanted, heroTiles, heroLayout } from '../hero-grid.ts';
 import { renderItemCosmeticHub } from '../item-hub.ts';
@@ -149,7 +150,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
   await paint(() => showScreen({
     kind: 'list',
     key: `cat:${categoryId}`,
-    title: (byHero && f.hero) || catName(categoryId),
+    title: (byHero && heroName(f.hero)) || catName(categoryId),
     back: byHero && Boolean(f.hero),
     toolbar,
     lead: lead && (!f.installedOnly || lead.installed) ? lead : null,

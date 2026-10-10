@@ -2,6 +2,7 @@
  * when one of them is installed. Portraits come out of the player's own game; without one, the
  * first of the hero's mods stands in, which is still that hero and still not a grey box. */
 import type { CSSProperties } from 'react';
+import { heroName } from '../../ui/hero-name.ts';
 import type { HeroTileModel, ScreenActions } from './model.ts';
 
 export function HeroGrid({ tiles, actions }: { tiles: HeroTileModel[]; actions: ScreenActions }) {
@@ -9,7 +10,7 @@ export function HeroGrid({ tiles, actions }: { tiles: HeroTileModel[]; actions: 
   return (
     <div className="hero-grid" id="heroGrid">
       {tiles.map((t, i) => {
-        const name = t.hero || tr('Прочее');
+        const name = heroName(t.hero) || tr('Прочее');
         return (
           <button key={t.hero} className={`hero-tile ${t.installed ? 'installed' : ''}`} data-hero={t.hero}
             style={{ '--i': Math.min(i, 40) } as CSSProperties} title={name} onClick={() => actions.pickHero(t.hero)}>

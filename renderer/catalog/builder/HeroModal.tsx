@@ -2,6 +2,7 @@
  * look on it, or how many there are to choose from. */
 import type { CSSProperties } from 'react';
 import { plural } from '../../ui/format.ts';
+import { heroName } from '../../ui/hero-name.ts';
 import type { HeroModalActions, HeroModalModel } from './model.ts';
 import { CosThumb } from './parts.tsx';
 
@@ -11,7 +12,7 @@ export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModa
   return (
     <div className="modal-body">
       <div className="modal-title-row">
-        <div className="modal-title">{m.hero}</div>
+        <div className="modal-title">{heroName(m.hero)}</div>
         <button className="modal-close" id="modalCloseBtn" aria-label={L`Закрыть`} onClick={actions.close}><span className="ms">close</span></button>
       </div>
       <div className="modal-sub">

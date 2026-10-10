@@ -3,6 +3,7 @@
  * belong to this category alone, so they sit under it, quieter. */
 import { SORTS } from '../../core/constants.ts';
 import { plural } from '../../ui/format.ts';
+import { heroName } from '../../ui/hero-name.ts';
 import type { ScreenActions, ToolbarModel } from './model.ts';
 
 interface Props { model: ToolbarModel; actions: ScreenActions }
@@ -31,7 +32,7 @@ export function Toolbar({ model: t, actions }: Props) {
           onPick={(sort) => actions.filter({ sort })} />
         {t.heroes.length > 0 && (
           <Select icon="person" id="heroSelect" value={t.hero} first={L`Все герои`}
-            options={t.heroes.map((h) => ({ value: h, label: h }))} onPick={(hero) => actions.filter({ hero })} />
+            options={t.heroes.map((h) => ({ value: h, label: heroName(h) }))} onPick={(hero) => actions.filter({ hero })} />
         )}
         {t.groups.length > 0 && (
           <Select icon={t.groupIcon} id="groupSelect" value={t.group} first={t.groupLabel}

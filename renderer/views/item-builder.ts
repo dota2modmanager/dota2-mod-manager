@@ -23,6 +23,7 @@ import { pickedIn } from '../core/installed.ts';
 import { showSlotPicker, showHeroModal } from '../catalog/modal/root.tsx';
 import { byName, effectKey, effectPicture, heroesOf, liveEffects, setIsOn, stagedItemAction, tagLine } from '../catalog/builder/logic.ts';
 import { plural } from '../ui/format.ts';
+import { heroName } from '../ui/hero-name.ts';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
 import { cosmeticSlotList, slotData } from './catalog/lists.ts';
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './catalog/overlay.ts';
@@ -117,8 +118,8 @@ function drawSlot(key: number, st: SlotState): void {
   const names = effects.filter((e) => st.effectIds.includes(e.id)).map((e) => e.name);
   const again = () => drawSlot(key, st);
   showSlotPicker(key, {
-    back: st.back?.label || null,
-    title: (st.back?.hero && data.slotLabel) || data.label || catName(COSMETIC_PREFIX + st.slot),
+    back: st.back?.hero ? heroName(st.back.label) : st.back?.label || null,
+    title: (st.back?.hero && data.slotLabel) || heroName(data.label || catName(COSMETIC_PREFIX + st.slot)),
     optionsCount: data.options.length,
     query: st.query,
     slotIcon: data.icon || 'checkroom',

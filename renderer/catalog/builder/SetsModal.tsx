@@ -3,6 +3,7 @@
  * set looks like, and without it "4 of 6" would not add up. */
 import { useRef, type CSSProperties } from 'react';
 import { plural } from '../../ui/format.ts';
+import { heroName } from '../../ui/hero-name.ts';
 import type { SetModalActions, SetModalModel, SetsModalActions, SetsModalModel } from './model.ts';
 import { BuilderFoot, BuilderHead, CosThumb, EmptySearch, PickerSearch } from './parts.tsx';
 
@@ -12,7 +13,7 @@ export function SetsModal({ m, actions }: { m: SetsModalModel; actions: SetsModa
   const search = useRef<HTMLInputElement>(null);
   return (
     <div className="modal-body item-picker-body">
-      <BuilderHead back={m.hero} onBack={actions.back} title={L`Наборы`} onClose={actions.close}
+      <BuilderHead back={heroName(m.hero)} onBack={actions.back} title={L`Наборы`} onClose={actions.close}
         sub={<span>{`${m.count} ${plural(m.count, 'набор', 'набора', 'наборов')}`}</span>} />
       <PickerSearch id="itemSetSearch" value={m.query} onChange={actions.search} inputRef={search} />
       <div className="item-pick-grid" id="itemSetGrid">
@@ -35,7 +36,7 @@ export function SetModal({ m, actions }: { m: SetModalModel; actions: SetModalAc
   return (
     <div className="modal-body item-picker-body">
       <BuilderHead back={L`Наборы`} onBack={actions.back} title={m.name} onClose={actions.close}
-        sub={<><span>{m.hero}</span><span>{`· ${m.count}`}</span></>} />
+        sub={<><span>{heroName(m.hero)}</span><span>{`· ${m.count}`}</span></>} />
       <div className="item-pick-grid">
         {m.pieces.map((p) => {
           const cls = `card item-pick-card item-piece ${p.fits ? '' : 'is-disabled'} ${p.on ? 'installed' : ''}`;

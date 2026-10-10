@@ -225,8 +225,19 @@ node tools/check-i18n.js
 ```
 
 `npm test` runs it too, and `test/chinese.test.js` checks Chinese coverage and placeholders, so a
-missing translation fails the pull request rather than shipping. The catalog's original names
-stay unchanged; guides and release notes use English when no Chinese text is available.
+missing translation fails the pull request rather than shipping. Mod and item names from the
+catalog stay unchanged; guides and release notes use English when no Chinese text is available.
+
+Chinese hero labels use Valve's [Simplified Chinese hero feed](https://www.dota2.com/datafeed/herolist?language=schinese)
+in `renderer/locales/zh-CN-heroes.ts`. `renderer/ui/hero-name.ts` translates display labels only:
+filter values, game identifiers, portrait keys and saved equipment keep their original names.
+Check named abilities against the [official hero data](https://www.dota2.com/datafeed/herodata?language=schinese&hero_id=109),
+not a literal translation of the English or Russian name. Generic numbered ability slots remain
+numbered; they do not identify a particular ability. Use official terms such as 至宝, 身心,
+连杀配音 and 连杀特效, distinguishing audio from visuals. Cosmetic terms can be checked in
+[Valve's Diretide page](https://www.dota2.com/diretide?l=schinese) and
+[workshop requirements](https://www.dota2.com/workshop/requirements/announcers?l=schinese);
+痛苦魔方 is also named in the [Chinese official update notes](https://www.dota2.com.cn/wapnews/article/details/20260325/220462.html).
 
 New languages are welcome. Say so in an issue first, so two people do not translate the same file
 in the same week.

@@ -2,6 +2,7 @@
  * on the hero rather than how many slots it has (92 of 124 heroes have four to six, so "5 slots"
  * told nobody anything). A hero opens its window (builder/HeroModal.tsx). */
 import type { CSSProperties } from 'react';
+import { heroName } from '../../ui/hero-name.ts';
 import type { ScreenActions, ScreenModel } from './model.ts';
 
 type Model = Extract<ScreenModel, { kind: 'builder' }>;
@@ -37,7 +38,7 @@ export function BuilderHub({ m, actions }: { m: Model; actions: ScreenActions })
                   </span>
                 </div>
                 <div className="card-body">
-                  <div className="card-name">{h.hero}</div>
+                  <div className="card-name">{heroName(h.hero)}</div>
                   <div className="card-meta"><span>{h.meta}</span></div>
                 </div>
               </div>
