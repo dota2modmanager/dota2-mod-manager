@@ -1,6 +1,7 @@
 /* Putting mods from the catalog into the game: one from its window, a pack, the list the user
  * built. Whatever is on screen says it is busy while a download is in flight (state.ts installing),
  * and the badges follow once it lands. */
+import { catalogName } from '../../ui/catalog-name.ts';
 import { state } from '../../core/store.ts';
 import { render } from '../../core/router.ts';
 import { keyOf, refreshInstalledIndex } from '../../core/installed.ts';
@@ -41,7 +42,7 @@ export async function doInstall(categoryId: string, mod: Mod, styleLabel: string
   // before doing it rather than leaving a tick behind on a mod that is already in the game.
   if (!batch && isQueued(k)) {
     const go = await confirmDialog(
-      L`«${mod.name}» уже в списке установки. Поставить сейчас? Из списка он пропадёт.`,
+      L`«${catalogName(mod.name)}» уже в списке установки. Поставить сейчас? Из списка он пропадёт.`,
       // nothing is being destroyed here, so neither the word nor the red button belongs
       { okLabel: L`Установить`, danger: false },
     );
@@ -77,10 +78,10 @@ export async function doInstall(categoryId: string, mod: Mod, styleLabel: string
     r = { error: String((err as Error)?.message || err) };
   }
   installing.delete(k);
-  if (r.error && !r.already) toast(`${mod.name}: ${r.error}`, 'error', 6000);
-  else if (r.replaced?.length) toast(L`${mod.name} установлен — «${r.replaced.join(', ')}» выключен: курсор в игре может быть только один`, 'warn', 7000);
+  if (r.error && !r.already) toast(`${catalogName(mod.name)}: ${r.error}`, 'error', 6000);
+  else if (r.replaced?.length) toast(L`${catalogName(mod.name)} установлен — «${r.replaced.map(n => catalogName(n)).join(', ')}» выключен: курсор в игре может быть только один`, 'warn', 7000);
   // a tool is not installed into anything: it is downloaded, unpacked and waiting in a folder
-  else if (!r.error) toast(categoryId === 'tools' ? L`${mod.name} готов` : L`${mod.name} установлен`);
+  else if (!r.error) toast(categoryId === 'tools' ? L`${catalogName(mod.name)} готов` : L`${catalogName(mod.name)} установлен`);
   await refreshInstalledIndex();
   redrawScreen(); // the "Установлен" badges follow the library, drawn again in place
   changed();
@@ -125,7 +126,7 @@ export async function installPack(pack: Mod, excluded: Set<string>): Promise<voi
     entries.push({ categoryId, mod, styleLabel: style?.label || null, fileRef: mod.file || style?.file, preview: style?.preview || mod.preview });
   }
   const { ok, skip, fail } = await installMany(entries);
-  toast(L`Пак «${pack.name}»: установлено ${ok}, пропущено ${skip + missing}${fail ? L`, ошибок ${fail}` : ''}`, fail ? 'warn' : 'ok', 7000);
+  toast(L`Пак «${catalogName(pack.name)}»: установлено ${ok}, пропущено ${skip + missing}${fail ? L`, ошибок ${fail}` : ''}`, fail ? 'warn' : 'ok', 7000);
 }
 
 // The install list hands its contents back here, since this is where installing lives.

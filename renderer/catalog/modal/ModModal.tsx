@@ -8,6 +8,7 @@ import { LegacyHtml } from '../screen/LegacyHtml.tsx';
 import { flatColor } from '../colors.ts';
 import { ModActions } from './ModActions.tsx';
 import { PackList } from './PackList.tsx';
+import { catalogName, catalogLabel } from '../../ui/catalog-name.ts';
 
 export function ModModal({ m, actions }: { m: ModModalModel; actions: ModModalActions }) {
   const favLabel = m.fav ? L`Убрать из избранного` : L`В избранное`;
@@ -26,7 +27,7 @@ export function ModModal({ m, actions }: { m: ModModalModel; actions: ModModalAc
       </div>
       <div className="modal-body">
         <div className="modal-title-row">
-          <div className="modal-title">{m.mod.name}</div>
+          <div className="modal-title" title={m.mod.name}>{catalogName(m.mod.name)}</div>
           <button className={`fav-btn ${m.fav ? 'on' : ''}`} data-fav={`${m.categoryId}|${m.mod.name}`} data-owned="react"
             aria-pressed={m.fav} title={favLabel} aria-label={favLabel} onClick={actions.toggleFav}>
             <span className="ms">{m.fav ? 'favorite' : 'favorite_border'}</span>
@@ -34,7 +35,7 @@ export function ModModal({ m, actions }: { m: ModModalModel; actions: ModModalAc
         </div>
         <div className="modal-sub">
           <span>{m.catName}</span>
-          {m.mod._group && <span>{`· ${m.mod._group}`}</span>}
+          {m.mod._group && <span>{`· ${catalogLabel(m.mod._group)}`}</span>}
           {m.mod._custom && <span>{L`· свой пак`}</span>}
           {m.date && <span>{`· ${m.date}`}</span>}
           <LegacyHtml tag="span" className="modal-layer" html={m.creditsHtml} bind={actions.bindCredits} />
@@ -44,7 +45,7 @@ export function ModModal({ m, actions }: { m: ModModalModel; actions: ModModalAc
             {m.styles.map((s, i) => (
               <button key={i} className={`style-btn ${i === m.styleIdx ? 'active' : ''}`} data-style={i}
                 style={{ '--c': flatColor(s.color) } as CSSProperties} onClick={() => actions.pickStyle(i)}>
-                {s.label || tr('Обычный')}
+                {s.label ? catalogLabel(s.label) : tr('Обычный')}
               </button>
             ))}
           </div>

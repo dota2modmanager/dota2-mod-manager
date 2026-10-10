@@ -1,6 +1,6 @@
 /* Language switching must refresh labels supplied by the main process too: repainting the
  * renderer alone left the Chinese builder showing "Head". The global search must find the
- * same original mod titles by Chinese hero names. No items are equipped by this scenario. */
+ * same catalog entries by Chinese hero names. No items are equipped by this scenario. */
 const steps = require('../steps');
 
 module.exports = async function localization(sim) {
@@ -70,7 +70,7 @@ module.exports = async function localization(sim) {
     await pick('zh-CN');
     const english = await search('Axe');
     const chinese = await search('斧王');
-    sim.check('the global Chinese hero search finds the same original Axe mod titles', english.mods.length > 0
+    sim.check('the global Chinese hero search finds the same Axe catalog entries', english.mods.length > 0
       && JSON.stringify(chinese.mods) === JSON.stringify(english.mods), JSON.stringify({ english, chinese }), { english, chinese });
     if (hasItems) sim.check('the Chinese hero search also reaches that hero\'s cosmetics', chinese.items.length > 0
       && chinese.items.every(item => item.slot.startsWith('item:axe:')), JSON.stringify(chinese.items), chinese.items);

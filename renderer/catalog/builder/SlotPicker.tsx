@@ -2,6 +2,7 @@
  * puts the choice on. Nothing reaches the game until it is pressed (views/item-builder.ts,
  * stagedItemAction): a pick used to be written on every click. The card the border marks is the
  * one chosen here; "Надето" is said only of what the game shows. */
+import { catalogName } from '../../ui/catalog-name.ts';
 import { useRef, type CSSProperties } from 'react';
 import { plural } from '../../ui/format.ts';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
@@ -54,7 +55,7 @@ export function SlotPicker({ m, actions }: { m: SlotPickerModel; actions: SlotPi
                     ? <span className="card-thumb"><img src={fx.picture} alt="" loading="lazy" /></span>
                     : <div className="noimg"><span className="ms">auto_awesome</span></div>}
                 </div>
-                <div className="card-body"><div className="card-name">{fx.name}</div></div>
+                <div className="card-body"><div className="card-name" title={fx.name}>{catalogName(fx.name)}</div></div>
               </button>
             ))}
           </div>

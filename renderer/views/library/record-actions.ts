@@ -5,6 +5,7 @@
  * What the row does not print lives in the menu. The load order, exporting a mod as one file and
  * taking a multi-hero mod apart are all real and all rare: on the row they were three buttons every
  * mod carried so that a few could use them. */
+import { catalogName, catalogLabel } from '../../ui/catalog-name.ts';
 import { catName } from '../../core/categories.ts';
 import { isCursorRec, isPackableRec } from '../../core/records.ts';
 import { fmtMB, plural } from '../../ui/format.ts';
@@ -26,10 +27,10 @@ async function moveRecord(id: string, dir: number) {
 async function exportRecord(id: string) {
   const rec = recById(id);
   if (!rec) return;
-  toast(L`Собираю «${rec.name}» в один файл…`);
+  toast(L`Собираю «${catalogName(rec.name)}» в один файл…`);
   const r = await window.api.mods.exportSingle(id);
-  if (r.error) toast(`${rec.name}: ${r.error}`, 'error', 6000);
-  else if (r.ok) toast(L`${rec.name} сохранён одним файлом (${fmtMB(r.size)} MB)`, 'ok', 6000);
+  if (r.error) toast(`${catalogName(rec.name)}: ${r.error}`, 'error', 6000);
+  else if (r.ok) toast(L`${catalogName(rec.name)} сохранён одним файлом (${fmtMB(r.size)} MB)`, 'ok', 6000);
 }
 
 /* Hand the mod's own files back as a tree. The pair to dropping a folder in: a mod can be opened,
@@ -39,27 +40,27 @@ async function unpackRecord(id: string) {
   if (!rec) return;
   const r = await window.api.mods.unpackToFolder(id);
   if (r.cancelled) return;
-  if (r.error) toast(`${rec.name}: ${r.error}`, 'error', 6000);
-  else if (r.ok) toast(L`«${rec.name}»: распакован, файлов — ${r.files} (${fmtMB(r.bytes)} MB)`, 'ok', 6000);
+  if (r.error) toast(`${catalogName(rec.name)}: ${r.error}`, 'error', 6000);
+  else if (r.ok) toast(L`«${catalogName(rec.name)}»: распакован, файлов — ${r.files} (${fmtMB(r.bytes)} MB)`, 'ok', 6000);
 }
 
 async function splitRecord(id: string) {
   const rec = recById(id);
   if (!rec) return;
   if (!await confirmDialog(
-    L`Разбить «${rec.name}» на отдельные моды по героям? Исходный файл заменится на отдельные, каждый можно будет включать и удалять по отдельности.`,
+    L`Разбить «${catalogName(rec.name)}» на отдельные моды по героям? Исходный файл заменится на отдельные, каждый можно будет включать и удалять по отдельности.`,
     { okLabel: L`Разобрать` },
   )) return;
   const r = await window.api.mods.splitMod(id);
   if (r.error) toast(r.error, 'error', 6000);
-  else toast(L`Разобрано на ${r.count}: ${r.names.join(', ')}`, 'ok', 6000);
+  else toast(L`Разобрано на ${r.count}: ${r.names.map(n => catalogName(n)).join(', ')}`, 'ok', 6000);
   await screen.reload();
 }
 
 /** Standalone mods that can go into a pack. */
 export function standalonePackable(): Candidate[] {
   return lib.records.filter(isPackableRec).map((r) => ({
-    id: r.id, name: r.name + (r.styleLabel ? ` (${r.styleLabel})` : ''), sub: r.info || catName(r.categoryId),
+    id: r.id, name: catalogName(r.name) + (r.styleLabel ? ` (${catalogLabel(r.styleLabel)})` : ''), sub: r.info || catName(r.categoryId),
   }));
 }
 
@@ -75,20 +76,20 @@ async function addToPack(id: string) {
 async function disbandPack(id: string) {
   const rec = recById(id);
   if (!rec) return;
-  if (!await confirmDialog(L`Разобрать пак «${rec.name}» на отдельные моды? Каждый мод снова займёт свой слот.`, { okLabel: L`Разобрать` })) return;
+  if (!await confirmDialog(L`Разобрать пак «${catalogName(rec.name)}» на отдельные моды? Каждый мод снова займёт свой слот.`, { okLabel: L`Разобрать` })) return;
   const r = await window.api.packs.disband(id);
   if (r.error) toast(r.error, 'error', 6000);
-  else toast(L`Разобрано на ${r.count}: ${r.names.slice(0, 4).join(', ')}${r.names.length > 4 ? '…' : ''}`, 'ok', 6000);
+  else toast(L`Разобрано на ${r.count}: ${r.names.slice(0, 4).map(n => catalogName(n)).join(', ')}${r.names.length > 4 ? '…' : ''}`, 'ok', 6000);
   await screen.reload();
 }
 
 export async function deleteRecord(id: string): Promise<void> {
   const rec = recById(id);
   if (!rec) return;
-  if (!await confirmDialog(rec.kind === 'pack' ? L`Удалить пак «${rec.name}» со всеми модами внутри?` : L`Удалить «${rec.name}»?`)) return;
+  if (!await confirmDialog(rec.kind === 'pack' ? L`Удалить пак «${catalogName(rec.name)}» со всеми модами внутри?` : L`Удалить «${catalogName(rec.name)}»?`)) return;
   const r = await window.api.mods.remove(id);
   if (r.error) toast(r.error, 'error');
-  else toast(L`${rec.name} удалён`);
+  else toast(L`${catalogName(rec.name)} удалён`);
   await screen.reload();
 }
 
@@ -115,8 +116,8 @@ export async function updateRecord(id: string): Promise<boolean> {
   const rec = recById(id);
   if (!rec) return false;
   const r = await window.api.mods.update(id);
-  if (r.error) { toast(`${rec.name}: ${r.error}`, 'error', 6000); return false; }
-  toast(L`«${rec.name}» обновлён`, 'ok');
+  if (r.error) { toast(`${catalogName(rec.name)}: ${r.error}`, 'error', 6000); return false; }
+  toast(L`«${catalogName(rec.name)}» обновлён`, 'ok');
   return true;
 }
 

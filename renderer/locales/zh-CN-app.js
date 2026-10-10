@@ -1,6 +1,7 @@
 /* Simplified Chinese, keyed by the same Russian source strings as i18n.js.
  * A classic script as well as an app import: the removal window has no build step. */
 Object.assign(window.ZH_CN ||= {}, {
+  "Менеджер модов": "模组管理器",
   "Язык переключён на 简体中文": "语言已切换为简体中文",
   "Вход нужен, чтобы подписывать свои сборки": "登录后，分享的搭配会显示你的名字",
   "Выйти": "退出登录",

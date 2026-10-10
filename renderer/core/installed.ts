@@ -9,13 +9,14 @@ import { $ } from './dom.ts';
 import { invalidateViews } from './router.ts';
 import { keyOf } from './keys.ts';
 import { setCosmeticNames } from '../ui/cosmetic-name.ts';
+import { catalogName, catalogLabel } from '../ui/catalog-name.ts';
 import type { LibRecord, Match } from '../library/types.ts';
 
 export { keyOf };
 
 // label for a fingerprint match (array of catalog identities that share the content)
 export function matchLabel(matches: Match): string {
-  return matches.map((m) => m.name + (m.styleLabel ? ` · ${m.styleLabel}` : '')).join(' / ');
+  return matches.map((m) => catalogName(m.name) + (m.styleLabel ? ` · ${catalogLabel(m.styleLabel)}` : '')).join(' / ');
 }
 
 // refresh the catalog "installed" lookup + the library tab counter from a list

@@ -6,6 +6,7 @@ import { isCursorRec, isFontRec, isCosmeticRec, effectNames } from '../../core/r
 import { staleTerrainWhy } from '../../core/terrain-age.ts';
 import { fmtMB } from '../../ui/format.ts';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
+import { catalogName, catalogLabel } from '../../ui/catalog-name.ts';
 import { isVideo } from '../../ui/media.ts';
 import { recPreviewUrl } from '../../ui/thumb.ts';
 import { extThumb, recThumb } from '../../library/thumbs.ts';
@@ -30,7 +31,7 @@ function coveredTag(x: { coveredBy?: Cover[]; enabled: boolean }): Tag | null {
   const by = x.coveredBy;
   if (!by || !by.length || !x.enabled) return null;
   const total = by.reduce((n, c) => n + c.files, 0);
-  const who = by.map((c) => `«${c.name}» (${c.files})`).join(', ');
+  const who = by.map((c) => `«${catalogName(c.name)}» (${c.files})`).join(', ');
   return { cls: 'covered', icon: 'layers', text: L`перекрыт`,
     title: L`Файлов перекрыто: ${total} — ${who}. Побеждает мод, который загружается раньше; порядок меняется правой кнопкой.` };
 }
@@ -66,7 +67,7 @@ export function modRow(rec: LibRecord, index: number): RowModel {
     thumb: cosmetic ? { icon: null } : recThumb(rec),
     cosmetic: cosmetic ? { name: rec.name, icon: catIcon(COSMETIC_PREFIX + rec.slot) } : null,
     tags: known([
-      rec.match ? { cls: 'match', text: matchLabel(rec.match) } : rec.info ? { cls: '', text: rec.info } : null,
+      rec.match ? { cls: 'match', text: matchLabel(rec.match) } : rec.info ? { cls: '', text: catalogLabel(rec.info) } : null,
       schemaTag(rec),
       coveredTag(rec),
       rec.staleMap ? { cls: 'stale', icon: 'history', text: L`старая карта`, title: staleTerrainWhy() } : null,

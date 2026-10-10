@@ -180,6 +180,11 @@ when GitHub is unreachable they come through public proxies. That whole path is 
 HTML goes through an allowlist of tags, and a file name from a catalog record is a name and not a
 path. Who is allowed to have written the bytes in the first place is the next section.
 
+In Chinese, `renderer/ui/catalog-name.ts` supplies display labels for catalog titles, styles and
+groups from the locale JSON dictionaries. Search accepts both labels and original names; record
+keys, downloads and saved styles remain canonical. `renderer/ui/guide-name.ts` translates known
+guide strings by exact match before the existing HTML sanitizer, preserving commands and links.
+
 ## Who is allowed to have written this
 
 Everything the app downloads travels a route it does not control. `raw.githubusercontent.com` is

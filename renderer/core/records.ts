@@ -1,4 +1,5 @@
 import { state } from './store.ts';
+import { catalogName } from '../ui/catalog-name.ts';
 import type { LibRecord } from '../library/types.ts';
 
 /** Anything with a record's shape: a row, a pack member, a record not yet listed. */
@@ -41,5 +42,5 @@ export function isPackableRec(rec: Rec | null | undefined): boolean {
 export function effectNames(rec: Rec | null | undefined): string {
   if (!rec || !rec.effectId) return '';
   const known = (state.cosmeticSlots || []).find((s) => s.slot === rec.slot)?.effects || [];
-  return ` · ${String(rec.effectId).split(',').filter(Boolean).map((id) => known.find((fx) => fx.id === id)?.name || id).join(', ')}`;
+  return ` · ${String(rec.effectId).split(',').filter(Boolean).map((id) => catalogName(known.find((fx) => fx.id === id)?.name || id)).join(', ')}`;
 }

@@ -186,7 +186,7 @@ const EN = {
   'Файлов перекрыто: {0} — {1}. Побеждает мод, который загружается раньше; порядок меняется правой кнопкой.':
     'Files overruled: {0} — {1}. The mod that loads earlier supplies them; right-click to change the order.',
   'Косметика': 'Cosmetics', 'Официальные предметы': 'Official cosmetics',
-  'Моды': 'Mods',
+  'Моды': 'Mods', 'Менеджер модов': 'Mod Manager',
   'вид для стандартного предмета': 'a look for a default item',
   'Предметы': 'Items', 'Официальные предметы героев': 'Official hero cosmetics',
   'Стандартный': 'Default',

@@ -225,18 +225,24 @@ node tools/check-i18n.js
 ```
 
 `npm test` runs it too, and `test/chinese.test.js` checks Chinese coverage and placeholders, so a
-missing translation fails the pull request rather than shipping. External mod titles stay
-unchanged; official item/set labels in Chinese resolve their `item_name` tokens from the installed
+missing translation fails the pull request rather than shipping. Catalog mod titles, styles and
+groups use the display-only labels in `zh-CN-mod-names.json` and `zh-CN-catalog-words.json` through
+`renderer/ui/catalog-name.ts`; original keys, file references and saved records stay unchanged.
+`zh-CN-guide-text.json` translates the inspected catalog's guide text by exact source string;
+changed instructions fall back to the source, and commands, paths and links remain intact.
+`test/chinese-catalog.test.ts` checks label coverage, bilingual search and guide integrity.
+Official item/set labels in Chinese resolve their `item_name` tokens from the installed
 game's `dota_schinese.txt` and `items_schinese.txt`. Original names remain icon/favourite/save keys;
 missing or ambiguous translations keep the original label. Guides and release notes use English
 when no Chinese text is available. `test/cosmetic-names.test.ts` covers decoding, token lookup,
-fallback, game-update invalidation and bilingual search. No Valve localization data is shipped.
+fallback, game-update invalidation and bilingual search. The complete Valve localization files
+are not shipped; only catalog display labels are included.
 
 Chinese hero labels use Valve's [Simplified Chinese hero feed](https://www.dota2.com/datafeed/herolist?language=schinese)
 in `renderer/locales/zh-CN-heroes.ts`. `renderer/ui/hero-name.ts` translates display labels only:
 filter values, game identifiers, portrait keys and saved equipment keep their original names.
 `test/chinese-heroes.test.ts` imports these TypeScript modules so Node measures their coverage.
-The global search also matches Chinese hero names while displaying original mod/item titles.
+The global search also matches Chinese hero and catalog names alongside the original English.
 Run `npm run sim -- --scenario localization --only fhd:default` to check English/Chinese/Russian
 switching, cached builder labels and global search in the sandbox.
 Check named abilities against the [official hero data](https://www.dota2.com/datafeed/herodata?language=schinese&hero_id=109),

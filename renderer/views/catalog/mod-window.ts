@@ -1,5 +1,6 @@
 /* A mod's window: what it shows (catalog/modal/ModModal.tsx draws it) and what its buttons do. It
  * opens on the look the card was showing, which is the one the user was just looking at. */
+import { catalogName } from '../../ui/catalog-name.ts';
 import { state } from '../../core/store.ts';
 import { keyOf, refreshInstalledIndex } from '../../core/installed.ts';
 import { catName, catIcon } from '../../core/categories.ts';
@@ -121,7 +122,7 @@ function drawModal(): void {
       redrawScreen(); // the card behind the window wears the same heart
       screen.favChanged();
     },
-    playPreview: () => { if (playable) openPlayer(playable, mod.name); },
+    playPreview: () => { if (playable) openPlayer(playable, catalogName(mod.name)); },
     pickStyle: (i) => {
       st.styleIdx = i;
       // the card behind the window is showing a look too; they agree from here on
@@ -136,7 +137,7 @@ function drawModal(): void {
     },
     savePack: (name) => savePack(mod, name, members.filter((x) => !excluded.has(x.name)).map((x) => x.name)),
     deletePack: async () => {
-      if (!await confirmDialog(L`Удалить пак «${mod.name}»?`)) return;
+      if (!await confirmDialog(L`Удалить пак «${catalogName(mod.name)}»?`)) return;
       saveCustomPacks(customPacks().filter((p) => p.name !== mod.name));
       closeOverlay();
       screen.redraw();
@@ -147,10 +148,10 @@ function drawModal(): void {
       installPack(mod, excluded);
     },
     uninstall: async () => {
-      if (!installedRec || !await confirmDialog(L`Удалить «${mod.name}»?`)) return;
+      if (!installedRec || !await confirmDialog(L`Удалить «${catalogName(mod.name)}»?`)) return;
       const r = await window.api.mods.remove(installedRec.id);
       if (r.error) toast(r.error, 'error');
-      else toast(L`${mod.name} удалён`);
+      else toast(L`${catalogName(mod.name)} удалён`);
       await refreshInstalledIndex();
       redrawScreen();
       redraw();

@@ -3,6 +3,7 @@
  * The game mounts pakNN in numeric order, so a mod's pak number is its priority: the list is shown
  * in it, and moving a mod up or down renames its file. Fonts, cursors and cosmetic picks live
  * outside a numbered pak and have no place in it. */
+import { catalogMatchesSearch } from '../ui/hero-name.ts';
 import { isCosmeticRec } from '../core/records.ts';
 import type { LibRecord } from './types.ts';
 
@@ -44,7 +45,7 @@ export function loadOrder(records: LibRecord[]): Map<string, Place> {
 /** Whether a record answers the search, by its own name or any of its members'. */
 export function matchesSearch(rec: LibRecord, query: string): boolean {
   const q = query.trim().toLowerCase();
-  return !q || rec.name.toLowerCase().includes(q) || (rec.members || []).some((m) => m.name.toLowerCase().includes(q));
+  return !q || catalogMatchesSearch(rec.name, q) || (rec.members || []).some((m) => catalogMatchesSearch(m.name, q));
 }
 
 /**
