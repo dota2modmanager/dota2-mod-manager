@@ -9,6 +9,7 @@ import { catName, catIcon } from '../../core/categories.ts';
 import { isAdult, adultShown } from '../../core/adult.ts';
 import { plural } from '../../ui/format.ts';
 import { heroName, catalogMatchesSearch } from '../../ui/hero-name.ts';
+import { cosmeticNameMatches } from '../../ui/cosmetic-name.ts';
 import { paint } from '../../ui/transitions.ts';
 import { heroOf, heroMatches, heroGridWanted, heroTiles, heroLayout } from '../hero-grid.ts';
 import { renderItemCosmeticHub } from '../item-hub.ts';
@@ -177,7 +178,7 @@ export async function renderCosmeticCategory(slot: string, actions: ScreenAction
   const f = view.filters;
   const q = view.cosSearch.trim().toLowerCase();
   let list: Look[] = data.options.map((o) => ({ slot, o }));
-  if (q) list = list.filter(({ o }) => o.name.toLowerCase().includes(q));
+  if (q) list = list.filter(({ o }) => cosmeticNameMatches(o.name, q));
   list = filterCosmetics(list);
   // same rule as the mod grid: a number only once the list in front of you is a subset
   const narrow = Boolean(view.cosSearch.trim() || f.installedOnly || f.favOnly);

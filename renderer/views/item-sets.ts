@@ -15,6 +15,8 @@ import { showSetsModal, showSetModal } from '../catalog/modal/root.tsx';
 import { matchingSets, setCardMeta, setCount, setIsOn } from '../catalog/builder/logic.ts';
 import { plural } from '../ui/format.ts';
 import { toast } from '../ui/toast.ts';
+import { cosmeticName } from '../ui/cosmetic-name.ts';
+import { state } from '../core/store.ts';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
 import { closeOverlay } from './catalog/overlay.ts';
 import { afterPick, heroSets, isOpen, openItemHeroModal, openItemSlotModal, openWindow } from './item-builder.ts';
@@ -86,6 +88,7 @@ function drawSet(key: number, st: SetState): void {
 }
 
 const setAction = (st: SetState): BuilderAction => (st.busy ? { label: L`Надеваю…`, icon: 'hourglass_top', off: true }
+  : !state.settings?.schemaPatch ? { label: L`Выключи безопасный режим, чтобы надеть`, icon: 'shield', off: true }
   : setIsOn(st.set, pickedIn) ? { label: L`Надето`, icon: 'check', off: true } : { label: L`Надеть весь набор`, icon: 'checkroom' });
 
 async function applySet(key: number, st: SetState): Promise<void> {
@@ -100,7 +103,7 @@ async function applySet(key: number, st: SetState): Promise<void> {
   }
   st.busy = false;
   if (r.error) toast(r.error, 'error');
-  else toast(r.applied === r.pieces ? L`Надето: ${st.set.name}` : L`Надето ${r.applied} из ${r.pieces} ${plural(r.pieces || 0, 'детали', 'деталей', 'деталей')}`);
+  else toast(r.applied === r.pieces ? L`Надето: ${cosmeticName(st.set.name)}` : L`Надето ${r.applied} из ${r.pieces} ${plural(r.pieces || 0, 'детали', 'деталей', 'деталей')}`);
   if (!r.error) await afterPick();
   if (isOpen(key)) drawSet(key, st);
 }

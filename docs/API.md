@@ -23,6 +23,7 @@ the code, not in this page.
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
 | [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
+| [`src/cosmetic-names.ts`](#srccosmetic-namests) | Display names come from Valve's installed localization, while schema names remain the keys |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/deep-links.ts`](#srcdeep-linksts) | d2mm:// links: a preset link clicked anywhere on the system, and on Linux, telling the desktop |
 | [`src/dev-harness.ts`](#srcdev-harnessts) | The switches that let a script drive the window: a screenshot after some clicks (MM_SHOT and |
@@ -623,6 +624,35 @@ export class Catalog
 
 The catalog on disk and on the wire: fetches the three data files, checks their signatures,
 keeps the last good copy, and says which archive hash the catalog published for a mod.
+
+## src/cosmetic-names.ts
+
+Display names come from Valve's installed localization, while schema names remain the keys
+used by icons, saved picks and the item builder. No translated name is written into the schema.
+
+### `localizationTokens`
+
+```ts
+export function localizationTokens(data: Buffer): Map<string, string>
+```
+
+Valve localization files are UTF-8 today; older loose copies may carry a UTF-16 BOM.
+
+### `cosmeticNameTable`
+
+```ts
+export function cosmeticNameTable(items: Pick<SchemaItem, 'name' | 'itemName'>[], tokens: Map<string, string>): Record<string, string>
+```
+
+Resolve by item_name token, never by guessing a translation from the English title.
+
+### `chineseCosmeticNames`
+
+```ts
+export function chineseCosmeticNames(game: string, schemaText: string): Record<string, string>
+```
+
+Read-only, offline and refreshed after a game update; a missing language file keeps English.
 
 ## src/cursors.ts
 

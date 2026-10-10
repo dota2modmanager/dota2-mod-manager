@@ -8,6 +8,7 @@ import { state } from './store.ts';
 import { $ } from './dom.ts';
 import { invalidateViews } from './router.ts';
 import { keyOf } from './keys.ts';
+import { setCosmeticNames } from '../ui/cosmetic-name.ts';
 import type { LibRecord, Match } from '../library/types.ts';
 
 export { keyOf };
@@ -57,7 +58,8 @@ export function pickedIn(slot: string): LibRecord | null {
 // most of the app's actions (toggling a regular mod, searching the catalog) never need
 // them, so this is fetched only where a cosmetic pick could actually have changed.
 export async function refreshCosmeticSlots(): Promise<void> {
-  const { slots, sets } = await window.api.cosmetics.slots();
+  const { slots, sets, names } = await window.api.cosmetics.slots();
+  setCosmeticNames(names || {});
   state.cosmeticSlots = slots || [];
   state.cosmeticSets = sets || []; // the item builder's sets, read with the slots they fill
   // Picks, safe mode and translated labels can change the catalog's rail as well as the

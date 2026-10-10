@@ -4,6 +4,7 @@
 import { useEffect, useReducer, useRef, useSyncExternalStore, type CSSProperties, type MouseEvent } from 'react';
 import { cosmeticIcon, subscribeIcon, watchIconFor } from '../../ui/cosmetic-icons.ts';
 import { toggleFavorite, isFavKey } from '../favorites.ts';
+import { cosmeticName } from '../../ui/cosmetic-name.ts';
 
 export interface CosmeticItem {
   slot: string;
@@ -59,7 +60,7 @@ export function CosmeticCard({ item, index, onOpen, onFavChanged }: Props) {
         </div>
       </div>
       <div className="card-body">
-        <div className="card-name">{item.name}</div>
+        <div className="card-name" title={item.name}>{cosmeticName(item.name)}</div>
         {item.catName && <div className="card-meta"><span>{item.catName}</span></div>}
       </div>
     </div>

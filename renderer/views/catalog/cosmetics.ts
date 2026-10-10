@@ -5,6 +5,7 @@ import { COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.ts';
 import { state } from '../../core/store.ts';
 import { pickedIn, refreshInstalledIndex } from '../../core/installed.ts';
 import { toast } from '../../ui/toast.ts';
+import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import { loadCosmeticIcons, cosmeticIconKnown } from '../../ui/cosmetic-icons.ts';
 import { favKey, isFav, toggleFavorite } from '../../catalog/favorites.ts';
 import { redrawScreen } from '../../catalog/screen/root.tsx';
@@ -51,6 +52,7 @@ function drawCosmeticModal(): void {
     live: live?.itemId === o.id,
     replaces: live && live.itemId !== o.id ? live.name : null,
     busy: installing.has(COSMETIC_PREFIX + slot + '|' + o.id + '|'),
+    blocked: !state.settings?.schemaPatch,
   }, {
     close: closeOverlay,
     toggleFav: async () => {
@@ -70,6 +72,7 @@ function drawCosmeticModal(): void {
  * @param effectId  the effects on a hero's item, comma separated (src/item-builder.ts effectKey)
  */
 export async function pickCosmetic(slot: string, o: CosmeticOption, remove: boolean, effectId = ''): Promise<void> {
+  if (!remove && !state.settings?.schemaPatch) return;
   const effect = isItemCosmeticSlot(slot) ? String(effectId || '') : '';
   const k = COSMETIC_PREFIX + slot + '|' + o.id + '|' + effect;
   if (installing.has(k)) return;
@@ -86,7 +89,7 @@ export async function pickCosmetic(slot: string, o: CosmeticOption, remove: bool
   }
   installing.delete(k);
   if (r.error) { toast(r.error, 'error'); if (open) drawCosmeticModal(); redrawItemSlotModal(); return; }
-  toast(remove ? L`Вернули как в игре` : isItemCosmeticSlot(slot) ? L`Надето: ${o.name}` : L`Выбрано: ${o.name}`);
+  toast(remove ? L`Вернули как в игре` : isItemCosmeticSlot(slot) ? L`Надето: ${cosmeticName(o.name)}` : L`Выбрано: ${cosmeticName(o.name)}`);
   await afterCosmeticPick();
 }
 

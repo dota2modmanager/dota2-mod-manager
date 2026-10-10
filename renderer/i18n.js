@@ -9,7 +9,6 @@
  *   tr(CAT_RU[id])                        -> plain lookup for data-driven labels
  */
 'use strict';
-
 // current UI language. Seeded synchronously from localStorage so a returning user sees the
 // right language with no flash; boot() reconciles it against settings.json (the source of truth).
 window.I18N_LANG = (() => {
@@ -186,10 +185,10 @@ const EN = {
   'перекрыт': 'overruled',
   'Файлов перекрыто: {0} — {1}. Побеждает мод, который загружается раньше; порядок меняется правой кнопкой.':
     'Files overruled: {0} — {1}. The mod that loads earlier supplies them; right-click to change the order.',
-  'Косметика': 'Cosmetics',
+  'Косметика': 'Cosmetics', 'Официальные предметы': 'Official cosmetics',
   'Моды': 'Mods',
   'вид для стандартного предмета': 'a look for a default item',
-  'Предметы': 'Items',
+  'Предметы': 'Items', 'Официальные предметы героев': 'Official hero cosmetics',
   'Стандартный': 'Default',
   'Надето': 'Equipped',
   'Надетые': 'Equipped',
@@ -200,7 +199,7 @@ const EN = {
   'Вернуть стандартный': 'Back to default',
   'Можно выбрать несколько. Иней и Снег держатся не на всех моделях.':
     'You can pick several. Frostbloom and Snow do not hold on every model.',
-  'Наборы': 'Sets',
+  'Наборы': 'Sets', 'Только официальные предметы': 'Only official cosmetics',
   '{0} из {1}': '{0} of {1}',
   '{0} из {1} {2}': '{0} of {1} {2}',
   'Надеть весь набор': 'Equip the whole set',
@@ -235,10 +234,12 @@ const EN = {
   'Эффект добавляется к предмету: сначала выбери его выше.': 'An effect goes on an item: choose one above first.',
   'Конструктор предметов': 'Item builder',
   'конструктор предметов': 'item builder',
-  'Без эффектов': 'No effects',
-  'Выбрать всю косметику': 'Select every look',
+  'Без эффектов': 'No effects', 'Показывать': 'Show', 'Все материалы': 'All content',
+  'Выбрать всю косметику': 'Select every look', 'Выключи безопасный режим, чтобы надеть': 'Turn off safe mode to equip',
   'Вернуть все слоты к тому, что даёт игра': 'Put every slot back to what the game gives',
   'Косметика выключена — слоты снова как в игре': 'Cosmetics off — the slots are the game’s own again',
+  'Предметы из файлов Dota 2. Внешние моды и дополнительные эффекты здесь не показываются.': 'Cosmetics from Dota 2 files. External mods and extra effects are hidden here.',
+  'Можно смотреть официальные предметы. Чтобы надеть их, закрой Dota 2 и выключи безопасный режим.': 'You can browse official cosmetics. To equip them, close Dota 2 and turn off safe mode.',
   'Вид подставляется в схему предметов игры — стандартный предмет просто рисуется как выбранный. Файлы модов это не трогает, и видно только тебе.':
     'A look is spliced into the game’s item schema — it touches no mod files, and only you can see it.',
   'Стандартный предмет героя сохранит свои id, name и prefab=default_item. Остальная часть блока берётся у выбранного предмета, а выбранный эффект добавляется в visuals.':
@@ -256,7 +257,6 @@ const EN = {
   'Развернуть': 'Maximize', 'Закрыть': 'Close', 'Поиск Dota 2…': 'Looking for Dota 2…',
   'Папка модов': 'Mods folder', 'Играть': 'Play',
   'Сменить цвета': 'Change the colours',
-
   // ---------- install list ----------
   'Список установки': 'Install list',
   'Добавить в список': 'Add to the install list',

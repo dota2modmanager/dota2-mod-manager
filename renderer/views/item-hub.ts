@@ -19,6 +19,7 @@ import type { CosmeticSlot } from '../catalog/types.ts';
 import type { ScreenActions, ScreenModel } from '../catalog/screen/model.ts';
 import { plural } from '../ui/format.ts';
 import { heroMatchesSearch } from '../ui/hero-name.ts';
+import { officialOnly } from '../catalog/source.ts';
 import { paint } from '../ui/transitions.ts';
 import { view } from './catalog/state.ts';
 import { catalogActions, heroSets, itemCosmeticSlots } from './item-builder.ts';
@@ -42,7 +43,7 @@ function hubModel(): ScreenModel {
     heroMatchesSearch(hero, q) && (!f.installedOnly || slots.some((s) => pickedIn(s.slot))));
   return {
     kind: 'builder' as const,
-    title: catName(HUB),
+    title: officialOnly() ? L`Официальные предметы героев` : catName(HUB),
     search: view.cosSearch,
     installedOnly: f.installedOnly,
     count: (view.cosSearch || f.installedOnly) ? `${shown.length} ${plural(shown.length, 'герой', 'героя', 'героев')}` : '',

@@ -4,6 +4,7 @@
 import { useRef, type CSSProperties } from 'react';
 import { plural } from '../../ui/format.ts';
 import { heroName } from '../../ui/hero-name.ts';
+import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import type { SetModalActions, SetModalModel, SetsModalActions, SetsModalModel } from './model.ts';
 import { BuilderFoot, BuilderHead, CosThumb, EmptySearch, PickerSearch } from './parts.tsx';
 
@@ -22,7 +23,7 @@ export function SetsModal({ m, actions }: { m: SetsModalModel; actions: SetsModa
             onClick={() => actions.open(s.id)}>
             <div className="card-media"><CosThumb name={s.name} fallback="inventory_2" /></div>
             <div className="card-body">
-              <div className="card-name">{s.name}</div>
+              <div className="card-name" title={s.name}>{cosmeticName(s.name)}</div>
               <div className="card-meta"><span>{s.meta}</span></div>
             </div>
           </button>
@@ -35,7 +36,7 @@ export function SetsModal({ m, actions }: { m: SetsModalModel; actions: SetsModa
 export function SetModal({ m, actions }: { m: SetModalModel; actions: SetModalActions }) {
   return (
     <div className="modal-body item-picker-body">
-      <BuilderHead back={L`Наборы`} onBack={actions.back} title={m.name} onClose={actions.close}
+      <BuilderHead back={L`Наборы`} onBack={actions.back} title={cosmeticName(m.name)} onClose={actions.close}
         sub={<><span>{heroName(m.hero)}</span><span>{`· ${m.count}`}</span></>} />
       <div className="item-pick-grid">
         {m.pieces.map((p) => {
@@ -44,7 +45,7 @@ export function SetModal({ m, actions }: { m: SetModalModel; actions: SetModalAc
             <>
               <div className="card-media"><CosThumb name={p.name} fallback="checkroom" /></div>
               <div className="card-body">
-                <div className="card-name">{p.name}</div>
+                <div className="card-name" title={p.name}>{cosmeticName(p.name)}</div>
                 <div className="card-meta"><span>{p.meta}</span></div>
               </div>
             </>
@@ -57,7 +58,7 @@ export function SetModal({ m, actions }: { m: SetModalModel; actions: SetModalAc
       </div>
       <div className="modal-note">{L`Набор надевается без эффектов. Чтобы добавить эффект, открой деталь.`}</div>
       <div className="item-picker-foot">
-        <BuilderFoot action={m.action} onApply={actions.apply} summary={<><b>{m.name}</b>{` · ${m.count}`}</>} />
+        <BuilderFoot action={m.action} onApply={actions.apply} summary={<><b>{cosmeticName(m.name)}</b>{` · ${m.count}`}</>} />
       </div>
     </div>
   );

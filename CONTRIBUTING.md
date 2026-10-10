@@ -225,8 +225,12 @@ node tools/check-i18n.js
 ```
 
 `npm test` runs it too, and `test/chinese.test.js` checks Chinese coverage and placeholders, so a
-missing translation fails the pull request rather than shipping. Mod and item names from the
-catalog stay unchanged; guides and release notes use English when no Chinese text is available.
+missing translation fails the pull request rather than shipping. External mod titles stay
+unchanged; official item/set labels in Chinese resolve their `item_name` tokens from the installed
+game's `dota_schinese.txt` and `items_schinese.txt`. Original names remain icon/favourite/save keys;
+missing or ambiguous translations keep the original label. Guides and release notes use English
+when no Chinese text is available. `test/cosmetic-names.test.ts` covers decoding, token lookup,
+fallback, game-update invalidation and bilingual search. No Valve localization data is shipped.
 
 Chinese hero labels use Valve's [Simplified Chinese hero feed](https://www.dota2.com/datafeed/herolist?language=schinese)
 in `renderer/locales/zh-CN-heroes.ts`. `renderer/ui/hero-name.ts` translates display labels only:

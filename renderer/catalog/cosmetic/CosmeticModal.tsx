@@ -3,6 +3,7 @@
  * will do to the slot, and which look it replaces. */
 import { useCosmeticIcon } from './CosmeticCard.tsx';
 import { plural } from '../../ui/format.ts';
+import { cosmeticName } from '../../ui/cosmetic-name.ts';
 
 export interface CosmeticModalModel {
   slot: string;
@@ -18,6 +19,7 @@ export interface CosmeticModalModel {
   /** the look it would replace, when another one is live */
   replaces: string | null;
   busy: boolean;
+  blocked?: boolean;
 }
 
 export interface CosmeticModalActions {
@@ -40,7 +42,7 @@ export function CosmeticModal({ m, actions }: { m: CosmeticModalModel; actions: 
       </div>
       <div className="modal-body">
         <div className="modal-title-row">
-          <div className="modal-title">{m.name}</div>
+          <div className="modal-title" title={m.name}>{cosmeticName(m.name)}</div>
           <button className={`fav-btn ${m.fav ? 'on' : ''}`} data-fav={m.favKey} data-owned="react"
             aria-pressed={m.fav} title={favLabel} aria-label={favLabel} onClick={actions.toggleFav}>
             <span className="ms">{m.fav ? 'favorite' : 'favorite_border'}</span>
@@ -55,8 +57,8 @@ export function CosmeticModal({ m, actions }: { m: CosmeticModalModel; actions: 
           {m.live
             ? <button className="btn btn-danger" id="cosRemoveBtn" onClick={actions.remove}><span className="ms">delete</span>{L`Убрать`}</button>
             : (
-              <button className="btn btn-primary" id="cosPickBtn" disabled={m.busy} onClick={actions.pick}>
-                <span className="ms">download</span>{m.busy ? L`Установка…` : L`Установить`}
+              <button className="btn btn-primary" id="cosPickBtn" disabled={m.busy || m.blocked} onClick={actions.pick}>
+                <span className="ms">download</span>{m.blocked ? L`Выключи безопасный режим, чтобы надеть` : m.busy ? L`Установка…` : L`Установить`}
               </button>
             )}
         </div>
@@ -64,7 +66,7 @@ export function CosmeticModal({ m, actions }: { m: CosmeticModalModel; actions: 
           {m.live
             ? L`Этот вид сейчас стоит в слоте «${m.label}». Убрать — вернуть то, что даёт игра; включить обратно можно в «Моих модах».`
             : m.replaces
-              ? L`На один слот — только один вид: этот заменит «${m.replaces}». Прошлый выбор останется в «Моих модах» выключенным.`
+              ? L`На один слот — только один вид: этот заменит «${cosmeticName(m.replaces)}». Прошлый выбор останется в «Моих модах» выключенным.`
               : L`Вид подставляется в схему предметов игры — стандартный предмет просто рисуется как выбранный. Файлы модов это не трогает, и видно только тебе.`}
         </div>
       </div>

@@ -9,6 +9,8 @@ import { pickedIn } from '../../core/installed.ts';
 import { shownMods, isAdult, adultShown } from '../../core/adult.ts';
 import { heroMatches } from '../hero-grid.ts';
 import { cosmeticMatchesSearch } from '../../ui/hero-name.ts';
+import { cosmeticName } from '../../ui/cosmetic-name.ts';
+import { officialOnly } from '../../catalog/source.ts';
 import { modsOf, isGrouped, modIndexOf, type CustomPack } from '../../catalog/mods.ts';
 import { tagLabel as labelOfTag, collectSlots as slotsOf } from '../../catalog/tags.ts';
 import { applyFilters as filterMods, sortMods } from '../../catalog/filters.ts';
@@ -40,7 +42,7 @@ const modsData = (categoryId: string) => catalogData()?.mods?.modsData?.[categor
 const allCategoryMods = (categoryId: string): Mod[] =>
   modsOf(modsData(categoryId), categoryId, { toolsHidden: TOOLS_HIDDEN, customPacks: customPacks() });
 /** What browsing shows: without the adult mods until the user said yes (core/adult.ts). */
-export const categoryMods = (categoryId: string): Mod[] => shownMods(allCategoryMods(categoryId));
+export const categoryMods = (categoryId: string): Mod[] => officialOnly() ? [] : shownMods(allCategoryMods(categoryId));
 export const isGroupedCategory = (categoryId: string): boolean => isGrouped(modsData(categoryId));
 
 export function visibleCategories(): { id: string; preview?: string }[] {
@@ -78,6 +80,7 @@ export function findModByName(cat: string, name: string): Mod | null {
 
 /** Starred mods resolved back to catalog entries (a mod dropped from the catalog is skipped). */
 export function favoriteMods(): Mod[] {
+  if (officialOnly()) return [];
   const out: Mod[] = [];
   for (const key of state.favorites as Set<string>) {
     if (key.startsWith(COSMETIC_PREFIX)) continue; // a look, not a mod: favoriteCosmetics()
@@ -94,7 +97,7 @@ export function favoriteMods(): Mod[] {
 // Cosmetics only work with the schema patch on, so with safe mode they are not offered
 // anywhere: the rail, the favourites, the search all ask here first.
 export function cosmeticSlotList(): CosmeticSlot[] {
-  return state.settings?.schemaPatch ? (state.cosmeticSlots || []) : [];
+  return state.settings?.schemaPatch || officialOnly() ? (state.cosmeticSlots || []) : [];
 }
 
 export function slotData(slot: string): CosmeticSlot | null {
@@ -136,7 +139,7 @@ export function searchCosmetics(q: string): Look[] {
   const out: Look[] = [];
   for (const s of cosmeticSlotList()) {
     for (const o of s.options) {
-      if (cosmeticMatchesSearch(o.name, q, s.heroLabel)) out.push({ slot: s.slot, o });
+      if (cosmeticMatchesSearch(`${o.name} ${cosmeticName(o.name)}`, q, s.heroLabel)) out.push({ slot: s.slot, o });
     }
   }
   return out;
@@ -147,5 +150,5 @@ export function filterCosmetics(list: Look[]): Look[] {
   const f = view.filters;
   let out = f.installedOnly ? list.filter(({ slot, o }) => pickedIn(slot)?.itemId === o.id) : list;
   if (f.favOnly) out = out.filter(({ slot, o }) => isFav(COSMETIC_PREFIX + slot, cosmeticFavValue(slot, o)));
-  return sortMods(out, f.sort, ({ o }) => o.name);
+  return sortMods(out, f.sort, ({ o }) => cosmeticName(o.name));
 }

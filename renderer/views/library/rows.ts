@@ -5,6 +5,7 @@ import { catName, catIcon } from '../../core/categories.ts';
 import { isCursorRec, isFontRec, isCosmeticRec, effectNames } from '../../core/records.ts';
 import { staleTerrainWhy } from '../../core/terrain-age.ts';
 import { fmtMB } from '../../ui/format.ts';
+import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import { isVideo } from '../../ui/media.ts';
 import { recPreviewUrl } from '../../ui/thumb.ts';
 import { extThumb, recThumb } from '../../library/thumbs.ts';
@@ -54,7 +55,7 @@ export function modRow(rec: LibRecord, index: number): RowModel {
   return {
     kind: 'mod',
     id: rec.id,
-    name: rec.name,
+    name: cosmetic ? cosmeticName(rec.name) : rec.name,
     styleLabel: rec.styleLabel || null,
     enabled: rec.enabled,
     selected: lib.sel.has(rec.id),

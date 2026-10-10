@@ -3,6 +3,7 @@
 import type { CSSProperties } from 'react';
 import { plural } from '../../ui/format.ts';
 import { heroName } from '../../ui/hero-name.ts';
+import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import type { HeroModalActions, HeroModalModel } from './model.ts';
 import { CosThumb } from './parts.tsx';
 
@@ -39,7 +40,7 @@ export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModa
             </div>
             <div className="card-body">
               <div className="card-name">{s.label}</div>
-              <div className="card-meta"><span>{s.meta}</span></div>
+              <div className="card-meta"><span>{cosmeticName(s.meta)}</span></div>
             </div>
           </button>
         ))}

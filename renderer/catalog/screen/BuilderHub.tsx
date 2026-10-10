@@ -3,6 +3,7 @@
  * told nobody anything). A hero opens its window (builder/HeroModal.tsx). */
 import type { CSSProperties } from 'react';
 import { heroName } from '../../ui/hero-name.ts';
+import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import type { ScreenActions, ScreenModel } from './model.ts';
 
 type Model = Extract<ScreenModel, { kind: 'builder' }>;
@@ -39,7 +40,7 @@ export function BuilderHub({ m, actions }: { m: Model; actions: ScreenActions })
                 </div>
                 <div className="card-body">
                   <div className="card-name">{heroName(h.hero)}</div>
-                  <div className="card-meta"><span>{h.meta}</span></div>
+                  <div className="card-meta"><span>{cosmeticName(h.meta)}</span></div>
                 </div>
               </div>
             ))}

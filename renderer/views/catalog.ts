@@ -28,6 +28,8 @@ import { renderCategory, renderCosmeticCategory, renderFavorites, renderHome, re
 import { openModWindow } from './catalog/mod-window.ts';
 import { afterCosmeticPick, openCosmeticWindow, pickCosmetic } from './catalog/cosmetics.ts';
 import { openArcanaWindow } from './catalog/arcana.ts';
+import { officialOnly, setCatalogSource, type CatalogSource } from '../catalog/source.ts';
+import { showOfficialHint } from './catalog/official.ts';
 import { screen, view } from './catalog/state.ts';
 
 registerView('catalog', () => renderCatalog());
@@ -38,7 +40,10 @@ function railModel(): RailModel {
   const cats = new Set(visibleCategories().map((c) => c.id));
   const favCount = favoriteMods().length + favoriteCosmetics().length;
   const sections: RailModel['sections'] = [{ label: null, items: [
-    { id: 'all', icon: 'apps', name: L`Все категории` },
+    ...(officialOnly() ? [] : [
+      { id: 'official', icon: 'verified', name: L`Официальные предметы` },
+      { id: 'all', icon: 'apps', name: L`Все категории` },
+    ]),
     { id: 'favorites', icon: 'favorite', name: L`Избранное`, count: favCount, fav: true },
   ] }];
   for (const [label, ids] of RAIL_SECTIONS as [string, string[]][]) {
@@ -57,12 +62,13 @@ function railModel(): RailModel {
       });
     const builder = itemRailEntry();
     if (builder) items.push(builder);
-    sections.push({ label: L`Косметика`, items });
+    sections.push({ label: L`Официальные предметы`, items });
   }
-  return { active: state.activeCategory, sections };
+  return { active: state.activeCategory, source: officialOnly() ? 'official' : 'all', sections };
 }
 
 function pickCategory(id: string): void {
+  if (id === 'official') { pickSource('official'); return; }
   state.activeCategory = id;
   view.filters = freshFilters();
   view.cosSearch = '';
@@ -75,7 +81,12 @@ function pickCategory(id: string): void {
 }
 
 function renderRail(): void {
-  drawRail($('#catRail'), railModel(), pickCategory);
+  drawRail($('#catRail'), railModel(), pickCategory, pickSource);
+}
+
+function pickSource(source: CatalogSource): void {
+  setCatalogSource(source);
+  pickCategory(source === 'official' ? COSMETIC_PREFIX + 'items' : 'all');
 }
 
 // ---------- the screen (catalog/screen/) ----------
@@ -135,7 +146,7 @@ const actions: ScreenActions = {
 
 async function renderCatalog(): Promise<void> {
   const cat = state.catalog;
-  if (!cat || cat.error) {
+  if ((!cat || cat.error) && !officialOnly()) {
     bannerLayer().replaceChildren();
     await paint(() => showScreen(cat
       ? { kind: 'offline', offline: Boolean(cat.offline), error: String(cat.error) }
@@ -143,6 +154,9 @@ async function renderCatalog(): Promise<void> {
     return;
   }
 
+  if (officialOnly() && state.activeCategory !== 'favorites' && !state.activeCategory.startsWith(COSMETIC_PREFIX)) {
+    state.activeCategory = COSMETIC_PREFIX + 'items';
+  }
   renderRail();
   await refreshNotices();
 
@@ -158,6 +172,7 @@ async function renderCatalog(): Promise<void> {
   banners.replaceChildren();
   showNoticeBanner(banners);
   showNoGameBanner(banners);
+  showOfficialHint(banners);
 }
 
 /* A notice that arrived from the network (see ui/notice.ts). Drawn after the screen, the same way

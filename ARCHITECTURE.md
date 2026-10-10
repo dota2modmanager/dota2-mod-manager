@@ -167,6 +167,14 @@ game folder.
 
 ## The catalog is somebody else's
 
+The source selector in `renderer/catalog/source.ts` can instead show only the installed game's
+official cosmetics. It is a local browsing preference: external mod categories, favourites and
+search results are hidden, not disabled or removed. In this mode safe mode permits read-only
+browsing; equipment controls stay disabled and the existing consent dialog still owns patching.
+Chinese item labels are resolved from Valve's installed localization by `src/cosmetic-names.ts`.
+The renderer's `renderer/ui/cosmetic-name.ts` uses these labels for display and bilingual search,
+keeping canonical names for icon lookup, favourites and saved picks. Missing names keep English.
+
 Mods, previews and guides come from [Dota2PornFxWeb](https://github.com/h6rd/Dota2PornFxWeb), and
 when GitHub is unreachable they come through public proxies. That whole path is untrusted: guide
 HTML goes through an allowlist of tags, and a file name from a catalog record is a name and not a
@@ -462,6 +470,7 @@ that location is not writable.
 | `src/patcher.ts`, `src/patcher-gameinfo.ts`, `src/patcher-signatures.ts` | The search-path patch: the two gameinfo files and the signature list, byte for byte, both directions |
 | `src/schema.ts`, `src/schema-kv.ts`, `src/schema-items.ts`, `src/schema-merge.ts` | `items_game.txt`: walking it, reading its items, merging a mod's blocks, building the item pak |
 | `src/schema-service.ts`, `src/schema-cosmetics.ts`, `src/schema-harvest.ts` | The item table as the app keeps it: the build and the repair, the free cosmetics, and a mod's own blocks |
+| `src/cosmetic-names.ts` | Official Chinese item names from the installed game's localization tokens; read-only and cached per game build |
 | `src/item-builder.ts`, `src/item-builder-slots.ts`, `src/item-builder-effects.ts` | The item builder: what it offers each hero and slot, the effects, and what a pick writes |
 | `src/notice-text.ts`, `src/notice-texts.ts` | The game's anti-cheat notice in words that say what to do, in every language Dota ships |
 | `src/terrain-age.ts` | Terrains that replace the whole map, and whether the game's map has moved on since |
@@ -482,6 +491,7 @@ that location is not writable.
 | `renderer/views/*` | What each screen reads and does around its components |
 | `renderer/ui/*` | Dialogs, toasts, the media player, the install queue, shared chrome |
 | `renderer/core/*` | What the screens share: the store, the router, the records, the categories, the 18+ question |
+| `renderer/catalog/source.ts`, `renderer/ui/cosmetic-name.ts`, `renderer/views/catalog/official.ts` | Official-only browsing, Chinese cosmetic display/search labels and the safe-mode browse hint |
 | `renderer/motion/*` | How things move: travel, fold, swap, reveal |
 | `renderer/styles/*`, `renderer/fonts/*` | The tokens every size and colour comes from, and the faces |
 | `renderer/uninstall.html`, `renderer/uninstall.js`, `renderer/uninstall-bridge.d.ts` | The removal window, a classic script loaded without a build, and the types of the bridge its preload gives it |
