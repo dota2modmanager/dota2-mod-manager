@@ -13,6 +13,7 @@ import { confirmDialog, promptDialog } from '../../ui/dialog.ts';
 import type { MenuItem } from '../../ui/menu.ts';
 import type { LibRecord } from '../../library/types.ts';
 import { pickModsDialog, type Candidate } from './pick-mods.ts';
+import { recolorFromLibrary } from '../catalog/arcana.ts';
 import { lib, recById, screen } from './state.ts';
 
 async function moveRecord(id: string, dir: number) {
@@ -157,6 +158,9 @@ export function menuFor(id: string): MenuItem[] | null {
   ] : [
     rec.updateAvailable && { label: L`Обновить до новой версии`, icon: 'upgrade', onPick: async () => { await updateRecord(rec.id); await screen.reload(); } },
     rec.updateAvailable && { separator: true },
+    // the arcana the app built: another colour is chosen in its window, not here
+    Boolean(rec.generated) && { label: L`Перекрасить`, icon: 'palette', onPick: () => void recolorFromLibrary() },
+    Boolean(rec.generated) && { separator: true },
     ...orderItems(rec),
     ordered && { separator: true },
     (isCursorRec(rec) || langDir(rec)) && {
