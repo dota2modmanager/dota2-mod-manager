@@ -7,10 +7,14 @@ import { lz4Literals } from '../../src/lz4.ts';
 import { readCell, type Kv3Block, type Kv3Node } from '../../src/kv3.ts';
 import { resourceId } from '../../src/resource.ts';
 
-/** A value as the test writes it, one key per KV3 type the encoder below knows. */
+/**
+ * A value as the test writes it, one key per KV3 type the encoder below knows. `objs` is a typed
+ * array of objects, the shape of a model's sequences; `i32rows` a typed array of arrays with a
+ * one-byte length (type 24), the shape of a model's bones.
+ */
 export type V = { int: number } | { i32s: number[] } | { str: string } | { yes: true } | { one: true } | { dbl: number }
   | { i64: number } | { i64zero: true } | { f64s: number[] } | { blob: Buffer } | { obj: [string, V][] } | { arr: V[] }
-  | { ref: string } | { bool: boolean };
+  | { ref: string } | { bool: boolean } | { objs: [string, V][][] } | { i32rows: number[][] };
 
 const TRAILER = 0xffeedd00;
 const u32 = (n: number) => { const b = Buffer.alloc(4); b.writeUInt32LE(n >>> 0); return b; };
@@ -29,7 +33,7 @@ export function encodeKv3(root: V, version: 1 | 2 = 2): Buffer {
   const types: number[] = [];
   const blobs: Buffer[] = [];
   const typeOf = (v: V): number => ('int' in v ? 11 : 'i32s' in v ? 10 : 'str' in v ? 6 : 'yes' in v ? 13 : 'one' in v ? 18 : 'dbl' in v ? 5
-    : 'i64' in v ? 3 : 'i64zero' in v ? 15 : 'f64s' in v ? 10 : 'blob' in v ? 7 : 'obj' in v ? 9 : 'ref' in v ? 6 : 'bool' in v ? 2 : 8);
+    : 'i64' in v ? 3 : 'i64zero' in v ? 15 : 'f64s' in v ? 10 : 'blob' in v ? 7 : 'obj' in v ? 9 : 'ref' in v ? 6 : 'bool' in v ? 2 : 'objs' in v || 'i32rows' in v ? 10 : 8);
   // a string that names a resource carries a flag after its type (bit 1 before version 3)
   const typed = (v: V) => ('ref' in v ? types.push(6 | 0x80, 1) : types.push(typeOf(v)));
   const body = (v: V): void => {
@@ -44,6 +48,11 @@ export function encodeKv3(root: V, version: 1 | 2 = 2): Buffer {
     else if ('blob' in v) { if (version === 1) { l4.push(v.blob.length); l1.push(v.blob); } else blobs.push(v.blob); }
     else if ('obj' in v) { l4.push(v.obj.length); for (const [k, x] of v.obj) { typed(x); l4.push(sid(k)); body(x); } }
     else if ('arr' in v) { l4.push(v.arr.length); for (const x of v.arr) { typed(x); body(x); } }
+    else if ('objs' in v) { l4.push(v.objs.length); types.push(9); for (const o of v.objs) body({ obj: o }); }
+    else if ('i32rows' in v) {
+      l4.push(v.i32rows.length); types.push(24);
+      for (const row of v.i32rows) { l1.push(Buffer.from([row.length])); types.push(11); l4.push(...row); }
+    }
   };
   typed(root);
   body(root);
@@ -167,10 +176,11 @@ export const host = (children = ['particles/eye.vpcf']) => resource([
 /** A model: the sequences in its ASEQ block with what each plays, and its own name in DATA. */
 export function model(name: string, sequences: [string, string[]][] = []): Buffer {
   return resource([
-    ['ASEQ', encodeKv3({ obj: [['m_localS1SeqDescArray', { arr: sequences.map(([seq, acts]): V => ({ obj: [
+    // typed arrays of objects, as the game's are
+    ['ASEQ', encodeKv3({ obj: [['m_localS1SeqDescArray', { objs: sequences.map(([seq, acts]): [string, V][] => [
       ['m_sName', { str: seq }],
-      ['m_activityArray', { arr: acts.map((a): V => ({ obj: [['m_name', { str: a }], ['m_nWeight', { int: 1 }]] })) }],
-    ] })) }]] })],
+      ['m_activityArray', { objs: acts.map((a): [string, V][] => [['m_name', { str: a }], ['m_nWeight', { int: 1 }]]) }],
+    ]) }]] })],
     ['RERL', rerl([])],
     ['DATA', encodeKv3({ obj: [['m_name', { str: name }], ['m_nFlags', { int: 3 }]] })],
   ]);

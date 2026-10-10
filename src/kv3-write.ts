@@ -5,8 +5,8 @@
  *
  * The block comes out in one buffer, the layout of versions 2 to 4: a file read as version 1 or 2
  * is written as 2, 3 as 3, 4 and 5 as 4, so a type's flag byte means what it meant (versions 1 and
- * 2 keep flags as bits, 3 and later as one value). Typed arrays are all written as ARRAY_TYPED,
- * which every version reads; an empty one, and one of arrays or objects, as a plain array.
+ * 2 keep flags as bits, 3 and later as one value). A typed array stays typed, its element type
+ * kept, and is written as ARRAY_TYPED, which every version reads.
  */
 import type { Kv3Block, Kv3Node } from './kv3.ts';
 import { lz4Literals } from './lz4.ts';
@@ -25,18 +25,22 @@ class Lane {
 const int32 = (n: number) => { const b = Buffer.alloc(4); b.writeInt32LE(n); return b; };
 const padTo = (n: number, a: number) => Buffer.alloc((a - (n % a)) % a);
 
-/** Arrays and objects: as the element type of a typed array, each of them has a shape of its own. */
-const CONTAINERS = new Set([8, 9, 10, 24, 25]);
+/**
+ * A typed array's element type as written. Arrays whose length is one byte (24, and 25 out of
+ * version 5's second buffer) go as ARRAY_TYPED (10) with a four-byte one: the same array to the
+ * game, in a shape every version has. Each element is written in the shape of the type declared
+ * for it, never its own: a model's arrays of byte-length arrays came back misread otherwise.
+ */
+const elementType = (t: number) => (t === 24 || t === 25 ? 10 : t);
 
 /**
- * The type a node is written under in its slot. A typed array of containers goes as a plain array,
- * each element with its own type: a model's typed array of byte-length arrays (24) came back
- * misread when its elements were written in another array's shape under the type it had.
+ * The type a node is written under in its slot. A typed array stays typed: written as a plain one,
+ * a model's list of sequences was still read, and the game played none of them (issue #118).
  */
 function slotType(n: Kv3Node): number {
   switch (n.kind) {
     case 'object': return 9;
-    case 'array': return n.element && n.items.length && !CONTAINERS.has(n.element.type) ? 10 : 8;
+    case 'array': return n.element ? 10 : 8;
     case 'string': return 6;
     case 'blob': return 7;
     default: return n.type;
@@ -64,7 +68,7 @@ export function writeKv3(kv: Kv3Block): Buffer {
   let arrays = 0;
   const type = (t: number, flag?: number) => (flag ? types.push(t | 0x80, flag) : types.push(t));
 
-  const write = (n: Kv3Node): void => {
+  const write = (n: Kv3Node, as = slotType(n)): void => {
     switch (n.kind) {
       case 'number': {
         const raw = n.raw ?? (n.cell && kv.buffers[n.cell.buffer].subarray(n.cell.offset, n.cell.offset + n.cell.width));
@@ -77,9 +81,11 @@ export function writeKv3(kv: Kv3Block): Buffer {
       case 'array': {
         arrays++;
         l4.push(int32(n.items.length));
-        if (slotType(n) === 10) {
-          type(n.element!.type, n.element!.flag);
-          n.items.forEach(write);
+        if (as === 10) {
+          if (!n.element) throw new Error('kv3: a typed array with no element type');
+          const t = elementType(n.element.type);
+          type(t, n.element.flag);
+          for (const x of n.items) write(x, t);
         } else for (const x of n.items) { type(slotType(x), x.flag); write(x); }
         return;
       }

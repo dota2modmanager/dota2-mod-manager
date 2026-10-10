@@ -70,6 +70,7 @@ the code, not in this page.
 | [`src/main-window.ts`](#srcmain-windowts) | The one window the app has: its size on the screen it opens on, the single page it may show, |
 | [`src/material.ts`](#srcmaterialts) | Compiled resources at the block level, and a material's expressions: what an item's gem colours. |
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
+| [`src/mod-doctor.ts`](#srcmod-doctorts) | The mod doctor: what is wrong with a mod, found in its files and the game's, before anybody |
 | [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
 | [`src/mod-preview-pick.ts`](#srcmod-preview-pickts) | Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
@@ -375,17 +376,22 @@ and binds its points to attachments in its first configuration, so both grow by 
 ### `asModel`
 
 ```ts
-export function asModel(file: Buffer, path: string, modifier?: string): Buffer
+export function asModel(file: Buffer, modifier?: string): Buffer
 ```
 
-A model put under another path: its own name inside made that path (the game knows a model by
-it), and with `modifier`, its animations that need it made the ones its activities play.
+A model put under another path that plays without the item what it played with it: its
+animations that need `modifier` made the ones its activities play.
 
-A sequence lists the activities it plays (ACT_DOTA_ATTACK) and the modifiers it needs ("abysm").
-The game picks, for an activity, the sequence whose modifiers match the ones on: with "abysm"
-never on, the arcana's attacks lost to "attack_injured". So the modifier is taken off the
-sequences that need it, and their activity off the plain ones beside them (death, sunder,
-loadout), which is the choice the game makes when the modifier is on.
+A sequence lists the activities it plays (ACT_DOTA_ATTACK) and the modifiers it needs ("abysm"),
+told apart by name alone. The game picks, for an activity, the sequence whose modifiers match the
+ones on: with "abysm" never on, the arcana's attacks lost to "attack_injured". So the modifier's
+entry is pointed at the sequence's activity instead, and the activity of the plain ones beside
+them (death, sunder, loadout) at their own name, which no activity is: the choice the game makes
+when the modifier is on.
+
+Only string indexes change, where they lie; every other byte stays the game's. Written anew from
+the tree, typed or not, the sequences were still read and the game played none of them, and the
+skeleton's arrays in DATA the same: the arcana stood still through its attacks (issue #118).
 
 ### `buildArcana`
 
@@ -2784,7 +2790,8 @@ Before version 2: the first buffer laid out again with every blob's new bytes in
 ## src/kv3-cells.ts
 
 The numbers in a parsed KV3 block (src/kv3.ts): read one where it lies, change it there, and the
-0s and 1s stored as a type alone, which can only become each other.
+0s and 1s stored as a type alone, which can only become each other. A string is a number too, its
+place in the block's string table, and can be pointed at another string the table has.
 
 ### `readCell`
 
@@ -2824,6 +2831,19 @@ every lane the length it was.
 @returns whether the value could be set
 ```
 
+### `setString`
+
+```ts
+export function setString(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'string' }>, value: string): boolean
+```
+
+Point a string node at another string of the block's table, where its index lies: every lane
+keeps its length and every other byte stays as it was. Only a string the table already has.
+
+```
+@returns whether it could be pointed there
+```
+
 ## src/kv3-write.ts
 
 A KV3 block written anew from its tree (src/kv3.ts), for changes that are more than a number:
@@ -2832,8 +2852,8 @@ they were, so nothing is rounded on the way.
 
 The block comes out in one buffer, the layout of versions 2 to 4: a file read as version 1 or 2
 is written as 2, 3 as 3, 4 and 5 as 4, so a type's flag byte means what it meant (versions 1 and
-2 keep flags as bits, 3 and later as one value). Typed arrays are all written as ARRAY_TYPED,
-which every version reads; an empty one, and one of arrays or objects, as a plain array.
+2 keep flags as bits, 3 and later as one value). A typed array stays typed, its element type
+kept, and is written as ARRAY_TYPED, which every version reads.
 
 ### `writeKv3`
 
@@ -2862,7 +2882,7 @@ and 2 version 3, all LZ4. Materials keep their expressions (`$GemColor`, issue #
 blobs, which can be given new bytes of another length (src/kv3-blobs.ts). The compression is
 src/lz4.ts, reading and changing a number src/kv3-cells.ts.
 
-Hands on from [`src/kv3-cells.ts`](#srckv3-cellsts): `readCell`, `writeCell`, `numberOf`, `setNumber`.
+Hands on from [`src/kv3-cells.ts`](#srckv3-cellsts): `readCell`, `writeCell`, `numberOf`, `setNumber`, `setString`.
 
 ### `Kv3Cell`
 
@@ -2875,7 +2895,7 @@ Where one number lives: which decompressed buffer, the byte offset in it, and ho
 ### `Kv3Node`
 
 ```ts
-export type Kv3Node = ( | { kind: 'object'; members: Map<string, Kv3Node> } | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number } } | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null; raw?: Buffer } | { kind: 'string'; value: string } | { kind: 'blob'; data: Buffer } | { kind: 'other'; type: number; value?: number } ) & { flag?: number }
+export type Kv3Node = ( | { kind: 'object'; members: Map<string, Kv3Node> } | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number } } | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null; raw?: Buffer } | { kind: 'string'; value: string; at?: Kv3Cell } | { kind: 'blob'; data: Buffer } | { kind: 'other'; type: number; value?: number } ) & { flag?: number }
 ```
 
 A value in the tree the walk builds. A number keeps where it lies (`cell`), or null when the
@@ -2883,7 +2903,8 @@ type alone says what it is (0 and 1 written as INT64_ZERO, DOUBLE_ONE...), and w
 byte is, which is the one place such a number can be changed. Elements of a typed array share
 one type byte, so theirs is null; the array keeps that type as `element`. `flag` is the byte
 that can follow a type (a string that names a resource, for one), kept as the file had it. A
-number made rather than read has its bytes in `raw`, for src/kv3-write.ts.
+number made rather than read has its bytes in `raw`, for src/kv3-write.ts. A string read keeps
+where its index into the string table lies (`at`).
 
 ### `Kv3Array`
 
@@ -3263,6 +3284,47 @@ Where Minify is, whether its folder is the one the game mounts, and whose mods a
 @param p.config  what Minify's own config says, read from disk unless a test hands one in
 @param p.countMods  how many of the files in a folder are Minify's own, when the caller can look at them
 ```
+
+## src/mod-doctor.ts
+
+The mod doctor: what is wrong with a mod, found in its files and the game's, before anybody
+starts the game to see it (issue #118).
+
+Every check here is a bug that reached the game once and took a person playing it to find:
+- a model whose animations need an activity modifier only an item turns on ("abysm"): without
+  the item an attack plays nothing, or the wrong one;
+- a model whose sequences are in another order than the game's model at that path: if the
+  server online picks a sequence by number from its own model, the client plays another one;
+- a particle that hangs more children on itself than it hands control points to: the extra
+  ones are drawn at its first point (the arcana's chest glow at the right eye);
+- a particle child that neither the mod nor the game has, or that its RERL block does not name.
+Each finding names the file, says what happens in the game, and how sure it is. A model named
+inside for another path than its own is only a note: the arcana mods in the catalog all are, and
+the game plays them.
+
+### `Finding`
+
+```ts
+export interface Finding
+```
+
+_No description in the source._
+
+### `sequencesOf`
+
+```ts
+export function sequencesOf(file: Buffer): { name: string; acts: string[]; mods: string[] }[]
+```
+
+A model's sequences: name, the activities it plays and the modifiers it needs.
+
+### `examine`
+
+```ts
+export function examine({ mod, pak01 }: { mod: string; pak01: string }): Finding[]
+```
+
+Everything the doctor finds in a mod's VPK, against the game's pak01.
 
 ## src/mod-id.ts
 
