@@ -8,7 +8,7 @@ import { pickedIn, refreshCosmeticSlots } from '../../core/installed.ts';
 import { catName, catIcon } from '../../core/categories.ts';
 import { isAdult, adultShown } from '../../core/adult.ts';
 import { plural } from '../../ui/format.ts';
-import { heroName } from '../../ui/hero-name.ts';
+import { heroName, catalogMatchesSearch } from '../../ui/hero-name.ts';
 import { paint } from '../../ui/transitions.ts';
 import { heroOf, heroMatches, heroGridWanted, heroTiles, heroLayout } from '../hero-grid.ts';
 import { renderItemCosmeticHub } from '../item-hub.ts';
@@ -85,7 +85,7 @@ export async function renderSearchResults(actions: ScreenActions): Promise<void>
   let mods: Mod[] = [];
   for (const c of visibleCategories()) {
     for (const m of categoryMods(c.id)) {
-      if (m.name && m.name.toLowerCase().includes(q)) mods.push({ ...m, _cat: c.id });
+      if (m.name && catalogMatchesSearch(m.name, q)) mods.push({ ...m, _cat: c.id });
     }
   }
   // the search reaches the free cosmetics too, in their own section below the mods

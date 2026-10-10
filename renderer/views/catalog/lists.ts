@@ -8,6 +8,7 @@ import { state } from '../../core/store.ts';
 import { pickedIn } from '../../core/installed.ts';
 import { shownMods, isAdult, adultShown } from '../../core/adult.ts';
 import { heroMatches } from '../hero-grid.ts';
+import { cosmeticMatchesSearch } from '../../ui/hero-name.ts';
 import { modsOf, isGrouped, modIndexOf, type CustomPack } from '../../catalog/mods.ts';
 import { tagLabel as labelOfTag, collectSlots as slotsOf } from '../../catalog/tags.ts';
 import { applyFilters as filterMods, sortMods } from '../../catalog/filters.ts';
@@ -130,12 +131,12 @@ export function favoriteCosmetics(): Look[] {
   return out;
 }
 
-/** Every look whose name matches, across all slots: the global search reaches these too. */
+/** Every look whose name or Chinese hero label matches, across all slots. */
 export function searchCosmetics(q: string): Look[] {
   const out: Look[] = [];
   for (const s of cosmeticSlotList()) {
     for (const o of s.options) {
-      if (o.name.toLowerCase().includes(q)) out.push({ slot: s.slot, o });
+      if (cosmeticMatchesSearch(o.name, q, s.heroLabel)) out.push({ slot: s.slot, o });
     }
   }
   return out;

@@ -231,6 +231,10 @@ catalog stay unchanged; guides and release notes use English when no Chinese tex
 Chinese hero labels use Valve's [Simplified Chinese hero feed](https://www.dota2.com/datafeed/herolist?language=schinese)
 in `renderer/locales/zh-CN-heroes.ts`. `renderer/ui/hero-name.ts` translates display labels only:
 filter values, game identifiers, portrait keys and saved equipment keep their original names.
+`test/chinese-heroes.test.ts` imports these TypeScript modules so Node measures their coverage.
+The global search also matches Chinese hero names while displaying original mod/item titles.
+Run `npm run sim -- --scenario localization --only fhd:default` to check English/Chinese/Russian
+switching, cached builder labels and global search in the sandbox.
 Check named abilities against the [official hero data](https://www.dota2.com/datafeed/herodata?language=schinese&hero_id=109),
 not a literal translation of the English or Russian name. Generic numbered ability slots remain
 numbered; they do not identify a particular ability. Use official terms such as 至宝, 身心,

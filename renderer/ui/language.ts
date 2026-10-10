@@ -9,6 +9,7 @@
  */
 import { state } from '../core/store.ts';
 import { render } from '../core/router.ts';
+import { refreshCosmeticSlots } from '../core/installed.ts';
 import { paintMasterSwitch, paintSafeModeSwitch, refreshSidebarStatus } from './statusbar.ts';
 import { paintPanels, syncNavOverflow } from './chrome.ts';
 
@@ -37,6 +38,9 @@ export async function applyLanguage(want: unknown): Promise<void> {
   window.I18N_LANG = lang;
   try { localStorage.setItem('uiLang', lang); } catch { /* ignore */ }
   await window.api.settings.set('uiLang', lang);
+  // Slot labels and set-piece explanations come from the main process, not renderer i18n.
+  // Startup has already cached them before the first-run picker is shown.
+  await refreshCosmeticSlots();
   applyStaticI18n();
   // Both status bar switches say on or off in words, and the title bar has a sign-in button:
   // painted once at start, so an English switch left "вкл" and "Войти" on screen until the

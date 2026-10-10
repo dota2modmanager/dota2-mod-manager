@@ -60,8 +60,8 @@ export async function refreshCosmeticSlots(): Promise<void> {
   const { slots, sets } = await window.api.cosmetics.slots();
   state.cosmeticSlots = slots || [];
   state.cosmeticSets = sets || []; // the item builder's sets, read with the slots they fill
-  // only called where a cosmetic pick or safe mode could have moved, and both of those
-  // change the catalog's rail as well as the screen asking - so nothing kept is still right
+  // Picks, safe mode and translated labels can change the catalog's rail as well as the
+  // screen asking - so nothing kept is still right.
   invalidateViews();
 }
 
