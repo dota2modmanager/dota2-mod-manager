@@ -1684,6 +1684,133 @@
       ]
     },
     {
+      "id": "herofx",
+      "mods": [
+        {
+          "name": "Terrorblade Black Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-black-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791636264
+        },
+        {
+          "name": "Terrorblade Blue Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-blue-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791636264
+        },
+        {
+          "name": "Terrorblade Green Spell Icons",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-green-spell-icons.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791636264
+        },
+        {
+          "name": "Terrorblade Orange Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-orange-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791636264
+        },
+        {
+          "name": "Terrorblade Pink Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-pink-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791636264
+        },
+        {
+          "name": "Terrorblade White Icons",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-white-icons.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791612287
+        },
+        {
+          "name": "Ancient Apparition Shatterblast",
+          "styleLabel": null,
+          "image": {"src":"/mods/ancient-apparition-shatterblast.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1790113207
+        },
+        {
+          "name": "Keeper of the Light Northlight Illuminance",
+          "styleLabel": null,
+          "image": {"src":"/mods/keeper-of-the-light-northlight-illuminance.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1788180009
+        },
+        {
+          "name": "Lifestealer Golden Effects",
+          "styleLabel": null,
+          "image": {"src":"/mods/lifestealer-golden-effects.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1784702480
+        },
+        {
+          "name": "Tinker Peashooter Turrets",
+          "styleLabel": null,
+          "image": {"src":"/mods/tinker-peashooter-turrets.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1779386733
+        },
+        {
+          "name": "Huskar White Screen Effect",
+          "styleLabel": null,
+          "image": {"src":"/mods/huskar-white-screen-effect.webp","width":854,"height":480},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1778935876
+        },
+        {"name":"Enigma World Chasm Artifact","styleLabel":null,"image":{"src":"/mods/enigma-world-chasm-artifact.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766284079},
+        {"name":"Sniper Ardalan Interdictor","styleLabel":null,"image":{"src":"/mods/sniper-ardalan-interdictor-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765442943}
+      ]
+    },
+    {
+      "id": "parts",
+      "mods": [
+        {"name":"Gotic","styleLabel":null,"image":{"src":"/mods/gotic.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791636264},
+        {"name":"Kaneki Mach V1.2","styleLabel":null,"image":{"src":"/mods/kaneki-mach-v1-2.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791627251},
+        {"name":"Kaneki Mach","styleLabel":null,"image":{"src":"/mods/kaneki-mach.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791612287},
+        {"name":"Larger Minimap","styleLabel":null,"image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
+        {"name":"Grey Minimap","styleLabel":null,"image":{"src":"/mods/grey-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790825298},
+        {"name":"Grey Search Bar","styleLabel":null,"image":{"src":"/mods/grey-search-bar.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {"name":"Larger Timer","styleLabel":null,"image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {"name":"Windows Xp Top Bar","styleLabel":null,"image":{"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
+        {"name":"Hypergamy Search Bar","styleLabel":null,"image":{"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737},
+        {
+          "name": "Sematary Search Bar",
+          "styleLabel": null,
+          "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1790213331
+        },
+        {"name":"Black Top Bar","styleLabel":null,"image":{"src":"/mods/black-top-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790084006},
+        {"name":"Kaneki Search Bar","styleLabel":null,"image":{"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790084006},
+        {
+          "name": "Scolopendra Search Bar",
+          "styleLabel": null,
+          "image": {"src":"/mods/scolopendra-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1790084006
+        }
+      ]
+    },
+    {
       "id": "pedestal",
       "mods": [
         {
@@ -1781,36 +1908,6 @@
       ]
     },
     {
-      "id": "parts",
-      "mods": [
-        {"name":"Kaneki Mach","styleLabel":null,"image":{"src":"/mods/kaneki-mach.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791612287},
-        {"name":"Larger Minimap","styleLabel":null,"image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
-        {"name":"Grey Minimap","styleLabel":null,"image":{"src":"/mods/grey-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790825298},
-        {"name":"Grey Search Bar","styleLabel":null,"image":{"src":"/mods/grey-search-bar.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
-        {"name":"Larger Timer","styleLabel":null,"image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
-        {"name":"Windows Xp Top Bar","styleLabel":null,"image":{"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
-        {"name":"Hypergamy Search Bar","styleLabel":null,"image":{"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737},
-        {
-          "name": "Sematary Search Bar",
-          "styleLabel": null,
-          "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1790213331
-        },
-        {"name":"Black Top Bar","styleLabel":null,"image":{"src":"/mods/black-top-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790084006},
-        {"name":"Kaneki Search Bar","styleLabel":null,"image":{"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790084006},
-        {
-          "name": "Scolopendra Search Bar",
-          "styleLabel": null,
-          "image": {"src":"/mods/scolopendra-search-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1790084006
-        }
-      ]
-    },
-    {
       "id": "roshan",
       "mods": [
         {"name":"Eternal Roshan","styleLabel":null,"image":{"src":"/mods/eternal-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1791372524},
@@ -1875,61 +1972,6 @@
         {"name":"TI12 Ranged Attack","styleLabel":null,"image":{"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
         {"name":"TI9 Ranged Attack","styleLabel":null,"image":{"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
         {"name":"Yellow Diretide Ranged Attack","styleLabel":null,"image":{"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644}
-      ]
-    },
-    {
-      "id": "herofx",
-      "mods": [
-        {
-          "name": "Terrorblade White Icons",
-          "styleLabel": null,
-          "image": {"src":"/mods/terrorblade-white-icons.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791612287
-        },
-        {
-          "name": "Ancient Apparition Shatterblast",
-          "styleLabel": null,
-          "image": {"src":"/mods/ancient-apparition-shatterblast.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1790113207
-        },
-        {
-          "name": "Keeper of the Light Northlight Illuminance",
-          "styleLabel": null,
-          "image": {"src":"/mods/keeper-of-the-light-northlight-illuminance.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1788180009
-        },
-        {
-          "name": "Lifestealer Golden Effects",
-          "styleLabel": null,
-          "image": {"src":"/mods/lifestealer-golden-effects.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1784702480
-        },
-        {
-          "name": "Tinker Peashooter Turrets",
-          "styleLabel": null,
-          "image": {"src":"/mods/tinker-peashooter-turrets.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1779386733
-        },
-        {
-          "name": "Huskar White Screen Effect",
-          "styleLabel": null,
-          "image": {"src":"/mods/huskar-white-screen-effect.webp","width":854,"height":480},
-          "author": "NahuiToSay",
-          "authorUrl": "https://t.me/NahuiToSay",
-          "date": 1778935876
-        },
-        {"name":"Enigma World Chasm Artifact","styleLabel":null,"image":{"src":"/mods/enigma-world-chasm-artifact.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766284079},
-        {"name":"Sniper Ardalan Interdictor","styleLabel":null,"image":{"src":"/mods/sniper-ardalan-interdictor-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765442943}
       ]
     },
     {

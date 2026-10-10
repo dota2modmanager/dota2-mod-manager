@@ -1,6 +1,6 @@
 {
   "heroes": 149,
-  "mods": 1538,
+  "mods": 1540,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -562,6 +562,7 @@
         {"name":"Cosmic Faceless Void","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","belt","weapon","arms"]},
         {"name":"Faceless Void Arcana","categoryId":"heroes","styleLabel":"Style I","slots":["belt","arms","head","shoulder","weapon","misc","legs"]},
         {"name":"Faceless Void Arcana","categoryId":"heroes","styleLabel":"Style II","slots":["belt","arms","head","shoulder","weapon","misc","legs"]},
+        {"name":"Faceless Void Arcana Reborn","categoryId":"heroes","styleLabel":null,"slots":["shoulder","arms","belt","weapon"]},
         {"name":"Faceless Void Battlefury","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Faceless Void Esdeath","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","misc","weapon","mount","legs"]},
         {"name":"Faceless Void Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","weapon"]},
@@ -1107,6 +1108,7 @@
         {"name":"Monkey King Arcana","categoryId":"heroes","styleLabel":null,"slots":["head"]},
         {"name":"Monkey King Arcana","categoryId":"heroes","styleLabel":"Water","slots":["head"]},
         {"name":"Monkey King Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head","shoulder"]},
+        {"name":"Monkey King Kapitan","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","back","head","shoulder"]},
         {"name":"Monkey King Simian Sovereign","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head","shoulder"]},
         {"name":"Monkey King Staff of Gun-Yu","categoryId":"hero-items","styleLabel":"Anniversary","slots":["weapon"]},
         {"name":"Monkey King Staff of Gun-Yu","categoryId":"hero-items","styleLabel":"Crimson","slots":["weapon"]},
@@ -1539,7 +1541,7 @@
         {"name":"Pink Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend 1000-7","categoryId":"heroes","styleLabel":null,"slots":["head","wings"]},
         {"name":"Shadow Fiend Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","wings"]},
-        {"name":"Shadow Fiend Arcana Desolator","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
+        {"name":"Shadow Fiend Arcana Desolator","categoryId":"heroes","styleLabel":null,"slots":["head","shoulder","arms"]},
         {"name":"Shadow Fiend Arms of Desolation","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
         {"name":"Shadow Fiend Avice Mod","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend Black","categoryId":"heroes","styleLabel":null,"slots":["wings","misc","arms","head","shoulder"]},
