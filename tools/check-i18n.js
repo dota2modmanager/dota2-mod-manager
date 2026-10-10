@@ -132,7 +132,9 @@ function scan(src, names, baseLine = 1) {
     const c = src[i];
     if (c === '/' && src[i + 1] === '/') { while (i < src.length && src[i] !== '\n') i++; continue; }
     if (c === '/' && src[i + 1] === '*') { i += 2; while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) i++; i += 2; continue; }
-    if (c === '/' && !IDENT_REST.test(prev) && prev !== ')' && prev !== ']') { // regex literal
+    // a regex literal; not JSX's "</tag>" or "/>", which read as one and swallowed every L``
+    // up to the next slash on the line (three strings of the arcana window, 2026-10-10)
+    if (c === '/' && !IDENT_REST.test(prev) && prev !== ')' && prev !== ']' && prev !== '<' && src[i + 1] !== '>') {
       i++;
       let inClass = false;
       while (i < src.length) {
@@ -301,4 +303,4 @@ function main() {
 // Run as a command; required by a test, it only hands over the functions above.
 if (require.main === module) main();
 
-module.exports = { checkTranslations, translationReport, SIDES };
+module.exports = { checkTranslations, translationReport, SIDES, scan };
