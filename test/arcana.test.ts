@@ -138,6 +138,7 @@ test("a child hung on with an attachment gets a control point of its own there, 
 
 const GEM: Rgb = [255, 60, 40];
 const T: Rgb = [100, 50, 20];
+const PINK: Rgb = [255, 193, 220];
 
 test('with no gem, a particle the gem would tint starts from the colour the tint would have given', () => {
   const colors = (file: Buffer) => {
@@ -157,6 +158,21 @@ test('with no gem, a particle the gem would tint starts from the colour the tint
     ['m_Initializers', { arr: [{ obj: [...(remap(15, [2, 2, 2]) as { obj: [string, V][] }).obj, ['m_nSetMethod', { str: 'PARTICLE_SET_SCALE_INITIAL_VALUE' }]] }] }],
   ] });
   assert.deepEqual(colors(recolorResource(particle(scaled), T, { bake: true }).file).m_ConstantColor, [200, 50, 0], 'a scaling tint: the colour times the chosen one, times its range');
+  // the blades: scaled from their blue, then set to the gem; the last one wins, as in the game
+  const scaledThenSet = encodeKv3({ obj: [
+    ['m_ConstantColor', { i32s: [85, 203, 252, 255] }],
+    ['m_Initializers', { arr: [{ obj: [...(remap(15, [2, 2, 2]) as { obj: [string, V][] }).obj, ['m_nSetMethod', { str: 'PARTICLE_SET_SCALE_INITIAL_VALUE' }]] }, remap(15)] }],
+  ] });
+  assert.deepEqual(colors(recolorResource(particle(scaledThenSet), PINK, { bake: true }).file).m_ConstantColor, PINK, 'a tint that sets the colour after one that scales it');
+  // an operator that sets the colour every frame wins over the initializer, wherever it is written
+  const opRemap = { obj: (remap(15, [1.2, 1.2, 1.2]) as { obj: [string, V][] }).obj.map(([k, v]): [string, V] => (k === '_class' ? [k, { str: 'C_OP_RemapCPtoVector' }] : [k, v])) };
+  const setEveryFrame = encodeKv3({ obj: [
+    ['m_Operators', { arr: [opRemap] }],
+    ['m_ConstantColor', { i32s: [0, 210, 255, 255] }],
+    ['m_Initializers', { arr: [remap(15, [0.5, 0.5, 0.5])] }],
+  ] });
+  assert.deepEqual(colors(recolorResource(particle(setEveryFrame), PINK, { bake: true }).file).m_ConstantColor, PINK,
+    'pink at 1.2 is over 255 in red and blue: brought down whole, it stays pink instead of turning lavender');
   assert.equal(recolorResource(particle(encodeKv3({ obj: [['m_ConstantColor', { i32s: [0, 210, 255, 255] }]] })), T, { bake: true, own: false }).changed, 0,
     'a shared particle with no tint is left as it is');
 });
