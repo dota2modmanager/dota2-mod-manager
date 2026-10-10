@@ -10,6 +10,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { insideJail } from './write-jail.ts';
+
 const WINDOWS = process.platform === 'win32';
 
 /** The value `reg query` printed for one entry, or null when it printed none. */
@@ -159,9 +161,12 @@ export function findDotaIn(steamRoot: string | null, fallbacks: string[]): strin
  * is the game's own content and is always there. The pak01 files in game\dota_<language> are
  * the voice pack, which plenty of people never download, and testing for those would call a
  * working install broken.
+ *
+ * A run held to a sandbox (src/write-jail.ts) knows no game outside it, so detection cannot hand it
+ * the real one: that is how a sandbox run once came to write into the real game.
  */
 export function validateGamePath(p: string | null | undefined): boolean {
-  if (!p) return false;
+  if (!p || !insideJail(p)) return false;
   try {
     return fs.existsSync(path.join(p, 'dota', 'pak01_dir.vpk'))
       || fs.existsSync(path.join(p, 'bin', 'win64', 'dota2.exe'))

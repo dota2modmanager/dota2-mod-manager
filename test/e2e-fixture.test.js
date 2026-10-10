@@ -117,17 +117,21 @@ test('the scripts the window runs compile', async () => {
   }
 });
 
-test('a run fails on an unresolved name or a refused call in the app log, and on nothing else', async () => {
+test('a run fails on an unresolved name, a refused call or a write out of the sandbox in the app log, and on nothing else', async () => {
   const { logProblems } = await load();
   const log = [
     '2026-10-10 boot',
     'mods:install failed: blocked is not defined',
     'ipc: refused settings:set: the window may not set dotaGamePath',
     'permission refused: media',
+    'write jail: refused writeFile D:/Steam/steamapps/common/dota 2 beta/game/dota_russian/dota2modmanager.json',
     'a line about something ordinary',
   ].join('\n');
   const found = logProblems(log);
   assert.deepEqual(found.unresolved, ['mods:install failed: blocked is not defined']);
   assert.deepEqual(found.refused, ['ipc: refused settings:set: the window may not set dotaGamePath', 'permission refused: media']);
-  assert.deepEqual(logProblems(null), { unresolved: [], refused: [] });
+  assert.deepEqual(found.escaped, ['write jail: refused writeFile D:/Steam/steamapps/common/dota 2 beta/game/dota_russian/dota2modmanager.json']);
+  assert.equal(found.jailed, false, 'a log that never says it was jailed was not');
+  assert.equal(logProblems('write jail: writes held to c:\sandbox | c:\temp').jailed, true);
+  assert.deepEqual(logProblems(null), { unresolved: [], refused: [], escaped: [], jailed: false });
 });

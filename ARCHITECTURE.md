@@ -384,6 +384,16 @@ and workflow steps they name as guards.
 load order, packs, the schema patch and language folders are tested there rather than against
 anybody's actual installation. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+Every launch against it is held to it. `npm run start:sandbox`, the e2e and the simulator start
+the app with `--write-jail=sandbox`, and `src/write-jail.ts` then refuses every Node call that
+would change the disk anywhere else (a write, either end of a rename, a delete, a folder, a file
+opened for writing), judged by the real path, so `..` or a junction inside the sandbox pointing
+out of it does not get past. Steam's detection is held to the same folders, so the app never sees
+the real game in the first place. On 2026-10-03 a sandbox whose saved path had gone stale wrote
+into the real game; `test/write-jail.test.ts` replays that with the folder check broken on purpose
+and checks that the real game stays byte for byte as it was, and the e2e fails unless every launch
+logged that it was held and none logged a refused write.
+
 `tools/e2e.mjs` drives the app in that tree the way a player does. It writes a fixture catalog and
 a fixture archive into the app's caches, starts the app twice, and clicks: install, switch off,
 restart, switch on, remove. After each launch it compares the language folder on disk with what
@@ -514,6 +524,7 @@ that location is not writable.
 | `renderer/styles/*`, `renderer/fonts/*` | The tokens every size and colour comes from, and the faces |
 | `renderer/uninstall.html`, `renderer/uninstall.js`, `renderer/uninstall-bridge.d.ts` | The removal window, a classic script loaded without a build, and the types of the bridge its preload gives it |
 | `tools/sandbox.js` | The throwaway game tree |
+| `src/write-jail.ts` | A run started with `--write-jail` writes nowhere else |
 | `tools/e2e.mjs`, `test/fixtures/e2e/*` | Installing, switching and removing a mod by clicking through the real window, offline, in the sandbox |
 | `tools/r2-sync.mjs`, `tools/r2-release.mjs`, `tools/r2-client.js`, `tools/mirror-plan.js` | The archive mirror, the update mirror, the signing they share, and which archives the mirror copies again or refuses |
 | `tools/gen-fingerprints.js` | Regenerating the published fingerprint map, and `mod-paths.json`, the files each pak mod replaces |

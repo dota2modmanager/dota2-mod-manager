@@ -1593,6 +1593,54 @@
       "from": "const ok = PERMISSIONS.has(permission) && isAppPage",
       "to": "const ok = isAppPage",
       "test": "test/window-guard.test.ts"
+    },
+    {
+      "name": "the jail judges a path by its spelling, not where it leads",
+      "file": "src/write-jail.ts",
+      "anchor": "export function insideJail(p: string | null | undefined): boolean {",
+      "from": "const real = fold(realOf(String(p)));",
+      "to": "const real = fold(path.resolve(String(p)));",
+      "test": "test/write-jail.test.ts"
+    },
+    {
+      "name": "the jail follows no link",
+      "file": "src/write-jail.ts",
+      "anchor": "function realOf(p: string): string {",
+      "from": "try { real = fs.realpathSync.native(cur); }",
+      "to": "try { real = cur; }",
+      "test": "test/write-jail.test.ts"
+    },
+    {
+      "name": "a rename out of the real game into the jail goes through",
+      "file": "src/write-jail.ts",
+      "anchor": "const PATHS: Record<string, number[]> = {",
+      "from": "rename: [0, 1],",
+      "to": "rename: [1],",
+      "test": "test/write-jail.test.ts"
+    },
+    {
+      "name": "a file opened for writing is not checked",
+      "file": "src/write-jail.ts",
+      "anchor": "const offender = (name: string, args: unknown[]): string | null => {",
+      "from": "(writes(args[1]) ? [0] : [])",
+      "to": "[]",
+      "test": "test/write-jail.test.ts"
+    },
+    {
+      "name": "the promise form writes anywhere",
+      "file": "src/write-jail.ts",
+      "anchor": "// the promise form rejects",
+      "from": "if (bad) return Promise.reject(refuse(name, bad));",
+      "to": "if (false) return Promise.reject(refuse(name, bad));",
+      "test": "test/write-jail.test.ts"
+    },
+    {
+      "name": "a jailed run takes the real game for a game",
+      "file": "src/steam.ts",
+      "anchor": "export function validateGamePath(p: string | null | undefined): boolean {",
+      "from": "if (!p || !insideJail(p)) return false;",
+      "to": "if (!p) return false;",
+      "test": "test/write-jail.test.ts"
     }
   ]
 }

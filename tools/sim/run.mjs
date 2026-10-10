@@ -69,7 +69,8 @@ export function launch(screenName, rendererName, { scenarios, app = null, platfo
   if (!screen) throw new Error(`no screen "${screenName}"`);
   if (!renderer) throw new Error(`no renderer "${rendererName}"`);
   const out = path.join(OUT, `${screenName}--${rendererName}`);
-  const args = [...(app ? [] : [root]), `--user-data-dir=${USERDATA}`, ...renderer.args];
+  // held to the sandbox: a write anywhere else is refused (src/write-jail.ts)
+  const args = [...(app ? [] : [root]), `--user-data-dir=${USERDATA}`, `--write-jail=${path.dirname(USERDATA)}`, ...renderer.args];
   if (screen.scale && screen.scale !== 1 && platform === 'win32') args.push(`--force-device-scale-factor=${screen.scale}`);
   const env = { ...process.env, MM_SIM: scenarios, MM_SIM_OUT: out };
   if (screen.workArea && platform === 'win32') env.MM_WORKAREA = screen.workArea;
