@@ -35,6 +35,7 @@ import { createGate } from './feature-gate.ts';
 import { settingsViewFor } from './settings-view.ts';
 import { registerIpc } from './ipc.ts';
 import { guardTheApp } from './window-guard.ts';
+import { jailLogTo, jailRoots, jailThisRun } from './write-jail.ts';
 import { createAppLog } from './app-log.ts';
 import { releaseNotes } from './release-notes.ts';
 import { firstLink, handleDeepLink, installDesktopEntry } from './deep-links.ts';
@@ -45,6 +46,9 @@ import type { AppContext, AppProgress } from './app-context.ts';
 import type { BrowserWindow } from 'electron';
 
 const { app, ipcMain, shell, net, session } = electron();
+
+// a sandbox run (--write-jail=<folder>) writes nowhere else, from its first write on (src/write-jail.ts)
+jailThisRun(process.argv, process.env);
 
 /** electron-updater, which a development checkout may not have installed yet. */
 type AutoUpdater = UpdaterLike & { quitAndInstall(): void };
@@ -90,6 +94,7 @@ const IS_UNINSTALL = isUninstallRun(process.argv);
 // the problem live (src/app-log.ts). MM_DIAG mirrors it for the screenshot harness.
 const appLog = createAppLog({ dir: () => app.getPath('userData'), mirror: process.env.MM_DIAG || null });
 const diag = (msg: string) => appLog.diag(msg);
+jailLogTo(diag);
 
 process.on('uncaughtException', (err) => diag(`uncaughtException: ${err?.stack || err}`));
 process.on('unhandledRejection', (reason) => diag(`unhandledRejection: ${(reason as Error | null)?.stack || reason}`));
@@ -234,7 +239,7 @@ async function start(): Promise<void> {
 
   // only the installed build claims the scheme: a dev run must not point the system's d2mm://
   // handler at a local electron binary
-  if (app.isPackaged) {
+  if (app.isPackaged && !jailRoots().length) {
     installDesktopEntry({ platform: process.platform, exe: process.env.APPIMAGE || process.execPath, home: app.getPath('home'), diag });
     app.setAsDefaultProtocolClient(SCHEME);
   }

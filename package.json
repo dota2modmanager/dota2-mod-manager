@@ -19,7 +19,7 @@
     "sandbox:seed": "node tools/sandbox.js seed",
     "sandbox:reset": "node tools/sandbox.js reset",
     "sandbox:status": "node tools/sandbox.js status",
-    "start:sandbox": "node tools/ui-build.mjs && node tools/sandbox.js pin && electron . --user-data-dir=sandbox/userdata",
+    "start:sandbox": "node tools/ui-build.mjs && node tools/sandbox.js pin && electron . --user-data-dir=sandbox/userdata --write-jail=sandbox",
     "e2e": "node tools/e2e.mjs",
     "sim": "node tools/sim/run.mjs",
     "dota:diff": "node tools/dota-diff.mjs",

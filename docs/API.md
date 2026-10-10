@@ -128,6 +128,7 @@ the code, not in this page.
 | [`src/vpk.ts`](#srcvpkts) | The VPK format, in one place for everything that reads or writes one: the reader |
 | [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
 | [`src/window-guard.ts`](#srcwindow-guardts) | Who may call the main process, and with what. |
+| [`src/write-jail.ts`](#srcwrite-jailts) | A run that may write only inside the folders it was given. |
 
 ## src/adopt.ts
 
@@ -6244,6 +6245,9 @@ is the game's own content and is always there. The pak01 files in game\dota_<lan
 the voice pack, which plenty of people never download, and testing for those would call a
 working install broken.
 
+A run held to a sandbox (src/write-jail.ts) knows no game outside it, so detection cannot hand it
+the real one: that is how a sandbox run once came to write into the real game.
+
 ## src/terrain-age.ts
 
 Terrains that replace the whole map, and whether the game's own map has moved on since.
@@ -7160,3 +7164,90 @@ export function guardTheApp({ app, ipcMain, session, appRoot, devUrl, log }: { a
 
 The whole guard, as src/main.ts puts it up before any channel or window exists: the channels,
 the browser's permissions, and every web contents locked the moment it is created.
+
+## src/write-jail.ts
+
+A run that may write only inside the folders it was given.
+
+On 2026-10-03 a sandbox run wrote into the real game. Its settings named a sandbox inside a copy
+of the repository deleted days before; the app saw no game there, detected the real one through
+Steam, saved it and rewrote the ownership note in the real language folder. tools/sandbox-pin.js
+now writes the right path in before every start, which fixes that path. It does not stop the
+next wrong path: a bug that computes another folder writes there just the same.
+
+So a run started with --write-jail=<folder> cannot write anywhere else. Every Node call that
+changes the disk - a write, an append, a copy's destination, both ends of a rename, a delete, a
+folder made, a file opened for writing, a stream - is checked before it happens, and one aimed
+outside throws EPERM and is logged. The check is on the real path: the nearest part of it that
+exists is resolved with realpath, so "..", a symlink or a Windows junction inside the folder that
+points out of it is outside. Reading is untouched, which is how the sandbox copies gameinfo out
+of the real game.
+
+The sandbox launches set it (npm run start:sandbox, tools/e2e.mjs, tools/sim/run.mjs); the temp
+folder and the folders a screenshot or a log mirror were asked into are let in beside it
+(src/main.ts). Steam's own detection is held to the same folders (src/steam.ts), so the app never
+adopts the real game in the first place. A copy started without the switch is not affected.
+
+### `insideJail`
+
+```ts
+export function insideJail(p: string | null | undefined): boolean
+```
+
+Whether `p` is inside the jail; always true when no jail is up.
+
+### `jailRoots`
+
+```ts
+export function jailRoots(): string[]
+```
+
+The folders the jail holds writes to, or none.
+
+### `jailRefusals`
+
+```ts
+export function jailRefusals(): number
+```
+
+How many writes the jail refused since it went up.
+
+### `jailFromArgv`
+
+```ts
+export function jailFromArgv(argv: string[]): string[]
+```
+
+The folders a --write-jail=<a><delimiter><b> switch on the command line names, or none.
+
+### `jailThisRun`
+
+```ts
+export function jailThisRun(argv: string[], env: NodeJS.ProcessEnv): string[]
+```
+
+Put the jail up for this run if its command line asks for one: the folders it names, the temp
+folder, and the folders the dev switches were asked to write into - a screenshot (MM_SHOT), a log
+mirror (MM_DIAG), a diagnostics report (MM_DIAG_OUT), the simulator's results (MM_SIM_OUT).
+
+```
+@returns the folders it holds writes to, or none when the run is not jailed
+```
+
+### `jailLogTo`
+
+```ts
+export function jailLogTo(log: (msg: string) => void): void
+```
+
+Send refusals to `log` from now on: the app's diagnostics log, where the e2e looks for them. A
+jailed run says so there first, so a run that should have been jailed and was not shows too.
+
+### `installWriteJail`
+
+```ts
+export function installWriteJail(folders: string[], log: (msg: string) => void = () => {}): () => void
+```
+
+Hold every write in this process to `folders` (and anything inside them) from now on. Returns
+the function that takes the jail down again, which only the tests call.

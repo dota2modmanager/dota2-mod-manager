@@ -23,7 +23,8 @@
  *      off in My mods. On disk: exactly one new pakNN_dir.vpk.off in the language folder.
  *   2. A fresh start. The mod is still listed and still off; switch it on, press Remove, confirm.
  *      On disk: the language folder is byte for byte what it was before the first launch.
- * The app's log must not contain an unresolved name at any point, nor a call the IPC gate refused.
+ * The app's log must not contain an unresolved name at any point, nor a call the IPC gate refused,
+ * nor a write the sandbox jail stopped: every launch is held to sandbox/ (src/write-jail.ts).
  *
  * Usage:
  *   node tools/e2e.mjs            # under `xvfb-run -a` on Linux
@@ -145,6 +146,8 @@ export function logProblems(text) {
   return {
     unresolved: lines.filter((l) => /unhandledrejection|is not defined|is not a function/.test(l)),
     refused: lines.filter((l) => /ipc: refused|permission refused/.test(l)),
+    escaped: lines.filter((l) => /write jail: refused/.test(l)),
+    jailed: lines.some((l) => /write jail: writes held to/.test(l)),
   };
 }
 
@@ -265,7 +268,8 @@ async function launch(label, env, timeoutMs = 180000, extraArgs = []) {
   const shot = path.join(OUT, `${label}.png`);
   for (const f of [shot, `${shot}.eval.json`, `${shot}.err.txt`]) fs.rmSync(f, { force: true });
   const log = fs.openSync(path.join(OUT, `${label}.electron.log`), 'w');
-  const args = [`--user-data-dir=${USERDATA}`, ...extraArgs];
+  // held to the sandbox: a write anywhere else is refused and fails the run (src/write-jail.ts)
+  const args = [`--user-data-dir=${USERDATA}`, `--write-jail=${SANDBOX}`, ...extraArgs];
   if (process.platform === 'linux') args.push('--no-sandbox');
   const child = spawn(APP || require('electron'), APP ? args : ['.', ...args], {
     cwd: root,
@@ -366,7 +370,9 @@ if (invokedDirectly) {
 
   const appLog = path.join(USERDATA, 'logs', 'app.log');
   const logText = readIfThere(appLog);
-  const { unresolved, refused } = logProblems(logText);
+  const { unresolved, refused, escaped, jailed } = logProblems(logText);
+  passed = check('every launch was held to the sandbox', jailed, 'the app log never said "write jail: writes held to"') && passed;
+  passed = check('the app tried to write nowhere outside the sandbox', !escaped.length, escaped.slice(0, 3).join(' / ')) && passed;
   passed = check('the app log has no unresolved name in it', !unresolved.length, unresolved.slice(0, 3).join(' / ')) && passed;
   passed = check('the IPC gate refused none of the window\'s calls', !refused.length, refused.slice(0, 3).join(' / ')) && passed;
   if (logText !== null) fs.writeFileSync(path.join(OUT, 'app.log'), logText);
