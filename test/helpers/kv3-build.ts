@@ -163,3 +163,15 @@ export const host = (children = ['particles/eye.vpcf']) => resource([
     ['m_PreEmissionOperators', { arr: [{ obj: [['_class', { str: 'C_OP_SetParentControlPointsToChildCP' }], ['m_nNumControlPoints', { int: children.length }]] }] }],
   ] })],
 ]);
+
+/** A model: the sequences in its ASEQ block with what each plays, and its own name in DATA. */
+export function model(name: string, sequences: [string, string[]][] = []): Buffer {
+  return resource([
+    ['ASEQ', encodeKv3({ obj: [['m_localS1SeqDescArray', { arr: sequences.map(([seq, acts]): V => ({ obj: [
+      ['m_sName', { str: seq }],
+      ['m_activityArray', { arr: acts.map((a): V => ({ obj: [['m_name', { str: a }], ['m_nWeight', { int: 1 }]] })) }],
+    ] })) }]] })],
+    ['RERL', rerl([])],
+    ['DATA', encodeKv3({ obj: [['m_name', { str: name }], ['m_nFlags', { int: 3 }]] })],
+  ]);
+}

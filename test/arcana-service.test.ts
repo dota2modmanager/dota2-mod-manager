@@ -15,7 +15,7 @@ import { buildVpk, entryAt, openVpkIndex } from '../src/vpk.ts';
 import { readKv3, readCell } from '../src/kv3.ts';
 import { dataBlock } from '../src/resource.ts';
 import { createArcanaService, hex, validColor } from '../src/arcana-service.ts';
-import { encodeKv3, host, particle, remap } from './helpers/kv3-build.ts';
+import { encodeKv3, host, model, particle, remap } from './helpers/kv3-build.ts';
 import type { LibRecord } from '../src/types.ts';
 
 const ARCANA = 'particles/econ/items/terrorblade/terrorblade_horns_arcana';
@@ -39,8 +39,8 @@ function world(t: TestContext, { withArcana = true } = {}) {
   const files = [entryAt('scripts/items/items_game.txt', Buffer.from('the game'))];
   if (withArcana) {
     files.push(
-      entryAt('models/heroes/terrorblade/terrorblade_arcana.vmdl_c', Buffer.from('the arcana')),
-      entryAt('models/heroes/terrorblade/horns_arcana.vmdl_c', Buffer.from('its horns')),
+      entryAt('models/heroes/terrorblade/terrorblade_arcana.vmdl_c', model('models/heroes/terrorblade/terrorblade_arcana.vmdl')),
+      entryAt('models/heroes/terrorblade/horns_arcana.vmdl_c', model('models/heroes/terrorblade/horns_arcana.vmdl')),
       entryAt('panorama/images/econ/heroes/terrorblade/arcana_terrorblade_png.vtex_c', picture()),
       entryAt(`${ARCANA}/terrorblade_ambient_eyes_arcana_horns.vpcf_c`, host([`${ARCANA}/terrorblade_ambient_eye_arcana_horns.vpcf`])),
       entryAt(`${HERO}/terrorblade_feet_effects.vpcf_c`, particle(encodeKv3({ obj: [['m_ConstantColor', { i32s: [85, 203, 252, 255] }], ['m_Initializers', { arr: [remap(15)] }]] }))),
@@ -86,7 +86,7 @@ test('the arcana goes into My mods in an early slot, marked with what it was bui
   assert.ok(slot >= 2 && slot <= 29, `before the hero mods, not pak${slot}`);
   assert.deepEqual(feet(w.lang, rec), [255, 193, 220], 'with no gem, its colour written in');
   const pak = openVpkIndex(path.join(w.lang, rec.files[0].relPath));
-  assert.equal((pak.read('models/heroes/terrorblade/terrorblade.vmdl_c') as Buffer).toString(), 'the arcana');
+  assert.ok(pak.read('models/heroes/terrorblade/terrorblade.vmdl_c'), "the arcana's model under the plain one's name");
   assert.deepEqual(w.service.state().installed, { id: rec.id, color: [255, 193, 220], mode: 'mod', enabled: true });
   assert.throws(() => w.service.install([300, 0, 0], 'mod'), /цвет|colour/i);
 });

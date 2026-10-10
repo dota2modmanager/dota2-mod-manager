@@ -247,7 +247,7 @@ function arcanaAssets(real) {
     const arcana = ARCANA_SETS['terrorblade-arcana'];
     const prefixes = [...set.own, ...set.shared, ...set.materials];
     const wanted = (p) => (/\.(vpcf_c|vmat_c)$/.test(p) && prefixes.some((f) => p.startsWith(f)))
-      || Object.values(arcana.copies).includes(p) || Object.keys(arcana.copies).includes(p)
+      || Object.values(arcana.models).some((m) => m.from === p) || Object.keys(arcana.models).includes(p)
       || (p.startsWith('panorama/images/') && p.includes('terrorblade') && (p.includes('_alt1') || p.includes('arcana') || !p.includes('/econ/')));
     for (const rel of listVpkPathsFile(pak).filter(wanted)) {
       const data = ix.read(rel);

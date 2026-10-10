@@ -322,7 +322,10 @@ in a colour they choose, in safe mode (issue #118, starting with Terrorblade).
 In the game the arcana is an item: the hero's model is swapped for the arcana's, the item creates
 its own particles, and a gem tints the rest (src/recolor.ts). A mod cannot give an item, so it
 puts the arcana's files where the plain hero's are:
-- the arcana's models under the names of the hero's own;
+- the arcana's models under the names of the hero's own, each named inside for the path it now
+  has; the hero's model also told to play its arcana animations, which in the game the item
+  turns on as the activity modifier "abysm" (issue #118: without it, an attack played the
+  injured one);
 - a particle the hero already creates, taken from the arcana's version and given the arcana's
   own particles as children, since nothing else would create them; the children are named in
   the file's RERL block too, as the compiler names them. A child is drawn at the control points
@@ -368,6 +371,21 @@ A particle with more children: each new entry in `m_Children` is a copy of the f
 pointing at another file, and the file names them in RERL. A child with an attachment gets a
 control point of its own: the parent hands point k to child k (C_OP_SetParentControlPointsToChildCP)
 and binds its points to attachments in its first configuration, so both grow by one.
+
+### `asModel`
+
+```ts
+export function asModel(file: Buffer, path: string, modifier?: string): Buffer
+```
+
+A model put under another path: its own name inside made that path (the game knows a model by
+it), and with `modifier`, its animations that need it made the ones its activities play.
+
+A sequence lists the activities it plays (ACT_DOTA_ATTACK) and the modifiers it needs ("abysm").
+The game picks, for an activity, the sequence whose modifiers match the ones on: with "abysm"
+never on, the arcana's attacks lost to "attack_injured". So the modifier is taken off the
+sequences that need it, and their activity off the plain ones beside them (death, sunder,
+loadout), which is the choice the game makes when the modifier is on.
 
 ### `buildArcana`
 
@@ -2815,7 +2833,7 @@ they were, so nothing is rounded on the way.
 The block comes out in one buffer, the layout of versions 2 to 4: a file read as version 1 or 2
 is written as 2, 3 as 3, 4 and 5 as 4, so a type's flag byte means what it meant (versions 1 and
 2 keep flags as bits, 3 and later as one value). Typed arrays are all written as ARRAY_TYPED,
-which every version reads, and an empty one as a plain array, which version 2 and later require.
+which every version reads; an empty one, and one of arrays or objects, as a plain array.
 
 ### `writeKv3`
 
