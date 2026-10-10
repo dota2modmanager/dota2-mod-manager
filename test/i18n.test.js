@@ -32,6 +32,15 @@ test('the check reads the main process\'s modules, whatever language they are wr
   assert.deepEqual(modules.filter((f) => !main.includes(f)), [], 'every src/ module is read');
 });
 
+test('a string after a JSX closing tag is still found, and a real regex is still skipped', () => {
+  // "</span>" read as the start of a regex swallowed the arcana window's L`` up to the next slash
+  const { scan } = require('../tools/check-i18n');
+  const keys = (src) => scan(src, ['L']).map((h) => h.key);
+  assert.deepEqual(keys('<b><span className="ms">check</span>{L`Установлено`}</b>'), ['Установлено']);
+  assert.deepEqual(keys('<input value={x} />{L`Свой цвет`}'), ['Свой цвет']);
+  assert.deepEqual(keys('const re = /L`нет`/; const s = L`да`;'), ['да']);
+});
+
 test('rejects an unchanged English twin', () => {
   const { checkTranslations } = require('../tools/check-i18n');
 
