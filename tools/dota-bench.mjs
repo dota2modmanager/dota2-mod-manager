@@ -47,6 +47,16 @@ function dotaRunning() {
   try { return /dota2\.exe/i.test(execFileSync('tasklist', ['/FI', 'IMAGENAME eq dota2.exe'], { encoding: 'utf8' })); } catch { return false; }
 }
 
+/**
+ * The game's console log, if it was written after `since`, else ''. One open file is asked both
+ * when it changed and what it says, so the two cannot be of different files.
+ */
+function logSince(log, since) {
+  let fd;
+  try { fd = fs.openSync(log, 'r'); } catch { return ''; }
+  try { return fs.fstatSync(fd).mtimeMs > since ? fs.readFileSync(fd, 'utf8') : ''; } finally { fs.closeSync(fd); }
+}
+
 function ps(script, ...args) {
   return execFileSync('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(HERE, 'dota-bench', script), ...args.map(String)], { encoding: 'utf8' }).trim();
 }
@@ -95,7 +105,7 @@ async function main() {
   try {
     const started = Date.now();
     spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H), '+dota_demo_hero', `npc_dota_hero_${hero}`, '+dota_camera_distance', camera], { detached: true, stdio: 'ignore' }).unref();
-    await until(() => fs.existsSync(log) && fs.statSync(log).mtimeMs > started && /OnAddNewHeroEntry/.test(fs.readFileSync(log, 'utf8')), 240000, 'the demo to start');
+    await until(() => /OnAddNewHeroEntry/.test(logSince(log, started)), 240000, 'the demo to start');
     await sleep(4000);
     shot('01-idle');
     ps('input.ps1', 'click', ...AT.level30);
@@ -126,7 +136,7 @@ async function main() {
   } finally {
     try { execFileSync('taskkill', ['/IM', 'dota2.exe'], { stdio: 'ignore' }); } catch { /* not running */ }
     await until(() => !dotaRunning(), 60000, 'Dota to close').catch(() => {});
-    if (fs.existsSync(log)) fs.copyFileSync(log, path.join(out, 'console.log'));
+    try { fs.copyFileSync(log, path.join(out, 'console.log')); } catch { /* the game wrote none */ }
     if (placed) { fs.rmSync(placed, { force: true }); console.log('bench: mod taken out'); }
   }
   console.log(`bench: ${shots.length} pictures in ${out}`);
