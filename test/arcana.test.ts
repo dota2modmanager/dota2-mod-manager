@@ -17,10 +17,10 @@ import { readKv3, readCell, numberOf, type Kv3Block, type Kv3Node } from '../src
 import { writeKv3 } from '../src/kv3-write.ts';
 import { dataBlock, references, resourceBlock, resourceBlocks, resourceId, withReferences } from '../src/resource.ts';
 import { recolorResource, type Rgb } from '../src/recolor.ts';
-import { buildArcana, withChildren } from '../src/arcana.ts';
+import { asModel, buildArcana, withChildren } from '../src/arcana.ts';
 import { materialExpressions } from '../src/material.ts';
 import { buildVpk, entryAt, openVpkIndex } from '../src/vpk.ts';
-import { at, encodeKv3, host, particle, remap, resource, rerl, type V } from './helpers/kv3-build.ts';
+import { at, encodeKv3, host, model, particle, remap, resource, rerl, type V } from './helpers/kv3-build.ts';
 
 /** A tree as plain data, every number as the bytes it is stored in, to compare two blocks by. */
 function plain(kv: Kv3Block, n: Kv3Node): unknown {
@@ -143,6 +143,35 @@ test('with no gem, a particle the gem would tint starts from the colour the tint
     'a shared particle with no tint is left as it is');
 });
 
+/** A model's own name, and its sequences with what each plays. */
+const modelName = (file: Buffer) => (at(readKv3(dataBlock(file).data).root, 'm_name') as { value: string }).value;
+const sequences = (file: Buffer) => (at(readKv3(resourceBlock(file, 'ASEQ').data).root, 'm_localS1SeqDescArray') as Extract<Kv3Node, { kind: 'array' }>).items
+  .map((sq) => [(at(sq, 'm_sName') as { value: string }).value, (at(sq, 'm_activityArray') as Extract<Kv3Node, { kind: 'array' }>).items.map((a) => (at(a, 'm_name') as { value: string }).value)]);
+
+test('a model under another path takes its name, and plays without the item what it played with it', () => {
+  // without the arcana item's "abysm" the game played the injured attack (issue #118)
+  const arcana = model('models/heroes/terrorblade/terrorblade_arcana.vmdl', [
+    ['attack', ['ACT_DOTA_ATTACK', 'abysm']],
+    ['attack_injured', ['ACT_DOTA_ATTACK', 'injured']],
+    ['death', ['ACT_DOTA_DIE']],
+    ['arcana_death', ['ACT_DOTA_DIE', 'abysm']],
+    ['run', ['ACT_DOTA_RUN']],
+  ]);
+  const out = asModel(arcana, 'models/heroes/terrorblade/terrorblade.vmdl_c', 'abysm');
+  assert.equal(modelName(out), 'models/heroes/terrorblade/terrorblade.vmdl');
+  assert.deepEqual(sequences(out), [
+    ['attack', ['ACT_DOTA_ATTACK']],
+    ['attack_injured', ['ACT_DOTA_ATTACK', 'injured']],
+    ['death', []],
+    ['arcana_death', ['ACT_DOTA_DIE']],
+    ['run', ['ACT_DOTA_RUN']],
+  ]);
+  assert.equal(numberOf(readKv3(dataBlock(out).data), at(readKv3(dataBlock(out).data).root, 'm_nFlags') as Extract<Kv3Node, { kind: 'number' }>), 3, 'the rest of it as it was');
+  assert.equal(out.readUInt32LE(0), out.length);
+  const horns = asModel(model('models/heroes/terrorblade/horns_arcana.vmdl', [['idle', ['ACT_DOTA_IDLE', 'abysm']]]), 'models/heroes/terrorblade/horns.vmdl_c');
+  assert.deepEqual(sequences(horns), [['idle', ['ACT_DOTA_IDLE', 'abysm']]], 'with no modifier asked for, only the name changes');
+});
+
 test('the arcana becomes one VPK: its models and pictures under the plain names, its glow hung on the eyes, its colour written in', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-arcana-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -155,9 +184,9 @@ test('the arcana becomes one VPK: its models and pictures under the plain names,
   ] })]]);
   const pak01 = path.join(dir, 'pak01_dir.vpk');
   fs.writeFileSync(pak01, buildVpk([
-    entryAt('models/heroes/terrorblade/terrorblade_arcana.vmdl_c', Buffer.from('the arcana')),
-    entryAt('models/heroes/terrorblade/horns_arcana.vmdl_c', Buffer.from('its horns')),
-    entryAt('models/heroes/terrorblade/terrorblade.vmdl_c', Buffer.from('the plain hero')),
+    entryAt('models/heroes/terrorblade/terrorblade_arcana.vmdl_c', model('models/heroes/terrorblade/terrorblade_arcana.vmdl', [['attack', ['ACT_DOTA_ATTACK', 'abysm']]])),
+    entryAt('models/heroes/terrorblade/horns_arcana.vmdl_c', model('models/heroes/terrorblade/horns_arcana.vmdl')),
+    entryAt('models/heroes/terrorblade/terrorblade.vmdl_c', model('models/heroes/terrorblade/terrorblade.vmdl')),
     entryAt('panorama/images/heroes/npc_dota_hero_terrorblade_alt1_png.vtex_c', Buffer.from('arcana portrait')),
     entryAt('panorama/images/heroes/npc_dota_hero_terrorblade_png.vtex_c', Buffer.from('plain portrait')),
     entryAt('panorama/images/spellicons/terrorblade_unused_alt1_png.vtex_c', Buffer.from('no plain one to replace')),
@@ -170,8 +199,8 @@ test('the arcana becomes one VPK: its models and pictures under the plain names,
   const mod = path.join(dir, 'mod_dir.vpk');
   fs.writeFileSync(mod, out.vpk);
   const read = (p: string) => openVpkIndex(mod).read(p) as Buffer;
-  assert.equal(read('models/heroes/terrorblade/terrorblade.vmdl_c').toString(), 'the arcana');
-  assert.equal(read('models/heroes/terrorblade/horns.vmdl_c').toString(), 'its horns');
+  assert.deepEqual(sequences(read('models/heroes/terrorblade/terrorblade.vmdl_c')), [['attack', ['ACT_DOTA_ATTACK']]], "the arcana's model, its attack playing without the item");
+  assert.equal(modelName(read('models/heroes/terrorblade/horns.vmdl_c')), 'models/heroes/terrorblade/horns.vmdl', "the arcana's horns, named for their place");
   assert.equal(read('panorama/images/heroes/npc_dota_hero_terrorblade_png.vtex_c').toString(), 'arcana portrait');
   assert.ok(!read('panorama/images/spellicons/terrorblade_unused_png.vtex_c'), 'an icon with no plain one is not made up');
   const eyes = read(`${hero}/terrorblade_ambient_eyes.vpcf_c`);
