@@ -10,6 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { FileTx, copyInto, writeInto } from '../src/file-tx.ts';
+import { Library } from '../src/library.ts';
 
 function tree(t: TestContext): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-tx-'));
@@ -145,7 +146,9 @@ test('rollback does not throw when the world moved under it', (t) => {
   tx.write(path.join(root, 'pak11_dir.vpk'), Buffer.from('x'));
   tx.remove(path.join(root, 'pak10_dir.vpk'));
   // somebody deleted what we parked (an antivirus, a cleaner, the user)
-  fs.rmSync(path.join(root, `pak10_dir.vpk.${tx.id}.mmtx`), { force: true });
+  const parked = tx.staged.find((p) => path.basename(p).startsWith('pak10_dir.vpk.'));
+  assert.ok(parked);
+  fs.rmSync(parked, { force: true });
 
   assert.doesNotThrow(() => tx.rollback());
   assert.equal(fs.existsSync(path.join(root, 'pak11_dir.vpk')), false, 'what could be undone was');
@@ -192,4 +195,139 @@ test('copyInto and writeInto go through a transaction when handed one, and strai
     throw new Error('stop');
   }));
   assert.deepEqual(snapshot(root), before, 'both were part of the change that was taken back');
+});
+
+/** Make one fs call fail the way a full disk or a held file does, once, then behave again. */
+function failOnce(t: TestContext, name: 'writeFileSync' | 'copyFileSync' | 'renameSync', code: string, when: (args: unknown[]) => boolean) {
+  const live = fs as unknown as Record<string, (...a: unknown[]) => unknown>;
+  const real = live[name];
+  let fired = false;
+  live[name] = (...args: unknown[]) => {
+    if (!fired && when(args)) {
+      fired = true;
+      throw Object.assign(new Error(`${code}: refused`), { code });
+    }
+    return real.apply(fs, args);
+  };
+  t.after(() => { live[name] = real; });
+}
+
+test('a write that fails after the original was parked brings the original back', (t) => {
+  /* The undo used to be recorded after the write. A write refused halfway - the disk filled up
+     on the new pak - had already renamed the original to .mmtx and had no undo to bring it back,
+     so the rollback meant for exactly that failure left the mod under its parked name. */
+  const root = tree(t);
+  put(root, 'pak10_dir.vpk', 'the mod that was there');
+  const before = snapshot(root);
+  failOnce(t, 'writeFileSync', 'ENOSPC', (a) => String(a[0]).endsWith('pak10_dir.vpk'));
+  assert.throws(() => FileTx.run((tx) => tx.write(path.join(root, 'pak10_dir.vpk'), 'new bytes')), /ENOSPC/);
+  assert.deepEqual(snapshot(root), before);
+});
+
+test('a copy that fails after the original was parked brings the original back', (t) => {
+  const root = tree(t);
+  const src = put(root, 'incoming/mod.vpk', 'new');
+  put(root, 'lang/pak10_dir.vpk', 'old');
+  const before = snapshot(root);
+  failOnce(t, 'copyFileSync', 'ENOSPC', () => true);
+  assert.throws(() => FileTx.run((tx) => tx.copy(src, path.join(root, 'lang', 'pak10_dir.vpk'))), /ENOSPC/);
+  assert.deepEqual(snapshot(root), before);
+});
+
+test('a move refused after its target was parked brings the target back and leaves the source', (t) => {
+  const root = tree(t);
+  put(root, 'a.vpk', 'moving');
+  put(root, 'b.vpk', 'in the way');
+  const before = snapshot(root);
+  // the first rename parks b.vpk, the second is the move itself
+  failOnce(t, 'renameSync', 'EBUSY', (a) => String(a[0]).endsWith('a.vpk'));
+  assert.throws(() => FileTx.run((tx) => tx.move(path.join(root, 'a.vpk'), path.join(root, 'b.vpk'))), /EBUSY/);
+  assert.deepEqual(snapshot(root), before);
+});
+
+test('a move from a source that is not there changes nothing at all', (t) => {
+  const root = tree(t);
+  put(root, 'b.vpk', 'would have been parked');
+  const before = snapshot(root);
+  assert.throws(() => FileTx.run((tx) => tx.move(path.join(root, 'gone.vpk'), path.join(root, 'b.vpk'))), /ENOENT/);
+  assert.deepEqual(snapshot(root), before);
+});
+
+test('one file written twice in one change rolls back to the original, not to the first new version', (t) => {
+  const root = tree(t);
+  put(root, 'manifest.json', 'original');
+  assert.throws(() => FileTx.run((tx) => {
+    tx.write(path.join(root, 'manifest.json'), 'first');
+    tx.write(path.join(root, 'manifest.json'), 'second');
+    throw new Error('later');
+  }), /later/);
+  assert.deepEqual(snapshot(root), { 'manifest.json': 'original' });
+
+  FileTx.run((tx) => {
+    tx.write(path.join(root, 'manifest.json'), 'first');
+    tx.write(path.join(root, 'manifest.json'), 'second');
+  });
+  assert.deepEqual(snapshot(root), { 'manifest.json': 'second' }, 'and a commit leaves neither parked copy');
+});
+
+test('a change inside a change joins it, and undoes only its own steps when it throws', (t) => {
+  /* A caller may catch an inner failure and carry on (src/ipc-packs.ts does, switching members
+     off). The inner block has to leave the folder as it found it, and the outer one still commits. */
+  const root = tree(t);
+  put(root, 'kept.vpk', 'old');
+  let inner: FileTx | null = null;
+  FileTx.run((outer) => {
+    outer.write(path.join(root, 'kept.vpk'), 'outer change');
+    assert.throws(() => FileTx.run((tx) => {
+      inner = tx;
+      tx.write(path.join(root, 'inner.vpk'), 'inner change');
+      throw new Error('inner refused');
+    }), /inner refused/);
+    assert.equal(inner, outer, 'the inner block ran in the outer change');
+    assert.equal(fs.existsSync(path.join(root, 'inner.vpk')), false, 'its own step is undone at once');
+  });
+  assert.deepEqual(snapshot(root), { 'kept.vpk': 'outer change' });
+});
+
+test('an inner change that succeeds rolls back with the outer one', (t) => {
+  const root = tree(t);
+  assert.throws(() => FileTx.run(() => {
+    FileTx.run((tx) => tx.write(path.join(root, 'a.vpk'), 'a'));
+    throw new Error('outer refused');
+  }), /outer refused/);
+  assert.deepEqual(snapshot(root), {});
+});
+
+test('a library record written inside a change goes back with the files, on disk and in memory', (t) => {
+  const root = tree(t);
+  const userData = path.join(root, 'userdata');
+  const library = new Library(userData);
+  library.add({ name: 'kept', categoryId: 'heroes', files: [{ root: 'lang', relPath: 'pak30_dir.vpk' }] });
+  const manifest = fs.readFileSync(path.join(userData, 'manifest.json'), 'utf8');
+  assert.throws(() => FileTx.run((tx) => {
+    tx.write(path.join(root, 'lang', 'pak31_dir.vpk'), 'new mod');
+    library.add({ name: 'new', categoryId: 'heroes', files: [{ root: 'lang', relPath: 'pak31_dir.vpk' }] });
+    throw new Error('the next pak was refused');
+  }), /refused/);
+  assert.deepEqual(library.list().map((r) => r.name), ['kept'], 'the record in memory is gone');
+  assert.equal(fs.readFileSync(path.join(userData, 'manifest.json'), 'utf8'), manifest, 'and on disk');
+  assert.equal(fs.existsSync(path.join(root, 'lang', 'pak31_dir.vpk')), false);
+});
+
+test('a change refuses a block that returns a promise, before it could commit half of it', (t) => {
+  const root = tree(t);
+  assert.throws(() => FileTx.run(async (tx) => { tx.write(path.join(root, 'a.vpk'), 'a'); }), /synchronous/);
+  assert.deepEqual(snapshot(root), {});
+});
+
+test('with a journal folder set, a change that commits or rolls back leaves no journal behind', (t) => {
+  const root = tree(t);
+  const journals = path.join(root, 'tx');
+  FileTx.journalDir = journals;
+  t.after(() => { FileTx.journalDir = null; });
+  FileTx.run((tx) => tx.write(path.join(root, 'game', 'a.vpk'), 'a'));
+  assert.throws(() => FileTx.run((tx) => { tx.write(path.join(root, 'game', 'b.vpk'), 'b'); throw new Error('no'); }), /no/);
+  FileTx.run(() => {}); // a change with no steps opens no journal at all
+  assert.deepEqual(fs.existsSync(journals) ? fs.readdirSync(journals) : [], []);
+  assert.deepEqual(snapshot(path.join(root, 'game')), { 'a.vpk': 'a' });
 });
