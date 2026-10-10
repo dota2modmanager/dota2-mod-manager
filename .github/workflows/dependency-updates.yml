@@ -22,6 +22,7 @@ jobs:
     # The author and the actor both: a person pushing to a Dependabot branch must not set off a merge.
     if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
       pull-requests: write

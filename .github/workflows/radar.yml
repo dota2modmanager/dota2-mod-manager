@@ -30,6 +30,7 @@ concurrency:
 jobs:
   radar:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # Read everything it reports on, write one issue. Nothing here pushes, labels or closes.
     permissions:
       contents: read

@@ -37,6 +37,7 @@ concurrency:
 jobs:
   report:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     # Reading the repository and writing one comment. It used to ask for contents: write, from the
     # days when the state was pushed back as a commit; nothing is pushed any more.
     permissions:

@@ -17,6 +17,7 @@ jobs:
   # the same list a pull request needs before it can merge, so the two cannot drift apart.
   gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 75
     permissions:
       contents: read
       checks: read
@@ -69,6 +70,7 @@ jobs:
   build:
     needs: gate
     runs-on: windows-latest
+    timeout-minutes: 45
     permissions:
       contents: write
     steps:
@@ -177,6 +179,7 @@ jobs:
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: write
     steps:
@@ -224,6 +227,7 @@ jobs:
     needs: [build, linux]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       # reading the draft and adding files to it
       contents: write
@@ -311,6 +315,7 @@ jobs:
     needs: [build, checksums]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: windows-latest
+    timeout-minutes: 45
     # a draft can be read only by a token that can write to the repository
     permissions:
       contents: write
@@ -380,6 +385,7 @@ jobs:
     needs: [linux, checksums]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: write
     steps:
@@ -455,6 +461,7 @@ jobs:
     needs: [gate, build, linux, checksums, try-windows, try-linux]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write
     steps:
@@ -562,6 +569,7 @@ jobs:
     needs: [gate, publish]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       actions: write
     steps:
@@ -602,6 +610,7 @@ jobs:
     needs: [gate, publish]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -630,6 +639,7 @@ jobs:
     needs: [gate, publish, mirror-update]
     if: always() && needs.publish.result == 'success' && needs.gate.outputs.beta != 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # editing the release body needs write; the default for a job is the repo's own
     # setting, which is read-only here (v1.12.0 shipped with an empty page because of it)
     permissions:

@@ -379,6 +379,15 @@ module what it unpacks), the renderer's imports, the release contract, `DECISION
 against the repository it describes, and the write-ups in `docs/incidents/` against the tests
 and workflow steps they name as guards.
 
+The checks are checked too, for the ways a green run can prove nothing. `test/suite-integrity.test.ts`
+parses every test file with TypeScript and fails on a test that reaches no assertion (in its own
+body, a helper, or a function it hands its body to), on a test skipped or marked `only` on every
+machine, and on a test file the runner's globs would never pick up. `test/workflows.test.js` fails
+on a job with no `timeout-minutes`, so a hung step fails within its limit instead of holding a
+check "pending" for GitHub's six hours. The e2e fails a launch whose window script reported no
+steps, and the simulator fails a scenario that wrote no check. `tools/mutate.mjs` then asks
+whether the assertions that are there would notice a deliberate breakage.
+
 `tools/sandbox.js` builds a throwaway Dota tree with the real game's `gameinfo.gi` and a
 `pak01_dir.vpk` built from its own item table, then downloads real catalog mods into it. Install,
 load order, packs, the schema patch and language folders are tested there rather than against

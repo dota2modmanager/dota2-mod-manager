@@ -85,3 +85,11 @@ test('the report names each failed check and escapes what the page shows', async
   assert.match(html, /the &lt;last&gt; card/);
   assert.match(html, /fhd--default\/scroll-top\.png/);
 });
+
+test('a scenario that wrote no check fails the run, and so does a launch with none', async () => {
+  const { silentScenarios } = await load();
+  const checks = [{ scenario: 'scroll', name: 'x', ok: true }, { scenario: 'mods', name: 'y', ok: true }];
+  assert.deepEqual(silentScenarios('scroll,mods', checks), []);
+  assert.deepEqual(silentScenarios('scroll,mods,presets', checks), ['presets: wrote no check at all']);
+  assert.deepEqual(silentScenarios('scroll', []), ['scroll: wrote no check at all', 'the launch wrote no checks']);
+});
