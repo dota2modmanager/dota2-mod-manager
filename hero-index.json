@@ -1,6 +1,6 @@
 {
   "heroes": 149,
-  "mods": 1533,
+  "mods": 1538,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -448,6 +448,7 @@
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Drow Ranger Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon","shoulder"]},
+        {"name":"Drow Ranger Crimson Stalker","categoryId":"heroes","styleLabel":null,"slots":["misc","legs","head","arms","weapon","back"]},
         {"name":"Drow Ranger Diretide","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
         {"name":"Drow Ranger Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
         {"name":"Drow Ranger Japan Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
@@ -751,7 +752,7 @@
         {"name":"Juggernaut Fireborn Assault","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
         {"name":"Juggernaut Ice and Fire","categoryId":"heroes","styleLabel":null,"slots":["misc","back","arms","head","weapon"]},
         {"name":"Juggernaut Jagged Honor","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
-        {"name":"Juggernaut Lineage Kantusa","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
+        {"name":"Juggernaut Lineage Kantusa","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Juggernaut Okita Souji","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
         {"name":"Juggernaut Provocation Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Juggernaut Samurai of Wind","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","weapon","arms"]},
@@ -1538,6 +1539,7 @@
         {"name":"Pink Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend 1000-7","categoryId":"heroes","styleLabel":null,"slots":["head","wings"]},
         {"name":"Shadow Fiend Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","wings"]},
+        {"name":"Shadow Fiend Arcana Desolator","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend Arms of Desolation","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
         {"name":"Shadow Fiend Avice Mod","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend Black","categoryId":"heroes","styleLabel":null,"slots":["wings","misc","arms","head","shoulder"]},
@@ -1836,6 +1838,7 @@
         {"name":"Terrorblade Foulfell Corruptor","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Terrorblade Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","wings"]},
         {"name":"Terrorblade Rictus Blade","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
+        {"name":"Terrorblade Rictus Blood","categoryId":"heroes","styleLabel":null,"slots":["wings","weapon","misc","head","arms"]},
         {"name":"Terrorblade Rictus Manta","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
         {"name":"Terrorblade Rictus Skadi","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
         {"name":"Terrorblade Scythes of Sorrow","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
@@ -1912,7 +1915,9 @@
         {"name":"Treant Protector Calabash","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
         {"name":"Treant Protector Calabash V2","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
         {"name":"Treant Protector Diretide","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
-        {"name":"Treant Protector Frost Hideaway","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","misc"]}
+        {"name":"Treant Protector Frost Hideaway","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","misc"]},
+        {"name":"Treant Protector Wraithwood","categoryId":"heroes","styleLabel":"Style I","slots":["misc","arms","head","legs","back"]},
+        {"name":"Treant Protector Wraithwood","categoryId":"heroes","styleLabel":"Style II","slots":["misc","arms","head","legs"]}
       ]
     },
     "troll_warlord": {
