@@ -1,6 +1,6 @@
 {
   "heroes": 149,
-  "mods": 1540,
+  "mods": 1541,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -562,7 +562,8 @@
         {"name":"Cosmic Faceless Void","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","belt","weapon","arms"]},
         {"name":"Faceless Void Arcana","categoryId":"heroes","styleLabel":"Style I","slots":["belt","arms","head","shoulder","weapon","misc","legs"]},
         {"name":"Faceless Void Arcana","categoryId":"heroes","styleLabel":"Style II","slots":["belt","arms","head","shoulder","weapon","misc","legs"]},
-        {"name":"Faceless Void Arcana Reborn","categoryId":"heroes","styleLabel":null,"slots":["shoulder","arms","belt","weapon"]},
+        {"name":"Faceless Void Arcana 2 Reborn","categoryId":"heroes","styleLabel":null,"slots":["head","shoulder","arms","belt","weapon"]},
+        {"name":"Faceless Void Arcana Reborn","categoryId":"heroes","styleLabel":null,"slots":["head","shoulder","arms","belt","weapon"]},
         {"name":"Faceless Void Battlefury","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Faceless Void Esdeath","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","misc","weapon","mount","legs"]},
         {"name":"Faceless Void Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","weapon"]},

@@ -13770,6 +13770,103 @@
       ]
     },
     {
+      "id": "faceless_void",
+      "name": "Faceless Void",
+      "slug": "faceless-void",
+      "mods": [
+        {
+          "name": "Faceless Void Esdeath",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","head","shoulder","misc","weapon","mount","legs"],
+          "image": {"src":"/mods/faceless-void-esdeath.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771195327
+        },
+        {
+          "name": "Faceless Void Rita",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","head","shoulder","misc","weapon","mount","legs"],
+          "image": {"src":"/mods/faceless-void-rita.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771195327
+        },
+        {
+          "name": "Faceless Void Arcana",
+          "categoryId": "heroes",
+          "styleLabel": "Style I",
+          "slots": ["belt","arms","head","shoulder","weapon","misc","legs"],
+          "image": {"src":"/mods/faceless-void-arcana-style-i.webp","width":854,"height":480},
+          "author": "Pinkie",
+          "authorUrl": "https://steamcommunity.com/profiles/76561198142595363",
+          "date": 1770536794
+        },
+        {
+          "name": "Faceless Void Arcana",
+          "categoryId": "heroes",
+          "styleLabel": "Style II",
+          "slots": ["belt","arms","head","shoulder","weapon","misc","legs"],
+          "image": {"src":"/mods/faceless-void-arcana-style-ii.webp","width":854,"height":480},
+          "author": "Pinkie",
+          "authorUrl": "https://steamcommunity.com/profiles/76561198142595363",
+          "date": 1770536794
+        },
+        {
+          "name": "Cosmic Faceless Void",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["shoulder","head","belt","weapon","arms"],
+          "image": {"src":"/mods/cosmic-faceless-void.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1758134079
+        },
+        {
+          "name": "Faceless Void Arcana 2 Reborn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","shoulder","arms","belt","weapon"],
+          "image": {"src":"/mods/faceless-void-arcana-2-reborn.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791645604
+        },
+        {
+          "name": "Faceless Void Arcana Reborn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","shoulder","arms","belt","weapon"],
+          "image": {"src":"/mods/faceless-void-arcana-reborn.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791641981
+        },
+        {
+          "name": "Faceless Void Immortal Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","head","shoulder","weapon"],
+          "image": {"src":"/mods/faceless-void-immortal-arcana.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1787915916
+        },
+        {
+          "name": "Faceless Void Battlefury",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/faceless-void-battlefury.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1780214981
+        }
+      ]
+    },
+    {
       "id": "lycan",
       "name": "Lycan",
       "slug": "lycan",
@@ -14144,93 +14241,6 @@
           "author": "Defiree",
           "authorUrl": "https://vk.com/defiree2mods",
           "date": 1789090758
-        }
-      ]
-    },
-    {
-      "id": "faceless_void",
-      "name": "Faceless Void",
-      "slug": "faceless-void",
-      "mods": [
-        {
-          "name": "Faceless Void Esdeath",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","head","shoulder","misc","weapon","mount","legs"],
-          "image": {"src":"/mods/faceless-void-esdeath.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771195327
-        },
-        {
-          "name": "Faceless Void Rita",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","head","shoulder","misc","weapon","mount","legs"],
-          "image": {"src":"/mods/faceless-void-rita.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771195327
-        },
-        {
-          "name": "Faceless Void Arcana",
-          "categoryId": "heroes",
-          "styleLabel": "Style I",
-          "slots": ["belt","arms","head","shoulder","weapon","misc","legs"],
-          "image": {"src":"/mods/faceless-void-arcana-style-i.webp","width":854,"height":480},
-          "author": "Pinkie",
-          "authorUrl": "https://steamcommunity.com/profiles/76561198142595363",
-          "date": 1770536794
-        },
-        {
-          "name": "Faceless Void Arcana",
-          "categoryId": "heroes",
-          "styleLabel": "Style II",
-          "slots": ["belt","arms","head","shoulder","weapon","misc","legs"],
-          "image": {"src":"/mods/faceless-void-arcana-style-ii.webp","width":854,"height":480},
-          "author": "Pinkie",
-          "authorUrl": "https://steamcommunity.com/profiles/76561198142595363",
-          "date": 1770536794
-        },
-        {
-          "name": "Cosmic Faceless Void",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["shoulder","head","belt","weapon","arms"],
-          "image": {"src":"/mods/cosmic-faceless-void.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1758134079
-        },
-        {
-          "name": "Faceless Void Immortal Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","head","shoulder","weapon"],
-          "image": {"src":"/mods/faceless-void-immortal-arcana.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1787915916
-        },
-        {
-          "name": "Faceless Void Arcana Reborn",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["shoulder","arms","belt","weapon"],
-          "image": {"src":"/mods/faceless-void-arcana-reborn.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791636264
-        },
-        {
-          "name": "Faceless Void Battlefury",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/faceless-void-battlefury.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1780214981
         }
       ]
     },

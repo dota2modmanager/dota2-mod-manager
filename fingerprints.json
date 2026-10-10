@@ -1,5 +1,5 @@
 {
-  "count": 1607,
+  "count": 1609,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -169,6 +169,7 @@
     "1baab76a8de47c1ee5f35bdc302cb3f946d5738e": [{"name":"Riki Hunger Howling Wilds","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "1bce79b9baa83f95e787a4207cfc7d002e57d75b": [{"name":"Anti-Mage Illidan","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "1ceefe37a2d38ba814b37b6025f2e74b85b91a1b": [{"name":"TI7 Blink Dagger","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
+    "1d3927af568b6796187e7d0bc73c6f4f6717e2c7": [{"name":"Winlose Music Suffocation Kit","categoryId":"sounds","styleLabel":null,"type":"vpk"}],
     "1d4d8a969f4cc506488af4a990ce5aa66d54b371": [{"name":"Darkness Phase Boots","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "1d54a288721a364772d21d147ad790bd1876a296": [{"name":"Night Stalker Frost Walker","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "1d828948887b5f38e569701eaf79adc7614bed51": [{"name":"Desert Roshan","categoryId":"roshan","styleLabel":null,"type":"vpk"}],
@@ -483,6 +484,7 @@
     "4fc65f6edccb3fb36c688af00b0b3be9cfaf0b91": [{"name":"Dark Souls Razor","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "4ff8288c7392f7f242e32ed2a1e765de9a4e2afd": [{"name":"Kunkka Whale Blade","categoryId":"hero-items","styleLabel":"Eminent Revival Exceptional","type":"vpk"}],
     "5041757b960f3e36f7ce7198b79d0dd7bb1fa0c2": [{"name":"Phantom Lancer Ravenblight","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
+    "509c8a7823b969245526cf55b7542c8d7fb6eff9": [{"name":"Faceless Void Arcana 2 Reborn","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "50d1d342af774f769d9095b76662e06522d88468": [{"name":"Winter Hex","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "50f15d8084fa701e6ab6c4583ad8520042bae98e": [{"name":"Monty","categoryId":"wards","styleLabel":null,"type":"vpk"}],
     "50f45557c2e0492983053820b0d0c3bbbac39c78": [{"name":"Wave Lite Aqua","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
@@ -777,7 +779,6 @@
     "7e66479e5bef548eb2d39222fe7a910074703729": [{"name":"Tusk Odobenus Frost Mage","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "7e6e2a89de7cab47d67081c64fe7f60ce64f9ce6": [{"name":"Techies","categoryId":"mega-kill","styleLabel":null,"type":"vpk"}],
     "7e7a2301dc2a15976991c26050d9c16d1438f38d": [{"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":"Golden","type":"vpk"}],
-    "7edeb6fca20d4afc0b05097d75c142618a19319f": [{"name":"Faceless Void Arcana Reborn","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "7f0e6bad79777ab5ee487f36c3da03fd09a7d35d": [{"name":"Drow Ranger Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "7f676ea9ea5439859abf8c96214eadc273f4d597": [{"name":"Shadow Shaman Wyrmbender","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "7fbcee79d4e5b40ada31263ab75bb9394f633222": [{"name":"Kunkka & Tidehunter","categoryId":"announcers","styleLabel":null,"type":"vpk"}],
@@ -1594,6 +1595,7 @@
     "fdc40f3299c2a09217225c49183f80fab6955cea": [{"name":"Void Medals","categoryId":"ranks","styleLabel":null,"type":"vpk"}],
     "fdcffd8b27935ddaee099a2be7683eb5abf9ef20": [{"name":"Spirit Breaker Iron Surge","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "fe05485d95bad8e678a1d01acc336ee1498190b0": [{"name":"LowPoly Stumps Trees","categoryId":"trees","styleLabel":null,"type":"vpk"}],
+    "fe11a5d7ace882cc9851f7790e50fe83603e9c73": [{"name":"Faceless Void Arcana Reborn","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "fe2211a18703e031bb7977bd1137815c8814a3d3": [{"name":"Lich Shokuhou Misaki","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "fe50d697a47f8ffd7591ffe825a41a799cd25705": [{"name":"Bounty Hunter Golden Rat","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "fe7cb5595de93b8a17988e63423b972ee0d60359": [{"name":"Immortal Love Undying","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
