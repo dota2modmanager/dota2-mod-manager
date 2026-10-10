@@ -25,6 +25,7 @@
     "dota:diff": "node tools/dota-diff.mjs",
     "dota:bench": "node tools/dota-bench.mjs",
     "doctor": "node tools/mod-doctor.mjs",
+    "item-plan": "node tools/item-plan.mjs",
     "recolor": "node tools/recolor.mjs",
     "fuzz": "node tools/fuzz-parsers.mjs",
     "mutate": "node tools/mutate.mjs",

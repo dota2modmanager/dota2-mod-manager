@@ -7,7 +7,7 @@ using System; using System.Runtime.InteropServices;
 public struct RECT2 { public int Left, Top, Right, Bottom; }
 public static class In {
   [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT2 r);
-  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
+  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h); [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
   [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
   [DllImport("user32.dll")] public static extern void mouse_event(uint f, uint x, uint y, uint d, IntPtr e);
   [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
@@ -19,6 +19,8 @@ $p = Get-Process dota2 -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $p) { Write-Output "no dota"; exit 1 }
 [In]::SetForegroundWindow($p.MainWindowHandle) | Out-Null
 Start-Sleep -Milliseconds 150
+# never click, press or take a picture into another window: somebody may be using the computer
+if ([In]::GetForegroundWindow() -ne $p.MainWindowHandle) { Write-Output "dota is not in front"; exit 3 }
 $r = New-Object RECT2
 [In]::GetWindowRect($p.MainWindowHandle, [ref]$r) | Out-Null
 switch ($Op) {
