@@ -125,6 +125,7 @@ export function uninstallFlow({ settings, library, installer, schemaService, dia
         preload: path.join(appRoot, 'preload-uninstall.js'),
         contextIsolation: true,
         nodeIntegration: false,
+        sandbox: true,
       },
     });
     w.loadFile(path.join(appRoot, 'renderer', 'uninstall.html'));

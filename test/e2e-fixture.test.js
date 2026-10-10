@@ -116,3 +116,18 @@ test('the scripts the window runs compile', async () => {
     assert.doesNotThrow(() => new AsyncFunction(m[name]), `${name} does not compile`);
   }
 });
+
+test('a run fails on an unresolved name or a refused call in the app log, and on nothing else', async () => {
+  const { logProblems } = await load();
+  const log = [
+    '2026-10-10 boot',
+    'mods:install failed: blocked is not defined',
+    'ipc: refused settings:set: the window may not set dotaGamePath',
+    'permission refused: media',
+    'a line about something ordinary',
+  ].join('\n');
+  const found = logProblems(log);
+  assert.deepEqual(found.unresolved, ['mods:install failed: blocked is not defined']);
+  assert.deepEqual(found.refused, ['ipc: refused settings:set: the window may not set dotaGamePath', 'permission refused: media']);
+  assert.deepEqual(logProblems(null), { unresolved: [], refused: [] });
+});

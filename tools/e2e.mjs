@@ -23,7 +23,7 @@
  *      off in My mods. On disk: exactly one new pakNN_dir.vpk.off in the language folder.
  *   2. A fresh start. The mod is still listed and still off; switch it on, press Remove, confirm.
  *      On disk: the language folder is byte for byte what it was before the first launch.
- * The app's log must not contain an unresolved name at any point.
+ * The app's log must not contain an unresolved name at any point, nor a call the IPC gate refused.
  *
  * Usage:
  *   node tools/e2e.mjs            # under `xvfb-run -a` on Linux
@@ -133,6 +133,19 @@ export function setNoticeAside(d, isMarked = () => listVpkPathsFile(path.join(LA
   if (touched && !isMarked()) return d; // somebody else's pak64: it stays in, and the check says so
   const other = (list) => list.filter((n) => n !== NOTICE_PAK);
   return { added: other(d.added), removed: d.removed, changed: other(d.changed) };
+}
+
+/**
+ * What in the app's log means the run failed even though every click landed: a name that does not
+ * resolve (2.6.5, Install dead), and a call the IPC gate refused (src/window-guard.ts) - a check
+ * stricter than the window is a button that stopped working.
+ */
+export function logProblems(text) {
+  const lines = String(text || '').split('\n');
+  return {
+    unresolved: lines.filter((l) => /unhandledrejection|is not defined|is not a function/.test(l)),
+    refused: lines.filter((l) => /ipc: refused|permission refused/.test(l)),
+  };
 }
 
 /** What changed between two snapshots. */
@@ -353,8 +366,9 @@ if (invokedDirectly) {
 
   const appLog = path.join(USERDATA, 'logs', 'app.log');
   const logText = readIfThere(appLog);
-  const unresolved = (logText || '').split('\n').filter((l) => /unhandledrejection|is not defined|is not a function/.test(l));
+  const { unresolved, refused } = logProblems(logText);
   passed = check('the app log has no unresolved name in it', !unresolved.length, unresolved.slice(0, 3).join(' / ')) && passed;
+  passed = check('the IPC gate refused none of the window\'s calls', !refused.length, refused.slice(0, 3).join(' / ')) && passed;
   if (logText !== null) fs.writeFileSync(path.join(OUT, 'app.log'), logText);
 
   report.passed = passed;

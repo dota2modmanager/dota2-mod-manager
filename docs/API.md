@@ -24,6 +24,7 @@ the code, not in this page.
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
 | [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
+| [`src/channel-args.ts`](#srcchannel-argsts) | What each channel may be handed, checked before its handler runs (src/window-guard.ts). |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/deep-links.ts`](#srcdeep-linksts) | d2mm:// links: a preset link clicked anywhere on the system, and on Linux, telling the desktop |
 | [`src/dev-harness.ts`](#srcdev-harnessts) | The switches that let a script drive the window: a screenshot after some clicks (MM_SHOT and |
@@ -126,6 +127,7 @@ the code, not in this page.
 | [`src/vpk-write.ts`](#srcvpk-writets) | Writing a Source-engine VPK: one self-contained file from a list of entries, a multi-part index |
 | [`src/vpk.ts`](#srcvpkts) | The VPK format, in one place for everything that reads or writes one: the reader |
 | [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
+| [`src/window-guard.ts`](#srcwindow-guardts) | Who may call the main process, and with what. |
 
 ## src/adopt.ts
 
@@ -666,6 +668,62 @@ export class Catalog
 
 The catalog on disk and on the wire: fetches the three data files, checks their signatures,
 keeps the last good copy, and says which archive hash the catalog published for a mod.
+
+## src/channel-args.ts
+
+What each channel may be handed, checked before its handler runs (src/window-guard.ts).
+
+TypeScript holds the window and the main process to the same shapes (renderer/api/), but only
+while both are this app's own code. The values that arrive over IPC are whatever the page sent:
+a page that ran a script it should not have - a mod description with markup in it, a catalog
+entry somebody wrote to break out - could send anything, and the handlers behind these channels
+write the game folder, open folders in Explorer, launch programs and change the settings.
+
+So every channel the main process answers has an entry here, and a call whose arguments do not
+fit is refused before the handler sees it. The checks are about shape and size: a string where
+a string goes, an id that is an id, a list that is not a million items long. What a value means
+(whether an id is a mod in the library, whether a tool folder is one this app installed) stays
+with the handler, which knows. Settings are the exception: the window may change only the keys
+it has a control for, so the game folder, the Discord account and the item table's stamp are
+not one call away from a script.
+
+test/window-guard.test.ts fails when a channel in src/ has no entry here, when an entry names a
+channel that no longer exists, and when a check accepts what it is there to refuse.
+
+### `Check`
+
+```ts
+export type Check = (v: unknown) => string | null
+```
+
+Why a value does not fit, or null when it does.
+
+### `WINDOW_SETTINGS`
+
+```ts
+export const WINDOW_SETTINGS: Record<string, Check> =
+```
+
+The settings the window has a control for, and what each may be set to. The rest - the game
+folder, the language suffix, the Discord account, the item table's stamp - are set by the main
+process from what it found or was told by Steam and Discord, never by the page.
+
+### `CHANNEL_ARGS`
+
+```ts
+export const CHANNEL_ARGS: Record<string, Check[]> =
+```
+
+Each channel's arguments, in order. A channel that takes none has an empty list.
+
+### `checkArgs`
+
+```ts
+export function checkArgs(channel: string, args: unknown[]): string | null
+```
+
+Check one call. Fewer arguments than the channel takes is fine when the missing ones are
+optional; more is not, because no caller in the window sends them.
 
 ## src/cursors.ts
 
@@ -7043,3 +7101,62 @@ export function pngFromVtex(buf: unknown): Buffer | null
 @param buf contents of a .vtex_c
 @returns the PNG file it carries, or null when it carries pixels instead
 ```
+
+## src/window-guard.ts
+
+Who may call the main process, and with what.
+
+The window's page reaches the main process through window.api (preload.js), and every channel
+behind it trusted whoever called: any frame, any page, any arguments. The page is the app's own
+and navigation off it is blocked (src/main-window.ts), but it also draws text from outside - mod
+names and descriptions from the catalog, preset notes from a friend - and the day one of those
+gets a script past the page, that script holds the same window.api the buttons do. Electron's
+security checklist asks for the sender of every message to be checked for that reason
+(https://www.electronjs.org/docs/latest/tutorial/security, "Validate the sender of all IPC
+messages").
+
+So the checks go in front of every channel, in one place: ipcMain.handle and ipcMain.on are
+wrapped before anything registers. A call is answered only when it comes from the top frame of
+one of the app's own pages - the main window's, or the removal window's - and its arguments fit
+the channel's entry in src/channel-args.ts. Registering a channel with no entry there throws at
+start, so a new channel cannot ship unchecked. Refusals go to the diagnostics log.
+
+The same guard answers the browser's permission questions (the clipboard for a share link and
+fullscreen for the video player, nothing else, and only for the app's pages) and locks every
+web contents the app ever creates: no webview, no window.open, no navigation off the app's pages.
+
+### `pageKey`
+
+```ts
+export function pageKey(url: string): string | null
+```
+
+An address reduced to the page it names: no query, no fragment, and a file path as Windows compares it.
+
+### `createIpcGuard`
+
+```ts
+export function createIpcGuard({ pages, log }: { pages: string[]; log: (msg: string) => void })
+```
+
+```
+@param pages  the addresses of the app's own pages: what the main window loads and the removal window's
+@param log    the diagnostics log, told about every refusal
+```
+
+### `appPages`
+
+```ts
+export function appPages({ appRoot, isPackaged, devUrl }: { appRoot: string; isPackaged: boolean; devUrl?: string }): string[]
+```
+
+The two pages of this app: what the main window loads (src/app-page.ts) and the removal window's.
+
+### `guardTheApp`
+
+```ts
+export function guardTheApp({ app, ipcMain, session, appRoot, devUrl, log }: { app: Pick<App, 'isPackaged' | 'on'>; ipcMain: Pick<IpcMain, 'handle' | 'on'>; session: { defaultSession: Pick<Session, 'setPermissionRequestHandler' | 'setPermissionCheckHandler'> }; appRoot: string; devUrl?: string; log: (msg: string) => void; }): ReturnType<typeof createIpcGuard>
+```
+
+The whole guard, as src/main.ts puts it up before any channel or window exists: the channels,
+the browser's permissions, and every web contents locked the moment it is created.

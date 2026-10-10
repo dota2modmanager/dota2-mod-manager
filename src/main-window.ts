@@ -105,6 +105,8 @@ export function createMainWindow({ appRoot, settings, diag, workArea = null, qui
       preload: path.join(appRoot, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      // the default since Electron 20, said out loud so test/window-guard.test.ts can hold it
+      sandbox: true,
       backgroundThrottling: false,
     },
   });

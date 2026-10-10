@@ -28,14 +28,29 @@ export function registerMiscIpc({
     }
   });
 
+  /** A tool folder this app installed, by the name its record gives it, or null for anything else. */
+  const toolFolder = (name: unknown): string | null => {
+    const sub = String(name || '');
+    const known = library.list().some((rec) => (rec.files || [])
+      .some((f) => f.root === 'tools' && f.relPath === sub));
+    const dir = path.join(installer.toolsDir, sub);
+    return known && path.dirname(dir) === path.resolve(installer.toolsDir) ? dir : null;
+  };
+
   ipcMain.handle('misc:openToolsFolder', (e, sub) => {
-    const p = sub ? path.join(installer.toolsDir, sub) : installer.toolsDir;
+    // shell.openPath runs what it is handed: joined unchecked, "../.." here opened any folder on
+    // the disk, and a path to an .exe started it. Only a tool folder the library knows.
+    const p = sub ? toolFolder(sub) : installer.toolsDir;
+    if (!p) return { error: t('Инструмент не найден') };
     shell.openPath(p);
     return { ok: true };
   });
 
   ipcMain.handle('misc:openExternal', (e, url) => {
-    if (/^https?:\/\//i.test(url)) shell.openExternal(url);
+    // the address is parsed, not matched: the browser gets http and https and nothing else
+    try {
+      if (/^https?:$/.test(new URL(String(url)).protocol)) shell.openExternal(String(url));
+    } catch { /* not an address */ }
     return { ok: true };
   });
 
@@ -51,12 +66,8 @@ export function registerMiscIpc({
       // The name has to be one of the tool folders this app installed and nothing else:
       // joined unchecked, "../../.." pointed this at any folder on the disk, and what it
       // does with a folder is run the first .exe in it.
-      const name = String(toolDirName || '');
-      const known = library.list().some((rec) => (rec.files || [])
-        .some((f) => f.root === 'tools' && f.relPath === name));
-      if (!known) return { error: t('Инструмент не найден') };
-      const dir = path.join(installer.toolsDir, name);
-      if (path.dirname(dir) !== path.resolve(installer.toolsDir)) return { error: t('Инструмент не найден') };
+      const dir = toolFolder(toolDirName);
+      if (!dir) return { error: t('Инструмент не найден') };
       const findExe = (d: string): string | null => {
         for (const f of fs.readdirSync(d)) {
           const full = path.join(d, f);
