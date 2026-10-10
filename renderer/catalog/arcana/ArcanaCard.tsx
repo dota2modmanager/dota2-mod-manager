@@ -2,6 +2,7 @@
  * Drawn with a mod card's markup (CardShell, .card-media, .card-body) and a tool's line under the
  * name (ToolMeta.tsx); once built, its picture is the arcana in the colour that was built. */
 import { CardShell } from '../card/CardShell.tsx';
+import { CardName } from '../card/CardName.tsx';
 import { GEM, useTinted, type Rgb } from './tint.ts';
 
 export interface ArcanaCardModel {
@@ -18,7 +19,7 @@ export function ArcanaCard({ m, onOpen }: { m: ArcanaCardModel; onOpen: (card: H
         {picture ? <img src={picture} alt="" /> : <div className="noimg"><span className="ms">palette</span></div>}
       </div>
       <div className="card-body">
-        <div className="card-name">{L`Аркана Террорблейда`}</div>
+        <CardName>{L`Аркана Террорблейда`}</CardName>
         <div className="card-meta card-meta-split">
           {!m.installed && <span>{L`Собрать`}</span>}
           <span className="card-pills"><span className="mtag soft">{L`Любой цвет`}</span></span>

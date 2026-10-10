@@ -29,6 +29,7 @@ import { applyContentZoom, readPanels, bindPanels } from './ui/chrome.ts';
 import { applyStaticI18n, showLanguagePicker } from './ui/language.ts';
 import { initTheme } from './ui/theme.ts';
 import { initQueue } from './ui/queue.ts';
+import { initA11y } from './ui/a11y.ts';
 import { loadCatalog } from './views/catalog.ts';
 
 /* Fetching it is a download of somebody else's program, so it happens on a yes and never
@@ -46,6 +47,8 @@ async function offerToolchain(): Promise<void> {
 }
 
 (async function boot() {
+  // focus into and out of every window over the app, dialogs named, icons silent (ui/a11y.ts)
+  initA11y();
   /* Pictures come from the network and the network is the part that fails. Started before
      anything is drawn so the first grid is covered too: a preview that cannot be fetched is asked
      for again from the mirror, and if that fails the tile says so instead of leaving a grey

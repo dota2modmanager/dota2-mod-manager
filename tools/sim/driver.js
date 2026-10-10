@@ -238,8 +238,11 @@ class Sim {
   async key(keyCode, modifiers = []) {
     const wc = this.win.webContents;
     wc.sendInputEvent({ type: 'keyDown', keyCode, modifiers });
-    // a printable key without Ctrl also types itself, which is what a field listens to
-    if (keyCode.length === 1 && !modifiers.includes('control')) wc.sendInputEvent({ type: 'char', keyCode, modifiers });
+    // a printable key without Ctrl also types itself, which is what a field listens to. So do
+    // Enter and Space: Chromium presses a focused button on the character, not on the key going
+    // down, and without it Enter on a button did nothing here while it worked under a hand.
+    const typed = keyCode === 'Enter' ? String.fromCharCode(13) : keyCode === 'Space' ? ' ' : keyCode.length === 1 ? keyCode : null;
+    if (typed && !modifiers.includes('control')) wc.sendInputEvent({ type: 'char', keyCode: typed, modifiers });
     await sleep(30);
     wc.sendInputEvent({ type: 'keyUp', keyCode, modifiers });
     await sleep(30);

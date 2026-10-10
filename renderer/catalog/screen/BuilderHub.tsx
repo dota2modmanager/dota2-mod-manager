@@ -3,6 +3,7 @@
  * told nobody anything). A hero opens its window (builder/HeroModal.tsx). */
 import type { CSSProperties } from 'react';
 import type { ScreenActions, ScreenModel } from './model.ts';
+import { CardName } from '../card/CardName.tsx';
 
 type Model = Extract<ScreenModel, { kind: 'builder' }>;
 
@@ -37,7 +38,7 @@ export function BuilderHub({ m, actions }: { m: Model; actions: ScreenActions })
                   </span>
                 </div>
                 <div className="card-body">
-                  <div className="card-name">{h.hero}</div>
+                  <CardName>{h.hero}</CardName>
                   <div className="card-meta"><span>{h.meta}</span></div>
                 </div>
               </div>

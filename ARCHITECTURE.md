@@ -422,7 +422,10 @@ again after one of its mods was deleted. `import` picks renamed catalog mods in 
 and a folder of them (the dialog's answer is played by `tools/sim/steps.js`), checks the app
 recognises and links them, and cancels once. `settings` switches the language and reads every screen
 for text left in the other one, and changes the scale and the switches. `game-session` plays the
-game starting, quitting and being updated or checked by Steam (`tools/sim/world.js`). The first
+game starting, quitting and being updated or checked by Steam (`tools/sim/world.js`). `a11y` runs
+axe-core and reads Chromium's accessibility tree over every section and window, walks the app with
+Tab, and opens, installs and removes a mod with the keyboard alone; what it holds the app to is in
+[docs/accessibility.md](docs/accessibility.md). The first
 machine of a set runs every scenario; the others run the ones a screen or a renderer can change
 (`looks` in the profiles). `tools/sim/dota.js` is a model of the game's
 loader, run over the sandbox after each step: what it mounts, which pack wins each file, whether
@@ -527,7 +530,7 @@ that location is not writable.
 | `renderer/api/*` | What every channel the window calls takes and answers |
 | `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*` | The four screens, in React |
 | `renderer/views/*` | What each screen reads and does around its components |
-| `renderer/ui/*` | Dialogs, toasts, the media player, the install queue, shared chrome |
+| `renderer/ui/*` | Dialogs, toasts, the media player, the install queue, shared chrome, and the focus and names a keyboard and a screen reader need (`a11y.ts`) |
 | `renderer/core/*` | What the screens share: the store, the router, the records, the categories, the 18+ question |
 | `renderer/motion/*` | How things move: travel, fold, swap, reveal |
 | `renderer/styles/*`, `renderer/fonts/*` | The tokens every size and colour comes from, and the faces |
