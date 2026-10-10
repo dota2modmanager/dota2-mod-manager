@@ -89,7 +89,9 @@ async function main() {
   const hero = arg('--hero', 'terrorblade');
   const camera = arg('--camera', '900');
   const vpk = arg('--vpk');
-  const out = path.resolve(arg('--out', path.join(os.tmpdir(), `d2mm-bench-${Date.now()}`)));
+  // without --out, a folder of its own in the temp dir, named at random and made in one step
+  const given = arg('--out');
+  const out = given ? path.resolve(given) : fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-bench-'));
   fs.mkdirSync(out, { recursive: true });
   if (dotaRunning()) throw new Error('bench: Dota is running; close it first, the bench does not take over a game');
   // it fills the screen and clicks: once it clicked into a video somebody was watching
