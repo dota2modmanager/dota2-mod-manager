@@ -3,13 +3,15 @@ Add-Type -AssemblyName System.Drawing
 Add-Type @"
 using System; using System.Runtime.InteropServices;
 public struct RECT { public int Left, Top, Right, Bottom; }
-public static class W2 { [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r); [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h); [DllImport("user32.dll")] public static extern bool SetProcessDPIAware(); }
+public static class W2 { [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r); [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h); [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern bool SetProcessDPIAware(); }
 "@
 [W2]::SetProcessDPIAware() | Out-Null
 $p = Get-Process dota2 -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $p) { Write-Output "no dota"; exit 1 }
 [W2]::SetForegroundWindow($p.MainWindowHandle) | Out-Null
 Start-Sleep -Milliseconds 300
+# never click, press or take a picture into another window: somebody may be using the computer
+if ([W2]::GetForegroundWindow() -ne $p.MainWindowHandle) { Write-Output "dota is not in front"; exit 3 }
 $r = New-Object RECT
 [W2]::GetWindowRect($p.MainWindowHandle, [ref]$r) | Out-Null
 $w = $r.Right - $r.Left; $h = $r.Bottom - $r.Top

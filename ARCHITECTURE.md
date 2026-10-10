@@ -426,6 +426,7 @@ that location is not writable.
 | `src/resource.ts` | Compiled resources at the block level: a block replaced, the resources a file names (RERL) added to |
 | `src/recolor.ts` | An item's particles and materials in a chosen colour, out of the game's own pak01, as one VPK: what its gem colours, pointed at the chosen colour ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118)) |
 | `src/arcana.ts` | An arcana as a mod built from the game's own files, for a player who has not got it: its models, glow and pictures under the plain hero's names, its colour written in |
+| `src/item-visuals.ts` | What an item changes while it is worn, read from its `visuals` in items_game, and what a mod built from the game's files has to do for each change. How to build one: [docs/item-mods.md](docs/item-mods.md) |
 | `src/mod-doctor.ts` | What is wrong with a mod's VPK, read from its files and the game's: a model's animations that need an item (in its animation clips, which the game picks by, and its sequences), sequences in another order than the game's, a particle's child drawn on the wrong attachment or missing |
 | `src/arcana-service.ts` | The arcana window's side in the main process: what the window shows, the mod built into My mods in an early slot, and built again after a Dota update |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
@@ -492,8 +493,9 @@ that location is not writable.
 | `tools/gen-fingerprints.js` | Regenerating the published fingerprint map, and `mod-paths.json`, the files each pak mod replaces |
 | `tools/dota-diff.mjs`, `tools/dota-watch.mjs` | What a Dota build changed, read from GameTracking-Dota2: by hand with `npm run dota:diff`, and twice an hour in the "Dota updates" issue |
 | `tools/recolor.mjs` | `npm run recolor`: the recolour, or with `--arcana` the whole arcana, as a VPK to import, before the window offers it |
+| `tools/item-plan.mjs` | `npm run item-plan -- <item>`: `src/item-visuals.ts` from the command line, the first step of building an item as a mod |
 | `tools/mod-doctor.mjs` | `npm run doctor -- <mod_dir.vpk>`: `src/mod-doctor.ts` from the command line, against the game folder in the app's settings |
-| `tools/dota-bench.mjs`, `tools/dota-bench/*.ps1` | `npm run dota:bench -- --vpk <mod_dir.vpk>`: a mod tried in the real game on Windows with nobody at the keyboard: hero demo started with the mod in a free slot, the hero levelled, set on a dummy, its abilities pressed, and pictures taken, a burst of them through the swing |
+| `tools/dota-bench.mjs`, `tools/dota-bench/*.ps1` | `npm run dota:bench -- --vpk <mod_dir.vpk>`: a mod tried in the real game on Windows with nobody at the keyboard: hero demo started with the mod in a free slot, the hero levelled, set on a dummy, its abilities pressed, and pictures taken, a burst of them through the swing, and whether the attack swings (`tools/dota-bench/verdict.mjs`) |
 | `tools/seo-report.mjs`, `tools/seo-state.mjs` | The weekly reach and search report posted to [issue #3](https://github.com/dota2modmanager/dota2-mod-manager/issues/3), and the numbers it carries from one week to the next inside the comment |
 | `tools/release-gate.mjs` | First job of every release: waits until the tagged commit has passed the checks in `.github/required-checks.json`, and refuses it otherwise |
 | `tools/check-credentials.mjs`, `tools/google-auth.mjs` | Every morning before the radar: tries each secret against its service and writes what works, what fails and when each expires, for the radar to report |

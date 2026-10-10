@@ -2,7 +2,7 @@
 /**
  * The bench: a mod tried in the real game, by the machine, with pictures to read afterwards.
  *
- *   npm run dota:bench -- --vpk <mod_dir.vpk> [--hero terrorblade] [--out <folder>] [--camera 900] [--short]
+ *   npm run dota:bench -- --vpk <mod_dir.vpk> [--hero terrorblade] [--out <folder>] [--camera 900] [--short] [--now]
  *   npm run dota:bench -- --hero terrorblade                the game as it is, for comparison
  *
  * It puts the mod into the language folder through the app's own installer (a free slot), starts
@@ -10,13 +10,17 @@
  * scenario: level 30, a target dummy to attack, Metamorphosis, Conjure Image (--short stops after the
  * attack). After each step it
  * captures the Dota window and a close-up around the hero, and copies the console log. Then it
- * closes Dota and takes the mod out again. The window fills a 1920x1080 screen, and the camera is
+ * closes Dota and takes the mod out again. Whether the hero swings through its attacks it says by
+ * itself, from the burst (tools/dota-bench/verdict.mjs), into verdict.json: a fidget at rest was once
+ * taken for the attack by eye. The window fills a 1920x1080 screen, and the camera is
  * brought closer than the game's 1134 (`+dota_camera_distance`, allowed in the demo's cheats).
  *
  * Nothing is typed into the game: buttons are clicked at their place in the window, and the
  * abilities are their keys sent as scan codes (Dota reads keys that way; SendKeys did nothing). A
- * key with no Enter after it cannot send anything to a chat, whatever has focus. It refuses to
- * start when Dota is already running, so it never takes over a game somebody is playing.
+ * key with no Enter after it cannot send anything to a chat. It refuses to start when Dota is
+ * already running, or when somebody touched the mouse or keyboard in the last two minutes (--now
+ * overrides that, when the computer's owner agrees), and every click, key and picture first checks
+ * that Dota's window is in front: once it clicked into a video playing over the game.
  *
  * Windows only, and Steam has to be running. The network consoles (-netconport, -vconsole) do not
  * answer in the retail game, which is why it works through the window. Written 2026-10-10 for
@@ -27,6 +31,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { attackVerdict, readDiffs } from './dota-bench/verdict.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const STEAM = 'C:/Program Files (x86)/Steam/steam.exe';
@@ -84,9 +89,16 @@ async function main() {
   const hero = arg('--hero', 'terrorblade');
   const camera = arg('--camera', '900');
   const vpk = arg('--vpk');
-  const out = path.resolve(arg('--out', path.join(os.tmpdir(), `d2mm-bench-${Date.now()}`)));
+  // without --out, a folder of its own in the temp dir, named at random and made in one step
+  const given = arg('--out');
+  const out = given ? path.resolve(given) : fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-bench-'));
   fs.mkdirSync(out, { recursive: true });
   if (dotaRunning()) throw new Error('bench: Dota is running; close it first, the bench does not take over a game');
+  // it fills the screen and clicks: once it clicked into a video somebody was watching
+  const idle = Number(ps('idle.ps1'));
+  if (idle < 120 && !process.argv.includes('--now')) {
+    throw new Error(`bench: somebody used this computer ${idle} s ago; the bench takes the screen and clicks, so run it when the computer is free, or with --now when its owner says so`);
+  }
   const settings = appSettings();
   const game = settings.dotaGamePath;
   if (!game) throw new Error('bench: no game folder in the app settings');
@@ -115,10 +127,12 @@ async function main() {
     shot('02-attack');
     // the swing itself: one picture a second would catch it at the same point every time
     const [fx, fy, fw, fh] = AT.fight;
-    ps('burst.ps1', '-Out', out, '-Prefix', '02-swing', '-X', fx, '-Y', fy, '-W', fw, '-H', fh, '-Count', 16, '-EveryMs', 80);
+    const diffs = readDiffs(ps('burst.ps1', '-Out', out, '-Prefix', '02-swing', '-X', fx, '-Y', fy, '-W', fw, '-H', fh, '-Count', 16, '-EveryMs', 80));
     const swing = Array.from({ length: 16 }, (_, i) => path.join(out, `02-swing-${String(i).padStart(2, '0')}.png`));
     ps('sheet.ps1', '-Out', path.join(out, '02-swing.png'), '-Columns', 8, '-Scale', 0.6, ...swing);
-    console.log('bench: 02-swing, 16 pictures 80 ms apart');
+    const verdict = attackVerdict(diffs);
+    fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify({ vpk: vpk ?? null, hero, ...verdict, diffs }, null, 2));
+    console.log(`bench: 02-swing, 16 pictures 80 ms apart; the attack ${verdict.swings ? 'swings' : verdict.swings === false ? 'DOES NOT SWING' : 'could not be judged'} (median change ${verdict.median})`);
     if (!process.argv.includes('--short')) {
       ps('input.ps1', 'key', 'e');
       await sleep(2500);

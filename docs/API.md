@@ -61,6 +61,7 @@ the code, not in this page.
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
 | [`src/item-builder-slots.ts`](#srcitem-builder-slotsts) | The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit |
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
+| [`src/item-visuals.ts`](#srcitem-visualsts) | What an item does to the game, read from its block in items_game ("visuals"), and what a mod |
 | [`src/kv3-blobs.ts`](#srckv3-blobsts) | Binary blobs in a KV3 block (src/kv3.ts): where they lie, how they are read, and how they are |
 | [`src/kv3-cells.ts`](#srckv3-cellsts) | The numbers in a parsed KV3 block (src/kv3.ts): read one where it lies, change it there, and the |
 | [`src/kv3-write.ts`](#srckv3-writets) | A KV3 block written anew from its tree (src/kv3.ts), for changes that are more than a number: |
@@ -2723,6 +2724,75 @@ export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | nu
 ```
 
 Read compiled asset bytes out of pak01 and stage them under the renamed path in our VPK.
+
+## src/item-visuals.ts
+
+What an item does to the game, read from its block in items_game ("visuals"), and what a mod
+built from the game's own files has to do to show it on a hero who does not own the item: the
+plan that src/arcana.ts carries out for Terrorblade's arcana (issue #118), worked out by hand
+there, for any item.
+
+Each asset modifier is one change the item makes while it is worn. Some are files and can be
+put under the plain names (a model, a particle, a picture); some only the item can switch on
+(an activity modifier, which a model then needs taken off its animations, and a particle the
+item creates, which needs a host); some live outside the files altogether (sounds, the kill
+effect, voice lines) and a mod cannot give them.
+
+### `AssetModifier`
+
+```ts
+export interface AssetModifier { type: string; asset: string; modifier: string; style: string | null }
+```
+
+_No description in the source._
+
+### `ItemVisuals`
+
+```ts
+export interface ItemVisuals
+```
+
+_No description in the source._
+
+### `PlanStep`
+
+```ts
+export interface PlanStep { what: string; how: string; done: 'built' | 'by hand' | 'cannot' }
+```
+
+One thing a build from the game's files has to do, and whether this code does it.
+
+### `itemVisuals`
+
+```ts
+export function itemVisuals(text: string, id: string | number): ItemVisuals | null
+```
+
+An item's visuals, by its id; null when the table has no such item.
+
+### `findItems`
+
+```ts
+export function findItems(text: string, query: string): { id: string; name: string }[]
+```
+
+Items whose name has `query` in it (any case), or the one with that id.
+
+### `defaultItem`
+
+```ts
+export function defaultItem(text: string, hero: string, slot: string): { id: string; model: string } | null
+```
+
+The free item of a hero's slot, whose model the item's own model takes the place of.
+
+### `buildPlan`
+
+```ts
+export function buildPlan(text: string, v: ItemVisuals): PlanStep[]
+```
+
+What a build from the game's files has to do for each of the item's changes.
 
 ## src/kv3-blobs.ts
 
