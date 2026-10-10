@@ -1,6 +1,6 @@
 /* The state of the game and the things that shape it: what the app was told from the network,
  * the search-path patch and its repair after a Dota update, the item schema, free cosmetics,
- * mod previews, and the Source 2 toolchain.
+ * mod previews, the Source 2 toolchain, and the arcana built out of the game's own files.
  *
  * These are the channels that answer "what is the game like right now" rather than "do this to
  * a mod".
@@ -16,9 +16,9 @@ import type { AppContext } from './app-context.ts';
 export function registerGameIpc({
   // patchRepair() is read late and written through setPatchRepair: it changes while the app
   // runs, and a value captured at registration would answer for the wrong moment forever.
-  blocked, diag, dotaIsRunning, gameIcons, icons, modPreviews, remoteConfig,
+  afterDeployMaster, arcana, blocked, diag, dotaIsRunning, gameIcons, icons, modPreviews, remoteConfig,
   repairAfterPatch, schemaService, settings, toolchain, patchRepair, setPatchRepair,
-}: Pick<AppContext, 'blocked' | 'diag' | 'dotaIsRunning' | 'gameIcons' | 'icons' | 'modPreviews' | 'remoteConfig' | 'repairAfterPatch' | 'schemaService' | 'settings' | 'toolchain' | 'patchRepair' | 'setPatchRepair'>): void {
+}: Pick<AppContext, 'afterDeployMaster' | 'arcana' | 'blocked' | 'diag' | 'dotaIsRunning' | 'gameIcons' | 'icons' | 'modPreviews' | 'remoteConfig' | 'repairAfterPatch' | 'schemaService' | 'settings' | 'toolchain' | 'patchRepair' | 'setPatchRepair'>): void {
   const { ipcMain } = electron();
 
   // A switch is honoured here rather than in the renderer: this is the boundary an old
@@ -216,6 +216,29 @@ export function registerGameIpc({
     if (stop) return stop;
     try {
       return { ok: true, ...schemaService.pickSet(setId) };
+    } catch (err) {
+      return { error: errorText(err) };
+    }
+  });
+
+  // The arcana window (src/arcana-service.ts): its picture and what is installed, and building it.
+  // The built mod is a library record like any other; switching it off or removing it goes
+  // through mods:setEnabled and mods:remove.
+  ipcMain.handle('arcana:state', () => {
+    try {
+      return { ok: true, ...arcana.state() };
+    } catch (err) {
+      return { error: errorText(err) };
+    }
+  });
+
+  ipcMain.handle('arcana:install', (e, color, mode) => {
+    const stop = blocked('install');
+    if (stop) return stop;
+    try {
+      const record = arcana.install(color, mode);
+      afterDeployMaster();
+      return { ok: true, record };
     } catch (err) {
       return { error: errorText(err) };
     }

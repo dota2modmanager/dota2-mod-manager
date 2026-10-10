@@ -1,5 +1,6 @@
 /* Where the catalog hands a window to React: a mod's (ModModal.tsx), a free look's
- * (cosmetic/CosmeticModal.tsx) or one of the item builder's (builder/). Drawn synchronously, so
+ * (cosmetic/CosmeticModal.tsx), the arcana's (arcana/ArcanaModal.tsx) or one of the item
+ * builder's (builder/). Drawn synchronously, so
  * the window is laid out by the time the overlay shows and modal-motion.ts measures it to grow it
  * out of the card. A builder window carries the number of the time it was opened: the same number
  * updates the window on show, a new one draws it fresh, entrances and all. */
@@ -9,6 +10,7 @@ import { flushSync } from 'react-dom';
 import { ModModal } from './ModModal.tsx';
 import type { ModModalActions, ModModalModel } from './model.ts';
 import { CosmeticModal, type CosmeticModalActions, type CosmeticModalModel } from '../cosmetic/CosmeticModal.tsx';
+import { ArcanaModal, type ArcanaModalActions, type ArcanaModalModel } from '../arcana/ArcanaModal.tsx';
 import { SlotPicker } from '../builder/SlotPicker.tsx';
 import { HeroModal } from '../builder/HeroModal.tsx';
 import { SetModal, SetsModal } from '../builder/SetsModal.tsx';
@@ -31,6 +33,8 @@ export const clearModal = (): void => show(null);
 export const showModModal = (model: ModModalModel, actions: ModModalActions): void => show(<ModModal m={model} actions={actions} />);
 export const showCosmeticModal = (model: CosmeticModalModel, actions: CosmeticModalActions): void =>
   show(<CosmeticModal m={model} actions={actions} />);
+export const showArcanaModal = (model: ArcanaModalModel, actions: ArcanaModalActions): void =>
+  show(<ArcanaModal m={model} actions={actions} />);
 
 export const showSlotPicker = (key: number, m: B.SlotPickerModel, actions: B.SlotPickerActions): void =>
   show(<SlotPicker key={key} m={m} actions={actions} />);

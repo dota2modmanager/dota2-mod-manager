@@ -2,6 +2,7 @@
  * split keeps the rules (which mods, which chips, which heading) where the data is, and the
  * markup in one place per shape. */
 import type { Filters, Mod } from '../types.ts';
+import type { ArcanaCardModel } from '../arcana/ArcanaCard.tsx';
 import type { CosmeticItem } from '../cosmetic/CosmeticCard.tsx';
 
 export interface ToolbarModel {
@@ -55,6 +56,8 @@ export type ScreenModel =
     back?: boolean;
     toolbar: ToolbarModel | null;
     note?: string;
+    /** a tool the app has in it, first in the grid (the arcana's, among the tools) */
+    lead?: ArcanaCardModel | null;
     mods: (GridModel & { heading: boolean }) | null;
     cosmetics: { items: CosmeticItem[]; emptyText?: string; more?: string } | null;
   }
@@ -96,4 +99,5 @@ export interface ScreenActions {
   cosmeticFavChanged: () => void;
   cosmeticFilter: (patch: { sort?: string; installedOnly?: boolean; favOnly?: boolean; search?: string }) => void;
   openHero: (hero: string, card: HTMLElement) => void;
+  openArcana: (card: HTMLElement) => void;
 }

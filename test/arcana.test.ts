@@ -20,7 +20,7 @@ import { recolorResource, type Rgb } from '../src/recolor.ts';
 import { buildArcana, withChildren } from '../src/arcana.ts';
 import { materialExpressions } from '../src/material.ts';
 import { buildVpk, entryAt, openVpkIndex } from '../src/vpk.ts';
-import { at, encodeKv3, particle, remap, resource, type V } from './helpers/kv3-build.ts';
+import { at, encodeKv3, host, particle, remap, resource, rerl, type V } from './helpers/kv3-build.ts';
 
 /** A tree as plain data, every number as the bytes it is stored in, to compare two blocks by. */
 function plain(kv: Kv3Block, n: Kv3Node): unknown {
@@ -79,21 +79,6 @@ test('a resource is named in RERL by the id the game gives it', () => {
   assert.equal(resourceId('particles/units/heroes/hero_terrorblade/terrorblade_ambient_eye.vpcf'), 0xecab88b177c7aabcn);
 });
 
-/** A RERL block naming `paths`. */
-function rerl(paths: string[]): Buffer {
-  const head = Buffer.alloc(8 + paths.length * 16);
-  head.writeUInt32LE(8, 0);
-  head.writeUInt32LE(paths.length, 4);
-  let text = head.length;
-  paths.forEach((p, k) => {
-    const e = 8 + k * 16;
-    head.writeBigUInt64LE(resourceId(p), e);
-    head.writeUInt32LE(text - (e + 8), e + 8);
-    text += p.length + 1;
-  });
-  return Buffer.concat([head, ...paths.map((p) => Buffer.from(`${p}\0`))]);
-}
-
 test('a resource named in RERL is added once, with its id, and the blocks after move and stay aligned', () => {
   const data = encodeKv3({ obj: [['m_nCount', { int: 7 }]] });
   const file = resource([['RERL', rerl(['particles/a.vpcf'])], ['DATA', data]]);
@@ -106,23 +91,6 @@ test('a resource named in RERL is added once, with its id, and the blocks after 
   assert.equal(next.readUInt32LE(0), next.length);
   assert.deepEqual(references(resource([['DATA', data]])), [], 'a file with no RERL names nothing');
 });
-
-/**
- * A particle with children, named in RERL, the way the arcana's eyes are: it binds a control point
- * to an attachment per child and hands point k to child k.
- */
-const host = (children = ['particles/eye.vpcf']) => resource([
-  ['RERL', rerl(children)],
-  ['DATA', encodeKv3({ obj: [
-    ['m_ConstantColor', { i32s: [0, 210, 255, 255] }],
-    ['m_Children', { arr: children.map((c): V => ({ obj: [['m_ChildRef', { ref: c }], ['m_flDelay', { dbl: 0.5 }]] })) }],
-    ['m_controlPointConfigurations', { arr: [{ obj: [['m_name', { str: 'preview' }], ['m_drivers', { arr: children.map((_, k): V => ({ obj: [
-      ...(k ? [['m_iControlPoint', { int: k }] as [string, V]] : []),
-      ['m_iAttachType', { str: 'PATTACH_POINT_FOLLOW' }], ['m_entityName', { str: 'parent' }], ['m_attachmentName', { str: `attach_${k}` }],
-    ] })) }]] }] }],
-    ['m_PreEmissionOperators', { arr: [{ obj: [['_class', { str: 'C_OP_SetParentControlPointsToChildCP' }], ['m_nNumControlPoints', { int: children.length }]] }] }],
-  ] })],
-]);
 
 test('a particle is given another child, copied from its first, and names it in RERL', () => {
   const next = withChildren(host(), [{ path: 'particles/body.vpcf' }]);

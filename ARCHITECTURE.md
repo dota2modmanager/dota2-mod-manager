@@ -426,6 +426,7 @@ that location is not writable.
 | `src/resource.ts` | Compiled resources at the block level: a block replaced, the resources a file names (RERL) added to |
 | `src/recolor.ts` | An item's particles and materials in a chosen colour, out of the game's own pak01, as one VPK: what its gem colours, pointed at the chosen colour ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118)) |
 | `src/arcana.ts` | An arcana as a mod built from the game's own files, for a player who has not got it: its models, glow and pictures under the plain hero's names, its colour written in |
+| `src/arcana-service.ts` | The arcana window's side in the main process: what the window shows, the mod built into My mods in an early slot, and built again after a Dota update |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
 | `src/discord-auth.ts`, `src/discord-presence.ts`, `src/presence-status.ts` | Signing in with Discord, and what the Discord status says and whether it is on |

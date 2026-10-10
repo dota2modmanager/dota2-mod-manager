@@ -741,3 +741,21 @@
 .layout-toggle .seg-btn:hover { color: var(--text); background: var(--surface); }
 .layout-toggle .seg-btn.active { background: var(--primary-dim); color: var(--primary-soft); }
 .layout-toggle .seg-btn:focus-visible { outline: none; box-shadow: var(--focus-ring-inset); }
+
+/* The arcana's window (catalog/arcana/ArcanaModal.tsx). The own colour is the system's picker,
+   kept under its pill and opened by it; before a colour is picked the pill carries a glyph in
+   place of the dot. The other build sits last in the row, quieter than the two buttons. */
+.arcana-own { position: relative; }
+.arcana-own:not([style])::before { display: none; }
+.arcana-own .ms { font-size: var(--text-md); }
+.arcana-own input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; }
+.modal-actions .arcana-mode { margin-left: auto; }
+/* The arcana's own picture is a 256-pixel item icon: drawn whole, at about twice its size rather
+   than four, in a shorter frame (the audio window's), its edges faded into the window's so its
+   square background does not show. */
+.modal-media.arcana-media { aspect-ratio: 16 / 7; }
+.modal-media.arcana-media img {
+  width: auto; max-width: 100%;
+  object-fit: contain;
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%);
+}

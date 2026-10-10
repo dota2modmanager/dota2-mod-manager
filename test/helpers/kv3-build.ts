@@ -5,6 +5,7 @@
  */
 import { lz4Literals } from '../../src/lz4.ts';
 import { readCell, type Kv3Block, type Kv3Node } from '../../src/kv3.ts';
+import { resourceId } from '../../src/resource.ts';
 
 /** A value as the test writes it, one key per KV3 type the encoder below knows. */
 export type V = { int: number } | { i32s: number[] } | { str: string } | { yes: true } | { one: true } | { dbl: number }
@@ -131,3 +132,34 @@ export function at(node: Kv3Node, ...p: (string | number)[]): Kv3Node {
 }
 export const range = (kv: Kv3Block, n: Kv3Node) => (n as Extract<Kv3Node, { kind: 'array' }>).items.map((x) => +readCell(kv, (x as { cell: NonNullable<Parameters<typeof readCell>[1]> }).cell).toFixed(3));
 
+/** A RERL block naming `paths`. */
+export function rerl(paths: string[]): Buffer {
+  const head = Buffer.alloc(8 + paths.length * 16);
+  head.writeUInt32LE(8, 0);
+  head.writeUInt32LE(paths.length, 4);
+  let text = head.length;
+  paths.forEach((p, k) => {
+    const e = 8 + k * 16;
+    head.writeBigUInt64LE(resourceId(p), e);
+    head.writeUInt32LE(text - (e + 8), e + 8);
+    text += p.length + 1;
+  });
+  return Buffer.concat([head, ...paths.map((p) => Buffer.from(`${p}\0`))]);
+}
+
+/**
+ * A particle with children, named in RERL, the way the arcana's eyes are: it binds a control point
+ * to an attachment per child and hands point k to child k.
+ */
+export const host = (children = ['particles/eye.vpcf']) => resource([
+  ['RERL', rerl(children)],
+  ['DATA', encodeKv3({ obj: [
+    ['m_ConstantColor', { i32s: [0, 210, 255, 255] }],
+    ['m_Children', { arr: children.map((c): V => ({ obj: [['m_ChildRef', { ref: c }], ['m_flDelay', { dbl: 0.5 }]] })) }],
+    ['m_controlPointConfigurations', { arr: [{ obj: [['m_name', { str: 'preview' }], ['m_drivers', { arr: children.map((_, k): V => ({ obj: [
+      ...(k ? [['m_iControlPoint', { int: k }] as [string, V]] : []),
+      ['m_iAttachType', { str: 'PATTACH_POINT_FOLLOW' }], ['m_entityName', { str: 'parent' }], ['m_attachmentName', { str: `attach_${k}` }],
+    ] })) }]] }] }],
+    ['m_PreEmissionOperators', { arr: [{ obj: [['_class', { str: 'C_OP_SetParentControlPointsToChildCP' }], ['m_nNumControlPoints', { int: children.length }]] }] }],
+  ] })],
+]);

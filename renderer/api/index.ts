@@ -5,7 +5,7 @@
  * from its handler in src/ipc-*.js; a change to what a handler answers changes the type beside
  * the others of its group here. */
 import type { AppApi } from './app.ts';
-import type { CatalogApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';
+import type { ArcanaApi, CatalogApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';
 import type { ModsApi, PacksApi } from './mods.ts';
 
 export interface Api extends AppApi {
@@ -18,6 +18,8 @@ export interface Api extends AppApi {
   /** what the app was told from the network: features switched off, dated notices */
   config: ConfigApi;
   cosmetics: CosmeticsApi;
+  /** the arcana built out of the game's own files */
+  arcana: ArcanaApi;
   preview: PreviewApi;
   packs: PacksApi;
   presets: PresetsApi;

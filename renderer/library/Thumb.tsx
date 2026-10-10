@@ -4,6 +4,7 @@
 import { Fragment, useEffect, useRef } from 'react';
 import { watchIconFor } from '../ui/cosmetic-icons.ts';
 import { useCosmeticIcon } from '../catalog/cosmetic/CosmeticCard.tsx';
+import { useArcanaPicture, useTinted } from '../catalog/arcana/tint.ts';
 import type { PackRowModel, Tag, Thumb as ThumbModel } from './model.ts';
 
 export function Thumb({ thumb, cls }: { thumb: ThumbModel; cls: string }) {
@@ -13,7 +14,14 @@ export function Thumb({ thumb, cls }: { thumb: ThumbModel; cls: string }) {
       : <img className={cls} src={thumb.url} loading="lazy" alt="" />;
   }
   if ('key' in thumb) return <Fetched name={thumb.key} icon={thumb.icon} cls={cls} />;
+  if ('arcana' in thumb) return <ArcanaThumb color={thumb.arcana} cls={cls} />;
   return <div className={cls}>{thumb.icon && <span className="ms thumb-glyph">{thumb.icon}</span>}</div>;
+}
+
+/** The arcana the app built, in its colour (catalog/arcana/). */
+function ArcanaThumb({ color, cls }: { color: [number, number, number]; cls: string }) {
+  const src = useTinted(useArcanaPicture(), color);
+  return src ? <img className={cls} src={src} alt="" /> : <div className={cls}><span className="ms thumb-glyph">palette</span></div>;
 }
 
 /* Asked for once it scrolls near. A lookup that came back with nothing leaves the tile as it was

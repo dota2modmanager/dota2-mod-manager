@@ -62,7 +62,7 @@ export async function runSteps(steps: Step[], diag: (msg: string) => void): Prom
 }
 
 export function createGameUpkeep({
-  settings, installer, library, schemaService, updateImpact = null, reconcileCursors, diag, send,
+  settings, installer, library, schemaService, updateImpact = null, rebuildGenerated, reconcileCursors, diag, send,
   isRunning = () => dotaIsRunning(), findGame, validGame, retryMs = REPAIR_RETRY_MS, now = Date.now,
 }: {
   settings: Pick<Settings, 'get' | 'set'>;
@@ -70,7 +70,9 @@ export function createGameUpkeep({
   library: Library;
   schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal' | 'migrate' | 'migrateCosmeticSettings'>;
   /** which mods a patch reached (src/update-impact.ts) */
-  updateImpact?: Pick<ReturnType<typeof createUpdateImpact>, 'check'> | null;
+  updateImpact?: Pick<ReturnType<typeof createUpdateImpact>, 'check' | 'clear'> | null;
+  /** builds again, from the new files, the mods the app built out of the game's (src/arcana-service.ts) */
+  rebuildGenerated?: (ids: string[]) => string[];
   /** puts the switched-on cursor set back on disk (src/cursors.ts) */
   reconcileCursors: () => void;
   diag: (msg: string) => void;
@@ -90,7 +92,7 @@ export function createGameUpkeep({
   let langFolder = gamelang.FALLBACK_FOLDER;
   let langMigration: LangMigration | null = null;
   let slotMigration: { moved: number } | null = null;
-  const repair = createGameRepair({ settings, installer, library, schemaService, updateImpact, diag, send, isRunning, retryMs, now });
+  const repair = createGameRepair({ settings, installer, library, schemaService, updateImpact, rebuildGenerated, diag, send, isRunning, retryMs, now });
 
   /* Auto-detect on first run, and re-detect whenever the saved path stopped being a Dota install:
    * a library moved to another drive leaves the old tree behind, and writing mods into it looks

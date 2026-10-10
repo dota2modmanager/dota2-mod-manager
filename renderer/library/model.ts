@@ -15,6 +15,8 @@ export interface Tag {
 export type Thumb =
   | { url: string; video: boolean }
   | { key: string; icon: string | null }
+  /** the arcana the app built, its picture out of the game in the colour it was built in */
+  | { arcana: [number, number, number] }
   | { icon: string | null };
 
 export interface RowModel {

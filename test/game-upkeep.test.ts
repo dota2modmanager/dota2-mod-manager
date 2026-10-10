@@ -38,7 +38,8 @@ type Rec = { id: string; name: string };
 function stand({ game = null as string | null, running = false, stored = {} as Record<string, unknown>, lost = [] as Rec[],
   restore = (_r: Rec): string | null => null, heal = () => ({ healed: [] as string[], error: null as string | null }),
   failLegacy = false, slotsMoved = 0, findGame = async (): Promise<string | null> => null,
-  reach = null as (() => { from: string | null; to: string | null; ids: string[] } | null) | null, mods = [] as Rec[] } = {}) {
+  reach = null as (() => { from: string | null; to: string | null; ids: string[] } | null) | null, mods = [] as Rec[],
+  rebuild = undefined as ((ids: string[]) => string[]) | undefined, cleared = [] as string[] } = {}) {
   const store = new Map<string, unknown>(Object.entries({ dotaGamePath: game, ...stored }));
   const said: string[] = [];
   const sent: PatchRepair[] = [];
@@ -60,7 +61,8 @@ function stand({ game = null as string | null, running = false, stored = {} as R
       migrate: () => ({ changed: 0 }),
       migrateCosmeticSettings: () => { asked.push('cosmetics'); },
     } as never,
-    updateImpact: reach ? { check: reach } : null,
+    updateImpact: reach ? { check: reach, clear: (id: string) => { cleared.push(id); return true; } } : null,
+    rebuildGenerated: rebuild,
     reconcileCursors: () => { asked.push('cursors'); },
     diag: (m) => said.push(m),
     send: (r) => sent.push(r),
@@ -196,6 +198,21 @@ test('the mods a patch reached are named in the repair, at start and while the a
   await broken.upkeep.repairAfterPatch();
   assert.equal(broken.sent.at(-1)?.state, 'done', 'the repair stands without it');
   assert.ok(broken.said.some((m) => m.includes('update impact skipped')));
+});
+
+test('a mod the app built out of the game files is built again after a patch, and not named as behind it', async (t) => {
+  const game = fakeGame(t, { build: '6946' });
+  const mods = [{ id: 'hud', name: 'Golden HUD' }, { id: 'arcana', name: 'Fractal Horns of Inner Abysm' }];
+  const cleared: string[] = [];
+  const asked: string[][] = [];
+  const both = stand({ game, mods, cleared, reach: () => ({ from: '6944', to: '6946', ids: ['hud', 'arcana'] }), rebuild: (ids) => { asked.push(ids); return ['arcana']; } });
+  await both.upkeep.repairAfterPatch();
+  assert.deepEqual(asked, [['hud', 'arcana']]);
+  assert.deepEqual(both.sent.at(-1)?.touched, { build: '6946', mods: ['Golden HUD'] });
+  assert.deepEqual(cleared, ['arcana'], 'its mark goes: it is not behind the patch any more');
+  const only = stand({ game, mods, reach: () => ({ from: '6944', to: '6946', ids: ['arcana'] }), rebuild: () => ['arcana'] });
+  await only.upkeep.repairAfterPatch();
+  assert.equal('touched' in (only.sent.at(-1) || {}), false, 'nothing left to tell');
 });
 
 test('a step that fails at start is logged and the ones after it still run', async (t) => {

@@ -27,6 +27,7 @@ import { buildModIndex, cosmeticSlotList, favoriteCosmetics, favoriteMods, isIte
 import { renderCategory, renderCosmeticCategory, renderFavorites, renderHome, renderSearchResults } from './catalog/screens.ts';
 import { openModWindow } from './catalog/mod-window.ts';
 import { afterCosmeticPick, openCosmeticWindow, pickCosmetic } from './catalog/cosmetics.ts';
+import { openArcanaWindow } from './catalog/arcana.ts';
 import { screen, view } from './catalog/state.ts';
 
 registerView('catalog', () => renderCatalog());
@@ -129,6 +130,7 @@ const actions: ScreenActions = {
     renderCatalog();
   },
   openHero: (hero, card) => openItemHeroModal(hero, card),
+  openArcana: (card) => void openArcanaWindow(card),
 };
 
 async function renderCatalog(): Promise<void> {

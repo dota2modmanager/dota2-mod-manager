@@ -18,6 +18,7 @@ import * as discordAuth from './discord-auth.ts';
 import { DiscordPresence } from './discord-presence.ts';
 import { createSchemaService } from './schema-service.ts';
 import { createUpdateImpact, impactMods } from './update-impact.ts';
+import { createArcanaService } from './arcana-service.ts';
 import { clientVersion } from './patch-watch.ts';
 import { createRemoteConfig } from './remote-config.ts';
 // the download chain, so a mirror named in that signed file joins it
@@ -71,6 +72,8 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
     build: clientVersion,
     log: diag,
   });
+  // the arcana built out of the game's own files, in a colour of the user's (src/arcana.ts)
+  const arcana = createArcanaService({ gamePath: () => settings.get('dotaGamePath'), installer, library, log: diag });
   const cursors = createCursors({ installer, library, settings });
   const adopt = createAdopt({ installer, library, schemaService });
   // what the app can be told after it shipped: a feature switched off with a reason, and dated
@@ -122,7 +125,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 
   return {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, icons, toolchain, gameIcons, modPreviews,
+    remoteConfig, icons, toolchain, gameIcons, modPreviews, arcana,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers,
   };
 }
