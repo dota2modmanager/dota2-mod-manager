@@ -206,7 +206,11 @@ test('a jailed run lets in the temp folder and the folders the dev switches writ
       assert.ok(roots.includes(fold(fs.realpathSync.native(os.tmpdir()))));
       assert.ok(roots.includes(fold(fs.realpathSync.native(shots))));
       assert.ok(roots.includes(fold(fs.realpathSync.native(sim))));
-      assert.equal(insideJail(path.join(base, 'elsewhere', 'x')), roots.some((r) => fold(base).startsWith(r)), 'and nothing else');
+      // a folder in none of them: the repository itself. (Not one under base, which sits in the temp
+      // folder; and not judged by spelling: a CI runner's temp folder is RUNNER~1, an 8.3 short name
+      // that only its real path makes equal to the root.)
+      assert.equal(insideJail(path.resolve(import.meta.dirname, '..', 'not-in-the-jail', 'x')), false, 'and nothing else');
+      assert.equal(insideJail(path.join(base, 'elsewhere', 'x')), true, 'the temp folder, under whatever name it is reached by');
     } finally {
       installWriteJail([base])();
     }
