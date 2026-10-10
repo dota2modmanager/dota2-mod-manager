@@ -903,7 +903,7 @@
       "file": "src/installer-slots.ts",
       "anchor": "export function swapSlots(",
       "from": "const parked = inst.moveToSlot(a, 'pak00', aBase, tx);",
-      "to": "const parked = inst.moveToSlot(a, 'pak00', aBase);",
+      "to": "const parked = inst.moveToSlot(a, 'pak00', aBase, new FileTx(inst.log));",
       "test": "test/installer.test.ts"
     },
     {
@@ -919,7 +919,7 @@
       "file": "src/slot-zones.ts",
       "anchor": "export function migrateSlotZones(",
       "from": "p.parked = installer.moveToSlot({ ...p.r, files: p.r.files }, p.park, p.from, tx);",
-      "to": "p.parked = installer.moveToSlot({ ...p.r, files: p.r.files }, p.park, p.from);",
+      "to": "p.parked = installer.moveToSlot({ ...p.r, files: p.r.files }, p.park, p.from, new FileTx(installer.log));",
       "test": "test/installer.test.ts"
     },
     {
@@ -1397,17 +1397,17 @@
     {
       "name": "a tool record naming a path out of the tools folder is run",
       "file": "src/ipc-misc.ts",
-      "anchor": "ipcMain.handle('misc:runTool'",
-      "from": "if (path.dirname(dir) !== path.resolve(installer.toolsDir)) return { error: t('Инструмент не найден') };",
-      "to": "",
+      "anchor": "const toolFolder = (name: unknown): string | null => {",
+      "from": "known && path.dirname(dir) === path.resolve(installer.toolsDir) ? dir : null",
+      "to": "known ? dir : null",
       "test": "test/run-tool.test.ts"
     },
     {
       "name": "any folder name is run as a tool",
       "file": "src/ipc-misc.ts",
-      "anchor": "ipcMain.handle('misc:runTool'",
-      "from": "if (!known) return { error: t('Инструмент не найден') };",
-      "to": "",
+      "anchor": "const toolFolder = (name: unknown): string | null => {",
+      "from": "known && path.dirname(dir) === path.resolve(installer.toolsDir) ? dir : null",
+      "to": "path.dirname(dir) === path.resolve(installer.toolsDir) ? dir : null",
       "test": "test/run-tool.test.ts"
     },
     {
@@ -1529,6 +1529,70 @@
       "lineStartsWith": "      record?.(files);",
       "to": "      setImmediate(() => record?.(files));",
       "test": "test/file-tx-crash.test.ts"
+    },
+    {
+      "name": "a tool folder outside the installed tools is opened",
+      "file": "src/ipc-misc.ts",
+      "anchor": "ipcMain.handle('misc:openToolsFolder'",
+      "from": "const p = sub ? toolFolder(sub) : installer.toolsDir;",
+      "to": "const p = sub ? path.join(installer.toolsDir, String(sub)) : installer.toolsDir;",
+      "test": "test/window-guard.test.ts"
+    },
+    {
+      "name": "the window may set any setting",
+      "file": "src/channel-args.ts",
+      "anchor": "const settingsSet: Check[] = [",
+      "from": "Object.hasOwn(WINDOW_SETTINGS, key)",
+      "to": "true",
+      "test": "test/window-guard.test.ts"
+    },
+    {
+      "name": "a call from any page is answered",
+      "file": "src/window-guard.ts",
+      "anchor": "const refuse = (e: Sender): string | null => {",
+      "from": "if (!isAppPage(frame.url)) return",
+      "to": "if (false) return",
+      "test": "test/window-guard.test.ts"
+    },
+    {
+      "name": "a call from a frame inside the page is answered",
+      "file": "src/window-guard.ts",
+      "anchor": "const refuse = (e: Sender): string | null => {",
+      "from": "if (frame.parent) return",
+      "to": "if (false) return",
+      "test": "test/window-guard.test.ts"
+    },
+    {
+      "name": "a channel registers without an argument check",
+      "file": "src/window-guard.ts",
+      "anchor": "const known = (channel: string) => {",
+      "from": "if (!Object.hasOwn(CHANNEL_ARGS, channel)) throw",
+      "to": "if (false) throw",
+      "test": "test/window-guard.test.ts"
+    },
+    {
+      "name": "an object with keys nobody sends gets through",
+      "file": "src/channel-args.ts",
+      "anchor": "const shape = (fields: Record<string, Check>): Check => (v) => {",
+      "from": "if (!(key in fields)) return",
+      "to": "if (false) return",
+      "test": "test/window-guard.test.ts"
+    },
+    {
+      "name": "the browser is handed any address",
+      "file": "src/ipc-misc.ts",
+      "anchor": "ipcMain.handle('misc:openExternal'",
+      "from": "if (/^https?:$/.test(new URL(String(url)).protocol)) shell.openExternal(String(url));",
+      "to": "shell.openExternal(String(url));",
+      "test": "test/window-guard.test.ts"
+    },
+    {
+      "name": "every permission is granted to the app pages",
+      "file": "src/window-guard.ts",
+      "anchor": "const permissions = (session",
+      "from": "const ok = PERMISSIONS.has(permission) && isAppPage",
+      "to": "const ok = isAppPage",
+      "test": "test/window-guard.test.ts"
     }
   ]
 }

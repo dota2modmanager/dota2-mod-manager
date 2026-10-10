@@ -22,11 +22,25 @@ beyond what `window.api` exposes, and the window refuses to navigate away from i
 is not ceremony: the app renders guide text and mod names that come from a repository we do not
 control, so the renderer is treated as a place where hostile strings end up.
 
+So the main process does not trust it either. Every channel is registered through
+`src/window-guard.ts`, which answers a call only when it comes from the top frame of one of the
+app's two pages (the main window's and the removal window's) and its arguments fit the channel's
+entry in `src/channel-args.ts`: types, sizes, the keys of an object, and for `settings:set` the
+eight settings the window has a control for, so the game folder and the Discord account are not
+one call away from a script. A channel with no entry there refuses to register, so the app does
+not start with one. The same guard grants the page two browser permissions (the clipboard and
+fullscreen) and nothing else, and locks every web contents the app creates against webviews, new
+windows and navigation off its pages. Both windows run their page in Chromium's sandbox.
+`test/window-guard.test.ts` holds the registry against every channel in the source and the
+preloads, makes one real call of each to show the window is let through, and a list of hostile
+ones to show a script is not; the window e2e fails on any refusal in the app's log.
+
 ## Where a feature lives
 
 Anything a user can do to a mod touches four files, in this order:
 
-1. A `src/ipc-*.ts` module gets an `ipcMain.handle('mods:something', ...)` that calls into `src/`
+1. A `src/ipc-*.ts` module gets an `ipcMain.handle('mods:something', ...)` that calls into `src/`,
+   and `src/channel-args.ts` says what it may be handed
 2. `preload.js` exposes it as `api.mods.something`
 3. `renderer/api/` gives it a type: what it takes and what its handler answers
 4. `renderer/views/` calls it and draws the result
@@ -420,6 +434,7 @@ that location is not writable.
 | `src/services.ts` | Every long-lived service, built once in the order they depend on each other |
 | `src/ipc.ts`, `src/ipc-*.ts` | Every IPC module registered in one place, and the handlers themselves, one file per group of channels, each naming what it needs |
 | `src/app-context.ts`, `src/electron.ts` | What the IPC modules are handed, and Electron asked for when a module registers |
+| `src/window-guard.ts`, `src/channel-args.ts` | Who may call the main process and with what: the sender, every channel's arguments, the page's permissions and navigation |
 | `src/main-window.ts`, `src/app-page.ts` | The window: its size on the screen it opens on, the one page it may show, Ctrl +/-/0 |
 | `src/dev-harness.ts`, `src/capture.ts` | `MM_SHOT`, `MM_EVAL` and the other switches a script drives the window with, and the screenshot they take |
 | `src/game-upkeep.ts` | The work done at start: the game path, the mod folder following the audio language, the load-order layout, the migrations |
