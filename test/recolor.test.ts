@@ -1,7 +1,7 @@
 /* Recolouring compiled particles and materials (src/kv3.ts, src/material.ts, src/recolor.ts), issue #118.
  *
  * Valve's own files cannot be committed here, so the tests build them: binary KV3 blocks of
- * versions 1 and 2 with the shapes the real ones have (a colour as a typed array of INT32s, a
+ * versions 1, 2 and 5 with the shapes the real ones have (a colour as a typed array of INT32s, a
  * colour whose zero has no bytes of its own, a range of doubles, a binary blob), a material in the
  * older NTRO container, and resources with their blocks in the order the game writes them. On
  * 2026-10-09 the same code read and wrote back 3829 particles and materials of four heroes,
@@ -75,6 +75,25 @@ for (const version of [1, 2] as const) {
     assert.deepEqual(range(back, at(back.root, 'm_vScale')), [1.5, 2.5, 3.5]);
   });
 }
+
+test('a version 5 block compressed with zstd, as a model\'s animations are, is read, changed where a number lies, and packed again', () => {
+  const kv = readKv3(encodeKv3({ obj: [
+    ['m_name', { str: 'attack' }],
+    ['m_nFrames', { int: 32 }],
+    ['m_frames', { blob: Buffer.from('the frames of the clip') }],
+    ['m_vScale', { f64s: [1.5, 2.5] }],
+  ] }, 5));
+  assert.equal(kv.version, 5);
+  assert.equal((at(kv.root, 'm_name') as { value: string }).value, 'attack');
+  assert.equal(kv.blobs[0].data.toString(), 'the frames of the clip');
+  assert.ok(setNumber(kv, at(kv.root, 'm_nFrames') as Extract<Kv3Node, { kind: 'number' }>, 40));
+  const back = readKv3(kv.encode());
+  assert.equal(numberOf(back, at(back.root, 'm_nFrames') as Extract<Kv3Node, { kind: 'number' }>), 40);
+  assert.deepEqual(range(back, at(back.root, 'm_vScale')), [1.5, 2.5]);
+  assert.equal(back.blobs[0].data.toString(), 'the frames of the clip', 'the blobs\' zstd frame carried over as it was');
+  back.blobs[0].data = Buffer.from('other frames');
+  assert.throws(() => back.encode(), /zstd/, 'new blobs in a zstd block are not written');
+});
 
 test('the main colour becomes the chosen one, a darker one a darker shade of it, and greys stay', () => {
   assert.deepEqual(shade([0, 210, 255], PINK), PINK);

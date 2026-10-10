@@ -417,7 +417,7 @@ that location is not writable.
 | `src/patch-watch.ts` | Noticing a game update the moment it lands |
 | `src/update-impact.ts` | Which installed mods a game update reached: Valve's files they replace that the patch changed or removed |
 | `src/mod-update.ts` | Whether the catalog has another version of an installed mod (its fingerprint is not among the catalog's), and replacing it in its own slot ([#171](https://github.com/dota2modmanager/dota2-mod-manager/issues/171)) |
-| `src/kv3.ts` | Binary KV3, versions 1 to 5: every number in a compiled resource found where it lies, changed there, binary blobs given new bytes, and the block written back |
+| `src/kv3.ts` | Binary KV3, versions 1 to 5, LZ4 or (version 5, a model's animations) zstd: every number in a compiled resource found where it lies, changed there, binary blobs given new bytes, and the block written back |
 | `src/kv3-blobs.ts` | Binary blobs in a KV3 block: read, and written back at a new length |
 | `src/kv3-cells.ts` | The numbers in a parsed KV3 block: read and changed where they lie |
 | `src/kv3-write.ts` | A KV3 block written anew from its tree, for changes bigger than a number (an array element added) |
@@ -426,7 +426,7 @@ that location is not writable.
 | `src/resource.ts` | Compiled resources at the block level: a block replaced, the resources a file names (RERL) added to |
 | `src/recolor.ts` | An item's particles and materials in a chosen colour, out of the game's own pak01, as one VPK: what its gem colours, pointed at the chosen colour ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118)) |
 | `src/arcana.ts` | An arcana as a mod built from the game's own files, for a player who has not got it: its models, glow and pictures under the plain hero's names, its colour written in |
-| `src/mod-doctor.ts` | What is wrong with a mod's VPK, read from its files and the game's: a model's animations that need an item, sequences in another order than the game's, a particle's child drawn on the wrong attachment or missing |
+| `src/mod-doctor.ts` | What is wrong with a mod's VPK, read from its files and the game's: a model's animations that need an item (in its animation clips, which the game picks by, and its sequences), sequences in another order than the game's, a particle's child drawn on the wrong attachment or missing |
 | `src/arcana-service.ts` | The arcana window's side in the main process: what the window shows, the mod built into My mods in an early slot, and built again after a Dota update |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |

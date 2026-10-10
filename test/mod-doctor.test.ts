@@ -36,10 +36,21 @@ test('a model whose attack needs a modifier only an item turns on is an error; o
     ['run', ['ACT_DOTA_RUN']],
     ['spawn', ['ACT_DOTA_SPAWN', 'loadout']],
   ])]], []);
-  assert.deepEqual(what(found), [`error: ${MODEL}`]);
-  assert.match(found[0].what, /ACT_DOTA_ATTACK plays only with the modifier "abysm"/);
+  assert.deepEqual(what(found), [`error: ${MODEL}`, `error: ${MODEL}`]);
+  assert.match(found[0].what, /ACT_DOTA_ATTACK plays only with the modifier "abysm" in its clips/);
+  assert.match(found[1].what, /in its sequences/);
   const fixed = findings(t, [[MODEL, model('models/heroes/terrorblade/terrorblade.vmdl', [['attack', ['ACT_DOTA_ATTACK']], ['run', ['ACT_DOTA_RUN']]])]], []);
   assert.deepEqual(fixed, [], 'with the modifier taken off, nothing to say');
+});
+
+test('the clips are read as well as the sequences, and an activity named again is a modifier', (t) => {
+  // the sequences fixed and the clips not: the game picks by the clips, and the arcana stood still
+  const clipsOnly = findings(t, [[MODEL, model('models/heroes/terrorblade/terrorblade.vmdl',
+    [['attack', ['ACT_DOTA_ATTACK']]], [['attack', ['ACT_DOTA_ATTACK', 'abysm']]])]], []);
+  assert.deepEqual(clipsOnly.map((f) => f.what.match(/in its (clips|sequences)/)?.[1]), ['clips']);
+  // "abysm" pointed at the activity instead of taken off: the game played nothing all the same
+  const named = findings(t, [[MODEL, model('models/heroes/terrorblade/terrorblade.vmdl', [['attack', ['ACT_DOTA_ATTACK', 'ACT_DOTA_ATTACK']]])]], []);
+  assert.match(named[0].what, /ACT_DOTA_ATTACK plays only with the modifier "ACT_DOTA_ATTACK"/);
 });
 
 test('a model in another order than the game has at its path is a warning, and another name inside a note', (t) => {

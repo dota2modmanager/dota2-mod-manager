@@ -6,7 +6,7 @@
  * The block comes out in one buffer, the layout of versions 2 to 4: a file read as version 1 or 2
  * is written as 2, 3 as 3, 4 and 5 as 4, so a type's flag byte means what it meant (versions 1 and
  * 2 keep flags as bits, 3 and later as one value). A typed array stays typed, its element type
- * kept, and is written as ARRAY_TYPED, which every version reads.
+ * kept, and is written as ARRAY_TYPED, which every version reads; an empty one as a plain array.
  */
 import type { Kv3Block, Kv3Node } from './kv3.ts';
 import { lz4Literals } from './lz4.ts';
@@ -33,14 +33,21 @@ const padTo = (n: number, a: number) => Buffer.alloc((a - (n % a)) % a);
  */
 const elementType = (t: number) => (t === 24 || t === 25 ? 10 : t);
 
+const ARRAYS = new Set([8, 10, 24, 25]);
+
 /**
- * The type a node is written under in its slot. A typed array stays typed: written as a plain one,
- * a model's list of sequences was still read, and the game played none of them (issue #118).
+ * The type a node is written under in its slot. A typed array stays typed, unless it is empty or
+ * holds an empty array: Valve never writes an empty typed array (ValveResourceFormat refuses one as
+ * broken), so such an array goes as a plain one, which can be empty, each element with its own type.
  */
 function slotType(n: Kv3Node): number {
   switch (n.kind) {
     case 'object': return 9;
-    case 'array': return n.element ? 10 : 8;
+    case 'array': {
+      if (!n.element || !n.items.length) return 8;
+      const holdsEmpty = ARRAYS.has(n.element.type) && n.items.some((x) => x.kind === 'array' && !x.items.length);
+      return holdsEmpty ? 8 : 10;
+    }
     case 'string': return 6;
     case 'blob': return 7;
     default: return n.type;

@@ -6,8 +6,10 @@
  * buffer with the types goes on with every blob's length (int32), a trailer and the compressed size
  * of every LZ4 frame (uint16); the frames come after the buffers, chained so a later one can
  * reference an earlier blob, and a trailer closes them. The layout follows ValveResourceFormat's
- * BinaryKV3.cs (MIT).
+ * BinaryKV3.cs (MIT). Compressed with zstd (version 5, a model's animations), the blobs are one zstd
+ * frame after the buffers instead, and the table has no frame sizes.
  */
+import zlib from 'node:zlib';
 import { lz4DecodeInto, lz4Literals } from './lz4.ts';
 
 const TRAILER = 0xffeedd00;
@@ -60,6 +62,19 @@ export function readBlobs(block: Buffer, at: number, t: BlobTable, total: number
   }
   if (block.readUInt32LE(p) !== TRAILER) throw new Error('kv3: no trailer after the blobs');
   return { data, end: p + 4 };
+}
+
+/** Every blob's bytes from a zstd block: one frame of `size` bytes at `at`, the trailer after it. */
+export function readZstdBlobs(block: Buffer, at: number, size: number, t: BlobTable, total: number): { data: Buffer; end: number } {
+  const raw = Buffer.concat([zstd(block.subarray(at, at + size)), block.subarray(at + size, at + size + 4)]);
+  return { data: readBlobs(raw, 0, t, total).data, end: at + size + 4 };
+}
+
+/** A zstd frame unpacked, checked against the size the header gives when there is one. */
+export function zstd(src: Buffer, size?: number): Buffer {
+  const out = zlib.zstdDecompressSync(src);
+  if (size !== undefined && out.length !== size) throw new Error('kv3: a zstd buffer of another size');
+  return out;
 }
 
 /**
