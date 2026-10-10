@@ -80,7 +80,7 @@ or turning mods back on would resurrect the ones you had deliberately switched o
 5. Pick a free slot: 02 to 29 for categories that must load early, otherwise the first free number
    from 30 up (`src/slot-zones.ts`). Combined packs exist for the same reason and are described in `src/vpk-write.ts`.
 6. Write everything through `src/file-tx.ts`.
-7. Record it in `manifest.json` through `src/library.ts`.
+7. Record it in `manifest.json` through `src/library.ts`, inside the same transaction as the files.
 
 ## All of it or none of it
 
@@ -97,6 +97,16 @@ strips its own suffix, so a sweep that stops half way is finished by the next pr
 there while `dota2.exe` is running, and the app checks that the game files are actually present
 before it downloads anything, after a user moved their Steam library and had the app cheerfully
 install forty three mods into the empty folder Steam left behind.
+
+A transaction also outlives the process that ran it. Each step is written to a journal in
+`userData/tx/` before it is taken (`src/file-tx-journal.ts`), so an app killed halfway, from Task
+Manager, by Windows Update or by a power cut, is undone on the next start before anything reads the
+library or touches the folder; one killed after its commit line is finished instead. The library
+record is a step of the same transaction, so an install cannot leave paks without a record or a
+record without its paks. `test/file-tx-crash.test.ts` kills each kind of change at every write the
+process makes, recovers, and checks the game folder and the library byte for byte against the state
+before the change and after it. `manifest.json` and `settings.json` outside a transaction are
+replaced in one rename (`src/atomic-file.ts`), so a save cut short leaves the old file whole.
 
 ## VPK
 
@@ -451,7 +461,8 @@ that location is not writable.
 | `src/updater.ts`, `src/portable-update.ts` | Where an installed copy looks for a new version, and updating the portable build without self-overwrite |
 | `src/beta.ts` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
 | `src/vpk.ts`, `src/vpk-read.ts`, `src/vpk-write.ts`, `src/vpk-pack.ts`, `src/vpk-analyze.ts` | The VPK format: reading one, writing one, packing a folder into one, and what a mod's paths say it changes |
-| `src/file-tx.ts` | One transaction per change to the game folder |
+| `src/file-tx.ts`, `src/file-tx-journal.ts` | One transaction per change to the game folder, and the journal that finishes or undoes it after a crash |
+| `src/atomic-file.ts` | `manifest.json` and `settings.json` replaced in one step |
 | `src/library.ts` | `manifest.json`: installed records and presets |
 | `src/settings.ts`, `src/settings-view.ts` | `settings.json` and its defaults, and everything the Settings screen is told in one answer |
 | `src/catalog.ts`, `src/catalog-signature.ts` | Catalog data and who is allowed to change it |

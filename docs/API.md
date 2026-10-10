@@ -19,6 +19,7 @@ the code, not in this page.
 | [`src/app-page.ts`](#srcapp-pagets) | The page the main window loads. |
 | [`src/arcana-service.ts`](#srcarcana-servicets) | The arcana window's side in the main process (issue #118): what the window shows, and the mod it |
 | [`src/arcana.ts`](#srcarcanats) | An arcana as a mod, built from the game's own files: the look of an item a player has not got, |
+| [`src/atomic-file.ts`](#srcatomic-filets) | Replace a small file so that whoever reads it next - this process, or the next start after |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
@@ -34,6 +35,7 @@ the code, not in this page.
 | [`src/electron.ts`](#srcelectronts) | Electron's main-process API, asked for at the moment it is used. |
 | [`src/error-text.ts`](#srcerror-textts) | What a caught error says, as one line of text. |
 | [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
+| [`src/file-tx-journal.ts`](#srcfile-tx-journalts) | The half of FileTx that outlives the process. |
 | [`src/file-tx.ts`](#srcfile-txts) | All of it, or none of it. |
 | [`src/fingerprints.ts`](#srcfingerprintsts) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
 | [`src/folder-size.ts`](#srcfolder-sizets) | Bytes under a folder: the number Settings shows beside each cache, and the one the removal |
@@ -397,6 +399,27 @@ export function buildArcana({ pak01, set, target }: { pak01: string; set: string
 ```
 
 The arcana in the chosen colour, as one VPK from the game's pak01.
+
+## src/atomic-file.ts
+
+Replace a small file so that whoever reads it next - this process, or the next start after
+a crash - finds the old contents or the new ones, never half of either.
+
+manifest.json and settings.json were written in place. A process killed during that write
+left a cut-off file; JSON.parse refused it on the next start, and the app went on with an
+empty library (every installed mod shown as somebody else's file) or default settings (the
+game looked for again, possibly finding another install). Writing beside the file and
+renaming over it makes the change one step: the rename either happened or it did not.
+
+### `writeFileAtomic`
+
+```ts
+export function writeFileAtomic(file: string, data: string | NodeJS.ArrayBufferView): void
+```
+
+Write `data` to `file` through a temporary file beside it. An antivirus or a backup tool
+holding the old file makes Windows refuse the rename for a moment, so it is tried a few times;
+if the file stays held, it is written in place as before rather than not written at all.
 
 ## src/beta.ts
 
@@ -1027,6 +1050,105 @@ export function createGate({ remoteConfig, settings }: { remoteConfig: FeatureSw
 @returns the answer to send back, or null to carry on
 ```
 
+## src/file-tx-journal.ts
+
+The half of FileTx that outlives the process.
+
+A transaction undoes itself when a step throws. It cannot when the process is gone: killed
+from Task Manager, closed by Windows Update, cut by a power failure halfway through moving
+a pak. Until 2026-10-10 the next start had only the parked .mmtx files to go on
+(sweepStaged in src/installer-folder.ts), and a parked file cannot say which transaction it
+belonged to or what else that transaction had already written. An install killed after its
+second pak left those two paks in the folder with no library record.
+
+So every step is written here before it is taken, one JSON line each, flushed to the disk
+first. A journal that ends in a commit line belonged to a change that finished: the next
+start drops what it parked. One that does not is undone, every step from the last to the
+first, and the folder is back to the moment before the change began.
+
+A step is written before it is taken, so its undo cannot know how far the step got. Each one
+below is written to be right from any point inside its step - not started, half done, done -
+and to be right a second time, because recovery can be killed too and simply runs again on
+the start after that.
+
+### `Undo`
+
+```ts
+export type Undo =
+```
+
+A step about to be taken, and how to take it back.
+
+### `JOURNAL_EXT`
+
+```ts
+export const JOURNAL_EXT = '.txlog'
+```
+
+The journal's own extension, in the folder FileTx.journalDir names.
+
+### `undoStep`
+
+```ts
+export function undoStep(op: Undo): string | null
+```
+
+Take one step back.
+
+unwrite: no original means whatever is at dest, whole or half written, is ours to delete. An
+  original that was parked goes back over it. An original that was never parked is still at
+  dest, untouched, because parking is the first thing the step does.
+unmove: the source is gone only once the rename happened, so that is when it is renamed back.
+  The rename refuses a missing source, so FileTx.move checks for one before it writes this.
+unremove: the parked copy goes back, unless the target is somehow there again.
+rmdir: only an empty folder, and only if it exists.
+
+Answers what it could not bring back: an original that is neither parked nor in its place,
+because something deleted it in between (an antivirus, a cleaner, the user). Nothing can
+restore that, but the log should say so.
+
+### `parkedBy`
+
+```ts
+export function parkedBy(op: Undo): string | null
+```
+
+Where a step parked an original, if it did.
+
+### `Journal`
+
+```ts
+export class Journal
+```
+
+One transaction's journal: opened on its first step, so a change that takes none leaves no file.
+
+### `readJournal`
+
+```ts
+export function readJournal(file: string): { steps: Undo[]; committed: boolean }
+```
+
+What a journal says: its steps in order, and whether the change got as far as committing.
+Reading stops at the first line that is not whole: a power cut can cut the last line short,
+and the step it was describing was never started, because a step starts after its line is
+on the disk.
+
+### `recoverJournals`
+
+```ts
+export function recoverJournals(dir: string | null, log: (msg: string) => void = () => {}): { undone: number; finished: number }
+```
+
+Finish whatever a killed process left in `dir`. Runs once at start, before anything opens the
+library or touches the game folder (src/services.ts); the app holds a single-instance lock, so
+every journal found here belongs to a process that is gone.
+
+A step that cannot be undone - Dota holding the pak - is logged and the rest still run, the
+same bargain as rollback in a live process. The journal is dropped either way: kept, it would
+replay those steps on a later start over changes made in between. A parked file it could not
+put back is still next to its original, where sweepStaged finds it.
+
 ## src/file-tx.ts
 
 All of it, or none of it.
@@ -1043,6 +1165,18 @@ that list backwards. What gets displaced is not copied anywhere: it is renamed n
 itself with a .mmtx suffix, which is atomic, costs nothing for a 300 MB pak, and cannot hit
 the cross-volume copy that staging in %APPDATA% would (the game usually lives on another
 drive). Commit deletes those; rollback renames them back.
+
+A step's undo is recorded before the step is taken, never after. Recorded after, a write
+that failed halfway - the disk filled up on the new pak - had already parked the original
+and had no undo to bring it back, so the rollback meant for exactly that failure left the
+original under its .mmtx name. And with FileTx.journalDir set (src/services.ts) the same
+record goes to a journal on the disk first, so a process killed in the middle is undone on
+the next start: src/file-tx-journal.ts.
+
+FileTx.run inside FileTx.run joins the open transaction instead of starting a second one,
+so a library record written in the same block as the files commits or rolls back with
+them (src/library.ts). The inner block is a savepoint: if it throws, its own steps are
+undone before the error reaches the caller, which may catch it and carry on.
 
 ### `Writer`
 
@@ -1940,12 +2074,13 @@ The game's own files in the language folder, and our notice pak: never a mod to 
 ### `STAGED_RE`
 
 ```ts
-export const STAGED_RE = /\.[a-z0-9]+\.mmtx$/i
+export const STAGED_RE = /\.[a-z0-9]+(?:-[a-z0-9]+)?\.mmtx$/i
 ```
 
 What a FileTx parks next to a file it is about to replace or delete (see src/file-tx.ts).
 Nothing should outlive its transaction; one that does means the app died mid-write, and
-sweepStaged() cleans up after that on the next start.
+sweepStaged() cleans up after that on the next start. The name is the transaction's id and,
+since 2026-10-10, a dash and a count, so one file parked twice in one change gets two names.
 
 ## src/installer-folder.ts
 

@@ -13,6 +13,8 @@ import * as importer from './import.ts';
 import { createCursors } from './cursors.ts';
 import { createAdopt, type ImportResult } from './adopt.ts';
 import { Library } from './library.ts';
+import { FileTx } from './file-tx.ts';
+import { recoverJournals } from './file-tx-journal.ts';
 import { Fingerprints } from './fingerprints.ts';
 import * as discordAuth from './discord-auth.ts';
 import { DiscordPresence } from './discord-presence.ts';
@@ -45,6 +47,11 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   /** Electron's network stack, which the wiki's pictures come through (see src/icons.ts) */
   fetchIcons: ConstructorParameters<typeof Icons>[1];
 }) {
+  // Before anything reads the library or touches the game folder: a change the last process
+  // died in the middle of is finished or undone first, so what loads next is one whole state.
+  FileTx.journalDir = path.join(userData, 'tx');
+  const recovered = recoverJournals(FileTx.journalDir, diag);
+  if (recovered.undone || recovered.finished) diag(`tx recovery: undid ${recovered.undone}, finished ${recovered.finished}`);
   const settings = new Settings(userData);
   setLang(settings.get('uiLang'));
   const catalog = new Catalog(userData);

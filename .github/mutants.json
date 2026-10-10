@@ -1465,6 +1465,70 @@
       "from": "if (!line) { closeList(); para = false; continue; }",
       "to": "if (!line) { closeList(); continue; }",
       "test": "test/notes-markdown.test.ts"
+    },
+    {
+      "name": "a write that fails keeps no undo for the original it parked",
+      "file": "src/file-tx.ts",
+      "anchor": "  write(dest: string, buf: string | NodeJS.ArrayBufferView): string {",
+      "lineStartsWith": "    fs.writeFileSync(dest, buf);",
+      "to": "    try { fs.writeFileSync(dest, buf); } catch (err) { this.undo.pop(); throw err; }",
+      "test": "test/file-tx.test.ts"
+    },
+    {
+      "name": "a step is taken without its line in the journal",
+      "file": "src/file-tx.ts",
+      "anchor": "  #record(op: Undo): void {",
+      "lineStartsWith": "    this.#journal?.add(op);",
+      "to": "    // journal skipped",
+      "test": "test/file-tx-crash.test.ts"
+    },
+    {
+      "name": "a commit never writes its commit line",
+      "file": "src/file-tx.ts",
+      "anchor": "  commit(): void {",
+      "lineStartsWith": "    this.#journal?.add({ commit: true });",
+      "to": "    // commit line skipped",
+      "test": "test/file-tx-crash.test.ts"
+    },
+    {
+      "name": "an inner change that throws keeps its steps",
+      "file": "src/file-tx.ts",
+      "anchor": "  #savepoint<T>(body: (tx: FileTx) => T): T {",
+      "lineStartsWith": "      this.#undoTo(mark);",
+      "to": "      // nothing undone",
+      "test": "test/file-tx.test.ts"
+    },
+    {
+      "name": "recovery undoes a change that had committed",
+      "file": "src/file-tx-journal.ts",
+      "anchor": "export function recoverJournals(",
+      "from": "if (read.committed) {",
+      "to": "if (read.committed && false) {",
+      "test": "test/file-tx-crash.test.ts"
+    },
+    {
+      "name": "undoing a move renames the target back even when the source is still there",
+      "file": "src/file-tx-journal.ts",
+      "anchor": "export function undoStep(op: Undo): string | null {",
+      "from": "if (there(op.to) && !there(op.from))",
+      "to": "if (there(op.to))",
+      "test": "test/file-tx-crash.test.ts"
+    },
+    {
+      "name": "the library saves outside the change it is part of",
+      "file": "src/library.ts",
+      "anchor": "  save(): void {",
+      "lineStartsWith": "    const tx = FileTx.open();",
+      "to": "    const tx = null as FileTx | null;",
+      "test": "test/file-tx-crash.test.ts"
+    },
+    {
+      "name": "an install writes its record after the change committed",
+      "file": "src/installer.ts",
+      "anchor": "  async install({ categoryId, modName, fileRef, record }",
+      "lineStartsWith": "      record?.(files);",
+      "to": "      setImmediate(() => record?.(files));",
+      "test": "test/file-tx-crash.test.ts"
     }
   ]
 }

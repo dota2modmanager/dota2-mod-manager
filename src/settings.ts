@@ -2,6 +2,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { writeFileAtomic } from './atomic-file.ts';
+
 /** What settings.json holds. The window has the same shape (renderer/api/app.ts StoredSettings). */
 export interface StoredSettings {
   dotaGamePath: string | null;
@@ -111,8 +113,7 @@ export class Settings {
   }
 
   save(): void {
-    fs.mkdirSync(path.dirname(this.file), { recursive: true });
-    fs.writeFileSync(this.file, JSON.stringify(this.data, null, 2));
+    writeFileAtomic(this.file, JSON.stringify(this.data, null, 2));
   }
 
   get<K extends keyof StoredSettings>(key: K): StoredSettings[K] {
