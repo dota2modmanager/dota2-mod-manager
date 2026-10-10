@@ -20,10 +20,10 @@
  *   until the files it was built from change, so the app builds it again then.
  * Not here: the kill effect (a modifier the item adds), the arcana's sounds and voice lines.
  */
-import { readKv3, numberOf, setString, type Kv3Node } from './kv3.ts';
+import { readKv3, numberOf, type Kv3Node } from './kv3.ts';
 import { writeKv3 } from './kv3-write.ts';
 import { recolorFiles, recolorResource, RECOLOR_SETS, type Rgb } from './recolor.ts';
-import { dataBlock, resourceBlock, withReferences } from './resource.ts';
+import { dataBlock, resourceBlock, resourceBlocks, withReferences } from './resource.ts';
 import { buildVpk, entryAt, listVpkPathsFile, openVpkIndex } from './vpk.ts';
 
 export interface ArcanaSet {
@@ -115,54 +115,56 @@ const nameOf = (n: Kv3Node | undefined) => {
 };
 
 /**
- * A model put under another path that plays without the item what it played with it: its
- * animations that need `modifier` made the ones its activities play.
- *
- * A sequence lists the activities it plays (ACT_DOTA_ATTACK) and the modifiers it needs ("abysm"),
- * told apart by name alone. The game picks, for an activity, the sequence whose modifiers match the
- * ones on: with "abysm" never on, the arcana's attacks lost to "attack_injured". So the modifier's
- * entry is pointed at the sequence's activity instead, and the activity of the plain ones beside
- * them (death, sunder, loadout) at their own name, which no activity is: the choice the game makes
- * when the modifier is on.
- *
- * Only string indexes change, where they lie; every other byte stays the game's. Written anew from
- * the tree, typed or not, the sequences were still read and the game played none of them, and the
- * skeleton's arrays in DATA the same: the arcana stood still through its attacks (issue #118).
+ * In a list of sequences or animation clips, the ones that need `modifier` made the ones their
+ * activities play: the modifier taken off them, and their activity off the plain ones beside them
+ * (death, sunder, loadout), which is the choice the game makes when the modifier is on.
+ * @returns whether anything changed
  */
-export function asModel(file: Buffer, modifier?: string): Buffer {
-  if (!modifier) return file;
-  const block = resourceBlock(file, 'ASEQ');
-  const seqs = readKv3(block.data);
-  const list = seqs.root.kind === 'object' ? seqs.root.members.get('m_localS1SeqDescArray') : undefined;
-  if (list?.kind !== 'array') return file;
-  const activities = (sq: Kv3Node) => {
-    const a = sq.kind === 'object' ? sq.members.get('m_activityArray') : undefined;
-    return a?.kind === 'array' ? a.items : [];
-  };
-  const point = (entry: Kv3Node, to: string) => {
-    const name = entry.kind === 'object' ? entry.members.get('m_name') : undefined;
-    if (name?.kind !== 'string' || !setString(seqs, name, to)) throw new Error(`arcana: "${nameOf(entry)}" cannot be pointed at "${to}"`);
+function playWithout(list: Kv3Node[], modifier: string): boolean {
+  const activities = (x: Kv3Node) => {
+    const a = x.kind === 'object' ? x.members.get('m_activityArray') : undefined;
+    return a?.kind === 'array' ? a : null;
   };
   const isAct = (a: Kv3Node) => nameOf(a).startsWith('ACT_');
   const needed = new Set<Kv3Node>();
   const taken = new Set<string>();
-  for (const sq of list.items) {
-    const acts = activities(sq);
-    const act = acts.find(isAct);
-    const mod = acts.find((a) => nameOf(a) === modifier);
-    if (!act || !mod) continue;
-    needed.add(sq);
-    for (const a of acts) if (isAct(a)) taken.add(nameOf(a));
-    point(mod, nameOf(act));
+  for (const x of list) {
+    const acts = activities(x);
+    if (!acts?.items.some((a) => nameOf(a) === modifier)) continue;
+    needed.add(x);
+    for (const a of acts.items) if (isAct(a)) taken.add(nameOf(a));
+    acts.items = acts.items.filter((a) => nameOf(a) !== modifier);
   }
-  // the plain ones beside them, with no modifier of their own: their activity is the arcana's now
-  for (const sq of list.items) {
-    const acts = activities(sq);
-    if (needed.has(sq) || acts.some((a) => !isAct(a))) continue;
-    const own = sq.kind === 'object' ? sq.members.get('m_sName') : undefined;
-    for (const a of acts) if (taken.has(nameOf(a)) && own?.kind === 'string') point(a, own.value);
+  for (const x of list) {
+    const acts = activities(x);
+    if (!acts || needed.has(x) || acts.items.some((a) => !isAct(a))) continue;
+    acts.items = acts.items.filter((a) => !taken.has(nameOf(a)));
   }
-  return block.replace(seqs.encode());
+  return needed.size > 0;
+}
+
+/**
+ * A model put under another path that plays without the item what it played with it: its
+ * animations that need `modifier` made the ones its activities play (playWithout).
+ *
+ * A sequence and an animation clip each list the activity they play (ACT_DOTA_ATTACK) and after it
+ * the modifiers they need ("abysm"). The game picks by the clips' lists (ANIM): with "abysm" taken
+ * off the sequences alone, the arcana still stood still through its attacks, and the plain hero
+ * still swung with its sequences pointed elsewhere (both found on the bench, issue #118). An entry
+ * pointed at the activity instead of taken off counts as a modifier: the entries are taken off, and
+ * both blocks written anew.
+ */
+export function asModel(file: Buffer, modifier?: string): Buffer {
+  if (!modifier) return file;
+  let out = file;
+  for (const [name, listKey] of [['ASEQ', 'm_localS1SeqDescArray'], ['ANIM', 'm_animArray']]) {
+    if (!resourceBlocks(out).some((b) => b.name === name)) continue;
+    const block = resourceBlock(out, name);
+    const kv = readKv3(block.data);
+    const list = kv.root.kind === 'object' ? kv.root.members.get(listKey) : undefined;
+    if (list?.kind === 'array' && playWithout(list.items, modifier)) out = block.replace(writeKv3(kv));
+  }
+  return out;
 }
 
 /** The arcana in the chosen colour, as one VPK from the game's pak01. */

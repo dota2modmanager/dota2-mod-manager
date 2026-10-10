@@ -380,18 +380,14 @@ export function asModel(file: Buffer, modifier?: string): Buffer
 ```
 
 A model put under another path that plays without the item what it played with it: its
-animations that need `modifier` made the ones its activities play.
+animations that need `modifier` made the ones its activities play (playWithout).
 
-A sequence lists the activities it plays (ACT_DOTA_ATTACK) and the modifiers it needs ("abysm"),
-told apart by name alone. The game picks, for an activity, the sequence whose modifiers match the
-ones on: with "abysm" never on, the arcana's attacks lost to "attack_injured". So the modifier's
-entry is pointed at the sequence's activity instead, and the activity of the plain ones beside
-them (death, sunder, loadout) at their own name, which no activity is: the choice the game makes
-when the modifier is on.
-
-Only string indexes change, where they lie; every other byte stays the game's. Written anew from
-the tree, typed or not, the sequences were still read and the game played none of them, and the
-skeleton's arrays in DATA the same: the arcana stood still through its attacks (issue #118).
+A sequence and an animation clip each list the activity they play (ACT_DOTA_ATTACK) and after it
+the modifiers they need ("abysm"). The game picks by the clips' lists (ANIM): with "abysm" taken
+off the sequences alone, the arcana still stood still through its attacks, and the plain hero
+still swung with its sequences pointed elsewhere (both found on the bench, issue #118). An entry
+pointed at the activity instead of taken off counts as a modifier: the entries are taken off, and
+both blocks written anew.
 
 ### `buildArcana`
 
@@ -2737,7 +2733,8 @@ Before version 2 a blob is in the 1-byte lane, its length in the 4-byte lane. Fr
 buffer with the types goes on with every blob's length (int32), a trailer and the compressed size
 of every LZ4 frame (uint16); the frames come after the buffers, chained so a later one can
 reference an earlier blob, and a trailer closes them. The layout follows ValveResourceFormat's
-BinaryKV3.cs (MIT).
+BinaryKV3.cs (MIT). Compressed with zstd (version 5, a model's animations), the blobs are one zstd
+frame after the buffers instead, and the table has no frame sizes.
 
 ### `BlobTable`
 
@@ -2763,6 +2760,22 @@ export function readBlobs(block: Buffer, at: number, t: BlobTable, total: number
 ```
 
 Every blob's bytes, one after another, read from the block at `at`; and where they end.
+
+### `readZstdBlobs`
+
+```ts
+export function readZstdBlobs(block: Buffer, at: number, size: number, t: BlobTable, total: number): { data: Buffer; end: number }
+```
+
+Every blob's bytes from a zstd block: one frame of `size` bytes at `at`, the trailer after it.
+
+### `zstd`
+
+```ts
+export function zstd(src: Buffer, size?: number): Buffer
+```
+
+A zstd frame unpacked, checked against the size the header gives when there is one.
 
 ### `rewriteBlobs`
 
@@ -2790,8 +2803,7 @@ Before version 2: the first buffer laid out again with every blob's new bytes in
 ## src/kv3-cells.ts
 
 The numbers in a parsed KV3 block (src/kv3.ts): read one where it lies, change it there, and the
-0s and 1s stored as a type alone, which can only become each other. A string is a number too, its
-place in the block's string table, and can be pointed at another string the table has.
+0s and 1s stored as a type alone, which can only become each other.
 
 ### `readCell`
 
@@ -2831,19 +2843,6 @@ every lane the length it was.
 @returns whether the value could be set
 ```
 
-### `setString`
-
-```ts
-export function setString(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'string' }>, value: string): boolean
-```
-
-Point a string node at another string of the block's table, where its index lies: every lane
-keeps its length and every other byte stays as it was. Only a string the table already has.
-
-```
-@returns whether it could be pointed there
-```
-
 ## src/kv3-write.ts
 
 A KV3 block written anew from its tree (src/kv3.ts), for changes that are more than a number:
@@ -2853,7 +2852,7 @@ they were, so nothing is rounded on the way.
 The block comes out in one buffer, the layout of versions 2 to 4: a file read as version 1 or 2
 is written as 2, 3 as 3, 4 and 5 as 4, so a type's flag byte means what it meant (versions 1 and
 2 keep flags as bits, 3 and later as one value). A typed array stays typed, its element type
-kept, and is written as ARRAY_TYPED, which every version reads.
+kept, and is written as ARRAY_TYPED, which every version reads; an empty one as a plain array.
 
 ### `writeKv3`
 
@@ -2882,7 +2881,7 @@ and 2 version 3, all LZ4. Materials keep their expressions (`$GemColor`, issue #
 blobs, which can be given new bytes of another length (src/kv3-blobs.ts). The compression is
 src/lz4.ts, reading and changing a number src/kv3-cells.ts.
 
-Hands on from [`src/kv3-cells.ts`](#srckv3-cellsts): `readCell`, `writeCell`, `numberOf`, `setNumber`, `setString`.
+Hands on from [`src/kv3-cells.ts`](#srckv3-cellsts): `readCell`, `writeCell`, `numberOf`, `setNumber`.
 
 ### `Kv3Cell`
 
@@ -2895,7 +2894,7 @@ Where one number lives: which decompressed buffer, the byte offset in it, and ho
 ### `Kv3Node`
 
 ```ts
-export type Kv3Node = ( | { kind: 'object'; members: Map<string, Kv3Node> } | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number } } | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null; raw?: Buffer } | { kind: 'string'; value: string; at?: Kv3Cell } | { kind: 'blob'; data: Buffer } | { kind: 'other'; type: number; value?: number } ) & { flag?: number }
+export type Kv3Node = ( | { kind: 'object'; members: Map<string, Kv3Node> } | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number }; type?: number } | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null; raw?: Buffer } | { kind: 'string'; value: string } | { kind: 'blob'; data: Buffer } | { kind: 'other'; type: number; value?: number } ) & { flag?: number }
 ```
 
 A value in the tree the walk builds. A number keeps where it lies (`cell`), or null when the
@@ -2903,8 +2902,9 @@ type alone says what it is (0 and 1 written as INT64_ZERO, DOUBLE_ONE...), and w
 byte is, which is the one place such a number can be changed. Elements of a typed array share
 one type byte, so theirs is null; the array keeps that type as `element`. `flag` is the byte
 that can follow a type (a string that names a resource, for one), kept as the file had it. A
-number made rather than read has its bytes in `raw`, for src/kv3-write.ts. A string read keeps
-where its index into the string table lies (`at`).
+number made rather than read has its bytes in `raw`, for src/kv3-write.ts. An array keeps the
+type it was stored as (`type`: 8 plain, 10 typed, 24 typed with a one-byte length, 25 the same
+with its elements in version 5's first buffer).
 
 ### `Kv3Array`
 
@@ -3292,7 +3292,9 @@ starts the game to see it (issue #118).
 
 Every check here is a bug that reached the game once and took a person playing it to find:
 - a model whose animations need an activity modifier only an item turns on ("abysm"): without
-  the item an attack plays nothing, or the wrong one;
+  the item an attack plays nothing, or the wrong one. Read from the animation clips (ANIM) as
+  well as the sequences (ASEQ): the game picks by the clips, and a fix to the sequences alone
+  changed nothing in the game;
 - a model whose sequences are in another order than the game's model at that path: if the
   server online picks a sequence by number from its own model, the client plays another one;
 - a particle that hangs more children on itself than it hands control points to: the extra
@@ -3313,10 +3315,18 @@ _No description in the source._
 ### `sequencesOf`
 
 ```ts
-export function sequencesOf(file: Buffer): { name: string; acts: string[]; mods: string[] }[]
+export const sequencesOf = (file: Buffer) => playables(file, 'ASEQ', 'm_localS1SeqDescArray', 'm_sName')
 ```
 
 A model's sequences: name, the activities it plays and the modifiers it needs.
+
+### `clipsOf`
+
+```ts
+export const clipsOf = (file: Buffer) => playables(file, 'ANIM', 'm_animArray', 'm_name')
+```
+
+A model's animation clips, the same way: the lists the game picks by.
 
 ### `examine`
 

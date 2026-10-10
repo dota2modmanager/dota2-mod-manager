@@ -4,7 +4,9 @@
  *
  * Every check here is a bug that reached the game once and took a person playing it to find:
  * - a model whose animations need an activity modifier only an item turns on ("abysm"): without
- *   the item an attack plays nothing, or the wrong one;
+ *   the item an attack plays nothing, or the wrong one. Read from the animation clips (ANIM) as
+ *   well as the sequences (ASEQ): the game picks by the clips, and a fix to the sequences alone
+ *   changed nothing in the game;
  * - a model whose sequences are in another order than the game's model at that path: if the
  *   server online picks a sequence by number from its own model, the client plays another one;
  * - a particle that hangs more children on itself than it hands control points to: the extra
@@ -29,15 +31,24 @@ const member = (n: Kv3Node | undefined, key: string) => (n?.kind === 'object' ? 
 const text = (n: Kv3Node | undefined) => (n?.kind === 'string' ? n.value : '');
 const items = (n: Kv3Node | undefined) => (n?.kind === 'array' ? n.items : []);
 
-/** A model's sequences: name, the activities it plays and the modifiers it needs. */
-export function sequencesOf(file: Buffer): { name: string; acts: string[]; mods: string[] }[] {
-  if (!resourceBlocks(file).some((b) => b.name === 'ASEQ')) return [];
-  const kv = readKv3(resourceBlock(file, 'ASEQ').data);
-  return items(member(kv.root, 'm_localS1SeqDescArray')).map((sq) => {
-    const names = items(member(sq, 'm_activityArray')).map((a) => text(member(a, 'm_name')));
-    return { name: text(member(sq, 'm_sName')), acts: names.filter((n) => n.startsWith('ACT_')), mods: names.filter((n) => !n.startsWith('ACT_')) };
+type Playable = { name: string; acts: string[]; mods: string[] };
+
+function playables(file: Buffer, block: string, listKey: string, nameKey: string): Playable[] {
+  if (!resourceBlocks(file).some((b) => b.name === block)) return [];
+  const kv = readKv3(resourceBlock(file, block).data);
+  return items(member(kv.root, listKey)).map((x) => {
+    // the first activity is the one played, every other entry a modifier: the game took the
+    // activity named again in place of "abysm" for a modifier too, and played nothing
+    const names = items(member(x, 'm_activityArray')).map((a) => text(member(a, 'm_name')));
+    const at = names.findIndex((n) => n.startsWith('ACT_'));
+    return { name: text(member(x, nameKey)), acts: at === -1 ? [] : [names[at]], mods: names.filter((_, i) => i !== at) };
   });
 }
+
+/** A model's sequences: name, the activities it plays and the modifiers it needs. */
+export const sequencesOf = (file: Buffer) => playables(file, 'ASEQ', 'm_localS1SeqDescArray', 'm_sName');
+/** A model's animation clips, the same way: the lists the game picks by. */
+export const clipsOf = (file: Buffer) => playables(file, 'ANIM', 'm_animArray', 'm_name');
 
 /** Activity modifiers the game itself turns on for a hero, with no item: these need no warning. */
 const GAME_MODIFIERS = new Set(['injured', 'haste', 'loadout', 'run', 'walk', 'aggressive', 'odachi', 'fast', 'faster', 'fastest', 'slow', 'arcana_level_2']);
@@ -51,15 +62,16 @@ function checkModel(path: string, file: Buffer, game: Buffer | null): Finding[] 
     out.push({ file: path, level: 'note', what: `named "${name}" inside, put under "${wanted}"` });
   }
   const seqs = sequencesOf(file);
-  const acts = new Set(seqs.flatMap((s) => s.acts));
-  for (const act of acts) {
-    const playing = seqs.filter((s) => s.acts.includes(act));
-    // a hero standing healthy has no modifier on: one sequence has to play with none at all
-    // ("attack_injured" plays only below a share of health, so it is no attack)
-    if (playing.some((s) => s.mods.length === 0)) continue;
-    const need = [...new Set(playing.flatMap((s) => s.mods.filter((m) => !GAME_MODIFIERS.has(m))))];
-    if (!need.length) continue; // only the game's own states ask for it, like a spawn in loadout
-    out.push({ file: path, level: 'error', what: `${act} plays only with the modifier ${need.map((m) => `"${m}"`).join(' or ')}, which an item turns on: without it, nothing or the wrong animation plays` });
+  for (const [kind, list] of [['clips', clipsOf(file)], ['sequences', seqs]] as const) {
+    for (const act of new Set(list.flatMap((s) => s.acts))) {
+      const playing = list.filter((s) => s.acts.includes(act));
+      // a hero standing healthy has no modifier on: one has to play with none at all
+      // ("attack_injured" plays only below a share of health, so it is no attack)
+      if (playing.some((s) => s.mods.length === 0)) continue;
+      const need = [...new Set(playing.flatMap((s) => s.mods.filter((m) => !GAME_MODIFIERS.has(m))))];
+      if (!need.length) continue; // only the game's own states ask for it, like a spawn in loadout
+      out.push({ file: path, level: 'error', what: `${act} plays only with the modifier ${need.map((m) => `"${m}"`).join(' or ')} in its ${kind}, which an item turns on: without it, nothing or the wrong animation plays` });
+    }
   }
   if (game) {
     const theirs = sequencesOf(game).map((s) => s.name);
