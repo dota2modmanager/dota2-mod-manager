@@ -47,7 +47,7 @@
       </div>
 
       <nav id="tbNav">
-        <button class="tb-tab active" data-view="catalog" data-i18n="Каталог">Catalog</button>
+        <button class="tb-tab active" data-view="catalog" data-i18n="Каталог" aria-current="page">Catalog</button>
         <button class="tb-tab" data-view="library" data-i18n="Мои моды">My mods<span class="tb-badge" id="libCount"></span></button>
         <button class="tb-tab" data-view="presets" data-i18n="Пресеты">Presets</button>
         <button class="tb-tab" data-view="settings" data-i18n="Настройки">Settings</button>
@@ -143,6 +143,8 @@
 
     <!-- Toasts -->
     <div id="toasts"></div>
+    <!-- What a screen reader is told when no window is open (renderer/ui/a11y.ts, announce) -->
+    <div id="announcer" class="sr-announce" role="status"></div>
 
     <!-- Modal -->
     <div id="modalOverlay" class="modal-overlay hidden">

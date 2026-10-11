@@ -63,4 +63,5 @@ fixes something brings a test or says why it cannot (`No-Test-Because:`), and th
 - **Code signing.** The installer is not signed, and SmartScreen says so. The attestation above is
   what stands in for it; [the code-signing policy](code-signing-policy.md) says what would change.
 - **A person with a screen reader.** The accessibility tree is checked on every change; a person
-  listening to it is not. [docs/accessibility.md](accessibility.md) lists what that pass covers.
+  listening to it is not. [docs/screen-reader-pass.md](screen-reader-pass.md) is that pass: six
+  tasks, what you should hear in each, and a table for the results.

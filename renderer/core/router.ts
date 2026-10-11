@@ -81,7 +81,12 @@ export function render(): unknown {
 export function switchView(view: string): Promise<void> {
   const main = $('#main');
   scrolls.set(state.view, main.scrollTop);
-  document.querySelectorAll<HTMLElement>('.tb-tab').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll<HTMLElement>('.tb-tab').forEach((b) => {
+    const on = b.dataset.view === view;
+    b.classList.toggle('active', on);
+    // the underline says which section this is; aria-current says it to a screen reader
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
   state.view = view;
   const railOff = view !== 'catalog';
   $('#catRail').classList.toggle('hidden', railOff);

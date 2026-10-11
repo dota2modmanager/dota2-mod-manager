@@ -118,6 +118,8 @@ module.exports = async function a11y(sim) {
   for (const view of SECTIONS) {
     await steps.openSection(sim, view);
     await sim.settle(600);
+    sim.check(`${view}: a screen reader is told it is the open section`,
+      await sim.js(`[...document.querySelectorAll('.tb-tab[aria-current]')].map((b) => b.dataset.view).join() === ${JSON.stringify(view)}`));
     await audit(view);
   }
 
@@ -147,6 +149,8 @@ module.exports = async function a11y(sim) {
   const m = picked[0];
   await steps.openSection(sim, 'catalog');
   await sim.click(`.rail-item[data-cat="${m.categoryId}"]`);
+  sim.check('a screen reader is told which category is picked',
+    await sim.until(`[...document.querySelectorAll('.rail-item[aria-current="true"]')].map((b) => b.dataset.cat).join() === ${JSON.stringify(m.categoryId)}`, 3000));
   const at = await sim.until(`(() => {
     const names = [...document.querySelectorAll('.view-pane[data-pane="catalog"] .grid .card .card-open')];
     const i = names.findIndex((n) => n.textContent.trim() === ${JSON.stringify(m.name)});
@@ -185,6 +189,16 @@ module.exports = async function a11y(sim) {
       await sim.until(`document.getElementById('uninstallBtn')`, 60000);
     }
     sim.check(`${m.name}: installed with the keyboard alone`, await sim.js(`!!document.getElementById('uninstallBtn')`));
+    /* Said out loud where the reader is listening: inside the window. A region outside it is
+       hidden by aria-modal, so a toast alone told a screen reader nothing. */
+    const said = await sim.until(`(() => {
+      const r = document.querySelector('[aria-modal="true"] .sr-announce');
+      return r && r.textContent.includes(${JSON.stringify(m.name)}) ? r.textContent : null;
+    })()`, 3000);
+    sim.check('the install is announced inside the window', !!said, String(said));
+    const { nodes } = await wc.debugger.sendCommand('Accessibility.getFullAXTree');
+    sim.check('and the reader can reach that announcement', nodes.some((n) => !n.ignored && n.role?.value === 'status'),
+      'no status region in the accessibility tree while the window is open');
   }
   await sim.key('Escape');
   await sim.until(`document.getElementById('modalOverlay').classList.contains('hidden')`, 3000);

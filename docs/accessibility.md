@@ -16,8 +16,9 @@ when there is a check behind it, and the last section says what no automated che
 | 6 | Escape closes a window and answers a question with no | The remove question: Escape, and the mod is still there |
 | 7 | A destructive question says what it will remove | The remove question names the mod; the window e2e checks the same with the mouse |
 | 8 | Nothing sticks out of the window or scrolls sideways at the scales the app offers | `tools/sim/scenarios/settings.js` at 110%, and every simulator screen profile, up to 125% on 1366x768 |
-| 9 | States are not told by colour alone: switches say on or off (`role="switch"`, `aria-checked`), favourites say whether they are pressed (`aria-pressed`) | Promise 2 and axe's ARIA rules |
+| 9 | States are not told by colour alone: switches say on or off (`role="switch"`, `aria-checked`), favourites say whether they are pressed (`aria-pressed`), and the open section and the picked category say they are the current one (`aria-current`) | Promise 2 and axe's ARIA rules; the scenario checks `aria-current` on every section and on the category it picks |
 | 10 | Text over the translucent panels, gradients and pictures has the contrast WCAG asks for: 4.5:1, or 3:1 for large text | Measured on the pixels for every node axe cannot judge (`tools/sim/contrast.js`), on the same screens as promise 1 |
+| 11 | What happens without the focus moving is said out loud: a mod installed, a pack finished, an error (WCAG 4.1.3) | Every toast is also announced through a live region, inside the open window when there is one, since `aria-modal` hides everything outside it (`renderer/ui/a11y.ts`, `announce`). The scenario installs a mod from its window and checks the words reach a region the reader can see |
 
 The scenario runs in the simulator on every pull request, on Windows and on Linux
 (`.github/workflows/sim.yml`), next to the other scenarios.
@@ -34,6 +35,10 @@ The scenario runs in the simulator on every pull request, on Windows and on Linu
 - The panel grips claimed `role="separator"` with a button inside, which a separator may not hold.
 - The simulator pressed Enter without the character Chromium presses a button on, so a test of
   "Enter opens it" could not have passed whatever the app did (`tools/sim/driver.js`).
+- Nothing was ever said without the focus moving. The app had no live region at all, so
+  "installed" and every error were toasts a screen reader never heard; and neither the open section
+  nor the picked category was told, only underlined and highlighted. Found later the same day,
+  writing the checklist for the person below, which is the argument for that pass.
 
 ## Contrast axe cannot judge
 
@@ -72,9 +77,9 @@ only appears on hover.
 ## What no automated check covers
 
 - **A screen reader pass by a person.** The tree is checked, the experience is not: whether the
-  order things are announced in makes sense, whether a progress toast is heard. NVDA or Narrator
-  over the four sections, a mod window and the install queue, once before a release that changes
-  a screen.
+  order things are announced in makes sense, whether an announcement comes at the right moment.
+  [screen-reader-pass.md](screen-reader-pass.md) is the fifteen minutes it takes with NVDA or
+  Narrator, once before a release that changes a screen, and where the results go.
 - **Dragging.** The panel grips and the load order are dragged with a mouse. Each has a keyboard
   route that does the same job (the grips' fold buttons and Ctrl + / - / 0; the load order's
   move up and down), but not the drag itself.

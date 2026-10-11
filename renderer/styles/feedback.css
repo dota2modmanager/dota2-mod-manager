@@ -29,6 +29,19 @@
   box-shadow: 0 0 10px var(--primary-glow);
 }
 
+/* Read by a screen reader, drawn nowhere (renderer/ui/a11y.ts, announce). */
+.sr-announce {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 #toasts {
   position: fixed;
   right: 18px; top: calc(var(--tb-h) * var(--top-zoom) + 8px);

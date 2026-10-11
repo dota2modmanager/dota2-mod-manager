@@ -38,7 +38,7 @@ function RailSection({ label, items, active, pick }: { label: string | null; ite
       {label && <div className="rail-section">{label}</div>}
       {items.map((it) => (
         <button key={it.id} className={`rail-item ${it.fav ? 'fav ' : ''}${active === it.id ? 'active' : ''}`}
-          data-cat={it.id} onClick={() => pick(it.id)}>
+          data-cat={it.id} aria-current={active === it.id ? 'true' : undefined} onClick={() => pick(it.id)}>
           {/* one highlight for the whole rail: it travels to the category picked, so the eye
               follows the move instead of seeing one pill go out and another come on */}
           {active === it.id && <motion.span layoutId="rail-active" className="rail-active" transition={slide()} />}
