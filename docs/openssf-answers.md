@@ -114,9 +114,9 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 
 **Justification for `test_most`**: 
 
-> Coverage is measured on every run and held two ways: an aggregate floor of 74% of lines in the
+> Coverage is measured on every run and held two ways: an aggregate floor of 90% of lines in the
 > gate, and each file's own number per platform in .github/coverage-baseline.json, which a run
-> below them fails. Measured today it is about 83% of lines and 80% of branches, with the modules
+> below them fails. Measured today it is about 93% of lines and 87% of branches, with the modules
 > that write into the player's game folder above 85%.
 
 **Justification for `test_policy` and `tests_are_added`**:

@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import type { LibFile, LibRecord, ModIdentity, Preset, PackMember, PresetEntry } from './types.ts';
+import { writeFileAtomic } from './atomic-file.ts';
+import { FileTx } from './file-tx.ts';
 
 /** A record as far as telling mods apart goes. No category means an import. */
 type ModLike = { name: string; categoryId?: string; styleLabel?: string | null; fp?: string | null };
@@ -44,10 +46,25 @@ export class Library {
     }
   }
 
+  /**
+   * Write the manifest. Inside a FileTx.run block the write is one more step of that change, so
+   * a mod's record and its files commit together or not at all - an install killed after its
+   * paks but before its record left paks the library did not know. Undone, the record goes back
+   * on the disk and here too. Outside one, the file is replaced in one step (src/atomic-file.ts).
+   */
   save(): void {
-    fs.mkdirSync(path.dirname(this.file), { recursive: true });
-    fs.writeFileSync(this.file, JSON.stringify(this.data, null, 2));
+    const text = JSON.stringify(this.data, null, 2);
+    const tx = FileTx.open();
+    if (tx) {
+      // before the write: a write refused on its first try has changed this.data already
+      tx.onUndo(this.#reload);
+      tx.write(this.file, text);
+      return;
+    }
+    writeFileAtomic(this.file, text);
   }
+
+  #reload = (): void => this.load();
 
   list(): LibRecord[] {
     return this.data.installed;

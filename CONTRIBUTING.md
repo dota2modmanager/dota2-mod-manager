@@ -55,7 +55,9 @@ anything you set up there by hand is gone afterwards. CI runs the same script on
 Windows, and a pull request cannot merge until both pass.
 
 Nothing in `sandbox/` is committed, and nothing in it touches
-`steamapps/common/dota 2 beta`. Please keep it that way in your own changes: a test that needs a
+`steamapps/common/dota 2 beta`. Every launch above passes `--write-jail=sandbox`, so the app itself
+refuses to write outside `sandbox/`, the temp folder and `e2e-output/`, whatever path it computes
+(`src/write-jail.ts`). Please keep it that way in your own changes: a test that needs a
 real game folder is a test nobody else can run.
 
 ## Tests

@@ -16,7 +16,6 @@ import { matchingSets, setCardMeta, setCount, setIsOn } from '../catalog/builder
 import { plural } from '../ui/format.ts';
 import { toast } from '../ui/toast.ts';
 import { cosmeticName } from '../ui/cosmetic-name.ts';
-import { state } from '../core/store.ts';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
 import { closeOverlay } from './catalog/overlay.ts';
 import { afterPick, heroSets, isOpen, openItemHeroModal, openItemSlotModal, openWindow } from './item-builder.ts';
@@ -88,7 +87,6 @@ function drawSet(key: number, st: SetState): void {
 }
 
 const setAction = (st: SetState): BuilderAction => (st.busy ? { label: L`Надеваю…`, icon: 'hourglass_top', off: true }
-  : !state.settings?.schemaPatch ? { label: L`Выключи безопасный режим, чтобы надеть`, icon: 'shield', off: true }
   : setIsOn(st.set, pickedIn) ? { label: L`Надето`, icon: 'check', off: true } : { label: L`Надеть весь набор`, icon: 'checkroom' });
 
 async function applySet(key: number, st: SetState): Promise<void> {

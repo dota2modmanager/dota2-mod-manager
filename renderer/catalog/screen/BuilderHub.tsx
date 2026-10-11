@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import { heroName } from '../../ui/hero-name.ts';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import type { ScreenActions, ScreenModel } from './model.ts';
+import { CardName } from '../card/CardName.tsx';
 
 type Model = Extract<ScreenModel, { kind: 'builder' }>;
 
@@ -39,7 +40,7 @@ export function BuilderHub({ m, actions }: { m: Model; actions: ScreenActions })
                   </span>
                 </div>
                 <div className="card-body">
-                  <div className="card-name">{heroName(h.hero)}</div>
+                  <CardName>{heroName(h.hero)}</CardName>
                   <div className="card-meta"><span>{cosmeticName(h.meta)}</span></div>
                 </div>
               </div>

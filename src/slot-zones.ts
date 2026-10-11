@@ -132,12 +132,13 @@ export function migrateSlotZones(installer: SlotInstaller, library: Pick<Library
     .map((p) => ({ ...p, from: installer.slotBase(p.r) as string, park: `mmslot${p.n}`, to: (p.to as string).replace(/_dir\.vpk$/i, ''), parked: [], files: [] }));
   if (!moving.length) return { moved: 0 };
 
-  // one transaction for the whole layout: a refusal anywhere puts every file back
+  // one transaction for the whole layout, records included: a refusal anywhere puts every file
+  // back, and a process killed after the last rename cannot leave records naming the old slots
   FileTx.run((tx) => {
     for (const p of moving) p.parked = installer.moveToSlot({ ...p.r, files: p.r.files }, p.park, p.from, tx);
     for (const p of moving) p.files = installer.moveToSlot({ ...p.r, files: p.parked }, p.to, p.park, tx);
+    for (const p of moving) library.update(p.r.id, { files: p.files });
   }, installer.log);
-  for (const p of moving) library.update(p.r.id, { files: p.files });
   return { moved: moving.length };
 }
 
@@ -162,7 +163,7 @@ export function vacateAppPak(installer: SlotInstaller, library: Pick<Library, 'l
   const from = `pak${APP_PAK}`;
   const base = to.replace(/_dir\.vpk$/i, '');
   // a refused rename puts back what already moved inside moveToSlot, so a throw here is clean
-  library.update(rec.id, { files: installer.moveToSlot(rec, base, from) });
+  FileTx.run(() => { library.update(rec.id, { files: installer.moveToSlot(rec, base, from) }); }, installer.log);
   return true;
 }
 

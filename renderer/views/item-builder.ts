@@ -25,7 +25,6 @@ import { byName, effectKey, effectPicture, heroesOf, liveEffects, setIsOn, stage
 import { plural } from '../ui/format.ts';
 import { heroName } from '../ui/hero-name.ts';
 import { cosmeticName } from '../ui/cosmetic-name.ts';
-import { officialOnly } from '../catalog/source.ts';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
 import { cosmeticSlotList, slotData } from './catalog/lists.ts';
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './catalog/overlay.ts';
@@ -129,7 +128,7 @@ function drawSlot(key: number, st: SlotState): void {
     options: byName([{ id: '', name: L`Стандартный`, tags: [] }, ...data.options], st.query).map((o) => ({
       id: o.id, name: o.name, tags: tagLine(o.tags), picked: o.id === st.selectedId, on: o.id ? live?.itemId === o.id : !live,
     })),
-    effects: effects.length && !officialOnly() ? {
+    effects: effects.length ? {
       none: hasItem && !st.effectIds.length,
       list: effects.map((fx) => ({ id: fx.id, name: fx.name, picture: effectPicture(fx.id), picked: hasItem && st.effectIds.includes(fx.id) })),
       enabled: hasItem,
@@ -138,8 +137,7 @@ function drawSlot(key: number, st: SlotState): void {
         : L`Эффект добавляется к предмету: сначала выбери его выше.`,
     } : null,
     summary: { name: chosen ? chosen.name : L`Стандартный`, effects: chosen && names.length ? names.join(', ') : '' },
-    action: state.settings?.schemaPatch ? stagedItemAction(data.effects, live, st)
-      : { label: L`Выключи безопасный режим, чтобы надеть`, icon: 'shield', off: true },
+    action: stagedItemAction(data.effects, live, st),
   }, {
     back: () => st.back?.go(),
     close: closeOverlay,
@@ -161,7 +159,7 @@ function drawSlot(key: number, st: SlotState): void {
 
 async function applySlot(key: number, st: SlotState, chosen: CosmeticOption | null | undefined): Promise<void> {
   const data = slotData(st.slot);
-  if (!data || !cat || !state.settings?.schemaPatch) return;
+  if (!data || !cat) return;
   const act = stagedItemAction(data.effects, pickedIn(st.slot), st);
   // taking a pick off puts the stock item back, which has no id of its own
   const look = act.remove ? { id: '', name: L`Стандартный` } : chosen;

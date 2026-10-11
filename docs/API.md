@@ -19,10 +19,12 @@ the code, not in this page.
 | [`src/app-page.ts`](#srcapp-pagets) | The page the main window loads. |
 | [`src/arcana-service.ts`](#srcarcana-servicets) | The arcana window's side in the main process (issue #118): what the window shows, and the mod it |
 | [`src/arcana.ts`](#srcarcanats) | An arcana as a mod, built from the game's own files: the look of an item a player has not got, |
+| [`src/atomic-file.ts`](#srcatomic-filets) | Replace a small file so that whoever reads it next - this process, or the next start after |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
 | [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
+| [`src/channel-args.ts`](#srcchannel-argsts) | What each channel may be handed, checked before its handler runs (src/window-guard.ts). |
 | [`src/cosmetic-names.ts`](#srccosmetic-namests) | Display names come from Valve's installed localization, while schema names remain the keys |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/deep-links.ts`](#srcdeep-linksts) | d2mm:// links: a preset link clicked anywhere on the system, and on Linux, telling the desktop |
@@ -35,6 +37,7 @@ the code, not in this page.
 | [`src/electron.ts`](#srcelectronts) | Electron's main-process API, asked for at the moment it is used. |
 | [`src/error-text.ts`](#srcerror-textts) | What a caught error says, as one line of text. |
 | [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
+| [`src/file-tx-journal.ts`](#srcfile-tx-journalts) | The half of FileTx that outlives the process. |
 | [`src/file-tx.ts`](#srcfile-txts) | All of it, or none of it. |
 | [`src/fingerprints.ts`](#srcfingerprintsts) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
 | [`src/folder-size.ts`](#srcfolder-sizets) | Bytes under a folder: the number Settings shows beside each cache, and the one the removal |
@@ -63,6 +66,7 @@ the code, not in this page.
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
 | [`src/item-builder-slots.ts`](#srcitem-builder-slotsts) | The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit |
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
+| [`src/item-visuals.ts`](#srcitem-visualsts) | What an item does to the game, read from its block in items_game ("visuals"), and what a mod |
 | [`src/kv3-blobs.ts`](#srckv3-blobsts) | Binary blobs in a KV3 block (src/kv3.ts): where they lie, how they are read, and how they are |
 | [`src/kv3-cells.ts`](#srckv3-cellsts) | The numbers in a parsed KV3 block (src/kv3.ts): read one where it lies, change it there, and the |
 | [`src/kv3-write.ts`](#srckv3-writets) | A KV3 block written anew from its tree (src/kv3.ts), for changes that are more than a number: |
@@ -72,6 +76,7 @@ the code, not in this page.
 | [`src/main-window.ts`](#srcmain-windowts) | The one window the app has: its size on the screen it opens on, the single page it may show, |
 | [`src/material.ts`](#srcmaterialts) | Compiled resources at the block level, and a material's expressions: what an item's gem colours. |
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
+| [`src/mod-doctor.ts`](#srcmod-doctorts) | The mod doctor: what is wrong with a mod, found in its files and the game's, before anybody |
 | [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
 | [`src/mod-preview-pick.ts`](#srcmod-preview-pickts) | Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
@@ -124,6 +129,8 @@ the code, not in this page.
 | [`src/vpk-write.ts`](#srcvpk-writets) | Writing a Source-engine VPK: one self-contained file from a list of entries, a multi-part index |
 | [`src/vpk.ts`](#srcvpkts) | The VPK format, in one place for everything that reads or writes one: the reader |
 | [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
+| [`src/window-guard.ts`](#srcwindow-guardts) | Who may call the main process, and with what. |
+| [`src/write-jail.ts`](#srcwrite-jailts) | A run that may write only inside the folders it was given. |
 
 ## src/adopt.ts
 
@@ -324,7 +331,10 @@ in a colour they choose, in safe mode (issue #118, starting with Terrorblade).
 In the game the arcana is an item: the hero's model is swapped for the arcana's, the item creates
 its own particles, and a gem tints the rest (src/recolor.ts). A mod cannot give an item, so it
 puts the arcana's files where the plain hero's are:
-- the arcana's models under the names of the hero's own;
+- the arcana's models under the names of the hero's own, each named inside for the path it now
+  has; the hero's model also told to play its arcana animations, which in the game the item
+  turns on as the activity modifier "abysm" (issue #118: without it, an attack played the
+  injured one);
 - a particle the hero already creates, taken from the arcana's version and given the arcana's
   own particles as children, since nothing else would create them; the children are named in
   the file's RERL block too, as the compiler names them. A child is drawn at the control points
@@ -371,6 +381,22 @@ pointing at another file, and the file names them in RERL. A child with an attac
 control point of its own: the parent hands point k to child k (C_OP_SetParentControlPointsToChildCP)
 and binds its points to attachments in its first configuration, so both grow by one.
 
+### `asModel`
+
+```ts
+export function asModel(file: Buffer, modifier?: string): Buffer
+```
+
+A model put under another path that plays without the item what it played with it: its
+animations that need `modifier` made the ones its activities play (playWithout).
+
+A sequence and an animation clip each list the activity they play (ACT_DOTA_ATTACK) and after it
+the modifiers they need ("abysm"). The game picks by the clips' lists (ANIM): with "abysm" taken
+off the sequences alone, the arcana still stood still through its attacks, and the plain hero
+still swung with its sequences pointed elsewhere (both found on the bench, issue #118). An entry
+pointed at the activity instead of taken off counts as a modifier: the entries are taken off, and
+both blocks written anew.
+
 ### `buildArcana`
 
 ```ts
@@ -378,6 +404,27 @@ export function buildArcana({ pak01, set, target }: { pak01: string; set: string
 ```
 
 The arcana in the chosen colour, as one VPK from the game's pak01.
+
+## src/atomic-file.ts
+
+Replace a small file so that whoever reads it next - this process, or the next start after
+a crash - finds the old contents or the new ones, never half of either.
+
+manifest.json and settings.json were written in place. A process killed during that write
+left a cut-off file; JSON.parse refused it on the next start, and the app went on with an
+empty library (every installed mod shown as somebody else's file) or default settings (the
+game looked for again, possibly finding another install). Writing beside the file and
+renaming over it makes the change one step: the rename either happened or it did not.
+
+### `writeFileAtomic`
+
+```ts
+export function writeFileAtomic(file: string, data: string | NodeJS.ArrayBufferView): void
+```
+
+Write `data` to `file` through a temporary file beside it. An antivirus or a backup tool
+holding the old file makes Windows refuse the rename for a moment, so it is tried a few times;
+if the file stays held, it is written in place as before rather than not written at all.
 
 ## src/beta.ts
 
@@ -624,6 +671,62 @@ export class Catalog
 
 The catalog on disk and on the wire: fetches the three data files, checks their signatures,
 keeps the last good copy, and says which archive hash the catalog published for a mod.
+
+## src/channel-args.ts
+
+What each channel may be handed, checked before its handler runs (src/window-guard.ts).
+
+TypeScript holds the window and the main process to the same shapes (renderer/api/), but only
+while both are this app's own code. The values that arrive over IPC are whatever the page sent:
+a page that ran a script it should not have - a mod description with markup in it, a catalog
+entry somebody wrote to break out - could send anything, and the handlers behind these channels
+write the game folder, open folders in Explorer, launch programs and change the settings.
+
+So every channel the main process answers has an entry here, and a call whose arguments do not
+fit is refused before the handler sees it. The checks are about shape and size: a string where
+a string goes, an id that is an id, a list that is not a million items long. What a value means
+(whether an id is a mod in the library, whether a tool folder is one this app installed) stays
+with the handler, which knows. Settings are the exception: the window may change only the keys
+it has a control for, so the game folder, the Discord account and the item table's stamp are
+not one call away from a script.
+
+test/window-guard.test.ts fails when a channel in src/ has no entry here, when an entry names a
+channel that no longer exists, and when a check accepts what it is there to refuse.
+
+### `Check`
+
+```ts
+export type Check = (v: unknown) => string | null
+```
+
+Why a value does not fit, or null when it does.
+
+### `WINDOW_SETTINGS`
+
+```ts
+export const WINDOW_SETTINGS: Record<string, Check> =
+```
+
+The settings the window has a control for, and what each may be set to. The rest - the game
+folder, the language suffix, the Discord account, the item table's stamp - are set by the main
+process from what it found or was told by Steam and Discord, never by the page.
+
+### `CHANNEL_ARGS`
+
+```ts
+export const CHANNEL_ARGS: Record<string, Check[]> =
+```
+
+Each channel's arguments, in order. A channel that takes none has an empty list.
+
+### `checkArgs`
+
+```ts
+export function checkArgs(channel: string, args: unknown[]): string | null
+```
+
+Check one call. Fewer arguments than the channel takes is fine when the missing ones are
+optional; more is not, because no caller in the window sends them.
 
 ## src/cosmetic-names.ts
 
@@ -1037,6 +1140,105 @@ export function createGate({ remoteConfig, settings }: { remoteConfig: FeatureSw
 @returns the answer to send back, or null to carry on
 ```
 
+## src/file-tx-journal.ts
+
+The half of FileTx that outlives the process.
+
+A transaction undoes itself when a step throws. It cannot when the process is gone: killed
+from Task Manager, closed by Windows Update, cut by a power failure halfway through moving
+a pak. Until 2026-10-10 the next start had only the parked .mmtx files to go on
+(sweepStaged in src/installer-folder.ts), and a parked file cannot say which transaction it
+belonged to or what else that transaction had already written. An install killed after its
+second pak left those two paks in the folder with no library record.
+
+So every step is written here before it is taken, one JSON line each, flushed to the disk
+first. A journal that ends in a commit line belonged to a change that finished: the next
+start drops what it parked. One that does not is undone, every step from the last to the
+first, and the folder is back to the moment before the change began.
+
+A step is written before it is taken, so its undo cannot know how far the step got. Each one
+below is written to be right from any point inside its step - not started, half done, done -
+and to be right a second time, because recovery can be killed too and simply runs again on
+the start after that.
+
+### `Undo`
+
+```ts
+export type Undo =
+```
+
+A step about to be taken, and how to take it back.
+
+### `JOURNAL_EXT`
+
+```ts
+export const JOURNAL_EXT = '.txlog'
+```
+
+The journal's own extension, in the folder FileTx.journalDir names.
+
+### `undoStep`
+
+```ts
+export function undoStep(op: Undo): string | null
+```
+
+Take one step back.
+
+unwrite: no original means whatever is at dest, whole or half written, is ours to delete. An
+  original that was parked goes back over it. An original that was never parked is still at
+  dest, untouched, because parking is the first thing the step does.
+unmove: the source is gone only once the rename happened, so that is when it is renamed back.
+  The rename refuses a missing source, so FileTx.move checks for one before it writes this.
+unremove: the parked copy goes back, unless the target is somehow there again.
+rmdir: only an empty folder, and only if it exists.
+
+Answers what it could not bring back: an original that is neither parked nor in its place,
+because something deleted it in between (an antivirus, a cleaner, the user). Nothing can
+restore that, but the log should say so.
+
+### `parkedBy`
+
+```ts
+export function parkedBy(op: Undo): string | null
+```
+
+Where a step parked an original, if it did.
+
+### `Journal`
+
+```ts
+export class Journal
+```
+
+One transaction's journal: opened on its first step, so a change that takes none leaves no file.
+
+### `readJournal`
+
+```ts
+export function readJournal(file: string): { steps: Undo[]; committed: boolean }
+```
+
+What a journal says: its steps in order, and whether the change got as far as committing.
+Reading stops at the first line that is not whole: a power cut can cut the last line short,
+and the step it was describing was never started, because a step starts after its line is
+on the disk.
+
+### `recoverJournals`
+
+```ts
+export function recoverJournals(dir: string | null, log: (msg: string) => void = () => {}): { undone: number; finished: number }
+```
+
+Finish whatever a killed process left in `dir`. Runs once at start, before anything opens the
+library or touches the game folder (src/services.ts); the app holds a single-instance lock, so
+every journal found here belongs to a process that is gone.
+
+A step that cannot be undone - Dota holding the pak - is logged and the rest still run, the
+same bargain as rollback in a live process. The journal is dropped either way: kept, it would
+replay those steps on a later start over changes made in between. A parked file it could not
+put back is still next to its original, where sweepStaged finds it.
+
 ## src/file-tx.ts
 
 All of it, or none of it.
@@ -1053,6 +1255,18 @@ that list backwards. What gets displaced is not copied anywhere: it is renamed n
 itself with a .mmtx suffix, which is atomic, costs nothing for a 300 MB pak, and cannot hit
 the cross-volume copy that staging in %APPDATA% would (the game usually lives on another
 drive). Commit deletes those; rollback renames them back.
+
+A step's undo is recorded before the step is taken, never after. Recorded after, a write
+that failed halfway - the disk filled up on the new pak - had already parked the original
+and had no undo to bring it back, so the rollback meant for exactly that failure left the
+original under its .mmtx name. And with FileTx.journalDir set (src/services.ts) the same
+record goes to a journal on the disk first, so a process killed in the middle is undone on
+the next start: src/file-tx-journal.ts.
+
+FileTx.run inside FileTx.run joins the open transaction instead of starting a second one,
+so a library record written in the same block as the files commits or rolls back with
+them (src/library.ts). The inner block is a savepoint: if it throws, its own steps are
+undone before the error reaches the caller, which may catch it and carry on.
 
 ### `Writer`
 
@@ -1953,12 +2167,13 @@ The game's own files in the language folder, and our notice pak: never a mod to 
 ### `STAGED_RE`
 
 ```ts
-export const STAGED_RE = /\.[a-z0-9]+\.mmtx$/i
+export const STAGED_RE = /\.[a-z0-9]+(?:-[a-z0-9]+)?\.mmtx$/i
 ```
 
 What a FileTx parks next to a file it is about to replace or delete (see src/file-tx.ts).
 Nothing should outlive its transaction; one that does means the app died mid-write, and
-sweepStaged() cleans up after that on the next start.
+sweepStaged() cleans up after that on the next start. The name is the transaction's id and,
+since 2026-10-10, a dash and a count, so one file parked twice in one change gets two names.
 
 ## src/installer-folder.ts
 
@@ -2738,6 +2953,75 @@ export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | nu
 
 Read compiled asset bytes out of pak01 and stage them under the renamed path in our VPK.
 
+## src/item-visuals.ts
+
+What an item does to the game, read from its block in items_game ("visuals"), and what a mod
+built from the game's own files has to do to show it on a hero who does not own the item: the
+plan that src/arcana.ts carries out for Terrorblade's arcana (issue #118), worked out by hand
+there, for any item.
+
+Each asset modifier is one change the item makes while it is worn. Some are files and can be
+put under the plain names (a model, a particle, a picture); some only the item can switch on
+(an activity modifier, which a model then needs taken off its animations, and a particle the
+item creates, which needs a host); some live outside the files altogether (sounds, the kill
+effect, voice lines) and a mod cannot give them.
+
+### `AssetModifier`
+
+```ts
+export interface AssetModifier { type: string; asset: string; modifier: string; style: string | null }
+```
+
+_No description in the source._
+
+### `ItemVisuals`
+
+```ts
+export interface ItemVisuals
+```
+
+_No description in the source._
+
+### `PlanStep`
+
+```ts
+export interface PlanStep { what: string; how: string; done: 'built' | 'by hand' | 'cannot' }
+```
+
+One thing a build from the game's files has to do, and whether this code does it.
+
+### `itemVisuals`
+
+```ts
+export function itemVisuals(text: string, id: string | number): ItemVisuals | null
+```
+
+An item's visuals, by its id; null when the table has no such item.
+
+### `findItems`
+
+```ts
+export function findItems(text: string, query: string): { id: string; name: string }[]
+```
+
+Items whose name has `query` in it (any case), or the one with that id.
+
+### `defaultItem`
+
+```ts
+export function defaultItem(text: string, hero: string, slot: string): { id: string; model: string } | null
+```
+
+The free item of a hero's slot, whose model the item's own model takes the place of.
+
+### `buildPlan`
+
+```ts
+export function buildPlan(text: string, v: ItemVisuals): PlanStep[]
+```
+
+What a build from the game's files has to do for each of the item's changes.
+
 ## src/kv3-blobs.ts
 
 Binary blobs in a KV3 block (src/kv3.ts): where they lie, how they are read, and how they are
@@ -2747,7 +3031,8 @@ Before version 2 a blob is in the 1-byte lane, its length in the 4-byte lane. Fr
 buffer with the types goes on with every blob's length (int32), a trailer and the compressed size
 of every LZ4 frame (uint16); the frames come after the buffers, chained so a later one can
 reference an earlier blob, and a trailer closes them. The layout follows ValveResourceFormat's
-BinaryKV3.cs (MIT).
+BinaryKV3.cs (MIT). Compressed with zstd (version 5, a model's animations), the blobs are one zstd
+frame after the buffers instead, and the table has no frame sizes.
 
 ### `BlobTable`
 
@@ -2773,6 +3058,22 @@ export function readBlobs(block: Buffer, at: number, t: BlobTable, total: number
 ```
 
 Every blob's bytes, one after another, read from the block at `at`; and where they end.
+
+### `readZstdBlobs`
+
+```ts
+export function readZstdBlobs(block: Buffer, at: number, size: number, t: BlobTable, total: number): { data: Buffer; end: number }
+```
+
+Every blob's bytes from a zstd block: one frame of `size` bytes at `at`, the trailer after it.
+
+### `zstd`
+
+```ts
+export function zstd(src: Buffer, size?: number): Buffer
+```
+
+A zstd frame unpacked, checked against the size the header gives when there is one.
 
 ### `rewriteBlobs`
 
@@ -2848,8 +3149,8 @@ they were, so nothing is rounded on the way.
 
 The block comes out in one buffer, the layout of versions 2 to 4: a file read as version 1 or 2
 is written as 2, 3 as 3, 4 and 5 as 4, so a type's flag byte means what it meant (versions 1 and
-2 keep flags as bits, 3 and later as one value). Typed arrays are all written as ARRAY_TYPED,
-which every version reads, and an empty one as a plain array, which version 2 and later require.
+2 keep flags as bits, 3 and later as one value). A typed array stays typed, its element type
+kept, and is written as ARRAY_TYPED, which every version reads; an empty one as a plain array.
 
 ### `writeKv3`
 
@@ -2891,7 +3192,7 @@ Where one number lives: which decompressed buffer, the byte offset in it, and ho
 ### `Kv3Node`
 
 ```ts
-export type Kv3Node = ( | { kind: 'object'; members: Map<string, Kv3Node> } | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number } } | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null; raw?: Buffer } | { kind: 'string'; value: string } | { kind: 'blob'; data: Buffer } | { kind: 'other'; type: number; value?: number } ) & { flag?: number }
+export type Kv3Node = ( | { kind: 'object'; members: Map<string, Kv3Node> } | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number }; type?: number } | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null; raw?: Buffer } | { kind: 'string'; value: string } | { kind: 'blob'; data: Buffer } | { kind: 'other'; type: number; value?: number } ) & { flag?: number }
 ```
 
 A value in the tree the walk builds. A number keeps where it lies (`cell`), or null when the
@@ -2899,7 +3200,9 @@ type alone says what it is (0 and 1 written as INT64_ZERO, DOUBLE_ONE...), and w
 byte is, which is the one place such a number can be changed. Elements of a typed array share
 one type byte, so theirs is null; the array keeps that type as `element`. `flag` is the byte
 that can follow a type (a string that names a resource, for one), kept as the file had it. A
-number made rather than read has its bytes in `raw`, for src/kv3-write.ts.
+number made rather than read has its bytes in `raw`, for src/kv3-write.ts. An array keeps the
+type it was stored as (`type`: 8 plain, 10 typed, 24 typed with a one-byte length, 25 the same
+with its elements in version 5's first buffer).
 
 ### `Kv3Array`
 
@@ -3279,6 +3582,57 @@ Where Minify is, whether its folder is the one the game mounts, and whose mods a
 @param p.config  what Minify's own config says, read from disk unless a test hands one in
 @param p.countMods  how many of the files in a folder are Minify's own, when the caller can look at them
 ```
+
+## src/mod-doctor.ts
+
+The mod doctor: what is wrong with a mod, found in its files and the game's, before anybody
+starts the game to see it (issue #118).
+
+Every check here is a bug that reached the game once and took a person playing it to find:
+- a model whose animations need an activity modifier only an item turns on ("abysm"): without
+  the item an attack plays nothing, or the wrong one. Read from the animation clips (ANIM) as
+  well as the sequences (ASEQ): the game picks by the clips, and a fix to the sequences alone
+  changed nothing in the game;
+- a model whose sequences are in another order than the game's model at that path: if the
+  server online picks a sequence by number from its own model, the client plays another one;
+- a particle that hangs more children on itself than it hands control points to: the extra
+  ones are drawn at its first point (the arcana's chest glow at the right eye);
+- a particle child that neither the mod nor the game has, or that its RERL block does not name.
+Each finding names the file, says what happens in the game, and how sure it is. A model named
+inside for another path than its own is only a note: the arcana mods in the catalog all are, and
+the game plays them.
+
+### `Finding`
+
+```ts
+export interface Finding
+```
+
+_No description in the source._
+
+### `sequencesOf`
+
+```ts
+export const sequencesOf = (file: Buffer) => playables(file, 'ASEQ', 'm_localS1SeqDescArray', 'm_sName')
+```
+
+A model's sequences: name, the activities it plays and the modifiers it needs.
+
+### `clipsOf`
+
+```ts
+export const clipsOf = (file: Buffer) => playables(file, 'ANIM', 'm_animArray', 'm_name')
+```
+
+A model's animation clips, the same way: the lists the game picks by.
+
+### `examine`
+
+```ts
+export function examine({ mod, pak01 }: { mod: string; pak01: string }): Finding[]
+```
+
+Everything the doctor finds in a mod's VPK, against the game's pak01.
 
 ## src/mod-id.ts
 
@@ -5925,6 +6279,9 @@ is the game's own content and is always there. The pak01 files in game\dota_<lan
 the voice pack, which plenty of people never download, and testing for those would call a
 working install broken.
 
+A run held to a sandbox (src/write-jail.ts) knows no game outside it, so detection cannot hand it
+the real one: that is how a sandbox run once came to write into the real game.
+
 ## src/terrain-age.ts
 
 Terrains that replace the whole map, and whether the game's own map has moved on since.
@@ -6782,3 +7139,149 @@ export function pngFromVtex(buf: unknown): Buffer | null
 @param buf contents of a .vtex_c
 @returns the PNG file it carries, or null when it carries pixels instead
 ```
+
+## src/window-guard.ts
+
+Who may call the main process, and with what.
+
+The window's page reaches the main process through window.api (preload.js), and every channel
+behind it trusted whoever called: any frame, any page, any arguments. The page is the app's own
+and navigation off it is blocked (src/main-window.ts), but it also draws text from outside - mod
+names and descriptions from the catalog, preset notes from a friend - and the day one of those
+gets a script past the page, that script holds the same window.api the buttons do. Electron's
+security checklist asks for the sender of every message to be checked for that reason
+(https://www.electronjs.org/docs/latest/tutorial/security, "Validate the sender of all IPC
+messages").
+
+So the checks go in front of every channel, in one place: ipcMain.handle and ipcMain.on are
+wrapped before anything registers. A call is answered only when it comes from the top frame of
+one of the app's own pages - the main window's, or the removal window's - and its arguments fit
+the channel's entry in src/channel-args.ts. Registering a channel with no entry there throws at
+start, so a new channel cannot ship unchecked. Refusals go to the diagnostics log.
+
+The same guard answers the browser's permission questions (the clipboard for a share link and
+fullscreen for the video player, nothing else, and only for the app's pages) and locks every
+web contents the app ever creates: no webview, no window.open, no navigation off the app's pages.
+
+### `pageKey`
+
+```ts
+export function pageKey(url: string): string | null
+```
+
+An address reduced to the page it names: no query, no fragment, and a file path as Windows compares it.
+
+### `createIpcGuard`
+
+```ts
+export function createIpcGuard({ pages, log }: { pages: string[]; log: (msg: string) => void })
+```
+
+```
+@param pages  the addresses of the app's own pages: what the main window loads and the removal window's
+@param log    the diagnostics log, told about every refusal
+```
+
+### `appPages`
+
+```ts
+export function appPages({ appRoot, isPackaged, devUrl }: { appRoot: string; isPackaged: boolean; devUrl?: string }): string[]
+```
+
+The two pages of this app: what the main window loads (src/app-page.ts) and the removal window's.
+
+### `guardTheApp`
+
+```ts
+export function guardTheApp({ app, ipcMain, session, appRoot, devUrl, log }: { app: Pick<App, 'isPackaged' | 'on'>; ipcMain: Pick<IpcMain, 'handle' | 'on'>; session: { defaultSession: Pick<Session, 'setPermissionRequestHandler' | 'setPermissionCheckHandler'> }; appRoot: string; devUrl?: string; log: (msg: string) => void; }): ReturnType<typeof createIpcGuard>
+```
+
+The whole guard, as src/main.ts puts it up before any channel or window exists: the channels,
+the browser's permissions, and every web contents locked the moment it is created.
+
+## src/write-jail.ts
+
+A run that may write only inside the folders it was given.
+
+On 2026-10-03 a sandbox run wrote into the real game. Its settings named a sandbox inside a copy
+of the repository deleted days before; the app saw no game there, detected the real one through
+Steam, saved it and rewrote the ownership note in the real language folder. tools/sandbox-pin.js
+now writes the right path in before every start, which fixes that path. It does not stop the
+next wrong path: a bug that computes another folder writes there just the same.
+
+So a run started with --write-jail=<folder> cannot write anywhere else. Every Node call that
+changes the disk - a write, an append, a copy's destination, both ends of a rename, a delete, a
+folder made, a file opened for writing, a stream - is checked before it happens, and one aimed
+outside throws EPERM and is logged. The check is on the real path: the nearest part of it that
+exists is resolved with realpath, so "..", a symlink or a Windows junction inside the folder that
+points out of it is outside. Reading is untouched, which is how the sandbox copies gameinfo out
+of the real game.
+
+The sandbox launches set it (npm run start:sandbox, tools/e2e.mjs, tools/sim/run.mjs); the temp
+folder and the folders a screenshot or a log mirror were asked into are let in beside it
+(src/main.ts). Steam's own detection is held to the same folders (src/steam.ts), so the app never
+adopts the real game in the first place. A copy started without the switch is not affected.
+
+### `insideJail`
+
+```ts
+export function insideJail(p: string | null | undefined): boolean
+```
+
+Whether `p` is inside the jail; always true when no jail is up.
+
+### `jailRoots`
+
+```ts
+export function jailRoots(): string[]
+```
+
+The folders the jail holds writes to, or none.
+
+### `jailRefusals`
+
+```ts
+export function jailRefusals(): number
+```
+
+How many writes the jail refused since it went up.
+
+### `jailFromArgv`
+
+```ts
+export function jailFromArgv(argv: string[]): string[]
+```
+
+The folders a --write-jail=<a><delimiter><b> switch on the command line names, or none.
+
+### `jailThisRun`
+
+```ts
+export function jailThisRun(argv: string[], env: NodeJS.ProcessEnv): string[]
+```
+
+Put the jail up for this run if its command line asks for one: the folders it names, the temp
+folder, and the folders the dev switches were asked to write into - a screenshot (MM_SHOT), a log
+mirror (MM_DIAG), a diagnostics report (MM_DIAG_OUT), the simulator's results (MM_SIM_OUT).
+
+```
+@returns the folders it holds writes to, or none when the run is not jailed
+```
+
+### `jailLogTo`
+
+```ts
+export function jailLogTo(log: (msg: string) => void): void
+```
+
+Send refusals to `log` from now on: the app's diagnostics log, where the e2e looks for them. A
+jailed run says so there first, so a run that should have been jailed and was not shows too.
+
+### `installWriteJail`
+
+```ts
+export function installWriteJail(folders: string[], log: (msg: string) => void = () => {}): () => void
+```
+
+Hold every write in this process to `folders` (and anything inside them) from now on. Returns
+the function that takes the jail down again, which only the tests call.

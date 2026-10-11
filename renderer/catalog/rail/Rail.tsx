@@ -5,7 +5,6 @@ import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { MotionConfig, motion } from 'motion/react';
 import { dur, ease } from '../../motion/tokens.ts';
-import type { CatalogSource } from '../source.ts';
 
 interface RailItem {
   id: string;
@@ -20,20 +19,12 @@ interface RailItem {
 
 export interface RailModel {
   active: string;
-  source: CatalogSource;
   sections: { label: string | null; items: RailItem[] }[];
 }
 
-function Rail({ model, pick, source }: { model: RailModel; pick: (id: string) => void; source: (value: CatalogSource) => void }) {
+function Rail({ model, pick }: { model: RailModel; pick: (id: string) => void }) {
   return (
     <>
-      <label className="rail-source" htmlFor="catalogSource">
-        <span>{L`Показывать`}</span>
-        <select className="select" id="catalogSource" value={model.source} onChange={(e) => source(e.target.value as CatalogSource)}>
-          <option value="all">{L`Все материалы`}</option>
-          <option value="official">{L`Только официальные предметы`}</option>
-        </select>
-      </label>
       {model.sections.map((s, si) => (
         <RailSection key={s.label ?? `top:${si}`} label={s.label} items={s.items} active={model.active} pick={pick} />
       ))}
@@ -64,11 +55,11 @@ const slide = () => ({ duration: dur('--dur-medium'), ease: ease('--ease-standar
 
 let root: ReturnType<typeof createRoot> | null = null;
 
-export function renderRail(el: HTMLElement, model: RailModel, pick: (id: string) => void, source: (value: CatalogSource) => void): void {
+export function renderRail(el: HTMLElement, model: RailModel, pick: (id: string) => void): void {
   if (!root) {
     el.replaceChildren();
     root = createRoot(el);
   }
   const r = root;
-  flushSync(() => r.render(<MotionConfig reducedMotion="user"><Rail model={model} pick={pick} source={source} /></MotionConfig>));
+  flushSync(() => r.render(<MotionConfig reducedMotion="user"><Rail model={model} pick={pick} /></MotionConfig>));
 }

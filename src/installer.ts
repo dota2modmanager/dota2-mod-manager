@@ -162,8 +162,11 @@ export class Installer {
 
   // ---------- install ----------
 
-  /** Install a catalog mod, and answer with the files it now owns. */
-  async install({ categoryId, modName, fileRef }: { categoryId: string; modName: string; fileRef: string }): Promise<LibFile[]> {
+  /**
+   * Install a catalog mod, and answer with the files it now owns. `record` runs inside the same
+   * transaction as the writes, so the library entry it makes commits with the files or not at all.
+   */
+  async install({ categoryId, modName, fileRef, record }: { categoryId: string; modName: string; fileRef: string; record?: (files: LibFile[]) => void }): Promise<LibFile[]> {
     // Before the download, not after it. The folder check used to happen at the write, so a
     // mod with nowhere to go still cost the user a 300 MB download first and only then said
     // no. Tools are the exception: they live in the app's own folder and need no game.
@@ -173,7 +176,11 @@ export class Installer {
     // A mod is rarely one file, and everything below writes into somebody else's game
     // folder. One transaction around the lot: a failure on the fourth file takes the first
     // three with it, instead of leaving paks nothing in the library points at.
-    return FileTx.run((tx) => this.installInto(tx, { categoryId, modName, local }), this.log);
+    return FileTx.run((tx) => {
+      const files = this.installInto(tx, { categoryId, modName, local });
+      record?.(files);
+      return files;
+    }, this.log);
   }
 
   // the writing: src/installer-write.ts

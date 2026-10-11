@@ -3,14 +3,19 @@
  * binary KV3 blocks of versions 1 and 2 with the shapes the real ones have, and resources with
  * their blocks in the order the game writes them. Valve's own files cannot be committed here.
  */
+import zlib from 'node:zlib';
 import { lz4Literals } from '../../src/lz4.ts';
 import { readCell, type Kv3Block, type Kv3Node } from '../../src/kv3.ts';
 import { resourceId } from '../../src/resource.ts';
 
-/** A value as the test writes it, one key per KV3 type the encoder below knows. */
+/**
+ * A value as the test writes it, one key per KV3 type the encoder below knows. `objs` is a typed
+ * array of objects, the shape of a model's sequences; `i32rows` a typed array of arrays with a
+ * one-byte length (type 24), the shape of a model's bones.
+ */
 export type V = { int: number } | { i32s: number[] } | { str: string } | { yes: true } | { one: true } | { dbl: number }
   | { i64: number } | { i64zero: true } | { f64s: number[] } | { blob: Buffer } | { obj: [string, V][] } | { arr: V[] }
-  | { ref: string } | { bool: boolean };
+  | { ref: string } | { bool: boolean } | { objs: [string, V][][] } | { i32rows: number[][] };
 
 const TRAILER = 0xffeedd00;
 const u32 = (n: number) => { const b = Buffer.alloc(4); b.writeUInt32LE(n >>> 0); return b; };
@@ -18,9 +23,11 @@ const pad = (n: number, a: number) => Buffer.alloc((a - (n % a)) % a);
 
 /**
  * A binary KV3 block, LZ4. Version 2 is the shape 290 of the game's Terrorblade particles have,
- * blobs in frames after the buffer; version 1 keeps a blob in the 1-byte lane.
+ * blobs in frames after the buffer; version 1 keeps a blob in the 1-byte lane. Version 5 is zstd,
+ * as a model's animations are, laid out the way ValveResourceFormat's writer does it: the strings
+ * in the first buffer, every value in the second, the blobs in one zstd frame after them.
  */
-export function encodeKv3(root: V, version: 1 | 2 = 2): Buffer {
+export function encodeKv3(root: V, version: 1 | 2 | 5 = 2): Buffer {
   const strings: string[] = [];
   const sid = (x: string) => { let i = strings.indexOf(x); if (i < 0) { i = strings.length; strings.push(x); } return i; };
   const l1: Buffer[] = [];
@@ -28,8 +35,10 @@ export function encodeKv3(root: V, version: 1 | 2 = 2): Buffer {
   const l8: [number, boolean][] = []; // value, and whether it is a double
   const types: number[] = [];
   const blobs: Buffer[] = [];
+  const lens: number[] = []; // version 5 keeps the objects' member counts apart
+  let arrays = 0;
   const typeOf = (v: V): number => ('int' in v ? 11 : 'i32s' in v ? 10 : 'str' in v ? 6 : 'yes' in v ? 13 : 'one' in v ? 18 : 'dbl' in v ? 5
-    : 'i64' in v ? 3 : 'i64zero' in v ? 15 : 'f64s' in v ? 10 : 'blob' in v ? 7 : 'obj' in v ? 9 : 'ref' in v ? 6 : 'bool' in v ? 2 : 8);
+    : 'i64' in v ? 3 : 'i64zero' in v ? 15 : 'f64s' in v ? 10 : 'blob' in v ? 7 : 'obj' in v ? 9 : 'ref' in v ? 6 : 'bool' in v ? 2 : 'objs' in v || 'i32rows' in v ? 10 : 8);
   // a string that names a resource carries a flag after its type (bit 1 before version 3)
   const typed = (v: V) => ('ref' in v ? types.push(6 | 0x80, 1) : types.push(typeOf(v)));
   const body = (v: V): void => {
@@ -42,11 +51,17 @@ export function encodeKv3(root: V, version: 1 | 2 = 2): Buffer {
     else if ('dbl' in v) l8.push([v.dbl, true]);
     else if ('i64' in v) l8.push([v.i64, false]);
     else if ('blob' in v) { if (version === 1) { l4.push(v.blob.length); l1.push(v.blob); } else blobs.push(v.blob); }
-    else if ('obj' in v) { l4.push(v.obj.length); for (const [k, x] of v.obj) { typed(x); l4.push(sid(k)); body(x); } }
-    else if ('arr' in v) { l4.push(v.arr.length); for (const x of v.arr) { typed(x); body(x); } }
+    else if ('obj' in v) { (version === 5 ? lens : l4).push(v.obj.length); for (const [k, x] of v.obj) { typed(x); l4.push(sid(k)); body(x); } }
+    else if ('arr' in v) { arrays++; l4.push(v.arr.length); for (const x of v.arr) { typed(x); body(x); } }
+    else if ('objs' in v) { arrays++; l4.push(v.objs.length); types.push(9); for (const o of v.objs) body({ obj: o }); }
+    else if ('i32rows' in v) {
+      arrays++; l4.push(v.i32rows.length); types.push(24);
+      for (const row of v.i32rows) { l1.push(Buffer.from([row.length])); types.push(11); l4.push(...row); }
+    }
   };
   typed(root);
   body(root);
+  if (version === 5) return version5({ strings, ones: Buffer.concat(l1), l4, l8, types, blobs, lens, arrays });
   const ones = Buffer.concat(l1);
   const ints = [strings.length, ...l4];
   const b4 = Buffer.alloc(ints.length * 4);
@@ -77,6 +92,36 @@ export function encodeKv3(root: V, version: 1 | 2 = 2): Buffer {
   head.writeInt32LE(raw.length, 48); head.writeInt32LE(packed.length, 52);
   head.writeInt32LE(blobs.length, 56); head.writeInt32LE(blobs.reduce((a, b) => a + b.length, 0), 60);
   return Buffer.concat([head, packed, ...(blobs.length ? [...frames, u32(TRAILER)] : [])]);
+}
+
+/** The lanes of a block laid out as version 5, compressed with zstd. */
+function version5({ strings, ones, l4, l8, types, blobs, lens, arrays }: {
+  strings: string[]; ones: Buffer; l4: number[]; l8: [number, boolean][]; types: number[]; blobs: Buffer[]; lens: number[]; arrays: number;
+}): Buffer {
+  const ints = (list: number[]) => { const b = Buffer.alloc(list.length * 4); list.forEach((n, i) => b.writeInt32LE(n, i * 4)); return b; };
+  const text = Buffer.from(strings.map((x) => `${x}\0`).join(''));
+  const one = Buffer.concat([text, pad(text.length, 4), u32(strings.length)]);
+  const parts: Buffer[] = [ints(lens), ones];
+  let at = lens.length * 4 + ones.length;
+  const place = (b: Buffer, a: number) => { if (!b.length) return; const gap = pad(at, a); parts.push(gap, b); at += gap.length + b.length; };
+  place(ints(l4), 4);
+  const b8 = Buffer.alloc(l8.length * 8);
+  l8.forEach(([n, dbl], i) => (dbl ? b8.writeDoubleLE(n, i * 8) : b8.writeBigInt64LE(BigInt(n), i * 8)));
+  place(b8, 8);
+  parts.push(Buffer.from(types), ...blobs.map((b) => u32(b.length)), u32(TRAILER));
+  const two = Buffer.concat(parts);
+  const [z1, z2] = [zlib.zstdCompressSync(one), zlib.zstdCompressSync(two)];
+  const zb = blobs.length ? zlib.zstdCompressSync(Buffer.concat(blobs)) : Buffer.alloc(0);
+  const head = Buffer.alloc(120);
+  head.writeUInt32LE(0x4b563305, 0);
+  head.writeUInt32LE(2, 20); // zstd, and no frame size
+  head.writeInt32LE(text.length, 28); head.writeInt32LE(1, 32); head.writeInt32LE(0, 36); head.writeInt32LE(types.length, 40);
+  head.writeUInt16LE(lens.length, 44); head.writeUInt16LE(arrays, 46);
+  head.writeInt32LE(one.length + two.length, 48); head.writeInt32LE(z1.length + z2.length + zb.length, 52);
+  head.writeInt32LE(blobs.length, 56); head.writeInt32LE(blobs.reduce((a, b) => a + b.length, 0), 60);
+  [one.length, z1.length, two.length, z2.length, ones.length, 0, l4.length, l8.length].forEach((n, i) => head.writeInt32LE(n, 72 + i * 4));
+  head.writeInt32LE(lens.length, 108); head.writeInt32LE(arrays, 112);
+  return Buffer.concat([head, z1, z2, ...(blobs.length ? [zb, u32(TRAILER)] : [])]);
 }
 
 /** A particle: a colour, an integer and a switch beside it, and a colour whose zero has no bytes. */
@@ -163,3 +208,24 @@ export const host = (children = ['particles/eye.vpcf']) => resource([
     ['m_PreEmissionOperators', { arr: [{ obj: [['_class', { str: 'C_OP_SetParentControlPointsToChildCP' }], ['m_nNumControlPoints', { int: children.length }]] }] }],
   ] })],
 ]);
+
+/**
+ * A model: its animation clips (ANIM, version 5 and zstd, with a blob of frames) and its sequences
+ * (ASEQ) with what each plays, the clips as the sequences unless given, and its own name in DATA.
+ */
+export function model(name: string, sequences: [string, string[]][] = [], clips: [string, string[]][] = sequences): Buffer {
+  const listed = (acts: string[]) => acts.map((a): [string, V][] => [['m_name', { str: a }], ['m_nWeight', { int: 1 }]]);
+  return resource([
+    ['ANIM', encodeKv3({ obj: [
+      ['m_animArray', { objs: clips.map(([clip, acts]): [string, V][] => [['m_name', { str: clip }], ['m_activityArray', { objs: listed(acts) }]]) }],
+      ['m_segmentArray', { arr: [{ obj: [['m_container', { blob: Buffer.from('the frames of every clip') }]] }] }],
+    ] }, 5)],
+    // typed arrays of objects, as the game's are
+    ['ASEQ', encodeKv3({ obj: [['m_localS1SeqDescArray', { objs: sequences.map(([seq, acts]): [string, V][] => [
+      ['m_sName', { str: seq }],
+      ['m_activityArray', { objs: acts.map((a): [string, V][] => [['m_name', { str: a }], ['m_nWeight', { int: 1 }]]) }],
+    ]) }]] })],
+    ['RERL', rerl([])],
+    ['DATA', encodeKv3({ obj: [['m_name', { str: name }], ['m_nFlags', { int: 3 }]] })],
+  ]);
+}

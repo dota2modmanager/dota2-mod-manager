@@ -29,6 +29,7 @@ import { Media } from './Media.tsx';
 import { ToolMeta } from './ToolMeta.tsx';
 import { useQueued, useTerrainMark } from './hooks.ts';
 import { CardShell } from './CardShell.tsx';
+import { CardName } from './CardName.tsx';
 
 interface CardProps {
   mod: Mod;
@@ -133,7 +134,7 @@ export function ModCard({ mod: m, index, withCat = false, moves = false, onOpen,
         )}
       </div>
       <div className="card-body">
-        <div className="card-name" title={m.name}>{catalogName(m.name)}</div>
+        <CardName>{catalogName(m.name)}</CardName>
         {cat === 'tools'
           ? <ToolMeta mod={m} installed={installed} />
           : (withCat || author) && (

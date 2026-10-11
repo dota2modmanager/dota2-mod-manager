@@ -37,5 +37,6 @@ export function isOfficialLangFile(baseLower: string): boolean {
 
 // What a FileTx parks next to a file it is about to replace or delete (see src/file-tx.ts).
 // Nothing should outlive its transaction; one that does means the app died mid-write, and
-// sweepStaged() cleans up after that on the next start.
-export const STAGED_RE = /\.[a-z0-9]+\.mmtx$/i;
+// sweepStaged() cleans up after that on the next start. The name is the transaction's id and,
+// since 2026-10-10, a dash and a count, so one file parked twice in one change gets two names.
+export const STAGED_RE = /\.[a-z0-9]+(?:-[a-z0-9]+)?\.mmtx$/i;

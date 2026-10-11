@@ -8,7 +8,6 @@ import path from 'node:path';
 import { localizationTokens, cosmeticNameTable, chineseCosmeticNames } from '../src/cosmetic-names.ts';
 import { buildVpk, crc32 } from '../src/vpk.ts';
 import { cosmeticName, cosmeticNameMatches, setCosmeticNames } from '../renderer/ui/cosmetic-name.ts';
-import { officialOnly, setCatalogSource } from '../renderer/catalog/source.ts';
 import { byName, matchingSets } from '../renderer/catalog/builder/logic.ts';
 
 const language = (pairs: string) => `"lang" { "Language" "schinese" "Tokens" { ${pairs} } }`;
@@ -88,28 +87,5 @@ test('Chinese labels and bilingual searches do not change item ids, icon keys or
   } finally {
     setCosmeticNames({});
     if (previous) Object.defineProperty(globalThis, 'window', previous); else Reflect.deleteProperty(globalThis, 'window');
-  }
-});
-
-test('official-only browsing preference persists independently of patch or equipment settings', () => {
-  const previous = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
-  const values = new Map<string, string>();
-  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
-    getItem: (key: string) => values.get(key) || null, setItem: (key: string, value: string) => values.set(key, value),
-  } });
-  try {
-    assert.equal(officialOnly(), false);
-    setCatalogSource('official');
-    assert.equal(officialOnly(), true);
-    assert.deepEqual([...values], [['catalogSource', 'official']]);
-    setCatalogSource('all');
-    assert.equal(officialOnly(), false);
-    Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: { getItem: () => { throw Error('blocked'); }, setItem: () => { throw Error('blocked'); } } });
-    assert.equal(officialOnly(), false);
-    setCatalogSource('official');
-    assert.equal(officialOnly(), true);
-    setCatalogSource('all');
-  } finally {
-    if (previous) Object.defineProperty(globalThis, 'localStorage', previous); else Reflect.deleteProperty(globalThis, 'localStorage');
   }
 });

@@ -52,7 +52,6 @@ function drawCosmeticModal(): void {
     live: live?.itemId === o.id,
     replaces: live && live.itemId !== o.id ? live.name : null,
     busy: installing.has(COSMETIC_PREFIX + slot + '|' + o.id + '|'),
-    blocked: !state.settings?.schemaPatch,
   }, {
     close: closeOverlay,
     toggleFav: async () => {
@@ -72,7 +71,6 @@ function drawCosmeticModal(): void {
  * @param effectId  the effects on a hero's item, comma separated (src/item-builder.ts effectKey)
  */
 export async function pickCosmetic(slot: string, o: CosmeticOption, remove: boolean, effectId = ''): Promise<void> {
-  if (!remove && !state.settings?.schemaPatch) return;
   const effect = isItemCosmeticSlot(slot) ? String(effectId || '') : '';
   const k = COSMETIC_PREFIX + slot + '|' + o.id + '|' + effect;
   if (installing.has(k)) return;

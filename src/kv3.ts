@@ -18,13 +18,15 @@
  */
 
 import { lz4Decode, lz4Literals } from './lz4.ts';
-import { blobTable, readBlobs, rewriteBlobs, relaidInline } from './kv3-blobs.ts';
+import zlib from 'node:zlib';
+import { blobTable, readBlobs, readZstdBlobs, rewriteBlobs, relaidInline, zstd } from './kv3-blobs.ts';
 
 export { readCell, writeCell, numberOf, setNumber } from './kv3-cells.ts';
 
 const MAGIC = 0x4b563300;
 const LZ4 = 1;
 const NONE = 0;
+const ZSTD = 2;
 
 /** Where one number lives: which decompressed buffer, the byte offset in it, and how wide it is. */
 export interface Kv3Cell { buffer: 0 | 1; offset: number; width: 1 | 2 | 4 | 8; signed: boolean; float?: boolean }
@@ -35,11 +37,13 @@ export interface Kv3Cell { buffer: 0 | 1; offset: number; width: 1 | 2 | 4 | 8; 
  * byte is, which is the one place such a number can be changed. Elements of a typed array share
  * one type byte, so theirs is null; the array keeps that type as `element`. `flag` is the byte
  * that can follow a type (a string that names a resource, for one), kept as the file had it. A
- * number made rather than read has its bytes in `raw`, for src/kv3-write.ts.
+ * number made rather than read has its bytes in `raw`, for src/kv3-write.ts. An array keeps the
+ * type it was stored as (`type`: 8 plain, 10 typed, 24 typed with a one-byte length, 25 the same
+ * with its elements in version 5's first buffer).
  */
 export type Kv3Node = (
   | { kind: 'object'; members: Map<string, Kv3Node> }
-  | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number } }
+  | { kind: 'array'; items: Kv3Node[]; element?: { type: number; flag?: number }; type?: number }
   | { kind: 'number'; type: number; cell: Kv3Cell | null; typeAt: Kv3Cell | null; raw?: Buffer }
   | { kind: 'string'; value: string }
   | { kind: 'blob'; data: Buffer }
@@ -55,6 +59,8 @@ export interface Kv3Block {
   /** the 16 bytes after the magic that name the format */
   format: Buffer;
   buffers: Buffer[];
+  /** the string table, which string nodes index */
+  strings: string[];
   root: Kv3Node;
   arrays: Kv3Array[];
   /** the blob nodes, in the order they are stored; give one new `data` and encode() writes it */
@@ -75,7 +81,7 @@ export function readKv3(block: Buffer): Kv3Block {
   if ((magic & 0xffffff00) >>> 0 !== MAGIC || version < 1 || version > 5) throw new Error('kv3: not a binary KV3 block');
   let p = 20;
   const method = block.readUInt32LE(p); p += 4;
-  if (method !== LZ4 && method !== NONE) throw new Error(`kv3: compression ${method} is not handled`);
+  if (method !== LZ4 && method !== NONE && !(method === ZSTD && version >= 5)) throw new Error(`kv3: compression ${method} is not handled`);
   const h: Record<string, number> = {};
   const field = (name: string, w: 2 | 4) => { h[name] = w === 2 ? block.readUInt16LE(p) : block.readInt32LE(p); h[`@${name}`] = p; p += w; };
   if (version === 1) {
@@ -94,7 +100,7 @@ export function readKv3(block: Buffer): Kv3Block {
   const unpack = (size: number, csize: number): Buffer => {
     const src = block.subarray(p, p + (method === NONE ? size : csize));
     p += src.length;
-    return method === NONE ? Buffer.from(src) : lz4Decode(src, size);
+    return method === NONE ? Buffer.from(src) : method === ZSTD ? zstd(src, size) : lz4Decode(src, size);
   };
   const buffers = version >= 5
     ? [unpack(h.unc1, h.cmp1), unpack(h.unc2, h.cmp2)]
@@ -147,7 +153,7 @@ export function readKv3(block: Buffer): Kv3Block {
   const blobLengths = table ? lane(types.buf, table.lengthsAt, table.count * 4) : null;
   let blobData: Buffer = Buffer.alloc(0);
   p = blobsAt;
-  if (table) ({ data: blobData, end: p } = readBlobs(block, p, table, h.blobs));
+  if (table) ({ data: blobData, end: p } = method === ZSTD ? readZstdBlobs(block, p, h.cmp - h.cmp1 - h.cmp2, table, h.blobs) : readBlobs(block, p, table, h.blobs));
   const blobsEnd = p;
   const tail = block.subarray(p);
 
@@ -222,7 +228,7 @@ export function readKv3(block: Buffer): Kv3Block {
           for (let k = 0; k < n; k++) items.push(value(sub, null, elementLanes, key, `${path}[${k}]`));
         }
         if (items.every((x) => x.kind === 'number')) arrays.push({ key, path, cells: items.map((x) => (x as { cell: Kv3Cell | null }).cell) });
-        return element ? { kind: 'array', items, element } : { kind: 'array', items };
+        return element ? { kind: 'array', items, element, type: t } : { kind: 'array', items, type: t };
       }
       case 9: {
         const n = objectLengths ? int4(objectLengths) : int4(main.l4);
@@ -248,6 +254,7 @@ export function readKv3(block: Buffer): Kv3Block {
     version,
     format: Buffer.from(block.subarray(4, 20)),
     buffers,
+    strings,
     root,
     arrays,
     blobs,
@@ -256,6 +263,7 @@ export function readKv3(block: Buffer): Kv3Block {
       let out = buffers;
       let blobPart = block.subarray(blobsAt, blobsEnd);
       if (blobs.some((b, i) => !b.data.equals(originals[i]))) {
+        if (method === ZSTD) throw new Error('kv3: blobs of a zstd block are not written back');
         if (version < 2) {
           out = [relaidInline(buffers[0], h.c1, h.c4, inline, originals, blobs.map((b) => b.data))];
           head.writeInt32LE(h.c1 + blobs.reduce((a, b, i) => a + b.data.length - originals[i].length, 0), h['@c1']);
@@ -265,12 +273,14 @@ export function readKv3(block: Buffer): Kv3Block {
           head.writeInt32LE(blobs.reduce((a, b) => a + b.data.length, 0), h['@blobs']);
         }
       }
-      const packed = out.map((b) => (method === LZ4 ? lz4Literals(b) : b));
-      if (method === LZ4) {
+      const packed = out.map((b) => (method === LZ4 ? lz4Literals(b) : method === ZSTD ? zlib.zstdCompressSync(b) : b));
+      if (method !== NONE) {
         if (version >= 5) {
           head.writeInt32LE(packed[0].length, h['@cmp1']);
           head.writeInt32LE(packed[1].length, h['@cmp2']);
-          head.writeInt32LE(packed[0].length + packed[1].length, h['@cmp']);
+          // with zstd the blobs' frame counts too, the trailer after it does not
+          const blobFrame = method === ZSTD && table ? blobPart.length - 4 : 0;
+          head.writeInt32LE(packed[0].length + packed[1].length + blobFrame, h['@cmp']);
         } else if (version > 1) {
           head.writeInt32LE(packed[0].length, h['@cmp']);
         }

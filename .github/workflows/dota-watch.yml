@@ -28,6 +28,7 @@ concurrency:
 jobs:
   watch:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # Comments on and edits one issue. Nothing here pushes, labels or closes.
     permissions:
       contents: read

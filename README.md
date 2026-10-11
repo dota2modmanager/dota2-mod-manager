@@ -306,7 +306,7 @@ the two additional terms this project adds under section 7 of the GPL.
 | [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2) | Every Dota build as text, read by this repository's checks to report what an update changed. Not the app | None stated. Read over the network; nothing from it is copied here |
 
 <!-- facts:deps-en -->
-`package.json` lists 14: `adm-zip` and `electron-updater` ship inside the app, `motion`, `react` and `react-dom` are built into its window, `@types/react`, `@types/react-dom`, `@vitejs/plugin-react`, `electron`, `electron-builder`, `eslint`, `fast-check`, `typescript` and `vite` only build or check it.
+`package.json` lists 15: `adm-zip` and `electron-updater` ship inside the app, `motion`, `react` and `react-dom` are built into its window, `@types/react`, `@types/react-dom`, `@vitejs/plugin-react`, `axe-core`, `electron`, `electron-builder`, `eslint`, `fast-check`, `typescript` and `vite` only build or check it.
 <!-- /facts:deps-en -->
 The tests use no dependencies at all, and `tools/` uses one, `vite`, to build the window. The VPK reader and writer, the KeyValues parser, the zip guards and the
 update logic are written here, because every dependency is a stranger with write access to a

@@ -95,8 +95,8 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
         <div className="settings-row">
           <span className="settings-label">{L`Язык`}</span>
           <div className="select-wrap">
-            <span className="ms">translate</span>
-            <select className="input" id="uiLangSelect" value={m.uiLang} onChange={(e) => actions.language(e.target.value)}>
+            <span className="ms" aria-hidden="true">translate</span>
+            <select className="input" id="uiLangSelect" aria-label={L`Язык`} value={m.uiLang} onChange={(e) => actions.language(e.target.value)}>
               <option value="en">English</option>
               <option value="ru">Русский</option>
               <option value="zh-CN">简体中文</option>

@@ -9,14 +9,15 @@ import type { ScreenActions, ToolbarModel } from './model.ts';
 
 interface Props { model: ToolbarModel; actions: ScreenActions }
 
-function Select({ icon, id, value, first, options, onPick }: {
-  icon: string; id: string; value: string; first?: string;
+/** `label` is what a screen reader calls the list: the icon beside it says it to the eye only. */
+function Select({ icon, id, label, value, first, options, onPick }: {
+  icon: string; id: string; label: string; value: string; first?: string;
   options: { value: string; label: string }[]; onPick: (v: string) => void;
 }) {
   return (
     <div className="select-wrap">
-      <span className="ms">{icon}</span>
-      <select id={id} value={value} onChange={(e) => onPick(e.target.value)}>
+      <span className="ms" aria-hidden="true">{icon}</span>
+      <select id={id} aria-label={label} value={value} onChange={(e) => onPick(e.target.value)}>
         {first !== undefined && <option value="">{first}</option>}
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
@@ -28,19 +29,19 @@ export function Toolbar({ model: t, actions }: Props) {
   return (
     <div className="toolbar">
       <div className="tb-line">
-        <Select icon="sort" id="sortSelect" value={t.sort}
+        <Select icon="sort" id="sortSelect" label={L`Сортировка`} value={t.sort}
           options={SORTS.map((s: { key: string; label: string }) => ({ value: s.key, label: tr(s.label) }))}
           onPick={(sort) => actions.filter({ sort })} />
         {t.heroes.length > 0 && (
-          <Select icon="person" id="heroSelect" value={t.hero} first={L`Все герои`}
+          <Select icon="person" id="heroSelect" label={L`Герой`} value={t.hero} first={L`Все герои`}
             options={t.heroes.map((h) => ({ value: h, label: heroName(h) }))} onPick={(hero) => actions.filter({ hero })} />
         )}
         {t.groups.length > 0 && (
-          <Select icon={t.groupIcon} id="groupSelect" value={t.group} first={t.groupLabel}
+          <Select icon={t.groupIcon} id="groupSelect" label={t.groupLabel} value={t.group} first={t.groupLabel}
             options={t.groups.map((g) => ({ value: g, label: catalogLabel(g) }))} onPick={(group) => actions.filter({ group })} />
         )}
         {t.slots.length > 0 && (
-          <Select icon="checkroom" id="slotSelect" value={t.slot} first={L`Все слоты`}
+          <Select icon="checkroom" id="slotSelect" label={L`Слот`} value={t.slot} first={L`Все слоты`}
             options={t.slots.map((s) => ({ value: s.id, label: s.label }))} onPick={(slot) => actions.filter({ slot })} />
         )}
         {(t.installable || t.fav) && <div className="sep" />}

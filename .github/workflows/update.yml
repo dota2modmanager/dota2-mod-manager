@@ -1,0 +1,110 @@
+name: Update
+
+# The update a person gets, rehearsed before a release has to rely on it.
+#
+# release.yml's try-update runs the draft's own installer over the last release, but only once a tag
+# exists, and a step that has never run is a release blocked on the day. This builds an installer
+# from the commit under test and does the same: the last published stable release installed from
+# its own page, given a mod and a favourite through its window, then this installer run over it
+# with /S the way an update arrives, then tools/e2e.mjs --upgrade finding everything in the new
+# version and answering the removal window, then the uninstaller the new version installed.
+#
+# On a pull request that can change any of that, weekly against whatever the last release is by
+# then, and by hand. Not a required check: it builds an installer, and most pull requests change
+# nothing an update goes through.
+
+on:
+  pull_request:
+    paths:
+      - 'tools/e2e.mjs'
+      - 'build/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'src/main.ts'
+      - 'src/uninstall-*.ts'
+      - 'src/settings.ts'
+      - 'src/library.ts'
+      - '.github/workflows/update.yml'
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rehearse:
+    name: Update the last release with an installer built here
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # unsigned and published nowhere: the installer only has to exist on this runner
+      - name: Build the installer
+        run: npx electron-builder --win nsis --publish never
+
+      - name: Download the installer of the last release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          last=$(gh release list --repo "$REPO" --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName')
+          [ -n "$last" ] || { echo "::error::no published release to update from"; exit 1; }
+          echo "updating from $last"
+          gh release download "$last" --repo "$REPO" --pattern Dota-2-Mod-Manager-Setup.exe --output previous.exe
+          if gh release download "$last" --repo "$REPO" --pattern SHA256SUMS --output previous.SHA256SUMS; then
+            want=$(awk '$2 == "Dota-2-Mod-Manager-Setup.exe" { print $1 }' previous.SHA256SUMS)
+            have=$(sha256sum previous.exe | cut -d' ' -f1)
+            if [ "$want" != "$have" ]; then
+              echo "::error::the installer of $last is not the one its SHA256SUMS lists"
+              exit 1
+            fi
+          fi
+          cp dist/Dota-2-Mod-Manager-Setup.exe setup.exe
+
+      - name: Install the last release
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath .\previous.exe -ArgumentList '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "the last release's installer exited with $($p.ExitCode)" }
+          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'Dota 2 Mod Manager.exe' | Select-Object -First 1
+          if (-not $exe) { throw 'the last release installed no Dota 2 Mod Manager.exe under LOCALAPPDATA\Programs' }
+          "APP=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "installed: $($exe.FullName) $($exe.VersionInfo.ProductVersion)"
+
+      - name: Give it a mod and a favourite, update it, and find them in the new version
+        shell: pwsh
+        run: node tools/e2e.mjs --app "$env:APP" --upgrade setup.exe
+
+      - name: Remove it with the uninstaller the new version installed
+        shell: pwsh
+        run: |
+          $dir = Split-Path $env:APP
+          $un = Get-ChildItem $dir -Filter 'Uninstall*.exe' | Select-Object -First 1
+          if (-not $un) { throw "no uninstaller next to $env:APP" }
+          $p = Start-Process -FilePath $un.FullName -ArgumentList '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "the uninstaller exited with $($p.ExitCode)" }
+          for ($i = 0; $i -lt 60 -and (Test-Path $env:APP); $i++) { Start-Sleep -Seconds 1 }
+          if (Test-Path $env:APP) { throw "the uninstaller finished and left $env:APP behind" }
+          "removed: $env:APP"
+
+      - name: What the window showed
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: e2e-update-rehearsal
+          path: e2e-output/

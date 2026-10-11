@@ -29,6 +29,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       # publishing to Pages, and proving to Pages which workflow did it
       pages: write

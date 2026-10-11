@@ -59,9 +59,13 @@ archives at it rather than only the ones somebody thought of.
 
 **An install that stops half way.** Power cuts, full disks and antivirus locks all land in the
 middle of writing. Writes go through `src/file-tx.ts`, which stages and then commits, so the game
-folder is either as it was or as it should be. Valve's own files are copied before the first
-write and put back byte for byte on revert.
-*Check:* `test/file-tx.test.ts`, `test/patcher.test.ts` (the patch round-trips byte for byte).
+folder is either as it was or as it should be, and the library record is part of the same change.
+Each step is journaled before it is taken (`src/file-tx-journal.ts`), so a process killed
+halfway is undone, or finished if it got past its commit, on the next start. Valve's own files
+are copied before the first write and put back byte for byte on revert.
+*Check:* `test/file-tx.test.ts`, `test/file-tx-crash.test.ts` (each change killed at every write
+it makes, then recovered and compared byte for byte), `test/patcher.test.ts` (the patch
+round-trips byte for byte).
 
 **Catalog text rendered as code.** Guides are HTML written by people who are not us. They go
 through an allowlist of tags, and the window runs under a content security policy with no remote
@@ -72,10 +76,14 @@ nothing to reach.
 
 **The window asking for something the app should not do.** The renderer cannot touch the
 filesystem or start a process, and the policy limits what it may fetch to pictures from two
-hosts. Everything else it does is a channel `preload.js` exposes, each one handled in an
-`src/ipc-*.ts` module that checks its arguments on the main side.
-*Check:* `test/ipc-contract.test.js`, which holds the channel list against what the renderer and
-the preload actually use.
+hosts. Everything else it does is a channel `preload.js` exposes. Every channel sits behind
+`src/window-guard.ts`: a call is answered only from the top frame of the app's own page and only
+with arguments that fit its entry in `src/channel-args.ts`, and the window may change only the
+settings it has a control for. Both windows run sandboxed, the page gets two browser permissions,
+and no web contents may open a window, attach a webview or leave the app's pages.
+*Check:* `test/window-guard.test.ts` (every channel has a check, one real call of each passes, a
+list of hostile ones does not, no check throws on any input), `test/ipc-contract.test.js`, and the
+window e2e, which fails on any call the guard refused.
 
 **Us, after the release.** The one thing this project can change on a machine without shipping a
 new version is `config/app.json`: a feature switched off, a notice, the beta list, a mirror. It

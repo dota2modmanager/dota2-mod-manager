@@ -19,7 +19,6 @@ export interface CosmeticModalModel {
   /** the look it would replace, when another one is live */
   replaces: string | null;
   busy: boolean;
-  blocked?: boolean;
 }
 
 export interface CosmeticModalActions {
@@ -57,8 +56,8 @@ export function CosmeticModal({ m, actions }: { m: CosmeticModalModel; actions: 
           {m.live
             ? <button className="btn btn-danger" id="cosRemoveBtn" onClick={actions.remove}><span className="ms">delete</span>{L`Убрать`}</button>
             : (
-              <button className="btn btn-primary" id="cosPickBtn" disabled={m.busy || m.blocked} onClick={actions.pick}>
-                <span className="ms">download</span>{m.blocked ? L`Выключи безопасный режим, чтобы надеть` : m.busy ? L`Установка…` : L`Установить`}
+              <button className="btn btn-primary" id="cosPickBtn" disabled={m.busy} onClick={actions.pick}>
+                <span className="ms">download</span>{m.busy ? L`Установка…` : L`Установить`}
               </button>
             )}
         </div>

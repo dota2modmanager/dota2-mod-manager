@@ -17,6 +17,7 @@ import { createNoticeText } from './notice-text.ts';
 import { createModsListing } from './mods-listing.ts';
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
+import { FileTx } from './file-tx.ts';
 import type { AppContext } from './app-context.ts';
 import type { LibRecord } from './types.ts';
 
@@ -40,7 +41,10 @@ export function registerModsIpc({
       return res.ok ? Buffer.from(await res.arrayBuffer()) : null;
     },
   });
-  const switchOff = (rec: LibRecord) => { installer.setEnabled(rec.files, false, rec.id); library.setEnabled(rec.id, false); };
+  const switchOff = (rec: LibRecord) => FileTx.run(() => {
+    installer.setEnabled(rec.files, false, rec.id);
+    library.setEnabled(rec.id, false);
+  }, diag);
   // the anti-cheat notice in plain words (src/notice-text.ts)
   const notice = createNoticeText({ gamePath: () => (installer.getGamePath ? installer.getGamePath() : null), langDir: () => installer.langFolder(), diag });
   const listMods = createModsListing({ installer, library, fingerprints, schemaService, updateImpact, terrainAges, notice, diag, refreshPresence, verifyStuck });
@@ -83,12 +87,16 @@ export function registerModsIpc({
       // a cursor set is written straight over the one in resource\cursor, so the set that
       // is on has to step aside first — otherwise its files are gone with no way back
       const replaced = payload.categoryId === 'cursors' ? disableOtherCursors(null) : [];
+      // the record is written in the install's own transaction: paks without a record, or a
+      // record without its paks, is not a state a killed process can leave behind
+      let added: LibRecord | null = null;
       const files = await installer.install({
         categoryId: payload.categoryId,
         modName: payload.name,
         fileRef: payload.fileRef,
+        record: (written) => { added = library.add({ ...payload, files: written }); },
       });
-      const rec = library.add({ ...payload, files });
+      const rec = added || library.add({ ...payload, files });
       // a whole-map terrain keeps the date its map was built, while the archive is at hand
       const mapBuiltAt = terrainAges.builtAtOf(rec);
       if (Number.isFinite(mapBuiltAt)) library.update(rec.id, { mapBuiltAt });

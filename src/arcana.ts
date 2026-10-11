@@ -5,7 +5,10 @@
  * In the game the arcana is an item: the hero's model is swapped for the arcana's, the item creates
  * its own particles, and a gem tints the rest (src/recolor.ts). A mod cannot give an item, so it
  * puts the arcana's files where the plain hero's are:
- * - the arcana's models under the names of the hero's own;
+ * - the arcana's models under the names of the hero's own, each named inside for the path it now
+ *   has; the hero's model also told to play its arcana animations, which in the game the item
+ *   turns on as the activity modifier "abysm" (issue #118: without it, an attack played the
+ *   injured one);
  * - a particle the hero already creates, taken from the arcana's version and given the arcana's
  *   own particles as children, since nothing else would create them; the children are named in
  *   the file's RERL block too, as the compiler names them. A child is drawn at the control points
@@ -20,14 +23,15 @@
 import { readKv3, numberOf, type Kv3Node } from './kv3.ts';
 import { writeKv3 } from './kv3-write.ts';
 import { recolorFiles, recolorResource, RECOLOR_SETS, type Rgb } from './recolor.ts';
-import { dataBlock, withReferences } from './resource.ts';
+import { dataBlock, resourceBlock, resourceBlocks, withReferences } from './resource.ts';
 import { buildVpk, entryAt, listVpkPathsFile, openVpkIndex } from './vpk.ts';
 
 export interface ArcanaSet {
   /** the recolour set with the arcana's particles and materials */
   recolor: string;
-  /** files to put under another name: game path -> path in pak01 */
-  copies: Record<string, string>;
+  /** models to put under another name: game path -> the model in pak01, and the activity modifier
+   *  the item turns on for it, whose animations are to play without it */
+  models: Record<string, { from: string; modifier?: string }>;
   /** images whose name with this removed is the plain one (`_alt1`) */
   images: { under: string[]; mark: string; hero: string };
   /** a particle the hero creates, the arcana's version of it, and the arcana's own particles to hang on it */
@@ -43,9 +47,9 @@ const ARCANA = 'particles/econ/items/terrorblade/terrorblade_horns_arcana';
 export const ARCANA_SETS: Record<string, ArcanaSet> = {
   'terrorblade-arcana': {
     recolor: 'terrorblade-arcana',
-    copies: {
-      'models/heroes/terrorblade/terrorblade.vmdl_c': 'models/heroes/terrorblade/terrorblade_arcana.vmdl_c',
-      'models/heroes/terrorblade/horns.vmdl_c': 'models/heroes/terrorblade/horns_arcana.vmdl_c',
+    models: {
+      'models/heroes/terrorblade/terrorblade.vmdl_c': { from: 'models/heroes/terrorblade/terrorblade_arcana.vmdl_c', modifier: 'abysm' },
+      'models/heroes/terrorblade/horns.vmdl_c': { from: 'models/heroes/terrorblade/horns_arcana.vmdl_c' },
     },
     images: { under: ['panorama/images/heroes/', 'panorama/images/spellicons/'], mark: '_alt1', hero: 'terrorblade' },
     host: {
@@ -105,6 +109,64 @@ export function withChildren(file: Buffer, children: Child[]): Buffer {
   return withReferences(block.replace(writeKv3(kv)), children.map((c) => c.path));
 }
 
+const nameOf = (n: Kv3Node | undefined) => {
+  const v = n?.kind === 'object' ? n.members.get('m_name') : undefined;
+  return v?.kind === 'string' ? v.value : '';
+};
+
+/**
+ * In a list of sequences or animation clips, the ones that need `modifier` made the ones their
+ * activities play: the modifier taken off them, and their activity off the plain ones beside them
+ * (death, sunder, loadout), which is the choice the game makes when the modifier is on.
+ * @returns whether anything changed
+ */
+function playWithout(list: Kv3Node[], modifier: string): boolean {
+  const activities = (x: Kv3Node) => {
+    const a = x.kind === 'object' ? x.members.get('m_activityArray') : undefined;
+    return a?.kind === 'array' ? a : null;
+  };
+  const isAct = (a: Kv3Node) => nameOf(a).startsWith('ACT_');
+  const needed = new Set<Kv3Node>();
+  const taken = new Set<string>();
+  for (const x of list) {
+    const acts = activities(x);
+    if (!acts?.items.some((a) => nameOf(a) === modifier)) continue;
+    needed.add(x);
+    for (const a of acts.items) if (isAct(a)) taken.add(nameOf(a));
+    acts.items = acts.items.filter((a) => nameOf(a) !== modifier);
+  }
+  for (const x of list) {
+    const acts = activities(x);
+    if (!acts || needed.has(x) || acts.items.some((a) => !isAct(a))) continue;
+    acts.items = acts.items.filter((a) => !taken.has(nameOf(a)));
+  }
+  return needed.size > 0;
+}
+
+/**
+ * A model put under another path that plays without the item what it played with it: its
+ * animations that need `modifier` made the ones its activities play (playWithout).
+ *
+ * A sequence and an animation clip each list the activity they play (ACT_DOTA_ATTACK) and after it
+ * the modifiers they need ("abysm"). The game picks by the clips' lists (ANIM): with "abysm" taken
+ * off the sequences alone, the arcana still stood still through its attacks, and the plain hero
+ * still swung with its sequences pointed elsewhere (both found on the bench, issue #118). An entry
+ * pointed at the activity instead of taken off counts as a modifier: the entries are taken off, and
+ * both blocks written anew.
+ */
+export function asModel(file: Buffer, modifier?: string): Buffer {
+  if (!modifier) return file;
+  let out = file;
+  for (const [name, listKey] of [['ASEQ', 'm_localS1SeqDescArray'], ['ANIM', 'm_animArray']]) {
+    if (!resourceBlocks(out).some((b) => b.name === name)) continue;
+    const block = resourceBlock(out, name);
+    const kv = readKv3(block.data);
+    const list = kv.root.kind === 'object' ? kv.root.members.get(listKey) : undefined;
+    if (list?.kind === 'array' && playWithout(list.items, modifier)) out = block.replace(writeKv3(kv));
+  }
+  return out;
+}
+
 /** The arcana in the chosen colour, as one VPK from the game's pak01. */
 export function buildArcana({ pak01, set, target }: { pak01: string; set: string; target: Rgb }): {
   vpk: Buffer; files: number; changed: number; failed: { path: string; error: string }[];
@@ -116,7 +178,7 @@ export function buildArcana({ pak01, set, target }: { pak01: string; set: string
   const have = new Set(all);
   const r = recolorFiles({ pak01, set: def.recolor, target, bake: true });
   const files = r.files;
-  for (const [to, from] of Object.entries(def.copies)) files.set(to, index.read(from) as Buffer);
+  for (const [to, { from, modifier }] of Object.entries(def.models)) files.set(to, asModel(index.read(from) as Buffer, modifier));
   const { under, mark, hero } = def.images;
   for (const p of all) {
     if (!under.some((u) => p.startsWith(u)) || !p.includes(hero) || !p.includes(mark)) continue;
