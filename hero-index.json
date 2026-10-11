@@ -1,6 +1,6 @@
 {
   "heroes": 149,
-  "mods": 1541,
+  "mods": 1546,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -212,6 +212,7 @@
         {"name":"Broodmother Anathema Reborn","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Epoch of the Abysm","categoryId":"heroes","styleLabel":null,"slots":["head","misc","legs"]},
         {"name":"Broodmother Golden Orbweaver","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
+        {"name":"Broodmother Gray Immortals","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Immortal Antiquity","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Redan","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Shaker Spiderlings","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
@@ -323,6 +324,7 @@
       "mods": [
         {"name":"Dark Seer Forlorn Precipice","categoryId":"hero-items","styleLabel":"Golden","slots":["arms"]},
         {"name":"Dark Seer Forlorn Precipice","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
+        {"name":"Dark Seer Oloxicams Glass","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","misc","shoulder"]},
         {"name":"Immortal Dark Seer","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head"]},
         {"name":"Mars Progenitors Bane","categoryId":"hero-items","styleLabel":"Crimson","slots":["head"]}
       ]
@@ -747,6 +749,7 @@
         {"name":"Juggernaut Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Juggernaut Arcana Golden Edge","categoryId":"heroes","styleLabel":null,"slots":["head","misc","arms","back","weapon"]},
         {"name":"Juggernaut Arcana Purple","categoryId":"heroes","styleLabel":null,"slots":["head","misc","weapon","back","arms"]},
+        {"name":"Juggernaut Arima","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
         {"name":"Juggernaut Aura","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Juggernaut Bladeform Aesthete","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Juggernaut Bladeform Legacy","categoryId":"heroes","styleLabel":null,"slots":["head"]},
@@ -1944,6 +1947,7 @@
       "name": "Tusk",
       "mods": [
         {"name":"Tusk Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Tusk Immortal Fire","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
         {"name":"Tusk King Kong","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
         {"name":"Tusk Odobenus Footman","categoryId":"heroes","styleLabel":null,"slots":["weapon","misc","head","arms"]},
         {"name":"Tusk Odobenus Frost Mage","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]}
@@ -2164,6 +2168,7 @@
         {"name":"Wraith King Blistering Crimson","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Wraith King Grim Destiny","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
         {"name":"Wraith King Itsuka Kotori","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","shoulder","weapon","arms"]},
+        {"name":"Wraith King Papich","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
         {"name":"Wraith King Papizi","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","weapon"]},
         {"name":"Wraith King Pizdec","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
         {"name":"Wraith King Radiance","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},

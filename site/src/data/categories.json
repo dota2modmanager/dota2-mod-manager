@@ -847,6 +847,22 @@
       "id": "hero-sounds",
       "mods": [
         {
+          "name": "Spirit Breaker Bash Kachal",
+          "styleLabel": null,
+          "image": {"src":"/mods/spirit-breaker-bash-kachal.webp","width":854,"height":480},
+          "author": "EmodzI",
+          "authorUrl": "https://t.me/Emodzl",
+          "date": 1791701314
+        },
+        {
+          "name": "Tinker Laser Contra Whistle",
+          "styleLabel": null,
+          "image": {"src":"/mods/tinker-laser-contra-whistle.webp","width":854,"height":480},
+          "author": "EmodzI",
+          "authorUrl": "https://t.me/Emodzl",
+          "date": 1791701314
+        },
+        {
           "name": "Wraith King Papich Attacks",
           "styleLabel": null,
           "image": {"src":"/mods/wraith-king-papich-attacks.webp","width":854,"height":480},
@@ -1695,6 +1711,22 @@
       "id": "herofx",
       "mods": [
         {
+          "name": "Terrorblade Purple Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-purple-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791699101
+        },
+        {
+          "name": "Terrorblade Yellow Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-yellow-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791699101
+        },
+        {
           "name": "Terrorblade Black Spell",
           "styleLabel": null,
           "image": {"src":"/mods/terrorblade-black-spell.webp","width":854,"height":480},
@@ -1789,6 +1821,7 @@
     {
       "id": "parts",
       "mods": [
+        {"name":"Tcoaal Search Bar","styleLabel":null,"image":{"src":"/mods/tcoaal-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791699101},
         {"name":"Gotic","styleLabel":null,"image":{"src":"/mods/gotic.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791636264},
         {"name":"Kaneki Mach V1.2","styleLabel":null,"image":{"src":"/mods/kaneki-mach-v1-2.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791627251},
         {"name":"Kaneki Mach","styleLabel":null,"image":{"src":"/mods/kaneki-mach.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791612287},
