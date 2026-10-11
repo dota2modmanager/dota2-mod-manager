@@ -142,7 +142,7 @@ test('release.yml shows a release to nobody until both builds on it installed a 
   assert.match(checksums, /attestations: write/, 'checksums cannot store an attestation without attestations: write');
   assert.match(checksums, /actions\/attest-build-provenance@[0-9a-f]{40}[^\n]*\n\s+with:\n\s+subject-checksums: SHA256SUMS/, 'the provenance attestation does not cover every file in SHA256SUMS');
   assert.match(checksums, /gh release upload[^\n]*SHA256SUMS[^\n]*SHA256SUMS\.intoto\.jsonl/, 'SHA256SUMS and its signed bundle do not go on the release');
-  for (const [name, after] of [['try-windows', 'build'], ['try-linux', 'linux']]) {
+  for (const [name, after] of [['try-windows', 'build'], ['try-linux', 'linux'], ['try-update', 'build']]) {
     const body = job(name);
     assert.ok(body, `release.yml has no ${name} job`);
     assert.match(body, /node tools\/e2e\.mjs --app /, `${name} does not click through the build it downloaded`);
@@ -152,7 +152,10 @@ test('release.yml shows a release to nobody until both builds on it installed a 
   }
   const publish = job('publish');
   assert.ok(publish, 'release.yml has no publish job');
-  for (const n of ['checksums', 'try-windows', 'try-linux']) assert.ok(needs(publish).includes(n), `publish does not wait for ${n}`);
+  for (const n of ['checksums', 'try-windows', 'try-linux', 'try-update']) assert.ok(needs(publish).includes(n), `publish does not wait for ${n}`);
+  // the update is tried from the last release a person could have, and with the draft's own installer
+  assert.match(job('try-update'), /--exclude-drafts --exclude-pre-releases/, 'try-update could update from a draft or a beta');
+  assert.match(job('try-update'), /node tools\/e2e\.mjs --app "\$env:APP" --upgrade setup\.exe/, 'try-update does not run the upgrade');
   assert.match(publish, /-F draft=false/, 'the publish job does not take the release out of draft');
   for (const n of ['mirror-update', 'notify']) assert.ok(needs(job(n)).includes('publish'), `${n} can run before the release is public`);
   // the API call, not the words: comments and error messages above publish name the endpoint on purpose

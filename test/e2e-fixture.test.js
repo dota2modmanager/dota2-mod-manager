@@ -115,6 +115,15 @@ test('the scripts the window runs compile', async () => {
   for (const name of ['EVAL_INSTALL', 'EVAL_REMOVE', 'EVAL_UNINSTALL_WINDOW', 'EVAL_NOT_THE_REMOVAL_WINDOW']) {
     assert.doesNotThrow(() => new AsyncFunction(m[name]), `${name} does not compile`);
   }
+  for (const opts of [{}, { off: true, favorite: true }]) assert.doesNotThrow(() => new AsyncFunction(m.evalSeed(opts)), `evalSeed(${JSON.stringify(opts)})`);
+  for (const opts of [{}, { cancel: true }, { mods: true, data: true, revert: true }]) assert.doesNotThrow(() => new AsyncFunction(m.evalUninstall(opts)), `evalUninstall(${JSON.stringify(opts)})`);
+  // the answers are the ones src/uninstall-window.ts exits with, which the uninstaller acts on (build/installer.nsh)
+  const window = fs.readFileSync(path.join(ROOT, 'src', 'uninstall-window.ts'), 'utf8');
+  assert.match(window, new RegExp(`UNINSTALL_CANCELLED = ${m.EXIT.cancelled};`));
+  assert.match(window, new RegExp(`UNINSTALL_WIPE_DATA = ${m.EXIT.wipeData};`));
+  const nsis = fs.readFileSync(path.join(ROOT, 'build', 'installer.nsh'), 'utf8');
+  assert.match(nsis, new RegExp(`\\$0 == ${m.EXIT.cancelled}[\\s\\S]*?Quit`));
+  assert.match(nsis, new RegExp(`\\$0 == ${m.EXIT.wipeData}[\\s\\S]*?d2mmWipeData "1"`));
 });
 
 test('a run fails on an unresolved name, a refused call or a write out of the sandbox in the app log, and on nothing else', async () => {
@@ -134,4 +143,72 @@ test('a run fails on an unresolved name, a refused call or a write out of the sa
   assert.equal(found.jailed, false, 'a log that never says it was jailed was not');
   assert.equal(logProblems('write jail: writes held to c:\sandbox | c:\temp').jailed, true);
   assert.deepEqual(logProblems(null), { unresolved: [], refused: [], escaped: [], jailed: false });
+});
+
+/** A run of answerRemoval against stand-ins: the exit codes each launch gets, and what the disk shows after each. */
+async function rehearse(answerRemoval, { exits = {}, paksAfter = {}, lang = { added: [], removed: [], changed: [] }, game = { added: [], removed: [], changed: [] } } = {}) {
+  const launched = [];
+  const verdicts = new Map();
+  let last = null;
+  const ok = await answerRemoval({
+    launch: async (label, env, timeout, args = []) => {
+      launched.push({ label, args, eval: env.MM_EVAL });
+      last = label;
+      return { result: { steps: [{ name: 'x', ok: true }] }, exitCode: label in exits ? exits[label] : null };
+    },
+    check: (name, pass) => { verdicts.set(name, Boolean(pass)); return Boolean(pass); },
+    windowSteps: (r) => Boolean(r.result),
+    paks: () => (last in paksAfter ? paksAfter[last] : ['pak30_dir.vpk']),
+    langChanges: () => lang,
+    gameChanges: () => game,
+  });
+  return { ok, launched, verdicts };
+}
+
+const GOOD_EXITS = { '6-uninstall-cancel': 3, '7-uninstall-keep': 0, '8-uninstall-everything': 4 };
+
+test('the removal window is answered three ways, in an order where each answer can be seen', async () => {
+  const { answerRemoval } = await load();
+  const { ok, launched } = await rehearse(answerRemoval, { exits: GOOD_EXITS, paksAfter: { '8-uninstall-everything': [] } });
+  assert.equal(ok, true);
+  assert.deepEqual(launched.map((l) => l.label), ['5-install-again', '6-uninstall-cancel', '7-uninstall-keep', '8-uninstall-everything']);
+  // the three answers go to the removal window, the reinstall to the ordinary one
+  assert.deepEqual(launched.map((l) => l.args.includes('--uninstall')), [false, true, true, true]);
+  assert.match(launched[1].eval, /cancelBtn/);
+  assert.match(launched[3].eval, /tick\('optMods', true\)/);
+  assert.match(launched[3].eval, /tick\('optData', true\)/);
+});
+
+test('every wrong answer from the removal window fails the run, and says which', async () => {
+  const { answerRemoval } = await load();
+  const cases = [
+    [{ exits: { ...GOOD_EXITS, '6-uninstall-cancel': 0 } }, 'Cancel tells the uninstaller to stop (exit 3)'],
+    [{ exits: GOOD_EXITS, paksAfter: { '6-uninstall-cancel': [] } }, 'and touches nothing'],
+    [{ exits: { ...GOOD_EXITS, '7-uninstall-keep': 4 } }, 'nothing ticked: the uninstaller goes on and keeps the app data (exit 0)'],
+    [{ exits: GOOD_EXITS, paksAfter: { '7-uninstall-keep': [] } }, 'and the mod stays in the game'],
+    [{ exits: { ...GOOD_EXITS, '8-uninstall-everything': 0 } }, 'everything ticked: the uninstaller is told to take the app data too (exit 4)'],
+    [{ exits: GOOD_EXITS, lang: { added: ['pak30_dir.vpk'], removed: [], changed: [] } }, 'on disk: the language folder is exactly as it was before the first launch'],
+    [{ exits: GOOD_EXITS, game: { added: [], removed: [], changed: ['gameinfo.gi'] } }, 'and the game\'s own files are as the sandbox seeded them'],
+    [{ exits: GOOD_EXITS, paksAfter: { '5-install-again': [] } }, 'on disk: the mod is back, switched on'],
+  ];
+  for (const [given, failing] of cases) {
+    const { ok, verdicts } = await rehearse(answerRemoval, given);
+    assert.equal(ok, false, failing);
+    assert.equal(verdicts.get(failing), false, failing);
+  }
+});
+
+test('after an update the new version has to say its version and keep the favourite', async () => {
+  const { checkUpdated, MOD } = await load();
+  const run = (reported, favorites) => {
+    const seen = [];
+    const ok = checkUpdated({ check: (n, p) => { seen.push([n, p]); return Boolean(p); }, reported, from: '2.10.0', want: '2.11.0', favorites });
+    return { ok, seen };
+  };
+  const fav = [`${MOD.categoryId}|${MOD.name}`];
+  assert.equal(run('2.11.0', fav).ok, true);
+  assert.equal(run('2.10.0', fav).ok, false, 'the old version still answering means the installer did not replace it');
+  const lost = run('2.11.0', []);
+  assert.equal(lost.ok, false, 'a favourite gone means the update lost settings');
+  assert.equal(lost.seen.length, 2, 'both are reported even when the first fails');
 });

@@ -405,9 +405,21 @@ logged that it was held and none logged a refused write.
 
 `tools/e2e.mjs` drives the app in that tree the way a player does. It writes a fixture catalog and
 a fixture archive into the app's caches, starts the app twice, and clicks: install, switch off,
-restart, switch on, remove. After each launch it compares the language folder on disk with what
-should be there. No network is involved. `.github/workflows/e2e.yml` runs it on Linux and on
-Windows, and both jobs have to pass before a pull request merges and before a release builds.
+restart, switch on, remove. Then it starts the app the way the uninstaller does and answers the
+removal window three ways: Cancel (exit 3, nothing touched), nothing ticked (exit 0, the mod
+stays), everything ticked (exit 4, the language folder and the game's own gameinfo files byte for
+byte as before the first launch). After each launch it compares the disk with what should be
+there. No network is involved. `.github/workflows/e2e.yml` runs it on Linux and on Windows, and both
+jobs have to pass before a pull request merges and before a release builds.
+
+The update is checked on the packages people install, not on the source tree. `release.yml`'s
+`try-update` installs the last published release, gives it a mod and a favourite through its own
+`window.api`, runs the draft's installer over it with `/S` as an update does, and runs
+`tools/e2e.mjs --upgrade`, which requires the new version to report itself and to find the mod, its
+state and the favourite where the old one left them; then the uninstaller the new version installed
+removes it. `.github/workflows/update.yml` does the same with an installer built from the commit, on
+a pull request that touches what an update goes through and weekly, so the release step has run
+before a release depends on it.
 
 `tools/sim/` runs the app on simulated machines. A machine is a screen (the work area and the
 scale Windows would give the window) and a renderer (the Chromium switches that decide how the page
