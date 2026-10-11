@@ -111,7 +111,8 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'account:signIn': [], 'account:signOut': [],
   'catalog:load': [optional(bool)], 'catalog:terrainAges': [],
   // mods (src/ipc-mods.ts, src/ipc-library.ts, src/ipc-foreign.ts)
-  'mods:install': [shape({ categoryId: str(100, 1), name: NAME, styleLabel: optional(NAME), fileRef: optional(str(1000)), preview: PREVIEW })],
+  // a stuck font or cursor is reinstalled from its record, whose category the handler judges
+  'mods:install': [shape({ categoryId: str(100), name: NAME, styleLabel: optional(NAME), fileRef: optional(str(1000)), preview: PREVIEW })],
   'mods:list': [], 'mods:update': [ID], 'mods:switchOffStaleTerrains': [], 'mods:clearPrePatch': [ID],
   'mods:importDialog': [], 'mods:importFolderDialog': [],
   'mods:importPaths': [list(PATH, 1000)],
@@ -157,7 +158,8 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   // diagnostics (src/ipc-diagnostics.ts)
   'diag:export': [], 'diag:rendererError': [str(64 * 1024)],
   // the removal window (src/uninstall-window.ts)
-  'uninstall:plan': [], 'uninstall:run': [optional(shape({ revert: optional(bool), mods: optional(bool) }))],
+  // the window sends all three boxes (renderer/uninstall.js); the uninstaller acts on data itself
+  'uninstall:plan': [], 'uninstall:run': [optional(shape({ revert: optional(bool), mods: optional(bool), data: optional(bool) }))],
   'uninstall:done': [bool], 'uninstall:cancel': [],
 };
 
