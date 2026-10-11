@@ -2,6 +2,38 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.11.0
+
+### A crash no longer leaves half a mod behind
+
+Installing a mod writes several files into the game, and the app now notes each step before it
+takes it. If the app closes in the middle, from Task Manager, a Windows update or a power cut, the
+next start either finishes the change or takes it back. You get the mod whole or not at all, and
+My mods agrees with the game folder.
+
+The app also saves your library and settings in one step. A save cut short used to leave My mods
+empty, with your mods listed as somebody else's files. A write that failed halfway, on a full disk
+for example, could leave the mod it replaced renamed to .mmtx; the app now puts it back.
+
+### The keyboard reaches everything
+
+The name on a catalog card is now a button: Tab to it and press Enter to open the mod. Install it
+from there, and remove it in My mods, without touching the mouse. A window takes the focus when it
+opens, Tab stays inside it, and closing it brings you back to where you were. Screen readers now
+hear names for the sort, hero and language lists, and stop reading icons out as words like
+check_circle.
+
+### The window can only ask for what its buttons do
+
+The app checks every request from its window: where it came from and what it carries. The page can
+no longer change the game folder or your Discord account, and the Folder button of a tool opens
+only a tool the app installed.
+
+### Each release is tried as an update first
+
+Before a release goes out, CI installs the previous one, gives it a mod and a favourite, installs
+the new one over it and checks that both are still there.
+
 ## 2.10.0
 
 ### Terrorblade's arcana in any colour
