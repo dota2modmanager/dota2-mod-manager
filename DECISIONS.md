@@ -47,7 +47,7 @@ where it runs before the suite.
 ### The app ships two dependencies
 
 `adm-zip` and `electron-updater` ship inside it; `electron`, `electron-builder`, `eslint`,
-`typescript` and `fast-check` only build and check it, and never reach a user's machine. The VPK reader and writer, the
+`typescript`, `fast-check` and `axe-core` only build and check it, and never reach a user's machine. The VPK reader and writer, the
 KeyValues parser, the zip guards, the mirror logic and the update checks are written here,
 because every dependency is a stranger with write access to a game folder on tens of thousands
 of machines. That is a bias rather than a ban: a pull request adding one has to say what it
@@ -78,11 +78,20 @@ the difference between "an archive broke it" and "a name of one dot breaks it". 
 in `test/properties.test.js`, and the first of them already earns its keep: our hand-written crc32
 is checked against `zlib.crc32` on random bytes rather than on the cases somebody chose.
 
+`axe-core` was added on 2026-10-11, for the accessibility scenario in the simulator
+(`tools/sim/scenarios/a11y.js`). It holds the window to WCAG 2.0, 2.1 and 2.2 at level AA, which
+is a few hundred rules with years of edge cases behind each, the kind of thing that is wrong in its
+own ways when written by hand. It runs inside the simulated window and nowhere else; the installer
+does not carry `tools/`, and nothing in `src/` or `renderer/` imports it. What it cannot decide by
+itself, and what a keyboard and a screen reader need beyond its rules, is in
+[docs/accessibility.md](docs/accessibility.md).
+
 It also flips a check on the OpenSSF Scorecard, which recognises fuzzing in JavaScript only
 through a short list of libraries and not through generators of our own. That is a real reason and
 not the reason: the shrinking is.
 
-Seven more came on 2026-09-27 with the decision below, twelve devDependencies in all. `vite` and
+Seven more came on 2026-09-27 with the decision below, and `axe-core` on 2026-10-11 (above), thirteen
+devDependencies in all. `vite` and
 `@vitejs/plugin-react` build the window's page. `react`, `react-dom` and `motion` are written into
 that page once a screen imports them, which makes them part of the app in every sense but the
 installer's: Vite copies their code into `out/renderer`, and the packages themselves stay behind.

@@ -304,7 +304,7 @@ GPL — в [NOTICE](NOTICE).
 | [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2) | Каждая сборка Доты текстом. Её читают проверки репозитория, чтобы сказать, что поменял патч. Не приложение | Не указана. Читается по сети, ничего из неё сюда не копируется |
 
 <!-- facts:deps-ru -->
-В `package.json` их 14: `adm-zip` и `electron-updater` едут внутри приложения, `motion`, `react` и `react-dom` собраны в его окно, `@types/react`, `@types/react-dom`, `@vitejs/plugin-react`, `electron`, `electron-builder`, `eslint`, `fast-check`, `typescript` и `vite` только собирают или проверяют его.
+В `package.json` их 15: `adm-zip` и `electron-updater` едут внутри приложения, `motion`, `react` и `react-dom` собраны в его окно, `@types/react`, `@types/react-dom`, `@vitejs/plugin-react`, `axe-core`, `electron`, `electron-builder`, `eslint`, `fast-check`, `typescript` и `vite` только собирают или проверяют его.
 <!-- /facts:deps-ru -->
 Тесты не зависят ни от чего, а в `tools/` одна зависимость, `vite`: она собирает окно. Чтение и запись VPK, разбор KeyValues, защита от zip-бомб и логика обновления написаны
 здесь, потому что каждая зависимость — это чужак с правом записи в папку игры на десятках тысяч
