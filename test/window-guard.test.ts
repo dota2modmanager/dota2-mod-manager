@@ -173,7 +173,7 @@ const VALID: Record<string, unknown[][]> = {
   'misc:openExternal': [['https://dota2modmanager.com/docs/'], ['http://example.org'], [undefined]],
   'misc:cacheSize': [[]], 'misc:clearCache': [[]], 'misc:runTool': [['Compiler']],
   'diag:export': [[]], 'diag:rendererError': [['TypeError: x is undefined']],
-  'uninstall:plan': [[]], 'uninstall:run': [[{ revert: true, mods: false }], [null]], 'uninstall:done': [[true]], 'uninstall:cancel': [[]],
+  'uninstall:plan': [[]], 'uninstall:run': [[{ revert: true, mods: false, data: false }], [{ revert: true, mods: true, data: true }], [null]], 'uninstall:done': [[true]], 'uninstall:cancel': [[]],
 };
 
 test('a call of every channel, as the window makes it, gets through', () => {
@@ -200,7 +200,7 @@ const HOSTILE: [string, unknown[], RegExp][] = [
   ['misc:openToolsFolder', [{ toString: () => '../..' }], /string/],
   ['misc:runTool', [''], /string/],
   ['mods:install', [{ categoryId: 'heroes', name: 'x', styleLabel: null, fileRef: 'a', preview: null, dest: 'C:\\' }], /unexpected key dest/],
-  ['mods:install', [{ categoryId: '', name: 'x' }], /categoryId/],
+  ['mods:install', [{ categoryId: 42, name: 'x' }], /categoryId/],
   ['mods:install', ['heroes'], /object/],
   ['mods:remove', [ID, 'extra'], /takes 1/],
   ['mods:remove', [42], /string/],
@@ -364,4 +364,22 @@ test('a tool folder opens only when the library installed it, and the browser ge
   } finally {
     fs.rmSync(toolsDir, { recursive: true, force: true });
   }
+});
+
+test('the objects the window sends fit their checks: every key it puts in one is a key the check knows', () => {
+  /* On 2026-10-11 the removal window's OK button was refused by the gate: renderer/uninstall.js
+     sends { revert, mods, data } and the check, written from the handler's type, knew only revert
+     and mods. Nothing above caught it, because the examples were written the same way. So the keys
+     are read from the code that sends them. */
+  const removal = read('renderer/uninstall.js');
+  const boxes = removal.slice(removal.indexOf('const boxes = () => ({'), removal.indexOf('});', removal.indexOf('const boxes = () => ({')));
+  const keys = [...boxes.matchAll(/^\s*(\w+): !!/gm)].map((m) => m[1]);
+  assert.deepEqual(keys.sort(), ['data', 'mods', 'revert'], 'the removal window still sends its boxes the way this reads them');
+  assert.equal(checkArgs('uninstall:run', [Object.fromEntries(keys.map((k) => [k, true]))]), null);
+
+  const install = read('renderer/views/catalog/install.ts');
+  const sent = /window\.api\.mods\.install\(\{([^}]*)\}\)/.exec(install)?.[1] || '';
+  const fields = sent.split(',').map((f) => f.trim().split(':')[0].trim()).filter(Boolean);
+  assert.ok(fields.length >= 4, `read ${fields.join(', ')} from the install call`);
+  assert.equal(checkArgs('mods:install', [Object.fromEntries(fields.map((k) => [k, k === 'categoryId' ? 'heroes' : 'x']))]), null, fields.join(', '));
 });
