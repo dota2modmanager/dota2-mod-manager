@@ -465,7 +465,10 @@ if (invokedDirectly) {
     const d = setNoticeAside(difference(before, snapshot(LANG_DIR)));
     const pak = d.added.length === 1 && /^pak\d+_dir\.vpk\.off$/i.test(d.added[0]) ? d.added[0] : null;
     if (check('on disk: one new pak, renamed .off, and none of the files already there touched', pak && !d.removed.length && !d.changed.length, JSON.stringify(d))
-      && check('the ownership note claims that pak and nothing else', JSON.stringify(claims()) === JSON.stringify([pak.replace(/\.off$/i, '')]), JSON.stringify(claims()))
+      // the note is the release before this one's own bookkeeping when it seeded the mod (2.10.0
+      // writes it only from its screens), so after an update it is the new version's to keep: the
+      // second launch checks it claims nothing once the mod is gone
+      && (UPGRADE || check('the ownership note claims that pak and nothing else', JSON.stringify(claims()) === JSON.stringify([pak.replace(/\.off$/i, '')]), JSON.stringify(claims())))
       && (!UPGRADE || ((why) => check(`the installer updates ${report.from || 'the last release'} in place, asking nothing`, !why, why || ''))(runInstaller(UPGRADE)))) {
       const second = await launch('2-remove', { MM_VIEW: 'library', MM_EVAL: EVAL_REMOVE });
       let updated = true;
