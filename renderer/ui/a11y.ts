@@ -57,6 +57,12 @@ function regionIn(host: HTMLElement): HTMLElement {
   return region;
 }
 
+/* How long the words stay after they are said. Long enough to be read; gone after, because a
+   region that kept them was still saying "installed" the next time the window opened, in the
+   language the app was in back then (the settings scenario found Russian in the English window). */
+const SAID_MS = 7000;
+const clearing = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
+
 /** Say `msg` to a screen reader without moving the focus, in the window that is open if one is. */
 export function announce(msg: string): void {
   const top = held[held.length - 1];
@@ -64,7 +70,11 @@ export function announce(msg: string): void {
   if (!region) return;
   // emptied first, so the same words twice in a row are read twice
   region.textContent = '';
-  setTimeout(() => { region.textContent = msg; }, 50);
+  clearTimeout(clearing.get(region));
+  setTimeout(() => {
+    region.textContent = msg;
+    clearing.set(region, setTimeout(() => { region.textContent = ''; }, SAID_MS));
+  }, 50);
 }
 let uid = 0;
 /* The last few things that had the focus, newest last. A dialog may focus its own button before
