@@ -20,38 +20,177 @@
     },
     {
       "content": "The project is written with Claude Code and says so in both READMEs, DECISIONS.md and AGENTS.md. The app collects nothing: no account, no telemetry (PRIVACY.md)."
+    },
+    {
+      "content": "Code layout since 2026-10-02: the main process is TypeScript in src/*.ts, run by Node's own type stripping with no build step; the entry is src/main.ts and there is no main.js any more. The window is React with Motion and TypeScript, built by Vite into out/renderer. preload.js is the only bridge between them, and the renderer's view of that bridge is typed in renderer/api/."
+    },
+    {
+      "content": "Writes to the game folder go through FileTx (src/file-tx.ts) with a write-ahead journal in the app's user data (src/file-tx-journal.ts): each step is written down before it happens, so an install the process died in is undone, or finished if it had committed, at the next start. test/file-tx-crash.test.ts kills a child process with SIGKILL at every write in turn and checks what is left. settings.json and manifest.json are written atomically."
+    },
+    {
+      "content": "The main process answers only the app's own pages, from the top frame, and only with the arguments each IPC channel declares (src/window-guard.ts, src/channel-args.ts). The window runs with sandbox: true. The packaged app has Electron fuses set (package.json build.electronFuses): it cannot be run as plain Node, does not read NODE_OPTIONS or --inspect, and loads only its own integrity-checked app.asar."
+    },
+    {
+      "content": "Mod slots: mods are named pakNN_dir.vpk in the language folder, and a lower number wins a file both mods carry. Trees, river, shaders, hero effects, ranged attacks, hero items and optimization load first and get pak02 to pak29 by category; every other mod takes the first free number from pak30. pak64 is the app's own notice text, pak65 to pak67 are left to Minify. My mods marks the mod that loses a file as overruled and names the files. src/slot-zones.ts holds these numbers and test/slot-docs.test.ts holds the README and the site to them."
+    },
+    {
+      "content": "The catalog bot does not commit to main. The fingerprint index (fingerprints.json) and the other data the bot regenerates live on the catalog-data branch, and the app and tools read them from there."
+    },
+    {
+      "content": "Item mods (issue #118): the app can build Terrorblade's arcana as a mod out of files already in the player's own game install, in a colour they choose, or recolour an arcana they own. It is installed like any other mod, in safe mode, and only the player sees it. src/arcana.ts, src/recolor.ts, src/kv3.ts and src/material.ts do the work; docs/item-mods.md explains the mechanism, and npm run item-plan, npm run doctor and npm run dota:bench are the tools around it."
+    },
+    {
+      "content": "A Dota update can break mods. .github/workflows/dota-watch.yml looks for a new Dota build every thirty minutes and posts in the pinned \"Dota updates\" issue what changed, starting with what the app's patch is built from, and which catalog mods replace files the update touched. npm run dota:diff reads what an update changed."
+    },
+    {
+      "content": "Mods marked 18+ in the catalog stay hidden until the user says they are 18 and wants to see them. The app tells the user when the catalog has a new version of an installed mod and updates it in place, keeping its slot (src/mod-update.ts)."
+    },
+    {
+      "content": "Accessibility and verification are documented and checked: docs/accessibility.md lists eleven promises, each with the simulator check behind it (axe-core, the accessibility tree over the DevTools protocol, a keyboard-only install, contrast measured on the pixels); docs/screen-reader-pass.md is the manual pass with NVDA or Narrator. docs/evidence.md lists every claim the project makes with the CI job that runs it and the command that runs it locally, and docs/assurance-case.md maps each threat to the test that answers it."
     }
   ],
   "pages": [
-    { "title": "Overview", "purpose": "What the app does, who it is for, how a mod reaches the game, and where the rest of this wiki goes." },
-    { "title": "Getting Started and Development Setup", "purpose": "Running the app and the tests, the sandbox game tree, and the commands a contributor uses.", "parent": "Overview" },
-    { "title": "Architecture at a Glance", "purpose": "The main process, the preload bridge and the renderer, and the modules each one holds.", "parent": "Overview" },
-    { "title": "Governance, Policies and Legal", "purpose": "Maintainers, how changes are accepted, security and privacy policies, the licence and its additional terms.", "parent": "Overview" },
-    { "title": "Desktop Application: Main Process", "purpose": "Everything in main.js and src/ that touches the game folder, the network and the user's settings." },
-    { "title": "Application Lifecycle, Window and Preload Bridge", "purpose": "Start-up, the window, updates, deep links and the API the preload script exposes.", "parent": "Desktop Application: Main Process" },
-    { "title": "IPC Layer", "purpose": "The src/ipc-*.js modules and the channels the renderer calls.", "parent": "Desktop Application: Main Process" },
-    { "title": "Installer Engine", "purpose": "Downloading, verifying and installing a mod, pak slots and the load order, the master switch and file transactions.", "parent": "Desktop Application: Main Process" },
-    { "title": "VPK Format, Language Folders and the Schema Patch", "purpose": "Reading and writing VPKs, which language folder the game mounts, living next to Minify, and the optional patch for looks on default items.", "parent": "Desktop Application: Main Process" },
-    { "title": "Imports, Terrain Age and the Anti-Cheat Notice", "purpose": "Importing a user's own files, whole-map terrains built for an older map, and the rewritten text of the anti-cheat notice.", "parent": "Desktop Application: Main Process" },
-    { "title": "Networking, Catalog and Remote Config", "purpose": "Mirrors, the signed catalog, signed remote config and rollbacks, and the pinned toolchain.", "parent": "Desktop Application: Main Process" },
-    { "title": "Presets, Settings and Diagnostics", "purpose": "Presets and sharing them, the settings store, and the diagnostics report.", "parent": "Desktop Application: Main Process" },
-    { "title": "Desktop Application: Renderer UI", "purpose": "The four sections of the window and the code behind them." },
-    { "title": "Renderer Core and Router", "purpose": "State, routing between sections and the shared renderer helpers.", "parent": "Desktop Application: Renderer UI" },
-    { "title": "Catalog View, Hero Grid and Install Queue", "purpose": "Browsing the catalog, the grid of heroes, the item builder and queueing installs.", "parent": "Desktop Application: Renderer UI" },
-    { "title": "Library, Presets and Settings Views", "purpose": "My mods, the load order, presets and settings as the user sees them.", "parent": "Desktop Application: Renderer UI" },
-    { "title": "UI Widgets and Localization", "purpose": "Shared widgets, themes, and the Russian and English strings.", "parent": "Desktop Application: Renderer UI" },
-    { "title": "Mod Catalog Data", "purpose": "The fingerprint index, the hero and category indexes, and the preview images kept in the repository." },
-    { "title": "Website", "purpose": "The Astro site in site/ at dota2modmanager.com." },
-    { "title": "Site Pages, Internationalization and Content", "purpose": "Pages, layouts and components, and the Russian and English content.", "parent": "Website" },
-    { "title": "SEO, llms.txt and Site Build", "purpose": "Search visibility, llms.txt and how the site is built and deployed.", "parent": "Website" },
-    { "title": "Build, Release and Distribution", "purpose": "How a version is built, checked and published." },
-    { "title": "Packaging and Installers", "purpose": "The Windows installer, the portable build and the AppImage.", "parent": "Build, Release and Distribution" },
-    { "title": "Release Pipeline, Gating and Release Watch", "purpose": "release.yml from the gate to the jobs after publishing, immutable releases, and release-watch.yml.", "parent": "Build, Release and Distribution" },
-    { "title": "Update Mirror and Remote Config Signing", "purpose": "The R2 update mirror, how it is kept current, and signing the remote config.", "parent": "Build, Release and Distribution" },
-    { "title": "Quality Assurance and Automation", "purpose": "What checks every change before it reaches main." },
-    { "title": "Tests, Sandbox, Simulation and E2E", "purpose": "The unit suite, the sandbox game tree, the machine simulation and the end-to-end clicks.", "parent": "Quality Assurance and Automation" },
-    { "title": "Coverage, Mutation and Documentation Ratchets", "purpose": "Coverage floors, mutants, size budgets and the documents held to the code.", "parent": "Quality Assurance and Automation" },
-    { "title": "CI Workflows, Radar and Incident Response", "purpose": "The workflows, actionlint, the status radar and the incident write-ups.", "parent": "Quality Assurance and Automation" },
-    { "title": "Glossary", "purpose": "Terms used across the project: pak slot, language folder, safe mode, schema patch, D2PFX and others." }
+    {
+      "title": "Overview",
+      "purpose": "What the app does, who it is for, how a mod reaches the game, and where the rest of this wiki goes."
+    },
+    {
+      "title": "Getting Started and Development Setup",
+      "purpose": "Running the app and the tests, the sandbox game tree and its write jail, and the commands a contributor uses.",
+      "parent": "Overview"
+    },
+    {
+      "title": "Architecture at a Glance",
+      "purpose": "The TypeScript main process in src/, the preload bridge, the React renderer built by Vite, and the modules each one holds.",
+      "parent": "Overview"
+    },
+    {
+      "title": "Security Model and Evidence",
+      "purpose": "Trust boundaries and threats from docs/assurance-case.md, the signed catalog and config, the IPC guard, Electron fuses, what the project does not claim, and docs/evidence.md for checking each claim.",
+      "parent": "Overview"
+    },
+    {
+      "title": "Governance, Policies and Legal",
+      "purpose": "Maintainers, how changes are accepted (pull requests, required checks, the merge queue), security and privacy policies, the licence and its additional terms.",
+      "parent": "Overview"
+    },
+    {
+      "title": "Desktop Application: Main Process",
+      "purpose": "Everything in src/ that touches the game folder, the network and the user's settings, starting from src/main.ts and src/services.ts."
+    },
+    {
+      "title": "Application Lifecycle, Window and Preload Bridge",
+      "purpose": "Start-up, the window, updates, deep links, the removal window the uninstaller opens, and the API the preload script exposes.",
+      "parent": "Desktop Application: Main Process"
+    },
+    {
+      "title": "IPC Layer and Its Guard",
+      "purpose": "The src/ipc-*.ts modules, the channels the renderer calls, and the check on who calls them and with what arguments (window-guard.ts, channel-args.ts).",
+      "parent": "Desktop Application: Main Process"
+    },
+    {
+      "title": "Installer Engine and File Transactions",
+      "purpose": "Downloading, verifying and installing a mod, pak slots and the load order, updates from the catalog, the master switch, and FileTx with its write-ahead journal.",
+      "parent": "Desktop Application: Main Process"
+    },
+    {
+      "title": "VPK Format, Language Folders and the Schema Patch",
+      "purpose": "Reading and writing VPKs, which language folder the game mounts, living next to Minify, and the optional patch for looks on default items.",
+      "parent": "Desktop Application: Main Process"
+    },
+    {
+      "title": "Item Mods: Arcana Builds and Recolours",
+      "purpose": "Building an item's look as a mod from the game's own files: KV3 and material reading and writing, the arcana build and recolour, and the item plan, mod doctor and game bench tools.",
+      "parent": "Desktop Application: Main Process"
+    },
+    {
+      "title": "Imports, Terrain Age and the Anti-Cheat Notice",
+      "purpose": "Importing a user's own files, whole-map terrains built for an older map, and the rewritten text of the anti-cheat notice.",
+      "parent": "Desktop Application: Main Process"
+    },
+    {
+      "title": "Networking, Catalog and Remote Config",
+      "purpose": "Mirrors and how each is checked, the signed catalog, the signed remote config with its rollbacks and signing, the R2 update mirror, and the pinned toolchain.",
+      "parent": "Desktop Application: Main Process"
+    },
+    {
+      "title": "Presets, Settings and Diagnostics",
+      "purpose": "Presets and sharing them as files and links, the settings store, and the diagnostics report.",
+      "parent": "Desktop Application: Main Process"
+    },
+    {
+      "title": "Desktop Application: Renderer UI",
+      "purpose": "The four sections of the window, the React screens behind them, state and routing between sections, and the shared renderer helpers."
+    },
+    {
+      "title": "Catalog View, Hero Grid and Install Queue",
+      "purpose": "Browsing the catalog, the grid of heroes, the item builder, the arcana window, and queueing installs.",
+      "parent": "Desktop Application: Renderer UI"
+    },
+    {
+      "title": "Library, Presets and Settings Views",
+      "purpose": "My mods, the load order, presets and settings as the user sees them.",
+      "parent": "Desktop Application: Renderer UI"
+    },
+    {
+      "title": "UI Widgets and Localization",
+      "purpose": "Shared widgets, themes, and the Russian and English strings.",
+      "parent": "Desktop Application: Renderer UI"
+    },
+    {
+      "title": "Mod Catalog Data",
+      "purpose": "The fingerprint index and the hero and category indexes on the catalog-data branch, and the preview images."
+    },
+    {
+      "title": "Website",
+      "purpose": "The Astro site in site/ at dota2modmanager.com."
+    },
+    {
+      "title": "Site Pages, Internationalization and Content",
+      "purpose": "Pages, layouts and components, the shared-build page, and the Russian and English content.",
+      "parent": "Website"
+    },
+    {
+      "title": "Site Build, Security Headers and SEO",
+      "purpose": "How the site is built and deployed to Cloudflare Pages, its content security policy and headers, the build check, search visibility and llms.txt.",
+      "parent": "Website"
+    },
+    {
+      "title": "Build, Release and Distribution",
+      "purpose": "How a version is built, checked and published."
+    },
+    {
+      "title": "Packaging and Installers",
+      "purpose": "The Windows installer, the portable build and the AppImage, and the Electron fuses set on them.",
+      "parent": "Build, Release and Distribution"
+    },
+    {
+      "title": "Release Pipeline, Gating and Release Watch",
+      "purpose": "release.yml from the gate to the jobs after publishing, the update rehearsal, checksums, attestation and SBOM, immutable releases, and release-watch.yml.",
+      "parent": "Build, Release and Distribution"
+    },
+    {
+      "title": "Quality Assurance and Automation",
+      "purpose": "What checks every change before it reaches main, and the coverage floors, mutants, size budgets and documents held to the code."
+    },
+    {
+      "title": "Tests, Sandbox, Simulation and E2E",
+      "purpose": "The unit suite, the crash test, the sandbox game tree, the machine simulation, the end-to-end clicks, and the update rehearsal.",
+      "parent": "Quality Assurance and Automation"
+    },
+    {
+      "title": "CI Workflows, Radar and Incident Response",
+      "purpose": "The workflows, actionlint, the Dota updates watch, the status radar and the incident write-ups.",
+      "parent": "Quality Assurance and Automation"
+    },
+    {
+      "title": "Accessibility",
+      "purpose": "The promises in docs/accessibility.md, how the a11y scenario checks each one, keyboard, focus, dialogs and announcements in renderer/ui/a11y.ts, contrast measured on the pixels, and the manual screen reader pass.",
+      "parent": "Quality Assurance and Automation"
+    },
+    {
+      "title": "Glossary",
+      "purpose": "Terms used across the project: pak slot, language folder, safe mode, schema patch, write jail, FileTx, catalog-data, D2PFX and others."
+    }
   ]
 }
