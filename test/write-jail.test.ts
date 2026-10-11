@@ -230,4 +230,7 @@ test('every launch of the sandbox is jailed', () => {
   const jailed = main.indexOf('jailThisRun(process.argv, process.env)');
   assert.ok(jailed > 0 && jailed < main.indexOf('createAppLog(') && jailed < main.indexOf('IS_PORTABLE'), 'the jail is up first');
   assert.match(main, /if \(app\.isPackaged && !jailRoots\(\)\.length\)/, 'a jailed run claims no system handler');
+  // 2.11.0's update rehearsal: the packaged app, jailed, started its updater, and the updater made
+  // its cache folder in %LOCALAPPDATA%, which the jail refused and the e2e failed on
+  assert.match(main, /if \(autoUpdater && app\.isPackaged && !jailRoots\(\)\.length\)/, 'a jailed run starts the auto-updater');
 });

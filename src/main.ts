@@ -264,8 +264,9 @@ async function start(): Promise<void> {
   /* Auto-update, packaged builds only. src/updater.ts holds it, including which channel this copy
      reads: the stable one, or the beta for an account the signed config names. The channel is a
      function rather than a value, so a tester taken off that list is back on stable at the next
-     check. */
-  if (autoUpdater && app.isPackaged) {
+     check. A run held to a sandbox (src/write-jail.ts) is a test, and does not update itself:
+     electron-updater keeps its cache in %LOCALAPPDATA%, outside any sandbox. */
+  if (autoUpdater && app.isPackaged && !jailRoots().length) {
     updater = createUpdater({
       autoUpdater,
       isPortable: IS_PORTABLE,
