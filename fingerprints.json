@@ -1,5 +1,5 @@
 {
-  "count": 1619,
+  "count": 1620,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -935,6 +935,7 @@
     "97d2f5cd0c7656b0e64123d536ad0013a69749a6": [{"name":"TI9 Teleport III","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "98187f069ae4309d3e451e561b03a278e4b2245c": [{"name":"Phantom Adven Blademail Red","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "9873af5cf87c66fbaac14259cd1c617461a1d843": [{"name":"Terrorblade Rictus Manta","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "98b15c502c0ab5c160e1cc991dcfb87d2b2a5b60": [{"name":"Tidehunter Vetmo","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "98b4f5b9b494fb60f8a93b8346200c3eedf1b173": [{"name":"Gopo Tidehunter","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "98f1d01a8f85fdcf4cd4be2c58b4a91020915256": [{"name":"Terrorblade Arcana Manta","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "9903db5306b825c16a16690dce974a6c51b05877": [{"name":"Slobbering Strongbox","categoryId":"wards","styleLabel":null,"type":"vpk"}],

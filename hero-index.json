@@ -1,6 +1,6 @@
 {
   "heroes": 149,
-  "mods": 1546,
+  "mods": 1547,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1868,7 +1868,8 @@
         {"name":"Tidehunter Insatiable Seas","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms"]},
         {"name":"Tidehunter Maw Of Megalodon","categoryId":"heroes","styleLabel":null,"slots":["misc","belt"]},
         {"name":"Tidehunter Squid Girl","categoryId":"heroes","styleLabel":null,"slots":["weapon","arms","head","belt","back","misc","offhand"]},
-        {"name":"Tidehunter Unfathomable Hunger","categoryId":"heroes","styleLabel":null,"slots":["misc","belt"]}
+        {"name":"Tidehunter Unfathomable Hunger","categoryId":"heroes","styleLabel":null,"slots":["misc","belt"]},
+        {"name":"Tidehunter Vetmo","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms","shield","head","weapon","back","offhand"]}
       ]
     },
     "tinker": {

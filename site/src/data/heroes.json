@@ -14623,6 +14623,93 @@
       ]
     },
     {
+      "id": "tidehunter",
+      "name": "Tidehunter",
+      "slug": "tidehunter",
+      "mods": [
+        {
+          "name": "Tidehunter Vetmo",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","belt","arms","shield","head","weapon","back","offhand"],
+          "image": {"src":"/mods/tidehunter-vetmo.webp","width":854,"height":480},
+          "author": "Mirik522",
+          "authorUrl": "https://t.me/Moggdeli",
+          "date": 1791747523
+        },
+        {
+          "name": "Tidehunter Squid Girl",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","arms","head","belt","back","misc","offhand"],
+          "image": {"src":"/mods/tidehunter-squid-girl.webp","width":854,"height":480},
+          "author": "Pinkpapa",
+          "authorUrl": "https://www.patreon.com/Pinkpapa",
+          "date": 1780160766
+        },
+        {
+          "name": "Gopo Tidehunter",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","belt","arms"],
+          "image": {"src":"/mods/gopo-tidehunter.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1756539017
+        },
+        {
+          "name": "Tidehunter Golden Diretide",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","belt","arms"],
+          "image": {"src":"/mods/tidehunter-golden-diretide.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1791162755
+        },
+        {
+          "name": "Tidehunter Insatiable Seas",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","belt","arms"],
+          "image": {"src":"/mods/tidehunter-insatiable-seas.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1766625145
+        },
+        {
+          "name": "Tidehunter Hammer Of Maeldrawn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","belt"],
+          "image": {"src":"/mods/tidehunter-hammer-of-maeldrawn.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791454886
+        },
+        {
+          "name": "Tidehunter Maw Of Megalodon",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","belt"],
+          "image": {"src":"/mods/tidehunter-maw-of-megalodon.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791454886
+        },
+        {
+          "name": "Tidehunter Unfathomable Hunger",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","belt"],
+          "image": {"src":"/mods/tidehunter-unfathomable-hunger.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791454886
+        }
+      ]
+    },
+    {
       "id": "treant_protector",
       "name": "Treant Protector",
       "slug": "treant-protector",
@@ -15014,83 +15101,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1776169497
-        }
-      ]
-    },
-    {
-      "id": "tidehunter",
-      "name": "Tidehunter",
-      "slug": "tidehunter",
-      "mods": [
-        {
-          "name": "Tidehunter Squid Girl",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","arms","head","belt","back","misc","offhand"],
-          "image": {"src":"/mods/tidehunter-squid-girl.webp","width":854,"height":480},
-          "author": "Pinkpapa",
-          "authorUrl": "https://www.patreon.com/Pinkpapa",
-          "date": 1780160766
-        },
-        {
-          "name": "Gopo Tidehunter",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","belt","arms"],
-          "image": {"src":"/mods/gopo-tidehunter.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1756539017
-        },
-        {
-          "name": "Tidehunter Golden Diretide",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","belt","arms"],
-          "image": {"src":"/mods/tidehunter-golden-diretide.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1791162755
-        },
-        {
-          "name": "Tidehunter Insatiable Seas",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","belt","arms"],
-          "image": {"src":"/mods/tidehunter-insatiable-seas.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1766625145
-        },
-        {
-          "name": "Tidehunter Hammer Of Maeldrawn",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","belt"],
-          "image": {"src":"/mods/tidehunter-hammer-of-maeldrawn.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791454886
-        },
-        {
-          "name": "Tidehunter Maw Of Megalodon",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","belt"],
-          "image": {"src":"/mods/tidehunter-maw-of-megalodon.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791454886
-        },
-        {
-          "name": "Tidehunter Unfathomable Hunger",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","belt"],
-          "image": {"src":"/mods/tidehunter-unfathomable-hunger.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791454886
         }
       ]
     },
