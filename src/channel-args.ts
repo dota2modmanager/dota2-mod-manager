@@ -115,7 +115,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'mods:install': [shape({ categoryId: str(100), name: NAME, styleLabel: optional(NAME), fileRef: optional(str(1000)), preview: PREVIEW })],
   'mods:list': [], 'mods:update': [ID], 'mods:switchOffStaleTerrains': [], 'mods:clearPrePatch': [ID],
   'mods:importDialog': [], 'mods:importFolderDialog': [],
-  'mods:importPaths': [list(PATH, 1000)],
+  'mods:importPaths': [list(PATH, 10000)],
   'mods:importBuffers': [list(shape({ name: str(1000, 1), data: bytes(4096 * MB) }), 1000)],
   'mods:exportSingle': [ID], 'mods:unpackToFolder': [ID],
   'mods:masterState': [], 'mods:setMaster': [bool],
@@ -156,7 +156,8 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   })],
   'misc:cacheSize': [], 'misc:clearCache': [], 'misc:runTool': [str(260, 1)],
   // diagnostics (src/ipc-diagnostics.ts)
-  'diag:export': [], 'diag:rendererError': [str(64 * 1024)],
+  // the handler keeps the first 2000 characters: a long error is cut there, not refused here
+  'diag:export': [], 'diag:rendererError': [str(4 * MB)],
   // the removal window (src/uninstall-window.ts)
   // the window sends all three boxes (renderer/uninstall.js); the uninstaller acts on data itself
   'uninstall:plan': [], 'uninstall:run': [optional(shape({ revert: optional(bool), mods: optional(bool), data: optional(bool) }))],
