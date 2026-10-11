@@ -2,6 +2,7 @@
  * as a pack of the user's own. */
 import { useRef } from 'react';
 import type { ModModalActions, ModModalModel } from './model.ts';
+import { catalogName } from '../../ui/catalog-name.ts';
 import { Thumb } from './Thumb.tsx';
 
 export function PackList({ m, actions }: { m: ModModalModel; actions: ModModalActions }) {
@@ -14,7 +15,7 @@ export function PackList({ m, actions }: { m: ModModalModel; actions: ModModalAc
           <div key={x.name} className={`pack-row ${x.excluded ? 'excluded' : ''} ${x.catName ? '' : 'missing'}`} data-member={x.name}>
             <Thumb url={x.thumb} />
             <div className="pack-info">
-              <div className="pack-mod-name">{x.name}</div>
+              <div className="pack-mod-name" title={x.name}>{catalogName(x.name)}</div>
               <div className="pack-mod-cat">{x.catName ?? L`не найден в каталоге`}{x.installed ? L` · установлен` : ''}</div>
             </div>
             <button className="pack-x" data-toggle={x.name} aria-label={x.excluded ? L`Вернуть` : L`Убрать`}

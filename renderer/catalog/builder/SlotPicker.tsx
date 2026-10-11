@@ -2,8 +2,10 @@
  * puts the choice on. Nothing reaches the game until it is pressed (views/item-builder.ts,
  * stagedItemAction): a pick used to be written on every click. The card the border marks is the
  * one chosen here; "Надето" is said only of what the game shows. */
+import { catalogName } from '../../ui/catalog-name.ts';
 import { useRef, type CSSProperties } from 'react';
 import { plural } from '../../ui/format.ts';
+import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import type { SlotPickerActions, SlotPickerModel } from './model.ts';
 import { BuilderFoot, BuilderHead, CosThumb, EmptySearch, PickerSearch } from './parts.tsx';
 
@@ -27,7 +29,7 @@ export function SlotPicker({ m, actions }: { m: SlotPickerModel; actions: SlotPi
               {o.id === '' ? <div className="noimg"><span className="ms">block</span></div> : <CosThumb name={o.name} fallback={m.slotIcon} />}
             </div>
             <div className="card-body">
-              <div className="card-name">{o.name}</div>
+              <div className="card-name" title={o.name}>{cosmeticName(o.name)}</div>
               <div className="card-meta"><span>{o.on ? L`Надето` : o.tags || ' '}</span></div>
             </div>
           </button>
@@ -53,7 +55,7 @@ export function SlotPicker({ m, actions }: { m: SlotPickerModel; actions: SlotPi
                     ? <span className="card-thumb"><img src={fx.picture} alt="" loading="lazy" /></span>
                     : <div className="noimg"><span className="ms">auto_awesome</span></div>}
                 </div>
-                <div className="card-body"><div className="card-name">{fx.name}</div></div>
+                <div className="card-body"><div className="card-name" title={fx.name}>{catalogName(fx.name)}</div></div>
               </button>
             ))}
           </div>
@@ -62,7 +64,7 @@ export function SlotPicker({ m, actions }: { m: SlotPickerModel; actions: SlotPi
       <div className="modal-note">{L`Вид подставляется в схему предметов игры — стандартный предмет просто рисуется как выбранный. Файлы модов это не трогает, и видно только тебе.`}</div>
       <div className="item-picker-foot" id="itemPickFoot">
         <BuilderFoot action={m.action} onApply={actions.apply}
-          summary={<><b>{m.summary.name}</b>{m.summary.effects ? ` · ${m.summary.effects}` : ''}</>} />
+          summary={<><b>{cosmeticName(m.summary.name)}</b>{m.summary.effects ? ` · ${m.summary.effects}` : ''}</>} />
       </div>
     </div>
   );

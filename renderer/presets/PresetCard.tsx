@@ -2,6 +2,7 @@
  * so the card leads with a row of covers and a line of counts: forty heroes, three terrains, one
  * cursor. The full list is one click away and grouped, rather than a paragraph of proper nouns in
  * the way of everybody who does not need it. */
+import { catalogName } from '../ui/catalog-name.ts';
 import { Fragment, useState, type CSSProperties } from 'react';
 import { motion } from 'motion/react';
 import { Thumb } from '../library/Thumb.tsx';
@@ -59,7 +60,7 @@ function PresetBody({ p }: { p: OwnPreset }) {
               {g.names.map((n, i) => (
                 <Fragment key={i}>
                   {i > 0 && ' · '}
-                  {n.absent ? <span className="preset-name-absent">{n.name}</span> : n.name}
+                  {n.absent ? <span className="preset-name-absent" title={n.name}>{catalogName(n.name)}</span> : <span title={n.name}>{catalogName(n.name)}</span>}
                 </Fragment>
               ))}
             </div>

@@ -4,6 +4,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { AnimatePresence, motion, useIsPresent } from 'motion/react';
 import { plural } from '../ui/format.ts';
+import { catalogName, catalogLabel } from '../ui/catalog-name.ts';
 import { rowMotion } from './row-motion.ts';
 import type { ExternalRowModel, LibraryActions, MemberModel, PackRowModel, RowModel } from './model.ts';
 import { CosmeticThumb, Grip, PackThumb, PakFile, Tags, Thumb } from './Thumb.tsx';
@@ -53,8 +54,8 @@ export function ModRow({ r, masterOff, actions, motionKey }: RowProps & Moves & 
       {r.cosmetic ? <CosmeticThumb name={r.cosmetic.name} icon={r.cosmetic.icon} /> : <Thumb thumb={r.thumb} cls="lib-thumb" />}
       <div className="lib-info">
         <div className="lib-name">
-          {r.name}
-          {r.styleLabel && <>{' '}<span className="lib-style-label">({r.styleLabel})</span></>}
+          <span title={r.cosmetic?.name || r.name}>{catalogName(r.name)}</span>
+          {r.styleLabel && <>{' '}<span className="lib-style-label" title={r.styleLabel}>({catalogLabel(r.styleLabel)})</span></>}
           <Tags tags={r.tags} />
         </div>
         <div className="lib-meta"><span>{r.meta}</span>{r.pakFile && <PakFile name={r.pakFile} />}</div>
@@ -122,7 +123,7 @@ function MemberRow({ packId, m, masterOff, actions }: RowProps & { packId: strin
         onChange={(e) => actions.select(m.key, e.target.checked)} />
       <Thumb thumb={m.thumb} cls="member-thumb" />
       <div className="member-info">
-        <div className="member-name">{m.name}{m.styleLabel && <>{' '}<span className="lib-style-label">({m.styleLabel})</span></>}</div>
+        <div className="member-name" title={m.name}>{catalogName(m.name)}{m.styleLabel && <>{' '}<span className="lib-style-label" title={m.styleLabel}>({catalogLabel(m.styleLabel)})</span></>}</div>
         <div className="member-meta">{m.meta}</div>
       </div>
       <div className="member-actions">

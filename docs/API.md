@@ -25,6 +25,7 @@ the code, not in this page.
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
 | [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
 | [`src/channel-args.ts`](#srcchannel-argsts) | What each channel may be handed, checked before its handler runs (src/window-guard.ts). |
+| [`src/cosmetic-names.ts`](#srccosmetic-namests) | Display names come from Valve's installed localization, while schema names remain the keys |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/deep-links.ts`](#srcdeep-linksts) | d2mm:// links: a preset link clicked anywhere on the system, and on Linux, telling the desktop |
 | [`src/dev-harness.ts`](#srcdev-harnessts) | The switches that let a script drive the window: a screenshot after some clicks (MM_SHOT and |
@@ -47,6 +48,7 @@ the code, not in this page.
 | [`src/gamelang-steam.ts`](#srcgamelang-steamts) | What Steam says about the game's language (src/gamelang.ts has the rule): the -language in the |
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
+| [`src/i18n-zh-CN.ts`](#srci18n-zh-CNts) | Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key. |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (src/). |
 | [`src/icon-match.ts`](#srcicon-matchts) | Which wiki file is an item's picture: the file names to try first, and how a wiki's listing is |
 | [`src/icon-wiki.ts`](#srcicon-wikits) | The two wikis the pictures come from. The Dota wiki on Fandom hosts a PNG for most cosmetics |
@@ -725,6 +727,35 @@ export function checkArgs(channel: string, args: unknown[]): string | null
 
 Check one call. Fewer arguments than the channel takes is fine when the missing ones are
 optional; more is not, because no caller in the window sends them.
+
+## src/cosmetic-names.ts
+
+Display names come from Valve's installed localization, while schema names remain the keys
+used by icons, saved picks and the item builder. No translated name is written into the schema.
+
+### `localizationTokens`
+
+```ts
+export function localizationTokens(data: Buffer): Map<string, string>
+```
+
+Valve localization files are UTF-8 today; older loose copies may carry a UTF-16 BOM.
+
+### `cosmeticNameTable`
+
+```ts
+export function cosmeticNameTable(items: Pick<SchemaItem, 'name' | 'itemName'>[], tokens: Map<string, string>): Record<string, string>
+```
+
+Resolve by item_name token, never by guessing a translation from the English title.
+
+### `chineseCosmeticNames`
+
+```ts
+export function chineseCosmeticNames(game: string, schemaText: string): Record<string, string>
+```
+
+Read-only, offline and refreshed after a game update; a missing language file keeps English.
 
 ## src/cursors.ts
 
@@ -1766,6 +1797,12 @@ Identity of a hero regardless of how the author spelled the folder. Authors mix
 used to count as a separate hero — which turned a single-hero skin into a "bundle of 3"
 and offered to split it into parts that make no sense.
 
+## src/i18n-zh-CN.ts
+
+Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key.
+
+_Exports nothing._
+
 ## src/i18n.ts
 
 Minimal i18n for the main process (src/).
@@ -1776,13 +1813,10 @@ the Russian source, so the app never shows an empty/undefined string.
 ### `Lang`
 
 ```ts
-export type Lang = 'en' | 'ru'
+export type Lang = 'en' | 'ru' | 'zh-CN'
 ```
 
-Minimal i18n for the main process (src/).
-Russian is the source language; English strings are keyed by the exact Russian text
-(with {0},{1}... placeholders for interpolated values). A missing key falls back to
-the Russian source, so the app never shows an empty/undefined string.
+_No description in the source._
 
 ### `setLang`
 

@@ -15,6 +15,7 @@ import { showSetsModal, showSetModal } from '../catalog/modal/root.tsx';
 import { matchingSets, setCardMeta, setCount, setIsOn } from '../catalog/builder/logic.ts';
 import { plural } from '../ui/format.ts';
 import { toast } from '../ui/toast.ts';
+import { cosmeticName } from '../ui/cosmetic-name.ts';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
 import { closeOverlay } from './catalog/overlay.ts';
 import { afterPick, heroSets, isOpen, openItemHeroModal, openItemSlotModal, openWindow } from './item-builder.ts';
@@ -100,7 +101,7 @@ async function applySet(key: number, st: SetState): Promise<void> {
   }
   st.busy = false;
   if (r.error) toast(r.error, 'error');
-  else toast(r.applied === r.pieces ? L`Надето: ${st.set.name}` : L`Надето ${r.applied} из ${r.pieces} ${plural(r.pieces || 0, 'детали', 'деталей', 'деталей')}`);
+  else toast(r.applied === r.pieces ? L`Надето: ${cosmeticName(st.set.name)}` : L`Надето ${r.applied} из ${r.pieces} ${plural(r.pieces || 0, 'детали', 'деталей', 'деталей')}`);
   if (!r.error) await afterPick();
   if (isOpen(key)) drawSet(key, st);
 }

@@ -2,6 +2,7 @@
  * with what is chosen, which heroes and sets a search leaves, and what a hero's card says. What a
  * pick does to the game is src/item-builder.ts. */
 import { plural } from '../../ui/format.ts';
+import { cosmeticNameMatches } from '../../ui/cosmetic-name.ts';
 import type { CosmeticSet, CosmeticSlot } from '../types.ts';
 import type { BuilderAction } from './model.ts';
 
@@ -55,13 +56,13 @@ export const tagLine = (tags: string[] | undefined): string => [...new Set((tags
 
 export const byName = <T extends { name: string }>(list: T[], query: string): T[] => {
   const q = query.trim().toLowerCase();
-  return q ? list.filter((o) => o.name.toLowerCase().includes(q)) : list;
+  return q ? list.filter((o) => cosmeticNameMatches(o.name, q)) : list;
 };
 
 /** A set is found by its own name or by any piece's. */
 export function matchingSets(sets: ItemSet[], query: string): ItemSet[] {
   const q = query.trim().toLowerCase();
-  return q ? sets.filter((s) => [s.name, ...s.pieces.map((p) => p.name)].some((n) => n.toLowerCase().includes(q))) : sets;
+  return q ? sets.filter((s) => [s.name, ...s.pieces.map((p) => p.name)].some((n) => cosmeticNameMatches(n, q))) : sets;
 }
 
 /** Each piece the builder puts on is on already, whatever effects it carries. */

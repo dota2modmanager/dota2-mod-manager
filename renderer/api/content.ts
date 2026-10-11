@@ -60,7 +60,7 @@ export interface ConfigApi {
 }
 
 export interface CosmeticsApi {
-  slots: () => Promise<{ slots: CosmeticSlot[]; sets: CosmeticSet[] } & Record<string, unknown>>;
+  slots: () => Promise<{ slots: CosmeticSlot[]; sets: CosmeticSet[]; names?: Record<string, string> } & Record<string, unknown>>;
   /** pictures by name; the clips among them come back to be decoded here (ui/cosmetic-icons.ts) */
   icons: (names: string[]) => Promise<{ pictures: Record<string, string | null>; decode: string[] }>;
   heroPortraits: (ids: string[]) => Promise<Record<string, string>>;

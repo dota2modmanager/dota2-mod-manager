@@ -8,6 +8,8 @@ import { pickedIn, refreshCosmeticSlots } from '../../core/installed.ts';
 import { catName, catIcon } from '../../core/categories.ts';
 import { isAdult, adultShown } from '../../core/adult.ts';
 import { plural } from '../../ui/format.ts';
+import { heroName, catalogMatchesSearch } from '../../ui/hero-name.ts';
+import { cosmeticNameMatches } from '../../ui/cosmetic-name.ts';
 import { paint } from '../../ui/transitions.ts';
 import { heroOf, heroMatches, heroGridWanted, heroTiles, heroLayout } from '../hero-grid.ts';
 import { renderItemCosmeticHub } from '../item-hub.ts';
@@ -84,7 +86,7 @@ export async function renderSearchResults(actions: ScreenActions): Promise<void>
   let mods: Mod[] = [];
   for (const c of visibleCategories()) {
     for (const m of categoryMods(c.id)) {
-      if (m.name && m.name.toLowerCase().includes(q)) mods.push({ ...m, _cat: c.id });
+      if (m.name && catalogMatchesSearch(m.name, q)) mods.push({ ...m, _cat: c.id });
     }
   }
   // the search reaches the free cosmetics too, in their own section below the mods
@@ -149,7 +151,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
   await paint(() => showScreen({
     kind: 'list',
     key: `cat:${categoryId}`,
-    title: (byHero && f.hero) || catName(categoryId),
+    title: (byHero && heroName(f.hero)) || catName(categoryId),
     back: byHero && Boolean(f.hero),
     toolbar,
     lead: lead && (!f.installedOnly || lead.installed) ? lead : null,
@@ -176,7 +178,7 @@ export async function renderCosmeticCategory(slot: string, actions: ScreenAction
   const f = view.filters;
   const q = view.cosSearch.trim().toLowerCase();
   let list: Look[] = data.options.map((o) => ({ slot, o }));
-  if (q) list = list.filter(({ o }) => o.name.toLowerCase().includes(q));
+  if (q) list = list.filter(({ o }) => cosmeticNameMatches(o.name, q));
   list = filterCosmetics(list);
   // same rule as the mod grid: a number only once the list in front of you is a subset
   const narrow = Boolean(view.cosSearch.trim() || f.installedOnly || f.favOnly);

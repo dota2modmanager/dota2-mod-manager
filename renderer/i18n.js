@@ -9,15 +9,14 @@
  *   tr(CAT_RU[id])                        -> plain lookup for data-driven labels
  */
 'use strict';
-
 // current UI language. Seeded synchronously from localStorage so a returning user sees the
 // right language with no flash; boot() reconciles it against settings.json (the source of truth).
 window.I18N_LANG = (() => {
-  try { return localStorage.getItem('uiLang') === 'ru' ? 'ru' : 'en'; } catch { return 'en'; }
+  try { const lang = localStorage.getItem('uiLang'); return lang === 'ru' || lang === 'zh-CN' ? lang : 'en'; } catch { return 'en'; }
 })();
 
 // locale used for date/number formatting
-window.i18nLocale = () => (window.I18N_LANG === 'en' ? 'en' : 'ru');
+window.i18nLocale = () => window.I18N_LANG;
 
 // English plural forms keyed by the Russian "many" form passed to plural(n, one, few, many)
 window.EN_PLURAL = {
@@ -188,6 +187,7 @@ const EN = {
     'Files overruled: {0} — {1}. The mod that loads earlier supplies them; right-click to change the order.',
   'Косметика': 'Cosmetics',
   'Моды': 'Mods',
+  'Менеджер модов': 'Mod Manager',
   'вид для стандартного предмета': 'a look for a default item',
   'Предметы': 'Items',
   'Стандартный': 'Default',
@@ -239,6 +239,7 @@ const EN = {
   'Выбрать всю косметику': 'Select every look',
   'Вернуть все слоты к тому, что даёт игра': 'Put every slot back to what the game gives',
   'Косметика выключена — слоты снова как в игре': 'Cosmetics off — the slots are the game’s own again',
+
   'Вид подставляется в схему предметов игры — стандартный предмет просто рисуется как выбранный. Файлы модов это не трогает, и видно только тебе.':
     'A look is spliced into the game’s item schema — it touches no mod files, and only you can see it.',
   'Стандартный предмет героя сохранит свои id, name и prefab=default_item. Остальная часть блока берётся у выбранного предмета, а выбранный эффект добавляется в visuals.':
@@ -256,7 +257,6 @@ const EN = {
   'Развернуть': 'Maximize', 'Закрыть': 'Close', 'Поиск Dota 2…': 'Looking for Dota 2…',
   'Папка модов': 'Mods folder', 'Играть': 'Play',
   'Сменить цвета': 'Change the colours',
-
   // ---------- install list ----------
   'Список установки': 'Install list',
   'Добавить в список': 'Add to the install list',
@@ -741,6 +741,7 @@ const EN = {
     'Mods moved into dota_{0}, the folder your audio language mounts. Restart the game.',
   'Скопировано в буфер': 'Copied to clipboard',
   'Кэш очищен': 'Cache cleared',
+  'Язык переключён на 简体中文': 'Language switched to Simplified Chinese',
   'Язык переключён на English': 'Language switched to English',
   'Язык переключён на Русский': 'Language switched to Russian',
 
@@ -805,6 +806,7 @@ const EN = {
   'Отчёт сохранён': 'Report saved',
 };
 
+const translation = (key) => window.I18N_LANG === 'zh-CN' ? (window.ZH_CN?.[key] ?? EN[key]) : EN[key];
 function canonKey(strings) {
   let k = strings[0];
   for (let i = 1; i < strings.length; i++) k += '{' + (i - 1) + '}' + strings[i];
@@ -815,22 +817,20 @@ function fillValues(tmpl, values) {
   return tmpl.replace(/\{(\d+)\}/g, (_, i) => (values[+i] != null ? String(values[+i]) : ''));
 }
 
-// tagged template (L`...`) or plain call L('...')
 function L(strings, ...values) {
   if (typeof strings === 'string') return tr(strings);
   const key = canonKey(strings);
-  if (window.I18N_LANG === 'en' && EN[key] != null) return fillValues(EN[key], values);
-  if (window.I18N_LANG === 'en' && !EN[key]) console.warn('[i18n miss]', JSON.stringify(key));
+  const translated = translation(key);
+  if (window.I18N_LANG !== 'ru' && translated != null) return fillValues(translated, values);
+  if (window.I18N_LANG !== 'ru') console.warn('[i18n miss]', JSON.stringify(key));
   let out = strings[0];
   for (let i = 0; i < values.length; i++) out += String(values[i]) + strings[i + 1];
   return out;
 }
 
-// plain-string lookup for data-driven labels
 function tr(s) {
   if (s == null) return s;
-  if (window.I18N_LANG === 'en' && EN[s] != null) return EN[s];
-  return s;
+  return window.I18N_LANG !== 'ru' ? (translation(s) ?? s) : s;
 }
 
 window.L = L;

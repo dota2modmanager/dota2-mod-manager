@@ -4,6 +4,7 @@
  * fourteen, which as chips was a second toolbar under the first, six of them finding one mod
  * each. Heroes are already a dropdown for the same reason. */
 import type { Mod } from './types.ts';
+import { catalogLabel } from '../ui/catalog-name.ts';
 
 export const SLOT_TAGS = new Set(['weapon', 'shoulders', 'head', 'arms', 'arm', 'armor', 'back', 'mount', 'shield', 'totem', 'hair']);
 
@@ -30,7 +31,7 @@ export function tagLabel(tag: string, catalogLabels?: Record<string, string>): s
   const known = TAG_WORD[canonTag(tag)];
   if (known) return tr(known);
   const raw = String(catalogLabels?.[tag] || tag);
-  return raw.charAt(0).toUpperCase() + raw.slice(1);
+  return catalogLabel(raw.charAt(0).toUpperCase() + raw.slice(1));
 }
 
 /** The tags a mod actually carries, each slot spelled one way. */

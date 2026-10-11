@@ -211,13 +211,13 @@ points at it, so removing a guard means saying in the same change what replaced 
 An issue labelled `regression` gets a write-up with its number in the `Issue` row. The radar lists
 a closed one that no write-up names.
 
-## Every user-facing string exists twice
+## Every user-facing string has a translation
 
-The interface ships in Russian and English. Russian text is the key and English is looked up from
-it, so a new string is two edits, not one:
+The interface ships in Russian, English and Simplified Chinese. Russian text remains the key:
 
 - `renderer/i18n.js` for anything in the window
 - `src/i18n.ts` for native dialogs, menus and tray text
+- `renderer/locales/zh-CN-*.js` and `src/i18n-zh-CN.ts` for the matching Chinese text
 
 A string with no English twin falls back to Russian, which means an English speaker sees Cyrillic
 in the middle of their app and nothing crashes to tell anybody. A checker finds those:
@@ -226,7 +226,34 @@ in the middle of their app and nothing crashes to tell anybody. A checker finds 
 node tools/check-i18n.js
 ```
 
-`npm test` runs it too, so a missing translation fails the pull request rather than shipping.
+`npm test` runs it too, and `test/chinese.test.js` checks Chinese coverage and placeholders, so a
+missing translation fails the pull request rather than shipping. Catalog mod titles, styles and
+groups use the display-only labels in `zh-CN-mod-names.json` and `zh-CN-catalog-words.json` through
+`renderer/ui/catalog-name.ts`; original keys, file references and saved records stay unchanged.
+`zh-CN-guide-text.json` translates the inspected catalog's guide text by exact source string;
+changed instructions fall back to the source, and commands, paths and links remain intact.
+`test/chinese-catalog.test.ts` checks label coverage, bilingual search and guide integrity.
+Official item/set labels in Chinese resolve their `item_name` tokens from the installed
+game's `dota_schinese.txt` and `items_schinese.txt`. Original names remain icon/favourite/save keys;
+missing or ambiguous translations keep the original label. Guides and release notes use English
+when no Chinese text is available. `test/cosmetic-names.test.ts` covers decoding, token lookup,
+fallback, game-update invalidation and bilingual search. The complete Valve localization files
+are not shipped; only catalog display labels are included.
+
+Chinese hero labels use Valve's [Simplified Chinese hero feed](https://www.dota2.com/datafeed/herolist?language=schinese)
+in `renderer/locales/zh-CN-heroes.ts`. `renderer/ui/hero-name.ts` translates display labels only:
+filter values, game identifiers, portrait keys and saved equipment keep their original names.
+`test/chinese-heroes.test.ts` imports these TypeScript modules so Node measures their coverage.
+The global search also matches Chinese hero and catalog names alongside the original English.
+Run `npm run sim -- --scenario localization --only fhd:default` to check English/Chinese/Russian
+switching, cached builder labels and global search in the sandbox.
+Check named abilities against the [official hero data](https://www.dota2.com/datafeed/herodata?language=schinese&hero_id=109),
+not a literal translation of the English or Russian name. Generic numbered ability slots remain
+numbered; they do not identify a particular ability. Use official terms such as 至宝, 身心,
+连杀配音 and 连杀特效, distinguishing audio from visuals. Cosmetic terms can be checked in
+[Valve's Diretide page](https://www.dota2.com/diretide?l=schinese) and
+[workshop requirements](https://www.dota2.com/workshop/requirements/announcers?l=schinese);
+痛苦魔方 is also named in the [Chinese official update notes](https://www.dota2.com.cn/wapnews/article/details/20260325/220462.html).
 
 New languages are welcome. Say so in an issue first, so two people do not translate the same file
 in the same week.

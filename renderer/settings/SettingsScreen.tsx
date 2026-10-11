@@ -99,6 +99,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
             <select className="input" id="uiLangSelect" aria-label={L`Язык`} value={m.uiLang} onChange={(e) => actions.language(e.target.value)}>
               <option value="en">English</option>
               <option value="ru">Русский</option>
+              <option value="zh-CN">简体中文</option>
             </select>
           </div>
         </div>

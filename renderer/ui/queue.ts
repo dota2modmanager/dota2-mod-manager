@@ -15,6 +15,8 @@
  */
 import { $ } from '../core/dom.ts';
 import { esc } from './format.ts';
+import { catalogName, catalogLabel } from './catalog-name.ts';
+import { catalogMatchesSearch } from './hero-name.ts';
 import { thumbHtml } from './thumb.ts';
 import type { QueueEntry } from '../catalog/queueing.ts';
 
@@ -79,7 +81,7 @@ let search = '';
 function matching(): QueueEntry[] {
   const q = search.trim().toLowerCase();
   const list = [...items.values()];
-  return q ? list.filter((it) => `${it.title} ${it.catName}`.toLowerCase().includes(q)) : list;
+  return q ? list.filter((it) => catalogMatchesSearch(`${it.title} ${it.catName}`, q)) : list;
 }
 
 function rowsHtml(): string {
@@ -89,7 +91,7 @@ function rowsHtml(): string {
     <div class="queue-row" data-row="${esc(it.key)}">
       ${thumbHtml('queue-thumb', it.preview)}
       <div class="queue-info">
-        <div class="queue-name">${esc(it.title)}</div>
+        <div class="queue-name" title="${esc(it.title)}">${esc(catalogName(it.name))}${it.label ? ` · ${esc(catalogLabel(it.label))}` : ''}</div>
         <div class="queue-cat">${esc(it.catName)}</div>
       </div>
       <button class="queue-drop" data-drop="${esc(it.key)}" aria-label="${L`Убрать`}"><span class="ms">close</span></button>

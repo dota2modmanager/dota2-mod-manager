@@ -19,6 +19,7 @@ import { toggleQueued } from '../../ui/queue.ts';
 import { staleTerrainWhy } from '../../core/terrain-age.ts';
 import { installTarget } from '../mods.ts';
 import { SLOT_TAGS, modTags, tagLabel } from '../tags.ts';
+import { catalogName, catalogLabel } from '../../ui/catalog-name.ts';
 import { styleIndex, pickStyle, lookInstalled } from '../looks.ts';
 import { canQueue, queueEntry } from '../queueing.ts';
 import { favKey, isFav, toggleFavorite } from '../favorites.ts';
@@ -108,7 +109,7 @@ export function ModCard({ mod: m, index, withCat = false, moves = false, onOpen,
         </div>
         {playable && (
           <button className="mtag-play" data-play={playable} data-title={m.name} aria-label={L`Смотреть превью`}
-            onClick={(e) => { stop(e); openPlayer(playable, m.name); }}>
+            onClick={(e) => { stop(e); openPlayer(playable, catalogName(m.name)); }}>
             <span className="ms">play_arrow</span>{L`Превью`}
           </button>
         )}
@@ -126,14 +127,14 @@ export function ModCard({ mod: m, index, withCat = false, moves = false, onOpen,
           <div className="media-swatches">
             {m.styles.slice(0, 5).map((s, i) => (
               <button key={i} className={`swatch-dot ${i === look ? 'active' : ''}`} data-style-dot={i}
-                style={{ background: cssColor(s.color) }} title={s.label || tr('Обычный')} aria-label={s.label || tr('Обычный')}
+                style={{ background: cssColor(s.color) }} title={s.label ? catalogLabel(s.label) : tr('Обычный')} aria-label={s.label ? catalogLabel(s.label) : tr('Обычный')}
                 onClick={choose(i)} />
             ))}
           </div>
         )}
       </div>
       <div className="card-body">
-        <CardName>{m.name}</CardName>
+        <CardName>{catalogName(m.name)}</CardName>
         {cat === 'tools'
           ? <ToolMeta mod={m} installed={installed} />
           : (withCat || author) && (

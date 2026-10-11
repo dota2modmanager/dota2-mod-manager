@@ -14,6 +14,7 @@
 import { state } from '../core/store.ts';
 import { GUIDE_ALSO } from '../core/constants.ts';
 import { esc } from './format.ts';
+import { guideText } from './guide-name.ts';
 import type { Mod } from '../catalog/types.ts';
 
 /* A guide as guides.json writes it: per language, a list of blocks. */
@@ -47,7 +48,12 @@ function guideIds(mod: Mod | null | undefined): string[] {
 // there is, which is how the old screen behaved too.
 function blocksOf(guide: Guide | undefined): Block[] {
   const c = guide?.content || {};
-  return (window.I18N_LANG === 'en' ? (c.en || c.ru) : (c.ru || c.en)) || [];
+  const blocks = (window.I18N_LANG !== 'ru' ? (c.en || c.ru) : (c.ru || c.en)) || [];
+  if (window.I18N_LANG !== 'zh-CN') return blocks;
+  return blocks.map((b) => ({ ...b, title: b.title && guideText(b.title), info: b.info && guideText(b.info),
+    result: b.result && guideText(b.result), warning: b.warning && guideText(b.warning),
+    steps: b.steps?.map((s) => typeof s === 'string' ? guideText(s) : { ...s, text: s.text && guideText(s.text) }),
+  }));
 }
 
 /* What a guide is allowed to be made of.

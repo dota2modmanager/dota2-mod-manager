@@ -191,10 +191,19 @@ game folder.
 
 ## The catalog is somebody else's
 
+Chinese item labels are resolved from Valve's installed localization by `src/cosmetic-names.ts`.
+The renderer's `renderer/ui/cosmetic-name.ts` uses these labels for display and bilingual search,
+keeping canonical names for icon lookup, favourites and saved picks. Missing names keep English.
+
 Mods, previews and guides come from [Dota2PornFxWeb](https://github.com/h6rd/Dota2PornFxWeb), and
 when GitHub is unreachable they come through public proxies. That whole path is untrusted: guide
 HTML goes through an allowlist of tags, and a file name from a catalog record is a name and not a
 path. Who is allowed to have written the bytes in the first place is the next section.
+
+In Chinese, `renderer/ui/catalog-name.ts` supplies display labels for catalog titles, styles and
+groups from the locale JSON dictionaries. Search accepts both labels and original names; record
+keys, downloads and saved styles remain canonical. `renderer/ui/guide-name.ts` translates known
+guide strings by exact match before the existing HTML sanitizer, preserving commands and links.
 
 ## Who is allowed to have written this
 
@@ -524,6 +533,7 @@ that location is not writable.
 | `src/patcher.ts`, `src/patcher-gameinfo.ts`, `src/patcher-signatures.ts` | The search-path patch: the two gameinfo files and the signature list, byte for byte, both directions |
 | `src/schema.ts`, `src/schema-kv.ts`, `src/schema-items.ts`, `src/schema-merge.ts` | `items_game.txt`: walking it, reading its items, merging a mod's blocks, building the item pak |
 | `src/schema-service.ts`, `src/schema-cosmetics.ts`, `src/schema-harvest.ts` | The item table as the app keeps it: the build and the repair, the free cosmetics, and a mod's own blocks |
+| `src/cosmetic-names.ts` | Official Chinese item names from the installed game's localization tokens; read-only and cached per game build |
 | `src/item-builder.ts`, `src/item-builder-slots.ts`, `src/item-builder-effects.ts` | The item builder: what it offers each hero and slot, the effects, and what a pick writes |
 | `src/notice-text.ts`, `src/notice-texts.ts` | The game's anti-cheat notice in words that say what to do, in every language Dota ships |
 | `src/terrain-age.ts` | Terrains that replace the whole map, and whether the game's map has moved on since |
@@ -537,7 +547,7 @@ that location is not writable.
 | `src/uninstall-args.ts`, `src/uninstall-window.ts` | Whether this run is the uninstaller asking what to take along, and the window that asks |
 | `src/folder-size.ts` | Bytes under a folder, for the caches in Settings and the removal window |
 | `src/types.ts` | The shapes the main process hands between its modules |
-| `src/i18n.ts`, `renderer/i18n.js` | Russian and English, for the main process and the window |
+| `src/i18n.ts`, `src/i18n-zh-CN.ts`, `renderer/i18n.js`, `renderer/locales/*` | Russian, English and Simplified Chinese, for the main process and the window |
 | `renderer/app.ts`, `renderer/shell/*` | The window's start, and its own elements every screen reaches: the title bar, search, the switches, progress, drops, updates |
 | `renderer/api/*` | What every channel the window calls takes and answers |
 | `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*` | The four screens, in React |

@@ -4,6 +4,8 @@
 import * as schema from './schema.ts';
 import * as itemBuilder from './item-builder.ts';
 import { t } from './i18n.ts';
+import { getLang } from './i18n.ts';
+import { chineseCosmeticNames } from './cosmetic-names.ts';
 import type { Settings } from './settings.ts';
 import type { Library } from './library.ts';
 import type { LibRecord } from './types.ts';
@@ -31,7 +33,7 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
    * The list comes from the installed game, so a slot Valve adds later appears by itself.
    * With them, the item builder's sets (item-builder.js itemSets).
    */
-  function cosmeticSlots(): { slots: CosmeticSlot[]; sets: ItemSet[]; error?: string } {
+  function cosmeticSlots(): { slots: CosmeticSlot[]; sets: ItemSet[]; names?: Record<string, string>; error?: string } {
     const game = gamePath();
     if (!game) return { slots: [], sets: [] };
     try {
@@ -66,7 +68,7 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
         if (at === -1) slots.unshift(...entries);
         else slots.splice(at + 1, 0, ...entries);
       }
-      return { slots, sets };
+      return { slots, sets, ...(getLang() === 'zh-CN' ? { names: chineseCosmeticNames(game, text) } : {}) };
     } catch (err) {
       return { slots: [], sets: [], error: String((err as Error)?.message || err) };
     }

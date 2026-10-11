@@ -11,6 +11,8 @@ import { cardMotion } from './card-motion.ts';
 import type { Mod } from '../types.ts';
 import { keyOf } from '../../core/keys.ts';
 import { ModCard } from './ModCard.tsx';
+import { heroName } from '../../ui/hero-name.ts';
+import { catalogLabel } from '../../ui/catalog-name.ts';
 
 /** Cards drawn in the first pass: more than a 4K window shows at the smallest card size. */
 const FIRST_PASS = 60;
@@ -54,7 +56,7 @@ export function ModGrid({ mods, grouped = false, withCat = false, emptyText, onO
     const moves = i < FIRST_PASS;
     const into = moves ? moving : still;
     if (grouped && m._group !== last) {
-      const title = m._group || tr('Прочее');
+      const title = catalogLabel(heroName(m._group || '')) || tr('Прочее');
       into.push(moves
         ? <motion.div key={`group:${m._group ?? ''}`} layout="position" exit={cardMotion().exit} transition={cardMotion().transition}
           className="group-title">{title}</motion.div>

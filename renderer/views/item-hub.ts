@@ -18,6 +18,7 @@ import { heroCardMeta, heroesOf } from '../catalog/builder/logic.ts';
 import type { CosmeticSlot } from '../catalog/types.ts';
 import type { ScreenActions, ScreenModel } from '../catalog/screen/model.ts';
 import { plural } from '../ui/format.ts';
+import { heroMatchesSearch } from '../ui/hero-name.ts';
 import { paint } from '../ui/transitions.ts';
 import { view } from './catalog/state.ts';
 import { catalogActions, heroSets, itemCosmeticSlots } from './item-builder.ts';
@@ -38,7 +39,7 @@ function hubModel(): ScreenModel {
   const f = view.filters;
   const q = view.cosSearch.trim().toLowerCase();
   const shown = heroesOf(itemCosmeticSlots()).filter(([hero, slots]) =>
-    (!q || hero.toLowerCase().includes(q)) && (!f.installedOnly || slots.some((s) => pickedIn(s.slot))));
+    heroMatchesSearch(hero, q) && (!f.installedOnly || slots.some((s) => pickedIn(s.slot))));
   return {
     kind: 'builder' as const,
     title: catName(HUB),
