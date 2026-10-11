@@ -21,6 +21,7 @@ The tag starts `.github/workflows/release.yml`:
 | `checksums` | Downloads every file on the draft, copies `latest.yml` and `latest-linux.yml` to `beta.yml` and `beta-linux.yml` for the beta channel, writes `SHA256SUMS` and an SBOM, attests the build provenance of every file and the SBOM through Sigstore, and puts all of it on the draft | the maintainer |
 | `try-windows` | Downloads the installer from the draft, checks it against `SHA256SUMS`, installs it, and runs `tools/e2e.mjs` against the installed app | the maintainer |
 | `try-linux` | Downloads the AppImage from the draft, checks it against `SHA256SUMS`, unpacks it, and runs `tools/e2e.mjs` against it | the maintainer |
+| `try-update` | Installs the last published stable release, gives it a mod and a favourite, runs the draft's installer over it with `/S` the way an update arrives, checks the new version has them (`tools/e2e.mjs --upgrade`), answers the removal window three ways, and removes the app with its own uninstaller | the maintainer |
 | `publish` | Checks the draft carries every file in `tools/release-state.js`, takes it out of draft, then checks it is the latest | everybody |
 | `antivirus` | Asks `virustotal.yml` to scan the release and put the verdict in its notes | everybody |
 | `mirror-update` | Brings the update mirror to what GitHub serves, the release and a newer beta together, and reads back each file's version and size | everybody |
@@ -61,7 +62,7 @@ node tools/r2-release.mjs --check
 ## Betas
 
 A beta is a tag with a prerelease part: `v2.7.0-beta.1`. It goes through the same `gate`, the same
-builds and the same `try-windows` and `try-linux` install runs, because a build nobody has
+builds and the same `try-windows`, `try-linux` and `try-update` install runs, because a build nobody has
 installed is not worth handing to a tester either. After that it parts company with a release:
 
 - it stays a **prerelease** and never becomes `/releases/latest`, which is the endpoint every copy

@@ -451,14 +451,124 @@ jobs:
           path: e2e-output/
           if-no-files-found: warn
 
+  # The draft's installer over the release before it, the way every update reaches a person.
+  #
+  # try-windows installs on a clean machine, and nobody updates from one: they have the last
+  # release, a library, settings and favourites. This installs that release from its own page,
+  # gives it a mod (switched off) and a favourite through its window, runs the draft's installer
+  # over it with /S as the updater does, and has tools/e2e.mjs find the new version holding all of
+  # it, then answer the removal window three ways (cancel, keep, everything) and check the game
+  # folder back as it was. Last, the uninstaller the new version installed removes it.
+  try-update:
+    name: Update the last release with the installer on the draft
+    needs: [build, checksums]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: windows-latest
+    timeout-minutes: 45
+    # a draft can be read only by a token that can write to the repository
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: npm
+
+      # The fixture is built with this repository's VPK writer and adm-zip. The Electron that npm
+      # would download is not the app under test, so it is skipped.
+      - name: Install dependencies
+        run: npm ci
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+
+      - name: Download the installer from the draft
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          id=$(gh api "repos/$REPO/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .assets[] | select(.name == \"Dota-2-Mod-Manager-Setup.exe\") | .id")
+          [ -n "$id" ] || { echo "::error::the draft has no installer"; exit 1; }
+          gh api -H "Accept: application/octet-stream" "repos/$REPO/releases/assets/$id" > setup.exe
+          sums=$(gh api "repos/$REPO/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .assets[] | select(.name == \"SHA256SUMS\") | .id")
+          [ -n "$sums" ] || { echo "::error::the draft has no SHA256SUMS"; exit 1; }
+          gh api -H "Accept: application/octet-stream" "repos/$REPO/releases/assets/$sums" > SHA256SUMS
+          want=$(awk '$2 == "Dota-2-Mod-Manager-Setup.exe" { print $1 }' SHA256SUMS)
+          have=$(sha256sum setup.exe | cut -d' ' -f1)
+          if [ -z "$want" ] || [ "$want" != "$have" ]; then
+            echo "::error::the installer on the draft is not the one SHA256SUMS lists"
+            exit 1
+          fi
+          echo "the installer matches SHA256SUMS: $have"
+
+      # The newest published stable release: what a person updating from stable has installed. A
+      # draft is not in this list, so it is never the tag being released.
+      - name: Download the installer of the last release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          last=$(gh release list --repo "$REPO" --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName')
+          [ -n "$last" ] || { echo "::error::no published release to update from"; exit 1; }
+          echo "updating from $last"
+          gh release download "$last" --repo "$REPO" --pattern Dota-2-Mod-Manager-Setup.exe --output previous.exe
+          # releases from 2.6.11 on carry SHA256SUMS; an older one is taken as GitHub serves it
+          if gh release download "$last" --repo "$REPO" --pattern SHA256SUMS --output previous.SHA256SUMS; then
+            want=$(awk '$2 == "Dota-2-Mod-Manager-Setup.exe" { print $1 }' previous.SHA256SUMS)
+            have=$(sha256sum previous.exe | cut -d' ' -f1)
+            if [ "$want" != "$have" ]; then
+              echo "::error::the installer of $last is not the one its SHA256SUMS lists"
+              exit 1
+            fi
+          fi
+
+      - name: Install the last release
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath .\previous.exe -ArgumentList '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "the last release's installer exited with $($p.ExitCode)" }
+          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'Dota 2 Mod Manager.exe' | Select-Object -First 1
+          if (-not $exe) { throw 'the last release installed no Dota 2 Mod Manager.exe under LOCALAPPDATA\Programs' }
+          "APP=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "installed: $($exe.FullName) $($exe.VersionInfo.ProductVersion)"
+
+      - name: Give it a mod and a favourite, update it, and find them in the new version
+        shell: pwsh
+        run: node tools/e2e.mjs --app "$env:APP" --upgrade setup.exe
+
+      - name: Remove it with the uninstaller the new version installed
+        shell: pwsh
+        run: |
+          $dir = Split-Path $env:APP
+          $un = Get-ChildItem $dir -Filter 'Uninstall*.exe' | Select-Object -First 1
+          if (-not $un) { throw "no uninstaller next to $env:APP" }
+          $p = Start-Process -FilePath $un.FullName -ArgumentList '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "the uninstaller exited with $($p.ExitCode)" }
+          # NSIS hands the work to a copy of itself and returns: wait for the program to go
+          for ($i = 0; $i -lt 60 -and (Test-Path $env:APP); $i++) { Start-Sleep -Seconds 1 }
+          if (Test-Path $env:APP) { throw "the uninstaller finished and left $env:APP behind" }
+          "removed: $env:APP"
+
+      - name: What the window showed
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: e2e-release-update-windows
+          path: e2e-output/
+
   # The one step that shows the release to anybody, and it runs only when both builds on the draft
-  # installed a mod and took it off again. Everything that reaches a person comes after it: the
+  # installed a mod and took it off again, and the installer updated the last release in place. Everything that reaches a person comes after it: the
   # update installed copies fetch, the mirror, the Discord post.
   #
   # A failure above leaves the draft where only the maintainer can see it. RELEASING.md says what
   # to do with it, and what to do when a release that did go out turns out to be broken.
   publish:
-    needs: [gate, build, linux, checksums, try-windows, try-linux]
+    needs: [gate, build, linux, checksums, try-windows, try-linux, try-update]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     timeout-minutes: 20

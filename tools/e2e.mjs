@@ -18,11 +18,24 @@
  * list and translations kept and its authors, notes and sources emptied, an empty guides.json,
  * and a mods.json in the real shape with every category empty except one hero mod.
  *
- * Two launches of the app, with the disk checked after each:
+ * Launches of the app, with the disk checked after each:
  *   1. Open the fixture mod's card, press Install, wait for the installed state, then switch it
  *      off in My mods. On disk: exactly one new pakNN_dir.vpk.off in the language folder.
  *   2. A fresh start. The mod is still listed and still off; switch it on, press Remove, confirm.
  *      On disk: the language folder is byte for byte what it was before the first launch.
+ *   3-4. The command line an update runs gets the ordinary window; the uninstaller's gets the
+ *      removal window, with nothing destructive ticked.
+ *   5-8. The removal window answered, the way a person leaving would: the mod installed again,
+ *      then Cancel (the app stays, exit 3), then "keep everything" (exit 0, the mod stays), then
+ *      everything ticked (exit 4, which tells the uninstaller to take the app data): the language
+ *      folder and the game's own gameinfo files are byte for byte what they were before launch 1.
+ *
+ * With --upgrade <installer> the first launch is a different app: the release before this one,
+ * installed by release.yml. It is given the mod and a favourite through its own window.api, not by
+ * clicking, since its screens may not be this version's. Then <installer> is run with /S, the way
+ * a person's update arrives, and the second launch onwards is the new version on the same data:
+ * it has to report its new version and find the mod, its state and the favourite where they were.
+ *
  * The app's log must not contain an unresolved name at any point, nor a call the IPC gate refused,
  * nor a write the sandbox jail stopped: every launch is held to sandbox/ (src/write-jail.ts).
  *
@@ -35,7 +48,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { crc32 } from 'node:zlib';
-import { spawn, execFileSync } from 'node:child_process';
+import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { ensureUi } from './ui-build.mjs';
@@ -58,6 +71,12 @@ const OWNERSHIP = 'dota2modmanager.json';
 // exe and the unpacked AppImage from the draft release, so what gets clicked is what goes out.
 const appAt = process.argv.indexOf('--app');
 const APP = appAt > 0 && process.argv[appAt + 1] ? path.resolve(process.argv[appAt + 1]) : null;
+// --upgrade <setup.exe>: --app is the release before this one, and this installer replaces it
+// between the first launch and the second (release.yml, "Update the last release")
+const upgradeAt = process.argv.indexOf('--upgrade');
+const UPGRADE = upgradeAt > 0 && process.argv[upgradeAt + 1] ? path.resolve(process.argv[upgradeAt + 1]) : null;
+/** What the removal window answers with on exit (src/uninstall-window.ts). */
+export const EXIT = { done: 0, cancelled: 3, wipeData: 4 };
 
 export const MOD = { categoryId: 'heroes', hero: 'Brewmaster', name: 'Brewmaster E2E Fixture', file: 'Brewmaster E2E Fixture.zip' };
 
@@ -216,8 +235,55 @@ export const EVAL_REMOVE = `
   confirm.querySelector('[data-c="yes"]').click();
   const gone = await until(() => (row() ? null : true), 30000);
   step('confirming removes it from My mods', gone, toasts());
+  out.version = await window.api.update.version();
   return out;
 `;
+
+/**
+ * Gives the app the fixture mod, and optionally a favourite, through window.api rather than the
+ * screens: the app may be the release before this one, whose screens this file cannot assume, but
+ * whose channels it can. The catalog the cards would come from is the same fixture either way.
+ */
+export function evalSeed({ off = false, favorite = false } = {}) {
+  return `
+  ${HELPERS}
+  await sleep(1000);
+  const r = await window.api.mods.install({ categoryId: ${JSON.stringify(MOD.categoryId)}, name: ${JSON.stringify(MOD.name)}, styleLabel: null, fileRef: ${JSON.stringify(MOD.file)} });
+  if (!step('the app installs the fixture mod through its own channels', r && r.ok && r.record, JSON.stringify(r).slice(0, 300))) return out;
+  if (${off}) {
+    const s = await window.api.mods.setEnabled(r.record.id, false);
+    step('and switches it off', s && s.ok, JSON.stringify(s).slice(0, 300));
+  }
+  if (${favorite}) {
+    const key = ${JSON.stringify(`${MOD.categoryId}|${MOD.name}`)};
+    const saved = await window.api.settings.set('favorites', [key]);
+    step('a favourite is saved', (saved && saved.favorites || []).includes(key), JSON.stringify(saved && saved.favorites));
+  }
+  out.version = await window.api.update.version();
+  return out;
+`;
+}
+
+/**
+ * Answers the removal window the way a person would: ticks what is asked for, and presses the
+ * button. The window then does the work and the app exits with the answer for the uninstaller, so
+ * the result is read from the exit code and the disk, not from anything this script returns.
+ */
+export function evalUninstall({ mods = false, data = false, revert = false, cancel = false } = {}) {
+  return `
+  ${HELPERS}
+  await sleep(800);
+  const box = (id) => document.getElementById(id);
+  const tick = (id, v) => { const b = box(id); if (b && b.checked !== v) b.click(); };
+  tick('optMods', ${mods});
+  tick('optData', ${data});
+  tick('optRevert', ${revert});
+  step('the removal window took the answers', box('optMods') && box('optMods').checked === ${mods} && box('optData') && box('optData').checked === ${data},
+    'mods ' + (box('optMods') && box('optMods').checked) + ', data ' + (box('optData') && box('optData').checked));
+  setTimeout(() => box(${cancel ? "'cancelBtn'" : "'okBtn'"}).click(), 100);
+  return out;
+`;
+}
 
 /* Runs in the removal window, which is a different window with a different preload.
  *
@@ -280,8 +346,11 @@ async function launch(label, env, timeoutMs = 180000, extraArgs = []) {
   // a path that is not there fails at once, not after three minutes of waiting for a window
   let startError = null;
   child.on('error', (e) => { startError = e; });
+  // an app that exits on its own (the removal window, answered) ends the wait, with its code
+  let exitCode = null;
+  child.on('exit', (code) => { exitCode = code; });
   const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline && !startError && !fs.existsSync(shot) && !fs.existsSync(`${shot}.err.txt`)) await sleep(1000);
+  while (Date.now() < deadline && !startError && exitCode === null && !fs.existsSync(shot) && !fs.existsSync(`${shot}.err.txt`)) await sleep(1000);
   await sleep(1500);
   stop(child);
   await sleep(2500); // let Windows release the files before the disk is read
@@ -291,11 +360,57 @@ async function launch(label, env, timeoutMs = 180000, extraArgs = []) {
     result: evaluated ? JSON.parse(evaluated) : null,
     error: startError ? `could not start ${APP || 'electron'}: ${startError.message}` : readIfThere(`${shot}.err.txt`),
     timedOut: Date.now() >= deadline,
+    exitCode,
   };
+}
+
+const untouched = (d) => !d.added.length && !d.removed.length && !d.changed.length;
+
+/**
+ * The removal window answered, the way somebody leaving would: the mod installed again, then
+ * Cancel (exit 3, nothing touched), then nothing ticked (exit 0, the mod stays), then everything
+ * ticked (exit 4, the language folder and the game's own files back to what they were before the
+ * first launch). The launches and the disk are handed in, so test/e2e-fixture.test.js can hold
+ * the order and every verdict without a window.
+ */
+export async function answerRemoval({ launch, check, windowSteps, paks, langChanges, gameChanges }) {
+  let ok = true;
+  const again = await launch('5-install-again', { MM_EVAL: evalSeed() });
+  ok = check('on disk: the mod is back, switched on', windowSteps(again, 'installing it again') && paks().length === 1, JSON.stringify(paks())) && ok;
+
+  const cancelled = await launch('6-uninstall-cancel', { MM_EVAL: evalUninstall({ cancel: true }) }, 120000, ['--uninstall']);
+  ok = check('Cancel tells the uninstaller to stop (exit 3)', cancelled.exitCode === EXIT.cancelled, `exit ${cancelled.exitCode}`) && ok;
+  ok = check('and touches nothing', paks().length === 1, JSON.stringify(paks())) && ok;
+
+  const kept = await launch('7-uninstall-keep', { MM_EVAL: evalUninstall({}) }, 120000, ['--uninstall']);
+  ok = check('nothing ticked: the uninstaller goes on and keeps the app data (exit 0)', kept.exitCode === EXIT.done, `exit ${kept.exitCode}`) && ok;
+  ok = check('and the mod stays in the game', paks().length === 1, JSON.stringify(paks())) && ok;
+
+  const all = await launch('8-uninstall-everything', { MM_EVAL: evalUninstall({ mods: true, data: true, revert: true }) }, 120000, ['--uninstall']);
+  ok = check('everything ticked: the uninstaller is told to take the app data too (exit 4)', all.exitCode === EXIT.wipeData, `exit ${all.exitCode}`) && ok;
+  const lang = langChanges();
+  ok = check('on disk: the language folder is exactly as it was before the first launch', untouched(lang), JSON.stringify(lang)) && ok;
+  const game = gameChanges();
+  ok = check('and the game\'s own files are as the sandbox seeded them', untouched(game), JSON.stringify(game)) && ok;
+  return ok;
+}
+
+/** What the new version has to show after an update: its own version, and the favourite the old one saved. */
+export function checkUpdated({ check, reported, from, want, favorites }) {
+  const a = check(`after the update the app is ${want}`, reported === want, `it says ${reported}, it was ${from}`);
+  const b = check('the favourite saved before the update is still there', favorites.includes(`${MOD.categoryId}|${MOD.name}`), JSON.stringify(favorites));
+  return a && b;
+}
+
+/** Run an installer with /S, the way an update arrives, and say whether it finished cleanly. */
+function runInstaller(setup) {
+  const r = spawnSync(setup, ['/S'], { stdio: 'ignore', timeout: 600000, windowsHide: true });
+  return r.error ? `could not run ${setup}: ${r.error.message}` : r.status === 0 ? null : `${setup} exited with ${r.status}`;
 }
 
 const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (invokedDirectly) {
+  if (UPGRADE && !APP) throw new Error('--upgrade replaces an installed app: name it with --app');
   // a checkout runs the page Vite built (an installed app carries its own)
   if (!APP) await ensureUi();
   const keep = process.argv.includes('--keep');
@@ -327,6 +442,10 @@ if (invokedDirectly) {
   const seeded = seedCaches();
   console.log(`fixture archive ${seeded.bytes} bytes, sha256 ${seeded.sha256.slice(0, 12)}`);
   const before = snapshot(LANG_DIR);
+  // the game's own folder, where the search-path patch writes gameinfo: a removal that puts the
+  // game back has to leave it as the sandbox seeded it
+  const GAME_DOTA = path.join(path.dirname(LANG_DIR), 'dota');
+  const gameBefore = snapshot(GAME_DOTA);
 
   const langChosen = () => {
     try { return JSON.parse(fs.readFileSync(path.join(USERDATA, 'settings.json'), 'utf8')).langSuffix; } catch { return null; }
@@ -336,20 +455,35 @@ if (invokedDirectly) {
   };
 
   let passed = false;
-  const first = await launch('1-install', { MM_CAT: MOD.categoryId, MM_EVAL: EVAL_INSTALL });
+  const first = UPGRADE
+    ? await launch('1-seed-old-version', { MM_EVAL: evalSeed({ off: true, favorite: true }) })
+    : await launch('1-install', { MM_CAT: MOD.categoryId, MM_EVAL: EVAL_INSTALL });
+  if (UPGRADE) report.from = first.result?.version || null;
   if (windowSteps(first, 'first launch')
     && check('the app installed into the sandbox language folder, dota_russian', langChosen() === 'russian',
       `it chose dota_${langChosen()}: a -language in Steam launch options outside the sandbox decides that`)) {
     const d = setNoticeAside(difference(before, snapshot(LANG_DIR)));
     const pak = d.added.length === 1 && /^pak\d+_dir\.vpk\.off$/i.test(d.added[0]) ? d.added[0] : null;
     if (check('on disk: one new pak, renamed .off, and none of the files already there touched', pak && !d.removed.length && !d.changed.length, JSON.stringify(d))
-      && check('the ownership note claims that pak and nothing else', JSON.stringify(claims()) === JSON.stringify([pak.replace(/\.off$/i, '')]), JSON.stringify(claims()))) {
+      // the note is the release before this one's own bookkeeping when it seeded the mod (2.10.0
+      // writes it only from its screens), so after an update it is the new version's to keep: the
+      // second launch checks it claims nothing once the mod is gone
+      && (UPGRADE || check('the ownership note claims that pak and nothing else', JSON.stringify(claims()) === JSON.stringify([pak.replace(/\.off$/i, '')]), JSON.stringify(claims())))
+      && (!UPGRADE || ((why) => check(`the installer updates ${report.from || 'the last release'} in place, asking nothing`, !why, why || ''))(runInstaller(UPGRADE)))) {
       const second = await launch('2-remove', { MM_VIEW: 'library', MM_EVAL: EVAL_REMOVE });
+      let updated = true;
+      if (UPGRADE) {
+        let favorites = [];
+        try { favorites = JSON.parse(fs.readFileSync(path.join(USERDATA, 'settings.json'), 'utf8')).favorites || []; } catch { /* checked next */ }
+        updated = checkUpdated({ check, reported: second.result?.version, from: report.from,
+          want: JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version, favorites });
+      }
       if (windowSteps(second, 'second launch')) {
         const back = setNoticeAside(difference(before, snapshot(LANG_DIR)));
         passed = check('on disk: the language folder is exactly as it was before', !back.added.length && !back.removed.length && !back.changed.length, JSON.stringify(back))
           && check('the ownership note claims nothing any more', claims().length === 0, JSON.stringify(claims()));
       }
+      if (!updated) passed = false;
     }
   }
 
@@ -368,6 +502,13 @@ if (invokedDirectly) {
     const after = setNoticeAside(difference(before, snapshot(LANG_DIR)));
     passed = check('opening the removal window changed nothing in the game folder',
       !after.added.length && !after.removed.length && !after.changed.length, JSON.stringify(after)) && passed;
+
+    passed = await answerRemoval({
+      launch, check, windowSteps,
+      paks: () => setNoticeAside(difference(before, snapshot(LANG_DIR))).added.filter((n) => /^pak\d+_dir\.vpk$/i.test(n)),
+      langChanges: () => setNoticeAside(difference(before, snapshot(LANG_DIR))),
+      gameChanges: () => difference(gameBefore, snapshot(GAME_DOTA)),
+    }) && passed;
   }
 
   const appLog = path.join(USERDATA, 'logs', 'app.log');
@@ -382,6 +523,6 @@ if (invokedDirectly) {
   report.passed = passed;
   fs.writeFileSync(path.join(OUT, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);
   if (!keep) execFileSync(node, ['tools/sandbox.js', 'reset'], { cwd: root, stdio: 'ignore' });
-  console.log(passed ? 'end-to-end: a mod was installed, switched off and on, and removed through the window, and the removal window opens only for a removal' : 'end-to-end: FAILED, see e2e-output/');
+  console.log(passed ? `end-to-end: a mod was installed, switched off and on, and removed through the window${UPGRADE ? `, across an update from ${report.from}` : ''}, and the removal window opens only for a removal and does what it is told` : 'end-to-end: FAILED, see e2e-output/');
   process.exitCode = passed ? 0 : 1;
 }
