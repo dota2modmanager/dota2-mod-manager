@@ -47,7 +47,9 @@
 
   --text: var(--md-on-surface);
   --text-muted: var(--md-on-surface-variant);
-  --text-faint: color-mix(in srgb, var(--md-on-surface-variant) 62%, transparent);
+  /* 70%, not the 62% it was: over the lighter right half of the page's gradient a card's caption
+     measured 4.0:1 against WCAG's 4.5, and 70% clears 4.7 on every card (docs/accessibility.md) */
+  --text-faint: color-mix(in srgb, var(--md-on-surface-variant) 70%, transparent);
 
   --success: #4ade80;
   /* "this one is already in your game" - the one colour that stays put while the window

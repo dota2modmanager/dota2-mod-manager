@@ -69,6 +69,18 @@ body {
 
 a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
+/* A link in the middle of a sentence carries an underline, because its colour alone does not set
+   it apart: lavender against the near-white text around it is 1.3:1, and WCAG 1.4.1 asks for 3:1
+   or a second cue. Links that are their own element (buttons, cards, navigation) carry a class and
+   keep their look. */
+.doc :is(p, li, td, dd) a:not([class]),
+.doc-note a:not([class]),
+.lead a:not([class]) {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
+}
 
 img { max-width: 100%; height: auto; display: block; }
 

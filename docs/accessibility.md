@@ -53,23 +53,24 @@ goes in the report as well. Text that is disabled, scrolled out of sight, covere
 window is left out, and the report says which and why. Every run writes `contrast-<screen>.json`
 and the capture it measured, `contrast-<screen>.png`.
 
-First measured on 2026-10-11, in a 1360x860 window on a 1920x1080 screen, default theme:
+Measured on 2026-10-11, in a 1360x860 window on a 1920x1080 screen, default theme, after the
+change below:
 
 | Screen | Measured | Short of its ratio | Lowest that passes |
 |---|---|---|---|
-| Catalog | 64 | 3 (below) | 4.53:1 |
+| Catalog | 64 | 0 | 4.78:1 |
 | My mods | 19 | 0 | 7.81:1 |
 | Presets | 20 | 0 | 7.81:1 |
 | Settings | 36 | 0 | 7.81:1 |
 | A mod's window | 5 | 0 | 9.33:1 |
 | The remove question | 3 | 0 | 7.72:1 |
 
-**Waiting on a decision.** The category under a card's name is `--text-faint`, 62% of
-on-surface-variant. The cards are translucent and the page's gradient is lighter on the right, so the
-same caption measures 4.53:1 on the first card of "Recently added" and 4.03:1 on the fourth. At 70%
-it clears 4.7:1 on every card measured. That changes how 51 places in the app look, so it waits for
-the maintainer, and until then the scenario lists the caption as "waiting" instead of failing on it.
-Any other text short of its ratio fails the run.
+The first measurement found one thing short. The category under a card's name was `--text-faint`
+at 62% of on-surface-variant; the cards are translucent and the page's gradient is lighter on the
+right, so the same caption measured 4.53:1 on the first card of "Recently added" and 4.03:1 on the
+fourth. The maintainer chose to raise the token to 70%, which changes 51 places in the app. The
+caption now measures 4.78 to 5.53:1 on that screen and 4.73 to 5.33:1 at 125% on 1366x768, and any
+text short of its ratio fails the run.
 
 What the measurement does not cover: the seven hero themes other than the default, and text that
 only appears on hover.

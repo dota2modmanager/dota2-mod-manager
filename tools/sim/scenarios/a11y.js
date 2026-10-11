@@ -34,13 +34,6 @@ const CONTROLS = new Set(['button', 'link', 'checkbox', 'switch', 'textbox', 'se
 const LIGATURE = /\b[a-z]+(?:_[a-z]+)+\b/;
 // one mod, small, whose archive the sandbox carries (tools/sandbox-mods.json)
 const MOD = 'IO Purple';
-/* Short of the contrast it needs, known, and waiting on a decision rather than hidden: the category
-   under a card's name is --text-faint (62% of on-surface-variant), and where a card sits over the
-   lighter right half of the page's gradient it measures 4.0 to 4.4:1 against 4.5. At 70% it clears
-   4.7:1 everywhere it was measured. Each run still measures it and lists it under "waiting";
-   docs/accessibility.md has the numbers. Anything else short of its ratio fails the run. */
-const WAITING = [/\.card-meta\b/];
-
 /** What has the focus, where it is, and whether it shows. */
 const FOCUSED = `(() => {
   const el = document.activeElement;
@@ -82,11 +75,9 @@ module.exports = async function a11y(sim) {
       const at = n.rects[0] && Object.fromEntries(Object.entries(n.rects[0]).map(([k, v]) => [k, Math.round(v)]));
       return m ? { sel: n.sel, text: n.text, px: n.px, at, ...m } : { sel: n.sel, text: n.text, skip: 'not on the capture' };
     });
-    const short = measured.filter((m) => m.ok === false);
-    const waiting = short.filter((m) => WAITING.some((re) => re.test(m.sel)));
-    const low = short.filter((m) => !waiting.includes(m));
+    const low = measured.filter((m) => m.ok === false);
     fs.writeFileSync(path.join(sim.out, `contrast-${where}.json`), JSON.stringify({
-      measured: measured.filter((m) => !m.skip).length, failing: low.length, waiting: waiting.length, nodes: measured,
+      measured: measured.filter((m) => !m.skip).length, failing: low.length, nodes: measured,
     }, null, 1));
     sim.check(`${where}: the text axe could not judge has the contrast WCAG asks for, measured on the pixels`, !low.length,
       low.slice(0, 6).map((m) => `${m.sel} "${m.text}" ${m.low}:1, needs ${m.need}:1`).join(' | '));
