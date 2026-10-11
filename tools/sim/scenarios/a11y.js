@@ -3,9 +3,9 @@
  *
  * Three kinds of check, each on every section and on the windows that open over them:
  *
- * - axe-core (WCAG 2.0, 2.1 and 2.2, A and AA). What it cannot decide by itself, mostly contrast
- *   over the translucent panels, is written to axe-<where>.json as "incomplete" for a person to
- *   look at, and is not a failure here.
+ * - axe-core (WCAG 2.0, 2.1 and 2.2, A and AA). The contrast it cannot decide by itself, over
+ *   the translucent panels, is measured on the pixels instead (tools/sim/contrast.js) and written
+ *   to contrast-<where>.json, every node with its ratio.
  * - The accessibility tree Chromium hands a screen reader, read over the DevTools protocol: every
  *   control in it has a role and a name, and no name is an icon's ligature ("check_circle").
  * - The keyboard, pressed the way a hand presses it (sendInputEvent): Tab goes everywhere with a
@@ -21,6 +21,7 @@
 const fs = require('fs');
 const path = require('path');
 const steps = require('../steps');
+const { measure, isLarge, NODES, HIDE_TEXT } = require('../contrast');
 
 const SECTIONS = ['catalog', 'library', 'presets', 'settings'];
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -31,6 +32,12 @@ const CONTROLS = new Set(['button', 'link', 'checkbox', 'switch', 'textbox', 'se
 const LIGATURE = /\b[a-z]+(?:_[a-z]+)+\b/;
 // one mod, small, whose archive the sandbox carries (tools/sandbox-mods.json)
 const MOD = 'IO Purple';
+/* Short of the contrast it needs, known, and waiting on a decision rather than hidden: the category
+   under a card's name is --text-faint (62% of on-surface-variant), and where a card sits over the
+   lighter right half of the page's gradient it measures 4.0 to 4.4:1 against 4.5. At 70% it clears
+   4.7:1 everywhere it was measured. Each run still measures it and lists it under "waiting";
+   docs/accessibility.md has the numbers. Anything else short of its ratio fails the run. */
+const WAITING = [/\.card-meta\b/];
 
 /** What has the focus, where it is, and whether it shows. */
 const FOCUSED = `(() => {
@@ -53,6 +60,36 @@ module.exports = async function a11y(sim) {
   wc.debugger.attach('1.3');
   await wc.debugger.sendCommand('Accessibility.enable');
 
+  /** The text axe could not judge, against the pixels behind it: one capture with the glyphs
+   * hidden, then every node's colour laid over every pixel under its text. */
+  const contrast = async (where, targets) => {
+    const nodes = await sim.js(`${NODES}(${JSON.stringify(targets)})`);
+    const key = await wc.insertCSS(HIDE_TEXT, { cssOrigin: 'user' });
+    // a forced repaint and time for it, or the capture can be the frame from before the style
+    // (it was, on the first section: every glyph still there, and 1:1 against itself)
+    wc.invalidate();
+    await sim.js('new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 350))))');
+    const image = await wc.capturePage();
+    await wc.removeInsertedCSS(key);
+    fs.writeFileSync(path.join(sim.out, `contrast-${where}.png`), image.toPNG());
+    const { width, height } = image.getSize();
+    const frame = { bitmap: image.toBitmap(), width, height, scale: width / await sim.js('innerWidth') };
+    const measured = nodes.map((n) => {
+      if (n.skip) return n;
+      const m = measure(frame, { rects: n.rects, color: n.color, alpha: n.alpha, large: isLarge(n.px, n.weight) });
+      const at = n.rects[0] && Object.fromEntries(Object.entries(n.rects[0]).map(([k, v]) => [k, Math.round(v)]));
+      return m ? { sel: n.sel, text: n.text, px: n.px, at, ...m } : { sel: n.sel, text: n.text, skip: 'not on the capture' };
+    });
+    const short = measured.filter((m) => m.ok === false);
+    const waiting = short.filter((m) => WAITING.some((re) => re.test(m.sel)));
+    const low = short.filter((m) => !waiting.includes(m));
+    fs.writeFileSync(path.join(sim.out, `contrast-${where}.json`), JSON.stringify({
+      measured: measured.filter((m) => !m.skip).length, failing: low.length, waiting: waiting.length, nodes: measured,
+    }, null, 1));
+    sim.check(`${where}: the text axe could not judge has the contrast WCAG asks for, measured on the pixels`, !low.length,
+      low.slice(0, 6).map((m) => `${m.sel} "${m.text}" ${m.low}:1, needs ${m.need}:1`).join(' | '));
+  };
+
   /** axe and the accessibility tree over what is on screen now. */
   const audit = async (where) => {
     if (!await sim.js('typeof window.axe === "object"')) await sim.js(`${axe};true`);
@@ -60,10 +97,13 @@ module.exports = async function a11y(sim) {
       .then((r) => ({
         violations: r.violations.map((v) => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.slice(0, 5).map((n) => n.target.join(' ')) })),
         incomplete: r.incomplete.map((v) => ({ id: v.id, nodes: v.nodes.length })),
+        contrast: (r.incomplete.find((v) => v.id === 'color-contrast')?.nodes || [])
+          .map((n) => n.target[n.target.length - 1]).filter((t) => typeof t === 'string'),
       }))`);
     fs.writeFileSync(path.join(sim.out, `axe-${where}.json`), JSON.stringify(found, null, 1));
     sim.check(`${where}: axe finds nothing against WCAG 2.2 AA`, !found.violations.length,
       found.violations.map((v) => `${v.id}: ${v.nodes.join(', ')}`).join(' | '), found);
+    await contrast(where, found.contrast);
 
     const { nodes } = await wc.debugger.sendCommand('Accessibility.getFullAXTree');
     const controls = nodes.filter((n) => !n.ignored && CONTROLS.has(n.role?.value));
