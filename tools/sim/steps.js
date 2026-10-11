@@ -167,21 +167,42 @@ async function heroesList(sim) {
 }
 
 /**
+ * One category's mods as cards, ready to be searched: the category picked and, where it opens on
+ * a grid of heroes, switched to the list of mods. Heroes opens on that grid and remembers the
+ * switch for the rest of the launch, so a scenario that ran after one that had switched it found
+ * its cards and the same scenario run alone found none: presets, run by itself, saved a preset
+ * with one mod of its two (2026-10-11).
+ * @returns {Promise<number|null>} how many cards the list shows, null when it showed none
+ */
+async function categoryList(sim, categoryId) {
+  const cards = `document.querySelectorAll('.view-pane[data-pane="catalog"] .grid .card').length`;
+  await openSection(sim, 'catalog');
+  await sim.click(`.rail-item[data-cat="${categoryId}"]`);
+  await sim.until(`document.querySelector('.rail-item.active')?.dataset.cat === ${lit(categoryId)} && ${calm}`, 8000);
+  // whichever comes up first; the grid of heroes takes a moment, and asking before it is there
+  // finds nothing to switch
+  const first = await sim.until(`document.querySelectorAll('#heroGrid .hero-tile').length ? 'grid' : ${cards} ? 'list' : null`, 15000);
+  if (first === 'grid') await sim.click('.layout-toggle [data-layout="list"]');
+  return sim.until(`${cards} || null`, 15000);
+}
+
+/**
  * Installs a mod from its card: the category, the card, Install, and whatever the app asks on
  * the way answered yes and written down. Says what appeared in the language folder.
  * @returns {Promise<{ pak: string|null, added: string[], asked: string|null, ok: boolean }>}
  */
 async function installFromCard(sim, m, langDir) {
-  await openSection(sim, 'catalog');
-  await sim.click(`.rail-item[data-cat="${m.categoryId}"]`);
-  await sim.until(`document.querySelector('.rail-item.active')?.dataset.cat === ${lit(m.categoryId)} && ${calm}`, 8000);
+  const shown = await categoryList(sim, m.categoryId);
+  const none = { pak: null, added: [], asked: null, ok: false };
+  if (!sim.check(`${m.categoryId}: the category lists its mods`, !!shown, 'not one card in it, so no mod could be found there')) return none;
   const at = await sim.until(`(() => {
     const names = [...document.querySelectorAll('.view-pane[data-pane="catalog"] .grid .card .card-name')];
     return names.findIndex((n) => n.textContent.trim() === ${lit(m.name)}) + 1;
   })()`, 8000);
-  const none = { pak: null, added: [], asked: null, ok: false };
-  // the catalog is live: a mod taken down upstream since the sandbox was seeded is not a fault here
-  if (!at) { sim.check(`${m.name} is still in the catalog`, true); return none; }
+  /* The catalog is live: a mod taken down upstream since the sandbox was seeded is not a fault
+     here. It used to be reported as "still in the catalog" and passed, which is how a list that
+     never drew its cards passed for one that no longer had the mod. */
+  if (!at) { sim.check(`${m.name}: gone from the catalog since the sandbox was seeded, so it sits this run out`, true, `${shown} cards, none of them it`); return none; }
   const clicked = await sim.click(`.view-pane[data-pane="catalog"] .grid .card .card-name@${at}`);
   const title = clicked && await sim.until(modalOpen, 5000);
   if (!sim.check(`${m.name}: its window opens`, title === m.name,
@@ -286,7 +307,7 @@ function whoServes(game, folder, pak) {
 }
 
 module.exports = {
-  calm, modalOpen, listing, listingDiff, readyMods, openSection, heroesList, installFromCard,
+  calm, modalOpen, listing, listingDiff, readyMods, openSection, heroesList, categoryList, installFromCard,
   libraryRows, rowOf, setEnabled, removeFromLibrary, gameOf, gameLoads, mountedOurs, whoServes,
   modFile, answerNextDialog,
 };
