@@ -72,6 +72,44 @@ if (unused.length) {
   problems.push(`${unused.length} of ${cards.length} link-preview cards are no page's og:image: ${unused.slice(0, 8).join(', ')}${unused.length > 8 ? ', ...' : ''}`);
 }
 
+/* The headers and the policy that keep the pages from being framed, sniffed or made to run a script
+   they did not ship. A header file missing from the build is silent: the site still serves, without
+   them, and nothing on the page shows it. */
+const headers = read('_headers');
+if (headers === null) problems.push('_headers was not copied into the build');
+else {
+  for (const h of ['Strict-Transport-Security', "frame-ancestors 'none'", 'X-Content-Type-Options: nosniff', 'Referrer-Policy', 'Permissions-Policy']) {
+    if (!headers.includes(h)) problems.push(`_headers does not set ${h}`);
+  }
+}
+const page = read('index.html') || '';
+const policy = /<meta http-equiv="content-security-policy" content="([^"]+)"/i.exec(page);
+if (!policy) problems.push('index.html carries no content security policy');
+else if (/'unsafe-inline'|'unsafe-eval'/.test(policy[1]) && !/sha256-/.test(policy[1])) problems.push(`index.html's policy allows inline code without hashes: ${policy[1].slice(0, 120)}`);
+
+/* Inline style attributes. The policy carries hashes, so the browser refuses every style="" on a
+   page with it, in the markup or in markup a script writes, and the element comes out unstyled with
+   only a console line to say so. Shiki's code colours and the mascot hunt's dots both went that way.
+   A script sets a style through element.style, which the policy allows. */
+let styled = 0;
+const styledAt = [];
+for (const rel of fs.readdirSync(dist, { recursive: true })) {
+  const name = String(rel);
+  if (!/\.(html|js)$/.test(name)) continue;
+  const body = fs.readFileSync(path.join(dist, rel), 'utf-8');
+  if (name.endsWith('.html') && !/http-equiv="content-security-policy"/i.test(body)) continue;
+  const hits = (body.match(/<[a-z][\w-]*\b[^<>]*\sstyle=\\?["'`]/gi) || []).length;
+  if (hits) { styled += hits; styledAt.push(name.replace(/\\/g, '/')); }
+}
+if (styled) problems.push(`${styled} inline style attribute(s) the content security policy refuses, in ${styledAt.slice(0, 6).join(', ')}${styledAt.length > 6 ? ', ...' : ''}`);
+
+/* The shared-build page makes each thumbnail off the page and puts it in once it has loaded.
+   Chromium never loads a lazy picture that is off the page, so a lazy one there never shows: every
+   shared build went out without its pictures until 2026-10-11, and nothing on the page said so. */
+const share = read('p/index.html');
+if (share === null) problems.push('p/index.html was not built');
+else if (/new Image\(\)[^]{0,200}loading\s*=\s*['"]lazy/.test(share)) problems.push('p/index.html makes its thumbnails lazy while they are off the page, so they never load');
+
 if (problems.length) {
   console.error(`check-build: ${problems.length} problem(s) in ${pages} pages`);
   for (const p of problems) console.error(`  - ${p}`);

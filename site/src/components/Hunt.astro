@@ -244,10 +244,15 @@ const { complete, shared } = Astro.props;
       return true;
     };
 
+    // Each dot's colour goes in through the style object, not a style="" in markup: the page's
+    // content security policy refuses inline style attributes, and the dots came out colourless.
     const paint = () => {
-      slots.innerHTML = heroes
-        .map((h) => `<i class="${found.has(h.id) ? 'on' : ''}" style="--slot:${h.primary}"></i>`)
-        .join('');
+      slots.replaceChildren(...heroes.map((h) => {
+        const dot = document.createElement('i');
+        if (found.has(h.id)) dot.className = 'on';
+        dot.style.setProperty('--slot', h.primary);
+        return dot;
+      }));
       score.hidden = found.size === 0;
     };
 

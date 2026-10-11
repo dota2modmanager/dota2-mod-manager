@@ -60,6 +60,29 @@ function cardText(lang, path) {
 export default defineConfig({
   site: SITE,
   trailingSlash: 'always',
+  /* A content security policy on every page, with the hashes of the page's own scripts and styles
+     worked out by Astro at build time, so nothing but those runs. The rest is what the pages really
+     load: their own files, the catalog's pictures from wherever a preview lives (the shared-build
+     page shows any catalog mod), and two addresses the shared-build page and nothing else fetches.
+     frame-ancestors cannot go in a <meta>; it is in public/_headers with the other headers. */
+  security: {
+    csp: {
+      directives: [
+        "default-src 'self'",
+        "img-src 'self' data: https:",
+        "media-src 'self' https:",
+        "connect-src 'self' https://raw.githubusercontent.com https://api.github.com",
+        "font-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+      ],
+    },
+  },
+  /* No colouring of code in markdown. Shiki colours a block with style="" on every element, and the
+     policy above refuses those, so a highlighted block came out as bare text. The one block the
+     markdown pages carry is a shell command; lib/legal.ts gives it the docs' code style instead. */
+  markdown: { syntaxHighlight: false },
   i18n: {
     defaultLocale: 'en',
     locales: ['en', 'ru'],

@@ -1,0 +1,12 @@
+# Headers Cloudflare Pages sends with every page (https://developers.cloudflare.com/pages/configuration/headers/).
+# The content security policy itself is in each page's <meta>, with the hashes Astro works out at
+# build time (astro.config.mjs, security.csp); a <meta> cannot say frame-ancestors, so that part is
+# here. tools/check-build.mjs fails the build when one of these goes missing.
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy: frame-ancestors 'none'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin

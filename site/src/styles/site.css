@@ -342,7 +342,7 @@ section { padding: 44px 0; }
   background: color-mix(in srgb, var(--primary) 13%, transparent);
   border-color: color-mix(in srgb, var(--primary) 34%, transparent);
 }
-.tour-panel { margin: 0; }
+.tour-panel, .tour-panel figure { margin: 0; }
 .tour-panel figcaption {
   margin-top: 20px; text-align: center;
   color: var(--text-faint); font-size: 14.5px;

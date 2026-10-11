@@ -33,6 +33,7 @@ export const ui = {
     'hero.free': 'Free, open source, no account needed.',
 
     'foot.built': 'Built by',
+    'foot.nav': 'Site sections',
     'foot.license': 'GPL-3.0, source on GitHub',
     'foot.unofficial': 'Dota 2 Mod Manager is a free community project under GPL-3.0. Valve Corporation has not endorsed it and takes no part in it.',
     'foot.marks': 'Dota 2 and the Dota 2 logo are trademarks of Valve Corporation. Game screenshots and in-game artwork belong to Valve and to the Steam Workshop authors who made them, and appear here only to show what the app does. Nothing on this site is sold.',
@@ -69,6 +70,7 @@ export const ui = {
     'hero.free': 'Бесплатно, открытый код, без регистрации.',
 
     'foot.built': 'Сделал',
+    'foot.nav': 'Разделы сайта',
     'foot.license': 'GPL-3.0, исходники на GitHub',
     'foot.unofficial': 'Dota 2 Mod Manager - бесплатный проект сообщества под лицензией GPL-3.0. Valve Corporation его не одобряла и к нему не причастна.',
     'foot.marks': 'Dota 2 и логотип Dota 2 - товарные знаки Valve Corporation. Скриншоты игры и внутриигровой арт принадлежат Valve и авторам работ в Steam Workshop, а здесь показаны только чтобы объяснить, что делает программа. Ничего на этом сайте не продаётся.',

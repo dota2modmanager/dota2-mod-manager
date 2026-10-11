@@ -52,14 +52,16 @@ const { shots, tablist } = Astro.props;
     ))}
   </div>
 
+  {/* the tab panel is a <div> holding the <figure>: a figure may not take the tabpanel role */}
   {shots.map((s, i) => (
-    <figure
+    <div
       class="tour-panel"
       role="tabpanel"
       id={`tour-panel-${i}`}
       aria-labelledby={`tour-tab-${i}`}
       hidden={i !== 0}
     >
+     <figure>
       <div class="win">
         <img
           src={s.src}
@@ -76,7 +78,8 @@ const { shots, tablist } = Astro.props;
         <div class="sheen"></div>
       </div>
       <figcaption>{s.caption}</figcaption>
-    </figure>
+     </figure>
+    </div>
   ))}
 </div>
 

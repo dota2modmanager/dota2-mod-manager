@@ -232,8 +232,10 @@
         if (!hit || /\.(mp4|webm|mp3|ogg|wav)$/i.test(hit.preview)) return;
         var url = /^https?:/i.test(hit.preview) ? hit.preview
           : RAW + '/assets/previews/' + encodeURIComponent(hit.cat) + '/' + encodeURIComponent(hit.preview);
+        // Not lazy: this picture is off the page until it loads, and Chromium never loads a lazy
+        // picture that is off the page, so a lazy one would never arrive.
         var img = new Image();
-        img.loading = 'lazy'; img.alt = '';
+        img.alt = '';
         img.onload = function () { el.innerHTML = ''; el.appendChild(img); };
         img.src = url;
       });

@@ -17,6 +17,9 @@ const list = docSlugs.map((s) => docs[lang][s]);
   <h1>{index.h1}</h1>
   <p class="lead">{index.lead}</p>
 
+  {/* the cards' titles are h3; a heading for the list itself keeps the outline in order for a
+      screen reader without making the cards' titles larger on screen */}
+  <h2 class="sr-only">{lang === 'ru' ? 'Все статьи' : 'All guides'}</h2>
   <div class="cards doc-cards">
     {
       list.map((d) => (

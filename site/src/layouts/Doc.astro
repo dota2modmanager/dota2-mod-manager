@@ -181,7 +181,7 @@ const updatedHuman = new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-GB', 
         if (b.k === 'h2') return <h2 id={b.id}>{b.t}</h2>;
         if (b.k === 'p') return <p set:html={link(b.t)} />;
         if (b.k === 'note') return <p class="doc-note" set:html={link(b.t)} />;
-        if (b.k === 'code') return <pre class="doc-code"><code>{b.t}</code></pre>;
+        if (b.k === 'code') return <pre class="doc-code" tabindex="0"><code>{b.t}</code></pre>;
         if (b.k === 'categories')
           return (
             <ul class="facts">
