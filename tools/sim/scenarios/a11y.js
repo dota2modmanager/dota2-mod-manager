@@ -21,6 +21,8 @@
 const fs = require('fs');
 const path = require('path');
 const steps = require('../steps');
+// every value put into page code goes through lit, which escapes what JSON.stringify leaves alone
+const { lit } = require('../driver');
 const { measure, isLarge, NODES, HIDE_TEXT } = require('../contrast');
 
 const SECTIONS = ['catalog', 'library', 'presets', 'settings'];
@@ -63,7 +65,7 @@ module.exports = async function a11y(sim) {
   /** The text axe could not judge, against the pixels behind it: one capture with the glyphs
    * hidden, then every node's colour laid over every pixel under its text. */
   const contrast = async (where, targets) => {
-    const nodes = await sim.js(`${NODES}(${JSON.stringify(targets)})`);
+    const nodes = await sim.js(`${NODES}(${lit(targets)})`);
     const key = await wc.insertCSS(HIDE_TEXT, { cssOrigin: 'user' });
     // a forced repaint and time for it, or the capture can be the frame from before the style
     // (it was, on the first section: every glyph still there, and 1:1 against itself)
@@ -93,7 +95,7 @@ module.exports = async function a11y(sim) {
   /** axe and the accessibility tree over what is on screen now. */
   const audit = async (where) => {
     if (!await sim.js('typeof window.axe === "object"')) await sim.js(`${axe};true`);
-    const found = await sim.js(`axe.run(document, { runOnly: { type: 'tag', values: ${JSON.stringify(TAGS)} }, resultTypes: ['violations', 'incomplete'] })
+    const found = await sim.js(`axe.run(document, { runOnly: { type: 'tag', values: ${lit(TAGS)} }, resultTypes: ['violations', 'incomplete'] })
       .then((r) => ({
         violations: r.violations.map((v) => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.slice(0, 5).map((n) => n.target.join(' ')) })),
         incomplete: r.incomplete.map((v) => ({ id: v.id, nodes: v.nodes.length })),
@@ -119,7 +121,7 @@ module.exports = async function a11y(sim) {
     await steps.openSection(sim, view);
     await sim.settle(600);
     sim.check(`${view}: a screen reader is told it is the open section`,
-      await sim.js(`[...document.querySelectorAll('.tb-tab[aria-current]')].map((b) => b.dataset.view).join() === ${JSON.stringify(view)}`));
+      await sim.js(`[...document.querySelectorAll('.tb-tab[aria-current]')].map((b) => b.dataset.view).join() === ${lit(view)}`));
     await audit(view);
   }
 
@@ -150,10 +152,10 @@ module.exports = async function a11y(sim) {
   await steps.openSection(sim, 'catalog');
   await sim.click(`.rail-item[data-cat="${m.categoryId}"]`);
   sim.check('a screen reader is told which category is picked',
-    await sim.until(`[...document.querySelectorAll('.rail-item[aria-current="true"]')].map((b) => b.dataset.cat).join() === ${JSON.stringify(m.categoryId)}`, 3000));
+    await sim.until(`[...document.querySelectorAll('.rail-item[aria-current="true"]')].map((b) => b.dataset.cat).join() === ${lit(m.categoryId)}`, 3000));
   const at = await sim.until(`(() => {
     const names = [...document.querySelectorAll('.view-pane[data-pane="catalog"] .grid .card .card-open')];
-    const i = names.findIndex((n) => n.textContent.trim() === ${JSON.stringify(m.name)});
+    const i = names.findIndex((n) => n.textContent.trim() === ${lit(m.name)});
     if (i < 0) return 0;
     names[i].focus(); // the walk above showed Tab gets to cards; this one is a long way down the grid
     return i + 1;
@@ -193,7 +195,7 @@ module.exports = async function a11y(sim) {
        hidden by aria-modal, so a toast alone told a screen reader nothing. */
     const said = await sim.until(`(() => {
       const r = document.querySelector('[aria-modal="true"] .sr-announce');
-      return r && r.textContent.includes(${JSON.stringify(m.name)}) ? r.textContent : null;
+      return r && r.textContent.includes(${lit(m.name)}) ? r.textContent : null;
     })()`, 3000);
     sim.check('the install is announced inside the window', !!said, String(said));
     const { nodes } = await wc.debugger.sendCommand('Accessibility.getFullAXTree');
@@ -216,7 +218,7 @@ module.exports = async function a11y(sim) {
     let onDel = false;
     for (let i = 0; i < 80 && !onDel; i++) {
       await sim.key('Tab');
-      onDel = await sim.js(`document.activeElement === document.querySelector(${JSON.stringify(del)})`);
+      onDel = await sim.js(`document.activeElement === document.querySelector(${lit(del)})`);
     }
     if (sim.check('Tab reaches the row\'s Remove', onDel)) {
       await sim.key('Enter');
@@ -233,7 +235,7 @@ module.exports = async function a11y(sim) {
       await sim.until(`!document.querySelector('.confirm-overlay')`, 3000);
       await sim.settle(200);
       sim.check('Escape answers no: the mod stays', !!steps.rowOf(await steps.libraryRows(sim), m.name));
-      sim.check('and the focus goes back to Remove', await sim.js(`document.activeElement === document.querySelector(${JSON.stringify(del)})`),
+      sim.check('and the focus goes back to Remove', await sim.js(`document.activeElement === document.querySelector(${lit(del)})`),
         JSON.stringify(await sim.js(FOCUSED)));
       await sim.key('Enter');
       await sim.until(`document.querySelector('.confirm-overlay [data-c="yes"]')`, 5000);
@@ -242,7 +244,7 @@ module.exports = async function a11y(sim) {
       const onYes = () => sim.js(`document.activeElement === document.querySelector('.confirm-overlay [data-c="yes"]')`);
       for (let i = 0; i < 4 && !await onYes(); i++) await sim.key('Tab');
       await sim.key('Enter');
-      const gone = await sim.until(`!document.querySelector(${JSON.stringify(`.lib-row[data-row="${row.id}"]`)})`, 10000);
+      const gone = await sim.until(`!document.querySelector(${lit(`.lib-row[data-row="${row.id}"]`)})`, 10000);
       sim.check(`${m.name}: removed with the keyboard alone`, !!gone);
     }
   }
