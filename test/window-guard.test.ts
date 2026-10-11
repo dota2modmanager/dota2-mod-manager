@@ -97,7 +97,8 @@ test('the dev server is the app\'s page only when it is the page the window load
 test('a file page is compared as Windows compares paths', { skip: process.platform !== 'win32' }, () => {
   const guard = createIpcGuard({ pages: [PAGE], log: () => {} });
   assert.equal(guard.refuse(top(PAGE.toUpperCase().replace('FILE:', 'file:'))), null);
-  assert.equal(pageKey(PAGE), pageKey(PAGE.replace(/\//g, '/')));
+  // the same file reached as an address with a space escaped differently is the same page
+  assert.equal(pageKey(PAGE), pageKey(PAGE.replace(/%20/g, ' ')));
 });
 
 test('a refused call never reaches its handler, and says why in the log', async () => {

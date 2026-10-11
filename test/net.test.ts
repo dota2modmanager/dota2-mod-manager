@@ -97,6 +97,27 @@ test('a host named in the config is never the one believed when no copy matches 
     'and an entry claiming that host is dropped rather than added beside it');
 });
 
+test('a configured host joins only when its entry is well formed', () => {
+  const ok = { base: 'https://gitlab.com/x/-/raw/main/assets/files/', host: 'gitlab.com' };
+  assert.equal(net.wellFormedMirror(ok), true);
+  for (const [why, entry] of [
+    ['plain http', { ...ok, base: 'http://gitlab.com/x/-/raw/main/assets/files/' }],
+    ['a host other than the one it names', { ...ok, base: 'https://evil.example/assets/files/' }],
+    ['a login in the address', { ...ok, base: 'https://user:pass@gitlab.com/x/' }],
+    ['not an address', { ...ok, base: 'gitlab.com/x/' }],
+    ['a base that is not a folder', { ...ok, base: 'https://gitlab.com/x/file' }],
+    ['a host that is not a host name', { ...ok, host: 'gitlab.com/x' }],
+    ['the origin itself', { base: 'https://raw.githubusercontent.com/x/', host: 'raw.githubusercontent.com' }],
+    ['nothing', null],
+  ] as const) {
+    assert.equal(net.wellFormedMirror(entry), false, why);
+  }
+  net.applyMirrors([{ ...ok, base: 'http://gitlab.com/x/-/raw/main/assets/files/' }, ok]);
+  const list = net.mirrorsFor(RAW_URL);
+  assert.equal(list.filter((u) => u.startsWith('http://gitlab.com/')).length, 0, 'the bad entry is left out');
+  assert.equal(list.filter((u) => u.startsWith(ok.base)).length, 1, 'and the good one still joins');
+});
+
 test('a GitHub raw URL gets mirrors, and a size-capped one only for small files', () => {
   const big = net.mirrorsFor(RAW_URL);
   const small = net.mirrorsFor(RAW_URL, { small: true });
@@ -453,4 +474,16 @@ test('a server that answered is not called a missing connection', async (t) => {
   const err = await net.fetchText(`${RAW_HOST}owner/repo/main/x.json`).then(() => null, (e) => e);
   assert.ok(err, 'a 500 from every mirror is still a failure');
   assert.equal(err.offline, false, 'the wifi is fine; saying otherwise sends somebody to fix nothing');
+});
+
+test('every mirror the signed config reading lets through, the request side lets through too', async () => {
+  /* Two places check a configured host: src/remote-config-format.ts when the signed file is read,
+     and wellFormedMirror where its address becomes a request. If they ever disagreed, a host the
+     config names on purpose would be dropped without a word; the live config's own mirror is the
+     case that matters most. */
+  const { normalize } = await import('../src/remote-config-format.ts');
+  const live = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '..', 'config', 'app.json'), 'utf8'));
+  const read = normalize({ ...live, mirrors: [...(live.mirrors || []), { id: 'port', base: 'https://mirror.example:8443/files/' }] });
+  assert.ok(read.mirrors.length >= 2, 'the live config names a mirror, and the extra one parses');
+  for (const m of read.mirrors) assert.equal(net.wellFormedMirror(m), true, m.base);
 });

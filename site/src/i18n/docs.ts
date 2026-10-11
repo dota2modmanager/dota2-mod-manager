@@ -265,14 +265,14 @@ const en: Record<CoreSlug, Doc> = {
         k: 'cards',
         items: [
           ['pak01_*', 'Valve\'s own. In a language folder it holds localized voice. Renaming or deleting it breaks the game.'],
-          ['pak02 to pak09', 'Where a mod goes when you want it to beat the others. The app puts anything you mark as priority here.'],
-          ['pak10 to pak99', 'Ordinary mods, first free number wins. Ninety-eight slots is more than anybody fills.'],
+          ['pak02 to pak29', 'The categories that have to load before the rest: trees, river, shaders, hero effects, ranged attacks, hero items, optimization. The app puts them here by their category.'],
+          ['pak30 to pak99', 'Every other mod, first free number wins. pak64 holds the app\'s own notice text, and pak65 to pak67 are left to Minify.'],
           ['pak00', 'Never mounted. The app parks an archive here for a moment while swapping two mods, so a crash mid-swap leaves nothing half-installed.'],
         ],
       },
       {
         k: 'p',
-        t: 'Two mods that touch different heroes never meet, and you can run a hundred of them. Two Juggernaut sets in the same slot range will collide over the same model file, and only one of them shows up. Nothing warns you: the hero simply looks like the other mod.',
+        t: 'Two mods that touch different heroes never meet, and you can run a hundred of them. Two Juggernaut sets in the same slot range will collide over the same model file, and only one of them shows up. Dota does not warn you: the hero simply looks like the other mod. My mods does: the mod that loses is marked overruled, with the files it lost named.',
       },
 
       { k: 'h2', t: 'Which folder gets mounted', id: 'folder' },
@@ -766,14 +766,14 @@ const ru: Record<CoreSlug, Doc> = {
         k: 'cards',
         items: [
           ['pak01_*', 'Валвовский. В языковой папке это локализованная озвучка. Переименуешь или удалишь - игра сломается.'],
-          ['pak02 - pak09', 'Сюда кладут мод, который должен выигрывать у остальных. Приложение отправляет туда всё, что помечено приоритетным.'],
-          ['pak10 - pak99', 'Обычные моды, занимается первый свободный номер. Девяносто восемь слотов не выбирает никто.'],
+          ['pak02 - pak29', 'Категории, которым надо грузиться раньше остальных: деревья, река, шейдеры, эффекты героев, дальние атаки, предметы героев, оптимизация. Приложение кладёт их сюда само, по категории.'],
+          ['pak30 - pak99', 'Все остальные моды, занимается первый свободный номер. В pak64 лежит собственный текст-плашка приложения, pak65 - pak67 оставлены Minify.'],
           ['pak00', 'Не монтируется никогда. Приложение на секунду паркует там архив при перестановке двух модов, чтобы падение посреди операции не оставило полуустановленный мод.'],
         ],
       },
       {
         k: 'p',
-        t: 'Два мода на разных героев не встречаются никогда, и таких можно держать хоть сотню. Два сета на Juggernaut в соседних слотах столкнутся на одном файле модели, и покажется только один. Предупреждения не будет: герой просто выглядит как второй мод.',
+        t: 'Два мода на разных героев не встречаются никогда, и таких можно держать хоть сотню. Два сета на Juggernaut в соседних слотах столкнутся на одном файле модели, и покажется только один. Дота не предупредит: герой просто выглядит как второй мод. «Мои моды» предупредят: у проигравшего мода стоит пометка «перекрыт» и названы файлы, которые он отдал.',
       },
 
       { k: 'h2', t: 'Какая папка монтируется', id: 'folder' },

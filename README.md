@@ -138,8 +138,10 @@ Nothing is injected into Dota's process, and no file of the game is opened while
 - Dota mounts **one** folder, named after its **voice** language. The app sets that language in
   the game's own settings and installs there — **no launch option involved**, which is the part
   worth reading twice. [Why that works](https://dota2modmanager.com/docs/language/)
-- VPK mods go in as `pakNN_dir.vpk`, slots 10 to 99. Categories that must load first get
-  `pak02` to `pak09`. [Slots and load order](https://dota2modmanager.com/docs/vpk/)
+- VPK mods go in as `pakNN_dir.vpk`. Trees, river, shaders, hero effects and the other categories
+  that must load first get `pak02` to `pak29`; everything else starts at `pak30`. `pak64` is the
+  app's own notice text, and `pak65` to `pak67` are left to Minify.
+  [Slots and load order](https://dota2modmanager.com/docs/vpk/)
 - Switching a mod off renames its file to `.off`. The game skips it, the file stays
 - Fonts and cursors go into the game's own folders, with the originals backed up first
 - Everything that writes to the game folder is one transaction: if a step fails, the whole

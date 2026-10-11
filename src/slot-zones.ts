@@ -41,7 +41,7 @@ export const PRIORITY_CATEGORIES: readonly string[] = ['trees', 'river', 'shader
 /** The first and last slot of those categories. */
 export const PRIORITY_SLOTS: readonly [number, number] = [2, 29];
 /** Where every other mod starts. */
-const NORMAL_FIRST = 30;
+export const NORMAL_FIRST = 30;
 /* The app's own pak, not a mod: the clearer text for the game's anti-cheat notice
  * (src/notice-text.ts). One below Minify's 65-67, so that it wins over a Minify "English fix"
  * carrying the same localization file, and never handed to a mod, counted as a slot, listed as

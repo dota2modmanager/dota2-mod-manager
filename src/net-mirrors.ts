@@ -196,10 +196,28 @@ export function setMirrors(list: readonly Mirror[] | null | undefined): void {
  *
  * @param list  from src/remote-config.ts
  */
+/**
+ * Whether a configured host is one this app will ask: an https folder address with no login and
+ * no query, on exactly the host it claims. src/remote-config-format.ts already reads the signed
+ * config this way and derives the host from the address; this is the same rule again at the point
+ * where the address becomes a request, so nothing that reaches applyMirrors another way (a test,
+ * a later caller) can point downloads at plain http or at a host other than the one whose
+ * failures stand it down. The bytes are still checked against the catalog's hashes either way.
+ */
+export function wellFormedMirror(m: unknown): m is { base: string; host: string } {
+  if (!m || typeof m !== 'object') return false;
+  const { base, host } = m as { base?: unknown; host?: unknown };
+  if (typeof base !== 'string' || typeof host !== 'string' || !/^[a-z0-9.-]+(:\d+)?$/i.test(host)) return false;
+  if (host === 'raw.githubusercontent.com') return false;
+  let u: URL;
+  try { u = new URL(base); } catch { return false; }
+  return u.protocol === 'https:' && !u.username && !u.password && !u.search && !u.hash
+    && u.host === host.toLowerCase() && u.pathname.endsWith('/');
+}
+
 export function applyMirrors(list: unknown): number {
   const extra: Mirror[] = (Array.isArray(list) ? list : [])
-    .filter((m): m is { base: string; host: string } => Boolean(m) && typeof m.base === 'string' && typeof m.host === 'string'
-      && Boolean(m.base) && Boolean(m.host) && m.host !== 'raw.githubusercontent.com')
+    .filter(wellFormedMirror)
     .map((m) => ({
       host: m.host,
       map: (url: string) => (url.startsWith(CATALOG_FILES) ? m.base + url.slice(CATALOG_FILES.length) : null),

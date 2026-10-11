@@ -4058,27 +4058,26 @@ export function setMirrors(list: readonly Mirror[] | null | undefined): void
 
 Point the chain at local servers for a test. Pass nothing to put the real list back.
 
+### `wellFormedMirror`
+
+```ts
+export function wellFormedMirror(m: unknown): m is { base: string; host: string }
+```
+
+Whether a configured host is one this app will ask: an https folder address with no login and
+no query, on exactly the host it claims. src/remote-config-format.ts already reads the signed
+config this way and derives the host from the address; this is the same rule again at the point
+where the address becomes a request, so nothing that reaches applyMirrors another way (a test,
+a later caller) can point downloads at plain http or at a host other than the one whose
+failures stand it down. The bytes are still checked against the catalog's hashes either way.
+
 ### `applyMirrors`
 
 ```ts
 export function applyMirrors(list: unknown): number
 ```
 
-Put the hosts the signed config names into the chain, or take them out again.
-
-The built-in list is compiled in, so arranging a second copy of the catalog somewhere used to
-mean a release and then waiting for people to take it. These sit after our own bucket and
-before the proxies, because a proxy is GitHub wearing a different hostname and one of these is
-a real second copy. None of them is ever the origin: the bytes are checked against the hash
-the catalog publishes, and when nothing matches it is the origin's copy that is believed, so
-what a host named here can do is serve a download or fail it.
-
-A host that answers with nothing useful stands itself down after a few failures like any
-other, which is also what happens to one that is named here after it stops existing.
-
-```
-@param list  from src/remote-config.ts
-```
+_No description in the source._
 
 ## src/net.ts
 
@@ -4103,7 +4102,7 @@ The code is kept as three files: src/net-mirrors.ts is the chain and how each ho
 src/net-fetch.ts asks along it, and src/net-download.ts brings a file to disk through it.
 Callers import from here.
 
-Hands on from [`src/net-mirrors.ts`](#srcnet-mirrorsts): `RAW_HOST`, `FAIL_THRESHOLD`, `COOLDOWN_MS`, `DEFAULT_MIRRORS`, `mirrorsFor`, `entriesFor`, `mirrorHealth`, `resetHealth`, `setMirrors`, `applyMirrors`, `Mirror`, `Entry`.
+Hands on from [`src/net-mirrors.ts`](#srcnet-mirrorsts): `RAW_HOST`, `FAIL_THRESHOLD`, `COOLDOWN_MS`, `DEFAULT_MIRRORS`, `mirrorsFor`, `entriesFor`, `mirrorHealth`, `resetHealth`, `setMirrors`, `applyMirrors`, `wellFormedMirror`, `Mirror`, `Entry`.
 
 Hands on from [`src/net-fetch.ts`](#srcnet-fetchts): `fetchMirrored`, `fetchText`, `FetchOptions`.
 
@@ -6045,6 +6044,14 @@ export const PRIORITY_SLOTS: readonly [number, number] = [2, 29]
 ```
 
 The first and last slot of those categories.
+
+### `NORMAL_FIRST`
+
+```ts
+export const NORMAL_FIRST = 30
+```
+
+Where every other mod starts.
 
 ### `APP_PAK`
 

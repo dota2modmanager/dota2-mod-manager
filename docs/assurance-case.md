@@ -85,6 +85,15 @@ and no web contents may open a window, attach a webview or leave the app's pages
 list of hostile ones does not, no check throws on any input), `test/ipc-contract.test.js`, and the
 window e2e, which fails on any call the guard refused.
 
+**Somebody else borrowing the app.** An Electron executable runs as plain Node when an environment
+variable asks it to, loads code named in `NODE_OPTIONS`, and opens a debugger on `--inspect`; for a
+program people download, each is a way for something else on the machine to run its own code
+under this app's name. The packaged app has all three switched off in the binary with Electron's
+fuses, refuses an `app.asar` changed after the build, and will not load a loose folder in its place.
+*Check:* `test/electron-fuses.test.js` (the fuses, and that nothing in the app needs what they take
+away); the PR rehearsal `.github/workflows/update.yml` and the release's install jobs run the fused
+build.
+
 **Us, after the release.** The one thing this project can change on a machine without shipping a
 new version is `config/app.json`: a feature switched off, a notice, the beta list, a mirror. It
 is signed with this project's own key against a key pinned in the app, and a file that does not

@@ -44,9 +44,9 @@
   "devDependencies": {
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.1",
+    "@vitejs/plugin-react": "^6.1.2",
     "axe-core": "^4.14.0",
-    "electron": "^44.5.1",
+    "electron": "^44.7.0",
     "electron-builder": "^26.15.3",
     "eslint": "^10.12.0",
     "fast-check": "^4.10.2",
@@ -54,7 +54,7 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "typescript": "^5.9.3",
-    "vite": "^8.3.2"
+    "vite": "^8.3.4"
   },
   "dependencies": {
     "adm-zip": "^0.6.1",
@@ -129,6 +129,14 @@
       "owner": "dota2modmanager",
       "repo": "dota2-mod-manager",
       "releaseType": "release"
+    },
+    "electronFuses": {
+      "runAsNode": false,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true,
+      "enableCookieEncryption": true
     }
   }
 }
