@@ -217,7 +217,7 @@ const HOSTILE: [string, unknown[], RegExp][] = [
   ['preview:frame', ['k', 'not bytes'], /bytes/],
   ['presets:export', [ID, { skip: [], author: 'me', note: '', path: 'C:\\' }], /unexpected key path/],
   ['uninstall:run', [{ revert: 'yes' }], /revert/],
-  ['diag:rendererError', ['x'.repeat(65 * 1024)], /string/],
+  ['diag:rendererError', ['x'.repeat(4 * 1024 * 1024 + 1)], /string/],
   ['nonexistent:channel', [], /no argument check/],
 ];
 
