@@ -225,6 +225,15 @@ export const EVAL_REMOVE = `
   ${HELPERS}
   const listed = await until(row, 20000);
   if (!step('after a restart My mods still lists it, switched off', listed && listed.classList.contains('disabled'), listed ? 'listed but switched on' : 'not listed')) return out;
+  // The fixture's preview is a file no host has, so the row's picture fails, and it has to fail
+  // into the row's own small box. Issue #243: a picture that failed was swapped for a placeholder
+  // that took the whole row, and the name was left a column a word wide.
+  await until(() => !listed.querySelector('img[src*="Brewmaster"]'), 8000);
+  const thumbBox = listed.querySelector('.lib-thumb, .noimg');
+  const info = listed.querySelector('.lib-info');
+  const tw = thumbBox ? thumbBox.getBoundingClientRect().width : -1;
+  const iw = info ? info.getBoundingClientRect().width : -1;
+  step('a picture that does not load leaves the row its shape', tw > 0 && tw <= 100 && iw >= 200, 'picture ' + Math.round(tw) + 'px wide, name ' + Math.round(iw) + 'px');
   if (!step('no dialog stands in front of My mods', !dialogs().length, dialogs().join(' | '))) return out;
   listed.querySelector('.toggle[data-id]').click();
   const on = await until(() => { const r = row(); return r && !r.classList.contains('disabled') ? r : null; }, 30000);

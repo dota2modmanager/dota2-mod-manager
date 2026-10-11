@@ -5,14 +5,11 @@ import { Fragment, useEffect, useRef } from 'react';
 import { watchIconFor } from '../ui/cosmetic-icons.ts';
 import { useCosmeticIcon } from '../catalog/cosmetic/CosmeticCard.tsx';
 import { useArcanaPicture, useTinted } from '../catalog/arcana/tint.ts';
+import { Picture } from '../ui/Picture.tsx';
 import type { PackRowModel, Tag, Thumb as ThumbModel } from './model.ts';
 
 export function Thumb({ thumb, cls }: { thumb: ThumbModel; cls: string }) {
-  if ('url' in thumb) {
-    return thumb.video
-      ? <video className={cls} src={thumb.url} muted playsInline preload="metadata" />
-      : <img className={cls} src={thumb.url} loading="lazy" alt="" />;
-  }
+  if ('url' in thumb) return <Picture url={thumb.url} cls={cls} />;
   if ('key' in thumb) return <Fetched name={thumb.key} icon={thumb.icon} cls={cls} />;
   if ('arcana' in thumb) return <ArcanaThumb color={thumb.arcana} cls={cls} />;
   return <div className={cls}>{thumb.icon && <span className="ms thumb-glyph">{thumb.icon}</span>}</div>;
@@ -21,7 +18,7 @@ export function Thumb({ thumb, cls }: { thumb: ThumbModel; cls: string }) {
 /** The arcana the app built, in its colour (catalog/arcana/). */
 function ArcanaThumb({ color, cls }: { color: [number, number, number]; cls: string }) {
   const src = useTinted(useArcanaPicture(), color);
-  return src ? <img className={cls} src={src} alt="" /> : <div className={cls}><span className="ms thumb-glyph">palette</span></div>;
+  return src ? <img className={cls} src={src} alt="" data-owned="react" /> : <div className={cls}><span className="ms thumb-glyph">palette</span></div>;
 }
 
 /* Asked for once it scrolls near. A lookup that came back with nothing leaves the tile as it was
@@ -30,7 +27,7 @@ function Fetched({ name, icon, cls }: { name: string; icon: string | null; cls: 
   const ref = useRef<HTMLDivElement>(null);
   const src = useCosmeticIcon(name);
   useEffect(() => (src === undefined && ref.current ? watchIconFor(ref.current, name) : undefined), [name, src]);
-  if (src) return <img className={cls} src={src} loading="lazy" alt="" />;
+  if (src) return <img className={cls} src={src} loading="lazy" alt="" data-owned="react" />;
   return (
     <div className={cls} ref={ref} data-name={src === undefined ? name : undefined} data-owned="react">
       {icon && <span className="ms thumb-glyph">{icon}</span>}
@@ -45,7 +42,7 @@ export function CosmeticThumb({ name, icon }: { name: string; icon: string }) {
   useEffect(() => (ref.current ? watchIconFor(ref.current, name) : undefined), [name]);
   return (
     <div className="lib-thumb" data-name={name} data-owned="react" ref={ref}>
-      {src ? <img src={src} alt="" loading="lazy" /> : <span className="ms thumb-glyph">{icon}</span>}
+      {src ? <img src={src} alt="" loading="lazy" data-owned="react" /> : <span className="ms thumb-glyph">{icon}</span>}
     </div>
   );
 }
@@ -59,8 +56,7 @@ export function PackThumb({ p }: { p: PackRowModel }) {
       {p.cells.map((c, i) => (
         !c ? <div key={i} className="pack-thumb-cell" />
           : 'icon' in c ? <div key={i} className="pack-thumb-cell"><span className="ms">{c.icon}</span></div>
-            : c.video ? <video key={i} src={c.url} muted playsInline preload="metadata" />
-              : <img key={i} src={c.url} loading="lazy" alt="" />
+            : <Picture key={i} url={c.url} cls="pack-thumb-cell" />
       ))}
     </div>
   );

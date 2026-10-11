@@ -68,12 +68,18 @@ export function mediaGaveUp(): void {
   }
 }
 
+/** Whether React drew this element, and so is the only one that may replace it (ui/Picture.tsx).
+ *  React marks the nodes it manages with a property of its own; data-owned is the explicit form. */
+export function reactOwns(el: Element): boolean {
+  return (el as HTMLElement).dataset?.owned === 'react' || Object.keys(el).some((k) => k.startsWith('__reactFiber$'));
+}
+
 export function watchMedia(onTrouble: () => void = () => {}): void {
   trouble = onTrouble;
   document.addEventListener('error', (e) => {
     const el = e.target;
     if (!(el instanceof HTMLImageElement) && !(el instanceof HTMLVideoElement)) return;
-    if (el.dataset.mediaGaveUp || el.dataset.owned === 'react') return;
+    if (el.dataset.mediaGaveUp || reactOwns(el)) return;
 
     const spare = el.dataset.mediaRetried ? null : mirrorOf(el.currentSrc || el.src);
     if (spare) {
@@ -84,7 +90,8 @@ export function watchMedia(onTrouble: () => void = () => {}): void {
 
     el.dataset.mediaGaveUp = '1';
     const box = document.createElement('div');
-    box.className = 'noimg';
+    // the picture's own classes stay: they are what gave it its size where it sat
+    box.className = [el.className, 'noimg'].filter(Boolean).join(' ');
     const icon = document.createElement('span');
     icon.className = 'ms';
     icon.textContent = 'image_not_supported';
