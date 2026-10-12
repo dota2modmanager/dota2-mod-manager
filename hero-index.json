@@ -1,6 +1,6 @@
 {
   "heroes": 149,
-  "mods": 1554,
+  "mods": 1563,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -126,6 +126,7 @@
       "mods": [
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Batrider Chubzarik Prime","categoryId":"heroes","styleLabel":null,"slots":["belt","back","head","mount","misc","shoulder"]},
+        {"name":"Batrider Napapiri","categoryId":"heroes","styleLabel":null,"slots":["belt","back","head","mount","shoulder"]},
         {"name":"Batrider Night Marauder","categoryId":"heroes","styleLabel":null,"slots":["belt","back","head","mount"]},
         {"name":"Batrider Night Snotty","categoryId":"heroes","styleLabel":null,"slots":["belt","back","head","mount"]},
         {"name":"Batrider Verna Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["mount"]},
@@ -352,7 +353,8 @@
       "mods": [
         {"name":"Dawnbreaker Death Knight","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
         {"name":"Dawnbreaker Moonbreaker","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head"]},
-        {"name":"Dawnbreaker Starlorn Adjudicator","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]}
+        {"name":"Dawnbreaker Starlorn Adjudicator","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
+        {"name":"Pink Spell Radius","categoryId":"other","styleLabel":null,"slots":[]}
       ]
     },
     "dazzle": {
@@ -494,6 +496,8 @@
         {"name":"Earthshaker Blink Dagger","categoryId":"item-effects","styleLabel":null,"slots":[]},
         {"name":"Earthshaker Burning Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc"]},
         {"name":"Earthshaker Carrot","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Earthshaker Cosmic Arcana","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
+        {"name":"Earthshaker Cosmic Arcana V2","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
         {"name":"Earthshaker Deep Magma","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head","weapon"]},
         {"name":"Earthshaker Gold Blink Dagger","categoryId":"item-effects","styleLabel":null,"slots":[]},
         {"name":"Earthshaker Planetfall Burning","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
@@ -1136,6 +1140,7 @@
         {"name":"Morphling Akulenok","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Morphling Automaton","categoryId":"heroes","styleLabel":null,"slots":["misc","arms"]},
         {"name":"Morphling Blade Of Tears","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
+        {"name":"Morphling Crimson","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
         {"name":"Morphling Darktrench Purple","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Morphling Darktrench Tears","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
         {"name":"Morphling Fluid Frenzy","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
@@ -1323,6 +1328,7 @@
         {"name":"Crimson Phantom Lancer","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Immortal Phantom Lancer","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Phantom Lancer Ame","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon","arms"]},
+        {"name":"Phantom Lancer Black","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Phantom Lancer Concord Dominion","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
         {"name":"Phantom Lancer Concord Revers","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Phantom Lancer Crimson v2","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
@@ -1474,7 +1480,7 @@
         {"name":"Razor Rainbow Statics","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc","weapon"]},
         {"name":"Razor Rizelencer","categoryId":"heroes","styleLabel":null,"slots":["head","weapon","arms","misc"]},
         {"name":"Razor Silver Rrevenant","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc","weapon"]},
-        {"name":"Razor Stormlord Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc","weapon","belt","shield"]},
+        {"name":"Razor Stormlord","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc","weapon"]},
         {"name":"Razor Voidstorm Asylum","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc","weapon"]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -1553,6 +1559,7 @@
         {"name":"Shadow Fiend Arms of Desolation","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
         {"name":"Shadow Fiend Avice Mod","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend Black","categoryId":"heroes","styleLabel":null,"slots":["wings","misc","arms","head","shoulder"]},
+        {"name":"Shadow Fiend Black White","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","wings"]},
         {"name":"Shadow Fiend Desolation","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","shoulder"]},
         {"name":"Shadow Fiend Eternal Harvest","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend Eternal Harvest","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
@@ -1683,6 +1690,7 @@
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Pink Spell Radius","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Snapfire Desert Ardalan","categoryId":"heroes","styleLabel":null,"slots":["arms","head","mount","weapon"]},
         {"name":"Snapfire Whippersnapper","categoryId":"heroes","styleLabel":null,"slots":["arms","head","mount","weapon"]},
@@ -1850,6 +1858,7 @@
         {"name":"Terrorblade Fire","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Terrorblade Foulfell Corruptor","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Terrorblade Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","wings"]},
+        {"name":"Terrorblade Load Out Rubiline","categoryId":"heroes","styleLabel":null,"slots":["head","wings"]},
         {"name":"Terrorblade Rictus Blade","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
         {"name":"Terrorblade Rictus Blood","categoryId":"heroes","styleLabel":null,"slots":["wings","weapon","misc","head","arms"]},
         {"name":"Terrorblade Rictus Manta","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
