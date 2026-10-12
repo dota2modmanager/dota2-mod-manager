@@ -1,6 +1,6 @@
 {
   "heroes": 149,
-  "mods": 1547,
+  "mods": 1554,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -693,6 +693,7 @@
         {"name":"Invoker Esl Relics Forge","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Invoker Fate Meridian","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Invoker Jack Daniels","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","shield","belt","legs"]},
         {"name":"Invoker Kid Forge","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Invoker Magus Accord","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
         {"name":"Invoker Magus Apex","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
@@ -801,6 +802,7 @@
         {"name":"Kez 200","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Kez Bersexer","categoryId":"heroes","styleLabel":null,"slots":["belt","head","shoulder","weapon"]},
         {"name":"Kez Captain Anchorbeak","categoryId":"heroes","styleLabel":null,"slots":["belt","head","offhand","shoulder","weapon"]},
+        {"name":"Kez Chicken Gun Napapiri","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","offhand","shoulder","weapon","back"]},
         {"name":"Kez Chickez","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","offhand","shoulder","weapon"]},
         {"name":"Kez Guts Sword","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Kez Nanami Yachiyo Kai","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","offhand","shoulder","weapon","back"]},
@@ -815,6 +817,7 @@
       "name": "Kunkka",
       "mods": [
         {"name":"Immortal Kunkka","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","shoulder","misc","weapon"]},
+        {"name":"Kunkka Frostbloom Sword","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Kunkka Inquisitor Tide","categoryId":"heroes","styleLabel":null,"slots":["misc","legs","head","arms","shoulder","weapon","back","belt"]},
         {"name":"Kunkka Leviathan","categoryId":"heroes","styleLabel":null,"slots":["legs","head","shoulder","misc","weapon"]},
         {"name":"Kunkka Saltworn Mariner","categoryId":"hero-items","styleLabel":"I","slots":["misc","shoulder"]},
@@ -1218,6 +1221,7 @@
       "name": "Nightstalker",
       "mods": [
         {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Night Stalker Dark Oath V2","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","tail","wings","head"]},
         {"name":"Night Stalker Feasts of Forever","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","tail","wings"]},
         {"name":"Night Stalker Frost Walker","categoryId":"heroes","styleLabel":null,"slots":["arms","tail","wings","back","head","legs"]},
         {"name":"Night Stalker Relict","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","tail","wings"]},
@@ -1471,7 +1475,7 @@
         {"name":"Razor Rizelencer","categoryId":"heroes","styleLabel":null,"slots":["head","weapon","arms","misc"]},
         {"name":"Razor Silver Rrevenant","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc","weapon"]},
         {"name":"Razor Stormlord Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc","weapon","belt","shield"]},
-        {"name":"Razor Voidstorm Asylum","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc","weapon","belt","shield"]},
+        {"name":"Razor Voidstorm Asylum","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc","weapon"]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -1665,6 +1669,7 @@
         {"name":"Ghosty Slark","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Immortal Slark","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Barracuda Re","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Slark Collector Fire","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Shadow in the Deep","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Tellurian Trespass","categoryId":"heroes","styleLabel":"Style I","slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Tellurian Trespass","categoryId":"heroes","styleLabel":"Style II","slots":["arms","back","head","shoulder","weapon"]},
@@ -1722,6 +1727,8 @@
         {"name":"Spectre Arcana","categoryId":"heroes","styleLabel":"Style II","slots":["misc","head","weapon","wings"]},
         {"name":"Spectre Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings"]},
         {"name":"Spectre Phantom Advent","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings"]},
+        {"name":"Spectre Phantom Advent V1","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings","shoulder","legs"]},
+        {"name":"Spectre Phantom Ascension V2","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings","shoulder","legs"]},
         {"name":"Spectre Shadowveil","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings"]},
         {"name":"Spectre Toxin","categoryId":"heroes","styleLabel":null,"slots":["misc","wings","weapon","head"]}
       ]

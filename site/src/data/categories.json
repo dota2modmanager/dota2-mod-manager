@@ -4,6 +4,14 @@
       "id": "hero-items",
       "mods": [
         {
+          "name": "Kunkka Frostbloom Sword",
+          "styleLabel": null,
+          "image": {"src":"/mods/kunkka-frostbloom-sword.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1791785647
+        },
+        {
           "name": "Zeleniy Techies",
           "styleLabel": null,
           "image": {"src":"/mods/zeleniy-techies.webp","width":854,"height":480},
@@ -846,6 +854,30 @@
     {
       "id": "hero-sounds",
       "mods": [
+        {
+          "name": "Doom Sematary Sound",
+          "styleLabel": null,
+          "image": {"src":"/mods/doom-sematary-sound.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791785647
+        },
+        {
+          "name": "Wraith King Papich",
+          "styleLabel": null,
+          "image": {"src":"/mods/wraith-king-papich-2.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791785647
+        },
+        {
+          "name": "Wraith King Papich Pamparam",
+          "styleLabel": null,
+          "image": {"src":"/mods/wraith-king-papich-pamparam.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791785647
+        },
         {
           "name": "Spirit Breaker Bash Kachal",
           "styleLabel": null,
