@@ -49234,6 +49234,12 @@
         "materials/models/items/marci/marci_boundless_potential_shoulder": ["cube_metal_grey_cube_png_4ad31b49.vtex_c","default_fresnelwarprim_d9279d65_fresnelwarpcolor_png_dec62b2b.vtex_c","marci_boundless_potential_shoulder.vmat_c","marci_boundless_potential_shoulder_color_png_a554d279.vtex_c","marci_boundless_potential_shoulder_detailmask_png_124f869a.vtex_c","marci_boundless_potential_shoulder_normal_png_a88c6d58.vtex_c","marci_boundless_potential_shoulder_specmask_png_a170ccad.vtex_c","ti11_cache_marci_detail_png_c7835aee.vtex_c","windranger_arcana_diffusewarp_png_db698313.vtex_c"],
         "models/heroes/marci": ["marci_back.vmdl_c","marci_base.vmdl_c","marci_costume.vmdl_c","marci_head.vmdl_c","marci_shoulders.vmdl_c"],
         "models/heroes/marci/marci_base": ["marci_base_msh_vmorf.vtex_c"],
+        "models/items/marci/boltheart_brawler": ["boltheart_bodyguard.vmdl_c"],
+        "models/items/marci/boltheart_brawler_armor": ["boltheart_brawler_armor.vmdl_c"],
+        "models/items/marci/boltheart_brawler_back": ["boltheart_brawler_back.vmdl_c"],
+        "models/items/marci/boltheart_brawler_head": ["boltheart_brawler_head.vmdl_c"],
+        "models/items/marci/boltheart_brawler_shoulder": ["boltheart_brawler_shoulder.vmdl_c"],
+        "particles/econ/items/marci/boltheart_brawler": ["boltheart_brawler_armor_arm_l_ambient.vpcf_c","boltheart_brawler_armor_arm_r_ambient.vpcf_c","boltheart_brawler_back_ambient.vpcf_c","boltheart_brawler_table_ambient.vpcf_c","boltheart_brawler_table_spawn.vpcf_c"],
         "particles/econ/items/marci/marci_boundless_potential": ["marci_boundless_potential_shoulder.vpcf_c"],
         "particles/models/items/marci/marci_boundless_potential_shoulder/marci_boundless_potential_shoulder": ["marci_boundless_potential_shoulder_fxmesh_a_l.vsnap_c","marci_boundless_potential_shoulder_fxmesh_a_r.vsnap_c","marci_boundless_potential_shoulder_fxmesh_b_l.vsnap_c","marci_boundless_potential_shoulder_fxmesh_b_r.vsnap_c"]
       }

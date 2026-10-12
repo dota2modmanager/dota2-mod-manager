@@ -1048,7 +1048,7 @@
         {"name":"Marci Silent Comedy","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
         {"name":"Nude Marci","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
         {"name":"Snowing Marci","categoryId":"heroes","styleLabel":null,"slots":["shoulder","misc","head","back"]},
-        {"name":"Vodolaska Marci","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]}
+        {"name":"Vodolaska Marci","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","arms"]}
       ]
     },
     "mars": {

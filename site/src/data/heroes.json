@@ -8583,6 +8583,16 @@
           "date": 1771195327
         },
         {
+          "name": "Vodolaska Marci",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","misc","head","shoulder","arms"],
+          "image": {"src":"/mods/vodolaska-marci.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1791826056
+        },
+        {
           "name": "Cosmic Cartographer",
           "categoryId": "heroes",
           "styleLabel": null,
@@ -8691,16 +8701,6 @@
           "author": "Darkness",
           "authorUrl": "https://t.me/Darkness_Logovo",
           "date": 1766145785
-        },
-        {
-          "name": "Vodolaska Marci",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","misc","head","shoulder"],
-          "image": {"src":"/mods/vodolaska-marci.webp","width":854,"height":480},
-          "author": "rasstegai",
-          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
-          "date": 1791203792
         },
         {
           "name": "Maid Marci",
