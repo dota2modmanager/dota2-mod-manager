@@ -1259,45 +1259,11 @@
       ]
     },
     {
-      "id": "shaders",
-      "mods": [
-        {"name":"Simple Minify Shader","styleLabel":null,"image":{"src":"/mods/simple-minify-shader.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772737722},
-        {"name":"Wave Lite Purple","styleLabel":null,"image":{"src":"/mods/wave-lite-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771195327},
-        {"name":"Cartoon Shader","styleLabel":null,"image":{"src":"/mods/cartoon-shader.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769364096},
-        {"name":"Purple Outline","styleLabel":null,"image":{"src":"/mods/purple-outline.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769364096},
-        {"name":"Diretide (outline)","styleLabel":null,"image":{"src":"/mods/diretide-outline.webp","width":601,"height":301},"author":null,"authorUrl":null,"date":1767325919},
-        {"name":"Aghanim Green Lite","styleLabel":null,"image":{"src":"/mods/aghanim-green-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
-        {"name":"Aghanim Purple Lite","styleLabel":null,"image":{"src":"/mods/aghanim-purple-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
-        {"name":"Aghanim Red Lite","styleLabel":null,"image":{"src":"/mods/aghanim-red-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
-        {"name":"Aghanim White Lite","styleLabel":null,"image":{"src":"/mods/aghanim-white-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
-        {"name":"Aghanim Yellow Lite","styleLabel":null,"image":{"src":"/mods/aghanim-yellow-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
-        {"name":"Aghanim Green","styleLabel":null,"image":{"src":"/mods/aghanim-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Aghanim Peach","styleLabel":null,"image":{"src":"/mods/aghanim-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Aghanim Purple","styleLabel":null,"image":{"src":"/mods/aghanim-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Aghanim Red","styleLabel":null,"image":{"src":"/mods/aghanim-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Aghanim White","styleLabel":null,"image":{"src":"/mods/aghanim-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Ancient","styleLabel":null,"image":{"src":"/mods/ancient.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1766992965},
-        {"name":"Haze","styleLabel":null,"image":{"src":"/mods/haze.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1766992965},
-        {"name":"Purple Ancient","styleLabel":null,"image":{"src":"/mods/purple-ancient.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1766992965},
-        {"name":"Wave Green","styleLabel":null,"image":{"src":"/mods/wave-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Aqua","styleLabel":null,"image":{"src":"/mods/wave-lite-aqua.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Blue","styleLabel":null,"image":{"src":"/mods/wave-lite-blue.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Green","styleLabel":null,"image":{"src":"/mods/wave-lite-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Peach","styleLabel":null,"image":{"src":"/mods/wave-lite-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Pink","styleLabel":null,"image":{"src":"/mods/wave-lite-pink.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Red","styleLabel":null,"image":{"src":"/mods/wave-lite-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite White","styleLabel":null,"image":{"src":"/mods/wave-lite-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Yellow","styleLabel":null,"image":{"src":"/mods/wave-lite-yellow.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Peach","styleLabel":null,"image":{"src":"/mods/wave-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Purple","styleLabel":null,"image":{"src":"/mods/wave-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Red","styleLabel":null,"image":{"src":"/mods/wave-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave White","styleLabel":null,"image":{"src":"/mods/wave-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Aghanim Labyrinth","styleLabel":null,"image":{"src":"/mods/aghanim-labyrinth.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282}
-      ]
-    },
-    {
       "id": "couriers",
       "mods": [
+        {"name":"Pandora The Packwyrm","styleLabel":"Style I","image":{"src":"/mods/pandora-the-packwyrm-style-i.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1791877099},
+        {"name":"Pandora The Packwyrm","styleLabel":"Golden","image":{"src":"/mods/pandora-the-packwyrm-golden.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1791877099},
+        {"name":"Shroomy","styleLabel":null,"image":{"src":"/mods/shroomy.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1791877099},
         {"name":"Baby Roshan The Eternal","styleLabel":null,"image":{"src":"/mods/baby-roshan-the-eternal.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1791389366},
         {"name":"Slobbering Strong Boxhound","styleLabel":null,"image":{"src":"/mods/slobbering-strong-boxhound.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1791389366},
         {
@@ -1349,6 +1315,43 @@
         {"name":"Baby Roshan Crownfall","styleLabel":null,"image":{"src":"/mods/baby-roshan-crownfall.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763698532},
         {"name":"Billy Bounceback","styleLabel":null,"image":{"src":"/mods/billy-bounceback.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763698532},
         {"name":"Waldi the Faithful","styleLabel":null,"image":{"src":"/mods/waldi-the-faithful.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763698532}
+      ]
+    },
+    {
+      "id": "shaders",
+      "mods": [
+        {"name":"Simple Minify Shader","styleLabel":null,"image":{"src":"/mods/simple-minify-shader.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772737722},
+        {"name":"Wave Lite Purple","styleLabel":null,"image":{"src":"/mods/wave-lite-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771195327},
+        {"name":"Cartoon Shader","styleLabel":null,"image":{"src":"/mods/cartoon-shader.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769364096},
+        {"name":"Purple Outline","styleLabel":null,"image":{"src":"/mods/purple-outline.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769364096},
+        {"name":"Diretide (outline)","styleLabel":null,"image":{"src":"/mods/diretide-outline.webp","width":601,"height":301},"author":null,"authorUrl":null,"date":1767325919},
+        {"name":"Aghanim Green Lite","styleLabel":null,"image":{"src":"/mods/aghanim-green-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim Purple Lite","styleLabel":null,"image":{"src":"/mods/aghanim-purple-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim Red Lite","styleLabel":null,"image":{"src":"/mods/aghanim-red-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim White Lite","styleLabel":null,"image":{"src":"/mods/aghanim-white-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim Yellow Lite","styleLabel":null,"image":{"src":"/mods/aghanim-yellow-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim Green","styleLabel":null,"image":{"src":"/mods/aghanim-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim Peach","styleLabel":null,"image":{"src":"/mods/aghanim-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim Purple","styleLabel":null,"image":{"src":"/mods/aghanim-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim Red","styleLabel":null,"image":{"src":"/mods/aghanim-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim White","styleLabel":null,"image":{"src":"/mods/aghanim-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Ancient","styleLabel":null,"image":{"src":"/mods/ancient.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1766992965},
+        {"name":"Haze","styleLabel":null,"image":{"src":"/mods/haze.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1766992965},
+        {"name":"Purple Ancient","styleLabel":null,"image":{"src":"/mods/purple-ancient.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1766992965},
+        {"name":"Wave Green","styleLabel":null,"image":{"src":"/mods/wave-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Aqua","styleLabel":null,"image":{"src":"/mods/wave-lite-aqua.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Blue","styleLabel":null,"image":{"src":"/mods/wave-lite-blue.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Green","styleLabel":null,"image":{"src":"/mods/wave-lite-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Peach","styleLabel":null,"image":{"src":"/mods/wave-lite-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Pink","styleLabel":null,"image":{"src":"/mods/wave-lite-pink.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Red","styleLabel":null,"image":{"src":"/mods/wave-lite-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite White","styleLabel":null,"image":{"src":"/mods/wave-lite-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Yellow","styleLabel":null,"image":{"src":"/mods/wave-lite-yellow.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Peach","styleLabel":null,"image":{"src":"/mods/wave-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Purple","styleLabel":null,"image":{"src":"/mods/wave-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Red","styleLabel":null,"image":{"src":"/mods/wave-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave White","styleLabel":null,"image":{"src":"/mods/wave-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim Labyrinth","styleLabel":null,"image":{"src":"/mods/aghanim-labyrinth.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282}
       ]
     },
     {
@@ -1508,6 +1511,29 @@
       ]
     },
     {
+      "id": "huds",
+      "mods": [
+        {"name":"Fluttershy Hud","styleLabel":null,"image":{"src":"/mods/fluttershy-hud.webp","width":854,"height":480},"author":"raddan","authorUrl":"https://t.me/munet_kynu","date":1791877099},
+        {"name":"Default Lite Hud","styleLabel":null,"image":{"src":"/mods/default-lite-hud.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
+        {"name":"Smaller Hud","styleLabel":null,"image":{"src":"/mods/smaller-hud.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791365613},
+        {"name":"One Piece Hud","styleLabel":null,"image":{"src":"/mods/one-piece-hud.webp","width":854,"height":480},"author":"Harlord","authorUrl":"https://t.me/harlord_mods","date":1791253117},
+        {"name":"Horror Black Hud","styleLabel":null,"image":{"src":"/mods/horror-black-hud.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1789988579},
+        {"name":"Gotohouse Hud","styleLabel":null,"image":{"src":"/mods/gotohouse-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789396660},
+        {"name":"Void Hud","styleLabel":null,"image":{"src":"/mods/void-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1789278465},
+        {"name":"Total Black Hud","styleLabel":null,"image":{"src":"/mods/total-black-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789234312},
+        {"name":"Ken Kaneki Hud","styleLabel":null,"image":{"src":"/mods/ken-kaneki-hud.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788726574},
+        {"name":"Anime Hud","styleLabel":null,"image":{"src":"/mods/anime-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788640214},
+        {"name":"Kawaii Hud","styleLabel":null,"image":{"src":"/mods/kawaii-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1788365172},
+        {"name":"Crimson Hud","styleLabel":null,"image":{"src":"/mods/crimson-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788180009},
+        {"name":"Twilight Hud","styleLabel":null,"image":{"src":"/mods/twilight-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1787864667},
+        {"name":"Purple Hud","styleLabel":null,"image":{"src":"/mods/purple-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1787413498},
+        {"name":"White Sora Hud","styleLabel":null,"image":{"src":"/mods/white-sora-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780226470},
+        {"name":"Green Hud","styleLabel":null,"image":{"src":"/mods/green-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1780143296},
+        {"name":"Black Hud","styleLabel":null,"image":{"src":"/mods/black-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1776610659},
+        {"name":"Blue Web Hud","styleLabel":null,"image":{"src":"/mods/blue-web-hud.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776610659}
+      ]
+    },
+    {
       "id": "creep-deny",
       "mods": [
         {"name":"Tidehunter Deny","styleLabel":null,"image":{"src":"/mods/tidehunter-deny.webp","width":854,"height":480},"author":"depex","authorUrl":"https://t.me/depexfx","date":1791610372},
@@ -1527,28 +1553,6 @@
         {"name":"Huh Deny","styleLabel":null,"image":{"src":"/mods/huh-deny.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
         {"name":"lasthit Golden Shards","styleLabel":null,"image":{"src":"/mods/lasthit-golden-shards.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
         {"name":"Soul Deny","styleLabel":null,"image":{"src":"/mods/soul-deny.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282}
-      ]
-    },
-    {
-      "id": "huds",
-      "mods": [
-        {"name":"Default Lite Hud","styleLabel":null,"image":{"src":"/mods/default-lite-hud.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
-        {"name":"Smaller Hud","styleLabel":null,"image":{"src":"/mods/smaller-hud.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791365613},
-        {"name":"One Piece Hud","styleLabel":null,"image":{"src":"/mods/one-piece-hud.webp","width":854,"height":480},"author":"Harlord","authorUrl":"https://t.me/harlord_mods","date":1791253117},
-        {"name":"Horror Black Hud","styleLabel":null,"image":{"src":"/mods/horror-black-hud.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1789988579},
-        {"name":"Gotohouse Hud","styleLabel":null,"image":{"src":"/mods/gotohouse-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789396660},
-        {"name":"Void Hud","styleLabel":null,"image":{"src":"/mods/void-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1789278465},
-        {"name":"Total Black Hud","styleLabel":null,"image":{"src":"/mods/total-black-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789234312},
-        {"name":"Ken Kaneki Hud","styleLabel":null,"image":{"src":"/mods/ken-kaneki-hud.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788726574},
-        {"name":"Anime Hud","styleLabel":null,"image":{"src":"/mods/anime-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788640214},
-        {"name":"Kawaii Hud","styleLabel":null,"image":{"src":"/mods/kawaii-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1788365172},
-        {"name":"Crimson Hud","styleLabel":null,"image":{"src":"/mods/crimson-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788180009},
-        {"name":"Twilight Hud","styleLabel":null,"image":{"src":"/mods/twilight-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1787864667},
-        {"name":"Purple Hud","styleLabel":null,"image":{"src":"/mods/purple-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1787413498},
-        {"name":"White Sora Hud","styleLabel":null,"image":{"src":"/mods/white-sora-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780226470},
-        {"name":"Green Hud","styleLabel":null,"image":{"src":"/mods/green-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1780143296},
-        {"name":"Black Hud","styleLabel":null,"image":{"src":"/mods/black-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1776610659},
-        {"name":"Blue Web Hud","styleLabel":null,"image":{"src":"/mods/blue-web-hud.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776610659}
       ]
     },
     {
@@ -2006,6 +2010,29 @@
       ]
     },
     {
+      "id": "ranks",
+      "mods": [
+        {"name":"Chess Ranks","styleLabel":null,"image":{"src":"/mods/chess-ranks.webp","width":854,"height":480},"author":"raddan","authorUrl":"https://t.me/munet_kynu","date":1791877099},
+        {"name":"Battle Icons","styleLabel":null,"image":{"src":"/mods/battle-icons.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790263250},
+        {"name":"Immortal Ranks","styleLabel":null,"image":{"src":"/mods/immortal-ranks.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1789988579},
+        {"name":"Normis Rank Icons","styleLabel":null,"image":{"src":"/mods/normis-rank-icons.webp","width":854,"height":480},"author":"palekid666","authorUrl":"https://t.me/ubiycasmerty","date":1781873451},
+        {"name":"Umbrella Medals","styleLabel":null,"image":{"src":"/mods/umbrella-medals.webp","width":854,"height":480},"author":"kebabmaker","authorUrl":null,"date":1777387078},
+        {
+          "name": "Slates of the Damned",
+          "styleLabel": null,
+          "image": {"src":"/mods/slates-of-the-damned.webp","width":854,"height":480},
+          "author": "ya_lyosha",
+          "authorUrl": "https://www.twitch.tv/ya_lyosha",
+          "date": 1775190022
+        },
+        {"name":"Azur Lane Medals","styleLabel":null,"image":{"src":"/mods/azur-lane-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768005424},
+        {"name":"Bear Medals","styleLabel":null,"image":{"src":"/mods/bear-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764543573},
+        {"name":"Void Medals","styleLabel":null,"image":{"src":"/mods/void-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764541283},
+        {"name":"Flaming Medals","styleLabel":null,"image":{"src":"/mods/flaming-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763129369},
+        {"name":"Imperial Medals","styleLabel":null,"image":{"src":"/mods/imperial-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763129369}
+      ]
+    },
+    {
       "id": "roshan",
       "mods": [
         {"name":"Eternal Roshan","styleLabel":null,"image":{"src":"/mods/eternal-roshan.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1791372524},
@@ -2034,28 +2061,6 @@
         {"name":"DM Mono","styleLabel":null,"image":{"src":"/mods/dm-mono.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770937816},
         {"name":"Divagon","styleLabel":null,"image":{"src":"/mods/divagon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770389710},
         {"name":"Monocraft","styleLabel":null,"image":{"src":"/mods/monocraft.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770383220}
-      ]
-    },
-    {
-      "id": "ranks",
-      "mods": [
-        {"name":"Battle Icons","styleLabel":null,"image":{"src":"/mods/battle-icons.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790263250},
-        {"name":"Immortal Ranks","styleLabel":null,"image":{"src":"/mods/immortal-ranks.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1789988579},
-        {"name":"Normis Rank Icons","styleLabel":null,"image":{"src":"/mods/normis-rank-icons.webp","width":854,"height":480},"author":"palekid666","authorUrl":"https://t.me/ubiycasmerty","date":1781873451},
-        {"name":"Umbrella Medals","styleLabel":null,"image":{"src":"/mods/umbrella-medals.webp","width":854,"height":480},"author":"kebabmaker","authorUrl":null,"date":1777387078},
-        {
-          "name": "Slates of the Damned",
-          "styleLabel": null,
-          "image": {"src":"/mods/slates-of-the-damned.webp","width":854,"height":480},
-          "author": "ya_lyosha",
-          "authorUrl": "https://www.twitch.tv/ya_lyosha",
-          "date": 1775190022
-        },
-        {"name":"Azur Lane Medals","styleLabel":null,"image":{"src":"/mods/azur-lane-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768005424},
-        {"name":"Bear Medals","styleLabel":null,"image":{"src":"/mods/bear-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764543573},
-        {"name":"Void Medals","styleLabel":null,"image":{"src":"/mods/void-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764541283},
-        {"name":"Flaming Medals","styleLabel":null,"image":{"src":"/mods/flaming-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763129369},
-        {"name":"Imperial Medals","styleLabel":null,"image":{"src":"/mods/imperial-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763129369}
       ]
     },
     {

@@ -1,6 +1,6 @@
 {
-  "heroes": 149,
-  "mods": 1566,
+  "heroes": 150,
+  "mods": 1568,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -729,6 +729,7 @@
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },
+    "io": {"name":"Io","mods":[{"name":"Io Verity","categoryId":"heroes","styleLabel":null,"slots":["misc"]}]},
     "jakiro": {
       "name": "Jakiro",
       "mods": [
@@ -1862,6 +1863,7 @@
         {"name":"Terrorblade Foulfell Corruptor","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Terrorblade Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","wings"]},
         {"name":"Terrorblade Load Out Rubiline","categoryId":"heroes","styleLabel":null,"slots":["head","wings"]},
+        {"name":"Terrorblade Really Black","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
         {"name":"Terrorblade Rictus Blade","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
         {"name":"Terrorblade Rictus Blood","categoryId":"heroes","styleLabel":null,"slots":["wings","weapon","misc","head","arms"]},
         {"name":"Terrorblade Rictus Manta","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
