@@ -4,6 +4,15 @@
       "id": "hero-items",
       "mods": [
         {
+          "name": "Invoker Esl Relics Forge",
+          "styleLabel": null,
+          "image": {"src":"/mods/invoker-esl-relics-forge.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {"name":"Invoker Kid Forge","styleLabel":null,"image":{"src":"/mods/invoker-kid-forge.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {
           "name": "Kunkka Frostbloom Sword",
           "styleLabel": null,
           "image": {"src":"/mods/kunkka-frostbloom-sword.webp","width":854,"height":480},
@@ -116,15 +125,6 @@
           "authorUrl": "https://t.me/harlord_mods",
           "date": 1790216964
         },
-        {
-          "name": "Invoker Esl Relics Forge",
-          "styleLabel": null,
-          "image": {"src":"/mods/invoker-esl-relics-forge.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1790202267
-        },
-        {"name":"Invoker Kid Forge","styleLabel":null,"image":{"src":"/mods/invoker-kid-forge.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790202267},
         {"name":"Invoker Frostbloom","styleLabel":null,"image":{"src":"/mods/invoker-frostbloom.webp","width":854,"height":480},"author":"Harlord","authorUrl":"https://t.me/harlord_mods","date":1790170612},
         {
           "name": "Lycan Frostbloom Claws",
@@ -757,7 +757,9 @@
     {
       "id": "backgrounds",
       "mods": [
-        {"name":"Anime","styleLabel":null,"image":{"src":"/mods/anime.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791469531},
+        {"name":"Anime","styleLabel":null,"image":{"src":"/mods/anime.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Dark Tree","styleLabel":null,"image":{"src":"/mods/dark-tree.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Sematary","styleLabel":null,"image":{"src":"/mods/sematary.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
         {
           "name": "Gwardjan Tad Dawl Perfezzjoni",
           "styleLabel": null,
@@ -770,8 +772,6 @@
         {"name":"Xvii","styleLabel":null,"image":{"src":"/mods/xvii.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790709328},
         {"name":"Bliss","styleLabel":null,"image":{"src":"/mods/bliss.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
         {"name":"Taghmel Ix-Xita","styleLabel":null,"image":{"src":"/mods/taghmel-ix-xita.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737},
-        {"name":"Dark Tree","styleLabel":null,"image":{"src":"/mods/dark-tree.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790299521},
-        {"name":"Sematary","styleLabel":null,"image":{"src":"/mods/sematary.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790299521},
         {"name":"Amor Endscreen","styleLabel":null,"image":{"src":"/mods/amor-endscreen.webp","width":1280,"height":720},"author":"SuperStas0","authorUrl":"https://t.me/SuperStas0","date":1786250017},
         {"name":"Illidan Stormrage","styleLabel":null,"image":{"src":"/mods/illidan-stormrage.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783266827},
         {"name":"Beneath the Seventh","styleLabel":null,"image":{"src":"/mods/beneath-the-seventh.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782990543},
@@ -855,6 +855,30 @@
       "id": "hero-sounds",
       "mods": [
         {
+          "name": "Doom Sematary Sound",
+          "styleLabel": null,
+          "image": {"src":"/mods/doom-sematary-sound.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {
+          "name": "Wraith King Papich",
+          "styleLabel": null,
+          "image": {"src":"/mods/wraith-king-papich-2.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {
+          "name": "Wraith King Papich Pamparam",
+          "styleLabel": null,
+          "image": {"src":"/mods/wraith-king-papich-pamparam.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {
           "name": "Dattebayo Puck",
           "styleLabel": null,
           "image": {"src":"/mods/dattebayo-puck.webp","width":1280,"height":720},
@@ -869,30 +893,6 @@
           "author": "Tom4ik",
           "authorUrl": "https://steamcommunity.com/profiles/76561199427406113/",
           "date": 1791794920
-        },
-        {
-          "name": "Doom Sematary Sound",
-          "styleLabel": null,
-          "image": {"src":"/mods/doom-sematary-sound.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791785647
-        },
-        {
-          "name": "Wraith King Papich",
-          "styleLabel": null,
-          "image": {"src":"/mods/wraith-king-papich-2.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791785647
-        },
-        {
-          "name": "Wraith King Papich Pamparam",
-          "styleLabel": null,
-          "image": {"src":"/mods/wraith-king-papich-pamparam.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791785647
         },
         {
           "name": "Spirit Breaker Bash Kachal",
@@ -1513,11 +1513,11 @@
     {
       "id": "huds",
       "mods": [
+        {"name":"Horror Black Hud","styleLabel":null,"image":{"src":"/mods/horror-black-hud.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
         {"name":"Fluttershy Hud","styleLabel":null,"image":{"src":"/mods/fluttershy-hud.webp","width":854,"height":480},"author":"raddan","authorUrl":"https://t.me/munet_kynu","date":1791877099},
         {"name":"Default Lite Hud","styleLabel":null,"image":{"src":"/mods/default-lite-hud.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
         {"name":"Smaller Hud","styleLabel":null,"image":{"src":"/mods/smaller-hud.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791365613},
         {"name":"One Piece Hud","styleLabel":null,"image":{"src":"/mods/one-piece-hud.webp","width":854,"height":480},"author":"Harlord","authorUrl":"https://t.me/harlord_mods","date":1791253117},
-        {"name":"Horror Black Hud","styleLabel":null,"image":{"src":"/mods/horror-black-hud.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1789988579},
         {"name":"Gotohouse Hud","styleLabel":null,"image":{"src":"/mods/gotohouse-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789396660},
         {"name":"Void Hud","styleLabel":null,"image":{"src":"/mods/void-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1789278465},
         {"name":"Total Black Hud","styleLabel":null,"image":{"src":"/mods/total-black-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789234312},
@@ -1558,6 +1558,7 @@
     {
       "id": "other",
       "mods": [
+        {"name":"All Grandmasters","styleLabel":null,"image":{"src":"/mods/all-grandmasters.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
         {"name":"Pink Spell Radius","styleLabel":null,"image":{"src":"/mods/pink-spell-radius.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791821609},
         {
           "name": "Unlock Hidden Profile Animations",
@@ -1575,7 +1576,6 @@
           "authorUrl": "https://t.me/hanfukj",
           "date": 1790818573
         },
-        {"name":"All Grandmasters","styleLabel":null,"image":{"src":"/mods/all-grandmasters.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790030268},
         {"name":"Black Click","styleLabel":null,"image":{"src":"/mods/black-click.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1788815201},
         {"name":"Light Brown Click","styleLabel":null,"image":{"src":"/mods/light-brown-click.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788762686},
         {"name":"Sapphire Click","styleLabel":null,"image":{"src":"/mods/sapphire-click.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788762686},
@@ -1743,36 +1743,12 @@
       "id": "herofx",
       "mods": [
         {
-          "name": "Snapfire Blue Icon",
-          "styleLabel": null,
-          "image": {"src":"/mods/snapfire-blue-icon.webp","width":1280,"height":960},
-          "author": "Tom4ik",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199427406113/",
-          "date": 1791794920
-        },
-        {
-          "name": "Terrorblade Purple Spell",
-          "styleLabel": null,
-          "image": {"src":"/mods/terrorblade-purple-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791699101
-        },
-        {
-          "name": "Terrorblade Yellow Spell",
-          "styleLabel": null,
-          "image": {"src":"/mods/terrorblade-yellow-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791699101
-        },
-        {
           "name": "Terrorblade Black Spell",
           "styleLabel": null,
           "image": {"src":"/mods/terrorblade-black-spell.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791636264
+          "date": 1791908483
         },
         {
           "name": "Terrorblade Blue Spell",
@@ -1780,7 +1756,7 @@
           "image": {"src":"/mods/terrorblade-blue-spell.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791636264
+          "date": 1791908483
         },
         {
           "name": "Terrorblade Green Spell Icons",
@@ -1788,7 +1764,7 @@
           "image": {"src":"/mods/terrorblade-green-spell-icons.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791636264
+          "date": 1791908483
         },
         {
           "name": "Terrorblade Orange Spell",
@@ -1796,7 +1772,7 @@
           "image": {"src":"/mods/terrorblade-orange-spell.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791636264
+          "date": 1791908483
         },
         {
           "name": "Terrorblade Pink Spell",
@@ -1804,7 +1780,15 @@
           "image": {"src":"/mods/terrorblade-pink-spell.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791636264
+          "date": 1791908483
+        },
+        {
+          "name": "Terrorblade Purple Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-purple-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
         },
         {
           "name": "Terrorblade White Icons",
@@ -1812,7 +1796,23 @@
           "image": {"src":"/mods/terrorblade-white-icons.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791612287
+          "date": 1791908483
+        },
+        {
+          "name": "Terrorblade Yellow Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-yellow-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {
+          "name": "Snapfire Blue Icon",
+          "styleLabel": null,
+          "image": {"src":"/mods/snapfire-blue-icon.webp","width":1280,"height":960},
+          "author": "Tom4ik",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199427406113/",
+          "date": 1791794920
         },
         {
           "name": "Ancient Apparition Shatterblast",
@@ -1882,34 +1882,34 @@
     {
       "id": "parts",
       "mods": [
-        {"name":"Tcoaal Search Bar","styleLabel":null,"image":{"src":"/mods/tcoaal-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791699101},
-        {"name":"Gotic","styleLabel":null,"image":{"src":"/mods/gotic.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791636264},
-        {"name":"Kaneki Mach V1.2","styleLabel":null,"image":{"src":"/mods/kaneki-mach-v1-2.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791627251},
-        {"name":"Kaneki Mach","styleLabel":null,"image":{"src":"/mods/kaneki-mach.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791612287},
-        {"name":"Larger Minimap","styleLabel":null,"image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
-        {"name":"Grey Minimap","styleLabel":null,"image":{"src":"/mods/grey-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790825298},
-        {"name":"Grey Search Bar","styleLabel":null,"image":{"src":"/mods/grey-search-bar.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
-        {"name":"Larger Timer","styleLabel":null,"image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
-        {"name":"Windows Xp Top Bar","styleLabel":null,"image":{"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
-        {"name":"Hypergamy Search Bar","styleLabel":null,"image":{"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737},
-        {
-          "name": "Sematary Search Bar",
-          "styleLabel": null,
-          "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1790213331
-        },
-        {"name":"Black Top Bar","styleLabel":null,"image":{"src":"/mods/black-top-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790084006},
-        {"name":"Kaneki Search Bar","styleLabel":null,"image":{"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790084006},
+        {"name":"Black Top Bar","styleLabel":null,"image":{"src":"/mods/black-top-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Gotic","styleLabel":null,"image":{"src":"/mods/gotic.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Kaneki Mach","styleLabel":null,"image":{"src":"/mods/kaneki-mach.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Kaneki Mach V1.2","styleLabel":null,"image":{"src":"/mods/kaneki-mach-v1-2.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Kaneki Search Bar","styleLabel":null,"image":{"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
         {
           "name": "Scolopendra Search Bar",
           "styleLabel": null,
           "image": {"src":"/mods/scolopendra-search-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1790084006
-        }
+          "date": 1791908483
+        },
+        {
+          "name": "Sematary Search Bar",
+          "styleLabel": null,
+          "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {"name":"Tcoaal Search Bar","styleLabel":null,"image":{"src":"/mods/tcoaal-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Larger Minimap","styleLabel":null,"image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
+        {"name":"Grey Minimap","styleLabel":null,"image":{"src":"/mods/grey-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790825298},
+        {"name":"Grey Search Bar","styleLabel":null,"image":{"src":"/mods/grey-search-bar.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {"name":"Larger Timer","styleLabel":null,"image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {"name":"Windows Xp Top Bar","styleLabel":null,"image":{"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
+        {"name":"Hypergamy Search Bar","styleLabel":null,"image":{"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737}
       ]
     },
     {
@@ -2012,9 +2012,9 @@
     {
       "id": "ranks",
       "mods": [
+        {"name":"Immortal Ranks","styleLabel":null,"image":{"src":"/mods/immortal-ranks.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
         {"name":"Chess Ranks","styleLabel":null,"image":{"src":"/mods/chess-ranks.webp","width":854,"height":480},"author":"raddan","authorUrl":"https://t.me/munet_kynu","date":1791877099},
         {"name":"Battle Icons","styleLabel":null,"image":{"src":"/mods/battle-icons.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790263250},
-        {"name":"Immortal Ranks","styleLabel":null,"image":{"src":"/mods/immortal-ranks.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1789988579},
         {"name":"Normis Rank Icons","styleLabel":null,"image":{"src":"/mods/normis-rank-icons.webp","width":854,"height":480},"author":"palekid666","authorUrl":"https://t.me/ubiycasmerty","date":1781873451},
         {"name":"Umbrella Medals","styleLabel":null,"image":{"src":"/mods/umbrella-medals.webp","width":854,"height":480},"author":"kebabmaker","authorUrl":null,"date":1777387078},
         {
@@ -2126,8 +2126,8 @@
     {
       "id": "pings",
       "mods": [
-        {"name":"Love Ping","styleLabel":null,"image":{"src":"/mods/love-ping.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790213331},
-        {"name":"Love Ping II","styleLabel":null,"image":{"src":"/mods/love-ping-ii.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1790213331},
+        {"name":"Love Ping","styleLabel":null,"image":{"src":"/mods/love-ping.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Love Ping II","styleLabel":null,"image":{"src":"/mods/love-ping-ii.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
         {
           "name": "Skeleton Black Ping",
           "styleLabel": null,

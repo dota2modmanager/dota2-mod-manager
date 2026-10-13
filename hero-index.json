@@ -1,6 +1,6 @@
 {
-  "heroes": 150,
-  "mods": 1568,
+  "heroes": 151,
+  "mods": 1566,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -300,6 +300,7 @@
         {"name":"Crystal Maiden Ice Blossom","categoryId":"hero-items","styleLabel":"Golden","slots":["weapon"]},
         {"name":"Crystal Maiden Ice Blossom","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Crystal Maiden Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["back","misc","shoulder","weapon","head"]},
+        {"name":"Crystal Maiden Narwolf Nebula","categoryId":"heroes","styleLabel":null,"slots":["back","misc","shoulder","weapon","head"]},
         {"name":"Crystal Maiden Tamamo no Mae","categoryId":"heroes","styleLabel":null,"slots":["misc","back","shoulder","weapon","head","arms","tail","legs"]},
         {"name":"Crystal Maiden Yulsarias Glacier","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Crystal Maiden Yulsarias Mantle","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
@@ -421,10 +422,10 @@
       "name": "Doom",
       "mods": [
         {"name":"Doom Fallen Khorne","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon","shoulder","tail","wings"]},
-        {"name":"Doom Jeanne Alter","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon","shoulder","tail","wings","back","misc"]},
-        {"name":"Doom Sematary","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon","shoulder","tail","wings"]}
+        {"name":"Doom Jeanne Alter","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon","shoulder","tail","wings","back","misc"]}
       ]
     },
+    "doom_bringer": {"name":"Doom","mods":[{"name":"Doom Sematary","categoryId":"heroes","styleLabel":null,"slots":["wings","tail","shoulder","arms","weapon","head","belt"]}]},
     "dragon_knight": {
       "name": "Dragon Knight",
       "mods": [
@@ -490,8 +491,6 @@
         {"name":"Cosmic Earthshaker","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc"]},
         {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Earthshaker Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc"]},
-        {"name":"Earthshaker Arcana Reborn","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
-        {"name":"Earthshaker Arcana V2 Reborn","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
         {"name":"Earthshaker Aura Derevni","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
         {"name":"Earthshaker Blink Dagger","categoryId":"item-effects","styleLabel":null,"slots":[]},
         {"name":"Earthshaker Burning Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc"]},
@@ -500,8 +499,6 @@
         {"name":"Earthshaker Cosmic Arcana V2","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
         {"name":"Earthshaker Deep Magma","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head","weapon"]},
         {"name":"Earthshaker Gold Blink Dagger","categoryId":"item-effects","styleLabel":null,"slots":[]},
-        {"name":"Earthshaker Planetfall Burning","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
-        {"name":"Earthshaker Planetfall Reborn","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
         {"name":"Earthshaker Purple Arcana","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc"]},
         {"name":"Earthshaker Red Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","belt"]},
         {"name":"Earthshaker Tectonic","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head","weapon"]}
@@ -530,7 +527,7 @@
         {"name":"Enchantress Darkwood Witness","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
         {"name":"Enchantress Diretide Shimmer","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
         {"name":"Enchantress Golubika","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
-        {"name":"Enchantress Sematary","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Enchantress Sematary","categoryId":"heroes","styleLabel":null,"slots":["weapon","misc","head","arms"]},
         {"name":"Enchantress Shiro","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","belt","shoulder","legs"]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -617,7 +614,13 @@
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },
-    "gyro": {"name":"Gyrocopter","mods":[{"name":"Gyrocopter Kongou","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","back","offhand","weapon"]}]},
+    "gyro": {
+      "name": "Gyrocopter",
+      "mods": [
+        {"name":"Gyrocopter Kongou","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","back","offhand","weapon"]},
+        {"name":"Krutoi Gyrocopter","categoryId":"heroes","styleLabel":null,"slots":["misc"]}
+      ]
+    },
     "gyrocopter": {
       "name": "Gyrocopter",
       "mods": [
@@ -686,7 +689,7 @@
         {"name":"Dark Reaper Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Homelander Invoker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
         {"name":"Ice Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
-        {"name":"Invoker Blackguard Magus","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Invoker Blackguard Magus","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","misc","back","arms"]},
         {"name":"Invoker Bloody Wizard","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Dark Artistry","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
         {"name":"Invoker Dark Artistry v2","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
@@ -784,7 +787,7 @@
         {"name":"Keeper of the Light Northlight Illuminance","categoryId":"herofx","styleLabel":null,"slots":[]},
         {"name":"Keeper of the Light Prominence","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Keeper of the Light Renegade","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
-        {"name":"Keeper of the Light Sematary","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
+        {"name":"Keeper of the Light Sematary","categoryId":"heroes","styleLabel":null,"slots":["weapon","legs","mount","head"]},
         {"name":"Keeper of the Light Tamamo","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","legs","weapon","arms","belt"]},
         {"name":"Keeper of the Light Waitureally","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
         {"name":"Keeper of the Light Wings of Daybreak","categoryId":"hero-items","styleLabel":null,"slots":["mount"]},
@@ -993,7 +996,7 @@
         {"name":"Luna Moon Stalker","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Moonfall","categoryId":"hero-items","styleLabel":"Golden","slots":["shield"]},
         {"name":"Luna Moonfall","categoryId":"hero-items","styleLabel":null,"slots":["shield"]},
-        {"name":"Luna Sematary Rainbow Bridge III","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
+        {"name":"Luna Sematary Rainbow Bridge III","categoryId":"heroes","styleLabel":null,"slots":["weapon","shoulder","shield","mount","head"]},
         {"name":"Luna Twilight Schism","categoryId":"hero-items","styleLabel":"Crimson","slots":["weapon"]},
         {"name":"Luna Twilight Schism","categoryId":"hero-items","styleLabel":"Golden","slots":["weapon"]},
         {"name":"Luna Twilight Schism","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
@@ -1550,8 +1553,8 @@
       "mods": [
         {"name":"Cardboard Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["head"]},
         {"name":"Cursed Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
-        {"name":"Diabolical Shadow Fiend","categoryId":"heroes","styleLabel":"Desolation","slots":["arms","head","shoulder"]},
-        {"name":"Diabolical Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
+        {"name":"Diabolical Shadow Fiend","categoryId":"heroes","styleLabel":"Desolation","slots":["shoulder","head","arms"]},
+        {"name":"Diabolical Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","arms"]},
         {"name":"Emerald Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["head","misc","arms","shoulder"]},
         {"name":"Ghost Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["shoulder","arms","head"]},
         {"name":"Old Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["wings","head","misc","arms","shoulder"]},
@@ -1884,12 +1887,12 @@
       "name": "Tidehunter",
       "mods": [
         {"name":"Gopo Tidehunter","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms"]},
+        {"name":"Tidehunter Arcana","categoryId":"heroes","styleLabel":"Style I","slots":["misc","belt","arms","weapon"]},
+        {"name":"Tidehunter Arcana","categoryId":"heroes","styleLabel":"Style II","slots":["misc","belt","arms","weapon"]},
+        {"name":"Tidehunter Arcana","categoryId":"heroes","styleLabel":"Style III","slots":["misc","belt","arms","weapon"]},
         {"name":"Tidehunter Golden Diretide","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms"]},
-        {"name":"Tidehunter Hammer Of Maeldrawn","categoryId":"heroes","styleLabel":null,"slots":["misc","belt"]},
         {"name":"Tidehunter Insatiable Seas","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms"]},
-        {"name":"Tidehunter Maw Of Megalodon","categoryId":"heroes","styleLabel":null,"slots":["misc","belt"]},
         {"name":"Tidehunter Squid Girl","categoryId":"heroes","styleLabel":null,"slots":["weapon","arms","head","belt","back","misc","offhand"]},
-        {"name":"Tidehunter Unfathomable Hunger","categoryId":"heroes","styleLabel":null,"slots":["misc","belt"]},
         {"name":"Tidehunter Vetmo","categoryId":"heroes","styleLabel":null,"slots":["misc","belt","arms","shield","head","weapon","back","offhand"]}
       ]
     },
@@ -2190,7 +2193,7 @@
         {"name":"Wraith King Blistering Crimson","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Wraith King Grim Destiny","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
         {"name":"Wraith King Itsuka Kotori","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","shoulder","weapon","arms"]},
-        {"name":"Wraith King Papich","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
+        {"name":"Wraith King Papich","categoryId":"heroes","styleLabel":null,"slots":["weapon","shoulder","head","misc","back"]},
         {"name":"Wraith King Papizi","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","weapon"]},
         {"name":"Wraith King Pizdec","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
         {"name":"Wraith King Radiance","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
