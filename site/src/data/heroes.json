@@ -810,6 +810,36 @@
       "slug": "terrorblade",
       "mods": [
         {
+          "name": "Terrorblade Arcana Blades",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","weapon","wings","back"],
+          "image": {"src":"/mods/terrorblade-arcana-blades.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791922171
+        },
+        {
+          "name": "Terrorblade Arcana Manta",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","weapon","wings","back"],
+          "image": {"src":"/mods/terrorblade-arcana-manta.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791922171
+        },
+        {
+          "name": "Terrorblade Arcana Skadi",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","weapon","wings","back"],
+          "image": {"src":"/mods/terrorblade-arcana-skadi.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791922171
+        },
+        {
           "name": "Rictus Ripper Terrorblade",
           "categoryId": "heroes",
           "styleLabel": null,
@@ -818,36 +848,6 @@
           "author": "rasstegai",
           "authorUrl": "https://steamcommunity.com/id/rasstegai/",
           "date": 1791372988
-        },
-        {
-          "name": "Terrorblade Arcana Blades",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head","weapon","wings"],
-          "image": {"src":"/mods/terrorblade-arcana-blades.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791549623
-        },
-        {
-          "name": "Terrorblade Arcana Manta",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head","weapon","wings"],
-          "image": {"src":"/mods/terrorblade-arcana-manta.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791549623
-        },
-        {
-          "name": "Terrorblade Arcana Skadi",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head","weapon","wings"],
-          "image": {"src":"/mods/terrorblade-arcana-skadi.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791549623
         },
         {
           "name": "Terrorblade Rictus Blade",
@@ -998,6 +998,16 @@
           "author": "depex",
           "authorUrl": "https://t.me/depexfx",
           "date": 1788287617
+        },
+        {
+          "name": "Terrorblade Legacy Green",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head"],
+          "image": {"src":"/mods/terrorblade-legacy-green.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1791922171
         },
         {
           "name": "Terrorblade Fire",
@@ -4794,6 +4804,183 @@
       ]
     },
     {
+      "id": "dazzle",
+      "name": "Dazzle",
+      "slug": "dazzle",
+      "mods": [
+        {
+          "name": "Dazzle Graveman",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","shoulder","weapon","back","arms","legs"],
+          "image": {"src":"/mods/dazzle-graveman.webp","width":854,"height":480},
+          "author": "александр",
+          "authorUrl": "https://t.me/+VY-_XaaDg00wYmI6",
+          "date": 1789742735
+        },
+        {
+          "name": "Bloody Dazzle",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","shoulder","weapon","back"],
+          "image": {"src":"/mods/bloody-dazzle.webp","width":854,"height":480},
+          "author": "Haruma",
+          "authorUrl": "https://t.me/DotA_2_Mods",
+          "date": 1778331617
+        },
+        {
+          "name": "Dazzle Darkclaw",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","shoulder","weapon","back"],
+          "image": {"src":"/mods/dazzle-darkclaw.webp","width":854,"height":480},
+          "author": "Haruma",
+          "authorUrl": "https://t.me/DotA_2_Mods",
+          "date": 1778331617
+        },
+        {
+          "name": "Dazzle Immortal",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","shoulder","weapon"],
+          "image": {"src":"/mods/dazzle-immortal.webp","width":854,"height":480},
+          "author": "hizu",
+          "authorUrl": "https://steamcommunity.com/id/digitalsilenc3/",
+          "date": 1791922171
+        },
+        {
+          "name": "Dazzle Lifeless Devotion",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","shoulder","weapon"],
+          "image": {"src":"/mods/dazzle-lifeless-devotion.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1784244448
+        },
+        {
+          "name": "Dazzle Needlepoint Necromance",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","shoulder","weapon"],
+          "image": {"src":"/mods/dazzle-needlepoint-necromance.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1777011527
+        },
+        {
+          "name": "Dazzle Gates of Nothl",
+          "categoryId": "hero-items",
+          "styleLabel": "Crimson",
+          "slots": ["misc"],
+          "image": {"src":"/mods/dazzle-gates-of-nothl-crimson.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1777011527
+        },
+        {
+          "name": "Dazzle Gates of Nothl",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/dazzle-gates-of-nothl.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1777011527
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "io",
       "name": "Io",
       "slug": "io",
@@ -5456,169 +5643,169 @@
       ]
     },
     {
-      "id": "dazzle",
-      "name": "Dazzle",
-      "slug": "dazzle",
+      "id": "earthshaker",
+      "name": "Earthshaker",
+      "slug": "earthshaker",
       "mods": [
         {
-          "name": "Dazzle Graveman",
+          "name": "Earthshaker Deep Magma",
           "categoryId": "heroes",
           "styleLabel": null,
-          "slots": ["misc","shoulder","weapon","back","arms","legs"],
-          "image": {"src":"/mods/dazzle-graveman.webp","width":854,"height":480},
-          "author": "александр",
-          "authorUrl": "https://t.me/+VY-_XaaDg00wYmI6",
-          "date": 1789742735
+          "slots": ["belt","arms","misc","head","weapon"],
+          "image": {"src":"/mods/earthshaker-deep-magma.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1775124421
         },
         {
-          "name": "Bloody Dazzle",
+          "name": "Earthshaker Tectonic",
           "categoryId": "heroes",
           "styleLabel": null,
-          "slots": ["misc","shoulder","weapon","back"],
-          "image": {"src":"/mods/bloody-dazzle.webp","width":854,"height":480},
-          "author": "Haruma",
-          "authorUrl": "https://t.me/DotA_2_Mods",
-          "date": 1778331617
+          "slots": ["belt","arms","misc","head","weapon"],
+          "image": {"src":"/mods/earthshaker-tectonic.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791253117
         },
         {
-          "name": "Dazzle Darkclaw",
+          "name": "Earthshaker Arcana Planetfall",
           "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","shoulder","weapon","back"],
-          "image": {"src":"/mods/dazzle-darkclaw.webp","width":854,"height":480},
-          "author": "Haruma",
-          "authorUrl": "https://t.me/DotA_2_Mods",
-          "date": 1778331617
+          "styleLabel": "Burning",
+          "slots": ["belt","arms","misc","head"],
+          "image": {"src":"/mods/earthshaker-arcana-planetfall-burning.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791922171
         },
         {
-          "name": "Dazzle Lifeless Devotion",
+          "name": "Earthshaker Arcana Planetfall",
+          "categoryId": "heroes",
+          "styleLabel": "Celestial",
+          "slots": ["belt","arms","misc","head"],
+          "image": {"src":"/mods/earthshaker-arcana-planetfall-celestial.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791922171
+        },
+        {
+          "name": "Earthshaker Aura Derevni",
           "categoryId": "heroes",
           "styleLabel": null,
-          "slots": ["misc","shoulder","weapon"],
-          "image": {"src":"/mods/dazzle-lifeless-devotion.webp","width":1280,"height":720},
+          "slots": ["belt","arms","misc","head"],
+          "image": {"src":"/mods/earthshaker-aura-derevni.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1791342818
+        },
+        {
+          "name": "Earthshaker Cosmic Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc","head"],
+          "image": {"src":"/mods/earthshaker-cosmic-arcana.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791821609
+        },
+        {
+          "name": "Earthshaker Cosmic Arcana V2",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc","head"],
+          "image": {"src":"/mods/earthshaker-cosmic-arcana-v2.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791821609
+        },
+        {
+          "name": "Cosmic Earthshaker",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc"],
+          "image": {"src":"/mods/cosmic-earthshaker.webp","width":854,"height":480},
           "author": null,
           "authorUrl": null,
-          "date": 1784244448
+          "date": 1777007944
         },
         {
-          "name": "Dazzle Needlepoint Necromance",
+          "name": "Earthshaker Arcana",
           "categoryId": "heroes",
           "styleLabel": null,
-          "slots": ["misc","shoulder","weapon"],
-          "image": {"src":"/mods/dazzle-needlepoint-necromance.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1777011527
+          "slots": ["arms","head","misc"],
+          "image": {"src":"/mods/earthshaker-arcana.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1789836072
         },
         {
-          "name": "Dazzle Gates of Nothl",
+          "name": "Earthshaker Burning Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","misc"],
+          "image": {"src":"/mods/earthshaker-burning-arcana.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1789836072
+        },
+        {
+          "name": "Earthshaker Purple Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","misc"],
+          "image": {"src":"/mods/earthshaker-purple-arcana.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1774882421
+        },
+        {
+          "name": "Earthshaker Red Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","belt"],
+          "image": {"src":"/mods/earthshaker-red-arcana.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1756539017
+        },
+        {
+          "name": "Darkness Crimson Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/darkness-crimson-naga-siren.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1776456530
+        },
+        {
+          "name": "Earthshaker Carrot",
           "categoryId": "hero-items",
-          "styleLabel": "Crimson",
-          "slots": ["misc"],
-          "image": {"src":"/mods/dazzle-gates-of-nothl-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1777011527
-        },
-        {
-          "name": "Dazzle Gates of Nothl",
-          "categoryId": "hero-items",
           "styleLabel": null,
           "slots": ["misc"],
-          "image": {"src":"/mods/dazzle-gates-of-nothl.webp","width":854,"height":480},
+          "image": {"src":"/mods/earthshaker-carrot.webp","width":854,"height":480},
           "author": null,
           "authorUrl": null,
-          "date": 1777011527
+          "date": 1768637892
         },
         {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
+          "name": "Earthshaker Blink Dagger",
+          "categoryId": "item-effects",
           "styleLabel": null,
           "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
+          "image": {"src":"/mods/earthshaker-blink-dagger.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
         },
         {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
+          "name": "Earthshaker Gold Blink Dagger",
+          "categoryId": "item-effects",
           "styleLabel": null,
           "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
+          "image": {"src":"/mods/earthshaker-gold-blink-dagger.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1789310506
         }
       ]
     },
@@ -8270,153 +8457,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "earthshaker",
-      "name": "Earthshaker",
-      "slug": "earthshaker",
-      "mods": [
-        {
-          "name": "Earthshaker Deep Magma",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head","weapon"],
-          "image": {"src":"/mods/earthshaker-deep-magma.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1775124421
-        },
-        {
-          "name": "Earthshaker Tectonic",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head","weapon"],
-          "image": {"src":"/mods/earthshaker-tectonic.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791253117
-        },
-        {
-          "name": "Earthshaker Aura Derevni",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head"],
-          "image": {"src":"/mods/earthshaker-aura-derevni.webp","width":854,"height":480},
-          "author": "твавт",
-          "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1791342818
-        },
-        {
-          "name": "Earthshaker Cosmic Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head"],
-          "image": {"src":"/mods/earthshaker-cosmic-arcana.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791821609
-        },
-        {
-          "name": "Earthshaker Cosmic Arcana V2",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc","head"],
-          "image": {"src":"/mods/earthshaker-cosmic-arcana-v2.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791821609
-        },
-        {
-          "name": "Cosmic Earthshaker",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc"],
-          "image": {"src":"/mods/cosmic-earthshaker.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1777007944
-        },
-        {
-          "name": "Earthshaker Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","misc"],
-          "image": {"src":"/mods/earthshaker-arcana.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1789836072
-        },
-        {
-          "name": "Earthshaker Burning Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","misc"],
-          "image": {"src":"/mods/earthshaker-burning-arcana.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1789836072
-        },
-        {
-          "name": "Earthshaker Purple Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","misc"],
-          "image": {"src":"/mods/earthshaker-purple-arcana.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1774882421
-        },
-        {
-          "name": "Earthshaker Red Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","belt"],
-          "image": {"src":"/mods/earthshaker-red-arcana.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1756539017
-        },
-        {
-          "name": "Darkness Crimson Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/darkness-crimson-naga-siren.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1776456530
-        },
-        {
-          "name": "Earthshaker Carrot",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/earthshaker-carrot.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1768637892
-        },
-        {
-          "name": "Earthshaker Blink Dagger",
-          "categoryId": "item-effects",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/earthshaker-blink-dagger.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1789310506
-        },
-        {
-          "name": "Earthshaker Gold Blink Dagger",
-          "categoryId": "item-effects",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/earthshaker-gold-blink-dagger.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1789310506
         }
       ]
     },
