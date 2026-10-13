@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@astrojs/sitemap": "^3.7.4",
-    "astro": "^7.3.5",
+    "astro": "^7.3.8",
     "wrangler": "^4.146.0"
   }
 }
