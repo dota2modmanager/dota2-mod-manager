@@ -1,6 +1,6 @@
 {
   "heroes": 149,
-  "mods": 1563,
+  "mods": 1566,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -837,6 +837,7 @@
       "name": "Templar Assassin",
       "mods": [
         {"name":"Immortal Templar Assassin","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head","misc"]},
+        {"name":"Templar Assassin Black","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head","misc","arms","weapon"]},
         {"name":"Templar Assassin PlayBoy","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head"]},
         {"name":"Templar Assassin Royal Squire","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head","weapon"]},
         {"name":"Templar Assassin Whisper Gates","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head"]}
@@ -985,6 +986,7 @@
         {"name":"Luna Cosmic","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon","misc"]},
         {"name":"Luna Crescent Wheel","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Dark Moonfall","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
+        {"name":"Luna Diretide Shimmer","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Golden Immortal Stalker","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Midnight Stalker","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
         {"name":"Luna Moon Stalker","categoryId":"heroes","styleLabel":null,"slots":["head","mount","shield","shoulder","weapon"]},
@@ -1677,6 +1679,7 @@
         {"name":"Immortal Slark","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Barracuda Re","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Collector Fire","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Slark Fernando","categoryId":"heroes","styleLabel":null,"slots":["head","weapon","misc","arms","shoulder"]},
         {"name":"Slark Shadow in the Deep","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Tellurian Trespass","categoryId":"heroes","styleLabel":"Style I","slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Tellurian Trespass","categoryId":"heroes","styleLabel":"Style II","slots":["arms","back","head","shoulder","weapon"]},
