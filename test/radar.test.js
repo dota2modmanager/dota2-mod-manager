@@ -151,14 +151,14 @@ test('a secret whose service did not answer is a look, not a token to replace', 
   const { evaluate } = await load();
   const r = evaluate({
     pulls: [], issues: [], codeScanning: [], privateReporting: true, workflows: [],
-    credentials: { YANDEX_OAUTH_TOKEN: { what: 'y', kind: 'oauth-token', expires: '2027-08-15', rotate: 'oauth.yandex.com' } },
+    credentials: { YANDEX_OAUTH_TOKEN: { what: 'y', kind: 'oauth-token', expires: '2027-08-15', rotate: 'issue a new token' } },
     credentialStatus: { YANDEX_OAUTH_TOKEN: { state: 'unreachable', detail: 'the service did not answer: fetch failed' } },
     searchReportAt: ago(24), goodFirstIssues: 3, communityHealth: 100, decisionsReviewed: '2026-09-20',
   }, NOW);
   assert.deepEqual(r.red, []);
   assert.equal(r.overdue.length, 0);
   assert.deepEqual(r.look.map((l) => l.title), ['YANDEX_OAUTH_TOKEN could not be checked']);
-  assert.ok(!r.look[0].detail.includes('oauth.yandex.com'), 'it does not send anybody to issue a new token');
+  assert.ok(!r.look[0].detail.includes('issue a new token'), 'it does not send anybody to replace the token');
 });
 
 test('Scorecard findings are one line to look at, and CodeQL alerts stay decisions', async () => {
