@@ -47,6 +47,7 @@ async function renderSettings(fresh = false): Promise<void> {
     dotaPath: s.dotaGamePath || '',
     dotaValid: Boolean(s.dotaPathValid),
     cache: `${fmtMB(cacheSize)} MB`,
+    proxy: s.downloadProxy || '',
     vrf: vrf ? { ready: Boolean(vrf.ready), size: `${fmtMB(vrf.ready ? vrf.installedBytes : vrf.downloadBytes)} MB` } : null,
     catalogUpdated: fetchedAt ? new Date(fetchedAt).toLocaleString(window.i18nLocale()) : '—',
     adult: adultShown(),
@@ -116,6 +117,22 @@ const actions: SettingsActions = {
     toast(L`Кэш очищен`);
     renderSettings();
   },
+  proxySave: async (value) => {
+    try {
+      const next = await window.api.settings.set('downloadProxy', value.trim());
+      state.settings = next;
+      toast(value.trim() ? L`Прокси сохранён` : L`Прокси отключён`);
+      renderSettings();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : L`Не удалось сохранить прокси`, 'error');
+    }
+  },
+  proxyTest: async (value) => {
+    const result = await window.api.settings.testProxy(value.trim());
+    if (result?.error) toast(result.error, 'error');
+    else toast(value.trim() ? L`Прокси работает` : L`Прямое подключение включено`);
+  },
+  proxyClear: async () => actions.proxySave(''),
   tool: async (install) => {
     if (install) {
       toast(L`Скачиваю инструмент — это разово`, 'ok', 5000);

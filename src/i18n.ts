@@ -128,6 +128,13 @@ const EN = {
   'Сначала закрой Dota 2 — она держит файлы озвучки открытыми':
     'Close Dota 2 first: it holds the voice files open',
   'HTTP {0} — не удалось скачать {1}': 'HTTP {0} — could not download {1}',
+  'Неверный адрес прокси': 'Invalid proxy address',
+  'Прокси должен быть адресом': 'The proxy must be an address',
+  'Прокси должен использовать HTTP или HTTPS': 'The proxy must use HTTP or HTTPS',
+  'Укажи прокси в формате http://host:port': 'Enter a proxy as http://host:port',
+  'Порт прокси должен быть от 1 до 65535': 'The proxy port must be from 1 to 65535',
+  'Прокси не ответил успешно': 'The proxy did not return a successful response',
+  'Не удалось подключиться через прокси': 'Could not connect through the proxy',
   'Не удалось скачать {0}: {1}': 'Could not download {0}: {1}',
   '{0}: скачанный файл не совпадает с тем, что опубликовал автор мода. Попробуй позже': '{0}: what downloaded is not what the mod\'s author published. Try again later',
   'Эта возможность временно отключена': 'This is switched off for now',
