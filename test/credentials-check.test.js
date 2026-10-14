@@ -95,11 +95,27 @@ test('a deleted webhook, a missing secret and a refused deploy key are each name
 test('a check that throws is a failed secret, and no secret value survives into the detail', async () => {
   const { checkAll } = await load();
   const env = { BING_API_KEY: 'bing-key-1234567890' };
-  const io = { http: async (url) => { throw new Error(`fetch failed for ${url}`); } };
+  const io = { http: async (url) => { throw new Error(`unexpected answer from ${url}?key=${env.BING_API_KEY}`); } };
   const results = await checkAll(['BING_API_KEY'], env, io);
   assert.equal(results.BING_API_KEY.state, 'failed');
   assert.doesNotMatch(results.BING_API_KEY.detail, /bing-key-1234567890/);
   assert.match(results.BING_API_KEY.detail, /\*\*\*/);
+});
+
+test('a service that never answers leaves the secret unchecked, not failed', async () => {
+  /* Yandex Webmaster stopped answering GitHub's runners on 2026-10-11, and every morning the radar
+     said, red, to issue a new token that had never been the problem. */
+  const { checkAll } = await load();
+  const env = { YANDEX_OAUTH_TOKEN: 'y-token-1234567890' };
+  for (const err of [new TypeError('fetch failed'), Object.assign(new TypeError('fetch failed'), { cause: { code: 'UND_ERR_CONNECT_TIMEOUT' } }), new Error('getaddrinfo ENOTFOUND api.webmaster.yandex.net')]) {
+    const results = await checkAll(['YANDEX_OAUTH_TOKEN'], env, { http: async () => { throw err; } });
+    assert.equal(results.YANDEX_OAUTH_TOKEN.state, 'unreachable', err.message);
+    assert.match(results.YANDEX_OAUTH_TOKEN.detail, /did not answer/);
+    assert.doesNotMatch(results.YANDEX_OAUTH_TOKEN.detail, /y-token-1234567890/);
+  }
+  // an answer that refuses the token is still the token's fault
+  const refused = await checkAll(['YANDEX_OAUTH_TOKEN'], env, { http: async () => ({ status: 401, json: null, text: '' }) });
+  assert.equal(refused.YANDEX_OAUTH_TOKEN.state, 'failed');
 });
 
 test('the zone id is read from r2.yml, where the purge that needs it runs', async () => {

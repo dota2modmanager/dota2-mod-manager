@@ -183,7 +183,14 @@ export const CHECKS = {
   },
 };
 
-/** Runs every named check. A check that throws is a failed secret, never a crashed run. */
+/* A request that never got an answer: no connection, no name, no reply in time. That says the
+   service could not be reached from the runner and nothing about the secret, so it is not reported
+   as a secret to replace. Yandex Webmaster stopped answering GitHub's runners on 2026-10-11 and the
+   radar told the maintainer, red, every morning, to issue a new token that was never the problem. */
+const UNANSWERED = /fetch failed|ECONNRESET|ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|UND_ERR_CONNECT_TIMEOUT|UND_ERR_SOCKET|timed? ?out|aborted/i;
+
+/** Runs every named check. A check that throws is a failed secret, never a crashed run, unless
+ * it threw because the service never answered: that is "unreachable". */
 export async function checkAll(names, env, io) {
   const results = {};
   for (const name of names) {
@@ -195,7 +202,10 @@ export async function checkAll(names, env, io) {
     try {
       results[name] = await check(env, io);
     } catch (err) {
-      results[name] = failed(`the check itself failed: ${err.message}`);
+      const why = `${err.message}${err.cause && err.cause.code ? ` (${err.cause.code})` : ''}`;
+      results[name] = UNANSWERED.test(why)
+        ? { state: 'unreachable', detail: `the service did not answer: ${why}` }
+        : failed(`the check itself failed: ${why}`);
     }
     results[name].detail = scrub(results[name].detail, env);
   }

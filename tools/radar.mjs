@@ -540,6 +540,11 @@ export function evaluate(data, now = Date.now(), policy = POLICY) {
       r.red.push({ title: `${name} no longer works`, detail: `${check.detail}. To replace it: ${s.rotate}`, overdue: true });
       continue;
     }
+    // the service never answered, so nothing is known about the secret: worth a look, not a rotation
+    if (check && check.state === 'unreachable') {
+      r.look.push({ title: `${name} could not be checked`, detail: `${check.detail}; the secret may be fine, and the job that uses it will hit the same wall`, overdue: false });
+      continue;
+    }
     if (check && check.state === 'missing') {
       /* A secret marked optional in the registry is one the job that reads it can do without: it
          says so and skips. That is a decision for whoever can create the key, not a breakage to
