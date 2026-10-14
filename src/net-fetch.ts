@@ -1,6 +1,7 @@
 // A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a
 // failure noted against its host, and the first good answer returned.
 import { stoodDown, noteFailure, noteSuccess, entriesFor, liveOrder } from './net-mirrors.ts';
+import { downloadProxyFetchInit } from './download-proxy.ts';
 
 const ATTEMPTS_PER_MIRROR = 2;
 
@@ -41,7 +42,11 @@ export async function fetchMirrored(url: string, {
       const host = candidate.host;
       if (stoodDown(host)) continue;
       try {
-        const res = await fetch(candidate.url, { headers, signal: AbortSignal.timeout(HEAD_TIMEOUT_MS) });
+        const res = await fetch(candidate.url, {
+          headers,
+          signal: AbortSignal.timeout(HEAD_TIMEOUT_MS),
+          ...downloadProxyFetchInit(),
+        } as RequestInit & { dispatcher?: unknown });
         if (!res.ok && res.status !== 206) {
           // 404 is the file, not the mirror: another mirror of the same repo will not have it
           if (res.status === 404) { onMirror(candidate); return res; }

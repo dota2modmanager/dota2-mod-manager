@@ -58,7 +58,8 @@
   },
   "dependencies": {
     "adm-zip": "^0.6.1",
-    "electron-updater": "^6.3.9"
+    "electron-updater": "^6.3.9",
+    "undici": "^7.30.0"
   },
   "build": {
     "appId": "com.thefleece.dota2modmanager",
