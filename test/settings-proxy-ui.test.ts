@@ -8,7 +8,11 @@ import { ProxyControl } from '../renderer/settings/ProxyControl.ts';
 const globals = globalThis as typeof globalThis & {
   L: (strings: TemplateStringsArray, ...values: unknown[]) => string;
 };
-globals.L = (strings, ...values) => strings.reduce((out, text, i) => out + text + (values[i] ?? ''), '');
+globals.L = ((strings: TemplateStringsArray, ...values: unknown[]) =>
+  Array.from(strings).reduce(
+    (out: string, text: string, i: number) => out + text + (values[i] ?? ''),
+    '',
+  )) as typeof globals.L;
 
 test('proxy settings control renders the input and actions', () => {
   const html = renderToStaticMarkup(createElement(ProxyControl, {

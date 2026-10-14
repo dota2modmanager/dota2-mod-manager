@@ -53,12 +53,12 @@ test('the dependencies it names are the dependencies package.json declares', () 
   const ships = Object.keys(pkg.dependencies ?? {});
   const builds = Object.keys(pkg.devDependencies ?? {});
 
-  // The entry names every one of them and says which two reach a user's machine. One more
+  // The entry names every one of them and says which three reach a user's machine. One more
   // arriving without the paragraph changing is exactly the drift this catches.
   for (const name of [...ships, ...builds]) {
     assert.ok(doc.includes(`\`${name}\``), `DECISIONS.md does not mention the dependency ${name}`);
   }
-  assert.equal(ships.length, 2, `the entry says the app ships two dependencies, package.json declares ${ships.length}`);
+  assert.equal(ships.length, 3, `the entry says the app ships three dependencies, package.json declares ${ships.length}`);
   assert.equal(builds.length, 13, `the entry says thirteen devDependencies in all, package.json declares ${builds.length}`);
 });
 

@@ -34,6 +34,7 @@ the code, not in this page.
 | [`src/diagnostics.ts`](#srcdiagnosticsts) | A support report a user can send instead of a round of screenshots: Dota's own path and |
 | [`src/discord-auth.ts`](#srcdiscord-authts) | Sign in with Discord, without a server of our own. |
 | [`src/discord-presence.ts`](#srcdiscord-presencets) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
+| [`src/download-proxy.ts`](#srcdownload-proxyts) | The optional HTTP/HTTPS route for app downloads, kept separate from Electron's browser session |
 | [`src/electron.ts`](#srcelectronts) | Electron's main-process API, asked for at the moment it is used. |
 | [`src/error-text.ts`](#srcerror-textts) | What a caught error says, as one line of text. |
 | [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
@@ -1074,6 +1075,59 @@ What Discord shows: two lines of text and up to two buttons.
 
 ```ts
 export class DiscordPresence
+```
+
+_No description in the source._
+
+## src/download-proxy.ts
+
+The optional HTTP/HTTPS route for app downloads, kept separate from Electron's browser session
+so catalog, archive, toolchain and update requests can share one tested transport.
+
+### `DownloadProxyResult`
+
+```ts
+export type DownloadProxyResult =
+```
+
+_No description in the source._
+
+### `validateDownloadProxy`
+
+```ts
+export function validateDownloadProxy(value: unknown): DownloadProxyResult
+```
+
+Validate the user-facing value without putting the address into an error message.
+
+### `setDownloadProxy`
+
+```ts
+export function setDownloadProxy(value: string | null): void
+```
+
+_No description in the source._
+
+### `downloadProxyFetchInit`
+
+```ts
+export function downloadProxyFetchInit(): { dispatcher?: ProxyAgent }
+```
+
+_No description in the source._
+
+### `closeDownloadProxy`
+
+```ts
+export function closeDownloadProxy(): void
+```
+
+_No description in the source._
+
+### `testDownloadProxy`
+
+```ts
+export async function testDownloadProxy(value: string, fetchImpl: typeof fetch = globalThis.fetch): Promise<{ ok: true } | { error: string }>
 ```
 
 _No description in the source._
@@ -4141,6 +4195,8 @@ Hands on from [`src/net-mirrors.ts`](#srcnet-mirrorsts): `RAW_HOST`, `FAIL_THRES
 Hands on from [`src/net-fetch.ts`](#srcnet-fetchts): `fetchMirrored`, `fetchText`, `FetchOptions`.
 
 Hands on from [`src/net-download.ts`](#srcnet-downloadts): `sha256`, `downloadFile`, `Download`.
+
+Hands on from [`src/download-proxy.ts`](#srcdownload-proxyts): `closeDownloadProxy`, `setDownloadProxy`, `testDownloadProxy`, `validateDownloadProxy`.
 
 ## src/notice-text.ts
 

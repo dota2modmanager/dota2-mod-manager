@@ -44,9 +44,11 @@ test passed, and nobody could install a mod in 2.6.5 or 2.6.6.
 *Check:* `npm run lint`, `eslint.config.js` for the rule list, and `.github/workflows/test.yml`,
 where it runs before the suite.
 
-### The app ships two dependencies
+### The app ships three dependencies
 
-`adm-zip` and `electron-updater` ship inside it; `electron`, `electron-builder`, `eslint`,
+`adm-zip`, `electron-updater` and `undici` ship inside it. `undici` supplies the supported
+HTTP/HTTPS `ProxyAgent` used when a user configures a download proxy; implementing CONNECT and
+streaming transport here would duplicate a networking client in the app. `electron`, `electron-builder`, `eslint`,
 `typescript`, `fast-check` and `axe-core` only build and check it, and never reach a user's machine. The VPK reader and writer, the
 KeyValues parser, the zip guards, the mirror logic and the update checks are written here,
 because every dependency is a stranger with write access to a game folder on tens of thousands

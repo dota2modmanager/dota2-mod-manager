@@ -1,3 +1,5 @@
+// The optional HTTP/HTTPS route for app downloads, kept separate from Electron's browser session
+// so catalog, archive, toolchain and update requests can share one tested transport.
 import { ProxyAgent } from 'undici';
 
 export type DownloadProxyResult =
@@ -25,7 +27,6 @@ export function validateDownloadProxy(value: unknown): DownloadProxyResult {
   }
   return { ok: true, value: text };
 }
-
 export function setDownloadProxy(value: string | null): void {
   const next = value ? validateDownloadProxy(value) : { ok: true as const, value: null };
   const nextValue = next.ok ? next.value : null;
@@ -56,7 +57,7 @@ export async function testDownloadProxy(value: string, fetchImpl: typeof fetch =
       method: 'HEAD',
       signal: AbortSignal.timeout(10000),
       dispatcher: probe,
-    } as RequestInit & { dispatcher?: unknown });
+    } as unknown as RequestInit & { dispatcher?: unknown });
     if (!response.ok) return { error: 'Прокси не ответил успешно' };
     return { ok: true };
   } catch {
@@ -65,4 +66,3 @@ export async function testDownloadProxy(value: string, fetchImpl: typeof fetch =
     await probe.close();
   }
 }
-
