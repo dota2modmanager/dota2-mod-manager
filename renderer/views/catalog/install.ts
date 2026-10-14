@@ -13,6 +13,7 @@ import type { Mod } from '../../catalog/types.ts';
 import type { QueueEntry } from '../../catalog/queueing.ts';
 import { findModByName } from './lists.ts';
 import { installing } from './state.ts';
+import { isNetworkDownloadError } from '../../catalog/download-error.ts';
 
 interface InstallResult {
   ok?: boolean;
@@ -78,7 +79,10 @@ export async function doInstall(categoryId: string, mod: Mod, styleLabel: string
     r = { error: String((err as Error)?.message || err) };
   }
   installing.delete(k);
-  if (r.error && !r.already) toast(`${catalogName(mod.name)}: ${r.error}`, 'error', 6000);
+  if (r.error && !r.already) {
+    const hint = isNetworkDownloadError(r.error) ? ` — ${L`Возможно, нужно настроить прокси или включить VPN`}` : '';
+    toast(`${catalogName(mod.name)}: ${r.error}${hint}`, 'error', 7000);
+  }
   else if (r.replaced?.length) toast(L`${catalogName(mod.name)} установлен — «${r.replaced.map(n => catalogName(n)).join(', ')}» выключен: курсор в игре может быть только один`, 'warn', 7000);
   // a tool is not installed into anything: it is downloaded, unpacked and waiting in a folder
   else if (!r.error) toast(categoryId === 'tools' ? L`${catalogName(mod.name)} готов` : L`${catalogName(mod.name)} установлен`);

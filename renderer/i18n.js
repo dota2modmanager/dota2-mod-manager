@@ -727,7 +727,7 @@ const EN = {
   'Крупнее': 'Bigger',
   'Сбросить': 'Reset',
   'Перенести сюда': 'Move here',
-  'Кэш загрузок': 'Download cache', 'Прокси загрузок': 'Download proxy', 'Проверить': 'Test', 'Сохранить': 'Save', 'Прокси сохранён': 'Proxy saved', 'Прокси отключён': 'Proxy disabled', 'Прокси работает': 'Proxy works', 'Прямое подключение включено': 'Direct connection enabled', 'Не удалось сохранить прокси': 'Could not save the proxy', 'Прокси используется только для загрузок приложения. Оставь поле пустым для прямого подключения. Не указывай логин и пароль.': 'The proxy is used only for app downloads. Leave the field empty for a direct connection. Do not enter a username or password.',
+  'Кэш загрузок': 'Download cache', 'Прокси загрузок': 'Download proxy', 'Проверить': 'Test', 'Сохранить': 'Save', 'Прокси сохранён': 'Proxy saved', 'Прокси отключён': 'Proxy disabled', 'Прокси работает': 'Proxy works', 'Прямое подключение включено': 'Direct connection enabled', 'Не удалось сохранить прокси': 'Could not save the proxy', 'Прокси используется только для загрузок приложения. Оставь поле пустым для прямого подключения. Не указывай логин и пароль.': 'The proxy is used only for app downloads. Leave the field empty for a direct connection. Do not enter a username or password.', 'Возможно, нужно настроить прокси или включить VPN': 'You may need to configure a proxy or enable a VPN.',
   'Размер': 'Size',
   'Обновлён': 'Updated',
   'Обновить сейчас': 'Refresh now',
