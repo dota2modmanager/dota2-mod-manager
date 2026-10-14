@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1570,
+  "mods": 1572,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1315,6 +1315,7 @@
     "phantom_assassin": {
       "name": "Phantom Assassin",
       "mods": [
+        {"name":"Phantom Assassin Altuxa","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
         {"name":"Phantom Assassin Arcana","categoryId":"heroes","styleLabel":null,"slots":["weapon","back","misc","head","shoulder","belt"]},
         {"name":"Phantom Assassin Arcana V1","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
         {"name":"Phantom Assassin Athena","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
@@ -2195,6 +2196,7 @@
         {"name":"Wraith King Arcana","categoryId":"heroes","styleLabel":"Style I","slots":["back","misc","head","shoulder","weapon"]},
         {"name":"Wraith King Arcana","categoryId":"heroes","styleLabel":"Style II","slots":["back","misc","head","shoulder","weapon"]},
         {"name":"Wraith King Blistering Crimson","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Wraith King Crimson Arcana","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
         {"name":"Wraith King Grim Destiny","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
         {"name":"Wraith King Itsuka Kotori","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","shoulder","weapon","arms"]},
         {"name":"Wraith King Papich","categoryId":"heroes","styleLabel":null,"slots":["weapon","shoulder","head","misc","back"]},

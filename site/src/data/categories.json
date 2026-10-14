@@ -1466,6 +1466,30 @@
       ]
     },
     {
+      "id": "huds",
+      "mods": [
+        {"name":"Noir Rose Hud","styleLabel":null,"image":{"src":"/mods/noir-rose-hud.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791964895},
+        {"name":"Horror Black Hud","styleLabel":null,"image":{"src":"/mods/horror-black-hud.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Fluttershy Hud","styleLabel":null,"image":{"src":"/mods/fluttershy-hud.webp","width":854,"height":480},"author":"raddan","authorUrl":"https://t.me/munet_kynu","date":1791877099},
+        {"name":"Default Lite Hud","styleLabel":null,"image":{"src":"/mods/default-lite-hud.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
+        {"name":"Smaller Hud","styleLabel":null,"image":{"src":"/mods/smaller-hud.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791365613},
+        {"name":"One Piece Hud","styleLabel":null,"image":{"src":"/mods/one-piece-hud.webp","width":854,"height":480},"author":"Harlord","authorUrl":"https://t.me/harlord_mods","date":1791253117},
+        {"name":"Gotohouse Hud","styleLabel":null,"image":{"src":"/mods/gotohouse-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789396660},
+        {"name":"Void Hud","styleLabel":null,"image":{"src":"/mods/void-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1789278465},
+        {"name":"Total Black Hud","styleLabel":null,"image":{"src":"/mods/total-black-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789234312},
+        {"name":"Ken Kaneki Hud","styleLabel":null,"image":{"src":"/mods/ken-kaneki-hud.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788726574},
+        {"name":"Anime Hud","styleLabel":null,"image":{"src":"/mods/anime-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788640214},
+        {"name":"Kawaii Hud","styleLabel":null,"image":{"src":"/mods/kawaii-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1788365172},
+        {"name":"Crimson Hud","styleLabel":null,"image":{"src":"/mods/crimson-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788180009},
+        {"name":"Twilight Hud","styleLabel":null,"image":{"src":"/mods/twilight-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1787864667},
+        {"name":"Purple Hud","styleLabel":null,"image":{"src":"/mods/purple-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1787413498},
+        {"name":"White Sora Hud","styleLabel":null,"image":{"src":"/mods/white-sora-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780226470},
+        {"name":"Green Hud","styleLabel":null,"image":{"src":"/mods/green-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1780143296},
+        {"name":"Black Hud","styleLabel":null,"image":{"src":"/mods/black-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1776610659},
+        {"name":"Blue Web Hud","styleLabel":null,"image":{"src":"/mods/blue-web-hud.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776610659}
+      ]
+    },
+    {
       "id": "music",
       "mods": [
         {"name":"Broodskoe","styleLabel":null,"image":{"src":"/mods/broodskoe.webp","width":854,"height":480},"author":"rasstegai","authorUrl":"https://steamcommunity.com/id/rasstegai/","date":1789902229},
@@ -1511,26 +1535,40 @@
       ]
     },
     {
-      "id": "huds",
+      "id": "parts",
       "mods": [
-        {"name":"Horror Black Hud","styleLabel":null,"image":{"src":"/mods/horror-black-hud.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Fluttershy Hud","styleLabel":null,"image":{"src":"/mods/fluttershy-hud.webp","width":854,"height":480},"author":"raddan","authorUrl":"https://t.me/munet_kynu","date":1791877099},
-        {"name":"Default Lite Hud","styleLabel":null,"image":{"src":"/mods/default-lite-hud.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
-        {"name":"Smaller Hud","styleLabel":null,"image":{"src":"/mods/smaller-hud.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791365613},
-        {"name":"One Piece Hud","styleLabel":null,"image":{"src":"/mods/one-piece-hud.webp","width":854,"height":480},"author":"Harlord","authorUrl":"https://t.me/harlord_mods","date":1791253117},
-        {"name":"Gotohouse Hud","styleLabel":null,"image":{"src":"/mods/gotohouse-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789396660},
-        {"name":"Void Hud","styleLabel":null,"image":{"src":"/mods/void-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1789278465},
-        {"name":"Total Black Hud","styleLabel":null,"image":{"src":"/mods/total-black-hud.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1789234312},
-        {"name":"Ken Kaneki Hud","styleLabel":null,"image":{"src":"/mods/ken-kaneki-hud.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788726574},
-        {"name":"Anime Hud","styleLabel":null,"image":{"src":"/mods/anime-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788640214},
-        {"name":"Kawaii Hud","styleLabel":null,"image":{"src":"/mods/kawaii-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1788365172},
-        {"name":"Crimson Hud","styleLabel":null,"image":{"src":"/mods/crimson-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1788180009},
-        {"name":"Twilight Hud","styleLabel":null,"image":{"src":"/mods/twilight-hud.webp","width":854,"height":480},"author":"lssqqqq","authorUrl":"https://t.me/lssqqqq","date":1787864667},
-        {"name":"Purple Hud","styleLabel":null,"image":{"src":"/mods/purple-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1787413498},
-        {"name":"White Sora Hud","styleLabel":null,"image":{"src":"/mods/white-sora-hud.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780226470},
-        {"name":"Green Hud","styleLabel":null,"image":{"src":"/mods/green-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1780143296},
-        {"name":"Black Hud","styleLabel":null,"image":{"src":"/mods/black-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1776610659},
-        {"name":"Blue Web Hud","styleLabel":null,"image":{"src":"/mods/blue-web-hud.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776610659}
+        {"name":"Bluelock Scoreboard And Shop","styleLabel":null,"image":{"src":"/mods/bluelock-scoreboard-and-shop.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791974606},
+        {"name":"Rose Overcast Search Bar","styleLabel":null,"image":{"src":"/mods/rose-overcast-search-bar.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791974606},
+        {"name":"Noir Rose Top Bar","styleLabel":null,"image":{"src":"/mods/noir-rose-top-bar.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791964895},
+        {"name":"Rose Lycoris Mode Cards","styleLabel":null,"image":{"src":"/mods/rose-lycoris-mode-cards.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791964895},
+        {"name":"Black Top Bar","styleLabel":null,"image":{"src":"/mods/black-top-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Gotic","styleLabel":null,"image":{"src":"/mods/gotic.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Kaneki Mach","styleLabel":null,"image":{"src":"/mods/kaneki-mach.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Kaneki Mach V1.2","styleLabel":null,"image":{"src":"/mods/kaneki-mach-v1-2.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Kaneki Search Bar","styleLabel":null,"image":{"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {
+          "name": "Scolopendra Search Bar",
+          "styleLabel": null,
+          "image": {"src":"/mods/scolopendra-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {
+          "name": "Sematary Search Bar",
+          "styleLabel": null,
+          "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {"name":"Tcoaal Search Bar","styleLabel":null,"image":{"src":"/mods/tcoaal-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Larger Minimap","styleLabel":null,"image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
+        {"name":"Grey Minimap","styleLabel":null,"image":{"src":"/mods/grey-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790825298},
+        {"name":"Grey Search Bar","styleLabel":null,"image":{"src":"/mods/grey-search-bar.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {"name":"Larger Timer","styleLabel":null,"image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {"name":"Windows Xp Top Bar","styleLabel":null,"image":{"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
+        {"name":"Hypergamy Search Bar","styleLabel":null,"image":{"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737}
       ]
     },
     {
@@ -1756,7 +1794,7 @@
           "image": {"src":"/mods/terrorblade-black-spell.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
+          "date": 1791974153
         },
         {
           "name": "Terrorblade Blue Spell",
@@ -1764,7 +1802,7 @@
           "image": {"src":"/mods/terrorblade-blue-spell.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
+          "date": 1791974153
         },
         {
           "name": "Terrorblade Green Spell Icons",
@@ -1772,7 +1810,7 @@
           "image": {"src":"/mods/terrorblade-green-spell-icons.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
+          "date": 1791974153
         },
         {
           "name": "Terrorblade Orange Spell",
@@ -1780,7 +1818,7 @@
           "image": {"src":"/mods/terrorblade-orange-spell.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
+          "date": 1791974153
         },
         {
           "name": "Terrorblade Pink Spell",
@@ -1788,7 +1826,7 @@
           "image": {"src":"/mods/terrorblade-pink-spell.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
+          "date": 1791974153
         },
         {
           "name": "Terrorblade Purple Spell",
@@ -1796,15 +1834,15 @@
           "image": {"src":"/mods/terrorblade-purple-spell.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
+          "date": 1791974153
         },
         {
-          "name": "Terrorblade White Icons",
+          "name": "Terrorblade White Spell",
           "styleLabel": null,
-          "image": {"src":"/mods/terrorblade-white-icons.webp","width":854,"height":480},
+          "image": {"src":"/mods/terrorblade-white-spell.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
+          "date": 1791974153
         },
         {
           "name": "Terrorblade Yellow Spell",
@@ -1812,7 +1850,7 @@
           "image": {"src":"/mods/terrorblade-yellow-spell.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
+          "date": 1791974153
         },
         {
           "name": "Snapfire Blue Icon",
@@ -1888,41 +1926,17 @@
       ]
     },
     {
-      "id": "parts",
-      "mods": [
-        {"name":"Black Top Bar","styleLabel":null,"image":{"src":"/mods/black-top-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Gotic","styleLabel":null,"image":{"src":"/mods/gotic.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Kaneki Mach","styleLabel":null,"image":{"src":"/mods/kaneki-mach.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Kaneki Mach V1.2","styleLabel":null,"image":{"src":"/mods/kaneki-mach-v1-2.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Kaneki Search Bar","styleLabel":null,"image":{"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {
-          "name": "Scolopendra Search Bar",
-          "styleLabel": null,
-          "image": {"src":"/mods/scolopendra-search-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
-        },
-        {
-          "name": "Sematary Search Bar",
-          "styleLabel": null,
-          "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
-        },
-        {"name":"Tcoaal Search Bar","styleLabel":null,"image":{"src":"/mods/tcoaal-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Larger Minimap","styleLabel":null,"image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
-        {"name":"Grey Minimap","styleLabel":null,"image":{"src":"/mods/grey-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790825298},
-        {"name":"Grey Search Bar","styleLabel":null,"image":{"src":"/mods/grey-search-bar.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
-        {"name":"Larger Timer","styleLabel":null,"image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
-        {"name":"Windows Xp Top Bar","styleLabel":null,"image":{"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
-        {"name":"Hypergamy Search Bar","styleLabel":null,"image":{"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737}
-      ]
-    },
-    {
       "id": "pedestal",
       "mods": [
+        {
+          "name": "Arcana Vengeful Spirit Pedest",
+          "styleLabel": null,
+          "image": {"src":"/mods/arcana-vengeful-spirit-pedest.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791964895
+        },
+        {"name":"Pedestal V1","styleLabel":null,"image":{"src":"/mods/pedestal-v1.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791964895},
         {
           "name": "Claszian Apostasy Pedestal",
           "styleLabel": null,
@@ -1995,6 +2009,30 @@
       ]
     },
     {
+      "id": "ranks",
+      "mods": [
+        {"name":"Rose Chinese Medals","styleLabel":null,"image":{"src":"/mods/rose-chinese-medals.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791974606},
+        {"name":"Immortal Ranks","styleLabel":null,"image":{"src":"/mods/immortal-ranks.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Chess Ranks","styleLabel":null,"image":{"src":"/mods/chess-ranks.webp","width":854,"height":480},"author":"raddan","authorUrl":"https://t.me/munet_kynu","date":1791877099},
+        {"name":"Battle Icons","styleLabel":null,"image":{"src":"/mods/battle-icons.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790263250},
+        {"name":"Normis Rank Icons","styleLabel":null,"image":{"src":"/mods/normis-rank-icons.webp","width":854,"height":480},"author":"palekid666","authorUrl":"https://t.me/ubiycasmerty","date":1781873451},
+        {"name":"Umbrella Medals","styleLabel":null,"image":{"src":"/mods/umbrella-medals.webp","width":854,"height":480},"author":"kebabmaker","authorUrl":null,"date":1777387078},
+        {
+          "name": "Slates of the Damned",
+          "styleLabel": null,
+          "image": {"src":"/mods/slates-of-the-damned.webp","width":854,"height":480},
+          "author": "ya_lyosha",
+          "authorUrl": "https://www.twitch.tv/ya_lyosha",
+          "date": 1775190022
+        },
+        {"name":"Azur Lane Medals","styleLabel":null,"image":{"src":"/mods/azur-lane-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768005424},
+        {"name":"Bear Medals","styleLabel":null,"image":{"src":"/mods/bear-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764543573},
+        {"name":"Void Medals","styleLabel":null,"image":{"src":"/mods/void-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764541283},
+        {"name":"Flaming Medals","styleLabel":null,"image":{"src":"/mods/flaming-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763129369},
+        {"name":"Imperial Medals","styleLabel":null,"image":{"src":"/mods/imperial-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763129369}
+      ]
+    },
+    {
       "id": "item-icons",
       "mods": [
         {"name":"Whatsapp Tranquill","styleLabel":null,"image":{"src":"/mods/whatsapp-tranquill.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
@@ -2015,29 +2053,6 @@
           "date": 1763215402
         },
         {"name":"Beer Bottle","styleLabel":null,"image":{"src":"/mods/beer-bottle.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763215402}
-      ]
-    },
-    {
-      "id": "ranks",
-      "mods": [
-        {"name":"Immortal Ranks","styleLabel":null,"image":{"src":"/mods/immortal-ranks.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Chess Ranks","styleLabel":null,"image":{"src":"/mods/chess-ranks.webp","width":854,"height":480},"author":"raddan","authorUrl":"https://t.me/munet_kynu","date":1791877099},
-        {"name":"Battle Icons","styleLabel":null,"image":{"src":"/mods/battle-icons.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790263250},
-        {"name":"Normis Rank Icons","styleLabel":null,"image":{"src":"/mods/normis-rank-icons.webp","width":854,"height":480},"author":"palekid666","authorUrl":"https://t.me/ubiycasmerty","date":1781873451},
-        {"name":"Umbrella Medals","styleLabel":null,"image":{"src":"/mods/umbrella-medals.webp","width":854,"height":480},"author":"kebabmaker","authorUrl":null,"date":1777387078},
-        {
-          "name": "Slates of the Damned",
-          "styleLabel": null,
-          "image": {"src":"/mods/slates-of-the-damned.webp","width":854,"height":480},
-          "author": "ya_lyosha",
-          "authorUrl": "https://www.twitch.tv/ya_lyosha",
-          "date": 1775190022
-        },
-        {"name":"Azur Lane Medals","styleLabel":null,"image":{"src":"/mods/azur-lane-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768005424},
-        {"name":"Bear Medals","styleLabel":null,"image":{"src":"/mods/bear-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764543573},
-        {"name":"Void Medals","styleLabel":null,"image":{"src":"/mods/void-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1764541283},
-        {"name":"Flaming Medals","styleLabel":null,"image":{"src":"/mods/flaming-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763129369},
-        {"name":"Imperial Medals","styleLabel":null,"image":{"src":"/mods/imperial-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763129369}
       ]
     },
     {
