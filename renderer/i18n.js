@@ -561,8 +561,8 @@ const EN = {
     '48 MB, downloaded once into the app\'s own folder. Remove it whenever you like in Settings; nothing breaks.',
   'Не сейчас': 'Not now',
   'Source 2 Viewer установлен — превью модов заработают': 'Source 2 Viewer installed — mod pictures will work now',
-  'Не удалось скачать: {0}. Попробовать снова можно в настройках.':
-    'Could not download it: {0}. Settings has the retry.',
+  'Не удалось скачать: {0}. Попробовать снова можно в настройках.': 'Could not download it: {0}. Settings has the retry.',
+  ' Возможно, нужно настроить прокси или включить VPN.': ' You may need to configure a proxy or enable a VPN.',
   'Запустить': 'Run', 'Папка': 'Folder', 'Скачать': 'Download', 'Открыть сайт': 'Open site',
   'Скачивание…': 'Downloading…', '{0} готов': '{0} ready',
   'Открыть': 'Open', 'Исходники': 'Source code', 'Небезопасно': 'Not safe',

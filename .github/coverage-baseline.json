@@ -558,12 +558,15 @@
       }
     },
     "win32": {
-      "measured": "2026-10-11",
+      "measured": "2026-10-14",
       "files": {
         "renderer/catalog/builder/logic.ts": {
-          "lines": 98.1
+          "lines": 100
         },
         "renderer/catalog/data.ts": {
+          "lines": 100
+        },
+        "renderer/catalog/download-error.ts": {
           "lines": 100
         },
         "renderer/catalog/favorites.ts": {
@@ -588,7 +591,7 @@
           "lines": 58.3
         },
         "renderer/core/categories.ts": {
-          "lines": 66.7
+          "lines": 79.3
         },
         "renderer/core/constants.ts": {
           "lines": 91.4
@@ -606,7 +609,7 @@
           "lines": 100
         },
         "renderer/core/records.ts": {
-          "lines": 86.7
+          "lines": 95.7
         },
         "renderer/core/store.ts": {
           "lines": 100
@@ -617,6 +620,15 @@
         "renderer/library/selection.ts": {
           "lines": 100
         },
+        "renderer/locales/zh-CN-heroes.ts": {
+          "lines": 100
+        },
+        "renderer/ui/catalog-name.ts": {
+          "lines": 100
+        },
+        "renderer/ui/cosmetic-name.ts": {
+          "lines": 100
+        },
         "renderer/ui/escape.ts": {
           "lines": 100
         },
@@ -624,10 +636,16 @@
           "lines": 100
         },
         "renderer/ui/format.ts": {
-          "lines": 70.8
+          "lines": 72
+        },
+        "renderer/ui/guide-name.ts": {
+          "lines": 100
+        },
+        "renderer/ui/hero-name.ts": {
+          "lines": 100
         },
         "renderer/ui/media.ts": {
-          "lines": 60
+          "lines": 59.8
         },
         "renderer/ui/notes-markdown.ts": {
           "lines": 100
@@ -663,6 +681,9 @@
           "lines": 97
         },
         "src/channel-args.ts": {
+          "lines": 100
+        },
+        "src/cosmetic-names.ts": {
           "lines": 100
         },
         "src/cursors.ts": {
@@ -726,6 +747,9 @@
           "lines": 99.6
         },
         "src/hero-names.ts": {
+          "lines": 100
+        },
+        "src/i18n-zh-CN.ts": {
           "lines": 100
         },
         "src/i18n.ts": {
@@ -927,7 +951,7 @@
           "lines": 100
         },
         "src/schema-cosmetics.ts": {
-          "lines": 89.4
+          "lines": 89.5
         },
         "src/schema-harvest.ts": {
           "lines": 100
@@ -1002,7 +1026,7 @@
           "lines": 100
         },
         "tools/check-credentials.mjs": {
-          "lines": 74.2
+          "lines": 76.1
         },
         "tools/check-i18n.js": {
           "lines": 94.8
@@ -1020,7 +1044,7 @@
           "lines": 71.2
         },
         "tools/e2e.mjs": {
-          "lines": 69.3
+          "lines": 69.8
         },
         "tools/email-worker/worker.js": {
           "lines": 100
@@ -1059,7 +1083,7 @@
           "lines": 79.2
         },
         "tools/radar.mjs": {
-          "lines": 77
+          "lines": 77.4
         },
         "tools/recolor.mjs": {
           "lines": 54.5
@@ -1078,6 +1102,9 @@
         },
         "tools/seo-state.mjs": {
           "lines": 99
+        },
+        "tools/sim/contrast.js": {
+          "lines": 100
         },
         "tools/sim/dota.js": {
           "lines": 90.1
