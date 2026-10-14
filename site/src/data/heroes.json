@@ -9,11 +9,11 @@
           "name": "Invoker Jack Daniels",
           "categoryId": "heroes",
           "styleLabel": null,
-          "slots": ["misc","arms","back","head","shoulder","shield","belt","legs"],
+          "slots": ["arms","back","misc","head","shoulder","shield","belt","legs"],
           "image": {"src":"/mods/invoker-jack-daniels.webp","width":854,"height":480},
           "author": "Mirik522",
           "authorUrl": "https://t.me/Moggdeli",
-          "date": 1791785647
+          "date": 1792011470
         },
         {
           "name": "Invoker Patchouli",
@@ -4649,7 +4649,7 @@
           "image": {"src":"/mods/arc-warden-frosty-toy.webp","width":854,"height":480},
           "author": "J0nathan550",
           "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790558987
+          "date": 1792011470
         },
         {
           "name": "Arc Warden Magician",
@@ -6394,6 +6394,163 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
+      "id": "ancient_apparition",
+      "name": "Ancient Apparition",
+      "slug": "ancient-apparition",
+      "mods": [
+        {
+          "name": "Ancient Apparition Yoshino",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["shoulder","tail","misc","arms","head"],
+          "image": {"src":"/mods/ancient-apparition-yoshino.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771195327
+        },
+        {
+          "name": "Ancient Apparition Sanity",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["shoulder","tail","arms","head"],
+          "image": {"src":"/mods/ancient-apparition-sanity.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1792011470
+        },
+        {
+          "name": "Ancient Apparition Wight",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["shoulder","tail","arms","head"],
+          "image": {"src":"/mods/ancient-apparition-wight.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1792011470
+        },
+        {
+          "name": "Bloody Ancient Apparition",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["shoulder","tail"],
+          "image": {"src":"/mods/bloody-ancient-apparition.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1768458923
+        },
+        {
+          "name": "Immortal Ancient Apparition",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["shoulder","tail"],
+          "image": {"src":"/mods/immortal-ancient-apparition.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1778421509
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Ancient Apparition Shatterblast",
+          "categoryId": "herofx",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ancient-apparition-shatterblast.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1790113207
         },
         {
           "name": "Blue Diretide Ranged Attack",
@@ -9784,143 +9941,6 @@
       ]
     },
     {
-      "id": "ancient_apparition",
-      "name": "Ancient Apparition",
-      "slug": "ancient-apparition",
-      "mods": [
-        {
-          "name": "Ancient Apparition Yoshino",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["shoulder","tail","misc","arms","head"],
-          "image": {"src":"/mods/ancient-apparition-yoshino.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771195327
-        },
-        {
-          "name": "Bloody Ancient Apparition",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["shoulder","tail"],
-          "image": {"src":"/mods/bloody-ancient-apparition.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1768458923
-        },
-        {
-          "name": "Immortal Ancient Apparition",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["shoulder","tail"],
-          "image": {"src":"/mods/immortal-ancient-apparition.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1778421509
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Ancient Apparition Shatterblast",
-          "categoryId": "herofx",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ancient-apparition-shatterblast.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1790113207
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
       "id": "dark_willow",
       "name": "Dark Willow",
       "slug": "dark-willow",
@@ -12801,16 +12821,6 @@
           "date": 1791785647
         },
         {
-          "name": "Slark Fernando",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","weapon","misc","arms","shoulder"],
-          "image": {"src":"/mods/slark-fernando.webp","width":854,"height":480},
-          "author": "Mirik522",
-          "authorUrl": "https://t.me/Moggdeli",
-          "date": 1791861641
-        },
-        {
           "name": "Slark Shadow in the Deep",
           "categoryId": "heroes",
           "styleLabel": null,
@@ -12849,6 +12859,16 @@
           "author": "3atvorn1k",
           "authorUrl": "https://discord.com/users/642254136053596200",
           "date": 1789724393
+        },
+        {
+          "name": "Slark Fernando",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","head","misc"],
+          "image": {"src":"/mods/slark-fernando.webp","width":854,"height":480},
+          "author": "Mirik522",
+          "authorUrl": "https://t.me/Moggdeli",
+          "date": 1792011470
         }
       ]
     },
@@ -16087,6 +16107,53 @@
       ]
     },
     {
+      "id": "slardar",
+      "name": "Slardar",
+      "slug": "slardar",
+      "mods": [
+        {
+          "name": "Slardar Naga Guardian",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","weapon","misc","head","arms"],
+          "image": {"src":"/mods/slardar-naga-guardian.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1765100855
+        },
+        {
+          "name": "Slardar Diretide Shimmer",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","weapon"],
+          "image": {"src":"/mods/slardar-diretide-shimmer.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1790931352
+        },
+        {
+          "name": "Immortal Slardar",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","weapon"],
+          "image": {"src":"/mods/immortal-slardar.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1783633485
+        },
+        {
+          "name": "Slardar Fernando",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/slardar-fernando.webp","width":854,"height":480},
+          "author": "Mirik522",
+          "authorUrl": "https://t.me/Moggdeli",
+          "date": 1792011470
+        }
+      ]
+    },
+    {
       "id": "doom",
       "name": "Doom",
       "slug": "doom",
@@ -16231,43 +16298,6 @@
           "author": "Миша Талант",
           "authorUrl": "https://t.me/madberserker",
           "date": 1790118406
-        }
-      ]
-    },
-    {
-      "id": "slardar",
-      "name": "Slardar",
-      "slug": "slardar",
-      "mods": [
-        {
-          "name": "Slardar Naga Guardian",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","weapon","misc","head","arms"],
-          "image": {"src":"/mods/slardar-naga-guardian.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1765100855
-        },
-        {
-          "name": "Slardar Diretide Shimmer",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","weapon"],
-          "image": {"src":"/mods/slardar-diretide-shimmer.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1790931352
-        },
-        {
-          "name": "Immortal Slardar",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","weapon"],
-          "image": {"src":"/mods/immortal-slardar.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1783633485
         }
       ]
     },

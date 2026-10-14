@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1572,
+  "mods": 1575,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -28,7 +28,9 @@
       "name": "Ancient Apparition",
       "mods": [
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Ancient Apparition Sanity","categoryId":"heroes","styleLabel":null,"slots":["shoulder","tail","arms","head"]},
         {"name":"Ancient Apparition Shatterblast","categoryId":"herofx","styleLabel":null,"slots":[]},
+        {"name":"Ancient Apparition Wight","categoryId":"heroes","styleLabel":null,"slots":["shoulder","tail","arms","head"]},
         {"name":"Ancient Apparition Yoshino","categoryId":"heroes","styleLabel":null,"slots":["shoulder","tail","misc","arms","head"]},
         {"name":"Bloody Ancient Apparition","categoryId":"heroes","styleLabel":null,"slots":["shoulder","tail"]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -703,7 +705,7 @@
         {"name":"Invoker Esl Relics Forge","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Invoker Fate Meridian","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
-        {"name":"Invoker Jack Daniels","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","shield","belt","legs"]},
+        {"name":"Invoker Jack Daniels","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","shield","belt","legs"]},
         {"name":"Invoker Kid Forge","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Invoker Magus Accord","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
         {"name":"Invoker Magus Apex","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
@@ -1675,6 +1677,7 @@
       "mods": [
         {"name":"Immortal Slardar","categoryId":"heroes","styleLabel":null,"slots":["back","weapon"]},
         {"name":"Slardar Diretide Shimmer","categoryId":"heroes","styleLabel":null,"slots":["arms","back","weapon"]},
+        {"name":"Slardar Fernando","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Slardar Naga Guardian","categoryId":"heroes","styleLabel":null,"slots":["back","weapon","misc","head","arms"]}
       ]
     },
@@ -1687,7 +1690,7 @@
         {"name":"Immortal Slark","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Barracuda Re","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Collector Fire","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
-        {"name":"Slark Fernando","categoryId":"heroes","styleLabel":null,"slots":["head","weapon","misc","arms","shoulder"]},
+        {"name":"Slark Fernando","categoryId":"heroes","styleLabel":null,"slots":["back","head","misc"]},
         {"name":"Slark Shadow in the Deep","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Tellurian Trespass","categoryId":"heroes","styleLabel":"Style I","slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Tellurian Trespass","categoryId":"heroes","styleLabel":"Style II","slots":["arms","back","head","shoulder","weapon"]},
