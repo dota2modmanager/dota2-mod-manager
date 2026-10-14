@@ -24,7 +24,7 @@ import { createArcanaService } from './arcana-service.ts';
 import { clientVersion } from './patch-watch.ts';
 import { createRemoteConfig } from './remote-config.ts';
 // the download chain, so a mirror named in that signed file joins it
-import { applyMirrors } from './net.ts';
+import { applyMirrors, setDownloadProxy } from './net.ts';
 import { createToolchain } from './toolchain.ts';
 import { createGameIcons } from './game-icons.ts';
 import { createModPreviews } from './mod-preview.ts';
@@ -53,6 +53,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   const recovered = recoverJournals(FileTx.journalDir, diag);
   if (recovered.undone || recovered.finished) diag(`tx recovery: undid ${recovered.undone}, finished ${recovered.finished}`);
   const settings = new Settings(userData);
+  setDownloadProxy(settings.get('downloadProxy'));
   setLang(settings.get('uiLang'));
   const catalog = new Catalog(userData);
   const library = new Library(userData);

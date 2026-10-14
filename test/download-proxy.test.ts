@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { validateDownloadProxy } from '../src/download-proxy.ts';
+import { testDownloadProxy, validateDownloadProxy } from '../src/download-proxy.ts';
 import * as net from '../src/net.ts';
 
 const realFetch = globalThis.fetch;
@@ -57,4 +57,20 @@ test('shared fetch uses the configured proxy and returns to direct fetch after c
   net.setDownloadProxy(null);
   assert.equal(await net.fetchText('https://example.com/file'), 'ok');
   assert.equal('dispatcher' in seen[1], false, 'direct fetch has no stale dispatcher');
+});
+
+test('proxy test uses the proxy and does not leak its address in failures', async () => {
+  let init: RequestInit & { dispatcher?: unknown } = {};
+  const ok = await testDownloadProxy('http://127.0.0.1:8080', async (_url, request) => {
+    init = request as RequestInit & { dispatcher?: unknown };
+    return new Response(null, { status: 200 });
+  });
+  assert.deepEqual(ok, { ok: true });
+  assert.ok(init.dispatcher);
+
+  const failed = await testDownloadProxy('http://127.0.0.1:8080', async () => {
+    throw new Error('http://127.0.0.1:8080 leaked');
+  });
+  assert.deepEqual(failed, { error: 'Не удалось подключиться через прокси' });
+  assert.equal(JSON.stringify(failed).includes('127.0.0.1'), false);
 });

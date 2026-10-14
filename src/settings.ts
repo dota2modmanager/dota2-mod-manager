@@ -22,6 +22,8 @@ export interface StoredSettings {
   toolsPromptSeen: boolean;
   showAdult: boolean | null;
   lastSeenVersion: string | null;
+  /** HTTP/HTTPS proxy for app downloads; empty means direct connection */
+  downloadProxy: string;
   /** the beta switch; it only counts for an account on the signed list (src/beta.ts) */
   betaChannel?: boolean;
   /** remote notices put away (src/remote-config.ts) */
@@ -86,6 +88,7 @@ const DEFAULTS: StoredSettings = {
   // last version whose release notes the user was shown. Null on a fresh install, which is
   // why nobody gets a "what's new" popup for a version they just installed by hand.
   lastSeenVersion: null,
+  downloadProxy: '',
 };
 
 export class Settings {

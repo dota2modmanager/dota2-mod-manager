@@ -104,6 +104,19 @@ test('changing the interface language changes the main process\'s too, and redra
   assert.equal(s.log.filter((l) => l === 'presence setting').length, 1, 'other keys leave the status alone');
 });
 
+test('saving a download proxy updates the setting without changing presence', async () => {
+  const s = stand();
+  assert.deepEqual(await s.call('settings:set', 'downloadProxy', 'http://127.0.0.1:8080'), { view: true });
+  assert.equal(s.store.get('downloadProxy'), 'http://127.0.0.1:8080');
+  assert.equal(s.log.includes('presence setting'), false);
+});
+
+test('testing a blank proxy confirms direct downloads without a network request', async () => {
+  const s = stand();
+  assert.deepEqual(await s.call('settings:testProxy', ''), { ok: true });
+  assert.deepEqual(await s.call('settings:testProxy', 'ftp://proxy.example:21'), { error: 'Неверный адрес прокси' });
+});
+
 test('the tab the window reports is passed on, and a nonsense one reads as the catalog', async () => {
   const s = stand();
   await s.call('presence:view', 'library');

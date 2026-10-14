@@ -26,6 +26,7 @@ export interface StoredSettings {
   /** null until the one question about adult mods is answered (core/adult.ts) */
   showAdult: boolean | null;
   lastSeenVersion: string | null;
+  downloadProxy: string;
   betaChannel?: boolean;
   seenNotices?: string[];
   slotZones?: unknown;
@@ -79,6 +80,7 @@ interface SettingsApi {
   detectDota: () => Promise<string | null | false>;
   browseDota: () => Promise<{ path?: string; error?: string; cancelled?: boolean } | null>;
   moveLangFiles: (fromSuffix: string | undefined) => Promise<Reply<{ moved: number; to: string }>>;
+  testProxy: (proxy: string) => Promise<Reply>;
 }
 
 interface UiApi {

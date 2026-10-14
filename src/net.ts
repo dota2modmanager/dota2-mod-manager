@@ -23,5 +23,5 @@ export type { Mirror, Entry } from './net-mirrors.ts';
 export { fetchMirrored, fetchText } from './net-fetch.ts';
 export type { FetchOptions } from './net-fetch.ts';
 export { sha256, downloadFile } from './net-download.ts';
-export { closeDownloadProxy, setDownloadProxy, validateDownloadProxy } from './download-proxy.ts';
+export { closeDownloadProxy, setDownloadProxy, testDownloadProxy, validateDownloadProxy } from './download-proxy.ts';
 export type { Download } from './net-download.ts';

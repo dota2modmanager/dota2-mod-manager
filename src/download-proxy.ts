@@ -44,3 +44,25 @@ export function closeDownloadProxy(): void {
   agent = null;
   configured = null;
 }
+
+export async function testDownloadProxy(value: string, fetchImpl: typeof fetch = globalThis.fetch): Promise<{ ok: true } | { error: string }> {
+  const checked = validateDownloadProxy(value);
+  if (!checked.ok) return { error: checked.error };
+  if (!checked.value) return { ok: true };
+
+  const probe = new ProxyAgent(checked.value);
+  try {
+    const response = await fetchImpl('https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/README.md', {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(10000),
+      dispatcher: probe,
+    } as RequestInit & { dispatcher?: unknown });
+    if (!response.ok) return { error: 'Прокси не ответил успешно' };
+    return { ok: true };
+  } catch {
+    return { error: 'Не удалось подключиться через прокси' };
+  } finally {
+    await probe.close();
+  }
+}
+

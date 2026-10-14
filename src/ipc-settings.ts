@@ -9,6 +9,7 @@ import { setLang, t } from './i18n.ts';
 import { betaState } from './beta.ts';
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
+import { setDownloadProxy, testDownloadProxy, validateDownloadProxy } from './download-proxy.ts';
 import type { AppContext } from './app-context.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
@@ -47,11 +48,20 @@ export function registerSettingsIpc({
   ipcMain.handle('settings:set', (e, key, value) => {
     // keep main-process strings (dialogs, errors) in sync with the UI language
     if (key === 'uiLang') setLang(value);
+    if (key === 'downloadProxy') {
+      const checked = validateDownloadProxy(value);
+      if (!checked.ok) return { error: checked.error };
+      settings.set('downloadProxy', checked.value || '');
+      setDownloadProxy(checked.value);
+      return settingsView();
+    }
     settings.set(key, value);
     // the status text is localized, so a language change has to redraw it too
     if (key === 'discordPresence' || key === 'uiLang') applyPresenceSetting();
     return settingsView();
   });
+
+  ipcMain.handle('settings:testProxy', async (e, value) => testDownloadProxy(value));
 
   // ----- Discord presence -----
   // the renderer tells us which tab is open; everything else comes from the library

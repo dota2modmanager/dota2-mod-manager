@@ -38,6 +38,7 @@ test('a fresh install starts on the defaults, and they are the documented ones',
   assert.equal(s.get('langPromptSeen'), false);
   assert.equal(s.get('toolsPromptSeen'), false);
   assert.equal(s.get('lastSeenVersion'), null, 'so a hand-installed version shows no what-is-new popup');
+  assert.equal(s.get('downloadProxy'), '', 'downloads use a direct connection until configured');
   assert.deepEqual(s.get('favorites'), []);
   assert.equal(s.get('panels'), null);
   assert.equal(s.get('account'), null);
@@ -57,11 +58,13 @@ test('a value survives a second Settings over the same folder', (t) => {
   s.set('dotaGamePath', 'C:/games/dota 2 beta/game');
   s.set('uiScale', 1.25);
   s.set('favorites', ['heroes|Crystal Maiden']);
+  s.set('downloadProxy', 'http://127.0.0.1:8080');
 
   const again = new Settings(dir);
   assert.equal(again.get('dotaGamePath'), 'C:/games/dota 2 beta/game');
   assert.equal(again.get('uiScale'), 1.25);
   assert.deepEqual(again.get('favorites'), ['heroes|Crystal Maiden']);
+  assert.equal(again.get('downloadProxy'), 'http://127.0.0.1:8080');
 });
 
 test('a file from an older version keeps its values and gains the new defaults', (t) => {
