@@ -124,6 +124,29 @@ test('a quiet day sends nothing and says what is in order', async () => {
   assert.match(body, /_Nothing is waiting\._/);
 });
 
+test('issue forms count as the issue template, though the community profile API says there is none', async () => {
+  /* GitHub's community profile endpoint gives issue_template: null for a repository that has only
+     issue forms, while the repository's Community Standards page ticks them. The radar showed
+     "Community profile at 87%" for a week over that one field (2026-10-14). */
+  const { evaluate, issueFormsValid } = await load();
+  assert.equal(issueFormsValid({ 'bug.yml': 'name: Bug\ndescription: Something broke\nbody: []\n', 'config.yml': 'blank_issues_enabled: true\n' }), true);
+  assert.equal(issueFormsValid({ 'config.yml': 'name: x\ndescription: y\n' }), false, 'config.yml is not a form');
+  assert.equal(issueFormsValid({ 'bug.yml': 'name: Bug\nbody: []\n' }), false, 'a form without a description is not counted');
+  const dir = path.join(ROOT, '.github', 'ISSUE_TEMPLATE');
+  assert.equal(issueFormsValid(Object.fromEntries(fs.readdirSync(dir).map((f) => [f, fs.readFileSync(path.join(dir, f), 'utf8')]))), true,
+    "this repository's own forms are ones GitHub counts");
+
+  const quiet = {
+    pulls: [], issues: [], codeScanning: [], privateReporting: true, workflows: [], credentials: {},
+    searchReportAt: ago(24), goodFirstIssues: 3, decisionsReviewed: '2026-09-20',
+  };
+  const looks = (extra) => evaluate({ ...quiet, ...extra }, NOW).look.map((l) => `${l.title} / ${l.detail}`);
+  assert.deepEqual(looks({ communityHealth: 87, communityMissing: ['issue_template'], issueForms: true }), []);
+  assert.deepEqual(looks({ communityHealth: 87, communityMissing: ['issue_template'], issueForms: false }), ['Community profile at 87% / GitHub finds no issue_template']);
+  assert.deepEqual(looks({ communityHealth: 75, communityMissing: ['issue_template', 'code_of_conduct'], issueForms: true }), ['Community profile at 75% / GitHub finds no code_of_conduct']);
+  assert.deepEqual(looks({ communityHealth: 87 }), ['Community profile at 87% / a file GitHub looks for is missing'], 'without the list, the percentage still speaks');
+});
+
 test('Scorecard findings are one line to look at, and CodeQL alerts stay decisions', async () => {
   /* Scorecard uploads into the same code scanning list as CodeQL. Several of its findings describe
      work with a plan rather than a bug (fuzzing, a paid signing certificate), and one overdue

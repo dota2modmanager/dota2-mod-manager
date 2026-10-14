@@ -220,6 +220,19 @@ export function acceptedAdvisories(toml) {
 }
 
 /**
+ * Whether the repository's issue forms are ones GitHub counts: a .yml in .github/ISSUE_TEMPLATE
+ * other than config.yml, with a name and a description at the top level. GitHub's community profile
+ * API reports issue_template as missing for issue forms all the same (it looks for the older
+ * Markdown templates), while the repository's own Community Standards page counts them, so the
+ * radar checks the forms itself instead of believing that one field.
+ * @param {Record<string, string>} files  file name -> its text, from .github/ISSUE_TEMPLATE
+ */
+export function issueFormsValid(files) {
+  return Object.entries(files || {}).some(([name, text]) => /\.ya?ml$/i.test(name) && !/^config\.ya?ml$/i.test(name)
+    && /^name:\s*\S/m.test(text) && /^description:\s*\S/m.test(text));
+}
+
+/**
  * Which findings an accepted advisory covers: the package it names, and every package that is
  * vulnerable only through covered ones (npm audit lists the whole chain up to a direct dependency).
  * @returns {Map<string, {id: string, until: string|null, reason: string, expired: boolean}>} package name -> the entry
@@ -583,8 +596,10 @@ export function evaluate(data, now = Date.now(), policy = POLICY) {
     r.look.push({ title: `Only ${data.goodFirstIssues} good first issue${data.goodFirstIssues === 1 ? '' : 's'} open`, detail: `keep at least ${policy.goodFirstIssues}, so a newcomer has somewhere to start`, overdue: false });
   }
 
-  if (typeof data.communityHealth === 'number' && data.communityHealth < 100) {
-    r.look.push({ title: `Community profile at ${data.communityHealth}%`, detail: 'a file GitHub looks for is missing', overdue: false });
+  // the files GitHub's profile finds missing, less issue_template when the issue forms are fine
+  const missing = (data.communityMissing || []).filter((f) => !(f === 'issue_template' && data.issueForms));
+  if (typeof data.communityHealth === 'number' && data.communityHealth < 100 && (!data.communityMissing || missing.length)) {
+    r.look.push({ title: `Community profile at ${data.communityHealth}%`, detail: missing.length ? `GitHub finds no ${missing.join(', ')}` : 'a file GitHub looks for is missing', overdue: false });
   }
 
   for (const list of ['decide', 'red', 'expiring', 'look']) r[list].sort((a, b) => Number(b.overdue) - Number(a.overdue));
@@ -654,6 +669,8 @@ async function api(pathname, { method = 'GET', body, token, allow = [] } = {}) {
 
 /** A file's text, or null when it is not there. */
 const readOr = (file) => { try { return fs.readFileSync(file, 'utf8'); } catch { return null; } };
+/** A folder's files as name -> text, or nothing when the folder is not there. */
+const readDir = (dir) => Object.fromEntries((fs.existsSync(dir) ? fs.readdirSync(dir) : []).map((f) => [f, readOr(path.join(dir, f)) || '']));
 
 /** npm audit from the lockfile alone: nothing installed, no token. 'unreadable' when npm could not answer. */
 function audit(dir) {
@@ -773,6 +790,8 @@ async function gather(repo, token, now) {
       privateReporting: typeof pvr.enabled === 'boolean' ? pvr.enabled : undefined,
       securitySettingsUrl: `https://github.com/${repo}/settings/security_analysis`,
       communityHealth: community.health_percentage,
+      communityMissing: community.files ? Object.entries(community.files).filter(([, v]) => v == null).map(([k]) => k) : undefined,
+      issueForms: issueFormsValid(readDir(path.join(root, '.github', 'ISSUE_TEMPLATE'))),
       workflows,
       credentials,
       credentialStatus,
