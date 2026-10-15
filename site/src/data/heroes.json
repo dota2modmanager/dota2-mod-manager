@@ -900,6 +900,16 @@
           "date": 1791459372
         },
         {
+          "name": "Terrorblade Skadi Blossom Red",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","weapon","wings"],
+          "image": {"src":"/mods/terrorblade-skadi-blossom-red.webp","width":854,"height":480},
+          "author": "zkll",
+          "authorUrl": null,
+          "date": 1792095190
+        },
+        {
           "name": "Terrorblade Immortal Arcana",
           "categoryId": "heroes",
           "styleLabel": null,

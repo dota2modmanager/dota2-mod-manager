@@ -1,5 +1,5 @@
 {
-  "count": 1684,
+  "count": 1687,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -419,6 +419,7 @@
     "419b3bd9cd022e14d43550da392fda54027524a4": [{"name":"Ursa Already Red","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
     "41f044f1c32258e6b77f287a1e4bb0046c8eff79": [{"name":"Galactic IO","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "41faff190f0bc1b072e993c341a75563d37b8cf8": [{"name":"Sakura Pink Invoker","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "42196019a749b1c17d55444b2ac4d4f9d00af55b": [{"name":"Grey Play Button","categoryId":"parts","styleLabel":null,"type":"vpk"}],
     "424a34125443f7f2aec7662a7d34134b55e06c63": [{"name":"Winter Forest","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "42510ea0dbeda631c21aa0c0301ecced92a731ff": [{"name":"Purple Ancient","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
     "426ed39717b3d7b8446715a7280bac739246b9fd": [{"name":"Pyrion Flax","categoryId":"mega-kill","styleLabel":null,"type":"vpk"}],
@@ -1116,6 +1117,7 @@
     "ae51beccb937f214b32589f1bc62bf1443dba764": [{"name":"Gingerbread Baby Roshan","categoryId":"couriers","styleLabel":null,"type":"vpk"}],
     "ae575ce7195b3a786e3dacb80029e178f1199700": [{"name":"Ancient","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
     "ae7933959399c4fdd10cc8e55e7875f82821ef78": [{"name":"Luna Blood Moon","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "ae9c03060cb64500fc9af9686fc5e20bfed8c963": [{"name":"Hud Forgotten Distortion","categoryId":"huds","styleLabel":null,"type":"vpk"}],
     "aea6979b1f27d14093f38d3629faa5620ce3b522": [{"name":"TI9 Lvl Up","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "aef82468d4281dbf264eac76a526c1e4d9aa66a5": [{"name":"Phantom Lancer Immortal Avilliva","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "af920520f5e14b61f9146daa00699a0a4271253b": [{"name":"Rictus Ripper Terrorblade","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -1149,6 +1151,7 @@
     "b32502965660a18c42394e50824d9bedf47ac258": [{"name":"Bloodseeker Immortal","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "b32b09cb8d80b0801cd98b57400e6c38a25a0e69": [{"name":"Outworld Destroyer Dark Metter","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "b331c12de6c2c74ed4d5baa83cbb74c295b9b385": [{"name":"Darkness Radiance","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
+    "b36808e419bf3b9e12a854881a34a8379c818d40": [{"name":"Terrorblade Skadi Blossom Red","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "b372d77527d26a93c6d097d8973cbba2acd0d336": [{"name":"Lion Hell-Spar Anathema","categoryId":"hero-items","styleLabel":"Crimson","type":"vpk"}],
     "b394aefe42a83705377436877a9646c8063043bd": [{"name":"Portal","categoryId":"wards","styleLabel":null,"type":"vpk"}],
     "b41e39ffb8a927caf5d8ee77dbe3b722a3dece7e": [{"name":"Defiree Disruptor","categoryId":"heroes","styleLabel":null,"type":"vpk"}],

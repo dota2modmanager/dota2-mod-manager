@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1577,
+  "mods": 1578,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1884,6 +1884,7 @@
         {"name":"Terrorblade Rictus Manta","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
         {"name":"Terrorblade Rictus Skadi","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
         {"name":"Terrorblade Scythes of Sorrow","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Terrorblade Skadi Blossom Red","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
         {"name":"Terrorblade Span Of Sorrow","categoryId":"hero-items","styleLabel":null,"slots":["wings"]},
         {"name":"Terrorblade Unblinking Horror","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","wings"]},
         {"name":"Terrorblade Wings Foulfell","categoryId":"hero-items","styleLabel":null,"slots":["wings"]},
