@@ -8,6 +8,7 @@ import { state } from './store.ts';
 import { CAT_RU, CAT_ICON, COSMETIC_PREFIX, cosmeticMeta } from './constants.ts';
 import { catalogLabel } from '../ui/catalog-name.ts';
 import { heroName } from '../ui/hero-name.ts';
+import { catalogTranslation } from './catalog-translation.ts';
 
 const cosmeticSlot = (slot: string) => (state.cosmeticSlots || []).find((s) => s.slot === slot) || null;
 
@@ -17,7 +18,7 @@ export function catName(id: string): string {
     const slot = id.slice(COSMETIC_PREFIX.length);
     return heroName(cosmeticSlot(slot)?.label || tr(cosmeticMeta(slot).label));
   }
-  return catalogLabel(tr(CAT_RU[id]) || state.catalog?.constants?.translations?.[id] || id);
+  return catalogLabel(tr(CAT_RU[id]) || catalogTranslation(state.catalog?.constants?.translations, id, window.I18N_LANG) || id);
 }
 
 export function catIcon(id: string): string {

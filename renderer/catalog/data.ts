@@ -8,7 +8,8 @@ interface CatalogConstants {
   TAG_CONFIGS?: Record<string, { map?: Record<string, string> } | undefined>;
   addToCartRules?: { hiddenCategories?: string[]; allowedMods?: Record<string, unknown[] | undefined> };
   HEROES_LIST?: string[];
-  translations?: Record<string, string>;
+  /** category names: flat ({ id: name }) or by language ({ en: { id: name } }), core/catalog-translation.ts */
+  translations?: Record<string, unknown>;
   /** a credited name's page, where the catalog has one (core/credits.ts) */
   MOD_AUTHOR?: Record<string, string>;
   MOD_SENDER?: Record<string, string>;
