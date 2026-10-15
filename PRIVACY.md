@@ -39,6 +39,13 @@ about you beyond what any HTTP request unavoidably reveals to the host it is sen
 | `dota2.fandom.com`, `liquipedia.net` | Item and hero pictures for the free-cosmetics screen, when the game's own files do not have one | `src/icons.ts` |
 | `discord.com`, `cdn.discordapp.com` | **Only** if you press *Sign in with Discord*, and only to read your name and avatar | `src/discord-auth.ts` |
 
+**A download proxy, if you set one.** Settings has a field for an HTTP or HTTPS proxy, empty by
+default. When it is set, the catalog, the fingerprint map, mod archives, the remote config, the
+toolchain and the portable build's updates go through it, so the proxy learns which of the hosts
+above the app asks and when. What it carries is still HTTPS end to end and still checked against
+the catalog's signed hashes, so it cannot change a file unnoticed. The installed app's own updates,
+the Discord sign-in and the item pictures do not use it (`src/download-proxy.ts`).
+
 The app never contacts Valve or Steam, and never touches your Steam account. It reads Steam's
 own configuration files on disk to find where Dota is installed and which language it is set
 to; nothing is written to them except the game's language setting, and only when you ask.
