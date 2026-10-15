@@ -35,6 +35,6 @@ was only odd.
 
 | Date | App version | Reader | Tasks that went as written | What was different |
 |---|---|---|---|---|
-| | | | | |
+| 2026-10-15 | 2.11.0 | Narrator, Windows 11 (current update) | Tab through every section: every control reached and read out | Tab passes every category to reach the grid and every card to get back, which is slow; kept as a known gap ([accessibility.md](accessibility.md)). The installed announcement and the current section and category came after 2.11.0, so this pass did not hear them |
 
 A finding becomes an issue, and a task above changes when the app changes what you should hear.
