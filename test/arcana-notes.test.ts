@@ -23,10 +23,11 @@ test('an arcana reported to work carries nothing, and one nobody has played says
   assert.deepEqual(itemNote(['some_new_hero'], ARCANA), { status: 'untested', note: 'Не проверено в игре' });
 });
 
-test('an item that is no arcana carries nothing, except that none of Io\'s has been checked', () => {
+test('an item that is no arcana carries nothing, and Io, played since, carries nothing either', () => {
   assert.equal(isArcanaBlock(IMMORTAL), false);
   assert.equal(itemNote(['razor'], IMMORTAL), null, "Razor's other items are not his arcana");
-  assert.equal(itemNote(['wisp'], IMMORTAL)?.status, 'untested');
+  assert.equal(itemNote(['wisp'], IMMORTAL), null);
+  assert.equal(itemNote(['wisp'], ARCANA), null, 'Benevolent Companion works');
 });
 
 test('no hero is reported both ways, and every note reads in English and Chinese', () => {

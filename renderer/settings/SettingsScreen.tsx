@@ -219,6 +219,11 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
           <span>h6rd, TheFleece</span>
           <a className="settings-link" id="builderLink" onClick={() => actions.open('https://github.com/h6rd')}>github.com/h6rd</a>
         </div>
+        <div className="settings-row spaced">
+          <span className="settings-label">{L`Арканы в конструкторе`}</span>
+          <span>J0nathan550</span>
+          <a className="settings-link" id="arcanaCreditLink" onClick={() => actions.open('https://github.com/J0nathan550')}>github.com/J0nathan550</a>
+        </div>
         <div className="settings-hint">
           {`© 2026 TheFleece · ${L`конструктор предметов`} © 2026 h6rd, TheFleece · GPL-3.0 · ${L`свободная программа без каких-либо гарантий`}`}
         </div>

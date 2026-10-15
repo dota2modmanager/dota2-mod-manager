@@ -277,8 +277,9 @@ note to the slot window, so nobody picks Razor's and goes looking for what they 
 
 The table is J0nathan550's pass through every arcana on 2026-10-15 (pull request #275). A hero
 here by its id as items_game names it (npc_dota_hero_<id>). An arcana of a hero who is in neither
-list, one Valve adds later, is not checked yet and says so. None of Io's items had been offered
-before, its arcana (Benevolent Companion) among them, so all of them say they are not checked.
+list, one Valve adds later, is not checked yet and says so. Io was offered for the first time in
+2.12.0 with all its items marked as not checked; J0nathan550 played them on 2026-10-15 and its
+arcana, Benevolent Companion, works, so Io joined the arcanas that do.
 
 The notes are written in Russian, the app's source language, and translated where they are shown
 (src/i18n.ts).
@@ -298,8 +299,9 @@ note to the slot window, so nobody picks Razor's and goes looking for what they 
 
 The table is J0nathan550's pass through every arcana on 2026-10-15 (pull request #275). A hero
 here by its id as items_game names it (npc_dota_hero_<id>). An arcana of a hero who is in neither
-list, one Valve adds later, is not checked yet and says so. None of Io's items had been offered
-before, its arcana (Benevolent Companion) among them, so all of them say they are not checked.
+list, one Valve adds later, is not checked yet and says so. Io was offered for the first time in
+2.12.0 with all its items marked as not checked; J0nathan550 played them on 2026-10-15 and its
+arcana, Benevolent Companion, works, so Io joined the arcanas that do.
 
 The notes are written in Russian, the app's source language, and translated where they are shown
 (src/i18n.ts).
@@ -323,7 +325,7 @@ Arcanas played and found wanting, by hero.
 ### `ARCANAS_THAT_WORK`
 
 ```ts
-export const ARCANAS_THAT_WORK: ReadonlySet<string> = new Set([ 'faceless_void', 'lina', 'monkey_king', 'ogre_magi', 'phantom_assassin', 'queenofpain', 'nevermore', 'techies', 'tidehunter', 'vengefulspirit', 'skeleton_king', 'zuus', ])
+export const ARCANAS_THAT_WORK: ReadonlySet<string> = new Set([ 'faceless_void', 'lina', 'monkey_king', 'ogre_magi', 'phantom_assassin', 'queenofpain', 'nevermore', 'techies', 'tidehunter', 'vengefulspirit', 'skeleton_king', 'zuus', 'wisp', ])
 ```
 
 Arcanas played and found to work, by hero.
@@ -331,10 +333,11 @@ Arcanas played and found to work, by hero.
 ### `HEROES_NOT_CHECKED`
 
 ```ts
-export const HEROES_NOT_CHECKED: ReadonlySet<string> = new Set(['wisp'])
+export const HEROES_NOT_CHECKED: ReadonlySet<string> = new Set([])
 ```
 
-Heroes none of whose items have been played through the builder yet.
+Heroes none of whose items have been played through the builder yet (none now: Io was the
+ last, checked on 2026-10-15). A hero offered for the first time goes here until it is played.
 
 ### `isArcanaBlock`
 

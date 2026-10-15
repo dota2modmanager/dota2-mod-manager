@@ -233,7 +233,7 @@ const EN = {
   'Набор надевается без эффектов. Чтобы добавить эффект, открой деталь.':
     'A set goes on without effects. Open a piece to add one.',
   'Эффект добавляется к предмету: сначала выбери его выше.': 'An effect goes on an item: choose one above first.',
-  'Конструктор предметов': 'Item builder',
+  'Конструктор предметов': 'Item builder', 'Арканы в конструкторе': 'Arcanas in the item builder',
   'конструктор предметов': 'item builder',
   'Без эффектов': 'No effects',
   'Выбрать всю косметику': 'Select every look',

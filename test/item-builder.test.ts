@@ -396,7 +396,7 @@ test('item cosmetics build one slot per hero part, infer missing stock slots, of
   const blade = slots.find((s) => s.slot === 'item:bloodseeker:weapon');
   assert.equal(blade?.label.includes('Bloodseeker'), true);
   assert.equal(blade?.label.includes('Weapon'), true);
-  assert.deepEqual(slots.find((s) => s.slot === 'item:wisp:ambient')?.options[0].note, { status: 'untested', text: 'Not checked in the game yet' });
+  assert.equal(slots.find((s) => s.slot === 'item:wisp:ambient')?.options[0].note, undefined, 'Io was played since and works');
   assert.equal(blade?.options[0].note, undefined, 'an item nobody has reported on, and no arcana, carries no note');
   assert.equal(slots.some((s) => /persona/i.test(`${s.slot} ${s.label}`)), false);
   assert.deepEqual(builder.itemOptions(text), [
@@ -404,7 +404,7 @@ test('item cosmetics build one slot per hero part, infer missing stock slots, of
     { id: '9456', name: 'Unsupported back' },
     { id: '9600', name: 'Bloodseeker main blade' },
     { id: '9601', name: 'Bloodseeker offhand blade' },
-    { id: '9701', name: 'Io Ambient', note: { status: 'untested', text: 'Not checked in the game yet' } },
+    { id: '9701', name: 'Io Ambient' },
     { id: '9457', name: 'No visuals here' },
     { id: '9455', name: 'Golden Full-Bore Bonanza' },
     { id: '9801', name: 'Tidehunter bonus anchor' },
