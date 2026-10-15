@@ -2,6 +2,48 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.12.0
+
+### Arcanas in the item builder
+
+With safe mode off, Cosmetics → Items now offers every hero's arcana along with the rest of their
+items. An item that comes in several styles lets you pick the style, and the builder brings its
+sounds and voice lines, the hero's portrait, minimap icon and ability icons with it. A few arcanas
+are not right yet. Their card says Has bugs or Broken, and before you put one on the window tells
+you what goes wrong: Razor walks facing backwards, for example. Io is in the builder for the first
+time, its arcana included, and its items say Not checked until somebody has played them.
+
+Items you already picked are built again once after this update, and after any later update that
+changes how they are built, so a fix reaches them without picking them again. Thanks to J0nathan550,
+who wrote this and played every arcana through it.
+
+### The app in Simplified Chinese
+
+Choose 简体中文 on the first start or in Settings. Hero and item names come from your own game's
+Chinese text, and the catalog searches in Chinese and by the original names. Anything new shows in
+English until it is translated. Thanks to F21HGG.
+
+### A proxy for downloads
+
+Settings → Download cache now has a field for an HTTP or HTTPS proxy. Test it, save it, and the
+catalog, mods and tools download through it; leave it empty to connect directly. The installed
+app's own updates still connect directly. When a download fails on the network, the error now
+suggests a proxy or a VPN. Thanks to ezvacss.
+
+### A screen reader hears more
+
+A message that pops up, such as a mod installed or an error, is now read out, inside a mod's window
+too, and the reader is told which section and which category are open.
+
+### Fixed
+
+- In My mods, a mod whose picture does not load keeps its row the right shape.
+- The grey captions, such as the category under a card's name, are a little brighter, so they stay
+  readable over the lighter part of the background.
+- The style dots on a card sit a pixel further apart, so each one is easier to hit.
+- The installed app can no longer be run as plain Node.js or have a debugger attached, and it loads
+  only its own code.
+
 ## 2.11.0
 
 ### A crash no longer leaves half a mod behind
