@@ -226,6 +226,16 @@
           "date": 1783870835
         },
         {
+          "name": "Invoker Pack 1",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","back","head","shoulder"],
+          "image": {"src":"/mods/invoker-pack-1.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792050673
+        },
+        {
           "name": "Invoker Wyrdwing Exort",
           "categoryId": "heroes",
           "styleLabel": null,
@@ -4649,7 +4659,7 @@
           "image": {"src":"/mods/arc-warden-frosty-toy.webp","width":854,"height":480},
           "author": "J0nathan550",
           "authorUrl": "https://t.me/j0nvpk",
-          "date": 1792011470
+          "date": 1792050673
         },
         {
           "name": "Arc Warden Magician",

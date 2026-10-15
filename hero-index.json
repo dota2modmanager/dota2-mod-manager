@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1575,
+  "mods": 1577,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -711,6 +711,7 @@
         {"name":"Invoker Magus Apex","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Invoker Magus Mimicry","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker MaryDay","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Invoker Pack 1","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Patchouli","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","shield","belt","legs"]},
         {"name":"Invoker Wyrdwing Exort","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Japan Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","legs"]},
@@ -1601,7 +1602,10 @@
       ]
     },
     "shopkeeper": {"name":"Shopkeeper","mods":[{"name":"Gabe Shopkeeper","categoryId":"other","styleLabel":null,"slots":[]}]},
-    "shopkeeper_dire": {"name":"Shopkeeper Dire","mods":[{"name":"Gabe Shopkeeper","categoryId":"other","styleLabel":null,"slots":[]}]},
+    "shopkeeper_dire": {
+      "name": "Shopkeeper Dire",
+      "mods": [{"name":"Gabe Shopkeeper","categoryId":"other","styleLabel":null,"slots":[]},{"name":"Old Shadow Fiend Secret Shop","categoryId":"other","styleLabel":null,"slots":[]}]
+    },
     "shredder": {
       "name": "Timbersaw",
       "mods": [

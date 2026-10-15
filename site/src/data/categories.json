@@ -855,6 +855,14 @@
       "id": "hero-sounds",
       "mods": [
         {
+          "name": "Weaver Ult Net Idi Nahui",
+          "styleLabel": null,
+          "image": {"src":"/mods/weaver-ult-net-idi-nahui.webp","width":854,"height":480},
+          "author": "EmodzI",
+          "authorUrl": "https://t.me/Emodzl",
+          "date": 1792055497
+        },
+        {
           "name": "Doom Sematary Sound",
           "styleLabel": null,
           "image": {"src":"/mods/doom-sematary-sound.webp","width":854,"height":480},
@@ -1383,53 +1391,6 @@
       ]
     },
     {
-      "id": "parts",
-      "mods": [
-        {
-          "name": "Naga Siren Cute Icon",
-          "styleLabel": null,
-          "image": {"src":"/mods/naga-siren-cute-icon.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792011470
-        },
-        {"name":"Pink Play Button","styleLabel":null,"image":{"src":"/mods/pink-play-button.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792011470},
-        {"name":"Purple Minimap","styleLabel":null,"image":{"src":"/mods/purple-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792011470},
-        {"name":"Bluelock Scoreboard And Shop","styleLabel":null,"image":{"src":"/mods/bluelock-scoreboard-and-shop.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791974606},
-        {"name":"Rose Overcast Search Bar","styleLabel":null,"image":{"src":"/mods/rose-overcast-search-bar.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791974606},
-        {"name":"Noir Rose Top Bar","styleLabel":null,"image":{"src":"/mods/noir-rose-top-bar.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791964895},
-        {"name":"Rose Lycoris Mode Cards","styleLabel":null,"image":{"src":"/mods/rose-lycoris-mode-cards.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791964895},
-        {"name":"Black Top Bar","styleLabel":null,"image":{"src":"/mods/black-top-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Gotic","styleLabel":null,"image":{"src":"/mods/gotic.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Kaneki Mach","styleLabel":null,"image":{"src":"/mods/kaneki-mach.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Kaneki Mach V1.2","styleLabel":null,"image":{"src":"/mods/kaneki-mach-v1-2.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Kaneki Search Bar","styleLabel":null,"image":{"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {
-          "name": "Scolopendra Search Bar",
-          "styleLabel": null,
-          "image": {"src":"/mods/scolopendra-search-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
-        },
-        {
-          "name": "Sematary Search Bar",
-          "styleLabel": null,
-          "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
-        },
-        {"name":"Tcoaal Search Bar","styleLabel":null,"image":{"src":"/mods/tcoaal-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Larger Minimap","styleLabel":null,"image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
-        {"name":"Grey Minimap","styleLabel":null,"image":{"src":"/mods/grey-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790825298},
-        {"name":"Grey Search Bar","styleLabel":null,"image":{"src":"/mods/grey-search-bar.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
-        {"name":"Larger Timer","styleLabel":null,"image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
-        {"name":"Windows Xp Top Bar","styleLabel":null,"image":{"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
-        {"name":"Hypergamy Search Bar","styleLabel":null,"image":{"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737}
-      ]
-    },
-    {
       "id": "terrains",
       "mods": [
         {"name":"Crownfall","styleLabel":null,"image":{"src":"/mods/crownfall.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1791343344},
@@ -1506,6 +1467,45 @@
         {"name":"Huh Deny","styleLabel":null,"image":{"src":"/mods/huh-deny.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
         {"name":"lasthit Golden Shards","styleLabel":null,"image":{"src":"/mods/lasthit-golden-shards.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282},
         {"name":"Soul Deny","styleLabel":null,"image":{"src":"/mods/soul-deny.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282}
+      ]
+    },
+    {
+      "id": "parts",
+      "mods": [
+        {"name":"Pink Play Button","styleLabel":null,"image":{"src":"/mods/pink-play-button.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792011470},
+        {"name":"Purple Minimap","styleLabel":null,"image":{"src":"/mods/purple-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792011470},
+        {"name":"Bluelock Scoreboard And Shop","styleLabel":null,"image":{"src":"/mods/bluelock-scoreboard-and-shop.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791974606},
+        {"name":"Rose Overcast Search Bar","styleLabel":null,"image":{"src":"/mods/rose-overcast-search-bar.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791974606},
+        {"name":"Noir Rose Top Bar","styleLabel":null,"image":{"src":"/mods/noir-rose-top-bar.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791964895},
+        {"name":"Rose Lycoris Mode Cards","styleLabel":null,"image":{"src":"/mods/rose-lycoris-mode-cards.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791964895},
+        {"name":"Black Top Bar","styleLabel":null,"image":{"src":"/mods/black-top-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Gotic","styleLabel":null,"image":{"src":"/mods/gotic.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Kaneki Mach","styleLabel":null,"image":{"src":"/mods/kaneki-mach.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Kaneki Mach V1.2","styleLabel":null,"image":{"src":"/mods/kaneki-mach-v1-2.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Kaneki Search Bar","styleLabel":null,"image":{"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {
+          "name": "Scolopendra Search Bar",
+          "styleLabel": null,
+          "image": {"src":"/mods/scolopendra-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {
+          "name": "Sematary Search Bar",
+          "styleLabel": null,
+          "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {"name":"Tcoaal Search Bar","styleLabel":null,"image":{"src":"/mods/tcoaal-search-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Larger Minimap","styleLabel":null,"image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
+        {"name":"Grey Minimap","styleLabel":null,"image":{"src":"/mods/grey-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790825298},
+        {"name":"Grey Search Bar","styleLabel":null,"image":{"src":"/mods/grey-search-bar.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {"name":"Larger Timer","styleLabel":null,"image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {"name":"Windows Xp Top Bar","styleLabel":null,"image":{"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
+        {"name":"Hypergamy Search Bar","styleLabel":null,"image":{"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737}
       ]
     },
     {
@@ -1630,6 +1630,14 @@
     {
       "id": "other",
       "mods": [
+        {
+          "name": "Old Shadow Fiend Secret Shop",
+          "styleLabel": null,
+          "image": {"src":"/mods/old-shadow-fiend-secret-shop.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792050673
+        },
         {"name":"Objective Timers","styleLabel":null,"image":{"src":"/mods/objective-timers.webp","width":854,"height":480},"author":"rizeru","authorUrl":"https://t.me/rizeru","date":1792011470},
         {"name":"All Grandmasters","styleLabel":null,"image":{"src":"/mods/all-grandmasters.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
         {"name":"Pink Spell Radius","styleLabel":null,"image":{"src":"/mods/pink-spell-radius.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791821609},
@@ -1696,12 +1704,12 @@
       "id": "sounds",
       "mods": [
         {
-          "name": "Weawer Ult Net Idi Nahui",
+          "name": "Sound To Battle! From Wot",
           "styleLabel": null,
-          "image": {"src":"/mods/weawer-ult-net-idi-nahui.webp","width":854,"height":480},
-          "author": "EmodzI",
-          "authorUrl": "https://t.me/Emodzl",
-          "date": 1791922171
+          "image": {"src":"/mods/sound-to-battle-from-wot.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792055497
         },
         {
           "name": "Winlose Music Suffocation Kit",
@@ -1821,148 +1829,16 @@
       ]
     },
     {
-      "id": "herofx",
-      "mods": [
-        {
-          "name": "Terrorblade Black Spell",
-          "styleLabel": null,
-          "image": {"src":"/mods/terrorblade-black-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791974153
-        },
-        {
-          "name": "Terrorblade Blue Spell",
-          "styleLabel": null,
-          "image": {"src":"/mods/terrorblade-blue-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791974153
-        },
-        {
-          "name": "Terrorblade Green Spell Icons",
-          "styleLabel": null,
-          "image": {"src":"/mods/terrorblade-green-spell-icons.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791974153
-        },
-        {
-          "name": "Terrorblade Orange Spell",
-          "styleLabel": null,
-          "image": {"src":"/mods/terrorblade-orange-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791974153
-        },
-        {
-          "name": "Terrorblade Pink Spell",
-          "styleLabel": null,
-          "image": {"src":"/mods/terrorblade-pink-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791974153
-        },
-        {
-          "name": "Terrorblade Purple Spell",
-          "styleLabel": null,
-          "image": {"src":"/mods/terrorblade-purple-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791974153
-        },
-        {
-          "name": "Terrorblade White Spell",
-          "styleLabel": null,
-          "image": {"src":"/mods/terrorblade-white-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791974153
-        },
-        {
-          "name": "Terrorblade Yellow Spell",
-          "styleLabel": null,
-          "image": {"src":"/mods/terrorblade-yellow-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791974153
-        },
-        {
-          "name": "Snapfire Blue Icon",
-          "styleLabel": null,
-          "image": {"src":"/mods/snapfire-blue-icon.webp","width":1280,"height":960},
-          "author": "Tom4ik",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199427406113/",
-          "date": 1791794920
-        },
-        {
-          "name": "Ancient Apparition Shatterblast",
-          "styleLabel": null,
-          "image": {"src":"/mods/ancient-apparition-shatterblast.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1790113207
-        },
-        {
-          "name": "Keeper of the Light Northlight Illuminance",
-          "styleLabel": null,
-          "image": {"src":"/mods/keeper-of-the-light-northlight-illuminance.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1788180009
-        },
-        {
-          "name": "Lifestealer Golden Effects",
-          "styleLabel": null,
-          "image": {"src":"/mods/lifestealer-golden-effects.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1784702480
-        },
-        {
-          "name": "Tinker Peashooter Turrets",
-          "styleLabel": null,
-          "image": {"src":"/mods/tinker-peashooter-turrets.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1779386733
-        },
-        {
-          "name": "Huskar White Screen Effect",
-          "styleLabel": null,
-          "image": {"src":"/mods/huskar-white-screen-effect.webp","width":854,"height":480},
-          "author": "NahuiToSay",
-          "authorUrl": "https://t.me/NahuiToSay",
-          "date": 1778935876
-        },
-        {"name":"Enigma World Chasm Artifact","styleLabel":null,"image":{"src":"/mods/enigma-world-chasm-artifact.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766284079},
-        {"name":"Sniper Ardalan Interdictor","styleLabel":null,"image":{"src":"/mods/sniper-ardalan-interdictor-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765442943}
-      ]
-    },
-    {
-      "id": "ti-bp-effects",
-      "mods": [
-        {"name":"Aghanims Labyrinth Battle Pass","styleLabel":null,"image":{"src":"/mods/aghanims-labyrinth-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Battle Pass 2022","styleLabel":null,"image":{"src":"/mods/battle-pass-2022.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Darkness Pack","styleLabel":null,"image":{"src":"/mods/darkness-pack.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
-        {"name":"Nemestice 2021 Battle Pass","styleLabel":null,"image":{"src":"/mods/nemestice-2021-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Purple Quarteros Curios","styleLabel":null,"image":{"src":"/mods/purple-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Quarteros Curios","styleLabel":null,"image":{"src":"/mods/quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Spring Quarteros Curios","styleLabel":null,"image":{"src":"/mods/spring-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Summer Quarteros Curios","styleLabel":null,"image":{"src":"/mods/summer-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"TI 2010 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2010-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"TI 2016 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2016-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"TI 2017 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2017-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"TI 2018 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2018-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"TI 2019 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2019-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Winter Quarteros Curios","styleLabel":null,"image":{"src":"/mods/winter-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
-        {"name":"Remove Seasonal Effects","styleLabel":null,"image":{"src":"/mods/remove-seasonal-effects.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662},
-        {"name":"Winter 2016 Battle Pass","styleLabel":null,"image":{"src":"/mods/winter-2016-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662}
-      ]
-    },
-    {
       "id": "pedestal",
       "mods": [
+        {
+          "name": "Queen Of Pain Arcane Pedestal",
+          "styleLabel": null,
+          "image": {"src":"/mods/queen-of-pain-arcane-pedestal.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792050673
+        },
         {
           "name": "Arcana Vengeful Spirit Pedest",
           "styleLabel": null,
@@ -2044,6 +1920,27 @@
       ]
     },
     {
+      "id": "ti-bp-effects",
+      "mods": [
+        {"name":"Aghanims Labyrinth Battle Pass","styleLabel":null,"image":{"src":"/mods/aghanims-labyrinth-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Battle Pass 2022","styleLabel":null,"image":{"src":"/mods/battle-pass-2022.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Darkness Pack","styleLabel":null,"image":{"src":"/mods/darkness-pack.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
+        {"name":"Nemestice 2021 Battle Pass","styleLabel":null,"image":{"src":"/mods/nemestice-2021-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Purple Quarteros Curios","styleLabel":null,"image":{"src":"/mods/purple-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Quarteros Curios","styleLabel":null,"image":{"src":"/mods/quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Spring Quarteros Curios","styleLabel":null,"image":{"src":"/mods/spring-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Summer Quarteros Curios","styleLabel":null,"image":{"src":"/mods/summer-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2010 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2010-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2016 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2016-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2017 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2017-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2018 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2018-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"TI 2019 Battle Pass","styleLabel":null,"image":{"src":"/mods/ti-2019-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Winter Quarteros Curios","styleLabel":null,"image":{"src":"/mods/winter-quarteros-curios.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
+        {"name":"Remove Seasonal Effects","styleLabel":null,"image":{"src":"/mods/remove-seasonal-effects.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662},
+        {"name":"Winter 2016 Battle Pass","styleLabel":null,"image":{"src":"/mods/winter-2016-battle-pass.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662}
+      ]
+    },
+    {
       "id": "ranks",
       "mods": [
         {"name":"Rose Chinese Medals","styleLabel":null,"image":{"src":"/mods/rose-chinese-medals.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791974606},
@@ -2122,6 +2019,91 @@
       ]
     },
     {
+      "id": "hero-icons",
+      "mods": [
+        {
+          "name": "Naga Siren Cute Icon",
+          "styleLabel": null,
+          "image": {"src":"/mods/naga-siren-cute-icon.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792055497
+        },
+        {
+          "name": "Snapfire Blue Icon",
+          "styleLabel": null,
+          "image": {"src":"/mods/snapfire-blue-icon.webp","width":1280,"height":960},
+          "author": "Tom4ik",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199427406113/",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Black Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-black-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Blue Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-blue-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Green Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-green-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Orange Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-orange-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Pink Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-pink-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Purple Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-purple-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade White Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-white-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Yellow Spell",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-yellow-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792055497
+        }
+      ]
+    },
+    {
       "id": "ranged-attack",
       "mods": [
         {"name":"Aghanim Ranged Attack","styleLabel":null,"image":{"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
@@ -2145,6 +2127,53 @@
         {"name":"Lina","styleLabel":null,"image":{"src":"/mods/lina-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763897201},
         {"name":"Meepo","styleLabel":null,"image":{"src":"/mods/meepo-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763897201},
         {"name":"Voice of The International","styleLabel":null,"image":{"src":"/mods/voice-of-the-international-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1763897201}
+      ]
+    },
+    {
+      "id": "herofx",
+      "mods": [
+        {
+          "name": "Ancient Apparition Shatterblast",
+          "styleLabel": null,
+          "image": {"src":"/mods/ancient-apparition-shatterblast.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1790113207
+        },
+        {
+          "name": "Keeper of the Light Northlight Illuminance",
+          "styleLabel": null,
+          "image": {"src":"/mods/keeper-of-the-light-northlight-illuminance.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1788180009
+        },
+        {
+          "name": "Lifestealer Golden Effects",
+          "styleLabel": null,
+          "image": {"src":"/mods/lifestealer-golden-effects.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1784702480
+        },
+        {
+          "name": "Tinker Peashooter Turrets",
+          "styleLabel": null,
+          "image": {"src":"/mods/tinker-peashooter-turrets.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1779386733
+        },
+        {
+          "name": "Huskar White Screen Effect",
+          "styleLabel": null,
+          "image": {"src":"/mods/huskar-white-screen-effect.webp","width":854,"height":480},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1778935876
+        },
+        {"name":"Enigma World Chasm Artifact","styleLabel":null,"image":{"src":"/mods/enigma-world-chasm-artifact.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766284079},
+        {"name":"Sniper Ardalan Interdictor","styleLabel":null,"image":{"src":"/mods/sniper-ardalan-interdictor-2.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765442943}
       ]
     },
     {
