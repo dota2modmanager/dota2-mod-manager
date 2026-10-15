@@ -75,6 +75,22 @@ text short of its ratio fails the run.
 What the measurement does not cover: the seven hero themes other than the default, and text that
 only appears on hover.
 
+## Known gaps, kept on purpose
+
+**The catalog is a long walk by Tab.** The maintainer went through every section with the keyboard
+and a screen reader on 2026-10-15: everything could be reached and everything was read out. One
+thing was slow. From the categories, Tab passes every one of them, about forty, before it reaches
+the grid, and from the grid it passes every card of the category, hundreds in some, before it gets
+back to them.
+
+It stays that way. The people who run a Dota mod manager by keyboard alone or by ear are expected
+to be few, it works as it is, and a skip link or a grid you move through with the arrow keys is
+more to build and keep right than that slowness costs them. Two ways round it exist already: from
+the first card, Shift+Tab is back among the categories in about a dozen presses (past the sort,
+the filters and the first card's own buttons), and a screen reader can jump between the window's
+landmarks (the categories are an `aside`, the grid is in `main`; D in NVDA) without passing the
+cards in between.
+
 ## What no automated check covers
 
 - **A screen reader pass by a person.** The tree is checked, the experience is not: whether the
