@@ -11,7 +11,17 @@ import { byId } from './dom.ts';
 
 document.getElementById('launchBtn')?.addEventListener('click', async () => {
   if (!state.settings?.dotaPathValid) { toast(L`Сначала укажи путь к Dota 2 в настройках`, 'warn'); return; }
-  await window.api.game.launch();
+  // the game starts once the item table being built is written (the bar above counts it), so
+  // the button stays pressed until then rather than taking a second press
+  const btn = byId<HTMLButtonElement>('launchBtn');
+  btn.disabled = true;
+  btn.setAttribute('aria-busy', 'true');
+  try {
+    await window.api.game.launch();
+  } finally {
+    btn.disabled = false;
+    btn.removeAttribute('aria-busy');
+  }
   toast(state.masterOff ? L`Запуск Dota 2 без модов…` : L`Запуск Dota 2 с модами…`);
 });
 

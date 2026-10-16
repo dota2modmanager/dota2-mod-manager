@@ -39,7 +39,7 @@ function stand(t: TestContext) {
     disableOtherCursors: (id: string) => { calls.push(`other cursors off for ${id}`); return ['Old cursors']; },
     installer, isCursorRecord: (rec: LibRecord) => rec.categoryId === 'cursors', library,
     refreshPresence: () => calls.push('presence'),
-    schemaService: { refresh: () => { refreshed++; } },
+    schemaService: { refreshInBackground: async () => { refreshed++; return { ok: true }; } },
   } as never));
   const call = (ch: string, ...args: unknown[]) => channels.get(ch)!({}, ...args);
   /** A mod of ours in the language folder. */

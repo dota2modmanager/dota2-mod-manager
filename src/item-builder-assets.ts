@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { openVpkIndex, entryAt, type VpkEntry } from './vpk.ts';
+import { sharedVpkIndex, entryAt, type VpkEntry, type VpkIndex } from './vpk.ts';
 import { t } from './i18n.ts';
 import { listItems, eachChild, blockBounds } from './schema.ts';
 import { itemHeroes, type AssetCopy } from './item-builder-slots.ts';
@@ -113,7 +113,7 @@ export function itemAssets(text: string, visuals: string, heroes: string[]): Ite
  * after it are its summons'). Shadow Fiend is npc_dota_hero_nevermore in models/heroes/shadow_fiend,
  * so the path cannot be made from the name.
  */
-export function heroModelPath(ix: ReturnType<typeof openVpkIndex>, hero: string): string {
+export function heroModelPath(ix: VpkIndex, hero: string): string {
   const script = ix.read(`scripts/npc/heroes/${hero}.txt`);
   const model = script?.toString('latin1').match(/^\s*"Model"\s+"([^"]+)"/mi)?.[1];
   if (!model) throw new Error(t('Не найдена модель героя {0}', hero));
@@ -139,7 +139,7 @@ function heroModelBytes(data: Buffer, activities: string[]): Buffer {
 export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | null | undefined): VpkEntry[] {
   const pak = path.join(gamePath, 'dota', 'pak01_dir.vpk');
   if (!fs.existsSync(pak)) throw new Error(t('Не найден {0}', pak));
-  const ix = openVpkIndex(pak);
+  const ix = sharedVpkIndex(pak);
   const out: VpkEntry[] = [];
   const seen = new Set<string>();
   for (const copy of assetCopies || []) {

@@ -54,11 +54,30 @@ export function buildSchemaVpk(text: string, extraEntries: VpkEntry[] = []): Buf
  * @param opts.beneath files every patch's own win over where both have a path: an arcana base
  *   (src/arcana-bases.ts), which another item picked for one of its slots replaces there
  */
-export function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath), beneath = [] }: {
-  gamePath: string; folder: string; patches: SchemaPatch[]; base?: GameSchema; beneath?: VpkEntry[];
-}): MergeResult & { stamp: string; bytes: number; items: number } {
+export function deploy(opts: DeployOptions): Deployed {
+  const steps = deploySteps(opts);
+  for (;;) {
+    const r = steps.next();
+    if (r.done) return r.value;
+  }
+}
+
+/** What deploy is given. */
+export interface DeployOptions { gamePath: string; folder: string; patches: SchemaPatch[]; base?: GameSchema; beneath?: VpkEntry[] }
+/** What deploy wrote. */
+export type Deployed = MergeResult & { stamp: string; bytes: number; items: number };
+
+/**
+ * deploy, a stage at a time: the merge, the check, the pak, the write, each a yield apart, so a
+ * caller that builds in the background (src/schema-service.ts refreshInBackground) lets the rest
+ * of the app run between them, and can stop before the write when a newer build has taken over.
+ * Nothing is written to the game before the last stage.
+ */
+export function* deploySteps({ gamePath, folder, patches, base = readGameSchema(gamePath), beneath = [] }: DeployOptions): Generator<'merged' | 'checked' | 'packed', Deployed> {
   const merged = mergeSchema(base.text, patches);
+  yield 'merged';
   const checked = validateSchema(merged.text, base.text);
+  yield 'checked';
   const extras: VpkEntry[] = [];
   const seen = new Set<string>();
   for (const assets of [...(patches || []).map((p) => p.assets || []), beneath]) {
@@ -70,6 +89,7 @@ export function deploy({ gamePath, folder, patches, base = readGameSchema(gamePa
     }
   }
   const buf = buildSchemaVpk(merged.text, extras);
+  yield 'packed';
   const dir = path.join(gamePath, folder);
   fs.mkdirSync(dir, { recursive: true });
   const dest = path.join(dir, SCHEMA_VPK);

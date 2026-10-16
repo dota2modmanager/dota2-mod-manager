@@ -45,7 +45,7 @@ export function registerLibraryIpc({
     library.removeRecord(rec.id);
   }, installer.log);
 
-  ipcMain.handle('mods:setEnabled', (e, id, enabled) => {
+  ipcMain.handle('mods:setEnabled', async (e, id, enabled) => {
     const rec = library.find(id);
     if (!rec) return { error: t('Мод не найден') };
     try {
@@ -61,7 +61,7 @@ export function registerLibraryIpc({
         library.setEnabled(id, enabled);
         return others;
       }, installer.log);
-      if (touchesSchema(rec)) schemaService.refresh();
+      if (touchesSchema(rec)) await schemaService.refreshInBackground();
       return { ok: true, replaced };
     } catch (err) {
       return { error: errorText(err) };
@@ -77,7 +77,7 @@ export function registerLibraryIpc({
    * hung. Deleting the files themselves was never the slow part: that is about two
    * milliseconds each.
    */
-  ipcMain.handle('mods:removeMany', (e, ids) => {
+  ipcMain.handle('mods:removeMany', async (e, ids) => {
     const errors: string[] = [];
     let removed = 0;
     let schemaTouched = false;
@@ -92,14 +92,14 @@ export function registerLibraryIpc({
         errors.push(`${rec.name}: ${errorText(err)}`);
       }
     }
-    if (schemaTouched) schemaService.refresh();
+    if (schemaTouched) await schemaService.refreshInBackground();
     return { ok: true, removed, errors };
   });
 
   // Same bargain for switching a selection on or off: one rebuild for the batch, not one
   // per mod. Cursors and cosmetics are left out because only one of each can be live and
   // the screen never offers them here.
-  ipcMain.handle('mods:setEnabledMany', (e, ids, enabled) => {
+  ipcMain.handle('mods:setEnabledMany', async (e, ids, enabled) => {
     const errors: string[] = [];
     let changed = 0;
     let schemaTouched = false;
@@ -117,7 +117,7 @@ export function registerLibraryIpc({
         errors.push(`${rec.name}: ${errorText(err)}`);
       }
     }
-    if (schemaTouched) schemaService.refresh();
+    if (schemaTouched) await schemaService.refreshInBackground();
     return { ok: true, changed, errors };
   });
 
@@ -149,12 +149,12 @@ export function registerLibraryIpc({
     }
   });
 
-  ipcMain.handle('mods:remove', (e, id) => {
+  ipcMain.handle('mods:remove', async (e, id) => {
     const rec = library.find(id);
     if (!rec) return { error: t('Мод не найден') };
     try {
       removeOne(rec);
-      if (touchesSchema(rec)) schemaService.refresh();
+      if (touchesSchema(rec)) await schemaService.refreshInBackground();
       return { ok: true };
     } catch (err) {
       return { error: errorText(err) };

@@ -45,6 +45,7 @@ function stand(t: TestContext, { catalogHas = [] as string[] } = {}) {
     schemaService: {
       pickCosmetic: (slot: string, itemId: string, name: string) => library.add({ name, categoryId: 'cosmetic', files: [] }),
       refresh: () => log.push('schema'),
+      refreshInBackground: async () => { log.push('schema'); return { ok: true }; },
     },
     presets: {
       catalogIndex: async () => ({

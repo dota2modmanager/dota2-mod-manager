@@ -7,6 +7,7 @@ export {
   openVpkIndex, entryPath, readVpkEntries, listVpkEntries, fingerprintEntries, fingerprintVpk, fingerprintFiles,
 } from './vpk-read.ts';
 export type { VpkEntry, VpkDirEntry, VpkIndex } from './vpk-read.ts';
+export { sharedVpkIndex } from './vpk-shared.ts';
 export {
   analyzeVpkPaths, slotDisplayName, describeHero, subjectHeroes, describeAnalysis, nameFromAnalysis,
 } from './vpk-analyze.ts';

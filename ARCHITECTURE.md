@@ -525,6 +525,7 @@ that location is not writable.
 | `src/updater.ts`, `src/portable-update.ts` | Where an installed copy looks for a new version, and updating the portable build without self-overwrite |
 | `src/beta.ts` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
 | `src/vpk.ts`, `src/vpk-read.ts`, `src/vpk-write.ts`, `src/vpk-pack.ts`, `src/vpk-analyze.ts` | The VPK format: reading one, writing one, packing a folder into one, and what a mod's paths say it changes |
+| `src/vpk-shared.ts` | The game's pak01 index opened once for a burst of reads, the item builder's, and let go 30 seconds after the last one |
 | `src/file-tx.ts`, `src/file-tx-journal.ts` | One transaction per change to the game folder, and the journal that finishes or undoes it after a crash |
 | `src/atomic-file.ts` | `manifest.json` and `settings.json` replaced in one step |
 | `src/library.ts` | `manifest.json`: installed records and presets |
@@ -539,6 +540,7 @@ that location is not writable.
 | `src/patcher.ts`, `src/patcher-gameinfo.ts`, `src/patcher-signatures.ts` | The search-path patch: the two gameinfo files and the signature list, byte for byte, both directions |
 | `src/schema.ts`, `src/schema-kv.ts`, `src/schema-items.ts`, `src/schema-merge.ts` | `items_game.txt`: walking it, reading its items, merging a mod's blocks, building the item pak |
 | `src/schema-service.ts`, `src/schema-cosmetics.ts`, `src/schema-harvest.ts` | The item table as the app keeps it: the build and the repair, the free cosmetics, and a mod's own blocks |
+| `src/schema-build.ts` | Building the table: each item builder pick built once and kept, and a build a step at a time in the background, a newer one stopping an older one before it writes, with the Play button waiting for the last |
 | `src/cosmetic-names.ts` | Official Chinese item names from the installed game's localization tokens; read-only and cached per game build |
 | `src/item-builder.ts`, `src/item-builder-slots.ts`, `src/item-builder-effects.ts` | The item builder: what it offers each hero and slot, the effects, and what a pick writes |
 | `src/item-builder-styles.ts` | An item's styles, and its visuals with the chosen one made its only one: a pick in another style rides in its effect key as `style-N` |

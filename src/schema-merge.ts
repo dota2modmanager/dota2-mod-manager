@@ -4,7 +4,7 @@
 import type { VpkEntry } from './vpk.ts';
 import { t } from './i18n.ts';
 import { blockBounds, eachChild, readToken, skipGap, type Bounds } from './schema-kv.ts';
-import { findItem, itemsSection, listItems } from './schema-items.ts';
+import { countItems, findItem, itemsSection, listItems } from './schema-items.ts';
 
 /** An item block a mod changed, lifted out of the table it shipped. */
 export interface SchemaDelta { id: string; name: string; block: string }
@@ -109,7 +109,6 @@ export function extractDeltas(modText: string, vpkPaths: string[], baseText?: st
   const needles = ownedAssetNeedles(vpkPaths);
   if (!needles.length) return [];
   const section = itemsSection(modText);
-  const baseSection = baseText ? itemsSection(baseText) : null;
   const deltas: SchemaDelta[] = [];
   eachChild(modText, section, (c) => {
     if (!c.isBlock || !/^\d+$/.test(c.key)) return;
@@ -119,7 +118,7 @@ export function extractDeltas(modText: string, vpkPaths: string[], baseText?: st
     let name = '';
     eachChild(modText, c.body, (f) => { if (!f.isBlock && f.key.toLowerCase() === 'name') name = f.value; });
     if (baseText) {
-      const cur = findItem(baseText, c.key, baseSection);
+      const cur = findItem(baseText, c.key);
       if (cur && cur.text.replace(/\s+/g, ' ') === raw.replace(/\s+/g, ' ')) return; // unchanged
     }
     deltas.push({ id: c.key, name, block: raw });
@@ -203,18 +202,25 @@ export function mergeSchema(baseText: string, patches: SchemaPatch[]): MergeResu
     }
     seen.set(String(p.id), p);
   }
-  const section = itemsSection(baseText);
+  // by the table's list of items, not by a walk of its 26 000 blocks for each patch: that walk
+  // was 80 ms a pick, and the item builder's thirty picks spent two and a half seconds on it
   for (const p of seen.values()) {
-    const item = findItem(baseText, p.id, section);
+    const item = findItem(baseText, p.id);
     if (!item) { missing.push(String(p.id)); continue; }
     edits.push({ start: item.start, end: item.end, text: reindent(p.block, '\t\t') });
     applied.push({ id: String(p.id), source: p.source || '' });
   }
 
-  edits.sort((a, b) => b.start - a.start); // splice from the tail so offsets stay valid
-  let text = baseText;
-  for (const e of edits) text = text.slice(0, e.start) + e.text + text.slice(e.end);
-  return { text, applied, missing, conflicts };
+  // the table in pieces, joined once: a splice per patch copied all 50 MB of it each time
+  edits.sort((a, b) => a.start - b.start);
+  const pieces: string[] = [];
+  let at = 0;
+  for (const e of edits) {
+    pieces.push(baseText.slice(at, e.start), e.text);
+    at = e.end;
+  }
+  pieces.push(baseText.slice(at));
+  return { text: pieces.join(''), applied, missing, conflicts };
 }
 
 /**
@@ -224,13 +230,13 @@ export function mergeSchema(baseText: string, patches: SchemaPatch[]): MergeResu
 export function validateSchema(text: string, baseText?: string | null): { items: number; bytes: number } {
   let depth = 0;
   for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (c === '"') { const e = text.indexOf('"', i + 1); if (e === -1) throw new Error(t('items_game: незакрытая кавычка')); i = e; continue; }
-    if (c === '{') depth++;
-    else if (c === '}') { depth--; if (depth < 0) throw new Error(t('items_game: лишняя закрывающая скобка')); }
+    const c = text.charCodeAt(i);
+    if (c === 34) { const e = text.indexOf('"', i + 1); if (e === -1) throw new Error(t('items_game: незакрытая кавычка')); i = e; continue; }
+    if (c === 123) depth++;
+    else if (c === 125) { depth--; if (depth < 0) throw new Error(t('items_game: лишняя закрывающая скобка')); }
   }
   if (depth !== 0) throw new Error(t('items_game: незакрытый блок'));
-  const items = listItems(text).length;
+  const items = countItems(text);
   if (items < 1000) throw new Error(t('items_game: подозрительно мало предметов ({0})', items));
   if (baseText) {
     const baseItems = listItems(baseText).length;

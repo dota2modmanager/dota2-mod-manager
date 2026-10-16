@@ -249,7 +249,9 @@ export function registerPresetsIpc({
           return records.map((r) => r.id);
         }
         if (entry.kind === 'cosmetic') {
-          const rec = schemaService.pickCosmetic(entry.slot, entry.itemId, entry.name, entry.effectId);
+          // the table is built once for the whole preset, at the end
+          const rec = schemaService.pickCosmetic(entry.slot, entry.itemId, entry.name, entry.effectId, { write: false });
+          schemaTouched = true;
           return rec ? [rec.id] : [];
         }
         const why = entry.kind === 'missing' ? entry.reason : '';
@@ -286,7 +288,7 @@ export function registerPresetsIpc({
     errors.push(...presets.applyPreset(preset));
     // a mod that arrived already enabled never passes through applyPreset's own switch, so
     // its freshly lifted blocks would sit in the library without ever reaching the build
-    if (schemaTouched) schemaService.refresh();
+    if (schemaTouched) await schemaService.refreshInBackground();
     afterDeployMaster();
     sendProgress({ type: 'done', label: preset.name });
     return { ok: true, installed: preset.mods.length, errors };

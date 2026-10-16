@@ -645,7 +645,7 @@
     {
       "name": "a table that would crash the client is written into the game anyway",
       "file": "src/schema.ts",
-      "anchor": "export function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath), beneath = [] }: {",
+      "anchor": "export function* deploySteps({ gamePath, folder, patches, base = readGameSchema(gamePath), beneath = [] }: DeployOptions)",
       "from": "const checked = validateSchema(merged.text, base.text);",
       "to": "const checked = { bytes: merged.text.length, items: 0 };",
       "test": "test/schema.test.ts"
@@ -1028,10 +1028,10 @@
     },
     {
       "name": "a switched-off mod still goes into the item table",
-      "file": "src/schema-service.ts",
-      "anchor": "  function build(vanillaText: string, game: string): { list: schema.SchemaPatch[]; beneath: VpkEntry[] } {",
-      "from": "if (rec.enabled === false) continue;",
-      "to": "void 0;",
+      "file": "src/schema-build.ts",
+      "anchor": "  function* buildSteps(vanillaText: string, game: string)",
+      "from": "const records = library.list().filter((r) => r.enabled !== false);",
+      "to": "const records = [...library.list()];",
       "test": "test/schema-service.test.ts"
     },
     {

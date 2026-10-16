@@ -36,6 +36,7 @@ function stand(over: Record<string, unknown> = {}) {
       setEnabled: (on: boolean) => { asked.push(`patch ${on}`); return { ok: true }; },
       pickCosmetic: (slot: string, itemId: string) => ({ id: `${slot}:${itemId}` }),
       pickSet: (setId: string) => ({ records: [setId] }),
+      refreshInBackground: async () => ({ ok: true }),
     },
     modPreviews: {
       VID: 'modvid:', ART: 'modart:', TEX: 'modtex:',

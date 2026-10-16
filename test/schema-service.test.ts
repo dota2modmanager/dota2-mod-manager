@@ -18,7 +18,7 @@ import * as schema from '../src/schema.ts';
 import { entryAt, readVpkEntryFile } from '../src/vpk.ts';
 import { encodeKv3, resource } from './helpers/kv3-build.ts';
 import { Library } from '../src/library.ts';
-import { builderStamp, createSchemaService, type SchemaInstaller } from '../src/schema-service.ts';
+import { buildBar, builderStamp, createSchemaService, type BuildStep, type SchemaInstaller } from '../src/schema-service.ts';
 import type { Settings } from '../src/settings.ts';
 import type { LibFile, LibRecord } from '../src/types.ts';
 
@@ -92,15 +92,16 @@ const NO_INSTALLER: SchemaInstaller = {
   installedSize: () => { throw new Error('the installer was not meant to be asked'); },
 };
 
-function service(t: TestContext, { values = {}, installer = NO_INSTALLER, text = GAME_TABLE, bases } = {} as {
+function service(t: TestContext, { values = {}, installer = NO_INSTALLER, text = GAME_TABLE, bases, onBuild } = {} as {
   values?: Record<string, unknown>; installer?: SchemaInstaller; text?: string; bases?: Parameters<typeof createSchemaService>[0]['bases'];
+  onBuild?: Parameters<typeof createSchemaService>[0]['onBuild'];
 }) {
   const g = game(t, text);
   fs.mkdirSync(g.userData, { recursive: true });
   const library = new Library(g.userData);
   const settings = settingsIn({ dotaGamePath: g.game, schemaPatch: false, ...values });
   const said: string[] = [];
-  const svc = createSchemaService({ settings, library, installer, userDataDir: g.userData, log: (m) => said.push(m), bases });
+  const svc = createSchemaService({ settings, library, installer, userDataDir: g.userData, log: (m) => said.push(m), bases, onBuild });
   return { ...g, library, settings, svc, said };
 }
 
@@ -492,4 +493,106 @@ test('an arcana picked puts its base on once it is here, its own part takes the 
   s.svc.refresh();
   assert.equal(built('models/heroes/juggernaut/juggernaut_body.vmdl_c'), null, 'the arcana off: its base goes with it');
   assert.equal(built('models/heroes/juggernaut/jugg_mask.vmdl_c'), "Valve's arcana mask", 'and the mask alone is Valve\'s again');
+});
+
+// ---------- building in the background ----------
+
+/** The Juggernaut table with Valve's files in the game's pak, for the builder's picks. */
+function juggernaut(t: TestContext) {
+  const steps: (BuildStep | null)[] = [];
+  const s = service(t, { values: { schemaPatch: true }, text: ARCANA_TABLE, onBuild: (step) => steps.push(step) });
+  fs.writeFileSync(path.join(s.game, 'dota', 'pak01_dir.vpk'), schema.buildSchemaVpk(ARCANA_TABLE,
+    Object.entries(VALVE).map(([p, d]) => entryAt(p, Buffer.from(d)))));
+  const built = (p: string) => readVpkEntryFile(path.join(s.game, patcher.FOLDER, schema.SCHEMA_VPK), p)?.data.toString() ?? null;
+  const counts = () => steps.filter((x) => x && 'total' in x);
+  const writes = () => steps.filter((x) => x && 'stage' in x && x.stage === 'packed').length;
+  const pick = (slot: string, id: string) => s.svc.pickCosmetic(`item:juggernaut:${slot}`, id, id, '', { write: false });
+  return { ...s, steps, built, counts, writes, pick };
+}
+const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
+
+test('a build in the background builds only the picks it has not built yet, says how far it is, and answers once the table is written', async (t) => {
+  const s = juggernaut(t);
+  s.pick('body', '9059');
+  const r = await s.svc.refreshInBackground();
+  assert.equal(r.ok, true);
+  assert.equal(r.deployed, true);
+  assert.equal(s.built('models/heroes/juggernaut/juggernaut_body.vmdl_c'), "Valve's arcana body", 'written by the time it answers');
+  assert.deepEqual(s.counts(), [{ done: 1, total: 1 }]);
+  assert.deepEqual(s.steps.slice(-4), [{ stage: 'merged' }, { stage: 'checked' }, { stage: 'packed' }, null], 'the write in stages, then the end');
+
+  s.steps.length = 0;
+  s.pick('weapon', '4015');
+  await s.svc.refreshInBackground();
+  assert.deepEqual(s.counts(), [{ done: 1, total: 1 }], 'the body was built before: only the sword is built now');
+  assert.equal(s.built('models/heroes/juggernaut/juggernaut_body.vmdl_c'), "Valve's arcana body", 'and the body is still in the table');
+  assert.equal(s.built('models/heroes/juggernaut/jugg_sword.vmdl_c'), 'Four-Fangs');
+
+  s.steps.length = 0;
+  await s.svc.refreshInBackground();
+  assert.deepEqual(s.counts(), [], 'nothing new picked: nothing built again');
+  assert.equal(s.writes(), 1, 'the table is still written');
+});
+
+test('a build asked for while one runs stops that one before it writes, and both answers are the build that wrote', async (t) => {
+  const s = juggernaut(t);
+  s.pick('body', '9059');
+  const first = s.svc.refreshInBackground();
+  await tick(); // the first build has taken its first step
+  s.pick('weapon', '4015');
+  const second = s.svc.refreshInBackground();
+  const [a, b] = await Promise.all([first, second]);
+  assert.equal(a, b, 'one answer for both');
+  assert.equal(s.writes(), 1, 'the out-of-date build wrote nothing');
+  assert.equal(s.built('models/heroes/juggernaut/juggernaut_body.vmdl_c'), "Valve's arcana body");
+  assert.equal(s.built('models/heroes/juggernaut/jugg_sword.vmdl_c'), 'Four-Fangs', 'the build that wrote has the second pick');
+});
+
+test('a refresh while a build runs in the background answers the build, and the Play button waits for the last one', async (t) => {
+  const s = juggernaut(t);
+  s.pick('body', '9059');
+  const waiting = s.svc.refreshInBackground();
+  await tick();
+  const now = s.svc.refresh();
+  assert.equal(await waiting, now, 'the refresh wrote the same library: its result is the answer');
+  assert.equal(s.writes(), 0, 'the build in the background stopped before writing');
+
+  s.pick('weapon', '4015');
+  void s.svc.refreshInBackground();
+  assert.equal(s.built('models/heroes/juggernaut/jugg_sword.vmdl_c'), null, 'asked for, not built yet');
+  await s.svc.settled();
+  assert.equal(s.built('models/heroes/juggernaut/jugg_sword.vmdl_c'), 'Four-Fangs', 'settled resolves once the table is written');
+});
+
+test('the bar shows a build only once it has run long enough to be seen, and counts the picks built anew', () => {
+  const sent: unknown[] = [];
+  let clock = 0;
+  const bar = buildBar((evt) => sent.push(evt), () => 'Building items', 400, () => clock);
+
+  bar({ done: 1, total: 3 });
+  clock = 200;
+  bar({ done: 2, total: 3 });
+  assert.deepEqual(sent, [], 'a fifth of a second in: nothing');
+  clock = 500;
+  bar({ done: 3, total: 3 });
+  bar({ stage: 'packed' });
+  bar(null);
+  assert.deepEqual(sent, [
+    { type: 'count', label: 'Building items', done: 3, total: 3 },
+    { type: 'count', label: 'Building items', done: 3, total: 3 },
+    { type: 'done' },
+  ], 'past the wait: the count, full while the pak is written, then the end');
+
+  sent.length = 0;
+  clock = 1000;
+  bar({ done: 1, total: 1 });
+  bar(null);
+  assert.deepEqual(sent, [], 'a quick build after it: no bar, and no end for a bar that never showed');
+
+  clock = 2000;
+  bar({ stage: 'merged' });
+  clock = 3000;
+  bar({ stage: 'packed' });
+  bar(null);
+  assert.deepEqual(sent, [], 'nothing to build anew, only the write: nothing to count');
 });

@@ -38,6 +38,7 @@ const EN = {
   // the two counted passes of an import, shown on the progress bar
   'Копирование модов': 'Copying mods',
   'Разбор модов': 'Reading mods',
+  'Сборка предметов': 'Building items',
   'Нет _dir.vpk для разбора': 'No _dir.vpk to split',
   'В файле меньше двух героев — разбирать нечего': 'Fewer than two heroes in the file — nothing to split',
   'Совпадение с каталогом не найдено': 'No catalog match found',

@@ -13,7 +13,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { openVpkIndex, entryAt, type VpkEntry } from './vpk.ts';
+import { sharedVpkIndex, entryAt, type VpkEntry } from './vpk.ts';
 import { t } from './i18n.ts';
 import { heroModelPath, normalizeAssetPath, type PortraitSwap, type SpriteSwap } from './item-builder-assets.ts';
 
@@ -73,7 +73,7 @@ export function portraitEntries(gamePath: string, portraits: PortraitSwap[], spr
   if (!portraits.length && !sprites.length) return [];
   const pak = path.join(gamePath, 'dota', 'pak01_dir.vpk');
   if (!fs.existsSync(pak)) throw new Error(t('Не найден {0}', pak));
-  const ix = openVpkIndex(pak);
+  const ix = sharedVpkIndex(pak);
   const swaps: { from: string; to: string }[] = [];
   for (const p of portraits) {
     try {

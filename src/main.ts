@@ -229,7 +229,9 @@ async function start(): Promise<void> {
   registerIpc(ctx);
   // Launch Dota through Steam so the user's own launch options apply (-novid, -fps max, -language
   // russian all differ per user). rungameid is what pressing Play in Steam does.
-  ipcMain.handle('game:launch', () => {
+  ipcMain.handle('game:launch', async () => {
+    // an item table still being built (a pick a moment ago, a base just come) goes in first
+    await schemaService.settled();
     // a Dota update wipes the search-path patch and moves the item table underneath our build:
     // the launch button is the last chance to notice before the game starts
     schemaService.heal();

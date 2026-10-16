@@ -12,22 +12,17 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import * as patcher from './patcher.ts';
 import * as schema from './schema.ts';
-import * as itemBuilder from './item-builder.ts';
 import { createHarvest, type SchemaInstaller } from './schema-harvest.ts';
 import { createCosmetics } from './schema-cosmetics.ts';
-import { soundEntries, type SoundSwap, type VoiceCue } from './item-sounds.ts';
-import { portraitEntries } from './item-portraits.ts';
-import type { PortraitSwap, SpriteSwap } from './item-builder-assets.ts';
-import { styleOf } from './item-builder-styles.ts';
-import { basesHere, chooseBases, withoutBaseFiles } from './arcana-bases.ts';
+import { createBackgroundBuilds, createTableBuild, drain, type BuildStep, type Refreshed } from './schema-build.ts';
+import { chooseBases } from './arcana-bases.ts';
 import type { BaseStore } from './arcana-base-store.ts';
-import type { VpkEntry } from './vpk.ts';
-import type { LibRecord } from './types.ts';
 import type { Settings } from './settings.ts';
 import type { Library } from './library.ts';
 
 export type { SchemaInstaller } from './schema-harvest.ts';
 export type { CosmeticSlot } from './schema-cosmetics.ts';
+export { buildBar, type BuildStep, type Refreshed } from './schema-build.ts';
 
 let builderCode: string | null | undefined;
 /**
@@ -64,16 +59,20 @@ export interface SchemaState extends Partial<patcher.PatchState> {
  * @param {string} deps.userDataDir
  * @param {(msg: string) => void} [deps.log]  the app's diagnostics log
  * @param deps.bases  the arcana bases kept on disk (src/arcana-base-store.ts); none: the game's files
+ * @param deps.onBuild how far a build in the background is (refreshInBackground), null when it ended
  */
 /** The item table and the search-path patch, kept in step with the library and the installed game. */
-export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases }: {
+export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {} }: {
   settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void;
   bases?: Pick<BaseStore, 'entries' | 'want'>;
+  onBuild?: (step: BuildStep | null) => void;
 }) {
   const backupDir = path.join(userDataDir, 'backups', 'patch');
   const gamePath = () => settings.get('dotaGamePath');
   // what the deployed table was built from: the game's item table, and the code that built it
   const stampOf = (table: string | null) => (table ? [table, builderStamp()].filter(Boolean).join('|') : null);
+  // every pick built once, and the patches of everything else (src/schema-build.ts)
+  const table = createTableBuild({ library, bases, log });
 
   // The game's table is 50 MB and walking its 25k items costs ~300 ms, while the picker
   // asks about a dozen slots in a row. Hold on to the text until the game itself changes:
@@ -87,77 +86,24 @@ export function createSchemaService({ settings, library, installer, userDataDir,
     if (stamp && cache.stamp === stamp && cache.base) return cache.base;
     const base = schema.readGameSchema(game);
     cache = { stamp, base };
+    table.forget();
     return base;
   }
   const vanilla = () => vanillaBase().text;
 
-  const isItemPick = (rec: LibRecord) => rec.categoryId === 'cosmetic' && (rec.slot === 'items' || String(rec.slot || '').startsWith('item:'));
+  // the patches a build would merge, all at once
+  const patches = (vanillaText: string, game: string) => drain(table.buildSteps(vanillaText, game)).list;
 
-  // the item builder's enabled picks, for which arcana bases they put on (src/arcana-bases.ts)
-  const picks = () => library.list().filter((r) => r.enabled !== false && isItemPick(r))
-    .map((r) => ({ itemId: String(r.itemId), style: styleOf(itemBuilder.effectKey(r.effectId)) }));
-  const readyBases = () => (bases ? basesHere(picks(), bases, log) : []);
-
-  // Enabled mods' lifted item blocks + the free cosmetics the user picked. A cosmetic pick
-  // is a library record like any other (categoryId 'cosmetic', slot + itemId of its own),
-  // so toggling, deleting and sharing it in a preset all go through the normal machinery.
-  // `beneath`: the arcana bases' files, which every pick's own win over (schema.deploy).
-  function build(vanillaText: string, game: string): { list: schema.SchemaPatch[]; beneath: VpkEntry[] } {
-    const ready = readyBases();
-    const out: schema.SchemaPatch[] = [];
-    const sounds: SoundSwap[] = [];
-    const voices: VoiceCue[] = [];
-    const portraits: PortraitSwap[] = [];
-    const sprites: SpriteSwap[] = [];
-    for (const rec of library.list()) {
-      if (rec.enabled === false) continue;
-      if (rec.categoryId === 'cosmetic') {
-        try {
-          if (isItemPick(rec)) {
-            const built = itemBuilder.itemEffectPatch(vanillaText, String(rec.itemId), rec.effectId);
-            const assets = withoutBaseFiles(String(rec.itemId), itemBuilder.gameAssetEntries(game, built.assetCopies), ready);
-            out.push({ id: built.id, block: built.block, assets, source: rec.name });
-            sounds.push(...built.sounds);
-            voices.push(...built.voices);
-            portraits.push(...built.portraits);
-            sprites.push(...built.sprites);
-            continue;
-          }
-          const target = schema.baseItemFor(vanillaText, rec.slot);
-          if (!target) continue;
-          out.push({ id: target.id, block: schema.baseItemPatch(vanillaText, target.id, String(rec.itemId)), source: rec.name });
-        } catch (err) {
-          // A donor Valve removed drops out of the build, and so does a pick the builder refuses.
-          // Said in the log, because the window cannot tell: it showed "installed" either way.
-          log(`schema: ${rec.name} left out of the build: ${(err as Error)?.message || err}`);
-        }
-        continue;
-      }
-      if (!Array.isArray(rec.schema)) continue;
-      for (const d of rec.schema) out.push({ id: d.id, block: d.block, source: rec.name });
-    }
-    // Two picks rewrite the same soundevents file, portrait settings and sprite sheet, and the build
-    // keeps the first file of a path it is given: so every pick's go into one copy of each, ahead
-    // of all other files.
-    const first = out.find((p) => p.assets);
-    if (first) {
-      try {
-        first.assets = [...portraitEntries(game, portraits, sprites), ...first.assets!];
-      } catch (err) {
-        log(`schema: the heroes' portraits left out of the build: ${(err as Error)?.message || err}`);
-      }
-      try {
-        first.assets = [...soundEntries(game, sounds, voices), ...first.assets!];
-      } catch (err) {
-        log(`schema: the items' sounds left out of the build: ${(err as Error)?.message || err}`);
-      }
-    }
-    return { list: out, beneath: ready.flatMap((r) => r.entries) };
-  }
-  const patches = (vanillaText: string, game: string) => build(vanillaText, game).list;
+  // builds in the background (refreshInBackground), and the Play button waiting on them (settled)
+  const builds = createBackgroundBuilds(() => refreshSteps(), onBuild);
 
   // Rebuild and write the schema pak, or remove it when nothing needs one.
   function refresh() {
+    return builds.ran(drain(refreshSteps()));
+  }
+
+  /** refresh, a step at a time: each pick built anew, then the merge, the check and the pak. */
+  function* refreshSteps(): Generator<BuildStep, Refreshed> {
     const game = gamePath();
     if (!game) return { ok: false, reason: 'no-game-path' };
     try {
@@ -170,15 +116,26 @@ export function createSchemaService({ settings, library, installer, userDataDir,
       // through the cache, not around it: this runs on every mod removed, enabled or
       // switched off, and re-extracting 50 MB from the game's pak each time was the wait
       const base = vanillaBase();
-      const { list, beneath } = build(base.text, game);
+      const { list, beneath } = yield* table.buildSteps(base.text, game);
       if (!list.length) return drop();
-      const res = schema.deploy({ gamePath: game, folder: patcher.FOLDER, patches: list, base, beneath });
+      const steps = schema.deploySteps({ gamePath: game, folder: patcher.FOLDER, patches: list, base, beneath });
+      let res: schema.Deployed;
+      for (;;) {
+        const r = steps.next();
+        if (r.done) { res = r.value; break; }
+        yield { stage: r.value };
+      }
       settings.set('schemaStamp', stampOf(res.stamp));
       return { ok: true, deployed: true, patches: res.applied.length, missing: res.missing, conflicts: res.conflicts, bytes: res.bytes };
     } catch (err) {
       return { ok: false, error: String((err as Error)?.message || err) };
     }
   }
+
+  /** The table built without holding up the app: what the window asks for when the user picks,
+   *  switches or takes off an item, and what a downloaded arcana base asks for. */
+  const refreshInBackground = () => builds.inBackground();
+  const settled = () => builds.settled();
 
   // A Dota update overwrites the patched gameinfo and moves the item table underneath our
   // build. Runs on startup and before launching the game.
@@ -291,10 +248,10 @@ export function createSchemaService({ settings, library, installer, userDataDir,
 
   // At start: the bases the picks need, in case the last run closed before one came or a newer one
   // was published. Whatever comes builds again (src/services.ts).
-  const askForBases = () => { if (bases && settings.get('schemaPatch')) for (const b of chooseBases(picks())) void bases.want(b.id); };
+  const askForBases = () => { if (bases && settings.get('schemaPatch')) for (const b of chooseBases(table.picks())) void bases.want(b.id); };
 
   return {
-    backupDir, patches, refresh, heal, setEnabled, harvest, split, migrate, state,
+    backupDir, patches, refresh, refreshInBackground, settled, heal, setEnabled, harvest, split, migrate, state,
     cosmeticSlots, pickCosmetic, pickSet, migrateCosmeticSettings, askForBases,
   };
 }

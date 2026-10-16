@@ -18,7 +18,7 @@ import { recoverJournals } from './file-tx-journal.ts';
 import { Fingerprints } from './fingerprints.ts';
 import * as discordAuth from './discord-auth.ts';
 import { DiscordPresence } from './discord-presence.ts';
-import { createSchemaService } from './schema-service.ts';
+import { buildBar, createSchemaService } from './schema-service.ts';
 import { createUpdateImpact, impactMods } from './update-impact.ts';
 import { createArcanaService, type Generated } from './arcana-service.ts';
 import { createBaseStore } from './arcana-base-store.ts';
@@ -80,12 +80,14 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
     dir: path.join(userData, 'arcana-bases'),
     log: diag,
     onReady: (id) => {
-      schemaService.refresh();
+      void schemaService.refreshInBackground();
       if (id !== TERRORBLADE_BASE) return;
       arcana.rebuild(library.list().filter((r) => (r.generated as Generated | undefined)?.mode === 'mod').map((r) => r.id));
     },
   });
-  const schemaService = createSchemaService({ settings, library, installer, userDataDir: userData, log: diag, bases });
+  // the item table built in the background says how far it is on the bar at the bottom
+  const onBuild = buildBar(sendProgress, () => t('Сборка предметов'));
+  const schemaService = createSchemaService({ settings, library, installer, userDataDir: userData, log: diag, bases, onBuild });
   // which installed mods a Dota update reached (src/update-impact.ts)
   const updateImpact = createUpdateImpact({
     file: path.join(userData, 'update-impact.json'),

@@ -329,6 +329,11 @@ writing VPK archives is done by this repository's own code, which is why `src/vp
   and the Dota 2 modding community. This app is a desktop client for their catalog, and every mod
   card in it credits its author.
 - Community tools (VPKMerge, Background Changer, Compiler, ItemsFix) belong to their authors.
+- **[J0nathan550](https://github.com/J0nathan550)** brought the arcanas into the item builder,
+  played every one of them through it, and compiled again by hand the ones Valve's files break
+  there, so Razor runs forward and Juggernaut keeps all his animations. The fixed arcanas live in
+  [d2pfx-arcana-fixes](https://github.com/J0nathan550/d2pfx-arcana-fixes), and the app downloads
+  them from there.
 - **Dota's updates** are read from [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2)
   by [SteamTracking](https://github.com/SteamTracking), which commits every Dota build as text within
   the hour. The [Dota updates](https://github.com/dota2modmanager/dota2-mod-manager/issues/225)

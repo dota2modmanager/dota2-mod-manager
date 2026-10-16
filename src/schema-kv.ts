@@ -14,11 +14,24 @@ export type KvChild =
 
 // ---------- KeyValues navigation (no full parse: 50 MB, and we only need blocks) ----------
 
+/* What /\s/ matches, asked of a character code. The table is walked a character at a time, 50 MB
+ * of it for every list of its items, and a regular expression per character was most of that walk:
+ * tab to carriage return, space and no-break space are all a latin1 table has, and anything past
+ * 255 (a mod's block can carry it) still goes to the expression. */
+function isGap(c: number): boolean {
+  return c <= 32 ? c === 32 || (c >= 9 && c <= 13) : c === 160 || (c > 255 && /\s/.test(String.fromCharCode(c)));
+}
+
+const QUOTE = 34;
+const OPEN = 123;
+const CLOSE = 125;
+const SLASH = 47;
+
 // Skip whitespace and // line comments starting at i.
 export function skipGap(text: string, i: number): number {
   for (;;) {
-    while (i < text.length && /\s/.test(text[i])) i++;
-    if (text[i] === '/' && text[i + 1] === '/') {
+    while (i < text.length && isGap(text.charCodeAt(i))) i++;
+    if (text.charCodeAt(i) === SLASH && text.charCodeAt(i + 1) === SLASH) {
       const nl = text.indexOf('\n', i);
       if (nl === -1) return text.length;
       i = nl + 1;
@@ -38,7 +51,10 @@ export function readToken(text: string, i: number): { value: string; start: numb
     return { value: text.slice(i + 1, end), start: i, next: end + 1 };
   }
   let end = i;
-  while (end < text.length && !/[\s{}"]/.test(text[end])) end++;
+  for (; end < text.length; end++) {
+    const c = text.charCodeAt(end);
+    if (isGap(c) || c === OPEN || c === CLOSE || c === QUOTE) break;
+  }
   return { value: text.slice(i, end), start: i, next: end };
 }
 
@@ -50,10 +66,10 @@ export function blockBounds(text: string, i: number): Bounds {
   if (open === -1) throw new Error(t('items_game: не найдено открытие блока'));
   let depth = 0;
   for (let k = open; k < text.length; k++) {
-    const c = text[k];
-    if (c === '"') { const e = text.indexOf('"', k + 1); if (e === -1) break; k = e; continue; }
-    if (c === '{') depth++;
-    else if (c === '}') { depth--; if (depth === 0) return [open, k + 1]; }
+    const c = text.charCodeAt(k);
+    if (c === QUOTE) { const e = text.indexOf('"', k + 1); if (e === -1) break; k = e; continue; }
+    if (c === OPEN) depth++;
+    else if (c === CLOSE) { depth--; if (depth === 0) return [open, k + 1]; }
   }
   throw new Error(t('items_game: незакрытый блок'));
 }

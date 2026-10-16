@@ -312,3 +312,20 @@ test('two spellings of one hero are one hero, under the name the game uses, whic
     assert.equal(heroes[0].models, 2);
   }
 });
+
+test('the shared index is one open for a file read in a row, and a new open once the file changed', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-sharedix-'));
+  try {
+    const file = path.join(dir, 'pak01_dir.vpk');
+    fs.writeFileSync(file, vpk.buildVpk([entry('models/a.vmdl_c', 'first')]));
+    const a = vpk.sharedVpkIndex(file);
+    assert.equal(vpk.sharedVpkIndex(file), a, 'the same file: the same index');
+    assert.equal(a.read('models/a.vmdl_c')?.toString(), 'first');
+    fs.writeFileSync(file, vpk.buildVpk([entry('models/a.vmdl_c', 'second, longer')]));
+    const b = vpk.sharedVpkIndex(file);
+    assert.notEqual(b, a, 'a changed file is opened again');
+    assert.equal(b.read('models/a.vmdl_c')?.toString(), 'second, longer');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

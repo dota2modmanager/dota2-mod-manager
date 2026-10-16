@@ -21,7 +21,7 @@ import path from 'node:path';
 import { dataBlock } from './resource.ts';
 import { readKv3, type Kv3Block, type Kv3Node } from './kv3.ts';
 import { writeKv3 } from './kv3-write.ts';
-import { entryAt, listVpkPathsFile, openVpkIndex, type VpkEntry } from './vpk.ts';
+import { entryAt, listVpkPathsFile, sharedVpkIndex, type VpkEntry, type VpkIndex } from './vpk.ts';
 
 /** An event to play as another: the one the server names, and the one the player hears. */
 export interface SoundSwap { sound: string; as: string }
@@ -29,7 +29,7 @@ export interface SoundSwap { sound: string; as: string }
 /** A response criterion an item sets for a hero ("customresponse" = "eartharc_cosmos"). */
 export interface VoiceCue { hero: string; key: string; value: string }
 
-type Index = ReturnType<typeof openVpkIndex>;
+type Index = VpkIndex;
 type Obj = Extract<Kv3Node, { kind: 'object' }>;
 
 const str = (n: Kv3Node | undefined, key: string): string => {
@@ -108,7 +108,7 @@ export function voiceSwaps(rules: Kv3Node, cue: Pick<VoiceCue, 'key' | 'value'>)
 export function soundEntries(gamePath: string, swaps: SoundSwap[], cues: VoiceCue[]): VpkEntry[] {
   if (!swaps.length && !cues.length) return [];
   const pak = path.join(gamePath, 'dota', 'pak01_dir.vpk');
-  const ix = openVpkIndex(pak);
+  const ix = sharedVpkIndex(pak);
   const all = [...swaps];
   for (const cue of cues) {
     const rules = rulesOf(ix, cue.hero);

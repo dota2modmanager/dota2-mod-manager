@@ -117,9 +117,10 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
   /**
    * Put a whole set on: each piece the builder has a slot for takes that slot, a row of its own
    * in My mods, and the game is written once. A set brings no effects, and a piece that is on
-   * already keeps the ones it has.
+   * already keeps the ones it has. With write false the writing is the caller's, which builds in
+   * the background (src/ipc-game.ts).
    */
-  function pickSet(setId: string | number): { applied: number; pieces: number } {
+  function pickSet(setId: string | number, { write = true } = {}): { applied: number; pieces: number } {
     const set = itemBuilder.itemSets(vanilla()).find((x) => x.id === String(setId));
     if (!set) throw new Error(t('Набор не найден'));
     let applied = 0;
@@ -129,7 +130,7 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
       pickCosmetic(p.slot, p.itemId, p.name, live && live.itemId === p.itemId ? live.effectId : '', { write: false });
       applied++;
     }
-    refresh();
+    if (write) refresh();
     return { applied, pieces: set.pieces.length };
   }
 

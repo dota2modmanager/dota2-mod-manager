@@ -48,8 +48,7 @@ export function findItem(text: string, id: string | number, section?: Bounds | n
   // Walking all 25 000 children instead cost about 200 ms a call, and dressing one cosmetic
   // slot makes two of them.
   if (!section) {
-    const want = String(id);
-    const item = listItems(text).find((i) => i.id === want);
+    const item = itemsById(text).get(String(id));
     if (item) return { id: item.id, start: item.start, end: item.end, text: text.slice(item.start, item.end) };
   }
   // A named section, or an id the item list does not carry (it keeps numbered items only).
@@ -90,7 +89,30 @@ export function itemFields(text: string, item: { start: number }): Map<string, s
  * Two is the number the work actually alternates between; a third would only hold a table
  * nothing is going to ask for again. */
 const ITEMS_CACHE_SIZE = 2;
-let itemsCache: { text: string; list: SchemaItem[] }[] = [];
+let itemsCache: { text: string; list: SchemaItem[]; byId?: Map<string, SchemaItem> }[] = [];
+
+/**
+ * How many items listItems would list, without reading what each one says: all a check of a built
+ * table (validateSchema) asks, and a third of the walk.
+ */
+export function countItems(text: string): number {
+  const hit = itemsCache.find((e) => e.text === text);
+  if (hit) return hit.list.length;
+  let n = 0;
+  eachChild(text, itemsSection(text), (c) => { if (c.isBlock && /^\d+$/.test(c.key)) n++; });
+  return n;
+}
+
+/** listItems by id, the first of an id winning as in the list; made once per table. */
+function itemsById(text: string): Map<string, SchemaItem> {
+  const list = listItems(text);
+  const entry = itemsCache.find((e) => e.list === list)!;
+  if (!entry.byId) {
+    entry.byId = new Map();
+    for (const item of list) if (!entry.byId.has(item.id)) entry.byId.set(item.id, item);
+  }
+  return entry.byId;
+}
 
 export function listItems(text: string): SchemaItem[] {
   const hit = itemsCache.find((e) => e.text === text);
@@ -202,19 +224,38 @@ export function cosmeticOptions(text: string, slot: string): { id: string; name:
 export function readGameSchema(gamePath: string): GameSchema {
   const pak = path.join(gamePath, 'dota', 'pak01_dir.vpk');
   if (!fs.existsSync(pak)) throw new Error(t('Не найден {0}', pak));
+  let key: string | null = null;
+  try { key = `${gamePath}|${pakFiles(gamePath, (st) => `${st.size}:${st.mtimeMs}:${st.ino}`)}`; } catch { /* read it anew */ }
+  if (key && lastRead?.key === key) return lastRead.schema;
   const hit = readVpkEntryFile(pak, SCHEMA_REL);
   if (!hit) throw new Error(t('items_game.txt не найден в pak01 игры'));
-  return { text: hit.data.toString('latin1'), stamp: `${hit.data.length}:${hit.crc >>> 0}` };
+  const schema = { text: hit.data.toString('latin1'), stamp: `${hit.data.length}:${hit.crc >>> 0}` };
+  lastRead = key ? { key, schema } : null;
+  return schema;
 }
 
-/** Cheap "did the game update?" probe: size+mtime of the paks that carry the schema. */
-export function gameSchemaStamp(gamePath: string): string {
+/* The table as it was last read, for as long as the game's paks are the files it was read from.
+ *
+ * The item builder, the game's pictures and the mod identifier each read the table, and each held
+ * a copy of its own: 50 MB apiece, and worse, three strings with the same text. A string has no
+ * identity in JavaScript, so finding one table's list of items (listItems) in a cache that held
+ * another copy compared all 50 MB of them, and the item builder looks an item up a dozen times a
+ * pick: 60 ms a pick, two seconds for thirty, spent proving that a table equals itself. One read,
+ * one string, and the comparison is the engine seeing the same string twice. */
+let lastRead: { key: string; schema: GameSchema } | null = null;
+
+/** Each of the game's pak01 files, as `describe` puts its stat, in name order. */
+function pakFiles(gamePath: string, describe: (st: fs.Stats) => string): string {
   const dir = path.join(gamePath, 'dota');
   const parts: string[] = [];
   for (const f of fs.readdirSync(dir)) {
     if (!/^pak01_(dir|\d{3})\.vpk$/i.test(f)) continue;
-    const st = fs.statSync(path.join(dir, f));
-    parts.push(`${f}:${st.size}:${Math.floor(st.mtimeMs)}`);
+    parts.push(`${f}:${describe(fs.statSync(path.join(dir, f)))}`);
   }
   return parts.sort().join('|');
+}
+
+/** Cheap "did the game update?" probe: size+mtime of the paks that carry the schema. */
+export function gameSchemaStamp(gamePath: string): string {
+  return pakFiles(gamePath, (st) => `${st.size}:${Math.floor(st.mtimeMs)}`);
 }

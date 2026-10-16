@@ -9,6 +9,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 import * as schema from '../src/schema.ts';
+import { countItems } from '../src/schema-items.ts';
+import { skipGap } from '../src/schema-kv.ts';
 import * as vpk from '../src/vpk.ts';
 
 const item = (id: string | number, name: string, extra = '') => `		"${id}"
@@ -538,4 +540,33 @@ test('a table that cannot be moved into place leaves no half-written file behind
 
   assert.throws(() => schema.deploy({ gamePath: game, folder: 'dota_mods', patches: [] }), /in use/);
   assert.deepEqual(fs.readdirSync(path.join(game, 'dota_mods')), [], 'the temp file stayed in the mod folder');
+});
+
+// ---------- the walk, made faster: the same answers ----------
+
+test('the walk skips exactly the characters a regular expression calls space', () => {
+  for (let c = 0; c <= 0xffff; c++) {
+    const ch = String.fromCharCode(c);
+    if (ch === '/') continue; // a comment's first half, not a space
+    assert.equal(skipGap(`${ch}x`, 0), /\s/.test(ch) ? 1 : 0, `U+${c.toString(16).padStart(4, '0')}`);
+  }
+  assert.equal(skipGap('  // a comment\n\t"key"', 0), 16, 'a comment is a gap too');
+});
+
+test('counting the items is listing them, and a merge of many patches is the same table as merging them one at a time', () => {
+  const block = (id: string, name: string) => `\t\t"${id}"\n\t\t{\n\t\t\t"name"\t\t"${name}"\n\t\t\t"visuals"\n\t\t\t{\n\t\t\t\t"asset_modifier" { "type" "particle" }\n\t\t\t}\n\t\t}`;
+  const items = Array.from({ length: 1200 }, (_, i) => block(String(100 + i), `Item ${i}`));
+  const text = ['"items_game"', '{', '\t"items"', '\t{', '\t\t"default" { "name" "not a number" }', ...items, '\t}', '}', ''].join('\n');
+  assert.equal(countItems(text), schema.listItems(text).length);
+  assert.equal(countItems(`${text} `), 1200, 'a table it has not listed: walked, not looked up');
+  assert.equal(schema.findItem(text, 'default')?.id, 'default', 'a key that is not a number: found by the walk, not the list');
+  assert.equal(schema.findItem(text, '1250')?.text.includes('Item 1150'), true, 'a number: found in the list');
+
+  const patches = ['150', '120', '1290', '100', '777'].map((id) => ({ id, block: `"${id}"\n{\n\t"name"\t\t"Patched ${id}"\n}`, source: id }));
+  const once = schema.mergeSchema(text, patches).text;
+  let oneByOne = text;
+  for (const p of patches) oneByOne = schema.mergeSchema(oneByOne, [p]).text;
+  assert.equal(once, oneByOne);
+  assert.match(once, /"Patched 1290"/);
+  assert.equal(countItems(once), 1200);
 });

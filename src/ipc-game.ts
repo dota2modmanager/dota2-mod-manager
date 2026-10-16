@@ -198,12 +198,15 @@ export function registerGameIpc({
   });
 
   // A pick is a library record like any other mod: mods:setEnabled/mods:remove already
-  // handle it (see touchesSchema above), this is only for the initial choice.
-  ipcMain.handle('cosmetics:pick', (e, slot, itemId, itemName, effectId) => {
+  // handle it (see touchesSchema above), this is only for the initial choice. The table is built
+  // in the background and answered once it is written: the app goes on meanwhile, and the bar at
+  // the bottom counts a long build.
+  ipcMain.handle('cosmetics:pick', async (e, slot, itemId, itemName, effectId) => {
     const stop = blocked('cosmetics');
     if (stop) return stop;
     try {
-      const rec = schemaService.pickCosmetic(slot, itemId, itemName, effectId);
+      const rec = schemaService.pickCosmetic(slot, itemId, itemName, effectId, { write: false });
+      await schemaService.refreshInBackground();
       return { ok: true, record: rec };
     } catch (err) {
       return { error: errorText(err) };
@@ -211,11 +214,13 @@ export function registerGameIpc({
   });
 
   // A whole set, one write to the game for all its pieces (schema-service pickSet).
-  ipcMain.handle('cosmetics:pickSet', (e, setId) => {
+  ipcMain.handle('cosmetics:pickSet', async (e, setId) => {
     const stop = blocked('cosmetics');
     if (stop) return stop;
     try {
-      return { ok: true, ...schemaService.pickSet(setId) };
+      const picked = schemaService.pickSet(setId, { write: false });
+      await schemaService.refreshInBackground();
+      return { ok: true, ...picked };
     } catch (err) {
       return { error: errorText(err) };
     }

@@ -115,6 +115,7 @@ the code, not in this page.
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
 | [`src/resource.ts`](#srcresourcets) | Compiled Source 2 resources at the block level: the blocks of a file, one replaced by new bytes, |
 | [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
+| [`src/schema-build.ts`](#srcschema-buildts) | Building the item table (src/schema-service.ts is the door: what goes into the table, when it is |
 | [`src/schema-cosmetics.ts`](#srcschema-cosmeticsts) | The free cosmetics (src/schema-service.ts): the slots the game has a free base item for and what |
 | [`src/schema-harvest.ts`](#srcschema-harvestts) | A mod's own item tables (src/schema-service.ts): the blocks it changed, lifted out on install and |
 | [`src/schema-items.ts`](#srcschema-itemsts) | Reading items_game.txt (src/schema.ts): the items section, one item's fields, the list the |
@@ -135,6 +136,7 @@ the code, not in this page.
 | [`src/vpk-analyze.ts`](#srcvpk-analyzets) | What a mod changes, read from the paths inside it: which heroes, which equip slots, or which |
 | [`src/vpk-pack.ts`](#srcvpk-packts) | Packing a folder of loose game files into a mod: where the content starts under the folder an |
 | [`src/vpk-read.ts`](#srcvpk-readts) | Reading a Source-engine VPK: the index of a "_dir" file (v1/v2), the files it lists and their |
+| [`src/vpk-shared.ts`](#srcvpk-sharedts) | One VPK index opened once for a burst of reads: the game's pak01, which the item builder reads |
 | [`src/vpk-write.ts`](#srcvpk-writets) | Writing a Source-engine VPK: one self-contained file from a list of entries, a multi-part index |
 | [`src/vpk.ts`](#srcvpkts) | The VPK format, in one place for everything that reads or writes one: the reader |
 | [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
@@ -3205,7 +3207,7 @@ arcanas), and those were read as no entries at all.
 ### `heroModelPath`
 
 ```ts
-export function heroModelPath(ix: ReturnType<typeof openVpkIndex>, hero: string): string
+export function heroModelPath(ix: VpkIndex, hero: string): string
 ```
 
 Where a hero's own model lives: the first "Model" in its script, which is the hero's (the ones
@@ -6174,6 +6176,90 @@ Open a foreign archive with every claim in it checked first.
 @param opts.limits   override the budgets (tests)
 ```
 
+## src/schema-build.ts
+
+Building the item table (src/schema-service.ts is the door: what goes into the table, when it is
+written, how a game update is repaired). Two things live here.
+
+Each pick of the item builder, built once and kept. The table is built again on every pick,
+switch and removal, and it used to build every pick over again: on the real game the thirtieth
+pick cost thirty, 12 s, and thirty picks put on one at a time cost three minutes. A pick is now
+built once, by item and effects, for as long as the game's table and the app's code are the ones
+it was built from; the sounds and portraits, made from all the picks at once, are kept for as
+long as the picks ask for the same ones.
+
+A build a step at a time, in the background. The steps are a generator (one per pick built
+anew, then the merge, the check and the pak), so the same code runs all at once for a caller
+that needs the table written before it returns, and with the rest of the main process let run
+between the steps for one that does not: the window's other requests, the bar at the bottom,
+and the Play button, which waits for the last build before the game starts.
+
+### `BuildStep`
+
+```ts
+export type BuildStep = { done: number; total: number } | { stage: 'merged' | 'checked' | 'packed' }
+```
+
+How far a build is: the picks built anew so far out of those it has to, or the stage of the write.
+
+### `Refreshed`
+
+```ts
+export interface Refreshed
+```
+
+What a build of the table answers.
+
+### `drain`
+
+```ts
+export function drain<R>(steps: Generator<unknown, R>): R
+```
+
+A generator run to its end at once: the steps of a build, for a caller that does not wait between them.
+
+### `buildBar`
+
+```ts
+export function buildBar(send: (evt: { type: 'count'; label: string; done: number; total: number } | { type: 'done' }) => void, label: () => string, after = 400, now = () => Date.now()): (step: BuildStep | null) => void
+```
+
+The bar at the bottom of the window for a build in the background: shown once the build has run
+for `after` ms, so a pick that takes a fifth of a second does not flash it, and counted in the
+picks built anew. A build with none to build, the merge and the write alone, shows nothing.
+
+### `isItemPick`
+
+```ts
+export const isItemPick = (rec: LibRecord) => rec.categoryId === 'cosmetic' && (rec.slot === 'items' || String(rec.slot || '').startsWith('item:'))
+```
+
+_No description in the source._
+
+### `createTableBuild`
+
+```ts
+export function createTableBuild({ library, bases, log }: { library: Pick<Library, 'list'>; bases?: Pick<BaseStore, 'entries' | 'want'>; log: (msg: string) => void; })
+```
+
+What goes into the table: every enabled record's patches, each item builder pick built once.
+
+### `createBackgroundBuilds`
+
+```ts
+export function createBackgroundBuilds(steps: () => Generator<BuildStep, Refreshed>, onBuild: (step: BuildStep | null) => void)
+```
+
+Builds in the background, one at a time and in order. A build asked for while one runs stops
+that one before it writes anything, since its list of picks is out of date already, and builds
+once more from what the library holds then; everybody waiting gets the result of the build that
+wrote. A build run in place in between (heal, the patch switch) does the same, through `ran`.
+
+```
+@param steps    a build of the table, a step at a time
+@param onBuild  each step of a build in the background, and null when it ends
+```
+
 ## src/schema-cosmetics.ts
 
 The free cosmetics (src/schema-service.ts): the slots the game has a free base item for and what
@@ -6272,6 +6358,15 @@ export function itemFields(text: string, item: { start: number }): Map<string, s
 ```
 
 Direct scalar fields of an item block ("name", "prefab", "item_slot"...).
+
+### `countItems`
+
+```ts
+export function countItems(text: string): number
+```
+
+How many items listItems would list, without reading what each one says: all a check of a built
+table (validateSchema) asks, and a third of the walk.
 
 ### `listItems`
 
@@ -6564,6 +6659,8 @@ Hands on from [`src/schema-harvest.ts`](#srcschema-harvestts): `SchemaInstaller`
 
 Hands on from [`src/schema-cosmetics.ts`](#srcschema-cosmeticsts): `CosmeticSlot`.
 
+Hands on from [`src/schema-build.ts`](#srcschema-buildts): `buildBar`.
+
 ### `builderStamp`
 
 ```ts
@@ -6586,7 +6683,7 @@ The patch and the built table as Settings shows them; the patcher's own state is
 ### `createSchemaService`
 
 ```ts
-export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; bases?: Pick<BaseStore, 'entries' | 'want'>; })
+export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {} }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; bases?: Pick<BaseStore, 'entries' | 'want'>; onBuild?: (step: BuildStep | null) => void; })
 ```
 
 The item table and the search-path patch, kept in step with the library and the installed game.
@@ -6635,7 +6732,7 @@ Pack the merged schema as a one-file VPK holding items_game.txt and the files it
 ### `deploy`
 
 ```ts
-export function deploy({ gamePath, folder, patches, base = readGameSchema(gamePath), beneath = [] }: { gamePath: string; folder: string; patches: SchemaPatch[]; base?: GameSchema; beneath?: VpkEntry[]; }): MergeResult & { stamp: string; bytes: number; items: number }
+export function deploy(opts: DeployOptions): Deployed
 ```
 
 Build the schema and put it in the mod folder. Always rebuilt from the installed
@@ -6651,6 +6748,26 @@ it is read here as before.
 @param opts.beneath files every patch's own win over where both have a path: an arcana base
 (src/arcana-bases.ts), which another item picked for one of its slots replaces there
 ```
+
+### `DeployOptions`
+
+```ts
+export interface DeployOptions { gamePath: string; folder: string; patches: SchemaPatch[]; base?: GameSchema; beneath?: VpkEntry[] }
+```
+
+What deploy is given.
+
+### `Deployed`
+
+```ts
+export type Deployed = MergeResult & { stamp: string; bytes: number; items: number }
+```
+
+What deploy wrote.
+
+### `deploySteps`
+
+_No description in the source._
 
 ### `undeploy`
 
@@ -7674,6 +7791,25 @@ export function listVpkEntries(buf: Buffer): { path: string; crc: number }[]
 
 Lightweight (path, crc) list — the mod's content signature, no archive reads.
 
+## src/vpk-shared.ts
+
+One VPK index opened once for a burst of reads: the game's pak01, which the item builder reads
+for every pick and for its sounds and portraits. src/vpk-read.ts is what opens it.
+
+### `sharedVpkIndex`
+
+```ts
+export function sharedVpkIndex(dirPath: string): VpkIndex
+```
+
+openVpkIndex, opened once for everything that reads the same file in a row.
+
+Every pick of the item builder reads its models out of the game's pak01, and so do its sounds
+and portraits: four opens of a 388 000-entry index per pick, 270 ms each, and a table of thirty
+picks spent four of its twelve seconds on them. The index is ~130 MB in memory, too much to keep
+for good, so it goes 30 seconds after it was last asked for. A changed file (size, time or
+file id) is opened anew.
+
 ## src/vpk-write.ts
 
 Writing a Source-engine VPK: one self-contained file from a list of entries, a multi-part index
@@ -7779,6 +7915,8 @@ and what a mod's paths say it changes (src/vpk-analyze.ts). Callers import from 
 files are how it is kept readable.
 
 Hands on from [`src/vpk-read.ts`](#srcvpk-readts): `readVpkIndexFile`, `listVpkPaths`, `listVpkPathsFile`, `listVpkPathCrcs`, `listVpkPathCrcsFile`, `readVpkEntryFile`, `openVpkIndex`, `entryPath`, `readVpkEntries`, `listVpkEntries`, `fingerprintEntries`, `fingerprintVpk`, `fingerprintFiles`, `VpkEntry`, `VpkDirEntry`, `VpkIndex`.
+
+Hands on from [`src/vpk-shared.ts`](#srcvpk-sharedts): `sharedVpkIndex`.
 
 Hands on from [`src/vpk-analyze.ts`](#srcvpk-analyzets): `analyzeVpkPaths`, `slotDisplayName`, `describeHero`, `subjectHeroes`, `describeAnalysis`, `nameFromAnalysis`, `HeroHit`, `Analysis`.
 

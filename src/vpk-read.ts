@@ -218,14 +218,16 @@ export function readVpkEntryFile(dirPath: string, wanted: string): { data: Buffe
 export function openVpkIndex(dirPath: string): VpkIndex {
   const buf = readVpkIndexFile(dirPath);
   const { headerSize, treeSize } = header(buf);
-  const entries = new Map<string, EntryRecord>();
-  eachEntry(buf, (ext, folder, name, rec) => { entries.set(joinPath(folder, name, ext), rec); });
+  // where each record starts, not the record: the game's 388 000 records as objects were 30 MB
+  // more to hold and most of what the garbage collector did while the item builder built
+  const entries = new Map<string, number>();
+  eachEntry(buf, (ext, folder, name, rec) => { entries.set(joinPath(folder, name, ext), rec.preloadAt - 18); });
   return {
     size: entries.size,
     has: (p: string) => entries.has(String(p).toLowerCase()),
     read: (wanted: string) => {
-      const rec = entries.get(String(wanted).toLowerCase());
-      return rec ? entryBytes(buf, dirPath, headerSize + treeSize, rec) : null;
+      const at = entries.get(String(wanted).toLowerCase());
+      return at === undefined ? null : entryBytes(buf, dirPath, headerSize + treeSize, readEntryRecord(buf, at));
     },
   };
 }
