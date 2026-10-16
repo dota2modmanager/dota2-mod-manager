@@ -2,6 +2,37 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.13.0
+
+### Broken arcanas fixed
+
+J0nathan550 compiled the arcanas that broke in the item builder again by hand, and the builder now
+puts on his fixed versions: Razor runs facing forward, Pudge's back is whole, Juggernaut has all his
+runs and attacks. That covers Crystal Maiden, Drow Ranger, Earthshaker, Juggernaut, Legion
+Commander, Pudge, Razor, Rubick, Skywrath Mage, Spectre's second style, Terrorblade and Windranger,
+and their Has bugs and Broken marks are gone. For Crystal Maiden and Rubick the fix covers the
+first style; their other styles build from the game's files as before.
+
+The app downloads a fixed arcana the first time you put it on and keeps it. Until the download
+finishes, the arcana goes on from the game's files, and the fixed one replaces it on its own. Any
+other item you pick for one of the arcana's slots still wins that slot. Terrorblade's arcana in
+Catalog → Tools builds from the fixed version too, in the colour you choose.
+
+### Io is checked
+
+Io's items, its arcana Benevolent Companion included, have been played through the builder and
+work, so they no longer say Not checked.
+
+### The item builder keeps up
+
+Putting an item on now takes about a quarter of a second, however many you already have on. Before,
+every item built all the others again: the thirtieth took twelve seconds and froze the window. The
+app stays responsive while it builds, a longer build shows its progress on the bar at the bottom,
+and Play waits for the build to finish before it starts the game. A friend's preset with items in
+it builds once, not once per item.
+
+Settings → About now credits J0nathan550 for the arcanas. Thank you, J0nathan550.
+
 ## 2.12.0
 
 ### Arcanas in the item builder
