@@ -11556,6 +11556,133 @@
       ]
     },
     {
+      "id": "shadow_demon",
+      "name": "Shadow Demon",
+      "slug": "shadow-demon",
+      "mods": [
+        {
+          "name": "Kruc Fungi Imp Shadow Demon",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","back","misc","tail","arms"],
+          "image": {"src":"/mods/kruc-fungi-imp-shadow-demon.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": 1792163562
+        },
+        {
+          "name": "Shadow Demon Grim Facade",
+          "categoryId": "hero-items",
+          "styleLabel": "Golden",
+          "slots": ["back"],
+          "image": {"src":"/mods/shadow-demon-grim-facade-golden.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1788587043
+        },
+        {
+          "name": "Shadow Demon Grim Facade",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["back"],
+          "image": {"src":"/mods/shadow-demon-grim-facade.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1788587043
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "silencer",
       "name": "Silencer",
       "slug": "silencer",
@@ -12665,123 +12792,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1775195016
-        }
-      ]
-    },
-    {
-      "id": "shadow_demon",
-      "name": "Shadow Demon",
-      "slug": "shadow-demon",
-      "mods": [
-        {
-          "name": "Shadow Demon Grim Facade",
-          "categoryId": "hero-items",
-          "styleLabel": "Golden",
-          "slots": ["back"],
-          "image": {"src":"/mods/shadow-demon-grim-facade-golden.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1788587043
-        },
-        {
-          "name": "Shadow Demon Grim Facade",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["back"],
-          "image": {"src":"/mods/shadow-demon-grim-facade.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1788587043
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
         }
       ]
     },
@@ -15539,6 +15549,73 @@
       ]
     },
     {
+      "id": "ogre_magi",
+      "name": "Ogre Magi",
+      "slug": "ogre-magi",
+      "mods": [
+        {
+          "name": "Ogre Magi Amakusa Shiro",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","back","head","weapon","misc","legs","tail"],
+          "image": {"src":"/mods/ogre-magi-amakusa-shiro.webp","width":854,"height":480},
+          "author": "SanyaBane",
+          "authorUrl": "https://steamcommunity.com/profiles/76561198072955043",
+          "date": 1775470500
+        },
+        {
+          "name": "Ogre Magi Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","back","head","weapon"],
+          "image": {"src":"/mods/ogre-magi-arcana.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1790375737
+        },
+        {
+          "name": "Ogre Magi Freeboot Fortunes",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","back","head","weapon"],
+          "image": {"src":"/mods/ogre-magi-freeboot-fortunes.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764908114
+        },
+        {
+          "name": "Ogre Magi Pyrexae Polymorph",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","back","head","weapon"],
+          "image": {"src":"/mods/ogre-magi-pyrexae-polymorph.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764908114
+        },
+        {
+          "name": "Ogre Magi Custom Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","weapon","belt","back"],
+          "image": {"src":"/mods/ogre-magi-custom-arcana.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1756539017
+        },
+        {
+          "name": "Ogre Arcana Egg Sound Fix",
+          "categoryId": "other",
+          "styleLabel": "Full remove",
+          "slots": ["misc"],
+          "image": {"src":"/mods/ogre-arcana-egg-sound-fix-full-remove.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": 1792163562
+        }
+      ]
+    },
+    {
       "id": "tiny",
       "name": "Tiny",
       "slug": "tiny",
@@ -15831,63 +15908,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1781012938
-        }
-      ]
-    },
-    {
-      "id": "ogre_magi",
-      "name": "Ogre Magi",
-      "slug": "ogre-magi",
-      "mods": [
-        {
-          "name": "Ogre Magi Amakusa Shiro",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","back","head","weapon","misc","legs","tail"],
-          "image": {"src":"/mods/ogre-magi-amakusa-shiro.webp","width":854,"height":480},
-          "author": "SanyaBane",
-          "authorUrl": "https://steamcommunity.com/profiles/76561198072955043",
-          "date": 1775470500
-        },
-        {
-          "name": "Ogre Magi Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","back","head","weapon"],
-          "image": {"src":"/mods/ogre-magi-arcana.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1790375737
-        },
-        {
-          "name": "Ogre Magi Freeboot Fortunes",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","back","head","weapon"],
-          "image": {"src":"/mods/ogre-magi-freeboot-fortunes.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764908114
-        },
-        {
-          "name": "Ogre Magi Pyrexae Polymorph",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","back","head","weapon"],
-          "image": {"src":"/mods/ogre-magi-pyrexae-polymorph.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764908114
-        },
-        {
-          "name": "Ogre Magi Custom Arcana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","weapon","belt","back"],
-          "image": {"src":"/mods/ogre-magi-custom-arcana.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1756539017
         }
       ]
     },

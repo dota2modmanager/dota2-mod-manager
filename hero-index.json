@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1579,
+  "mods": 1581,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1272,6 +1272,7 @@
     "ogre_magi": {
       "name": "Ogre Magi",
       "mods": [
+        {"name":"Ogre Arcana Egg Sound Fix","categoryId":"other","styleLabel":"Full remove","slots":["misc"]},
         {"name":"Ogre Magi Amakusa Shiro","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","weapon","misc","legs","tail"]},
         {"name":"Ogre Magi Arcana","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","weapon"]},
         {"name":"Ogre Magi Custom Arcana","categoryId":"heroes","styleLabel":null,"slots":["head","weapon","belt","back"]},
@@ -1545,6 +1546,7 @@
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Kruc Fungi Imp Shadow Demon","categoryId":"heroes","styleLabel":null,"slots":["belt","back","misc","tail","arms"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Shadow Demon Grim Facade","categoryId":"hero-items","styleLabel":"Golden","slots":["back"]},

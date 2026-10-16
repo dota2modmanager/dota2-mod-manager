@@ -1,5 +1,5 @@
 {
-  "count": 1693,
+  "count": 1697,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -56,6 +56,7 @@
     "07d337c76db400a9e7aa40a415bc02eeb72f7319": [{"name":"Slark Barracuda Re","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "07f3fbb7c6b10c35cbd3e0dc586d2c77789acfd3": [{"name":"Earth Spirit Slitehering Stone","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "081d1ab700339d2f42f1428ebd8a3617508f0738": [{"name":"Bloody Gore Spectre","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "081f8d4fc0cf5af89aa229c21e9f04ed89fae4ac": [{"name":"Ogre Arcana Egg Sound Fix","categoryId":"other","styleLabel":"Sound remove","type":"vpk"}],
     "08520657c0f8eeae7acac7dda52184d9f2b5dd36": [{"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":"Crimson","type":"vpk"}],
     "086fe5b61666485c1a176d1517da84ed46e99b08": [{"name":"Magnus White Tiger","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "08ffd51b28cc10013ee0e4632ace79d46e0f7dd6": [{"name":"Anime","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
@@ -70,6 +71,7 @@
     "09fa376b01bd602446387534485d5e148bdf9b3a": [{"name":"Sven Yatogami Tohka","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "0a0192ef447841c9ba4ec46238e7b040991babe9": [{"name":"Venomancer Peashooter","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "0a0b30fa3da041f1820adb86638f15a2de9022e5": [{"name":"Lone Druid Immortal","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "0a84755cf4f0b48d471bff63fbc09be91bd51dea": [{"name":"Derpy Hooves Donkey","categoryId":"couriers","styleLabel":null,"type":"vpk"}],
     "0a854cbef28dc6205906c70e663dad08eed86a2e": [{"name":"Shadow Demon Grim Facade","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "0aaa0bebf588de0bca6a01957381f255eeb1404f": [{"name":"Devotions of Dragonus Atos II","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "0ad39f6bcd712fca0fbe56644834e0081a10e029": [{"name":"Aghanims Emblem","categoryId":"emblems","styleLabel":null,"type":"vpk"}],
@@ -153,6 +155,7 @@
     "173ddbe603dd7decb872dbc4f4e07613f7d9d5d6": [{"name":"Spectre Arcana Pedestal","categoryId":"pedestal","styleLabel":"Style I","type":"vpk"}],
     "17b4a26081062d2dbdeb6a9d28f6a6afa32ea207": [{"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"type":"vpk"}],
     "17d43c4a57c36fda83751918cfec3f651692a86c": [{"name":"Northern Winds","categoryId":"music","styleLabel":null,"type":"vpk"}],
+    "17d458bb11d2ed8301cda19077583e853df1bebc": [{"name":"Kruc Fungi Imp Shadow Demon","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "180a04f7c9b33d67ea117c9cd8b3a39f31d14dfc": [{"name":"Normis Rank Icons","categoryId":"ranks","styleLabel":null,"type":"vpk"}],
     "182c2e26fc4e8d516ee2e322d6661cf9f8db1c06": [{"name":"Juggernaut Arcana Purple","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "185ea47bbe8158de45522852a8370272202b0b07": [{"name":"Immortal Lich","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -1034,6 +1037,7 @@
     "a10ca98a1ab643b95be29ab48eb355de14cc1d00": [{"name":"Keeper of the Light Tamamo","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a1469a11fe323c8cfdef290674c87f2c1a35a641": [{"name":"Bts3 Cursor","categoryId":"cursors","styleLabel":null,"type":"files"}],
     "a14a33c4371c0585dda43fa4499916e70791b29d": [{"name":"TI8 Cursor","categoryId":"cursors","styleLabel":null,"type":"files"}],
+    "a167e5e74fa0983f3b5968eb8bb12f71234e0dfb": [{"name":"Ogre Arcana Egg Sound Fix","categoryId":"other","styleLabel":"Full remove","type":"vpk"}],
     "a179789aa4a2c5b6142855ac14f9e4c10c62d59c": [{"name":"Winter Roshan","categoryId":"roshan","styleLabel":null,"type":"vpk"}],
     "a1b4a866ddd7dfc4af8946cbd0c40b3c0ec058f5": [{"name":"Keeper of the Light Renegade","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a1dd1248a8c480c292e70ee3536536adffb38d2c": [{"name":"Invoker Fate Meridian","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
