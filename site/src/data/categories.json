@@ -757,6 +757,7 @@
     {
       "id": "backgrounds",
       "mods": [
+        {"name":"Pug","styleLabel":null,"image":{"src":"/mods/pug.webp","width":854,"height":480},"author":"Swin-РукаBlood","authorUrl":"https://discord.gg/SCnUSB4j6S","date":1792151800},
         {"name":"Black Background","styleLabel":null,"image":{"src":"/mods/black-background.webp","width":854,"height":480},"author":"loveculted","authorUrl":"https://t.me/loveculted","date":1792060612},
         {"name":"Anime","styleLabel":null,"image":{"src":"/mods/anime.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
         {"name":"Dark Tree","styleLabel":null,"image":{"src":"/mods/dark-tree.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
@@ -855,6 +856,15 @@
     {
       "id": "hero-sounds",
       "mods": [
+        {"name":"Arc Warden Xvii","styleLabel":null,"image":{"src":"/mods/arc-warden-xvii.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792151800},
+        {
+          "name": "Techies Chance Allahu Akbar",
+          "styleLabel": null,
+          "image": {"src":"/mods/techies-chance-allahu-akbar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792151800
+        },
         {
           "name": "Weaver Ult Net Idi Nahui",
           "styleLabel": null,
@@ -1569,6 +1579,115 @@
       ]
     },
     {
+      "id": "sounds",
+      "mods": [
+        {
+          "name": "Ech Cat Sound Game Startup",
+          "styleLabel": null,
+          "image": {"src":"/mods/ech-cat-sound-game-startup.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792060612
+        },
+        {
+          "name": "Sound To Battle! From Wot",
+          "styleLabel": null,
+          "image": {"src":"/mods/sound-to-battle-from-wot.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792055497
+        },
+        {
+          "name": "Winlose Music Suffocation Kit",
+          "styleLabel": null,
+          "image": {"src":"/mods/winlose-music-suffocation-kit.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1791645604
+        },
+        {
+          "name": "Dragon Ball Blink",
+          "styleLabel": null,
+          "image": {"src":"/mods/dragon-ball-blink.webp","width":854,"height":480},
+          "author": "M1su",
+          "authorUrl": "https://steamcommunity.com/id/A-ds/",
+          "date": 1791342818
+        },
+        {"name":"Dagon Cobra Kick","styleLabel":null,"image":{"src":"/mods/dagon-cobra-kick.webp","width":854,"height":480},"author":"Новомодный","authorUrl":null,"date":1789727816},
+        {"name":"Dagon Revolver","styleLabel":null,"image":{"src":"/mods/dagon-revolver.webp","width":854,"height":480},"author":"keeper","authorUrl":"https://t.me/eternalsadism","date":1789192305},
+        {
+          "name": "1st September Horn",
+          "styleLabel": null,
+          "image": {"src":"/mods/1st-september-horn.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1788365172
+        },
+        {"name":"Dagon AWP","styleLabel":null,"image":{"src":"/mods/dagon-awp.webp","width":1280,"height":720},"author":"SuperStas0","authorUrl":"https://t.me/SuperStas0","date":1786250017},
+        {"name":"Flash Step Blink","styleLabel":null,"image":{"src":"/mods/flash-step-blink.webp","width":736,"height":411},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1786250017},
+        {"name":"Tormentor Amor","styleLabel":null,"image":{"src":"/mods/tormentor-amor.webp","width":1280,"height":720},"author":"SuperStas0","authorUrl":"https://t.me/SuperStas0","date":1786250017},
+        {"name":"Dark Carnival Dora","styleLabel":null,"image":{"src":"/mods/dark-carnival-dora.webp","width":854,"height":480},"author":"Senop","authorUrl":"https://t.me/senopD2","date":1784454434},
+        {
+          "name": "Dark Carnival Serega Pirat",
+          "styleLabel": null,
+          "image": {"src":"/mods/dark-carnival-serega-pirat.webp","width":854,"height":480},
+          "author": "Senop",
+          "authorUrl": "https://t.me/senopD2",
+          "date": 1784454434
+        },
+        {
+          "name": "Dark Carnival Team Spirit",
+          "styleLabel": null,
+          "image": {"src":"/mods/dark-carnival-team-spirit.webp","width":854,"height":480},
+          "author": "Senop",
+          "authorUrl": "https://t.me/senopD2",
+          "date": 1784454434
+        },
+        {
+          "name": "ReZero Subaru Phone Horn",
+          "styleLabel": null,
+          "image": {"src":"/mods/rezero-subaru-phone-horn.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1780816909
+        },
+        {
+          "name": "ReZero Respawn Sound",
+          "styleLabel": null,
+          "image": {"src":"/mods/rezero-respawn-sound.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1780653646
+        },
+        {"name":"Sora Main Menu","styleLabel":null,"image":{"src":"/mods/sora-main-menu.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780653646},
+        {
+          "name": "Stairs Guy Main Menu",
+          "styleLabel": null,
+          "image": {"src":"/mods/stairs-guy-main-menu.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1780653646
+        },
+        {
+          "name": "USSR and Germany Horn",
+          "styleLabel": null,
+          "image": {"src":"/mods/ussr-and-germany-horn.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1780653646
+        },
+        {"name":"Artifact Voices","styleLabel":null,"image":{"src":"/mods/artifact-voices.webp","width":854,"height":480},"author":"Fr0dech","authorUrl":"https://t.me/fr0dech_vpk","date":null},
+        {
+          "name": "Warcraft III / AllStars Voices",
+          "styleLabel": null,
+          "image": {"src":"/mods/warcraft-iii-allstars-voices.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": null
+        }
+      ]
+    },
+    {
       "id": "trees",
       "mods": [
         {"name":"Virus Trees","styleLabel":null,"image":{"src":"/mods/virus-trees.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788762686},
@@ -1709,114 +1828,6 @@
         {"name":"Rage Voice Icon","styleLabel":null,"image":{"src":"/mods/rage-voice-icon.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203},
         {"name":"Showcase Rotation","styleLabel":null,"image":{"src":"/mods/showcase-rotation.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203},
         {"name":"Techies Mine Radius","styleLabel":null,"image":{"src":"/mods/techies-mine-radius.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203}
-      ]
-    },
-    {
-      "id": "sounds",
-      "mods": [
-        {
-          "name": "Ech Cat Sound Game Startup",
-          "styleLabel": null,
-          "image": {"src":"/mods/ech-cat-sound-game-startup.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792060612
-        },
-        {
-          "name": "Sound To Battle! From Wot",
-          "styleLabel": null,
-          "image": {"src":"/mods/sound-to-battle-from-wot.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792055497
-        },
-        {
-          "name": "Winlose Music Suffocation Kit",
-          "styleLabel": null,
-          "image": {"src":"/mods/winlose-music-suffocation-kit.webp","width":854,"height":480},
-          "author": "драг",
-          "authorUrl": "https://t.me/dragvpk",
-          "date": 1791645604
-        },
-        {
-          "name": "Dragon Ball Blink",
-          "styleLabel": null,
-          "image": {"src":"/mods/dragon-ball-blink.webp","width":854,"height":480},
-          "author": "M1su",
-          "authorUrl": "https://steamcommunity.com/id/A-ds/",
-          "date": 1791342818
-        },
-        {"name":"Dagon Cobra Kick","styleLabel":null,"image":{"src":"/mods/dagon-cobra-kick.webp","width":854,"height":480},"author":"Новомодный","authorUrl":null,"date":1789727816},
-        {"name":"Dagon Revolver","styleLabel":null,"image":{"src":"/mods/dagon-revolver.webp","width":854,"height":480},"author":"keeper","authorUrl":"https://t.me/eternalsadism","date":1789192305},
-        {
-          "name": "1st September Horn",
-          "styleLabel": null,
-          "image": {"src":"/mods/1st-september-horn.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1788365172
-        },
-        {"name":"Dagon AWP","styleLabel":null,"image":{"src":"/mods/dagon-awp.webp","width":1280,"height":720},"author":"SuperStas0","authorUrl":"https://t.me/SuperStas0","date":1786250017},
-        {"name":"Flash Step Blink","styleLabel":null,"image":{"src":"/mods/flash-step-blink.webp","width":736,"height":411},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1786250017},
-        {"name":"Tormentor Amor","styleLabel":null,"image":{"src":"/mods/tormentor-amor.webp","width":1280,"height":720},"author":"SuperStas0","authorUrl":"https://t.me/SuperStas0","date":1786250017},
-        {"name":"Dark Carnival Dora","styleLabel":null,"image":{"src":"/mods/dark-carnival-dora.webp","width":854,"height":480},"author":"Senop","authorUrl":"https://t.me/senopD2","date":1784454434},
-        {
-          "name": "Dark Carnival Serega Pirat",
-          "styleLabel": null,
-          "image": {"src":"/mods/dark-carnival-serega-pirat.webp","width":854,"height":480},
-          "author": "Senop",
-          "authorUrl": "https://t.me/senopD2",
-          "date": 1784454434
-        },
-        {
-          "name": "Dark Carnival Team Spirit",
-          "styleLabel": null,
-          "image": {"src":"/mods/dark-carnival-team-spirit.webp","width":854,"height":480},
-          "author": "Senop",
-          "authorUrl": "https://t.me/senopD2",
-          "date": 1784454434
-        },
-        {
-          "name": "ReZero Subaru Phone Horn",
-          "styleLabel": null,
-          "image": {"src":"/mods/rezero-subaru-phone-horn.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1780816909
-        },
-        {
-          "name": "ReZero Respawn Sound",
-          "styleLabel": null,
-          "image": {"src":"/mods/rezero-respawn-sound.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1780653646
-        },
-        {"name":"Sora Main Menu","styleLabel":null,"image":{"src":"/mods/sora-main-menu.webp","width":854,"height":480},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1780653646},
-        {
-          "name": "Stairs Guy Main Menu",
-          "styleLabel": null,
-          "image": {"src":"/mods/stairs-guy-main-menu.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1780653646
-        },
-        {
-          "name": "USSR and Germany Horn",
-          "styleLabel": null,
-          "image": {"src":"/mods/ussr-and-germany-horn.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1780653646
-        },
-        {
-          "name": "Warcraft III / AllStars Voices",
-          "styleLabel": null,
-          "image": {"src":"/mods/warcraft-iii-allstars-voices.webp","width":854,"height":480},
-          "author": "Fr0dech",
-          "authorUrl": "https://t.me/fr0dech_vpk",
-          "date": null
-        }
       ]
     },
     {
@@ -1962,6 +1973,14 @@
     {
       "id": "hero-icons",
       "mods": [
+        {
+          "name": "Shadow Fiend Zxcursed Icon",
+          "styleLabel": null,
+          "image": {"src":"/mods/shadow-fiend-zxcursed-icon.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792151800
+        },
         {"name":"Invoker Mogg","styleLabel":null,"image":{"src":"/mods/invoker-mogg.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792060612},
         {"name":"Marci Mogg","styleLabel":null,"image":{"src":"/mods/marci-mogg.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792060612},
         {"name":"Ogre Magi Mogg","styleLabel":null,"image":{"src":"/mods/ogre-magi-mogg.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792060612},

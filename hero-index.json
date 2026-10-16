@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1578,
+  "mods": 1579,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1873,6 +1873,7 @@
         {"name":"Terrorblade Arcana Skadi","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings","back"]},
         {"name":"Terrorblade Arcana Sunrise","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
         {"name":"Terrorblade Arcana White","categoryId":"heroes","styleLabel":null,"slots":["misc","head"]},
+        {"name":"Terrorblade Emerald Arcana","categoryId":"heroes","styleLabel":null,"slots":["head"]},
         {"name":"Terrorblade Fire","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Terrorblade Foulfell Corruptor","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Terrorblade Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","wings"]},

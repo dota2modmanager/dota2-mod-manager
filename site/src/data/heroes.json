@@ -1020,6 +1020,16 @@
           "date": 1788287617
         },
         {
+          "name": "Terrorblade Emerald Arcana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head"],
+          "image": {"src":"/mods/terrorblade-emerald-arcana.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/drainAngel",
+          "date": 1792151800
+        },
+        {
           "name": "Terrorblade Legacy Green",
           "categoryId": "heroes",
           "styleLabel": null,
