@@ -473,8 +473,7 @@ const EN = {
   // ---------- presets ----------
   '{0} не установлено': '{0} not installed',
   'не установлен': 'not installed',
-  'Пресет хранит моды и виды из игры. Моды, которых в нём нет, выключаются, а вид надевается в свой слот: слоты, которых пресет не называет, остаются как есть.':
-    'A preset holds mods and looks from the game. Mods it does not name are switched off; a look goes on in its slot, and the slots the preset does not name stay as they are.',
+  'Пресет хранит моды и виды из игры. Моды, которых в нём нет, выключаются, а вид надевается в свой слот: слоты, которых пресет не называет, остаются как есть.': 'A preset holds mods and looks from the game. Mods it does not name are switched off; a look goes on in its slot, and the slots the preset does not name stay as they are.',
   'Пресет запоминает, какие моды включены. Применение пресета включает его моды и выключает остальные. Готовым пресетом можно поделиться файлом — перетащи полученный .d2mm сюда.':
     'A preset remembers which mods are on. Applying a preset enables its mods and disables the rest. A finished preset can be shared as a file — drop a .d2mm you received here.',
 

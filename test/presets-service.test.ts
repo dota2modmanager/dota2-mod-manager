@@ -351,3 +351,22 @@ test('the looks travel with a preset, in its file and in its link', async (t) =>
   const link = s.svc.presetLinkMods(preset, await s.svc.catalogIndex());
   assert.ok(link.mods.some((m) => m.kind === 'cosmetic' && m.itemId === '9059'), 'a link carries it too: a slot and an item');
 });
+
+test('a look the game no longer has is named, and the rest of the preset still goes on', async (t) => {
+  const s = stand(t);
+  s.pick('weather', '4000', 'Weather Snow');
+  s.pick('courier', '999', 'A Courier Valve Removed');
+  s.library.savePreset('Build');
+  const preset = s.library.listPresets()[0];
+  const gone = presetsService({
+    catalog: { load: async () => CATALOG } as never,
+    installer: { setEnabled: () => {}, analyzeRecord: () => null } as unknown as PresetInstaller,
+    library: s.library,
+    schemaService: {
+      refreshInBackground: async () => {},
+      pickCosmetic: (slot: string, itemId: string) => { if (itemId === '999') throw new Error('items_game: the item is not there'); return null; },
+    },
+    deployAndApply: () => [],
+  });
+  assert.deepEqual(await gone.applyPreset(preset), ['A Courier Valve Removed: items_game: the item is not there']);
+});

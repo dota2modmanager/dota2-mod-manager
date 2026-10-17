@@ -128,8 +128,7 @@ export function registerPresetsIpc({
         }
       }
     }
-    // the looks too, unless the remote config has them switched off: then the mods alone, and why
-    const off = preset.picks?.length ? blocked('cosmetics') : null;
+    const off = preset.picks?.length ? blocked('cosmetics') : null; // looks switched off remotely: the mods alone, and why
     if (off) errors.push(off.error);
     const toggleErrors = await presets.applyPreset(preset, { picks: !off });
     if (installed) {

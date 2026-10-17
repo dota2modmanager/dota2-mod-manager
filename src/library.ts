@@ -169,15 +169,9 @@ export class Library {
     return this.data.installed.filter((m) => m.enabled !== false && Library.isPick(m)).map(Library.pickOf);
   }
 
-  /** A look on the library's books: a cosmetic record with a slot and an item. */
-  static isPick(rec: LibRecord | null | undefined): rec is LibRecord {
-    return !!rec && rec.categoryId === 'cosmetic' && !!rec.slot && !!rec.itemId;
-  }
-
-  /** A look as a preset keeps it. */
-  static pickOf(rec: LibRecord): PresetPick {
-    return { slot: String(rec.slot), itemId: String(rec.itemId), name: rec.name, effectId: String(rec.effectId || '') };
-  }
+  /** A look on the library's books (a cosmetic record with a slot and an item), and the look as a preset keeps it. */
+  static isPick = (rec: LibRecord | null | undefined): rec is LibRecord => !!rec && rec.categoryId === 'cosmetic' && !!rec.slot && !!rec.itemId;
+  static pickOf = (rec: LibRecord): PresetPick => ({ slot: String(rec.slot), itemId: String(rec.itemId), name: rec.name, effectId: String(rec.effectId || '') });
 
   /* What a preset remembers about one mod: the same self-contained identity that already
    * travels inside a .d2mm (see src/preset-share.ts), so what is stored and what is shared

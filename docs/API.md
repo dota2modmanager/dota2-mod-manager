@@ -5743,7 +5743,7 @@ Does changing this record mean the item table has to be rebuilt?
 ### `presetsService`
 
 ```ts
-export function presetsService({ catalog, installer, library, schemaService, deployAndApply }: { catalog: Pick<Catalog, 'load'>; installer: PresetInstaller; library: Library; schemaService: { refresh(): unknown }; deployAndApply: (pack: LibRecord) => unknown; })
+export function presetsService({ catalog, installer, library, schemaService, deployAndApply }: { catalog: Pick<Catalog, 'load'>; installer: PresetInstaller; library: Library; schemaService: { refreshInBackground(): Promise<unknown>; pickCosmetic(slot: string, itemId: string, name: string, effectId: string, opts: { write: boolean }): unknown; }; deployAndApply: (pack: LibRecord) => unknown; })
 ```
 
 Everything about presets that needs the running app's services.
@@ -5752,7 +5752,7 @@ Everything about presets that needs the running app's services.
 @param deps.catalog        the catalog store, for turning a mod into an identity
 @param deps.installer      reads and writes what is in the game folder
 @param deps.library        the manifest of installed mods and saved presets
-@param deps.schemaService  rebuilds the item table when a preset changes it
+@param deps.schemaService  puts a preset's looks on, and rebuilds the item table when a preset changes it
 @param deps.deployAndApply  rebuilds one pack's VPK
 ```
 
@@ -7396,6 +7396,14 @@ export interface ModIdentity
 ```
 
 A mod as a preset remembers it: what it is, not which installation of it (src/preset-share.ts).
+
+### `PresetPick`
+
+```ts
+export interface PresetPick { slot: string; itemId: string; name: string; effectId: string }
+```
+
+A free look or an item builder pick as a preset remembers it: the slot, the item, its effects.
 
 ### `Preset`
 
