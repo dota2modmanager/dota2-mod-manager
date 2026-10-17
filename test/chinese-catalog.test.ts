@@ -41,6 +41,53 @@ test('hero sounds, skills, styles and categories display understandable Chinese'
   assert.equal(catalogName('Unseen author title', 'ru'), 'Unseen author title');
 });
 
+test('Chinese catalog bars use interface phrases without changing item names or other languages', () => {
+  const titles = {
+    'Black Top Bar': '黑色 顶部栏',
+    'Kaneki Search Bar': '金木研 搜索栏',
+    'Scolopendra Search Bar': '蜈蚣 搜索栏',
+    'Sematary Search Bar': '塞默特里 搜索栏',
+    'Hypergamy Search Bar': '海帕加米 搜索栏',
+    'Grey Search Bar': '灰色 搜索栏',
+    'Windows Xp Top Bar': 'Windows XP 顶部栏',
+    'Tcoaal Search Bar': 'Tcoaal 搜索栏',
+    'Noir Rose Top Bar': 'Noir 玫瑰 顶部栏',
+    'Rose Overcast Search Bar': '玫瑰 Overcast 搜索栏',
+    'Black King Bar': '黑皇杖',
+    'Monkey King Bar': '金箍棒',
+  };
+  for (const [source, chinese] of Object.entries(titles)) {
+    assert.equal(catalogName(source, 'zh-CN'), chinese, source);
+    assert.equal(catalogLabel(source, 'zh-CN'), chinese, source);
+    for (const lang of ['en', 'ru']) {
+      assert.equal(catalogName(source, lang), source);
+      assert.equal(catalogLabel(source, lang), source);
+    }
+  }
+  assert.equal(catalogLabel('Unseen SEARCH BAR v2', 'zh-CN'), 'Unseen 搜索栏 第 2 版');
+  assert.equal(catalogLabel('Bard Barrel Barracuda', 'zh-CN'), '吟游诗人 木桶 梭鱼');
+});
+
+test('new catalog labels translate interface phrases while keeping unknown creator names readable', () => {
+  const titles = {
+    'Pink Play Button': '粉色 开始游戏按钮',
+    'Grey Play Button': '灰色 开始游戏按钮',
+    'Old Shadow Fiend Secret Shop': '旧版 影魔 神秘商店',
+    'Rose Lycoris Mode Cards': '玫瑰 Lycoris 模式卡片',
+    'Bluelock Scoreboard And Shop': 'Bluelock 记分板 与 商店',
+    'Pink Spell Radius': '粉色 技能范围',
+    'Terrorblade White Spell': '恐怖利刃 白色 技能',
+    'Broodmother Gray Immortals': '育母蜘蛛 灰色 不朽饰品',
+    'Earthshaker Arcana Planetfall': '撼地者 至宝 天外飞星',
+    'Pandora The Packwyrm': '龙小宝',
+    'Shroomy': '小蘑菇',
+  };
+  for (const [source, chinese] of Object.entries(titles)) {
+    assert.equal(catalogName(source, 'zh-CN'), chinese, source);
+    for (const lang of ['en', 'ru']) assert.equal(catalogName(source, lang), source);
+  }
+});
+
 test('bilingual catalog and library searches keep records and original style keys intact', () => {
   const previous = Object.getOwnPropertyDescriptor(globalThis, 'window');
   const previousSlots = state.cosmeticSlots;
