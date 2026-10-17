@@ -19,7 +19,7 @@
 import { readKv3, readCell, writeCell, numberOf, type Kv3Block, type Kv3Node } from './kv3.ts';
 import { attributeToken, constantExpression, rewriteExpressions, withConstant } from './material.ts';
 import { dataBlock } from './resource.ts';
-import { buildVpk, entryAt, listVpkPathsFile, openVpkIndex } from './vpk.ts';
+import { buildVpk, entryAt, sharedVpkIndex } from './vpk.ts';
 
 export type Rgb = [number, number, number];
 
@@ -256,13 +256,13 @@ export function recolorFiles({ pak01, set, target, bake = false }: { pak01: stri
 } {
   const def = RECOLOR_SETS[set];
   if (!def) throw new Error(`recolor: no set ${set}`);
-  const index = openVpkIndex(pak01);
+  const index = sharedVpkIndex(pak01);
   const files = new Map<string, Buffer>();
   const failed: Failed = [];
   let changed = 0;
   let skipped = 0;
   const under = (p: string, prefixes: string[]) => prefixes.some((f) => p.startsWith(f));
-  for (const p of listVpkPathsFile(pak01)) {
+  for (const p of index.paths()) {
     const particle = p.endsWith('.vpcf_c') && (under(p, def.own) || under(p, def.shared));
     const material = p.endsWith('.vmat_c') && under(p, def.materials);
     if (!particle && !material) continue;

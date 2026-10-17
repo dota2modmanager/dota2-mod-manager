@@ -4,10 +4,11 @@
 // files are how it is kept readable.
 export {
   readVpkIndexFile, listVpkPaths, listVpkPathsFile, listVpkPathCrcs, listVpkPathCrcsFile, readVpkEntryFile,
-  openVpkIndex, entryPath, readVpkEntries, listVpkEntries, fingerprintEntries, fingerprintVpk, fingerprintFiles,
+  openVpkIndex, openVpkIndexSteps, entryPath, readVpkEntries, listVpkEntries,
 } from './vpk-read.ts';
 export type { VpkEntry, VpkDirEntry, VpkIndex } from './vpk-read.ts';
-export { sharedVpkIndex } from './vpk-shared.ts';
+export { sharedVpkIndex, sharedVpkIndexSteps } from './vpk-shared.ts';
+export { fingerprintEntries, fingerprintVpk, fingerprintFiles } from './vpk-fingerprint.ts';
 export {
   analyzeVpkPaths, slotDisplayName, describeHero, subjectHeroes, describeAnalysis, nameFromAnalysis,
 } from './vpk-analyze.ts';

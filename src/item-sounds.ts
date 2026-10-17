@@ -21,7 +21,8 @@ import path from 'node:path';
 import { dataBlock } from './resource.ts';
 import { readKv3, type Kv3Block, type Kv3Node } from './kv3.ts';
 import { writeKv3 } from './kv3-write.ts';
-import { entryAt, listVpkPathsFile, sharedVpkIndex, type VpkEntry, type VpkIndex } from './vpk.ts';
+import { entryAt, sharedVpkIndexSteps, type VpkEntry, type VpkIndex } from './vpk.ts';
+import { drain, PAUSE } from './steps.ts';
 
 /** An event to play as another: the one the server names, and the one the player hears. */
 export interface SoundSwap { sound: string; as: string }
@@ -106,9 +107,14 @@ export function voiceSwaps(rules: Kv3Node, cue: Pick<VoiceCue, 'key' | 'value'>)
  * @param gamePath  the game folder (…/dota 2 beta/game)
  */
 export function soundEntries(gamePath: string, swaps: SoundSwap[], cues: VoiceCue[]): VpkEntry[] {
+  return drain(soundEntriesSteps(gamePath, swaps, cues));
+}
+
+/** soundEntries, a pause every few dozen soundevents files: reading all of them is 300 ms. */
+export function* soundEntriesSteps(gamePath: string, swaps: SoundSwap[], cues: VoiceCue[]): Generator<typeof PAUSE, VpkEntry[]> {
   if (!swaps.length && !cues.length) return [];
   const pak = path.join(gamePath, 'dota', 'pak01_dir.vpk');
-  const ix = sharedVpkIndex(pak);
+  const ix = yield* sharedVpkIndexSteps(pak);
   const all = [...swaps];
   for (const cue of cues) {
     const rules = rulesOf(ix, cue.hero);
@@ -119,8 +125,10 @@ export function soundEntries(gamePath: string, swaps: SoundSwap[], cues: VoiceCu
   // the one that plays is not ours to guess, so each copy is rewritten.
   const files = new Map<string, Kv3Block>();
   const homes = new Map<string, string[]>();
-  for (const p of listVpkPathsFile(pak)) {
-    if (!p.startsWith('soundevents/') || !p.endsWith('.vsndevts_c')) continue;
+  const events = [...ix.paths()].filter((p) => p.startsWith('soundevents/') && p.endsWith('.vsndevts_c'));
+  yield PAUSE;
+  for (const [i, p] of events.entries()) {
+    if (i && i % 40 === 0) yield PAUSE;
     try {
       const kv = readKv3(dataBlock(ix.read(p)!).data);
       files.set(p, kv);

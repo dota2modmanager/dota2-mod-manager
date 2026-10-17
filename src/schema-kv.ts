@@ -2,6 +2,7 @@
 // its children without parsing the whole file. The table is 50 MB and only a few blocks of it are
 // ever needed, so nothing here builds a tree. Text is latin1, byte for byte.
 import { t } from './i18n.ts';
+import { PAUSE } from './steps.ts';
 
 /** A block's braces in the text: [open, close + 1]. */
 export type Bounds = [number, number];
@@ -79,21 +80,30 @@ export function blockBounds(text: string, i: number): Bounds {
  * @param bounds  from blockBounds()
  */
 export function eachChild(text: string, bounds: Bounds, fn: (child: KvChild) => void): void {
-  let i = bounds[0] + 1;
   const end = bounds[1] - 1;
-  while (i < end) {
-    const key = readToken(text, i);
-    if (!key) break;
-    const at = skipGap(text, key.next);
-    if (text[at] === '{') {
-      const b = blockBounds(text, at);
-      fn({ key: key.value, start: key.start, end: b[1], isBlock: true, value: null, body: b });
-      i = b[1];
-    } else {
-      const val = readToken(text, at);
-      if (!val) break;
-      fn({ key: key.value, start: key.start, end: val.next, isBlock: false, value: val.value, body: null });
-      i = val.next;
-    }
+  for (let i = bounds[0] + 1, c: KvChild | null; i < end && (c = childAt(text, i)); i = c.end) fn(c);
+}
+
+/** eachChild, with a pause every `every` children: the table's 26 000 items are a walk of 50 MB. */
+export function* eachChildSteps(text: string, bounds: Bounds, fn: (child: KvChild) => void, every: number): Generator<typeof PAUSE, void> {
+  const end = bounds[1] - 1;
+  let n = 0;
+  for (let i = bounds[0] + 1, c: KvChild | null; i < end && (c = childAt(text, i)); i = c.end) {
+    fn(c);
+    if (++n === every) { n = 0; yield PAUSE; }
   }
+}
+
+/** The child whose key starts at i (or after the gap there), or null at the block's close. */
+function childAt(text: string, i: number): KvChild | null {
+  const key = readToken(text, i);
+  if (!key) return null;
+  const at = skipGap(text, key.next);
+  if (text[at] === '{') {
+    const b = blockBounds(text, at);
+    return { key: key.value, start: key.start, end: b[1], isBlock: true, value: null, body: b };
+  }
+  const val = readToken(text, at);
+  if (!val) return null;
+  return { key: key.value, start: key.start, end: val.next, isBlock: false, value: val.value, body: null };
 }

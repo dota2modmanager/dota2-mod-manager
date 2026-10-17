@@ -24,7 +24,7 @@ import { readKv3, numberOf, type Kv3Node } from './kv3.ts';
 import { writeKv3 } from './kv3-write.ts';
 import { recolorFiles, recolorResource, RECOLOR_SETS, type Rgb } from './recolor.ts';
 import { dataBlock, resourceBlock, resourceBlocks, withReferences } from './resource.ts';
-import { buildVpk, entryAt, listVpkPathsFile, openVpkIndex } from './vpk.ts';
+import { buildVpk, entryAt, sharedVpkIndex } from './vpk.ts';
 
 export interface ArcanaSet {
   /** the recolour set with the arcana's particles and materials */
@@ -171,8 +171,9 @@ export function asModel(file: Buffer, modifier?: string): Buffer {
 export function arcanaPictures(pak01: string, set: string): Map<string, Buffer> {
   const def = ARCANA_SETS[set];
   if (!def) throw new Error(`arcana: no set ${set}`);
-  const index = openVpkIndex(pak01);
-  const all = listVpkPathsFile(pak01);
+  // the one the item builder holds: an open of the game's index is 270 ms, and this made two
+  const index = sharedVpkIndex(pak01);
+  const all = [...index.paths()];
   const have = new Set(all);
   const files = new Map<string, Buffer>();
   const { under, mark, hero } = def.images;
@@ -190,7 +191,7 @@ export function buildArcana({ pak01, set, target }: { pak01: string; set: string
 } {
   const def = ARCANA_SETS[set];
   if (!def) throw new Error(`arcana: no set ${set}`);
-  const index = openVpkIndex(pak01);
+  const index = sharedVpkIndex(pak01);
   const r = recolorFiles({ pak01, set: def.recolor, target, bake: true });
   const files = r.files;
   for (const [to, { from, modifier }] of Object.entries(def.models)) files.set(to, asModel(index.read(from) as Buffer, modifier));

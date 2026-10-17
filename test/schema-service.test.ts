@@ -596,3 +596,53 @@ test('the bar shows a build only once it has run long enough to be seen, and cou
   bar(null);
   assert.deepEqual(sent, [], 'nothing to build anew, only the write: nothing to count');
 });
+
+// ---------- the window first, the table behind it (issue #286) ----------
+
+test('a repair at start or after a patch builds the table in the background, and Play waits for it', async (t) => {
+  const s = service(t);
+  modWith(s.library, 'Rifle mod', [riflePatch('models/mod/rifle.vmdl')]);
+  s.svc.setEnabled(true);
+  const built = String(s.settings.get('schemaStamp'));
+  s.settings.set('schemaStamp', built.replace(/\|[^|]+$/, '|older'));
+
+  assert.deepEqual(s.svc.heal({ background: true }), { ok: true, healed: ['schema'] }, 'said at once, as the banner needs it');
+  assert.notEqual(s.settings.get('schemaStamp'), built, 'and not built yet: the window goes on drawing meanwhile');
+  await s.svc.settled();
+  assert.equal(s.settings.get('schemaStamp'), built, 'built by the time Play is let through');
+  assert.match(deployedTable(s.game) as string, /models\/mod\/rifle\.vmdl/);
+  assert.deepEqual(s.svc.heal(), { ok: true, healed: [] }, 'and the launch itself finds nothing to do');
+});
+
+test('a build in the background writes the pak without leaving a file of its own beside it, stopped or not', async (t) => {
+  const s = juggernaut(t);
+  s.pick('body', '9059');
+  const first = s.svc.refreshInBackground();
+  // stopped at every point it can be: a newer build each time the first one pauses
+  for (let i = 0; i < 6; i++) { await tick(); void s.svc.refreshInBackground(); }
+  await first;
+  await s.svc.settled();
+  const folder = path.join(s.game, patcher.FOLDER);
+  assert.deepEqual(fs.readdirSync(folder).filter((f) => f.includes('.mmtmp')), [], 'no temporary file left beside the pak');
+  assert.ok(fs.existsSync(path.join(folder, schema.SCHEMA_VPK)));
+  assert.equal(s.built('models/heroes/juggernaut/juggernaut_body.vmdl_c'), "Valve's arcana body");
+});
+
+test('a build pauses while it walks a table it has not listed, and builds the same table as one at once', async (t) => {
+  const s = juggernaut(t);
+  s.pick('body', '9059');
+  s.pick('weapon', '4015');
+  const pauses: number[] = [];
+  const { createBackgroundBuilds } = await import('../src/schema-build.ts');
+  let n = 0;
+  const steps = function* () { for (const step of [1, 2, 3]) { n++; yield { done: step, total: 3 }; } return { ok: true }; };
+  const builds = createBackgroundBuilds(steps as never, (st) => { if (st) pauses.push((st as { done: number }).done); });
+  assert.deepEqual(await builds.inBackground(), { ok: true });
+  assert.deepEqual(pauses, [1, 2, 3], 'each step reaches the bar, with the thread let go between them');
+  assert.equal(n, 3);
+  const inPlace = s.svc.refresh();
+  const once = deployedTable(s.game);
+  await s.svc.refreshInBackground();
+  assert.equal(deployedTable(s.game), once, 'the same table either way');
+  assert.equal(inPlace.ok, true);
+});

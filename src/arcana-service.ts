@@ -19,7 +19,7 @@ import { buildRecolor, RECOLOR_SETS, type Rgb } from './recolor.ts';
 import { TERRORBLADE_BASE } from './arcana-bases.ts';
 import { baseInColor } from './arcana-base-color.ts';
 import type { BaseStore } from './arcana-base-store.ts';
-import { buildVpk, entryAt, entryPath, openVpkIndex } from './vpk.ts';
+import { buildVpk, entryAt, entryPath, sharedVpkIndex } from './vpk.ts';
 import { pngFromVtex } from './vtex.ts';
 import { t } from './i18n.ts';
 import type { Installer } from './installer.ts';
@@ -120,7 +120,7 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
           const mtime = fs.statSync(pak).mtimeMs;
           if (probe?.pak === pak && probe.mtime === mtime) seen = probe;
           else {
-            const index = openVpkIndex(pak);
+            const index = sharedVpkIndex(pak);
             const png = pngFromVtex(index.read(PICTURE));
             seen = probe = { pak, mtime, available: Boolean(index.read(MODEL)), picture: png ? `data:image/png;base64,${png.toString('base64')}` : null };
           }

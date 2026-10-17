@@ -646,7 +646,7 @@
       "name": "a table that would crash the client is written into the game anyway",
       "file": "src/schema.ts",
       "anchor": "export function* deploySteps({ gamePath, folder, patches, base = readGameSchema(gamePath), beneath = [] }: DeployOptions)",
-      "from": "const checked = validateSchema(merged.text, base.text);",
+      "from": "const checked = yield* validateSchemaSteps(merged.text, base.text);",
       "to": "const checked = { bytes: merged.text.length, items: 0 };",
       "test": "test/schema.test.ts"
     },
@@ -1005,7 +1005,7 @@
     {
       "name": "a game update leaves the built table on the old one",
       "file": "src/schema-service.ts",
-      "anchor": "  function heal() {",
+      "anchor": "  function heal({ background = false } = {}) {",
       "from": "if (stamp !== settings.get('schemaStamp') || !schema.isDeployed(game, patcher.FOLDER)) {",
       "to": "if (!schema.isDeployed(game, patcher.FOLDER)) {",
       "test": "test/schema-service.test.ts"

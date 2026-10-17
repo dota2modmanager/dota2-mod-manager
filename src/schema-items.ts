@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { readVpkEntryFile } from './vpk.ts';
 import { t } from './i18n.ts';
-import { blockBounds, eachChild, type Bounds } from './schema-kv.ts';
+import { blockBounds, eachChild, eachChildSteps, type Bounds } from './schema-kv.ts';
+import { drain, PAUSE } from './steps.ts';
 
 /** An item of items_game as the pickers read it; see listItems. */
 export interface SchemaItem {
@@ -29,12 +30,18 @@ export const SCHEMA_REL = 'scripts/items/items_game.txt';
 
 // The "items" section of items_game.txt (all item definitions live directly under it).
 export function itemsSection(text: string): Bounds {
+  return drain(itemsSectionSteps(text));
+}
+
+/** itemsSection, a pause after each of the table's sections: finding their ends is a walk of 50 MB. */
+function* itemsSectionSteps(text: string): Generator<typeof PAUSE, Bounds> {
   const root = blockBounds(text, 0);
+  yield PAUSE;
   // set from inside the walk, which is why it is widened by hand
   let found = null as Bounds | null;
-  eachChild(text, root, (c) => {
+  yield* eachChildSteps(text, root, (c) => {
     if (!found && c.isBlock && c.key.toLowerCase() === 'items') found = c.body;
-  });
+  }, 1);
   if (!found) throw new Error(t('items_game: секция items не найдена'));
   return found;
 }
@@ -96,10 +103,16 @@ let itemsCache: { text: string; list: SchemaItem[]; byId?: Map<string, SchemaIte
  * table (validateSchema) asks, and a third of the walk.
  */
 export function countItems(text: string): number {
+  return drain(countItemsSteps(text));
+}
+
+/** countItems, a pause every few thousand items (validateSchemaSteps). */
+export function* countItemsSteps(text: string): Generator<typeof PAUSE, number> {
   const hit = itemsCache.find((e) => e.text === text);
   if (hit) return hit.list.length;
   let n = 0;
-  eachChild(text, itemsSection(text), (c) => { if (c.isBlock && /^\d+$/.test(c.key)) n++; });
+  const section = yield* itemsSectionSteps(text);
+  yield* eachChildSteps(text, section, (c) => { if (c.isBlock && /^\d+$/.test(c.key)) n++; }, 4000);
   return n;
 }
 
@@ -115,11 +128,16 @@ function itemsById(text: string): Map<string, SchemaItem> {
 }
 
 export function listItems(text: string): SchemaItem[] {
+  return drain(listItemsSteps(text));
+}
+
+/** listItems, a pause every thousand items: the first list of a table is 300 ms of walking. */
+export function* listItemsSteps(text: string): Generator<typeof PAUSE, SchemaItem[]> {
   const hit = itemsCache.find((e) => e.text === text);
   if (hit) return hit.list;
-  const section = itemsSection(text);
+  const section = yield* itemsSectionSteps(text);
   const out: SchemaItem[] = [];
-  eachChild(text, section, (c) => {
+  yield* eachChildSteps(text, section, (c) => {
     if (!c.isBlock || !/^\d+$/.test(c.key)) return;
     const fields = new Map<string, string>();
     let hasVisuals = false;
@@ -151,7 +169,10 @@ export function listItems(text: string): SchemaItem[] {
       start: c.start,
       end: c.end,
     });
-  });
+  }, 1000);
+  // somebody who could not wait listed it in the meantime: theirs is the one kept
+  const meanwhile = itemsCache.find((e) => e.text === text);
+  if (meanwhile) return meanwhile.list;
   itemsCache.unshift({ text, list: out });
   itemsCache.length = Math.min(itemsCache.length, ITEMS_CACHE_SIZE);
   return out;

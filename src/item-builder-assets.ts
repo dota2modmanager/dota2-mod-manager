@@ -135,8 +135,12 @@ function heroModelBytes(data: Buffer, activities: string[]): Buffer {
   }
 }
 
-/** Read compiled asset bytes out of pak01 and stage them under the renamed path in our VPK. */
-export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | null | undefined): VpkEntry[] {
+/**
+ * Read compiled asset bytes out of pak01 and stage them under the renamed path in our VPK.
+ * @param skip  the paths, lowercased, something else fills (an arcana base, src/arcana-bases.ts):
+ *   Juggernaut's arcana body made the plain hero's is a quarter of a second for a file thrown away
+ */
+export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | null | undefined, skip?: (to: string) => boolean): VpkEntry[] {
   const pak = path.join(gamePath, 'dota', 'pak01_dir.vpk');
   if (!fs.existsSync(pak)) throw new Error(t('Не найден {0}', pak));
   const ix = sharedVpkIndex(pak);
@@ -145,7 +149,7 @@ export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | nu
   for (const copy of assetCopies || []) {
     const from = compiledAssetPath(copy.from);
     const to = compiledAssetPath('hero' in copy ? heroModelPath(ix, copy.hero) : copy.to);
-    if (!from || !to || seen.has(to)) continue;
+    if (!from || !to || seen.has(to) || skip?.(to.toLowerCase())) continue;
     const data = ix.read(from);
     if (!data && 'optional' in copy && copy.optional) continue;
     if (!data) throw new Error(t('Не найден {0}', from));

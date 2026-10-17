@@ -570,3 +570,19 @@ test('counting the items is listing them, and a merge of many patches is the sam
   assert.match(once, /"Patched 1290"/);
   assert.equal(countItems(once), 1200);
 });
+
+test('the walks that pause give what the walks at once give', async () => {
+  const { listItemsSteps, countItemsSteps } = await import('../src/schema-items.ts');
+  const { validateSchemaSteps } = await import('../src/schema-merge.ts');
+  const { drain, PAUSE } = await import('../src/steps.ts');
+  const block = (id: string) => `\t\t"${id}"\n\t\t{\n\t\t\t"name"\t\t"Item ${id}"\n\t\t}`;
+  const text = ['"items_game"', '{', '\t"items"', '\t{', ...Array.from({ length: 5000 }, (_, i) => block(String(100 + i))), '\t}', '}', ''].join('\n');
+  const pausesOf = (steps: Generator<unknown, unknown>) => { let p = 0; for (let r = steps.next(); !r.done; r = steps.next()) if (r.value === PAUSE) p++; return p; };
+  assert.ok(pausesOf(countItemsSteps(text)) >= 2, 'the count pauses on its way');
+  assert.equal(drain(countItemsSteps(text)), 5000);
+  const fresh = `${text} `;
+  assert.ok(pausesOf(listItemsSteps(fresh)) >= 5, 'a thousand items a step');
+  assert.deepEqual(drain(listItemsSteps(fresh)), schema.listItems(fresh));
+  assert.deepEqual(drain(validateSchemaSteps(text, null)), schema.validateSchema(text, null));
+  assert.throws(() => drain(validateSchemaSteps(`${text}{`, null)), 'a broken table is refused step by step too');
+});

@@ -1,7 +1,7 @@
 // Display names come from Valve's installed localization, while schema names remain the keys
 // used by icons, saved picks and the item builder. No translated name is written into the schema.
 import path from 'path';
-import { openVpkIndex } from './vpk.ts';
+import { sharedVpkIndex } from './vpk.ts';
 import { gameSchemaStamp, listItems, toUtf8, type SchemaItem } from './schema.ts';
 
 /** Valve localization files are UTF-8 today; older loose copies may carry a UTF-16 BOM. */
@@ -46,7 +46,7 @@ export function styleNamer(game: string, lang: string, fallback: (index: number)
     const key = `${game}|${gameSchemaStamp(game)}|${lang}`;
     if (styleCache?.key !== key) {
       // style names are in dota_*.txt (DOTA_Style_Bracers_of_the_Cavern_Luminar_0), items_*.txt has a few more
-      const index = openVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
+      const index = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
       const found = new Map<string, string>();
       for (const file of ['dota', 'items']) {
         const data = index.read(`resource/localization/${file}_${LANG_FILE[lang] || 'english'}.txt`);
@@ -69,7 +69,7 @@ export function chineseCosmeticNames(game: string, schemaText: string): Record<s
   try {
     const stamp = gameSchemaStamp(game);
     if (cached?.game === game && cached.stamp === stamp) return cached.names;
-    const index = openVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
+    const index = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
     const tokens = new Map<string, string>();
     for (const file of ['dota', 'items']) {
       const data = index.read(`resource/localization/${file}_schinese.txt`);

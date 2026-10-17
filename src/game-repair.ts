@@ -83,7 +83,8 @@ export function createGameRepair({ settings, installer, library, schemaService, 
     const healed: string[] = [];
     let error: string | null = null;
     try {
-      const res = schemaService.heal();
+      // in the background: this runs at start and when a patch lands, with the window up (issue #286)
+      const res = schemaService.heal({ background: true });
       if (res.healed) healed.push(...res.healed);
       if (res.error) error = res.error;
     } catch (err) {

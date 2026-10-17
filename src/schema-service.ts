@@ -14,7 +14,8 @@ import * as patcher from './patcher.ts';
 import * as schema from './schema.ts';
 import { createHarvest, type SchemaInstaller } from './schema-harvest.ts';
 import { createCosmetics } from './schema-cosmetics.ts';
-import { createBackgroundBuilds, createTableBuild, drain, type BuildStep, type Refreshed } from './schema-build.ts';
+import { createBackgroundBuilds, createTableBuild, type BuildStep, type BuildYield, type Refreshed } from './schema-build.ts';
+import { drain } from './steps.ts';
 import { chooseBases } from './arcana-bases.ts';
 import type { BaseStore } from './arcana-base-store.ts';
 import type { Settings } from './settings.ts';
@@ -103,7 +104,7 @@ export function createSchemaService({ settings, library, installer, userDataDir,
   }
 
   /** refresh, a step at a time: each pick built anew, then the merge, the check and the pak. */
-  function* refreshSteps(): Generator<BuildStep, Refreshed> {
+  function* refreshSteps(): Generator<BuildYield, Refreshed, boolean | undefined> {
     const game = gamePath();
     if (!game) return { ok: false, reason: 'no-game-path' };
     try {
@@ -118,13 +119,7 @@ export function createSchemaService({ settings, library, installer, userDataDir,
       const base = vanillaBase();
       const { list, beneath } = yield* table.buildSteps(base.text, game);
       if (!list.length) return drop();
-      const steps = schema.deploySteps({ gamePath: game, folder: patcher.FOLDER, patches: list, base, beneath });
-      let res: schema.Deployed;
-      for (;;) {
-        const r = steps.next();
-        if (r.done) { res = r.value; break; }
-        yield { stage: r.value };
-      }
+      const res = yield* schema.deploySteps({ gamePath: game, folder: patcher.FOLDER, patches: list, base, beneath });
       settings.set('schemaStamp', stampOf(res.stamp));
       return { ok: true, deployed: true, patches: res.applied.length, missing: res.missing, conflicts: res.conflicts, bytes: res.bytes };
     } catch (err) {
@@ -139,7 +134,7 @@ export function createSchemaService({ settings, library, installer, userDataDir,
 
   // A Dota update overwrites the patched gameinfo and moves the item table underneath our
   // build. Runs on startup and before launching the game.
-  function heal() {
+  function heal({ background = false } = {}) {
     const game = gamePath();
     if (!game) return { ok: true, healed: [] };
     // Safe mode still needs a look: if the game's own file is not what Valve signed, the
@@ -168,7 +163,10 @@ export function createSchemaService({ settings, library, installer, userDataDir,
       // a new build of the game or of the app: either can change what a pick builds into
       const stamp = stampOf(schema.readGameSchema(game).stamp);
       if (stamp !== settings.get('schemaStamp') || !schema.isDeployed(game, patcher.FOLDER)) {
-        refresh();
+        // at start and after a patch the window is open, or about to be: the table builds behind
+        // it, not in the way of its first frame (issue #286), and Play waits for it (settled)
+        if (background) void refreshInBackground().then((r) => { if (r.error) log(`schema: the build after the repair failed: ${r.error}`); });
+        else refresh();
         healed.push('schema');
       }
     } catch (err) {

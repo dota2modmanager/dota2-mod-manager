@@ -18,6 +18,7 @@
  *   what the base fixes: such a pick leaves the base's paths to the base (`withoutBaseFiles`).
  */
 import { entryPath, type VpkEntry } from './vpk.ts';
+import { drain, PAUSE } from './steps.ts';
 
 /** One base: a folder of the repository, and the picks it is for. */
 export interface ArcanaBase {
@@ -111,13 +112,22 @@ export function readyBase(base: ArcanaBase, entries: VpkEntry[]): ReadyBase {
  * (src/services.ts), so a pick never waits on the network. One that is here is asked for too, once
  * a run, for a newer version of it.
  */
-export function basesHere(picks: BasePick[], store: { entries(id: string): VpkEntry[] | null; want(id: string): Promise<boolean> }, log: (msg: string) => void = () => {}): ReadyBase[] {
+export function basesHere(picks: BasePick[], store: BaseSource, log: (msg: string) => void = () => {}): ReadyBase[] {
+  return drain(basesHereSteps(picks, store, log));
+}
+
+/** Where a build reads bases from (src/arcana-base-store.ts). */
+export interface BaseSource { entries(id: string): VpkEntry[] | null; want(id: string): Promise<boolean> }
+
+/** basesHere, a pause after each base: one is up to 20 MB read off the disk. */
+export function* basesHereSteps(picks: BasePick[], store: BaseSource, log: (msg: string) => void = () => {}): Generator<typeof PAUSE, ReadyBase[]> {
   const out: ReadyBase[] = [];
   for (const base of chooseBases(picks)) {
     const entries = store.entries(base.id);
     void store.want(base.id);
     if (entries) out.push(readyBase(base, entries));
     else log(`schema: the arcana base ${base.id} is not here yet; built from the game's files until it is`);
+    yield PAUSE;
   }
   return out;
 }

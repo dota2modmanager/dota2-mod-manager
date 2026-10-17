@@ -18,7 +18,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { buildVpk, entryAt, type VpkEntry } from './vpk.ts';
 import { readGameSchema, type GameSchema } from './schema-items.ts';
-import { mergeSchema, validateSchema, type MergeResult, type SchemaPatch } from './schema-merge.ts';
+import { mergeSchema, validateSchemaSteps, type MergeResult, type SchemaPatch } from './schema-merge.ts';
+import { drain, PAUSE } from './steps.ts';
 
 export { blockBounds, eachChild } from './schema-kv.ts';
 export type { Bounds, KvChild } from './schema-kv.ts';
@@ -55,29 +56,31 @@ export function buildSchemaVpk(text: string, extraEntries: VpkEntry[] = []): Buf
  *   (src/arcana-bases.ts), which another item picked for one of its slots replaces there
  */
 export function deploy(opts: DeployOptions): Deployed {
-  const steps = deploySteps(opts);
-  for (;;) {
-    const r = steps.next();
-    if (r.done) return r.value;
-  }
+  return drain(deploySteps(opts));
 }
 
 /** What deploy is given. */
 export interface DeployOptions { gamePath: string; folder: string; patches: SchemaPatch[]; base?: GameSchema; beneath?: VpkEntry[] }
 /** What deploy wrote. */
 export type Deployed = MergeResult & { stamp: string; bytes: number; items: number };
+/** A stage of deploySteps; `write` asks the caller to write the pak where it can wait for the disk. */
+export type DeployStep = { stage: 'merged' | 'checked' | 'packed' } | { write: string; data: Buffer } | typeof PAUSE;
+/** temporary files of the pak, one name each: a write in the background and one in place can overlap */
+let writes = 0;
 
 /**
  * deploy, a stage at a time: the merge, the check, the pak, the write, each a yield apart, so a
- * caller that builds in the background (src/schema-service.ts refreshInBackground) lets the rest
- * of the app run between them, and can stop before the write when a newer build has taken over.
- * Nothing is written to the game before the last stage.
+ * caller that builds in the background (src/schema-build.ts) lets the rest of the app run between
+ * them, and can stop before the write when a newer build has taken over. The write is handed to
+ * that caller to do without holding the thread (a pak with arcana bases in it is 200 MB), and
+ * done here when the caller does not take it (next(true) says it did). Nothing is written to the
+ * game before the last stage.
  */
-export function* deploySteps({ gamePath, folder, patches, base = readGameSchema(gamePath), beneath = [] }: DeployOptions): Generator<'merged' | 'checked' | 'packed', Deployed> {
+export function* deploySteps({ gamePath, folder, patches, base = readGameSchema(gamePath), beneath = [] }: DeployOptions): Generator<DeployStep, Deployed, boolean | undefined> {
   const merged = mergeSchema(base.text, patches);
-  yield 'merged';
-  const checked = validateSchema(merged.text, base.text);
-  yield 'checked';
+  yield { stage: 'merged' };
+  const checked = yield* validateSchemaSteps(merged.text, base.text);
+  yield { stage: 'checked' };
   const extras: VpkEntry[] = [];
   const seen = new Set<string>();
   for (const assets of [...(patches || []).map((p) => p.assets || []), beneath]) {
@@ -89,18 +92,18 @@ export function* deploySteps({ gamePath, folder, patches, base = readGameSchema(
     }
   }
   const buf = buildSchemaVpk(merged.text, extras);
-  yield 'packed';
+  yield { stage: 'packed' };
   const dir = path.join(gamePath, folder);
   fs.mkdirSync(dir, { recursive: true });
   const dest = path.join(dir, SCHEMA_VPK);
-  const tmp = dest + '.mmtmp';
-  fs.writeFileSync(tmp, buf);
+  const tmp = `${dest}.${process.pid}-${++writes}.mmtmp`;
   try {
+    if (!(yield { write: tmp, data: buf })) fs.writeFileSync(tmp, buf);
     fs.rmSync(dest, { force: true });
     fs.renameSync(tmp, dest);
-  } catch (e) {
+  } finally {
+    // gone after the rename; left by a failed write, or a build stopped for a newer one
     fs.rmSync(tmp, { force: true });
-    throw e;
   }
   return { ...merged, stamp: base.stamp, bytes: checked.bytes, items: checked.items };
 }

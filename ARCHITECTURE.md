@@ -126,7 +126,8 @@ replaced in one rename (`src/atomic-file.ts`), so a save cut short leaves the ol
 
 `src/vpk.ts` is a full reader and writer for Valve's v1 and v2 pack format, written here rather
 than pulled in, and it is the piece most worth reading first. Every caller imports it from there;
-the code sits in three files behind it: `src/vpk-read.ts` (the index, entries, fingerprints),
+the code sits in the files behind it: `src/vpk-read.ts` (the index and entries), `src/vpk-fingerprint.ts`
+(what a mod is, whatever it is packed as),
 `src/vpk-write.ts` (building, packing a folder, combining, merging, splitting) and
 `src/vpk-analyze.ts` (which heroes and slots a mod's paths touch). It parses the directory tree, reads
 entries with their CRCs, writes single and multi-volume archives, merges a multi-volume mod into
@@ -526,6 +527,8 @@ that location is not writable.
 | `src/beta.ts` | Who the beta channel is offered to, from the signed list of Discord accounts, and which update feed a copy reads |
 | `src/vpk.ts`, `src/vpk-read.ts`, `src/vpk-write.ts`, `src/vpk-pack.ts`, `src/vpk-analyze.ts` | The VPK format: reading one, writing one, packing a folder into one, and what a mod's paths say it changes |
 | `src/vpk-shared.ts` | The game's pak01 index opened once for a burst of reads, the item builder's, and let go 30 seconds after the last one |
+| `src/vpk-fingerprint.ts` | A mod's fingerprint from its index or its files, the same whatever it is packed as |
+| `src/steps.ts` | Long work as generators that pause every few dozen milliseconds, run at once with `drain` or a step at a time in the background, so the main process never holds the thread the window draws on for long (issue #286) |
 | `src/file-tx.ts`, `src/file-tx-journal.ts` | One transaction per change to the game folder, and the journal that finishes or undoes it after a crash |
 | `src/atomic-file.ts` | `manifest.json` and `settings.json` replaced in one step |
 | `src/library.ts` | `manifest.json`: installed records and presets |

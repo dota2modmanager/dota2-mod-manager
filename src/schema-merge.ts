@@ -4,7 +4,11 @@
 import type { VpkEntry } from './vpk.ts';
 import { t } from './i18n.ts';
 import { blockBounds, eachChild, readToken, skipGap, type Bounds } from './schema-kv.ts';
-import { countItems, findItem, itemsSection, listItems } from './schema-items.ts';
+import { countItemsSteps, findItem, itemsSection, listItems } from './schema-items.ts';
+import { drain, PAUSE } from './steps.ts';
+
+/** how much of the table the brace count walks between pauses: about 10 ms of it */
+const SLICE = 8_000_000;
 
 /** An item block a mod changed, lifted out of the table it shipped. */
 export interface SchemaDelta { id: string; name: string; block: string }
@@ -228,15 +232,21 @@ export function mergeSchema(baseText: string, patches: SchemaPatch[]): MergeResu
  * only: a malformed file is what makes the game die with "ERROR PARSING SCRIPT".
  */
 export function validateSchema(text: string, baseText?: string | null): { items: number; bytes: number } {
+  return drain(validateSchemaSteps(text, baseText));
+}
+
+/** validateSchema, a pause every few megabytes of the brace count and every few thousand items. */
+export function* validateSchemaSteps(text: string, baseText?: string | null): Generator<typeof PAUSE, { items: number; bytes: number }> {
   let depth = 0;
-  for (let i = 0; i < text.length; i++) {
+  for (let i = 0, pause = SLICE; i < text.length; i++) {
+    if (i >= pause) { pause = i + SLICE; yield PAUSE; }
     const c = text.charCodeAt(i);
     if (c === 34) { const e = text.indexOf('"', i + 1); if (e === -1) throw new Error(t('items_game: незакрытая кавычка')); i = e; continue; }
     if (c === 123) depth++;
     else if (c === 125) { depth--; if (depth < 0) throw new Error(t('items_game: лишняя закрывающая скобка')); }
   }
   if (depth !== 0) throw new Error(t('items_game: незакрытый блок'));
-  const items = countItems(text);
+  const items = yield* countItemsSteps(text);
   if (items < 1000) throw new Error(t('items_game: подозрительно мало предметов ({0})', items));
   if (baseText) {
     const baseItems = listItems(baseText).length;

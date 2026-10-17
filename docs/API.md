@@ -127,6 +127,7 @@ the code, not in this page.
 | [`src/settings.ts`](#srcsettingsts) | Simple JSON settings store in userData |
 | [`src/slot-zones.ts`](#srcslot-zonests) | The load order in two parts. |
 | [`src/steam.ts`](#srcsteamts) | Finding Steam, and then finding Dota inside it. |
+| [`src/steps.ts`](#srcstepsts) | Work a step at a time. |
 | [`src/terrain-age.ts`](#srcterrain-agets) | Terrains that replace the whole map, and whether the game's own map has moved on since. |
 | [`src/toolchain.ts`](#srctoolchaints) | Tools the app can borrow, fetched only when something actually needs them. |
 | [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
@@ -134,6 +135,7 @@ the code, not in this page.
 | [`src/update-impact.ts`](#srcupdate-impactts) | Which installed mods a Dota update reached. |
 | [`src/updater.ts`](#srcupdaterts) | Where an installed copy looks for a new version, and on which channel. |
 | [`src/vpk-analyze.ts`](#srcvpk-analyzets) | What a mod changes, read from the paths inside it: which heroes, which equip slots, or which |
+| [`src/vpk-fingerprint.ts`](#srcvpk-fingerprintts) | What a mod is, whatever it is packed as: a fingerprint of its files (src/vpk.ts gathers the VPK |
 | [`src/vpk-pack.ts`](#srcvpk-packts) | Packing a folder of loose game files into a mod: where the content starts under the folder an |
 | [`src/vpk-read.ts`](#srcvpk-readts) | Reading a Source-engine VPK: the index of a "_dir" file (v1/v2), the files it lists and their |
 | [`src/vpk-shared.ts`](#srcvpk-sharedts) | One VPK index opened once for a burst of reads: the game's pak01, which the item builder reads |
@@ -480,13 +482,29 @@ A base with the files the store had for it, and the paths they fill.
 ### `basesHere`
 
 ```ts
-export function basesHere(picks: BasePick[], store: { entries(id: string): VpkEntry[] | null; want(id: string): Promise<boolean> }, log: (msg: string) => void = () => {}): ReadyBase[]
+export function basesHere(picks: BasePick[], store: BaseSource, log: (msg: string) => void = () => {}): ReadyBase[]
 ```
 
 The bases a set of picks puts on that are here, for a build. One that is not is asked for, and
 the build goes on from the game's files: the store builds again once it has come
 (src/services.ts), so a pick never waits on the network. One that is here is asked for too, once
 a run, for a newer version of it.
+
+### `BaseSource`
+
+```ts
+export interface BaseSource { entries(id: string): VpkEntry[] | null; want(id: string): Promise<boolean> }
+```
+
+Where a build reads bases from (src/arcana-base-store.ts).
+
+### `basesHereSteps`
+
+```ts
+export function* basesHereSteps(picks: BasePick[], store: BaseSource, log: (msg: string) => void = () => {}): Generator<typeof PAUSE, ReadyBase[]>
+```
+
+basesHere, a pause after each base: one is up to 20 MB read off the disk.
 
 ### `withoutBaseFiles`
 
@@ -3217,10 +3235,15 @@ so the path cannot be made from the name.
 ### `gameAssetEntries`
 
 ```ts
-export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | null | undefined): VpkEntry[]
+export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | null | undefined, skip?: (to: string) => boolean): VpkEntry[]
 ```
 
 Read compiled asset bytes out of pak01 and stage them under the renamed path in our VPK.
+
+```
+@param skip  the paths, lowercased, something else fills (an arcana base, src/arcana-bases.ts):
+Juggernaut's arcana body made the plain hero's is a quarter of a second for a file thrown away
+```
 
 ## src/item-builder-effects.ts
 
@@ -3594,6 +3617,14 @@ An event the game no longer has is passed over: items_game names a few dozen of 
 ```
 @param gamePath  the game folder (…/dota 2 beta/game)
 ```
+
+### `soundEntriesSteps`
+
+```ts
+export function* soundEntriesSteps(gamePath: string, swaps: SoundSwap[], cues: VoiceCue[]): Generator<typeof PAUSE, VpkEntry[]>
+```
+
+soundEntries, a pause every few dozen soundevents files: reading all of them is 300 ms.
 
 ## src/item-visuals.ts
 
@@ -6202,6 +6233,14 @@ export type BuildStep = { done: number; total: number } | { stage: 'merged' | 'c
 
 How far a build is: the picks built anew so far out of those it has to, or the stage of the write.
 
+### `BuildYield`
+
+```ts
+export type BuildYield = BuildStep | schema.DeployStep
+```
+
+What a build yields: a step the bar counts, a pause in a long walk, or the pak to write (schema.deploySteps).
+
 ### `Refreshed`
 
 ```ts
@@ -6209,14 +6248,6 @@ export interface Refreshed
 ```
 
 What a build of the table answers.
-
-### `drain`
-
-```ts
-export function drain<R>(steps: Generator<unknown, R>): R
-```
-
-A generator run to its end at once: the steps of a build, for a caller that does not wait between them.
 
 ### `buildBar`
 
@@ -6247,7 +6278,7 @@ What goes into the table: every enabled record's patches, each item builder pick
 ### `createBackgroundBuilds`
 
 ```ts
-export function createBackgroundBuilds(steps: () => Generator<BuildStep, Refreshed>, onBuild: (step: BuildStep | null) => void)
+export function createBackgroundBuilds(steps: () => Generator<BuildYield, Refreshed, boolean | undefined>, onBuild: (step: BuildStep | null) => void)
 ```
 
 Builds in the background, one at a time and in order. A build asked for while one runs stops
@@ -6368,6 +6399,14 @@ export function countItems(text: string): number
 How many items listItems would list, without reading what each one says: all a check of a built
 table (validateSchema) asks, and a third of the walk.
 
+### `countItemsSteps`
+
+```ts
+export function* countItemsSteps(text: string): Generator<typeof PAUSE, number>
+```
+
+countItems, a pause every few thousand items (validateSchemaSteps).
+
 ### `listItems`
 
 ```ts
@@ -6375,6 +6414,14 @@ export function listItems(text: string): SchemaItem[]
 ```
 
 _No description in the source._
+
+### `listItemsSteps`
+
+```ts
+export function* listItemsSteps(text: string): Generator<typeof PAUSE, SchemaItem[]>
+```
+
+listItems, a pause every thousand items: the first list of a table is 300 ms of walking.
 
 ### `toUtf8`
 
@@ -6508,6 +6555,14 @@ Walk the direct children of a block.
 ```
 @param bounds  from blockBounds()
 ```
+
+### `eachChildSteps`
+
+```ts
+export function* eachChildSteps(text: string, bounds: Bounds, fn: (child: KvChild) => void, every: number): Generator<typeof PAUSE, void>
+```
+
+eachChild, with a pause every `every` children: the table's 26 000 items are a walk of 50 MB.
 
 ## src/schema-merge.ts
 
@@ -6643,6 +6698,14 @@ export function validateSchema(text: string, baseText?: string | null): { items:
 Refuse to ship a schema that could crash the client on load. Cheap structural checks
 only: a malformed file is what makes the game die with "ERROR PARSING SCRIPT".
 
+### `validateSchemaSteps`
+
+```ts
+export function* validateSchemaSteps(text: string, baseText?: string | null): Generator<typeof PAUSE, { items: number; bytes: number }>
+```
+
+validateSchema, a pause every few megabytes of the brace count and every few thousand items.
+
 ## src/schema-service.ts
 
 Orchestration around the item schema: what goes into it, when it is rebuilt, and how a
@@ -6765,9 +6828,26 @@ export type Deployed = MergeResult & { stamp: string; bytes: number; items: numb
 
 What deploy wrote.
 
+### `DeployStep`
+
+```ts
+export type DeployStep = { stage: 'merged' | 'checked' | 'packed' } | { write: string; data: Buffer } | typeof PAUSE
+```
+
+A stage of deploySteps; `write` asks the caller to write the pak where it can wait for the disk.
+
 ### `deploySteps`
 
-_No description in the source._
+```ts
+export function* deploySteps({ gamePath, folder, patches, base = readGameSchema(gamePath), beneath = [] }: DeployOptions): Generator<DeployStep, Deployed, boolean | undefined>
+```
+
+deploy, a stage at a time: the merge, the check, the pak, the write, each a yield apart, so a
+caller that builds in the background (src/schema-build.ts) lets the rest of the app run between
+them, and can stop before the write when a newer build has taken over. The write is handed to
+that caller to do without holding the thread (a pak with arcana bases in it is 200 MB), and
+done here when the caller does not take it (next(true) says it did). Nothing is written to the
+game before the last stage.
 
 ### `undeploy`
 
@@ -7074,6 +7154,33 @@ working install broken.
 
 A run held to a sandbox (src/write-jail.ts) knows no game outside it, so detection cannot hand it
 the real one: that is how a sandbox run once came to write into the real game.
+
+## src/steps.ts
+
+Work a step at a time.
+
+Electron runs the main process's JavaScript on the thread that draws the window, so a build that
+holds that thread for a second leaves the window black for that second (issue #286). The long
+jobs (the item table, the game's index, its soundevents) are written as generators that yield
+between steps of a few dozen milliseconds: run at once with drain where the caller needs the
+answer before it returns, or a step at a time with the rest of the app let in between
+(src/schema-build.ts). One body of code either way.
+
+### `drain`
+
+```ts
+export function drain<R>(steps: Generator<unknown, R>): R
+```
+
+A generator run to its end at once: for a caller that does not wait between the steps.
+
+### `PAUSE`
+
+```ts
+export const PAUSE = Symbol('pause')
+```
+
+The step a walk yields between pieces of its work.
 
 ## src/terrain-age.ts
 
@@ -7547,6 +7654,41 @@ A short display NAME for a mod from its analysis — used to name imported VPKs 
 content (a hero, a set, or a content kind) instead of a bare "pakNN" slot. Null if the
 content isn't recognisable enough to name.
 
+## src/vpk-fingerprint.ts
+
+What a mod is, whatever it is packed as: a fingerprint of its files (src/vpk.ts gathers the VPK
+code; the index is read in src/vpk-read.ts). The catalog's fingerprint list and the import both
+recognise a mod by it.
+
+### `fingerprintEntries`
+
+```ts
+export function fingerprintEntries(entries: { path: string; crc: number }[]): string
+```
+
+Content fingerprint of a mod: sha1 over its sorted (path:crc) index. Independent of
+packaging (multi-part vs single, filename), so the same mod installed from the site,
+from another tool, or via this app all hash identically — the basis for recognising
+a foreign vpk as a specific catalog mod.
+
+### `fingerprintVpk`
+
+```ts
+export function fingerprintVpk(buf: Buffer): string
+```
+
+fingerprintEntries over one VPK's index.
+
+### `fingerprintFiles`
+
+```ts
+export function fingerprintFiles(files: { path: string; data: Buffer }[]): string
+```
+
+Content fingerprint of a loose-file mod (cursors, fonts): sha1 over sorted
+"path:sha1(bytes)". Paths should already be normalized (top folder stripped,
+lowercased) so it reproduces from either the source zip or the installed files.
+
 ## src/vpk-pack.ts
 
 Packing a folder of loose game files into a mod: where the content starts under the folder an
@@ -7618,7 +7760,7 @@ An entry of a multi-part index: where its bytes sit in the _NNN volumes, not the
 ### `VpkIndex`
 
 ```ts
-export interface VpkIndex { size: number; has(p: string): boolean; read(p: string): Buffer | null }
+export interface VpkIndex { size: number; has(p: string): boolean; read(p: string): Buffer | null; paths(): Iterable<string> }
 ```
 
 A reader over one index that seeks straight to a file; see openVpkIndex.
@@ -7737,6 +7879,14 @@ per icon costs seconds. This walks it once and hands back a reader that seeks.
 @param dirPath path to the *_dir.vpk
 ```
 
+### `openVpkIndexSteps`
+
+```ts
+export function* openVpkIndexSteps(dirPath: string, every = 20_000): Generator<typeof PAUSE, VpkIndex>
+```
+
+openVpkIndex, a pause every `every` entries of the walk (src/vpk-shared.ts).
+
 ### `entryPath`
 
 ```ts
@@ -7753,35 +7903,6 @@ export function readVpkEntries(dirBuf: Buffer, dirPath: string, archivePathFor?:
 
 Read every entry of a _dir.vpk (following external _NNN archives) into a flat list
 with its bytes, in on-disk tree order.
-
-### `fingerprintEntries`
-
-```ts
-export function fingerprintEntries(entries: { path: string; crc: number }[]): string
-```
-
-Content fingerprint of a mod: sha1 over its sorted (path:crc) index. Independent of
-packaging (multi-part vs single, filename), so the same mod installed from the site,
-from another tool, or via this app all hash identically — the basis for recognising
-a foreign vpk as a specific catalog mod.
-
-### `fingerprintVpk`
-
-```ts
-export function fingerprintVpk(buf: Buffer): string
-```
-
-fingerprintEntries over one VPK's index.
-
-### `fingerprintFiles`
-
-```ts
-export function fingerprintFiles(files: { path: string; data: Buffer }[]): string
-```
-
-Content fingerprint of a loose-file mod (cursors, fonts): sha1 over sorted
-"path:sha1(bytes)". Paths should already be normalized (top folder stripped,
-lowercased) so it reproduces from either the source zip or the installed files.
 
 ### `listVpkEntries`
 
@@ -7806,9 +7927,17 @@ openVpkIndex, opened once for everything that reads the same file in a row.
 
 Every pick of the item builder reads its models out of the game's pak01, and so do its sounds
 and portraits: four opens of a 388 000-entry index per pick, 270 ms each, and a table of thirty
-picks spent four of its twelve seconds on them. The index is ~130 MB in memory, too much to keep
+picks spent four of its twelve seconds on them. The index is ~90 MB in memory, too much to keep
 for good, so it goes 30 seconds after it was last asked for. A changed file (size, time or
 file id) is opened anew.
+
+### `sharedVpkIndexSteps`
+
+```ts
+export function* sharedVpkIndexSteps(dirPath: string): Generator<typeof PAUSE, VpkIndex>
+```
+
+sharedVpkIndex, a build in the background (src/schema-build.ts) opening it a pause at a time.
 
 ## src/vpk-write.ts
 
@@ -7914,9 +8043,11 @@ The VPK format, in one place for everything that reads or writes one: the reader
 and what a mod's paths say it changes (src/vpk-analyze.ts). Callers import from here; the four
 files are how it is kept readable.
 
-Hands on from [`src/vpk-read.ts`](#srcvpk-readts): `readVpkIndexFile`, `listVpkPaths`, `listVpkPathsFile`, `listVpkPathCrcs`, `listVpkPathCrcsFile`, `readVpkEntryFile`, `openVpkIndex`, `entryPath`, `readVpkEntries`, `listVpkEntries`, `fingerprintEntries`, `fingerprintVpk`, `fingerprintFiles`, `VpkEntry`, `VpkDirEntry`, `VpkIndex`.
+Hands on from [`src/vpk-read.ts`](#srcvpk-readts): `readVpkIndexFile`, `listVpkPaths`, `listVpkPathsFile`, `listVpkPathCrcs`, `listVpkPathCrcsFile`, `readVpkEntryFile`, `openVpkIndex`, `openVpkIndexSteps`, `entryPath`, `readVpkEntries`, `listVpkEntries`, `VpkEntry`, `VpkDirEntry`, `VpkIndex`.
 
-Hands on from [`src/vpk-shared.ts`](#srcvpk-sharedts): `sharedVpkIndex`.
+Hands on from [`src/vpk-shared.ts`](#srcvpk-sharedts): `sharedVpkIndex`, `sharedVpkIndexSteps`.
+
+Hands on from [`src/vpk-fingerprint.ts`](#srcvpk-fingerprintts): `fingerprintEntries`, `fingerprintVpk`, `fingerprintFiles`.
 
 Hands on from [`src/vpk-analyze.ts`](#srcvpk-analyzets): `analyzeVpkPaths`, `slotDisplayName`, `describeHero`, `subjectHeroes`, `describeAnalysis`, `nameFromAnalysis`, `HeroHit`, `Analysis`.
 

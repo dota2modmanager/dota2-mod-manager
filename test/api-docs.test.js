@@ -97,7 +97,7 @@ test('a module that hands on names from another points there instead of counting
 /* A ratchet, not a target. Every export with no comment above it is a gap in the source, and
  * this number is only ever allowed to go down: lower it when you document something, never
  * raise it to make a new undocumented export fit. */
-const UNDOCUMENTED_CEILING = 45;
+const UNDOCUMENTED_CEILING = 42;
 
 test('the number of exports nobody has explained does not grow', () => {
   const text = read(OUT);
@@ -107,4 +107,15 @@ test('the number of exports nobody has explained does not grow', () => {
     `${bare} exports have no comment in the source, and the ceiling is ${UNDOCUMENTED_CEILING}. `
     + 'Write the comment rather than raising the number.',
   );
+});
+
+test("a generator's comment is its own, like a function's", () => {
+  const doc = moduleDoc('steps.ts', [
+    '// Work in steps.',
+    '/** The walk, a pause at a time. */',
+    'export function* walk(text: string): Generator<symbol, number> {',
+    '  return 1;',
+    '}',
+  ].join('\n'));
+  assert.deepEqual(doc.items.map((it) => [it.name, it.doc]), [['walk', 'The walk, a pause at a time.']]);
 });

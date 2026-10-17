@@ -82,7 +82,8 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
     onReady: (id) => {
       void schemaService.refreshInBackground();
       if (id !== TERRORBLADE_BASE) return;
-      arcana.rebuild(library.list().filter((r) => (r.generated as Generated | undefined)?.mode === 'mod').map((r) => r.id));
+      // after the table, not on top of it: each is a stretch of the thread the window draws on
+      void schemaService.settled().then(() => arcana.rebuild(library.list().filter((r) => (r.generated as Generated | undefined)?.mode === 'mod').map((r) => r.id)));
     },
   });
   // the item table built in the background says how far it is on the bar at the bottom

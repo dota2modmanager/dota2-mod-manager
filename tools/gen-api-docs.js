@@ -106,7 +106,8 @@ function reexportsOf(text) {
 /** Where a name is defined in this file, and how it is written there. */
 function defineOf(lines, name) {
   const patterns = [
-    new RegExp(`^(?:export\\s+)?(?:async\\s+)?function\\s+${name}\\s*[(<]`),
+    // a generator too: `export function* name(`
+    new RegExp(`^(?:export\\s+)?(?:async\\s+)?function\\*?\\s*${name}\\s*[(<]`),
     new RegExp(`^(?:export\\s+)?class\\s+${name}\\b`),
     new RegExp(`^(?:export\\s+)?const\\s+${name}\\s*[=:]`),
     new RegExp(`^(?:export\\s+)?let\\s+${name}\\s*[=:]`),

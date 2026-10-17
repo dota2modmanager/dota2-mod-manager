@@ -14,15 +14,20 @@
  * between the steps for one that does not: the window's other requests, the bar at the bottom,
  * and the Play button, which waits for the last build before the game starts.
  */
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import path from 'node:path';
 import * as schema from './schema.ts';
 import * as itemBuilder from './item-builder.ts';
-import { soundEntries, type SoundSwap, type VoiceCue } from './item-sounds.ts';
+import { listItemsSteps } from './schema-items.ts';
+import { soundEntriesSteps, type SoundSwap, type VoiceCue } from './item-sounds.ts';
 import { portraitEntries } from './item-portraits.ts';
 import type { ItemAssets, PortraitSwap, SpriteSwap } from './item-builder-assets.ts';
 import { styleOf } from './item-builder-styles.ts';
-import { basesHere, withoutBaseFiles } from './arcana-bases.ts';
+import { basesHereSteps, withoutBaseFiles, type ReadyBase } from './arcana-bases.ts';
 import type { BaseStore } from './arcana-base-store.ts';
-import type { VpkEntry } from './vpk.ts';
+import { sharedVpkIndexSteps, type VpkEntry } from './vpk.ts';
+import { PAUSE } from './steps.ts';
 import type { LibRecord } from './types.ts';
 import type { Library } from './library.ts';
 
@@ -31,6 +36,8 @@ type ItemPick = { id: string; block: string; assets: VpkEntry[] } & ItemAssets;
 
 /** How far a build is: the picks built anew so far out of those it has to, or the stage of the write. */
 export type BuildStep = { done: number; total: number } | { stage: 'merged' | 'checked' | 'packed' };
+/** What a build yields: a step the bar counts, a pause in a long walk, or the pak to write (schema.deploySteps). */
+export type BuildYield = BuildStep | schema.DeployStep;
 
 /** What a build of the table answers. */
 export interface Refreshed {
@@ -46,13 +53,6 @@ export interface Refreshed {
   superseded?: boolean;
 }
 
-/** A generator run to its end at once: the steps of a build, for a caller that does not wait between them. */
-export function drain<R>(steps: Generator<unknown, R>): R {
-  for (;;) {
-    const r = steps.next();
-    if (r.done) return r.value;
-  }
-}
 
 /**
  * The bar at the bottom of the window for a build in the background: shown once the build has run
@@ -81,6 +81,17 @@ export function buildBar(send: (evt: { type: 'count'; label: string; done: numbe
   };
 }
 
+/** Which files a base fills, as a short name: a new version of a base builds its own parts again. */
+const signatures = new WeakMap<ReadyBase, string>();
+function baseSignature(r: ReadyBase): string {
+  let sig = signatures.get(r);
+  if (!sig) {
+    sig = crypto.createHash('sha1').update([...r.paths].sort().join('\n')).digest('hex').slice(0, 10);
+    signatures.set(r, sig);
+  }
+  return sig;
+}
+
 export const isItemPick = (rec: LibRecord) => rec.categoryId === 'cosmetic' && (rec.slot === 'items' || String(rec.slot || '').startsWith('item:'));
 
 /** What goes into the table: every enabled record's patches, each item builder pick built once. */
@@ -91,21 +102,27 @@ export function createTableBuild({ library, bases, log }: {
   const shared = new Map<string, { key: string; entries: VpkEntry[] }>();
   let builtFrom: string | null = null;
   let builtGame: string | null = null;
-  const pickKey = (rec: LibRecord) => `${rec.itemId}|${itemBuilder.effectKey(rec.effectId)}`;
-  function builtPick(vanillaText: string, game: string, key: string, rec: LibRecord): ItemPick {
+  /* A pick by item and effects, and by the base of its own arcana set when one is here: that base
+   * fills some of the pick's paths, which the pick then does not build (gameAssetEntries skip). */
+  const ownBase = (rec: LibRecord, ready: ReadyBase[]) => ready.find((r) => r.base.parts.includes(String(rec.itemId)));
+  const pickKey = (rec: LibRecord, ready: ReadyBase[]) => {
+    const own = ownBase(rec, ready);
+    return `${rec.itemId}|${itemBuilder.effectKey(rec.effectId)}${own ? `|${own.base.id}:${baseSignature(own)}` : ''}`;
+  };
+  function builtPick(vanillaText: string, game: string, key: string, rec: LibRecord, own: ReadyBase | undefined): ItemPick {
     let pick = built.get(key);
     if (!pick) {
       const made = itemBuilder.itemEffectPatch(vanillaText, String(rec.itemId), rec.effectId);
-      pick = { ...made, assets: itemBuilder.gameAssetEntries(game, made.assetCopies) };
+      pick = { ...made, assets: itemBuilder.gameAssetEntries(game, made.assetCopies, own && ((p) => own.paths.has(p))) };
       built.set(key, pick);
     }
     return pick;
   }
-  function sharedEntries(name: string, inputs: unknown, make: () => VpkEntry[]): VpkEntry[] {
+  function* sharedEntries(name: string, inputs: unknown, make: () => Generator<typeof PAUSE, VpkEntry[]>): Generator<typeof PAUSE, VpkEntry[]> {
     const key = JSON.stringify(inputs);
     const hit = shared.get(name);
     if (hit && hit.key === key) return hit.entries;
-    const entries = make();
+    const entries = yield* make();
     shared.set(name, { key, entries });
     return entries;
   }
@@ -113,7 +130,6 @@ export function createTableBuild({ library, bases, log }: {
   // the item builder's enabled picks, for which arcana bases they put on (src/arcana-bases.ts)
   const picks = () => library.list().filter((r) => r.enabled !== false && isItemPick(r))
     .map((r) => ({ itemId: String(r.itemId), style: styleOf(itemBuilder.effectKey(r.effectId)) }));
-  const readyBases = () => (bases ? basesHere(picks(), bases, log) : []);
 
   /**
    * Enabled mods' lifted item blocks + the free cosmetics the user picked, a step for each pick
@@ -122,10 +138,14 @@ export function createTableBuild({ library, bases, log }: {
    * through the normal machinery. `beneath`: the arcana bases' files, which every pick's own win
    * over (schema.deploy).
    */
-  function* buildSteps(vanillaText: string, game: string): Generator<BuildStep, { list: schema.SchemaPatch[]; beneath: VpkEntry[] }> {
+  function* buildSteps(vanillaText: string, game: string): Generator<BuildYield, { list: schema.SchemaPatch[]; beneath: VpkEntry[] }> {
     if (builtFrom !== vanillaText || builtGame !== game) { built.clear(); shared.clear(); builtFrom = vanillaText; builtGame = game; }
     const used = new Set<string>();
-    const ready = readyBases();
+    // what the picks are built from, made a pause at a time before the first pick needs it: the
+    // table's list of items (300 ms), the game's index (270 ms) and the arcana bases (a read of up
+    // to 20 MB each), which held the window for most of a second after every start (issue #286)
+    yield* listItemsSteps(vanillaText);
+    const ready = bases ? yield* basesHereSteps(picks(), bases, log) : [];
     const out: schema.SchemaPatch[] = [];
     const sounds: SoundSwap[] = [];
     const voices: VoiceCue[] = [];
@@ -133,15 +153,17 @@ export function createTableBuild({ library, bases, log }: {
     const sprites: SpriteSwap[] = [];
     // a copy: a build in the background goes on while the user changes the library
     const records = library.list().filter((r) => r.enabled !== false);
-    const total = records.filter((r) => isItemPick(r) && !built.has(pickKey(r))).length;
+    const total = records.filter((r) => isItemPick(r) && !built.has(pickKey(r, ready))).length;
+    const pak = path.join(game, 'dota', 'pak01_dir.vpk');
+    if (total && fs.existsSync(pak)) yield* sharedVpkIndexSteps(pak);
     let done = 0;
     for (const rec of records) {
       if (rec.categoryId === 'cosmetic') {
-        const fresh = isItemPick(rec) && !built.has(pickKey(rec));
+        const fresh = isItemPick(rec) && !built.has(pickKey(rec, ready));
         try {
           if (isItemPick(rec)) {
-            const key = pickKey(rec);
-            const pick = builtPick(vanillaText, game, key, rec);
+            const key = pickKey(rec, ready);
+            const pick = builtPick(vanillaText, game, key, rec, ownBase(rec, ready));
             used.add(key);
             const assets = withoutBaseFiles(String(rec.itemId), pick.assets, ready);
             out.push({ id: pick.id, block: pick.block, assets, source: rec.name });
@@ -170,13 +192,16 @@ export function createTableBuild({ library, bases, log }: {
     const first = out.find((p) => p.assets);
     if (first) {
       try {
-        first.assets = [...sharedEntries('portraits', [portraits, sprites], () => portraitEntries(game, portraits, sprites)), ...first.assets!];
+        // eslint-disable-next-line require-yield
+        const made = yield* sharedEntries('portraits', [portraits, sprites], function* () { return portraitEntries(game, portraits, sprites); });
+        first.assets = [...made, ...first.assets!];
       } catch (err) {
         log(`schema: the heroes' portraits left out of the build: ${(err as Error)?.message || err}`);
       }
       try {
         // the soundevents are 946 files to read and parse, 300 ms whatever the picks
-        first.assets = [...sharedEntries('sounds', [sounds, voices], () => soundEntries(game, sounds, voices)), ...first.assets!];
+        const made = yield* sharedEntries('sounds', [sounds, voices], () => soundEntriesSteps(game, sounds, voices));
+        first.assets = [...made, ...first.assets!];
       } catch (err) {
         log(`schema: the items' sounds left out of the build: ${(err as Error)?.message || err}`);
       }
@@ -201,7 +226,7 @@ export function createTableBuild({ library, bases, log }: {
  * @param steps    a build of the table, a step at a time
  * @param onBuild  each step of a build in the background, and null when it ends
  */
-export function createBackgroundBuilds(steps: () => Generator<BuildStep, Refreshed>, onBuild: (step: BuildStep | null) => void) {
+export function createBackgroundBuilds(steps: () => Generator<BuildYield, Refreshed, boolean | undefined>, onBuild: (step: BuildStep | null) => void) {
   let generation = 0;
   let chain: Promise<void> = Promise.resolve();
   const waiting: { gen: number; resolve: (r: Refreshed) => void }[] = [];
@@ -226,12 +251,21 @@ export function createBackgroundBuilds(steps: () => Generator<BuildStep, Refresh
       chain = chain.then(async () => {
         if (gen !== generation) return; // a newer request is behind this one
         const run = steps();
+        let wrote: boolean | undefined;
         try {
           for (;;) {
-            const r = run.next();
+            const r = run.next(wrote);
+            wrote = undefined;
             if (r.done) { settle(gen, r.value); return; }
-            onBuild(r.value);
-            await new Promise<void>((resolve) => setImmediate(resolve));
+            const step = r.value;
+            if (step !== PAUSE && 'write' in step) {
+              // the pak written without holding the thread; one that fails is tried again in
+              // place by deploySteps, whose error is then the build's
+              try { await fs.promises.writeFile(step.write, step.data); wrote = true; } catch { wrote = false; }
+            } else {
+              if (step !== PAUSE) onBuild(step);
+              await new Promise<void>((resolve) => setImmediate(resolve));
+            }
             if (gen !== generation) { run.return({ ok: true, superseded: true }); return; }
           }
         } catch (err) {

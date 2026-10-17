@@ -2,8 +2,8 @@
 // bytes, and the content fingerprint that recognises a mod whatever it is packed as. Part of the
 // VPK code src/vpk.ts gathers; writing is src/vpk-write.ts, what a mod changes src/vpk-analyze.ts.
 import fs from 'node:fs';
-import crypto from 'node:crypto';
 import { t } from './i18n.ts';
+import { drain, PAUSE } from './steps.ts';
 
 /** The first four bytes of every VPK index. */
 export const VPK_SIGNATURE = 0x55aa1234;
@@ -18,7 +18,7 @@ export interface VpkDirEntry {
 }
 
 /** A reader over one index that seeks straight to a file; see openVpkIndex. */
-export interface VpkIndex { size: number; has(p: string): boolean; read(p: string): Buffer | null }
+export interface VpkIndex { size: number; has(p: string): boolean; read(p: string): Buffer | null; paths(): Iterable<string> }
 
 /** Resolves external archive N of a multi-part VPK to its path on disk. */
 export type ArchivePathFor = (idx: number) => string;
@@ -85,7 +85,13 @@ type EntryRecord = ReturnType<typeof readEntryRecord>;
  * holding names, every list closed by an empty string. Six functions here used to carry their
  * own copy of this loop; `visit` returning false stops the walk early. */
 function eachEntry(buf: Buffer, visit: (ext: string, folder: string, name: string, rec: EntryRecord) => boolean | void): void {
+  drain(eachEntrySteps(buf, visit, Infinity));
+}
+
+/** eachEntry, with a pause every `every` entries: the game's 388 000 take 270 ms in one go. */
+function* eachEntrySteps(buf: Buffer, visit: (ext: string, folder: string, name: string, rec: EntryRecord) => boolean | void, every: number): Generator<typeof PAUSE, void> {
   let pos = header(buf).headerSize;
+  let n = 0;
   for (;;) {
     const ext = readCString(buf, pos); pos = ext.next; if (!ext.str) return;
     for (;;) {
@@ -95,6 +101,7 @@ function eachEntry(buf: Buffer, visit: (ext: string, folder: string, name: strin
         const rec = readEntryRecord(buf, pos);
         pos = rec.next;
         if (visit(ext.str, folder.str, name.str, rec) === false) return;
+        if (++n === every) { n = 0; yield PAUSE; }
       }
     }
   }
@@ -216,15 +223,21 @@ export function readVpkEntryFile(dirPath: string, wanted: string): { data: Buffe
  * @param dirPath path to the *_dir.vpk
  */
 export function openVpkIndex(dirPath: string): VpkIndex {
+  return drain(openVpkIndexSteps(dirPath, Infinity));
+}
+
+/** openVpkIndex, a pause every `every` entries of the walk (src/vpk-shared.ts). */
+export function* openVpkIndexSteps(dirPath: string, every = 20_000): Generator<typeof PAUSE, VpkIndex> {
   const buf = readVpkIndexFile(dirPath);
   const { headerSize, treeSize } = header(buf);
   // where each record starts, not the record: the game's 388 000 records as objects were 30 MB
   // more to hold and most of what the garbage collector did while the item builder built
   const entries = new Map<string, number>();
-  eachEntry(buf, (ext, folder, name, rec) => { entries.set(joinPath(folder, name, ext), rec.preloadAt - 18); });
+  yield* eachEntrySteps(buf, (ext, folder, name, rec) => { entries.set(joinPath(folder, name, ext), rec.preloadAt - 18); }, every);
   return {
     size: entries.size,
     has: (p: string) => entries.has(String(p).toLowerCase()),
+    paths: () => entries.keys(),
     read: (wanted: string) => {
       const at = entries.get(String(wanted).toLowerCase());
       return at === undefined ? null : entryBytes(buf, dirPath, headerSize + treeSize, readEntryRecord(buf, at));
@@ -265,28 +278,6 @@ export function readVpkEntries(dirBuf: Buffer, dirPath: string, archivePathFor?:
     entries.push({ ext, folder, name, crc: rec.crc, preload, data });
   });
   return entries;
-}
-
-/** Content fingerprint of a mod: sha1 over its sorted (path:crc) index. Independent of
- * packaging (multi-part vs single, filename), so the same mod installed from the site,
- * from another tool, or via this app all hash identically — the basis for recognising
- * a foreign vpk as a specific catalog mod. */
-export function fingerprintEntries(entries: { path: string; crc: number }[]): string {
-  const canon = entries.map((e) => `${e.path}:${e.crc}`).sort().join('\n');
-  return crypto.createHash('sha1').update(canon).digest('hex');
-}
-
-/** fingerprintEntries over one VPK's index. */
-export function fingerprintVpk(buf: Buffer): string {
-  return fingerprintEntries(listVpkEntries(buf));
-}
-
-/** Content fingerprint of a loose-file mod (cursors, fonts): sha1 over sorted
- * "path:sha1(bytes)". Paths should already be normalized (top folder stripped,
- * lowercased) so it reproduces from either the source zip or the installed files. */
-export function fingerprintFiles(files: { path: string; data: Buffer }[]): string {
-  const rows = files.map((f) => `${f.path}:${crypto.createHash('sha1').update(f.data).digest('hex')}`);
-  return crypto.createHash('sha1').update(rows.sort().join('\n')).digest('hex');
 }
 
 /** Lightweight (path, crc) list — the mod's content signature, no archive reads. */
