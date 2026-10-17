@@ -884,3 +884,16 @@ test("a pick in another style is the item with that style as its only one, and t
   assert.deepEqual(builder.itemEffectPatch(styledTable(), '7293', 'style-9').block, builder.itemEffectPatch(styledTable(), '7293', '').block,
     'a style the item has not got is its first');
 });
+
+test("the builder's slots made a pause at a time are the slots made at once", async () => {
+  const { drain, PAUSE } = await import('../src/steps.ts');
+  const { itemSlots, itemSlotsSteps } = await import('../src/item-builder-slots.ts');
+  const text = `${itemWearableTable()} `;
+  let pauses = 0;
+  const steps = itemSlotsSteps(text);
+  let r = steps.next();
+  for (; !r.done; r = steps.next()) if (r.value === PAUSE) pauses++;
+  assert.ok(pauses >= 1);
+  assert.deepEqual(r.value, itemSlots(text));
+  assert.deepEqual(drain(itemSlotsSteps(text)), r.value);
+});

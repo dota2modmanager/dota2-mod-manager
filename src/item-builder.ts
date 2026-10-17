@@ -31,7 +31,7 @@ import { ITEM_EFFECTS, type ItemEffect } from './item-builder-effects.ts';
 import { itemAssets, normalizeAssetPath, type ItemAssets } from './item-builder-assets.ts';
 import { styleOf, withStyle } from './item-builder-styles.ts';
 
-export { itemSlots, itemSets, itemOptions } from './item-builder-slots.ts';
+export { itemSlots, itemSlotsSteps, itemSets, itemOptions } from './item-builder-slots.ts';
 export { itemEffects } from './item-builder-effects.ts';
 export { gameAssetEntries } from './item-builder-assets.ts';
 export type { ItemSlot, ItemSet, AssetCopy } from './item-builder-slots.ts';

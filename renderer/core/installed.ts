@@ -68,6 +68,18 @@ export async function refreshCosmeticSlots(): Promise<void> {
   invalidateViews();
 }
 
+let first: Promise<void> | null = null;
+/**
+ * The list as the window first reads it, once however many screens ask while it is on its way: at
+ * start the catalog does not wait for it (app.ts), and the screens that need it wait for this one
+ * read rather than each starting their own.
+ */
+export function firstCosmeticSlots(): Promise<void> {
+  if (state.cosmeticSlots) return Promise.resolve();
+  first ||= refreshCosmeticSlots().finally(() => { first = null; });
+  return first;
+}
+
 export async function refreshInstalledIndex(): Promise<void> {
   const { installed } = await window.api.mods.list();
   applyInstalled(installed);

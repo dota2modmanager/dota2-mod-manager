@@ -646,3 +646,18 @@ test('a build pauses while it walks a table it has not listed, and builds the sa
   assert.equal(deployedTable(s.game), once, 'the same table either way');
   assert.equal(inPlace.ok, true);
 });
+
+test('the free looks the window asks for at start come a step at a time, the same as at once', async (t) => {
+  const { runSteps, PAUSE } = await import('../src/steps.ts');
+  const s = service(t, { values: { schemaPatch: true }, text: ARCANA_TABLE });
+  s.svc.pickCosmetic('item:juggernaut:body', '9059', 'Bladeform Legacy', '');
+  let pauses = 0;
+  const steps = s.svc.cosmeticSlotsSteps();
+  let r = steps.next();
+  for (; !r.done; r = steps.next()) if (r.value === PAUSE) pauses++;
+  assert.ok(pauses >= 3, `the walk lets the window in: ${pauses} pauses`);
+  assert.deepEqual(r.value, s.svc.cosmeticSlots(), 'what the steps give is what the call at once gives');
+  assert.deepEqual(await runSteps(s.svc.cosmeticSlotsSteps()), r.value, 'and what the channel answers');
+  const body = r.value.slots.find((x) => x.slot === 'item:juggernaut:body');
+  assert.equal(body?.picked, '9059', 'with what is picked');
+});

@@ -4,7 +4,7 @@
 import { arcanaLead } from './arcana.ts';
 import { RAW_BASE, COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.ts';
 import { state } from '../../core/store.ts';
-import { pickedIn, refreshCosmeticSlots } from '../../core/installed.ts';
+import { pickedIn, firstCosmeticSlots } from '../../core/installed.ts';
 import { catName, catIcon } from '../../core/categories.ts';
 import { isAdult, adultShown } from '../../core/adult.ts';
 import { plural } from '../../ui/format.ts';
@@ -166,7 +166,7 @@ export async function renderCosmeticCategory(slot: string, actions: ScreenAction
   const waiting = (note: string) => paint(() => showScreen(
     { kind: 'list', key: `cos:${slot}:note`, title: tr(meta.label), toolbar: null, note, mods: null, cosmetics: null }, actions));
   await waiting(L`Читаем схему игры…`);
-  if (!state.cosmeticSlots) await refreshCosmeticSlots();
+  await firstCosmeticSlots();
   if (state.activeCategory !== COSMETIC_PREFIX + slot) return; // moved on while reading
 
   const data = (state.cosmeticSlots || []).find((s) => s.slot === slot);

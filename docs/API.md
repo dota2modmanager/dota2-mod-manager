@@ -1119,6 +1119,14 @@ export function chineseCosmeticNames(game: string, schemaText: string): Record<s
 
 Read-only, offline and refreshed after a game update; a missing language file keeps English.
 
+### `chineseCosmeticNamesSteps`
+
+```ts
+export function* chineseCosmeticNamesSteps(game: string, schemaText: string): Generator<typeof PAUSE, Record<string, string>>
+```
+
+chineseCosmeticNames, a pause after each of the two language files and before the table.
+
 ## src/cursors.ts
 
 Which cursor set is live, and which look a slot is wearing.
@@ -3362,6 +3370,14 @@ export function itemSlots(text: string): ItemSlot[]
 
 Hero item slots built from real default_item entries, with one donor list per hero part.
 
+### `itemSlotsSteps`
+
+```ts
+export function* itemSlotsSteps(text: string): Generator<typeof PAUSE, ItemSlot[]>
+```
+
+itemSlots, a pause every couple of thousand items: the table's 26 000 are a quarter of a second.
+
 ### `itemSets`
 
 ```ts
@@ -3467,7 +3483,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
 the credits of the program it goes into.
 
-Hands on from [`src/item-builder-slots.ts`](#srcitem-builder-slotsts): `itemSlots`, `itemSets`, `itemOptions`, `ItemSlot`, `ItemSet`, `AssetCopy`.
+Hands on from [`src/item-builder-slots.ts`](#srcitem-builder-slotsts): `itemSlots`, `itemSlotsSteps`, `itemSets`, `itemOptions`, `ItemSlot`, `ItemSet`, `AssetCopy`.
 
 Hands on from [`src/item-builder-effects.ts`](#srcitem-builder-effectsts): `itemEffects`.
 
@@ -6297,6 +6313,14 @@ The free cosmetics (src/schema-service.ts): the slots the game has a free base i
 can go on each, the look picked for one, a whole set put on at once, and the one-time move of
 picks that used to live in settings.json. A pick is a library record like any other mod.
 
+### `CosmeticSlots`
+
+```ts
+export type CosmeticSlots = { slots: CosmeticSlot[]; sets: ItemSet[]; names?: Record<string, string>; error?: string }
+```
+
+What the window is told about the free looks and the item builder (cosmeticSlots).
+
 ### `CosmeticSlot`
 
 ```ts
@@ -6772,7 +6796,7 @@ them, and this file builds the result and writes it into the game. Callers impor
 
 Hands on from [`src/schema-kv.ts`](#srcschema-kvts): `blockBounds`, `eachChild`, `Bounds`, `KvChild`.
 
-Hands on from [`src/schema-items.ts`](#srcschema-itemsts): `SCHEMA_REL`, `findItem`, `itemFields`, `listItems`, `toUtf8`, `itemSearchText`, `inferredItemSlot`, `baseItemFor`, `cosmeticOptions`, `readGameSchema`, `gameSchemaStamp`, `SchemaItem`, `GameSchema`.
+Hands on from [`src/schema-items.ts`](#srcschema-itemsts): `SCHEMA_REL`, `findItem`, `itemFields`, `listItems`, `listItemsSteps`, `toUtf8`, `itemSearchText`, `inferredItemSlot`, `baseItemFor`, `cosmeticOptions`, `readGameSchema`, `gameSchemaStamp`, `SchemaItem`, `GameSchema`.
 
 Hands on from [`src/schema-merge.ts`](#srcschema-mergets): `reindent`, `ownedAssetNeedles`, `blockUsesAssets`, `deltaTable`, `extractDeltas`, `stripKeyBlocks`, `baseItemPatch`, `mergeSchema`, `validateSchema`, `SchemaDelta`, `SchemaPatch`, `MergeResult`.
 
@@ -7181,6 +7205,14 @@ export const PAUSE = Symbol('pause')
 ```
 
 The step a walk yields between pieces of its work.
+
+### `runSteps`
+
+```ts
+export async function runSteps<R>(steps: Generator<unknown, R>): Promise<R>
+```
+
+A generator run with the rest of the main process let in between its steps: for a channel the window waits on.
 
 ## src/terrain-age.ts
 

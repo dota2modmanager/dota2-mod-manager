@@ -17,3 +17,12 @@ export function drain<R>(steps: Generator<unknown, R>): R {
 
 /** The step a walk yields between pieces of its work. */
 export const PAUSE = Symbol('pause');
+
+/** A generator run with the rest of the main process let in between its steps: for a channel the window waits on. */
+export async function runSteps<R>(steps: Generator<unknown, R>): Promise<R> {
+  for (;;) {
+    const r = steps.next();
+    if (r.done) return r.value;
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  }
+}

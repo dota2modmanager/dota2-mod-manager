@@ -12,7 +12,8 @@
  */
 import { heroDisplayName } from './vpk.ts';
 import { t } from './i18n.ts';
-import { listItems, toUtf8, eachChild, blockBounds, itemSearchText, inferredItemSlot, type SchemaItem } from './schema.ts';
+import { listItems, listItemsSteps, toUtf8, eachChild, blockBounds, itemSearchText, inferredItemSlot, type SchemaItem } from './schema.ts';
+import { drain, PAUSE } from './steps.ts';
 import { styleTokens } from './item-builder-styles.ts';
 import { itemNote, type ItemNote } from './arcana-notes.ts';
 
@@ -134,7 +135,13 @@ function itemSlotIcon(slot: string): string {
 
 /** Hero item slots built from real default_item entries, with one donor list per hero part. */
 export function itemSlots(text: string): ItemSlot[] {
-  const items = listItems(text);
+  return drain(itemSlotsSteps(text));
+}
+
+/** itemSlots, a pause every couple of thousand items: the table's 26 000 are a quarter of a second. */
+export function* itemSlotsSteps(text: string): Generator<typeof PAUSE, ItemSlot[]> {
+  const items = yield* listItemsSteps(text);
+  let n = 0;
   const heroCache = new Map<string, string[]>();
   const heroesOf = (item: SchemaItem): string[] => {
     let heroes = heroCache.get(item.id);
@@ -144,6 +151,7 @@ export function itemSlots(text: string): ItemSlot[] {
   const slots = new Map<string, ItemSlot>();
   const matchSlots = new Map<string, string[]>();
   for (const item of items) {
+    if (++n % 2000 === 0) yield PAUSE;
     const equipSlot = canonicalItemSlot(inferredItemSlot(item));
     if (item.prefab !== 'default_item' || !equipSlot || isPersonaItem(item)) continue;
     const heroes = heroesOf(item);
@@ -169,6 +177,7 @@ export function itemSlots(text: string): ItemSlot[] {
     matchSlots.set(matchKey, hits);
   }
   for (const item of items) {
+    if (++n % 2000 === 0) yield PAUSE;
     const equipSlot = canonicalItemSlot(inferredItemSlot(item));
     if (item.prefab !== 'wearable' || !equipSlot || !item.name || isPersonaItem(item)) continue;
     const heroes = heroesOf(item);

@@ -10,6 +10,7 @@ import { t } from './i18n.ts';
 import { heroIdFromName } from './hero-names.ts';
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
+import { runSteps } from './steps.ts';
 import type { AppContext } from './app-context.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
@@ -77,7 +78,8 @@ export function registerGameIpc({
 
   // Free cosmetics are generated from the installed game's own schema, so a weather or
   // courier Valve ships later appears in the list without an app update.
-  ipcMain.handle('cosmetics:slots', () => schemaService.cosmeticSlots());
+  // a step at a time: on the first start it is most of a second, and the catalog is asked for meanwhile
+  ipcMain.handle('cosmetics:slots', () => runSteps(schemaService.cosmeticSlotsSteps()));
 
   // One picture per tile, so opening a slot with 2000 items costs only what is on screen.
   //

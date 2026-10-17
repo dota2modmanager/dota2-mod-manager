@@ -21,7 +21,7 @@ import './shell/updates.ts';
 import './views/settings.ts';
 import { state } from './core/store.ts';
 import { render, invalidateViews } from './core/router.ts';
-import { refreshInstalledIndex, refreshCosmeticSlots } from './core/installed.ts';
+import { refreshInstalledIndex, firstCosmeticSlots } from './core/installed.ts';
 import { switchOffStaleTerrains } from './core/terrain-age.ts';
 import { askAdultOnce } from './core/adult.ts';
 import { toast } from './ui/toast.ts';
@@ -89,8 +89,11 @@ async function offerToolchain(): Promise<void> {
   await refreshPatchState();
   await switchOffStaleTerrains();
   await refreshInstalledIndex();
-  await refreshCosmeticSlots();
+  // the free looks are read out of the game's 50 MB table, most of a second on the first start:
+  // the catalog is drawn without waiting for them, and drawn again with them once they are here
+  const looks = firstCosmeticSlots().then(() => { if (state.view === 'catalog') render(); });
   await loadCatalog();
+  await looks;
 
   // first launch, or first launch after this release: let the user pick a language
   if (!cfg.langPromptSeen) await showLanguagePicker();

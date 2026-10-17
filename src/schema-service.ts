@@ -240,7 +240,7 @@ export function createSchemaService({ settings, library, installer, userDataDir,
   }
 
   const { harvest, split, migrate } = createHarvest({ library, installer, gamePath, vanilla });
-  const { cosmeticSlots, pickCosmetic, pickSet, migrateCosmeticSettings } = createCosmetics({
+  const { cosmeticSlots, cosmeticSlotsSteps, pickCosmetic, pickSet, migrateCosmeticSettings } = createCosmetics({
     library, settings, gamePath, vanilla, refresh,
   });
 
@@ -250,6 +250,6 @@ export function createSchemaService({ settings, library, installer, userDataDir,
 
   return {
     backupDir, patches, refresh, refreshInBackground, settled, heal, setEnabled, harvest, split, migrate, state,
-    cosmeticSlots, pickCosmetic, pickSet, migrateCosmeticSettings, askForBases,
+    cosmeticSlots, cosmeticSlotsSteps, pickCosmetic, pickSet, migrateCosmeticSettings, askForBases,
   };
 }

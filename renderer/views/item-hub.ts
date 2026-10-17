@@ -12,7 +12,7 @@
 import { state } from '../core/store.ts';
 import { COSMETIC_PREFIX } from '../core/constants.ts';
 import { catName, catIcon } from '../core/categories.ts';
-import { pickedIn, refreshCosmeticSlots } from '../core/installed.ts';
+import { pickedIn, firstCosmeticSlots } from '../core/installed.ts';
 import { showScreen } from '../catalog/screen/root.tsx';
 import { heroCardMeta, heroesOf } from '../catalog/builder/logic.ts';
 import type { CosmeticSlot } from '../catalog/types.ts';
@@ -64,7 +64,7 @@ export async function renderItemCosmeticHub(): Promise<void> {
   // said only while there is something to wait for: the game's schema, or the portraits the first time
   const waiting = !state.cosmeticSlots || heroesOf(itemCosmeticSlots()).some(([hero]) => !heroPortraits.has(hero));
   if (waiting) await hubNote(L`Читаем схему игры…`);
-  if (!state.cosmeticSlots) await refreshCosmeticSlots();
+  await firstCosmeticSlots();
   const list = heroesOf(itemCosmeticSlots());
   await loadHeroPortraits(list);
   if (state.activeCategory !== HUB) return; // moved on while reading

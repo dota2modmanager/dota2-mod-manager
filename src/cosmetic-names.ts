@@ -2,6 +2,7 @@
 // used by icons, saved picks and the item builder. No translated name is written into the schema.
 import path from 'path';
 import { sharedVpkIndex } from './vpk.ts';
+import { drain, PAUSE } from './steps.ts';
 import { gameSchemaStamp, listItems, toUtf8, type SchemaItem } from './schema.ts';
 
 /** Valve localization files are UTF-8 today; older loose copies may carry a UTF-16 BOM. */
@@ -66,6 +67,11 @@ let cached: { game: string; stamp: string; names: Record<string, string> } | nul
 
 /** Read-only, offline and refreshed after a game update; a missing language file keeps English. */
 export function chineseCosmeticNames(game: string, schemaText: string): Record<string, string> {
+  return drain(chineseCosmeticNamesSteps(game, schemaText));
+}
+
+/** chineseCosmeticNames, a pause after each of the two language files and before the table. */
+export function* chineseCosmeticNamesSteps(game: string, schemaText: string): Generator<typeof PAUSE, Record<string, string>> {
   try {
     const stamp = gameSchemaStamp(game);
     if (cached?.game === game && cached.stamp === stamp) return cached.names;
@@ -74,6 +80,7 @@ export function chineseCosmeticNames(game: string, schemaText: string): Record<s
     for (const file of ['dota', 'items']) {
       const data = index.read(`resource/localization/${file}_schinese.txt`);
       if (data) for (const [key, value] of localizationTokens(data)) tokens.set(key, value);
+      yield PAUSE;
     }
     const names = cosmeticNameTable(listItems(schemaText), tokens);
     cached = { game, stamp, names };

@@ -1,15 +1,22 @@
 // The free cosmetics (src/schema-service.ts): the slots the game has a free base item for and what
 // can go on each, the look picked for one, a whole set put on at once, and the one-time move of
 // picks that used to live in settings.json. A pick is a library record like any other mod.
+import fs from 'node:fs';
+import path from 'node:path';
 import * as schema from './schema.ts';
 import * as itemBuilder from './item-builder.ts';
 import { t } from './i18n.ts';
 import { getLang } from './i18n.ts';
-import { chineseCosmeticNames, styleNamer } from './cosmetic-names.ts';
+import { chineseCosmeticNamesSteps, styleNamer } from './cosmetic-names.ts';
+import { sharedVpkIndexSteps } from './vpk.ts';
+import { drain, PAUSE } from './steps.ts';
 import type { Settings } from './settings.ts';
 import type { Library } from './library.ts';
 import type { LibRecord } from './types.ts';
 import type { ItemSet } from './item-builder.ts';
+
+/** What the window is told about the free looks and the item builder (cosmeticSlots). */
+export type CosmeticSlots = { slots: CosmeticSlot[]; sets: ItemSet[]; names?: Record<string, string>; error?: string };
 
 /** A slot the free-cosmetics picker offers: its base item, what is on it, and what could be. */
 export type CosmeticSlot = {
@@ -33,27 +40,44 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
    * The list comes from the installed game, so a slot Valve adds later appears by itself.
    * With them, the item builder's sets (item-builder.js itemSets).
    */
-  function cosmeticSlots(): { slots: CosmeticSlot[]; sets: ItemSet[]; names?: Record<string, string>; error?: string } {
+  function cosmeticSlots(): CosmeticSlots {
+    return drain(cosmeticSlotsSteps());
+  }
+
+  /**
+   * cosmeticSlots, a pause at a time: the window asks for it on every start, and on the first one
+   * it is most of a second of walking the game's table and opening its index, which held the
+   * catalog back and the window with it (src/ipc-game.ts runs it a step at a time).
+   */
+  function* cosmeticSlotsSteps(): Generator<typeof PAUSE, CosmeticSlots> {
     const game = gamePath();
     if (!game) return { slots: [], sets: [] };
     try {
       const text = vanilla();
-      const bases = schema.listItems(text).filter((i) => i.baseitem);
+      yield PAUSE;
+      const bases = (yield* schema.listItemsSteps(text)).filter((i) => i.baseitem);
       const seen = new Set<string>();
       const slots: CosmeticSlot[] = [];
       for (const base of bases) {
         const slot = base.slot || base.prefab || '';
         if (!slot || seen.has(slot)) continue;
         seen.add(slot);
+        yield PAUSE; // each slot is a pass over the 26 000 items
         const options = schema.cosmeticOptions(text, slot);
         if (!options.length) continue;
         const rec = cosmeticRecordFor(slot);
         slots.push({ slot, base: base.id, picked: rec ? rec.itemId : null, recordId: rec ? rec.id : null, options });
       }
-      const itemSlots = itemBuilder.itemSlots(text);
+      yield PAUSE;
+      const itemSlots = yield* itemBuilder.itemSlotsSteps(text);
+      yield PAUSE;
       const sets = itemBuilder.itemSets(text, itemSlots);
+      yield PAUSE;
       const effects = itemBuilder.itemEffects();
       if (itemSlots.length && effects.length) {
+        // the style names are read out of the game's index: opened here a pause at a time
+        const pak = path.join(game, 'dota', 'pak01_dir.vpk');
+        if (fs.existsSync(pak)) yield* sharedVpkIndexSteps(pak);
         const styleName = styleNamer(game, getLang(), (i) => t('Стиль {0}', i + 1));
         const entries = itemSlots.map((it) => {
           const rec = cosmeticRecordFor(it.slot);
@@ -70,7 +94,9 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
         if (at === -1) slots.unshift(...entries);
         else slots.splice(at + 1, 0, ...entries);
       }
-      return { slots, sets, ...(getLang() === 'zh-CN' ? { names: chineseCosmeticNames(game, text) } : {}) };
+      if (getLang() !== 'zh-CN') return { slots, sets };
+      yield PAUSE;
+      return { slots, sets, names: yield* chineseCosmeticNamesSteps(game, text) };
     } catch (err) {
       return { slots: [], sets: [], error: String((err as Error)?.message || err) };
     }
@@ -152,5 +178,5 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
     settings.set('cosmetics', {});
   }
 
-  return { cosmeticSlots, pickCosmetic, pickSet, migrateCosmeticSettings };
+  return { cosmeticSlots, cosmeticSlotsSteps, pickCosmetic, pickSet, migrateCosmeticSettings };
 }
