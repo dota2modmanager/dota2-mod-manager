@@ -14749,93 +14749,6 @@
       ]
     },
     {
-      "id": "nerubian_assassin",
-      "name": "Nyx Assassin",
-      "slug": "nyx-assassin",
-      "mods": [
-        {
-          "name": "Nyx Assassin Mesmer Eye",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","head","weapon","back"],
-          "image": {"src":"/mods/nyx-assassin-mesmer-eye.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791607322
-        },
-        {
-          "name": "Nyx Assassin - Mecha Nyx",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","head","weapon"],
-          "image": {"src":"/mods/nyx-assassin-mecha-nyx.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790294865
-        },
-        {
-          "name": "Alien Nyx Assassin",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","weapon"],
-          "image": {"src":"/mods/alien-nyx-assassin.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1756539017
-        },
-        {
-          "name": "Nyx Assassin Dalbaeb",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","weapon"],
-          "image": {"src":"/mods/nyx-assassin-dalbaeb.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1788902445
-        },
-        {
-          "name": "Pink Nyx Assassin",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","weapon"],
-          "image": {"src":"/mods/pink-nyx-assassin.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1766443370
-        },
-        {
-          "name": "Nyx Assassin Latticean Hierarchy",
-          "categoryId": "hero-items",
-          "styleLabel": "Crimson",
-          "slots": ["arms"],
-          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy-crimson.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1788042221
-        },
-        {
-          "name": "Nyx Assassin Latticean Hierarchy",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["arms"],
-          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1788042221
-        },
-        {
-          "name": "Nyx Assassin Latticean Hierarchy",
-          "categoryId": "hero-items",
-          "styleLabel": "Tyrian",
-          "slots": ["arms"],
-          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy-tyrian.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1788042221
-        }
-      ]
-    },
-    {
       "id": "primal_beast",
       "name": "Primal Beast",
       "slug": "primal-beast",
@@ -15324,6 +15237,83 @@
           "author": "Ромчик",
           "authorUrl": "https://watchmy.bio/shidehara",
           "date": 1784702480
+        }
+      ]
+    },
+    {
+      "id": "nerubian_assassin",
+      "name": "Nyx Assassin",
+      "slug": "nyx-assassin",
+      "mods": [
+        {
+          "name": "Nyx Assassin - Mecha Nyx",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","head","weapon"],
+          "image": {"src":"/mods/nyx-assassin-mecha-nyx.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790294865
+        },
+        {
+          "name": "Alien Nyx Assassin",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","weapon"],
+          "image": {"src":"/mods/alien-nyx-assassin.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1756539017
+        },
+        {
+          "name": "Nyx Assassin Dalbaeb",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","weapon"],
+          "image": {"src":"/mods/nyx-assassin-dalbaeb.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1788902445
+        },
+        {
+          "name": "Pink Nyx Assassin",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","weapon"],
+          "image": {"src":"/mods/pink-nyx-assassin.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1766443370
+        },
+        {
+          "name": "Nyx Assassin Latticean Hierarchy",
+          "categoryId": "hero-items",
+          "styleLabel": "Crimson",
+          "slots": ["arms"],
+          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy-crimson.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
+        },
+        {
+          "name": "Nyx Assassin Latticean Hierarchy",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["arms"],
+          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
+        },
+        {
+          "name": "Nyx Assassin Latticean Hierarchy",
+          "categoryId": "hero-items",
+          "styleLabel": "Tyrian",
+          "slots": ["arms"],
+          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy-tyrian.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
         }
       ]
     },

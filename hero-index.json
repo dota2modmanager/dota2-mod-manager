@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1581,
+  "mods": 1580,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1203,8 +1203,7 @@
         {"name":"Nyx Assassin Dalbaeb","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
         {"name":"Nyx Assassin Latticean Hierarchy","categoryId":"hero-items","styleLabel":"Crimson","slots":["arms"]},
         {"name":"Nyx Assassin Latticean Hierarchy","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
-        {"name":"Nyx Assassin Latticean Hierarchy","categoryId":"hero-items","styleLabel":"Tyrian","slots":["arms"]},
-        {"name":"Nyx Assassin Mesmer Eye","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","weapon","back"]}
+        {"name":"Nyx Assassin Latticean Hierarchy","categoryId":"hero-items","styleLabel":"Tyrian","slots":["arms"]}
       ]
     },
     "nevermore": {

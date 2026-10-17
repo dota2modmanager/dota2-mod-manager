@@ -1,5 +1,5 @@
 {
-  "count": 1697,
+  "count": 1696,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -269,7 +269,6 @@
     "2b28fddde5d51c09bc095dedffd54f4f34a5eaa1": [{"name":"White Click","categoryId":"other","styleLabel":null,"type":"vpk"}],
     "2b2fcba46ffe8207a5189de996bf0042ef384706": [{"name":"All Grandmasters","categoryId":"other","styleLabel":null,"type":"vpk"}],
     "2b6e123f526e0f11c7abfd979392c0ac699e1f66": [{"name":"Nemestice","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
-    "2b75006421b0eb565e0b9fce63c02f6ae245756f": [{"name":"Nyx Assassin Mesmer Eye","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "2b9f6a30b8350dd81547f92b75185306f0d316e3": [{"name":"Love Ping","categoryId":"pings","styleLabel":null,"type":"vpk"}],
     "2bb0086fa35ddd3c43009ad5f9378e6dcb69e480": [{"name":"Necrophos Serpent Spite","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "2bd44b06331c68387c6335e398c4beb0c0d19898": [{"name":"Gabe Shopkeeper","categoryId":"other","styleLabel":null,"type":"vpk"}],
