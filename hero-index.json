@@ -1,6 +1,6 @@
 {
-  "heroes": 151,
-  "mods": 1580,
+  "heroes": 152,
+  "mods": 1584,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -74,6 +74,7 @@
         {"name":"Arc Warden Ancient Gaoler","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
         {"name":"Arc Warden Black Hole","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
         {"name":"Arc Warden Frosty Toy","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
+        {"name":"Arc Warden Gray Monster","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden Magician","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden Sakura Winter","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden The Last Survivor","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","misc","head"]},
@@ -98,6 +99,7 @@
         {"name":"Axe Heracles","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"]},
         {"name":"Axe Immortal Bootblack","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","misc","head"]},
         {"name":"Axe Immortal Bootblack Brawler","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon"]},
+        {"name":"Axe Immortal Rampage","categoryId":"heroes","styleLabel":null,"slots":["arms","tail","belt","weapon","back","misc"]},
         {"name":"Axe Kratos","categoryId":"heroes","styleLabel":null,"slots":["weapon","tail","head","belt","arms"]},
         {"name":"Axe Unleashed","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","misc","head"]}
       ]
@@ -509,6 +511,7 @@
         {"name":"Earthshaker Tectonic","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head","weapon"]}
       ]
     },
+    "elder_titan": {"name":"Elder Titan","mods":[{"name":"Elder Titan Creation Immortal","categoryId":"heroes","styleLabel":null,"slots":["weapon","misc","arms","head","shoulder","back"]}]},
     "ember_spirit": {
       "name": "Ember Spirit",
       "mods": [
@@ -1247,7 +1250,13 @@
     },
     "nightstlaker": {"name":"Nightstlaker","mods":[{"name":"Night Stalker Remilia","categoryId":"heroes","styleLabel":"Style I","slots":["arms","back","misc","head","legs","tail"]}]},
     "nyx": {"name":"Nyx Assassin","mods":[{"name":"Alien Nyx Assassin","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]}]},
-    "nyx_assassin": {"name":"Nyx Assassin","mods":[{"name":"Pink Nyx Assassin","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]}]},
+    "nyx_assassin": {
+      "name": "Nyx Assassin",
+      "mods": [
+        {"name":"Nyx Assassin Mesmer Eye","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","arms","head","back"]},
+        {"name":"Pink Nyx Assassin","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]}
+      ]
+    },
     "obsidian_destroyer": {
       "name": "Outworld Destroyer",
       "mods": [

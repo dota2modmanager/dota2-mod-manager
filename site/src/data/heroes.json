@@ -4096,6 +4096,193 @@
       ]
     },
     {
+      "id": "arc_warden",
+      "name": "Arc Warden",
+      "slug": "arc-warden",
+      "mods": [
+        {
+          "name": "Arc Warden The Last Survivor",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","misc","head"],
+          "image": {"src":"/mods/arc-warden-the-last-survivor.webp","width":854,"height":480},
+          "author": "Schizo",
+          "authorUrl": "https://t.me/schizo_workshop",
+          "date": 1790988499
+        },
+        {
+          "name": "Arc Warden Frosty Toy",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","head"],
+          "image": {"src":"/mods/arc-warden-frosty-toy.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1792050673
+        },
+        {
+          "name": "Arc Warden Gray Monster",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","head"],
+          "image": {"src":"/mods/arc-warden-gray-monster.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1792235759
+        },
+        {
+          "name": "Arc Warden Magician",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","head"],
+          "image": {"src":"/mods/arc-warden-magician.webp","width":854,"height":480},
+          "author": "Schizo",
+          "authorUrl": "https://t.me/schizo_workshop",
+          "date": 1791253117
+        },
+        {
+          "name": "Arc Warden Sakura Winter",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","head"],
+          "image": {"src":"/mods/arc-warden-sakura-winter.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1756539017
+        },
+        {
+          "name": "Arc Warden Ancient Gaoler",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder"],
+          "image": {"src":"/mods/arc-warden-ancient-gaoler.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1778935876
+        },
+        {
+          "name": "Arc Warden Black Hole",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder"],
+          "image": {"src":"/mods/arc-warden-black-hole.webp","width":854,"height":480},
+          "author": "Amir4an",
+          "authorUrl": "https://vk.com/amir4an",
+          "date": 1756539017
+        },
+        {
+          "name": "Arc Warden Yin Yang",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder"],
+          "image": {"src":"/mods/arc-warden-yin-yang.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1766265248
+        },
+        {
+          "name": "Ashes Arc Warden",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder"],
+          "image": {"src":"/mods/ashes-arc-warden.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1775106039
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "crystal_maiden",
       "name": "Crystal Maiden",
       "slug": "crystal-maiden",
@@ -4563,183 +4750,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1788958573
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "arc_warden",
-      "name": "Arc Warden",
-      "slug": "arc-warden",
-      "mods": [
-        {
-          "name": "Arc Warden The Last Survivor",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder","misc","head"],
-          "image": {"src":"/mods/arc-warden-the-last-survivor.webp","width":854,"height":480},
-          "author": "Schizo",
-          "authorUrl": "https://t.me/schizo_workshop",
-          "date": 1790988499
-        },
-        {
-          "name": "Arc Warden Frosty Toy",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder","head"],
-          "image": {"src":"/mods/arc-warden-frosty-toy.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1792050673
-        },
-        {
-          "name": "Arc Warden Magician",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder","head"],
-          "image": {"src":"/mods/arc-warden-magician.webp","width":854,"height":480},
-          "author": "Schizo",
-          "authorUrl": "https://t.me/schizo_workshop",
-          "date": 1791253117
-        },
-        {
-          "name": "Arc Warden Sakura Winter",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder","head"],
-          "image": {"src":"/mods/arc-warden-sakura-winter.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1756539017
-        },
-        {
-          "name": "Arc Warden Ancient Gaoler",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder"],
-          "image": {"src":"/mods/arc-warden-ancient-gaoler.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1778935876
-        },
-        {
-          "name": "Arc Warden Black Hole",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder"],
-          "image": {"src":"/mods/arc-warden-black-hole.webp","width":854,"height":480},
-          "author": "Amir4an",
-          "authorUrl": "https://vk.com/amir4an",
-          "date": 1756539017
-        },
-        {
-          "name": "Arc Warden Yin Yang",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder"],
-          "image": {"src":"/mods/arc-warden-yin-yang.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1766265248
-        },
-        {
-          "name": "Ashes Arc Warden",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder"],
-          "image": {"src":"/mods/ashes-arc-warden.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1775106039
         },
         {
           "name": "Aghanim Ranged Attack",
@@ -13993,6 +14003,103 @@
       ]
     },
     {
+      "id": "axe",
+      "name": "Axe",
+      "slug": "axe",
+      "mods": [
+        {
+          "name": "Axe Gawr Gura",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"],
+          "image": {"src":"/mods/axe-gawr-gura.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771195327
+        },
+        {
+          "name": "Axe Heracles",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"],
+          "image": {"src":"/mods/axe-heracles.webp","width":854,"height":480},
+          "author": "SanyaBane",
+          "authorUrl": "https://steamcommunity.com/profiles/76561198072955043",
+          "date": 1771195327
+        },
+        {
+          "name": "Axe Automaton Reborn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","tail","weapon","back","base"],
+          "image": {"src":"/mods/axe-automaton-reborn.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1790622902
+        },
+        {
+          "name": "Axe Immortal Bootblack",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","tail","weapon","misc","head"],
+          "image": {"src":"/mods/axe-immortal-bootblack.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1756539017
+        },
+        {
+          "name": "Axe Immortal Rampage",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","tail","belt","weapon","back","misc"],
+          "image": {"src":"/mods/axe-immortal-rampage.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1792235759
+        },
+        {
+          "name": "Axe Unleashed",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","tail","weapon","misc","head"],
+          "image": {"src":"/mods/axe-unleashed.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1765448898
+        },
+        {
+          "name": "Axe Automaton",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","head","tail","weapon"],
+          "image": {"src":"/mods/axe-automaton.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1787499382
+        },
+        {
+          "name": "Axe Immortal Bootblack Brawler",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","head","tail","weapon"],
+          "image": {"src":"/mods/axe-immortal-bootblack-brawler.webp","width":854,"height":480},
+          "author": "CeoMods",
+          "authorUrl": "https://t.me/modsceo",
+          "date": 1783879866
+        },
+        {
+          "name": "Axe Kratos",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","tail","head","belt","arms"],
+          "image": {"src":"/mods/axe-kratos.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1789090758
+        }
+      ]
+    },
+    {
       "id": "beastmaster",
       "name": "Beastmaster",
       "slug": "beastmaster",
@@ -14575,93 +14682,6 @@
       ]
     },
     {
-      "id": "axe",
-      "name": "Axe",
-      "slug": "axe",
-      "mods": [
-        {
-          "name": "Axe Gawr Gura",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"],
-          "image": {"src":"/mods/axe-gawr-gura.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771195327
-        },
-        {
-          "name": "Axe Heracles",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"],
-          "image": {"src":"/mods/axe-heracles.webp","width":854,"height":480},
-          "author": "SanyaBane",
-          "authorUrl": "https://steamcommunity.com/profiles/76561198072955043",
-          "date": 1771195327
-        },
-        {
-          "name": "Axe Automaton Reborn",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","tail","weapon","back","base"],
-          "image": {"src":"/mods/axe-automaton-reborn.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790622902
-        },
-        {
-          "name": "Axe Immortal Bootblack",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","tail","weapon","misc","head"],
-          "image": {"src":"/mods/axe-immortal-bootblack.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1756539017
-        },
-        {
-          "name": "Axe Unleashed",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","tail","weapon","misc","head"],
-          "image": {"src":"/mods/axe-unleashed.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1765448898
-        },
-        {
-          "name": "Axe Automaton",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","head","tail","weapon"],
-          "image": {"src":"/mods/axe-automaton.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1787499382
-        },
-        {
-          "name": "Axe Immortal Bootblack Brawler",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","head","tail","weapon"],
-          "image": {"src":"/mods/axe-immortal-bootblack-brawler.webp","width":854,"height":480},
-          "author": "CeoMods",
-          "authorUrl": "https://t.me/modsceo",
-          "date": 1783879866
-        },
-        {
-          "name": "Axe Kratos",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","tail","head","belt","arms"],
-          "image": {"src":"/mods/axe-kratos.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1789090758
-        }
-      ]
-    },
-    {
       "id": "meepo",
       "name": "Meepo",
       "slug": "meepo",
@@ -14745,6 +14765,93 @@
           "author": "Haruma",
           "authorUrl": "https://t.me/DotA_2_Mods",
           "date": 1779111814
+        }
+      ]
+    },
+    {
+      "id": "nerubian_assassin",
+      "name": "Nyx Assassin",
+      "slug": "nyx-assassin",
+      "mods": [
+        {
+          "name": "Nyx Assassin Mesmer Eye",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon","arms","head","back"],
+          "image": {"src":"/mods/nyx-assassin-mesmer-eye.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1792235759
+        },
+        {
+          "name": "Nyx Assassin - Mecha Nyx",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","head","weapon"],
+          "image": {"src":"/mods/nyx-assassin-mecha-nyx.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790294865
+        },
+        {
+          "name": "Alien Nyx Assassin",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","weapon"],
+          "image": {"src":"/mods/alien-nyx-assassin.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1756539017
+        },
+        {
+          "name": "Nyx Assassin Dalbaeb",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","weapon"],
+          "image": {"src":"/mods/nyx-assassin-dalbaeb.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1788902445
+        },
+        {
+          "name": "Pink Nyx Assassin",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","weapon"],
+          "image": {"src":"/mods/pink-nyx-assassin.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1766443370
+        },
+        {
+          "name": "Nyx Assassin Latticean Hierarchy",
+          "categoryId": "hero-items",
+          "styleLabel": "Crimson",
+          "slots": ["arms"],
+          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy-crimson.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
+        },
+        {
+          "name": "Nyx Assassin Latticean Hierarchy",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["arms"],
+          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
+        },
+        {
+          "name": "Nyx Assassin Latticean Hierarchy",
+          "categoryId": "hero-items",
+          "styleLabel": "Tyrian",
+          "slots": ["arms"],
+          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy-tyrian.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
         }
       ]
     },
@@ -15237,83 +15344,6 @@
           "author": "Ромчик",
           "authorUrl": "https://watchmy.bio/shidehara",
           "date": 1784702480
-        }
-      ]
-    },
-    {
-      "id": "nerubian_assassin",
-      "name": "Nyx Assassin",
-      "slug": "nyx-assassin",
-      "mods": [
-        {
-          "name": "Nyx Assassin - Mecha Nyx",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","head","weapon"],
-          "image": {"src":"/mods/nyx-assassin-mecha-nyx.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790294865
-        },
-        {
-          "name": "Alien Nyx Assassin",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","weapon"],
-          "image": {"src":"/mods/alien-nyx-assassin.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1756539017
-        },
-        {
-          "name": "Nyx Assassin Dalbaeb",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","weapon"],
-          "image": {"src":"/mods/nyx-assassin-dalbaeb.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1788902445
-        },
-        {
-          "name": "Pink Nyx Assassin",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","weapon"],
-          "image": {"src":"/mods/pink-nyx-assassin.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1766443370
-        },
-        {
-          "name": "Nyx Assassin Latticean Hierarchy",
-          "categoryId": "hero-items",
-          "styleLabel": "Crimson",
-          "slots": ["arms"],
-          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy-crimson.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1788042221
-        },
-        {
-          "name": "Nyx Assassin Latticean Hierarchy",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["arms"],
-          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1788042221
-        },
-        {
-          "name": "Nyx Assassin Latticean Hierarchy",
-          "categoryId": "hero-items",
-          "styleLabel": "Tyrian",
-          "slots": ["arms"],
-          "image": {"src":"/mods/nyx-assassin-latticean-hierarchy-tyrian.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1788042221
         }
       ]
     },
@@ -16483,6 +16513,23 @@
           "author": null,
           "authorUrl": null,
           "date": 1756539017
+        }
+      ]
+    },
+    {
+      "id": "elder_titan",
+      "name": "Elder Titan",
+      "slug": "elder-titan",
+      "mods": [
+        {
+          "name": "Elder Titan Creation Immortal",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","misc","arms","head","shoulder","back"],
+          "image": {"src":"/mods/elder-titan-creation-immortal.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1792235759
         }
       ]
     },
