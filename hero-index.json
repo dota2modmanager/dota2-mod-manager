@@ -1,6 +1,6 @@
 {
   "heroes": 152,
-  "mods": 1584,
+  "mods": 1585,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -206,7 +206,6 @@
       "mods": [
         {"name":"Bristleback Automaton","categoryId":"heroes","styleLabel":null,"slots":["back","arms","head","weapon","misc"]},
         {"name":"Bristleback Crimson Ring","categoryId":"heroes","styleLabel":null,"slots":["back","arms","head","misc","weapon"]},
-        {"name":"Crimson Immortal Bristleback","categoryId":"heroes","styleLabel":null,"slots":["back","arms","head","misc","weapon"]},
         {"name":"Crystal Bristleback","categoryId":"heroes","styleLabel":null,"slots":["misc","back","weapon","head","arms"]}
       ]
     },
@@ -1886,6 +1885,7 @@
         {"name":"Terrorblade Emerald Arcana","categoryId":"heroes","styleLabel":null,"slots":["head"]},
         {"name":"Terrorblade Fire","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Terrorblade Foulfell Corruptor","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Terrorblade Foulfell Demon","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Terrorblade Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","wings"]},
         {"name":"Terrorblade Legacy Green","categoryId":"heroes","styleLabel":null,"slots":["head"]},
         {"name":"Terrorblade Load Out Rubiline","categoryId":"heroes","styleLabel":null,"slots":["head","wings"]},
@@ -2170,6 +2170,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Winter Wyvern Defender","categoryId":"heroes","styleLabel":null,"slots":["back","head"]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },

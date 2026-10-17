@@ -1060,6 +1060,16 @@
           "date": 1787826635
         },
         {
+          "name": "Terrorblade Foulfell Demon",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/terrorblade-foulfell-demon.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/drainAngel",
+          "date": 1792264217
+        },
+        {
           "name": "Terrorblade Scythes of Sorrow",
           "categoryId": "hero-items",
           "styleLabel": null,
@@ -13040,6 +13050,123 @@
       ]
     },
     {
+      "id": "winter_wyvern",
+      "name": "Winter Wyvern",
+      "slug": "winter-wyvern",
+      "mods": [
+        {
+          "name": "Immortal Winter Wyvern",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","head"],
+          "image": {"src":"/mods/immortal-winter-wyvern.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1787153550
+        },
+        {
+          "name": "Winter Wyvern Defender",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","head"],
+          "image": {"src":"/mods/winter-wyvern-defender.webp","width":854,"height":480},
+          "author": "zkll",
+          "authorUrl": null,
+          "date": 1792275718
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "ember_spirit",
       "name": "Ember Spirit",
       "slug": "ember-spirit",
@@ -13695,113 +13822,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1756539017
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "winter_wyvern",
-      "name": "Winter Wyvern",
-      "slug": "winter-wyvern",
-      "mods": [
-        {
-          "name": "Immortal Winter Wyvern",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","head"],
-          "image": {"src":"/mods/immortal-winter-wyvern.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1787153550
         },
         {
           "name": "Aghanim Ranged Attack",
@@ -16036,53 +16056,6 @@
       ]
     },
     {
-      "id": "bristleback",
-      "name": "Bristleback",
-      "slug": "bristleback",
-      "mods": [
-        {
-          "name": "Bristleback Automaton",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","head","weapon","misc"],
-          "image": {"src":"/mods/bristleback-automaton.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1787499382
-        },
-        {
-          "name": "Bristleback Crimson Ring",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","head","misc","weapon"],
-          "image": {"src":"/mods/bristleback-crimson-ring.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1776304745
-        },
-        {
-          "name": "Crimson Immortal Bristleback",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","head","misc","weapon"],
-          "image": {"src":"/mods/crimson-immortal-bristleback.webp","width":854,"height":480},
-          "author": "rasstegai",
-          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
-          "date": 1791379892
-        },
-        {
-          "name": "Crystal Bristleback",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","back","weapon","head","arms"],
-          "image": {"src":"/mods/crystal-bristleback.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1766145785
-        }
-      ]
-    },
-    {
       "id": "dawnbreaker",
       "name": "Dawnbreaker",
       "slug": "dawnbreaker",
@@ -16220,6 +16193,43 @@
           "author": "Mirik522",
           "authorUrl": "https://t.me/Moggdeli",
           "date": 1792011470
+        }
+      ]
+    },
+    {
+      "id": "bristleback",
+      "name": "Bristleback",
+      "slug": "bristleback",
+      "mods": [
+        {
+          "name": "Bristleback Automaton",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","head","weapon","misc"],
+          "image": {"src":"/mods/bristleback-automaton.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1787499382
+        },
+        {
+          "name": "Bristleback Crimson Ring",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","head","misc","weapon"],
+          "image": {"src":"/mods/bristleback-crimson-ring.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1776304745
+        },
+        {
+          "name": "Crystal Bristleback",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","back","weapon","head","arms"],
+          "image": {"src":"/mods/crystal-bristleback.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1766145785
         }
       ]
     },
