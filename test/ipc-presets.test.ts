@@ -31,6 +31,7 @@ function stand(t: TestContext, { catalogHas = [] as string[] } = {}) {
   const fpIndex = new Map<string, string>();
 
   const channels = registerAgainst(() => registerPresetsIpc({
+    blocked: () => null,
     win: () => null,
     settings: { get: (k: string) => (k === 'account' ? { id: '1', username: 'misha' } : null) },
     catalog: {},

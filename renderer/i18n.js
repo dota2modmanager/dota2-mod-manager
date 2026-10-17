@@ -473,8 +473,8 @@ const EN = {
   // ---------- presets ----------
   '{0} не установлено': '{0} not installed',
   'не установлен': 'not installed',
-  'Пресет хранит моды. Виды для стандартных предметов в него не входят: они живут своей жизнью в «Моих модах» и не выключаются вместе с пресетом.':
-    'A preset holds mods. Looks for default items are not part of one: they live in My mods on their own and are not switched off along with a preset.',
+  'Пресет хранит моды и виды из игры. Моды, которых в нём нет, выключаются, а вид надевается в свой слот: слоты, которых пресет не называет, остаются как есть.':
+    'A preset holds mods and looks from the game. Mods it does not name are switched off; a look goes on in its slot, and the slots the preset does not name stay as they are.',
   'Пресет запоминает, какие моды включены. Применение пресета включает его моды и выключает остальные. Готовым пресетом можно поделиться файлом — перетащи полученный .d2mm сюда.':
     'A preset remembers which mods are on. Applying a preset enables its mods and disables the rest. A finished preset can be shared as a file — drop a .d2mm you received here.',
 
@@ -502,6 +502,7 @@ const EN = {
   'Пресет «{0}» добавлен — нажми «Установить»': 'Preset «{0}» added — press «Install»',
   'Установлено и применено: {0} {1}': 'Installed and applied: {0} {1}',
   'виды из игры: {0}': 'looks from the game: {0}',
+  'Виды из игры в этом пресете заработают, когда выключишь безопасный режим': 'The looks from the game in this preset take effect once you turn safe mode off',
   'Не удалось прочитать файл пресета': 'Could not read the preset file',
   'Сюда можно бросить моды (.vpk, .zip, папку) или пресет .d2mm':
     'You can drop mods here (.vpk, .zip, a folder) or a .d2mm preset',

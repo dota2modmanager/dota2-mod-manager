@@ -57,12 +57,16 @@ export function touchesSchema(rec: LibRecord): boolean {
  * @param deps.catalog        the catalog store, for turning a mod into an identity
  * @param deps.installer      reads and writes what is in the game folder
  * @param deps.library        the manifest of installed mods and saved presets
- * @param deps.schemaService  rebuilds the item table when a preset changes it
+ * @param deps.schemaService  puts a preset's looks on, and rebuilds the item table when a preset changes it
  * @param deps.deployAndApply  rebuilds one pack's VPK
  */
 export function presetsService({ catalog, installer, library, schemaService, deployAndApply }: {
   catalog: Pick<Catalog, 'load'>; installer: PresetInstaller; library: Library;
-  schemaService: { refresh(): unknown }; deployAndApply: (pack: LibRecord) => unknown;
+  schemaService: {
+    refreshInBackground(): Promise<unknown>;
+    pickCosmetic(slot: string, itemId: string, name: string, effectId: string, opts: { write: boolean }): unknown;
+  };
+  deployAndApply: (pack: LibRecord) => unknown;
 }) {
   const plan = createPresetPlan({ catalog, installer, library });
 
@@ -134,8 +138,12 @@ export function presetsService({ catalog, installer, library, schemaService, dep
     }
   }
 
-  // enable exactly the preset's mods, disable everything else
-  function applyPreset(preset: Preset): string[] {
+  /**
+   * Enable exactly the preset's mods, disable everything else, and put its looks on, each in its
+   * slot. A slot the preset does not name keeps what it has (see Library.picksOn).
+   * @param opts.picks  false: the looks are switched off for now (the remote config), mods only
+   */
+  async function applyPreset(preset: Preset, { picks = true } = {}): Promise<string[]> {
     const wanted = new Set(library.presetModIds(preset));
     const errors: string[] = [];
     // Free cosmetics are not part of a build (see Library.inPreset): a preset that does not
@@ -157,7 +165,17 @@ export function presetsService({ catalog, installer, library, schemaService, dep
         }
       }
     }
-    if (schemaTouched) schemaService.refresh();
+    if (picks) {
+      for (const p of preset.picks || []) {
+        try {
+          schemaService.pickCosmetic(p.slot, p.itemId, p.name, p.effectId, { write: false });
+          schemaTouched = true;
+        } catch (err) {
+          errors.push(`${p.name}: ${(err as Error).message}`);
+        }
+      }
+    }
+    if (schemaTouched) await schemaService.refreshInBackground();
     return errors;
   }
 

@@ -100,6 +100,8 @@ export interface PresetRecord {
   absent?: { name: string; categoryId?: string }[];
   /** what a link could carry of it */
   link?: { count: number; skipped: unknown[] };
+  /** the looks it puts on, slot by slot (src/library.ts picksOn) */
+  picks?: { slot: string; itemId: string; name: string; effectId: string }[];
   /** a received preset, waiting to be installed */
   wanted?: unknown;
   source?: { author?: string; note?: string };

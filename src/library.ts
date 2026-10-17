@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import type { LibFile, LibRecord, ModIdentity, Preset, PackMember, PresetEntry } from './types.ts';
+import type { LibFile, LibRecord, ModIdentity, Preset, PackMember, PresetEntry, PresetPick } from './types.ts';
 import { writeFileAtomic } from './atomic-file.ts';
 import { FileTx } from './file-tx.ts';
 
@@ -162,6 +162,23 @@ export class Library {
     return !!rec && rec.categoryId !== 'cosmetic';
   }
 
+  /* The looks that are on, as a preset keeps them (issue #284): slot by slot, apart from the mods,
+   * because applying a preset puts each of them on in its slot and leaves the slots it does not
+   * name as they are. A courier picked after the preset was saved stays on. */
+  picksOn(): PresetPick[] {
+    return this.data.installed.filter((m) => m.enabled !== false && Library.isPick(m)).map(Library.pickOf);
+  }
+
+  /** A look on the library's books: a cosmetic record with a slot and an item. */
+  static isPick(rec: LibRecord | null | undefined): rec is LibRecord {
+    return !!rec && rec.categoryId === 'cosmetic' && !!rec.slot && !!rec.itemId;
+  }
+
+  /** A look as a preset keeps it. */
+  static pickOf(rec: LibRecord): PresetPick {
+    return { slot: String(rec.slot), itemId: String(rec.itemId), name: rec.name, effectId: String(rec.effectId || '') };
+  }
+
   /* What a preset remembers about one mod: the same self-contained identity that already
    * travels inside a .d2mm (see src/preset-share.ts), so what is stored and what is shared
    * say the same thing. Not an id - an id belongs to one installation of one mod on one
@@ -186,15 +203,17 @@ export class Library {
   savePreset(name: string): void {
     const enabled = this.data.installed.filter((m) => m.enabled && Library.inPreset(m));
     const mods = enabled.map(Library.identityOf);
+    const picks = this.picksOn();
     // never fold today's state into a shared preset waiting to be installed — same name,
     // completely different thing
     const existing = this.data.presets.find((p) => p.name === name && !p.wanted);
     if (existing) {
       existing.mods = mods;
+      existing.picks = picks;
       delete existing.modIds;
       existing.updatedAt = Date.now();
     } else {
-      this.data.presets.push({ id: crypto.randomUUID(), name, mods, updatedAt: Date.now() });
+      this.data.presets.push({ id: crypto.randomUUID(), name, mods, picks, updatedAt: Date.now() });
     }
     this.save();
   }
@@ -205,6 +224,7 @@ export class Library {
     const p = this.getPreset(presetId);
     if (!p || p.wanted) return null;
     p.mods = this.data.installed.filter((m) => m.enabled && Library.inPreset(m)).map(Library.identityOf);
+    p.picks = this.picksOn();
     delete p.modIds;
     p.updatedAt = Date.now();
     this.save();

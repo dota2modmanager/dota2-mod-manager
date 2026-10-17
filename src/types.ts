@@ -74,11 +74,16 @@ export interface ModIdentity {
   fp: string | null;
 }
 
+/** A free look or an item builder pick as a preset remembers it: the slot, the item, its effects. */
+export interface PresetPick { slot: string; itemId: string; name: string; effectId: string }
+
 /** A saved build, or one received as a .d2mm and not installed yet (`wanted`). */
 export interface Preset {
   id: string;
   name: string;
   mods?: ModIdentity[];
+  /** the looks it puts on, slot by slot; a preset saved before it had them leaves every look alone */
+  picks?: PresetPick[];
   /** how presets were written before they held identities: ids of installed records */
   modIds?: string[];
   updatedAt: number;

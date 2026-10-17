@@ -10,6 +10,8 @@ import { state } from '../core/store.ts';
 import { registerView, switchView } from '../core/router.ts';
 import { refreshInstalledIndex } from '../core/installed.ts';
 import { catName, catIcon } from '../core/categories.ts';
+import { COSMETIC_PREFIX } from '../core/constants.ts';
+import { cosmeticName } from '../ui/cosmetic-name.ts';
 import { fmtMB, plural } from '../ui/format.ts';
 import { toast } from '../ui/toast.ts';
 import { confirmDialog, promptDialog } from '../ui/dialog.ts';
@@ -42,23 +44,30 @@ function ownCard(p: Preset, byId: Map<string, LibRecord>): OwnPreset {
   };
   for (const r of recs) add(r.categoryId, { name: r.name, absent: false });
   for (const a of absent) add(a.categoryId, { name: a.name, absent: true });
+  // the looks it puts on, under the catalog's own names for them: the item builder, the weather...
+  const picks = p.picks || [];
+  const lookOf = (slot: string) => COSMETIC_PREFIX + (slot.startsWith('item:') ? 'items' : slot);
+  for (const pick of picks) add(lookOf(pick.slot), { name: cosmeticName(pick.name), absent: false });
   // biggest group first: it is what the preset is mostly made of
   const ordered = [...groups.entries()].sort((a, b) => b[1].length - a[1].length);
   // installed first in the strip, so the pictures still lead
-  const all = [...recs.map((rec) => ({ thumb: recThumb(rec) })), ...absent.map((a) => ({
+  // a look's picture by the item's name, as My mods asks for it, the slot's glyph until it comes
+  const looks = picks.map((pick) => ({ thumb: { key: pick.name, icon: catIcon(lookOf(pick.slot)) } }));
+  const all = [...recs.map((rec) => ({ thumb: recThumb(rec) })), ...looks, ...absent.map((a) => ({
     icon: catIcon(a.categoryId || 'other'), title: `${a.name} — ${L`не установлен`}`,
   }))];
+  const n = recs.length + absent.length;
   const cat = (id: string, n: number) => ({ id, icon: catIcon(id), name: catName(id), n });
   return {
     kind: 'own',
     id: p.id,
     name: p.name,
-    count: mods(recs.length + absent.length),
+    count: [n || !picks.length ? mods(n) : '', picks.length ? L`виды из игры: ${picks.length}` : ''].filter(Boolean).join(' · '),
     absent: absent.length ? { text: L`${absent.length} не установлено`, title: absent.map((a) => a.name).join(', ') } : null,
     linkTitle: !link.count ? L`В пресете только свои моды — ссылка их не донесёт, отправь файлом`
       : link.skipped.length ? L`Ссылка донесёт ${link.count} из каталога; свои моды (${link.skipped.length}) в неё не влезут — для них нужен файл`
         : L`Скопировать короткую ссылку на пресет`,
-    body: !recs.length && !absent.length ? null : {
+    body: !n && !picks.length ? null : {
       strip: all.slice(0, STRIP),
       rest: all.length - Math.min(all.length, STRIP),
       cats: ordered.map(([id, list]) => cat(id, list.length)),
@@ -143,6 +152,10 @@ const actions: PresetsActions = {
       toast(r.installed ? L`Пресет применён · доустановлено ${r.installed} ${plural(r.installed, 'мод', 'мода', 'модов')}` : L`Пресет применён`);
       if (r.missing?.length) toast(L`Своих модов нет на этом компьютере, из каталога их не вернуть: ${r.missing.join(', ')}`, 'warn', 8000);
       for (const err of (r.errors || []).slice(0, 3)) toast(err, 'warn', 7000);
+      // a look is a line in the game's item table, which safe mode keeps the game from reading
+      if (presets.find((p) => p.id === id)?.picks?.length && !state.settings?.schemaPatch) {
+        toast(L`Виды из игры в этом пресете заработают, когда выключишь безопасный режим`, 'warn', 8000);
+      }
     }
     await refreshInstalledIndex();
     await renderPresets();

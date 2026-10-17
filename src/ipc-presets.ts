@@ -23,8 +23,8 @@ import type { LibRecord, ModIdentity, PresetEntry } from './types.ts';
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerPresetsIpc({
   win, settings, catalog, installer, library, schemaService, presets,
-  adoptImportedFiles, afterDeployMaster, disableOtherCursors, sendProgress,
-}: Pick<AppContext, 'win' | 'settings' | 'catalog' | 'installer' | 'library' | 'schemaService' | 'presets' | 'adoptImportedFiles' | 'afterDeployMaster' | 'disableOtherCursors' | 'sendProgress'>): void {
+  adoptImportedFiles, afterDeployMaster, disableOtherCursors, sendProgress, blocked,
+}: Pick<AppContext, 'win' | 'settings' | 'catalog' | 'installer' | 'library' | 'schemaService' | 'presets' | 'adoptImportedFiles' | 'afterDeployMaster' | 'disableOtherCursors' | 'sendProgress' | 'blocked'>): void {
   const { app, dialog, ipcMain } = electron();
   // `win` arrives as a getter, not as the window. These are registered before the window
   // is created, so a value captured here would be undefined forever - which is exactly
@@ -128,7 +128,10 @@ export function registerPresetsIpc({
         }
       }
     }
-    const toggleErrors = presets.applyPreset(preset);
+    // the looks too, unless the remote config has them switched off: then the mods alone, and why
+    const off = preset.picks?.length ? blocked('cosmetics') : null;
+    if (off) errors.push(off.error);
+    const toggleErrors = await presets.applyPreset(preset, { picks: !off });
     if (installed) {
       afterDeployMaster();
       sendProgress({ type: 'done', label: preset.name });
@@ -249,6 +252,7 @@ export function registerPresetsIpc({
           return records.map((r) => r.id);
         }
         if (entry.kind === 'cosmetic') {
+          if (blocked('cosmetics')) return [];
           // the table is built once for the whole preset, at the end
           const rec = schemaService.pickCosmetic(entry.slot, entry.itemId, entry.name, entry.effectId, { write: false });
           schemaTouched = true;
@@ -275,17 +279,18 @@ export function registerPresetsIpc({
       }
     }
 
-    // the picks a sender's file asked for are made, but they do not join the build: from
-    // here this is an ordinary preset, and those hold mods only
-    const landed = [...new Set(ids)].map((id) => library.find(id)).filter((r): r is LibRecord => Library.inPreset(r));
+    // from here this is an ordinary preset: its mods, and the looks the sender's file asked for
+    const made = [...new Set(ids)].map((id) => library.find(id));
+    const landed = made.filter((r): r is LibRecord => Library.inPreset(r));
     preset.mods = landed.map(Library.identityOf);
+    preset.picks = made.filter(Library.isPick).map(Library.pickOf);
     delete preset.modIds;
     delete preset.wanted;                       // resolved: it's an ordinary preset now
     if (preset.source) preset.source.file = null;
     library.save();
     if (stash) { try { fs.rmSync(stash, { force: true }); } catch { /* noop */ } }
 
-    errors.push(...presets.applyPreset(preset));
+    errors.push(...await presets.applyPreset(preset, { picks: !blocked('cosmetics') }));
     // a mod that arrived already enabled never passes through applyPreset's own switch, so
     // its freshly lifted blocks would sit in the library without ever reaching the build
     if (schemaTouched) await schemaService.refreshInBackground();

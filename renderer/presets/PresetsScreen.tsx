@@ -27,7 +27,7 @@ function PresetsScreen({ m, actions }: { m: PresetsModel; actions: PresetsAction
   return (
     <>
       <div className="view-header"><h1 className="view-title">{L`Пресеты`}</h1></div>
-      <div className="view-intro">{L`Пресет хранит моды. Виды для стандартных предметов в него не входят: они живут своей жизнью в «Моих модах» и не выключаются вместе с пресетом.`}</div>
+      <div className="view-intro">{L`Пресет хранит моды и виды из игры. Моды, которых в нём нет, выключаются, а вид надевается в свой слот: слоты, которых пресет не называет, остаются как есть.`}</div>
       <div className="preset-new">
         <input className="input" id="presetName" ref={name} placeholder={L`Название пресета (напр. «Анимешный», «Минимал»)`} />
         <button className="btn btn-primary" id="savePresetBtn" onClick={save}><span className="ms">save</span>{L`Сохранить текущее состояние`}</button>

@@ -47,12 +47,24 @@ function stand(t: TestContext, { failOn = '' } = {}) {
     },
     analyzeRecord: () => null,
   } as unknown as PresetInstaller;
-  const schemaService = { refresh: () => calls.push('refresh') };
+  // a look put on is a record in its slot, as schema-cosmetics pickCosmetic makes it
+  const schemaService = {
+    refreshInBackground: async () => { calls.push('refresh'); },
+    pickCosmetic: (slot: string, itemId: string, name: string, effectId: string) => {
+      calls.push(`pick ${slot} ${itemId}${effectId ? ` ${effectId}` : ''}`);
+      for (const r of library.list()) if (r.categoryId === 'cosmetic' && r.slot === slot) library.setEnabled(r.id, false);
+      const rec = library.add({ name, categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [] });
+      library.update(rec.id, { slot, itemId, effectId: effectId || undefined });
+      return library.find(rec.id);
+    },
+  };
   const svc = presetsService({ catalog: { load: async () => CATALOG } as never, installer, library, schemaService, deployAndApply: () => [] });
-  return { library, svc, calls, nyx, trees, mine };
+  /** a look picked the way the window picks one */
+  const pick = (slot: string, itemId: string, name: string, effectId = '') => schemaService.pickCosmetic(slot, itemId, name, effectId);
+  return { library, svc, calls, nyx, trees, mine, pick };
 }
 
-test('applying a preset turns off what it does not name before turning on what it does', (t) => {
+test('applying a preset turns off what it does not name before turning on what it does', async (t) => {
   /* Two cursor sets cannot be live at once, so the outgoing one has to put the vanilla files back
      before the incoming one writes over them. */
   const s = stand(t);
@@ -64,7 +76,7 @@ test('applying a preset turns off what it does not name before turning on what i
   s.library.setEnabled(s.mine.id, true);
 
   // the preset was saved with nyx and mine on and trees off; now it is the other way round
-  const errors = s.svc.applyPreset(preset);
+  const errors = await s.svc.applyPreset(preset);
 
   assert.deepEqual(errors, []);
   assert.deepEqual(s.calls, ['off Pumpkin Trees', 'on Alien Nyx Assassin']);
@@ -72,14 +84,14 @@ test('applying a preset turns off what it does not name before turning on what i
   assert.equal(s.library.find(s.nyx.id)?.enabled, true);
 });
 
-test('a mod that cannot be switched is named, and the rest of the preset still applies', (t) => {
+test('a mod that cannot be switched is named, and the rest of the preset still applies', async (t) => {
   const s = stand(t, { failOn: 'Alien Nyx Assassin' });
   s.library.savePreset('All on');
   const preset = s.library.listPresets()[0];
   s.library.setEnabled(s.nyx.id, false);
   s.library.setEnabled(s.trees.id, false);
 
-  const errors = s.svc.applyPreset(preset);
+  const errors = await s.svc.applyPreset(preset);
 
   assert.deepEqual(errors, ['Alien Nyx Assassin: the file is in use']);
   assert.equal(s.library.find(s.trees.id)?.enabled, true, 'the one that could be switched was');
@@ -159,7 +171,7 @@ function shareStand(t: TestContext) {
   };
   const svc = presetsService({
     catalog: { load: async () => CATALOG } as never, installer, library,
-    schemaService: { refresh: () => {} }, deployAndApply: (pack) => { deployed.push(pack.name); return []; },
+    schemaService: { refreshInBackground: async () => {}, pickCosmetic: () => null }, deployAndApply: (pack) => { deployed.push(pack.name); return []; },
   });
   const add = (name: string, categoryId: string, rel: string | null) => library.add({
     name, categoryId, styleLabel: null, fileRef: null, preview: null,
@@ -284,4 +296,58 @@ test('a received file parks as a preset, keeping the archive only when it carrie
   const junk = withElectron(fakeElectron, () => s.svc.importPresetFile(path.join(s.dir, 'junk.d2mm')));
   assert.ok('error' in junk && junk.error.length > 0, 'a broken file is an error the window can show');
   assert.equal(s.library.listPresets().length, 2, 'only the two good files became presets');
+});
+
+// ---------- the looks in a preset (issue #284) ----------
+
+test('a preset keeps the looks that were on, and applying it puts each back in its slot while leaving the slots it does not name alone', async (t) => {
+  const s = stand(t);
+  s.pick('item:juggernaut:body', '9059', 'Bladeform Legacy', 'style-1');
+  s.pick('weather', '4000', 'Weather Snow');
+  s.library.savePreset('Jugg in the snow');
+  const preset = s.library.listPresets()[0];
+  assert.deepEqual(preset.picks, [
+    { slot: 'item:juggernaut:body', itemId: '9059', name: 'Bladeform Legacy', effectId: 'style-1' },
+    { slot: 'weather', itemId: '4000', name: 'Weather Snow', effectId: '' },
+  ], 'slot, item and effects, as the builder put them on');
+  assert.ok(!(preset.mods || []).some((m) => m.categoryId === 'cosmetic'), 'and not among the mods');
+
+  // later: another sword of weather, and a courier the preset never heard of
+  s.pick('weather', '4001', 'Weather Rain');
+  s.pick('courier', '700', 'Golden Courier');
+  s.calls.length = 0;
+  assert.deepEqual(await s.svc.applyPreset(preset), []);
+  const on = (slot: string) => s.library.list().find((r) => r.categoryId === 'cosmetic' && r.slot === slot && r.enabled !== false);
+  assert.equal(on('weather')?.itemId, '4000', 'its weather back');
+  assert.equal(on('item:juggernaut:body')?.effectId, 'style-1');
+  assert.equal(on('courier')?.itemId, '700', 'the courier it does not name stays on');
+  assert.equal(s.calls.at(-1), 'refresh', 'and the table built once, at the end');
+});
+
+test('a preset saved before it kept looks leaves every look as it is, and the remote switch keeps them off', async (t) => {
+  const s = stand(t);
+  s.pick('weather', '4000', 'Weather Snow');
+  s.library.savePreset('Old');
+  const preset = s.library.listPresets()[0];
+  delete preset.picks;
+  s.pick('weather', '4001', 'Weather Rain');
+  await s.svc.applyPreset(preset);
+  const on = () => s.library.list().find((r) => r.categoryId === 'cosmetic' && r.slot === 'weather' && r.enabled !== false);
+  assert.equal(on()?.itemId, '4001', 'nothing to say about looks, nothing done to them');
+
+  s.library.savePreset('Old');
+  s.pick('weather', '4000', 'Weather Snow');
+  await s.svc.applyPreset(s.library.listPresets()[0], { picks: false });
+  assert.equal(on()?.itemId, '4000', 'looks switched off remotely: the preset applies its mods only');
+});
+
+test('the looks travel with a preset, in its file and in its link', async (t) => {
+  const s = stand(t);
+  s.pick('item:juggernaut:body', '9059', 'Bladeform Legacy');
+  s.library.savePreset('Build');
+  const preset = s.library.listPresets()[0];
+  const entries = await s.svc.presetShareEntries(preset);
+  assert.deepEqual(entries.filter((e) => e.kind === 'cosmetic'), [{ kind: 'cosmetic', slot: 'item:juggernaut:body', itemId: '9059', name: 'Bladeform Legacy', effectId: '' }]);
+  const link = s.svc.presetLinkMods(preset, await s.svc.catalogIndex());
+  assert.ok(link.mods.some((m) => m.kind === 'cosmetic' && m.itemId === '9059'), 'a link carries it too: a slot and an item');
 });

@@ -25,9 +25,12 @@ export type ShareEntry =
   | { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null; fp: string | null; size: number }
   | { kind: 'missing'; name: string; reason: string }
   | { kind: 'embedded'; name: string; categoryId: string; info: string; fp: string | null; size: number; loadData: () => Buffer }
+  | { kind: 'cosmetic'; name: string; slot: string; itemId: string; effectId: string }
   | { kind: 'pack'; name: string; members: ShareEntry[] };
 
 /** A share entry without its loader, as the window is shown it; `key` is what it sends back to leave one out. */
+/** What a link carries of a preset: catalog mods by name, and its looks by slot (src/preset-link.ts). */
+type LinkMod = { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null } | { kind: 'cosmetic'; slot: string; itemId: string; name: string; effectId: string };
 type PlanRow = { key: string; kind: string; name: string; size: number; info: string; reason: string; members?: PlanRow[] };
 
 /** What of the installer the plan reads: what a record is, and where its bytes are. */
@@ -141,6 +144,8 @@ export function createPresetPlan({ catalog, installer, library }: {
       if (!rec) continue;
       out.push(rec.kind === 'pack' ? packShareEntry(rec, cat) : shareEntryFor(rec, cat));
     }
+    // the looks travel as what they are, a slot and an item of the game's own: no bytes at all
+    for (const p of preset.picks || []) out.push({ kind: 'cosmetic', ...p });
     return out;
   }
 
@@ -176,8 +181,8 @@ export function createPresetPlan({ catalog, installer, library }: {
   // A pack flattens to its members: packing is a local storage choice, not part of the build.
   // A cosmetic pick travels too — slot + item id is a few bytes, and needs no catalog lookup
   // at all (both players' games carry the same Valve schema).
-  function presetLinkMods(preset: Preset, cat: CatalogIndex): { mods: { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null }[]; skipped: string[] } {
-    const mods: { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null }[] = [];
+  function presetLinkMods(preset: Preset, cat: CatalogIndex): { mods: LinkMod[]; skipped: string[] } {
+    const mods: LinkMod[] = [];
     const skipped: string[] = [];
     for (const id of library.presetModIds(preset)) {
       const rec = library.find(id);
@@ -190,6 +195,7 @@ export function createPresetPlan({ catalog, installer, library }: {
         mods.push({ kind: 'catalog', categoryId: it.categoryId, name: it.name, styleLabel: it.styleLabel || null });
       }
     }
+    for (const p of preset.picks || []) mods.push({ kind: 'cosmetic', ...p });
     return { mods, skipped };
   }
 
