@@ -227,6 +227,8 @@ const { complete, shared } = Astro.props;
         const el = document.createElement('div');
         el.className = 'hunt-hero';
         el.dataset.hero = h.id;
+        // they live on <body>, outside the aria-hidden layer above, so they say so themselves
+        el.setAttribute('aria-hidden', 'true');
         const img = document.createElement('img');
         img.src = `/mascots/${h.id}.gif`;
         img.alt = '';

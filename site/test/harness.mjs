@@ -283,3 +283,12 @@ export async function snap(page, name) {
   await page.screenshot({ path: file }).catch(() => {});
   return file;
 }
+
+/**
+ * Wait for the page to catch up with a change of size: the resize handlers have run and two
+ * frames have been drawn. A fixed 60 ms was enough on this machine and not on a CI runner, where
+ * the mascots were still standing where the wider window had put them.
+ */
+export function settle(page) {
+  return page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(done, 0)))));
+}
