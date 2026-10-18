@@ -579,7 +579,7 @@ section { padding: 44px 0; }
 .stand-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .stand-row {
   display: grid;
-  grid-template-columns: auto auto 1fr auto auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
   align-items: center; gap: 12px;
   padding: 12px 14px;
   border: 1px solid var(--border);
@@ -615,6 +615,13 @@ section { padding: 44px 0; }
   color: #fbbf24;
 }
 .stand-cat { font-size: 12px; color: var(--text-faint); }
+/* A narrow phone keeps the name and drops the category. Five columns with 12 px between them
+   left a 320 px screen about 35 px for "Pudge Butcher Arcana", and with a font wider than the one
+   Windows draws in, the rows ran off the right edge. */
+@media (max-width: 420px) {
+  .stand-row { grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 10px; padding-inline: 10px 12px; }
+  .stand-cat { display: none; }
+}
 
 /* the switch, the app's own shape */
 .stand-sw { position: relative; display: inline-flex; cursor: pointer; }
@@ -863,6 +870,9 @@ section { padding: 44px 0; }
      here quietly zeroes it, which puts the text against the edge of a phone screen. */
   padding-block: 44px 72px;
   max-width: calc(74ch + 40px);
+  /* an address written out as a link ("github.com/dota2modmanager/dota2-mod-manager") is one
+     word wider than a 320 px phone in a wider font than Windows has, and it has to break */
+  overflow-wrap: break-word;
 }
 .doc h1 { font-size: clamp(30px, 4.4vw, 44px); margin-bottom: 0.35em; }
 .doc h2 { scroll-margin-top: 84px; }

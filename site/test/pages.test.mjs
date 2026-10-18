@@ -55,6 +55,25 @@ for (const screen of ['mobile', 'desktop']) {
             throw new Error(`at ${w}px: ${over.join('; ')}`);
           }
         }
+        // The narrowest phone once more, in a wide font. system-ui is Segoe on Windows and
+        // something wider on Linux and Android, and the first CI run of these tests found two
+        // things at 320 px that fit only because Segoe is narrow. Verdana is about as wide as
+        // the widest of them and is on Windows and macOS; DejaVu Sans stands in on Linux.
+        if (screen === 'mobile') {
+          await page.setViewportSize({ width: 320, height: 760 });
+          // a constructed sheet, since the page's own policy refuses a <style> it did not ship
+          await page.evaluate(() => {
+            const sheet = new CSSStyleSheet();
+            sheet.replaceSync('body, body * { font-family: Verdana, "DejaVu Sans", sans-serif !important; }');
+            document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+          });
+          await page.waitForTimeout(60);
+          const over = await findOverflow(page);
+          if (over.length) {
+            await snap(page, `overflow-wide-font-320-${p}`);
+            throw new Error(`at 320px in a wide font: ${over.join('; ')}`);
+          }
+        }
       } finally {
         await context.close();
       }
