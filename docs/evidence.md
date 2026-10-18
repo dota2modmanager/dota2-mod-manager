@@ -14,7 +14,7 @@ install: the commands that need a game build a throwaway one first (`npm run san
 |---|---|---|---|
 | The code does what its tests say: more than 1,300 tests in 150 files | `test/` | Tests: `test` (Linux), `windows` | `npm test` |
 | Coverage does not go backwards: lines 92.9%, branches 86.9%, functions 91.6% on 2026-10-11 | `.github/coverage-baseline.json`, a floor that only rises | Tests | `npm run verify` |
-| The tests catch real breakage, not only run the code | 206 deliberate breakages in `.github/mutants.json`, each with the test file that has to go red | Mutants, weekly; `test/mutate.test.js` holds every entry against today's source on every push | `npm run mutate` |
+| The tests catch real breakage, not only run the code | 207 deliberate breakages in `.github/mutants.json`, each with the test file that has to go red | Mutants, weekly; `test/mutate.test.js` holds every entry against today's source on every push | `npm run mutate` |
 | Malformed archives and VPK files are refused, not trusted | `test/safe-zip-fuzz.test.js`, `test/vpk-fuzz.test.ts` | Tests | `npm run fuzz` |
 | An install interrupted at any point leaves the game folder whole | `test/file-tx-crash.test.ts` kills a child process with SIGKILL at every write in turn and checks what it left | Tests | `node --test test/file-tx-crash.test.ts` |
 

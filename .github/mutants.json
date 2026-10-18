@@ -782,8 +782,16 @@
       "name": "the desktop entry is rewritten and the desktop reread on every start",
       "file": "src/deep-links.ts",
       "anchor": "export function installDesktopEntry(",
-      "from": "if (fs.existsSync(file) && fs.readFileSync(file, 'utf-8') === entry) return;",
+      "from": "if (holds(file, Buffer.from(entry))) return;",
       "to": "if (false) return;",
+      "test": "test/deep-links.test.ts"
+    },
+    {
+      "name": "the desktop entry names an icon nothing installs, and the dock shows a gear",
+      "file": "src/deep-links.ts",
+      "anchor": "export function installDesktopEntry(",
+      "from": "if (icon) installIcon(icon, home, diag);",
+      "to": "void icon;",
       "test": "test/deep-links.test.ts"
     },
     {
