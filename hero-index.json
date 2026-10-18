@@ -1,6 +1,6 @@
 {
   "heroes": 152,
-  "mods": 1585,
+  "mods": 1586,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -927,6 +927,7 @@
         {"name":"Lina Aerial Aphrodite Flame","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc"]},
         {"name":"Lina Crystal Empress","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","belt","head"]},
         {"name":"Lina Fire Flame of Origin","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc"]},
+        {"name":"Lina Immortal Electric Gem","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc"]},
         {"name":"Lina Sharm Lady","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc"]},
         {"name":"Lina Soul Slayer Immortal","categoryId":"heroes","styleLabel":null,"slots":["head","misc","arms","belt"]},
         {"name":"Lina Wyrmwrought Flame","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},

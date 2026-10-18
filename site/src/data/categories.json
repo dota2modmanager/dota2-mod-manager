@@ -766,6 +766,30 @@
       "id": "backgrounds",
       "mods": [
         {
+          "name": "Spectaclcore Blue Girl",
+          "styleLabel": null,
+          "image": {"src":"/mods/spectaclcore-blue-girl.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1792286060
+        },
+        {
+          "name": "Tcoaal Wallpaper V2",
+          "styleLabel": null,
+          "image": {"src":"/mods/tcoaal-wallpaper-v2.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792286060
+        },
+        {
+          "name": "Tcoaal Wallpaper V3",
+          "styleLabel": null,
+          "image": {"src":"/mods/tcoaal-wallpaper-v3.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792286060
+        },
+        {
           "name": "Tcoaal Wallpaper V1",
           "styleLabel": null,
           "image": {"src":"/mods/tcoaal-wallpaper-v1.webp","width":854,"height":480},

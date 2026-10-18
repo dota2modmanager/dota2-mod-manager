@@ -4667,6 +4667,193 @@
       ]
     },
     {
+      "id": "lina",
+      "name": "Lina",
+      "slug": "lina",
+      "mods": [
+        {
+          "name": "Ancients Lina",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","misc","belt","arms"],
+          "image": {"src":"/mods/ancients-lina.webp","width":1280,"height":720},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1777641425
+        },
+        {
+          "name": "Lina Aerial Aphrodite Flame",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","head","misc"],
+          "image": {"src":"/mods/lina-aerial-aphrodite-flame.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1769266243
+        },
+        {
+          "name": "Lina Crystal Empress",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","arms","belt","head"],
+          "image": {"src":"/mods/lina-crystal-empress.webp","width":854,"height":480},
+          "author": "CeoMods",
+          "authorUrl": "https://t.me/modsceo",
+          "date": 1784328560
+        },
+        {
+          "name": "Lina Fire Flame of Origin",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","head","misc"],
+          "image": {"src":"/mods/lina-fire-flame-of-origin.webp","width":1280,"height":720},
+          "author": "CeoMods",
+          "authorUrl": "https://t.me/modsceo",
+          "date": 1786494204
+        },
+        {
+          "name": "Lina Immortal Electric Gem",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","head","misc"],
+          "image": {"src":"/mods/lina-immortal-electric-gem.webp","width":854,"height":480},
+          "author": "YZT",
+          "authorUrl": "https://t.me/YZTdota",
+          "date": 1792286060
+        },
+        {
+          "name": "Lina Sharm Lady",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","head","misc"],
+          "image": {"src":"/mods/lina-sharm-lady.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1790809354
+        },
+        {
+          "name": "Lina Soul Slayer Immortal",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","misc","arms","belt"],
+          "image": {"src":"/mods/lina-soul-slayer-immortal.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1790528261
+        },
+        {
+          "name": "Immortal Lina",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","head","misc"],
+          "image": {"src":"/mods/immortal-lina.webp","width":854,"height":480},
+          "author": "Haruma",
+          "authorUrl": "https://t.me/DotA_2_Mods",
+          "date": 1777484653
+        },
+        {
+          "name": "Lina Wyrmwrought Flame",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/lina-wyrmwrought-flame.webp","width":854,"height":480},
+          "author": "Mopsyara",
+          "authorUrl": "https://t.me/+AM_aLD0x2TcwY2My",
+          "date": 1787031170
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "furion",
       "name": "Natures Prophet",
       "slug": "natures-prophet",
@@ -5079,183 +5266,6 @@
           "date": 1756539017
         },
         {"name":"IO Purple","categoryId":"heroes","styleLabel":null,"slots":[],"image":{"src":"/mods/io-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756539017},
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "lina",
-      "name": "Lina",
-      "slug": "lina",
-      "mods": [
-        {
-          "name": "Ancients Lina",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","misc","belt","arms"],
-          "image": {"src":"/mods/ancients-lina.webp","width":1280,"height":720},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1777641425
-        },
-        {
-          "name": "Lina Aerial Aphrodite Flame",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","head","misc"],
-          "image": {"src":"/mods/lina-aerial-aphrodite-flame.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1769266243
-        },
-        {
-          "name": "Lina Crystal Empress",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","arms","belt","head"],
-          "image": {"src":"/mods/lina-crystal-empress.webp","width":854,"height":480},
-          "author": "CeoMods",
-          "authorUrl": "https://t.me/modsceo",
-          "date": 1784328560
-        },
-        {
-          "name": "Lina Fire Flame of Origin",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","head","misc"],
-          "image": {"src":"/mods/lina-fire-flame-of-origin.webp","width":1280,"height":720},
-          "author": "CeoMods",
-          "authorUrl": "https://t.me/modsceo",
-          "date": 1786494204
-        },
-        {
-          "name": "Lina Sharm Lady",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","head","misc"],
-          "image": {"src":"/mods/lina-sharm-lady.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1790809354
-        },
-        {
-          "name": "Lina Soul Slayer Immortal",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","misc","arms","belt"],
-          "image": {"src":"/mods/lina-soul-slayer-immortal.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790528261
-        },
-        {
-          "name": "Immortal Lina",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","head","misc"],
-          "image": {"src":"/mods/immortal-lina.webp","width":854,"height":480},
-          "author": "Haruma",
-          "authorUrl": "https://t.me/DotA_2_Mods",
-          "date": 1777484653
-        },
-        {
-          "name": "Lina Wyrmwrought Flame",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/lina-wyrmwrought-flame.webp","width":854,"height":480},
-          "author": "Mopsyara",
-          "authorUrl": "https://t.me/+AM_aLD0x2TcwY2My",
-          "date": 1787031170
-        },
         {
           "name": "Aghanim Ranged Attack",
           "categoryId": "ranged-attack",

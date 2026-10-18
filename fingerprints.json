@@ -1,5 +1,5 @@
 {
-  "count": 1716,
+  "count": 1720,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -143,6 +143,7 @@
     "1576f7cdaa0cc153b4f183ffb337146cb834ed6f": [{"name":"Night Stalker Remilia","categoryId":"heroes","styleLabel":"Style II","type":"vpk"}],
     "15954cf71f2456326155cad58c0557ef66a131f3": [{"name":"Hoodwink Tomokan Footsoldier","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "15dfe5925cb8f72bae73d88ca94c6a5e4e8ff60e": [{"name":"Batrider Night Marauder","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "15e5339a9917561f845bf55f075dfe28f0d4c94b": [{"name":"Tcoaal Wallpaper V3","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "15f18defb0d37347490e82ea40ba8fc3fa15c587": [{"name":"IO Purple","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "15fb4875692b60d6adf6d2826323aca543496322": [{"name":"Broodmother Anathema Reborn","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "1628c50b8f2be12cced7ef7635f1cbd00a8bdf88": [{"name":"Ursa Immortal Hallowed Hunt","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -584,6 +585,7 @@
     "5c1126d63a0ed110e91ac2b9e1fee169962b8603": [{"name":"TI10 Fountain Regen II","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "5c17a138df3450f20f56dd891b03b99cee81d0ea": [{"name":"Nier Automata","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "5c894173fe7081852ebc1787651e8bcc63791070": [{"name":"Omniknight Blinding Bastion","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "5ca19689fa85ed7f4cafce4f808c9fb44a0129ef": [{"name":"Tcoaal Wallpaper V2","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "5cb652349f0770dc2ef099092e478b5ef2780d1f": [{"name":"Wraith King Grim Destiny","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "5d3ce09da6166e6d64bfa7cebb576054129b7440": [{"name":"Pine Forest","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "5d93c1e852dd7423dcfef6980c294e29c9a79c23": [{"name":"Invoker Blackguard Magus","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -837,6 +839,7 @@
     "8115ce75c8165d18bebf6db5686b7880181ab88f": [{"name":"TI10 Teleport II","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "81178d5ccb635196c3dbf2d1e365188429cd64a3": [{"name":"Timbersaw Rectifier","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "814fb849b04fe6f575e4df74b2e372d533c33e02": [{"name":"Wave Lite Blue","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
+    "8181fc1ceeb1430963d5aad42231ec03544d95dc": [{"name":"Lina Immortal Electric Gem","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "8187a5557fbeec79587f6df8500730003dd51c04": [{"name":"Centaur Infernal Chieftain","categoryId":"hero-items","styleLabel":"Crimson","type":"vpk"}],
     "818cb8af3a1ff52f380a60f9e7e01491ac0c1577": [{"name":"Wave Purple","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
     "8197b77f9cba9e568393ef67c2da321538213dab": [{"name":"TI6 Fountain Regen II","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
@@ -1550,6 +1553,7 @@
     "ea83ea8368a7ee4af65eafbfaf7d872afc4162ff": [{"name":"Timbersaw Rectifier","categoryId":"hero-items","styleLabel":"Golden","type":"vpk"}],
     "ea897dec0c12aa8d764a804d91e68494ebf529fa": [{"name":"Small Trees Minify","categoryId":"trees","styleLabel":null,"type":"vpk"}],
     "eaa166cab6b8c60c4d0b4e36171e97b2c44ab797": [{"name":"Catbuns Trees","categoryId":"trees","styleLabel":null,"type":"vpk"}],
+    "eaa239c5d043f2cb69c6dc1e51b0b26fcefb6de8": [{"name":"Spectaclcore Blue Girl","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "eaefce8fd905f48587018a027441f6cb5fd706fd": [{"name":"Night Stalker Feasts of Forever","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "eb09e90cb56301189f18889c27d6aa88f896dabf": [{"name":"Woodland Dire Siege","categoryId":"creeps","styleLabel":null,"type":"vpk"}],
     "eb0a600924b9543e1be12d6f271a0e57cea77e21": [{"name":"Batrider Napapiri","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
