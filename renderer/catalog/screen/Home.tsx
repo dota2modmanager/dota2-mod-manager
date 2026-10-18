@@ -9,16 +9,25 @@ import { Media } from '../card/Media.tsx';
 
 interface Props {
   recent: Mod[];
+  /** the whole list's length when the strip shows only part of it, else 0 */
+  recentTotal: number;
   tiles: { id: string; name: string; preview: string | null }[];
   actions: ScreenActions;
 }
 
-export function Home({ recent, tiles, actions }: Props) {
+export function Home({ recent, recentTotal, tiles, actions }: Props) {
   return (
     <>
       {recent.length > 0 && (
         <>
-          <div className="section-h"><span className="ms">new_releases</span>{L`Недавно добавленные`}</div>
+          <div className="section-h">
+            <span className="ms">new_releases</span>{L`Недавно добавленные`}
+            {recentTotal > 0 && (
+              <button className="btn btn-ghost btn-sm section-more" id="recentAll" onClick={actions.openRecent}>
+                {L`Показать все ${recentTotal}`}
+              </button>
+            )}
+          </div>
           <div className="recent-row" id="recentRow">
             <ModGrid mods={recent} withCat onOpen={actions.openMod} onFavChanged={actions.favChanged} />
           </div>

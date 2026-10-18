@@ -20,7 +20,7 @@ export function Screen({ model, actions }: Props) {
     case 'offline':
       return <Offline offline={model.offline} error={model.error} retry={actions.retry} />;
     case 'home':
-      return <Home recent={model.recent} tiles={model.tiles} actions={actions} />;
+      return <Home recent={model.recent} recentTotal={model.recentTotal} tiles={model.tiles} actions={actions} />;
     case 'heroes':
       return (
         <Fragment key={model.key}>
@@ -42,9 +42,14 @@ function List({ model: m, actions }: { model: Extract<ScreenModel, { kind: 'list
   return (
     <>
       <div className="view-header">
-        {m.back && (
+        {m.back === 'heroes' && (
           <button className="btn btn-ghost btn-sm hero-back" id="heroBack" onClick={actions.allHeroes}>
             <span className="ms">arrow_back</span>{L`Все герои`}
+          </button>
+        )}
+        {m.back === 'home' && (
+          <button className="btn btn-ghost btn-sm hero-back" id="homeBack" onClick={() => actions.openCategory('all')}>
+            <span className="ms">arrow_back</span>{L`Все категории`}
           </button>
         )}
         <h1 className="view-title">{m.title}{m.accent !== undefined && <> <span className="accent">{m.accent}</span></>}</h1>

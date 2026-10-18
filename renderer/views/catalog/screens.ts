@@ -17,6 +17,7 @@ import { canBeInstalled } from '../../catalog/mods.ts';
 import { collectTags, collectGroups } from '../../catalog/tags.ts';
 import { narrowed as filtersNarrowed } from '../../catalog/filters.ts';
 import { favKey } from '../../catalog/favorites.ts';
+import { recentStrip } from '../../catalog/recent.ts';
 import { isInstalled } from '../../catalog/looks.ts';
 import { catalogConstants, catalogData } from '../../catalog/data.ts';
 import { showScreen } from '../../catalog/screen/root.tsx';
@@ -61,20 +62,40 @@ export async function renderFavorites(actions: ScreenActions): Promise<void> {
   }, actions));
 }
 
-export async function renderHome(actions: ScreenActions): Promise<void> {
-  const recent = (catalogData()?.mods?.recentlyAddedMods || [])
+/** The catalog's own list of what arrived lately, newest first, as mods the app knows. */
+function recentMods(): Mod[] {
+  return (catalogData()?.mods?.recentlyAddedMods || [])
     .map((r) => {
       const hit = state.modIndex.get(r.name.toLowerCase());
       return hit ? { ...hit.mod, _cat: hit.categoryId } as Mod : null;
     })
-    .filter((m): m is Mod => Boolean(m && (adultShown() || !isAdult(m))))
-    .slice(0, 12);
+    .filter((m): m is Mod => Boolean(m && (adultShown() || !isAdult(m))));
+}
+
+export async function renderHome(actions: ScreenActions): Promise<void> {
+  const { strip: recent, total: recentTotal } = recentStrip(recentMods());
   const tiles = visibleCategories().map((c) => ({
     id: c.id,
     name: catName(c.id),
     preview: c.preview ? `${RAW_BASE}/assets/previews/categories/${encodeURIComponent(c.preview)}` : null,
   }));
-  await paint(() => showScreen({ kind: 'home', recent, tiles }, actions));
+  await paint(() => showScreen({ kind: 'home', recent, recentTotal, tiles }, actions));
+}
+
+/* Everything the catalog lists as recently added, as a grid with the toolbar: the strip on the
+ * front page stops at twelve, and the list runs to a couple of hundred (issue #292). */
+export async function renderRecent(actions: ScreenActions): Promise<void> {
+  const all = recentMods();
+  const mods = applyFilters(all);
+  await paint(() => showScreen({
+    kind: 'list',
+    key: 'recent',
+    title: L`Недавно добавленные`,
+    back: 'home',
+    toolbar: toolbarModel(mods.length, { installable: all.some(canBeInstalled) }),
+    mods: { heading: false, mods, withCat: true, emptyText: NOTHING() },
+    cosmetics: null,
+  }, actions));
 }
 
 // how many looks a search shows before it just says how many more there are: a query like
@@ -152,7 +173,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
     kind: 'list',
     key: `cat:${categoryId}`,
     title: (byHero && heroName(f.hero)) || catName(categoryId),
-    back: byHero && Boolean(f.hero),
+    back: byHero && f.hero ? 'heroes' : undefined,
     toolbar,
     lead: lead && (!f.installedOnly || lead.installed) ? lead : null,
     mods: { heading: false, mods, grouped, emptyText: NOTHING() },

@@ -75,6 +75,9 @@
 }
 .section-h .ms { color: var(--primary-soft); font-size: 19px; }
 .section-h::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+/* a way into the rest of a section, after the rule: quieter than the heading it belongs to */
+.section-h .section-more { order: 1; font-family: var(--font-body); font-weight: 500; color: var(--text-muted); }
+.section-h .section-more:hover { color: var(--text); }
 
 /* ============ Mod grid ============ */
 .grid {

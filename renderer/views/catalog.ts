@@ -24,7 +24,7 @@ import { renderRail as drawRail, type RailModel } from '../catalog/rail/Rail.tsx
 import { bannerLayer } from '../catalog/layers.ts';
 import type { Mod } from '../catalog/types.ts';
 import { buildModIndex, cosmeticSlotList, favoriteCosmetics, favoriteMods, isItemCosmeticSlot, visibleCategories } from './catalog/lists.ts';
-import { renderCategory, renderCosmeticCategory, renderFavorites, renderHome, renderSearchResults } from './catalog/screens.ts';
+import { renderCategory, renderCosmeticCategory, renderFavorites, renderHome, renderRecent, renderSearchResults } from './catalog/screens.ts';
 import { openModWindow } from './catalog/mod-window.ts';
 import { afterCosmeticPick, openCosmeticWindow, pickCosmetic } from './catalog/cosmetics.ts';
 import { openArcanaWindow } from './catalog/arcana.ts';
@@ -88,6 +88,7 @@ const actions: ScreenActions = {
     await renderCatalog(); // the grid has to exist before it can be scrolled to the top
     $('#main').scrollTop = 0;
   },
+  openRecent: () => void actions.openCategory('recent'),
   filter: (patch) => {
     Object.assign(view.filters, patch);
     renderCatalog();
@@ -150,6 +151,7 @@ async function renderCatalog(): Promise<void> {
   if (state.search.trim()) await renderSearchResults(actions);
   else if (active === 'all') await renderHome(actions);
   else if (active === 'favorites') await renderFavorites(actions);
+  else if (active === 'recent') await renderRecent(actions);
   else if (active.startsWith(COSMETIC_PREFIX)) await renderCosmeticCategory(active.slice(COSMETIC_PREFIX.length), actions);
   else await renderCategory(active, actions);
   // the no-game banner goes on last so it ends up on top: a user with no Dota has a more
