@@ -107,8 +107,6 @@ test('the header and footer links can all be pressed on a phone', async () => {
             return document.elementFromPoint(r.left + Math.min(r.width / 2, 20), r.top + r.height / 2)?.closest('a') === el;
           });
           if (!hit) foot.push(`"${(await link.textContent()).trim()}" (link ${i}) is under something`);
-          continue;
-          if (hit !== (await link.textContent()).trim()) foot.push(`"${(await link.textContent()).trim()}" (link ${i}) is under something`);
         }
         if (head.length || foot.length) {
           await snap(page, `links-${w}-${p}`);
