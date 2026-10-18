@@ -543,7 +543,10 @@ section { padding: 44px 0; }
  * correct thing for it to be. */
 .reveal { opacity: 1; transform: none; }
 
-@media (prefers-reduced-motion: no-preference) {
+/* Not on a touch screen. Safari 26 is the first Safari to run scroll-driven animations, forty of
+   them on one page is a lot of new code to lean on, and the site stopped opening on iPhones the
+   season it shipped. A phone gets the sections standing still, which is what they are anyway. */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
   @supports (animation-timeline: view()) {
     .reveal {
       animation: rise linear both;
@@ -1069,3 +1072,14 @@ section { padding: 44px 0; }
    Тини" for Tiny Banana. One quiet line under the title, because it is there for the person
    who arrived on those words and needs to see they are in the right place. */
 .mod-alias { margin: 0 0 6px; font-size: 14px; color: var(--text-dim); }
+
+/* What a touch screen is spared. Every one of these is light that answers a pointer or turns
+   forever: blend layers on each card, a conic sweep, a spinning border, a floating icon with a
+   drop shadow re-rasterised each frame. A phone has no pointer to answer, and Safari on an iPhone
+   ran out of room for the layers they make. Last in the file, so it wins over each rule it undoes. */
+@media (hover: none) {
+  .progress { display: none; }
+  .lit { isolation: auto; }
+  .lit::before, .lit::after, .sheen { display: none; }
+  .badge, .final-icon, .final-sweep::after { animation: none; }
+}

@@ -10,7 +10,7 @@
  */
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { serveDist, launch, openPage, samplePages, findOverflow, findCovered, findLoneCards, isOffline, snap } from './harness.mjs';
+import { serveDist, launch, openPage, samplePages, findOverflow, findCovered, findLoneCards, isOffline, snap, settle } from './harness.mjs';
 
 let server, browser;
 before(async () => {
@@ -48,7 +48,7 @@ for (const screen of ['mobile', 'desktop']) {
         if (own.length) throw new Error(own.join('; '));
         for (const w of WIDTHS[screen]) {
           await page.setViewportSize({ width: w, height: screen === 'mobile' ? 760 : 900 });
-          await page.waitForTimeout(60);
+          await settle(page);
           const over = await findOverflow(page);
           if (over.length) {
             await snap(page, `overflow-${screen}-${w}-${p}`);
@@ -67,7 +67,7 @@ for (const screen of ['mobile', 'desktop']) {
             sheet.replaceSync('body, body * { font-family: Verdana, "DejaVu Sans", sans-serif !important; }');
             document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
           });
-          await page.waitForTimeout(60);
+          await settle(page);
           const over = await findOverflow(page);
           if (over.length) {
             await snap(page, `overflow-wide-font-320-${p}`);
@@ -134,7 +134,7 @@ test('a card left alone on the last row of a grid sits in the middle of it', asy
       await page.goto(server.url + p, { waitUntil: 'load' });
       for (const w of [1440, 1024, 768, 600]) {
         await page.setViewportSize({ width: w, height: 900 });
-        await page.waitForTimeout(60);
+        await settle(page);
         const lone = await findLoneCards(page);
         if (lone.length) {
           await snap(page, `lone-card-${w}-${p}`);
