@@ -31,7 +31,7 @@ the code, not in this page.
 | [`src/channel-args.ts`](#srcchannel-argsts) | What each channel may be handed, checked before its handler runs (src/window-guard.ts). |
 | [`src/cosmetic-names.ts`](#srccosmetic-namests) | Display names come from Valve's installed localization, while schema names remain the keys |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
-| [`src/deep-links.ts`](#srcdeep-linksts) | d2mm:// links: a preset link clicked anywhere on the system, and on Linux, telling the desktop |
+| [`src/deep-links.ts`](#srcdeep-linksts) | d2mm:// links: a preset or a single mod clicked anywhere on the system, and on Linux, telling |
 | [`src/dev-harness.ts`](#srcdev-harnessts) | The switches that let a script drive the window: a screenshot after some clicks (MM_SHOT and |
 | [`src/diagnostics-files.ts`](#srcdiagnostics-filests) | What a support report reads off the disk: a folder's listing (names, sizes, dates, never the |
 | [`src/diagnostics-render.ts`](#srcdiagnostics-renderts) | A support report laid out as text (src/diagnostics.ts gathers it): the one-screen summary, |
@@ -1185,13 +1185,13 @@ export function createCursors({ installer, library, settings }: { installer: Cur
 
 ## src/deep-links.ts
 
-d2mm:// links: a preset link clicked anywhere on the system, and on Linux, telling the desktop
-that this program opens them.
+d2mm:// links: a preset or a single mod clicked anywhere on the system, and on Linux, telling
+the desktop that this program opens them.
 
-Nothing installs from a link. It parks in the Presets tab exactly like a dropped file, and the
-user decides. A link reaches the app three ways: on the command line of a cold start, from a
-second copy started with it, which hands it to the first and quits, and on macOS as an
-open-url event.
+Nothing installs from a link. A preset parks in the Presets tab exactly like a dropped file; a
+mod (d2mm://mod/...) opens its window in the catalog. The user decides either way. A link
+reaches the app three ways: on the command line of a cold start, from a second copy started
+with it, which hands it to the first and quits, and on macOS as an open-url event.
 
 ### `firstLink`
 
@@ -1201,14 +1201,40 @@ export function firstLink(argv: readonly unknown[] | null | undefined): string |
 
 The first d2mm:// link on a command line, if there is one.
 
+### `ModLink`
+
+```ts
+export type ModLink = { cat: string; name: string; style: string | null }
+```
+
+A mod a link names: its category, its name in the catalog, and the look, when it picks one.
+
+### `modLinkUrl`
+
+```ts
+export function modLinkUrl({ cat, name, style }: ModLink): string
+```
+
+d2mm://mod/<category>/<name>[/<look>], each part URL-encoded: a name may hold a slash.
+
+### `parseModLink`
+
+```ts
+export function parseModLink(url: string): ModLink | null
+```
+
+The mod a d2mm://mod/ link names, or null when it names none. Tolerant of what happens to a link
+on its way here: a browser or the shell may add a slash at the end, and a query or a fragment
+says nothing about the mod.
+
 ### `handleDeepLink`
 
 ```ts
 export function handleDeepLink(url: string | null | undefined, { importPresetLink, win }: { importPresetLink: (code: string) => unknown; win: () => LinkWindow | null | undefined; }): void
 ```
 
-Take a link in: the preset is parked, and the window comes forward and is told what arrived.
-Anything that is not a d2mm:// link is ignored.
+Take a link in: a preset is parked, a mod is looked up by the window, and the window comes
+forward and is told what arrived. Anything that is not a d2mm:// link is ignored.
 
 ### `desktopEntry`
 

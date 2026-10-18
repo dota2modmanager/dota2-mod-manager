@@ -68,6 +68,17 @@ export function applyFilters(mods: Mod[], catForInstalled = ''): Mod[] {
   });
 }
 
+/* The mod a d2mm://mod/ link names: in the category the link gives, else by name wherever the
+ * catalog has since moved it. Not past the adult question, though (core/adult.ts): a link is no
+ * way round it. */
+export function findLinkedMod(cat: string, name: string): Mod | null {
+  const want = name.toLowerCase();
+  const own = categoryMods(cat).find((m) => m.name?.toLowerCase() === want);
+  if (own) return { ...own, _cat: cat };
+  const moved = findModByName(cat, name);
+  return moved && shownMods([moved]).length ? moved : null;
+}
+
 export function findModByName(cat: string, name: string): Mod | null {
   if (cat === 'packs') {
     const custom = customPacks().find((p) => p.name === name);

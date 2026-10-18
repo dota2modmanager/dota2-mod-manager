@@ -202,6 +202,12 @@ because it did: paths are matched against a strict pattern, a record that does n
 dropped whole rather than half trusted, and a buffer is validated as a VPK before it reaches the
 game folder.
 
+A single mod has a link of its own, `d2mm://mod/<category>/<name>[/<look>]`, each part
+URL-encoded (`src/deep-links.ts` parseModLink). It installs nothing either: the window opens the
+catalog on the mod's category with the mod's window on top, on the look the link names. A link
+that started the app waits in `renderer/views/catalog.ts` until the catalog has loaded, and a mod
+behind the adult question stays behind it.
+
 ## The catalog is somebody else's
 
 Chinese item labels are resolved from Valve's installed localization by `src/cosmetic-names.ts`.

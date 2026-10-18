@@ -106,8 +106,8 @@ const windowOpen = () => (win && !win.isDestroyed() ? win : null);
 // to park it in. Assigned once the services exist.
 let presets: ReturnType<typeof createServices>['presets'] | null = null;
 
-// A preset link clicked anywhere on the system (src/deep-links.ts): parked in Presets, never
-// installed from the link itself.
+// A preset or mod link clicked anywhere on the system (src/deep-links.ts): a preset is parked in
+// Presets, a mod opens in the catalog, and nothing is installed from the link itself.
 const takeLink = (url: string | null | undefined) => handleDeepLink(url, {
   importPresetLink: (code) => presets?.importPresetLink(code) ?? null,
   win: windowOpen,

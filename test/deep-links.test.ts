@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { desktopEntry, firstLink, handleDeepLink, installDesktopEntry } from '../src/deep-links.ts';
+import { desktopEntry, firstLink, handleDeepLink, installDesktopEntry, modLinkUrl, parseModLink } from '../src/deep-links.ts';
 
 test('the link is found among the other arguments, and a missing command line is no link', () => {
   const argv = ['C:\\app\\Dota 2 Mod Manager.exe', '--allow-file-access', 'd2mm://preset/abc'];
@@ -46,6 +46,38 @@ test('anything that is not a d2mm link is ignored, and a closed window is not to
   handleDeepLink('d2mm://preset/X', { importPresetLink, win: () => gone.win });
   assert.deepEqual(gone.log, [], 'the preset is still parked, the window is not asked to show');
   assert.deepEqual(asked, ['X']);
+});
+
+test('a mod link names its category, the mod and the look, and survives the trip', () => {
+  // a name with a slash, a space, Cyrillic and a quote: every part travels encoded
+  const mod = { cat: 'heroes', name: 'Pudge / Мясник "Arcana"', style: 'Red' };
+  const url = modLinkUrl(mod);
+  assert.match(url, /^d2mm:\/\/mod\/heroes\/[^/]+\/Red$/);
+  assert.deepEqual(parseModLink(url), mod);
+  assert.equal(modLinkUrl({ cat: 'couriers', name: 'Golden Baby Roshan', style: null }), 'd2mm://mod/couriers/Golden%20Baby%20Roshan');
+  assert.deepEqual(parseModLink('d2mm://mod/couriers/Golden%20Baby%20Roshan'), { cat: 'couriers', name: 'Golden Baby Roshan', style: null });
+});
+
+test('a mod link keeps its mod through what a browser or the shell does to it, and names nothing when broken', () => {
+  const want = { cat: 'wards', name: 'Ward', style: null };
+  assert.deepEqual(parseModLink('d2mm://mod/wards/Ward/'), want, 'a slash added at the end');
+  assert.deepEqual(parseModLink('d2mm://mod/wards/Ward?from=site#x'), want, 'a query and a fragment');
+  for (const bad of ['d2mm://mod/', 'd2mm://mod/wards', 'd2mm://mod/wards/%E0%A4%A', 'd2mm://mod/a/b/c/d', 'd2mm://mod/wards/%20', 'd2mm://preset/abc']) {
+    assert.equal(parseModLink(bad), null, bad);
+  }
+});
+
+test('a mod link goes to the window to open, and never reaches the preset importer', () => {
+  const asked: string[] = [];
+  const importPresetLink = (c: string) => { asked.push(c); return { ok: true }; };
+  const w = fakeWindow();
+  handleDeepLink('d2mm://mod/heroes/Arcana/Blue', { importPresetLink, win: () => w.win });
+  assert.deepEqual(w.log, [['show'], ['focus'], ['send', 'mod-link', { cat: 'heroes', name: 'Arcana', style: 'Blue' }]]);
+  // one that names nothing still arrives, so the window can say so instead of staying silent
+  const broken = fakeWindow();
+  handleDeepLink('d2mm://mod/heroes', { importPresetLink, win: () => broken.win });
+  assert.deepEqual(broken.log, [['show'], ['focus'], ['send', 'mod-link', null]]);
+  assert.deepEqual(asked, []);
 });
 
 function home(t: TestContext) {

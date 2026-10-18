@@ -8,7 +8,7 @@
 import { $ } from '../core/dom.ts';
 import { COSMETIC_PREFIX, RAIL_SECTIONS, freshFilters } from '../core/constants.ts';
 import { state } from '../core/store.ts';
-import { registerView } from '../core/router.ts';
+import { registerView, switchView } from '../core/router.ts';
 import { pickedIn } from '../core/installed.ts';
 import { catName, catIcon } from '../core/categories.ts';
 import { toast } from '../ui/toast.ts';
@@ -23,7 +23,9 @@ import type { ScreenActions } from '../catalog/screen/model.ts';
 import { renderRail as drawRail, type RailModel } from '../catalog/rail/Rail.tsx';
 import { bannerLayer } from '../catalog/layers.ts';
 import type { Mod } from '../catalog/types.ts';
-import { buildModIndex, cosmeticSlotList, favoriteCosmetics, favoriteMods, isItemCosmeticSlot, visibleCategories } from './catalog/lists.ts';
+import { pickStyle } from '../catalog/looks.ts';
+import type { ModLink } from '../api/content.ts';
+import { buildModIndex, cosmeticSlotList, favoriteCosmetics, favoriteMods, findLinkedMod, isItemCosmeticSlot, visibleCategories } from './catalog/lists.ts';
 import { renderCategory, renderCosmeticCategory, renderFavorites, renderHome, renderRecent, renderSearchResults } from './catalog/screens.ts';
 import { openModWindow } from './catalog/mod-window.ts';
 import { afterCosmeticPick, openCosmeticWindow, pickCosmetic } from './catalog/cosmetics.ts';
@@ -62,7 +64,7 @@ function railModel(): RailModel {
   return { active: state.activeCategory, sections };
 }
 
-function pickCategory(id: string): void {
+function pickCategory(id: string): Promise<void> {
   state.activeCategory = id;
   view.filters = freshFilters();
   view.cosSearch = '';
@@ -71,7 +73,7 @@ function pickCategory(id: string): void {
     ($('#globalSearch') as HTMLInputElement).value = '';
     $('#clearSearch').classList.add('hidden');
   }
-  renderCatalog();
+  return renderCatalog();
 }
 
 function renderRail(): void {
@@ -218,6 +220,11 @@ export async function loadCatalog(force = false): Promise<void> {
   state.catalog = cat;
   if (!cat.error) buildModIndex();
   if (state.view === 'catalog') renderCatalog();
+  if (!cat.error && waitingLink) {
+    const link = waitingLink;
+    waitingLink = null;
+    void openModLink(link);
+  }
   // The list is on screen and it is yesterday's: say so once rather than pretend it is fresh
   // or throw the whole thing away, which is what an empty window during a GitHub outage is.
   if (cat.stale) toast(L`Каталог не обновился, показан последний загруженный`, 'warn');
@@ -233,6 +240,29 @@ export async function loadCatalog(force = false): Promise<void> {
     });
   }
 }
+
+// ---------- a d2mm://mod/ link (src/deep-links.ts) ----------
+
+/* A link to one mod, from the site or a chat: the catalog opens on the mod's category with the
+ * mod's window on top, on the look the link names. When the link is what started the app, it
+ * arrives before the catalog does, so it waits for the list and opens once that is in. */
+let waitingLink: ModLink | null = null;
+
+async function openModLink(link: ModLink | null): Promise<void> {
+  if (!link) { toast(L`Эта ссылка не ведёт на мод`, 'warn'); return; }
+  if (!state.catalog || state.catalog.error) { waitingLink = link; return; }
+  const mod = findLinkedMod(link.cat, link.name);
+  if (!mod) { toast(L`Мода «${link.name}» нет в каталоге`, 'warn', 6000); return; }
+  const cat = mod._cat || link.cat;
+  const look = link.style ? (mod.styles || []).findIndex((s) => s.label === link.style) : -1;
+  if (look >= 0) pickStyle(cat, mod, look);
+  if (state.view !== 'catalog') await switchView('catalog');
+  await pickCategory(cat);
+  $('#main').scrollTop = 0;
+  openModWindow(cat, mod, null);
+}
+
+window.api.catalog.onModLink((link) => void openModLink(link));
 
 // what the window's parts reach back into the screen for (views/catalog/state.ts)
 screen.redraw = renderCatalog;

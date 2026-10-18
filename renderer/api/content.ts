@@ -23,6 +23,16 @@ export interface CatalogApi {
   load: (force?: boolean) => Promise<CatalogData & { stale?: boolean; fetchedAt?: number }>;
   /** which whole-map terrains were built for an older map than the game's */
   terrainAges: () => Promise<{ mapAt: number | null; ages: Record<string, number>; stale: Record<string, boolean>; error?: string }>;
+  /** a d2mm://mod/ link clicked outside the app: the mod it names, or null when it names none */
+  onModLink: (cb: (link: ModLink | null) => void) => void;
+}
+
+/** What a d2mm://mod/ link names (src/deep-links.ts parses it). */
+export interface ModLink {
+  cat: string;
+  name: string;
+  /** the look's label, when the link picks one */
+  style: string | null;
 }
 
 /** The schema patch's state: whether our line is in gameinfo, and what else is (src/schema-service.ts). */

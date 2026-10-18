@@ -1,10 +1,10 @@
-/* d2mm:// links: a preset link clicked anywhere on the system, and on Linux, telling the desktop
- * that this program opens them.
+/* d2mm:// links: a preset or a single mod clicked anywhere on the system, and on Linux, telling
+ * the desktop that this program opens them.
  *
- * Nothing installs from a link. It parks in the Presets tab exactly like a dropped file, and the
- * user decides. A link reaches the app three ways: on the command line of a cold start, from a
- * second copy started with it, which hands it to the first and quits, and on macOS as an
- * open-url event.
+ * Nothing installs from a link. A preset parks in the Presets tab exactly like a dropped file; a
+ * mod (d2mm://mod/...) opens its window in the catalog. The user decides either way. A link
+ * reaches the app three ways: on the command line of a cold start, from a second copy started
+ * with it, which hands it to the first and quits, and on macOS as an open-url event.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -22,24 +22,53 @@ function presetCode(url: string): string {
   return url.replace(new RegExp(`^${SCHEME}://preset/`), '');
 }
 
+/** A mod a link names: its category, its name in the catalog, and the look, when it picks one. */
+export type ModLink = { cat: string; name: string; style: string | null };
+
+const MOD_LINK = new RegExp(`^${SCHEME}://mod(?:/|$)`, 'i');
+
+/** d2mm://mod/<category>/<name>[/<look>], each part URL-encoded: a name may hold a slash. */
+export function modLinkUrl({ cat, name, style }: ModLink): string {
+  return [`${SCHEME}://mod`, cat, name, ...(style ? [style] : [])].map((p, i) => (i ? encodeURIComponent(p) : p)).join('/');
+}
+
+/**
+ * The mod a d2mm://mod/ link names, or null when it names none. Tolerant of what happens to a link
+ * on its way here: a browser or the shell may add a slash at the end, and a query or a fragment
+ * says nothing about the mod.
+ */
+export function parseModLink(url: string): ModLink | null {
+  if (!MOD_LINK.test(url)) return null;
+  const parts = url.replace(MOD_LINK, '').replace(/[?#].*$/, '').split('/').filter(Boolean);
+  if (parts.length < 2 || parts.length > 3) return null;
+  try {
+    const [cat, name, style] = parts.map((p) => decodeURIComponent(p).trim());
+    return cat && name ? { cat, name, style: style || null } : null;
+  } catch { return null; } // a stray % that decodes to nothing
+}
+
 /** What a window has to be able to do for a link to reach it. */
 type LinkWindow = { isDestroyed(): boolean; show(): void; focus(): void; webContents: { send(channel: string, ...args: unknown[]): void } };
 
 /**
- * Take a link in: the preset is parked, and the window comes forward and is told what arrived.
- * Anything that is not a d2mm:// link is ignored.
+ * Take a link in: a preset is parked, a mod is looked up by the window, and the window comes
+ * forward and is told what arrived. Anything that is not a d2mm:// link is ignored.
  */
 export function handleDeepLink(url: string | null | undefined, { importPresetLink, win }: {
   importPresetLink: (code: string) => unknown;
   win: () => LinkWindow | null | undefined;
 }): void {
   if (!url || !url.startsWith(`${SCHEME}://`)) return;
-  const res = importPresetLink(presetCode(url));
+  // a mod link that names nothing still reaches the window, which says so: a click that does
+  // nothing at all looks like an app that did not hear it
+  const [channel, payload] = MOD_LINK.test(url)
+    ? ['mod-link', parseModLink(url)]
+    : ['preset-link', importPresetLink(presetCode(url))];
   const w = win();
   if (w && !w.isDestroyed()) {
     w.show();
     w.focus();
-    w.webContents.send('preset-link', res);
+    w.webContents.send(channel, payload);
   }
 }
 

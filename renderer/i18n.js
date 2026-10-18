@@ -770,6 +770,8 @@ const EN = {
   'Обновляю каталог…': 'Refreshing the catalog…',
   'Каталог обновлён': 'Catalog updated',
   'Каталог не обновился, показан последний загруженный': 'Could not update the catalog, showing the last one downloaded',
+  'Эта ссылка не ведёт на мод': 'This link does not lead to a mod',
+  'Мода «{0}» нет в каталоге': 'The catalog has no mod called «{0}»',
   'Нет соединения с интернетом': 'No internet connection',
   'Каталог сейчас недоступен': 'The catalog is unavailable right now',
   'Моды, которые уже стоят, работают. Каталог появится, как только связь вернётся.': 'The mods you already have keep working. The catalog will be here as soon as you are back online.',
