@@ -2,6 +2,7 @@
   "name": "dota2-mod-manager",
   "productName": "Dota 2 Mod Manager",
   "version": "2.14.0",
+  "desktopName": "dota2-mod-manager.desktop",
   "description": "Desktop mod manager for Dota 2 — browse, install, toggle and preset 1100+ cosmetic mods from the D2PFX catalog",
   "main": "src/main.ts",
   "scripts": {
@@ -72,6 +73,7 @@
       "!src/tsconfig.json",
       "renderer/**/*",
       "out/renderer/**/*",
+      "build/icon.png",
       "package.json",
       "CHANGELOG.md",
       "CHANGELOG.ru.md",
@@ -112,6 +114,7 @@
         "AppImage"
       ],
       "icon": "build/icon.png",
+      "syncDesktopName": true,
       "category": "Game",
       "artifactName": "Dota-2-Mod-Manager.${ext}",
       "synopsis": "Mods for Dota 2, without the file juggling"

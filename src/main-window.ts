@@ -97,6 +97,9 @@ export function createMainWindow({ appRoot, settings, diag, workArea = null, qui
     backgroundColor: '#050506',
     autoHideMenuBar: true,
     frame: false,
+    // Windows takes the icon from the .exe. On Linux an X11 window shows only what it was handed,
+    // and an AppImage's own icon stays inside the image where the taskbar never looks
+    ...(process.platform === 'linux' ? { icon: path.join(appRoot, 'build', 'icon.png') } : {}),
     // A window that was never shown produces no frames, and a view transition waits for one:
     // time-from-click-to-visible reads in seconds then and means nothing. A quiet run measures
     // the main thread (the gap between timer ticks) instead, which is what a frozen window is.

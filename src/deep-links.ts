@@ -43,6 +43,9 @@ export function handleDeepLink(url: string | null | undefined, { importPresetLin
   }
 }
 
+/** The name of the .desktop file, its icon and the running window's class, all one word. */
+const APP_ID = 'dota2-mod-manager';
+
 /** The .desktop file for `exe`: the program, and the scheme and file type it opens. */
 export function desktopEntry(exe: string): string {
   return [
@@ -52,7 +55,10 @@ export function desktopEntry(exe: string): string {
     'Comment=Mods for Dota 2, without the file juggling',
     // %u passes the clicked link through; the quotes are for a path with a space in it
     `Exec="${exe}" %u`,
-    'Icon=dota2-mod-manager',
+    `Icon=${APP_ID}`,
+    // what Electron names the window (package.json desktopName): without it the dock cannot tell
+    // the running window belongs to this entry, and shows a generic icon beside it
+    `StartupWMClass=${APP_ID}`,
     'Categories=Game;',
     'Terminal=false',
     `MimeType=x-scheme-handler/${SCHEME};application/x-d2mm;`,
@@ -73,15 +79,18 @@ export function desktopEntry(exe: string): string {
  * normally and preset links opening nothing, which is where Linux stood before this existed.
  */
 /** Write the .desktop file on Linux when it is missing or says something else; elsewhere, nothing. */
-export function installDesktopEntry({ platform, exe, home, diag, refresh = defaultRefresh }: {
+export function installDesktopEntry({ platform, exe, home, diag, icon, refresh = defaultRefresh }: {
   platform: string; exe: string; home: string; diag: (msg: string) => void;
+  /** the app's own PNG. Icon= names a theme icon, and inside an AppImage nothing provides one */
+  icon?: string;
   /** tells the desktop to reread the folder; missing on a minimal system, and harmless then */
   refresh?: (dir: string) => void;
 }): void {
   if (platform !== 'linux') return;
+  if (icon) installIcon(icon, home, diag);
   try {
     const dir = path.join(home, '.local', 'share', 'applications');
-    const file = path.join(dir, 'dota2-mod-manager.desktop');
+    const file = path.join(dir, `${APP_ID}.desktop`);
     const entry = desktopEntry(exe);
     if (fs.existsSync(file) && fs.readFileSync(file, 'utf-8') === entry) return;
     fs.mkdirSync(dir, { recursive: true });
@@ -90,6 +99,23 @@ export function installDesktopEntry({ platform, exe, home, diag, refresh = defau
     diag(`desktop entry written: ${file}`);
   } catch (e) {
     diag(`desktop entry skipped: ${(e as Error).message}`);
+  }
+}
+
+/* The icon goes where the freedesktop icon theme spec looks first for a user's own programs. The
+ * size folder has to be the picture's real size, or a strict theme lookup skips it. Copied again
+ * whenever it differs, so a release with a new icon replaces the old one. */
+function installIcon(src: string, home: string, diag: (msg: string) => void): void {
+  try {
+    const dir = path.join(home, '.local', 'share', 'icons', 'hicolor', '512x512', 'apps');
+    const file = path.join(dir, `${APP_ID}.png`);
+    const want = fs.readFileSync(src);
+    if (fs.existsSync(file) && fs.readFileSync(file).equals(want)) return;
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, want);
+    diag(`desktop icon written: ${file}`);
+  } catch (e) {
+    diag(`desktop icon skipped: ${(e as Error).message}`);
   }
 }
 

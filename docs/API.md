@@ -1221,7 +1221,7 @@ The .desktop file for `exe`: the program, and the scheme and file type it opens.
 ### `installDesktopEntry`
 
 ```ts
-export function installDesktopEntry({ platform, exe, home, diag, refresh = defaultRefresh }: { platform: string; exe: string; home: string; diag: (msg: string) => void; /** tells the desktop to reread the folder; missing on a minimal system, and harmless then */ refresh?: (dir: string) => void; }): void
+export function installDesktopEntry({ platform, exe, home, diag, icon, refresh = defaultRefresh }: { platform: string; exe: string; home: string; diag: (msg: string) => void; /** the app's own PNG. Icon= names a theme icon, and inside an AppImage nothing provides one */ icon?: string; /** tells the desktop to reread the folder; missing on a minimal system, and harmless then */ refresh?: (dir: string) => void; }): void
 ```
 
 Write the .desktop file on Linux when it is missing or says something else; elsewhere, nothing.

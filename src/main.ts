@@ -242,7 +242,7 @@ async function start(): Promise<void> {
   // only the installed build claims the scheme: a dev run must not point the system's d2mm://
   // handler at a local electron binary
   if (app.isPackaged && !jailRoots().length) {
-    installDesktopEntry({ platform: process.platform, exe: process.env.APPIMAGE || process.execPath, home: app.getPath('home'), diag });
+    installDesktopEntry({ platform: process.platform, exe: process.env.APPIMAGE || process.execPath, home: app.getPath('home'), icon: path.join(appRoot, 'build', 'icon.png'), diag });
     app.setAsDefaultProtocolClient(SCHEME);
   }
 

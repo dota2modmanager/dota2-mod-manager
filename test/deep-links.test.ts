@@ -63,10 +63,32 @@ test('on Linux the desktop learns the program and its scheme, once', (t) => {
   const text = fs.readFileSync(file, 'utf8');
   assert.match(text, /^Exec="\/opt\/My Apps\/mm\.AppImage" %u$/m, 'quoted, with the link passed through');
   assert.match(text, /^MimeType=x-scheme-handler\/d2mm;application\/x-d2mm;$/m);
+  assert.match(text, /^StartupWMClass=dota2-mod-manager$/m, 'the running window is matched to the entry');
   installDesktopEntry(opts);
   assert.equal(refreshed.length, 1, 'an entry that already says the same is left alone');
   installDesktopEntry({ ...opts, exe: '/new/place.AppImage' });
   assert.equal(fs.readFileSync(file, 'utf8'), desktopEntry('/new/place.AppImage'), 'a moved AppImage is followed');
+});
+
+test('the icon the entry names is put where the desktop looks for it', (t) => {
+  const h = home(t);
+  const src = path.join(h, 'icon.png');
+  fs.writeFileSync(src, 'first');
+  const opts = { platform: 'linux', exe: '/x.AppImage', home: h, diag: () => {}, icon: src, refresh: () => {} };
+  installDesktopEntry(opts);
+  const file = path.join(h, '.local', 'share', 'icons', 'hicolor', '512x512', 'apps', 'dota2-mod-manager.png');
+  assert.equal(fs.readFileSync(file, 'utf8'), 'first');
+  fs.writeFileSync(src, 'second');
+  installDesktopEntry(opts);
+  assert.equal(fs.readFileSync(file, 'utf8'), 'second', 'a new release brings its new icon');
+});
+
+test('a missing icon still leaves the entry written', (t) => {
+  const h = home(t);
+  const said: string[] = [];
+  installDesktopEntry({ platform: 'linux', exe: '/x.AppImage', home: h, diag: (m) => said.push(m), icon: path.join(h, 'none.png'), refresh: () => {} });
+  assert.ok(fs.existsSync(path.join(h, '.local', 'share', 'applications', 'dota2-mod-manager.desktop')));
+  assert.match(said[0], /^desktop icon skipped: /);
 });
 
 test('Windows and macOS are left to their installers', (t) => {
