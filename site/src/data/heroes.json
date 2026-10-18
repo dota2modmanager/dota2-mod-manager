@@ -15848,6 +15848,63 @@
       ]
     },
     {
+      "id": "blood_seeker",
+      "name": "Bloodseeker",
+      "slug": "bloodseeker",
+      "mods": [
+        {
+          "name": "Bloodseeker Made In Heaven",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","back","head","misc","weapon","offhand","shoulder","legs"],
+          "image": {"src":"/mods/bloodseeker-made-in-heaven.webp","width":854,"height":480},
+          "author": "Mirik522",
+          "authorUrl": "https://t.me/Moggdeli",
+          "date": 1792330154
+        },
+        {
+          "name": "Bloodseeker Harvest Hound",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","back","head","misc","weapon","offhand"],
+          "image": {"src":"/mods/bloodseeker-harvest-hound.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1780230946
+        },
+        {
+          "name": "Bloodseeker Immortal",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","back","head","misc","weapon","offhand"],
+          "image": {"src":"/mods/bloodseeker-immortal.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1790000676
+        },
+        {
+          "name": "Bloodseeker Strygwyr",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","back","head","weapon","offhand"],
+          "image": {"src":"/mods/bloodseeker-strygwyr.webp","width":854,"height":480},
+          "author": "Naix",
+          "authorUrl": "https://www.youtube.com/channel/UCOfO6lf7jJO88NMlHDBkkCw",
+          "date": 1770119477
+        },
+        {
+          "name": "Bloodseeker Thirst of Eztzhok",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon","offhand"],
+          "image": {"src":"/mods/bloodseeker-thirst-of-eztzhok.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1780230946
+        }
+      ]
+    },
+    {
       "id": "dark_seer",
       "name": "Dark Seer",
       "slug": "dark-seer",
@@ -16015,53 +16072,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1765100855
-        }
-      ]
-    },
-    {
-      "id": "blood_seeker",
-      "name": "Bloodseeker",
-      "slug": "bloodseeker",
-      "mods": [
-        {
-          "name": "Bloodseeker Harvest Hound",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","back","head","misc","weapon","offhand"],
-          "image": {"src":"/mods/bloodseeker-harvest-hound.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1780230946
-        },
-        {
-          "name": "Bloodseeker Immortal",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","back","head","misc","weapon","offhand"],
-          "image": {"src":"/mods/bloodseeker-immortal.webp","width":854,"height":480},
-          "author": "твавт",
-          "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1790000676
-        },
-        {
-          "name": "Bloodseeker Strygwyr",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","back","head","weapon","offhand"],
-          "image": {"src":"/mods/bloodseeker-strygwyr.webp","width":854,"height":480},
-          "author": "Naix",
-          "authorUrl": "https://www.youtube.com/channel/UCOfO6lf7jJO88NMlHDBkkCw",
-          "date": 1770119477
-        },
-        {
-          "name": "Bloodseeker Thirst of Eztzhok",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon","offhand"],
-          "image": {"src":"/mods/bloodseeker-thirst-of-eztzhok.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1780230946
         }
       ]
     },

@@ -1,6 +1,6 @@
 {
   "heroes": 152,
-  "mods": 1586,
+  "mods": 1587,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -163,6 +163,7 @@
       "mods": [
         {"name":"Bloodseeker Harvest Hound","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","misc","weapon","offhand"]},
         {"name":"Bloodseeker Immortal","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","misc","weapon","offhand"]},
+        {"name":"Bloodseeker Made In Heaven","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","misc","weapon","offhand","shoulder","legs"]},
         {"name":"Bloodseeker Strygwyr","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","weapon","offhand"]},
         {"name":"Bloodseeker Thirst of Eztzhok","categoryId":"hero-items","styleLabel":null,"slots":["weapon","offhand"]}
       ]
