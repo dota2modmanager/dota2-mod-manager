@@ -34,6 +34,39 @@ export interface Landing {
   /** Singular / few / many, for the first three tiles. English repeats itself, Russian does not. */
   statWords: [[string, string, string], [string, string, string], [string, string, string]];
   latest: string;
+  /** Three short facts under the hero's buttons. They were one line joined with middle dots. */
+  heroTicks: [string, string, string];
+  /** The hero's second button, to the catalog. */
+  browse: string;
+  /** The fourth number: heroes with sets of their own. Carries {word}, agreeing with the count. */
+  statHeroes: string;
+  statHeroWords: [string, string, string];
+
+  /** Search the catalog from the landing. finderLead carries {mods} and {word}. */
+  finderTitle: string;
+  finderLead: string;
+  finderPlaceholder: string;
+  finderAll: string;
+  finderEmpty: string;
+
+  /** The screenshots and the clip, as one set of tabs. */
+  showTitle: string;
+  showVideo: string;
+
+  /** The heroes with the most mods. heroesAll carries {count}. */
+  heroesTitle: string;
+  heroesLead: string;
+  heroesAll: string;
+
+  /** Each step, done by hand and done by the app: [step, by hand, with the app]. */
+  compareTitle: string;
+  compareLead: string;
+  compareCols: [string, string];
+  compare: Array<[string, string, string]>;
+
+  /** The hunt's reward, said once and then out of the way. */
+  huntClose: string;
+  huntHint: string;
 
   filmTitle: string;
   filmCaption: string;
@@ -47,16 +80,6 @@ export interface Landing {
   creatorWatch: string;
   creatorChannel: string;
   creatorAlt: string;
-
-  /** The interactive panel: pak order, and who wins a shared file. */
-  standTitle: string;
-  standLead: string;
-  standSlots: string;
-  standEmpty: string;
-  standWins: string;
-  standCovered: string;
-  standHint: string;
-  standMove: string;
 
   shotsTitle: string;
   shotCatalog: string;
@@ -86,9 +109,6 @@ export interface Landing {
   ctaTitle: string;
   ctaLead: string;
   ctaMeta: string;
-  /** The scrolling band above the finale: [catalog category id, what to call it]. The counts
-      come from the catalog itself, so this list only has to say which ones to show. */
-  marquee: Array<[string, string]>;
   linkGithub: [string, string];
   linkDiscord: [string, string];
 }
@@ -96,8 +116,8 @@ export interface Landing {
 export const landing: Record<'en' | 'ru', Landing> = {
   en: {
     heroKicker: 'Free · open source · Windows and Linux',
-    heroTitle: 'DOTA 2 MOD',
-    heroTitleAccent: 'MANAGER',
+    heroTitle: 'Dota 2',
+    heroTitleAccent: 'Mod Manager',
     heroLead: 'A mod manager for Dota 2: {mods} {word} from the D2PFX catalog in one place. One click to install, one to take back. Plus the cosmetics your account already owns and setups you can send as a link.',
     download: 'Download',
     dlInstaller: { title: 'Windows installer', note: 'Installs, adds a shortcut, updates itself' },
@@ -113,6 +133,39 @@ export const landing: Record<'en' | 'ru', Landing> = {
       ['release', 'releases', 'releases'],
     ],
     latest: 'latest',
+    heroTicks: ['Windows 10/11 and Linux', 'No account', 'Updates itself'],
+    browse: 'Browse the catalog',
+    statHeroes: '{word} with sets of their own',
+    statHeroWords: ['hero', 'heroes', 'heroes'],
+
+    finderTitle: 'Find a mod',
+    finderLead: '{mods} {word} in the catalog. Search by name, hero or author, then pick a few and send them to the app as one set.',
+    finderPlaceholder: 'Pudge, arcana, river, an author',
+    finderAll: 'Open the whole catalog',
+    finderEmpty: 'Nothing by that name. Try a hero, or one word from the title.',
+
+    showTitle: 'See it work',
+    showVideo: 'Install in one take',
+
+    heroesTitle: 'Pick your hero',
+    heroesLead: 'Each hero with a set made for them gets a page with all of it.',
+    heroesAll: 'All {count} heroes',
+
+    compareTitle: 'By hand, or with the app',
+    compareLead: 'You can do all of it by hand. Each step, both ways:',
+    compareCols: ['By hand', 'With the app'],
+    compare: [
+      ['Finding a mod', 'Forum threads, Discord pins and Drive links, many of them written before the July 2026 patch changed how mods load.', 'One catalog with a preview of every mod, by hero and by kind.'],
+      ['Installing it', 'Find the folder Dota mounts for your voice language, rename the .vpk to a free pak number, check the launch options.', 'Press Install. The app picks the folder and the slot.'],
+      ['Two mods with the same file', 'One covers the other, and nothing tells you until a match.', 'The app says which one the game loads and lets you swap them.'],
+      ['Before a ranked match', 'Move the files out, and remember where to.', 'Switch it off, and back on after.'],
+      ['After a Dota patch', 'Check every mod, and put back what the update wiped.', 'The app puts it back, and warns you when something needs you.'],
+      ['Sharing your setup', 'A zip and a page of instructions.', 'One link. The other side opens it in the app.'],
+      ['Taking it all off', 'Delete the right files and restore the fonts and cursors you backed up, if you did.', 'Remove in My mods. The game is back to how Valve shipped it.'],
+    ],
+
+    huntClose: 'Close',
+    huntHint: 'It stays on while you look around. The switch is at the foot of every page.',
 
     filmTitle: 'One take, start to finish',
     filmCaption: 'Find a hero, take a set, take another, install both. No cuts and no speed-up.',
@@ -126,14 +179,6 @@ export const landing: Record<'en' | 'ru', Landing> = {
     creatorChannel: "hanta's channel",
     creatorAlt: "Thumbnail of hanta's video about Dota 2 Mod Manager, with the app's mod catalog behind it",
 
-    standTitle: 'Try the part people get wrong',
-    standLead: 'Two mods carrying the same file cannot both win. The game loads the one in the lower pak slot. Switch these on and off, drag them into another order, and watch which one the game takes.',
-    standSlots: 'In the game folder',
-    standEmpty: 'Nothing switched on. The game looks exactly as Valve shipped it.',
-    standWins: 'the game loads it from',
-    standCovered: 'covered',
-    standHint: 'The app shows you this for your real mods, and lets you change the order from the same screen.',
-    standMove: 'Drag to reorder, or use the arrow keys',
 
     shotsTitle: 'What it looks like',
     shotCatalog: 'The catalog: every mod in the community collection, sorted the way its authors sorted it.',
@@ -181,22 +226,14 @@ export const landing: Record<'en' | 'ru', Landing> = {
     ctaTitle: 'Get it',
     ctaLead: 'Windows 10, 11 or Linux. No account. It updates itself from here on.',
     ctaMeta: 'Free forever. GPL-3.0. Built in the open.',
-    marquee: [
-      ['heroes', 'Heroes'], ['hero-items', 'Hero items'], ['backgrounds', 'Backgrounds'],
-      ['mega-kill', 'Mega-kills'], ['cursors', 'Cursors'], ['shaders', 'Shaders'],
-      ['hero-sounds', 'Hero sounds'], ['couriers', 'Couriers'], ['item-effects', 'Item effects'],
-      ['terrains', 'Terrains'], ['river', 'River'], ['trees', 'Trees'],
-      ['emblems', 'Emblems'], ['music', 'Music'], ['sounds', 'Sounds'],
-      ['roshan', 'Roshan'], ['fonts', 'Fonts'], ['announcers', 'Announcers'],
-    ],
     linkGithub: ['Read the source', 'Every line, every release, every build log.'],
     linkDiscord: ['Come to Discord', 'Ask, report a bug, show the setup you made.'],
   },
 
   ru: {
     heroKicker: 'Бесплатно · открытый код · Windows и Linux',
-    heroTitle: 'DOTA 2 MOD',
-    heroTitleAccent: 'MANAGER',
+    heroTitle: 'Dota 2',
+    heroTitleAccent: 'Mod Manager',
     heroLead: 'Мод-менеджер для Доты 2: {mods} {word} из каталога D2PFX в одном месте. Один клик поставить, один - убрать. Плюс косметика, которая у тебя и так есть, и сборки, которые отправляются ссылкой.',
     download: 'Скачать',
     dlInstaller: { title: 'Windows, установщик', note: 'Поставит, сделает ярлык, обновляется сам' },
@@ -212,6 +249,39 @@ export const landing: Record<'en' | 'ru', Landing> = {
       ['релиз', 'релиза', 'релизов'],
     ],
     latest: 'последняя',
+    heroTicks: ['Windows 10/11 и Linux', 'Без аккаунта', 'Обновляется само'],
+    browse: 'Открыть каталог',
+    statHeroes: '{word} со своими сетами',
+    statHeroWords: ['герой', 'героя', 'героев'],
+
+    finderTitle: 'Найди мод',
+    finderLead: '{mods} {word} в каталоге. Ищи по названию, герою или автору, а потом отметь несколько и отправь их в приложение одним набором.',
+    finderPlaceholder: 'Пудж, аркана, река, автор',
+    finderAll: 'Весь каталог',
+    finderEmpty: 'Ничего с таким названием. Попробуй героя или одно слово из названия.',
+
+    showTitle: 'Как это выглядит',
+    showVideo: 'Установка одним дублем',
+
+    heroesTitle: 'Выбери героя',
+    heroesLead: 'У каждого героя, для которого кто-то сделал сет, своя страница со всеми его модами.',
+    heroesAll: 'Все герои: {count}',
+
+    compareTitle: 'Руками или через приложение',
+    compareLead: 'Всё это можно сделать и руками. Каждый шаг, так и так:',
+    compareCols: ['Руками', 'В приложении'],
+    compare: [
+      ['Найти мод', 'Темы на форумах, закрепы в Discord и ссылки на Диск, и многие написаны до июльского патча 2026, который поменял, как грузятся моды.', 'Один каталог с превью каждого мода, по героям и по видам.'],
+      ['Поставить', 'Найти папку, которую Дота монтирует для языка озвучки, переименовать .vpk в свободный номер пака, проверить параметры запуска.', 'Нажать «Установить». Папку и слот приложение выберет само.'],
+      ['Два мода с одним файлом', 'Один перекрывает другой, и узнаёшь ты об этом уже в катке.', 'Приложение показывает, чей файл грузит игра, и даёт поменять их местами.'],
+      ['Перед рейтинговой каткой', 'Вынести файлы и запомнить, куда.', 'Выключить мод, а после катки включить обратно.'],
+      ['После патча Доты', 'Проверить каждый мод и вернуть то, что стёрло обновление.', 'Возвращается само, а если нужна твоя помощь, приложение скажет.'],
+      ['Поделиться сборкой', 'Архив и страница инструкций.', 'Одна ссылка. На той стороне она откроется в приложении.'],
+      ['Убрать всё', 'Удалить нужные файлы и вернуть шрифты и курсоры из копии, если ты её сделал.', '«Удалить» в «Моих модах». Игра снова такая, какой её выпустила Valve.'],
+    ],
+
+    huntClose: 'Закрыть',
+    huntHint: 'Радуга останется, пока ты ходишь по сайту. Выключатель внизу каждой страницы.',
 
     filmTitle: 'Как ставится мод на Доту 2: один дубль, от начала до конца',
     filmCaption: 'Находим героя, берём сет, берём второй, ставим оба. Без склеек и без ускорения.',
@@ -225,14 +295,6 @@ export const landing: Record<'en' | 'ru', Landing> = {
     creatorChannel: 'Канал hanta',
     creatorAlt: 'Превью ролика hanta про Dota 2 Mod Manager, за ним каталог модов в окне приложения',
 
-    standTitle: 'Порядок модов: потрогай то, на чём все спотыкаются',
-    standLead: 'Два мода с одним и тем же файлом не могут выиграть оба. Игра грузит тот, что лежит в паке с меньшим номером. Повключай их, перетащи в другом порядке и посмотри, чей файл возьмёт игра.',
-    standSlots: 'В папке игры',
-    standEmpty: 'Ничего не включено. Игра ровно такая, какой её выпустила Valve.',
-    standWins: 'игра берёт его из',
-    standCovered: 'перекрыт',
-    standHint: 'Приложение показывает это же для твоих настоящих модов и там же даёт поменять порядок.',
-    standMove: 'Перетащи или двигай стрелками',
 
     shotsTitle: 'Как выглядит менеджер модов для Доты 2',
     shotCatalog: 'Каталог: все моды и скины из коллекции D2PFX, в том порядке, в котором это разложили её авторы.',
@@ -280,14 +342,6 @@ export const landing: Record<'en' | 'ru', Landing> = {
     ctaTitle: 'Скачать мод-менеджер для Доты 2',
     ctaLead: 'Windows 10, 11 или Linux. Без аккаунта. Дальше обновляется само.',
     ctaMeta: 'Бесплатно навсегда. GPL-3.0. Собирается на виду.',
-    marquee: [
-      ['heroes', 'Герои'], ['hero-items', 'Предметы героев'], ['backgrounds', 'Фоны меню'],
-      ['mega-kill', 'Мега-киллы'], ['cursors', 'Курсоры'], ['shaders', 'Шейдеры'],
-      ['hero-sounds', 'Звуки героев'], ['couriers', 'Курьеры'], ['item-effects', 'Эффекты предметов'],
-      ['terrains', 'Ландшафты'], ['river', 'Река'], ['trees', 'Деревья'],
-      ['emblems', 'Эмблемы'], ['music', 'Музыка'], ['sounds', 'Звуки'],
-      ['roshan', 'Рошан'], ['fonts', 'Шрифты'], ['announcers', 'Комментаторы'],
-    ],
     linkGithub: ['Читать исходники', 'Каждая строчка, каждый релиз, каждый лог сборки.'],
     linkDiscord: ['Зайти в Discord', 'Спросить, сообщить о баге, показать свою сборку.'],
   },

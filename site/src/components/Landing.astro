@@ -2,43 +2,38 @@
 /**
  * The landing, in whichever language the page asked for.
  *
- * The page opens with the product's name at full size rather than a sentence about it. That
- * is what the two sites in this corner of the internet that people actually like do, and it
- * is also the phrase somebody types into a search box. The sentence explaining it comes
- * second, where a sentence belongs.
+ * It opens on the catalog itself: a wall of the newest renders from it, behind the product's
+ * name. Two thousand pictures of heroes in sets people made are the most specific thing this
+ * site has, and a sentence about mods is weaker than the mods. The sentence comes second, where
+ * a sentence belongs.
  *
- * The numbers under it are the ones people read before they read anything, so the build counts
- * them from the catalog and the releases API rather than trusting anybody's memory: see
- * src/lib/stats.ts. A checkable number is the only kind worth printing.
- *
- * The order after that answers a stranger's questions in the order they ask them: what does
- * it look like, what does it do, why should I run an unsigned .exe, and the usual worries.
+ * Then it answers a stranger's questions in the order they ask them: is my thing in there (the
+ * search), what does the app look like (the window), what does it do (the tiles, each with a
+ * picture of what it claims), is there anything for my hero, why not just do it by hand, why
+ * should I run an unsigned .exe, and the usual worries. The numbers are counted at build time
+ * from the catalog and the releases API (src/lib/stats.ts); a checkable number is the only kind
+ * worth printing.
  */
 import { landing } from '../i18n/landing';
 import Download from './Download.astro';
+import Show from './Show.astro';
+import Creator from './Creator.astro';
+import Hunt from './Hunt.astro';
+import Icon from './Icon.astro';
 import { siteStats } from '../lib/stats';
 import { shotNames, shotUrl, shotAlt } from '../lib/media';
-import Shots from './Shots.astro';
-import Tour from './Tour.astro';
-import Creator from './Creator.astro';
-import Stand from './Stand.astro';
-import Hunt from './Hunt.astro';
-import type { Lang } from '../i18n/ui';
+import { heroes } from '../lib/heroes';
+import { catalog, catalogCategories, thumbOf, groupOf } from '../lib/catalog';
+import { categoryText } from '../i18n/categories';
+import { pathIn, type Lang } from '../i18n/ui';
+import { ruName } from '../i18n/hero-names';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const c = landing[lang];
 
-/** Copy links are written as "~/docs/safe/" and get their language prefix here, the same
-    way the guides do, so one string serves both halves of the site. */
+/** Copy links are written as "~/docs/safe/" and get their language prefix here. */
 const link = (html: string) => html.replaceAll('~/', lang === 'en' ? '/' : `/${lang}/`);
-
-/** "Free · open source · Windows and Linux" breaks at the dots and nowhere else. Left to itself a
-    phone broke it inside "открытый код" or left "Linux" alone on the second line. */
-const kicker = c.heroKicker.split(' · ');
-const meta = c.heroMeta.split(' · ');
-// the dot stays at the end of the line it closes, never at the start of the next one
-const SEP = ' · ';
 
 const GITHUB = 'https://github.com/dota2modmanager/dota2-mod-manager';
 const RELEASES = `${GITHUB}/releases/latest`;
@@ -65,21 +60,15 @@ const word = (n: number, forms: readonly [string, string, string]) => {
   return form === 'one' ? forms[0] : form === 'few' ? forms[1] : forms[2];
 };
 
-const heroLead = c.heroLead
-  .replace('{mods}', nf.format(stats.mods))
-  .replace('{word}', word(stats.mods, c.statWords[0]));
+const heroLead = c.heroLead.replace('{mods}', nf.format(stats.mods)).replace('{word}', word(stats.mods, c.statWords[0]));
+const heroCount = heroes.filter((h) => h.mods.length).length;
+const statTiles = [
+  { n: stats.mods, label: c.statLabels[0].replace('{word}', word(stats.mods, c.statWords[0])) },
+  { n: stats.downloads, label: c.statLabels[1].replace('{word}', word(stats.downloads, c.statWords[1])) },
+  { n: stats.releases, label: c.statLabels[2].replace('{word}', word(stats.releases, c.statWords[2])) },
+  { n: heroCount, label: c.statHeroes.replace('{word}', word(heroCount, c.statHeroWords)) },
+];
 
-const tiles = [
-  { n: stats.mods, forms: c.statWords[0], label: c.statLabels[0] },
-  { n: stats.downloads, forms: c.statWords[1], label: c.statLabels[1] },
-  { n: stats.releases, forms: c.statWords[2], label: c.statLabels[2] },
-].map((t) => ({ value: nf.format(t.n), to: t.n, label: t.label.replace('{word}', word(t.n, t.forms)) }));
-// The last tile is not a count of anything, so it has no number to climb to.
-const statTiles = [...tiles, { value: '100%', to: 0, label: c.statLabels[3] }];
-
-// The trust list claims the history is checkable, so its own figures are counted rather than
-// typed: the pair sitting here said "27 releases, 17,500+ downloads" for long enough that the
-// answer bots quoting this page were repeating a number two releases out of date.
 const trustFacts = c.trustFacts.map(([title, body]) => [
   title
     .replace('{releases}', nf.format(stats.releases))
@@ -89,33 +78,58 @@ const trustFacts = c.trustFacts.map(([title, body]) => [
   body,
 ]);
 
-// Sorted by what is actually in the catalog, so the band stays in order as it grows.
-const marquee = c.marquee
-  .map(([id, label]) => [label, stats.byCategory[id] ?? 0] as const)
-  .filter(([, n]) => n > 0)
-  .sort((a, b) => b[1] - a[1]);
+/* The wall: the newest renders in the catalog, so it changes as the catalog grows. Four rows on
+   a desktop; each row is its pictures twice over, so drifting half its width loops seamlessly. */
+const pictured = catalog.filter((m) => m.img);
+const wallRows = [0, 1, 2, 3].map((r) => pictured.slice(r * 9, r * 9 + 9));
 
-// the app is bilingual, so the window in the picture speaks the reader's language
+/* The finder's chips: the biggest kinds of mod, each in its group's colour. */
+const topCats = catalogCategories.slice(0, 10);
+
+/* Pictures for the tiles, picked by kind so each tile shows what it is about. */
+const firstOf = (cats: string[], skip = 0) => pictured.filter((m) => cats.includes(m.cat)).slice(skip);
+const demo = firstOf(['heroes'])[0];
+const toggles = [firstOf(['terrains'])[0], firstOf(['heroes'], 1)[0], firstOf(['cursors', 'huds'])[0]].filter(Boolean);
+const fan = [firstOf(['couriers'])[0], firstOf(['wards'])[0], firstOf(['couriers'], 1)[0]].filter(Boolean);
+const shareSet = [firstOf(['heroes'], 4)[0], firstOf(['terrains'], 2)[0], firstOf(['heroes'], 5)[0]].filter(Boolean);
+const finalArt = [firstOf(['heroes'], 2)[0], firstOf(['terrains'], 1)[0], firstOf(['item-effects'])[0], firstOf(['heroes'], 3)[0]].filter(Boolean);
+
+/* The heroes with the most made for them, each shown by their newest render. */
+const topHeroes = [...heroes]
+  .filter((h) => h.mods.some((m) => m.image))
+  .sort((a, b) => b.mods.length - a.mods.length)
+  .slice(0, 12)
+  .map((h) => ({ ...h, pic: [...h.mods].filter((m) => m.image).sort((a, b) => (b.date ?? 0) - (a.date ?? 0))[0].image!.src }));
+
 const captions = [c.shotCatalog, c.shotHeroes, c.shotLibrary];
-const shots = shotNames.map((name, i) => ({
-  src: shotUrl(lang, name),
-  caption: captions[i],
-  label: c.shotLabels[i],
-  alt: shotAlt[lang][name],
-}));
+const shots = shotNames.map((name, i) => ({ src: shotUrl(lang, name), caption: captions[i], label: c.shotLabels[i], alt: shotAlt[lang][name] }));
+
+const finderLead = c.finderLead.replace('{mods}', nf.format(stats.mods)).replace('{word}', word(stats.mods, c.statWords[0]));
+const catalogHref = pathIn(lang, '/catalog/');
+const catName = (id: string) => (id === 'heroes' ? (lang === 'ru' ? 'Герои' : 'Heroes') : categoryText(lang, id).name);
+const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : name);
 ---
 
-<section class="hero">
-  <div class="wrap">
+<section class="hero" id="top">
+  <div class="wall-clip" aria-hidden="true">
+    <div class="wall">
+      {wallRows.map((row) => (
+        <div class="wall-row">
+          {[...row, ...row].map((m, i) => (
+            <img src={thumbOf(m.img!)} width="400" height="225" alt="" loading={i < 6 ? 'eager' : 'lazy'} decoding="async" />
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div class="wrap hero-body">
     {latestTag && (
       <a class="badge" href={RELEASES} rel="noopener">
-        <span class="dot"></span>
         <b>{latestTag}</b>
-        <span class="badge-sep"></span>
         <span>{c.latest}</span>
       </a>
     )}
-    <p class="kicker">{kicker.map((part, i) => <>{i > 0 && SEP}<span class="nobr">{part}</span></>)}</p>
     <h1>
       <span class="t1">{c.heroTitle}</span>
       <span class="t2">{c.heroTitleAccent}</span>
@@ -123,91 +137,215 @@ const shots = shotNames.map((name, i) => ({
     <p class="lead">{heroLead}</p>
 
     <div class="btn-row">
-      <Download copy={c} anchor />
-      <a class="btn ghost" href={GITHUB} rel="noopener">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.2-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.6 1.6.2 2.8.1 3.1.8.9 1.2 1.9 1.2 3.2 0 4.6-2.7 5.5-5.3 5.8.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z" />
-        </svg>
-        {c.source}
+      <Download copy={c} anchor big />
+      <a class="btn ghost lg" href={catalogHref}>
+        <Icon name="search" />
+        {c.browse}
       </a>
     </div>
-    <p class="muted">{meta.map((part, i) => <>{i > 0 && SEP}<span class="nobr">{part}</span></>)}</p>
-
-    {/* No `reveal` here on purpose. A scroll-driven reveal reads the element's position in
-        the viewport, and this row starts half in it - so it would sit permanently at a third
-        of its opacity until somebody scrolled, which looks like a page that failed to load
-        rather than like an entrance. Above the fold, things are simply there. */}
-    <ul class="stats lit-group">
-      {statTiles.map(({ value, to, label }) => {
-        // A number worth counting up to is one that is large enough for the climb to mean
-        // something. "29 releases" counting from zero is a parody of the effect, so only the
-        // four-figure ones get it; the rest are simply printed.
-        const climbs = to >= 1000;
-        return (
-          <li class="lit">
-            <b data-to={climbs ? to : undefined} data-final={climbs ? value : undefined}>{value}</b>
-            <span>{label}</span>
-          </li>
-        );
-      })}
+    <ul class="ticks">
+      {c.heroTicks.map((tick) => <li><Icon name="check" size={16} />{tick}</li>)}
     </ul>
   </div>
 </section>
 
-<Tour lang={lang} title={c.filmTitle} caption={c.filmCaption} play={c.filmPlay} />
+<div class="wrap">
+  <ul class="stats">
+    {statTiles.map(({ n, label }) => (
+      <li>
+        <b data-to={n >= 1000 ? n : undefined} data-final={n >= 1000 ? nf.format(n) : undefined}>{nf.format(n)}</b>
+        <span>{label}</span>
+      </li>
+    ))}
+  </ul>
+</div>
 
-<Creator lang={lang} />
+<section class="finder-sec">
+  <div class="wrap finder">
+    <div class="sec-head">
+      <div>
+        <h2>{c.finderTitle}</h2>
+        <p>{finderLead}</p>
+      </div>
+      <a class="more" href={catalogHref}>{c.finderAll}</a>
+    </div>
+    {/* A form that works with no script at all: it lands on the catalog with the query in the
+        address. With the script, results come up here as you type. */}
+    <form class="search lg" action={catalogHref} method="get" role="search">
+      <Icon name="search" size={20} />
+      <label class="sr-only" for="finder-q">{c.finderTitle}</label>
+      <input id="finder-q" name="q" type="search" placeholder={c.finderPlaceholder} autocomplete="off" enterkeyhint="search" />
+    </form>
+    <ul class="chips" aria-label={c.finderTitle}>
+      {topCats.map((cat) => (
+        <li>
+          <a class="chip" href={pathIn(lang, cat.id === 'heroes' ? '/heroes/' : `/catalog/${cat.id}/`)} data-group={cat.group}>
+            <span class="dot"></span>{catName(cat.id)} <small>{nf.format(cat.n)}</small>
+          </a>
+        </li>
+      ))}
+    </ul>
+    <div class="finder-results" id="finderResults" data-lang={lang} data-catalog={catalogHref} data-empty={c.finderEmpty} aria-live="polite"></div>
+  </div>
+</section>
 
-<section class="shots">
+<section class="show-sec">
   <div class="wrap">
-    <h2 class="sr-only">{c.shotsTitle}</h2>
-    <Shots lang={lang} shots={shots} tablist={c.shotsTablist} />
+    <h2 class="reveal">{c.showTitle}</h2>
+    <Show lang={lang} shots={shots} tablist={c.shotsTablist} video={{ label: c.showVideo, caption: c.filmCaption, play: c.filmPlay }} />
   </div>
 </section>
 
 <section>
   <div class="wrap">
     <h2 class="reveal">{c.whatTitle}</h2>
-    <div class="cards lit-group">
-      {/* set:html so a card can send you somewhere. The strings are ours, in src/i18n/landing.ts,
-          and the only markup any of them carries is a link. Through link(), like every other
-          block on the page: a card written with an absolute /docs/ path sent Russian readers
-          to the English guide, which is exactly what the "~/" convention exists to stop. */}
-      {c.cards.map(([title, body]) => (
-        <article class="card lit reveal">
-          <h3>{title}</h3>
-          <p set:html={link(body)} />
-        </article>
-      ))}
+    {/* set:html so a tile can send you somewhere. The strings are ours, in src/i18n/landing.ts,
+        and the only markup any of them carries is a link. */}
+    <div class="bento">
+      <article class="tile big reveal" id="tileInstall">
+        <h3>{c.cards[0][0]}</h3>
+        <p set:html={link(c.cards[0][1])} />
+        {demo && (
+          <div class="art">
+            <div class="demo-card">
+              <img src={thumbOf(demo.img!)} srcset={`${thumbOf(demo.img!)} 400w, ${demo.img} 854w`} sizes="(max-width: 640px) 90vw, 420px" width="400" height="225" alt="" loading="lazy" decoding="async" />
+              <div>
+                <b>{demo.name}</b>
+                <span>{catName(demo.cat)}{demo.hero ? ` · ${heroName(heroes.find((h) => h.slug === demo.hero)?.name ?? '')}` : ''}</span>
+                <span class="demo-btn" aria-hidden="true"><i></i><em class="go"><Icon name="download" size={16} />{lang === 'ru' ? 'Установить' : 'Install'}</em><em class="done"><Icon name="check" size={16} />{lang === 'ru' ? 'Установлен' : 'Installed'}</em></span>
+              </div>
+            </div>
+          </div>
+        )}
+      </article>
+
+      <article class="tile reveal">
+        <h3>{c.cards[1][0]}</h3>
+        <p set:html={link(c.cards[1][1])} />
+        <div class="art toggles" aria-hidden="true">
+          {toggles.map((m, i) => (
+            <div class:list={['toggle-row', { off: i === 1 }]}>
+              <img src={thumbOf(m.img!)} width="400" height="225" alt="" loading="lazy" decoding="async" />
+              <span>{m.name}</span>
+              <i class="sw"></i>
+            </div>
+          ))}
+        </div>
+      </article>
+
+      <article class="tile reveal">
+        <h3>{c.cards[3][0]}</h3>
+        <p set:html={link(c.cards[3][1])} />
+        <div class="art clash" aria-hidden="true">
+          <div class="clash-file">models/heroes/pudge/pudge.vmdl</div>
+          <div class="clash-row win"><code>pak10</code><span>Gopo Pudge</span><em>{lang === 'ru' ? 'грузится' : 'loaded'}</em></div>
+          <div class="clash-row lose"><code>pak11</code><span>Pudge Butcher Arcana</span><em>{lang === 'ru' ? 'перекрыт' : 'covered'}</em></div>
+        </div>
+      </article>
+
+      <article class="tile wide reveal">
+        <h3>{c.cards[2][0]}</h3>
+        <p set:html={link(c.cards[2][1])} />
+        {fan.length === 3 && (
+          <div class="art fan" aria-hidden="true">
+            {fan.map((m) => <img src={thumbOf(m.img!)} width="400" height="225" alt="" loading="lazy" decoding="async" />)}
+          </div>
+        )}
+      </article>
+
+      <article class="tile wide reveal">
+        <h3>{c.cards[4][0]}</h3>
+        <p set:html={link(c.cards[4][1])} />
+        <div class="art" aria-hidden="true">
+          <div class="share-set">
+            <span>{shareSet.map((m) => <img src={thumbOf(m.img!)} width="400" height="225" alt="" loading="lazy" decoding="async" />)}</span>
+            <span><b>Midlane night</b><small>{lang === 'ru' ? '5 модов' : '5 mods'}</small></span>
+          </div>
+          <div class="share"><Icon name="link" size={16} /><span>dota2modmanager.com/p/#q1YqU7Iy1FHKU7JSKknNzVWyUkrOzytRyM9LLVbSUcrMS8nMS1</span></div>
+        </div>
+      </article>
+
+      <article class="tile reveal">
+        <h3>{c.cards[5][0]}</h3>
+        <p set:html={link(c.cards[5][1])} />
+        <div class="art patch" aria-hidden="true">
+          <span>{lang === 'ru' ? 'Патч Доты' : 'Dota patch'}</span>
+          <span class="ok">{lang === 'ru' ? 'Моды на месте' : 'Mods put back'}</span>
+        </div>
+      </article>
+
+      <article class="tile span4 reveal">
+        <h3>{c.cards[6][0]}</h3>
+        <p set:html={link(c.cards[6][1])} />
+      </article>
     </div>
   </div>
 </section>
 
-{/* Straight after the card that claims the app tells you when mods collide. A claim followed
-    by the thing itself, rather than by another claim. */}
-<Stand
-  title={c.standTitle}
-  lead={c.standLead}
-  slotsLabel={c.standSlots}
-  emptyLabel={c.standEmpty}
-  winsLabel={c.standWins}
-  coveredLabel={c.standCovered}
-  hint={c.standHint}
-  moveLabel={c.standMove}
-/>
-
-<section class="trust">
+<section>
   <div class="wrap">
-    <h2 class="reveal">{c.trustTitle}</h2>
-    <p class="lead reveal">{c.trustLead}</p>
-    <ul class="facts">
-      {trustFacts.map(([title, body]) => (
-        <li class="reveal">
-          <b>{title}</b>
-          <span>{body}</span>
+    <div class="sec-head">
+      <div>
+        <h2 class="reveal">{c.heroesTitle}</h2>
+        <p>{c.heroesLead}</p>
+      </div>
+      <a class="more" href={pathIn(lang, '/heroes/')}>{c.heroesAll.replace('{count}', nf.format(heroCount))}</a>
+    </div>
+    <ul class="htiles">
+      {topHeroes.map((h) => (
+        <li>
+          <a class="htile" href={pathIn(lang, `/heroes/${h.slug}/`)}>
+            <img src={thumbOf(h.pic)} width="400" height="225" alt="" loading="lazy" decoding="async" />
+            <b>{heroName(h.name)}</b>
+            <span>{nf.format(h.mods.length)}</span>
+          </a>
         </li>
       ))}
     </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <h2 class="reveal">{c.compareTitle}</h2>
+        <p>{c.compareLead}</p>
+      </div>
+    </div>
+    <div class="compare-wrap reveal">
+      <table class="compare">
+        <thead><tr><td></td><th scope="col">{c.compareCols[0]}</th><th scope="col">{c.compareCols[1]}</th></tr></thead>
+        <tbody>
+          {c.compare.map(([step, hand, app]) => (
+            <tr>
+              <th scope="row">{step}</th>
+              <td data-col={c.compareCols[0]}>{hand}</td>
+              <td data-col={c.compareCols[1]}>{app}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="trust">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <h2 class="reveal">{c.trustTitle}</h2>
+        <p>{c.trustLead}</p>
+      </div>
+    </div>
+    <div class="trust-grid reveal">
+      {trustFacts.map(([title, body]) => (
+        <div>
+          <b>{title}</b>
+          <span>{body}</span>
+        </div>
+      ))}
+    </div>
     <div class="warn reveal">
       <h3>{c.smartscreenTitle}</h3>
       <p set:html={c.smartscreen} />
@@ -218,127 +356,151 @@ const shots = shotNames.map((name, i) => ({
   </div>
 </section>
 
+<Creator lang={lang} />
+
 <section>
-  <div class="wrap narrow">
+  <div class="wrap">
     <h2 class="reveal">{c.faqTitle}</h2>
-    {c.faq.map(([q, a]) => (
-      <details class="faq reveal">
-        <summary>{q}</summary>
-        <p set:html={link(a)} />
-      </details>
-    ))}
+    <div class="faqs">
+      {c.faq.map(([q, a]) => (
+        <details class="faq">
+          <summary>{q}</summary>
+          <p set:html={link(a)} />
+        </details>
+      ))}
+    </div>
   </div>
 </section>
-
-<div class="marquee" aria-hidden="true">
-  <div class="marquee-track">
-    {[0, 1].map(() => (
-      <div class="marquee-run">
-        {marquee.map(([name, n]) => (
-          <span class="marquee-item"><b>{nf.format(n)}</b>{name}</span>
-        ))}
-      </div>
-    ))}
-  </div>
-</div>
 
 <section class="final">
   <div class="wrap">
     <div class="final-box reveal">
-      <span class="final-sweep" aria-hidden="true"></span>
-      <img class="final-icon" src="/icon.png" width="84" height="84" alt="" />
-      <h2>{c.ctaTitle}</h2>
-      <p class="lead">{c.ctaLead}</p>
-      <div class="btn-row">
-        <Download copy={c} big />
+      <div>
+        <h2>{c.ctaTitle}</h2>
+        <p class="lead">{c.ctaLead}</p>
+        <div class="btn-row">
+          <Download copy={c} big />
+        </div>
+        <p class="muted">{c.ctaMeta}</p>
       </div>
-      <p class="muted">{c.ctaMeta}</p>
+      {finalArt.length === 4 && (
+        <div class="final-art" aria-hidden="true">
+          {finalArt.map((m) => <img src={thumbOf(m.img!)} width="400" height="225" alt="" loading="lazy" decoding="async" />)}
+        </div>
+      )}
     </div>
 
     <div class="links">
-      <a class="link-card reveal" href={GITHUB} rel="noopener">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <a class="link-card" href={GITHUB} rel="noopener">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.2-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.6 1.6.2 2.8.1 3.1.8.9 1.2 1.9 1.2 3.2 0 4.6-2.7 5.5-5.3 5.8.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z" />
         </svg>
         <span><b>{c.linkGithub[0]}</b>{c.linkGithub[1]}</span>
-        <i class="arr">&#8594;</i>
       </a>
-      <a class="link-card reveal" href={DISCORD} rel="noopener">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <a class="link-card" href={DISCORD} rel="noopener">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.2.4c1.6.4 2.9 1 4.1 1.8a13.8 13.8 0 0 0-9.8-.9c-.6.2-1.1.3-1.6.5.2-.1.3-.2.4-.2A16 16 0 0 1 12 3.4L11.8 3a19.8 19.8 0 0 0-4.9 1.4C3.8 8.9 3 13.3 3.4 17.6a19.9 19.9 0 0 0 6 3l1.2-1.7c-.9-.3-1.7-.7-2.5-1.3l.5-.4a14.2 14.2 0 0 0 12.1 0l.5.4c-.8.6-1.6 1-2.5 1.3l1.2 1.7c2.2-.7 4.2-1.7 6-3 .5-5-.8-9.3-3.6-13.2zM9.3 15c-1.2 0-2.1-1.1-2.1-2.4 0-1.3.9-2.4 2.1-2.4 1.2 0 2.2 1.1 2.2 2.4 0 1.3-1 2.4-2.2 2.4zm5.4 0c-1.2 0-2.1-1.1-2.1-2.4 0-1.3.9-2.4 2.1-2.4 1.2 0 2.2 1.1 2.2 2.4 0 1.3-1 2.4-2.2 2.4z" />
         </svg>
         <span><b>{c.linkDiscord[0]}</b>{c.linkDiscord[1]}</span>
-        <i class="arr">&#8594;</i>
       </a>
     </div>
   </div>
 </section>
 
-<Hunt complete={c.huntComplete} shared={c.huntShared} />
+<Hunt complete={c.huntComplete} shared={c.huntShared} close={c.huntClose} hint={c.huntHint} />
 
 <script>
-  // A radial gradient placed by a custom property only knows the box it is painted in, so
-  // every lit surface is told where the pointer is in its own coordinates.
-  //
-  // The rule that keeps this cheap: read everything, then write everything, once per frame.
-  // Measuring a card inside the move handler is a forced reflow, and doing it for ten cards
-  // on every pointer event is the usual reason a glow like this makes a page feel heavy. So
-  // scroll and resize only mark the measurements stale, and the next frame that actually
-  // paints takes them all in one go.
-  const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  const lit = [...document.querySelectorAll<HTMLElement>('.lit')];
+  import { loadCatalog, rank, matcher, el, type Lang } from '../scripts/catalog';
 
-  if (fine && lit.length) {
-    const rects = new WeakMap<HTMLElement, DOMRect>();
-    let stale = true;
-    let ev: PointerEvent | null = null;
-    let queued = false;
+  // ---- the wall moves on a desktop, while it is on screen ----
+  const hero = document.querySelector<HTMLElement>('.hero');
+  const moving = window.matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)').matches;
+  if (hero && moving) {
+    hero.classList.add('wall-moving');
+    new IntersectionObserver(([en]) => hero.classList.toggle('wall-paused', !en.isIntersecting)).observe(hero);
+  }
 
-    const place = () => {
-      queued = false;
-      if (!ev) return;
-      if (stale) {
-        for (const el of lit) rects.set(el, el.getBoundingClientRect());
-        stale = false;
+  // ---- the install tile installs itself once, the first time it is seen ----
+  const tile = document.getElementById('tileInstall');
+  if (tile && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const io = new IntersectionObserver(([en]) => {
+      if (!en.isIntersecting) return;
+      io.disconnect();
+      tile.classList.add('run');
+      tile.querySelector('.demo-btn i')?.addEventListener('animationend', () => tile.classList.add('installed'), { once: true });
+    }, { threshold: 0.6 });
+    io.observe(tile);
+  }
+
+  // ---- the big numbers climb to themselves, once ----
+  // The markup holds the real, formatted figure; the climb replaces it for a second and then
+  // puts that exact string back, so find-on-page and screen readers never see a frame of it.
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const nf = new Intl.NumberFormat(document.documentElement.lang || 'en');
+    const io = new IntersectionObserver((entries) => {
+      for (const en of entries) {
+        if (!en.isIntersecting) continue;
+        io.unobserve(en.target);
+        const b = en.target as HTMLElement;
+        const to = Number(b.dataset.to);
+        const final = b.dataset.final ?? b.textContent ?? '';
+        const t0 = performance.now();
+        const step = (t: number) => {
+          const k = Math.min(1, (t - t0) / 1100);
+          b.textContent = k < 1 ? nf.format(Math.round(to * (1 - (1 - k) ** 4))) : final;
+          if (k < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
       }
-      for (const el of lit) {
-        const box = rects.get(el);
-        if (!box) continue;
-        el.style.setProperty('--mx', `${ev.clientX - box.left}px`);
-        el.style.setProperty('--my', `${ev.clientY - box.top}px`);
-      }
+    }, { threshold: 0.6 });
+    document.querySelectorAll<HTMLElement>('[data-to]').forEach((b) => io.observe(b));
+  }
+
+  // ---- the finder: results as you type, from the same file the catalog reads ----
+  const box = document.getElementById('finderResults');
+  const input = document.getElementById('finder-q') as HTMLInputElement | null;
+  if (box && input) {
+    const lang = (box.dataset.lang as Lang) || 'en';
+    const base = box.dataset.catalog!;
+    let timer = 0;
+    const render = async () => {
+      const q = input.value.trim();
+      if (!q) { box.replaceChildren(); return; }
+      let cat;
+      try { cat = await loadCatalog(lang); } catch { return; }
+      const ok = matcher(q);
+      const hits = cat.mods.filter(ok).sort((a, b) => rank(b, q) - rank(a, q)).slice(0, 6);
+      if (!hits.length) { box.replaceChildren(el('p', 'muted', box.dataset.empty)); return; }
+      box.replaceChildren(...hits.map((m) => {
+        const a = el('a', 'finder-row');
+        a.href = `${base}?q=${encodeURIComponent(q)}#mod=${encodeURIComponent(m.key)}`;
+        a.dataset.group = m.group;
+        if (m.thumb) {
+          const img = el('img');
+          img.src = m.thumb; img.alt = ''; img.width = 400; img.height = 225; img.loading = 'lazy';
+          a.append(img);
+        }
+        const text = el('div');
+        const meta = el('span');
+        meta.append(el('i', 'dot'), document.createTextNode(m.heroName ? `${m.catName} · ${m.heroName}` : m.catName));
+        text.append(el('b', '', m.name), meta);
+        a.append(text);
+        return a;
+      }));
     };
-
-    for (const group of document.querySelectorAll<HTMLElement>('.lit-group')) {
-      group.addEventListener('pointermove', (e) => {
-        ev = e;
-        if (!queued) { queued = true; requestAnimationFrame(place); }
-      }, { passive: true });
-    }
-    const invalidate = () => { stale = true; };
-    window.addEventListener('scroll', invalidate, { passive: true });
-    window.addEventListener('resize', invalidate, { passive: true });
+    input.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(render, 90); });
+    // start fetching the moment somebody shows intent, so the first letter has results
+    input.addEventListener('focus', () => { loadCatalog(lang).catch(() => {}); }, { once: true });
   }
 </script>
 
 <script>
-  // A second door, for people who open the source of a page before they open the page.
-  //
-  // This is a GPL-3.0 project with a public repository, so a fair share of the people who
-  // land here will look. The console gets the repository link and a working handle on the
-  // thing the site is actually built out of: the eight hero palettes the app wears. Not a
-  // joke printed in a box - the same gesture as clicking the mascot, in the place these
-  // particular visitors live. The palette is read off the hunt's own data, so there is one
-  // list of heroes on this site rather than two that drift apart.
-  //
-  // Deliberately absent: anything that gives away where the mascots are. Somebody who wants
-  // to skip the hunt can already read this file.
+  // A second door, for people who open the source of a page before they open the page. The
+  // console gets the repository link and a working handle on the eight hero palettes the app
+  // wears. Deliberately absent: anything that gives away where the mascots are.
   const heroes = JSON.parse(document.getElementById('hunt')?.dataset.heroes ?? '[]') as Array<{ id: string; primary: string }>;
   if (heroes.length) {
-    console.log(
-      '%c Dota 2 Mod Manager ',
-      'background:#d0bcff;color:#220a32;padding:4px 10px;border-radius:6px;font-weight:700',
-    );
+    console.log('%c Dota 2 Mod Manager ', 'background:#d0bcff;color:#220a32;padding:4px 10px;border-radius:6px;font-weight:700');
     console.log('GPL-3.0, every line: https://github.com/dota2modmanager/dota2-mod-manager');
     console.log('The app wears eight hero palettes. So does this page: mm.hero("brew")');
     (window as any).mm = {
@@ -350,46 +512,5 @@ const shots = shotNames.map((name, i) => ({
         return h.id;
       },
     };
-  }
-</script>
-
-<script>
-  // The big numbers climb to themselves, once.
-  //
-  // The markup already holds the real, formatted figure - the climb replaces it for a second
-  // and then puts that exact string back. So find-on-page, text selection and a screen reader
-  // never see a frame of the animation, and somebody who asked for less motion never sees the
-  // animation at all: they already have the number.
-  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const climbers = document.querySelectorAll<HTMLElement>('[data-to]');
-
-  if (!still && climbers.length) {
-    const nf = new Intl.NumberFormat(document.documentElement.lang || 'en');
-    const io = new IntersectionObserver((entries) => {
-      for (const en of entries) {
-        if (!en.isIntersecting) continue;
-        io.unobserve(en.target);
-        const el = en.target as HTMLElement;
-        const to = Number(el.dataset.to);
-        const final = el.dataset.final ?? el.textContent ?? '';
-        // Count in the shape the final number is written in. "1150" is authored without a
-        // separator and "17,515" with one, so a blanket Intl.format would count up through
-        // "1,149" and then snap to "1150" on the last frame - a visible twitch at exactly the
-        // moment the eye is on it.
-        const grouped = /\d\D\d/.test(final);
-        const show = (v: number) => (grouped ? nf.format(v) : String(v));
-        const t0 = performance.now();
-        const step = (t: number) => {
-          const k = Math.min(1, (t - t0) / 1100);
-          // out-quart: most of the distance early, then a long settle - a climb that slows
-          // down reads as arriving somewhere, a linear one reads as a loading bar
-          el.textContent = k < 1 ? show(Math.round(to * (1 - (1 - k) ** 4))) : final;
-          if (k < 1) requestAnimationFrame(step);
-        };
-        el.textContent = show(0);
-        requestAnimationFrame(step);
-      }
-    }, { threshold: 0.45 });
-    climbers.forEach((el) => io.observe(el));
   }
 </script>

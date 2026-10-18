@@ -19,6 +19,8 @@ import { plainText } from '../lib/text';
 import { authorNode, appVersion } from '../lib/schema';
 import { siteStats } from '../lib/stats';
 import { landing } from '../i18n/landing';
+import { catalogCategories } from '../lib/catalog';
+import { categoryText } from '../i18n/categories';
 
 interface Props {
   lang: Lang;
@@ -69,11 +71,12 @@ const link = (html: string) => {
   return out;
 };
 
-/** The catalog by category, biggest first, using the names the landing already translates. */
-const categories = landing[lang].marquee
-  .map(([id, label]) => [label, stats.byCategory[id] ?? 0] as const)
-  .filter(([, n]) => n > 0)
-  .sort((a, b) => b[1] - a[1]);
+/** The catalog by category, biggest first, counted from the same merged list the catalog shows. */
+const categories = catalogCategories.map((c) => [c.id === 'heroes' ? (lang === 'ru' ? 'Герои' : 'Heroes') : categoryText(lang, c.id).name, c.n] as const);
+
+/** The page's own sections, for the contents beside it on a wide window. */
+const toc = doc.blocks.filter((b): b is { k: 'h2'; id: string; t: string } => b.k === 'h2' && !!(b as { id?: string }).id);
+const tocLabel = lang === 'ru' ? 'На этой странице' : 'On this page';
 
 const steps = doc.blocks.filter((b) => b.k === 'steps');
 const faqs = doc.blocks.filter((b) => b.k === 'faq');
@@ -165,7 +168,8 @@ const updatedHuman = new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-GB', 
 <Base title={doc.title} description={doc.description} path={`/docs/${doc.slug}/`}>
   {jsonLd.map((node) => <script type="application/ld+json" slot="head" set:html={JSON.stringify(node)} />)}
 
-  <article class="doc wrap">
+  <div class="wrap doc-layout">
+  <article class="doc">
     <nav class="crumbs" aria-label={index.h1}>
       <a href={pathIn(lang, '/docs/')}>{backLabel}</a>
     </nav>
@@ -250,4 +254,31 @@ const updatedHuman = new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-GB', 
       </div>
     </aside>
   </article>
+  {toc.length > 2 && (
+    <nav class="toc" aria-label={tocLabel}>
+      <b>{tocLabel}</b>
+      <ol>
+        {toc.map((h) => <li><a href={`#${h.id}`}>{h.t}</a></li>)}
+      </ol>
+    </nav>
+  )}
+  </div>
 </Base>
+
+<script>
+  // The contents mark the section being read: the last heading that has scrolled past the top.
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('.toc a')];
+  if (links.length) {
+    const heads = links.map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1)))).filter(Boolean) as HTMLElement[];
+    let queued = false;
+    const mark = () => {
+      queued = false;
+      const line = 120;
+      let at = 0;
+      heads.forEach((h, i) => { if (h.getBoundingClientRect().top < line) at = i; });
+      links.forEach((a, i) => a.classList.toggle('on', i === at));
+    };
+    window.addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(mark); } }, { passive: true });
+    mark();
+  }
+</script>

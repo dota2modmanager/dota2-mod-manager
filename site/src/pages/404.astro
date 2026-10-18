@@ -24,6 +24,9 @@ import Base from '../layouts/Base.astro';
   lost
 >
   <article class="lost wrap">
+    {/* Meepo, one of the app's eight palette mascots, because getting lost is what a Meepo does
+        best. The same animation the app's own title bar wears. */}
+    <img class="lost-mascot" src="/mascots/meepo.gif" width="88" height="88" alt="" />
     <p class="code">404</p>
 
     <h1>This page is not here</h1>
@@ -59,13 +62,14 @@ import Base from '../layouts/Base.astro';
 
   /* Big, because it is the one word that explains the whole page, and quiet, because being
      lost is not an emergency. */
+  .lost-mascot { width: 88px; height: 88px; margin: 0 auto 8px; image-rendering: auto; }
   .code {
     margin: 0 0 6px;
     font-size: clamp(64px, 16vw, 132px);
     font-weight: 800;
     line-height: 0.9;
     letter-spacing: -0.04em;
-    color: color-mix(in srgb, var(--accent) 22%, transparent);
+    color: color-mix(in srgb, var(--primary) 34%, transparent);
   }
 
   h1 { margin: 0 0 14px; font-size: clamp(24px, 4.4vw, 34px); }

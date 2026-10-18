@@ -1,56 +1,58 @@
 ---
 /**
- * The catalog's categories, biggest first, plus the way into the hero pages.
+ * The whole catalog, as one page somebody can actually browse: search, the app's six groups, every
+ * kind of mod, three orders, a closer look at any mod, and a set to send to the app.
  *
- * The one page on the site that answers "what kinds of mods even exist for Dota", which is the
- * question somebody has before they know what to search for.
+ * It used to be forty pills linking to forty long lists. The pills are still here (as filters),
+ * and so are the forty pages, linked at the foot for whoever wants a kind's own page and for
+ * search engines; the grid is what most people came for. The first cards are in the HTML and the
+ * rest arrive from /catalog/data.json (Browser.astro).
  */
 import { pathIn, type Lang } from '../i18n/ui';
 import { categoryText } from '../i18n/categories';
-import { categories, totalCategoryMods } from '../lib/categories';
+import { browse } from '../i18n/browse';
+import { catalog, catalogCategories, groupOf } from '../lib/catalog';
+import { categories } from '../lib/categories';
 import { heroes, totalHeroMods } from '../lib/heroes';
 import { heroCopy } from '../i18n/heroes';
+import Browser from './Browser.astro';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 
 const nf = new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US');
 const ru = lang === 'ru';
+const b = browse[lang];
 
 const h1 = ru ? 'Каталог модов для Доты 2' : 'The Dota 2 mod catalog';
 const lead = ru
   ? 'Что вообще бывает: ландшафты, деревья, река, шейдеры, курсоры, шрифты, фон меню, звуки, крипы и остальное. Всё из открытого каталога D2PFX и всё ставится в один клик.'
   : 'What exists, by kind: terrains, trees, the river, shaders, cursors, fonts, the menu background, sounds, creeps and the rest. All from the open D2PFX catalog, all installed in one click.';
-// The second count is mods, and it says so: printed bare it read "Categories: 37 · 860".
-const pr = new Intl.PluralRules(ru ? 'ru-RU' : 'en-US');
-const modWord = (n: number) =>
-  ru ? ({ one: 'мод', few: 'мода' } as Record<string, string>)[pr.select(n)] ?? 'модов' : n === 1 ? 'mod' : 'mods';
 const heroesLine = ru
   ? `Скины на конкретного героя лежат отдельно: ${nf.format(heroes.length)} героев, ${nf.format(totalHeroMods)} модов.`
   : `Skins for a particular hero have their own pages: ${nf.format(heroes.length)} heroes, ${nf.format(totalHeroMods)} mods.`;
+const pages = new Set(categories.map((c) => c.id));
 ---
 
-<article class="doc wrap">
+<div class="wrap browse-head">
   <h1>{h1}</h1>
   <p class="lead">{lead}</p>
-  <p class="muted">
-    {ru ? 'Категорий' : 'Categories'}: {nf.format(categories.length)} · {nf.format(totalCategoryMods)} {modWord(totalCategoryMods)}
-  </p>
+  <Browser lang={lang} mode="all" mods={catalog.slice(0, 48)} context="all" />
 
-  <ul class="hero-links hero-grid">
-    {
-      categories.map((c) => (
+  <section class="kinds">
+    <h2>{b.allKinds}</h2>
+    <ul class="chips">
+      {catalogCategories.filter((c) => pages.has(c.id)).map((c) => (
         <li>
-          <a class="chip" href={pathIn(lang, `/catalog/${c.id}/`)}>
-            {categoryText(lang, c.id).name} <span>{nf.format(c.mods.length)}</span>
+          <a class="chip" href={pathIn(lang, `/catalog/${c.id}/`)} data-group={groupOf(c.id)}>
+            <span class="dot"></span>{categoryText(lang, c.id).name} <small>{nf.format(c.n)}</small>
           </a>
         </li>
-      ))
-    }
-  </ul>
-
-  <h2>{heroCopy[lang].indexH1}</h2>
-  <p>
-    {heroesLine} <a href={pathIn(lang, '/heroes/')}>{heroCopy[lang].back}</a>.
-  </p>
-</article>
+      ))}
+    </ul>
+    <h2>{heroCopy[lang].indexH1}</h2>
+    <p class="prose">
+      {heroesLine} <a href={pathIn(lang, '/heroes/')}>{heroCopy[lang].back}</a>.
+    </p>
+  </section>
+</div>

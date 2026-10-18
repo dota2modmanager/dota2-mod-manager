@@ -40,8 +40,8 @@ const HEROES = [
   { id: 'axe', primary: '#ffb4a9', accent: '#ff897a' },
 ];
 
-interface Props { complete: string; shared: string }
-const { complete, shared } = Astro.props;
+interface Props { complete: string; shared: string; close: string; hint: string }
+const { complete, shared, close, hint } = Astro.props;
 ---
 
 <div id="hunt" data-heroes={JSON.stringify(HEROES)} aria-hidden="true"></div>
@@ -53,9 +53,17 @@ const { complete, shared } = Astro.props;
   <span class="hunt-slots"></span>
 </div>
 
-<div id="hunt-done" class="hunt-done" hidden aria-hidden="true">
+{/* The reward is said once and gets out of the way: it closes by itself after seven seconds and
+    has a button to close it sooner. It used to sit in the middle of the screen for good, over
+    whatever was there, and it is not hidden from screen readers the way the hunt is: by the time
+    it appears there is no secret left to give away, and it has a button. */}
+<div id="hunt-done" class="hunt-done" role="status" hidden>
   <b></b>
   <span data-complete={complete} data-shared={shared}></span>
+  <small>{hint}</small>
+  <button class="icon-btn hunt-close" type="button" aria-label={close}>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+  </button>
 </div>
 
 <style>
@@ -68,7 +76,7 @@ const { complete, shared } = Astro.props;
   :global(.hunt-hero) {
     position: absolute;
     width: 54px; height: 54px;
-    z-index: 1;
+    z-index: 3;            /* over the landing's hero (z-index 2), under the sticky header (40) */
     cursor: pointer;
     opacity: calc(0.045 + var(--heat, 0) * 0.955);
     transform: scale(calc(0.9 + var(--heat, 0) * 0.1));
@@ -121,58 +129,38 @@ const { complete, shared } = Astro.props;
   }
 
   .hunt-done {
-    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 7;
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
-    padding: 14px 26px; border-radius: var(--radius);
-    background: color-mix(in srgb, var(--surface-container) 94%, transparent);
+    position: fixed; right: 18px; bottom: 18px; z-index: 50;
+    display: grid; gap: 2px;
+    width: min(360px, calc(100vw - 36px));
+    padding: 16px 52px 16px 18px; border-radius: var(--radius);
+    background: color-mix(in srgb, var(--surface-container) 96%, transparent);
     border: 1px solid transparent;
     background-image:
       linear-gradient(var(--surface-container), var(--surface-container)),
       linear-gradient(90deg, #d0bcff, #fac898, #b1f9a4, #c7dbf0, #ffb0c8, #f1d783, #ffb4a9, #d0bcff);
     background-origin: border-box;
     background-clip: padding-box, border-box;
-    text-align: center;
-    animation: popc 420ms cubic-bezier(0.2, 0, 0, 1);
+    box-shadow: 0 24px 60px -16px rgb(0 0 0 / 0.8);
+    animation: pop 420ms cubic-bezier(0.2, 0, 0, 1);
   }
-  .hunt-done b { font-size: 15px; color: var(--text); }
-  .hunt-done span { font-size: 13px; color: var(--text-dim); }
+  .hunt-done b { font: 800 22px/1 var(--display); color: var(--text); letter-spacing: -0.03em; }
+  .hunt-done span { font-size: 14.5px; color: var(--text); margin-top: 6px; }
+  .hunt-done small { font-size: 12.5px; color: var(--text-faint); }
+  .hunt-close { position: absolute; right: 10px; top: 10px; width: 32px; height: 32px; }
+  /* the bar along the bottom that says how long until it closes itself */
+  .hunt-done::after {
+    content: ''; position: absolute; left: 18px; right: 18px; bottom: 0; height: 2px; border-radius: 2px;
+    background: var(--primary); transform-origin: 0 50%;
+    animation: countdown 7s linear forwards;
+  }
+  @keyframes countdown { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
   @keyframes pop {
     from { opacity: 0; transform: translateY(14px) scale(0.94); }
     to { opacity: 1; }
   }
-  @keyframes popc {
-    from { opacity: 0; transform: translateX(-50%) translateY(14px) scale(0.94); }
-    to { opacity: 1; transform: translateX(-50%); }
-  }
-
-  /* Once every hero is found the whole page wears all eight at once. Measured rather than
-     assumed: the worst point anywhere along this gradient sits at 10.8:1 against the page,
-     so there is no contrast problem to solve here. What does break is a high-contrast
-     system theme, where a colour clipped to text has no colour to clip - hence the branch. */
-  :global(html.rainbow) { --primary: #d0bcff; }
-  :global(html.rainbow) :global(h1 .t2),
-  :global(html.rainbow) :global(.stats b) {
-    background: linear-gradient(96deg, #d0bcff, #fac898, #b1f9a4, #c7dbf0, #ffb0c8, #f1d783, #ffb4a9, #d0bcff);
-    background-size: 300% 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: hue 9s linear infinite;
-  }
-  @keyframes hue { to { background-position: 300% 0; } }
-  @media (prefers-reduced-motion: reduce) {
-    :global(html.rainbow) :global(h1 .t2),
-    :global(html.rainbow) :global(.stats b) { animation: none; }
-  }
-  @media (forced-colors: active) {
-    :global(html.rainbow) :global(h1 .t2),
-    :global(html.rainbow) :global(.stats b) {
-      background: none;
-      -webkit-text-fill-color: CanvasText;
-      color: CanvasText;
-    }
-  }
+  /* What the whole page does once all eight are found lives in site.css (html.rainbow), since it
+     is every page's business and not this component's: the reward follows the visitor around. */
 
   @media (hover: none), (prefers-reduced-motion: reduce) {
     .hunt-score, .hunt-done { display: none; }
@@ -218,7 +206,7 @@ const { complete, shared } = Astro.props;
       // clientWidth, not innerWidth: innerWidth counts the scrollbar, and a hero placed in
       // that strip is a hero nobody can reach and a horizontal scrollbar for everybody
       const vw = document.documentElement.clientWidth;
-      const gutter = Math.max(0, (vw - Math.min(1080, vw)) / 2);
+      const gutter = Math.max(0, (vw - Math.min(1200, vw)) / 2);
       if (gutter < 70) return false;  // no room beside the column: no hunt on a narrow window
 
       heroes.forEach((h, i) => {
@@ -325,13 +313,30 @@ const { complete, shared } = Astro.props;
       if (!raf) raf = requestAnimationFrame(step);
     };
 
-    // ---- finding one -----------------------------------------------------------------
+    // ---- the reward --------------------------------------------------------------------
+    // Said once, then out of the way: seven seconds, or the close button, whichever is first.
+    let closeTimer = 0;
+    const hideDone = () => { clearTimeout(closeTimer); done.hidden = true; };
+    const say = (text: string) => {
+      (done.querySelector('b') as HTMLElement).textContent = `${heroes.length}/${heroes.length}`;
+      doneText.textContent = text;
+      done.hidden = false;
+      clearTimeout(closeTimer);
+      closeTimer = window.setTimeout(hideDone, 7000);
+    };
+    done.querySelector('.hunt-close')?.addEventListener('click', hideDone);
+
     const finish = () => {
+      // The whole site turns, not just the title: every colour on it is drawn from --primary,
+      // and site.css cycles it through all eight palettes. It stays on from page to page
+      // (Base.astro reads the flag before the first paint) until the footer's switch.
       document.documentElement.style.removeProperty('--primary');
       document.documentElement.classList.add('rainbow');
-      (done.querySelector('b') as HTMLElement).textContent = `${heroes.length}/${heroes.length}`;
-      doneText.textContent = doneText.dataset.complete!;
-      done.hidden = false;
+      try { localStorage.setItem('mm-rainbow', '1'); } catch { /* private mode: this page only */ }
+      document.dispatchEvent(new Event('mm-rainbow'));
+      const sw = document.getElementById('rainbowSwitch');
+      if (sw?.parentElement) sw.parentElement.hidden = false;
+      say(doneText.dataset.complete!);
       score.hidden = true;
       // Something to send. The reward used to die on reload, which made it the one thing on
       // the page nobody could show anybody: a screenshot is a dead end, a link is a door.
@@ -391,17 +396,20 @@ const { complete, shared } = Astro.props;
     // Arriving on somebody else's link: wear the full set for a moment, then hand it back.
     // The visitor sees what was found without being given it, which is the only way this
     // stays worth finding.
-    if (location.hash === '#all-eight') {
+    let earned = false;
+    try { earned = localStorage.getItem('mm-rainbow') !== null; } catch { /* private mode */ }
+    if (location.hash === '#all-eight' && !earned) {
       document.documentElement.classList.add('rainbow');
-      (done.querySelector('b') as HTMLElement).textContent = `${heroes.length}/${heroes.length}`;
-      doneText.textContent = doneText.dataset.shared!;
-      done.hidden = false;
+      say(doneText.dataset.shared!);
       history.replaceState(null, '', location.pathname);
       setTimeout(() => {
         document.documentElement.classList.remove('rainbow');
-        done.hidden = true;
+        hideDone();
         if (place()) paint();
       }, 4200);
+    } else if (earned) {
+      // found them before: the page already wears the reward, and there is nothing left to hide
+      if (location.hash === '#all-eight') history.replaceState(null, '', location.pathname);
     } else if (place()) {
       paint();
     }

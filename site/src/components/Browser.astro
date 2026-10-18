@@ -1,0 +1,142 @@
+---
+/**
+ * A browsable grid of mods: search, sort, filter, a closer look at one, and a set to send to the
+ * app. One component for the three places mods are listed: the whole catalog, a category, a hero.
+ *
+ * On a category or a hero page every card is in the HTML, so the page reads whole to a search
+ * engine and to anybody without the script, and the script only sorts and hides what is already
+ * there. On /catalog/ the first cards are in the HTML and the rest come from /catalog/data.json,
+ * drawn a screen at a time as the visitor scrolls: fifteen hundred cards at once is a page that
+ * takes its time on a phone for pictures nobody has reached yet.
+ *
+ * What the visitor picks is kept in their own browser (localStorage, "mm-set") and follows them
+ * from page to page. The tray turns it into the app's own preset link (src/scripts/catalog.ts).
+ */
+import type { CatalogMod } from '../lib/catalog';
+import { GROUPS, groupNames, catalogCategories } from '../lib/catalog';
+import ModCard from './ModCard.astro';
+import Icon from './Icon.astro';
+import { browse } from '../i18n/browse';
+import { categoryText } from '../i18n/categories';
+import { slotNames } from '../i18n/heroes';
+import { pathIn, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  /** "all": the whole catalog, drawn from data. "page": the cards given here are all there is. */
+  mode: 'all' | 'page';
+  mods: CatalogMod[];
+  context?: 'all' | 'category' | 'hero';
+  /** parts a hero's mods replace, offered as filters */
+  slots?: string[];
+  heading?: 'h2' | 'h3';
+  altFor?: (m: CatalogMod) => string;
+}
+const { lang, mode, mods, context = 'all', slots = [], heading = 'h2', altFor } = Astro.props;
+const b = browse[lang];
+const nf = new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US');
+const total = mode === 'all' ? catalogCategories.reduce((n, c) => n + c.n, 0) : mods.length;
+const catName = (id: string) => (id === 'heroes' ? (lang === 'ru' ? 'Герои' : 'Heroes') : categoryText(lang, id).name);
+
+/* what the script needs to say things, in this page's language */
+const words = {
+  shown: b.shown, more: b.more, add: b.add, remove: b.remove, look: b.look, newBadge: b.newBadge, by: b.by,
+  kind: b.kind, hero: b.hero, replaces: b.replaces, author: b.author, added: b.added, style: b.style,
+  openApp: b.openApp, copyLink: b.copyLink, copied: b.copied, noCompress: b.noCompress, appNote: b.appNote,
+  close: b.close, tray: b.tray, setName: b.setName, heroPage: b.heroPage, kindPage: b.kindPage, mods: b.mods,
+  slots: slotNames[lang], heroesLabel: lang === 'ru' ? 'Герои' : 'Heroes',
+  heroBase: pathIn(lang, '/heroes/'), catBase: pathIn(lang, '/catalog/'),
+};
+const groupsHere = GROUPS.map(([g]) => g).filter((g) => catalogCategories.some((c) => c.group === g));
+---
+
+<div class="browse" id="browse" data-mode={mode} data-lang={lang} data-context={context} data-total={total} data-words={JSON.stringify(words)}>
+  <div class="toolbar">
+    <div class="toolbar-row">
+      <form class="search" role="search" method="get">
+        <Icon name="search" size={19} />
+        <label class="sr-only" for="browse-q">{b.searchLabel}</label>
+        <input id="browse-q" name="q" type="search" placeholder={b.searchPlaceholder} autocomplete="off" enterkeyhint="search" />
+      </form>
+      <label class="select">
+        <span class="sr-only">{b.sortLabel}</span>
+        <select id="browse-sort" name="sort">
+          <option value="new">{b.sortNew}</option>
+          <option value="old">{b.sortOld}</option>
+          <option value="az">{b.sortAZ}</option>
+        </select>
+      </label>
+    </div>
+
+    {mode === 'all' && (
+      <>
+        <div class="chips rail" id="browse-groups" role="group" aria-label={b.kinds}>
+          <button class="chip on" type="button" data-group-filter="" aria-pressed="true">{b.all} <small>{nf.format(total)}</small></button>
+          {groupsHere.map((g) => (
+            <button class="chip" type="button" data-group={g} data-group-filter={g} aria-pressed="false">
+              <span class="dot"></span>{groupNames[lang][g]}
+              <small>{nf.format(catalogCategories.filter((c) => c.group === g).reduce((n, c) => n + c.n, 0))}</small>
+            </button>
+          ))}
+        </div>
+        <div class="chips rail" id="browse-cats" role="group" aria-label={b.kind}>
+          {catalogCategories.map((c) => (
+            <button class="chip" type="button" data-group={c.group} data-cat={c.id} aria-pressed="false">
+              {catName(c.id)} <small>{nf.format(c.n)}</small>
+            </button>
+          ))}
+        </div>
+      </>
+    )}
+
+    {slots.length > 1 && (
+      <div class="chips rail" id="browse-slots" role="group" aria-label={b.part}>
+        <button class="chip on" type="button" data-slot="" aria-pressed="true">{b.anyPart}</button>
+        {slots.map((s) => <button class="chip" type="button" data-slot={s} aria-pressed="false">{slotNames[lang][s] ?? s}</button>)}
+      </div>
+    )}
+
+    <div class="result-line">
+      <span id="browse-count" aria-live="polite">{b.shown.replace('{n}', nf.format(Math.min(mods.length, total))).replace('{total}', nf.format(total))}</span>
+      <button class="clear-btn" type="button" id="browse-clear" hidden>{b.clear}</button>
+    </div>
+  </div>
+
+  <ul class="grid" id="browse-grid">
+    {mods.map((m, i) => <ModCard mod={m} lang={lang} context={context} eager={i < 8} heading={heading} alt={altFor?.(m)} />)}
+  </ul>
+  <div class="empty" id="browse-empty" hidden>
+    <b>{b.empty}</b>
+    {b.emptyHint}
+  </div>
+  <div class="more-row"><button class="btn ghost" type="button" id="browse-more" hidden>{b.more}</button></div>
+</div>
+
+<dialog class="quick" id="quick" aria-labelledby="quick-title">
+  <button class="icon-btn quick-close" type="button" id="quick-close" aria-label={b.close}><Icon name="x" /></button>
+  <div class="quick-pic"><img id="quick-img" alt="" width="854" height="480" /></div>
+  <div class="quick-body">
+    <h2 id="quick-title"></h2>
+    <dl class="quick-facts" id="quick-facts"></dl>
+    <div class="btn-row">
+      <a class="btn" id="quick-app" href="#"><Icon name="open" />{b.openApp}</a>
+      <button class="btn ghost" type="button" id="quick-add"><Icon name="plus" /><span>{b.add}</span></button>
+      <button class="btn ghost" type="button" id="quick-copy"><Icon name="link" />{b.copyLink}</button>
+    </div>
+    <p class="quick-note">{b.appNote}</p>
+    <p class="quick-note" id="quick-links"></p>
+  </div>
+</dialog>
+
+<div class="tray" id="tray" hidden>
+  <div class="tray-count"><span id="tray-count"></span><small>{b.trayHint}</small></div>
+  <a class="btn sm" id="tray-app" href="#"><Icon name="open" size={16} />{b.openApp}</a>
+  <button class="btn sm ghost" type="button" id="tray-copy"><Icon name="link" size={16} />{b.copyLink}</button>
+  <button class="btn sm ghost" type="button" id="tray-clear"><Icon name="trash" size={16} />{b.trayClear}</button>
+</div>
+
+<script>
+  import { initBrowser } from '../scripts/browse';
+  const root = document.getElementById('browse');
+  if (root) initBrowser(root);
+</script>

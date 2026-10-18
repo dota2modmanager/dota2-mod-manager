@@ -84,11 +84,14 @@ Edge already on the machine:
 
 ```bash
 npm --prefix site run build   # the pages, into site/dist/
-npm --prefix site test        # links and markup, every kind of page at 320-1440 px, the landing pressed
+npm --prefix site test        # links, markup, every kind of page at 320-1440 px, the landing,
+                              # the catalog and its preset links, and the same pages in WebKit
 npm --prefix site run look    # pictures of every kind of page, desktop and phone
 ```
 
-The tests are what CI runs before the site deploys. The pictures are for looking: after a change
+The tests are what CI runs before the site deploys. The WebKit ones (every browser on an iPhone
+is WebKit) skip themselves locally until `npx playwright-core install webkit` has been run once in
+site/; CI installs it and requires them. The pictures are for looking: after a change
 to the site, open the `index.html` that `look` writes into the site's test-output/look folder and
 read the phone pictures first, since that is where the layout breaks and nobody on a desktop sees
 it.

@@ -6,7 +6,7 @@
   "description": "dota2modmanager.com - landing and docs. Built by Astro, served by Cloudflare Pages.",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && node tools/shots.mjs && node tools/preset-page.mjs && node tools/mirror.mjs",
+    "build": "astro build && node tools/shots.mjs && node tools/thumbs.mjs && node tools/preset-page.mjs && node tools/mirror.mjs",
     "preview": "astro preview",
     "deploy:preview": "astro build && wrangler pages deploy dist --project-name dota2modmanager --branch preview --commit-dirty=true",
     "deploy": "astro build && wrangler pages deploy dist --project-name dota2modmanager --branch main --commit-dirty=true && npm run indexnow",
@@ -22,6 +22,8 @@
   },
   "devDependencies": {
     "@astrojs/sitemap": "^3.7.4",
+    "@fontsource-variable/onest": "^5.3.1",
+    "@fontsource-variable/unbounded": "^5.3.0",
     "astro": "^7.3.8",
     "playwright-core": "^1.63.0",
     "wrangler": "^4.146.0"

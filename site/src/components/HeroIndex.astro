@@ -1,42 +1,107 @@
 ---
 /**
- * The list of heroes, biggest first.
+ * Every hero somebody has made something for, as tiles with that hero's newest render behind the
+ * name, biggest first, with a search box and a choice of order.
  *
- * Sorted by how much exists rather than alphabetically, because somebody arriving here is
- * browsing, not looking up a name they already have. The count next to each is the point of
- * the page: it answers "is there anything for my hero" before the click.
+ * Sorted by how much exists rather than alphabetically by default, because somebody arriving
+ * here is browsing, not looking up a name they already have; the A to Z order and the search are
+ * for the one who is. The search knows the Russian names and the nicknames players use (Кристалка,
+ * ЦМ), from src/i18n/hero-names.ts. Every tile is in the HTML; the script only hides and orders.
  */
 import { pathIn, type Lang } from '../i18n/ui';
 import { heroCopy } from '../i18n/heroes';
+import { browse } from '../i18n/browse';
 import { heroes, totalHeroMods } from '../lib/heroes';
+import { thumbOf } from '../lib/catalog';
+import { ruName } from '../i18n/hero-names';
+import Icon from './Icon.astro';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 
 const c = heroCopy[lang];
+const b = browse[lang];
 const nf = new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US');
 // The second count is mods, and it says so rather than standing there as a bare number.
 const pr = new Intl.PluralRules(lang === 'ru' ? 'ru-RU' : 'en-US');
 const modWord = (n: number) =>
   lang === 'ru' ? ({ one: 'мод', few: 'мода' } as Record<string, string>)[pr.select(n)] ?? 'модов' : n === 1 ? 'mod' : 'mods';
+
+const tiles = heroes.map((h) => {
+  const ru = ruName(h.name);
+  const newest = [...h.mods].filter((m) => m.image).sort((a, b2) => (b2.date ?? 0) - (a.date ?? 0))[0];
+  return {
+    ...h,
+    shown: lang === 'ru' ? ru?.nom ?? h.name : h.name,
+    pic: newest?.image?.src ?? null,
+    latest: Math.max(0, ...h.mods.map((m) => m.date ?? 0)),
+    hay: [h.name, ru?.nom, ...(ru?.alt ?? [])].filter(Boolean).join(' ').toLowerCase(),
+  };
+});
 ---
 
-<article class="doc wrap">
+<div class="wrap browse-head">
   <h1>{c.indexH1}</h1>
   <p class="lead">{c.indexLead}</p>
   <p class="muted">
     {c.indexCount.replace('{count}', nf.format(heroes.length))} · {nf.format(totalHeroMods)} {modWord(totalHeroMods)}
   </p>
 
-  <ul class="hero-links hero-grid">
-    {
-      heroes.map((h) => (
-        <li>
-          <a class="chip" href={pathIn(lang, `/heroes/${h.slug}/`)}>
-            {h.name} <span>{nf.format(h.mods.length)}</span>
-          </a>
-        </li>
-      ))
-    }
+  <div class="toolbar" id="heroBrowse">
+    <div class="toolbar-row">
+      <form class="search" role="search">
+        <Icon name="search" size={19} />
+        <label class="sr-only" for="hero-q">{b.searchLabel}</label>
+        <input id="hero-q" type="search" placeholder={lang === 'ru' ? 'Имя героя, например Пудж' : 'A hero, like Pudge'} autocomplete="off" enterkeyhint="search" />
+      </form>
+      <label class="select">
+        <span class="sr-only">{b.sortLabel}</span>
+        <select id="hero-sort">
+          <option value="most">{b.sortMost}</option>
+          <option value="az">{b.sortAZ}</option>
+          <option value="new">{b.sortNew}</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <ul class="hgrid" id="heroGrid">
+    {tiles.map((h, i) => (
+      <li data-name={h.shown.toLowerCase()} data-hay={h.hay} data-count={h.mods.length} data-latest={h.latest}>
+        <a class="htile" href={pathIn(lang, `/heroes/${h.slug}/`)}>
+          {h.pic && <img src={thumbOf(h.pic)} width="400" height="225" alt="" loading={i < 12 ? 'eager' : 'lazy'} decoding="async" />}
+          <b>{h.shown}</b>
+          <span>{nf.format(h.mods.length)} {modWord(h.mods.length)}</span>
+        </a>
+      </li>
+    ))}
   </ul>
-</article>
+  <div class="empty" id="heroEmpty" hidden><b>{b.empty}</b>{lang === 'ru' ? 'Попробуй английское имя или прозвище.' : 'Try the English name, or a nickname.'}</div>
+</div>
+
+<script>
+  const grid = document.getElementById('heroGrid');
+  const input = document.getElementById('hero-q') as HTMLInputElement | null;
+  const sort = document.getElementById('hero-sort') as HTMLSelectElement | null;
+  const empty = document.getElementById('heroEmpty');
+  if (grid && input && sort && empty) {
+    const items = [...grid.children] as HTMLElement[];
+    const apply = () => {
+      const words = input.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+      let shown = 0;
+      for (const li of items) {
+        const ok = words.every((w) => li.dataset.hay!.includes(w));
+        li.hidden = !ok;
+        if (ok) shown++;
+      }
+      const by = sort.value;
+      const num = (li: HTMLElement, k: string) => Number(li.dataset[k]);
+      items.sort((a, b) => by === 'az' ? a.dataset.name!.localeCompare(b.dataset.name!) : by === 'new' ? num(b, 'latest') - num(a, 'latest') : num(b, 'count') - num(a, 'count'));
+      grid.append(...items);
+      empty.hidden = shown > 0;
+    };
+    input.addEventListener('input', apply);
+    input.form?.addEventListener('submit', (e) => e.preventDefault());
+    sort.addEventListener('change', apply);
+  }
+</script>

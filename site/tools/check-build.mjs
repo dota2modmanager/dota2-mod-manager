@@ -110,9 +110,24 @@ const share = read('p/index.html');
 if (share === null) problems.push('p/index.html was not built');
 else if (/new Image\(\)[^]{0,200}loading\s*=\s*['"]lazy/.test(share)) problems.push('p/index.html makes its thumbnails lazy while they are off the page, so they never load');
 
+/* The catalog's browser reads one file and the grids show small copies of every picture. A build
+   that lost either still has pages: the catalog would sit at its first 48 cards for good, and the
+   grids would be a wall of broken pictures. */
+const data = read('catalog/data.json');
+let catalogSize = 0;
+if (data === null) problems.push('catalog/data.json was not built');
+else {
+  try { catalogSize = JSON.parse(data).mods.length; } catch { problems.push('catalog/data.json is not JSON'); }
+  if (data && catalogSize < 500) problems.push(`catalog/data.json has ${catalogSize} mods, which is not a catalog`);
+}
+const pics = (dir) => (fs.existsSync(path.join(dist, dir)) ? fs.readdirSync(path.join(dist, dir)).filter((f) => f.endsWith('.webp')).length : 0);
+const full = pics('mods');
+const small = pics('mods/t');
+if (full && small < full) problems.push(`${full - small} of ${full} mod pictures have no small copy in mods/t/ (tools/thumbs.mjs)`);
+
 if (problems.length) {
   console.error(`check-build: ${problems.length} problem(s) in ${pages} pages`);
   for (const p of problems) console.error(`  - ${p}`);
   process.exit(1);
 }
-console.log(`check-build: ${pages} pages, version ${version} where it belongs, ${used.size} of ${cards.length} cards in use`);
+console.log(`check-build: ${pages} pages, version ${version} where it belongs, ${used.size} of ${cards.length} cards in use, ${catalogSize} mods and ${small} small pictures for the catalog`);

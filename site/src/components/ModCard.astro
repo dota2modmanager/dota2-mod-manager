@@ -1,0 +1,83 @@
+---
+/**
+ * One mod, as a card in a grid: its picture, its name, what kind it is, who made it, and a button
+ * that puts it in the set the visitor is collecting.
+ *
+ * The same markup is built in the browser for the cards /catalog/ draws from data
+ * (src/scripts/browse.ts, card()), and the two are kept to one shape so the script can sort,
+ * filter and open both the same way. The picture is the button that opens the closer look; the
+ * heading sits outside it, because a heading is not allowed inside a button.
+ *
+ * The data-* attributes are what the page's own search and sort read, so a category or a hero
+ * page can be searched without downloading the whole catalog.
+ */
+import type { CatalogMod } from '../lib/catalog';
+import { thumbOf, groupOf } from '../lib/catalog';
+import { browse } from '../i18n/browse';
+import { categoryText } from '../i18n/categories';
+import { slotNames } from '../i18n/heroes';
+import { aliasesFor } from '../i18n/mod-aliases';
+import { heroBySlug } from '../lib/heroes';
+import { ruName } from '../i18n/hero-names';
+import type { Lang } from '../i18n/ui';
+
+interface Props {
+  mod: CatalogMod;
+  lang: Lang;
+  /** what the page is already about, so the card does not say it again */
+  context?: 'all' | 'category' | 'hero';
+  eager?: boolean;
+  heading?: 'h2' | 'h3';
+  alt?: string;
+}
+const { mod: m, lang, context = 'all', eager = false, heading = 'h2', alt } = Astro.props;
+const b = browse[lang];
+const H = heading;
+
+const catName = m.cat === 'heroes' ? (lang === 'ru' ? 'Герои' : 'Heroes') : categoryText(lang, m.cat).name;
+const hero = m.hero ? heroBySlug.get(m.hero) : null;
+const heroName = hero ? (lang === 'ru' ? ruName(hero.name)?.nom ?? hero.name : hero.name) : null;
+const slots = m.slots.map((s) => slotNames[lang][s] ?? s);
+const meta =
+  context === 'hero' ? [m.cat === 'heroes' ? '' : catName, slots.length ? `${b.replaces}: ${slots.join(', ')}` : ''].filter(Boolean).join(' · ') || catName
+  : context === 'category' ? (heroName ?? catName)
+  : [catName, heroName].filter(Boolean).join(' · ');
+const fresh = !!m.date && Date.now() / 1000 - m.date < 30 * 86400;
+const aliases = lang === 'ru' ? aliasesFor(m.name) : [];
+const hay = [m.name, ...m.styles, m.author, catName, hero?.name, heroName, ...aliases].filter(Boolean).join(' ').toLowerCase();
+---
+
+<li class="mcard" data-group={groupOf(m.cat)} data-cat={m.cat} data-key={m.key} data-date={m.date ?? 0} data-name={m.name.toLowerCase()} data-hay={hay} data-slots={m.slots.join(' ')}>
+  <button class="mcard-pic" type="button" data-open>
+    {m.img ? (
+      <img
+        src={thumbOf(m.img)}
+        srcset={`${thumbOf(m.img)} 400w, ${m.img} 854w`}
+        sizes="(max-width: 520px) 46vw, (max-width: 900px) 30vw, 290px"
+        width="400"
+        height="225"
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
+        alt={alt ?? `${m.name}: ${catName}`}
+      />
+    ) : (
+      <span class="none">{m.name}</span>
+    )}
+    {fresh && <span class="mcard-new">{b.newBadge}</span>}
+  </button>
+  <button class="mcard-add" type="button" aria-pressed="false" aria-label={`${b.add}: ${m.name}`} data-add>
+    <svg class="no" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+    <svg class="yes" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17 19 7.5" /></svg>
+  </button>
+  <div class="mcard-body">
+    <H>{m.name}</H>
+    {m.style && <span class="mcard-style">{m.styles.length > 1 ? `${m.style} +${m.styles.length - 1}` : m.style}</span>}
+    {aliases.length > 0 && <p class="mod-alias">Ищут как: {aliases.join(', ')}</p>}
+    <div class="mcard-meta"><i class="dot"></i><span>{meta}</span></div>
+    {m.author && (
+      <div class="mcard-meta">
+        <span>{b.by} {m.authorUrl ? <a href={m.authorUrl} rel="noopener nofollow">{m.author}</a> : m.author}</span>
+      </div>
+    )}
+  </div>
+</li>
