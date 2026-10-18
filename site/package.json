@@ -16,11 +16,14 @@
     "catalog": "node tools/catalog.mjs",
     "mirror": "node tools/mirror.mjs",
     "preset-page": "node tools/preset-page.mjs",
-    "shots": "node tools/shots.mjs"
+    "shots": "node tools/shots.mjs",
+    "test": "node --test \"test/*.test.mjs\"",
+    "look": "node tools/look.mjs"
   },
   "devDependencies": {
     "@astrojs/sitemap": "^3.7.4",
     "astro": "^7.3.8",
+    "playwright-core": "^1.63.0",
     "wrangler": "^4.146.0"
   }
 }

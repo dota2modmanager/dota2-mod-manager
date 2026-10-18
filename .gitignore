@@ -37,3 +37,5 @@ fuzz-output/
 
 # The window page Vite builds (npm run build:ui); main.js loads it from here.
 out/
+# pictures and failure shots of the site tests (site/test, site/tools/look.mjs)
+test-output/

@@ -96,7 +96,7 @@ const others = neighbours(hero.slug);
     <ul class="hero-links">
       {others.map((h) => (
         <li>
-          <a href={pathIn(lang, `/heroes/${h.slug}/`)}>
+          <a class="chip" href={pathIn(lang, `/heroes/${h.slug}/`)}>
             {h.name} <span>{nf.format(h.mods.length)}</span>
           </a>
         </li>

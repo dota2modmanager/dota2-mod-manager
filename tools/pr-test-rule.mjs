@@ -9,7 +9,8 @@
  *
  * The rule is deliberately small. A change counts as a fix when it carries the label bug or
  * regression, or when its title or a commit subject says fix, fixes, fixed, regression, broke or
- * broken. Such a change must modify something under test/, or carry a line
+ * broken. Such a change must modify something under test/ (or site/test/, the site's own browser
+ * tests, for a fix to the site), or carry a line
  *
  *   No-Test-Because: <reason>
  *
@@ -37,7 +38,7 @@ export function judge({ title = '', body = '', labels = [], author = '', commits
   const isFix = labelled.length > 0 || worded.length > 0;
   if (!isFix) return { ok: true, reason: 'not described as a fix' };
 
-  const tests = files.filter((f) => f.startsWith('test/'));
+  const tests = files.filter((f) => f.startsWith('test/') || f.startsWith('site/test/'));
   if (tests.length) return { ok: true, reason: `a fix, and it changes ${tests.length} test file${tests.length === 1 ? '' : 's'}` };
 
   const trailer = [body, ...commits.map((c) => c.message)].map((t) => TRAILER.exec(String(t || ''))).find(Boolean);
@@ -46,7 +47,7 @@ export function judge({ title = '', body = '', labels = [], author = '', commits
   const why = labelled.length ? `it is labelled ${labelled.join(', ')}` : `"${worded[0]}" describes a fix`;
   return {
     ok: false,
-    reason: `${why}, and nothing under test/ changed. Add the test that fails without this change, or put "No-Test-Because: <reason>" in a commit message or the pull request description.`,
+    reason: `${why}, and nothing under test/ or site/test/ changed. Add the test that fails without this change, or put "No-Test-Because: <reason>" in a commit message or the pull request description.`,
   };
 }
 

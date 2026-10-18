@@ -49,11 +49,16 @@ test('the documents agree with package.json about whether there is a linter', ()
 
 test('every npm script the documents tell you to run exists', () => {
   const scripts = new Set(Object.keys(pkg.scripts || {}));
+  const siteScripts = new Set(Object.keys(JSON.parse(read('site/package.json')).scripts || {}));
   const missing = [];
   for (const doc of DOCS.concat(['.github/workflows/test.yml', '.github/workflows/release.yml'])) {
     if (!fs.existsSync(path.join(ROOT, doc))) continue;
     for (const m of read(doc).matchAll(/npm run ([a-z][\w:-]*)/g)) {
       if (!scripts.has(m[1])) missing.push(`${doc} says "npm run ${m[1]}", which package.json does not have`);
+    }
+    // the site's own scripts, run from the root with --prefix site
+    for (const m of read(doc).matchAll(/npm --prefix site run ([a-z][\w:-]*)/g)) {
+      if (!siteScripts.has(m[1])) missing.push(`${doc} says "npm --prefix site run ${m[1]}", which site/package.json does not have`);
     }
   }
   assert.deepEqual([...new Set(missing)], [], missing.join('; '));

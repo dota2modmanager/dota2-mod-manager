@@ -92,7 +92,7 @@ const moreLabel = lang === 'ru' ? 'Другие категории' : 'Other cat
     <ul class="hero-links">
       {others.map((o) => (
         <li>
-          <a href={pathIn(lang, `/catalog/${o.id}/`)}>
+          <a class="chip" href={pathIn(lang, `/catalog/${o.id}/`)}>
             {categoryText(lang, o.id).name} <span>{nf.format(o.mods.length)}</span>
           </a>
         </li>

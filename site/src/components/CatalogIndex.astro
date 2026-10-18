@@ -21,6 +21,10 @@ const h1 = ru ? 'Каталог модов для Доты 2' : 'The Dota 2 mod 
 const lead = ru
   ? 'Что вообще бывает: ландшафты, деревья, река, шейдеры, курсоры, шрифты, фон меню, звуки, крипы и остальное. Всё из открытого каталога D2PFX и всё ставится в один клик.'
   : 'What exists, by kind: terrains, trees, the river, shaders, cursors, fonts, the menu background, sounds, creeps and the rest. All from the open D2PFX catalog, all installed in one click.';
+// The second count is mods, and it says so: printed bare it read "Categories: 37 · 860".
+const pr = new Intl.PluralRules(ru ? 'ru-RU' : 'en-US');
+const modWord = (n: number) =>
+  ru ? ({ one: 'мод', few: 'мода' } as Record<string, string>)[pr.select(n)] ?? 'модов' : n === 1 ? 'mod' : 'mods';
 const heroesLine = ru
   ? `Скины на конкретного героя лежат отдельно: ${nf.format(heroes.length)} героев, ${nf.format(totalHeroMods)} модов.`
   : `Skins for a particular hero have their own pages: ${nf.format(heroes.length)} heroes, ${nf.format(totalHeroMods)} mods.`;
@@ -30,14 +34,14 @@ const heroesLine = ru
   <h1>{h1}</h1>
   <p class="lead">{lead}</p>
   <p class="muted">
-    {ru ? 'Категорий' : 'Categories'}: {nf.format(categories.length)} · {nf.format(totalCategoryMods)}
+    {ru ? 'Категорий' : 'Categories'}: {nf.format(categories.length)} · {nf.format(totalCategoryMods)} {modWord(totalCategoryMods)}
   </p>
 
   <ul class="hero-links hero-grid">
     {
       categories.map((c) => (
         <li>
-          <a href={pathIn(lang, `/catalog/${c.id}/`)}>
+          <a class="chip" href={pathIn(lang, `/catalog/${c.id}/`)}>
             {categoryText(lang, c.id).name} <span>{nf.format(c.mods.length)}</span>
           </a>
         </li>

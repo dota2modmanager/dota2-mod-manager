@@ -54,6 +54,8 @@ html {
   /* the header is sticky, so anything scrolled to has to stop below it rather than under it */
   scroll-padding-top: 78px;
 }
+/* the header is two rows on a phone (see .bar below) */
+@media (max-width: 720px) { html { scroll-padding-top: 112px; } }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -107,8 +109,8 @@ img { max-width: 100%; height: auto; display: block; }
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
-.bar { display: flex; align-items: center; gap: 20px; height: 62px; }
-.brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 650; }
+.bar { display: flex; align-items: center; gap: 6px; height: 62px; }
+.brand { display: flex; align-items: center; gap: 10px; margin-right: auto; color: var(--text); font-weight: 650; }
 .brand:hover { text-decoration: none; }
 .brand-mark {
   width: 28px; height: 28px; border-radius: 8px; display: block;
@@ -118,24 +120,54 @@ img { max-width: 100%; height: auto; display: block; }
   transform: rotate(-8deg) scale(1.08);
   filter: drop-shadow(0 0 10px color-mix(in srgb, var(--primary) 55%, transparent));
 }
-.nav { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.nav a {
+.nav { display: flex; align-items: center; gap: 6px; }
+.nav a, .topbar .cta {
   color: var(--text-dim); padding: 7px 12px; border-radius: 999px; font-size: 14.5px;
+  white-space: nowrap;
 }
 .nav a:hover { background: var(--surface-high); color: var(--text); text-decoration: none; }
 .nav .lang { color: var(--text-faint); }
-.nav .cta {
+.topbar .cta {
+  flex: none;
   background: var(--primary); color: var(--on-primary); font-weight: 650;
 }
-.nav .cta:hover { background: #e0d0ff; color: var(--on-primary); }
+.topbar .cta:hover { background: #e0d0ff; color: var(--on-primary); text-decoration: none; }
 
+/* On a phone the header is two rows: the name and Download, then the links on one line that
+   scrolls sideways if a language makes it longer than the screen. It used to wrap into three
+   rows, and since it is sticky that was 155 px of an 844 px phone on every screen of every page.
+   The links line up with the name above them rather than with their own padding. */
 @media (max-width: 720px) {
-  .bar { height: auto; padding-block: 12px; flex-wrap: wrap; }
-  .nav { width: 100%; margin-left: 0; }
+  .bar { height: auto; padding-top: 10px; flex-wrap: wrap; row-gap: 2px; }
+  /* a basis of zero, so the name never pushes Download onto a row of its own: a wrapping row
+     breaks before it shrinks anything */
+  .brand { flex: 1 1 0; min-width: 0; }
+  .brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nav {
+    order: 3;
+    width: calc(100% + 24px); margin-inline: -12px;
+    padding-bottom: 6px;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+}
+/* The narrowest phones lose GitHub from the header: every page has it in the footer, and the front
+   page twice more (Source code under the title, Read the source at the end). Kept, the Russian
+   row ran 40 px past a 320 px screen and the language switch was the part cut off. */
+@media (max-width: 420px) {
+  .nav .nav-gh { display: none; }
+}
+/* and the very narrowest get a little less padding, so the name is not cut short next to Download */
+@media (max-width: 360px) {
+  .brand { gap: 8px; }
+  .brand span { font-size: 14.5px; }
+  .nav a, .topbar .cta { padding-inline: 10px; }
 }
 
 /* ---------- prose ---------- */
-h1, h2, h3 { line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 0.5em; }
+h1, h2, h3 { line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 0.5em; text-wrap: balance; }
+/* no paragraph ends on one stray word where the browser can help it */
+p, li, figcaption { text-wrap: pretty; }
 h1 { font-size: clamp(34px, 5.4vw, 54px); }
 h2 { font-size: clamp(24px, 3vw, 32px); margin-top: 1.6em; }
 h3 { font-size: 20px; margin-top: 1.4em; }
@@ -144,6 +176,7 @@ h3 { font-size: 20px; margin-top: 1.4em; }
 section > .wrap > :is(h1, h2, h3):first-child { margin-top: 0; }
 p { margin: 0 0 1em; }
 .lead { font-size: clamp(17px, 2vw, 20px); color: var(--text-dim); }
+.nobr { white-space: nowrap; }
 .muted { color: var(--text-faint); font-size: 14px; }
 
 section { padding: 44px 0; }
@@ -272,6 +305,7 @@ section { padding: 44px 0; }
 .kicker {
   text-transform: uppercase; letter-spacing: 0.16em; font-size: 12px;
   color: var(--text-faint); margin: 0 0 14px;
+  text-wrap: balance;
 }
 
 .hero h1 {
@@ -395,7 +429,9 @@ section { padding: 44px 0; }
 .film { max-width: 940px; margin: 0 auto; }
 .film .win { position: relative; }
 /* the box keeps the clip's shape before a single byte of it is fetched, so nothing jumps */
-.film video { aspect-ratio: 880 / 556; background: #0f0d12; }
+/* height: auto, or the height="556" on the tag wins over the ratio and a phone gets a 348 x 556
+   frame with the clip floating in the middle of it */
+.film video { aspect-ratio: 880 / 556; height: auto; background: #0f0d12; }
 .film figcaption {
   margin-top: 18px; text-align: center;
   color: var(--text-faint); font-size: 14.5px;
@@ -407,6 +443,7 @@ section { padding: 44px 0; }
   padding: 13px 22px; border-radius: 999px; cursor: pointer;
   background: var(--primary); color: var(--on-primary);
   border: 0; font: inherit; font-weight: 650; font-size: 15px;
+  white-space: nowrap;
   box-shadow: 0 10px 34px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 .film-play:hover { background: #e0d0ff; }
@@ -694,28 +731,40 @@ section { padding: 44px 0; }
    stacked down the middle, so the emptiness was inside the box; now it is around it, which is
    the difference between a composition and a container. */
 .final .wrap > * { max-width: 720px; margin-inline: auto; }
+/* The panel does not clip. The download menu opens out of it and has to hang below its edge, and
+   when the panel had `overflow: hidden` for the sweep's sake the menu was cut off at the border,
+   with the line under the button painted across it and the two cards below drawn on top. The
+   sweep is clipped by a layer of its own instead, and the panel sits above the cards, which are
+   layers too once their scroll animation runs. */
 .final-box {
   position: relative;
+  z-index: 2;
   padding: 48px 24px 44px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  overflow: hidden;
   background:
     radial-gradient(90% 130% at 50% 0%, color-mix(in srgb, var(--primary) 14%, transparent) 0%, transparent 68%),
     var(--surface-container);
 }
 /* a slow sweep of light across the panel, so the end of the page is not a dead rectangle */
-.final-box::after {
+.final-box > .final-sweep {
+  position: absolute; inset: 0; z-index: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+.final-sweep::after {
   content: '';
   position: absolute; inset: -40% -10%;
   background: conic-gradient(from 0deg, transparent 0deg, color-mix(in srgb, var(--primary) 9%, transparent) 40deg, transparent 90deg);
   animation: sweep 11s linear infinite;
-  pointer-events: none;
 }
 @keyframes sweep { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .final-box::after { animation: none; opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .final-sweep::after { animation: none; opacity: 0.35; } }
 
 .final-box > * { position: relative; z-index: 1; }
+/* the button's row goes over the line of text under it, which the open menu covers */
+.final-box > .btn-row { z-index: 2; }
 .final-icon {
   width: 84px; height: 84px; margin: 0 auto 18px;
   border-radius: 22px;
@@ -779,7 +828,9 @@ section { padding: 44px 0; }
    paragraph that has to be readable to be worth writing. */
 .foot-legal { margin-top: 18px; }
 .foot-legal p { max-width: 82ch; font-size: 13px; line-height: 1.6; color: var(--text-dim); }
-.foot-links { margin-left: auto; display: flex; gap: 20px; }
+/* Wraps. Without it a phone squeezed "Mods by hero" into three lines and pushed GitHub, Releases
+   and Discord off the right edge, where the footer's clip hid them for good. */
+.foot-links { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px 20px; }
 @media (max-width: 720px) { .foot-links { margin-left: 0; } }
 /* the policies, under the paragraphs they belong with, spaced like the links above */
 .foot-legal .foot-policies { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 10px; }
@@ -846,6 +897,11 @@ section { padding: 44px 0; }
   vertical-align: top;
 }
 .doc th { background: var(--surface-container); color: var(--text); font-weight: 600; }
+/* In a cell a code chip keeps its words whole. The break-anywhere rule above is right in a
+   paragraph, but a table sizes its columns by the narrowest they can go, and with it a phone got
+   host names and file paths one or two letters a line. Now the columns are as wide as their
+   longest word, and the table scrolls sideways when that is wider than the screen. */
+.doc :is(td, th) code { word-break: normal; overflow-wrap: break-word; }
 
 .crumbs { font-size: 14px; margin-bottom: 18px; }
 .crumbs a { color: var(--text-faint); }
@@ -969,6 +1025,8 @@ section { padding: 44px 0; }
 }
 
 /* The hero list, and the row of neighbours at the foot of each hero page. */
+/* Each link carries class="chip", which is what keeps the underline of links inside sentences off
+   it (see the top of this file): a pill is its own element, and underlined it read as a typo. */
 .hero-links { list-style: none; padding: 0; margin: 1.4em 0 0; display: flex; flex-wrap: wrap; gap: 10px; }
 .hero-grid { margin-top: 2em; }
 .hero-links a {

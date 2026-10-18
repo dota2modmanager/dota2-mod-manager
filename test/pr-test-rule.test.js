@@ -16,7 +16,7 @@ test('a fix that changes no test is refused, with what to do about it', async ()
     files: ['src/ipc-mods.ts'],
   });
   assert.equal(r.ok, false);
-  assert.match(r.reason, /nothing under test\/ changed/);
+  assert.match(r.reason, /nothing under test\/ or site\/test\/ changed/);
   assert.match(r.reason, /No-Test-Because:/);
 });
 
@@ -28,6 +28,19 @@ test('the same fix with its test passes', async () => {
     files: ['src/ipc-mods.ts', 'test/ipc-contract.test.js'],
   });
   assert.equal(r.ok, true);
+});
+
+test('a fix to the site counts the site tests in site/test/', async () => {
+  const { judge } = await load();
+  const r = judge({
+    title: 'Fix the download menu cut off at the foot of the landing',
+    commits: [{ message: 'Fix the download menu cut off at the foot of the landing' }],
+    files: ['site/src/styles/site.css', 'site/test/landing.test.mjs'],
+  });
+  assert.equal(r.ok, true);
+  // and only those: a file named like a test elsewhere in site/ is not one
+  const off = judge({ title: 'Fix the menu', commits: [{ message: 'Fix the menu' }], files: ['site/src/test.ts'] });
+  assert.equal(off.ok, false);
 });
 
 test('a fix with nothing to test says why, in a commit or in the description', async () => {

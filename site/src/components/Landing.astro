@@ -33,6 +33,13 @@ const c = landing[lang];
     way the guides do, so one string serves both halves of the site. */
 const link = (html: string) => html.replaceAll('~/', lang === 'en' ? '/' : `/${lang}/`);
 
+/** "Free · open source · Windows and Linux" breaks at the dots and nowhere else. Left to itself a
+    phone broke it inside "открытый код" or left "Linux" alone on the second line. */
+const kicker = c.heroKicker.split(' · ');
+const meta = c.heroMeta.split(' · ');
+// the dot stays at the end of the line it closes, never at the start of the next one
+const SEP = ' · ';
+
 const GITHUB = 'https://github.com/dota2modmanager/dota2-mod-manager';
 const RELEASES = `${GITHUB}/releases/latest`;
 const WORKFLOW = `${GITHUB}/actions`;
@@ -108,7 +115,7 @@ const shots = shotNames.map((name, i) => ({
         <span>{c.latest}</span>
       </a>
     )}
-    <p class="kicker">{c.heroKicker}</p>
+    <p class="kicker">{kicker.map((part, i) => <>{i > 0 && SEP}<span class="nobr">{part}</span></>)}</p>
     <h1>
       <span class="t1">{c.heroTitle}</span>
       <span class="t2">{c.heroTitleAccent}</span>
@@ -124,7 +131,7 @@ const shots = shotNames.map((name, i) => ({
         {c.source}
       </a>
     </div>
-    <p class="muted">{c.heroMeta}</p>
+    <p class="muted">{meta.map((part, i) => <>{i > 0 && SEP}<span class="nobr">{part}</span></>)}</p>
 
     {/* No `reveal` here on purpose. A scroll-driven reveal reads the element's position in
         the viewport, and this row starts half in it - so it would sit permanently at a third
@@ -238,6 +245,7 @@ const shots = shotNames.map((name, i) => ({
 <section class="final">
   <div class="wrap">
     <div class="final-box reveal">
+      <span class="final-sweep" aria-hidden="true"></span>
       <img class="final-icon" src="/icon.png" width="84" height="84" alt="" />
       <h2>{c.ctaTitle}</h2>
       <p class="lead">{c.ctaLead}</p>

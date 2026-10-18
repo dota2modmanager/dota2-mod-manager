@@ -21,6 +21,7 @@ import Base from '../layouts/Base.astro';
   title="Not found - Dota 2 Mod Manager"
   description="This address does not exist on dota2modmanager.com."
   path="/404/"
+  lost
 >
   <article class="lost wrap">
     <p class="code">404</p>
@@ -50,7 +51,9 @@ import Base from '../layouts/Base.astro';
   .lost {
     min-height: 62vh;
     display: flex; flex-direction: column; justify-content: center;
-    padding: 60px 0 80px;
+    /* padding-block, not the shorthand: .wrap carries the 20px at the sides, and a shorthand
+       here zeroed it, which put the text against both edges of a phone screen. */
+    padding-block: 60px 80px;
     text-align: center;
   }
 

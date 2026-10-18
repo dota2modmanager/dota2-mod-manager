@@ -92,6 +92,25 @@ jobs:
         working-directory: site
         run: node tools/check-build.mjs
 
+      # The built pages, opened in a browser and pressed: both download menus, the tabs, the pak
+      # panel, the clip, the links in the header and the footer, and one page of every kind at five
+      # widths from a 320 px phone up (site/test/). The download menu at the foot of the landing
+      # shipped cut off by its own panel because nothing here ever opened a page. The runner's own
+      # Chrome does the work, so nothing is downloaded, and the pages never reach the internet. A
+      # red run deploys nothing.
+      - name: Test the pages in a browser
+        working-directory: site
+        run: npm test
+
+      # The screenshot of whatever failed, and the screen it failed on.
+      - name: Keep the pictures of a failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: site-test-output
+          path: site/test-output/
+          if-no-files-found: ignore
+
       - name: Deploy to Cloudflare Pages
         if: github.event_name != 'pull_request'
         working-directory: site

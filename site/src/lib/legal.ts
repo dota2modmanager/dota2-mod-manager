@@ -59,6 +59,12 @@ export function fromMarkdown(html: string, source: string): LegalDoc {
     })
     // a code block wears the docs' code style, and takes focus so a keyboard can scroll a long line
     .replace(/<pre>/g, '<pre class="doc-code" tabindex="0">')
+    // A code chip in a table cell may break after a dot, a slash or a hyphen and nowhere else.
+    // The cell keeps a chip's words whole (.doc td code in site.css), which alone made PRIVACY.md's
+    // host column as wide as "cdn.dota2modmanager.com" and pushed the rest off a phone; before
+    // that, the chips broke anywhere and a phone read them two letters a line.
+    .replace(/<td\b[^>]*>[\s\S]*?<\/td>/g, (cell) =>
+      cell.replace(/<code>([^<]*)<\/code>/g, (_, code: string) => `<code>${code.replace(/([./-])(?=[^./-])/g, '$1<wbr>')}</code>`))
     .trim();
   // a translation opens by naming the file it translates, which is not what the page is about
   return { title, body, description: describe(body, (text) => !/\b[\w.-]+\.md\b/.test(text)) };

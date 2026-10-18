@@ -15,20 +15,24 @@ const { lang } = Astro.props;
 
 const c = heroCopy[lang];
 const nf = new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US');
+// The second count is mods, and it says so rather than standing there as a bare number.
+const pr = new Intl.PluralRules(lang === 'ru' ? 'ru-RU' : 'en-US');
+const modWord = (n: number) =>
+  lang === 'ru' ? ({ one: 'мод', few: 'мода' } as Record<string, string>)[pr.select(n)] ?? 'модов' : n === 1 ? 'mod' : 'mods';
 ---
 
 <article class="doc wrap">
   <h1>{c.indexH1}</h1>
   <p class="lead">{c.indexLead}</p>
   <p class="muted">
-    {c.indexCount.replace('{count}', nf.format(heroes.length))} · {nf.format(totalHeroMods)}
+    {c.indexCount.replace('{count}', nf.format(heroes.length))} · {nf.format(totalHeroMods)} {modWord(totalHeroMods)}
   </p>
 
   <ul class="hero-links hero-grid">
     {
       heroes.map((h) => (
         <li>
-          <a href={pathIn(lang, `/heroes/${h.slug}/`)}>
+          <a class="chip" href={pathIn(lang, `/heroes/${h.slug}/`)}>
             {h.name} <span>{nf.format(h.mods.length)}</span>
           </a>
         </li>

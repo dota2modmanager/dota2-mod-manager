@@ -79,6 +79,19 @@ answer to a question about the finished DOM beside it. Both are dev-only and doc
 `src/dev-harness.ts`. A screenshot proves a layout; `MM_EVAL` proves the text, the language and the
 state, and it is the one that catches real bugs.
 
+The website has tests of its own, in `site/test/`, run against the built pages in the Chrome or
+Edge already on the machine:
+
+```bash
+npm --prefix site run build   # the pages, into site/dist/
+npm --prefix site test        # links and markup, every kind of page at 320-1440 px, the landing pressed
+npm --prefix site run look    # pictures of every kind of page, desktop and phone
+```
+
+The tests are what CI runs before the site deploys. The pictures are for looking: open
+`site/test-output/look/index.html` after a change to the site and read the phone pictures first,
+since that is where the layout breaks and nobody on a desktop sees it.
+
 ## What the tests will not let you do
 
 Four of them check the project against itself rather than checking code:

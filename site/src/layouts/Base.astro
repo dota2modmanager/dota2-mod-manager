@@ -22,9 +22,12 @@ interface Props {
   path: string;
   /** Overrides the drawn card, for pages that have a real picture of their own. */
   image?: { src: string; width: number; height: number };
+  /** The page for an address that is not here: no canonical address of its own, no twin in the
+      other language, and the language switch goes to the other language's front page. */
+  lost?: boolean;
 }
 
-const { title, description, path, image } = Astro.props;
+const { title, description, path, image, lost = false } = Astro.props;
 const lang: Lang = langFromUrl(Astro.url);
 const t = useTranslations(lang);
 
@@ -60,8 +63,8 @@ const RELEASES = `${GITHUB}/releases/latest`;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
-    {alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
+    {!lost && <link rel="canonical" href={canonical} />}
+    {!lost && alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={t('site.name')} />
@@ -86,7 +89,7 @@ const RELEASES = `${GITHUB}/releases/latest`;
     <link rel="apple-touch-icon" href="/icon-180.png" />
     {/* Let the result carry a real picture instead of a thumbnail cropped out of a dark
         screenshot. Which image gets picked is Google's call; the schema below nominates one. */}
-    <meta name="robots" content="max-image-preview:large" />
+    <meta name="robots" content={lost ? 'noindex' : 'max-image-preview:large'} />
     <meta name="theme-color" content="#141218" />
     <slot name="head" />
   </head>
@@ -107,11 +110,13 @@ const RELEASES = `${GITHUB}/releases/latest`;
         </a>
         <nav class="nav" aria-label={t('site.name')}>
           <a href={pathIn(lang, '/docs/')}>{t('nav.docs')}</a>
-          <a href={GITHUB} rel="noopener">{t('nav.github')}</a>
+          <a class="nav-gh" href={GITHUB} rel="noopener">{t('nav.github')}</a>
           <a href={DISCORD} rel="noopener">{t('nav.discord')}</a>
-          <a class="lang" href={pathIn(other, path)} lang={other} hreflang={other}>{t('lang.switch')}</a>
-          <a class="cta" href={`${lang === "en" ? "/" : `/${lang}/`}#download`} rel="noopener">{t('nav.download')}</a>
+          <a class="lang" href={pathIn(other, lost ? '/' : path)} lang={other} hreflang={other}>{t('lang.switch')}</a>
         </nav>
+        {/* Outside the nav so a phone can keep it on the first row, next to the name, while the
+            links take a row of their own underneath. */}
+        <a class="cta" href={`${pathIn(lang, '/')}#download`}>{t('nav.download')}</a>
       </div>
     </header>
 
@@ -126,7 +131,9 @@ const RELEASES = `${GITHUB}/releases/latest`;
     <footer class="foot">
       <div class="wrap foot-row">
         <p>
-          {t('foot.built')} <a href="https://github.com/TheFleece" rel="noopener">TheFleece</a>.
+          {/* The space after the full stop is written out: Astro drops a line break between two
+              elements, and the line read "TheFleece.GPL-3.0" for as long as it was a line break. */}
+          {t('foot.built')} <a href="https://github.com/TheFleece" rel="noopener">TheFleece</a>.{' '}
           <a href={GITHUB} rel="noopener">{t('foot.license')}</a>.
         </p>
         <nav class="foot-links" aria-label={t('foot.nav')}>
