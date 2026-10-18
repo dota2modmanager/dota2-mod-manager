@@ -92,7 +92,7 @@ export function installDesktopEntry({ platform, exe, home, diag, icon, refresh =
     const dir = path.join(home, '.local', 'share', 'applications');
     const file = path.join(dir, `${APP_ID}.desktop`);
     const entry = desktopEntry(exe);
-    if (fs.existsSync(file) && fs.readFileSync(file, 'utf-8') === entry) return;
+    if (holds(file, Buffer.from(entry))) return;
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(file, entry);
     refresh(dir);
@@ -100,6 +100,12 @@ export function installDesktopEntry({ platform, exe, home, diag, icon, refresh =
   } catch (e) {
     diag(`desktop entry skipped: ${(e as Error).message}`);
   }
+}
+
+/* Whether `file` already says exactly `want`. One read, no existsSync before it: a check and then a
+ * use is a race CodeQL rightly flags, and a missing file is simply one that says something else. */
+function holds(file: string, want: Buffer): boolean {
+  try { return fs.readFileSync(file).equals(want); } catch { return false; }
 }
 
 /* The icon goes where the freedesktop icon theme spec looks first for a user's own programs. The
@@ -110,7 +116,7 @@ function installIcon(src: string, home: string, diag: (msg: string) => void): vo
     const dir = path.join(home, '.local', 'share', 'icons', 'hicolor', '512x512', 'apps');
     const file = path.join(dir, `${APP_ID}.png`);
     const want = fs.readFileSync(src);
-    if (fs.existsSync(file) && fs.readFileSync(file).equals(want)) return;
+    if (holds(file, want)) return;
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(file, want);
     diag(`desktop icon written: ${file}`);
