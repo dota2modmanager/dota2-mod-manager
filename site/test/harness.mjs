@@ -200,10 +200,14 @@ export function findOverflow(page) {
   return page.evaluate(() => {
     const vw = document.documentElement.clientWidth;
     const out = [];
+    // A line cut short with an ellipsis is cut on purpose (an author's name in a narrow card), and
+    // says so on screen; a line cut by a clip with no ellipsis is the bug this looks for.
     const clipped = (el) => {
       for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
-        const ox = getComputedStyle(a).overflowX;
-        if (ox === 'auto' || ox === 'scroll') {
+        const cs = getComputedStyle(a);
+        const ox = cs.overflowX;
+        const ellipsis = (ox === 'hidden' || ox === 'clip') && cs.textOverflow === 'ellipsis';
+        if (ox === 'auto' || ox === 'scroll' || ellipsis) {
           const r = a.getBoundingClientRect();
           return r.left >= -1 && r.right <= vw + 1;
         }
