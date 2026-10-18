@@ -73,7 +73,19 @@ async function sandboxMod(m) {
   let bytes = null;
   try { bytes = fs.readFileSync(file); } catch { /* not in this sandbox */ }
   if (bytes && hash(bytes) === m.sha256) return { file };
-  const res = await fetch(m.url);
+  // Three tries, a few seconds apart. A runner's network drops a fetch now and then ("fetch
+  // failed", a 502 from the mirror), and that one dropped download was failing the whole run.
+  // A 4xx is an answer, not a hiccup, and is not asked again.
+  let res;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      res = await fetch(m.url);
+      if (res.ok || res.status < 500 || attempt === 3) break;
+    } catch (e) {
+      if (attempt === 3) throw e;
+    }
+    await new Promise((r) => setTimeout(r, 2000 * attempt));
+  }
   if (!res.ok) throw new Error(`${m.url}: HTTP ${res.status}`);
   bytes = Buffer.from(await res.arrayBuffer());
   const got = hash(bytes);

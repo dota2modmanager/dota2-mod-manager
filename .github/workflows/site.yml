@@ -98,8 +98,17 @@ jobs:
       # shipped cut off by its own panel because nothing here ever opened a page. The runner's own
       # Chrome does the work, so nothing is downloaded, and the pages never reach the internet. A
       # red run deploys nothing.
+      # WebKit as well, which is what every browser on an iPhone is. The site stopped opening in
+      # Safari on iOS while every Chrome test was green; site/test/webkit.test.mjs is the reason
+      # this step installs Playwright's WebKit build and SITE_WEBKIT makes it required.
+      - name: Install WebKit for the iPhone tests
+        working-directory: site
+        run: npx playwright-core install --with-deps webkit
+
       - name: Test the pages in a browser
         working-directory: site
+        env:
+          SITE_WEBKIT: required
         run: npm test
 
       # The screenshot of whatever failed, and the screen it failed on.

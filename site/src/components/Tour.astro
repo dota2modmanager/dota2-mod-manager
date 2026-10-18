@@ -47,11 +47,10 @@ const film = tourText[lang];
           loop
           playsinline
           preload="none"
+          data-src={tourUrl(lang)}
           title={film.name}
           aria-label={caption}
-        >
-          <source src={tourUrl(lang)} type="video/webm" />
-        </video>
+        ></video>
         <button class="film-play" id="filmPlay" type="button" hidden>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
           {play}
@@ -73,8 +72,12 @@ const film = tourText[lang];
     const roomy = window.matchMedia('(min-width: 760px)');
     const auto = () => !still.matches && roomy.matches;
 
+    // The file is named in data-src and handed over only here. A <source> in the markup, even
+    // with preload="none", kept WebKit's load event from ever firing: Safari sat on a page that
+    // had finished drawing and still called itself loading. A phone never plays the clip by
+    // itself, so on a phone it is fetched only when somebody presses play.
     const start = () => {
-      if (film.preload !== 'auto') { film.preload = 'auto'; film.load(); }
+      if (!film.src && film.dataset.src) { film.src = film.dataset.src; film.preload = 'auto'; }
       film.play().catch(() => { play.hidden = false; });
     };
 
