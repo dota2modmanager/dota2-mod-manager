@@ -296,8 +296,11 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
         <li>
           <a class="htile" href={pathIn(lang, `/heroes/${h.slug}/`)}>
             <img src={thumbOf(h.pic)} width="400" height="225" alt="" loading="lazy" decoding="async" />
-            <b>{heroName(h.name)}</b>
-            <span>{nf.format(h.mods.length)}</span>
+            <span class="htile-text">
+              <b>{h.name}</b>
+              {heroName(h.name).toLowerCase() !== h.name.toLowerCase() && <small>{heroName(h.name)}</small>}
+              <span class="htile-count">{nf.format(h.mods.length)}</span>
+            </span>
           </a>
         </li>
       ))}
