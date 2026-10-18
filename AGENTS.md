@@ -88,9 +88,10 @@ npm --prefix site test        # links and markup, every kind of page at 320-1440
 npm --prefix site run look    # pictures of every kind of page, desktop and phone
 ```
 
-The tests are what CI runs before the site deploys. The pictures are for looking: open
-`site/test-output/look/index.html` after a change to the site and read the phone pictures first,
-since that is where the layout breaks and nobody on a desktop sees it.
+The tests are what CI runs before the site deploys. The pictures are for looking: after a change
+to the site, open the `index.html` that `look` writes into the site's test-output/look folder and
+read the phone pictures first, since that is where the layout breaks and nobody on a desktop sees
+it.
 
 ## What the tests will not let you do
 
