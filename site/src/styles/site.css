@@ -886,6 +886,7 @@ section { padding: 56px 0; }
   position: relative; display: block; width: 100%; padding: 0; border: 0;
   aspect-ratio: 16 / 9; background: var(--surface-low); overflow: hidden; cursor: zoom-in;
 }
+.mcard-pic:hover { text-decoration: none; }
 .mcard-pic:focus-visible { outline-offset: -3px; border-radius: var(--radius) var(--radius) 0 0; }
 .mcard-body { cursor: pointer; }
 .mcard-meta a { color: var(--text-dim); text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 0.2em; }
@@ -995,6 +996,68 @@ section { padding: 56px 0; }
 .crumbs a { color: var(--text-faint); }
 .crumbs a::before { content: '\2190\00a0'; }
 .crumbs a:hover { color: var(--text); }
+
+/* ---------- one mod's page ---------- */
+/* The picture is the page: as wide as the column allows, framed in the colour of the mod's group.
+   This is the one place where that colour is more than a dot, because here it is the only mod. */
+.mod-page { padding-block: 28px 8px; }
+.mod { display: grid; gap: 28px; align-items: start; }
+@media (min-width: 960px) { .mod { grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: 40px; } }
+.mod-pic {
+  margin: 0; position: relative; aspect-ratio: 16 / 9; overflow: hidden;
+  border-radius: var(--radius-lg); background: var(--surface-low);
+  border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
+  box-shadow: 0 40px 90px -50px color-mix(in srgb, var(--tone) 70%, transparent), 0 24px 60px -30px rgb(0 0 0 / 0.8);
+}
+.mod-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.mod-pic .none { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; text-align: center; color: var(--text-faint); }
+/* the styles, as their own pictures: a mod in three colours is chosen by looking */
+.mod-looks { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.mod-look {
+  display: grid; gap: 6px; width: 132px; padding: 6px; cursor: pointer; text-align: left;
+  border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface-container);
+  color: var(--text-dim); font: 600 13px/1.25 var(--body);
+  transition: border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+  touch-action: manipulation;
+}
+.mod-look img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-xs); }
+.mod-look span { padding: 0 2px 2px; overflow-wrap: anywhere; }
+.mod-look:hover { color: var(--text); border-color: var(--border-strong); }
+.mod-look[aria-pressed='true'] { color: var(--text); border-color: var(--tone); box-shadow: inset 0 0 0 1px var(--tone); }
+.mod-info { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.mod-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.mod-info h1 { margin: 0; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.1; overflow-wrap: anywhere; }
+.mod-lead { margin: 0; max-width: 52ch; color: var(--text-dim); font-size: 17px; line-height: 1.6; }
+.mod-facts {
+  display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 20px; margin: 0;
+  padding: 16px 0; border-block: 1px solid var(--border); font-size: 15px;
+}
+.mod-facts dt { color: var(--text-faint); }
+.mod-facts dd { margin: 0; overflow-wrap: anywhere; }
+.mod-facts a { color: var(--text); }
+.mod-set, .mod-note { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text-faint); }
+.mod-set { color: var(--text-dim); }
+.mod-more { padding-top: 56px; }
+.mod-more .grid { margin-top: 0; }
+/* here a card is a way to its own page, not to a closer look */
+.mod-more .mcard-pic { cursor: pointer; }
+@media (max-width: 520px) {
+  .mod-page { padding-top: 18px; }
+  .mod-looks { gap: 8px; }
+  .mod-look { width: calc((100% - 16px) / 3); padding: 4px; font-size: 12px; }
+  .mod-lead { font-size: 16px; }
+  .mod-info .btn-row .btn { flex: 1 1 100%; }
+}
+/* A phone cannot run the app, so the link to it goes, and sending the page on comes first: the
+   person looking at a mod on a phone in Discord opens it later on the computer (as on the landing). */
+.mod-note-touch { display: none; margin: 0; font-size: 14px; line-height: 1.55; color: var(--text-dim); }
+@media (hover: none) and (pointer: coarse) {
+  #mod-app, .mod-note { display: none; }
+  .mod-note-touch { display: block; }
+  #mod-share { order: -1; background: var(--primary); color: var(--on-primary); border-color: transparent; }
+}
+/* "in the set": the same green the cards turn when they are in it */
+.btn.ghost.on { background: color-mix(in srgb, var(--arcana) 16%, transparent); border-color: color-mix(in srgb, var(--arcana) 60%, transparent); }
 
 /* ---------- docs ---------- */
 /* A reading column, not the landing's full width: 72ch is the line length the body text was

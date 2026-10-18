@@ -1,0 +1,130 @@
+---
+/**
+ * One mod's own page: what a link to one mod opens, from a chat or from a search.
+ *
+ * The picture is the page. It is as large as the column allows, framed in the colour of the mod's
+ * group, and a mod that comes in several styles switches between their pictures in place. Beside
+ * it: what the mod is, who made it, and the three things to do with it - open it in the app, put
+ * it in the set, send the link on. Under it, the hero's or the category's other mods, as cards
+ * that lead to their own pages.
+ *
+ * Everything is in the HTML. The script (src/scripts/mod-page.ts) only switches the style, keeps
+ * the set and shares the link; without it the page still shows the mod and its first style opens
+ * in the app.
+ */
+import { groupOf, thumbOf, dayOf, type CatalogMod } from '../lib/catalog';
+import { modText, modNeighbours } from '../lib/mods';
+import { presetCode, appLink } from '../lib/preset';
+import { modPage } from '../i18n/mod-page';
+import { browse } from '../i18n/browse';
+import { heroCopy, slotNames } from '../i18n/heroes';
+import { pathIn, type Lang } from '../i18n/ui';
+import ModCard from './ModCard.astro';
+import Icon from './Icon.astro';
+
+interface Props { lang: Lang; mod: CatalogMod }
+const { lang, mod } = Astro.props;
+
+const c = modPage[lang];
+const b = browse[lang];
+const text = modText(lang, mod);
+const near = modNeighbours(lang, mod);
+const nf = new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US');
+const pr = new Intl.PluralRules(lang === 'ru' ? 'ru-RU' : 'en-US');
+const word = (n: number) => {
+  const f = pr.select(n);
+  const w = heroCopy[lang].modsWord;
+  return f === 'one' ? w[0] : f === 'few' ? w[1] : w[2];
+};
+
+/* every style with a picture of its own; a mod in one style has one, with no label */
+const looks = mod.looks.filter((l) => l.img).map((l) => ({
+  ...l,
+  name: l.label ?? c.plainStyle,
+  app: appLink(presetCode(mod.name, [{ cat: mod.cat, name: mod.name, style: l.label }])),
+  alt: mod.looks.length > 1 ? c.styleAlt.replace('{mod}', mod.name).replace('{style}', l.label ?? c.plainStyle) : `${mod.name}: ${text.kind}`,
+}));
+const first = looks[0] ?? { label: mod.style, img: null, app: appLink(presetCode(mod.name, [{ cat: mod.cat, name: mod.name, style: mod.style }])), alt: mod.name };
+const slots = mod.slots.map((s) => slotNames[lang][s] ?? s);
+const kindHref = mod.cat === 'heroes' ? pathIn(lang, '/heroes/') : pathIn(lang, `/catalog/${mod.cat}/`);
+const heroHref = mod.hero ? pathIn(lang, `/heroes/${mod.hero}/`) : null;
+const moreTitle = text.hero ? text.put(c.moreHero) : text.put(c.moreKind);
+const allLabel = text.hero
+  ? text.put(c.allHero).replace('{n}', nf.format(near.total)).replace('{word}', word(near.total))
+  : text.put(c.allKind);
+const back = text.heroShown ?? text.kind;
+---
+
+<div class="wrap mod-page" data-group={groupOf(mod.cat)}>
+  <nav class="crumbs" aria-label={lang === 'ru' ? 'Где этот мод' : 'Where this mod is'}>
+    <a href={heroHref ?? kindHref}>{back}</a>
+  </nav>
+
+  <article class="mod" id="mod" data-key={mod.key}
+    data-words={JSON.stringify({ add: b.add, remove: b.remove, shared: c.shared, inSet: c.inSet, mods: heroCopy[lang].modsWord })}>
+    <div class="mod-media">
+      <figure class="mod-pic">
+        {first.img ? (
+          <img id="mod-img" src={first.img} srcset={`${thumbOf(first.img)} 400w, ${first.img} 854w`}
+            sizes="(max-width: 960px) calc(100vw - 32px), 700px" width="854" height="480" alt={first.alt} fetchpriority="high" />
+        ) : (
+          <span class="none">{mod.name}</span>
+        )}
+      </figure>
+      {looks.length > 1 && (
+        <div class="mod-looks" role="group" aria-label={c.styles}>
+          {looks.map((l, i) => (
+            <button class="mod-look" type="button" aria-pressed={i === 0 ? 'true' : 'false'}
+              data-img={l.img} data-thumb={thumbOf(l.img!)} data-alt={l.alt} data-app={l.app}>
+              <img src={thumbOf(l.img!)} width="400" height="225" alt="" loading="lazy" decoding="async" />
+              <span>{l.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <div class="mod-info">
+      <div class="mod-tags">
+        <a class="chip" href={kindHref}><span class="dot"></span>{text.kind}</a>
+        {heroHref && <a class="chip" href={heroHref}>{text.heroShown}</a>}
+      </div>
+      <h1>{mod.name}</h1>
+      <p class="mod-lead">{text.lead} {c.install}</p>
+      <dl class="mod-facts">
+        {looks.length > 1 && <><dt>{c.styles}</dt><dd>{looks.map((l) => l.name).join(', ')}</dd></>}
+        {slots.length > 0 && <><dt>{b.replaces}</dt><dd>{slots.join(', ')}</dd></>}
+        {mod.author && (
+          <><dt>{b.author}</dt><dd>{mod.authorUrl ? <a href={mod.authorUrl} rel="noopener nofollow">{mod.author}</a> : mod.author}</dd></>
+        )}
+        {mod.date && <><dt>{b.added}</dt><dd>{dayOf(lang, mod.date)}</dd></>}
+      </dl>
+      <div class="btn-row">
+        <a class="btn" id="mod-app" href={first.app}><Icon name="open" />{b.openApp}</a>
+        <button class="btn ghost" type="button" id="mod-add" aria-pressed="false"><Icon name="plus" /><span>{b.add}</span></button>
+        <button class="btn ghost" type="button" id="mod-share"><Icon name="link" />{c.share}</button>
+      </div>
+      <p class="mod-set" id="mod-set" hidden><span></span> <a href={pathIn(lang, '/catalog/')}>{c.openSet}</a></p>
+      <p class="mod-note-touch">{c.noteTouch}</p>
+      <p class="mod-note">{c.note} {c.noApp} <a href={`${pathIn(lang, '/')}#download`}>{c.download}</a> {c.downloadFor}</p>
+    </div>
+  </article>
+
+  {near.mods.length > 0 && (
+    <section class="mod-more">
+      <div class="sec-head">
+        <h2>{moreTitle}</h2>
+        <a class="more" href={near.home}>{allLabel}</a>
+      </div>
+      <ul class="grid">
+        {near.mods.map((m) => <ModCard mod={m} lang={lang} context={mod.hero ? 'hero' : 'category'} heading="h3" />)}
+      </ul>
+    </section>
+  )}
+</div>
+
+<script>
+  import { initModPage } from '../scripts/mod-page';
+  const root = document.getElementById('mod');
+  if (root) initModPage(root);
+</script>

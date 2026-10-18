@@ -192,7 +192,7 @@ test('the tabs of the app switch by click and by keyboard', async () => {
   await context.close();
 });
 
-test('the search on the landing finds mods as you type and lands on them in the catalog', async () => {
+test('the search on the landing finds mods as you type and lands on their pages', async () => {
   for (const screen of ['desktop', 'mobile']) {
     const { context, page } = await open(screen);
     const input = page.locator('#finder-q');
@@ -203,10 +203,10 @@ test('the search on the landing finds mods as you type and lands on them in the 
     assert.ok((await rows.count()) > 0 && (await rows.count()) <= 6);
     for (const t of await rows.allTextContents()) assert.match(t.toLowerCase(), /pudge|пудж/);
     const href = await rows.first().getAttribute('href');
-    assert.match(href, /\/catalog\/\?q=pudge#mod=/);
+    assert.match(href, /^\/mods\/[a-z0-9-]+\/$/);
     await press(screen, rows.first());
-    await page.waitForURL(/\/catalog\//);
-    await page.locator('#quick[open]').waitFor();
+    await page.waitForURL(/\/mods\/[a-z0-9-]+\/$/);
+    assert.match(await page.locator('h1').textContent(), /pudge/i);
     await context.close();
   }
 });

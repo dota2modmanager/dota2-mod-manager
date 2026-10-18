@@ -17,6 +17,8 @@ import { heroCopy } from '../i18n/heroes';
 import { heroText, type Hero } from './heroes';
 import { categoryText } from '../i18n/categories';
 import { categories, type Category } from './categories';
+import type { CatalogMod } from './catalog';
+import { modText } from './mods';
 import { plainText } from './text';
 import { ogPath } from './og';
 import {
@@ -256,6 +258,63 @@ export function categorySchema(lang: 'en' | 'ru', category: Category, origin = '
         { '@type': 'ListItem', position: 1, name: 'Dota 2 Mod Manager', item: `${origin}${prefix}/` },
         { '@type': 'ListItem', position: 2, name: lang === 'ru' ? 'Каталог' : 'Catalog', item: `${origin}${prefix}/catalog/` },
         { '@type': 'ListItem', position: 3, name: c.name, item: url },
+      ],
+    },
+  ];
+}
+
+/**
+ * One mod's page: a page about one work, its picture, who made it and when the catalog added it,
+ * and the way back to the hero or the category it belongs to. Nothing here the page does not show.
+ */
+export function modSchema(lang: 'en' | 'ru', mod: CatalogMod, origin = 'https://dota2modmanager.com') {
+  const text = modText(lang, mod);
+  const prefix = lang === 'en' ? '' : `/${lang}`;
+  const url = `${origin}${prefix}/mods/${mod.key}/`;
+  const author = authorNode(origin);
+  const images = mod.looks.filter((l) => l.img).map((l) => ({
+    '@type': 'ImageObject',
+    contentUrl: `${origin}${l.img}`,
+    url: `${origin}${l.img}`,
+    name: l.label ? `${mod.name} (${l.label})` : mod.name,
+    width: 854,
+    height: 480,
+    encodingFormat: 'image/webp',
+  }));
+  const parent = text.hero
+    ? { name: text.heroShown!, item: `${origin}${prefix}/heroes/${text.hero.slug}/` }
+    : mod.cat === 'heroes'
+      ? { name: text.kind, item: `${origin}${prefix}/heroes/` }
+      : { name: text.kind, item: `${origin}${prefix}/catalog/${mod.cat}/` };
+
+  return [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'ItemPage',
+      '@id': url,
+      url,
+      name: text.title,
+      description: text.description,
+      inLanguage: lang,
+      isPartOf: { '@id': `${origin}/#website` },
+      publisher: { '@id': author['@id'] },
+      ...(images.length ? { primaryImageOfPage: images[0] } : {}),
+      mainEntity: {
+        '@type': 'CreativeWork',
+        name: mod.name,
+        ...(images.length ? { image: images } : {}),
+        ...(mod.author ? { author: { '@type': 'Person', name: mod.author, ...(mod.authorUrl ? { url: mod.authorUrl } : {}) } } : {}),
+        ...(mod.date ? { dateCreated: new Date(mod.date * 1000).toISOString().slice(0, 10) } : {}),
+        about: { '@type': 'VideoGame', name: 'Dota 2' },
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Dota 2 Mod Manager', item: `${origin}${prefix}/` },
+        { '@type': 'ListItem', position: 2, ...parent },
+        { '@type': 'ListItem', position: 3, name: mod.name, item: url },
       ],
     },
   ];

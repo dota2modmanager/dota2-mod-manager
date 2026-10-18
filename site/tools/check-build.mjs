@@ -125,9 +125,19 @@ const full = pics('mods');
 const small = pics('mods/t');
 if (full && small < full) problems.push(`${full - small} of ${full} mod pictures have no small copy in mods/t/ (tools/thumbs.mjs)`);
 
+/* Every mod has a page of its own in both languages (/mods/<key>/): a link to one mod in a chat or
+   a search result lands there, so a key with no page is a link that goes nowhere. */
+let modPages = 0;
+if (catalogSize) {
+  const keys = JSON.parse(data).mods.map((m) => m[0]);
+  const missing = keys.flatMap((k) => ['', 'ru/'].filter((l) => read(`${l}mods/${k}/index.html`) === null).map((l) => `/${l}mods/${k}/`));
+  if (missing.length) problems.push(`${missing.length} mod page(s) were not built: ${missing.slice(0, 6).join(', ')}${missing.length > 6 ? ', ...' : ''}`);
+  modPages = keys.length * 2 - missing.length;
+}
+
 if (problems.length) {
   console.error(`check-build: ${problems.length} problem(s) in ${pages} pages`);
   for (const p of problems) console.error(`  - ${p}`);
   process.exit(1);
 }
-console.log(`check-build: ${pages} pages, version ${version} where it belongs, ${used.size} of ${cards.length} cards in use, ${catalogSize} mods and ${small} small pictures for the catalog`);
+console.log(`check-build: ${pages} pages, version ${version} where it belongs, ${used.size} of ${cards.length} cards in use, ${catalogSize} mods, ${modPages} mod pages and ${small} small pictures for the catalog`);

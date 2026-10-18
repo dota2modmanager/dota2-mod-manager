@@ -48,6 +48,8 @@ export interface BrowseCopy {
   allKinds: string;
   heroPage: string;
   kindPage: string;
+  /** the link from the closer look to the mod's own page */
+  modPage: string;
   mods: [string, string, string];
 }
 
@@ -82,7 +84,7 @@ export const browse: Record<'en' | 'ru', BrowseCopy> = {
     copyLink: 'Copy the link',
     copied: 'Link copied',
     noCompress: 'This browser cannot build the link. Any recent Chrome, Edge, Firefox or Safari can.',
-    appNote: 'The button opens the app if you have it. The link works for anyone: it shows the set and offers the download.',
+    appNote: "The button opens the app if you have it. The link leads to the mod's page, which shows the mod to anyone and offers the app.",
     close: 'Close',
     tray: '{n} {word} in your set',
     trayHint: 'Open it in the app, or send the link to a friend.',
@@ -93,6 +95,7 @@ export const browse: Record<'en' | 'ru', BrowseCopy> = {
     allKinds: 'Every kind of mod',
     heroPage: 'Everything for {hero}',
     kindPage: 'More {kind}',
+    modPage: "The mod's page",
     mods: ['mod', 'mods', 'mods'],
   },
   ru: {
@@ -125,7 +128,7 @@ export const browse: Record<'en' | 'ru', BrowseCopy> = {
     copyLink: 'Скопировать ссылку',
     copied: 'Ссылка скопирована',
     noCompress: 'Этот браузер не умеет собрать ссылку. Любой свежий Chrome, Edge, Firefox или Safari умеет.',
-    appNote: 'Кнопка откроет приложение, если оно у тебя стоит. Ссылка работает у всех: покажет набор и предложит скачать.',
+    appNote: 'Кнопка откроет приложение, если оно у тебя стоит. Ссылка ведёт на страницу мода: она покажет мод кому угодно и предложит приложение.',
     close: 'Закрыть',
     tray: 'В наборе {n} {word}',
     trayHint: 'Открой его в приложении или отправь ссылку другу.',
@@ -136,6 +139,7 @@ export const browse: Record<'en' | 'ru', BrowseCopy> = {
     allKinds: 'Все виды модов',
     heroPage: 'Всё для героя {hero}',
     kindPage: 'Ещё: {kind}',
+    modPage: 'Страница мода',
     mods: ['мод', 'мода', 'модов'],
   },
 };

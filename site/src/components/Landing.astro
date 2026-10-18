@@ -185,7 +185,7 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
         </li>
       ))}
     </ul>
-    <div class="finder-results" id="finderResults" data-lang={lang} data-catalog={catalogHref} data-empty={c.finderEmpty} aria-live="polite"></div>
+    <div class="finder-results" id="finderResults" data-lang={lang} data-mods={pathIn(lang, '/mods/')} data-empty={c.finderEmpty} aria-live="polite"></div>
   </div>
 </section>
 
@@ -481,7 +481,7 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
   const input = document.getElementById('finder-q') as HTMLInputElement | null;
   if (box && input) {
     const lang = (box.dataset.lang as Lang) || 'en';
-    const base = box.dataset.catalog!;
+    const base = box.dataset.mods!;
     let timer = 0;
     const render = async () => {
       const q = input.value.trim();
@@ -493,7 +493,7 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
       if (!hits.length) { box.replaceChildren(el('p', 'muted', box.dataset.empty)); return; }
       box.replaceChildren(...hits.map((m) => {
         const a = el('a', 'finder-row');
-        a.href = `${base}?q=${encodeURIComponent(q)}#mod=${encodeURIComponent(m.key)}`;
+        a.href = `${base}${m.key}/`; // the mod's own page
         a.dataset.group = m.group;
         if (m.thumb) {
           const img = el('img');

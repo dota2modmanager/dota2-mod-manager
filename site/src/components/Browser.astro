@@ -46,6 +46,7 @@ const words = {
   close: b.close, tray: b.tray, setName: b.setName, heroPage: b.heroPage, kindPage: b.kindPage, mods: b.mods,
   slots: slotNames[lang], heroesLabel: lang === 'ru' ? 'Герои' : 'Heroes',
   heroBase: pathIn(lang, '/heroes/'), catBase: pathIn(lang, '/catalog/'),
+  modBase: pathIn(lang, '/mods/'), modPage: b.modPage,
 };
 const groupsHere = GROUPS.map(([g]) => g).filter((g) => catalogCategories.some((c) => c.group === g));
 ---

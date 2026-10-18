@@ -36,7 +36,7 @@ export const groupNames: Record<'en' | 'ru', Record<Group, string>> = {
 };
 
 export interface CatalogMod {
-  /** Unique across the catalog, for the address of the quick view. */
+  /** Unique across the catalog: the mod's page is /mods/<key>/, and the quick view's #mod=<key>. */
   key: string;
   name: string;
   cat: string;
@@ -50,6 +50,8 @@ export interface CatalogMod {
   authorUrl: string | null;
   date: number | null;
   slots: string[];
+  /** Each look with its own picture, in the catalog's order: what the mod's page switches between. */
+  looks: Array<{ label: string | null; img: string | null }>;
 }
 
 const byKey = new Map<string, CatalogMod>();
@@ -60,6 +62,7 @@ for (const c of categories) {
     byKey.set(keyOf(c.id, m.name, m.styleLabel), {
       key: '', name: m.name, cat: c.id, style: m.styleLabel, styles: m.styleLabel ? [m.styleLabel] : [], hero: null,
       img: m.image?.src ?? null, author: m.author, authorUrl: m.authorUrl, date: m.date, slots: [],
+      looks: [{ label: m.styleLabel, img: m.image?.src ?? null }],
     });
   }
 }
@@ -76,17 +79,22 @@ for (const h of heroes) {
     byKey.set(k, {
       key: '', name: m.name, cat, style: m.styleLabel, styles: m.styleLabel ? [m.styleLabel] : [], hero: h.slug,
       img: m.image?.src ?? null, author: m.author, authorUrl: m.authorUrl, date: m.date, slots: m.slots,
+      looks: [{ label: m.styleLabel, img: m.image?.src ?? null }],
     });
   }
 }
 
 /* The styles of one mod arrive as separate entries; they become one card that lists them. */
 const byName = new Map<string, CatalogMod>();
+/* when each mod first appeared: a new look moves its date on, and must not move its address */
+const since = new Map<CatalogMod, number>();
 for (const m of byKey.values()) {
   const k = `${m.cat}|${m.name}`;
   const have = byName.get(k);
-  if (!have) { byName.set(k, m); continue; }
+  if (!have) { byName.set(k, m); since.set(m, m.date ?? 0); continue; }
   for (const st of m.styles) if (!have.styles.includes(st)) have.styles.push(st);
+  for (const l of m.looks) if (!have.looks.some((x) => x.label === l.label)) have.looks.push(l);
+  since.set(have, Math.min(since.get(have)!, m.date ?? 0));
   have.img ??= m.img;
   have.hero ??= m.hero;
   have.date = Math.max(have.date ?? 0, m.date ?? 0) || null;
@@ -95,11 +103,17 @@ for (const m of byKey.values()) {
 
 /** Newest first, which is the order the catalog opens in. */
 export const catalog: CatalogMod[] = [...byName.values()].sort((a, b) => (b.date ?? 0) - (a.date ?? 0) || a.name.localeCompare(b.name));
+/* The key is an address people share, so it has to keep. Two mods may share a name (a hero's mod
+   and a hero item of the same name), and the one that came first keeps the plain one: handed out
+   newest first, a new arrival would take the old mod's address and send every link to it astray.
+   "t" is the folder of the small pictures, beside the pages under /mods/. */
 {
-  const taken = new Set<string>();
-  for (const m of catalog) {
-    let k = slugify(m.name);
-    for (let n = 2; taken.has(k); n++) k = `${slugify(m.name)}-${n}`;
+  const taken = new Set<string>(['t']);
+  const byAge = [...catalog].sort((a, b) => since.get(a)! - since.get(b)! || a.cat.localeCompare(b.cat) || a.name.localeCompare(b.name));
+  for (const m of byAge) {
+    const base = slugify(m.name) || 'mod';
+    let k = base;
+    for (let n = 2; taken.has(k); n++) k = `${base}-${n}`;
     taken.add(k);
     m.key = k;
   }

@@ -12,26 +12,17 @@
  * and authors come from somebody else's catalog.
  */
 import { loadCatalog, presetCode, appLink, webLink, fmtDay, isNew, el, type Catalog, type Mod, type Lang } from './catalog';
+import { readSet, writeSet, markCards as markIn, SET_KEY } from './set';
 
 type Words = {
   shown: string; more: string; add: string; remove: string; look: string; newBadge: string; by: string;
   kind: string; hero: string; replaces: string; author: string; added: string; style: string;
   openApp: string; copyLink: string; copied: string; noCompress: string; appNote: string; close: string;
   tray: string; setName: string; heroPage: string; kindPage: string; mods: [string, string, string];
-  slots: Record<string, string>; heroesLabel: string; heroBase: string; catBase: string;
+  slots: Record<string, string>; heroesLabel: string; heroBase: string; catBase: string; modBase: string; modPage: string;
 };
 
 const BATCH = 48;
-const SET_KEY = 'mm-set';
-
-// ---- the set, kept in this browser and shared by every page that lists mods ----------------
-
-const readSet = (): string[] => {
-  try { return JSON.parse(localStorage.getItem(SET_KEY) || '[]').filter((k: unknown) => typeof k === 'string'); } catch { return []; }
-};
-const writeSet = (keys: string[]) => {
-  try { localStorage.setItem(SET_KEY, JSON.stringify(keys)); } catch { /* private mode: this page only */ }
-};
 
 export function initBrowser(root: HTMLElement) {
   const lang = (root.dataset.lang as Lang) || 'en';
@@ -83,17 +74,7 @@ export function initBrowser(root: HTMLElement) {
 
   // ---- the set ----
   let picked = new Set(readSet());
-  const markCards = () => {
-    for (const li of grid.querySelectorAll<HTMLElement>('.mcard')) {
-      const on = picked.has(li.dataset.key!);
-      li.classList.toggle('picked', on);
-      const btn = li.querySelector<HTMLButtonElement>('[data-add]');
-      if (btn) {
-        btn.setAttribute('aria-pressed', String(on));
-        btn.setAttribute('aria-label', `${on ? w.remove : w.add}: ${li.querySelector('h2, h3')?.textContent ?? ''}`);
-      }
-    }
-  };
+  const markCards = () => markIn(grid, picked, w);
   const toggle = (key: string) => {
     if (picked.has(key)) picked.delete(key); else picked.add(key);
     writeSet([...picked]);
@@ -113,8 +94,8 @@ export function initBrowser(root: HTMLElement) {
     li.dataset.hay = m.hay;
     li.dataset.slots = m.slots.join(' ');
 
-    const pic = el('button', 'mcard-pic');
-    pic.type = 'button';
+    const pic = el('a', 'mcard-pic');
+    pic.href = `${w.modBase}${m.key}/`;
     pic.dataset.open = '';
     if (m.thumb) {
       const img = el('img');
@@ -238,10 +219,14 @@ export function initBrowser(root: HTMLElement) {
 
   grid.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    if (t.closest('a')) return;
     const li = t.closest<HTMLElement>('.mcard');
     if (!li) return;
     if (t.closest('[data-add]')) { toggle(li.dataset.key!); return; }
+    const link = t.closest('a');
+    if (link && !link.matches('[data-open]')) return; // the author's profile
+    // a plain click looks closer; one that asks for a new tab or window gets the mod's page
+    if (link && (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0)) return;
+    e.preventDefault();
     open(li.dataset.key!, li);
   });
 
@@ -285,7 +270,7 @@ export function initBrowser(root: HTMLElement) {
     qFacts.replaceChildren(...facts.flatMap(([k, v]) => { const dd = el('dd'); dd.append(v); return [el('dt', '', k), dd]; }));
     qLinks.replaceChildren();
     const linkTo = (href: string, text: string) => { const a = el('a', '', text); a.href = href; return a; };
-    const links: HTMLAnchorElement[] = [];
+    const links: HTMLAnchorElement[] = [linkTo(`${w.modBase}${m.key}/`, w.modPage)];
     if (m.hero && context !== 'hero') links.push(linkTo(`${w.heroBase}${m.hero}/`, w.heroPage.replace('{hero}', m.heroName ?? '')));
     if (m.cat !== 'heroes' && context !== 'category') links.push(linkTo(`${w.catBase}${m.cat}/`, w.kindPage.replace('{kind}', m.catName)));
     links.forEach((a, i) => { if (i) qLinks.append(' · '); qLinks.append(a); });
@@ -307,7 +292,8 @@ export function initBrowser(root: HTMLElement) {
   // a press on the dimmed page around the box closes it, as it does in the app
   dialog.addEventListener('click', (e) => { if (e.target === dialog) close(); });
   qAdd.addEventListener('click', () => { if (current) toggle(current); });
-  qCopy.addEventListener('click', () => { if (qCode) copy(webLink(qCode)); else say(w.noCompress); });
+  // the mod's own page: it shows the mod to anybody, with its picture in a chat's preview
+  qCopy.addEventListener('click', () => { if (current) copy(`${location.origin}${w.modBase}${current}/`); });
   qApp.addEventListener('click', (e) => { if (!qCode) { e.preventDefault(); say(w.noCompress); } });
 
   // ---- the tray ----

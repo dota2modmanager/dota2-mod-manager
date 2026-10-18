@@ -58,7 +58,21 @@ async function settle(page) {
 async function full(page, name, screen) {
   const { width, height } = SCREENS[screen].viewport;
   const total = await page.evaluate(() => document.documentElement.scrollHeight);
-  const step = height * (screen === 'mobile' ? 2 : 2);
+  /* A phone is shot a screen at a time, scrolled. For a full-page picture Chromium resizes the
+     page and drops the touch screen while it does, so (hover: none) stops matching and the page
+     is drawn as a narrow desktop: the header showed Download where every phone shows Catalog. */
+  if (screen === 'mobile') {
+    for (let y = 0, k = 1; y < total; y += height, k++) {
+      await page.evaluate((top) => scrollTo(0, top), y);
+      await page.waitForTimeout(150);
+      const file = `${name}.${screen}.${String(k).padStart(2, '0')}.png`;
+      await page.screenshot({ path: path.join(out, file) });
+      shots.push({ file, page: name, screen });
+    }
+    await page.evaluate(() => scrollTo(0, 0));
+    return;
+  }
+  const step = height * 2;
   for (let y = 0, k = 1; y < total; y += step, k++) {
     const file = `${name}.${screen}.${String(k).padStart(2, '0')}.png`;
     await page.screenshot({ path: path.join(out, file), fullPage: true, clip: { x: 0, y, width, height: Math.min(step, total - y) } });

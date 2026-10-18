@@ -5,8 +5,9 @@
  *
  * The same markup is built in the browser for the cards /catalog/ draws from data
  * (src/scripts/browse.ts, card()), and the two are kept to one shape so the script can sort,
- * filter and open both the same way. The picture is the button that opens the closer look; the
- * heading sits outside it, because a heading is not allowed inside a button.
+ * filter and open both the same way. The picture is a link to the mod's own page (/mods/<key>/):
+ * in a browsable grid a plain click opens the closer look instead, and a click that asks for a new
+ * tab, or a search engine, gets the page. The heading sits outside the link.
  *
  * The data-* attributes are what the page's own search and sort read, so a category or a hero
  * page can be searched without downloading the whole catalog.
@@ -19,6 +20,7 @@ import { slotNames } from '../i18n/heroes';
 import { aliasesFor } from '../i18n/mod-aliases';
 import { heroBySlug } from '../lib/heroes';
 import { ruName } from '../i18n/hero-names';
+import { modPath } from '../lib/mods';
 import type { Lang } from '../i18n/ui';
 
 interface Props {
@@ -48,7 +50,7 @@ const hay = [m.name, ...m.styles, m.author, catName, hero?.name, heroName, ...al
 ---
 
 <li class="mcard" data-group={groupOf(m.cat)} data-cat={m.cat} data-key={m.key} data-date={m.date ?? 0} data-name={m.name.toLowerCase()} data-hay={hay} data-slots={m.slots.join(' ')}>
-  <button class="mcard-pic" type="button" data-open>
+  <a class="mcard-pic" href={modPath(lang, m.key)} data-open>
     {m.img ? (
       <img
         src={thumbOf(m.img)}
@@ -64,7 +66,7 @@ const hay = [m.name, ...m.styles, m.author, catName, hero?.name, heroName, ...al
       <span class="none">{m.name}</span>
     )}
     {fresh && <span class="mcard-new">{b.newBadge}</span>}
-  </button>
+  </a>
   <button class="mcard-add" type="button" aria-pressed="false" aria-label={`${b.add}: ${m.name}`} data-add>
     <svg class="no" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
     <svg class="yes" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17 19 7.5" /></svg>

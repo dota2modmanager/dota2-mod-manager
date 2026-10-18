@@ -175,14 +175,22 @@ export function builtPages(dir = DIST) {
 /**
  * One page of each kind the site has, in both languages. A hero page and a catalog page are the
  * same template 120 and 37 times over, so the first of each stands for the rest; the guides are
- * all different and all listed.
+ * all different and all listed. A mod's page stands in twice: one with the most to show (a hero's
+ * mod in several styles, the longest name among them) and one with the least.
  */
 export function samplePages(dir = DIST) {
   const all = builtPages(dir);
   const first = (prefix) => all.find((p) => p.startsWith(prefix) && p !== prefix && p.split('/').length === prefix.split('/').length + 1);
+  let mods = [];
+  try {
+    const data = JSON.parse(fs.readFileSync(path.join(dir, 'catalog', 'data.json'), 'utf-8'));
+    const rich = data.mods.filter((m) => m[3] >= 0 && m[7].includes('|')).sort((a, b) => b[1].length - a[1].length)[0];
+    const bare = data.mods.find((m) => m[3] < 0 && !m[7] && !m[5]);
+    mods = [rich, bare].filter(Boolean).map((m) => `/mods/${m[0]}/`).filter((p) => all.includes(p));
+  } catch { /* a build without the catalog file: check-build says so */ }
   const en = [
     '/', '/docs/', '/catalog/', '/heroes/', '/facts/', '/transparency/', '/privacy/', '/terms/', '/code-signing/',
-    first('/heroes/'), first('/catalog/'),
+    first('/heroes/'), first('/catalog/'), ...mods,
     ...all.filter((p) => /^\/docs\/[^/]+\/$/.test(p)),
   ].filter(Boolean);
   return [...en, ...en.map((p) => `/ru${p}`).filter((p) => all.includes(p)), '/p/', '/404.html'];

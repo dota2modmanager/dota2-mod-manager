@@ -9,14 +9,34 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { DIST, builtPages } from './harness.mjs';
+import { decodePresetLink } from '../../src/preset-link.ts';
 
 const SITE = 'https://dota2modmanager.com';
 const pages = builtPages();
 const html = new Map(pages.map((p) => [p, fs.readFileSync(path.join(DIST, p.endsWith('/') ? `${p}index.html` : p), 'utf-8')]));
 
+/* What the catalog holds, as "category|name|style" the way the app looks a preset's mod up
+   (src/preset-plan.ts): a look with no label and a mod with no looks are both "category|name|".
+   Read from the data the pages were built from, which keeps the unlabeled look data.json drops. */
+const source = (f) => JSON.parse(fs.readFileSync(new URL(`../src/data/${f}`, import.meta.url), 'utf-8'));
+const inCatalog = new Set([
+  ...source('categories.json').categories.flatMap((c) => c.mods.map((m) => `${c.id}|${m.name}|${m.styleLabel ?? ''}`)),
+  ...source('heroes.json').heroes.flatMap((h) => h.mods.map((m) => `${m.categoryId ?? 'heroes'}|${m.name}|${m.styleLabel ?? ''}`)),
+]);
+
+/** Why a link to the app (d2mm://) would not open what the page says, or null when it would. */
+function appLinkProblem(href) {
+  const code = href.match(/^d2mm:\/\/preset\/(.+)$/)?.[1];
+  if (!code) return 'is not a preset link';
+  let preset;
+  try { preset = decodePresetLink(code); } catch (e) { return `does not decode (${e.message})`; }
+  const gone = preset.mods.filter((m) => !inCatalog.has(`${m.categoryId}|${m.name}|${m.styleLabel ?? ''}`));
+  return gone.length ? `names what the catalog has not got: ${gone.map((m) => `${m.categoryId}/${m.name}/${m.styleLabel ?? ''}`).join(', ')}` : null;
+}
+
 /** The site path a link points at, or null when it leaves the site. */
 function local(href, from) {
-  if (/^(mailto:|tel:|data:|javascript:)/.test(href)) return null;
+  if (/^(mailto:|tel:|data:|javascript:|d2mm:)/.test(href)) return null;
   if (/^https?:\/\//.test(href) && !href.startsWith(`${SITE}/`)) return null;
   const u = new URL(href, `${SITE}${from}`);
   return { path: decodeURIComponent(u.pathname), hash: decodeURIComponent(u.hash.slice(1)) };
@@ -42,6 +62,11 @@ test('every link on the site lands on something the build wrote', () => {
     for (const ref of refs) {
       if (ref.startsWith('#')) {
         if (ref.length > 1 && !ids(body).has(ref.slice(1))) broken.push(`${from}: ${ref} names no element on the page`);
+        continue;
+      }
+      if (ref.startsWith('d2mm:')) {
+        const why = appLinkProblem(ref);
+        if (why) broken.push(`${from}: ${ref.slice(0, 60)} ${why}`);
         continue;
       }
       const to = local(ref.replaceAll('&amp;', '&'), from);
