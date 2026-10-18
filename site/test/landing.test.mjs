@@ -81,7 +81,9 @@ for (const screen of ['desktop', 'mobile']) {
 
           // so does a press anywhere else
           await press(screen, summary);
-          await press(screen, page.locator(where === '.hero' ? '.hero h1' : '.final-box h2'));
+          // on an empty spot by the screen's edge: the menu may have opened over anything else
+          const vh = await page.evaluate(() => innerHeight);
+          if (screen === 'mobile') await page.touchscreen.tap(4, vh / 2); else await page.mouse.click(4, vh / 2);
           assert.equal(await dl.evaluate((d) => d.open), false, `${where}: a press elsewhere left it open`);
         }
       } finally {
@@ -122,6 +124,9 @@ for (const screen of ['desktop', 'mobile']) {
   test(`the clip keeps its own shape and can always be started (${screen})`, async () => {
     for (const motion of ['no-preference', 'reduce']) {
       const { context, page } = await open(screen, '', motion);
+      // the clip is the last of the app's tabs
+      await bring(page.locator('#show'));
+      await press(screen, page.locator('.show-tab').last());
       const film = page.locator('#film');
       await bring(film);
       await page.waitForTimeout(400);
@@ -157,42 +162,40 @@ for (const screen of ['desktop', 'mobile']) {
   });
 }
 
-test('the screenshots switch by click and by keyboard', async () => {
+test('the tabs of the app switch by click and by keyboard', async () => {
   const { context, page } = await open('desktop');
-  const visible = () => page.locator('.tour-panel').evaluateAll((ps) => ps.map((p) => !p.hidden));
-  const tabs = page.locator('.tour-tab');
+  const visible = () => page.locator('.show-panel').evaluateAll((ps) => ps.map((p) => !p.hidden));
+  const tabs = page.locator('.show-tab');
   await tabs.nth(1).click();
-  assert.deepEqual(await visible(), [false, true, false]);
+  assert.deepEqual(await visible(), [false, true, false, false]);
   await page.keyboard.press('End');
-  assert.deepEqual(await visible(), [false, false, true]);
+  assert.deepEqual(await visible(), [false, false, false, true]);
   await page.keyboard.press('ArrowRight');
-  assert.deepEqual(await visible(), [true, false, false], 'ArrowRight from the last wraps to the first');
+  assert.deepEqual(await visible(), [true, false, false, false], 'ArrowRight from the last wraps to the first');
   await page.keyboard.press('ArrowLeft');
-  assert.deepEqual(await visible(), [false, false, true]);
-  assert.equal(await tabs.nth(2).evaluate((t) => t === document.activeElement && t.tabIndex === 0), true);
+  assert.deepEqual(await visible(), [false, false, false, true]);
+  assert.equal(await tabs.nth(3).evaluate((t) => t === document.activeElement && t.tabIndex === 0), true);
+  // leaving the clip's tab stops the clip
+  await page.keyboard.press('Home');
+  assert.equal(await page.locator('#film').evaluate((v) => v.paused), true);
   await context.close();
 });
 
-test('the pak panel: switching off clears the clash, moving a mod up changes the winner', async () => {
+test('the search on the landing finds mods as you type and lands on them in the catalog', async () => {
   for (const screen of ['desktop', 'mobile']) {
     const { context, page } = await open(screen);
-    const verdict = page.locator('#standVerdict');
-    const slots = () => page.locator('#standSlots li').allTextContents();
-    await bring(page.locator('#stand'));
-
-    assert.match(await verdict.textContent(), /Gopo Pudge/);
-    const butcher = page.locator('.stand-row[data-id="butcher"]');
-    await press(screen, butcher.locator('.stand-sw'));
-    assert.equal(await page.locator('.stand-row[data-id="butcher"]').evaluate((r) => r.classList.contains('off')), true);
-    assert.equal((await slots()).length, 4);
-    assert.equal(await verdict.isHidden(), true, 'no clash left, so no verdict');
-
-    await press(screen, page.locator('.stand-row[data-id="butcher"] .stand-sw'));
-    await page.locator('.stand-row[data-id="butcher"] .stand-grip').focus();
-    await page.keyboard.press('ArrowUp');
-    assert.match((await slots())[0], /pak10\s*Pudge Butcher Arcana/);
-    assert.match(await verdict.textContent(), /Pudge Butcher Arcana/);
-    assert.equal(await page.locator('.stand-row[data-id="butcher"] .stand-grip').evaluate((g) => g === document.activeElement), true, 'the grip keeps the focus');
+    const input = page.locator('#finder-q');
+    await bring(input);
+    await input.fill('pudge');
+    const rows = page.locator('#finderResults .finder-row');
+    await rows.first().waitFor();
+    assert.ok((await rows.count()) > 0 && (await rows.count()) <= 6);
+    for (const t of await rows.allTextContents()) assert.match(t.toLowerCase(), /pudge|пудж/);
+    const href = await rows.first().getAttribute('href');
+    assert.match(href, /\/catalog\/\?q=pudge#mod=/);
+    await press(screen, rows.first());
+    await page.waitForURL(/\/catalog\//);
+    await page.locator('#quick[open]').waitFor();
     await context.close();
   }
 });
@@ -212,7 +215,7 @@ test('the eight mascots hide in the margins, and only where there are margins', 
   const spots = await page.locator('.hunt-hero').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().toJSON()));
   assert.equal(spots.length, 8);
   const vw = await page.evaluate(() => document.documentElement.clientWidth);
-  const gutter = (vw - 1080) / 2;
+  const gutter = (vw - 1200) / 2;
   for (const r of spots) assert.ok(r.right <= gutter + 20 || r.left >= vw - gutter - 20, `a mascot sits over the column at x ${Math.round(r.left)}`);
 
   // finding one gives the page its colours and brings up the tally
@@ -229,4 +232,46 @@ test('the eight mascots hide in the margins, and only where there are margins', 
     assert.equal(await c.page.locator('.hunt-hero').count(), 0, `${screen}, ${motion}: nothing to hunt`);
     await c.context.close();
   }
+});
+
+test('all eight found: the whole site turns, the note gets out of the way, and the switch turns it off', async () => {
+  const { context, page } = await open('desktop');
+  for (let i = 0; i < 8; i++) {
+    await page.locator('.hunt-hero:not(.pop)').first().click({ force: true });
+    await page.waitForTimeout(260);
+  }
+  const done = page.locator('#hunt-done');
+  await done.waitFor();
+  assert.match(await done.textContent(), /8\/8/);
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains('rainbow')), true);
+  // the colour every surface is drawn from is moving, not just the title
+  const a = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--primary'));
+  await page.waitForTimeout(1200);
+  const b = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--primary'));
+  assert.notEqual(a, b, 'the page is not cycling through the palettes');
+  // the note can be closed, and closes itself if it is not
+  await done.locator('.hunt-close').click();
+  assert.equal(await done.isHidden(), true);
+
+  // it follows the visitor to the next page, and the footer can turn it off
+  await page.goto(`${server.url}/docs/`, { waitUntil: 'load' });
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains('rainbow')), true);
+  const sw = page.locator('#rainbowSwitch');
+  await sw.scrollIntoViewIfNeeded();
+  await sw.click();
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains('rainbow')), false);
+  await page.reload({ waitUntil: 'load' });
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains('rainbow')), false);
+  await context.close();
+});
+
+test('the note says it once and leaves by itself', async () => {
+  // a fresh page on somebody else's link, the way it arrives from a chat
+  const { context, page } = await openPage(browser, server.url, 'desktop');
+  await page.goto(`${server.url}/#all-eight`, { waitUntil: 'load' });
+  const done = page.locator('#hunt-done');
+  await done.waitFor();
+  await page.waitForTimeout(7600);
+  assert.equal(await done.isHidden(), true, 'the note is still on screen after seven seconds');
+  await context.close();
 });

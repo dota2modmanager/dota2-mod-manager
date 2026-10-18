@@ -1,26 +1,27 @@
 ---
 /**
- * One hero's page: everything made for them, with a picture of each.
+ * One hero's page: everything made for them, as a grid that can be searched, sorted and narrowed
+ * to the part of the hero a mod replaces (head, weapon, back...).
  *
- * The list is the page. The sentences around it are the same on all 126 of these, which is
- * only a problem if the list is thin, so this is the one place on the site where the content
- * comes from data rather than from someone typing it.
+ * The list is the page. The sentences around it are the same on all 126 of these, which is only
+ * a problem if the list is thin, so this is the one place on the site where the content comes
+ * from data rather than from someone typing it. The page opens on the hero's newest render,
+ * darkened enough to read the heading over.
  *
- * Every picture is the catalog's own preview, copied onto this domain with h6rd's permission
- * and credited to whoever the catalog names as the author, with a link to their profile where
- * one is recorded. The first two load eagerly and the rest lazily: a hero with thirty mods is
- * thirty images, and all of them at once is a slow page for no benefit.
+ * Every picture is the catalog's own preview, copied onto this domain with h6rd's permission and
+ * credited to whoever the catalog names as the author, with a link to their profile where one is
+ * recorded.
  */
 import { pathIn, type Lang } from '../i18n/ui';
-import { heroCopy, slotNames } from '../i18n/heroes';
+import { heroCopy } from '../i18n/heroes';
 import { neighbours, heroText, type Hero } from '../lib/heroes';
-import { aliasesFor } from '../i18n/mod-aliases';
+import { catalog } from '../lib/catalog';
+import Browser from './Browser.astro';
 
 interface Props { lang: Lang; hero: Hero }
 const { lang, hero } = Astro.props;
 
 const c = heroCopy[lang];
-const slots = slotNames[lang];
 const nf = new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US');
 const pr = new Intl.PluralRules(lang === 'ru' ? 'ru-RU' : 'en-US');
 const word = (n: number) => {
@@ -29,67 +30,42 @@ const word = (n: number) => {
 };
 
 const text = heroText(lang, hero);
-
+const mods = catalog.filter((m) => m.hero === hero.slug);
 const fill = (s: string) =>
   s
     .replaceAll('~/', lang === 'en' ? '/' : `/${lang}/`)
-    .replaceAll('{count}', nf.format(hero.mods.length))
-    .replaceAll('{word}', word(hero.mods.length));
+    .replaceAll('{count}', nf.format(mods.length))
+    .replaceAll('{word}', word(mods.length));
 
 const others = neighbours(hero.slug);
+const cover = mods.find((m) => m.img)?.img;
+/* the parts this hero's mods replace, the most common first */
+const slotCount = new Map<string, number>();
+for (const m of mods) for (const s of m.slots) slotCount.set(s, (slotCount.get(s) ?? 0) + 1);
+const slots = [...slotCount.entries()].sort((a, b) => b[1] - a[1]).map(([s]) => s);
+const altFor = (m: { name: string }) => c.alt.replace('{mod}', m.name).replace('{hero}', hero.name);
 ---
 
-<article class="doc wrap">
-  <nav class="crumbs" aria-label={c.indexH1}>
-    <a href={pathIn(lang, '/heroes/')}>{c.back}</a>
-  </nav>
+<header class="page-hero">
+  {cover && <img src={cover} width="854" height="480" alt="" fetchpriority="high" />}
+  <div class="wrap">
+    <nav class="crumbs" aria-label={c.indexH1}>
+      <a href={pathIn(lang, '/heroes/')}>{c.back}</a>
+    </nav>
+    <h1>{text.h1}</h1>
+    <p class="lead">{text.lead}</p>
+    <p class="prose" set:html={fill(text.intro)} />
+    {text.aka && <p class="muted">{text.aka}</p>}
+  </div>
+</header>
 
-  <h1>{text.h1}</h1>
-  <p class="lead">{text.lead}</p>
-  <p set:html={fill(text.intro)} />
-  {text.aka && <p class="muted">{text.aka}</p>}
+<div class="wrap">
+  <Browser lang={lang} mode="page" mods={mods} context="hero" slots={slots} altFor={altFor} />
 
-  <ul class="mods">
-    {
-      hero.mods.map((m, i) => (
-        <li class="mod">
-          {m.image && (
-            <img
-              src={m.image.src}
-              width={m.image.width}
-              height={m.image.height}
-              loading={i < 2 ? 'eager' : 'lazy'}
-              decoding="async"
-              alt={c.alt.replace('{mod}', m.name).replace('{hero}', hero.name)}
-            />
-          )}
-          <div class="mod-body">
-            <h2>
-              {m.name}
-              {m.styleLabel && <span class="mod-style">{m.styleLabel}</span>}
-            </h2>
-            {lang === 'ru' && aliasesFor(m.name).length > 0 && (
-              <p class="mod-alias">Ищут как: {aliasesFor(m.name).join(', ')}</p>
-            )}
-            <p class="mod-meta">
-              <span>
-                {c.changes}: {m.slots.length ? m.slots.map((s) => slots[s] ?? s).join(', ') : c.noSlots}
-              </span>
-              {m.author && (
-                <span>
-                  {c.by}{' '}
-                  {m.authorUrl ? <a href={m.authorUrl} rel="noopener nofollow">{m.author}</a> : m.author}
-                </span>
-              )}
-            </p>
-          </div>
-        </li>
-      ))
-    }
-  </ul>
-
-  <h2 id="install">{c.install}</h2>
-  <p set:html={fill(c.installBody)} />
+  <div class="doc prose-block">
+    <h2 id="install">{c.install}</h2>
+    <p set:html={fill(c.installBody)} />
+  </div>
 
   <aside class="doc-next">
     <h2>{c.otherHeroes}</h2>
@@ -97,10 +73,10 @@ const others = neighbours(hero.slug);
       {others.map((h) => (
         <li>
           <a class="chip" href={pathIn(lang, `/heroes/${h.slug}/`)}>
-            {h.name} <span>{nf.format(h.mods.length)}</span>
+            {h.name} <small>{nf.format(h.mods.length)}</small>
           </a>
         </li>
       ))}
     </ul>
   </aside>
-</article>
+</div>

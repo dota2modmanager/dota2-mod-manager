@@ -91,15 +91,25 @@ test('the header and footer links can all be pressed on a phone', async () => {
         await page.goto(server.url + p, { waitUntil: 'load' });
         // the header's own links, as the page opens
         const head = await findCovered(page, '.topbar a');
-        // the footer's, scrolled to: a link cut off by its row, or drawn under something, fails
-        await page.locator('.foot-links').scrollIntoViewIfNeeded();
-        const covered = [];
-        for (const link of await page.locator('.foot a').all()) {
-          await link.scrollIntoViewIfNeeded();
+        // the footer's, each brought to the middle of the screen in turn: a link cut off by its
+        // row, or drawn under something, fails (at the top of the screen the sticky header is
+        // over everything, which is the header's job and not the link's fault)
+        const foot = [];
+        const links = await page.locator('.foot a').all();
+        for (const [i, link] of links.entries()) {
+          if (!(await link.isVisible())) continue;
+          await link.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
           const box = await link.boundingBox();
-          if (!box || box.x < 0 || box.x + box.width > w + 1) covered.push(`"${await link.textContent()}" is off the screen`);
+          if (!box || box.x < 0 || box.x + box.width > w + 1) { foot.push(`"${await link.textContent()}" is off the screen`); continue; }
+          // the middle of the link's first line: a link that wraps has a gap in the middle of its box
+          const hit = await link.evaluate((el) => {
+            const r = el.getClientRects()[0];
+            return document.elementFromPoint(r.left + Math.min(r.width / 2, 20), r.top + r.height / 2)?.closest('a') === el;
+          });
+          if (!hit) foot.push(`"${(await link.textContent()).trim()}" (link ${i}) is under something`);
+          continue;
+          if (hit !== (await link.textContent()).trim()) foot.push(`"${(await link.textContent()).trim()}" (link ${i}) is under something`);
         }
-        const foot = [...covered, ...(await findCovered(page, '.foot-links a'))];
         if (head.length || foot.length) {
           await snap(page, `links-${w}-${p}`);
           throw new Error(`at ${w}px: ${[...head, ...foot].join('; ')}`);

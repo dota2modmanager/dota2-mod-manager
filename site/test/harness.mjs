@@ -48,6 +48,8 @@ const TYPES = {
  * @returns {Promise<{ url: string, close: () => Promise<void> }>}
  */
 export function serveDist(dir = DIST) {
+  // resolved, so "C:/a/b" and "C:\a\b" are one folder to the escape check below
+  dir = path.resolve(dir);
   if (!fs.existsSync(path.join(dir, 'index.html'))) {
     throw new Error(`no built site in ${dir}: run npm run build in site/ first`);
   }
@@ -124,6 +126,12 @@ export const SCREENS = {
  */
 export async function openPage(browser, base, screen, { motion = 'no-preference', online = false } = {}) {
   const context = await browser.newContext({ ...SCREENS[screen], reducedMotion: motion });
+  // Scrolling is instant in the tests. The site scrolls smoothly, and a smooth scroll Playwright
+  // starts for one click is still travelling when the next step scrolls somewhere else, so a
+  // button brought to the middle of the screen ended up 555 px lower by the time it was pressed.
+  await context.addInitScript(() => {
+    document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.scrollBehavior = 'auto'; });
+  });
   const page = await context.newPage();
   const problems = [];
   page.on('console', (m) => {
@@ -192,10 +200,14 @@ export function findOverflow(page) {
   return page.evaluate(() => {
     const vw = document.documentElement.clientWidth;
     const out = [];
+    // A line cut short with an ellipsis is cut on purpose (an author's name in a narrow card), and
+    // says so on screen; a line cut by a clip with no ellipsis is the bug this looks for.
     const clipped = (el) => {
       for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
-        const ox = getComputedStyle(a).overflowX;
-        if (ox === 'auto' || ox === 'scroll') {
+        const cs = getComputedStyle(a);
+        const ox = cs.overflowX;
+        const ellipsis = (ox === 'hidden' || ox === 'clip') && cs.textOverflow === 'ellipsis';
+        if (ox === 'auto' || ox === 'scroll' || ellipsis) {
           const r = a.getBoundingClientRect();
           return r.left >= -1 && r.right <= vw + 1;
         }

@@ -39,3 +39,6 @@ fuzz-output/
 out/
 # pictures and failure shots of the site tests (site/test, site/tools/look.mjs)
 test-output/
+
+# small copies of the mod pictures, kept between local builds (site/tools/thumbs.mjs)
+.thumb-cache/

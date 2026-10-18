@@ -31,7 +31,7 @@ const items = [
 ---
 
 <details class:list={['dl', { big }]} id={anchor ? 'download' : undefined}>
-  <summary class:list={['btn', 'btn-glow', { 'btn-big': big }]}>
+  <summary class:list={['btn', 'btn-glow', { lg: big }]}>
     <svg width={big ? 20 : 18} height={big ? 20 : 18} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
     </svg>
@@ -83,6 +83,8 @@ const items = [
     animation: dl-in .16s cubic-bezier(.2, 0, 0, 1);
   }
   @keyframes dl-in { from { opacity: 0; transform: translateY(-6px); } }
+  .dl.up .dl-menu { top: auto; bottom: calc(100% + 8px); animation-name: dl-up; }
+  @keyframes dl-up { from { opacity: 0; transform: translateY(6px); } }
 
   .dl-item {
     display: block;
@@ -136,6 +138,13 @@ const items = [
       const right = document.documentElement.clientWidth - edge;
       const shift = box.left < edge ? edge - box.left : box.right > right ? right - box.right : 0;
       if (shift) menu.style.setProperty('--dl-shift', `${Math.round(shift)}px`);
+      // Up, when there is no room for it below and there is above: the button at the foot of the
+      // landing sits low on the screen, and a menu that opens past the bottom edge has to be
+      // scrolled to before it can be read.
+      dl.classList.remove('up');
+      const below = window.innerHeight - edge - box.bottom;
+      const above = (dl.querySelector('summary')?.getBoundingClientRect().top ?? 0) - edge - box.height - 8;
+      if (below < 0 && above > below) dl.classList.add('up');
     });
 
     dl.addEventListener('keydown', (e) => {

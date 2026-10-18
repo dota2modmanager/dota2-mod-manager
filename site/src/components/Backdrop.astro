@@ -1,226 +1,53 @@
 ---
 /**
- * What the page sits on.
+ * What the page sits on: two soft pools of the app's purple at the top and a faint grid, both
+ * fading out a screen down.
  *
- * The first version drifted every mote straight up at a constant speed, which is exactly as
- * interesting as it sounds: the eye predicts the path in a second and stops looking. This
- * one moves them through a flow field - a smooth pseudo-random angle that varies across the
- * screen and slowly rotates over time - so no two motes take the same road and none of them
- * travels in a straight line.
+ * It used to be busier: a canvas of drifting motes that the pointer stirred, and a glow that
+ * followed the pointer around. Both went when the landing got the mod wall, which is the one
+ * moving thing the page should have; two layers of light competing with two thousand pictures
+ * of heroes is noise. The pools have no blur filter on them: the gradient is soft by itself,
+ * and a 120 px blur on a 780 px circle is the kind of layer that made Safari give up on iPhones.
  *
- * The pointer stirs them. Inside its reach they are pulled into a slow orbit rather than
- * pushed away: mist disturbed by a hand, not a repulsion demo. They brighten as they get
- * close, which is what makes it read as light rather than as movement.
- *
- * Drawn rather than downloaded, because Dota's own artwork belongs to Valve and this project
- * is not affiliated with them.
+ * Drawn rather than downloaded, because Dota's own artwork belongs to Valve.
  */
 ---
 
 <div class="backdrop" aria-hidden="true">
   <div class="glow glow-a"></div>
   <div class="glow glow-b"></div>
-  <canvas id="dust"></canvas>
-  <div class="grid"></div>
+  <div class="grid-lines"></div>
 </div>
 
 <style>
   .backdrop {
     position: fixed;
-    inset: 0;
-    z-index: -1;
+    inset: 0 0 auto 0;
+    height: 120vh;
+    z-index: -3;
     overflow: hidden;
     pointer-events: none;
     background: var(--surface);
   }
-  /* Soft by its own gradient, with no blur filter on top. A 120 px blur on a 780 px circle that
-     scales and drifts is a texture several thousand pixels across, rendered again every frame,
-     and on a phone at three device pixels that was enough for Safari to give up on the page.
-     The gradient already fades to nothing; the blur was doing the same job twice. */
-  .glow {
-    position: absolute;
-    border-radius: 50%;
-    opacity: 0.5;
-    animation: breathe 14s ease-in-out infinite alternate;
-  }
+  .glow { position: absolute; border-radius: 50%; }
   .glow-a {
-    width: 980px; height: 980px;
-    top: -420px; left: 50%; margin-left: -660px;
-    background: radial-gradient(circle, rgb(107 79 168 / 0.9) 0%, rgb(107 79 168 / 0.35) 30%, rgb(107 79 168 / 0) 68%);
+    width: 1000px; height: 1000px;
+    top: -520px; left: 50%; margin-left: -820px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--primary) 26%, transparent) 0%, color-mix(in srgb, var(--primary) 9%, transparent) 32%, transparent 68%);
+    opacity: 0.8;
   }
   .glow-b {
     width: 820px; height: 820px;
-    top: -280px; left: 50%; margin-left: 20px;
-    background: radial-gradient(circle, rgb(61 47 107 / 0.9) 0%, rgb(61 47 107 / 0.35) 30%, rgb(61 47 107 / 0) 68%);
-    animation-delay: -7s;
+    top: -380px; left: 50%; margin-left: 120px;
+    background: radial-gradient(circle, rgb(61 47 107 / 0.85) 0%, rgb(61 47 107 / 0.3) 32%, rgb(61 47 107 / 0) 68%);
   }
-  @media (hover: none) {
-    .glow { animation: none; }
-  }
-  @keyframes breathe {
-    from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.42; }
-    to { transform: translate3d(0, 34px, 0) scale(1.12); opacity: 0.58; }
-  }
-  .grid {
+  .grid-lines {
     position: absolute; inset: 0;
     background-image:
       linear-gradient(color-mix(in srgb, var(--primary) 5%, transparent) 1px, transparent 1px),
       linear-gradient(90deg, color-mix(in srgb, var(--primary) 5%, transparent) 1px, transparent 1px);
-    background-size: 72px 72px;
-    mask-image: radial-gradient(120% 60% at 50% 0%, #000 0%, transparent 72%);
-    -webkit-mask-image: radial-gradient(120% 60% at 50% 0%, #000 0%, transparent 72%);
-  }
-  canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-
-  /* The page ends by going still.
-   *
-   * Everything here is light that drifts and answers the pointer, so the honest way to say
-   * "this is the bottom" is to let that light settle rather than to print the word. The
-   * scroll position drives it directly, which means no handler and no observer, and browsers
-   * that cannot do that simply keep the backdrop lit all the way down. */
-  /* Not on a touch screen: Safari 26 is the first to run scroll-driven animations at all, and a
-     fixed full-screen layer re-composited on every scroll step is the last thing a phone needs. */
-  @media (prefers-reduced-motion: no-preference) and (hover: hover) {
-    @supports (animation-timeline: scroll()) {
-      .backdrop {
-        animation: settle linear both;
-        animation-timeline: scroll(root block);
-        animation-range: 74% 100%;
-      }
-      @keyframes settle { to { opacity: 0.2; } }
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    canvas { display: none; }
-    .glow { animation: none; }
-  }
-
-  /* Same rule as the script, said in CSS as well: without it the element is still laid out and
-     composited on a phone for an effect that never runs. */
-  @media not all and (hover: hover) and (pointer: fine) {
-    canvas { display: none; }
+    background-size: 64px 64px;
+    mask-image: radial-gradient(110% 55% at 50% 0%, #000 0%, transparent 70%);
+    -webkit-mask-image: radial-gradient(110% 55% at 50% 0%, #000 0%, transparent 70%);
   }
 </style>
-
-<script>
-  const canvas = document.getElementById('dust') as HTMLCanvasElement | null;
-  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  /* No pointer, no dust.
-   *
-   * Every mote here exists to be stirred by the pointer, and a phone has none: the same test
-   * Cursor.astro uses to decide there is nothing for it to do. Without it this ran a full
-   * screen of canvas at device resolution, every frame, for an effect nobody on that device
-   * could interact with - 1.2 megapixels of repaint on a 375-pixel screen. Alongside the
-   * screenshots decoding as they scroll into view, that is what made Safari give up on the
-   * page after a few seconds of scrolling.
-   *
-   * The .glow gradient underneath stays. It costs one paint and carries the look on its own.
-   */
-  const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-
-  if (canvas && !still && fine) {
-    const ctx = canvas.getContext('2d', { alpha: true })!;
-    let w = 0, h = 0, raf = 0, t = 0;
-    let px = -9999, py = -9999;
-
-    // A cheap smooth field: three sines out of phase give an angle that varies over space
-    // and turns slowly over time. Not real curl noise, and close enough that the eye reads
-    // it as weather rather than as a formula.
-    const angleAt = (x: number, y: number) =>
-      Math.sin(x * 0.0016 + t * 0.00021) * 1.7 +
-      Math.cos(y * 0.0021 - t * 0.00017) * 1.7 +
-      Math.sin((x + y) * 0.0009 + t * 0.00013) * 1.2;
-
-    type Mote = { x: number; y: number; vx: number; vy: number; r: number; a: number; s: number };
-    let motes: Mote[] = [];
-
-    const seed = () => {
-      // fewer on a small screen: the same count on a phone buys nothing and costs frames
-      const count = Math.round(Math.min(96, Math.max(34, (w * h) / 26000)));
-      motes = Array.from({ length: count }, () => ({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        vx: 0, vy: 0,
-        r: Math.random() * 1.7 + 0.5,
-        a: Math.random() * 0.3 + 0.06,
-        s: Math.random() * 0.5 + 0.5,      // how strongly this one follows the field
-      }));
-    };
-
-    const size = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      w = canvas.clientWidth; h = canvas.clientHeight;
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      seed();
-    };
-
-    const REACH = 210;
-
-    const frame = () => {
-      t += 16;
-      ctx.clearRect(0, 0, w, h);
-
-      for (const m of motes) {
-        // the field carries it
-        const ang = angleAt(m.x, m.y);
-        m.vx += Math.cos(ang) * 0.012 * m.s;
-        m.vy += Math.sin(ang) * 0.012 * m.s - 0.004; // a whisper of lift
-
-        // the pointer stirs what is near it: pulled slightly in, and pushed sideways, which
-        // together read as an orbit rather than a shove
-        let lit = 0;
-        const dx = m.x - px;
-        const dy = m.y - py;
-        const d = Math.hypot(dx, dy);
-        if (d < REACH && d > 0.001) {
-          const f = (1 - d / REACH) ** 2;
-          lit = f;
-          const nx = dx / d, ny = dy / d;
-          m.vx += (-nx * 0.05 - ny * 0.16) * f;   // inward + tangential
-          m.vy += (-ny * 0.05 + nx * 0.16) * f;
-        }
-
-        m.vx *= 0.96; m.vy *= 0.96;               // drag, so nothing runs away
-        m.x += m.vx; m.y += m.vy;
-
-        // wrap, so the field never empties a corner
-        if (m.x < -6) m.x = w + 6; else if (m.x > w + 6) m.x = -6;
-        if (m.y < -6) m.y = h + 6; else if (m.y > h + 6) m.y = -6;
-
-        const alpha = Math.min(0.85, m.a + lit * 0.75);
-        ctx.beginPath();
-        ctx.arc(m.x, m.y, m.r + lit * 1.1, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(208, 188, 255, ${alpha})`;
-        ctx.fill();
-
-        // The neon on the ones the pointer has woken. This used to be `shadowBlur`, which is
-        // the single most expensive thing you can ask a 2D canvas for - the whole shape gets
-        // re-rasterised through a blur. A second, wider, dimmer disc added on top of the first
-        // costs one more fill and looks the same at this size.
-        if (lit > 0.12) {
-          ctx.globalCompositeOperation = 'lighter';
-          ctx.beginPath();
-          ctx.arc(m.x, m.y, (m.r + 1) * 3.4, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(177, 144, 255, ${0.1 * lit})`;
-          ctx.fill();
-          ctx.globalCompositeOperation = 'source-over';
-        }
-      }
-      raf = requestAnimationFrame(frame);
-    };
-
-    const start = () => { if (!raf) raf = requestAnimationFrame(frame); };
-    const stop = () => { cancelAnimationFrame(raf); raf = 0; };
-
-    size();
-    start();
-    window.addEventListener('resize', size);
-    window.addEventListener('pointermove', (e) => { px = e.clientX; py = e.clientY; }, { passive: true });
-    document.addEventListener('pointerleave', () => { px = -9999; py = -9999; });
-    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
-  }
-</script>

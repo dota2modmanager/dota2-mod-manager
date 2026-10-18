@@ -1,18 +1,21 @@
 ---
 /**
- * One category of the catalog: every mod in it, newest first, with a picture of each.
+ * One category of the catalog: every mod in it, as a grid that can be searched and sorted.
  *
- * Same card as a hero page, and for the same reason: the list is the page. What differs is who
- * arrives. A hero page is found by somebody who already knows about mods; these are found by
- * somebody searching how to change the river, and who will only learn the word "mod" from
- * reading this. So the paragraph under the heading says what this kind of mod does before the
- * pictures start, and the install section does not assume they have the app.
+ * Who arrives here is somebody searching how to change the river, who will only learn the word
+ * "mod" from reading this. So the paragraph under the heading says what this kind of mod does
+ * before the pictures start, and the install section does not assume they have the app.
+ *
+ * Every card is in the HTML (Browser.astro, page mode), so the page reads whole to a search
+ * engine; the script only sorts and filters what is there. It used to be one wide card per row,
+ * which for 154 hero items was a page as long as a novel.
  */
 import { pathIn, type Lang } from '../i18n/ui';
 import { categoryText } from '../i18n/categories';
 import { heroCopy } from '../i18n/heroes';
 import { otherCategories, type Category } from '../lib/categories';
-import { aliasesFor } from '../i18n/mod-aliases';
+import { catalog, groupOf } from '../lib/catalog';
+import Browser from './Browser.astro';
 
 interface Props { lang: Lang; category: Category }
 const { lang, category } = Astro.props;
@@ -28,75 +31,50 @@ const word = (n: number) => {
 
 const link = (s: string) => s.replaceAll('~/', lang === 'en' ? '/' : `/${lang}/`);
 const others = otherCategories(category.id);
+const mods = catalog.filter((m) => m.cat === category.id);
+const cover = mods.find((m) => m.img)?.img;
 
-const count = nf.format(category.mods.length);
+const count = nf.format(mods.length);
 const intro =
   lang === 'ru'
-    ? `В каталоге D2PFX <b>${count} ${word(category.mods.length)}</b> в этой категории. Каждый меняет картинку только у тебя на экране: соперники и союзники видят свою игру.`
-    : `The D2PFX catalog has <b>${count} ${word(category.mods.length)}</b> in this category. Each changes what you see on your own screen; everyone else sees their own game.`;
+    ? `В каталоге D2PFX <b>${count} ${word(mods.length)}</b> в этой категории. Каждый меняет картинку только у тебя на экране: соперники и союзники видят свою игру.`
+    : `The D2PFX catalog has <b>${count} ${word(mods.length)}</b> in this category. Each changes what you see on your own screen; everyone else sees their own game.`;
 
 const backLabel = lang === 'ru' ? 'Весь каталог' : 'The whole catalog';
 const moreLabel = lang === 'ru' ? 'Другие категории' : 'Other categories';
+const altFor = (m: { name: string }) => `${m.name}: ${c.name}, ${lang === 'ru' ? 'мод для Доты 2' : 'a Dota 2 mod'}`;
 ---
 
-<article class="doc wrap">
-  <nav class="crumbs" aria-label={backLabel}>
-    <a href={pathIn(lang, '/catalog/')}>{backLabel}</a>
-  </nav>
+<header class="page-hero" data-group={groupOf(category.id)}>
+  {cover && <img src={cover} width="854" height="480" alt="" fetchpriority="high" />}
+  <div class="wrap">
+    <nav class="crumbs" aria-label={backLabel}>
+      <a href={pathIn(lang, '/catalog/')}>{backLabel}</a>
+    </nav>
+    <h1>{c.h1}</h1>
+    {c.about && <p class="lead">{c.about}</p>}
+    <p class="prose" set:html={intro} />
+  </div>
+</header>
 
-  <h1>{c.h1}</h1>
-  {c.about && <p class="lead">{c.about}</p>}
-  <p set:html={intro} />
+<div class="wrap">
+  <Browser lang={lang} mode="page" mods={mods} context="category" altFor={altFor} />
 
-  <ul class="mods">
-    {
-      category.mods.map((m, i) => (
-        <li class="mod">
-          {m.image && (
-            <img
-              src={m.image.src}
-              width={m.image.width}
-              height={m.image.height}
-              loading={i < 2 ? 'eager' : 'lazy'}
-              decoding="async"
-              alt={`${m.name}: ${c.name} — ${lang === 'ru' ? 'мод для Доты 2' : 'a Dota 2 mod'}`}
-            />
-          )}
-          <div class="mod-body">
-            <h2>
-              {m.name}
-              {m.styleLabel && <span class="mod-style">{m.styleLabel}</span>}
-            </h2>
-            {lang === 'ru' && aliasesFor(m.name).length > 0 && (
-              <p class="mod-alias">Ищут как: {aliasesFor(m.name).join(', ')}</p>
-            )}
-            {m.author && (
-              <p class="mod-meta">
-                <span>
-                  {h.by}{' '}
-                  {m.authorUrl ? <a href={m.authorUrl} rel="noopener nofollow">{m.author}</a> : m.author}
-                </span>
-              </p>
-            )}
-          </div>
-        </li>
-      ))
-    }
-  </ul>
-
-  <h2 id="install">{h.install}</h2>
-  <p set:html={link(h.installBody)} />
+  <div class="doc prose-block">
+    <h2 id="install">{h.install}</h2>
+    <p set:html={link(h.installBody)} />
+  </div>
 
   <aside class="doc-next">
     <h2>{moreLabel}</h2>
     <ul class="hero-links">
       {others.map((o) => (
         <li>
-          <a class="chip" href={pathIn(lang, `/catalog/${o.id}/`)}>
-            {categoryText(lang, o.id).name} <span>{nf.format(o.mods.length)}</span>
+          <a class="chip" href={pathIn(lang, `/catalog/${o.id}/`)} data-group={groupOf(o.id)}>
+            <span class="dot"></span>{categoryText(lang, o.id).name} <small>{nf.format(o.mods.length)}</small>
           </a>
         </li>
       ))}
     </ul>
   </aside>
-</article>
+</div>

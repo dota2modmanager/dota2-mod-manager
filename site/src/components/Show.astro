@@ -1,0 +1,159 @@
+---
+/**
+ * The app itself: three screenshots and the clip, behind one set of tabs.
+ *
+ * They used to be two sections in a row, the clip and then the screenshots, and the page spent
+ * two screens on "what does it look like". One window, four views of it. The visitor picks which;
+ * nothing advances by itself (a carousel that moves on its own takes fewer looks than the same
+ * pictures standing still, and fights anyone slow with a pointer).
+ *
+ * A real tab list: arrow keys, Home and End, one stop in the tab order, each panel labelled by
+ * its tab.
+ *
+ * The clip is twenty-four seconds of the app driven by a script and filmed by the app itself
+ * (tools/screencast.js), so it is re-shot by running one command when the interface changes. Its
+ * file is named in data-src and handed over only when it plays: a <source> in the markup, even
+ * with preload="none", kept WebKit's load event from ever firing, and the landing never finished
+ * loading on an iPhone. On a desktop it plays when its tab is open and on screen; a phone, and
+ * anybody who asked for less motion, gets the still and a button.
+ */
+import type { Lang } from '../i18n/ui';
+import { SHOT_SIZE, TOUR_SIZE, srcsetFor, tourUrl, tourPoster, tourText } from '../lib/media';
+import Icon from './Icon.astro';
+
+interface Props {
+  lang: Lang;
+  shots: Array<{ src: string; caption: string; alt: string; label: string }>;
+  tablist: string;
+  video: { label: string; caption: string; play: string };
+}
+const { lang, shots, tablist, video } = Astro.props;
+const film = tourText[lang];
+const tabs = [...shots.map((s) => s.label), video.label];
+---
+
+<div class="show" id="show">
+  <div class="show-tabs" role="tablist" aria-label={tablist}>
+    {tabs.map((label, i) => (
+      <button
+        class="show-tab"
+        type="button"
+        role="tab"
+        id={`show-tab-${i}`}
+        aria-controls={`show-panel-${i}`}
+        aria-selected={i === 0 ? 'true' : 'false'}
+        tabindex={i === 0 ? 0 : -1}
+      >{label}</button>
+    ))}
+  </div>
+
+  {/* the tab panel is a <div> holding the <figure>: a figure may not take the tabpanel role */}
+  {shots.map((s, i) => (
+    <div class="show-panel" role="tabpanel" id={`show-panel-${i}`} aria-labelledby={`show-tab-${i}`} hidden={i !== 0}>
+      <figure>
+        <div class="win">
+          <img
+            src={s.src}
+            srcset={srcsetFor(s.src, SHOT_SIZE.width)}
+            sizes={`(max-width: 1240px) 94vw, 1136px`}
+            width={SHOT_SIZE.width}
+            height={SHOT_SIZE.height}
+            loading={i === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+            alt={s.alt}
+          />
+        </div>
+        <figcaption>{s.caption}</figcaption>
+      </figure>
+    </div>
+  ))}
+
+  <div class="show-panel" role="tabpanel" id={`show-panel-${shots.length}`} aria-labelledby={`show-tab-${shots.length}`} hidden>
+    <figure class="film">
+      <div class="win">
+        <video
+          id="film"
+          width={TOUR_SIZE.width}
+          height={TOUR_SIZE.height}
+          poster={tourPoster(lang)}
+          muted
+          loop
+          playsinline
+          preload="none"
+          data-src={tourUrl(lang)}
+          title={film.name}
+          aria-label={video.caption}
+        ></video>
+        <button class="film-play" id="filmPlay" type="button" hidden>
+          <Icon name="play" size={20} />
+          {video.play}
+        </button>
+      </div>
+      <figcaption>{video.caption}</figcaption>
+    </figure>
+  </div>
+</div>
+
+<script>
+  const show = document.getElementById('show');
+  const film = document.getElementById('film') as HTMLVideoElement | null;
+  const play = document.getElementById('filmPlay') as HTMLButtonElement | null;
+
+  if (show && film && play) {
+    const tabs = [...show.querySelectorAll<HTMLElement>('[role="tab"]')];
+    const panels = [...show.querySelectorAll<HTMLElement>('[role="tabpanel"]')];
+    const filmPanel = panels.length - 1;
+
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // wide enough that a three-megabyte file is a reasonable thing to send
+    const roomy = window.matchMedia('(min-width: 760px)');
+    const auto = () => !still.matches && roomy.matches;
+    let onScreen = false;
+
+    const start = () => {
+      if (!film.src && film.dataset.src) { film.src = film.dataset.src; film.preload = 'auto'; }
+      film.play().catch(() => { play.hidden = false; });
+    };
+    const filmOpen = () => !panels[filmPanel].hidden;
+    const sync = () => {
+      if (!filmOpen()) { film.pause(); return; }
+      if (auto() && onScreen) { play.hidden = true; start(); }
+      else if (film.paused) play.hidden = false;
+    };
+
+    // Roving tabindex: the list is one stop on the way through the page, and the arrows move
+    // inside it.
+    const select = (n: number, focus = true) => {
+      const at = (n + tabs.length) % tabs.length;
+      tabs.forEach((t, i) => {
+        t.setAttribute('aria-selected', String(i === at));
+        t.tabIndex = i === at ? 0 : -1;
+      });
+      panels.forEach((p, i) => { p.hidden = i !== at; });
+      if (focus) tabs[at].focus();
+      sync();
+    };
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => select(i, false));
+      tab.addEventListener('keydown', (e) => {
+        const go = { ArrowLeft: i - 1, ArrowRight: i + 1, Home: 0, End: tabs.length - 1 }[e.key];
+        if (go === undefined) return;
+        e.preventDefault();
+        select(go);
+      });
+    });
+
+    play.addEventListener('click', () => {
+      play.hidden = true;
+      film.controls = true;
+      start();
+    });
+
+    new IntersectionObserver((entries) => {
+      for (const en of entries) onScreen = en.isIntersecting;
+      sync();
+    }, { threshold: 0.3 }).observe(film);
+    still.addEventListener('change', sync);
+  }
+</script>
