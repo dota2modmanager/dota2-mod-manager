@@ -33,7 +33,7 @@ async function renderSettings(fresh = false): Promise<void> {
   const cacheSize = await window.api.misc.cacheSize();
   const version = await window.api.update.version();
   let vrf = null;
-  try { vrf = (await window.api.tools.state()).tools.find((x: { name: string }) => x.name === 'vrf') || null; } catch { /* older build */ }
+  try { vrf = (await window.api.tools.state()).tools.find((x) => x.name === 'vrf') || null; } catch { /* older build */ }
   let beta = { eligible: false, on: false };
   try { beta = await window.api.beta.state(); } catch { /* older build */ }
   if (fresh) key++;
@@ -48,7 +48,8 @@ async function renderSettings(fresh = false): Promise<void> {
     dotaValid: Boolean(s.dotaPathValid),
     cache: `${fmtMB(cacheSize)} MB`,
     proxy: s.downloadProxy || '',
-    vrf: vrf ? { ready: Boolean(vrf.ready), size: `${fmtMB(vrf.ready ? vrf.installedBytes : vrf.downloadBytes)} MB` } : null,
+    // no row on a machine with no build of it: the button could only fail
+    vrf: vrf && vrf.available !== false ? { ready: Boolean(vrf.ready), size: `${fmtMB(vrf.ready ? vrf.installedBytes : vrf.downloadBytes)} MB` } : null,
     catalogUpdated: fetchedAt ? new Date(fetchedAt).toLocaleString(window.i18nLocale()) : '—',
     adult: adultShown(),
     adultHint: adultHint(),

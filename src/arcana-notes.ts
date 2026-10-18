@@ -51,6 +51,20 @@ export const HEROES_NOT_CHECKED: ReadonlySet<string> = new Set([]);
 
 const UNTESTED = 'Не проверено в игре';
 
+/**
+ * Said of a pick whose model has no stock path to go under: the slot's stock item has no model of
+ * its own (Earthshaker's head). The game wears a model after a reconnect only if the server's own
+ * item table loaded it, and that table names nothing for the slot, so the pick is an ERROR model
+ * from the first reconnect on (src/item-builder.ts withoutFileSwaps, 2026-10-18).
+ */
+export const UNTIL_RECONNECT = 'Видно только до переподключения к матчу: у стандартного предмета этого слота нет своей модели, и после переподключения игра рисует на её месте ERROR';
+
+/** An option's note with UNTIL_RECONNECT added: on its own as one with issues, after an arcana's own. */
+export function untilReconnect(noted: { status: ItemNoteStatus; note: string } | null, text: (ru: string) => string): ItemNote {
+  if (!noted) return { status: 'issues', text: text(UNTIL_RECONNECT) };
+  return { status: noted.status, text: `${text(noted.note)} ${text(UNTIL_RECONNECT)}` };
+}
+
 /** Whether an item's block in items_game says it is an arcana. */
 export function isArcanaBlock(block: string): boolean {
   return /"item_rarity"\s+"arcana"/i.test(block);

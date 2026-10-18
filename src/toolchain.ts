@@ -25,12 +25,16 @@ import { execFile } from 'node:child_process';
 import { downloadFile } from './net.ts';
 import { openZip } from './safe-zip.ts';
 import { FileTx } from './file-tx.ts';
+import { t } from './i18n.ts';
 
 /** A tool pinned to a version, a URL, and the digest those bytes have to hash to. */
 interface Pin { version: string; url: string; sha256: string; bytes: number; exe: string; license: string; project: string }
 
-/** What installed.json records for a tool on disk. */
-type Installed = { version: string; exe: string; sha256: string; at: number };
+/**
+ * What installed.json records for a tool on disk. `build` is missing from every record written
+ * before there was more than one build, and those are all the Windows one: it was the only pin.
+ */
+type Installed = { version: string; exe: string; sha256: string; at: number; build?: string };
 
 /** How a download is going, for the bar at the bottom of the window. */
 export type ToolProgress =
@@ -39,24 +43,51 @@ export type ToolProgress =
   | { type: 'done'; label: string }
   | { type: 'error'; label: string; message: string };
 
-/** The only pins there are: what the app was built knowing. */
-// Measured again 2026-09-07 for 20.0: the digest comes from GitHub's own release API and was
-// confirmed by downloading the file and hashing it, and the archive was opened to check the
-// executable is at its root under the name below.
-export const BUILT_IN_PINS: Record<string, Pin> = {
+/** The build of a tool this machine runs: platform and processor, as Node names them. */
+export const HOST_BUILD = `${process.platform}-${process.arch}`;
+
+/* The only pins there are: what the app was built knowing, one per build of each tool.
+ *
+ * There was one, the Windows build, and Linux downloaded it too: a Windows program the system
+ * refuses to start (EACCES), so every item icon and hero portrait on Linux failed into the log
+ * from 2.4.0 on. A machine with no build of its own here gets no tool rather than another's.
+ *
+ * Measured 2026-09-07 (Windows) and 2026-10-18 (Linux) for 20.0: each digest comes from GitHub's
+ * own release API and was confirmed by downloading the file and hashing it, and each archive was
+ * opened to check the executable is at its root under the name below. */
+const VRF = {
+  version: '20.0',
+  license: 'MIT',
+  project: 'https://github.com/ValveResourceFormat/ValveResourceFormat',
+};
+const VRF_RELEASE = 'https://github.com/ValveResourceFormat/ValveResourceFormat/releases/download/20.0';
+/** Every tool's pins, by build (HOST_BUILD's shape): the comment above says why there are several. */
+export const BUILT_IN_PINS: Record<string, Record<string, Pin>> = {
   vrf: {
-    version: '20.0',
-    url: 'https://github.com/ValveResourceFormat/ValveResourceFormat/releases/download/20.0/cli-windows-x64.zip',
-    sha256: 'd32ab327b8bbb42a2528866afb03bb582bdb779d0005488da32b90292afd3ff5',
-    bytes: 52735867,
-    exe: 'Source2Viewer-CLI.exe',
-    license: 'MIT',
-    project: 'https://github.com/ValveResourceFormat/ValveResourceFormat',
+    'win32-x64': {
+      ...VRF,
+      url: `${VRF_RELEASE}/cli-windows-x64.zip`,
+      sha256: 'd32ab327b8bbb42a2528866afb03bb582bdb779d0005488da32b90292afd3ff5',
+      bytes: 52735867,
+      exe: 'Source2Viewer-CLI.exe',
+    },
+    'linux-x64': {
+      ...VRF,
+      url: `${VRF_RELEASE}/cli-linux-x64.zip`,
+      sha256: '3e8af47cd6ce52e8068904f2aa1dda23c56a6b96a8310b25090f0711cda76a8a',
+      bytes: 53059004,
+      exe: 'Source2Viewer-CLI',
+    },
   },
 };
 
 /** Every tool the app knows how to fetch. */
 const TOOL_NAMES: readonly string[] = Object.keys(BUILT_IN_PINS);
+
+/** A tool's pin for one build, or null when that build has none. */
+export function pinFor(name: string, build: string = HOST_BUILD): Pin | null {
+  return BUILT_IN_PINS[name]?.[build] || null;
+}
 
 /* A copy of the pinned archive in this project's own bucket.
  *
@@ -69,8 +100,14 @@ const TOOL_NAMES: readonly string[] = Object.keys(BUILT_IN_PINS);
  * hash to. The address is written here for the same reason the owner allowlist below is.
  */
 const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/';
-/** Where the copy of a pinned archive lives, keyed by the tool and the version pinned to it. */
-const fallbackUrl = (name: string, version: string): string => `${FALLBACK_BASE}${name}-${version}.zip`;
+/**
+ * The name of the copy of a pinned archive in the bucket, keyed by the tool, the version and the
+ * build. The Windows build keeps the name it had when it was the only one: every release before
+ * the Linux pin asks for exactly that name.
+ */
+export function fallbackName(name: string, version: string, build: string): string {
+  return build === 'win32-x64' ? `${name}-${version}.zip` : `${name}-${version}-${build}.zip`;
+}
 
 /* Whose releases a pin may point at.
  *
@@ -118,11 +155,12 @@ export function runTool(exe: string, args: string[], { timeoutMs = TOOL_TIMEOUT_
 }
 
 /** The tools in userData: what is there, fetching one at its pin, and deleting it again. */
-export function createToolchain({ userDataDir, onProgress = () => {}, log = () => {} }: {
+export function createToolchain({ userDataDir, onProgress = () => {}, log = () => {}, build = HOST_BUILD }: {
   userDataDir: string; onProgress?: (evt: ToolProgress) => void; log?: (msg: string) => void;
+  /** the build to fetch and to accept on disk; tests name one, the app runs its own */
+  build?: string;
 }) {
   const root = path.join(userDataDir, 'toolchain');
-  const pins = BUILT_IN_PINS;
 
   const dirFor = (name: string, version: string) => path.join(root, name, version);
   const stateFile = path.join(root, 'installed.json');
@@ -138,10 +176,13 @@ export function createToolchain({ userDataDir, onProgress = () => {}, log = () =
     fs.writeFileSync(stateFile, JSON.stringify(all, null, 2));
   }
 
-  /** Where this tool's executable sits right now, or null if it is not downloaded. */
+  /**
+   * Where this tool's executable sits right now, or null if it is not downloaded. A build for
+   * another machine counts as not downloaded: it is on disk, and it cannot run here.
+   */
   function pathOf(name: string): string | null {
     const entry = installed()[name];
-    if (!entry) return null;
+    if (!entry || (entry.build || 'win32-x64') !== build) return null;
     const exe = path.join(dirFor(name, entry.version), entry.exe);
     return fs.existsSync(exe) ? exe : null;
   }
@@ -152,12 +193,13 @@ export function createToolchain({ userDataDir, onProgress = () => {}, log = () =
    */
   async function ensure(name: string): Promise<string> {
     if (!TOOL_NAMES.includes(name)) throw new Error(`unknown tool ${name}`);
-    const pin = pins[name];
+    const pin = pinFor(name, build);
+    if (!pin) throw new Error(t('Для этой системы ({0}) нет сборки {1}', build, name));
     const have = installed()[name];
     if (have && have.version === pin.version) {
       const exe = pathOf(name);
       if (exe) return exe;
-      log(`toolchain: ${name} ${have.version} was recorded but is gone from disk, fetching again`);
+      log(`toolchain: ${name} ${have.version} (${have.build || 'win32-x64'}) was recorded but cannot run here as ${build}, fetching again`);
     }
 
     /* Whatever happens next, the bar at the bottom of the window hears how it ended. It hides
@@ -184,7 +226,7 @@ export function createToolchain({ userDataDir, onProgress = () => {}, log = () =
     } catch (err) {
       // Every mirror in net.ts is GitHub wearing another hostname, so a GitHub outage takes
       // the whole chain. The bucket is the one copy that does not share its fate.
-      const spare = fallbackUrl(name, pin.version);
+      const spare = FALLBACK_BASE + fallbackName(name, pin.version, build);
       log(`toolchain: ${name} not available from the release (${(err as Error)?.message || err}), trying ${spare}`);
       try {
         got = await downloadFile(spare, dest, { expectSha256: pin.sha256, onProgress: onBytes, log });
@@ -212,7 +254,9 @@ export function createToolchain({ userDataDir, onProgress = () => {}, log = () =
       fs.rmSync(into, { recursive: true, force: true });
       throw new Error(`${pin.exe} is not in the ${name} archive`);
     }
-    remember(name, { version: pin.version, exe: pin.exe, sha256: got.sha256, at: Date.now() });
+    // the archive marks it executable, and the unzip keeps contents, not modes
+    if (!build.startsWith('win32')) fs.chmodSync(exe, 0o755);
+    remember(name, { version: pin.version, exe: pin.exe, sha256: got.sha256, at: Date.now(), build });
     // an older version of the same tool is dead weight once this one works
     for (const old of fs.readdirSync(path.join(root, name))) {
       if (old !== pin.version) fs.rmSync(path.join(root, name, old), { recursive: true, force: true });
@@ -230,14 +274,17 @@ export function createToolchain({ userDataDir, onProgress = () => {}, log = () =
       if (dir) {
         try { for (const f of fs.readdirSync(dir)) bytes += fs.statSync(path.join(dir, f)).size; } catch { /* gone */ }
       }
+      const pin = pinFor(name, build);
       return {
         name,
         version: entry ? entry.version : null,
-        latest: pins[name].version,
+        latest: pin?.version ?? null,
         installedBytes: bytes,
-        downloadBytes: pins[name].bytes || 0,
-        license: pins[name].license,
-        project: pins[name].project,
+        downloadBytes: pin?.bytes || 0,
+        license: pin?.license ?? null,
+        project: pin?.project ?? null,
+        /** whether this machine has a build of it at all */
+        available: !!pin,
         ready: !!pathOf(name),
       };
     });

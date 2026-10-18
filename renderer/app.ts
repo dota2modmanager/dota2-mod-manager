@@ -40,6 +40,10 @@ import { loadCatalog } from './views/catalog.ts';
  * there, and a failed download does not re-ask on the next launch either - the row in Settings
  * says what happened and offers the retry. */
 async function offerToolchain(): Promise<void> {
+  // a machine with no build of it (a Mac, an ARM board) is not offered a download that cannot run
+  let available = true;
+  try { available = (await window.api.tools.state()).tools.find((x) => x.name === 'vrf')?.available !== false; } catch { /* older main */ }
+  if (!available) return;
   let wanted = false;
   try { wanted = await toolchainDialog(); } catch { /* nothing shown, nothing fetched */ }
   await window.api.settings.set('toolsPromptSeen', true);

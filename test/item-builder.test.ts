@@ -461,7 +461,10 @@ test('item effects keep the donor body, rewrite only the stock header and collec
   assert.match(patched.block, /"name"\s+"Sniper's Cape"/);
   assert.match(patched.block, /"prefab"\s+"default_item"/);
   assert.match(patched.block, /"item_name"\s+"#DOTA_Item_Golden_FullBore_Bonanza"/);
-  assert.match(patched.block, /"model_player"\s+"models\/items\/sniper\/sniper_cape_immortal\/sniper_cape_immortal\.vmdl"/);
+  // the stock path, which the VPK fills with the cape: a reconnect wears only what the server's table
+  // loads, and the paid path became an ERROR model (src/item-builder.ts withoutFileSwaps)
+  assert.match(patched.block, /"model_player"\s+"models\/heroes\/sniper\/cape\.vmdl"/);
+  assert.doesNotMatch(patched.block, /sniper_cape_immortal\.vmdl/);
   assert.match(patched.block, /"modifier"\s+"particles\/econ\/items\/sniper\/sniper_immortal_cape_golden\/sniper_immortal_cape_golden_headshot_slow\.vpcf"/);
   assert.match(patched.block, /"modifier"\s+"particles\/econ\/items\/sniper\/sniper_immortal_cape_golden\/sniper_immortal_cape_golden_headshot_slow_caster\.vpcf"/);
   assert.match(patched.block, /particles\/econ\/items\/sniper\/sniper_immortal_cape_golden\/sniper_immortal_cape_golden_ambient\.vpcf/);
@@ -498,7 +501,7 @@ test('item effects keep the donor body, rewrite only the stock header and collec
   const merged = schema.findItem(out.text, '282');
   assert.ok(merged);
   assert.match(merged.text, /seasonal_ambient_silver\.vpcf/);
-  assert.match(merged.text, /models\/items\/sniper\/sniper_cape_immortal\/sniper_cape_immortal\.vmdl/);
+  assert.match(merged.text, /"model_player"\s+"models\/heroes\/sniper\/cape\.vmdl"/);
 });
 
 test('game asset entries read donor bytes from pak01 and buildSchemaVpk packs them under stock paths', (t) => {
@@ -720,7 +723,12 @@ test("an arcana's patch brings its hero model under the plain hero's, with its f
   const picture = (folder: string, name: string) => `panorama/images/${folder}/${name}_png.vtex_c`;
   const pictureCopy = (folder: string, from: string, to: string) => ({ from: picture(folder, from), to: picture(folder, to), optional: true });
   assert.equal(patched.id, '811');
-  assert.match(patched.block, /"type"\s+"entity_model"/, 'the table still swaps the model where the game reads it');
+  // the VPK puts the arcana under the hero's path and the box under the mask's, so the table names
+  // neither: a swap to a path the server's table does not load is an ERROR model after a reconnect
+  assert.doesNotMatch(patched.block, /"npc_dota_hero_juggernaut"\s+"modifier"\s+"models\/heroes\/juggernaut\/juggernaut_arcana\.vmdl"/, "no swap of the hero's model");
+  assert.doesNotMatch(patched.block, /invisiblebox/, 'no swap of the stock mask');
+  assert.match(patched.block, /spirit_bear_rubick\.vmdl/, "another unit's swap stays: nothing puts it under a path");
+  assert.match(patched.block, /paid_mask_arcana_refit\.vmdl/, "and so does a paid mask's refit");
   assert.deepEqual(patched.assetCopies, [
     // the hero's own, once, with what the item switches on in every style: "red" is the second style's
     { from: 'models/heroes/juggernaut/juggernaut_arcana.vmdl', hero: 'npc_dota_hero_juggernaut', activities: ['arcana'] },
@@ -896,4 +904,25 @@ test("the builder's slots made a pause at a time are the slots made at once", as
   assert.ok(pauses >= 1);
   assert.deepEqual(r.value, itemSlots(text));
   assert.deepEqual(drain(itemSlotsSteps(text)), r.value);
+});
+
+/* A reconnect wears only what the server's own item table loaded, and a slot whose stock item has
+ * no model has nothing loaded to put a pick under: Earthshaker's cosmic head was an ERROR model
+ * after every reconnect (2026-10-18). The picker says so before the pick, not the game after it. */
+test('a pick for a slot whose stock item has no model is marked as lasting until a reconnect', () => {
+  const es = '\t\t\t"used_by_heroes"\n\t\t\t{\n\t\t\t\t"npc_dota_hero_earthshaker"\t\t"1"\n\t\t\t}\n';
+  const stock = (id: string, name: string, slot: string, model = '') => `\t\t"${id}"\n\t\t{\n\t\t\t"name"\t\t"${name}"\n\t\t\t"prefab"\t\t"default_item"\n\t\t\t"item_slot"\t\t"${slot}"\n${model ? `\t\t\t"model_player"\t\t"${model}"\n` : ''}${es}\t\t}\n`;
+  const wearable = (id: string, name: string, slot: string, model = '') => `\t\t"${id}"\n\t\t{\n\t\t\t"name"\t\t"${name}"\n\t\t\t"prefab"\t\t"wearable"\n\t\t\t"item_slot"\t\t"${slot}"\n${model ? `\t\t\t"model_player"\t\t"${model}"\n` : ''}${es}\t\t}\n`;
+  const text = table([
+    stock('8655', "Earthshaker's Uncoiffed Head", 'head'),
+    stock('460', "Earthshaker's Bracers", 'arms', 'models/heroes/earthshaker/bracers.vmdl'),
+    wearable('34310', 'Intergalactic Orbliterator Head', 'head', 'models/items/earthshaker/es_cosmic/es_cosmic_head.vmdl'),
+    wearable('34311', 'Head With Nothing To Wear', 'head'),
+    wearable('34308', 'Intergalactic Orbliterator Arms', 'arms', 'models/items/earthshaker/es_cosmic/es_cosmic_arms.vmdl'),
+  ]);
+  const options = new Map(builder.itemSlots(text).flatMap((s) => s.options.map((o) => [o.id, o])));
+  assert.equal(options.get('34310')?.note?.status, 'issues');
+  assert.match(options.get('34310')?.note?.text || '', /ERROR/);
+  assert.equal(options.get('34311')?.note, undefined, 'no model of its own, nothing to lose');
+  assert.equal(options.get('34308')?.note, undefined, 'the bracers have a stock path to go under');
 });

@@ -579,6 +579,25 @@ export const HEROES_NOT_CHECKED: ReadonlySet<string> = new Set([])
 Heroes none of whose items have been played through the builder yet (none now: Io was the
  last, checked on 2026-10-15). A hero offered for the first time goes here until it is played.
 
+### `UNTIL_RECONNECT`
+
+```ts
+export const UNTIL_RECONNECT = 'Видно только до переподключения к матчу: у стандартного предмета этого слота нет своей модели, и после переподключения игра рисует на её месте ERROR'
+```
+
+Said of a pick whose model has no stock path to go under: the slot's stock item has no model of
+its own (Earthshaker's head). The game wears a model after a reconnect only if the server's own
+item table loaded it, and that table names nothing for the slot, so the pick is an ERROR model
+from the first reconnect on (src/item-builder.ts withoutFileSwaps, 2026-10-18).
+
+### `untilReconnect`
+
+```ts
+export function untilReconnect(noted: { status: ItemNoteStatus; note: string } | null, text: (ru: string) => string): ItemNote
+```
+
+An option's note with UNTIL_RECONNECT added: on its own as one with issues, after an arcana's own.
+
 ### `isArcanaBlock`
 
 ```ts
@@ -3524,9 +3543,13 @@ Turn one paid wearable into the hero's stock item for that slot.
 The block stays the donor item almost verbatim: only the header is rewritten to the matching
 default_item (id + name + prefab), styles/unlocks that cannot be used on a free base item are
 dropped (the chosen style, if not the first, stays as the only one: src/item-builder-styles.ts),
-and the chosen effect is inserted into visuals. The donor model/particles stay named as the paid
-item in items_game, while assetCopies still describe the stock-path overrides the built VPK
-should carry, and sounds and voices the soundevents it rewrites (src/item-sounds.ts).
+and the chosen effect is inserted into visuals. assetCopies describe the stock-path overrides the
+built VPK carries, and sounds and voices the soundevents it rewrites (src/item-sounds.ts).
+
+A model the VPK carries under a stock path is named by that path, not the paid item's: the stock
+item's model_player, and no swap of the hero's model or of a stock model left in the visuals
+(withoutFileSwaps says why). The particles keep the paid item's paths: the game loads a particle
+when it is created, and a reconnect keeps them.
 
 ## src/item-portraits.ts
 
@@ -7310,15 +7333,39 @@ export type ToolProgress =
 
 How a download is going, for the bar at the bottom of the window.
 
+### `HOST_BUILD`
+
+```ts
+export const HOST_BUILD = `${process.platform}-${process.arch}`
+```
+
+The build of a tool this machine runs: platform and processor, as Node names them.
+
 ### `BUILT_IN_PINS`
 
 ```ts
-export const BUILT_IN_PINS: Record<string, Pin> =
+export const BUILT_IN_PINS: Record<string, Record<string, Pin>> =
 ```
 
-Measured again 2026-09-07 for 20.0: the digest comes from GitHub's own release API and was
-confirmed by downloading the file and hashing it, and the archive was opened to check the
-executable is at its root under the name below.
+Every tool's pins, by build (HOST_BUILD's shape): the comment above says why there are several.
+
+### `pinFor`
+
+```ts
+export function pinFor(name: string, build: string = HOST_BUILD): Pin | null
+```
+
+A tool's pin for one build, or null when that build has none.
+
+### `fallbackName`
+
+```ts
+export function fallbackName(name: string, version: string, build: string): string
+```
+
+The name of the copy of a pinned archive in the bucket, keyed by the tool, the version and the
+build. The Windows build keeps the name it had when it was the only one: every release before
+the Linux pin asks for exactly that name.
 
 ### `validPin`
 
@@ -7339,7 +7386,7 @@ Run one of the tools, hidden, and settle when it exits: resolved on 0, rejected 
 ### `createToolchain`
 
 ```ts
-export function createToolchain({ userDataDir, onProgress = () => {}, log = () => {} }: { userDataDir: string; onProgress?: (evt: ToolProgress) => void; log?: (msg: string) => void; })
+export function createToolchain({ userDataDir, onProgress = () => {}, log = () => {}, build = HOST_BUILD }: { userDataDir: string; onProgress?: (evt: ToolProgress) => void; log?: (msg: string) => void; /** the build to fetch and to accept on disk; tests name one, the app runs its own */ build?: string; })
 ```
 
 The tools in userData: what is there, fetching one at its pin, and deleting it again.

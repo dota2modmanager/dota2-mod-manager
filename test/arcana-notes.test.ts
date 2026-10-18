@@ -3,7 +3,7 @@
  * every language the window speaks. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { itemNote, ARCANA_NOTES, ARCANAS_THAT_WORK, isArcanaBlock } from '../src/arcana-notes.ts';
+import { itemNote, ARCANA_NOTES, ARCANAS_THAT_WORK, isArcanaBlock, untilReconnect, UNTIL_RECONNECT } from '../src/arcana-notes.ts';
 import { setLang, t } from '../src/i18n.ts';
 import ZH from '../src/i18n-zh-CN.ts';
 
@@ -42,4 +42,15 @@ test('no hero is reported both ways, and every note reads in English and Chinese
   } finally {
     setLang('ru');
   }
+});
+
+test('the reconnect warning stands alone as an issue, and follows an arcana note without hiding it', () => {
+  const same = (ru: string) => ru;
+  assert.deepEqual(untilReconnect(null, same), { status: 'issues', text: UNTIL_RECONNECT });
+  const pudge = untilReconnect({ status: 'broken', note: ARCANA_NOTES.pudge.note }, same);
+  assert.equal(pudge.status, 'broken', 'a broken arcana stays broken');
+  assert.ok(pudge.text.startsWith(ARCANA_NOTES.pudge.note) && pudge.text.endsWith(UNTIL_RECONNECT));
+  setLang('en');
+  assert.match(t(UNTIL_RECONNECT), /^Shows only until you reconnect/);
+  assert.ok((ZH as Record<string, string>)[UNTIL_RECONNECT], 'and in Chinese');
 });

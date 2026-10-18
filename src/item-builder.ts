@@ -137,6 +137,39 @@ export function defaultItemForWearable(text: string, sourceId: string | number):
     .sort((a, b) => Number(a.id) - Number(b.id))[0] || null;
 }
 
+/**
+ * The visuals without the model swaps the built files already make: the hero's own model swapped
+ * for an arcana's, and a stock item's model for another, where the pick puts that model under the
+ * plain path. Each left in names a model only the paid item loads.
+ *
+ * The game wears an item's model only once it is loaded, and what a match loads is what the
+ * server's own item table names: the stock paths. Joining a match the client loaded the paid
+ * models with the hero, so the swaps worked; after a reconnect it did not, and the console said
+ * "Attempting to set nonresident model 'models/items/earthshaker/es_cosmic/es_cosmic_totem.vmdl'
+ * for item Def 459", the totem an ERROR model and the rest the plain hero (2026-10-18). Under the
+ * stock paths the same files are loaded either way.
+ * @param heroes  the heroes whose own model the pick puts under their path
+ * @param stock  the stock models the pick puts another model under, as normalizeAssetPath writes them
+ */
+function withoutFileSwaps(visuals: string, heroes: Set<string>, stock: Set<string>): string {
+  const cut: { start: number; end: number }[] = [];
+  eachChild(visuals, blockBounds(visuals, 0), (c) => {
+    if (!c.isBlock || !/^asset_modifier\d*$/i.test(c.key)) return;
+    const fields = new Map<string, string>();
+    eachChild(visuals, c.body, (f) => { if (!f.isBlock) fields.set(f.key.toLowerCase(), f.value); });
+    const type = (fields.get('type') || '').toLowerCase();
+    const asset = fields.get('asset') || '';
+    if ((type === 'entity_model' && heroes.has(asset.toLowerCase())) || (type === 'model' && stock.has(normalizeAssetPath(asset)))) cut.push(c);
+  });
+  let out = visuals;
+  for (const c of cut.reverse()) {
+    let start = c.start;
+    while (start > 0 && /[ \t\r\n]/.test(out[start - 1])) start--;
+    out = out.slice(0, start) + out.slice(c.end);
+  }
+  return out;
+}
+
 function appendItemEffect(visuals: string, effect: ItemEffect): string {
   const needle = String(effect.modifier || '').toLowerCase();
   if (needle && visuals.toLowerCase().includes(needle)) return visuals;
@@ -165,9 +198,13 @@ function appendItemEffect(visuals: string, effect: ItemEffect): string {
  * The block stays the donor item almost verbatim: only the header is rewritten to the matching
  * default_item (id + name + prefab), styles/unlocks that cannot be used on a free base item are
  * dropped (the chosen style, if not the first, stays as the only one: src/item-builder-styles.ts),
- * and the chosen effect is inserted into visuals. The donor model/particles stay named as the paid
- * item in items_game, while assetCopies still describe the stock-path overrides the built VPK
- * should carry, and sounds and voices the soundevents it rewrites (src/item-sounds.ts).
+ * and the chosen effect is inserted into visuals. assetCopies describe the stock-path overrides the
+ * built VPK carries, and sounds and voices the soundevents it rewrites (src/item-sounds.ts).
+ *
+ * A model the VPK carries under a stock path is named by that path, not the paid item's: the stock
+ * item's model_player, and no swap of the hero's model or of a stock model left in the visuals
+ * (withoutFileSwaps says why). The particles keep the paid item's paths: the game loads a particle
+ * when it is created, and a reconnect keeps them.
  */
 export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined): { id: string; block: string } & ItemAssets {
   const source = findItem(baseText, itemId);
@@ -191,10 +228,12 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
   // a style with a model of its own wears that one in place of the item's
   const sourceModel = styled.model || sourceFields.get('model_player') || '';
   const targetModel = targetFields.get('model_player') || '';
-  if (sourceModel && targetModel && normalizeAssetPath(sourceModel) !== normalizeAssetPath(targetModel)) {
-    assets.assetCopies.unshift({ from: sourceModel, to: targetModel });
-  }
+  const underStock = !!sourceModel && !!targetModel && normalizeAssetPath(sourceModel) !== normalizeAssetPath(targetModel);
+  if (underStock) assets.assetCopies.unshift({ from: sourceModel, to: targetModel });
 
+  const copiedHeroes = new Set(assets.assetCopies.flatMap((c) => ('hero' in c ? [c.hero] : [])));
+  const copiedStock = new Set(assets.assetCopies.flatMap((c) => ('to' in c ? [normalizeAssetPath(c.to)] : [])));
+  visuals = withoutFileSwaps(visuals, copiedHeroes, copiedStock);
   visuals = stripKeyBlocks(visuals, 'unlock');
   if (!styled.applied) visuals = stripKeyBlocks(visuals, 'styles');
   for (const effect of effects) visuals = appendItemEffect(visuals, effect);
@@ -202,7 +241,9 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
   let patched = setBlockId(itemBlock(baseText, source), target.id);
   patched = setScalarField(patched, 'name', targetFields.get('name') || target.name || target.id);
   patched = setScalarField(patched, 'prefab', 'default_item');
-  if (styled.model) patched = setScalarField(patched, 'model_player', styled.model);
+  // the stock path, which the pick's VPK fills with the item's model (withoutFileSwaps says why)
+  if (underStock) patched = setScalarField(patched, 'model_player', targetModel);
+  else if (styled.model) patched = setScalarField(patched, 'model_player', styled.model);
   patched = setVisualsBlock(patched, visuals);
   return { id: target.id, block: patched, ...assets };
 }

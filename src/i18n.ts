@@ -24,6 +24,8 @@ const EN = {
   'В этой папке не найдена Dota 2 (нет подпапки dota)': 'No Dota 2 here (there is no "dota" subfolder)',
   'Уже установлено': 'Already installed',
   'Мод не найден': 'Mod not found',
+  // a tool of the toolchain with no build for this machine (src/toolchain.ts)
+  'Для этой системы ({0}) нет сборки {1}': 'There is no build of {1} for this system ({0})',
   'Не указана папка игры': 'No game folder is set',
   'Не тот цвет': 'Not a colour',
   'Этот мод нельзя обновить из каталога': 'This mod cannot be updated from the catalog',
@@ -119,6 +121,7 @@ const EN = {
   'Стиль {0}': 'Style {0}',
   // what an arcana does once the builder puts it on (src/arcana-notes.ts)
   'Не проверено в игре': 'Not checked in the game yet',
+  'Видно только до переподключения к матчу: у стандартного предмета этого слота нет своей модели, и после переподключения игра рисует на её месте ERROR': 'Shows only until you reconnect to a match: this slot\'s stock item has no model of its own, and after a reconnect the game draws ERROR in its place',
   'Анимации работают с багами': 'Its animations are buggy',
   'Берёт анимации бессмертного предмета Mask of Madness и из-за них дёргается': 'Takes the animations of the Mask of Madness immortal and twitches because of them',
   'Работает с оговорками: во втором стиле глаза красно-синие, а второй навык с Aghanim\'s зависит от предметов, отданных тотемом, и может провалить героя под землю': 'Works with caveats: the second style has red and blue eyes, and the second ability with Aghanim\'s depends on the items the totem gives and can sink the hero into the ground',

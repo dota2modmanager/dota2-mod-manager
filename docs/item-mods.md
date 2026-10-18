@@ -49,6 +49,15 @@ while it is worn:
 The item's own `model_player` takes the place of the free item of its slot for that hero (the
 arcana's horns under `horns.vmdl`).
 
+**Name the stock path, not the paid one.** The game wears a model only once it is loaded, and a
+match loads what the server's own item table names: the stock paths. Joining a match, the client
+loads the paid models with the hero, so a table naming them looks right; after a reconnect it does
+not, and the console says `Attempting to set nonresident model ... for item Def 459` while the hero
+wears an ERROR model. So a built item names the stock path its VPK fills, and drops the
+`entity_model` and `model` swaps the files already make (`src/item-builder.ts`, `withoutFileSwaps`).
+A slot whose stock item has no model at all, such as Earthshaker's head, has no path to fill, and
+its pick still shows only until a reconnect.
+
 **Load order.** A built item goes in as a hero item, which the app loads from slots 02-29, above
 the catalog's hero mods at 30 and up: an arcana mod from the catalog does not cover the colour.
 

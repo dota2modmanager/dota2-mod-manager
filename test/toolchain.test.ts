@@ -13,7 +13,11 @@ import type { AddressInfo } from 'node:net';
 import AdmZip from 'adm-zip';
 
 import * as net from '../src/net.ts';
-import { createToolchain, BUILT_IN_PINS, validPin, runTool, type ToolProgress } from '../src/toolchain.ts';
+import { createToolchain, BUILT_IN_PINS, validPin, runTool, fallbackName, type ToolProgress } from '../src/toolchain.ts';
+
+/** The Windows build's pin: what the tests below download, on whichever system runs them. */
+const WIN = BUILT_IN_PINS.vrf['win32-x64'];
+const LINUX = BUILT_IN_PINS.vrf['linux-x64'];
 
 function userDir(t: TestContext) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-tool-'));
@@ -48,8 +52,8 @@ async function serve(t: TestContext, data: Buffer) {
 }
 
 test('every built-in pin passes the check the app enforces on a pin', () => {
-  for (const [name, pin] of Object.entries(BUILT_IN_PINS)) {
-    assert.ok(validPin(pin, name), `${name} pin is valid`);
+  for (const [name, builds] of Object.entries(BUILT_IN_PINS)) {
+    for (const [build, pin] of Object.entries(builds)) assert.ok(validPin(pin, name), `${name} ${build} pin is valid`);
   }
 });
 
@@ -80,7 +84,7 @@ test('both homes of the tool are accepted, and nothing that merely looks like th
    *
    * Widening an allowlist is where a check stops meaning anything, so the near-misses are here
    * too: an owner whose name merely ends with the right one must still be refused. */
-  const good = BUILT_IN_PINS.vrf;
+  const good = WIN;
   const at = (url: string) => validPin({ ...good, url }, 'vrf');
   const rel = '/releases/download/20.0/cli-windows-x64.zip';
 
@@ -94,7 +98,7 @@ test('both homes of the tool are accepted, and nothing that merely looks like th
 });
 
 test('a pin is refused unless it points at a project release with a real hash', () => {
-  const good = BUILT_IN_PINS.vrf;
+  const good = WIN;
   assert.equal(validPin({ ...good, url: 'https://example.com/tool.zip' }, 'vrf'), false, 'any host will not do');
   assert.equal(validPin({ ...good, url: 'https://github.com/someone/else/raw/main/tool.zip' }, 'vrf'), false, 'a raw file is not a release');
   assert.equal(validPin({ ...good, sha256: 'nope' }, 'vrf'), false);
@@ -107,7 +111,7 @@ test('a pin is refused unless it points at a project release with a real hash', 
 // is something anybody can produce with a repository of their own. Only the tool's own
 // project counts, and a config that names no tool at all counts for nothing.
 test('a pin may only point at the repository the tool actually comes from', () => {
-  const good = BUILT_IN_PINS.vrf;
+  const good = WIN;
   const elsewhere = 'https://github.com/attacker/ValveResourceFormat/releases/download/19.2/cli-windows-x64.zip';
   assert.equal(validPin({ ...good, url: elsewhere }, 'vrf'), false, 'somebody else’s release is not the tool');
   assert.equal(validPin(good, 'unknown-tool'), false, 'a tool with no pinned repository has no valid pin');
@@ -119,9 +123,9 @@ test('a tool downloads, unpacks and is found where it says', async (t) => {
   const data = toolZip();
   await serve(t, data);
   const dir = userDir(t);
-  const tc = createToolchain({ userDataDir: dir });
+  const tc = createToolchain({ userDataDir: dir, build: 'win32-x64' });
   // pretend the built-in pin describes what the local server is about to hand over
-  BUILT_IN_PINS.vrf.sha256 = crypto.createHash('sha256').update(data).digest('hex');
+  WIN.sha256 = crypto.createHash('sha256').update(data).digest('hex');
 
   const exe = await tc.ensure('vrf');
   assert.ok(fs.existsSync(exe), 'the executable is on disk');
@@ -129,15 +133,15 @@ test('a tool downloads, unpacks and is found where it says', async (t) => {
   assert.equal(tc.pathOf('vrf'), exe, 'and it is found again without downloading');
   const state = tc.state().find((s) => s.name === 'vrf');
   assert.equal(state?.ready, true);
-  assert.equal(state?.version, BUILT_IN_PINS.vrf.version);
+  assert.equal(state?.version, WIN.version);
   assert.ok(state && state.installedBytes > 0);
 });
 
 test('an archive that hashes to something else is not unpacked at all', async (t) => {
   await serve(t, toolZip());
   const dir = userDir(t);
-  const tc = createToolchain({ userDataDir: dir });
-  BUILT_IN_PINS.vrf.sha256 = 'f'.repeat(64); // what we pinned is not what arrived
+  const tc = createToolchain({ userDataDir: dir, build: 'win32-x64' });
+  WIN.sha256 = 'f'.repeat(64); // what we pinned is not what arrived
 
   await assert.rejects(() => tc.ensure('vrf'), /checksum/);
   assert.equal(tc.pathOf('vrf'), null, 'nothing was installed');
@@ -148,11 +152,68 @@ test('an archive without the executable it promised is thrown away', async (t) =
   const data = toolZip('SomethingElse.exe');
   await serve(t, data);
   const dir = userDir(t);
-  const tc = createToolchain({ userDataDir: dir });
-  BUILT_IN_PINS.vrf.sha256 = crypto.createHash('sha256').update(data).digest('hex');
+  const tc = createToolchain({ userDataDir: dir, build: 'win32-x64' });
+  WIN.sha256 = crypto.createHash('sha256').update(data).digest('hex');
 
   await assert.rejects(() => tc.ensure('vrf'), /Source2Viewer-CLI\.exe/);
   assert.equal(tc.pathOf('vrf'), null);
+});
+
+/* Linux downloaded the Windows build through 2.14.0: a program the system would not start (EACCES),
+ * so every item icon and hero portrait failed into the log. Each build now has its own pin. */
+test('each system downloads its own build, and Linux gets one it can run', async (t) => {
+  assert.match(WIN.url, /cli-windows-x64\.zip$/);
+  assert.match(LINUX.url, /cli-linux-x64\.zip$/);
+  assert.equal(LINUX.exe, 'Source2Viewer-CLI', 'no .exe on Linux');
+
+  const data = toolZip('Source2Viewer-CLI');
+  await serve(t, data);
+  const tc = createToolchain({ userDataDir: userDir(t), build: 'linux-x64' });
+  const pinned = LINUX.sha256;
+  t.after(() => { LINUX.sha256 = pinned; });
+  LINUX.sha256 = crypto.createHash('sha256').update(data).digest('hex');
+
+  const exe = await tc.ensure('vrf');
+  assert.match(exe, /Source2Viewer-CLI$/);
+  // the unzip keeps contents, not modes, and Windows has no execute bit to check
+  if (process.platform !== 'win32') assert.ok(fs.statSync(exe).mode & 0o100, 'it can be started');
+  assert.equal(tc.pathOf('vrf'), exe);
+});
+
+test('a Windows build already on a Linux machine is not used, and is replaced', async (t) => {
+  const dir = userDir(t);
+  // what every Linux install has had: the Windows build, recorded before records named a build
+  const old = path.join(dir, 'toolchain', 'vrf', WIN.version);
+  fs.mkdirSync(old, { recursive: true });
+  fs.writeFileSync(path.join(old, WIN.exe), 'MZ');
+  fs.writeFileSync(path.join(dir, 'toolchain', 'installed.json'), JSON.stringify({ vrf: { version: WIN.version, exe: WIN.exe, sha256: WIN.sha256, at: 1 } }));
+
+  assert.ok(createToolchain({ userDataDir: dir, build: 'win32-x64' }).pathOf('vrf'), 'on Windows the same record is a working tool');
+  const tc = createToolchain({ userDataDir: dir, build: 'linux-x64' });
+  assert.equal(tc.pathOf('vrf'), null, 'on Linux it is no tool at all');
+  assert.equal(tc.state().find((s) => s.name === 'vrf')?.ready, false);
+
+  const data = toolZip('Source2Viewer-CLI');
+  await serve(t, data);
+  const pinned = LINUX.sha256;
+  t.after(() => { LINUX.sha256 = pinned; });
+  LINUX.sha256 = crypto.createHash('sha256').update(data).digest('hex');
+  const exe = await tc.ensure('vrf');
+  assert.match(exe, /Source2Viewer-CLI$/, 'the Linux build came down in its place');
+  assert.equal(fs.existsSync(path.join(old, WIN.exe)), false, 'and the Windows one is gone');
+});
+
+test('a machine with no build of a tool is told so, and offered nothing', async (t) => {
+  const tc = createToolchain({ userDataDir: userDir(t), build: 'darwin-arm64' });
+  await assert.rejects(() => tc.ensure('vrf'), /darwin-arm64/);
+  const state = tc.state().find((s) => s.name === 'vrf');
+  assert.equal(state?.available, false);
+  assert.equal(state?.ready, false);
+});
+
+test('the copy in the bucket keeps the name released versions ask for', () => {
+  assert.equal(fallbackName('vrf', '20.0', 'win32-x64'), 'vrf-20.0.zip');
+  assert.equal(fallbackName('vrf', '20.0', 'linux-x64'), 'vrf-20.0-linux-x64.zip');
 });
 
 test('a tool nobody asked for is not a tool', async (t) => {
@@ -164,8 +225,8 @@ test('deleting a tool leaves nothing behind', async (t) => {
   const data = toolZip();
   await serve(t, data);
   const dir = userDir(t);
-  const tc = createToolchain({ userDataDir: dir });
-  BUILT_IN_PINS.vrf.sha256 = crypto.createHash('sha256').update(data).digest('hex');
+  const tc = createToolchain({ userDataDir: dir, build: 'win32-x64' });
+  WIN.sha256 = crypto.createHash('sha256').update(data).digest('hex');
 
   await tc.ensure('vrf');
   tc.remove('vrf');
@@ -180,15 +241,15 @@ test('a download tells the progress bar it is over, however it ends', async (t) 
   const data = toolZip();
   await serve(t, data);
   const events: ToolProgress[] = [];
-  const tc = createToolchain({ userDataDir: userDir(t), onProgress: (e) => events.push(e) });
-  BUILT_IN_PINS.vrf.sha256 = crypto.createHash('sha256').update(data).digest('hex');
+  const tc = createToolchain({ userDataDir: userDir(t), onProgress: (e) => events.push(e), build: 'win32-x64' });
+  WIN.sha256 = crypto.createHash('sha256').update(data).digest('hex');
   await tc.ensure('vrf');
   assert.equal(events.at(-1)?.type, 'done');
   assert.equal(events.at(-1)?.label, 'vrf');
 
   const failed: ToolProgress[] = [];
-  const tc2 = createToolchain({ userDataDir: userDir(t), onProgress: (e) => failed.push(e) });
-  BUILT_IN_PINS.vrf.sha256 = 'f'.repeat(64);
+  const tc2 = createToolchain({ userDataDir: userDir(t), onProgress: (e) => failed.push(e), build: 'win32-x64' });
+  WIN.sha256 = 'f'.repeat(64);
   await assert.rejects(() => tc2.ensure('vrf'), /checksum/);
   const last = failed.at(-1);
   assert.equal(last?.type, 'error');

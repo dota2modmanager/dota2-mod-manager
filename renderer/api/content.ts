@@ -44,7 +44,8 @@ export interface PatchApi {
   onRepair: (cb: (st: RepairState) => void) => void;
 }
 
-interface ToolState { name: string; ready: boolean; installedBytes: number; downloadBytes: number; [key: string]: unknown }
+/** A tool as src/toolchain.ts state() describes it; `available` is false where this machine has no build of it. */
+interface ToolState { name: string; ready: boolean; available: boolean; installedBytes: number; downloadBytes: number; [key: string]: unknown }
 
 export interface ToolsApi {
   state: () => Promise<{ tools: ToolState[]; iconCacheBytes: number }>;

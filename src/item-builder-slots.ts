@@ -15,7 +15,7 @@ import { t } from './i18n.ts';
 import { listItems, listItemsSteps, toUtf8, eachChild, blockBounds, itemSearchText, inferredItemSlot, type SchemaItem } from './schema.ts';
 import { drain, PAUSE } from './steps.ts';
 import { styleTokens } from './item-builder-styles.ts';
-import { itemNote, type ItemNote } from './arcana-notes.ts';
+import { itemNote, untilReconnect, type ItemNote } from './arcana-notes.ts';
 
 /** A slot of a hero the builder can dress, and the paid items that fit it. */
 export interface ItemSlot {
@@ -150,6 +150,8 @@ export function* itemSlotsSteps(text: string): Generator<typeof PAUSE, ItemSlot[
   };
   const slots = new Map<string, ItemSlot>();
   const matchSlots = new Map<string, string[]>();
+  // the stock items with no model of their own: a pick for their slot has no path to go under
+  const bare = new Set<string>();
   for (const item of items) {
     if (++n % 2000 === 0) yield PAUSE;
     const equipSlot = canonicalItemSlot(inferredItemSlot(item));
@@ -158,6 +160,7 @@ export function* itemSlotsSteps(text: string): Generator<typeof PAUSE, ItemSlot[
     if (!heroes.length) continue;
     const heroIds = heroes.map(canonicalHeroId);
     const slotId = itemSlotId(heroIds, equipSlot);
+    if (!item.model) bare.add(item.id);
     slots.set(slotId, {
       slot: slotId,
       kind: 'item-effect',
@@ -193,10 +196,11 @@ export function* itemSlotsSteps(text: string): Generator<typeof PAUSE, ItemSlot[
     const block = text.slice(item.start, item.end);
     const styles = block.includes('"styles"') ? styleTokens(visualsOf(text, item)) : [];
     const noted = itemNote(heroIds, block, item.id);
+    const note = item.model && bare.has(target.base) ? untilReconnect(noted, t) : noted && { status: noted.status, text: t(noted.note) };
     target.options.push({
       id: item.id, name: toUtf8(item.name),
       ...(styles.length ? { styles } : {}),
-      ...(noted ? { note: { status: noted.status, text: t(noted.note) } } : {}),
+      ...(note ? { note } : {}),
     });
   }
 

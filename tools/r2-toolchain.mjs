@@ -21,7 +21,7 @@ import { createRequire } from 'node:module';
 import { createR2 } from './r2-client.js';
 
 const require = createRequire(import.meta.url);
-const { BUILT_IN_PINS } = require('../src/toolchain.ts');
+const { BUILT_IN_PINS, fallbackName } = require('../src/toolchain.ts');
 
 const dry = process.argv.includes('--dry');
 const PREFIX = 'tools/';
@@ -40,12 +40,15 @@ console.log(`${PREFIX} holds ${before.size} object(s)`);
 const keep = new Set();
 let failed = 0;
 
-for (const [name, pin] of Object.entries(BUILT_IN_PINS)) {
-  const key = `${PREFIX}${name}-${pin.version}.zip`;
+// one archive per build of each tool, under the name src/toolchain.ts asks the bucket for
+const pins = Object.entries(BUILT_IN_PINS).flatMap(([name, builds]) => Object.entries(builds).map(([build, pin]) => ({ name, build, pin })));
+
+for (const { name, build, pin } of pins) {
+  const key = `${PREFIX}${fallbackName(name, pin.version, build)}`;
   keep.add(key);
 
   if (before.get(key) === pin.bytes) {
-    console.log(`already there ${name} ${pin.version} (${(pin.bytes / 1048576).toFixed(1)} MB)`);
+    console.log(`already there ${name} ${pin.version} ${build} (${(pin.bytes / 1048576).toFixed(1)} MB)`);
     continue;
   }
 
@@ -62,10 +65,10 @@ for (const [name, pin] of Object.entries(BUILT_IN_PINS)) {
     if (body.length !== pin.bytes) throw new Error(`${body.length} bytes, pinned as ${pin.bytes}`);
 
     if (!dry) await r2.put(key, body, 'application/zip');
-    console.log(`${dry ? 'would upload' : 'uploaded'} ${name} ${pin.version} (${(body.length / 1048576).toFixed(1)} MB)`);
+    console.log(`${dry ? 'would upload' : 'uploaded'} ${name} ${pin.version} ${build} (${(body.length / 1048576).toFixed(1)} MB)`);
   } catch (err) {
     failed++;
-    console.log(`skipped ${name} ${pin.version}: ${err.message}`);
+    console.log(`skipped ${name} ${pin.version} ${build}: ${err.message}`);
   }
 }
 
