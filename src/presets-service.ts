@@ -1,6 +1,7 @@
 /* Presets, and the two ways one travels to somebody else.
  *
- * A preset is a named set of "these mods on, everything else off". Sharing is what makes this
+ * A preset is a named set of "these mods on, everything else off", and the looks that go on in
+ * the slots it names (Library.picksOn). Sharing is what makes this
  * more than a list: a preset that only names catalog mods is a few hundred bytes and installs
  * from the catalog on the other end, while one that has to carry a mod's own bytes can run to
  * hundreds of megabytes. Which of the two a given preset is depends on where its mods came
@@ -146,8 +147,8 @@ export function presetsService({ catalog, installer, library, schemaService, dep
   async function applyPreset(preset: Preset, { picks = true } = {}): Promise<string[]> {
     const wanted = new Set(library.presetModIds(preset));
     const errors: string[] = [];
-    // Free cosmetics are not part of a build (see Library.inPreset): a preset that does not
-    // name somebody's courier is not asking for it to be taken off.
+    // Free cosmetics are not among the mods (see Library.inPreset): a preset that does not name
+    // somebody's courier is not asking for it to be taken off. Its own looks go on further down.
     const recs = library.list().filter((r) => Library.inPreset(r));
     let schemaTouched = false;
     // off first, then on: two cursor sets cannot be live at once, so the outgoing one has to

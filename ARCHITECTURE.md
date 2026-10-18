@@ -175,12 +175,24 @@ the status bar means. `src/patcher.ts` performs it and reverses it byte for byte
 `src/schema-service.ts` decides when the schema is rebuilt: always from the installed game's own
 item table, never from a copy a mod happened to ship.
 
+It is rebuilt on every pick, switch and removal, so `src/schema-build.ts` keeps each item builder
+pick as it was built, by item and effects, until the game or the app changes, and builds from the
+window run in the background a step at a time. Electron draws the window from the main process's
+thread, and a build that held it for seconds left the window black after an update (issue #286).
+The long walks (the game's index, the table's items, the soundevents, the check of the built
+table) are generators that pause every few dozen milliseconds (`src/steps.ts`); a newer request
+stops an older build before it writes, the pak is written without holding the thread, and Play
+waits for the last build. At start and after a Dota patch the repair builds behind the open window.
+
 ## Presets
 
-A preset is the set of enabled mods, and it travels two ways.
+A preset is the set of enabled mods, and the looks from the game that were on, kept slot by slot
+(`src/library.ts` picksOn). Applying one switches its mods on and every other mod off, and puts
+each look on in its slot; a slot it does not name keeps what it has, so a courier picked after the
+preset was saved stays on. It travels two ways.
 
 **As a link.** `src/preset-link.ts` encodes catalog identities, not file names, into
-`d2mm://preset/<code>`: deflate, base64url, a code short enough for a chat message. Catalog file
+`d2mm://preset/<code>`, and a look as its slot and item: deflate, base64url, a code short enough for a chat message. Catalog file
 names change when their author renames them; the identity triple does not. The clickable form is
 an https page that hands the code to the app, because chat clients only linkify http and https.
 

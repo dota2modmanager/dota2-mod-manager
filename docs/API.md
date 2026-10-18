@@ -5700,7 +5700,8 @@ Parse and validate a .d2mm.
 
 Presets, and the two ways one travels to somebody else.
 
-A preset is a named set of "these mods on, everything else off". Sharing is what makes this
+A preset is a named set of "these mods on, everything else off", and the looks that go on in
+the slots it names (Library.picksOn). Sharing is what makes this
 more than a list: a preset that only names catalog mods is a few hundred bytes and installs
 from the catalog on the other end, while one that has to carry a mod's own bytes can run to
 hundreds of megabytes. Which of the two a given preset is depends on where its mods came

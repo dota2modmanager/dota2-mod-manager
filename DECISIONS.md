@@ -596,6 +596,38 @@ on every pull request and installed only on a tag.
 a screenshot per launch, the window's own step report and the app log; `.github/workflows/sim.yml`
 and `.github/workflows/update.yml`.
 
+### A preset puts its looks back slot by slot, and leaves the others
+
+Until 2.14.0 a preset held mods only, on purpose: applying a build used to switch off every free
+look it did not name, and people lost their courier and wards to a preset that had never mentioned
+them. So the looks were left out, and a build made with the item builder came back without any of
+it ([#284](https://github.com/dota2modmanager/dota2-mod-manager/issues/284)).
+
+Now a preset keeps the looks that were on, slot by slot, apart from its mods. Applying it puts each
+look on in its slot and leaves every slot it does not name as it is. The cost: a preset cannot say
+"nothing in this slot", and switching from one hero's build to another's leaves the first hero
+dressed. A preset saved before 2.14.0 keeps no looks and changes none.
+
+*Check:* `node --test test/presets-service.test.ts`, the tests under "the looks in a preset".
+
+### Nothing holds the main process for long
+
+Electron runs the main process's JavaScript on the thread that draws the window. In 2.13.0 a new
+version of the app made every built item table stale, and the repair at start built it again in
+one go before the window opened; the build in the background still held the thread for most of a
+second at a time. With many items picked the window stayed black
+([#286](https://github.com/dota2modmanager/dota2-mod-manager/issues/286)).
+
+Long work in the main process is now a generator that pauses every few dozen milliseconds
+(`src/steps.ts`): run at once with `drain` where the caller needs the answer before it returns,
+or a step at a time with the rest of the app let in between. The item table, the game's index,
+the list of free looks and the check of a built table all work this way. Measured on the installed
+game with 60 picks and six arcana bases, the longest stretch is 0.27 s, one arcana's model with no
+base; the cold list of free looks at start holds it for 0.08 s.
+
+*Check:* `node --test test/schema-service.test.ts` (the tests under "building in the background"
+and "the window first, the table behind it"), and `src/steps.ts`.
+
 ### No macOS build, and the Linux one is young
 
 Windows has a year behind it. Linux has shipped an AppImage since 2.4.0 and is started against a
@@ -621,6 +653,19 @@ before.
 *Check:* download the installer from the latest release and ask Windows who signed it:
 `Get-AuthenticodeSignature .\Dota-2-Mod-Manager-Setup.exe`. It answers `NotSigned` today, and
 the day it stops, this entry is out of date.
+
+### The arcana bases come from a contributor's own repository
+
+Since 2.13.0 the item builder puts on arcanas that J0nathan550 compiled again by hand, downloaded
+from his repository the first time somebody picks one. The app takes only files under `models/`,
+`materials/` and `particles/`, checks each against its git hash, and builds from the game's own
+files when the repository cannot be reached. It reads the repository's `main` branch, though, with
+no signature of ours: whatever he pushes reaches everybody who picks that arcana. Pinning a commit
+in the app would make every fix wait for a release; moving the repository into the organisation
+or signing its manifest would keep fixes immediate and put a second key between a push and the
+users. Not decided yet.
+
+*Check:* `BASES_REPO` and the branch it is read from, in `src/arcana-base-store.ts`.
 
 ---
 

@@ -153,11 +153,11 @@ export class Library {
     return this.data.presets;
   }
 
-  /* A preset is a set of mods, and a free cosmetic is not one: it owns no file and no pak
-   * slot, it is a pick written into the item table, and it exists only while safe mode is
-   * off. Folding the two together is what made applying a build silently strip somebody's
-   * courier and wards - they were never in the preset, so the apply turned them off. The
-   * picks are left alone by everything here; the Library is where they are managed. */
+  /* A preset's mods, and a free cosmetic is not one of them: it owns no file and no pak slot,
+   * it is a pick written into the item table, and it exists only while safe mode is off. Folding
+   * the two together is what made applying a build silently strip somebody's courier and wards:
+   * they were not in the preset, so the apply turned them off. A preset keeps its looks apart,
+   * slot by slot (picksOn), and puts back only the slots it names. */
   static inPreset(rec: Pick<LibRecord, 'categoryId'> | null | undefined): boolean {
     return !!rec && rec.categoryId !== 'cosmetic';
   }
