@@ -64,6 +64,11 @@ export interface Landing {
   compareCols: [string, string];
   compare: Array<[string, string, string]>;
 
+  /** Under the download, on a phone only: the app is for a computer, and a way to send the link. */
+  phoneNote: string;
+  phoneShare: string;
+  phoneShared: string;
+
   /** The hunt's reward, said once and then out of the way. */
   huntClose: string;
   huntHint: string;
@@ -163,6 +168,10 @@ export const landing: Record<'en' | 'ru', Landing> = {
       ['Sharing your setup', 'A zip and a page of instructions.', 'One link. The other side opens it in the app.'],
       ['Taking it all off', 'Delete the right files and restore the fonts and cursors you backed up, if you did.', 'Remove in My mods. The game is back to how Valve shipped it.'],
     ],
+
+    phoneNote: 'The app is for Windows and Linux. Open this page on your computer, or send yourself the link.',
+    phoneShare: 'Send the link',
+    phoneShared: 'Link copied',
 
     huntClose: 'Close',
     huntHint: 'It stays on while you look around. The switch is at the foot of every page.',
@@ -279,6 +288,10 @@ export const landing: Record<'en' | 'ru', Landing> = {
       ['Поделиться сборкой', 'Архив и страница инструкций.', 'Одна ссылка. На той стороне она откроется в приложении.'],
       ['Убрать всё', 'Удалить нужные файлы и вернуть шрифты и курсоры из копии, если ты её сделал.', '«Удалить» в «Моих модах». Игра снова такая, какой её выпустила Valve.'],
     ],
+
+    phoneNote: 'Приложение для Windows и Linux. Открой сайт на компьютере или скинь себе ссылку.',
+    phoneShare: 'Скинуть ссылку',
+    phoneShared: 'Ссылка скопирована',
 
     huntClose: 'Закрыть',
     huntHint: 'Радуга останется, пока ты ходишь по сайту. Выключатель внизу каждой страницы.',

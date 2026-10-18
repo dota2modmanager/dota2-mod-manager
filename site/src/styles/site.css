@@ -272,6 +272,12 @@ section > .wrap > :is(h1, h2, h3):first-child { margin-top: 0; }
 .nav .lang { color: var(--text-faint); }
 .nav-sep { width: 1px; height: 20px; background: var(--border-strong); margin: 0 6px; }
 .topbar .cta { margin-left: 8px; }
+.topbar .cta-catalog { display: none; }
+/* a device with only a touch screen cannot run the app: it gets the catalog (Base.astro) */
+@media (hover: none) and (pointer: coarse) {
+  .topbar .cta-download { display: none; }
+  .topbar .cta-catalog { display: inline-flex; }
+}
 
 .menu-btn { display: none; }
 
@@ -808,6 +814,10 @@ section { padding: 56px 0; }
 .final-box h2 { margin: 0 0 12px; font-size: clamp(30px, 4.6vw, 56px); letter-spacing: -0.04em; }
 .final-box .lead { margin-bottom: 24px; max-width: 40ch; }
 .final-box .muted { margin: 16px 0 0; }
+/* On a phone, under the download: the app is for a computer, and the way to get it there. */
+.phone-note { display: none; margin: 16px 0 0; font-size: 15px; color: var(--text-dim); max-width: 44ch; }
+.phone-note .clear-btn { padding-inline: 0; margin-left: 2px; text-decoration: underline; text-underline-offset: 0.2em; }
+@media (hover: none) and (pointer: coarse) { .phone-note { display: block; } }
 /* the button's row goes over the line of text under it, which the open menu covers */
 .final-box .btn-row { position: relative; z-index: 2; }
 .final-art { position: relative; justify-self: end; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; transform: rotate(-4deg); }

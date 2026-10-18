@@ -385,6 +385,7 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
           <Download copy={c} big />
         </div>
         <p class="muted">{c.ctaMeta}</p>
+        <p class="phone-note">{c.phoneNote} <button class="clear-btn" type="button" data-share data-done={c.phoneShared}>{c.phoneShare}</button></p>
       </div>
       {finalArt.length === 4 && (
         <div class="final-art" aria-hidden="true">
@@ -457,6 +458,22 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
       }
     }, { threshold: 0.6 });
     document.querySelectorAll<HTMLElement>('[data-to]').forEach((b) => io.observe(b));
+  }
+
+  // ---- on a phone: send this page to the computer that can run the app ----
+  // The phone's own share sheet where there is one, which is how somebody sends a link to
+  // themselves; the clipboard where there is not.
+  for (const b of document.querySelectorAll<HTMLButtonElement>('[data-share]')) {
+    const label = b.textContent;
+    b.addEventListener('click', async () => {
+      const url = `${location.origin}${location.pathname}`;
+      try {
+        if (navigator.share) { await navigator.share({ title: document.title, url }); return; }
+        await navigator.clipboard.writeText(url);
+        b.textContent = b.dataset.done!;
+        setTimeout(() => { b.textContent = label; }, 2400);
+      } catch { /* the share sheet was closed, or the clipboard refused: nothing to undo */ }
+    });
   }
 
   // ---- the finder: results as you type, from the same file the catalog reads ----

@@ -94,7 +94,18 @@ for (const screen of ['desktop', 'mobile']) {
     test(`the header's Download lands on the button, clear of the header (${name})`, async () => {
       const { context, page } = await open(screen, lang);
       try {
-        await press(screen, page.locator('.topbar .cta'));
+        // a phone cannot run the app: its header offers the catalog instead, and the note under
+        // the download says where the app does run
+        if (screen === 'mobile') {
+          assert.equal(await page.locator('.topbar .cta-download').isVisible(), false);
+          assert.match(await page.locator('.topbar .cta-catalog').getAttribute('href'), /\/catalog\/$/);
+          assert.equal(await page.locator('.final .phone-note').isVisible(), true);
+          assert.equal(await page.locator('.final .phone-note [data-share]').isVisible(), true);
+          return;
+        }
+        assert.equal(await page.locator('.topbar .cta-catalog').isVisible(), false);
+        assert.equal(await page.locator('.final .phone-note').isVisible(), false, 'a computer is told to open the page on a computer');
+        await press(screen, page.locator('.topbar .cta-download'));
         await settled(page);
         assert.match(page.url(), /#download$/);
         const head = await page.locator('.topbar').boundingBox();
