@@ -2,6 +2,30 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.14.0
+
+### Presets keep your looks
+
+A preset now remembers the item builder's picks and the free looks that were on when you saved it,
+such as weather, a courier or a HUD. Applying it puts each look back in its slot. Slots the preset
+does not name keep what they have, so a courier you picked later stays on. The preset's card counts
+the looks and shows their pictures, and a preset you share as a file or a link carries them too.
+Presets saved before this update keep no looks and leave yours as they are. Looks only work with
+safe mode off, and the app tells you when you apply one while it is on. Thanks to J0nathan550 for
+asking.
+
+### No more black window at start
+
+With a lot of items picked, the first start after an update could leave the window black until the
+app had built them all again. The app now opens the window at once and builds the items behind it,
+in short steps, so the window keeps drawing. Play waits until the build is done. The catalog also
+no longer waits for the list of free looks before it shows. Thanks to J0nathan550 for the report.
+
+### Fixed
+
+- In Chinese, catalog titles with Search Bar or Top Bar no longer say "staff", and Planetfall,
+  Pandora the Packwyrm and Shroomy have their official Chinese names. Thanks to F21HGG.
+
 ## 2.13.0
 
 ### Broken arcanas fixed
