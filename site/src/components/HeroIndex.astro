@@ -32,7 +32,8 @@ const tiles = heroes.map((h) => {
   const newest = [...h.mods].filter((m) => m.image).sort((a, b2) => (b2.date ?? 0) - (a.date ?? 0))[0];
   return {
     ...h,
-    shown: lang === 'ru' ? ru?.nom ?? h.name : h.name,
+    /* what players call them, under the name the game writes; only when it is not the same */
+    local: lang === 'ru' && ru?.nom && ru.nom.toLowerCase() !== h.name.toLowerCase() ? ru.nom : null,
     pic: newest?.image?.src ?? null,
     latest: Math.max(0, ...h.mods.map((m) => m.date ?? 0)),
     hay: [h.name, ru?.nom, ...(ru?.alt ?? [])].filter(Boolean).join(' ').toLowerCase(),
@@ -67,11 +68,14 @@ const tiles = heroes.map((h) => {
 
   <ul class="hgrid" id="heroGrid">
     {tiles.map((h, i) => (
-      <li data-name={h.shown.toLowerCase()} data-hay={h.hay} data-count={h.mods.length} data-latest={h.latest}>
+      <li data-name={h.name.toLowerCase()} data-hay={h.hay} data-count={h.mods.length} data-latest={h.latest}>
         <a class="htile" href={pathIn(lang, `/heroes/${h.slug}/`)}>
           {h.pic && <img src={thumbOf(h.pic)} width="400" height="225" alt="" loading={i < 12 ? 'eager' : 'lazy'} decoding="async" />}
-          <b>{h.shown}</b>
-          <span>{nf.format(h.mods.length)} {modWord(h.mods.length)}</span>
+          <span class="htile-text">
+            <b>{h.name}</b>
+            {h.local && <small>{h.local}</small>}
+            <span class="htile-count">{nf.format(h.mods.length)} {modWord(h.mods.length)}</span>
+          </span>
         </a>
       </li>
     ))}

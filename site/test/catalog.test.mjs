@@ -183,9 +183,10 @@ test('a category page searches its own cards without the catalog file', async ()
 test('the heroes are found by their Russian names and nicknames, in any order', async () => {
   const { context, page } = await open('/ru/heroes/');
   await page.locator('#hero-q').fill('пудж');
-  const shown = await page.locator('#heroGrid li:not([hidden]) b').allTextContents();
+  const shown = await page.locator('#heroGrid li:not([hidden]) .htile-text').allTextContents();
   assert.ok(shown.length >= 1);
-  assert.ok(shown.some((n) => /пудж/i.test(n)));
+  // the tile says Pudge, as the game does, and Пудж under it, as players do
+  assert.ok(shown.some((t) => /Pudge/.test(t) && /Пудж/.test(t)), shown.join(' | '));
   await page.locator('#hero-q').fill('');
   await page.locator('#hero-sort').selectOption('az');
   const names = await page.locator('#heroGrid li b').allTextContents();

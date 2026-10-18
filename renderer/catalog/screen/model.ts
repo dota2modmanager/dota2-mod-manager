@@ -46,14 +46,15 @@ export interface HeroTileModel {
 export type ScreenModel =
   | { kind: 'loading' }
   | { kind: 'offline'; offline: boolean; error: string }
-  | { kind: 'home'; recent: Mod[]; tiles: { id: string; name: string; preview: string | null }[] }
+  | { kind: 'home'; recent: Mod[]; /** how many there are in all, when more than the strip shows; else 0 */ recentTotal: number; tiles: { id: string; name: string; preview: string | null }[] }
   | {
     kind: 'list';
     /** a new key is a new screen, entrances and all; the same key updates the one on show */
     key: string;
     title: string;
     accent?: string;
-    back?: boolean;
+    /** a way back: to the whole heroes category, or to the front page */
+    back?: 'heroes' | 'home';
     toolbar: ToolbarModel | null;
     note?: string;
     /** a tool the app has in it, first in the grid (the arcana's, among the tools) */
@@ -87,6 +88,8 @@ export type ScreenModel =
 /** What the screen can ask the catalog to do. */
 export interface ScreenActions {
   openCategory: (id: string) => void;
+  /** everything recently added, past the front page's strip */
+  openRecent: () => void;
   filter: (patch: Partial<Filters>) => void;
   toggleTag: (tag: string) => void;
   allHeroes: () => void;

@@ -302,7 +302,7 @@ const EN = {
   'Загрузка каталога…': 'Loading catalog…',
   'Не удалось загрузить каталог: {0}': 'Could not load the catalog: {0}',
   'Повторить': 'Retry',
-  'Недавно добавленные': 'Recently added',
+  'Недавно добавленные': 'Recently added', 'Показать все {0}': 'Show all {0}',
   'Категории': 'Categories',
   'Поиск:': 'Search:',
   'Ничего не найдено': 'Nothing found',

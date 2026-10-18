@@ -707,8 +707,13 @@ section { padding: 56px 0; }
 }
 .htile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; transition: transform 500ms var(--ease); }
 .htile::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgb(20 18 24 / 0) 30%, rgb(20 18 24 / 0.92) 100%); }
-.htile b { position: absolute; left: 14px; right: 14px; bottom: 30px; font: 700 16px/1.15 var(--display); letter-spacing: -0.01em; }
-.htile span { position: absolute; left: 14px; bottom: 11px; font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+/* The name as the game writes it, the name players call the hero by under it (Russian pages:
+   "Shadow Fiend", then "СФ"), and the count. The second line is real text in the page, so a
+   search engine still reads the Russian name the page was written to be found by. */
+.htile-text { position: absolute; left: 14px; right: 14px; bottom: 11px; display: grid; gap: 1px; }
+.htile b { font: 700 16px/1.15 var(--display); letter-spacing: -0.01em; }
+.htile small { font-size: 13px; line-height: 1.3; color: var(--text); }
+.htile .htile-count { font-size: 12.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; margin-top: 2px; }
 .htile:hover { text-decoration: none; border-color: color-mix(in srgb, var(--primary) 50%, transparent); }
 .htile:hover img { transform: scale(1.06); }
 
