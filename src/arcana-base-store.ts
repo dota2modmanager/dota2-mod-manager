@@ -159,6 +159,11 @@ export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetch
     const data = Buffer.from(await res.arrayBuffer());
     if (blobSha(data) !== sha) throw new Error(`${rel}: not the file the repository names`);
     fs.mkdirSync(blobs, { recursive: true });
+    // CodeQL reads this as network data written to a file, and so it is. What reaches the disk
+    // has already been hashed the way git hashes a blob and matched against the sha the listing
+    // names (the line above), and the listing keeps only 40-hex shas (safeListing). The file is
+    // named by that sha and nothing else, and blobPath refuses any name that is not one, so
+    // nothing that arrives over the network decides where it is written or what it says.
     const tmp = `${blobPath(sha)}.part`;
     fs.writeFileSync(tmp, data);
     fs.renameSync(tmp, blobPath(sha));
