@@ -51,8 +51,10 @@ test('a mod page tells a chat what to show: its own picture, at its real size, a
       assert.equal(img, `${ORIGIN}/mods/${m[4]}.webp`, `${p}: the preview is the mod's picture`);
       const { width, height } = await sharp(path.join(DIST, new URL(img).pathname)).metadata();
       assert.equal(`${meta(body, 'og:image:width')}x${meta(body, 'og:image:height')}`, `${width}x${height}`, `${p}: the size the head states`);
-      assert.match(body, new RegExp(`<link rel="canonical" href="${ORIGIN}${p}"`));
-      assert.match(body, new RegExp(`hreflang="${lang === 'ru' ? 'en' : 'ru'}" href="${ORIGIN}${page(lang === 'ru' ? 'en' : 'ru', m)}"`));
+      // addresses compared as text: in a pattern the dots of the domain would match anything
+      const twin = lang === 'ru' ? 'en' : 'ru';
+      assert.ok(body.includes(`<link rel="canonical" href="${ORIGIN}${p}"`), `${p}: its own canonical address`);
+      assert.ok(body.includes(`hreflang="${twin}" href="${ORIGIN}${page(twin, m)}"`), `${p}: its twin in ${twin}`);
       assert.ok(meta(body, 'og:title').includes(m[1]), `${p}: the title names the mod`);
       // the structured data parses, and says the same picture and the same mod
       const nodes = [...body.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g)].map((x) => JSON.parse(x[1]));
@@ -64,8 +66,8 @@ test('a mod page tells a chat what to show: its own picture, at its real size, a
   }
   // and a search engine is told about the page and its pictures
   const map = fs.readFileSync(path.join(DIST, 'sitemap-0.xml'), 'utf-8');
-  assert.match(map, new RegExp(`<loc>${ORIGIN}/mods/${styled[0]}/</loc>`));
-  assert.match(map, new RegExp(`<image:loc>${ORIGIN}/mods/${styled[4]}.webp</image:loc>`));
+  assert.ok(map.includes(`<loc>${ORIGIN}/mods/${styled[0]}/</loc>`), 'the sitemap lists the page');
+  assert.ok(map.includes(`<image:loc>${ORIGIN}/mods/${styled[4]}.webp</image:loc>`), 'and its picture');
 });
 
 test('a mod page switches styles, opens the style on show in the app, and keeps the set', async () => {
