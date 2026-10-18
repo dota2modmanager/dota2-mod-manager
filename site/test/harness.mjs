@@ -141,7 +141,9 @@ export async function openPage(browser, base, screen, { motion = 'no-preference'
     }
   });
   if (!online) {
-    await context.route((url) => !url.href.startsWith(base) && !url.href.startsWith('data:'), (route) => route.abort('blockedbyclient'));
+    // the web only: the preset page's d2mm:// is the browser's to refuse, and refusing it here
+    // cancelled the page's own load
+    await context.route((url) => /^https?:/.test(url.href) && !url.href.startsWith(base), (route) => route.abort('blockedbyclient'));
   }
   return { context, page, problems };
 }
@@ -246,6 +248,32 @@ export function findCovered(page, selector) {
     }
     return out;
   }, selector);
+}
+
+/**
+ * Card grids whose last row is one card left at the left edge. The landing's seven cards made
+ * three, three and one; the one is supposed to sit in the middle of its row.
+ * @returns {Promise<string[]>}
+ */
+export function findLoneCards(page) {
+  return page.evaluate(() => {
+    const out = [];
+    for (const grid of document.querySelectorAll('.cards')) {
+      const items = [...grid.children].filter((c) => c.checkVisibility());
+      const rows = new Map();
+      for (const c of items) {
+        const top = Math.round(c.getBoundingClientRect().top);
+        rows.set(top, [...(rows.get(top) ?? []), c]);
+      }
+      const sizes = [...rows.values()].map((r) => r.length);
+      if (sizes.length < 2 || sizes.at(-1) !== 1 || Math.max(...sizes) < 2) continue;
+      const g = grid.getBoundingClientRect();
+      const r = [...rows.values()].at(-1)[0].getBoundingClientRect();
+      const off = Math.round(r.left + r.width / 2 - (g.left + g.width / 2));
+      if (Math.abs(off) > 2) out.push(`a grid of ${items.length} leaves its last card ${off} px off the middle`);
+    }
+    return out;
+  });
 }
 
 /** A screenshot named for the test that failed, so a red run in CI comes with a picture. */

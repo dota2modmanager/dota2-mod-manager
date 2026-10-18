@@ -37,6 +37,12 @@ if (html === before) {
   console.log('preset page: no og:image to rewrite, check docs/p/index.html still has one');
 }
 
+// The app's icon and the way back to the site are absolute in the source, which is what the
+// GitHub Pages copy needs. Served from the site itself they are this site's own files.
+html = html
+  .replaceAll('src="https://dota2modmanager.com/icon.png"', 'src="/icon.png"')
+  .replaceAll('href="https://dota2modmanager.com/"', 'href="/"');
+
 fs.mkdirSync(OUT_DIR, { recursive: true });
 fs.writeFileSync(path.join(OUT_DIR, 'index.html'), html);
 console.log(`preset page: ${(Buffer.byteLength(html) / 1024).toFixed(1)} KB -> dist/p/index.html`);

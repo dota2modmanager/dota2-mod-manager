@@ -264,6 +264,18 @@ section { padding: 44px 0; }
 
 /* ---------- cards ---------- */
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+/* A last card alone on its row goes to the middle of it, at the width of the others. At the left
+   it read as a card that had fallen out of the grid: the landing's seven made three, three and
+   one, the thirteen guides six pairs and one. How many columns there are is the grid's own
+   width, so the grid is the container that is asked; 812 and 536 px are where auto-fit makes
+   room for a third and a second 260 px column. */
+.cards { container-type: inline-size; }
+@container (min-width: 812px) and (max-width: 1087.98px) {
+  .cards > :last-child:nth-child(3n+1) { grid-column: 2; }
+}
+@container (min-width: 536px) and (max-width: 811.98px) {
+  .cards > :last-child:nth-child(odd) { grid-column: 1 / -1; justify-self: center; width: calc((100% - 16px) / 2); }
+}
 .card {
   background: var(--surface-container);
   border: 1px solid var(--border);

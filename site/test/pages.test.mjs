@@ -10,7 +10,7 @@
  */
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { serveDist, launch, openPage, samplePages, findOverflow, findCovered, isOffline, snap } from './harness.mjs';
+import { serveDist, launch, openPage, samplePages, findOverflow, findCovered, findLoneCards, isOffline, snap } from './harness.mjs';
 
 let server, browser;
 before(async () => {
@@ -125,6 +125,27 @@ test('the header leaves a phone most of its screen', async () => {
     }
     await context.close();
   }
+});
+
+test('a card left alone on the last row of a grid sits in the middle of it', async () => {
+  const bad = await eachPage(['/', '/ru/', '/docs/', '/ru/docs/', '/transparency/', '/facts/', '/docs/install/'], async (p) => {
+    const { context, page } = await openPage(browser, server.url, 'desktop', { motion: 'reduce' });
+    try {
+      await page.goto(server.url + p, { waitUntil: 'load' });
+      for (const w of [1440, 1024, 768, 600]) {
+        await page.setViewportSize({ width: w, height: 900 });
+        await page.waitForTimeout(60);
+        const lone = await findLoneCards(page);
+        if (lone.length) {
+          await snap(page, `lone-card-${w}-${p}`);
+          throw new Error(`at ${w}px: ${lone.join('; ')}`);
+        }
+      }
+    } finally {
+      await context.close();
+    }
+  });
+  assert.deepEqual(bad, []);
 });
 
 test('the skip link appears on the first Tab and lands on the content', async () => {

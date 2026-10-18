@@ -179,7 +179,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
     ],
 
     ctaTitle: 'Get it',
-    ctaLead: 'Windows 10 or 11. No account. It updates itself from here on.',
+    ctaLead: 'Windows 10, 11 or Linux. No account. It updates itself from here on.',
     ctaMeta: 'Free forever. GPL-3.0. Built in the open.',
     marquee: [
       ['heroes', 'Heroes'], ['hero-items', 'Hero items'], ['backgrounds', 'Backgrounds'],
@@ -278,7 +278,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
     ],
 
     ctaTitle: 'Скачать мод-менеджер для Доты 2',
-    ctaLead: 'Windows 10 или 11. Без аккаунта. Дальше обновляется само.',
+    ctaLead: 'Windows 10, 11 или Linux. Без аккаунта. Дальше обновляется само.',
     ctaMeta: 'Бесплатно навсегда. GPL-3.0. Собирается на виду.',
     marquee: [
       ['heroes', 'Герои'], ['hero-items', 'Предметы героев'], ['backgrounds', 'Фоны меню'],
