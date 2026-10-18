@@ -114,7 +114,7 @@ export function baseInColor(entries: VpkEntry[], target: Rgb, gem: Rgb): { entri
 export const WINDOW_SET = 'terrorblade-arcana';
 
 /** Whether a record is the arcana window's. */
-export const isWindowRecord = (rec: { generated?: unknown }) => (rec.generated as { set?: string } | undefined)?.set === WINDOW_SET;
+export const isWindowRecord = (rec: object) => ((rec as { generated?: { set?: string } }).generated)?.set === WINDOW_SET;
 
 /** The colour the arcana window has Terrorblade in, while its record is on; null otherwise. */
 export function windowColor(records: { enabled?: boolean; generated?: unknown }[]): Rgb | null {

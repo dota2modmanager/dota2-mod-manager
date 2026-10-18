@@ -333,7 +333,7 @@ The set the arcana window builds (src/arcana-service.ts), as its records carry i
 ### `isWindowRecord`
 
 ```ts
-export const isWindowRecord = (rec: { generated?: unknown }) => (rec.generated as { set?: string } | undefined)?.set === WINDOW_SET
+export const isWindowRecord = (rec: object) => ((rec as { generated?: { set?: string } }).generated)?.set === WINDOW_SET
 ```
 
 Whether a record is the arcana window's.
