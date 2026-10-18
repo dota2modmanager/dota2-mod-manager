@@ -15,11 +15,12 @@ import { buildVpk, entryAt, openVpkIndex } from '../src/vpk.ts';
 import { readKv3, readCell } from '../src/kv3.ts';
 import { dataBlock } from '../src/resource.ts';
 import { createArcanaService, hex, validColor } from '../src/arcana-service.ts';
-import { encodeKv3, host, model, particle, remap } from './helpers/kv3-build.ts';
+import { encodeKv3, host, model, particle, remap, rerl, resource } from './helpers/kv3-build.ts';
 import type { LibRecord } from '../src/types.ts';
 
 const ARCANA = 'particles/econ/items/terrorblade/terrorblade_horns_arcana';
 const HERO = 'particles/units/heroes/hero_terrorblade';
+const DREADHUNT = 'particles/econ/items/terrorblade/dreadhunt';
 
 /** A picture as the game ships one: a resource header, then a whole PNG file. */
 function picture(): Buffer {
@@ -29,7 +30,7 @@ function picture(): Buffer {
 }
 
 /** A game folder whose pak01 has the arcana's model, picture, eyes and one tinted particle. */
-function world(t: TestContext, { withArcana = true, bases }: { withArcana?: boolean; bases?: Parameters<typeof createArcanaService>[0]['bases'] } = {}) {
+function world(t: TestContext, { withArcana = true, bases, code }: { withArcana?: boolean; bases?: Parameters<typeof createArcanaService>[0]['bases']; code?: () => string | null } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-arcana-service-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const game = path.join(dir, 'game');
@@ -44,13 +45,14 @@ function world(t: TestContext, { withArcana = true, bases }: { withArcana?: bool
       entryAt('panorama/images/econ/heroes/terrorblade/arcana_terrorblade_png.vtex_c', picture()),
       entryAt(`${ARCANA}/terrorblade_ambient_eyes_arcana_horns.vpcf_c`, host([`${ARCANA}/terrorblade_ambient_eye_arcana_horns.vpcf`])),
       entryAt(`${HERO}/terrorblade_feet_effects.vpcf_c`, particle(encodeKv3({ obj: [['m_ConstantColor', { i32s: [85, 203, 252, 255] }], ['m_Initializers', { arr: [remap(15)] }]] }))),
+      entryAt(`${DREADHUNT}/dreadhunt_arcana_head_ambient.vpcf_c`, host([`${DREADHUNT}/dreadhunt_arcana_head_ambient_glow.vpcf`])),
     );
   }
   fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk(files));
   const installer = new Installer({ userDataDir: path.join(dir, 'userdata'), getGamePath: () => game, getLangSuffix: () => 'russian', onProgress: () => {} });
   const library = new Library(path.join(dir, 'userdata'));
   const said: string[] = [];
-  const service = createArcanaService({ gamePath: () => game, installer, library, log: (m) => said.push(m), bases });
+  const service = createArcanaService({ gamePath: () => game, installer, library, log: (m) => said.push(m), bases, code });
   return { game, lang, installer, library, service, said };
 }
 
@@ -136,12 +138,91 @@ test("with Terrorblade's base here the whole arcana is built from it, in the cho
   assert.deepEqual(wanted, ['fractal_horns_of_inner_abysm']);
   const pakOf = (rec: LibRecord) => openVpkIndex(path.join(w.lang, rec.files[0].relPath));
   assert.notEqual(pakOf(before).read(BODY)?.toString(), 'the base body', "not here: Valve's model, as before");
+  // Rictus Ripper's eye is the arcana's while both are worn: nothing in the game swaps it without the item
+  const EYE = `${DREADHUNT}/dreadhunt_head_ambient.vpcf_c`;
+  assert.ok(pakOf(before).read(EYE), "the arcana's eye under Rictus Ripper's");
 
   here = true;
   const rec = w.service.install([40, 120, 255], 'mod');
   assert.equal(pakOf(rec).read(BODY)?.toString(), 'the base body');
+  assert.ok(pakOf(rec).read(EYE), "from the base too");
   const [r, g, b] = feet(w.lang, rec);
   assert.ok(b > r && b > g, `the base's red moved to blue, not ${[r, g, b]}`);
   assert.deepEqual(feet(w.lang, w.service.install([255, 60, 40], 'mod')), [255, 60, 40], 'in its own colour, as it was made');
   assert.equal(w.library.list().length, 1, 'one record all along');
+});
+
+/* Its pak loads ahead of the item builder's folder, so where both wrote a path the arcana won:
+ * Rictus Ripper's head and demon came out as the arcana's (2026-10-19). A pick wins over a base,
+ * the builder's own and this one alike. */
+test("the arcana leaves the paths the item builder's picks fill to them, and takes them back once no pick does", (t) => {
+  const HEAD = 'models/heroes/terrorblade/horns.vmdl_c';
+  const DEMON = 'models/heroes/terrorblade/demon.vmdl_c';
+  const BODY = 'models/heroes/terrorblade/terrorblade.vmdl_c';
+  const bases = {
+    entries: () => [entryAt(HEAD, Buffer.from('arcana head')), entryAt(DEMON, Buffer.from('arcana demon')), entryAt(BODY, Buffer.from('arcana body'))],
+    want: async () => false,
+  };
+  const w = world(t, { bases });
+  w.service.install([40, 120, 255], 'mod');
+  const rec = () => w.library.list()[0];
+  const has = (p: string) => Boolean(openVpkIndex(path.join(w.lang, rec().files[0].relPath)).read(p));
+
+  assert.equal(w.service.giveWay(new Set([HEAD, DEMON, 'models/items/terrorblade/rictus/armor.vmdl_c'])), true);
+  assert.deepEqual([has(HEAD), has(DEMON), has(BODY)], [false, false, true], 'the picks have the head and the demon, the arcana its body');
+  assert.deepEqual((rec().generated as { under?: string[] }).under, [DEMON, HEAD]);
+  assert.equal(w.service.giveWay(new Set([HEAD, DEMON])), false, 'the same picks: nothing to build');
+
+  w.service.install([255, 0, 0], 'mod');
+  assert.equal(has(HEAD), false, 'a new colour keeps what was left to the picks');
+
+  assert.equal(w.service.giveWay(new Set([DEMON])), true);
+  assert.deepEqual([has(HEAD), has(DEMON)], [true, false], 'the head picked off: the arcana has it again');
+  w.service.giveWay(new Set());
+  assert.equal((rec().generated as { under?: string[] }).under, undefined, 'the table taken off: all of it back');
+  assert.equal(has(DEMON), true);
+  assert.equal(w.library.list().length, 1, 'one record all along');
+});
+
+/* Its form's particle and the code that built it: Rictus Ripper's demon eye goes on the demon only
+ * while the demon is picked, and an arcana installed before a fix is built again by the fixed code
+ * instead of waiting for the next colour (2026-10-19: the eye's fix never reached the game). */
+test('the arcana is built again when a pick whose form it dresses comes or goes, and when its code changes', (t) => {
+  const META = `${HERO}/terrorblade_metamorphosis.vpcf_c`;
+  const EYE = `${DREADHUNT}/dreadhunt_demon_ambient.vpcf`;
+  let stamp = 'one';
+  const w = world(t, { code: () => stamp });
+  // the game's metamorphosis binds points to attachments and hands none, as in the game of 2026-10-19
+  const meta = resource([['RERL', rerl([`${HERO}/terrorblade_metamorphosis_ambient.vpcf`])], ['DATA', encodeKv3({ obj: [
+    ['m_Children', { arr: [{ obj: [['m_ChildRef', { ref: `${HERO}/terrorblade_metamorphosis_ambient.vpcf` }]] }] }],
+    ['m_controlPointConfigurations', { arr: [{ obj: [['m_drivers', { arr: [
+      { obj: [['m_entityName', { str: 'self' }]] },
+      { obj: [['m_iControlPoint', { int: 1 }], ['m_attachmentName', { str: 'attach_hitloc' }], ['m_entityName', { str: 'self' }]] },
+    ] }]] }] }],
+  ] })]]);
+  const pak01 = path.join(w.game, 'dota', 'pak01_dir.vpk');
+  const index = openVpkIndex(pak01);
+  const kept = [...index.paths()].map((p) => entryAt(p, index.read(p) as Buffer));
+  fs.writeFileSync(pak01, buildVpk([...kept, entryAt(META, meta), entryAt(`${EYE}_c`, particle(encodeKv3({ obj: [['m_ColorMin', { i32s: [255, 86, 86, 255] }]] })))]));
+
+  w.service.install([40, 120, 255], 'mod');
+  const rec = () => w.library.list().find((r) => r.generated) as LibRecord;
+  const carries = () => openVpkIndex(path.join(w.lang, rec().files[0].relPath)).read(META)?.toString('latin1').includes('dreadhunt_demon_ambient') ?? false;
+  assert.equal(carries(), false, 'no demon picked: no eye on the metamorphosis');
+  assert.equal((rec().generated as { code?: string }).code, 'one');
+  assert.equal(w.service.giveWay(new Set()), false, 'nothing changed');
+
+  const added = w.library.add({ name: 'Rictus Ripper - Demon', categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [] });
+  const demon = w.library.update(added.id, { slot: 'item:terrorblade:ability3', itemId: '31410' }) as LibRecord;
+  assert.equal(w.service.giveWay(new Set()), true);
+  assert.equal(carries(), true, "the demon picked: its eye on the metamorphosis");
+  assert.ok(openVpkIndex(path.join(w.lang, rec().files[0].relPath)).read(`${EYE}_c`), 'and the eye in the colour, under its own path');
+
+  stamp = 'two';
+  assert.equal(w.service.giveWay(new Set()), true, 'new code builds it again');
+  assert.equal((rec().generated as { code?: string }).code, 'two');
+
+  w.library.update(demon.id, { enabled: false });
+  assert.equal(w.service.giveWay(new Set()), true);
+  assert.equal(carries(), false, 'the demon switched off: the eye goes with it');
 });

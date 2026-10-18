@@ -15,6 +15,7 @@
  *   its parent hands it, so a new one gets a point of its own on the attachment it needs (the
  *   glow of the body on the chest, where the eyes would put it at the right eye);
  * - the arcana's portraits and ability icons under the plain ones' names;
+ * - its versions of other items' particles, which it swaps in while both are worn, under theirs;
  * - no gem, so its tint is off: the colour is written into the particles and materials instead
  *   (`bake`). Built once from Valve's files and kept in the mod, it is the same after a patch only
  *   until the files it was built from change, so the app builds it again then.
@@ -36,6 +37,12 @@ export interface ArcanaSet {
   images: { under: string[]; mark: string; hero: string };
   /** a particle the hero creates, the arcana's version of it, and the arcana's own particles to hang on it */
   host: { at: string; from: string; children: Child[] };
+  /** another item's particle the arcana swaps for one of its own while both are worn (its visuals
+   *  in items_game): game path -> the arcana's version in pak01 */
+  swaps?: Record<string, string>;
+  /** a particle an item of the hero's form creates in the loadout only, hung on one the game creates
+   *  in that form (at), on the form's attachment, while the item is picked in the builder */
+  forms?: { item: string; at: string; child: string; attachment: string }[];
 }
 
 /** A particle to hang on another, and the model attachment it is drawn at (none: its parent's first point). */
@@ -43,6 +50,7 @@ export interface Child { path: string; attachment?: string }
 
 const TB = 'particles/units/heroes/hero_terrorblade';
 const ARCANA = 'particles/econ/items/terrorblade/terrorblade_horns_arcana';
+const DREADHUNT = 'particles/econ/items/terrorblade/dreadhunt';
 
 export const ARCANA_SETS: Record<string, ArcanaSet> = {
   'terrorblade-arcana': {
@@ -58,6 +66,12 @@ export const ARCANA_SETS: Record<string, ArcanaSet> = {
       // its own preview puts it on the horns' attach_hitloc, the chest
       children: [{ path: `${ARCANA}/terrorblade_ambient_body_arcana_horns.vpcf`, attachment: 'attach_hitloc' }],
     },
+    // Rictus Ripper's head (31411) creates an eye with nothing in it; worn with the arcana, the
+    // eye is the arcana's, whose glow takes the gem's colour (Fractal Horns' visuals, 2026-10-19)
+    swaps: { [`${DREADHUNT}/dreadhunt_head_ambient.vpcf_c`]: `${DREADHUNT}/dreadhunt_arcana_head_ambient.vpcf_c` },
+    // Rictus Ripper's demon (31410) has its eye spawn_in_loadout_only: in a match the demon had none.
+    // The game creates the metamorphosis on the demon, so the eye goes on it, at the demon's eye
+    forms: [{ item: '31410', at: `${TB}/terrorblade_metamorphosis.vpcf_c`, child: `${DREADHUNT}/dreadhunt_demon_ambient.vpcf`, attachment: 'attach_eye' }],
   },
 };
 
@@ -107,6 +121,63 @@ export function withChildren(file: Buffer, children: Child[]): Buffer {
     list.items.push({ kind: 'object', members } as Kv3Node);
   }
   return withReferences(block.replace(writeKv3(kv)), children.map((c) => c.path));
+}
+
+/**
+ * A particle with one more child, drawn at an attachment its parent did not bind: the host binds a
+ * new control point to it in its first configuration, and hands that point to the child as its
+ * first (C_OP_SetParentControlPointsToChildCP, which counts children from the first, so the new one
+ * goes first and the others keep the points they had). For a host withChildren cannot extend:
+ * Terrorblade's metamorphosis binds 17 points and hands none.
+ */
+export function withChildAt(file: Buffer, child: string, attachment: string): Buffer {
+  const block = dataBlock(file);
+  const kv = readKv3(block.data);
+  const root = kv.root.kind === 'object' ? kv.root.members : null;
+  const list = root?.get('m_Children') as Arr | undefined;
+  const first = list?.items[0] as Obj | undefined;
+  const drivers = ((root?.get('m_controlPointConfigurations') as Arr | undefined)?.items[0] as Obj | undefined)?.members.get('m_drivers') as Arr | undefined;
+  const like = drivers?.items.find((d) => d.kind === 'object' && d.members.has('m_attachmentName') && d.members.has('m_iControlPoint')) as Obj | undefined;
+  const ref = first?.kind === 'object' ? first.members.get('m_ChildRef') : undefined;
+  const name = like?.members.get('m_attachmentName');
+  if (!root || !list || first?.kind !== 'object' || ref?.kind !== 'string' || !drivers || !like || name?.kind !== 'string') {
+    throw new Error('arcana: the host binds no control point to an attachment');
+  }
+  if (root.has('m_PreEmissionOperators')) throw new Error('arcana: the host already hands its children points');
+  const point = drivers.items.length;
+  const driver = new Map(like.members);
+  driver.set('m_iControlPoint', int32(point));
+  driver.set('m_attachmentName', { ...name, value: attachment });
+  drivers.items.push({ kind: 'object', members: driver });
+  const members = new Map(first.members);
+  members.set('m_ChildRef', { ...ref, value: child }); // the copy keeps its flag: a resource it names
+  list.items.unshift({ kind: 'object', members });
+  const hand = new Map<string, Kv3Node>([['_class', { kind: 'string', value: 'C_OP_SetParentControlPointsToChildCP' }],
+    ['m_nNumControlPoints', int32(1)], ['m_nFirstSourcePoint', int32(point)]]);
+  root.set('m_PreEmissionOperators', { ...list, items: [{ kind: 'object', members: hand }] });
+  return withReferences(block.replace(writeKv3(kv)), [child]);
+}
+
+/**
+ * The forms' particles for the items among `items` (the builder's picks): each host from `files`
+ * (a base's, in colour) or the game, with the item's particle hung on it, and that particle in the
+ * chosen colour under its own path. A host that cannot take it stays as it was.
+ */
+export function arcanaForms(pak01: string, set: string, target: Rgb, items: string[], files: Map<string, Buffer>, log: (msg: string) => void = () => {}): void {
+  const def = ARCANA_SETS[set];
+  const index = sharedVpkIndex(pak01);
+  for (const f of def?.forms || []) {
+    if (!items.includes(f.item)) continue;
+    const host = files.get(f.at) ?? index.read(f.at);
+    const child = index.read(`${f.child}_c`);
+    if (!host || !child) continue;
+    try {
+      files.set(f.at, withChildAt(host, f.child, f.attachment));
+      files.set(`${f.child}_c`, recolorResource(child, target, { gem: RECOLOR_SETS[def.recolor].gem, bake: true }).file);
+    } catch (err) {
+      log(`arcana: ${f.child} not hung on ${f.at}: ${(err as Error).message}`);
+    }
+  }
 }
 
 const nameOf = (n: Kv3Node | undefined) => {
@@ -185,8 +256,24 @@ export function arcanaPictures(pak01: string, set: string): Map<string, Buffer> 
   return files;
 }
 
-/** The arcana in the chosen colour, as one VPK from the game's pak01. */
-export function buildArcana({ pak01, set, target }: { pak01: string; set: string; target: Rgb }): {
+/**
+ * The arcana's versions of other items' particles, under those items' paths and in the chosen
+ * colour: nothing in the game swaps them without the item. What the swapped-in particle hangs
+ * below keeps its own path, which the recolour (or a base) covers.
+ */
+export function arcanaSwaps(pak01: string, set: string, target: Rgb): Map<string, Buffer> {
+  const def = ARCANA_SETS[set];
+  const index = sharedVpkIndex(pak01);
+  const files = new Map<string, Buffer>();
+  for (const [at, from] of Object.entries(def?.swaps || {})) {
+    const data = index.read(from);
+    if (data) files.set(at, recolorResource(data, target, { gem: RECOLOR_SETS[def.recolor].gem, bake: true }).file);
+  }
+  return files;
+}
+
+/** The arcana in the chosen colour, as one VPK from the game's pak01 (but the paths `skip` names, lowercased). */
+export function buildArcana({ pak01, set, target, skip, forms = [] }: { pak01: string; set: string; target: Rgb; skip?: (p: string) => boolean; forms?: string[] }): {
   vpk: Buffer; files: number; changed: number; failed: { path: string; error: string }[];
 } {
   const def = ARCANA_SETS[set];
@@ -196,7 +283,10 @@ export function buildArcana({ pak01, set, target }: { pak01: string; set: string
   const files = r.files;
   for (const [to, { from, modifier }] of Object.entries(def.models)) files.set(to, asModel(index.read(from) as Buffer, modifier));
   for (const [p, data] of arcanaPictures(pak01, set)) files.set(p, data);
+  for (const [p, data] of arcanaSwaps(pak01, set, target)) files.set(p, data);
   const host = withChildren(index.read(def.host.from) as Buffer, def.host.children);
   files.set(def.host.at, recolorResource(host, target, { gem: RECOLOR_SETS[def.recolor].gem, bake: true }).file);
+  arcanaForms(pak01, set, target, forms, files);
+  for (const p of files.keys()) if (skip?.(p.toLowerCase())) files.delete(p);
   return { vpk: buildVpk([...files].map(([p, f]) => entryAt(p, f))), files: files.size, changed: r.changed, failed: r.failed };
 }

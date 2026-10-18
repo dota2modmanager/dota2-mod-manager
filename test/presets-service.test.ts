@@ -142,6 +142,7 @@ test('what can go into a pack, and what makes the item table rebuild', () => {
 
   assert.equal(touchesSchema(rec({ categoryId: 'cosmetic' })), true);
   assert.equal(touchesSchema(rec({ schema: [{ id: '1', name: 'a', block: '"1"{}' }] })), true);
+  assert.equal(touchesSchema(rec({ generated: { set: 'terrorblade-arcana', color: [0, 0, 255], mode: 'mod' } })), true, "the arcana window's colour is the builder's base's");
   assert.equal(touchesSchema(rec({})), false);
 });
 

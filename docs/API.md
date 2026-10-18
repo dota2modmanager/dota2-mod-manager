@@ -283,10 +283,18 @@ files do with the gem's colour. The base has no gem to read: it was compiled wit
 colour, Reflection's Shade, written in. So here it is that colour that moves:
 - a particle's written colours move as far as the gem's colour moves to the chosen one (shade
   with `from`), so the base in red is the base as it was made;
+- a particle that puts the gem's colour on control point 15 itself, as 94 of the base's 120 do,
+  has the chosen colour put there too: what reads that point is then in it (particleInColor);
 - a material that read `$GemColor` has the colour as a constant expression in its place, the
   numbers as somebody typed them in the tools (0.235 for 60/255): one near the gem's colour
   becomes the chosen one, any other constant stays.
 A file that cannot be read goes in as it is, in the base's own colour, and is counted.
+
+The item builder puts the same base on when Terrorblade's arcana is picked, from its own folder
+(src/schema-build.ts). It took the base as the repository has it, so a colour chosen in the
+window went back to Reflection's Shade wherever the builder's copy was the one the game read.
+While the window's record is on, the builder's copy is in its colour too; switched off or
+removed, the builder puts on the base as it was made, which is how the user picks between them.
 
 ### `materialInColor`
 
@@ -296,6 +304,16 @@ export function materialInColor(file: Buffer, target: Rgb, gem: Rgb): { file: Bu
 
 A base's material with the gem's colour, written in, made the chosen one.
 
+### `particleInColor`
+
+```ts
+export function particleInColor(file: Buffer, target: Rgb, gem: Rgb): { file: Buffer; changed: number }
+```
+
+A base's particle in the chosen colour. One that sets the gem's point has the colour put there
+and its written colours moved, and is not baked: its tints read the point as for a gem of that
+colour. Any other is moved as src/recolor.ts does for a hero with no gem.
+
 ### `baseInColor`
 
 ```ts
@@ -303,6 +321,40 @@ export function baseInColor(entries: VpkEntry[], target: Rgb, gem: Rgb): { entri
 ```
 
 A base's files in the chosen colour: its particles and materials moved, every other file as it is.
+
+### `WINDOW_SET`
+
+```ts
+export const WINDOW_SET = 'terrorblade-arcana'
+```
+
+The set the arcana window builds (src/arcana-service.ts), as its records carry it.
+
+### `isWindowRecord`
+
+```ts
+export const isWindowRecord = (rec: { generated?: unknown }) => (rec.generated as { set?: string } | undefined)?.set === WINDOW_SET
+```
+
+Whether a record is the arcana window's.
+
+### `windowColor`
+
+```ts
+export function windowColor(records: { enabled?: boolean; generated?: unknown }[]): Rgb | null
+```
+
+The colour the arcana window has Terrorblade in, while its record is on; null otherwise.
+
+### `createColoredBases`
+
+```ts
+export function createColoredBases(log: (msg: string) => void = () => {})
+```
+
+The builder's bases with Terrorblade's in a colour, the last one made kept: the recolour parses
+every particle of the base, and the table is built again on every pick. Kept by what the files
+say, since the store reads them off the disk anew each time and a new version keeps the paths.
 
 ## src/arcana-base-store.ts
 
@@ -646,10 +698,13 @@ The whole arcana, or only its colour over one the player has.
 ### `Generated`
 
 ```ts
-export interface Generated { set: string; color: Rgb; mode: ArcanaMode }
+export interface Generated { set: string; color: Rgb; mode: ArcanaMode; under?: string[]; forms?: string[]; code?: string }
 ```
 
-What a generated record was built from, kept on it to build it again.
+What a generated record was built from, kept on it to build it again. `under`: the paths, as
+the pak lists them, it leaves to the item builder's picks; `forms`: the picks whose form's
+particle it carries (src/arcana.ts arcanaForms); `code`: the app's code it was built by. A
+change to any of them builds it again (giveWay).
 
 ### `ArcanaState`
 
@@ -678,7 +733,7 @@ A colour from the window: three whole numbers 0-255, or nothing.
 ### `createArcanaService`
 
 ```ts
-export function createArcanaService({ gamePath, installer, library, log = () => {}, bases }: { gamePath: () => string | null | undefined; installer: Pick<Installer, 'langFolder' | 'ensureLangFolder' | 'usedPakNames' | 'allocatePak' | 'writeInto' | 'remove' | 'slotBase' | 'moveToSlot' | 'setEnabled'>; library: Pick<Library, 'list' | 'add' | 'update'>; log?: (msg: string) => void; /** the arcana bases kept on disk (src/arcana-base-store.ts): the whole arcana is built from *  Terrorblade's when it is here, and from Valve's files until it is */ bases?: Pick<BaseStore, 'entries' | 'want'>
+export function createArcanaService({ gamePath, installer, library, log = () => {}, bases, code = () => null }: { gamePath: () => string | null | undefined; installer: Pick<Installer, 'langFolder' | 'langFileOnDisk' | 'ensureLangFolder' | 'usedPakNames' | 'allocatePak' | 'writeInto' | 'remove' | 'slotBase' | 'moveToSlot' | 'setEnabled'>; library: Pick<Library, 'list' | 'add' | 'update'>; log?: (msg: string) => void; /** the arcana bases kept on disk (src/arcana-base-store.ts): the whole arcana is built from *  Terrorblade's when it is here, and from Valve's files until it is */ bases?: Pick<BaseStore, 'entries' | 'want'>
 ```
 
 _No description in the source._
@@ -701,6 +756,7 @@ puts the arcana's files where the plain hero's are:
   its parent hands it, so a new one gets a point of its own on the attachment it needs (the
   glow of the body on the chest, where the eyes would put it at the right eye);
 - the arcana's portraits and ability icons under the plain ones' names;
+- its versions of other items' particles, which it swaps in while both are worn, under theirs;
 - no gem, so its tint is off: the colour is written into the particles and materials instead
   (`bake`). Built once from Valve's files and kept in the mod, it is the same after a patch only
   until the files it was built from change, so the app builds it again then.
@@ -741,6 +797,28 @@ pointing at another file, and the file names them in RERL. A child with an attac
 control point of its own: the parent hands point k to child k (C_OP_SetParentControlPointsToChildCP)
 and binds its points to attachments in its first configuration, so both grow by one.
 
+### `withChildAt`
+
+```ts
+export function withChildAt(file: Buffer, child: string, attachment: string): Buffer
+```
+
+A particle with one more child, drawn at an attachment its parent did not bind: the host binds a
+new control point to it in its first configuration, and hands that point to the child as its
+first (C_OP_SetParentControlPointsToChildCP, which counts children from the first, so the new one
+goes first and the others keep the points they had). For a host withChildren cannot extend:
+Terrorblade's metamorphosis binds 17 points and hands none.
+
+### `arcanaForms`
+
+```ts
+export function arcanaForms(pak01: string, set: string, target: Rgb, items: string[], files: Map<string, Buffer>, log: (msg: string) => void = () => {}): void
+```
+
+The forms' particles for the items among `items` (the builder's picks): each host from `files`
+(a base's, in colour) or the game, with the item's particle hung on it, and that particle in the
+chosen colour under its own path. A host that cannot take it stays as it was.
+
 ### `asModel`
 
 ```ts
@@ -765,13 +843,23 @@ export function arcanaPictures(pak01: string, set: string): Map<string, Buffer>
 
 The arcana's portraits and ability icons out of pak01, under the plain ones' names.
 
+### `arcanaSwaps`
+
+```ts
+export function arcanaSwaps(pak01: string, set: string, target: Rgb): Map<string, Buffer>
+```
+
+The arcana's versions of other items' particles, under those items' paths and in the chosen
+colour: nothing in the game swaps them without the item. What the swapped-in particle hangs
+below keeps its own path, which the recolour (or a base) covers.
+
 ### `buildArcana`
 
 ```ts
-export function buildArcana({ pak01, set, target }: { pak01: string; set: string; target: Rgb }):
+export function buildArcana({ pak01, set, target, skip, forms = [] }: { pak01: string; set: string; target: Rgb; skip?: (p: string) => boolean; forms?: string[] }):
 ```
 
-The arcana in the chosen colour, as one VPK from the game's pak01.
+The arcana in the chosen colour, as one VPK from the game's pak01 (but the paths `skip` names, lowercased).
 
 ## src/atomic-file.ts
 
@@ -5835,6 +5923,14 @@ With `from`, the colour the file was made in (an arcana base has its gem's writt
 src/arcana-base-color.ts), it moves as far as `from` would to the target instead: the base in
 its own colour stays as it was made.
 
+### `shadeColors`
+
+```ts
+export function shadeColors(kv: Kv3Block, target: Rgb, skip?: RegExp, from?: Rgb): { changed: number; skipped: number }
+```
+
+The colours written in a particle moved to the chosen one (but those `skip` names); `skipped` counts those with no room.
+
 ### `recolorResource`
 
 ```ts
@@ -5870,10 +5966,10 @@ that fail to read are reported and left out, so a mod carries Valve's own versio
 ### `buildRecolor`
 
 ```ts
-export function buildRecolor({ pak01, set, target }: { pak01: string; set: string; target: Rgb }):
+export function buildRecolor({ pak01, set, target, skip }: { pak01: string; set: string; target: Rgb; skip?: (p: string) => boolean }):
 ```
 
-A set recoloured into one VPK, from the game's pak01, for a hero whose item brings its gem.
+A set recoloured into one VPK, from the game's pak01, for a hero whose item brings its gem (but the paths `skip` names).
 
 ## src/release-notes.ts
 
@@ -6794,7 +6890,7 @@ The patch and the built table as Settings shows them; the patcher's own state is
 ### `createSchemaService`
 
 ```ts
-export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {} }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; bases?: Pick<BaseStore, 'entries' | 'want'>; onBuild?: (step: BuildStep | null) => void; })
+export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {}, onDeployed = () => {} }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; bases?: Pick<BaseStore, 'entries' | 'want'>; onBuild?: (step: BuildStep | null) => void; onDeployed?: (filled: Set<string>) => void; })
 ```
 
 The item table and the search-path patch, kept in step with the library and the installed game.

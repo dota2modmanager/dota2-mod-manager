@@ -140,7 +140,8 @@ export function defaultItemForWearable(text: string, sourceId: string | number):
 /**
  * The visuals without the model swaps the built files already make: the hero's own model swapped
  * for an arcana's, and a stock item's model for another, where the pick puts that model under the
- * plain path. Each left in names a model only the paid item loads.
+ * plain path, and a hero's other form swapped for the item's (hero_model_change) the same way.
+ * Each left in names a model only the paid item loads.
  *
  * The game wears an item's model only once it is loaded, and what a match loads is what the
  * server's own item table names: the stock paths. Joining a match the client loaded the paid
@@ -159,7 +160,8 @@ function withoutFileSwaps(visuals: string, heroes: Set<string>, stock: Set<strin
     eachChild(visuals, c.body, (f) => { if (!f.isBlock) fields.set(f.key.toLowerCase(), f.value); });
     const type = (fields.get('type') || '').toLowerCase();
     const asset = fields.get('asset') || '';
-    if ((type === 'entity_model' && heroes.has(asset.toLowerCase())) || (type === 'model' && stock.has(normalizeAssetPath(asset)))) cut.push(c);
+    if ((type === 'entity_model' && heroes.has(asset.toLowerCase()))
+      || ((type === 'model' || type === 'hero_model_change') && stock.has(normalizeAssetPath(asset)))) cut.push(c);
   });
   let out = visuals;
   for (const c of cut.reverse()) {

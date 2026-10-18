@@ -18,6 +18,7 @@ import { createBackgroundBuilds, createTableBuild, type BuildStep, type BuildYie
 import { drain } from './steps.ts';
 import { chooseBases } from './arcana-bases.ts';
 import type { BaseStore } from './arcana-base-store.ts';
+import { entryPath } from './vpk.ts';
 import type { Settings } from './settings.ts';
 import type { Library } from './library.ts';
 
@@ -61,12 +62,15 @@ export interface SchemaState extends Partial<patcher.PatchState> {
  * @param {(msg: string) => void} [deps.log]  the app's diagnostics log
  * @param deps.bases  the arcana bases kept on disk (src/arcana-base-store.ts); none: the game's files
  * @param deps.onBuild how far a build in the background is (refreshInBackground), null when it ended
+ * @param deps.onDeployed the paths, lowercased, the written table's picks fill (none once it is
+ *   taken off): the arcana window's Terrorblade gives them up (src/arcana-service.ts giveWay)
  */
 /** The item table and the search-path patch, kept in step with the library and the installed game. */
-export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {} }: {
+export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {}, onDeployed = () => {} }: {
   settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void;
   bases?: Pick<BaseStore, 'entries' | 'want'>;
   onBuild?: (step: BuildStep | null) => void;
+  onDeployed?: (filled: Set<string>) => void;
 }) {
   const backupDir = path.join(userDataDir, 'backups', 'patch');
   const gamePath = () => settings.get('dotaGamePath');
@@ -111,6 +115,7 @@ export function createSchemaService({ settings, library, installer, userDataDir,
       const drop = () => {
         schema.undeploy({ gamePath: game, folder: patcher.FOLDER });
         settings.set('schemaStamp', null);
+        onDeployed(new Set());
         return { ok: true, deployed: false, patches: 0 };
       };
       if (!settings.get('schemaPatch')) return drop();
@@ -121,6 +126,7 @@ export function createSchemaService({ settings, library, installer, userDataDir,
       if (!list.length) return drop();
       const res = yield* schema.deploySteps({ gamePath: game, folder: patcher.FOLDER, patches: list, base, beneath });
       settings.set('schemaStamp', stampOf(res.stamp));
+      onDeployed(new Set(list.flatMap((p) => (p.assets || []).map((e) => entryPath(e).toLowerCase()))));
       return { ok: true, deployed: true, patches: res.applied.length, missing: res.missing, conflicts: res.conflicts, bytes: res.bytes };
     } catch (err) {
       return { ok: false, error: String((err as Error)?.message || err) };

@@ -25,6 +25,7 @@ import { portraitEntries } from './item-portraits.ts';
 import type { ItemAssets, PortraitSwap, SpriteSwap } from './item-builder-assets.ts';
 import { styleOf } from './item-builder-styles.ts';
 import { basesHereSteps, withoutBaseFiles, type ReadyBase } from './arcana-bases.ts';
+import { createColoredBases, windowColor } from './arcana-base-color.ts';
 import type { BaseStore } from './arcana-base-store.ts';
 import { sharedVpkIndexSteps, type VpkEntry } from './vpk.ts';
 import { PAUSE } from './steps.ts';
@@ -102,6 +103,7 @@ export function createTableBuild({ library, bases, log }: {
   const shared = new Map<string, { key: string; entries: VpkEntry[] }>();
   let builtFrom: string | null = null;
   let builtGame: string | null = null;
+  const colored = createColoredBases(log);
   /* A pick by item and effects, and by the base of its own arcana set when one is here: that base
    * fills some of the pick's paths, which the pick then does not build (gameAssetEntries skip). */
   const ownBase = (rec: LibRecord, ready: ReadyBase[]) => ready.find((r) => r.base.parts.includes(String(rec.itemId)));
@@ -145,7 +147,8 @@ export function createTableBuild({ library, bases, log }: {
     // table's list of items (300 ms), the game's index (270 ms) and the arcana bases (a read of up
     // to 20 MB each), which held the window for most of a second after every start (issue #286)
     yield* listItemsSteps(vanillaText);
-    const ready = bases ? yield* basesHereSteps(picks(), bases, log) : [];
+    // Terrorblade's in the arcana window's colour while its record is on (src/arcana-base-color.ts)
+    const ready = colored(bases ? yield* basesHereSteps(picks(), bases, log) : [], windowColor(library.list()));
     const out: schema.SchemaPatch[] = [];
     const sounds: SoundSwap[] = [];
     const voices: VoiceCue[] = [];

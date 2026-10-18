@@ -51,6 +51,15 @@ function stockModelsOf(text: string, heroes: string[]): Set<string> {
     .map((i) => normalizeAssetPath(i.model)));
 }
 
+/*
+ * A hero's other form, which an item swaps by hero_model_change: Terrorblade's demon, Dragon
+ * Knight's dragon, Lycan's wolf, Lone Druid's true form, Undying's golem (the game of 2026-10-19
+ * has eight such paths, all under models/heroes/). Left to the game, the swap names a model only
+ * the paid item loads, so it is a stock model's swap over again (item-builder.ts withoutFileSwaps):
+ * Rictus Ripper's demon came out as the plain one, or as whatever another mod put at demon.vmdl.
+ */
+const FORM = /^models\/heroes\//;
+
 /**
  * The files an item's visuals swap, to stage under the plain paths: particles, models, and the
  * hero's own model (an arcana's entity_model) with the item's activity modifiers to take off it;
@@ -94,6 +103,8 @@ export function itemAssets(text: string, visuals: string, heroes: string[]): Ite
     assetCopies: [
       ...models.map((f) => ({ from: f.get('modifier')!, hero: f.get('asset')!.toLowerCase(), activities })),
       ...typed('model', 'asset', 'modifier').filter((f) => stock.has(normalizeAssetPath(f.get('asset'))))
+        .map((f) => ({ from: f.get('modifier')!, to: f.get('asset')! })),
+      ...typed('hero_model_change', 'asset', 'modifier').filter((f) => FORM.test(normalizeAssetPath(f.get('asset'))))
         .map((f) => ({ from: f.get('modifier')!, to: f.get('asset')! })),
       ...typed('particle', 'asset', 'modifier').map((f) => ({ from: f.get('modifier')!, to: f.get('asset')! })),
       ...pictures,

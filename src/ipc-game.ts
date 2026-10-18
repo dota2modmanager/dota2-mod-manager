@@ -245,6 +245,9 @@ export function registerGameIpc({
     try {
       const record = arcana.install(color, mode);
       afterDeployMaster();
+      // the builder's copy of Terrorblade's base takes the new colour (src/arcana-base-color.ts);
+      // the window does not wait on the table, the bar at the bottom counts it
+      void schemaService.refreshInBackground();
       return { ok: true, record };
     } catch (err) {
       return { error: errorText(err) };

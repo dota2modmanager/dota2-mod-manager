@@ -12,13 +12,15 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { ARCANA_BASES, chooseBases, hasBase, readyBase, withoutBaseFiles } from '../src/arcana-bases.ts';
-import { baseInColor, materialInColor } from '../src/arcana-base-color.ts';
+import { baseInColor, createColoredBases, materialInColor, particleInColor, windowColor } from '../src/arcana-base-color.ts';
 import { constantExpression, constantOf, materialExpressions } from '../src/material.ts';
 import { shade, type Rgb } from '../src/recolor.ts';
 import { itemNote } from '../src/arcana-notes.ts';
 import * as schema from '../src/schema.ts';
 import { entryAt, entryPath, readVpkEntryFile } from '../src/vpk.ts';
-import { encodeKv3, kv3Block, particle, resource } from './helpers/kv3-build.ts';
+import { at, encodeKv3, kv3Block, particle, range, remap, resource } from './helpers/kv3-build.ts';
+import { readKv3 } from '../src/kv3.ts';
+import { dataBlock } from '../src/resource.ts';
 
 const GEM: Rgb = [255, 60, 40];
 
@@ -129,4 +131,45 @@ test("a base in a colour: its particles and materials move, other files and the 
   assert.equal(baseInColor(entries, GEM, GEM).entries, entries, 'red is the base as it was made');
   const broken = baseInColor([entryAt('particles/x.vpcf_c', Buffer.from('not a particle'))], [40, 120, 255], GEM);
   assert.deepEqual(broken.failed, ['particles/x.vpcf_c'], 'counted, and kept as it is');
+});
+
+test("a base's particle that puts the gem on control point 15 itself has the chosen colour there", () => {
+  // the shape of 94 of the base's 120: the gem and the tint's switch set before emission, a tint
+  // that reads the point, and the gem's red written in as well
+  const point = (cp: number, pos: number[]) => ({ obj: [['_class', { str: 'C_OP_SetSingleControlPointPosition' }], ['m_nCP1', { int: cp }], ['m_vecCP1Pos', { f64s: pos }]] as [string, never][] });
+  const file = particle(encodeKv3({ obj: [
+    ['m_ConstantColor', { i32s: [255, 60, 40, 255] }],
+    ['m_PreEmissionOperators', { arr: [point(15, [255, 60, 40]), point(16, [1, 0, 0])] }],
+    ['m_Initializers', { arr: [remap(15)] }],
+  ] }));
+  const purple: Rgb = [150, 40, 255];
+  const r = particleInColor(file, purple, GEM);
+  const kv = readKv3(dataBlock(r.file).data);
+  assert.deepEqual(range(kv, at(kv.root, 'm_PreEmissionOperators', 0, 'm_vecCP1Pos')), purple, 'the gem is the chosen colour: it was red under the purple');
+  assert.deepEqual(range(kv, at(kv.root, 'm_PreEmissionOperators', 1, 'm_vecCP1Pos')), [1, 0, 0], 'the tint stays on');
+  assert.deepEqual(range(kv, at(kv.root, 'm_Initializers', 0, 'm_vOutputMax')), [1, 1, 1], 'not baked: the tint reads the point');
+  assert.deepEqual(range(kv, at(kv.root, 'm_ConstantColor')).slice(0, 3), shade([255, 60, 40], purple, GEM), 'the written red moves too');
+  assert.equal(particleInColor(file, GEM, GEM).file.equals(file), true, 'red is the base as it was made');
+});
+
+test("the builder's Terrorblade base is in the arcana window's colour while the window's record is on", () => {
+  const blue: Rgb = [40, 120, 255];
+  const win = (enabled: boolean, color: unknown = blue) => ({ enabled, generated: { set: 'terrorblade-arcana', color, mode: 'mod' } });
+  assert.deepEqual(windowColor([{ enabled: true }, win(true)]), blue);
+  assert.equal(windowColor([win(false)]), null, 'switched off: the base as it was made');
+  assert.equal(windowColor([]), null, 'no record: the same');
+  assert.equal(windowColor([win(true, [1, 2])]), null, 'not a colour');
+
+  const glow = 'particles/units/heroes/hero_terrorblade/glow.vpcf_c';
+  const tb = ARCANA_BASES.find((b) => b.id === 'fractal_horns_of_inner_abysm')!;
+  const jugg = ARCANA_BASES.find((b) => b.id === 'bladeform_legacy')!;
+  const files = () => [entryAt(glow, particle(kv3Block([255, 60, 40, 255])))];
+  const colored = createColoredBases();
+  const [t, j] = colored([readyBase(tb, files()), readyBase(jugg, files())], blue);
+  assert.notDeepEqual(t.entries[0].data, files()[0].data, "Terrorblade's moves");
+  assert.deepEqual(t.paths, new Set([glow]), 'at the same paths, so every other pick still wins over it');
+  assert.deepEqual(j.entries[0].data, files()[0].data, 'no other base has a window');
+  assert.equal(colored([readyBase(tb, files())], blue)[0].entries, t.entries, 'the same files in the same colour: made once');
+  const asMade = readyBase(tb, files());
+  assert.equal(colored([asMade], null)[0], asMade, 'no colour: untouched');
 });

@@ -926,3 +926,26 @@ test('a pick for a slot whose stock item has no model is marked as lasting until
   assert.equal(options.get('34311')?.note, undefined, 'no model of its own, nothing to lose');
   assert.equal(options.get('34308')?.note, undefined, 'the bracers have a stock path to go under');
 });
+
+/* A hero's other form, swapped by hero_model_change, names a model only the paid item loads: left
+ * to the game, Rictus Ripper's demon was the plain one, or the arcana's another mod put at
+ * demon.vmdl (2026-10-19). It goes under the form's own path, like a stock item's model. */
+test("a pick that changes the hero's other form puts the form's model under its path", () => {
+  const tb = '\t\t\t"used_by_heroes"\n\t\t\t{\n\t\t\t\t"npc_dota_hero_terrorblade"\t\t"1"\n\t\t\t}\n';
+  const swap = (type: string, asset: string, modifier: string) => `\t\t\t\t"asset_modifier"\n\t\t\t\t{\n\t\t\t\t\t"type"\t\t"${type}"\n\t\t\t\t\t"asset"\t\t"${asset}"\n\t\t\t\t\t"modifier"\t\t"${modifier}"\n\t\t\t\t}\n`;
+  const text = table([
+    `\t\t"5960"\n\t\t{\n\t\t\t"name"\t\t"Terrorblade's Metamorphosis"\n\t\t\t"prefab"\t\t"default_item"\n\t\t\t"item_slot"\t\t"ability3"\n${tb}\t\t}\n`,
+    `\t\t"31410"\n\t\t{\n\t\t\t"name"\t\t"Rictus Ripper - Demon"\n\t\t\t"prefab"\t\t"wearable"\n\t\t\t"item_slot"\t\t"ability3"\n${tb}\t\t\t"visuals"\n\t\t\t{\n`
+      + swap('hero_model_change', 'models/heroes/terrorblade/demon.vmdl', 'models/items/terrorblade/dreadhunt_demon/dreadhunt_demon.vmdl')
+      + swap('ability_icon', 'terrorblade_metamorphosis', 'terrorblade/dreadhunt/default/dreadhunt_metamorphosis')
+      + swap('hero_model_change', 'models/creeps/neutral_creeps/n_creep_ogre_med/n_creep_ogre_med.vmdl', 'models/items/x/ogre.vmdl')
+      + '\t\t\t}\n\t\t}\n',
+  ]);
+  const pick = builder.itemEffectPatch(text, '31410', '');
+  assert.equal(pick.id, '5960');
+  assert.deepEqual(pick.assetCopies.filter((c) => 'to' in c && c.to.endsWith('.vmdl')),
+    [{ from: 'models/items/terrorblade/dreadhunt_demon/dreadhunt_demon.vmdl', to: 'models/heroes/terrorblade/demon.vmdl' }]);
+  assert.doesNotMatch(pick.block, /dreadhunt_demon\.vmdl/, 'the swap is the file now, not the table');
+  assert.match(pick.block, /"type"\s+"ability_icon"/, 'the rest of the visuals stay');
+  assert.match(pick.block, /n_creep_ogre_med/, 'only a form under models/heroes/ is staged; anything else stays for the game');
+});

@@ -188,7 +188,7 @@ function bakeTint(kv: Kv3Block, tints: Tint[], target: Rgb): { changed: number; 
 }
 
 /** The colours written in a particle moved to the chosen one (but those `skip` names); `skipped` counts those with no room. */
-function shadeColors(kv: Kv3Block, target: Rgb, skip?: RegExp, from?: Rgb): { changed: number; skipped: number } {
+export function shadeColors(kv: Kv3Block, target: Rgb, skip?: RegExp, from?: Rgb): { changed: number; skipped: number } {
   let changed = 0;
   let skipped = 0;
   for (const a of kv.arrays) {
@@ -279,11 +279,12 @@ export function recolorFiles({ pak01, set, target, bake = false }: { pak01: stri
   return { files, changed, skipped, failed };
 }
 
-/** A set recoloured into one VPK, from the game's pak01, for a hero whose item brings its gem. */
-export function buildRecolor({ pak01, set, target }: { pak01: string; set: string; target: Rgb }): {
+/** A set recoloured into one VPK, from the game's pak01, for a hero whose item brings its gem (but the paths `skip` names). */
+export function buildRecolor({ pak01, set, target, skip }: { pak01: string; set: string; target: Rgb; skip?: (p: string) => boolean }): {
   vpk: Buffer; files: number; changed: number; skipped: number; failed: Failed;
 } {
   const r = recolorFiles({ pak01, set, target });
   if (!r.files.size) throw new Error('recolor: nothing in the set took the colour');
+  for (const p of r.files.keys()) if (skip?.(p.toLowerCase())) r.files.delete(p);
   return { vpk: buildVpk([...r.files].map(([p, f]) => entryAt(p, f))), files: r.files.size, changed: r.changed, skipped: r.skipped, failed: r.failed };
 }
