@@ -333,6 +333,58 @@ section > .wrap > :is(h1, h2, h3):first-child { margin-top: 0; }
 @keyframes menu-in { from { opacity: 0; transform: translateY(-8px); } }
 @media (min-width: 861px) { .menu { display: none !important; } }
 
+/* ---------- the site's search (Base.astro, src/scripts/site-search.ts) ---------- */
+.bar .search-btn { margin-left: 4px; width: 38px; height: 38px; color: var(--text-dim); }
+.bar .search-btn:hover { color: var(--text); }
+@media (max-width: 860px) { .bar .search-btn { display: none; } }
+/* on a phone, the first line of the menu */
+.menu-search {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 4px; cursor: pointer;
+  background: none; border: 0; border-bottom: 1px solid var(--border); text-align: left;
+  color: var(--text); font: 600 18px/1.2 var(--display); letter-spacing: -0.01em;
+}
+.menu-search svg { color: var(--primary); }
+
+/* The box: high on the screen where the eye already is, the answers under it in three groups. */
+.sitesearch {
+  width: min(640px, calc(100vw - 24px)); max-height: min(620px, calc(100dvh - 48px));
+  margin: max(40px, 9vh) auto auto; padding: 0;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-lg);
+  background: var(--surface-container); color: var(--text);
+  box-shadow: 0 40px 100px -20px rgb(0 0 0 / 0.8); overflow: hidden;
+}
+.sitesearch[open] { display: flex; flex-direction: column; animation: quick-in 220ms var(--ease); }
+.sitesearch::backdrop { background: rgb(8 7 10 / 0.72); }
+.sitesearch-bar { display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 18px; border-bottom: 1px solid var(--border); color: var(--text-faint); }
+.sitesearch-bar input {
+  flex: 1; min-width: 0; padding: 12px 0; border: 0; outline: 0; background: none;
+  color: var(--text); font: 500 18px/1.3 var(--body);
+}
+.sitesearch-bar input::-webkit-search-cancel-button { display: none; }
+.sitesearch-list { overflow-y: auto; padding: 6px 8px 8px; }
+.sitesearch-list:empty { display: none; }
+.ss-label { margin: 0; padding: 12px 10px 6px; font-size: 12.5px; font-weight: 650; color: var(--text-faint); }
+.ss-row {
+  display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 14px; align-items: center;
+  padding: 7px 10px; border-radius: var(--radius-sm); color: var(--text);
+}
+.ss-row:hover { text-decoration: none; }
+.ss-row[aria-selected='true'] { background: var(--surface-high); }
+.ss-row img, .ss-none { width: 72px; height: 40px; border-radius: 7px; object-fit: cover; background: var(--surface-low); display: block; }
+.ss-text { display: grid; gap: 2px; min-width: 0; }
+.ss-text b, .ss-text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ss-text b { font-weight: 650; font-size: 15.5px; }
+.ss-text span { font-size: 13px; color: var(--text-faint); }
+.ss-all { display: block; margin: 6px 2px 2px; padding: 12px 10px; border-top: 1px solid var(--border); font-weight: 650; font-size: 14.5px; }
+.ss-empty { margin: 0; padding: 22px 12px; text-align: center; color: var(--text-dim); }
+.sitesearch-tip { margin: 0; padding: 10px 18px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-faint); }
+@media (hover: none) and (pointer: coarse) { .sitesearch-tip { display: none; } }
+@media (max-width: 520px) {
+  .sitesearch { margin-top: 10px; max-height: calc(100dvh - 20px); }
+  .ss-row { grid-template-columns: 60px minmax(0, 1fr); gap: 12px; }
+  .ss-row img, .ss-none { width: 60px; height: 34px; }
+}
+
 /* ---------- footer ---------- */
 
 .foot {
@@ -933,8 +985,36 @@ section { padding: 56px 0; }
 }
 .empty { padding: 60px 20px; text-align: center; color: var(--text-dim); border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); }
 .empty b { display: block; font: 650 18px/1.3 var(--display); color: var(--text); margin-bottom: 6px; }
-.more-row { display: flex; justify-content: center; padding: 28px 0 8px; }
-.browse { margin-bottom: 24px; }
+.browse { margin-bottom: 24px; scroll-margin-top: calc(var(--head) + 12px); }
+/* the catalog's pages: back and next at the ends, the numbers between, where you are under them */
+.pager { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 32px 0 6px; }
+.pager-step { min-height: 44px; padding-inline: 18px; }
+.pager-step:disabled { opacity: 0.38; cursor: default; pointer-events: none; }
+.pager-step .flip { display: inline-grid; transform: scaleX(-1); }
+.pager-nums { display: flex; align-items: center; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.pager-num {
+  min-width: 44px; height: 44px; padding: 0 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border-strong); background: transparent; color: var(--text-dim);
+  font: 650 15px/1 var(--body); font-variant-numeric: tabular-nums;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.pager-num:hover { color: var(--text); border-color: color-mix(in srgb, var(--primary) 50%, transparent); }
+.pager-num[aria-current='page'] { background: var(--primary); color: var(--on-primary); border-color: transparent; cursor: default; }
+.pager-gap { color: var(--text-faint); padding: 0 2px; }
+.pager-now { display: none; font-weight: 650; color: var(--text); font-variant-numeric: tabular-nums; }
+.pager-where { margin: 0; text-align: center; font-size: 14px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+/* a phone has no room for the numbers: back, "Page 5 of 32", next */
+@media (max-width: 620px) {
+  .pager { flex-wrap: nowrap; justify-content: space-between; }
+  .pager-nums { display: none; }
+  .pager-now { display: block; text-align: center; font-size: 14.5px; }
+  .pager-step { padding-inline: 14px; }
+}
+/* narrower still: back and next are their arrows, and their words are for a screen reader */
+@media (max-width: 420px) {
+  .pager-step { width: 44px; padding: 0; }
+  .pager-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
 .prose-block { padding-block: 32px 0; padding-inline: 0; }
 .kinds { padding: 48px 0 0; }
 .kinds h2 { font-size: clamp(22px, 2.6vw, 30px); }

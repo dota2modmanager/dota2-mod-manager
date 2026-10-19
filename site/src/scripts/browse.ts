@@ -4,7 +4,7 @@
  *
  * Two modes. "page": every card is already in the HTML (a category, a hero) and this only sorts
  * and hides them. "all": the catalog page, where the first cards are in the HTML and the rest are
- * drawn from /catalog/data.json a screen at a time.
+ * drawn from /catalog/data.json a page of 48 at a time, the page kept in the address (?page=).
  *
  * The state is in the address (?q=, ?sort=, ?group=, ?cat=, ?slot=, #mod=), so a search can be
  * sent to somebody, Back goes back to it, and the landing's search can land here on a result.
@@ -15,7 +15,7 @@ import { loadCatalog, presetCode, appLink, webLink, fmtDay, isNew, el, type Cata
 import { readSet, writeSet, markCards as markIn, SET_KEY } from './set';
 
 type Words = {
-  shown: string; more: string; add: string; remove: string; look: string; newBadge: string; by: string;
+  shown: string; prev: string; next: string; pageOf: string; range: string; add: string; remove: string; look: string; newBadge: string; by: string;
   kind: string; hero: string; replaces: string; author: string; added: string; style: string;
   openApp: string; copyLink: string; copied: string; noCompress: string; appNote: string; close: string;
   tray: string; setName: string; heroPage: string; kindPage: string; mods: [string, string, string];
@@ -40,7 +40,13 @@ export function initBrowser(root: HTMLElement) {
   const count = root.querySelector<HTMLElement>('#browse-count')!;
   const clear = root.querySelector<HTMLButtonElement>('#browse-clear')!;
   const empty = root.querySelector<HTMLElement>('#browse-empty')!;
-  const more = root.querySelector<HTMLButtonElement>('#browse-more')!;
+  // the pager exists on /catalog/ only; a category or a hero holds all its cards at once
+  const pager = root.querySelector<HTMLElement>('#browse-pager');
+  const pageNums = root.querySelector<HTMLOListElement>('#browse-pages');
+  const pageNow = root.querySelector<HTMLElement>('#browse-now');
+  const prevBtn = root.querySelector<HTMLButtonElement>('#browse-prev');
+  const nextBtn = root.querySelector<HTMLButtonElement>('#browse-next');
+  const where = root.querySelector<HTMLElement>('#browse-where');
   const groupBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-group-filter]')];
   // inside the toolbar's rows only: the cards carry data-cat too
   const catBtns = [...root.querySelectorAll<HTMLButtonElement>('#browse-cats [data-cat]')];
@@ -54,19 +60,22 @@ export function initBrowser(root: HTMLElement) {
     group: params.get('group') ?? '',
     cat: params.get('cat') ?? '',
     slot: params.get('slot') ?? '',
+    page: Math.max(1, Math.floor(Number(params.get('page'))) || 1),
   };
   input.value = state.q;
   sortSel.value = state.sort;
 
-  const saveState = () => {
+  /* A filter replaces the address; a page adds one, so Back goes back to the page before. */
+  const saveState = (push = false) => {
     const p = new URLSearchParams();
     if (state.q) p.set('q', state.q);
     if (state.sort !== 'new') p.set('sort', state.sort);
     if (state.group) p.set('group', state.group);
     if (state.cat) p.set('cat', state.cat);
     if (state.slot) p.set('slot', state.slot);
+    if (state.page > 1) p.set('page', String(state.page));
     const qs = p.toString();
-    history.replaceState(history.state, '', `${location.pathname}${qs ? `?${qs}` : ''}${location.hash}`);
+    history[push ? 'pushState' : 'replaceState'](history.state, '', `${location.pathname}${qs ? `?${qs}` : ''}${location.hash}`);
   };
 
   let catalog: Catalog | null = null;
@@ -173,19 +182,51 @@ export function initBrowser(root: HTMLElement) {
       grid.append(...list.map((r) => r.el!));
       drawn = list.length;
     } else {
-      grid.replaceChildren();
-      drawn = 0;
-      drawMore();
+      const pages = Math.max(1, Math.ceil(list.length / BATCH));
+      state.page = Math.min(state.page, pages);
+      const from = (state.page - 1) * BATCH;
+      grid.replaceChildren(...list.slice(from, from + BATCH).map((r) => card(r.mod!)));
+      drawn = Math.min(from + BATCH, list.length);
+      markCards();
+      paintPager(pages);
     }
     paintCount();
   };
 
-  const drawMore = () => {
-    const next = list.slice(drawn, drawn + BATCH);
-    grid.append(...next.map((r) => card(r.mod!)));
-    drawn += next.length;
-    more.hidden = drawn >= list.length;
-    markCards();
+  /* Back, next, the numbers around this page and at both ends (1 … 4 5 6 … 32), and where in
+     the catalog the page is. A phone shows "Page 5 of 32" in place of the numbers. */
+  const paintPager = (pages: number) => {
+    if (!pager || !pageNums || !pageNow || !prevBtn || !nextBtn || !where) return;
+    pager.hidden = pages < 2;
+    where.hidden = !list.length;
+    const from = (state.page - 1) * BATCH + 1;
+    where.textContent = w.range.replace('{from}', nf.format(from)).replace('{to}', nf.format(drawn)).replace('{total}', nf.format(list.length));
+    pageNow.textContent = w.pageOf.replace('{n}', nf.format(state.page)).replace('{total}', nf.format(pages));
+    prevBtn.disabled = state.page <= 1;
+    nextBtn.disabled = state.page >= pages;
+    const shown = [...new Set([1, state.page - 1, state.page, state.page + 1, pages])].filter((n) => n >= 1 && n <= pages).sort((a, b) => a - b);
+    const items: HTMLLIElement[] = [];
+    shown.forEach((n, i) => {
+      if (i && n - shown[i - 1] > 1) { const gap = el('li', 'pager-gap', '…'); gap.setAttribute('aria-hidden', 'true'); items.push(gap); }
+      const li = el('li');
+      const b = el('button', 'pager-num', nf.format(n));
+      b.type = 'button';
+      b.dataset.page = String(n);
+      b.setAttribute('aria-label', w.pageOf.replace('{n}', nf.format(n)).replace('{total}', nf.format(pages)));
+      if (n === state.page) b.setAttribute('aria-current', 'page');
+      li.append(b);
+      items.push(li);
+    });
+    pageNums.replaceChildren(...items);
+  };
+
+  /** Go to a page: its own entry in the history, and the top of the grid in view. */
+  const goTo = (n: number) => {
+    if (n === state.page) return;
+    state.page = n;
+    saveState(true);
+    apply();
+    root.scrollIntoView({ block: 'start' });
   };
 
   const paintCount = () => {
@@ -205,7 +246,8 @@ export function initBrowser(root: HTMLElement) {
   };
 
   let timer = 0;
-  const changed = () => { saveState(); apply(); };
+  // any change of what is shown starts again from its first page
+  const changed = () => { state.page = 1; saveState(); apply(); };
   input.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(() => { state.q = input.value; changed(); }, 120); });
   input.form?.addEventListener('submit', (e) => { e.preventDefault(); state.q = input.value; changed(); input.blur(); });
   sortSel.addEventListener('change', () => { state.sort = sortSel.value; changed(); });
@@ -213,12 +255,18 @@ export function initBrowser(root: HTMLElement) {
   catBtns.forEach((b) => b.addEventListener('click', () => { state.cat = state.cat === b.dataset.cat ? '' : b.dataset.cat!; if (state.cat) state.group = b.dataset.group || ''; changed(); }));
   slotBtns.forEach((b) => b.addEventListener('click', () => { state.slot = b.dataset.slot || ''; changed(); }));
   clear.addEventListener('click', () => { state.q = ''; state.group = ''; state.cat = ''; state.slot = ''; input.value = ''; changed(); input.focus(); });
-  more.addEventListener('click', drawMore);
-
-  // the next screen of cards arrives before the visitor reaches the end of this one
-  if (mode === 'all' && 'IntersectionObserver' in window) {
-    new IntersectionObserver(([en]) => { if (en.isIntersecting && !more.hidden) drawMore(); }, { rootMargin: '900px 0px' }).observe(more);
-  }
+  prevBtn?.addEventListener('click', () => goTo(state.page - 1));
+  nextBtn?.addEventListener('click', () => goTo(state.page + 1));
+  pageNums?.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-page]');
+    if (b) goTo(Number(b.dataset.page));
+  });
+  // Back and Forward between pages
+  window.addEventListener('popstate', () => {
+    if (mode !== 'all' || !catalog) return;
+    state.page = Math.max(1, Math.floor(Number(new URLSearchParams(location.search).get('page'))) || 1);
+    apply();
+  });
 
   grid.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
@@ -354,7 +402,7 @@ export function initBrowser(root: HTMLElement) {
     need().then((c) => {
       rows = fromData(c);
       apply();
-    }).catch(() => { more.hidden = true; });
+    }).catch(() => { /* no data: the first page in the HTML is all there is, with no pager */ });
   }
   paintTray();
   const fromHash = decodeURIComponent(location.hash.match(/^#mod=(.+)$/)?.[1] ?? '');

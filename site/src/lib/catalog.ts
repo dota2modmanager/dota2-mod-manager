@@ -164,7 +164,8 @@ export function catalogPayload() {
     cats: catalogCategories.map((c) => c.id === 'heroes'
       ? [c.id, 'Heroes', 'Герои', c.group]
       : [c.id, categoryText('en', c.id).name, categoryText('ru', c.id).name, c.group]),
-    heroes: heroes.map((h) => [h.slug, h.name, ruName(h.name)?.nom ?? h.name]),
+    // the nicknames players type ("кристалка", "сф") as a fourth field, for the site's search
+    heroes: heroes.map((h) => [h.slug, h.name, ruName(h.name)?.nom ?? h.name, (ruName(h.name)?.alt ?? []).join('|')]),
     mods: catalog.map((m) => [
       m.key, m.name, catIndex.get(m.cat), m.hero ? heroIndex.get(m.hero) : -1,
       m.img ? m.img.replace(/^\/mods\/|\.webp$/g, '') : '', m.author ?? '', m.date ?? 0, m.styles.join('|'), m.slots, m.authorUrl ?? '',

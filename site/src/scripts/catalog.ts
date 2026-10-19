@@ -39,7 +39,8 @@ export interface Mod {
 export interface Catalog {
   mods: Mod[];
   cats: Array<{ id: string; name: string; group: Group; n: number }>;
-  heroes: Array<{ slug: string; name: string }>;
+  /** en, ru and the nicknames are what a search matches; name is the page's language */
+  heroes: Array<{ slug: string; name: string; en: string; ru: string; alt: string[] }>;
   byKey: Map<string, Mod>;
 }
 
@@ -58,14 +59,14 @@ export function loadCatalog(lang: Lang): Promise<Catalog> {
 
 type Raw = {
   cats: Array<[string, string, string, Group]>;
-  heroes: Array<[string, string, string]>;
+  heroes: Array<[string, string, string, string?]>;
   mods: Array<[string, string, number, number, string, string, number, string, string[], string, string?]>;
 };
 
 function decode(raw: Raw, lang: Lang): Catalog {
   const L = lang === 'ru' ? 2 : 1;
   const cats = raw.cats.map((c) => ({ id: c[0], name: c[L], group: c[3], n: 0, en: c[1], ru: c[2] }));
-  const heroes = raw.heroes.map((h) => ({ slug: h[0], name: h[L], en: h[1], ru: h[2] }));
+  const heroes = raw.heroes.map((h) => ({ slug: h[0], name: h[L], en: h[1], ru: h[2], alt: h[3] ? h[3].split('|') : [] }));
   const mods: Mod[] = raw.mods.map((m) => {
     const cat = cats[m[2]];
     const hero = m[3] >= 0 ? heroes[m[3]] : null;

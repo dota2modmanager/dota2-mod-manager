@@ -6,8 +6,8 @@
  * On a category or a hero page every card is in the HTML, so the page reads whole to a search
  * engine and to anybody without the script, and the script only sorts and hides what is already
  * there. On /catalog/ the first cards are in the HTML and the rest come from /catalog/data.json,
- * drawn a screen at a time as the visitor scrolls: fifteen hundred cards at once is a page that
- * takes its time on a phone for pictures nobody has reached yet.
+ * in pages of 48. It used to add 48 more each time the visitor neared the bottom, and the bottom
+ * kept moving away: the footer was out of reach, and a long visit held every card it had drawn.
  *
  * What the visitor picks is kept in their own browser (localStorage, "mm-set") and follows them
  * from page to page. The tray turns it into the app's own preset link (src/scripts/catalog.ts).
@@ -41,7 +41,7 @@ const catName = (id: string) => (id === 'heroes' ? (lang === 'ru' ? 'Герои'
 
 /* what the script needs to say things, in this page's language */
 const words = {
-  shown: b.shown, more: b.more, add: b.add, remove: b.remove, look: b.look, newBadge: b.newBadge, by: b.by,
+  shown: b.shown, prev: b.prev, next: b.next, pageOf: b.pageOf, range: b.range, add: b.add, remove: b.remove, look: b.look, newBadge: b.newBadge, by: b.by,
   kind: b.kind, hero: b.hero, replaces: b.replaces, author: b.author, added: b.added, style: b.style,
   openApp: b.openApp, copyLink: b.copyLink, copied: b.copied, noCompress: b.noCompress, appNote: b.appNote,
   close: b.close, tray: b.tray, setName: b.setName, heroPage: b.heroPage, kindPage: b.kindPage, mods: b.mods,
@@ -111,7 +111,17 @@ const groupsHere = GROUPS.map(([g]) => g).filter((g) => catalogCategories.some((
     <b>{b.empty}</b>
     {b.emptyHint}
   </div>
-  <div class="more-row"><button class="btn ghost" type="button" id="browse-more" hidden>{b.more}</button></div>
+  {/* The whole catalog, a page of 48 at a time: the footer stays a scroll away, and the browser
+      holds 48 cards rather than every one it has drawn. The page is in the address (?page=). */}
+  {mode === 'all' && (
+    <nav class="pager" id="browse-pager" aria-label={b.pages} hidden>
+      <button class="btn ghost pager-step" type="button" id="browse-prev"><span class="flip"><Icon name="arrow" /></span><span class="pager-label">{b.prev}</span></button>
+      <ol class="pager-nums" id="browse-pages"></ol>
+      <span class="pager-now" id="browse-now"></span>
+      <button class="btn ghost pager-step" type="button" id="browse-next"><span class="pager-label">{b.next}</span><Icon name="arrow" /></button>
+    </nav>
+    <p class="pager-where" id="browse-where" hidden></p>
+  )}
 </div>
 
 <dialog class="quick" id="quick" aria-labelledby="quick-title">

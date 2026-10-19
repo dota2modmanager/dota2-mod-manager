@@ -20,7 +20,14 @@ export interface BrowseCopy {
   clear: string;
   empty: string;
   emptyHint: string;
-  more: string;
+  /** the catalog in pages of 48: back and next, and where in it you are */
+  prev: string;
+  next: string;
+  pages: string;
+  /** "Page {n} of {total}", for a phone, which has no room for the numbers */
+  pageOf: string;
+  /** "Mods {from}–{to} of {total}" */
+  range: string;
   add: string;
   remove: string;
   look: string;
@@ -68,7 +75,11 @@ export const browse: Record<'en' | 'ru', BrowseCopy> = {
     clear: 'Clear the search',
     empty: 'Nothing matches that.',
     emptyHint: 'Try fewer words, or another kind.',
-    more: 'Show more',
+    prev: 'Back',
+    next: 'Next',
+    pages: 'Pages of the catalog',
+    pageOf: 'Page {n} of {total}',
+    range: 'Mods {from}–{to} of {total}',
     add: 'Add to your set',
     remove: 'Take out of your set',
     look: 'Look closer at',
@@ -112,7 +123,11 @@ export const browse: Record<'en' | 'ru', BrowseCopy> = {
     clear: 'Сбросить поиск',
     empty: 'Ничего не нашлось.',
     emptyHint: 'Попробуй меньше слов или другой вид.',
-    more: 'Показать ещё',
+    prev: 'Назад',
+    next: 'Дальше',
+    pages: 'Страницы каталога',
+    pageOf: 'Страница {n} из {total}',
+    range: 'Моды {from}–{to} из {total}',
     add: 'Добавить в набор',
     remove: 'Убрать из набора',
     look: 'Рассмотреть',

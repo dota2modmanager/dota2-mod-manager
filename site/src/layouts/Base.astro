@@ -17,6 +17,8 @@ import { ogPath } from '../lib/og';
 import { SITE_ROOT } from '../lib/paths';
 import { LANG_OFFER } from '../lib/inline-scripts';
 import Backdrop from '../components/Backdrop.astro';
+import Icon from '../components/Icon.astro';
+import { heroCopy } from '../i18n/heroes';
 import onestLatin from '../../node_modules/@fontsource-variable/onest/files/onest-latin-wght-normal.woff2?url';
 import onestCyr from '../../node_modules/@fontsource-variable/onest/files/onest-cyrillic-wght-normal.woff2?url';
 import unboundedLatin from '../../node_modules/@fontsource-variable/unbounded/files/unbounded-latin-wght-normal.woff2?url';
@@ -73,6 +75,12 @@ const navLinks = [
   { id: 'docs', href: pathIn(lang, '/docs/'), label: t('nav.guides'), note: t('menu.guides') },
 ];
 const fonts = lang === 'ru' ? [onestCyr, unboundedCyr] : [onestLatin, unboundedLatin];
+/* what the search box says, and where its answers lead, in this page's language */
+const searchWords = {
+  heroes: t('search.heroes'), authors: t('search.authors'), mods: t('search.mods'), empty: t('search.empty'), all: t('search.all'),
+  modsWord: heroCopy[lang].modsWord,
+  base: { mods: pathIn(lang, '/mods/'), heroes: pathIn(lang, '/heroes/'), authors: pathIn(lang, '/authors/'), catalog: pathIn(lang, '/catalog/') },
+};
 ---
 
 <!doctype html>
@@ -149,6 +157,11 @@ const fonts = lang === 'ru' ? [onestCyr, unboundedCyr] : [onestLatin, unboundedL
           <a href={DISCORD} rel="noopener">{t('nav.discord')}</a>
           <a class="lang" href={pathIn(other, lost ? '/' : path)} lang={other} hreflang={other}>{t('lang.switch')}</a>
         </nav>
+        {/* The whole site's search (src/scripts/site-search.ts). A phone finds it first in the menu:
+            its header holds the name, the catalog and the menu, and a fourth button cut the name. */}
+        <button class="icon-btn search-btn" type="button" data-search-open aria-label={t('search.open')} aria-keyshortcuts="Control+K Meta+K /" title={t('search.open')}>
+          <Icon name="search" size={18} />
+        </button>
         {/* Two, and the stylesheet shows one. A phone or a tablet cannot run the app, and its
             visitor most likely came from a link in Discord to look at mods, so a touch screen gets
             the catalog; a computer gets the download. */}
@@ -160,6 +173,7 @@ const fonts = lang === 'ru' ? [onestCyr, unboundedCyr] : [onestLatin, unboundedL
       </div>
       <div class="menu" id="menu" hidden>
         <nav aria-label={t('menu.open')}>
+          <button class="menu-search" type="button" data-search-open><Icon name="search" size={20} />{t('search.open')}</button>
           {navLinks.map((l) => <a href={l.href}>{l.label}<small>{l.note}</small></a>)}
           <div class="menu-foot">
             <a href={GITHUB} rel="noopener">{t('nav.github')}</a>
@@ -243,8 +257,26 @@ const fonts = lang === 'ru' ? [onestCyr, unboundedCyr] : [onestLatin, unboundedL
       </div>
       <p class="wordmark" aria-hidden="true">{t('site.name')}</p>
     </footer>
+
+    <dialog class="sitesearch" id="sitesearch" aria-label={t('search.open')} data-lang={lang} data-words={JSON.stringify(searchWords)}>
+      <form class="sitesearch-bar" role="search" method="dialog">
+        <Icon name="search" size={20} />
+        <label class="sr-only" for="sitesearch-q">{t('search.open')}</label>
+        <input id="sitesearch-q" type="search" placeholder={t('search.placeholder')} autocomplete="off" spellcheck="false" enterkeyhint="go"
+          role="combobox" aria-expanded="false" aria-controls="sitesearch-list" aria-autocomplete="list" />
+        <button class="icon-btn" type="button" data-search-close aria-label={t('search.close')}><Icon name="x" size={16} /></button>
+      </form>
+      <div class="sitesearch-list" id="sitesearch-list" role="listbox" aria-label={t('search.open')}></div>
+      <p class="sitesearch-tip">{t('search.tip')}</p>
+    </dialog>
   </body>
 </html>
+
+<script>
+  import { initSiteSearch } from '../scripts/site-search';
+  const search = document.getElementById('sitesearch') as HTMLDialogElement | null;
+  if (search) initSiteSearch(search);
+</script>
 
 <script>
   // The menu on a phone: one button, Escape closes it, and so does following a link in it.
