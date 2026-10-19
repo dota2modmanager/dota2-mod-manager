@@ -13,6 +13,7 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
+const RELEASES = 'https://github.com/dota2modmanager/dota2-mod-manager/releases';
 
 for (const [file, page] of [
   ['README.md', 'https://dota2modmanager.com/docs/copies/'],
@@ -25,8 +26,10 @@ for (const [file, page] of [
     // above the first section, so it is on the screen GitHub opens with
     assert.ok(warning < text.indexOf('\n## '), 'the warning sits below the first section');
     const block = text.slice(warning).split('\n\n')[0];
-    assert.ok(block.includes(page), `the warning does not link ${page}`);
-    assert.ok(block.includes('https://github.com/dota2modmanager/dota2-mod-manager/releases'), 'the warning does not say where the real releases are');
+    // the links of the callout, compared whole: a piece of an address could sit inside another one
+    const links = [...block.matchAll(/\]\(([^)\s]+)\)/g)].map((m) => m[1]);
+    assert.ok(links.some((l) => l === page), `the warning does not link ${page}`);
+    assert.ok(links.some((l) => l === RELEASES), 'the warning does not say where the real releases are');
   });
 }
 
