@@ -40,11 +40,13 @@ const HEROES = [
   { id: 'axe', primary: '#ffb4a9', accent: '#ff897a' },
 ];
 
-interface Props { complete: string; shared: string; close: string; hint: string }
-const { complete, shared, close, hint } = Astro.props;
+/* `last`: whether the eighth runs (src/scripts/chase.ts). It gives a key for the app, so the site
+   holds it back until a release that takes the key is out; Landing.astro asks GitHub at build. */
+interface Props { complete: string; shared: string; close: string; hint: string; last?: boolean }
+const { complete, shared, close, hint, last = false } = Astro.props;
 ---
 
-<div id="hunt" data-heroes={JSON.stringify(HEROES)} aria-hidden="true"></div>
+<div id="hunt" data-heroes={JSON.stringify(HEROES)} data-last={last ? '' : undefined} aria-hidden="true"></div>
 
 {/* Eight slots rather than "3/8". A number is a report; an empty slot is a question, and the
     question here answers itself in colour - you can see how many palettes are still missing
@@ -162,12 +164,137 @@ const { complete, shared, close, hint } = Astro.props;
   /* What the whole page does once all eight are found lives in site.css (html.rainbow), since it
      is every page's business and not this component's: the reward follows the visitor around. */
 
+  /* ---- the last one (src/scripts/chase.ts builds all of this) ---- */
+  :global(.hunt-hero.runner) { transition: opacity 90ms linear, transform 200ms cubic-bezier(0.2, 0, 0, 1), top 260ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  :global(.hunt-hero.runner.hop) { animation: hop 260ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes hop { 30% { transform: scale(1.25, 0.75); } 60% { transform: scale(0.85, 1.2); } }
+
+  :global(html.chasing) { overflow: hidden; }
+  :global(.chase) {
+    position: fixed; inset: 0; z-index: 60;
+    cursor: crosshair;
+    background: radial-gradient(120% 90% at 50% 50%, rgb(10 4 8 / 0.9) 0%, rgb(4 2 4 / 0.97) 70%);
+    opacity: 0;
+    transition: opacity 900ms cubic-bezier(0.2, 0, 0, 1);
+    overflow: hidden;
+    user-select: none;
+  }
+  :global(.chase.on) { opacity: 1; }
+  :global(.chase.off) { opacity: 0; transition-duration: 800ms; pointer-events: none; }
+  :global(.chase.jolt) { animation: jolt 180ms linear; }
+  @keyframes jolt {
+    20% { transform: translate(-7px, 3px); } 40% { transform: translate(6px, -4px); }
+    60% { transform: translate(-4px, -2px); } 80% { transform: translate(3px, 3px); }
+  }
+  /* the heart behind the screen: the script beats it, slower as the runner tires */
+  :global(.chase-pulse) {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(75% 70% at 50% 50%, transparent 45%, rgb(190 10 30 / 0.55) 100%);
+    opacity: 0.3;
+  }
+  :global(.chase-title) {
+    position: absolute; left: 0; right: 0; top: 50%;
+    margin: 0; translate: 0 -58%;
+    text-align: center; white-space: nowrap;
+    font: 900 clamp(64px, 12.5vw, 230px)/0.92 var(--display);   /* chase.ts fits the size to the screen */
+    letter-spacing: -0.03em;
+    color: #ff2a3a;
+    pointer-events: none;
+    --amp: 7px; --split: 6px;
+    /* two ghosts of the line, off to each side by --split: the shake reads as a picture that
+       cannot hold still, and both close in as the runner tires */
+    text-shadow:
+      calc(var(--split) * -1) 0 0 rgb(0 220 255 / 0.32),
+      var(--split) 0 0 rgb(255 0 90 / 0.5),
+      0 0 46px rgb(255 30 50 / 0.55);
+  }
+  /* as wide as its letters, so chase.ts can measure the line and fit it to the screen */
+  :global(.chase-title .line) { display: block; width: max-content; margin-inline: auto; }
+  :global(.chase-title .line span) {
+    display: inline-block;
+    animation: slam 620ms cubic-bezier(0.2, 0, 0, 1) both, shiver var(--d) steps(2) infinite;
+    animation-delay: calc(var(--i) * 45ms), calc(var(--i) * -37ms);
+  }
+  @keyframes slam { from { opacity: 0; transform: scale(2.6) translateY(-0.2em); filter: blur(8px); } }
+  @keyframes shiver {
+    0% { translate: calc(var(--amp) * -1) calc(var(--amp) * 0.6); rotate: -1.5deg; }
+    50% { translate: var(--amp) calc(var(--amp) * -0.5); rotate: 1.2deg; }
+    100% { translate: calc(var(--amp) * 0.4) var(--amp); rotate: -0.6deg; }
+  }
+  :global(.chase.spent .chase-title) { color: #8c1420; transition: color 1.2s ease; }
+  :global(.chase-sub) {
+    position: absolute; left: 0; right: 0; top: calc(50% + clamp(54px, 7.4vw, 130px));
+    margin: 0; text-align: center; pointer-events: none;
+    font: 700 clamp(16px, 1.6vw, 22px)/1.2 var(--display); letter-spacing: 0.01em;
+    color: rgb(255 210 210 / 0.75);
+  }
+  :global(.chase.spent .chase-sub) { color: #fff; animation: urge 700ms ease-in-out infinite alternate; }
+  @keyframes urge { to { opacity: 0.45; transform: scale(1.06); } }
+  :global(.chase-esc) {
+    position: absolute; left: 22px; bottom: 18px; margin: 0;
+    font-size: 13px; color: rgb(255 255 255 / 0.4); pointer-events: none;
+  }
+  :global(.chase-fx) { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  :global(.chase-runner) {
+    position: absolute; left: 0; top: 0; width: 64px; height: 64px;
+    pointer-events: none; will-change: transform, filter;
+  }
+  :global(.chase-runner img) { width: 100%; height: 100%; object-fit: contain; display: block; }
+  :global(.chase-runner.got img) { animation: got 1s cubic-bezier(0.2, 0, 0, 1) forwards; }
+  @keyframes got { 15% { transform: scale(1.6); } 100% { transform: scale(2.4); opacity: 0; } }
+  :global(.chase-flash) { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  :global(.chase-flash.go) { animation: flash 700ms ease-out; }
+  @keyframes flash { 0% { opacity: 0.85; } 100% { opacity: 0; } }
+  /* caught: the line that dared you falls apart, every letter its own way */
+  :global(.chase.caught .chase-title .line span) {
+    animation: fall 1.1s cubic-bezier(0.55, 0, 1, 0.45) forwards;
+    animation-delay: calc(var(--i) * 25ms);
+  }
+  @keyframes fall { to { translate: var(--fx) 70vh; rotate: var(--r); opacity: 0; } }
+  :global(.chase.caught .chase-sub), :global(.chase.caught .chase-esc) { opacity: 0; transition: opacity 300ms; }
+
+  /* the prize */
+  :global(.hunt-key) {
+    position: fixed; left: 50%; top: 50%; z-index: 55;
+    translate: -50% -50%;
+    display: grid; justify-items: center; gap: 6px;
+    width: min(460px, calc(100vw - 36px));
+    padding: 30px 30px 26px; border-radius: var(--radius-lg);
+    text-align: center;
+    border: 1px solid transparent;
+    background-image:
+      linear-gradient(var(--surface-container), var(--surface-container)),
+      linear-gradient(90deg, #d0bcff, #fac898, #b1f9a4, #c7dbf0, #ffb0c8, #f1d783, #ffb4a9, #d0bcff);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    box-shadow: 0 30px 90px -20px rgb(0 0 0 / 0.85), 0 0 80px -30px var(--primary);
+    animation: prize 620ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  :global(.hunt-key.out) { animation: prize-out 240ms ease-in forwards; }
+  @keyframes prize { from { opacity: 0; transform: scale(0.7) rotate(-4deg); } }
+  @keyframes prize-out { to { opacity: 0; transform: scale(0.92); } }
+  :global(.hunt-key-title) { font: 900 40px/1 var(--display); letter-spacing: -0.04em; color: var(--text); }
+  :global(.hunt-key-label) { margin-top: 10px; font-size: 13.5px; color: var(--text-dim); }
+  :global(.hunt-key-code) {
+    display: block; padding: 4px 0 8px;
+    font: 800 clamp(26px, 5vw, 36px)/1.1 var(--display); letter-spacing: 0.06em;
+    background: linear-gradient(90deg, #d0bcff, #fac898, #b1f9a4, #c7dbf0, #ffb0c8, #f1d783, #ffb4a9, #d0bcff);
+    background-size: 200% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: pan 5s linear infinite;
+    user-select: all;
+  }
+  :global(.hunt-key-hint) { margin-top: 8px; max-width: 34ch; font-size: 13.5px; line-height: 1.45; color: var(--text-dim); }
+  :global(.hunt-key .hunt-close) { position: absolute; right: 10px; top: 10px; width: 32px; height: 32px; }
+
   @media (hover: none), (prefers-reduced-motion: reduce) {
     .hunt-score, .hunt-done { display: none; }
   }
 </style>
 
 <script>
+  import { chase, showKey, CHASE_WORDS } from '../scripts/chase';
+
   const host = document.getElementById('hunt');
   const score = document.getElementById('hunt-score');
   const done = document.getElementById('hunt-done');
@@ -200,6 +327,35 @@ const { complete, shared, close, hint } = Astro.props;
     type Spot = { el: HTMLElement; hero: Hero; x: number; y: number };
     let spots: Spot[] = [];
 
+    // The last one left does not wait to be clicked: it hops away along its margin a few times
+    // before it lets a click land, and that click starts the chase (src/scripts/chase.ts).
+    const words = CHASE_WORDS[document.documentElement.lang === 'ru' ? 'ru' : 'en'];
+    let caught = false;
+    // held back until the app that takes the key is out; mm-chase lets it be tried before that
+    let runs = host.dataset.last !== undefined;
+    try {
+      caught = localStorage.getItem('mm-caught') !== null;
+      runs ||= localStorage.getItem('mm-chase') === '1';
+    } catch { /* private mode */ }
+    let hops = 3;
+    let hopReady = 0;
+    const runnerSpot = () => (runs && found.size === heroes.length - 1 && spots.length === 1 ? spots[0] : null);
+    const markRunner = () => runnerSpot()?.el.classList.add('runner');
+
+    const hop = (s: Spot) => {
+      const pageH = document.documentElement.scrollHeight;
+      const up = py + window.scrollY > s.y;   // away from the pointer, along the margin
+      const by = 150 + Math.random() * 110;
+      const ny = Math.max(120, Math.min(pageH - 90, s.y + (up ? -by : by)));
+      s.y = ny;
+      s.el.style.top = `${Math.round(ny - 27)}px`;
+      s.el.classList.remove('hop');
+      void s.el.offsetWidth;
+      s.el.classList.add('hop');
+      hops -= 1;
+      hopReady = performance.now() + 420;
+    };
+
     const place = () => {
       spots = [];
       const pageH = document.documentElement.scrollHeight;
@@ -231,6 +387,7 @@ const { complete, shared, close, hint } = Astro.props;
         document.body.appendChild(el);
         spots.push({ el, hero: h, x: Math.min(x, vw - 62) + 27, y: y + 27 });
       });
+      markRunner();
       return true;
     };
 
@@ -326,7 +483,20 @@ const { complete, shared, close, hint } = Astro.props;
     };
     done.querySelector('.hunt-close')?.addEventListener('click', hideDone);
 
-    const finish = () => {
+    // the footer's rainbow line offers the key again to whoever caught the last one
+    const offerKeyAgain = () => {
+      const sw = document.getElementById('rainbowSwitch');
+      if (!sw?.parentElement || document.getElementById('keyAgain')) return;
+      const again = document.createElement('button');
+      again.id = 'keyAgain';
+      again.type = 'button';
+      again.className = 'clear-btn';
+      again.textContent = words.again;
+      again.addEventListener('click', () => showKey(words));
+      sw.after(' · ', again);
+    };
+
+    const finish = (prize = false) => {
       // The whole site turns, not just the title: every colour on it is drawn from --primary,
       // and site.css cycles it through all eight palettes. It stays on from page to page
       // (Base.astro reads the flag before the first paint) until the footer's switch.
@@ -336,11 +506,42 @@ const { complete, shared, close, hint } = Astro.props;
       document.dispatchEvent(new Event('mm-rainbow'));
       const sw = document.getElementById('rainbowSwitch');
       if (sw?.parentElement) sw.parentElement.hidden = false;
-      say(doneText.dataset.complete!);
+      if (prize) {
+        try { localStorage.setItem('mm-caught', '1'); } catch { /* private mode */ }
+        caught = true;
+        offerKeyAgain();
+        showKey(words);
+      } else {
+        say(doneText.dataset.complete!);
+      }
       score.hidden = true;
       // Something to send. The reward used to die on reload, which made it the one thing on
       // the page nobody could show anybody: a screenshot is a dead end, a link is a door.
       history.replaceState(null, '', '#all-eight');
+    };
+
+    const startChase = (el: HTMLElement, hero: Hero) => {
+      const box = el.getBoundingClientRect();
+      el.remove();
+      spots = [];
+      score.hidden = true;
+      chase({
+        hero,
+        from: { x: box.left + box.width / 2, y: box.top + box.height / 2 },
+        palettes: heroes.map((h) => [h.primary, h.accent]),
+        words,
+      }).then((how) => {
+        if (how === 'caught') {
+          found.add(hero.id);
+          document.documentElement.style.setProperty('--primary', hero.primary);
+          paint();
+          finish(true);
+        } else {
+          // gave up: it goes back to its margin, and the next click there starts it again
+          hops = 0;
+          if (place()) paint();
+        }
+      });
     };
 
     document.addEventListener('click', (e) => {
@@ -348,6 +549,11 @@ const { complete, shared, close, hint } = Astro.props;
       if (!el || el.classList.contains('pop')) return;
       const id = el.dataset.hero!;
       const hero = heroes.find((h) => h.id === id)!;
+      if (el.classList.contains('runner')) {
+        if (hops > 0) { const s = spots.find((x) => x.el === el); if (s) hop(s); return; }
+        startChase(el, hero);
+        return;
+      }
       const box = el.getBoundingClientRect();
       burst(box.left + box.width / 2, box.top + box.height / 2, [hero.primary, hero.accent, '#ffffff']);
       el.classList.add('pop');
@@ -357,6 +563,7 @@ const { complete, shared, close, hint } = Astro.props;
       // the page takes this hero's accent, the way the window does when you click its mascot
       document.documentElement.style.setProperty('--primary', hero.primary);
       paint();
+      markRunner();
 
       if (found.size === heroes.length) {
         // The eighth find has to differ from the seventh by an event, not only by a result.
@@ -386,6 +593,7 @@ const { complete, shared, close, hint } = Astro.props;
         const d = Math.hypot(px - (s.x - sx), py - (s.y - sy));
         const k = Math.max(0, Math.min(1, (FAR - d) / (FAR - NEAR)));
         s.el.style.setProperty('--heat', (k ** 2.2).toFixed(3));
+        if (hops > 0 && d < 105 && s.el.classList.contains('runner') && performance.now() > hopReady) hop(s);
       }
     };
     const wake = () => { if (!queued) { queued = true; requestAnimationFrame(lightUp); } };
@@ -407,9 +615,16 @@ const { complete, shared, close, hint } = Astro.props;
         hideDone();
         if (place()) paint();
       }, 4200);
-    } else if (earned) {
-      // found them before: the page already wears the reward, and there is nothing left to hide
+    } else if (earned && (caught || !runs)) {
+      // found them all and caught the last: the page already wears the reward
       if (location.hash === '#all-eight') history.replaceState(null, '', location.pathname);
+      if (caught) offerKeyAgain();
+    } else if (earned) {
+      // All eight found before the last one learned to run: the page keeps its rainbow, and one
+      // hero is back in the margins by the footer, waiting to be chased.
+      if (location.hash === '#all-eight') history.replaceState(null, '', location.pathname);
+      for (const h of heroes.slice(0, -1)) found.add(h.id);
+      if (place()) paint();
     } else if (place()) {
       paint();
     }

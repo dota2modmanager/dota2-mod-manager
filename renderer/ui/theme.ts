@@ -7,73 +7,119 @@
  * The mascots are animated GIFs from the catalog repository, listed there in GIF_CONFIG. We
  * fetch them the same way as every other picture in the app, so the first switch after a
  * fresh install needs the network and everything after it comes out of the cache.
+ *
+ * A ninth, 'rainbow', joins the round once ui/rainbow-lock.ts has been opened (settings
+ * `rainbow`). It wears all eight in turn: every few seconds the mascot spins to the next hero and
+ * the accent goes with it, the same spin the eight use, so it reads as the window that cannot
+ * pick one rather than as a flicker.
  */
 import { state } from '../core/store.ts';
 import { RAW_BASE } from '../core/constants.ts';
 import { tokenMs } from '../core/css-time.ts';
 
-const THEMES = ['ursa', 'brew', 'fura', 'storm', 'invoker', 'meepo', 'bh', 'axe'];
+const HEROES = ['ursa', 'brew', 'fura', 'storm', 'invoker', 'meepo', 'bh', 'axe'];
+const RAINBOW = 'rainbow';
+/** how long the rainbow wears each hero */
+const HUE_MS = 6000;
+
+const unlocked = () => state.settings?.rainbow === true;
+const themes = () => (unlocked() ? [...HEROES, RAINBOW] : HEROES);
 
 function mascotUrl(theme: string): string {
   const cfg = state.catalog?.constants?.GIF_CONFIG;
-  const i = THEMES.indexOf(theme);
+  const i = HEROES.indexOf(theme);
   const at = cfg?.themes?.indexOf(theme) ?? -1;
   const fromCatalog = at >= 0 ? cfg?.gifs?.[at] : null;
-  return `${RAW_BASE}/${fromCatalog || `assets/previews/hueta/${THEMES[i < 0 ? 0 : i]}.gif`}`;
+  return `${RAW_BASE}/${fromCatalog || `assets/previews/hueta/${HEROES[i < 0 ? 0 : i]}.gif`}`;
 }
 
-/** Put a theme on the window. Unknown names fall back to the one the app ships on. */
-function applyTheme(name: unknown): string {
-  const theme = typeof name === 'string' && THEMES.includes(name) ? name : THEMES[0];
-  document.documentElement.dataset.theme = theme;
+const setMascot = (hero: string) => {
   const img = document.querySelector<HTMLImageElement>('#themeMascot img');
-  if (img) img.src = mascotUrl(theme);
+  if (img) img.src = mascotUrl(hero);
+};
+
+// ---- the rainbow's round of the eight ----
+let hueTimer = 0;
+const stopHues = () => { clearInterval(hueTimer); hueTimer = 0; delete document.documentElement.dataset.hue; };
+function startHues(): void {
+  stopHues();
+  let at = 0;
+  document.documentElement.dataset.hue = HEROES[at];
+  setMascot(HEROES[at]);
+  // asked for less motion, it keeps the first and wears the rainbow only in its trim
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  hueTimer = window.setInterval(() => {
+    if (document.hidden) return;
+    at = (at + 1) % HEROES.length;
+    const next = HEROES[at];
+    spin(() => { document.documentElement.dataset.hue = next; setMascot(next); });
+  }, HUE_MS);
+}
+
+/** Put a theme on the window. Unknown names, and a rainbow not yet earned, fall back to the one the app ships on. */
+function applyTheme(name: unknown): string {
+  const theme = typeof name === 'string' && themes().includes(name) ? name : HEROES[0];
+  document.documentElement.dataset.theme = theme;
+  if (theme === RAINBOW) startHues();
+  else { stopHues(); setMascot(theme); }
   return theme;
+}
+
+/** Wear the rainbow now: the pumpkin calls this the moment its lock opens. */
+export function wearRainbow(): void {
+  window.api.settings.set('theme', applyTheme(RAINBOW));
+}
+
+/* The spin has to end on a clock, not only on its own event.
+ *
+ * `spinning` is what stops a second click landing mid-turn, and it used to come off in
+ * animationend alone. Turn animations off in Windows and the stylesheet answers with
+ * `animation: none !important` for everything, so the animation never runs, the event
+ * never fires, and the class stays on the button forever: the colour changed once and the
+ * mascot was dead for the rest of the session. Reported by somebody who had exactly that
+ * setting, and it would have been every such person.
+ *
+ * So the timer is the guarantee and the event is only the early finish. Both call the same
+ * idempotent pair, so whichever arrives first is the one that counts.
+ */
+function spin(swapTo: () => void): void {
+  const mascot = document.querySelector<HTMLElement>('#themeMascot');
+  if (!mascot || mascot.classList.contains('spinning')) { swapTo(); return; }
+  // The hero turns away and the new one turns back: the window changes colour at the point
+  // of the spin where the face is smallest, so the two look like one event rather than a
+  // recolour with a spin thrown over it. Same trick the catalog's own site uses.
+  mascot.classList.add('spinning');
+  let swapped = false;
+  const swap = () => { if (!swapped) { swapped = true; swapTo(); } };
+  const end = () => {
+    clearTimeout(timer);
+    mascot.removeEventListener('animationend', end);
+    mascot.classList.remove('spinning');
+    swap();
+  };
+  const ms = spinMs();
+  setTimeout(swap, ms / 2);
+  const timer = setTimeout(end, ms + 50);
+  mascot.addEventListener('animationend', end);
 }
 
 export function initTheme(): void {
   applyTheme(state.settings?.theme);
   const mascot = document.querySelector<HTMLElement>('#themeMascot');
   if (!mascot) return;
+  // the heroes worn by clicking, this session: once all eight have been, the title bar says so
+  const worn = new Set([document.documentElement.dataset.theme]);
   mascot.addEventListener('click', () => {
     if (mascot.classList.contains('spinning')) return;
-    const now = document.documentElement.dataset.theme || THEMES[0];
-    const next = THEMES[(THEMES.indexOf(now) + 1) % THEMES.length];
-    // The hero turns away and the new one turns back: the window changes colour at the point
-    // of the spin where the face is smallest, so the two look like one event rather than a
-    // recolour with a spin thrown over it. Same trick the catalog's own site uses.
-    mascot.classList.add('spinning');
-
-    let swapped = false;
-    const swap = () => {
-      if (swapped) return;
-      swapped = true;
+    const list = themes();
+    const now = document.documentElement.dataset.theme || HEROES[0];
+    const next = list[(list.indexOf(now) + 1) % list.length];
+    spin(() => {
       applyTheme(next);
       window.api.settings.set('theme', next);
-    };
-
-    /* The spin has to end on a clock, not only on its own event.
-     *
-     * `spinning` is what stops a second click landing mid-turn, and it used to come off in
-     * animationend alone. Turn animations off in Windows and the stylesheet answers with
-     * `animation: none !important` for everything, so the animation never runs, the event
-     * never fires, and the class stays on the button forever: the colour changed once and the
-     * mascot was dead for the rest of the session. Reported by somebody who had exactly that
-     * setting, and it would have been every such person.
-     *
-     * So the timer is the guarantee and the event is only the early finish. Both call the same
-     * idempotent pair, so whichever arrives first is the one that counts.
-     */
-    const end = () => {
-      clearTimeout(timer);
-      mascot.removeEventListener('animationend', end);
-      mascot.classList.remove('spinning');
-      swap();
-    };
-    const ms = spinMs();
-    setTimeout(swap, ms / 2);
-    const timer = setTimeout(end, ms + 50);
-    mascot.addEventListener('animationend', end);
+      worn.add(next);
+      if (HEROES.every((h) => worn.has(h))) document.dispatchEvent(new Event('mm-all-heroes'));
+    });
   });
 }
 

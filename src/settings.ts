@@ -32,6 +32,10 @@ export interface StoredSettings {
   slotZones?: number;
   /** the build of the game last seen on disk (src/patch-watch.ts gameStamp) */
   gameStamp?: string | null;
+  /** the pumpkin in the title bar has come out (renderer/ui/pumpkin.ts) */
+  pumpkin: boolean;
+  /** the ninth theme is open (renderer/ui/rainbow-lock.ts) */
+  rainbow: boolean;
 }
 
 const DEFAULTS: StoredSettings = {
@@ -53,6 +57,9 @@ const DEFAULTS: StoredSettings = {
   // bh | axe. The catalog's own site has the same eight and switches them by clicking the
   // mascot beside its logo; h6rd let us bring both across (see renderer/styles/themes.css).
   theme: 'ursa',
+  // the title bar's pumpkin, and the ninth theme it opens (renderer/ui/pumpkin.ts)
+  pumpkin: false,
+  rainbow: false,
   // catalog mods the user starred: "<categoryId>|<mod name>" keys
   favorites: [],
   // sizes and folded state of the title bar, status bar and category rail

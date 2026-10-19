@@ -332,19 +332,20 @@ const searchWords = {
   // The rainbow's switch, shown to somebody who has earned it (Hunt.astro sets the flag).
   const sw = document.getElementById('rainbowSwitch') as HTMLButtonElement | null;
   const read = () => { try { return localStorage.getItem('mm-rainbow'); } catch { return null; } };
-  if (sw && read() !== null) {
+  if (sw) {
     const paint = () => {
       const on = document.documentElement.classList.contains('rainbow');
       sw.textContent = on ? sw.dataset.on! : sw.dataset.off!;
+      sw.parentElement!.hidden = false;
     };
-    sw.parentElement!.hidden = false;
-    paint();
+    if (read() !== null) paint();
     sw.addEventListener('click', () => {
       const on = !document.documentElement.classList.contains('rainbow');
       document.documentElement.classList.toggle('rainbow', on);
       try { localStorage.setItem('mm-rainbow', on ? '1' : '0'); } catch { /* private mode */ }
       paint();
     });
+    // earned on this very page: the switch has to appear with its words, not empty until a reload
     document.addEventListener('mm-rainbow', paint);
   }
 </script>

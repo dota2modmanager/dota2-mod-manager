@@ -85,6 +85,8 @@ export const WINDOW_SETTINGS: Record<string, Check> = {
   favorites: list(str(500), 20000),
   langPromptSeen: bool,
   panels: either(oneOf(null), json(64 * 1024)),
+  pumpkin: bool,
+  rainbow: bool,
   showAdult: bool,
   theme: str(40, 1),
   toolsPromptSeen: bool,

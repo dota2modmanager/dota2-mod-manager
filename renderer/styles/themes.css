@@ -167,3 +167,35 @@
   --md-outline: #a08c88;
   --md-error: #ffb4ab;
 }
+
+/* The ninth, 'rainbow' (ui/theme.ts, opened by ui/rainbow-lock.ts). The floor is the first
+   hero's; the accent is whichever of the eight the window is wearing this moment, which the
+   theme script moves round every few seconds behind a spin of the mascot. The trim along the
+   title bar and on the main buttons carries all eight at once, so the rainbow is there even
+   with motion turned off and the accent holding still. */
+[data-theme='rainbow'][data-hue='ursa'] { --md-primary: #d0bcff; --md-accent: #b190ff; --md-on-primary: #220a32; --md-primary-container: #4f378b; --md-on-primary-container: #f4e7ff; }
+[data-theme='rainbow'][data-hue='brew'] { --md-primary: #fac898; --md-accent: #f8b774; --md-on-primary: #3a1f00; --md-primary-container: #5c3b00; --md-on-primary-container: #ffddb7; }
+[data-theme='rainbow'][data-hue='fura'] { --md-primary: #b1f9a4; --md-accent: #9bf38a; --md-on-primary: #00390e; --md-primary-container: #0a5d1d; --md-on-primary-container: #c8ffc0; }
+[data-theme='rainbow'][data-hue='storm'] { --md-primary: #c7dbf0; --md-accent: #b5d0ec; --md-on-primary: #10283e; --md-primary-container: #334b61; --md-on-primary-container: #e9f3ff; }
+[data-theme='rainbow'][data-hue='invoker'] { --md-primary: #ffffff; --md-accent: #e0e0e0; --md-on-primary: #000000; --md-primary-container: #404040; --md-on-primary-container: #ffffff; }
+[data-theme='rainbow'][data-hue='meepo'] { --md-primary: #ffb0c8; --md-accent: #ff8fb3; --md-on-primary: #5e0029; --md-primary-container: #83003e; --md-on-primary-container: #ffd9e3; }
+[data-theme='rainbow'][data-hue='bh'] { --md-primary: #f1d783; --md-accent: #ebcc6d; --md-on-primary: #3a2e00; --md-primary-container: #574600; --md-on-primary-container: #ffe8b8; }
+[data-theme='rainbow'][data-hue='axe'] { --md-primary: #ffb4a9; --md-accent: #ff897a; --md-on-primary: #680003; --md-primary-container: #930006; --md-on-primary-container: #ffdad4; }
+
+[data-theme='rainbow'] {
+  --rainbow: linear-gradient(90deg, #d0bcff, #fac898, #b1f9a4, #c7dbf0, #ffffff, #ffb0c8, #f1d783, #ffb4a9, #d0bcff);
+}
+[data-theme='rainbow'] #titlebar::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: var(--rainbow);
+  background-size: 200% 100%;
+  animation: rainbowPan 9s linear infinite;
+  pointer-events: none;
+}
+[data-theme='rainbow'] .btn-primary {
+  background-image: var(--rainbow);
+  background-size: 200% 100%;
+  animation: rainbowPan 9s linear infinite;
+}
+@keyframes rainbowPan { to { background-position: 200% 0; } }

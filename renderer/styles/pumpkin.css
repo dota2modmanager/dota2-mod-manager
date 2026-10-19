@@ -1,0 +1,102 @@
+/* ============ The pumpkin (ui/pumpkin.ts) ============
+   Its colours are the drawing's own, the way a mod's picture keeps its colours: a pumpkin is
+   orange whatever hero the window is wearing. Everything else here is tokens. */
+
+.pk-stem { fill: #6b8f3e; }
+.pk-body { fill: #ff8a2b; }
+.pk-rib { fill: none; stroke: #c8551b; stroke-width: 1.6; stroke-linecap: round; opacity: 0.85; }
+.pk-face path { fill: #ffd36e; }
+/* a candle, not a bulb: the light inside stutters */
+@keyframes pkFlicker {
+  0%, 100% { opacity: 1; } 6% { opacity: 0.7; } 9% { opacity: 1; } 38% { opacity: 0.86; }
+  42% { opacity: 1; } 61% { opacity: 0.62; } 65% { opacity: 0.95; } 83% { opacity: 0.8; }
+}
+
+/* ---- in the title bar, beside the mascot ---- */
+.tb-pumpkin {
+  border: none;
+  background: none;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  line-height: 0;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  transition: transform var(--dur-base) var(--ease-spring), filter var(--dur-base) var(--ease-standard);
+}
+.tb-pumpkin svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.tb-pumpkin:hover { transform: scale(1.2) rotate(8deg); filter: drop-shadow(0 0 6px rgb(255 150 50 / 0.75)); }
+.tb-pumpkin:hover .pk-face { animation: pkFlicker 2.4s linear infinite; }
+.tb-pumpkin:active { transform: scale(0.92); }
+.tb-pumpkin:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+/* the first time, it rolls in from behind the mascot */
+.tb-pumpkin.rolling { animation: pkRoll 900ms var(--ease-spring) both; }
+@keyframes pkRoll {
+  from { transform: translateX(-28px) rotate(-360deg) scale(0.3); opacity: 0; }
+  70% { transform: translateX(2px) rotate(12deg) scale(1.18); opacity: 1; }
+}
+
+/* ---- the window ---- */
+.pk-box { position: relative; text-align: center; width: min(420px, calc(88vw / var(--content-zoom))); }
+.pk-big {
+  width: 96px;
+  height: 96px;
+  margin: var(--space-1) auto var(--space-3);
+  filter: drop-shadow(0 0 18px rgb(255 140 40 / 0.45));
+}
+.pk-big svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.pk-big .pk-face { animation: pkFlicker 2.6s linear infinite; }
+.pk-title { font: 700 20px/1.25 var(--font-head); color: var(--text); }
+.pk-text { margin: var(--space-2) auto var(--space-4); max-width: 34ch; font-size: 13.5px; line-height: 1.5; color: var(--text-muted); }
+.pk-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font: 700 18px/1 var(--font-head);
+  letter-spacing: 0.14em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.pk-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
+.pk-input::placeholder { letter-spacing: normal; text-transform: none; color: var(--text-faint); font-weight: 600; }
+.pk-error { min-height: 18px; margin: var(--space-2) 0 0; font-size: 12.5px; color: var(--md-error); }
+.pk-hint { margin: 0 0 var(--space-4); font-size: 12px; color: var(--text-faint); }
+.pk-box .confirm-actions { justify-content: center; }
+/* a button says display: inline-flex, which outranks the hidden attribute */
+.pk-box [hidden] { display: none; }
+.pk-box.shake { animation: pkShake 420ms var(--ease-standard); }
+@keyframes pkShake {
+  15% { translate: -9px 0; } 30% { translate: 8px 0; } 45% { translate: -6px 0; }
+  60% { translate: 4px 0; } 75% { translate: -2px 0; }
+}
+
+/* lit: the face takes every hero's colour in turn, and so does the rim of the window */
+.pk-box.lit {
+  border-color: transparent;
+  background-image: linear-gradient(var(--surface-solid), var(--surface-solid)),
+    linear-gradient(90deg, #d0bcff, #fac898, #b1f9a4, #c7dbf0, #ffffff, #ffb0c8, #f1d783, #ffb4a9, #d0bcff);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+.pk-box.lit .pk-face path { animation: pkHue 4s linear infinite; }
+.pk-box.lit .pk-big { animation: pkGlow 4s linear infinite; }
+.pk-box.burst .pk-big svg { animation: pkPop 760ms var(--ease-spring); }
+@keyframes pkHue {
+  0%, 100% { fill: #d0bcff; } 12.5% { fill: #fac898; } 25% { fill: #b1f9a4; } 37.5% { fill: #c7dbf0; }
+  50% { fill: #ffffff; } 62.5% { fill: #ffb0c8; } 75% { fill: #f1d783; } 87.5% { fill: #ffb4a9; }
+}
+@keyframes pkGlow {
+  0%, 100% { filter: drop-shadow(0 0 20px rgb(208 188 255 / 0.6)); }
+  25% { filter: drop-shadow(0 0 20px rgb(177 249 164 / 0.6)); }
+  50% { filter: drop-shadow(0 0 20px rgb(255 176 200 / 0.6)); }
+  75% { filter: drop-shadow(0 0 20px rgb(241 215 131 / 0.6)); }
+}
+@keyframes pkPop {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.4) rotate(-10deg); }
+  100% { transform: scale(1); }
+}
