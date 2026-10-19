@@ -203,6 +203,11 @@ const searchWords = {
               {t('foot.built')} <a href="https://github.com/TheFleece" rel="noopener">TheFleece</a>.{' '}
               <a href={GITHUB} rel="noopener">{t('foot.license')}</a>.
             </p>
+            {/* On every page, because a copy of the app can be met before this site is: renamed,
+                closed and sometimes sold (docs/copies). */}
+            <p class="foot-copies">
+              {t('foot.copies')} <a href={pathIn(lang, '/docs/copies/')}>{t('foot.copiesLink')}</a>
+            </p>
           </div>
           <nav aria-label={t('foot.colMods')}>
             <h3>{t('foot.colMods')}</h3>

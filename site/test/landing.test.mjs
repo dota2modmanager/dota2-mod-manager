@@ -91,6 +91,30 @@ for (const screen of ['desktop', 'mobile']) {
       }
     });
 
+    /* On an iPhone the menu now and then showed past the screen's edge, though the test above, which
+       looks a moment after the press, never saw it there. So this one looks at once: the menu has
+       to be in its place by the time the press has been handled, before any frame is drawn. */
+    test(`a download menu is on the screen from the moment it opens (${name})`, async () => {
+      const { context, page } = await open(screen, lang);
+      try {
+        for (const where of ['.hero', '.final']) {
+          await bring(page.locator(`${where} .dl summary`));
+          const at = await page.evaluate((sel) => {
+            const dl = document.querySelector(sel);
+            dl.querySelector('summary').click();
+            const r = dl.querySelector('.dl-menu').getBoundingClientRect();
+            const out = { open: dl.open, left: Math.round(r.left), right: Math.round(r.right), vw: document.documentElement.clientWidth };
+            dl.open = false;
+            return out;
+          }, `${where} .dl`);
+          assert.equal(at.open, true, `${where}: the press did not open it`);
+          assert.ok(at.left >= 0 && at.right <= at.vw, `${where}: the menu opened at ${at.left}..${at.right} of ${at.vw}`);
+        }
+      } finally {
+        await context.close();
+      }
+    });
+
     test(`the header's Download lands on the button, clear of the header (${name})`, async () => {
       const { context, page } = await open(screen, lang);
       try {
@@ -172,6 +196,23 @@ for (const screen of ['desktop', 'mobile']) {
     }
   });
 }
+
+test('on a phone each row of "by hand or with the app" names itself across the whole card', async () => {
+  for (const lang of ['', '/ru']) {
+    const { context, page } = await open('mobile', lang);
+    try {
+      const narrow = await page.$$eval('.compare tbody tr', (rows) => rows.flatMap((tr) => {
+        const th = tr.querySelector('th');
+        const room = tr.clientWidth - parseFloat(getComputedStyle(tr).paddingLeft) - parseFloat(getComputedStyle(tr).paddingRight);
+        // the desktop's 26% column once squeezed "Two mods with the same file" into three lines
+        return th.getBoundingClientRect().width < room - 1 ? [`${th.textContent.trim()}: ${Math.round(th.getBoundingClientRect().width)} of ${Math.round(room)} px`] : [];
+      }));
+      assert.deepEqual(narrow, [], lang || 'en');
+    } finally {
+      await context.close();
+    }
+  }
+});
 
 test('the tabs of the app switch by click and by keyboard', async () => {
   const { context, page } = await open('desktop');

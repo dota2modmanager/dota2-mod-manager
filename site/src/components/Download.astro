@@ -65,15 +65,18 @@ const items = [
   /* Centred under the button, then moved sideways by --dl-shift when that would put an edge off
      the screen: on a phone the hero's button is the left one of two, and centred under it the
      menu began 35 px left of the screen. The script below works the shift out on opening. The
-     centring is `translate` rather than `transform`, so the entrance can animate `transform`
-     without the two fighting. */
+     place is `left`, worked out by layout, and nothing else. It used to be a `translate` set
+     after the menu had opened, and on a real iPhone the menu now and then showed past the
+     screen's edge, while Chrome and Playwright's WebKit drew it in place every time; a property
+     layout owns, set before the first frame, leaves Safari nothing to draw late. `transform` is
+     left to the entrance alone. */
   .dl-menu {
+    --w: min(max(280px, 100%), calc(100vw - 24px));
     position: absolute;
     z-index: 5;
     top: calc(100% + 8px);
-    left: 50%;
-    translate: calc(-50% + var(--dl-shift, 0px)) 0;
-    width: min(max(280px, 100%), calc(100vw - 24px));
+    left: calc((100% - var(--w)) / 2 + var(--dl-shift, 0px));
+    width: var(--w);
     padding: 6px;
     text-align: left;
     background: var(--surface-container);
@@ -127,25 +130,37 @@ const items = [
     const os = /Linux|X11/.test(ua) && !/Android/.test(ua) ? 'linux' : /Windows/.test(ua) ? 'win' : '';
     if (os) dl.querySelector(`.dl-item[data-os="${os}"]`)?.classList.add('match');
 
-    // Keep the open menu on the screen. Measured with the shift cleared, so a menu that was
-    // moved last time and now has room goes back to the middle.
+    // Keep the open menu on the screen. Worked out from the button's box and the menu's own size,
+    // never from where the menu was drawn, so a menu moved last time that now has room goes back
+    // to the middle, and an entrance still running cannot skew the numbers.
     const menu = dl.querySelector<HTMLElement>('.dl-menu');
-    dl.addEventListener('toggle', () => {
-      if (!dl.open || !menu) return;
-      menu.style.removeProperty('--dl-shift');
-      const box = menu.getBoundingClientRect();
+    const summary = dl.querySelector<HTMLElement>('summary');
+    const place = () => {
+      if (!dl.open || !menu || !summary) return;
       const edge = 12;
+      const button = summary.getBoundingClientRect();
+      const left = button.left + (button.width - menu.offsetWidth) / 2;
       const right = document.documentElement.clientWidth - edge;
-      const shift = box.left < edge ? edge - box.left : box.right > right ? right - box.right : 0;
-      if (shift) menu.style.setProperty('--dl-shift', `${Math.round(shift)}px`);
+      const shift = left < edge ? edge - left : left + menu.offsetWidth > right ? right - left - menu.offsetWidth : 0;
+      menu.style.setProperty('--dl-shift', `${Math.round(shift)}px`);
       // Up, when there is no room for it below and there is above: the button at the foot of the
       // landing sits low on the screen, and a menu that opens past the bottom edge has to be
       // scrolled to before it can be read.
-      dl.classList.remove('up');
-      const below = window.innerHeight - edge - box.bottom;
-      const above = (dl.querySelector('summary')?.getBoundingClientRect().top ?? 0) - edge - box.height - 8;
-      if (below < 0 && above > below) dl.classList.add('up');
+      const below = window.innerHeight - edge - button.bottom - 8 - menu.offsetHeight;
+      const above = button.top - edge - 8 - menu.offsetHeight;
+      dl.classList.toggle('up', below < 0 && above > below);
+    };
+    // Opened here rather than by the browser, so the menu is placed before it is first painted:
+    // the browser's own `toggle` comes a moment later, after a frame of the menu where it was.
+    summary?.addEventListener('click', (e) => {
+      if (dl.open) return;
+      e.preventDefault();
+      dl.open = true;
+      place();
     });
+    // and anything else that opens it, or a phone turned on its side while it is open
+    dl.addEventListener('toggle', place);
+    addEventListener('resize', place);
 
     dl.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && dl.open) { dl.open = false; dl.querySelector('summary')?.focus(); }

@@ -401,6 +401,8 @@ section > .wrap > :is(h1, h2, h3):first-child { margin-top: 0; }
 }
 @media (max-width: 860px) { .foot-grid { grid-template-columns: 1fr 1fr; } .foot-about { grid-column: 1 / -1; } }
 .foot-about p { max-width: 38ch; margin: 12px 0 0; color: var(--text-dim); }
+/* the line about copies of the app, marked in the colour the landing's warnings use */
+.foot-about .foot-copies { padding-left: 12px; border-left: 2px solid color-mix(in srgb, var(--immortal) 60%, transparent); font-size: 14px; }
 .foot h3 { font: 600 13px/1.2 var(--body); color: var(--text); margin: 0 0 12px; letter-spacing: 0; }
 .foot ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
 .foot ul a { display: inline-block; padding: 4px 0; color: var(--text-dim); }
@@ -807,7 +809,9 @@ section { padding: 56px 0; }
   .compare tr { padding: 14px 16px; border-bottom: 1px solid var(--border); }
   .compare tbody tr:last-child { border-bottom: 0; }
   .compare th, .compare td { padding: 0; border: 0; }
-  .compare tbody th { margin-bottom: 8px; }
+  /* the row's name takes the whole card: the desktop's 26% column outranks the block rule above
+     and squeezed "Two mods with the same file" into three lines on a phone */
+  .compare tbody th { width: auto; margin-bottom: 8px; }
   .compare td { padding: 8px 10px; border-radius: 10px; font-size: 14.5px; }
   .compare td::before { content: attr(data-col); display: block; font-size: 12px; font-weight: 650; color: var(--text-faint); margin-bottom: 2px; }
   .compare td + td { margin-top: 6px; }
@@ -819,8 +823,9 @@ section { padding: 56px 0; }
 .trust-grid > div { padding: 24px; background: var(--surface-container); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 0 -1px -1px 0; }
 .trust-grid b { display: block; font: 650 17px/1.3 var(--display); letter-spacing: -0.01em; margin-bottom: 8px; }
 .trust-grid span { color: var(--text-dim); font-size: 15px; }
+.warn-pair { margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 16px; }
 .warn {
-  margin-top: 16px; padding: 22px 24px;
+  padding: 22px 24px;
   border: 1px solid color-mix(in srgb, var(--immortal) 34%, transparent);
   background: color-mix(in srgb, var(--immortal) 7%, transparent);
   border-radius: var(--radius-lg);
@@ -1259,7 +1264,9 @@ details.release-old:first-of-type { margin-top: 44px; border-top: 1px solid var(
 }
 .doc-steps b { color: var(--text); }
 .doc-steps span { grid-column: 2; }
-.doc-list { margin: 1.2em 0; padding-left: 1.15em; display: grid; gap: 8px; }
+/* one column that may not grow past the page: a grid sizes its column to the longest word, and
+   the copies guide's github.com/dota2modmanager/dota2-mod-manager is wider than a 320 px phone */
+.doc-list { margin: 1.2em 0; padding-left: 1.15em; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .doc-list li { padding-left: 4px; }
 .doc-list li::marker { color: var(--primary); }
 .doc-code { background: var(--surface-low); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 14px 16px; margin: 1.3em 0; overflow-x: auto; font-size: 14px; line-height: 1.55; }

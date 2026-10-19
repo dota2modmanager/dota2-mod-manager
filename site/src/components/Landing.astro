@@ -87,11 +87,22 @@ const topCats = catalogCategories.slice(0, 10);
 
 /* Pictures for the tiles, picked by kind so each tile shows what it is about. */
 const firstOf = (cats: string[], skip = 0) => pictured.filter((m) => cats.includes(m.cat)).slice(skip);
-const demo = firstOf(['heroes'])[0];
-const toggles = [firstOf(['terrains'])[0], firstOf(['heroes'], 1)[0], firstOf(['cursors', 'huds'])[0]].filter(Boolean);
+/* A hero on a tile is one of these arcanas, which a player knows on sight, in this order. The
+   newest hero mod can look like anything, and the install demo once showed a Bloodseeker that
+   read as broken. A name the catalog has lost is skipped, and the newest fill in after the list. */
+const SHOWCASE = [
+  'Shadow Fiend Arcana', 'Crystal Maiden Immortal Arcana', 'Terrorblade Arcana Midnight Blue',
+  'Windranger Arcana Prismatic', 'Queen of Pain Arcana', 'Juggernaut Arcana',
+];
+const heroPics = [
+  ...SHOWCASE.flatMap((name) => pictured.find((m) => m.cat === 'heroes' && m.name === name) ?? []),
+  ...firstOf(['heroes']).filter((m) => !SHOWCASE.includes(m.name)),
+];
+const demo = heroPics[0];
+const toggles = [firstOf(['terrains'])[0], heroPics[1], firstOf(['cursors', 'huds'])[0]].filter(Boolean);
 const fan = [firstOf(['couriers'])[0], firstOf(['wards'])[0], firstOf(['couriers'], 1)[0]].filter(Boolean);
-const shareSet = [firstOf(['heroes'], 4)[0], firstOf(['terrains'], 2)[0], firstOf(['heroes'], 5)[0]].filter(Boolean);
-const finalArt = [firstOf(['heroes'], 2)[0], firstOf(['terrains'], 1)[0], firstOf(['item-effects'])[0], firstOf(['heroes'], 3)[0]].filter(Boolean);
+const shareSet = [heroPics[4], firstOf(['terrains'], 2)[0], heroPics[5]].filter(Boolean);
+const finalArt = [heroPics[2], firstOf(['terrains'], 1)[0], firstOf(['item-effects'])[0], heroPics[3]].filter(Boolean);
 
 /* The heroes with the most made for them, each shown by their newest render. */
 const topHeroes = [...heroes]
@@ -348,12 +359,22 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
         </div>
       ))}
     </div>
-    <div class="warn reveal">
-      <h3>{c.smartscreenTitle}</h3>
-      <p set:html={c.smartscreen} />
-      <p class="muted">
-        <a href={WORKFLOW} rel="noopener">{lang === 'ru' ? 'Посмотреть, как собираются релизы' : 'See how releases are built'}</a>
-      </p>
+    {/* Two things a visitor should hear before downloading: that copies of this app go around
+        under other names, and why Windows will warn about the real one. Side by side on a wide
+        screen, so neither reads as a footnote to the other. */}
+    <div class="warn-pair reveal">
+      <div class="warn" id="copies">
+        <h3>{c.copiesTitle}</h3>
+        <p>{c.copies}</p>
+        <p class="muted"><a href={link('~/docs/copies/')}>{c.copiesLink}</a></p>
+      </div>
+      <div class="warn">
+        <h3>{c.smartscreenTitle}</h3>
+        <p set:html={c.smartscreen} />
+        <p class="muted">
+          <a href={WORKFLOW} rel="noopener">{lang === 'ru' ? 'Посмотреть, как собираются релизы' : 'See how releases are built'}</a>
+        </p>
+      </div>
     </div>
   </div>
 </section>

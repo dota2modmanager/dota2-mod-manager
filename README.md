@@ -50,6 +50,15 @@
 
 </div>
 
+> [!WARNING]
+> **Copies of this app are going around.** Renamed builds of Dota 2 Mod Manager are handed out
+> and sold as other people's launchers, with no source code and no credit. The real one is free,
+> has no paid version and never asks for your Steam login. Do not trust a launcher that shows no
+> source code, names nobody it is built on, wants a subscription or a payment, or makes you sign
+> in. Get it only from [dota2modmanager.com](https://dota2modmanager.com) or this repository's
+> [releases](https://github.com/dota2modmanager/dota2-mod-manager/releases).
+> [How to tell the real one](https://dota2modmanager.com/docs/copies/).
+
 > [!NOTE]
 > Not affiliated with Valve. Every mod here is client-side: nobody else sees them, and no other
 > player's game is touched. Safe mode is on by default and keeps the app out of Dota's own files
