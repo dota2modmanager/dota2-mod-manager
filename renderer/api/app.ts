@@ -33,8 +33,8 @@ export interface StoredSettings {
   gameStamp?: unknown;
   /** the pumpkin in the title bar has come out (ui/pumpkin.ts) */
   pumpkin?: boolean;
-  /** the ninth theme is open (ui/rainbow-lock.ts) */
-  rainbow?: boolean;
+  /** the ninth theme is open (ui/secret-lock.ts) */
+  secret?: boolean;
 }
 
 /** What main reports while it works, for the bar over the status bar (shell/progress.ts): bytes

@@ -100,3 +100,15 @@
   30% { transform: scale(1.4) rotate(-10deg); }
   100% { transform: scale(1); }
 }
+
+/* lit for Halloween: no rainbow, a candle burning hot inside and a rim of fire and blood */
+.pk-box.lit.halloween {
+  background-image: linear-gradient(var(--surface-solid), var(--surface-solid)), linear-gradient(180deg, #ffa24a, #c4161c);
+}
+.pk-box.lit.halloween .pk-face path { animation: none; fill: #ffe08a; }
+.pk-box.lit.halloween .pk-face { animation: pkFlicker 1.4s linear infinite; }
+.pk-box.lit.halloween .pk-big { animation: pkHaunt 2.4s ease-in-out infinite; }
+@keyframes pkHaunt {
+  0%, 100% { filter: drop-shadow(0 0 22px rgb(255 120 30 / 0.7)); }
+  50% { filter: drop-shadow(0 0 30px rgb(200 20 30 / 0.7)); }
+}

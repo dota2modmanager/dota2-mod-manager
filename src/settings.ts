@@ -34,8 +34,8 @@ export interface StoredSettings {
   gameStamp?: string | null;
   /** the pumpkin in the title bar has come out (renderer/ui/pumpkin.ts) */
   pumpkin: boolean;
-  /** the ninth theme is open (renderer/ui/rainbow-lock.ts) */
-  rainbow: boolean;
+  /** the ninth theme is open (renderer/ui/secret-lock.ts) */
+  secret: boolean;
 }
 
 const DEFAULTS: StoredSettings = {
@@ -59,7 +59,7 @@ const DEFAULTS: StoredSettings = {
   theme: 'ursa',
   // the title bar's pumpkin, and the ninth theme it opens (renderer/ui/pumpkin.ts)
   pumpkin: false,
-  rainbow: false,
+  secret: false,
   // catalog mods the user starred: "<categoryId>|<mod name>" keys
   favorites: [],
   // sizes and folded state of the title bar, status bar and category rail

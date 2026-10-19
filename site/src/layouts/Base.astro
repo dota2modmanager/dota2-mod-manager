@@ -15,7 +15,7 @@ import { join } from 'node:path';
 import { langFromUrl, useTranslations, pathIn, type Lang } from '../i18n/ui';
 import { ogPath } from '../lib/og';
 import { SITE_ROOT } from '../lib/paths';
-import { LANG_OFFER } from '../lib/inline-scripts';
+import { LANG_OFFER, EARLY_LOOK } from '../lib/inline-scripts';
 import Backdrop from '../components/Backdrop.astro';
 import Icon from '../components/Icon.astro';
 import { heroCopy } from '../i18n/heroes';
@@ -117,9 +117,9 @@ const searchWords = {
     <link rel="apple-touch-icon" href="/icon-180.png" />
     <meta name="robots" content={lost ? 'noindex' : 'max-image-preview:large'} />
     <meta name="theme-color" content="#141218" />
-    {/* The rainbow somebody earned in the hunt follows them from page to page, and is put on
-        before the first paint so the page does not flash purple first (Hunt.astro). */}
-    <script is:inline>try{if(localStorage.getItem('mm-rainbow')==='1')document.documentElement.classList.add('rainbow')}catch(e){}</script>
+    {/* The reward somebody earned in the hunt follows them from page to page, in today's look,
+        and is put on before the first paint so the page does not flash purple first (Hunt.astro). */}
+    <script is:inline set:html={EARLY_LOOK} />
     <slot name="head" />
   </head>
   <body>
@@ -256,7 +256,7 @@ const searchWords = {
             <a href={pathIn(lang, '/code-signing/')}>{t('foot.codesigning')}</a>
           </p>
           <p class="foot-rainbow" hidden>
-            <button class="clear-btn" type="button" id="rainbowSwitch" data-on={t('foot.rainbowOn')} data-off={t('foot.rainbowOff')}></button>
+            <button class="clear-btn" type="button" id="rainbowSwitch" data-on={t('foot.rainbowOn')} data-off={t('foot.rainbowOff')} data-hon={t('foot.halloweenOn')} data-hoff={t('foot.halloweenOff')}></button>
           </p>
         </div>
       </div>
@@ -284,6 +284,9 @@ const searchWords = {
 </script>
 
 <script>
+  import { wearing, wear, lookNow } from '../scripts/look';
+  import { mountHalloween } from '../scripts/halloween';
+
   // The menu on a phone: one button, Escape closes it, and so does following a link in it.
   const btn = document.querySelector<HTMLButtonElement>('.menu-btn');
   const menu = document.getElementById('menu');
@@ -329,23 +332,29 @@ const searchWords = {
     }
   }
 
-  // The rainbow's switch, shown to somebody who has earned it (Hunt.astro sets the flag).
+  // The reward's switch, shown to somebody who has earned it (Hunt.astro sets the flag), in the
+  // words of today's look (scripts/look.ts): the rainbow, or the event that is on.
   const sw = document.getElementById('rainbowSwitch') as HTMLButtonElement | null;
   const read = () => { try { return localStorage.getItem('mm-rainbow'); } catch { return null; } };
   if (sw) {
     const paint = () => {
-      const on = document.documentElement.classList.contains('rainbow');
-      sw.textContent = on ? sw.dataset.on! : sw.dataset.off!;
+      const halloween = lookNow() === 'halloween';
+      sw.textContent = wearing()
+        ? (halloween ? sw.dataset.hon! : sw.dataset.on!)
+        : (halloween ? sw.dataset.hoff! : sw.dataset.off!);
       sw.parentElement!.hidden = false;
     };
     if (read() !== null) paint();
     sw.addEventListener('click', () => {
-      const on = !document.documentElement.classList.contains('rainbow');
-      document.documentElement.classList.toggle('rainbow', on);
+      const on = !wearing();
       try { localStorage.setItem('mm-rainbow', on ? '1' : '0'); } catch { /* private mode */ }
+      wear(on);
       paint();
     });
     // earned on this very page: the switch has to appear with its words, not empty until a reload
     document.addEventListener('mm-rainbow', paint);
   }
+
+  // what an event's look adds to the page beyond its colours: Halloween's webs and spiders
+  mountHalloween();
 </script>

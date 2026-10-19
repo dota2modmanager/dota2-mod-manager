@@ -1,16 +1,19 @@
 /**
  * The pumpkin in the title bar (renderer/ui/pumpkin.ts), pressed the way a hand presses it: it is
  * not there until the mascot has worn all eight heroes, a wrong key leaves it shut, and the key
- * the site gives (site/src/scripts/chase.ts) opens the ninth theme, which then moves on to the
- * next hero by itself. Everything is put back at the end, so the scenarios after this one see the
- * window the way it opens.
+ * the site gives (site/src/scripts/chase.ts) opens the ninth theme, in today's look
+ * (renderer/ui/season.ts): Halloween's dressing while it is on, else a rainbow that moves on to
+ * the next hero by itself. Everything is put back at the end, so the scenarios after this one see
+ * the window the way it opens.
  */
 const { lit } = require('../driver');
-const { theKey } = require('../../../site/src/scripts/chase.ts');
+const { theKey } = require('../../../site/src/scripts/key.ts');
+const { lookOn } = require('../../../renderer/ui/season.ts');
 
 module.exports = async function pumpkin(sim) {
-  const was = await sim.js('({ theme: document.documentElement.dataset.theme, rainbow: !!window.state?.settings?.rainbow })');
-  await sim.js(`(async () => { await window.api.settings.set('pumpkin', false); await window.api.settings.set('rainbow', false); })()`);
+  const look = lookOn(new Date());
+  const was = await sim.js('window.api.settings.get()');
+  await sim.js(`(async () => { await window.api.settings.set('pumpkin', false); await window.api.settings.set('secret', false); })()`);
   sim.check('no pumpkin before the round', !(await sim.js('!!document.querySelector(".tb-pumpkin")')));
 
   for (let i = 0; i < 8; i++) {
@@ -34,7 +37,7 @@ module.exports = async function pumpkin(sim) {
   await sim.key('Enter');
   await sim.settle(700);
   const wrong = await sim.js(`({ error: document.querySelector('.pk-error').textContent, theme: document.documentElement.dataset.theme, lit: document.querySelector('.pk-box').classList.contains('lit') })`);
-  sim.check('a wrong key is turned away, with a reason on screen', !!wrong.error && !wrong.lit && wrong.theme !== 'rainbow', JSON.stringify(wrong));
+  sim.check('a wrong key is turned away, with a reason on screen', !!wrong.error && !wrong.lit && wrong.theme !== look, JSON.stringify(wrong));
   await sim.shot('pumpkin-wrong');
 
   // the site's key, typed the lazy way: lower case, spaces for dashes
@@ -42,34 +45,44 @@ module.exports = async function pumpkin(sim) {
   await sim.click('.pk-input');
   await sim.type(theKey().toLowerCase().replaceAll('-', ' '));
   await sim.key('Enter');
-  await sim.until(`document.documentElement.dataset.theme === 'rainbow'`, 3000);
-  const open = await sim.js(`({ theme: document.documentElement.dataset.theme, hue: document.documentElement.dataset.hue, lit: !!document.querySelector('.pk-box.lit') })`);
-  sim.check('the key opens it, and the window puts the rainbow on', open.theme === 'rainbow' && !!open.hue && open.lit, JSON.stringify(open));
+  await sim.until(`document.documentElement.dataset.theme === ${lit(look)}`, 3000);
+  const open = await sim.js(`({ theme: document.documentElement.dataset.theme, hue: document.documentElement.dataset.hue, lit: !!document.querySelector('.pk-box.lit'), dressed: !!document.querySelector('.hwa') })`);
+  sim.check(`the key opens it, and the window puts today's look on (${look})`, open.theme === look && open.lit && (look === 'halloween' ? open.dressed : !!open.hue), JSON.stringify(open));
   await sim.settle(900);
   await sim.shot('pumpkin-lit');
   await sim.click('.pk-box [data-c="ok"]');
   await sim.until(`!document.querySelector('.pk-overlay')`, 3000);
 
   const saved = await sim.js('window.api.settings.get()');
-  sim.check('the rainbow and the pumpkin are kept for next time', saved.rainbow === true && saved.pumpkin === true && saved.theme === 'rainbow', JSON.stringify({ rainbow: saved.rainbow, pumpkin: saved.pumpkin, theme: saved.theme }));
+  sim.check('the ninth theme and the pumpkin are kept for next time', saved.secret === true && saved.pumpkin === true && saved.theme === 'secret', JSON.stringify({ secret: saved.secret, pumpkin: saved.pumpkin, theme: saved.theme }));
 
-  // it does not hold one hero: within a round it has moved on
-  const first = open.hue;
-  await sim.until(`document.documentElement.dataset.hue !== ${lit(first)}`, 9000);
-  const later = await sim.js('document.documentElement.dataset.hue');
-  sim.check('the rainbow moves on to the next hero by itself', later !== first, `${first} -> ${later}`);
-  await sim.settle(400);
-  await sim.shot('pumpkin-rainbow');
+  if (look === 'rainbow') {
+    // it does not hold one hero: within a round it has moved on
+    const first = open.hue;
+    await sim.until(`document.documentElement.dataset.hue !== ${lit(first)}`, 9000);
+    const later = await sim.js('document.documentElement.dataset.hue');
+    sim.check('the rainbow moves on to the next hero by itself', later !== first, `${first} -> ${later}`);
+  } else {
+    // the dressing sits under the title bar and over the status bar, and catches no click
+    const hw = await sim.js(`(() => {
+      const l = document.querySelector('.hwa');
+      const top = document.getElementById('titlebar').getBoundingClientRect().bottom;
+      return { top: parseFloat(l.style.getPropertyValue('--top')), bar: top, events: getComputedStyle(l).pointerEvents, drips: l.querySelectorAll('.hwa-blood i').length };
+    })()`);
+    sim.check('the Halloween dressing hangs from the title bar and lets clicks through', Math.abs(hw.top - hw.bar) < 2 && hw.events === 'none' && hw.drips > 0, JSON.stringify(hw));
+  }
+  await sim.settle(2500);
+  await sim.shot(`pumpkin-${look}`);
 
   // and the mascot's round now has nine: one more click from the rainbow lands on the first hero
   await sim.click('#themeMascot');
-  await sim.until(`document.documentElement.dataset.theme !== 'rainbow'`, 3000);
-  sim.check('the mascot goes on from the rainbow to the first hero', (await sim.js('document.documentElement.dataset.theme')) === 'ursa');
+  await sim.until(`document.documentElement.dataset.theme !== ${lit(look)}`, 3000);
+  sim.check('the mascot goes on from the ninth theme to the first hero, and the dressing comes off', (await sim.js(`document.documentElement.dataset.theme === 'ursa' && !document.querySelector('.hwa')`)) === true);
 
   // put back, and start the window again the way it opens
   await sim.js(`(async () => {
-    await window.api.settings.set('pumpkin', false);
-    await window.api.settings.set('rainbow', ${was.rainbow});
+    await window.api.settings.set('pumpkin', ${!!was.pumpkin});
+    await window.api.settings.set('secret', ${!!was.secret});
     await window.api.settings.set('theme', ${lit(was.theme || 'ursa')});
     location.reload();
   })()`);

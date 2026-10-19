@@ -1,12 +1,12 @@
 /* The site and the window hold the two halves of one thing: the site hands out a key
- * (site/src/scripts/chase.ts) and the window keeps a lock (renderer/ui/rainbow-lock.ts). They are
+ * (site/src/scripts/key.ts) and the window keeps a lock (renderer/ui/secret-lock.ts). They are
  * written apart, in two builds, so this is the one place that says they still fit. The key is
  * taken from the site's own code rather than written here.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { theKey } from '../site/src/scripts/chase.ts';
-import { opens, readings } from '../renderer/ui/rainbow-lock.ts';
+import { theKey } from '../site/src/scripts/key.ts';
+import { opens, readings } from '../renderer/ui/secret-lock.ts';
 
 const RU = 'йцукенгшщзфывапролдячсмить';
 const EN = 'qwertyuiopasdfghjklzxcvbnm';

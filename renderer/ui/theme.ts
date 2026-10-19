@@ -8,22 +8,27 @@
  * fetch them the same way as every other picture in the app, so the first switch after a
  * fresh install needs the network and everything after it comes out of the cache.
  *
- * A ninth, 'rainbow', joins the round once ui/rainbow-lock.ts has been opened (settings
- * `rainbow`). It wears all eight in turn: every few seconds the mascot spins to the next hero and
- * the accent goes with it, the same spin the eight use, so it reads as the window that cannot
- * pick one rather than as a flicker.
+ * A ninth, 'secret', joins the round once ui/secret-lock.ts has been opened (settings `secret`).
+ * What it wears follows the calendar (ui/season.ts): an event's own look while one is on, with
+ * its dressing (ui/halloween.ts), and the rainbow the rest of the year. The rainbow wears all
+ * eight in turn: every few seconds the mascot spins to the next hero and the accent goes with it,
+ * the same spin the eight use, so it reads as the window that cannot pick one, not as a flicker.
  */
 import { state } from '../core/store.ts';
 import { RAW_BASE } from '../core/constants.ts';
 import { tokenMs } from '../core/css-time.ts';
+import { lookOn } from './season.ts';
+import { dressHalloween } from './halloween.ts';
 
 const HEROES = ['ursa', 'brew', 'fura', 'storm', 'invoker', 'meepo', 'bh', 'axe'];
-const RAINBOW = 'rainbow';
+const SECRET = 'secret';
 /** how long the rainbow wears each hero */
 const HUE_MS = 6000;
 
-const unlocked = () => state.settings?.rainbow === true;
-const themes = () => (unlocked() ? [...HEROES, RAINBOW] : HEROES);
+const unlocked = () => state.settings?.secret === true;
+const themes = () => (unlocked() ? [...HEROES, SECRET] : HEROES);
+/** the theme the window wears by name: the hero's, or 'secret' whatever look that has today */
+let current = HEROES[0];
 
 function mascotUrl(theme: string): string {
   const cfg = state.catalog?.constants?.GIF_CONFIG;
@@ -56,18 +61,21 @@ function startHues(): void {
   }, HUE_MS);
 }
 
-/** Put a theme on the window. Unknown names, and a rainbow not yet earned, fall back to the one the app ships on. */
+/** Put a theme on the window. Unknown names, and a secret not yet earned, fall back to the one the app ships on. */
 function applyTheme(name: unknown): string {
   const theme = typeof name === 'string' && themes().includes(name) ? name : HEROES[0];
-  document.documentElement.dataset.theme = theme;
-  if (theme === RAINBOW) startHues();
-  else { stopHues(); setMascot(theme); }
+  current = theme;
+  const look = theme === SECRET ? lookOn(new Date()) : null;
+  document.documentElement.dataset.theme = look ?? theme;
+  if (look === 'rainbow') startHues();
+  else { stopHues(); setMascot(look ? HEROES[0] : theme); }
+  dressHalloween(look === 'halloween');
   return theme;
 }
 
-/** Wear the rainbow now: the pumpkin calls this the moment its lock opens. */
-export function wearRainbow(): void {
-  window.api.settings.set('theme', applyTheme(RAINBOW));
+/** Wear the secret theme now: the pumpkin calls this the moment its lock opens. */
+export function wearSecret(): void {
+  window.api.settings.set('theme', applyTheme(SECRET));
 }
 
 /* The spin has to end on a clock, not only on its own event.
@@ -108,12 +116,11 @@ export function initTheme(): void {
   const mascot = document.querySelector<HTMLElement>('#themeMascot');
   if (!mascot) return;
   // the heroes worn by clicking, this session: once all eight have been, the title bar says so
-  const worn = new Set([document.documentElement.dataset.theme]);
+  const worn = new Set([current]);
   mascot.addEventListener('click', () => {
     if (mascot.classList.contains('spinning')) return;
     const list = themes();
-    const now = document.documentElement.dataset.theme || HEROES[0];
-    const next = list[(list.indexOf(now) + 1) % list.length];
+    const next = list[(list.indexOf(current) + 1) % list.length];
     spin(() => {
       applyTheme(next);
       window.api.settings.set('theme', next);

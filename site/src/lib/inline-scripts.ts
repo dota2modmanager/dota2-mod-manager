@@ -32,3 +32,17 @@ export const LANG_OFFER = [
   "b.querySelector('[data-lang-stay]').addEventListener('click',function(){keep(me);b.hidden=true})",
   '})();',
 ].join('');
+
+/**
+ * The hunt's reward, put on before the first paint so the page does not flash its plain colours
+ * first (Hunt.astro sets mm-rainbow when it is earned). Which look it wears is scripts/look.ts
+ * lookNow written small: `mm-look` if it names one, else the event of the day, else the rainbow.
+ * It goes in the head ahead of the policy's <meta>, so it needs no hash; test/look.test.mjs runs
+ * it against look.ts on every day of a year.
+ */
+export const EARLY_LOOK = [
+  "try{if(localStorage.getItem('mm-rainbow')==='1'){",
+  "var a=localStorage.getItem('mm-look'),d=new Date(),n=(d.getMonth()+1)*100+d.getDate();",
+  "var l=a==='rainbow'||a==='halloween'?a:n>=1015&&n<=1110?'halloween':'rainbow';",
+  'document.documentElement.classList.add(l)}}catch(e){}',
+].join('');

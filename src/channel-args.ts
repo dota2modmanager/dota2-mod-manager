@@ -86,7 +86,7 @@ export const WINDOW_SETTINGS: Record<string, Check> = {
   langPromptSeen: bool,
   panels: either(oneOf(null), json(64 * 1024)),
   pumpkin: bool,
-  rainbow: bool,
+  secret: bool,
   showAdult: bool,
   theme: str(40, 1),
   toolsPromptSeen: bool,

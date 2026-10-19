@@ -1,0 +1,78 @@
+/* ============ Halloween's dressing (ui/halloween.ts) ============
+   Worn with the ninth theme while the event is on; the colours are themes.css. Like the
+   pumpkin's, the colours here are the drawing's own: blood is red whatever else is going on. */
+
+.hwa {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-bar) + 5);
+  pointer-events: none;
+  --top: 46px;
+  --bottom: 30px;
+}
+
+/* blood from under the title bar */
+.hwa-blood { position: absolute; left: 0; right: 0; top: var(--top); height: 0; }
+.hwa-blood::before {
+  content: '';
+  position: absolute; left: 0; right: 0; top: -1px; height: 3px;
+  background: linear-gradient(180deg, #6e0910, #a8111a);
+  border-radius: 0 0 2px 2px;
+}
+.hwa-blood i {
+  position: absolute; left: var(--x); top: 0;
+  width: var(--w); height: var(--h);
+  border-radius: 0 0 var(--radius-full) var(--radius-full);
+  background: linear-gradient(180deg, #6e0910, #b3121a 70%, #d8323a);
+  transform-origin: 50% 0;
+  animation: hwaOoze var(--t) cubic-bezier(0.5, 0, 0.9, 0.6) var(--wait) infinite;
+}
+@keyframes hwaOoze { 0% { transform: scaleY(0.15); } 85% { transform: scaleY(1); } 100% { transform: scaleY(0.92); } }
+
+/* a spider on a thread, letting itself down and climbing back */
+.hwa-hang { position: absolute; right: 22%; top: var(--top); width: 34px; }
+.hwa-thread {
+  position: absolute; left: 50%; top: 0; width: 1px; height: 120px;
+  background: color-mix(in srgb, var(--md-on-surface) 45%, transparent);
+  transform-origin: 50% 0;
+  animation: hwaLine 16s var(--ease-standard) infinite;
+}
+.hwa-hanger {
+  position: absolute; left: 0; top: 0; width: 34px; height: 34px;
+  animation: hwaDrop 16s var(--ease-standard) infinite;
+}
+@keyframes hwaLine { 0%, 100% { transform: scaleY(0.25); } 45%, 60% { transform: scaleY(1); } }
+@keyframes hwaDrop { 0%, 100% { transform: translateY(26px); } 45%, 60% { transform: translateY(116px) rotate(6deg); } 52% { transform: translateY(112px) rotate(-6deg); } }
+
+.hwa-spider { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 2px rgb(255 150 70 / 0.8)) drop-shadow(0 0 6px rgb(255 90 30 / 0.35)); }
+.hwa-spider .ab { fill: #120c10; stroke: #3a2a33; stroke-width: 0.8; }
+.hwa-spider .hd { fill: #1a1116; }
+.hwa-spider .eye { fill: #ff2a3a; }
+.hwa-spider .leg { fill: none; stroke: #120c10; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* webs, one under the title bar on the left and one over the status bar on the right */
+.hwa-web { position: absolute; opacity: 0.4; }
+.hwa-web svg { display: block; overflow: visible; }
+.hwa-web :is(line, path) { fill: none; stroke: var(--md-on-surface); stroke-width: 0.8; }
+.hwa-web.top { left: 0; top: var(--top); transform-origin: 0 0; animation: hwaDraught 7s ease-in-out infinite alternate; }
+.hwa-web.bottom { right: 0; bottom: var(--bottom); transform-origin: 100% 100%; scale: -1 -1; animation: hwaDraught 9s ease-in-out -4s infinite alternate; }
+@keyframes hwaDraught { from { rotate: -1.5deg; } to { rotate: 2deg; } }
+
+/* now and then, one across the top of the status bar */
+.hwa-runner {
+  position: absolute; left: 0; bottom: calc(var(--bottom) - 4px); width: 30px; height: 30px;
+  animation: hwaRun 5.5s linear forwards;
+}
+.hwa-runner .hwa-spider { rotate: 90deg; }
+.hwa-runner.back { animation-name: hwaRunBack; }
+.hwa-runner.back .hwa-spider { rotate: -90deg; }
+.hwa-runner .legs.a .leg:not(.odd), .hwa-runner .legs.b .leg.odd { animation: hwaScuttle 120ms linear infinite alternate; }
+.hwa-runner .legs.a .leg.odd, .hwa-runner .legs.b .leg:not(.odd) { animation: hwaScuttle 120ms linear -60ms infinite alternate; }
+@keyframes hwaRun { from { translate: -40px 0; } to { translate: calc(100vw + 40px) 0; } }
+@keyframes hwaRunBack { from { translate: calc(100vw + 40px) 0; } to { translate: -40px 0; } }
+@keyframes hwaScuttle { from { rotate: -9deg; } to { rotate: 9deg; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hwa-blood i, .hwa-thread, .hwa-hanger, .hwa-web.top, .hwa-web.bottom { animation: none; }
+  .hwa-runner { display: none; }
+}

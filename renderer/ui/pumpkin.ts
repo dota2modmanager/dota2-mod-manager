@@ -2,42 +2,51 @@
  *
  * It is not there to begin with. It rolls in beside the mascot once the window has worn all eight
  * heroes (ui/theme.ts says so with 'mm-all-heroes'), and from then on it stays (settings
- * `pumpkin`). A click on it asks for a key; ui/rainbow-lock.ts says whether it fits, and the right
- * one adds the rainbow to the mascot's round and puts it on at once.
+ * `pumpkin`). A click on it asks for a key; ui/secret-lock.ts says whether it fits, and the right
+ * one adds the ninth theme to the mascot's round and puts it on at once, in today's look
+ * (ui/season.ts): Halloween's while it is on, the rainbow otherwise.
  *
  * Its words are its own, in the three languages the window speaks, rather than in i18n.js.
  */
 import { state } from '../core/store.ts';
-import { opens } from './rainbow-lock.ts';
-import { wearRainbow } from './theme.ts';
+import { opens } from './secret-lock.ts';
+import { wearSecret } from './theme.ts';
+import { lookOn, type Look } from './season.ts';
 
+type Lit = { litTitle: string; litText: string; again: string; wear: string };
 type Words = {
   label: string; title: string; text: string; placeholder: string; hint: string;
-  open: string; close: string; wrong: string; empty: string;
-  litTitle: string; litText: string; again: string; wear: string; done: string;
+  open: string; close: string; wrong: string; empty: string; done: string;
+  lit: Record<Look, Lit>;
 };
 
 const WORDS: Record<'ru' | 'en' | 'zh-CN', Words> = {
   ru: {
     label: 'Тыква', title: 'Тыква ждёт ключ', text: 'Она что-то прячет внутри и отдаст это тому, кто принесёт ключ.',
     placeholder: 'Ключ', hint: 'Ключ у того, кто убегает. Он прячется на сайте.',
-    open: 'Открыть', close: 'Закрыть', wrong: 'Не тот ключ. Тыква молчит.', empty: 'Сначала впиши ключ.',
-    litTitle: 'Радуга твоя', litText: 'Девятая тема теперь в кругу героев: щёлкай по маскоту, и она придёт после восьмого.',
-    again: 'Радуга уже твоя', wear: 'Надеть радугу', done: 'Ура',
+    open: 'Открыть', close: 'Закрыть', wrong: 'Не тот ключ. Тыква молчит.', empty: 'Сначала впиши ключ.', done: 'Ура',
+    lit: {
+      rainbow: { litTitle: 'Радуга твоя', litText: 'Девятая тема теперь в кругу героев: щёлкай по маскоту, и она придёт после восьмого.', again: 'Радуга уже твоя', wear: 'Надеть радугу' },
+      halloween: { litTitle: 'Хеллоуин твой', litText: 'Девятая тема теперь в кругу героев: щёлкай по маскоту, и она придёт после восьмого. Пока идёт Хеллоуин, она в паутине, а в обычные дни станет радугой.', again: 'Хеллоуин уже твой', wear: 'Надеть Хеллоуин' },
+    },
   },
   en: {
     label: 'Pumpkin', title: 'The pumpkin wants a key', text: 'Something is hidden inside, and it goes to whoever brings the key.',
     placeholder: 'Key', hint: 'The key is with the one that runs away. It hides on the site.',
-    open: 'Open', close: 'Close', wrong: 'Not that key. The pumpkin stays shut.', empty: 'Type the key first.',
-    litTitle: 'The rainbow is yours', litText: 'A ninth theme has joined the heroes: click the mascot, and it comes after the eighth.',
-    again: 'The rainbow is already yours', wear: 'Wear the rainbow', done: 'Yay',
+    open: 'Open', close: 'Close', wrong: 'Not that key. The pumpkin stays shut.', empty: 'Type the key first.', done: 'Yay',
+    lit: {
+      rainbow: { litTitle: 'The rainbow is yours', litText: 'A ninth theme has joined the heroes: click the mascot, and it comes after the eighth.', again: 'The rainbow is already yours', wear: 'Wear the rainbow' },
+      halloween: { litTitle: 'Halloween is yours', litText: 'A ninth theme has joined the heroes: click the mascot, and it comes after the eighth. While Halloween is on it wears cobwebs, and on ordinary days it turns into a rainbow.', again: 'Halloween is already yours', wear: 'Wear Halloween' },
+    },
   },
   'zh-CN': {
     label: '南瓜', title: '南瓜在等一把钥匙', text: '里面藏着东西，谁带来钥匙就归谁。',
     placeholder: '钥匙', hint: '钥匙在那个会逃跑的家伙身上。它躲在网站上。',
-    open: '打开', close: '关闭', wrong: '钥匙不对。南瓜一声不吭。', empty: '先输入钥匙。',
-    litTitle: '彩虹归你了', litText: '第九个主题加入了英雄的轮换：点击吉祥物，它会排在第八个之后。',
-    again: '彩虹已经是你的了', wear: '换上彩虹', done: '好耶',
+    open: '打开', close: '关闭', wrong: '钥匙不对。南瓜一声不吭。', empty: '先输入钥匙。', done: '好耶',
+    lit: {
+      rainbow: { litTitle: '彩虹归你了', litText: '第九个主题加入了英雄的轮换：点击吉祥物，它会排在第八个之后。', again: '彩虹已经是你的了', wear: '换上彩虹' },
+      halloween: { litTitle: '万圣节归你了', litText: '第九个主题加入了英雄的轮换：点击吉祥物，它会排在第八个之后。万圣节期间它挂满蛛网，平常日子会变成彩虹。', again: '万圣节已经是你的了', wear: '换上万圣节' },
+    },
   },
 };
 const words = (): Words => WORDS[(window.I18N_LANG as 'ru' | 'en' | 'zh-CN') ?? 'en'] ?? WORDS.en;
@@ -123,21 +132,23 @@ function keyWindow(): void {
 
   // lit: the rainbow is earned; `fresh` when it was earned this very moment
   const lit = (fresh: boolean) => {
-    box.classList.add('lit');
+    const look = lookOn(new Date());
+    const l = w.lit[look];
+    box.classList.add('lit', look);
     if (fresh) box.classList.add('burst');
-    title.textContent = fresh ? w.litTitle : w.again;
-    text.textContent = w.litText;
+    title.textContent = fresh ? l.litTitle : l.again;
+    text.textContent = l.litText;
     input.hidden = true;
     hint.hidden = true;
     // the moment it opens there is one thing to say, and it is not "close"
     cancel.hidden = fresh;
     error.textContent = '';
-    ok.textContent = fresh ? w.done : w.wear;
-    ok.onclick = (e) => { e.preventDefault(); if (!fresh) wearRainbow(); close(); };
+    ok.textContent = fresh ? w.done : l.wear;
+    ok.onclick = (e) => { e.preventDefault(); if (!fresh) wearSecret(); close(); };
     ok.focus();
   };
 
-  if (state.settings?.rainbow === true) { lit(false); return; }
+  if (state.settings?.secret === true) { lit(false); return; }
 
   title.textContent = w.title;
   text.textContent = w.text;
@@ -147,9 +158,9 @@ function keyWindow(): void {
     e.preventDefault();
     if (!input.value.trim()) { error.textContent = w.empty; input.focus(); return; }
     if (await opens(input.value)) {
-      window.api.settings.set('rainbow', true);
-      if (state.settings) state.settings.rainbow = true;
-      wearRainbow();
+      window.api.settings.set('secret', true);
+      if (state.settings) state.settings.secret = true;
+      wearSecret();
       lit(true);
       return;
     }

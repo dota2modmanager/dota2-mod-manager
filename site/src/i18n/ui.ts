@@ -49,6 +49,8 @@ export const ui = {
     'foot.colProject': 'Project',
     'foot.rainbowOn': 'Rainbow is on. Turn it off',
     'foot.rainbowOff': 'Turn the rainbow back on',
+    'foot.halloweenOn': 'Halloween is on. Turn it off',
+    'foot.halloweenOff': 'Turn Halloween back on',
 
     'hero.title': 'Dota 2 mods, installed properly',
     'hero.lead': 'A free desktop app that installs skins, terrains, announcers and music from the community catalog, unlocks the cosmetics your account already owns, and lets you share a whole setup as one link.',
@@ -117,6 +119,8 @@ export const ui = {
     'foot.colProject': 'Проект',
     'foot.rainbowOn': 'Радуга включена. Выключить',
     'foot.rainbowOff': 'Включить радугу обратно',
+    'foot.halloweenOn': 'Хеллоуин включён. Выключить',
+    'foot.halloweenOff': 'Включить Хеллоуин обратно',
 
     'hero.title': 'Моды для Dota 2, поставленные по-человечески',
     'hero.lead': 'Бесплатная программа: ставит скины, ландшафты, комментаторов и музыку из общего каталога, открывает косметику, которая у тебя и так есть, и позволяет поделиться всей сборкой одной ссылкой.',

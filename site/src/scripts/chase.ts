@@ -17,31 +17,30 @@
  * is never touched except to stop it scrolling while the chase is on.
  */
 
+import { spook } from './spook-sound';
+import { theKey } from './key';
+
 export interface ChaseHero { id: string; primary: string; accent: string }
 
 export interface ChaseWords {
-  title: string; slowing: string; spent: string; giveUp: string;
+  title: string; slowing: string; spent: string; giveUp: string; sound: string;
   caught: string; keyIs: string; hint: string; copy: string; copied: string; again: string; close: string;
 }
 
 /** The words of the chase and of what it gives, in the page's language. */
 export const CHASE_WORDS: Record<'en' | 'ru', ChaseWords> = {
   en: {
-    title: 'CATCH ME', slowing: 'It is slowing down', spent: 'Out of breath. Grab it!', giveUp: 'Esc to give up',
+    title: 'CATCH ME', slowing: 'It is slowing down', spent: 'Out of breath. Grab it!', giveUp: 'Esc to give up', sound: 'M for sound',
     caught: 'Caught', keyIs: 'Your key', hint: 'It opens the pumpkin in the app. Eight heroes know the way to it.',
     copy: 'Copy', copied: 'Copied', again: 'Show the key', close: 'Close',
   },
   ru: {
-    title: 'ПОЙМАЙ МЕНЯ', slowing: 'Он сбавляет ход', spent: 'Выдохся. Лови!', giveUp: 'Esc - сдаться',
+    title: 'ПОЙМАЙ МЕНЯ', slowing: 'Он сбавляет ход', spent: 'Выдохся. Лови!', giveUp: 'Esc - сдаться', sound: 'M - звук',
     caught: 'Пойман', keyIs: 'Твой ключ', hint: 'Он открывает тыкву в приложении. Дорогу к ней знают восемь героев.',
     copy: 'Скопировать', copied: 'Скопировано', again: 'Показать ключ', close: 'Закрыть',
   },
 };
 
-// The key, kept out of plain sight in the bundle. It is the same for everybody: it is a prize
-// to show off, and passing it on is part of the fun.
-const SEAL = [14, 8, 19, 25, 17, 119, 21, 8, 119, 18, 15, 31];
-export const theKey = () => String.fromCharCode(...SEAL.map((n) => n ^ 0x5a));
 
 // ---- tuning ---------------------------------------------------------------------------
 const SIZE = 64;           // the runner, in CSS pixels
@@ -94,7 +93,10 @@ export function chase(opts: {
       title.appendChild(line);
     }
     const sub = el('p', 'chase-sub');
-    const esc = el('p', 'chase-esc', words.giveUp);
+    const esc = el('p', 'chase-esc', `${words.giveUp}    ${words.sound}`);
+    // started inside the click that began the chase, which is what lets a page make a sound
+    const sound = spook();
+    let dodges = 0;
     const flash = el('div', 'chase-flash');
     const fx = el('canvas', 'chase-fx');
     const runner = el('div', 'chase-runner');
@@ -175,7 +177,9 @@ export function chase(opts: {
         setTimeout(() => { cancelAnimationFrame(raf); root.remove(); }, 900);
         resolve(how);
       };
-      if (how === 'gave-up') { leave(); return; }
+      if (how === 'gave-up') { sound.stop(); leave(); return; }
+      sound.caught();
+      setTimeout(() => sound.stop(), 3600);
       // The catch: a held breath, a flash, eight bursts in the eight palettes, and the line of
       // type falls apart. Then the lights come back on, in every colour at once.
       root.classList.add('caught');
@@ -190,7 +194,10 @@ export function chase(opts: {
       setTimeout(leave, 1250);
     };
 
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') end('gave-up'); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') end('gave-up');
+      if (e.key === 'm' || e.key === 'M' || e.key === 'ь' || e.key === 'Ь') sound.toggle();
+    };
 
     const onDown = (e: PointerEvent) => {
       if (over) return;
@@ -205,6 +212,8 @@ export function chase(opts: {
         vx += (dx / n) * k; vy += (dy / n) * k;
         breath = Math.max(0, breath - LUNGE);
         jolt();
+        sound.whoosh();
+        if (++dodges % 3 === 0) sound.giggle();
       }
     };
 
@@ -272,8 +281,14 @@ export function chase(opts: {
           root.classList.toggle('spent', stage === 2);
         }
         // the heart: lub-dub, fast while it is fresh, slow as it gives out
+        const was = beat % 1;
         beat += dt * (55 + 95 * breath) / 60;
         const ph = beat % 1;
+        // the heart you hear is the one you see: a thump on each of the two peaks
+        if ((was < 0.06 && ph >= 0.06) || (ph < was && ph >= 0.06)) sound.heart(0.5 + 0.5 * breath);
+        else if (was < 0.24 && ph >= 0.24) sound.heart(0.3 + 0.3 * breath);
+        sound.feet(Math.hypot(vx, vy));
+        if ((t * 2 | 0) !== ((t - dt) * 2 | 0)) sound.tension(breath);
         const lub = Math.exp(-(((ph - 0.06) / 0.05) ** 2)) + 0.6 * Math.exp(-(((ph - 0.24) / 0.05) ** 2));
         pulse.style.opacity = (0.3 + 0.7 * lub * (0.35 + 0.65 * breath)).toFixed(3);
 

@@ -1326,6 +1326,113 @@ html.rainbow .topbar { border-bottom-color: color-mix(in srgb, var(--primary) 50
   html.rainbow :is(h1, h2, .wordmark) { background: none; color: CanvasText; }
 }
 
+/* ---------- Halloween: the hunt's reward while the event is on (scripts/look.ts) ----------
+ * Pumpkin orange where the page had lavender, headings lit from below like a face over a
+ * candle, and the dressing scripts/halloween.ts builds: webs, blood, spiders, lanterns. */
+html.halloween { --primary: #ff8a2b; }
+html.halloween :is(h1, h2, .wordmark) {
+  background: linear-gradient(180deg, #ffb35c 0%, #ff7a1a 55%, #c4161c 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+html.halloween .wordmark { opacity: 0.2; }
+html.halloween :is(.btn:not(.ghost), .badge b, .show-tab[aria-selected='true']) {
+  background: linear-gradient(180deg, #ffa24a, #ff7a1a);
+  color: #2a0d00;
+}
+html.halloween :is(.card, .tile, .mcard, .htile, .panel, .final-box, .trust-grid, .compare-wrap, .link-card) {
+  border-color: color-mix(in srgb, #ff7a1a 32%, transparent);
+}
+html.halloween .topbar { border-bottom-color: #6e0a10; }
+html.halloween .hunt-key {
+  background-image: linear-gradient(var(--surface-container), var(--surface-container)), linear-gradient(180deg, #ffa24a, #c4161c);
+}
+html.halloween .hunt-key-code { background-image: linear-gradient(90deg, #ffb35c, #ff7a1a, #e0323a, #ff7a1a, #ffb35c); }
+@media (forced-colors: active) {
+  html.halloween :is(h1, h2, .wordmark) { background: none; color: CanvasText; }
+}
+
+/* the webs: drawn from their corner, and stirring around it as if in a draught */
+.hw-web { position: fixed; z-index: 39; pointer-events: none; opacity: 0.5; }
+.hw-web svg { display: block; overflow: visible; }
+.hw-web :is(line, path) { fill: none; stroke: #e8e2f0; stroke-width: 0.9; stroke-opacity: 0.55; }
+.hw-web.tl { left: 0; top: var(--head); transform-origin: 0 0; }
+.hw-web.tr { right: 0; top: var(--head); transform-origin: 100% 0; scale: -1 1; }
+.hw-web.bl { left: 0; bottom: 0; transform-origin: 0 100%; scale: 1 -1; }
+.hw-web.br { right: 0; bottom: 0; transform-origin: 100% 100%; scale: -1 -1; }
+.hw-web.tl, .hw-web.br { animation: draught 6.5s ease-in-out infinite alternate; }
+.hw-web.tr, .hw-web.bl { animation: draught 8s ease-in-out -3s infinite alternate; }
+@keyframes draught { from { rotate: -1.6deg; } to { rotate: 2.2deg; } }
+
+/* blood, oozing from the header's lower edge and letting go a drop now and then */
+.hw-blood { position: absolute; left: 0; right: 0; top: 100%; height: 0; pointer-events: none; }
+.hw-blood::before {
+  content: ''; position: absolute; left: 0; right: 0; top: -1px; height: 4px;
+  background: linear-gradient(180deg, #7a0910, #b3121a);
+  border-radius: 0 0 3px 3px;
+}
+.hw-blood i {
+  position: absolute; left: var(--x); top: 0;
+  width: var(--w); height: var(--h);
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(180deg, #7a0910, #c4161c 70%, #e0323a);
+  transform-origin: 50% 0;
+  animation: ooze var(--t) cubic-bezier(0.5, 0, 0.9, 0.6) var(--wait) infinite;
+}
+.hw-blood i::after {
+  content: ''; position: absolute; left: 50%; bottom: -2px;
+  width: var(--w); height: calc(var(--w) * 1.25); translate: -50% 0;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: #c4161c;
+  animation: let-go var(--t) cubic-bezier(0.55, 0, 1, 0.45) var(--wait) infinite;
+}
+@keyframes ooze { 0% { transform: scaleY(0.12); } 82% { transform: scaleY(1); } 100% { transform: scaleY(0.9); } }
+@keyframes let-go {
+  0%, 80% { opacity: 1; transform: translateY(0); }
+  97% { opacity: 1; transform: translateY(70vh); }
+  98%, 100% { opacity: 0; transform: translateY(70vh); }
+}
+
+/* spiders */
+.hw-spider { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 2px rgb(255 150 70 / 0.8)) drop-shadow(0 0 6px rgb(255 90 30 / 0.35)); }
+.hw-spider .ab { fill: #120c10; stroke: #3a2a33; stroke-width: 0.8; }
+.hw-spider .hd { fill: #1a1116; }
+.hw-spider .eye { fill: #ff2a3a; }
+.hw-spider .leg { fill: none; stroke: #120c10; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.hw-thread { position: fixed; left: 0; top: 0; z-index: 38; width: 1px; height: 1px; background: rgb(230 226 240 / 0.45); transform-origin: 0 0; pointer-events: none; }
+.hw-hanger { position: fixed; left: 0; top: 0; z-index: 38; width: 42px; height: 42px; transform-origin: 50% 0; pointer-events: none; }
+.hw-woven { position: fixed; left: 0; top: 0; z-index: 37; pointer-events: none; opacity: 0.6; }
+.hw-woven[hidden] { display: none; }
+.hw-woven :is(line, path) { fill: none; stroke: #e8e2f0; stroke-width: 0.8; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.hw-runner { position: fixed; left: 0; top: 0; z-index: 45; width: 44px; height: 44px; pointer-events: none; }
+.hw-runner .legs.a .leg:not(.odd), .hw-runner .legs.b .leg.odd { animation: scuttle 120ms linear infinite alternate; }
+.hw-runner .legs.a .leg.odd, .hw-runner .legs.b .leg:not(.odd) { animation: scuttle 120ms linear -60ms infinite alternate; }
+@keyframes scuttle { from { rotate: -9deg; } to { rotate: 9deg; } }
+
+/* the lanterns over the footer */
+.hw-garland { position: absolute; left: 0; right: 0; top: 0; height: 70px; pointer-events: none; }
+.hw-string { position: absolute; inset: 0 0 auto; width: 100%; height: 54px; }
+.hw-string path { fill: none; stroke: #4a3a42; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.hw-garland span {
+  position: absolute; left: var(--x); top: 18px; width: 30px; height: 30px; translate: -50% 0;
+  transform-origin: 50% 0; animation: sway 3.6s ease-in-out calc(var(--i) * -0.45s) infinite alternate;
+}
+.hw-garland span:nth-of-type(even) { top: 6px; }
+@keyframes sway { from { rotate: -6deg; } to { rotate: 6deg; } }
+.hw-lantern { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 8px rgb(255 140 40 / 0.55)); }
+.hw-lantern .pk-stem { fill: #6b8f3e; }
+.hw-lantern .pk-body { fill: #ff8a2b; }
+.hw-lantern .pk-face path { fill: #ffd36e; }
+.hw-lantern .pk-face { animation: candle 2.6s linear calc(var(--i) * -0.7s) infinite; }
+@keyframes candle {
+  0%, 100% { opacity: 1; } 7% { opacity: 0.68; } 10% { opacity: 1; } 43% { opacity: 0.85; }
+  47% { opacity: 1; } 66% { opacity: 0.6; } 70% { opacity: 0.95; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hw-web, .hw-garland span, .hw-lantern .pk-face, .hw-blood i, .hw-blood i::after { animation: none; }
+  .hw-blood i::after { display: none; }
+}
+
 /* ---------- a touch screen is spared ----------
  *
  * Nothing here runs by itself on a phone. Every effect below is light that turns forever or a
@@ -1335,5 +1442,7 @@ html.rainbow .topbar { border-bottom-color: color-mix(in srgb, var(--primary) 50
   .wall-moving .wall-row { animation: none; }
   html.rainbow { animation: none; --primary: #fac898; }
   html.rainbow :is(h1, h2, .wordmark, .btn:not(.ghost), .badge b, .show-tab[aria-selected='true']) { animation: none; }
+  .hw-web, .hw-garland span, .hw-lantern .pk-face, .hw-blood i, .hw-blood i::after { animation: none; }
+  .hw-blood i::after { display: none; }
   .topbar { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--surface) 96%, transparent); }
 }

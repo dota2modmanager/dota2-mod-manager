@@ -231,7 +231,7 @@ const { complete, shared, close, hint, last = false } = Astro.props;
   :global(.chase.spent .chase-sub) { color: #fff; animation: urge 700ms ease-in-out infinite alternate; }
   @keyframes urge { to { opacity: 0.45; transform: scale(1.06); } }
   :global(.chase-esc) {
-    position: absolute; left: 22px; bottom: 18px; margin: 0;
+    position: absolute; left: 22px; bottom: 18px; margin: 0; white-space: pre;
     font-size: 13px; color: rgb(255 255 255 / 0.4); pointer-events: none;
   }
   :global(.chase-fx) { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -294,6 +294,7 @@ const { complete, shared, close, hint, last = false } = Astro.props;
 
 <script>
   import { chase, showKey, CHASE_WORDS } from '../scripts/chase';
+  import { wear } from '../scripts/look';
 
   const host = document.getElementById('hunt');
   const score = document.getElementById('hunt-score');
@@ -497,12 +498,13 @@ const { complete, shared, close, hint, last = false } = Astro.props;
     };
 
     const finish = (prize = false) => {
-      // The whole site turns, not just the title: every colour on it is drawn from --primary,
-      // and site.css cycles it through all eight palettes. It stays on from page to page
-      // (Base.astro reads the flag before the first paint) until the footer's switch.
+      // The whole site turns, not just the title: every colour on it is drawn from --primary, and
+      // today's look (scripts/look.ts) decides what it turns into: the rainbow cycling through
+      // all eight palettes, or the event that is on. It stays on from page to page (Base.astro
+      // reads the flag before the first paint) until the footer's switch.
       document.documentElement.style.removeProperty('--primary');
-      document.documentElement.classList.add('rainbow');
       try { localStorage.setItem('mm-rainbow', '1'); } catch { /* private mode: this page only */ }
+      wear(true);
       document.dispatchEvent(new Event('mm-rainbow'));
       const sw = document.getElementById('rainbowSwitch');
       if (sw?.parentElement) sw.parentElement.hidden = false;
@@ -607,11 +609,11 @@ const { complete, shared, close, hint, last = false } = Astro.props;
     let earned = false;
     try { earned = localStorage.getItem('mm-rainbow') !== null; } catch { /* private mode */ }
     if (location.hash === '#all-eight' && !earned) {
-      document.documentElement.classList.add('rainbow');
+      wear(true);
       say(doneText.dataset.shared!);
       history.replaceState(null, '', location.pathname);
       setTimeout(() => {
-        document.documentElement.classList.remove('rainbow');
+        wear(false);
         hideDone();
         if (place()) paint();
       }, 4200);

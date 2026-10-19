@@ -199,3 +199,25 @@
   animation: rainbowPan 9s linear infinite;
 }
 @keyframes rainbowPan { to { background-position: 200% 0; } }
+
+/* Halloween: what the ninth theme wears while the event is on (ui/season.ts). A night with a
+   violet cast for the floor, pumpkin orange for the accent; ui/halloween.ts adds the webs,
+   the blood and the spiders. */
+[data-theme='halloween'] {
+  --md-primary: #ff9a3c;
+  --md-accent: #ff6a00;
+  --md-on-primary: #2a0d00;
+  --md-primary-container: #6b2a00;
+  --md-on-primary-container: #ffdcc2;
+  --md-secondary: #c9a2ff;
+  --md-surface: #100a12;
+  --md-surface-low: #170f1a;
+  --md-surface-container: #1d1421;
+  --md-surface-high: #271b2c;
+  --md-surface-highest: #322337;
+  --md-on-surface: #f1e6ea;
+  --md-on-surface-variant: #cdb9c4;
+  --md-outline: #8f7a86;
+  --md-error: #ffb4ab;
+}
+[data-theme='halloween'] .btn-primary { background-image: linear-gradient(180deg, #ffb35c, #ff7a1a); }
