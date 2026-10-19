@@ -19,7 +19,7 @@ type Words = {
   kind: string; hero: string; replaces: string; author: string; added: string; style: string;
   openApp: string; copyLink: string; copied: string; noCompress: string; appNote: string; close: string;
   tray: string; setName: string; heroPage: string; kindPage: string; mods: [string, string, string];
-  slots: Record<string, string>; heroesLabel: string; heroBase: string; catBase: string; modBase: string; modPage: string;
+  slots: Record<string, string>; heroesLabel: string; heroBase: string; catBase: string; modBase: string; modPage: string; authorBase: string; plainStyle: string;
 };
 
 const BATCH = 48;
@@ -27,7 +27,7 @@ const BATCH = 48;
 export function initBrowser(root: HTMLElement) {
   const lang = (root.dataset.lang as Lang) || 'en';
   const mode = root.dataset.mode as 'all' | 'page';
-  const context = root.dataset.context as 'all' | 'category' | 'hero';
+  const context = root.dataset.context as 'all' | 'category' | 'hero' | 'author';
   const w = JSON.parse(root.dataset.words!) as Words;
   const total = Number(root.dataset.total);
   const nf = new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US');
@@ -83,6 +83,15 @@ export function initBrowser(root: HTMLElement) {
     if (current === key) paintQuickAdd();
   };
 
+  /** Who made a mod, as a link: to their page here when they have one, else to their profile. */
+  const authorLink = (m: Mod): HTMLAnchorElement | null => {
+    if (!m.author || (!m.authorPage && !m.authorUrl)) return null;
+    const a = el('a', '', m.author);
+    if (m.authorPage) a.href = `${w.authorBase}${m.authorPage}/`;
+    else { a.href = m.authorUrl; a.rel = 'noopener nofollow'; }
+    return a;
+  };
+
   // ---- a card, built the same way ModCard.astro builds one ----
   const card = (m: Mod): HTMLLIElement => {
     const li = el('li', 'mcard');
@@ -119,20 +128,14 @@ export function initBrowser(root: HTMLElement) {
 
     const body = el('div', 'mcard-body');
     body.append(el('h2', '', m.name));
-    if (m.style) body.append(el('span', 'mcard-style', m.styles.length > 1 ? `${m.style} +${m.styles.length - 1}` : m.style));
+    if (m.styles.length) body.append(el('span', 'mcard-style', m.styles.length > 1 ? `${m.style || w.plainStyle} +${m.styles.length - 1}` : m.style));
     const meta = el('div', 'mcard-meta');
     meta.append(el('i', 'dot'), el('span', '', m.heroName ? `${m.catName} · ${m.heroName}` : m.catName));
     body.append(meta);
-    if (m.author) {
+    if (m.author && context !== 'author') {
       const by = el('div', 'mcard-meta');
       const span = el('span', '', `${w.by} `);
-      if (m.authorUrl) {
-        const a = el('a', '', m.author);
-        a.href = m.authorUrl; a.rel = 'noopener nofollow';
-        span.append(a);
-      } else {
-        span.append(m.author);
-      }
+      span.append(authorLink(m) ?? m.author);
       by.append(span);
       body.append(by);
     }
@@ -260,11 +263,10 @@ export function initBrowser(root: HTMLElement) {
     qTitle.textContent = m.name;
     const facts: Array<[string, string | Node]> = [[w.kind, m.catName]];
     if (m.heroName) facts.push([w.hero, m.heroName]);
-    if (m.styles.length) facts.push([w.style, m.styles.join(', ')]);
+    if (m.styles.length) facts.push([w.style, m.styles.map((s) => s || w.plainStyle).join(', ')]);
     if (m.slots.length) facts.push([w.replaces, m.slots.map((s) => w.slots[s] ?? s).join(', ')]);
     if (m.author) {
-      if (m.authorUrl) { const a = el('a', '', m.author); a.href = m.authorUrl; a.rel = 'noopener nofollow'; facts.push([w.author, a]); }
-      else facts.push([w.author, m.author]);
+      facts.push([w.author, authorLink(m) ?? m.author]);
     }
     if (m.date) facts.push([w.added, fmtDay(lang, m.date)]);
     qFacts.replaceChildren(...facts.flatMap(([k, v]) => { const dd = el('dd'); dd.append(v); return [el('dt', '', k), dd]; }));

@@ -101,6 +101,16 @@ for (const m of byKey.values()) {
   if (!have.slots.length) have.slots = m.slots;
 }
 
+/* A mod whose looks include one the catalog leaves unnamed (a plain look and "Crimson") lists it
+   as a style too, written '': without it the plain look could not be picked or sent anywhere,
+   and the app looks both up the same way, as category|name| (src/preset-plan.ts). */
+for (const m of byName.values()) {
+  if (m.looks.length > 1 && m.looks.some((l) => !l.label)) {
+    m.styles = m.looks.map((l) => l.label ?? '');
+    m.style = m.styles[0];
+  }
+}
+
 /** Newest first, which is the order the catalog opens in. */
 export const catalog: CatalogMod[] = [...byName.values()].sort((a, b) => (b.date ?? 0) - (a.date ?? 0) || a.name.localeCompare(b.name));
 /* The key is an address people share, so it has to keep. Two mods may share a name (a hero's mod

@@ -1,0 +1,43 @@
+---
+/**
+ * Everybody with a page of their own (src/lib/authors.ts), as tiles with their newest render
+ * behind the name, most mods first: the same tiles the heroes have.
+ */
+import type { Lang } from '../i18n/ui';
+import { authorsCopy } from '../i18n/authors';
+import { heroCopy } from '../i18n/heroes';
+import { authors, authorPath } from '../lib/authors';
+import { thumbOf } from '../lib/catalog';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const c = authorsCopy[lang];
+const nf = new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US');
+const pr = new Intl.PluralRules(lang === 'ru' ? 'ru-RU' : 'en-US');
+const word = (n: number) => {
+  const f = pr.select(n);
+  const w = heroCopy[lang].modsWord;
+  return f === 'one' ? w[0] : f === 'few' ? w[1] : w[2];
+};
+---
+
+<div class="wrap browse-head">
+  <h1>{c.indexH1}</h1>
+  <p class="lead">{c.indexLead}</p>
+  <ul class="hgrid authors-grid">
+    {authors.map((a, i) => {
+      const pic = a.mods.find((m) => m.img)?.img;
+      return (
+        <li>
+          <a class="htile" href={authorPath(lang, a.slug)}>
+            {pic && <img src={thumbOf(pic)} width="400" height="225" alt="" loading={i < 12 ? 'eager' : 'lazy'} decoding="async" />}
+            <span class="htile-text">
+              <b>{a.name}</b>
+              <span class="htile-count">{nf.format(a.mods.length)} {word(a.mods.length)}</span>
+            </span>
+          </a>
+        </li>
+      );
+    })}
+  </ul>
+</div>

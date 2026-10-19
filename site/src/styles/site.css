@@ -725,8 +725,10 @@ section { padding: 56px 0; }
 /* The name as the game writes it, the name players call the hero by under it (Russian pages:
    "Shadow Fiend", then "СФ"), and the count. The second line is real text in the page, so a
    search engine still reads the Russian name the page was written to be found by. */
-.htile-text { position: absolute; left: 14px; right: 14px; bottom: 11px; display: grid; gap: 1px; }
-.htile b { font: 700 16px/1.15 var(--display); letter-spacing: -0.01em; }
+/* one column that may not grow past the tile: an author called DotaMiniProfile is one word wider
+   than a 320 px phone's tile in Unbounded, and breaks inside it rather than past the screen */
+.htile-text { position: absolute; left: 14px; right: 14px; bottom: 11px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px; }
+.htile b { font: 700 16px/1.15 var(--display); letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .htile small { font-size: 13px; line-height: 1.3; color: var(--text); }
 .htile .htile-count { font-size: 12.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; margin-top: 2px; }
 .htile:hover { text-decoration: none; border-color: color-mix(in srgb, var(--primary) 50%, transparent); }

@@ -66,7 +66,7 @@ const GITHUB = 'https://github.com/dota2modmanager/dota2-mod-manager';
 const DISCORD = 'https://discord.gg/PBvG8D9MxT';
 
 /* Which part of the site this page is in, for the header's current-page mark. */
-const section = path.startsWith('/catalog/') || path.startsWith('/mods/') ? 'catalog' : path.startsWith('/heroes/') ? 'heroes' : path.startsWith('/docs/') ? 'docs' : '';
+const section = path.startsWith('/catalog/') || path.startsWith('/mods/') || path.startsWith('/authors/') ? 'catalog' : path.startsWith('/heroes/') ? 'heroes' : path.startsWith('/docs/') ? 'docs' : '';
 const navLinks = [
   { id: 'catalog', href: pathIn(lang, '/catalog/'), label: t('nav.catalog'), note: t('menu.catalog') },
   { id: 'heroes', href: pathIn(lang, '/heroes/'), label: t('nav.heroesShort'), note: t('menu.heroes') },
@@ -195,6 +195,7 @@ const fonts = lang === 'ru' ? [onestCyr, unboundedCyr] : [onestLatin, unboundedL
             <ul>
               <li><a href={pathIn(lang, '/catalog/')}>{t('nav.catalog')}</a></li>
               <li><a href={pathIn(lang, '/heroes/')}>{t('nav.heroes')}</a></li>
+              <li><a href={pathIn(lang, '/authors/')}>{t('nav.authors')}</a></li>
               <li><a href={`${pathIn(lang, '/')}#download`}>{t('nav.download')}</a></li>
             </ul>
           </nav>

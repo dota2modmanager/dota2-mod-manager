@@ -14,6 +14,7 @@
  */
 import { groupOf, thumbOf, dayOf, type CatalogMod } from '../lib/catalog';
 import { modText, modNeighbours } from '../lib/mods';
+import { authorOf, authorPath, profileName } from '../lib/authors';
 import { presetCode, appLink } from '../lib/preset';
 import { modPage } from '../i18n/mod-page';
 import { browse } from '../i18n/browse';
@@ -53,6 +54,7 @@ const allLabel = text.hero
   ? text.put(c.allHero).replace('{n}', nf.format(near.total)).replace('{word}', word(near.total))
   : text.put(c.allKind);
 const back = text.heroShown ?? text.kind;
+const author = authorOf(mod);
 ---
 
 <div class="wrap mod-page" data-group={groupOf(mod.cat)}>
@@ -95,7 +97,9 @@ const back = text.heroShown ?? text.kind;
         {looks.length > 1 && <><dt>{c.styles}</dt><dd>{looks.map((l) => l.name).join(', ')}</dd></>}
         {slots.length > 0 && <><dt>{b.replaces}</dt><dd>{slots.join(', ')}</dd></>}
         {mod.author && (
-          <><dt>{b.author}</dt><dd>{mod.authorUrl ? <a href={mod.authorUrl} rel="noopener nofollow">{mod.author}</a> : mod.author}</dd></>
+          <><dt>{b.author}</dt><dd>{author
+            ? <><a href={authorPath(lang, author.slug)}>{mod.author}</a>{mod.authorUrl && <> (<a href={mod.authorUrl} rel="noopener nofollow">{profileName(mod.authorUrl)}</a>)</>}</>
+            : mod.authorUrl ? <a href={mod.authorUrl} rel="noopener nofollow">{mod.author}</a> : mod.author}</dd></>
         )}
         {mod.date && <><dt>{b.added}</dt><dd>{dayOf(lang, mod.date)}</dd></>}
       </dl>

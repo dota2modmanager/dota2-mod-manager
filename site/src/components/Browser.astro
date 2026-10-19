@@ -17,6 +17,7 @@ import { GROUPS, groupNames, catalogCategories } from '../lib/catalog';
 import ModCard from './ModCard.astro';
 import Icon from './Icon.astro';
 import { browse } from '../i18n/browse';
+import { modPage } from '../i18n/mod-page';
 import { categoryText } from '../i18n/categories';
 import { slotNames } from '../i18n/heroes';
 import { pathIn, type Lang } from '../i18n/ui';
@@ -26,7 +27,7 @@ interface Props {
   /** "all": the whole catalog, drawn from data. "page": the cards given here are all there is. */
   mode: 'all' | 'page';
   mods: CatalogMod[];
-  context?: 'all' | 'category' | 'hero';
+  context?: 'all' | 'category' | 'hero' | 'author';
   /** parts a hero's mods replace, offered as filters */
   slots?: string[];
   heading?: 'h2' | 'h3';
@@ -46,7 +47,7 @@ const words = {
   close: b.close, tray: b.tray, setName: b.setName, heroPage: b.heroPage, kindPage: b.kindPage, mods: b.mods,
   slots: slotNames[lang], heroesLabel: lang === 'ru' ? 'Герои' : 'Heroes',
   heroBase: pathIn(lang, '/heroes/'), catBase: pathIn(lang, '/catalog/'),
-  modBase: pathIn(lang, '/mods/'), modPage: b.modPage,
+  modBase: pathIn(lang, '/mods/'), modPage: b.modPage, authorBase: pathIn(lang, '/authors/'), plainStyle: modPage[lang].plainStyle,
 };
 const groupsHere = GROUPS.map(([g]) => g).filter((g) => catalogCategories.some((c) => c.group === g));
 ---

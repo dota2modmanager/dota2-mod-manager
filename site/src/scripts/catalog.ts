@@ -25,6 +25,8 @@ export interface Mod {
   thumb: string | null;
   author: string;
   authorUrl: string;
+  /** the author's page on this site (/authors/<slug>/); '' for an author with too few mods for one */
+  authorPage: string;
   date: number;
   /** the first style, which a preset gets; '' for a mod with one look */
   style: string;
@@ -57,7 +59,7 @@ export function loadCatalog(lang: Lang): Promise<Catalog> {
 type Raw = {
   cats: Array<[string, string, string, Group]>;
   heroes: Array<[string, string, string]>;
-  mods: Array<[string, string, number, number, string, string, number, string, string[], string]>;
+  mods: Array<[string, string, number, number, string, string, number, string, string[], string, string?]>;
 };
 
 function decode(raw: Raw, lang: Lang): Catalog {
@@ -73,7 +75,7 @@ function decode(raw: Raw, lang: Lang): Catalog {
       key: m[0], name: m[1], cat: cat.id, catName: cat.name, group: cat.group,
       hero: hero?.slug ?? null, heroName: hero?.name ?? null,
       img, thumb: img ? `/mods/t/${m[4]}.webp` : null,
-      author: m[5], date: m[6], style: m[7].split('|')[0] ?? '', styles: m[7] ? m[7].split('|') : [], slots: m[8], authorUrl: m[9],
+      author: m[5], date: m[6], style: m[7].split('|')[0] ?? '', styles: m[7] ? m[7].split('|') : [], slots: m[8], authorUrl: m[9], authorPage: m[10] ?? '',
       // both languages' names, so "пудж" finds Pudge on the English page too
       hay: [m[1], m[7].replace(/\|/g, ' '), m[5], cat.en, cat.ru, hero?.en, hero?.ru].filter(Boolean).join(' ').toLowerCase(),
     };

@@ -191,7 +191,7 @@ export function samplePages(dir = DIST) {
   } catch { /* a build without the catalog file: check-build says so */ }
   const en = [
     '/', '/docs/', '/catalog/', '/heroes/', '/facts/', '/changes/', '/transparency/', '/privacy/', '/terms/', '/code-signing/',
-    first('/heroes/'), first('/catalog/'), ...mods,
+    first('/heroes/'), first('/catalog/'), ...mods, '/authors/', first('/authors/'),
     ...all.filter((p) => /^\/docs\/[^/]+\/$/.test(p)),
   ].filter(Boolean);
   return [...en, ...en.map((p) => `/ru${p}`).filter((p) => all.includes(p)), '/p/', '/404.html'];

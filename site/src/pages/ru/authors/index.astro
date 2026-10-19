@@ -1,0 +1,16 @@
+---
+import Base from '../../../layouts/Base.astro';
+import AuthorIndex from '../../../components/AuthorIndex.astro';
+import { authorsCopy } from '../../../i18n/authors';
+import { authors } from '../../../lib/authors';
+import { authorsIndexSchema } from '../../../lib/schema';
+
+const c = authorsCopy.ru;
+const description = c.indexDescription.replace('{top}', authors.slice(0, 3).map((a) => a.name).join(', '));
+const jsonLd = authorsIndexSchema('ru');
+---
+
+<Base title={c.indexTitle} description={description} path="/authors/">
+  {jsonLd.map((node) => <script type="application/ld+json" slot="head" set:html={JSON.stringify(node)} />)}
+  <AuthorIndex lang="ru" />
+</Base>

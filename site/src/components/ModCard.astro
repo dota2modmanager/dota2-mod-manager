@@ -21,19 +21,23 @@ import { aliasesFor } from '../i18n/mod-aliases';
 import { heroBySlug } from '../lib/heroes';
 import { ruName } from '../i18n/hero-names';
 import { modPath } from '../lib/mods';
+import { authorOf, authorPath } from '../lib/authors';
+import { modPage } from '../i18n/mod-page';
 import type { Lang } from '../i18n/ui';
 
 interface Props {
   mod: CatalogMod;
   lang: Lang;
   /** what the page is already about, so the card does not say it again */
-  context?: 'all' | 'category' | 'hero';
+  context?: 'all' | 'category' | 'hero' | 'author';
   eager?: boolean;
   heading?: 'h2' | 'h3';
   alt?: string;
 }
 const { mod: m, lang, context = 'all', eager = false, heading = 'h2', alt } = Astro.props;
 const b = browse[lang];
+/* a style the catalog leaves unnamed, called what the app calls it */
+const plain = modPage[lang].plainStyle;
 const H = heading;
 
 const catName = m.cat === 'heroes' ? (lang === 'ru' ? 'Герои' : 'Heroes') : categoryText(lang, m.cat).name;
@@ -44,6 +48,9 @@ const meta =
   context === 'hero' ? [m.cat === 'heroes' ? '' : catName, slots.length ? `${b.replaces}: ${slots.join(', ')}` : ''].filter(Boolean).join(' · ') || catName
   : context === 'category' ? (heroName ?? catName)
   : [catName, heroName].filter(Boolean).join(' · ');
+/* who made it: their page here when they have one, else their profile; on their own page, nothing */
+const authorPage = authorOf(m);
+const authorHref = authorPage ? authorPath(lang, authorPage.slug) : m.authorUrl;
 const fresh = !!m.date && Date.now() / 1000 - m.date < 30 * 86400;
 const aliases = lang === 'ru' ? aliasesFor(m.name) : [];
 const hay = [m.name, ...m.styles, m.author, catName, hero?.name, heroName, ...aliases].filter(Boolean).join(' ').toLowerCase();
@@ -73,12 +80,12 @@ const hay = [m.name, ...m.styles, m.author, catName, hero?.name, heroName, ...al
   </button>
   <div class="mcard-body">
     <H>{m.name}</H>
-    {m.style && <span class="mcard-style">{m.styles.length > 1 ? `${m.style} +${m.styles.length - 1}` : m.style}</span>}
+    {m.styles.length > 0 && <span class="mcard-style">{m.styles.length > 1 ? `${m.style || plain} +${m.styles.length - 1}` : m.style}</span>}
     {aliases.length > 0 && <p class="mod-alias">Ищут как: {aliases.join(', ')}</p>}
     <div class="mcard-meta"><i class="dot"></i><span>{meta}</span></div>
-    {m.author && (
+    {m.author && context !== 'author' && (
       <div class="mcard-meta">
-        <span>{b.by} {m.authorUrl ? <a href={m.authorUrl} rel="noopener nofollow">{m.author}</a> : m.author}</span>
+        <span>{b.by} {authorPage ? <a href={authorHref}>{m.author}</a> : authorHref ? <a href={authorHref} rel="noopener nofollow">{m.author}</a> : m.author}</span>
       </div>
     )}
   </div>
