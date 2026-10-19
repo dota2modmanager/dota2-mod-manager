@@ -88,6 +88,7 @@ npm --prefix site test        # links, markup, every kind of page at 320-1440 px
                               # the catalog and its preset links, a mod's own page, and the
                               # same pages in WebKit
 npm --prefix site run look    # pictures of every kind of page, desktop and phone
+npm run guide-shots           # the app's own pictures in the guides, taken in the sandbox
 ```
 
 The tests are what CI runs before the site deploys. The WebKit ones (every browser on an iPhone

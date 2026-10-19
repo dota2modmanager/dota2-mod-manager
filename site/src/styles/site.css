@@ -1196,6 +1196,20 @@ details.release-old:first-of-type { margin-top: 44px; border-top: 1px solid var(
 .release-toc a { padding-block: 3px; font-variant-numeric: tabular-nums; }
 
 /* ---------- docs ---------- */
+/* the app's own pictures in a guide: a framed window part, its caption, and full size on a press */
+.doc-shot { margin: 1.4em 0 1.9em; }
+.doc-shot a {
+  display: block; width: fit-content; max-width: 100%; overflow: hidden; cursor: zoom-in;
+  border: 1px solid var(--border-strong); border-radius: var(--radius);
+  box-shadow: 0 24px 50px -30px rgb(0 0 0 / 0.85);
+}
+.doc-shot img { display: block; width: auto; max-width: 100%; height: auto; }
+.doc-shot figcaption { margin-top: 10px; font-size: 14px; line-height: 1.5; color: var(--text-faint); }
+.zoom { padding: 0; border: 0; background: transparent; max-width: 96vw; max-height: 94dvh; overflow: visible; }
+.zoom::backdrop { background: rgb(8 7 10 / 0.88); }
+.zoom[open] { animation: quick-in 200ms var(--ease); }
+.zoom img { display: block; max-width: 96vw; max-height: 94dvh; width: auto; height: auto; border-radius: var(--radius); cursor: zoom-out; }
+
 /* A reading column, not the landing's full width: 72ch is the line length the body text was
    chosen for. A guide gets its contents beside it on a wide window (Doc.astro). */
 .doc { padding-block: 44px 72px; max-width: calc(72ch + 64px); }

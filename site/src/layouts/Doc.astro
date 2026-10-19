@@ -21,6 +21,11 @@ import { siteStats } from '../lib/stats';
 import { landing } from '../i18n/landing';
 import { catalogCategories } from '../lib/catalog';
 import { categoryText } from '../i18n/categories';
+import { docShots } from '../i18n/doc-shots';
+import { SITE_ROOT } from '../lib/paths';
+import fs from 'node:fs';
+import path from 'node:path';
+import sharp from 'sharp';
 
 interface Props {
   lang: Lang;
@@ -73,6 +78,30 @@ const link = (html: string) => {
 
 /** The catalog by category, biggest first, counted from the same merged list the catalog shows. */
 const categories = catalogCategories.map((c) => [c.id === 'heroes' ? (lang === 'ru' ? 'Герои' : 'Heroes') : categoryText(lang, c.id).name, c.n] as const);
+
+/* The app's own pictures (src/i18n/doc-shots.ts), each put under the steps of the section it
+   belongs to, or under its first paragraph. A picture the build cannot find stops the build: a
+   guide that says "here is the button" over an empty frame is worse than no picture. */
+type Shown = Doc['blocks'][number] | { k: 'shot'; src: string; w: number; h: number; caption: string };
+/** The block a section's picture goes under: its first steps, else its first paragraph. */
+const anchorOf = (id: string): number => {
+  const start = doc.blocks.findIndex((x) => x.k === 'h2' && x.id === id);
+  if (start < 0) throw new Error(`${slug}: there is no section "${id}" for a picture to go in`);
+  const next = doc.blocks.findIndex((x, i) => i > start && x.k === 'h2');
+  const part = doc.blocks.slice(start + 1, next < 0 ? undefined : next);
+  const at = part.findIndex((x) => x.k === 'steps');
+  const para = part.findIndex((x) => x.k === 'p');
+  return start + 1 + (at >= 0 ? at : Math.max(para, 0));
+};
+const pictures = await Promise.all((docShots[slug] ?? []).map(async (s) => {
+  const src = `/guides/${s.shot}-${lang}.webp`;
+  const file = path.join(SITE_ROOT, 'public', src);
+  if (!fs.existsSync(file)) throw new Error(`${slug}: ${src} is missing; npm run guide-shots takes it`);
+  const { width = 0, height = 0 } = await sharp(file).metadata();
+  return { at: anchorOf(s.after), shot: { k: 'shot' as const, src, w: width, h: height, caption: s.caption[lang] } };
+}));
+const shown: Shown[] = doc.blocks.flatMap((b, i) => [b, ...pictures.filter((p) => p.at === i).map((p) => p.shot)]);
+const zoomLabel = lang === 'ru' ? 'Открыть картинку крупно' : 'Open the picture full size';
 
 /** The page's own sections, for the contents beside it on a wide window. */
 const toc = doc.blocks.filter((b): b is { k: 'h2'; id: string; t: string } => b.k === 'h2' && !!(b as { id?: string }).id);
@@ -181,7 +210,16 @@ const updatedHuman = new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-GB', 
     </p>
 
     {
-      doc.blocks.map((b) => {
+      shown.map((b) => {
+        if (b.k === 'shot')
+          return (
+            <figure class="doc-shot">
+              <a href={b.src} data-zoom title={zoomLabel}>
+                <img src={b.src} width={b.w} height={b.h} alt={b.caption} loading="lazy" decoding="async" />
+              </a>
+              <figcaption>{b.caption}</figcaption>
+            </figure>
+          );
         if (b.k === 'h2') return <h2 id={b.id}>{b.t}</h2>;
         if (b.k === 'p') return <p set:html={link(b.t)} />;
         if (b.k === 'note') return <p class="doc-note" set:html={link(b.t)} />;
@@ -263,7 +301,32 @@ const updatedHuman = new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-GB', 
     </nav>
   )}
   </div>
+  {pictures.length > 0 && (
+    <dialog class="zoom" id="zoom" aria-label={zoomLabel}></dialog>
+  )}
 </Base>
+
+<script>
+  // A picture of the app opens full size over the page: in the reading column a whole window is
+  // too small to read. Any press, or Escape, closes it. A click that asks for a new tab still
+  // opens the file there.
+  const zoom = document.getElementById('zoom') as HTMLDialogElement | null;
+  if (zoom) {
+    document.addEventListener('click', (e) => {
+      const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[data-zoom]');
+      if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+      e.preventDefault();
+      // the picture is made here, so the page carries no empty one for a reader to stumble on
+      const img = a.querySelector('img')!;
+      const big = new Image(img.naturalWidth || img.width, img.naturalHeight || img.height);
+      big.src = a.href;
+      big.alt = img.alt;
+      zoom.replaceChildren(big);
+      zoom.showModal();
+    });
+    zoom.addEventListener('click', () => zoom.close());
+  }
+</script>
 
 <script>
   // The contents mark the section being read: the last heading that has scrolled past the top.
