@@ -1068,6 +1068,46 @@ section { padding: 56px 0; }
 /* "in the set": the same green the cards turn when they are in it */
 .btn.ghost.on { background: color-mix(in srgb, var(--arcana) 16%, transparent); border-color: color-mix(in srgb, var(--arcana) 60%, transparent); }
 
+/* ---------- what's new (/changes/) ---------- */
+/* A release is a block of its own: its number large, a mark on the newest, its date and the way to
+   its files beside it, then the notes in the guides' reading column. The page's sections take no
+   section padding: these follow one another as entries, not as parts of a landing. */
+.release { margin-top: 44px; padding: 40px 0 0; border-top: 1px solid var(--border); scroll-margin-top: calc(var(--head) + 16px); }
+.release:first-of-type { margin-top: 12px; padding-top: 0; border-top: 0; }
+.release-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.release-head h2 { margin: 0; font-size: clamp(26px, 3vw, 34px); font-variant-numeric: tabular-nums; }
+.release-latest { padding: 3px 10px; border-radius: 999px; background: var(--arcana); color: #142400; font-size: 12.5px; font-weight: 700; }
+.release-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; width: 100%; margin: 0; font-size: 14px; color: var(--text-faint); }
+.release-meta a { color: var(--text-dim); text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 0.2em; }
+.release-meta a:hover { color: var(--text); }
+.release-body h3 { margin: 1.5em 0 0.4em; font-size: 19px; }
+.release-body :is(p, li) { color: var(--text-dim); }
+.release-note { margin: 14px 0 0; font-size: 14px; color: var(--text-faint); }
+/* an older release, folded to one row: the version, its date, what it was about */
+.release-old { margin-top: 0; padding: 0; }
+details.release-old:first-of-type { margin-top: 44px; border-top: 1px solid var(--border); }
+.release-old > summary {
+  position: relative; display: grid; gap: 4px; padding: 18px 40px 18px 0;
+  list-style: none; cursor: pointer; border-radius: var(--radius-xs);
+}
+.release-old > summary::-webkit-details-marker { display: none; }
+.release-old > summary::after {
+  content: ''; position: absolute; right: 8px; top: 30px; width: 9px; height: 9px;
+  border-right: 2px solid var(--text-faint); border-bottom: 2px solid var(--text-faint);
+  transform: rotate(45deg); transition: transform 200ms var(--ease);
+}
+.release-old[open] > summary::after { transform: rotate(225deg); }
+.release-old > summary:hover h2 { color: var(--primary); }
+.release-old .release-head h2 { font-size: 22px; }
+.release-old .release-head time { font-size: 14px; color: var(--text-faint); }
+.release-about { font-size: 15px; color: var(--text-dim); }
+.release-old[open] .release-about { display: none; }
+.release-old > .release-body { padding-bottom: 28px; }
+.release-old + .release-old { border-top: 1px solid var(--border); }
+/* forty-odd versions do not fit a screen: the list scrolls on its own */
+.release-toc { max-height: calc(100dvh - var(--head) - 56px); overflow-y: auto; }
+.release-toc a { padding-block: 3px; font-variant-numeric: tabular-nums; }
+
 /* ---------- docs ---------- */
 /* A reading column, not the landing's full width: 72ch is the line length the body text was
    chosen for. A guide gets its contents beside it on a wide window (Doc.astro). */

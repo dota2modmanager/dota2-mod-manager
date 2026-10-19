@@ -190,7 +190,7 @@ export function samplePages(dir = DIST) {
     mods = [rich, bare].filter(Boolean).map((m) => `/mods/${m[0]}/`).filter((p) => all.includes(p));
   } catch { /* a build without the catalog file: check-build says so */ }
   const en = [
-    '/', '/docs/', '/catalog/', '/heroes/', '/facts/', '/transparency/', '/privacy/', '/terms/', '/code-signing/',
+    '/', '/docs/', '/catalog/', '/heroes/', '/facts/', '/changes/', '/transparency/', '/privacy/', '/terms/', '/code-signing/',
     first('/heroes/'), first('/catalog/'), ...mods,
     ...all.filter((p) => /^\/docs\/[^/]+\/$/.test(p)),
   ].filter(Boolean);

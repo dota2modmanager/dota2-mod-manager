@@ -1,0 +1,11 @@
+---
+import Base from '../../layouts/Base.astro';
+import Changes from '../../components/Changes.astro';
+import { changesCopy } from '../../i18n/changes';
+
+const page = changesCopy.ru;
+---
+
+<Base title={page.title} description={page.description} path="/changes/">
+  <Changes lang="ru" />
+</Base>

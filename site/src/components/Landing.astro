@@ -36,7 +36,6 @@ const c = landing[lang];
 const link = (html: string) => html.replaceAll('~/', lang === 'en' ? '/' : `/${lang}/`);
 
 const GITHUB = 'https://github.com/dota2modmanager/dota2-mod-manager';
-const RELEASES = `${GITHUB}/releases/latest`;
 const WORKFLOW = `${GITHUB}/actions`;
 const DISCORD = 'https://discord.gg/PBvG8D9MxT';
 
@@ -125,7 +124,7 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
 
   <div class="wrap hero-body">
     {latestTag && (
-      <a class="badge" href={RELEASES} rel="noopener">
+      <a class="badge" href={pathIn(lang, '/changes/')}>
         <b>{latestTag}</b>
         <span>{c.latest}</span>
       </a>

@@ -210,6 +210,7 @@ const fonts = lang === 'ru' ? [onestCyr, unboundedCyr] : [onestLatin, unboundedL
           <nav aria-label={t('foot.colProject')}>
             <h3>{t('foot.colProject')}</h3>
             <ul>
+              <li><a href={pathIn(lang, '/changes/')}>{t('nav.changes')}</a></li>
               <li><a href={GITHUB} rel="noopener">{t('nav.github')}</a></li>
               <li><a href={`${GITHUB}/releases`} rel="noopener">{t('foot.releases')}</a></li>
               <li><a href={DISCORD} rel="noopener">{t('nav.discord')}</a></li>
