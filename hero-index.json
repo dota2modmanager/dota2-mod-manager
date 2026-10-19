@@ -1,14 +1,12 @@
 {
-  "heroes": 152,
-  "mods": 1587,
+  "heroes": 151,
+  "mods": 1528,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
       "mods": [
-        {"name":"Abaddon Bloody Fallen King","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
         {"name":"Abaddon Endless Night","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
         {"name":"Abaddon Endless Night Reborn","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
-        {"name":"Abaddon Fallen King","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
         {"name":"Abaddon Sayaka Miki","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","mount","shoulder","weapon","wings"]},
         {"name":"Red Abaddon","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]}
       ]
@@ -32,7 +30,6 @@
         {"name":"Ancient Apparition Shatterblast","categoryId":"herofx","styleLabel":null,"slots":[]},
         {"name":"Ancient Apparition Wight","categoryId":"heroes","styleLabel":null,"slots":["shoulder","tail","arms","head"]},
         {"name":"Ancient Apparition Yoshino","categoryId":"heroes","styleLabel":null,"slots":["shoulder","tail","misc","arms","head"]},
-        {"name":"Bloody Ancient Apparition","categoryId":"heroes","styleLabel":null,"slots":["shoulder","tail"]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Immortal Ancient Apparition","categoryId":"heroes","styleLabel":null,"slots":["shoulder","tail"]},
@@ -48,22 +45,18 @@
       "name": "Anti-Mage",
       "mods": [
         {"name":"Anti-Mage Bloody Reaper","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
-        {"name":"Anti-Mage Blue Illidan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Creep","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head"]},
         {"name":"Anti-Mage Daemon Hunter","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Fervent Conscript","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","shoulder","offhand"]},
         {"name":"Anti-Mage Forgotten Planes","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","shoulder"]},
         {"name":"Anti-Mage Guilt Survivor","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Illidan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","legs","offhand","shoulder"]},
-        {"name":"Anti-Mage Illidan v2","categoryId":"heroes","styleLabel":null,"slots":["head","weapon","arms","misc","belt"]},
         {"name":"Anti-Mage Manta","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Mod Rotten","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","offhand","weapon"]},
         {"name":"Anti-Mage Persona Sakura","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Prime","categoryId":"heroes","styleLabel":null,"slots":["weapon","misc","head","arms","belt"]},
         {"name":"Anti-Mage Ronin Warrior","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
-        {"name":"Anti-Mage Shadow Slayer","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Turstarkuri Pilgrim","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","legs","shoulder"]},
-        {"name":"Curseding Anti-Mage","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Immortal Anti-Mage","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","offhand"]}
       ]
     },
@@ -73,13 +66,11 @@
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Arc Warden Ancient Gaoler","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
         {"name":"Arc Warden Black Hole","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
+        {"name":"Arc Warden Chicken Gun","categoryId":"heroes","styleLabel":null,"slots":["back","arms","misc","shoulder","head"]},
         {"name":"Arc Warden Frosty Toy","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden Gray Monster","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden Magician","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
-        {"name":"Arc Warden Sakura Winter","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden The Last Survivor","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","misc","head"]},
-        {"name":"Arc Warden Yin Yang","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
-        {"name":"Ashes Arc Warden","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -226,7 +217,6 @@
         {"name":"Broodmother Undermount Gloom","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother White Widow","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Goffren Broodmother","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
-        {"name":"Purple Witch Broodmother","categoryId":"heroes","styleLabel":null,"slots":["head","misc","legs"]},
         {"name":"Reverse Broodmother","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"SF Broodmother","categoryId":"heroes","styleLabel":null,"slots":["legs"]}
       ]
@@ -253,10 +243,7 @@
         {"name":"Chaos Knight Celestial Sentine","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]},
         {"name":"Chaos Knight Flandre Scarlet","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder","arms","offhand","weapon","legs"]},
         {"name":"Chaos Knight Unities Of Discord","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]},
-        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
-        {"name":"Endless Storm Chaos Knight","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]},
-        {"name":"Ice Chaos Knight","categoryId":"heroes","styleLabel":null,"slots":["misc","shoulder","head","mount","shield"]},
-        {"name":"Nightmare Chaos Knight","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]}
+        {"name":"Endless Storm Chaos Knight","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]}
       ]
     },
     "chen": {
@@ -287,7 +274,6 @@
         {"name":"Clinkz Leader of the Molten Army","categoryId":"heroes","styleLabel":null,"slots":["misc","back","weapon","arms","head"]},
         {"name":"Clinkz Maraxiforms Fate","categoryId":"hero-items","styleLabel":null,"slots":["weapon","misc"]},
         {"name":"Clinkz Maraxiforms Ire","categoryId":"hero-items","styleLabel":null,"slots":["misc","back"]},
-        {"name":"Clinkz Silver Metall Pink","categoryId":"heroes","styleLabel":null,"slots":["back","weapon","arms","head","misc"]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -456,7 +442,6 @@
       "mods": [
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
-        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Drow Ranger Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon","shoulder"]},
         {"name":"Drow Ranger Crimson Stalker","categoryId":"heroes","styleLabel":null,"slots":["misc","legs","head","arms","weapon","back"]},
         {"name":"Drow Ranger Diretide","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon"]},
@@ -494,7 +479,6 @@
       "name": "Earthshaker",
       "mods": [
         {"name":"Cosmic Earthshaker","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc"]},
-        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Earthshaker Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","misc"]},
         {"name":"Earthshaker Arcana Planetfall","categoryId":"heroes","styleLabel":"Burning","slots":["belt","arms","misc","head"]},
         {"name":"Earthshaker Arcana Planetfall","categoryId":"heroes","styleLabel":"Celestial","slots":["belt","arms","misc","head"]},
@@ -515,7 +499,6 @@
     "ember_spirit": {
       "name": "Ember Spirit",
       "mods": [
-        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Ember Spirit Cinder Sensei","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","head","shoulder","weapon"]},
         {"name":"Ember Spirit Green Samurai","categoryId":"heroes","styleLabel":null,"slots":["belt","weapon","shoulder","arms","back"]},
         {"name":"Ember Spirit Immortal Fire","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon"]},
@@ -523,8 +506,7 @@
         {"name":"Ember Spirit Master of Searing Path","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon"]},
         {"name":"Ember Spirit Shana","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","head","shoulder","weapon","wings","offhand","misc"]},
         {"name":"Ember Spirit Vanishing Flame","categoryId":"heroes","styleLabel":null,"slots":["back","belt","shoulder","weapon"]},
-        {"name":"Fog Ember Spirit","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon"]},
-        {"name":"Winter Ember Spirit","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon"]}
+        {"name":"Fog Ember Spirit","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon"]}
       ]
     },
     "enchantress": {
@@ -550,7 +532,6 @@
       "name": "Enigma",
       "mods": [
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
-        {"name":"Bloody Enigma","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Cosmic Enigma","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Enigma Angel of the Abyss","categoryId":"heroes","styleLabel":null,"slots":[]},
@@ -670,7 +651,6 @@
         {"name":"Bedrock","categoryId":"terrains","styleLabel":null,"slots":["misc"]},
         {"name":"Black Huskar","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder"]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
-        {"name":"Blue Soul Huskar","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder"]},
         {"name":"Dark Terrain Minify","categoryId":"terrains","styleLabel":null,"slots":["misc"]},
         {"name":"DarkPoly","categoryId":"terrains","styleLabel":null,"slots":["misc"]},
         {"name":"DarkPoly & Trees","categoryId":"terrains","styleLabel":null,"slots":["misc"]},
@@ -694,11 +674,8 @@
       "mods": [
         {"name":"Avice Aura Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Chaos Invoker","categoryId":"heroes","styleLabel":null,"slots":["shoulder","arms","head","back","belt","misc"]},
-        {"name":"Dark Reaper Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
-        {"name":"Homelander Invoker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
         {"name":"Ice Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Blackguard Magus","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","misc","back","arms"]},
-        {"name":"Invoker Bloody Wizard","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Dark Artistry","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
         {"name":"Invoker Dark Artistry v2","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
         {"name":"Invoker Dark Artistry v3","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","belt"]},
@@ -714,11 +691,11 @@
         {"name":"Invoker Magus Apex","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Invoker Magus Mimicry","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker MaryDay","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Invoker Never","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","belt","legs"]},
         {"name":"Invoker Pack 1","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Patchouli","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","shield","belt","legs"]},
         {"name":"Invoker Wyrdwing Exort","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Japan Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","legs"]},
-        {"name":"Sakura Pink Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Sasuke Invoker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","misc","belt","shield","legs"]},
         {"name":"Wyrdwing Exaltation Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Young Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","shield","belt","legs"]},
@@ -730,7 +707,6 @@
       "mods": [
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
-        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Invoker Magus Accord","categoryId":"hero-items","styleLabel":"White","slots":["arms"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -802,7 +778,6 @@
         {"name":"Keeper of the Light Wings of Daybreak","categoryId":"hero-items","styleLabel":null,"slots":["mount"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
-        {"name":"Scarlet Keeper of the Light","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -814,8 +789,6 @@
       "name": "Kez",
       "mods": [
         {"name":"Bare Kez","categoryId":"heroes","styleLabel":null,"slots":["shoulder"]},
-        {"name":"Bloody Kez","categoryId":"heroes","styleLabel":null,"slots":["head","offhand","misc","weapon"]},
-        {"name":"Hollow Kez","categoryId":"heroes","styleLabel":null,"slots":["head","offhand","misc","weapon"]},
         {"name":"Kez 200","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Kez Bersexer","categoryId":"heroes","styleLabel":null,"slots":["belt","head","shoulder","weapon"]},
         {"name":"Kez Captain Anchorbeak","categoryId":"heroes","styleLabel":null,"slots":["belt","head","offhand","shoulder","weapon"]},
@@ -921,7 +894,6 @@
       "name": "Lina",
       "mods": [
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
-        {"name":"Ancients Lina","categoryId":"heroes","styleLabel":null,"slots":["head","misc","belt","arms"]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Immortal Lina","categoryId":"heroes","styleLabel":null,"slots":["belt","head","misc"]},
@@ -1029,8 +1001,7 @@
         {"name":"Lycan Frostbloom Claws","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Lycan Furrytrop","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc","head"]},
         {"name":"Lycan Red Wolf Clan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc","head"]},
-        {"name":"Lycan Vakir Min Silvath","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc","head"]},
-        {"name":"Winter Lycan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc"]}
+        {"name":"Lycan Vakir Min Silvath","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc","head"]}
       ]
     },
     "magnataur": {
@@ -1063,14 +1034,12 @@
         {"name":"Marci School of the Solar Fang","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
         {"name":"Marci Silent Comedy","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
         {"name":"Nude Marci","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder"]},
-        {"name":"Snowing Marci","categoryId":"heroes","styleLabel":null,"slots":["shoulder","misc","head","back"]},
         {"name":"Vodolaska Marci","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","arms"]}
       ]
     },
     "mars": {
       "name": "Mars",
       "mods": [
-        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Mars Crimson Set","categoryId":"heroes","styleLabel":null,"slots":["misc","shield","weapon"]},
         {"name":"Mars Diretide Shimmer","categoryId":"heroes","styleLabel":null,"slots":["misc","shield"]},
         {"name":"Mars Progenitors Bane","categoryId":"hero-items","styleLabel":"Crimson","slots":["misc"]},
@@ -1097,8 +1066,6 @@
     "meepo": {
       "name": "Meepo",
       "mods": [
-        {"name":"Bunshinjutsu Meepo","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder"]},
-        {"name":"Kai Meepo","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]},
         {"name":"Meepo Blueness","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]},
         {"name":"Meepo Diretide","categoryId":"heroes","styleLabel":null,"slots":["head","misc","weapon","shoulder","back"]},
         {"name":"Meepo Fractured Haul","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]},
@@ -1129,7 +1096,6 @@
     "monkey_king": {
       "name": "Monkey King",
       "mods": [
-        {"name":"Ifrit Monkey King","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head","shoulder"]},
         {"name":"Monkey King Arcana","categoryId":"heroes","styleLabel":"Death","slots":["head"]},
         {"name":"Monkey King Arcana","categoryId":"heroes","styleLabel":"Fire","slots":["head"]},
         {"name":"Monkey King Arcana","categoryId":"heroes","styleLabel":null,"slots":["head"]},
@@ -1150,7 +1116,6 @@
       "mods": [
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
-        {"name":"Flameling Morphling","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Morphling Abyss Revenge","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Morphling Akulenok","categoryId":"heroes","styleLabel":null,"slots":[]},
@@ -1169,7 +1134,6 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
-        {"name":"Void Morphling","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },
@@ -1182,7 +1146,6 @@
         {"name":"Muerta Soul Warden","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","misc","weapon"]}
       ]
     },
-    "naga": {"name":"Naga","mods":[{"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]}]},
     "necrolyte": {
       "name": "Necrophos",
       "mods": [
@@ -1223,7 +1186,6 @@
         {"name":"Shadow Fiend King of Vipers","categoryId":"heroes","styleLabel":"Style II","slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend King of Vipers","categoryId":"heroes","styleLabel":"Style III","slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend Lightning Soul","categoryId":"heroes","styleLabel":null,"slots":["head","wings","shoulder","arms"]},
-        {"name":"Shadow Fiend White","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","arms","misc"]},
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -1240,24 +1202,16 @@
     "nightstalker": {
       "name": "Nightstalker",
       "mods": [
-        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Night Stalker Dark Oath V2","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","tail","wings","head"]},
         {"name":"Night Stalker Feasts of Forever","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","tail","wings"]},
         {"name":"Night Stalker Frost Walker","categoryId":"heroes","styleLabel":null,"slots":["arms","tail","wings","back","head","legs"]},
         {"name":"Night Stalker Relict","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","tail","wings"]},
-        {"name":"Night Stalker Remilia","categoryId":"heroes","styleLabel":"Style I","slots":["arms","misc","tail","wings"]},
-        {"name":"Phite Phantom Assassin","categoryId":"heroes","styleLabel":null,"slots":["head"]}
+        {"name":"Night Stalker Remilia","categoryId":"heroes","styleLabel":"Style I","slots":["arms","misc","tail","wings"]}
       ]
     },
     "nightstlaker": {"name":"Nightstlaker","mods":[{"name":"Night Stalker Remilia","categoryId":"heroes","styleLabel":"Style I","slots":["arms","back","misc","head","legs","tail"]}]},
     "nyx": {"name":"Nyx Assassin","mods":[{"name":"Alien Nyx Assassin","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]}]},
-    "nyx_assassin": {
-      "name": "Nyx Assassin",
-      "mods": [
-        {"name":"Nyx Assassin Mesmer Eye","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","arms","head","back"]},
-        {"name":"Pink Nyx Assassin","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]}
-      ]
-    },
+    "nyx_assassin": {"name":"Nyx Assassin","mods":[{"name":"Nyx Assassin Mesmer Eye","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","arms","head","back"]}]},
     "obsidian_destroyer": {
       "name": "Outworld Destroyer",
       "mods": [
@@ -1340,7 +1294,6 @@
         {"name":"Phantom Assassin Rory","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","back","head","shoulder","belt"]},
         {"name":"Phantom Assassin Skull Arcana","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
         {"name":"Phantom Assassin Yor Forger","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","weapon","back","head","shoulder","belt"]},
-        {"name":"Phite Phantom Assassin","categoryId":"heroes","styleLabel":null,"slots":["back","misc","head","shoulder","weapon"]},
         {"name":"Warden Phantom Assassin","categoryId":"heroes","styleLabel":null,"slots":["weapon","back","misc","head","shoulder","belt"]}
       ]
     },
@@ -1354,6 +1307,7 @@
         {"name":"Phantom Lancer Black","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Phantom Lancer Concord Dominion","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
         {"name":"Phantom Lancer Concord Revers","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Phantom Lancer Crimson Furry","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Phantom Lancer Crimson v2","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Phantom Lancer Dark Carnival","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Phantom Lancer Epileptick1d Mod","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
@@ -1405,7 +1359,6 @@
       "mods": [
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
-        {"name":"Blue Dragon Puck","categoryId":"heroes","styleLabel":null,"slots":["wings","tail","head"]},
         {"name":"Fire Puck","categoryId":"heroes","styleLabel":null,"slots":["head","tail"]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Immortal Puck","categoryId":"heroes","styleLabel":null,"slots":["head","tail","wings"]},
@@ -1431,7 +1384,7 @@
         {"name":"Pudge CM","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon"]},
         {"name":"Pudge Dendi Arcana","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Feast Immortal","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
-        {"name":"Pudge Gol0vach","categoryId":"heroes","styleLabel":null,"slots":["back","belt","head","arms","weapon","misc"]},
+        {"name":"Pudge G0Lovach","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Greasepaint Gutbuster","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Hood of Defiance","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Pudge Immortal Gold","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
@@ -1464,13 +1417,13 @@
       "mods": [
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
-        {"name":"Cursed Queen of Pain","categoryId":"heroes","styleLabel":null,"slots":["arms","shoulder","head","wings","legs","misc","weapon"]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Immortal Queen of Pain","categoryId":"heroes","styleLabel":null,"slots":["head","legs","weapon","shoulder","wings"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nude Queen of Pain","categoryId":"heroes","styleLabel":null,"slots":["head","legs","weapon","shoulder","wings","arms","misc"]},
-        {"name":"Purple Queen of Pain","categoryId":"heroes","styleLabel":null,"slots":["head","legs","weapon","shoulder","wings","arms","misc"]},
         {"name":"Queen of Pain Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","wings","shoulder","weapon","legs","head"]},
+        {"name":"Queen Of Pain Bloodfeather","categoryId":"heroes","styleLabel":"Style I","slots":["weapon","head","legs","wings","shoulder"]},
+        {"name":"Queen Of Pain Bloodfeather","categoryId":"heroes","styleLabel":"Style II","slots":["weapon","head","legs","wings","shoulder"]},
         {"name":"Queen of Pain Blue Arcana","categoryId":"heroes","styleLabel":null,"slots":["head","legs","weapon","shoulder","wings","misc"]},
         {"name":"Queen of Pain Rose","categoryId":"heroes","styleLabel":null,"slots":["head","legs","weapon","shoulder","wings"]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -1570,13 +1523,10 @@
       "name": "Shadow Fiend",
       "mods": [
         {"name":"Cardboard Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["head"]},
-        {"name":"Cursed Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
         {"name":"Diabolical Shadow Fiend","categoryId":"heroes","styleLabel":"Desolation","slots":["shoulder","head","arms"]},
         {"name":"Diabolical Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","arms"]},
         {"name":"Emerald Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["head","misc","arms","shoulder"]},
-        {"name":"Ghost Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["shoulder","arms","head"]},
         {"name":"Old Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["wings","head","misc","arms","shoulder"]},
-        {"name":"Pink Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend 1000-7","categoryId":"heroes","styleLabel":null,"slots":["head","wings"]},
         {"name":"Shadow Fiend Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","wings"]},
         {"name":"Shadow Fiend Arcana Desolator","categoryId":"heroes","styleLabel":null,"slots":["head","shoulder","arms"]},
@@ -1649,10 +1599,7 @@
     "siren": {
       "name": "Naga Siren",
       "mods": [
-        {"name":"Ancient Sand Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
         {"name":"Aquamarine Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand","misc"]},
-        {"name":"Darkness Crimson Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
-        {"name":"Darkness Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
         {"name":"Naga Siren 42 Bratuha","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand","legs","misc"]},
         {"name":"Naga Siren Allure of the Deep","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
         {"name":"Naga Siren Coral Cultist Frost","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
@@ -1700,8 +1647,6 @@
       "name": "Slark",
       "mods": [
         {"name":"Custom Slark","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
-        {"name":"Dark Ancient Slark","categoryId":"heroes","styleLabel":null,"slots":["shoulder","weapon","head","back","arms","misc"]},
-        {"name":"Ghosty Slark","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Immortal Slark","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Barracuda Re","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Collector Fire","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
@@ -1756,7 +1701,6 @@
     "spectre": {
       "name": "Spectre",
       "mods": [
-        {"name":"Bloody Gore Spectre","categoryId":"heroes","styleLabel":null,"slots":["head","misc","weapon","wings"]},
         {"name":"Bloody Spectre","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings"]},
         {"name":"Phantom Adven Blademail Red","categoryId":"item-effects","styleLabel":null,"slots":[]},
         {"name":"Phantom Adven Blademail White","categoryId":"item-effects","styleLabel":null,"slots":[]},
@@ -1766,8 +1710,7 @@
         {"name":"Spectre Phantom Advent","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings"]},
         {"name":"Spectre Phantom Advent V1","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings","shoulder","legs"]},
         {"name":"Spectre Phantom Ascension V2","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings","shoulder","legs"]},
-        {"name":"Spectre Shadowveil","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings"]},
-        {"name":"Spectre Toxin","categoryId":"heroes","styleLabel":null,"slots":["misc","wings","weapon","head"]}
+        {"name":"Spectre Shadowveil","categoryId":"heroes","styleLabel":null,"slots":["misc","head","weapon","wings"]}
       ]
     },
     "spirit_breaker": {
@@ -1817,7 +1760,6 @@
     "sven": {
       "name": "Sven",
       "mods": [
-        {"name":"Pinkie Sven","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Sven Berseker","categoryId":"heroes","styleLabel":null,"slots":["shoulder","back","misc","head","belt","weapon"]},
         {"name":"Sven Blue Angel","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Sven Guts Sword","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
@@ -1946,7 +1888,6 @@
         {"name":"Tinker Frusy","categoryId":"heroes","styleLabel":null,"slots":["back","head","arms","shoulder","legs","weapon","misc"]},
         {"name":"Tinker Immortal","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","arms","shoulder"]},
         {"name":"Tinker Lite Machines","categoryId":"optimization","styleLabel":null,"slots":[]},
-        {"name":"Tinker Peashooter Turrets","categoryId":"herofx","styleLabel":null,"slots":["misc"]},
         {"name":"Tinker Sakuya","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","arms","shoulder","legs"]},
         {"name":"Tinker Submerged Hazard","categoryId":"heroes","styleLabel":null,"slots":["back","head","arms","shoulder","weapon"]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
@@ -2008,7 +1949,6 @@
       "name": "Undying",
       "mods": [
         {"name":"Immortal Love Undying","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
-        {"name":"Undying Archange","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Undying Desecration Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Undying Direstone Desecration","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Undying Grim Reformation","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head"]},
@@ -2025,8 +1965,7 @@
         {"name":"Ursa Feast of the Damned","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","legs"]},
         {"name":"Ursa Immortal Hallowed Hunt","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","legs"]},
         {"name":"Ursa Roshan Hunter","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","legs"]},
-        {"name":"Ursa Swift Claw","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
-        {"name":"Ursa White and Red","categoryId":"heroes","styleLabel":null,"slots":["legs","misc","arms","head"]}
+        {"name":"Ursa Swift Claw","categoryId":"hero-items","styleLabel":null,"slots":["arms"]}
       ]
     },
     "vengeful": {
@@ -2052,7 +1991,6 @@
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
-        {"name":"Ice Venomancer","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","shoulder","tail"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -2103,7 +2041,6 @@
     "void_spirit": {
       "name": "Void Spirit",
       "mods": [
-        {"name":"Ghost Void Spirit","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","weapon"]},
         {"name":"Void Spirit Hidden Vector","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","weapon"]},
         {"name":"Void Spirit Keqing","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc","weapon"]}
       ]
@@ -2128,7 +2065,6 @@
       "mods": [
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
-        {"name":"Darkness Weaver","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","legs"]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},

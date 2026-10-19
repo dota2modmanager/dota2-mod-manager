@@ -559,36 +559,6 @@
         {"name":"BP 2022 Teleport II","styleLabel":null,"image":{"src":"/mods/bp-2022-teleport-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
         {"name":"BP 2022 Teleport III","styleLabel":null,"image":{"src":"/mods/bp-2022-teleport-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
         {
-          "name": "Darkness Blink Dagger",
-          "styleLabel": null,
-          "image": {"src":"/mods/darkness-blink-dagger.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1789310506
-        },
-        {"name":"Darkness Bottle","styleLabel":null,"image":{"src":"/mods/darkness-bottle.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
-        {
-          "name": "Darkness Euls Scepter",
-          "styleLabel": null,
-          "image": {"src":"/mods/darkness-euls-scepter.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1789310506
-        },
-        {"name":"Darkness Lvl Up","styleLabel":null,"image":{"src":"/mods/darkness-lvl-up.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
-        {"name":"Darkness Mekanism","styleLabel":null,"image":{"src":"/mods/darkness-mekanism.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
-        {"name":"Darkness Mjollnir","styleLabel":null,"image":{"src":"/mods/darkness-mjollnir.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
-        {
-          "name": "Darkness Phase Boots",
-          "styleLabel": null,
-          "image": {"src":"/mods/darkness-phase-boots.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1789310506
-        },
-        {"name":"Darkness Radiance","styleLabel":null,"image":{"src":"/mods/darkness-radiance.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
-        {"name":"Darkness Shiva","styleLabel":null,"image":{"src":"/mods/darkness-shiva.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
-        {
           "name": "Devotions of Dragonus Atos",
           "styleLabel": null,
           "image": {"src":"/mods/devotions-of-dragonus-atos.webp","width":854,"height":480},
@@ -652,7 +622,6 @@
           "authorUrl": "https://watchmy.bio/shidehara",
           "date": 1789310506
         },
-        {"name":"Red Bottle","styleLabel":null,"image":{"src":"/mods/red-bottle.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1789310506},
         {"name":"RPG Lvl Up","styleLabel":null,"image":{"src":"/mods/rpg-lvl-up.webp","width":854,"height":480},"author":"Pinkpapa","authorUrl":"https://www.patreon.com/Pinkpapa","date":1789310506},
         {"name":"TI10 Aghanim Aura","styleLabel":null,"image":{"src":"/mods/ti10-aghanim-aura.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
         {"name":"TI10 Blink Dagger","styleLabel":null,"image":{"src":"/mods/ti10-blink-dagger.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
@@ -748,7 +717,6 @@
         {"name":"Winter 2016 Teleport II","styleLabel":null,"image":{"src":"/mods/winter-2016-teleport-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
         {"name":"Winter 2016 Teleport III","styleLabel":null,"image":{"src":"/mods/winter-2016-teleport-iii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1789310506},
         {"name":"Christmas Iron Branch","styleLabel":null,"image":{"src":"/mods/christmas-iron-branch.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1788999662},
-        {"name":"Custom Runes","styleLabel":null,"image":{"src":"/mods/custom-runes.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1788999662},
         {"name":"Dark Bounty Rune","styleLabel":null,"image":{"src":"/mods/dark-bounty-rune.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767204615},
         {"name":"Purple Hex","styleLabel":null,"image":{"src":"/mods/purple-hex.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766555595},
         {"name":"Winter Hex","styleLabel":null,"image":{"src":"/mods/winter-hex.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766555595},
@@ -905,6 +873,22 @@
     {
       "id": "hero-sounds",
       "mods": [
+        {
+          "name": "Anti-Mage Taunt Serega Pirat",
+          "styleLabel": null,
+          "image": {"src":"/mods/anti-mage-taunt-serega-pirat.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1792412054
+        },
+        {
+          "name": "Arc Warden Gay Taunt",
+          "styleLabel": null,
+          "image": {"src":"/mods/arc-warden-gay-taunt.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1792412054
+        },
         {"name":"Arc Warden Xvii","styleLabel":null,"image":{"src":"/mods/arc-warden-xvii.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792151800},
         {
           "name": "Techies Chance Allahu Akbar",
@@ -1436,45 +1420,28 @@
       ]
     },
     {
-      "id": "shaders",
-      "mods": [
-        {"name":"Simple Minify Shader","styleLabel":null,"image":{"src":"/mods/simple-minify-shader.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772737722},
-        {"name":"Wave Lite Purple","styleLabel":null,"image":{"src":"/mods/wave-lite-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771195327},
-        {"name":"Cartoon Shader","styleLabel":null,"image":{"src":"/mods/cartoon-shader.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769364096},
-        {"name":"Purple Outline","styleLabel":null,"image":{"src":"/mods/purple-outline.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769364096},
-        {"name":"Diretide (outline)","styleLabel":null,"image":{"src":"/mods/diretide-outline.webp","width":601,"height":301},"author":null,"authorUrl":null,"date":1767325919},
-        {"name":"Aghanim Green Lite","styleLabel":null,"image":{"src":"/mods/aghanim-green-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
-        {"name":"Aghanim Purple Lite","styleLabel":null,"image":{"src":"/mods/aghanim-purple-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
-        {"name":"Aghanim Red Lite","styleLabel":null,"image":{"src":"/mods/aghanim-red-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
-        {"name":"Aghanim White Lite","styleLabel":null,"image":{"src":"/mods/aghanim-white-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
-        {"name":"Aghanim Yellow Lite","styleLabel":null,"image":{"src":"/mods/aghanim-yellow-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
-        {"name":"Aghanim Green","styleLabel":null,"image":{"src":"/mods/aghanim-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Aghanim Peach","styleLabel":null,"image":{"src":"/mods/aghanim-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Aghanim Purple","styleLabel":null,"image":{"src":"/mods/aghanim-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Aghanim Red","styleLabel":null,"image":{"src":"/mods/aghanim-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Aghanim White","styleLabel":null,"image":{"src":"/mods/aghanim-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Ancient","styleLabel":null,"image":{"src":"/mods/ancient.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1766992965},
-        {"name":"Haze","styleLabel":null,"image":{"src":"/mods/haze.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1766992965},
-        {"name":"Purple Ancient","styleLabel":null,"image":{"src":"/mods/purple-ancient.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1766992965},
-        {"name":"Wave Green","styleLabel":null,"image":{"src":"/mods/wave-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Aqua","styleLabel":null,"image":{"src":"/mods/wave-lite-aqua.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Blue","styleLabel":null,"image":{"src":"/mods/wave-lite-blue.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Green","styleLabel":null,"image":{"src":"/mods/wave-lite-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Peach","styleLabel":null,"image":{"src":"/mods/wave-lite-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Pink","styleLabel":null,"image":{"src":"/mods/wave-lite-pink.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Red","styleLabel":null,"image":{"src":"/mods/wave-lite-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite White","styleLabel":null,"image":{"src":"/mods/wave-lite-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Lite Yellow","styleLabel":null,"image":{"src":"/mods/wave-lite-yellow.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Peach","styleLabel":null,"image":{"src":"/mods/wave-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Purple","styleLabel":null,"image":{"src":"/mods/wave-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave Red","styleLabel":null,"image":{"src":"/mods/wave-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Wave White","styleLabel":null,"image":{"src":"/mods/wave-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
-        {"name":"Aghanim Labyrinth","styleLabel":null,"image":{"src":"/mods/aghanim-labyrinth.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282}
-      ]
-    },
-    {
       "id": "parts",
       "mods": [
+        {"name":"Anime Search Bar","styleLabel":null,"image":{"src":"/mods/anime-search-bar.webp","width":397,"height":1022},"author":"Defendor","authorUrl":null,"date":1792412054},
+        {
+          "name": "Dean Norris Match",
+          "styleLabel": "Style I",
+          "image": {"src":"/mods/dean-norris-match-style-i.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1792412054
+        },
+        {
+          "name": "Dean Norris Match",
+          "styleLabel": "Style II",
+          "image": {"src":"/mods/dean-norris-match-style-ii.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1792412054
+        },
+        {"name":"Play Black","styleLabel":null,"image":{"src":"/mods/play-black.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792412054},
+        {"name":"Play White","styleLabel":null,"image":{"src":"/mods/play-white.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792412054},
+        {"name":"Remove Innate Icon","styleLabel":null,"image":{"src":"/mods/remove-innate-icon.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792412054},
         {"name":"Play Pinkv2","styleLabel":null,"image":{"src":"/mods/play-pinkv2.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792330154},
         {"name":"Topbar Pink","styleLabel":null,"image":{"src":"/mods/topbar-pink.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792330154},
         {
@@ -1520,6 +1487,40 @@
         {"name":"Larger Timer","styleLabel":null,"image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
         {"name":"Windows Xp Top Bar","styleLabel":null,"image":{"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790528664},
         {"name":"Hypergamy Search Bar","styleLabel":null,"image":{"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790375737}
+      ]
+    },
+    {
+      "id": "shaders",
+      "mods": [
+        {"name":"Simple Minify Shader","styleLabel":null,"image":{"src":"/mods/simple-minify-shader.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772737722},
+        {"name":"Wave Lite Purple","styleLabel":null,"image":{"src":"/mods/wave-lite-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1771195327},
+        {"name":"Cartoon Shader","styleLabel":null,"image":{"src":"/mods/cartoon-shader.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769364096},
+        {"name":"Purple Outline","styleLabel":null,"image":{"src":"/mods/purple-outline.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769364096},
+        {"name":"Diretide (outline)","styleLabel":null,"image":{"src":"/mods/diretide-outline.webp","width":601,"height":301},"author":null,"authorUrl":null,"date":1767325919},
+        {"name":"Aghanim Green Lite","styleLabel":null,"image":{"src":"/mods/aghanim-green-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim Purple Lite","styleLabel":null,"image":{"src":"/mods/aghanim-purple-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim Red Lite","styleLabel":null,"image":{"src":"/mods/aghanim-red-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim White Lite","styleLabel":null,"image":{"src":"/mods/aghanim-white-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim Yellow Lite","styleLabel":null,"image":{"src":"/mods/aghanim-yellow-lite.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1767120602},
+        {"name":"Aghanim Green","styleLabel":null,"image":{"src":"/mods/aghanim-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim Peach","styleLabel":null,"image":{"src":"/mods/aghanim-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim Purple","styleLabel":null,"image":{"src":"/mods/aghanim-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim Red","styleLabel":null,"image":{"src":"/mods/aghanim-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim White","styleLabel":null,"image":{"src":"/mods/aghanim-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Green","styleLabel":null,"image":{"src":"/mods/wave-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Aqua","styleLabel":null,"image":{"src":"/mods/wave-lite-aqua.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Blue","styleLabel":null,"image":{"src":"/mods/wave-lite-blue.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Green","styleLabel":null,"image":{"src":"/mods/wave-lite-green.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Peach","styleLabel":null,"image":{"src":"/mods/wave-lite-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Pink","styleLabel":null,"image":{"src":"/mods/wave-lite-pink.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Red","styleLabel":null,"image":{"src":"/mods/wave-lite-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite White","styleLabel":null,"image":{"src":"/mods/wave-lite-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Lite Yellow","styleLabel":null,"image":{"src":"/mods/wave-lite-yellow.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Peach","styleLabel":null,"image":{"src":"/mods/wave-peach.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Purple","styleLabel":null,"image":{"src":"/mods/wave-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave Red","styleLabel":null,"image":{"src":"/mods/wave-red.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Wave White","styleLabel":null,"image":{"src":"/mods/wave-white.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766992965},
+        {"name":"Aghanim Labyrinth","styleLabel":null,"image":{"src":"/mods/aghanim-labyrinth.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756459282}
       ]
     },
     {
@@ -2372,6 +2373,18 @@
       ]
     },
     {
+      "id": "versus-screens",
+      "mods": [
+        {"name":"Diretide Versus Screen","styleLabel":null,"image":{"src":"/mods/diretide-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
+        {"name":"Muerta Versus Screen","styleLabel":null,"image":{"src":"/mods/muerta-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
+        {"name":"Nemestice Versus Screen","styleLabel":null,"image":{"src":"/mods/nemestice-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
+        {"name":"TI 2024 Versus Screen","styleLabel":null,"image":{"src":"/mods/ti-2024-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
+        {"name":"TI9 Versus Screen I","styleLabel":null,"image":{"src":"/mods/ti9-versus-screen-i.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
+        {"name":"TI9 Versus Screen II","styleLabel":null,"image":{"src":"/mods/ti9-versus-screen-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
+        {"name":"Winter Versus Screen","styleLabel":null,"image":{"src":"/mods/winter-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295}
+      ]
+    },
+    {
       "id": "herofx",
       "mods": [
         {
@@ -2399,14 +2412,6 @@
           "date": 1784702480
         },
         {
-          "name": "Tinker Peashooter Turrets",
-          "styleLabel": null,
-          "image": {"src":"/mods/tinker-peashooter-turrets.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1779386733
-        },
-        {
           "name": "Huskar White Screen Effect",
           "styleLabel": null,
           "image": {"src":"/mods/huskar-white-screen-effect.webp","width":854,"height":480},
@@ -2419,18 +2424,6 @@
       ]
     },
     {
-      "id": "versus-screens",
-      "mods": [
-        {"name":"Diretide Versus Screen","styleLabel":null,"image":{"src":"/mods/diretide-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
-        {"name":"Muerta Versus Screen","styleLabel":null,"image":{"src":"/mods/muerta-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
-        {"name":"Nemestice Versus Screen","styleLabel":null,"image":{"src":"/mods/nemestice-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
-        {"name":"TI 2024 Versus Screen","styleLabel":null,"image":{"src":"/mods/ti-2024-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
-        {"name":"TI9 Versus Screen I","styleLabel":null,"image":{"src":"/mods/ti9-versus-screen-i.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
-        {"name":"TI9 Versus Screen II","styleLabel":null,"image":{"src":"/mods/ti9-versus-screen-ii.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295},
-        {"name":"Winter Versus Screen","styleLabel":null,"image":{"src":"/mods/winter-versus-screen.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1770643295}
-      ]
-    },
-    {
       "id": "packs",
       "mods": [
         {"name":"Autumn Pack","styleLabel":null,"image":{"src":"/mods/autumn-pack.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":null},
@@ -2439,37 +2432,6 @@
         {"name":"Purple Pack","styleLabel":null,"image":{"src":"/mods/purple-pack.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":null},
         {"name":"Umbrella Pack","styleLabel":null,"image":{"src":"/mods/umbrella-pack.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":null},
         {"name":"Winter Pack","styleLabel":null,"image":{"src":"/mods/winter-pack.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":null}
-      ]
-    },
-    {
-      "id": "pings",
-      "mods": [
-        {"name":"Love Ping","styleLabel":null,"image":{"src":"/mods/love-ping.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Love Ping II","styleLabel":null,"image":{"src":"/mods/love-ping-ii.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {
-          "name": "Skeleton Black Ping",
-          "styleLabel": null,
-          "image": {"src":"/mods/skeleton-black-ping.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1765193630
-        },
-        {
-          "name": "Skeleton Blue Ping",
-          "styleLabel": null,
-          "image": {"src":"/mods/skeleton-blue-ping.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1765193630
-        },
-        {
-          "name": "Skeleton Purple Ping",
-          "styleLabel": null,
-          "image": {"src":"/mods/skeleton-purple-ping.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1765193630
-        }
       ]
     },
     {
@@ -2500,6 +2462,13 @@
       "mods": [
         {"name":"High Five Aghanim Puppet","styleLabel":null,"image":{"src":"/mods/high-five-aghanim-puppet.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782925485},
         {"name":"High Five Crownfall","styleLabel":null,"image":{"src":"/mods/high-five-crownfall.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782925485}
+      ]
+    },
+    {
+      "id": "pings",
+      "mods": [
+        {"name":"Love Ping","styleLabel":null,"image":{"src":"/mods/love-ping.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Love Ping II","styleLabel":null,"image":{"src":"/mods/love-ping-ii.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483}
       ]
     },
     {"id":"towers","mods":[{"name":"Holiday Radiant Tower","styleLabel":null,"image":{"src":"/mods/holiday-radiant-tower.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766624100}]}
