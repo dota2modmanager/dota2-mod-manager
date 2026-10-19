@@ -60,6 +60,11 @@ export const ui = {
     'foot.releases': 'Releases',
 
     'lang.switch': 'Русский',
+    /* The offer of this language, shown on the other language's pages (Base.astro): these three
+       are in English because a Russian page shows them to somebody who does not read Russian. */
+    'lang.offer': 'This page is also in English.',
+    'lang.offerOpen': 'Open it',
+    'lang.offerClose': 'Close',
   },
   ru: {
     'site.name': 'Dota 2 Mod Manager',
@@ -108,6 +113,9 @@ export const ui = {
     'foot.releases': 'Релизы',
 
     'lang.switch': 'English',
+    'lang.offer': 'Эта страница есть на русском.',
+    'lang.offerOpen': 'Открыть',
+    'lang.offerClose': 'Закрыть',
   },
 } as const;
 

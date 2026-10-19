@@ -15,6 +15,7 @@ import { join } from 'node:path';
 import { langFromUrl, useTranslations, pathIn, type Lang } from '../i18n/ui';
 import { ogPath } from '../lib/og';
 import { SITE_ROOT } from '../lib/paths';
+import { LANG_OFFER } from '../lib/inline-scripts';
 import Backdrop from '../components/Backdrop.astro';
 import onestLatin from '../../node_modules/@fontsource-variable/onest/files/onest-latin-wght-normal.woff2?url';
 import onestCyr from '../../node_modules/@fontsource-variable/onest/files/onest-cyrillic-wght-normal.woff2?url';
@@ -47,6 +48,8 @@ const alternates = [
   { hreflang: 'x-default', href: new URL(pathIn('en', path), site).href },
 ];
 const other: Lang = lang === 'ru' ? 'en' : 'ru';
+/* the offer of this page in the other language is worded in that language */
+const offer = useTranslations(other);
 
 /* This page's own link-preview card, drawn by tools/og.mjs and committed under public/og/.
    A page with a real picture of its own passes one instead - a hero page sends the art rather
@@ -114,6 +117,24 @@ const fonts = lang === 'ru' ? [onestCyr, unboundedCyr] : [onestLatin, unboundedL
   <body>
     <Backdrop />
     <a class="skip" href="#main">Skip to content</a>
+
+    {/* This page in the other language, offered in that language to a browser that reads it:
+        an English page to a browser that prefers Russian, a Russian page to one that has no
+        Russian at all. Never a redirect, which would send a search engine and a shared link to a
+        page nobody asked for. The script below decides before the first paint, so nothing moves;
+        any choice (this link, the close button, any language switch on the site) is kept, and
+        the offer is not made again. */}
+    {!lost && (
+      <div class="langbar" id="langbar" lang={other} hidden>
+        <div class="wrap langbar-row">
+          <p>{offer('lang.offer')} <a href={pathIn(other, path)} hreflang={other}>{offer('lang.offerOpen')}</a></p>
+          <button class="icon-btn langbar-x" type="button" data-lang-stay aria-label={offer('lang.offerClose')}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+      </div>
+    )}
+    <script is:inline set:html={LANG_OFFER} />
 
     <header class="topbar">
       <div class="wrap bar">

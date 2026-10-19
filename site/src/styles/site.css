@@ -240,6 +240,15 @@ section > .wrap > :is(h1, h2, h3):first-child { margin-top: 0; }
 .chips.rail::-webkit-scrollbar { display: none; }
 @media (min-width: 900px) { .chips.rail { margin-inline: 0; padding-inline: 0; } }
 
+/* ---------- this page in the other language, offered once (Base.astro) ---------- */
+/* Above the header and out of the way as the page scrolls: one line of text with its link in it,
+   and a way to say no. On a 320 px phone the text wraps beside the button rather than under it. */
+.langbar { background: color-mix(in srgb, var(--primary) 12%, var(--surface-low)); border-bottom: 1px solid var(--border); }
+.langbar-row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding-block: 4px; }
+.langbar p { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 14.5px; line-height: 1.45; color: var(--text); }
+.langbar a { color: var(--primary); font-weight: 650; text-decoration: underline; text-underline-offset: 0.2em; }
+.langbar-x { flex: none; width: 34px; height: 34px; }
+
 /* ---------- header ---------- */
 
 .topbar {

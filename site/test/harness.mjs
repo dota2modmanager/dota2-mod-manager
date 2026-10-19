@@ -124,8 +124,9 @@ export const SCREENS = {
  * the browser only reports to the console. Requests to anywhere else are refused so the tests
  * never depend on GitHub or YouTube being up; `online` lets tools/look.mjs see the real thing.
  */
-export async function openPage(browser, base, screen, { motion = 'no-preference', online = false } = {}) {
-  const context = await browser.newContext({ ...SCREENS[screen], reducedMotion: motion });
+export async function openPage(browser, base, screen, { motion = 'no-preference', online = false, locale } = {}) {
+  // locale: the language the browser asks for (navigator.languages), for the offer of the other one
+  const context = await browser.newContext({ ...SCREENS[screen], reducedMotion: motion, ...(locale ? { locale } : {}) });
   // Scrolling is instant in the tests. The site scrolls smoothly, and a smooth scroll Playwright
   // starts for one click is still travelling when the next step scrolls somewhere else, so a
   // button brought to the middle of the screen ended up 555 px lower by the time it was pressed.
