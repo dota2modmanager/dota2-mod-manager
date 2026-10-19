@@ -2,6 +2,47 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.15.0
+
+### A link to one mod
+
+A link like `d2mm://mod/heroes/Tidehunter%20Arcana/Style%20II` now opens that mod's window in the
+catalog, on the style it names, from whichever tab you are on. Like a preset link, it installs
+nothing. If the app was closed, the link starts it and the window opens as soon as the catalog has
+loaded. "Open in Mod Manager" on a mod's page at dota2modmanager.com opens it this way.
+
+### Terrorblade's arcana keeps your colour
+
+The colour you pick for Terrorblade's arcana in Catalog → Tools now holds when the item builder puts
+the arcana on as well. Before, the builder's copy went back to Reflection's Shade wherever the game
+read that one. A purple or green arcana is now that colour all over: most of its particles used to
+keep the red they were made with. Thanks to J0nathan550.
+
+### All of Recently added
+
+The catalog's front page showed twelve recently added mods and no way to the rest. Show all in that
+strip now opens every one of them as a grid, newest first, with the usual sort and the installed and
+starred filters. Thanks to solanafl1pper for asking.
+
+### Fixed
+
+- On Linux, item pictures and hero portraits load again. The app downloaded the Windows build of
+  Source2Viewer, which Linux refuses to run, and every picture failed quietly. It now downloads the
+  Linux build. Thanks to J0nathan550.
+- On Linux, the app's own icon shows in the dock and the app menu beside its window.
+- An item the builder puts in a slot whose stock item has no model of its own (Earthshaker's head,
+  for one) now says it shows only until you reconnect to a match: after a reconnect the game draws
+  ERROR in its place. The builder's other picks keep their models after a reconnect, where some of
+  them used to fall back to the plain hero. Thanks to J0nathan550.
+
+### The site
+
+dota2modmanager.com is rebuilt around the catalog. Every mod has a page of its own, with its picture
+in a chat's link preview, and so do heroes and the people who make the mods. The catalog searches,
+filters and goes through all the mods a page at a time, and the mods you collect there open in the
+app as one preset. The search in the header finds mods, heroes by their nicknames too, and authors.
+The guides show the app itself, and What's new lists every release.
+
 ## 2.14.0
 
 ### Presets keep your looks
