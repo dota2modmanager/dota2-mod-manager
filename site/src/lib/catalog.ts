@@ -50,8 +50,11 @@ export interface CatalogMod {
   authorUrl: string | null;
   date: number | null;
   slots: string[];
-  /** Each look with its own picture, in the catalog's order: what the mod's page switches between. */
-  looks: Array<{ label: string | null; img: string | null }>;
+  /** Each look with its own picture, in the catalog's order: what the mod's page switches between.
+      The size is the picture's own, as tools/catalog.mjs measured it: most are 854 x 480, but a
+      search bar's preview came in at 397 x 1022, and a link preview that states the wrong size
+      draws the picture squashed. */
+  looks: Array<{ label: string | null; img: string | null; width: number; height: number }>;
 }
 
 const byKey = new Map<string, CatalogMod>();
@@ -62,7 +65,7 @@ for (const c of categories) {
     byKey.set(keyOf(c.id, m.name, m.styleLabel), {
       key: '', name: m.name, cat: c.id, style: m.styleLabel, styles: m.styleLabel ? [m.styleLabel] : [], hero: null,
       img: m.image?.src ?? null, author: m.author, authorUrl: m.authorUrl, date: m.date, slots: [],
-      looks: [{ label: m.styleLabel, img: m.image?.src ?? null }],
+      looks: [{ label: m.styleLabel, img: m.image?.src ?? null, width: m.image?.width ?? 854, height: m.image?.height ?? 480 }],
     });
   }
 }
@@ -79,7 +82,7 @@ for (const h of heroes) {
     byKey.set(k, {
       key: '', name: m.name, cat, style: m.styleLabel, styles: m.styleLabel ? [m.styleLabel] : [], hero: h.slug,
       img: m.image?.src ?? null, author: m.author, authorUrl: m.authorUrl, date: m.date, slots: m.slots,
-      looks: [{ label: m.styleLabel, img: m.image?.src ?? null }],
+      looks: [{ label: m.styleLabel, img: m.image?.src ?? null, width: m.image?.width ?? 854, height: m.image?.height ?? 480 }],
     });
   }
 }

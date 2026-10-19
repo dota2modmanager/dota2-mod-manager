@@ -12,10 +12,10 @@ export function getStaticPaths() {
 const { mod } = Astro.props;
 const text = modText('en', mod);
 const jsonLd = modSchema('en', mod);
-const img = mod.looks.find((l) => l.img)?.img;
+const look = mod.looks.find((l) => l.img);
 ---
 
-<Base title={text.title} description={text.description} path={`/mods/${mod.key}/`} image={img ? { src: img, width: 854, height: 480 } : undefined}>
+<Base title={text.title} description={text.description} path={`/mods/${mod.key}/`} image={look?.img ? { src: look.img, width: look.width, height: look.height } : undefined}>
   {jsonLd.map((node) => <script type="application/ld+json" slot="head" set:html={JSON.stringify(node)} />)}
   <ModPage lang="en" mod={mod} />
 </Base>

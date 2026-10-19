@@ -78,6 +78,32 @@ test('a mod page tells a chat what to show: its own picture, at its real size, a
   assert.ok(map.includes(`<image:loc>${ORIGIN}/mods/${styled[4]}.webp</image:loc>`), 'and its picture');
 });
 
+/* Every mod page, not the two above: most previews are 854 x 480, and the pages said so for all of
+   them until a search bar's arrived at 397 x 1022 (October 2026). A chat that is told the wrong
+   size draws the picture squashed, and the test above only met it once that mod was the newest. */
+test('every mod page states the real size of its picture, to a chat and to a search engine', async () => {
+  const sizes = new Map();
+  const bad = [];
+  for (const m of data.mods.filter((x) => x[4])) {
+    const p = page('en', m);
+    const body = read(p);
+    const img = meta(body, 'og:image');
+    const file = new URL(img).pathname;
+    if (!sizes.has(file)) {
+      const { width, height } = await sharp(path.join(DIST, file)).metadata();
+      sizes.set(file, `${width}x${height}`);
+    }
+    const real = sizes.get(file);
+    const said = `${meta(body, 'og:image:width')}x${meta(body, 'og:image:height')}`;
+    if (said !== real) bad.push(`${p}: the head says ${said}, the picture is ${real}`);
+    const item = [...body.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g)]
+      .map((x) => JSON.parse(x[1])).find((n) => n['@type'] === 'ItemPage');
+    const pic = item?.primaryImageOfPage;
+    if (pic && `${pic.width}x${pic.height}` !== real) bad.push(`${p}: the structured data says ${pic.width}x${pic.height}, the picture is ${real}`);
+  }
+  assert.deepEqual(bad.slice(0, 20), []);
+});
+
 test('a mod page switches styles, opens the style on show in the app, and keeps the set', async () => {
   for (const screen of ['desktop', 'mobile']) {
     const { context, page: p, problems } = await open(page('en', styled), screen);

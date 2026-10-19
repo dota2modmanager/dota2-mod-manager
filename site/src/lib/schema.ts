@@ -279,8 +279,8 @@ export function modSchema(lang: 'en' | 'ru', mod: CatalogMod, origin = 'https://
     contentUrl: `${origin}${l.img}`,
     url: `${origin}${l.img}`,
     name: l.label ? `${mod.name} (${l.label})` : mod.name,
-    width: 854,
-    height: 480,
+    width: l.width,
+    height: l.height,
     encodingFormat: 'image/webp',
   }));
   const parent = text.hero
