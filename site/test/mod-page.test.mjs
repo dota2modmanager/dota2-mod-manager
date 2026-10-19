@@ -13,6 +13,7 @@ import path from 'node:path';
 import sharp from 'sharp';
 import { DIST, serveDist, launch, openPage, findOverflow, isOffline, snap } from './harness.mjs';
 import { decodePresetLink } from '../../src/preset-link.ts';
+import { parseModLink } from '../../src/deep-links.ts';
 
 const ORIGIN = 'https://dota2modmanager.com';
 const data = JSON.parse(fs.readFileSync(path.join(DIST, 'catalog', 'data.json'), 'utf-8'));
@@ -39,7 +40,14 @@ async function open(path, screen = 'desktop') {
   await p.goto(server.url + path, { waitUntil: 'load' });
   return { context, page: p, problems };
 }
-const decode = (href) => decodePresetLink(href.replace('d2mm://preset/', ''));
+/* What the app opens from a mod page's button, read with the app's own code: the mod's own link
+   once a released app reads one (lib/preset.ts openInApp), a preset of that one mod before. */
+const decode = (href) => {
+  if (href.startsWith('d2mm://mod/')) { const m = parseModLink(href); return m && { categoryId: m.cat, name: m.name, styleLabel: m.style }; }
+  const preset = decodePresetLink(href.replace('d2mm://preset/', ''));
+  assert.equal(preset.mods.length, 1, 'a preset of the one mod');
+  return preset.mods[0];
+};
 
 test('a mod page tells a chat what to show: its own picture, at its real size, and its own address', async () => {
   assert.ok(styled && single, 'the catalog has a styled hero mod and a one-look category mod to test with');
@@ -87,17 +95,16 @@ test('a mod page switches styles, opens the style on show in the app, and keeps 
 
     // the app link opens this mod, in the style the page shows
     const first = decode(await p.locator('#mod-app').getAttribute('href'));
-    assert.equal(first.mods.length, 1);
-    assert.equal(first.mods[0].categoryId, catOf(styled));
-    assert.equal(first.mods[0].name, styled[1]);
+    assert.equal(first.categoryId, catOf(styled));
+    assert.equal(first.name, styled[1]);
 
     const second = looks.nth(1);
     await second.click();
     assert.equal(await second.getAttribute('aria-pressed'), 'true');
     assert.equal(await looks.first().getAttribute('aria-pressed'), 'false');
     assert.equal(await p.locator('#mod-img').getAttribute('src'), await second.getAttribute('data-img'));
-    const now = decode(await p.locator('#mod-app').getAttribute('href')).mods[0];
-    assert.notEqual(now.styleLabel, first.mods[0].styleLabel, 'the second style opens, not the first');
+    const now = decode(await p.locator('#mod-app').getAttribute('href'));
+    assert.notEqual(now.styleLabel, first.styleLabel, 'the second style opens, not the first');
     assert.equal(now.name, styled[1]);
 
     // the set is the catalog's: the button, and the cards under the mod
@@ -139,7 +146,7 @@ test('a mod page copies its own address, in either language', async () => {
     assert.equal(await p.locator('.toast').textContent(), lang === 'ru' ? 'Ссылка скопирована' : 'Link copied');
     // one style: no switch, and the app link names no style
     assert.equal(await p.locator('.mod-look').count(), 0);
-    const mod = decode(await p.locator('#mod-app').getAttribute('href')).mods[0];
+    const mod = decode(await p.locator('#mod-app').getAttribute('href'));
     assert.deepEqual([mod.categoryId, mod.name, mod.styleLabel], [catOf(single), single[1], null]);
     await context.close();
   }

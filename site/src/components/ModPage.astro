@@ -15,7 +15,7 @@
 import { groupOf, thumbOf, dayOf, type CatalogMod } from '../lib/catalog';
 import { modText, modNeighbours } from '../lib/mods';
 import { authorOf, authorPath, profileName } from '../lib/authors';
-import { presetCode, appLink } from '../lib/preset';
+import { openInApp } from '../lib/preset';
 import { modPage } from '../i18n/mod-page';
 import { browse } from '../i18n/browse';
 import { heroCopy, slotNames } from '../i18n/heroes';
@@ -27,6 +27,8 @@ interface Props { lang: Lang; mod: CatalogMod }
 const { lang, mod } = Astro.props;
 
 const c = modPage[lang];
+/* the mod's own link once a released app reads it, else a preset of it (lib/preset.ts) */
+const open = await openInApp();
 const b = browse[lang];
 const text = modText(lang, mod);
 const near = modNeighbours(lang, mod);
@@ -42,10 +44,10 @@ const word = (n: number) => {
 const looks = mod.looks.filter((l) => l.img).map((l) => ({
   ...l,
   name: l.label ?? c.plainStyle,
-  app: appLink(presetCode(mod.name, [{ cat: mod.cat, name: mod.name, style: l.label }])),
+  app: open({ cat: mod.cat, name: mod.name, style: l.label }),
   alt: mod.looks.length > 1 ? c.styleAlt.replace('{mod}', mod.name).replace('{style}', l.label ?? c.plainStyle) : `${mod.name}: ${text.kind}`,
 }));
-const first = looks[0] ?? { label: mod.style, img: null, app: appLink(presetCode(mod.name, [{ cat: mod.cat, name: mod.name, style: mod.style }])), alt: mod.name };
+const first = looks[0] ?? { label: mod.style, img: null, app: open({ cat: mod.cat, name: mod.name, style: mod.style }), alt: mod.name };
 const slots = mod.slots.map((s) => slotNames[lang][s] ?? s);
 const kindHref = mod.cat === 'heroes' ? pathIn(lang, '/heroes/') : pathIn(lang, `/catalog/${mod.cat}/`);
 const heroHref = mod.hero ? pathIn(lang, `/heroes/${mod.hero}/`) : null;

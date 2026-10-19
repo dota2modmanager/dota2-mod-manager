@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DIST, builtPages } from './harness.mjs';
 import { decodePresetLink } from '../../src/preset-link.ts';
+import { parseModLink } from '../../src/deep-links.ts';
 
 const SITE = 'https://dota2modmanager.com';
 const pages = builtPages();
@@ -26,8 +27,14 @@ const inCatalog = new Set([
 
 /** Why a link to the app (d2mm://) would not open what the page says, or null when it would. */
 function appLinkProblem(href) {
+  // a mod's own link (src/deep-links.ts), read the way the app reads it
+  if (href.startsWith('d2mm://mod/')) {
+    const m = parseModLink(href);
+    if (!m) return 'names no mod';
+    return inCatalog.has(`${m.cat}|${m.name}|${m.style ?? ''}`) ? null : `names what the catalog has not got: ${m.cat}/${m.name}/${m.style ?? ''}`;
+  }
   const code = href.match(/^d2mm:\/\/preset\/(.+)$/)?.[1];
-  if (!code) return 'is not a preset link';
+  if (!code) return 'is neither a preset link nor a mod link';
   let preset;
   try { preset = decodePresetLink(code); } catch (e) { return `does not decode (${e.message})`; }
   const gone = preset.mods.filter((m) => !inCatalog.has(`${m.categoryId}|${m.name}|${m.styleLabel ?? ''}`));

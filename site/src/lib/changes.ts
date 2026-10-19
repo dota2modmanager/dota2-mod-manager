@@ -111,6 +111,12 @@ function publishedReleases() {
   return published;
 }
 
+/** The newest version GitHub has published, or null when the build could not ask. */
+export async function latestRelease(): Promise<string | null> {
+  const dates = await publishedReleases();
+  return dates ? [...dates.keys()].sort(compareVersions).at(-1)! : null;
+}
+
 const read = (name: string) => fs.readFileSync(path.join(REPO_ROOT, name), 'utf-8');
 
 /** The page's releases in a language, newest first, and the changelog's own first paragraph. */
