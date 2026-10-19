@@ -192,19 +192,31 @@ test('the tabs of the app switch by click and by keyboard', async () => {
   await context.close();
 });
 
-test('the search on the landing finds mods as you type and lands on their pages', async () => {
+test('the search on the landing answers like the header: heroes, authors and mods, each to its page', async () => {
   for (const screen of ['desktop', 'mobile']) {
     const { context, page } = await open(screen);
     const input = page.locator('#finder-q');
     await bring(input);
-    await input.fill('pudge');
-    const rows = page.locator('#finderResults .finder-row');
-    await rows.first().waitFor();
-    assert.ok((await rows.count()) > 0 && (await rows.count()) <= 6);
-    for (const t of await rows.allTextContents()) assert.match(t.toLowerCase(), /pudge|пудж/);
-    const href = await rows.first().getAttribute('href');
-    assert.match(href, /^\/mods\/[a-z0-9-]+\/$/);
-    await press(screen, rows.first());
+    const ask = async (q) => {
+      await input.fill(q);
+      await page.waitForFunction((x) => document.getElementById('finderResults')?.dataset.q === x, q);
+    };
+    // the hero first, then their mods
+    await ask('pudge');
+    const hrefs = await page.locator('#finderResults .finder-row').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
+    assert.equal(hrefs[0], '/heroes/pudge/');
+    const mods = hrefs.filter((h) => h.startsWith('/mods/'));
+    assert.ok(mods.length > 0 && mods.length <= 6);
+    for (const t of await page.locator('#finderResults .finder-row[data-kind="mod"]').allTextContents()) assert.match(t.toLowerCase(), /pudge|пудж/);
+    // a nickname finds the hero, as in the header
+    await ask('кристалка');
+    assert.equal(await page.locator('#finderResults a[href="/heroes/crystal-maiden/"]').count(), 1);
+    // many mods: the rest are the catalog's own search
+    await ask('arcana');
+    assert.match(await page.locator('#finderResults .finder-all').getAttribute('href'), /^\/catalog\/\?q=arcana$/);
+    // and a mod leads to its page
+    await ask('pudge');
+    await press(screen, page.locator('#finderResults .finder-row[data-kind="mod"]').first());
     await page.waitForURL(/\/mods\/[a-z0-9-]+\/$/);
     assert.match(await page.locator('h1').textContent(), /pudge/i);
     await context.close();

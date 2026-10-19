@@ -184,7 +184,7 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
         </li>
       ))}
     </ul>
-    <div class="finder-results" id="finderResults" data-lang={lang} data-mods={pathIn(lang, '/mods/')} data-empty={c.finderEmpty} aria-live="polite"></div>
+    <div class="finder-results" id="finderResults" data-lang={lang} data-empty={c.finderEmpty} aria-live="polite"></div>
   </div>
 </section>
 
@@ -413,7 +413,8 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
 <Hunt complete={c.huntComplete} shared={c.huntShared} close={c.huntClose} hint={c.huntHint} />
 
 <script>
-  import { loadCatalog, rank, matcher, el, type Lang } from '../scripts/catalog';
+  import { el, type Lang } from '../scripts/catalog';
+  import { searchEngine, type Hit, type Words } from '../scripts/search-engine';
 
   // ---- the wall moves on a desktop, while it is on screen ----
   const hero = document.querySelector<HTMLElement>('.hero');
@@ -475,41 +476,49 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
     });
   }
 
-  // ---- the finder: results as you type, from the same file the catalog reads ----
+  // ---- the finder: the site's own search (scripts/search-engine.ts), drawn as cards here ----
+  // The same answers as the box in the header, so a nickname finds its hero and a name its
+  // author on the landing too; the words are the header box's, which every page carries.
   const box = document.getElementById('finderResults');
   const input = document.getElementById('finder-q') as HTMLInputElement | null;
-  if (box && input) {
+  const words = JSON.parse(document.getElementById('sitesearch')?.dataset.words ?? 'null') as Words | null;
+  if (box && input && words) {
     const lang = (box.dataset.lang as Lang) || 'en';
-    const base = box.dataset.mods!;
+    const { ready, answer } = searchEngine(lang, words);
+    const card = (h: Hit) => {
+      const a = el('a', 'finder-row');
+      a.href = h.href;
+      a.dataset.kind = h.kind;
+      if (h.group) a.dataset.group = h.group;
+      if (h.img) {
+        const img = el('img');
+        img.src = h.img; img.alt = ''; img.width = 400; img.height = 225; img.loading = 'lazy';
+        a.append(img);
+      }
+      const text = el('div');
+      const meta = el('span');
+      if (h.group) meta.append(el('i', 'dot'));
+      meta.append(document.createTextNode(h.meta));
+      text.append(el('b', '', h.title), meta);
+      a.append(text);
+      return a;
+    };
     let timer = 0;
     const render = async () => {
-      const q = input.value.trim();
-      if (!q) { box.replaceChildren(); return; }
-      let cat;
-      try { cat = await loadCatalog(lang); } catch { return; }
-      const ok = matcher(q);
-      const hits = cat.mods.filter(ok).sort((a, b) => rank(b, q) - rank(a, q)).slice(0, 6);
-      if (!hits.length) { box.replaceChildren(el('p', 'muted', box.dataset.empty)); return; }
-      box.replaceChildren(...hits.map((m) => {
-        const a = el('a', 'finder-row');
-        a.href = `${base}${m.key}/`; // the mod's own page
-        a.dataset.group = m.group;
-        if (m.thumb) {
-          const img = el('img');
-          img.src = m.thumb; img.alt = ''; img.width = 400; img.height = 225; img.loading = 'lazy';
-          a.append(img);
-        }
-        const text = el('div');
-        const meta = el('span');
-        meta.append(el('i', 'dot'), document.createTextNode(m.heroName ? `${m.catName} · ${m.heroName}` : m.catName));
-        text.append(el('b', '', m.name), meta);
-        a.append(text);
-        return a;
-      }));
+      try { await ready(); } catch { return; }
+      const ans = answer(input.value, { heroes: 2, authors: 2, mods: 6 });
+      if (!ans) { box.replaceChildren(); delete box.dataset.q; return; }
+      const out: HTMLElement[] = [];
+      for (const g of ans.groups) out.push(el('p', 'finder-label', g.label), ...g.hits.map(card));
+      const shown = ans.groups.find((g) => g.kind === 'mod')?.hits.length ?? 0;
+      if (ans.found > shown) { const all = el('a', 'finder-all', ans.all.label); all.href = ans.all.href; out.push(all); }
+      if (!out.length) out.push(el('p', 'muted', box.dataset.empty));
+      box.replaceChildren(...out);
+      box.dataset.q = ans.q; // which question the answers on show are for
     };
     input.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(render, 90); });
     // start fetching the moment somebody shows intent, so the first letter has results
-    input.addEventListener('focus', () => { loadCatalog(lang).catch(() => {}); }, { once: true });
+    input.addEventListener('focus', () => { ready().catch(() => {}); }, { once: true });
   }
 </script>
 

@@ -618,6 +618,11 @@ section { padding: 56px 0; }
 .finder-row img { width: 88px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; flex: none; background: var(--surface-low); }
 .finder-row b { display: block; font-size: 14.5px; font-weight: 600; line-height: 1.3; }
 .finder-row span { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-faint); }
+/* the answers come in the header search's groups: heroes, authors, mods, each under its name */
+.finder-label { grid-column: 1 / -1; margin: 6px 0 -2px; font-size: 12.5px; font-weight: 650; color: var(--text-faint); }
+.finder-label:first-child { margin-top: 0; }
+.finder-row b { overflow-wrap: anywhere; }
+.finder-all { grid-column: 1 / -1; justify-self: start; margin-top: 4px; font-weight: 650; font-size: 14.5px; }
 
 /* ---------- the landing: see it work ---------- */
 .show-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
