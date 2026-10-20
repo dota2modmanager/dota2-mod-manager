@@ -4350,6 +4350,183 @@
       ]
     },
     {
+      "id": "arc_warden",
+      "name": "Arc Warden",
+      "slug": "arc-warden",
+      "mods": [
+        {
+          "name": "Arc Warden Chicken Gun",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","misc","shoulder","head"],
+          "image": {"src":"/mods/arc-warden-chicken-gun.webp","width":854,"height":480},
+          "author": "Mirik522",
+          "authorUrl": "https://t.me/Moggdeli",
+          "date": 1792421381
+        },
+        {
+          "name": "Arc Warden The Duna",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","misc","head"],
+          "image": {"src":"/mods/arc-warden-the-duna.webp","width":854,"height":480},
+          "author": "Schizo",
+          "authorUrl": "https://t.me/Schizo_shop",
+          "date": 1792453496
+        },
+        {
+          "name": "Arc Warden The Last Survivor",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","misc","head"],
+          "image": {"src":"/mods/arc-warden-the-last-survivor.webp","width":854,"height":480},
+          "author": "Schizo",
+          "authorUrl": "https://t.me/Schizo_shop",
+          "date": 1790988499
+        },
+        {
+          "name": "Arc Warden Frosty Toy",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","head"],
+          "image": {"src":"/mods/arc-warden-frosty-toy.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1792050673
+        },
+        {
+          "name": "Arc Warden Gray Monster",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","head"],
+          "image": {"src":"/mods/arc-warden-gray-monster.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1792235759
+        },
+        {
+          "name": "Arc Warden Magician",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder","head"],
+          "image": {"src":"/mods/arc-warden-magician.webp","width":854,"height":480},
+          "author": "Schizo",
+          "authorUrl": "https://t.me/Schizo_shop",
+          "date": 1791253117
+        },
+        {
+          "name": "Arc Warden Ancient Gaoler",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder"],
+          "image": {"src":"/mods/arc-warden-ancient-gaoler.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1778935876
+        },
+        {
+          "name": "Arc Warden Black Hole",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","arms","shoulder"],
+          "image": {"src":"/mods/arc-warden-black-hole.webp","width":854,"height":480},
+          "author": "Amir4an",
+          "authorUrl": "https://vk.com/amir4an",
+          "date": 1756539017
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "dazzle",
       "name": "Dazzle",
       "slug": "dazzle",
@@ -4948,173 +5125,6 @@
           "author": "Ромчик",
           "authorUrl": "https://watchmy.bio/shidehara",
           "date": 1789310506
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "arc_warden",
-      "name": "Arc Warden",
-      "slug": "arc-warden",
-      "mods": [
-        {
-          "name": "Arc Warden Chicken Gun",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","misc","shoulder","head"],
-          "image": {"src":"/mods/arc-warden-chicken-gun.webp","width":854,"height":480},
-          "author": "Mirik522",
-          "authorUrl": "https://t.me/Moggdeli",
-          "date": 1792421381
-        },
-        {
-          "name": "Arc Warden The Last Survivor",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder","misc","head"],
-          "image": {"src":"/mods/arc-warden-the-last-survivor.webp","width":854,"height":480},
-          "author": "Schizo",
-          "authorUrl": "https://t.me/schizo_workshop",
-          "date": 1790988499
-        },
-        {
-          "name": "Arc Warden Frosty Toy",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder","head"],
-          "image": {"src":"/mods/arc-warden-frosty-toy.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1792050673
-        },
-        {
-          "name": "Arc Warden Gray Monster",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder","head"],
-          "image": {"src":"/mods/arc-warden-gray-monster.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1792235759
-        },
-        {
-          "name": "Arc Warden Magician",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder","head"],
-          "image": {"src":"/mods/arc-warden-magician.webp","width":854,"height":480},
-          "author": "Schizo",
-          "authorUrl": "https://t.me/schizo_workshop",
-          "date": 1791253117
-        },
-        {
-          "name": "Arc Warden Ancient Gaoler",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder"],
-          "image": {"src":"/mods/arc-warden-ancient-gaoler.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1778935876
-        },
-        {
-          "name": "Arc Warden Black Hole",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","arms","shoulder"],
-          "image": {"src":"/mods/arc-warden-black-hole.webp","width":854,"height":480},
-          "author": "Amir4an",
-          "authorUrl": "https://vk.com/amir4an",
-          "date": 1756539017
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
         },
         {
           "name": "Green Diretide Ranged Attack",

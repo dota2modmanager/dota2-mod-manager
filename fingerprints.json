@@ -1,5 +1,5 @@
 {
-  "count": 1669,
+  "count": 1672,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -129,6 +129,7 @@
     "149c7fe24721b15177a2b43e00545ff6d2329b1f": [{"name":"Devotions of Dragonus Atos","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "14c843344afb3ec57799f4dd76b95a78b3eb93b0": [{"name":"Earthshaker Carrot","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "14cf23fab93284e6260dec450bf376581dc6e760": [{"name":"Krutoi Gyrocopter","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "14da2310f051a22483d1ad30fb27a743cca79973": [{"name":"Tcoaal Mach v1","categoryId":"parts","styleLabel":null,"type":"vpk"}],
     "14e970aaee8ab78b475a44b15bda1a6f1c143e68": [{"name":"Stone Trees","categoryId":"trees","styleLabel":null,"type":"vpk"}],
     "15166e8305a7d519dd03e2b2d8a600cfb6d9ffa7": [{"name":"Dead Eyes","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "154c09a39be23b471cb00be78701d28c898470ba": [{"name":"Invoker Magus Apex","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
@@ -269,6 +270,7 @@
     "2bb0086fa35ddd3c43009ad5f9378e6dcb69e480": [{"name":"Necrophos Serpent Spite","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "2bd44b06331c68387c6335e398c4beb0c0d19898": [{"name":"Gabe Shopkeeper","categoryId":"other","styleLabel":null,"type":"vpk"}],
     "2bdd984dc782af1297ad3926b39070dfcda64317": [{"name":"Terrorblade Blue Spell","categoryId":"hero-icons","styleLabel":null,"type":"vpk"}],
+    "2c0f434a124ba733930beb02771c3f6cd1da464b": [{"name":"Tcoaal Mach v2","categoryId":"parts","styleLabel":null,"type":"vpk"}],
     "2c53192c6cd314fefbd8649e8fe1bc2e9ae8d1c9": [{"name":"Woodland Dire Creeps","categoryId":"creeps","styleLabel":null,"type":"vpk"}],
     "2c5aed12cce4cd14545c3c6ad9896c34e7993a64": [{"name":"Darkest Dungeon","categoryId":"announcers","styleLabel":null,"type":"vpk"}],
     "2c5f7c763d7d7f2d5f1ed5f3986f9bbe3f513f4a": [{"name":"Earthshaker Cosmic Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -1059,6 +1061,7 @@
     "a68f0058acf9a9355f46db41ff33f4cd95d8d9f9": [{"name":"Shadow Fiend Black","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a6c004aaaccd0964612794c32ceba7a916095bcd": [{"name":"Immortal Slark","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a6c8d5e93ba1515da8ca3d4da74ab556ba8ed0c7": [{"name":"Terrorblade Load Out Rubiline","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "a6eded9c1863cc69fd233fddf8d1fe8cda880a81": [{"name":"Arc Warden The Duna","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a6f12afb10c7ff989b02ca0b3b89ef86ade323cc": [{"name":"Broodmother Golden Orbweaver","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a714437d4cbf831678b8b5ebe062c8b17b6176f0": [{"name":"Heroes Within","categoryId":"music","styleLabel":null,"type":"vpk"}],
     "a71f2ec5e4058fa766a7fc1f32849adde040fa33": [{"name":"Gardens Roshan","categoryId":"roshan","styleLabel":null,"type":"vpk"}],
