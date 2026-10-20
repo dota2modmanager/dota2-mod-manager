@@ -227,10 +227,14 @@ export function chase(opts: {
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
       // a hidden tab is not a chase: nothing moves and nothing drains until it is back
-      const dt = document.hidden ? 0 : Math.min(0.033, (now - last) / 1000);
+      // Two clocks. The body moves in short steps so it never jumps through a wall, but breath,
+      // the heart and the chase's length run on the real one: on a machine drawing few frames the
+      // short steps added up slower than time, and a chase meant to last 14 s took minutes.
+      const real = document.hidden ? 0 : Math.min(0.25, (now - last) / 1000);
+      const dt = Math.min(0.033, real);
       last = now;
       if (!dt) return;
-      t += dt;
+      t += real;
       const w = innerWidth, h = innerHeight;
 
       if (!over) {
@@ -262,7 +266,7 @@ export function chase(opts: {
         y = clamp(y + vy * dt, SIZE / 2, h - SIZE / 2);
 
         const floor = 0.5 * clamp(1 - (t - INTRO) / STAMINA, 0, 1);
-        if (t > INTRO) breath = clamp(breath - dt * threat * DRAIN + (threat === 0 ? dt * REST : 0), floor, 1);
+        if (t > INTRO) breath = clamp(breath - real * threat * DRAIN + (threat === 0 ? real * REST : 0), floor, 1);
 
         // the cues, all from the one number
         const tired = 1 - breath;
@@ -272,7 +276,7 @@ export function chase(opts: {
         runner.style.filter = `saturate(${(0.3 + 0.95 * breath).toFixed(2)}) brightness(${(0.7 + 0.42 * breath).toFixed(2)}) drop-shadow(0 0 ${(4 + 16 * breath).toFixed(1)}px ${hero.primary})`;
         title.style.setProperty('--amp', `${(0.5 + 7.5 * breath).toFixed(2)}px`);
         title.style.setProperty('--split', `${(1 + 6 * breath).toFixed(2)}px`);
-        if (Math.random() < dt * (tired > 0.25 ? 9 * tired ** 1.4 : 0)) sweat();
+        if (Math.random() < real * (tired > 0.25 ? 9 * tired ** 1.4 : 0)) sweat();
 
         const next = spent ? 2 : breath < 0.55 ? 1 : 0;
         if (next !== stage) {
@@ -282,13 +286,13 @@ export function chase(opts: {
         }
         // the heart: lub-dub, fast while it is fresh, slow as it gives out
         const was = beat % 1;
-        beat += dt * (55 + 95 * breath) / 60;
+        beat += real * (55 + 95 * breath) / 60;
         const ph = beat % 1;
         // the heart you hear is the one you see: a thump on each of the two peaks
         if ((was < 0.06 && ph >= 0.06) || (ph < was && ph >= 0.06)) sound.heart(0.5 + 0.5 * breath);
         else if (was < 0.24 && ph >= 0.24) sound.heart(0.3 + 0.3 * breath);
         sound.feet(Math.hypot(vx, vy));
-        if ((t * 2 | 0) !== ((t - dt) * 2 | 0)) sound.tension(breath);
+        if ((t * 2 | 0) !== ((t - real) * 2 | 0)) sound.tension(breath);
         const lub = Math.exp(-(((ph - 0.06) / 0.05) ** 2)) + 0.6 * Math.exp(-(((ph - 0.24) / 0.05) ** 2));
         pulse.style.opacity = (0.3 + 0.7 * lub * (0.35 + 0.65 * breath)).toFixed(3);
 

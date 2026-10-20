@@ -299,7 +299,7 @@ test('the eight mascots hide in the margins, and only where there are margins', 
 });
 
 /** Chase the one that runs (src/scripts/chase.ts) the way a hand would, until it is caught. */
-async function runDown(page, limit = 90_000) {
+async function runDown(page, limit = 200_000) {
   const t0 = Date.now();
   let mx = 700, my = 420, lastClick = 0;
   while (Date.now() - t0 < limit) {
@@ -355,7 +355,7 @@ test('until the build says the last one runs, the eighth is found like the other
   await context.close();
 });
 
-test('the last of the eight runs, and only a long chase catches it: the site turns, and a key that fits the app', { timeout: 180_000 }, async () => {
+test('the last of the eight runs, and only a long chase catches it: the site turns, and a key that fits the app', { timeout: 300_000 }, async () => {
   const { context, page } = await chasing();
   for (let i = 0; i < 7; i++) {
     await page.locator('.hunt-hero:not(.pop):not(.runner)').first().click({ force: true });
@@ -398,7 +398,7 @@ test('the last of the eight runs, and only a long chase catches it: the site tur
 
   // and it is not caught on the first try: a click on a fresh one only makes it dodge
   const took = await runDown(page);
-  assert.ok(took !== null, 'nobody could catch it in a minute and a half');
+  assert.ok(took !== null, 'nobody could catch it in two hundred seconds');
   assert.ok(took > 8000, `caught after ${took} ms, which is no chase at all`);
 
   const prize = page.locator('.hunt-key');

@@ -56,7 +56,12 @@ module.exports = async function pumpkin(sim) {
   const saved = await sim.js('window.api.settings.get()');
   sim.check('the ninth theme and the pumpkin are kept for next time', saved.secret === true && saved.pumpkin === true && saved.theme === 'secret', JSON.stringify({ secret: saved.secret, pumpkin: saved.pumpkin, theme: saved.theme }));
 
-  if (look === 'rainbow') {
+  // asked for less motion (the Windows runner turns animations off), the rainbow holds one hero
+  const still = await sim.js(`matchMedia('(prefers-reduced-motion: reduce)').matches`);
+  if (look === 'rainbow' && still) {
+    await sim.settle(7000);
+    sim.check('with less motion asked for, the rainbow holds still', (await sim.js('document.documentElement.dataset.hue')) === open.hue);
+  } else if (look === 'rainbow') {
     // it does not hold one hero: within a round it has moved on
     const first = open.hue;
     await sim.until(`document.documentElement.dataset.hue !== ${lit(first)}`, 9000);
