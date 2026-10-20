@@ -2,6 +2,21 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.16.0
+
+### The Halloween update
+
+Something has carved its way into the app, and dota2modmanager.com has a new secret of its own.
+Nobody is going to tell you where. Eight heroes know the way.
+
+### The site
+
+- A warning about copies of this app that go around under other names, some of them paid or
+  asking for a login, with a page on how to tell the real one: dota2modmanager.com/docs/copies/.
+- On a phone, the comparison table on the front page no longer squeezes each row's name into a
+  quarter of its card, and the download menu no longer opens past the edge of the screen.
+- Link previews show each mod's picture at its real size.
+
 ## 2.15.0
 
 ### A link to one mod
