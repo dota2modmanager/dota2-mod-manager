@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1529,
+  "mods": 1534,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -337,6 +337,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"White Spell Radius","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },
@@ -346,7 +347,8 @@
         {"name":"Dawnbreaker Death Knight","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
         {"name":"Dawnbreaker Moonbreaker","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head"]},
         {"name":"Dawnbreaker Starlorn Adjudicator","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
-        {"name":"Pink Spell Radius","categoryId":"other","styleLabel":null,"slots":[]}
+        {"name":"Pink Spell Radius","categoryId":"other","styleLabel":null,"slots":[]},
+        {"name":"White Spell Radius","categoryId":"other","styleLabel":null,"slots":[]}
       ]
     },
     "dazzle": {
@@ -1155,6 +1157,7 @@
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Immortal Necrophos","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs","shoulder"]},
         {"name":"Necrophos Eucliwood Halsace","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs","weapon","shoulder","arms","wings","tail"]},
+        {"name":"Necrophos Irkutsk Chuma","categoryId":"hero-items","styleLabel":null,"slots":["misc","weapon"]},
         {"name":"Necrophos Serpent Spite","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs","shoulder"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -1352,7 +1355,8 @@
         {"name":"Primal Beast Snowbeast","categoryId":"heroes","styleLabel":null,"slots":["arms","legs","back","head"]},
         {"name":"Primal Beast Strongbox","categoryId":"heroes","styleLabel":null,"slots":["arms","back","legs","head"]},
         {"name":"Primal Beast Strongbox Reborn","categoryId":"heroes","styleLabel":null,"slots":["arms","back","legs","head"]},
-        {"name":"Primal Beast Temple Guardian","categoryId":"hero-items","styleLabel":null,"slots":["arms"]}
+        {"name":"Primal Beast Temple Guardian","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
+        {"name":"White Spell Radius","categoryId":"other","styleLabel":null,"slots":[]}
       ]
     },
     "puck": {
@@ -1672,6 +1676,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"White Spell Radius","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },
