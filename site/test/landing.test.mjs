@@ -310,8 +310,9 @@ async function runDown(page, limit = 90_000) {
       return { x: b.left + b.width / 2, y: b.top + b.height / 2 };
     });
     if (!r) return Date.now() - t0;
-    const dx = r.x - mx, dy = r.y - my, d = Math.hypot(dx, dy), step = 60;
-    if (d > step) { mx += (dx / d) * step; my += (dy / d) * step; } else { mx = r.x; my = r.y; }
+    // straight onto it, however long a step takes: on a slow CI runner a hand that moved a fixed
+    // distance per step never got near, and the chase never ended (2026-10-20)
+    mx = r.x; my = r.y;
     await page.mouse.move(mx, my);
     if (Math.hypot(r.x - mx, r.y - my) < 50 && Date.now() - lastClick > 280) {
       lastClick = Date.now();
