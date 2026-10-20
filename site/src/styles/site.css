@@ -1429,7 +1429,7 @@ html.halloween .hunt-key-code { background-image: linear-gradient(90deg, #ffb35c
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hw-web, .hw-garland span, .hw-lantern .pk-face, .hw-blood i, .hw-blood i::after { animation: none; }
+  .hw-web:is(.tl, .tr, .bl, .br), .hw-garland span, .hw-lantern .pk-face, .hw-blood i, .hw-blood i::after { animation: none; }
   .hw-blood i::after { display: none; }
 }
 
@@ -1442,7 +1442,7 @@ html.halloween .hunt-key-code { background-image: linear-gradient(90deg, #ffb35c
   .wall-moving .wall-row { animation: none; }
   html.rainbow { animation: none; --primary: #fac898; }
   html.rainbow :is(h1, h2, .wordmark, .btn:not(.ghost), .badge b, .show-tab[aria-selected='true']) { animation: none; }
-  .hw-web, .hw-garland span, .hw-lantern .pk-face, .hw-blood i, .hw-blood i::after { animation: none; }
+  .hw-web:is(.tl, .tr, .bl, .br), .hw-garland span, .hw-lantern .pk-face, .hw-blood i, .hw-blood i::after { animation: none; }
   .hw-blood i::after { display: none; }
   .topbar { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--surface) 96%, transparent); }
 }
