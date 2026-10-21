@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1536,
+  "mods": 1540,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -93,6 +93,7 @@
         {"name":"Axe Immortal Bootblack Brawler","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon"]},
         {"name":"Axe Immortal Rampage","categoryId":"heroes","styleLabel":null,"slots":["arms","tail","belt","weapon","back","misc"]},
         {"name":"Axe Kratos","categoryId":"heroes","styleLabel":null,"slots":["weapon","tail","head","belt","arms"]},
+        {"name":"Axe Molten Fist","categoryId":"heroes","styleLabel":null,"slots":["arms","tail","belt","weapon","legs","misc"]},
         {"name":"Axe Unleashed","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","misc","head"]}
       ]
     },
@@ -493,6 +494,7 @@
         {"name":"Earthshaker Cosmic Arcana V2","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head"]},
         {"name":"Earthshaker Deep Magma","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head","weapon"]},
         {"name":"Earthshaker Gold Blink Dagger","categoryId":"item-effects","styleLabel":null,"slots":[]},
+        {"name":"Earthshaker Herald Gar Beast","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","belt","head"]},
         {"name":"Earthshaker Purple Arcana","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc"]},
         {"name":"Earthshaker Red Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","belt"]},
         {"name":"Earthshaker Tectonic","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head","weapon"]}
@@ -1594,7 +1596,8 @@
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
-        {"name":"Silencer Oscilla Immortal","categoryId":"heroes","styleLabel":null,"slots":["head","misc","shield","shoulder","weapon","arms","belt"]},
+        {"name":"Silencer Oscilla Crimson","categoryId":"heroes","styleLabel":null,"slots":["misc","shoulder","arms","head","shield","weapon"]},
+        {"name":"Silencer Oscilla Immortal","categoryId":"heroes","styleLabel":null,"slots":["misc","shoulder","arms","head","shield","weapon"]},
         {"name":"Silencer Whispered Wing","categoryId":"heroes","styleLabel":null,"slots":["head","misc","shield","shoulder","weapon","arms"]},
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -1608,6 +1611,7 @@
         {"name":"Aquamarine Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand","misc"]},
         {"name":"Naga Siren 42 Bratuha","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand","legs","misc"]},
         {"name":"Naga Siren Allure of the Deep","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
+        {"name":"Naga Siren Bell Of Meranthia","categoryId":"heroes","styleLabel":null,"slots":["tail","head","offhand","weapon"]},
         {"name":"Naga Siren Coral Cultist Frost","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
         {"name":"Naga Siren Diretide","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
         {"name":"Naga Siren Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
