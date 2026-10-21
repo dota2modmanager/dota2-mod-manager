@@ -2926,14 +2926,14 @@
           "date": 1790392857
         },
         {
-          "name": "Pudge G0Lovach",
+          "name": "Pudge Gol0vach",
           "categoryId": "heroes",
           "styleLabel": null,
           "slots": ["back","belt","arms","head","weapon","misc"],
-          "image": {"src":"/mods/pudge-g0lovach.webp","width":854,"height":480},
+          "image": {"src":"/mods/pudge-gol0vach.webp","width":854,"height":480},
           "author": "твавт",
           "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1792415868
+          "date": 1792590707
         },
         {
           "name": "Pudge Greasepaint Gutbuster",
@@ -3414,6 +3414,213 @@
       ]
     },
     {
+      "id": "techies",
+      "name": "Techies",
+      "slug": "techies",
+      "mods": [
+        {
+          "name": "Techies Sunken Galley",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["mount","misc","arms"],
+          "image": {"src":"/mods/techies-sunken-galley.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/eternalsadism",
+          "date": 1788815201
+        },
+        {
+          "name": "Techies Alien",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon"],
+          "image": {"src":"/mods/techies-alien.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1772534203
+        },
+        {
+          "name": "Techies Arab",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon"],
+          "image": {"src":"/mods/techies-arab.webp","width":854,"height":480},
+          "author": "laskotdota",
+          "authorUrl": "https://t.me/laskotdota",
+          "date": 1766660349
+        },
+        {
+          "name": "Techies Gol0Vach",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon"],
+          "image": {"src":"/mods/techies-gol0vach.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1792591892
+        },
+        {
+          "name": "Techies Sodbustin Saboteurs",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon"],
+          "image": {"src":"/mods/techies-sodbustin-saboteurs.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1766260456
+        },
+        {
+          "name": "Techies War Rig Pachyderm",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon"],
+          "image": {"src":"/mods/techies-war-rig-pachyderm.webp","width":1280,"height":720},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1764289001
+        },
+        {
+          "name": "Techies Arcana",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["misc","mount","arms"],
+          "image": {"src":"/mods/techies-arcana.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1787848064
+        },
+        {
+          "name": "Techies Arcana Shanachnetsya",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["misc","mount","arms"],
+          "image": {"src":"/mods/techies-arcana-shanachnetsya.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790392857
+        },
+        {
+          "name": "Techies Frostbloom Weapon",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/techies-frostbloom-weapon.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/eternalsadism",
+          "date": 1787848064
+        },
+        {
+          "name": "Zeleniy Techies",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/zeleniy-techies.webp","width":854,"height":480},
+          "author": "shears001",
+          "authorUrl": "https://discord.com/users/1204344805748903948",
+          "date": 1791374590
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Techies Mine Radius",
+          "categoryId": "other",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/techies-mine-radius.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1772534203
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "sniper",
       "name": "Sniper",
       "slug": "sniper",
@@ -3567,203 +3774,6 @@
           "author": "hrdq",
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765442943
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "techies",
-      "name": "Techies",
-      "slug": "techies",
-      "mods": [
-        {
-          "name": "Techies Sunken Galley",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["mount","misc","arms"],
-          "image": {"src":"/mods/techies-sunken-galley.webp","width":854,"height":480},
-          "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
-          "date": 1788815201
-        },
-        {
-          "name": "Techies Alien",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","weapon"],
-          "image": {"src":"/mods/techies-alien.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1772534203
-        },
-        {
-          "name": "Techies Arab",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","weapon"],
-          "image": {"src":"/mods/techies-arab.webp","width":854,"height":480},
-          "author": "laskotdota",
-          "authorUrl": "https://t.me/laskotdota",
-          "date": 1766660349
-        },
-        {
-          "name": "Techies Sodbustin Saboteurs",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","weapon"],
-          "image": {"src":"/mods/techies-sodbustin-saboteurs.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1766260456
-        },
-        {
-          "name": "Techies War Rig Pachyderm",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","weapon"],
-          "image": {"src":"/mods/techies-war-rig-pachyderm.webp","width":1280,"height":720},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1764289001
-        },
-        {
-          "name": "Techies Arcana",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["misc","mount","arms"],
-          "image": {"src":"/mods/techies-arcana.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1787848064
-        },
-        {
-          "name": "Techies Arcana Shanachnetsya",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["misc","mount","arms"],
-          "image": {"src":"/mods/techies-arcana-shanachnetsya.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790392857
-        },
-        {
-          "name": "Techies Frostbloom Weapon",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/techies-frostbloom-weapon.webp","width":854,"height":480},
-          "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
-          "date": 1787848064
-        },
-        {
-          "name": "Zeleniy Techies",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/zeleniy-techies.webp","width":854,"height":480},
-          "author": "shears001",
-          "authorUrl": "https://discord.com/users/1204344805748903948",
-          "date": 1791374590
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Techies Mine Radius",
-          "categoryId": "other",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/techies-mine-radius.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1772534203
         },
         {
           "name": "TI10 Ranged Attack",

@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1535,
+  "mods": 1536,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1390,7 +1390,7 @@
         {"name":"Pudge CM","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon"]},
         {"name":"Pudge Dendi Arcana","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Feast Immortal","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
-        {"name":"Pudge G0Lovach","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
+        {"name":"Pudge Gol0vach","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Greasepaint Gutbuster","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Hood of Defiance","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Pudge Immortal Gold","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
@@ -1791,6 +1791,7 @@
         {"name":"Techies Arcana","categoryId":"hero-items","styleLabel":null,"slots":["misc","mount","arms"]},
         {"name":"Techies Arcana Shanachnetsya","categoryId":"hero-items","styleLabel":null,"slots":["misc","mount","arms"]},
         {"name":"Techies Frostbloom Weapon","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Techies Gol0Vach","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]},
         {"name":"Techies Mine Radius","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Techies Sodbustin Saboteurs","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]},
         {"name":"Techies Sunken Galley","categoryId":"heroes","styleLabel":null,"slots":["mount","misc","arms"]},
