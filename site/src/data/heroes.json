@@ -136,13 +136,23 @@
           "date": 1791908483
         },
         {
+          "name": "Invoker Dark Apex",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["shoulder","misc","arms","back","head"],
+          "image": {"src":"/mods/invoker-dark-apex.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1792583758
+        },
+        {
           "name": "Invoker Dark Artistry",
           "categoryId": "heroes",
           "styleLabel": null,
           "slots": ["arms","back","misc","head","shoulder"],
           "image": {"src":"/mods/invoker-dark-artistry.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766382657
         },
         {
@@ -151,8 +161,8 @@
           "styleLabel": null,
           "slots": ["arms","back","misc","head","shoulder"],
           "image": {"src":"/mods/invoker-dark-artistry-v2.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766443370
         },
         {
@@ -181,8 +191,8 @@
           "styleLabel": null,
           "slots": ["misc","arms","back","head","shoulder"],
           "image": {"src":"/mods/invoker-fate-meridian.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771017673
         },
         {
@@ -271,8 +281,8 @@
           "styleLabel": null,
           "slots": ["arms"],
           "image": {"src":"/mods/invoker-magus-accord.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780741566
         },
         {
@@ -281,8 +291,8 @@
           "styleLabel": "White",
           "slots": ["arms"],
           "image": {"src":"/mods/invoker-magus-accord-white.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780741566
         },
         {
@@ -291,8 +301,8 @@
           "styleLabel": null,
           "slots": ["head"],
           "image": {"src":"/mods/invoker-magus-apex.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1778075019
         },
         {
@@ -835,8 +845,8 @@
           "styleLabel": null,
           "slots": ["head","wings","shoulder","arms"],
           "image": {"src":"/mods/shadow-fiend-lightning-soul.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1789395409
         },
         {
@@ -845,8 +855,8 @@
           "styleLabel": null,
           "slots": ["arms","head","shoulder","wings"],
           "image": {"src":"/mods/shadow-fiend-sundered-souls.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765891036
         },
         {
@@ -905,8 +915,8 @@
           "styleLabel": null,
           "slots": ["arms","head","shoulder"],
           "image": {"src":"/mods/shadow-fiend-eternal-harvest.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781942779
         },
         {
@@ -915,8 +925,8 @@
           "styleLabel": "Spring",
           "slots": ["arms","head","shoulder"],
           "image": {"src":"/mods/shadow-fiend-eternal-harvest-spring.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781942779
         },
         {
@@ -925,8 +935,8 @@
           "styleLabel": "Style II",
           "slots": ["arms","head","shoulder"],
           "image": {"src":"/mods/shadow-fiend-king-of-vipers-style-ii.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771025586
         },
         {
@@ -935,8 +945,8 @@
           "styleLabel": "Style III",
           "slots": ["arms","head","shoulder"],
           "image": {"src":"/mods/shadow-fiend-king-of-vipers-style-iii.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771025586
         },
         {
@@ -945,8 +955,8 @@
           "styleLabel": "Style I",
           "slots": ["arms","head","shoulder"],
           "image": {"src":"/mods/shadow-fiend-king-of-vipers-style-i.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771025586
         },
         {
@@ -955,8 +965,8 @@
           "styleLabel": null,
           "slots": ["arms","head","shoulder"],
           "image": {"src":"/mods/shadow-fiend-souls-tyrant.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780143296
         },
         {
@@ -1005,8 +1015,8 @@
           "styleLabel": null,
           "slots": ["arms"],
           "image": {"src":"/mods/shadow-fiend-arms-of-desolation.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780692007
         },
         {
@@ -1015,8 +1025,8 @@
           "styleLabel": null,
           "slots": ["shoulder"],
           "image": {"src":"/mods/shadow-fiend-eternal-harvest-2.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780692007
         },
         {
@@ -1409,8 +1419,8 @@
           "styleLabel": null,
           "slots": ["head","mount","shield","shoulder","weapon"],
           "image": {"src":"/mods/luna-bloodmoon-stalker.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1772641602
         },
         {
@@ -1499,8 +1509,8 @@
           "styleLabel": "Golden",
           "slots": ["shield"],
           "image": {"src":"/mods/luna-moonfall-golden.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780230946
         },
         {
@@ -1509,8 +1519,8 @@
           "styleLabel": null,
           "slots": ["shield"],
           "image": {"src":"/mods/luna-moonfall.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780230946
         },
         {
@@ -1519,8 +1529,8 @@
           "styleLabel": "Crimson",
           "slots": ["weapon"],
           "image": {"src":"/mods/luna-twilight-schism-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780230946
         },
         {
@@ -1529,8 +1539,8 @@
           "styleLabel": "Golden",
           "slots": ["weapon"],
           "image": {"src":"/mods/luna-twilight-schism-golden.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780230946
         },
         {
@@ -1539,8 +1549,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/luna-twilight-schism.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780230946
         },
         {
@@ -1676,8 +1686,8 @@
           "styleLabel": null,
           "slots": ["misc","back","head","arms","shoulder"],
           "image": {"src":"/mods/cosmic-tinker.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776304745
         },
         {
@@ -1716,8 +1726,8 @@
           "styleLabel": null,
           "slots": ["back","head","arms","shoulder","weapon"],
           "image": {"src":"/mods/tinker-submerged-hazard.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1763694211
         },
         {
@@ -1866,8 +1876,8 @@
           "styleLabel": null,
           "slots": [],
           "image": {"src":"/mods/tinker-lite-machines.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1773596942
         },
         {
@@ -1923,8 +1933,8 @@
           "styleLabel": "Exceptional",
           "slots": ["weapon"],
           "image": {"src":"/mods/lion-fin-kings-charm-exceptional.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787598535
         },
         {
@@ -1933,8 +1943,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/lion-fin-kings-charm.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787598535
         },
         {
@@ -1943,8 +1953,8 @@
           "styleLabel": "Purple",
           "slots": ["weapon"],
           "image": {"src":"/mods/lion-fin-kings-charm-purple.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787598535
         },
         {
@@ -1953,8 +1963,8 @@
           "styleLabel": "Retro",
           "slots": ["weapon"],
           "image": {"src":"/mods/lion-fin-kings-charm-retro.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787598535
         },
         {
@@ -1963,8 +1973,8 @@
           "styleLabel": "Crimson",
           "slots": ["arms"],
           "image": {"src":"/mods/lion-hell-spar-anathema-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787602307
         },
         {
@@ -1973,8 +1983,8 @@
           "styleLabel": null,
           "slots": ["arms"],
           "image": {"src":"/mods/lion-hell-spar-anathema.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787602307
         },
         {
@@ -1983,8 +1993,8 @@
           "styleLabel": "Obsidian",
           "slots": ["arms"],
           "image": {"src":"/mods/lion-hell-spar-anathema-obsidian.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787602307
         },
         {
@@ -1993,8 +2003,8 @@
           "styleLabel": "Purple",
           "slots": ["arms"],
           "image": {"src":"/mods/lion-hell-spar-anathema-purple.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787602307
         },
         {
@@ -2003,8 +2013,8 @@
           "styleLabel": "Crimson",
           "slots": ["back"],
           "image": {"src":"/mods/lion-mulctant-pall-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776439861
         },
         {
@@ -2013,8 +2023,8 @@
           "styleLabel": null,
           "slots": ["back"],
           "image": {"src":"/mods/lion-mulctant-pall.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776439861
         },
         {
@@ -2023,8 +2033,8 @@
           "styleLabel": "Purple",
           "slots": ["back"],
           "image": {"src":"/mods/lion-mulctant-pall-purple.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776439861
         },
         {
@@ -2170,8 +2180,8 @@
           "styleLabel": null,
           "slots": ["head","mount","legs","weapon"],
           "image": {"src":"/mods/keeper-of-the-light-renegade.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1775454991
         },
         {
@@ -2397,8 +2407,8 @@
           "styleLabel": null,
           "slots": ["head","misc","shoulder"],
           "image": {"src":"/mods/storm-spirit-beast-of-thunder.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1764952100
         },
         {
@@ -2407,8 +2417,8 @@
           "styleLabel": null,
           "slots": ["head","misc","shoulder"],
           "image": {"src":"/mods/storm-spirit-corridan-maestro.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1764952100
         },
         {
@@ -2417,8 +2427,8 @@
           "styleLabel": null,
           "slots": ["misc"],
           "image": {"src":"/mods/storm-spirit-corridan-maestro-2.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776836491
         },
         {
@@ -2427,8 +2437,8 @@
           "styleLabel": null,
           "slots": ["head"],
           "image": {"src":"/mods/storm-spirit-lightning-orchid.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776836491
         },
         {
@@ -2437,8 +2447,8 @@
           "styleLabel": "Retro",
           "slots": ["head"],
           "image": {"src":"/mods/storm-spirit-lightning-orchid-retro.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776836491
         },
         {
@@ -2447,8 +2457,8 @@
           "styleLabel": "Retro v2",
           "slots": ["head"],
           "image": {"src":"/mods/storm-spirit-lightning-orchid-retro-v2.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776836491
         },
         {
@@ -2467,8 +2477,8 @@
           "styleLabel": "Golden",
           "slots": ["shoulder"],
           "image": {"src":"/mods/storm-spirit-stormborn-mandate-golden.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776836841
         },
         {
@@ -2477,8 +2487,8 @@
           "styleLabel": null,
           "slots": ["shoulder"],
           "image": {"src":"/mods/storm-spirit-stormborn-mandate.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776836841
         },
         {
@@ -2891,8 +2901,8 @@
           "styleLabel": null,
           "slots": ["back","belt","arms","head","weapon","misc"],
           "image": {"src":"/mods/pudge-candy-cat.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771681325
         },
         {
@@ -2951,8 +2961,8 @@
           "styleLabel": null,
           "slots": ["back","belt","arms","head","weapon","misc"],
           "image": {"src":"/mods/pudge-iron-hog.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771681325
         },
         {
@@ -2961,8 +2971,8 @@
           "styleLabel": null,
           "slots": ["back","belt","arms","head","weapon","misc"],
           "image": {"src":"/mods/pudge-mindless-slaughter.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771681325
         },
         {
@@ -2971,8 +2981,8 @@
           "styleLabel": null,
           "slots": ["back","belt","arms","head","weapon","misc"],
           "image": {"src":"/mods/pudge-rotzo-the-clown.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771681325
         },
         {
@@ -3052,7 +3062,16 @@
           "authorUrl": "https://discord.com/users/538760177470668810",
           "date": 1777911854
         },
-        {"name":"Bedrock","categoryId":"terrains","styleLabel":null,"slots":["misc"],"image":{"src":"/mods/bedrock.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1782296453},
+        {
+          "name": "Bedrock",
+          "categoryId": "terrains",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/bedrock.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1782296453
+        },
         {
           "name": "Dark Terrain Minify",
           "categoryId": "terrains",
@@ -3089,8 +3108,8 @@
           "styleLabel": null,
           "slots": ["misc"],
           "image": {"src":"/mods/mossy-cobblestone.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1782296453
         },
         {"name":"Simple Dark Terrain Minify","categoryId":"terrains","styleLabel":"Green","slots":["misc"],"image":null,"author":"Robbyz","authorUrl":"https://github.com/robbyz512","date":1785323948},
@@ -3208,8 +3227,8 @@
           "styleLabel": null,
           "slots": ["belt","misc","head","shoulder","weapon"],
           "image": {"src":"/mods/anubis-phantom-lancer.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1764486398
         },
         {
@@ -3268,8 +3287,8 @@
           "styleLabel": null,
           "slots": ["belt","misc","head","shoulder","weapon"],
           "image": {"src":"/mods/phantom-lancer-dark-carnival.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1783870835
         },
         {
@@ -3338,8 +3357,8 @@
           "styleLabel": null,
           "slots": ["head","shoulder","weapon"],
           "image": {"src":"/mods/phantom-lancer-immortal-avilliva.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777361234
         },
         {
@@ -3405,8 +3424,8 @@
           "styleLabel": null,
           "slots": ["arms","back","head","shoulder","weapon"],
           "image": {"src":"/mods/sniper-ardalan-interdictor.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776242547
         },
         {
@@ -3415,8 +3434,8 @@
           "styleLabel": null,
           "slots": ["weapon","shoulder","head","back","arms"],
           "image": {"src":"/mods/sniper-blacksail-cannoneer.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787925089
         },
         {
@@ -3425,8 +3444,8 @@
           "styleLabel": null,
           "slots": ["arms","back","head","shoulder","weapon"],
           "image": {"src":"/mods/sniper-howling-wolf.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771681325
         },
         {
@@ -3455,8 +3474,8 @@
           "styleLabel": "Crimson",
           "slots": ["back"],
           "image": {"src":"/mods/sniper-full-bore-bonanza-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787925089
         },
         {
@@ -3465,8 +3484,8 @@
           "styleLabel": "Golden",
           "slots": ["back"],
           "image": {"src":"/mods/sniper-full-bore-bonanza-golden.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787925089
         },
         {
@@ -3475,8 +3494,8 @@
           "styleLabel": null,
           "slots": ["back"],
           "image": {"src":"/mods/sniper-full-bore-bonanza.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787925089
         },
         {
@@ -3485,8 +3504,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/sniper-occultists-pursuit.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787925089
         },
         {
@@ -3545,8 +3564,8 @@
           "styleLabel": null,
           "slots": [],
           "image": {"src":"/mods/sniper-ardalan-interdictor-2.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765442943
         },
         {
@@ -3612,8 +3631,8 @@
           "styleLabel": null,
           "slots": ["misc","weapon"],
           "image": {"src":"/mods/techies-alien.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1772534203
         },
         {
@@ -3632,8 +3651,8 @@
           "styleLabel": null,
           "slots": ["misc","weapon"],
           "image": {"src":"/mods/techies-sodbustin-saboteurs.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766260456
         },
         {
@@ -3642,8 +3661,8 @@
           "styleLabel": null,
           "slots": ["misc","weapon"],
           "image": {"src":"/mods/techies-war-rig-pachyderm.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1764289001
         },
         {
@@ -3849,8 +3868,8 @@
           "styleLabel": "Golden",
           "slots": ["weapon"],
           "image": {"src":"/mods/crystal-maiden-ice-blossom-golden.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1783354875
         },
         {
@@ -3859,8 +3878,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/crystal-maiden-ice-blossom.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1783354875
         },
         {
@@ -3869,8 +3888,8 @@
           "styleLabel": null,
           "slots": ["head"],
           "image": {"src":"/mods/crystal-maiden-yulsarias-glacier.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1783354875
         },
         {
@@ -3879,8 +3898,8 @@
           "styleLabel": null,
           "slots": ["shoulder"],
           "image": {"src":"/mods/crystal-maiden-yulsarias-mantle.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1783354875
         },
         {
@@ -4193,8 +4212,8 @@
           "styleLabel": null,
           "slots": ["arms","back","head","misc","weapon"],
           "image": {"src":"/mods/bare-natures-prophet.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765720497
         },
         {
@@ -4213,8 +4232,8 @@
           "styleLabel": null,
           "slots": ["misc","arms","back","head","weapon"],
           "image": {"src":"/mods/natures-prophet-allfather.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1782202798
         },
         {
@@ -4253,8 +4272,8 @@
           "styleLabel": null,
           "slots": ["misc","weapon","head","back","arms"],
           "image": {"src":"/mods/white-natures-prophet.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1788958573
         },
         {
@@ -4577,8 +4596,8 @@
           "styleLabel": null,
           "slots": ["misc","shoulder","weapon"],
           "image": {"src":"/mods/dazzle-lifeless-devotion.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1784244448
         },
         {
@@ -4587,8 +4606,8 @@
           "styleLabel": null,
           "slots": ["misc","shoulder","weapon"],
           "image": {"src":"/mods/dazzle-needlepoint-necromance.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777011527
         },
         {
@@ -4597,8 +4616,8 @@
           "styleLabel": "Crimson",
           "slots": ["misc"],
           "image": {"src":"/mods/dazzle-gates-of-nothl-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777011527
         },
         {
@@ -4607,8 +4626,8 @@
           "styleLabel": null,
           "slots": ["misc"],
           "image": {"src":"/mods/dazzle-gates-of-nothl.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777011527
         },
         {
@@ -4739,8 +4758,26 @@
           "authorUrl": "https://vk.com/amir4an",
           "date": 1766253727
         },
-        {"name":"Galactic IO","categoryId":"heroes","styleLabel":null,"slots":[],"image":{"src":"/mods/galactic-io.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765100855},
-        {"name":"IO Madame Scrio","categoryId":"heroes","styleLabel":null,"slots":[],"image":{"src":"/mods/io-madame-scrio.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1783522642},
+        {
+          "name": "Galactic IO",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/galactic-io.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1765100855
+        },
+        {
+          "name": "IO Madame Scrio",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/io-madame-scrio.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1783522642
+        },
         {
           "name": "IO Pink Arcana",
           "categoryId": "heroes",
@@ -4751,7 +4788,16 @@
           "authorUrl": "https://vk.com/defiree2mods",
           "date": 1756539017
         },
-        {"name":"IO Purple","categoryId":"heroes","styleLabel":null,"slots":[],"image":{"src":"/mods/io-purple.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756539017},
+        {
+          "name": "IO Purple",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/io-purple.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1756539017
+        },
         {
           "name": "Aghanim Ranged Attack",
           "categoryId": "ranged-attack",
@@ -5229,8 +5275,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/lone-druid-cauldron-of-xahryx.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777750466
         },
         {
@@ -5239,8 +5285,8 @@
           "styleLabel": "Retro",
           "slots": ["weapon"],
           "image": {"src":"/mods/lone-druid-cauldron-of-xahryx-retro.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777750466
         },
         {
@@ -5249,8 +5295,8 @@
           "styleLabel": "Retro v2",
           "slots": ["weapon"],
           "image": {"src":"/mods/lone-druid-cauldron-of-xahryx-retro-v2.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777750466
         },
         {
@@ -5259,8 +5305,8 @@
           "styleLabel": null,
           "slots": ["arms"],
           "image": {"src":"/mods/lone-druid-claws-of-nuranu.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777750466
         },
         {
@@ -5603,8 +5649,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/windranger-peregrine-flight.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787135218
         },
         {
@@ -5754,7 +5800,16 @@
           "authorUrl": "https://t.me/madberserker",
           "date": 1790809354
         },
-        {"name":"Bare Brewmaster","categoryId":"heroes","styleLabel":null,"slots":[],"image":{"src":"/mods/bare-brewmaster.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1756537726},
+        {
+          "name": "Bare Brewmaster",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/bare-brewmaster.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1756537726
+        },
         {
           "name": "Aghanim Ranged Attack",
           "categoryId": "ranged-attack",
@@ -5888,8 +5943,8 @@
           "styleLabel": null,
           "slots": ["head","misc","legs"],
           "image": {"src":"/mods/broodmother-epoch-of-the-abysm.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766145785
         },
         {
@@ -5938,8 +5993,8 @@
           "styleLabel": null,
           "slots": ["misc","head","legs"],
           "image": {"src":"/mods/broodmother-silken-queen.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1770736101
         },
         {
@@ -5948,8 +6003,8 @@
           "styleLabel": null,
           "slots": ["misc","head","legs"],
           "image": {"src":"/mods/broodmother-undermount-gloom.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776821710
         },
         {
@@ -6212,8 +6267,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","head","shield","shoulder","legs","weapon"],
           "image": {"src":"/mods/dragon-knight-silverwurm-sacrifice.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777812843
         },
         {
@@ -6222,8 +6277,8 @@
           "styleLabel": null,
           "slots": ["arms","head","shield","shoulder","legs","weapon"],
           "image": {"src":"/mods/emerald-dragon-knight.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1773392449
         },
         {
@@ -6399,8 +6454,8 @@
           "styleLabel": null,
           "slots": ["belt","arms","misc"],
           "image": {"src":"/mods/cosmic-earthshaker.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777007944
         },
         {
@@ -6556,8 +6611,8 @@
           "styleLabel": null,
           "slots": [],
           "image": {"src":"/mods/enigma-world-chasm-artifact.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766284079
         },
         {
@@ -6653,8 +6708,8 @@
           "styleLabel": null,
           "slots": ["misc","weapon","head","tail"],
           "image": {"src":"/mods/hoodwink-bilge-rat-buccaneer.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771681325
         },
         {
@@ -6683,8 +6738,8 @@
           "styleLabel": null,
           "slots": ["misc","weapon","head","tail"],
           "image": {"src":"/mods/hoodwink-tomokan-footsoldier.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1772755574
         },
         {
@@ -6693,8 +6748,8 @@
           "styleLabel": null,
           "slots": ["misc","weapon","head","tail"],
           "image": {"src":"/mods/immortal-hoodwink.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1778951513
         },
         {
@@ -6840,8 +6895,8 @@
           "styleLabel": null,
           "slots": ["arms","back","head","weapon"],
           "image": {"src":"/mods/oracle-immortal-silence.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771823372
         },
         {
@@ -7144,8 +7199,8 @@
           "styleLabel": null,
           "slots": ["arms","head","misc","weapon"],
           "image": {"src":"/mods/razor-silver-rrevenant.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766382657
         },
         {
@@ -7301,8 +7356,8 @@
           "styleLabel": null,
           "slots": ["back","head","weapon","shoulder"],
           "image": {"src":"/mods/rubick-dark-mage.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1767291507
         },
         {
@@ -7311,8 +7366,8 @@
           "styleLabel": null,
           "slots": ["back","head","weapon","shoulder"],
           "image": {"src":"/mods/rubick-plagueroad-apothacary.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1767189517
         },
         {
@@ -7458,8 +7513,8 @@
           "styleLabel": null,
           "slots": ["shoulder","tail"],
           "image": {"src":"/mods/immortal-ancient-apparition.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1778421509
         },
         {
@@ -7575,8 +7630,8 @@
           "styleLabel": null,
           "slots": ["arms","belt","misc","head","weapon","legs","offhand","shoulder"],
           "image": {"src":"/mods/anti-mage-illidan.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1769918621
         },
         {
@@ -7879,8 +7934,8 @@
           "styleLabel": null,
           "slots": ["arms","head","mount","shoulder","weapon"],
           "image": {"src":"/mods/chen-infernal-psychic.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1763705444
         },
         {
@@ -7899,8 +7954,8 @@
           "styleLabel": null,
           "slots": ["arms","head","mount","shoulder","weapon"],
           "image": {"src":"/mods/chen-seed-of-strife.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765893248
         },
         {
@@ -7909,8 +7964,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/chen-green-infernal.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1789398422
         },
         {
@@ -8320,8 +8375,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","head","weapon"],
           "image": {"src":"/mods/enchantress-darkwood-witness.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771681325
         },
         {
@@ -8497,8 +8552,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/mirana-pulsar-remnant.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787135218
         },
         {
@@ -8811,8 +8866,8 @@
           "styleLabel": null,
           "slots": ["back","misc","head","shoulder","weapon"],
           "image": {"src":"/mods/wraith-king-grim-destiny.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780226470
         },
         {
@@ -8831,8 +8886,8 @@
           "styleLabel": null,
           "slots": ["back","misc","head","shoulder","weapon"],
           "image": {"src":"/mods/wraith-king-pizdec.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765384615
         },
         {
@@ -8851,8 +8906,8 @@
           "styleLabel": null,
           "slots": ["back","misc","head","shoulder","weapon"],
           "image": {"src":"/mods/wraith-king-veil-tyrant.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780226470
         },
         {
@@ -8861,8 +8916,8 @@
           "styleLabel": null,
           "slots": ["misc"],
           "image": {"src":"/mods/wraith-king-blistering-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787040057
         },
         {
@@ -8881,8 +8936,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/wraith-king-winterblight.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780226470
         }
       ]
@@ -9065,8 +9120,8 @@
           "styleLabel": null,
           "slots": ["arms","head","legs","weapon"],
           "image": {"src":"/mods/grimstroke-gloom-shroud.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771871425
         },
         {
@@ -9246,7 +9301,16 @@
           "authorUrl": "https://t.me/Darkness_Logovo",
           "date": 1781266231
         },
-        {"name":"Bare Kez","categoryId":"heroes","styleLabel":null,"slots":["shoulder"],"image":{"src":"/mods/bare-kez.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1765999001},
+        {
+          "name": "Bare Kez",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["shoulder"],
+          "image": {"src":"/mods/bare-kez.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1765999001
+        },
         {
           "name": "Kez Tensura",
           "categoryId": "heroes",
@@ -9360,8 +9424,8 @@
           "styleLabel": null,
           "slots": ["back","misc","head","shoulder"],
           "image": {"src":"/mods/marci-laurels-of-the-downstar.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766284079
         },
         {
@@ -9457,8 +9521,8 @@
           "styleLabel": null,
           "slots": ["arms","weapon","head","shoulder"],
           "image": {"src":"/mods/monkey-king-simian-sovereign.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766284079
         },
         {
@@ -9467,8 +9531,8 @@
           "styleLabel": null,
           "slots": ["arms","weapon","head","shoulder"],
           "image": {"src":"/mods/monkey-king-water-demon.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1784176630
         },
         {
@@ -9487,8 +9551,8 @@
           "styleLabel": "Death",
           "slots": ["head"],
           "image": {"src":"/mods/monkey-king-arcana-death.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781270968
         },
         {
@@ -9497,8 +9561,8 @@
           "styleLabel": "Fire",
           "slots": ["head"],
           "image": {"src":"/mods/monkey-king-arcana-fire.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781270968
         },
         {
@@ -9507,8 +9571,8 @@
           "styleLabel": null,
           "slots": ["head"],
           "image": {"src":"/mods/monkey-king-arcana.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781270968
         },
         {
@@ -9517,8 +9581,8 @@
           "styleLabel": "Water",
           "slots": ["head"],
           "image": {"src":"/mods/monkey-king-arcana-water.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781270968
         },
         {
@@ -9527,8 +9591,8 @@
           "styleLabel": "Anniversary",
           "slots": ["weapon"],
           "image": {"src":"/mods/monkey-king-staff-of-gun-yu-anniversary.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781348535
         },
         {
@@ -9537,8 +9601,8 @@
           "styleLabel": "Crimson",
           "slots": ["weapon"],
           "image": {"src":"/mods/monkey-king-staff-of-gun-yu-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781348535
         },
         {
@@ -9547,8 +9611,8 @@
           "styleLabel": "Golden",
           "slots": ["weapon"],
           "image": {"src":"/mods/monkey-king-staff-of-gun-yu-golden.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781348535
         },
         {
@@ -9557,8 +9621,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/monkey-king-staff-of-gun-yu.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781348535
         }
       ]
@@ -9594,8 +9658,8 @@
           "styleLabel": null,
           "slots": ["misc","head","legs","shoulder"],
           "image": {"src":"/mods/necrophos-serpent-spite.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1774198352
         },
         {
@@ -9751,8 +9815,8 @@
           "styleLabel": null,
           "slots": ["weapon","back","misc","head","shoulder","belt"],
           "image": {"src":"/mods/warden-phantom-assassin.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1773556978
         },
         {
@@ -9811,8 +9875,8 @@
           "styleLabel": "Crimson",
           "slots": ["shoulder"],
           "image": {"src":"/mods/phantom-assassin-avowance-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780692007
         },
         {
@@ -9821,8 +9885,8 @@
           "styleLabel": null,
           "slots": ["shoulder"],
           "image": {"src":"/mods/phantom-assassin-avowance.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780692007
         },
         {
@@ -9831,8 +9895,8 @@
           "styleLabel": null,
           "slots": ["head"],
           "image": {"src":"/mods/phantom-assassin-codicil.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780692007
         }
       ]
@@ -9986,8 +10050,8 @@
           "styleLabel": null,
           "slots": ["arms","belt","head","misc","weapon","offhand"],
           "image": {"src":"/mods/shadow-shaman-purple.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1756539017
         },
         {
@@ -10006,8 +10070,8 @@
           "styleLabel": null,
           "slots": ["arms","belt","head","misc","weapon","offhand"],
           "image": {"src":"/mods/white-shadow-shaman.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766377740
         },
         {
@@ -10123,8 +10187,8 @@
           "styleLabel": null,
           "slots": ["arms","head","mount","weapon"],
           "image": {"src":"/mods/snapfire-whippersnapper.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1763904269
         },
         {
@@ -10250,8 +10314,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","shoulder","tail"],
           "image": {"src":"/mods/venomancer-poisonous-assassin.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781024680
         },
         {
@@ -10260,8 +10324,8 @@
           "styleLabel": "Purple",
           "slots": ["arms","misc","shoulder","tail"],
           "image": {"src":"/mods/venomancer-poisonous-assassin-purple.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781024680
         },
         {
@@ -10397,8 +10461,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","head"],
           "image": {"src":"/mods/visage-grimfeather-sorpse.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1758675825
         },
         {
@@ -10534,8 +10598,8 @@
           "styleLabel": null,
           "slots": ["belt","arms","head","misc"],
           "image": {"src":"/mods/cosmic-zeus.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1758967933
         },
         {
@@ -11306,8 +11370,8 @@
           "styleLabel": "Golden",
           "slots": ["back"],
           "image": {"src":"/mods/shadow-demon-grim-facade-golden.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1788587043
         },
         {
@@ -11316,8 +11380,8 @@
           "styleLabel": null,
           "slots": ["back"],
           "image": {"src":"/mods/shadow-demon-grim-facade.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1788587043
         },
         {
@@ -11443,8 +11507,8 @@
           "styleLabel": null,
           "slots": ["head","misc","shield","shoulder","weapon","arms"],
           "image": {"src":"/mods/silencer-whispered-wing.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766284079
         },
         {
@@ -11560,8 +11624,8 @@
           "styleLabel": null,
           "slots": ["arms","head","shoulder","weapon"],
           "image": {"src":"/mods/zuljin-troll-warlord.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1773556978
         },
         {
@@ -11931,8 +11995,8 @@
           "styleLabel": "Eternal",
           "slots": ["belt","arms","head","shield","shoulder","tail","weapon"],
           "image": {"src":"/mods/centaur-chaos-chosen-eternal.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781354613
         },
         {
@@ -11941,8 +12005,8 @@
           "styleLabel": null,
           "slots": ["belt","arms","head","shield","shoulder","tail","weapon"],
           "image": {"src":"/mods/centaur-chaos-chosen.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781354613
         },
         {
@@ -11951,8 +12015,8 @@
           "styleLabel": null,
           "slots": ["belt","arms","head","shield","shoulder","tail","weapon"],
           "image": {"src":"/mods/centaur-cunning-counterfeit.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765891036
         },
         {
@@ -11961,8 +12025,8 @@
           "styleLabel": null,
           "slots": ["belt","arms","head","shield","shoulder","tail","weapon"],
           "image": {"src":"/mods/centaur-emerald-marauder.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781354613
         },
         {
@@ -11971,8 +12035,8 @@
           "styleLabel": "Crimson",
           "slots": ["shoulder"],
           "image": {"src":"/mods/centaur-infernal-cavalcade-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781354613
         },
         {
@@ -11981,8 +12045,8 @@
           "styleLabel": "Golden",
           "slots": ["shoulder"],
           "image": {"src":"/mods/centaur-infernal-cavalcade-golden.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781354613
         },
         {
@@ -11991,8 +12055,8 @@
           "styleLabel": null,
           "slots": ["shoulder"],
           "image": {"src":"/mods/centaur-infernal-cavalcade.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781354613
         },
         {
@@ -12001,8 +12065,8 @@
           "styleLabel": "Crimson",
           "slots": ["head"],
           "image": {"src":"/mods/centaur-infernal-chieftain-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781354613
         },
         {
@@ -12011,8 +12075,8 @@
           "styleLabel": "Golden",
           "slots": ["head"],
           "image": {"src":"/mods/centaur-infernal-chieftain-golden.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781354613
         },
         {
@@ -12021,8 +12085,8 @@
           "styleLabel": null,
           "slots": ["head"],
           "image": {"src":"/mods/centaur-infernal-chieftain.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781354613
         },
         {
@@ -12031,8 +12095,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/centaur-infernal-menace.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781354613
         }
       ]
@@ -12235,8 +12299,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/kunkka-shadow-blade.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1775190022
         },
         {
@@ -12245,8 +12309,8 @@
           "styleLabel": "Eminent Revival",
           "slots": ["weapon"],
           "image": {"src":"/mods/kunkka-whale-blade-eminent-revival.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1775195016
         },
         {
@@ -12255,8 +12319,8 @@
           "styleLabel": "Eminent Revival Exceptional",
           "slots": ["weapon"],
           "image": {"src":"/mods/kunkka-whale-blade-eminent-revival-exceptional.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1775195016
         },
         {
@@ -12265,8 +12329,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/kunkka-whale-blade.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1775195016
         }
       ]
@@ -12770,8 +12834,8 @@
           "styleLabel": null,
           "slots": ["belt","arms","head","weapon"],
           "image": {"src":"/mods/magnus-ornate-cruelty.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777037538
         },
         {
@@ -12790,8 +12854,8 @@
           "styleLabel": "Crimson",
           "slots": ["head"],
           "image": {"src":"/mods/magnus-eyes-of-ardenok-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777037538
         },
         {
@@ -12800,8 +12864,8 @@
           "styleLabel": null,
           "slots": ["head"],
           "image": {"src":"/mods/magnus-eyes-of-ardenok.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777037538
         },
         {
@@ -12810,8 +12874,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/magnus-shock-of-the-anvil.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777037538
         },
         {
@@ -12837,8 +12901,8 @@
           "styleLabel": null,
           "slots": ["belt","arms","back","head","shoulder","misc","weapon"],
           "image": {"src":"/mods/pugna-nightwither-revenant.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1772556284
         },
         {
@@ -13014,8 +13078,8 @@
           "styleLabel": null,
           "slots": ["misc","head","weapon","wings"],
           "image": {"src":"/mods/spectre-shadowveil.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1763126851
         },
         {
@@ -13051,8 +13115,8 @@
           "styleLabel": null,
           "slots": ["misc","arms","back","shoulder","weapon"],
           "image": {"src":"/mods/warlock-puppet-bear.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1756539017
         },
         {
@@ -13479,8 +13543,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","belt","head","shoulder","weapon"],
           "image": {"src":"/mods/beastmaster-bone-armor.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765778824
         },
         {
@@ -13519,8 +13583,8 @@
           "styleLabel": null,
           "slots": ["shoulder"],
           "image": {"src":"/mods/beastmaster-primal-paean.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1778407359
         },
         {
@@ -13539,8 +13603,8 @@
           "styleLabel": "Crimson",
           "slots": ["weapon"],
           "image": {"src":"/mods/beastmaster-primal-peacemaker-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1778407359
         },
         {
@@ -13549,8 +13613,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/beastmaster-primal-peacemaker.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1778407359
         }
       ]
@@ -13596,8 +13660,8 @@
           "styleLabel": "Night",
           "slots": ["back","misc","weapon"],
           "image": {"src":"/mods/bounty-hunter-old-man-night.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1779535888
         },
         {
@@ -13606,8 +13670,8 @@
           "styleLabel": null,
           "slots": ["back","misc","weapon"],
           "image": {"src":"/mods/bounty-hunter-old-man.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1779535888
         },
         {
@@ -13616,8 +13680,8 @@
           "styleLabel": null,
           "slots": ["back","misc","weapon"],
           "image": {"src":"/mods/bounty-hunter-old-verminator.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766382657
         },
         {
@@ -13626,8 +13690,8 @@
           "styleLabel": "Crimson",
           "slots": ["back","weapon"],
           "image": {"src":"/mods/bounty-hunter-hunters-hoard-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1779535888
         },
         {
@@ -13636,8 +13700,8 @@
           "styleLabel": null,
           "slots": ["back","weapon"],
           "image": {"src":"/mods/bounty-hunter-hunters-hoard.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1779535888
         },
         {
@@ -13646,8 +13710,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/bounty-hunter-tines-of-tybara.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1779535888
         }
       ]
@@ -13703,8 +13767,8 @@
           "styleLabel": null,
           "slots": ["shoulder","head","belt","weapon","arms"],
           "image": {"src":"/mods/cosmic-faceless-void.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1758134079
         },
         {
@@ -13743,8 +13807,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/faceless-void-battlefury.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780214981
         }
       ]
@@ -13760,8 +13824,8 @@
           "styleLabel": null,
           "slots": ["misc","arms","back","legs"],
           "image": {"src":"/mods/immortal-primal-beast.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781030461
         },
         {
@@ -13897,8 +13961,8 @@
           "styleLabel": null,
           "slots": ["arms","back","head","shoulder","weapon"],
           "image": {"src":"/mods/slark-shadow-in-the-deep.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776439861
         },
         {
@@ -14101,8 +14165,8 @@
           "styleLabel": null,
           "slots": ["arms","back","belt","shoulder","weapon"],
           "image": {"src":"/mods/ember-spirit-master-of-searing-path.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1771071220
         },
         {
@@ -14168,8 +14232,8 @@
           "styleLabel": null,
           "slots": ["arms","belt","weapon","misc","head"],
           "image": {"src":"/mods/lycan-red-wolf-clan.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1763704289
         },
         {
@@ -14372,8 +14436,8 @@
           "styleLabel": null,
           "slots": ["legs","head","arms","misc"],
           "image": {"src":"/mods/treant-protector-frost-hideaway.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766145785
         },
         {
@@ -14419,8 +14483,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","head","legs"],
           "image": {"src":"/mods/ursa-alpine-stalker.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1770569976
         },
         {
@@ -14429,8 +14493,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","head","legs"],
           "image": {"src":"/mods/ursa-crystal-drift.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777037538
         },
         {
@@ -14439,8 +14503,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","head","legs"],
           "image": {"src":"/mods/ursa-feast-of-the-damned.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1770569976
         },
         {
@@ -14459,8 +14523,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","head","legs"],
           "image": {"src":"/mods/ursa-roshan-hunter.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1770569976
         },
         {
@@ -14469,8 +14533,8 @@
           "styleLabel": null,
           "slots": ["arms"],
           "image": {"src":"/mods/ursa-swift-claw.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1777037538
         }
       ]
@@ -14486,8 +14550,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","head","weapon"],
           "image": {"src":"/mods/clockwerk-apex-automated.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1764908114
         },
         {
@@ -14516,8 +14580,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","head","weapon"],
           "image": {"src":"/mods/clockwerk-seadog-stash.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1764908114
         },
         {
@@ -14536,8 +14600,8 @@
           "styleLabel": null,
           "slots": ["misc"],
           "image": {"src":"/mods/clockwerk-paraflare-cannon.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787135218
         },
         {
@@ -14546,8 +14610,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/clockwerk-rabid-watchcog.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787135218
         }
       ]
@@ -14573,8 +14637,8 @@
           "styleLabel": null,
           "slots": ["misc","back","belt","head","arms"],
           "image": {"src":"/mods/lifestealer-red-immortal.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1790213637
         },
         {
@@ -14603,8 +14667,8 @@
           "styleLabel": null,
           "slots": ["misc"],
           "image": {"src":"/mods/lifestealer-diretide-shimmer.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1758967933
         },
         {
@@ -14690,8 +14754,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","tail","wings"],
           "image": {"src":"/mods/night-stalker-relict.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1768491259
         },
         {
@@ -14794,8 +14858,8 @@
           "styleLabel": null,
           "slots": ["arms","head","shoulder","tail","weapon"],
           "image": {"src":"/mods/cosmic-spirit-breaker.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1758256622
         },
         {
@@ -14804,8 +14868,8 @@
           "styleLabel": null,
           "slots": ["arms","head","shoulder","tail","weapon"],
           "image": {"src":"/mods/spirit-breaker-crystal-colossus.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776242547
         },
         {
@@ -14814,8 +14878,8 @@
           "styleLabel": null,
           "slots": ["arms","head","shoulder","tail","weapon"],
           "image": {"src":"/mods/spirit-breaker-elemental-imperator.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776169497
         },
         {
@@ -14834,8 +14898,8 @@
           "styleLabel": null,
           "slots": ["head"],
           "image": {"src":"/mods/spirit-breaker-iron-surge.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787135218
         },
         {
@@ -14844,8 +14908,8 @@
           "styleLabel": "Tyrian",
           "slots": ["head"],
           "image": {"src":"/mods/spirit-breaker-iron-surge-tyrian.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787135218
         },
         {
@@ -14854,8 +14918,8 @@
           "styleLabel": null,
           "slots": ["weapon"],
           "image": {"src":"/mods/spirit-breaker-savage-mettle.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776169497
         }
       ]
@@ -14881,8 +14945,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","head","shoulder"],
           "image": {"src":"/mods/shadow-timbersaw.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765358405
         },
         {
@@ -14968,7 +15032,7 @@
           "styleLabel": null,
           "slots": ["arms","head","weapon","misc","shoulder","tail"],
           "image": {"src":"/mods/meepo-lotus-bear.webp","width":854,"height":480},
-          "author": null,
+          "author": "Anonymous",
           "authorUrl": null,
           "date": 1775307626
         },
@@ -14988,7 +15052,7 @@
           "styleLabel": null,
           "slots": ["arms","head","weapon","misc","shoulder","tail"],
           "image": {"src":"/mods/meepo-mocking-bird.webp","width":854,"height":480},
-          "author": null,
+          "author": "Anonymous",
           "authorUrl": null,
           "date": 1775307626
         },
@@ -15035,8 +15099,8 @@
           "styleLabel": null,
           "slots": ["belt","arms","back","head","weapon"],
           "image": {"src":"/mods/ogre-magi-freeboot-fortunes.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1764908114
         },
         {
@@ -15045,8 +15109,8 @@
           "styleLabel": null,
           "slots": ["belt","arms","back","head","weapon"],
           "image": {"src":"/mods/ogre-magi-pyrexae-polymorph.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1764908114
         },
         {
@@ -15112,8 +15176,8 @@
           "styleLabel": null,
           "slots": ["misc"],
           "image": {"src":"/mods/tiny-stone-giant-stronghold.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765893248
         },
         {
@@ -15126,7 +15190,16 @@
           "authorUrl": "https://t.me/j0nvpk",
           "date": 1791470872
         },
-        {"name":"Tiny Banana","categoryId":"hero-items","styleLabel":null,"slots":["misc"],"image":{"src":"/mods/tiny-banana.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768637892}
+        {
+          "name": "Tiny Banana",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/tiny-banana.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1768637892
+        }
       ]
     },
     {
@@ -15150,8 +15223,8 @@
           "styleLabel": null,
           "slots": ["misc","head","shoulder","weapon"],
           "image": {"src":"/mods/frostivus-alchemist.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1763214286
         },
         {
@@ -15160,8 +15233,8 @@
           "styleLabel": null,
           "slots": ["misc","head","shoulder"],
           "image": {"src":"/mods/cosmic-alchemist.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1763214286
         },
         {
@@ -15207,8 +15280,8 @@
           "styleLabel": null,
           "slots": ["belt","arms","back","head","misc","weapon","offhand"],
           "image": {"src":"/mods/bloodseeker-harvest-hound.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780230946
         },
         {
@@ -15237,8 +15310,8 @@
           "styleLabel": null,
           "slots": ["weapon","offhand"],
           "image": {"src":"/mods/bloodseeker-thirst-of-eztzhok.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780230946
         }
       ]
@@ -15274,8 +15347,8 @@
           "styleLabel": "Golden",
           "slots": ["arms"],
           "image": {"src":"/mods/dark-seer-forlorn-precipice-golden.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780941032
         },
         {
@@ -15284,8 +15357,8 @@
           "styleLabel": null,
           "slots": ["arms"],
           "image": {"src":"/mods/dark-seer-forlorn-precipice.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780941032
         },
         {
@@ -15294,8 +15367,8 @@
           "styleLabel": "Crimson",
           "slots": ["head"],
           "image": {"src":"/mods/mars-progenitors-bane-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781012938
         }
       ]
@@ -15398,8 +15471,8 @@
           "styleLabel": null,
           "slots": ["weapon","misc","head","arms"],
           "image": {"src":"/mods/tusk-odobenus-footman.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765100855
         },
         {
@@ -15408,8 +15481,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","head","weapon"],
           "image": {"src":"/mods/tusk-odobenus-frost-mage.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765100855
         }
       ]
@@ -15425,8 +15498,8 @@
           "styleLabel": null,
           "slots": ["arms","belt","misc","head"],
           "image": {"src":"/mods/undying-grim-reformation.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781027597
         },
         {
@@ -15465,8 +15538,8 @@
           "styleLabel": null,
           "slots": ["head","misc"],
           "image": {"src":"/mods/undying-hallows-within.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781027597
         }
       ]
@@ -15492,8 +15565,8 @@
           "styleLabel": null,
           "slots": ["back","head","mount","shoulder","weapon"],
           "image": {"src":"/mods/abaddon-endless-night.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1788942404
         },
         {
@@ -15586,8 +15659,8 @@
           "styleLabel": null,
           "slots": ["misc","shield"],
           "image": {"src":"/mods/mars-diretide-shimmer.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1758685938
         },
         {
@@ -15596,8 +15669,8 @@
           "styleLabel": "Crimson",
           "slots": ["misc"],
           "image": {"src":"/mods/mars-progenitors-bane-crimson.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781012938
         },
         {
@@ -15606,8 +15679,8 @@
           "styleLabel": null,
           "slots": ["misc"],
           "image": {"src":"/mods/mars-progenitors-bane.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781012938
         }
       ]
@@ -15633,8 +15706,8 @@
           "styleLabel": null,
           "slots": ["arms","back","head","misc","weapon"],
           "image": {"src":"/mods/muerta-blackwing-bandolera.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1770981554
         },
         {
@@ -15670,8 +15743,8 @@
           "styleLabel": null,
           "slots": ["back","weapon","misc","head","arms"],
           "image": {"src":"/mods/slardar-naga-guardian.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765100855
         },
         {
@@ -15690,8 +15763,8 @@
           "styleLabel": null,
           "slots": ["back","weapon"],
           "image": {"src":"/mods/immortal-slardar.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1783633485
         },
         {
@@ -15727,8 +15800,8 @@
           "styleLabel": null,
           "slots": ["back","arms","head","misc","weapon"],
           "image": {"src":"/mods/bristleback-crimson-ring.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1776304745
         },
         {
@@ -15737,8 +15810,8 @@
           "styleLabel": null,
           "slots": ["misc","back","weapon","head","arms"],
           "image": {"src":"/mods/crystal-bristleback.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766145785
         }
       ]
@@ -15811,8 +15884,8 @@
           "styleLabel": null,
           "slots": ["arms","back","head","weapon","shoulder"],
           "image": {"src":"/mods/omniknight-blinding-bastion.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766284079
         }
       ]
@@ -15828,8 +15901,8 @@
           "styleLabel": null,
           "slots": ["arms","head","weapon"],
           "image": {"src":"/mods/bare-pangolier.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1765720497
         },
         {
@@ -15865,8 +15938,8 @@
           "styleLabel": null,
           "slots": ["arms","belt","head","weapon"],
           "image": {"src":"/mods/harrows-harvest-ringmaster.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766284079
         },
         {
@@ -15966,8 +16039,8 @@
           "styleLabel": null,
           "slots": ["arms","head","shoulder","tail","weapon"],
           "image": {"src":"/mods/riki-hunger-howling-wilds.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1767451400
         }
       ]
@@ -15983,8 +16056,8 @@
           "styleLabel": null,
           "slots": ["arms","head","legs","shoulder","misc","tail"],
           "image": {"src":"/mods/sand-king-black-sands.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1780160766
         },
         {

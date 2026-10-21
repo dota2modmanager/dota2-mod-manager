@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1534,
+  "mods": 1535,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -679,6 +679,7 @@
         {"name":"Chaos Invoker","categoryId":"heroes","styleLabel":null,"slots":["shoulder","arms","head","back","belt","misc"]},
         {"name":"Ice Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Blackguard Magus","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","misc","back","arms"]},
+        {"name":"Invoker Dark Apex","categoryId":"heroes","styleLabel":null,"slots":["shoulder","misc","arms","back","head"]},
         {"name":"Invoker Dark Artistry","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
         {"name":"Invoker Dark Artistry v2","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
         {"name":"Invoker Dark Artistry v3","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","belt"]},
