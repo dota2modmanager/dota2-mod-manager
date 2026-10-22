@@ -1893,6 +1893,243 @@
       ]
     },
     {
+      "id": "keeper_of_the_light",
+      "name": "Keeper of the Light",
+      "slug": "keeper-of-the-light",
+      "mods": [
+        {
+          "name": "Keeper of the Light Darklord",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","legs","weapon","belt","arms","misc"],
+          "image": {"src":"/mods/keeper-of-the-light-darklord.webp","width":854,"height":480},
+          "author": "александр",
+          "authorUrl": "https://t.me/+VY-_XaaDg00wYmI6",
+          "date": 1788902445
+        },
+        {
+          "name": "Keeper of the Light Tamamo",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","misc","mount","legs","weapon","arms","belt"],
+          "image": {"src":"/mods/keeper-of-the-light-tamamo.webp","width":854,"height":480},
+          "author": "SanyaBane",
+          "authorUrl": "https://steamcommunity.com/profiles/76561198072955043",
+          "date": 1771195327
+        },
+        {
+          "name": "White Keeper of the Light",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","legs","weapon","belt"],
+          "image": {"src":"/mods/white-keeper-of-the-light.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788042221
+        },
+        {
+          "name": "Camel Keeper of the Light",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","legs","weapon"],
+          "image": {"src":"/mods/camel-keeper-of-the-light.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1787848064
+        },
+        {
+          "name": "Keeper Of The Light Ded Na Fernando",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","mount","arms","head"],
+          "image": {"src":"/mods/keeper-of-the-light-ded-na-fernando.webp","width":854,"height":480},
+          "author": "Mirik522",
+          "authorUrl": "https://t.me/Moggdeli",
+          "date": 1792668576
+        },
+        {
+          "name": "Keeper of the Light Renegade",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","legs","weapon"],
+          "image": {"src":"/mods/keeper-of-the-light-renegade.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1775454991
+        },
+        {
+          "name": "Keeper of the Light Sematary",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","legs","mount","head"],
+          "image": {"src":"/mods/keeper-of-the-light-sematary.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {
+          "name": "Keeper of the Light Waitureally",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["head","mount","legs","weapon"],
+          "image": {"src":"/mods/keeper-of-the-light-waitureally.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/eternalsadism",
+          "date": 1789234312
+        },
+        {
+          "name": "Keeper Of The Light - Snowdrift",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/keeper-of-the-light-snowdrift.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790294865
+        },
+        {
+          "name": "Keeper Of The Light BMW",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["mount"],
+          "image": {"src":"/mods/keeper-of-the-light-bmw.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1790528261
+        },
+        {
+          "name": "Keeper of the Light Frostbloom",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/keeper-of-the-light-frostbloom.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/eternalsadism",
+          "date": 1787500706
+        },
+        {
+          "name": "Keeper of the Light Prominence",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/keeper-of-the-light-prominence.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/eternalsadism",
+          "date": 1788365172
+        },
+        {
+          "name": "Keeper of the Light Wings of Daybreak",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["mount"],
+          "image": {"src":"/mods/keeper-of-the-light-wings-of-daybreak.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/eternalsadism",
+          "date": 1788815201
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Keeper of the Light Northlight Illuminance",
+          "categoryId": "herofx",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/keeper-of-the-light-northlight-illuminance.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1788180009
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "lion",
       "name": "Lion",
       "slug": "lion",
@@ -2066,233 +2303,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "keeper_of_the_light",
-      "name": "Keeper of the Light",
-      "slug": "keeper-of-the-light",
-      "mods": [
-        {
-          "name": "Keeper of the Light Darklord",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","legs","weapon","belt","arms","misc"],
-          "image": {"src":"/mods/keeper-of-the-light-darklord.webp","width":854,"height":480},
-          "author": "александр",
-          "authorUrl": "https://t.me/+VY-_XaaDg00wYmI6",
-          "date": 1788902445
-        },
-        {
-          "name": "Keeper of the Light Tamamo",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","misc","mount","legs","weapon","arms","belt"],
-          "image": {"src":"/mods/keeper-of-the-light-tamamo.webp","width":854,"height":480},
-          "author": "SanyaBane",
-          "authorUrl": "https://steamcommunity.com/profiles/76561198072955043",
-          "date": 1771195327
-        },
-        {
-          "name": "White Keeper of the Light",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","legs","weapon","belt"],
-          "image": {"src":"/mods/white-keeper-of-the-light.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1788042221
-        },
-        {
-          "name": "Camel Keeper of the Light",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","legs","weapon"],
-          "image": {"src":"/mods/camel-keeper-of-the-light.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1787848064
-        },
-        {
-          "name": "Keeper of the Light Renegade",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","legs","weapon"],
-          "image": {"src":"/mods/keeper-of-the-light-renegade.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1775454991
-        },
-        {
-          "name": "Keeper of the Light Sematary",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","legs","mount","head"],
-          "image": {"src":"/mods/keeper-of-the-light-sematary.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
-        },
-        {
-          "name": "Keeper of the Light Waitureally",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["head","mount","legs","weapon"],
-          "image": {"src":"/mods/keeper-of-the-light-waitureally.webp","width":854,"height":480},
-          "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
-          "date": 1789234312
-        },
-        {
-          "name": "Keeper Of The Light - Snowdrift",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/keeper-of-the-light-snowdrift.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790294865
-        },
-        {
-          "name": "Keeper Of The Light BMW",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["mount"],
-          "image": {"src":"/mods/keeper-of-the-light-bmw.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1790528261
-        },
-        {
-          "name": "Keeper of the Light Frostbloom",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/keeper-of-the-light-frostbloom.webp","width":854,"height":480},
-          "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
-          "date": 1787500706
-        },
-        {
-          "name": "Keeper of the Light Prominence",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/keeper-of-the-light-prominence.webp","width":854,"height":480},
-          "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
-          "date": 1788365172
-        },
-        {
-          "name": "Keeper of the Light Wings of Daybreak",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["mount"],
-          "image": {"src":"/mods/keeper-of-the-light-wings-of-daybreak.webp","width":854,"height":480},
-          "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
-          "date": 1788815201
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Keeper of the Light Northlight Illuminance",
-          "categoryId": "herofx",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/keeper-of-the-light-northlight-illuminance.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1788180009
         },
         {
           "name": "Nemestice Ranged Attack",
@@ -12610,6 +12620,123 @@
       ]
     },
     {
+      "id": "witch_doctor",
+      "name": "Witch Doctor",
+      "slug": "witch-doctor",
+      "mods": [
+        {
+          "name": "Black Witch Doctor",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon","head","belt"],
+          "image": {"src":"/mods/black-witch-doctor.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1766382657
+        },
+        {
+          "name": "Witch Doctor Awaleb",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","head","misc"],
+          "image": {"src":"/mods/witch-doctor-awaleb.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1792668576
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "axe",
       "name": "Axe",
       "slug": "axe",
@@ -13372,113 +13499,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1767093656
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "witch_doctor",
-      "name": "Witch Doctor",
-      "slug": "witch-doctor",
-      "mods": [
-        {
-          "name": "Black Witch Doctor",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","weapon","head","belt"],
-          "image": {"src":"/mods/black-witch-doctor.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1766382657
         },
         {
           "name": "Aghanim Ranged Attack",

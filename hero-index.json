@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1540,
+  "mods": 1542,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -774,6 +774,7 @@
         {"name":"Keeper Of The Light - Snowdrift","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Keeper Of The Light BMW","categoryId":"hero-items","styleLabel":null,"slots":["mount"]},
         {"name":"Keeper of the Light Darklord","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon","belt","arms","misc"]},
+        {"name":"Keeper Of The Light Ded Na Fernando","categoryId":"heroes","styleLabel":null,"slots":["misc","mount","arms","head"]},
         {"name":"Keeper of the Light Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Keeper of the Light Northlight Illuminance","categoryId":"herofx","styleLabel":null,"slots":[]},
         {"name":"Keeper of the Light Prominence","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
@@ -2145,7 +2146,13 @@
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },
-    "witch_doctor": {"name":"Witch Doctor","mods":[{"name":"Black Witch Doctor","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","belt"]}]},
+    "witch_doctor": {
+      "name": "Witch Doctor",
+      "mods": [
+        {"name":"Black Witch Doctor","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","belt"]},
+        {"name":"Witch Doctor Awaleb","categoryId":"heroes","styleLabel":null,"slots":["weapon","head","misc"]}
+      ]
+    },
     "witchdoctor": {
       "name": "Witchdoctor",
       "mods": [
