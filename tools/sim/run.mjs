@@ -88,10 +88,19 @@ export function launch(screenName, rendererName, { scenarios, app = null, platfo
   return { cmd, args: cmdArgs, env, out };
 }
 
+/** Scenarios that check nothing and run only when named: tools/guide-shots.mjs takes the site's
+    pictures of the app with one, and a nightly run has no use for twenty screenshots. */
+export const ON_ASK = ['guide-shots'];
+
+/** The scenarios a run gets when none is named: every file in scenarios/ but the ones on ask. */
+export function defaultScenarios(files) {
+  return files.filter((f) => f.endsWith('.js')).map((f) => f.slice(0, -3)).filter((n) => !ON_ASK.includes(n));
+}
+
 function scenarioList() {
   const only = arg('scenario');
   if (only) return only;
-  return fs.readdirSync(path.join(here, 'scenarios')).filter((f) => f.endsWith('.js')).map((f) => f.slice(0, -3)).join(',');
+  return defaultScenarios(fs.readdirSync(path.join(here, 'scenarios'))).join(',');
 }
 
 function runOne(spec, timeoutMs) {

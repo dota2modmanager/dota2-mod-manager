@@ -90,3 +90,42 @@ test('the landing on an iPhone runs no animation forever and paints no blur', as
   assert.deepEqual(heavy.filter((x) => !/marquee/.test(x)), []);
   await context.close();
 });
+
+/* The download menus, opened by a finger on an iPhone and looked at twice: the moment the tap is
+   handled, and once the entrance has finished. Safari on a real iPhone once showed the hero's menu
+   past the screen's left edge now and then; the menu is placed before its first frame since. */
+test('both download menus open inside an iPhone screen, at once and after the entrance', async (t) => {
+  if (!browser) return t.skip(`no WebKit here (${why})`);
+  const bad = [];
+  for (const lang of ['', '/ru']) {
+    const context = await browser.newContext(IPHONE);
+    const page = await context.newPage();
+    await page.goto(`${server.url}${lang}/`, { waitUntil: 'load', timeout: 10_000 });
+    for (const where of ['.hero', '.final']) {
+      const summary = page.locator(`${where} .dl summary`);
+      await summary.evaluate((el) => scrollBy({ top: el.getBoundingClientRect().top - innerHeight * 0.4, behavior: 'instant' }));
+      await page.waitForTimeout(700);
+      // a click handled whole inside the page, then the menu read before anything is drawn
+      const first = await summary.evaluate((el) => {
+        el.click();
+        const r = el.parentElement.querySelector('.dl-menu').getBoundingClientRect();
+        const box = { left: r.left, right: r.right, vw: document.documentElement.clientWidth };
+        el.parentElement.open = false;
+        return box;
+      });
+      await summary.tap();
+      await page.waitForTimeout(400);
+      const later = await summary.evaluate((el) => {
+        const r = el.parentElement.querySelector('.dl-menu').getBoundingClientRect();
+        return { left: r.left, right: r.right, vw: document.documentElement.clientWidth, open: el.parentElement.open };
+      });
+      if (!later.open) bad.push(`${lang || 'en'} ${where}: a tap did not open it`);
+      for (const [when, b] of [['at once', first], ['after the entrance', later]]) {
+        if (b.left < 0 || b.right > b.vw) bad.push(`${lang || 'en'} ${where} ${when}: ${Math.round(b.left)}..${Math.round(b.right)} of ${b.vw}`);
+      }
+      await page.touchscreen.tap(4, 400);
+    }
+    await context.close();
+  }
+  assert.deepEqual(bad, []);
+});

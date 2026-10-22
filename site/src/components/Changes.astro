@@ -1,0 +1,85 @@
+---
+/**
+ * What's new (/changes/): every released version and its notes, newest first, in the reading
+ * column the guides use, with the versions down the side on a wide screen.
+ *
+ * The newest three are open. The rest are folded to one row each, the version, its date and what
+ * it was about, because forty releases in full were 76 screens on a phone and nobody reading
+ * them wants the August ones first. Folded is still in the page: a search engine reads it, the
+ * browser's find opens it, and an address naming a version (/changes/#v2-8-0, the list at the
+ * side) opens that one.
+ *
+ * The notes are the changelog's own text (src/lib/changes.ts), the same the app's "What's new"
+ * window shows after an update, so a Russian reader gets the same "ты" here as in the app.
+ */
+import { releases, type Release } from '../lib/changes';
+import { changesCopy } from '../i18n/changes';
+import type { Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const c = changesCopy[lang];
+const { intro, list } = await releases(lang);
+const OPEN = 3;
+const day = new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const GITHUB = 'https://github.com/dota2modmanager/dota2-mod-manager';
+const when = (r: Release) => (r.date ? c.released.replace('{date}', day.format(new Date(r.date))) : null);
+const about = (r: Release) => (r.topics.length > 1 ? `${r.topics[0]} ${c.more.replace('{n}', String(r.topics.length - 1))}` : r.topics[0] ?? '');
+---
+
+<div class="wrap doc-layout changes">
+  <article class="doc">
+    <h1>{c.h1}</h1>
+    <p class="lead">{intro}</p>
+
+    {list.map((r, i) => i < OPEN ? (
+      <section class="release" id={r.id} aria-labelledby={`${r.id}-h`}>
+        <header class="release-head">
+          <h2 id={`${r.id}-h`}>{r.version}</h2>
+          {i === 0 && <span class="release-latest">{c.latest}</span>}
+          <span class="release-meta">
+            {r.date && <time datetime={r.date.slice(0, 10)}>{when(r)}</time>}
+            <a href={`${GITHUB}/releases/tag/v${r.version}`} rel="noopener">{c.onGithub}</a>
+          </span>
+        </header>
+        {r.lang !== lang && <p class="release-note">{c.inEnglish}</p>}
+        <div class="release-body" lang={r.lang} set:html={r.html} />
+      </section>
+    ) : (
+      <details class="release release-old" id={r.id}>
+        <summary>
+          <span class="release-head">
+            <h2 id={`${r.id}-h`}>{r.version}</h2>
+            {r.date && <time datetime={r.date.slice(0, 10)}>{when(r)}</time>}
+          </span>
+          <span class="release-about" lang={r.lang}>{about(r)}</span>
+        </summary>
+        <p class="release-meta"><a href={`${GITHUB}/releases/tag/v${r.version}`} rel="noopener">{c.onGithub}</a></p>
+        {r.lang !== lang && <p class="release-note">{c.inEnglish}</p>}
+        <div class="release-body" lang={r.lang} set:html={r.html} />
+      </details>
+    ))}
+  </article>
+
+  <nav class="toc release-toc" aria-label={c.versions}>
+    <b>{c.versions}</b>
+    <ol>
+      {list.map((r) => <li><a href={`#${r.id}`}>{r.version}</a></li>)}
+    </ol>
+  </nav>
+</div>
+
+<script>
+  // An address or a link naming a folded version opens it, and brings it into view once it has
+  // its full height.
+  const reveal = () => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    const el = id ? document.getElementById(id) : null;
+    const fold = el?.closest('details');
+    if (!el || !fold || fold.open) return;
+    fold.open = true;
+    el.scrollIntoView();
+  };
+  reveal();
+  window.addEventListener('hashchange', reveal);
+</script>

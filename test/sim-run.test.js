@@ -75,6 +75,14 @@ test('only the first machine of a set runs every scenario, the rest the ones a s
   }
 });
 
+test('a scenario that takes pictures rather than checking runs only when named', async () => {
+  const { defaultScenarios, ON_ASK } = await load();
+  assert.deepEqual(defaultScenarios(['mods.js', 'guide-shots.js', 'scroll.js', 'notes.txt']), ['mods', 'scroll']);
+  for (const s of ON_ASK) {
+    assert.ok(fs.existsSync(path.join(__dirname, '..', 'tools', 'sim', 'scenarios', `${s}.js`)), `ON_ASK names ${s}, which is not a scenario`);
+  }
+});
+
 test('the report names each failed check and escapes what the page shows', async () => {
   const { reportHtml } = await load();
   const html = reportHtml([{ screen: 'fhd', renderer: 'default', dir: 'fhd--default', result: {

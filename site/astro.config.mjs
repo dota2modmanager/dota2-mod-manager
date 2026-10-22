@@ -17,11 +17,17 @@ import {
 import { ogPath } from './src/lib/og.ts';
 import { heroCopy } from './src/i18n/heroes.ts';
 import { categoryText } from './src/i18n/categories.ts';
+import { createHash } from 'node:crypto';
+import { catalog } from './src/lib/catalog.ts';
+import { modText } from './src/lib/mods.ts';
+import { LANG_OFFER } from './src/lib/inline-scripts.ts';
 import heroData from './src/data/heroes.json' with { type: 'json' };
 import categoryData from './src/data/categories.json' with { type: 'json' };
 
 const heroBySlug = new Map(heroData.heroes.map((h) => [h.slug, h]));
 const categoryById = new Map(categoryData.categories.map((c) => [c.id, c]));
+const modByKey = new Map(catalog.map((m) => [m.key, m]));
+const sha256 = (text) => `sha256-${createHash('sha256').update(text).digest('base64')}`;
 
 /**
  * dota2modmanager.com
@@ -77,6 +83,8 @@ export default defineConfig({
         "base-uri 'self'",
         "form-action 'self'",
       ],
+      // the scripts written into the page itself, which Astro does not hash (src/lib/inline-scripts.ts)
+      scriptDirective: { hashes: [sha256(LANG_OFFER)] },
     },
   },
   /* No colouring of code in markdown. Shiki colours a block with style="" on every element, and the
@@ -122,6 +130,19 @@ export default defineConfig({
                 title: m.name,
                 caption: heroCopy[lang].alt.replace('{mod}', m.name).replace('{hero}', hero.name),
               }));
+          }
+          return item;
+        }
+
+        // A mod's page: the mod in each of its styles, captioned with the page's own title.
+        const modMatch = /^\/mods\/([^/]+)\/$/.exec(path);
+        if (modMatch) {
+          const mod = modByKey.get(modMatch[1]);
+          if (mod) {
+            const caption = modText(lang, mod).title;
+            item.img = mod.looks
+              .filter((l) => l.img)
+              .map((l) => ({ url: abs(l.img), title: l.label ? `${mod.name} (${l.label})` : mod.name, caption }));
           }
           return item;
         }

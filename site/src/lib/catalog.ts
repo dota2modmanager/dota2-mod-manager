@@ -36,7 +36,7 @@ export const groupNames: Record<'en' | 'ru', Record<Group, string>> = {
 };
 
 export interface CatalogMod {
-  /** Unique across the catalog, for the address of the quick view. */
+  /** Unique across the catalog: the mod's page is /mods/<key>/, and the quick view's #mod=<key>. */
   key: string;
   name: string;
   cat: string;
@@ -50,6 +50,11 @@ export interface CatalogMod {
   authorUrl: string | null;
   date: number | null;
   slots: string[];
+  /** Each look with its own picture, in the catalog's order: what the mod's page switches between.
+      The size is the picture's own, as tools/catalog.mjs measured it: most are 854 x 480, but a
+      search bar's preview came in at 397 x 1022, and a link preview that states the wrong size
+      draws the picture squashed. */
+  looks: Array<{ label: string | null; img: string | null; width: number; height: number }>;
 }
 
 const byKey = new Map<string, CatalogMod>();
@@ -60,6 +65,7 @@ for (const c of categories) {
     byKey.set(keyOf(c.id, m.name, m.styleLabel), {
       key: '', name: m.name, cat: c.id, style: m.styleLabel, styles: m.styleLabel ? [m.styleLabel] : [], hero: null,
       img: m.image?.src ?? null, author: m.author, authorUrl: m.authorUrl, date: m.date, slots: [],
+      looks: [{ label: m.styleLabel, img: m.image?.src ?? null, width: m.image?.width ?? 854, height: m.image?.height ?? 480 }],
     });
   }
 }
@@ -76,30 +82,51 @@ for (const h of heroes) {
     byKey.set(k, {
       key: '', name: m.name, cat, style: m.styleLabel, styles: m.styleLabel ? [m.styleLabel] : [], hero: h.slug,
       img: m.image?.src ?? null, author: m.author, authorUrl: m.authorUrl, date: m.date, slots: m.slots,
+      looks: [{ label: m.styleLabel, img: m.image?.src ?? null, width: m.image?.width ?? 854, height: m.image?.height ?? 480 }],
     });
   }
 }
 
 /* The styles of one mod arrive as separate entries; they become one card that lists them. */
 const byName = new Map<string, CatalogMod>();
+/* when each mod first appeared: a new look moves its date on, and must not move its address */
+const since = new Map<CatalogMod, number>();
 for (const m of byKey.values()) {
   const k = `${m.cat}|${m.name}`;
   const have = byName.get(k);
-  if (!have) { byName.set(k, m); continue; }
+  if (!have) { byName.set(k, m); since.set(m, m.date ?? 0); continue; }
   for (const st of m.styles) if (!have.styles.includes(st)) have.styles.push(st);
+  for (const l of m.looks) if (!have.looks.some((x) => x.label === l.label)) have.looks.push(l);
+  since.set(have, Math.min(since.get(have)!, m.date ?? 0));
   have.img ??= m.img;
   have.hero ??= m.hero;
   have.date = Math.max(have.date ?? 0, m.date ?? 0) || null;
   if (!have.slots.length) have.slots = m.slots;
 }
 
+/* A mod whose looks include one the catalog leaves unnamed (a plain look and "Crimson") lists it
+   as a style too, written '': without it the plain look could not be picked or sent anywhere,
+   and the app looks both up the same way, as category|name| (src/preset-plan.ts). */
+for (const m of byName.values()) {
+  if (m.looks.length > 1 && m.looks.some((l) => !l.label)) {
+    m.styles = m.looks.map((l) => l.label ?? '');
+    m.style = m.styles[0];
+  }
+}
+
 /** Newest first, which is the order the catalog opens in. */
 export const catalog: CatalogMod[] = [...byName.values()].sort((a, b) => (b.date ?? 0) - (a.date ?? 0) || a.name.localeCompare(b.name));
+/* The key is an address people share, so it has to keep. Two mods may share a name (a hero's mod
+   and a hero item of the same name), and the one that came first keeps the plain one: handed out
+   newest first, a new arrival would take the old mod's address and send every link to it astray.
+   "t" is the folder of the small pictures, beside the pages under /mods/. */
 {
-  const taken = new Set<string>();
-  for (const m of catalog) {
-    let k = slugify(m.name);
-    for (let n = 2; taken.has(k); n++) k = `${slugify(m.name)}-${n}`;
+  const taken = new Set<string>(['t']);
+  const byAge = [...catalog].sort((a, b) => since.get(a)! - since.get(b)! || a.cat.localeCompare(b.cat) || a.name.localeCompare(b.name));
+  for (const m of byAge) {
+    const base = slugify(m.name) || 'mod';
+    let k = base;
+    for (let n = 2; taken.has(k); n++) k = `${base}-${n}`;
     taken.add(k);
     m.key = k;
   }
@@ -140,7 +167,8 @@ export function catalogPayload() {
     cats: catalogCategories.map((c) => c.id === 'heroes'
       ? [c.id, 'Heroes', 'Герои', c.group]
       : [c.id, categoryText('en', c.id).name, categoryText('ru', c.id).name, c.group]),
-    heroes: heroes.map((h) => [h.slug, h.name, ruName(h.name)?.nom ?? h.name]),
+    // the nicknames players type ("кристалка", "сф") as a fourth field, for the site's search
+    heroes: heroes.map((h) => [h.slug, h.name, ruName(h.name)?.nom ?? h.name, (ruName(h.name)?.alt ?? []).join('|')]),
     mods: catalog.map((m) => [
       m.key, m.name, catIndex.get(m.cat), m.hero ? heroIndex.get(m.hero) : -1,
       m.img ? m.img.replace(/^\/mods\/|\.webp$/g, '') : '', m.author ?? '', m.date ?? 0, m.styles.join('|'), m.slots, m.authorUrl ?? '',

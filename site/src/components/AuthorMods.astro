@@ -1,0 +1,64 @@
+---
+/**
+ * One author's page: every mod the catalog credits to them, as the same grid a hero has, with
+ * their newest render behind the heading and the way to their own profile beside it.
+ *
+ * The cards say what each mod is and for which hero, and not who made it: the whole page is one
+ * person's, and "by Darkness" eighty-one times would be the only thing on it.
+ */
+import { pathIn, type Lang } from '../i18n/ui';
+import { authorsCopy } from '../i18n/authors';
+import { authors, authorPath, authorText, type Author } from '../lib/authors';
+import { kindName } from '../lib/mods';
+import Browser from './Browser.astro';
+import Icon from './Icon.astro';
+
+interface Props { lang: Lang; author: Author }
+const { lang, author } = Astro.props;
+const c = authorsCopy[lang];
+const nf = new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US');
+const text = authorText(lang, author);
+
+/* the kinds they make most, up to three, so the lead says what kind of author this is */
+const kindCount = new Map<string, number>();
+for (const m of author.mods) kindCount.set(m.cat, (kindCount.get(m.cat) ?? 0) + 1);
+const kinds = [...kindCount].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => kindName(lang, k));
+const cover = author.mods.find((m) => m.img)?.img;
+
+/* a few more authors, walking on from this one so every page offers different ones */
+const at = authors.indexOf(author);
+const others = Array.from({ length: Math.min(6, authors.length - 1) }, (_, i) => authors[(at + i + 1) % authors.length]);
+---
+
+<header class="page-hero">
+  {cover && <img src={cover} width="854" height="480" alt="" fetchpriority="high" />}
+  <div class="wrap">
+    <nav class="crumbs" aria-label={c.nav}>
+      <a href={pathIn(lang, '/authors/')}>{c.back}</a>
+    </nav>
+    <h1>{text.h1}</h1>
+    <p class="lead">{text.lead} {kinds.length > 1 && c.kinds.replace('{kinds}', kinds.join(', '))}</p>
+    {author.url && text.profile && (
+      <p class="author-profile">
+        <a class="btn sm ghost" href={author.url} rel="noopener nofollow"><Icon name="open" size={16} />{text.profile}</a>
+      </p>
+    )}
+  </div>
+</header>
+
+<div class="wrap">
+  <Browser lang={lang} mode="page" mods={author.mods} context="author" />
+
+  <aside class="doc-next">
+    <h2>{c.others}</h2>
+    <ul class="hero-links">
+      {others.map((a) => (
+        <li>
+          <a class="chip" href={authorPath(lang, a.slug)}>
+            {a.name} <small>{nf.format(a.mods.length)}</small>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </aside>
+</div>

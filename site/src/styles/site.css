@@ -240,6 +240,15 @@ section > .wrap > :is(h1, h2, h3):first-child { margin-top: 0; }
 .chips.rail::-webkit-scrollbar { display: none; }
 @media (min-width: 900px) { .chips.rail { margin-inline: 0; padding-inline: 0; } }
 
+/* ---------- this page in the other language, offered once (Base.astro) ---------- */
+/* Above the header and out of the way as the page scrolls: one line of text with its link in it,
+   and a way to say no. On a 320 px phone the text wraps beside the button rather than under it. */
+.langbar { background: color-mix(in srgb, var(--primary) 12%, var(--surface-low)); border-bottom: 1px solid var(--border); }
+.langbar-row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding-block: 4px; }
+.langbar p { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 14.5px; line-height: 1.45; color: var(--text); }
+.langbar a { color: var(--primary); font-weight: 650; text-decoration: underline; text-underline-offset: 0.2em; }
+.langbar-x { flex: none; width: 34px; height: 34px; }
+
 /* ---------- header ---------- */
 
 .topbar {
@@ -324,6 +333,58 @@ section > .wrap > :is(h1, h2, h3):first-child { margin-top: 0; }
 @keyframes menu-in { from { opacity: 0; transform: translateY(-8px); } }
 @media (min-width: 861px) { .menu { display: none !important; } }
 
+/* ---------- the site's search (Base.astro, src/scripts/site-search.ts) ---------- */
+.bar .search-btn { margin-left: 4px; width: 38px; height: 38px; color: var(--text-dim); }
+.bar .search-btn:hover { color: var(--text); }
+@media (max-width: 860px) { .bar .search-btn { display: none; } }
+/* on a phone, the first line of the menu */
+.menu-search {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 4px; cursor: pointer;
+  background: none; border: 0; border-bottom: 1px solid var(--border); text-align: left;
+  color: var(--text); font: 600 18px/1.2 var(--display); letter-spacing: -0.01em;
+}
+.menu-search svg { color: var(--primary); }
+
+/* The box: high on the screen where the eye already is, the answers under it in three groups. */
+.sitesearch {
+  width: min(640px, calc(100vw - 24px)); max-height: min(620px, calc(100dvh - 48px));
+  margin: max(40px, 9vh) auto auto; padding: 0;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-lg);
+  background: var(--surface-container); color: var(--text);
+  box-shadow: 0 40px 100px -20px rgb(0 0 0 / 0.8); overflow: hidden;
+}
+.sitesearch[open] { display: flex; flex-direction: column; animation: quick-in 220ms var(--ease); }
+.sitesearch::backdrop { background: rgb(8 7 10 / 0.72); }
+.sitesearch-bar { display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 18px; border-bottom: 1px solid var(--border); color: var(--text-faint); }
+.sitesearch-bar input {
+  flex: 1; min-width: 0; padding: 12px 0; border: 0; outline: 0; background: none;
+  color: var(--text); font: 500 18px/1.3 var(--body);
+}
+.sitesearch-bar input::-webkit-search-cancel-button { display: none; }
+.sitesearch-list { overflow-y: auto; padding: 6px 8px 8px; }
+.sitesearch-list:empty { display: none; }
+.ss-label { margin: 0; padding: 12px 10px 6px; font-size: 12.5px; font-weight: 650; color: var(--text-faint); }
+.ss-row {
+  display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 14px; align-items: center;
+  padding: 7px 10px; border-radius: var(--radius-sm); color: var(--text);
+}
+.ss-row:hover { text-decoration: none; }
+.ss-row[aria-selected='true'] { background: var(--surface-high); }
+.ss-row img, .ss-none { width: 72px; height: 40px; border-radius: 7px; object-fit: cover; background: var(--surface-low); display: block; }
+.ss-text { display: grid; gap: 2px; min-width: 0; }
+.ss-text b, .ss-text span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ss-text b { font-weight: 650; font-size: 15.5px; }
+.ss-text span { font-size: 13px; color: var(--text-faint); }
+.ss-all { display: block; margin: 6px 2px 2px; padding: 12px 10px; border-top: 1px solid var(--border); font-weight: 650; font-size: 14.5px; }
+.ss-empty { margin: 0; padding: 22px 12px; text-align: center; color: var(--text-dim); }
+.sitesearch-tip { margin: 0; padding: 10px 18px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-faint); }
+@media (hover: none) and (pointer: coarse) { .sitesearch-tip { display: none; } }
+@media (max-width: 520px) {
+  .sitesearch { margin-top: 10px; max-height: calc(100dvh - 20px); }
+  .ss-row { grid-template-columns: 60px minmax(0, 1fr); gap: 12px; }
+  .ss-row img, .ss-none { width: 60px; height: 34px; }
+}
+
 /* ---------- footer ---------- */
 
 .foot {
@@ -340,6 +401,8 @@ section > .wrap > :is(h1, h2, h3):first-child { margin-top: 0; }
 }
 @media (max-width: 860px) { .foot-grid { grid-template-columns: 1fr 1fr; } .foot-about { grid-column: 1 / -1; } }
 .foot-about p { max-width: 38ch; margin: 12px 0 0; color: var(--text-dim); }
+/* the line about copies of the app, marked in the colour the landing's warnings use */
+.foot-about .foot-copies { padding-left: 12px; border-left: 2px solid color-mix(in srgb, var(--immortal) 60%, transparent); font-size: 14px; }
 .foot h3 { font: 600 13px/1.2 var(--body); color: var(--text); margin: 0 0 12px; letter-spacing: 0; }
 .foot ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
 .foot ul a { display: inline-block; padding: 4px 0; color: var(--text-dim); }
@@ -557,6 +620,11 @@ section { padding: 56px 0; }
 .finder-row img { width: 88px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; flex: none; background: var(--surface-low); }
 .finder-row b { display: block; font-size: 14.5px; font-weight: 600; line-height: 1.3; }
 .finder-row span { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-faint); }
+/* the answers come in the header search's groups: heroes, authors, mods, each under its name */
+.finder-label { grid-column: 1 / -1; margin: 6px 0 -2px; font-size: 12.5px; font-weight: 650; color: var(--text-faint); }
+.finder-label:first-child { margin-top: 0; }
+.finder-row b { overflow-wrap: anywhere; }
+.finder-all { grid-column: 1 / -1; justify-self: start; margin-top: 4px; font-weight: 650; font-size: 14.5px; }
 
 /* ---------- the landing: see it work ---------- */
 .show-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
@@ -716,8 +784,10 @@ section { padding: 56px 0; }
 /* The name as the game writes it, the name players call the hero by under it (Russian pages:
    "Shadow Fiend", then "СФ"), and the count. The second line is real text in the page, so a
    search engine still reads the Russian name the page was written to be found by. */
-.htile-text { position: absolute; left: 14px; right: 14px; bottom: 11px; display: grid; gap: 1px; }
-.htile b { font: 700 16px/1.15 var(--display); letter-spacing: -0.01em; }
+/* one column that may not grow past the tile: an author called DotaMiniProfile is one word wider
+   than a 320 px phone's tile in Unbounded, and breaks inside it rather than past the screen */
+.htile-text { position: absolute; left: 14px; right: 14px; bottom: 11px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px; }
+.htile b { font: 700 16px/1.15 var(--display); letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .htile small { font-size: 13px; line-height: 1.3; color: var(--text); }
 .htile .htile-count { font-size: 12.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; margin-top: 2px; }
 .htile:hover { text-decoration: none; border-color: color-mix(in srgb, var(--primary) 50%, transparent); }
@@ -739,7 +809,9 @@ section { padding: 56px 0; }
   .compare tr { padding: 14px 16px; border-bottom: 1px solid var(--border); }
   .compare tbody tr:last-child { border-bottom: 0; }
   .compare th, .compare td { padding: 0; border: 0; }
-  .compare tbody th { margin-bottom: 8px; }
+  /* the row's name takes the whole card: the desktop's 26% column outranks the block rule above
+     and squeezed "Two mods with the same file" into three lines on a phone */
+  .compare tbody th { width: auto; margin-bottom: 8px; }
   .compare td { padding: 8px 10px; border-radius: 10px; font-size: 14.5px; }
   .compare td::before { content: attr(data-col); display: block; font-size: 12px; font-weight: 650; color: var(--text-faint); margin-bottom: 2px; }
   .compare td + td { margin-top: 6px; }
@@ -751,8 +823,9 @@ section { padding: 56px 0; }
 .trust-grid > div { padding: 24px; background: var(--surface-container); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 0 -1px -1px 0; }
 .trust-grid b { display: block; font: 650 17px/1.3 var(--display); letter-spacing: -0.01em; margin-bottom: 8px; }
 .trust-grid span { color: var(--text-dim); font-size: 15px; }
+.warn-pair { margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 16px; }
 .warn {
-  margin-top: 16px; padding: 22px 24px;
+  padding: 22px 24px;
   border: 1px solid color-mix(in srgb, var(--immortal) 34%, transparent);
   background: color-mix(in srgb, var(--immortal) 7%, transparent);
   border-radius: var(--radius-lg);
@@ -886,6 +959,7 @@ section { padding: 56px 0; }
   position: relative; display: block; width: 100%; padding: 0; border: 0;
   aspect-ratio: 16 / 9; background: var(--surface-low); overflow: hidden; cursor: zoom-in;
 }
+.mcard-pic:hover { text-decoration: none; }
 .mcard-pic:focus-visible { outline-offset: -3px; border-radius: var(--radius) var(--radius) 0 0; }
 .mcard-body { cursor: pointer; }
 .mcard-meta a { color: var(--text-dim); text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 0.2em; }
@@ -921,8 +995,36 @@ section { padding: 56px 0; }
 }
 .empty { padding: 60px 20px; text-align: center; color: var(--text-dim); border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); }
 .empty b { display: block; font: 650 18px/1.3 var(--display); color: var(--text); margin-bottom: 6px; }
-.more-row { display: flex; justify-content: center; padding: 28px 0 8px; }
-.browse { margin-bottom: 24px; }
+.browse { margin-bottom: 24px; scroll-margin-top: calc(var(--head) + 12px); }
+/* the catalog's pages: back and next at the ends, the numbers between, where you are under them */
+.pager { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 32px 0 6px; }
+.pager-step { min-height: 44px; padding-inline: 18px; }
+.pager-step:disabled { opacity: 0.38; cursor: default; pointer-events: none; }
+.pager-step .flip { display: inline-grid; transform: scaleX(-1); }
+.pager-nums { display: flex; align-items: center; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.pager-num {
+  min-width: 44px; height: 44px; padding: 0 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border-strong); background: transparent; color: var(--text-dim);
+  font: 650 15px/1 var(--body); font-variant-numeric: tabular-nums;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.pager-num:hover { color: var(--text); border-color: color-mix(in srgb, var(--primary) 50%, transparent); }
+.pager-num[aria-current='page'] { background: var(--primary); color: var(--on-primary); border-color: transparent; cursor: default; }
+.pager-gap { color: var(--text-faint); padding: 0 2px; }
+.pager-now { display: none; font-weight: 650; color: var(--text); font-variant-numeric: tabular-nums; }
+.pager-where { margin: 0; text-align: center; font-size: 14px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+/* a phone has no room for the numbers: back, "Page 5 of 32", next */
+@media (max-width: 620px) {
+  .pager { flex-wrap: nowrap; justify-content: space-between; }
+  .pager-nums { display: none; }
+  .pager-now { display: block; text-align: center; font-size: 14.5px; }
+  .pager-step { padding-inline: 14px; }
+}
+/* narrower still: back and next are their arrows, and their words are for a screen reader */
+@media (max-width: 420px) {
+  .pager-step { width: 44px; padding: 0; }
+  .pager-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
 .prose-block { padding-block: 32px 0; padding-inline: 0; }
 .kinds { padding: 48px 0 0; }
 .kinds h2 { font-size: clamp(22px, 2.6vw, 30px); }
@@ -996,7 +1098,123 @@ section { padding: 56px 0; }
 .crumbs a::before { content: '\2190\00a0'; }
 .crumbs a:hover { color: var(--text); }
 
+/* ---------- one mod's page ---------- */
+/* The picture is the page: as wide as the column allows, framed in the colour of the mod's group.
+   This is the one place where that colour is more than a dot, because here it is the only mod. */
+.mod-page { padding-block: 28px 8px; }
+.mod { display: grid; gap: 28px; align-items: start; }
+@media (min-width: 960px) { .mod { grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: 40px; } }
+.mod-pic {
+  margin: 0; position: relative; aspect-ratio: 16 / 9; overflow: hidden;
+  border-radius: var(--radius-lg); background: var(--surface-low);
+  border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
+  box-shadow: 0 40px 90px -50px color-mix(in srgb, var(--tone) 70%, transparent), 0 24px 60px -30px rgb(0 0 0 / 0.8);
+}
+.mod-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.mod-pic .none { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; text-align: center; color: var(--text-faint); }
+/* the styles, as their own pictures: a mod in three colours is chosen by looking */
+.mod-looks { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.mod-look {
+  display: grid; gap: 6px; width: 132px; padding: 6px; cursor: pointer; text-align: left;
+  border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface-container);
+  color: var(--text-dim); font: 600 13px/1.25 var(--body);
+  transition: border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+  touch-action: manipulation;
+}
+.mod-look img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-xs); }
+.mod-look span { padding: 0 2px 2px; overflow-wrap: anywhere; }
+.mod-look:hover { color: var(--text); border-color: var(--border-strong); }
+.mod-look[aria-pressed='true'] { color: var(--text); border-color: var(--tone); box-shadow: inset 0 0 0 1px var(--tone); }
+.mod-info { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.mod-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.mod-info h1 { margin: 0; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.1; overflow-wrap: anywhere; }
+.mod-lead { margin: 0; max-width: 52ch; color: var(--text-dim); font-size: 17px; line-height: 1.6; }
+.mod-facts {
+  display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 20px; margin: 0;
+  padding: 16px 0; border-block: 1px solid var(--border); font-size: 15px;
+}
+.mod-facts dt { color: var(--text-faint); }
+.mod-facts dd { margin: 0; overflow-wrap: anywhere; }
+.mod-facts a { color: var(--text); }
+.mod-set, .mod-note { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text-faint); }
+.mod-set { color: var(--text-dim); }
+.mod-more { padding-top: 56px; }
+.mod-more .grid { margin-top: 0; }
+/* here a card is a way to its own page, not to a closer look */
+.mod-more .mcard-pic { cursor: pointer; }
+@media (max-width: 520px) {
+  .mod-page { padding-top: 18px; }
+  .mod-looks { gap: 8px; }
+  .mod-look { width: calc((100% - 16px) / 3); padding: 4px; font-size: 12px; }
+  .mod-lead { font-size: 16px; }
+  .mod-info .btn-row .btn { flex: 1 1 100%; }
+}
+/* A phone cannot run the app, so the link to it goes, and sending the page on comes first: the
+   person looking at a mod on a phone in Discord opens it later on the computer (as on the landing). */
+.mod-note-touch { display: none; margin: 0; font-size: 14px; line-height: 1.55; color: var(--text-dim); }
+@media (hover: none) and (pointer: coarse) {
+  #mod-app, .mod-note { display: none; }
+  .mod-note-touch { display: block; }
+  #mod-share { order: -1; background: var(--primary); color: var(--on-primary); border-color: transparent; }
+}
+/* "in the set": the same green the cards turn when they are in it */
+.btn.ghost.on { background: color-mix(in srgb, var(--arcana) 16%, transparent); border-color: color-mix(in srgb, var(--arcana) 60%, transparent); }
+
+/* ---------- what's new (/changes/) ---------- */
+/* A release is a block of its own: its number large, a mark on the newest, its date and the way to
+   its files beside it, then the notes in the guides' reading column. The page's sections take no
+   section padding: these follow one another as entries, not as parts of a landing. */
+.release { margin-top: 44px; padding: 40px 0 0; border-top: 1px solid var(--border); scroll-margin-top: calc(var(--head) + 16px); }
+.release:first-of-type { margin-top: 12px; padding-top: 0; border-top: 0; }
+.release-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.release-head h2 { margin: 0; font-size: clamp(26px, 3vw, 34px); font-variant-numeric: tabular-nums; }
+.release-latest { padding: 3px 10px; border-radius: 999px; background: var(--arcana); color: #142400; font-size: 12.5px; font-weight: 700; }
+.release-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; width: 100%; margin: 0; font-size: 14px; color: var(--text-faint); }
+.release-meta a { color: var(--text-dim); text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 0.2em; }
+.release-meta a:hover { color: var(--text); }
+.release-body h3 { margin: 1.5em 0 0.4em; font-size: 19px; }
+.release-body :is(p, li) { color: var(--text-dim); }
+.release-note { margin: 14px 0 0; font-size: 14px; color: var(--text-faint); }
+/* an older release, folded to one row: the version, its date, what it was about */
+.release-old { margin-top: 0; padding: 0; }
+details.release-old:first-of-type { margin-top: 44px; border-top: 1px solid var(--border); }
+.release-old > summary {
+  position: relative; display: grid; gap: 4px; padding: 18px 40px 18px 0;
+  list-style: none; cursor: pointer; border-radius: var(--radius-xs);
+}
+.release-old > summary::-webkit-details-marker { display: none; }
+.release-old > summary::after {
+  content: ''; position: absolute; right: 8px; top: 30px; width: 9px; height: 9px;
+  border-right: 2px solid var(--text-faint); border-bottom: 2px solid var(--text-faint);
+  transform: rotate(45deg); transition: transform 200ms var(--ease);
+}
+.release-old[open] > summary::after { transform: rotate(225deg); }
+.release-old > summary:hover h2 { color: var(--primary); }
+.release-old .release-head h2 { font-size: 22px; }
+.release-old .release-head time { font-size: 14px; color: var(--text-faint); }
+.release-about { font-size: 15px; color: var(--text-dim); }
+.release-old[open] .release-about { display: none; }
+.release-old > .release-body { padding-bottom: 28px; }
+.release-old + .release-old { border-top: 1px solid var(--border); }
+/* forty-odd versions do not fit a screen: the list scrolls on its own */
+.release-toc { max-height: calc(100dvh - var(--head) - 56px); overflow-y: auto; }
+.release-toc a { padding-block: 3px; font-variant-numeric: tabular-nums; }
+
 /* ---------- docs ---------- */
+/* the app's own pictures in a guide: a framed window part, its caption, and full size on a press */
+.doc-shot { margin: 1.4em 0 1.9em; }
+.doc-shot a {
+  display: block; width: fit-content; max-width: 100%; overflow: hidden; cursor: zoom-in;
+  border: 1px solid var(--border-strong); border-radius: var(--radius);
+  box-shadow: 0 24px 50px -30px rgb(0 0 0 / 0.85);
+}
+.doc-shot img { display: block; width: auto; max-width: 100%; height: auto; }
+.doc-shot figcaption { margin-top: 10px; font-size: 14px; line-height: 1.5; color: var(--text-faint); }
+.zoom { padding: 0; border: 0; background: transparent; max-width: 96vw; max-height: 94dvh; overflow: visible; }
+.zoom::backdrop { background: rgb(8 7 10 / 0.88); }
+.zoom[open] { animation: quick-in 200ms var(--ease); }
+.zoom img { display: block; max-width: 96vw; max-height: 94dvh; width: auto; height: auto; border-radius: var(--radius); cursor: zoom-out; }
+
 /* A reading column, not the landing's full width: 72ch is the line length the body text was
    chosen for. A guide gets its contents beside it on a wide window (Doc.astro). */
 .doc { padding-block: 44px 72px; max-width: calc(72ch + 64px); }
@@ -1046,7 +1264,9 @@ section { padding: 56px 0; }
 }
 .doc-steps b { color: var(--text); }
 .doc-steps span { grid-column: 2; }
-.doc-list { margin: 1.2em 0; padding-left: 1.15em; display: grid; gap: 8px; }
+/* one column that may not grow past the page: a grid sizes its column to the longest word, and
+   the copies guide's github.com/dota2modmanager/dota2-mod-manager is wider than a 320 px phone */
+.doc-list { margin: 1.2em 0; padding-left: 1.15em; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .doc-list li { padding-left: 4px; }
 .doc-list li::marker { color: var(--primary); }
 .doc-code { background: var(--surface-low); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 14px 16px; margin: 1.3em 0; overflow-x: auto; font-size: 14px; line-height: 1.55; }
@@ -1106,6 +1326,113 @@ html.rainbow .topbar { border-bottom-color: color-mix(in srgb, var(--primary) 50
   html.rainbow :is(h1, h2, .wordmark) { background: none; color: CanvasText; }
 }
 
+/* ---------- Halloween: the hunt's reward while the event is on (scripts/look.ts) ----------
+ * Pumpkin orange where the page had lavender, headings lit from below like a face over a
+ * candle, and the dressing scripts/halloween.ts builds: webs, blood, spiders, lanterns. */
+html.halloween { --primary: #ff8a2b; }
+html.halloween :is(h1, h2, .wordmark) {
+  background: linear-gradient(180deg, #ffb35c 0%, #ff7a1a 55%, #c4161c 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+html.halloween .wordmark { opacity: 0.2; }
+html.halloween :is(.btn:not(.ghost), .badge b, .show-tab[aria-selected='true']) {
+  background: linear-gradient(180deg, #ffa24a, #ff7a1a);
+  color: #2a0d00;
+}
+html.halloween :is(.card, .tile, .mcard, .htile, .panel, .final-box, .trust-grid, .compare-wrap, .link-card) {
+  border-color: color-mix(in srgb, #ff7a1a 32%, transparent);
+}
+html.halloween .topbar { border-bottom-color: #6e0a10; }
+html.halloween .hunt-key {
+  background-image: linear-gradient(var(--surface-container), var(--surface-container)), linear-gradient(180deg, #ffa24a, #c4161c);
+}
+html.halloween .hunt-key-code { background-image: linear-gradient(90deg, #ffb35c, #ff7a1a, #e0323a, #ff7a1a, #ffb35c); }
+@media (forced-colors: active) {
+  html.halloween :is(h1, h2, .wordmark) { background: none; color: CanvasText; }
+}
+
+/* the webs: drawn from their corner, and stirring around it as if in a draught */
+.hw-web { position: fixed; z-index: 39; pointer-events: none; opacity: 0.5; }
+.hw-web svg { display: block; overflow: visible; }
+.hw-web :is(line, path) { fill: none; stroke: #e8e2f0; stroke-width: 0.9; stroke-opacity: 0.55; }
+.hw-web.tl { left: 0; top: var(--head); transform-origin: 0 0; }
+.hw-web.tr { right: 0; top: var(--head); transform-origin: 100% 0; scale: -1 1; }
+.hw-web.bl { left: 0; bottom: 0; transform-origin: 0 100%; scale: 1 -1; }
+.hw-web.br { right: 0; bottom: 0; transform-origin: 100% 100%; scale: -1 -1; }
+.hw-web.tl, .hw-web.br { animation: draught 6.5s ease-in-out infinite alternate; }
+.hw-web.tr, .hw-web.bl { animation: draught 8s ease-in-out -3s infinite alternate; }
+@keyframes draught { from { rotate: -1.6deg; } to { rotate: 2.2deg; } }
+
+/* blood, oozing from the header's lower edge and letting go a drop now and then */
+.hw-blood { position: absolute; left: 0; right: 0; top: 100%; height: 0; pointer-events: none; }
+.hw-blood::before {
+  content: ''; position: absolute; left: 0; right: 0; top: -1px; height: 4px;
+  background: linear-gradient(180deg, #7a0910, #b3121a);
+  border-radius: 0 0 3px 3px;
+}
+.hw-blood i {
+  position: absolute; left: var(--x); top: 0;
+  width: var(--w); height: var(--h);
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(180deg, #7a0910, #c4161c 70%, #e0323a);
+  transform-origin: 50% 0;
+  animation: ooze var(--t) cubic-bezier(0.5, 0, 0.9, 0.6) var(--wait) infinite;
+}
+.hw-blood i::after {
+  content: ''; position: absolute; left: 50%; bottom: -2px;
+  width: var(--w); height: calc(var(--w) * 1.25); translate: -50% 0;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: #c4161c;
+  animation: let-go var(--t) cubic-bezier(0.55, 0, 1, 0.45) var(--wait) infinite;
+}
+@keyframes ooze { 0% { transform: scaleY(0.12); } 82% { transform: scaleY(1); } 100% { transform: scaleY(0.9); } }
+@keyframes let-go {
+  0%, 80% { opacity: 1; transform: translateY(0); }
+  97% { opacity: 1; transform: translateY(70vh); }
+  98%, 100% { opacity: 0; transform: translateY(70vh); }
+}
+
+/* spiders */
+.hw-spider { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 2px rgb(255 150 70 / 0.8)) drop-shadow(0 0 6px rgb(255 90 30 / 0.35)); }
+.hw-spider .ab { fill: #120c10; stroke: #3a2a33; stroke-width: 0.8; }
+.hw-spider .hd { fill: #1a1116; }
+.hw-spider .eye { fill: #ff2a3a; }
+.hw-spider .leg { fill: none; stroke: #120c10; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.hw-thread { position: fixed; left: 0; top: 0; z-index: 38; width: 1px; height: 1px; background: rgb(230 226 240 / 0.45); transform-origin: 0 0; pointer-events: none; }
+.hw-hanger { position: fixed; left: 0; top: 0; z-index: 38; width: 42px; height: 42px; transform-origin: 50% 0; pointer-events: none; }
+.hw-woven { position: fixed; left: 0; top: 0; z-index: 37; pointer-events: none; opacity: 0.6; }
+.hw-woven[hidden] { display: none; }
+.hw-woven :is(line, path) { fill: none; stroke: #e8e2f0; stroke-width: 0.8; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.hw-runner { position: fixed; left: 0; top: 0; z-index: 45; width: 44px; height: 44px; pointer-events: none; }
+.hw-runner .legs.a .leg:not(.odd), .hw-runner .legs.b .leg.odd { animation: scuttle 120ms linear infinite alternate; }
+.hw-runner .legs.a .leg.odd, .hw-runner .legs.b .leg:not(.odd) { animation: scuttle 120ms linear -60ms infinite alternate; }
+@keyframes scuttle { from { rotate: -9deg; } to { rotate: 9deg; } }
+
+/* the lanterns over the footer */
+.hw-garland { position: absolute; left: 0; right: 0; top: 0; height: 70px; pointer-events: none; }
+.hw-string { position: absolute; inset: 0 0 auto; width: 100%; height: 54px; }
+.hw-string path { fill: none; stroke: #4a3a42; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.hw-garland span {
+  position: absolute; left: var(--x); top: 18px; width: 30px; height: 30px; translate: -50% 0;
+  transform-origin: 50% 0; animation: sway 3.6s ease-in-out calc(var(--i) * -0.45s) infinite alternate;
+}
+.hw-garland span:nth-of-type(even) { top: 6px; }
+@keyframes sway { from { rotate: -6deg; } to { rotate: 6deg; } }
+.hw-lantern { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 8px rgb(255 140 40 / 0.55)); }
+.hw-lantern .pk-stem { fill: #6b8f3e; }
+.hw-lantern .pk-body { fill: #ff8a2b; }
+.hw-lantern .pk-face path { fill: #ffd36e; }
+.hw-lantern .pk-face { animation: candle 2.6s linear calc(var(--i) * -0.7s) infinite; }
+@keyframes candle {
+  0%, 100% { opacity: 1; } 7% { opacity: 0.68; } 10% { opacity: 1; } 43% { opacity: 0.85; }
+  47% { opacity: 1; } 66% { opacity: 0.6; } 70% { opacity: 0.95; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hw-web:is(.tl, .tr, .bl, .br), .hw-garland span, .hw-lantern .pk-face, .hw-blood i, .hw-blood i::after { animation: none; }
+  .hw-blood i::after { display: none; }
+}
+
 /* ---------- a touch screen is spared ----------
  *
  * Nothing here runs by itself on a phone. Every effect below is light that turns forever or a
@@ -1115,5 +1442,7 @@ html.rainbow .topbar { border-bottom-color: color-mix(in srgb, var(--primary) 50
   .wall-moving .wall-row { animation: none; }
   html.rainbow { animation: none; --primary: #fac898; }
   html.rainbow :is(h1, h2, .wordmark, .btn:not(.ghost), .badge b, .show-tab[aria-selected='true']) { animation: none; }
+  .hw-web:is(.tl, .tr, .bl, .br), .hw-garland span, .hw-lantern .pk-face, .hw-blood i, .hw-blood i::after { animation: none; }
+  .hw-blood i::after { display: none; }
   .topbar { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--surface) 96%, transparent); }
 }

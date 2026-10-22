@@ -1,0 +1,20 @@
+---
+import Base from '../../layouts/Base.astro';
+import AuthorMods from '../../components/AuthorMods.astro';
+import { authors, authorText } from '../../lib/authors';
+import { authorSchema } from '../../lib/schema';
+
+export function getStaticPaths() {
+  return authors.map((author) => ({ params: { slug: author.slug }, props: { author } }));
+}
+
+const { author } = Astro.props;
+const text = authorText('en', author);
+const img = author.mods.find((m) => m.img)?.img;
+const jsonLd = authorSchema('en', author);
+---
+
+<Base title={text.title} description={text.description} path={`/authors/${author.slug}/`} image={img ? { src: img, width: 854, height: 480 } : undefined}>
+  {jsonLd.map((node) => <script type="application/ld+json" slot="head" set:html={JSON.stringify(node)} />)}
+  <AuthorMods lang="en" author={author} />
+</Base>

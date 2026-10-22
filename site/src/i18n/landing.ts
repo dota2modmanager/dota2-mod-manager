@@ -107,6 +107,10 @@ export interface Landing {
   trustFacts: Array<[string, string]>;
   smartscreenTitle: string;
   smartscreen: string;
+  /** The warning about renamed, closed or paid copies of the app, and its link to the guide. */
+  copiesTitle: string;
+  copies: string;
+  copiesLink: string;
 
   faqTitle: string;
   faq: Array<[string, string]>;
@@ -221,6 +225,10 @@ export const landing: Record<'en' | 'ru', Landing> = {
     smartscreenTitle: 'Windows will warn you, and here is why',
     smartscreen: 'The installer is not signed with a paid certificate, so SmartScreen says "unknown publisher". Click <b>More info</b>, then <b>Run anyway</b>. A certificate costs a few hundred dollars a year, and this is free software; the free programme for open-source projects turned the application down for not being famous enough yet.',
 
+    copiesTitle: 'Copies of this app are going around',
+    copies: 'Renamed, closed, sometimes for money: launchers built on this app\'s code that hide where they came from. The real one is free, has no paid version and never asks for your Steam login. Do not trust a launcher that shows no source code, names nobody it is built on, wants a subscription or a payment, or makes you sign in.',
+    copiesLink: 'How to tell the real one',
+
     faqTitle: 'Questions',
     faq: [
       ['Is this a cheat?', 'No. The mods change how things look on your screen only. Nobody else in the match sees them.'],
@@ -230,6 +238,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
       ['How do I remove a mod?', 'Delete it in My mods and the game goes back to how it was. Fonts and cursors are restored from the backup the app made before installing. <a href="~/docs/install/#remove">Doing it by hand</a>.'],
       ['Where do the mods come from?', 'The D2PFX catalog: the largest open collection of Dota 2 mods there is, run by h6rd with the community for over a year. The app reads it directly, so new mods appear without an app update. <a href="~/docs/catalog/">About the catalog and its author</a>.'],
       ['Does it work after a Dota update?', 'Yes. After a game patch the app puts back what the update wiped, and warns you when something needs attention. <a href="~/docs/troubleshooting/">What to do when something breaks</a>.'],
+      ['Is there a paid version?', 'No. There is one version, it is free, and every feature is in it. Copies of this app go around under other names, some of them sold, closed or asking for a login, and none of them are ours. <a href="~/docs/copies/">How to tell the real one</a>.'],
     ],
 
     ctaTitle: 'Get it',
@@ -341,6 +350,10 @@ export const landing: Record<'en' | 'ru', Landing> = {
     smartscreenTitle: 'Windows будет ругаться, и вот почему',
     smartscreen: 'Установщик не подписан платным сертификатом, поэтому SmartScreen пишет «неизвестный издатель». Нажми <b>Подробнее</b>, затем <b>Выполнить в любом случае</b>. Сертификат стоит несколько сотен долларов в год, а программа бесплатная; бесплатная программа подписи для открытых проектов заявку отклонила - проект пока недостаточно известен.',
 
+    copiesTitle: 'По сети ходят копии этого приложения',
+    copies: 'Переименованные, с закрытым кодом, иногда платные: лаунчеры на коде этого приложения, которые прячут, откуда взялись. Настоящий бесплатный, платной версии у него нет, и логин Steam он никогда не просит. Не доверяй лаунчеру, который не показывает исходный код, молчит, на чём сделан, просит подписку или деньги или требует войти.',
+    copiesLink: 'Как отличить настоящий',
+
     faqTitle: 'Вопросы про моды в Доте 2',
     faq: [
       ['Это чит?', 'Нет. Моды меняют только картинку у тебя на экране. Соперники и союзники ничего этого не видят.'],
@@ -350,6 +363,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
       ['Как убрать мод?', 'Кнопка «Удалить» в «Моих модах» возвращает игру к исходному виду. Шрифты и курсоры восстанавливаются из копии, которую приложение сделало до установки. <a href="~/docs/install/#remove">Как это делается руками</a>.'],
       ['Откуда моды?', 'Каталог D2PFX: самая большая открытая коллекция модов для Доты 2, её больше года ведёт h6rd вместе с сообществом. Приложение читает каталог напрямую, поэтому новые моды появляются без обновления программы. <a href="~/docs/catalog/">Про каталог и его автора</a>.'],
       ['А после патча доты работает?', 'Да. После обновления игры приложение возвращает на место то, что патч стёр, и предупреждает, если что-то требует внимания. <a href="~/docs/troubleshooting/">Что делать, если что-то сломалось</a>.'],
+      ['Есть платная версия?', 'Нет. Версия одна, бесплатная, и в ней есть всё. Под чужими названиями ходят копии этого приложения, платные, с закрытым кодом или с обязательным входом, и ни одна из них не наша. <a href="~/docs/copies/">Как отличить настоящий</a>.'],
     ],
 
     ctaTitle: 'Скачать мод-менеджер для Доты 2',

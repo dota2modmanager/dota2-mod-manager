@@ -19,6 +19,7 @@ import Download from './Download.astro';
 import Show from './Show.astro';
 import Creator from './Creator.astro';
 import Hunt from './Hunt.astro';
+import { compareVersions, latestRelease } from '../lib/changes';
 import Icon from './Icon.astro';
 import { siteStats } from '../lib/stats';
 import { shotNames, shotUrl, shotAlt } from '../lib/media';
@@ -30,13 +31,15 @@ import { ruName } from '../i18n/hero-names';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
+/* The last hero only runs once an app that can take what it gives is out (Hunt.astro). */
+const latest = await latestRelease();
+const lastRuns = !!latest && compareVersions(latest, '2.16.0') >= 0;
 const c = landing[lang];
 
 /** Copy links are written as "~/docs/safe/" and get their language prefix here. */
 const link = (html: string) => html.replaceAll('~/', lang === 'en' ? '/' : `/${lang}/`);
 
 const GITHUB = 'https://github.com/dota2modmanager/dota2-mod-manager';
-const RELEASES = `${GITHUB}/releases/latest`;
 const WORKFLOW = `${GITHUB}/actions`;
 const DISCORD = 'https://discord.gg/PBvG8D9MxT';
 
@@ -88,11 +91,22 @@ const topCats = catalogCategories.slice(0, 10);
 
 /* Pictures for the tiles, picked by kind so each tile shows what it is about. */
 const firstOf = (cats: string[], skip = 0) => pictured.filter((m) => cats.includes(m.cat)).slice(skip);
-const demo = firstOf(['heroes'])[0];
-const toggles = [firstOf(['terrains'])[0], firstOf(['heroes'], 1)[0], firstOf(['cursors', 'huds'])[0]].filter(Boolean);
+/* A hero on a tile is one of these arcanas, which a player knows on sight, in this order. The
+   newest hero mod can look like anything, and the install demo once showed a Bloodseeker that
+   read as broken. A name the catalog has lost is skipped, and the newest fill in after the list. */
+const SHOWCASE = [
+  'Shadow Fiend Arcana', 'Crystal Maiden Immortal Arcana', 'Terrorblade Arcana Midnight Blue',
+  'Windranger Arcana Prismatic', 'Queen of Pain Arcana', 'Juggernaut Arcana',
+];
+const heroPics = [
+  ...SHOWCASE.flatMap((name) => pictured.find((m) => m.cat === 'heroes' && m.name === name) ?? []),
+  ...firstOf(['heroes']).filter((m) => !SHOWCASE.includes(m.name)),
+];
+const demo = heroPics[0];
+const toggles = [firstOf(['terrains'])[0], heroPics[1], firstOf(['cursors', 'huds'])[0]].filter(Boolean);
 const fan = [firstOf(['couriers'])[0], firstOf(['wards'])[0], firstOf(['couriers'], 1)[0]].filter(Boolean);
-const shareSet = [firstOf(['heroes'], 4)[0], firstOf(['terrains'], 2)[0], firstOf(['heroes'], 5)[0]].filter(Boolean);
-const finalArt = [firstOf(['heroes'], 2)[0], firstOf(['terrains'], 1)[0], firstOf(['item-effects'])[0], firstOf(['heroes'], 3)[0]].filter(Boolean);
+const shareSet = [heroPics[4], firstOf(['terrains'], 2)[0], heroPics[5]].filter(Boolean);
+const finalArt = [heroPics[2], firstOf(['terrains'], 1)[0], firstOf(['item-effects'])[0], heroPics[3]].filter(Boolean);
 
 /* The heroes with the most made for them, each shown by their newest render. */
 const topHeroes = [...heroes]
@@ -125,7 +139,7 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
 
   <div class="wrap hero-body">
     {latestTag && (
-      <a class="badge" href={RELEASES} rel="noopener">
+      <a class="badge" href={pathIn(lang, '/changes/')}>
         <b>{latestTag}</b>
         <span>{c.latest}</span>
       </a>
@@ -185,7 +199,7 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
         </li>
       ))}
     </ul>
-    <div class="finder-results" id="finderResults" data-lang={lang} data-catalog={catalogHref} data-empty={c.finderEmpty} aria-live="polite"></div>
+    <div class="finder-results" id="finderResults" data-lang={lang} data-empty={c.finderEmpty} aria-live="polite"></div>
   </div>
 </section>
 
@@ -349,12 +363,22 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
         </div>
       ))}
     </div>
-    <div class="warn reveal">
-      <h3>{c.smartscreenTitle}</h3>
-      <p set:html={c.smartscreen} />
-      <p class="muted">
-        <a href={WORKFLOW} rel="noopener">{lang === 'ru' ? 'Посмотреть, как собираются релизы' : 'See how releases are built'}</a>
-      </p>
+    {/* Two things a visitor should hear before downloading: that copies of this app go around
+        under other names, and why Windows will warn about the real one. Side by side on a wide
+        screen, so neither reads as a footnote to the other. */}
+    <div class="warn-pair reveal">
+      <div class="warn" id="copies">
+        <h3>{c.copiesTitle}</h3>
+        <p>{c.copies}</p>
+        <p class="muted"><a href={link('~/docs/copies/')}>{c.copiesLink}</a></p>
+      </div>
+      <div class="warn">
+        <h3>{c.smartscreenTitle}</h3>
+        <p set:html={c.smartscreen} />
+        <p class="muted">
+          <a href={WORKFLOW} rel="noopener">{lang === 'ru' ? 'Посмотреть, как собираются релизы' : 'See how releases are built'}</a>
+        </p>
+      </div>
     </div>
   </div>
 </section>
@@ -411,10 +435,11 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
   </div>
 </section>
 
-<Hunt complete={c.huntComplete} shared={c.huntShared} close={c.huntClose} hint={c.huntHint} />
+<Hunt complete={c.huntComplete} shared={c.huntShared} close={c.huntClose} hint={c.huntHint} last={lastRuns} />
 
 <script>
-  import { loadCatalog, rank, matcher, el, type Lang } from '../scripts/catalog';
+  import { el, type Lang } from '../scripts/catalog';
+  import { searchEngine, type Hit, type Words } from '../scripts/search-engine';
 
   // ---- the wall moves on a desktop, while it is on screen ----
   const hero = document.querySelector<HTMLElement>('.hero');
@@ -476,41 +501,49 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
     });
   }
 
-  // ---- the finder: results as you type, from the same file the catalog reads ----
+  // ---- the finder: the site's own search (scripts/search-engine.ts), drawn as cards here ----
+  // The same answers as the box in the header, so a nickname finds its hero and a name its
+  // author on the landing too; the words are the header box's, which every page carries.
   const box = document.getElementById('finderResults');
   const input = document.getElementById('finder-q') as HTMLInputElement | null;
-  if (box && input) {
+  const words = JSON.parse(document.getElementById('sitesearch')?.dataset.words ?? 'null') as Words | null;
+  if (box && input && words) {
     const lang = (box.dataset.lang as Lang) || 'en';
-    const base = box.dataset.catalog!;
+    const { ready, answer } = searchEngine(lang, words);
+    const card = (h: Hit) => {
+      const a = el('a', 'finder-row');
+      a.href = h.href;
+      a.dataset.kind = h.kind;
+      if (h.group) a.dataset.group = h.group;
+      if (h.img) {
+        const img = el('img');
+        img.src = h.img; img.alt = ''; img.width = 400; img.height = 225; img.loading = 'lazy';
+        a.append(img);
+      }
+      const text = el('div');
+      const meta = el('span');
+      if (h.group) meta.append(el('i', 'dot'));
+      meta.append(document.createTextNode(h.meta));
+      text.append(el('b', '', h.title), meta);
+      a.append(text);
+      return a;
+    };
     let timer = 0;
     const render = async () => {
-      const q = input.value.trim();
-      if (!q) { box.replaceChildren(); return; }
-      let cat;
-      try { cat = await loadCatalog(lang); } catch { return; }
-      const ok = matcher(q);
-      const hits = cat.mods.filter(ok).sort((a, b) => rank(b, q) - rank(a, q)).slice(0, 6);
-      if (!hits.length) { box.replaceChildren(el('p', 'muted', box.dataset.empty)); return; }
-      box.replaceChildren(...hits.map((m) => {
-        const a = el('a', 'finder-row');
-        a.href = `${base}?q=${encodeURIComponent(q)}#mod=${encodeURIComponent(m.key)}`;
-        a.dataset.group = m.group;
-        if (m.thumb) {
-          const img = el('img');
-          img.src = m.thumb; img.alt = ''; img.width = 400; img.height = 225; img.loading = 'lazy';
-          a.append(img);
-        }
-        const text = el('div');
-        const meta = el('span');
-        meta.append(el('i', 'dot'), document.createTextNode(m.heroName ? `${m.catName} · ${m.heroName}` : m.catName));
-        text.append(el('b', '', m.name), meta);
-        a.append(text);
-        return a;
-      }));
+      try { await ready(); } catch { return; }
+      const ans = answer(input.value, { heroes: 2, authors: 2, mods: 6 });
+      if (!ans) { box.replaceChildren(); delete box.dataset.q; return; }
+      const out: HTMLElement[] = [];
+      for (const g of ans.groups) out.push(el('p', 'finder-label', g.label), ...g.hits.map(card));
+      const shown = ans.groups.find((g) => g.kind === 'mod')?.hits.length ?? 0;
+      if (ans.found > shown) { const all = el('a', 'finder-all', ans.all.label); all.href = ans.all.href; out.push(all); }
+      if (!out.length) out.push(el('p', 'muted', box.dataset.empty));
+      box.replaceChildren(...out);
+      box.dataset.q = ans.q; // which question the answers on show are for
     };
     input.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(render, 90); });
     // start fetching the moment somebody shows intent, so the first letter has results
-    input.addEventListener('focus', () => { loadCatalog(lang).catch(() => {}); }, { once: true });
+    input.addEventListener('focus', () => { ready().catch(() => {}); }, { once: true });
   }
 </script>
 

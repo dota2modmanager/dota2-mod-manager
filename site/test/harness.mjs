@@ -124,8 +124,9 @@ export const SCREENS = {
  * the browser only reports to the console. Requests to anywhere else are refused so the tests
  * never depend on GitHub or YouTube being up; `online` lets tools/look.mjs see the real thing.
  */
-export async function openPage(browser, base, screen, { motion = 'no-preference', online = false } = {}) {
-  const context = await browser.newContext({ ...SCREENS[screen], reducedMotion: motion });
+export async function openPage(browser, base, screen, { motion = 'no-preference', online = false, locale } = {}) {
+  // locale: the language the browser asks for (navigator.languages), for the offer of the other one
+  const context = await browser.newContext({ ...SCREENS[screen], reducedMotion: motion, ...(locale ? { locale } : {}) });
   // Scrolling is instant in the tests. The site scrolls smoothly, and a smooth scroll Playwright
   // starts for one click is still travelling when the next step scrolls somewhere else, so a
   // button brought to the middle of the screen ended up 555 px lower by the time it was pressed.
@@ -175,14 +176,22 @@ export function builtPages(dir = DIST) {
 /**
  * One page of each kind the site has, in both languages. A hero page and a catalog page are the
  * same template 120 and 37 times over, so the first of each stands for the rest; the guides are
- * all different and all listed.
+ * all different and all listed. A mod's page stands in twice: one with the most to show (a hero's
+ * mod in several styles, the longest name among them) and one with the least.
  */
 export function samplePages(dir = DIST) {
   const all = builtPages(dir);
   const first = (prefix) => all.find((p) => p.startsWith(prefix) && p !== prefix && p.split('/').length === prefix.split('/').length + 1);
+  let mods = [];
+  try {
+    const data = JSON.parse(fs.readFileSync(path.join(dir, 'catalog', 'data.json'), 'utf-8'));
+    const rich = data.mods.filter((m) => m[3] >= 0 && m[7].includes('|')).sort((a, b) => b[1].length - a[1].length)[0];
+    const bare = data.mods.find((m) => m[3] < 0 && !m[7] && !m[5]);
+    mods = [rich, bare].filter(Boolean).map((m) => `/mods/${m[0]}/`).filter((p) => all.includes(p));
+  } catch { /* a build without the catalog file: check-build says so */ }
   const en = [
-    '/', '/docs/', '/catalog/', '/heroes/', '/facts/', '/transparency/', '/privacy/', '/terms/', '/code-signing/',
-    first('/heroes/'), first('/catalog/'),
+    '/', '/docs/', '/catalog/', '/heroes/', '/facts/', '/changes/', '/transparency/', '/privacy/', '/terms/', '/code-signing/',
+    first('/heroes/'), first('/catalog/'), ...mods, '/authors/', first('/authors/'),
     ...all.filter((p) => /^\/docs\/[^/]+\/$/.test(p)),
   ].filter(Boolean);
   return [...en, ...en.map((p) => `/ru${p}`).filter((p) => all.includes(p)), '/p/', '/404.html'];

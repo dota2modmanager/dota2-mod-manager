@@ -71,15 +71,56 @@ test('the catalog searches, filters by group and kind, sorts, and keeps it all i
   await context.close();
 });
 
-test('the catalog draws the next screen of cards as you scroll', async () => {
-  const { context, page } = await open('/catalog/');
-  await ready(page);
-  const first = await cards(page).count();
-  assert.equal(first, 48);
-  await page.locator('#browse-more').scrollIntoViewIfNeeded();
-  await page.waitForFunction((n) => document.querySelectorAll('#browse-grid .mcard').length > n, first);
-  assert.ok((await cards(page).count()) >= 96);
-  await context.close();
+test('the catalog comes in pages of 48, keeps the page in the address, and never grows past one', async () => {
+  for (const screen of ['desktop', 'mobile']) {
+    const { context, page, problems } = await open('/catalog/', screen);
+    await ready(page);
+    const keys = () => cards(page).evaluateAll((els) => els.map((e) => e.dataset.key));
+    const first = await keys();
+    assert.equal(first.length, 48);
+    // scrolling to the bottom adds nothing: the footer is reachable
+    await page.locator('footer').scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+    assert.equal(await cards(page).count(), 48, `${screen}: no cards arrive on their own`);
+
+    await page.locator('#browse-next').click();
+    await page.waitForFunction(() => new URLSearchParams(location.search).get('page') === '2');
+    const second = await keys();
+    assert.equal(second.length, 48);
+    assert.ok(second.every((k) => !first.includes(k)), 'page 2 is the next 48, not the same ones');
+    assert.match(await page.locator('#browse-where').textContent(), /49.96/);
+    // and the grid's top is back in view
+    const top = await page.locator('#browse').evaluate((el) => el.getBoundingClientRect().top);
+    assert.ok(top > -20 && top < 200, `${screen}: the grid starts at ${Math.round(top)} px`);
+
+    // Back goes to page 1
+    await page.goBack();
+    await page.waitForFunction((k) => document.querySelector('#browse-grid .mcard')?.dataset.key === k, first[0]);
+
+    const total = await page.evaluate(() => fetch('/catalog/data.json').then((r) => r.json()).then((d) => d.mods.length));
+    const pages = Math.ceil(total / 48);
+    if (screen === 'desktop') {
+      // the last page holds what is left
+      await page.locator(`#browse-pages [data-page="${pages}"]`).click();
+      await page.waitForFunction((p) => new URLSearchParams(location.search).get('page') === String(p), pages);
+      assert.equal(await cards(page).count(), total - 48 * (pages - 1));
+      assert.equal(await page.locator('#browse-next').isDisabled(), true);
+      assert.equal(await page.locator('#browse-pages [aria-current="page"]').textContent(), String(pages));
+    } else {
+      // a phone says which page in words instead of numbers
+      assert.equal(await page.locator('#browse-pages').isVisible(), false);
+      assert.match(await page.locator('#browse-now').textContent(), new RegExp(`1\\D+${pages}`));
+    }
+
+    // a search starts from its own first page
+    await page.goto(`${server.url}/catalog/?page=3`, { waitUntil: 'load' });
+    await ready(page);
+    await page.waitForFunction(() => document.getElementById('browse-where')?.textContent?.includes('97'));
+    await page.locator('#browse-q').fill('pudge');
+    await page.waitForFunction(() => new URLSearchParams(location.search).get('q') === 'pudge' && !new URLSearchParams(location.search).get('page'));
+    assert.deepEqual(problems.filter((l) => !isOffline(l)), []);
+    await context.close();
+  }
 });
 
 test('a closer look at a mod opens, has its own address, and closes on Escape', async () => {
@@ -100,7 +141,8 @@ test('a closer look at a mod opens, has its own address, and closes on Escape', 
     if (over.length) { await snap(page, `quick-${screen}`); assert.fail(over.join('; ')); }
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#quick').evaluate((d) => d.open), false);
-    assert.doesNotMatch(page.url(), /#mod=/);
+    // the dialog's close event, which takes the #mod= off the address, comes a moment later
+    await page.waitForFunction(() => !location.hash.startsWith('#mod='));
 
     // and the address opens it again
     const key = await first.evaluate((li) => li.dataset.key);

@@ -1,18 +1,21 @@
 /**
- * Seven more guides, in both languages.
+ * Nine more guides, in both languages.
  *
  * A separate file from docs.ts for length alone: the two together are one table of pages, and
  * merging happens there. The rule is the same one that file states - both languages side by
  * side, so a paragraph that exists in one and not the other is visible while typing.
  *
- * Why these seven. The five originals answer how modding works; these answer what people
+ * Why these. The five originals answer how modding works; these answer what people
  * actually type. Terrains are the most-wanted mod in Dota and every guide ranking for them
  * teaches the `-language tempcontent` trick that stopped producing a folder on 2026-07-24.
  * Removing mods is the second thing searched after installing them and nothing here answered
  * it. The language folder is the piece no other guide explains correctly, and it is the reason
  * the terrain guides broke. Announcers, and your own files, had no page at all. The last two
  * are about the people this is built on and about choosing between the tools in this corner:
- * both get asked, and until now both got answered by somebody else.
+ * both get asked, and until now both got answered by somebody else. The copies page came in
+ * October 2026, once renamed copies of this app with no source, no credit and sometimes a price
+ * or a required login had turned up in more than one place: a person who meets one of those first
+ * needs a page that says how to tell, and so does an assistant asked which launcher to trust.
  *
  * Facts are read off the code they describe: pak slots and priority categories from
  * installer.js (PRIORITY_CATEGORIES, allocatePak), the folder name from gamelang.js, the
@@ -23,7 +26,7 @@
  */
 import type { Doc } from './docs.ts';
 
-type Slug = 'uninstall' | 'terrain' | 'announcer' | 'language' | 'own-mods' | 'catalog' | 'minify' | 'compare';
+type Slug = 'uninstall' | 'terrain' | 'announcer' | 'language' | 'own-mods' | 'catalog' | 'minify' | 'compare' | 'copies';
 
 // ---------------------------------------------------------------------------
 // English
@@ -680,6 +683,81 @@ const en: Record<Slug, Doc> = {
       },
     ],
   },
+  copies: {
+    slug: 'copies',
+    title: 'Fake copies of Dota 2 Mod Manager: how to tell the real one',
+    h1: 'Copies of this app, and how to tell the real one',
+    description:
+      'Dota 2 Mod Manager is free, open source and has no paid version. Four signs of a copy you should not run, and the only addresses that are ours.',
+    lead: 'We keep finding this app under other names: renamed, closed, sometimes for money. Some of them run our code with our name taken off. You cannot check what else they do, and you do not need them, because the original costs nothing.',
+    card: 'Paid launchers, renamed copies, apps that want a login. Four signs, and the addresses that are really ours.',
+    updated: '2026-10-19',
+    blocks: [
+      { k: 'h2', t: 'What is going around', id: 'what' },
+      {
+        k: 'p',
+        t: 'Launchers that look like this one or do what it does, under a name of their own, with no source code and no word about where they came from. Some sell a subscription, a premium tier or keys. Some make you sign in before they show a single mod. A few are this app with its name changed and its authors removed.',
+      },
+      {
+        k: 'p',
+        t: 'The original is free, open and needs no account. So each of these takes something from you that the original does not: money, a password, or the chance to read what you are running.',
+      },
+
+      { k: 'h2', t: 'Four signs', id: 'signs' },
+      {
+        k: 'cards',
+        items: [
+          ['No source code', 'The original is GPL-3.0. Anyone may build on that code and even charge for a copy, but whoever hands you one has to give you its source too, under the same licence. No source means nobody can read what the program does, and its maker is breaking the licence it was built under.'],
+          ['No word about where it came from', 'The licence also keeps the original authors\' notices in every copy. A launcher that calls itself new and names nothing it is built on hides the first thing you would want to know.'],
+          ['It wants money', 'Dota 2 Mod Manager has never charged for anything. It has no subscription, no premium tier, no keys and no locked mods. A launcher asking you to pay for the same job is charging you for something free.'],
+          ['It wants a login or your data', 'Installing a mod means putting a file into your game folder. That takes no Steam login, no password, no phone number and no card. The one sign-in the original has is optional, happens on discord.com, and only puts your name on a setup you share.'],
+        ],
+      },
+
+      { k: 'h2', t: 'Where the real one lives', id: 'official' },
+      {
+        k: 'list',
+        items: [
+          '<a href="~/">dota2modmanager.com</a>, this site. Its download buttons take the file straight from the GitHub releases page.',
+          '<a href="https://github.com/dota2modmanager/dota2-mod-manager" rel="noopener">github.com/dota2modmanager/dota2-mod-manager</a>, the source code and every release, each built by a <a href="https://github.com/dota2modmanager/dota2-mod-manager/actions" rel="noopener">public workflow</a>. The old address, github.com/TheFleece/dota2-mod-manager, leads there.',
+          '<a href="https://gitlab.com/TheFleece/dota2-mod-manager" rel="noopener">gitlab.com/TheFleece/dota2-mod-manager</a>, a mirror of the same repository.',
+          '<a href="https://discord.gg/PBvG8D9MxT" rel="noopener">The Discord server</a>, where the people who make it answer.',
+        ],
+      },
+      {
+        k: 'p',
+        t: 'The D2PFX catalog, where the mods come from, lists the app in its own Tools section and links here. Anything else that looks like this app did not come from us.',
+      },
+
+      { k: 'h2', t: 'Forks that say so', id: 'forks' },
+      {
+        k: 'p',
+        t: 'You may build on this code, and we are glad when people do. A fair fork names what it is built on, publishes its own source and keeps the licence. If you like one of those better, use it. The four signs are about the copies that hide where they came from.',
+      },
+
+      { k: 'h2', t: 'If you already paid or signed in', id: 'already' },
+      {
+        k: 'list',
+        items: [
+          'Change the password you typed into it, and the same password anywhere else you use it. If it was your Steam password, change it in Steam and sign out of every other device from the Steam Guard page.',
+          'If you paid, ask your bank or the payment service how to dispute the charge, and keep the receipt.',
+          'Remove the copy, then get the original from this site. It recognises the mods already in your game folder and takes them over. <a href="~/docs/own-mods/#adopt">How that works</a>.',
+          'Tell us where you found it, on <a href="https://discord.gg/PBvG8D9MxT" rel="noopener">Discord</a> or at <a href="mailto:hello@dota2modmanager.com">hello@dota2modmanager.com</a>, so we can warn the next person.',
+        ],
+      },
+
+      { k: 'h2', t: 'Questions', id: 'faq' },
+      {
+        k: 'faq',
+        items: [
+          ['Is there a paid or Pro version of Dota 2 Mod Manager?', 'No. There is one version, it is free, and every feature is in it. A Pro, Premium or VIP Dota 2 Mod Manager is not ours.'],
+          ['A launcher does the same thing under another name. Is it safe?', 'Ask it for its source code and for what it is built on. If it shows you neither, you cannot know what else it does on your computer, and the original does the same job for free.'],
+          ['Can someone sell this app?', 'The licence allows charging for a copy, as long as the buyer gets the full source under GPL-3.0 and the original notices stay in. You never have to buy it: the same program is free here.'],
+        ],
+      },
+    ],
+  },
+
   compare: {
     slug: 'compare',
     title: 'Choosing a Dota 2 mod manager: what to check',
@@ -745,6 +823,10 @@ const en: Record<Slug, Doc> = {
           [
             'Skin changers and inventory changers (Overplus, MetaSkins and the like)',
             'A different category of thing. They advertise unlocking items you do not own, they are closed source, with no public build anybody can check. Where this app adds a file next to the game and can take it back, these change the files of the game itself, and you have their word for what else they touch.',
+          ],
+          [
+            'Renamed copies of this app',
+            'Launchers that run this app\'s code under a name of their own, closed and with no word about where they came from, some of them for money or behind a login. They are not ours, and you cannot check what else they do. <a href="~/docs/copies/">Four signs of one</a>.',
           ],
           [
             'Umbrella and other cheat platforms',
@@ -1432,6 +1514,81 @@ const ru: Record<Slug, Doc> = {
       },
     ],
   },
+  copies: {
+    slug: 'copies',
+    title: 'Копии Dota 2 Mod Manager: как отличить настоящий',
+    h1: 'Копии приложения и как отличить настоящее',
+    description:
+      'Dota 2 Mod Manager бесплатный, с открытым кодом и без платной версии. Четыре признака копии, которую не стоит запускать, и единственные адреса, которые наши.',
+    lead: 'Мы всё чаще находим это приложение под чужими названиями: переименованное, с закрытым кодом, иногда за деньги. Часть таких копий работает на нашем коде, только наше имя из них убрано. Что ещё они делают, проверить нельзя, и они тебе не нужны: оригинал бесплатный.',
+    card: 'Платные лаунчеры, переименованные копии, программы с обязательным входом. Четыре признака и адреса, которые правда наши.',
+    updated: '2026-10-19',
+    blocks: [
+      { k: 'h2', t: 'Что гуляет по сети', id: 'what' },
+      {
+        k: 'p',
+        t: 'Лаунчеры, похожие на этот или делающие то же самое, под своим названием, без исходного кода и без слова о том, откуда они взялись. Одни продают подписку, премиум или ключи. Другие требуют войти, прежде чем покажут хоть один мод. А некоторые - это наше приложение с другим именем и без авторов.',
+      },
+      {
+        k: 'p',
+        t: 'Оригинал бесплатный, открытый и работает без аккаунта. Значит, каждая такая копия забирает у тебя то, чего оригинал не берёт: деньги, пароль или возможность прочитать, что ты запускаешь.',
+      },
+
+      { k: 'h2', t: 'Четыре признака', id: 'signs' },
+      {
+        k: 'cards',
+        items: [
+          ['Нет исходного кода', 'Оригинал выходит под GPL-3.0. На этом коде можно строить своё и даже продавать копии, но тот, кто даёт тебе копию, обязан дать и её исходники под той же лицензией. Нет исходников - никто не может прочитать, что делает программа, а её автор нарушает лицензию, на которой она построена.'],
+          ['Не сказано, откуда она взялась', 'Та же лицензия требует оставлять в каждой копии имена авторов оригинала. Лаунчер, который называет себя новым и молчит, на чём сделан, скрывает первое, что ты захотел бы знать.'],
+          ['Просит денег', 'Dota 2 Mod Manager ни разу ни за что не брал денег. У него нет подписки, премиума, ключей и закрытых модов. Лаунчер, который просит заплатить за ту же работу, продаёт тебе бесплатное.'],
+          ['Просит логин или твои данные', 'Поставить мод - значит положить файл в папку с игрой. Для этого не нужны ни логин Steam, ни пароль, ни телефон, ни карта. Единственный вход в оригинале необязательный, проходит на discord.com и только подписывает твоим ником сборку, которой ты делишься.'],
+        ],
+      },
+
+      { k: 'h2', t: 'Где живёт настоящий', id: 'official' },
+      {
+        k: 'list',
+        items: [
+          '<a href="~/">dota2modmanager.com</a> - этот сайт. Кнопки скачивания берут файл прямо со страницы релизов на GitHub.',
+          '<a href="https://github.com/dota2modmanager/dota2-mod-manager" rel="noopener">github.com/dota2modmanager/dota2-mod-manager</a> - исходный код и все релизы, каждый собран <a href="https://github.com/dota2modmanager/dota2-mod-manager/actions" rel="noopener">публичным workflow</a>. Старый адрес github.com/TheFleece/dota2-mod-manager ведёт туда же.',
+          '<a href="https://gitlab.com/TheFleece/dota2-mod-manager" rel="noopener">gitlab.com/TheFleece/dota2-mod-manager</a> - зеркало того же репозитория.',
+          '<a href="https://discord.gg/PBvG8D9MxT" rel="noopener">Сервер в Discord</a>, где отвечают те, кто его делает.',
+        ],
+      },
+      {
+        k: 'p',
+        t: 'Каталог D2PFX, откуда берутся моды, держит приложение в своём разделе Tools со ссылкой сюда. Всё остальное, что похоже на это приложение, пришло не от нас.',
+      },
+
+      { k: 'h2', t: 'Форки, которые этого не скрывают', id: 'forks' },
+      {
+        k: 'p',
+        t: 'Строить своё на этом коде можно, и мы этому рады. Честный форк называет, на чём сделан, выкладывает свои исходники и сохраняет лицензию. Если такой нравится тебе больше, пользуйся им. Четыре признака выше - про копии, которые прячут, откуда взялись.',
+      },
+
+      { k: 'h2', t: 'Если уже заплатил или вошёл', id: 'already' },
+      {
+        k: 'list',
+        items: [
+          'Смени пароль, который туда вводил, и тот же пароль везде, где он у тебя стоит. Если это был пароль от Steam, смени его в Steam и в настройках Steam Guard выйди на всех остальных устройствах.',
+          'Если платил, спроси в банке или платёжном сервисе, как оспорить платёж, и сохрани чек.',
+          'Удали копию и поставь оригинал с этого сайта. Он узнает моды, которые уже лежат в папке игры, и возьмёт их под себя. <a href="~/docs/own-mods/#adopt">Как это работает</a>.',
+          'Напиши нам, где ты её нашёл, в <a href="https://discord.gg/PBvG8D9MxT" rel="noopener">Discord</a> или на <a href="mailto:hello@dota2modmanager.com">hello@dota2modmanager.com</a>: так мы предупредим следующего.',
+        ],
+      },
+
+      { k: 'h2', t: 'Вопросы', id: 'faq' },
+      {
+        k: 'faq',
+        items: [
+          ['Есть платная или Pro-версия Dota 2 Mod Manager?', 'Нет. Версия одна, бесплатная, и в ней есть всё. Dota 2 Mod Manager Pro, Premium или VIP - не наш.'],
+          ['Лаунчер делает то же самое, но называется иначе. Ему можно верить?', 'Спроси у него исходный код и на чём он сделан. Если он не показывает ни того, ни другого, узнать, что ещё он делает на твоём компьютере, нельзя, а оригинал делает ту же работу бесплатно.'],
+          ['Это приложение вообще можно продавать?', 'Лицензия разрешает брать деньги за копию, если покупатель получает все исходники под GPL-3.0 и в копии остаются имена авторов оригинала. Покупать его тебе не нужно: здесь та же программа бесплатно.'],
+        ],
+      },
+    ],
+  },
+
   compare: {
     slug: 'compare',
     title: 'Какой мод-менеджер для Доты 2 выбрать в 2026',
@@ -1497,6 +1654,10 @@ const ru: Record<Slug, Doc> = {
           [
             'Скинченджеры и инвентарь-ченджеры (Overplus, MetaSkins и подобные)',
             'Другая категория вещей. Они обещают открыть предметы, которыми ты не владеешь, у них закрытый код и нет публичной сборки, которую можно проверить. Разница простая: эта программа кладёт файл рядом с игрой и умеет его забрать, а они меняют файлы самой игры, и что там ещё затронуто, известно только с их слов.',
+          ],
+          [
+            'Переименованные копии этого приложения',
+            'Лаунчеры на коде этого приложения под своим названием, с закрытым кодом и без слова о том, откуда взялись, некоторые за деньги или с обязательным входом. Они не наши, и что ещё они делают, проверить нельзя. <a href="~/docs/copies/">Четыре признака такой копии</a>.',
           ],
           [
             'Umbrella и прочие читы',

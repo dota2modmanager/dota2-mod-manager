@@ -17,6 +17,10 @@ import { heroCopy } from '../i18n/heroes';
 import { heroText, type Hero } from './heroes';
 import { categoryText } from '../i18n/categories';
 import { categories, type Category } from './categories';
+import type { CatalogMod } from './catalog';
+import { modText } from './mods';
+import { authors, authorText, type Author } from './authors';
+import { authorsCopy } from '../i18n/authors';
 import { plainText } from './text';
 import { ogPath } from './og';
 import {
@@ -257,6 +261,132 @@ export function categorySchema(lang: 'en' | 'ru', category: Category, origin = '
         { '@type': 'ListItem', position: 2, name: lang === 'ru' ? 'Каталог' : 'Catalog', item: `${origin}${prefix}/catalog/` },
         { '@type': 'ListItem', position: 3, name: c.name, item: url },
       ],
+    },
+  ];
+}
+
+/**
+ * One mod's page: a page about one work, its picture, who made it and when the catalog added it,
+ * and the way back to the hero or the category it belongs to. Nothing here the page does not show.
+ */
+export function modSchema(lang: 'en' | 'ru', mod: CatalogMod, origin = 'https://dota2modmanager.com') {
+  const text = modText(lang, mod);
+  const prefix = lang === 'en' ? '' : `/${lang}`;
+  const url = `${origin}${prefix}/mods/${mod.key}/`;
+  const author = authorNode(origin);
+  const images = mod.looks.filter((l) => l.img).map((l) => ({
+    '@type': 'ImageObject',
+    contentUrl: `${origin}${l.img}`,
+    url: `${origin}${l.img}`,
+    name: l.label ? `${mod.name} (${l.label})` : mod.name,
+    width: l.width,
+    height: l.height,
+    encodingFormat: 'image/webp',
+  }));
+  const parent = text.hero
+    ? { name: text.heroShown!, item: `${origin}${prefix}/heroes/${text.hero.slug}/` }
+    : mod.cat === 'heroes'
+      ? { name: text.kind, item: `${origin}${prefix}/heroes/` }
+      : { name: text.kind, item: `${origin}${prefix}/catalog/${mod.cat}/` };
+
+  return [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'ItemPage',
+      '@id': url,
+      url,
+      name: text.title,
+      description: text.description,
+      inLanguage: lang,
+      isPartOf: { '@id': `${origin}/#website` },
+      publisher: { '@id': author['@id'] },
+      ...(images.length ? { primaryImageOfPage: images[0] } : {}),
+      mainEntity: {
+        '@type': 'CreativeWork',
+        name: mod.name,
+        ...(images.length ? { image: images } : {}),
+        ...(mod.author ? { author: { '@type': 'Person', name: mod.author, ...(mod.authorUrl ? { url: mod.authorUrl } : {}) } } : {}),
+        ...(mod.date ? { dateCreated: new Date(mod.date * 1000).toISOString().slice(0, 10) } : {}),
+        about: { '@type': 'VideoGame', name: 'Dota 2' },
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Dota 2 Mod Manager', item: `${origin}${prefix}/` },
+        { '@type': 'ListItem', position: 2, ...parent },
+        { '@type': 'ListItem', position: 3, name: mod.name, item: url },
+      ],
+    },
+  ];
+}
+
+/**
+ * An author's page: a profile of a person who is not us, so the Person here has no @id of ours,
+ * only the name the catalog gives and the profile it links. Their mods are the page's list.
+ */
+export function authorSchema(lang: 'en' | 'ru', author: Author, origin = 'https://dota2modmanager.com') {
+  const text = authorText(lang, author);
+  const prefix = lang === 'en' ? '' : `/${lang}`;
+  const url = `${origin}${prefix}/authors/${author.slug}/`;
+  return [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'ProfilePage',
+      '@id': url,
+      url,
+      name: text.title,
+      description: text.description,
+      inLanguage: lang,
+      isPartOf: { '@id': `${origin}/#website` },
+      mainEntity: {
+        '@type': 'Person',
+        name: author.name,
+        ...(author.url ? { sameAs: [author.url] } : {}),
+      },
+      hasPart: {
+        '@type': 'ItemList',
+        numberOfItems: author.mods.length,
+        itemListElement: author.mods.map((m, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: m.name,
+          url: `${origin}${prefix}/mods/${m.key}/`,
+        })),
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Dota 2 Mod Manager', item: `${origin}${prefix}/` },
+        { '@type': 'ListItem', position: 2, name: authorsCopy[lang].nav, item: `${origin}${prefix}/authors/` },
+        { '@type': 'ListItem', position: 3, name: author.name, item: url },
+      ],
+    },
+  ];
+}
+
+/** The index of authors: a list of their pages, most mods first. */
+export function authorsIndexSchema(lang: 'en' | 'ru', origin = 'https://dota2modmanager.com') {
+  const c = authorsCopy[lang];
+  const prefix = lang === 'en' ? '' : `/${lang}`;
+  const url = `${origin}${prefix}/authors/`;
+  return [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      '@id': url,
+      url,
+      name: c.indexH1,
+      inLanguage: lang,
+      isPartOf: { '@id': `${origin}/#website` },
+      mainEntity: {
+        '@type': 'ItemList',
+        numberOfItems: authors.length,
+        itemListElement: authors.map((a, i) => ({ '@type': 'ListItem', position: i + 1, name: a.name, url: `${origin}${prefix}/authors/${a.slug}/` })),
+      },
     },
   ];
 }

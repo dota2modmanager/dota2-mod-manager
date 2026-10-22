@@ -4,7 +4,7 @@
  *
  * Two modes. "page": every card is already in the HTML (a category, a hero) and this only sorts
  * and hides them. "all": the catalog page, where the first cards are in the HTML and the rest are
- * drawn from /catalog/data.json a screen at a time.
+ * drawn from /catalog/data.json a page of 48 at a time, the page kept in the address (?page=).
  *
  * The state is in the address (?q=, ?sort=, ?group=, ?cat=, ?slot=, #mod=), so a search can be
  * sent to somebody, Back goes back to it, and the landing's search can land here on a result.
@@ -12,31 +12,22 @@
  * and authors come from somebody else's catalog.
  */
 import { loadCatalog, presetCode, appLink, webLink, fmtDay, isNew, el, type Catalog, type Mod, type Lang } from './catalog';
+import { readSet, writeSet, markCards as markIn, SET_KEY } from './set';
 
 type Words = {
-  shown: string; more: string; add: string; remove: string; look: string; newBadge: string; by: string;
+  shown: string; prev: string; next: string; pageOf: string; range: string; add: string; remove: string; look: string; newBadge: string; by: string;
   kind: string; hero: string; replaces: string; author: string; added: string; style: string;
   openApp: string; copyLink: string; copied: string; noCompress: string; appNote: string; close: string;
   tray: string; setName: string; heroPage: string; kindPage: string; mods: [string, string, string];
-  slots: Record<string, string>; heroesLabel: string; heroBase: string; catBase: string;
+  slots: Record<string, string>; heroesLabel: string; heroBase: string; catBase: string; modBase: string; modPage: string; authorBase: string; plainStyle: string;
 };
 
 const BATCH = 48;
-const SET_KEY = 'mm-set';
-
-// ---- the set, kept in this browser and shared by every page that lists mods ----------------
-
-const readSet = (): string[] => {
-  try { return JSON.parse(localStorage.getItem(SET_KEY) || '[]').filter((k: unknown) => typeof k === 'string'); } catch { return []; }
-};
-const writeSet = (keys: string[]) => {
-  try { localStorage.setItem(SET_KEY, JSON.stringify(keys)); } catch { /* private mode: this page only */ }
-};
 
 export function initBrowser(root: HTMLElement) {
   const lang = (root.dataset.lang as Lang) || 'en';
   const mode = root.dataset.mode as 'all' | 'page';
-  const context = root.dataset.context as 'all' | 'category' | 'hero';
+  const context = root.dataset.context as 'all' | 'category' | 'hero' | 'author';
   const w = JSON.parse(root.dataset.words!) as Words;
   const total = Number(root.dataset.total);
   const nf = new Intl.NumberFormat(lang === 'ru' ? 'ru-RU' : 'en-US');
@@ -49,7 +40,13 @@ export function initBrowser(root: HTMLElement) {
   const count = root.querySelector<HTMLElement>('#browse-count')!;
   const clear = root.querySelector<HTMLButtonElement>('#browse-clear')!;
   const empty = root.querySelector<HTMLElement>('#browse-empty')!;
-  const more = root.querySelector<HTMLButtonElement>('#browse-more')!;
+  // the pager exists on /catalog/ only; a category or a hero holds all its cards at once
+  const pager = root.querySelector<HTMLElement>('#browse-pager');
+  const pageNums = root.querySelector<HTMLOListElement>('#browse-pages');
+  const pageNow = root.querySelector<HTMLElement>('#browse-now');
+  const prevBtn = root.querySelector<HTMLButtonElement>('#browse-prev');
+  const nextBtn = root.querySelector<HTMLButtonElement>('#browse-next');
+  const where = root.querySelector<HTMLElement>('#browse-where');
   const groupBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-group-filter]')];
   // inside the toolbar's rows only: the cards carry data-cat too
   const catBtns = [...root.querySelectorAll<HTMLButtonElement>('#browse-cats [data-cat]')];
@@ -63,19 +60,22 @@ export function initBrowser(root: HTMLElement) {
     group: params.get('group') ?? '',
     cat: params.get('cat') ?? '',
     slot: params.get('slot') ?? '',
+    page: Math.max(1, Math.floor(Number(params.get('page'))) || 1),
   };
   input.value = state.q;
   sortSel.value = state.sort;
 
-  const saveState = () => {
+  /* A filter replaces the address; a page adds one, so Back goes back to the page before. */
+  const saveState = (push = false) => {
     const p = new URLSearchParams();
     if (state.q) p.set('q', state.q);
     if (state.sort !== 'new') p.set('sort', state.sort);
     if (state.group) p.set('group', state.group);
     if (state.cat) p.set('cat', state.cat);
     if (state.slot) p.set('slot', state.slot);
+    if (state.page > 1) p.set('page', String(state.page));
     const qs = p.toString();
-    history.replaceState(history.state, '', `${location.pathname}${qs ? `?${qs}` : ''}${location.hash}`);
+    history[push ? 'pushState' : 'replaceState'](history.state, '', `${location.pathname}${qs ? `?${qs}` : ''}${location.hash}`);
   };
 
   let catalog: Catalog | null = null;
@@ -83,23 +83,22 @@ export function initBrowser(root: HTMLElement) {
 
   // ---- the set ----
   let picked = new Set(readSet());
-  const markCards = () => {
-    for (const li of grid.querySelectorAll<HTMLElement>('.mcard')) {
-      const on = picked.has(li.dataset.key!);
-      li.classList.toggle('picked', on);
-      const btn = li.querySelector<HTMLButtonElement>('[data-add]');
-      if (btn) {
-        btn.setAttribute('aria-pressed', String(on));
-        btn.setAttribute('aria-label', `${on ? w.remove : w.add}: ${li.querySelector('h2, h3')?.textContent ?? ''}`);
-      }
-    }
-  };
+  const markCards = () => markIn(grid, picked, w);
   const toggle = (key: string) => {
     if (picked.has(key)) picked.delete(key); else picked.add(key);
     writeSet([...picked]);
     markCards();
     paintTray();
     if (current === key) paintQuickAdd();
+  };
+
+  /** Who made a mod, as a link: to their page here when they have one, else to their profile. */
+  const authorLink = (m: Mod): HTMLAnchorElement | null => {
+    if (!m.author || (!m.authorPage && !m.authorUrl)) return null;
+    const a = el('a', '', m.author);
+    if (m.authorPage) a.href = `${w.authorBase}${m.authorPage}/`;
+    else { a.href = m.authorUrl; a.rel = 'noopener nofollow'; }
+    return a;
   };
 
   // ---- a card, built the same way ModCard.astro builds one ----
@@ -113,8 +112,8 @@ export function initBrowser(root: HTMLElement) {
     li.dataset.hay = m.hay;
     li.dataset.slots = m.slots.join(' ');
 
-    const pic = el('button', 'mcard-pic');
-    pic.type = 'button';
+    const pic = el('a', 'mcard-pic');
+    pic.href = `${w.modBase}${m.key}/`;
     pic.dataset.open = '';
     if (m.thumb) {
       const img = el('img');
@@ -138,20 +137,14 @@ export function initBrowser(root: HTMLElement) {
 
     const body = el('div', 'mcard-body');
     body.append(el('h2', '', m.name));
-    if (m.style) body.append(el('span', 'mcard-style', m.styles.length > 1 ? `${m.style} +${m.styles.length - 1}` : m.style));
+    if (m.styles.length) body.append(el('span', 'mcard-style', m.styles.length > 1 ? `${m.style || w.plainStyle} +${m.styles.length - 1}` : m.style));
     const meta = el('div', 'mcard-meta');
     meta.append(el('i', 'dot'), el('span', '', m.heroName ? `${m.catName} · ${m.heroName}` : m.catName));
     body.append(meta);
-    if (m.author) {
+    if (m.author && context !== 'author') {
       const by = el('div', 'mcard-meta');
       const span = el('span', '', `${w.by} `);
-      if (m.authorUrl) {
-        const a = el('a', '', m.author);
-        a.href = m.authorUrl; a.rel = 'noopener nofollow';
-        span.append(a);
-      } else {
-        span.append(m.author);
-      }
+      span.append(authorLink(m) ?? m.author);
       by.append(span);
       body.append(by);
     }
@@ -189,19 +182,51 @@ export function initBrowser(root: HTMLElement) {
       grid.append(...list.map((r) => r.el!));
       drawn = list.length;
     } else {
-      grid.replaceChildren();
-      drawn = 0;
-      drawMore();
+      const pages = Math.max(1, Math.ceil(list.length / BATCH));
+      state.page = Math.min(state.page, pages);
+      const from = (state.page - 1) * BATCH;
+      grid.replaceChildren(...list.slice(from, from + BATCH).map((r) => card(r.mod!)));
+      drawn = Math.min(from + BATCH, list.length);
+      markCards();
+      paintPager(pages);
     }
     paintCount();
   };
 
-  const drawMore = () => {
-    const next = list.slice(drawn, drawn + BATCH);
-    grid.append(...next.map((r) => card(r.mod!)));
-    drawn += next.length;
-    more.hidden = drawn >= list.length;
-    markCards();
+  /* Back, next, the numbers around this page and at both ends (1 … 4 5 6 … 32), and where in
+     the catalog the page is. A phone shows "Page 5 of 32" in place of the numbers. */
+  const paintPager = (pages: number) => {
+    if (!pager || !pageNums || !pageNow || !prevBtn || !nextBtn || !where) return;
+    pager.hidden = pages < 2;
+    where.hidden = !list.length;
+    const from = (state.page - 1) * BATCH + 1;
+    where.textContent = w.range.replace('{from}', nf.format(from)).replace('{to}', nf.format(drawn)).replace('{total}', nf.format(list.length));
+    pageNow.textContent = w.pageOf.replace('{n}', nf.format(state.page)).replace('{total}', nf.format(pages));
+    prevBtn.disabled = state.page <= 1;
+    nextBtn.disabled = state.page >= pages;
+    const shown = [...new Set([1, state.page - 1, state.page, state.page + 1, pages])].filter((n) => n >= 1 && n <= pages).sort((a, b) => a - b);
+    const items: HTMLLIElement[] = [];
+    shown.forEach((n, i) => {
+      if (i && n - shown[i - 1] > 1) { const gap = el('li', 'pager-gap', '…'); gap.setAttribute('aria-hidden', 'true'); items.push(gap); }
+      const li = el('li');
+      const b = el('button', 'pager-num', nf.format(n));
+      b.type = 'button';
+      b.dataset.page = String(n);
+      b.setAttribute('aria-label', w.pageOf.replace('{n}', nf.format(n)).replace('{total}', nf.format(pages)));
+      if (n === state.page) b.setAttribute('aria-current', 'page');
+      li.append(b);
+      items.push(li);
+    });
+    pageNums.replaceChildren(...items);
+  };
+
+  /** Go to a page: its own entry in the history, and the top of the grid in view. */
+  const goTo = (n: number) => {
+    if (n === state.page) return;
+    state.page = n;
+    saveState(true);
+    apply();
+    root.scrollIntoView({ block: 'start' });
   };
 
   const paintCount = () => {
@@ -221,7 +246,8 @@ export function initBrowser(root: HTMLElement) {
   };
 
   let timer = 0;
-  const changed = () => { saveState(); apply(); };
+  // any change of what is shown starts again from its first page
+  const changed = () => { state.page = 1; saveState(); apply(); };
   input.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(() => { state.q = input.value; changed(); }, 120); });
   input.form?.addEventListener('submit', (e) => { e.preventDefault(); state.q = input.value; changed(); input.blur(); });
   sortSel.addEventListener('change', () => { state.sort = sortSel.value; changed(); });
@@ -229,19 +255,29 @@ export function initBrowser(root: HTMLElement) {
   catBtns.forEach((b) => b.addEventListener('click', () => { state.cat = state.cat === b.dataset.cat ? '' : b.dataset.cat!; if (state.cat) state.group = b.dataset.group || ''; changed(); }));
   slotBtns.forEach((b) => b.addEventListener('click', () => { state.slot = b.dataset.slot || ''; changed(); }));
   clear.addEventListener('click', () => { state.q = ''; state.group = ''; state.cat = ''; state.slot = ''; input.value = ''; changed(); input.focus(); });
-  more.addEventListener('click', drawMore);
-
-  // the next screen of cards arrives before the visitor reaches the end of this one
-  if (mode === 'all' && 'IntersectionObserver' in window) {
-    new IntersectionObserver(([en]) => { if (en.isIntersecting && !more.hidden) drawMore(); }, { rootMargin: '900px 0px' }).observe(more);
-  }
+  prevBtn?.addEventListener('click', () => goTo(state.page - 1));
+  nextBtn?.addEventListener('click', () => goTo(state.page + 1));
+  pageNums?.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-page]');
+    if (b) goTo(Number(b.dataset.page));
+  });
+  // Back and Forward between pages
+  window.addEventListener('popstate', () => {
+    if (mode !== 'all' || !catalog) return;
+    state.page = Math.max(1, Math.floor(Number(new URLSearchParams(location.search).get('page'))) || 1);
+    apply();
+  });
 
   grid.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    if (t.closest('a')) return;
     const li = t.closest<HTMLElement>('.mcard');
     if (!li) return;
     if (t.closest('[data-add]')) { toggle(li.dataset.key!); return; }
+    const link = t.closest('a');
+    if (link && !link.matches('[data-open]')) return; // the author's profile
+    // a plain click looks closer; one that asks for a new tab or window gets the mod's page
+    if (link && (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0)) return;
+    e.preventDefault();
     open(li.dataset.key!, li);
   });
 
@@ -275,17 +311,16 @@ export function initBrowser(root: HTMLElement) {
     qTitle.textContent = m.name;
     const facts: Array<[string, string | Node]> = [[w.kind, m.catName]];
     if (m.heroName) facts.push([w.hero, m.heroName]);
-    if (m.styles.length) facts.push([w.style, m.styles.join(', ')]);
+    if (m.styles.length) facts.push([w.style, m.styles.map((s) => s || w.plainStyle).join(', ')]);
     if (m.slots.length) facts.push([w.replaces, m.slots.map((s) => w.slots[s] ?? s).join(', ')]);
     if (m.author) {
-      if (m.authorUrl) { const a = el('a', '', m.author); a.href = m.authorUrl; a.rel = 'noopener nofollow'; facts.push([w.author, a]); }
-      else facts.push([w.author, m.author]);
+      facts.push([w.author, authorLink(m) ?? m.author]);
     }
     if (m.date) facts.push([w.added, fmtDay(lang, m.date)]);
     qFacts.replaceChildren(...facts.flatMap(([k, v]) => { const dd = el('dd'); dd.append(v); return [el('dt', '', k), dd]; }));
     qLinks.replaceChildren();
     const linkTo = (href: string, text: string) => { const a = el('a', '', text); a.href = href; return a; };
-    const links: HTMLAnchorElement[] = [];
+    const links: HTMLAnchorElement[] = [linkTo(`${w.modBase}${m.key}/`, w.modPage)];
     if (m.hero && context !== 'hero') links.push(linkTo(`${w.heroBase}${m.hero}/`, w.heroPage.replace('{hero}', m.heroName ?? '')));
     if (m.cat !== 'heroes' && context !== 'category') links.push(linkTo(`${w.catBase}${m.cat}/`, w.kindPage.replace('{kind}', m.catName)));
     links.forEach((a, i) => { if (i) qLinks.append(' · '); qLinks.append(a); });
@@ -307,7 +342,8 @@ export function initBrowser(root: HTMLElement) {
   // a press on the dimmed page around the box closes it, as it does in the app
   dialog.addEventListener('click', (e) => { if (e.target === dialog) close(); });
   qAdd.addEventListener('click', () => { if (current) toggle(current); });
-  qCopy.addEventListener('click', () => { if (qCode) copy(webLink(qCode)); else say(w.noCompress); });
+  // the mod's own page: it shows the mod to anybody, with its picture in a chat's preview
+  qCopy.addEventListener('click', () => { if (current) copy(`${location.origin}${w.modBase}${current}/`); });
   qApp.addEventListener('click', (e) => { if (!qCode) { e.preventDefault(); say(w.noCompress); } });
 
   // ---- the tray ----
@@ -366,7 +402,7 @@ export function initBrowser(root: HTMLElement) {
     need().then((c) => {
       rows = fromData(c);
       apply();
-    }).catch(() => { more.hidden = true; });
+    }).catch(() => { /* no data: the first page in the HTML is all there is, with no pager */ });
   }
   paintTray();
   const fromHash = decodeURIComponent(location.hash.match(/^#mod=(.+)$/)?.[1] ?? '');

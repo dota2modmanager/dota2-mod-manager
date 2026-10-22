@@ -17,7 +17,7 @@
  * string serves both languages. Counts written as {mods} are filled by the layout too, because
  * a number typed into a guide is a number that will be wrong in a month.
  *
- * Seven more pages live in docs-more.ts and merge in at the bottom of this file. They were
+ * Nine more pages live in docs-more.ts and merge in at the bottom of this file. They were
  * split off for length alone.
  */
 import { moreDocs } from './docs-more.ts';
@@ -44,6 +44,8 @@ export interface Doc {
   /** Card text on the docs index. */
   card: string;
   blocks: Block[];
+  /** When this page was written or last checked, where that is later than the rest (Doc.astro). */
+  updated?: string;
 }
 
 export interface DocsIndex {
@@ -71,13 +73,14 @@ export const docSlugs = [
   'language',
   'own-mods',
   'safe',
+  'copies',
   'catalog',
   'minify',
   'compare',
 ] as const;
 export type DocSlug = (typeof docSlugs)[number];
 
-/** The five this file holds. The other seven live in docs-more.ts and are merged in below. */
+/** The five this file holds. The other nine live in docs-more.ts and are merged in below. */
 type CoreSlug = 'install' | 'vpk' | 'safe' | 'cosmetics' | 'troubleshooting';
 
 export const docsIndex: Record<'en' | 'ru', DocsIndex> = {
@@ -412,6 +415,10 @@ const en: Record<CoreSlug, Doc> = {
       {
         k: 'p',
         t: 'This one is GPL-3.0, built from that source by GitHub Actions, and every release since the first is still on the releases page. <a href="https://github.com/dota2modmanager/dota2-mod-manager" rel="noopener">Read it</a> before you run it.',
+      },
+      {
+        k: 'note',
+        t: 'Copies of this app go around under other names: closed, with no credit to the project, some of them sold or locked behind a login. The original is free and has no paid version. <a href="~/docs/copies/">How to tell the real one</a>.',
       },
 
       { k: 'h2', t: 'Questions', id: 'faq' },
@@ -913,6 +920,10 @@ const ru: Record<CoreSlug, Doc> = {
       {
         k: 'p',
         t: 'Этот - под GPL-3.0, собран из своих же исходников через GitHub Actions, и каждый релиз с самого первого до сих пор лежит на странице релизов. <a href="https://github.com/dota2modmanager/dota2-mod-manager" rel="noopener">Прочитай</a>, прежде чем запускать.',
+      },
+      {
+        k: 'note',
+        t: 'Копии этого приложения ходят под чужими названиями: с закрытым кодом, без упоминания проекта, некоторые за деньги или с обязательным входом. Оригинал бесплатный, и платной версии у него нет. <a href="~/docs/copies/">Как отличить настоящий</a>.',
       },
 
       { k: 'h2', t: 'Вопросы', id: 'faq' },
