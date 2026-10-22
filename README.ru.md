@@ -358,6 +358,12 @@ GPL — в [NOTICE](NOTICE).
 
 <br>
 
+## Спонсоры
+
+Спонсор: [VGTopup](https://vgtopup.com/), магазин пополнения игр. Платное размещение.
+
+<br>
+
 ## Лицензия
 
 [GPL-3.0](LICENSE). Copyright (C) 2026 TheFleece. Подробности и две добавки по седьмой

@@ -357,6 +357,12 @@ list of their own.
 
 <br>
 
+## Sponsors
+
+Sponsored by [VGTopup](https://vgtopup.com/), a game top-up store. Paid placement.
+
+<br>
+
 ## License
 
 [GPL-3.0](LICENSE). Copyright (C) 2026 TheFleece.
