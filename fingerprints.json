@@ -1,5 +1,5 @@
 {
-  "count": 1717,
+  "count": 1721,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -335,6 +335,7 @@
     "346234ef7c122cb7bf6c93409cd4208d4f3a0e4b": [{"name":"Artifact Voices","categoryId":"sounds","styleLabel":null,"type":"vpk"}],
     "3471ed0b7688a141c75cb1e5978f17aef95d977a": [{"name":"Pudgling","categoryId":"couriers","styleLabel":"Style II","type":"vpk"}],
     "34b9c4da0d24e97e225993d06cb1aae82bac67a8": [{"name":"Sven Blue Angel","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "35188b5ade1d929095dd7771f81f42c2f55edff5": [{"name":"Purple Electric River","categoryId":"river","styleLabel":null,"type":"vpk"}],
     "35347ff74bd6f8588f5a3bb059e819b17ff01180": [{"name":"Techies Frostbloom Weapon","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "353884bb14fd96a324a4454033cd02a9efd4862e": [{"name":"Winter 2016 Euls Scepter","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "35414a7bd4a0738110f79bd23a85e900eec7128c": [{"name":"Undying Grim Reformation","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -342,6 +343,7 @@
     "358d8fe984b64034f239be0d3320f3ae0088b61c": [{"name":"Mirana Suigintou","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "35986d2b60550ad321b07f0eda062e29a8c88707": [{"name":"Nyx Assassin Mesmer Eye","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "35a7b794fe23d17cc991db8e7b889ca741989dc7": [{"name":"Arc Warden Black Hole","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "35cee327039b4171acca6fc210ee30da995804fb": [{"name":"Bear Deny","categoryId":"creep-deny","styleLabel":null,"type":"vpk"}],
     "35d679f70231edb101c5ca9eb66669dbab711ef7": [{"name":"The International 2017","categoryId":"music","styleLabel":null,"type":"vpk"}],
     "35e05c67baac582d9ef84258e758fb3e2e19cb5f": [{"name":"Immortal Leshrac","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "35e400919f31e5c67432b4cf302bde8f04b1e81c": [{"name":"Shadow Timbersaw","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -669,6 +671,7 @@
     "6a57f5ca58249444374156a722dc6ac328c275ef": [{"name":"Marci Faithful Fortune","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "6a68ee738a492d93cfee36dd441bff15f1d6fd9e": [{"name":"Experiments Lain","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "6a8a4ba5dcfc6f9c44728a2a4dc7daee50b23d44": [{"name":"Ogre Magi Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "6accf75246ce7bf9ebcda57500e99b5c6295532a": [{"name":"Kotl Spirit Form Litvin Sound","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
     "6ae63e880476896f07197d1f525541fe7803db2f": [{"name":"Christmas Iron Branch","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "6aef04f7eca5544d9b4dc3069ad0ebf9d06b3798": [{"name":"Lone Tree Meadow","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "6b08b9627189ab9b31735db9a3cba44f91f2803e": [{"name":"Treant Protector Frost Hideaway","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -762,6 +765,7 @@
     "75ccec697189a7cb1ffe3a9a27b9eeaa8acccdbd": [{"name":"Crimson Immortal Riki","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "75e79de68cd6181ff02b3d081b7542eabe94eaf8": [{"name":"Cosmic Roshan","categoryId":"roshan","styleLabel":null,"type":"vpk"}],
     "760ea0e9e62bd41e526b9ee2a8ad1883b645aead": [{"name":"BP 2022 Fountain Regen II","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
+    "766564900a326ba1d427911b4f050342dba8ac2f": [{"name":"Acid Electric River","categoryId":"river","styleLabel":null,"type":"vpk"}],
     "76692ea09ab03665debf3b504f197fa905240725": [{"name":"Storm Spirit Corridan Maestro","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "7684eca7726fd0bb80d01d3a0d50ada2bbd6f9db": [{"name":"Monkey King Simian Sovereign","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "769263eaa97ed8682d67c7373d71a2d384f2eb4b": [{"name":"Clinkz Leader of the Molten Army","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
