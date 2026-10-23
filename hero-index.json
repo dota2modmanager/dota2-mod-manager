@@ -1,11 +1,10 @@
 {
   "heroes": 151,
-  "mods": 1543,
+  "mods": 1542,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
       "mods": [
-        {"name":"Abaddon Endless Night","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
         {"name":"Abaddon Endless Night Reborn","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
         {"name":"Abaddon Sayaka Miki","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","mount","shoulder","weapon","wings"]},
         {"name":"Red Abaddon","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]}

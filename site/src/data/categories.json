@@ -1124,19 +1124,13 @@
         {"name":"Disruptor Tractor","styleLabel":null,"image":{"src":"/mods/disruptor-tractor.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768637892},
         {"name":"Earthshaker Carrot","styleLabel":null,"image":{"src":"/mods/earthshaker-carrot.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768637892},
         {"name":"Sniper Dragon Lore","styleLabel":null,"image":{"src":"/mods/sniper-dragon-lore.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768637892},
-        {
-          "name": "Tiny Banana",
-          "styleLabel": null,
-          "image": {"src":"/mods/tiny-banana.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1768637892
-        }
+        {"name":"Tiny Banana","styleLabel":null,"image":{"src":"/mods/tiny-banana.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768637892}
       ]
     },
     {
       "id": "item-effects",
       "mods": [
+        {"name":"Pink Meteor Hammer","styleLabel":null,"image":{"src":"/mods/pink-meteor-hammer.webp","width":854,"height":480},"author":"4d4mf","authorUrl":"https://t.me/vpk4d4mmf","date":1792718488},
         {
           "name": "BP 2022 Aghanim Aura I",
           "styleLabel": null,
@@ -2128,6 +2122,7 @@
     {
       "id": "backgrounds",
       "mods": [
+        {"name":"Lone Tree Meadow","styleLabel":null,"image":{"src":"/mods/lone-tree-meadow.webp","width":854,"height":480},"author":"zkll","authorUrl":null,"date":1792720833},
         {"name":"Kanekisf","styleLabel":null,"image":{"src":"/mods/kanekisf.webp","width":854,"height":480},"author":"Swin-РукаBlood","authorUrl":"https://discord.gg/SCnUSB4j6S","date":1792668576},
         {
           "name": "Kururu Tsepeshi",
@@ -2171,7 +2166,6 @@
           "authorUrl": "https://discord.gg/SCnUSB4j6S",
           "date": 1792518355
         },
-        {"name":"Lone Tree Meadow","styleLabel":null,"image":{"src":"/mods/lone-tree-meadow.webp","width":854,"height":480},"author":"zkll","authorUrl":null,"date":1792330154},
         {
           "name": "Push The Button",
           "styleLabel": null,
@@ -3492,6 +3486,7 @@
     {
       "id": "mega-kill",
       "mods": [
+        {"name":"Tcoaal Rampage","styleLabel":null,"image":{"src":"/mods/tcoaal-rampage.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792718488},
         {
           "name": "10000Weeping Choirs Mega-Kill",
           "styleLabel": null,
@@ -4420,111 +4415,6 @@
       ]
     },
     {
-      "id": "other",
-      "mods": [
-        {"name":"Pink Meteor Hammer","styleLabel":null,"image":{"src":"/mods/pink-meteor-hammer.webp","width":854,"height":480},"author":"4d4mf","authorUrl":"https://t.me/vpk4d4mmf","date":1792712707},
-        {"name":"All Grandmasters","styleLabel":null,"image":{"src":"/mods/all-grandmasters.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792518355},
-        {"name":"White Spell Radius","styleLabel":null,"image":{"src":"/mods/white-spell-radius.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792518355},
-        {
-          "name": "Ogre Arcana Egg Sound Fix",
-          "styleLabel": "Full remove",
-          "image": {"src":"/mods/ogre-arcana-egg-sound-fix-full-remove.webp","width":854,"height":480},
-          "author": "Fr0dech",
-          "authorUrl": "https://t.me/fr0dech_vpk",
-          "date": 1792163562
-        },
-        {
-          "name": "Ogre Arcana Egg Sound Fix",
-          "styleLabel": "Sound remove",
-          "image": {"src":"/mods/ogre-arcana-egg-sound-fix-sound-remove.webp","width":854,"height":480},
-          "author": "Fr0dech",
-          "authorUrl": "https://t.me/fr0dech_vpk",
-          "date": 1792163562
-        },
-        {
-          "name": "Old Shadow Fiend Secret Shop",
-          "styleLabel": null,
-          "image": {"src":"/mods/old-shadow-fiend-secret-shop.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792050673
-        },
-        {"name":"Objective Timers","styleLabel":null,"image":{"src":"/mods/objective-timers.webp","width":854,"height":480},"author":"rizeru","authorUrl":"https://t.me/rizeru","date":1792011470},
-        {"name":"Pink Spell Radius","styleLabel":null,"image":{"src":"/mods/pink-spell-radius.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791821609},
-        {
-          "name": "Unlock Hidden Profile Animations",
-          "styleLabel": null,
-          "image": {"src":"/mods/unlock-hidden-profile-animations.webp","width":854,"height":480},
-          "author": "DotaMiniProfile",
-          "authorUrl": "https://t.me/DotaMiniProfile",
-          "date": 1791607322
-        },
-        {
-          "name": "Techies Minimap-Hero Mine Icon",
-          "styleLabel": null,
-          "image": {"src":"/mods/techies-minimap-hero-mine-icon.webp","width":854,"height":480},
-          "author": "hanfukj",
-          "authorUrl": "https://t.me/hanfukj",
-          "date": 1790818573
-        },
-        {"name":"Black Click","styleLabel":null,"image":{"src":"/mods/black-click.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1788815201},
-        {"name":"Light Brown Click","styleLabel":null,"image":{"src":"/mods/light-brown-click.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788762686},
-        {"name":"Sapphire Click","styleLabel":null,"image":{"src":"/mods/sapphire-click.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788762686},
-        {
-          "name": "White Click",
-          "styleLabel": null,
-          "image": {"src":"/mods/white-click.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1788095311
-        },
-        {
-          "name": "Profile Graffiti & Phrases",
-          "styleLabel": null,
-          "image": {"src":"/mods/profile-graffiti-phrases.webp","width":854,"height":480},
-          "author": "DotaMiniProfile",
-          "authorUrl": "https://t.me/DotaMiniProfile",
-          "date": 1785640852
-        },
-        {"name":"Blue Click","styleLabel":null,"image":{"src":"/mods/blue-click.webp","width":854,"height":480},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1785081533},
-        {
-          "name": "Dummy In Profile",
-          "styleLabel": null,
-          "image": {"src":"/mods/dummy-in-profile.webp","width":854,"height":480},
-          "author": "DotaMiniProfile",
-          "authorUrl": "https://t.me/DotaMiniProfile",
-          "date": 1784702480
-        },
-        {"name":"Purple Click","styleLabel":null,"image":{"src":"/mods/purple-click.webp","width":854,"height":480},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1778331617},
-        {
-          "name": "Tower re-aggro Radius",
-          "styleLabel": null,
-          "image": {"src":"/mods/tower-re-aggro-radius.webp","width":854,"height":480},
-          "author": "NahuiToSay",
-          "authorUrl": "https://t.me/NahuiToSay",
-          "date": 1776801533
-        },
-        {"name":"Gabe Shopkeeper","styleLabel":null,"image":{"src":"/mods/gabe-shopkeeper.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203},
-        {
-          "name": "Rage Voice Icon",
-          "styleLabel": null,
-          "image": {"src":"/mods/rage-voice-icon.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1772534203
-        },
-        {
-          "name": "Showcase Rotation",
-          "styleLabel": null,
-          "image": {"src":"/mods/showcase-rotation.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1772534203
-        },
-        {"name":"Techies Mine Radius","styleLabel":null,"image":{"src":"/mods/techies-mine-radius.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203}
-      ]
-    },
-    {
       "id": "sounds",
       "mods": [
         {
@@ -4648,6 +4538,110 @@
           "authorUrl": "https://t.me/fr0dech_vpk",
           "date": null
         }
+      ]
+    },
+    {
+      "id": "other",
+      "mods": [
+        {"name":"All Grandmasters","styleLabel":null,"image":{"src":"/mods/all-grandmasters.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792518355},
+        {"name":"White Spell Radius","styleLabel":null,"image":{"src":"/mods/white-spell-radius.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792518355},
+        {
+          "name": "Ogre Arcana Egg Sound Fix",
+          "styleLabel": "Full remove",
+          "image": {"src":"/mods/ogre-arcana-egg-sound-fix-full-remove.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": 1792163562
+        },
+        {
+          "name": "Ogre Arcana Egg Sound Fix",
+          "styleLabel": "Sound remove",
+          "image": {"src":"/mods/ogre-arcana-egg-sound-fix-sound-remove.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": 1792163562
+        },
+        {
+          "name": "Old Shadow Fiend Secret Shop",
+          "styleLabel": null,
+          "image": {"src":"/mods/old-shadow-fiend-secret-shop.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792050673
+        },
+        {"name":"Objective Timers","styleLabel":null,"image":{"src":"/mods/objective-timers.webp","width":854,"height":480},"author":"rizeru","authorUrl":"https://t.me/rizeru","date":1792011470},
+        {"name":"Pink Spell Radius","styleLabel":null,"image":{"src":"/mods/pink-spell-radius.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791821609},
+        {
+          "name": "Unlock Hidden Profile Animations",
+          "styleLabel": null,
+          "image": {"src":"/mods/unlock-hidden-profile-animations.webp","width":854,"height":480},
+          "author": "DotaMiniProfile",
+          "authorUrl": "https://t.me/DotaMiniProfile",
+          "date": 1791607322
+        },
+        {
+          "name": "Techies Minimap-Hero Mine Icon",
+          "styleLabel": null,
+          "image": {"src":"/mods/techies-minimap-hero-mine-icon.webp","width":854,"height":480},
+          "author": "hanfukj",
+          "authorUrl": "https://t.me/hanfukj",
+          "date": 1790818573
+        },
+        {"name":"Black Click","styleLabel":null,"image":{"src":"/mods/black-click.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1788815201},
+        {"name":"Light Brown Click","styleLabel":null,"image":{"src":"/mods/light-brown-click.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788762686},
+        {"name":"Sapphire Click","styleLabel":null,"image":{"src":"/mods/sapphire-click.webp","width":854,"height":480},"author":"YuyaKizami","authorUrl":"https://t.me/YuyaKizami","date":1788762686},
+        {
+          "name": "White Click",
+          "styleLabel": null,
+          "image": {"src":"/mods/white-click.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1788095311
+        },
+        {
+          "name": "Profile Graffiti & Phrases",
+          "styleLabel": null,
+          "image": {"src":"/mods/profile-graffiti-phrases.webp","width":854,"height":480},
+          "author": "DotaMiniProfile",
+          "authorUrl": "https://t.me/DotaMiniProfile",
+          "date": 1785640852
+        },
+        {"name":"Blue Click","styleLabel":null,"image":{"src":"/mods/blue-click.webp","width":854,"height":480},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1785081533},
+        {
+          "name": "Dummy In Profile",
+          "styleLabel": null,
+          "image": {"src":"/mods/dummy-in-profile.webp","width":854,"height":480},
+          "author": "DotaMiniProfile",
+          "authorUrl": "https://t.me/DotaMiniProfile",
+          "date": 1784702480
+        },
+        {"name":"Purple Click","styleLabel":null,"image":{"src":"/mods/purple-click.webp","width":854,"height":480},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1778331617},
+        {
+          "name": "Tower re-aggro Radius",
+          "styleLabel": null,
+          "image": {"src":"/mods/tower-re-aggro-radius.webp","width":854,"height":480},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1776801533
+        },
+        {"name":"Gabe Shopkeeper","styleLabel":null,"image":{"src":"/mods/gabe-shopkeeper.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203},
+        {
+          "name": "Rage Voice Icon",
+          "styleLabel": null,
+          "image": {"src":"/mods/rage-voice-icon.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1772534203
+        },
+        {
+          "name": "Showcase Rotation",
+          "styleLabel": null,
+          "image": {"src":"/mods/showcase-rotation.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1772534203
+        },
+        {"name":"Techies Mine Radius","styleLabel":null,"image":{"src":"/mods/techies-mine-radius.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203}
       ]
     },
     {
@@ -6054,7 +6048,6 @@
     {
       "id": "announcers",
       "mods": [
-        {"name":"Tcoaal Rampage","styleLabel":null,"image":{"src":"/mods/tcoaal-rampage.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792609094},
         {"name":"Tusk","styleLabel":null,"image":{"src":"/mods/tusk.webp","width":854,"height":480},"author":"hrdq","authorUrl":"https://steamcommunity.com/profiles/76561199180038073","date":1764638549},
         {
           "name": "Dark Willow",

@@ -4778,16 +4778,7 @@
           "authorUrl": "https://vk.com/amir4an",
           "date": 1766253727
         },
-        {
-          "name": "Galactic IO",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/galactic-io.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1765100855
-        },
+        {"name":"Galactic IO","categoryId":"heroes","styleLabel":null,"slots":[],"image":{"src":"/mods/galactic-io.webp","width":854,"height":480},"author":"Anonymous","authorUrl":null,"date":1765100855},
         {
           "name": "IO Madame Scrio",
           "categoryId": "heroes",
@@ -7670,8 +7661,8 @@
           "styleLabel": null,
           "slots": ["arms","belt","misc","head","weapon","legs","offhand","shoulder"],
           "image": {"src":"/mods/anti-mage-illidan.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "author": "Anonymous",
+          "authorUrl": null,
           "date": 1769918621
         },
         {
@@ -14717,8 +14708,8 @@
           "styleLabel": null,
           "slots": ["misc","back","belt","head","arms"],
           "image": {"src":"/mods/lifestealer-red-immortal.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "author": "Anonymous",
+          "authorUrl": null,
           "date": 1790213637
         },
         {
@@ -14834,8 +14825,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","tail","wings"],
           "image": {"src":"/mods/night-stalker-relict.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "author": null,
+          "authorUrl": null,
           "date": 1768491259
         },
         {
@@ -15270,16 +15261,7 @@
           "authorUrl": "https://t.me/j0nvpk",
           "date": 1791470872
         },
-        {
-          "name": "Tiny Banana",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/tiny-banana.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1768637892
-        }
+        {"name":"Tiny Banana","categoryId":"hero-items","styleLabel":null,"slots":["misc"],"image":{"src":"/mods/tiny-banana.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1768637892}
       ]
     },
     {
@@ -15551,8 +15533,8 @@
           "styleLabel": null,
           "slots": ["weapon","misc","head","arms"],
           "image": {"src":"/mods/tusk-odobenus-footman.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "author": "Anonymous",
+          "authorUrl": null,
           "date": 1765100855
         },
         {
@@ -15561,8 +15543,8 @@
           "styleLabel": null,
           "slots": ["arms","misc","head","weapon"],
           "image": {"src":"/mods/tusk-odobenus-frost-mage.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "author": "Anonymous",
+          "authorUrl": null,
           "date": 1765100855
         }
       ]
@@ -15621,53 +15603,6 @@
           "author": "hrdq",
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1781027597
-        }
-      ]
-    },
-    {
-      "id": "abaddon",
-      "name": "Abaddon",
-      "slug": "abaddon",
-      "mods": [
-        {
-          "name": "Abaddon Sayaka Miki",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","back","head","mount","shoulder","weapon","wings"],
-          "image": {"src":"/mods/abaddon-sayaka-miki.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1767093656
-        },
-        {
-          "name": "Abaddon Endless Night",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","head","mount","shoulder","weapon"],
-          "image": {"src":"/mods/abaddon-endless-night.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1788942404
-        },
-        {
-          "name": "Abaddon Endless Night Reborn",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","head","mount","shoulder","weapon"],
-          "image": {"src":"/mods/abaddon-endless-night-reborn.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790475709
-        },
-        {
-          "name": "Red Abaddon",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","head","mount","shoulder","weapon"],
-          "image": {"src":"/mods/red-abaddon.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1756972905
         }
       ]
     },
@@ -15823,8 +15758,8 @@
           "styleLabel": null,
           "slots": ["back","weapon","misc","head","arms"],
           "image": {"src":"/mods/slardar-naga-guardian.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "author": "Anonymous",
+          "authorUrl": null,
           "date": 1765100855
         },
         {
@@ -15856,6 +15791,43 @@
           "author": "Mirik522",
           "authorUrl": "https://t.me/Moggdeli",
           "date": 1792011470
+        }
+      ]
+    },
+    {
+      "id": "abaddon",
+      "name": "Abaddon",
+      "slug": "abaddon",
+      "mods": [
+        {
+          "name": "Abaddon Sayaka Miki",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","back","head","mount","shoulder","weapon","wings"],
+          "image": {"src":"/mods/abaddon-sayaka-miki.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1767093656
+        },
+        {
+          "name": "Abaddon Endless Night Reborn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","head","mount","shoulder","weapon"],
+          "image": {"src":"/mods/abaddon-endless-night-reborn.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1790475709
+        },
+        {
+          "name": "Red Abaddon",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","head","mount","shoulder","weapon"],
+          "image": {"src":"/mods/red-abaddon.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1756972905
         }
       ]
     },
