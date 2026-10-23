@@ -2655,6 +2655,8 @@
     {
       "id": "hero-sounds",
       "mods": [
+        {"name":"Magnus Collapse Rp","styleLabel":null,"image":{"src":"/mods/magnus-collapse-rp.webp","width":854,"height":480},"author":"Danulaguts","authorUrl":null,"date":1792764215},
+        {"name":"Shadow Fiend Ult Xvii","styleLabel":null,"image":{"src":"/mods/shadow-fiend-ult-xvii.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792764215},
         {
           "name": "Kotl Spirit Form Litvin Sound",
           "styleLabel": null,
@@ -3014,6 +3016,7 @@
     {
       "id": "parts",
       "mods": [
+        {"name":"Xvii Search Bar","styleLabel":null,"image":{"src":"/mods/xvii-search-bar.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792764215},
         {"name":"Purple Play Button","styleLabel":null,"image":{"src":"/mods/purple-play-button.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792712707},
         {"name":"Hetgraph Black","styleLabel":null,"image":{"src":"/mods/hetgraph-black.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792668576},
         {"name":"Kda Black","styleLabel":null,"image":{"src":"/mods/kda-black.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792668576},
@@ -6211,6 +6214,29 @@
       ]
     },
     {
+      "id": "optimization",
+      "mods": [
+        {
+          "name": "No Unnecessary Map Effects",
+          "styleLabel": null,
+          "image": {"src":"/mods/no-unnecessary-map-effects.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1792764215
+        },
+        {
+          "name": "Tinker Lite Machines",
+          "styleLabel": null,
+          "image": {"src":"/mods/tinker-lite-machines.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1773596942
+        },
+        {"name":"Default Wards","styleLabel":null,"image":{"src":"/mods/default-wards.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769787537},
+        {"name":"Commands","styleLabel":null,"image":null,"author":"hrdq","authorUrl":"https://steamcommunity.com/profiles/76561199180038073","date":null}
+      ]
+    },
+    {
       "id": "high-five",
       "mods": [
         {
@@ -6237,21 +6263,6 @@
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1782925485
         }
-      ]
-    },
-    {
-      "id": "optimization",
-      "mods": [
-        {
-          "name": "Tinker Lite Machines",
-          "styleLabel": null,
-          "image": {"src":"/mods/tinker-lite-machines.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1773596942
-        },
-        {"name":"Default Wards","styleLabel":null,"image":{"src":"/mods/default-wards.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769787537},
-        {"name":"Commands","styleLabel":null,"image":null,"author":"hrdq","authorUrl":"https://steamcommunity.com/profiles/76561199180038073","date":null}
       ]
     },
     {
