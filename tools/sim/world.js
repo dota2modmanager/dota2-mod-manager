@@ -4,9 +4,12 @@
  *
  * The game. The app knows Dota is running by the process name alone (src/game-upkeep.ts dotaIsRunning:
  * "dota2.exe" through tasklist on Windows, "dota2" through pgrep on Linux). So a harmless program
- * copied under that name into the game's bin folder is, to the app, the game: ping on Windows,
- * sleep on Linux, both of which sit quietly until killed. When the real game quits it rewrites
- * boot.vcfg, so quitting here does too.
+ * by that name is, to the app, the game. On Windows it is ping, copied under that name into the
+ * game's bin folder. On Linux it is this Node with its process name set to dota2: a copy of sleep
+ * was, until Ubuntu 26.04 made coreutils one Rust program that picks the tool by its own file name
+ * and quits at once under any other (the runners moved to it on 2026-10-21, and from then on the
+ * app never saw the game run). Either sits quietly until killed. When the real game quits it
+ * rewrites boot.vcfg, so quitting here does too.
  *
  * Steam. An update bumps ClientVersion in dota/steam.inf and puts Valve's own branch file and
  * signature list back; the check of the game's files ("Verify integrity") puts the same two files
@@ -29,12 +32,15 @@ function startGame(gamePath) {
   fs.mkdirSync(path.dirname(exe), { recursive: true });
   if (process.platform === 'win32') {
     fs.copyFileSync(path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'PING.EXE'), exe);
-  } else {
-    fs.copyFileSync(fs.existsSync('/usr/bin/sleep') ? '/usr/bin/sleep' : '/bin/sleep', exe);
-    fs.chmodSync(exe, 0o755);
+    const child = spawn(exe, ['-n', '100000', '127.0.0.1'], { windowsHide: true, stdio: 'ignore', detached: false });
+    return { child, exe };
   }
-  const args = process.platform === 'win32' ? ['-n', '100000', '127.0.0.1'] : ['100000'];
-  const child = spawn(exe, args, { windowsHide: true, stdio: 'ignore', detached: false });
+  // the file is what makes the folder a game (src/steam.ts); the process is what pgrep finds
+  if (!fs.existsSync(exe)) fs.writeFileSync(exe, '#!/bin/sh\n', { mode: 0o755 });
+  // the scenarios run in Electron's main process: ELECTRON_RUN_AS_NODE makes its binary a plain Node
+  const child = spawn(process.execPath, ['-e', "process.title = 'dota2'; setInterval(() => {}, 1 << 30)"], {
+    stdio: 'ignore', detached: false, env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+  });
   return { child, exe };
 }
 
