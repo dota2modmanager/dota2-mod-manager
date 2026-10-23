@@ -3016,6 +3016,7 @@
     {
       "id": "parts",
       "mods": [
+        {"name":"TikTok Overlay","styleLabel":null,"image":{"src":"/mods/tiktok-overlay.webp","width":854,"height":480},"author":"Baste","authorUrl":"https://projects.baste.ru/","date":1792782705},
         {"name":"Xvii Search Bar","styleLabel":null,"image":{"src":"/mods/xvii-search-bar.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792764215},
         {"name":"Purple Play Button","styleLabel":null,"image":{"src":"/mods/purple-play-button.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792712707},
         {"name":"Hetgraph Black","styleLabel":null,"image":{"src":"/mods/hetgraph-black.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792668576},
@@ -5014,132 +5015,16 @@
       ]
     },
     {
-      "id": "terrains",
-      "mods": [
-        {
-          "name": "Crownfall",
-          "styleLabel": null,
-          "image": {"src":"/mods/crownfall.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1791343344
-        },
-        {
-          "name": "Dota+ Autumn",
-          "styleLabel": null,
-          "image": {"src":"/mods/dota-autumn.webp","width":1280,"height":720},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1791343344
-        },
-        {
-          "name": "Dota+ Spring",
-          "styleLabel": null,
-          "image": {"src":"/mods/dota-spring.webp","width":1280,"height":720},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1791343344
-        },
-        {
-          "name": "Dota+ Summer",
-          "styleLabel": null,
-          "image": {"src":"/mods/dota-summer.webp","width":1280,"height":720},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1791343344
-        },
-        {
-          "name": "Dota+ Winter",
-          "styleLabel": null,
-          "image": {"src":"/mods/dota-winter.webp","width":1280,"height":720},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1791343344
-        },
-        {
-          "name": "The Kings New Journey",
-          "styleLabel": null,
-          "image": {"src":"/mods/the-kings-new-journey.webp","width":1280,"height":720},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1791343344
-        },
-        {
-          "name": "TI10 Sanctum of the Divine",
-          "styleLabel": null,
-          "image": {"src":"/mods/ti10-sanctum-of-the-divine.webp","width":1280,"height":720},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1791343344
-        },
-        {
-          "name": "TI5 Desert Terrain",
-          "styleLabel": null,
-          "image": {"src":"/mods/ti5-desert-terrain.webp","width":1280,"height":720},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1791343344
-        },
-        {
-          "name": "TI6 Immortal Gardens",
-          "styleLabel": null,
-          "image": {"src":"/mods/ti6-immortal-gardens.webp","width":1280,"height":720},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1791343344
-        },
-        {
-          "name": "TI7 Reefs Edge",
-          "styleLabel": null,
-          "image": {"src":"/mods/ti7-reefs-edge.webp","width":1280,"height":720},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1791343344
-        },
-        {
-          "name": "TI8 Emerald Abyss",
-          "styleLabel": null,
-          "image": {"src":"/mods/ti8-emerald-abyss.webp","width":1280,"height":720},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1791343344
-        },
-        {
-          "name": "TI9 Overgrown Empire",
-          "styleLabel": null,
-          "image": {"src":"/mods/ti9-overgrown-empire.webp","width":1280,"height":720},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1791343344
-        },
-        {"name":"Simple Dark Terrain Minify","styleLabel":null,"image":null,"author":"Robbyz","authorUrl":"https://github.com/robbyz512","date":1785323948},
-        {"name":"Simple Dark Terrain Minify","styleLabel":"Green","image":null,"author":"Robbyz","authorUrl":"https://github.com/robbyz512","date":1785323948},
-        {"name":"Bedrock","styleLabel":null,"image":{"src":"/mods/bedrock.webp","width":854,"height":480},"author":"hrdq","authorUrl":"https://steamcommunity.com/profiles/76561199180038073","date":1782296453},
-        {
-          "name": "Dark Terrain Minify",
-          "styleLabel": null,
-          "image": {"src":"/mods/dark-terrain-minify.webp","width":854,"height":480},
-          "author": "Robbyz",
-          "authorUrl": "https://github.com/robbyz512",
-          "date": 1782296453
-        },
-        {"name":"DarkPoly","styleLabel":null,"image":{"src":"/mods/darkpoly.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1782296453},
-        {"name":"DarkPoly & Trees","styleLabel":null,"image":{"src":"/mods/darkpoly-trees.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1782296453},
-        {"name":"LowPoly","styleLabel":null,"image":{"src":"/mods/lowpoly.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1782296453},
-        {"name":"LowPoly & Trees","styleLabel":null,"image":{"src":"/mods/lowpoly-trees.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1782296453},
-        {
-          "name": "Mossy Cobblestone",
-          "styleLabel": null,
-          "image": {"src":"/mods/mossy-cobblestone.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1782296453
-        }
-      ]
-    },
-    {
       "id": "music",
       "mods": [
+        {
+          "name": "Dark Carnival",
+          "styleLabel": null,
+          "image": {"src":"/mods/dark-carnival.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1792778089
+        },
         {"name":"Win Lose Music Never","styleLabel":null,"image":{"src":"/mods/win-lose-music-never.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792609094},
         {"name":"Broodskoe","styleLabel":null,"image":{"src":"/mods/broodskoe.webp","width":854,"height":480},"author":"rasstegai","authorUrl":"https://steamcommunity.com/id/rasstegai/","date":1789902229},
         {
@@ -5279,6 +5164,130 @@
           "date": 1764459882
         },
         {"name":"Sewerslvt Music","styleLabel":null,"image":{"src":"/mods/sewerslvt-music.webp","width":854,"height":480},"author":"мс яйцо","authorUrl":"https://steamcommunity.com/id/mcegg/","date":null}
+      ]
+    },
+    {
+      "id": "terrains",
+      "mods": [
+        {
+          "name": "Crownfall",
+          "styleLabel": null,
+          "image": {"src":"/mods/crownfall.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1791343344
+        },
+        {
+          "name": "Dota+ Autumn",
+          "styleLabel": null,
+          "image": {"src":"/mods/dota-autumn.webp","width":1280,"height":720},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1791343344
+        },
+        {
+          "name": "Dota+ Spring",
+          "styleLabel": null,
+          "image": {"src":"/mods/dota-spring.webp","width":1280,"height":720},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1791343344
+        },
+        {
+          "name": "Dota+ Summer",
+          "styleLabel": null,
+          "image": {"src":"/mods/dota-summer.webp","width":1280,"height":720},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1791343344
+        },
+        {
+          "name": "Dota+ Winter",
+          "styleLabel": null,
+          "image": {"src":"/mods/dota-winter.webp","width":1280,"height":720},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1791343344
+        },
+        {
+          "name": "The Kings New Journey",
+          "styleLabel": null,
+          "image": {"src":"/mods/the-kings-new-journey.webp","width":1280,"height":720},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1791343344
+        },
+        {
+          "name": "TI10 Sanctum of the Divine",
+          "styleLabel": null,
+          "image": {"src":"/mods/ti10-sanctum-of-the-divine.webp","width":1280,"height":720},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1791343344
+        },
+        {
+          "name": "TI5 Desert Terrain",
+          "styleLabel": null,
+          "image": {"src":"/mods/ti5-desert-terrain.webp","width":1280,"height":720},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1791343344
+        },
+        {
+          "name": "TI6 Immortal Gardens",
+          "styleLabel": null,
+          "image": {"src":"/mods/ti6-immortal-gardens.webp","width":1280,"height":720},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1791343344
+        },
+        {
+          "name": "TI7 Reefs Edge",
+          "styleLabel": null,
+          "image": {"src":"/mods/ti7-reefs-edge.webp","width":1280,"height":720},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1791343344
+        },
+        {
+          "name": "TI8 Emerald Abyss",
+          "styleLabel": null,
+          "image": {"src":"/mods/ti8-emerald-abyss.webp","width":1280,"height":720},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1791343344
+        },
+        {
+          "name": "TI9 Overgrown Empire",
+          "styleLabel": null,
+          "image": {"src":"/mods/ti9-overgrown-empire.webp","width":1280,"height":720},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1791343344
+        },
+        {"name":"Simple Dark Terrain Minify","styleLabel":null,"image":null,"author":"Robbyz","authorUrl":"https://github.com/robbyz512","date":1785323948},
+        {"name":"Simple Dark Terrain Minify","styleLabel":"Green","image":null,"author":"Robbyz","authorUrl":"https://github.com/robbyz512","date":1785323948},
+        {"name":"Bedrock","styleLabel":null,"image":{"src":"/mods/bedrock.webp","width":854,"height":480},"author":"hrdq","authorUrl":"https://steamcommunity.com/profiles/76561199180038073","date":1782296453},
+        {
+          "name": "Dark Terrain Minify",
+          "styleLabel": null,
+          "image": {"src":"/mods/dark-terrain-minify.webp","width":854,"height":480},
+          "author": "Robbyz",
+          "authorUrl": "https://github.com/robbyz512",
+          "date": 1782296453
+        },
+        {"name":"DarkPoly","styleLabel":null,"image":{"src":"/mods/darkpoly.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1782296453},
+        {"name":"DarkPoly & Trees","styleLabel":null,"image":{"src":"/mods/darkpoly-trees.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1782296453},
+        {"name":"LowPoly","styleLabel":null,"image":{"src":"/mods/lowpoly.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1782296453},
+        {"name":"LowPoly & Trees","styleLabel":null,"image":{"src":"/mods/lowpoly-trees.webp","width":854,"height":480},"author":"Darkness","authorUrl":"https://t.me/Darkness_Logovo","date":1782296453},
+        {
+          "name": "Mossy Cobblestone",
+          "styleLabel": null,
+          "image": {"src":"/mods/mossy-cobblestone.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1782296453
+        }
       ]
     },
     {
