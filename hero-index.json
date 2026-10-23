@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1542,
+  "mods": 1543,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -637,6 +637,7 @@
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Hoodwink Bilge Rat Buccaneer","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","tail"]},
+        {"name":"Hoodwink Frostbloom Arbalest","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Hoodwink Immortal Fire","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","tail"]},
         {"name":"Hoodwink Spring Tide Raider","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","tail"]},
         {"name":"Hoodwink Tomokan Footsoldier","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","tail"]},

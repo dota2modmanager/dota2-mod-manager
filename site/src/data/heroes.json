@@ -3399,7 +3399,7 @@
           "image": {"src":"/mods/phantom-lancer-immortal-frost.webp","width":854,"height":480},
           "author": "Harlord",
           "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790424886
+          "date": 1792712707
         },
         {
           "name": "Phantom Lancer Ravenblight",
@@ -5432,6 +5432,173 @@
       ]
     },
     {
+      "id": "hoodwink",
+      "name": "Hoodwink",
+      "slug": "hoodwink",
+      "mods": [
+        {
+          "name": "Bare Hoodwink",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","head","arms","back"],
+          "image": {"src":"/mods/bare-hoodwink.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": 1784328560
+        },
+        {
+          "name": "Hoodwink Bilge Rat Buccaneer",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon","head","tail"],
+          "image": {"src":"/mods/hoodwink-bilge-rat-buccaneer.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1771681325
+        },
+        {
+          "name": "Hoodwink Immortal Fire",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon","head","tail"],
+          "image": {"src":"/mods/hoodwink-immortal-fire.webp","width":854,"height":480},
+          "author": "wannakissyou",
+          "authorUrl": "https://t.me/wannakissyouuu",
+          "date": 1788293360
+        },
+        {
+          "name": "Hoodwink Spring Tide Raider",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon","head","tail"],
+          "image": {"src":"/mods/hoodwink-spring-tide-raider.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1791376639
+        },
+        {
+          "name": "Hoodwink Tomokan Footsoldier",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon","head","tail"],
+          "image": {"src":"/mods/hoodwink-tomokan-footsoldier.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1772755574
+        },
+        {
+          "name": "Immortal Hoodwink",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon","head","tail"],
+          "image": {"src":"/mods/immortal-hoodwink.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1778951513
+        },
+        {
+          "name": "Hoodwink Frostbloom Arbalest",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/hoodwink-frostbloom-arbalest.webp","width":854,"height":480},
+          "author": "YZT",
+          "authorUrl": "https://t.me/YZTdota",
+          "date": 1792712707
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "lone_druid",
       "name": "Lone Druid",
       "slug": "lone-druid",
@@ -6644,163 +6811,6 @@
           "author": "hrdq",
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766284079
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "hoodwink",
-      "name": "Hoodwink",
-      "slug": "hoodwink",
-      "mods": [
-        {
-          "name": "Bare Hoodwink",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","head","arms","back"],
-          "image": {"src":"/mods/bare-hoodwink.webp","width":854,"height":480},
-          "author": "Fr0dech",
-          "authorUrl": "https://t.me/fr0dech_vpk",
-          "date": 1784328560
-        },
-        {
-          "name": "Hoodwink Bilge Rat Buccaneer",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","weapon","head","tail"],
-          "image": {"src":"/mods/hoodwink-bilge-rat-buccaneer.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1771681325
-        },
-        {
-          "name": "Hoodwink Immortal Fire",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","weapon","head","tail"],
-          "image": {"src":"/mods/hoodwink-immortal-fire.webp","width":854,"height":480},
-          "author": "wannakissyou",
-          "authorUrl": "https://t.me/wannakissyouuu",
-          "date": 1788293360
-        },
-        {
-          "name": "Hoodwink Spring Tide Raider",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","weapon","head","tail"],
-          "image": {"src":"/mods/hoodwink-spring-tide-raider.webp","width":854,"height":480},
-          "author": "драг",
-          "authorUrl": "https://t.me/dragvpk",
-          "date": 1791376639
-        },
-        {
-          "name": "Hoodwink Tomokan Footsoldier",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","weapon","head","tail"],
-          "image": {"src":"/mods/hoodwink-tomokan-footsoldier.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1772755574
-        },
-        {
-          "name": "Immortal Hoodwink",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","weapon","head","tail"],
-          "image": {"src":"/mods/immortal-hoodwink.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1778951513
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
         },
         {
           "name": "Green Diretide Ranged Attack",
