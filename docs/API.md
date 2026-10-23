@@ -483,6 +483,12 @@ Rubick's Magus Cypher has 41 styles, colours of its particles, and Crystal Maide
 Avalanche four: their bases are the first style's, and the others build from Valve's files as
 before. Spectre's first style works from Valve's (the 2026-10-15 pass), so only the second has one.
 
+Drow's bases are her body and the arcana's own effects, and nothing at another slot's stock path:
+her cape, armour and quiver are the user's picks, or the stock items. Her first bases wrote the
+set's cape, armour and quiver there too, so she wore the arcana's cape whatever was picked, and
+her second style had a variant for under Mania's Mask (both replaced on 2026-10-23). Axe's Fists
+of Axe Unleashed is an immortal, not an arcana, but it swaps his whole model the same way.
+
 ### `TERRORBLADE_BASE`
 
 ```ts

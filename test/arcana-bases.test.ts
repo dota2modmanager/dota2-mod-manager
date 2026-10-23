@@ -30,8 +30,10 @@ test('a pick puts on the base of its style, and an item that must be worn with i
   assert.deepEqual(ids([{ itemId: '9059', style: 1 }]), ['bladeform_legacy_v2']);
   assert.deepEqual(ids([{ itemId: '5957', style: 0 }]), ['fractal_horns_of_inner_abysm'], 'no styles: every style');
   assert.deepEqual(ids([{ itemId: '19090', style: 1 }]), ['dread_retribution_v2']);
-  assert.deepEqual(ids([{ itemId: '19090', style: 1 }, { itemId: '6785', style: 0 }]), ['dread_retribution_v2_mask'], "with Mania's Mask, the mask's");
-  assert.deepEqual(ids([{ itemId: '19090', style: 0 }, { itemId: '6785', style: 0 }]), ['dread_retribution'], 'the mask has a base under the second style only');
+  assert.deepEqual(ids([{ itemId: '19090', style: 1 }, { itemId: '6785', style: 0 }]), ['dread_retribution_v2'], "Mania's Mask goes over the same base");
+  assert.deepEqual(ids([{ itemId: '18033', style: 0 }]), ['claszian_apostasy']);
+  assert.deepEqual(ids([{ itemId: '18033', style: 1 }]), ['claszian_apostasy_v2']);
+  assert.deepEqual(ids([{ itemId: '12964', style: 0 }]), ['fists_of_axe_unleashed'], 'an immortal can have a base too');
   assert.deepEqual(ids([{ itemId: '9662', style: 0 }]), [], "Spectre's first style works from Valve's files");
   assert.deepEqual(ids([{ itemId: '12451', style: 7 }]), [], "a style of Rubick's the base is not");
   assert.deepEqual(ids([{ itemId: '19089', style: 0 }]), [], 'a part alone is not the arcana');

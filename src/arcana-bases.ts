@@ -43,25 +43,33 @@ const PUDGE = ['7756', '29687'];
 const EARTHSHAKER = ['12692', '34379', '34380', '34381', '34382'];
 const SKYWRATH = ['18539', '18540', '18541', '18542', '18543', '18544'];
 const RAZOR = ['23095', '23096', '23097', '23098', '23099'];
-/** Mania's Mask: Drow's second style has a base of its own for under it */
-const MANIAS_MASK = '6785';
+const FACELESS_VOID = ['18033', '22822', '22823', '22824', '22825'];
+const AXE_UNLEASHED = ['12964', '12965', '12966', '12968'];
 
 /*
  * Rubick's Magus Cypher has 41 styles, colours of its particles, and Crystal Maiden's Frost
  * Avalanche four: their bases are the first style's, and the others build from Valve's files as
  * before. Spectre's first style works from Valve's (the 2026-10-15 pass), so only the second has one.
+ *
+ * Drow's bases are her body and the arcana's own effects, and nothing at another slot's stock path:
+ * her cape, armour and quiver are the user's picks, or the stock items. Her first bases wrote the
+ * set's cape, armour and quiver there too, so she wore the arcana's cape whatever was picked, and
+ * her second style had a variant for under Mania's Mask (both replaced on 2026-10-23). Axe's Fists
+ * of Axe Unleashed is an immortal, not an arcana, but it swaps his whole model the same way.
  */
 export const ARCANA_BASES: readonly ArcanaBase[] = [
   { id: 'bladeform_legacy', hero: 'juggernaut', item: '9059', styles: [0], parts: JUGGERNAUT },
   { id: 'bladeform_legacy_v2', hero: 'juggernaut', item: '9059', styles: [1], parts: JUGGERNAUT },
   { id: 'blades_of_voth_domosh', hero: 'legion_commander', item: '5810', parts: ['5810', '37140'] },
+  { id: 'claszian_apostasy', hero: 'faceless_void', item: '18033', styles: [0], parts: FACELESS_VOID },
+  { id: 'claszian_apostasy_v2', hero: 'faceless_void', item: '18033', styles: [1], parts: FACELESS_VOID },
   { id: 'compass_of_the_rising_gale_bundle', hero: 'windrunner', item: '13806', styles: [0], parts: WINDRUNNER },
   { id: 'compass_of_the_rising_gale_bundle_v2', hero: 'windrunner', item: '13806', styles: [1], parts: WINDRUNNER },
   { id: 'dread_retribution', hero: 'drow_ranger', item: '19090', styles: [0], parts: DROW },
   { id: 'dread_retribution_v2', hero: 'drow_ranger', item: '19090', styles: [1], parts: DROW },
-  { id: 'dread_retribution_v2_mask', hero: 'drow_ranger', item: '19090', styles: [1], requires: [MANIAS_MASK], parts: [...DROW, MANIAS_MASK] },
   { id: 'feast_of_abscession', hero: 'pudge', item: '7756', styles: [0], parts: PUDGE },
   { id: 'feast_of_abscession_v2', hero: 'pudge', item: '7756', styles: [1], parts: PUDGE },
+  { id: 'fists_of_axe_unleashed', hero: 'axe', item: '12964', parts: AXE_UNLEASHED },
   { id: 'fractal_horns_of_inner_abysm', hero: 'terrorblade', item: '5957', parts: ['5957', '37161'] },
   { id: 'frost_avalanche', hero: 'crystal_maiden', item: '7385', styles: [0], parts: ['7385'] },
   { id: 'phantom_advent_v2', hero: 'spectre', item: '9662', styles: [1], parts: ['9662', '9663', '12312', '12313', '12314', '18750'] },
