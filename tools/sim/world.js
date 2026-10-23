@@ -35,8 +35,13 @@ function startGame(gamePath) {
     const child = spawn(exe, ['-n', '100000', '127.0.0.1'], { windowsHide: true, stdio: 'ignore', detached: false });
     return { child, exe };
   }
-  // the file is what makes the folder a game (src/steam.ts); the process is what pgrep finds
-  if (!fs.existsSync(exe)) fs.writeFileSync(exe, '#!/bin/sh\n', { mode: 0o755 });
+  // the file is what makes the folder a game (src/steam.ts); the process is what pgrep finds.
+  // 'wx' creates it only where there is none, in one call: no gap between a check and the write
+  try {
+    fs.writeFileSync(exe, '#!/bin/sh\n', { mode: 0o755, flag: 'wx' });
+  } catch (err) {
+    if (err.code !== 'EEXIST') throw err;
+  }
   // the scenarios run in Electron's main process: ELECTRON_RUN_AS_NODE makes its binary a plain Node
   const child = spawn(process.execPath, ['-e', "process.title = 'dota2'; setInterval(() => {}, 1 << 30)"], {
     stdio: 'ignore', detached: false, env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
