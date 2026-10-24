@@ -15,7 +15,7 @@ import { effectNames } from '../renderer/core/records.ts';
 import type { CosmeticSlot } from '../renderer/catalog/types.ts';
 
 test('catalog titles cover the inspected catalog and retain only technical/name identifiers', () => {
-  assert.equal(Object.keys(translations).length, 1565);
+  assert.equal(Object.keys(translations).length, 1569);
   for (const [original, translated] of Object.entries(translations)) {
     assert.match(translated, /[\u3400-\u9fff]/, original);
     const remaining = translated.replace(/M1A2|Windows XP|Dota2?|Linux|Source|VPK|Steam|Discord|Eul/gi, '');

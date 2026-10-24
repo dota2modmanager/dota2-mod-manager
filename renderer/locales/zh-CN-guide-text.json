@@ -118,5 +118,7 @@
   "Script for restructuring the items_game.txt file from dota2changer/mor, making it readable and convenient for analysis": "重整来自 dota2changer/mor 的 items_game.txt 文件结构，使其便于阅读和分析。",
   "Place the <fcode>items_game.txt</fcode> file in the folder next to ItemsFix.exe": "将 <fcode>items_game.txt</fcode> 文件放进 ItemsFix.exe 所在的文件夹。",
   "Launch ItemsFix.exe": "运行 ItemsFix.exe。",
-  "It will change the file structure and save the result in output.txt": "文件结构将被重整，结果保存为 output.txt。"
+  "It will change the file structure and save the result in output.txt": "文件结构将被重整，结果保存为 output.txt。",
+  "To open the overlay, press F8": "按 F8 打开叠加层。",
+  "This is a standard VPK, but its safety is unconfirmed. During patrol, mouse movements in a certain area may be flagged as cheating, so use it at your own risk. Not recommended for use in games on Valve servers. Read more about usage on GitHub.": "这是一份普通 VPK，但其安全性尚未得到确认。在录像审查中，特定区域内的鼠标移动可能被视为作弊，请自行承担使用风险。不建议在 Valve 服务器的对局中使用。更多使用说明请查看 GitHub。"
 }

@@ -65,6 +65,7 @@ test('native dialogs and errors follow Chinese while preserving interpolated fil
     setLang('zh-CN');
     assert.equal(getLang(), 'zh-CN');
     assert.equal(t('Мод не найден'), '未找到模组');
+    assert.equal(t('персона'), '身心');
     assert.equal(t('Не найден {0}', 'Official.vpk'), '未找到 Official.vpk');
     assert.equal(t('untranslated {0}', 'name'), 'untranslated name');
     setLang('ru');
