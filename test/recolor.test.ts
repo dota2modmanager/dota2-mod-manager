@@ -15,6 +15,7 @@ import path from 'node:path';
 
 import { readKv3, readCell, numberOf, setNumber, type Kv3Node } from '../src/kv3.ts';
 import { lz4Decode, lz4Literals } from '../src/lz4.ts';
+import { writeKv3 } from '../src/kv3-write.ts';
 import { at, encodeKv3, kv3Block, particle, range, remap, resource } from './helpers/kv3-build.ts';
 import { attributeToken, materialExpressions, withConstant } from '../src/material.ts';
 import { dataBlock, resourceBlocks } from '../src/resource.ts';
@@ -142,6 +143,17 @@ test('a number stored as its type alone can only become the other of 0 and 1', (
   assert.equal(setNumber(kv, a, 0.5), false);
   assert.equal(setNumber(kv, a, 0), true);
   assert.equal(numberOf(kv, at(readKv3(kv.encode()).root, 'a') as Extract<Kv3Node, { kind: 'number' }>), 0, 'and it survives being written back');
+});
+
+test('a uint32 0 or 1 stored as its type alone is read, set, and written back as a plain uint32', () => {
+  const kv = readKv3(encodeKv3({ obj: [['m_nFlags', { u32bit: 0 }], ['m_bOn', { u32bit: 1 }], ['m_nAfter', { int: 7 }]] }));
+  const num = (k: typeof kv, key: string) => at(k.root, key) as Extract<Kv3Node, { kind: 'number' }>;
+  assert.deepEqual(['m_nFlags', 'm_bOn', 'm_nAfter'].map((key) => numberOf(kv, num(kv, key))), [0, 1, 7]);
+  assert.equal(setNumber(kv, num(kv, 'm_nFlags'), 1), true);
+  // a block written here is version 4 at most, where the game does not take these types
+  const back = readKv3(writeKv3(kv));
+  assert.deepEqual(['m_nFlags', 'm_bOn', 'm_nAfter'].map((key) => num(back, key).type), [12, 12, 11]);
+  assert.deepEqual(['m_nFlags', 'm_bOn', 'm_nAfter'].map((key) => numberOf(back, num(back, key))), [1, 1, 7]);
 });
 
 test('a scale with Color in its name is not taken for a colour', () => {

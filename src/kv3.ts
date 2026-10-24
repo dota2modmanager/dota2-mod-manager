@@ -187,7 +187,9 @@ export function readKv3(block: Buffer): Kv3Block {
   };
   const read = (t: number, typeAt: Kv3Cell | null, lanes: typeof main, key: string, path: string): Kv3Node => {
     switch (t) {
-      case 15: case 16: case 17: case 18: return num(t, null, typeAt); // 0 or 1, stored in the type alone
+      // 0 or 1, stored in the type alone: int64 (15, 16), double (17, 18), and uint32 (26, 27), which
+      // newer compilers write (a model built with today's workshop tools has m_nFlags so)
+      case 15: case 16: case 17: case 18: case 26: case 27: return num(t, null, typeAt);
       case 1: case 13: case 14: return { kind: 'other', type: t };
       case 2: return { kind: 'other', type: t, value: buf(lanes.l1)[take(lanes.l1, 1)] };
       case 22: case 23: return num(t, cell(lanes.l1, 1, t === 22), typeAt);
