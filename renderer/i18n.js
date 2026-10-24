@@ -46,7 +46,7 @@ const EN = {
   'Паки эффектов': 'Effect packs', 'Эмблемы': 'Emblems', 'Денай крипов': 'Creep deny',
   'Музыка': 'Music', 'Звуки героев': 'Hero sounds', 'Звуки': 'Sounds', 'Дальние атаки': 'Ranged attacks',
   'Разное': 'Other', 'Ранги': 'Ranks', 'Иконки предметов': 'Item icons', 'Экраны Versus': 'Versus screens',
-  'Анонсеры': 'Announcers', 'Варды': 'Wards', 'Пьедесталы': 'Pedestals',
+  'Анонсеры': 'Announcers', 'Варды': 'Wards', 'Пьедесталы': 'Pedestals', 'Части': 'Parts',
   'Эффекты героев': 'Hero FX', 'Пинги': 'Pings', 'Паки': 'Packs', 'Оптимизация': 'Optimization',
   'Торментор': 'Tormentor', 'Древние': 'Ancients', 'Рошан': 'Roshan',
   'Башни': 'Towers', 'Шрифты': 'Fonts', 'Сайты': 'Sites', 'Гайды': 'Guides', 'Новости': 'News',
