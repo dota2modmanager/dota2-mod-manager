@@ -29,7 +29,9 @@ two days, most of them on two traps that the tools below now catch in seconds.
    with `-wtf` typed into the console so nothing waits on a cooldown. `--idle-seconds 13` first
    steps the hero so its idle starts over, then films it standing in the inspect, from in front
    with the face in view, four pictures a second, for an idle that does something only every few
-   seconds (`01-idle-long.png`).
+   seconds (`01-idle-long.png`). Every run also walks the hero across the screen and back, filmed
+   on the way (`05-walk-right.png`, `05-walk-left.png`): a layer that goes wrong only in motion does
+   not show on a hero that has stopped.
 5. **Compare.** Run the bench on the plain hero (`--hero terrorblade`, no `--vpk`) and on a mod of
    the same item from the catalog that works. When yours does not, swap resource blocks between
    the two (`resourceBlock(file, 'ANIM').replace(...)`) and bench each: the block that carries the
@@ -128,6 +130,7 @@ picture is every hero's.
 | fixing the sequences when the game reads the clips | a day of builds that changed nothing | this page |
 | a search over a model's blocks that skipped what it could not read | the clips (zstd) never looked at | the reader reads zstd |
 | one picture a second, read by eye | a fidget at rest taken for the attack | burst and verdict |
+| a model compiled again keeps a clip of the turns source itself, one pose of the full turn, which Valve's has not | the head looked backward whenever the hero walked | the walk pictures |
 
 Not settled yet: whether a swapped model's sequences in another order than the hero's cause wrong
 animations online, where the server keeps the plain model. The doctor warns about it.

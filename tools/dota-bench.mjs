@@ -276,8 +276,16 @@ async function main() {
       await sleep(1300);
       shot(`05-turn-${++i}`, [to[0], to[1] - Math.round(90 * 700 / cam)]);
     }
+    // a long walk across the screen and back, filmed on the way: a pose layer that goes wrong only in
+    // motion (the head turned round while it ran) does not show in a hero that has stopped, and side
+    // on the face shows which way it looks
+    const far = Math.round(520 * 700 / cam);
+    const lane = [away[0] - Math.round(120 * 700 / cam), away[1] - Math.round(300 * 700 / cam), far + Math.round(240 * 700 / cam), Math.round(360 * 700 / cam)];
+    input('rclick', away[0] + far, away[1]);
+    burst('05-walk-right', lane, 10, 200, 0.5);
     input('rclick', ...away);
-    await sleep(1500);
+    burst('05-walk-left', lane, 10, 200, 0.5);
+    await sleep(500);
     // the enemy hero, for the abilities aimed at a hero; it comes in front of where ours now stands
     bars = shot('05-before-enemy');
     click(AT.enemy);
