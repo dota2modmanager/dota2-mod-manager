@@ -1,5 +1,6 @@
 # Clicks and key presses into the Dota window, at coordinates inside it.
-# Usage: input.ps1 click X Y | rclick X Y | key K | keys "QWE"
+# Usage: input.ps1 click X Y | rclick X Y | hover X Y | key K | drag "X1,Y1,X2,Y2" [left|right]
+# (drag holds the button and moves in small steps: the in-world inspect turns its camera that way)
 param([string]$Op, [string]$A, [string]$B)
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type @"
@@ -26,9 +27,22 @@ $r = New-Object RECT2
 switch ($Op) {
   'click'  { [In]::SetCursorPos($r.Left + [int]$A, $r.Top + [int]$B) | Out-Null; Start-Sleep -Milliseconds 80; [In]::mouse_event(0x02,0,0,0,[IntPtr]::Zero); Start-Sleep -Milliseconds 60; [In]::mouse_event(0x04,0,0,0,[IntPtr]::Zero) }
   'rclick' { [In]::SetCursorPos($r.Left + [int]$A, $r.Top + [int]$B) | Out-Null; Start-Sleep -Milliseconds 80; [In]::mouse_event(0x08,0,0,0,[IntPtr]::Zero); Start-Sleep -Milliseconds 60; [In]::mouse_event(0x10,0,0,0,[IntPtr]::Zero) }
+  'hover'  { [In]::SetCursorPos($r.Left + [int]$A, $r.Top + [int]$B) | Out-Null }
+  'drag'   {
+    $v = $A.Split(',') | ForEach-Object { [int]$_ }
+    $down, $up = if ($B -eq 'right') { 0x08, 0x10 } else { 0x02, 0x04 }
+    [In]::SetCursorPos($r.Left + $v[0], $r.Top + $v[1]) | Out-Null; Start-Sleep -Milliseconds 80
+    [In]::mouse_event($down,0,0,0,[IntPtr]::Zero)
+    for ($k = 1; $k -le 30; $k++) {
+      [In]::SetCursorPos($r.Left + $v[0] + [int](($v[2] - $v[0]) * $k / 30), $r.Top + $v[1] + [int](($v[3] - $v[1]) * $k / 30)) | Out-Null
+      Start-Sleep -Milliseconds 25
+    }
+    [In]::mouse_event($up,0,0,0,[IntPtr]::Zero)
+  }
   'key'    {
     # games read scan codes: press and release by scan code (KEYEVENTF_SCANCODE 0x08, KEYUP 0x02)
-    $codes = @{ q = 0x10; w = 0x11; e = 0x12; r = 0x13; a = 0x1E; s = 0x1F; d = 0x20; f = 0x21; space = 0x39; esc = 0x01; f1 = 0x3B }
+    $codes = @{ q = 0x10; w = 0x11; e = 0x12; r = 0x13; t = 0x14; i = 0x17; a = 0x1E; s = 0x1F; d = 0x20; f = 0x21; g = 0x22; z = 0x2C; x = 0x2D; c = 0x2E; v = 0x2F; b = 0x30; space = 0x39; esc = 0x01; f1 = 0x3B }
+    if (-not $codes.ContainsKey($A.ToLower())) { Write-Output "no scan code for $A"; exit 2 }
     $sc = [byte]$codes[$A.ToLower()]
     [In]::keybd_event(0, $sc, 0x08, [IntPtr]::Zero); Start-Sleep -Milliseconds 60; [In]::keybd_event(0, $sc, 0x0A, [IntPtr]::Zero)
   }

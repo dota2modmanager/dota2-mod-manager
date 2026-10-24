@@ -21,10 +21,12 @@ two days, most of them on two traps that the tools below now catch in seconds.
    and in the sequences; a particle child that is missing or drawn on another attachment than it
    is made for. It takes seconds.
 4. **Check in the game.** `npm run dota:bench -- --vpk <mod_dir.vpk> --short` (Windows, Steam
-   running, Dota closed) puts the mod in a free slot, starts hero demo, levels the hero, sets it on
-   a dummy and takes 16 pictures 80 ms apart through the attack. `verdict.json` says whether the
-   attack swings (`tools/dota-bench/verdict.mjs`); look at the pictures for the rest. About three
-   minutes a build. Without `--short` it also presses Metamorphosis and Conjure Image.
+   running, Dota closed) puts the mod in a free slot, starts hero demo, gives the hero level 30,
+   Aghanim's Scepter and Shard, shows it close in the inspect, sets it on a dummy and takes 16
+   pictures 80 ms apart through the attack. `verdict.json` says whether the attack swings
+   (`tools/dota-bench/verdict.mjs`); look at the pictures for the rest. About three minutes a
+   build. Without `--short` it also casts every ability (`--skills`, aimed ones on an enemy hero),
+   with `-wtf` typed into the console so nothing waits on a cooldown.
 5. **Compare.** Run the bench on the plain hero (`--hero terrorblade`, no `--vpk`) and on a mod of
    the same item from the catalog that works. When yours does not, swap resource blocks between
    the two (`resourceBlock(file, 'ANIM').replace(...)`) and bench each: the block that carries the
