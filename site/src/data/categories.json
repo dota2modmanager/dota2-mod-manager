@@ -188,7 +188,7 @@
           "styleLabel": null,
           "image": {"src":"/mods/keeper-of-the-light-wings-of-daybreak.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1788815201
         },
         {
@@ -196,7 +196,7 @@
           "styleLabel": null,
           "image": {"src":"/mods/bane-origin-of-the-unmaking.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1788762686
         },
         {
@@ -220,7 +220,7 @@
           "styleLabel": null,
           "image": {"src":"/mods/keeper-of-the-light-prominence.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1788365172
         },
         {
@@ -375,7 +375,7 @@
           "styleLabel": null,
           "image": {"src":"/mods/techies-frostbloom-weapon.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1787848064
         },
         {
@@ -464,7 +464,7 @@
           "styleLabel": null,
           "image": {"src":"/mods/keeper-of-the-light-frostbloom.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1787500706
         },
         {
@@ -2123,6 +2123,23 @@
       "id": "backgrounds",
       "mods": [
         {
+          "name": "Blue Archive Hina Summer",
+          "styleLabel": null,
+          "image": {"src":"/mods/blue-archive-hina-summer.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1792860890
+        },
+        {
+          "name": "Lye Batenkaitos",
+          "styleLabel": null,
+          "image": {"src":"/mods/lye-batenkaitos.webp","width":1280,"height":720},
+          "author": "drugponu",
+          "authorUrl": "https://steamcommunity.com/id/drugponu/",
+          "date": 1792860890
+        },
+        {"name":"Ram And Rem","styleLabel":null,"image":{"src":"/mods/ram-and-rem.webp","width":854,"height":480},"author":"Swin-РукаBlood","authorUrl":"https://discord.gg/SCnUSB4j6S","date":1792860890},
+        {
           "name": "Blue Archive Ako",
           "styleLabel": null,
           "image": {"src":"/mods/blue-archive-ako.webp","width":854,"height":480},
@@ -2680,6 +2697,14 @@
     {
       "id": "hero-sounds",
       "mods": [
+        {
+          "name": "Wraith King  I Live Forever",
+          "styleLabel": null,
+          "image": {"src":"/mods/wraith-king-i-live-forever.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792860890
+        },
         {"name":"Shadow Fiend Taunt Xvii","styleLabel":null,"image":{"src":"/mods/shadow-fiend-taunt-xvii.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792795312},
         {"name":"Magnus Collapse Rp","styleLabel":null,"image":{"src":"/mods/magnus-collapse-rp.webp","width":854,"height":480},"author":"Danulaguts","authorUrl":null,"date":1792764215},
         {"name":"Shadow Fiend Ult Xvii","styleLabel":null,"image":{"src":"/mods/shadow-fiend-ult-xvii.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792764215},
@@ -2688,7 +2713,7 @@
           "styleLabel": null,
           "image": {"src":"/mods/kotl-spirit-form-litvin-sound.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1792685250
         },
         {"name":"Ringmaster Monokoleso","styleLabel":null,"image":{"src":"/mods/ringmaster-monokoleso.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792587555},
@@ -4452,7 +4477,7 @@
           "styleLabel": null,
           "image": {"src":"/mods/dagon-awp-from-cs-1-6.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1792591892
         },
         {
@@ -4497,7 +4522,7 @@
           "date": 1791342818
         },
         {"name":"Dagon Cobra Kick","styleLabel":null,"image":{"src":"/mods/dagon-cobra-kick.webp","width":854,"height":480},"author":"Новомодный","authorUrl":null,"date":1789727816},
-        {"name":"Dagon Revolver","styleLabel":null,"image":{"src":"/mods/dagon-revolver.webp","width":854,"height":480},"author":"keeper","authorUrl":"https://t.me/eternalsadism","date":1789192305},
+        {"name":"Dagon Revolver","styleLabel":null,"image":{"src":"/mods/dagon-revolver.webp","width":854,"height":480},"author":"keeper","authorUrl":"https://t.me/meetmeattheriver","date":1789192305},
         {
           "name": "1st September Horn",
           "styleLabel": null,
@@ -5009,7 +5034,7 @@
           "image": {"src":"/mods/gotick-full-black-hud.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792668576
+          "date": 1792860890
         },
         {
           "name": "Hud Forgotten Distortion",
@@ -6249,31 +6274,9 @@
       ]
     },
     {
-      "id": "optimization",
-      "mods": [
-        {
-          "name": "No Unnecessary Map Effects",
-          "styleLabel": null,
-          "image": {"src":"/mods/no-unnecessary-map-effects.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1792764215
-        },
-        {
-          "name": "Tinker Lite Machines",
-          "styleLabel": null,
-          "image": {"src":"/mods/tinker-lite-machines.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1773596942
-        },
-        {"name":"Default Wards","styleLabel":null,"image":{"src":"/mods/default-wards.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769787537},
-        {"name":"Commands","styleLabel":null,"image":null,"author":"hrdq","authorUrl":"https://steamcommunity.com/profiles/76561199180038073","date":null}
-      ]
-    },
-    {
       "id": "high-five",
       "mods": [
+        {"name":"High Five Cat Paw","styleLabel":null,"image":{"src":"/mods/high-five-cat-paw.webp","width":854,"height":480},"author":"4d4mf","authorUrl":"https://t.me/vpk4d4mmf","date":1792860890},
         {
           "name": "High Five Battle Pass 2022",
           "styleLabel": null,
@@ -6298,6 +6301,29 @@
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1782925485
         }
+      ]
+    },
+    {
+      "id": "optimization",
+      "mods": [
+        {
+          "name": "No Unnecessary Map Effects",
+          "styleLabel": null,
+          "image": {"src":"/mods/no-unnecessary-map-effects.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1792764215
+        },
+        {
+          "name": "Tinker Lite Machines",
+          "styleLabel": null,
+          "image": {"src":"/mods/tinker-lite-machines.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1773596942
+        },
+        {"name":"Default Wards","styleLabel":null,"image":{"src":"/mods/default-wards.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1769787537},
+        {"name":"Commands","styleLabel":null,"image":null,"author":"hrdq","authorUrl":"https://steamcommunity.com/profiles/76561199180038073","date":null}
       ]
     },
     {

@@ -1,10 +1,11 @@
 {
   "heroes": 151,
-  "mods": 1542,
+  "mods": 1546,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
       "mods": [
+        {"name":"Abaddon Calavera","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
         {"name":"Abaddon Endless Night Reborn","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
         {"name":"Abaddon Sayaka Miki","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","mount","shoulder","weapon","wings"]},
         {"name":"Red Abaddon","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]}
@@ -53,6 +54,7 @@
         {"name":"Anti-Mage Manta","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Mod Rotten","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","offhand","weapon"]},
         {"name":"Anti-Mage Persona Sakura","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
+        {"name":"Anti-Mage Persona Sakuramix","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Prime","categoryId":"heroes","styleLabel":null,"slots":["weapon","misc","head","arms","belt"]},
         {"name":"Anti-Mage Ronin Warrior","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Turstarkuri Pilgrim","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","legs","shoulder"]},
@@ -147,6 +149,7 @@
         {"name":"Beastmaster Primal Peacemaker","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Beastmaster Prismatic Bone","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","belt","head","shoulder","weapon"]},
         {"name":"Beastmaster Yuuki Yuuna","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","belt","head","shoulder","weapon","legs","back"]},
+        {"name":"Centaur Immortal Emerald","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Immortal Beastmaster","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","shoulder","weapon"]}
       ]
     },
@@ -229,6 +232,7 @@
         {"name":"Centaur Chaos Chosen","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shield","shoulder","tail","weapon"]},
         {"name":"Centaur Cunning Counterfeit","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shield","shoulder","tail","weapon"]},
         {"name":"Centaur Emerald Marauder","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shield","shoulder","tail","weapon"]},
+        {"name":"Centaur Immortal Emerald","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shield","shoulder","tail","weapon"]},
         {"name":"Centaur Infernal Cavalcade","categoryId":"hero-items","styleLabel":"Crimson","slots":["shoulder"]},
         {"name":"Centaur Infernal Cavalcade","categoryId":"hero-items","styleLabel":"Golden","slots":["shoulder"]},
         {"name":"Centaur Infernal Cavalcade","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},

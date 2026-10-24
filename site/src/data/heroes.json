@@ -1974,7 +1974,7 @@
           "slots": ["head","mount","legs","weapon"],
           "image": {"src":"/mods/keeper-of-the-light-waitureally.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1789234312
         },
         {
@@ -2004,7 +2004,7 @@
           "slots": ["weapon"],
           "image": {"src":"/mods/keeper-of-the-light-frostbloom.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1787500706
         },
         {
@@ -2014,7 +2014,7 @@
           "slots": ["weapon"],
           "image": {"src":"/mods/keeper-of-the-light-prominence.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1788365172
         },
         {
@@ -2024,7 +2024,7 @@
           "slots": ["mount"],
           "image": {"src":"/mods/keeper-of-the-light-wings-of-daybreak.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1788815201
         },
         {
@@ -3435,7 +3435,7 @@
           "slots": ["mount","misc","arms"],
           "image": {"src":"/mods/techies-sunken-galley.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1788815201
         },
         {
@@ -3515,7 +3515,7 @@
           "slots": ["weapon"],
           "image": {"src":"/mods/techies-frostbloom-weapon.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1787848064
         },
         {
@@ -6091,6 +6091,163 @@
       ]
     },
     {
+      "id": "antimage",
+      "name": "Anti-Mage",
+      "slug": "anti-mage",
+      "mods": [
+        {
+          "name": "Anti-Mage Illidan",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon","legs","offhand","shoulder"],
+          "image": {"src":"/mods/anti-mage-illidan.webp","width":854,"height":480},
+          "author": "Anonymous",
+          "authorUrl": null,
+          "date": 1769918621
+        },
+        {
+          "name": "Anti-Mage Fervent Conscript",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon","shoulder","offhand"],
+          "image": {"src":"/mods/anti-mage-fervent-conscript.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1790630988
+        },
+        {
+          "name": "Anti-Mage Turstarkuri Pilgrim",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon","legs","shoulder"],
+          "image": {"src":"/mods/anti-mage-turstarkuri-pilgrim.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1766149492
+        },
+        {
+          "name": "Anti-Mage Forgotten Planes",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon","shoulder"],
+          "image": {"src":"/mods/anti-mage-forgotten-planes.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1790294865
+        },
+        {
+          "name": "Anti-Mage Mod Rotten",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","offhand","weapon"],
+          "image": {"src":"/mods/anti-mage-mod-rotten.webp","width":854,"height":480},
+          "author": "Mopsyara",
+          "authorUrl": "https://t.me/+AM_aLD0x2TcwY2My",
+          "date": 1791383152
+        },
+        {
+          "name": "Immortal Anti-Mage",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon","offhand"],
+          "image": {"src":"/mods/immortal-anti-mage.webp","width":854,"height":480},
+          "author": "Haruma",
+          "authorUrl": "https://t.me/DotA_2_Mods",
+          "date": 1781266231
+        },
+        {
+          "name": "Anti-Mage Bloody Reaper",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-bloody-reaper.webp","width":1280,"height":720},
+          "author": "CeoMods",
+          "authorUrl": "https://t.me/modsceo",
+          "date": 1786250017
+        },
+        {
+          "name": "Anti-Mage Daemon Hunter",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-daemon-hunter.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791449984
+        },
+        {
+          "name": "Anti-Mage Guilt Survivor",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-guilt-survivor.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/drainAngel",
+          "date": 1790809354
+        },
+        {
+          "name": "Anti-Mage Manta",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-manta.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1789935592
+        },
+        {
+          "name": "Anti-Mage Persona Sakura",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-persona-sakura.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1790709328
+        },
+        {
+          "name": "Anti-Mage Persona Sakuramix",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-persona-sakuramix.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1792860890
+        },
+        {
+          "name": "Anti-Mage Prime",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","misc","head","arms","belt"],
+          "image": {"src":"/mods/anti-mage-prime.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1787851451
+        },
+        {
+          "name": "Anti-Mage Ronin Warrior",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-ronin-warrior.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1769787537
+        },
+        {
+          "name": "Anti-Mage Creep",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","misc","head"],
+          "image": {"src":"/mods/anti-mage-creep.webp","width":854,"height":480},
+          "author": "laskotdota",
+          "authorUrl": "https://t.me/laskotdota",
+          "date": 1768093343
+        }
+      ]
+    },
+    {
       "id": "brewmaster",
       "name": "Brewmaster",
       "slug": "brewmaster",
@@ -7647,153 +7804,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "antimage",
-      "name": "Anti-Mage",
-      "slug": "anti-mage",
-      "mods": [
-        {
-          "name": "Anti-Mage Illidan",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon","legs","offhand","shoulder"],
-          "image": {"src":"/mods/anti-mage-illidan.webp","width":854,"height":480},
-          "author": "Anonymous",
-          "authorUrl": null,
-          "date": 1769918621
-        },
-        {
-          "name": "Anti-Mage Fervent Conscript",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon","shoulder","offhand"],
-          "image": {"src":"/mods/anti-mage-fervent-conscript.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790630988
-        },
-        {
-          "name": "Anti-Mage Turstarkuri Pilgrim",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon","legs","shoulder"],
-          "image": {"src":"/mods/anti-mage-turstarkuri-pilgrim.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1766149492
-        },
-        {
-          "name": "Anti-Mage Forgotten Planes",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon","shoulder"],
-          "image": {"src":"/mods/anti-mage-forgotten-planes.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790294865
-        },
-        {
-          "name": "Anti-Mage Mod Rotten",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","offhand","weapon"],
-          "image": {"src":"/mods/anti-mage-mod-rotten.webp","width":854,"height":480},
-          "author": "Mopsyara",
-          "authorUrl": "https://t.me/+AM_aLD0x2TcwY2My",
-          "date": 1791383152
-        },
-        {
-          "name": "Immortal Anti-Mage",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon","offhand"],
-          "image": {"src":"/mods/immortal-anti-mage.webp","width":854,"height":480},
-          "author": "Haruma",
-          "authorUrl": "https://t.me/DotA_2_Mods",
-          "date": 1781266231
-        },
-        {
-          "name": "Anti-Mage Bloody Reaper",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-bloody-reaper.webp","width":1280,"height":720},
-          "author": "CeoMods",
-          "authorUrl": "https://t.me/modsceo",
-          "date": 1786250017
-        },
-        {
-          "name": "Anti-Mage Daemon Hunter",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-daemon-hunter.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791449984
-        },
-        {
-          "name": "Anti-Mage Guilt Survivor",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-guilt-survivor.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/drainAngel",
-          "date": 1790809354
-        },
-        {
-          "name": "Anti-Mage Manta",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-manta.webp","width":854,"height":480},
-          "author": "твавт",
-          "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1789935592
-        },
-        {
-          "name": "Anti-Mage Persona Sakura",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-persona-sakura.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790709328
-        },
-        {
-          "name": "Anti-Mage Prime",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","misc","head","arms","belt"],
-          "image": {"src":"/mods/anti-mage-prime.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1787851451
-        },
-        {
-          "name": "Anti-Mage Ronin Warrior",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-ronin-warrior.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1769787537
-        },
-        {
-          "name": "Anti-Mage Creep",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","misc","head"],
-          "image": {"src":"/mods/anti-mage-creep.webp","width":854,"height":480},
-          "author": "laskotdota",
-          "authorUrl": "https://t.me/laskotdota",
-          "date": 1768093343
         }
       ]
     },
@@ -10914,7 +10924,7 @@
           "slots": ["head","misc"],
           "image": {"src":"/mods/bane-origin-of-the-unmaking.webp","width":854,"height":480},
           "author": "keeper",
-          "authorUrl": "https://t.me/eternalsadism",
+          "authorUrl": "https://t.me/meetmeattheriver",
           "date": 1788762686
         },
         {
@@ -11006,6 +11016,133 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
+        }
+      ]
+    },
+    {
+      "id": "centaur",
+      "name": "Centaur",
+      "slug": "centaur",
+      "mods": [
+        {
+          "name": "Centaur Chaos Chosen",
+          "categoryId": "heroes",
+          "styleLabel": "Eternal",
+          "slots": ["belt","arms","head","shield","shoulder","tail","weapon"],
+          "image": {"src":"/mods/centaur-chaos-chosen-eternal.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781354613
+        },
+        {
+          "name": "Centaur Chaos Chosen",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","head","shield","shoulder","tail","weapon"],
+          "image": {"src":"/mods/centaur-chaos-chosen.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781354613
+        },
+        {
+          "name": "Centaur Cunning Counterfeit",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","head","shield","shoulder","tail","weapon"],
+          "image": {"src":"/mods/centaur-cunning-counterfeit.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1765891036
+        },
+        {
+          "name": "Centaur Emerald Marauder",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","head","shield","shoulder","tail","weapon"],
+          "image": {"src":"/mods/centaur-emerald-marauder.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781354613
+        },
+        {
+          "name": "Centaur Immortal Emerald",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","arms","head","shield","shoulder","tail","weapon"],
+          "image": {"src":"/mods/centaur-immortal-emerald.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1792860890
+        },
+        {
+          "name": "Centaur Infernal Cavalcade",
+          "categoryId": "hero-items",
+          "styleLabel": "Crimson",
+          "slots": ["shoulder"],
+          "image": {"src":"/mods/centaur-infernal-cavalcade-crimson.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781354613
+        },
+        {
+          "name": "Centaur Infernal Cavalcade",
+          "categoryId": "hero-items",
+          "styleLabel": "Golden",
+          "slots": ["shoulder"],
+          "image": {"src":"/mods/centaur-infernal-cavalcade-golden.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781354613
+        },
+        {
+          "name": "Centaur Infernal Cavalcade",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["shoulder"],
+          "image": {"src":"/mods/centaur-infernal-cavalcade.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781354613
+        },
+        {
+          "name": "Centaur Infernal Chieftain",
+          "categoryId": "hero-items",
+          "styleLabel": "Crimson",
+          "slots": ["head"],
+          "image": {"src":"/mods/centaur-infernal-chieftain-crimson.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781354613
+        },
+        {
+          "name": "Centaur Infernal Chieftain",
+          "categoryId": "hero-items",
+          "styleLabel": "Golden",
+          "slots": ["head"],
+          "image": {"src":"/mods/centaur-infernal-chieftain-golden.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781354613
+        },
+        {
+          "name": "Centaur Infernal Chieftain",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["head"],
+          "image": {"src":"/mods/centaur-infernal-chieftain.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781354613
+        },
+        {
+          "name": "Centaur Infernal Menace",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/centaur-infernal-menace.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781354613
         }
       ]
     },
@@ -12153,123 +12290,6 @@
       ]
     },
     {
-      "id": "centaur",
-      "name": "Centaur",
-      "slug": "centaur",
-      "mods": [
-        {
-          "name": "Centaur Chaos Chosen",
-          "categoryId": "heroes",
-          "styleLabel": "Eternal",
-          "slots": ["belt","arms","head","shield","shoulder","tail","weapon"],
-          "image": {"src":"/mods/centaur-chaos-chosen-eternal.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781354613
-        },
-        {
-          "name": "Centaur Chaos Chosen",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","head","shield","shoulder","tail","weapon"],
-          "image": {"src":"/mods/centaur-chaos-chosen.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781354613
-        },
-        {
-          "name": "Centaur Cunning Counterfeit",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","head","shield","shoulder","tail","weapon"],
-          "image": {"src":"/mods/centaur-cunning-counterfeit.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1765891036
-        },
-        {
-          "name": "Centaur Emerald Marauder",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","arms","head","shield","shoulder","tail","weapon"],
-          "image": {"src":"/mods/centaur-emerald-marauder.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781354613
-        },
-        {
-          "name": "Centaur Infernal Cavalcade",
-          "categoryId": "hero-items",
-          "styleLabel": "Crimson",
-          "slots": ["shoulder"],
-          "image": {"src":"/mods/centaur-infernal-cavalcade-crimson.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781354613
-        },
-        {
-          "name": "Centaur Infernal Cavalcade",
-          "categoryId": "hero-items",
-          "styleLabel": "Golden",
-          "slots": ["shoulder"],
-          "image": {"src":"/mods/centaur-infernal-cavalcade-golden.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781354613
-        },
-        {
-          "name": "Centaur Infernal Cavalcade",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["shoulder"],
-          "image": {"src":"/mods/centaur-infernal-cavalcade.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781354613
-        },
-        {
-          "name": "Centaur Infernal Chieftain",
-          "categoryId": "hero-items",
-          "styleLabel": "Crimson",
-          "slots": ["head"],
-          "image": {"src":"/mods/centaur-infernal-chieftain-crimson.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781354613
-        },
-        {
-          "name": "Centaur Infernal Chieftain",
-          "categoryId": "hero-items",
-          "styleLabel": "Golden",
-          "slots": ["head"],
-          "image": {"src":"/mods/centaur-infernal-chieftain-golden.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781354613
-        },
-        {
-          "name": "Centaur Infernal Chieftain",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["head"],
-          "image": {"src":"/mods/centaur-infernal-chieftain.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781354613
-        },
-        {
-          "name": "Centaur Infernal Menace",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/centaur-infernal-menace.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781354613
-        }
-      ]
-    },
-    {
       "id": "gyro",
       "name": "Gyrocopter",
       "slug": "gyrocopter",
@@ -12841,6 +12861,113 @@
           "author": "Defiree",
           "authorUrl": "https://vk.com/defiree2mods",
           "date": 1789090758
+        }
+      ]
+    },
+    {
+      "id": "beastmaster",
+      "name": "Beastmaster",
+      "slug": "beastmaster",
+      "mods": [
+        {
+          "name": "Beastmaster Yuuki Yuuna",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","belt","head","shoulder","weapon","legs","back"],
+          "image": {"src":"/mods/beastmaster-yuuki-yuuna.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771195327
+        },
+        {
+          "name": "Beastmaster Bone Armor",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","belt","head","shoulder","weapon"],
+          "image": {"src":"/mods/beastmaster-bone-armor.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1765778824
+        },
+        {
+          "name": "Beastmaster Egxrdemxn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","belt","head","shoulder","weapon"],
+          "image": {"src":"/mods/beastmaster-egxrdemxn.webp","width":854,"height":480},
+          "author": "illidan",
+          "authorUrl": "https://t.me/illidan888",
+          "date": 1790017303
+        },
+        {
+          "name": "Beastmaster Prismatic Bone",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","belt","head","shoulder","weapon"],
+          "image": {"src":"/mods/beastmaster-prismatic-bone.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1790208203
+        },
+        {
+          "name": "Immortal Beastmaster",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","head","shoulder","weapon"],
+          "image": {"src":"/mods/immortal-beastmaster.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1780648482
+        },
+        {
+          "name": "Centaur Immortal Emerald",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/centaur-immortal-emerald.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1792860890
+        },
+        {
+          "name": "Beastmaster Primal Paean",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["shoulder"],
+          "image": {"src":"/mods/beastmaster-primal-paean.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1778407359
+        },
+        {
+          "name": "Beastmaster Primal Paean Crimson",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["shoulder"],
+          "image": {"src":"/mods/beastmaster-primal-paean-crimson.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788205090
+        },
+        {
+          "name": "Beastmaster Primal Peacemaker",
+          "categoryId": "hero-items",
+          "styleLabel": "Crimson",
+          "slots": ["weapon"],
+          "image": {"src":"/mods/beastmaster-primal-peacemaker-crimson.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1778407359
+        },
+        {
+          "name": "Beastmaster Primal Peacemaker",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/beastmaster-primal-peacemaker.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1778407359
         }
       ]
     },
@@ -13590,103 +13717,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "beastmaster",
-      "name": "Beastmaster",
-      "slug": "beastmaster",
-      "mods": [
-        {
-          "name": "Beastmaster Yuuki Yuuna",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","belt","head","shoulder","weapon","legs","back"],
-          "image": {"src":"/mods/beastmaster-yuuki-yuuna.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771195327
-        },
-        {
-          "name": "Beastmaster Bone Armor",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","belt","head","shoulder","weapon"],
-          "image": {"src":"/mods/beastmaster-bone-armor.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1765778824
-        },
-        {
-          "name": "Beastmaster Egxrdemxn",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","belt","head","shoulder","weapon"],
-          "image": {"src":"/mods/beastmaster-egxrdemxn.webp","width":854,"height":480},
-          "author": "illidan",
-          "authorUrl": "https://t.me/illidan888",
-          "date": 1790017303
-        },
-        {
-          "name": "Beastmaster Prismatic Bone",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","belt","head","shoulder","weapon"],
-          "image": {"src":"/mods/beastmaster-prismatic-bone.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790208203
-        },
-        {
-          "name": "Immortal Beastmaster",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","head","shoulder","weapon"],
-          "image": {"src":"/mods/immortal-beastmaster.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1780648482
-        },
-        {
-          "name": "Beastmaster Primal Paean",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["shoulder"],
-          "image": {"src":"/mods/beastmaster-primal-paean.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1778407359
-        },
-        {
-          "name": "Beastmaster Primal Paean Crimson",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["shoulder"],
-          "image": {"src":"/mods/beastmaster-primal-paean-crimson.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1788205090
-        },
-        {
-          "name": "Beastmaster Primal Peacemaker",
-          "categoryId": "hero-items",
-          "styleLabel": "Crimson",
-          "slots": ["weapon"],
-          "image": {"src":"/mods/beastmaster-primal-peacemaker-crimson.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1778407359
-        },
-        {
-          "name": "Beastmaster Primal Peacemaker",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/beastmaster-primal-peacemaker.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1778407359
         }
       ]
     },
@@ -15607,6 +15637,53 @@
       ]
     },
     {
+      "id": "abaddon",
+      "name": "Abaddon",
+      "slug": "abaddon",
+      "mods": [
+        {
+          "name": "Abaddon Sayaka Miki",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","back","head","mount","shoulder","weapon","wings"],
+          "image": {"src":"/mods/abaddon-sayaka-miki.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1767093656
+        },
+        {
+          "name": "Abaddon Calavera",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","head","mount","shoulder","weapon"],
+          "image": {"src":"/mods/abaddon-calavera.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1792860890
+        },
+        {
+          "name": "Abaddon Endless Night Reborn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","head","mount","shoulder","weapon"],
+          "image": {"src":"/mods/abaddon-endless-night-reborn.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1790475709
+        },
+        {
+          "name": "Red Abaddon",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","head","mount","shoulder","weapon"],
+          "image": {"src":"/mods/red-abaddon.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1756972905
+        }
+      ]
+    },
+    {
       "id": "chaos_knight",
       "name": "Chaos Knight",
       "slug": "chaos-knight",
@@ -15791,43 +15868,6 @@
           "author": "Mirik522",
           "authorUrl": "https://t.me/Moggdeli",
           "date": 1792011470
-        }
-      ]
-    },
-    {
-      "id": "abaddon",
-      "name": "Abaddon",
-      "slug": "abaddon",
-      "mods": [
-        {
-          "name": "Abaddon Sayaka Miki",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","back","head","mount","shoulder","weapon","wings"],
-          "image": {"src":"/mods/abaddon-sayaka-miki.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1767093656
-        },
-        {
-          "name": "Abaddon Endless Night Reborn",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","head","mount","shoulder","weapon"],
-          "image": {"src":"/mods/abaddon-endless-night-reborn.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790475709
-        },
-        {
-          "name": "Red Abaddon",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","head","mount","shoulder","weapon"],
-          "image": {"src":"/mods/red-abaddon.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1756972905
         }
       ]
     },
