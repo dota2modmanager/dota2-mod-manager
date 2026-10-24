@@ -48,7 +48,7 @@ const W = 1920;
 const H = 1080;
 /** The demo panel, the ability bar and the hero on screen, measured in a 1600x900 window: they scale with the height. */
 const AT900 = {
-  level30: [170, 270], scepter: [117, 303], shard: [193, 303], dummy: [189, 213], enemy: [117, 213], mana: [18, 393], refresh: [126, 446],
+  level30: [170, 270], scepter: [117, 303], shard: [193, 303], dummy: [189, 213], enemy: [117, 213], mana: [18, 393], refresh: [126, 446], decline: [908, 563],
   icons: [583, 771, 467, 96], hero: [500, 40, 600, 600], fight: [630, 200, 290, 310],
 };
 const AT = Object.fromEntries(Object.entries(AT900).map(([k, v]) => [k, v.map((n) => Math.round(n * H / 900))]));
@@ -203,6 +203,14 @@ async function main() {
     const centre = { x: AT.hero[0] + AT.hero[2] / 2, y: AT.hero[1] + AT.hero[3] / 3 };
     let bars = shot('01-idle', [centre.x, centre.y + 80]);
     let heroBar = me(bars, centre);
+    // a party invite from another player can cover the screen: declined, as the player allowed
+    for (let tries = 0; !heroBar && tries < 3; tries++) {
+      note('no health bar: declining a party invite, in case that is what covers it');
+      click(AT.decline);
+      await sleep(1500);
+      bars = shot('01-idle', [centre.x, centre.y + 80]);
+      heroBar = me(bars, centre);
+    }
     if (!heroBar) throw new Error('bench: the hero\'s health bar is not on screen');
     // --idle-seconds: the hero left standing, close, for an idle that does something every few seconds
     const idleFor = Number(arg('--idle-seconds', '0'));
@@ -221,6 +229,15 @@ async function main() {
       input('key', inspectKey);
       await sleep(2000);
       bars = shot('01-idle-after');
+      heroBar = me(bars, heroBar) ?? heroBar;
+    }
+    // --spawn: the hero killed; the demo brings it back where it stood some four seconds later, and
+    // six seconds of pictures from the kill hold its death and its spawn animation
+    if (process.argv.includes('--spawn')) {
+      await command(`dota_kill_unit_by_name npc_dota_hero_${hero}`);
+      const r = Math.round(240 * 700 / cam);
+      burst('01-spawn', [heroBar.x - r, heroBar.y - Math.round(r * 0.6), 2 * r, Math.round(r * 2.2)], 40, 150, 0.5);
+      bars = shot('01-spawn-after');
       heroBar = me(bars, heroBar) ?? heroBar;
     }
     // the hero at its height, with Aghanim's Scepter and Shard and mana that does not run out:
