@@ -1232,7 +1232,7 @@
     "hero-sounds/Weaver Ult Net Idi Nahui": {"name":"Weaver Ult Net Idi Nahui","categoryId":"hero-sounds","styleLabel":null,"dirs":{"sounds/weapons/hero/weaver":["time_lapse.vsnd_c","time_lapse.wav"],"":["tools_asset_info.bin","tools_thumbnail_cache.sqlite3"]}},
     "hero-sounds/Witch Doctor Death Ward": {"name":"Witch Doctor Death Ward","categoryId":"hero-sounds","styleLabel":null,"dirs":{"sounds/weapons/hero/witch_doctor":["deathward_build.vsnd_c"]}},
     "hero-sounds/Witch Doctor True Maledict": {"name":"Witch Doctor True Maledict","categoryId":"hero-sounds","styleLabel":null,"dirs":{"sounds/weapons/hero/witch_doctor":["maledict_cast.vsnd_c"]}},
-    "hero-sounds/Wraith King  I Live Forever": {"name":"Wraith King  I Live Forever","categoryId":"hero-sounds","styleLabel":null,"dirs":{"sounds/weapons/hero/skeleton_king":["reincarnate.vsnd_c"]}},
+    "hero-sounds/Wraith King I Live Forever": {"name":"Wraith King I Live Forever","categoryId":"hero-sounds","styleLabel":null,"dirs":{"sounds/weapons/hero/skeleton_king":["reincarnate.vsnd_c"]}},
     "hero-sounds/Wraith King Papich": {"name":"Wraith King Papich","categoryId":"hero-sounds","styleLabel":null,"dirs":{"sounds/weapons/hero/skeleton_king":["reincarnate.vsnd_c"]}},
     "hero-sounds/Wraith King Papich Attacks": {"name":"Wraith King Papich Attacks","categoryId":"hero-sounds","styleLabel":null,"dirs":{"sounds/weapons/hero/skeleton_king":["attack01.vsnd_c","attack02.vsnd_c","attack03.vsnd_c"]}},
     "hero-sounds/Wraith King Papich Pamparam": {"name":"Wraith King Papich Pamparam","categoryId":"hero-sounds","styleLabel":null,"dirs":{"sounds/weapons/hero/skeleton_king":["ti8_taunt.vsnd_c"]}},
