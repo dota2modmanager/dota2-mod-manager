@@ -32,7 +32,9 @@ two days, most of them on two traps that the tools below now catch in seconds.
    seconds (`01-idle-long.png`). Every run also walks the hero across the screen and back, filmed
    on the way (`05-walk-right.png`, `05-walk-left.png`): a layer that goes wrong only in motion does
    not show on a hero that has stopped. `--spawn` kills the hero and films the next six seconds,
-   in which the demo brings it back where it stood: the spawn animation (`01-spawn.png`). A party
+   in which the demo brings it back where it stood: the spawn animation (`01-spawn.png`). `--death`
+   kills it with the game slowed to a quarter and films the fall close, then six seconds later what
+   lies on the ground (`01-death.png`, `01-death-after.png`). A party
    invite that covers the screen at the start is declined.
 5. **Compare.** Run the bench on the plain hero (`--hero terrorblade`, no `--vpk`) and on a mod of
    the same item from the catalog that works. When yours does not, swap resource blocks between

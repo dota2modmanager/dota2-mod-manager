@@ -4,7 +4,7 @@
  *
  *   npm run dota:bench -- --vpk <mod_dir.vpk> [--hero terrorblade] [--out <folder>] [--camera 900]
  *                          [--skills "q,w,r@enemy"] [--console-key "\\"] [--short] [--now]
- *                          [--idle-seconds 12]
+ *                          [--idle-seconds 12] [--spawn] [--death]
  *   npm run dota:bench -- --hero terrorblade                the game as it is, for comparison
  *
  * It puts the mod into the language folder through the app's own installer (a free slot), starts
@@ -229,6 +229,18 @@ async function main() {
       input('key', inspectKey);
       await sleep(2000);
       bars = shot('01-idle-after');
+      heroBar = me(bars, heroBar) ?? heroBar;
+    }
+    // --death: the hero killed with time running at a quarter, so the death animation, under a second
+    // or two and greyed by the game, is filmed frame by frame; the demo then brings it back
+    if (process.argv.includes('--death')) {
+      await command('host_timescale 0.25');
+      await command(`dota_kill_unit_by_name npc_dota_hero_${hero}`);
+      const r = Math.round(240 * 700 / cam);
+      burst('01-death', [heroBar.x - r, heroBar.y - Math.round(r * 0.8), 2 * r, Math.round(r * 2)], 24, 300, 0.5);
+      await command('host_timescale 1');
+      await sleep(6000);
+      bars = shot('01-death-after');
       heroBar = me(bars, heroBar) ?? heroBar;
     }
     // --spawn: the hero killed; the demo brings it back where it stood some four seconds later, and
