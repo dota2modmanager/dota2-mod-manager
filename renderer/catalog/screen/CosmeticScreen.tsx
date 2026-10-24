@@ -4,6 +4,7 @@
 import { SORTS } from '../../core/constants.ts';
 import type { ScreenActions, ScreenModel } from './model.ts';
 import { CosmeticGrid } from '../cosmetic/CosmeticCard.tsx';
+import { Dropdown } from '../../ui/Dropdown.tsx';
 
 type Model = Extract<ScreenModel, { kind: 'cosmetics' }>;
 
@@ -14,14 +15,17 @@ export function CosmeticScreen({ m, actions }: { m: Model; actions: ScreenAction
       {/* This toolbar lays its controls out as a line of text (it has no .tb-line), so the
           spaces between them are part of the layout, as they were in the markup it replaced. */}
       <div className="toolbar">
-        <div className="select-wrap">
-          <span className="ms">sort</span>
-          <select id="cosSort" value={m.sort} onChange={(e) => actions.cosmeticFilter({ sort: e.target.value })}>
-            {SORTS.filter((s: { key: string }) => s.key !== 'date').map((s: { key: string; label: string }) => (
-              <option key={s.key} value={s.key}>{tr(s.label)}</option>
-            ))}
-          </select>
-        </div>{' '}
+        <Dropdown
+          id="cosSort"
+          icon="sort"
+          label={L`Сортировка`}
+          value={m.sort}
+          options={SORTS.filter((s: { key: string }) => s.key !== 'date').map((s: { key: string; label: string }) => ({
+            value: s.key,
+            label: tr(s.label),
+          }))}
+          onPick={(sort) => actions.cosmeticFilter({ sort })}
+        />{' '}
         <div className="tb-search cat-search">
           <span className="ms">search</span>
           <input type="text" id="cosSearch" placeholder={L`Поиск…`} value={m.search} autoComplete="off"

@@ -8,6 +8,7 @@ import { MotionConfig } from 'motion/react';
 import { pane } from '../core/router.ts';
 import { Reveal } from '../motion/Reveal.tsx';
 import { Swap } from '../motion/Swap.tsx';
+import { Dropdown } from '../ui/Dropdown.tsx';
 import { ProxyControl } from './ProxyControl.ts';
 
 export interface SettingsModel {
@@ -99,14 +100,18 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
       <Block title={L`Интерфейс`}>
         <div className="settings-row">
           <span className="settings-label">{L`Язык`}</span>
-          <div className="select-wrap">
-            <span className="ms" aria-hidden="true">translate</span>
-            <select className="input" id="uiLangSelect" aria-label={L`Язык`} value={m.uiLang} onChange={(e) => actions.language(e.target.value)}>
-              <option value="en">English</option>
-              <option value="ru">Русский</option>
-              <option value="zh-CN">简体中文</option>
-            </select>
-          </div>
+          <Dropdown
+            id="uiLangSelect"
+            icon="translate"
+            label={L`Язык`}
+            value={m.uiLang}
+            options={[
+              { value: 'en', label: 'English' },
+              { value: 'ru', label: 'Русский' },
+              { value: 'zh-CN', label: '简体中文' },
+            ]}
+            onPick={(lang) => actions.language(lang)}
+          />
         </div>
         <div className="settings-row spaced">
           <span className="settings-label">{L`Масштаб`}</span>

@@ -71,6 +71,8 @@
    heroes, and the two questions about your own library - and it reads as one row. Tags
    belong to this category alone and sit under a rule, quieter, so the eye can skip them. */
 .toolbar {
+  position: relative;
+  z-index: 25;
   margin-bottom: var(--space-4);
   padding: 11px 14px;
   background: var(--surface);
@@ -78,6 +80,14 @@
   border-radius: var(--radius);
   backdrop-filter: blur(14px);
 }
+.toolbar:has(.custom-select-wrap.open) {
+  z-index: 200;
+}
+.settings-block:has(.custom-select-wrap.open) {
+  position: relative;
+  z-index: 200;
+}
+
 .tb-line {
   display: flex;
   align-items: center;
@@ -104,7 +114,7 @@
   display: inline-flex;
   align-items: center;
 }
-.select-wrap .ms {
+.select-wrap:not(.custom-select-wrap) > .ms {
   position: absolute;
   left: 9px;
   font-size: 15px;
@@ -127,7 +137,7 @@
 .select-wrap select:focus { box-shadow: 0 0 14px color-mix(in srgb, var(--md-primary) 18%, transparent); }
 .select-wrap select:hover { border-color: var(--border-strong); }
 .select-wrap select:focus { outline: none; border-color: var(--primary); }
-.select-wrap::after {
+.select-wrap:not(.custom-select-wrap)::after {
   content: '';
   position: absolute;
   right: 10px;
@@ -137,6 +147,163 @@
   border-bottom: 1.5px solid var(--text-faint);
   transform: rotate(45deg) translateY(-2px);
   pointer-events: none;
+}
+.select-wrap:has(.custom-select-trigger)::after { display: none; }
+
+.select-wrap.custom-select-wrap.open {
+  z-index: 210;
+}
+
+.custom-select-trigger {
+  appearance: none;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 6px 10px 6px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  max-width: 220px;
+  text-align: left;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  user-select: none;
+  outline: none;
+}
+.custom-select-trigger:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.custom-select-trigger:focus-visible,
+.custom-select-trigger.open {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--md-primary) 18%, transparent);
+}
+.custom-select-trigger:disabled {
+  opacity: var(--disabled-opacity);
+  cursor: default;
+}
+.custom-select-icon {
+  font-size: 16px !important;
+  color: var(--text-faint);
+  flex-shrink: 0;
+  pointer-events: none;
+  transition: color var(--dur-fast);
+}
+.custom-select-trigger:hover .custom-select-icon,
+.custom-select-trigger.open .custom-select-icon {
+  color: var(--primary);
+}
+.custom-select-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.custom-select-arrow {
+  font-size: 18px !important;
+  color: var(--text-faint);
+  flex-shrink: 0;
+  pointer-events: none;
+  transition: transform var(--dur-fast) var(--ease-decelerate), color var(--dur-fast);
+  margin-left: 2px;
+}
+.custom-select-trigger.open .custom-select-arrow {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+
+.custom-select-menu {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  z-index: 220;
+  min-width: 100%;
+  width: max-content;
+  max-width: 290px;
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-3);
+  animation: customSelectIn var(--dur-fast) var(--ease-decelerate);
+}
+.custom-select-menu.upward {
+  top: auto;
+  bottom: calc(100% + var(--space-1));
+  animation: customSelectInUp var(--dur-fast) var(--ease-decelerate);
+}
+@keyframes customSelectIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes customSelectInUp {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.custom-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 6px var(--space-3);
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.custom-select-option:hover,
+.custom-select-option.highlighted {
+  background: var(--state-hover);
+  color: var(--text);
+}
+.custom-select-option.selected {
+  background: var(--state-active);
+  color: var(--text);
+  font-weight: 600;
+}
+.custom-select-option .option-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.custom-select-option .option-check {
+  position: static !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.custom-select-option .option-icon {
+  position: static !important;
+  font-size: 16px !important;
+  color: var(--primary-soft);
+  flex-shrink: 0;
 }
 
 .fchip {
