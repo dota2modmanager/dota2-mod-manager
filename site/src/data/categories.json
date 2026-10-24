@@ -2122,6 +2122,31 @@
     {
       "id": "backgrounds",
       "mods": [
+        {
+          "name": "Blue Archive Ako",
+          "styleLabel": null,
+          "image": {"src":"/mods/blue-archive-ako.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1792795312
+        },
+        {
+          "name": "Blue Archive Atsuko",
+          "styleLabel": null,
+          "image": {"src":"/mods/blue-archive-atsuko.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1792795312
+        },
+        {"name":"City Ruins","styleLabel":null,"image":{"src":"/mods/city-ruins.webp","width":854,"height":480},"author":"Swin-РукаBlood","authorUrl":"https://discord.gg/SCnUSB4j6S","date":1792795312},
+        {
+          "name": "Majo No Tabitabi",
+          "styleLabel": null,
+          "image": {"src":"/mods/majo-no-tabitabi.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1792795312
+        },
         {"name":"Lone Tree Meadow","styleLabel":null,"image":{"src":"/mods/lone-tree-meadow.webp","width":854,"height":480},"author":"zkll","authorUrl":null,"date":1792720833},
         {"name":"Kanekisf","styleLabel":null,"image":{"src":"/mods/kanekisf.webp","width":854,"height":480},"author":"Swin-РукаBlood","authorUrl":"https://discord.gg/SCnUSB4j6S","date":1792668576},
         {
@@ -2655,6 +2680,7 @@
     {
       "id": "hero-sounds",
       "mods": [
+        {"name":"Shadow Fiend Taunt Xvii","styleLabel":null,"image":{"src":"/mods/shadow-fiend-taunt-xvii.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792795312},
         {"name":"Magnus Collapse Rp","styleLabel":null,"image":{"src":"/mods/magnus-collapse-rp.webp","width":854,"height":480},"author":"Danulaguts","authorUrl":null,"date":1792764215},
         {"name":"Shadow Fiend Ult Xvii","styleLabel":null,"image":{"src":"/mods/shadow-fiend-ult-xvii.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792764215},
         {
