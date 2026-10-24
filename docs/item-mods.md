@@ -26,7 +26,9 @@ two days, most of them on two traps that the tools below now catch in seconds.
    pictures 80 ms apart through the attack. `verdict.json` says whether the attack swings
    (`tools/dota-bench/verdict.mjs`); look at the pictures for the rest. About three minutes a
    build. Without `--short` it also casts every ability (`--skills`, aimed ones on an enemy hero),
-   with `-wtf` typed into the console so nothing waits on a cooldown.
+   with `-wtf` typed into the console so nothing waits on a cooldown. `--idle-seconds 13` first
+   steps the hero toward the camera and films it standing, four pictures a second, for an idle
+   that does something only every few seconds (`01-idle-long.png`).
 5. **Compare.** Run the bench on the plain hero (`--hero terrorblade`, no `--vpk`) and on a mod of
    the same item from the catalog that works. When yours does not, swap resource blocks between
    the two (`resourceBlock(file, 'ANIM').replace(...)`) and bench each: the block that carries the

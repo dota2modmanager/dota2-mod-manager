@@ -4,6 +4,7 @@
  *
  *   npm run dota:bench -- --vpk <mod_dir.vpk> [--hero terrorblade] [--out <folder>] [--camera 900]
  *                          [--skills "q,w,r@enemy"] [--console-key "\\"] [--short] [--now]
+ *                          [--idle-seconds 12]
  *   npm run dota:bench -- --hero terrorblade                the game as it is, for comparison
  *
  * It puts the mod into the language folder through the app's own installer (a free slot), starts
@@ -203,6 +204,17 @@ async function main() {
     let bars = shot('01-idle', [centre.x, centre.y + 80]);
     let heroBar = me(bars, centre);
     if (!heroBar) throw new Error('bench: the hero\'s health bar is not on screen');
+    // --idle-seconds: the hero left standing, close, for an idle that does something every few seconds
+    const idleFor = Number(arg('--idle-seconds', '0'));
+    if (idleFor > 0) {
+      // a step toward the camera first: the hero then stands facing it, and its idle starts over
+      const step = Math.round(70 * 700 / cam);
+      input('rclick', heroBar.x, heroBar.y + Math.round(110 * 700 / cam) + step);
+      await sleep(1200);
+      const [bx, by] = [heroBar.x, heroBar.y + Math.round(110 * 700 / cam) + step];
+      const r = Math.round(260 * 700 / cam);
+      burst('01-idle-long', [bx - r, by - Math.round(r * 1.4), 2 * r, Math.round(r * 2.2)], Math.round(idleFor * 4), 250, 1);
+    }
     // the hero at its height, with Aghanim's Scepter and Shard and mana that does not run out:
     // every ability can be cast, the ones those two add included, and the bar shows all the icons
     // A picture after each: what one of them switches on is seen on its own (the Scepter can).
