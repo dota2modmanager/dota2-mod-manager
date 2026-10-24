@@ -27,8 +27,9 @@ two days, most of them on two traps that the tools below now catch in seconds.
    (`tools/dota-bench/verdict.mjs`); look at the pictures for the rest. About three minutes a
    build. Without `--short` it also casts every ability (`--skills`, aimed ones on an enemy hero),
    with `-wtf` typed into the console so nothing waits on a cooldown. `--idle-seconds 13` first
-   steps the hero toward the camera and films it standing, four pictures a second, for an idle
-   that does something only every few seconds (`01-idle-long.png`).
+   steps the hero so its idle starts over, then films it standing in the inspect, from in front
+   with the face in view, four pictures a second, for an idle that does something only every few
+   seconds (`01-idle-long.png`).
 5. **Compare.** Run the bench on the plain hero (`--hero terrorblade`, no `--vpk`) and on a mod of
    the same item from the catalog that works. When yours does not, swap resource blocks between
    the two (`resourceBlock(file, 'ANIM').replace(...)`) and bench each: the block that carries the

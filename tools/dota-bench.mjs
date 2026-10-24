@@ -207,13 +207,21 @@ async function main() {
     // --idle-seconds: the hero left standing, close, for an idle that does something every few seconds
     const idleFor = Number(arg('--idle-seconds', '0'));
     if (idleFor > 0) {
-      // a step toward the camera first: the hero then stands facing it, and its idle starts over
+      // a step first, so its idle starts over; then the inspect, which looks at the face, not the
+      // top of the head the game's camera sees
       const step = Math.round(70 * 700 / cam);
-      input('rclick', heroBar.x, heroBar.y + Math.round(110 * 700 / cam) + step);
-      await sleep(1200);
       const [bx, by] = [heroBar.x, heroBar.y + Math.round(110 * 700 / cam) + step];
-      const r = Math.round(260 * 700 / cam);
-      burst('01-idle-long', [bx - r, by - Math.round(r * 1.4), 2 * r, Math.round(r * 2.2)], Math.round(idleFor * 4), 250, 1);
+      input('rclick', bx, by);
+      await sleep(1200);
+      click(bodyOf({ x: heroBar.x, y: heroBar.y + step }, cam));
+      await sleep(300);
+      input('key', inspectKey);
+      await sleep(1500);
+      burst('01-idle-long', close, Math.round(idleFor * 4), 250, 0.5);
+      input('key', inspectKey);
+      await sleep(2000);
+      bars = shot('01-idle-after');
+      heroBar = me(bars, heroBar) ?? heroBar;
     }
     // the hero at its height, with Aghanim's Scepter and Shard and mana that does not run out:
     // every ability can be cast, the ones those two add included, and the bar shows all the icons
