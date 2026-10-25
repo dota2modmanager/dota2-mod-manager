@@ -1,5 +1,5 @@
 {
-  "count": 1748,
+  "count": 1749,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -1620,6 +1620,7 @@
     "eef896b29e6b2b026ce69451dacc163fe13409ba": [{"name":"Shadow Fiend Arcana Fixv1","categoryId":"hero-icons","styleLabel":null,"type":"vpk"}],
     "ef0d53c2cb52df75fd6b5d6180e32255bc6fce37": [{"name":"Doom Widged 0.1","categoryId":"parts","styleLabel":null,"type":"vpk"}],
     "ef47863e18d52292d4869a2f9dc3a29d55f61fed": [{"name":"Witch Doctor Death Ward","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
+    "ef4dc52a40ffe51c7cc440b6ed628a5f7e6fb94e": [{"name":"Girl Resting Under Tree","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "ef89b663b6803951c64f3849bbe293c820ac4837": [{"name":"Primal Beast Frostbloom","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "ef8d1b3a992368776dc23d653335489439162efa": [{"name":"Lycan Blood Moon","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "efc79d42a3e143e4d72ac5761f610ac9d1319a13": [{"name":"Maid Marci","categoryId":"heroes","styleLabel":null,"type":"vpk"}],

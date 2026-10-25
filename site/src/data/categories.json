@@ -2122,6 +2122,7 @@
     {
       "id": "backgrounds",
       "mods": [
+        {"name":"Girl Resting Under Tree","styleLabel":null,"image":{"src":"/mods/girl-resting-under-tree.webp","width":854,"height":480},"author":"qoofix","authorUrl":"https://qoofix.ru","date":1792914979},
         {
           "name": "Japanese Background",
           "styleLabel": null,
