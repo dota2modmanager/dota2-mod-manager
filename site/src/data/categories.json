@@ -3,6 +3,7 @@
     {
       "id": "hero-items",
       "mods": [
+        {"name":"Invoker Infernus Forge","styleLabel":null,"image":{"src":"/mods/invoker-infernus-forge.webp","width":854,"height":480},"author":"4d4mf","authorUrl":"https://t.me/vpk4d4mmf","date":1792947904},
         {
           "name": "Hoodwink Frostbloom Arbalest",
           "styleLabel": null,
@@ -1130,6 +1131,14 @@
     {
       "id": "item-effects",
       "mods": [
+        {
+          "name": "Mecha Boots Of Travel Mk Ill",
+          "styleLabel": null,
+          "image": {"src":"/mods/mecha-boots-of-travel-mk-ill.webp","width":854,"height":480},
+          "author": "4d4mf",
+          "authorUrl": "https://t.me/vpk4d4mmf",
+          "date": 1792947904
+        },
         {"name":"Pink Meteor Hammer","styleLabel":null,"image":{"src":"/mods/pink-meteor-hammer.webp","width":854,"height":480},"author":"4d4mf","authorUrl":"https://t.me/vpk4d4mmf","date":1792718488},
         {
           "name": "BP 2022 Aghanim Aura I",
@@ -3084,69 +3093,69 @@
     {
       "id": "parts",
       "mods": [
-        {"name":"Hetgraph Red","styleLabel":null,"image":{"src":"/mods/hetgraph-red.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792894433},
+        {"name":"Netgraph Black","styleLabel":null,"image":{"src":"/mods/netgraph-black.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792946553},
+        {"name":"Netgraph Red","styleLabel":null,"image":{"src":"/mods/netgraph-red.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792946553},
+        {
+          "name": "Vs Creen",
+          "styleLabel": "Style black",
+          "image": {"src":"/mods/vs-creen-style-black.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792946553
+        },
+        {
+          "name": "Vs Creen",
+          "styleLabel": "Style white",
+          "image": {"src":"/mods/vs-creen-style-white.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792946553
+        },
         {"name":"Kda Red","styleLabel":null,"image":{"src":"/mods/kda-red.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792894433},
         {"name":"TikTok Overlay","styleLabel":null,"image":{"src":"/mods/tiktok-overlay.webp","width":854,"height":480},"author":"Baste","authorUrl":"https://projects.baste.ru/","date":1792782705},
         {"name":"Xvii Search Bar","styleLabel":null,"image":{"src":"/mods/xvii-search-bar.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792764215},
         {"name":"Purple Play Button","styleLabel":null,"image":{"src":"/mods/purple-play-button.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792712707},
-        {"name":"Hetgraph Black","styleLabel":null,"image":{"src":"/mods/hetgraph-black.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792668576},
         {"name":"Kda Black","styleLabel":null,"image":{"src":"/mods/kda-black.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792668576},
         {"name":"Play Red","styleLabel":null,"image":{"src":"/mods/play-red.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792591892},
         {"name":"Kda Purple","styleLabel":null,"image":{"src":"/mods/kda-purple.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792583758},
         {"name":"Netgraph Purple","styleLabel":null,"image":{"src":"/mods/netgraph-purple.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792583758},
         {"name":"Red Topbar","styleLabel":null,"image":{"src":"/mods/red-topbar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792583758},
         {
-          "name": "Vs Creen Lycoris Colors Pack1",
+          "name": "Vs Creen Lycoris Colors V1",
           "styleLabel": "Style I",
-          "image": {"src":"/mods/vs-creen-lycoris-colors-pack1-style-i.webp","width":854,"height":480},
+          "image": {"src":"/mods/vs-creen-lycoris-colors-v1-style-i.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
           "date": 1792583758
         },
         {
-          "name": "Vs Creen Lycoris Colors Pack1",
+          "name": "Vs Creen Lycoris Colors V1",
           "styleLabel": "Style II",
-          "image": {"src":"/mods/vs-creen-lycoris-colors-pack1-style-ii.webp","width":854,"height":480},
+          "image": {"src":"/mods/vs-creen-lycoris-colors-v1-style-ii.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
           "date": 1792583758
         },
         {
-          "name": "Vs Creen Lycoris Colors Pack1",
+          "name": "Vs Creen Lycoris Colors V1",
           "styleLabel": "Style III",
-          "image": {"src":"/mods/vs-creen-lycoris-colors-pack1-style-iii.webp","width":854,"height":480},
+          "image": {"src":"/mods/vs-creen-lycoris-colors-v1-style-iii.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
           "date": 1792583758
         },
         {
-          "name": "Vs Creen Lycoris Colors Pack2",
+          "name": "Vs Creen Lycoris Colors V2",
           "styleLabel": "Style I",
-          "image": {"src":"/mods/vs-creen-lycoris-colors-pack2-style-i.webp","width":854,"height":480},
+          "image": {"src":"/mods/vs-creen-lycoris-colors-v2-style-i.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
           "date": 1792583758
         },
         {
-          "name": "Vs Creen Lycoris Colors Pack2",
+          "name": "Vs Creen Lycoris Colors V2",
           "styleLabel": "Style II",
-          "image": {"src":"/mods/vs-creen-lycoris-colors-pack2-style-ii.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792583758
-        },
-        {
-          "name": "Vs Creen,Black-White",
-          "styleLabel": "Style black",
-          "image": {"src":"/mods/vs-creen-black-white-style-black.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792583758
-        },
-        {
-          "name": "Vs Creen,Black-White",
-          "styleLabel": "Style white",
-          "image": {"src":"/mods/vs-creen-black-white-style-white.webp","width":854,"height":480},
+          "image": {"src":"/mods/vs-creen-lycoris-colors-v2-style-ii.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
           "date": 1792583758
@@ -4615,9 +4624,169 @@
       ]
     },
     {
+      "id": "music",
+      "mods": [
+        {
+          "name": "Terrorblade Arcana Music",
+          "styleLabel": null,
+          "image": {"src":"/mods/terrorblade-arcana-music.webp","width":854,"height":480},
+          "author": "4d4mf",
+          "authorUrl": "https://t.me/vpk4d4mmf",
+          "date": 1792947904
+        },
+        {
+          "name": "Dark Carnival",
+          "styleLabel": null,
+          "image": {"src":"/mods/dark-carnival.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1792778089
+        },
+        {"name":"Win Lose Music Never","styleLabel":null,"image":{"src":"/mods/win-lose-music-never.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792609094},
+        {"name":"Broodskoe","styleLabel":null,"image":{"src":"/mods/broodskoe.webp","width":854,"height":480},"author":"rasstegai","authorUrl":"https://steamcommunity.com/id/rasstegai/","date":1789902229},
+        {
+          "name": "Rory in early 20s Music",
+          "styleLabel": null,
+          "image": {"src":"/mods/rory-in-early-20s-music.webp","width":854,"height":480},
+          "author": "мс яйцо",
+          "authorUrl": "https://steamcommunity.com/id/mcegg/",
+          "date": 1789754338
+        },
+        {
+          "name": "Terraria Music",
+          "styleLabel": null,
+          "image": {"src":"/mods/terraria-music.webp","width":854,"height":480},
+          "author": "buba43",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199220865017",
+          "date": 1789547063
+        },
+        {
+          "name": "Magic Sticks of Dynamite",
+          "styleLabel": null,
+          "image": {"src":"/mods/magic-sticks-of-dynamite.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1785236208
+        },
+        {
+          "name": "Northern Winds",
+          "styleLabel": null,
+          "image": {"src":"/mods/northern-winds.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781266231
+        },
+        {
+          "name": "The International 10",
+          "styleLabel": null,
+          "image": {"src":"/mods/the-international-10.webp","width":854,"height":480},
+          "author": "SkippingHades",
+          "authorUrl": "https://www.youtube.com/@skippinghadesofficialmc",
+          "date": 1780648482
+        },
+        {
+          "name": "The International 2014",
+          "styleLabel": null,
+          "image": {"src":"/mods/the-international-2014.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1765999001
+        },
+        {
+          "name": "The International 2015",
+          "styleLabel": null,
+          "image": {"src":"/mods/the-international-2015.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1765999001
+        },
+        {
+          "name": "The International 2016",
+          "styleLabel": null,
+          "image": {"src":"/mods/the-international-2016.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1765999001
+        },
+        {
+          "name": "The International 2017",
+          "styleLabel": null,
+          "image": {"src":"/mods/the-international-2017.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1765999001
+        },
+        {
+          "name": "The International 2019",
+          "styleLabel": null,
+          "image": {"src":"/mods/the-international-2019.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1765926561
+        },
+        {
+          "name": "Dire Shred",
+          "styleLabel": null,
+          "image": {"src":"/mods/dire-shred.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1764954164
+        },
+        {
+          "name": "deadmau5 dieback",
+          "styleLabel": null,
+          "image": {"src":"/mods/deadmau5-dieback.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1764486398
+        },
+        {
+          "name": "Elemental Fury",
+          "styleLabel": null,
+          "image": {"src":"/mods/elemental-fury.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1764486398
+        },
+        {
+          "name": "Heroes Within",
+          "styleLabel": null,
+          "image": {"src":"/mods/heroes-within.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1764486398
+        },
+        {
+          "name": "Humanity Last Breath",
+          "styleLabel": null,
+          "image": {"src":"/mods/humanity-last-breath.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1764486398
+        },
+        {
+          "name": "JJ Lin Timekeeper",
+          "styleLabel": null,
+          "image": {"src":"/mods/jj-lin-timekeeper.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1764486398
+        },
+        {
+          "name": "TheFatRat Warrior",
+          "styleLabel": null,
+          "image": {"src":"/mods/thefatrat-warrior.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1764459882
+        },
+        {"name":"Sewerslvt Music","styleLabel":null,"image":{"src":"/mods/sewerslvt-music.webp","width":854,"height":480},"author":"мс яйцо","authorUrl":"https://steamcommunity.com/id/mcegg/","date":null}
+      ]
+    },
+    {
       "id": "other",
       "mods": [
-        {"name":"All Grandmasters","styleLabel":null,"image":{"src":"/mods/all-grandmasters.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792518355},
+        {"name":"All Grandmasters","styleLabel":null,"image":{"src":"/mods/all-grandmasters.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792947904},
         {"name":"White Spell Radius","styleLabel":null,"image":{"src":"/mods/white-spell-radius.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792518355},
         {
           "name": "Ogre Arcana Egg Sound Fix",
@@ -5082,158 +5251,6 @@
         {"name":"Green Hud","styleLabel":null,"image":{"src":"/mods/green-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1780143296},
         {"name":"Black Hud","styleLabel":null,"image":{"src":"/mods/black-hud.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1776610659},
         {"name":"Blue Web Hud","styleLabel":null,"image":{"src":"/mods/blue-web-hud.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1776610659}
-      ]
-    },
-    {
-      "id": "music",
-      "mods": [
-        {
-          "name": "Dark Carnival",
-          "styleLabel": null,
-          "image": {"src":"/mods/dark-carnival.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1792778089
-        },
-        {"name":"Win Lose Music Never","styleLabel":null,"image":{"src":"/mods/win-lose-music-never.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792609094},
-        {"name":"Broodskoe","styleLabel":null,"image":{"src":"/mods/broodskoe.webp","width":854,"height":480},"author":"rasstegai","authorUrl":"https://steamcommunity.com/id/rasstegai/","date":1789902229},
-        {
-          "name": "Rory in early 20s Music",
-          "styleLabel": null,
-          "image": {"src":"/mods/rory-in-early-20s-music.webp","width":854,"height":480},
-          "author": "мс яйцо",
-          "authorUrl": "https://steamcommunity.com/id/mcegg/",
-          "date": 1789754338
-        },
-        {
-          "name": "Terraria Music",
-          "styleLabel": null,
-          "image": {"src":"/mods/terraria-music.webp","width":854,"height":480},
-          "author": "buba43",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199220865017",
-          "date": 1789547063
-        },
-        {
-          "name": "Magic Sticks of Dynamite",
-          "styleLabel": null,
-          "image": {"src":"/mods/magic-sticks-of-dynamite.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1785236208
-        },
-        {
-          "name": "Northern Winds",
-          "styleLabel": null,
-          "image": {"src":"/mods/northern-winds.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781266231
-        },
-        {
-          "name": "The International 10",
-          "styleLabel": null,
-          "image": {"src":"/mods/the-international-10.webp","width":854,"height":480},
-          "author": "SkippingHades",
-          "authorUrl": "https://www.youtube.com/@skippinghadesofficialmc",
-          "date": 1780648482
-        },
-        {
-          "name": "The International 2014",
-          "styleLabel": null,
-          "image": {"src":"/mods/the-international-2014.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1765999001
-        },
-        {
-          "name": "The International 2015",
-          "styleLabel": null,
-          "image": {"src":"/mods/the-international-2015.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1765999001
-        },
-        {
-          "name": "The International 2016",
-          "styleLabel": null,
-          "image": {"src":"/mods/the-international-2016.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1765999001
-        },
-        {
-          "name": "The International 2017",
-          "styleLabel": null,
-          "image": {"src":"/mods/the-international-2017.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1765999001
-        },
-        {
-          "name": "The International 2019",
-          "styleLabel": null,
-          "image": {"src":"/mods/the-international-2019.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1765926561
-        },
-        {
-          "name": "Dire Shred",
-          "styleLabel": null,
-          "image": {"src":"/mods/dire-shred.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1764954164
-        },
-        {
-          "name": "deadmau5 dieback",
-          "styleLabel": null,
-          "image": {"src":"/mods/deadmau5-dieback.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1764486398
-        },
-        {
-          "name": "Elemental Fury",
-          "styleLabel": null,
-          "image": {"src":"/mods/elemental-fury.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1764486398
-        },
-        {
-          "name": "Heroes Within",
-          "styleLabel": null,
-          "image": {"src":"/mods/heroes-within.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1764486398
-        },
-        {
-          "name": "Humanity Last Breath",
-          "styleLabel": null,
-          "image": {"src":"/mods/humanity-last-breath.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1764486398
-        },
-        {
-          "name": "JJ Lin Timekeeper",
-          "styleLabel": null,
-          "image": {"src":"/mods/jj-lin-timekeeper.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1764486398
-        },
-        {
-          "name": "TheFatRat Warrior",
-          "styleLabel": null,
-          "image": {"src":"/mods/thefatrat-warrior.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1764459882
-        },
-        {"name":"Sewerslvt Music","styleLabel":null,"image":{"src":"/mods/sewerslvt-music.webp","width":854,"height":480},"author":"мс яйцо","authorUrl":"https://steamcommunity.com/id/mcegg/","date":null}
       ]
     },
     {

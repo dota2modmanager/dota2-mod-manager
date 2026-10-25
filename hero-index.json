@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1547,
+  "mods": 1549,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -695,6 +695,7 @@
         {"name":"Invoker Esl Relics Forge","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Invoker Fate Meridian","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Invoker Infernus Forge","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Invoker Jack Daniels","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","shield","belt","legs"]},
         {"name":"Invoker Kid Forge","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Invoker Lelouch","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
@@ -853,6 +854,7 @@
         {"name":"Legion Commander Holy Paladin","categoryId":"heroes","styleLabel":null,"slots":["head","legs","shoulder","back","arms","weapon"]},
         {"name":"Legion Commander Nero","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon","misc","legs"]},
         {"name":"Legion Commander Persona","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon","legs"]},
+        {"name":"Legion Commander Sorla Khan","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon","legs","misc"]},
         {"name":"Purple Legion Commander","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon","legs"]}
       ]
     },
