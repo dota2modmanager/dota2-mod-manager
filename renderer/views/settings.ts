@@ -28,16 +28,20 @@ let key = 0;
 registerView('settings', () => renderSettings(true));
 
 async function renderSettings(fresh = false): Promise<void> {
-  const s = await window.api.settings.get();
+  /* Asked all at once: one after another they were seven trips to the main process before the page
+   * drew, and the compiler's state looks for Wine on disk. The longer the wait, the longer a click
+   * lands on the page the redraw is about to replace (the Linux simulation's language switch, on
+   * the pull request that added the compiler). */
+  const [s, cacheSize, version, tools, compiler, beta] = await Promise.all([
+    window.api.settings.get(),
+    window.api.misc.cacheSize(),
+    window.api.update.version(),
+    window.api.tools.state().catch(() => null), // older build
+    window.api.compiler.state().catch(() => null),
+    window.api.beta.state().catch(() => ({ eligible: false, on: false })),
+  ]);
   state.settings = s;
-  const cacheSize = await window.api.misc.cacheSize();
-  const version = await window.api.update.version();
-  let vrf = null;
-  try { vrf = (await window.api.tools.state()).tools.find((x) => x.name === 'vrf') || null; } catch { /* older build */ }
-  let compiler = null;
-  try { compiler = await window.api.compiler.state(); } catch { /* older build */ }
-  let beta = { eligible: false, on: false };
-  try { beta = await window.api.beta.state(); } catch { /* older build */ }
+  const vrf = tools?.tools.find((x) => x.name === 'vrf') || null;
   if (fresh) key++;
   const fetchedAt = (state.catalog as { fetchedAt?: number } | null)?.fetchedAt;
   model = {
