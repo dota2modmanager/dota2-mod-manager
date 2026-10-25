@@ -41,6 +41,10 @@ function proton(t: TestContext) {
   put(path.join(game, 'dota', 'shaders_vulkan_dir.vpk'), 'vulkan');
   put(path.join(game, 'core', 'pak01_dir.vpk'), 'core');
   put(path.join(game, 'core', 'shaders_pc_dir.vpk'), 'core dx11');
+  put(path.join(game, 'core', 'base.fgd'), 'fgd');
+  put(path.join(game, 'dota', 'readonly_tools_asset_info.bin'), 'info');
+  put(path.join(game, 'dota', 'tools', 'workshop_addoninfo.fgd'), 'fgd2');
+  put(path.join(game, 'dota', 'tools', 'images', 'icon.png'), 'png');
   return { root, game, userData: path.join(root, 'userdata') };
 }
 
@@ -51,12 +55,12 @@ function steamTakesThemAway(game: string) {
     fs.rmSync(dir, { recursive: true, force: true });
     fs.mkdirSync(dir);
   }
-  for (const f of [path.join(game, 'dota', 'shaders_pc_dir.vpk'), path.join(game, 'core', 'shaders_pc_dir.vpk')]) fs.rmSync(f);
+  for (const f of ['dota/shaders_pc_dir.vpk', 'core/shaders_pc_dir.vpk', 'core/base.fgd', 'dota/readonly_tools_asset_info.bin', 'dota/tools/workshop_addoninfo.fgd']) fs.rmSync(path.join(game, f));
 }
 
 test('of game/dota and game/core, only the Windows build\'s own entries are copied', () => {
-  for (const yes of ['bin/win64', 'shaders_pc_dir.vpk', 'shaders_pc_000.vpk']) assert.ok(windowsOnly(yes), yes);
-  for (const no of ['bin', 'bin/linuxsteamrt64', 'shaders_pcgl_dir.vpk', 'shaders_vulkan_dir.vpk', 'pak01_dir.vpk', 'gameinfo.gi', 'maps/shaders_pc_x.vpk']) assert.equal(windowsOnly(no), false, no);
+  for (const yes of ['bin/win64/modtools.dll', 'shaders_pc_dir.vpk', 'shaders_pc_000.vpk', 'models_gamedata.fgd', 'tools/workshop_addoninfo.fgd', 'readonly_tools_asset_info.bin']) assert.ok(windowsOnly(yes), yes);
+  for (const no of ['bin/linuxsteamrt64/libserver.so', 'shaders_pcgl_dir.vpk', 'shaders_vulkan_dir.vpk', 'pak01_dir.vpk', 'gameinfo.gi', 'maps/shaders_pc_x.vpk', 'tools/images/icon.png']) assert.equal(windowsOnly(no), false, no);
 });
 
 /** A compiler that writes each source's compiled file where the real one does. */
@@ -80,12 +84,12 @@ test('the copy is the Windows build\'s own files, with the rest of the game link
   assert.ok(fs.existsSync(path.join(tree, 'bin', 'sdkenginetools.txt')));
   assert.equal(fs.existsSync(path.join(tree, 'bin', 'linuxsteamrt64')), false, 'the Linux game is not copied');
   const real = (rel: string) => !fs.lstatSync(path.join(tree, rel)).isSymbolicLink();
-  for (const rel of ['dota', 'dota/bin', 'dota/bin/win64/modtools.dll', 'dota/shaders_pc_dir.vpk', 'core', 'core/shaders_pc_dir.vpk', 'dota_addons']) assert.ok(real(rel), `${rel} is the copy's own`);
-  for (const rel of ['dota/pak01_dir.vpk', 'dota/gameinfo.gi', 'dota/shaders_vulkan_dir.vpk', 'dota/bin/linuxsteamrt64', 'core/pak01_dir.vpk']) {
+  for (const rel of ['dota', 'dota/bin', 'dota/bin/win64/modtools.dll', 'dota/shaders_pc_dir.vpk', 'dota/readonly_tools_asset_info.bin', 'dota/tools/workshop_addoninfo.fgd', 'core', 'core/shaders_pc_dir.vpk', 'core/base.fgd', 'dota_addons']) assert.ok(real(rel), `${rel} is the copy's own`);
+  for (const rel of ['dota/pak01_dir.vpk', 'dota/gameinfo.gi', 'dota/shaders_vulkan_dir.vpk', 'dota/bin/linuxsteamrt64', 'dota/tools/images', 'core/pak01_dir.vpk']) {
     assert.equal(fs.readlinkSync(path.join(tree, rel)), path.join(game, rel), `${rel} is linked`);
   }
-  assert.deepEqual(steps, [1, 2, 3, 4, 5, 6, 7]);
-  assert.equal(keeper.info()?.bytes, ['MZ compiler', 'MZ tier0', 'MZ mesh', 'tools', 'MZ modtools', 'dx11', 'core dx11'].join('').length);
+  assert.deepEqual(steps, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  assert.equal(keeper.info()?.bytes, ['MZ compiler', 'MZ tier0', 'MZ mesh', 'tools', 'MZ modtools', 'dx11', 'info', 'fgd2', 'core dx11', 'fgd'].join('').length);
   assert.equal(await keeper.keep(), false, 'the same tools are not copied twice');
 });
 
@@ -104,7 +108,7 @@ test('once Steam takes the game\'s tools away, the copy compiles, into itself an
   const out = await rc.compile({ id: 'x', files: [{ path: 'models/a.vmdl', data: Buffer.from('m') }], compile: ['models/a.vmdl'] });
   assert.deepEqual(out.map((e) => entryPath(e)), ['models/a.vmdl_c']);
   assert.ok(fs.existsSync(path.join(st.exe!, '..', '..', '..', 'dota', 'bin', 'win64', 'modtools.dll')), 'Dota\'s own Windows libraries stay in the copy');
-  assert.deepEqual(fs.readdirSync(path.join(game, 'dota')).sort(), ['bin', 'gameinfo.gi', 'pak01_dir.vpk', 'shaders_vulkan_dir.vpk'], 'nothing written into the game through a link');
+  assert.deepEqual(fs.readdirSync(path.join(game, 'dota')).sort(), ['bin', 'gameinfo.gi', 'pak01_dir.vpk', 'shaders_vulkan_dir.vpk', 'tools'], 'nothing written into the game through a link');
   assert.equal(fs.existsSync(path.join(root, 'dota 2 beta', 'content')), false);
 });
 

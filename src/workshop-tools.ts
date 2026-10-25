@@ -8,8 +8,11 @@
  *
  * What is copied is what only the Windows build has: game/bin (win64, the tools themselves, 137
  * files and 700 MB on 2026-10-25, and the few files beside it), and in game/dota and game/core
- * their own bin/win64 and the DX11 shaders (shaders_pc_*; the Linux build has pcgl and vulkan
- * ones). The rest of the game is not copied: the compiler finds the game through its own place,
+ * their own bin/win64 (client, server, host and modtools), the DX11 shaders (shaders_pc_*; the
+ * Linux build has pcgl and vulkan ones), the tools' entity definitions (*.fgd) and their asset
+ * list (readonly_tools_asset_info.bin): 456 MB more. That list is the whole difference between the
+ * two builds' game/dota and game/core, both listed on 2026-10-25, and the Linux one has none of
+ * these. The rest of the game is not copied: the compiler finds the game through its own place,
  * two folders up from win64, and every other entry of game/dota and game/core here is a link to the
  * user's game, whose content is the same for both builds. The first copy linked game/dota and
  * game/core whole, and once Steam had taken the Windows build away the compiler stopped at "Unable
@@ -29,16 +32,18 @@ import { compilerIn, installOf } from './resource-compiler.ts';
 /** What kept.json says of the copy: the tools it was copied from, its size, and how it is laid out. */
 export interface KeptInfo { from: string; stamp: string; bytes: number; at: number; layout: number }
 
-/* How the copy is laid out. A copy of an older layout is not run: the first one linked game/dota
- * whole and cannot compile once the Windows build is gone, so it is made again when it can be. */
-const LAYOUT = 2;
+/* How the copy is laid out. A copy of an older layout is not run, and is made again when it can be:
+ * the first linked game/dota whole, the second had no .fgd files, and neither compiles once the
+ * Windows build is gone. */
+const LAYOUT = 3;
 
 /** The game's folders the compiler reads, each part copied and the rest linked. */
 const MODS = ['dota', 'core'];
 
-/** Whether an entry of game/dota or game/core is the Windows build's alone, and so copied. */
+/** Whether a file of game/dota or game/core, by its path inside it, is the Windows build's alone. */
 export function windowsOnly(rel: string): boolean {
-  return rel === 'bin/win64' || /^shaders_pc_[^/]*$/i.test(rel);
+  const p = rel.split(path.sep).join('/');
+  return p.startsWith('bin/win64/') || /^shaders_pc_[^/]*$/i.test(p) || /\.fgd$/i.test(p) || p === 'readonly_tools_asset_info.bin';
 }
 
 /** The game's tools as they are now: a copy is of these when the stamp matches. */
@@ -66,10 +71,7 @@ export function windowsFiles(game: string): string[] {
     // linuxsteamrt64 beside it is the Linux game, and the user has it already
     ...top(bin).map((f) => path.join('bin', f)),
     ...filesUnder(path.join(bin, 'win64')).map((f) => path.join('bin', 'win64', f)),
-    ...MODS.flatMap((mod) => [
-      ...filesUnder(path.join(game, mod, 'bin', 'win64')).map((f) => path.join(mod, 'bin', 'win64', f)),
-      ...top(path.join(game, mod)).filter((f) => windowsOnly(f)).map((f) => path.join(mod, f)),
-    ]),
+    ...MODS.flatMap((mod) => filesUnder(path.join(game, mod)).filter(windowsOnly).map((f) => path.join(mod, f))),
   ];
 }
 
@@ -77,7 +79,7 @@ export function windowsFiles(game: string): string[] {
  * The copy's game/dota and game/core: a real folder holding what was copied, and a link for every
  * other entry of the game's, made again on each use. A file a patch adds is linked the next time,
  * one it removes loses its link, and a game moved to another library is linked where it is now.
- * Into a folder the copy has of its own (bin, holding win64) it goes one level down and does the
+ * Into a folder the copy has of its own (bin holding win64, tools holding an .fgd) it goes down and does the
  * same; what was copied is never touched.
  */
 function mirror(real: string, copy: string) {

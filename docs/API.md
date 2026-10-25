@@ -8772,8 +8772,11 @@ the game's own is gone. Nobody has to keep a Proton build installed to compile.
 
 What is copied is what only the Windows build has: game/bin (win64, the tools themselves, 137
 files and 700 MB on 2026-10-25, and the few files beside it), and in game/dota and game/core
-their own bin/win64 and the DX11 shaders (shaders_pc_*; the Linux build has pcgl and vulkan
-ones). The rest of the game is not copied: the compiler finds the game through its own place,
+their own bin/win64 (client, server, host and modtools), the DX11 shaders (shaders_pc_*; the
+Linux build has pcgl and vulkan ones), the tools' entity definitions (*.fgd) and their asset
+list (readonly_tools_asset_info.bin): 456 MB more. That list is the whole difference between the
+two builds' game/dota and game/core, both listed on 2026-10-25, and the Linux one has none of
+these. The rest of the game is not copied: the compiler finds the game through its own place,
 two folders up from win64, and every other entry of game/dota and game/core here is a link to the
 user's game, whose content is the same for both builds. The first copy linked game/dota and
 game/core whole, and once Steam had taken the Windows build away the compiler stopped at "Unable
@@ -8800,7 +8803,7 @@ What kept.json says of the copy: the tools it was copied from, its size, and how
 export function windowsOnly(rel: string): boolean
 ```
 
-Whether an entry of game/dota or game/core is the Windows build's alone, and so copied.
+Whether a file of game/dota or game/core, by its path inside it, is the Windows build's alone.
 
 ### `windowsFiles`
 

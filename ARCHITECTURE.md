@@ -199,7 +199,8 @@ on Linux Steam installs them while Dota runs through Proton, and the compiler ru
 prefix of the app's own in `userData/wine` made once with `wineboot` (`src/wine.ts`). Going back to
 the Linux build to play, Steam deletes the Windows files and the compiler with them, so once the app
 has seen the tools it copies what only the Windows build has into `userData/workshop-tools`:
-`game/bin` (about 700 MB), and `bin/win64` and the DX11 shaders of `game/dota` and `game/core`.
+`game/bin` (about 700 MB), and of `game/dota` and `game/core` their `bin/win64`, DX11 shaders,
+`.fgd` files and tools asset list (456 MB more; the whole difference between the two builds there).
 Every other entry of those two is a link to the user's game, made again on each use, and the copy
 runs whenever the game's own is gone (`src/workshop-tools.ts`). The Check
 button in Settings compiles an empty model through all of it, counting its steps on the bar at the
