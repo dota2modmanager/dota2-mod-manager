@@ -84,6 +84,7 @@ contextBridge.exposeInMainWorld('api', {
     browse: () => ipcRenderer.invoke('compiler:browse'),
     forget: () => ipcRenderer.invoke('compiler:forget'),
     prepare: () => ipcRenderer.invoke('compiler:prepare'),
+    check: () => ipcRenderer.invoke('compiler:check'),
   },
   // what the app was told from the network: features switched off, dated notices
   config: {

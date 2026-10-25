@@ -6509,6 +6509,22 @@ export interface CompileJob { id: string; files: SourceFile[]; compile: string[]
 
 One compile: the addon's sources, and which of them to hand the compiler (it finds what they use).
 
+### `CompilerCheck`
+
+```ts
+export interface CompilerCheck { ok: boolean; message?: string; seconds: number; at: number }
+```
+
+How the last check of a compiler went: kept until another compiler is picked or a patch replaces it.
+
+### `CheckStep`
+
+```ts
+export type CheckStep = 'wine' | 'compile'
+```
+
+A step of the check, for the bar at the bottom of the window.
+
 ### `CompilerState`
 
 ```ts

@@ -12,7 +12,7 @@ import { installOf } from './resource-compiler.ts';
 import type { AppContext } from './app-context.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
-export function registerCompilerIpc({ compiler, diag, settings, win }: Pick<AppContext, 'compiler' | 'diag' | 'settings' | 'win'>): void {
+export function registerCompilerIpc({ compiler, diag, sendProgress, settings, win }: Pick<AppContext, 'compiler' | 'diag' | 'sendProgress' | 'settings' | 'win'>): void {
   const { dialog, ipcMain } = electron();
 
   ipcMain.handle('compiler:state', () => compiler.state());
@@ -34,6 +34,19 @@ export function registerCompilerIpc({ compiler, diag, settings, win }: Pick<AppC
   ipcMain.handle('compiler:forget', () => {
     settings.set('resourceCompilerPath', null);
     return { ok: true, state: compiler.state() };
+  });
+
+  /* The empty model compiled, its steps counted on the bar at the bottom: making the prefix is a few
+   * seconds the first time, and the compile five more, which is long enough to look stuck. */
+  ipcMain.handle('compiler:check', async () => {
+    const label = t('Проверка компилятора');
+    const steps = compiler.state().needsWine ? ['wine', 'compile'] : ['compile'];
+    sendProgress({ type: 'count', label, done: 0, total: steps.length });
+    const result = await compiler.check((step) => sendProgress({
+      type: 'count', label: `${label}: ${step === 'wine' ? t('подготовка Wine') : t('сборка пустой модели')}`, done: steps.indexOf(step), total: steps.length,
+    }));
+    sendProgress(result.ok ? { type: 'done', label } : { type: 'error', label, message: result.message || '' });
+    return result.ok ? { ok: true, state: compiler.state() } : { error: result.message, state: compiler.state() };
   });
 
   // the prefix is made by the first compile anyway; this is for doing it while somebody watches

@@ -231,6 +231,9 @@ const EN = {
   'resourcecompiler.exe не собрал {0}: {1}': 'resourcecompiler.exe could not compile {0}: {1}',
   'Выбери resourcecompiler.exe в папке game/bin/win64 игры с Workshop Tools': 'Pick resourcecompiler.exe in game/bin/win64 of a game with the Workshop Tools',
   'Это не resourcecompiler.exe из папки game/bin/win64 установленной Dota 2': 'This is not resourcecompiler.exe from game/bin/win64 of an installed Dota 2',
+  'Проверка компилятора': 'Checking the compiler',
+  'подготовка Wine': 'setting up Wine',
+  'сборка пустой модели': 'compiling an empty model',
 } satisfies Record<string, string>;
 
 /** The table as a lookup: any Russian string, its English or nothing. */

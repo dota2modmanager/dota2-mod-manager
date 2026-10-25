@@ -166,6 +166,12 @@ const actions: SettingsActions = {
     else toast(L`Wine готов`);
     await renderSettings();
   },
+  compilerCheck: async () => {
+    const r = await window.api.compiler.check();
+    if (r?.error) toast(r.error, 'error', 7000);
+    else toast(L`Компилятор работает`);
+    await renderSettings();
+  },
   refreshCatalog: async () => {
     await loadCatalog(true);
     renderSettings();

@@ -36,6 +36,24 @@ export const COMPILER = 'resourcecompiler.exe';
 const COMPILE_TIMEOUT_MS = 10 * 60 * 1000;
 const ADDON = /^[a-z0-9_]{1,64}$/;
 
+/* The check Settings runs: the smallest model there is, the empty one a persona's base puts at each
+ * of the plain hero's slots. It goes through everything a real compile does (Wine, the addon, the
+ * compiler, the files read back) in a few seconds. */
+const EMPTY_MODEL = `<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:modeldoc41:version{12fc9d44-453a-4ae4-b4d9-7e2ac0bbd4e0} -->
+{
+	rootNode =
+	{
+		_class = "RootNode"
+		children = [  ]
+		model_archetype = ""
+		primary_associated_entity = ""
+		anim_graph_name = ""
+		base_model_name = ""
+	}
+}
+`;
+const CHECK_SOURCE = 'models/d2mm_check/empty.vmdl';
+
 /** Where the Workshop Tools put the compiler in a game folder (dota 2 beta/game). */
 export function compilerIn(gamePath: string): string {
   return path.join(gamePath, 'bin', 'win64', COMPILER);
@@ -65,6 +83,12 @@ export interface SourceFile { path: string; data: Buffer }
 /** One compile: the addon's sources, and which of them to hand the compiler (it finds what they use). */
 export interface CompileJob { id: string; files: SourceFile[]; compile: string[] }
 
+/** How the last check of a compiler went: kept until another compiler is picked or a patch replaces it. */
+export interface CompilerCheck { ok: boolean; message?: string; seconds: number; at: number }
+
+/** A step of the check, for the bar at the bottom of the window. */
+export type CheckStep = 'wine' | 'compile';
+
 /** What Settings shows of the compiler. */
 export interface CompilerState {
   /** the compiler that will run, or null when there is none */
@@ -77,6 +101,8 @@ export interface CompilerState {
   prefixReady: boolean;
   /** whether a compile can start without anything more to set up */
   ready: boolean;
+  /** the last check of this compiler, or null when it has not been checked */
+  check: CompilerCheck | null;
 }
 
 /** Run a program and settle with its exit code: a non-zero one is an answer, not a failure to run. */
@@ -113,8 +139,21 @@ export function createResourceCompiler({ userDataDir, gamePath, chosen, log = ()
   wine?: () => string | null;
 }) {
   const prefix = path.join(userDataDir, 'wine');
+  const checkFile = path.join(userDataDir, 'compiler-check.json');
   const needsWine = platform !== 'win32';
   let queue: Promise<unknown> = Promise.resolve();
+  let checking: Promise<CompilerCheck> | null = null;
+
+  /* A check counts for the compiler it ran on, as that file was: a Dota patch that brings a new
+   * resourcecompiler.exe, or another one picked, is unchecked again. */
+  const stampOf = (exe: string) => { try { return `${exe}|${fs.statSync(exe).mtimeMs}`; } catch { return null; } };
+  function lastCheck(exe: string | undefined): CompilerCheck | null {
+    if (!exe) return null;
+    try {
+      const { stamp, ...check } = JSON.parse(fs.readFileSync(checkFile, 'utf8')) as CompilerCheck & { stamp: string };
+      return stamp === stampOf(exe) ? check : null;
+    } catch { return null; }
+  }
 
   /** The compiler that runs: the one picked, when it is one, else the game's own. */
   function locate(): { exe: string; install: string; chosen: boolean } | null {
@@ -130,7 +169,7 @@ export function createResourceCompiler({ userDataDir, gamePath, chosen, log = ()
     const found = locate();
     const w = needsWine ? wine() : null;
     const made = needsWine && prefixReady(prefix);
-    return { exe: found?.exe ?? null, chosen: !!found?.chosen, needsWine, wine: w, prefixReady: made, ready: !!found && (!needsWine || (!!w && made)) };
+    return { exe: found?.exe ?? null, chosen: !!found?.chosen, needsWine, wine: w, prefixReady: made, ready: !!found && (!needsWine || (!!w && made)), check: lastCheck(found?.exe) };
   }
 
   /** Everything a compile needs before it starts: the compiler, and here Wine with its prefix made. */
@@ -184,7 +223,32 @@ export function createResourceCompiler({ userDataDir, gamePath, chosen, log = ()
     return next;
   }
 
-  return { state, prepare, compile, locate, prefix };
+  /**
+   * Compile the empty model and keep how it went: whether this compiler, here, compiles at all.
+   * A second press while one runs gets the same answer rather than a second compile.
+   */
+  function check(onStep: (step: CheckStep) => void = () => {}): Promise<CompilerCheck> {
+    checking ||= (async () => {
+      const started = Date.now();
+      let result: CompilerCheck;
+      try {
+        if (needsWine) { onStep('wine'); await prepare(); }
+        onStep('compile');
+        await compile({ id: 'check', files: [{ path: CHECK_SOURCE, data: Buffer.from(EMPTY_MODEL) }], compile: [CHECK_SOURCE] });
+        result = { ok: true, seconds: (Date.now() - started) / 1000, at: Date.now() };
+      } catch (err) {
+        result = { ok: false, message: (err as Error).message, seconds: (Date.now() - started) / 1000, at: Date.now() };
+      }
+      const exe = locate()?.exe;
+      const stamp = exe && stampOf(exe);
+      if (stamp) { fs.mkdirSync(userDataDir, { recursive: true }); fs.writeFileSync(checkFile, JSON.stringify({ ...result, stamp })); }
+      log(`resourcecompiler: check ${result.ok ? 'passed' : `failed: ${result.message}`} in ${result.seconds.toFixed(1)} s`);
+      return result;
+    })().finally(() => { checking = null; });
+    return checking;
+  }
+
+  return { state, prepare, compile, check, locate, prefix };
 }
 
 /** The compiler as the IPC and the builder take it. */

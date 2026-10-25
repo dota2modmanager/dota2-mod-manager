@@ -194,9 +194,11 @@ through the same compiler, Valve's `resourcecompiler.exe` from the Workshop Tool
 into `game/dota_addons/d2mm_<id>/`, read back as VPK entries, and both folders are deleted whether
 the compile worked or not. The compiler is never downloaded, because it is Valve's and not open
 source: it is the game's own (`game/bin/win64`), or one picked in Settings through a dialog of the
-main process, never a path from the window. The tools exist only for the Windows build of Dota, so
-on Linux the pick is a Windows copy's compiler and it runs under Wine, in a prefix of the app's own
-in `userData/wine` made once with `wineboot` (`src/wine.ts`). Taking the item's model apart into
+main process, never a path from the window. The tools exist only for the Windows build of Dota:
+on Linux Steam installs them while Dota runs through Proton, and the compiler runs under Wine, in a
+prefix of the app's own in `userData/wine` made once with `wineboot` (`src/wine.ts`). The Check
+button in Settings compiles an empty model through all of it, counting its steps on the bar at the
+bottom, and the answer is kept until another compiler is picked or a patch replaces it. Taking the item's model apart into
 those sources (Source 2 Viewer's export) is the next half and is not here yet.
 
 ## Presets

@@ -188,3 +188,42 @@ test('two compiles asked for at once run one after the other, and a failed one d
   assert.equal(b.status, 'fulfilled');
   assert.equal(most, 1);
 });
+
+test('the check compiles an empty model, says each step, and is kept for this compiler', { skip: !posix }, async (t) => {
+  const { root, exe, userData } = install(t);
+  const calls: string[][] = [];
+  const rc = createResourceCompiler({ userDataDir: userData, gamePath: () => null, chosen: () => exe, platform: 'linux', run: fakeCompiler({ calls }), wine: () => '/usr/bin/wine' });
+  assert.equal(rc.state().check, null, 'not checked yet');
+  const steps: string[] = [];
+  const [a, b] = await Promise.all([rc.check((s) => steps.push(s)), rc.check()]);
+  assert.equal(a, b, 'a second press while one runs gets the same answer');
+  assert.ok(a.ok);
+  assert.deepEqual(steps, ['wine', 'compile']);
+  assert.equal(calls.filter((c) => c.includes('-i')).length, 1, 'one compile');
+  assert.match(calls.find((c) => c.includes('-i'))!.join(' '), /d2mm_check\\models\\d2mm_check\\empty\.vmdl/);
+  assert.equal(rc.state().check?.ok, true);
+  assert.deepEqual(addonsOf(root), []);
+  // a patch that brings a new compiler makes it unchecked again
+  fs.utimesSync(exe, new Date(), new Date(Date.now() + 60000));
+  assert.equal(rc.state().check, null);
+});
+
+test('a check that fails keeps what the compiler said', async (t) => {
+  const { game, userData } = install(t);
+  const rc = createResourceCompiler({ userDataDir: userData, gamePath: () => game, chosen: () => null, platform: 'win32', run: fakeCompiler({ code: 1 }) });
+  const steps: string[] = [];
+  const result = await rc.check((s) => steps.push(s));
+  assert.equal(result.ok, false);
+  assert.deepEqual(steps, ['compile'], 'Windows has no Wine step');
+  assert.match(result.message || '', /FAILED/);
+  assert.equal(rc.state().check?.ok, false);
+});
+
+test('with no compiler the check fails with where one comes from, and nothing is kept', async (t) => {
+  const { userData } = install(t);
+  const rc = createResourceCompiler({ userDataDir: userData, gamePath: () => null, chosen: () => null, platform: 'win32', run: fakeCompiler() });
+  const result = await rc.check();
+  assert.equal(result.ok, false);
+  assert.match(result.message || '', /Workshop Tools/);
+  assert.equal(fs.existsSync(path.join(userData, 'compiler-check.json')), false);
+});

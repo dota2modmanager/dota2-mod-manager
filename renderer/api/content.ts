@@ -64,7 +64,11 @@ export interface ToolsApi {
 }
 
 /** resourcecompiler.exe as src/resource-compiler.ts state() describes it. */
-export interface CompilerState { exe: string | null; chosen: boolean; needsWine: boolean; wine: string | null; prefixReady: boolean; ready: boolean }
+export interface CompilerState {
+  exe: string | null; chosen: boolean; needsWine: boolean; wine: string | null; prefixReady: boolean; ready: boolean;
+  /** the last check of this compiler: an empty model compiled, and how long it took */
+  check: { ok: boolean; message?: string; seconds: number; at: number } | null;
+}
 
 export interface CompilerApi {
   state: () => Promise<CompilerState>;
@@ -73,6 +77,8 @@ export interface CompilerApi {
   forget: () => Promise<Reply<{ state: CompilerState }>>;
   /** the state comes back with an error too: what is missing is what Settings shows */
   prepare: () => Promise<Reply<{ state: CompilerState }>>;
+  /** compile an empty model; the bar at the bottom counts its steps */
+  check: () => Promise<Reply<{ state: CompilerState }>>;
 }
 
 export interface Notice { id: string; date?: string; level?: string; text: string; url?: string }

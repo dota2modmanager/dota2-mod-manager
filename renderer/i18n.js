@@ -699,8 +699,14 @@ const EN = {
   'Подготовить Wine': 'Set up Wine',
   'Компилятор выбран': 'Compiler picked',
   'Wine готов': 'Wine is ready',
+  'Не проверен': 'Not checked',
+  'Работает: пустая модель собрана за {0} с': 'Works: an empty model compiled in {0} s',
+  'Не собирает: {0}': 'Does not compile: {0}',
+  'Проверяю…': 'Checking…',
+  'Проверка собирает пустую модель во временном аддоне и сразу его удаляет: игра не меняется.': 'The check compiles an empty model in a temporary addon and deletes it right after: the game is not changed.',
+  'Компилятор работает': 'The compiler works',
   'Компилятор из Dota 2 Workshop Tools собирает модели и эффекты аркан, для которых ещё нет готовой основы. Workshop Tools ставятся в Steam как бесплатное дополнение к Windows-версии игры.': 'The compiler from the Dota 2 Workshop Tools builds the models and effects of arcanas that have no ready-made base yet. The Workshop Tools are a free add-on to the Windows version of the game in Steam.',
-  'На Linux у игры нет этого компилятора: укажи resourcecompiler.exe из Windows-копии игры (game/bin/win64). Он запускается через Wine в отдельном префиксе приложения, твой ~/.wine не трогается.': 'On Linux the game has no such compiler: pick resourcecompiler.exe from a Windows copy of the game (game/bin/win64). It runs under Wine in a prefix of the app\'s own, and your ~/.wine is left alone.',
+  'На Linux Workshop Tools ставятся, только когда Dota запущена через Proton (Свойства → Совместимость). Компилятор запускается через Wine в отдельном префиксе приложения, твой ~/.wine не трогается.': 'On Linux the Workshop Tools install only while Dota runs through Proton (Properties → Compatibility). The compiler runs under Wine in a prefix of the app\'s own, and your ~/.wine is left alone.',
 
   // ---------- Dota patched underneath the app ----------
   'Dota обновилась': 'Dota has updated',

@@ -220,4 +220,7 @@ export default {
   "resourcecompiler.exe не собрал {0}: {1}": "resourcecompiler.exe 无法编译 {0}：{1}",
   "Выбери resourcecompiler.exe в папке game/bin/win64 игры с Workshop Tools": "请选择装有 Workshop Tools 的游戏中 game/bin/win64 文件夹里的 resourcecompiler.exe",
   "Это не resourcecompiler.exe из папки game/bin/win64 установленной Dota 2": "这不是已安装 Dota 2 的 game/bin/win64 文件夹中的 resourcecompiler.exe",
+  "Проверка компилятора": "正在检查编译器",
+  "подготовка Wine": "正在准备 Wine",
+  "сборка пустой модели": "正在编译空模型",
 } satisfies Record<string, string>;
