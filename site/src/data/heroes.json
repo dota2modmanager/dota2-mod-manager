@@ -196,6 +196,16 @@
           "date": 1771017673
         },
         {
+          "name": "Invoker Lelouch",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","misc","head","shoulder"],
+          "image": {"src":"/mods/invoker-lelouch.webp","width":854,"height":480},
+          "author": "Anonymous",
+          "authorUrl": null,
+          "date": 1792894433
+        },
+        {
           "name": "Invoker Magus Mimicry",
           "categoryId": "heroes",
           "styleLabel": null,
@@ -11794,7 +11804,7 @@
           "image": {"src":"/mods/kruc-fungi-imp-shadow-demon.webp","width":854,"height":480},
           "author": "Fr0dech",
           "authorUrl": "https://t.me/fr0dech_vpk",
-          "date": 1792163562
+          "date": 1792894433
         },
         {
           "name": "Shadow Demon Grim Facade",

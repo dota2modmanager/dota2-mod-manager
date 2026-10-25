@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1546,
+  "mods": 1547,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -697,6 +697,7 @@
         {"name":"Invoker Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Invoker Jack Daniels","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","shield","belt","legs"]},
         {"name":"Invoker Kid Forge","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Invoker Lelouch","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
         {"name":"Invoker Magus Accord","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
         {"name":"Invoker Magus Apex","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Invoker Magus Mimicry","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},

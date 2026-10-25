@@ -2123,6 +2123,14 @@
       "id": "backgrounds",
       "mods": [
         {
+          "name": "Japanese Background",
+          "styleLabel": null,
+          "image": {"src":"/mods/japanese-background.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792894433
+        },
+        {
           "name": "Blue Archive Hina Summer",
           "styleLabel": null,
           "image": {"src":"/mods/blue-archive-hina-summer.webp","width":854,"height":480},
@@ -2698,6 +2706,14 @@
       "id": "hero-sounds",
       "mods": [
         {
+          "name": "Mortal Strike Nyaaa!!! Sound",
+          "styleLabel": null,
+          "image": {"src":"/mods/mortal-strike-nyaaa-sound.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/meetmeattheriver",
+          "date": 1792894433
+        },
+        {
           "name": "Wraith King I Live Forever",
           "styleLabel": null,
           "image": {"src":"/mods/wraith-king-i-live-forever.webp","width":854,"height":480},
@@ -3067,6 +3083,8 @@
     {
       "id": "parts",
       "mods": [
+        {"name":"Hetgraph Red","styleLabel":null,"image":{"src":"/mods/hetgraph-red.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792894433},
+        {"name":"Kda Red","styleLabel":null,"image":{"src":"/mods/kda-red.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792894433},
         {"name":"TikTok Overlay","styleLabel":null,"image":{"src":"/mods/tiktok-overlay.webp","width":854,"height":480},"author":"Baste","authorUrl":"https://projects.baste.ru/","date":1792782705},
         {"name":"Xvii Search Bar","styleLabel":null,"image":{"src":"/mods/xvii-search-bar.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792764215},
         {"name":"Purple Play Button","styleLabel":null,"image":{"src":"/mods/purple-play-button.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792712707},
@@ -6327,6 +6345,21 @@
       ]
     },
     {
+      "id": "pings",
+      "mods": [
+        {
+          "name": "Tcoaal Heart Ping Love 3",
+          "styleLabel": null,
+          "image": {"src":"/mods/tcoaal-heart-ping-love-3.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792894433
+        },
+        {"name":"Love Ping","styleLabel":null,"image":{"src":"/mods/love-ping.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Love Ping II","styleLabel":null,"image":{"src":"/mods/love-ping-ii.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483}
+      ]
+    },
+    {
       "id": "tormentor",
       "mods": [
         {
@@ -6367,13 +6400,6 @@
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1784792710
         }
-      ]
-    },
-    {
-      "id": "pings",
-      "mods": [
-        {"name":"Love Ping","styleLabel":null,"image":{"src":"/mods/love-ping.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Love Ping II","styleLabel":null,"image":{"src":"/mods/love-ping-ii.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483}
       ]
     },
     {"id":"towers","mods":[{"name":"Holiday Radiant Tower","styleLabel":null,"image":{"src":"/mods/holiday-radiant-tower.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766624100}]}
