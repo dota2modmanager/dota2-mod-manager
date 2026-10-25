@@ -184,6 +184,21 @@ table) are generators that pause every few dozen milliseconds (`src/steps.ts`); 
 stops an older build before it writes, the pak is written without holding the thread, and Play
 waits for the last build. At start and after a Dota patch the repair builds behind the open window.
 
+### Compiling what has no base
+
+An arcana base (`src/arcana-bases.ts`) is the arcana taken apart and compiled again by hand, so
+that every file sits at a path the plain hero reads. An arcana nobody has made one for can go
+through the same compiler, Valve's `resourcecompiler.exe` from the Workshop Tools, and
+`src/resource-compiler.ts` runs it: sources are written into an addon of ours,
+`content/dota_addons/d2mm_<id>/` of the install the compiler belongs to, compiled one at a time
+into `game/dota_addons/d2mm_<id>/`, read back as VPK entries, and both folders are deleted whether
+the compile worked or not. The compiler is never downloaded, because it is Valve's and not open
+source: it is the game's own (`game/bin/win64`), or one picked in Settings through a dialog of the
+main process, never a path from the window. The tools exist only for the Windows build of Dota, so
+on Linux the pick is a Windows copy's compiler and it runs under Wine, in a prefix of the app's own
+in `userData/wine` made once with `wineboot` (`src/wine.ts`). Taking the item's model apart into
+those sources (Source 2 Viewer's export) is the next half and is not here yet.
+
 ## Presets
 
 A preset is the set of enabled mods, and the looks from the game that were on, kept slot by slot
@@ -489,6 +504,7 @@ system and writes `e2e-output/sim/index.html`.
   packs/             the source VPK of each member of a combined pack
   backups/           the originals of any Valve file the app replaced
   tools/             external tools, downloaded on demand
+  wine/              on Linux, the Wine prefix resourcecompiler.exe runs in
 ```
 
 The portable build puts the same tree next to its executable, and falls back to `%APPDATA%` when
@@ -578,6 +594,7 @@ that location is not writable.
 | `src/mod-id.ts`, `src/fingerprints.ts`, `src/hero-names.ts` | What a mod replaces, asked of the game; recognising a file somebody else installed; which hero a name means |
 | `src/icons.ts`, `src/icon-match.ts`, `src/icon-wiki.ts` | Pictures off the Dota wikis: the cache and its misses, which file is an item's picture, and asking the two wikis |
 | `src/game-icons.ts`, `src/vtex.ts`, `src/toolchain.ts` | Item pictures out of the installed game, and the Source 2 tools fetched only when something needs them |
+| `src/resource-compiler.ts`, `src/wine.ts` | Valve's resourcecompiler.exe from the Workshop Tools, found in the game or picked in Settings, compiling sources staged in an addon of ours and handing back the compiled files; on Linux it runs under Wine in a prefix of the app's own |
 | `src/mod-preview.ts`, `src/mod-preview-pick.ts` | A picture for a mod that came with none, taken out of the mod itself, and which one is worth showing |
 | `src/preset-link.ts`, `src/preset-share.ts` | Presets as a link and as a file |
 | `src/presets-service.ts`, `src/preset-plan.ts` | Presets: applying, packing and receiving one, and how one travels to somebody else |

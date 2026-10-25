@@ -34,6 +34,8 @@ async function renderSettings(fresh = false): Promise<void> {
   const version = await window.api.update.version();
   let vrf = null;
   try { vrf = (await window.api.tools.state()).tools.find((x) => x.name === 'vrf') || null; } catch { /* older build */ }
+  let compiler = null;
+  try { compiler = await window.api.compiler.state(); } catch { /* older build */ }
   let beta = { eligible: false, on: false };
   try { beta = await window.api.beta.state(); } catch { /* older build */ }
   if (fresh) key++;
@@ -50,6 +52,7 @@ async function renderSettings(fresh = false): Promise<void> {
     proxy: s.downloadProxy || '',
     // no row on a machine with no build of it: the button could only fail
     vrf: vrf && vrf.available !== false ? { ready: Boolean(vrf.ready), size: `${fmtMB(vrf.ready ? vrf.installedBytes : vrf.downloadBytes)} MB` } : null,
+    compiler,
     catalogUpdated: fetchedAt ? new Date(fetchedAt).toLocaleString(window.i18nLocale()) : '—',
     adult: adultShown(),
     adultHint: adultHint(),
@@ -144,6 +147,23 @@ const actions: SettingsActions = {
       await window.api.tools.remove('vrf');
       toast(L`Инструмент удалён — картинки снова из вики`);
     }
+    await renderSettings();
+  },
+  compilerBrowse: async () => {
+    const r = await window.api.compiler.browse();
+    if (r?.error) toast(r.error, 'error', 7000);
+    else if (r?.ok) toast(L`Компилятор выбран`);
+    renderSettings();
+  },
+  compilerForget: async () => {
+    await window.api.compiler.forget();
+    renderSettings();
+  },
+  // a few seconds of wineboot the first time; the button stays pressed until it answers
+  compilerPrepare: async () => {
+    const r = await window.api.compiler.prepare();
+    if (r?.error) toast(r.error, 'error', 7000);
+    else toast(L`Wine готов`);
     await renderSettings();
   },
   refreshCatalog: async () => {

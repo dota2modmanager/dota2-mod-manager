@@ -115,6 +115,7 @@ the code, not in this page.
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
+| [`src/resource-compiler.ts`](#srcresource-compilerts) | resourcecompiler.exe: Valve's compiler from the Dota 2 Workshop Tools, run on sources the app |
 | [`src/resource.ts`](#srcresourcets) | Compiled Source 2 resources at the block level: the blocks of a file, one replaced by new bytes, |
 | [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
 | [`src/schema-build.ts`](#srcschema-buildts) | Building the item table (src/schema-service.ts is the door: what goes into the table, when it is |
@@ -145,6 +146,7 @@ the code, not in this page.
 | [`src/vpk.ts`](#srcvpkts) | The VPK format, in one place for everything that reads or writes one: the reader |
 | [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
 | [`src/window-guard.ts`](#srcwindow-guardts) | Who may call the main process, and with what. |
+| [`src/wine.ts`](#srcwinets) | Running a Windows program on Linux, for the one that has no Linux build: resourcecompiler.exe, |
 | [`src/write-jail.ts`](#srcwrite-jailts) | A run that may write only inside the folders it was given. |
 
 ## src/adopt.ts
@@ -6430,6 +6432,115 @@ wants to sign its own fixture, which it cannot do with a private key that is not
 @param opts.now          the clock a notice's until date is read against
 ```
 
+## src/resource-compiler.ts
+
+resourcecompiler.exe: Valve's compiler from the Dota 2 Workshop Tools, run on sources the app
+staged, for the compiled files an arcana base is made of (src/arcana-bases.ts).
+
+The bases J0nathan550 publishes were made by hand: the item's model taken apart in Source 2
+Viewer, its .vmdl put at the plain hero's path with its meshes and animations beside the item's,
+and the lot compiled in the Workshop Tools, so every file is at a path the plain hero reads. An
+arcana nobody has made a base for yet can go through the same compiler, and this file is the
+compiler half of that: given sources at their paths, it hands back the compiled files.
+
+The compiler is not ours to ship. It is Valve's, it is not open source, and toolchain.ts says
+why nothing proprietary is downloaded by this app; it comes with the Workshop Tools, a free DLC
+of Dota's in Steam. So it is found where Steam put it, game/bin/win64 of the user's game, or in
+a file the user picked in Settings. The tools exist for the Windows build of Dota alone, and
+Linux has no game/bin/win64/resourcecompiler.exe: there the user points at one from a Windows
+copy of the game (Steam installs that copy when Dota is forced to run under Proton), and it runs
+under Wine in a prefix of the app's (src/wine.ts).
+
+How it is run, as BetterSource2Viewer's ResourceCompilerTest runs it: a source under
+content/dota_addons/<addon>/ of the install the compiler belongs to is compiled into the same
+path under game/dota_addons/<addon>/, with "-nop4 -f -i <source>" from the compiler's own folder.
+The addon is ours (d2mm_<id>), made for one compile and deleted after it, so nothing is left in
+the install either way. Neither folder is one the game mounts: a compile while Dota runs does not
+touch what it plays with. One compile runs at a time, since every one of them writes the
+install's asset list.
+
+### `COMPILER`
+
+```ts
+export const COMPILER = 'resourcecompiler.exe'
+```
+
+The compiler's file name, as the Workshop Tools install it.
+
+### `compilerIn`
+
+```ts
+export function compilerIn(gamePath: string): string
+```
+
+Where the Workshop Tools put the compiler in a game folder (dota 2 beta/game).
+
+### `installOf`
+
+```ts
+export function installOf(exe: string | null | undefined): string | null
+```
+
+The install a compiler belongs to, the folder with game/ and content/ in it, or null when it is
+not one: the compiler finds the game through its own place in game/bin/win64, so a copy of the
+file anywhere else compiles nothing.
+
+### `safeRel`
+
+```ts
+export function safeRel(rel: string): boolean
+```
+
+A path inside an addon, as the game spells it: forward slashes, nothing that climbs out.
+
+### `SourceFile`
+
+```ts
+export interface SourceFile { path: string; data: Buffer }
+```
+
+A source file to stage, at its path in the addon (models/heroes/razor/razor.vmdl).
+
+### `CompileJob`
+
+```ts
+export interface CompileJob { id: string; files: SourceFile[]; compile: string[] }
+```
+
+One compile: the addon's sources, and which of them to hand the compiler (it finds what they use).
+
+### `CompilerState`
+
+```ts
+export interface CompilerState
+```
+
+What Settings shows of the compiler.
+
+### `runProcess`
+
+```ts
+export const runProcess: RunProcess = (exe, args, { cwd, env, timeoutMs }) => new Promise((resolve, reject) => { execFile(exe, args, { cwd, env, timeout: timeoutMs, windowsHide: true, maxBuffer: 64 * 1024 * 1024 }, (err, stdout, stderr) => { const out = `${stdout || ''}${stderr || ''}`; if (!err) return resolve({ code: 0, out }); // a number is the program's own exit code; anything else is that it never ran, or was killed if (typeof (err as { code?: unknown }).code === 'number') return resolve({ code: (err as { code: number }).code, out }); reject(err); })
+```
+
+Run a program and settle with its exit code: a non-zero one is an answer, not a failure to run.
+
+### `createResourceCompiler`
+
+```ts
+export function createResourceCompiler({ userDataDir, gamePath, chosen, log = () => {}, platform = process.platform, run = runProcess, wine = () => findWine() }: { userDataDir: string; /** the game folder in Settings (dota 2 beta/game) */ gamePath: () => string | null | undefined; /** the compiler the user picked in Settings */ chosen: () => string | null | undefined; log?: (msg: string) => void; /** the system it runs on; tests name one */
+```
+
+The compiler as the app runs it: where it is, what it needs, and a compile.
+
+### `ResourceCompiler`
+
+```ts
+export type ResourceCompiler = ReturnType<typeof createResourceCompiler>
+```
+
+The compiler as the IPC and the builder take it.
+
 ## src/resource.ts
 
 Compiled Source 2 resources at the block level: the blocks of a file, one replaced by new bytes,
@@ -8537,6 +8648,90 @@ export function guardTheApp({ app, ipcMain, session, appRoot, devUrl, log }: { a
 
 The whole guard, as src/main.ts puts it up before any channel or window exists: the channels,
 the browser's permissions, and every web contents locked the moment it is created.
+
+## src/wine.ts
+
+Running a Windows program on Linux, for the one that has no Linux build: resourcecompiler.exe,
+Valve's compiler from the Workshop Tools (src/resource-compiler.ts).
+
+The app keeps a Wine prefix of its own in userData/wine rather than borrowing ~/.wine. A prefix
+is a whole pretend Windows, and the user's may be set up for a game, a 32-bit one, or somebody's
+registry tweaks; the compiler wants none of that, and a prefix that is only ours can be deleted
+and made again without asking anybody. It is made once, by the first compile or ahead of it from
+Settings: wineboot takes a few seconds, and Wine offers to download Mono and Gecko into a new prefix in a window of its
+own unless it is told not to (WINEDLLOVERRIDES below), which the compiler needs neither of.
+
+Which Wine: the system's, on PATH, and when there is none the one inside a Proton that Steam
+installed. Anybody running Dota on Linux has Steam, and most have a Proton; its files/bin/wine
+runs on its own (Proton - Experimental's, 2026-10-25). Older Protons kept it under dist/.
+
+A path goes to a Windows program as Windows spells it. A new prefix maps Z: to the root of the
+file system, so /home/x/a.vmdl is Z:\home\x\a.vmdl, with no call into Wine to find that out.
+
+### `wineEnv`
+
+```ts
+export function wineEnv(prefix: string, base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv
+```
+
+The env a Windows program runs in under our prefix: quiet, 64-bit, and no Mono or Gecko offer.
+
+### `winePath`
+
+```ts
+export function winePath(p: string): string
+```
+
+A Linux path as a program under Wine reads it, through the Z: drive every new prefix has.
+
+### `protonWines`
+
+```ts
+export function protonWines(steamRoots: string[]): string[]
+```
+
+The Wine inside each Proton Steam installed, in every library it knows of.
+
+### `pathWines`
+
+```ts
+export function pathWines(env: NodeJS.ProcessEnv = process.env): string[]
+```
+
+Every Wine on PATH, by the names it goes by.
+
+### `findWine`
+
+```ts
+export function findWine({ env = process.env, home = os.homedir() }: { env?: NodeJS.ProcessEnv; home?: string } = {}): string | null
+```
+
+The Wine to run with: the system's first, then a Proton's; null when there is neither.
+
+### `prefixReady`
+
+```ts
+export function prefixReady(prefix: string): boolean
+```
+
+Whether a prefix is made and was made whole.
+
+### `RunProcess`
+
+```ts
+export type RunProcess = (exe: string, args: string[], opts: { cwd?: string; env?: NodeJS.ProcessEnv; timeoutMs: number }) => Promise<{ code: number; out: string }>
+```
+
+How a program is run: its exit code and everything it printed.
+
+### `ensurePrefix`
+
+```ts
+export async function ensurePrefix(prefix: string, wine: string, run: RunProcess, log: (msg: string) => void = () => {}): Promise<void>
+```
+
+Make the prefix, once. A prefix wineboot left half made (the app closed in the middle) has no
+marker, so it is thrown away and made again rather than trusted.
 
 ## src/write-jail.ts
 

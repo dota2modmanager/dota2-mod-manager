@@ -34,7 +34,7 @@ type PatchState = Partial<SchemaState>;
 /** Facts only the main process can answer, handed in so this module stays free of Electron. */
 interface ReportExtra {
   dotaRunning?: boolean; windows?: unknown; rendererErrors?: unknown; updater?: unknown;
-  remoteConfig?: unknown; toolchain?: unknown; displays?: unknown; gpu?: unknown;
+  remoteConfig?: unknown; toolchain?: unknown; compiler?: unknown; displays?: unknown; gpu?: unknown;
 }
 
 /** The support report: what report.json holds, and what the two renderings read. */
@@ -63,7 +63,7 @@ export interface Report {
   disk: { freeBytes: number; totalBytes: number } | null;
   installedMods: { i: number; slot: number | null; name: string; categoryId: string | null; enabled: boolean; kind: string; files: number }[];
   dotaRunning: boolean;
-  windows: unknown; rendererErrors: unknown; updater: unknown; remoteConfig: unknown; toolchain: unknown;
+  windows: unknown; rendererErrors: unknown; updater: unknown; remoteConfig: unknown; toolchain: unknown; compiler: unknown;
   displays: unknown; gpu: unknown;
   problems: Problem[];
 }
@@ -183,6 +183,7 @@ export function buildReport({ settings, library, installer, schemaService, catal
     updater: extra.updater || null,
     remoteConfig: extra.remoteConfig || null,
     toolchain: extra.toolchain || null,
+    compiler: extra.compiler || null,
     /* Both of these were collected and thrown away. ipc-diagnostics.js gathered the displays
      * from 2026-09-04, for the complaint that a list "stops scrolling partway", and this object
      * copied `extra` field by field without them - so no report ever carried the one thing that

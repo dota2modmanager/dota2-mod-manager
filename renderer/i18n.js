@@ -694,6 +694,14 @@ const EN = {
   'Готово — картинки теперь берутся из игры': 'Done, pictures now come from the game',
   'Инструмент удалён — картинки снова из вики': 'Tool removed, pictures come from the wiki again',
 
+  // ---------- resourcecompiler.exe, under Wine on Linux (settings/CompilerBlock.tsx) ----------
+  'Компилятор ресурсов': 'Resource compiler',
+  'Подготовить Wine': 'Set up Wine',
+  'Компилятор выбран': 'Compiler picked',
+  'Wine готов': 'Wine is ready',
+  'Компилятор из Dota 2 Workshop Tools собирает модели и эффекты аркан, для которых ещё нет готовой основы. Workshop Tools ставятся в Steam как бесплатное дополнение к Windows-версии игры.': 'The compiler from the Dota 2 Workshop Tools builds the models and effects of arcanas that have no ready-made base yet. The Workshop Tools are a free add-on to the Windows version of the game in Steam.',
+  'На Linux у игры нет этого компилятора: укажи resourcecompiler.exe из Windows-копии игры (game/bin/win64). Он запускается через Wine в отдельном префиксе приложения, твой ~/.wine не трогается.': 'On Linux the game has no such compiler: pick resourcecompiler.exe from a Windows copy of the game (game/bin/win64). It runs under Wine in a prefix of the app\'s own, and your ~/.wine is left alone.',
+
   // ---------- Dota patched underneath the app ----------
   'Dota обновилась': 'Dota has updated',
   ', моды и настройки вернули на место': ', and your mods and settings are back in place',

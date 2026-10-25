@@ -14,6 +14,7 @@ import AdmZip from 'adm-zip';
 
 import { t } from './i18n.ts';
 import { buildReport, renderSummary, renderDetailed } from './diagnostics.ts';
+import { redactHome } from './diagnostics-files.ts';
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
 import type { AppContext } from './app-context.ts';
@@ -24,8 +25,8 @@ type GpuDevice = { active?: boolean; vendorId?: number; deviceId?: number; drive
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerDiagnosticsIpc({
   autoUpdater, catalog, diag, dotaIsRunning, icons, installer, library, logFile, remoteConfig,
-  schemaService, settings, toolchain, win, rendererErrors, lastUpdateError,
-}: Pick<AppContext, 'autoUpdater' | 'catalog' | 'diag' | 'dotaIsRunning' | 'icons' | 'installer' | 'library' | 'logFile' | 'remoteConfig' | 'schemaService' | 'settings' | 'toolchain' | 'win' | 'rendererErrors' | 'lastUpdateError'>): void {
+  schemaService, settings, toolchain, compiler, win, rendererErrors, lastUpdateError,
+}: Pick<AppContext, 'autoUpdater' | 'catalog' | 'diag' | 'dotaIsRunning' | 'icons' | 'installer' | 'library' | 'logFile' | 'remoteConfig' | 'schemaService' | 'settings' | 'toolchain' | 'compiler' | 'win' | 'rendererErrors' | 'lastUpdateError'>): void {
   const { app, BrowserWindow, dialog, ipcMain, screen, shell } = electron();
   // fire-and-forget: a renderer crash it can't recover from still lands in the log a support
   // report is built from, instead of vanishing with the window
@@ -124,6 +125,10 @@ export function registerDiagnosticsIpc({
             // state(), not installed(): the toolchain never had an installed(), and this section
             // of every report said so instead of saying what was on disk
             try { return toolchain.state(); } catch (err) { return { error: errorText(err) }; }
+          })(),
+          compiler: (() => {
+            // the paths with the home folder taken out, as the game's is
+            try { const st = compiler.state(); return { ...st, exe: redactHome(st.exe), wine: redactHome(st.wine) }; } catch (err) { return { error: errorText(err) }; }
           })(),
         },
       });

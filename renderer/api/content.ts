@@ -63,6 +63,18 @@ export interface ToolsApi {
   remove: (name: string) => Promise<Reply<{ tools: ToolState[] }>>;
 }
 
+/** resourcecompiler.exe as src/resource-compiler.ts state() describes it. */
+export interface CompilerState { exe: string | null; chosen: boolean; needsWine: boolean; wine: string | null; prefixReady: boolean; ready: boolean }
+
+export interface CompilerApi {
+  state: () => Promise<CompilerState>;
+  /** null when the dialog was closed */
+  browse: () => Promise<Reply<{ state: CompilerState }> | null>;
+  forget: () => Promise<Reply<{ state: CompilerState }>>;
+  /** the state comes back with an error too: what is missing is what Settings shows */
+  prepare: () => Promise<Reply<{ state: CompilerState }>>;
+}
+
 export interface Notice { id: string; date?: string; level?: string; text: string; url?: string }
 
 export interface ConfigApi {

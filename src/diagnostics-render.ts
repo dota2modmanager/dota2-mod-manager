@@ -98,6 +98,7 @@ export function renderDetailed(r: Report, files: Record<string, string> = {}): s
   if (r.updater) block('Updater', r.updater);
   if (r.remoteConfig) block('Remote config', r.remoteConfig);
   if (r.toolchain) block('Source 2 toolchain', r.toolchain);
+  if (r.compiler) block('resourcecompiler.exe', r.compiler);
   if (r.installedMods) {
     L.push('## Installed mods', '', '| # | slot | on | category | name |', '|---|---|---|---|---|');
     for (const m of r.installedMods) {

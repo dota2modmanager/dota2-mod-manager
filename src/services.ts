@@ -28,6 +28,7 @@ import { createRemoteConfig } from './remote-config.ts';
 // the download chain, so a mirror named in that signed file joins it
 import { applyMirrors, setDownloadProxy } from './net.ts';
 import { createToolchain } from './toolchain.ts';
+import { createResourceCompiler } from './resource-compiler.ts';
 import { createGameIcons } from './game-icons.ts';
 import { createModPreviews } from './mod-preview.ts';
 import { createModIdentity } from './mod-id.ts';
@@ -117,6 +118,10 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   const gameIcons = createGameIcons({ userDataDir: userData, toolchain, getGamePath: () => settings.get('dotaGamePath'), log: diag });
   // ...and the same toolchain gives a mod that came with no picture one out of itself
   const modPreviews = createModPreviews({ userDataDir: userData, toolchain, langFileOf: (relPath) => installer.langFileOnDisk(relPath), log: diag });
+  // Valve's compiler from the Workshop Tools, found in the game or picked in Settings, under Wine
+  // on Linux (src/resource-compiler.ts)
+  const compiler = createResourceCompiler({ userDataDir: userData, gamePath: () => settings.get('dotaGamePath'),
+    chosen: () => settings.get('resourceCompilerPath'), log: diag });
 
   // after any deploy, if the master switch is off, sweep freshly written files off too
   const afterDeployMaster = () => {
@@ -152,7 +157,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 
   return {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, icons, toolchain, gameIcons, modPreviews, arcana,
+    remoteConfig, icons, toolchain, compiler, gameIcons, modPreviews, arcana,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers,
   };
 }

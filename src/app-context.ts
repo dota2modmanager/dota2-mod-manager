@@ -14,6 +14,7 @@ import type { Library } from './library.ts';
 import type { Fingerprints } from './fingerprints.ts';
 import type { Icons } from './icons.ts';
 import type { ToolProgress, createToolchain } from './toolchain.ts';
+import type { ResourceCompiler } from './resource-compiler.ts';
 import type { createSchemaService } from './schema-service.ts';
 import type { createUpdateImpact } from './update-impact.ts';
 import type { createArcanaService } from './arcana-service.ts';
@@ -62,6 +63,8 @@ export interface AppContext {
   gameIcons: ReturnType<typeof createGameIcons>;
   modPreviews: ReturnType<typeof createModPreviews>;
   toolchain: ReturnType<typeof createToolchain>;
+  /** Valve's resourcecompiler.exe, under Wine where it has to be (src/resource-compiler.ts) */
+  compiler: ResourceCompiler;
   remoteConfig: ReturnType<typeof createRemoteConfig>;
   presets: ReturnType<typeof presetsService>;
   discordAuth: typeof discordAuthModule;
