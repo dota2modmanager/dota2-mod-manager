@@ -74,6 +74,8 @@ export interface CompilerState {
   kept: { from: string; bytes: number; at: number } | null;
   /** whether the game has tools the copy is not of */
   keepable: boolean;
+  /** whether a copy is here that is not run, made before it took Dota's own Windows files */
+  keptOutdated: boolean;
 }
 
 export interface CompilerApi {

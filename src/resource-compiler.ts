@@ -107,6 +107,8 @@ export interface CompilerState {
   kept: KeptInfo | null;
   /** whether the game has tools the copy is not of, so a copy can be made now */
   keepable: boolean;
+  /** whether a copy is here that is not run, made before it took Dota's own Windows files */
+  keptOutdated: boolean;
   /** whether it runs through Wine here */
   needsWine: boolean;
   wine: string | null;
@@ -145,7 +147,7 @@ export function createResourceCompiler({ userDataDir, gamePath, chosen, keeper, 
   /** the compiler the user picked in Settings */
   chosen: () => string | null | undefined;
   /** the copy of the Workshop Tools kept for when the game's are gone (src/workshop-tools.ts) */
-  keeper?: Pick<ToolsKeeper, 'usable' | 'info' | 'keepable'>;
+  keeper?: Pick<ToolsKeeper, 'usable' | 'info' | 'outdated' | 'keepable'>;
   log?: (msg: string) => void;
   /** the system it runs on; tests name one */
   platform?: NodeJS.Platform;
@@ -189,7 +191,7 @@ export function createResourceCompiler({ userDataDir, gamePath, chosen, keeper, 
     const w = needsWine ? wine() : null;
     const made = needsWine && prefixReady(prefix);
     return {
-      exe: found?.exe ?? null, chosen: found?.source === 'chosen', source: found?.source ?? null, kept: keeper?.info() ?? null, keepable: !!keeper?.keepable(),
+      exe: found?.exe ?? null, chosen: found?.source === 'chosen', source: found?.source ?? null, kept: keeper?.info() ?? null, keepable: !!keeper?.keepable(), keptOutdated: !!keeper?.outdated(),
       needsWine, wine: w, prefixReady: made, ready: !!found && (!needsWine || (!!w && made)), check: lastCheck(found?.exe),
     };
   }

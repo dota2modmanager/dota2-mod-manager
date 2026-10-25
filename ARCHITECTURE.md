@@ -198,9 +198,10 @@ main process, never a path from the window. The tools exist only for the Windows
 on Linux Steam installs them while Dota runs through Proton, and the compiler runs under Wine, in a
 prefix of the app's own in `userData/wine` made once with `wineboot` (`src/wine.ts`). Going back to
 the Linux build to play, Steam deletes the Windows files and the compiler with them, so once the app
-has seen the tools it copies `game/bin` into `userData/workshop-tools` (about 700 MB), links that
-copy's `game/dota` and `game/core` to the user's game, and runs it whenever the game's own is gone
-(`src/workshop-tools.ts`). The Check
+has seen the tools it copies what only the Windows build has into `userData/workshop-tools`:
+`game/bin` (about 700 MB), and `bin/win64` and the DX11 shaders of `game/dota` and `game/core`.
+Every other entry of those two is a link to the user's game, made again on each use, and the copy
+runs whenever the game's own is gone (`src/workshop-tools.ts`). The Check
 button in Settings compiles an empty model through all of it, counting its steps on the bar at the
 bottom, and the answer is kept until another compiler is picked or a patch replaces it. Taking the item's model apart into
 those sources (Source 2 Viewer's export) is the next half and is not here yet.

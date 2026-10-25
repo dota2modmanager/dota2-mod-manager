@@ -6,28 +6,40 @@
  * the game it copies them here, and the compiler (src/resource-compiler.ts) runs this copy whenever
  * the game's own is gone. Nobody has to keep a Proton build installed to compile.
  *
- * What is copied is game/bin: win64, the tools themselves, 137 files and 700 MB on 2026-10-25, and
- * the few files beside it the tools read. The game itself is not: the compiler finds the game
- * through its own place, two folders up from win64, and game/dota and game/core here are links to
- * the user's game, whose content is the same for both builds. content/ and game/dota_addons/ here
- * are folders of the copy's own, so what a compile writes stays in userData and never reaches the
- * game through a link. The copy's compiler compiled the empty model from such a tree under Wine
- * (2026-10-25), and wrote nothing through the links.
+ * What is copied is what only the Windows build has: game/bin (win64, the tools themselves, 137
+ * files and 700 MB on 2026-10-25, and the few files beside it), and in game/dota and game/core
+ * their own bin/win64 and the DX11 shaders (shaders_pc_*; the Linux build has pcgl and vulkan
+ * ones). The rest of the game is not copied: the compiler finds the game through its own place,
+ * two folders up from win64, and every other entry of game/dota and game/core here is a link to the
+ * user's game, whose content is the same for both builds. The first copy linked game/dota and
+ * game/core whole, and once Steam had taken the Windows build away the compiler stopped at "Unable
+ * to load module modtools, error 126": game/dota/bin/win64 had gone with it (J0nathan550,
+ * 2026-10-25). content/ and game/dota_addons/ here are folders of the copy's own, so what a compile
+ * writes stays in userData and never reaches the game through a link.
  *
  * It is copied into a folder of its own and renamed into place once whole, so a copy cut short is
  * never run; and copied again when the game's tools change, which is what a Dota patch does while
  * the Proton build is installed. Deleted from Settings, it is not copied again until the game's
- * tools change: 700 MB the user said no to is not taken back on the next start.
+ * tools change: a gigabyte the user said no to is not taken back on the next start.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { compilerIn, installOf } from './resource-compiler.ts';
 
-/** What kept.json says of the copy: the tools it was copied from, and its size. */
-export interface KeptInfo { from: string; stamp: string; bytes: number; at: number }
+/** What kept.json says of the copy: the tools it was copied from, its size, and how it is laid out. */
+export interface KeptInfo { from: string; stamp: string; bytes: number; at: number; layout: number }
 
-/** game/ of the copy links these to the user's game: what the compiler reads of the game. */
-const LINKED = ['dota', 'core'];
+/* How the copy is laid out. A copy of an older layout is not run: the first one linked game/dota
+ * whole and cannot compile once the Windows build is gone, so it is made again when it can be. */
+const LAYOUT = 2;
+
+/** The game's folders the compiler reads, each part copied and the rest linked. */
+const MODS = ['dota', 'core'];
+
+/** Whether an entry of game/dota or game/core is the Windows build's alone, and so copied. */
+export function windowsOnly(rel: string): boolean {
+  return rel === 'bin/win64' || /^shaders_pc_[^/]*$/i.test(rel);
+}
 
 /** The game's tools as they are now: a copy is of these when the stamp matches. */
 function stampOf(exe: string): string | null {
@@ -38,10 +50,59 @@ function readJson<T>(file: string): T | null {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')) as T; } catch { return null; }
 }
 
-/** Every file under a folder, as paths relative to it. */
+/** Every file under a folder, as paths relative to it; none when it is not there. */
 function filesUnder(dir: string, base = dir): string[] {
-  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory()
+  let names: fs.Dirent[] = [];
+  try { names = fs.readdirSync(dir, { withFileTypes: true }); } catch { return []; }
+  return names.flatMap((e) => (e.isDirectory()
     ? filesUnder(path.join(dir, e.name), base) : [path.relative(base, path.join(dir, e.name))]));
+}
+
+/** What to copy of a game folder of the Windows build, as paths relative to game/. */
+export function windowsFiles(game: string): string[] {
+  const bin = path.join(game, 'bin');
+  const top = (dir: string) => { try { return fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isFile()).map((e) => e.name); } catch { return []; } };
+  return [
+    // linuxsteamrt64 beside it is the Linux game, and the user has it already
+    ...top(bin).map((f) => path.join('bin', f)),
+    ...filesUnder(path.join(bin, 'win64')).map((f) => path.join('bin', 'win64', f)),
+    ...MODS.flatMap((mod) => [
+      ...filesUnder(path.join(game, mod, 'bin', 'win64')).map((f) => path.join(mod, 'bin', 'win64', f)),
+      ...top(path.join(game, mod)).filter((f) => windowsOnly(f)).map((f) => path.join(mod, f)),
+    ]),
+  ];
+}
+
+/*
+ * The copy's game/dota and game/core: a real folder holding what was copied, and a link for every
+ * other entry of the game's, made again on each use. A file a patch adds is linked the next time,
+ * one it removes loses its link, and a game moved to another library is linked where it is now.
+ * Into a folder the copy has of its own (bin, holding win64) it goes one level down and does the
+ * same; what was copied is never touched.
+ */
+function mirror(real: string, copy: string) {
+  fs.mkdirSync(copy, { recursive: true });
+  let names: string[] = [];
+  try { names = fs.readdirSync(real); } catch { /* the game has none: nothing to link */ }
+  for (const name of names) {
+    const at = path.join(copy, name);
+    const target = path.join(real, name);
+    let st: fs.Stats | null = null;
+    try { st = fs.lstatSync(at); } catch { /* not there yet */ }
+    if (st && !st.isSymbolicLink()) {
+      if (st.isDirectory() && fs.lstatSync(target).isDirectory()) mirror(target, at);
+      continue;
+    }
+    if (st && fs.readlinkSync(at) === target) continue;
+    if (st) fs.rmSync(at, { force: true });
+    fs.symlinkSync(target, at);
+  }
+  // a link to anything but this entry of the game as it is now: a file gone, or the library moved from
+  const here = new Set(names);
+  for (const name of fs.readdirSync(copy)) {
+    const at = path.join(copy, name);
+    if (fs.lstatSync(at).isSymbolicLink() && (!here.has(name) || fs.readlinkSync(at) !== path.join(real, name))) fs.rmSync(at, { force: true });
+  }
 }
 
 /** The copy, as the compiler and Settings take it. */
@@ -67,23 +128,11 @@ export function createToolsKeeper({ dir, gamePath, log = () => {}, onStep = () =
     return exe && stamp ? { exe, stamp } : null;
   }
 
-  /* The links follow the game: a game moved to another library, or picked again in Settings, is
-   * linked again on the next use rather than leaving the copy pointing at the old one. */
-  function link(root: string, game: string) {
-    for (const name of LINKED) {
-      const at = path.join(root, 'game', name);
-      const target = path.join(game, name);
-      let now: string | null = null;
-      try { now = fs.readlinkSync(at); } catch { /* not there yet */ }
-      if (now === target) continue;
-      fs.rmSync(at, { force: true });
-      fs.symlinkSync(target, at, 'dir');
-    }
-  }
+  const link = (root: string, game: string) => { for (const mod of MODS) mirror(path.join(game, mod), path.join(root, 'game', mod)); };
 
   function info(): KeptInfo | null {
     const kept = readJson<KeptInfo>(record);
-    return kept && fs.existsSync(exeIn(tree)) ? kept : null;
+    return kept && kept.layout === LAYOUT && fs.existsSync(exeIn(tree)) ? kept : null;
   }
 
   /** The copy's compiler and its install, linked to the game in Settings; null when there is none. */
@@ -111,20 +160,15 @@ export function createToolsKeeper({ dir, gamePath, log = () => {}, onStep = () =
     const own = gameTools();
     const game = gamePath();
     if (!own || !game) return false;
-    const bin = path.dirname(path.dirname(own.exe));
-    // win64 and the files beside it; linuxsteamrt64 is the Linux game, and the user has it already
-    const files = [
-      ...fs.readdirSync(bin, { withFileTypes: true }).filter((e) => e.isFile()).map((e) => e.name),
-      ...filesUnder(path.join(bin, 'win64')).map((f) => path.join('win64', f)),
-    ];
+    const files = windowsFiles(game);
     const part = `${tree}.part`;
     fs.rmSync(part, { recursive: true, force: true });
     let bytes = 0;
     try {
       for (let i = 0; i < files.length; i++) {
-        const to = path.join(part, 'game', 'bin', files[i]);
+        const to = path.join(part, 'game', files[i]);
         fs.mkdirSync(path.dirname(to), { recursive: true });
-        await fs.promises.copyFile(path.join(bin, files[i]), to);
+        await fs.promises.copyFile(path.join(game, files[i]), to);
         bytes += fs.statSync(to).size;
         onStep(i + 1, files.length);
       }
@@ -138,9 +182,9 @@ export function createToolsKeeper({ dir, gamePath, log = () => {}, onStep = () =
       fs.rmSync(part, { recursive: true, force: true });
       throw err;
     }
-    fs.writeFileSync(record, JSON.stringify({ from: own.exe, stamp: own.stamp, bytes, at: Date.now() } satisfies KeptInfo));
+    fs.writeFileSync(record, JSON.stringify({ from: own.exe, stamp: own.stamp, bytes, at: Date.now(), layout: LAYOUT } satisfies KeptInfo));
     fs.rmSync(declinedFile, { force: true });
-    log(`workshop tools: kept a copy of ${files.length} files, ${(bytes / 1048576).toFixed(0)} MB, from ${bin}`);
+    log(`workshop tools: kept a copy of ${files.length} files, ${(bytes / 1048576).toFixed(0)} MB, from ${game}`);
     return true;
   }
 
@@ -161,7 +205,13 @@ export function createToolsKeeper({ dir, gamePath, log = () => {}, onStep = () =
     if (stamp) { fs.mkdirSync(dir, { recursive: true }); fs.writeFileSync(declinedFile, JSON.stringify({ stamp })); }
   }
 
-  return { usable, info, keepable, wanted, keep, remove };
+  /** Whether a copy is here that is not run: made in an older layout, to be made again. */
+  function outdated(): boolean {
+    const kept = readJson<KeptInfo>(record);
+    return !!kept && kept.layout !== LAYOUT;
+  }
+
+  return { usable, info, outdated, keepable, wanted, keep, remove };
 }
 
 /** The copy as the compiler and the IPC take it. */

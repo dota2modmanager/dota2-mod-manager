@@ -6554,7 +6554,7 @@ Run a program and settle with its exit code: a non-zero one is an answer, not a 
 ### `createResourceCompiler`
 
 ```ts
-export function createResourceCompiler({ userDataDir, gamePath, chosen, keeper, log = () => {}, platform = process.platform, run = runProcess, wine = () => findWine() }: { userDataDir: string; /** the game folder in Settings (dota 2 beta/game) */ gamePath: () => string | null | undefined; /** the compiler the user picked in Settings */ chosen: () => string | null | undefined; /** the copy of the Workshop Tools kept for when the game's are gone (src/workshop-tools.ts) */ keeper?: Pick<ToolsKeeper, 'usable' | 'info' | 'keepable'>
+export function createResourceCompiler({ userDataDir, gamePath, chosen, keeper, log = () => {}, platform = process.platform, run = runProcess, wine = () => findWine() }: { userDataDir: string; /** the game folder in Settings (dota 2 beta/game) */ gamePath: () => string | null | undefined; /** the compiler the user picked in Settings */ chosen: () => string | null | undefined; /** the copy of the Workshop Tools kept for when the game's are gone (src/workshop-tools.ts) */ keeper?: Pick<ToolsKeeper, 'usable' | 'info' | 'outdated' | 'keepable'>
 ```
 
 The compiler as the app runs it: where it is, what it needs, and a compile.
@@ -8770,26 +8770,45 @@ Windows files away, resourcecompiler.exe with them. So the first time the app se
 the game it copies them here, and the compiler (src/resource-compiler.ts) runs this copy whenever
 the game's own is gone. Nobody has to keep a Proton build installed to compile.
 
-What is copied is game/bin: win64, the tools themselves, 137 files and 700 MB on 2026-10-25, and
-the few files beside it the tools read. The game itself is not: the compiler finds the game
-through its own place, two folders up from win64, and game/dota and game/core here are links to
-the user's game, whose content is the same for both builds. content/ and game/dota_addons/ here
-are folders of the copy's own, so what a compile writes stays in userData and never reaches the
-game through a link. The copy's compiler compiled the empty model from such a tree under Wine
-(2026-10-25), and wrote nothing through the links.
+What is copied is what only the Windows build has: game/bin (win64, the tools themselves, 137
+files and 700 MB on 2026-10-25, and the few files beside it), and in game/dota and game/core
+their own bin/win64 and the DX11 shaders (shaders_pc_*; the Linux build has pcgl and vulkan
+ones). The rest of the game is not copied: the compiler finds the game through its own place,
+two folders up from win64, and every other entry of game/dota and game/core here is a link to the
+user's game, whose content is the same for both builds. The first copy linked game/dota and
+game/core whole, and once Steam had taken the Windows build away the compiler stopped at "Unable
+to load module modtools, error 126": game/dota/bin/win64 had gone with it (J0nathan550,
+2026-10-25). content/ and game/dota_addons/ here are folders of the copy's own, so what a compile
+writes stays in userData and never reaches the game through a link.
 
 It is copied into a folder of its own and renamed into place once whole, so a copy cut short is
 never run; and copied again when the game's tools change, which is what a Dota patch does while
 the Proton build is installed. Deleted from Settings, it is not copied again until the game's
-tools change: 700 MB the user said no to is not taken back on the next start.
+tools change: a gigabyte the user said no to is not taken back on the next start.
 
 ### `KeptInfo`
 
 ```ts
-export interface KeptInfo { from: string; stamp: string; bytes: number; at: number }
+export interface KeptInfo { from: string; stamp: string; bytes: number; at: number; layout: number }
 ```
 
-What kept.json says of the copy: the tools it was copied from, and its size.
+What kept.json says of the copy: the tools it was copied from, its size, and how it is laid out.
+
+### `windowsOnly`
+
+```ts
+export function windowsOnly(rel: string): boolean
+```
+
+Whether an entry of game/dota or game/core is the Windows build's alone, and so copied.
+
+### `windowsFiles`
+
+```ts
+export function windowsFiles(game: string): string[]
+```
+
+What to copy of a game folder of the Windows build, as paths relative to game/.
 
 ### `createToolsKeeper`
 

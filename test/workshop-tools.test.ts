@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { createToolsKeeper } from '../src/workshop-tools.ts';
+import { createToolsKeeper, windowsOnly } from '../src/workshop-tools.ts';
 import { compilerIn, createResourceCompiler } from '../src/resource-compiler.ts';
 import { entryPath } from '../src/vpk.ts';
 import type { RunProcess } from '../src/wine.ts';
@@ -34,12 +34,30 @@ function proton(t: TestContext) {
   put(path.join(game, 'bin', 'sdkenginetools.txt'), 'tools');
   put(path.join(game, 'bin', 'linuxsteamrt64', 'dota2'), 'ELF');
   put(path.join(game, 'dota', 'gameinfo.gi'), '"GameInfo" {}');
+  put(path.join(game, 'dota', 'pak01_dir.vpk'), 'dota');
+  put(path.join(game, 'dota', 'bin', 'win64', 'modtools.dll'), 'MZ modtools');
+  put(path.join(game, 'dota', 'bin', 'linuxsteamrt64', 'libserver.so'), 'ELF');
+  put(path.join(game, 'dota', 'shaders_pc_dir.vpk'), 'dx11');
+  put(path.join(game, 'dota', 'shaders_vulkan_dir.vpk'), 'vulkan');
   put(path.join(game, 'core', 'pak01_dir.vpk'), 'core');
+  put(path.join(game, 'core', 'shaders_pc_dir.vpk'), 'core dx11');
   return { root, game, userData: path.join(root, 'userdata') };
 }
 
-/** What Steam does on the way back to the Linux build: the Windows files go. */
-const steamTakesThemAway = (game: string) => fs.rmSync(path.join(game, 'bin', 'win64'), { recursive: true, force: true });
+/* What Steam does on the way back to the Linux build: the Windows files go, the tools and Dota's
+ * own Windows libraries and DX11 shaders alike, and the folders stay behind empty. */
+function steamTakesThemAway(game: string) {
+  for (const dir of [path.join(game, 'bin', 'win64'), path.join(game, 'dota', 'bin', 'win64')]) {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.mkdirSync(dir);
+  }
+  for (const f of [path.join(game, 'dota', 'shaders_pc_dir.vpk'), path.join(game, 'core', 'shaders_pc_dir.vpk')]) fs.rmSync(f);
+}
+
+test('of game/dota and game/core, only the Windows build\'s own entries are copied', () => {
+  for (const yes of ['bin/win64', 'shaders_pc_dir.vpk', 'shaders_pc_000.vpk']) assert.ok(windowsOnly(yes), yes);
+  for (const no of ['bin', 'bin/linuxsteamrt64', 'shaders_pcgl_dir.vpk', 'shaders_vulkan_dir.vpk', 'pak01_dir.vpk', 'gameinfo.gi', 'maps/shaders_pc_x.vpk']) assert.equal(windowsOnly(no), false, no);
+});
 
 /** A compiler that writes each source's compiled file where the real one does. */
 const fakeCompiler: RunProcess = async (exe, args, opts) => {
@@ -49,7 +67,7 @@ const fakeCompiler: RunProcess = async (exe, args, opts) => {
   return { code: 0, out: '' };
 };
 
-test('the copy is the tools and the files beside them, with the game linked rather than copied', { skip: !posix }, async (t) => {
+test('the copy is the Windows build\'s own files, with the rest of the game linked entry by entry', { skip: !posix }, async (t) => {
   const { game, userData } = proton(t);
   const keeper = createToolsKeeper({ dir: path.join(userData, 'workshop-tools'), gamePath: () => game });
   assert.equal(keeper.info(), null);
@@ -61,11 +79,13 @@ test('the copy is the tools and the files beside them, with the game linked rath
   assert.equal(fs.readFileSync(path.join(tree, 'bin', 'win64', 'tools', 'meshsystem.dll'), 'utf8'), 'MZ mesh');
   assert.ok(fs.existsSync(path.join(tree, 'bin', 'sdkenginetools.txt')));
   assert.equal(fs.existsSync(path.join(tree, 'bin', 'linuxsteamrt64')), false, 'the Linux game is not copied');
-  assert.equal(fs.readlinkSync(path.join(tree, 'dota')), path.join(game, 'dota'));
-  assert.equal(fs.readlinkSync(path.join(tree, 'core')), path.join(game, 'core'));
-  assert.ok(fs.lstatSync(path.join(tree, 'dota_addons')).isDirectory(), 'a folder of its own, not a link');
-  assert.deepEqual(steps, [1, 2, 3, 4]);
-  assert.equal(keeper.info()?.bytes, 'MZ compiler'.length + 'MZ tier0'.length + 'MZ mesh'.length + 'tools'.length);
+  const real = (rel: string) => !fs.lstatSync(path.join(tree, rel)).isSymbolicLink();
+  for (const rel of ['dota', 'dota/bin', 'dota/bin/win64/modtools.dll', 'dota/shaders_pc_dir.vpk', 'core', 'core/shaders_pc_dir.vpk', 'dota_addons']) assert.ok(real(rel), `${rel} is the copy's own`);
+  for (const rel of ['dota/pak01_dir.vpk', 'dota/gameinfo.gi', 'dota/shaders_vulkan_dir.vpk', 'dota/bin/linuxsteamrt64', 'core/pak01_dir.vpk']) {
+    assert.equal(fs.readlinkSync(path.join(tree, rel)), path.join(game, rel), `${rel} is linked`);
+  }
+  assert.deepEqual(steps, [1, 2, 3, 4, 5, 6, 7]);
+  assert.equal(keeper.info()?.bytes, ['MZ compiler', 'MZ tier0', 'MZ mesh', 'tools', 'MZ modtools', 'dx11', 'core dx11'].join('').length);
   assert.equal(await keeper.keep(), false, 'the same tools are not copied twice');
 });
 
@@ -83,7 +103,8 @@ test('once Steam takes the game\'s tools away, the copy compiles, into itself an
   assert.equal(st.keepable, false, 'no tools in the game to copy');
   const out = await rc.compile({ id: 'x', files: [{ path: 'models/a.vmdl', data: Buffer.from('m') }], compile: ['models/a.vmdl'] });
   assert.deepEqual(out.map((e) => entryPath(e)), ['models/a.vmdl_c']);
-  assert.deepEqual(fs.readdirSync(path.join(game, 'dota')), ['gameinfo.gi'], 'nothing written into the game through a link');
+  assert.ok(fs.existsSync(path.join(st.exe!, '..', '..', '..', 'dota', 'bin', 'win64', 'modtools.dll')), 'Dota\'s own Windows libraries stay in the copy');
+  assert.deepEqual(fs.readdirSync(path.join(game, 'dota')).sort(), ['bin', 'gameinfo.gi', 'pak01_dir.vpk', 'shaders_vulkan_dir.vpk'], 'nothing written into the game through a link');
   assert.equal(fs.existsSync(path.join(root, 'dota 2 beta', 'content')), false);
 });
 
@@ -113,15 +134,38 @@ test('new tools in the game, a Dota patch under Proton, are copied again', { ski
   assert.equal(fs.readFileSync(path.join(userData, 'workshop-tools', 'tree', 'game', 'bin', 'win64', 'resourcecompiler.exe'), 'utf8'), 'MZ compiler, patched');
 });
 
-test('the links follow the game when it moves to another library', { skip: !posix }, async (t) => {
+test('the links follow the game: a moved library, a file a patch adds and one it removes', { skip: !posix }, async (t) => {
   const a = proton(t);
   const b = proton(t);
   let game = a.game;
   const keeper = createToolsKeeper({ dir: path.join(a.userData, 'workshop-tools'), gamePath: () => game });
   await keeper.keep();
+  const dota = path.join(a.userData, 'workshop-tools', 'tree', 'game', 'dota');
   game = b.game;
+  put(path.join(b.game, 'dota', 'pak01_007.vpk'), 'new');
+  fs.rmSync(path.join(b.game, 'dota', 'pak01_dir.vpk'));
   assert.ok(keeper.usable());
-  assert.equal(fs.readlinkSync(path.join(a.userData, 'workshop-tools', 'tree', 'game', 'dota')), path.join(b.game, 'dota'));
+  assert.equal(fs.readlinkSync(path.join(dota, 'gameinfo.gi')), path.join(b.game, 'dota', 'gameinfo.gi'));
+  assert.equal(fs.readlinkSync(path.join(dota, 'pak01_007.vpk')), path.join(b.game, 'dota', 'pak01_007.vpk'));
+  assert.equal(fs.existsSync(path.join(dota, 'pak01_dir.vpk')), false);
+  assert.equal(fs.readFileSync(path.join(dota, 'bin', 'win64', 'modtools.dll'), 'utf8'), 'MZ modtools', 'what was copied stays');
+});
+
+test('a copy made before Dota\'s own Windows files were copied is not run, and is made again', { skip: !posix }, async (t) => {
+  const { game, userData } = proton(t);
+  const dir = path.join(userData, 'workshop-tools');
+  const keeper = createToolsKeeper({ dir, gamePath: () => game });
+  await keeper.keep();
+  const record = JSON.parse(fs.readFileSync(path.join(dir, 'kept.json'), 'utf8'));
+  delete record.layout;
+  fs.writeFileSync(path.join(dir, 'kept.json'), JSON.stringify(record));
+  assert.equal(keeper.info(), null);
+  assert.equal(keeper.usable(), null);
+  assert.ok(keeper.outdated(), 'Settings says to make it again');
+  assert.ok(keeper.wanted());
+  assert.equal(await keeper.keep(), true);
+  assert.ok(keeper.usable());
+  assert.equal(keeper.outdated(), false);
 });
 
 test('a copy cut short is thrown away whole, and the old one stays in use', { skip: !posix || process.getuid?.() === 0 }, async (t) => {

@@ -49,6 +49,9 @@ export function CompilerBlock({ i, c, actions }: { i: number; c: CompilerState; 
         </div>
       )}
       {/* on Linux: the copy kept for when Steam takes the game's tools away with the Proton build */}
+      {c.needsWine && c.keptOutdated && !c.kept && !c.keepable && (
+        <div className="settings-hint">{L`Копию Workshop Tools нужно сделать заново: прежняя не взяла файлы Windows-версии самой Dota. Переключи Dota на Proton один раз, приложение скопирует всё само.`}</div>
+      )}
       {c.needsWine && (c.kept || c.keepable) && (
         <div className="settings-row spaced">
           <span className="settings-label grow">{c.kept ? L`Копия Workshop Tools: ${Math.round(c.kept.bytes / 1048576)} MB` : L`Копии Workshop Tools нет`}</span>
@@ -66,7 +69,7 @@ export function CompilerBlock({ i, c, actions }: { i: number; c: CompilerState; 
       </div>
       <div className="settings-hint">{L`Проверка собирает пустую модель во временном аддоне и сразу его удаляет: игра не меняется.`}</div>
       <div className="settings-hint">{L`Компилятор из Dota 2 Workshop Tools собирает модели и эффекты аркан, для которых ещё нет готовой основы. Workshop Tools ставятся в Steam как бесплатное дополнение к Windows-версии игры.`}</div>
-      {c.needsWine && <div className="settings-hint">{L`Steam удаляет Workshop Tools, когда Dota переключают обратно на Linux-версию, поэтому приложение хранит их копию (около 700 MB) и работает с ней. Сама игра не копируется.`}</div>}
+      {c.needsWine && <div className="settings-hint">{L`Steam удаляет Workshop Tools, когда Dota переключают обратно на Linux-версию, поэтому приложение хранит их копию вместе с Windows-файлами самой Dota и работает с ней. Остальная игра не копируется.`}</div>}
       {c.needsWine && <div className="settings-hint">{L`На Linux Workshop Tools ставятся, только когда Dota запущена через Proton (Свойства → Совместимость). Компилятор запускается через Wine в отдельном префиксе приложения, твой ~/.wine не трогается.`}</div>}
     </div>
   );
