@@ -8722,7 +8722,7 @@
           "image": {"src":"/mods/templar-assassin-black.webp","width":854,"height":480},
           "author": "3atvorn1k",
           "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1791861641
+          "date": 1792965567
         },
         {
           "name": "Immortal Templar Assassin",
@@ -10639,6 +10639,143 @@
       ]
     },
     {
+      "id": "viper",
+      "name": "Viper",
+      "slug": "viper",
+      "mods": [
+        {
+          "name": "Viper Butch Dog",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back"],
+          "image": {"src":"/mods/viper-butch-dog.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1763621172
+        },
+        {
+          "name": "Viper Elephant Hawk Moth",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back"],
+          "image": {"src":"/mods/viper-elephant-hawk-moth.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1770460734
+        },
+        {
+          "name": "Viper Glist",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back"],
+          "image": {"src":"/mods/viper-glist.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/meetmeattheriver",
+          "date": 1792965567
+        },
+        {
+          "name": "Viper Stuffed Menace",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back"],
+          "image": {"src":"/mods/viper-stuffed-menace.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1766177291
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "visage",
       "name": "Visage",
       "slug": "visage",
@@ -12183,129 +12320,119 @@
       ]
     },
     {
-      "id": "viper",
-      "name": "Viper",
-      "slug": "viper",
+      "id": "axe",
+      "name": "Axe",
+      "slug": "axe",
       "mods": [
         {
-          "name": "Viper Butch Dog",
+          "name": "Axe Gawr Gura",
           "categoryId": "heroes",
           "styleLabel": null,
-          "slots": ["back"],
-          "image": {"src":"/mods/viper-butch-dog.webp","width":854,"height":480},
+          "slots": ["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"],
+          "image": {"src":"/mods/axe-gawr-gura.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1771195327
+        },
+        {
+          "name": "Axe Heracles",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"],
+          "image": {"src":"/mods/axe-heracles.webp","width":854,"height":480},
+          "author": "SanyaBane",
+          "authorUrl": "https://steamcommunity.com/profiles/76561198072955043",
+          "date": 1771195327
+        },
+        {
+          "name": "Axe Automaton Reborn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","tail","weapon","back","base"],
+          "image": {"src":"/mods/axe-automaton-reborn.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1790622902
+        },
+        {
+          "name": "Axe Immortal Bootblack",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","tail","weapon","misc","head"],
+          "image": {"src":"/mods/axe-immortal-bootblack.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1756539017
+        },
+        {
+          "name": "Axe Immortal Rampage",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","tail","belt","weapon","back","misc"],
+          "image": {"src":"/mods/axe-immortal-rampage.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1792235759
+        },
+        {
+          "name": "Axe Molten Fist",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","tail","belt","weapon","legs","misc"],
+          "image": {"src":"/mods/axe-molten-fist.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1792609094
+        },
+        {
+          "name": "Axe Unleashed",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","tail","weapon","misc","head"],
+          "image": {"src":"/mods/axe-unleashed.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1765448898
+        },
+        {
+          "name": "Axe Automaton",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","head","tail","weapon"],
+          "image": {"src":"/mods/axe-automaton.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1787499382
+        },
+        {
+          "name": "Axe Immortal Bootblack Brawler",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","head","tail","weapon"],
+          "image": {"src":"/mods/axe-immortal-bootblack-brawler.webp","width":854,"height":480},
+          "author": "CeoMods",
+          "authorUrl": "https://t.me/modsceo",
+          "date": 1783879866
+        },
+        {
+          "name": "Axe Immortal Demon",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","belt","tail","weapon","misc"],
+          "image": {"src":"/mods/axe-immortal-demon.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1792965567
+        },
+        {
+          "name": "Axe Kratos",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","tail","head","belt","arms"],
+          "image": {"src":"/mods/axe-kratos.webp","width":854,"height":480},
           "author": "Defiree",
           "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1763621172
-        },
-        {
-          "name": "Viper Elephant Hawk Moth",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back"],
-          "image": {"src":"/mods/viper-elephant-hawk-moth.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1770460734
-        },
-        {
-          "name": "Viper Stuffed Menace",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back"],
-          "image": {"src":"/mods/viper-stuffed-menace.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1766177291
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
+          "date": 1789090758
         }
       ]
     },
@@ -12891,113 +13018,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "axe",
-      "name": "Axe",
-      "slug": "axe",
-      "mods": [
-        {
-          "name": "Axe Gawr Gura",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"],
-          "image": {"src":"/mods/axe-gawr-gura.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1771195327
-        },
-        {
-          "name": "Axe Heracles",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"],
-          "image": {"src":"/mods/axe-heracles.webp","width":854,"height":480},
-          "author": "SanyaBane",
-          "authorUrl": "https://steamcommunity.com/profiles/76561198072955043",
-          "date": 1771195327
-        },
-        {
-          "name": "Axe Automaton Reborn",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","tail","weapon","back","base"],
-          "image": {"src":"/mods/axe-automaton-reborn.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790622902
-        },
-        {
-          "name": "Axe Immortal Bootblack",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","tail","weapon","misc","head"],
-          "image": {"src":"/mods/axe-immortal-bootblack.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1756539017
-        },
-        {
-          "name": "Axe Immortal Rampage",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","tail","belt","weapon","back","misc"],
-          "image": {"src":"/mods/axe-immortal-rampage.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1792235759
-        },
-        {
-          "name": "Axe Molten Fist",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","tail","belt","weapon","legs","misc"],
-          "image": {"src":"/mods/axe-molten-fist.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1792609094
-        },
-        {
-          "name": "Axe Unleashed",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","tail","weapon","misc","head"],
-          "image": {"src":"/mods/axe-unleashed.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1765448898
-        },
-        {
-          "name": "Axe Automaton",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","head","tail","weapon"],
-          "image": {"src":"/mods/axe-automaton.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1787499382
-        },
-        {
-          "name": "Axe Immortal Bootblack Brawler",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","belt","head","tail","weapon"],
-          "image": {"src":"/mods/axe-immortal-bootblack-brawler.webp","width":854,"height":480},
-          "author": "CeoMods",
-          "authorUrl": "https://t.me/modsceo",
-          "date": 1783879866
-        },
-        {
-          "name": "Axe Kratos",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","tail","head","belt","arms"],
-          "image": {"src":"/mods/axe-kratos.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1789090758
         }
       ]
     },
@@ -14236,6 +14256,93 @@
       ]
     },
     {
+      "id": "rattletrap",
+      "name": "Clockwerk",
+      "slug": "clockwerk",
+      "mods": [
+        {
+          "name": "Clockwerk Apex Automated",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","weapon"],
+          "image": {"src":"/mods/clockwerk-apex-automated.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1764908114
+        },
+        {
+          "name": "Clockwerk Cogwerk",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","weapon"],
+          "image": {"src":"/mods/clockwerk-cogwerk.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1790267695
+        },
+        {
+          "name": "Clockwerk Immortal",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","weapon"],
+          "image": {"src":"/mods/clockwerk-immortal.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1790193060
+        },
+        {
+          "name": "Clockwerk Rocketbunny",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","weapon"],
+          "image": {"src":"/mods/clockwerk-rocketbunny.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1792965567
+        },
+        {
+          "name": "Clockwerk Seadog Stash",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","weapon"],
+          "image": {"src":"/mods/clockwerk-seadog-stash.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1764908114
+        },
+        {
+          "name": "Nuclear Clockwerk",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","misc","head","weapon"],
+          "image": {"src":"/mods/nuclear-clockwerk.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1769273719
+        },
+        {
+          "name": "Clockwerk Paraflare Cannon",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/clockwerk-paraflare-cannon.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1787135218
+        },
+        {
+          "name": "Clockwerk Rabid Watchcog",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/clockwerk-rabid-watchcog.webp","width":1280,"height":720},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1787135218
+        }
+      ]
+    },
+    {
       "id": "ember_spirit",
       "name": "Ember Spirit",
       "slug": "ember-spirit",
@@ -14406,6 +14513,93 @@
           "author": "Harlord",
           "authorUrl": "https://t.me/harlord_mods",
           "date": 1790170612
+        }
+      ]
+    },
+    {
+      "id": "spirit_breaker",
+      "name": "Spirit Breaker",
+      "slug": "spirit-breaker",
+      "mods": [
+        {
+          "name": "Cosmic Spirit Breaker",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","shoulder","tail","weapon"],
+          "image": {"src":"/mods/cosmic-spirit-breaker.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1758256622
+        },
+        {
+          "name": "Spirit Breaker Crystal Colossus",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","shoulder","tail","weapon"],
+          "image": {"src":"/mods/spirit-breaker-crystal-colossus.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1776242547
+        },
+        {
+          "name": "Spirit Breaker Elemental Imperator",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","shoulder","tail","weapon"],
+          "image": {"src":"/mods/spirit-breaker-elemental-imperator.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1776169497
+        },
+        {
+          "name": "Spirit Breaker Ghost Monster",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","shoulder","tail","weapon"],
+          "image": {"src":"/mods/spirit-breaker-ghost-monster.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1756539017
+        },
+        {
+          "name": "Spirit Breaker Bmw Vip 228",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/spirit-breaker-bmw-vip-228.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/meetmeattheriver",
+          "date": 1792965567
+        },
+        {
+          "name": "Spirit Breaker Iron Surge",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["head"],
+          "image": {"src":"/mods/spirit-breaker-iron-surge.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1787135218
+        },
+        {
+          "name": "Spirit Breaker Iron Surge",
+          "categoryId": "hero-items",
+          "styleLabel": "Tyrian",
+          "slots": ["head"],
+          "image": {"src":"/mods/spirit-breaker-iron-surge-tyrian.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1787135218
+        },
+        {
+          "name": "Spirit Breaker Savage Mettle",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "slots": ["weapon"],
+          "image": {"src":"/mods/spirit-breaker-savage-mettle.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1776169497
         }
       ]
     },
@@ -14671,83 +14865,6 @@
       ]
     },
     {
-      "id": "rattletrap",
-      "name": "Clockwerk",
-      "slug": "clockwerk",
-      "mods": [
-        {
-          "name": "Clockwerk Apex Automated",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head","weapon"],
-          "image": {"src":"/mods/clockwerk-apex-automated.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1764908114
-        },
-        {
-          "name": "Clockwerk Cogwerk",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head","weapon"],
-          "image": {"src":"/mods/clockwerk-cogwerk.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1790267695
-        },
-        {
-          "name": "Clockwerk Immortal",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head","weapon"],
-          "image": {"src":"/mods/clockwerk-immortal.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1790193060
-        },
-        {
-          "name": "Clockwerk Seadog Stash",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head","weapon"],
-          "image": {"src":"/mods/clockwerk-seadog-stash.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1764908114
-        },
-        {
-          "name": "Nuclear Clockwerk",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","misc","head","weapon"],
-          "image": {"src":"/mods/nuclear-clockwerk.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1769273719
-        },
-        {
-          "name": "Clockwerk Paraflare Cannon",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/clockwerk-paraflare-cannon.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1787135218
-        },
-        {
-          "name": "Clockwerk Rabid Watchcog",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/clockwerk-rabid-watchcog.webp","width":1280,"height":720},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1787135218
-        }
-      ]
-    },
-    {
       "id": "life_stealer",
       "name": "Lifestealer",
       "slug": "lifestealer",
@@ -14975,83 +15092,6 @@
           "author": "depex",
           "authorUrl": "https://t.me/depexfx",
           "date": 1788042221
-        }
-      ]
-    },
-    {
-      "id": "spirit_breaker",
-      "name": "Spirit Breaker",
-      "slug": "spirit-breaker",
-      "mods": [
-        {
-          "name": "Cosmic Spirit Breaker",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","shoulder","tail","weapon"],
-          "image": {"src":"/mods/cosmic-spirit-breaker.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1758256622
-        },
-        {
-          "name": "Spirit Breaker Crystal Colossus",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","shoulder","tail","weapon"],
-          "image": {"src":"/mods/spirit-breaker-crystal-colossus.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1776242547
-        },
-        {
-          "name": "Spirit Breaker Elemental Imperator",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","shoulder","tail","weapon"],
-          "image": {"src":"/mods/spirit-breaker-elemental-imperator.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1776169497
-        },
-        {
-          "name": "Spirit Breaker Ghost Monster",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","shoulder","tail","weapon"],
-          "image": {"src":"/mods/spirit-breaker-ghost-monster.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1756539017
-        },
-        {
-          "name": "Spirit Breaker Iron Surge",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["head"],
-          "image": {"src":"/mods/spirit-breaker-iron-surge.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1787135218
-        },
-        {
-          "name": "Spirit Breaker Iron Surge",
-          "categoryId": "hero-items",
-          "styleLabel": "Tyrian",
-          "slots": ["head"],
-          "image": {"src":"/mods/spirit-breaker-iron-surge-tyrian.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1787135218
-        },
-        {
-          "name": "Spirit Breaker Savage Mettle",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "slots": ["weapon"],
-          "image": {"src":"/mods/spirit-breaker-savage-mettle.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1776169497
         }
       ]
     },

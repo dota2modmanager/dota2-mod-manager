@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1549,
+  "mods": 1553,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -92,6 +92,7 @@
         {"name":"Axe Heracles","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon","misc","shoulder","back","legs","shield"]},
         {"name":"Axe Immortal Bootblack","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","misc","head"]},
         {"name":"Axe Immortal Bootblack Brawler","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","tail","weapon"]},
+        {"name":"Axe Immortal Demon","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","misc"]},
         {"name":"Axe Immortal Rampage","categoryId":"heroes","styleLabel":null,"slots":["arms","tail","belt","weapon","back","misc"]},
         {"name":"Axe Kratos","categoryId":"heroes","styleLabel":null,"slots":["weapon","tail","head","belt","arms"]},
         {"name":"Axe Molten Fist","categoryId":"heroes","styleLabel":null,"slots":["arms","tail","belt","weapon","legs","misc"]},
@@ -1457,6 +1458,7 @@
         {"name":"Clockwerk Immortal","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
         {"name":"Clockwerk Paraflare Cannon","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
         {"name":"Clockwerk Rabid Watchcog","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Clockwerk Rocketbunny","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
         {"name":"Clockwerk Seadog Stash","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
         {"name":"Nuclear Clockwerk","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]}
       ]
@@ -1736,6 +1738,7 @@
       "name": "Spirit Breaker",
       "mods": [
         {"name":"Cosmic Spirit Breaker","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","tail","weapon"]},
+        {"name":"Spirit Breaker Bmw Vip 228","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
         {"name":"Spirit Breaker Crystal Colossus","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","tail","weapon"]},
         {"name":"Spirit Breaker Elemental Imperator","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","tail","weapon"]},
         {"name":"Spirit Breaker Ghost Monster","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","tail","weapon"]},
@@ -2036,6 +2039,7 @@
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Viper Butch Dog","categoryId":"heroes","styleLabel":null,"slots":["back"]},
         {"name":"Viper Elephant Hawk Moth","categoryId":"heroes","styleLabel":null,"slots":["back"]},
+        {"name":"Viper Glist","categoryId":"heroes","styleLabel":null,"slots":["back"]},
         {"name":"Viper Stuffed Menace","categoryId":"heroes","styleLabel":null,"slots":["back"]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
