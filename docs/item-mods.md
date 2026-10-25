@@ -21,10 +21,21 @@ two days, most of them on two traps that the tools below now catch in seconds.
    and in the sequences; a particle child that is missing or drawn on another attachment than it
    is made for. It takes seconds.
 4. **Check in the game.** `npm run dota:bench -- --vpk <mod_dir.vpk> --short` (Windows, Steam
-   running, Dota closed) puts the mod in a free slot, starts hero demo, levels the hero, sets it on
-   a dummy and takes 16 pictures 80 ms apart through the attack. `verdict.json` says whether the
-   attack swings (`tools/dota-bench/verdict.mjs`); look at the pictures for the rest. About three
-   minutes a build. Without `--short` it also presses Metamorphosis and Conjure Image.
+   running, Dota closed) puts the mod in a free slot, starts hero demo, gives the hero level 30,
+   Aghanim's Scepter and Shard, shows it close in the inspect, sets it on a dummy and takes 16
+   pictures 80 ms apart through the attack. `verdict.json` says whether the attack swings
+   (`tools/dota-bench/verdict.mjs`); look at the pictures for the rest. About three minutes a
+   build. Without `--short` it also casts every ability (`--skills`, aimed ones on an enemy hero),
+   with `-wtf` typed into the console so nothing waits on a cooldown. `--idle-seconds 13` first
+   steps the hero so its idle starts over, then films it standing in the inspect, from in front
+   with the face in view, four pictures a second, for an idle that does something only every few
+   seconds (`01-idle-long.png`). Every run also walks the hero across the screen and back, filmed
+   on the way (`05-walk-right.png`, `05-walk-left.png`): a layer that goes wrong only in motion does
+   not show on a hero that has stopped. `--spawn` kills the hero and films the next six seconds,
+   in which the demo brings it back where it stood: the spawn animation (`01-spawn.png`). `--death`
+   kills it with the game slowed to a quarter and films the fall close, then six seconds later what
+   lies on the ground (`01-death.png`, `01-death-after.png`). A party
+   invite that covers the screen at the start is declined.
 5. **Compare.** Run the bench on the plain hero (`--hero terrorblade`, no `--vpk`) and on a mod of
    the same item from the catalog that works. When yours does not, swap resource blocks between
    the two (`resourceBlock(file, 'ANIM').replace(...)`) and bench each: the block that carries the
@@ -123,6 +134,7 @@ picture is every hero's.
 | fixing the sequences when the game reads the clips | a day of builds that changed nothing | this page |
 | a search over a model's blocks that skipped what it could not read | the clips (zstd) never looked at | the reader reads zstd |
 | one picture a second, read by eye | a fidget at rest taken for the attack | burst and verdict |
+| a model compiled again keeps a clip of the turns source itself, one pose of the full turn, which Valve's has not | the head looked backward whenever the hero walked | the walk pictures |
 
 Not settled yet: whether a swapped model's sequences in another order than the hero's cause wrong
 animations online, where the server keeps the plain model. The doctor warns about it.
