@@ -196,7 +196,11 @@ the compile worked or not. The compiler is never downloaded, because it is Valve
 source: it is the game's own (`game/bin/win64`), or one picked in Settings through a dialog of the
 main process, never a path from the window. The tools exist only for the Windows build of Dota:
 on Linux Steam installs them while Dota runs through Proton, and the compiler runs under Wine, in a
-prefix of the app's own in `userData/wine` made once with `wineboot` (`src/wine.ts`). The Check
+prefix of the app's own in `userData/wine` made once with `wineboot` (`src/wine.ts`). Going back to
+the Linux build to play, Steam deletes the Windows files and the compiler with them, so once the app
+has seen the tools it copies `game/bin` into `userData/workshop-tools` (about 700 MB), links that
+copy's `game/dota` and `game/core` to the user's game, and runs it whenever the game's own is gone
+(`src/workshop-tools.ts`). The Check
 button in Settings compiles an empty model through all of it, counting its steps on the bar at the
 bottom, and the answer is kept until another compiler is picked or a patch replaces it. Taking the item's model apart into
 those sources (Source 2 Viewer's export) is the next half and is not here yet.
@@ -507,6 +511,7 @@ system and writes `e2e-output/sim/index.html`.
   backups/           the originals of any Valve file the app replaced
   tools/             external tools, downloaded on demand
   wine/              on Linux, the Wine prefix resourcecompiler.exe runs in
+  workshop-tools/    on Linux, the copy of the Workshop Tools kept after Steam removes them
 ```
 
 The portable build puts the same tree next to its executable, and falls back to `%APPDATA%` when
@@ -596,7 +601,7 @@ that location is not writable.
 | `src/mod-id.ts`, `src/fingerprints.ts`, `src/hero-names.ts` | What a mod replaces, asked of the game; recognising a file somebody else installed; which hero a name means |
 | `src/icons.ts`, `src/icon-match.ts`, `src/icon-wiki.ts` | Pictures off the Dota wikis: the cache and its misses, which file is an item's picture, and asking the two wikis |
 | `src/game-icons.ts`, `src/vtex.ts`, `src/toolchain.ts` | Item pictures out of the installed game, and the Source 2 tools fetched only when something needs them |
-| `src/resource-compiler.ts`, `src/wine.ts` | Valve's resourcecompiler.exe from the Workshop Tools, found in the game or picked in Settings, compiling sources staged in an addon of ours and handing back the compiled files; on Linux it runs under Wine in a prefix of the app's own |
+| `src/resource-compiler.ts`, `src/wine.ts`, `src/workshop-tools.ts` | Valve's resourcecompiler.exe from the Workshop Tools, found in the game, picked in Settings or kept, compiling sources staged in an addon of ours and handing back the compiled files; on Linux it runs under Wine in a prefix of the app's own, and a copy of the tools is kept for when Steam takes the Proton build's away |
 | `src/mod-preview.ts`, `src/mod-preview-pick.ts` | A picture for a mod that came with none, taken out of the mod itself, and which one is worth showing |
 | `src/preset-link.ts`, `src/preset-share.ts` | Presets as a link and as a file |
 | `src/presets-service.ts`, `src/preset-plan.ts` | Presets: applying, packing and receiving one, and how one travels to somebody else |

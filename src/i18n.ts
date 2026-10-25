@@ -234,6 +234,7 @@ const EN = {
   'Проверка компилятора': 'Checking the compiler',
   'подготовка Wine': 'setting up Wine',
   'сборка пустой модели': 'compiling an empty model',
+  'Копия Workshop Tools': 'Copy of the Workshop Tools',
 } satisfies Record<string, string>;
 
 /** The table as a lookup: any Russian string, its English or nothing. */

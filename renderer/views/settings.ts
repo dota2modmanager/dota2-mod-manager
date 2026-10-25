@@ -172,6 +172,17 @@ const actions: SettingsActions = {
     else toast(L`Компилятор работает`);
     await renderSettings();
   },
+  compilerKeep: async () => {
+    const r = await window.api.compiler.keep();
+    if (r?.error) toast(r.error, 'error', 7000);
+    else toast(L`Копия Workshop Tools сохранена`);
+    await renderSettings();
+  },
+  compilerRemoveKept: async () => {
+    await window.api.compiler.removeKept();
+    toast(L`Копия Workshop Tools удалена`);
+    renderSettings();
+  },
   refreshCatalog: async () => {
     await loadCatalog(true);
     renderSettings();

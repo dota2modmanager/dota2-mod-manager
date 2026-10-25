@@ -147,6 +147,7 @@ the code, not in this page.
 | [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
 | [`src/window-guard.ts`](#srcwindow-guardts) | Who may call the main process, and with what. |
 | [`src/wine.ts`](#srcwinets) | Running a Windows program on Linux, for the one that has no Linux build: resourcecompiler.exe, |
+| [`src/workshop-tools.ts`](#srcworkshop-toolsts) | A copy of the Workshop Tools kept in userData, for a Linux machine that plays the Linux build. |
 | [`src/write-jail.ts`](#srcwrite-jailts) | A run that may write only inside the folders it was given. |
 
 ## src/adopt.ts
@@ -6446,10 +6447,11 @@ compiler half of that: given sources at their paths, it hands back the compiled 
 The compiler is not ours to ship. It is Valve's, it is not open source, and toolchain.ts says
 why nothing proprietary is downloaded by this app; it comes with the Workshop Tools, a free DLC
 of Dota's in Steam. So it is found where Steam put it, game/bin/win64 of the user's game, or in
-a file the user picked in Settings. The tools exist for the Windows build of Dota alone, and
-Linux has no game/bin/win64/resourcecompiler.exe: there the user points at one from a Windows
-copy of the game (Steam installs that copy when Dota is forced to run under Proton), and it runs
-under Wine in a prefix of the app's (src/wine.ts).
+a file the user picked in Settings. The tools exist for the Windows build of Dota alone: on Linux
+Steam installs them while Dota is forced to run through Proton and takes them away again with
+the Linux build, so the app keeps a copy of them once it has seen them (src/workshop-tools.ts),
+and runs that when the game's are gone. On Linux it runs under Wine in a prefix of the app's
+(src/wine.ts).
 
 How it is run, as BetterSource2Viewer's ResourceCompilerTest runs it: a source under
 content/dota_addons/<addon>/ of the install the compiler belongs to is compiled into the same
@@ -6525,6 +6527,14 @@ export type CheckStep = 'wine' | 'compile'
 
 A step of the check, for the bar at the bottom of the window.
 
+### `CompilerSource`
+
+```ts
+export type CompilerSource = 'chosen' | 'game' | 'kept'
+```
+
+Where the compiler that runs comes from.
+
 ### `CompilerState`
 
 ```ts
@@ -6544,7 +6554,7 @@ Run a program and settle with its exit code: a non-zero one is an answer, not a 
 ### `createResourceCompiler`
 
 ```ts
-export function createResourceCompiler({ userDataDir, gamePath, chosen, log = () => {}, platform = process.platform, run = runProcess, wine = () => findWine() }: { userDataDir: string; /** the game folder in Settings (dota 2 beta/game) */ gamePath: () => string | null | undefined; /** the compiler the user picked in Settings */ chosen: () => string | null | undefined; log?: (msg: string) => void; /** the system it runs on; tests name one */
+export function createResourceCompiler({ userDataDir, gamePath, chosen, keeper, log = () => {}, platform = process.platform, run = runProcess, wine = () => findWine() }: { userDataDir: string; /** the game folder in Settings (dota 2 beta/game) */ gamePath: () => string | null | undefined; /** the compiler the user picked in Settings */ chosen: () => string | null | undefined; /** the copy of the Workshop Tools kept for when the game's are gone (src/workshop-tools.ts) */ keeper?: Pick<ToolsKeeper, 'usable' | 'info' | 'keepable'>
 ```
 
 The compiler as the app runs it: where it is, what it needs, and a compile.
@@ -7353,7 +7363,8 @@ each other. src/main.ts calls this when the app is ready, then puts the game fol
 hands the services to the IPC modules.
 
 Two things start in the background here and are not waited for: the fingerprint list and the
-remote config. Both answer from their cached copies until the network does.
+remote config. Both answer from their cached copies until the network does. A third waits for
+the start to settle: on Linux, a copy of the Workshop Tools the game has (src/workshop-tools.ts).
 
 ### `createServices`
 
@@ -8748,6 +8759,53 @@ export async function ensurePrefix(prefix: string, wine: string, run: RunProcess
 
 Make the prefix, once. A prefix wineboot left half made (the app closed in the middle) has no
 marker, so it is thrown away and made again rather than trusted.
+
+## src/workshop-tools.ts
+
+A copy of the Workshop Tools kept in userData, for a Linux machine that plays the Linux build.
+
+On Linux the tools come only with the Windows build of Dota, which Steam installs while the game
+is forced to run through Proton; switch back to the Linux build to play and Steam takes the
+Windows files away, resourcecompiler.exe with them. So the first time the app sees the tools in
+the game it copies them here, and the compiler (src/resource-compiler.ts) runs this copy whenever
+the game's own is gone. Nobody has to keep a Proton build installed to compile.
+
+What is copied is game/bin: win64, the tools themselves, 137 files and 700 MB on 2026-10-25, and
+the few files beside it the tools read. The game itself is not: the compiler finds the game
+through its own place, two folders up from win64, and game/dota and game/core here are links to
+the user's game, whose content is the same for both builds. content/ and game/dota_addons/ here
+are folders of the copy's own, so what a compile writes stays in userData and never reaches the
+game through a link. The copy's compiler compiled the empty model from such a tree under Wine
+(2026-10-25), and wrote nothing through the links.
+
+It is copied into a folder of its own and renamed into place once whole, so a copy cut short is
+never run; and copied again when the game's tools change, which is what a Dota patch does while
+the Proton build is installed. Deleted from Settings, it is not copied again until the game's
+tools change: 700 MB the user said no to is not taken back on the next start.
+
+### `KeptInfo`
+
+```ts
+export interface KeptInfo { from: string; stamp: string; bytes: number; at: number }
+```
+
+What kept.json says of the copy: the tools it was copied from, and its size.
+
+### `createToolsKeeper`
+
+```ts
+export function createToolsKeeper({ dir, gamePath, log = () => {}, onStep = () => {} }: { /** where the copy is kept (userData/workshop-tools) */ dir: string; gamePath: () => string | null | undefined; log?: (msg: string) => void; /** files copied of how many, for the bar at the bottom */ onStep?: (done: number, total: number) => void; })
+```
+
+The copy, as the compiler and Settings take it.
+
+### `ToolsKeeper`
+
+```ts
+export type ToolsKeeper = ReturnType<typeof createToolsKeeper>
+```
+
+The copy as the compiler and the IPC take it.
 
 ## src/write-jail.ts
 

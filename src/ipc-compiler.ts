@@ -12,7 +12,7 @@ import { installOf } from './resource-compiler.ts';
 import type { AppContext } from './app-context.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
-export function registerCompilerIpc({ compiler, diag, sendProgress, settings, win }: Pick<AppContext, 'compiler' | 'diag' | 'sendProgress' | 'settings' | 'win'>): void {
+export function registerCompilerIpc({ compiler, diag, keepTools, sendProgress, settings, toolsKeeper, win }: Pick<AppContext, 'compiler' | 'diag' | 'keepTools' | 'sendProgress' | 'settings' | 'toolsKeeper' | 'win'>): void {
   const { dialog, ipcMain } = electron();
 
   ipcMain.handle('compiler:state', () => compiler.state());
@@ -46,7 +46,24 @@ export function registerCompilerIpc({ compiler, diag, sendProgress, settings, wi
       type: 'count', label: `${label}: ${step === 'wine' ? t('подготовка Wine') : t('сборка пустой модели')}`, done: steps.indexOf(step), total: steps.length,
     }));
     sendProgress(result.ok ? { type: 'done', label } : { type: 'error', label, message: result.message || '' });
+    // tools that work are worth keeping for when Steam takes them away (src/workshop-tools.ts)
+    if (result.ok && compiler.state().source === 'game') keepTools().catch(() => {});
     return result.ok ? { ok: true, state: compiler.state() } : { error: result.message, state: compiler.state() };
+  });
+
+  // the copy made on the user's word: again even if they deleted the one of these same tools
+  ipcMain.handle('compiler:keep', async () => {
+    try {
+      await keepTools({ force: true });
+      return { ok: true, state: compiler.state() };
+    } catch (err) {
+      return { error: errorText(err), state: compiler.state() };
+    }
+  });
+
+  ipcMain.handle('compiler:removeKept', () => {
+    toolsKeeper?.remove();
+    return { ok: true, state: compiler.state() };
   });
 
   // the prefix is made by the first compile anyway; this is for doing it while somebody watches

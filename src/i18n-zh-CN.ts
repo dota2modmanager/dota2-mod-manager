@@ -223,4 +223,5 @@ export default {
   "Проверка компилятора": "正在检查编译器",
   "подготовка Wine": "正在准备 Wine",
   "сборка пустой модели": "正在编译空模型",
+  "Копия Workshop Tools": "Workshop Tools 副本",
 } satisfies Record<string, string>;

@@ -10,10 +10,11 @@
  * The compiler is not ours to ship. It is Valve's, it is not open source, and toolchain.ts says
  * why nothing proprietary is downloaded by this app; it comes with the Workshop Tools, a free DLC
  * of Dota's in Steam. So it is found where Steam put it, game/bin/win64 of the user's game, or in
- * a file the user picked in Settings. The tools exist for the Windows build of Dota alone, and
- * Linux has no game/bin/win64/resourcecompiler.exe: there the user points at one from a Windows
- * copy of the game (Steam installs that copy when Dota is forced to run under Proton), and it runs
- * under Wine in a prefix of the app's (src/wine.ts).
+ * a file the user picked in Settings. The tools exist for the Windows build of Dota alone: on Linux
+ * Steam installs them while Dota is forced to run through Proton and takes them away again with
+ * the Linux build, so the app keeps a copy of them once it has seen them (src/workshop-tools.ts),
+ * and runs that when the game's are gone. On Linux it runs under Wine in a prefix of the app's
+ * (src/wine.ts).
  *
  * How it is run, as BetterSource2Viewer's ResourceCompilerTest runs it: a source under
  * content/dota_addons/<addon>/ of the install the compiler belongs to is compiled into the same
@@ -28,6 +29,8 @@ import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { entryAt, type VpkEntry } from './vpk.ts';
 import { ensurePrefix, findWine, prefixReady, winePath, wineEnv, type RunProcess } from './wine.ts';
+import { clientVersion } from './patch-watch.ts';
+import type { KeptInfo, ToolsKeeper } from './workshop-tools.ts';
 import { t } from './i18n.ts';
 
 /** The compiler's file name, as the Workshop Tools install it. */
@@ -89,12 +92,21 @@ export interface CompilerCheck { ok: boolean; message?: string; seconds: number;
 /** A step of the check, for the bar at the bottom of the window. */
 export type CheckStep = 'wine' | 'compile';
 
+/** Where the compiler that runs comes from. */
+export type CompilerSource = 'chosen' | 'game' | 'kept';
+
 /** What Settings shows of the compiler. */
 export interface CompilerState {
   /** the compiler that will run, or null when there is none */
   exe: string | null;
   /** whether it is the one the user picked rather than the game's own */
   chosen: boolean;
+  /** which one runs: picked in Settings, the game's own, or the copy the app kept */
+  source: CompilerSource | null;
+  /** the copy of the Workshop Tools the app keeps, whichever compiler runs */
+  kept: KeptInfo | null;
+  /** whether the game has tools the copy is not of, so a copy can be made now */
+  keepable: boolean;
   /** whether it runs through Wine here */
   needsWine: boolean;
   wine: string | null;
@@ -126,12 +138,14 @@ function walk(dir: string, base = dir): string[] {
 }
 
 /** The compiler as the app runs it: where it is, what it needs, and a compile. */
-export function createResourceCompiler({ userDataDir, gamePath, chosen, log = () => {}, platform = process.platform, run = runProcess, wine = () => findWine() }: {
+export function createResourceCompiler({ userDataDir, gamePath, chosen, keeper, log = () => {}, platform = process.platform, run = runProcess, wine = () => findWine() }: {
   userDataDir: string;
   /** the game folder in Settings (dota 2 beta/game) */
   gamePath: () => string | null | undefined;
   /** the compiler the user picked in Settings */
   chosen: () => string | null | undefined;
+  /** the copy of the Workshop Tools kept for when the game's are gone (src/workshop-tools.ts) */
+  keeper?: Pick<ToolsKeeper, 'usable' | 'info' | 'keepable'>;
   log?: (msg: string) => void;
   /** the system it runs on; tests name one */
   platform?: NodeJS.Platform;
@@ -144,9 +158,12 @@ export function createResourceCompiler({ userDataDir, gamePath, chosen, log = ()
   let queue: Promise<unknown> = Promise.resolve();
   let checking: Promise<CompilerCheck> | null = null;
 
-  /* A check counts for the compiler it ran on, as that file was: a Dota patch that brings a new
-   * resourcecompiler.exe, or another one picked, is unchecked again. */
-  const stampOf = (exe: string) => { try { return `${exe}|${fs.statSync(exe).mtimeMs}`; } catch { return null; } };
+  /* A check counts for the compiler it ran on, as that file was, and for the game it compiled
+   * against: another one picked, a new resourcecompiler.exe, or a Dota patch is unchecked again.
+   * The patch matters for the kept copy, which stays as it was while the game moves on. */
+  const stampOf = (exe: string) => {
+    try { const game = gamePath(); return `${exe}|${fs.statSync(exe).mtimeMs}|${(game && clientVersion(game)) || ''}`; } catch { return null; }
+  };
   function lastCheck(exe: string | undefined): CompilerCheck | null {
     if (!exe) return null;
     try {
@@ -155,21 +172,26 @@ export function createResourceCompiler({ userDataDir, gamePath, chosen, log = ()
     } catch { return null; }
   }
 
-  /** The compiler that runs: the one picked, when it is one, else the game's own. */
-  function locate(): { exe: string; install: string; chosen: boolean } | null {
+  /** The compiler that runs: the one picked, when it is one, else the game's own, else the kept copy. */
+  function locate(): { exe: string; install: string; source: CompilerSource } | null {
     const picked = chosen();
-    if (picked && installOf(picked)) return { exe: picked, install: installOf(picked)!, chosen: true };
+    if (picked && installOf(picked)) return { exe: picked, install: installOf(picked)!, source: 'chosen' };
     const game = gamePath();
     const own = game ? compilerIn(game) : null;
     const install = installOf(own);
-    return own && install ? { exe: own, install, chosen: false } : null;
+    if (own && install) return { exe: own, install, source: 'game' };
+    const kept = keeper?.usable();
+    return kept ? { ...kept, source: 'kept' } : null;
   }
 
   function state(): CompilerState {
     const found = locate();
     const w = needsWine ? wine() : null;
     const made = needsWine && prefixReady(prefix);
-    return { exe: found?.exe ?? null, chosen: !!found?.chosen, needsWine, wine: w, prefixReady: made, ready: !!found && (!needsWine || (!!w && made)), check: lastCheck(found?.exe) };
+    return {
+      exe: found?.exe ?? null, chosen: found?.source === 'chosen', source: found?.source ?? null, kept: keeper?.info() ?? null, keepable: !!keeper?.keepable(),
+      needsWine, wine: w, prefixReady: made, ready: !!found && (!needsWine || (!!w && made)), check: lastCheck(found?.exe),
+    };
   }
 
   /** Everything a compile needs before it starts: the compiler, and here Wine with its prefix made. */
@@ -189,6 +211,7 @@ export function createResourceCompiler({ userDataDir, gamePath, chosen, log = ()
     const staged = new Set(job.files.map((f) => f.path));
     for (const c of job.compile) if (!staged.has(c)) throw new Error(`${c} is to be compiled and is not among the sources`);
     const { exe, install, wine: w } = await prepare();
+    log(`resourcecompiler: ${job.id} with ${exe}`);
     const addon = `d2mm_${job.id}`;
     const content = path.join(install, 'content', 'dota_addons', addon);
     const out = path.join(install, 'game', 'dota_addons', addon);

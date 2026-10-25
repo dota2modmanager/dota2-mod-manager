@@ -94,9 +94,9 @@ test('the compiler picked in Settings runs over the game\'s own, and a wrong pic
   const b = install(t);
   let picked: string | null = b.exe;
   const rc = createResourceCompiler({ userDataDir: a.userData, gamePath: () => a.game, chosen: () => picked, platform: 'win32' });
-  assert.deepEqual(rc.locate(), { exe: b.exe, install: b.root, chosen: true });
+  assert.deepEqual(rc.locate(), { exe: b.exe, install: b.root, source: 'chosen' });
   picked = path.join(b.root, 'nothing.exe');
-  assert.deepEqual(rc.locate(), { exe: a.exe, install: a.root, chosen: false });
+  assert.deepEqual(rc.locate(), { exe: a.exe, install: a.root, source: 'game' });
   const none = createResourceCompiler({ userDataDir: a.userData, gamePath: () => null, chosen: () => null, platform: 'win32' });
   assert.equal(none.locate(), null);
   assert.equal(none.state().ready, false);
