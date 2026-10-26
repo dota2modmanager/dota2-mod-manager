@@ -572,7 +572,7 @@ test('Halloween dresses the page: webs, blood, spiders that come down with the s
   await phone.context.close();
 });
 
-test('in season the page itself turns: bleeding headings, eyes that whisper the way on, and a heart on the lost page', { timeout: 60_000 }, async () => {
+test('in season the page itself turns: bleeding headings, eyes that whisper the way on, and a mask on the lost page', { timeout: 60_000 }, async () => {
   // for everybody while Halloween is on, earned or not: no mm-rainbow here
   const { context, page } = await openPage(browser, server.url, 'desktop');
   await page.setViewportSize({ width: 1600, height: 900 });
@@ -580,7 +580,7 @@ test('in season the page itself turns: bleeding headings, eyes that whisper the 
   await page.evaluate(() => localStorage.setItem('mm-look', 'halloween'));
   await page.reload({ waitUntil: 'load' });
   await page.waitForTimeout(300);
-  assert.ok((await page.locator('.dr-drips i').count()) >= 4, 'the headings do not bleed');
+  assert.ok((await page.locator('.dr-drip').count()) >= 4, 'the headings do not bleed');
   assert.ok((await page.locator('.dr-word').count()) >= 1, 'no word is possessed');
   // the first thing the eyes say is the way into the app's half of the hunt
   const eyes = page.locator('.dr-eyes').first();
@@ -589,18 +589,17 @@ test('in season the page itself turns: bleeding headings, eyes that whisper the 
   assert.match(await page.locator('.dr-whisper').textContent(), /twenty/);
   await context.close();
 
-  // the lost page: his heart named, a phone rings, and whoever picks up keeps the mask
+  // the lost page: his mask on a thread, and pressed it shows the mod it was hiding
   const lost = await openPage(browser, server.url, 'desktop');
   await lost.page.goto(`${server.url}/404.html`, { waitUntil: 'load' });
   await lost.page.evaluate(() => localStorage.setItem('mm-look', 'halloween'));
   await lost.page.reload({ waitUntil: 'load' });
-  await lost.page.keyboard.type('nothing to see');
-  await lost.page.waitForTimeout(300);
-  assert.equal(await lost.page.locator('.hs').count(), 0, 'any word made it ring');
-  await lost.page.keyboard.type('heartstopper');
-  await lost.page.locator('.hs-pick').click();
-  await lost.page.locator('.hs.after').waitFor({ timeout: 20_000 });
+  await lost.page.locator('.hs-mask').click({ force: true }); // it swings on its thread and is never still
+  await lost.page.locator('.hs.on .hs-title').waitFor({ timeout: 5_000 });
+  assert.match(await lost.page.locator('.hs-card').textContent(), /Necrophos[\s\S]*not in the catalog/);
   assert.equal(await lost.page.evaluate(() => localStorage.getItem('mm-heart')), '1');
+  // whoever found it keeps the mask, so the footer has it
+  await lost.page.locator('.hs-close').click();
   assert.equal(await lost.page.locator('.foot-legal .dr-trophy').count(), 1, 'the mask is not in the footer');
   await lost.context.close();
 });

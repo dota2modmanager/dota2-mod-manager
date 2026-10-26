@@ -24,7 +24,7 @@ const WHISPERS: Say[] = [
   { en: 'The one in the corner of the app\'s window. Knock on him twenty times. I count from the first.', ru: 'Тот, кто сидит в углу окна приложения. Постучи по нему двадцать раз. Считаю с первого.' },
   { en: 'The pumpkin in the app is hungry. It eats what the mother of spiders leaves behind.', ru: 'Тыква в приложении голодна. Она ест то, что оставляет мать пауков.' },
   { en: 'Only the pumpkin knows the fourth.', ru: 'Четвёртого знает только тыква.' },
-  { en: 'His heart is on the page that is not here.', ru: 'Его сердце на странице, которой нет.' },
+  { en: 'His mask hangs on the page that is not here.', ru: 'Его маска висит на странице, которой нет.' },
   { en: 'He wears a mask now. He carries a phone.', ru: 'Теперь он носит маску. И у него есть телефон.' },
   { en: 'Do not look behind you.', ru: 'Не оглядывайся.' },
 ];
@@ -107,34 +107,53 @@ export function mountDread(): void {
   const place = () => { for (const f of placed) f(); };
   const pageBox = (e: Element) => { const r = e.getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height }; };
 
-  // headings that bleed, from under the last line of their letters (laid over the page, not
-  // put inside: a heading's letters are a gradient clipped to the text, and that clips them too)
-  for (const h of [...main.querySelectorAll<HTMLElement>('h1, h2')].slice(0, 10)) {
-    const drips = el('div', 'dr-drips');
-    const size = parseFloat(getComputedStyle(h).fontSize);
-    drips.style.setProperty('--w', `${Math.max(3, size * 0.05).toFixed(1)}px`);
-    const k = 2 + Math.floor(Math.random() * 3);
-    for (let i = 0; i < k; i++) {
-      const d = document.createElement('i');
-      d.style.setProperty('--x', `${((i + 0.2 + Math.random() * 0.6) / k) * 100}%`);
+  // headings that bleed: drops hang from the foot of a few letters on the last line, each
+  // from a stroke that really reaches the baseline (laid over the page, not put inside: a
+  // heading's letters are a gradient clipped to the text, and that would clip the drops too)
+  const LOW = /[gjpqyуцщрдфз,.]/i;          // these hang below the line: no drop from them
+  const STEM = /[AHKMNVWXYhkmnrvwxПНИЙЛМКЖХШЩЧЯАпнийлмкжхшчяа]/;   // these touch it at the left stroke
+  const ruler = document.createElement('canvas').getContext('2d')!;
+  for (const h of [...main.querySelectorAll<HTMLElement>('h1, h2')].slice(0, 24)) {
+    const cs = getComputedStyle(h);
+    const size = parseFloat(cs.fontSize);
+    ruler.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const ascent = ruler.measureText('H').fontBoundingBoxAscent;
+    const w = Math.max(3, size * 0.05);
+    const drips = Array.from({ length: 2 + Math.floor(Math.random() * 3) }, () => {
+      const d = el('i', 'dr-drip');
+      d.style.setProperty('--w', `${w.toFixed(1)}px`);
       d.style.setProperty('--h', `${Math.round(size * (0.2 + Math.random() * 0.45))}px`);
       d.style.setProperty('--t', `${5 + Math.random() * 7}s`);
       d.style.setProperty('--wait', `${-Math.random() * 10}s`);
-      drips.appendChild(d);
-    }
-    document.body.appendChild(drips);
+      document.body.appendChild(d);
+      return d;
+    });
+    let chosen: number[] | null = null;
     placed.push(() => {
+      // every letter of the heading with its box, then the ones on its last line that can bleed
+      const letters: Array<{ ch: string; r: DOMRect }> = [];
+      const walker = document.createTreeWalker(h, NodeFilter.SHOW_TEXT);
       const r = document.createRange();
-      r.selectNodeContents(h);
-      const lines = [...r.getClientRects()].filter((q) => q.width > 4);
-      const last = lines.length ? lines.reduce((m, q) => (q.bottom > m.bottom ? q : m)) : null;
-      drips.hidden = !last;
-      if (!last) return;
-      const lineWide = lines.filter((q) => Math.abs(q.bottom - last.bottom) < 4);
-      const left = Math.min(...lineWide.map((q) => q.left)), right = Math.max(...lineWide.map((q) => q.right));
-      drips.style.left = `${Math.round(left + scrollX)}px`;
-      drips.style.width = `${Math.round(right - left)}px`;
-      drips.style.top = `${Math.round(last.bottom + scrollY - last.height * 0.28)}px`;
+      while (walker.nextNode()) {
+        const t = walker.currentNode as Text;
+        for (let i = 0; i < t.data.length; i++) {
+          if (!/\p{L}/u.test(t.data[i])) continue;
+          r.setStart(t, i); r.setEnd(t, i + 1);
+          const box = r.getBoundingClientRect();
+          if (box.width) letters.push({ ch: t.data[i], r: box });
+        }
+      }
+      const bottom = Math.max(...letters.map((l) => l.r.bottom));
+      const can = letters.filter((l) => Math.abs(l.r.bottom - bottom) < 4 && !LOW.test(l.ch));
+      chosen ??= can.map((_, i) => i).sort(() => Math.random() - 0.5).slice(0, drips.length);
+      drips.forEach((d, k) => {
+        const l = can[chosen![k]];
+        d.hidden = !l;
+        if (!l) return;
+        const x = l.r.left + (STEM.test(l.ch) ? l.r.width * 0.2 : l.r.width / 2) - w / 2;
+        d.style.left = `${Math.round(x + scrollX)}px`;
+        d.style.top = `${Math.round(l.r.top + ascent + scrollY - w * 0.6)}px`;
+      });
     });
   }
 
@@ -172,7 +191,22 @@ export function mountDread(): void {
   // above a section, where nothing is written; somewhere else each time they open ----
   const eyes: Array<{ box: HTMLElement; pupils: HTMLElement[]; shut: boolean }> = [];
   let told = 0;
+  // never on top of one of the hunt's heroes, nor next to another pair of eyes
+  const crowded = (x: number, y: number, self: HTMLElement) => [
+    ...[...document.querySelectorAll('.hunt-hero')].map((e) => pageBox(e)),
+    ...eyes.filter((e) => e.box !== self && !e.box.classList.contains('gone')).map((e) => pageBox(e.box)),
+  ].some((b) => Math.hypot(b.x + b.w / 2 - (x + 30), b.y + b.h / 2 - (y + 12)) < 170);
   const openEyes = (box: HTMLElement) => {
+    for (let tries = 0; tries < 24; tries++) {
+      const [x, y] = spot();
+      if (tries < 23 && crowded(x, y, box)) continue;
+      box.style.left = `${Math.round(Math.max(4, x))}px`;
+      box.style.top = `${Math.round(y)}px`;
+      break;
+    }
+    box.classList.remove('gone');
+  };
+  const spot = (): [number, number] => {
     const vw = document.documentElement.clientWidth;
     const g = Math.max(0, (vw - Math.min(1200, vw)) / 2);
     const strips = [...main.querySelectorAll<HTMLElement>('section')].filter((s) => parseFloat(getComputedStyle(s).paddingTop) >= 40);
@@ -188,25 +222,25 @@ export function mountDread(): void {
       x = 16 + Math.random() * (vw - 100);
       y = s.y + 6;
     }
-    box.style.left = `${Math.round(Math.max(4, x))}px`;
-    box.style.top = `${Math.round(y)}px`;
-    box.classList.remove('gone');
+    return [x, y];
   };
   for (let i = 0; i < 3; i++) {
-    const box = el('div', 'dr-eyes');
+    const box = el('div', 'dr-eyes gone');
     box.removeAttribute('aria-hidden');
     box.setAttribute('role', 'presentation');
     const pupils = [0, 1].map(() => { const e = document.createElement('i'); const p = document.createElement('b'); e.appendChild(p); box.appendChild(e); return p; });
     document.body.appendChild(box);
-    openEyes(box);
     eyes.push({ box, pupils, shut: false });
+    // a moment after the page, once the hunt has put its heroes where they go
+    setTimeout(() => openEyes(box), 900 + i * 300);
     box.addEventListener('click', () => {
       whisper();
       const bubble = el('p', 'dr-whisper');
       bubble.textContent = say(WHISPERS[told++ % WHISPERS.length]);
       const r = box.getBoundingClientRect();
-      bubble.style.top = `${Math.round(r.bottom + 8)}px`;
-      bubble.style.left = `${Math.round(Math.min(innerWidth - 300, Math.max(12, r.left - 110)))}px`;
+      // on the page beside the eyes, so it stays where they were as the page scrolls
+      bubble.style.top = `${Math.round(r.bottom + scrollY + 8)}px`;
+      bubble.style.left = `${Math.round(Math.min(document.documentElement.clientWidth - 300, Math.max(12, r.left - 110)) + scrollX)}px`;
       document.body.appendChild(bubble);
       setTimeout(() => bubble.remove(), 6500);
       box.classList.add('gone');
@@ -298,7 +332,7 @@ export function mountDread(): void {
   trophy();
 }
 
-/** Whoever found his heart (scripts/heart.ts) keeps his mask, in the footer of every page. */
+/** Whoever found his mask (scripts/heart.ts) keeps it, in the footer of every page. */
 export function trophy(): void {
   let heart = false;
   try { heart = localStorage.getItem('mm-heart') === '1'; } catch { /* private mode */ }

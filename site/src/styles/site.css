@@ -1505,14 +1505,13 @@ html.halloween .hunt-key-code { background-image: linear-gradient(90deg, #ffb35c
 
 /* ---------- what the season does to the page itself (scripts/dread.ts) ---------- */
 /* headings that bleed: drops gather under the letters, stretch and fall */
-.dr-drips { position: absolute; z-index: 30; height: 0; pointer-events: none; }
-.dr-drips[hidden] { display: none; }
-.dr-drips i {
-  position: absolute; left: var(--x); top: 0; width: var(--w); height: var(--h);
+.dr-drip {
+  position: absolute; z-index: 30; pointer-events: none; width: var(--w); height: var(--h);
   background: linear-gradient(#5c0009, #c4111f); border-radius: 0 0 3px 3px;
   transform-origin: 50% 0; animation: ooze var(--t) ease-in var(--wait) infinite;
 }
-.dr-drips i::after {
+.dr-drip[hidden] { display: none; }
+.dr-drip::after {
   content: ''; position: absolute; left: -25%; bottom: calc(var(--w) * -0.9); width: 150%; height: calc(var(--w) * 1.8);
   background: #c4111f; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
   animation: drop var(--t) ease-in var(--wait) infinite;
@@ -1524,8 +1523,8 @@ html.halloween .hunt-key-code { background-image: linear-gradient(90deg, #ffb35c
 .dr-grip { position: absolute; z-index: 30; width: 84px; height: 50px; pointer-events: none; }
 .dr-grip svg { display: block; width: 84px; height: 50px; overflow: visible; filter: drop-shadow(0 3px 2px rgb(0 0 0 / 0.6)); }
 /* near the pointer they let go and drop back behind the card, and the blood they left stays */
-.dr-grip :is(.hand, .nail, .knuckle) { transition: translate 300ms cubic-bezier(0.5, 0, 0.9, 0.6), opacity 300ms; }
-.dr-grip.gone :is(.hand, .nail, .knuckle) { translate: 0 -14px; opacity: 0; transition-duration: 120ms; }
+.dr-grip :is(.hand, .nail, .knuckle, .smear) { transition: translate 300ms cubic-bezier(0.5, 0, 0.9, 0.6), opacity 300ms; }
+.dr-grip.gone :is(.hand, .nail, .knuckle, .smear) { translate: 0 -14px; opacity: 0; transition-duration: 120ms; }
 .dr-grip .hand path { fill: #a99a8c; stroke: #2e211d; stroke-width: 0.9; }
 .dr-grip .nail path { fill: #cfc2b4; stroke: #5d4a40; stroke-width: 0.6; }
 .dr-grip .knuckle path { fill: none; stroke: #6d5a50; stroke-width: 0.9; stroke-linecap: round; }
@@ -1561,7 +1560,7 @@ html.halloween .hunt-key-code { background-image: linear-gradient(90deg, #ffb35c
 .dr-eyes b { width: 4px; height: 7px; border-radius: 50%; background: #000; }
 .dr-eyes:is(.shut, .blink) i { scale: 1 0.08; }
 .dr-whisper {
-  position: fixed; z-index: 60; max-width: 280px; margin: 0; pointer-events: none;
+  position: absolute; z-index: 60; max-width: 280px; margin: 0; pointer-events: none;
   font: italic 600 15px/1.4 var(--display); color: #ff3b4e;
   text-shadow: 0 0 10px rgb(255 0 30 / 0.6), 0 2px 0 #300;
   animation: hush 6.5s ease forwards;
@@ -1580,23 +1579,37 @@ html.halloween .hunt-key-code { background-image: linear-gradient(90deg, #ffb35c
 .dr-peek.right.in { translate: 42% 0; }
 .dr-flash { position: fixed; inset: 0; z-index: 100; background: #000 url('/halloween/scream.webp') center / cover no-repeat; pointer-events: none; }
 .dr-ghost { position: fixed; z-index: 50; pointer-events: none; background: url('/halloween/scream.webp') center / cover; mix-blend-mode: hard-light; opacity: 0.8; }
-/* the end of the night on the lost page (scripts/heart.ts): a phone ringing in the dark */
-.hs-caret { display: block; margin: -4px auto 10px; color: #c3102a; font: 700 28px/1 var(--display); animation: caret 1.1s steps(1) infinite; }
-@keyframes caret { 50% { opacity: 0; } }
+/* the end of the night on the lost page (scripts/heart.ts): a mask on a thread, and what it hides */
+article.lost { position: relative; }
+.hs-mask {
+  position: absolute; top: 0; right: clamp(8px, 10%, 160px); width: 74px; height: 64px; padding: 0; border: 0;
+  background: none; cursor: pointer; transform-origin: 50% -90px;
+}
+.hs-mask::before { content: ''; position: absolute; left: 50%; bottom: 100%; width: 1px; height: 90px; background: rgb(230 226 240 / 0.4); }
+.hs-mask img {
+  display: block; width: 100%; height: 100%; border-radius: 46% 46% 50% 50%; object-fit: cover;
+  -webkit-mask-image: radial-gradient(closest-side, #000 70%, transparent); mask-image: radial-gradient(closest-side, #000 70%, transparent);
+  filter: drop-shadow(0 0 10px rgb(255 0 30 / 0.5)); opacity: 0.85; transition: opacity 200ms, scale 200ms;
+}
+.hs-mask:is(:hover, :focus-visible) img { opacity: 1; scale: 1.08; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .hs-mask { animation: hang 4.2s ease-in-out infinite alternate; }
+}
+@keyframes hang { from { rotate: -7deg; } to { rotate: 7deg; } }
 .hs {
-  position: fixed; inset: 0; z-index: 200; display: grid; place-content: center; justify-items: center; gap: 22px;
-  padding: 24px; background: #000; color: #f3e9ea; text-align: center; opacity: 0; transition: opacity 600ms;
+  position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 16px;
+  background: rgb(5 0 1 / 0.86); opacity: 0; transition: opacity 400ms;
 }
 .hs.on { opacity: 1; }
-.hs-phone { font-size: 84px; line-height: 1; color: #c4111f; text-shadow: 0 0 24px rgb(255 0 30 / 0.6); animation: ringing 0.1s linear infinite alternate; }
-.hs-phone.up { animation: none; opacity: 0.25; }
-@keyframes ringing { from { rotate: -9deg; } to { rotate: 9deg; } }
-.hs-said { min-height: 1.4em; margin: 0; max-width: 34ch; font: italic 600 clamp(22px, 3.4vw, 34px)/1.3 var(--display); color: #ff3b4e; text-shadow: 0 0 14px rgb(255 0 30 / 0.5); }
-.hs.scream { background: #000 url('/halloween/scream.webp') center / cover no-repeat; animation: shake 90ms linear 12; }
-.hs.scream :is(.hs-phone, .hs-said) { opacity: 0; }
-.hs.after { background-size: contain; background-color: #0a0002; animation: none; place-content: end center; padding-bottom: 8vh; }
-.hs.after .hs-said { opacity: 1; font-size: clamp(18px, 2.2vw, 24px); color: #fff; background: rgb(0 0 0 / 0.7); padding: 10px 16px; border-radius: 10px; }
-@keyframes shake { 0% { translate: 6px -4px; } 50% { translate: -7px 5px; } 100% { translate: 3px 6px; } }
+.hs-card {
+  width: min(560px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 0 0 20px;
+  background: #140306; border: 1px solid #5c0009; border-radius: 16px; color: #f3e9ea;
+  box-shadow: 0 0 60px rgb(150 0 14 / 0.45);
+}
+.hs-pic { display: block; width: 100%; height: auto; aspect-ratio: 1280 / 680; object-fit: cover; border-radius: 15px 15px 0 0; }
+.hs-title { margin: 18px 20px 8px; font-size: clamp(22px, 4vw, 28px); color: #ff3b4e; }
+.hs-text { margin: 0 20px 10px; color: #e6d6d8; line-height: 1.55; }
+.hs-close { margin: 8px 20px 0; }
 .dr-trophy {width: 34px; height: 28px; margin-left: 8px; border-radius: 50%; object-fit: cover; vertical-align: middle; filter: drop-shadow(0 0 6px #f00); }
 
 @media (prefers-reduced-motion: reduce) {

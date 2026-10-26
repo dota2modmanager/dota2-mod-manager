@@ -1,38 +1,35 @@
 /**
  * The end of the night, on the page for an address that is not here (pages/404.astro).
  *
- * The app's pumpkin, once opened, says where to go next: where there is nothing on the site, name
- * his heart. Everybody who plays the game knows the name of Necrophos' heart. Typed anywhere on
- * this page, in either keyboard layout or in Russian, it makes a telephone ring. Picking up plays
- * the oldest call in horror, and then he is there, in the mask of the mod the app's pumpkin gave. Whoever got that far keeps
- * the mask in the footer of every page (scripts/dread.ts, mm-heart).
- *
- * The words are compared by their SHA-256, so reading this file gives away the place and not the
- * name. Only while Halloween is in season.
+ * The app's pumpkin, once opened, says where to go next: where there is nothing on the site, find
+ * his mask. It hangs there on a thread while Halloween is in season. Pressed, it screams, and then
+ * shows what it was hiding: the mod the pumpkin gives, what went into it and where it is kept.
+ * Whoever got that far keeps the mask in the footer of every page (scripts/dread.ts, mm-heart).
  */
 import { lookNow } from './look';
-import { ring, stinger, whisper } from './spook-sound';
+import { stinger } from './spook-sound';
 import { trophy } from './dread';
 
-const HEARTS = new Set([
-  '3667af449558d78faaaadf4426580e6051ee76e04ba507a501b5d12e443fc8c3',
-  '0da38ac694fbcb8b17de54b2d0ae6157cbdc79f09bb36e6ee93277f027aca514',
-  '9680fcfe1e416fb1dccd9c2b26bd485298bf24caba205a095820473895ba5746',
-  '658afb2671f60a77fa0a977e4a913bb48edf96f9e28771ba29771a6f73292244',
-]);
-const LENGTHS = [12, 15, 16, 19];
-
 const WORDS = {
-  en: { pick: 'Pick up', hello: 'Hello?', line: 'Do you like scary movies?', end: 'You named his heart, and it stopped. The mask is yours now.', close: 'Hang up' },
-  ru: { pick: 'Взять трубку', hello: 'Алло?', line: 'Ты любишь страшные фильмы?', end: 'Ты назвал его сердце, и оно остановилось. Маска теперь твоя.', close: 'Положить трубку' },
+  en: {
+    label: 'A mask on a thread',
+    title: 'Necrophos: Scream',
+    body: [
+      'A set for Necrophos made from nothing: a mask and hood of its own, a black robe, a bloody scythe, every effect of his turned red, new spell icons, and the look and sound of his immortals without owning them.',
+      'It is not in the catalog. It is hidden in the night that runs between the site and the app: the eight on the site, the pumpkin in the app, and a key of your own that opens it once.',
+    ],
+    close: 'Close',
+  },
+  ru: {
+    label: 'Маска на нитке',
+    title: 'Некрофос: Крик',
+    body: [
+      'Сет для Некрофоса, сделанный с нуля: своя маска и капюшон, чёрная мантия, окровавленная коса, все его эффекты в красном, новые иконки способностей, а ещё вид и звуки его имморталов без самих предметов.',
+      'В каталоге его нет. Он спрятан в ночи, которая идёт между сайтом и приложением: восемь героев на сайте, тыква в приложении и твой собственный ключ, который откроет его один раз.',
+    ],
+    close: 'Закрыть',
+  },
 };
-
-async function sha(s: string): Promise<string> {
-  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: string): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
@@ -41,82 +38,58 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: s
   return e;
 }
 
-async function call(ru: boolean): Promise<void> {
+/** The scream, and then the mod it was hiding. */
+function reveal(ru: boolean, from: HTMLElement): void {
   const w = WORDS[ru ? 'ru' : 'en'];
+  stinger();
+  const flash = el('div', 'dr-flash');
+  flash.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 650);
+  try { localStorage.setItem('mm-heart', '1'); } catch { /* private mode */ }
+  trophy();
+
   const root = el('div', 'hs');
   root.setAttribute('role', 'dialog');
   root.setAttribute('aria-modal', 'true');
-  const phone = el('div', 'hs-phone', '☎');
-  phone.setAttribute('aria-hidden', 'true');
-  const pick = el('button', 'btn hs-pick', w.pick);
-  pick.type = 'button';
-  const said = el('p', 'hs-said');
-  said.setAttribute('aria-live', 'polite');
-  root.append(phone, said, pick);
-  document.body.appendChild(root);
-  document.documentElement.classList.add('chasing');
-  requestAnimationFrame(() => root.classList.add('on'));
-  const hush = ring();
-  pick.focus();
-  await new Promise<void>((r) => pick.addEventListener('click', () => r(), { once: true }));
-  hush();
-  pick.remove();
-  phone.classList.add('up');
-
-  const type = async (text: string) => {
-    said.textContent = '';
-    for (const ch of text) { said.textContent += ch; await sleep(ch === ' ' ? 90 : 60 + Math.random() * 70); }
-  };
-  await sleep(1400);
-  whisper();
-  await type(w.hello);
-  await sleep(1600);
-  await type(w.line);
-  await sleep(2200);
-
-  stinger();
-  await sleep(330);
-  root.classList.add('scream');
-  try { localStorage.setItem('mm-heart', '1'); } catch { /* private mode */ }
-  trophy();
-  await sleep(1500);
-  root.classList.add('after');
-  said.textContent = w.end;
-  const close = el('button', 'btn ghost hs-close', w.close);
+  root.setAttribute('aria-labelledby', 'hs-title');
+  const card = el('div', 'hs-card');
+  const pic = el('img', 'hs-pic');
+  pic.src = '/halloween/scream.webp';
+  pic.alt = '';
+  const title = el('h2', 'hs-title', w.title);
+  title.id = 'hs-title';
+  card.append(pic, title, ...w.body.map((t) => el('p', 'hs-text', t)));
+  const close = el('button', 'btn hs-close', w.close);
   close.type = 'button';
-  root.appendChild(close);
-  close.focus();
+  card.appendChild(close);
+  root.appendChild(card);
+  setTimeout(() => {
+    document.body.appendChild(root);
+    requestAnimationFrame(() => root.classList.add('on'));
+    close.focus();
+  }, 600);
   const done = () => {
     root.classList.remove('on');
-    document.documentElement.classList.remove('chasing');
-    setTimeout(() => root.remove(), 600);
+    setTimeout(() => root.remove(), 400);
+    from.focus();
   };
-  close.addEventListener('click', done, { once: true });
+  close.addEventListener('click', done);
+  root.addEventListener('click', (e) => { if (e.target === root) done(); });
   root.addEventListener('keydown', (e) => { if (e.key === 'Escape') done(); });
 }
 
 export function mountHeart(): void {
-  if (!document.querySelector('article.lost') || lookNow() !== 'halloween') return;
+  const lost = document.querySelector('article.lost');
+  if (!lost || lookNow() !== 'halloween') return;
   const ru = navigator.language.toLowerCase().startsWith('ru');
-  // a caret blinking under the code, as if something were waiting to be typed
-  const code = document.querySelector('.lost .code');
-  if (code) { const caret = el('span', 'hs-caret', '_'); caret.setAttribute('aria-hidden', 'true'); code.after(caret); }
-
-  // what is typed, twice: by the key's place on the keyboard (whatever layout it is in), and as typed
-  let byPlace = '', asTyped = '', busy = false;
-  addEventListener('keydown', async (e) => {
-    if (busy || e.ctrlKey || e.metaKey || e.altKey) return;
-    if (/^Key[A-Z]$/.test(e.code)) byPlace = (byPlace + e.code.slice(3).toLowerCase()).slice(-24);
-    if (/^\p{L}$/u.test(e.key)) asTyped = (asTyped + e.key.toLowerCase()).slice(-24);
-    for (const s of [byPlace, asTyped]) {
-      for (const n of LENGTHS) {
-        if (s.length < n || !HEARTS.has(await sha(s.slice(-n)))) continue;
-        busy = true;
-        byPlace = asTyped = '';
-        await call(ru);
-        busy = false;
-        return;
-      }
-    }
-  });
+  const mask = el('button', 'hs-mask');
+  mask.type = 'button';
+  mask.setAttribute('aria-label', WORDS[ru ? 'ru' : 'en'].label);
+  const face = el('img', '');
+  face.src = '/halloween/face.webp';
+  face.alt = '';
+  mask.appendChild(face);
+  lost.appendChild(mask);
+  mask.addEventListener('click', () => reveal(ru, mask));
 }

@@ -44,7 +44,7 @@ const WORDS: Record<'ru' | 'en' | 'zh-CN', Words> = {
     litTitle: 'Кровавая ночь твоя', litText: 'Тема уже надета, а в «Моих модах» тебя ждёт {0}: включи его, и Некрофос станет Криком. Пока его нет ни у кого, кроме тех, кто добрался сюда.',
     litNoMod: 'Тема уже надета, а мод не скачался: {0}.', show: 'Показать мод', retry: 'Скачать мод', retried: 'Скачано',
     again: 'Кровавая ночь уже твоя', againText: 'Она в круге героев: щёлкай по маскоту, пока он не станет кровавой тыквой.', wear: 'Надеть кровавую ночь', prizeBack: 'Вернуть мод',
-    heart: 'Он тебя видел. Там, где на сайте ничего нет, назови его сердце.',
+    heart: 'Он тебя видел. Там, где на сайте ничего нет, найди его маску.',
   },
   en: {
     label: 'Pumpkin', coldLabel: 'A cold pumpkin', close: 'Close',
@@ -60,7 +60,7 @@ const WORDS: Record<'ru' | 'en' | 'zh-CN', Words> = {
     litTitle: 'The bloody night is yours', litText: 'The theme is on, and {0} is waiting in My mods: switch it on and Necrophos becomes Scream. Nobody has it yet except the people who made it this far.',
     litNoMod: 'The theme is on, but the mod did not download: {0}.', show: 'Show the mod', retry: 'Download the mod', retried: 'Downloaded',
     again: 'The bloody night is already yours', againText: 'It is in the round of heroes: click the mascot until it turns into a bloody pumpkin.', wear: 'Wear the bloody night', prizeBack: 'Get the mod back',
-    heart: 'He saw you. Where there is nothing on the site, name his heart.',
+    heart: 'He saw you. Where there is nothing on the site, find his mask.',
   },
   'zh-CN': {
     label: '南瓜', coldLabel: '冷掉的南瓜', close: '关闭',
@@ -76,7 +76,7 @@ const WORDS: Record<'ru' | 'en' | 'zh-CN', Words> = {
     litTitle: '血腥之夜归你了', litText: '主题已经换上，{0} 正在“我的模组”里等你：启用它，死灵飞龙就会变成惊声尖叫。除了走到这一步的人，还没有人拥有它。',
     litNoMod: '主题已经换上，但模组没有下载成功：{0}。', show: '查看模组', retry: '下载模组', retried: '已下载',
     again: '血腥之夜已经是你的了', againText: '它在英雄轮换里：一直点击吉祥物，直到它变成血色南瓜。', wear: '换上血腥之夜', prizeBack: '找回模组',
-    heart: '他看见你了。在网站上什么都没有的地方，说出他的心。',
+    heart: '他看见你了。在网站上什么都没有的地方，找到他的面具。',
   },
 };
 const words = (): Words => WORDS[(window.I18N_LANG as 'ru' | 'en' | 'zh-CN') ?? 'en'] ?? WORDS.en;
