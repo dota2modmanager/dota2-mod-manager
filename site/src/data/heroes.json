@@ -10502,6 +10502,143 @@
       ]
     },
     {
+      "id": "troll_warlord",
+      "name": "Troll Warlord",
+      "slug": "troll-warlord",
+      "mods": [
+        {
+          "name": "Troll Warlord Reimu",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["misc","weapon","arms","head","shoulder"],
+          "image": {"src":"/mods/troll-warlord-reimu.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1767093656
+        },
+        {
+          "name": "Troll Warlord Steel Warrior",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","head","shoulder","arms"],
+          "image": {"src":"/mods/troll-warlord-steel-warrior.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1792993494
+        },
+        {
+          "name": "Zuljin Troll Warlord",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","head","shoulder","weapon"],
+          "image": {"src":"/mods/zuljin-troll-warlord.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1773556978
+        },
+        {
+          "name": "Immortal Troll Warlord",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["weapon","head","shoulder"],
+          "image": {"src":"/mods/immortal-troll-warlord.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1790375737
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "venomancer",
       "name": "Venomancer",
       "slug": "venomancer",
@@ -12066,133 +12203,6 @@
       ]
     },
     {
-      "id": "troll_warlord",
-      "name": "Troll Warlord",
-      "slug": "troll-warlord",
-      "mods": [
-        {
-          "name": "Troll Warlord Reimu",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["misc","weapon","arms","head","shoulder"],
-          "image": {"src":"/mods/troll-warlord-reimu.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1767093656
-        },
-        {
-          "name": "Zuljin Troll Warlord",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","head","shoulder","weapon"],
-          "image": {"src":"/mods/zuljin-troll-warlord.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1773556978
-        },
-        {
-          "name": "Immortal Troll Warlord",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["weapon","head","shoulder"],
-          "image": {"src":"/mods/immortal-troll-warlord.webp","width":854,"height":480},
-          "author": "rasstegai",
-          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
-          "date": 1790375737
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
       "id": "vengeful",
       "name": "Vengeful Spirit",
       "slug": "vengeful-spirit",
@@ -13450,6 +13460,113 @@
       ]
     },
     {
+      "id": "slark",
+      "name": "Slark",
+      "slug": "slark",
+      "mods": [
+        {
+          "name": "Slark As If It Were Real",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","misc","head","shoulder","weapon"],
+          "image": {"src":"/mods/slark-as-if-it-were-real.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1792993494
+        },
+        {
+          "name": "Custom Slark",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","head","shoulder","weapon"],
+          "image": {"src":"/mods/custom-slark.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1769918269
+        },
+        {
+          "name": "Immortal Slark",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","head","shoulder","weapon"],
+          "image": {"src":"/mods/immortal-slark.webp","width":1280,"height":720},
+          "author": "Tenkay",
+          "authorUrl": "https://t.me/dota2Tenkay",
+          "date": 1786405804
+        },
+        {
+          "name": "Slark Barracuda Re",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","head","shoulder","weapon"],
+          "image": {"src":"/mods/slark-barracuda-re.webp","width":854,"height":480},
+          "author": "Amir4an",
+          "authorUrl": "https://vk.com/amir4an",
+          "date": 1768285028
+        },
+        {
+          "name": "Slark Collector Fire",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","head","shoulder","weapon"],
+          "image": {"src":"/mods/slark-collector-fire.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1791785647
+        },
+        {
+          "name": "Slark Shadow in the Deep",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","head","shoulder","weapon"],
+          "image": {"src":"/mods/slark-shadow-in-the-deep.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1776439861
+        },
+        {
+          "name": "Slark Tellurian Trespass",
+          "categoryId": "heroes",
+          "styleLabel": "Style I",
+          "slots": ["arms","back","head","shoulder","weapon"],
+          "image": {"src":"/mods/slark-tellurian-trespass-style-i.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1789724393
+        },
+        {
+          "name": "Slark Tellurian Trespass",
+          "categoryId": "heroes",
+          "styleLabel": "Style II",
+          "slots": ["arms","back","head","shoulder","weapon"],
+          "image": {"src":"/mods/slark-tellurian-trespass-style-ii.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1789724393
+        },
+        {
+          "name": "Slark Tellurian Trespass",
+          "categoryId": "heroes",
+          "styleLabel": "Style III",
+          "slots": ["arms","back","head","shoulder","weapon"],
+          "image": {"src":"/mods/slark-tellurian-trespass-style-iii.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1789724393
+        },
+        {
+          "name": "Slark Fernando",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","head","misc"],
+          "image": {"src":"/mods/slark-fernando.webp","width":854,"height":480},
+          "author": "Mirik522",
+          "authorUrl": "https://t.me/Moggdeli",
+          "date": 1792011470
+        }
+      ]
+    },
+    {
       "id": "spectre",
       "name": "Spectre",
       "slug": "spectre",
@@ -13868,6 +13985,103 @@
       ]
     },
     {
+      "id": "ember_spirit",
+      "name": "Ember Spirit",
+      "slug": "ember-spirit",
+      "mods": [
+        {
+          "name": "Ember Spirit Mai Shiranui",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","belt","misc","head","legs","shoulder","weapon","offhand"],
+          "image": {"src":"/mods/ember-spirit-mai-shiranui.webp","width":854,"height":480},
+          "author": "Pinkpapa",
+          "authorUrl": "https://www.patreon.com/Pinkpapa",
+          "date": 1771195327
+        },
+        {
+          "name": "Ember Spirit Shana",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","belt","head","shoulder","weapon","wings","offhand","misc"],
+          "image": {"src":"/mods/ember-spirit-shana.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1767093656
+        },
+        {
+          "name": "Ember Spirit Archive",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","belt","head","shoulder","weapon"],
+          "image": {"src":"/mods/ember-spirit-archive.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1792993494
+        },
+        {
+          "name": "Ember Spirit Cinder Sensei",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","belt","head","shoulder","weapon"],
+          "image": {"src":"/mods/ember-spirit-cinder-sensei.webp","width":854,"height":480},
+          "author": "Haruma",
+          "authorUrl": "https://t.me/DotA_2_Mods",
+          "date": 1779092133
+        },
+        {
+          "name": "Ember Spirit Green Samurai",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["belt","weapon","shoulder","arms","back"],
+          "image": {"src":"/mods/ember-spirit-green-samurai.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1765372546
+        },
+        {
+          "name": "Ember Spirit Immortal Fire",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","belt","shoulder","weapon"],
+          "image": {"src":"/mods/ember-spirit-immortal-fire.webp","width":1280,"height":720},
+          "author": "Tenkay",
+          "authorUrl": "https://t.me/dota2Tenkay",
+          "date": 1786494204
+        },
+        {
+          "name": "Ember Spirit Master of Searing Path",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","belt","shoulder","weapon"],
+          "image": {"src":"/mods/ember-spirit-master-of-searing-path.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1771071220
+        },
+        {
+          "name": "Fog Ember Spirit",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["arms","back","belt","shoulder","weapon"],
+          "image": {"src":"/mods/fog-ember-spirit.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1768729974
+        },
+        {
+          "name": "Ember Spirit Vanishing Flame",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "slots": ["back","belt","shoulder","weapon"],
+          "image": {"src":"/mods/ember-spirit-vanishing-flame.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1785081533
+        }
+      ]
+    },
+    {
       "id": "faceless_void",
       "name": "Faceless Void",
       "slug": "faceless-void",
@@ -14062,103 +14276,6 @@
       ]
     },
     {
-      "id": "slark",
-      "name": "Slark",
-      "slug": "slark",
-      "mods": [
-        {
-          "name": "Custom Slark",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","head","shoulder","weapon"],
-          "image": {"src":"/mods/custom-slark.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1769918269
-        },
-        {
-          "name": "Immortal Slark",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","head","shoulder","weapon"],
-          "image": {"src":"/mods/immortal-slark.webp","width":1280,"height":720},
-          "author": "Tenkay",
-          "authorUrl": "https://t.me/dota2Tenkay",
-          "date": 1786405804
-        },
-        {
-          "name": "Slark Barracuda Re",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","head","shoulder","weapon"],
-          "image": {"src":"/mods/slark-barracuda-re.webp","width":854,"height":480},
-          "author": "Amir4an",
-          "authorUrl": "https://vk.com/amir4an",
-          "date": 1768285028
-        },
-        {
-          "name": "Slark Collector Fire",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","head","shoulder","weapon"],
-          "image": {"src":"/mods/slark-collector-fire.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1791785647
-        },
-        {
-          "name": "Slark Shadow in the Deep",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","head","shoulder","weapon"],
-          "image": {"src":"/mods/slark-shadow-in-the-deep.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1776439861
-        },
-        {
-          "name": "Slark Tellurian Trespass",
-          "categoryId": "heroes",
-          "styleLabel": "Style I",
-          "slots": ["arms","back","head","shoulder","weapon"],
-          "image": {"src":"/mods/slark-tellurian-trespass-style-i.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1789724393
-        },
-        {
-          "name": "Slark Tellurian Trespass",
-          "categoryId": "heroes",
-          "styleLabel": "Style II",
-          "slots": ["arms","back","head","shoulder","weapon"],
-          "image": {"src":"/mods/slark-tellurian-trespass-style-ii.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1789724393
-        },
-        {
-          "name": "Slark Tellurian Trespass",
-          "categoryId": "heroes",
-          "styleLabel": "Style III",
-          "slots": ["arms","back","head","shoulder","weapon"],
-          "image": {"src":"/mods/slark-tellurian-trespass-style-iii.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1789724393
-        },
-        {
-          "name": "Slark Fernando",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","head","misc"],
-          "image": {"src":"/mods/slark-fernando.webp","width":854,"height":480},
-          "author": "Mirik522",
-          "authorUrl": "https://t.me/Moggdeli",
-          "date": 1792011470
-        }
-      ]
-    },
-    {
       "id": "sven",
       "name": "Sven",
       "slug": "sven",
@@ -14339,93 +14456,6 @@
           "author": "hrdq",
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1787135218
-        }
-      ]
-    },
-    {
-      "id": "ember_spirit",
-      "name": "Ember Spirit",
-      "slug": "ember-spirit",
-      "mods": [
-        {
-          "name": "Ember Spirit Mai Shiranui",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","belt","misc","head","legs","shoulder","weapon","offhand"],
-          "image": {"src":"/mods/ember-spirit-mai-shiranui.webp","width":854,"height":480},
-          "author": "Pinkpapa",
-          "authorUrl": "https://www.patreon.com/Pinkpapa",
-          "date": 1771195327
-        },
-        {
-          "name": "Ember Spirit Shana",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","belt","head","shoulder","weapon","wings","offhand","misc"],
-          "image": {"src":"/mods/ember-spirit-shana.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1767093656
-        },
-        {
-          "name": "Ember Spirit Cinder Sensei",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","belt","head","shoulder","weapon"],
-          "image": {"src":"/mods/ember-spirit-cinder-sensei.webp","width":854,"height":480},
-          "author": "Haruma",
-          "authorUrl": "https://t.me/DotA_2_Mods",
-          "date": 1779092133
-        },
-        {
-          "name": "Ember Spirit Green Samurai",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["belt","weapon","shoulder","arms","back"],
-          "image": {"src":"/mods/ember-spirit-green-samurai.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1765372546
-        },
-        {
-          "name": "Ember Spirit Immortal Fire",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","belt","shoulder","weapon"],
-          "image": {"src":"/mods/ember-spirit-immortal-fire.webp","width":1280,"height":720},
-          "author": "Tenkay",
-          "authorUrl": "https://t.me/dota2Tenkay",
-          "date": 1786494204
-        },
-        {
-          "name": "Ember Spirit Master of Searing Path",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","belt","shoulder","weapon"],
-          "image": {"src":"/mods/ember-spirit-master-of-searing-path.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1771071220
-        },
-        {
-          "name": "Fog Ember Spirit",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["arms","back","belt","shoulder","weapon"],
-          "image": {"src":"/mods/fog-ember-spirit.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1768729974
-        },
-        {
-          "name": "Ember Spirit Vanishing Flame",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "slots": ["back","belt","shoulder","weapon"],
-          "image": {"src":"/mods/ember-spirit-vanishing-flame.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1785081533
         }
       ]
     },

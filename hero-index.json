@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1553,
+  "mods": 1556,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -508,6 +508,7 @@
     "ember_spirit": {
       "name": "Ember Spirit",
       "mods": [
+        {"name":"Ember Spirit Archive","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","head","shoulder","weapon"]},
         {"name":"Ember Spirit Cinder Sensei","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","head","shoulder","weapon"]},
         {"name":"Ember Spirit Green Samurai","categoryId":"heroes","styleLabel":null,"slots":["belt","weapon","shoulder","arms","back"]},
         {"name":"Ember Spirit Immortal Fire","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon"]},
@@ -1668,6 +1669,7 @@
       "mods": [
         {"name":"Custom Slark","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Immortal Slark","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
+        {"name":"Slark As If It Were Real","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","weapon"]},
         {"name":"Slark Barracuda Re","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Collector Fire","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","weapon"]},
         {"name":"Slark Fernando","categoryId":"heroes","styleLabel":null,"slots":["back","head","misc"]},
@@ -1954,6 +1956,7 @@
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Troll Warlord Reimu","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","arms","head","shoulder"]},
+        {"name":"Troll Warlord Steel Warrior","categoryId":"heroes","styleLabel":null,"slots":["weapon","head","shoulder","arms"]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Zuljin Troll Warlord","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","weapon"]}
       ]
