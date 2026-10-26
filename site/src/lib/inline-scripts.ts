@@ -34,6 +34,19 @@ export const LANG_OFFER = [
 ].join('');
 
 /**
+ * The night from the beginning, once per round (the app does the same: src/pumpkin.ts
+ * NIGHT_ROUND). Whatever the hunt and the lost page left behind goes: the reward the page wears,
+ * Axe caught, the key shown, the mask in the footer. Ahead of EARLY_LOOK, so the page that
+ * forgets is not first painted in the colours it is forgetting.
+ */
+export const NIGHT_ROUND = '1';
+export const NIGHT_AGAIN = [
+  `try{if(localStorage.getItem('mm-night')!=='${NIGHT_ROUND}'){`,
+  "['mm-rainbow','mm-bled','mm-key','mm-heart'].forEach(function(k){localStorage.removeItem(k)});",
+  `localStorage.setItem('mm-night','${NIGHT_ROUND}')}}catch(e){}`,
+].join('');
+
+/**
  * The hunt's reward, put on before the first paint so the page does not flash its plain colours
  * first (Hunt.astro sets mm-rainbow when it is earned). Which look it wears is scripts/look.ts
  * lookNow written small: `mm-look` if it names one, else the event of the day, else the rainbow.

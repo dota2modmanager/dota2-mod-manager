@@ -17,6 +17,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
+import { NIGHT_ROUND } from '../src/lib/inline-scripts.ts';
 
 export const SITE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const DIST = path.join(SITE, 'dist');
@@ -133,6 +134,9 @@ export async function openPage(browser, base, screen, { motion = 'no-preference'
   await context.addInitScript(() => {
     document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.scrollBehavior = 'auto'; });
   });
+  // A visitor who has already been set back to the start of this round of the night
+  // (lib/inline-scripts.ts NIGHT_AGAIN): what a test puts in storage stays there.
+  await context.addInitScript((round) => { try { localStorage.setItem('mm-night', round); } catch { /* opaque origin */ } }, NIGHT_ROUND);
   const page = await context.newPage();
   const problems = [];
   page.on('console', (m) => {

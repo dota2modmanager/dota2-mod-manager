@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { createPumpkin, readings, PRIZE_NAME } from '../src/pumpkin.ts';
+import { createPumpkin, readings, PRIZE_NAME, beginNightAgain, NIGHT_ROUND } from '../src/pumpkin.ts';
 
 test('a key is read whatever the layout and the dashes', () => {
   assert.deepEqual(readings('abcd-efgh-jkmn-pqrs'), ['ABCDEFGHJKMNPQRS']);
@@ -76,4 +76,22 @@ test('the prize keeps its own picture: a data address reaches the library row as
   const pic = 'data:image/png;base64,iVBORw0KGgo=';
   assert.equal(previewUrl('imported', pic), pic);
   assert.match(previewUrl('heroes', 'x.png'), /\/assets\/previews\/heroes\/x\.png$/);
+});
+
+test('a new round of the night starts every install from the beginning, once, and keeps the earned key', () => {
+  const data: Record<string, unknown> = { pumpkin: true, secret: true, pumpkinLit: true, blood: true, theme: 'blood', bloodKey: 'ABCDEFGHJKMNPQRS' };
+  const settings = { get: (k: string) => data[k], set: (k: string, v: unknown) => { data[k] = v; } };
+  assert.equal(beginNightAgain(settings), true);
+  assert.deepEqual([data.pumpkin, data.secret, data.pumpkinLit, data.blood, data.theme], [false, false, false, false, 'ursa']);
+  assert.equal(data.bloodKey, 'ABCDEFGHJKMNPQRS');
+  assert.equal(data.nightRound, NIGHT_ROUND);
+  // walked again after the reset: the next start leaves it alone
+  data.blood = true;
+  data.theme = 'blood';
+  assert.equal(beginNightAgain(settings), false);
+  assert.equal(data.theme, 'blood');
+  // a hero's theme is not touched
+  const other: Record<string, unknown> = { theme: 'axe' };
+  beginNightAgain({ get: (k) => other[k], set: (k, v) => { other[k] = v; } });
+  assert.equal(other.theme, 'axe');
 });

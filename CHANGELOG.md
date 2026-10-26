@@ -2,6 +2,40 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.17.0
+
+### The night begins again
+
+The pumpkin has forgotten everyone who opened it, and the site has forgotten them too. Start from the
+first knock. This time the night ends with a key made for you alone, and the key opens something
+nobody else has.
+
+What it opens stays with the install that earned it. A copy from a friend will not run.
+
+### Items and heroes
+
+- The item builder dresses heroes in personas. With a persona picked, the builder stops offering
+  that hero's other looks.
+- New base models: Axe's immortal, Drow Ranger without the cape that clashed with some cosmetics,
+  and Faceless Void's second style with its own textures and immortal attachments.
+- Summons that belong to an item's hero, like Invoker's Infernus forge spirits, come out of the
+  builder ready for a match on Valve's servers, with their animations numbered the way the server
+  plays them. Before, they only kept their look in hero demo.
+- With the Dota 2 Workshop Tools installed, the app compiles the resources of mods outside safe mode
+  with resourcecompiler.exe. Your hero no longer comes back from a reconnect covered in errors.
+  Settings shows the compiler, checks it, and on Linux sets it up under Wine.
+
+### Catalog
+
+- A new Parts category.
+- The app draws its own dropdowns in the toolbar and in Settings, and the search field shows when
+  it has focus.
+- Chinese: the catalog's guides are translated, and cosmetics use Valve's own Chinese names.
+
+### Under the hood
+
+- Electron 45, with the security fixes it and the other dependencies brought.
+
 ## 2.16.0
 
 ### The Halloween update

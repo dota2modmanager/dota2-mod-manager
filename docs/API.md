@@ -6202,6 +6202,25 @@ export function readings(typed: string): string[]
 
 Every reading of what was typed that could be a key: 16 Latin letters and digits.
 
+### `NIGHT_ROUND`
+
+```ts
+export const NIGHT_ROUND = 1
+```
+
+Which night this install has been through: a new number makes everybody walk it again.
+
+### `beginNightAgain`
+
+```ts
+export function beginNightAgain(settings: Deps['settings']): boolean
+```
+
+The night from the beginning, once per round, for every install: the pumpkin goes back in, the
+two themes it opened close, and a window wearing one of them goes back to Ursa. The key spent
+and the mod it brought stay: that mod was earned (src/scream-guard.ts), only the way to the
+theme has to be found again. True when this start was the one that reset it.
+
 ### `RedeemAnswer`
 
 ```ts

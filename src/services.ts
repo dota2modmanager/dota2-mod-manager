@@ -8,6 +8,7 @@
  */
 import path from 'node:path';
 import { Settings } from './settings.ts';
+import { beginNightAgain } from './pumpkin.ts';
 import { Catalog } from './catalog.ts';
 import { Installer } from './installer.ts';
 import * as importer from './import.ts';
@@ -58,6 +59,8 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   const recovered = recoverJournals(FileTx.journalDir, diag);
   if (recovered.undone || recovered.finished) diag(`tx recovery: undid ${recovered.undone}, finished ${recovered.finished}`);
   const settings = new Settings(userData);
+  // a new round of the bloody night starts everybody from the beginning, once (src/pumpkin.ts)
+  if (beginNightAgain({ get: (k) => settings.get(k as never), set: (k, v) => settings.set(k as never, v as never) })) diag('the night starts again');
   setDownloadProxy(settings.get('downloadProxy'));
   setLang(settings.get('uiLang'));
   const catalog = new Catalog(userData);

@@ -15,7 +15,7 @@ import { join } from 'node:path';
 import { langFromUrl, useTranslations, pathIn, type Lang } from '../i18n/ui';
 import { ogPath } from '../lib/og';
 import { SITE_ROOT } from '../lib/paths';
-import { LANG_OFFER, EARLY_LOOK } from '../lib/inline-scripts';
+import { LANG_OFFER, EARLY_LOOK, NIGHT_AGAIN } from '../lib/inline-scripts';
 import Backdrop from '../components/Backdrop.astro';
 import Icon from '../components/Icon.astro';
 import { heroCopy } from '../i18n/heroes';
@@ -119,6 +119,7 @@ const searchWords = {
     <meta name="theme-color" content="#141218" />
     {/* The reward somebody earned in the hunt follows them from page to page, in today's look,
         and is put on before the first paint so the page does not flash purple first (Hunt.astro). */}
+    <script is:inline set:html={NIGHT_AGAIN} />
     <script is:inline set:html={EARLY_LOOK} />
     <slot name="head" />
   </head>

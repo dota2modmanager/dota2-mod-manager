@@ -43,6 +43,24 @@ export function readings(typed: string): string[] {
   return [...new Set([plain(asLooks), plain(typed), plain(asKeys)])].filter((r) => r.length === 16);
 }
 
+/** Which night this install has been through: a new number makes everybody walk it again. */
+export const NIGHT_ROUND = 1;
+
+/**
+ * The night from the beginning, once per round, for every install: the pumpkin goes back in, the
+ * two themes it opened close, and a window wearing one of them goes back to Ursa. The key spent
+ * and the mod it brought stay: that mod was earned (src/scream-guard.ts), only the way to the
+ * theme has to be found again. True when this start was the one that reset it.
+ */
+export function beginNightAgain(settings: Deps['settings']): boolean {
+  if (settings.get('nightRound') === NIGHT_ROUND) return false;
+  for (const k of ['pumpkin', 'secret', 'pumpkinLit', 'blood']) settings.set(k, false);
+  const theme = settings.get('theme');
+  if (theme === 'secret' || theme === 'blood') settings.set('theme', 'ursa');
+  settings.set('nightRound', NIGHT_ROUND);
+  return true;
+}
+
 /** What the window is told after a key: the night opened (and whether the mod came with it), or why not. */
 export type RedeemAnswer =
   | { ok: true; installed: string | null; installError?: string }

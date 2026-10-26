@@ -43,6 +43,8 @@ export interface StoredSettings {
   bloodKey?: string | null;
   /** this install's name for the pumpkin's worker, random, made when first needed (src/pumpkin.ts) */
   pumpkinInstall?: string | null;
+  /** the round of the night this install was last set back to the start of (src/pumpkin.ts NIGHT_ROUND) */
+  nightRound?: number;
   /** the resourcecompiler.exe picked in Settings, over the game's own (src/resource-compiler.ts) */
   resourceCompilerPath?: string | null;
 }

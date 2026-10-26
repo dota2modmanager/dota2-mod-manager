@@ -572,6 +572,32 @@ test('Halloween dresses the page: webs, blood, spiders that come down with the s
   await phone.context.close();
 });
 
+test('a new round of the night forgets what the last one left, once, before the first paint', async () => {
+  const { context, page } = await openPage(browser, server.url, 'desktop');
+  // somebody from the round before: rewarded, Axe caught, a key, the mask, and no mark of this round
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem('seeded')) return;
+    sessionStorage.setItem('seeded', '1');
+    localStorage.removeItem('mm-night');
+    for (const k of ['mm-rainbow', 'mm-bled', 'mm-key', 'mm-heart']) localStorage.setItem(k, '1');
+    localStorage.setItem('mm-sound', '1');
+  });
+  await page.goto(`${server.url}/`, { waitUntil: 'load' });
+  const left = await page.evaluate(() => ({
+    kept: ['mm-rainbow', 'mm-bled', 'mm-key', 'mm-heart'].filter((k) => localStorage.getItem(k) !== null),
+    sound: localStorage.getItem('mm-sound'),
+    worn: document.documentElement.classList.contains('rainbow') || document.documentElement.classList.contains('halloween'),
+  }));
+  assert.deepEqual(left.kept, []);
+  assert.equal(left.sound, '1', 'a choice that is not part of the night stays');
+  assert.equal(left.worn, false, 'the page wore the forgotten reward');
+  // earned again in this round, it stays
+  await page.evaluate(() => localStorage.setItem('mm-rainbow', '1'));
+  await page.reload({ waitUntil: 'load' });
+  assert.equal(await page.evaluate(() => localStorage.getItem('mm-rainbow')), '1');
+  await context.close();
+});
+
 test('in season the page itself turns: hands on the cards, eyes that whisper the way on, and a mask on the lost page', { timeout: 60_000 }, async () => {
   // for everybody while Halloween is on, earned or not: no mm-rainbow here
   const { context, page } = await openPage(browser, server.url, 'desktop');
