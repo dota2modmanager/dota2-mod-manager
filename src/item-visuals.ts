@@ -99,7 +99,11 @@ export function buildPlan(text: string, v: ItemVisuals): PlanStep[] {
   for (const m of v.modifiers) {
     const at = m.style ? ` (style ${m.style})` : '';
     switch (m.type) {
-      case 'entity_model': out.push({ what: `the hero's own model${at}`, how: `${m.modifier} under the hero's model path; its animations that need the item's activity modifier made the plain ones (asModel); its portrait camera under the plain path (item-portraits.ts)`, done: 'built' }); break;
+      case 'entity_model': out.push(!/^npc_dota_hero_/i.test(m.asset) ? {
+        what: `a summon's model (${m.asset})${at}`,
+        how: `${m.modifier} under the unit's plain model from scripts/npc/npc_units.txt, when that sits in the hero's model folder (summonModels); another hero's summon stays a swap in the table, which only hero demo reads`,
+        done: 'built',
+      } : { what: `the hero's own model${at}`, how: `${m.modifier} under the hero's model path; its animations that need the item's activity modifier made the plain ones (asModel); its portrait camera under the plain path (item-portraits.ts)`, done: 'built' }); break;
       case 'activity': out.push({ what: `activity modifier "${m.modifier}"${at}`, how: 'only the item switches it on: take it off the swapped model\'s animation clips (ANIM) and sequences (ASEQ), asModel; the game picks by the clips', done: 'built' }); break;
       case 'model': out.push({ what: `a model swap${at}`, how: `${m.modifier} under ${m.asset}`, done: 'by hand' }); break;
       case 'particle': out.push({ what: `a particle swap${at}`, how: `${m.modifier} under ${m.asset}; its children keep their own paths`, done: 'by hand' }); break;

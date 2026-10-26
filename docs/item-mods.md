@@ -53,6 +53,7 @@ while it is worn:
 | type | what it does | a build from files |
 |---|---|---|
 | `entity_model` | the hero's own model becomes another | put that model under the hero's model path |
+| `entity_model` on a summon | the hero's summon wears another model (Invoker's forged spirits) | put it under the unit's plain model from `scripts/npc/npc_units.txt`, when that sits in the hero's model folder; another hero's summon stays a swap in the table, which only hero demo reads |
 | `activity` | switches an activity modifier on (`abysm`) | take the modifier off the swapped model's animations (below) |
 | `model` | one wearable model becomes another | put the new one under the old path |
 | `particle` | one particle becomes another | put the new one under the old path; its children keep their paths |

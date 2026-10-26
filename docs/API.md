@@ -92,6 +92,7 @@ the code, not in this page.
 | [`src/mod-preview-pick.ts`](#srcmod-preview-pickts) | Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
+| [`src/model-sequences.ts`](#srcmodel-sequencests) | A model put under another model's path that numbers its sequences as that one does. |
 | [`src/mods-listing.ts`](#srcmods-listingts) | What My mods is drawn from: the answer to mods:list (src/ipc-mods.ts), which every screen asks |
 | [`src/net-download.ts`](#srcnet-downloadts) | A file downloaded to disk across the mirror chain (src/net.ts explains it): resumed where a |
 | [`src/net-fetch.ts`](#srcnet-fetchts) | A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a |
@@ -3365,7 +3366,7 @@ _No description in the source._
 ### `itemAssets`
 
 ```ts
-export function itemAssets(text: string, visuals: string, heroes: string[]): ItemAssets
+export function itemAssets(text: string, visuals: string, heroes: string[], summon?: SummonModels): ItemAssets
 ```
 
 The files an item's visuals swap, to stage under the plain paths: particles, models, and the
@@ -3380,7 +3381,10 @@ The pictures it swaps for the hero's (PICTURES): its portrait, minimap icon and 
 the minimap draws its hero icons out of a sprite sheet as well, so that sprite is swapped too.
 An arcana's hero model brings its HUD portrait's camera and lights (src/item-portraits.ts).
 
-Only what the hero has on without the item. An entity_model for another unit is left alone:
+Only what the hero has on without the item. An entity_model for one of the hero's own summons
+goes under that unit's plain model (`summon`, summonModels says which): online the server
+creates the unit from its own table and never swaps it, and Invoker's forged spirits came out
+plain in a lobby while hero demo showed Infernus (issue #334). Any other unit's is left alone:
 Rubick's arcana reshapes Spirit Bear and a dozen other heroes' summons for when he steals them.
 So is a model swap for anything but a stock item of the hero's: Queen of Pain's arcana lists 40,
 nearly all refits of paid shoulders to its body, and under their plain paths everyone wearing
@@ -3392,6 +3396,7 @@ arcanas), and those were read as no entries at all.
 ```
 @param text  items_game, for the hero's stock models
 @param heroes  the item's heroes, npc_dota_hero_*
+@param summon  the plain model of one of these heroes' summons; without it, none is staged
 ```
 
 ### `heroModelPath`
@@ -3403,6 +3408,31 @@ export function heroModelPath(ix: VpkIndex, hero: string): string
 Where a hero's own model lives: the first "Model" in its script, which is the hero's (the ones
 after it are its summons'). Shadow Fiend is npc_dota_hero_nevermore in models/heroes/shadow_fiend,
 so the path cannot be made from the name.
+
+### `SummonModels`
+
+```ts
+export type SummonModels = (unit: string, heroes: string[], model: string) => string | null
+```
+
+The plain model of a unit the item swaps for `model`, when the unit is one of these heroes'
+summons and `model` can number its sequences as the plain one does; or null.
+
+### `summonModels`
+
+```ts
+export function summonModels(ix: VpkIndex): SummonModels
+```
+
+Where the plain models of a hero's own summons live, read out of the game's unit scripts.
+
+An item names its unit by name, or by the start of the names it covers ("npc_dota_lone_druid_bear"
+for bear1 to bear4), and those have to agree on one model. A summon is the hero's own when that
+model sits in the hero's model folder: models/heroes/invoker/forge_spirit.vmdl for Invoker's
+forged spirits, and Undying's tombstones, whose units are not named after him. Rubick's arcana
+swaps the bear, Shadow Shaman's wards and others' summons, all in their own heroes' folders.
+A model that cannot be numbered as the plain one (numberedAs) is left to the table too: under the
+plain path it would play the wrong animations online, which is worse than none.
 
 ### `gameAssetEntries`
 
@@ -3615,13 +3645,14 @@ A set, as the builder puts it on; see itemSets.
 ### `AssetCopy`
 
 ```ts
-export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[] }
+export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[] } | { from: string; to: string; unit: string }
 ```
 
 A file in the game's archive staged under another path in the built VPK; an `optional` one (a
 picture the game has in some of its folders only) is left out when the game has not got it. A hero's own model
 names the hero instead of a path: where its model lives is in the hero's script, which the
 table does not say, and it goes in with the item's activity modifiers taken off (arcana.ts asModel).
+A summon's (forged spirits) names its unit, and is numbered as the plain model (model-sequences.ts).
 
 ### `canonicalItemSlot`
 
@@ -3810,7 +3841,7 @@ Hands on from [`src/item-builder-slots.ts`](#srcitem-builder-slotsts): `itemSlot
 
 Hands on from [`src/item-builder-effects.ts`](#srcitem-builder-effectsts): `itemEffects`.
 
-Hands on from [`src/item-builder-assets.ts`](#srcitem-builder-assetsts): `gameAssetEntries`.
+Hands on from [`src/item-builder-assets.ts`](#srcitem-builder-assetsts): `gameAssetEntries`, `summonModels`, `SummonModels`.
 
 ### `effectKey`
 
@@ -3839,7 +3870,7 @@ The stock default_item that matches a wearable by slot and by the hero(es) that 
 ### `itemEffectPatch`
 
 ```ts
-export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string): { id: string; block: string } & ItemAssets
+export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels): { id: string; block: string } & ItemAssets
 ```
 
 Turn one paid wearable into the hero's stock item for that slot.
@@ -3858,6 +3889,8 @@ when it is created, and a reconnect keeps them.
 ```
 @param targetId  the stock item to write it over, where its slot does not say: a persona's
 (src/item-builder-personas.ts personaRecords)
+@param summon  the plain models of the hero's summons (item-builder-assets.ts summonModels), for an
+item that swaps one; without it the swap stays in the table and shows in hero demo only
 ```
 
 ## src/item-portraits.ts
@@ -4886,6 +4919,32 @@ file with a fixed path (a terrain's maps/dota.vpk) has to make room first.
 ```
 @returns the record, updated
 ```
+
+## src/model-sequences.ts
+
+A model put under another model's path that numbers its sequences as that one does.
+
+Online the server picks a unit's animation in its own copy of the plain model and sends the
+client a number: the place of the sequence in the model's name list (ASEQ
+m_localSequenceNameArray), which also counts the clips a sequence plays under a name of its own.
+A model from an item lists them in an order of its own. Infernus, Invoker's forged spirit, has 24
+names where the plain spirit has 8, and number 2, the plain idle, is its turn_center: put under
+the plain path as it is, the spirit would play its turns for its idle in a lobby.
+
+So the plain model's names come first, in the plain order, each matched to the item's sequence of
+the same name (written any case, with or without underscores) or, failing that, of the same
+activity (the plain run is Infernus's runx); the rest
+follow in their own order, and every reference into the list is moved with its entry.
+
+### `numberedAs`
+
+```ts
+export function numberedAs(model: Buffer, plain: Buffer): Buffer | null
+```
+
+`model` with its sequences numbered as `plain` numbers its own, or null where that cannot be
+done: a plain sequence with nothing in the model to stand for it, a list either one has not got,
+or sequences of kinds this does not move the references of (multi, synth, command).
 
 ## src/mods-listing.ts
 

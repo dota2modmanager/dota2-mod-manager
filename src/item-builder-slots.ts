@@ -49,8 +49,9 @@ export interface ItemSet { id: string; name: string; heroIds: string[]; fit: num
  * picture the game has in some of its folders only) is left out when the game has not got it. A hero's own model
  * names the hero instead of a path: where its model lives is in the hero's script, which the
  * table does not say, and it goes in with the item's activity modifiers taken off (arcana.ts asModel).
+ * A summon's (forged spirits) names its unit, and is numbered as the plain model (model-sequences.ts).
  */
-export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[] };
+export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[] } | { from: string; to: string; unit: string };
 
 const ITEM_SLOT_MATCH_ALIAS: Record<string, string> = {
   offhand_weapon: 'offhand',
