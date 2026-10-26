@@ -74,8 +74,9 @@ export function Dropdown({
       return;
     }
 
+    // closed, the arrows step through the values as a native select's do; Alt+Down opens it, as there
     if (!open) {
-      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      if (e.key === 'Enter' || e.key === ' ' || (e.altKey && e.key === 'ArrowDown')) {
         e.preventDefault();
         toggle();
         return;
@@ -145,13 +146,14 @@ export function Dropdown({
       if (listRef.current && listRef.current.contains(e.target as Node)) return;
       setOpen(false);
     };
+    const onBlur = () => setOpen(false);
     document.addEventListener('mousedown', onPointerDown);
     document.addEventListener('scroll', onScroll, { capture: true, passive: true });
-    window.addEventListener('blur', () => setOpen(false));
+    window.addEventListener('blur', onBlur);
     return () => {
       document.removeEventListener('mousedown', onPointerDown);
       document.removeEventListener('scroll', onScroll, true);
-      window.removeEventListener('blur', () => setOpen(false));
+      window.removeEventListener('blur', onBlur);
     };
   }, [open]);
 
@@ -166,7 +168,8 @@ export function Dropdown({
         id={id}
         value={value}
         className={`custom-select-trigger ${open ? 'open' : ''}`}
-        aria-label={label}
+        // the name holds the shown value too: a voice user says what they see (WCAG 2.5.3)
+        aria-label={label ? `${label}: ${currentLabel}` : undefined}
         aria-haspopup="listbox"
         aria-expanded={open}
         disabled={disabled}
@@ -195,11 +198,9 @@ export function Dropdown({
                 role="option"
                 aria-selected={isSelected}
                 className={`custom-select-option ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}`}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  pick(opt.value);
-                }}
+                tabIndex={-1}
+                // keeps the focus on the trigger; the pick itself is the click's, once
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
