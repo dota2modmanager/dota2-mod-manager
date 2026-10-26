@@ -20,12 +20,13 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { runCompiler } from './commands.mjs';
 import { pak01, src } from './game.mjs';
-import { heroId, locate, toolCandidates, walkFiles } from './lib.mjs';
+import { escapeRe, heroId, locate, toolCandidates, walkFiles } from './lib.mjs';
 
 /** The panorama pictures of a hero in pak01, compiled path -> PNG path. */
 export function heroPictures(paths, hero) {
   const out = new Map();
-  const mine = new RegExp(`^panorama/images/(spellicons/${hero}_[^/]+|heroes/(icons/|selection/)?npc_dota_hero_${hero})_png\\.vtex_c$`);
+  const h = escapeRe(hero);
+  const mine = new RegExp(`^panorama/images/(spellicons/${h}_[^/]+|heroes/(icons/|selection/)?npc_dota_hero_${h})_png\\.vtex_c$`);
   for (const p of paths) if (mine.test(p)) out.set(p, p.replace(/_png\.vtex_c$/, '.png'));
   return out;
 }

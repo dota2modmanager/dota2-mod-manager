@@ -170,3 +170,11 @@ test("a hero's interface pictures, its minimap cell, and the sheet that makes th
   assert.equal(minimapCell(text, 'axe'), null);
   assert.equal(namingSheet(['panorama/images/spellicons/a.png']), '.mm0 { background-image: url("file://{images}/spellicons/a.png"); }\n');
 });
+
+test('a hero name is matched as text, never as a pattern', async () => {
+  const { heroPictures } = await import('../tools/modkit/pictures.mjs');
+  const paths = ['particles/status_fx/status_effect_aXb_shroud.vpcf_c', 'particles/status_fx/status_effect_a.b_shroud.vpcf_c'];
+  assert.deepEqual(heroParticlePaths(paths, 'a.b'), ['particles/status_fx/status_effect_a.b_shroud.vpcf_c']);
+  assert.equal(heroPictures(['panorama/images/spellicons/aXb_q_png.vtex_c'], 'a.b').size, 0);
+  assert.equal(heroPictures(['panorama/images/spellicons/a.b_q_png.vtex_c'], 'a.b').size, 1);
+});

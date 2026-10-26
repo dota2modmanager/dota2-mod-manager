@@ -434,6 +434,8 @@ section { padding: 56px 0; }
 .sec-head h2 { margin: 0; max-width: 22ch; }
 .sec-head p { margin: 8px 0 0; color: var(--text-dim); max-width: 60ch; }
 .sec-head .more { font-weight: 600; font-size: 15px; white-space: nowrap; }
+/* "Весь раздел «Эффекты предметов»" is wider than a 320 px phone in a wide font: there it wraps */
+@media (max-width: 480px) { .sec-head .more { white-space: normal; } }
 
 /* Reveal on scroll, done by an observer that adds a class (Base.astro), not by a scroll-driven
    animation: Safari 26 runs those and the page crashed on iPhones with forty of them. Visible is

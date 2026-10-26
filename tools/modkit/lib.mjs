@@ -74,6 +74,9 @@ export function heroId(text, display = {}) {
   return s.replace(/^npc_dota_hero_/, '').replace(/[\s-]+/g, '_').replace(/'/g, '');
 }
 
+/** Text to match as it is inside a RegExp: a hero name off the command line is not a pattern. */
+export const escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /**
  * Which of the game's particles are a hero's own: its folder under particles/units/heroes, and
  * the status effects named after it (Necrophos' Ghost Shroud tint lives in particles/status_fx).
@@ -81,7 +84,7 @@ export function heroId(text, display = {}) {
  */
 export function heroParticlePaths(paths, hero, extra = []) {
   const own = `particles/units/heroes/hero_${hero}/`;
-  const status = new RegExp(`^particles/status_fx/status_effect_${hero}[_.]`);
+  const status = new RegExp(`^particles/status_fx/status_effect_${escapeRe(hero)}[_.]`);
   const more = extra.map((p) => p.toLowerCase().replace(/\\/g, '/'));
   const out = [];
   for (const p of paths) {

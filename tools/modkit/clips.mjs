@@ -177,7 +177,9 @@ export async function clips(opts) {
   const maxNode = anim.root.members.get('m_nMaxUniqueFrameIndex');
   let unique = numberOf(anim, maxNode);
   const ourAnims = new Map(anim.root.members.get('m_animArray').items.map((a) => [memberValue(a, 'm_name'), a]));
-  const fromValve = new RegExp(typeof opts['valve-clips'] === 'string' ? opts['valve-clips'] : '^@.*_lookFrame_');
+  // --valve-clips a,b: clips whose names hold any of these words; by default the look poses
+  const words = typeof opts['valve-clips'] === 'string' ? opts['valve-clips'].split(',').filter(Boolean) : null;
+  const fromValve = { test: (name) => (words ? words.some((w) => name.includes(w)) : name.startsWith('@') && name.includes('_lookFrame_')) };
   const fits = (n, v) => n.raw && v < 2 ** (n.raw.length * 8 - 1);
   const moved = new Map();
   let poses = 0;
