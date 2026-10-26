@@ -25,12 +25,14 @@ not offer.
    | `model` (a slot model becomes another) | the new model under the stock slot path |
    | `particle` (one effect becomes another) | the new particle under the old one's path |
    | `particle_create` (the item creates an effect) | nothing creates it: hang it as a child of a particle the hero always has |
-   | `activity` (an activity modifier, e.g. `abysm`) | take the modifier off the swapped model's clips |
+   | `activity` (an activity modifier, e.g. `abysm`) | keep Valve's activities on every sequence the server can pick and make the plain one play the item's clips ([below](#an-immortal-or-set-without-the-item)); take the modifier off only where no plain twin exists |
    | `ability_icon`, `icon_replacement_hero*` | the pictures under the plain names in `panorama/images` |
 
    In the repo an item is a set in `src/arcana.ts` (`ARCANA_SETS`) with helpers for each row:
    `withChildren` (hang created particles on a host, each on its own control point), `asModel`
-   (drop the item's modifier from clips and sequences), `bakeTint` (gem colours written in).
+   (drops the item's modifier and also takes the activity off the plain animations: the old way,
+   right in demo mode, not checked in a lobby; do not copy it for a new item, follow the
+   `activity` row), `bakeTint` (gem colours written in).
 3. **Doctor:** `npm run doctor -- <mod.vpk>`. Nothing may be reported.
 4. **Bench:** `npm run dota:bench -- --vpk <mod.vpk> --hero <hero> --short`, then read
    `verdict.json` (`swings: true` means the attack animation plays).
@@ -52,7 +54,9 @@ hero their behaviour:
   first Scream build took the activity off the plain idle instead, which looked right in demo
   mode, and in a real lobby the hero stood in the injured idle at full health. Only an item
   sequence with no plain twin (the menu's `immosh_loadout`) loses the modifier: the server never
-  picks it, and the menu picks on the client. The doctor warns when a pickable sequence changed;
+  picks it, and the menu picks on the client. The rebuilt pack was checked in a private lobby on
+  a real server: the hero stands and runs as it should at full health. The doctor warns when a
+  pickable sequence changed;
 - the scythe's sound layer added to the plain cast event ([sounds.md](sounds.md)).
 
 ## Gem colours (prismatic arcanas)

@@ -123,7 +123,8 @@ That last step is right in demo mode and wrong online, where the server picks by
 and sends a sequence number. The "Scream" Necrophos set did it to `idle_anim`, and in a lobby the
 hero stood in the injured idle at full health. Its fix keeps every activity the server can pick
 on and has the plain sequence play the item's clips instead (`withImmosh` in the set's build,
-described in `skills/dota2-modding/references/items-from-game.md`), and the doctor now warns about
+described in `skills/dota2-modding/references/items-from-game.md`, checked in a private lobby on
+a real server), and the doctor now warns about
 a sequence like that. `asModel` still takes the activity off; whether the arcana goes wrong online
 the same way has not been checked in a lobby.
 
