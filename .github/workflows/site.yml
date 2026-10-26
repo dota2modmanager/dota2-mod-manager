@@ -101,9 +101,18 @@ jobs:
       # WebKit as well, which is what every browser on an iPhone is. The site stopped opening in
       # Safari on iOS while every Chrome test was green; site/test/webkit.test.mjs is the reason
       # this step installs Playwright's WebKit build and SITE_WEBKIT makes it required.
+      # It takes about a minute. On 2026-10-26 the download hung twice in a row for the whole job's
+      # thirty minutes and the release went out without its site, so each try gets four minutes
+      # and a stuck one is tried again.
       - name: Install WebKit for the iPhone tests
         working-directory: site
-        run: npx playwright-core install --with-deps webkit
+        timeout-minutes: 14
+        run: |
+          for try in 1 2 3; do
+            timeout 240 npx playwright-core install --with-deps webkit && exit 0
+            echo "::warning::WebKit install attempt $try did not finish"
+          done
+          exit 1
 
       - name: Test the pages in a browser
         working-directory: site
