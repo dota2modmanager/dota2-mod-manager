@@ -119,6 +119,14 @@ activity named again included. A model swapped in for a hero who lacks the item 
 item's modifier from both lists, by taking the entry out (`asModel`); the plain animations beside
 them lose that activity, which is what the game chooses when the modifier is on.
 
+That last step is right in demo mode and wrong online, where the server picks by the plain model
+and sends a sequence number. The "Scream" Necrophos set did it to `idle_anim`, and in a lobby the
+hero stood in the injured idle at full health. Its fix keeps every activity the server can pick
+on and has the plain sequence play the item's clips instead (`withImmosh` in the set's build,
+described in `skills/dota2-modding/references/items-from-game.md`), and the doctor now warns about
+a sequence like that. `asModel` still takes the activity off; whether the arcana goes wrong online
+the same way has not been checked in a lobby.
+
 **Portraits and icons.** The HUD draws the hero's model with the camera and lights that
 `scripts/npc/portraits.txt` gives its path, so an arcana model under the plain path brings its own
 settings under that path (`src/item-portraits.ts`). The hero's portrait, minimap icon and ability

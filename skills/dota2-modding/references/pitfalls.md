@@ -38,6 +38,7 @@ before trying a fix.
 |---|---|---|
 | The hero stands in the bind pose | The game rejected the animation blocks: KV3 types 26/27 copied wrong, or a bad compile | Rebuild with `modkit clips` from a fresh compile; run the doctor |
 | Online the wrong animations play from some ability on | Sequence numbers differ from Valve's model (a clip added, or a clip renamed by the decompile) | `modkit clips` restores Valve's list; the doctor reports it |
+| Online in a lobby the hero idles or runs hunched at full health; demo mode looks right | The mod took the activity off a plain sequence (`idle_anim`) so an item's would win; the server picks by Valve's model, the client finds no idle under that number | Keep Valve's activities, make the plain sequence play the item's clips ([items-from-game.md](items-from-game.md)); the doctor reports it |
 | An item's clip plays at random without the item | The decompile dropped activity modifiers | `scripts/prepare_vmdl.py` puts them back from `modkit model` |
 | Fingers of one hand twitch with the weapon | Bones compiled in another order | `move_last` the bone `modkit clips` names, compile again |
 | The head turns backwards while running | The turns layer: missing `m_bMulti`, poses compiled whole, or the compiler's extra `turns` clip | `modkit clips` copies Valve's fetch, flags and poses, and stills the extra clip |

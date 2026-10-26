@@ -90,6 +90,18 @@ function checkModel(path: string, file: Buffer, game: Buffer | null): Finding[] 
     if (at !== -1) {
       out.push({ file: path, level: 'warning', what: `sequence ${at} is "${ours[at] ?? 'none'}" here and "${theirs[at]}" in the game's model: if the server online picks by number from its own, from there on other animations play` });
     }
+    // Online the server picks by the game's model, so each sequence it can pick for a hero with no
+    // item has to stay what the game's is to the picking: its activity and modifiers. Another clip
+    // behind them is how a mod changes it. One that needs an item's modifier the server never picks.
+    const said = (s: Playable) => [...s.acts, ...[...s.mods].sort()].join(' ') || 'nothing';
+    const mine = new Map(seqs.map((s) => [s.name, s]));
+    const moved = sequencesOf(game).filter((s) => s.mods.every((m) => GAME_MODIFIERS.has(m))
+      && mine.has(s.name) && said(mine.get(s.name)!) !== said(s));
+    if (moved.length) {
+      const s = moved[0];
+      const more = moved.length > 1 ? ` (and ${moved.length - 1} more)` : '';
+      out.push({ file: path, level: 'warning', what: `sequence ${theirs.indexOf(s.name)} "${s.name}" is ${said(s)} in the game's model and plays as ${said(mine.get(s.name)!)} here${more}: online the server picks it by the game's model, and your client plays something else. Keep the game's activities and put your clip behind them` });
+    }
   }
   return out;
 }

@@ -44,10 +44,15 @@ hero their behaviour:
 - their ambient effects hung as children of `necrolyte_ambient_glow`, which the hero always
   creates. Ambients bound to attachment points that exist only on the item's own model (a palm, a
   horn) cannot attach to another model: leave them out or give your model those attachments;
-- their animations (the `immosh` modifier) played without the item: remove the modifier from the
-  clips that need it, and remove the activity from the plain clip whose other entries match, which
-  is what the game does with the modifier on. Leave clips with other modifiers alone, or the plain
-  run disappears;
+- their animations (the `immosh` modifier) played without the item. **Keep every activity and
+  modifier Valve's model has on the sequences the server can pick without the item**, and make the
+  plain sequence play the item's clips: copy everything of the `immosh` sequence but its name and
+  activities onto the plain one whose other entries match (`idle_anim` plays what
+  `immosh_idle_anim` plays). Online the server picks by Valve's model and sends a number; the
+  first Scream build took the activity off the plain idle instead, which looked right in demo
+  mode, and in a real lobby the hero stood in the injured idle at full health. Only an item
+  sequence with no plain twin (the menu's `immosh_loadout`) loses the modifier: the server never
+  picks it, and the menu picks on the client. The doctor warns when a pickable sequence changed;
 - the scythe's sound layer added to the plain cast event ([sounds.md](sounds.md)).
 
 ## Gem colours (prismatic arcanas)
