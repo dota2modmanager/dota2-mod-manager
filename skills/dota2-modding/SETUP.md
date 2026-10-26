@@ -48,7 +48,7 @@ It reports each tool as ok or MISSING with the fix. Go through the missing ones 
 | Dota 2 | everything | Steam. If installed in an unusual place, pass `--game "<...>/dota 2 beta/game"` |
 | Workshop Tools | compiling models, materials, textures, sounds, clips | the person does it: Steam > Dota 2 > Properties > DLC > tick "Dota 2 Workshop Tools" |
 | Source2Viewer CLI (VRF) | decompiling the game's files | download from https://github.com/ValveResourceFormat/ValveResourceFormat/releases, unzip, put on PATH or set `VRF_CLI` |
-| Blender 4.2+ | models, animations, renders | https://www.blender.org; for importing game models also the SourceIO add-on |
+| Blender 4.2+ | models, animations, renders | https://www.blender.org (no add-ons: game models come in as glb from Source2Viewer) |
 | Python 3.11+ with Pillow and numpy | textures, the helper scripts | https://www.python.org, then `python -m pip install pillow numpy` |
 
 Only install what their mod needs. A recolour needs none of the last four.

@@ -69,8 +69,12 @@ blender -b scene.blend --python script.py -- arg1 arg2
 ```
 
 Arguments after `--` reach the script as `sys.argv[sys.argv.index("--") + 1:]`. Render with EEVEE
-for quick checks. SourceIO (https://github.com/REDxEYE/SourceIO) imports Source 2 models
-directly; a glb from Source2Viewer works without it.
+for quick checks.
+
+Every step in this skill brings game models into Blender as a glb from Source2Viewer, through
+Blender's own glTF import; that is the export the bone order and axes here were checked against.
+You do not need SourceIO (https://github.com/REDxEYE/SourceIO). Suggest it only when the person
+wants to open `.vmdl_c` files in Blender by hand.
 
 Units: the glb is in Source units x 0.0254 (metres); the hero faces -Y. FBX for the compiler goes
 out at 1/0.0254 with `import_scale = 0.01` in the vmdl (`scripts/export_fbx.py`).
