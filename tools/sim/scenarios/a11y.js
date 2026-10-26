@@ -40,11 +40,14 @@ const FOCUSED = `(() => {
   if (!el || el === document.body) return { what: 'body' };
   const r = el.getBoundingClientRect();
   const cs = getComputedStyle(el);
+  const ringed = (s) => (s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0) || (s.boxShadow && s.boxShadow !== 'none');
+  // a text field in a pill (the search) leaves its ring to the pill around it
+  const pill = el.matches('input, textarea') && el.parentElement ? getComputedStyle(el.parentElement) : null;
   return {
     what: el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\\s+/).slice(0, 2).join('.') : ''),
     name: (el.getAttribute('aria-label') || el.textContent || el.getAttribute('title') || '').trim().replace(/\\s+/g, ' ').slice(0, 40),
     shown: r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth,
-    ring: (cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0) || (cs.boxShadow && cs.boxShadow !== 'none'),
+    ring: ringed(cs) || (!!pill && ringed(pill)),
     inDialog: !!el.closest('[aria-modal="true"]'),
   };
 })()`;

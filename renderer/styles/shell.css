@@ -222,7 +222,8 @@
   border-color: var(--primary);
   background: var(--surface);
   width: 300px;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 12%, transparent);
+  /* the field's own ring would sit inside the pill: the pill wears it */
+  box-shadow: var(--focus-ring);
 }
 .tb-search .ms { font-size: 16px; color: var(--text-faint); }
 .tb-search input {
@@ -230,6 +231,7 @@
   background: transparent;
   border: none;
   outline: none;
+  box-shadow: none;
   appearance: none;
   -webkit-appearance: none;
   color: var(--text);
