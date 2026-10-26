@@ -1,0 +1,14 @@
+{
+  "name": "dota2-modding",
+  "version": "1.0.0",
+  "description": "Make Dota 2 cosmetic mods with an AI assistant: recoloured effects, items and arcanas from the game's files, custom models, animations, sounds and icons, built, checked and packed into a VPK.",
+  "author": {
+    "name": "TheFleece",
+    "url": "https://github.com/TheFleece"
+  },
+  "homepage": "https://dota2modmanager.com/docs/ai-mods/",
+  "repository": "https://github.com/dota2modmanager/dota2-mod-manager",
+  "license": "GPL-3.0-or-later",
+  "keywords": ["dota2", "modding", "skins", "source2", "blender"],
+  "skills": "./"
+}

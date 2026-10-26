@@ -36,6 +36,8 @@ export interface StoredSettings {
   pumpkin: boolean;
   /** the ninth theme is open (renderer/ui/secret-lock.ts) */
   secret: boolean;
+  /** the resourcecompiler.exe picked in Settings, over the game's own (src/resource-compiler.ts) */
+  resourceCompilerPath?: string | null;
 }
 
 const DEFAULTS: StoredSettings = {
@@ -96,6 +98,10 @@ const DEFAULTS: StoredSettings = {
   // why nobody gets a "what's new" popup for a version they just installed by hand.
   lastSeenVersion: null,
   downloadProxy: '',
+  // resourcecompiler.exe from the Workshop Tools, when the game's own is not the one to run: on
+  // Linux there is none, and the one picked is a Windows copy's (src/resource-compiler.ts). Only
+  // its own channel sets it, from a dialog in the main process; settings:set refuses the key
+  resourceCompilerPath: null,
 };
 
 export class Settings {

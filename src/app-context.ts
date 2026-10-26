@@ -14,6 +14,8 @@ import type { Library } from './library.ts';
 import type { Fingerprints } from './fingerprints.ts';
 import type { Icons } from './icons.ts';
 import type { ToolProgress, createToolchain } from './toolchain.ts';
+import type { ResourceCompiler } from './resource-compiler.ts';
+import type { ToolsKeeper } from './workshop-tools.ts';
 import type { createSchemaService } from './schema-service.ts';
 import type { createUpdateImpact } from './update-impact.ts';
 import type { createArcanaService } from './arcana-service.ts';
@@ -62,6 +64,12 @@ export interface AppContext {
   gameIcons: ReturnType<typeof createGameIcons>;
   modPreviews: ReturnType<typeof createModPreviews>;
   toolchain: ReturnType<typeof createToolchain>;
+  /** Valve's resourcecompiler.exe, under Wine where it has to be (src/resource-compiler.ts) */
+  compiler: ResourceCompiler;
+  /** on Linux, the copy of the Workshop Tools kept for when Steam takes the game's away; null on Windows */
+  toolsKeeper: ToolsKeeper | null;
+  /** copy the game's Workshop Tools into the kept copy, with the bar at the bottom; whether it copied */
+  keepTools: (opts?: { force?: boolean }) => Promise<boolean>;
   remoteConfig: ReturnType<typeof createRemoteConfig>;
   presets: ReturnType<typeof presetsService>;
   discordAuth: typeof discordAuthModule;

@@ -11,11 +11,12 @@ import { resourceId } from '../../src/resource.ts';
 /**
  * A value as the test writes it, one key per KV3 type the encoder below knows. `objs` is a typed
  * array of objects, the shape of a model's sequences; `i32rows` a typed array of arrays with a
- * one-byte length (type 24), the shape of a model's bones.
+ * one-byte length (type 24), the shape of a model's bones. `u32bit` is a uint32 0 or 1 stored as its
+ * type alone (26, 27), as today's compiler writes a freshly built model's flags.
  */
 export type V = { int: number } | { i32s: number[] } | { str: string } | { yes: true } | { one: true } | { dbl: number }
   | { i64: number } | { i64zero: true } | { f64s: number[] } | { blob: Buffer } | { obj: [string, V][] } | { arr: V[] }
-  | { ref: string } | { bool: boolean } | { objs: [string, V][][] } | { i32rows: number[][] };
+  | { ref: string } | { bool: boolean } | { objs: [string, V][][] } | { i32rows: number[][] } | { u32bit: 0 | 1 };
 
 const TRAILER = 0xffeedd00;
 const u32 = (n: number) => { const b = Buffer.alloc(4); b.writeUInt32LE(n >>> 0); return b; };
@@ -38,7 +39,7 @@ export function encodeKv3(root: V, version: 1 | 2 | 5 = 2): Buffer {
   const lens: number[] = []; // version 5 keeps the objects' member counts apart
   let arrays = 0;
   const typeOf = (v: V): number => ('int' in v ? 11 : 'i32s' in v ? 10 : 'str' in v ? 6 : 'yes' in v ? 13 : 'one' in v ? 18 : 'dbl' in v ? 5
-    : 'i64' in v ? 3 : 'i64zero' in v ? 15 : 'f64s' in v ? 10 : 'blob' in v ? 7 : 'obj' in v ? 9 : 'ref' in v ? 6 : 'bool' in v ? 2 : 'objs' in v || 'i32rows' in v ? 10 : 8);
+    : 'i64' in v ? 3 : 'i64zero' in v ? 15 : 'f64s' in v ? 10 : 'blob' in v ? 7 : 'obj' in v ? 9 : 'ref' in v ? 6 : 'bool' in v ? 2 : 'objs' in v || 'i32rows' in v ? 10 : 'u32bit' in v ? 26 + v.u32bit : 8);
   // a string that names a resource carries a flag after its type (bit 1 before version 3)
   const typed = (v: V) => ('ref' in v ? types.push(6 | 0x80, 1) : types.push(typeOf(v)));
   const body = (v: V): void => {
@@ -213,7 +214,8 @@ export const host = (children = ['particles/eye.vpcf']) => resource([
  * A model: its animation clips (ANIM, version 5 and zstd, with a blob of frames) and its sequences
  * (ASEQ) with what each plays, the clips as the sequences unless given, and its own name in DATA.
  */
-export function model(name: string, sequences: [string, string[]][] = [], clips: [string, string[]][] = sequences): Buffer {
+export function model(name: string, sequences: [string, string[]][] = [], clips: [string, string[]][] = sequences,
+  numbers: string[] = sequences.map(([seq]) => seq)): Buffer {
   const listed = (acts: string[]) => acts.map((a): [string, V][] => [['m_name', { str: a }], ['m_nWeight', { int: 1 }]]);
   return resource([
     ['ANIM', encodeKv3({ obj: [
@@ -221,7 +223,8 @@ export function model(name: string, sequences: [string, string[]][] = [], clips:
       ['m_segmentArray', { arr: [{ obj: [['m_container', { blob: Buffer.from('the frames of every clip') }]] }] }],
     ] }, 5)],
     // typed arrays of objects, as the game's are
-    ['ASEQ', encodeKv3({ obj: [['m_localS1SeqDescArray', { objs: sequences.map(([seq, acts]): [string, V][] => [
+    // the numbers the server sends: every sequence, and every clip played only through one
+    ['ASEQ', encodeKv3({ obj: [['m_localSequenceNameArray', { arr: numbers.map((n) => ({ str: n })) }], ['m_localS1SeqDescArray', { objs: sequences.map(([seq, acts]): [string, V][] => [
       ['m_sName', { str: seq }],
       ['m_activityArray', { objs: acts.map((a): [string, V][] => [['m_name', { str: a }], ['m_nWeight', { int: 1 }]]) }],
     ]) }]] })],

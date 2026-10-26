@@ -212,6 +212,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
       ['Setups by link', 'Save the mods you run as a preset and send it in one message. The other side opens it and gets the same look.'],
       ['It survives Dota patches', 'After a game update the app puts back what the patch wiped, and it writes to the game folder as one transaction - if anything fails, everything goes back.'],
       ['It works with Dota2 Minify', 'Run both on the same game. This app installs into whichever folder Minify pointed the game at, keeps the pak slots Minify writes free, and never touches its files. <a href="~/docs/minify/">What Minify is, and running the two together</a>.'],
+      ['Make your own with AI', 'Describe the skin to Claude Code or another AI assistant. It reads the game\'s files, builds the effects, models, animations and sounds, checks the result and hands you a VPK to drag in here. One line sets it up. <a href="~/docs/ai-mods/">How to start</a>.'],
     ],
 
     trustTitle: 'Why you can check this one',
@@ -337,6 +338,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
       ['Сборки ссылкой', 'Сохрани набор включённых модов пресетом и отправь одним сообщением. На той стороне откроется то же самое.'],
       ['Переживает патчи Доты', 'После обновления игры приложение возвращает на место то, что патч стёр, а в папку игры пишет одной транзакцией: если что-то сорвётся, всё вернётся как было.'],
       ['Работает с Dota2 Minify', 'Держи обе на одной игре. Приложение ставит моды в ту папку, на которую Minify направил игру, его слоты паков не занимает, его файлы не трогает. <a href="~/docs/minify/">Что такое Minify и как держать обе</a>.'],
+      ['Свои моды с помощью ИИ', 'Опиши скин Claude Code или другому ИИ-ассистенту. Он прочитает файлы игры, соберёт эффекты, модели, анимации и звуки, проверит результат и отдаст VPK, который ты перетащишь сюда. Настраивается одной строкой. <a href="~/docs/ai-mods/">Как начать</a>.'],
     ],
 
     trustTitle: 'Почему это можно проверить',

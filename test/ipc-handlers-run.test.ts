@@ -15,6 +15,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import * as compiler from '../src/ipc-compiler.ts';
 import * as diagnostics from '../src/ipc-diagnostics.ts';
 import * as game from '../src/ipc-game.ts';
 import * as foreign from '../src/ipc-foreign.ts';
@@ -30,7 +31,7 @@ import { registerAgainst } from './helpers/fake-electron.ts';
 const ROOT = path.resolve(import.meta.dirname, '..');
 
 const MODULES: Record<string, Record<string, unknown>> = {
-  'ipc-diagnostics.ts': diagnostics, 'ipc-foreign.ts': foreign, 'ipc-game.ts': game, 'ipc-library.ts': library,
+  'ipc-compiler.ts': compiler, 'ipc-diagnostics.ts': diagnostics, 'ipc-foreign.ts': foreign, 'ipc-game.ts': game, 'ipc-library.ts': library,
   'ipc-misc.ts': misc, 'ipc-mods.ts': mods, 'ipc-packs.ts': packs,
   'ipc-presets.ts': presets, 'ipc-settings.ts': settings, 'ipc-window.ts': windowIpc,
 };

@@ -165,6 +165,7 @@ test('the skip link appears on the first Tab and lands on the content', async ()
   const box = await skip.boundingBox();
   assert.ok(box && box.x >= 0 && box.y >= 0, 'the skip link is on screen when focused');
   await page.keyboard.press('Enter');
-  assert.match(page.url(), /#main$/);
+  // the jump to #main lands a moment after the key, and a busy runner read the address before it
+  await page.waitForURL(/#main$/, { timeout: 5000 });
   await context.close();
 });

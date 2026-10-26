@@ -147,7 +147,7 @@ async function start(): Promise<void> {
   const services = createServices({ userData, appVersion: () => app.getVersion(), sendProgress, diag, fetchIcons: net.fetch });
   const {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, icons, toolchain, gameIcons, modPreviews, arcana,
+    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana,
   } = services;
 
   // Put the game folder right before anything is shown: where mods go, what Steam's file check
@@ -180,7 +180,7 @@ async function start(): Promise<void> {
      window, the updater, the patch watcher, the upkeep's state) is a function read when needed. */
   const ctx: AppContext = {
     settings, catalog, installer, library, fingerprints, schemaService, updateImpact, icons, gameIcons, modPreviews,
-    toolchain, remoteConfig, presets, arcana, discordAuth, portableUpdater, autoUpdater,
+    toolchain, compiler, toolsKeeper, keepTools, remoteConfig, presets, arcana, discordAuth, portableUpdater, autoUpdater,
     // One gate, handed to every module that guards a channel with it. Two copies is how installing
     // broke once: the call went to one file and the helper stayed in the other.
     blocked: createGate({ remoteConfig, settings }),

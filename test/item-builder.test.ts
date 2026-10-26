@@ -16,6 +16,7 @@ import type { Settings } from '../src/settings.ts';
 import { readKv3, type Kv3Node } from '../src/kv3.ts';
 import { resourceBlock } from '../src/resource.ts';
 import { at, model } from './helpers/kv3-build.ts';
+import { sequenceNumbersOf } from '../src/mod-doctor.ts';
 
 /** A model's animation clips, with what each plays (as test/arcana.test.ts reads them). */
 const clips = (file: Buffer) => (at(readKv3(resourceBlock(file, 'ANIM').data).root, 'm_animArray') as Extract<Kv3Node, { kind: 'array' }>).items
@@ -786,6 +787,81 @@ test('a hero model the reader cannot open goes in as it is rather than taking th
   const [only] = builder.gameAssetEntries(dir, [{ from: 'models/heroes/phantom_assassin/pa_arcana.vmdl', hero: 'npc_dota_hero_phantom_assassin', activities: ['arcana'] }]);
   assert.equal(vpk.entryPath(only), 'models/heroes/phantom_assassin/phantom_assassin.vmdl_c');
   assert.equal(only.data.toString('latin1'), 'bytes the reader cannot open');
+});
+
+/** Invoker's stock summon and a forged spirit item, and the game's files it is built from: the
+ *  hero's script, the unit scripts with his spirit and another hero's bear, and the models:
+ *  Infernus's lists its turns first, as the game's does. */
+function summonGame(t: test.TestContext) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-summon-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(dir, 'dota'), { recursive: true });
+  const unit = (name: string, model?: string) => `\t"${name}"\n\t{\n\t\t// a comment, as the game's file has them\n${model ? `\t\t"Model"\t\t"${model}"\n` : ''}\t\t"ModelScale"\t\t"1"\n\t}\n`;
+  const units = `"DOTAUnits"\n{\n\t"Version"\t\t"1"\n${unit('npc_dota_invoker_forged_spirit', 'models/heroes/invoker/forge_spirit.vmdl')}`
+    + `${unit('npc_dota_lone_druid_bear1', 'models/heroes/lone_druid/spirit_bear.vmdl')}${unit('npc_dota_lone_druid_bear2')}`
+    + `${unit('npc_dota_invoker_twin_a', 'models/heroes/invoker/twin.vmdl')}${unit('npc_dota_invoker_twin_b', 'models/heroes/invoker/twin.vmdl')}}\n`;
+  fs.writeFileSync(path.join(dir, 'dota', 'pak01_dir.vpk'), vpk.buildVpk([
+    entry('scripts/npc/heroes/npc_dota_hero_invoker.txt', '"DOTAHeroes"\n{\n\t"npc_dota_hero_invoker"\n\t{\n\t\t"Model"\t\t"models/heroes/invoker/invoker.vmdl"\n\t}\n}\n'),
+    entry('scripts/npc/npc_units.txt', units),
+    entry('models/heroes/invoker/forge_spirit.vmdl_c', model('models/heroes/invoker/forge_spirit.vmdl', [['bindPose', []], ['forge_spirit_idle', ['ACT_DOTA_IDLE']]])),
+    entry('models/items/invoker/forge_spirit/infernus/infernus.vmdl_c', model('models/items/invoker/forge_spirit/infernus/infernus.vmdl',
+      [['forge_spirit_turns', []], ['bindPose', []], ['forge_spirit_idle', ['ACT_DOTA_IDLE']]])),
+    // a spirit with no idle: under the plain path the server's idle would play whatever has its number
+    entry('models/items/invoker/forge_spirit/stiff/stiff.vmdl_c', model('models/items/invoker/forge_spirit/stiff/stiff.vmdl', [['bindPose', []]])),
+    ...['models/heroes/invoker/twin.vmdl', 'models/items/invoker/twin_red.vmdl', 'models/items/invoker/twin_blue.vmdl']
+      .map((m) => entry(`${m}_c`, model(m, [['bindPose', []]]))),
+  ]));
+  const invoker = `\t\t\t"used_by_heroes"\n\t\t\t{\n\t\t\t\t"npc_dota_hero_invoker"\t\t"1"\n\t\t\t}\n`;
+  const mod = (asset: string, modifier: string) => `\t\t\t\t"asset_modifier"\n\t\t\t\t{\n\t\t\t\t\t"type"\t\t"entity_model"\n\t\t\t\t\t"asset"\t\t"${asset}"\n\t\t\t\t\t"modifier"\t\t"${modifier}"\n\t\t\t\t}\n`;
+  const text = table([
+    `\t\t"500"\n\t\t{\n\t\t\t"name"\t\t"Invoker's Summon"\n\t\t\t"prefab"\t\t"default_item"\n\t\t\t"item_slot"\t\t"summon"\n${invoker}\t\t}\n`,
+    `\t\t"7231"\n\t\t{\n\t\t\t"name"\t\t"Infernus"\n\t\t\t"prefab"\t\t"wearable"\n\t\t\t"item_slot"\t\t"summon"\n${invoker}\t\t\t"visuals"\n\t\t\t{\n`
+      + mod('npc_dota_invoker_forged_spirit', 'models/items/invoker/forge_spirit/infernus/infernus.vmdl')
+      // another hero's summon, as Rubick's arcana swaps the bear for when he steals it
+      + mod('npc_dota_lone_druid_bear', 'models/heroes/lone_druid/spirit_bear_rubick.vmdl')
+      // two units on one plain model, each swapped for a model of its own: only one could win
+      + mod('npc_dota_invoker_twin_a', 'models/items/invoker/twin_red.vmdl')
+      + mod('npc_dota_invoker_twin_b', 'models/items/invoker/twin_blue.vmdl')
+      + `\t\t\t}\n\t\t}\n`,
+    `\t\t"7232"\n\t\t{\n\t\t\t"name"\t\t"Stiff"\n\t\t\t"prefab"\t\t"wearable"\n\t\t\t"item_slot"\t\t"summon"\n${invoker}\t\t\t"visuals"\n\t\t\t{\n`
+      + mod('npc_dota_invoker_forged_spirit', 'models/items/invoker/forge_spirit/stiff/stiff.vmdl')
+      + `\t\t\t}\n\t\t}\n`,
+  ]);
+  return { dir, text, summon: builder.summonModels(vpk.sharedVpkIndex(path.join(dir, 'dota', 'pak01_dir.vpk'))) };
+}
+
+test("a summon's model goes under the unit's plain model, where a lobby's server still finds it (issue #334)", (t) => {
+  /* Hero demo runs a server of its own that reads our table, and there the forged spirits wore
+     Infernus; a lobby's server creates them from Valve's table, and they came out plain. */
+  const { dir, text, summon } = summonGame(t);
+  const patched = builder.itemEffectPatch(text, '7231', '', undefined, summon);
+  assert.equal(patched.id, '500');
+  assert.deepEqual(patched.assetCopies, [{
+    from: 'models/items/invoker/forge_spirit/infernus/infernus.vmdl', to: 'models/heroes/invoker/forge_spirit.vmdl', unit: 'npc_dota_invoker_forged_spirit',
+  }], "only Invoker's own summon with one model to fill");
+  assert.doesNotMatch(patched.block, /infernus\.vmdl/, 'the table names no model only the paid item loads');
+  assert.match(patched.block, /spirit_bear_rubick\.vmdl/, "the bear is Lone Druid's: its swap stays in the table");
+  assert.match(patched.block, /twin_red\.vmdl/, 'two models for one plain path stay in the table');
+  assert.match(patched.block, /twin_blue\.vmdl/);
+  const entries = builder.gameAssetEntries(dir, patched.assetCopies);
+  assert.deepEqual(entries.map((en) => vpk.entryPath(en)), ['models/heroes/invoker/forge_spirit.vmdl_c']);
+  assert.deepEqual(sequenceNumbersOf(entries[0].data), ['bindPose', 'forge_spirit_idle', 'forge_spirit_turns'],
+    "numbered as the plain spirit: the number the server sends for the idle is the idle");
+});
+
+test("a summon's model that cannot be numbered as the plain one stays a swap in the table", (t) => {
+  // under the plain path it would play another animation in a lobby, which is worse than the plain spirit
+  const { text, summon } = summonGame(t);
+  const patched = builder.itemEffectPatch(text, '7232', '', undefined, summon);
+  assert.deepEqual(patched.assetCopies, []);
+  assert.match(patched.block, /stiff\.vmdl/);
+});
+
+test("without the game's unit scripts a summon's swap stays in the table, as it was", (t) => {
+  const { text } = summonGame(t);
+  const patched = builder.itemEffectPatch(text, '7231', '');
+  assert.deepEqual(patched.assetCopies, []);
+  assert.match(patched.block, /"npc_dota_invoker_forged_spirit"\s+"modifier"\s+"models\/items\/invoker\/forge_spirit\/infernus\/infernus\.vmdl"/);
 });
 
 test('a wearable finds its stock item under the other spelling of its slot', () => {

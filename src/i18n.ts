@@ -225,6 +225,16 @@ const EN = {
   // kind names (title-case)
   'Варды': 'Wards', 'Курьер': 'Courier', 'Интерфейс меню': 'Menu UI', 'Звуки': 'Sounds', 'Ландшафт': 'Terrain',
   'Сборка · {0} героев': 'Bundle · {0} heroes',
+  // resourcecompiler.exe and the Wine it runs under (src/resource-compiler.ts, src/ipc-compiler.ts)
+  'resourcecompiler.exe не найден. Он входит в Dota 2 Workshop Tools: поставь их в Steam или укажи файл вручную': 'resourcecompiler.exe was not found. It comes with the Dota 2 Workshop Tools: install them in Steam, or pick the file by hand',
+  'Для resourcecompiler.exe нужен Wine: поставь его из пакетов своей системы или Proton в Steam': 'resourcecompiler.exe needs Wine: install it from your system\'s packages, or install Proton in Steam',
+  'resourcecompiler.exe не собрал {0}: {1}': 'resourcecompiler.exe could not compile {0}: {1}',
+  'Выбери resourcecompiler.exe в папке game/bin/win64 игры с Workshop Tools': 'Pick resourcecompiler.exe in game/bin/win64 of a game with the Workshop Tools',
+  'Это не resourcecompiler.exe из папки game/bin/win64 установленной Dota 2': 'This is not resourcecompiler.exe from game/bin/win64 of an installed Dota 2',
+  'Проверка компилятора': 'Checking the compiler',
+  'подготовка Wine': 'setting up Wine',
+  'сборка пустой модели': 'compiling an empty model',
+  'Копия Workshop Tools': 'Copy of the Workshop Tools',
 } satisfies Record<string, string>;
 
 /** The table as a lookup: any Russian string, its English or nothing. */

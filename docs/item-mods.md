@@ -7,6 +7,10 @@ time. The worked example is Terrorblade's arcana, Fractal Horns of Inner Abysm
 ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118), `src/arcana.ts`). It took
 two days, most of them on two traps that the tools below now catch in seconds.
 
+Making a mod with an AI assistant? [`skills/dota2-modding`](../skills/dota2-modding/SKILL.md)
+covers this page and everything past it (custom models, animations, sounds, icons) as a skill the
+assistant follows.
+
 ## The loop
 
 1. **Plan.** `npm run item-plan -- "<item name>"` (or its id) reads the item's `visuals` from
@@ -21,10 +25,21 @@ two days, most of them on two traps that the tools below now catch in seconds.
    and in the sequences; a particle child that is missing or drawn on another attachment than it
    is made for. It takes seconds.
 4. **Check in the game.** `npm run dota:bench -- --vpk <mod_dir.vpk> --short` (Windows, Steam
-   running, Dota closed) puts the mod in a free slot, starts hero demo, levels the hero, sets it on
-   a dummy and takes 16 pictures 80 ms apart through the attack. `verdict.json` says whether the
-   attack swings (`tools/dota-bench/verdict.mjs`); look at the pictures for the rest. About three
-   minutes a build. Without `--short` it also presses Metamorphosis and Conjure Image.
+   running, Dota closed) puts the mod in a free slot, starts hero demo, gives the hero level 30,
+   Aghanim's Scepter and Shard, shows it close in the inspect, sets it on a dummy and takes 16
+   pictures 80 ms apart through the attack. `verdict.json` says whether the attack swings
+   (`tools/dota-bench/verdict.mjs`); look at the pictures for the rest. About three minutes a
+   build. Without `--short` it also casts every ability (`--skills`, aimed ones on an enemy hero),
+   with `-wtf` typed into the console so nothing waits on a cooldown. `--idle-seconds 13` first
+   steps the hero so its idle starts over, then films it standing in the inspect, from in front
+   with the face in view, four pictures a second, for an idle that does something only every few
+   seconds (`01-idle-long.png`). Every run also walks the hero across the screen and back, filmed
+   on the way (`05-walk-right.png`, `05-walk-left.png`): a layer that goes wrong only in motion does
+   not show on a hero that has stopped. `--spawn` kills the hero and films the next six seconds,
+   in which the demo brings it back where it stood: the spawn animation (`01-spawn.png`). `--death`
+   kills it with the game slowed to a quarter and films the fall close, then six seconds later what
+   lies on the ground (`01-death.png`, `01-death-after.png`). A party
+   invite that covers the screen at the start is declined.
 5. **Compare.** Run the bench on the plain hero (`--hero terrorblade`, no `--vpk`) and on a mod of
    the same item from the catalog that works. When yours does not, swap resource blocks between
    the two (`resourceBlock(file, 'ANIM').replace(...)`) and bench each: the block that carries the
@@ -38,6 +53,7 @@ while it is worn:
 | type | what it does | a build from files |
 |---|---|---|
 | `entity_model` | the hero's own model becomes another | put that model under the hero's model path |
+| `entity_model` on a summon | the hero's summon wears another model (Invoker's forged spirits) | put it under the unit's plain model from `scripts/npc/npc_units.txt`, when that sits in the hero's model folder; another hero's summon stays a swap in the table, which only hero demo reads |
 | `activity` | switches an activity modifier on (`abysm`) | take the modifier off the swapped model's animations (below) |
 | `model` | one wearable model becomes another | put the new one under the old path |
 | `particle` | one particle becomes another | put the new one under the old path; its children keep their paths |
@@ -104,6 +120,15 @@ activity named again included. A model swapped in for a hero who lacks the item 
 item's modifier from both lists, by taking the entry out (`asModel`); the plain animations beside
 them lose that activity, which is what the game chooses when the modifier is on.
 
+That last step is right in demo mode and wrong online, where the server picks by the plain model
+and sends a sequence number. The "Scream" Necrophos set did it to `idle_anim`, and in a lobby the
+hero stood in the injured idle at full health. Its fix keeps every activity the server can pick
+on and has the plain sequence play the item's clips instead (`withImmosh` in the set's build,
+described in `skills/dota2-modding/references/items-from-game.md`, checked in a private lobby on
+a real server), and the doctor now warns about
+a sequence like that. `asModel` still takes the activity off; whether the arcana goes wrong online
+the same way has not been checked in a lobby.
+
 **Portraits and icons.** The HUD draws the hero's model with the camera and lights that
 `scripts/npc/portraits.txt` gives its path, so an arcana model under the plain path brings its own
 settings under that path (`src/item-portraits.ts`). The hero's portrait, minimap icon and ability
@@ -123,6 +148,11 @@ picture is every hero's.
 | fixing the sequences when the game reads the clips | a day of builds that changed nothing | this page |
 | a search over a model's blocks that skipped what it could not read | the clips (zstd) never looked at | the reader reads zstd |
 | one picture a second, read by eye | a fidget at rest taken for the attack | burst and verdict |
+| a model compiled again keeps a clip of the turns source itself, one pose of the full turn, which Valve's has not | the head looked backward whenever the hero walked | the walk pictures |
 
-Not settled yet: whether a swapped model's sequences in another order than the hero's cause wrong
-animations online, where the server keeps the plain model. The doctor warns about it.
+Online the server keeps the plain model and sends the client sequence numbers, so a swapped model
+has to number its sequences as the hero's does. The numbers are the model's sequence name list,
+which also counts clips a sequence plays under a name of their own (`@@cast_ghost_shroud`); the
+"Scream" Necrophos model lost one of those in a recompile and numbered every sequence from 30 on
+one lower than the game. The doctor compares that list now (`sequenceNumbersOf` in
+`src/mod-doctor.ts`), and `npm run modkit -- clips` puts Valve's names and numbers back.

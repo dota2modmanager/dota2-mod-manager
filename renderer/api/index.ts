@@ -5,7 +5,7 @@
  * from its handler in src/ipc-*.js; a change to what a handler answers changes the type beside
  * the others of its group here. */
 import type { AppApi } from './app.ts';
-import type { ArcanaApi, CatalogApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';
+import type { ArcanaApi, CatalogApi, CompilerApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';
 import type { ModsApi, PacksApi } from './mods.ts';
 
 export interface Api extends AppApi {
@@ -15,6 +15,8 @@ export interface Api extends AppApi {
   patch: PatchApi;
   /** the Source 2 toolchain: downloaded on request, never behind the user's back */
   tools: ToolsApi;
+  /** Valve's resourcecompiler.exe: found or picked, and the Wine prefix it runs in on Linux */
+  compiler: CompilerApi;
   /** what the app was told from the network: features switched off, dated notices */
   config: ConfigApi;
   cosmetics: CosmeticsApi;

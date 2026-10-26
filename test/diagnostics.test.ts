@@ -39,7 +39,7 @@ const healthy = (): Report => ({
   disk: { freeBytes: 40 * 1024 ** 3, totalBytes: 100 * 1024 ** 3 },
   installedMods: [],
   dotaRunning: false,
-  windows: null, rendererErrors: null, updater: null, remoteConfig: null, toolchain: null, displays: null, gpu: null,
+  windows: null, rendererErrors: null, updater: null, remoteConfig: null, toolchain: null, compiler: null, displays: null, gpu: null,
   problems: [],
 });
 

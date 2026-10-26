@@ -24,8 +24,13 @@
     "@astrojs/sitemap": "^3.7.4",
     "@fontsource-variable/onest": "^5.3.1",
     "@fontsource-variable/unbounded": "^5.3.0",
-    "astro": "^7.3.8",
-    "playwright-core": "^1.63.0",
-    "wrangler": "^4.146.0"
+    "astro": "^7.4.2",
+    "playwright-core": "^1.64.1",
+    "wrangler": "^4.152.0"
+  },
+  "overrides": {
+    "miniflare": {
+      "undici": "^7.30.1"
+    }
   }
 }

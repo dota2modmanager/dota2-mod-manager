@@ -196,7 +196,7 @@
   "updateable_reused_components_status": "Met",
   "updateable_reused_components_justification": "The app ships two runtime dependencies, both from npm and neither vendored into this repository, so updating one is a version bump. Nothing is forked or copied in.",
   "interfaces_current_status": "Met",
-  "interfaces_current_justification": "The runtime is kept current rather than pinned to an old line: Electron 44 and Node 24 today, with Dependabot opening the bumps. No deprecated Electron or Node API is knowingly used, and the type checker runs against the current typings with a ceiling that can only fall.",
+  "interfaces_current_justification": "The runtime is kept current rather than pinned to an old line: Electron 45 and Node 24 today, with Dependabot opening the bumps. No deprecated Electron or Node API is knowingly used, and the type checker runs against the current typings with a ceiling that can only fall.",
   "automated_integration_testing_status": "Met",
   "automated_integration_testing_justification": "Every push and every pull request runs the suite on Linux and on Windows, and a separate job installs the built AppImage and clicks through installing, switching and removing a mod against a real Dota tree. Each run reports pass or fail as a required check: https://github.com/dota2modmanager/dota2-mod-manager/blob/main/.github/workflows/test.yml",
   "regression_tests_added50_status": "Met",

@@ -28,12 +28,13 @@ import {
   canonicalItemSlot, isPersonaItem, itemHeroes, matchItemSlot,
 } from './item-builder-slots.ts';
 import { ITEM_EFFECTS, type ItemEffect } from './item-builder-effects.ts';
-import { itemAssets, normalizeAssetPath, type ItemAssets } from './item-builder-assets.ts';
+import { itemAssets, normalizeAssetPath, type ItemAssets, type SummonModels } from './item-builder-assets.ts';
 import { styleOf, withStyle } from './item-builder-styles.ts';
 
 export { itemSlots, itemSlotsSteps, itemSets, itemOptions } from './item-builder-slots.ts';
 export { itemEffects } from './item-builder-effects.ts';
-export { gameAssetEntries } from './item-builder-assets.ts';
+export { gameAssetEntries, summonModels } from './item-builder-assets.ts';
+export type { SummonModels } from './item-builder-assets.ts';
 export type { ItemSlot, ItemSet, AssetCopy } from './item-builder-slots.ts';
 
 // ---------- reading the game's own schema ----------
@@ -140,8 +141,8 @@ export function defaultItemForWearable(text: string, sourceId: string | number):
 /**
  * The visuals without the model swaps the built files already make: the hero's own model swapped
  * for an arcana's, and a stock item's model for another, where the pick puts that model under the
- * plain path, and a hero's other form swapped for the item's (hero_model_change) the same way.
- * Each left in names a model only the paid item loads.
+ * plain path, and a hero's other form swapped for the item's (hero_model_change) the same way, and
+ * a summon's model put under the unit's. Each left in names a model only the paid item loads.
  *
  * The game wears an item's model only once it is loaded, and what a match loads is what the
  * server's own item table names: the stock paths. Joining a match the client loaded the paid
@@ -153,10 +154,11 @@ export function defaultItemForWearable(text: string, sourceId: string | number):
  * A persona's switch to its own loadout ("persona") goes too: the persona is worn as the plain
  * hero (src/item-builder-personas.ts), and switched it would put on the persona's stock items,
  * which are not where the picks for its slots are.
- * @param heroes  the heroes whose own model the pick puts under their path
+ * @param units  the heroes whose own model the pick puts under their path, and the summons whose
+ *   model it puts under the unit's
  * @param stock  the stock models the pick puts another model under, as normalizeAssetPath writes them
  */
-function withoutFileSwaps(visuals: string, heroes: Set<string>, stock: Set<string>): string {
+function withoutFileSwaps(visuals: string, units: Set<string>, stock: Set<string>): string {
   const cut: { start: number; end: number }[] = [];
   eachChild(visuals, blockBounds(visuals, 0), (c) => {
     if (!c.isBlock || !/^asset_modifier\d*$/i.test(c.key)) return;
@@ -164,7 +166,7 @@ function withoutFileSwaps(visuals: string, heroes: Set<string>, stock: Set<strin
     eachChild(visuals, c.body, (f) => { if (!f.isBlock) fields.set(f.key.toLowerCase(), f.value); });
     const type = (fields.get('type') || '').toLowerCase();
     const asset = fields.get('asset') || '';
-    if (type === 'persona' || (type === 'entity_model' && heroes.has(asset.toLowerCase()))
+    if (type === 'persona' || (type === 'entity_model' && units.has(asset.toLowerCase()))
       || ((type === 'model' || type === 'hero_model_change') && stock.has(normalizeAssetPath(asset)))) cut.push(c);
   });
   let out = visuals;
@@ -213,8 +215,10 @@ function appendItemEffect(visuals: string, effect: ItemEffect): string {
  * when it is created, and a reconnect keeps them.
  * @param targetId  the stock item to write it over, where its slot does not say: a persona's
  *   (src/item-builder-personas.ts personaRecords)
+ * @param summon  the plain models of the hero's summons (item-builder-assets.ts summonModels), for an
+ *   item that swaps one; without it the swap stays in the table and shows in hero demo only
  */
-export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string): { id: string; block: string } & ItemAssets {
+export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels): { id: string; block: string } & ItemAssets {
   const source = findItem(baseText, itemId);
   if (!source) throw new Error(t('items_game: предмет {0} не найден', itemId));
   const target = targetId ? listItems(baseText).find((i) => i.id === targetId) || null : defaultItemForWearable(baseText, itemId);
@@ -232,14 +236,14 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
   const styled = withStyle(itemVisuals(baseText, source) || '"visuals"\r\n{\r\n}', styleOf(key));
   let visuals = styled.visuals;
 
-  const assets = itemAssets(baseText, visuals, itemHeroes(baseText, source));
+  const assets = itemAssets(baseText, visuals, itemHeroes(baseText, source), summon);
   // a style with a model of its own wears that one in place of the item's
   const sourceModel = styled.model || sourceFields.get('model_player') || '';
   const targetModel = targetFields.get('model_player') || '';
   const underStock = !!sourceModel && !!targetModel && normalizeAssetPath(sourceModel) !== normalizeAssetPath(targetModel);
   if (underStock) assets.assetCopies.unshift({ from: sourceModel, to: targetModel });
 
-  const copiedHeroes = new Set(assets.assetCopies.flatMap((c) => ('hero' in c ? [c.hero] : [])));
+  const copiedHeroes = new Set(assets.assetCopies.flatMap((c) => ('hero' in c ? [c.hero] : 'unit' in c ? [c.unit] : [])));
   const copiedStock = new Set(assets.assetCopies.flatMap((c) => ('to' in c ? [normalizeAssetPath(c.to)] : [])));
   visuals = withoutFileSwaps(visuals, copiedHeroes, copiedStock);
   visuals = stripKeyBlocks(visuals, 'unlock');

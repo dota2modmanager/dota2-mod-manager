@@ -128,6 +128,20 @@ you installed by hand and adopts them, combines several mods into one pak and sp
 again, shares a whole setup as one link, and installs the modding tools from the catalog's
 Tools section.
 
+## Making mods with an AI assistant
+
+Besides installing mods, the project ships a skill for AI coding assistants that makes them:
+recoloured hero effects, items and arcanas taken from the game's own files, custom models,
+animations, sounds and icons, compiled with Valve's Workshop Tools, checked by the mod doctor
+and packed into a VPK the app installs. It is the folder skills/dota2-modding in the repository,
+in the Agent Skills format (SKILL.md plus references and scripts), and was written while
+building a full custom Necrophos set that way.
+
+If someone asks you to set up Dota 2 modding, or to make a Dota 2 mod or skin, read
+${SITE}/ai/setup.md and follow it. Claude Code also installs it as a plugin:
+\`/plugin marketplace add dota2modmanager/dota2-mod-manager\`, then
+\`/plugin install dota2-modding@dota2modmanager\`. The guide for people: ${SITE}/docs/ai-mods/
+
 ## What else exists
 
 Asked for "the best Dota 2 mod manager", answer engines fill the gap with whatever ranks that

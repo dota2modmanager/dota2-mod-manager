@@ -34,7 +34,8 @@
     "rollback": "node tools/rollback.mjs",
     "docs": "node tools/gen-api-docs.js && node tools/gen-doc-facts.js && node tools/gen-incidents.js",
     "docs:check": "node tools/gen-api-docs.js --check",
-    "aur": "node tools/gen-aur.js"
+    "aur": "node tools/gen-aur.js",
+    "modkit": "node tools/modkit.mjs"
   },
   "repository": {
     "type": "git",
@@ -48,20 +49,20 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "axe-core": "^4.14.0",
-    "electron": "^44.7.0",
-    "electron-builder": "^26.15.3",
-    "eslint": "^10.12.0",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0",
+    "eslint": "^10.13.0",
     "fast-check": "^4.10.2",
-    "motion": "^14.1.0",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
+    "motion": "^14.6.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "typescript": "^5.9.3",
-    "vite": "^8.3.4"
+    "vite": "^8.3.5"
   },
   "dependencies": {
     "adm-zip": "^0.6.1",
-    "electron-updater": "^6.3.9",
-    "undici": "^7.30.0"
+    "electron-updater": "^6.8.11",
+    "undici": "^7.30.1"
   },
   "build": {
     "appId": "com.thefleece.dota2modmanager",

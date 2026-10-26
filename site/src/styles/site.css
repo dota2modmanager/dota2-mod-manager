@@ -434,6 +434,8 @@ section { padding: 56px 0; }
 .sec-head h2 { margin: 0; max-width: 22ch; }
 .sec-head p { margin: 8px 0 0; color: var(--text-dim); max-width: 60ch; }
 .sec-head .more { font-weight: 600; font-size: 15px; white-space: nowrap; }
+/* "Весь раздел «Эффекты предметов»" is wider than a 320 px phone in a wide font: there it wraps */
+@media (max-width: 480px) { .sec-head .more { white-space: normal; } }
 
 /* Reveal on scroll, done by an observer that adds a class (Base.astro), not by a scroll-driven
    animation: Safari 26 runs those and the page crashed on iPhones with forty of them. Visible is
@@ -651,7 +653,7 @@ section { padding: 56px 0; }
 
 /* ---------- the landing: what you get ----------
  *
- * Not seven identical boxes. Each tile carries a small picture of the thing it claims, drawn in
+ * Not eight identical boxes. Each tile carries a small picture of the thing it claims, drawn in
  * HTML from real names and real renders, and the tiles are as big as the claim. */
 .bento {
   display: grid; gap: 14px;
@@ -672,6 +674,7 @@ section { padding: 56px 0; }
 .tile.wide { grid-column: span 3; }
 .tile.span4 { grid-column: span 4; }
 .tile.big { grid-column: span 4; grid-row: span 2; }
+.tile.full { grid-column: 1 / -1; }
 .tile h3 { margin: 0 0 8px; font-size: 20px; }
 .tile p { margin: 0; color: var(--text-dim); font-size: 15px; max-width: 46ch; }
 .tile .art { margin-top: auto; padding-top: 22px; }
@@ -682,8 +685,26 @@ section { padding: 56px 0; }
 }
 @media (max-width: 640px) {
   .bento { grid-template-columns: 1fr; }
-  .tile, .tile.wide, .tile.big, .tile.span4 { grid-column: auto; min-height: 0; }
+  .tile, .tile.wide, .tile.big, .tile.span4, .tile.full { grid-column: auto; min-height: 0; }
 }
+
+/* the AI tile: the words on the left, the conversation that makes a mod on the right */
+.tile.ai {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: center;
+  min-height: 0;
+}
+.tile.ai .art { margin: 0; padding: 0; }
+.ai-chat { display: grid; gap: 10px; }
+.ai-msg { padding: 12px 14px; border: 1px solid var(--border); font-size: 14px; }
+.ai-msg.you {
+  justify-self: end; max-width: 85%;
+  border-radius: 14px 14px 4px 14px; background: color-mix(in srgb, var(--primary) 16%, var(--surface-low));
+}
+.ai-msg.bot { display: grid; gap: 8px; border-radius: 14px 14px 14px 4px; background: var(--surface-low); color: var(--text-dim); }
+.ai-msg.bot span { display: flex; align-items: center; gap: 8px; }
+.ai-msg.bot span svg { color: var(--arcana); flex: none; }
+.ai-msg.bot code { font: 500 13px/1.4 var(--mono); color: var(--primary); }
+@media (max-width: 980px) { .tile.ai { grid-template-columns: 1fr; } }
 
 /* the install tile: a real catalog card that installs itself when it comes into view */
 .demo-card {
@@ -1271,6 +1292,14 @@ details.release-old:first-of-type { margin-top: 44px; border-top: 1px solid var(
 .doc-list li::marker { color: var(--primary); }
 .doc-code { background: var(--surface-low); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 14px 16px; margin: 1.3em 0; overflow-x: auto; font-size: 14px; line-height: 1.55; }
 .doc-code code { background: none; border: 0; padding: 0; }
+/* a line to paste into an AI assistant: it wraps rather than scrolls, the button beside it or under it */
+.doc-prompt {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 1.3em 0; padding: 14px 16px;
+  border-radius: var(--radius-sm); border: 1px solid color-mix(in srgb, var(--primary) 45%, var(--border-strong));
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface-low));
+}
+.doc-prompt code { flex: 1 1 260px; min-width: 0; background: none; border: 0; padding: 0; font-size: 14.5px; line-height: 1.55; overflow-wrap: anywhere; }
+.doc-prompt .btn { flex: none; }
 .doc-faq { margin: 1.3em 0; display: grid; gap: 18px; }
 .doc-faq dt { color: var(--text); font-weight: 650; margin-bottom: 4px; }
 .doc-faq dd { margin: 0; }

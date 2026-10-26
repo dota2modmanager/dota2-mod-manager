@@ -61,6 +61,33 @@ test('a model in another order than the game has at its path is a warning, and a
   assert.match(found[0].what, /sequence 1 is "run" here and "idle"/);
 });
 
+test('sequence numbers count the clips a sequence plays under a name of their own', (t) => {
+  // necrolyte: the decompile gave cast_ghost_shroud and its clip @@cast_ghost_shroud one name, the
+  // sequences matched Valve's one by one, and every number after it was one off online
+  const seqs: [string, string[]][] = [['idle', ['ACT_DOTA_IDLE']], ['cast', ['ACT_DOTA_CAST_ABILITY_1']], ['run', ['ACT_DOTA_RUN']]];
+  const found = findings(t,
+    [[MODEL, model('models/heroes/terrorblade/terrorblade.vmdl', seqs, seqs, ['idle', 'cast', 'run'])]],
+    [[MODEL, model('models/heroes/terrorblade/terrorblade.vmdl', seqs, seqs, ['idle', 'cast', '@@cast', 'run'])]]);
+  assert.deepEqual(what(found), [`warning: ${MODEL}`]);
+  assert.match(found[0].what, /sequence 2 is "run" here and "@@cast"/);
+});
+
+test("a sequence keeps the game's activity and modifiers, since the server online picks it by them", (t) => {
+  // necrolyte "Scream": the plain idle lost ACT_DOTA_IDLE so the shoulders' idle would win in demo
+  // mode; online the server picked the plain idle by the game's model, and the client, finding no
+  // idle under that number, stood the hero in the injured idle at full health
+  const game: [string, string[]][] = [['idle_anim', ['ACT_DOTA_IDLE']], ['immosh_idle_injured', ['ACT_DOTA_IDLE', 'immosh', 'injured']], ['immosh_idle_anim', ['ACT_DOTA_IDLE', 'immosh']]];
+  const mod: [string, string[]][] = [['idle_anim', []], ['immosh_idle_injured', ['ACT_DOTA_IDLE', 'injured']], ['immosh_idle_anim', ['ACT_DOTA_IDLE']]];
+  const found = findings(t, [[MODEL, model('models/heroes/terrorblade/terrorblade.vmdl', mod)]], [[MODEL, model('models/heroes/terrorblade/terrorblade.vmdl', game)]]);
+  assert.deepEqual(what(found), [`warning: ${MODEL}`]);
+  assert.match(found[0].what, /sequence 0 "idle_anim" is ACT_DOTA_IDLE in the game's model and plays as nothing here/);
+  // the two that need the item's "immosh" the server never picks without it: changing them is the mod's own business
+  assert.doesNotMatch(found[0].what, /more/);
+  // the same activities with other clips behind them are the way to do it, and pass
+  assert.deepEqual(what(findings(t, [[MODEL, model('models/heroes/terrorblade/terrorblade.vmdl', game, [['idle_anim', ['ACT_DOTA_IDLE']]])]],
+    [[MODEL, model('models/heroes/terrorblade/terrorblade.vmdl', game)]])), []);
+});
+
 /** A particle that draws itself on `attachment`, its preview's control point 0. */
 const drawnOn = (attachment: string) => resource([['RERL', rerl([])], ['DATA', encodeKv3({ obj: [
   ['m_controlPointConfigurations', { arr: [{ obj: [['m_drivers', { arr: [{ obj: [['m_attachmentName', { str: attachment }]] }] }]] }] }],

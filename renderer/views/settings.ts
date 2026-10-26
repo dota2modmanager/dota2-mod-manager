@@ -28,14 +28,20 @@ let key = 0;
 registerView('settings', () => renderSettings(true));
 
 async function renderSettings(fresh = false): Promise<void> {
-  const s = await window.api.settings.get();
+  /* Asked all at once: one after another they were seven trips to the main process before the page
+   * drew, and the compiler's state looks for Wine on disk. The longer the wait, the longer a click
+   * lands on the page the redraw is about to replace (the Linux simulation's language switch, on
+   * the pull request that added the compiler). */
+  const [s, cacheSize, version, tools, compiler, beta] = await Promise.all([
+    window.api.settings.get(),
+    window.api.misc.cacheSize(),
+    window.api.update.version(),
+    window.api.tools.state().catch(() => null), // older build
+    window.api.compiler.state().catch(() => null),
+    window.api.beta.state().catch(() => ({ eligible: false, on: false })),
+  ]);
   state.settings = s;
-  const cacheSize = await window.api.misc.cacheSize();
-  const version = await window.api.update.version();
-  let vrf = null;
-  try { vrf = (await window.api.tools.state()).tools.find((x) => x.name === 'vrf') || null; } catch { /* older build */ }
-  let beta = { eligible: false, on: false };
-  try { beta = await window.api.beta.state(); } catch { /* older build */ }
+  const vrf = tools?.tools.find((x) => x.name === 'vrf') || null;
   if (fresh) key++;
   const fetchedAt = (state.catalog as { fetchedAt?: number } | null)?.fetchedAt;
   model = {
@@ -50,6 +56,7 @@ async function renderSettings(fresh = false): Promise<void> {
     proxy: s.downloadProxy || '',
     // no row on a machine with no build of it: the button could only fail
     vrf: vrf && vrf.available !== false ? { ready: Boolean(vrf.ready), size: `${fmtMB(vrf.ready ? vrf.installedBytes : vrf.downloadBytes)} MB` } : null,
+    compiler,
     catalogUpdated: fetchedAt ? new Date(fetchedAt).toLocaleString(window.i18nLocale()) : '—',
     adult: adultShown(),
     adultHint: adultHint(),
@@ -145,6 +152,40 @@ const actions: SettingsActions = {
       toast(L`Инструмент удалён — картинки снова из вики`);
     }
     await renderSettings();
+  },
+  compilerBrowse: async () => {
+    const r = await window.api.compiler.browse();
+    if (r?.error) toast(r.error, 'error', 7000);
+    else if (r?.ok) toast(L`Компилятор выбран`);
+    renderSettings();
+  },
+  compilerForget: async () => {
+    await window.api.compiler.forget();
+    renderSettings();
+  },
+  // a few seconds of wineboot the first time; the button stays pressed until it answers
+  compilerPrepare: async () => {
+    const r = await window.api.compiler.prepare();
+    if (r?.error) toast(r.error, 'error', 7000);
+    else toast(L`Wine готов`);
+    await renderSettings();
+  },
+  compilerCheck: async () => {
+    const r = await window.api.compiler.check();
+    if (r?.error) toast(r.error, 'error', 7000);
+    else toast(L`Компилятор работает`);
+    await renderSettings();
+  },
+  compilerKeep: async () => {
+    const r = await window.api.compiler.keep();
+    if (r?.error) toast(r.error, 'error', 7000);
+    else toast(L`Копия Workshop Tools сохранена`);
+    await renderSettings();
+  },
+  compilerRemoveKept: async () => {
+    await window.api.compiler.removeKept();
+    toast(L`Копия Workshop Tools удалена`);
+    renderSettings();
   },
   refreshCatalog: async () => {
     await loadCatalog(true);

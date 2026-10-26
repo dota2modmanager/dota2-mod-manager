@@ -301,7 +301,7 @@ test('the eight mascots hide in the margins, and only where there are margins', 
 /** Chase the one that runs (src/scripts/chase.ts) the way a hand would, until it is caught. */
 async function runDown(page, limit = 200_000) {
   const t0 = Date.now();
-  let mx = 700, my = 420, lastClick = 0;
+  let lastClick = 0;
   while (Date.now() - t0 < limit) {
     const r = await page.evaluate(() => {
       const e = document.querySelector('.chase-runner');
@@ -312,9 +312,8 @@ async function runDown(page, limit = 200_000) {
     if (!r) return Date.now() - t0;
     // straight onto it, however long a step takes: on a slow CI runner a hand that moved a fixed
     // distance per step never got near, and the chase never ended (2026-10-20)
-    mx = r.x; my = r.y;
-    await page.mouse.move(mx, my);
-    if (Math.hypot(r.x - mx, r.y - my) < 50 && Date.now() - lastClick > 280) {
+    await page.mouse.move(r.x, r.y);
+    if (Date.now() - lastClick > 280) {
       lastClick = Date.now();
       await page.mouse.down();
       await page.mouse.up();

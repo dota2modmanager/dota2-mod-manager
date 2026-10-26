@@ -160,6 +160,8 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'cosmetics:pickSet': [either(str(100, 1), num(0, 1e9))],
   'preview:video': [str(500, 1)], 'preview:frame': [str(500, 1), bytes(32 * MB)],
   'tools:state': [], 'tools:install': [str(100, 1)], 'tools:remove': [str(100, 1)],
+  // resourcecompiler.exe (src/ipc-compiler.ts): its path comes from a dialog, never from here
+  'compiler:state': [], 'compiler:browse': [], 'compiler:forget': [], 'compiler:prepare': [], 'compiler:check': [], 'compiler:keep': [], 'compiler:removeKept': [],
   'arcana:state': [], 'arcana:install': [list(num(0, 255), 3), oneOf('mod', 'recolor')],
   // the small errands (src/ipc-misc.ts)
   'misc:openLangFolder': [], 'misc:openToolsFolder': [optional(str(260, 1))],

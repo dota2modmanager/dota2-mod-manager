@@ -92,6 +92,7 @@ the code, not in this page.
 | [`src/mod-preview-pick.ts`](#srcmod-preview-pickts) | Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
+| [`src/model-sequences.ts`](#srcmodel-sequencests) | A model put under another model's path that numbers its sequences as that one does. |
 | [`src/mods-listing.ts`](#srcmods-listingts) | What My mods is drawn from: the answer to mods:list (src/ipc-mods.ts), which every screen asks |
 | [`src/net-download.ts`](#srcnet-downloadts) | A file downloaded to disk across the mirror chain (src/net.ts explains it): resumed where a |
 | [`src/net-fetch.ts`](#srcnet-fetchts) | A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a |
@@ -115,6 +116,7 @@ the code, not in this page.
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
+| [`src/resource-compiler.ts`](#srcresource-compilerts) | resourcecompiler.exe: Valve's compiler from the Dota 2 Workshop Tools, run on sources the app |
 | [`src/resource.ts`](#srcresourcets) | Compiled Source 2 resources at the block level: the blocks of a file, one replaced by new bytes, |
 | [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
 | [`src/schema-build.ts`](#srcschema-buildts) | Building the item table (src/schema-service.ts is the door: what goes into the table, when it is |
@@ -145,6 +147,8 @@ the code, not in this page.
 | [`src/vpk.ts`](#srcvpkts) | The VPK format, in one place for everything that reads or writes one: the reader |
 | [`src/vtex.ts`](#srcvtexts) | The picture inside a compiled Source 2 texture, when it is already a picture. |
 | [`src/window-guard.ts`](#srcwindow-guardts) | Who may call the main process, and with what. |
+| [`src/wine.ts`](#srcwinets) | Running a Windows program on Linux, for the one that has no Linux build: resourcecompiler.exe, |
+| [`src/workshop-tools.ts`](#srcworkshop-toolsts) | A copy of the Workshop Tools kept in userData, for a Linux machine that plays the Linux build. |
 | [`src/write-jail.ts`](#srcwrite-jailts) | A run that may write only inside the folders it was given. |
 
 ## src/adopt.ts
@@ -3362,7 +3366,7 @@ _No description in the source._
 ### `itemAssets`
 
 ```ts
-export function itemAssets(text: string, visuals: string, heroes: string[]): ItemAssets
+export function itemAssets(text: string, visuals: string, heroes: string[], summon?: SummonModels): ItemAssets
 ```
 
 The files an item's visuals swap, to stage under the plain paths: particles, models, and the
@@ -3377,7 +3381,10 @@ The pictures it swaps for the hero's (PICTURES): its portrait, minimap icon and 
 the minimap draws its hero icons out of a sprite sheet as well, so that sprite is swapped too.
 An arcana's hero model brings its HUD portrait's camera and lights (src/item-portraits.ts).
 
-Only what the hero has on without the item. An entity_model for another unit is left alone:
+Only what the hero has on without the item. An entity_model for one of the hero's own summons
+goes under that unit's plain model (`summon`, summonModels says which): online the server
+creates the unit from its own table and never swaps it, and Invoker's forged spirits came out
+plain in a lobby while hero demo showed Infernus (issue #334). Any other unit's is left alone:
 Rubick's arcana reshapes Spirit Bear and a dozen other heroes' summons for when he steals them.
 So is a model swap for anything but a stock item of the hero's: Queen of Pain's arcana lists 40,
 nearly all refits of paid shoulders to its body, and under their plain paths everyone wearing
@@ -3389,6 +3396,7 @@ arcanas), and those were read as no entries at all.
 ```
 @param text  items_game, for the hero's stock models
 @param heroes  the item's heroes, npc_dota_hero_*
+@param summon  the plain model of one of these heroes' summons; without it, none is staged
 ```
 
 ### `heroModelPath`
@@ -3400,6 +3408,31 @@ export function heroModelPath(ix: VpkIndex, hero: string): string
 Where a hero's own model lives: the first "Model" in its script, which is the hero's (the ones
 after it are its summons'). Shadow Fiend is npc_dota_hero_nevermore in models/heroes/shadow_fiend,
 so the path cannot be made from the name.
+
+### `SummonModels`
+
+```ts
+export type SummonModels = (unit: string, heroes: string[], model: string) => string | null
+```
+
+The plain model of a unit the item swaps for `model`, when the unit is one of these heroes'
+summons and `model` can number its sequences as the plain one does; or null.
+
+### `summonModels`
+
+```ts
+export function summonModels(ix: VpkIndex): SummonModels
+```
+
+Where the plain models of a hero's own summons live, read out of the game's unit scripts.
+
+An item names its unit by name, or by the start of the names it covers ("npc_dota_lone_druid_bear"
+for bear1 to bear4), and those have to agree on one model. A summon is the hero's own when that
+model sits in the hero's model folder: models/heroes/invoker/forge_spirit.vmdl for Invoker's
+forged spirits, and Undying's tombstones, whose units are not named after him. Rubick's arcana
+swaps the bear, Shadow Shaman's wards and others' summons, all in their own heroes' folders.
+A model that cannot be numbered as the plain one (numberedAs) is left to the table too: under the
+plain path it would play the wrong animations online, which is worse than none.
 
 ### `gameAssetEntries`
 
@@ -3612,13 +3645,14 @@ A set, as the builder puts it on; see itemSets.
 ### `AssetCopy`
 
 ```ts
-export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[] }
+export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[] } | { from: string; to: string; unit: string }
 ```
 
 A file in the game's archive staged under another path in the built VPK; an `optional` one (a
 picture the game has in some of its folders only) is left out when the game has not got it. A hero's own model
 names the hero instead of a path: where its model lives is in the hero's script, which the
 table does not say, and it goes in with the item's activity modifiers taken off (arcana.ts asModel).
+A summon's (forged spirits) names its unit, and is numbered as the plain model (model-sequences.ts).
 
 ### `canonicalItemSlot`
 
@@ -3807,7 +3841,7 @@ Hands on from [`src/item-builder-slots.ts`](#srcitem-builder-slotsts): `itemSlot
 
 Hands on from [`src/item-builder-effects.ts`](#srcitem-builder-effectsts): `itemEffects`.
 
-Hands on from [`src/item-builder-assets.ts`](#srcitem-builder-assetsts): `gameAssetEntries`.
+Hands on from [`src/item-builder-assets.ts`](#srcitem-builder-assetsts): `gameAssetEntries`, `summonModels`, `SummonModels`.
 
 ### `effectKey`
 
@@ -3836,7 +3870,7 @@ The stock default_item that matches a wearable by slot and by the hero(es) that 
 ### `itemEffectPatch`
 
 ```ts
-export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string): { id: string; block: string } & ItemAssets
+export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels): { id: string; block: string } & ItemAssets
 ```
 
 Turn one paid wearable into the hero's stock item for that slot.
@@ -3855,6 +3889,8 @@ when it is created, and a reconnect keeps them.
 ```
 @param targetId  the stock item to write it over, where its slot does not say: a persona's
 (src/item-builder-personas.ts personaRecords)
+@param summon  the plain models of the hero's summons (item-builder-assets.ts summonModels), for an
+item that swaps one; without it the swap stays in the table and shows in hero demo only
 ```
 
 ## src/item-portraits.ts
@@ -4646,6 +4682,16 @@ export const sequencesOf = (file: Buffer) => playables(file, 'ASEQ', 'm_localS1S
 
 A model's sequences: name, the activities it plays and the modifiers it needs.
 
+### `sequenceNumbersOf`
+
+```ts
+export function sequenceNumbersOf(file: Buffer): string[]
+```
+
+The names behind a model's sequence numbers, which the server sends online: every sequence, and
+every clip played only through one (necrolyte's cast_ghost_shroud plays @@cast_ghost_shroud, its
+own number). Older files without the list number their sequences alone.
+
 ### `clipsOf`
 
 ```ts
@@ -4873,6 +4919,32 @@ file with a fixed path (a terrain's maps/dota.vpk) has to make room first.
 ```
 @returns the record, updated
 ```
+
+## src/model-sequences.ts
+
+A model put under another model's path that numbers its sequences as that one does.
+
+Online the server picks a unit's animation in its own copy of the plain model and sends the
+client a number: the place of the sequence in the model's name list (ASEQ
+m_localSequenceNameArray), which also counts the clips a sequence plays under a name of its own.
+A model from an item lists them in an order of its own. Infernus, Invoker's forged spirit, has 24
+names where the plain spirit has 8, and number 2, the plain idle, is its turn_center: put under
+the plain path as it is, the spirit would play its turns for its idle in a lobby.
+
+So the plain model's names come first, in the plain order, each matched to the item's sequence of
+the same name (written any case, with or without underscores) or, failing that, of the same
+activity (the plain run is Infernus's runx); the rest
+follow in their own order, and every reference into the list is moved with its entry.
+
+### `numberedAs`
+
+```ts
+export function numberedAs(model: Buffer, plain: Buffer): Buffer | null
+```
+
+`model` with its sequences numbered as `plain` numbers its own, or null where that cannot be
+done: a plain sequence with nothing in the model to stand for it, a list either one has not got,
+or sequences of kinds this does not move the references of (multi, synth, command).
 
 ## src/mods-listing.ts
 
@@ -6430,6 +6502,140 @@ wants to sign its own fixture, which it cannot do with a private key that is not
 @param opts.now          the clock a notice's until date is read against
 ```
 
+## src/resource-compiler.ts
+
+resourcecompiler.exe: Valve's compiler from the Dota 2 Workshop Tools, run on sources the app
+staged, for the compiled files an arcana base is made of (src/arcana-bases.ts).
+
+The bases J0nathan550 publishes were made by hand: the item's model taken apart in Source 2
+Viewer, its .vmdl put at the plain hero's path with its meshes and animations beside the item's,
+and the lot compiled in the Workshop Tools, so every file is at a path the plain hero reads. An
+arcana nobody has made a base for yet can go through the same compiler, and this file is the
+compiler half of that: given sources at their paths, it hands back the compiled files.
+
+The compiler is not ours to ship. It is Valve's, it is not open source, and toolchain.ts says
+why nothing proprietary is downloaded by this app; it comes with the Workshop Tools, a free DLC
+of Dota's in Steam. So it is found where Steam put it, game/bin/win64 of the user's game, or in
+a file the user picked in Settings. The tools exist for the Windows build of Dota alone: on Linux
+Steam installs them while Dota is forced to run through Proton and takes them away again with
+the Linux build, so the app keeps a copy of them once it has seen them (src/workshop-tools.ts),
+and runs that when the game's are gone. On Linux it runs under Wine in a prefix of the app's
+(src/wine.ts).
+
+How it is run, as BetterSource2Viewer's ResourceCompilerTest runs it: a source under
+content/dota_addons/<addon>/ of the install the compiler belongs to is compiled into the same
+path under game/dota_addons/<addon>/, with "-nop4 -f -i <source>" from the compiler's own folder.
+The addon is ours (d2mm_<id>), made for one compile and deleted after it, so nothing is left in
+the install either way. Neither folder is one the game mounts: a compile while Dota runs does not
+touch what it plays with. One compile runs at a time, since every one of them writes the
+install's asset list.
+
+### `COMPILER`
+
+```ts
+export const COMPILER = 'resourcecompiler.exe'
+```
+
+The compiler's file name, as the Workshop Tools install it.
+
+### `compilerIn`
+
+```ts
+export function compilerIn(gamePath: string): string
+```
+
+Where the Workshop Tools put the compiler in a game folder (dota 2 beta/game).
+
+### `installOf`
+
+```ts
+export function installOf(exe: string | null | undefined): string | null
+```
+
+The install a compiler belongs to, the folder with game/ and content/ in it, or null when it is
+not one: the compiler finds the game through its own place in game/bin/win64, so a copy of the
+file anywhere else compiles nothing.
+
+### `safeRel`
+
+```ts
+export function safeRel(rel: string): boolean
+```
+
+A path inside an addon, as the game spells it: forward slashes, nothing that climbs out.
+
+### `SourceFile`
+
+```ts
+export interface SourceFile { path: string; data: Buffer }
+```
+
+A source file to stage, at its path in the addon (models/heroes/razor/razor.vmdl).
+
+### `CompileJob`
+
+```ts
+export interface CompileJob { id: string; files: SourceFile[]; compile: string[] }
+```
+
+One compile: the addon's sources, and which of them to hand the compiler (it finds what they use).
+
+### `CompilerCheck`
+
+```ts
+export interface CompilerCheck { ok: boolean; message?: string; seconds: number; at: number }
+```
+
+How the last check of a compiler went: kept until another compiler is picked or a patch replaces it.
+
+### `CheckStep`
+
+```ts
+export type CheckStep = 'wine' | 'compile'
+```
+
+A step of the check, for the bar at the bottom of the window.
+
+### `CompilerSource`
+
+```ts
+export type CompilerSource = 'chosen' | 'game' | 'kept'
+```
+
+Where the compiler that runs comes from.
+
+### `CompilerState`
+
+```ts
+export interface CompilerState
+```
+
+What Settings shows of the compiler.
+
+### `runProcess`
+
+```ts
+export const runProcess: RunProcess = (exe, args, { cwd, env, timeoutMs }) => new Promise((resolve, reject) => { execFile(exe, args, { cwd, env, timeout: timeoutMs, windowsHide: true, maxBuffer: 64 * 1024 * 1024 }, (err, stdout, stderr) => { const out = `${stdout || ''}${stderr || ''}`; if (!err) return resolve({ code: 0, out }); // a number is the program's own exit code; anything else is that it never ran, or was killed if (typeof (err as { code?: unknown }).code === 'number') return resolve({ code: (err as { code: number }).code, out }); reject(err); })
+```
+
+Run a program and settle with its exit code: a non-zero one is an answer, not a failure to run.
+
+### `createResourceCompiler`
+
+```ts
+export function createResourceCompiler({ userDataDir, gamePath, chosen, keeper, log = () => {}, platform = process.platform, run = runProcess, wine = () => findWine() }: { userDataDir: string; /** the game folder in Settings (dota 2 beta/game) */ gamePath: () => string | null | undefined; /** the compiler the user picked in Settings */ chosen: () => string | null | undefined; /** the copy of the Workshop Tools kept for when the game's are gone (src/workshop-tools.ts) */ keeper?: Pick<ToolsKeeper, 'usable' | 'info' | 'outdated' | 'keepable'>
+```
+
+The compiler as the app runs it: where it is, what it needs, and a compile.
+
+### `ResourceCompiler`
+
+```ts
+export type ResourceCompiler = ReturnType<typeof createResourceCompiler>
+```
+
+The compiler as the IPC and the builder take it.
+
 ## src/resource.ts
 
 Compiled Source 2 resources at the block level: the blocks of a file, one replaced by new bytes,
@@ -7226,7 +7432,8 @@ each other. src/main.ts calls this when the app is ready, then puts the game fol
 hands the services to the IPC modules.
 
 Two things start in the background here and are not waited for: the fingerprint list and the
-remote config. Both answer from their cached copies until the network does.
+remote config. Both answer from their cached copies until the network does. A third waits for
+the start to settle: on Linux, a copy of the Workshop Tools the game has (src/workshop-tools.ts).
 
 ### `createServices`
 
@@ -8537,6 +8744,159 @@ export function guardTheApp({ app, ipcMain, session, appRoot, devUrl, log }: { a
 
 The whole guard, as src/main.ts puts it up before any channel or window exists: the channels,
 the browser's permissions, and every web contents locked the moment it is created.
+
+## src/wine.ts
+
+Running a Windows program on Linux, for the one that has no Linux build: resourcecompiler.exe,
+Valve's compiler from the Workshop Tools (src/resource-compiler.ts).
+
+The app keeps a Wine prefix of its own in userData/wine rather than borrowing ~/.wine. A prefix
+is a whole pretend Windows, and the user's may be set up for a game, a 32-bit one, or somebody's
+registry tweaks; the compiler wants none of that, and a prefix that is only ours can be deleted
+and made again without asking anybody. It is made once, by the first compile or ahead of it from
+Settings: wineboot takes a few seconds, and Wine offers to download Mono and Gecko into a new prefix in a window of its
+own unless it is told not to (WINEDLLOVERRIDES below), which the compiler needs neither of.
+
+Which Wine: the system's, on PATH, and when there is none the one inside a Proton that Steam
+installed. Anybody running Dota on Linux has Steam, and most have a Proton; its files/bin/wine
+runs on its own (Proton - Experimental's, 2026-10-25). Older Protons kept it under dist/.
+
+A path goes to a Windows program as Windows spells it. A new prefix maps Z: to the root of the
+file system, so /home/x/a.vmdl is Z:\home\x\a.vmdl, with no call into Wine to find that out.
+
+### `wineEnv`
+
+```ts
+export function wineEnv(prefix: string, base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv
+```
+
+The env a Windows program runs in under our prefix: quiet, 64-bit, and no Mono or Gecko offer.
+
+### `winePath`
+
+```ts
+export function winePath(p: string): string
+```
+
+A Linux path as a program under Wine reads it, through the Z: drive every new prefix has.
+
+### `protonWines`
+
+```ts
+export function protonWines(steamRoots: string[]): string[]
+```
+
+The Wine inside each Proton Steam installed, in every library it knows of.
+
+### `pathWines`
+
+```ts
+export function pathWines(env: NodeJS.ProcessEnv = process.env): string[]
+```
+
+Every Wine on PATH, by the names it goes by.
+
+### `findWine`
+
+```ts
+export function findWine({ env = process.env, home = os.homedir() }: { env?: NodeJS.ProcessEnv; home?: string } = {}): string | null
+```
+
+The Wine to run with: the system's first, then a Proton's; null when there is neither.
+
+### `prefixReady`
+
+```ts
+export function prefixReady(prefix: string): boolean
+```
+
+Whether a prefix is made and was made whole.
+
+### `RunProcess`
+
+```ts
+export type RunProcess = (exe: string, args: string[], opts: { cwd?: string; env?: NodeJS.ProcessEnv; timeoutMs: number }) => Promise<{ code: number; out: string }>
+```
+
+How a program is run: its exit code and everything it printed.
+
+### `ensurePrefix`
+
+```ts
+export async function ensurePrefix(prefix: string, wine: string, run: RunProcess, log: (msg: string) => void = () => {}): Promise<void>
+```
+
+Make the prefix, once. A prefix wineboot left half made (the app closed in the middle) has no
+marker, so it is thrown away and made again rather than trusted.
+
+## src/workshop-tools.ts
+
+A copy of the Workshop Tools kept in userData, for a Linux machine that plays the Linux build.
+
+On Linux the tools come only with the Windows build of Dota, which Steam installs while the game
+is forced to run through Proton; switch back to the Linux build to play and Steam takes the
+Windows files away, resourcecompiler.exe with them. So the first time the app sees the tools in
+the game it copies them here, and the compiler (src/resource-compiler.ts) runs this copy whenever
+the game's own is gone. Nobody has to keep a Proton build installed to compile.
+
+What is copied is what only the Windows build has: game/bin (win64, the tools themselves, 137
+files and 700 MB on 2026-10-25, and the few files beside it), and in game/dota and game/core
+their own bin/win64 (client, server, host and modtools), the DX11 shaders (shaders_pc_*; the
+Linux build has pcgl and vulkan ones), the tools' entity definitions (*.fgd) and their asset
+list (readonly_tools_asset_info.bin): 456 MB more. That list is the whole difference between the
+two builds' game/dota and game/core, both listed on 2026-10-25, and the Linux one has none of
+these. The rest of the game is not copied: the compiler finds the game through its own place,
+two folders up from win64, and every other entry of game/dota and game/core here is a link to the
+user's game, whose content is the same for both builds. The first copy linked game/dota and
+game/core whole, and once Steam had taken the Windows build away the compiler stopped at "Unable
+to load module modtools, error 126": game/dota/bin/win64 had gone with it (J0nathan550,
+2026-10-25). content/ and game/dota_addons/ here are folders of the copy's own, so what a compile
+writes stays in userData and never reaches the game through a link.
+
+It is copied into a folder of its own and renamed into place once whole, so a copy cut short is
+never run; and copied again when the game's tools change, which is what a Dota patch does while
+the Proton build is installed. Deleted from Settings, it is not copied again until the game's
+tools change: a gigabyte the user said no to is not taken back on the next start.
+
+### `KeptInfo`
+
+```ts
+export interface KeptInfo { from: string; stamp: string; bytes: number; at: number; layout: number }
+```
+
+What kept.json says of the copy: the tools it was copied from, its size, and how it is laid out.
+
+### `windowsOnly`
+
+```ts
+export function windowsOnly(rel: string): boolean
+```
+
+Whether a file of game/dota or game/core, by its path inside it, is the Windows build's alone.
+
+### `windowsFiles`
+
+```ts
+export function windowsFiles(game: string): string[]
+```
+
+What to copy of a game folder of the Windows build, as paths relative to game/.
+
+### `createToolsKeeper`
+
+```ts
+export function createToolsKeeper({ dir, gamePath, log = () => {}, onStep = () => {} }: { /** where the copy is kept (userData/workshop-tools) */ dir: string; gamePath: () => string | null | undefined; log?: (msg: string) => void; /** files copied of how many, for the bar at the bottom */ onStep?: (done: number, total: number) => void; })
+```
+
+The copy, as the compiler and Settings take it.
+
+### `ToolsKeeper`
+
+```ts
+export type ToolsKeeper = ReturnType<typeof createToolsKeeper>
+```
+
+The copy as the compiler and the IPC take it.
 
 ## src/write-jail.ts
 

@@ -31,7 +31,7 @@ const padTo = (n: number, a: number) => Buffer.alloc((a - (n % a)) % a);
  * game, in a shape every version has. Each element is written in the shape of the type declared
  * for it, never its own: a model's arrays of byte-length arrays came back misread otherwise.
  */
-const elementType = (t: number) => (t === 24 || t === 25 ? 10 : t);
+const elementType = (t: number) => (t === 24 || t === 25 ? 10 : UINT32_BY_TYPE.has(t) ? 12 : t);
 
 const ARRAYS = new Set([8, 10, 24, 25]);
 
@@ -50,9 +50,16 @@ function slotType(n: Kv3Node): number {
     }
     case 'string': return 6;
     case 'blob': return 7;
-    default: return n.type;
+    default: return UINT32_BY_TYPE.has(n.type) ? 12 : n.type;
   }
 }
+
+/**
+ * A uint32 0 or 1 stored as its type alone (26, 27) is version 5's: a block written here is version
+ * 4 at most, and the game took a model's animations with them in one for unreadable (the hero stood
+ * in bind pose). Such a value goes as a plain uint32 (12) with its four bytes.
+ */
+const UINT32_BY_TYPE = new Map([[26, 0], [27, 1]]);
 
 /** The block, written from `kv.root`, with the source's format GUID. */
 export function writeKv3(kv: Kv3Block): Buffer {
@@ -80,6 +87,7 @@ export function writeKv3(kv: Kv3Block): Buffer {
       case 'number': {
         const raw = n.raw ?? (n.cell && kv.buffers[n.cell.buffer].subarray(n.cell.offset, n.cell.offset + n.cell.width));
         if (raw) ({ 1: l1, 2: l2, 4: l4, 8: l8 } as Record<number, Lane>)[raw.length].push(Buffer.from(raw));
+        else if (UINT32_BY_TYPE.has(n.type)) l4.push(int32(UINT32_BY_TYPE.get(n.type)!));
         return;
       }
       case 'other': if (n.type === 2) l1.push(Buffer.from([n.value ?? 0])); return;

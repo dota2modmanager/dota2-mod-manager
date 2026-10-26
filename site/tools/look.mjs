@@ -95,7 +95,7 @@ const STATES = {
     await page.waitForTimeout(250);
   },
   'header-cta': async (page) => {
-    await page.locator('.topbar .cta').click();
+    await page.locator('.topbar .cta:visible').first().click();
     await page.waitForTimeout(900);
   },
 };

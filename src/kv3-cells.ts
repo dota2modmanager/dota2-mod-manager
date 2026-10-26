@@ -27,7 +27,7 @@ export function writeCell(kv: Kv3Block, c: Kv3Cell, v: number): void {
 /** A number node's value: from its bytes, or from its type for the 0s and 1s stored as a type alone. */
 export function numberOf(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' }>): number {
   if (node.cell) return readCell(kv, node.cell);
-  return node.type === 16 || node.type === 18 ? 1 : 0;
+  return node.type === 16 || node.type === 18 || node.type === 27 ? 1 : 0;
 }
 
 /**
@@ -39,7 +39,7 @@ export function numberOf(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' }
 export function setNumber(kv: Kv3Block, node: Extract<Kv3Node, { kind: 'number' }>, v: number): boolean {
   if (node.cell) { writeCell(kv, node.cell, v); return true; }
   if (!node.typeAt || (v !== 0 && v !== 1)) return false;
-  const want = node.type <= 16 ? (v ? 16 : 15) : (v ? 18 : 17);
+  const want = node.type >= 26 ? (v ? 27 : 26) : node.type <= 16 ? (v ? 16 : 15) : (v ? 18 : 17);
   const b = kv.buffers[node.typeAt.buffer];
   const mask = kv.version >= 3 ? 0x3f : 0x7f;
   b[node.typeAt.offset] = (b[node.typeAt.offset] & ~mask) | want;

@@ -22,13 +22,13 @@ import * as itemBuilder from './item-builder.ts';
 import { listItemsSteps } from './schema-items.ts';
 import { soundEntriesSteps, type SoundSwap, type VoiceCue } from './item-sounds.ts';
 import { portraitEntries } from './item-portraits.ts';
-import type { ItemAssets, PortraitSwap, SpriteSwap } from './item-builder-assets.ts';
+import { summonModels, type ItemAssets, type PortraitSwap, type SpriteSwap } from './item-builder-assets.ts';
 import { styleOf } from './item-builder-styles.ts';
 import { basesHereSteps, withoutBaseFiles, type ReadyBase } from './arcana-bases.ts';
 import { isSelectorSlot, leftOut, personaAssets, personaRecords, personasOn, type BuildRecord } from './item-builder-personas.ts';
 import { createColoredBases, windowColor } from './arcana-base-color.ts';
 import type { BaseStore } from './arcana-base-store.ts';
-import { sharedVpkIndexSteps, type VpkEntry } from './vpk.ts';
+import { sharedVpkIndex, sharedVpkIndexSteps, type VpkEntry } from './vpk.ts';
 import { PAUSE } from './steps.ts';
 import type { LibRecord } from './types.ts';
 import type { Library } from './library.ts';
@@ -90,7 +90,9 @@ export function createTableBuild({ library, bases, log }: {
   function builtPick(vanillaText: string, game: string, key: string, rec: BuildRecord, own: ReadyBase | undefined): ItemPick {
     let pick = built.get(key);
     if (!pick) {
-      const made = itemBuilder.itemEffectPatch(vanillaText, String(rec.itemId), rec.effectId, rec.persona?.target);
+      // a summon's plain model, from the game's unit scripts: read only for an item that swaps one
+      const summon: itemBuilder.SummonModels = (...args) => summonModels(sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk')))(...args);
+      const made = itemBuilder.itemEffectPatch(vanillaText, String(rec.itemId), rec.effectId, rec.persona?.target, summon);
       pick = { ...made, assets: itemBuilder.gameAssetEntries(game, made.assetCopies, own && ((p) => own.paths.has(p))) };
       built.set(key, pick);
     }

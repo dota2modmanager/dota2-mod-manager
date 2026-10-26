@@ -184,6 +184,29 @@ table) are generators that pause every few dozen milliseconds (`src/steps.ts`); 
 stops an older build before it writes, the pak is written without holding the thread, and Play
 waits for the last build. At start and after a Dota patch the repair builds behind the open window.
 
+### Compiling what has no base
+
+An arcana base (`src/arcana-bases.ts`) is the arcana taken apart and compiled again by hand, so
+that every file sits at a path the plain hero reads. An arcana nobody has made one for can go
+through the same compiler, Valve's `resourcecompiler.exe` from the Workshop Tools, and
+`src/resource-compiler.ts` runs it: sources are written into an addon of ours,
+`content/dota_addons/d2mm_<id>/` of the install the compiler belongs to, compiled one at a time
+into `game/dota_addons/d2mm_<id>/`, read back as VPK entries, and both folders are deleted whether
+the compile worked or not. The compiler is never downloaded, because it is Valve's and not open
+source: it is the game's own (`game/bin/win64`), or one picked in Settings through a dialog of the
+main process, never a path from the window. The tools exist only for the Windows build of Dota:
+on Linux Steam installs them while Dota runs through Proton, and the compiler runs under Wine, in a
+prefix of the app's own in `userData/wine` made once with `wineboot` (`src/wine.ts`). Going back to
+the Linux build to play, Steam deletes the Windows files and the compiler with them, so once the app
+has seen the tools it copies what only the Windows build has into `userData/workshop-tools`:
+`game/bin` (about 700 MB), and of `game/dota` and `game/core` their `bin/win64`, DX11 shaders,
+`.fgd` files and tools asset list (456 MB more; the whole difference between the two builds there).
+Every other entry of those two is a link to the user's game, made again on each use, and the copy
+runs whenever the game's own is gone (`src/workshop-tools.ts`). The Check
+button in Settings compiles an empty model through all of it, counting its steps on the bar at the
+bottom, and the answer is kept until another compiler is picked or a patch replaces it. Taking the item's model apart into
+those sources (Source 2 Viewer's export) is the next half and is not here yet.
+
 ## Presets
 
 A preset is the set of enabled mods, and the looks from the game that were on, kept slot by slot
@@ -489,6 +512,8 @@ system and writes `e2e-output/sim/index.html`.
   packs/             the source VPK of each member of a combined pack
   backups/           the originals of any Valve file the app replaced
   tools/             external tools, downloaded on demand
+  wine/              on Linux, the Wine prefix resourcecompiler.exe runs in
+  workshop-tools/    on Linux, the copy of the Workshop Tools kept after Steam removes them
 ```
 
 The portable build puts the same tree next to its executable, and falls back to `%APPDATA%` when
@@ -566,7 +591,8 @@ that location is not writable.
 | `src/item-builder.ts`, `src/item-builder-slots.ts`, `src/item-builder-effects.ts` | The item builder: what it offers each hero and slot, the effects, and what a pick writes |
 | `src/item-builder-personas.ts` | Personas: the slot a persona is picked in and one for each of its own, each worn under one of the plain hero's slots over the persona's base, the game's own item where nothing is picked, and the rule that a hero with a persona on wears its items alone |
 | `src/item-builder-styles.ts` | An item's styles, and its visuals with the chosen one made its only one: a pick in another style rides in its effect key as `style-N` |
-| `src/item-builder-assets.ts` | What a pick needs beyond its block: the game's files under the plain paths (models, particles, an arcana's hero model, the hero's portrait, minimap and ability pictures) and the sounds, voice, portrait settings and minimap sprite it switches |
+| `src/item-builder-assets.ts` | What a pick needs beyond its block: the game's files under the plain paths (models, particles, an arcana's hero model, a summon's model, the hero's portrait, minimap and ability pictures) and the sounds, voice, portrait settings and minimap sprite it switches |
+| `src/model-sequences.ts` | A model put under another model's path that numbers its sequences as that one does, so the numbers a lobby's server sends play the same animations (a summon's model from the item builder) |
 | `src/arcana-notes.ts` | What each arcana does in the game once the builder puts it on, from a pass through every one: a note with its problems, or that it is broken or not checked, which the slot window shows on the item |
 | `src/arcana-bases.ts` | The arcana bases, each arcana compiled again by hand so it works as the hero's own look: which base a pick puts on, by item, style and what is worn with it, and the rule that every other pick wins over the base where both write a path, the arcana's own parts excepted |
 | `src/arcana-base-store.ts` | The bases brought down from their repository (J0nathan550/d2pfx-arcana-fixes) and kept in userData: listed from its git tree, each file checked against its git hash, a base used only once all of it is here, and the build asked to run again when one comes |
@@ -578,6 +604,7 @@ that location is not writable.
 | `src/mod-id.ts`, `src/fingerprints.ts`, `src/hero-names.ts` | What a mod replaces, asked of the game; recognising a file somebody else installed; which hero a name means |
 | `src/icons.ts`, `src/icon-match.ts`, `src/icon-wiki.ts` | Pictures off the Dota wikis: the cache and its misses, which file is an item's picture, and asking the two wikis |
 | `src/game-icons.ts`, `src/vtex.ts`, `src/toolchain.ts` | Item pictures out of the installed game, and the Source 2 tools fetched only when something needs them |
+| `src/resource-compiler.ts`, `src/wine.ts`, `src/workshop-tools.ts` | Valve's resourcecompiler.exe from the Workshop Tools, found in the game, picked in Settings or kept, compiling sources staged in an addon of ours and handing back the compiled files; on Linux it runs under Wine in a prefix of the app's own, and a copy of the tools is kept for when Steam takes the Proton build's away |
 | `src/mod-preview.ts`, `src/mod-preview-pick.ts` | A picture for a mod that came with none, taken out of the mod itself, and which one is worth showing |
 | `src/preset-link.ts`, `src/preset-share.ts` | Presets as a link and as a file |
 | `src/presets-service.ts`, `src/preset-plan.ts` | Presets: applying, packing and receiving one, and how one travels to somebody else |

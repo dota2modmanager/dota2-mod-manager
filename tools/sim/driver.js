@@ -20,6 +20,7 @@ const fs = require('fs');
 const path = require('path');
 const { compareFrames, markChanges } = require('./frames');
 const { fitsWorkArea } = require('./fit');
+const { awaited } = require('./answer');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -51,12 +52,14 @@ class Sim {
 
   js(expr) { return this.win.webContents.executeJavaScript(expr); }
 
-  /** Polls an expression in the page until it is truthy, and returns its value, or null on timeout. */
+  /**
+   * Polls an expression in the page until it is truthy, and returns its value, or null on timeout.
+   * An answer that cannot leave the page, such as an element React drew, comes back as true.
+   */
   async until(expr, ms = 15000) {
     const end = Date.now() + ms;
     for (;;) {
-      // awaited in the page, so an expression can be a call into window.api and not only the DOM
-      const v = await this.js(`(async () => { try { return await (${expr}); } catch { return null; } })()`);
+      const v = await this.js(awaited(expr));
       if (v) return v;
       if (Date.now() > end) return null;
       await sleep(200);

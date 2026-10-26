@@ -63,6 +63,35 @@ export interface ToolsApi {
   remove: (name: string) => Promise<Reply<{ tools: ToolState[] }>>;
 }
 
+/** resourcecompiler.exe as src/resource-compiler.ts state() describes it. */
+export interface CompilerState {
+  exe: string | null; chosen: boolean; needsWine: boolean; wine: string | null; prefixReady: boolean; ready: boolean;
+  /** the last check of this compiler: an empty model compiled, and how long it took */
+  check: { ok: boolean; message?: string; seconds: number; at: number } | null;
+  /** which compiler runs: picked in Settings, the game's own, or the copy the app kept */
+  source: 'chosen' | 'game' | 'kept' | null;
+  /** on Linux, the copy of the Workshop Tools the app keeps for when Steam takes the game's away */
+  kept: { from: string; bytes: number; at: number } | null;
+  /** whether the game has tools the copy is not of */
+  keepable: boolean;
+  /** whether a copy is here that is not run, made before it took Dota's own Windows files */
+  keptOutdated: boolean;
+}
+
+export interface CompilerApi {
+  state: () => Promise<CompilerState>;
+  /** null when the dialog was closed */
+  browse: () => Promise<Reply<{ state: CompilerState }> | null>;
+  forget: () => Promise<Reply<{ state: CompilerState }>>;
+  /** the state comes back with an error too: what is missing is what Settings shows */
+  prepare: () => Promise<Reply<{ state: CompilerState }>>;
+  /** compile an empty model; the bar at the bottom counts its steps */
+  check: () => Promise<Reply<{ state: CompilerState }>>;
+  /** copy the game's Workshop Tools into the app's folder; the bar at the bottom counts the files */
+  keep: () => Promise<Reply<{ state: CompilerState }>>;
+  removeKept: () => Promise<Reply<{ state: CompilerState }>>;
+}
+
 export interface Notice { id: string; date?: string; level?: string; text: string; url?: string }
 
 export interface ConfigApi {
