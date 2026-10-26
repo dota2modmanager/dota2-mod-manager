@@ -221,3 +221,23 @@
   --md-error: #ffb4ab;
 }
 [data-theme='halloween'] .btn-primary { background-image: linear-gradient(180deg, #ffb35c, #ff7a1a); }
+
+/* The bloody night: the tenth, opened by the pumpkin's key (ui/pumpkin.ts, ui/blood.ts). The floor
+   is night with blood in it, the accent is fresh blood and the second colour is bone. */
+[data-theme='blood'] {
+  --md-primary: #ff5260;
+  --md-accent: #d4142a;
+  --md-on-primary: #2b0005;
+  --md-primary-container: #6a0812;
+  --md-on-primary-container: #ffdadb;
+  --md-secondary: #e6d6bd;
+  --md-surface: #0c0405;
+  --md-surface-low: #130708;
+  --md-surface-container: #1a090b;
+  --md-surface-high: #240d10;
+  --md-surface-highest: #301216;
+  --md-on-surface: #f3e3e1;
+  --md-on-surface-variant: #d2aeab;
+  --md-outline: #8c5a5a;
+  --md-error: #ffb4ab;
+}

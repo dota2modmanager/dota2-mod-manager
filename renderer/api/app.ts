@@ -33,8 +33,12 @@ export interface StoredSettings {
   gameStamp?: unknown;
   /** the pumpkin in the title bar has come out (ui/pumpkin.ts) */
   pumpkin?: boolean;
-  /** the ninth theme is open (ui/secret-lock.ts) */
+  /** the ninth theme is open (ui/pumpkin.ts) */
   secret?: boolean;
+  /** the pumpkin has been fed a spider and is lit, waiting for a key (ui/pumpkin.ts) */
+  pumpkinLit?: boolean;
+  /** a key was spent: the bloody night is open (src/pumpkin.ts) */
+  blood?: boolean;
 }
 
 /** What main reports while it works, for the bar over the status bar (shell/progress.ts): bytes
@@ -101,6 +105,17 @@ interface MiscApi {
   runTool: (dirName: string) => Promise<Reply>;
 }
 
+/** What spending a key came to (src/pumpkin.ts RedeemAnswer). */
+export type RedeemAnswer =
+  | { ok: true; installed: string | null; installError?: string }
+  | { error: 'empty' | 'wrong' | 'used' | 'offline' | 'broken'; detail?: string };
+
+interface PumpkinApi {
+  redeem: (key: string) => Promise<RedeemAnswer>;
+  prizeAgain: () => Promise<{ ok: true; installed: string } | { error: string }>;
+  hasPrize: () => Promise<boolean>;
+}
+
 interface UpdateApi {
   install: () => Promise<void>;
   fetchPortable: () => Promise<Reply<{ name: string; path: string; already: boolean }>>;
@@ -121,6 +136,8 @@ export interface AppApi {
   beta: { state: () => Promise<{ eligible: boolean; on: boolean }>; set: (on: boolean) => Promise<{ eligible: boolean; on: boolean }> };
   presence: { view: (name: string) => Promise<void> };
   misc: MiscApi;
+  /** the pumpkin's key: the bloody theme and the mod it opens (src/ipc-pumpkin.ts) */
+  pumpkin: PumpkinApi;
   diag: { export: () => Promise<Dialog<{ path: string }>>; reportError: (msg: string) => void };
   onProgress: (cb: (evt: ProgressEvent) => void) => void;
   update: UpdateApi;

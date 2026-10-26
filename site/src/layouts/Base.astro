@@ -286,6 +286,7 @@ const searchWords = {
 <script>
   import { wearing, wear, lookNow } from '../scripts/look';
   import { mountHalloween } from '../scripts/halloween';
+  import { mountHuntNotes } from '../scripts/hunt-notes';
 
   // The menu on a phone: one button, Escape closes it, and so does following a link in it.
   const btn = document.querySelector<HTMLButtonElement>('.menu-btn');
@@ -357,4 +358,6 @@ const searchWords = {
 
   // what an event's look adds to the page beyond its colours: Halloween's webs and spiders
   mountHalloween();
+  // the hunt's order, a line to a page, while Halloween is in season (for everyone, earned or not)
+  mountHuntNotes();
 </script>

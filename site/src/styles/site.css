@@ -1457,6 +1457,51 @@ html.halloween .hunt-key-code { background-image: linear-gradient(90deg, #ffb35c
   47% { opacity: 1; } 66% { opacity: 0.6; } 70% { opacity: 0.95; }
 }
 
+/* blood splashed over the margins, behind everything in the column */
+.hw-splat { position: absolute; z-index: -1; pointer-events: none; opacity: 0.75; }
+.hw-splat svg { display: block; overflow: visible; }
+.hw-splat :is(path, circle) { fill: #6a0812; }
+.hw-splat path { filter: drop-shadow(0 0 1px #2a0005); }
+/* webs strung in the gutters further down the page, on a thread from nowhere */
+.hw-strung { position: absolute; z-index: -1; pointer-events: none; opacity: 0.4; }
+.hw-strung.l { left: var(--gut); translate: -50% 0; }
+.hw-strung.r { right: var(--gut); translate: 50% 0; }
+.hw-strung :is(line, path) { fill: none; stroke: #e8e2f0; stroke-width: 0.7; }
+.hw-strung::before { content: ''; position: absolute; left: 50%; bottom: 50%; width: 1px; height: 60vh; background: linear-gradient(transparent, rgb(230 226 240 / 0.35)); }
+/* the pool on top of the footer: what dripped from the header all the way down ends here */
+.foot { position: relative; }
+.hw-pool { position: absolute; left: 0; right: 0; top: -1px; height: 34px; pointer-events: none; z-index: 1; }
+.hw-pool svg { display: block; width: 100%; height: 100%; }
+.hw-pool path { fill: #5c0009; filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.6)); }
+.hw-pool::after {
+  content: ''; position: absolute; left: 12%; right: 30%; top: 3px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgb(255 140 150 / 0.4), transparent);
+}
+/* a spider can be caught (scripts/halloween.ts) */
+.hw-runner { pointer-events: auto; cursor: grab; }
+.hw-runner.held { cursor: grabbing; }
+.hw-star {
+  position: fixed; z-index: 45; width: 18px; height: 18px; translate: -50% -50%; pointer-events: none;
+  background: radial-gradient(circle, #fff 0 18%, transparent 20%),
+    conic-gradient(from 0deg, transparent 0 40deg, #fff 45deg, transparent 50deg 130deg, #fff 135deg, transparent 140deg 220deg, #fff 225deg, transparent 230deg 310deg, #fff 315deg, transparent 320deg);
+  animation: twinkle 1.6s ease-out forwards;
+}
+@keyframes twinkle { 0% { scale: 0; opacity: 1; } 25% { scale: 1.6; } 100% { scale: 0.6; opacity: 0; rotate: 90deg; } }
+
+/* the hunt's order, scrawled above the footer in blood (scripts/hunt-notes.ts): almost nothing
+   until the pointer's light falls on it */
+.hunt-notes { display: grid; justify-items: center; gap: 10px; padding: 34px 16px 46px; }
+.hunt-note {
+  margin: 0; max-width: 62ch; text-align: center;
+  font: italic 600 clamp(16px, 1.4vw, 19px)/1.35 var(--display); letter-spacing: 0.01em;
+  color: #c3102a;
+  rotate: var(--tilt);
+  opacity: calc(0.035 + var(--heat, 0) * 0.965);
+  text-shadow: 0 0 calc(var(--heat, 0) * 14px) rgb(255 30 50 / 0.6), 0 2px 0 #3a0006;
+  transition: opacity 90ms linear;
+}
+.hunt-note b { font-style: normal; font-weight: 900; margin-right: 0.2em; }
+
 @media (prefers-reduced-motion: reduce) {
   .hw-web:is(.tl, .tr, .bl, .br), .hw-garland span, .hw-lantern .pk-face, .hw-blood i, .hw-blood i::after { animation: none; }
   .hw-blood i::after { display: none; }

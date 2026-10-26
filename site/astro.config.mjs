@@ -77,7 +77,7 @@ export default defineConfig({
         "default-src 'self'",
         "img-src 'self' data: https:",
         "media-src 'self' https:",
-        "connect-src 'self' https://raw.githubusercontent.com https://api.github.com",
+        "connect-src 'self' https://raw.githubusercontent.com https://api.github.com https://pumpkin.dota2modmanager.com",
         "font-src 'self'",
         "object-src 'none'",
         "base-uri 'self'",

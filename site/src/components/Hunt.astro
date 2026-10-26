@@ -1,24 +1,29 @@
 ---
 /**
- * Eight heroes are hiding on this page.
+ * Eight heroes are hiding on this page, and they have to be found in order.
  *
  * This is the site's one secret, and it is not decoration bolted on: the app itself is
  * dressed in eight hero palettes, and you change them by clicking the little animated mascot
  * next to its logo. Somebody who has used the app recognises these characters. So the site
- * hides all eight of them in its margins, and the light around the pointer brings them up.
+ * hides seven of them in its margins, where the light around the pointer brings them up, and
+ * the eighth, Axe, hangs in a cocoon in the middle of the page.
  *
- * Click one and it bursts into its own colours, and the site takes that hero's accent -
- * exactly what clicking the mascot does in the window. Find all eight and the page keeps all
- * of them at once, and the address bar gets something you can send to somebody.
+ * The first year anybody found all eight by sweeping the margins, so this year the seven go in
+ * an order, and the order is not written down anywhere in one piece. Lines of it are scrawled
+ * across the site (components/HuntNote.astro), one riddle per page, each naming a hero without
+ * saying the name. A hero clicked out of turn screams, and everything found so far goes back.
+ * Axe's cocoon only tears once the seven are in; until then a click on it gets a whisper. Axe
+ * is the one that runs (src/scripts/chase.ts), and catching him gives a key of one's own.
  *
  * Rules this thing has to obey, or it stops being a delight and becomes a nuisance:
  *   nothing about the page depends on it. Never found = never missed;
  *   nothing is placed for a visitor who asked for less motion, or who has no fine pointer -
  *     a hunt you cannot see is not worth announcing, and a phone has no cursor to light with;
  *   the tally only appears after the first find, so the page does not open by handing out a
- *     chore. It also means nobody ever sees 0/8: you enter the game already winning;
- *   the mascots sit in the page margins, never over text or a control, so a click aimed at
- *     something real can never land on one.
+ *     chore;
+ *   the mascots sit in the page margins, and the cocoon in the empty band between two
+ *     sections, never over text or a control, so a click aimed at something real can never
+ *     land on one.
  *
  * On accessibility, a deliberate decision rather than an oversight. The whole layer is
  * `aria-hidden` and contains no focusable element at all - no button, no tabindex, no key
@@ -29,36 +34,36 @@
  * eyes to exist at all, so it declares itself invisible to anything else and takes nothing
  * away from anybody.
  */
+
+/* In the order they have to be found. The riddles (HuntNote.astro) number the same way. */
 const HEROES = [
+  { id: 'meepo', primary: '#ffb0c8', accent: '#ff8fb3' },
+  { id: 'invoker', primary: '#ffffff', accent: '#e0e0e0' },
+  { id: 'bh', primary: '#f1d783', accent: '#ebcc6d' },
   { id: 'ursa', primary: '#d0bcff', accent: '#b190ff' },
+  { id: 'storm', primary: '#c7dbf0', accent: '#b5d0ec' },
   { id: 'brew', primary: '#fac898', accent: '#f8b774' },
   { id: 'fura', primary: '#b1f9a4', accent: '#9bf38a' },
-  { id: 'storm', primary: '#c7dbf0', accent: '#b5d0ec' },
-  { id: 'invoker', primary: '#ffffff', accent: '#e0e0e0' },
-  { id: 'meepo', primary: '#ffb0c8', accent: '#ff8fb3' },
-  { id: 'bh', primary: '#f1d783', accent: '#ebcc6d' },
   { id: 'axe', primary: '#ffb4a9', accent: '#ff897a' },
 ];
 
-/* `last`: whether the eighth runs (src/scripts/chase.ts). It gives a key for the app, so the site
-   holds it back until a release that takes the key is out; Landing.astro asks GitHub at build. */
+/* `last`: whether Axe runs (src/scripts/chase.ts). He gives a key for the app, so the site holds
+   him back until a release that takes the key is out; Landing.astro asks GitHub at build. */
 interface Props { complete: string; shared: string; close: string; hint: string; last?: boolean }
 const { complete, shared, close, hint, last = false } = Astro.props;
 ---
 
 <div id="hunt" data-heroes={JSON.stringify(HEROES)} data-last={last ? '' : undefined} aria-hidden="true"></div>
 
-{/* Eight slots rather than "3/8". A number is a report; an empty slot is a question, and the
-    question here answers itself in colour - you can see how many palettes are still missing
-    and none of them tells you where to look. It is also the thing worth screenshotting. */}
+{/* Eight slots rather than "3/8". A number is a report; an empty slot is a question. They fill
+    in the colour of whoever was found, in the order found, so the tally never tells the order. */}
 <div id="hunt-score" class="hunt-score" hidden aria-hidden="true">
   <span class="hunt-slots"></span>
 </div>
 
 {/* The reward is said once and gets out of the way: it closes by itself after seven seconds and
-    has a button to close it sooner. It used to sit in the middle of the screen for good, over
-    whatever was there, and it is not hidden from screen readers the way the hunt is: by the time
-    it appears there is no secret left to give away, and it has a button. */}
+    has a button to close it sooner. It is not hidden from screen readers the way the hunt is: by
+    the time it appears there is no secret left to give away, and it has a button. */}
 <div id="hunt-done" class="hunt-done" role="status" hidden>
   <b></b>
   <span data-complete={complete} data-shared={shared}></span>
@@ -73,8 +78,7 @@ const { complete, shared, close, hint, last = false } = Astro.props;
      Distance drives one number, --heat, and everything here is a function of it. The floor of
      four and a half per cent is the point of the whole thing: at that level a still image is
      invisible, but these are animated, and peripheral vision is far better at catching motion
-     than detail. That faint stirring at the edge of the eye is what makes somebody look. An
-     easter egg nobody ever finds is an easter egg that does not exist. */
+     than detail. That faint stirring at the edge of the eye is what makes somebody look. */
   :global(.hunt-hero) {
     position: absolute;
     width: 54px; height: 54px;
@@ -100,6 +104,88 @@ const { complete, shared, close, hint, last = false } = Astro.props;
     100% { transform: scale(0); opacity: 0; }
   }
 
+  /* ---- Axe's cocoon: silk wound round him, hanging on a thread from the section above.
+     It is a little easier to see than the margin heroes (a floor of eight per cent), since the
+     middle of the page is where people look and the riddle says where it is. */
+  :global(.hunt-hero.cocoon) {
+    width: 64px; height: 92px;
+    opacity: calc(0.08 + var(--heat, 0) * 0.92);
+    transform-origin: 50% -60px;
+    animation: sway 4.2s ease-in-out infinite alternate;
+  }
+  :global(.hunt-hero.cocoon:hover) { transform: none; }
+  :global(.hunt-hero.cocoon::before) {
+    /* the thread */
+    content: ''; position: absolute; left: 50%; bottom: 100%; width: 1px; height: 70px;
+    background: linear-gradient(transparent, rgb(230 220 210 / 0.55));
+  }
+  :global(.hunt-hero.cocoon img) {
+    position: absolute; left: 7px; top: 22px; width: 50px; height: 50px;
+    filter: saturate(0.4) brightness(0.55);
+  }
+  :global(.hunt-hero.cocoon svg) { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  :global(.hunt-hero.cocoon.shake) { animation: shudder 380ms linear; }
+  :global(.hunt-hero.cocoon.torn) { animation: none; }
+  :global(.hunt-hero.cocoon.torn svg) { animation: tear 700ms cubic-bezier(0.2, 0, 0, 1) forwards; }
+  :global(.hunt-hero.cocoon.torn img) { filter: none; transition: filter 600ms ease; }
+  @keyframes sway { from { rotate: -3deg; } to { rotate: 3deg; } }
+  @keyframes shudder {
+    20% { rotate: -9deg; } 40% { rotate: 8deg; } 60% { rotate: -5deg; } 80% { rotate: 3deg; }
+  }
+  @keyframes tear { 30% { transform: scale(1.12); } 100% { transform: scale(1.5) translateY(30px); opacity: 0; } }
+
+  /* what the cocoon says when it is clicked too soon */
+  :global(.hunt-whisper) {
+    position: absolute; z-index: 3;
+    translate: -50% 0;
+    margin: 0; white-space: nowrap; pointer-events: none;
+    font: italic 600 15px/1 var(--display); letter-spacing: 0.02em;
+    color: #ff4b5c;
+    text-shadow: 0 0 12px rgb(255 20 40 / 0.6);
+    animation: whisper 2.6s ease-out forwards;
+  }
+  @keyframes whisper {
+    0% { opacity: 0; transform: translateY(6px); filter: blur(3px); }
+    15% { opacity: 1; transform: none; filter: none; }
+    75% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-10px); }
+  }
+
+  /* ---- out of turn: half the screen is somebody's face, for under a second ---- */
+  :global(.hunt-scream) {
+    position: fixed; left: 0; right: 0; bottom: 0; height: 58vh; z-index: 70;
+    display: grid; place-items: end center;
+    pointer-events: none; overflow: hidden;
+    background: linear-gradient(to top, rgb(20 0 4 / 0.96) 40%, rgb(60 0 8 / 0.7) 80%, transparent);
+    animation: scream-in 900ms cubic-bezier(0.2, 0, 0, 1) forwards;
+  }
+  :global(.hunt-scream img) {
+    width: min(70vh, 80vw); height: auto; margin-bottom: -14vh;
+    filter: sepia(1) saturate(7) hue-rotate(-40deg) contrast(1.7) brightness(0.8);
+    /* the gif is a square with its own dark ground: fade its edges so it is a face, not a tile */
+    -webkit-mask-image: radial-gradient(closest-side, #000 60%, transparent 100%);
+    mask-image: radial-gradient(closest-side, #000 60%, transparent 100%);
+    animation: scream-face 900ms linear forwards;
+  }
+  :global(.hunt-scream b) {
+    position: absolute; left: 0; right: 0; top: 18%;
+    text-align: center; font: 900 clamp(40px, 7vw, 110px)/1 var(--display); letter-spacing: -0.03em;
+    color: #ff1a2e; text-shadow: 0 0 30px rgb(255 0 30 / 0.8);
+  }
+  @keyframes scream-in {
+    0% { transform: translateY(100%); }
+    12% { transform: none; }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: none; }
+  }
+  @keyframes scream-face {
+    0% { transform: scale(0.6) translateY(20%); }
+    12% { transform: scale(1.15) rotate(-3deg); }
+    20% { transform: scale(1.05) rotate(4deg) translateX(-2%); }
+    28% { transform: scale(1.12) rotate(-2deg) translateX(2%); }
+    100% { transform: scale(1.2); }
+  }
+
   .hunt-score {
     position: fixed; right: 18px; bottom: 18px; z-index: 6;
     display: flex; align-items: center;
@@ -109,13 +195,13 @@ const { complete, shared, close, hint, last = false } = Astro.props;
     backdrop-filter: blur(10px);
     animation: pop 380ms cubic-bezier(0.2, 0, 0, 1);
   }
+  .hunt-score.lost { animation: lost 420ms linear; }
+  @keyframes lost { 25% { translate: -6px 0; } 50% { translate: 5px 0; } 75% { translate: -3px 0; } }
   .hunt-slots { display: flex; gap: 6px; }
 
-  /* :global, because the script builds these and Astro only scopes what is in the template.
-     Without it the eight dots carried no styles at all: eleven pixels wide became zero, and the
-     panel opened as an empty 66-pixel pill every time somebody found a mascot. The same reason
-     .hunt-hero above is global, which is the half of this that was remembered. */
+  /* :global, because the script builds these and Astro only scopes what is in the template. */
   :global(.hunt-slots i) {
+    --slot: var(--text-faint);
     width: 11px; height: 11px; border-radius: 4px;
     border: 1px solid color-mix(in srgb, var(--slot) 34%, transparent);
     background: transparent;
@@ -165,7 +251,7 @@ const { complete, shared, close, hint, last = false } = Astro.props;
      is every page's business and not this component's: the reward follows the visitor around. */
 
   /* ---- the last one (src/scripts/chase.ts builds all of this) ---- */
-  :global(.hunt-hero.runner) { transition: opacity 90ms linear, transform 200ms cubic-bezier(0.2, 0, 0, 1), top 260ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  :global(.hunt-hero.runner) { transition: opacity 90ms linear, transform 200ms cubic-bezier(0.2, 0, 0, 1), top 260ms cubic-bezier(0.34, 1.56, 0.64, 1), left 260ms cubic-bezier(0.34, 1.56, 0.64, 1); }
   :global(.hunt-hero.runner.hop) { animation: hop 260ms cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes hop { 30% { transform: scale(1.25, 0.75); } 60% { transform: scale(0.85, 1.2); } }
 
@@ -173,7 +259,7 @@ const { complete, shared, close, hint, last = false } = Astro.props;
   :global(.chase) {
     position: fixed; inset: 0; z-index: 60;
     cursor: crosshair;
-    background: radial-gradient(120% 90% at 50% 50%, rgb(10 4 8 / 0.9) 0%, rgb(4 2 4 / 0.97) 70%);
+    background: radial-gradient(120% 90% at 50% 50%, rgb(14 2 6 / 0.9) 0%, rgb(4 0 2 / 0.97) 70%);
     opacity: 0;
     transition: opacity 900ms cubic-bezier(0.2, 0, 0, 1);
     overflow: hidden;
@@ -192,6 +278,40 @@ const { complete, shared, close, hint, last = false } = Astro.props;
     background: radial-gradient(75% 70% at 50% 50%, transparent 45%, rgb(190 10 30 / 0.55) 100%);
     opacity: 0.3;
   }
+  /* blood running down from the top edge, each streak at its own pace */
+  :global(.chase-blood) { position: absolute; inset: 0 0 auto; height: 100%; pointer-events: none; }
+  :global(.chase-blood::before) {
+    content: ''; position: absolute; left: 0; right: 0; top: 0; height: 26px;
+    background: linear-gradient(#5c0009, #8a0614 60%, transparent);
+  }
+  :global(.chase-blood i) {
+    position: absolute; top: 0; left: var(--x);
+    width: var(--w); height: var(--h);
+    border-radius: 0 0 999px 999px;
+    background: linear-gradient(#5c0009, #a0081a 70%, #c3102a);
+    transform-origin: 50% 0;
+    animation: run var(--t) cubic-bezier(0.5, 0, 0.6, 1) infinite;
+  }
+  :global(.chase-blood i::after) {
+    content: ''; position: absolute; left: 50%; bottom: -3px; translate: -50% 0;
+    width: calc(var(--w) * 1.5); height: calc(var(--w) * 1.7); border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    background: #c3102a;
+  }
+  @keyframes run { 0% { transform: scaleY(0.05); } 70% { transform: scaleY(1); } 100% { transform: scaleY(1.06); } }
+  /* spiders crossing the dark, there and back, none of them in a hurry */
+  :global(.chase-crawlers) { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  :global(.chase-spider) {
+    position: absolute; left: 0; top: var(--y);
+    width: var(--size); height: var(--size); color: #120306;
+    filter: drop-shadow(0 0 3px rgb(255 40 60 / 0.65));
+    rotate: 90deg;
+    animation: crawl var(--t) linear var(--wait) infinite;
+    translate: -80px 0;
+  }
+  :global(.chase-spider.back) { rotate: -90deg; animation-name: crawl-back; translate: calc(100vw + 80px) 0; }
+  :global(.chase-spider svg) { width: 100%; height: 100%; display: block; }
+  @keyframes crawl { from { translate: -80px 0; } to { translate: calc(100vw + 80px) 30px; } }
+  @keyframes crawl-back { from { translate: calc(100vw + 80px) 0; } to { translate: -80px -30px; } }
   :global(.chase-title) {
     position: absolute; left: 0; right: 0; top: 50%;
     margin: 0; translate: 0 -58%;
@@ -240,8 +360,14 @@ const { complete, shared, close, hint, last = false } = Astro.props;
     pointer-events: none; will-change: transform, filter;
   }
   :global(.chase-runner img) { width: 100%; height: 100%; object-fit: contain; display: block; }
+  /* the copies that split off him: the same hero, a little washed out and flickering, so a
+     careful eye can tell, and a hurried hand cannot */
+  :global(.chase-runner.chase-decoy img) { opacity: 0.82; filter: saturate(0.7); animation: flicker 1.3s steps(3) infinite; }
+  @keyframes flicker { 50% { opacity: 0.55; } }
   :global(.chase-runner.got img) { animation: got 1s cubic-bezier(0.2, 0, 0, 1) forwards; }
   @keyframes got { 15% { transform: scale(1.6); } 100% { transform: scale(2.4); opacity: 0; } }
+  :global(.chase-runner.chase-decoy.got img) { animation: poof 380ms ease-out forwards; }
+  @keyframes poof { to { transform: scale(1.8); opacity: 0; filter: blur(4px); } }
   :global(.chase-flash) { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
   :global(.chase-flash.go) { animation: flash 700ms ease-out; }
   @keyframes flash { 0% { opacity: 0.85; } 100% { opacity: 0; } }
@@ -264,10 +390,10 @@ const { complete, shared, close, hint, last = false } = Astro.props;
     border: 1px solid transparent;
     background-image:
       linear-gradient(var(--surface-container), var(--surface-container)),
-      linear-gradient(90deg, #d0bcff, #fac898, #b1f9a4, #c7dbf0, #ffb0c8, #f1d783, #ffb4a9, #d0bcff);
+      linear-gradient(90deg, #5c0009, #ff2a3a, #8a0614, #ff4b5c, #5c0009);
     background-origin: border-box;
     background-clip: padding-box, border-box;
-    box-shadow: 0 30px 90px -20px rgb(0 0 0 / 0.85), 0 0 80px -30px var(--primary);
+    box-shadow: 0 30px 90px -20px rgb(0 0 0 / 0.85), 0 0 90px -30px #ff2a3a;
     animation: prize 620ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   :global(.hunt-key.out) { animation: prize-out 240ms ease-in forwards; }
@@ -277,12 +403,23 @@ const { complete, shared, close, hint, last = false } = Astro.props;
   :global(.hunt-key-label) { margin-top: 10px; font-size: 13.5px; color: var(--text-dim); }
   :global(.hunt-key-code) {
     display: block; padding: 4px 0 8px;
-    font: 800 clamp(26px, 5vw, 36px)/1.1 var(--display); letter-spacing: 0.06em;
-    background: linear-gradient(90deg, #d0bcff, #fac898, #b1f9a4, #c7dbf0, #ffb0c8, #f1d783, #ffb4a9, #d0bcff);
+    font: 800 clamp(22px, 4.4vw, 32px)/1.1 var(--display); letter-spacing: 0.06em;
+    background: linear-gradient(90deg, #ff4b5c, #ffd1d6, #ff2a3a, #ff8f9a, #ff4b5c);
     background-size: 200% 100%;
     -webkit-background-clip: text; background-clip: text; color: transparent;
     animation: pan 5s linear infinite;
     user-select: all;
+  }
+  /* asking the worker: the words breathe until the answer is in */
+  :global(.hunt-key-code.waiting) {
+    font-size: 16px; letter-spacing: 0.02em; user-select: none;
+    animation: pan 5s linear infinite, breathe 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes breathe { to { opacity: 0.4; } }
+  /* no key: the reason, in plain colour, so it reads as words and not as a prize */
+  :global(.hunt-key-code.failed) {
+    max-width: 34ch; font-family: inherit; font-size: 15px; font-weight: 600; line-height: 1.45; letter-spacing: 0;
+    background: none; color: #ff8f9a; animation: none; user-select: text;
   }
   :global(.hunt-key-hint) { margin-top: 8px; max-width: 34ch; font-size: 13.5px; line-height: 1.45; color: var(--text-dim); }
   :global(.hunt-key .hunt-close) { position: absolute; right: 10px; top: 10px; width: 32px; height: 32px; }
@@ -294,6 +431,8 @@ const { complete, shared, close, hint, last = false } = Astro.props;
 
 <script>
   import { chase, showKey, CHASE_WORDS } from '../scripts/chase';
+  import { ticket, claim, keptKey } from '../scripts/pumpkin-key';
+  import { shriek } from '../scripts/spook-sound';
   import { wear } from '../scripts/look';
 
   const host = document.getElementById('hunt');
@@ -305,22 +444,26 @@ const { complete, shared, close, hint, last = false } = Astro.props;
   if (host && score && done && fine && !still) {
     type Hero = { id: string; primary: string; accent: string };
     const heroes = JSON.parse(host.dataset.heroes!) as Hero[];
+    const axe = heroes[heroes.length - 1];
+    const seven = heroes.slice(0, -1);
     const slots = score.querySelector('.hunt-slots')!;
     const doneText = done.querySelector('span') as HTMLElement;
-    const found = new Set<string>();
+    const ru = document.documentElement.lang === 'ru';
+    const words = CHASE_WORDS[ru ? 'ru' : 'en'];
+    const WHISPER = ru ? ['Сначала семеро.', 'По порядку.', 'Я подожду.'] : ['Seven first.', 'In order.', 'I can wait.'];
+    const WRONG = ru ? 'НЕ ТОТ' : 'WRONG ONE';
+    // found, in the order found: the tally paints itself from this, so it never gives the order away
+    const found: Hero[] = [];
 
-    // Where each mascot sits, as a side of the column and a fraction down the page.
-    //
-    // The first one is not random. A hunt whose only entrance is the pointer wandering into
-    // the margins by chance is a hunt most people never enter, so this one sits in the right
-    // margin at the height of the header, directly under the path any hand takes towards the
-    // Download button. The last one sits down by the footer, where nobody arrives by accident:
-    // a set whose final piece costs nothing is an anticlimax, and one that is impossible
-    // breeds resentment, so it costs exactly one deliberate movement.
+    // Where the seven sit, as a side of the column and a fraction down the page. Which hero gets
+    // which spot is dealt at random once per visit and kept for it, so the margins cannot be
+    // read top to bottom as the answer, and a visitor who loses the order can still go back to
+    // where they saw somebody.
     const SPOTS = [
-      { side: 1, y: 0.055 }, { side: -1, y: 0.17 }, { side: 1, y: 0.30 }, { side: -1, y: 0.42 },
-      { side: 1, y: 0.55 }, { side: -1, y: 0.66 }, { side: 1, y: 0.78 }, { side: -1, y: 0.955 },
+      { side: 1, y: 0.055 }, { side: -1, y: 0.16 }, { side: 1, y: 0.29 }, { side: -1, y: 0.41 },
+      { side: 1, y: 0.66 }, { side: -1, y: 0.78 }, { side: 1, y: 0.9 },
     ];
+    const deal = SPOTS.map((s) => ({ s, k: Math.random() })).sort((a, b) => a.k - b.k).map((x) => x.s);
 
     // Document coordinates of each mascot's centre, kept here rather than measured. Nothing
     // in the frame loop reads layout at all: the pointer is in viewport coordinates, these
@@ -328,34 +471,39 @@ const { complete, shared, close, hint, last = false } = Astro.props;
     type Spot = { el: HTMLElement; hero: Hero; x: number; y: number };
     let spots: Spot[] = [];
 
-    // The last one left does not wait to be clicked: it hops away along its margin a few times
-    // before it lets a click land, and that click starts the chase (src/scripts/chase.ts).
-    const words = CHASE_WORDS[document.documentElement.lang === 'ru' ? 'ru' : 'en'];
     let caught = false;
     // held back until the app that takes the key is out; mm-chase lets it be tried before that
     let runs = host.dataset.last !== undefined;
     try {
-      caught = localStorage.getItem('mm-caught') !== null;
+      caught = localStorage.getItem('mm-bled') !== null;
       runs ||= localStorage.getItem('mm-chase') === '1';
     } catch { /* private mode */ }
-    let hops = 3;
+    let hops = 4;
     let hopReady = 0;
-    const runnerSpot = () => (runs && found.size === heroes.length - 1 && spots.length === 1 ? spots[0] : null);
-    const markRunner = () => runnerSpot()?.el.classList.add('runner');
 
-    const hop = (s: Spot) => {
-      const pageH = document.documentElement.scrollHeight;
-      const up = py + window.scrollY > s.y;   // away from the pointer, along the margin
-      const by = 150 + Math.random() * 110;
-      const ny = Math.max(120, Math.min(pageH - 90, s.y + (up ? -by : by)));
-      s.y = ny;
-      s.el.style.top = `${Math.round(ny - 27)}px`;
-      s.el.classList.remove('hop');
-      void s.el.offsetWidth;
-      s.el.classList.add('hop');
-      hops -= 1;
-      hopReady = performance.now() + 420;
+    const cocoonSpot = () => spots.find((s) => s.hero === axe) ?? null;
+
+    // Axe hangs in the widest empty band between two sections near the middle of the page: the
+    // padding between one section's content and the next one's, where there is nothing to click.
+    const middle = (): { x: number; y: number } | null => {
+      const wraps = [...document.querySelectorAll<HTMLElement>('main section > .wrap, body > section > .wrap')];
+      const sy = window.scrollY;
+      const mid = document.documentElement.scrollHeight / 2;
+      let best: { y: number; d: number } | null = null;
+      for (let i = 1; i < wraps.length; i++) {
+        const a = wraps[i - 1].getBoundingClientRect().bottom + sy;
+        const b = wraps[i].getBoundingClientRect().top + sy;
+        if (b - a < 110) continue;
+        const y = (a + b) / 2;
+        const d = Math.abs(y - mid);
+        if (!best || d < best.d) best = { y, d };
+      }
+      return best && { x: document.documentElement.clientWidth / 2, y: best.y };
     };
+
+    const COCOON = '<svg viewBox="0 0 64 92" aria-hidden="true"><path d="M32 2C14 18 6 40 9 60c3 18 13 29 23 30 10-1 20-12 23-30 3-20-5-42-23-58z" fill="rgb(222 210 196 / 0.86)"/>'
+      + '<g fill="none" stroke="rgb(120 100 90 / 0.55)" stroke-width="1.1"><path d="M11 30q21 9 42 0M9 44q23 10 46 0M9 58q23 10 46 0M13 72q19 8 38 0M18 84q14 5 28 0"/><path d="M14 22q18 16 38 30M50 22Q30 40 12 50M10 62q20-6 44 12M54 60Q34 66 14 82"/></g>'
+      + '<path d="M22 50q3-4 6 0M36 50q3-4 6 0" stroke="#ff1a2e" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>';
 
     const place = () => {
       spots = [];
@@ -366,9 +514,9 @@ const { complete, shared, close, hint, last = false } = Astro.props;
       const gutter = Math.max(0, (vw - Math.min(1200, vw)) / 2);
       if (gutter < 70) return false;  // no room beside the column: no hunt on a narrow window
 
-      heroes.forEach((h, i) => {
-        if (found.has(h.id)) return;
-        const s = SPOTS[i];
+      seven.forEach((h, i) => {
+        if (found.includes(h)) return;
+        const s = deal[i];
         const el = document.createElement('div');
         el.className = 'hunt-hero';
         el.dataset.hero = h.id;
@@ -388,20 +536,38 @@ const { complete, shared, close, hint, last = false } = Astro.props;
         document.body.appendChild(el);
         spots.push({ el, hero: h, x: Math.min(x, vw - 62) + 27, y: y + 27 });
       });
-      markRunner();
+
+      const m = middle();
+      if (m) {
+        const el = document.createElement('div');
+        el.className = 'hunt-hero cocoon';
+        el.dataset.hero = axe.id;
+        el.setAttribute('aria-hidden', 'true');
+        const img = document.createElement('img');
+        img.src = `/mascots/${axe.id}.gif`;
+        img.alt = '';
+        img.loading = 'lazy';
+        el.append(img);
+        el.insertAdjacentHTML('beforeend', COCOON);
+        el.style.left = `${Math.round(m.x - 32)}px`;
+        el.style.top = `${Math.round(m.y - 46)}px`;
+        document.body.appendChild(el);
+        spots.push({ el, hero: axe, x: m.x, y: m.y });
+        if (found.length === seven.length) tear();
+      }
       return true;
     };
 
     // Each dot's colour goes in through the style object, not a style="" in markup: the page's
-    // content security policy refuses inline style attributes, and the dots came out colourless.
+    // content security policy refuses inline style attributes.
     const paint = () => {
-      slots.replaceChildren(...heroes.map((h) => {
+      slots.replaceChildren(...heroes.map((_, i) => {
         const dot = document.createElement('i');
-        if (found.has(h.id)) dot.className = 'on';
-        dot.style.setProperty('--slot', h.primary);
+        const h = found[i];
+        if (h) { dot.className = 'on'; dot.style.setProperty('--slot', h.primary); }
         return dot;
       }));
-      score.hidden = found.size === 0;
+      score.hidden = found.length === 0;
     };
 
     // ---- the burst -------------------------------------------------------------------
@@ -484,10 +650,10 @@ const { complete, shared, close, hint, last = false } = Astro.props;
     };
     done.querySelector('.hunt-close')?.addEventListener('click', hideDone);
 
-    // the footer's rainbow line offers the key again to whoever caught the last one
+    // the footer's rainbow line offers the key again to whoever caught Axe and still has it here
     const offerKeyAgain = () => {
       const sw = document.getElementById('rainbowSwitch');
-      if (!sw?.parentElement || document.getElementById('keyAgain')) return;
+      if (!sw?.parentElement || document.getElementById('keyAgain') || !keptKey()) return;
       const again = document.createElement('button');
       again.id = 'keyAgain';
       again.type = 'button';
@@ -497,11 +663,10 @@ const { complete, shared, close, hint, last = false } = Astro.props;
       sw.after(' · ', again);
     };
 
-    const finish = (prize = false) => {
+    const finish = (prize?: Promise<string | null>) => {
       // The whole site turns, not just the title: every colour on it is drawn from --primary, and
-      // today's look (scripts/look.ts) decides what it turns into: the rainbow cycling through
-      // all eight palettes, or the event that is on. It stays on from page to page (Base.astro
-      // reads the flag before the first paint) until the footer's switch.
+      // today's look (scripts/look.ts) decides what it turns into. It stays on from page to page
+      // (Base.astro reads the flag before the first paint) until the footer's switch.
       document.documentElement.style.removeProperty('--primary');
       try { localStorage.setItem('mm-rainbow', '1'); } catch { /* private mode: this page only */ }
       wear(true);
@@ -509,37 +674,126 @@ const { complete, shared, close, hint, last = false } = Astro.props;
       const sw = document.getElementById('rainbowSwitch');
       if (sw?.parentElement) sw.parentElement.hidden = false;
       if (prize) {
-        try { localStorage.setItem('mm-caught', '1'); } catch { /* private mode */ }
+        try { localStorage.setItem('mm-bled', '1'); } catch { /* private mode */ }
         caught = true;
-        offerKeyAgain();
-        showKey(words);
+        // the ticket was asked for when the chase began; spending it now is what makes the key
+        const got = prize.then(claim);
+        void got.then(offerKeyAgain);
+        showKey(words, got, async () => claim((await prize) ?? (await ticket())));
       } else {
         say(doneText.dataset.complete!);
       }
       score.hidden = true;
-      // Something to send. The reward used to die on reload, which made it the one thing on
-      // the page nobody could show anybody: a screenshot is a dead end, a link is a door.
+      // Something to send. A screenshot is a dead end, a link is a door.
       history.replaceState(null, '', '#all-eight');
     };
 
-    const startChase = (el: HTMLElement, hero: Hero) => {
+    // ---- out of turn ---------------------------------------------------------------------
+    // Half the screen becomes the hero that was clicked, red and too close, with a scream (muted
+    // by the same switch as every other sound on the site). Then everyone found so far goes back
+    // to where they were, and the count starts again. Where they were is kept, so the second
+    // attempt is a matter of the order and not of searching all over again.
+    let screaming = false;
+    const scream = (hero: Hero) => {
+      if (screaming) return;
+      screaming = true;
+      shriek();
+      const box = document.createElement('div');
+      box.className = 'hunt-scream';
+      box.setAttribute('aria-hidden', 'true');
+      const img = document.createElement('img');
+      img.src = `/mascots/${hero.id}.gif`;
+      img.alt = '';
+      const b = document.createElement('b');
+      b.textContent = WRONG;
+      box.append(img, b);
+      document.body.appendChild(box);
+      score.classList.remove('lost');
+      void score.offsetWidth;
+      score.classList.add('lost');
+      setTimeout(() => {
+        box.remove();
+        screaming = false;
+        for (const s of spots) s.el.remove();
+        found.length = 0;
+        hops = 4;
+        document.documentElement.style.removeProperty('--primary');
+        if (place()) paint();
+      }, 900);
+    };
+
+    // ---- Axe -------------------------------------------------------------------------------
+    let whispered = 0;
+    const whisper = (s: Spot) => {
+      s.el.classList.remove('shake');
+      void s.el.offsetWidth;
+      s.el.classList.add('shake');
+      document.querySelector('.hunt-whisper')?.remove();
+      const p = document.createElement('p');
+      p.className = 'hunt-whisper';
+      p.setAttribute('aria-hidden', 'true');
+      p.textContent = WHISPER[Math.min(whispered++, WHISPER.length - 1)];
+      p.style.left = `${Math.round(s.x)}px`;
+      p.style.top = `${Math.round(s.y + 54)}px`;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 2700);
+    };
+
+    // the seven are in: the silk splits, and Axe is loose
+    const tear = () => {
+      const s = cocoonSpot();
+      if (!s || s.el.classList.contains('torn')) return;
+      s.el.classList.add('torn');
+      burst(s.x - window.scrollX, s.y - window.scrollY, ['#ff2a3a', '#ffb4a9', '#e6d6bd']);
+      setTimeout(() => {
+        s.el.classList.remove('cocoon', 'torn');
+        s.el.querySelector('svg')?.remove();
+        s.el.style.left = `${Math.round(s.x - 27)}px`;
+        s.el.style.top = `${Math.round(s.y - 27)}px`;
+        if (runs) s.el.classList.add('runner');
+      }, 720);
+    };
+
+    // A loose Axe does not wait to be clicked: he hops away from the pointer a few times, in any
+    // direction across the band he hung in, before a click can land, and that click starts the
+    // chase. He keeps to the middle of the page, between the columns' edges.
+    const hop = (s: Spot) => {
+      const pageH = document.documentElement.scrollHeight;
+      const vw = document.documentElement.clientWidth;
+      const a = Math.atan2(s.y - (py + window.scrollY), s.x - (px + window.scrollX)) + (Math.random() - 0.5) * 1.2;
+      const by = 160 + Math.random() * 120;
+      s.x = Math.max(60, Math.min(vw - 60, s.x + Math.cos(a) * by));
+      s.y = Math.max(120, Math.min(pageH - 90, s.y + Math.sin(a) * by));
+      s.el.style.left = `${Math.round(s.x - 27)}px`;
+      s.el.style.top = `${Math.round(s.y - 27)}px`;
+      s.el.classList.remove('hop');
+      void s.el.offsetWidth;
+      s.el.classList.add('hop');
+      hops -= 1;
+      hopReady = performance.now() + 420;
+    };
+
+    const startChase = (el: HTMLElement) => {
       const box = el.getBoundingClientRect();
       el.remove();
       spots = [];
       score.hidden = true;
+      // The ticket is asked for as the chase starts, and the worker will not turn it into a key
+      // until a chase's worth of time has passed. Nothing waits on it: the chase runs either way.
+      const t = ticket();
       chase({
-        hero,
+        hero: axe,
         from: { x: box.left + box.width / 2, y: box.top + box.height / 2 },
         palettes: heroes.map((h) => [h.primary, h.accent]),
         words,
       }).then((how) => {
         if (how === 'caught') {
-          found.add(hero.id);
-          document.documentElement.style.setProperty('--primary', hero.primary);
+          found.push(axe);
+          document.documentElement.style.setProperty('--primary', axe.primary);
           paint();
-          finish(true);
+          finish(t);
         } else {
-          // gave up: it goes back to its margin, and the next click there starts it again
+          // gave up: he goes back to the middle, loose, and the next click there starts it again
           hops = 0;
           if (place()) paint();
         }
@@ -548,26 +802,38 @@ const { complete, shared, close, hint, last = false } = Astro.props;
 
     document.addEventListener('click', (e) => {
       const el = (e.target as HTMLElement).closest('.hunt-hero') as HTMLElement | null;
-      if (!el || el.classList.contains('pop')) return;
-      const id = el.dataset.hero!;
-      const hero = heroes.find((h) => h.id === id)!;
-      if (el.classList.contains('runner')) {
-        if (hops > 0) { const s = spots.find((x) => x.el === el); if (s) hop(s); return; }
-        startChase(el, hero);
+      if (!el || el.classList.contains('pop') || screaming) return;
+      const s = spots.find((x) => x.el === el);
+      if (!s) return;
+      const hero = s.hero;
+
+      if (hero === axe) {
+        if (el.classList.contains('cocoon')) { whisper(s); return; }
+        if (el.classList.contains('runner')) {
+          if (hops > 0) { hop(s); return; }
+          startChase(el);
+          return;
+        }
+        // before the chase is out: the eighth is found like the others, and the page changes
+        found.push(axe);
+      } else if (seven[found.length] !== hero) {
+        scream(hero);
         return;
+      } else {
+        found.push(hero);
       }
+
       const box = el.getBoundingClientRect();
       burst(box.left + box.width / 2, box.top + box.height / 2, [hero.primary, hero.accent, '#ffffff']);
       el.classList.add('pop');
       setTimeout(() => el.remove(), 240);
-      spots = spots.filter((s) => s.el !== el);
-      found.add(id);
+      spots = spots.filter((x) => x.el !== el);
       // the page takes this hero's accent, the way the window does when you click its mascot
       document.documentElement.style.setProperty('--primary', hero.primary);
       paint();
-      markRunner();
+      if (found.length === seven.length) setTimeout(tear, 300);
 
-      if (found.size === heroes.length) {
+      if (found.length === heroes.length) {
         // The eighth find has to differ from the seventh by an event, not only by a result.
         // Eight bursts around the page, one per palette, and the page changes when they land.
         const cx = window.innerWidth / 2;
@@ -576,7 +842,7 @@ const { complete, shared, close, hint, last = false } = Astro.props;
           const a = (i / heroes.length) * Math.PI * 2 - Math.PI / 2;
           setTimeout(() => burst(cx + Math.cos(a) * cx * 0.72, cy + Math.sin(a) * cy * 0.72, [h.primary, h.accent]), i * 70);
         });
-        setTimeout(finish, heroes.length * 70 + 120);
+        setTimeout(() => finish(), heroes.length * 70 + 120);
       }
     });
 
@@ -595,7 +861,7 @@ const { complete, shared, close, hint, last = false } = Astro.props;
         const d = Math.hypot(px - (s.x - sx), py - (s.y - sy));
         const k = Math.max(0, Math.min(1, (FAR - d) / (FAR - NEAR)));
         s.el.style.setProperty('--heat', (k ** 2.2).toFixed(3));
-        if (hops > 0 && d < 105 && s.el.classList.contains('runner') && performance.now() > hopReady) hop(s);
+        if (hops > 0 && d < 110 && s.el.classList.contains('runner') && performance.now() > hopReady) hop(s);
       }
     };
     const wake = () => { if (!queued) { queued = true; requestAnimationFrame(lightUp); } };
@@ -604,8 +870,6 @@ const { complete, shared, close, hint, last = false } = Astro.props;
     window.addEventListener('scroll', wake, { passive: true });
 
     // Arriving on somebody else's link: wear the full set for a moment, then hand it back.
-    // The visitor sees what was found without being given it, which is the only way this
-    // stays worth finding.
     let earned = false;
     try { earned = localStorage.getItem('mm-rainbow') !== null; } catch { /* private mode */ }
     if (location.hash === '#all-eight' && !earned) {
@@ -618,17 +882,14 @@ const { complete, shared, close, hint, last = false } = Astro.props;
         if (place()) paint();
       }, 4200);
     } else if (earned && (caught || !runs)) {
-      // found them all and caught the last: the page already wears the reward
+      // found them all (and caught Axe, once he runs): the page already wears the reward
       if (location.hash === '#all-eight') history.replaceState(null, '', location.pathname);
       if (caught) offerKeyAgain();
-    } else if (earned) {
-      // All eight found before the last one learned to run: the page keeps its rainbow, and one
-      // hero is back in the margins by the footer, waiting to be chased.
+    } else {
+      // Not yet, or only last year's rainbow: the page keeps whatever it wears, and the hunt is
+      // laid out from the start, since this year's has an order the old one did not.
       if (location.hash === '#all-eight') history.replaceState(null, '', location.pathname);
-      for (const h of heroes.slice(0, -1)) found.add(h.id);
       if (place()) paint();
-    } else if (place()) {
-      paint();
     }
 
     window.addEventListener('resize', () => {
@@ -636,7 +897,7 @@ const { complete, shared, close, hint, last = false } = Astro.props;
       // still hidden and lay them out again
       for (const s of spots) s.el.remove();
       spots = [];
-      if (found.size < heroes.length) place();
+      if (found.length < heroes.length) place();
     });
   }
 </script>

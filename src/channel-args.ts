@@ -86,6 +86,7 @@ export const WINDOW_SETTINGS: Record<string, Check> = {
   langPromptSeen: bool,
   panels: either(oneOf(null), json(64 * 1024)),
   pumpkin: bool,
+  pumpkinLit: bool,
   secret: bool,
   showAdult: bool,
   theme: str(40, 1),
@@ -170,6 +171,8 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
     try { return /^https?:$/.test(new URL(v).protocol) ? null : fail('an http or https address'); } catch { return fail('an address'); }
   })],
   'misc:cacheSize': [], 'misc:clearCache': [], 'misc:runTool': [str(260, 1)],
+  // the pumpkin's key (src/ipc-pumpkin.ts)
+  'pumpkin:redeem': [str(80)], 'pumpkin:prizeAgain': [], 'pumpkin:hasPrize': [],
   // diagnostics (src/ipc-diagnostics.ts)
   // the handler keeps the first 2000 characters: a long error is cut there, not refused here
   'diag:export': [], 'diag:rendererError': [str(4 * MB)],

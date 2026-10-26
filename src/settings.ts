@@ -34,8 +34,15 @@ export interface StoredSettings {
   gameStamp?: string | null;
   /** the pumpkin in the title bar has come out (renderer/ui/pumpkin.ts) */
   pumpkin: boolean;
-  /** the ninth theme is open (renderer/ui/secret-lock.ts) */
+  /** the ninth theme is open (renderer/ui/pumpkin.ts) */
   secret: boolean;
+  /** the pumpkin has been fed a spider and is lit, waiting for a key (renderer/ui/pumpkin.ts) */
+  pumpkinLit: boolean;
+  /** a key was spent: the bloody night is open, and the key that did it (src/pumpkin.ts) */
+  blood?: boolean;
+  bloodKey?: string | null;
+  /** this install's name for the pumpkin's worker, random, made when first needed (src/pumpkin.ts) */
+  pumpkinInstall?: string | null;
   /** the resourcecompiler.exe picked in Settings, over the game's own (src/resource-compiler.ts) */
   resourceCompilerPath?: string | null;
 }
@@ -62,6 +69,7 @@ const DEFAULTS: StoredSettings = {
   // the title bar's pumpkin, and the ninth theme it opens (renderer/ui/pumpkin.ts)
   pumpkin: false,
   secret: false,
+  pumpkinLit: false,
   // catalog mods the user starred: "<categoryId>|<mod name>" keys
   favorites: [],
   // sizes and folded state of the title bar, status bar and category rail

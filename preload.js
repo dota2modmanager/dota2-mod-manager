@@ -157,6 +157,12 @@ contextBridge.exposeInMainWorld('api', {
     clearCache: () => ipcRenderer.invoke('misc:clearCache'),
     runTool: (dirName) => ipcRenderer.invoke('misc:runTool', dirName),
   },
+  // the pumpkin's key and the mod it opens (src/ipc-pumpkin.ts)
+  pumpkin: {
+    redeem: (key) => ipcRenderer.invoke('pumpkin:redeem', key),
+    prizeAgain: () => ipcRenderer.invoke('pumpkin:prizeAgain'),
+    hasPrize: () => ipcRenderer.invoke('pumpkin:hasPrize'),
+  },
   diag: {
     export: () => ipcRenderer.invoke('diag:export'),
     reportError: (msg) => ipcRenderer.send('diag:rendererError', msg),

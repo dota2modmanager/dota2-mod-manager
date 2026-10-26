@@ -112,3 +112,50 @@
   0%, 100% { filter: drop-shadow(0 0 22px rgb(255 120 30 / 0.7)); }
   50% { filter: drop-shadow(0 0 30px rgb(200 20 30 / 0.7)); }
 }
+
+/* ---- cold: the candle is out until a spider is thrown in (ui/spiders.ts) ---- */
+.pk-drip { display: none; }
+.tb-pumpkin.cold .pk-body, .pk-box.cold .pk-body { fill: #8a5a34; }
+.tb-pumpkin.cold .pk-rib, .pk-box.cold .pk-rib { stroke: #5e3a22; }
+.tb-pumpkin.cold .pk-face path, .pk-box.cold .pk-face path { fill: #1c120e; }
+.tb-pumpkin.cold:hover { filter: none; }
+.tb-pumpkin.cold:hover .pk-face, .pk-box.cold .pk-face { animation: none; }
+.pk-box.cold .pk-big { filter: none; }
+/* a spider going in: the jaw works, and the first one lights the candle */
+.tb-pumpkin.chomp svg { animation: pkChomp 420ms var(--ease-spring); }
+@keyframes pkChomp { 0% { scale: 1; } 25% { scale: 1.35 0.8; } 50% { scale: 0.9 1.2; } 100% { scale: 1; } }
+.tb-pumpkin.kindled { animation: pkKindle 1.6s var(--ease-out); }
+@keyframes pkKindle {
+  0% { filter: drop-shadow(0 0 0 rgb(255 120 30 / 0)); }
+  20% { filter: drop-shadow(0 0 14px rgb(255 120 30 / 0.95)); }
+  100% { filter: drop-shadow(0 0 0 rgb(255 120 30 / 0)); }
+}
+
+/* ---- the bloody night: the pumpkin bleeds from its eyes and mouth ---- */
+.tb-pumpkin.bloody .pk-drip, .pk-box.blood .pk-drip { display: inline; }
+.pk-drip path { fill: #b3121a; }
+.tb-pumpkin.bloody .pk-face path { fill: #ff4a4a; }
+.pk-box.lit.blood {
+  background-image: linear-gradient(var(--surface-solid), var(--surface-solid)), linear-gradient(180deg, #e3283a, #4a0309);
+}
+.pk-box.lit.blood .pk-face path { animation: none; fill: #ff3b3b; }
+.pk-box.lit.blood .pk-face { animation: pkFlicker 1.2s linear infinite; }
+.pk-box.lit.blood .pk-big { animation: pkBleed 2.2s ease-in-out infinite; }
+@keyframes pkBleed {
+  0%, 100% { filter: drop-shadow(0 0 22px rgb(220 20 40 / 0.7)); }
+  50% { filter: drop-shadow(0 0 34px rgb(140 0 10 / 0.9)); }
+}
+
+/* ---- a wrong key: the face lunges out of the window at you ---- */
+.pk-box.scream .pk-big { animation: pkScream 650ms var(--ease-out); z-index: 2; position: relative; }
+.pk-box.scream .pk-face path { fill: #ff2020; }
+@keyframes pkScream {
+  0% { scale: 1; }
+  12% { scale: 4.2; translate: 0 60px; filter: drop-shadow(0 0 60px rgb(255 0 0 / 0.95)) brightness(1.4); }
+  40% { scale: 3.8; translate: 0 56px; }
+  100% { scale: 1; translate: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-box.scream .pk-big, .tb-pumpkin.chomp svg, .tb-pumpkin.kindled { animation: none; }
+}

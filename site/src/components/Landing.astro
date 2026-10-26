@@ -33,7 +33,7 @@ interface Props { lang: Lang }
 const { lang } = Astro.props;
 /* The last hero only runs once an app that can take what it gives is out (Hunt.astro). */
 const latest = await latestRelease();
-const lastRuns = !!latest && compareVersions(latest, '2.16.0') >= 0;
+const lastRuns = !!latest && compareVersions(latest, '2.17.0') >= 0;
 const c = landing[lang];
 
 /** Copy links are written as "~/docs/safe/" and get their language prefix here. */

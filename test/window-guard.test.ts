@@ -160,6 +160,7 @@ const VALID: Record<string, unknown[][]> = {
   'presets:delete': [[ID]], 'presets:apply': [[ID]], 'presets:resolve': [[ID]], 'presets:exportPlan': [[ID]], 'presets:shareLink': [[ID]],
   'presets:export': [[ID, { skip: [ID], author: 'me', note: 'gg' }]], 'presets:importDialog': [[]],
   'presets:importFile': [['C:\\Users\\me\\Downloads\\build.d2mm']],
+  'pumpkin:redeem': [['K7QX-M2PA-9HRT-WZ4N']], 'pumpkin:prizeAgain': [[]], 'pumpkin:hasPrize': [[]],
   'config:state': [[]], 'config:noticeSeen': [['notice-2026-10']],
   'patch:state': [[]], 'patch:repairState': [[]], 'patch:repairNow': [[]], 'patch:repairSeen': [[]], 'patch:setEnabled': [[true]],
   'schema:refresh': [[]], 'cosmetics:slots': [[]],

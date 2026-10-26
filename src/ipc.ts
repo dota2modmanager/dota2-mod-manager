@@ -13,6 +13,7 @@ import { registerSettingsIpc } from './ipc-settings.ts';
 import { registerGameIpc } from './ipc-game.ts';
 import { registerCompilerIpc } from './ipc-compiler.ts';
 import { registerDiagnosticsIpc } from './ipc-diagnostics.ts';
+import { registerPumpkinIpc } from './ipc-pumpkin.ts';
 
 /** Register every channel the window can call. */
 export function registerIpc(ctx: AppContext): void {
@@ -27,4 +28,5 @@ export function registerIpc(ctx: AppContext): void {
   registerPresetsIpc(ctx);
   registerMiscIpc(ctx);
   registerDiagnosticsIpc(ctx);
+  registerPumpkinIpc(ctx);
 }

@@ -18,44 +18,54 @@
  */
 
 import { spook } from './spook-sound';
-import { theKey } from './key';
+import { keptKey, type Claim } from './pumpkin-key';
 
 export interface ChaseHero { id: string; primary: string; accent: string }
 
 export interface ChaseWords {
   title: string; slowing: string; spent: string; giveUp: string; sound: string;
   caught: string; keyIs: string; hint: string; copy: string; copied: string; again: string; close: string;
+  claiming: string; early: string; enough: string; offline: string; broken: string; retry: string;
 }
 
 /** The words of the chase and of what it gives, in the page's language. */
 export const CHASE_WORDS: Record<'en' | 'ru', ChaseWords> = {
   en: {
     title: 'CATCH ME', slowing: 'It is slowing down', spent: 'Out of breath. Grab it!', giveUp: 'Esc to give up', sound: 'M for sound',
-    caught: 'Caught', keyIs: 'Your key', hint: 'It opens the pumpkin in the app. Eight heroes know the way to it.',
-    copy: 'Copy', copied: 'Copied', again: 'Show the key', close: 'Close',
+    caught: 'Caught', keyIs: 'Your key', hint: 'It opens one pumpkin in the app, yours, and only once. Posted in a channel, it burns for whoever is first.',
+    copy: 'Copy', copied: 'Copied', again: 'Show my key', close: 'Close',
+    claiming: 'Carving your key…', early: 'Too fast. Nobody catches it that fast.', enough: 'Enough keys from here for today. Come back tomorrow.',
+    offline: 'The pumpkin cannot be reached. Check your connection.', broken: 'Something broke on the other side. Try again in a minute.', retry: 'Try again',
   },
   ru: {
     title: 'ПОЙМАЙ МЕНЯ', slowing: 'Он сбавляет ход', spent: 'Выдохся. Лови!', giveUp: 'Esc - сдаться', sound: 'M - звук',
-    caught: 'Пойман', keyIs: 'Твой ключ', hint: 'Он открывает тыкву в приложении. Дорогу к ней знают восемь героев.',
-    copy: 'Скопировать', copied: 'Скопировано', again: 'Показать ключ', close: 'Закрыть',
+    caught: 'Пойман', keyIs: 'Твой ключ', hint: 'Он откроет одну тыкву в приложении, твою, и только один раз. Выложишь в канал - сгорит у того, кто успеет первым.',
+    copy: 'Скопировать', copied: 'Скопировано', again: 'Показать мой ключ', close: 'Закрыть',
+    claiming: 'Вырезаю твой ключ…', early: 'Слишком быстро. Так быстро его не ловят.', enough: 'На сегодня ключей отсюда хватит. Приходи завтра.',
+    offline: 'Тыква не отвечает. Проверь интернет.', broken: 'На той стороне что-то сломалось. Попробуй через минуту.', retry: 'Ещё раз',
   },
 };
 
 
 // ---- tuning ---------------------------------------------------------------------------
 const SIZE = 64;           // the runner, in CSS pixels
-const SCARE = 290;         // how near the pointer has to come before it runs
-const DRAIN = 0.062;       // breath lost per second with the pointer on top of it
+const SCARE = 320;         // how near the pointer has to come before it runs
+const DRAIN = 0.05;        // breath lost per second with the pointer on top of it
 const LUNGE = 0.02;        // and per click it dodges
 const REST = 0.012;        // breath back per second when nobody is close
 const SPENT = 0.1;         // below this it cannot run any more
 const INTRO = 1.3;         // seconds of the page going dark, when nothing drains
 // However quick the hand, it cannot be worn out before this many seconds of chase: the breath
 // has a floor that sinks from half to nothing over them, so the tiring is always seen happening.
-const STAMINA = 14;
+const STAMINA = 24;
+const DECOY_EVERY = 5.5;   // seconds between the false runners it throws off while it still has breath
+const DECOY_GIFT = 0.07;   // breath it gets back when one of them is grabbed instead of it
 const WALL = 110;          // how far from an edge the walls start pushing back
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
+
+/** A spider for the dark, drawn facing up. */
+const SPIDER = '<svg viewBox="-20 -20 40 40" aria-hidden="true"><g class="legs a"><polyline class="leg" points="-3,-2 -11,-10 -16,-6"/><polyline class="leg odd" points="-3,0 -13,-4 -18,1"/><polyline class="leg" points="-3,2 -12,4 -17,10"/><polyline class="leg odd" points="-3,4 -9,9 -12,16"/></g><g class="legs b"><polyline class="leg" points="3,-2 11,-10 16,-6"/><polyline class="leg odd" points="3,0 13,-4 18,1"/><polyline class="leg" points="3,2 12,4 17,10"/><polyline class="leg odd" points="3,4 9,9 12,16"/></g><ellipse class="ab" cx="0" cy="6" rx="6.4" ry="8"/><circle class="hd" cx="0" cy="-4" r="4.2"/><circle class="eye" cx="-1.6" cy="-5.2" r="1"/><circle class="eye" cx="1.6" cy="-5.2" r="1"/></svg>';
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: string): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
@@ -104,7 +114,28 @@ export function chase(opts: {
     img.src = `/mascots/${hero.id}.gif`;
     img.alt = '';
     runner.appendChild(img);
-    root.append(pulse, title, sub, fx, runner, flash, esc);
+    // blood running down from the top of the dark, and spiders crossing it
+    const blood = el('div', 'chase-blood');
+    for (let k = 0; k < 28; k++) {
+      const d = el('i', '');
+      d.style.setProperty('--x', `${((k + 0.15 + Math.random() * 0.7) / 28) * 100}%`);
+      d.style.setProperty('--w', `${(4 + Math.random() * 9).toFixed(1)}px`);
+      d.style.setProperty('--h', `${(30 + Math.random() ** 1.5 * 260).toFixed(0)}px`);
+      d.style.setProperty('--t', `${(5 + Math.random() * 7).toFixed(1)}s`);
+      blood.appendChild(d);
+    }
+    const crawlers = el('div', 'chase-crawlers');
+    for (let k = 0; k < 7; k++) {
+      const s = el('span', 'chase-spider');
+      s.innerHTML = SPIDER;
+      s.style.setProperty('--y', `${(8 + Math.random() * 84).toFixed(0)}vh`);
+      s.style.setProperty('--t', `${(6 + Math.random() * 9).toFixed(1)}s`);
+      s.style.setProperty('--wait', `${(1.5 + Math.random() * 10).toFixed(1)}s`);
+      s.style.setProperty('--size', `${(22 + Math.random() * 26).toFixed(0)}px`);
+      if (k % 2) s.classList.add('back');
+      crawlers.appendChild(s);
+    }
+    root.append(pulse, blood, crawlers, title, sub, fx, runner, flash, esc);
     document.body.appendChild(root);
     document.documentElement.classList.add('chasing');
 
@@ -139,6 +170,10 @@ export function chase(opts: {
     const trail: Array<{ x: number; y: number }> = [];
     type Bit = { x: number; y: number; vx: number; vy: number; r: number; life: number; dl: number; c: string; g: number };
     let bits: Bit[] = [];
+    // the false runners it throws off: grab one of those and it gets some breath back
+    type Decoy = { el: HTMLElement; x: number; y: number; vx: number; vy: number; life: number };
+    let decoys: Decoy[] = [];
+    let decoyClock = 0;
 
     requestAnimationFrame(() => root.classList.add('on'));
 
@@ -203,6 +238,17 @@ export function chase(opts: {
       if (over) return;
       const d = Math.hypot(e.clientX - x, e.clientY - y);
       const spent = breath <= SPENT;
+      // a false one grabbed instead of it: the false one bursts, and it laughs and breathes
+      const fake = decoys.find((dc) => Math.hypot(e.clientX - dc.x, e.clientY - dc.y) < SIZE * 0.6);
+      if (fake && d > SIZE * 0.72) {
+        spray(fake.x, fake.y, ['#5a0710', '#a80f1b', '#2a2a2a'], 30, 7, 0.2);
+        fake.el.remove();
+        decoys = decoys.filter((dc) => dc !== fake);
+        breath = Math.min(1, breath + DECOY_GIFT);
+        sound.giggle();
+        jolt();
+        return;
+      }
       if (d < SIZE * 0.72 && spent && t > INTRO) { end('caught'); return; }
       spray(e.clientX, e.clientY, ['#ff2a3a', '#ff7b54'], 10, 5, 0);
       if (d < 120 && t > INTRO * 0.6) {
@@ -298,6 +344,32 @@ export function chase(opts: {
 
         trail.push({ x, y });
         if (trail.length > 12) trail.shift();
+
+        // a false runner thrown off now and then while it still has the breath for tricks
+        decoyClock += real;
+        if (t > INTRO && breath > SPENT + 0.12 && decoyClock > DECOY_EVERY) {
+          decoyClock = 0;
+          const dc = el('div', 'chase-runner chase-decoy');
+          const im = el('img', '');
+          im.src = img.src;
+          im.alt = '';
+          dc.appendChild(im);
+          root.insertBefore(dc, runner);
+          const a = Math.random() * Math.PI * 2;
+          decoys.push({ el: dc, x, y, vx: Math.cos(a) * 700, vy: Math.sin(a) * 700, life: 3.2 });
+          // and it darts the other way as the false one leaves
+          vx -= Math.cos(a) * 600; vy -= Math.sin(a) * 600;
+        }
+        decoys = decoys.filter((dc) => {
+          dc.life -= real;
+          dc.vx *= Math.pow(0.15, dt); dc.vy *= Math.pow(0.15, dt);
+          dc.x = clamp(dc.x + dc.vx * dt, SIZE / 2, w - SIZE / 2);
+          dc.y = clamp(dc.y + dc.vy * dt, SIZE / 2, h - SIZE / 2);
+          dc.el.style.transform = `translate3d(${dc.x - SIZE / 2}px, ${dc.y - SIZE / 2}px, 0)`;
+          dc.el.style.opacity = String(Math.min(1, dc.life));
+          if (dc.life <= 0) { dc.el.remove(); return false; }
+          return true;
+        });
       }
 
       // ---- the canvas: its afterimages, its sweat, the bursts ----
@@ -332,19 +404,24 @@ export function chase(opts: {
 }
 
 /**
- * The prize: the key, in the middle of the screen, with a way to copy it. It stays until it is
- * closed, since it has to be written down, and Hunt.astro offers it again from the footer.
+ * The prize: a key of this person's own, in the middle of the screen, with a way to copy it. It
+ * stays until it is closed, since it has to be written down, and Hunt.astro offers it again from
+ * the footer. `got` is the worker's answer on its way (scripts/pumpkin-key.ts); with nothing passed
+ * the key this browser was given before is shown. A failed claim says why, and offers to try again
+ * when trying again could help.
  */
-export function showKey(words: ChaseWords): void {
+export function showKey(words: ChaseWords, got?: Promise<Claim>, again?: () => Promise<Claim>): void {
   document.querySelector('.hunt-key')?.remove();
   const box = el('div', 'hunt-key');
   box.setAttribute('role', 'dialog');
   box.setAttribute('aria-label', words.caught);
   const head = el('b', 'hunt-key-title', words.caught);
   const label = el('span', 'hunt-key-label', words.keyIs);
-  const code = el('output', 'hunt-key-code', theKey());
+  const code = el('output', 'hunt-key-code', words.claiming);
+  code.classList.add('waiting');
   const copy = el('button', 'btn btn-glow hunt-key-copy', words.copy);
   copy.type = 'button';
+  copy.hidden = true;
   const hint = el('small', 'hunt-key-hint', words.hint);
   const close = el('button', 'icon-btn hunt-close', '');
   close.type = 'button';
@@ -353,13 +430,30 @@ export function showKey(words: ChaseWords): void {
   box.append(head, label, code, copy, hint, close);
   document.body.appendChild(box);
 
-  const shut = () => { box.classList.add('out'); setTimeout(() => box.remove(), 260); window.removeEventListener('keydown', onKey); };
-  const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') shut(); };
-  window.addEventListener('keydown', onKey);
-  close.addEventListener('click', shut);
-  copy.addEventListener('click', async () => {
+  let key = '';
+  const settle = (c: Claim) => {
+    code.classList.remove('waiting');
+    if ('key' in c) {
+      key = c.key;
+      code.textContent = c.key;
+      copy.textContent = words.copy;
+      copy.hidden = false;
+      copy.onclick = onCopy;
+      copy.focus();
+      return;
+    }
+    code.classList.add('failed');
+    code.textContent = words[c.error];
+    // too fast or too many will not change with another try; the network might
+    if (again && (c.error === 'offline' || c.error === 'broken')) {
+      copy.hidden = false;
+      copy.textContent = words.retry;
+      copy.onclick = () => { code.classList.remove('failed'); code.classList.add('waiting'); code.textContent = words.claiming; copy.hidden = true; void again().then(settle); };
+    }
+  };
+  const onCopy = async () => {
     try {
-      await navigator.clipboard.writeText(theKey());
+      await navigator.clipboard.writeText(key);
       copy.textContent = words.copied;
     } catch {
       // no clipboard here: select the key so a Ctrl+C takes it
@@ -368,6 +462,13 @@ export function showKey(words: ChaseWords): void {
       getSelection()?.removeAllRanges();
       getSelection()?.addRange(r);
     }
-  });
-  copy.focus();
+  };
+  if (got) void got.then(settle);
+  else { const k = keptKey(); settle(k ? { key: k } : { error: 'broken' }); }
+
+  const shut = () => { box.classList.add('out'); setTimeout(() => box.remove(), 260); window.removeEventListener('keydown', onKey); };
+  const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') shut(); };
+  window.addEventListener('keydown', onKey);
+  close.addEventListener('click', shut);
+  close.focus();
 }

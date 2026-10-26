@@ -179,3 +179,49 @@ export function spook(): Spook {
 
 /** Whether the sound is on (it is, unless muted with M before). */
 export const soundOn = () => !muted();
+
+/**
+ * The scream of a wrong turn in the hunt (Hunt.astro): a shriek of noise sweeping up through a
+ * narrow filter over three detuned saws falling, under a second. Its own short-lived context, so
+ * it can sound from any click; silent when the chase's sound was muted with M.
+ */
+export function shriek(): void {
+  if (muted()) return;
+  const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!Ctx) return;
+  let ctx: AudioContext;
+  try { ctx = new Ctx(); } catch { return; }
+  void ctx.resume();
+  const t = ctx.currentTime;
+  const out = ctx.createGain();
+  out.gain.setValueAtTime(0.0001, t);
+  out.gain.exponentialRampToValueAtTime(0.5, t + 0.02);
+  out.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
+  out.connect(ctx.destination);
+  const buf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.Q.value = 6;
+  bp.frequency.setValueAtTime(900, t);
+  bp.frequency.exponentialRampToValueAtTime(3600, t + 0.5);
+  src.connect(bp).connect(out);
+  src.start(t);
+  src.stop(t + 0.9);
+  for (const det of [-30, 0, 25]) {
+    const o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(1300, t);
+    o.frequency.exponentialRampToValueAtTime(380, t + 0.8);
+    o.detune.value = det;
+    const g = ctx.createGain();
+    g.gain.value = 0.12;
+    o.connect(g).connect(out);
+    o.start(t);
+    o.stop(t + 0.9);
+  }
+  setTimeout(() => { void ctx.close(); }, 1200);
+}

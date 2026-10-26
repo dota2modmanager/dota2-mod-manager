@@ -112,6 +112,7 @@ the code, not in this page.
 | [`src/preset-plan.ts`](#srcpreset-plants) | How a preset travels to somebody else (src/presets-service.ts applies, packs and receives |
 | [`src/preset-share.ts`](#srcpreset-sharets) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
 | [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
+| [`src/pumpkin.ts`](#srcpumpkints) | The pumpkin's side of the key (renderer/ui/pumpkin.ts asks, tools/pumpkin-worker answers). |
 | [`src/recolor.ts`](#srcrecolorts) | An item's effects in a colour of the user's choosing, built from the game's own files. |
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
@@ -6157,6 +6158,64 @@ Everything about presets that needs the running app's services.
 @param deps.schemaService  puts a preset's looks on, and rebuilds the item table when a preset changes it
 @param deps.deployAndApply  rebuilds one pack's VPK
 ```
+
+## src/pumpkin.ts
+
+The pumpkin's side of the key (renderer/ui/pumpkin.ts asks, tools/pumpkin-worker answers).
+
+Each key the site hands out opens one pumpkin. This install has a name of its own for that, a
+random one made the first time it is needed and never sent anywhere else, and the worker ties
+a key to the first name that brings it. A key posted in a channel is spent by whoever is first;
+everybody after gets "used".
+
+What the key opens: the bloody theme (settings `blood`) and a mod nobody else has yet, which is
+downloaded from the worker, the one place that knows whether this install may have it, and
+then taken in the way any .vpk somebody drops on the window is (src/import.ts). The key is
+kept, so the mod can be fetched again after it was removed.
+
+Forgiving about typing in the same way the old lock was: case, spaces and dashes do not count,
+and a key typed on a Russian layout or with Cyrillic look-alikes is read back as the Latin it
+meant.
+
+### `PUMPKIN_HOST`
+
+```ts
+export const PUMPKIN_HOST = 'https://pumpkin.dota2modmanager.com'
+```
+
+The worker that keeps the keys and the prize (tools/pumpkin-worker).
+
+### `PRIZE_NAME`
+
+```ts
+export const PRIZE_NAME = 'Necrophos - Scream'
+```
+
+What the mod is called in the library.
+
+### `readings`
+
+```ts
+export function readings(typed: string): string[]
+```
+
+Every reading of what was typed that could be a key: 16 Latin letters and digits.
+
+### `RedeemAnswer`
+
+```ts
+export type RedeemAnswer =
+```
+
+What the window is told after a key: the night opened (and whether the mod came with it), or why not.
+
+### `createPumpkin`
+
+```ts
+export function createPumpkin({ settings, importVpkPaths, library, fetch: get = fetch, host = PUMPKIN_HOST, log = () => {} }: Deps)
+```
+
+The pumpkin's side in the main process: spend a key, fetch the prize again, say whether it is here.
 
 ## src/recolor.ts
 

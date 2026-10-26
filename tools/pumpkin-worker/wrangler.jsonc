@@ -1,0 +1,16 @@
+{
+  // The pumpkin's keys. See worker.mjs for what it does and README.md for how it is set up.
+  "$schema": "../../site/node_modules/wrangler/config-schema.json",
+  "name": "d2mm-pumpkin",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-09-01",
+  "routes": [{ "pattern": "pumpkin.dota2modmanager.com", "custom_domain": true }],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "d2mm-pumpkin", "database_id": "bf965dc8-bb6c-42c5-a3a6-66ca231b7f30" }
+  ],
+  // private: unlike d2mm-mods, this bucket has no public address, and the prize leaves it only
+  // through GET /mod
+  "r2_buckets": [{ "binding": "PRIZE", "bucket_name": "d2mm-pumpkin" }],
+  "observability": { "enabled": true }
+  // TICKET_SECRET and ADDR_SALT are secrets: npx wrangler secret put TICKET_SECRET
+}

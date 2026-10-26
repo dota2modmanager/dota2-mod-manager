@@ -32,6 +32,7 @@ import { applyContentZoom, readPanels, bindPanels } from './ui/chrome.ts';
 import { applyStaticI18n, showLanguagePicker } from './ui/language.ts';
 import { initTheme } from './ui/theme.ts';
 import { initPumpkin } from './ui/pumpkin.ts';
+import { initBrood } from './ui/brood.ts';
 import { initQueue } from './ui/queue.ts';
 import { initA11y } from './ui/a11y.ts';
 import { loadCatalog } from './views/catalog.ts';
@@ -76,6 +77,7 @@ async function offerToolchain(): Promise<void> {
   applyStaticI18n();
   initTheme();
   initPumpkin();
+  initBrood();
   initQueue();
   bindPanels();
   paintAccount();
