@@ -2,8 +2,7 @@
  * What Halloween does to the page itself, past the webs and spiders of scripts/halloween.ts: the
  * part everybody sees while the season is on, earned or not, because it is where the hunt starts.
  *
- * Headings bleed: drops gather under the letters, stretch and fall. Fingers grip the top edge of a
- * card here and there, as if somebody were climbing out from behind it, and slide back down when
+ * Fingers grip the top edge of a card here and there, as if somebody were climbing out from behind it, and slide back down when
  * the pointer comes near. Screenshots get a frame of dried blood. A few words in the text are not
  * what they seem, and say something else under the pointer. Eyes open in the margins, follow the
  * pointer, shut when it comes close, and whisper when touched: what they whisper is how the hunt
@@ -49,20 +48,19 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string): HTMLEle
   return e;
 }
 
-/** Four fingers curled over an edge from behind it, nails and creases, and what runs from them. */
-const FINGERS = `<svg viewBox="0 0 84 50" aria-hidden="true">
-  <g class="smear"><path d="M13 38v12"/><path d="M30 43v14"/><path d="M47 42v14"/><path d="M63 36v11"/></g>
+/** Four fingertips curled over an edge from behind it, nails and creases, and what runs from them. */
+const FINGERS = `<svg viewBox="0 0 84 40" aria-hidden="true">
+  <g class="smear"><path d="M13 32v6"/><path d="M30 35v8"/><path d="M47 34v7"/><path d="M63 31v5"/></g>
   <g class="hand">
-    <path d="M8 22C8 8 20 8 20 22L19.4 37Q14 42 8.6 37Z"/><path d="M24 22C24 8 38 8 38 22L37.4 42Q31 47 24.6 42Z"/>
-    <path d="M41 22C41 8 55 8 55 22L54.4 41Q48 46 41.6 41Z"/><path d="M58.5 22C58.5 8 69.5 8 69.5 22L68.9 35Q64 40 59.1 35Z"/>
+    <path d="M8 22C8 8 20 8 20 22L19.4 29Q14 34 8.6 29Z"/><path d="M24 22C24 8 38 8 38 22L37.4 32Q31 37 24.6 32Z"/>
+    <path d="M41 22C41 8 55 8 55 22L54.4 31Q48 36 41.6 31Z"/><path d="M58.5 22C58.5 8 69.5 8 69.5 22L68.9 28Q64 33 59.1 28Z"/>
   </g>
   <g class="nail">
-    <path d="M10.4 31h7.2v4q-3.6 4-7.2 0z"/><path d="M26.8 36h8.4v4q-4.2 4-8.4 0z"/>
-    <path d="M43.8 35h8.4v4q-4.2 4-8.4 0z"/><path d="M60.7 29h6.6v4q-3.3 4-6.6 0z"/>
+    <path d="M10.4 24h7.2v3q-3.6 3-7.2 0z"/><path d="M26.8 27h8.4v3q-4.2 3-8.4 0z"/>
+    <path d="M43.8 26h8.4v3q-4.2 3-8.4 0z"/><path d="M60.7 23h6.6v3q-3.3 3-6.6 0z"/>
   </g>
   <g class="knuckle">
-    <path d="M11 16q3-2 6 0M11 28.8h6"/><path d="M27.5 16q3.5-2 7 0M27.5 31h7"/>
-    <path d="M44.5 16q3.5-2 7 0M44.5 30.6h7"/><path d="M61.3 16q2.7-2 5.5 0M61.3 27.9h5.5"/>
+    <path d="M11 15q3-2 6 0"/><path d="M27.5 15q3.5-2 7 0"/><path d="M44.5 15q3.5-2 7 0"/><path d="M61.3 15q2.7-2 5.5 0"/>
   </g>
 </svg>`;
 
@@ -107,56 +105,6 @@ export function mountDread(): void {
   const place = () => { for (const f of placed) f(); };
   const pageBox = (e: Element) => { const r = e.getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height }; };
 
-  // headings that bleed: drops hang from the foot of a few letters on the last line, each
-  // from a stroke that really reaches the baseline (laid over the page, not put inside: a
-  // heading's letters are a gradient clipped to the text, and that would clip the drops too)
-  const LOW = /[gjpqyуцщрдфз,.]/i;          // these hang below the line: no drop from them
-  const STEM = /[AHKMNVWXYhkmnrvwxПНИЙЛМКЖХШЩЧЯАпнийлмкжхшчяа]/;   // these touch it at the left stroke
-  const ruler = document.createElement('canvas').getContext('2d')!;
-  for (const h of [...main.querySelectorAll<HTMLElement>('h1, h2')].slice(0, 24)) {
-    const cs = getComputedStyle(h);
-    const size = parseFloat(cs.fontSize);
-    ruler.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-    const ascent = ruler.measureText('H').fontBoundingBoxAscent;
-    const w = Math.max(3, size * 0.05);
-    const drips = Array.from({ length: 2 + Math.floor(Math.random() * 3) }, () => {
-      const d = el('i', 'dr-drip');
-      d.style.setProperty('--w', `${w.toFixed(1)}px`);
-      d.style.setProperty('--h', `${Math.round(size * (0.2 + Math.random() * 0.45))}px`);
-      d.style.setProperty('--t', `${5 + Math.random() * 7}s`);
-      d.style.setProperty('--wait', `${-Math.random() * 10}s`);
-      document.body.appendChild(d);
-      return d;
-    });
-    let chosen: number[] | null = null;
-    placed.push(() => {
-      // every letter of the heading with its box, then the ones on its last line that can bleed
-      const letters: Array<{ ch: string; r: DOMRect }> = [];
-      const walker = document.createTreeWalker(h, NodeFilter.SHOW_TEXT);
-      const r = document.createRange();
-      while (walker.nextNode()) {
-        const t = walker.currentNode as Text;
-        for (let i = 0; i < t.data.length; i++) {
-          if (!/\p{L}/u.test(t.data[i])) continue;
-          r.setStart(t, i); r.setEnd(t, i + 1);
-          const box = r.getBoundingClientRect();
-          if (box.width) letters.push({ ch: t.data[i], r: box });
-        }
-      }
-      const bottom = Math.max(...letters.map((l) => l.r.bottom));
-      const can = letters.filter((l) => Math.abs(l.r.bottom - bottom) < 4 && !LOW.test(l.ch));
-      chosen ??= can.map((_, i) => i).sort(() => Math.random() - 0.5).slice(0, drips.length);
-      drips.forEach((d, k) => {
-        const l = can[chosen![k]];
-        d.hidden = !l;
-        if (!l) return;
-        const x = l.r.left + (STEM.test(l.ch) ? l.r.width * 0.2 : l.r.width / 2) - w / 2;
-        d.style.left = `${Math.round(x + scrollX)}px`;
-        d.style.top = `${Math.round(l.r.top + ascent + scrollY - w * 0.6)}px`;
-      });
-    });
-  }
-
   // fingers over the top edge of a few cards, gone back down when the pointer comes near
   const rows = new Set<number>();
   const cards = [...main.querySelectorAll<HTMLElement>('.card, .tile, .mcard, .htile, .panel, .link-card, .release')]
@@ -168,12 +116,29 @@ export function mountDread(): void {
     const grip = el('div', 'dr-grip');
     grip.innerHTML = FINGERS;
     document.body.appendChild(grip);
-    const at = 0.15 + Math.random() * 0.6;
+    // towards the right of the card, where a title that starts on the left seldom reaches
+    const at = 0.62 + Math.random() * 0.3;
     placed.push(() => {
       const b = pageBox(card);
       grip.style.left = `${Math.round(b.x + (b.w - 84) * at)}px`;
       grip.style.top = `${Math.round(b.y - 22)}px`;
     });
+    // they climb up once the card itself has come in, not before it
+    grip.classList.add('gone');
+    const seen = new IntersectionObserver((entries) => {
+      for (const en of entries) {
+        if (!en.isIntersecting) continue;
+        const card = en.target as HTMLElement;
+        const wait = () => {
+          const rising = card.closest('.reveal');
+          if (rising && document.documentElement.classList.contains('reveal-armed') && !rising.classList.contains('in')) { setTimeout(wait, 150); return; }
+          setTimeout(() => { grip.dataset.up = '1'; grip.classList.remove('gone'); }, 700 + Math.random() * 900);
+        };
+        wait();
+        seen.disconnect();
+      }
+    }, { rootMargin: '0px 0px -15% 0px' });
+    seen.observe(card);
     return grip;
   });
 
@@ -268,7 +233,7 @@ export function mountDread(): void {
       const r = g.getBoundingClientRect();
       const d = Math.hypot(px - (r.left + r.width / 2), py - (r.top + r.height / 2));
       if (d < 130) g.classList.add('gone');
-      else if (d > 420 && g.classList.contains('gone') && Math.random() < 0.02) g.classList.remove('gone');
+      else if (d > 420 && g.dataset.up && g.classList.contains('gone') && Math.random() < 0.02) g.classList.remove('gone');
     }
   };
   addEventListener('pointermove', (e) => {
@@ -329,18 +294,4 @@ export function mountDread(): void {
     img.addEventListener('pointerleave', () => clearTimeout(stare));
   }
 
-  trophy();
-}
-
-/** Whoever found his mask (scripts/heart.ts) keeps it, in the footer of every page. */
-export function trophy(): void {
-  let heart = false;
-  try { heart = localStorage.getItem('mm-heart') === '1'; } catch { /* private mode */ }
-  const legal = document.querySelector('.foot-legal');
-  if (!heart || !legal || legal.querySelector('.dr-trophy')) return;
-  const mask = el('img', 'dr-trophy');
-  mask.src = '/halloween/face.webp';
-  mask.alt = '';
-  mask.title = document.documentElement.lang === 'ru' ? 'Ты любишь страшные фильмы?' : 'Do you like scary movies?';
-  legal.appendChild(mask);
 }

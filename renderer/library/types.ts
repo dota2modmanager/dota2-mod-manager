@@ -57,6 +57,8 @@ export interface LibRecord {
   prePatch?: { since: string | null; changed: number; removed: number };
   /** the catalog has a newer version of this mod than the one installed (src/mod-update.ts) */
   updateAvailable?: boolean;
+  /** a copy of the pumpkin's mod this install did not earn, kept off (src/scream-guard.ts) */
+  cheat?: boolean;
   fileRef?: string;
   preview?: string;
   [key: string]: unknown;

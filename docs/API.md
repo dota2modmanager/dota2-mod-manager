@@ -128,6 +128,7 @@ the code, not in this page.
 | [`src/schema-merge.ts`](#srcschema-mergets) | Mod deltas and the merge (src/schema.ts): which item blocks a mod changed, lifted out of the |
 | [`src/schema-service.ts`](#srcschema-servicets) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
 | [`src/schema.ts`](#srcschemats) | Item-schema engine: the game's own scripts/items/items_game.txt is the only place |
+| [`src/scream-guard.ts`](#srcscream-guardts) | The pumpkin's mod belongs to whoever opened the pumpkin (src/pumpkin.ts). |
 | [`src/services.ts`](#srcservicests) | What the app is built from: every long-lived service, created once in the order they depend on |
 | [`src/settings.ts`](#srcsettingsts) | Simple JSON settings store in userData |
 | [`src/slot-zones.ts`](#srcslot-zonests) | The load order in two parts. |
@@ -4962,7 +4963,7 @@ follows every change.
 ### `createModsListing`
 
 ```ts
-export function createModsListing({ installer, library, fingerprints, schemaService, updateImpact = null, terrainAges, notice, diag, refreshPresence, verifyStuck }: ListingDeps)
+export function createModsListing({ installer, library, fingerprints, schemaService, updateImpact = null, terrainAges, notice, diag, refreshPresence, verifyStuck, guard }: ListingDeps)
 ```
 
 The mods:list answer, built over the services src/ipc-mods.ts hands it.
@@ -7483,6 +7484,50 @@ export function isDeployed(gamePath: string, folder: string): boolean
 ```
 
 Whether a built schema is in the mod folder.
+
+## src/scream-guard.ts
+
+The pumpkin's mod belongs to whoever opened the pumpkin (src/pumpkin.ts).
+
+It is recognised by what is inside its pak, not by its name or its file: its own folders, which
+no other mod has. An install that never spent a key of its own and has it anyway was handed a
+copy, so the mod is switched off, marked, and stays off (src/ipc-library.ts refuses to switch
+it on); My mods says why on its row. Spending a key later takes the mark off.
+
+Every mod is looked into once (`scream` on its record), from mods:list (src/mods-listing.ts),
+which follows every change, so a copy dropped on the window is caught on the next listing.
+
+### `SCREAM_MARKS`
+
+```ts
+export const SCREAM_MARKS = ['materials/scream_fx/', 'materials/models/heroes/necrolyte/scream/']
+```
+
+Folders only the pumpkin's mod has.
+
+### `isScream`
+
+```ts
+export function isScream(paths: string[]): boolean
+```
+
+Whether a pak's paths are the pumpkin's mod.
+
+### `createScreamGuard`
+
+```ts
+export function createScreamGuard({ library, settings, pathsOf, switchOff, log = () => {} }: Deps)
+```
+
+Look into the mods not looked into yet, and switch off a copy this install did not earn. The names caught.
+
+### `screamGuardFor`
+
+```ts
+export function screamGuardFor({ installer, library, settings, afterOff = () => {}, log }: AppDeps)
+```
+
+The guard over the installer and the library (src/ipc-mods.ts): paks read from the game folder.
 
 ## src/services.ts
 

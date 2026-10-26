@@ -34,10 +34,12 @@ type ListingDeps = Pick<AppContext, 'installer' | 'library' | 'fingerprints' | '
   updateImpact?: Pick<AppContext['updateImpact'], 'marked'> | null;
   terrainAges: ReturnType<typeof createTerrainAges>;
   notice: ReturnType<typeof createNoticeText>;
+  /** switches off a copy of the pumpkin's mod nobody earned here (src/scream-guard.ts) */
+  guard?: () => unknown;
 };
 
 /** The mods:list answer, built over the services src/ipc-mods.ts hands it. */
-export function createModsListing({ installer, library, fingerprints, schemaService, updateImpact = null, terrainAges, notice, diag, refreshPresence, verifyStuck }: ListingDeps) {
+export function createModsListing({ installer, library, fingerprints, schemaService, updateImpact = null, terrainAges, notice, diag, refreshPresence, verifyStuck, guard }: ListingDeps) {
   return function listMods() {
     // a mod still on the slot the notice text took moves off it (src/slot-zones.ts)
     try { if (zones.vacateAppPak(installer, library)) diag('a mod moved off the notice slot'); } catch (err) { diag(`notice slot not freed: ${errorText(err)}`); }
@@ -54,6 +56,7 @@ export function createModsListing({ installer, library, fingerprints, schemaServ
         }
       }
     } catch { /* no game path yet — nothing to sync */ }
+    try { guard?.(); } catch (err) { diag(`scream guard: ${errorText(err)}`); }
 
     let external: ExternalRow[] = [];
     // fingerprint -> a mod already in the library, so a file that is byte-identical to

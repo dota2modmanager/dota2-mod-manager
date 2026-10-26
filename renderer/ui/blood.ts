@@ -10,14 +10,17 @@
  * newborn walks off to a spot of its own and spins a web there; ui/spiders.ts lets any of them be
  * caught and thrown), a bloody hand that slaps against the side of the window and slides down, and
  * now and then a severed hand dragging itself along the status bar. The content in the middle is
- * left alone: this is a tool somebody is working in.
+ * left alone: this is a tool somebody is working in. While a mod's window is open the blood moves
+ * onto it: the band seeps from its top edge, the pool gathers along its bottom, and the top-left
+ * web hangs from its corner.
  *
  * One layer, out of the pointer's way, and one canvas for the drops and the pool, drawn only
  * while the window is visible. With less motion asked for, the blood hangs still, nothing falls,
  * nobody breeds or crawls, and the pool is drawn once at a fixed depth.
  */
 import { spawnSpider, residents, dismissResidents, someResident } from './spiders.ts';
-import { svg, div, cornerWeb, wheel, handPrint, crawler, screamMask } from './blood-art.ts';
+import { svg, div, cornerWeb, wheel, handPrint, crawler } from './blood-art.ts';
+import { peeker } from './blood-peek.ts';
 
 const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -66,6 +69,8 @@ function dress(): () => void {
   layer.appendChild(canvas);
   const ctx = canvas.getContext('2d')!;
   let top = 46, bottom = 30;
+  // where the blood runs: the window between its bars, or a mod's window while one is open
+  let fl = -1, fr = -1, ft = -1, fb = -1;
   const COL = 6;
   let pool: number[] = [];
   const fit = () => {
@@ -82,7 +87,22 @@ function dress(): () => void {
     bottom = bar && bar.offsetParent ? innerHeight - bar.getBoundingClientRect().top : 0;
     layer.style.setProperty('--top', `${Math.round(top)}px`);
     layer.style.setProperty('--bottom', `${Math.round(bottom)}px`);
+    placeFrame();
   };
+  const overlay = document.getElementById('modalOverlay');
+  const placeFrame = () => {
+    const open = overlay && !overlay.classList.contains('hidden') ? document.getElementById('modalContent')?.getBoundingClientRect() : null;
+    const box = open?.width ? open : { left: 0, right: innerWidth, top, bottom: innerHeight - bottom };
+    if (box.left === fl && box.right === fr && box.top === ft && box.bottom === fb) return;
+    fl = box.left; fr = box.right; ft = box.top; fb = box.bottom;
+    layer.classList.toggle('on-modal', !!open?.width);
+    layer.style.setProperty('--ftop', `${Math.round(ft)}px`);
+    layer.style.setProperty('--left', `${Math.round(fl)}px`);
+    layer.style.setProperty('--right', `${Math.round(innerWidth - fr)}px`);
+    if (!live) { ctx.clearRect(0, 0, innerWidth, innerHeight); drawPool(); }
+  };
+  const shown = new MutationObserver(() => placeFrame());
+  if (overlay) shown.observe(overlay, { attributes: true, attributeFilter: ['class'] });
   placeBars();
   fit();
   const watch = new ResizeObserver(() => { placeBars(); });
@@ -96,12 +116,16 @@ function dress(): () => void {
   let bits: Bit[] = [];
   const MAX_POOL = 16;
 
-  const drawPool = () => {
-    const floor = innerHeight - bottom;
+  function drawPool() {
+    const floor = fb, a = Math.max(0, Math.floor(fl / COL)), z = Math.min(pool.length - 1, Math.ceil(fr / COL));
+    ctx.save();
     ctx.beginPath();
-    ctx.moveTo(0, floor + 2);
-    for (let i = 0; i < pool.length; i++) ctx.lineTo(i * COL, floor + 1 - pool[i]);
-    ctx.lineTo(innerWidth, floor + 2);
+    ctx.rect(fl, 0, fr - fl, innerHeight);
+    ctx.clip();
+    ctx.beginPath();
+    ctx.moveTo(a * COL, floor + 2);
+    for (let i = a; i <= z; i++) ctx.lineTo(i * COL, floor + 1 - pool[i]);
+    ctx.lineTo(z * COL, floor + 2);
     ctx.closePath();
     const g = ctx.createLinearGradient(0, floor - MAX_POOL, 0, floor);
     g.addColorStop(0, '#b0101c');
@@ -111,7 +135,7 @@ function dress(): () => void {
     // the wet shine along the top of it
     ctx.beginPath();
     let on = false;
-    for (let i = 0; i < pool.length; i++) {
+    for (let i = a; i <= z; i++) {
       if (pool[i] < 1.5) { on = false; continue; }
       const x = i * COL, y = floor - pool[i] + 2.2;
       if (!on) { ctx.moveTo(x, y); on = true; } else ctx.lineTo(x, y);
@@ -119,7 +143,8 @@ function dress(): () => void {
     ctx.strokeStyle = 'rgba(255, 140, 140, 0.35)';
     ctx.lineWidth = 1;
     ctx.stroke();
-  };
+    ctx.restore();
+  }
 
   /** Blood landing at x: the pool rises there and runs out to the sides. */
   const land = (x: number, amount: number) => {
@@ -145,7 +170,8 @@ function dress(): () => void {
     last = now;
     if (document.hidden) return;
     if ((nextDrip -= dt) <= 0) { drip(); nextDrip = 0.9 + Math.random() * 2.6; }
-    const floor = innerHeight - bottom;
+    if (overlay && !overlay.classList.contains('hidden') || fb !== innerHeight - bottom) placeFrame();
+    const floor = fb;
     ctx.clearRect(0, 0, innerWidth, innerHeight);
     ctx.fillStyle = '#a10d18';
     drops = drops.filter((dr) => {
@@ -247,23 +273,9 @@ function dress(): () => void {
     layer.appendChild(h);
     h.addEventListener('animationend', () => h.remove(), { once: true });
   };
-  // ---- and somebody in a mask, looking in from the edge while nobody moves ----
-  let lastMove = performance.now();
-  const moved = () => { lastMove = performance.now(); layer.querySelector('.bn-peek')?.classList.add('gone'); };
-  const peek = () => {
-    later(peek, 20000 + Math.random() * 25000);
-    if (document.hidden || performance.now() - lastMove < 6000 || layer.querySelector('.bn-peek')) return;
-    const m = div('bn-peek');
-    m.classList.toggle('right', Math.random() < 0.5);
-    m.style.top = `${(top + 60 + Math.random() * (innerHeight - top - bottom - 220)).toFixed(0)}px`;
-    m.appendChild(screamMask());
-    layer.appendChild(m);
-    later(() => m.classList.add('gone'), 5200);
-    later(() => m.remove(), 6400);
-  };
+  // ---- and somebody in a mask, looking in from the edge while nobody moves (ui/blood-peek.ts) ----
+  const unpeek = live ? peeker(layer, () => ({ top, bottom })) : () => {};
   if (live) {
-    addEventListener('pointermove', moved, { passive: true });
-    later(peek, 15000);
     later(slap, 9000 + Math.random() * 8000);
     later(crawl, 25000 + Math.random() * 20000);
   }
@@ -272,8 +284,9 @@ function dress(): () => void {
     for (const t of timers) clearTimeout(t);
     cancelAnimationFrame(raf);
     watch.disconnect();
+    shown.disconnect();
+    unpeek();
     removeEventListener('resize', onResize);
-    removeEventListener('pointermove', moved);
     dismissResidents();
     layer.remove();
   };

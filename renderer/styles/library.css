@@ -98,6 +98,15 @@
   background: rgba(251, 191, 36, 0.12);
   border-color: rgba(251, 191, 36, 0.4);
 }
+/* a copy of the pumpkin's mod nobody earned here (src/scream-guard.ts): said in red, in full */
+.lib-tag.cheat {
+  max-width: none;
+  color: #ff4d5e;
+  background: rgba(255, 40, 60, 0.12);
+  border-color: rgba(255, 60, 80, 0.5);
+}
+/* switched off like any other, but not quietly: the row keeps its full strength so the red reads */
+.lib-row.disabled:has(.lib-tag.cheat) { opacity: 1; border-color: rgba(255, 60, 80, 0.45); }
 .lib-tag .ms { font-size: 13px; line-height: 1; }
 /* foreign file that is byte-identical to an installed mod: nothing is wrong, there is
    just one copy too many — stated quietly, since deleting it is the user's call */

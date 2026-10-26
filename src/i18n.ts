@@ -24,6 +24,8 @@ const EN = {
   'В этой папке не найдена Dota 2 (нет подпапки dota)': 'No Dota 2 here (there is no "dota" subfolder)',
   'Уже установлено': 'Already installed',
   'Мод не найден': 'Mod not found',
+  // a copy of the pumpkin prize this install did not earn (src/scream-guard.ts)
+  'Жульничество наказуемо гадостью': 'Cheating is punished with something nasty',
   // a tool of the toolchain with no build for this machine (src/toolchain.ts)
   'Для этой системы ({0}) нет сборки {1}': 'There is no build of {1} for this system ({0})',
   'Не указана папка игры': 'No game folder is set',

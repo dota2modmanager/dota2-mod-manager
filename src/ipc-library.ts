@@ -48,6 +48,8 @@ export function registerLibraryIpc({
   ipcMain.handle('mods:setEnabled', async (e, id, enabled) => {
     const rec = library.find(id);
     if (!rec) return { error: t('Мод не найден') };
+    // a copy of the pumpkin's mod this install did not earn stays off (src/scream-guard.ts)
+    if (enabled && rec.cheat) return { error: t('Жульничество наказуемо гадостью') };
     try {
       // One change: the other set switched off, this one on, and both records. A failure on the
       // last rename leaves the folder and the library as they were, not the old set off and the
@@ -105,7 +107,7 @@ export function registerLibraryIpc({
     let schemaTouched = false;
     for (const id of Array.isArray(ids) ? ids : []) {
       const rec = library.find(id);
-      if (!rec || rec.enabled === !!enabled) continue;
+      if (!rec || rec.enabled === !!enabled || (enabled && rec.cheat)) continue;
       try {
         FileTx.run(() => {
           installer.setEnabled(rec.files, !!enabled, rec.id);

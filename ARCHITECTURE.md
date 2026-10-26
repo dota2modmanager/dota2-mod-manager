@@ -609,6 +609,7 @@ that location is not writable.
 | `src/preset-link.ts`, `src/preset-share.ts` | Presets as a link and as a file |
 | `src/presets-service.ts`, `src/preset-plan.ts` | Presets: applying, packing and receiving one, and how one travels to somebody else |
 | `src/pumpkin.ts` | The title bar pumpkin's key, checked once against its worker (`tools/pumpkin-worker`), and what it opens |
+| `src/scream-guard.ts` | What the pumpkin opens stays with the install that opened it: a copy found anywhere else is switched off and marked |
 | `src/diagnostics.ts`, `src/diagnostics-files.ts`, `src/diagnostics-render.ts` | The support report: what it gathers, what it reads off the disk, and how it is laid out |
 | `src/uninstall-args.ts`, `src/uninstall-window.ts` | Whether this run is the uninstaller asking what to take along, and the window that asks |
 | `src/folder-size.ts` | Bytes under a folder, for the caches in Settings and the removal window |

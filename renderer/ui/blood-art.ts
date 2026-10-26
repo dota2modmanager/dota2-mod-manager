@@ -70,18 +70,48 @@ export function handPrint(): SVGElement {
   return s;
 }
 
-/** A severed hand, seen from the side, that drags itself along on its fingers. */
+/**
+ * A severed hand, seen from the side, dragging itself along on its fingers: the back of the hand
+ * with its knuckles, tendons and a vein, four jointed fingers with nails (the two on the far side
+ * darker), the thumb tucked under, and the torn wrist with the bone showing, still dripping.
+ */
 export function crawler(): SVGElement {
-  const s = svg('svg', { viewBox: '0 0 70 40', class: 'bn-hand' });
-  s.appendChild(svg('path', { class: 'stump', d: 'M2 18c0-6 3-9 8-9l4 1-1 18-4 1c-5 0-7-4-7-11z' }));
-  s.appendChild(svg('path', { class: 'skin', d: 'M10 10c8-3 22-4 32-2 6 1 9 4 9 8 0 5-5 9-13 10-10 1-21 1-28 0z' }));
-  const g = svg('g', { class: 'fingers' });
-  [[44, 14], [46, 19], [45, 24], [41, 27]].forEach(([x, y], i) => {
-    g.appendChild(svg('path', { class: `finger f${i}`, d: `M${x} ${y}q10 2 14 10q1 3-2 3q-6-6-14-8z` }));
-  });
-  s.appendChild(g);
-  s.appendChild(svg('path', { class: 'thumb', d: 'M30 26q4 6 0 11q-3 1-3-2q2-4 0-8z' }));
-  s.appendChild(svg('path', { class: 'gore', d: 'M3 13c2 4 2 9 0 13M7 11c1 5 1 11 0 16' }));
+  const s = svg('svg', { viewBox: '0 0 100 54', class: 'bn-hand' });
+  s.appendChild(svg('path', { class: 'smear', d: 'M-46 48.6c14-1.4 34-2.2 58-1.4l2 2.6c-26 .8-46 .4-60-.6z' }));
+  const finger = (k: number, far: boolean, pts: number[]) => {
+    const [x, y, jx, jy, tx, ty] = pts;
+    const g = svg('g', { class: `finger f${k}${far ? ' far' : ''}`, style: `transform-origin: ${x}px ${y}px` });
+    const line = `${x},${y} ${jx},${jy} ${tx},${ty}`;
+    g.appendChild(svg('polyline', { class: 'edge', points: line }));
+    g.appendChild(svg('polyline', { class: 'flesh', points: line }));
+    g.appendChild(svg('path', { class: 'crease', d: `M${jx - 2.4} ${jy - 3.2}q2.4 1.6 4.6-.2M${jx - 1.6} ${jy - 1.6}q1.8 1 3.4 0` }));
+    const a = Math.atan2(ty - jy, tx - jx), deg = (a * 180) / Math.PI;
+    const nx = tx - Math.cos(a) * 2.2 - Math.sin(a) * 1.8, ny = ty - Math.sin(a) * 2.2 + Math.cos(a) * 1.8;
+    g.appendChild(svg('ellipse', { class: 'nail', cx: nx.toFixed(1), cy: ny.toFixed(1), rx: 2.6, ry: 1.7, transform: `rotate(${deg.toFixed(0)} ${nx.toFixed(1)} ${ny.toFixed(1)})` }));
+    return g;
+  };
+  // the far fingers, behind the hand
+  s.appendChild(finger(3, true, [53, 19, 68, 20, 77, 43]));
+  s.appendChild(finger(2, true, [57, 21, 73, 23, 83, 45]));
+  // the thumb, under the palm on the near side
+  s.appendChild(svg('path', { class: 'skin', d: 'M38 35c5 2 9 5 13 8 3 2 7 3 9 4 1.6.8.8 2.6-1 2.4-4-.4-9-2-13-4-4-2-8-4-10-7z' }));
+  s.appendChild(svg('path', { class: 'crease', d: 'M49 42.5q1.4 1.8.6 3.6' }));
+  // the back of the hand
+  s.appendChild(svg('path', { class: 'skin', d: 'M16 21C24 14 40 11 52 14c6 1 10 5 9 11-1 6-7 10-15 12-10 2-22 1-30-1z' }));
+  s.appendChild(svg('path', { class: 'shade', d: 'M17 31c10 2 24 2 34-1 4-1 8-3 10-6-1 6-7 10-15 12-10 2-22 1-30-1z' }));
+  s.appendChild(svg('path', { class: 'tendon', d: 'M22 21c10-4 20-5 30-4M23 25c10-3 21-4 32-3M24 29c10-2 20-2 31-2' }));
+  s.appendChild(svg('path', { class: 'vein', d: 'M20 27c5-2 8 1 13-1s7-3 11-2c3 .6 5-.6 7-2' }));
+  s.appendChild(svg('path', { class: 'knuckle', d: 'M46 14.6q3-2.4 6-.4M52.4 16q3-1.6 5.4.8M56.6 19.4q2.2-.6 3.4 2' }));
+  // the near fingers, in front
+  s.appendChild(finger(1, false, [58, 25, 76, 28, 87, 47]));
+  s.appendChild(finger(0, false, [56, 30, 71, 34, 80, 49]));
+  // where it was cut off: torn skin, the stump, two bones, and what still runs out
+  s.appendChild(svg('path', { class: 'torn', d: 'M17 20l-3 2 2 2-3 3 2 2-3 3 2 3-2 2 4 1z' }));
+  s.appendChild(svg('ellipse', { class: 'stump', cx: 15, cy: 28.5, rx: 4.2, ry: 8.6 }));
+  s.appendChild(svg('ellipse', { class: 'bone', cx: 15.4, cy: 25, rx: 1.7, ry: 2.2 }));
+  s.appendChild(svg('ellipse', { class: 'bone', cx: 15, cy: 31.6, rx: 1.4, ry: 1.8 }));
+  s.appendChild(svg('path', { class: 'gore', d: 'M12.6 22c-1 4-.8 9 .4 13M17.4 21.4c.8 3 .6 6-.2 8' }));
+  s.appendChild(svg('path', { class: 'drip', d: 'M13 36.6c.8 3 1.4 6 .4 8.4-1.6-1.4-1.8-4.6-.4-8.4zM16.6 36.8c.6 2 .8 3.6 0 4.8-1-.8-1-2.6 0-4.8z' }));
   return s;
 }
 

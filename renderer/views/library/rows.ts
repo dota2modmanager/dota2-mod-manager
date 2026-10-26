@@ -67,6 +67,8 @@ export function modRow(rec: LibRecord, index: number): RowModel {
     thumb: cosmetic ? { icon: null } : recThumb(rec),
     cosmetic: cosmetic ? { name: rec.name, icon: catIcon(COSMETIC_PREFIX + rec.slot) } : null,
     tags: known([
+      // a copy of the pumpkin's mod this install did not earn: switched off, and it says why (src/scream-guard.ts)
+      rec.cheat ? { cls: 'cheat', icon: 'skull', text: L`Жульничество наказуемо гадостью`, title: L`Этот мод выдаётся одним ключом на одну установку, а здесь ключ не открывали. Мод выключен и не включится.` } : null,
       rec.match ? { cls: 'match', text: matchLabel(rec.match) } : rec.info ? { cls: '', text: catalogLabel(rec.info) } : null,
       schemaTag(rec),
       coveredTag(rec),

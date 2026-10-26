@@ -15,6 +15,8 @@ import { fileUrl } from './installer-downloads.ts';
 import { createTerrainAges, TAIL_BYTES } from './terrain-age.ts';
 import { createNoticeText } from './notice-text.ts';
 import { createModsListing } from './mods-listing.ts';
+import { screamGuardFor } from './scream-guard.ts';
+import { touchesSchema } from './presets-service.ts';
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
 import { FileTx } from './file-tx.ts';
@@ -23,8 +25,8 @@ import type { LibRecord } from './types.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerModsIpc({
-  applyMasterToCursors, blocked, catalog, diag, disableOtherCursors, fingerprints, importVpkBuffers, importVpkPaths, installer, isCursorRecord, library, refreshPresence, schemaService, sendProgress, updateImpact, verifyStuck, win,
-}: Pick<AppContext, 'applyMasterToCursors' | 'blocked' | 'catalog' | 'diag' | 'disableOtherCursors' | 'fingerprints' | 'importVpkBuffers' | 'importVpkPaths' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService' | 'sendProgress' | 'updateImpact' | 'verifyStuck' | 'win'>): void {
+  applyMasterToCursors, blocked, catalog, diag, disableOtherCursors, fingerprints, importVpkBuffers, importVpkPaths, installer, isCursorRecord, library, refreshPresence, schemaService, sendProgress, settings, updateImpact, verifyStuck, win,
+}: Pick<AppContext, 'applyMasterToCursors' | 'blocked' | 'catalog' | 'diag' | 'disableOtherCursors' | 'fingerprints' | 'importVpkBuffers' | 'importVpkPaths' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService' | 'sendProgress' | 'settings' | 'updateImpact' | 'verifyStuck' | 'win'>): void {
   const { dialog, ipcMain } = electron();
   // `win` arrives as a getter, not as the window. These are registered before the window
   // is created, so a value captured here would be undefined forever - which is exactly
@@ -47,7 +49,10 @@ export function registerModsIpc({
   }, diag);
   // the anti-cheat notice in plain words (src/notice-text.ts)
   const notice = createNoticeText({ gamePath: () => (installer.getGamePath ? installer.getGamePath() : null), langDir: () => installer.langFolder(), diag });
-  const listMods = createModsListing({ installer, library, fingerprints, schemaService, updateImpact, terrainAges, notice, diag, refreshPresence, verifyStuck });
+  // the pumpkin's mod on an install that did not open the pumpkin (src/scream-guard.ts)
+  const guard = screamGuardFor({ installer, library, settings: { get: (k) => settings.get(k as never) }, 
+    afterOff: (rec) => { if (touchesSchema(rec)) void schemaService.refreshInBackground(); }, log: diag });
+  const listMods = createModsListing({ installer, library, fingerprints, schemaService, updateImpact, terrainAges, notice, diag, refreshPresence, verifyStuck, guard });
   // the pre-patch mark taken off one mod by hand (src/update-impact.ts)
   ipcMain.handle('mods:clearPrePatch', (e, id) => {
     if (typeof id !== 'string' || !library.find(id)) return { error: t('Мод не найден') };
