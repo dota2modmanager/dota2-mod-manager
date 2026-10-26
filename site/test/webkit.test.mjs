@@ -34,6 +34,8 @@ after(async () => {
 
 const IPHONE = devices['iPhone 15'];
 
+const SELECT_NOISE = /^Refused to apply a stylesheet because its hash, its nonce, or 'unsafe-inline' does not appear in the style-src directive/;
+
 test('every kind of page finishes loading on an iPhone, without an error', { timeout: 600_000 }, async (t) => {
   if (!browser) return t.skip(`no WebKit here (${why}); npx playwright-core install webkit`);
   const bad = [];
@@ -54,6 +56,12 @@ test('every kind of page finishes loading on an iPhone, without an error', { tim
       bad.push(`${p}: not loaded after 10 s`);
     }
     await page.waitForTimeout(300);
+    // WebKit 27 reports its own <select>'s inner styling as a refused inline style (the select
+    // draws the same either way). Ours would show up as a [style] in the page, and Chrome's run
+    // refuses those too, so the message is let through only where the page has none.
+    if (errors.some((e) => SELECT_NOISE.test(e)) && await page.evaluate(() => !!document.querySelector('select') && !document.querySelector('[style]'))) {
+      errors.splice(0, errors.length, ...errors.filter((e) => !SELECT_NOISE.test(e)));
+    }
     if (errors.length) bad.push(`${p}: ${errors.join('; ')}`);
     if (Date.now() - t0 > 8000) bad.push(`${p}: ${Date.now() - t0} ms to load`);
     await context.close();
