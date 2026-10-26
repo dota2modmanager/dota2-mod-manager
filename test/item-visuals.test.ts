@@ -93,3 +93,15 @@ test('the plan says what a build gives, what is done by hand, and what only the 
   assert.match(plan[0].how, /horns_arcana\.vmdl under models\/heroes\/terrorblade\/horns\.vmdl/, "the item's own model in the place of the free one");
   assert.match(plan[2].how, /animation clips \(ANIM\)/, 'the modifier comes off the clips, which the game picks by');
 });
+
+test("a summon's model swap is named as the summon's and built under the unit's plain model", () => {
+  // Invoker's forged spirits (issue #334): the asset is the unit, not the hero
+  const plan = buildPlan(TABLE, {
+    id: '7231', name: 'Infernus', slot: 'summon', heroes: ['npc_dota_hero_invoker'], model: '', styles: [],
+    modifiers: [{ type: 'entity_model', asset: 'npc_dota_invoker_forged_spirit', modifier: 'models/heroes/invoker/infernus.vmdl', style: '1' }],
+  });
+  assert.equal(plan.length, 1);
+  assert.equal(plan[0].done, 'built');
+  assert.match(plan[0].what, /summon's model \(npc_dota_invoker_forged_spirit\) \(style 1\)/);
+  assert.match(plan[0].how, /npc_units\.txt/, "the plain model comes from the game's unit scripts");
+});
