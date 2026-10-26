@@ -1,12 +1,13 @@
 /**
  * Halloween's look, past its colours (site.css html.halloween has those).
  *
- * Webs in the corners that stir as if in a draught, and more strung down the margins; blood
- * oozing from under the header, splashed over the margins and pooled on top of the footer; two
- * spiders hanging in the margins that let themselves down as the page is scrolled and spin a web
- * beside them out of the distance scrolled; spiders running across the screen and away from the
- * pointer, more of them the longer the page is open, each one able to be caught and thrown (hard
- * enough upwards, and it goes to space); and a string of jack-o'-lanterns over the footer.
+ * Webs in the corners that stir as if in a draught, and more left hanging still all down the page;
+ * blood oozing from under the header, splashed all over the page behind what is written and
+ * pooled on top of the footer; two spiders hanging in the margins that let themselves down as the
+ * page is scrolled, one no further than the middle of the screen and the other, later, all the
+ * way to its foot; spiders running across the screen and away from the pointer, more of them the
+ * longer the page is open, each one able to be caught and thrown (hard enough upwards, and it
+ * goes to space); and strings of jack-o'-lanterns between the sections and over the footer.
  *
  * Everything is built here, aria-hidden and out of the pointer's way, and taken down again when
  * the look comes off (scripts/look.ts says so with 'mm-look'). On a touch screen, or with less
@@ -51,13 +52,13 @@ function cornerWeb(size: number): SVGElement {
   return s;
 }
 
-/** A round web, every thread drawn with pathLength 1 so the script can spin it a little at a time. */
+/** A round web: spokes, and rings that sag a little between them. */
 function roundWeb(r: number): SVGElement {
-  const s = svg('svg', { viewBox: `${-r} ${-r} ${r * 2} ${r * 2}`, width: r * 2, height: r * 2, class: 'hw-wheel' });
+  const s = svg('svg', { viewBox: `${-r} ${-r} ${r * 2} ${r * 2}`, width: r * 2, height: r * 2 });
   const spokes = 10;
   for (let i = 0; i < spokes; i++) {
     const a = (i / spokes) * Math.PI * 2;
-    s.appendChild(svg('line', { x1: 0, y1: 0, x2: (Math.cos(a) * r).toFixed(1), y2: (Math.sin(a) * r).toFixed(1), pathLength: 1 }));
+    s.appendChild(svg('line', { x1: 0, y1: 0, x2: (Math.cos(a) * r).toFixed(1), y2: (Math.sin(a) * r).toFixed(1) }));
   }
   for (let k = 1; k <= 6; k++) {
     const rr = (r * k) / 6.6;
@@ -69,7 +70,7 @@ function roundWeb(r: number): SVGElement {
       const am = ((i - 0.5) / spokes) * Math.PI * 2;
       d += ` Q${(Math.cos(am) * rr * 0.86).toFixed(1)} ${(Math.sin(am) * rr * 0.86).toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)}`;
     }
-    s.appendChild(svg('path', { d, pathLength: 1 }));
+    s.appendChild(svg('path', { d }));
   }
   return s;
 }
@@ -125,6 +126,23 @@ function splat(size: number): SVGElement {
   return s;
 }
 
+/** A string of `n` jack-o'-lanterns sagging between its ends, into `into`. */
+function garland(into: HTMLElement, n: number): void {
+  const string = svg('svg', { viewBox: '0 0 1000 60', preserveAspectRatio: 'none', class: 'hw-string' });
+  let d = 'M0 6';
+  const span = 1000 / Math.ceil(n / 2);
+  for (let x = 0; x < 999; x += span) d += ` Q${(x + span / 2).toFixed(0)} 46 ${Math.min(1000, x + span).toFixed(0)} 8`;
+  string.appendChild(svg('path', { d }));
+  into.appendChild(string);
+  for (let i = 0; i < n; i++) {
+    const l = document.createElement('span');
+    l.style.setProperty('--x', `${((i + 0.5) / n) * 100}%`);
+    l.style.setProperty('--i', String(i));
+    l.appendChild(lantern());
+    into.appendChild(l);
+  }
+}
+
 let mounted: (() => void) | null = null;
 
 function mount(): () => void {
@@ -139,31 +157,47 @@ function mount(): () => void {
     w.appendChild(cornerWeb(corner[0] === 't' ? 250 : 200));
   }
 
-  // ---- blood over the margins, a pool on the footer, webs strung down the sides ----
-  // In page coordinates, behind the content (site.css .hw-splat sits under the column), and
-  // only in the gutters beside it, so nothing written is ever covered.
+  // ---- blood all over the page, webs left hanging down it ----
+  // In page coordinates, behind the content (site.css .hw-splat sits under the column): the
+  // big ones in the gutters beside it where there are gutters, small ones anywhere, where they
+  // show only between the cards and never over anything written.
   const vw0 = document.documentElement.clientWidth;
   const gut = Math.max(0, (vw0 - Math.min(1200, vw0)) / 2);
   const pageH = document.documentElement.scrollHeight;
-  if (gut >= 80) {
-    const n = Math.min(9, Math.round(pageH / 900) + 3);
-    for (let i = 0; i < n; i++) {
-      const size = Math.round(40 + Math.random() * Math.min(150, gut - 30));
-      const sp = add(div('hw-splat'));
-      sp.appendChild(splat(size));
-      // turned at any angle its box grows by up to a fifth each way, and none of it may poke past the window
-      const pad = size * 0.22;
-      const x = i % 2 === 0 ? pad + Math.random() * Math.max(0, gut - size - pad) : vw0 - gut + Math.random() * Math.max(0, gut - size - pad);
-      sp.style.left = `${Math.round(x)}px`;
-      sp.style.top = `${Math.round(((i + 0.3 + Math.random() * 0.4) / n) * pageH * 0.92 + 120)}px`;
-      sp.style.rotate = `${Math.round(Math.random() * 360)}deg`;
-    }
-    for (const side of ['l', 'r']) {
-      const w = add(div(`hw-strung ${side}`));
-      w.appendChild(roundWeb(Math.round(Math.min(70, gut / 2.4))));
-      w.style.top = `${Math.round(pageH * (side === 'l' ? 0.36 : 0.58))}px`;
-      w.style.setProperty('--gut', `${Math.round(gut / 2)}px`);
-    }
+  const n = Math.min(22, Math.round(pageH / 420) + 4);
+  for (let i = 0; i < n; i++) {
+    const wide = gut >= 80 && i % 3 !== 2;
+    const size = Math.round(wide ? 40 + Math.random() * Math.min(150, gut - 30) : 26 + Math.random() * 60);
+    const sp = add(div(wide ? 'hw-splat' : 'hw-splat faint'));
+    sp.appendChild(splat(size));
+    // turned at any angle its box grows by up to a fifth each way, and none of it may poke past the window
+    const pad = size * 0.22;
+    const x = wide
+      ? (i % 2 === 0 ? pad + Math.random() * Math.max(0, gut - size - pad) : vw0 - gut + Math.random() * Math.max(0, gut - size - pad))
+      : pad + Math.random() * Math.max(0, vw0 - size - pad * 2);
+    sp.style.left = `${Math.round(x)}px`;
+    sp.style.top = `${Math.round(((i + 0.3 + Math.random() * 0.4) / n) * pageH * 0.92 + 120)}px`;
+    sp.style.rotate = `${Math.round(Math.random() * 360)}deg`;
+  }
+  // webs at odd heights down both sides, each its own size and turned its own way, none of them moving
+  const webs = Math.min(8, Math.round(pageH / 1100) + 2);
+  for (let i = 0; i < webs; i++) {
+    const side = i % 2 ? 'r' : 'l';
+    const r = Math.round(gut >= 80 ? Math.min(80, 28 + Math.random() * gut / 2.6) : 22 + Math.random() * 16);
+    const w = add(div(`hw-strung ${side}`));
+    w.appendChild(roundWeb(r));
+    w.style.top = `${Math.round(((i + 0.2 + Math.random() * 0.6) / webs) * pageH * 0.9 + 80)}px`;
+    w.style.setProperty('--gut', `${Math.round(gut >= 80 ? gut * (0.2 + Math.random() * 0.6) : r * 0.4)}px`);
+    w.style.rotate = `${Math.round(Math.random() * 60 - 30)}deg`;
+  }
+  // and jack-o'-lanterns strung between some of the sections, the way they are over the footer
+  const sections = [...document.querySelectorAll<HTMLElement>('main section, main .release')].filter((_, i) => i % 2 === 1);
+  for (const sec of sections.slice(0, 4)) {
+    const top = sec.getBoundingClientRect().top + scrollY;
+    if (top < 400) continue;
+    const g = add(div('hw-garland strung'));
+    g.style.top = `${Math.round(top - 8)}px`;
+    garland(g, 6 + (Math.random() * 3 | 0));
   }
   const footing = document.querySelector('.foot');
   if (footing) {
@@ -192,40 +226,33 @@ function mount(): () => void {
   }
 
   // ---- two spiders on threads, in the margins, letting themselves down as the page scrolls ----
-  const hangers = [0, 1].map((i) => {
+  // Each by its own share of the way down the page: the first no further than the middle of the
+  // screen, the second waiting a while and then going all the way to the bottom of it.
+  const hangers = [0, 1].map(() => {
     const thread = add(div('hw-thread'));
     const body = add(div('hw-hanger'));
     body.appendChild(spider());
-    const wheel = add(div(`hw-woven ${i ? 'r' : 'l'}`));
-    wheel.appendChild(roundWeb(46));
-    return { thread, body, wheel, threads: Array.from(wheel.querySelectorAll<SVGElement>('line, path')), bob: Math.random() * 6 };
+    return { thread, body, bob: Math.random() * 6 };
   });
-  let spun = 0, lastY = scrollY, t = 0, raf = 0;
+  let t = 0, raf = 0;
   const head = () => (bar?.getBoundingClientRect().bottom ?? 64);
   const hang = () => {
     const top = head();
-    const drop = Math.min(scrollY * 0.12, innerHeight * 0.42);
-    // in the margins beside the page's column, and the web beside each only where it fits
+    const room = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+    const p = Math.min(1, Math.max(0, scrollY / room));
     const vw = document.documentElement.clientWidth;
     const gutter = Math.max(0, (vw - Math.min(1200, vw)) / 2);
-    const roomy = gutter >= 170;
     hangers.forEach((h, i) => {
-      const inset = gutter >= 60 ? Math.round(gutter * (roomy ? 0.26 : 0.5)) : 16;
+      const inset = gutter >= 60 ? Math.round(gutter * (gutter >= 170 ? 0.26 : 0.5)) : 16;
       const x = i ? vw - inset : inset;
-      const len = 46 + drop + (i ? 30 : 0) + (live ? Math.sin(t * 1.4 + h.bob) * 6 : 0);
+      const deepest = i ? innerHeight - top - 52 : innerHeight * 0.5 - top;
+      const share = i ? Math.max(0, (p - 0.25) / 0.75) ** 1.3 : Math.min(1, p * 1.6);
+      const len = 46 + Math.max(0, deepest - 46) * share + (live ? Math.sin(t * 1.4 + h.bob) * 6 : 0);
       h.thread.style.transform = `translate(${x}px, ${top}px) scaleY(${len})`;
       h.body.style.transform = `translate(${x - 21}px, ${top + len - 6}px) rotate(${(live ? Math.sin(t * 1.1 + h.bob) * 7 : 0).toFixed(1)}deg)`;
-      h.wheel.hidden = !roomy;
-      h.wheel.style.transform = `translate(${i ? vw - gutter + 8 : gutter - 100}px, ${top + 40 + drop * 0.6}px)`;
-      // the web beside it grows with the distance scrolled: spokes first, then the rings, out
-      const p = Math.min(1, spun / 5000);
-      h.threads.forEach((th, k) => {
-        const from = k / h.threads.length, part = Math.min(1, Math.max(0, (p - from) * h.threads.length));
-        th.style.strokeDashoffset = String(1 - part);
-      });
     });
   };
-  const onScroll = () => { spun += Math.abs(scrollY - lastY); lastY = scrollY; if (!live) hang(); };
+  const onScroll = () => { if (!live) hang(); };
   addEventListener('scroll', onScroll, { passive: true });
   addEventListener('resize', hang);
   stops.push(() => { removeEventListener('scroll', onScroll); removeEventListener('resize', hang); });
@@ -357,19 +384,7 @@ function mount(): () => void {
 
   // ---- jack-o'-lanterns strung over the footer ----
   const foot = document.querySelector('.foot');
-  if (foot) {
-    const garland = add(div('hw-garland'), foot);
-    const string = svg('svg', { viewBox: '0 0 1000 60', preserveAspectRatio: 'none', class: 'hw-string' });
-    string.appendChild(svg('path', { d: 'M0 6 Q125 46 250 10 Q375 46 500 10 Q625 46 750 10 Q875 46 1000 6' }));
-    garland.appendChild(string);
-    for (let i = 0; i < 8; i++) {
-      const l = document.createElement('span');
-      l.style.setProperty('--x', `${6.25 + i * 12.5}%`);
-      l.style.setProperty('--i', String(i));
-      l.appendChild(lantern());
-      garland.appendChild(l);
-    }
-  }
+  if (foot) garland(add(div('hw-garland'), foot), 8);
 
   return () => { for (const s of stops) s(); for (const e of made) e.remove(); runners = []; };
 }

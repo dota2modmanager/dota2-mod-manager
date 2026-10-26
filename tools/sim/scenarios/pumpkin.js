@@ -1,6 +1,6 @@
 /**
  * The pumpkin in the title bar (renderer/ui/pumpkin.ts), pressed the way a hand presses it: it is
- * not there until the mascot has worn all eight heroes, it comes out cold and asks for nothing but
+ * not there until the mascot has been knocked on twenty times, it comes out cold and asks for nothing but
  * food, Broodmother's name in the search lets spiders loose (renderer/ui/brood.ts), one of them
  * carried into the pumpkin lights it, and a wrong key is turned away. A right key is the worker's
  * business and has its own tests (test/pumpkin.test.ts); here the key's effect is set the way main
@@ -19,13 +19,14 @@ module.exports = async function pumpkin(sim) {
   })()`);
   sim.check('no pumpkin before the round', !(await sim.js('!!document.querySelector(".tb-pumpkin")')));
 
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 20; i++) {
+    if (i === 19) sim.check('nineteen knocks are not enough', !(await sim.js('!!document.querySelector(".tb-pumpkin")')));
     await sim.click('#themeMascot');
     await sim.until(`!document.getElementById('themeMascot').classList.contains('spinning')`, 3000);
     await sim.settle(150);
   }
   await sim.until('!!document.querySelector(".tb-pumpkin")', 3000);
-  sim.check('the pumpkin comes out once all eight heroes have been worn, and it comes out cold',
+  sim.check('the pumpkin comes out at the twentieth knock, and it comes out cold',
     await sim.js('!!document.querySelector(".tb-pumpkin.cold")'));
   await sim.settle(1100);
   await sim.shot('pumpkin-bar');
@@ -102,8 +103,15 @@ module.exports = async function pumpkin(sim) {
       return l && { theme: document.documentElement.dataset.theme, top: parseFloat(l.style.getPropertyValue('--top')), bar: top, events: getComputedStyle(l).pointerEvents, streaks: l.querySelectorAll('.bn-band i').length };
     })()`);
     sim.check('the bloody night hangs from the title bar and lets clicks through', !!bn && bn.theme === 'blood' && Math.abs(bn.top - bn.bar) < 2 && bn.events === 'none' && bn.streaks > 10, JSON.stringify(bn));
+    sim.check('the bloody night wears a bloody pumpkin as its mascot', await sim.js(`document.querySelector('#themeMascot img').src.startsWith('data:image/svg')`));
     await sim.settle(6000);
     await sim.shot('pumpkin-blood');
+    // the round goes on to Ursa, and Ursa is Ursa: nothing of the night stays on (2026-10-26)
+    await sim.click('#themeMascot');
+    await sim.until(`document.documentElement.dataset.theme === 'ursa'`, 3000);
+    await sim.settle(600);
+    const after = await sim.js(`({ bn: !!document.querySelector('.bn'), hw: !!document.querySelector('[class^="hw"], .hw-web'), pumpkin: document.querySelector('#themeMascot img').src.startsWith('data:') })`);
+    sim.check('after the night, Ursa wears nothing of it', !after.bn && !after.hw && !after.pumpkin, JSON.stringify(after));
   }
 
   // put back, and start the window again the way it opens

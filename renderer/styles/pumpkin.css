@@ -159,3 +159,6 @@
 @media (prefers-reduced-motion: reduce) {
   .pk-box.scream .pk-big, .tb-pumpkin.chomp svg, .tb-pumpkin.kindled { animation: none; }
 }
+
+/* the pumpkin's last words once it has a key: where on the site to go next (ui/pumpkin.ts) */
+.pk-hint.pk-heart { color: #ff5260; font-style: italic; text-shadow: 0 0 10px rgb(255 30 50 / 0.45); }

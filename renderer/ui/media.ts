@@ -5,7 +5,8 @@ export function previewUrl(categoryId: string, preview: string): string;
 export function previewUrl(categoryId: string, preview: string | null | undefined): string | null;
 export function previewUrl(categoryId: string, preview: string | null | undefined): string | null {
   if (!preview) return null;
-  if (/^https?:\/\//i.test(preview)) return preview;
+  // a picture carried in the record itself (an adopted file, the pumpkin's prize) is its own address
+  if (/^(https?:\/\/|data:image\/)/i.test(preview)) return preview;
   if (preview.startsWith('assets/previews/')) return `${RAW_BASE}/${preview.split('/').map(encodeURIComponent).join('/')}`;
   return `${RAW_BASE}/assets/previews/${encodeURIComponent(categoryId)}/${encodeURIComponent(preview)}`;
 }

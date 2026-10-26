@@ -1429,9 +1429,6 @@ html.halloween .hunt-key-code { background-image: linear-gradient(90deg, #ffb35c
 .hw-spider .leg { fill: none; stroke: #120c10; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .hw-thread { position: fixed; left: 0; top: 0; z-index: 38; width: 1px; height: 1px; background: rgb(230 226 240 / 0.45); transform-origin: 0 0; pointer-events: none; }
 .hw-hanger { position: fixed; left: 0; top: 0; z-index: 38; width: 42px; height: 42px; transform-origin: 50% 0; pointer-events: none; }
-.hw-woven { position: fixed; left: 0; top: 0; z-index: 37; pointer-events: none; opacity: 0.6; }
-.hw-woven[hidden] { display: none; }
-.hw-woven :is(line, path) { fill: none; stroke: #e8e2f0; stroke-width: 0.8; stroke-dasharray: 1; stroke-dashoffset: 1; }
 .hw-runner { position: fixed; left: 0; top: 0; z-index: 45; width: 44px; height: 44px; pointer-events: none; }
 .hw-runner .legs.a .leg:not(.odd), .hw-runner .legs.b .leg.odd { animation: scuttle 120ms linear infinite alternate; }
 .hw-runner .legs.a .leg.odd, .hw-runner .legs.b .leg:not(.odd) { animation: scuttle 120ms linear -60ms infinite alternate; }
@@ -1446,6 +1443,9 @@ html.halloween .hunt-key-code { background-image: linear-gradient(90deg, #ffb35c
   transform-origin: 50% 0; animation: sway 3.6s ease-in-out calc(var(--i) * -0.45s) infinite alternate;
 }
 .hw-garland span:nth-of-type(even) { top: 6px; }
+/* the same, strung across the page over a section's top edge, in its padding */
+.hw-garland.strung { z-index: 2; height: 60px; }
+.hw-garland.strung span { width: 24px; height: 24px; }
 @keyframes sway { from { rotate: -6deg; } to { rotate: 6deg; } }
 .hw-lantern { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 8px rgb(255 140 40 / 0.55)); }
 .hw-lantern .pk-stem { fill: #6b8f3e; }
@@ -1462,6 +1462,7 @@ html.halloween .hunt-key-code { background-image: linear-gradient(90deg, #ffb35c
 .hw-splat svg { display: block; overflow: visible; }
 .hw-splat :is(path, circle) { fill: #6a0812; }
 .hw-splat path { filter: drop-shadow(0 0 1px #2a0005); }
+.hw-splat.faint { opacity: 0.5; }
 /* webs strung in the gutters further down the page, on a thread from nowhere */
 .hw-strung { position: absolute; z-index: -1; pointer-events: none; opacity: 0.4; }
 .hw-strung.l { left: var(--gut); translate: -50% 0; }
@@ -1501,6 +1502,102 @@ html.halloween .hunt-key-code { background-image: linear-gradient(90deg, #ffb35c
   transition: opacity 90ms linear;
 }
 .hunt-note b { font-style: normal; font-weight: 900; margin-right: 0.2em; }
+
+/* ---------- what the season does to the page itself (scripts/dread.ts) ---------- */
+/* headings that bleed: drops gather under the letters, stretch and fall */
+.dr-drips { position: absolute; z-index: 30; height: 0; pointer-events: none; }
+.dr-drips[hidden] { display: none; }
+.dr-drips i {
+  position: absolute; left: var(--x); top: 0; width: var(--w); height: var(--h);
+  background: linear-gradient(#5c0009, #c4111f); border-radius: 0 0 3px 3px;
+  transform-origin: 50% 0; animation: ooze var(--t) ease-in var(--wait) infinite;
+}
+.dr-drips i::after {
+  content: ''; position: absolute; left: -25%; bottom: calc(var(--w) * -0.9); width: 150%; height: calc(var(--w) * 1.8);
+  background: #c4111f; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  animation: drop var(--t) ease-in var(--wait) infinite;
+}
+@keyframes ooze { 0% { scale: 1 0.1; } 72% { scale: 1 1; } 100% { scale: 1 0.7; } }
+@keyframes drop { 0%, 72% { translate: 0 0; opacity: 1; } 100% { translate: 0 140px; opacity: 0; } }
+
+/* fingers over a card's top edge, as if somebody were climbing out from behind it */
+.dr-grip { position: absolute; z-index: 30; width: 84px; height: 50px; pointer-events: none; }
+.dr-grip svg { display: block; width: 84px; height: 50px; overflow: visible; filter: drop-shadow(0 3px 2px rgb(0 0 0 / 0.6)); }
+/* near the pointer they let go and drop back behind the card, and the blood they left stays */
+.dr-grip :is(.hand, .nail, .knuckle) { transition: translate 300ms cubic-bezier(0.5, 0, 0.9, 0.6), opacity 300ms; }
+.dr-grip.gone :is(.hand, .nail, .knuckle) { translate: 0 -14px; opacity: 0; transition-duration: 120ms; }
+.dr-grip .hand path { fill: #a99a8c; stroke: #2e211d; stroke-width: 0.9; }
+.dr-grip .nail path { fill: #cfc2b4; stroke: #5d4a40; stroke-width: 0.6; }
+.dr-grip .knuckle path { fill: none; stroke: #6d5a50; stroke-width: 0.9; stroke-linecap: round; }
+.dr-grip .smear path { fill: none; stroke: #8a0614; stroke-width: 2.4; stroke-linecap: round; opacity: 0.9; }
+
+/* screenshots in a frame of dried blood */
+.dr-framed {
+  outline: 2px solid #5c0009; outline-offset: 4px;
+  box-shadow: 0 0 0 9px rgb(40 0 5 / 0.5), 0 0 36px 6px rgb(150 0 14 / 0.35);
+}
+
+/* a word that says something else under the pointer */
+.dr-word { position: relative; text-decoration: underline wavy rgb(195 16 42 / 0.35) 1px; text-underline-offset: 3px; }
+.dr-word::after {
+  content: attr(data-alt); position: absolute; left: 50%; top: 0; translate: -50% 0;
+  white-space: nowrap; color: #ff2a3a; font-style: italic; font-weight: 700;
+  text-shadow: 0 0 8px rgb(255 0 30 / 0.7); opacity: 0; pointer-events: none; transition: opacity 150ms;
+}
+.dr-word:hover { color: transparent; text-decoration-color: transparent; }
+.dr-word:hover::after { opacity: 1; animation: tremble 120ms steps(2) infinite; }
+@keyframes tremble { from { translate: -50% 0; } to { translate: calc(-50% + 1px) -1px; } }
+
+/* eyes in the margins: they follow the pointer, shut when it comes close, whisper when touched */
+.dr-eyes { position: absolute; z-index: 36; display: flex; gap: 10px; padding: 8px; cursor: pointer; opacity: 0.9; transition: opacity 600ms; }
+.dr-eyes.gone { opacity: 0; pointer-events: none; }
+.dr-eyes i {
+  display: grid; place-items: center; width: 18px; height: 9px; border-radius: 50%;
+  background: radial-gradient(#ff2a3a 0 30%, #7a0010 75%);
+  box-shadow: 0 0 10px #ff0020, 0 0 24px rgb(255 0 30 / 0.4);
+  rotate: 12deg; transition: scale 120ms;
+}
+.dr-eyes i + i { rotate: -12deg; }
+.dr-eyes b { width: 4px; height: 7px; border-radius: 50%; background: #000; }
+.dr-eyes:is(.shut, .blink) i { scale: 1 0.08; }
+.dr-whisper {
+  position: fixed; z-index: 60; max-width: 280px; margin: 0; pointer-events: none;
+  font: italic 600 15px/1.4 var(--display); color: #ff3b4e;
+  text-shadow: 0 0 10px rgb(255 0 30 / 0.6), 0 2px 0 #300;
+  animation: hush 6.5s ease forwards;
+}
+@keyframes hush { 0% { opacity: 0; translate: 0 6px; } 10%, 80% { opacity: 1; translate: 0 0; } 100% { opacity: 0; } }
+
+/* the mask that looks in from the side when the pointer has been still too long */
+.dr-peek {
+  position: fixed; left: 0; z-index: 44; width: 120px; height: 98px; padding: 0; border: 0;
+  background: none; cursor: pointer; translate: -100% 0; transition: translate 1.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.dr-peek img { display: block; width: 100%; height: 100%; rotate: 18deg; -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent); mask-image: radial-gradient(closest-side, #000 62%, transparent); }
+.dr-peek.in { translate: -42% 0; }
+.dr-peek.right { left: auto; right: 0; translate: 100% 0; }
+.dr-peek.right img { rotate: -18deg; scale: -1 1; }
+.dr-peek.right.in { translate: 42% 0; }
+.dr-flash { position: fixed; inset: 0; z-index: 100; background: #000 url('/halloween/scream.webp') center / cover no-repeat; pointer-events: none; }
+.dr-ghost { position: fixed; z-index: 50; pointer-events: none; background: url('/halloween/scream.webp') center / cover; mix-blend-mode: hard-light; opacity: 0.8; }
+/* the end of the night on the lost page (scripts/heart.ts): a phone ringing in the dark */
+.hs-caret { display: block; margin: -4px auto 10px; color: #c3102a; font: 700 28px/1 var(--display); animation: caret 1.1s steps(1) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+.hs {
+  position: fixed; inset: 0; z-index: 200; display: grid; place-content: center; justify-items: center; gap: 22px;
+  padding: 24px; background: #000; color: #f3e9ea; text-align: center; opacity: 0; transition: opacity 600ms;
+}
+.hs.on { opacity: 1; }
+.hs-phone { font-size: 84px; line-height: 1; color: #c4111f; text-shadow: 0 0 24px rgb(255 0 30 / 0.6); animation: ringing 0.1s linear infinite alternate; }
+.hs-phone.up { animation: none; opacity: 0.25; }
+@keyframes ringing { from { rotate: -9deg; } to { rotate: 9deg; } }
+.hs-said { min-height: 1.4em; margin: 0; max-width: 34ch; font: italic 600 clamp(22px, 3.4vw, 34px)/1.3 var(--display); color: #ff3b4e; text-shadow: 0 0 14px rgb(255 0 30 / 0.5); }
+.hs.scream { background: #000 url('/halloween/scream.webp') center / cover no-repeat; animation: shake 90ms linear 12; }
+.hs.scream :is(.hs-phone, .hs-said) { opacity: 0; }
+.hs.after { background-size: contain; background-color: #0a0002; animation: none; place-content: end center; padding-bottom: 8vh; }
+.hs.after .hs-said { opacity: 1; font-size: clamp(18px, 2.2vw, 24px); color: #fff; background: rgb(0 0 0 / 0.7); padding: 10px 16px; border-radius: 10px; }
+@keyframes shake { 0% { translate: 6px -4px; } 50% { translate: -7px 5px; } 100% { translate: 3px 6px; } }
+.dr-trophy {width: 34px; height: 28px; margin-left: 8px; border-radius: 50%; object-fit: cover; vertical-align: middle; filter: drop-shadow(0 0 6px #f00); }
 
 @media (prefers-reduced-motion: reduce) {
   .hw-web:is(.tl, .tr, .bl, .br), .hw-garland span, .hw-lantern .pk-face, .hw-blood i, .hw-blood i::after { animation: none; }

@@ -17,7 +17,7 @@
  * nobody breeds or crawls, and the pool is drawn once at a fixed depth.
  */
 import { spawnSpider, residents, dismissResidents, someResident } from './spiders.ts';
-import { svg, div, cornerWeb, wheel, handPrint, crawler } from './blood-art.ts';
+import { svg, div, cornerWeb, wheel, handPrint, crawler, screamMask } from './blood-art.ts';
 
 const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -247,7 +247,23 @@ function dress(): () => void {
     layer.appendChild(h);
     h.addEventListener('animationend', () => h.remove(), { once: true });
   };
+  // ---- and somebody in a mask, looking in from the edge while nobody moves ----
+  let lastMove = performance.now();
+  const moved = () => { lastMove = performance.now(); layer.querySelector('.bn-peek')?.classList.add('gone'); };
+  const peek = () => {
+    later(peek, 20000 + Math.random() * 25000);
+    if (document.hidden || performance.now() - lastMove < 6000 || layer.querySelector('.bn-peek')) return;
+    const m = div('bn-peek');
+    m.classList.toggle('right', Math.random() < 0.5);
+    m.style.top = `${(top + 60 + Math.random() * (innerHeight - top - bottom - 220)).toFixed(0)}px`;
+    m.appendChild(screamMask());
+    layer.appendChild(m);
+    later(() => m.classList.add('gone'), 5200);
+    later(() => m.remove(), 6400);
+  };
   if (live) {
+    addEventListener('pointermove', moved, { passive: true });
+    later(peek, 15000);
     later(slap, 9000 + Math.random() * 8000);
     later(crawl, 25000 + Math.random() * 20000);
   }
@@ -257,6 +273,7 @@ function dress(): () => void {
     cancelAnimationFrame(raf);
     watch.disconnect();
     removeEventListener('resize', onResize);
+    removeEventListener('pointermove', moved);
     dismissResidents();
     layer.remove();
   };

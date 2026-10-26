@@ -24,10 +24,13 @@ import { tokenMs } from '../core/css-time.ts';
 import { lookOn } from './season.ts';
 import { dressHalloween } from './halloween.ts';
 import { dressBlood } from './blood.ts';
+import { pumpkinMascot } from './pumpkin-art.ts';
 
 const HEROES = ['ursa', 'brew', 'fura', 'storm', 'invoker', 'meepo', 'bh', 'axe'];
 const SECRET = 'secret';
 const BLOOD = 'blood';
+/** knocks on the mascot that bring the pumpkin out */
+const KNOCKS = 20;
 /** how long the rainbow wears each hero */
 const HUE_MS = 6000;
 
@@ -48,6 +51,12 @@ function mascotUrl(theme: string): string {
 const setMascot = (hero: string) => {
   const img = document.querySelector<HTMLImageElement>('#themeMascot img');
   if (img) img.src = mascotUrl(hero);
+};
+/* The two themes the pumpkin opens wear the pumpkin as their mascot, not a hero's face: with a
+   hero's there, the Halloween look read as that hero's theme gone wrong (Ursa's, since it was hers). */
+const setPumpkin = (bloody: boolean) => {
+  const img = document.querySelector<HTMLImageElement>('#themeMascot img');
+  if (img) img.src = pumpkinMascot(bloody);
 };
 
 // ---- the rainbow's round of the eight ----
@@ -75,7 +84,11 @@ function applyTheme(name: unknown): string {
   const look = theme === SECRET ? lookOn(new Date()) : null;
   document.documentElement.dataset.theme = look ?? theme;
   if (look === 'rainbow') startHues();
-  else { stopHues(); setMascot(look ? HEROES[0] : theme === BLOOD ? 'axe' : theme); }
+  else {
+    stopHues();
+    if (look === 'halloween' || theme === BLOOD) setPumpkin(theme === BLOOD);
+    else setMascot(look ? HEROES[0] : theme);
+  }
   dressHalloween(look === 'halloween');
   dressBlood(theme === BLOOD);
   return theme;
@@ -128,17 +141,17 @@ export function initTheme(): void {
   applyTheme(state.settings?.theme);
   const mascot = document.querySelector<HTMLElement>('#themeMascot');
   if (!mascot) return;
-  // the heroes worn by clicking, this session: once all eight have been, the title bar says so
-  const worn = new Set([current]);
+  // Knocks on the mascot, this session, counted from the first: at the twentieth the pumpkin
+  // rolls out (ui/pumpkin.ts). A click that lands mid-spin still counts as a knock.
+  let knocks = 0;
   mascot.addEventListener('click', () => {
+    if (++knocks === KNOCKS) document.dispatchEvent(new Event('mm-knocks'));
     if (mascot.classList.contains('spinning')) return;
     const list = themes();
     const next = list[(list.indexOf(current) + 1) % list.length];
     spin(() => {
       applyTheme(next);
       window.api.settings.set('theme', next);
-      worn.add(next);
-      if (HEROES.every((h) => worn.has(h))) document.dispatchEvent(new Event('mm-all-heroes'));
     });
   });
 }

@@ -15,12 +15,13 @@ import { lookNow } from './look';
 
 type Line = { n: string; en: string; ru: string };
 
-/** In the hunt's order: Meepo, Invoker, Bounty Hunter, Ursa, Storm Spirit, Brewmaster, Nature's Prophet, Axe. */
+/** In the hunt's order: Meepo, Invoker, Bounty Hunter, Ursa, Storm Spirit, Brewmaster, Nature's Prophet, Axe.
+ *  The fourth is not here: the app's pumpkin names him (renderer/ui/pumpkin.ts, its hint). */
 const LINES: Line[] = [
   { n: 'I', en: 'First comes the one there is always more than one of.', ru: 'Первым приходит тот, кого всегда больше одного.' },
   { n: 'II', en: 'Second knows ten spells by heart and only three orbs.', ru: 'Второй помнит десять заклинаний наизусть, а сфер у него всего три.' },
   { n: 'III', en: 'Third is paid for every head.', ru: 'Третьему платят за каждую голову.' },
-  { n: 'IV', en: 'Fourth slept through the winter and woke up angry.', ru: 'Четвёртый проспал всю зиму и проснулся злым.' },
+  { n: 'IV', en: "Only the pumpkin in the app's window knows the fourth. Feed it first.", ru: 'Четвёртого знает только тыква в окне приложения. Сначала накорми её.' },
   { n: 'V', en: 'Fifth arrives with the thunder.', ru: 'Пятый приходит вместе с громом.' },
   { n: 'VI', en: 'Sixth drowns his fear in a mug, and splits in three when it runs out.', ru: 'Шестой топит страх в кружке, а когда она пустеет, делится на троих.' },
   { n: 'VII', en: 'Seventh plants a forest wherever you run.', ru: 'Седьмой сажает лес везде, куда ты бежишь.' },

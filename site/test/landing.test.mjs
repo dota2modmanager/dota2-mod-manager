@@ -529,19 +529,26 @@ test('Halloween dresses the page: webs, blood, spiders that come down with the s
   assert.equal(await count('.hw-hanger'), 2, 'two spiders on threads');
   assert.equal(await count('.foot .hw-garland span'), 8, 'lanterns over the footer');
 
-  // the spiders come down as the page goes, and their webs grow out of the distance scrolled
-  const read = () => page.evaluate(() => ({
-    y: [...document.querySelectorAll('.hw-hanger')].map((h) => h.getBoundingClientRect().top),
-    spun: [...document.querySelectorAll('.hw-woven line, .hw-woven path')].reduce((a, t) => a + (1 - parseFloat(getComputedStyle(t).strokeDashoffset)), 0),
-  }));
+  // the spiders come down as the page goes, each to its own depth: the first no further than the
+  // middle of the screen, the second all the way to the bottom of it once the page is read through
+  const read = () => page.evaluate(() => [...document.querySelectorAll('.hw-hanger')].map((h) => h.getBoundingClientRect().bottom));
   const before = await read();
   for (const y of [800, 1600, 2400, 3200]) { await page.evaluate((v) => scrollTo(0, v), y); await page.waitForTimeout(120); }
   await page.waitForTimeout(300);
   const after = await read();
-  assert.ok(after.y.every((v, i) => v > before.y[i] + 60), `the spiders did not come down: ${before.y} -> ${after.y}`);
-  assert.ok(after.spun > before.spun + 1, `no web was spun: ${before.spun} -> ${after.spun}`);
+  assert.ok(after.every((v, i) => v > before[i] + 60), `the spiders did not come down: ${before} -> ${after}`);
+  await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(400);
+  const bottom = await read();
+  assert.ok(bottom[0] < 900 * 0.6, `the first spider went past the middle: ${bottom[0]}`);
+  assert.ok(bottom[1] > 900 * 0.8, `the second spider stopped short of the bottom: ${bottom[1]}`);
+  // the webs are left hanging about the page, and none of them moves with the spiders
+  const webs = await page.evaluate(() => [...document.querySelectorAll('.hw-strung')].map((w) => Math.round(parseFloat(w.style.top))));
+  assert.ok(webs.length >= 3 && new Set(webs).size === webs.length, `webs not scattered: ${webs}`);
+  assert.equal(await count('.hw-woven'), 0, 'a web still follows a spider');
+  assert.ok((await count('.hw-garland.strung')) >= 1, 'no lanterns strung between the sections');
   // all of it lets the pointer through
-  const blocking = await page.evaluate(() => [...document.querySelectorAll('.hw-web, .hw-blood, .hw-hanger, .hw-thread, .hw-woven, .hw-garland')].filter((e) => getComputedStyle(e).pointerEvents !== 'none').length);
+  const blocking = await page.evaluate(() => [...document.querySelectorAll('.hw-web, .hw-blood, .hw-hanger, .hw-thread, .hw-strung, .hw-garland')].filter((e) => getComputedStyle(e).pointerEvents !== 'none').length);
   assert.equal(blocking, 0, 'part of the dressing catches clicks');
 
   // the footer speaks of Halloween, and turning it off takes the dressing down
@@ -563,6 +570,39 @@ test('Halloween dresses the page: webs, blood, spiders that come down with the s
   assert.deepEqual(moving.filter((c) => /hw/.test(String(c))), [], 'the dressing loops on a phone');
   assert.equal(await phone.page.locator('.hw-runner').count(), 0);
   await phone.context.close();
+});
+
+test('in season the page itself turns: bleeding headings, eyes that whisper the way on, and a heart on the lost page', { timeout: 60_000 }, async () => {
+  // for everybody while Halloween is on, earned or not: no mm-rainbow here
+  const { context, page } = await openPage(browser, server.url, 'desktop');
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.goto(`${server.url}/`, { waitUntil: 'load' });
+  await page.evaluate(() => localStorage.setItem('mm-look', 'halloween'));
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForTimeout(300);
+  assert.ok((await page.locator('.dr-drips i').count()) >= 4, 'the headings do not bleed');
+  assert.ok((await page.locator('.dr-word').count()) >= 1, 'no word is possessed');
+  // the first thing the eyes say is the way into the app's half of the hunt
+  const eyes = page.locator('.dr-eyes').first();
+  await eyes.scrollIntoViewIfNeeded();
+  await eyes.click();
+  assert.match(await page.locator('.dr-whisper').textContent(), /twenty/);
+  await context.close();
+
+  // the lost page: his heart named, a phone rings, and whoever picks up keeps the mask
+  const lost = await openPage(browser, server.url, 'desktop');
+  await lost.page.goto(`${server.url}/404.html`, { waitUntil: 'load' });
+  await lost.page.evaluate(() => localStorage.setItem('mm-look', 'halloween'));
+  await lost.page.reload({ waitUntil: 'load' });
+  await lost.page.keyboard.type('nothing to see');
+  await lost.page.waitForTimeout(300);
+  assert.equal(await lost.page.locator('.hs').count(), 0, 'any word made it ring');
+  await lost.page.keyboard.type('heartstopper');
+  await lost.page.locator('.hs-pick').click();
+  await lost.page.locator('.hs.after').waitFor({ timeout: 20_000 });
+  assert.equal(await lost.page.evaluate(() => localStorage.getItem('mm-heart')), '1');
+  assert.equal(await lost.page.locator('.foot-legal .dr-trophy').count(), 1, 'the mask is not in the footer');
+  await lost.context.close();
 });
 
 test('the note says it once and leaves by itself', async () => {

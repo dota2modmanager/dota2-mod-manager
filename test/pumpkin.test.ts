@@ -68,3 +68,12 @@ test('the install keeps one name', () => {
   const { pumpkin } = fake({});
   assert.equal(pumpkin.install(), pumpkin.install());
 });
+
+test('the prize keeps its own picture: a data address reaches the library row as it is', async () => {
+  // 2026-10-26: the record had the picture, previewUrl turned it into a catalog path, and the
+  // row showed an empty box
+  const { previewUrl } = await import('../renderer/ui/media.ts');
+  const pic = 'data:image/png;base64,iVBORw0KGgo=';
+  assert.equal(previewUrl('imported', pic), pic);
+  assert.match(previewUrl('heroes', 'x.png'), /\/assets\/previews\/heroes\/x\.png$/);
+});

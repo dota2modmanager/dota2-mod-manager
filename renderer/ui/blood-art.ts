@@ -84,3 +84,18 @@ export function crawler(): SVGElement {
   s.appendChild(svg('path', { class: 'gore', d: 'M3 13c2 4 2 9 0 13M7 11c1 5 1 11 0 16' }));
   return s;
 }
+
+/**
+ * The Scream mask (the prize mod is Necrophos wearing it): a long pale face, eyes and mouth
+ * pulled down into black, the way it is always remembered. Its own colours, since it is drawn
+ * the same in the window and over the site.
+ */
+export function screamMask(): SVGElement {
+  const s = svg('svg', { viewBox: '0 0 60 96', class: 'bn-mask' });
+  s.appendChild(svg('path', { class: 'hood', d: 'M30 0C8 0-2 22 1 52c2 24 14 44 29 44s27-20 29-44C62 22 52 0 30 0z' }));
+  s.appendChild(svg('path', { class: 'face', d: 'M30 10c-13 0-20 14-19 32 1 20 9 42 19 46 10-4 18-26 19-46 1-18-6-32-19-32z' }));
+  s.appendChild(svg('path', { class: 'hole', d: 'M15 36c3-6 10-6 12 2 1 6-3 13-7 13-4 0-7-8-5-15zM45 36c-3-6-10-6-12 2-1 6 3 13 7 13 4 0 7-8 5-15z' }));
+  s.appendChild(svg('path', { class: 'hole', d: 'M30 56c-6 0-8 8-7 16 1 7 4 12 7 12s6-5 7-12c1-8-1-16-7-16z' }));
+  s.appendChild(svg('path', { class: 'blood', d: 'M20 18c-2 6 1 10 0 16-1 3-2 1-2-1 0-5-1-10 2-15z' }));
+  return s;
+}

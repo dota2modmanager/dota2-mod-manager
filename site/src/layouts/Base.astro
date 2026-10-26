@@ -287,6 +287,8 @@ const searchWords = {
   import { wearing, wear, lookNow } from '../scripts/look';
   import { mountHalloween } from '../scripts/halloween';
   import { mountHuntNotes } from '../scripts/hunt-notes';
+  import { mountDread } from '../scripts/dread';
+  import { mountHeart } from '../scripts/heart';
 
   // The menu on a phone: one button, Escape closes it, and so does following a link in it.
   const btn = document.querySelector<HTMLButtonElement>('.menu-btn');
@@ -360,4 +362,8 @@ const searchWords = {
   mountHalloween();
   // the hunt's order, a line to a page, while Halloween is in season (for everyone, earned or not)
   mountHuntNotes();
+  // and what the season does to the page itself, also for everyone: the way into the hunt's other half
+  mountDread();
+  // and on the page that is not here, the end of the night for whoever knows what to type
+  mountHeart();
 </script>

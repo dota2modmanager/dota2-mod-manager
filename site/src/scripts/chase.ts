@@ -5,7 +5,8 @@
  * dark, a red line of type shakes across it, and the hero runs from the pointer across the whole
  * screen. Running costs it breath: every second the pointer is close drains it, every lunge it
  * dodges drains it more, and a few seconds left alone give a little back. Spent, it can barely
- * crawl, and a click on it ends the night.
+ * crawl, and a click on it ends the night. Not the first time it is spent, though: it finds a
+ * second wind once, and runs again. Now and then the lights go out and only its eyes are left.
  *
  * Tiredness is shown on the body, never on a bar. A fresh runner is fast, glows, saturated, and
  * drags a trail of its own afterimages; a spent one is grey, sways, pants and sweats. The heart
@@ -23,7 +24,7 @@ import { keptKey, type Claim } from './pumpkin-key';
 export interface ChaseHero { id: string; primary: string; accent: string }
 
 export interface ChaseWords {
-  title: string; slowing: string; spent: string; giveUp: string; sound: string;
+  title: string; slowing: string; spent: string; wind: string; giveUp: string; sound: string;
   caught: string; keyIs: string; hint: string; copy: string; copied: string; again: string; close: string;
   claiming: string; early: string; enough: string; offline: string; broken: string; retry: string;
 }
@@ -31,14 +32,14 @@ export interface ChaseWords {
 /** The words of the chase and of what it gives, in the page's language. */
 export const CHASE_WORDS: Record<'en' | 'ru', ChaseWords> = {
   en: {
-    title: 'CATCH ME', slowing: 'It is slowing down', spent: 'Out of breath. Grab it!', giveUp: 'Esc to give up', sound: 'M for sound',
+    title: 'CATCH ME', slowing: 'It is slowing down', spent: 'Out of breath. Grab it!', wind: 'Second wind. It is running again', giveUp: 'Esc to give up', sound: 'M for sound',
     caught: 'Caught', keyIs: 'Your key', hint: 'It opens one pumpkin in the app, yours, and only once. Posted in a channel, it burns for whoever is first.',
     copy: 'Copy', copied: 'Copied', again: 'Show my key', close: 'Close',
     claiming: 'Carving your key…', early: 'Too fast. Nobody catches it that fast.', enough: 'Enough keys from here for today. Come back tomorrow.',
     offline: 'The pumpkin cannot be reached. Check your connection.', broken: 'Something broke on the other side. Try again in a minute.', retry: 'Try again',
   },
   ru: {
-    title: 'ПОЙМАЙ МЕНЯ', slowing: 'Он сбавляет ход', spent: 'Выдохся. Лови!', giveUp: 'Esc - сдаться', sound: 'M - звук',
+    title: 'ПОЙМАЙ МЕНЯ', slowing: 'Он сбавляет ход', spent: 'Выдохся. Лови!', wind: 'Второе дыхание. Он снова бежит', giveUp: 'Esc - сдаться', sound: 'M - звук',
     caught: 'Пойман', keyIs: 'Твой ключ', hint: 'Он откроет одну тыкву в приложении, твою, и только один раз. Выложишь в канал - сгорит у того, кто успеет первым.',
     copy: 'Скопировать', copied: 'Скопировано', again: 'Показать мой ключ', close: 'Закрыть',
     claiming: 'Вырезаю твой ключ…', early: 'Слишком быстро. Так быстро его не ловят.', enough: 'На сегодня ключей отсюда хватит. Приходи завтра.',
@@ -50,16 +51,18 @@ export const CHASE_WORDS: Record<'en' | 'ru', ChaseWords> = {
 // ---- tuning ---------------------------------------------------------------------------
 const SIZE = 64;           // the runner, in CSS pixels
 const SCARE = 320;         // how near the pointer has to come before it runs
-const DRAIN = 0.05;        // breath lost per second with the pointer on top of it
-const LUNGE = 0.02;        // and per click it dodges
-const REST = 0.012;        // breath back per second when nobody is close
+const DRAIN = 0.04;        // breath lost per second with the pointer on top of it
+const LUNGE = 0.012;       // and per click it dodges
+const REST = 0.016;        // breath back per second when nobody is close
 const SPENT = 0.1;         // below this it cannot run any more
 const INTRO = 1.3;         // seconds of the page going dark, when nothing drains
 // However quick the hand, it cannot be worn out before this many seconds of chase: the breath
 // has a floor that sinks from half to nothing over them, so the tiring is always seen happening.
-const STAMINA = 24;
-const DECOY_EVERY = 5.5;   // seconds between the false runners it throws off while it still has breath
-const DECOY_GIFT = 0.07;   // breath it gets back when one of them is grabbed instead of it
+const STAMINA = 34;
+const WIND = 0.45;         // the breath its one second wind gives back, a moment after it is first spent
+const DARK_EVERY = 9;      // seconds between the lights going out, give or take a few
+const DECOY_EVERY = 3.8;   // seconds between the false runners it throws off while it still has breath
+const DECOY_GIFT = 0.1;    // breath it gets back when one of them is grabbed instead of it
 const WALL = 110;          // how far from an edge the walls start pushing back
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
@@ -108,6 +111,13 @@ export function chase(opts: {
     const sound = spook();
     let dodges = 0;
     const flash = el('div', 'chase-flash');
+    // the lights out: black over everything but two red eyes where it is
+    const dark = el('div', 'chase-dark');
+    const eyes = el('div', 'chase-eyes');
+    eyes.append(el('i', ''), el('i', ''));
+    dark.appendChild(eyes);
+    // and who is waiting for whoever catches it
+    const mask = el('div', 'chase-mask');
     const fx = el('canvas', 'chase-fx');
     const runner = el('div', 'chase-runner');
     const img = el('img', '');
@@ -135,7 +145,7 @@ export function chase(opts: {
       if (k % 2) s.classList.add('back');
       crawlers.appendChild(s);
     }
-    root.append(pulse, blood, crawlers, title, sub, fx, runner, flash, esc);
+    root.append(pulse, blood, crawlers, title, sub, fx, runner, dark, flash, mask, esc);
     document.body.appendChild(root);
     document.documentElement.classList.add('chasing');
 
@@ -174,6 +184,8 @@ export function chase(opts: {
     type Decoy = { el: HTMLElement; x: number; y: number; vx: number; vy: number; life: number };
     let decoys: Decoy[] = [];
     let decoyClock = 0;
+    let winded = 0;            // 0: not yet spent; above 0: seconds left until the second wind; -1: used
+    let darkClock = DARK_EVERY * 0.6, darkLeft = 0;
 
     requestAnimationFrame(() => root.classList.add('on'));
 
@@ -219,6 +231,7 @@ export function chase(opts: {
       // type falls apart. Then the lights come back on, in every colour at once.
       root.classList.add('caught');
       runner.classList.add('got');
+      setTimeout(() => mask.classList.add('go'), 60);
       setTimeout(() => {
         flash.classList.add('go');
         palettes.forEach((p, i) => setTimeout(() => {
@@ -324,10 +337,32 @@ export function chase(opts: {
         title.style.setProperty('--split', `${(1 + 6 * breath).toFixed(2)}px`);
         if (Math.random() < real * (tired > 0.25 ? 9 * tired ** 1.4 : 0)) sweat();
 
-        const next = spent ? 2 : breath < 0.55 ? 1 : 0;
+        // the first time it is spent it gets one more run out of itself, unless caught first
+        if (spent && winded === 0) winded = 0.9;
+        if (winded > 0 && (winded -= real) <= 0) {
+          winded = -1;
+          breath = WIND;
+          vx += (Math.random() - 0.5) * 2400; vy += (Math.random() - 0.5) * 2400;
+          sound.giggle();
+          jolt();
+          stage = 3;
+          sub.textContent = words.wind;
+          root.classList.remove('spent');
+        }
+        // the lights go out now and then while it can still run, and only its eyes are left
+        if (t > INTRO && (darkClock -= real) <= 0 && breath > SPENT) {
+          darkClock = DARK_EVERY * (0.7 + Math.random() * 0.6);
+          darkLeft = 0.9 + Math.random() * 0.6;
+          dark.classList.add('on');
+          sound.giggle();
+        }
+        if (darkLeft > 0 && (darkLeft -= real) <= 0) dark.classList.remove('on');
+        eyes.style.transform = `translate3d(${x - 14}px, ${y - SIZE * 0.22}px, 0)`;
+
+        const next = spent ? 2 : stage === 3 ? 3 : breath < 0.55 ? 1 : 0;
         if (next !== stage) {
           stage = next;
-          sub.textContent = stage === 2 ? words.spent : stage === 1 ? words.slowing : '';
+          sub.textContent = stage === 2 ? words.spent : stage === 1 ? words.slowing : stage === 3 ? words.wind : '';
           root.classList.toggle('spent', stage === 2);
         }
         // the heart: lub-dub, fast while it is fresh, slow as it gives out

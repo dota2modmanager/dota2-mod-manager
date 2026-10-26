@@ -1,8 +1,8 @@
 /* The pumpkin in the title bar, and the window it opens.
  *
- * It is not there to begin with. It rolls in beside the mascot once the window has worn all eight
- * heroes (ui/theme.ts says so with 'mm-all-heroes'), and from then on it stays (settings
- * `pumpkin`). It rolls in cold: the candle inside is out, and a click on it says only that it is
+ * It is not there to begin with. It rolls in beside the mascot once the mascot has been knocked
+ * on twenty times, counted from the first (ui/theme.ts says so with 'mm-knocks'; the site's
+ * whispers are where that is learned), and from then on it stays (settings `pumpkin`). It rolls in cold: the candle inside is out, and a click on it says only that it is
  * hungry. What warms it is a spider. Broodmother's children (ui/brood.ts) can be caught and
  * thrown (ui/spiders.ts), and one thrown into the pumpkin is eaten and lights it for good
  * (settings `pumpkinLit`).
@@ -17,6 +17,8 @@
 import { state } from '../core/store.ts';
 import { switchView } from '../core/router.ts';
 import { wearBlood } from './theme.ts';
+import { PUMPKIN_SVG } from './pumpkin-art.ts';
+import { crunch, kindle, hiss, opens } from './dread.ts';
 import type { RedeemAnswer } from '../api/app.ts';
 
 type Words = {
@@ -24,7 +26,7 @@ type Words = {
   title: string; text: string; placeholder: string; hint: string; open: string; chewing: string;
   wrong: string; empty: string; used: string; offline: string; broken: string;
   litTitle: string; litText: string; litNoMod: string; show: string; retry: string; retried: string;
-  again: string; againText: string; wear: string; prizeBack: string;
+  again: string; againText: string; wear: string; prizeBack: string; heart: string;
 };
 
 const WORDS: Record<'ru' | 'en' | 'zh-CN', Words> = {
@@ -33,7 +35,7 @@ const WORDS: Record<'ru' | 'en' | 'zh-CN', Words> = {
     coldTitle: 'Тыква остыла', coldText: 'Свеча внутри погасла, и тыква голодна. Греет её только живое, а у матери пауков детей хватит на всех.',
     coldHint: 'Пауков ловят руками.', ate: 'Хрум. Тыква горит.',
     title: 'Тыква ждёт ключ', text: 'Свеча снова горит. Внутри что-то прячется, и тыква отдаст это тому, кто принесёт ключ.',
-    placeholder: 'XXXX-XXXX-XXXX-XXXX', hint: 'Ключ у того, кто убегает на сайте. У каждого он свой, и каждый открывает одну тыкву.',
+    placeholder: 'XXXX-XXXX-XXXX-XXXX', hint: 'Ключ у того, кто висит в коконе на сайте. Сначала семеро, по порядку. Четвёртого назову я: тот, кто проспал всю зиму. У каждого ключ свой, и каждый открывает одну тыкву.',
     open: 'Открыть', chewing: 'Тыква жуёт…',
     wrong: 'Не тот ключ. Тыква плюётся.', empty: 'Сначала впиши ключ.',
     used: 'Этот ключ уже съела другая тыква. Каждый ключ открывает одну тыкву: добудь свой на сайте.',
@@ -41,14 +43,15 @@ const WORDS: Record<'ru' | 'en' | 'zh-CN', Words> = {
     broken: 'На той стороне что-то сломалось ({0}). Попробуй чуть позже.',
     litTitle: 'Кровавая ночь твоя', litText: 'Тема уже надета, а в «Моих модах» тебя ждёт {0}: включи его, и Некрофос станет Криком. Пока его нет ни у кого, кроме тех, кто добрался сюда.',
     litNoMod: 'Тема уже надета, а мод не скачался: {0}.', show: 'Показать мод', retry: 'Скачать мод', retried: 'Скачано',
-    again: 'Кровавая ночь уже твоя', againText: 'Она в круге героев сразу после девятой темы: щёлкай по маскоту.', wear: 'Надеть кровавую ночь', prizeBack: 'Вернуть мод',
+    again: 'Кровавая ночь уже твоя', againText: 'Она в круге героев: щёлкай по маскоту, пока он не станет кровавой тыквой.', wear: 'Надеть кровавую ночь', prizeBack: 'Вернуть мод',
+    heart: 'Он тебя видел. Там, где на сайте ничего нет, назови его сердце.',
   },
   en: {
     label: 'Pumpkin', coldLabel: 'A cold pumpkin', close: 'Close',
     coldTitle: 'The pumpkin has gone cold', coldText: 'The candle inside is out, and the pumpkin is hungry. Only something alive warms it, and the mother of spiders has children enough for everyone.',
     coldHint: 'Spiders are caught by hand.', ate: 'Crunch. The pumpkin is lit.',
     title: 'The pumpkin wants a key', text: 'The candle is burning again. Something is hidden inside, and it goes to whoever brings the key.',
-    placeholder: 'XXXX-XXXX-XXXX-XXXX', hint: 'The key is with the one that runs away on the site. Everyone gets their own, and each one opens one pumpkin.',
+    placeholder: 'XXXX-XXXX-XXXX-XXXX', hint: 'The key is with the one in the cocoon on the site. Seven first, in order. I will name the fourth myself: the one who slept through the winter. Everyone gets their own key, and each one opens one pumpkin.',
     open: 'Open', chewing: 'The pumpkin is chewing…',
     wrong: 'Not that key. The pumpkin spits it out.', empty: 'Type the key first.',
     used: 'Another pumpkin already ate this key. Each key opens one pumpkin: get your own on the site.',
@@ -56,14 +59,15 @@ const WORDS: Record<'ru' | 'en' | 'zh-CN', Words> = {
     broken: 'Something broke on the other side ({0}). Try again a little later.',
     litTitle: 'The bloody night is yours', litText: 'The theme is on, and {0} is waiting in My mods: switch it on and Necrophos becomes Scream. Nobody has it yet except the people who made it this far.',
     litNoMod: 'The theme is on, but the mod did not download: {0}.', show: 'Show the mod', retry: 'Download the mod', retried: 'Downloaded',
-    again: 'The bloody night is already yours', againText: 'It is in the round of heroes, right after the ninth theme: click the mascot.', wear: 'Wear the bloody night', prizeBack: 'Get the mod back',
+    again: 'The bloody night is already yours', againText: 'It is in the round of heroes: click the mascot until it turns into a bloody pumpkin.', wear: 'Wear the bloody night', prizeBack: 'Get the mod back',
+    heart: 'He saw you. Where there is nothing on the site, name his heart.',
   },
   'zh-CN': {
     label: '南瓜', coldLabel: '冷掉的南瓜', close: '关闭',
     coldTitle: '南瓜凉了', coldText: '里面的蜡烛灭了，南瓜饿了。只有活物能让它暖起来，而蜘蛛之母的孩子多得是。',
     coldHint: '蜘蛛要用手抓。', ate: '咔嚓。南瓜亮了。',
     title: '南瓜在等一把钥匙', text: '蜡烛又亮了。里面藏着东西，谁带来钥匙就归谁。',
-    placeholder: 'XXXX-XXXX-XXXX-XXXX', hint: '钥匙在网站上那个会逃跑的家伙身上。每人一把，每把只能打开一个南瓜。',
+    placeholder: 'XXXX-XXXX-XXXX-XXXX', hint: '钥匙在网站上那个挂在茧里的家伙身上。先找七个，按顺序。第四个我亲自告诉你：那个睡过了整个冬天的。每人一把钥匙，每把只能打开一个南瓜。',
     open: '打开', chewing: '南瓜在嚼…',
     wrong: '钥匙不对。南瓜把它吐了出来。', empty: '先输入钥匙。',
     used: '这把钥匙已经被另一个南瓜吃掉了。每把钥匙只能打开一个南瓜：去网站拿你自己的。',
@@ -71,25 +75,15 @@ const WORDS: Record<'ru' | 'en' | 'zh-CN', Words> = {
     broken: '对面出了点问题（{0}）。稍后再试。',
     litTitle: '血腥之夜归你了', litText: '主题已经换上，{0} 正在“我的模组”里等你：启用它，死灵飞龙就会变成惊声尖叫。除了走到这一步的人，还没有人拥有它。',
     litNoMod: '主题已经换上，但模组没有下载成功：{0}。', show: '查看模组', retry: '下载模组', retried: '已下载',
-    again: '血腥之夜已经是你的了', againText: '它在英雄轮换里，紧跟第九个主题之后：点击吉祥物。', wear: '换上血腥之夜', prizeBack: '找回模组',
+    again: '血腥之夜已经是你的了', againText: '它在英雄轮换里：一直点击吉祥物，直到它变成血色南瓜。', wear: '换上血腥之夜', prizeBack: '找回模组',
+    heart: '他看见你了。在网站上什么都没有的地方，说出他的心。',
   },
 };
 const words = (): Words => WORDS[(window.I18N_LANG as 'ru' | 'en' | 'zh-CN') ?? 'en'] ?? WORDS.en;
 const fill = (s: string, v: string) => s.replace('{0}', v);
 
-/* A jack-o'-lantern: the face is cut out of the body and lit from inside, and the light is what
-   flickers (styles/pumpkin.css). One drawing for the title bar and for the window. */
-const SVG = `
-<svg viewBox="0 0 64 64" aria-hidden="true">
-  <path class="pk-stem" d="M30 14c0-5 2-9 7-11l2 3c-3 2-4 4-4 8z"/>
-  <path class="pk-body" d="M32 15c-6-4-17-3-23 4C2 27 2 43 9 51c6 7 16 9 23 6 7 3 17 1 23-6 7-8 7-24 0-32-6-7-17-8-23-4z"/>
-  <path class="pk-rib" d="M32 15c-5 6-6 34 0 42M32 15c5 6 6 34 0 42M19 17c-7 9-7 29 2 38M45 17c7 9 7 29-2 38"/>
-  <g class="pk-face">
-    <path d="M16 31l7-7 6 8z"/><path d="M48 31l-7-7-6 8z"/>
-    <path d="M14 39c5 7 12 10 18 10s13-3 18-10l-5 2-3-4-4 5-6-4-6 4-4-5-3 4z"/>
-  </g>
-  <g class="pk-drip"><path d="M20 46q1 6 0 9q-2 2-2-1q0-4 2-8z"/><path d="M41 47q1 4 0 7q-2 1-2-1q0-3 2-6z"/></g>
-</svg>`;
+/* The drawing is ui/pumpkin-art.ts; the light in its face flickers in styles/pumpkin.css. */
+const SVG = PUMPKIN_SVG;
 
 let button: HTMLButtonElement | null = null;
 const lit = () => state.settings?.pumpkinLit === true || state.settings?.blood === true;
@@ -123,7 +117,9 @@ function onEaten(): void {
   button.classList.remove('chomp');
   void button.offsetWidth;
   button.classList.add('chomp');
+  crunch();
   if (lit()) return;
+  kindle();
   window.api.settings.set('pumpkinLit', true);
   if (state.settings) state.settings.pumpkinLit = true;
   dress();
@@ -133,7 +129,7 @@ function onEaten(): void {
 
 export function initPumpkin(): void {
   if (state.settings?.pumpkin === true) show(false);
-  document.addEventListener('mm-all-heroes', () => {
+  document.addEventListener('mm-knocks', () => {
     if (button) return;
     show(true);
     window.api.settings.set('pumpkin', true);
@@ -189,9 +185,11 @@ function keyWindow(): void {
   const opened = async (fresh: boolean, answer?: Extract<RedeemAnswer, { ok: true }>) => {
     box.classList.remove('cold');
     box.classList.add('lit', 'blood');
-    if (fresh) box.classList.add('burst');
+    if (fresh) { box.classList.add('burst'); opens(); }
     input.hidden = true;
-    hint.hidden = true;
+    hint.hidden = false;
+    hint.textContent = w.heart;
+    hint.classList.add('pk-heart');
     error.textContent = '';
     extra.hidden = true;
     if (fresh) {
@@ -282,6 +280,7 @@ function keyWindow(): void {
       : answer.error === 'offline' ? w.offline
         : answer.error === 'broken' ? fill(w.broken, answer.detail || '?')
           : answer.error === 'empty' ? w.empty : w.wrong;
+    hiss();
     if (answer.error === 'wrong') {
       // the pumpkin lunges: its face fills the window for a moment
       box.classList.remove('scream');

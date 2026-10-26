@@ -371,6 +371,16 @@ const { complete, shared, close, hint, last = false } = Astro.props;
   :global(.chase-flash) { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
   :global(.chase-flash.go) { animation: flash 700ms ease-out; }
   @keyframes flash { 0% { opacity: 0.85; } 100% { opacity: 0; } }
+  /* the lights out, and two red eyes left where it is */
+  :global(.chase-dark) { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 70ms; }
+  :global(.chase-dark.on) { opacity: 0.97; }
+  :global(.chase-eyes) { position: absolute; left: 0; top: 0; display: flex; gap: 8px; }
+  :global(.chase-eyes i) { width: 10px; height: 5px; border-radius: 50%; background: #ff1a2a; box-shadow: 0 0 8px #ff0020, 0 0 20px rgb(255 0 30 / 0.5); rotate: 14deg; }
+  :global(.chase-eyes i + i) { rotate: -14deg; }
+  /* who is waiting for whoever catches it: there for a blink, over everything */
+  :global(.chase-mask) { position: absolute; inset: 0; background: #000 url('/halloween/scream.webp') center / cover no-repeat; opacity: 0; pointer-events: none; }
+  :global(.chase-mask.go) { animation: mask 420ms steps(1) forwards; }
+  @keyframes mask { 0% { opacity: 1; } 60% { opacity: 0.85; } 100% { opacity: 0; } }
   /* caught: the line that dared you falls apart, every letter its own way */
   :global(.chase.caught .chase-title .line span) {
     animation: fall 1.1s cubic-bezier(0.55, 0, 1, 0.45) forwards;

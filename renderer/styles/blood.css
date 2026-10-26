@@ -148,3 +148,17 @@
   .bn-slap, .bn-crawl { display: none; }
   .sp .leg { animation: none !important; }
 }
+
+/* the mask at the edge of the window, there while nobody moves (ui/blood.ts) */
+.bn-peek { position: absolute; left: -34px; width: 60px; rotate: 24deg; animation: bnPeek 1.6s var(--ease-out) forwards; transition: translate 260ms var(--ease-in), opacity 260ms linear; }
+.bn-peek.right { left: auto; right: -34px; rotate: -24deg; scale: -1 1; }
+.bn-peek.gone { translate: -70px 0; opacity: 0; }
+.bn-peek.right.gone { translate: 70px 0; }
+.bn-mask { display: block; width: 100%; overflow: visible; filter: drop-shadow(0 0 10px rgb(0 0 0 / 0.9)); }
+.bn-mask .hood { fill: #050304; }
+.bn-mask .face { fill: #ece6dc; }
+.bn-mask .hole { fill: #070506; }
+.bn-mask .blood { fill: #a30d19; }
+@keyframes bnPeek { from { translate: -70px 0; } }
+.bn-peek.right { animation-name: bnPeekRight; }
+@keyframes bnPeekRight { from { translate: 70px 0; } }
