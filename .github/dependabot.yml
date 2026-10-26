@@ -30,7 +30,7 @@ updates:
       - dependency-name: typescript
         update-types: [version-update:semver-major]
       # src/download-proxy.ts hands an undici ProxyAgent to the global fetch, and that fetch is the
-      # undici inside Electron's Node (7.29 in Electron 44). A dispatcher from another major is a
+      # undici inside Electron's Node (7.29 in Electron 44 and 45). A dispatcher from another major is a
       # different handler contract under the same call. Take 8 with the Electron whose Node ships 8.
       - dependency-name: undici
         update-types: [version-update:semver-major]

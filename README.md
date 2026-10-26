@@ -305,7 +305,7 @@ npm run start:sandbox     # the app against it, never your own game
 npm run dota:diff         # what changed between two Dota builds (6944 6952, or the last two)
 ```
 
-Node 24, Electron 44. The main process is TypeScript that Node runs without a build, and the
+Node 24, Electron 45. The main process is TypeScript that Node runs without a build, and the
 window is TypeScript and React, built by Vite. Every release
 is produced by [`release.yml`](.github/workflows/release.yml) from the commit its tag names.
 

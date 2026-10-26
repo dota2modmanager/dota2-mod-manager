@@ -387,7 +387,7 @@ offering the major version until somebody does it.
 ### The main process is TypeScript, with no build step
 
 Every file of the main process is TypeScript since 2026-10-01, the entry included: package.json
-starts `src/main.ts`. Nothing compiles it. Electron 44 runs on Node 24, which strips the types
+starts `src/main.ts`. Nothing compiles it. Electron 45 runs on Node 24, which strips the types
 itself when it loads a `.ts` file, and it does so from inside `app.asar` as well: checked with a
 packed test app before the first module moved, and again with the installer built from the last
 one, which installed, switched and removed a mod through the window. So the installer, the updater

@@ -304,7 +304,7 @@ npm run start:sandbox     # приложение против него, а не 
 npm run dota:diff         # что поменялось между двумя сборками Доты (6944 6952 или две последние)
 ```
 
-Node 24, Electron 44. Главный процесс на TypeScript, Node запускает его без сборки, а окно на
+Node 24, Electron 45. Главный процесс на TypeScript, Node запускает его без сборки, а окно на
 TypeScript и React, его собирает Vite. Каждый релиз
 делает [`release.yml`](.github/workflows/release.yml) из того коммита, на который указывает тег.
 

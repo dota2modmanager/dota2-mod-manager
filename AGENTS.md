@@ -39,7 +39,7 @@ the folder free of anything a user should not download.
 
 ## What this is
 
-A desktop mod manager for Dota 2. Electron 44 on Node 24. The window is **TypeScript and React,
+A desktop mod manager for Dota 2. Electron 45 on Node 24. The window is **TypeScript and React,
 with Motion for animation**, built by Vite (`vite.config.mjs`, into `out/renderer`). New screens
 and components are written that way: one component per file, logic that decides things in plain
 modules with tests, and no file past 300 lines (`npm run size` fails one). The main process in
