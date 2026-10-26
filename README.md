@@ -81,6 +81,7 @@
 <tr><td><b>It says when mods collide</b></td><td>Two mods carrying the same file cannot both win. The app names the file, says which mod the game loads it from, and lets you reorder</td></tr>
 <tr><td><b>Setups by link</b></td><td>Save what you run as a preset and send it in one message. The other side opens it and gets the same look</td></tr>
 <tr><td><b>It survives Dota patches</b></td><td>The app notices a game update when it lands and puts back what the patch wiped, without ever writing while Dota is running</td></tr>
+<tr><td><b>Make your own with AI</b></td><td>Describe a skin to Claude Code or another AI assistant and it builds the mod: effects, items, models, animations, sounds, icons. <a href="#make-your-own-mods-with-ai">One line sets it up</a></td></tr>
 </table>
 
 <details>
@@ -102,6 +103,36 @@
   <img src="site/public/screenshots/dota-2-mod-manager-heroes-en.webp" alt="Mods grouped hero by hero" width="49%">
   <img src="site/public/screenshots/dota-2-mod-manager-my-mods-en.webp" alt="Installed mods, with the load order" width="49%">
 </div>
+
+<br>
+
+## Make your own mods with AI
+
+The repository carries a skill for AI coding assistants: everything an assistant needs to build a
+Dota 2 mod from a description. Send this to Claude Code, Codex, Cursor or any agent that can run
+commands on your computer:
+
+```
+Set up Dota 2 modding for me: https://dota2modmanager.com/ai/setup.md
+```
+
+It clones this repository, installs the skill, checks which tools you have and asks before
+installing the rest. Then ask for what you want: "make Necrophos' spells blood red", "give me
+Terrorblade's arcana", "a Ghostface mask and a hooded cloak", "he should pull a knife on spawn".
+The assistant reads the game's files, compiles with Valve's Workshop Tools, checks the result with
+the mod doctor and hands you a VPK to drag into the app.
+
+In Claude Code it also installs as a plugin:
+
+```
+/plugin marketplace add dota2modmanager/dota2-mod-manager
+/plugin install dota2-modding@dota2modmanager
+```
+
+The skill lives in [skills/dota2-modding](skills/dota2-modding): `SKILL.md`, references for each
+kind of mod, helper scripts for Blender and Python, and the `npm run modkit` commands it drives.
+We wrote it down while building a full custom Necrophos set this way. The guide for people:
+[Make Dota 2 mods with AI](https://dota2modmanager.com/docs/ai-mods/).
 
 <br>
 
@@ -194,6 +225,7 @@ installed here survives its uninstall.
 | [Safe mode](https://dota2modmanager.com/docs/safe/) | What the app writes into the game, and what it does not |
 | [Free cosmetics](https://dota2modmanager.com/docs/cosmetics/) | The item table, and what it can and cannot give you |
 | [After a Dota patch](https://dota2modmanager.com/docs/troubleshooting/) | What breaks, and what the app puts back |
+| [Make mods with AI](https://dota2modmanager.com/docs/ai-mods/) · [skills/dota2-modding](skills/dota2-modding) · [docs/item-mods.md](docs/item-mods.md) | The skill an assistant builds mods with, and how an item mod is built from the game's files |
 | [Every fact, checkable](https://dota2modmanager.com/facts/) | Version, platforms, counts, and how to verify each one |
 | [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/API.md](docs/API.md) | Which file owns which decision, and every module's exports |
 | [CONTRIBUTING.md](CONTRIBUTING.md) · [AGENTS.md](AGENTS.md) · [SECURITY.md](SECURITY.md) | How to work on it, with or without an assistant, and how to report a hole |

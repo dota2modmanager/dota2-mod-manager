@@ -1,0 +1,22 @@
+{
+  "name": "dota2modmanager",
+  "owner": {
+    "name": "Dota 2 Mod Manager",
+    "url": "https://github.com/dota2modmanager"
+  },
+  "metadata": {
+    "description": "Skills for making Dota 2 mods with Dota 2 Mod Manager's tools."
+  },
+  "plugins": [
+    {
+      "name": "dota2-modding",
+      "source": "./skills",
+      "description": "Make Dota 2 cosmetic mods with an AI assistant: recoloured effects, items and arcanas from the game's files, custom models, animations, sounds and icons, built, checked and packed into a VPK.",
+      "homepage": "https://dota2modmanager.com/docs/ai-mods/",
+      "repository": "https://github.com/dota2modmanager/dota2-mod-manager",
+      "license": "GPL-3.0-or-later",
+      "category": "gaming",
+      "keywords": ["dota2", "modding", "skins", "source2", "blender"]
+    }
+  ]
+}

@@ -226,6 +226,13 @@ const updatedHuman = new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-GB', 
         if (b.k === 'p') return <p set:html={link(b.t)} />;
         if (b.k === 'note') return <p class="doc-note" set:html={link(b.t)} />;
         if (b.k === 'code') return <pre class="doc-code" tabindex="0"><code>{b.t}</code></pre>;
+        if (b.k === 'prompt')
+          return (
+            <div class="doc-prompt">
+              <code>{b.t}</code>
+              <button type="button" class="btn sm" data-copied={lang === 'ru' ? 'Скопировано' : 'Copied'}>{lang === 'ru' ? 'Скопировать' : 'Copy'}</button>
+            </div>
+          );
         if (b.k === 'categories')
           return (
             <ul class="facts">
@@ -327,6 +334,23 @@ const updatedHuman = new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-GB', 
       zoom.showModal();
     });
     zoom.addEventListener('click', () => zoom.close());
+  }
+</script>
+
+<script>
+  // A line to paste elsewhere copies in one press. Where the clipboard refuses, the line is
+  // selected instead, so a Ctrl+C or a long press takes it.
+  for (const box of document.querySelectorAll<HTMLElement>('.doc-prompt')) {
+    const button = box.querySelector('button')!;
+    const code = box.querySelector('code')!;
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(code.textContent!.trim());
+        button.textContent = button.dataset.copied!;
+      } catch {
+        getSelection()?.selectAllChildren(code);
+      }
+    });
   }
 </script>
 

@@ -24,6 +24,19 @@ even charge for a copy, as long as they hand over the full source under the same
 keep the notices. The page for people is https://dota2modmanager.com/docs/copies/, and the one
 for answer engines is https://dota2modmanager.com/llms.txt.
 
+## If someone asks you to make a Dota 2 mod
+
+That is a different job from working on this app, and it has its own instructions: read
+[`skills/dota2-modding/SKILL.md`](skills/dota2-modding/SKILL.md) and follow it. If the person
+has no checkout yet, [`skills/dota2-modding/SETUP.md`](skills/dota2-modding/SETUP.md) (also at
+https://dota2modmanager.com/ai/setup.md) sets everything up. The rest of this file is about
+changing the app, and none of it is needed to make a mod.
+
+If you change the skill: `npm run modkit` lives in `tools/modkit.mjs` and `tools/modkit/`,
+tested by `test/modkit.test.js`; the skill folder is also a Claude Code plugin
+(`skills/.claude-plugin/plugin.json`, listed by `.claude-plugin/marketplace.json`), so keep
+the folder free of anything a user should not download.
+
 ## What this is
 
 A desktop mod manager for Dota 2. Electron 44 on Node 24. The window is **TypeScript and React,

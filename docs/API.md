@@ -4649,6 +4649,16 @@ export const sequencesOf = (file: Buffer) => playables(file, 'ASEQ', 'm_localS1S
 
 A model's sequences: name, the activities it plays and the modifiers it needs.
 
+### `sequenceNumbersOf`
+
+```ts
+export function sequenceNumbersOf(file: Buffer): string[]
+```
+
+The names behind a model's sequence numbers, which the server sends online: every sequence, and
+every clip played only through one (necrolyte's cast_ghost_shroud plays @@cast_ghost_shroud, its
+own number). Older files without the list number their sequences alone.
+
 ### `clipsOf`
 
 ```ts

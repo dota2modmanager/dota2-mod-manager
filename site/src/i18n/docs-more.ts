@@ -1,5 +1,5 @@
 /**
- * Nine more guides, in both languages.
+ * Ten more guides, in both languages.
  *
  * A separate file from docs.ts for length alone: the two together are one table of pages, and
  * merging happens there. The rule is the same one that file states - both languages side by
@@ -26,7 +26,18 @@
  */
 import type { Doc } from './docs.ts';
 
-type Slug = 'uninstall' | 'terrain' | 'announcer' | 'language' | 'own-mods' | 'catalog' | 'minify' | 'compare' | 'copies';
+type Slug = 'uninstall' | 'terrain' | 'announcer' | 'language' | 'own-mods' | 'ai-mods' | 'catalog' | 'minify' | 'compare' | 'copies';
+
+/*
+ * The ai-mods page (October 2026) describes skills/dota2-modding in the repo: the skill an AI
+ * assistant reads to make a mod, written down while building the "Scream" Necrophos set. The
+ * one-line setup points at /ai/setup.md, which serves that folder's SETUP.md (src/pages/ai/).
+ * What the skill can do is what its references cover; if a reference goes, so does its line here.
+ */
+const SETUP_PROMPT = 'Set up Dota 2 modding for me: https://dota2modmanager.com/ai/setup.md';
+const SETUP_PROMPT_RU = 'Настрой мне моддинг Доты 2: https://dota2modmanager.com/ai/setup.md';
+const PLUGIN_ADD = '/plugin marketplace add dota2modmanager/dota2-mod-manager';
+const PLUGIN_INSTALL = '/plugin install dota2-modding@dota2modmanager';
 
 // ---------------------------------------------------------------------------
 // English
@@ -448,6 +459,10 @@ const en: Record<Slug, Doc> = {
         k: 'p',
         t: 'Making a mod rather than installing one means decompiling a game asset, editing it, compiling it back and packing it into a VPK. The tools for that live in the catalog\'s Tools section and install from inside the app, and the catalog\'s wiki is the documentation for the pipeline. <a href="~/docs/catalog/">Where those come from</a>.',
       },
+      {
+        k: 'p',
+        t: 'Or describe the mod to an AI assistant and let it run those tools for you: <a href="~/docs/ai-mods/">making mods with AI</a>.',
+      },
 
       { k: 'h2', t: 'Questions', id: 'faq' },
       {
@@ -456,6 +471,97 @@ const en: Record<Slug, Doc> = {
           ['Can I install a mod from a zip?', 'Yes. Archives from the catalog often come that way and the app unpacks them itself.'],
           ['Will my own mod survive a Dota patch?', 'The same as any other. A patch overwrites the files underneath, and the repair puts your archives back where they were.'],
           ['Can I share a mod I made?', 'The catalog takes submissions, and its Discord is where that conversation happens.'],
+        ],
+      },
+    ],
+  },
+
+  'ai-mods': {
+    slug: 'ai-mods',
+    title: 'Make Dota 2 mods with AI: skins, effects, models, animations',
+    h1: 'Make Dota 2 mods with AI',
+    description:
+      'Describe the skin you want and an AI assistant builds it: recoloured spells, arcanas from the game files, new models, animations, sounds and icons, packed into a VPK. One line sets it up.',
+    lead: 'Tell an AI assistant what your hero should look like and it builds the mod: it reads the game\'s files, runs Valve\'s compiler, checks the result and hands you a VPK to drag into the app. The knowledge it works from is a skill in our repository, written down while we built a full custom Necrophos set this way.',
+    card: 'Describe a skin in words; Claude Code or another assistant builds the VPK. One line sets it up.',
+    updated: '2026-10-26',
+    blocks: [
+      { k: 'h2', t: 'Set it up with one line', id: 'setup' },
+      {
+        k: 'p',
+        t: 'Open an AI coding assistant that can run commands on your computer (Claude Code, Codex, Cursor, Gemini CLI and the like) and send it this:',
+      },
+      { k: 'prompt', t: SETUP_PROMPT },
+      {
+        k: 'p',
+        t: 'The link is a page of instructions written for the assistant, not for you. It clones the repository, installs the skill, checks which tools your computer has and asks before it installs anything. When it finishes it tells you what works and what you can ask for.',
+      },
+      {
+        k: 'p',
+        t: 'In Claude Code the skill also installs as a plugin, which keeps it updated. Run these two in a session:',
+      },
+      { k: 'prompt', t: PLUGIN_ADD },
+      { k: 'prompt', t: PLUGIN_INSTALL },
+
+      { k: 'h2', t: 'What you can ask for', id: 'what' },
+      {
+        k: 'cards',
+        items: [
+          ['Effects in any colour', '"Make Necrophos\' spells blood red." Every particle and status effect of a hero, recoloured and compiled. Needs only Dota and Node.js.'],
+          ['Items you do not own', '"Give me Terrorblade\'s arcana." Arcanas, immortals and sets taken from the game\'s own files, with their effects and animations.'],
+          ['New models', '"A Ghostface mask and a hooded cloak." The assistant models in Blender, fits the mesh to the hero\'s skeleton and compiles it into the slot it replaces.'],
+          ['Animations', '"He should pull a knife on spawn." New idle, attack, run, cast and spawn clips, swapped into the hero\'s model so the game plays them.'],
+          ['Sounds and voice', '"Scream when he casts." Replace a sound, layer one on top, or add lines to the voice.'],
+          ['Icons and portraits', 'Ability icons, the portrait, the minimap icon and the hero-picker video, edited as pictures and compiled back.'],
+        ],
+      },
+      {
+        k: 'p',
+        t: 'The rule underneath all of it: a mod replaces files the game already has. A new mask goes where an existing head item lives, a new clip in place of an existing clip. The skill knows which file each change lands in, so it will tell you when an idea needs a different route.',
+      },
+
+      { k: 'h2', t: 'How a mod gets made', id: 'how' },
+      {
+        k: 'steps',
+        items: [
+          ['It asks', 'Which hero, every change as a list you confirm, pictures of what you mean, where it has to look right. A big set goes in stages, each one shown before the next.'],
+          ['It plans from the game\'s data', 'It reads the item table, the hero\'s model, its sound events and icons from your game files instead of guessing paths.'],
+          ['It builds', 'Recolours, decompiles, models, compiles with Valve\'s Workshop Tools, all in a work folder outside the game.'],
+          ['It checks', 'The mod doctor reads the finished VPK against the game in seconds: animations that need an item turned on, sequence numbers that differ from the game\'s, effects on the wrong attachment.'],
+          ['It shows you', 'Renders from Blender, and with your permission a short film from the game itself: the bench starts Dota, puts the hero on screen and records it.'],
+          ['You install it', 'Drag the VPK into Dota 2 Mod Manager. It switches off in one click and survives patches like any other mod.'],
+        ],
+      },
+
+      { k: 'h2', t: 'What your computer needs', id: 'needs' },
+      {
+        k: 'list',
+        items: [
+          '<b>Dota 2 and Node.js 24.</b> Enough for recolours and items from the game\'s files, on any system.',
+          '<b>Dota 2 Workshop Tools</b> for anything compiled: models, textures, animations, sounds, icons. Steam, Dota 2, Properties, DLC. Windows only.',
+          '<b>Source2Viewer</b> to decompile the game\'s files, <b>Blender</b> for models and animations, <b>Python</b> with Pillow and numpy for textures.',
+        ],
+      },
+      {
+        k: 'p',
+        t: 'You do not have to install these yourself. The assistant runs <code>modkit check</code>, tells you what is missing for the mod you asked for, and installs it once you agree.',
+      },
+
+      { k: 'h2', t: 'Where it comes from', id: 'source' },
+      {
+        k: 'p',
+        t: 'Everything in the skill was learned on real mods: Terrorblade\'s arcana built from the game\'s files, and "Scream", a Necrophos set with a new mask, hood, cloak, scythe and knife, red effects, new animations, sounds, icons and a hero-picker scene. Each mistake that cost a day there is a line in its pitfalls table now. The skill, its scripts and the <code>modkit</code> commands are open source in <a href="https://github.com/dota2modmanager/dota2-mod-manager/tree/main/skills/dota2-modding">skills/dota2-modding</a>.',
+      },
+
+      { k: 'h2', t: 'Questions', id: 'faq' },
+      {
+        k: 'faq',
+        items: [
+          ['Does it cost anything?', 'The skill and the tools are free. The AI assistant is your own, on whatever plan you already use.'],
+          ['Which assistant works best?', 'Any agent that can run commands and read files. The skill is written in the Agent Skills format Claude Code reads natively; other agents follow the same files through a line in AGENTS.md, which the setup adds.'],
+          ['Do other players see my skin?', 'No. A mod changes the files on your computer, so only you see it. Everyone else sees the default hero.'],
+          ['Will it touch my game?', 'It works in its own folder and builds the VPK there. Only the app writes into the game, when you install the mod.'],
+          ['Can I share what it made?', 'Yes, with the catalog\'s community. Mind what you put in: a model or sound from somewhere else carries its author\'s licence.'],
         ],
       },
     ],
@@ -1279,6 +1385,10 @@ const ru: Record<Slug, Doc> = {
         k: 'p',
         t: 'Сделать мод, а не поставить, значит декомпилировать игровой ресурс, отредактировать, скомпилировать обратно и запаковать в VPK. Инструменты для этого лежат в разделе Tools каталога и ставятся прямо из программы, а вики каталога - документация ко всему конвейеру. <a href="~/docs/catalog/">Откуда это всё</a>.',
       },
+      {
+        k: 'p',
+        t: 'Или опиши мод ИИ-ассистенту, и он сам прогонит эти инструменты: <a href="~/docs/ai-mods/">моды с помощью ИИ</a>.',
+      },
 
       { k: 'h2', t: 'Вопросы', id: 'faq' },
       {
@@ -1287,6 +1397,97 @@ const ru: Record<Slug, Doc> = {
           ['Можно поставить мод из zip?', 'Да. Из каталога они часто приходят именно так, и программа распаковывает их сама.'],
           ['Мой мод переживёт патч Доты?', 'Так же, как любой другой. Патч переписывает файлы под ним, а восстановление возвращает архивы на место.'],
           ['Можно поделиться модом, который я сделал?', 'Каталог принимает работы, а его Discord - место, где этот разговор происходит.'],
+        ],
+      },
+    ],
+  },
+
+  'ai-mods': {
+    slug: 'ai-mods',
+    title: 'Моды для Доты 2 с помощью ИИ: скины, эффекты, модели',
+    h1: 'Моды для Доты 2 с помощью ИИ',
+    description:
+      'Опиши скин словами, и ИИ-ассистент соберёт его: перекрашенные спеллы, арканы из файлов игры, новые модели, анимации, звуки и иконки, упакованные в VPK. Настраивается одной строкой.',
+    lead: 'Расскажи ИИ-ассистенту, как должен выглядеть твой герой, и он соберёт мод: прочитает файлы игры, прогонит компилятор Valve, проверит результат и отдаст VPK, который ты перетащишь в программу. Всё, что он для этого знает, лежит скиллом в нашем репозитории. Мы записали его, пока так же собирали полный кастомный сет на Некрофоса.',
+    card: 'Опиши скин словами, а Claude Code или другой ассистент соберёт VPK. Настройка одной строкой.',
+    updated: '2026-10-26',
+    blocks: [
+      { k: 'h2', t: 'Настройка одной строкой', id: 'setup' },
+      {
+        k: 'p',
+        t: 'Открой ИИ-ассистента, который умеет запускать команды на твоём компьютере (Claude Code, Codex, Cursor, Gemini CLI и подобные), и отправь ему:',
+      },
+      { k: 'prompt', t: SETUP_PROMPT_RU },
+      {
+        k: 'p',
+        t: 'По ссылке лежит инструкция для ассистента, не для тебя. Он склонирует репозиторий, поставит скилл, проверит, какие инструменты есть на компьютере, и спросит, прежде чем что-то устанавливать. В конце скажет, что уже работает и что можно у него просить.',
+      },
+      {
+        k: 'p',
+        t: 'В Claude Code скилл ставится ещё и плагином, тогда он сам обновляется. Запусти в сессии эти две команды:',
+      },
+      { k: 'prompt', t: PLUGIN_ADD },
+      { k: 'prompt', t: PLUGIN_INSTALL },
+
+      { k: 'h2', t: 'Что можно попросить', id: 'what' },
+      {
+        k: 'cards',
+        items: [
+          ['Эффекты в любом цвете', '«Сделай спеллы Некрофоса кроваво-красными». Все партиклы и статус-эффекты героя, перекрашенные и скомпилированные. Хватит Доты и Node.js.'],
+          ['Предметы, которых у тебя нет', '«Дай мне аркану Террорблейда». Арканы, иммортал-предметы и сеты из файлов самой игры, вместе с эффектами и анимациями.'],
+          ['Новые модели', '«Маску Гостфейса и плащ с капюшоном». Ассистент моделит в Blender, сажает меш на скелет героя и компилирует в слот, который тот заменяет.'],
+          ['Анимации', '«Пусть на спавне достаёт нож». Новые клипы стойки, атаки, бега, каста и спавна, подменённые в модели героя, чтобы игра их играла.'],
+          ['Звуки и голос', '«Пусть кричит, когда кастует». Заменить звук, наложить свой поверх или добавить реплики в озвучку.'],
+          ['Иконки и портреты', 'Иконки способностей, портрет, значок на миникарте и видео в пике героя: правятся как картинки и компилируются обратно.'],
+        ],
+      },
+      {
+        k: 'p',
+        t: 'Правило под всем этим одно: мод заменяет файлы, которые в игре уже есть. Новая маска встаёт на место существующего предмета на голову, новый клип на место существующего клипа. Скилл знает, в какой файл ложится каждая правка, так что сам скажет, если идее нужен другой путь.',
+      },
+
+      { k: 'h2', t: 'Как собирается мод', id: 'how' },
+      {
+        k: 'steps',
+        items: [
+          ['Расспрашивает', 'Какой герой, все правки списком, который ты подтверждаешь, картинки того, что имеешь в виду, где должно смотреться. Большой сет идёт этапами, каждый показывается до следующего.'],
+          ['Планирует по данным игры', 'Читает таблицу предметов, модель героя, его звуковые события и иконки прямо из файлов игры, а не угадывает пути.'],
+          ['Собирает', 'Перекрашивает, декомпилирует, моделит, компилирует через Workshop Tools от Valve, всё в рабочей папке вне игры.'],
+          ['Проверяет', 'Доктор модов за секунды сверяет готовый VPK с игрой: анимации, которым нужен включённый предмет, номера анимаций, разошедшиеся с игровыми, эффекты не на той точке крепления.'],
+          ['Показывает', 'Рендеры из Blender, а с твоего разрешения и короткое видео из самой игры: стенд запускает Доту, выводит героя на экран и записывает.'],
+          ['Ты ставишь', 'Перетащи VPK в Dota 2 Mod Manager. Выключается в один клик и переживает патчи, как любой другой мод.'],
+        ],
+      },
+
+      { k: 'h2', t: 'Что нужно на компьютере', id: 'needs' },
+      {
+        k: 'list',
+        items: [
+          '<b>Дота 2 и Node.js 24.</b> Этого хватит на перекраску и предметы из файлов игры, на любой системе.',
+          '<b>Dota 2 Workshop Tools</b> для всего, что компилируется: моделей, текстур, анимаций, звуков, иконок. Steam, Dota 2, Свойства, Дополнительный контент. Только Windows.',
+          '<b>Source2Viewer</b>, чтобы декомпилировать файлы игры, <b>Blender</b> для моделей и анимаций, <b>Python</b> с Pillow и numpy для текстур.',
+        ],
+      },
+      {
+        k: 'p',
+        t: 'Ставить это самому не надо. Ассистент запустит <code>modkit check</code>, скажет, чего не хватает для твоего мода, и поставит, когда ты согласишься.',
+      },
+
+      { k: 'h2', t: 'Откуда это', id: 'source' },
+      {
+        k: 'p',
+        t: 'Всё в скилле выучено на настоящих модах: аркана Террорблейда из файлов игры и «Крик», сет на Некрофоса с новой маской, капюшоном, плащом, косой и ножом, красными эффектами, новыми анимациями, звуками, иконками и сценой в пике героя. Каждая ошибка, на которую там ушёл день, теперь строчка в таблице ловушек. Скилл, его скрипты и команды <code>modkit</code> открыты в <a href="https://github.com/dota2modmanager/dota2-mod-manager/tree/main/skills/dota2-modding">skills/dota2-modding</a>.',
+      },
+
+      { k: 'h2', t: 'Вопросы', id: 'faq' },
+      {
+        k: 'faq',
+        items: [
+          ['Это платно?', 'Скилл и инструменты бесплатные. ИИ-ассистент твой собственный, на том тарифе, что у тебя уже есть.'],
+          ['Какой ассистент лучше?', 'Любой агент, который запускает команды и читает файлы. Скилл написан в формате Agent Skills, который Claude Code читает сам; другие агенты идут по тем же файлам через строчку в AGENTS.md, её добавит настройка.'],
+          ['Другие игроки увидят мой скин?', 'Нет. Мод меняет файлы на твоём компьютере, так что видишь его только ты. Остальные видят обычного героя.'],
+          ['Он полезет в мою игру?', 'Он работает в своей папке и там же собирает VPK. В игру пишет только программа, когда ты ставишь мод.'],
+          ['Можно поделиться тем, что он сделал?', 'Да, с сообществом каталога. Смотри, что кладёшь внутрь: модель или звук из чужого источника несут лицензию своего автора.'],
         ],
       },
     ],

@@ -214,7 +214,8 @@ export const host = (children = ['particles/eye.vpcf']) => resource([
  * A model: its animation clips (ANIM, version 5 and zstd, with a blob of frames) and its sequences
  * (ASEQ) with what each plays, the clips as the sequences unless given, and its own name in DATA.
  */
-export function model(name: string, sequences: [string, string[]][] = [], clips: [string, string[]][] = sequences): Buffer {
+export function model(name: string, sequences: [string, string[]][] = [], clips: [string, string[]][] = sequences,
+  numbers: string[] = sequences.map(([seq]) => seq)): Buffer {
   const listed = (acts: string[]) => acts.map((a): [string, V][] => [['m_name', { str: a }], ['m_nWeight', { int: 1 }]]);
   return resource([
     ['ANIM', encodeKv3({ obj: [
@@ -222,7 +223,8 @@ export function model(name: string, sequences: [string, string[]][] = [], clips:
       ['m_segmentArray', { arr: [{ obj: [['m_container', { blob: Buffer.from('the frames of every clip') }]] }] }],
     ] }, 5)],
     // typed arrays of objects, as the game's are
-    ['ASEQ', encodeKv3({ obj: [['m_localS1SeqDescArray', { objs: sequences.map(([seq, acts]): [string, V][] => [
+    // the numbers the server sends: every sequence, and every clip played only through one
+    ['ASEQ', encodeKv3({ obj: [['m_localSequenceNameArray', { arr: numbers.map((n) => ({ str: n })) }], ['m_localS1SeqDescArray', { objs: sequences.map(([seq, acts]): [string, V][] => [
       ['m_sName', { str: seq }],
       ['m_activityArray', { objs: acts.map((a): [string, V][] => [['m_name', { str: a }], ['m_nWeight', { int: 1 }]]) }],
     ]) }]] })],

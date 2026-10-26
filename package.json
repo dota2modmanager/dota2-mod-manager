@@ -34,7 +34,8 @@
     "rollback": "node tools/rollback.mjs",
     "docs": "node tools/gen-api-docs.js && node tools/gen-doc-facts.js && node tools/gen-incidents.js",
     "docs:check": "node tools/gen-api-docs.js --check",
-    "aur": "node tools/gen-aur.js"
+    "aur": "node tools/gen-aur.js",
+    "modkit": "node tools/modkit.mjs"
   },
   "repository": {
     "type": "git",

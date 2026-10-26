@@ -17,7 +17,7 @@
  * string serves both languages. Counts written as {mods} are filled by the layout too, because
  * a number typed into a guide is a number that will be wrong in a month.
  *
- * Nine more pages live in docs-more.ts and merge in at the bottom of this file. They were
+ * Ten more pages live in docs-more.ts and merge in at the bottom of this file. They were
  * split off for length alone.
  */
 import { moreDocs } from './docs-more.ts';
@@ -30,6 +30,8 @@ export type Block =
   | { k: 'list'; items: string[] }
   | { k: 'cards'; items: Array<[string, string]> }
   | { k: 'code'; t: string }
+  /** One line for the reader to paste somewhere else: it wraps on a phone and has a Copy button. */
+  | { k: 'prompt'; t: string }
   /** The catalog's categories with their live counts, read from the catalog at build time. */
   | { k: 'categories' }
   | { k: 'faq'; items: Array<[string, string]> };
@@ -59,12 +61,14 @@ export interface DocsIndex {
  * Order matters: it is the order on the index and the order the "read next" row walks.
  *
  * Roughly by how many people want each one. Installing first, removing second because that is
- * the second thing typed into a search box, then the two kinds of mod people come here for by
- * name, then the mechanics, then the two pages about who made all this.
+ * the second thing typed into a search box, then making your own with an AI assistant (the one
+ * thing here no other launcher offers), then the two kinds of mod people come here for by name,
+ * then the mechanics, then the two pages about who made all this.
  */
 export const docSlugs = [
   'install',
   'uninstall',
+  'ai-mods',
   'terrain',
   'announcer',
   'cosmetics',
@@ -80,7 +84,7 @@ export const docSlugs = [
 ] as const;
 export type DocSlug = (typeof docSlugs)[number];
 
-/** The five this file holds. The other nine live in docs-more.ts and are merged in below. */
+/** The five this file holds. The other ten live in docs-more.ts and are merged in below. */
 type CoreSlug = 'install' | 'vpk' | 'safe' | 'cosmetics' | 'troubleshooting';
 
 export const docsIndex: Record<'en' | 'ru', DocsIndex> = {

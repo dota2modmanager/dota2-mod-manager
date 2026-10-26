@@ -7,6 +7,10 @@ time. The worked example is Terrorblade's arcana, Fractal Horns of Inner Abysm
 ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118), `src/arcana.ts`). It took
 two days, most of them on two traps that the tools below now catch in seconds.
 
+Making a mod with an AI assistant? [`skills/dota2-modding`](../skills/dota2-modding/SKILL.md)
+covers this page and everything past it (custom models, animations, sounds, icons) as a skill the
+assistant follows.
+
 ## The loop
 
 1. **Plan.** `npm run item-plan -- "<item name>"` (or its id) reads the item's `visuals` from
@@ -136,5 +140,9 @@ picture is every hero's.
 | one picture a second, read by eye | a fidget at rest taken for the attack | burst and verdict |
 | a model compiled again keeps a clip of the turns source itself, one pose of the full turn, which Valve's has not | the head looked backward whenever the hero walked | the walk pictures |
 
-Not settled yet: whether a swapped model's sequences in another order than the hero's cause wrong
-animations online, where the server keeps the plain model. The doctor warns about it.
+Online the server keeps the plain model and sends the client sequence numbers, so a swapped model
+has to number its sequences as the hero's does. The numbers are the model's sequence name list,
+which also counts clips a sequence plays under a name of their own (`@@cast_ghost_shroud`); the
+"Scream" Necrophos model lost one of those in a recompile and numbered every sequence from 30 on
+one lower than the game. The doctor compares that list now (`sequenceNumbersOf` in
+`src/mod-doctor.ts`), and `npm run modkit -- clips` puts Valve's names and numbers back.

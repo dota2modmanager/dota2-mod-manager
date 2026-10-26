@@ -47,6 +47,16 @@ function playables(file: Buffer, block: string, listKey: string, nameKey: string
 
 /** A model's sequences: name, the activities it plays and the modifiers it needs. */
 export const sequencesOf = (file: Buffer) => playables(file, 'ASEQ', 'm_localS1SeqDescArray', 'm_sName');
+/**
+ * The names behind a model's sequence numbers, which the server sends online: every sequence, and
+ * every clip played only through one (necrolyte's cast_ghost_shroud plays @@cast_ghost_shroud, its
+ * own number). Older files without the list number their sequences alone.
+ */
+export function sequenceNumbersOf(file: Buffer): string[] {
+  if (!resourceBlocks(file).some((b) => b.name === 'ASEQ')) return [];
+  const list = member(readKv3(resourceBlock(file, 'ASEQ').data).root, 'm_localSequenceNameArray');
+  return list ? items(list).map(text) : sequencesOf(file).map((s) => s.name);
+}
 /** A model's animation clips, the same way: the lists the game picks by. */
 export const clipsOf = (file: Buffer) => playables(file, 'ANIM', 'm_animArray', 'm_name');
 
@@ -74,8 +84,8 @@ function checkModel(path: string, file: Buffer, game: Buffer | null): Finding[] 
     }
   }
   if (game) {
-    const theirs = sequencesOf(game).map((s) => s.name);
-    const ours = seqs.map((s) => s.name);
+    const theirs = sequenceNumbersOf(game);
+    const ours = sequenceNumbersOf(file);
     const at = theirs.findIndex((n, i) => ours[i] !== n);
     if (at !== -1) {
       out.push({ file: path, level: 'warning', what: `sequence ${at} is "${ours[at] ?? 'none'}" here and "${theirs[at]}" in the game's model: if the server online picks by number from its own, from there on other animations play` });

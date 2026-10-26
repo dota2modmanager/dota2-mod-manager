@@ -61,6 +61,17 @@ test('a model in another order than the game has at its path is a warning, and a
   assert.match(found[0].what, /sequence 1 is "run" here and "idle"/);
 });
 
+test('sequence numbers count the clips a sequence plays under a name of their own', (t) => {
+  // necrolyte: the decompile gave cast_ghost_shroud and its clip @@cast_ghost_shroud one name, the
+  // sequences matched Valve's one by one, and every number after it was one off online
+  const seqs: [string, string[]][] = [['idle', ['ACT_DOTA_IDLE']], ['cast', ['ACT_DOTA_CAST_ABILITY_1']], ['run', ['ACT_DOTA_RUN']]];
+  const found = findings(t,
+    [[MODEL, model('models/heroes/terrorblade/terrorblade.vmdl', seqs, seqs, ['idle', 'cast', 'run'])]],
+    [[MODEL, model('models/heroes/terrorblade/terrorblade.vmdl', seqs, seqs, ['idle', 'cast', '@@cast', 'run'])]]);
+  assert.deepEqual(what(found), [`warning: ${MODEL}`]);
+  assert.match(found[0].what, /sequence 2 is "run" here and "@@cast"/);
+});
+
 /** A particle that draws itself on `attachment`, its preview's control point 0. */
 const drawnOn = (attachment: string) => resource([['RERL', rerl([])], ['DATA', encodeKv3({ obj: [
   ['m_controlPointConfigurations', { arr: [{ obj: [['m_drivers', { arr: [{ obj: [['m_attachmentName', { str: attachment }]] }] }]] }] }],
