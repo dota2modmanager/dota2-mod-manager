@@ -1,5 +1,5 @@
 {
-  "count": 1766,
+  "count": 1767,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -851,6 +851,7 @@
     "8004800613c8f09ff6a3180f8c0ff88f69866f1c": [{"name":"Yatoro Electric","categoryId":"wards","styleLabel":null,"type":"vpk"}],
     "800e5055543d2372a41b93cccd60c96473e370c3": [{"name":"Wraith King Crimson Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "802072614d499df476fdbd3ba8f2c7094754ec72": [{"name":"TI8 Radiance","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
+    "80393612f4e1111a44589cfa6ed29d922c025308": [{"name":"Shadow Shaman Desert Eagle","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "80434a3a78a6e4b11cb6633f6c9c51bdf4288b46": [{"name":"BP 2022 Lvl Up","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "80626e9a811a95f81b6e6c49bca7d449daeadf63": [{"name":"The International 2015","categoryId":"music","styleLabel":null,"type":"vpk"}],
     "80666262924ffc1d5f1ecd8ef1fd043732b9ce85": [{"name":"Enchantress Sematary","categoryId":"heroes","styleLabel":null,"type":"vpk"}],

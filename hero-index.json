@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1557,
+  "mods": 1558,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1572,6 +1572,7 @@
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Shadow Shaman Desert Eagle","categoryId":"heroes","styleLabel":null,"slots":["offhand","weapon","head","belt","arms"]},
         {"name":"Shadow Shaman Immortal Crimson","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc","weapon","offhand"]},
         {"name":"Shadow Shaman Purple","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc","weapon","offhand"]},
         {"name":"Shadow Shaman Wyrmbender","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","misc","weapon","offhand"]},
