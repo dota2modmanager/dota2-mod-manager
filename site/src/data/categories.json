@@ -3,6 +3,14 @@
     {
       "id": "hero-items",
       "mods": [
+        {
+          "name": "Kotl Obeisance Of The Keeper",
+          "styleLabel": null,
+          "image": {"src":"/mods/kotl-obeisance-of-the-keeper.webp","width":854,"height":480},
+          "author": "keeper",
+          "authorUrl": "https://t.me/meetmeattheriver",
+          "date": 1793062291
+        },
         {"name":"Invoker Infernus Forge","styleLabel":null,"image":{"src":"/mods/invoker-infernus-forge.webp","width":854,"height":480},"author":"4d4mf","authorUrl":"https://t.me/vpk4d4mmf","date":1792947904},
         {
           "name": "Hoodwink Frostbloom Arbalest",
@@ -2131,6 +2139,14 @@
     {
       "id": "backgrounds",
       "mods": [
+        {
+          "name": "Last Match Vidget",
+          "styleLabel": null,
+          "image": {"src":"/mods/last-match-vidget.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1793062291
+        },
         {"name":"Girl Resting Under Tree","styleLabel":null,"image":{"src":"/mods/girl-resting-under-tree.webp","width":854,"height":480},"author":"qoofix","authorUrl":"https://qoofix.ru","date":1792914979},
         {
           "name": "Japanese Background",
@@ -2217,14 +2233,6 @@
           "author": "Swin-РукаBlood",
           "authorUrl": "https://discord.gg/SCnUSB4j6S",
           "date": 1792583758
-        },
-        {
-          "name": "Last Match Vidget",
-          "styleLabel": null,
-          "image": {"src":"/mods/last-match-vidget.webp","width":854,"height":480},
-          "author": "Swin-РукаBlood",
-          "authorUrl": "https://discord.gg/SCnUSB4j6S",
-          "date": 1792518355
         },
         {
           "name": "Push The Button",
@@ -2716,6 +2724,14 @@
       "id": "hero-sounds",
       "mods": [
         {
+          "name": "Keeper Of The Light Kotl Taunt Xvi",
+          "styleLabel": null,
+          "image": {"src":"/mods/keeper-of-the-light-kotl-taunt-xvi.webp","width":854,"height":480},
+          "author": "xvii",
+          "authorUrl": "https://t.me/xviivpk",
+          "date": 1793062291
+        },
+        {
           "name": "Mortal Strike Nyaaa!!! Sound",
           "styleLabel": null,
           "image": {"src":"/mods/mortal-strike-nyaaa-sound.webp","width":854,"height":480},
@@ -3093,6 +3109,7 @@
     {
       "id": "parts",
       "mods": [
+        {"name":"Crystal Interface","styleLabel":null,"image":{"src":"/mods/crystal-interface.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1793062291},
         {"name":"Netgraph Black","styleLabel":null,"image":{"src":"/mods/netgraph-black.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792946553},
         {"name":"Netgraph Red","styleLabel":null,"image":{"src":"/mods/netgraph-red.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792946553},
         {
@@ -3569,6 +3586,14 @@
     {
       "id": "mega-kill",
       "mods": [
+        {
+          "name": "Break The Drum Mega Kill",
+          "styleLabel": null,
+          "image": {"src":"/mods/break-the-drum-mega-kill.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1793062291
+        },
         {"name":"Tcoaal Rampage","styleLabel":null,"image":{"src":"/mods/tcoaal-rampage.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792718488},
         {
           "name": "10000Weeping Choirs Mega-Kill",

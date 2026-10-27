@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1556,
+  "mods": 1557,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -791,6 +791,7 @@
         {"name":"Keeper of the Light Tamamo","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","legs","weapon","arms","belt"]},
         {"name":"Keeper of the Light Waitureally","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
         {"name":"Keeper of the Light Wings of Daybreak","categoryId":"hero-items","styleLabel":null,"slots":["mount"]},
+        {"name":"Kotl Obeisance Of The Keeper","categoryId":"hero-items","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
