@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1558,
+  "mods": 1559,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -73,6 +73,7 @@
         {"name":"Arc Warden Magician","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden The Duna","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","misc","head"]},
         {"name":"Arc Warden The Last Survivor","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","misc","head"]},
+        {"name":"Arc Warden Verity Warden","categoryId":"heroes","styleLabel":null,"slots":["back","misc"]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
