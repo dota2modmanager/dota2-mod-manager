@@ -25,6 +25,7 @@ import { portraitEntries } from './item-portraits.ts';
 import { summonModels, type ItemAssets, type PortraitSwap, type SpriteSwap } from './item-builder-assets.ts';
 import { styleOf } from './item-builder-styles.ts';
 import { basesHereSteps, withoutBaseFiles, type ReadyBase } from './arcana-bases.ts';
+import { ownModelsWin, pickModels, refitsOf, type PickModels } from './item-builder-refits.ts';
 import { isSelectorSlot, leftOut, personaAssets, personaRecords, personasOn, type BuildRecord } from './item-builder-personas.ts';
 import { createColoredBases, windowColor } from './arcana-base-color.ts';
 import type { BaseStore } from './arcana-base-store.ts';
@@ -34,7 +35,7 @@ import type { LibRecord } from './types.ts';
 import type { Library } from './library.ts';
 
 /** A pick of the item builder as built: its block, and the game's files under the plain paths. */
-type ItemPick = { id: string; block: string; assets: VpkEntry[] } & ItemAssets;
+type ItemPick = { id: string; block: string; own: string | null; assets: VpkEntry[] } & ItemAssets;
 
 /** How far a build is: the picks built anew so far out of those it has to, or the stage of the write. */
 export type BuildStep = { done: number; total: number } | { stage: 'merged' | 'checked' | 'packed' };
@@ -83,16 +84,17 @@ export function createTableBuild({ library, bases, log }: {
   /* A pick by item and effects, and by the base of its own arcana set when one is here: that base
    * fills some of the pick's paths, which the pick then does not build (gameAssetEntries skip). */
   const ownBase = (rec: LibRecord, ready: ReadyBase[]) => ready.find((r) => r.base.parts.includes(String(rec.itemId)));
-  const pickKey = (rec: BuildRecord, ready: ReadyBase[]) => {
+  // and by the refit another pick makes of its model (src/item-builder-refits.ts)
+  const pickKey = (rec: BuildRecord, ready: ReadyBase[], refit?: string) => {
     const own = ownBase(rec, ready);
-    return `${rec.itemId}|${itemBuilder.effectKey(rec.effectId)}${own ? `|${own.base.id}:${baseSignature(own)}` : ''}${rec.persona ? `@${rec.persona.target}` : ''}`;
+    return `${rec.itemId}|${itemBuilder.effectKey(rec.effectId)}${own ? `|${own.base.id}:${baseSignature(own)}` : ''}${rec.persona ? `@${rec.persona.target}` : ''}${refit ? `~${refit}` : ''}`;
   };
-  function builtPick(vanillaText: string, game: string, key: string, rec: BuildRecord, own: ReadyBase | undefined): ItemPick {
+  function builtPick(vanillaText: string, game: string, key: string, rec: BuildRecord, own: ReadyBase | undefined, refit: string | undefined): ItemPick {
     let pick = built.get(key);
     if (!pick) {
       // a summon's plain model, from the game's unit scripts: read only for an item that swaps one
       const summon: itemBuilder.SummonModels = (...args) => summonModels(sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk')))(...args);
-      const made = itemBuilder.itemEffectPatch(vanillaText, String(rec.itemId), rec.effectId, rec.persona?.target, summon);
+      const made = itemBuilder.itemEffectPatch(vanillaText, String(rec.itemId), rec.effectId, rec.persona?.target, summon, refit);
       pick = { ...made, assets: itemBuilder.gameAssetEntries(game, made.assetCopies, own && ((p) => own.paths.has(p))) };
       built.set(key, pick);
     }
@@ -140,21 +142,30 @@ export function createTableBuild({ library, bases, log }: {
     // persona's own items in, and what cannot be worn with it out (src/item-builder-personas.ts)
     const { records, left } = personaRecords(library.list().filter((r) => r.enabled !== false), vanillaText);
     for (const { rec, why } of left) log(`schema: ${rec.name} left out of the build: ${why}`);
-    const total = records.filter((r) => isItemPick(r) && !built.has(pickKey(r, ready))).length;
+    const models = new Map<BuildRecord, PickModels>();
+    for (const rec of records) {
+      const m = isItemPick(rec) ? pickModels(vanillaText, String(rec.itemId), rec.effectId) : null;
+      if (m) models.set(rec, m);
+    }
+    const refits = refitsOf(models);
+    const total = records.filter((r) => isItemPick(r) && !built.has(pickKey(r, ready, refits.get(r)))).length;
     const pak = path.join(game, 'dota', 'pak01_dir.vpk');
     if (total && fs.existsSync(pak)) yield* sharedVpkIndexSteps(pak);
     let done = 0;
+    const owned: { patch: schema.SchemaPatch; own: string | null }[] = [];
     for (const rec of records) {
       if (rec.categoryId === 'cosmetic') {
-        const fresh = isItemPick(rec) && !built.has(pickKey(rec, ready));
+        const fresh = isItemPick(rec) && !built.has(pickKey(rec, ready, refits.get(rec)));
         try {
           if (isItemPick(rec)) {
-            const key = pickKey(rec, ready);
-            const pick = builtPick(vanillaText, game, key, rec, ownBase(rec, ready));
+            const key = pickKey(rec, ready, refits.get(rec));
+            const pick = builtPick(vanillaText, game, key, rec, ownBase(rec, ready), refits.get(rec));
             used.add(key);
             const assets = rec.persona && !isSelectorSlot(rec.slot)
               ? personaAssets(rec, pick.assets, ready) : withoutBaseFiles(String(rec.itemId), pick.assets, ready);
-            out.push({ id: pick.id, block: pick.block, assets, source: rec.name });
+            const patch = { id: pick.id, block: pick.block, assets, source: rec.name };
+            out.push(patch);
+            owned.push({ patch, own: pick.own });
             sounds.push(...pick.sounds);
             voices.push(...pick.voices);
             portraits.push(...pick.portraits);
@@ -174,6 +185,7 @@ export function createTableBuild({ library, bases, log }: {
       if (!Array.isArray(rec.schema)) continue;
       for (const d of rec.schema) out.push({ id: d.id, block: d.block, source: rec.name });
     }
+    ownModelsWin(owned);
     // Two picks rewrite the same soundevents file, portrait settings and sprite sheet, and the build
     // keeps the first file of a path it is given: so every pick's go into one copy of each, ahead
     // of all other files.

@@ -217,8 +217,11 @@ function appendItemEffect(visuals: string, effect: ItemEffect): string {
  *   (src/item-builder-personas.ts personaRecords)
  * @param summon  the plain models of the hero's summons (item-builder-assets.ts summonModels), for an
  *   item that swaps one; without it the swap stays in the table and shows in hero demo only
+ * @param refit  the model another pick makes of this one's, to wear in its place where the game
+ *   has it (src/item-builder-refits.ts)
+ * @returns `own`: the stock path the item's model goes under, null when it wears none of its own
  */
-export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels): { id: string; block: string } & ItemAssets {
+export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels, refit?: string): { id: string; block: string; own: string | null } & ItemAssets {
   const source = findItem(baseText, itemId);
   if (!source) throw new Error(t('items_game: предмет {0} не найден', itemId));
   const target = targetId ? listItems(baseText).find((i) => i.id === targetId) || null : defaultItemForWearable(baseText, itemId);
@@ -241,7 +244,7 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
   const sourceModel = styled.model || sourceFields.get('model_player') || '';
   const targetModel = targetFields.get('model_player') || '';
   const underStock = !!sourceModel && !!targetModel && normalizeAssetPath(sourceModel) !== normalizeAssetPath(targetModel);
-  if (underStock) assets.assetCopies.unshift({ from: sourceModel, to: targetModel });
+  if (underStock) assets.assetCopies.unshift(...(refit ? [{ from: refit, to: targetModel, optional: true }] : []), { from: sourceModel, to: targetModel });
 
   const copiedHeroes = new Set(assets.assetCopies.flatMap((c) => ('hero' in c ? [c.hero] : 'unit' in c ? [c.unit] : [])));
   const copiedStock = new Set(assets.assetCopies.flatMap((c) => ('to' in c ? [normalizeAssetPath(c.to)] : [])));
@@ -259,5 +262,5 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
   if (underStock) patched = setScalarField(patched, 'model_player', targetModel);
   else if (styled.model) patched = setScalarField(patched, 'model_player', styled.model);
   patched = setVisualsBlock(patched, visuals);
-  return { id: target.id, block: patched, ...assets };
+  return { id: target.id, block: patched, own: underStock ? `${normalizeAssetPath(targetModel)}_c` : null, ...assets };
 }

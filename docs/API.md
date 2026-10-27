@@ -72,6 +72,7 @@ the code, not in this page.
 | [`src/item-builder-assets.ts`](#srcitem-builder-assetsts) | What an item builder pick needs beyond its block in items_game: the game's files it puts under |
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
 | [`src/item-builder-personas.ts`](#srcitem-builder-personasts) | Personas in the item builder: a hero's second look, with slots and items of its own. |
+| [`src/item-builder-refits.ts`](#srcitem-builder-refitsts) | Refits: an item's model made again to fit a body another item gives the hero. Faceless Void's |
 | [`src/item-builder-slots.ts`](#srcitem-builder-slotsts) | The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit |
 | [`src/item-builder-styles.ts`](#srcitem-builder-stylests) | An item's styles in the item builder: which ones it has, and its visuals with one of them made |
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
@@ -3390,7 +3391,8 @@ plain in a lobby while hero demo showed Infernus (issue #334). Any other unit's 
 Rubick's arcana reshapes Spirit Bear and a dozen other heroes' summons for when he steals them.
 So is a model swap for anything but a stock item of the hero's: Queen of Pain's arcana lists 40,
 nearly all refits of paid shoulders to its body, and under their plain paths everyone wearing
-one would have the refit (and one of them is not in the game's files at all). The stock ones are
+one would have the refit (and one of them is not in the game's files at all); a pick of such a
+shoulder worn with the arcana takes its refit instead (src/item-builder-refits.ts). The stock ones are
 what is worn under the arcana: Zeus's vest and bracers become an invisible box, its body has them.
 Some items number their entries (asset_modifier0, asset_modifier1: Zeus's and Phantom Assassin's
 arcanas), and those were read as no entries at all.
@@ -3613,6 +3615,62 @@ export function personaAssets(rec: BuildRecord, assets: VpkEntry[], ready: Ready
 A persona slot's files over the persona's base. The base wins wherever it has a file, its
 particles rebuilt to fit the body, except at the slot's own model: there a pick wins, and the
 game's own item wins over an empty model but not over one rebuilt by hand (Mirana's mount).
+
+## src/item-builder-refits.ts
+
+Refits: an item's model made again to fit a body another item gives the hero. Faceless Void's
+arcana is a body of its own, and Valve made some thirty of his items again for it (Bracers of
+Aeons, Jewel of Aeons, his stock bracers, belt and shoulders); the arcana's visuals name each one
+as a "model" swap of the item's model, which the game makes while both are worn. Drow's arcana
+does the same for her quivers and for its own set's bow, which becomes the crossbow.
+
+The builder puts a pick's model under its slot's stock path (src/item-builder.ts), where the
+game's swap of the paid model never reaches it: the plain model went on the arcana's body and sat
+wrong on it, and the arcana's refit of the stock item fought it for the same path, the first pick
+in the library winning. The report of 2026-10-27: Void's arms, shoulders and belt broken under
+the arcana, Drow's Dread Retribution bow gone in the menu and shrunk in a match. So the build
+(src/schema-build.ts) gives a pick the refit any other pick makes of its model, and lets a pick's
+own model keep its stock path over another pick's swap of the stock model there.
+
+### `PickModels`
+
+```ts
+export interface PickModels { model: string; swaps: Map<string, string> }
+```
+
+What a pick wears, and what it makes of other items' models, as normalizeAssetPath writes them.
+
+### `pickModels`
+
+```ts
+export function pickModels(text: string, itemId: string, effectIds: string | string[] | null | undefined): PickModels | null
+```
+
+The model a pick wears in its chosen style, and the model swaps that style makes: the ones with
+no style or the first, as src/item-builder-assets.ts itemAssets reads them, after withStyle has
+made the chosen one the first.
+
+### `refitsOf`
+
+```ts
+export function refitsOf<K>(picks: Map<K, PickModels>): Map<K, string>
+```
+
+Each pick's refit: the model another pick makes of the one it wears. Not its own swaps: an item
+that refits its own model does it for another body than the one it brings.
+
+### `ownModelsWin`
+
+```ts
+export function ownModelsWin(picks: { patch: { assets?: VpkEntry[] }; own: string | null }[]): void
+```
+
+A pick's own model keeps its stock path: another pick's file at that path is taken out of that
+pick. The arcana's refit of the stock bracers is for when no bracers are picked.
+
+```
+@param picks  each pick's patch, and the stock path its own model goes under as entryPath writes it
+```
 
 ## src/item-builder-slots.ts
 
@@ -3872,7 +3930,7 @@ The stock default_item that matches a wearable by slot and by the hero(es) that 
 ### `itemEffectPatch`
 
 ```ts
-export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels): { id: string; block: string } & ItemAssets
+export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels, refit?: string): { id: string; block: string; own: string | null } & ItemAssets
 ```
 
 Turn one paid wearable into the hero's stock item for that slot.
@@ -3893,6 +3951,9 @@ when it is created, and a reconnect keeps them.
 (src/item-builder-personas.ts personaRecords)
 @param summon  the plain models of the hero's summons (item-builder-assets.ts summonModels), for an
 item that swaps one; without it the swap stays in the table and shows in hero demo only
+@param refit  the model another pick makes of this one's, to wear in its place where the game
+has it (src/item-builder-refits.ts)
+@returns `own`: the stock path the item's model goes under, null when it wears none of its own
 ```
 
 ## src/item-portraits.ts

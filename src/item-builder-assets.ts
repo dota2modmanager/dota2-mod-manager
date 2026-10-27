@@ -81,7 +81,8 @@ const FORM = /^models\/heroes\//;
  * Rubick's arcana reshapes Spirit Bear and a dozen other heroes' summons for when he steals them.
  * So is a model swap for anything but a stock item of the hero's: Queen of Pain's arcana lists 40,
  * nearly all refits of paid shoulders to its body, and under their plain paths everyone wearing
- * one would have the refit (and one of them is not in the game's files at all). The stock ones are
+ * one would have the refit (and one of them is not in the game's files at all); a pick of such a
+ * shoulder worn with the arcana takes its refit instead (src/item-builder-refits.ts). The stock ones are
  * what is worn under the arcana: Zeus's vest and bracers become an invisible box, its body has them.
  * Some items number their entries (asset_modifier0, asset_modifier1: Zeus's and Phantom Assassin's
  * arcanas), and those were read as no entries at all.
