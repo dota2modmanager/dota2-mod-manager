@@ -159,6 +159,48 @@ test('a file deleted by hand makes the base not ready, and the next want brings 
   assert.ok(next.entries('bladeform_legacy'));
 });
 
+test("two bases coming down at once keep each other's files: the first one whole does not sweep the second's", async (t) => {
+  /* Anti-Mage's and Invoker's bases came down together on 2026-10-27, and Anti-Mage's sweep took a
+     file Invoker's had already brought: his base was ready with a file missing, every build that
+     run made him from the game's files, and his plain dress showed under the persona. */
+  const r = repo({
+    ...JUGG,
+    'src/acolyte/models/heroes/invoker/invoker.vmdl_c': 'kid',
+    'src/acolyte/models/heroes/invoker/invoker/invoker_kid_vmorf.vtex_c': 'morph',
+    'src/acolyte/models/heroes/invoker/invoker_dress.vmdl_c': 'empty',
+  });
+  let release = () => {};
+  const held = new Promise<void>((resolve) => { release = resolve; });
+  const fetchUrl: typeof r.fetchUrl = async (url, opts) => {
+    if (url.endsWith('invoker_dress.vmdl_c')) await held;
+    return r.fetchUrl(url, opts);
+  };
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-basestore-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const s = createBaseStore({ dir, fetchUrl });
+  const invoker = s.want('acolyte');
+  // the kid's body and morph are on the disk, his dress still coming, when Juggernaut's is whole
+  while (!fs.existsSync(path.join(dir, 'blobs', blobSha(Buffer.from('morph'))))) await new Promise((resolve) => setTimeout(resolve, 1));
+  assert.equal(await s.want('bladeform_legacy'), true);
+  release();
+  assert.equal(await invoker, true);
+  assert.deepEqual(s.entries('acolyte')?.map(entryPath).sort(), [
+    'models/heroes/invoker/invoker.vmdl_c', 'models/heroes/invoker/invoker/invoker_kid_vmorf.vtex_c', 'models/heroes/invoker/invoker_dress.vmdl_c',
+  ]);
+  assert.ok(s.entries('bladeform_legacy'));
+});
+
+test('a base missing a file is brought down again by the next want of the same run', async (t) => {
+  const r = repo(JUGG);
+  const { s, dir, ready } = store(t, r);
+  await s.want('bladeform_legacy');
+  fs.rmSync(path.join(dir, 'blobs', blobSha(Buffer.from('body'))));
+  assert.equal(s.entries('bladeform_legacy'), null);
+  assert.equal(await s.want('bladeform_legacy'), true, 'not the answer from before the file went');
+  assert.ok(s.entries('bladeform_legacy'));
+  assert.deepEqual(ready, ['bladeform_legacy', 'bladeform_legacy'], 'and the build is asked to run again');
+});
+
 test('a base the repository does not have is said so, and nothing is kept', async (t) => {
   const r = repo(JUGG);
   const { s, said } = store(t, r);

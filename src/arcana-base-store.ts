@@ -123,6 +123,8 @@ export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetch
   /** bases asked for this run, so a build that runs ten times asks the network once */
   const asked = new Map<string, Promise<boolean>>();
   const failedAt = new Map<string, number>();
+  /** the files of each base coming down now, which no sweep may take before it is ready */
+  const coming = new Map<string, Record<string, string>>();
 
   async function fetchListing(): Promise<Listing> {
     const cached = readJson<{ etag?: string; bases?: Listing }>(listingFile, {});
@@ -169,9 +171,13 @@ export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetch
     fs.renameSync(tmp, blobPath(sha));
   }
 
-  /** Files no base here uses any more: an old version's, once the new one is whole. */
+  /**
+   * Files no base here uses any more: an old version's, once the new one is whole. Not those of a
+   * base still coming down: Anti-Mage's base whole swept a file Invoker's had already brought, and
+   * his was then ready with it missing (2026-10-27).
+   */
   function sweep(have: Listing) {
-    const used = new Set(Object.values(have).flatMap((files) => Object.values(files)));
+    const used = new Set([...Object.values(have), ...coming.values()].flatMap((files) => Object.values(files)));
     let names: string[] = [];
     try { names = fs.readdirSync(blobs); } catch { return; }
     for (const n of names) if (!used.has(n.replace(/\.part$/, ''))) fs.rmSync(path.join(blobs, n), { force: true });
@@ -191,7 +197,12 @@ export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetch
     if (sameFiles(ready()[id], files) && Object.values(files).every((sha) => fs.existsSync(blobPath(sha)))) return false;
     const queue = Object.entries(files);
     const worker = async () => { for (let next = queue.shift(); next; next = queue.shift()) await bring(id, next[0], next[1]); };
-    await Promise.all(Array.from({ length: PARALLEL }, worker));
+    coming.set(id, files);
+    try {
+      await Promise.all(Array.from({ length: PARALLEL }, worker));
+    } finally {
+      coming.delete(id);
+    }
     const have = { ...ready(), [id]: files };
     writeJson(readyFile, have);
     sweep(have);
@@ -206,7 +217,9 @@ export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetch
       try {
         return Object.entries(files).map(([rel, sha]) => entryAt(rel, fs.readFileSync(blobPath(sha))));
       } catch {
-        return null; // a file deleted by hand: brought down again by the next want
+        // a file gone from the disk: brought down again by the next want, in this run and not the next
+        asked.delete(id);
+        return null;
       }
     },
 
