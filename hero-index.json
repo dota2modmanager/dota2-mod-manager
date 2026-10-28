@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1559,
+  "mods": 1560,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -785,6 +785,7 @@
         {"name":"Keeper of the Light Darklord","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon","belt","arms","misc"]},
         {"name":"Keeper Of The Light Ded Na Fernando","categoryId":"heroes","styleLabel":null,"slots":["misc","mount","arms","head"]},
         {"name":"Keeper of the Light Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Keeper Of The Light Invisible Horse","categoryId":"heroes","styleLabel":null,"slots":["misc","mount"]},
         {"name":"Keeper of the Light Northlight Illuminance","categoryId":"herofx","styleLabel":null,"slots":[]},
         {"name":"Keeper of the Light Prominence","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Keeper of the Light Renegade","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon"]},
