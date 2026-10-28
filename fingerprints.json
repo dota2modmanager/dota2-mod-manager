@@ -1,5 +1,5 @@
 {
-  "count": 1779,
+  "count": 1780,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -477,6 +477,7 @@
     "483c3983f6b92c9dea2c3d2ef3904f2ad499d627": [{"name":"Anti-Mage Fervent Conscript","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "48468fac0be233dd6e2b146fcecb7f8284afd7f9": [{"name":"Dragon Knight Fire","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "487a9bbba26a2538fc80f4e549ce30ac2d8ead1f": [{"name":"Alchemist Radiance Blades","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
+    "4891393db9d329609b2f5b812eb80c23ad07945b": [{"name":"Hero Auto Pick","categoryId":"parts","styleLabel":null,"type":"vpk"}],
     "48bdc08d1190fc3a57af2295a80dcb182582740a": [{"name":"Purple Top Bar","categoryId":"parts","styleLabel":null,"type":"vpk"}],
     "48de643c5b8e63a0fcfd58471ab13337714025b7": [{"name":"Cone Trees","categoryId":"trees","styleLabel":null,"type":"vpk"}],
     "48e4b8dca638e6f0540c744a9ba9459c9e0f57ca": [{"name":"Abaddon Calavera","categoryId":"heroes","styleLabel":null,"type":"vpk"}],

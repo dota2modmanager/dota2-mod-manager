@@ -1,5 +1,5 @@
 {
-  "count": 1731,
+  "count": 1732,
   "mods": {
     "ancient/Ancient Dragon King": {"name":"Ancient Dragon King","categoryId":"ancient","styleLabel":null,"dirs":{"kisilev_ind/models/ancient":["new_bloom_dragon.vmat_c","new_bloom_dragon_dire.vmat_c","new_bloom_dragon_hair.vmat_c","new_bloom_dragon_hair_dire.vmat_c","new_bloom_dragon_kisilev_ind.vmdl_c","new_bloom_dragon_outline.vmat_c"],"kisilev_ind/particles/ancient":["ancient_dragon_roar.vpcf_c","bad_ancient_ambient.vpcf_c","bad_ancient_dragon.vpcf_c","bad_ancient_dragon_ambient.vpcf_c","good_ancient001_ambient.vpcf_c","radiant_ancient_dragon.vpcf_c"],"particles/dire_fx":["bad_ancient_ambient.vpcf_c"],"particles/radiant_fx2":["good_ancient001_ambient.vpcf_c"]}},
     "ancient/Frostivus Ancient": {"name":"Frostivus Ancient","categoryId":"ancient","styleLabel":null,"dirs":{"materials/models/props_structures":["bad_ancient001.vmat_c","bad_ancient002.vmat_c","good_ancient001.vmat_c","good_ancient002.vmat_c","radiant_ancient001.vmat_c"],"models/props_structures":["bad_ancient002.vmdl_c","dire_ancient_base001.vmdl_c","good_ancient001.vmdl_c","radiant_ancient001.vmdl_c"]}},
@@ -54611,6 +54611,7 @@
     "parts/Grey Minimap": {"name":"Grey Minimap","categoryId":"parts","styleLabel":null,"dirs":{"materials/overviews":["dota_minimal.vmat_c","dota_minimal.vtex_c","dota_minimal_psd_f4e53729.vtex_c"],"panorama/images/minimap":["dotamap_psd.vtex_c"]}},
     "parts/Grey Play Button": {"name":"Grey Play Button","categoryId":"parts","styleLabel":null,"dirs":{"panorama/styles":["play.vcss_c"]}},
     "parts/Grey Search Bar": {"name":"Grey Search Bar","categoryId":"parts","styleLabel":null,"dirs":{"panorama/styles":["dotastyles.vcss_c","play.vcss_c"]}},
+    "parts/Hero Auto Pick": {"name":"Hero Auto Pick","categoryId":"parts","styleLabel":null,"dirs":{"panorama/layout":["play.vxml_c"],"panorama/scripts":["autopick.vjs_c"],"panorama/styles":["play.vcss_c"]}},
     "parts/Hypergamy Search Bar": {"name":"Hypergamy Search Bar","categoryId":"parts","styleLabel":null,"dirs":{"panorama/images/textures":["playtabbg_bots_psd.vtex_c","playtabbg_normal_psd.vtex_c","playtabbg_ranked_psd.vtex_c"]}},
     "parts/Kaneki Mach": {"name":"Kaneki Mach","categoryId":"parts","styleLabel":null,"dirs":{"panorama/images/game_modes":["all_pick_psd.vtex_c","turbo_psd.vtex_c"]}},
     "parts/Kaneki Mach V1.2": {"name":"Kaneki Mach V1.2","categoryId":"parts","styleLabel":null,"dirs":{"panorama/images/game_modes":["all_pick_psd.vtex_c","turbo_psd.vtex_c"]}},

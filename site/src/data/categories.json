@@ -2723,6 +2723,14 @@
     {
       "id": "parts",
       "mods": [
+        {
+          "name": "Hero Auto Pick",
+          "styleLabel": null,
+          "image": {"src":"/mods/hero-auto-pick.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1793169329
+        },
         {"name":"Black Top Bar 2","styleLabel":null,"image":{"src":"/mods/black-top-bar-2.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1793139107},
         {"name":"Blue Top Bar","styleLabel":null,"image":{"src":"/mods/blue-top-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1793139107},
         {"name":"Green Top Bar","styleLabel":null,"image":{"src":"/mods/green-top-bar.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1793139107},
