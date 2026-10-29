@@ -210,9 +210,9 @@ those sources (Source 2 Viewer's export) is the next half and is not here yet.
 ## Presets
 
 A preset is the set of enabled mods, and the looks from the game that were on, kept slot by slot
-(`src/library.ts` picksOn). Applying one switches its mods on and every other mod off, and puts
-each look on in its slot; a slot it does not name keeps what it has, so a courier picked after the
-preset was saved stays on. It travels two ways.
+(`src/library.ts` picksOn). Applying one switches its mods on and every other mod off, and the same
+for the looks: each of its own on in its slot, every other one off, kept in My mods. A preset of 20
+is 20 whatever was on before. It travels two ways.
 
 **As a link.** `src/preset-link.ts` encodes catalog identities, not file names, into
 `d2mm://preset/<code>`, and a look as its slot and item: deflate, base64url, a code short enough for a chat message. Catalog file

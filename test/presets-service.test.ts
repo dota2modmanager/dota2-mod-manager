@@ -301,7 +301,7 @@ test('a received file parks as a preset, keeping the archive only when it carrie
 
 // ---------- the looks in a preset (issue #284) ----------
 
-test('a preset keeps the looks that were on, and applying it puts each back in its slot while leaving the slots it does not name alone', async (t) => {
+test('a preset keeps the looks that were on, and applying it puts each back in its slot and switches every other look off', async (t) => {
   const s = stand(t);
   s.pick('item:juggernaut:body', '9059', 'Bladeform Legacy', 'style-1');
   s.pick('weather', '4000', 'Weather Snow');
@@ -321,8 +321,17 @@ test('a preset keeps the looks that were on, and applying it puts each back in i
   const on = (slot: string) => s.library.list().find((r) => r.categoryId === 'cosmetic' && r.slot === slot && r.enabled !== false);
   assert.equal(on('weather')?.itemId, '4000', 'its weather back');
   assert.equal(on('item:juggernaut:body')?.effectId, 'style-1');
-  assert.equal(on('courier')?.itemId, '700', 'the courier it does not name stays on');
+  assert.equal(on('courier'), undefined, 'a preset of 20 is 20: the courier it does not name goes off');
+  assert.ok(s.library.list().some((r) => r.slot === 'courier' && r.itemId === '700'), 'switched off, not deleted: My mods still has it');
   assert.equal(s.calls.at(-1), 'refresh', 'and the table built once, at the end');
+
+  // a preset saved with no looks on at all puts every look off
+  s.library.savePreset('Bare');
+  s.pick('courier', '700', 'Golden Courier');
+  const bare = s.library.listPresets().find((p) => p.name === 'Bare')!;
+  bare.picks = [];
+  await s.svc.applyPreset(bare);
+  assert.equal(s.library.list().filter((r) => r.categoryId === 'cosmetic' && r.enabled !== false).length, 0);
 });
 
 test('a preset saved before it kept looks leaves every look as it is, and the remote switch keeps them off', async (t) => {

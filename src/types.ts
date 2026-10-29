@@ -82,7 +82,7 @@ export interface Preset {
   id: string;
   name: string;
   mods?: ModIdentity[];
-  /** the looks it puts on, slot by slot; a preset saved before it had them leaves every look alone */
+  /** the looks it puts on, slot by slot, every other one going off; a preset saved before it had them leaves every look alone */
   picks?: PresetPick[];
   /** how presets were written before they held identities: ids of installed records */
   modIds?: string[];

@@ -596,17 +596,21 @@ on every pull request and installed only on a tag.
 a screenshot per launch, the window's own step report and the app log; `.github/workflows/sim.yml`
 and `.github/workflows/update.yml`.
 
-### A preset puts its looks back slot by slot, and leaves the others
+### A preset is the whole state, looks included
 
 Until 2.14.0 a preset held mods only, on purpose: applying a build used to switch off every free
 look it did not name, and people lost their courier and wards to a preset that had never mentioned
 them. So the looks were left out, and a build made with the item builder came back without any of
 it ([#284](https://github.com/dota2modmanager/dota2-mod-manager/issues/284)).
 
-Now a preset keeps the looks that were on, slot by slot, apart from its mods. Applying it puts each
-look on in its slot and leaves every slot it does not name as it is. The cost: a preset cannot say
-"nothing in this slot", and switching from one hero's build to another's leaves the first hero
-dressed. A preset saved before 2.14.0 keeps no looks and changes none.
+Since then a preset keeps the looks that were on, slot by slot, apart from its mods. Until
+2026-10-29 applying one put each of its looks on and left every slot it did not name as it was, so
+switching from a build of a hundred to a build of twenty added to the hundred, and the first hero
+stayed dressed. Now a preset's looks are switched as its mods are: its own on, every other look
+off, nothing deleted, each kept in My mods to be put on again. That is safe for the reason the old
+rule was not: a preset that knows which looks were on can say which were not. The cost: a courier
+picked after a preset was saved goes off when it is applied, and has to be saved into it. A preset
+saved before 2.14.0 keeps no looks and changes none.
 
 *Check:* `node --test test/presets-service.test.ts`, the tests under "the looks in a preset".
 

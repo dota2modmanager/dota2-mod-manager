@@ -157,14 +157,14 @@ export class Library {
    * it is a pick written into the item table, and it exists only while safe mode is off. Folding
    * the two together is what made applying a build silently strip somebody's courier and wards:
    * they were not in the preset, so the apply turned them off. A preset keeps its looks apart,
-   * slot by slot (picksOn), and puts back only the slots it names. */
+   * slot by slot (picksOn), and a preset saved before it kept them leaves every look alone. */
   static inPreset(rec: Pick<LibRecord, 'categoryId'> | null | undefined): boolean {
     return !!rec && rec.categoryId !== 'cosmetic';
   }
 
-  /* The looks that are on, as a preset keeps them (issue #284): slot by slot, apart from the mods,
-   * because applying a preset puts each of them on in its slot and leaves the slots it does not
-   * name as they are. A courier picked after the preset was saved stays on. */
+  /* The looks that are on, as a preset keeps them (issue #284): slot by slot, apart from the mods.
+   * Applying the preset puts each of them on in its slot and every other look off, as it does the
+   * mods (src/presets-service.ts applyPreset). */
   picksOn(): PresetPick[] {
     return this.data.installed.filter((m) => m.enabled !== false && Library.isPick(m)).map(Library.pickOf);
   }

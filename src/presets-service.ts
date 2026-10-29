@@ -1,7 +1,7 @@
 /* Presets, and the two ways one travels to somebody else.
  *
- * A preset is a named set of "these mods on, everything else off", and the looks that go on in
- * the slots it names (Library.picksOn). Sharing is what makes this
+ * A preset is a named set of "these mods on, everything else off", and the same for the looks
+ * (Library.picksOn). Sharing is what makes this
  * more than a list: a preset that only names catalog mods is a few hundred bytes and installs
  * from the catalog on the other end, while one that has to carry a mod's own bytes can run to
  * hundreds of megabytes. Which of the two a given preset is depends on where its mods came
@@ -142,15 +142,16 @@ export function presetsService({ catalog, installer, library, schemaService, dep
   }
 
   /**
-   * Enable exactly the preset's mods, disable everything else, and put its looks on, each in its
-   * slot. A slot the preset does not name keeps what it has (see Library.picksOn).
+   * Enable exactly the preset's mods, disable everything else, and the same for its looks: each
+   * of them on in its slot, and every other look off, kept in My mods to be put on again. A preset
+   * saved before it kept looks (no `picks`) has nothing to say about them and leaves them be.
    * @param opts.picks  false: the looks are switched off for now (the remote config), mods only
    */
   async function applyPreset(preset: Preset, { picks = true } = {}): Promise<string[]> {
     const wanted = new Set(library.presetModIds(preset));
     const errors: string[] = [];
-    // Free cosmetics are not among the mods (see Library.inPreset): a preset that does not name
-    // somebody's courier is not asking for it to be taken off. Its own looks go on further down.
+    // Free cosmetics are not among the mods (see Library.inPreset): they are the preset's looks,
+    // switched further down, and only by a preset that kept them.
     const recs = library.list().filter((r) => Library.inPreset(r));
     let schemaTouched = false;
     // off first, then on: two cursor sets cannot be live at once, so the outgoing one has to
@@ -168,8 +169,16 @@ export function presetsService({ catalog, installer, library, schemaService, dep
         }
       }
     }
-    if (picks) {
-      for (const p of preset.picks || []) {
+    if (picks && Array.isArray(preset.picks)) {
+      // A preset of 20 left the looks of a build of 100 on in every slot it did not name, so going
+      // from one to the other was adding to it (J0nathan550, 2026-10-29): the preset is the state
+      const named = new Set(preset.picks.map((p) => `${p.slot}|${p.itemId}`));
+      for (const rec of library.list()) {
+        if (rec.enabled === false || !Library.isPick(rec) || named.has(`${rec.slot}|${rec.itemId}`)) continue;
+        library.setEnabled(rec.id, false);
+        schemaTouched = true;
+      }
+      for (const p of preset.picks) {
         try {
           schemaService.pickCosmetic(p.slot, p.itemId, p.name, p.effectId, { write: false });
           schemaTouched = true;
