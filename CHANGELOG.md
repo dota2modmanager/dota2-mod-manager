@@ -2,6 +2,35 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.18.0
+
+### How many people took a mod
+
+A catalog card shows how many times people installed that mod through the app, and the toolbar can
+sort by it: pick "Most downloaded first". The numbers come from the D2PFX counter.
+
+Each install you make adds one to that mod's count. The app sends only the mod's name and look, with
+no account, no install ID and nothing about your computer. If you would rather not be counted,
+turn off "Count my downloads" in Settings, under Catalog. The counts stay on the cards either way.
+When the counter is down, the cards show no number and installs work as before.
+
+### Items and heroes
+
+- Under Faceless Void's arcana, Bracers of Aeons, Jewel of Aeons and the Claszian Apostasy Belt
+  wear the refit Valve made for the arcana's body. Before, they came out broken. Drow Ranger's
+  Dread Retribution bow shows again under her arcana, at its full size.
+- Items you pick keep their model even when another pick swaps the stock model on the same slot.
+- Personas get their own default items every time. Before, an assembly sometimes dressed a persona
+  in the base model's items.
+
+### Catalog and window
+
+- Long lists draw a page at a time while you scroll, so a category with six hundred heroes opens
+  without the wait.
+- The help menu opens over the catalog toolbar instead of under it.
+- In the blood theme, the streaks run down once and stay. The floor stains no longer turn darker
+  where they overlap.
+
 ## 2.17.0
 
 ### The night begins again
