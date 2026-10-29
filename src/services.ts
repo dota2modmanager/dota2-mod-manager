@@ -21,6 +21,8 @@ import { Fingerprints } from './fingerprints.ts';
 import * as discordAuth from './discord-auth.ts';
 import { DiscordPresence } from './discord-presence.ts';
 import { buildBar, builderStamp, createSchemaService } from './schema-service.ts';
+import { quitAfterBuild } from './quit-after-build.ts';
+import { electron } from './electron.ts';
 import { createUpdateImpact, impactMods } from './update-impact.ts';
 import { createArcanaService, type Generated } from './arcana-service.ts';
 import { createBaseStore } from './arcana-base-store.ts';
@@ -108,6 +110,8 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   // the arcana window's Terrorblade leaves the paths the builder's picks fill to them
   const schemaService = createSchemaService({ settings, library, installer, userDataDir: userData, log: diag, bases, onBuild,
     onDeployed: (filled) => arcana.giveWay(filled), modsOff: () => installer.masterIsOff() });
+  // the window closed while the table was written left the game a change behind (src/quit-after-build.ts)
+  quitAfterBuild(electron().app, { busy: schemaService.busy, settled: schemaService.settled, log: diag });
   // which installed mods a Dota update reached (src/update-impact.ts)
   const updateImpact = createUpdateImpact({
     file: path.join(userData, 'update-impact.json'),

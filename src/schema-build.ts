@@ -277,6 +277,9 @@ export function createBackgroundBuilds(steps: () => Generator<BuildYield, Refres
       return answer;
     },
 
+    /** Whether a build is running or asked for and has not answered: quitting waits (src/quit-after-build.ts). */
+    busy: () => waiting.length > 0,
+
     /** Resolves once no build is running or asked for: the Play button waits on it. */
     async settled(): Promise<void> {
       for (let last = null as Promise<void> | null; last !== chain;) {
