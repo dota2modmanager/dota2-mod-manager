@@ -2,6 +2,29 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.19.0
+
+### Support the project
+
+From the third launch, a window asks for two things, both free: a star on GitHub, and a few
+words about the app somewhere people talk about Dota mods. It says why each one helps. Stars bring
+developers who add features and fix the app. Being better known gets us free code signing from
+SignPath, so Windows stops warning about an "unknown publisher".
+
+"Remind me later" puts it away for a week, three times at most. "Already done" or either button
+in it closes it for good. Settings has a "How to support the project" button that opens it
+any time.
+
+### Settings
+
+- The About block is regrouped: the support button first, then the version with "What's new"
+  and "Source code", then the credits in one table, then the licence.
+
+### Fixed
+
+- A mod with several looks shows the downloads of all its looks together. Before, Tidehunter's
+  arcana showed 12 instead of 778.
+
 ## 2.18.0
 
 ### How many people took a mod
