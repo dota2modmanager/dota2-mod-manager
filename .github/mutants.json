@@ -998,8 +998,16 @@
       "name": "the item table is written into the game with the patch switched off",
       "file": "src/schema-service.ts",
       "anchor": "  function refresh() {",
-      "from": "if (!settings.get('schemaPatch')) return drop();",
-      "to": "if (false) return drop();",
+      "from": "if (!settings.get('schemaPatch') || modsOff()) return drop();",
+      "to": "if (modsOff()) return drop();",
+      "test": "test/schema-service.test.ts"
+    },
+    {
+      "name": "the item table stays in the game with every mod switched off",
+      "file": "src/schema-service.ts",
+      "anchor": "  function refresh() {",
+      "from": "if (!settings.get('schemaPatch') || modsOff()) return drop();",
+      "to": "if (!settings.get('schemaPatch')) return drop();",
       "test": "test/schema-service.test.ts"
     },
     {

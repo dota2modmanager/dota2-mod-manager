@@ -92,16 +92,16 @@ const NO_INSTALLER: SchemaInstaller = {
   installedSize: () => { throw new Error('the installer was not meant to be asked'); },
 };
 
-function service(t: TestContext, { values = {}, installer = NO_INSTALLER, text = GAME_TABLE, bases, onBuild } = {} as {
+function service(t: TestContext, { values = {}, installer = NO_INSTALLER, text = GAME_TABLE, bases, onBuild, modsOff } = {} as {
   values?: Record<string, unknown>; installer?: SchemaInstaller; text?: string; bases?: Parameters<typeof createSchemaService>[0]['bases'];
-  onBuild?: Parameters<typeof createSchemaService>[0]['onBuild'];
+  onBuild?: Parameters<typeof createSchemaService>[0]['onBuild']; modsOff?: () => boolean;
 }) {
   const g = game(t, text);
   fs.mkdirSync(g.userData, { recursive: true });
   const library = new Library(g.userData);
   const settings = settingsIn({ dotaGamePath: g.game, schemaPatch: false, ...values });
   const said: string[] = [];
-  const svc = createSchemaService({ settings, library, installer, userDataDir: g.userData, log: (m) => said.push(m), bases, onBuild });
+  const svc = createSchemaService({ settings, library, installer, userDataDir: g.userData, log: (m) => said.push(m), bases, onBuild, modsOff });
   return { ...g, library, settings, svc, said };
 }
 
@@ -169,6 +169,23 @@ test('a mod switched off leaves the table, and with nothing left the table goes'
   assert.deepEqual(s.svc.refresh(), { ok: true, deployed: false, patches: 0 });
   assert.equal(schema.isDeployed(s.game, patcher.FOLDER), false, 'an empty table is not written');
   assert.equal(s.svc.state().mods, 0);
+});
+
+test('with every mod off the table goes, cosmetics and all, and comes back when they are on', (t) => {
+  let off = false;
+  const s = service(t, { values: { schemaPatch: true }, modsOff: () => off });
+  modWith(s.library, 'Rifle mod', [riflePatch('models/mod/rifle.vmdl')]);
+  s.svc.setEnabled(true);
+  assert.equal(schema.isDeployed(s.game, patcher.FOLDER), true);
+
+  off = true;
+  assert.deepEqual(s.svc.refresh(), { ok: true, deployed: false, patches: 0 });
+  assert.equal(schema.isDeployed(s.game, patcher.FOLDER), false, '"mods off" said vanilla, and the picked items stayed on');
+  assert.equal(s.settings.get('schemaPatch'), true, 'the patch itself stays on: safe mode is a switch of its own');
+
+  off = false;
+  assert.equal((s.svc.refresh() as { deployed?: boolean }).deployed, true);
+  assert.match(deployedTable(s.game) as string, /models\/mod\/rifle\.vmdl/);
 });
 
 // ---------- a Dota update ----------

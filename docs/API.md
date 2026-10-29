@@ -7561,7 +7561,7 @@ The patch and the built table as Settings shows them; the patcher's own state is
 ### `createSchemaService`
 
 ```ts
-export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {}, onDeployed = () => {} }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; bases?: Pick<BaseStore, 'entries' | 'want'>; onBuild?: (step: BuildStep | null) => void; onDeployed?: (filled: Set<string>) => void; })
+export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {}, onDeployed = () => {}, modsOff = () => false }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; bases?: Pick<BaseStore, 'entries' | 'want'>; onBuild?: (step: BuildStep | null) => void; onDeployed?: (filled: Set<string>) => void; modsOff?: () => boolean; })
 ```
 
 The item table and the search-path patch, kept in step with the library and the installed game.

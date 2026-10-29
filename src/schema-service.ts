@@ -64,13 +64,15 @@ export interface SchemaState extends Partial<patcher.PatchState> {
  * @param deps.onBuild how far a build in the background is (refreshInBackground), null when it ended
  * @param deps.onDeployed the paths, lowercased, the written table's picks fill (none once it is
  *   taken off): the arcana window's Terrorblade gives them up (src/arcana-service.ts giveWay)
+ * @param deps.modsOff whether the master switch has every mod off (installer.masterIsOff)
  */
 /** The item table and the search-path patch, kept in step with the library and the installed game. */
-export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {}, onDeployed = () => {} }: {
+export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {}, onDeployed = () => {}, modsOff = () => false }: {
   settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void;
   bases?: Pick<BaseStore, 'entries' | 'want'>;
   onBuild?: (step: BuildStep | null) => void;
   onDeployed?: (filled: Set<string>) => void;
+  modsOff?: () => boolean;
 }) {
   const backupDir = path.join(userDataDir, 'backups', 'patch');
   const gamePath = () => settings.get('dotaGamePath');
@@ -118,7 +120,10 @@ export function createSchemaService({ settings, library, installer, userDataDir,
         onDeployed(new Set());
         return { ok: true, deployed: false, patches: 0 };
       };
-      if (!settings.get('schemaPatch')) return drop();
+      // the master switch renames the paks in the language folder; the table is in a folder of
+      // its own, so it stayed and the picked cosmetics with it while "mods off" said vanilla. It
+      // goes, and the switch turned on builds it again (src/ipc-library.ts mods:setMaster)
+      if (!settings.get('schemaPatch') || modsOff()) return drop();
       // through the cache, not around it: this runs on every mod removed, enabled or
       // switched off, and re-extracting 50 MB from the game's pak each time was the wait
       const base = vanillaBase();

@@ -165,3 +165,14 @@ test('before a terrain goes in, the map archive already there is named as ours, 
   s.installer.langFolder = (() => { throw new Error('no game path'); }) as never;
   assert.deepEqual(await s.call('mods:mapsOwner'), { present: false });
 });
+
+test('the master switch takes the item table along: off and on each rebuild it, which drops it or puts it back', async (t) => {
+  const s = stand(t);
+  s.mod('pak30');
+  assert.equal((await s.call('mods:setMaster', false) as { ok?: boolean }).ok, true);
+  assert.deepEqual(s.files(), ['pak30_dir.vpk.moff']);
+  assert.equal(s.refreshed(), 1, "the picked cosmetics are in the table, which the language folder's sweep never reached");
+  await s.call('mods:setMaster', true);
+  assert.deepEqual(s.files(), ['pak30_dir.vpk']);
+  assert.equal(s.refreshed(), 2);
+});

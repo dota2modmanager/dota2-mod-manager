@@ -107,7 +107,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   const onBuild = buildBar(sendProgress, () => t('Сборка предметов'));
   // the arcana window's Terrorblade leaves the paths the builder's picks fill to them
   const schemaService = createSchemaService({ settings, library, installer, userDataDir: userData, log: diag, bases, onBuild,
-    onDeployed: (filled) => arcana.giveWay(filled) });
+    onDeployed: (filled) => arcana.giveWay(filled), modsOff: () => installer.masterIsOff() });
   // which installed mods a Dota update reached (src/update-impact.ts)
   const updateImpact = createUpdateImpact({
     file: path.join(userData, 'update-impact.json'),

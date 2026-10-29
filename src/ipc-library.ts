@@ -31,6 +31,8 @@ export function registerLibraryIpc({
     try {
       const r = installer.setMasterEnabled(!!enabled);
       applyMasterToCursors(!!enabled);
+      // the item table and the cosmetics in it: taken off with the rest, built again when back on
+      void schemaService.refreshInBackground();
       refreshPresence();
       return { ok: true, ...r };
     } catch (err) {
