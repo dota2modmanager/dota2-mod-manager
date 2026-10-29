@@ -9,7 +9,7 @@ import {
 import { isMinifyFile, isMinifyPak } from './minify.ts';
 import { FONTS_SUBDIR, CURSOR_SUBDIR } from './overlays.ts';
 import { t } from './i18n.ts';
-import { MASTER_OFF, OWNERSHIP_FILE, STAGED_RE, isOfficialLangFile } from './installer-files.ts';
+import { MASTER_MARK, MASTER_OFF, OWNERSHIP_FILE, STAGED_RE, isOfficialLangFile } from './installer-files.ts';
 import type { Installer } from './installer.ts';
 import type { LibFile, LibRecord } from './types.ts';
 
@@ -55,7 +55,8 @@ export function setMasterEnabled(inst: Installer, enabled: boolean): { changed: 
       if (!fs.statSync(full).isFile()) continue;
       const lower = f.toLowerCase();
       if (enabled) {
-        if (lower.endsWith(MASTER_OFF)) {
+        if (dir === lang && lower === MASTER_MARK) fs.rmSync(full, { force: true });
+        else if (lower.endsWith(MASTER_OFF)) {
           fs.renameSync(full, path.join(dir, f.slice(0, -MASTER_OFF.length)));
           changed++;
         }
@@ -70,6 +71,7 @@ export function setMasterEnabled(inst: Installer, enabled: boolean): { changed: 
   sweep(lang);
   const mapsDir = path.join(lang, 'maps');
   if (fs.existsSync(mapsDir)) sweep(mapsDir);
+  if (!enabled) fs.writeFileSync(path.join(lang, MASTER_MARK), '');
   return { changed };
 }
 

@@ -170,9 +170,22 @@ test('the master switch takes the item table along: off and on each rebuild it, 
   const s = stand(t);
   s.mod('pak30');
   assert.equal((await s.call('mods:setMaster', false) as { ok?: boolean }).ok, true);
-  assert.deepEqual(s.files(), ['pak30_dir.vpk.moff']);
+  assert.deepEqual(s.files(), ['dota2modmanager.moff', 'pak30_dir.vpk.moff']);
   assert.equal(s.refreshed(), 1, "the picked cosmetics are in the table, which the language folder's sweep never reached");
   await s.call('mods:setMaster', true);
   assert.deepEqual(s.files(), ['pak30_dir.vpk']);
   assert.equal(s.refreshed(), 2);
+});
+
+test('the master switch stays off with nothing to rename, and on leaves no marker behind', async (t) => {
+  const s = stand(t);
+  const rec = s.mod('pak30');
+  await s.call('mods:setEnabled', rec.id, false);
+  assert.deepEqual(s.files(), ['pak30_dir.vpk.off'], 'the only mod, switched off by hand: a folder of looks only');
+  await s.call('mods:setMaster', false);
+  assert.deepEqual(await s.call('mods:masterState'), { off: true }, 'it said on, so the switch flipped back and the table stayed');
+  assert.deepEqual(s.files(), ['dota2modmanager.moff', 'pak30_dir.vpk.off']);
+  await s.call('mods:setMaster', true);
+  assert.deepEqual(await s.call('mods:masterState'), { off: false });
+  assert.deepEqual(s.files(), ['pak30_dir.vpk.off'], 'the hand-switched mod stays off, and the marker is gone, not renamed');
 });

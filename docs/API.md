@@ -2841,6 +2841,16 @@ ignores it (it only mounts pakNN_dir.vpk). Distinct from the per-mod ".off" stat
 the two never clobber each other. Official localization (pak01_*) / gameinfo.gi are
 never touched — turning mods off must not strip the game's own language files.
 
+### `MASTER_MARK`
+
+```ts
+export const MASTER_MARK = `dota2modmanager${MASTER_OFF}`
+```
+
+The master switch off, said on its own. A folder with nothing to rename (every mod already
+switched off one by one, the looks all in the item table) said "on" whatever was pressed: the
+switch flipped back at the next start and the table, which follows it, stayed in the game.
+
 ### `OWNERSHIP_FILE`
 
 ```ts
