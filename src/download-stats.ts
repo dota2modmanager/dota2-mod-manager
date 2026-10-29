@@ -201,11 +201,16 @@ export function catalogModsReader(file: string): () => Record<string, StatCatego
   let at = -1;
   let data: Record<string, StatCategory> | null = null;
   return () => {
+    // one open file for both questions, so what was dated is what is read
+    let fd: number | null = null;
     try {
-      const m = fs.statSync(file).mtimeMs;
-      if (m !== at) { data = JSON.parse(fs.readFileSync(file, 'utf8'))?.modsData ?? null; at = m; }
+      fd = fs.openSync(file, 'r');
+      const m = fs.fstatSync(fd).mtimeMs;
+      if (m !== at) { data = JSON.parse(fs.readFileSync(fd, 'utf8'))?.modsData ?? null; at = m; }
     } catch {
       data = null; at = -1;
+    } finally {
+      if (fd !== null) fs.closeSync(fd);
     }
     return data;
   };
