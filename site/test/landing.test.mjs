@@ -469,7 +469,8 @@ test('Axe runs, and only a long chase catches him: the site turns, and a key of 
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains('halloween')), true, 'the page did not put on the look of the day');
   // the footer offers the key again, for whoever closed it before writing it down
   await prize.locator('.hunt-close').click();
-  await page.waitForTimeout(300);
+  // it fades for 260 ms before it goes (chase.ts, shut); a fixed 300 ms wait lost that race on a busy runner
+  await prize.waitFor({ state: 'detached', timeout: 3000 });
   assert.equal(await prize.count(), 0);
   const again = page.locator('#keyAgain');
   await again.scrollIntoViewIfNeeded();
