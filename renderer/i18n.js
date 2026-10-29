@@ -819,7 +819,8 @@ const EN = {
 
   // ---------- thanks ----------
   'Спасибо': 'Thanks',
-  'hanta снял видео о менеджере': 'hanta made a video about the manager',
+  'Видео о менеджере': 'Video about the manager', 'Авторы и благодарности': 'Credits', 'Поддержи проект': 'Support the project',
+  'Звезда на GitHub и пара слов о нас в интернете. Бесплатно и занимает минуту.': 'A star on GitHub and a few words about us online. Free, and it takes a minute.',
 
   // ---------- being uninstalled (renderer/uninstall.js) ----------
   'Удалить Dota 2 Mod Manager': 'Remove Dota 2 Mod Manager',

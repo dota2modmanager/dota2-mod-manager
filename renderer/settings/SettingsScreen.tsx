@@ -218,35 +218,40 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
         <div className="settings-hint">{L`Путь к игре, список модов и последние записи журнала в одном файле. Пришли его, если что-то не работает.`}</div>
       </Block>
 
+      {/* Four kinds of thing, in the order somebody looks for them: what they can do for the
+          project, which build this is, who made it, and the licence. The support strip is the one
+          tinted thing on the page, because it is the only row here that asks something. */}
       <Block i={6} title={L`О программе`}>
-        <div className="settings-row">
-          <span className="settings-label">{L`Версия`}</span>
-          <span className="num">{`v${m.version}`}</span>
-          <a className="settings-link" id="repoLink" onClick={() => actions.open('https://github.com/dota2modmanager/dota2-mod-manager')}>github.com/dota2modmanager/dota2-mod-manager</a>
+        <div className="about-support">
+          <span className="ms">favorite</span>
+          <div className="about-support-text">
+            <div className="about-support-title">{L`Поддержи проект`}</div>
+            <div className="settings-hint">{L`Звезда на GitHub и пара слов о нас в интернете. Бесплатно и занимает минуту.`}</div>
+          </div>
+          <button className="btn btn-primary" id="supportBtn" onClick={actions.support}>{L`Как поддержать проект`}</button>
         </div>
-        <div className="settings-row">
+        <div className="about-app">
+          <span className="about-name">{L`Менеджер модов`}</span>
+          <span className="about-ver num">{`v${m.version}`}</span>
+          <span className="about-gap" />
           <button className="btn btn-sm" id="whatsNewBtn" onClick={actions.whatsNew}><span className="ms">auto_awesome</span>{L`Что нового`}</button>
-          <button className="btn btn-sm" id="supportBtn" onClick={actions.support}><span className="ms">favorite</span>{L`Как поддержать проект`}</button>
+          <button className="btn btn-sm" id="repoLink" onClick={() => actions.open('https://github.com/dota2modmanager/dota2-mod-manager')}><span className="ms">code</span>{L`Исходный код`}</button>
         </div>
-        {/* The people the app owes something to and cannot pay. The catalog is credited in its own
-            block above; this row is for whoever else did the work. */}
-        <div className="settings-row spaced">
-          <span className="settings-label">{L`Спасибо`}</span>
-          <span>{L`hanta снял видео о менеджере`}</span>
-          <a className="settings-link" id="thanksLink" onClick={() => actions.open('https://www.youtube.com/@hqnta')}>youtube.com/@hqnta</a>
-        </div>
-        {/* Credit NOTICE requires for the item builder (section 7(b)): both names, here. */}
-        <div className="settings-row spaced">
-          <span className="settings-label">{L`Конструктор предметов`}</span>
+        {/* The people the app owes something to. Credit NOTICE requires for the item builder
+            (section 7(b)): both names, here. The catalog is credited in its own block above. */}
+        <div className="about-sub">{L`Авторы и благодарности`}</div>
+        <div className="about-credits">
+          <span className="about-role">{L`Конструктор предметов`}</span>
           <span>h6rd, TheFleece</span>
           <a className="settings-link" id="builderLink" onClick={() => actions.open('https://github.com/h6rd')}>github.com/h6rd</a>
-        </div>
-        <div className="settings-row spaced">
-          <span className="settings-label">{L`Арканы в конструкторе`}</span>
+          <span className="about-role">{L`Арканы в конструкторе`}</span>
           <span>J0nathan550</span>
           <a className="settings-link" id="arcanaCreditLink" onClick={() => actions.open('https://github.com/J0nathan550')}>github.com/J0nathan550</a>
+          <span className="about-role">{L`Видео о менеджере`}</span>
+          <span>hanta</span>
+          <a className="settings-link" id="thanksLink" onClick={() => actions.open('https://www.youtube.com/@hqnta')}>youtube.com/@hqnta</a>
         </div>
-        <div className="settings-hint">
+        <div className="about-legal">
           {`© 2026 TheFleece · ${L`конструктор предметов`} © 2026 h6rd, TheFleece · GPL-3.0 · ${L`свободная программа без каких-либо гарантий`}`}
         </div>
       </Block>
