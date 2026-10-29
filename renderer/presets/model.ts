@@ -18,6 +18,8 @@ export interface OwnPreset {
   id: string;
   name: string;
   count: string;
+  /** what is on is exactly this preset; or it was applied last and something changed since */
+  on: 'active' | 'changed' | null;
   absent: { text: string; title: string } | null;
   /** what the share button says it can carry */
   linkTitle: string;

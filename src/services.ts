@@ -171,7 +171,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
     afterDeployMaster();
     return conflicts;
   };
-  const presets = presetsService({ catalog, installer, library, schemaService, deployAndApply });
+  const presets = presetsService({ catalog, installer, library, schemaService, deployAndApply, settings });
 
   // Two counted passes over the same batch: the files land, then each one is read. Both are shown
   // on the one bar, so a long import says which mod it is on instead of nothing at all. The two

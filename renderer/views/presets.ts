@@ -63,6 +63,7 @@ function ownCard(p: Preset, byId: Map<string, LibRecord>): OwnPreset {
     id: p.id,
     name: p.name,
     count: [n || !picks.length ? mods(n) : '', picks.length ? L`виды из игры: ${picks.length}` : ''].filter(Boolean).join(' · '),
+    on: p.on || null,
     absent: absent.length ? { text: L`${absent.length} не установлено`, title: absent.map((a) => a.name).join(', ') } : null,
     linkTitle: !link.count ? L`В пресете только свои моды — ссылка их не донесёт, отправь файлом`
       : link.skipped.length ? L`Ссылка донесёт ${link.count} из каталога; свои моды (${link.skipped.length}) в неё не влезут — для них нужен файл`

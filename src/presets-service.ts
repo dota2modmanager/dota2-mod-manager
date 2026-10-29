@@ -25,9 +25,10 @@ import { decodePresetLink } from './preset-link.ts';
 import { t } from './i18n.ts';
 import { electron } from './electron.ts';
 import type { Catalog } from './catalog.ts';
+import type { Settings } from './settings.ts';
 import { createPresetPlan } from './preset-plan.ts';
 import { isWindowRecord } from './arcana-base-color.ts';
-import type { LibFile, LibRecord, PackMember, Preset, PresetEntry } from './types.ts';
+import type { LibFile, LibRecord, PackMember, Preset, PresetEntry, PresetPick } from './types.ts';
 
 /** What of the installer presets ask: what a record is, where its files are, and packing. */
 export interface PresetInstaller {
@@ -55,6 +56,22 @@ export function touchesSchema(rec: LibRecord): boolean {
 }
 
 /**
+ * Whether what is on is exactly this preset, so the Presets screen can say which one you are in:
+ * its installed mods and no other, and for a preset that kept its looks, those and no other. A
+ * member not installed cannot be on, and is not asked about; a preset saved before it kept looks
+ * says nothing about them, and they are not asked about either.
+ */
+export function presetIsOn(library: Library, preset: Preset): boolean {
+  const wanted = new Set(library.presetModIds(preset));
+  if (library.list().some((r) => Library.inPreset(r) && (r.enabled !== false) !== wanted.has(r.id))) return false;
+  if (!Array.isArray(preset.picks)) return true;
+  const key = (p: PresetPick) => `${p.slot}|${p.itemId}|${p.effectId || ''}`;
+  const on = new Set(library.picksOn().map(key));
+  const named = new Set(preset.picks.map(key));
+  return on.size === named.size && [...on].every((k) => named.has(k));
+}
+
+/**
  * Everything about presets that needs the running app's services.
  *
  * @param deps.catalog        the catalog store, for turning a mod into an identity
@@ -62,9 +79,11 @@ export function touchesSchema(rec: LibRecord): boolean {
  * @param deps.library        the manifest of installed mods and saved presets
  * @param deps.schemaService  puts a preset's looks on, and rebuilds the item table when a preset changes it
  * @param deps.deployAndApply  rebuilds one pack's VPK
+ * @param deps.settings       where the preset applied last is kept (presetState)
  */
-export function presetsService({ catalog, installer, library, schemaService, deployAndApply }: {
+export function presetsService({ catalog, installer, library, schemaService, deployAndApply, settings }: {
   catalog: Pick<Catalog, 'load'>; installer: PresetInstaller; library: Library;
+  settings?: Pick<Settings, 'get' | 'set'>;
   schemaService: {
     refreshInBackground(): Promise<unknown>;
     pickCosmetic(slot: string, itemId: string, name: string, effectId: string, opts: { write: boolean }): unknown;
@@ -188,7 +207,20 @@ export function presetsService({ catalog, installer, library, schemaService, dep
       }
     }
     if (schemaTouched) await schemaService.refreshInBackground();
+    settings?.set('lastPreset', preset.id);
     return errors;
+  }
+
+  /**
+   * Which preset you are in, for its card: this one exactly, or the one applied last and changed
+   * since. One with members not installed is yours only if you applied it: of three mods since
+   * deleted, none is on whatever the state, and every such preset said it was the one.
+   */
+  function presetState(preset: Preset): 'active' | 'changed' | null {
+    const last = settings?.get('lastPreset') === preset.id;
+    const whole = library.presetMembers(preset).every((m) => m.rec);
+    if ((whole || last) && presetIsOn(library, preset)) return 'active';
+    return last ? 'changed' : null;
   }
 
   return {
@@ -199,6 +231,7 @@ export function presetsService({ catalog, installer, library, schemaService, dep
     importPresetFile,
     importPresetLink,
     applyPreset,
+    presetState,
   };
 }
 

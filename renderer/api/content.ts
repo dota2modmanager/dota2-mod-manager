@@ -138,6 +138,8 @@ export interface PresetRecord {
   id: string;
   name: string;
   modIds: string[];
+  /** which one you are in: what is on is exactly this one, or it was applied last and changed since */
+  on?: 'active' | 'changed' | null;
   /** members the build names that are not installed now */
   absent?: { name: string; categoryId?: string }[];
   /** what a link could carry of it */

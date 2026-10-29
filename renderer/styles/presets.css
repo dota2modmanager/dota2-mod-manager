@@ -17,6 +17,16 @@
   will-change: opacity;
 }
 .preset-card:hover { border-color: var(--border-strong); }
+/* the preset you are in, told apart at a glance from the ones you are not */
+.preset-card.is-active, .preset-card.is-active:hover { border-color: var(--primary); box-shadow: inset 3px 0 0 var(--primary); }
+.preset-card.is-changed { border-style: dashed; border-color: var(--border-strong); }
+.preset-on {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600; color: var(--primary);
+  padding: 2px 8px; border-radius: 999px; background: var(--primary-dim);
+}
+.preset-on .ms { font-size: var(--icon-sm, 15px); }
+.preset-on.changed { color: var(--text-muted); background: var(--bg-elev); }
 .preset-head { display: flex; align-items: center; gap: 12px; }
 .preset-name { font-weight: 700; font-size: 15px; flex: 1; font-family: var(--font-head); }
 .preset-mods { font-size: 12.5px; color: var(--text-muted); margin-top: 8px; line-height: 1.7; }

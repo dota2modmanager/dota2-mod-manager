@@ -62,6 +62,7 @@ function stand(t: TestContext, { catalogHas = [] as string[] } = {}) {
         return library.add({ name, categoryId: 'combined', kind: 'pack', files: [], members: [] });
       },
       applyPreset: (p: Preset) => { log.push(`apply ${p.name}`); return []; },
+      presetState: (p: Preset) => (p.id === 'p1' ? 'active' : null),
       dropSharedPresetFile: () => log.push('drop file'),
     },
     adoptImportedFiles: () => ({ records: [] }),
@@ -86,6 +87,7 @@ test('a build lists the mods it has here and names the ones it does not', async 
   assert.deepEqual(row.modIds, [here.id]);
   assert.deepEqual(row.absent, [gone]);
   assert.deepEqual(row.link, { count: 2, skipped: 0 }, 'and how much of it a link could carry');
+  assert.equal(row.on, 'active', 'and whether it is the one you are in');
 });
 
 test('a received preset is listed with what installing it would take', async (t) => {

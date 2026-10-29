@@ -6330,10 +6330,21 @@ export function touchesSchema(rec: LibRecord): boolean
 
 Does changing this record mean the item table has to be rebuilt?
 
+### `presetIsOn`
+
+```ts
+export function presetIsOn(library: Library, preset: Preset): boolean
+```
+
+Whether what is on is exactly this preset, so the Presets screen can say which one you are in:
+its installed mods and no other, and for a preset that kept its looks, those and no other. A
+member not installed cannot be on, and is not asked about; a preset saved before it kept looks
+says nothing about them, and they are not asked about either.
+
 ### `presetsService`
 
 ```ts
-export function presetsService({ catalog, installer, library, schemaService, deployAndApply }: { catalog: Pick<Catalog, 'load'>; installer: PresetInstaller; library: Library; schemaService: { refreshInBackground(): Promise<unknown>; pickCosmetic(slot: string, itemId: string, name: string, effectId: string, opts: { write: boolean }): unknown; }; deployAndApply: (pack: LibRecord) => unknown; })
+export function presetsService({ catalog, installer, library, schemaService, deployAndApply, settings }: { catalog: Pick<Catalog, 'load'>; installer: PresetInstaller; library: Library; settings?: Pick<Settings, 'get' | 'set'>; schemaService: { refreshInBackground(): Promise<unknown>; pickCosmetic(slot: string, itemId: string, name: string, effectId: string, opts: { write: boolean }): unknown; }; deployAndApply: (pack: LibRecord) => unknown
 ```
 
 Everything about presets that needs the running app's services.
@@ -6344,6 +6355,7 @@ Everything about presets that needs the running app's services.
 @param deps.library        the manifest of installed mods and saved presets
 @param deps.schemaService  puts a preset's looks on, and rebuilds the item table when a preset changes it
 @param deps.deployAndApply  rebuilds one pack's VPK
+@param deps.settings       where the preset applied last is kept (presetState)
 ```
 
 ## src/pumpkin.ts

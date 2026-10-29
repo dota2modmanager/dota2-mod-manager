@@ -476,7 +476,7 @@ const EN = {
   // ---------- presets ----------
   '{0} не установлено': '{0} not installed',
   'не установлен': 'not installed',
-  'Пресет хранит моды и виды из игры. Моды, которых в нём нет, выключаются, а вид надевается в свой слот: слоты, которых пресет не называет, остаются как есть.': 'A preset holds mods and looks from the game. Mods it does not name are switched off; a look goes on in its slot, and the slots the preset does not name stay as they are.',
+  'Пресет хранит моды и виды из игры. Применённый, он включает ровно их, а всё остальное выключает: ничего не удаляется.': 'A preset holds mods and looks from the game. Applied, it switches on exactly those and everything else off; nothing is deleted.',
   'Пресет запоминает, какие моды включены. Применение пресета включает его моды и выключает остальные. Готовым пресетом можно поделиться файлом — перетащи полученный .d2mm сюда.':
     'A preset remembers which mods are on. Applying a preset enables its mods and disables the rest. A finished preset can be shared as a file — drop a .d2mm you received here.',
 
@@ -546,6 +546,11 @@ const EN = {
   'Введи название пресета': 'Enter a preset name',
   'Пресет «{0}» сохранён': 'Preset «{0}» saved',
   'Пресет применён': 'Preset applied',
+  'Сейчас включено ровно то, что в этом пресете': 'What is on right now is exactly this preset',
+  'Применён последним, но с тех пор что-то включили или выключили': 'Applied last, but something was switched on or off since',
+  'Выбран': 'Selected',
+  'Изменён': 'Changed',
+  'Применён': 'Applied',
   'Пресет применён · доустановлено {0} {1}': 'Preset applied · installed {0} {1} it was missing',
   'Своих модов нет на этом компьютере, из каталога их не вернуть: {0}': 'Your own mods are not on this computer, and the catalog cannot bring them back: {0}',
   'Удалить пресет «{0}»?': 'Delete preset «{0}»?',

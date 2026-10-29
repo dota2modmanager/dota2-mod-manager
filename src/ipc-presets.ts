@@ -68,8 +68,7 @@ export function registerPresetsIpc({
       // The screen shows the whole set and says which part of it is missing, rather than
       // quietly listing the leftovers as if that were the build.
       const members = library.presetMembers(p);
-      return {
-        ...p,
+      return { ...p, on: presets.presetState(p), // which one you are in
         modIds: members.flatMap((m) => (m.rec ? [m.rec.id] : [])),
         absent: members.filter((m) => !m.rec).map((m) => m.identity),
         link: { count: mods.length, skipped },

@@ -21,6 +21,8 @@ export interface StoredSettings {
   schemaPatch: boolean;
   cosmetics: Record<string, unknown>;
   schemaStamp: string | null;
+  /** the preset applied last, which the Presets screen marks as changed once the state leaves it */
+  lastPreset: string | null;
   toolsPromptSeen: boolean;
   showAdult: boolean | null;
   lastSeenVersion: string | null;
@@ -102,6 +104,7 @@ const DEFAULTS: StoredSettings = {
   cosmetics: {},
   // items_game.txt build the deployed schema was made from, to spot a game update
   schemaStamp: null,
+  lastPreset: null,
   // One-time offer of the Source 2 toolchain, asked once on first run. False for fresh
   // installs and for anybody updating from before it was offered, so everyone gets the
   // question once; the Settings row is the way in afterwards either way.

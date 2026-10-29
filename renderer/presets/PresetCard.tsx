@@ -17,15 +17,19 @@ const cardMotion = () => ({ layout: 'position' as const, transition: travel(), e
 export function OwnPresetCard({ p, index, actions }: { p: OwnPreset; index: number; actions: PresetsActions }) {
   // applying can download the members that are not installed, which is long enough to press twice
   const [busy, setBusy] = useState(false);
+  // the one you are in has nothing to apply, unless some of it still has to be installed
+  const done = p.on === 'active' && !p.absent;
   return (
-    <motion.div className="preset-card" style={{ '--i': index } as CSSProperties} {...cardMotion()}>
+    <motion.div className={`preset-card${p.on ? ` is-${p.on}` : ''}`} style={{ '--i': index } as CSSProperties} {...cardMotion()}>
       <div className="preset-head">
         <div className="preset-name">{p.name}</div>
+        {p.on === 'active' && <span className="preset-on" title={L`Сейчас включено ровно то, что в этом пресете`}><span className="ms">check_circle</span>{L`Выбран`}</span>}
+        {p.on === 'changed' && <span className="preset-on changed" title={L`Применён последним, но с тех пор что-то включили или выключили`}><span className="ms">edit</span>{L`Изменён`}</span>}
         <Swap className="text-meta" value={p.count} />
         {p.absent && <span className="text-meta preset-absent" title={p.absent.title}>{p.absent.text}</span>}
-        <button className="btn btn-sm btn-primary" data-apply={p.id} disabled={busy}
+        <button className={`btn btn-sm${done ? '' : ' btn-primary'}`} data-apply={p.id} disabled={busy || done}
           onClick={() => { setBusy(true); actions.apply(p.id).finally(() => setBusy(false)); }}>
-          {L`Применить`}
+          {done ? L`Применён` : p.on === 'changed' ? L`Вернуть` : L`Применить`}
         </button>
         <button className="btn btn-sm" data-share={p.id} title={p.linkTitle} onClick={() => actions.share(p.id)}>
           <span className="ms">ios_share</span>{L`Поделиться`}
