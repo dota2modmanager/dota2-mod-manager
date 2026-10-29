@@ -229,6 +229,23 @@ test('a table built by older code is rebuilt at the next start or launch, the ga
   assert.equal(s.settings.get('schemaStamp'), built);
 });
 
+test('a build the last run never wrote is built at the next start, and a write it left half done is taken away', (t) => {
+  const s = service(t);
+  const rifle = modWith(s.library, 'Rifle mod', [riflePatch('models/mod/rifle.vmdl')]);
+  s.svc.setEnabled(true);
+  assert.equal(s.settings.get('schemaPending'), false, 'a build that wrote says so');
+  // the app closed while the table was written: the library moved on, the game did not
+  s.library.setEnabled(rifle.id, false);
+  s.settings.set('schemaPending', true);
+  const dir = path.join(s.game, patcher.FOLDER);
+  fs.writeFileSync(path.join(dir, `${schema.SCHEMA_VPK}.999999-1.mmtmp`), 'half a pak');
+  fs.writeFileSync(path.join(dir, `${schema.SCHEMA_VPK}.${process.pid}-7.mmtmp`), 'a write of this run, still going');
+  assert.deepEqual(s.svc.heal(), { ok: true, healed: ['schema'] }, 'the stamp still matched, and the start did not notice');
+  assert.equal(schema.isDeployed(s.game, patcher.FOLDER), false, 'the game caught up: its only mod is off, so the table went');
+  assert.equal(s.settings.get('schemaPending'), false);
+  assert.deepEqual(fs.readdirSync(dir).filter((f) => f.endsWith('.mmtmp')), [`${schema.SCHEMA_VPK}.${process.pid}-7.mmtmp`]);
+});
+
 test("the code's fingerprint follows its files", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-code-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));

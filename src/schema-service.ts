@@ -113,10 +113,15 @@ export function createSchemaService({ settings, library, installer, userDataDir,
   function* refreshSteps(): Generator<BuildYield, Refreshed, boolean | undefined> {
     const game = gamePath();
     if (!game) return { ok: false, reason: 'no-game-path' };
+    // said before the build and unsaid when one writes: the app closed in between (a switch
+    // pressed, the window shut while the table was written) left the game a change behind the
+    // library, the look off on screen and on in the game, and the next start did not notice
+    settings.set('schemaPending', true);
     try {
       const drop = () => {
         schema.undeploy({ gamePath: game, folder: patcher.FOLDER });
         settings.set('schemaStamp', null);
+        settings.set('schemaPending', false);
         onDeployed(new Set());
         return { ok: true, deployed: false, patches: 0 };
       };
@@ -131,6 +136,7 @@ export function createSchemaService({ settings, library, installer, userDataDir,
       if (!list.length) return drop();
       const res = yield* schema.deploySteps({ gamePath: game, folder: patcher.FOLDER, patches: list, base, beneath });
       settings.set('schemaStamp', stampOf(res.stamp));
+      settings.set('schemaPending', false);
       onDeployed(new Set(list.flatMap((p) => (p.assets || []).map((e) => entryPath(e).toLowerCase()))));
       return { ok: true, deployed: true, patches: res.applied.length, missing: res.missing, conflicts: res.conflicts, bytes: res.bytes };
     } catch (err) {
@@ -171,9 +177,11 @@ export function createSchemaService({ settings, library, installer, userDataDir,
         patcher.apply({ gamePath: game, folder: patcher.FOLDER, backupDir });
         healed.push('patch');
       }
-      // a new build of the game or of the app: either can change what a pick builds into
+      if (schema.sweepUnfinished(game, patcher.FOLDER)) log('schema: a write another run left unfinished was taken away');
+      // a new build of the game or of the app: either can change what a pick builds into; or a
+      // build the last run was asked for and never wrote
       const stamp = stampOf(schema.readGameSchema(game).stamp);
-      if (stamp !== settings.get('schemaStamp') || !schema.isDeployed(game, patcher.FOLDER)) {
+      if (stamp !== settings.get('schemaStamp') || !schema.isDeployed(game, patcher.FOLDER) || settings.get('schemaPending')) {
         // at start and after a patch the window is open, or about to be: the table builds behind
         // it, not in the way of its first frame (issue #286), and Play waits for it (settled)
         if (background) void refreshInBackground().then((r) => { if (r.error) log(`schema: the build after the repair failed: ${r.error}`); });

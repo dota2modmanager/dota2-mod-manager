@@ -126,6 +126,19 @@ export function undeploy({ gamePath, folder }: { gamePath: string; folder: strin
   if (fs.existsSync(dir) && !hasFiles(dir)) fs.rmSync(dir, { recursive: true, force: true });
 }
 
+/**
+ * Take away the writes of the pak another run left half done: an app closed while a build wrote
+ * left 190 MB beside the pak, and nothing ever took it away. This run's own are its builds' to
+ * finish, so only another process's go. Answers how many went.
+ */
+export function sweepUnfinished(gamePath: string, folder: string, pid = process.pid): number {
+  const dir = path.join(gamePath, folder);
+  if (!fs.existsSync(dir)) return 0;
+  const left = fs.readdirSync(dir).filter((f) => f.startsWith(`${SCHEMA_VPK}.`) && f.endsWith('.mmtmp') && !f.startsWith(`${SCHEMA_VPK}.${pid}-`));
+  for (const f of left) fs.rmSync(path.join(dir, f), { force: true });
+  return left.length;
+}
+
 /** Whether a built schema is in the mod folder. */
 export function isDeployed(gamePath: string, folder: string): boolean {
   return fs.existsSync(path.join(gamePath, folder, SCHEMA_VPK));

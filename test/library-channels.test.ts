@@ -33,13 +33,14 @@ function stand(t: TestContext) {
   const library = new Library(path.join(dir, 'userdata'));
   const calls: string[] = [];
   let refreshed = 0;
+  let build: () => Promise<unknown> = async () => ({ ok: true });
   const channels = registerAgainst(() => registerLibraryIpc({
     applyMasterToCursors: (on: boolean) => calls.push(`master cursors ${on}`),
     disableOtherCosmetics: (rec: LibRecord) => { calls.push(`other looks off for ${rec.name}`); return ['Old look']; },
     disableOtherCursors: (id: string) => { calls.push(`other cursors off for ${id}`); return ['Old cursors']; },
     installer, isCursorRecord: (rec: LibRecord) => rec.categoryId === 'cursors', library,
     refreshPresence: () => calls.push('presence'),
-    schemaService: { refreshInBackground: async () => { refreshed++; return { ok: true }; } },
+    schemaService: { refreshInBackground: () => { refreshed++; return build(); } },
   } as never));
   const call = (ch: string, ...args: unknown[]) => channels.get(ch)!({}, ...args);
   /** A mod of ours in the language folder. */
@@ -50,7 +51,8 @@ function stand(t: TestContext) {
   /** A record whose item blocks reach the table, so changing it means a rebuild. */
   const withBlocks = (rec: LibRecord) => { library.update(rec.id, { schema: ['"1" { }'] } as never); return library.find(rec.id)!; };
   const files = () => fs.readdirSync(lang).sort();
-  return { lang, installer, library, call, mod, withBlocks, files, calls, refreshed: () => refreshed };
+  const refreshWith = (b: () => Promise<unknown>) => { build = b; };
+  return { lang, installer, library, call, mod, withBlocks, files, calls, refreshed: () => refreshed, refreshWith };
 }
 
 test('switching a mod off renames it, switching it on puts it back, and a mod nobody has is an error', async (t) => {
@@ -188,4 +190,16 @@ test('the master switch stays off with nothing to rename, and on leaves no marke
   await s.call('mods:setMaster', true);
   assert.deepEqual(await s.call('mods:masterState'), { off: false });
   assert.deepEqual(s.files(), ['pak30_dir.vpk.off'], 'the hand-switched mod stays off, and the marker is gone, not renamed');
+});
+
+test("a look's switch answers at once, not after the item table is written", async (t) => {
+  const s = stand(t);
+  const look = s.library.add({ name: 'Weather Snow', categoryId: 'cosmetic', files: [] } as never);
+  s.library.update(look.id, { slot: 'weather', itemId: '4000' } as never);
+  let wrote: () => void = () => {};
+  s.refreshWith(() => new Promise((r) => { wrote = () => r({ ok: true }); }));
+  const answer = await Promise.race([s.call('mods:setEnabled', look.id, false), new Promise((r) => setTimeout(() => r('waited'), 200))]);
+  assert.deepEqual(answer, { ok: true, replaced: [] }, 'it waited for a 200 MB pak, and the switch looked stuck');
+  assert.equal(s.library.find(look.id)?.enabled, false);
+  wrote();
 });

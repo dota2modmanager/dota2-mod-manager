@@ -7694,6 +7694,16 @@ export function undeploy({ gamePath, folder }: { gamePath: string; folder: strin
 
 Drop the built schema, and the folder with it once nothing of ours is left there.
 
+### `sweepUnfinished`
+
+```ts
+export function sweepUnfinished(gamePath: string, folder: string, pid = process.pid): number
+```
+
+Take away the writes of the pak another run left half done: an app closed while a build wrote
+left 190 MB beside the pak, and nothing ever took it away. This run's own are its builds' to
+finish, so only another process's go. Answers how many went.
+
 ### `isDeployed`
 
 ```ts
