@@ -34,6 +34,8 @@ export interface Mod {
   slots: string[];
   /** Everything a search can match, lower-cased once. */
   hay: string;
+  /** the download counter's key, category/group/name (src/scripts/downloads.ts) */
+  countKey: string;
 }
 
 export interface Catalog {
@@ -60,7 +62,7 @@ export function loadCatalog(lang: Lang): Promise<Catalog> {
 type Raw = {
   cats: Array<[string, string, string, Group]>;
   heroes: Array<[string, string, string, string?]>;
-  mods: Array<[string, string, number, number, string, string, number, string, string[], string, string?]>;
+  mods: Array<[string, string, number, number, string, string, number, string, string[], string, string?, string?]>;
 };
 
 function decode(raw: Raw, lang: Lang): Catalog {
@@ -77,6 +79,7 @@ function decode(raw: Raw, lang: Lang): Catalog {
       hero: hero?.slug ?? null, heroName: hero?.name ?? null,
       img, thumb: img ? `/mods/t/${m[4]}.webp` : null,
       author: m[5], date: m[6], style: m[7].split('|')[0] ?? '', styles: m[7] ? m[7].split('|') : [], slots: m[8], authorUrl: m[9], authorPage: m[10] ?? '',
+      countKey: m[11] || `${cat.id}/${m[1]}`,
       // both languages' names, so "пудж" finds Pudge on the English page too
       hay: [m[1], m[7].replace(/\|/g, ' '), m[5], cat.en, cat.ru, hero?.en, hero?.ru].filter(Boolean).join(' ').toLowerCase(),
     };

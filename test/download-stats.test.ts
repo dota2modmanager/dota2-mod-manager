@@ -11,6 +11,7 @@ import path from 'node:path';
 
 import { buildToken, catalogModsReader, createDownloadStats, statKey, statKeysFor, statStyleName } from '../src/download-stats.ts';
 import { sortMods } from '../renderer/catalog/filters.ts';
+import { totalOf } from '../renderer/core/download-counts.ts';
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'mm-stats-'));
 
@@ -139,4 +140,15 @@ test('"most downloaded first" keeps the catalog order among mods with the same c
   const list = ['a', 'b', 'c', 'd'];
   const n: Record<string, number> = { a: 0, b: 7, c: 0, d: 30 };
   assert.deepEqual(sortMods(list, 'popular', (x) => x, () => 0, (x) => n[x]), ['d', 'b', 'a', 'c']);
+});
+
+test('a mod with looks counts as its looks together, the plain key where that is more', () => {
+  // as the counter has it: the catalog's site counts the look, the app counts the look and the plain key
+  const all = { 'heroes/Tidehunter Arcana': 12, 'heroes/Tidehunter Arcana/I': 778, 'heroes/Tidehunter Arcana/II': 40,
+    'hero-items/axe/Axe Helm': 9, 'music/Broodskoe': 5 };
+  assert.equal(totalOf(all, 'heroes/Tidehunter Arcana'), 818);
+  assert.equal(totalOf(all, 'hero-items/axe/Axe Helm'), 9);
+  assert.equal(totalOf(all, 'music/Broodskoe'), 5);
+  assert.equal(totalOf(all, 'music/Nobody'), 0);
+  assert.equal(totalOf({ 'cursors/Gold': 30, 'cursors/Gold/Dark': 4 }, 'cursors/Gold'), 30);
 });

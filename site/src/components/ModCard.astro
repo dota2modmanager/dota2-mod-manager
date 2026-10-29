@@ -56,7 +56,7 @@ const aliases = lang === 'ru' ? aliasesFor(m.name) : [];
 const hay = [m.name, ...m.styles, m.author, catName, hero?.name, heroName, ...aliases].filter(Boolean).join(' ').toLowerCase();
 ---
 
-<li class="mcard" data-group={groupOf(m.cat)} data-cat={m.cat} data-key={m.key} data-date={m.date ?? 0} data-name={m.name.toLowerCase()} data-hay={hay} data-slots={m.slots.join(' ')}>
+<li class="mcard" data-group={groupOf(m.cat)} data-cat={m.cat} data-key={m.key} data-date={m.date ?? 0} data-name={m.name.toLowerCase()} data-hay={hay} data-slots={m.slots.join(' ')} data-count={m.countKey}>
   <a class="mcard-pic" href={modPath(lang, m.key)} data-open>
     {m.img ? (
       <img

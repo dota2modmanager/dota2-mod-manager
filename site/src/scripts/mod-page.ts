@@ -7,6 +7,7 @@
  * the one the catalog keeps (set.ts); the cards under the mod use it too.
  */
 import { readSet, writeSet, markCards, SET_KEY } from './set';
+import { loadCounts, paintCards, downloadsOf } from './downloads';
 
 type Words = { add: string; remove: string; shared: string; inSet: string; mods: [string, string, string] };
 
@@ -17,6 +18,18 @@ export function initModPage(root: HTMLElement) {
   const nf = new Intl.NumberFormat(lang);
   const pr = new Intl.PluralRules(lang);
   const modsWord = (n: number) => { const f = pr.select(n); return f === 'one' ? w.mods[0] : f === 'few' ? w.mods[1] : w.mods[2]; };
+
+  // ---- how many times it was downloaded, here and on the cards below ----
+  void loadCounts().then((counts) => {
+    const dd = document.getElementById('mod-dl');
+    const n = dd ? downloadsOf(counts, dd.dataset.count!) : 0;
+    if (dd && n) {
+      dd.textContent = nf.format(n);
+      dd.hidden = false;
+      document.getElementById('mod-dl-label')!.hidden = false;
+    }
+    paintCards(document, counts); // the cards under it sit outside the article
+  });
 
   // ---- styles ----
   const img = document.getElementById('mod-img') as HTMLImageElement | null;

@@ -13,6 +13,7 @@
  */
 import { loadCatalog, presetCode, appLink, webLink, fmtDay, isNew, el, type Catalog, type Mod, type Lang } from './catalog';
 import { readSet, writeSet, markCards as markIn, SET_KEY } from './set';
+import { showCounts, paintCards } from './downloads';
 
 type Words = {
   shown: string; prev: string; next: string; pageOf: string; range: string; add: string; remove: string; look: string; newBadge: string; by: string;
@@ -79,6 +80,9 @@ export function initBrowser(root: HTMLElement) {
   };
 
   let catalog: Catalog | null = null;
+  // the download counts: painted on the cards in the HTML when they come, and on every grid drawn after
+  let counts: Record<string, number> | null = null;
+  void showCounts(grid).then((c) => (counts = c));
   const need = () => loadCatalog(lang).then((c) => (catalog = c));
 
   // ---- the set ----
@@ -111,6 +115,7 @@ export function initBrowser(root: HTMLElement) {
     li.dataset.name = m.name.toLowerCase();
     li.dataset.hay = m.hay;
     li.dataset.slots = m.slots.join(' ');
+    li.dataset.count = m.countKey;
 
     const pic = el('a', 'mcard-pic');
     pic.href = `${w.modBase}${m.key}/`;
@@ -188,6 +193,7 @@ export function initBrowser(root: HTMLElement) {
       grid.replaceChildren(...list.slice(from, from + BATCH).map((r) => card(r.mod!)));
       drawn = Math.min(from + BATCH, list.length);
       markCards();
+      paintCards(grid, counts);
       paintPager(pages);
     }
     paintCount();

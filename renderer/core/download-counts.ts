@@ -10,6 +10,9 @@
 import type { Mod } from '../catalog/types.ts';
 
 let counts: Record<string, number> | null = null;
+/* per mod, its looks added up: the catalog's site counts a mod with looks under
+   category/group/name/Look, and the plain key holds only this app's hits, sent per look as well */
+const looks = new WeakMap<Record<string, number>, Map<string, number>>();
 let asking = false;
 const listeners = new Set<() => void>();
 
@@ -40,11 +43,26 @@ export function refreshDownloadCounts(): void {
 export const countKey = (categoryId: string, m: Pick<Mod, 'name' | '_groupId'>): string =>
   [categoryId, m._groupId, m.name].filter(Boolean).join('/');
 
+/** A key's count, its looks together where they are more: the plain key alone said 12 for a
+ *  Tidehunter Arcana whose look had 778. */
+export function totalOf(all: Record<string, number>, key: string): number {
+  let sums = looks.get(all);
+  if (!sums) {
+    sums = new Map();
+    for (const [k, n] of Object.entries(all)) {
+      const at = k.lastIndexOf('/');
+      if (at > 0 && typeof n === 'number') sums.set(k.slice(0, at), (sums.get(k.slice(0, at)) ?? 0) + n);
+    }
+    looks.set(all, sums);
+  }
+  return Math.max(Number(all[key]) || 0, sums.get(key) ?? 0);
+}
+
 /** Downloads of this mod, all its looks together; 0 when nobody can say (asked here, once). */
 export function downloadsOf(categoryId: string, m: Pick<Mod, 'name' | '_groupId'> | null | undefined): number {
   if (!m || !m.name || !categoryId) return 0;
   if (!counts) { ask(); return 0; }
-  return counts[countKey(categoryId, m)] || 0;
+  return totalOf(counts, countKey(categoryId, m));
 }
 
 /** 950 → "950", 1234 → "1.2k", 15600 → "15k", 2 500 000 → "2.5M": the site's way of writing it. */

@@ -38,6 +38,8 @@ export interface BrowseCopy {
   replaces: string;
   author: string;
   added: string;
+  /** on a mod's page, beside the date: how many times it was downloaded (src/scripts/downloads.ts) */
+  downloads: string;
   style: string;
   openApp: string;
   copyLink: string;
@@ -90,6 +92,7 @@ export const browse: Record<'en' | 'ru', BrowseCopy> = {
     replaces: 'Replaces',
     author: 'Made by',
     added: 'Added',
+    downloads: 'Downloads',
     style: 'Style',
     openApp: 'Open in Mod Manager',
     copyLink: 'Copy the link',
@@ -138,6 +141,7 @@ export const browse: Record<'en' | 'ru', BrowseCopy> = {
     replaces: 'Меняет',
     author: 'Автор',
     added: 'Добавлен',
+    downloads: 'Скачиваний',
     style: 'Стиль',
     openApp: 'Открыть в Mod Manager',
     copyLink: 'Скопировать ссылку',

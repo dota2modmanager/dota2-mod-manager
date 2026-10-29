@@ -20,6 +20,9 @@ export interface HeroImage {
 export interface HeroMod {
   name: string;
   styleLabel: string | null;
+  /** The catalog group the mod sits in (a hero item's hero, a creep's side), part of its download
+      counter's key; null in a category without groups. */
+  group?: string | null;
   /** Which parts of the hero this replaces: head, weapon, arms... Empty means a recolour. */
   slots: string[];
   image: HeroImage | null;

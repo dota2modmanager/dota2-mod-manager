@@ -118,12 +118,14 @@ function canonicaliser(heroList) {
 function catalogIndex(modsData) {
   const byKey = new Map();
   for (const [categoryId, data] of Object.entries(modsData)) {
-    const arr = Array.isArray(data) ? data : (data?.groups ? data.groups.flatMap((g) => g.mods || []) : []);
-    for (const mod of arr) {
+    /* the group a mod sits in is part of its download counter's key (category/group/name) */
+    const arr = Array.isArray(data) ? data.map((mod) => [null, mod])
+      : (data?.groups ? data.groups.flatMap((g) => (g.mods || []).map((mod) => [typeof g.id === 'string' ? g.id : null, mod])) : []);
+    for (const [group, mod] of arr) {
       if (!mod?.name) continue;
       const author = (mod.links || []).find((l) => l.type === 'author')?.url
         || (mod.linkType === 'author' ? mod.linkUrl : null);
-      const common = { author, date: mod.meta?.date ?? null, tags: mod.tags || {} };
+      const common = { author, group, date: mod.meta?.date ?? null, tags: mod.tags || {} };
       if (Array.isArray(mod.styles) && mod.styles.length) {
         for (const st of mod.styles) {
           byKey.set(`${categoryId} ${mod.name} ${st.label || ''}`, { ...common, preview: st.preview || mod.preview });
@@ -272,6 +274,7 @@ for (const [, entry] of merged) {
       name: m.name,
       categoryId: m.categoryId,
       styleLabel: m.styleLabel,
+      group: meta?.group ?? null,
       slots: m.slots,
       image,
       author: meta?.author ?? null,
@@ -352,6 +355,7 @@ for (const [categoryId, data] of Object.entries(mods.modsData)) {
       list.push({
         name: mod.name,
         styleLabel: e.styleLabel,
+        group: meta?.group ?? null,
         image,
         author: meta?.author ?? null,
         authorUrl: meta?.author ? profile(meta.author) : null,

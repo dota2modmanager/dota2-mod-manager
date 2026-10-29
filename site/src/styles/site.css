@@ -996,6 +996,9 @@ section { padding: 56px 0; }
 }
 .mcard-meta { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-faint); min-width: 0; }
 .mcard-meta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* how many times it was downloaded (src/scripts/downloads.ts): at the end of the first row, never cut */
+.mcard-dl { margin-left: auto; padding-left: 4px; display: inline-flex; align-items: center; gap: 3px; flex: none; font-variant-numeric: tabular-nums; }
+.mcard-dl b { font-weight: 600; color: var(--text-dim); }
 .mcard-style { font-size: 12px; font-weight: 600; color: var(--on-primary); background: var(--primary); border-radius: 999px; padding: 1px 8px; justify-self: start; }
 .mcard-add {
   position: absolute; right: 8px; top: 8px; z-index: 1;

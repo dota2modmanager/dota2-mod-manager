@@ -147,6 +147,11 @@ analytics, no tag manager and no cookies. Fonts, styles and scripts are served f
 itself. Cloudflare keeps request logs the way any host does; nothing beyond that is collected,
 and there is nothing on the site that could identify a visitor to us.
 
+The catalog pages read the download numbers from the same counter the app uses
+(`d2pfx-counter.hrdqfck.workers.dev`, see *The download counter*). Your browser asks it for the
+list of counts and sends nothing else; the counter sees that request the way any host does. The
+site never counts a visit or a download into it.
+
 ## Writing to hello@ or security@
 
 Both addresses are Cloudflare Email Routing, and a letter to either is handled in two steps, in
