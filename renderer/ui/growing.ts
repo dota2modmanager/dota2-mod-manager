@@ -18,6 +18,16 @@ export const PAGE = 120;
 /** How far ahead of the visible part the next page is fetched, so a fast scroll never hits the end. */
 const AHEAD = '1600px 0px';
 
+/* The list scrolls inside #main, not the window. Watched against the window, the margin above is
+ * cut away by #main's own clip, and the next page only came once the end was already on screen:
+ * a fast flick ran into the bottom. So the marker is watched against the box that scrolls it. */
+function scroller(el: HTMLElement): HTMLElement | null {
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    if (/(auto|scroll)/.test(getComputedStyle(p).overflowY)) return p;
+  }
+  return null;
+}
+
 /**
  * How many of `total` to draw, and the marker to put after them.
  * @param resetKey  a different list (another category, another search): back to the first page
@@ -36,7 +46,7 @@ export function useGrowing(total: number, resetKey: unknown): { limit: number; m
       if (!entries.some((e) => e.isIntersecting)) return;
       // a transition: the page joins across frames rather than in one long task
       startTransition(() => setLimit((n) => Math.min(total, n + PAGE)));
-    }, { rootMargin: AHEAD });
+    }, { root: scroller(el), rootMargin: AHEAD });
     seen.observe(el);
     return () => seen.disconnect();
   }, [more, total, limit]);

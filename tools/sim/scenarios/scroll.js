@@ -22,6 +22,19 @@ module.exports = async function scroll(sim) {
   await sim.settle(600);
   await sim.shot('top');
 
+  // the next page comes before its end is on screen: the marker a thousand pixels below the
+  // visible part is already near enough (it was not, watched against the window: #main clipped it)
+  const drawn = `document.querySelectorAll('.view-pane[data-pane="catalog"] .grid .card').length`;
+  const first = await sim.js(drawn);
+  await sim.js(`(() => {
+    const main = document.getElementById('main'), m = document.querySelector('.view-pane[data-pane="catalog"] .grid-more');
+    if (m) main.scrollTop += m.getBoundingClientRect().top - main.getBoundingClientRect().bottom - 1000;
+  })()`);
+  sim.check('the next page is drawn before the end of the list comes into view',
+    await sim.until(`${drawn} > ${first}`, 3000), `still ${first} cards with the end 1000 px below the window`);
+  await sim.js(`document.getElementById('main').scrollTop = 0`);
+  await sim.settle(600);
+
   const grid = await sim.find('#main');
   const park = { x: Math.round(grid.x), y: 8 }; // the title bar: nothing there lifts on hover
   const flicks = [900, 900, 1400, -600, 2000, 700, -1200, 2600];
