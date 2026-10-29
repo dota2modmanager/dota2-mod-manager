@@ -12666,6 +12666,145 @@
       ]
     },
     {
+      "id": "gyro",
+      "name": "Gyrocopter",
+      "slug": "gyrocopter",
+      "mods": [
+        {
+          "name": "Gyrocopter Kongou",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc","arms","head","back","offhand","weapon"],
+          "image": {"src":"/mods/gyrocopter-kongou.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1767093656
+        },
+        {
+          "name": "Gyrocopter Airbone Machete",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/gyrocopter-airbone-machete.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1793264883
+        },
+        {
+          "name": "Krutoi Gyrocopter",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/krutoi-gyrocopter.webp","width":854,"height":480},
+          "author": "rasstegai",
+          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
+          "date": 1791904368
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        }
+      ]
+    },
+    {
       "id": "jakiro",
       "name": "Jakiro",
       "slug": "jakiro",
@@ -12801,6 +12940,145 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
+        }
+      ]
+    },
+    {
+      "id": "kunkka",
+      "name": "Kunkka",
+      "slug": "kunkka",
+      "mods": [
+        {
+          "name": "Kunkka Inquisitor Tide",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc","legs","head","arms","shoulder","weapon","back","belt"],
+          "image": {"src":"/mods/kunkka-inquisitor-tide.webp","width":854,"height":480},
+          "author": "александр",
+          "authorUrl": "https://t.me/+VY-_XaaDg00wYmI6",
+          "date": 1790894654
+        },
+        {
+          "name": "Kunkka Sea Spirit",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["legs","head","arms","shoulder","misc","weapon","back","belt"],
+          "image": {"src":"/mods/kunkka-sea-spirit.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1790424886
+        },
+        {
+          "name": "Immortal Kunkka",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["legs","head","arms","shoulder","misc","weapon"],
+          "image": {"src":"/mods/immortal-kunkka.webp","width":854,"height":480},
+          "author": "Arthas",
+          "authorUrl": "https://t.me/ArthasModMaker",
+          "date": 1785232049
+        },
+        {
+          "name": "Kunkka Viking",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["legs","head","arms","shoulder","misc","weapon"],
+          "image": {"src":"/mods/kunkka-viking.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1793264883
+        },
+        {
+          "name": "Kunkka Leviathan",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["legs","head","shoulder","misc","weapon"],
+          "image": {"src":"/mods/kunkka-leviathan.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1791162755
+        },
+        {
+          "name": "Kunkka Saltworn Mariner",
+          "categoryId": "hero-items",
+          "styleLabel": "I",
+          "group": "kunkka",
+          "slots": ["misc","shoulder"],
+          "image": {"src":"/mods/kunkka-saltworn-mariner-i.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790294026
+        },
+        {
+          "name": "Kunkka Saltworn Mariner",
+          "categoryId": "hero-items",
+          "styleLabel": "II",
+          "group": "kunkka",
+          "slots": ["misc","shoulder"],
+          "image": {"src":"/mods/kunkka-saltworn-mariner-ii.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790294026
+        },
+        {
+          "name": "Kunkka Frostbloom Sword",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "group": "kunkka",
+          "slots": ["weapon"],
+          "image": {"src":"/mods/kunkka-frostbloom-sword.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1791785647
+        },
+        {
+          "name": "Kunkka Shadow Blade",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "group": "kunkka",
+          "slots": ["weapon"],
+          "image": {"src":"/mods/kunkka-shadow-blade.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1775190022
+        },
+        {
+          "name": "Kunkka Whale Blade",
+          "categoryId": "hero-items",
+          "styleLabel": "Eminent Revival",
+          "group": "kunkka",
+          "slots": ["weapon"],
+          "image": {"src":"/mods/kunkka-whale-blade-eminent-revival.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1775195016
+        },
+        {
+          "name": "Kunkka Whale Blade",
+          "categoryId": "hero-items",
+          "styleLabel": "Eminent Revival Exceptional",
+          "group": "kunkka",
+          "slots": ["weapon"],
+          "image": {"src":"/mods/kunkka-whale-blade-eminent-revival-exceptional.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1775195016
+        },
+        {
+          "name": "Kunkka Whale Blade",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "group": "kunkka",
+          "slots": ["weapon"],
+          "image": {"src":"/mods/kunkka-whale-blade.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1775195016
         }
       ]
     },
@@ -13763,262 +14041,6 @@
           "author": "Defiree",
           "authorUrl": "https://vk.com/defiree2mods",
           "date": 1789090758
-        }
-      ]
-    },
-    {
-      "id": "gyro",
-      "name": "Gyrocopter",
-      "slug": "gyrocopter",
-      "mods": [
-        {
-          "name": "Gyrocopter Kongou",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc","arms","head","back","offhand","weapon"],
-          "image": {"src":"/mods/gyrocopter-kongou.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1767093656
-        },
-        {
-          "name": "Krutoi Gyrocopter",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/krutoi-gyrocopter.webp","width":854,"height":480},
-          "author": "rasstegai",
-          "authorUrl": "https://steamcommunity.com/id/rasstegai/",
-          "date": 1791904368
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "kunkka",
-      "name": "Kunkka",
-      "slug": "kunkka",
-      "mods": [
-        {
-          "name": "Kunkka Inquisitor Tide",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc","legs","head","arms","shoulder","weapon","back","belt"],
-          "image": {"src":"/mods/kunkka-inquisitor-tide.webp","width":854,"height":480},
-          "author": "александр",
-          "authorUrl": "https://t.me/+VY-_XaaDg00wYmI6",
-          "date": 1790894654
-        },
-        {
-          "name": "Kunkka Sea Spirit",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["legs","head","arms","shoulder","misc","weapon","back","belt"],
-          "image": {"src":"/mods/kunkka-sea-spirit.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790424886
-        },
-        {
-          "name": "Immortal Kunkka",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["legs","head","arms","shoulder","misc","weapon"],
-          "image": {"src":"/mods/immortal-kunkka.webp","width":854,"height":480},
-          "author": "Arthas",
-          "authorUrl": "https://t.me/ArthasModMaker",
-          "date": 1785232049
-        },
-        {
-          "name": "Kunkka Leviathan",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["legs","head","shoulder","misc","weapon"],
-          "image": {"src":"/mods/kunkka-leviathan.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1791162755
-        },
-        {
-          "name": "Kunkka Saltworn Mariner",
-          "categoryId": "hero-items",
-          "styleLabel": "I",
-          "group": "kunkka",
-          "slots": ["misc","shoulder"],
-          "image": {"src":"/mods/kunkka-saltworn-mariner-i.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790294026
-        },
-        {
-          "name": "Kunkka Saltworn Mariner",
-          "categoryId": "hero-items",
-          "styleLabel": "II",
-          "group": "kunkka",
-          "slots": ["misc","shoulder"],
-          "image": {"src":"/mods/kunkka-saltworn-mariner-ii.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790294026
-        },
-        {
-          "name": "Kunkka Frostbloom Sword",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "group": "kunkka",
-          "slots": ["weapon"],
-          "image": {"src":"/mods/kunkka-frostbloom-sword.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1791785647
-        },
-        {
-          "name": "Kunkka Shadow Blade",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "group": "kunkka",
-          "slots": ["weapon"],
-          "image": {"src":"/mods/kunkka-shadow-blade.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1775190022
-        },
-        {
-          "name": "Kunkka Whale Blade",
-          "categoryId": "hero-items",
-          "styleLabel": "Eminent Revival",
-          "group": "kunkka",
-          "slots": ["weapon"],
-          "image": {"src":"/mods/kunkka-whale-blade-eminent-revival.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1775195016
-        },
-        {
-          "name": "Kunkka Whale Blade",
-          "categoryId": "hero-items",
-          "styleLabel": "Eminent Revival Exceptional",
-          "group": "kunkka",
-          "slots": ["weapon"],
-          "image": {"src":"/mods/kunkka-whale-blade-eminent-revival-exceptional.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1775195016
-        },
-        {
-          "name": "Kunkka Whale Blade",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "group": "kunkka",
-          "slots": ["weapon"],
-          "image": {"src":"/mods/kunkka-whale-blade.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1775195016
         }
       ]
     },
@@ -16527,6 +16549,90 @@
       ]
     },
     {
+      "id": "meepo",
+      "name": "Meepo",
+      "slug": "meepo",
+      "mods": [
+        {
+          "name": "Meepo Blueness",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","weapon","misc","shoulder","tail"],
+          "image": {"src":"/mods/meepo-blueness.webp","width":854,"height":480},
+          "author": "lansory",
+          "authorUrl": "https://discord.com/users/1108248721768071210",
+          "date": 1787119140
+        },
+        {
+          "name": "Meepo Fractured Haul",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","weapon","misc","shoulder","tail"],
+          "image": {"src":"/mods/meepo-fractured-haul.webp","width":854,"height":480},
+          "author": "Niski25",
+          "authorUrl": "https://github.com/cus-nyam",
+          "date": 1787848064
+        },
+        {
+          "name": "Meepo Jungle Babysitter",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","weapon","misc","shoulder","tail"],
+          "image": {"src":"/mods/meepo-jungle-babysitter.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1793264883
+        },
+        {
+          "name": "Meepo Lotus Bear",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","weapon","misc","shoulder","tail"],
+          "image": {"src":"/mods/meepo-lotus-bear.webp","width":854,"height":480},
+          "author": "Anonymous",
+          "authorUrl": null,
+          "date": 1775307626
+        },
+        {
+          "name": "Meepo Mafia",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","weapon","misc","shoulder","tail"],
+          "image": {"src":"/mods/meepo-mafia.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1791389366
+        },
+        {
+          "name": "Meepo Mocking Bird",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","weapon","misc","shoulder","tail"],
+          "image": {"src":"/mods/meepo-mocking-bird.webp","width":854,"height":480},
+          "author": "Anonymous",
+          "authorUrl": null,
+          "date": 1775307626
+        },
+        {
+          "name": "Meepo Diretide",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["head","misc","weapon","shoulder","back"],
+          "image": {"src":"/mods/meepo-diretide.webp","width":854,"height":480},
+          "author": "Haruma",
+          "authorUrl": "https://t.me/DotA_2_Mods",
+          "date": 1779111814
+        }
+      ]
+    },
+    {
       "id": "night_stalker",
       "name": "Night Stalker",
       "slug": "night-stalker",
@@ -16775,79 +16881,6 @@
           "author": "depex",
           "authorUrl": "https://t.me/depexfx",
           "date": 1788091261
-        }
-      ]
-    },
-    {
-      "id": "meepo",
-      "name": "Meepo",
-      "slug": "meepo",
-      "mods": [
-        {
-          "name": "Meepo Blueness",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","weapon","misc","shoulder","tail"],
-          "image": {"src":"/mods/meepo-blueness.webp","width":854,"height":480},
-          "author": "lansory",
-          "authorUrl": "https://discord.com/users/1108248721768071210",
-          "date": 1787119140
-        },
-        {
-          "name": "Meepo Fractured Haul",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","weapon","misc","shoulder","tail"],
-          "image": {"src":"/mods/meepo-fractured-haul.webp","width":854,"height":480},
-          "author": "Niski25",
-          "authorUrl": "https://github.com/cus-nyam",
-          "date": 1787848064
-        },
-        {
-          "name": "Meepo Lotus Bear",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","weapon","misc","shoulder","tail"],
-          "image": {"src":"/mods/meepo-lotus-bear.webp","width":854,"height":480},
-          "author": "Anonymous",
-          "authorUrl": null,
-          "date": 1775307626
-        },
-        {
-          "name": "Meepo Mafia",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","weapon","misc","shoulder","tail"],
-          "image": {"src":"/mods/meepo-mafia.webp","width":854,"height":480},
-          "author": "твавт",
-          "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1791389366
-        },
-        {
-          "name": "Meepo Mocking Bird",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","weapon","misc","shoulder","tail"],
-          "image": {"src":"/mods/meepo-mocking-bird.webp","width":854,"height":480},
-          "author": "Anonymous",
-          "authorUrl": null,
-          "date": 1775307626
-        },
-        {
-          "name": "Meepo Diretide",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["head","misc","weapon","shoulder","back"],
-          "image": {"src":"/mods/meepo-diretide.webp","width":854,"height":480},
-          "author": "Haruma",
-          "authorUrl": "https://t.me/DotA_2_Mods",
-          "date": 1779111814
         }
       ]
     },

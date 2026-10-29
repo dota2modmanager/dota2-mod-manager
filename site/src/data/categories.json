@@ -8371,6 +8371,49 @@
       ]
     },
     {
+      "id": "pings",
+      "mods": [
+        {
+          "name": "Old Ping",
+          "styleLabel": "Old Icons",
+          "group": null,
+          "image": {"src":"/mods/old-ping-old-icons.webp","width":854,"height":480},
+          "author": "4d4mf",
+          "authorUrl": "https://t.me/vpk4d4mmf",
+          "date": 1793264883
+        },
+        {
+          "name": "Old Ping",
+          "styleLabel": "New Icons",
+          "group": null,
+          "image": {"src":"/mods/old-ping-new-icons.webp","width":854,"height":480},
+          "author": "4d4mf",
+          "authorUrl": "https://t.me/vpk4d4mmf",
+          "date": 1793264883
+        },
+        {"name":"Question Marks","styleLabel":null,"group":null,"image":{"src":"/mods/question-marks.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1793129686},
+        {
+          "name": "Tcoaal Heart Ping Love 3",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/tcoaal-heart-ping-love-3.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792894433
+        },
+        {"name":"Love Ping","styleLabel":null,"group":null,"image":{"src":"/mods/love-ping.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {
+          "name": "Love Ping II",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/love-ping-ii.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        }
+      ]
+    },
+    {
       "id": "optimization",
       "mods": [
         {
@@ -8380,7 +8423,7 @@
           "image": {"src":"/mods/no-unnecessary-models.webp","width":854,"height":480},
           "author": "depex",
           "authorUrl": "https://t.me/depexfx",
-          "date": 1793227820
+          "date": 1793272140
         },
         {
           "name": "No Unnecessary Map Effects",
@@ -8442,31 +8485,6 @@
           "author": "hrdq",
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1782925485
-        }
-      ]
-    },
-    {
-      "id": "pings",
-      "mods": [
-        {"name":"Question Marks","styleLabel":null,"group":null,"image":{"src":"/mods/question-marks.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1793129686},
-        {
-          "name": "Tcoaal Heart Ping Love 3",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/tcoaal-heart-ping-love-3.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792894433
-        },
-        {"name":"Love Ping","styleLabel":null,"group":null,"image":{"src":"/mods/love-ping.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {
-          "name": "Love Ping II",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/love-ping-ii.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
         }
       ]
     },

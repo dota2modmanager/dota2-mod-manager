@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1563,
+  "mods": 1566,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -619,6 +619,7 @@
     "gyro": {
       "name": "Gyrocopter",
       "mods": [
+        {"name":"Gyrocopter Airbone Machete","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Gyrocopter Kongou","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","back","offhand","weapon"]},
         {"name":"Krutoi Gyrocopter","categoryId":"heroes","styleLabel":null,"slots":["misc"]}
       ]
@@ -835,6 +836,7 @@
         {"name":"Kunkka Saltworn Mariner","categoryId":"hero-items","styleLabel":"II","slots":["misc","shoulder"]},
         {"name":"Kunkka Sea Spirit","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","shoulder","misc","weapon","back","belt"]},
         {"name":"Kunkka Shadow Blade","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Kunkka Viking","categoryId":"heroes","styleLabel":null,"slots":["legs","head","arms","shoulder","misc","weapon"]},
         {"name":"Kunkka Whale Blade","categoryId":"hero-items","styleLabel":"Eminent Revival","slots":["weapon"]},
         {"name":"Kunkka Whale Blade","categoryId":"hero-items","styleLabel":"Eminent Revival Exceptional","slots":["weapon"]},
         {"name":"Kunkka Whale Blade","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]}
@@ -1091,6 +1093,7 @@
         {"name":"Meepo Blueness","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]},
         {"name":"Meepo Diretide","categoryId":"heroes","styleLabel":null,"slots":["head","misc","weapon","shoulder","back"]},
         {"name":"Meepo Fractured Haul","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]},
+        {"name":"Meepo Jungle Babysitter","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]},
         {"name":"Meepo Lotus Bear","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]},
         {"name":"Meepo Mafia","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]},
         {"name":"Meepo Mocking Bird","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc","shoulder","tail"]}
