@@ -46,7 +46,8 @@ function banners(): BannersModel {
 export function libraryModel(): LibraryModel {
   const all = lib.records;
   const { mods, cosmetics } = listParts(all, lib.search, lib.order);
-  const enabled = all.filter((m) => m.enabled).length;
+  // the master switch off: nothing is on, whatever each one will come back as
+  const enabled = state.masterOff ? 0 : all.filter((m) => m.enabled).length;
   const dupes = lib.external.filter((f) => f.duplicateOf).length;
   return {
     key: lib.key,
@@ -63,7 +64,7 @@ export function libraryModel(): LibraryModel {
     cosmetics: cosmetics.length ? {
       rows: cosmetics.map((rec, i) => modRow(rec, i)),
       count: cosmetics.length,
-      on: cosmetics.filter((r) => r.enabled !== false).length,
+      on: state.masterOff ? 0 : cosmetics.filter((r) => r.enabled !== false).length,
     } : null,
     selectAll: tristate(selectableMods(all, lib.search), lib.sel),
     selectAllCosmetics: tristate(selectableCosmetics(all, lib.search), lib.sel),
