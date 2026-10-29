@@ -72,6 +72,7 @@ module.exports = async function guideShots(sim) {
 
     // the install guide: a mod's window, its Install button in reach
     await steps.categoryList(sim, 'heroes');
+    await steps.allCards(sim);
     const at = await sim.until(`[...document.querySelectorAll('.view-pane[data-pane="catalog"] .grid .card .card-name')].findIndex((n) => n.textContent.trim() === ${lit(SHOWN)}) + 1`, 8000);
     if (sim.check(`${SHOWN} is in the heroes list to open`, !!at)) {
       await sim.click(`.view-pane[data-pane="catalog"] .grid .card .card-name@${at}`);

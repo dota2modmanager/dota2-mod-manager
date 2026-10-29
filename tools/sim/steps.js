@@ -207,6 +207,7 @@ async function installFromCard(sim, m, langDir) {
   const shown = await categoryList(sim, m.categoryId);
   const none = { pak: null, added: [], asked: null, ok: false };
   if (!sim.check(`${m.categoryId}: the category lists its mods`, !!shown, 'not one card in it, so no mod could be found there')) return none;
+  await allCards(sim); // the grid draws a page at a time
   const at = await sim.until(`(() => {
     const names = [...document.querySelectorAll('.view-pane[data-pane="catalog"] .grid .card .card-name')];
     return names.findIndex((n) => n.textContent.trim() === ${lit(m.name)}) + 1;

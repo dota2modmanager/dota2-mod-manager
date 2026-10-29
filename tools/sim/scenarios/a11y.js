@@ -147,6 +147,7 @@ module.exports = async function a11y(sim) {
   await sim.click(`.rail-item[data-cat="${m.categoryId}"]`);
   sim.check('a screen reader is told which category is picked',
     await sim.until(`[...document.querySelectorAll('.rail-item[aria-current="true"]')].map((b) => b.dataset.cat).join() === ${lit(m.categoryId)}`, 3000));
+  await steps.allCards(sim); // the grid draws a page at a time, and this mod is past the first one
   const at = await sim.until(`(() => {
     const names = [...document.querySelectorAll('.view-pane[data-pane="catalog"] .grid .card .card-open')];
     const i = names.findIndex((n) => n.textContent.trim() === ${lit(m.name)});
