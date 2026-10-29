@@ -70,9 +70,12 @@
 /* Two lines that are not equals. The first is the same on every category - order, whose
    heroes, and the two questions about your own library - and it reads as one row. Tags
    belong to this category alone and sit under a rule, quieter, so the eye can skip them. */
+/* Its level is above the cards it floats over and below the title bar: at 25 it painted over the
+   help menu that drops out of the bar, and a tall bar (a big --top-zoom) puts that menu right on
+   top of it, unclickable (issue #357). An open dropdown still lifts it, below. */
 .toolbar {
   position: relative;
-  z-index: 25;
+  z-index: calc(var(--z-bar) - 1);
   margin-bottom: var(--space-4);
   padding: 11px 14px;
   background: var(--surface);
