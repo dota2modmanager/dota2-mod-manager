@@ -1,9 +1,10 @@
-# Every pull request asks both maintainers for a review. Merging does not wait for one: main
+# Every pull request asks the maintainers for a review. Merging does not wait for one: main
 # takes a change through the merge queue once its required checks are green. The modules that
 # write into somebody's game folder are listed again on purpose: a change there is the one to
-# read twice, and a module split into several files keeps all of them on the list.
+# read twice, by the two owners of the organization, and a module split into several files keeps
+# all of them on the list.
 
-*                     @TheFleece @Nersaa
+*                     @TheFleece @Nersaa @J0nathan550 @h6rd
 
 src/patcher*.ts       @TheFleece @Nersaa
 src/vpk*.ts           @TheFleece @Nersaa

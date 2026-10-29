@@ -19,12 +19,14 @@ project's name.
 
 | Role | Who | What they do |
 |---|---|---|
-| Committers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Write changes. A change reaches `main` only through a pull request, the maintainers' own included |
-| Reviewers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Review a pull request from outside the project before merging it: a merge needs write access, so such a change always passes a maintainer. The maintainers' own changes merge once the required checks pass |
-| Approvers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Tag a release on a commit of `main`, and approve each signing request once signing is in place |
+| Committers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa), [@J0nathan550](https://github.com/J0nathan550), [@h6rd](https://github.com/h6rd) | Write changes. A change reaches `main` only through a pull request, the maintainers' own included |
+| Reviewers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa), [@J0nathan550](https://github.com/J0nathan550), [@h6rd](https://github.com/h6rd) | Review a pull request from outside the project before merging it: a merge needs write access, so such a change always passes a maintainer. The maintainers' own changes merge once the required checks pass |
+| Approvers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa), [@J0nathan550](https://github.com/J0nathan550), [@h6rd](https://github.com/h6rd) | Tag a release on a commit of `main`, and approve each signing request once signing is in place |
 
-Both are owners of the [dota2modmanager](https://github.com/dota2modmanager) organization, which
-requires two-factor authentication of every member. They use it on every service that can publish
+[@TheFleece](https://github.com/TheFleece) and [@Nersaa](https://github.com/Nersaa) own the
+[dota2modmanager](https://github.com/dota2modmanager) organization; the other two hold the Maintain
+role on the repository, which does not reach its settings or secrets. The organization requires
+two-factor authentication of every member, and all four use it on every service that can publish
 anything. [GOVERNANCE.md](../GOVERNANCE.md) says who decides what.
 
 ## How a release is built
