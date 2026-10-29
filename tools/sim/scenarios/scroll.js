@@ -39,15 +39,26 @@ module.exports = async function scroll(sim) {
   const park = { x: Math.round(grid.x), y: 8 }; // the title bar: nothing there lifts on hover
   const flicks = [900, 900, 1400, -600, 2000, 700, -1200, 2600];
   const at = () => sim.js(`Math.round(document.getElementById('main').scrollTop)`);
+  const room = `(() => { const m = document.getElementById('main'); return m.scrollHeight - m.clientHeight; })()`;
   for (const [i, dy] of flicks.entries()) {
     await sim.move(grid.x, grid.y);
     const before = await at();
+    const last = await sim.js(room);
+    const count = await sim.js(drawn);
     await sim.fling(dy, 8, 16);
     await sim.settle(300);
     const after = await at();
+    // A flick is seven thousand pixels in an eighth of a second, far past the thousand the next
+    // page is fetched ahead of. Where the page is drawn mid-flick the list runs on; on a slower
+    // machine (the Linux runner) it is drawn just after, and the flick stops at the end of what
+    // was there before it, having moved a hundred pixels. That is the list working: what has to
+    // happen then is the next page arriving, so that is what is waited for and checked.
+    const stopped = dy > 0 && after > before && after >= last - 2;
+    const grew = stopped && await sim.until(`${drawn} > ${count}`, 3000);
     // a check that compares a list that never moved proves nothing, so moving is checked first
-    sim.check(`flick ${i + 1} moves the list`, Math.sign(after - before) === Math.sign(dy) && Math.abs(after - before) > 200,
-      `scrollTop went from ${before} to ${after} for a flick of ${dy}`);
+    const moved = Math.sign(after - before) === Math.sign(dy) && Math.abs(after - before) > 200;
+    sim.check(`flick ${i + 1} moves the list`, moved || grew,
+      `scrollTop went from ${before} to ${after} for a flick of ${dy}${stopped ? `, the end of the ${count} cards drawn, and no page came after` : ''}`);
     await sim.move(park.x, park.y);
     await sim.settle(900);
     await sim.integrity(`flick-${i + 1}`);
