@@ -2140,6 +2140,14 @@
       "id": "backgrounds",
       "mods": [
         {
+          "name": "Main Menu 7.00 Style",
+          "styleLabel": null,
+          "image": {"src":"/mods/main-menu-7-00-style.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1793238383
+        },
+        {
           "name": "Main Menu Reborn Beta",
           "styleLabel": null,
           "image": {"src":"/mods/main-menu-reborn-beta.webp","width":854,"height":480},
@@ -6517,19 +6525,6 @@
           "author": "hrdq",
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1784792710
-        }
-      ]
-    },
-    {
-      "id": "background",
-      "mods": [
-        {
-          "name": "Main Menu 7 00 Style",
-          "styleLabel": null,
-          "image": {"src":"/mods/main-menu-7-00-style.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1793227820
         }
       ]
     },
