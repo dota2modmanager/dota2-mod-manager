@@ -2,6 +2,8 @@
 .lib-toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
 .lib-stats { color: var(--text-muted); font-size: 13px; margin-right: auto; }
 .lib-list { display: flex; flex-direction: column; gap: var(--space-2); }
+/* where the next page of rows joins (ui/growing.ts): nothing to see, and no gap of its own */
+.lib-more { height: 1px; margin-top: calc(-1 * var(--space-2)); }
 .lib-row {
   display: flex;
   align-items: center;

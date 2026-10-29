@@ -105,7 +105,8 @@ module.exports = async function browse(sim) {
     const shown = await sim.js(`(() => {
       const pane = document.querySelector('.view-pane[data-pane="catalog"]');
       return {
-        cards: pane.querySelectorAll('.grid .card').length,
+        // a long list is drawn a page at a time, and its marker carries the whole length
+        cards: pane.querySelector('.grid-more') ? Number(pane.querySelector('.grid-more').dataset.total) : pane.querySelectorAll('.grid .card').length,
         // Heroes opens on one tile per hero, each saying how many mods it holds
         tiles: pane.querySelector('#heroGrid')
           ? [...pane.querySelectorAll('#heroGrid .hero-count')].reduce((n, t) => n + Number(t.textContent), 0) : null,
@@ -174,7 +175,7 @@ module.exports = async function browse(sim) {
   ];
   // the first card, one from the middle and one near the end (the end is where the window opens
   // from a card that had to be scrolled to), and one with more than one look to pick from
-  const total = await sim.js(`document.querySelectorAll('.view-pane[data-pane="catalog"] .grid .card').length`);
+  const total = await steps.allCards(sim);
   const withLooks = await sim.js(`(async () => {
     const c = await window.api.catalog.load(false);
     const names = new Set((c?.mods?.modsData?.heroes || []).filter((m) => (m.styles || []).length > 1).map((m) => m.name));

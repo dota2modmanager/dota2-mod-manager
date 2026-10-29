@@ -318,8 +318,23 @@ function whoServes(game, folder, pak) {
   return { files: mine.length + Object.values(lost).reduce((a, b) => a + b, 0), served: mine.length, lost };
 }
 
+/**
+ * Every card of the list on show, the way a person gets them: a long list is drawn a page at a time
+ * (renderer/ui/growing.ts), so this scrolls to the end until the marker of the next page is gone.
+ * @returns {Promise<number>} how many cards the list shows then
+ */
+async function allCards(sim) {
+  const cards = `document.querySelectorAll('.view-pane[data-pane="catalog"] .grid .card').length`;
+  for (let i = 0; i < 40; i++) {
+    const more = await sim.js(`(() => { const m = document.querySelector('.view-pane[data-pane="catalog"] .grid-more'); if (m) m.scrollIntoView({ block: 'end', behavior: 'instant' }); return Boolean(m); })()`);
+    if (!more) break;
+    await sim.settle(250);
+  }
+  return sim.js(cards);
+}
+
 module.exports = {
-  calm, modalOpen, listing, listingDiff, readyMods, openSection, heroesList, categoryList, installFromCard,
+  calm, modalOpen, listing, listingDiff, readyMods, openSection, heroesList, categoryList, installFromCard, allCards,
   libraryRows, rowOf, setEnabled, removeFromLibrary, gameOf, gameLoads, mountedOurs, whoServes,
   modFile, answerNextDialog,
 };

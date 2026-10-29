@@ -97,6 +97,8 @@
   content-visibility: auto;
   contain-intrinsic-size: auto 250px;
 }
+/* where the next page of a long list joins (ui/growing.ts): a whole row, and nothing to see */
+.grid-more { grid-column: 1 / -1; height: 1px; margin-top: -1px; }
 .group-title {
   grid-column: 1 / -1;
   font-family: var(--font-head);

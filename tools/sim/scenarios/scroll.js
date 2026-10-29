@@ -41,7 +41,8 @@ module.exports = async function scroll(sim) {
   }
   await sim.shot('after-flicks');
 
-  // the very end of the list
+  // the very end of the list, with every page of it drawn
+  await steps.allCards(sim);
   const end = await sim.js(`new Promise((done) => {
     const main = document.getElementById('main');
     main.scrollTop = main.scrollHeight;

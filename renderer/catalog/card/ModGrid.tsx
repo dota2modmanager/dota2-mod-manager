@@ -4,7 +4,10 @@
  * opens the screen, so the view transition captures it whole; the rest follows as a transition
  * React can split across frames. Drawing all 611 heroes in one go held the window for about 55 ms
  * (measured against the string templates it replaced, which never did); this way no single task
- * is that long, and nothing below the fold was going to be seen in the first frame anyway. */
+ * is that long, and nothing below the fold was going to be seen in the first frame anyway.
+ *
+ * And not all of a long list is drawn at all: a page of it, and the next as the end comes near
+ * (ui/growing.ts, issue #358). */
 import { startTransition, useEffect, useState, type ReactElement } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { cardMotion } from './card-motion.ts';
@@ -13,6 +16,7 @@ import { keyOf } from '../../core/keys.ts';
 import { ModCard } from './ModCard.tsx';
 import { heroName } from '../../ui/hero-name.ts';
 import { catalogLabel } from '../../ui/catalog-name.ts';
+import { GrowMarker, useGrowing } from '../../ui/growing.ts';
 
 /** Cards drawn in the first pass: more than a 4K window shows at the smallest card size. */
 const FIRST_PASS = 60;
@@ -26,9 +30,12 @@ interface GridProps {
   emptyText?: string;
   onOpen: (mod: Mod, card: HTMLElement) => void;
   onFavChanged: () => void;
+  /** the screen's key: another screen starts again from the first page */
+  listKey?: string;
 }
 
-export function ModGrid({ mods, grouped = false, withCat = false, emptyText, onOpen, onFavChanged }: GridProps) {
+export function ModGrid({ mods, grouped = false, withCat = false, emptyText, onOpen, onFavChanged, listKey = '' }: GridProps) {
+  const { limit, marker, more } = useGrowing(mods.length, listKey);
   const [whole, setWhole] = useState(mods.length <= FIRST_PASS);
   // A list that grows by more than a screenful at once - a chip turned off, taking Heroes from 60
   // back to 614 - arrives in two parts too, the way a new screen does.
@@ -42,7 +49,7 @@ export function ModGrid({ mods, grouped = false, withCat = false, emptyText, onO
   }, [whole]);
 
   if (!mods.length) return emptyText ? <div className="empty-note">{emptyText}</div> : null;
-  const shown = whole ? mods : mods.slice(0, FIRST_PASS);
+  const shown = mods.slice(0, whole ? limit : Math.min(FIRST_PASS, limit));
   /* The first screenful moves: a chip that narrows the list slides the cards that stay into their
    * new places and fades out the ones that go (popLayout: a leaving card stops holding its place,
    * so the rest move at once). Everything past it is plain markup beside it, changed in place.
@@ -70,6 +77,7 @@ export function ModGrid({ mods, grouped = false, withCat = false, emptyText, onO
     <>
       <AnimatePresence mode="popLayout" initial={false}>{moving}</AnimatePresence>
       {still}
+      {more && <GrowMarker marker={marker} total={mods.length} className="grid-more" />}
     </>
   );
 }
