@@ -790,7 +790,7 @@ const EN = {
   'Язык переключён на Русский': 'Language switched to Russian',
 
   // ---------- status bar ----------
-  'Dota 2 подключена': 'Dota 2 connected',
+  'Dota 2 найдена': 'Dota 2 found',
   'Dota 2 не найдена — укажи путь в настройках': 'Dota 2 not found — set the path in Settings',
 
   // ---------- what's new ----------

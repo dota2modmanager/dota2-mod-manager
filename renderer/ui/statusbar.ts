@@ -57,7 +57,8 @@ export function paintSafeModeSwitch(): void {
   btn.classList.toggle('trouble', !!trouble);
 }
 
-// The left of the bar: whether Dota was found. Which folder inside the game the mods land in
+// The left of the bar: whether Dota was found, not whether it is running. It said "connected",
+// which read as the game being open, and was lit with the game closed. Which folder inside the game the mods land in
 // is the app's business, not the user's - the full path is in Settings and in a diagnostics
 // report, which is where somebody actually chasing a problem goes.
 export async function refreshSidebarStatus(): Promise<void> {
@@ -67,7 +68,7 @@ export async function refreshSidebarStatus(): Promise<void> {
   const txtEl = $('#dotaStatusText');
   if (s.dotaPathValid) {
     dotEl.className = 'dot ok';
-    txtEl.textContent = L`Dota 2 подключена`;
+    txtEl.textContent = L`Dota 2 найдена`;
   } else {
     dotEl.className = 'dot bad';
     txtEl.textContent = L`Dota 2 не найдена — укажи путь в настройках`;
