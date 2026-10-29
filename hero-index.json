@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1560,
+  "mods": 1563,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -221,6 +221,7 @@
         {"name":"Broodmother Silken Queen","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Undermount Candles","categoryId":"heroes","styleLabel":null,"slots":["misc","legs","head","back"]},
         {"name":"Broodmother Undermount Gloom","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
+        {"name":"Broodmother Venomancer","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother White Widow","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Goffren Broodmother","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Reverse Broodmother","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
@@ -281,6 +282,7 @@
         {"name":"Clinkz Leader of the Molten Army","categoryId":"heroes","styleLabel":null,"slots":["misc","back","weapon","arms","head"]},
         {"name":"Clinkz Maraxiforms Fate","categoryId":"hero-items","styleLabel":null,"slots":["weapon","misc"]},
         {"name":"Clinkz Maraxiforms Ire","categoryId":"hero-items","styleLabel":null,"slots":["misc","back"]},
+        {"name":"Clinkz Restless Shikaree","categoryId":"heroes","styleLabel":null,"slots":["back","weapon","arms","head","misc"]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -669,6 +671,7 @@
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Huskar Bleeding Edge","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder"]},
         {"name":"Huskar Cthugha","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder","offhand","weapon"]},
+        {"name":"Huskar Darkclaw Berserker","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder"]},
         {"name":"Huskar Flashpoint Proselyte","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","shoulder","head"]},
         {"name":"Mossy Cobblestone","categoryId":"terrains","styleLabel":null,"slots":["misc"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
