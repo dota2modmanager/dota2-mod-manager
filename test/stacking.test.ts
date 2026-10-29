@@ -16,7 +16,7 @@ const css = (name: string): string => fs.readFileSync(path.join(STYLES, name), '
 
 /** The declarations of the first rule whose selector is exactly `selector`. */
 function rule(source: string, selector: string): string {
-  const at = source.search(new RegExp(`(^|\\n)${selector.replace(/[.#()[\]]/g, '\\$&')}\\s*\\{`));
+  const at = source.search(new RegExp(`(^|\\n)${selector.replace(/[.*+?^${}()|[]\#]/g, '\\$&')}\\s*\\{`));
   assert.ok(at >= 0, `${selector} has a rule`);
   const open = source.indexOf('{', at);
   return source.slice(open + 1, source.indexOf('}', open));
