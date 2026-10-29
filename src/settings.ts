@@ -49,6 +49,8 @@ export interface StoredSettings {
   nightRound?: number;
   /** the resourcecompiler.exe picked in Settings, over the game's own (src/resource-compiler.ts) */
   resourceCompilerPath?: string | null;
+  /** when the window asking for support last came up and what the user answered (src/support-prompt.ts) */
+  supportPrompt?: unknown;
 }
 
 const DEFAULTS: StoredSettings = {

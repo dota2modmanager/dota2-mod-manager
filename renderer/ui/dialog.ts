@@ -60,15 +60,17 @@ function whatsNewDialog(version: string, md: string, notices: Notice[] = []): Pr
 }
 
 // Show it once per version, and only for a version the user did not install by hand.
-export async function showWhatsNew({ force = false } = {}): Promise<void> {
+// Answers whether it was shown.
+export async function showWhatsNew({ force = false } = {}): Promise<boolean> {
   let r: { version: string; notes: string; unseen: boolean } | null = null;
-  try { r = await window.api.update.notes(window.I18N_LANG); } catch { return; }
-  if (!r || !r.notes) { if (force) toast(L`Для этой версии заметок нет`, 'warn'); return; }
-  if (!force && !r.unseen) { window.api.update.notesSeen(); return; }
+  try { r = await window.api.update.notes(window.I18N_LANG); } catch { return false; }
+  if (!r || !r.notes) { if (force) toast(L`Для этой версии заметок нет`, 'warn'); return false; }
+  if (!force && !r.unseen) { window.api.update.notesSeen(); return false; }
   let notices: Notice[] = [];
   try { notices = (await window.api.config.state()).notices || []; } catch { /* offline: the release notes alone */ }
   await whatsNewDialog(r.version, r.notes, notices);
   window.api.update.notesSeen();
+  return true;
 }
 
 // ---------- custom confirm dialog ----------

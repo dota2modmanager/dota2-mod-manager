@@ -26,6 +26,7 @@ import { switchOffStaleTerrains } from './core/terrain-age.ts';
 import { askAdultOnce } from './core/adult.ts';
 import { toast } from './ui/toast.ts';
 import { showWhatsNew, toolchainDialog } from './ui/dialog.ts';
+import { offerSupport } from './ui/support.ts';
 import { watchMedia } from './ui/media.ts';
 import { refreshPatchState, refreshMasterSwitch, refreshSidebarStatus } from './ui/statusbar.ts';
 import { applyContentZoom, readPanels, bindPanels } from './ui/chrome.ts';
@@ -120,5 +121,8 @@ async function offerToolchain(): Promise<void> {
 
   // the app updates itself in the background, so this is the only place a user finds out what
   // changed while they were away
-  showWhatsNew();
+  const sawNotes = await showWhatsNew();
+
+  // from the third start: a star, a word about us, and why (ui/support.ts, src/support-prompt.ts)
+  await offerSupport({ quiet: sawNotes });
 })();

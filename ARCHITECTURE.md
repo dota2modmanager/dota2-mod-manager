@@ -576,6 +576,7 @@ that location is not writable.
 | `src/atomic-file.ts` | `manifest.json` and `settings.json` replaced in one step |
 | `src/library.ts` | `manifest.json`: installed records and presets |
 | `src/settings.ts`, `src/settings-view.ts` | `settings.json` and its defaults, and everything the Settings screen is told in one answer |
+| `src/support-prompt.ts` | When the window asking for support opens on its own: from the third launch, a week between reminders, three at most, never again after the user helped |
 | `src/catalog.ts`, `src/catalog-signature.ts` | Catalog data and who is allowed to change it |
 | `src/download-stats.ts` | The catalog's download counter: the counts on the cards, and one hit per catalog install, never in an install's way |
 | `src/net.ts`, `src/net-mirrors.ts`, `src/net-fetch.ts`, `src/net-download.ts`, `src/download-proxy.ts` | Downloads across the mirror chain: the hosts and how each is doing, an optional user proxy, a request along it, a file to disk checked against its hash |

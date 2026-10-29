@@ -161,6 +161,8 @@
   --dur-medium: 250ms;
   --dur-medium-long: 300ms;
   --dur-slow: 320ms;
+  /* not a motion: how long the support window's closing buttons wait (ui/support.ts WAIT_MS) */
+  --dur-wait: 3s;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);

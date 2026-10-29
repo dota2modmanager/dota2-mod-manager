@@ -136,6 +136,7 @@ the code, not in this page.
 | [`src/slot-zones.ts`](#srcslot-zonests) | The load order in two parts. |
 | [`src/steam.ts`](#srcsteamts) | Finding Steam, and then finding Dota inside it. |
 | [`src/steps.ts`](#srcstepsts) | Work a step at a time. |
+| [`src/support-prompt.ts`](#srcsupport-promptts) | When the window asking people to support the project comes up on its own. |
 | [`src/terrain-age.ts`](#srcterrain-agets) | Terrains that replace the whole map, and whether the game's own map has moved on since. |
 | [`src/toolchain.ts`](#srctoolchaints) | Tools the app can borrow, fetched only when something actually needs them. |
 | [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
@@ -8048,6 +8049,80 @@ export async function runSteps<R>(steps: Generator<unknown, R>): Promise<R>
 ```
 
 A generator run with the rest of the main process let in between its steps: for a channel the window waits on.
+
+## src/support-prompt.ts
+
+When the window asking people to support the project comes up on its own.
+
+Not on the first two launches: on the first somebody is still finding their way, on the
+second they may not have installed anything yet. By the third they came back by themselves.
+"Later" puts it away for a week, three times at most; after that, and after "I did it" or a
+click on any of its actions, it only opens from Settings. A window that came back every day
+would get the project talked about, just not in the way it asks for.
+
+### `SupportPrompt`
+
+```ts
+export interface SupportPrompt
+```
+
+What settings.json keeps about the window, under supportPrompt.
+
+### `FIRST_LAUNCH`
+
+```ts
+export const FIRST_LAUNCH = 3
+```
+
+The launch it first opens on.
+
+### `SNOOZE_MS`
+
+```ts
+export const SNOOZE_MS = 7 * 24 * 60 * 60 * 1000
+```
+
+How long "later" puts it away for: a week.
+
+### `MAX_REMINDERS`
+
+```ts
+export const MAX_REMINDERS = 3
+```
+
+How many times it comes back after the first.
+
+### `readPrompt`
+
+```ts
+export function readPrompt(raw: unknown): SupportPrompt
+```
+
+Whatever settings.json holds, as a prompt state: a missing or hand-edited value starts fresh.
+
+### `counted`
+
+```ts
+export function counted(p: SupportPrompt): SupportPrompt
+```
+
+One more launch.
+
+### `due`
+
+```ts
+export function due(p: SupportPrompt, now: number): boolean
+```
+
+Whether the window opens on its own now.
+
+### `choose`
+
+```ts
+export function choose(p: SupportPrompt, choice: 'later' | 'done', now: number): SupportPrompt
+```
+
+What the user's answer leaves behind.
 
 ## src/terrain-age.ts
 

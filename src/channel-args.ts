@@ -123,6 +123,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'settings:get': [], 'settings:set': settingsSet, 'settings:testProxy': [downloadProxy], 'settings:detectDota': [], 'settings:browseDota': [],
   'settings:moveLangFiles': [optional(str(64))],
   'presence:view': [str(64)],
+  'support:state': [], 'support:choose': [oneOf('later', 'done')],
   'account:signIn': [], 'account:signOut': [],
   'catalog:load': [optional(bool)], 'catalog:terrainAges': [], 'catalog:downloadCounts': [],
   // mods (src/ipc-mods.ts, src/ipc-library.ts, src/ipc-foreign.ts)

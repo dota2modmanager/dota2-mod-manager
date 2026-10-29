@@ -9,6 +9,7 @@ import { setLang, t } from './i18n.ts';
 import { betaState } from './beta.ts';
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
+import { choose, counted, due, readPrompt } from './support-prompt.ts';
 import { setDownloadProxy, testDownloadProxy, validateDownloadProxy } from './download-proxy.ts';
 import type { AppContext } from './app-context.ts';
 
@@ -41,6 +42,25 @@ export function registerSettingsIpc({
     // look now rather than in four hours: switching this on is a question the user just asked
     updater()?.recheck();
     return state;
+  });
+
+  /* The window asking for support. The launch is counted on the first question of the run rather
+   * than at start, so a launch that never got as far as the window does not count, and a reload of
+   * the window does not count twice. */
+  let launchCounted = false;
+  ipcMain.handle('support:state', () => {
+    let p = readPrompt(settings.get('supportPrompt'));
+    if (!launchCounted) {
+      launchCounted = true;
+      p = counted(p);
+      settings.set('supportPrompt', p);
+    }
+    return { due: due(p, Date.now()) };
+  });
+
+  ipcMain.handle('support:choose', (e, choice) => {
+    settings.set('supportPrompt', choose(readPrompt(settings.get('supportPrompt')), choice, Date.now()));
+    return { ok: true };
   });
 
   ipcMain.handle('settings:get', () => settingsView({ consumeMigration: true }));

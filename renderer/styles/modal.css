@@ -661,6 +661,74 @@ audio::-webkit-media-controls-panel { background: var(--surface-solid); }
 .tool-gains b { color: var(--text); font-weight: var(--weight-semibold); }
 .tool-box .confirm-actions { margin-top: var(--space-5); }
 
+/* ============ Asking for support ============
+   The toolchain box's head and type, with two numbered steps instead of a list of gains: they
+   are an order, the one-click star before the one that takes a minute. Each step's button sits
+   beside the reason for it, so the reason is read on the way to the click. */
+.support-box { width: min(560px, calc(90vw / var(--content-zoom))); text-align: left; }
+.support-steps {
+  list-style: none;
+  counter-reset: step;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.support-step {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: 'num title action' '. text text';
+  align-items: center;
+  column-gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.support-step::before {
+  grid-area: num;
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  border-radius: var(--radius-full);
+  background: var(--primary-dim);
+  color: var(--primary-soft);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+.support-step-title { grid-area: title; font-size: var(--text-base); font-weight: var(--weight-semibold); }
+.support-step .btn { grid-area: action; white-space: nowrap; }
+.support-step p {
+  grid-area: text;
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--text-muted);
+}
+/* narrow window: the button goes under its text rather than squeezing the title */
+@media (max-width: 620px) {
+  .support-step { grid-template-areas: 'num title title' '. text text' '. action action'; }
+  .support-step .btn { justify-self: start; margin-top: var(--space-3); }
+}
+.support-box .confirm-actions { margin-top: var(--space-5); }
+/* the wait, shown as the button filling up rather than as a number counting down */
+.support-wait { position: relative; overflow: hidden; }
+.support-wait:disabled::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: var(--space-px);
+  background: var(--primary);
+  transform-origin: left;
+  animation: supportWait var(--dur-wait) linear both;
+}
+@keyframes supportWait { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .support-wait:disabled::after { animation: none; transform: scaleX(1); } }
+
 /* ============ The window the uninstaller opens ============
    Its own small page (renderer/uninstall.html), not a screen of the app: no titlebar, no
    rail, no status bar, and it lives for a few seconds. It borrows the tokens and the buttons

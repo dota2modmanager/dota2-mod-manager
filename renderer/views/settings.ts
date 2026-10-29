@@ -14,6 +14,7 @@ import { registerView, invalidateViews } from '../core/router.ts';
 import { fmtMB } from '../ui/format.ts';
 import { toast } from '../ui/toast.ts';
 import { showWhatsNew } from '../ui/dialog.ts';
+import { showSupport } from '../ui/support.ts';
 import { refreshSidebarStatus } from '../ui/statusbar.ts';
 import { clampScale, currentScalePct, paintScale, applyScalePct, clampPanelZoom, paintPanels, savePanels } from '../ui/chrome.ts';
 import { applyLanguage } from '../ui/language.ts';
@@ -206,6 +207,7 @@ const actions: SettingsActions = {
     if (r?.error) toast(r.error, 'error', 7000);
     else toast(L`Отчёт сохранён`);
   },
-  whatsNew: () => showWhatsNew({ force: true }),
+  whatsNew: () => { showWhatsNew({ force: true }); },
+  support: () => { showSupport(); },
   open: (url) => window.api.misc.openExternal(url),
 };

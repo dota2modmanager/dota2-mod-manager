@@ -53,6 +53,8 @@ export interface SettingsActions extends CompilerActions {
   adult: () => void;
   exportReport: () => void;
   whatsNew: () => void;
+  /** the window asking for support (ui/support.ts) */
+  support: () => void;
   open: (url: string) => void;
 }
 
@@ -224,6 +226,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
         </div>
         <div className="settings-row">
           <button className="btn btn-sm" id="whatsNewBtn" onClick={actions.whatsNew}><span className="ms">auto_awesome</span>{L`Что нового`}</button>
+          <button className="btn btn-sm" id="supportBtn" onClick={actions.support}><span className="ms">favorite</span>{L`Как поддержать проект`}</button>
         </div>
         {/* The people the app owes something to and cannot pay. The catalog is credited in its own
             block above; this row is for whoever else did the work. */}

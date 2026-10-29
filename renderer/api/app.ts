@@ -137,6 +137,8 @@ export interface AppApi {
   /** the beta channel: shown only to an account the signed list names (src/beta.ts) */
   beta: { state: () => Promise<{ eligible: boolean; on: boolean }>; set: (on: boolean) => Promise<{ eligible: boolean; on: boolean }> };
   presence: { view: (name: string) => Promise<void> };
+  /** the window asking for support: whether it opens on its own, and the user's answer (src/support-prompt.ts) */
+  support: { state: () => Promise<{ due: boolean }>; choose: (choice: 'later' | 'done') => Promise<Reply> };
   misc: MiscApi;
   /** the pumpkin's key: the bloody theme and the mod it opens (src/ipc-pumpkin.ts) */
   pumpkin: PumpkinApi;

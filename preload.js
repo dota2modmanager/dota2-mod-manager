@@ -150,6 +150,11 @@ contextBridge.exposeInMainWorld('api', {
   presence: {
     view: (name) => ipcRenderer.invoke('presence:view', name),
   },
+  // the window asking for support (src/support-prompt.ts)
+  support: {
+    state: () => ipcRenderer.invoke('support:state'),
+    choose: (choice) => ipcRenderer.invoke('support:choose', choice),
+  },
   misc: {
     openLangFolder: () => ipcRenderer.invoke('misc:openLangFolder'),
     openToolsFolder: (sub) => ipcRenderer.invoke('misc:openToolsFolder', sub),

@@ -553,6 +553,19 @@ const EN = {
   // ---------- tools ----------
   // the one-time offer on first run (renderer/ui/dialog.ts, toolchainDialog)
   'Скачать Source 2 Viewer?': 'Download Source 2 Viewer?',
+  // the window asking for support (ui/support.ts)
+  'Нравится Mod Manager?': 'Enjoying Mod Manager?',
+  'Две просьбы. Обе бесплатные и занимают минуту.': 'Two requests. Both are free and take a minute.',
+  'Поставь звезду на GitHub': 'Star us on GitHub',
+  'Звёзды видят разработчики. По ним они находят проект и приходят добавлять функции, чинить ошибки и улучшать приложение.': 'Developers notice stars. That is how they find the project and come to add features, fix bugs and improve the app.',
+  'Поставить звезду': 'Star on GitHub',
+  'Расскажи о нас': 'Tell people about us',
+  'Пост на Reddit, сообщение в Discord, комментарий под видео про моды. Это помогает получить бесплатную подпись программы от SignPath: без неё Windows пугает «неизвестным издателем». Прошлую заявку отклонили, потому что о проекте мало кто знает.': 'A Reddit post, a Discord message, a comment under a modding video. It helps us get free code signing from SignPath: without it, Windows warns about an "unknown publisher". Our last application was turned down because too few people know the project.',
+  'Скопировать ссылку': 'Copy link',
+  'Ссылка скопирована': 'Link copied',
+  'Напомнить позже': 'Remind me later',
+  'Уже сделано': 'Already done',
+  'Как поддержать проект': 'How to support the project',
   'Открытая программа (MIT) от ValveResourceFormat, не наша': 'An open-source program (MIT) by ValveResourceFormat, not ours',
   'Дота хранит почти всё в сжатых форматах Source 2. Простую половину приложение читает само, а остальное разбирает эта программа.':
     'Dota keeps almost everything it draws in compiled Source 2 formats. The app reads the easy half itself; this program reads the rest.',

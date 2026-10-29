@@ -139,7 +139,7 @@ const VALID: Record<string, unknown[][]> = {
     ['panels', { library: { width: 320 } }], ['panels', null], ['showAdult', true], ['theme', 'ursa'],
     ['toolsPromptSeen', true], ['downloadProxy', 'http://127.0.0.1:8080'], ['uiLang', 'en'], ['uiLang', 'ru']],
   'settings:moveLangFiles': [['russian'], [undefined], []],
-  'presence:view': [['catalog']], 'account:signIn': [[]], 'account:signOut': [[]],
+  'presence:view': [['catalog']], 'support:state': [[]], 'support:choose': [['later'], ['done']], 'account:signIn': [[]], 'account:signOut': [[]],
   'catalog:load': [[false], [true], [undefined], []], 'catalog:terrainAges': [[]], 'catalog:downloadCounts': [[]],
   'mods:install': [[{ categoryId: 'heroes', name: 'Arcana', styleLabel: null, fileRef: 'heroes/arcana.zip', preview: 'https://example.org/a.jpg' }],
     [{ categoryId: 'heroes', name: 'Arcana', styleLabel: undefined, fileRef: undefined, preview: undefined }]],

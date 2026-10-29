@@ -123,3 +123,13 @@ test('the tab the window reports is passed on, and a nonsense one reads as the c
   await s.call('presence:view', 42);
   assert.deepEqual(s.log, ['view library', 'presence', 'view catalog', 'presence']);
 });
+
+test('the support window counts a launch once per run, however often the window asks', async () => {
+  const s = stand();
+  s.store.set('supportPrompt', { launches: 2, state: 'new', until: 0, later: 0 });
+  assert.deepEqual(await s.call('support:state'), { due: true }, 'this run is the third launch');
+  assert.deepEqual(await s.call('support:state'), { due: true }, 'a reload of the window is not a fourth');
+  assert.equal((s.store.get('supportPrompt') as { launches: number }).launches, 3);
+  assert.deepEqual(await s.call('support:choose', 'done'), { ok: true });
+  assert.deepEqual(await s.call('support:state'), { due: false });
+});
