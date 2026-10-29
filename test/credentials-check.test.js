@@ -183,6 +183,19 @@ test('the VirusTotal key is read against a report only a key can read, and "not 
   assert.equal(none.state, 'missing');
 });
 
+test('the download counter token is asked with an empty batch, which counts nothing', async () => {
+  const { CHECKS } = await load();
+  const counter = service([[/workers\.dev\/hit$/, { status: 204, json: null }]]);
+  const good = await CHECKS.STATS_APP_TOKEN({ STATS_APP_TOKEN: 'tok' }, { http: counter.http });
+  assert.equal(good.state, 'ok');
+  assert.equal(counter.calls[0].headers['X-App-Token'], 'tok');
+  assert.deepEqual(JSON.parse(counter.calls[0].body), { hits: {} });
+
+  const refused = service([[/hit$/, { status: 403, json: null }]]);
+  assert.equal((await CHECKS.STATS_APP_TOKEN({ STATS_APP_TOKEN: 'old' }, { http: refused.http })).state, 'failed');
+  assert.equal((await CHECKS.STATS_APP_TOKEN({}, { http: counter.http })).state, 'missing');
+});
+
 test('a secret marked optional is a decision when it is not set, and a red line when it is not', async () => {
   /* The workflow that reads an optional key says so and skips, so a key nobody has created yet
      must not message the maintainer every morning. */

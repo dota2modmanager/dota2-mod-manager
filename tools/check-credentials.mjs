@@ -133,6 +133,21 @@ export const CHECKS = {
     return ok('active', res.json.expires_at);
   },
 
+  /* Optional: a release built without it counts nothing and says so. The counter answers an empty
+     batch of hits with 204 for the right token and 403 for any other, and an empty batch counts
+     nothing, so this asks exactly the question without touching a number. */
+  async STATS_APP_TOKEN(env, { http }) {
+    if (!env.STATS_APP_TOKEN) return missing('STATS_APP_TOKEN');
+    const res = await http('https://d2pfx-counter.hrdqfck.workers.dev/hit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8', 'X-Source': 'app', 'X-App-Token': env.STATS_APP_TOKEN },
+      body: JSON.stringify({ hits: {} }),
+    });
+    if (res.status >= 200 && res.status < 300) return ok('the counter accepts the token');
+    if (res.status === 401 || res.status === 403) return failed('the counter refuses the token: it was changed on the Worker');
+    return failed(`the counter answers HTTP ${res.status}`);
+  },
+
   async DISCORD_WEBHOOK_URL(env, io) {
     return webhook('DISCORD_WEBHOOK_URL', env.DISCORD_WEBHOOK_URL, io);
   },

@@ -40,6 +40,7 @@ the code, not in this page.
 | [`src/discord-auth.ts`](#srcdiscord-authts) | Sign in with Discord, without a server of our own. |
 | [`src/discord-presence.ts`](#srcdiscord-presencets) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
 | [`src/download-proxy.ts`](#srcdownload-proxyts) | The optional HTTP/HTTPS route for app downloads, kept separate from Electron's browser session |
+| [`src/download-stats.ts`](#srcdownload-statsts) | How many times each catalog mod was downloaded, counted by the catalog's own counter (a |
 | [`src/electron.ts`](#srcelectronts) | Electron's main-process API, asked for at the moment it is used. |
 | [`src/error-text.ts`](#srcerror-textts) | What a caught error says, as one line of text. |
 | [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
@@ -1668,6 +1669,119 @@ export async function testDownloadProxy(value: string, fetchImpl: typeof fetch =
 ```
 
 _No description in the source._
+
+## src/download-stats.ts
+
+How many times each catalog mod was downloaded, counted by the catalog's own counter (a
+Cloudflare Worker its author runs, the same one the catalog site counts its downloads with).
+
+Two directions, and neither may ever cost the user anything:
+
+ - The numbers come down as one public file, downloads.json, a map of "category/group/mod" (and
+   "category/group/mod/style" for a mod with several looks) to a count. It is fetched at most
+   once every few minutes and kept on disk, so a window opened offline, or while the Worker is
+   down, shows yesterday's numbers instead of none.
+ - An install of a catalog mod goes up as a hit on that mod's key. Hits wait a moment and leave
+   together, so a preset of fifty mods is one request, and a key counts at most a few times per
+   request. A hit that cannot be sent is dropped, not retried: the counter is somebody else's
+   free-tier Worker, and a thousand windows retrying at it the moment it comes back is exactly
+   the load that took it down.
+
+A hit carries the mod's key and nothing else: no id, no machine, no settings. It goes out only
+when the build carries the counter's token (written into the release build by CI from a
+repository secret, never committed: tools/stats-token.mjs) and the user has not switched
+counting off in Settings. Every request has a short timeout and every failure is swallowed:
+an install never waits for the counter and never fails because of it.
+
+### `STATS_API`
+
+```ts
+export const STATS_API = 'https://d2pfx-counter.hrdqfck.workers.dev'
+```
+
+The counter's Worker: GET /downloads.json for the numbers, POST /hit to add to them.
+
+### `TOKEN_FILE`
+
+```ts
+export const TOKEN_FILE = path.join(import.meta.dirname, 'download-stats.token')
+```
+
+The build's copy of the counter's token, beside this file; absent in a source checkout.
+
+### `Counts`
+
+```ts
+export type Counts = Record<string, number>
+```
+
+Downloads by key (statKey).
+
+### `statKey`
+
+```ts
+export const statKey = (categoryId: string, groupId: string | null | undefined, modName: string, styleName?: string | null): string
+```
+
+A mod's key, the way the counter and the catalog site write it: categoryId/groupId/modName[/style].
+
+### `statStyleName`
+
+```ts
+export const statStyleName = (label: unknown): string
+```
+
+A look's name as the counter keys it: its label without "Style ", or "Default" when that leaves nothing.
+
+### `statKeysFor`
+
+```ts
+export function statKeysFor(modsData: Record<string, StatCategory> | null | undefined, categoryId: string, name: string, styleLabel?: string | null): string[]
+```
+
+The keys one install counts under, read off mods.json: the mod's own key, and for a mod with
+more than one look the look's key too, so the mod's total stays right and each look has its
+own number. Nothing for a mod the catalog does not list, since the counter would drop it anyway.
+
+### `DownloadStatsOptions`
+
+```ts
+export interface DownloadStatsOptions
+```
+
+What the counter is made over; everything past the first two stands in for a test.
+
+### `buildToken`
+
+```ts
+export function buildToken(file = TOKEN_FILE): string | null
+```
+
+The token this build was given, or null. Read once: it cannot change while the app runs.
+
+### `createDownloadStats`
+
+```ts
+export function createDownloadStats({ cacheFile, enabled, token = buildToken, api = STATS_API, fetch = globalThis.fetch, now = Date.now, log = () => {}, }: DownloadStatsOptions)
+```
+
+The counter for this app: get() the numbers to show, track() an install, flush() what waits.
+
+### `catalogModsReader`
+
+```ts
+export function catalogModsReader(file: string): () => Record<string, StatCategory> | null
+```
+
+mods.json's modsData off the catalog's cache file, parsed again only when the file changes.
+
+### `DownloadStats`
+
+```ts
+export type DownloadStats = ReturnType<typeof createDownloadStats>
+```
+
+One app's counter (createDownloadStats).
 
 ## src/electron.ts
 

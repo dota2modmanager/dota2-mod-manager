@@ -32,6 +32,7 @@ import type { createUpdater, UpdaterLike } from './updater.ts';
 import type { findDotaGamePath, validateGamePath } from './steam.ts';
 import type { moveLangFolder } from './gamelang.ts';
 import type { LibRecord } from './types.ts';
+import type { DownloadStats } from './download-stats.ts';
 import type { PatchRepair } from './game-upkeep.ts';
 import type * as discordAuthModule from './discord-auth.ts';
 import type * as portableUpdateModule from './portable-update.ts';
@@ -72,6 +73,10 @@ export interface AppContext {
   keepTools: (opts?: { force?: boolean }) => Promise<boolean>;
   remoteConfig: ReturnType<typeof createRemoteConfig>;
   presets: ReturnType<typeof presetsService>;
+  /** how many times each catalog mod was downloaded, and the hits this machine adds (src/download-stats.ts) */
+  downloadStats: DownloadStats;
+  /** count one install of a catalog mod; never throws and never waits */
+  countInstall: (categoryId: string, name: string, styleLabel?: string | null) => void;
   discordAuth: typeof discordAuthModule;
   portableUpdater: typeof portableUpdateModule;
   /** electron-updater, when the packaged build has it */

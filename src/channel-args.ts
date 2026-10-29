@@ -82,6 +82,7 @@ const PREVIEW = optional(str(16 * MB));
  */
 export const WINDOW_SETTINGS: Record<string, Check> = {
   discordPresence: bool,
+  countDownloads: bool,
   favorites: list(str(500), 20000),
   langPromptSeen: bool,
   panels: either(oneOf(null), json(64 * 1024)),
@@ -123,7 +124,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'settings:moveLangFiles': [optional(str(64))],
   'presence:view': [str(64)],
   'account:signIn': [], 'account:signOut': [],
-  'catalog:load': [optional(bool)], 'catalog:terrainAges': [],
+  'catalog:load': [optional(bool)], 'catalog:terrainAges': [], 'catalog:downloadCounts': [],
   // mods (src/ipc-mods.ts, src/ipc-library.ts, src/ipc-foreign.ts)
   // a stuck font or cursor is reinstalled from its record, whose category the handler judges
   'mods:install': [shape({ categoryId: str(100), name: NAME, styleLabel: optional(NAME), fileRef: optional(str(1000)), preview: PREVIEW })],

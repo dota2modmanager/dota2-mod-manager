@@ -56,7 +56,7 @@ const EN = {
   'Мир': 'World', 'Эффекты': 'Effects', 'Интерфейс': 'Interface', 'Звук': 'Audio', 'Прочее': 'Other',
 
   // ---------- sort labels ----------
-  'По умолчанию': 'Default', 'Сначала новые': 'Newest first',
+  'По умолчанию': 'Default', 'Сначала новые': 'Newest first', 'Сначала популярные': 'Most downloaded first', 'Скачиваний: {0}': 'Downloads: {0}',
   'По имени А-Я': 'Name A-Z', 'По имени Я-А': 'Name Z-A',
 
   // ---------- group / link labels ----------
@@ -529,7 +529,7 @@ const EN = {
   'Добавить': 'Add',
 
   // ---------- account ----------
-  'Показывать в Discord, что ты в Mod Manager': 'Show in Discord that you are in Mod Manager',
+  'Показывать в Discord, что ты в Mod Manager': 'Show in Discord that you are in Mod Manager', 'Считать мои скачивания': 'Count my downloads', 'Когда ставишь мод из каталога, приложение сообщает счётчику каталога его название, и больше ничего. Из этого счётчика и цифры скачиваний на карточках.': 'When you install a mod from the catalog, the app tells the catalog counter its name and nothing else. The download numbers on the cards come from that counter.',
   'Скопировано': 'Copied',
   'Войти': 'Sign in',
   'Вход нужен, чтобы подписывать свои сборки': 'Signing in puts your name on the builds you share',

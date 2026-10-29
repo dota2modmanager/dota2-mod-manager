@@ -59,9 +59,11 @@ copy that does not verify is ignored exactly as if it were unreachable.
 
 ## Privacy
 
-This program sends no information about you, your machine or your games. There is no telemetry and
-no account. It contacts the mod catalog and the update feed; every address it can contact, what for
-and when, is listed in [PRIVACY.md](../PRIVACY.md).
+This program sends no information about you or your machine, and has no account. The one thing it
+reports is a download count: installing a mod from the catalog sends that mod's name to the
+catalog's counter, with no identifier, and Settings can switch it off. It contacts the mod catalog,
+that counter and the update feed; every address it can contact, what for and when, is listed in
+[PRIVACY.md](../PRIVACY.md).
 
 ## What the program does to a machine
 

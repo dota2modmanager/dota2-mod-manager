@@ -49,6 +49,7 @@ function stand(t: TestContext) {
     applyMasterToCursors: (on: boolean) => calls.push(`cursors ${on}`), blocked: () => blockedWith, catalog: {},
     diag: () => {}, disableOtherCursors: () => { calls.push('other cursors off'); return ['Old cursors']; }, fingerprints,
     importVpkBuffers: () => {}, importVpkPaths: () => {}, installer, isCursorRecord: () => false, library,
+    countInstall: (cat: string, name: string) => calls.push(`counted ${cat}/${name}`), downloadStats: { get: async () => ({}) },
     refreshPresence: () => calls.push('presence'),
     schemaService: { state: () => ({ enabled: schemaOn }), harvest: () => harvest, refresh: () => { refreshed++; } },
     sendProgress: (p: { type: string; label: string }) => progress.push(p), verifyStuck: () => [], win: () => null,
@@ -267,6 +268,7 @@ test('a cursor set steps the one that is on aside first, and keeps a copy of its
   const r = await s.call('mods:install', { categoryId: 'cursors', name: 'Gold', fileRef: 'gold.zip' });
   assert.equal(r.ok, true, JSON.stringify(r));
   assert.deepEqual(r.replaced, ['Old cursors']);
+  assert.ok(s.calls.includes('counted cursors/Gold'), 'a catalog install reaches the download counter');
   assert.equal(s.calls[0], 'other cursors off', 'before the new set is written over it');
   assert.equal(stored, r.record.id);
   assert.deepEqual(s.progress.at(-1), { type: 'done', label: 'Gold' });

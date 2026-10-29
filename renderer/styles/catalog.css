@@ -450,6 +450,16 @@
   transition: all 0.2s var(--ease);
 }
 .author-chip .ms { font-size: 12px; }
+/* how many people have the mod: a fact about it, quieter than the author beside it, at the far end */
+.dl-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+.dl-count .ms { font-size: 13px; }
 /* what a modder or a sender did, quieter than who they are, so the author still leads */
 .author-chip .credit-role { color: var(--text-faint); font-weight: 500; }
 .author-chip.clickable { cursor: pointer; }

@@ -38,6 +38,7 @@ import { createModIdentity } from './mod-id.ts';
 import { Icons } from './icons.ts';
 import { presetsService } from './presets-service.ts';
 import { createPresenceStatus } from './presence-status.ts';
+import { catalogModsReader, createDownloadStats, statKeysFor } from './download-stats.ts';
 import { setLang, t } from './i18n.ts';
 import { errorText } from './error-text.ts';
 import type { AppContext, AppProgress } from './app-context.ts';
@@ -65,6 +66,16 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   setLang(settings.get('uiLang'));
   const catalog = new Catalog(userData);
   const library = new Library(userData);
+  const downloadStats = createDownloadStats({
+    cacheFile: path.join(userData, 'download-counts.json'),
+    enabled: () => settings.get('countDownloads') !== false,
+    log: diag,
+  });
+  const catalogMods = catalogModsReader(catalog.cachePath('mods.json'));
+  /** one install of a catalog mod, for the counter; never throws */
+  const countInstall = (categoryId: string, name: string, styleLabel?: string | null) => {
+    try { downloadStats.track(statKeysFor(catalogMods(), categoryId, name, styleLabel)); } catch { /* counting is never worth an install */ }
+  };
   const fingerprints = new Fingerprints(userData);
   void fingerprints.refresh(); // fire-and-forget: pull the latest fp -> mod map
   const modId = createModIdentity({ getGamePath: () => settings.get('dotaGamePath'), log: diag });
@@ -183,6 +194,6 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   return {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
     remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana,
-    afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers,
+    afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };
 }

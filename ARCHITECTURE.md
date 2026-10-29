@@ -577,6 +577,7 @@ that location is not writable.
 | `src/library.ts` | `manifest.json`: installed records and presets |
 | `src/settings.ts`, `src/settings-view.ts` | `settings.json` and its defaults, and everything the Settings screen is told in one answer |
 | `src/catalog.ts`, `src/catalog-signature.ts` | Catalog data and who is allowed to change it |
+| `src/download-stats.ts` | The catalog's download counter: the counts on the cards, and one hit per catalog install, never in an install's way |
 | `src/net.ts`, `src/net-mirrors.ts`, `src/net-fetch.ts`, `src/net-download.ts`, `src/download-proxy.ts` | Downloads across the mirror chain: the hosts and how each is doing, an optional user proxy, a request along it, a file to disk checked against its hash |
 | `src/remote-config.ts`, `src/remote-config-format.ts` | The switches and notices this project can change after a release, the version ranges a switch can be held to, the signature over them, and the checks the fetched file goes through |
 | `tools/sign-catalog.js` | The signing side, for whoever holds a private key |

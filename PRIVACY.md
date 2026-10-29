@@ -1,16 +1,18 @@
 # Privacy
 
-Dota 2 Mod Manager collects nothing, sends nothing about you anywhere, and has no account you
-need. This page says exactly what that means, and lists every address the app can contact and
-why, so the claim is checkable rather than a promise.
+Dota 2 Mod Manager sends nothing about you anywhere and has no account you need. The one thing it
+reports is a count: installing a catalog mod adds one to that mod's download number, and you can
+switch that off. This page says exactly what that means, and lists every address the app can
+contact and why, so the claim is checkable rather than a promise.
 
 Everything below is read off the source in this repository. The file it came from is named on
 each line; if any of this stops being true, that file changed and this page is wrong.
 
 ## What is not collected
 
-- **No telemetry, analytics or usage statistics.** Nothing counts what you install, what you
-  switch on, how long the app is open, or that it was opened at all.
+- **No telemetry or analytics about you.** Nothing records what you switch on, how long the app
+  is open, or that it was opened at all. The one count there is, of catalog downloads, is
+  described in *The download counter* below, and it carries no identifier.
 - **No identifiers.** Your Steam ID, Dota account, machine name, hardware and IP are never read
   by the app and never sent anywhere by it.
 - **No crash reporting service.** Errors are written to a log file on your own disk and stay
@@ -20,13 +22,36 @@ each line; if any of this stops being true, that file changed and this page is w
 - **No account.** You do not sign in to use any feature. The one optional sign-in is described
   below and it stores no credentials.
 
-The download counts quoted on the site and in the README come from GitHub's own release API,
-which counts files, not people. Nothing in the app reports back.
+The download counts of the app itself, quoted on the site and in the README, come from GitHub's
+own release API, which counts files, not people.
+
+## The download counter
+
+The numbers on the catalog's cards (how many times each mod was downloaded) come from a counter
+the catalog's author runs as a Cloudflare Worker, the same one the catalog site counts with.
+
+- **What goes up.** When you install a mod from the catalog, the app sends the counter that mod's
+  key, for example `heroes/Spectre Arcana/II`: category, group, name, and the look you picked.
+  Several installs close together leave as one request. Nothing else is in it: no id, no
+  machine, no settings, no list of what else you have.
+- **What comes down.** The public list of counts, `downloads.json`, at most every few minutes,
+  kept on disk so the cards still have numbers offline.
+- **Switching it off.** Settings → Catalog → *Count my downloads*. Off, nothing goes up; the
+  numbers still come down.
+- **What the counter sees.** The key above, and what any host sees of any request, your IP
+  among it. What the Worker keeps is up to the catalog's author; the app sends it nothing more.
+- **If it is down.** Nothing changes: an install never waits for the counter, and a request
+  that fails is dropped, not retried.
+
+The code is `src/download-stats.ts`. A build only counts when it carries the counter's token,
+which the release workflow puts in from a repository secret (`tools/stats-token.mjs`); a build
+you make yourself counts nothing.
 
 ## Where the app connects, and why
 
-Every request the app makes is to fetch something public. None of them carries information
-about you beyond what any HTTP request unavoidably reveals to the host it is sent to.
+Every request the app makes is to fetch something public, except the one download count above.
+None of them carries information about you beyond what any HTTP request unavoidably reveals to
+the host it is sent to.
 
 | Host | What for | Where in the code |
 |---|---|---|
@@ -37,6 +62,7 @@ about you beyond what any HTTP request unavoidably reveals to the host it is sen
 | `dota2modmanager.com` | A mirror of the small catalog files, same reason, and the one copy where a file and its signature are always from the same moment | `src/net.ts`, `src/catalog.ts` |
 | `cdn.jsdelivr.net`, `ghproxy.net`, `gh-proxy.com`, `ghfast.top` | Public GitHub mirrors, tried only when the ones above fail. The list itself is remote config, so a mirror that misbehaves can be dropped without a release | `src/net.ts` |
 | `dota2.fandom.com`, `liquipedia.net` | Item and hero pictures for the free-cosmetics screen, when the game's own files do not have one | `src/icons.ts` |
+| `d2pfx-counter.hrdqfck.workers.dev` | The catalog's download counter: the counts on the cards, and one hit per catalog install unless you switch counting off (see above). Through the download proxy when one is set | `src/download-stats.ts` |
 | `discord.com`, `cdn.discordapp.com` | **Only** if you press *Sign in with Discord*, and only to read your name and avatar | `src/discord-auth.ts` |
 
 **A download proxy, if you set one.** Settings has a field for an HTTP or HTTPS proxy, empty by
@@ -94,7 +120,7 @@ Nothing leaves that folder unless you send it.
 | `manifest.json` | Which mods you installed and which presets you saved |
 | `downloads/` | The mod archives you downloaded, kept so a reinstall needs no network |
 | `logs/` | What the app did, on your disk only |
-| `catalog-cache/`, `icons/`, `fingerprints.json` | Copies of public data, so the app works offline |
+| `catalog-cache/`, `icons/`, `fingerprints.json`, `download-counts.json` | Copies of public data, so the app works offline |
 
 Uninstalling offers to remove this folder. Removing it by hand is enough on its own.
 

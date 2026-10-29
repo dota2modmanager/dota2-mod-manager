@@ -24,6 +24,10 @@ mod-paths.json
 indexnow.state.json
 seo-state.json
 
+# The catalog download counter's token, written into a release build by tools/stats-token.mjs
+# from a repository secret. A copy in git would hand it to every scraper.
+src/download-stats.token
+
 # Signing keys. The public halves are pinned in src/; the private halves live outside this
 # tree and a stray one committed here would look like protection while being the opposite.
 *.pem

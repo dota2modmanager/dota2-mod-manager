@@ -13,6 +13,7 @@ import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import { modsOf, isGrouped, modIndexOf, type CustomPack } from '../../catalog/mods.ts';
 import { tagLabel as labelOfTag, collectSlots as slotsOf } from '../../catalog/tags.ts';
 import { applyFilters as filterMods, sortMods } from '../../catalog/filters.ts';
+import { downloadsOf } from '../../core/download-counts.ts';
 import { isFav } from '../../catalog/favorites.ts';
 import { isInstalled } from '../../catalog/looks.ts';
 import { withPersonas } from '../../catalog/builder/logic.ts';
@@ -66,6 +67,7 @@ export function applyFilters(mods: Mod[], catForInstalled = ''): Mod[] {
     isInstalled: (m) => isInstalled(m._cat || catForInstalled, m),
     isFav: (m) => isFav(m._cat || catForInstalled, m.name),
     heroMatches,
+    downloads: (m) => downloadsOf(m._cat || catForInstalled, m),
   });
 }
 

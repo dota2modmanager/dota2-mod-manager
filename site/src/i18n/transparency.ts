@@ -21,7 +21,7 @@ export const transparency = {
     valuesHeading: 'What is fixed',
     values: [
       ['Free, with nothing held back', 'There is no paid version, no feature behind a login, and no plan for either. The program is GPL-3.0 and the whole of it is on GitHub.'],
-      ['Nothing is collected', 'No telemetry, no analytics, no account needed to install a mod. Every address the app can contact is listed, and the list is short.'],
+      ['Nothing about you is collected', 'No analytics and no account needed to install a mod. The one thing the app reports is a download count per catalog mod, with no identifier, and it can be switched off. Every address the app can contact is listed, and the list is short.'],
       ['No advertising, and nothing sold', 'Not on the site, not in the app, not in the installer. The catalog belongs to its own authors and is not ours to sell.'],
     ],
 
@@ -68,7 +68,7 @@ export const transparency = {
     valuesHeading: 'Что не поменяется',
     values: [
       ['Бесплатно, без придержанного', 'Нет платной версии, нет функции за входом и нет планов ни на то, ни на другое. Программа под GPL-3.0, целиком на GitHub.'],
-      ['Ничего не собирается', 'Ни телеметрии, ни аналитики, ни аккаунта ради установки мода. Все адреса, куда приложение вообще может пойти, перечислены, и список короткий.'],
+      ['Ничего о тебе не собирается', 'Ни аналитики, ни аккаунта ради установки мода. Единственное, о чём приложение сообщает, это счёт скачиваний по моду из каталога, без идентификатора, и его можно выключить. Все адреса, куда приложение вообще может пойти, перечислены, и список короткий.'],
       ['Ни рекламы, ни продаж', 'Ни на сайте, ни в приложении, ни в установщике. Каталог принадлежит своим авторам, и продавать его мы не вправе.'],
     ],
 

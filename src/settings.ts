@@ -16,6 +16,8 @@ export interface StoredSettings {
   panels: Record<string, unknown> | null;
   account: { id: string; username: string; avatar?: string | null } | null;
   discordPresence: boolean;
+  /** whether installs of catalog mods are counted by the catalog's download counter (src/download-stats.ts) */
+  countDownloads: boolean;
   schemaPatch: boolean;
   cosmetics: Record<string, unknown>;
   schemaStamp: string | null;
@@ -81,6 +83,8 @@ const DEFAULTS: StoredSettings = {
   account: null,
   // show "Playing Dota 2 Mod Manager" in Discord while the app is open
   discordPresence: true,
+  // tell the catalog's counter which catalog mod was installed: its name and nothing else
+  countDownloads: true,
   // Item-schema support ("safe mode" off, in the status bar). The engine reads
   // scripts/items/items_game.txt through the MOD path only (game/dota), so mods that
   // change it - skinchanger-style sets with their own ambient effects, free cosmetics -

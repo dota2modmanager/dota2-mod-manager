@@ -95,7 +95,7 @@
 <tr><td><b>Your own files</b></td><td>Import a <code>.vpk</code>, or adopt what somebody else's tool left in the folder. The app fingerprints it against the catalog and tells you what it is</td></tr>
 <tr><td><b>Auto-updates</b></td><td>The app checks GitHub Releases and installs new versions itself</td></tr>
 <tr><td><b>Windows and Linux</b></td><td>Both ship with every release: an installer and a portable build for Windows, an AppImage for Linux. Steam is found wherever your distribution keeps it, flatpak included</td></tr>
-<tr><td><b>No account, no telemetry</b></td><td>Nothing is collected and nothing is sent. Signing in with Discord is optional and only puts your name on a setup you share</td></tr>
+<tr><td><b>No account, nothing about you</b></td><td>Nothing about you is collected or sent. Installing a catalog mod adds one to its download count, and that can be switched off. Signing in with Discord is optional and only puts your name on a setup you share</td></tr>
 </table>
 </details>
 

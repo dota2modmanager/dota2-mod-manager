@@ -14,6 +14,7 @@ import type { QueueEntry } from '../../catalog/queueing.ts';
 import { findModByName } from './lists.ts';
 import { installing } from './state.ts';
 import { isNetworkDownloadError } from '../../catalog/download-error.ts';
+import { refreshDownloadCounts } from '../../core/download-counts.ts';
 
 interface InstallResult {
   ok?: boolean;
@@ -87,6 +88,7 @@ export async function doInstall(categoryId: string, mod: Mod, styleLabel: string
   // a tool is not installed into anything: it is downloaded, unpacked and waiting in a folder
   else if (!r.error) toast(categoryId === 'tools' ? L`${catalogName(mod.name)} готов` : L`${catalogName(mod.name)} установлен`);
   await refreshInstalledIndex();
+  if (r.ok) refreshDownloadCounts(); // this install shows in the mod's number
   redrawScreen(); // the "Установлен" badges follow the library, drawn again in place
   changed();
   return r;

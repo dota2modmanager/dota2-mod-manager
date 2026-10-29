@@ -123,6 +123,7 @@ export const HELP_LINKS = {
 export const SORTS = [
   { key: 'default', label: 'По умолчанию' },
   { key: 'date', label: 'Сначала новые' },
+  { key: 'popular', label: 'Сначала популярные' },
   { key: 'name', label: 'По имени А-Я' },
   { key: 'name-desc', label: 'По имени Я-А' },
 ];

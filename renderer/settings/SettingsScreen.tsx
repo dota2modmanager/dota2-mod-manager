@@ -18,6 +18,8 @@ export interface SettingsModel {
   uiLang: string;
   scalePct: number;
   presence: boolean;
+  /** installs of catalog mods are counted by the catalog's download counter */
+  countDownloads: boolean;
   beta: { eligible: boolean; on: boolean };
   dotaPath: string;
   dotaValid: boolean;
@@ -38,6 +40,7 @@ export interface SettingsActions extends CompilerActions {
   scale: (pct: number, live: boolean) => void;
   scaleStep: (delta: number | null) => void;
   presence: () => void;
+  countDownloads: () => void;
   beta: () => void;
   detect: () => void;
   browse: () => void;
@@ -199,6 +202,11 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
           <Toggle id="adultToggle" on={m.adult} label={L`Моды 18+`} onClick={actions.adult} />
         </div>
         <div className="settings-hint">{m.adultHint}</div>
+        <div className="settings-row spaced">
+          <span className="settings-label">{L`Считать мои скачивания`}</span>
+          <Toggle id="countDownloadsToggle" on={m.countDownloads} label={L`Считать мои скачивания`} onClick={actions.countDownloads} />
+        </div>
+        <div className="settings-hint">{L`Когда ставишь мод из каталога, приложение сообщает счётчику каталога его название, и больше ничего. Из этого счётчика и цифры скачиваний на карточках.`}</div>
       </Block>
 
       <Block i={5} title={L`Диагностика`}>

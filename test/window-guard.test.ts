@@ -140,7 +140,7 @@ const VALID: Record<string, unknown[][]> = {
     ['toolsPromptSeen', true], ['downloadProxy', 'http://127.0.0.1:8080'], ['uiLang', 'en'], ['uiLang', 'ru']],
   'settings:moveLangFiles': [['russian'], [undefined], []],
   'presence:view': [['catalog']], 'account:signIn': [[]], 'account:signOut': [[]],
-  'catalog:load': [[false], [true], [undefined], []], 'catalog:terrainAges': [[]],
+  'catalog:load': [[false], [true], [undefined], []], 'catalog:terrainAges': [[]], 'catalog:downloadCounts': [[]],
   'mods:install': [[{ categoryId: 'heroes', name: 'Arcana', styleLabel: null, fileRef: 'heroes/arcana.zip', preview: 'https://example.org/a.jpg' }],
     [{ categoryId: 'heroes', name: 'Arcana', styleLabel: undefined, fileRef: undefined, preview: undefined }]],
   'mods:list': [[]], 'mods:update': [[ID]], 'mods:switchOffStaleTerrains': [[]], 'mods:clearPrePatch': [[ID]],

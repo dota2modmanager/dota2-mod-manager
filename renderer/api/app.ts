@@ -19,6 +19,8 @@ export interface StoredSettings {
   panels: Partial<Panels> | null;
   account: { id: string; username: string; avatar?: string | null } | null;
   discordPresence: boolean;
+  /** installs of catalog mods are counted by the catalog's download counter (src/download-stats.ts) */
+  countDownloads: boolean;
   schemaPatch: boolean;
   cosmetics: Record<string, unknown>;
   schemaStamp: string | null;

@@ -63,6 +63,7 @@ jobs:
           YANDEX_OAUTH_TOKEN: ${{ secrets.YANDEX_OAUTH_TOKEN }}
           FINGERPRINTS_DEPLOY_KEY: ${{ secrets.FINGERPRINTS_DEPLOY_KEY }}
           VIRUSTOTAL_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
+          STATS_APP_TOKEN: ${{ secrets.STATS_APP_TOKEN }}
         run: node tools/check-credentials.mjs
 
       # The webhook address is a credential. The script never prints it, including in an error.

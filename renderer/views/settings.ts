@@ -49,6 +49,7 @@ async function renderSettings(fresh = false): Promise<void> {
     uiLang: s.uiLang,
     scalePct: Math.round((Number(s.uiScale) || 1) * 100),
     presence: s.discordPresence !== false,
+    countDownloads: s.countDownloads !== false,
     beta,
     dotaPath: s.dotaGamePath || '',
     dotaValid: Boolean(s.dotaPathValid),
@@ -70,7 +71,7 @@ function draw(): void {
 }
 
 /** A switch that shows its new position at once and tells main after. */
-function flip(field: 'presence' | 'adult'): boolean {
+function flip(field: 'presence' | 'adult' | 'countDownloads'): boolean {
   if (!model) return false;
   model = { ...model, [field]: !model[field] };
   draw();
@@ -98,6 +99,9 @@ const actions: SettingsActions = {
   scaleStep: (delta) => setEverything(delta === null ? 100 : currentScalePct() + delta),
   presence: async () => {
     state.settings = await window.api.settings.set('discordPresence', flip('presence'));
+  },
+  countDownloads: async () => {
+    state.settings = await window.api.settings.set('countDownloads', flip('countDownloads'));
   },
   beta: async () => {
     if (!model) return;

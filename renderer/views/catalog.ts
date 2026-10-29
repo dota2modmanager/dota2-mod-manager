@@ -31,6 +31,7 @@ import { openModWindow } from './catalog/mod-window.ts';
 import { afterCosmeticPick, openCosmeticWindow, pickCosmetic } from './catalog/cosmetics.ts';
 import { openArcanaWindow } from './catalog/arcana.ts';
 import { screen, view } from './catalog/state.ts';
+import { onDownloadCounts } from '../core/download-counts.ts';
 
 registerView('catalog', () => renderCatalog());
 
@@ -266,6 +267,8 @@ window.api.catalog.onModLink((link) => void openModLink(link));
 
 // what the window's parts reach back into the screen for (views/catalog/state.ts)
 screen.redraw = renderCatalog;
+// a list sorted by popularity is put in order again once the numbers it sorts by arrive
+onDownloadCounts(() => { if (state.view === 'catalog' && view.filters.sort === 'popular') void renderCatalog(); });
 screen.rail = renderRail;
 screen.favChanged = actions.favChanged;
 // The item builder lives in views/item-builder.ts and reaches the catalog only through this.

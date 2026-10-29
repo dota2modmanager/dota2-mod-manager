@@ -23,6 +23,7 @@ contextBridge.exposeInMainWorld('api', {
   catalog: {
     load: (force) => ipcRenderer.invoke('catalog:load', force),
     terrainAges: () => ipcRenderer.invoke('catalog:terrainAges'),
+    downloadCounts: () => ipcRenderer.invoke('catalog:downloadCounts'),
     // a d2mm://mod/ link clicked outside the app (src/deep-links.ts)
     onModLink: (cb) => ipcRenderer.on('mod-link', (e, link) => cb(link)),
   },

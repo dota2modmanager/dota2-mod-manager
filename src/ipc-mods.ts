@@ -25,8 +25,8 @@ import type { LibRecord } from './types.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerModsIpc({
-  applyMasterToCursors, blocked, catalog, diag, disableOtherCursors, fingerprints, importVpkBuffers, importVpkPaths, installer, isCursorRecord, library, refreshPresence, schemaService, sendProgress, settings, updateImpact, verifyStuck, win,
-}: Pick<AppContext, 'applyMasterToCursors' | 'blocked' | 'catalog' | 'diag' | 'disableOtherCursors' | 'fingerprints' | 'importVpkBuffers' | 'importVpkPaths' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService' | 'sendProgress' | 'settings' | 'updateImpact' | 'verifyStuck' | 'win'>): void {
+  applyMasterToCursors, blocked, catalog, countInstall, diag, disableOtherCursors, downloadStats, fingerprints, importVpkBuffers, importVpkPaths, installer, isCursorRecord, library, refreshPresence, schemaService, sendProgress, settings, updateImpact, verifyStuck, win,
+}: Pick<AppContext, 'applyMasterToCursors' | 'blocked' | 'catalog' | 'countInstall' | 'diag' | 'disableOtherCursors' | 'downloadStats' | 'fingerprints' | 'importVpkBuffers' | 'importVpkPaths' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService' | 'sendProgress' | 'settings' | 'updateImpact' | 'verifyStuck' | 'win'>): void {
   const { dialog, ipcMain } = electron();
   // `win` arrives as a getter, not as the window. These are registered before the window
   // is created, so a value captured here would be undefined forever - which is exactly
@@ -117,6 +117,8 @@ export function registerModsIpc({
         applyMasterToCursors(false);
       }
       sendProgress({ type: 'done', label: payload.name });
+      // the catalog's download counter hears of it after the install is done, and never holds it up
+      countInstall(payload.categoryId, payload.name, payload.styleLabel);
       return { ok: true, record: rec, replaced };
     } catch (err) {
       sendProgress({ type: 'error', label: payload.name, message: errorText(err) });
@@ -205,6 +207,11 @@ export function registerModsIpc({
   });
 
   // When each whole-map terrain in the catalog was built, for the mark on its card.
+  // hits still waiting to go to the download counter leave as the app does; nothing waits for them
+  const { app } = electron();
+  if (typeof app?.on === 'function') app.on('before-quit', () => { void downloadStats.flush(); });
+  // how many times each catalog mod was downloaded (src/download-stats.ts): {} when nobody can say
+  ipcMain.handle('catalog:downloadCounts', () => downloadStats.get().catch(() => ({})));
   ipcMain.handle('catalog:terrainAges', async () => {
     try {
       const c = await catalog.load();
