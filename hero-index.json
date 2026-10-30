@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1568,
+  "mods": 1569,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1421,7 +1421,8 @@
         {"name":"Pudge Rotzo the Clown","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Toy Butcher","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","base","shoulder"]},
         {"name":"Pudge Toy Inc Boss","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","offhand"]},
-        {"name":"Pudge Toy Woodcutter","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","base","shoulder"]}
+        {"name":"Pudge Toy Woodcutter","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","base","shoulder"]},
+        {"name":"Pudge Waitureally","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]}
       ]
     },
     "pudge_cute": {"name":"Pudge","mods":[{"name":"Pudge Clown Toy","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","shoulder"]}]},

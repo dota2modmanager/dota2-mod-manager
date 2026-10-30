@@ -1400,6 +1400,15 @@
       "id": "item-effects",
       "mods": [
         {
+          "name": "Hex Is Fucking Sick",
+          "styleLabel": null,
+          "group": "hex",
+          "image": {"src":"/mods/hex-is-fucking-sick.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1793361682
+        },
+        {
           "name": "Mecha Boots Of Travel Mk Ill",
           "styleLabel": null,
           "group": "teleport",

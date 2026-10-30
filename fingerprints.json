@@ -1,5 +1,5 @@
 {
-  "count": 1808,
+  "count": 1810,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -133,6 +133,7 @@
     "13a54da150130ab6d5bb0c4ee1048eabe0788377": [{"name":"Dry River","categoryId":"river","styleLabel":null,"type":"vpk"}],
     "13a8e4327ed9ae9bd1d1eece42d1b4db898b49e5": [{"name":"Snapfire Whippersnapper","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "13c6dd4f95c42746e61a9b92457b076e3a7528ee": [{"name":"Pangolier Gentleman","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "13d0ec0a1fce1a314bde4aebc1e500f12806e01a": [{"name":"Pudge Waitureally","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "13f7474b9f38228ac868f617f830dd8a52a70247": [{"name":"Drow Ranger Diretide","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "1451724a02c1b42b320e2e28dbf2c2c4780a3a78": [{"name":"Pugna Nightwither Revenant","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "146da30d204ecd6da937e5c9c0376459bce6536d": [{"name":"Centaur Immortal Emerald","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -301,6 +302,7 @@
     "2c5aed12cce4cd14545c3c6ad9896c34e7993a64": [{"name":"Darkest Dungeon","categoryId":"announcers","styleLabel":null,"type":"vpk"}],
     "2c5f7c763d7d7f2d5f1ed5f3986f9bbe3f513f4a": [{"name":"Earthshaker Cosmic Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "2c6fb20684344a90976d4af1835f6b29b5ba8e2c": [{"name":"Nude Drow Ranger v2","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "2c7f40b05d9c9e2da40bd6d6a0077c5b88aa8cb1": [{"name":"Hex Is Fucking Sick","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "2c7f45ba12532b04912d1715df0476296ca2e412": [{"name":"TI10 Mekanism","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "2c7fe9e4b8c0d8c119f84ba500fbebff362dcb3a": [{"name":"Rubick Ancient Magus","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "2cd72a6b8a05d2d5768a5ef8660954ecb29f38e7": [{"name":"Aghanim Peach","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
