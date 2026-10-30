@@ -2,6 +2,49 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.20.0
+
+### Presets switch the looks too
+
+Applying a preset now does to the looks from the game what it already did to mods: the ones in the
+preset go on, and every other look goes off. Before, a preset only added its looks, so switching
+from a build of a hundred items to one of twenty left you with all hundred and twenty, and the
+first hero stayed dressed. Nothing is deleted: the looks that went off stay in My mods, ready to go
+back on.
+
+The Presets screen marks the preset you applied last. "Applied" means what is on is exactly that
+preset; "Changed" means something was switched on or off since.
+
+A courier picked after a preset was saved now goes off when that preset is applied. Save it into
+the preset to keep it.
+
+### Couriers in unsafe mode
+
+A courier picked with safe mode off is now the courier itself. Before, the game drew the donkey with
+the courier's particles on it, so a Baby Roshan was a donkey that glowed. Collector's Baby Roshan
+2018 wears its silver.
+
+### The fixed hero models are signed
+
+The arcanas, personas and immortals that J0nathan550 compiled again by hand now come from
+[hero-base-fixes](https://github.com/dota2modmanager/hero-base-fixes) in the project's own
+organization, and the app checks a signature on them before it downloads anything. Nobody can
+change what reaches you by pushing to that repository without the signing key.
+
+### Fixed
+
+- Closing the app a few seconds after switching a look on or off could leave the game with the old
+  item table, so a look that was off on screen was still on in the game. The app now finishes
+  writing before it quits, for up to 30 seconds.
+- The master switch at the bottom right turned off could flip back on at the next start, and the
+  looks stayed in the game. With it off, every row in My mods, looks included, is now drawn off.
+- An app closed while it was writing the game's pak could leave about 190 MB beside it for good.
+  It is now cleaned up at the next start.
+- The status bar said "Dota 2 connected", which read as the game being open. It says "Dota 2
+  found", because that is what it checks.
+
+Thanks to J0nathan550 for all of the above.
+
 ## 2.19.0
 
 ### Support the project
