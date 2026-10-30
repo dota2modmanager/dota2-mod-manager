@@ -261,6 +261,8 @@ So each thing carries its own proof, and each has a different answer to a proof 
 | Catalog data: `mods.json`, `constants.json`, `guides.json`, `mod-hashes.json` | ed25519 signature by the catalog's author, public key pinned in `src/catalog-signature.ts` | keep the last good copy; on a first run, no catalog and an error |
 | A mod archive | sha256 from the signed `mod-hashes.json` | drop that mirror's copy, delete the part file and ask the next mirror; refuse the mod only when every mirror fails the same check |
 | `config/app.json`, the switches and notices this project can change after a release | ed25519 signature by this project's own key, pinned in `src/remote-config.ts` | ignore the file, exactly as if it were unreachable |
+| The item builder's hero bases: `manifest.json` in `dota2modmanager/hero-base-fixes` | ed25519 signature by the bases' author, a key of its own pinned in `src/arcana-base-store.ts` | keep the last good list and the bases already here; a base not here yet is built from the game's files |
+| A hero base's file | git's hash of it, from that signed manifest | the base is not ready; asked for again in five minutes |
 | The Source 2 toolchain executable | version and sha256 pinned in `src/toolchain.ts`, checked before anything is unpacked | do not unpack it; item icons fall back to the wiki |
 
 The three answers differ because what each file costs differs. Without a catalog there is nothing
@@ -601,7 +603,7 @@ that location is not writable.
 | `src/model-skin.ts` | A model made to wear one of its material sets by default, for a courier worn in another set (Collector's Baby Roshan 2018's silver), which the server leaves at the first |
 | `src/arcana-notes.ts` | What each arcana does in the game once the builder puts it on, from a pass through every one: a note with its problems, or that it is broken or not checked, which the slot window shows on the item |
 | `src/arcana-bases.ts` | The arcana bases, each arcana compiled again by hand so it works as the hero's own look: which base a pick puts on, by item, style and what is worn with it, and the rule that every other pick wins over the base where both write a path, the arcana's own parts excepted |
-| `src/arcana-base-store.ts` | The bases brought down from their repository (J0nathan550/d2pfx-arcana-fixes) and kept in userData: listed from its git tree, each file checked against its git hash, a base used only once all of it is here, and the build asked to run again when one comes |
+| `src/arcana-base-store.ts` | The bases brought down from their repository (dota2modmanager/hero-base-fixes) and kept in userData: listed from its manifest only with a good signature against `BASES_PUBLIC_KEY`, each file checked against its git hash, a base used only once all of it is here, and the build asked to run again when one comes |
 | `src/arcana-base-color.ts` | Terrorblade's base in the arcana window's colour: the gem's colour written into its particles and materials moved to the chosen one, for the window's mod and for the builder's copy while the window's record is on |
 | `src/item-portraits.ts` | A hero's HUD portrait camera and lights (`scripts/npc/portraits.txt`) and minimap sprite (`scripts/mod_textures.txt`) as the picks make them, every pick's in one copy of each file |
 | `src/item-sounds.ts` | An item's sounds and an arcana's voice, which the server gives only to the item's owner: the plain sound events rewritten as the item's in the game's soundevents files, every pick's in one copy of each |
@@ -639,7 +641,7 @@ that location is not writable.
 | `tools/recolor.mjs` | `npm run recolor`: the recolour, or with `--arcana` the whole arcana, as a VPK to import, before the window offers it |
 | `tools/clean-arcana-bases.mjs` | A compiled arcana base stripped to models, materials and particles, the editor's files, sounds, pictures and particles every hero shares moved aside |
 | `tools/pack-arcana-vpks.mjs` | Every base in a folder packed into a VPK with VPKTool, one at a time, each checked against the files it was made from |
-| `tools/arcana-bases-manifest.mjs` | manifest.json for the bases' repository, the list of files and hashes the app falls back on where api.github.com cannot be reached |
+| `tools/arcana-bases-manifest.mjs` | manifest.json and its signature for the bases' repository: the only list of files and hashes the app takes, written and signed in one step |
 | `tools/item-plan.mjs` | `npm run item-plan -- <item>`: `src/item-visuals.ts` from the command line, the first step of building an item as a mod |
 | `tools/mod-doctor.mjs` | `npm run doctor -- <mod_dir.vpk>`: `src/mod-doctor.ts` from the command line, against the game folder in the app's settings |
 | `tools/dota-bench.mjs`, `tools/dota-bench/*.ps1` | `npm run dota:bench -- --vpk <mod_dir.vpk>`: a mod tried in the real game on Windows with nobody at the keyboard: hero demo started with the mod in a free slot, the hero levelled, set on a dummy, its abilities pressed, and pictures taken, a burst of them through the swing, and whether the attack swings (`tools/dota-bench/verdict.mjs`) |

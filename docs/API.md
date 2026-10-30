@@ -377,11 +377,16 @@ build reads them from disk like it reads pak01.
 
 The repository holds each base as its compiled files under src/<id>/, and a VPK of the same
 files beside them for people to try by hand; the app takes the files. What is there is read from
-the repository's git tree, which names every file with git's hash of it: nothing to keep in step
-by hand, and each file is checked against its hash, so a mirror (src/net.ts) can be trusted with
-the bytes. The tree comes from api.github.com, which has no mirrors; where it cannot be reached a
-manifest.json in the repository, the same list (tools/arcana-bases-manifest.mjs writes it), comes
-through them; and where neither can, the list from last time.
+manifest.json in the repository, every file of every base with git's hash of it, and
+manifest.json.sig beside it: tools/arcana-bases-manifest.mjs writes both from the files, so
+they go up in the same commit. The app takes the list only when the signature is good against
+BASES_PUBLIC_KEY, and then each file only when it matches its hash, so a mirror (src/net.ts) can
+be trusted with all of it. Where neither can be had, or the signature is not good, the list from
+last time, checked again.
+
+Signed since 2026-10-30. Before that the list was the repository's git tree, and whatever was
+pushed to its main reached everybody who picked that arcana with no signature of ours: a second
+key now stands between a push and the users, as the catalog's does (src/catalog-signature.ts).
 
 On disk: blobs/<hash>, one per file whatever base it is in (both of Juggernaut's styles share
 most of theirs), and ready.json, each base that is all here with the hash of each of its files.
@@ -395,10 +400,20 @@ caller to build again. Everything that needs the network fails quietly into the 
 ### `BASES_REPO`
 
 ```ts
-export const BASES_REPO = 'J0nathan550/d2pfx-arcana-fixes'
+export const BASES_REPO = 'dota2modmanager/hero-base-fixes'
 ```
 
-Where the bases are published, owner/name on GitHub.
+Where the bases are published, owner/name on GitHub: J0nathan550/d2pfx-arcana-fixes until 2026-10-30.
+
+### `BASES_PUBLIC_KEY`
+
+```ts
+export const BASES_PUBLIC_KEY = 'MCowBQYDK2VwAyEAAzqINyzZu0s84UbXXU+9uRuN0Z8IH7TO2oSCMO0tcMU='
+```
+
+Base64 SPKI of the ed25519 key the bases' manifest is signed with. J0nathan550 holds the
+private half; `tools/sign-catalog.js --keygen` makes a pair in this form. Not the catalog's key:
+that one belongs to the catalog's author, and the bases are not his to vouch for.
 
 ### `Listing`
 
@@ -427,13 +442,14 @@ a git hash. The list can come from a mirror (the manifest), and a mirror that se
 its own and the bytes to match it could otherwise have put a file at any path of the user's
 game pak, a script among them; and a hash is a file name here, so it has to be one.
 
-### `listingFromTree`
+### `signedListing`
 
 ```ts
-export function listingFromTree(tree: { tree?: { path: string; type: string; sha: string }[] }): Listing
+export function signedListing(manifest: string, sig: string, key: string = BASES_PUBLIC_KEY): Listing | null
 ```
 
-The bases in a git tree (GET /git/trees/<branch>?recursive=1): every file under src/<id>/ but the VPK of them.
+The bases in a manifest, or null when its signature is not the bases' key's over exactly these
+bytes. Nothing in an unsigned list is taken, not even what safeListing would let through.
 
 ### `BaseStoreDeps`
 
@@ -446,7 +462,7 @@ What a store is made with: where it keeps the bases, and whom it tells.
 ### `createBaseStore`
 
 ```ts
-export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetchUrl = fetchDefault }: BaseStoreDeps)
+export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetchUrl = fetchMirrored, key = BASES_PUBLIC_KEY }: BaseStoreDeps)
 ```
 
 The bases on disk, and bringing one down when a build needs it (the header says how).

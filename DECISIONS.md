@@ -332,6 +332,29 @@ that already. What they no longer get is to put words on the screen in this proj
 and its signature disagree - the failure an unsigned edit would otherwise cause in silence, on
 the day somebody reached for a switch and it did not work.
 
+### The hero bases are signed, by a key of their own
+
+Since 2.13.0 the item builder puts on arcanas, personas and some immortals that J0nathan550
+compiled again by hand, downloaded the first time somebody picks one. Until 2026-10-30 the app
+listed them from his repository's git tree: each file was checked against its hash, but whatever
+was pushed to `main` reached everybody who picked that arcana, with no signature of ours.
+
+Now the repository is the organisation's (`dota2modmanager/hero-base-fixes`, renamed because it
+fixes more than arcanas), and the app takes the list of bases only from `manifest.json` with a
+good signature in `manifest.json.sig`, against a key pinned in `src/arcana-base-store.ts`. Every
+file is still checked against its hash in that list, so the list and the files can both travel
+the mirrors. A push without the key changes nothing anybody downloads: the list from last time
+stays, and the bases already here keep being built with. The tree is no longer read at all: a
+list nobody signed is no list, and dropping it took api.github.com out of the path.
+
+The key is not the catalog's. The catalog's author holds that one, and these files are not his
+to vouch for; J0nathan550 compiles them and holds this one. Pinning a commit in the app was the
+other way, and was turned down because every fix would then wait for a release.
+
+*Check:* `BASES_PUBLIC_KEY` in `src/arcana-base-store.ts`, `test/arcana-base-store.test.ts`, and
+`tools/arcana-bases-manifest.mjs`, which writes and signs the manifest in one step and refuses a
+key that is not the pinned one's pair.
+
 ### Nothing is collected, and that is enforced by review rather than by a setting
 
 There is no telemetry, no analytics, no crash reporting and no opt-out to configure, because
@@ -657,19 +680,6 @@ before.
 *Check:* download the installer from the latest release and ask Windows who signed it:
 `Get-AuthenticodeSignature .\Dota-2-Mod-Manager-Setup.exe`. It answers `NotSigned` today, and
 the day it stops, this entry is out of date.
-
-### The arcana bases come from a contributor's own repository
-
-Since 2.13.0 the item builder puts on arcanas that J0nathan550 compiled again by hand, downloaded
-from his repository the first time somebody picks one. The app takes only files under `models/`,
-`materials/` and `particles/`, checks each against its git hash, and builds from the game's own
-files when the repository cannot be reached. It reads the repository's `main` branch, though, with
-no signature of ours: whatever he pushes reaches everybody who picks that arcana. Pinning a commit
-in the app would make every fix wait for a release; moving the repository into the organisation
-or signing its manifest would keep fixes immediate and put a second key between a push and the
-users. Not decided yet.
-
-*Check:* `BASES_REPO` and the branch it is read from, in `src/arcana-base-store.ts`.
 
 ---
 

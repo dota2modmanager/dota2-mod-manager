@@ -6,42 +6,55 @@
  * and a build that runs on every pick does not turn into a request on every pick. */
 import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { blobSha, createBaseStore, listingFromTree, safeListing, BASES_REPO } from '../src/arcana-base-store.ts';
+import { blobSha, createBaseStore, signedListing, safeListing, BASES_REPO, BASES_PUBLIC_KEY, type Listing } from '../src/arcana-base-store.ts';
 import { entryPath } from '../src/vpk.ts';
 
 const RAW = `https://raw.githubusercontent.com/${BASES_REPO}/main/`;
-/** A request for the repository's git tree: by its host, as the store tells them apart. */
-const isTreeUrl = (url: string) => new URL(url).host === 'api.github.com';
+/** A key of the tests' own: the pinned one's private half is not in the repository. */
+const pair = crypto.generateKeyPairSync('ed25519');
+const KEY = pair.publicKey.export({ type: 'spki', format: 'der' }).toString('base64');
+const sign = (text: string, key = pair.privateKey) => crypto.sign(null, Buffer.from(text), key).toString('base64');
 
-/** A repository: files by path, served as GitHub would, and every URL asked for. */
+/** What tools/arcana-bases-manifest.mjs writes for these files: each base under src/<id>/, its VPK left out. */
+function manifestOf(files: Record<string, string>): string {
+  const bases: Listing = {};
+  for (const [p, body] of Object.entries(files)) {
+    const m = /^src\/([^/]+)\/(.+)$/.exec(p);
+    if (!m || (!m[2].includes('/') && m[2].endsWith('.vpk'))) continue;
+    (bases[m[1]] ||= {})[m[2]] = blobSha(Buffer.from(body));
+  }
+  return `${JSON.stringify({ bases }, null, 1)}\n`;
+}
+
+/** A repository: files by path, its signed manifest, served as GitHub would, and every URL asked for. */
 function repo(files: Record<string, string>) {
-  const state = { files: { ...files }, offline: false, manifest: null as string | null, etag: '"one"' };
+  const state = { files: { ...files }, offline: false, manifest: null as string | null, sig: null as string | null };
   const asked: string[] = [];
-  const tree = () => ({ tree: Object.entries(state.files).map(([p, s]) => ({ path: p, type: 'blob', sha: blobSha(Buffer.from(s)) })) });
-  const fetchUrl = async (url: string, opts: { headers?: Record<string, string> }) => {
+  /** the manifest and signature as the tool would write them for the files as they are now */
+  const publish = () => { state.manifest = manifestOf(state.files); state.sig = sign(state.manifest); };
+  publish();
+  const fetchUrl = async (url: string) => {
     asked.push(url);
     if (state.offline) throw new Error('fetch failed');
-    if (isTreeUrl(url)) {
-      if (opts.headers?.['If-None-Match'] === state.etag) return new Response(null, { status: 304 });
-      return new Response(JSON.stringify(tree()), { headers: { etag: state.etag } });
-    }
     const rel = decodeURIComponent(url.slice(RAW.length));
-    if (rel === 'manifest.json' && state.manifest) return new Response(state.manifest);
+    if (rel === 'manifest.json') return state.manifest === null ? new Response('', { status: 404 }) : new Response(state.manifest);
+    if (rel === 'manifest.json.sig') return state.sig === null ? new Response('', { status: 404 }) : new Response(`${state.sig}\n`);
     const body = state.files[rel];
     return body === undefined ? new Response('', { status: 404 }) : new Response(body);
   };
-  return { state, asked, fetchUrl, tree };
+  return { state, asked, fetchUrl, publish };
 }
 
 function store(t: TestContext, r: ReturnType<typeof repo>, dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-basestore-'))) {
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const ready: string[] = [];
   const said: string[] = [];
-  const s = createBaseStore({ dir, fetchUrl: r.fetchUrl, onReady: (id) => ready.push(id), log: (m) => said.push(m) });
+  const s = createBaseStore({ dir, key: KEY, fetchUrl: r.fetchUrl, onReady: (id) => ready.push(id), log: (m) => said.push(m) });
   return { s, dir, ready, said };
 }
 
@@ -52,12 +65,20 @@ const JUGG = {
   'README.md': 'not a base',
 };
 
-test("the tree lists each base's files with their hash, and not the VPK of them", () => {
+test("a signed manifest lists each base's files with their hash; any other signature, or none, lists nothing", () => {
   const r = repo(JUGG);
-  const listing = listingFromTree(r.tree());
+  const listing = signedListing(r.state.manifest!, r.state.sig!, KEY)!;
   assert.deepEqual(Object.keys(listing), ['bladeform_legacy']);
   assert.deepEqual(Object.keys(listing.bladeform_legacy).sort(), ['models/heroes/juggernaut/juggernaut.vmdl_c', 'particles/econ/items/juggernaut/Blade Fury.vpcf_c']);
   assert.equal(listing.bladeform_legacy['models/heroes/juggernaut/juggernaut.vmdl_c'], blobSha(Buffer.from('body')));
+  const other = crypto.generateKeyPairSync('ed25519').privateKey;
+  assert.equal(signedListing(r.state.manifest!, sign(r.state.manifest!, other), KEY), null, "another key's signature");
+  assert.equal(signedListing(r.state.manifest!.replace('"body"', '"x"').replace(/"[0-9a-f]{40}"/, `"${blobSha(Buffer.from('x'))}"`), r.state.sig!, KEY), null, 'a manifest changed after it was signed');
+  assert.equal(signedListing(r.state.manifest!, '', KEY), null, 'no signature');
+  assert.equal(signedListing('not json', sign('not json'), KEY), null, 'signed, but not a manifest');
+  // the pinned key is a real ed25519 key: a typo in it would refuse every list, quietly, for everybody
+  assert.equal(crypto.createPublicKey({ key: Buffer.from(BASES_PUBLIC_KEY, 'base64'), format: 'der', type: 'spki' }).asymmetricKeyType, 'ed25519');
+  assert.equal(signedListing(r.state.manifest!, r.state.sig!), null, 'and it is not the tests\' key');
 });
 
 test('a base asked for comes down whole, is said to be ready once, and a build gets its files', async (t) => {
@@ -78,18 +99,16 @@ test('a base asked for comes down whole, is said to be ready once, and a build g
 
 test('a file that is not what the repository names is refused, and the base is not ready', async (t) => {
   const r = repo(JUGG);
-  const tree = JSON.stringify(r.tree());
-  // a mirror, or a push halfway through, hands over other bytes than the tree names
-  const fetchUrl: typeof r.fetchUrl = async (url, opts) => {
-    if (isTreeUrl(url)) return new Response(tree);
+  // a mirror, or a push halfway through, hands over other bytes than the manifest names
+  const fetchUrl: typeof r.fetchUrl = async (url) => {
     if (url.endsWith('juggernaut.vmdl_c')) return new Response('something a mirror made up');
-    return r.fetchUrl(url, opts);
+    return r.fetchUrl(url);
   };
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-basestore-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const ready: string[] = [];
   const said: string[] = [];
-  const s = createBaseStore({ dir, fetchUrl, onReady: (id) => ready.push(id), log: (m) => said.push(m) });
+  const s = createBaseStore({ dir, key: KEY, fetchUrl, onReady: (id) => ready.push(id), log: (m) => said.push(m) });
   assert.equal(await s.want('bladeform_legacy'), false);
   assert.equal(s.entries('bladeform_legacy'), null, 'no half a base');
   assert.deepEqual(ready, []);
@@ -101,11 +120,11 @@ test('with no network a base that is here keeps working, and one that is not wai
   const { s, dir } = store(t, r);
   await s.want('bladeform_legacy');
   r.state.offline = true;
-  const again = createBaseStore({ dir, fetchUrl: r.fetchUrl });
+  const again = createBaseStore({ dir, key: KEY, fetchUrl: r.fetchUrl });
   assert.equal(await again.want('bladeform_legacy'), false, 'the last list, and every file is here');
   assert.ok(again.entries('bladeform_legacy'), 'still built with');
   const said: string[] = [];
-  const empty = createBaseStore({ dir: fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-basestore-')), fetchUrl: r.fetchUrl, log: (m) => said.push(m) });
+  const empty = createBaseStore({ dir: fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-basestore-')), key: KEY, fetchUrl: r.fetchUrl, log: (m) => said.push(m) });
   assert.equal(await empty.want('bladeform_legacy'), false);
   assert.ok(said.some((m) => /could not be brought down/.test(m)), 'said in the log, not thrown');
   const asked = r.asked.length;
@@ -113,38 +132,63 @@ test('with no network a base that is here keeps working, and one that is not wai
   assert.equal(r.asked.length, asked, 'the next build does not ask again at once');
 });
 
-test('where the tree cannot be read, the manifest in the repository is the list', async (t) => {
+test('a manifest the key did not sign is refused: nothing new comes down, and the list from last time stays', async (t) => {
   const r = repo(JUGG);
-  const listing = listingFromTree(r.tree());
-  r.state.manifest = JSON.stringify({ bases: listing });
-  const fetchUrl: typeof r.fetchUrl = async (url, opts) => {
-    if (isTreeUrl(url)) throw new Error('api.github.com unreachable');
-    return r.fetchUrl(url, opts);
-  };
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-basestore-'));
-  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const s = createBaseStore({ dir, fetchUrl });
+  const { s, dir } = store(t, r);
   assert.equal(await s.want('bladeform_legacy'), true);
-  assert.ok(s.entries('bladeform_legacy'));
+  // somebody who can push, but has not the key: a new body, the manifest written to match, the old signature
+  r.state.files['src/bladeform_legacy/models/heroes/juggernaut/juggernaut.vmdl_c'] = 'a body nobody signed';
+  const sig = r.state.sig;
+  r.publish();
+  r.state.sig = sig;
+  const said: string[] = [];
+  const next = createBaseStore({ dir, key: KEY, fetchUrl: r.fetchUrl, log: (m) => said.push(m) });
+  assert.equal(await next.want('bladeform_legacy'), false);
+  assert.ok(said.some((m) => /not signed by the bases' key/.test(m)), said.join(' | '));
+  assert.equal(next.entries('bladeform_legacy')!.find((e) => e.name === 'juggernaut')!.data.toString(), 'body', 'the signed version is still built with');
+  assert.ok(!r.asked.some((u) => u.endsWith('juggernaut.vmdl_c') && r.asked.indexOf(u) !== r.asked.lastIndexOf(u)), 'the unsigned body is never asked for');
+  // and with no signature at all, the same
+  r.state.sig = null;
+  const third = createBaseStore({ dir, key: KEY, fetchUrl: r.fetchUrl });
+  assert.equal(await third.want('bladeform_legacy'), false);
+  assert.ok(third.entries('bladeform_legacy'));
 });
 
-test('an unchanged tree is asked about and not read again; a new version replaces the old once whole, and the old files go', async (t) => {
+test('a list kept from before the signing, or changed on disk, is not taken', async (t) => {
+  const r = repo(JUGG);
+  const { s, dir } = store(t, r);
+  await s.want('bladeform_legacy');
+  r.state.offline = true;
+  const listingFile = path.join(dir, 'listing.json');
+  const kept = JSON.parse(fs.readFileSync(listingFile, 'utf8'));
+  fs.writeFileSync(listingFile, JSON.stringify({ etag: '"old"', bases: signedListing(kept.manifest, kept.sig, KEY) }));
+  fs.rmSync(path.join(dir, 'ready.json'));
+  const said: string[] = [];
+  const old = createBaseStore({ dir, key: KEY, fetchUrl: r.fetchUrl, log: (m) => said.push(m) });
+  assert.equal(await old.want('bladeform_legacy'), false, 'the tree-era list on disk is no list');
+  assert.ok(said.some((m) => /could not be brought down/.test(m)));
+  fs.writeFileSync(listingFile, JSON.stringify({ manifest: kept.manifest.replace('bladeform_legacy', 'bladeform_legacx'), sig: kept.sig }));
+  const changed = createBaseStore({ dir, key: KEY, fetchUrl: r.fetchUrl });
+  assert.equal(await changed.want('bladeform_legacx'), false, 'nor one edited after it was signed');
+});
+
+test('a new signed version replaces the old once whole, the old files go, and an unchanged one brings nothing', async (t) => {
   const r = repo(JUGG);
   const { s, dir } = store(t, r);
   await s.want('bladeform_legacy');
   const blobs = () => fs.readdirSync(path.join(dir, 'blobs')).sort();
   const old = blobs();
   r.state.files['src/bladeform_legacy/models/heroes/juggernaut/juggernaut.vmdl_c'] = 'body, fixed again';
-  r.state.etag = '"two"';
+  r.publish();
   const ready: string[] = [];
-  const next = createBaseStore({ dir, fetchUrl: r.fetchUrl, onReady: (id) => ready.push(id) });
+  const next = createBaseStore({ dir, key: KEY, fetchUrl: r.fetchUrl, onReady: (id) => ready.push(id) });
   assert.equal(await next.want('bladeform_legacy'), true);
   assert.deepEqual(ready, ['bladeform_legacy']);
   assert.equal(next.entries('bladeform_legacy')!.find((e) => e.name === 'juggernaut')!.data.toString(), 'body, fixed again');
   assert.equal(blobs().length, old.length, 'the old body is swept, the particle shared');
   assert.ok(!blobs().includes(blobSha(Buffer.from('body'))));
-  const third = createBaseStore({ dir, fetchUrl: r.fetchUrl });
-  assert.equal(await third.want('bladeform_legacy'), false, 'the same tree: 304, nothing to do');
+  const third = createBaseStore({ dir, key: KEY, fetchUrl: r.fetchUrl });
+  assert.equal(await third.want('bladeform_legacy'), false, 'the same manifest: nothing to do');
   assert.equal(r.asked.filter((u) => u.includes('juggernaut.vmdl_c')).length, 2, 'each body asked for once');
 });
 
@@ -154,7 +198,7 @@ test('a file deleted by hand makes the base not ready, and the next want brings 
   await s.want('bladeform_legacy');
   fs.rmSync(path.join(dir, 'blobs', blobSha(Buffer.from('body'))));
   assert.equal(s.entries('bladeform_legacy'), null);
-  const next = createBaseStore({ dir, fetchUrl: r.fetchUrl });
+  const next = createBaseStore({ dir, key: KEY, fetchUrl: r.fetchUrl });
   assert.equal(await next.want('bladeform_legacy'), true);
   assert.ok(next.entries('bladeform_legacy'));
 });
@@ -171,13 +215,13 @@ test("two bases coming down at once keep each other's files: the first one whole
   });
   let release = () => {};
   const held = new Promise<void>((resolve) => { release = resolve; });
-  const fetchUrl: typeof r.fetchUrl = async (url, opts) => {
+  const fetchUrl: typeof r.fetchUrl = async (url) => {
     if (url.endsWith('invoker_dress.vmdl_c')) await held;
-    return r.fetchUrl(url, opts);
+    return r.fetchUrl(url);
   };
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-basestore-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const s = createBaseStore({ dir, fetchUrl });
+  const s = createBaseStore({ dir, key: KEY, fetchUrl });
   const invoker = s.want('acolyte');
   // the kid's body and morph are on the disk, his dress still coming, when Juggernaut's is whole
   while (!fs.existsSync(path.join(dir, 'blobs', blobSha(Buffer.from('morph'))))) await new Promise((resolve) => setTimeout(resolve, 1));
@@ -220,16 +264,18 @@ test("a list can only name a base's models, materials and particles, each by a g
     },
     '../escape': { 'models/a.vmdl_c': sha },
   }), { planetfall: { 'models/heroes/earthshaker/earthshaker.vmdl_c': sha } });
-  // a mirror's manifest naming a script, with the bytes to match its own hash: the script never comes
+  // a manifest naming a script, with the bytes to match its own hash: the script never comes, not
+  // even signed, since the key is one more lock and not a reason to take a path off the list
   const script = 'local x = 1';
+  const manifest = JSON.stringify({ bases: { planetfall: { 'scripts/vscripts/evil.lua': blobSha(Buffer.from(script)) } } });
   const fetchUrl = async (url: string) => {
-    if (isTreeUrl(url)) throw new Error('unreachable');
-    if (url.endsWith('manifest.json')) return new Response(JSON.stringify({ bases: { planetfall: { 'scripts/vscripts/evil.lua': blobSha(Buffer.from(script)) } } }));
+    if (url.endsWith('manifest.json')) return new Response(manifest);
+    if (url.endsWith('manifest.json.sig')) return new Response(sign(manifest));
     return new Response(script);
   };
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-basestore-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const s = createBaseStore({ dir, fetchUrl });
+  const s = createBaseStore({ dir, key: KEY, fetchUrl });
   assert.equal(await s.want('planetfall'), false);
   assert.equal(s.entries('planetfall'), null);
 });

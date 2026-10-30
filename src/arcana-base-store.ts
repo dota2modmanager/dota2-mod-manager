@@ -4,11 +4,16 @@
  *
  * The repository holds each base as its compiled files under src/<id>/, and a VPK of the same
  * files beside them for people to try by hand; the app takes the files. What is there is read from
- * the repository's git tree, which names every file with git's hash of it: nothing to keep in step
- * by hand, and each file is checked against its hash, so a mirror (src/net.ts) can be trusted with
- * the bytes. The tree comes from api.github.com, which has no mirrors; where it cannot be reached a
- * manifest.json in the repository, the same list (tools/arcana-bases-manifest.mjs writes it), comes
- * through them; and where neither can, the list from last time.
+ * manifest.json in the repository, every file of every base with git's hash of it, and
+ * manifest.json.sig beside it: tools/arcana-bases-manifest.mjs writes both from the files, so
+ * they go up in the same commit. The app takes the list only when the signature is good against
+ * BASES_PUBLIC_KEY, and then each file only when it matches its hash, so a mirror (src/net.ts) can
+ * be trusted with all of it. Where neither can be had, or the signature is not good, the list from
+ * last time, checked again.
+ *
+ * Signed since 2026-10-30. Before that the list was the repository's git tree, and whatever was
+ * pushed to its main reached everybody who picked that arcana with no signature of ours: a second
+ * key now stands between a push and the users, as the catalog's does (src/catalog-signature.ts).
  *
  * On disk: blobs/<hash>, one per file whatever base it is in (both of Juggernaut's styles share
  * most of theirs), and ready.json, each base that is all here with the hash of each of its files.
@@ -23,13 +28,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fetchMirrored } from './net.ts';
-import { downloadProxyFetchInit } from './download-proxy.ts';
+import { verify } from './catalog-signature.ts';
 import { entryAt, type VpkEntry } from './vpk.ts';
 
-/** Where the bases are published, owner/name on GitHub. */
-export const BASES_REPO = 'J0nathan550/d2pfx-arcana-fixes';
+/** Where the bases are published, owner/name on GitHub: J0nathan550/d2pfx-arcana-fixes until 2026-10-30. */
+export const BASES_REPO = 'dota2modmanager/hero-base-fixes';
 const BRANCH = 'main';
-const TREE_URL = `https://api.github.com/repos/${BASES_REPO}/git/trees/${BRANCH}?recursive=1`;
+/**
+ * Base64 SPKI of the ed25519 key the bases' manifest is signed with. J0nathan550 holds the
+ * private half; `tools/sign-catalog.js --keygen` makes a pair in this form. Not the catalog's key:
+ * that one belongs to the catalog's author, and the bases are not his to vouch for.
+ */
+export const BASES_PUBLIC_KEY = 'MCowBQYDK2VwAyEAAzqINyzZu0s84UbXXU+9uRuN0Z8IH7TO2oSCMO0tcMU=';
 const rawUrl = (rel: string) => `https://raw.githubusercontent.com/${BASES_REPO}/${BRANCH}/${rel}`;
 /** how long a base that could not be had waits before it is asked for again: a build runs on every pick */
 const RETRY_MS = 5 * 60 * 1000;
@@ -66,15 +76,17 @@ export function safeListing(raw: unknown): Listing {
   return out;
 }
 
-/** The bases in a git tree (GET /git/trees/<branch>?recursive=1): every file under src/<id>/ but the VPK of them. */
-export function listingFromTree(tree: { tree?: { path: string; type: string; sha: string }[] }): Listing {
-  const out: Listing = {};
-  for (const e of tree.tree || []) {
-    const m = e.type === 'blob' ? /^src\/([^/]+)\/(.+)$/.exec(e.path) : null;
-    if (!m || (!m[2].includes('/') && m[2].toLowerCase().endsWith('.vpk'))) continue;
-    (out[m[1]] ||= {})[m[2]] = e.sha;
+/**
+ * The bases in a manifest, or null when its signature is not the bases' key's over exactly these
+ * bytes. Nothing in an unsigned list is taken, not even what safeListing would let through.
+ */
+export function signedListing(manifest: string, sig: string, key: string = BASES_PUBLIC_KEY): Listing | null {
+  if (!verify(manifest, sig, key)) return null;
+  try {
+    return safeListing((JSON.parse(manifest) as { bases?: unknown }).bases);
+  } catch {
+    return null;
   }
-  return safeListing(out);
 }
 
 const sameFiles = (a: Record<string, string> | undefined, b: Record<string, string>) =>
@@ -97,21 +109,14 @@ export interface BaseStoreDeps {
   /** a base came down, or a newer version of it did */
   onReady?: (id: string) => void;
   log?: (msg: string) => void;
-  /** the network, for tests: a URL and the headers to send, to a Response */
-  fetchUrl?: (url: string, opts: { headers?: Record<string, string>; small?: boolean }) => Promise<Response>;
+  /** the network, for tests: a URL to a Response. Mirrored, since everything it brings is signed or hashed */
+  fetchUrl?: (url: string, opts: { small?: boolean }) => Promise<Response>;
+  /** the key the list has to be signed with, for tests; BASES_PUBLIC_KEY */
+  key?: string;
 }
 
-/**
- * The network as the store asks it: the raw files along the mirrors, which their hashes make safe
- * to take from a stranger; the tree straight from api.github.com, which has no mirrors and whose
- * "unchanged" (304) the mirror chain would count as the host failing.
- */
-const fetchDefault: NonNullable<BaseStoreDeps['fetchUrl']> = (url, opts) => (url.startsWith('https://api.github.com/')
-  ? fetch(url, { headers: opts.headers, signal: AbortSignal.timeout(20000), ...downloadProxyFetchInit() } as RequestInit)
-  : fetchMirrored(url, opts));
-
 /** The bases on disk, and bringing one down when a build needs it (the header says how). */
-export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetchUrl = fetchDefault }: BaseStoreDeps) {
+export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetchUrl = fetchMirrored, key = BASES_PUBLIC_KEY }: BaseStoreDeps) {
   const blobs = path.join(dir, 'blobs');
   const readyFile = path.join(dir, 'ready.json');
   const listingFile = path.join(dir, 'listing.json');
@@ -127,29 +132,29 @@ export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetch
   const coming = new Map<string, Record<string, string>>();
 
   async function fetchListing(): Promise<Listing> {
-    const cached = readJson<{ etag?: string; bases?: Listing }>(listingFile, {});
+    // stored as it came, signature and all, and checked again when read: a list on disk is only as
+    // good as the key that signed it, and one kept from before the signing is not taken
+    const cached = readJson<{ manifest?: string; sig?: string }>(listingFile, {});
     try {
-      const res = await fetchUrl(TREE_URL, { headers: { Accept: 'application/vnd.github+json', ...(cached.etag ? { 'If-None-Match': cached.etag } : {}) } });
-      // an unchanged tree answers 304, which GitHub does not count against the hourly limit
-      if (res.status === 304 && cached.bases) return safeListing(cached.bases);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const bases = listingFromTree(await res.json() as Parameters<typeof listingFromTree>[0]);
+      const get = async (rel: string) => {
+        const res = await fetchUrl(rawUrl(rel), { small: true });
+        if (!res.ok) throw new Error(`${rel}: HTTP ${res.status}`);
+        return res.text();
+      };
+      const [manifest, sig] = await Promise.all([get('manifest.json'), get('manifest.json.sig')]);
+      // the two are cached apart on the way, so for a few minutes after a push they can disagree:
+      // that reads as a bad signature, and the list from last time does until they agree
+      const bases = signedListing(manifest, sig, key);
+      if (!bases) throw new Error('manifest.json is not signed by the bases\' key');
+      if (!Object.keys(bases).length) throw new Error('no bases in it');
       fs.mkdirSync(dir, { recursive: true });
-      writeJson(listingFile, { etag: res.headers.get('etag') || undefined, bases });
+      writeJson(listingFile, { manifest, sig });
       return bases;
     } catch (err) {
-      log(`arcana bases: the repository's tree could not be read: ${(err as Error).message}`);
+      log(`arcana bases: the list could not be had: ${(err as Error).message}`);
     }
-    try {
-      const res = await fetchUrl(rawUrl('manifest.json'), { small: true });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const bases = safeListing((await res.json() as { bases?: unknown }).bases);
-      if (Object.keys(bases).length) return bases;
-      throw new Error('no bases in it');
-    } catch (err) {
-      log(`arcana bases: no manifest.json either: ${(err as Error).message}`);
-    }
-    if (cached.bases) return safeListing(cached.bases);
+    const bases = cached.manifest && cached.sig ? signedListing(cached.manifest, cached.sig, key) : null;
+    if (bases) return bases;
     throw new Error('the list of bases could not be had');
   }
 

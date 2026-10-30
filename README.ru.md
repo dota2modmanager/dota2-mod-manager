@@ -370,9 +370,9 @@ GPL — в [NOTICE](NOTICE).
 
 **[J0nathan550](https://github.com/J0nathan550)** добавил арканы в конструктор предметов, прогнал
 через него каждую и заново собрал вручную те, что ломаются на файлах Valve: теперь Razor бегает
-вперёд, а у Juggernaut на месте все анимации. Исправленные арканы лежат в
-[d2pfx-arcana-fixes](https://github.com/J0nathan550/d2pfx-arcana-fixes), приложение скачивает их
-оттуда.
+вперёд, а у Juggernaut на месте все анимации. Исправленные арканы, персоны и
+бессмертные лежат в [hero-base-fixes](https://github.com/dota2modmanager/hero-base-fixes),
+приложение скачивает их оттуда с подписью.
 
 **Обновления Доты** читаются из [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2)
 от [SteamTracking](https://github.com/SteamTracking): там каждая сборка Доты появляется текстом в
