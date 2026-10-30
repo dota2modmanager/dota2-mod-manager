@@ -52,6 +52,43 @@ const madeInt = (v: number): Num => {
   return { kind: 'number', type: 11, cell: null, typeAt: null, raw };
 };
 
+/** The "<word>_" every one of these names starts with ("donkey_", "donkey_wings_"), or ''. */
+function namePrefix(names: string[]): string {
+  if (!names.length) return '';
+  const lower = names.map((n) => n.toLowerCase());
+  let prefix = lower[0].slice(0, lower[0].lastIndexOf('_') + 1);
+  while (prefix && !lower.every((n) => n.startsWith(prefix))) prefix = prefix.slice(0, prefix.lastIndexOf('_', prefix.length - 2) + 1);
+  return prefix;
+}
+
+/*
+ * A sequence that plays no activity, found by its name without the plain model's own prefix:
+ * the courier's "@donkey_turns_lookframe_0" is "@turns_lookFrame_0" in Murrissey and
+ * "@run_turns_lookFrame_0" in Drodo, and "donkey_turns" their "turns" and "run_turns". Those
+ * four were what left two couriers in three unnumbered, and so the plain donkey online.
+ * The whole rest of the name first, then the end of one, at a word's start; "@" only for "@".
+ */
+function sameRest(names: string[], used: Set<number>, name: string, prefix: string): number {
+  const at = name.startsWith('@') ? '@' : '';
+  const rest = name.slice(at.length).toLowerCase();
+  if (!prefix || !rest.startsWith(prefix) || rest === prefix) return -1;
+  const tail = rest.slice(prefix.length);
+  const free = names.map((n, i) => ({ n: n.toLowerCase(), i })).filter(({ n, i }) => !used.has(i) && n.startsWith('@') === !!at);
+  const whole = free.find(({ n }) => n.slice(at.length) === tail);
+  return (whole ?? free.find(({ n }) => n.endsWith(`_${tail}`)))?.i ?? -1;
+}
+
+/*
+ * Any sequence left over, for a plain one that plays no activity and has no namesake in the model.
+ * The server picks what a unit plays by activity, so it never sends the number of such a sequence:
+ * it is a part another one plays (the donkey's turns, layered over its run), and the model's own
+ * run plays its own parts, moved with it. Gama Sennin and the F2P courier have no turns at all.
+ */
+function spare(names: string[], used: Set<number>, name: string): number {
+  const free = names.map((n, i) => ({ n, i })).filter(({ i }) => !used.has(i));
+  return (free.find(({ n }) => n.startsWith('@') === name.startsWith('@')) ?? free[0])?.i ?? -1;
+}
+
 /**
  * `model` with its sequences numbered as `plain` numbers its own, or null where that cannot be
  * done: a plain sequence with nothing in the model to stand for it, a list either one has not got,
@@ -79,6 +116,7 @@ export function numberedAs(model: Buffer, plain: Buffer): Buffer | null {
     const order: number[] = [];
     // "bindPose" is "bind_pose" in half of Invoker's spirits, and it plays no activity to find it by
     const loose = (n: string) => n.toLowerCase().replace(/[^a-z0-9@]/g, '');
+    const prefix = namePrefix([...plainActs].filter(([, act]) => act).map(([n]) => n));
     for (const name of wanted) {
       let at = names.indexOf(name);
       if (at !== -1 && used.has(at)) at = -1;
@@ -90,6 +128,8 @@ export function numberedAs(model: Buffer, plain: Buffer): Buffer | null {
         const pick = same.find((s) => !s.name.startsWith('@')) ?? same[0];
         at = pick ? names.indexOf(pick.name) : -1;
       }
+      if (at === -1) at = sameRest(names, used, name, prefix);
+      if (at === -1 && !plainActs.get(name)) at = spare(names, used, name);
       if (at === -1) return null;
       used.add(at);
       order.push(at);

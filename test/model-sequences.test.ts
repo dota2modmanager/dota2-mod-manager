@@ -97,3 +97,42 @@ test('a model that cannot stand for every plain sequence, or that this cannot re
   assert.equal(numberedAs(multi, PLAIN), null, 'a multi sequence points into the list in ways this does not move');
   assert.equal(numberedAs(Buffer.from('not a resource'), PLAIN), null);
 });
+
+// the Default Courier's, cut down: its turns play no activity, under names of the donkey's own
+const DONKEY = model(['bindpose', 'donkey_idle', 'donkey_run', '@donkey_run', 'donkey_turns', '@donkey_turns_lookframe_0'], [
+  { name: 'bindPose', refs: [0] },
+  { name: 'donkey_idle', act: 'ACT_DOTA_IDLE', refs: [1] },
+  { name: 'donkey_run', act: 'ACT_DOTA_RUN', refs: [3], layer: { int: 4 } },
+  { name: 'donkey_turns', refs: [5] },
+]);
+
+test("a courier's parts are found by their names without the donkey's, whole or at the end", () => {
+  // Drodo's turns are its run_turns, Murrissey's its turns
+  const drodo = model(['run', 'bindPose', '@run_turns_lookFrame_0', 'idle', 'run_turns', '@run'], [
+    { name: 'bindPose', refs: [1] },
+    { name: 'idle', act: 'ACT_DOTA_IDLE', refs: [3] },
+    { name: 'run', act: 'ACT_DOTA_RUN', refs: [5], layer: { int: 4 } },
+    { name: 'run_turns', refs: [2] },
+  ]);
+  const before = read(drodo);
+  const out = numberedAs(drodo, DONKEY);
+  assert.ok(out);
+  assert.deepEqual(read(out).names, ['bindPose', 'idle', 'run', '@run', 'run_turns', '@run_turns_lookFrame_0']);
+  assert.deepEqual(read(out).seqs, before.seqs, 'each sequence still fetches and layers what it did');
+});
+
+test('a part the model has not got is stood for by one left over, an animation it plays never', () => {
+  // the F2P courier has no turns: the server never sends their number, it picks by activity
+  const out = numberedAs(model(['idle', 'bindPose', 'run', 'flap', '@run', 'shake'], [
+    { name: 'bindPose', refs: [1] },
+    { name: 'idle', act: 'ACT_DOTA_IDLE', refs: [0] },
+    { name: 'run', act: 'ACT_DOTA_RUN', refs: [4] },
+  ]), DONKEY);
+  assert.ok(out);
+  assert.deepEqual(read(out).names.slice(0, 4), ['bindPose', 'idle', 'run', '@run'], 'what plays an activity is where the donkey has it');
+  // one with an activity is not stood for: the server would send its number
+  assert.equal(numberedAs(model(['bindPose', 'run', '@run', 'a', 'b', 'c'], [
+    { name: 'bindPose', refs: [0] },
+    { name: 'run', act: 'ACT_DOTA_RUN', refs: [2] },
+  ]), DONKEY), null, 'no idle');
+});

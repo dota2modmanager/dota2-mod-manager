@@ -12,6 +12,7 @@ import { listItems, eachChild, blockBounds } from './schema.ts';
 import { itemHeroes, type AssetCopy } from './item-builder-slots.ts';
 import { asModel } from './arcana.ts';
 import { numberedAs } from './model-sequences.ts';
+import { withSkin } from './model-skin.ts';
 import type { SoundSwap, VoiceCue } from './item-sounds.ts';
 
 /** A sprite of the game's sprite sheets shown in place of another (the minimap's hero icons are). */
@@ -260,8 +261,10 @@ export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | nu
     const data = ix.read(from);
     if (!data && 'optional' in copy && copy.optional) continue;
     if (!data) throw new Error(t('Не найден {0}', from));
+    // in the item's material set first (a courier's: src/model-skin.ts), and left out if it has not got it
+    const worn = 'unit' in copy && copy.skin ? withSkin(data, copy.skin) : data;
     // the resolver saw it numbered (summonModels); a game changed since would leave the unit plain
-    const bytes = 'unit' in copy ? numberedAs(data, ix.read(to) ?? Buffer.alloc(0))
+    const bytes = 'unit' in copy ? worn && numberedAs(worn, ix.read(to) ?? Buffer.alloc(0))
       : 'hero' in copy ? heroModelBytes(data, copy.activities) : data;
     if (!bytes) continue;
     out.push(entryAt(to, bytes));

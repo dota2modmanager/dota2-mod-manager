@@ -23,10 +23,10 @@ export function resourceBlocks(file: Buffer): Block[] {
 
 const align16 = (n: number) => Math.ceil(n / 16) * 16;
 
-/** One block of a compiled resource, and the file with new bytes in its place. */
-export function resourceBlock(file: Buffer, name: string): { data: Buffer; replace(next: Buffer): Buffer } {
+/** One block of a compiled resource (the `nth` of that name: a model has an MDAT per mesh), and the file with new bytes in its place. */
+export function resourceBlock(file: Buffer, name: string, nth = 0): { data: Buffer; replace(next: Buffer): Buffer } {
   const blocks = resourceBlocks(file);
-  const block = blocks.find((b) => b.name === name);
+  const block = blocks.filter((b) => b.name === name)[nth];
   if (!block) throw new Error(`resource: no ${name} block`);
   const after = blocks.filter((b) => b.at > block.at);
   const end = after.length ? Math.min(...after.map((b) => b.at)) : block.at + block.size;

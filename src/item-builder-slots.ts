@@ -51,7 +51,7 @@ export interface ItemSet { id: string; name: string; heroIds: string[]; fit: num
  * table does not say, and it goes in with the item's activity modifiers taken off (arcana.ts asModel).
  * A summon's (forged spirits) names its unit, and is numbered as the plain model (model-sequences.ts).
  */
-export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[] } | { from: string; to: string; unit: string };
+export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[] } | { from: string; to: string; unit: string; skin?: number };
 
 const ITEM_SLOT_MATCH_ALIAS: Record<string, string> = {
   offhand_weapon: 'offhand',

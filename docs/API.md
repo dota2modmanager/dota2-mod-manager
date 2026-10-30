@@ -31,6 +31,7 @@ the code, not in this page.
 | [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
 | [`src/channel-args.ts`](#srcchannel-argsts) | What each channel may be handed, checked before its handler runs (src/window-guard.ts). |
 | [`src/cosmetic-names.ts`](#srccosmetic-namests) | Display names come from Valve's installed localization, while schema names remain the keys |
+| [`src/courier-models.ts`](#srccourier-modelsts) | A courier look's models, under the Default Courier's paths. |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/deep-links.ts`](#srcdeep-linksts) | d2mm:// links: a preset or a single mod clicked anywhere on the system, and on Linux, telling |
 | [`src/dev-harness.ts`](#srcdev-harnessts) | The switches that let a script drive the window: a screenshot after some clicks (MM_SHOT and |
@@ -95,6 +96,7 @@ the code, not in this page.
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
 | [`src/model-sequences.ts`](#srcmodel-sequencests) | A model put under another model's path that numbers its sequences as that one does. |
+| [`src/model-skin.ts`](#srcmodel-skints) | A model with one of its material sets made the one it wears by default. |
 | [`src/mods-listing.ts`](#srcmods-listingts) | What My mods is drawn from: the answer to mods:list (src/ipc-mods.ts), which every screen asks |
 | [`src/net-download.ts`](#srcnet-downloadts) | A file downloaded to disk across the mirror chain (src/net.ts explains it): resumed where a |
 | [`src/net-fetch.ts`](#srcnet-fetchts) | A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a |
@@ -1271,6 +1273,52 @@ export function* chineseCosmeticNamesSteps(game: string, schemaText: string): Ge
 ```
 
 chineseCosmeticNames, a pause after each of the two language files and before the table.
+
+## src/courier-models.ts
+
+A courier look's models, under the Default Courier's paths.
+
+A look is the paid courier's visuals copied onto Default Courier (schema baseItemPatch), and the
+client draws its particles from that. The courier's model it does not: the server makes the unit
+and sets its model from its own item table, where Default Courier is the donkey. So a courier
+picked in unsafe mode came out as the donkey with the paid courier's particles on it.
+
+Under the donkey's paths the courier's own model is what the client loads for it, numbered as the
+donkey is (src/model-sequences.ts), since online the server picks the animation in the donkey and
+sends its number. A model that cannot be numbered so is left out (gameAssetEntries): the donkey
+is better than a courier playing its death for its run.
+
+### `courierCopies`
+
+```ts
+export function courierCopies(text: string, targetId: string, sourceId: string): AssetCopy[]
+```
+
+The files a courier look puts under the base courier's models: each of the source's models goes
+where the base has the same kind (walking, flying) for the same team, in the courier's material
+set (src/model-skin.ts), which the server would leave at the first. Nothing for a look of any
+other slot, which names no courier models.
+
+```
+@param targetId  the base item, Default Courier
+@param sourceId  the courier picked
+```
+
+### `lookPatch`
+
+```ts
+export function lookPatch(text: string, game: string, rec: Pick<LibRecord, 'name' | 'slot' | 'itemId'>, log: (msg: string) => void): SchemaPatch | null
+```
+
+A look's patch: its slot's base item dressed in the picked item's visuals, and for a courier its
+models under the base's paths. Null for a slot with no base item.
+
+Without the game's files to read the block still goes on, particles and all: the models are what
+a lobby would miss, not the look.
+
+```
+@param log  a model left out, and why
+```
 
 ## src/cursors.ts
 
@@ -3831,7 +3879,7 @@ A set, as the builder puts it on; see itemSets.
 ### `AssetCopy`
 
 ```ts
-export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[] } | { from: string; to: string; unit: string }
+export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[] } | { from: string; to: string; unit: string; skin?: number }
 ```
 
 A file in the game's archive staged under another path in the built VPK; an `optional` one (a
@@ -5134,6 +5182,29 @@ export function numberedAs(model: Buffer, plain: Buffer): Buffer | null
 `model` with its sequences numbered as `plain` numbers its own, or null where that cannot be
 done: a plain sequence with nothing in the model to stand for it, a list either one has not got,
 or sequences of kinds this does not move the references of (multi, synth, command).
+
+## src/model-skin.ts
+
+A model with one of its material sets made the one it wears by default.
+
+An item can wear its model in another material set ("skin" in its visuals): Collector's Baby
+Roshan 2018 is the plain alt Baby Roshan's model in set 2, the silver one. A model put under a
+plain unit's path (src/courier-models.ts) is worn in set 0 online, since the server sets the
+skin from its own table, where the plain unit has none: the silver courier came out purple.
+
+So the meshes draw with the set's materials, matched to set 0's by place (a model's
+m_materialGroups lists every set in the same order), and set 0 takes the set's list under its
+own name and place, so that whether the game reads the meshes, the first set or the one named
+"0", it finds the chosen one. The materials are already among the model's references: every
+set's are.
+
+### `withSkin`
+
+```ts
+export function withSkin(model: Buffer, skin: number): Buffer | null
+```
+
+`model` wearing material set `skin` by default; null where it has no such set or no mesh of its own to change.
 
 ## src/mods-listing.ts
 
@@ -6981,10 +7052,10 @@ The blocks of a compiled resource: name, where its table entry is, where its dat
 ### `resourceBlock`
 
 ```ts
-export function resourceBlock(file: Buffer, name: string): { data: Buffer; replace(next: Buffer): Buffer }
+export function resourceBlock(file: Buffer, name: string, nth = 0): { data: Buffer; replace(next: Buffer): Buffer }
 ```
 
-One block of a compiled resource, and the file with new bytes in its place.
+One block of a compiled resource (the `nth` of that name: a model has an MDAT per mesh), and the file with new bytes in its place.
 
 ### `dataBlock`
 

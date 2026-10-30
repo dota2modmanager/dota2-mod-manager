@@ -28,6 +28,7 @@ import { basesHereSteps, withoutBaseFiles, type ReadyBase } from './arcana-bases
 import { ownModelsWin, pickModels, refitsOf, type PickModels } from './item-builder-refits.ts';
 import { isSelectorSlot, leftOut, personaAssets, personaRecords, personasOn, type BuildRecord } from './item-builder-personas.ts';
 import { createColoredBases, windowColor } from './arcana-base-color.ts';
+import { lookPatch } from './courier-models.ts';
 import type { BaseStore } from './arcana-base-store.ts';
 import { sharedVpkIndex, sharedVpkIndexSteps, type VpkEntry } from './vpk.ts';
 import { PAUSE } from './steps.ts';
@@ -171,8 +172,8 @@ export function createTableBuild({ library, bases, log }: {
             portraits.push(...pick.portraits);
             sprites.push(...pick.sprites);
           } else {
-            const target = schema.baseItemFor(vanillaText, rec.slot);
-            if (target) out.push({ id: target.id, block: schema.baseItemPatch(vanillaText, target.id, String(rec.itemId)), source: rec.name });
+            const patch = lookPatch(vanillaText, game, rec, log);
+            if (patch) out.push(patch);
           }
         } catch (err) {
           // A donor Valve removed drops out of the build, and so does a pick the builder refuses.
