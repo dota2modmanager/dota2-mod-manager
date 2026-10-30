@@ -358,6 +358,17 @@
           "date": 1778075019
         },
         {
+          "name": "Invoker Ronaldo",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "group": "invoker",
+          "slots": ["head"],
+          "image": {"src":"/mods/invoker-ronaldo.webp","width":854,"height":480},
+          "author": "qizlik",
+          "authorUrl": "https://t.me/qizlikmod",
+          "date": 1793329448
+        },
+        {
           "name": "Aghanim Ranged Attack",
           "categoryId": "ranged-attack",
           "styleLabel": null,
@@ -691,7 +702,7 @@
           "slots": ["head"],
           "image": {"src":"/mods/terrorblade-emerald-arcana.webp","width":854,"height":480},
           "author": "cursedseizures",
-          "authorUrl": "https://t.me/drainAngel",
+          "authorUrl": "https://t.me/cvrsxdseizures",
           "date": 1792151800
         },
         {
@@ -735,7 +746,7 @@
           "slots": ["misc"],
           "image": {"src":"/mods/terrorblade-foulfell-demon.webp","width":854,"height":480},
           "author": "cursedseizures",
-          "authorUrl": "https://t.me/drainAngel",
+          "authorUrl": "https://t.me/cvrsxdseizures",
           "date": 1792264217
         },
         {
@@ -986,6 +997,17 @@
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
           "date": 1791908483
+        },
+        {
+          "name": "Kaneki Shadow Fiend",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","shoulder"],
+          "image": {"src":"/mods/kaneki-shadow-fiend.webp","width":854,"height":480},
+          "author": "qizlik",
+          "authorUrl": "https://t.me/qizlikmod",
+          "date": 1793329448
         },
         {
           "name": "Shadow Fiend Arcana Desolator",
@@ -3218,7 +3240,7 @@
           "slots": ["weapon"],
           "image": {"src":"/mods/morphling-yatoro-burning.webp","width":854,"height":480},
           "author": "cursedseizures",
-          "authorUrl": "https://t.me/drainAngel",
+          "authorUrl": "https://t.me/cvrsxdseizures",
           "date": 1790988499
         },
         {
@@ -7069,7 +7091,7 @@
           "slots": ["arms","belt","misc","head","weapon"],
           "image": {"src":"/mods/anti-mage-guilt-survivor.webp","width":854,"height":480},
           "author": "cursedseizures",
-          "authorUrl": "https://t.me/drainAngel",
+          "authorUrl": "https://t.me/cvrsxdseizures",
           "date": 1790809354
         },
         {

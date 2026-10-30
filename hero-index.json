@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1566,
+  "mods": 1568,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -713,6 +713,7 @@
         {"name":"Invoker Never","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","belt","legs"]},
         {"name":"Invoker Pack 1","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Patchouli","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","shield","belt","legs"]},
+        {"name":"Invoker Ronaldo","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Invoker Wyrdwing Exort","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Japan Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","legs"]},
         {"name":"Sasuke Invoker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","misc","belt","shield","legs"]},
@@ -1554,6 +1555,7 @@
         {"name":"Diabolical Shadow Fiend","categoryId":"heroes","styleLabel":"Desolation","slots":["shoulder","head","arms"]},
         {"name":"Diabolical Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","arms"]},
         {"name":"Emerald Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["head","misc","arms","shoulder"]},
+        {"name":"Kaneki Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
         {"name":"Old Shadow Fiend","categoryId":"heroes","styleLabel":null,"slots":["wings","head","misc","arms","shoulder"]},
         {"name":"Shadow Fiend 1000-7","categoryId":"heroes","styleLabel":null,"slots":["head","wings"]},
         {"name":"Shadow Fiend Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","wings"]},
