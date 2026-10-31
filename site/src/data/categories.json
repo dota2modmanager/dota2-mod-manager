@@ -3835,6 +3835,15 @@
       "id": "hero-sounds",
       "mods": [
         {
+          "name": "Anti Mage Taunt Tt",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/anti-mage-taunt-tt.webp","width":854,"height":480},
+          "author": "xvii",
+          "authorUrl": "https://t.me/xviivpk",
+          "date": 1793426257
+        },
+        {
           "name": "Pudge Rot Ponos Sound",
           "styleLabel": null,
           "group": null,
@@ -4750,6 +4759,15 @@
     {
       "id": "mega-kill",
       "mods": [
+        {
+          "name": "Waitureally Mega-Kill",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/waitureally-mega-kill.webp","width":854,"height":480},
+          "author": "waitureally",
+          "authorUrl": "https://t.me/s/waitureally",
+          "date": 1793424595
+        },
         {"name":"Blindzone","styleLabel":null,"group":null,"image":{"src":"/mods/blindzone.webp","width":854,"height":480},"author":"ataraxxxd","authorUrl":"https://t.me/ataraxxxd","date":1793329448},
         {
           "name": "12C3M8Jydwfodsjlo Mega Kill",
@@ -5373,6 +5391,15 @@
     {
       "id": "shaders",
       "mods": [
+        {
+          "name": "Winter",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/winter.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1793426257
+        },
         {"name":"Simple Minify Shader","styleLabel":null,"group":null,"image":{"src":"/mods/simple-minify-shader.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772737722},
         {
           "name": "Wave Lite Purple",
@@ -5638,15 +5665,6 @@
           "image": {"src":"/mods/alpha-lvlup-sound.webp","width":854,"height":480},
           "author": "Swin-РукаBlood",
           "authorUrl": "https://discord.gg/SCnUSB4j6S",
-          "date": 1793329448
-        },
-        {
-          "name": "Scarry Respawn Bayback",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/scarry-respawn-bayback.webp","width":854,"height":480},
-          "author": "waitureally",
-          "authorUrl": "https://t.me/s/waitureally",
           "date": 1793329448
         },
         {
@@ -8469,7 +8487,7 @@
           "image": {"src":"/mods/no-unnecessary-models.webp","width":854,"height":480},
           "author": "depex",
           "authorUrl": "https://t.me/depexfx",
-          "date": 1793272140
+          "date": 1793424595
         },
         {
           "name": "No Unnecessary Map Effects",

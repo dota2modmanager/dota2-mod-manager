@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1569,
+  "mods": 1573,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -352,6 +352,7 @@
     "dawnbreaker": {
       "name": "Dawnbreaker",
       "mods": [
+        {"name":"Dawnbreaker Adam Smasher","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc"]},
         {"name":"Dawnbreaker Death Knight","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
         {"name":"Dawnbreaker Moonbreaker","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head"]},
         {"name":"Dawnbreaker Starlorn Adjudicator","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
@@ -653,6 +654,7 @@
         {"name":"Immortal Hoodwink","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","tail"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Ruby Hoodwink","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","tail","back"]},
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -2035,6 +2037,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Venomancer Alien","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","shoulder","tail"]},
         {"name":"Venomancer Peashooter","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Venomancer Poisonous Assassin","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","shoulder","tail"]},
         {"name":"Venomancer Poisonous Assassin","categoryId":"heroes","styleLabel":"Purple","slots":["arms","misc","shoulder","tail"]},
@@ -2073,6 +2076,7 @@
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Visage Azure Phantom","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
+        {"name":"Visage Bloodking","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Visage Grimfeather Сorpse","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Visage Vulture Wraith","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head"]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
