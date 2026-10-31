@@ -26,7 +26,8 @@ import { summonModels, type ItemAssets, type PortraitSwap, type SpriteSwap } fro
 import { styleOf } from './item-builder-styles.ts';
 import { basesHereSteps, withoutBaseFiles, type ReadyBase } from './arcana-bases.ts';
 import { ownModelsWin, pickModels, refitsOf, type PickModels } from './item-builder-refits.ts';
-import { isSelectorSlot, leftOut, personaAssets, personaRecords, personasOn, type BuildRecord } from './item-builder-personas.ts';
+import { isSelectorSlot, leftOut, personaAssets, personaRecords, personaScaleOf, personaScales, personasOn, type BuildRecord } from './item-builder-personas.ts';
+import { scaledModels } from './model-scale.ts';
 import { createColoredBases, windowColor } from './arcana-base-color.ts';
 import { lookPatch } from './courier-models.ts';
 import type { BaseStore } from './arcana-base-store.ts';
@@ -86,17 +87,19 @@ export function createTableBuild({ library, bases, log }: {
    * fills some of the pick's paths, which the pick then does not build (gameAssetEntries skip). */
   const ownBase = (rec: LibRecord, ready: ReadyBase[]) => ready.find((r) => r.base.parts.includes(String(rec.itemId)));
   // and by the refit another pick makes of its model (src/item-builder-refits.ts)
-  const pickKey = (rec: BuildRecord, ready: ReadyBase[], refit?: string) => {
+  // and by how much bigger a persona's body makes its models (src/model-scale.ts)
+  const pickKey = (rec: BuildRecord, ready: ReadyBase[], refit?: string, scale?: number) => {
     const own = ownBase(rec, ready);
-    return `${rec.itemId}|${itemBuilder.effectKey(rec.effectId)}${own ? `|${own.base.id}:${baseSignature(own)}` : ''}${rec.persona ? `@${rec.persona.target}` : ''}${refit ? `~${refit}` : ''}`;
+    return `${rec.itemId}|${itemBuilder.effectKey(rec.effectId)}${own ? `|${own.base.id}:${baseSignature(own)}` : ''}${rec.persona ? `@${rec.persona.target}` : ''}${refit ? `~${refit}` : ''}${scale ? `*${scale}` : ''}`;
   };
-  function builtPick(vanillaText: string, game: string, key: string, rec: BuildRecord, own: ReadyBase | undefined, refit: string | undefined): ItemPick {
+  function builtPick(vanillaText: string, game: string, key: string, rec: BuildRecord, own: ReadyBase | undefined, refit: string | undefined, scale?: number): ItemPick {
     let pick = built.get(key);
     if (!pick) {
       // a summon's plain model, from the game's unit scripts: read only for an item that swaps one
       const summon: itemBuilder.SummonModels = (...args) => summonModels(sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk')))(...args);
       const made = itemBuilder.itemEffectPatch(vanillaText, String(rec.itemId), rec.effectId, rec.persona?.target, summon, refit);
-      pick = { ...made, assets: itemBuilder.gameAssetEntries(game, made.assetCopies, own && ((p) => own.paths.has(p))) };
+      pick = { ...made, assets: scaledModels(itemBuilder.gameAssetEntries(game, made.assetCopies, own && ((p) => own.paths.has(p))), scale,
+        (p, why) => log(`schema: ${rec.name}: ${p} left at its own size: ${why}`)) };
       built.set(key, pick);
     }
     return pick;
@@ -149,18 +152,23 @@ export function createTableBuild({ library, bases, log }: {
       if (m) models.set(rec, m);
     }
     const refits = refitsOf(models);
-    const total = records.filter((r) => isItemPick(r) && !built.has(pickKey(r, ready, refits.get(r)))).length;
     const pak = path.join(game, 'dota', 'pak01_dir.vpk');
+    // a persona's body compiled bigger than Valve's makes its items as big (src/model-scale.ts)
+    const on = personasOn(records);
+    const index = on.size && fs.existsSync(pak) ? yield* sharedVpkIndexSteps(pak) : null;
+    const scales = index ? personaScales(on, ready, (p) => index.read(p)) : new Map<string, number>();
+    const scaleOf = (r: BuildRecord) => personaScaleOf(r, scales);
+    const total = records.filter((r) => isItemPick(r) && !built.has(pickKey(r, ready, refits.get(r), scaleOf(r)))).length;
     if (total && fs.existsSync(pak)) yield* sharedVpkIndexSteps(pak);
     let done = 0;
     const owned: { patch: schema.SchemaPatch; own: string | null }[] = [];
     for (const rec of records) {
       if (rec.categoryId === 'cosmetic') {
-        const fresh = isItemPick(rec) && !built.has(pickKey(rec, ready, refits.get(rec)));
+        const fresh = isItemPick(rec) && !built.has(pickKey(rec, ready, refits.get(rec), scaleOf(rec)));
         try {
           if (isItemPick(rec)) {
-            const key = pickKey(rec, ready, refits.get(rec));
-            const pick = builtPick(vanillaText, game, key, rec, ownBase(rec, ready), refits.get(rec));
+            const key = pickKey(rec, ready, refits.get(rec), scaleOf(rec));
+            const pick = builtPick(vanillaText, game, key, rec, ownBase(rec, ready), refits.get(rec), scaleOf(rec));
             used.add(key);
             const assets = rec.persona && !isSelectorSlot(rec.slot)
               ? personaAssets(rec, pick.assets, ready) : withoutBaseFiles(String(rec.itemId), pick.assets, ready);

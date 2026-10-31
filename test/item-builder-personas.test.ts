@@ -8,9 +8,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  displaced, isSelectorSlot, leftOut, personaAssets, personaLayouts, personaRecords, personasOn, personaSlots,
+  displaced, isSelectorSlot, leftOut, personaAssets, personaLayouts, personaRecords, personasOn, personaSlots, personaScales, personaScaleOf,
 } from '../src/item-builder-personas.ts';
 import { ARCANA_BASES, readyBase } from '../src/arcana-bases.ts';
+import { encodeKv3, resource } from './helpers/kv3-build.ts';
 import { itemEffectPatch } from '../src/item-builder.ts';
 import { entryAt, entryPath } from '../src/vpk.ts';
 import type { LibRecord } from '../src/types.ts';
@@ -152,4 +153,32 @@ test("a persona's pictures: its portrait in the top bar and the hero picker as w
     'panorama/images/heroes/selection/npc_dota_hero_pudge_persona1_png.vtex_c -> panorama/images/heroes/selection/npc_dota_hero_pudge_png.vtex_c',
     'panorama/images/spellicons/pudge/persona_toy_butcher/pudge_rot_persona1_png.vtex_c -> panorama/images/spellicons/pudge_rot_png.vtex_c',
   ], 'the persona names only the minimap one; the game has the same name for the other two');
+});
+
+test("a persona's items are made as big as its body is against Valve's, measured, and only in its own slots", () => {
+  const body = (s: number) => resource([['DATA', encodeKv3({ obj: [['m_modelSkeleton', { obj: [
+    ['m_boneName', { arr: [{ str: 'pelvis' }, { str: 'head' }] }],
+    ['m_bonePosParent', { arr: [{ f64s: [0, 0, 55 * s] }, { f64s: [0, 3 * s, 20 * s] }] }],
+  ] }]] })]]);
+  const game: Record<string, Buffer> = {
+    'scripts/npc/heroes/npc_dota_hero_invoker.txt': Buffer.from('"DOTAHeroes"\n{\n\t"npc_dota_hero_invoker"\n\t{\n\t\t"Model"\t\t"models/heroes/invoker/invoker.vmdl"\n'
+      + '\t\t"Persona"\n\t\t{\n\t\t\t"1"\n\t\t\t{\n\t\t\t\t"Model"\t\t"models/heroes/invoker_kid/invoker_kid.vmdl"\t// For tools only\n\t\t\t}\n\t\t}\n\t}\n}'),
+    'models/heroes/invoker_kid/invoker_kid.vmdl_c': body(1),
+  };
+  const read = (p: string) => game[p] ?? null;
+  const acolyte = ARCANA_BASES.find((b) => b.persona && b.hero === 'invoker')!;
+  const on = new Map([['invoker', acolyte.item]]);
+  const based = (s: number) => [readyBase(acolyte, [entryAt('models/heroes/invoker/invoker.vmdl_c', body(s))])];
+  assert.deepEqual([...personaScales(on, based(1.351), read)], [['invoker', 1.351]], 'the body compiled at 1/0.74');
+  assert.deepEqual([...personaScales(on, based(1), read)], [], "one compiled as Valve's: nothing to scale");
+  assert.deepEqual([...personaScales(new Map(), based(1.351), read)], [], 'the persona not on');
+  assert.deepEqual([...personaScales(on, [], read)], [], 'its base not here');
+
+  const scales = new Map([['invoker', 1.351]]);
+  const persona = { target: '1', host: null, given: false };
+  const own = { id: 'a', name: 'Hair', categoryId: 'cosmetic', files: [], slot: 'item:invoker:head_persona_1', itemId: '9', persona };
+  assert.equal(personaScaleOf(own, scales), 1.351);
+  assert.equal(personaScaleOf({ ...own, slot: 'item:invoker:persona_selector' }, scales), undefined, 'not the persona itself');
+  assert.equal(personaScaleOf({ ...own, persona: undefined }, scales), undefined, 'not a plain pick');
+  assert.equal(personaScaleOf({ ...own, slot: 'item:pudge:weapon_persona_1' }, scales), undefined, "not another hero's");
 });

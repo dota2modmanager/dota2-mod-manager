@@ -85,6 +85,10 @@ Source2Viewer-CLI, from ValveResourceFormat by SteamDatabase, MIT licensed. The
 app downloads it when a feature needs it and never bundles it:
 https://github.com/SteamDatabase/ValveResourceFormat
 
+meshoptimizer, Copyright (c) 2016-2026 Arseny Kapoulkine, MIT licensed, ships inside the app
+to read and write the vertex buffers of the game's models:
+https://github.com/zeux/meshoptimizer
+
 The npm packages the build depends on carry their own licenses, listed in their
 own folders under node_modules and inside the installer.
 

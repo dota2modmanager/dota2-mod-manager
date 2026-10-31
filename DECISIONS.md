@@ -44,9 +44,9 @@ test passed, and nobody could install a mod in 2.6.5 or 2.6.6.
 *Check:* `npm run lint`, `eslint.config.js` for the rule list, and `.github/workflows/test.yml`,
 where it runs before the suite.
 
-### The app ships three dependencies
+### The app ships four dependencies
 
-`adm-zip`, `electron-updater` and `undici` ship inside it. `undici` supplies the supported
+`adm-zip`, `electron-updater`, `undici` and `meshoptimizer` ship inside it. `undici` supplies the supported
 HTTP/HTTPS `ProxyAgent` used when a user configures a download proxy; implementing CONNECT and
 streaming transport here would duplicate a networking client in the app. `electron`, `electron-builder`, `eslint`,
 `typescript`, `fast-check` and `axe-core` only build and check it, and never reach a user's machine. The VPK reader and writer, the
@@ -54,6 +54,15 @@ KeyValues parser, the zip guards, the mirror logic and the update checks are wri
 because every dependency is a stranger with write access to a game folder on tens of thousands
 of machines. That is a bias rather than a ban: a pull request adding one has to say what it
 replaces and why writing it here is worse.
+
+`meshoptimizer` was added on 2026-10-31 to make a persona's items as big as its body
+(`src/model-scale.ts`). Most of the game's item models keep their vertices in meshopt's vertex
+codec, 107 of the 168 buffers the five scaled personas' items have, and a position cannot be
+changed without decoding the buffer and encoding it again. The codec is Valve's own choice and has
+one reference implementation, this package, by its author: a decoder written here would be a
+second implementation of a format whose only test is whether the game draws the result, and an
+encoder would be two. It has no dependencies of its own, and the app uses its decoder and encoder
+and nothing else.
 
 `eslint` was added on 2026-09-10 and is the one case where writing it here would have been the
 wrong answer. Two releases shipped in which no mod could be installed, because splitting a file

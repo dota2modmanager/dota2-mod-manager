@@ -96,6 +96,7 @@ the code, not in this page.
 | [`src/mod-preview-pick.ts`](#srcmod-preview-pickts) | Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
+| [`src/model-scale.ts`](#srcmodel-scalets) | A compiled model made bigger about its origin, and how much bigger one model is than another. |
 | [`src/model-sequences.ts`](#srcmodel-sequencests) | A model put under another model's path that numbers its sequences as that one does. |
 | [`src/model-skin.ts`](#srcmodel-skints) | A model with one of its material sets made the one it wears by default. |
 | [`src/mods-listing.ts`](#srcmods-listingts) | What My mods is drawn from: the answer to mods:list (src/ipc-mods.ts), which every screen asks |
@@ -3873,6 +3874,30 @@ A persona slot's files over the persona's base. The base wins wherever it has a 
 particles rebuilt to fit the body, except at the slot's own model: there a pick wins, and the
 game's own item wins over an empty model but not over one rebuilt by hand (Mirana's mount).
 
+### `personaScales`
+
+```ts
+export function personaScales(on: Map<string, string>, ready: ReadyBase[], read: (path: string) => Buffer | null): Map<string, number>
+```
+
+How much bigger each persona's base body is than Valve's persona model, for each hero with a
+persona on whose base is here: what its items are made bigger by (src/model-scale.ts). The
+server draws the persona at the plain hero's scale, and a body compiled bigger to make up for it
+needs its items as big. Measured, not written down, so the items follow whatever the bases'
+repository publishes: a body compiled as Valve's measures 1, and nothing is scaled.
+
+```
+@param read  a file of the game's pak01: the hero's script and Valve's persona model
+```
+
+### `personaScaleOf`
+
+```ts
+export function personaScaleOf(rec: BuildRecord, scales: Map<string, number>): number | undefined
+```
+
+What a pick's models are made bigger by: a persona's own slot's, while its body is bigger (personaScales).
+
 ## src/item-builder-refits.ts
 
 Refits: an item's model made again to fit a body another item gives the hero. Faceless Void's
@@ -5248,6 +5273,65 @@ file with a fixed path (a terrain's maps/dota.vpk) has to make room first.
 ```
 @returns the record, updated
 ```
+
+## src/model-scale.ts
+
+A compiled model made bigger about its origin, and how much bigger one model is than another.
+
+A persona is worn as the plain hero (src/item-builder-personas.ts), and the server draws the
+plain hero at his own ModelScale: Invoker at 0.74, where Valve draws the Acolyte at 1 through the
+persona's hero_scale, which the server applies only to the persona's owner. A persona body
+compiled 1.35 times bigger stands at Valve's size, but its items do not follow: a wearable is
+bone-merged, its bones put where the body's are, and its vertices hang off those bones at the
+distances it was compiled with. The Acolyte's hair, weighted to the head alone, sat inside a head
+1.35 times bigger, and Invoker came out bald (hero-base-fixes 5f977421, 2026-10-27).
+
+So each item worn on such a body is made bigger by the same factor, here, from the game's own
+file: its vertices' positions, the translation of each bone's inverse bind pose (which the
+skinning uses, so the vertices stay on their bones), its skeleton's bone positions, and its
+bounds, hitboxes and attachment offsets. 107 of the 168 vertex buffers the five personas' items
+have are meshopt-compressed, the codec Valve uses; they are decoded, scaled and encoded again in
+the same version (0, "0xa0"), and every flag and size the model names stays as it was.
+
+Not scaled: an item's own animations (its jiggle and cloth bones keep their compiled distances
+where an animation moves them), its physics, and its morphs.
+
+### `modelScaleReady`
+
+```ts
+export const modelScaleReady = (): Promise<void> => codec
+```
+
+Resolves once models can be scaled: for a caller that starts before the codec is ready, a test.
+
+### `scaleModel`
+
+```ts
+export function scaleModel(file: Buffer, s: number): Buffer
+```
+
+A compiled model (vmdl_c) `s` times bigger about its origin. Its meshes are named in CTRL: the
+older models keep their buffers in one MBUF block per mesh (vbib_block), the newer in an MVTX
+block per buffer with the layout in CTRL itself (m_vertexBuffers).
+
+### `modelScaleAgainst`
+
+```ts
+export function modelScaleAgainst(model: Buffer, reference: Buffer): number | null
+```
+
+How much bigger `model` is than `reference`, from the bones they share: their total distance from
+their parents, one over the other. A persona's base compiled at 1.35 measures 1.35 against
+Valve's persona model, one compiled as Valve's measures 1. Null where they share no bone.
+
+### `scaledModels`
+
+```ts
+export function scaledModels(entries: VpkEntry[], scale: number | undefined, skipped: (path: string, why: string) => void): VpkEntry[]
+```
+
+A pick's files with its models `scale` times bigger (src/schema-build.ts, a persona's items). A
+model that cannot be is left at its own size, and `skipped` is told which and why.
 
 ## src/model-sequences.ts
 
