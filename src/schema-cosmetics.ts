@@ -150,10 +150,20 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
    * in My mods, and the game is written once. A set brings no effects, and a piece that is on
    * already keeps the ones it has. With write false the writing is the caller's, which builds in
    * the background (src/ipc-game.ts).
+   *
+   * The set is the whole hero: every other pick of his goes off, kept in My mods to be put back
+   * on. An arcana picked in his hero base before stayed on, and its base put the arcana's body
+   * under the hero's own path, so Earthshaker wore the Gar Beast on Planetfall's body
+   * (J0nathan550, 2026-10-31). So do a persona and its pieces, which he would wear in its place.
    */
   function pickSet(setId: string | number, { write = true } = {}): { applied: number; pieces: number } {
     const set = itemBuilder.itemSets(vanilla()).find((x) => x.id === String(setId));
     if (!set) throw new Error(t('Набор не найден'));
+    const taken = new Set(set.pieces.flatMap((p) => (p.fits && p.slot ? [p.slot] : [])));
+    const hero = `item:${set.heroIds.join('+')}:`;
+    for (const r of library.list()) {
+      if (r.categoryId === 'cosmetic' && r.enabled !== false && r.slot?.startsWith(hero) && !taken.has(r.slot)) library.setEnabled(r.id, false);
+    }
     let applied = 0;
     for (const p of set.pieces) {
       if (!p.fits || !p.slot) continue;

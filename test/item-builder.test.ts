@@ -663,14 +663,19 @@ test('a whole set goes on in one write, a row per piece, and a piece already on 
 
   service.pickCosmetic('item:sniper:head', '9457', 'No visuals here', 'fire,snow');
   service.pickCosmetic('item:sniper:back', '9951', 'Sniper Spare Cape', 'ghost');
+  // an arcana in a slot the set has no piece for, and another hero's pick
+  const arcana = service.pickCosmetic('item:sniper:hero_base', '9970', 'Sniper Arcana');
+  service.pickCosmetic('item:bloodseeker:weapon', '9953', 'Bloodseeker Headmaster Wand');
   writes = 0;
   const res = service.pickSet('9960');
   assert.deepEqual(res, { applied: 2, pieces: 4 });
   assert.equal(writes, 1, 'one write for the whole set');
   assert.deepEqual(picks().map((r) => [r.slot, r.itemId, r.effectId || '']).sort(), [
+    ['item:bloodseeker:weapon', '9953', ''], // another hero's: his own
     ['item:sniper:back', '9455', ''], // the set's cape in place of the spare one, and no effects with it
     ['item:sniper:head', '9457', 'fire,snow'], // already on: keeps what it had
-  ]);
+  ], 'the arcana went off: the set is the whole hero');
+  assert.equal(library.find(arcana!.id)?.enabled, false, 'kept in My mods, off');
   assert.throws(() => service.pickSet('404'), /Set not found/);
 });
 
