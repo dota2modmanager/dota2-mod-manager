@@ -3597,7 +3597,7 @@ arcanas), and those were read as no entries at all.
 ### `heroModelPath`
 
 ```ts
-export function heroModelPath(ix: VpkIndex, hero: string): string
+export function heroModelPath(ix: Pick<VpkIndex, 'read'>, hero: string): string
 ```
 
 Where a hero's own model lives: the first "Model" in its script, which is the hero's (the ones
@@ -3699,13 +3699,29 @@ file the user's hero wears in its slot, at each model path its block names, its 
 - the game's own stock item, where it does not: the Planetfall base fills Earthshaker's totem and
   bracers, and his belt is the plain one, so a store belt was drawn on the arcana (J0nathan550,
   2026-10-30, with the Intergalactic Orbliterator on);
-- nothing, where the stock item has no model: Earthshaker's head is his body's, and a store head
-  sat on the arcana's. Nothing is Valve's own invisible box, the one Monkey King's transformation
-  hides his wearables with.
+- the pick's own model, where the stock item has none and the pick names one: Earthshaker's head
+  is his body's, so the Gar Beast's head stays at its own path, and everybody else's head was the
+  invisible box under the rest of the set (J0nathan550, 2026-10-31);
+- nothing, where neither has a model: a store head sat on the arcana's. Nothing is Valve's own
+  invisible box, the one Monkey King's transformation hides his wearables with.
 Its block in the table becomes the pick's, else the stock item's, keeping its own name and
-picture, so its own particles do not hang off our model. Left alone: a slot with no stock item,
-items shared with other heroes, and any that changes the hero itself (an arcana's model, a
-persona), whose body the server sets.
+picture, so its own particles do not hang off our model.
+
+An arcana that swaps the hero's body (an entity_model naming the hero) is dressed too, in the slot
+it sits in (Planetfall in hero_base, under Earthshaker's Base). The server sets that body on its
+owner, from its own table, so the swap cannot be taken out of the table; the file is what can be
+changed. Under each body it names goes the user's hero's: the build's at the hero's path (a base's
+body), else the game's plain one. With the Gar Beast picked, another player's Planetfall was the
+arcana's body and particles with the Gar Beast's arms and belt on it.
+
+An arcana also swaps dozens of paid items' models for refits to its body (Planetfall 41, Dread
+Retribution 30), and the user's built blocks keep those swaps. So a dressed item's refit path gets
+the user's file as well, and a slot of the user's that is swapped itself is worn as what the swap
+shows. With an arcana on, hovering any set in the loadout showed that set (J0nathan550, 2026-10-31).
+
+Left alone: a slot with no stock item, items shared with other heroes, a persona (a second hero
+with slots of its own), and an item that swaps another form of the hero or one of his summons
+(hero_model_change, an entity_model for another unit), which the user's own hero has no file for.
 
 For a persona the stock paths hold the empty models its base puts there, so another player's plain
 items go the way the user's own do, and the persona's body is not dressed in them.
