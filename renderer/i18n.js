@@ -63,7 +63,7 @@ const EN = {
   'Все герои': 'All heroes', 'Все предметы': 'All items', 'Все крипы': 'All creeps',
   'Вид': 'View', 'Сеткой героев': 'Hero grid', 'Все моды списком': 'All mods as a list',
   'Все башни': 'All towers', 'Все типы': 'All types', 'Все группы': 'All groups',
-  'Все категории': 'All categories', 'Все слоты': 'All slots',
+  'Все категории': 'All categories', 'Все слоты': 'All slots', 'Все авторы': 'All authors',
 
   // ---------- tags: what a mod changes, and which slot an item goes in ----------
   // The catalog ships these in English; these are our own words for them. 'Эффекты' and

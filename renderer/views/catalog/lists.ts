@@ -8,11 +8,11 @@ import { state } from '../../core/store.ts';
 import { pickedIn } from '../../core/installed.ts';
 import { shownMods, isAdult, adultShown } from '../../core/adult.ts';
 import { heroMatches } from '../hero-grid.ts';
-import { cosmeticMatchesSearch } from '../../ui/hero-name.ts';
+import { catalogMatchesSearch, cosmeticMatchesSearch } from '../../ui/hero-name.ts';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import { modsOf, isGrouped, modIndexOf, type CustomPack } from '../../catalog/mods.ts';
 import { tagLabel as labelOfTag, collectSlots as slotsOf } from '../../catalog/tags.ts';
-import { applyFilters as filterMods, sortMods } from '../../catalog/filters.ts';
+import { applyFilters as filterMods, authorIn, collectAuthors, sortMods } from '../../catalog/filters.ts';
 import { downloadsOf } from '../../core/download-counts.ts';
 import { isFav } from '../../catalog/favorites.ts';
 import { isInstalled } from '../../catalog/looks.ts';
@@ -62,8 +62,21 @@ export const tagLabel = (categoryId: string | null, tag: string): string =>
 export const collectSlots = (mods: Mod[], categoryId: string): string[] => slotsOf(mods, (t) => tagLabel(categoryId, t));
 
 /** The toolbar's narrowing and order (catalog/filters.ts), on a list of mods. */
+/** The mods the title-bar search finds among these: all of them while it is empty. */
+function searched(mods: Mod[]): Mod[] {
+  const q = state.search.trim().toLowerCase();
+  return q ? mods.filter((m) => m.name && catalogMatchesSearch(m.name, q)) : mods;
+}
+
+/** The toolbar's authors for a list, and the one it is narrowed to (catalog/filters.ts authorIn). */
+export function authorsOf(mods: Mod[]): { authors: { name: string; count: number }[]; author: string } {
+  const list = searched(mods);
+  return { authors: collectAuthors(list), author: authorIn(list, view.filters.author) };
+}
+
+/** A list as the toolbar and the title-bar search narrow and sort it. */
 export function applyFilters(mods: Mod[], catForInstalled = ''): Mod[] {
-  return filterMods(mods, view.filters, {
+  return filterMods(searched(mods), view.filters, {
     isInstalled: (m) => isInstalled(m._cat || catForInstalled, m),
     isFav: (m) => isFav(m._cat || catForInstalled, m.name),
     heroMatches,

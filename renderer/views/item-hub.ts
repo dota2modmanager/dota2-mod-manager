@@ -20,7 +20,7 @@ import type { ScreenActions, ScreenModel } from '../catalog/screen/model.ts';
 import { plural } from '../ui/format.ts';
 import { heroMatchesSearch } from '../ui/hero-name.ts';
 import { paint } from '../ui/transitions.ts';
-import { view } from './catalog/state.ts';
+import { remember, view } from './catalog/state.ts';
 import { catalogActions, heroSets, itemCosmeticSlots } from './item-builder.ts';
 
 const HUB = COSMETIC_PREFIX + 'items';
@@ -30,7 +30,7 @@ const hubActions = (): ScreenActions => ({
   ...catalogActions(),
   cosmeticFilter: ({ search, installedOnly }) => {
     if (search !== undefined) view.cosSearch = search;
-    if (installedOnly !== undefined) view.filters.installedOnly = installedOnly;
+    if (installedOnly !== undefined) { view.filters.installedOnly = installedOnly; remember({ installedOnly }); }
     drawHub();
   },
 });

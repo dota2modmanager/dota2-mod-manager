@@ -6,7 +6,7 @@
  * (mod-window.ts), installing (install.ts) and the free looks (cosmetics.ts). What they draw with
  * is catalog/, in React. */
 import { $ } from '../core/dom.ts';
-import { COSMETIC_PREFIX, RAIL_SECTIONS, freshFilters } from '../core/constants.ts';
+import { COSMETIC_PREFIX, RAIL_SECTIONS } from '../core/constants.ts';
 import { state } from '../core/store.ts';
 import { registerView, switchView } from '../core/router.ts';
 import { pickedIn } from '../core/installed.ts';
@@ -30,7 +30,7 @@ import { renderCategory, renderCosmeticCategory, renderFavorites, renderHome, re
 import { openModWindow } from './catalog/mod-window.ts';
 import { afterCosmeticPick, openCosmeticWindow, pickCosmetic } from './catalog/cosmetics.ts';
 import { openArcanaWindow } from './catalog/arcana.ts';
-import { screen, view } from './catalog/state.ts';
+import { remember, screen, startFilters, view } from './catalog/state.ts';
 import { onDownloadCounts } from '../core/download-counts.ts';
 
 registerView('catalog', () => renderCatalog());
@@ -65,15 +65,13 @@ function railModel(): RailModel {
   return { active: state.activeCategory, sections };
 }
 
+// The search in the title bar stays: in a category it narrows that category, and "All categories"
+// shows what it finds everywhere (renderCatalog). It used to be cleared here, and a search could not
+// be carried from one category to the next.
 function pickCategory(id: string): Promise<void> {
   state.activeCategory = id;
-  view.filters = freshFilters();
+  view.filters = startFilters();
   view.cosSearch = '';
-  if (state.search) {
-    state.search = '';
-    ($('#globalSearch') as HTMLInputElement).value = '';
-    $('#clearSearch').classList.add('hidden');
-  }
   return renderCatalog();
 }
 
@@ -87,13 +85,14 @@ function renderRail(): void {
 const actions: ScreenActions = {
   openCategory: async (id) => {
     state.activeCategory = id;
-    view.filters = freshFilters();
+    view.filters = startFilters();
     await renderCatalog(); // the grid has to exist before it can be scrolled to the top
     $('#main').scrollTop = 0;
   },
   openRecent: () => void actions.openCategory('recent'),
   filter: (patch) => {
     Object.assign(view.filters, patch);
+    remember(patch);
     renderCatalog();
   },
   toggleTag: (tag) => {
@@ -130,6 +129,7 @@ const actions: ScreenActions = {
   cosmeticFavChanged: () => actions.favChanged(),
   cosmeticFilter: ({ search, ...patch }) => {
     Object.assign(view.filters, patch);
+    remember(patch);
     if (search !== undefined) view.cosSearch = search;
     renderCatalog();
   },
@@ -151,8 +151,8 @@ async function renderCatalog(): Promise<void> {
   await refreshNotices();
 
   const active = state.activeCategory;
-  if (state.search.trim()) await renderSearchResults(actions);
-  else if (active === 'all') await renderHome(actions);
+  // the search finds things everywhere from the front page, and narrows a category picked with it
+  if (active === 'all') await (state.search.trim() ? renderSearchResults(actions) : renderHome(actions));
   else if (active === 'favorites') await renderFavorites(actions);
   else if (active === 'recent') await renderRecent(actions);
   else if (active.startsWith(COSMETIC_PREFIX)) await renderCosmeticCategory(active.slice(COSMETIC_PREFIX.length), actions);
