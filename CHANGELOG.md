@@ -2,6 +2,50 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 2.21.0
+
+### Mods by author, and a catalog that remembers
+
+The toolbar has a new "Author" dropdown: pick someone and the list shows only the mods they made,
+with how many each author has beside their name.
+
+The catalog now remembers how you left it: the sort, the author, the "Installed" and "Favorites"
+chips and the search stay as they were when you open another category, and after a restart. An
+author with nothing in a category is set aside there instead of leaving it empty. A search no
+longer disappears when you pick a category: it narrows that category instead, and "All categories"
+shows what it finds everywhere.
+
+### Your look on everyone playing your hero
+
+A new switch in Settings, under "Item builder": "My look on everyone playing that hero". With it on,
+every player of a hero you built, ally or enemy, is drawn in your look on your screen: your picks,
+the plain items where you picked nothing, and nothing of their own store items. Only you see it.
+
+It holds for arcanas too. Another player's Planetfall is drawn with your Earthshaker's body and
+items, and with an arcana of your own on, hovering any set in the loadout shows your look instead
+of that set.
+
+### A set is the whole hero
+
+Putting a set on now switches off that hero's other picks, an arcana in the hero base included, so
+the hero wears the set and nothing else. The picks that went off stay in My mods, ready to go back
+on.
+
+### Personas at their full size
+
+The game draws a persona worn this way at the plain hero's size, so the Acolyte of the Lost Arts
+came out about three quarters of Valve's. The persona's items are now made as big as its body, so a
+persona compiled at full size wears them at full size too. The bigger bodies for the Acolyte,
+Conduit of the Blueheart, the Disciple's Path, Legion Commander's persona and the Toy Butcher arrive
+from hero-base-fixes by themselves once this version is in.
+
+### Chinese
+
+Catalog titles added this week read as phrases instead of word by word, and the auto-pick guide is
+in Chinese.
+
+Thanks to J0nathan550 for the item builder and the catalog, and to F21HGG for the Chinese.
+
 ## 2.20.0
 
 ### Presets switch the looks too
