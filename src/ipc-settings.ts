@@ -18,9 +18,9 @@ export function registerSettingsIpc({
   // The four read late are main-process state that changes while the app runs; setPresenceView
   // writes one back. Passing values here would freeze them at registration time.
   applyPresenceSetting, catalog, discordAuth, findDotaGamePath, moveLangFolder,
-  refreshPresence, remoteConfig, settings, settingsView, validateGamePath,
+  refreshPresence, remoteConfig, schemaService, settings, settingsView, validateGamePath,
   langFolder, patchWatcher, setPresenceView, updater, win,
-}: Pick<AppContext, 'applyPresenceSetting' | 'catalog' | 'discordAuth' | 'findDotaGamePath' | 'moveLangFolder' | 'refreshPresence' | 'remoteConfig' | 'settings' | 'settingsView' | 'validateGamePath' | 'langFolder' | 'patchWatcher' | 'setPresenceView' | 'updater' | 'win'>): void {
+}: Pick<AppContext, 'applyPresenceSetting' | 'catalog' | 'discordAuth' | 'findDotaGamePath' | 'moveLangFolder' | 'refreshPresence' | 'remoteConfig' | 'schemaService' | 'settings' | 'settingsView' | 'validateGamePath' | 'langFolder' | 'patchWatcher' | 'setPresenceView' | 'updater' | 'win'>): void {
   const { dialog, ipcMain } = electron();
   /* The beta channel, from the switch in settings and the list in the signed config.
    *
@@ -78,6 +78,8 @@ export function registerSettingsIpc({
     settings.set(key, value);
     // the status text is localized, so a language change has to redraw it too
     if (key === 'discordPresence' || key === 'uiLang') applyPresenceSetting();
+    // the table is what the switch changes; the bar at the bottom counts the build
+    if (key === 'everyoneWearsMine') void schemaService.refreshInBackground();
     return settingsView();
   });
 

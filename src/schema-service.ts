@@ -14,11 +14,12 @@ import * as patcher from './patcher.ts';
 import * as schema from './schema.ts';
 import { createHarvest, type SchemaInstaller } from './schema-harvest.ts';
 import { createCosmetics } from './schema-cosmetics.ts';
+import { everyoneWears } from './item-builder-everyone.ts';
 import { createBackgroundBuilds, createTableBuild, type BuildStep, type BuildYield, type Refreshed } from './schema-build.ts';
 import { drain } from './steps.ts';
 import { chooseBases } from './arcana-bases.ts';
 import type { BaseStore } from './arcana-base-store.ts';
-import { entryPath } from './vpk.ts';
+import { entryPath, sharedVpkIndex } from './vpk.ts';
 import type { Settings } from './settings.ts';
 import type { Library } from './library.ts';
 
@@ -132,7 +133,10 @@ export function createSchemaService({ settings, library, installer, userDataDir,
       // through the cache, not around it: this runs on every mod removed, enabled or
       // switched off, and re-extracting 50 MB from the game's pak each time was the wait
       const base = vanillaBase();
-      const { list, beneath } = yield* table.buildSteps(base.text, game);
+      const { list: own, beneath } = yield* table.buildSteps(base.text, game);
+      // every other player of the hero in the user's look, when asked for (src/item-builder-everyone.ts)
+      const pak = () => sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
+      const list = settings.get('everyoneWearsMine') ? [...own, ...everyoneWears(base.text, own, beneath, (p) => pak().read(p))] : own;
       if (!list.length) return drop();
       const res = yield* schema.deploySteps({ gamePath: game, folder: patcher.FOLDER, patches: list, base, beneath });
       settings.set('schemaStamp', stampOf(res.stamp));

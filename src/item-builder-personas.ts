@@ -22,6 +22,8 @@ import {
 } from './item-builder-slots.ts';
 import { heroDisplayName } from './hero-names.ts';
 import { entryPath, type VpkEntry } from './vpk.ts';
+import { heroModelPath } from './item-builder-assets.ts';
+import { modelScaleAgainst } from './model-scale.ts';
 import type { LibRecord } from './types.ts';
 
 /** The slot a persona is picked in. */
@@ -239,4 +241,39 @@ export function personaAssets(rec: BuildRecord, assets: VpkEntry[], ready: Ready
     const p = entryPath(e).toLowerCase();
     return !base.paths.has(p) || (p === host && (!given || emptyAt(base, p)));
   });
+}
+
+/** A hero script's persona model: the "Model" of its Persona block, which the game keeps for its tools. */
+const PERSONA_MODEL = /"Persona"[\s\S]*?"Model"\s+"([^"]+)"/;
+
+/**
+ * How much bigger each persona's base body is than Valve's persona model, for each hero with a
+ * persona on whose base is here: what its items are made bigger by (src/model-scale.ts). The
+ * server draws the persona at the plain hero's scale, and a body compiled bigger to make up for it
+ * needs its items as big. Measured, not written down, so the items follow whatever the bases'
+ * repository publishes: a body compiled as Valve's measures 1, and nothing is scaled.
+ * @param read  a file of the game's pak01: the hero's script and Valve's persona model
+ */
+export function personaScales(on: Map<string, string>, ready: ReadyBase[], read: (path: string) => Buffer | null): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const hero of on.keys()) {
+    const base = ready.find((r) => r.base.persona && r.base.hero === hero);
+    const script = read(`scripts/npc/heroes/npc_dota_hero_${hero}.txt`)?.toString('latin1');
+    const valve = script && PERSONA_MODEL.exec(script)?.[1];
+    if (!base || !script || !valve) continue;
+    try {
+      const body = base.entries.find((e) => entryPath(e).toLowerCase() === compiled(heroModelPath({ read }, `npc_dota_hero_${hero}`)));
+      const reference = read(compiled(valve));
+      const scale = body && reference ? modelScaleAgainst(body.data, reference) : null;
+      // a body compiled as Valve's measures 1 to within a thousandth
+      if (scale && Math.abs(scale - 1) > 0.01) out.set(hero, Math.round(scale * 1000) / 1000);
+    } catch { /* a body or a script that does not read: its items as they are */ }
+  }
+  return out;
+}
+
+/** What a pick's models are made bigger by: a persona's own slot's, while its body is bigger (personaScales). */
+export function personaScaleOf(rec: BuildRecord, scales: Map<string, number>): number | undefined {
+  const at = pickSlot(rec);
+  return rec.persona && at && at.slot !== SELECTOR ? at.heroes.map((h) => scales.get(h)).find(Boolean) : undefined;
 }

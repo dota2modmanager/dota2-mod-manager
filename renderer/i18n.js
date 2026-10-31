@@ -132,6 +132,11 @@ const EN = {
   'Бета-версии включены': 'Beta builds on',
   'Бета-версии выключены': 'Beta builds off',
 
+  // ---------- the item builder's look on everybody (src/item-builder-everyone.ts) ----------
+  'Мой вид на всех, кто играет этим героем': 'My look on everyone playing that hero',
+  'Кто бы ни играл героем, которого ты собрал, союзник или враг, у тебя на экране он будет в твоих предметах, а не в своих. Видишь это только ты. Работает с выключенным безопасным режимом.':
+    'Whoever plays a hero you built, ally or enemy, wears your items on your screen, not their own. Only you see this. Works with safe mode off.',
+
   // ---------- item schema: catalog cards, library tag, conflict banners ----------
   'Моды спорят за один предмет': 'Mods disagree about the same item',
   '. В таблицу попадёт правка того мода, что установлен последним — выключи лишний.':

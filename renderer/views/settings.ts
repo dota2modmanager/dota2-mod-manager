@@ -51,6 +51,7 @@ async function renderSettings(fresh = false): Promise<void> {
     scalePct: Math.round((Number(s.uiScale) || 1) * 100),
     presence: s.discordPresence !== false,
     countDownloads: s.countDownloads !== false,
+    everyone: s.everyoneWearsMine === true,
     beta,
     dotaPath: s.dotaGamePath || '',
     dotaValid: Boolean(s.dotaPathValid),
@@ -72,7 +73,7 @@ function draw(): void {
 }
 
 /** A switch that shows its new position at once and tells main after. */
-function flip(field: 'presence' | 'adult' | 'countDownloads'): boolean {
+function flip(field: 'presence' | 'adult' | 'countDownloads' | 'everyone'): boolean {
   if (!model) return false;
   model = { ...model, [field]: !model[field] };
   draw();
@@ -103,6 +104,9 @@ const actions: SettingsActions = {
   },
   countDownloads: async () => {
     state.settings = await window.api.settings.set('countDownloads', flip('countDownloads'));
+  },
+  everyone: async () => {
+    state.settings = await window.api.settings.set('everyoneWearsMine', flip('everyone'));
   },
   beta: async () => {
     if (!model) return;

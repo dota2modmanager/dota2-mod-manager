@@ -25,6 +25,8 @@ export interface StoredSettings {
   schemaPending: boolean;
   /** the preset applied last, which the Presets screen marks as changed once the state leaves it */
   lastPreset: string | null;
+  /** everybody playing a hero the item builder dressed wears the same look (src/item-builder-everyone.ts) */
+  everyoneWearsMine: boolean;
   toolsPromptSeen: boolean;
   showAdult: boolean | null;
   lastSeenVersion: string | null;
@@ -107,6 +109,8 @@ const DEFAULTS: StoredSettings = {
   // items_game.txt build the deployed schema was made from, to spot a game update
   schemaStamp: null,
   lastPreset: null,
+  // tried on one hero first, so off until the user asks for it
+  everyoneWearsMine: false,
   schemaPending: false,
   // One-time offer of the Source 2 toolchain, asked once on first run. False for fresh
   // installs and for anybody updating from before it was offered, so everyone gets the

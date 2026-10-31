@@ -21,6 +21,8 @@ export interface StoredSettings {
   discordPresence: boolean;
   /** installs of catalog mods are counted by the catalog's download counter (src/download-stats.ts) */
   countDownloads: boolean;
+  /** everybody playing a hero the item builder dressed wears the same look (src/item-builder-everyone.ts) */
+  everyoneWearsMine: boolean;
   schemaPatch: boolean;
   cosmetics: Record<string, unknown>;
   schemaStamp: string | null;

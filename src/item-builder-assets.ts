@@ -142,7 +142,7 @@ export function itemAssets(text: string, visuals: string, heroes: string[], summ
  * after it are its summons'). Shadow Fiend is npc_dota_hero_nevermore in models/heroes/shadow_fiend,
  * so the path cannot be made from the name.
  */
-export function heroModelPath(ix: VpkIndex, hero: string): string {
+export function heroModelPath(ix: Pick<VpkIndex, 'read'>, hero: string): string {
   const script = ix.read(`scripts/npc/heroes/${hero}.txt`);
   const model = script?.toString('latin1').match(/^\s*"Model"\s+"([^"]+)"/mi)?.[1];
   if (!model) throw new Error(t('Не найдена модель героя {0}', hero));

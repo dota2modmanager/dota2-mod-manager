@@ -83,6 +83,7 @@ const PREVIEW = optional(str(16 * MB));
 export const WINDOW_SETTINGS: Record<string, Check> = {
   discordPresence: bool,
   countDownloads: bool,
+  everyoneWearsMine: bool,
   favorites: list(str(500), 20000),
   langPromptSeen: bool,
   panels: either(oneOf(null), json(64 * 1024)),

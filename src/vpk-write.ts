@@ -98,10 +98,15 @@ export function buildVpk(entries: VpkEntry[]): Buffer {
   const tree = groupTree(entries);
   const dataChunks: Buffer[] = [];
   const offsets = new Map<VpkEntry, number>();
+  // one buffer under many paths is written once, and each path points at it: the item builder
+  // puts one model under every wearable of a slot (src/item-builder-everyone.ts)
+  const written = new Map<Buffer, number>();
   let dataLen = 0;
   for (const folders of tree.values()) for (const names of folders.values()) for (const en of names) {
+    const at = en.data.length ? written.get(en.data) : undefined;
+    if (at !== undefined) { offsets.set(en, at); continue; }
     offsets.set(en, dataLen);
-    if (en.data.length) { dataChunks.push(en.data); dataLen += en.data.length; }
+    if (en.data.length) { written.set(en.data, dataLen); dataChunks.push(en.data); dataLen += en.data.length; }
   }
   const treeBuf = treeBytes(tree, (en) => [INLINE, offsets.get(en) ?? 0, en.data.length]);
   return Buffer.concat([vpkHeader(treeBuf.length, dataLen), treeBuf, ...dataChunks]);

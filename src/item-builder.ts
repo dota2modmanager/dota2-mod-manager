@@ -96,6 +96,20 @@ function setBlockId(blockText: string, id: string): string {
 }
 
 
+/** What an item keeps of its own when it wears another's block: what the game shows of it by name. */
+const OWN_FIELDS = ['name', 'prefab', 'item_name', 'item_description', 'image_inventory', 'item_rarity'];
+
+/**
+ * A built block worn as another item of the same hero and slot (src/item-builder-everyone.ts): the
+ * built visuals, under that item's id, its own name and picture, and the model path its block names.
+ */
+export function asItem(block: string, text: string, item: { id: string; start: number }, model: string | null): string {
+  const own = itemFields(text, item);
+  let out = setBlockId(block, item.id);
+  for (const key of OWN_FIELDS) { const v = own.get(key); if (v) out = setScalarField(out, key, v); }
+  return model ? setScalarField(out, 'model_player', model) : out;
+}
+
 function itemBlock(text: string, item: { start: number; end: number }): string {
   return text.slice(item.start, item.end);
 }

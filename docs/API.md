@@ -73,6 +73,7 @@ the code, not in this page.
 | [`src/ipc.ts`](#srcipcts) | Every IPC module, registered in one place over the context src/main.ts builds. A new |
 | [`src/item-builder-assets.ts`](#srcitem-builder-assetsts) | What an item builder pick needs beyond its block in items_game: the game's files it puts under |
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
+| [`src/item-builder-everyone.ts`](#srcitem-builder-everyonets) | Everybody playing a hero wears the user's look for it, not only the user. |
 | [`src/item-builder-personas.ts`](#srcitem-builder-personasts) | Personas in the item builder: a hero's second look, with slots and items of its own. |
 | [`src/item-builder-refits.ts`](#srcitem-builder-refitsts) | Refits: an item's model made again to fit a body another item gives the hero. Faceless Void's |
 | [`src/item-builder-slots.ts`](#srcitem-builder-slotsts) | The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit |
@@ -95,6 +96,7 @@ the code, not in this page.
 | [`src/mod-preview-pick.ts`](#srcmod-preview-pickts) | Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
+| [`src/model-scale.ts`](#srcmodel-scalets) | A compiled model made bigger about its origin, and how much bigger one model is than another. |
 | [`src/model-sequences.ts`](#srcmodel-sequencests) | A model put under another model's path that numbers its sequences as that one does. |
 | [`src/model-skin.ts`](#srcmodel-skints) | A model with one of its material sets made the one it wears by default. |
 | [`src/mods-listing.ts`](#srcmods-listingts) | What My mods is drawn from: the answer to mods:list (src/ipc-mods.ts), which every screen asks |
@@ -3596,7 +3598,7 @@ arcanas), and those were read as no entries at all.
 ### `heroModelPath`
 
 ```ts
-export function heroModelPath(ix: VpkIndex, hero: string): string
+export function heroModelPath(ix: Pick<VpkIndex, 'read'>, hero: string): string
 ```
 
 Where a hero's own model lives: the first "Model" in its script, which is the hero's (the ones
@@ -3678,6 +3680,72 @@ export function itemEffects(): { id: string; name: string }[]
 ```
 
 The effect variants the synthetic cosmetics/items picker can apply.
+
+## src/item-builder-everyone.ts
+
+Everybody playing a hero wears the user's look for it, not only the user.
+
+The builder puts a pick's model under the stock item's path, and an arcana base its body under
+the hero's. A match loads each wearable from the path the server's own item table names
+(src/item-builder.ts, withoutFileSwaps), so another player's Juggernaut with a sword of his own
+was drawn with that sword, on the base's body when one was on: the body is at the hero's path,
+which is everybody's, and the sword at its own, which nothing of ours filled. A persona's body
+with a plain item hanging off it, the thing src/item-builder-personas.ts keeps off the user's
+own hero, is what everybody else's looked like.
+
+So a hero the build dresses (a pick, or a base's part, at one of his stock paths) is worn by
+everybody exactly as the user's is, slot by slot. Every other wearable of his goes under the
+file the user's hero wears in its slot, at each model path its block names, its styles' included:
+- the build's, where it fills the stock path (a pick's model, else a base's part);
+- the game's own stock item, where it does not: the Planetfall base fills Earthshaker's totem and
+  bracers, and his belt is the plain one, so a store belt was drawn on the arcana (J0nathan550,
+  2026-10-30, with the Intergalactic Orbliterator on);
+- the pick's own model, where the stock item has none and the pick names one: Earthshaker's head
+  is his body's, so the Gar Beast's head stays at its own path, and everybody else's head was the
+  invisible box under the rest of the set (J0nathan550, 2026-10-31);
+- nothing, where neither has a model: a store head sat on the arcana's. Nothing is Valve's own
+  invisible box, the one Monkey King's transformation hides his wearables with.
+Its block in the table becomes the pick's, else the stock item's, keeping its own name and
+picture, so its own particles do not hang off our model.
+
+An arcana that swaps the hero's body (an entity_model naming the hero) is dressed too, in the slot
+it sits in (Planetfall in hero_base, under Earthshaker's Base). The server sets that body on its
+owner, from its own table, so the swap cannot be taken out of the table; the file is what can be
+changed. Under each body it names goes the user's hero's: the build's at the hero's path (a base's
+body), else the game's plain one. With the Gar Beast picked, another player's Planetfall was the
+arcana's body and particles with the Gar Beast's arms and belt on it.
+
+An arcana also swaps dozens of paid items' models for refits to its body (Planetfall 41, Dread
+Retribution 30), and the user's built blocks keep those swaps. So a dressed item's refit path gets
+the user's file as well, and a slot of the user's that is swapped itself is worn as what the swap
+shows. With an arcana on, hovering any set in the loadout showed that set (J0nathan550, 2026-10-31).
+
+Left alone: a slot with no stock item, items shared with other heroes, a persona (a second hero
+with slots of its own), and an item that swaps another form of the hero or one of his summons
+(hero_model_change, an entity_model for another unit), which the user's own hero has no file for.
+
+For a persona the stock paths hold the empty models its base puts there, so another player's plain
+items go the way the user's own do, and the persona's body is not dressed in them.
+
+The bytes are one buffer under many paths, and the pak stores them once (src/vpk-write.ts). Tried
+on Juggernaut first (five slots, about 140 wearables), then every hero (2026-10-30). The table is
+walked once whatever the number of heroes: a walk a hero was 118 ms each.
+
+### `everyoneWears`
+
+```ts
+export function everyoneWears(text: string, list: SchemaPatch[], beneath: VpkEntry[], read: (path: string) => Buffer | null, heroes?: string[]): SchemaPatch[]
+```
+
+The patches that dress every other wearable of each hero the build dresses as the user's hero is
+dressed. Merged after the build's own, whose files and blocks win where both name one.
+
+```
+@param list     the build's patches (src/schema-build.ts buildSteps)
+@param beneath  the arcana bases' files, under every pick's
+@param read     a file of the game's pak01, for its stock items and the invisible box
+@param heroes   only these, as items_game names them without npc_dota_hero_; none: all of them
+```
 
 ## src/item-builder-personas.ts
 
@@ -3805,6 +3873,30 @@ export function personaAssets(rec: BuildRecord, assets: VpkEntry[], ready: Ready
 A persona slot's files over the persona's base. The base wins wherever it has a file, its
 particles rebuilt to fit the body, except at the slot's own model: there a pick wins, and the
 game's own item wins over an empty model but not over one rebuilt by hand (Mirana's mount).
+
+### `personaScales`
+
+```ts
+export function personaScales(on: Map<string, string>, ready: ReadyBase[], read: (path: string) => Buffer | null): Map<string, number>
+```
+
+How much bigger each persona's base body is than Valve's persona model, for each hero with a
+persona on whose base is here: what its items are made bigger by (src/model-scale.ts). The
+server draws the persona at the plain hero's scale, and a body compiled bigger to make up for it
+needs its items as big. Measured, not written down, so the items follow whatever the bases'
+repository publishes: a body compiled as Valve's measures 1, and nothing is scaled.
+
+```
+@param read  a file of the game's pak01: the hero's script and Valve's persona model
+```
+
+### `personaScaleOf`
+
+```ts
+export function personaScaleOf(rec: BuildRecord, scales: Map<string, number>): number | undefined
+```
+
+What a pick's models are made bigger by: a persona's own slot's, while its body is bigger (personaScales).
 
 ## src/item-builder-refits.ts
 
@@ -4108,6 +4200,15 @@ A style other than the item's first goes last, as "style-2" (src/item-builder-st
 rides in the same string so that a record, a preset and a shared link carry it as they carry the
 effects, with nothing new to keep in step; the first style is no token at all, which keeps every
 pick made before styles could be chosen the same pick.
+
+### `asItem`
+
+```ts
+export function asItem(block: string, text: string, item: { id: string; start: number }, model: string | null): string
+```
+
+A built block worn as another item of the same hero and slot (src/item-builder-everyone.ts): the
+built visuals, under that item's id, its own name and picture, and the model path its block names.
 
 ### `defaultItemForWearable`
 
@@ -5172,6 +5273,65 @@ file with a fixed path (a terrain's maps/dota.vpk) has to make room first.
 ```
 @returns the record, updated
 ```
+
+## src/model-scale.ts
+
+A compiled model made bigger about its origin, and how much bigger one model is than another.
+
+A persona is worn as the plain hero (src/item-builder-personas.ts), and the server draws the
+plain hero at his own ModelScale: Invoker at 0.74, where Valve draws the Acolyte at 1 through the
+persona's hero_scale, which the server applies only to the persona's owner. A persona body
+compiled 1.35 times bigger stands at Valve's size, but its items do not follow: a wearable is
+bone-merged, its bones put where the body's are, and its vertices hang off those bones at the
+distances it was compiled with. The Acolyte's hair, weighted to the head alone, sat inside a head
+1.35 times bigger, and Invoker came out bald (hero-base-fixes 5f977421, 2026-10-27).
+
+So each item worn on such a body is made bigger by the same factor, here, from the game's own
+file: its vertices' positions, the translation of each bone's inverse bind pose (which the
+skinning uses, so the vertices stay on their bones), its skeleton's bone positions, and its
+bounds, hitboxes and attachment offsets. 107 of the 168 vertex buffers the five personas' items
+have are meshopt-compressed, the codec Valve uses; they are decoded, scaled and encoded again in
+the same version (0, "0xa0"), and every flag and size the model names stays as it was.
+
+Not scaled: an item's own animations (its jiggle and cloth bones keep their compiled distances
+where an animation moves them), its physics, and its morphs.
+
+### `modelScaleReady`
+
+```ts
+export const modelScaleReady = (): Promise<void> => codec
+```
+
+Resolves once models can be scaled: for a caller that starts before the codec is ready, a test.
+
+### `scaleModel`
+
+```ts
+export function scaleModel(file: Buffer, s: number): Buffer
+```
+
+A compiled model (vmdl_c) `s` times bigger about its origin. Its meshes are named in CTRL: the
+older models keep their buffers in one MBUF block per mesh (vbib_block), the newer in an MVTX
+block per buffer with the layout in CTRL itself (m_vertexBuffers).
+
+### `modelScaleAgainst`
+
+```ts
+export function modelScaleAgainst(model: Buffer, reference: Buffer): number | null
+```
+
+How much bigger `model` is than `reference`, from the bones they share: their total distance from
+their parents, one over the other. A persona's base compiled at 1.35 measures 1.35 against
+Valve's persona model, one compiled as Valve's measures 1. Null where they share no bone.
+
+### `scaledModels`
+
+```ts
+export function scaledModels(entries: VpkEntry[], scale: number | undefined, skipped: (path: string, why: string) => void): VpkEntry[]
+```
+
+A pick's files with its models `scale` times bigger (src/schema-build.ts, a persona's items). A
+model that cannot be is left at its own size, and `skipped` is told which and why.
 
 ## src/model-sequences.ts
 
