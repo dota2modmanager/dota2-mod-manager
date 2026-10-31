@@ -1377,8 +1377,8 @@
   "Wraith King Papich Attacks": "冥魂大帝 帕皮奇 攻击",
   "ReZero Respawn Sound": "从零开始的异世界生活 复活 音效",
   "USSR and Germany Horn": "苏联 与 德国 号角",
-  "Sora Main Menu": "空 主 菜单",
-  "Stairs Guy Main Menu": "阶梯 男子 主 菜单",
+  "Sora Main Menu": "空 主菜单",
+  "Stairs Guy Main Menu": "阶梯 男子 主菜单",
   "ReZero Subaru Phone Horn": "从零开始的异世界生活 昴 电话 号角",
   "Warcraft III / AllStars Voices": "魔兽争霸 三 / 全明星 语音",
   "Dark Carnival Serega Pirat": "暗黑 嘉年华 谢廖加·海盗",
@@ -1567,5 +1567,14 @@
   "Play Pinkv2": "粉色开始游戏按钮（第 2 版）",
   "Play Black": "黑色开始游戏按钮",
   "Play White": "白色开始游戏按钮",
-  "Play Red": "红色开始游戏按钮"
+  "Play Red": "红色开始游戏按钮",
+  "No Unnecessary Models": "移除多余模型",
+  "No Unnecessary Map Effects": "移除多余地图特效",
+  "Hero Auto Pick": "自动选择英雄",
+  "Question Marks": "问号",
+  "Crystal Interface": "水晶界面",
+  "Japanese Background": "日式背景",
+  "Girl Resting Under Tree": "树下休憩的少女",
+  "Stylish Cat": "时髦猫咪",
+  "Main Menu 7.00 Style": "7.00 风格主菜单"
 }

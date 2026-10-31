@@ -120,5 +120,6 @@
   "Launch ItemsFix.exe": "运行 ItemsFix.exe。",
   "It will change the file structure and save the result in output.txt": "文件结构将被重整，结果保存为 output.txt。",
   "To open the overlay, press F8": "按 F8 打开叠加层。",
-  "This is a standard VPK, but its safety is unconfirmed. During patrol, mouse movements in a certain area may be flagged as cheating, so use it at your own risk. Not recommended for use in games on Valve servers. Read more about usage on GitHub.": "这是一份普通 VPK，但其安全性尚未得到确认。在录像审查中，特定区域内的鼠标移动可能被视为作弊，请自行承担使用风险。不建议在 Valve 服务器的对局中使用。更多使用说明请查看 GitHub。"
+  "This is a standard VPK, but its safety is unconfirmed. During patrol, mouse movements in a certain area may be flagged as cheating, so use it at your own risk. Not recommended for use in games on Valve servers. Read more about usage on GitHub.": "这是一份普通 VPK，但其安全性尚未得到确认。在录像审查中，特定区域内的鼠标移动可能被视为作弊，请自行承担使用风险。不建议在 Valve 服务器的对局中使用。更多使用说明请查看 GitHub。",
+  "This is a standard VPK that modifies the Play menu, but its safety is unconfirmed. During the hero pick phase it automatically and repeatedly sends hero selection commands, which Valve may treat as automation, so use it at your own risk.": "这是一份修改开始游戏菜单的普通 VPK，但其安全性尚未得到确认。在英雄选择阶段，它会自动、反复发送选择英雄的命令，Valve 可能将其视为自动化操作，请自行承担使用风险。"
 }
