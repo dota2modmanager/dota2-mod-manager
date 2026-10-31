@@ -14,7 +14,7 @@ const load = async () => ({
 });
 
 const names = (list) => list.map((m) => m.name);
-const freshFilters = () => ({ sort: 'default', tags: new Set(), installedOnly: false, favOnly: false, group: '', hero: '', slot: '' });
+const freshFilters = () => ({ sort: 'default', tags: new Set(), installedOnly: false, favOnly: false, group: '', hero: '', slot: '', author: '' });
 const noChecks = { isInstalled: () => false, isFav: () => false, heroMatches: () => true };
 
 test('a flat category keeps its order, drops the tools this app replaces, and lists the user\'s packs last', async () => {
@@ -118,7 +118,7 @@ test('the toolbar narrows by every filter at once and sorts only when asked', as
 test('sorting is not narrowing', async () => {
   const { filters } = await load();
   assert.equal(filters.narrowed({ ...freshFilters(), sort: 'name' }), false);
-  for (const change of [{ installedOnly: true }, { favOnly: true }, { group: 'x' }, { hero: 'x' }, { slot: 'x' }]) {
+  for (const change of [{ installedOnly: true }, { favOnly: true }, { group: 'x' }, { hero: 'x' }, { slot: 'x' }, { author: 'x' }]) {
     assert.equal(filters.narrowed({ ...freshFilters(), ...change }), true, JSON.stringify(change));
   }
   assert.equal(filters.narrowed({ ...freshFilters(), tags: new Set(['effects']) }), true);

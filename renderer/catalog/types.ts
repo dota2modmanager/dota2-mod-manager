@@ -91,4 +91,6 @@ export interface Filters {
   group: string;
   hero: string;
   slot: string;
+  /** whose mods: a name as the catalog writes it, '' for everybody's */
+  author: string;
 }

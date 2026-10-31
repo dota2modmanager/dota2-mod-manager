@@ -10,6 +10,9 @@ export interface ToolbarModel {
   /** print the count only when the list is narrower than the category: "did that chip do anything" */
   showCount: boolean;
   sort: string;
+  /** the authors of the mods on screen, with how many each, and the one picked ('' for all) */
+  authors: { value: string; label: string }[];
+  author: string;
   heroes: string[];
   hero: string;
   groups: string[];
