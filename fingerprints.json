@@ -1,5 +1,5 @@
 {
-  "count": 1816,
+  "count": 1819,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -43,6 +43,7 @@
     "063898dbfd8cfcd7493b4c8a6cfd4b5af1915cf1": [{"name":"Aghanim Purple","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
     "065efba2595e3f496e4c203fef6629445032240a": [{"name":"Crystal Interface","categoryId":"parts","styleLabel":null,"type":"vpk"}],
     "06841fdcb4c8181e8d2bb733d2048c1661a95f7f": [{"name":"Lion Hell-Spar Anathema","categoryId":"hero-items","styleLabel":"Purple","type":"vpk"}],
+    "069f70f7835586dae5ffff0270c24e461b16b9ee": [{"name":"Hikikomori Startup","categoryId":"sounds","styleLabel":null,"type":"vpk"}],
     "06bacd44bc8e47d767683396cc6437319aded3be": [{"name":"White Items","categoryId":"item-icons","styleLabel":null,"type":"vpk"}],
     "06c3915cd795a3cf9b6a32230d144adc27e3ecdb": [{"name":"Razor Silver Rrevenant","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "073126a6445f977b6a6d52a998ac93d25670e2c3": [{"name":"Taghmel Ix-Xita","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
@@ -63,6 +64,7 @@
     "093fc7124f11f560f94dba1325d4178739116ede": [{"name":"TI7 Radiance","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "094a03cef74e335e1b8d124fe4ef6ee199786fa7": [{"name":"Grave of the Fireflies","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "094bca8d47dd3573665f006a21ed8a77fdfb40eb": [{"name":"Cloudy Tree","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
+    "096e010435c6c8ceeae6a4627a625306875a62ed": [{"name":"Shadow Fiend Red Ruby","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "098a9e9dd3076c266db4ca4aab40ce5d0108c4de": [{"name":"Slates of the Damned","categoryId":"ranks","styleLabel":null,"type":"vpk"}],
     "09aeb19d32537ec3c4f90c334eb810c7e33d4d65": [{"name":"Deus Ex","categoryId":"mega-kill","styleLabel":null,"type":"vpk"}],
     "09b6de07f38b16aaab961474ecf3569f85b22fec": [{"name":"Beastmaster Primal Paean","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
@@ -1149,6 +1151,7 @@
     "a5902ecce404dd1419a0d73cb3aa402b408ce00d": [{"name":"Oracle Automaton","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a5b87deba9fd737042d2c37ffa369a4500051882": [{"name":"Top Bar Pink","categoryId":"parts","styleLabel":null,"type":"vpk"}],
     "a5cbc17e90809299b0369254f7051b7c85f1e807": [{"name":"Voice of The International","categoryId":"mega-kill","styleLabel":null,"type":"vpk"}],
+    "a5eefc9a7214fdbf98f2d37658b6e22372356e44": [{"name":"Arc Warden Destruction Sounds","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
     "a5fef37f233fa17a40cf5ec09888cd861b994699": [{"name":"Kez Bersexer","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a62da1502d098c86afa82ca7bd6cd41f645b8f4a": [{"name":"Disruptor Tandem Storm","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "a63d1bc0bbe6ad299a452298b9e1287435df6a6d": [{"name":"Zeleniy Techies","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],

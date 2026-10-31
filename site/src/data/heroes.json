@@ -922,6 +922,17 @@
           "date": 1780226470
         },
         {
+          "name": "Shadow Fiend Red Ruby",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc","arms","head","shoulder","wings"],
+          "image": {"src":"/mods/shadow-fiend-red-ruby.webp","width":854,"height":480},
+          "author": "Mirik522",
+          "authorUrl": "https://t.me/Moggdeli",
+          "date": 1793451373
+        },
+        {
           "name": "Emerald Shadow Fiend",
           "categoryId": "heroes",
           "styleLabel": null,

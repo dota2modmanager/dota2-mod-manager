@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1573,
+  "mods": 1574,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1572,6 +1572,7 @@
         {"name":"Shadow Fiend Eternal Harvest","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
         {"name":"Shadow Fiend Eternal Harvest","categoryId":"heroes","styleLabel":"Spring","slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend King of Vipers","categoryId":"heroes","styleLabel":"Style I","slots":["arms","head","shoulder"]},
+        {"name":"Shadow Fiend Red Ruby","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","shoulder","wings"]},
         {"name":"Shadow Fiend Souls Tyrant","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]},
         {"name":"Shadow Fiend Sundered Souls","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder","wings"]},
         {"name":"Shadow Fiend Trenbolone","categoryId":"heroes","styleLabel":null,"slots":["arms","head","shoulder"]}
