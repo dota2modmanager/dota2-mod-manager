@@ -15,10 +15,11 @@ test('a key is read whatever the layout and the dashes', () => {
   assert.deepEqual(readings('TRICK-OR-HUE'), []);
 });
 
-function fake(status: Record<string, number>) {
+function fake(status: Record<string, number>, voice?: () => string | null) {
   const store: Record<string, unknown> = {};
   const imported: string[][] = [];
   const records: Array<{ id: string; name: string; files: Array<{ relPath: string }>; preview?: string | null }> = [];
+  const asked: string[] = [];
   const pumpkin = createPumpkin({
     settings: { get: (k) => store[k], set: (k, v) => { store[k] = v; } },
     importVpkPaths: async (paths) => {
@@ -28,7 +29,9 @@ function fake(status: Record<string, number>) {
       return { imported: [{ name: PRIZE_NAME, relPath: 'pak30_dir.vpk' }], errors: [] };
     },
     library: { list: () => records, update: (id, f) => { Object.assign(records.find((r) => r.id === id)!, f); } },
+    voice,
     fetch: (async (url: string, init?: RequestInit) => {
+      asked.push(url);
       const p = new URL(url).pathname;
       if (p === '/redeem') {
         const { key } = JSON.parse(String(init!.body));
@@ -40,7 +43,7 @@ function fake(status: Record<string, number>) {
     }) as typeof fetch,
     host: 'https://pumpkin.test',
   });
-  return { pumpkin, store, imported, records };
+  return { pumpkin, store, imported, records, asked };
 }
 
 test('a good key opens the bloody night and brings the mod in with its picture', async () => {
@@ -53,6 +56,15 @@ test('a good key opens the bloody night and brings the mod in with its picture',
   assert.equal(imported.length, 1);
   assert.equal(records[0].preview, 'data:image/png;base64,CQ==');
   assert.equal(pumpkin.hasPrize(), true);
+});
+
+test('the prize is asked for in the voice the game speaks, and plain without one', async () => {
+  const ru = fake({ ABCDEFGHJKMNPQRS: 200 }, () => 'russian');
+  await ru.pumpkin.redeem('ABCDEFGHJKMNPQRS');
+  assert.ok(ru.asked.some((u) => new URL(u).pathname === '/mod' && new URL(u).searchParams.get('voice') === 'russian'));
+  const plain = fake({ ABCDEFGHJKMNPQRS: 200 });
+  await plain.pumpkin.redeem('ABCDEFGHJKMNPQRS');
+  assert.ok(plain.asked.some((u) => new URL(u).pathname === '/mod' && !new URL(u).searchParams.has('voice')));
 });
 
 test('a key another pumpkin ate, and one nobody made, say so and open nothing', async () => {
