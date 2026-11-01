@@ -7399,6 +7399,155 @@
       ]
     },
     {
+      "id": "emblems",
+      "mods": [
+        {
+          "name": "Emblem Of The Diretide Black",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/emblem-of-the-diretide-black.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1793530595
+        },
+        {
+          "name": "Emblem Of The Diretide White",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/emblem-of-the-diretide-white.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1793530595
+        },
+        {
+          "name": "Crimson Chains Emblem",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/crimson-chains-emblem.webp","width":854,"height":480},
+          "author": "VPKDota",
+          "authorUrl": "https://t.me/vpkdota",
+          "date": 1775819130
+        },
+        {
+          "name": "Bard Frog Emblem",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/bard-frog-emblem.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1766335374
+        },
+        {
+          "name": "Bard Frog Emblem v2",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/bard-frog-emblem-v2.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1766335374
+        },
+        {
+          "name": "Aghanims Emblem",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/aghanims-emblem.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1756459282
+        },
+        {
+          "name": "Battle Pass 2022 Emblem",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/battle-pass-2022-emblem.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1756459282
+        },
+        {
+          "name": "Emblem of Divinity",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/emblem-of-divinity.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1756459282
+        },
+        {
+          "name": "Emblem of the Crystal Echelon",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/emblem-of-the-crystal-echelon.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1756459282
+        },
+        {
+          "name": "Emblem of the Diretide Blue",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/emblem-of-the-diretide-blue.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1756459282
+        },
+        {
+          "name": "Emblem of the Diretide Green",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/emblem-of-the-diretide-green.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1756459282
+        },
+        {
+          "name": "Emblem of the Diretide Red",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/emblem-of-the-diretide-red.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1756459282
+        },
+        {
+          "name": "Emblem of the Diretide Yellow",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/emblem-of-the-diretide-yellow.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1756459282
+        },
+        {
+          "name": "Nemestice Emblem",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/nemestice-emblem.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1756459282
+        },
+        {
+          "name": "Overgrown Emblem",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/overgrown-emblem.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1756459282
+        },
+        {
+          "name": "Sunken Emblem",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/sunken-emblem.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1756459282
+        }
+      ]
+    },
+    {
       "id": "pedestal",
       "mods": [
         {
@@ -7812,137 +7961,6 @@
       ]
     },
     {
-      "id": "emblems",
-      "mods": [
-        {
-          "name": "Crimson Chains Emblem",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/crimson-chains-emblem.webp","width":854,"height":480},
-          "author": "VPKDota",
-          "authorUrl": "https://t.me/vpkdota",
-          "date": 1775819130
-        },
-        {
-          "name": "Bard Frog Emblem",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/bard-frog-emblem.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1766335374
-        },
-        {
-          "name": "Bard Frog Emblem v2",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/bard-frog-emblem-v2.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1766335374
-        },
-        {
-          "name": "Aghanims Emblem",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/aghanims-emblem.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1756459282
-        },
-        {
-          "name": "Battle Pass 2022 Emblem",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/battle-pass-2022-emblem.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1756459282
-        },
-        {
-          "name": "Emblem of Divinity",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/emblem-of-divinity.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1756459282
-        },
-        {
-          "name": "Emblem of the Crystal Echelon",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/emblem-of-the-crystal-echelon.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1756459282
-        },
-        {
-          "name": "Emblem of the Diretide Blue",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/emblem-of-the-diretide-blue.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1756459282
-        },
-        {
-          "name": "Emblem of the Diretide Green",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/emblem-of-the-diretide-green.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1756459282
-        },
-        {
-          "name": "Emblem of the Diretide Red",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/emblem-of-the-diretide-red.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1756459282
-        },
-        {
-          "name": "Emblem of the Diretide Yellow",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/emblem-of-the-diretide-yellow.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1756459282
-        },
-        {
-          "name": "Nemestice Emblem",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/nemestice-emblem.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1756459282
-        },
-        {
-          "name": "Overgrown Emblem",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/overgrown-emblem.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1756459282
-        },
-        {
-          "name": "Sunken Emblem",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/sunken-emblem.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1756459282
-        }
-      ]
-    },
-    {
       "id": "ranks",
       "mods": [
         {"name":"Rose Chinese Medals","styleLabel":null,"group":null,"image":{"src":"/mods/rose-chinese-medals.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791974606},
@@ -8068,6 +8086,62 @@
           "author": "hrdq",
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1763215402
+        }
+      ]
+    },
+    {
+      "id": "ranged-attack",
+      "mods": [
+        {
+          "name": "Black Diretide Ranged Attack",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/black-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1793530595
+        },
+        {
+          "name": "White Diretide Ranged Attack",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/white-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1793530595
+        },
+        {"name":"Aghanim Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
+        },
+        {"name":"Nemestice Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {"name":"Red Diretide Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {"name":"TI10 Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {"name":"TI12 Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {"name":"TI9 Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1764003644
         }
       ]
     },
@@ -8251,44 +8325,6 @@
           "author": "hrdq",
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1770383220
-        }
-      ]
-    },
-    {
-      "id": "ranged-attack",
-      "mods": [
-        {"name":"Aghanim Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
-        },
-        {"name":"Nemestice Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
-        {"name":"Red Diretide Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
-        {"name":"TI10 Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
-        {"name":"TI12 Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
-        {"name":"TI9 Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1764003644},
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1764003644
         }
       ]
     },
