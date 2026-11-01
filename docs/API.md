@@ -6678,7 +6678,7 @@ What the window is told after a key: the night opened (and whether the mod came 
 ### `createPumpkin`
 
 ```ts
-export function createPumpkin({ settings, importVpkPaths, library, fetch: get = fetch, host = PUMPKIN_HOST, log = () => {} }: Deps)
+export function createPumpkin({ settings, importVpkPaths, library, voice = () => null, fetch: get = fetch, host = PUMPKIN_HOST, log = () => {} }: Deps)
 ```
 
 The pumpkin's side in the main process: spend a key, fetch the prize again, say whether it is here.

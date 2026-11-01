@@ -23,6 +23,7 @@ npx wrangler d1 execute d2mm-pumpkin --remote --file schema.sql
 npx wrangler r2 bucket create d2mm-pumpkin
 npx wrangler r2 object put d2mm-pumpkin/necrophos-scream.vpk --file <the mod> --remote
 npx wrangler r2 object put d2mm-pumpkin/necrophos-scream.png --file <its picture> --remote
+npx wrangler r2 object put d2mm-pumpkin/necrophos-scream.russian.vpk --file <the mod with the Russian voice> --remote
 npx wrangler secret put TICKET_SECRET
 npx wrangler secret put ADDR_SALT
 npx wrangler deploy
@@ -30,3 +31,8 @@ npx wrangler deploy
 
 Replacing the prize is the `r2 object put` again under the same name; installs that already have
 it keep their copy.
+
+The app says `voice=russian` when the game speaks Russian, that is when Valve's Russian voice pack
+is in the folder it mounts (English speakers keep mods in `dota_russian` too, without it). Such an
+install gets `necrophos-scream.russian.vpk`; without that object, and for any other voice, it gets
+the plain one.
