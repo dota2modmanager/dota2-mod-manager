@@ -1,10 +1,11 @@
 {
   "heroes": 151,
-  "mods": 1574,
+  "mods": 1587,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
       "mods": [
+        {"name":"Abaddon Anointed Armor","categoryId":"heroes","styleLabel":null,"slots":["mount","back","head","shoulder","weapon"]},
         {"name":"Abaddon Calavera","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
         {"name":"Abaddon Endless Night Reborn","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
         {"name":"Abaddon Sayaka Miki","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","mount","shoulder","weapon","wings"]},
@@ -17,6 +18,7 @@
       "mods": [
         {"name":"Alchemist Darkbrew Enforcer","categoryId":"heroes","styleLabel":null,"slots":["misc","head","shoulder","weapon"]},
         {"name":"Alchemist Radiance Blades","categoryId":"hero-items","styleLabel":null,"slots":["misc","weapon"]},
+        {"name":"Alchemist Taur Rider","categoryId":"heroes","styleLabel":null,"slots":["head","misc","shoulder"]},
         {"name":"Cosmic Alchemist","categoryId":"heroes","styleLabel":null,"slots":["misc","head","shoulder"]},
         {"name":"Frostivus Alchemist","categoryId":"heroes","styleLabel":null,"slots":["misc","head","shoulder","weapon"]},
         {"name":"Wraith King Radiance","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]}
@@ -352,11 +354,15 @@
     "dawnbreaker": {
       "name": "Dawnbreaker",
       "mods": [
+        {"name":"Dark Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Dawnbreaker Adam Smasher","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc"]},
         {"name":"Dawnbreaker Death Knight","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
         {"name":"Dawnbreaker Moonbreaker","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head"]},
         {"name":"Dawnbreaker Starlorn Adjudicator","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
         {"name":"Pink Spell Radius","categoryId":"other","styleLabel":null,"slots":[]},
+        {"name":"Purple Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
+        {"name":"Red Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
+        {"name":"White Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"White Spell Radius","categoryId":"other","styleLabel":null,"slots":[]}
       ]
     },
@@ -1156,6 +1162,7 @@
         {"name":"Morphling Green Immortal","categoryId":"heroes","styleLabel":null,"slots":["head","weapon"]},
         {"name":"Morphling Immortal Electro Gem","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Morphling Megalodon","categoryId":"heroes","styleLabel":null,"slots":[]},
+        {"name":"Morphling Shotgun Chicken Gun","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","arms","tail","shoulder","weapon"]},
         {"name":"Morphling Yatoro Burning","categoryId":"heroes","styleLabel":null,"slots":["weapon"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -1700,15 +1707,19 @@
       "mods": [
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Dark Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Pink Spell Radius","categoryId":"other","styleLabel":null,"slots":[]},
+        {"name":"Purple Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Red Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Snapfire Desert Ardalan","categoryId":"heroes","styleLabel":null,"slots":["arms","head","mount","weapon"]},
         {"name":"Snapfire Whippersnapper","categoryId":"heroes","styleLabel":null,"slots":["arms","head","mount","weapon"]},
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"White Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"White Spell Radius","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -1826,6 +1837,7 @@
         {"name":"Techies Frostbloom Weapon","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Techies Gol0Vach","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]},
         {"name":"Techies Mine Radius","categoryId":"other","styleLabel":null,"slots":[]},
+        {"name":"Techies Pudge And Sniper","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]},
         {"name":"Techies Sodbustin Saboteurs","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]},
         {"name":"Techies Sunken Galley","categoryId":"heroes","styleLabel":null,"slots":["mount","misc","arms"]},
         {"name":"Techies War Rig Pachyderm","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon"]},
@@ -1882,6 +1894,7 @@
         {"name":"Terrorblade Scythes of Sorrow","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Terrorblade Skadi Blossom Red","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings"]},
         {"name":"Terrorblade Span Of Sorrow","categoryId":"hero-items","styleLabel":null,"slots":["wings"]},
+        {"name":"Terrorblade True Zxc","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","wings","back"]},
         {"name":"Terrorblade Unblinking Horror","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","wings"]},
         {"name":"Terrorblade Wings Foulfell","categoryId":"hero-items","styleLabel":null,"slots":["wings"]},
         {"name":"Terrorblade Wrong Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","wings"]},

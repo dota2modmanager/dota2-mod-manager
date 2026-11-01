@@ -3331,509 +3331,18 @@
       ]
     },
     {
-      "id": "parts",
-      "mods": [
-        {
-          "name": "Cursed Play Button",
-          "styleLabel": null,
-          "group": "play-button",
-          "image": {"src":"/mods/cursed-play-button.webp","width":854,"height":480},
-          "author": "YZT",
-          "authorUrl": "https://t.me/YZTdota",
-          "date": 1793178545
-        },
-        {
-          "name": "Grey Play Button",
-          "styleLabel": null,
-          "group": "play-button",
-          "image": {"src":"/mods/grey-play-button.webp","width":854,"height":480},
-          "author": "YZT",
-          "authorUrl": "https://t.me/YZTdota",
-          "date": 1793178545
-        },
-        {
-          "name": "Pink Play Button",
-          "styleLabel": null,
-          "group": "play-button",
-          "image": {"src":"/mods/pink-play-button.webp","width":854,"height":480},
-          "author": "YZT",
-          "authorUrl": "https://t.me/YZTdota",
-          "date": 1793178545
-        },
-        {
-          "name": "Purple Play Button",
-          "styleLabel": null,
-          "group": "play-button",
-          "image": {"src":"/mods/purple-play-button.webp","width":854,"height":480},
-          "author": "YZT",
-          "authorUrl": "https://t.me/YZTdota",
-          "date": 1793178545
-        },
-        {
-          "name": "Sky Play Button",
-          "styleLabel": null,
-          "group": "play-button",
-          "image": {"src":"/mods/sky-play-button.webp","width":854,"height":480},
-          "author": "YZT",
-          "authorUrl": "https://t.me/YZTdota",
-          "date": 1793178545
-        },
-        {
-          "name": "Hero Auto Pick",
-          "styleLabel": null,
-          "group": "misc",
-          "image": {"src":"/mods/hero-auto-pick.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1793169329
-        },
-        {
-          "name": "Black Top Bar 2",
-          "styleLabel": null,
-          "group": "top-bar",
-          "image": {"src":"/mods/black-top-bar-2.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1793139107
-        },
-        {
-          "name": "Blue Top Bar",
-          "styleLabel": null,
-          "group": "top-bar",
-          "image": {"src":"/mods/blue-top-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1793139107
-        },
-        {
-          "name": "Green Top Bar",
-          "styleLabel": null,
-          "group": "top-bar",
-          "image": {"src":"/mods/green-top-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1793139107
-        },
-        {
-          "name": "Light Blue Top Bar",
-          "styleLabel": null,
-          "group": "top-bar",
-          "image": {"src":"/mods/light-blue-top-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1793139107
-        },
-        {
-          "name": "Orange Top Bar",
-          "styleLabel": null,
-          "group": "top-bar",
-          "image": {"src":"/mods/orange-top-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1793139107
-        },
-        {
-          "name": "Purple Top Bar",
-          "styleLabel": null,
-          "group": "top-bar",
-          "image": {"src":"/mods/purple-top-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1793139107
-        },
-        {
-          "name": "White Top Bar",
-          "styleLabel": null,
-          "group": "top-bar",
-          "image": {"src":"/mods/white-top-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1793139107
-        },
-        {
-          "name": "Yellow Top Bar",
-          "styleLabel": null,
-          "group": "top-bar",
-          "image": {"src":"/mods/yellow-top-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1793139107
-        },
-        {
-          "name": "Crystal Interface",
-          "styleLabel": null,
-          "group": "misc",
-          "image": {"src":"/mods/crystal-interface.webp","width":854,"height":480},
-          "author": "YZT",
-          "authorUrl": "https://t.me/YZTdota",
-          "date": 1793137750
-        },
-        {
-          "name": "Material You Interface 0.1",
-          "styleLabel": null,
-          "group": "misc",
-          "image": {"src":"/mods/material-you-interface-0-1.webp","width":854,"height":480},
-          "author": "Swin-РукаBlood",
-          "authorUrl": "https://discord.gg/SCnUSB4j6S",
-          "date": 1793129686
-        },
-        {
-          "name": "Netgraph Black",
-          "styleLabel": null,
-          "group": "netgraph",
-          "image": {"src":"/mods/netgraph-black.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792946553
-        },
-        {
-          "name": "Netgraph Red",
-          "styleLabel": null,
-          "group": "netgraph",
-          "image": {"src":"/mods/netgraph-red.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792946553
-        },
-        {
-          "name": "Vs Creen",
-          "styleLabel": "Style black",
-          "group": "vs",
-          "image": {"src":"/mods/vs-creen-style-black.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792946553
-        },
-        {
-          "name": "Vs Creen",
-          "styleLabel": "Style white",
-          "group": "vs",
-          "image": {"src":"/mods/vs-creen-style-white.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792946553
-        },
-        {"name":"Kda Red","styleLabel":null,"group":"kda","image":{"src":"/mods/kda-red.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792894433},
-        {
-          "name": "TikTok Overlay",
-          "styleLabel": null,
-          "group": "misc",
-          "image": {"src":"/mods/tiktok-overlay.webp","width":854,"height":480},
-          "author": "Baste",
-          "authorUrl": "https://projects.baste.ru/",
-          "date": 1792782705
-        },
-        {
-          "name": "Xvii Search Bar",
-          "styleLabel": null,
-          "group": "search-bar",
-          "image": {"src":"/mods/xvii-search-bar.webp","width":854,"height":480},
-          "author": "xvii",
-          "authorUrl": "https://t.me/xviivpk",
-          "date": 1792764215
-        },
-        {"name":"Kda Black","styleLabel":null,"group":"kda","image":{"src":"/mods/kda-black.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792668576},
-        {
-          "name": "Play Red",
-          "styleLabel": null,
-          "group": "play-button",
-          "image": {"src":"/mods/play-red.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792591892
-        },
-        {"name":"Kda Purple","styleLabel":null,"group":"kda","image":{"src":"/mods/kda-purple.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792583758},
-        {
-          "name": "Netgraph Purple",
-          "styleLabel": null,
-          "group": "netgraph",
-          "image": {"src":"/mods/netgraph-purple.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792583758
-        },
-        {
-          "name": "Red Top Bar",
-          "styleLabel": null,
-          "group": "top-bar",
-          "image": {"src":"/mods/red-top-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792583758
-        },
-        {
-          "name": "Vs Creen Lycoris Colors V1",
-          "styleLabel": "Style I",
-          "group": "vs",
-          "image": {"src":"/mods/vs-creen-lycoris-colors-v1-style-i.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792583758
-        },
-        {
-          "name": "Vs Creen Lycoris Colors V1",
-          "styleLabel": "Style II",
-          "group": "vs",
-          "image": {"src":"/mods/vs-creen-lycoris-colors-v1-style-ii.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792583758
-        },
-        {
-          "name": "Vs Creen Lycoris Colors V1",
-          "styleLabel": "Style III",
-          "group": "vs",
-          "image": {"src":"/mods/vs-creen-lycoris-colors-v1-style-iii.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792583758
-        },
-        {
-          "name": "Vs Creen Lycoris Colors V2",
-          "styleLabel": "Style I",
-          "group": "vs",
-          "image": {"src":"/mods/vs-creen-lycoris-colors-v2-style-i.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792583758
-        },
-        {
-          "name": "Vs Creen Lycoris Colors V2",
-          "styleLabel": "Style II",
-          "group": "vs",
-          "image": {"src":"/mods/vs-creen-lycoris-colors-v2-style-ii.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792583758
-        },
-        {
-          "name": "Doom Widged 0.1",
-          "styleLabel": null,
-          "group": "misc",
-          "image": {"src":"/mods/doom-widged-0-1.webp","width":854,"height":480},
-          "author": "Swin-РукаBlood",
-          "authorUrl": "https://discord.gg/SCnUSB4j6S",
-          "date": 1792518355
-        },
-        {
-          "name": "Tcoaal Mach v1",
-          "styleLabel": null,
-          "group": "game-mode",
-          "image": {"src":"/mods/tcoaal-mach-v1.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792448425
-        },
-        {
-          "name": "Tcoaal Mach v2",
-          "styleLabel": null,
-          "group": "game-mode",
-          "image": {"src":"/mods/tcoaal-mach-v2.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792448425
-        },
-        {"name":"Anime Search Bar","styleLabel":null,"group":"search-bar","image":{"src":"/mods/anime-search-bar.webp","width":397,"height":1022},"author":"Defendor","authorUrl":null,"date":1792412054},
-        {
-          "name": "Dean Norris Match",
-          "styleLabel": "Style I",
-          "group": "game-mode",
-          "image": {"src":"/mods/dean-norris-match-style-i.webp","width":854,"height":480},
-          "author": "Swin-РукаBlood",
-          "authorUrl": "https://discord.gg/SCnUSB4j6S",
-          "date": 1792412054
-        },
-        {
-          "name": "Dean Norris Match",
-          "styleLabel": "Style II",
-          "group": "game-mode",
-          "image": {"src":"/mods/dean-norris-match-style-ii.webp","width":854,"height":480},
-          "author": "Swin-РукаBlood",
-          "authorUrl": "https://discord.gg/SCnUSB4j6S",
-          "date": 1792412054
-        },
-        {
-          "name": "Play Black",
-          "styleLabel": null,
-          "group": "play-button",
-          "image": {"src":"/mods/play-black.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792412054
-        },
-        {
-          "name": "Play White",
-          "styleLabel": null,
-          "group": "play-button",
-          "image": {"src":"/mods/play-white.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792412054
-        },
-        {
-          "name": "Remove Innate Icon",
-          "styleLabel": null,
-          "group": "misc",
-          "image": {"src":"/mods/remove-innate-icon.webp","width":854,"height":480},
-          "author": "YZT",
-          "authorUrl": "https://t.me/YZTdota",
-          "date": 1792412054
-        },
-        {
-          "name": "Play Pinkv2",
-          "styleLabel": null,
-          "group": "play-button",
-          "image": {"src":"/mods/play-pinkv2.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792330154
-        },
-        {
-          "name": "Top Bar Pink",
-          "styleLabel": null,
-          "group": "top-bar",
-          "image": {"src":"/mods/top-bar-pink.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792330154
-        },
-        {
-          "name": "Cupsize Search Bar",
-          "styleLabel": null,
-          "group": "search-bar",
-          "image": {"src":"/mods/cupsize-search-bar.webp","width":1280,"height":720},
-          "author": "Tom4ik",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199427406113/",
-          "date": 1792235759
-        },
-        {"name":"Purple Minimap","styleLabel":null,"group":"minimap","image":{"src":"/mods/purple-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792011470},
-        {
-          "name": "Bluelock Scoreboard And Shop",
-          "styleLabel": null,
-          "group": "scoreboard",
-          "image": {"src":"/mods/bluelock-scoreboard-and-shop.webp","width":854,"height":480},
-          "author": "chineseg0d",
-          "authorUrl": null,
-          "date": 1791974606
-        },
-        {
-          "name": "Rose Overcast Search Bar",
-          "styleLabel": null,
-          "group": "search-bar",
-          "image": {"src":"/mods/rose-overcast-search-bar.webp","width":854,"height":480},
-          "author": "chineseg0d",
-          "authorUrl": null,
-          "date": 1791974606
-        },
-        {"name":"Noir Rose Top Bar","styleLabel":null,"group":"top-bar","image":{"src":"/mods/noir-rose-top-bar.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791964895},
-        {
-          "name": "Rose Lycoris Mode Cards",
-          "styleLabel": null,
-          "group": "game-mode",
-          "image": {"src":"/mods/rose-lycoris-mode-cards.webp","width":854,"height":480},
-          "author": "chineseg0d",
-          "authorUrl": null,
-          "date": 1791964895
-        },
-        {
-          "name": "Black Top Bar",
-          "styleLabel": null,
-          "group": "top-bar",
-          "image": {"src":"/mods/black-top-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
-        },
-        {"name":"Gotic","styleLabel":null,"group":"search-bar","image":{"src":"/mods/gotic.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {
-          "name": "Kaneki Mach",
-          "styleLabel": null,
-          "group": "game-mode",
-          "image": {"src":"/mods/kaneki-mach.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
-        },
-        {
-          "name": "Kaneki Mach V1.2",
-          "styleLabel": null,
-          "group": "game-mode",
-          "image": {"src":"/mods/kaneki-mach-v1-2.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
-        },
-        {
-          "name": "Kaneki Search Bar",
-          "styleLabel": null,
-          "group": "search-bar",
-          "image": {"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
-        },
-        {
-          "name": "Scolopendra Search Bar",
-          "styleLabel": null,
-          "group": "search-bar",
-          "image": {"src":"/mods/scolopendra-search-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
-        },
-        {
-          "name": "Sematary Search Bar",
-          "styleLabel": null,
-          "group": "search-bar",
-          "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
-        },
-        {
-          "name": "Tcoaal Search Bar",
-          "styleLabel": null,
-          "group": "search-bar",
-          "image": {"src":"/mods/tcoaal-search-bar.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
-        },
-        {"name":"Larger Minimap","styleLabel":null,"group":"minimap","image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
-        {"name":"Grey Minimap","styleLabel":null,"group":"minimap","image":{"src":"/mods/grey-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790825298},
-        {
-          "name": "Grey Search Bar",
-          "styleLabel": null,
-          "group": "search-bar",
-          "image": {"src":"/mods/grey-search-bar.webp","width":854,"height":480},
-          "author": "YZT",
-          "authorUrl": "https://t.me/YZTdota",
-          "date": 1790818573
-        },
-        {"name":"Larger Timer","styleLabel":null,"group":"misc","image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
-        {
-          "name": "Windows Xp Top Bar",
-          "styleLabel": null,
-          "group": "top-bar",
-          "image": {"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},
-          "author": "драг",
-          "authorUrl": "https://t.me/dragvpk",
-          "date": 1790528664
-        },
-        {
-          "name": "Hypergamy Search Bar",
-          "styleLabel": null,
-          "group": "search-bar",
-          "image": {"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},
-          "author": "драг",
-          "authorUrl": "https://t.me/dragvpk",
-          "date": 1790375737
-        }
-      ]
-    },
-    {
       "id": "hero-sounds",
       "mods": [
+        {"name":"Doom Sematary Ult","styleLabel":null,"group":null,"image":{"src":"/mods/doom-sematary-ult.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1793525913},
+        {
+          "name": "Shadow Fiend Requiem Of Poop",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/shadow-fiend-requiem-of-poop.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1793525913
+        },
         {
           "name": "Arc Warden Destruction Sounds",
           "styleLabel": null,
@@ -4360,6 +3869,507 @@
           "author": "buba43",
           "authorUrl": "https://steamcommunity.com/profiles/76561199220865017",
           "date": 1782990543
+        }
+      ]
+    },
+    {
+      "id": "parts",
+      "mods": [
+        {
+          "name": "Cursed Play Button",
+          "styleLabel": null,
+          "group": "play-button",
+          "image": {"src":"/mods/cursed-play-button.webp","width":854,"height":480},
+          "author": "YZT",
+          "authorUrl": "https://t.me/YZTdota",
+          "date": 1793178545
+        },
+        {
+          "name": "Grey Play Button",
+          "styleLabel": null,
+          "group": "play-button",
+          "image": {"src":"/mods/grey-play-button.webp","width":854,"height":480},
+          "author": "YZT",
+          "authorUrl": "https://t.me/YZTdota",
+          "date": 1793178545
+        },
+        {
+          "name": "Pink Play Button",
+          "styleLabel": null,
+          "group": "play-button",
+          "image": {"src":"/mods/pink-play-button.webp","width":854,"height":480},
+          "author": "YZT",
+          "authorUrl": "https://t.me/YZTdota",
+          "date": 1793178545
+        },
+        {
+          "name": "Purple Play Button",
+          "styleLabel": null,
+          "group": "play-button",
+          "image": {"src":"/mods/purple-play-button.webp","width":854,"height":480},
+          "author": "YZT",
+          "authorUrl": "https://t.me/YZTdota",
+          "date": 1793178545
+        },
+        {
+          "name": "Sky Play Button",
+          "styleLabel": null,
+          "group": "play-button",
+          "image": {"src":"/mods/sky-play-button.webp","width":854,"height":480},
+          "author": "YZT",
+          "authorUrl": "https://t.me/YZTdota",
+          "date": 1793178545
+        },
+        {
+          "name": "Hero Auto Pick",
+          "styleLabel": null,
+          "group": "misc",
+          "image": {"src":"/mods/hero-auto-pick.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1793169329
+        },
+        {
+          "name": "Black Top Bar 2",
+          "styleLabel": null,
+          "group": "top-bar",
+          "image": {"src":"/mods/black-top-bar-2.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1793139107
+        },
+        {
+          "name": "Blue Top Bar",
+          "styleLabel": null,
+          "group": "top-bar",
+          "image": {"src":"/mods/blue-top-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1793139107
+        },
+        {
+          "name": "Green Top Bar",
+          "styleLabel": null,
+          "group": "top-bar",
+          "image": {"src":"/mods/green-top-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1793139107
+        },
+        {
+          "name": "Light Blue Top Bar",
+          "styleLabel": null,
+          "group": "top-bar",
+          "image": {"src":"/mods/light-blue-top-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1793139107
+        },
+        {
+          "name": "Orange Top Bar",
+          "styleLabel": null,
+          "group": "top-bar",
+          "image": {"src":"/mods/orange-top-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1793139107
+        },
+        {
+          "name": "Purple Top Bar",
+          "styleLabel": null,
+          "group": "top-bar",
+          "image": {"src":"/mods/purple-top-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1793139107
+        },
+        {
+          "name": "White Top Bar",
+          "styleLabel": null,
+          "group": "top-bar",
+          "image": {"src":"/mods/white-top-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1793139107
+        },
+        {
+          "name": "Yellow Top Bar",
+          "styleLabel": null,
+          "group": "top-bar",
+          "image": {"src":"/mods/yellow-top-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1793139107
+        },
+        {
+          "name": "Crystal Interface",
+          "styleLabel": null,
+          "group": "misc",
+          "image": {"src":"/mods/crystal-interface.webp","width":854,"height":480},
+          "author": "YZT",
+          "authorUrl": "https://t.me/YZTdota",
+          "date": 1793137750
+        },
+        {
+          "name": "Material You Interface 0.1",
+          "styleLabel": null,
+          "group": "misc",
+          "image": {"src":"/mods/material-you-interface-0-1.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1793129686
+        },
+        {
+          "name": "Netgraph Black",
+          "styleLabel": null,
+          "group": "netgraph",
+          "image": {"src":"/mods/netgraph-black.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792946553
+        },
+        {
+          "name": "Netgraph Red",
+          "styleLabel": null,
+          "group": "netgraph",
+          "image": {"src":"/mods/netgraph-red.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792946553
+        },
+        {
+          "name": "Vs Creen",
+          "styleLabel": "Style black",
+          "group": "vs",
+          "image": {"src":"/mods/vs-creen-style-black.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792946553
+        },
+        {
+          "name": "Vs Creen",
+          "styleLabel": "Style white",
+          "group": "vs",
+          "image": {"src":"/mods/vs-creen-style-white.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792946553
+        },
+        {"name":"Kda Red","styleLabel":null,"group":"kda","image":{"src":"/mods/kda-red.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792894433},
+        {
+          "name": "TikTok Overlay",
+          "styleLabel": null,
+          "group": "misc",
+          "image": {"src":"/mods/tiktok-overlay.webp","width":854,"height":480},
+          "author": "Baste",
+          "authorUrl": "https://projects.baste.ru/",
+          "date": 1792782705
+        },
+        {
+          "name": "Xvii Search Bar",
+          "styleLabel": null,
+          "group": "search-bar",
+          "image": {"src":"/mods/xvii-search-bar.webp","width":854,"height":480},
+          "author": "xvii",
+          "authorUrl": "https://t.me/xviivpk",
+          "date": 1792764215
+        },
+        {"name":"Kda Black","styleLabel":null,"group":"kda","image":{"src":"/mods/kda-black.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792668576},
+        {
+          "name": "Play Red",
+          "styleLabel": null,
+          "group": "play-button",
+          "image": {"src":"/mods/play-red.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792591892
+        },
+        {"name":"Kda Purple","styleLabel":null,"group":"kda","image":{"src":"/mods/kda-purple.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792583758},
+        {
+          "name": "Netgraph Purple",
+          "styleLabel": null,
+          "group": "netgraph",
+          "image": {"src":"/mods/netgraph-purple.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792583758
+        },
+        {
+          "name": "Red Top Bar",
+          "styleLabel": null,
+          "group": "top-bar",
+          "image": {"src":"/mods/red-top-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792583758
+        },
+        {
+          "name": "Vs Creen Lycoris Colors V1",
+          "styleLabel": "Style I",
+          "group": "vs",
+          "image": {"src":"/mods/vs-creen-lycoris-colors-v1-style-i.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792583758
+        },
+        {
+          "name": "Vs Creen Lycoris Colors V1",
+          "styleLabel": "Style II",
+          "group": "vs",
+          "image": {"src":"/mods/vs-creen-lycoris-colors-v1-style-ii.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792583758
+        },
+        {
+          "name": "Vs Creen Lycoris Colors V1",
+          "styleLabel": "Style III",
+          "group": "vs",
+          "image": {"src":"/mods/vs-creen-lycoris-colors-v1-style-iii.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792583758
+        },
+        {
+          "name": "Vs Creen Lycoris Colors V2",
+          "styleLabel": "Style I",
+          "group": "vs",
+          "image": {"src":"/mods/vs-creen-lycoris-colors-v2-style-i.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792583758
+        },
+        {
+          "name": "Vs Creen Lycoris Colors V2",
+          "styleLabel": "Style II",
+          "group": "vs",
+          "image": {"src":"/mods/vs-creen-lycoris-colors-v2-style-ii.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792583758
+        },
+        {
+          "name": "Doom Widged 0.1",
+          "styleLabel": null,
+          "group": "misc",
+          "image": {"src":"/mods/doom-widged-0-1.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1792518355
+        },
+        {
+          "name": "Tcoaal Mach v1",
+          "styleLabel": null,
+          "group": "game-mode",
+          "image": {"src":"/mods/tcoaal-mach-v1.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792448425
+        },
+        {
+          "name": "Tcoaal Mach v2",
+          "styleLabel": null,
+          "group": "game-mode",
+          "image": {"src":"/mods/tcoaal-mach-v2.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792448425
+        },
+        {"name":"Anime Search Bar","styleLabel":null,"group":"search-bar","image":{"src":"/mods/anime-search-bar.webp","width":397,"height":1022},"author":"Defendor","authorUrl":null,"date":1792412054},
+        {
+          "name": "Dean Norris Match",
+          "styleLabel": "Style I",
+          "group": "game-mode",
+          "image": {"src":"/mods/dean-norris-match-style-i.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1792412054
+        },
+        {
+          "name": "Dean Norris Match",
+          "styleLabel": "Style II",
+          "group": "game-mode",
+          "image": {"src":"/mods/dean-norris-match-style-ii.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1792412054
+        },
+        {
+          "name": "Play Black",
+          "styleLabel": null,
+          "group": "play-button",
+          "image": {"src":"/mods/play-black.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792412054
+        },
+        {
+          "name": "Play White",
+          "styleLabel": null,
+          "group": "play-button",
+          "image": {"src":"/mods/play-white.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792412054
+        },
+        {
+          "name": "Remove Innate Icon",
+          "styleLabel": null,
+          "group": "misc",
+          "image": {"src":"/mods/remove-innate-icon.webp","width":854,"height":480},
+          "author": "YZT",
+          "authorUrl": "https://t.me/YZTdota",
+          "date": 1792412054
+        },
+        {
+          "name": "Play Pinkv2",
+          "styleLabel": null,
+          "group": "play-button",
+          "image": {"src":"/mods/play-pinkv2.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792330154
+        },
+        {
+          "name": "Top Bar Pink",
+          "styleLabel": null,
+          "group": "top-bar",
+          "image": {"src":"/mods/top-bar-pink.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792330154
+        },
+        {
+          "name": "Cupsize Search Bar",
+          "styleLabel": null,
+          "group": "search-bar",
+          "image": {"src":"/mods/cupsize-search-bar.webp","width":1280,"height":720},
+          "author": "Tom4ik",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199427406113/",
+          "date": 1792235759
+        },
+        {"name":"Purple Minimap","styleLabel":null,"group":"minimap","image":{"src":"/mods/purple-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1792011470},
+        {
+          "name": "Bluelock Scoreboard And Shop",
+          "styleLabel": null,
+          "group": "scoreboard",
+          "image": {"src":"/mods/bluelock-scoreboard-and-shop.webp","width":854,"height":480},
+          "author": "chineseg0d",
+          "authorUrl": null,
+          "date": 1791974606
+        },
+        {
+          "name": "Rose Overcast Search Bar",
+          "styleLabel": null,
+          "group": "search-bar",
+          "image": {"src":"/mods/rose-overcast-search-bar.webp","width":854,"height":480},
+          "author": "chineseg0d",
+          "authorUrl": null,
+          "date": 1791974606
+        },
+        {"name":"Noir Rose Top Bar","styleLabel":null,"group":"top-bar","image":{"src":"/mods/noir-rose-top-bar.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791964895},
+        {
+          "name": "Rose Lycoris Mode Cards",
+          "styleLabel": null,
+          "group": "game-mode",
+          "image": {"src":"/mods/rose-lycoris-mode-cards.webp","width":854,"height":480},
+          "author": "chineseg0d",
+          "authorUrl": null,
+          "date": 1791964895
+        },
+        {
+          "name": "Black Top Bar",
+          "styleLabel": null,
+          "group": "top-bar",
+          "image": {"src":"/mods/black-top-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {"name":"Gotic","styleLabel":null,"group":"search-bar","image":{"src":"/mods/gotic.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {
+          "name": "Kaneki Mach",
+          "styleLabel": null,
+          "group": "game-mode",
+          "image": {"src":"/mods/kaneki-mach.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {
+          "name": "Kaneki Mach V1.2",
+          "styleLabel": null,
+          "group": "game-mode",
+          "image": {"src":"/mods/kaneki-mach-v1-2.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {
+          "name": "Kaneki Search Bar",
+          "styleLabel": null,
+          "group": "search-bar",
+          "image": {"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {
+          "name": "Scolopendra Search Bar",
+          "styleLabel": null,
+          "group": "search-bar",
+          "image": {"src":"/mods/scolopendra-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {
+          "name": "Sematary Search Bar",
+          "styleLabel": null,
+          "group": "search-bar",
+          "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {
+          "name": "Tcoaal Search Bar",
+          "styleLabel": null,
+          "group": "search-bar",
+          "image": {"src":"/mods/tcoaal-search-bar.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {"name":"Larger Minimap","styleLabel":null,"group":"minimap","image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
+        {"name":"Grey Minimap","styleLabel":null,"group":"minimap","image":{"src":"/mods/grey-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790825298},
+        {
+          "name": "Grey Search Bar",
+          "styleLabel": null,
+          "group": "search-bar",
+          "image": {"src":"/mods/grey-search-bar.webp","width":854,"height":480},
+          "author": "YZT",
+          "authorUrl": "https://t.me/YZTdota",
+          "date": 1790818573
+        },
+        {"name":"Larger Timer","styleLabel":null,"group":"misc","image":{"src":"/mods/larger-timer.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1790818573},
+        {
+          "name": "Windows Xp Top Bar",
+          "styleLabel": null,
+          "group": "top-bar",
+          "image": {"src":"/mods/windows-xp-top-bar.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1790528664
+        },
+        {
+          "name": "Hypergamy Search Bar",
+          "styleLabel": null,
+          "group": "search-bar",
+          "image": {"src":"/mods/hypergamy-search-bar.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1790375737
         }
       ]
     },
@@ -5665,6 +5675,189 @@
       ]
     },
     {
+      "id": "other",
+      "mods": [
+        {
+          "name": "Dark Radius Texture",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/dark-radius-texture.webp","width":854,"height":480},
+          "author": "SenkuXVII",
+          "authorUrl": "https://t.me/xanoya",
+          "date": 1793525913
+        },
+        {
+          "name": "Purple Radius Texture",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/purple-radius-texture.webp","width":854,"height":480},
+          "author": "SenkuXVII",
+          "authorUrl": "https://t.me/xanoya",
+          "date": 1793525913
+        },
+        {
+          "name": "Red Radius Texture",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/red-radius-texture.webp","width":854,"height":480},
+          "author": "SenkuXVII",
+          "authorUrl": "https://t.me/xanoya",
+          "date": 1793525913
+        },
+        {
+          "name": "White Radius Texture",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/white-radius-texture.webp","width":854,"height":480},
+          "author": "SenkuXVII",
+          "authorUrl": "https://t.me/xanoya",
+          "date": 1793525913
+        },
+        {
+          "name": "All Grandmasters",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/all-grandmasters.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792947904
+        },
+        {
+          "name": "White Spell Radius",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/white-spell-radius.webp","width":854,"height":480},
+          "author": "YZT",
+          "authorUrl": "https://t.me/YZTdota",
+          "date": 1792518355
+        },
+        {
+          "name": "Ogre Arcana Egg Sound Fix",
+          "styleLabel": "Full remove",
+          "group": null,
+          "image": {"src":"/mods/ogre-arcana-egg-sound-fix-full-remove.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": 1792163562
+        },
+        {
+          "name": "Ogre Arcana Egg Sound Fix",
+          "styleLabel": "Sound remove",
+          "group": null,
+          "image": {"src":"/mods/ogre-arcana-egg-sound-fix-sound-remove.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": 1792163562
+        },
+        {
+          "name": "Old Shadow Fiend Secret Shop",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/old-shadow-fiend-secret-shop.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1792050673
+        },
+        {"name":"Objective Timers","styleLabel":null,"group":null,"image":{"src":"/mods/objective-timers.webp","width":854,"height":480},"author":"rizeru","authorUrl":"https://t.me/rizeru","date":1792011470},
+        {"name":"Pink Spell Radius","styleLabel":null,"group":null,"image":{"src":"/mods/pink-spell-radius.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791821609},
+        {
+          "name": "Unlock Hidden Profile Animations",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/unlock-hidden-profile-animations.webp","width":854,"height":480},
+          "author": "DotaMiniProfile",
+          "authorUrl": "https://t.me/DotaMiniProfile",
+          "date": 1791607322
+        },
+        {
+          "name": "Techies Minimap-Hero Mine Icon",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/techies-minimap-hero-mine-icon.webp","width":854,"height":480},
+          "author": "hanfukj",
+          "authorUrl": "https://t.me/hanfukj",
+          "date": 1790818573
+        },
+        {"name":"Black Click","styleLabel":null,"group":null,"image":{"src":"/mods/black-click.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1788815201},
+        {
+          "name": "Light Brown Click",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/light-brown-click.webp","width":854,"height":480},
+          "author": "YuyaKizami",
+          "authorUrl": "https://t.me/YuyaKizami",
+          "date": 1788762686
+        },
+        {
+          "name": "Sapphire Click",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/sapphire-click.webp","width":854,"height":480},
+          "author": "YuyaKizami",
+          "authorUrl": "https://t.me/YuyaKizami",
+          "date": 1788762686
+        },
+        {
+          "name": "White Click",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/white-click.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1788095311
+        },
+        {
+          "name": "Profile Graffiti & Phrases",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/profile-graffiti-phrases.webp","width":854,"height":480},
+          "author": "DotaMiniProfile",
+          "authorUrl": "https://t.me/DotaMiniProfile",
+          "date": 1785640852
+        },
+        {"name":"Blue Click","styleLabel":null,"group":null,"image":{"src":"/mods/blue-click.webp","width":854,"height":480},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1785081533},
+        {
+          "name": "Dummy In Profile",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/dummy-in-profile.webp","width":854,"height":480},
+          "author": "DotaMiniProfile",
+          "authorUrl": "https://t.me/DotaMiniProfile",
+          "date": 1784702480
+        },
+        {"name":"Purple Click","styleLabel":null,"group":null,"image":{"src":"/mods/purple-click.webp","width":854,"height":480},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1778331617},
+        {
+          "name": "Tower re-aggro Radius",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/tower-re-aggro-radius.webp","width":854,"height":480},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1776801533
+        },
+        {"name":"Gabe Shopkeeper","styleLabel":null,"group":null,"image":{"src":"/mods/gabe-shopkeeper.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203},
+        {
+          "name": "Rage Voice Icon",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/rage-voice-icon.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1772534203
+        },
+        {
+          "name": "Showcase Rotation",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/showcase-rotation.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1772534203
+        },
+        {"name":"Techies Mine Radius","styleLabel":null,"group":null,"image":{"src":"/mods/techies-mine-radius.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203}
+      ]
+    },
+    {
       "id": "sounds",
       "mods": [
         {
@@ -6518,153 +6711,6 @@
           "authorUrl": "https://steamcommunity.com/id/mcegg/",
           "date": null
         }
-      ]
-    },
-    {
-      "id": "other",
-      "mods": [
-        {
-          "name": "All Grandmasters",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/all-grandmasters.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792947904
-        },
-        {
-          "name": "White Spell Radius",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/white-spell-radius.webp","width":854,"height":480},
-          "author": "YZT",
-          "authorUrl": "https://t.me/YZTdota",
-          "date": 1792518355
-        },
-        {
-          "name": "Ogre Arcana Egg Sound Fix",
-          "styleLabel": "Full remove",
-          "group": null,
-          "image": {"src":"/mods/ogre-arcana-egg-sound-fix-full-remove.webp","width":854,"height":480},
-          "author": "Fr0dech",
-          "authorUrl": "https://t.me/fr0dech_vpk",
-          "date": 1792163562
-        },
-        {
-          "name": "Ogre Arcana Egg Sound Fix",
-          "styleLabel": "Sound remove",
-          "group": null,
-          "image": {"src":"/mods/ogre-arcana-egg-sound-fix-sound-remove.webp","width":854,"height":480},
-          "author": "Fr0dech",
-          "authorUrl": "https://t.me/fr0dech_vpk",
-          "date": 1792163562
-        },
-        {
-          "name": "Old Shadow Fiend Secret Shop",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/old-shadow-fiend-secret-shop.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792050673
-        },
-        {"name":"Objective Timers","styleLabel":null,"group":null,"image":{"src":"/mods/objective-timers.webp","width":854,"height":480},"author":"rizeru","authorUrl":"https://t.me/rizeru","date":1792011470},
-        {"name":"Pink Spell Radius","styleLabel":null,"group":null,"image":{"src":"/mods/pink-spell-radius.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791821609},
-        {
-          "name": "Unlock Hidden Profile Animations",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/unlock-hidden-profile-animations.webp","width":854,"height":480},
-          "author": "DotaMiniProfile",
-          "authorUrl": "https://t.me/DotaMiniProfile",
-          "date": 1791607322
-        },
-        {
-          "name": "Techies Minimap-Hero Mine Icon",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/techies-minimap-hero-mine-icon.webp","width":854,"height":480},
-          "author": "hanfukj",
-          "authorUrl": "https://t.me/hanfukj",
-          "date": 1790818573
-        },
-        {"name":"Black Click","styleLabel":null,"group":null,"image":{"src":"/mods/black-click.webp","width":854,"height":480},"author":"Morecursed","authorUrl":null,"date":1788815201},
-        {
-          "name": "Light Brown Click",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/light-brown-click.webp","width":854,"height":480},
-          "author": "YuyaKizami",
-          "authorUrl": "https://t.me/YuyaKizami",
-          "date": 1788762686
-        },
-        {
-          "name": "Sapphire Click",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/sapphire-click.webp","width":854,"height":480},
-          "author": "YuyaKizami",
-          "authorUrl": "https://t.me/YuyaKizami",
-          "date": 1788762686
-        },
-        {
-          "name": "White Click",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/white-click.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1788095311
-        },
-        {
-          "name": "Profile Graffiti & Phrases",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/profile-graffiti-phrases.webp","width":854,"height":480},
-          "author": "DotaMiniProfile",
-          "authorUrl": "https://t.me/DotaMiniProfile",
-          "date": 1785640852
-        },
-        {"name":"Blue Click","styleLabel":null,"group":null,"image":{"src":"/mods/blue-click.webp","width":854,"height":480},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1785081533},
-        {
-          "name": "Dummy In Profile",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/dummy-in-profile.webp","width":854,"height":480},
-          "author": "DotaMiniProfile",
-          "authorUrl": "https://t.me/DotaMiniProfile",
-          "date": 1784702480
-        },
-        {"name":"Purple Click","styleLabel":null,"group":null,"image":{"src":"/mods/purple-click.webp","width":854,"height":480},"author":"NahuiToSay","authorUrl":"https://t.me/NahuiToSay","date":1778331617},
-        {
-          "name": "Tower re-aggro Radius",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/tower-re-aggro-radius.webp","width":854,"height":480},
-          "author": "NahuiToSay",
-          "authorUrl": "https://t.me/NahuiToSay",
-          "date": 1776801533
-        },
-        {"name":"Gabe Shopkeeper","styleLabel":null,"group":null,"image":{"src":"/mods/gabe-shopkeeper.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203},
-        {
-          "name": "Rage Voice Icon",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/rage-voice-icon.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1772534203
-        },
-        {
-          "name": "Showcase Rotation",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/showcase-rotation.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1772534203
-        },
-        {"name":"Techies Mine Radius","styleLabel":null,"group":null,"image":{"src":"/mods/techies-mine-radius.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1772534203}
       ]
     },
     {
