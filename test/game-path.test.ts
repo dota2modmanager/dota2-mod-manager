@@ -82,13 +82,21 @@ test('the Linux executable counts as an install too', (t) => {
   assert.equal(validateGamePath(game), true);
 });
 
-// Discovery on Linux, where there is no registry to ask. XDG_DATA_HOME is the one root that
-// can be pointed at a temporary folder, so it is the one the test drives.
+// Discovery on Linux, where there is no registry to ask. XDG_DATA_HOME is the root the test
+// drives, and HOME goes to the same temporary folder: ~/.steam/steam is tried first, so on a
+// machine with Steam installed the real library answered before the one the test made.
+function linuxHome(t: TestContext, dir: string): void {
+  const was = { HOME: process.env.HOME, XDG_DATA_HOME: process.env.XDG_DATA_HOME };
+  process.env.HOME = dir;
+  process.env.XDG_DATA_HOME = dir;
+  t.after(() => {
+    for (const [k, v] of Object.entries(was)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+  });
+}
+
 test('a library under XDG_DATA_HOME is found', { skip: process.platform === 'win32' }, async (t) => {
   const dir = tmpDir(t);
-  const was = process.env.XDG_DATA_HOME;
-  process.env.XDG_DATA_HOME = dir;
-  t.after(() => { if (was === undefined) delete process.env.XDG_DATA_HOME; else process.env.XDG_DATA_HOME = was; });
+  linuxHome(t, dir);
 
   const game = path.join(dir, 'Steam', 'steamapps', 'common', 'dota 2 beta', 'game');
   fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
@@ -101,9 +109,7 @@ test('a library under XDG_DATA_HOME is found', { skip: process.platform === 'win
 // difference. An install from that era still has to be found.
 test('the old SteamApps spelling is found as well', { skip: process.platform === 'win32' }, async (t) => {
   const dir = tmpDir(t);
-  const was = process.env.XDG_DATA_HOME;
-  process.env.XDG_DATA_HOME = dir;
-  t.after(() => { if (was === undefined) delete process.env.XDG_DATA_HOME; else process.env.XDG_DATA_HOME = was; });
+  linuxHome(t, dir);
 
   const game = path.join(dir, 'Steam', 'SteamApps', 'common', 'dota 2 beta', 'game');
   fs.mkdirSync(path.join(game, 'bin', 'linuxsteamrt64'), { recursive: true });
