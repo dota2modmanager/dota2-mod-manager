@@ -31,7 +31,7 @@ export function shareDialog(plan: SharePlan): Promise<ShareOptions | null> {
     overlay.className = 'confirm-overlay';
     overlay.innerHTML = `
       <div class="confirm-box share-box">
-        <div class="share-title">${L`Поделиться пресетом «${plan.name}»`}</div>
+        <div class="share-title">${L`Поделиться пресетом «${esc(plan.name)}»`}</div>
         <div class="share-line">
           <span class="ms">link</span>
           <div><b>${refs}</b> ${plural(refs, 'мод из каталога', 'мода из каталога', 'модов из каталога')}
@@ -99,7 +99,7 @@ export function shareSheet(preset: { name: string }, link: ShareLink | null): Pr
     overlay.className = 'confirm-overlay';
     overlay.innerHTML = `
       <div class="confirm-box share-box">
-        <div class="share-title">${L`Поделиться пресетом «${preset.name}»`}</div>
+        <div class="share-title">${L`Поделиться пресетом «${esc(preset.name)}»`}</div>
 
         <div class="share-way">
           <div class="share-way-head"><span class="ms">link</span>${L`Ссылка`}</div>
