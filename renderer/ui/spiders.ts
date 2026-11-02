@@ -9,12 +9,18 @@
  *
  * One layer over the window, above the content and below the dialogs, that takes the pointer
  * only on the spiders themselves. One frame loop for all of them, which stops when the last one
- * is gone. With less motion asked for, spiders do not run: they sit where they appeared and can
- * still be picked up and carried, since carrying is the person's own movement.
+ * is gone. With less motion asked for, spiders do not run: they sit where they appeared, can
+ * still be picked up and carried, since carrying is the person's own movement, and go when their
+ * time is up without walking anywhere.
+ *
+ * How a running spider moves is decided in ui/spider-motion.ts.
  */
+import { MAX_SPIDERS, leaving, runStep } from './spider-motion.ts';
 
 const NS = 'http://www.w3.org/2000/svg';
-const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+// one query, read every frame by every spider: asking matchMedia each time cost a parse per spider
+let motionQuery: MediaQueryList | null = null;
+const still = () => (motionQuery ??= matchMedia('(prefers-reduced-motion: reduce)')).matches;
 
 function svg(tag: string, attrs: Record<string, string | number> = {}): SVGElement {
   const e = document.createElementNS(NS, tag);
@@ -153,52 +159,24 @@ function frame(now: number): void {
       if (Math.hypot(s.x - px, s.y - py) < 90) { s.mode = 'run'; s.restUntil = 0; }
       return true;
     }
-    if (still()) return true;
-    // running: from the pointer, otherwise towards home or out of the window
-    s.life -= dt;
-    let ax = 0, ay = 0;
-    const dx = s.x - px, dy = s.y - py, d = Math.hypot(dx, dy) || 1;
-    const scared = d < 170;
-    if (scared) { ax += (dx / d) * 2600 * (1 - d / 170); ay += (dy / d) * 2600 * (1 - d / 170); }
-    s.wander += (Math.random() - 0.5) * 6 * dt;
-    let target: { x: number; y: number } | null = s.home ?? null;
-    if (!target && s.life <= 0 && !s.stays) {
-      // time to go: the nearest edge
-      const edges = [{ x: -40, y: s.y, d: s.x }, { x: w + 40, y: s.y, d: w - s.x }, { x: s.x, y: h + 40, d: h - s.y }];
-      edges.sort((p, q) => p.d - q.d);
-      target = edges[0];
+    if (still()) {
+      // sits where it is, and goes when its time is up rather than walking out
+      s.life -= dt;
+      if (!leaving(s)) return true;
+      s.el.remove();
+      return false;
     }
-    if (target) {
-      const tx = target.x - s.x, ty = target.y - s.y, td = Math.hypot(tx, ty) || 1;
-      ax += (tx / td) * 700; ay += (ty / td) * 700;
-      if (s.home && td < 6 && !scared) {
-        s.home = null; s.vx = s.vy = 0; s.mode = 'rest'; s.restUntil = now + 4000 + Math.random() * 9000;
-        s.el.classList.remove('walk');
-        s.onRest?.(s);
-        return true;
-      }
-    } else {
-      ax += Math.cos(s.wander) * 260; ay += Math.sin(s.wander) * 260;
+    const step = runStep(s, { w, h, px, py, dt });
+    if (step === 'home') {
+      s.mode = 'rest'; s.restUntil = now + 4000 + Math.random() * 9000;
+      s.el.classList.remove('walk');
+      s.onRest?.(s);
+      return true;
     }
-    // the walls push back, unless it is leaving through one
-    const m = 24;
-    if (!(s.life <= 0 && !s.stays)) {
-      if (s.x < m) ax += (m - s.x) * 60;
-      if (s.x > w - m) ax -= (s.x - (w - m)) * 60;
-      if (s.y < m + 30) ay += (m + 30 - s.y) * 60;
-      if (s.y > h - m) ay -= (s.y - (h - m)) * 60;
-    }
-    s.vx += ax * dt; s.vy += ay * dt;
-    s.vx *= Math.pow(0.08, dt); s.vy *= Math.pow(0.08, dt);
-    const top = scared ? 330 : 150, sp = Math.hypot(s.vx, s.vy);
-    if (sp > top) { s.vx *= top / sp; s.vy *= top / sp; }
-    s.x += s.vx * dt; s.y += s.vy * dt;
-    if (sp > 8) s.a = (Math.atan2(s.vy, s.vx) * 180) / Math.PI + 90;
-    s.el.classList.toggle('walk', sp > 8);
+    if (step === 'gone') { s.el.remove(); return false; }
+    s.el.classList.toggle('walk', step > 8);
     place(s);
-    const gone = s.x < -60 || s.x > w + 60 || s.y < -60 || s.y > h + 60;
-    if (gone) s.el.remove();
-    return !gone;
+    return true;
   });
   if (!spiders.length) { cancelAnimationFrame(raf); raf = 0; }
 }
@@ -225,8 +203,9 @@ export interface SpawnOptions {
   onRest?: (s: { x: number; y: number }) => void;
 }
 
-/** Let a spider loose at (x, y). Returns how many are about now. */
+/** Let a spider loose at (x, y). Returns how many are about now; none is added past the cap. */
 export function spawnSpider(x: number, y: number, opts: SpawnOptions = {}): number {
+  if (spiders.length >= MAX_SPIDERS) return spiders.length;
   const host = ensureLayer();
   const size = opts.size ?? 24 + Math.random() * 12;
   const el = document.createElement('div');
