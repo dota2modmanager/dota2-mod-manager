@@ -6,13 +6,13 @@ import { readKv3, numberOf, type Kv3Node } from '../src/kv3.ts';
 import { resourceBlock } from '../src/resource.ts';
 import { encodeKv3, resource, type V } from './helpers/kv3-build.ts';
 
-type Seq = { name: string; act?: string; refs: number[]; layer?: V };
+type Seq = { name: string; act?: string; refs: number[] | V; layer?: V };
 
 /** A model with only what numbering reads: the name list, and each sequence's fetch and layers. */
 function model(names: string[], seqs: Seq[], multi: [string, V][][] = []): Buffer {
   const desc = (s: Seq): [string, V][] => [
     ['m_sName', { str: s.name }],
-    ['m_fetch', { obj: [['m_localReferenceArray', { i32s: s.refs }]] }],
+    ['m_fetch', { obj: [['m_localReferenceArray', Array.isArray(s.refs) ? { i32s: s.refs } : s.refs]] }],
     ['m_autoLayerArray', { objs: s.layer ? [[['m_nLocalReference', s.layer]]] : [] }],
     ['m_activityArray', { objs: s.act ? [[['m_name', { str: s.act }], ['m_nWeight', { int: 1 }]]] : [] }],
   ];
@@ -135,4 +135,85 @@ test('a part the model has not got is stood for by one left over, an animation i
     { name: 'bindPose', refs: [0] },
     { name: 'run', act: 'ACT_DOTA_RUN', refs: [2] },
   ]), DONKEY), null, 'no idle');
+});
+
+// #403: the flying donkey runs two ways and a courier flies one, so the second run found nothing
+// left, the whole flying model was dropped, and the courier turned into the donkey once it flew.
+const WINGS = model(['bindpose', 'donkey_wings_die', 'donkey_wings_idle', 'donkey_wings_run', 'donkey_wings_run_alt'], [
+  { name: 'bindPose', refs: [] },
+  { name: 'donkey_wings_die', act: 'ACT_DOTA_DIE', refs: [1] },
+  { name: 'donkey_wings_idle', act: 'ACT_DOTA_IDLE', refs: [2] },
+  { name: 'donkey_wings_run', act: 'ACT_DOTA_RUN', refs: [3] },
+  { name: 'donkey_wings_run_alt', act: 'ACT_DOTA_RUN', refs: [4] },
+]);
+
+/** The activity each name plays in the file, by the server's number. */
+function playedAt(file: Buffer): (string | null)[] {
+  const kv = readKv3(resourceBlock(file, 'ASEQ').data);
+  const get = (n: Kv3Node | undefined, k: string) => (n?.kind === 'object' ? n.members.get(k) : undefined);
+  const list = (n: Kv3Node | undefined) => (n?.kind === 'array' ? n.items : []);
+  const str = (n: Kv3Node | undefined) => (n?.kind === 'string' ? n.value : '');
+  const acts = new Map(list(get(kv.root, 'm_localS1SeqDescArray')).map((d) => [str(get(d, 'm_sName')), str(get(list(get(d, 'm_activityArray'))[0], 'm_name')) || null]));
+  return list(get(kv.root, 'm_localSequenceNameArray')).map((n) => acts.get(str(n)) ?? null);
+}
+
+test("a courier with one flying run plays it for both of the donkey's, rather than being the donkey", () => {
+  const filmtail = model(['bindPose', 'flying_run', 'flying_idle', 'flying_spawn', 'flying_death'], [
+    { name: 'bindPose', refs: [] },
+    { name: 'flying_run', act: 'ACT_DOTA_RUN', refs: [1] },
+    { name: 'flying_idle', act: 'ACT_DOTA_IDLE', refs: [2] },
+    { name: 'flying_spawn', act: 'ACT_DOTA_SPAWN', refs: [3] },
+    { name: 'flying_death', act: 'ACT_DOTA_DIE', refs: [4] },
+  ]);
+  const out = numberedAs(filmtail, WINGS);
+  assert.ok(out, 'the flying model is kept');
+  const { names, seqs } = read(out);
+  assert.deepEqual(playedAt(out).slice(0, 5), [null, 'ACT_DOTA_DIE', 'ACT_DOTA_IDLE', 'ACT_DOTA_RUN', 'ACT_DOTA_RUN'], 'each of the donkey\'s numbers plays what the donkey plays there');
+  assert.equal(names[4], 'donkey_wings_run_alt', 'the stand-in goes under the donkey\'s name');
+  assert.deepEqual(seqs.donkey_wings_run_alt.refs, seqs.flying_run.refs, 'and plays the courier\'s own run');
+  assert.deepEqual(seqs.flying_run.refs, ['flying_run']);
+  assert.deepEqual(seqs.flying_spawn.refs, ['flying_spawn'], 'what the donkey has not got stays, after its names');
+});
+
+test("a missing rare idle is the courier's idle, played as the rare one, and a missing part is its bind pose", () => {
+  const plain = model(['bindPose', 'donkey_idle', 'donkey_idle_alt', 'donkey_run', 'donkey_turns'], [
+    { name: 'bindPose', refs: [] },
+    { name: 'donkey_idle', act: 'ACT_DOTA_IDLE', refs: [1] },
+    { name: 'donkey_idle_alt', act: 'ACT_DOTA_IDLE_RARE', refs: [2] },
+    { name: 'donkey_run', act: 'ACT_DOTA_RUN', refs: [3] },
+    { name: 'donkey_turns', refs: [4] },
+  ]);
+  const sennin = model(['bindPose', 'courier_run', 'courier_idle'], [
+    { name: 'bindPose', refs: [] },
+    { name: 'courier_run', act: 'ACT_DOTA_RUN', refs: [1] },
+    { name: 'courier_idle', act: 'ACT_DOTA_IDLE', refs: [2] },
+  ]);
+  const out = numberedAs(sennin, plain);
+  assert.ok(out);
+  assert.deepEqual(playedAt(out), [null, 'ACT_DOTA_IDLE', 'ACT_DOTA_IDLE_RARE', 'ACT_DOTA_RUN', null]);
+  const { names, seqs } = read(out);
+  assert.deepEqual(names, ['bindPose', 'courier_idle', 'donkey_idle_alt', 'courier_run', 'donkey_turns']);
+  assert.deepEqual(seqs.donkey_idle_alt.refs, ['courier_idle']);
+  assert.deepEqual(seqs.donkey_turns.refs, [], 'the turns hold their number with the bind pose, which plays nothing');
+});
+
+test('a reference stored as a type alone can be moved without the model coming out unreadable', () => {
+  // Spooly and Brightskye: the compiler writes a fetch of [1] as a typed array whose element type
+  // is the number one itself. Moved to 2 among such elements, every value after it shifted.
+  const spooly = model(['bindPose', 'courier_run', 'courier_idle'], [
+    { name: 'bindPose', refs: [] },
+    { name: 'courier_run', act: 'ACT_DOTA_RUN', refs: { typedOnes: 1 } },
+    { name: 'courier_idle', act: 'ACT_DOTA_IDLE', refs: [2] },
+  ]);
+  const idleFirst = model(['bindPose', 'donkey_idle', 'donkey_run'], [
+    { name: 'bindPose', refs: [] },
+    { name: 'donkey_idle', act: 'ACT_DOTA_IDLE', refs: [1] },
+    { name: 'donkey_run', act: 'ACT_DOTA_RUN', refs: [2] },
+  ]);
+  const out = numberedAs(spooly, idleFirst);
+  assert.ok(out);
+  const { names, seqs } = read(out);
+  assert.deepEqual(names, ['bindPose', 'courier_idle', 'courier_run'], 'the run moved from 1 to 2');
+  assert.deepEqual(seqs.courier_run.refs, ['courier_run'], 'the run still fetches its own clip, from its new place');
+  assert.deepEqual(seqs.courier_idle.refs, ['courier_idle']);
 });

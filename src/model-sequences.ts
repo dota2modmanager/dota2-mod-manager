@@ -12,6 +12,15 @@
  * the same name (written any case, with or without underscores) or, failing that, of the same
  * activity (the plain run is Infernus's runx); the rest
  * follow in their own order, and every reference into the list is moved with its entry.
+ *
+ * A plain name with nothing left in the item to stand for it gets a stand-in: a copy of the item's
+ * own sequence for that activity, under the plain name, so one clip answers to two numbers. The
+ * flying donkey runs two ways (donkey_wings_run, donkey_wings_run_alt) and a courier flies one; the
+ * plain donkey idles two ways and many couriers one. Without stand-ins those models were dropped
+ * whole, and 143 of 216 couriers went back to the donkey for their flight, their walk or both
+ * (#403). A name the server never sends, a part with no activity, holds its place with the item's
+ * bind pose. A model with no run or no idle of its own still gets none: the donkey beats a courier
+ * standing still while it travels.
  */
 import { readKv3, numberOf, setNumber, type Kv3Block, type Kv3Node } from './kv3.ts';
 import { writeKv3 } from './kv3-write.ts';
@@ -36,7 +45,10 @@ function pointers(desc: Kv3Node): { node: Num; set(n: Num): void }[] {
   const out: { node: Num; set(n: Num): void }[] = [];
   const refs = member(member(desc, 'm_fetch'), 'm_localReferenceArray');
   if (refs?.kind === 'array') {
-    refs.items.forEach((r, i) => { if (r.kind === 'number') out.push({ node: r, set: (n) => { refs.items[i] = n; } }); });
+    // A typed array writes its items in its element's storage, and a 0 or 1 stored as a type has
+    // none: a number with bytes put in among them shifted every value after it, and the model came
+    // out unreadable (Brightskye, Spooly). Untyped, each item carries its own type.
+    refs.items.forEach((r, i) => { if (r.kind === 'number') out.push({ node: r, set: (n) => { refs.items[i] = n; delete refs.element; } }); });
   }
   for (const layer of items(member(desc, 'm_autoLayerArray'))) {
     const r = member(layer, 'm_nLocalReference');
@@ -50,6 +62,16 @@ const madeInt = (v: number): Num => {
   const raw = Buffer.alloc(4);
   raw.writeInt32LE(v);
   return { kind: 'number', type: 11, cell: null, typeAt: null, raw };
+};
+
+/** `v` as a number of the same type and width as `like`, which a typed array's lane needs. */
+const madeLike = (like: Num, v: number): Num => {
+  const width = like.cell?.width ?? like.raw?.length;
+  if (!width) return madeInt(v);
+  const raw = Buffer.alloc(width);
+  if (width === 8) raw.writeBigInt64LE(BigInt(v));
+  else raw.writeIntLE(v, 0, width);
+  return { kind: 'number', type: like.type, cell: null, typeAt: null, raw };
 };
 
 /** The "<word>_" every one of these names starts with ("donkey_", "donkey_wings_"), or ''. */
@@ -89,9 +111,31 @@ function spare(names: string[], used: Set<number>, name: string): number {
   return (free.find(({ n }) => n.startsWith('@') === name.startsWith('@')) ?? free[0])?.i ?? -1;
 }
 
+type Described = ReturnType<typeof described>[number];
+
+/*
+ * The item's sequence to copy for a plain one that has nothing left: the same activity, then the
+ * same without _RARE (the donkey's IDLE_RARE is a courier's idle), then the idle for anything that
+ * is neither a run nor an idle (a spawn, a capture). A part with no activity takes the bind pose.
+ */
+function standIn(seqs: Described[], act: string | null | undefined): Described | null {
+  if (!act) return seqs.find((s) => !s.act && /^bind_?pose$/i.test(s.name)) ?? null;
+  const by = (a: string) => seqs.find((s) => s.act === a && !s.name.startsWith('@')) ?? seqs.find((s) => s.act === a) ?? null;
+  const common = act.replace(/_RARE$/, '');
+  return by(act) ?? by(common) ?? (common === 'ACT_DOTA_RUN' || common === 'ACT_DOTA_IDLE' ? null : by('ACT_DOTA_IDLE'));
+}
+
+/* A copy of a sequence's tree. The numbers stay the original's nodes, so the copy's references
+ * must be given new ones (madeInt), never written where they lie: that would move the original's. */
+function copyTree(n: Kv3Node): Kv3Node {
+  if (n.kind === 'object') return { ...n, members: new Map([...n.members].map(([k, v]) => [k, copyTree(v)])) };
+  if (n.kind === 'array') return { ...n, items: n.items.map(copyTree) };
+  return n;
+}
+
 /**
  * `model` with its sequences numbered as `plain` numbers its own, or null where that cannot be
- * done: a plain sequence with nothing in the model to stand for it, a list either one has not got,
+ * done: a plain run or idle with nothing in the model to play it, a list either one has not got,
  * or sequences of kinds this does not move the references of (multi, synth, command).
  */
 export function numberedAs(model: Buffer, plain: Buffer): Buffer | null {
@@ -113,6 +157,7 @@ export function numberedAs(model: Buffer, plain: Buffer): Buffer | null {
     const plainActs = new Map(described(theirs).map((s) => [s.name, s.act]));
     const seqs = described(kv);
     const used = new Set<number>();
+    const standIns: { place: number; name: string; act: string | null; from: Described }[] = [];
     const order: number[] = [];
     // "bindPose" is "bind_pose" in half of Invoker's spirits, and it plays no activity to find it by
     const loose = (n: string) => n.toLowerCase().replace(/[^a-z0-9@]/g, '');
@@ -130,12 +175,24 @@ export function numberedAs(model: Buffer, plain: Buffer): Buffer | null {
       }
       if (at === -1) at = sameRest(names, used, name, prefix);
       if (at === -1 && !plainActs.get(name)) at = spare(names, used, name);
-      if (at === -1) return null;
+      if (at === -1) {
+        const from = standIn(seqs, plainActs.get(name));
+        if (!from) return null;
+        standIns.push({ place: order.length, name: names.includes(name) ? `${name}_d2mm` : name, act: plainActs.get(name) ?? null, from });
+        order.push(-1);
+        continue;
+      }
       used.add(at);
       order.push(at);
     }
     names.forEach((_, i) => { if (!used.has(i)) order.push(i); });
-    const placeOf = new Map(order.map((old, place) => [old, place]));
+    const placeOf = new Map(order.flatMap((old, place) => (old < 0 ? [] : [[old, place] as const])));
+
+    // the copies' references, read before any original is renumbered: they share its cells
+    const copies = standIns.map((s) => {
+      const desc = copyTree(s.from.desc);
+      return { ...s, desc, refs: pointers(desc).map((p) => ({ p, old: numberOf(kv, p.node) })) };
+    });
 
     for (const s of seqs) {
       for (const p of pointers(s.desc)) {
@@ -146,7 +203,26 @@ export function numberedAs(model: Buffer, plain: Buffer): Buffer | null {
         if (place !== old && !setNumber(kv, p.node, place)) p.set(madeInt(place));
       }
     }
-    list.items = order.map((i) => list.items[i]);
+    const descs = member(kv.root, 'm_localS1SeqDescArray');
+    if (copies.length && descs?.kind !== 'array') return null;
+    for (const c of copies) {
+      for (const { p, old } of c.refs) {
+        const place = placeOf.get(old);
+        if (place === undefined) return null;
+        p.set(madeLike(p.node, place));
+      }
+      if (c.desc.kind !== 'object') return null;
+      c.desc.members.set('m_sName', { kind: 'string', value: c.name });
+      // played for the plain activity: a courier's idle standing in for the donkey's rare one is
+      // its rare one now, as the donkey's was
+      if (c.act && c.act !== c.from.act) {
+        for (const a of items(member(c.desc, 'm_activityArray'))) {
+          if (a.kind === 'object' && text(member(a, 'm_name')).startsWith('ACT_')) { a.members.set('m_name', { kind: 'string', value: c.act }); break; }
+        }
+      }
+      (descs as Extract<Kv3Node, { kind: 'array' }>).items.push(c.desc);
+    }
+    list.items = order.map((i, place) => (i < 0 ? { kind: 'string', value: copies.find((c) => c.place === place)!.name } : list.items[i]));
     return block.replace(writeKv3(kv));
   } catch {
     return null;
