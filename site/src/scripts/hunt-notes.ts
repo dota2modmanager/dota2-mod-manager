@@ -8,10 +8,13 @@
  *
  * A line is written in blood just above the footer and is nearly invisible: it comes up only
  * where the pointer's light falls on it, the way the heroes do. It is there only while the
- * Halloween look is in season, and only for a fine pointer with motion allowed, since the hunt
- * itself is only there for those. aria-hidden for the reason Hunt.astro gives.
+ * Halloween look is in season, and only where the hunt itself can start (scripts/hunt-room.ts): a
+ * fine pointer, motion allowed, and a window wide enough for heroes beside the column. A riddle
+ * with no heroes to find sent somebody on an hour's search for nothing (#386). aria-hidden for the
+ * reason Hunt.astro gives.
  */
 import { lookNow } from './look';
+import { huntAllowed, huntFits } from './hunt-room';
 
 type Line = { n: string; en: string; ru: string };
 
@@ -42,9 +45,7 @@ function linesHere(): Line[] {
 }
 
 export function mountHuntNotes(): void {
-  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
-  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!fine || still || lookNow() !== 'halloween') return;
+  if (!huntAllowed() || lookNow() !== 'halloween') return;
   const foot = document.querySelector('.foot');
   const lines = linesHere();
   if (!foot || !lines.length) return;
@@ -68,6 +69,10 @@ export function mountHuntNotes(): void {
     return p;
   });
   foot.before(wall);
+  // the hunt lays its heroes out again on a resize, and drops them when the margins go
+  const fit = () => { wall.hidden = !huntFits(); };
+  fit();
+  addEventListener('resize', fit, { passive: true });
 
   // the same light as the hunt's: heat from the distance to the pointer, nothing read per frame
   // but the notes' own boxes, and nothing at all while the pointer is still

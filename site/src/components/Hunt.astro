@@ -10,7 +10,7 @@
  *
  * The first year anybody found all eight by sweeping the margins, so this year the seven go in
  * an order, and the order is not written down anywhere in one piece. Lines of it are scrawled
- * across the site (components/HuntNote.astro), one riddle per page, each naming a hero without
+ * across the site (scripts/hunt-notes.ts), one riddle per page, each naming a hero without
  * saying the name. A hero clicked out of turn screams, and everything found so far goes back.
  * Axe's cocoon only tears once the seven are in; until then a click on it gets a whisper. Axe
  * is the one that runs (src/scripts/chase.ts), and catching him gives a key of one's own.
@@ -35,7 +35,7 @@
  * away from anybody.
  */
 
-/* In the order they have to be found. The riddles (HuntNote.astro) number the same way. */
+/* In the order they have to be found. The riddles (scripts/hunt-notes.ts) number the same way. */
 const HEROES = [
   { id: 'meepo', primary: '#ffb0c8', accent: '#ff8fb3' },
   { id: 'invoker', primary: '#ffffff', accent: '#e0e0e0' },
@@ -444,14 +444,13 @@ const { complete, shared, close, hint, last = false } = Astro.props;
   import { ticket, claim, keptKey } from '../scripts/pumpkin-key';
   import { shriek } from '../scripts/spook-sound';
   import { wear } from '../scripts/look';
+  import { huntAllowed, huntFits, huntGutter } from '../scripts/hunt-room';
 
   const host = document.getElementById('hunt');
   const score = document.getElementById('hunt-score');
   const done = document.getElementById('hunt-done');
-  const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if (host && score && done && fine && !still) {
+  if (host && score && done && huntAllowed()) {
     type Hero = { id: string; primary: string; accent: string };
     const heroes = JSON.parse(host.dataset.heroes!) as Hero[];
     const axe = heroes[heroes.length - 1];
@@ -521,8 +520,8 @@ const { complete, shared, close, hint, last = false } = Astro.props;
       // clientWidth, not innerWidth: innerWidth counts the scrollbar, and a hero placed in
       // that strip is a hero nobody can reach and a horizontal scrollbar for everybody
       const vw = document.documentElement.clientWidth;
-      const gutter = Math.max(0, (vw - Math.min(1200, vw)) / 2);
-      if (gutter < 70) return false;  // no room beside the column: no hunt on a narrow window
+      const gutter = huntGutter(vw);
+      if (!huntFits(vw)) return false;  // no room beside the column: no hunt on a narrow window
 
       seven.forEach((h, i) => {
         if (found.includes(h)) return;

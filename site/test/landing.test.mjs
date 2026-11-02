@@ -350,6 +350,42 @@ test('the order is written across the site while Halloween is in season, a line 
   await context.close();
 });
 
+// #386: a visitor with animations off followed the riddles for an hour on a page that would never
+// place a hero for them. A riddle shows only where the hunt it invites can start.
+test('a riddle never shows without heroes to find', async () => {
+  const cases = [
+    { name: 'a wide desktop', screen: 'desktop', motion: 'no-preference', heroes: true },
+    { name: 'less motion asked for', screen: 'desktop', motion: 'reduce', heroes: false },
+    { name: 'a phone', screen: 'mobile', motion: 'no-preference', heroes: false },
+    { name: 'a 1280 px window, too narrow for the margins', screen: 'desktop', motion: 'no-preference', width: 1280, heroes: false },
+  ];
+  for (const c of cases) {
+    const { context, page } = await openPage(browser, server.url, c.screen, { motion: c.motion });
+    if (c.width) await page.setViewportSize({ width: c.width, height: 900 });
+    await page.addInitScript(() => localStorage.setItem('mm-look', 'halloween'));
+    await page.goto(`${server.url}/`, { waitUntil: 'load' });
+    const heroes = await page.locator('.hunt-hero').count();
+    const riddles = await page.locator('.hunt-note:visible').count();
+    assert.equal(heroes > 0, c.heroes, `${c.name}: ${heroes} heroes placed`);
+    assert.equal(riddles > 0, c.heroes, `${c.name}: ${riddles} riddles shown`);
+    await context.close();
+  }
+
+  // the margins go with a resize and come back with one, and the riddles with them
+  const { context, page } = await openPage(browser, server.url, 'desktop');
+  await page.addInitScript(() => localStorage.setItem('mm-look', 'halloween'));
+  await page.goto(`${server.url}/`, { waitUntil: 'load' });
+  await page.setViewportSize({ width: 1100, height: 900 });
+  await page.waitForTimeout(200);
+  assert.equal(await page.locator('.hunt-hero').count(), 0, 'narrowed: the heroes go');
+  assert.equal(await page.locator('.hunt-note:visible').count(), 0, 'narrowed: the riddles go with them');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(200);
+  assert.ok(await page.locator('.hunt-hero').count() > 0, 'widened: the heroes are back');
+  assert.ok(await page.locator('.hunt-note:visible').count() > 0, 'widened: and the riddles');
+  await context.close();
+});
+
 /** Chase the one that runs (src/scripts/chase.ts) the way a hand would, until it is caught. */
 async function runDown(page, limit = 200_000) {
   const t0 = Date.now();
