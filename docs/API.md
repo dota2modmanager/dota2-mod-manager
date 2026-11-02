@@ -3987,7 +3987,7 @@ A set, as the builder puts it on; see itemSets.
 ### `AssetCopy`
 
 ```ts
-export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[] } | { from: string; to: string; unit: string; skin?: number }
+export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[]; skin?: number } | { from: string; to: string; unit: string; skin?: number }
 ```
 
 A file in the game's archive staged under another path in the built VPK; an `optional` one (a

@@ -62,6 +62,18 @@ function stockModelsOf(text: string, heroes: string[]): Set<string> {
  */
 const FORM = /^models\/heroes\//;
 
+/** The material set the first style's block names ("skin"), as a string, or undefined for none. */
+function firstStyleSkin(visuals: string): string | undefined {
+  let skin: string | undefined;
+  eachChild(visuals, blockBounds(visuals, 0), (c) => {
+    if (!c.isBlock || c.key.toLowerCase() !== 'styles') return;
+    eachChild(visuals, c.body!, (st) => {
+      if (st.isBlock && st.key === '0') eachChild(visuals, st.body!, (f) => { if (!f.isBlock && f.key.toLowerCase() === 'skin') skin ??= f.value; });
+    });
+  });
+  return skin;
+}
+
 /**
  * The files an item's visuals swap, to stage under the plain paths: particles, models, and the
  * hero's own model (an arcana's entity_model) with the item's activity modifiers to take off it;
@@ -102,6 +114,8 @@ export function itemAssets(text: string, visuals: string, heroes: string[], summ
   });
   const typed = (type: string, ...keys: string[]) => mods.filter((f) => (f.get('type') || '').toLowerCase() === type && keys.every((k) => f.get(k)));
   const activities = [...new Set(typed('activity', 'modifier').map((f) => f.get('modifier')!))];
+  // the material set the item wears its hero's body in, which the server leaves at the first (#401)
+  const skin = Number(typed('model_skin', 'skin')[0]?.get('skin') ?? firstStyleSkin(visuals)) || 0;
   const stock = stockModelsOf(text, heroes);
   const models = typed('entity_model', 'asset', 'modifier').filter((f) => heroes.includes(f.get('asset')!.toLowerCase()));
   const summons = summonCopies(typed('entity_model', 'asset', 'modifier')
@@ -118,7 +132,7 @@ export function itemAssets(text: string, visuals: string, heroes: string[], summ
   }
   return {
     assetCopies: [
-      ...models.map((f) => ({ from: f.get('modifier')!, hero: f.get('asset')!.toLowerCase(), activities })),
+      ...models.map((f) => ({ from: f.get('modifier')!, hero: f.get('asset')!.toLowerCase(), activities, ...(skin ? { skin } : {}) })),
       ...summons,
       ...typed('model', 'asset', 'modifier').filter((f) => stock.has(normalizeAssetPath(f.get('asset'))))
         .map((f) => ({ from: f.get('modifier')!, to: f.get('asset')! })),
@@ -261,11 +275,12 @@ export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | nu
     const data = ix.read(from);
     if (!data && 'optional' in copy && copy.optional) continue;
     if (!data) throw new Error(t('Не найден {0}', from));
-    // in the item's material set first (a courier's: src/model-skin.ts), and left out if it has not got it
-    const worn = 'unit' in copy && copy.skin ? withSkin(data, copy.skin) : data;
+    // in the item's material set first (src/model-skin.ts): a unit is left out if it has not got it,
+    // a hero's body goes in as it is, since a body in the wrong colours beats the plain hero
+    const worn = 'unit' in copy && copy.skin ? withSkin(data, copy.skin) : 'hero' in copy && copy.skin ? withSkin(data, copy.skin) ?? data : data;
     // the resolver saw it numbered (summonModels); a game changed since would leave the unit plain
     const bytes = 'unit' in copy ? worn && numberedAs(worn, ix.read(to) ?? Buffer.alloc(0))
-      : 'hero' in copy ? heroModelBytes(data, copy.activities) : data;
+      : 'hero' in copy ? heroModelBytes(worn!, copy.activities) : data;
     if (!bytes) continue;
     out.push(entryAt(to, bytes));
     seen.add(to);
