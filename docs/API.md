@@ -5349,6 +5349,15 @@ the same name (written any case, with or without underscores) or, failing that, 
 activity (the plain run is Infernus's runx); the rest
 follow in their own order, and every reference into the list is moved with its entry.
 
+A plain name with nothing left in the item to stand for it gets a stand-in: a copy of the item's
+own sequence for that activity, under the plain name, so one clip answers to two numbers. The
+flying donkey runs two ways (donkey_wings_run, donkey_wings_run_alt) and a courier flies one; the
+plain donkey idles two ways and many couriers one. Without stand-ins those models were dropped
+whole, and 143 of 216 couriers went back to the donkey for their flight, their walk or both
+(#403). A name the server never sends, a part with no activity, holds its place with the item's
+bind pose. A model with no run or no idle of its own still gets none: the donkey beats a courier
+standing still while it travels.
+
 ### `numberedAs`
 
 ```ts
@@ -5356,7 +5365,7 @@ export function numberedAs(model: Buffer, plain: Buffer): Buffer | null
 ```
 
 `model` with its sequences numbered as `plain` numbers its own, or null where that cannot be
-done: a plain sequence with nothing in the model to stand for it, a list either one has not got,
+done: a plain run or idle with nothing in the model to play it, a list either one has not got,
 or sequences of kinds this does not move the references of (multi, synth, command).
 
 ## src/model-skin.ts

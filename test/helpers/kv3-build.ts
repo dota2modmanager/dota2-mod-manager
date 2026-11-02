@@ -16,7 +16,9 @@ import { resourceId } from '../../src/resource.ts';
  */
 export type V = { int: number } | { i32s: number[] } | { str: string } | { yes: true } | { one: true } | { dbl: number }
   | { i64: number } | { i64zero: true } | { f64s: number[] } | { blob: Buffer } | { obj: [string, V][] } | { arr: V[] }
-  | { ref: string } | { bool: boolean } | { objs: [string, V][][] } | { i32rows: number[][] } | { u32bit: 0 | 1 };
+  | { ref: string } | { bool: boolean } | { objs: [string, V][][] } | { i32rows: number[][] } | { u32bit: 0 | 1 }
+  // a typed array of 1s held in its element type (INT64_ONE) alone, as the compiler writes [1]
+  | { typedOnes: number };
 
 const TRAILER = 0xffeedd00;
 const u32 = (n: number) => { const b = Buffer.alloc(4); b.writeUInt32LE(n >>> 0); return b; };
@@ -39,12 +41,13 @@ export function encodeKv3(root: V, version: 1 | 2 | 5 = 2): Buffer {
   const lens: number[] = []; // version 5 keeps the objects' member counts apart
   let arrays = 0;
   const typeOf = (v: V): number => ('int' in v ? 11 : 'i32s' in v ? 10 : 'str' in v ? 6 : 'yes' in v ? 13 : 'one' in v ? 18 : 'dbl' in v ? 5
-    : 'i64' in v ? 3 : 'i64zero' in v ? 15 : 'f64s' in v ? 10 : 'blob' in v ? 7 : 'obj' in v ? 9 : 'ref' in v ? 6 : 'bool' in v ? 2 : 'objs' in v || 'i32rows' in v ? 10 : 'u32bit' in v ? 26 + v.u32bit : 8);
+    : 'i64' in v ? 3 : 'i64zero' in v ? 15 : 'f64s' in v ? 10 : 'blob' in v ? 7 : 'obj' in v ? 9 : 'ref' in v ? 6 : 'bool' in v ? 2 : 'objs' in v || 'i32rows' in v || 'typedOnes' in v ? 10 : 'u32bit' in v ? 26 + v.u32bit : 8);
   // a string that names a resource carries a flag after its type (bit 1 before version 3)
   const typed = (v: V) => ('ref' in v ? types.push(6 | 0x80, 1) : types.push(typeOf(v)));
   const body = (v: V): void => {
     if ('int' in v) l4.push(v.int);
     else if ('i32s' in v) { l4.push(v.i32s.length); types.push(11); l4.push(...v.i32s); }
+    else if ('typedOnes' in v) { l4.push(v.typedOnes); types.push(16); }
     else if ('f64s' in v) { l4.push(v.f64s.length); types.push(5); l8.push(...v.f64s.map((x): [number, boolean] => [x, true])); }
     else if ('str' in v) l4.push(sid(v.str));
     else if ('ref' in v) l4.push(sid(v.ref));
