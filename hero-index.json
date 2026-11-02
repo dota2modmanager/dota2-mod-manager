@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1710,
+  "mods": 1716,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -230,6 +230,7 @@
         {"name":"Broodmother Immortal Antiquity","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Redan","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Shaker Spiderlings","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"Broodmother Sharp Rose","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Silken Queen","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Broodmother Undermount Candles","categoryId":"heroes","styleLabel":null,"slots":["misc","legs","head","back"]},
         {"name":"Broodmother Undermount Gloom","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
@@ -377,6 +378,7 @@
         {"name":"Dawnbreaker Death Knight","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
         {"name":"Dawnbreaker Moonbreaker","categoryId":"heroes","styleLabel":null,"slots":["arms","weapon","head"]},
         {"name":"Dawnbreaker Starlorn Adjudicator","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon"]},
+        {"name":"Light Blue Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Pink Spell Radius","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Purple Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Red Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
@@ -649,6 +651,7 @@
         {"name":"Grimstroke Arong","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","legs","weapon","belt"]},
         {"name":"Grimstroke Gloom Shroud","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","weapon"]},
         {"name":"Grimstroke Purple","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","weapon","misc","belt"]},
+        {"name":"Grimstroke The Chained Scribe","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","weapon"]},
         {"name":"Immortal Grimstroke","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","weapon","misc","belt"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -765,6 +768,7 @@
         {"name":"Invoker Pack 1","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Patchouli","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder","shield","belt","legs"]},
         {"name":"Invoker Ronaldo","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
+        {"name":"Invoker True Form","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Wyrdwing Exort","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Japan Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","legs"]},
         {"name":"Sasuke Invoker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","misc","belt","shield","legs"]},
@@ -1428,7 +1432,8 @@
         {"name":"Phantom Lancer Pose","categoryId":"hero-items","styleLabel":null,"slots":[]},
         {"name":"Phantom Lancer Purple Avilliva","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Phantom Lancer Ravenblight","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
-        {"name":"Phantom Lancer Sun Warrior","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","shoulder","weapon"]}
+        {"name":"Phantom Lancer Sun Warrior","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","shoulder","weapon"]},
+        {"name":"Phantom Lancer Yatoro","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]}
       ]
     },
     "pheonix": {"name":"Pheonix","mods":[{"name":"Ice Phoenix","categoryId":"heroes","styleLabel":null,"slots":[]}]},
@@ -1805,6 +1810,7 @@
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Dark Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Light Blue Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Pink Spell Radius","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Purple Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
