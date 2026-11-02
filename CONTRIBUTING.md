@@ -60,6 +60,47 @@ refuses to write outside `sandbox/`, the temp folder and `e2e-output/`, whatever
 (`src/write-jail.ts`). Please keep it that way in your own changes: a test that needs a
 real game folder is a test nobody else can run.
 
+## Driving the window from a script
+
+The app can walk its own window to a state and take a picture of it, which is how a change to a
+screen is shown in a pull request and how CI checks the installer it built. Every switch is an
+environment variable, read in `src/dev-harness.ts` and nowhere near a normal start: none does
+anything unless it is set. They run in the order of the table, after the page has loaded.
+
+<!-- dev-switches: test/dev-switches.test.js checks this table against src/dev-harness.ts -->
+| Switch | Takes | What it does |
+|---|---|---|
+| `MM_SHOT` | a path to a `.png` | Takes the picture, about ten seconds after start, once the switches below have run. Anything that goes wrong is written to `<path>.err.txt` |
+| `MM_QUIET` | `1` | Keeps the window hidden for a run after numbers rather than a picture. A hidden window does not animate |
+| `MM_VIEW` | `catalog`, `library`, `presets` or `settings` | Opens that tab |
+| `MM_CAT` | a catalog category id | Picks it in the catalog's rail (`.rail-item[data-cat]`) |
+| `MM_SEARCH` | text | Types it into the title-bar search |
+| `MM_CLICK` | CSS selectors split by `\|\|` | Clicks each, in order |
+| `MM_HOVER` | a selector, or `x,y` | Parks the pointer there, for a hover state |
+| `MM_MENU` | a selector | Presses the right button on it, for the menu it opens |
+| `MM_DRAG` | `x1,y1,x2,y2` | Presses, moves and releases the left button |
+| `MM_WHEEL` | `x,y,deltaY[,ctrl]`, several split by `;` | Turns the wheel at a point |
+| `MM_UPDATE` | `type:version`, e.g. `portable:2.3.0` | Raises the update bar without a real release |
+| `MM_SCROLL` | a number of pixels | Scrolls the first scrollable pane by it |
+| `MM_MODAL` | a mod's name, exactly as its card shows it | Opens that card |
+| `MM_PREVIEW` | `1` | With `MM_MODAL`, plays the mod's preview |
+| `MM_EVAL` | JavaScript, `await` allowed | Runs in the finished page; what it returns is written to `<path>.eval.json` |
+| `MM_SIM` | scenario names from `tools/sim/scenarios`, split by `,` | Runs those scenarios instead of a picture; results go to `MM_SIM_OUT` |
+| `MM_REC` | a folder | Films the scenes of `tools/screencast-scenes.js` into it, one webm each, then quits |
+| `MM_SCENE` | scene names, split by `,` | With `MM_REC`, films only those |
+
+A picture of My mods with a row's menu open, against the sandbox:
+
+```bash
+MM_SHOT=shot.png MM_VIEW=library MM_MENU='.lib-row[data-row] .lib-pak' npm run start:sandbox
+```
+
+A picture proves a layout. `MM_EVAL` proves the text, the language and the state, and it is the one
+that catches real bugs: `MM_EVAL='return document.querySelectorAll(".lib-row").length'` writes the
+number of rows beside the picture. The app stays open after the picture; close it, or run it under
+`timeout`. Started from a terminal inside VS Code, unset `ELECTRON_RUN_AS_NODE` first, or Electron
+runs as plain Node and no window opens.
+
 ## Tests
 
 ```bash
