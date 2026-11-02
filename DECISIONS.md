@@ -500,6 +500,21 @@ it the radar asks again.
 *Check:* `osv-scanner.toml`, `npm ls sprintf-js`, and `acceptedAdvisories` in `tools/radar.mjs`
 with its test in `test/radar.test.js`.
 
+### A second advisory in the build tools, fixed only in a major they do not take
+
+`minimatch` (GHSA-g3hv-75wg-m249, moderate) is fixed in 11.0.1 and in no older line. Every tool
+here that uses it asks for one: `electron-builder` 26 and 27-alpha bring 3.x, 5.x, 9.x and 10.x
+through `app-builder-lib`, `@electron/asar`, `@electron/universal` and `ejs`, and `eslint` 10.14
+asks for ^10. An override to 11 is not a fix: the 3.x callers call the module itself, and 11
+exports a name. The flaw is a slow match on a glob pattern an attacker writes, and the patterns
+here come from the build and lint configs in this repository. `npm ls minimatch --omit=dev` is
+empty, so none of it ships inside the app.
+
+It is accepted in `osv-scanner.toml` until 2027-01-08, the same date as `sprintf-js`, so both
+come back as questions together, around when `electron-builder` 27 is out of alpha.
+
+*Check:* `osv-scanner.toml`, `npm ls minimatch` and `npm ls minimatch --omit=dev`.
+
 ### The installer is not signed
 
 Windows SmartScreen says "unknown publisher" on first run. SignPath Foundation, which signs open
