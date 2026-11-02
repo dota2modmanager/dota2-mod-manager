@@ -55,6 +55,11 @@ export const HERO_ALIAS: Readonly<Record<string, string>> = {
   drow: 'drow_ranger', gyro: 'gyrocopter', blood_seeker: 'bloodseeker', lanaya: 'templar_assassin',
   tuskarr: 'tusk', vengeful: 'vengefulspirit', rikimaru: 'riki', siren: 'naga_siren',
   bard: 'largo', sandking: 'sand_king',
+  // Folders Valve itself files a hero under besides its own: Legion Commander's item effects are
+  // in particles/econ/items/legion, Witch Doctor's in .../witchdoctor, and Tiny's four growth
+  // stages each have a model folder, tiny_01 to tiny_04. Read by tools/dota-diff.mjs (#228).
+  legion: 'legion_commander', witchdoctor: 'witch_doctor',
+  tiny_01: 'tiny', tiny_02: 'tiny', tiny_03: 'tiny', tiny_04: 'tiny',
 };
 
 /** What people call a hero the game or an author files as `id` (skeleton_king -> Wraith King). */
