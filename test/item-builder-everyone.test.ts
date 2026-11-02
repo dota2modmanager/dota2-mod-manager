@@ -197,3 +197,18 @@ test('a pak with one model under many paths stores the bytes once, and reads bac
   assert.equal(back.length, 5);
   for (const en of back) assert.ok(en.data.equals(model), entryPath(en));
 });
+
+// #402: the server sends another player's item with the style they wear it in. The user's pick in
+// its first style still carried the second style's entries, so another player's Blade of the
+// Wandering Demon in its second style showed the second style's particles on the user's sword.
+test("another player's item shows the user's style whatever style its owner wears it in", () => {
+  const block = item('7', "Juggernaut's Weapon", 'default_item', 'weapon', 'models/heroes/juggernaut/jugg_sword.vmdl', [
+    modifier({ type: 'particle_create', modifier: 'particles/econ/items/juggernaut/picked/blue.vpcf', style: '0' }),
+    modifier({ type: 'particle_create', modifier: 'particles/econ/items/juggernaut/picked/orange.vpcf', style: '1' }),
+  ].join('\n')).trim();
+  const out = wears([{ id: '7', block, assets: [entryAt(SWORD, Buffer.from('the sword the user picked'))], source: 'Picked Sword' }]);
+  const demon = of(out, '6058').block;
+  assert.match(demon, /blue\.vpcf/, "the user's style");
+  assert.doesNotMatch(demon, /orange\.vpcf/, 'not the one its owner may wear');
+  assert.doesNotMatch(demon, /"style"\s+"\d+"/, 'and nothing in it waits for a style');
+});

@@ -21,7 +21,9 @@
  * - nothing, where neither has a model: a store head sat on the arcana's. Nothing is Valve's own
  *   invisible box, the one Monkey King's transformation hides his wearables with.
  * Its block in the table becomes the pick's, else the stock item's, keeping its own name and
- * picture, so its own particles do not hang off our model.
+ * picture, so its own particles do not hang off our model; and it is the same in every style its
+ * owner can wear it in, since the server sends their style with it, not the user's
+ * (src/item-builder-styles.ts inEveryStyle).
  *
  * An arcana that swaps the hero's body (an entity_model naming the hero) is dressed too, in the slot
  * it sits in (Planetfall in hero_base, under Earthshaker's Base). The server sets that body on its
@@ -49,6 +51,7 @@
 import { listItems, inferredItemSlot, type SchemaItem, type SchemaPatch } from './schema.ts';
 import { canonicalItemSlot, isPersonaItem, itemHeroes } from './item-builder-slots.ts';
 import { asItem } from './item-builder.ts';
+import { blockInEveryStyle } from './item-builder-styles.ts';
 import { heroModelPath, normalizeAssetPath } from './item-builder-assets.ts';
 import { entryAt, entryPath, type VpkEntry } from './vpk.ts';
 
@@ -196,7 +199,8 @@ export function everyoneWears(text: string, list: SchemaPatch[], beneath: VpkEnt
     if (!assets.length) continue;
     out.push({
       id: item.id,
-      block: asItem(blocks.get(stock.id) ?? text.slice(stock.start, stock.end), text, item, item.model),
+      // in whatever style its owner wears it: the server sends theirs, and ours is the first (#402)
+      block: blockInEveryStyle(asItem(blocks.get(stock.id) ?? text.slice(stock.start, stock.end), text, item, item.model), raw),
       assets,
       source: `${stock.name}: everybody's`,
     });
