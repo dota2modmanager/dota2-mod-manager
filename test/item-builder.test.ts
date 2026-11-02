@@ -710,6 +710,37 @@ function arcanaTable() {
   ]);
 }
 
+// #401: The Resurrection of Shen wears Vengeful Spirit's body in material set 1 in its second
+// style, the purple one. Online the server draws the body at the hero's path in set 0, so the body
+// put there has to wear the picked set as its first; it went in as it was, and came out orange.
+function skinnedArcana(withModelSkin: boolean) {
+  const venge = `\t\t\t"used_by_heroes"\n\t\t\t{\n\t\t\t\t"npc_dota_hero_vengefulspirit"\t\t"1"\n\t\t\t}\n`;
+  const entry = (fields: [string, string][]) => `\t\t\t\t"asset_modifier"\n\t\t\t\t{\n${fields.map(([k, v]) => `\t\t\t\t\t"${k}"\t\t"${v}"\n`).join('')}\t\t\t\t}\n`;
+  const body = 'models/items/vengefulspirit/arcana/arcana.vmdl';
+  return table([
+    `\t\t"445"\n\t\t{\n\t\t\t"name"\t\t"Vengeful Spirit's Shoulders"\n\t\t\t"prefab"\t\t"default_item"\n\t\t\t"item_slot"\t\t"shoulder"\n\t\t\t"model_player"\t\t"models/heroes/vengeful/vengeful_upperbody.vmdl"\n${venge}\t\t}\n`,
+    `\t\t"22718"\n\t\t{\n\t\t\t"name"\t\t"Wings"\n\t\t\t"prefab"\t\t"wearable"\n\t\t\t"item_rarity"\t\t"arcana"\n\t\t\t"item_slot"\t\t"shoulder"\n\t\t\t"model_player"\t\t"models/items/vengefulspirit/arcana/wings.vmdl"\n${venge}`
+      + `\t\t\t"visuals"\n\t\t\t{\n`
+      + entry([['type', 'entity_model'], ['asset', 'npc_dota_hero_vengefulspirit'], ['modifier', body], ['style', '0']])
+      + entry([['type', 'entity_model'], ['asset', 'npc_dota_hero_vengefulspirit'], ['modifier', body], ['style', '1']])
+      + (withModelSkin ? entry([['type', 'model_skin'], ['style', '0'], ['skin', '0']]) + entry([['type', 'model_skin'], ['style', '1'], ['skin', '1']]) : '')
+      + `\t\t\t\t"styles"\n\t\t\t\t{\n`
+      + `\t\t\t\t\t"0"\n\t\t\t\t\t{\n\t\t\t\t\t\t"name"\t\t"#Orange"\n${withModelSkin ? '' : '\t\t\t\t\t\t"skin"\t\t"0"\n'}\t\t\t\t\t}\n`
+      + `\t\t\t\t\t"1"\n\t\t\t\t\t{\n\t\t\t\t\t\t"name"\t\t"#Purple"\n${withModelSkin ? '' : '\t\t\t\t\t\t"skin"\t\t"1"\n'}\t\t\t\t\t}\n`
+      + `\t\t\t\t}\n\t\t\t}\n\t\t}\n`,
+  ]);
+}
+
+test("an arcana's hero body is worn in the material set of the style picked, from model_skin or the style's own block", () => {
+  for (const withModelSkin of [true, false]) {
+    const text = skinnedArcana(withModelSkin);
+    const body = (effect: string) => builder.itemEffectPatch(text, '22718', effect).assetCopies.find((c) => 'hero' in c);
+    assert.deepEqual(body('style-1'), { from: 'models/items/vengefulspirit/arcana/arcana.vmdl', hero: 'npc_dota_hero_vengefulspirit', activities: [], skin: 1 },
+      `the second style's set (${withModelSkin ? 'model_skin' : 'styles block'})`);
+    assert.equal(body('')!.skin, undefined, 'the first style is the set the body wears already');
+  }
+});
+
 test('an arcana is offered and dresses the stock item of its slot, the hero base most of them sit in', () => {
   /* Arcanas used to be left out by their name, and hero_base with them: twelve heroes have a stock
      "<Hero>'s Base" for an arcana to dress, and none of it was offered. */
