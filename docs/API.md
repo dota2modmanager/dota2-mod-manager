@@ -3706,7 +3706,9 @@ file the user's hero wears in its slot, at each model path its block names, its 
 - nothing, where neither has a model: a store head sat on the arcana's. Nothing is Valve's own
   invisible box, the one Monkey King's transformation hides his wearables with.
 Its block in the table becomes the pick's, else the stock item's, keeping its own name and
-picture, so its own particles do not hang off our model.
+picture, so its own particles do not hang off our model; and it is the same in every style its
+owner can wear it in, since the server sends their style with it, not the user's
+(src/item-builder-styles.ts inEveryStyle).
 
 An arcana that swaps the hero's body (an entity_model naming the hero) is dressed too, in the slot
 it sits in (Planetfall in hero_base, under Earthshaker's Base). The server sets that body on its
@@ -4155,6 +4157,30 @@ The visuals with style `style` made the item's only one, and the model that styl
 item instead of its own (null: its own). Style 0, or a style the item has not got, leaves the
 visuals as they are (`applied` false): the builder strips the styles, which leaves the item in
 its first.
+
+### `inEveryStyle`
+
+```ts
+export function inEveryStyle(visuals: string, count: number): string
+```
+
+A built item's visuals as they look whatever style it is worn in: its first style's entries with
+their mark taken off, every other style's taken out, and the first style's block under each of
+the `count` numbers the worn item can be in.
+
+For another player's item dressed in the user's look (src/item-builder-everyone.ts). The server
+sends the style the player chose in the game, not the user's: another player's Bracers of the
+Cavern Luminar in their second style, under the user's block with both styles in it, was drawn
+with the second style's orange particles and the parts of it the build had not copied (#402).
+The first style is the user's: the builder writes a pick in another one as the first (withStyle).
+
+### `blockInEveryStyle`
+
+```ts
+export function blockInEveryStyle(block: string, worn: string): string
+```
+
+A built item block worn as `worn` (an item block of the game's), in every style `worn` has (inEveryStyle).
 
 ## src/item-builder.ts
 

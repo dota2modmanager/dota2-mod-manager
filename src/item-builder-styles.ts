@@ -47,30 +47,82 @@ export const styleOf = (key: string): number => Number(/(?:^|,)style-(\d+)(?:,|$
  */
 export function withStyle(visuals: string, style: number): { visuals: string; model: string | null; applied: boolean } {
   const block = stylesBlock(visuals);
-  let own: KvChild | null = null;
-  if (block && style > 0) eachChild(visuals, block.body!, (s) => { if (s.isBlock && s.key === String(style)) own = s; });
+  const own = block && style > 0 ? styleChild(visuals, block, style) : null;
   if (!block || !own) return { visuals, model: null, applied: false };
-  const chosen = own as KvChild;
+  return { ...onlyStyle(visuals, block, own, style, '0', 1), applied: true };
+}
+
+/**
+ * A built item's visuals as they look whatever style it is worn in: its first style's entries with
+ * their mark taken off, every other style's taken out, and the first style's block under each of
+ * the `count` numbers the worn item can be in.
+ *
+ * For another player's item dressed in the user's look (src/item-builder-everyone.ts). The server
+ * sends the style the player chose in the game, not the user's: another player's Bracers of the
+ * Cavern Luminar in their second style, under the user's block with both styles in it, was drawn
+ * with the second style's orange particles and the parts of it the build had not copied (#402).
+ * The first style is the user's: the builder writes a pick in another one as the first (withStyle).
+ */
+export function inEveryStyle(visuals: string, count: number): string {
+  // a pick in its first style is written with the styles block taken out and its entries still
+  // marked: with no block to copy, the entries are what decides
+  const block = stylesBlock(visuals);
+  const own = block && styleChild(visuals, block, 0);
+  return onlyStyle(visuals, own ? block : null, own, 0, null, Math.max(1, count)).visuals;
+}
+
+/** An item block's visuals, by where they sit in it, or null for an item with none. */
+function visualsOf(block: string): KvChild | null {
+  let hit: KvChild | null = null;
+  eachChild(block, blockBounds(block, 0), (c) => { if (!hit && c.isBlock && c.key.toLowerCase() === 'visuals') hit = c; });
+  return hit;
+}
+
+/** A built item block worn as `worn` (an item block of the game's), in every style `worn` has (inEveryStyle). */
+export function blockInEveryStyle(block: string, worn: string): string {
+  const at = visualsOf(block);
+  if (!at) return block;
+  const own = visualsOf(worn);
+  const count = own ? styleTokens(worn.slice(own.start, own.end)).length : 0;
+  const visuals = block.slice(at.start, at.end);
+  return block.slice(0, at.start) + inEveryStyle(visuals, count) + block.slice(at.end);
+}
+
+function styleChild(visuals: string, block: KvChild, style: number): KvChild | null {
+  let own: KvChild | null = null;
+  eachChild(visuals, block.body!, (s) => { if (!own && s.isBlock && s.key === String(style)) own = s; });
+  return own;
+}
+
+/**
+ * The visuals with `style`'s entries kept, marked `mark` (null: unmarked, so in any style), every
+ * other style's taken out, and its own block written under the numbers 0 to `copies` - 1.
+ */
+function onlyStyle(visuals: string, block: KvChild | null, chosen: KvChild | null, style: number, mark: string | null, copies: number): { visuals: string; model: string | null } {
   const fields: string[] = [];
   let model: string | null = null;
-  eachChild(visuals, chosen.body!, (f) => {
+  if (chosen) eachChild(visuals, chosen.body!, (f) => {
     if (OWNER_ONLY.has(f.key.toLowerCase())) return;
     if (!f.isBlock && f.key.toLowerCase() === 'model_player') model = f.value ?? null;
     fields.push(visuals.slice(f.start, f.end));
   });
-  const cuts: { start: number; end: number; text: string }[] = [
-    { start: block.start, end: block.end, text: `"styles"\r\n{\r\n"0"\r\n{\r\n${fields.join('\r\n')}\r\n}\r\n}` },
-  ];
+  const styles = Array.from({ length: copies }, (_, i) => `"${i}"\r\n{\r\n${fields.join('\r\n')}\r\n}`).join('\r\n');
+  const cuts: { start: number; end: number; text: string }[] = block
+    ? [{ start: block.start, end: block.end, text: `"styles"\r\n{\r\n${styles}\r\n}` }]
+    : [];
+  // a cut that takes a whole entry or line takes the whitespace before it with it
+  const lineStart = (at: number) => at - (/[ \t]*\r?\n[ \t]*$/.exec(visuals.slice(0, at))?.[0].length ?? 0);
   eachChild(visuals, blockBounds(visuals, 0), (c) => {
     if (!c.isBlock || !MODIFIER.test(c.key)) return;
-    let at: string | null = null;
-    eachChild(visuals, c.body!, (f) => { if (!f.isBlock && f.key.toLowerCase() === 'style') at = f.value ?? ''; });
+    let at: KvChild | null = null;
+    eachChild(visuals, c.body!, (f) => { if (!f.isBlock && f.key.toLowerCase() === 'style') at = f; });
     if (at === null) return;
-    const text = visuals.slice(c.start, c.end);
-    if (at === String(style)) cuts.push({ start: c.start, end: c.end, text: text.replace(/("style"\s+")\d+(")/i, '$10$2') });
-    else cuts.push({ start: c.start - (/[ \t]*\r?\n[ \t]*$/.exec(visuals.slice(0, c.start))?.[0].length ?? 0), end: c.end, text: '' }); // its line too
+    const mine = at as KvChild;
+    if (mine.value !== String(style)) { cuts.push({ start: lineStart(c.start), end: c.end, text: '' }); return; }
+    if (mark === null) cuts.push({ start: lineStart(mine.start), end: mine.end, text: '' });
+    else if (mark !== String(style)) cuts.push({ start: mine.start, end: mine.end, text: visuals.slice(mine.start, mine.end).replace(/("style"\s+")\d+(")/i, `$1${mark}$2`) });
   });
   let out = visuals;
   for (const cut of cuts.sort((a, b) => b.start - a.start)) out = out.slice(0, cut.start) + cut.text + out.slice(cut.end);
-  return { visuals: out, model, applied: true };
+  return { visuals: out, model };
 }
