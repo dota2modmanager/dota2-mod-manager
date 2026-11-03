@@ -740,8 +740,8 @@
     },
     {
       "name": "a resolved preset folds the cosmetic picks into the build",
-      "file": "src/ipc-presets.ts",
-      "anchor": "ipcMain.handle('presets:resolve', async (e, id) => {",
+      "file": "src/preset-install.ts",
+      "anchor": "async function resolve(",
       "from": ".filter((r): r is LibRecord => Library.inPreset(r));",
       "to": ".filter((r): r is LibRecord => !!r);",
       "test": "test/ipc-presets.test.ts"

@@ -10,9 +10,16 @@ import { readPresetFile } from './preset-share.ts';
 import { installVpkBuffer } from './import.ts';
 import { t } from './i18n.ts';
 import { errorText } from './error-text.ts';
+import { isWindowRecord } from './arcana-base-color.ts';
 import type { AppContext } from './app-context.ts';
 import type { CatalogIndex } from './presets-service.ts';
 import type { LibRecord, ModIdentity, Preset, PresetEntry } from './types.ts';
+
+/** Does changing this record mean the item table has to be rebuilt? */
+export function touchesSchema(rec: LibRecord): boolean {
+  // the arcana window's record sets the colour the builder puts Terrorblade's base on in
+  return rec.categoryId === 'cosmetic' || (Array.isArray(rec.schema) && rec.schema.length > 0) || isWindowRecord(rec);
+}
 
 /** What the preset flows need from the app. */
 export type PresetInstallDeps = Pick<AppContext, 'installer' | 'library' | 'schemaService' | 'presets'

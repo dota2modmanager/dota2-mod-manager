@@ -32,6 +32,7 @@ the code, not in this page.
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
 | [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
 | [`src/channel-args.ts`](#srcchannel-argsts) | What each channel may be handed, checked before its handler runs (src/window-guard.ts). |
+| [`src/cli.ts`](#srcclits) | The command line (issue #436): put a preset on, list the mods, or switch them all off, with no |
 | [`src/cosmetic-names.ts`](#srccosmetic-namests) | Display names come from Valve's installed localization, while schema names remain the keys |
 | [`src/courier-models.ts`](#srccourier-modelsts) | A courier look's models, under the Default Courier's paths. |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
@@ -122,6 +123,7 @@ the code, not in this page.
 | [`src/patcher.ts`](#srcpatcherts) | Search-path patch: registers an extra content folder ahead of the game's own, which |
 | [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
 | [`src/presence-status.ts`](#srcpresence-statusts) | What the user's Discord profile says while the app is open: which screen they are on, and how |
+| [`src/preset-install.ts`](#srcpreset-installts) | Putting a preset on: an own one whose mods may have gone, or a received one that is still a |
 | [`src/preset-link.ts`](#srcpreset-linkts) | Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed |
 | [`src/preset-plan.ts`](#srcpreset-plants) | How a preset travels to somebody else (src/presets-service.ts applies, packs and receives |
 | [`src/preset-share.ts`](#srcpreset-sharets) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
@@ -1326,6 +1328,125 @@ export function checkArgs(channel: string, args: unknown[]): string | null
 
 Check one call. Fewer arguments than the channel takes is fine when the missing ones are
 optional; more is not, because no caller in the window sends them.
+
+## src/cli.ts
+
+The command line (issue #436): put a preset on, list the mods, or switch them all off, with no
+window. For scripts, LAN setups and Steam Deck desktop mode.
+
+  dota2-mod-manager --apply "d2mm://preset/..."   install the preset's mods and put it on
+  dota2-mod-manager --list                        every mod in My mods, on or off
+  dota2-mod-manager --disable-all                 every mod and look off, kept in My mods
+
+`--headless` may go along with any of them and changes nothing: none of them opens a window.
+The run goes through what the window uses (src/preset-install.ts, the installer, the library),
+so the write jail, the file journal and the remote switches hold here too. It starts after the
+game folder has been put right (src/game-upkeep.ts), the way a window would find it.
+
+Exit codes: 0 done; 1 failed, one line on stderr; 2 done without some of it, one line per thing
+left out; 3 the app is already open; 64 a command line it does not understand.
+
+### `CliCommand`
+
+```ts
+export type CliCommand = { run: 'apply'; link: string } | { run: 'list' } | { run: 'disable-all' }
+```
+
+What the command line asked for.
+
+### `CLI_OK`
+
+```ts
+export const CLI_OK = 0
+```
+
+Exit code: done.
+
+### `CLI_FAILED`
+
+```ts
+export const CLI_FAILED = 1
+```
+
+Exit code: failed, one line on stderr.
+
+### `CLI_PARTLY`
+
+```ts
+export const CLI_PARTLY = 2
+```
+
+Exit code: done without some of it, one stderr line per thing left out.
+
+### `CLI_BUSY`
+
+```ts
+export const CLI_BUSY = 3
+```
+
+Exit code: the app is already open and holds the library.
+
+### `CLI_USAGE`
+
+```ts
+export const CLI_USAGE = 64
+```
+
+Exit code: a command line it does not understand.
+
+### `cliCommand`
+
+```ts
+export function cliCommand(argv: readonly string[]): CliCommand | { run: 'usage'; why: string } | null
+```
+
+The command in a command line, null when it holds none (an ordinary start), or why it cannot
+be run. Everything else on the line (Electron's and Chromium's switches, --write-jail, the
+app folder) is left to whoever reads it.
+
+### `CliOut`
+
+```ts
+export interface CliOut { out(line: string): void; err(line: string): void }
+```
+
+Where the run's lines go: stdout for answers, stderr for what went wrong.
+
+### `CliDeps`
+
+```ts
+export type CliDeps = PresetInstallDeps & { schemaService: PresetInstallDeps['schemaService'] & { settled(): Promise<unknown> } }
+```
+
+What a run needs on top of the preset flows: the table build to wait for before exiting.
+
+### `runCli`
+
+```ts
+export async function runCli(cmd: CliCommand, deps: CliDeps, io: CliOut): Promise<number>
+```
+
+Run one command to the end, the item table included.
+
+```
+@returns the exit code
+```
+
+### `exitWithCli`
+
+```ts
+export async function exitWithCli( cmd: NonNullable<ReturnType<typeof cliCommand>>, deps: CliDeps, app: { exit(code?: number): void }, io: CliOut = stdio, ): Promise<void>
+```
+
+Run the command line's command and exit with its code. A line it cannot read exits at once.
+
+### `cliBusy`
+
+```ts
+export function cliBusy(app: { exit(code?: number): void }, io: CliOut = stdio): void
+```
+
+A second copy started with a command: the open one holds the library, so it says so and goes.
 
 ## src/cosmetic-names.ts
 
@@ -6882,6 +7003,45 @@ export function createPresenceStatus({ presence, settings, library, installer }:
 
 The status kept in step with the app: the setting that turns it off, and the screen it names.
 
+## src/preset-install.ts
+
+Putting a preset on: an own one whose mods may have gone, or a received one that is still a
+wish list. The Presets screen (src/ipc-presets.ts) and the command line (src/cli.ts) both go
+through here, so `--apply` from a script does exactly what the button does: the same catalog
+downloads, the same one-cursor rule, the same table built once at the end.
+
+### `touchesSchema`
+
+```ts
+export function touchesSchema(rec: LibRecord): boolean
+```
+
+Does changing this record mean the item table has to be rebuilt?
+
+### `PresetInstallDeps`
+
+```ts
+export type PresetInstallDeps = Pick<AppContext, 'installer' | 'library' | 'schemaService' | 'presets'
+```
+
+What the preset flows need from the app.
+
+### `PresetApplied`
+
+```ts
+export type PresetApplied = { ok: true; installed: number; missing?: string[]; errors: string[] } | { error: string }
+```
+
+How applying went: the counts, and what was left out and why.
+
+### `createPresetInstall`
+
+```ts
+export function createPresetInstall({ installer, library, schemaService, presets, adoptImportedFiles, afterDeployMaster, disableOtherCursors, sendProgress, blocked, }: PresetInstallDeps)
+```
+
+The two ways a preset goes on, over the app's services.
+
 ## src/preset-link.ts
 
 Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed
@@ -7069,6 +7229,8 @@ window, reachable only through the process that owns that window, and testable o
 launching the app. The bodies below are the same bodies; what changed is that the services
 they use arrive as arguments instead of as variables that happen to be in scope.
 
+Hands on from [`src/preset-install.ts`](#srcpreset-installts): `touchesSchema`.
+
 Hands on from [`src/preset-plan.ts`](#srcpreset-plants): `categoryModList`, `CatalogIndex`, `ShareEntry`.
 
 ### `PresetInstaller`
@@ -7086,14 +7248,6 @@ export function packableRecord(rec: LibRecord | null | undefined): rec is LibRec
 ```
 
 Can this record go into a pack? Packs, fonts and cursors cannot; a lang-folder VPK can.
-
-### `touchesSchema`
-
-```ts
-export function touchesSchema(rec: LibRecord): boolean
-```
-
-Does changing this record mean the item table has to be rebuilt?
 
 ### `presetIsOn`
 

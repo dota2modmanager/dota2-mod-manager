@@ -14,18 +14,22 @@
  * left out; 3 the app is already open; 64 a command line it does not understand.
  */
 import { FileTx } from './file-tx.ts';
-import { touchesSchema } from './presets-service.ts';
-import { createPresetInstall, type PresetInstallDeps } from './preset-install.ts';
+import { createPresetInstall, touchesSchema, type PresetInstallDeps } from './preset-install.ts';
 import { errorText } from './error-text.ts';
 import type { Preset, PresetEntry } from './types.ts';
 
 /** What the command line asked for. */
 export type CliCommand = { run: 'apply'; link: string } | { run: 'list' } | { run: 'disable-all' };
 
+/** Exit code: done. */
 export const CLI_OK = 0;
+/** Exit code: failed, one line on stderr. */
 export const CLI_FAILED = 1;
+/** Exit code: done without some of it, one stderr line per thing left out. */
 export const CLI_PARTLY = 2;
+/** Exit code: the app is already open and holds the library. */
 export const CLI_BUSY = 3;
+/** Exit code: a command line it does not understand. */
 export const CLI_USAGE = 64;
 
 const USAGE = 'usage: --apply <d2mm://preset/... link> | --list | --disable-all [--headless]';
