@@ -101,6 +101,7 @@ the code, not in this page.
 | [`src/mod-preview-pick.ts`](#srcmod-preview-pickts) | Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
+| [`src/model-glb.ts`](#srcmodel-glbts) | Models out of the installed game as glTF, for a 3D preview of a hero in the chosen items (issue #417). |
 | [`src/model-scale.ts`](#srcmodel-scalets) | A compiled model made bigger about its origin, and how much bigger one model is than another. |
 | [`src/model-sequences.ts`](#srcmodel-sequencests) | A model put under another model's path that numbers its sequences as that one does. |
 | [`src/model-skin.ts`](#srcmodel-skints) | A model with one of its material sets made the one it wears by default. |
@@ -5604,6 +5605,51 @@ file with a fixed path (a terrain's maps/dota.vpk) has to make room first.
 ```
 @returns the record, updated
 ```
+
+## src/model-glb.ts
+
+Models out of the installed game as glTF, for a 3D preview of a hero in the chosen items (issue #417).
+
+The Source 2 toolchain (src/toolchain.ts) turns a compiled model straight out of pak01 into a
+GLB with its textures as PNG files beside it, and with the clips asked for. Measured on the
+real game (2026-11-03): Techies with its idle 1.2 s and 2.3 MB, a wearable 1.1 s, and most of
+that is the program starting, so the models a preview asks for go out in one call, the way
+src/game-icons.ts fetches its pictures.
+
+The export runs as a child process, which keeps the main process free. The cache lives in
+userData under the game's build: a new build can change any model, so the old cache goes.
+
+### `modelFile`
+
+```ts
+export function modelFile(model: string): string | null
+```
+
+A model path as the game names it, compiled or not, or null for one that is not a model.
+
+### `glbAt`
+
+```ts
+export function glbAt(root: string, file: string): string
+```
+
+Where the toolchain puts a model's GLB under its output folder: the archive's layout, .glb for .vmdl_c.
+
+### `exportArgs`
+
+```ts
+export function exportArgs(pakFile: string, out: string, files: string[], clips: string[]): string[]
+```
+
+The toolchain's arguments for these models out of this archive into this folder.
+
+### `createModelGlb`
+
+```ts
+export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runTool, log = () => {} }: { userDataDir: string; toolchain: { pathOf: (name: string) => string | null }; getGamePath: () => string | null; run?: Run; log?: (msg: string) => void; })
+```
+
+GLB files of the game's models, made on demand and kept per game build.
 
 ## src/model-scale.ts
 
