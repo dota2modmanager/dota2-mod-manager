@@ -257,7 +257,7 @@ a closed one that no write-up names.
 The interface ships in Russian, English and Simplified Chinese. Russian text remains the key:
 
 - `renderer/i18n.js` for anything in the window
-- `src/i18n.ts` for native dialogs, menus and tray text
+- `src/i18n-en.ts` for native dialogs, menus and tray text
 - `renderer/locales/zh-CN-*.js` and `src/i18n-zh-CN.ts` for the matching Chinese text
 
 A string with no English twin falls back to Russian, which means an English speaker sees Cyrillic

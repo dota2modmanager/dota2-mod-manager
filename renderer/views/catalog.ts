@@ -32,6 +32,7 @@ import { afterCosmeticPick, openCosmeticWindow, pickCosmetic } from './catalog/c
 import { openArcanaWindow } from './catalog/arcana.ts';
 import { openMapLooks } from './catalog/map-looks.ts';
 import { openSounds } from './catalog/sounds.ts';
+import { openBackground } from './catalog/background.ts';
 import { remember, screen, startFilters, view } from './catalog/state.ts';
 import { onDownloadCounts } from '../core/download-counts.ts';
 
@@ -139,6 +140,7 @@ const actions: ScreenActions = {
   openArcana: (set, card) => void openArcanaWindow(set, card),
   openMapLooks: (kind, card) => void openMapLooks(kind, card),
   openSounds: (card) => void openSounds(card),
+  openBackground: (card) => void openBackground(card),
 };
 
 async function renderCatalog(): Promise<void> {

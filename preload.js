@@ -116,6 +116,10 @@ contextBridge.exposeInMainWorld('api', {
     add: (hero, event, mode, volume, wav, label) => ipcRenderer.invoke('sounds:add', hero, event, mode, volume, wav, label),
     remove: (hero, event) => ipcRenderer.invoke('sounds:remove', hero, event),
   },
+  background: {
+    state: () => ipcRenderer.invoke('background:state'),
+    install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur),
+  },
   map: {
     state: () => ipcRenderer.invoke('map:state'),
     install: (kind, radiant, dire) => ipcRenderer.invoke('map:install', kind, radiant, dire),

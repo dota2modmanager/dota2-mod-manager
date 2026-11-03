@@ -4,6 +4,7 @@
 import { arcanaLeads } from './arcana.ts';
 import { mapLookLead } from './map-looks.ts';
 import { soundLead } from './sounds.ts';
+import { backgroundLead } from './background.ts';
 import { RAW_BASE, COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.ts';
 import { state } from '../../core/store.ts';
 import { pickedIn, firstCosmeticSlots } from '../../core/installed.ts';
@@ -176,6 +177,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
   const lead = categoryId === 'tools' && !f.favOnly ? await arcanaLeads() : null;
   const mapLead = !f.favOnly ? await mapLookLead(categoryId) : null;
   const soundCard = !f.favOnly ? soundLead(categoryId) : null;
+  const backgroundCard = !f.favOnly ? backgroundLead(categoryId) : null;
   await paint(() => showScreen({
     kind: 'list',
     key: `cat:${categoryId}`,
@@ -186,6 +188,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
     lead: lead?.filter((a) => !f.installedOnly || a.installed) ?? null,
     mapLead: mapLead && (!f.installedOnly || mapLead.installed) ? mapLead : null,
     soundLead: soundCard && (!f.installedOnly || soundCard.installed) ? soundCard : null,
+    backgroundLead: backgroundCard && (!f.installedOnly || backgroundCard.installed) ? backgroundCard : null,
     mods: { heading: false, mods, grouped, emptyText: NOTHING() },
     cosmetics: null,
   }, actions));

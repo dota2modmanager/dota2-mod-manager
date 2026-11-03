@@ -186,6 +186,8 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   // the 3D preview: a hero and its slots, each with the stock item it dresses (src/hero-preview.ts)
   'preview3d:models': [str(80, 1), list(shape({ slot: str(120, 1), stock: str(20, 1) }), 40)], 'sounds:hero': [str(60, 1)], 'sounds:remove': [str(60, 1), str(200, 1)],
   'sounds:add': [str(60, 1), str(200, 1), oneOf('replace', 'layer'), num(0.05, 1), bytes(8 * MB), str(200)],
+  // the menu's background (src/ipc-background.ts): a WebM the window encoded, or null for a new look alone
+  'background:state': [], 'background:install': [optional(bytes(48 * MB)), optional(str(200)), num(0, 0.9), num(0, 20)],
   'map:state': [], 'map:install': [oneOf('towers', 'trees'), optional(str(40)), optional(str(40))],
   'arcana:state': [], 'arcana:install': [oneOf(...ARCANA_WINDOWS), list(num(0, 255), 3), oneOf('mod', 'recolor')],
   // the small errands (src/ipc-misc.ts)

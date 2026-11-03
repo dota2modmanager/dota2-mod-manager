@@ -5,6 +5,7 @@ import type { Filters, Mod } from '../types.ts';
 import type { ArcanaCardModel } from '../arcana/ArcanaCard.tsx';
 import type { MapLookCardModel } from '../map/MapLookCard.tsx';
 import type { SoundCardModel } from '../sounds/SoundCard.tsx';
+import type { BackgroundCardModel } from '../background/BackgroundCard.tsx';
 import type { MapKind } from '../../api/content.ts';
 import type { CosmeticItem } from '../cosmetic/CosmeticCard.tsx';
 
@@ -69,6 +70,8 @@ export type ScreenModel =
     mapLead?: MapLookCardModel | null;
     /** a sound of the user's own on a hero's event, first among the hero sounds */
     soundLead?: SoundCardModel | null;
+    /** a main menu background of the user's own, first among the backgrounds */
+    backgroundLead?: BackgroundCardModel | null;
     mods: (GridModel & { heading: boolean }) | null;
     cosmetics: { items: CosmeticItem[]; emptyText?: string; more?: string } | null;
   }
@@ -115,4 +118,5 @@ export interface ScreenActions {
   openArcana: (set: string, card: HTMLElement) => void;
   openMapLooks: (kind: MapKind, card: HTMLElement) => void;
   openSounds: (card: HTMLElement) => void;
+  openBackground: (card: HTMLElement) => void;
 }
