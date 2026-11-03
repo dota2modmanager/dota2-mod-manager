@@ -154,6 +154,7 @@ the code, not in this page.
 | [`src/tower-looks.ts`](#srctower-looksts) | Tower looks as a file mod (issue #446). The game has thirteen items that dress the towers: five |
 | [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
+| [`src/unusual-effects.ts`](#srcunusual-effectsts) | The game's unusual and ethereal effects, read out of items_game.txt (issue #393). An owned |
 | [`src/update-impact.ts`](#srcupdate-impactts) | Which installed mods a Dota update reached. |
 | [`src/updater.ts`](#srcupdaterts) | Where an installed copy looks for a new version, and on which channel. |
 | [`src/vpk-analyze.ts`](#srcvpk-analyzets) | What a mod changes, read from the paths inside it: which heroes, which equip slots, or which |
@@ -9224,6 +9225,50 @@ export const isUninstallRun = (argv: readonly unknown[] = []): boolean => argv.i
 ```
 
 A person removing the program, which is the only case the window may open in.
+
+## src/unusual-effects.ts
+
+The game's unusual and ethereal effects, read out of items_game.txt (issue #393). An owned
+courier, ward or weapon with such an effect carries a number in its attributes, which the Game
+Coordinator sends and a mod cannot change. The table says what each number draws: its
+"attribute_controlled_attached_particles" section maps it to a particle system and how that
+particle attaches ("rootbone_follow", or control points on named attachments). The names
+players know ("Ethereal Flame") are in dota_english.txt as Attrib_Particle<number>.
+
+With this a file mod can draw the effect itself: the particle goes in as a child of a particle
+the item always plays, the way an arcana's host particle works (src/arcana.ts).
+
+### `EffectPoint`
+
+```ts
+export interface EffectPoint { index: number; attachType: string; attachment: string | null }
+```
+
+One control point of an effect, put on a named attachment of the model.
+
+### `UnusualEffect`
+
+```ts
+export interface UnusualEffect
+```
+
+One effect the table knows, with the name players know it by when it has one.
+
+### `effectNames`
+
+```ts
+export function effectNames(english: string): Map<number, string>
+```
+
+Attrib_Particle<id> names out of dota_english.txt's text, by id.
+
+### `unusualEffects`
+
+```ts
+export function unusualEffects(text: string, english = ''): UnusualEffect[]
+```
+
+Every effect in the table, in its order; named ones carry the English name.
 
 ## src/update-impact.ts
 
