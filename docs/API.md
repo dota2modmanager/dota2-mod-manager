@@ -150,6 +150,7 @@ the code, not in this page.
 | [`src/support-prompt.ts`](#srcsupport-promptts) | When the window asking people to support the project comes up on its own. |
 | [`src/terrain-age.ts`](#srcterrain-agets) | Terrains that replace the whole map, and whether the game's own map has moved on since. |
 | [`src/toolchain.ts`](#srctoolchaints) | Tools the app can borrow, fetched only when something actually needs them. |
+| [`src/tower-looks.ts`](#srctower-looksts) | Tower looks as a file mod (issue #446). The game has thirteen items that dress the towers: five |
 | [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
 | [`src/update-impact.ts`](#srcupdate-impactts) | Which installed mods a Dota update reached. |
@@ -8980,6 +8981,83 @@ export function createToolchain({ userDataDir, onProgress = () => {}, log = () =
 ```
 
 The tools in userData: what is there, fetching one at its pin, and deleting it again.
+
+## src/tower-looks.ts
+
+Tower looks as a file mod (issue #446). The game has thirteen items that dress the towers: five
+pairs a player equips per side ("Guardians of the Lost Path Radiant Towers"), offered by the
+free looks once safe mode is off, and three event items (New Bloom's dragon towers, The
+International 2017's) nobody can equip any more. Each says in its visuals which model the tower
+entity wears, which model stands in for each stage of its destruction, and which particles it
+swaps. Those are files, so a pak can put them under the default tower's names, for one side or
+both, with safe mode on.
+
+What a file cannot carry is left out and said: a particle the item creates (it needs a host),
+its sounds, the TI7 tower's level activities and skins.
+
+### `Side`
+
+```ts
+export type Side = 'radiant' | 'dire'
+```
+
+_No description in the source._
+
+### `DEFAULT_TOWER`
+
+```ts
+export const DEFAULT_TOWER: Record<Side, string> =
+```
+
+The model every tower of a side wears (scripts/npc/npc_units.txt, 2026-11-03).
+
+### `TowerLook`
+
+```ts
+export interface TowerLook { id: string; name: string; sides: Side[] }
+```
+
+One item that dresses the towers, with the sides it has something for.
+
+### `TowerPlan`
+
+```ts
+export interface TowerPlan { files: { at: string; from: string }[]; skipped: string[] }
+```
+
+What a look does to one side: files under the default names, and what it leaves out.
+
+### `towerLookIds`
+
+```ts
+export function towerLookIds(text: string): string[]
+```
+
+The ids of the items whose visuals put a model on a tower, in the table's order.
+
+### `towerLooks`
+
+```ts
+export function towerLooks(text: string): TowerLook[]
+```
+
+Every look the table has, with the sides each dresses.
+
+### `towerPlan`
+
+```ts
+export function towerPlan(modifiers: AssetModifier[], side: Side): TowerPlan
+```
+
+What a look's visuals put under which name for one side.
+
+### `buildTowerLook`
+
+```ts
+export function buildTowerLook({ pak01, text, id, sides }: { pak01: string; text: string; id: string; sides: Side[] }):
+```
+
+A look for one side or both as one VPK, out of the game's pak01. A file the game lacks is left out and named.
 
 ## src/types.ts
 

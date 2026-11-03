@@ -5,6 +5,7 @@
  *   npm run dota:bench -- --vpk <mod_dir.vpk> [--hero terrorblade] [--out <folder>] [--camera 900]
  *                          [--skills "q,w,r@enemy"] [--console-key "\\"] [--short] [--now]
  *                          [--idle-seconds 12] [--spawn] [--death]
+ *   npm run dota:bench -- --vpk towers_dir.vpk --units npc_dota_goodguys_tower1_mid,npc_dota_badguys_tower1_mid
  *   npm run dota:bench -- --hero terrorblade                the game as it is, for comparison
  *
  * It puts the mod into the language folder through the app's own installer (a free slot), starts
@@ -212,6 +213,21 @@ async function main() {
       heroBar = me(bars, centre);
     }
     if (!heroBar) throw new Error('bench: the hero\'s health bar is not on screen');
+    // --units: buildings and creeps instead of the hero (tower looks, #446). Each one is made next
+    // to the hero, pictured, then killed and filmed, which shows what it leaves when it falls
+    const units = (arg('--units') || '').split(',').filter(Boolean);
+    if (units.length) {
+      for (const unit of units) {
+        await command(`dota_create_unit ${unit}`);
+        await sleep(2500);
+        shot(`10-${unit}`);
+        await command(`dota_kill_unit_by_name ${unit}`);
+        burst(`10-${unit}-falls`, [W / 2 - 600, H / 2 - 450, 1200, 900], 16, 300, 0.4);
+        shot(`10-${unit}-after`);
+      }
+      fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify({ vpk: vpk ?? null, units, notes }, null, 2));
+      return;
+    }
     // --idle-seconds: the hero left standing, close, for an idle that does something every few seconds
     const idleFor = Number(arg('--idle-seconds', '0'));
     if (idleFor > 0) {

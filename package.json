@@ -29,6 +29,7 @@
     "doctor": "node tools/mod-doctor.mjs",
     "item-plan": "node tools/item-plan.mjs",
     "recolor": "node tools/recolor.mjs",
+    "tower-looks": "node tools/tower-looks.mjs",
     "fuzz": "node tools/fuzz-parsers.mjs",
     "mutate": "node tools/mutate.mjs",
     "rollback": "node tools/rollback.mjs",
