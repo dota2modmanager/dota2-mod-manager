@@ -874,6 +874,14 @@ const EN = {
   'Диагностика': 'Diagnostics',
   'Экспортировать отчёт': 'Export report', 'Чиню…': 'Repairing…', 'Починить приложение': 'Repair the app', 'Починка возвращает патч игры, ищет пропавшие файлы модов и очищает картинки. Моды и пресеты не трогает.': 'Repair puts the game patch back, looks for missing mod files and clears the pictures. Your mods and presets stay as they are.', 'Не вышло? Отправь отчёт: в нём видно, на каком шаге.': 'Still broken? Send the report: it shows which step failed.', 'Всё в порядке': 'All good', 'Починка нашла проблемы': 'Repair found problems',
   'Отчёт сохранён': 'Report saved',
+  // ---------- a theme of your own (ui/custom-theme, ui/theme-menu) ----------
+  'Это не JSON': 'This is not JSON', 'В файле нет темы': 'There is no theme in the file', 'Лишние поля: {0}': 'Fields a theme does not have: {0}',
+  'У темы нет имени': 'The theme has no name', 'У темы нет цветов': 'The theme has no colours', 'Таких цветов тема не задаёт: {0}': 'A theme does not set these colours: {0}',
+  'Не хватает цветов: {0}': 'Colours missing: {0}', 'Не цвет вида #a1b2c3: {0}': 'Not a colour like #a1b2c3: {0}', 'Текст не читается: {0} на {1}, контраст {2} из нужных {3}': 'Text would not read: {0} on {1}, contrast {2} where {3} is needed',
+  'Фон должен быть картинкой PNG, JPEG или WebP внутри файла': 'The background has to be a PNG, JPEG or WebP picture inside the file', 'Фон больше 3 МБ': 'The background is over 3 MB', 'Файл больше 5 МБ: это не тема': 'The file is over 5 MB: that is not a theme',
+  'Тема не подходит: {0}': 'This theme will not do: {0}', 'Тема «{0}» надета': 'Theme “{0}” is on', 'Моя тема': 'My theme',
+  'Загрузить тему из файла…': 'Load a theme from a file…', 'Сохранить тему в файл…': 'Save the theme to a file…', 'Сохранить эти цвета как тему…': 'Save these colours as a theme…',
+  'Убрать свою тему': 'Remove your theme',
   // ---------- another item's effect (catalog/builder) ----------
   'эффект: {0}': 'effect: {0}', 'Эффект другого предмета': 'Another item’s effect', 'Частицы этого предмета на выбранном. Эффект, который держится на точке своей модели, может сесть иначе.': 'That item’s particles on the one you chose. An effect held on a point of its own model can sit differently.',
   'Сначала выбери предмет выше.': 'Pick an item above first.', 'Свой эффект': 'Its own effect',
