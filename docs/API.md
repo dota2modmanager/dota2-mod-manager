@@ -3271,8 +3271,9 @@ Particles take the colour through src/recolor.ts. A picture is a compiled textur
 hero's are block-compressed (all his small icons, nearly every ability icon): ValveResourceFormat
 reads one out as a PNG, it is repainted (`repaint`, Electron's image codec in the app), and
 Valve's compiler builds it again, as the child of a stylesheet that names it, which is how
-Panorama compiles a picture. A texture with a PNG inside (src/vtex.ts) needs neither tool: its
-PNG is repainted and put back behind the same header.
+Panorama compiles a picture. The body's textures go the same way, as the colour of a material of
+the hero shader, and come back under the game's own names. A texture with a PNG inside
+(src/vtex.ts) needs neither tool: its PNG is repainted and put back behind the same header.
 
 A Dota update that reached the record builds it again with the same colours, a step at a time,
 after the update's repair has answered; the record's mark goes when that is done.
@@ -8105,7 +8106,7 @@ export function quitAfterBuild(app: { on(event: 'before-quit', fn: (e: QuitEvent
 A hero in colours of the user's choosing, part by part (issue #422): each ability's effect and its
 icon, the hero's other effects, the hero's icons and portrait, and the effects of the items picked
 for him in the item builder. Each part is a layer with a colour of its own and its own switch,
-and the whole recolour is one pak (src/recolor-layers-service.ts).
+and the whole recolour is one pak (src/hero-paint-service.ts).
 
 What belongs to an ability is read off the game's file names: Valve names an ability's particles
 after it (particles/units/heroes/hero_juggernaut/juggernaut_blade_fury_glow.vpcf for
@@ -8114,13 +8115,16 @@ ability list itself is the hero's script (scripts/npc/heroes/npc_dota_hero_<name
 no ability claims are the hero's other effects: the attack, the crit, the portrait. An item's
 effect is every particle its visuals name, with the children those particles create (RERL).
 
+The body is the colour textures of his model's materials (materials/models/heroes/<model folder>/,
+*_color_*.vtex_c), the folder his script's "Model" is in.
+
 Particles take the colour through src/recolor.ts (the colours written in them move to the chosen
-hue); pictures through `shadePixels` below, the same move pixel by pixel.
+hue); pictures and textures through `shadePixels` below, the same move pixel by pixel.
 
 ### `LayerKind`
 
 ```ts
-export type LayerKind = 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'item'
+export type LayerKind = 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item'
 ```
 
 What a layer recolours.
@@ -8141,6 +8145,14 @@ export function heroAbilities(heroScript: string): string[]
 
 The hero's abilities, in his script's order, once each; an Ability Draft copy (invoker_emp_ad) goes with its ability.
 
+### `heroModelFolder`
+
+```ts
+export function heroModelFolder(heroScript: string): string | null
+```
+
+The folder of the hero's model in his script, `juggernaut` for models/heroes/juggernaut/juggernaut.vmdl; null when it is not one of models/heroes.
+
 ### `heroParticleFolder`
 
 ```ts
@@ -8152,7 +8164,7 @@ The folder a hero's own particles are in.
 ### `heroLayers`
 
 ```ts
-export function heroLayers(paths: Iterable<string>, hero: string, abilities: string[], items: { id: string; name: string; particles: string[] }[] = []): RecolorLayer[]
+export function heroLayers(paths: Iterable<string>, hero: string, abilities: string[], items: { id: string; name: string; particles: string[] }[] = [], model: string | null = null): RecolorLayer[]
 ```
 
 The layers a hero has, from the paths in pak01. A layer with no files is left out: a hero with no
@@ -8161,6 +8173,7 @@ picture for an ability, or an ability with no particle of its own, shows no row 
 ```
 @param hero  the hero's name in his npc name, `juggernaut` for npc_dota_hero_juggernaut
 @param items the items picked for him, with the particles their visuals name
+@param model the folder of his model (`heroModelFolder`), for the body's textures
 ```
 
 ### `withChildren`

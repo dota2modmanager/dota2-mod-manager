@@ -66,7 +66,7 @@ function draw(key: number, st: PaintState): void {
     hero: st.label,
     all: st.all,
     abilities: abilities.map((a) => ({ name: a.name, effect: cell(`ability:${a.key}`), icon: cell(`abilityIcon:${a.key}`) })),
-    own: { effects: cell('effects'), portrait: cell('portrait') },
+    own: { effects: cell('effects'), portrait: cell('portrait'), body: cell('body') },
     items: st.layers.filter((l) => l.kind === 'item').map((l) => ({ name: l.name || l.id, cell: cell(l.id)! })),
     summary: named.length ? named.slice(0, 4).join(', ') + (named.length > 4 ? ` +${named.length - 4}` : '') : '',
     action: !Object.keys(want).length
@@ -93,6 +93,7 @@ function draw(key: number, st: PaintState): void {
 function layerLabel(l: PaintLayer): string {
   if (l.kind === 'effects') return L`атака и прочее`;
   if (l.kind === 'portrait') return L`портрет`;
+  if (l.kind === 'body') return L`тело`;
   if (l.kind === 'abilityIcon') return L`иконка ${l.name || ''}`;
   return l.name || l.id;
 }

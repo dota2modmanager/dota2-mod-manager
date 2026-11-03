@@ -1,7 +1,7 @@
 /* A hero in colours of the user's choosing, part by part (issue #422): each ability's effect and its
  * icon, the hero's other effects, the hero's icons and portrait, and the effects of the items picked
  * for him in the item builder. Each part is a layer with a colour of its own and its own switch,
- * and the whole recolour is one pak (src/recolor-layers-service.ts).
+ * and the whole recolour is one pak (src/hero-paint-service.ts).
  *
  * What belongs to an ability is read off the game's file names: Valve names an ability's particles
  * after it (particles/units/heroes/hero_juggernaut/juggernaut_blade_fury_glow.vpcf for
@@ -10,16 +10,19 @@
  * no ability claims are the hero's other effects: the attack, the crit, the portrait. An item's
  * effect is every particle its visuals name, with the children those particles create (RERL).
  *
+ * The body is the colour textures of his model's materials (materials/models/heroes/<model folder>/,
+ * *_color_*.vtex_c), the folder his script's "Model" is in.
+ *
  * Particles take the colour through src/recolor.ts (the colours written in them move to the chosen
- * hue); pictures through `shadePixels` below, the same move pixel by pixel. */
+ * hue); pictures and textures through `shadePixels` below, the same move pixel by pixel. */
 import { shade, type Rgb } from './recolor.ts';
 
 /** What a layer recolours. */
-export type LayerKind = 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'item';
+export type LayerKind = 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item';
 
 /** One part of a hero that takes a colour of its own. */
 export interface RecolorLayer {
-  /** `ability:<name>`, `abilityIcon:<name>`, `effects`, `portrait`, `item:<id>` */
+  /** `ability:<name>`, `abilityIcon:<name>`, `effects`, `portrait`, `body`, `item:<id>` */
   id: string;
   kind: LayerKind;
   /** the ability's or the item's name, for the window to word */
@@ -37,6 +40,11 @@ export function heroAbilities(heroScript: string): string[] {
   const out: string[] = [];
   for (const m of heroScript.matchAll(ABILITY)) if (!NOT_AN_ABILITY.test(m[1]) && !out.includes(m[1])) out.push(m[1]);
   return out.filter((a) => !(a.endsWith('_ad') && out.includes(a.slice(0, -3))));
+}
+
+/** The folder of the hero's model in his script, `juggernaut` for models/heroes/juggernaut/juggernaut.vmdl; null when it is not one of models/heroes. */
+export function heroModelFolder(heroScript: string): string | null {
+  return /"Model"\s+"models\/heroes\/([a-z0-9_]+)\//i.exec(heroScript)?.[1].toLowerCase() ?? null;
 }
 
 const flat = (s: string) => s.replace(/_/g, '');
@@ -72,8 +80,9 @@ function claims(ability: string, hero: string, particle: string): boolean {
  * picture for an ability, or an ability with no particle of its own, shows no row for it.
  * @param hero  the hero's name in his npc name, `juggernaut` for npc_dota_hero_juggernaut
  * @param items the items picked for him, with the particles their visuals name
+ * @param model the folder of his model (`heroModelFolder`), for the body's textures
  */
-export function heroLayers(paths: Iterable<string>, hero: string, abilities: string[], items: { id: string; name: string; particles: string[] }[] = []): RecolorLayer[] {
+export function heroLayers(paths: Iterable<string>, hero: string, abilities: string[], items: { id: string; name: string; particles: string[] }[] = [], model: string | null = null): RecolorLayer[] {
   const all = [...paths];
   const folder = heroParticleFolder(all, hero);
   const own = all.filter((p) => p.startsWith(folder) && p.endsWith('.vpcf_c'));
@@ -95,6 +104,11 @@ export function heroLayers(paths: Iterable<string>, hero: string, abilities: str
   }
   const pictures = ['heroes', 'heroes/icons', 'heroes/selection'].map((d) => `panorama/images/${d}/npc_dota_hero_${hero}_png.vtex_c`).filter((p) => present.has(p));
   if (pictures.length) layers.push({ id: 'portrait', kind: 'portrait', files: pictures });
+  if (model) {
+    const dir = `materials/models/heroes/${model}/`;
+    const body = all.filter((p) => p.startsWith(dir) && !p.slice(dir.length).includes('/') && /_color_(psd|tga|png)_[0-9a-f]+\.vtex_c$/.test(p));
+    if (body.length) layers.push({ id: 'body', kind: 'body', files: body });
+  }
   for (const item of items) {
     const files = item.particles.map((p) => p.toLowerCase().replace(/\.vpcf$/, '.vpcf_c')).filter((p) => present.has(p));
     if (files.length) layers.push({ id: `item:${item.id}`, kind: 'item', name: item.name, files: [...new Set(files)] });

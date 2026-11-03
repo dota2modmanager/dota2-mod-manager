@@ -20,7 +20,8 @@ import type { LibRecord } from '../src/types.ts';
 const FURY = 'particles/units/heroes/hero_juggernaut/juggernaut_blade_fury.vpcf_c';
 const ICON = 'panorama/images/spellicons/juggernaut_blade_fury_png.vtex_c';
 const PORTRAIT = 'panorama/images/heroes/icons/npc_dota_hero_juggernaut_png.vtex_c';
-const SCRIPT = '"DOTAHeroes"\n{\n\t"npc_dota_hero_juggernaut"\n\t{\n\t\t"Ability1"\t\t"juggernaut_blade_fury"\n\t}\n}\n';
+const TORSO = 'materials/models/heroes/juggernaut/juggernaut_torso_color_psd_4087f5cf.vtex_c';
+const SCRIPT = '"DOTAHeroes"\n{\n\t"npc_dota_hero_juggernaut"\n\t{\n\t\t"Model"\t\t"models/heroes/juggernaut/juggernaut.vmdl"\n\t\t"Ability1"\t\t"juggernaut_blade_fury"\n\t}\n}\n';
 const NAMES = '"lang"\n{\n\t"Language"\t\t"English"\n\t"Tokens"\n\t{\n\t\t"DOTA_Tooltip_ability_juggernaut_blade_fury"\t\t"Blade Fury"\n\t}\n}\n';
 
 function picture(): Buffer {
@@ -43,6 +44,7 @@ function world(t: TestContext, tools: Pick<Parameters<typeof createHeroPaint>[0]
     entryAt(ICON, picture()),
     // block-compressed, as nearly all of a hero's pictures are: no PNG inside
     entryAt(PORTRAIT, Buffer.alloc(64, 7)),
+    entryAt(TORSO, Buffer.alloc(64, 9)),
   ]));
   const installer = new Installer({ userDataDir: path.join(dir, 'userdata'), getGamePath: () => game, getLangSuffix: () => 'russian', onProgress: () => {} });
   const library = new Library(path.join(dir, 'userdata'));
@@ -60,7 +62,7 @@ const furyColor = (lang: string, rec: LibRecord) => {
 test("the window is told the hero's layers by the game's names, and nothing is on yet", (t) => {
   const w = world(t);
   const s = w.paint.state('juggernaut');
-  assert.deepEqual(s.layers.map((l) => [l.id, l.name, l.files]), [['ability:juggernaut_blade_fury', 'Blade Fury', 1], ['abilityIcon:juggernaut_blade_fury', 'Blade Fury', 1], ['portrait', null, 1]]);
+  assert.deepEqual(s.layers.map((l) => [l.id, l.name, l.files]), [['ability:juggernaut_blade_fury', 'Blade Fury', 1], ['abilityIcon:juggernaut_blade_fury', 'Blade Fury', 1], ['portrait', null, 1], ['body', null, 1]]);
   assert.equal(s.installed, null);
   assert.throws(() => w.paint.state('../etc'), /etc/);
 });
@@ -92,7 +94,7 @@ test('after a Dota update the record is built again with its colours, and stays 
   assert.deepEqual(furyColor(w.lang, after), [40, 255, 40]);
 });
 
-test('a compressed picture is read out by ValveResourceFormat and compiled again as the child of a style', async (t) => {
+test("a compressed picture is read out by ValveResourceFormat and compiled again as the child of a style, the body's texture as a material's", async (t) => {
   const plain = world(t);
   const left = await plain.paint.install('juggernaut', { 'ability:juggernaut_blade_fury': '#00ff00', portrait: '#0000ff' }, 'Juggernaut');
   assert.equal(pakOf(plain.lang, left).read(PORTRAIT), null, 'without the tool it stays as the game has it');
@@ -102,13 +104,19 @@ test('a compressed picture is read out by ValveResourceFormat and compiled again
   const w = world(t, {
     vrf: () => 'vrf.exe',
     decode: async () => Buffer.from('decoded'),
-    compile: async (job) => { jobs.push(job); return [entryAt(PORTRAIT, Buffer.from('compiled')), entryAt('panorama/styles/d2mm_hero_paint.vcss_c', Buffer.from('style'))]; },
+    compile: async (job) => { jobs.push(job); return [entryAt(PORTRAIT, Buffer.from('compiled')), entryAt('panorama/styles/d2mm_hero_paint.vcss_c', Buffer.from('style')),
+      entryAt('materials/d2mm_paint/t0_png_90369be2.vtex_c', Buffer.from('texture')), entryAt('materials/d2mm_paint/t0.vmat_c', Buffer.from('material'))]; },
   });
-  const rec = await w.paint.install('juggernaut', { portrait: '#0000ff' }, 'Juggernaut');
+  const rec = await w.paint.install('juggernaut', { portrait: '#0000ff', body: '#00ff00' }, 'Juggernaut');
   assert.equal(jobs.length, 1);
+  const vmat = jobs[0].files.find((f) => f.path === 'materials/d2mm_paint/t0.vmat')!.data.toString();
+  assert.ok(vmat.includes('shader "hero.vfx"') && vmat.includes('TextureColor "materials/d2mm_paint/t0.png"'), vmat);
+  assert.ok(jobs[0].compile.includes('materials/d2mm_paint/t0.vmat'));
+  assert.equal(pakOf(w.lang, rec).read(TORSO)?.toString(), 'texture', "the compiler's texture under the game's own name");
+  assert.equal(pakOf(w.lang, rec).read('materials/d2mm_paint/t0.vmat_c'), null);
   const png = jobs[0].files.find((f) => f.path === 'panorama/images/heroes/icons/npc_dota_hero_juggernaut.png');
   assert.equal(png?.data.toString(), 'repainted', 'the PNG read out, in the colour');
-  const css = jobs[0].files.find((f) => f.path === jobs[0].compile[0])!.data.toString();
+  const css = jobs[0].files.find((f) => f.path === jobs[0].compile.find((p) => p.endsWith('.css')))!.data.toString();
   assert.ok(css.includes('url("file://{images}/heroes/icons/npc_dota_hero_juggernaut.png")'), css);
   assert.equal(pakOf(w.lang, rec).read(PORTRAIT)?.toString(), 'compiled');
   assert.equal(pakOf(w.lang, rec).read('panorama/styles/d2mm_hero_paint.vcss_c'), null, "the style that named it is not the game's to load");

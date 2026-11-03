@@ -15,8 +15,8 @@ export interface PaintModalModel {
   /** the colour the top swatch gives every layer that is on */
   all: string;
   abilities: { name: string; effect: PaintCell | null; icon: PaintCell | null }[];
-  /** the rest of the hero: his other effects, his icon and portrait */
-  own: { effects: PaintCell | null; portrait: PaintCell | null };
+  /** the rest of the hero: his other effects, his icon and portrait, his body's textures */
+  own: { effects: PaintCell | null; portrait: PaintCell | null; body: PaintCell | null };
   items: { name: string; cell: PaintCell }[];
   /** the layers on, by name, for the line at the foot */
   summary: string;
@@ -66,7 +66,7 @@ function Group({ icon, title, children }: { icon: string; title: string; childre
 }
 
 export function PaintModal({ m, actions }: { m: PaintModalModel; actions: PaintModalActions }) {
-  const count = m.abilities.reduce((n, a) => n + (a.effect ? 1 : 0) + (a.icon ? 1 : 0), 0) + (m.own.effects ? 1 : 0) + (m.own.portrait ? 1 : 0) + m.items.length;
+  const count = m.abilities.reduce((n, a) => n + (a.effect ? 1 : 0) + (a.icon ? 1 : 0), 0) + (m.own.effects ? 1 : 0) + (m.own.portrait ? 1 : 0) + (m.own.body ? 1 : 0) + m.items.length;
   return (
     <div className="modal-body item-picker-body paint-body">
       <BuilderHead back={m.hero} onBack={actions.back} title={L`Перекраска`} onClose={actions.close}
@@ -94,13 +94,14 @@ export function PaintModal({ m, actions }: { m: PaintModalModel; actions: PaintM
         </Group>
       )}
 
-      {(m.own.effects || m.own.portrait) && (
+      {(m.own.effects || m.own.portrait || m.own.body) && (
         <Group icon="person" title={L`Герой`}>
           <div className="paint-row">
             <div className="paint-row-name">{m.hero}</div>
             <div className="paint-row-cells">
               {m.own.effects && <Cell cell={m.own.effects} label={L`Атака и прочее`} actions={actions} />}
               {m.own.portrait && <Cell cell={m.own.portrait} label={L`Иконка и портрет`} actions={actions} />}
+              {m.own.body && <Cell cell={m.own.body} label={L`Тело`} actions={actions} />}
             </div>
           </div>
         </Group>
@@ -119,14 +120,14 @@ export function PaintModal({ m, actions }: { m: PaintModalModel; actions: PaintM
 
       {!m.vrf && (
         <div className="paint-tool">
-          <span className="text-meta">{L`Иконки почти все сжаты: их читает ValveResourceFormat, его нужно один раз скачать. Собирает их компилятор Valve из Dota 2 Workshop Tools. Без него иконки останутся как в игре.`}</span>
+          <span className="text-meta">{L`Иконки и тело почти все сжаты: их читает ValveResourceFormat, его нужно один раз скачать. Собирает их компилятор Valve из Dota 2 Workshop Tools. Без него они останутся как в игре.`}</span>
           <button className="btn btn-sm" id="paintToolBtn" disabled={m.gettingTool} onClick={actions.getTool}>
             <span className="ms">{m.gettingTool ? 'progress_activity' : 'download'}</span>{L`Скачать ValveResourceFormat`}
           </button>
         </div>
       )}
       <div className="modal-note">
-        {L`Цвет берут частицы, где он записан числом. Часть эффектов красит текстура: они останутся как в игре. Тело героя пока не перекрашивается.`}
+        {L`Цвет берут частицы, где он записан числом. Часть эффектов красит текстура: они останутся как в игре. Тело красится целиком, кожа тоже.`}
       </div>
       <div className="item-picker-foot" id="paintFoot">
         <BuilderFoot action={m.busy ? { label: L`Собираю…`, icon: 'progress_activity', off: true } : m.action} onApply={actions.apply}

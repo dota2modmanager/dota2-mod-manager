@@ -7,15 +7,16 @@
  * hero's are block-compressed (all his small icons, nearly every ability icon): ValveResourceFormat
  * reads one out as a PNG, it is repainted (`repaint`, Electron's image codec in the app), and
  * Valve's compiler builds it again, as the child of a stylesheet that names it, which is how
- * Panorama compiles a picture. A texture with a PNG inside (src/vtex.ts) needs neither tool: its
- * PNG is repainted and put back behind the same header.
+ * Panorama compiles a picture. The body's textures go the same way, as the colour of a material of
+ * the hero shader, and come back under the game's own names. A texture with a PNG inside
+ * (src/vtex.ts) needs neither tool: its PNG is repainted and put back behind the same header.
  *
  * A Dota update that reached the record builds it again with the same colours, a step at a time,
  * after the update's repair has answered; the record's mark goes when that is done. */
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { heroAbilities, heroLayers, withChildren, type RecolorLayer } from './recolor-layers.ts';
+import { heroAbilities, heroLayers, heroModelFolder, withChildren, type RecolorLayer } from './recolor-layers.ts';
 import { recolorResource, type Rgb } from './recolor.ts';
 import { references } from './resource.ts';
 import { pngFromVtex } from './vtex.ts';
@@ -78,7 +79,7 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
     const text = vanilla();
     return ids.flatMap((id) => {
       const block = findItem(text, id)?.text;
-      const name = block && /"name"s+"([^"]+)"/.exec(block)?.[1];
+      const name = block && /"name"\s+"([^"]+)"/.exec(block)?.[1];
       return block ? [{ id, name: name || id, particles: [...block.matchAll(PARTICLE)].map((m) => m[1]) }] : [];
     });
   }
@@ -88,7 +89,8 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
     const index = pak01();
     const script = index.read(`scripts/npc/heroes/npc_dota_hero_${hero}.txt`);
     if (!script) throw new Error(t('Нет такого героя: {0}', hero));
-    const all = heroLayers(index.paths(), hero, heroAbilities(script.toString('utf8')), picked(hero));
+    const text = script.toString('utf8');
+    const all = heroLayers(index.paths(), hero, heroAbilities(text), picked(hero), heroModelFolder(text));
     // an item's particles create others: those are its effect too
     const refs = (p: string) => { try { return references(index.read(p) as Buffer).map((r) => (r.toLowerCase().endsWith('_c') ? r.toLowerCase() : `${r.toLowerCase()}_c`)); } catch { return []; } };
     for (const l of all) if (l.kind === 'item') l.files = withChildren(l.files, refs).filter((p) => index.read(p));
@@ -142,17 +144,41 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
       return [];
     }
     try {
-      const files = [];
+      const files: { path: string; data: Buffer }[] = [];
+      const rules: string[] = [];
+      const compileList: string[] = [];
+      // a model's texture comes back under a name of the compiler's: put it under the game's
+      const textures = new Map<string, string>();
       for (const p of list) {
-        const source = p.path.replace(/_png\.vtex_c$/, '.png');
-        files.push({ path: source, data: repaint(await decode(exe, p.file), p.color) });
+        const png = repaint(await decode(exe, p.file), p.color);
+        if (p.path.startsWith('panorama/images/')) {
+          const source = p.path.replace(/_png\.vtex_c$/, '.png');
+          files.push({ path: source, data: png });
+          rules.push(`.p${rules.length} { background-image: url("file://{images}/${source.slice('panorama/images/'.length)}"); }`);
+        } else {
+          // a model's texture compiles as the colour of a material of the hero shader
+          const n = textures.size;
+          const source = `materials/d2mm_paint/t${n}.png`;
+          const vmat = `materials/d2mm_paint/t${n}.vmat`;
+          files.push({ path: source, data: png }, { path: vmat, data: Buffer.from(`Layer0\n{\n\tshader "hero.vfx"\n\tTextureColor "${source}"\n}\n`) });
+          compileList.push(vmat);
+          textures.set(`t${n}`, p.path);
+        }
       }
       // Panorama compiles a picture as the child of a style that names it
-      const css = 'panorama/styles/d2mm_hero_paint.css';
-      const rules = files.map((f, i) => `.p${i} { background-image: url("file://{images}/${f.path.slice('panorama/images/'.length)}"); }`).join('\n');
+      if (rules.length) {
+        const css = 'panorama/styles/d2mm_hero_paint.css';
+        files.push({ path: css, data: Buffer.from(rules.join('\n')) });
+        compileList.push(css);
+      }
       const wanted = new Set(list.map((p) => p.path));
-      const out = await compile({ id: 'hero_paint', files: [...files, { path: css, data: Buffer.from(rules) }], compile: [css] });
-      return out.filter((e) => wanted.has(entryPath(e)));
+      const out = await compile({ id: 'hero_paint', files, compile: compileList });
+      return out.flatMap((e) => {
+        const p = entryPath(e);
+        const own = /^materials\/d2mm_paint\/(t\d+)_png_[0-9a-f]+\.vtex_c$/.exec(p);
+        if (own) return textures.has(own[1]) ? [entryAt(textures.get(own[1])!, e.data)] : [];
+        return wanted.has(p) ? [e] : [];
+      });
     } catch (e) {
       // no Workshop Tools, or the tool failed: the particles still go in
       log(`hero paint: ${list.length} compressed picture(s) left as they are: ${(e as Error).message}`);

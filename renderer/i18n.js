@@ -880,14 +880,14 @@ const EN = {
   'Стиль интерфейса из игры читает ValveResourceFormat, его нужно один раз скачать. Собирает компилятор Valve из Dota 2 Workshop Tools.': 'ValveResourceFormat reads the HUD style out of the game. Download it once. Valve’s compiler from Dota 2 Workshop Tools builds it.', 'сейчас {0}%': 'now {0}%', 'Не удалось прочитать интерфейс игры': 'Couldn’t read the game’s HUD',
   'Изменить размер': 'Change the size',
   // ---------- a hero recoloured part by part (catalog/paint) ----------
-  'Иконки почти все сжаты: их читает ValveResourceFormat, его нужно один раз скачать. Собирает их компилятор Valve из Dota 2 Workshop Tools. Без него иконки останутся как в игре.': 'Nearly all icons are compressed. ValveResourceFormat reads them, so download it once. Valve’s compiler from Dota 2 Workshop Tools builds them again. Without it the icons stay as the game has them.',
+  'Иконки и тело почти все сжаты: их читает ValveResourceFormat, его нужно один раз скачать. Собирает их компилятор Valve из Dota 2 Workshop Tools. Без него они останутся как в игре.': 'Nearly all icons and the body are compressed. ValveResourceFormat reads them, so download it once. Valve’s compiler from Dota 2 Workshop Tools builds them again. Without it they stay as the game has them.', 'Тело': 'Body', 'тело': 'body',
   // ---------- a hero recoloured part by part (catalog/paint) ----------
   'Свой цвет для способностей, иконок и предметов': 'Your own colour for abilities, icons and items', 'Перекраска': 'Recolor',
   'свой цвет для каждой части героя': 'a colour of your own for each part of the hero', 'Цвет для всех включённых': 'One colour for every layer on', 'Потом любой слой можно перекрасить отдельно.': 'Any layer can then take a colour of its own.',
   'Способности': 'Abilities', 'Эффект': 'Effect', 'Иконка': 'Icon',
   'Эффекта нет': 'No effect', 'Иконки нет': 'No icon', 
   'Атака и прочее': 'Attack and the rest', 'Иконка и портрет': 'Icon and portrait', 
-  'Цвет берут частицы, где он записан числом. Часть эффектов красит текстура: они останутся как в игре. Тело героя пока не перекрашивается.': 'Particles whose colour is written as a number take the new one. Some effects get their colour from a texture and stay as the game has them. The hero\'s body is not recoloured yet.', 'Ни один слой не включён': 'No layer is on',
+  'Цвет берут частицы, где он записан числом. Часть эффектов красит текстура: они останутся как в игре. Тело красится целиком, кожа тоже.': 'Particles take the colour where it is written as a number. Some effects get theirs from a texture: those stay as the game has them. The body is recoloured whole, skin included.', 'Ни один слой не включён': 'No layer is on',
   'Не удалось прочитать файлы героя': 'Couldn\'t read the hero\'s files', 'Включи хотя бы один слой': 'Switch on at least one layer',
   'Стоит': 'Installed', 'атака и прочее': 'attack and the rest',
   'портрет': 'portrait', 'иконка {0}': 'icon {0}', 'Не удалось перекрасить героя': 'Couldn\'t recolor the hero',

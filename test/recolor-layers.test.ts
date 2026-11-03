@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { heroAbilities, heroLayers, heroParticleFolder, shadePixels, withChildren } from '../src/recolor-layers.ts';
+import { heroAbilities, heroLayers, heroModelFolder, heroParticleFolder, shadePixels, withChildren } from '../src/recolor-layers.ts';
 
 const SCRIPT = `"DOTAHeroes"
 {
@@ -78,4 +78,14 @@ test('a picture takes the colour pixel by pixel: greys and clear pixels stay, BG
   const bgra = Buffer.from([40, 40, 200, 255]);
   shadePixels(bgra, [0, 0, 255], { bgra: true });
   assert.deepEqual([...bgra], [200, 40, 40, 255], 'red in BGRA moved to blue in BGRA');
+});
+
+test("the body is the colour textures in his model's folder, not its masks or a folder below", () => {
+  assert.equal(heroModelFolder('"npc_dota_hero_drow_ranger"\n{\n\t"Model"\t\t"models/heroes/drow/drow_base.vmdl"\n}'), 'drow');
+  assert.equal(heroModelFolder('"Model" "models/creeps/x.vmdl"'), null);
+  const dir = 'materials/models/heroes/juggernaut/';
+  const body = heroLayers([`${dir}juggernaut_torso_color_psd_4087f5cf.vtex_c`, `${dir}juggernaut_torso_normal_psd_89f6336d.vtex_c`,
+    `${dir}juggernaut_fresnelwarprim_tga_1128410f.vtex_c`, `${dir}old/juggernaut_color_psd_1.vtex_c`, `${dir}juggernaut_sword_color_tga_ab12.vtex_c`], 'juggernaut', [], [], 'juggernaut');
+  assert.deepEqual(body.map((l) => [l.id, l.files]), [['body', [`${dir}juggernaut_torso_color_psd_4087f5cf.vtex_c`, `${dir}juggernaut_sword_color_tga_ab12.vtex_c`]]]);
+  assert.deepEqual(heroLayers([`${dir}juggernaut_torso_color_psd_4087f5cf.vtex_c`], 'juggernaut', []), [], 'no model folder, no body');
 });

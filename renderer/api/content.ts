@@ -176,7 +176,7 @@ export interface BackgroundApi {
 }
 
 /** One part of a hero that takes a colour of its own (src/recolor-layers.ts). */
-export interface PaintLayer { id: string; kind: 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'item'; name: string | null; files: number }
+export interface PaintLayer { id: string; kind: 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item'; name: string | null; files: number }
 
 /** A hero recoloured part by part (src/hero-paint-service.ts). */
 export interface PaintApi {
