@@ -806,8 +806,8 @@
       "name": "the window is as tall as it was designed, whatever the screen",
       "file": "src/main-window.ts",
       "anchor": "export function windowFit(",
-      "from": "height: Math.min(DESIGNED.height, ah),",
-      "to": "height: DESIGNED.height,",
+      "from": "height: Math.min(Math.round(DESIGNED.height * grow), ah),",
+      "to": "height: Math.round(DESIGNED.height * grow),",
       "test": "test/main-window.test.ts"
     },
     {
