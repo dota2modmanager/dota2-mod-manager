@@ -40,6 +40,7 @@ the code, not in this page.
 | [`src/diagnostics.ts`](#srcdiagnosticsts) | A support report a user can send instead of a round of screenshots: Dota's own path and |
 | [`src/discord-auth.ts`](#srcdiscord-authts) | Sign in with Discord, without a server of our own. |
 | [`src/discord-presence.ts`](#srcdiscord-presencets) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
+| [`src/disk-space.ts`](#srcdisk-spacets) | Room on the disk, checked before a mod is written (issue #426). A disk that fills up halfway |
 | [`src/download-proxy.ts`](#srcdownload-proxyts) | The optional HTTP/HTTPS route for app downloads, kept separate from Electron's browser session |
 | [`src/download-stats.ts`](#srcdownload-statsts) | How many times each catalog mod was downloaded, counted by the catalog's own counter (a |
 | [`src/electron.ts`](#srcelectronts) | Electron's main-process API, asked for at the moment it is used. |
@@ -1684,6 +1685,40 @@ export class DiscordPresence
 ```
 
 _No description in the source._
+
+## src/disk-space.ts
+
+Room on the disk, checked before a mod is written (issue #426). A disk that fills up halfway
+through a pak leaves the transaction to roll back and the user with an error about a file
+they never heard of; asking first costs one statfs and says what is wrong in megabytes.
+
+### `SPACE_MARGIN`
+
+```ts
+export const SPACE_MARGIN = 64 * 1024 * 1024
+```
+
+Kept free on top of what the write needs: the journal's copies and the OS's own work.
+
+### `freeBytes`
+
+```ts
+export function freeBytes(dir: string, statfs: StatFs = fs.statfsSync): number | null
+```
+
+Free bytes on the drive that holds dir, or null when the system will not say.
+dir may not exist yet (a language folder made on first install), so the nearest folder
+above it that does is asked instead.
+
+### `ensureSpace`
+
+```ts
+export function ensureSpace(dir: string, need: number, statfs: StatFs = fs.statfsSync): void
+```
+
+Throw before writing when dir's drive has less than need bytes plus the margin.
+A drive that cannot be asked is let through: refusing every install on a system without
+statfs would be worse than the error this is here to prevent.
 
 ## src/download-proxy.ts
 

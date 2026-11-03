@@ -558,6 +558,7 @@ that location is not writable.
 | `src/installer.ts` | The door to everything below that writes a mod into the game folder or takes it out |
 | `src/installer-downloads.ts` | Getting a catalog archive onto this machine |
 | `src/installer-write.ts` | Writing a mod into the folder, switching its files on and off, removing them |
+| `src/disk-space.ts` | Room on the disk, checked before a mod is written, so a full drive is an error in megabytes instead of a half-written pak |
 | `src/installer-slots.ts`, `src/slot-zones.ts` | The load order: pak slots, moving and swapping them, its two parts, and which mod hides whose files |
 | `src/installer-packs.ts` | Several mods in one pak slot |
 | `src/installer-repack.ts` | What is already installed, read and rewritten: merged, unpacked, folded, split by hero |
