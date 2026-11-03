@@ -137,7 +137,8 @@ export interface AppApi {
   win: WinApi;
   settings: SettingsApi;
   ui: UiApi;
-  game: { launch: () => Promise<Reply> };
+  /** warning: Steam is still updating the game (src/steam-appstate.ts), said before it starts */
+  game: { launch: () => Promise<Reply<{ warning?: string | null }>> };
   account: { signIn: () => Promise<Reply<{ account: NonNullable<StoredSettings['account']> }>>; signOut: () => Promise<Reply> };
   /** the beta channel: shown only to an account the signed list names (src/beta.ts) */
   beta: { state: () => Promise<{ eligible: boolean; on: boolean }>; set: (on: boolean) => Promise<{ eligible: boolean; on: boolean }> };

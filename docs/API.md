@@ -140,6 +140,7 @@ the code, not in this page.
 | [`src/services.ts`](#srcservicests) | What the app is built from: every long-lived service, created once in the order they depend on |
 | [`src/settings.ts`](#srcsettingsts) | Simple JSON settings store in userData |
 | [`src/slot-zones.ts`](#srcslot-zonests) | The load order in two parts. |
+| [`src/steam-appstate.ts`](#srcsteam-appstatets) | What Steam's own manifest says about Dota right now (issue #427). Pressing Play while Steam is |
 | [`src/steam.ts`](#srcsteamts) | Finding Steam, and then finding Dota inside it. |
 | [`src/steps.ts`](#srcstepsts) | Work a step at a time. |
 | [`src/support-prompt.ts`](#srcsupport-promptts) | When the window asking people to support the project comes up on its own. |
@@ -2247,6 +2248,8 @@ half-succeed, and the client has already read the files anyway. The app says it 
 tries again after the game exits.
 
 Hands on from [`src/game-repair.ts`](#srcgame-repairts): `REPAIR_RETRY_MS`, `PatchRepair`, `Stuck`.
+
+Hands on from [`src/steam-appstate.ts`](#srcsteam-appstatets): `launchWarning`.
 
 ### `dotaIsRunning`
 
@@ -8310,6 +8313,54 @@ game refuses puts back what already moved and throws; the next call tries again.
 ```
 @returns {boolean} whether a mod moved
 ```
+
+## src/steam-appstate.ts
+
+What Steam's own manifest says about Dota right now (issue #427). Pressing Play while Steam is
+still downloading an update queues the update first: the game starts minutes later, on new
+files the mods may not fit yet, and the user sees nothing happen. steamapps/appmanifest_570.acf
+says so before the launch, in one field.
+
+### `AppState`
+
+```ts
+export interface AppState { flags: number; toDownload: number; downloaded: number }
+```
+
+The game's state as Steam last wrote it: its flags, and the bytes of the download under way.
+
+### `parseAppManifest`
+
+```ts
+export function parseAppManifest(text: string): AppState | null
+```
+
+The fields this module reads, out of an appmanifest's text; null when it has no StateFlags.
+
+### `updatePending`
+
+```ts
+export function updatePending(state: AppState): boolean
+```
+
+Whether Steam has an update for the game that it has not finished.
+
+### `readAppState`
+
+```ts
+export function readAppState(gamePath: string | null | undefined, read: (p: string) => string = (p) => fs.readFileSync(p, 'utf-8')): AppState | null
+```
+
+The manifest next to a game folder ("<library>/steamapps/common/dota 2 beta/game"), read;
+null when it is not where Steam keeps it, which a copied or moved game can be.
+
+### `launchWarning`
+
+```ts
+export function launchWarning(gamePath: string | null | undefined, read?: (p: string) => string): string | null
+```
+
+What to tell the user before the launch, or null when Steam is done with the game.
 
 ## src/steam.ts
 

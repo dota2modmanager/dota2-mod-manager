@@ -41,7 +41,7 @@ import { releaseNotes } from './release-notes.ts';
 import { firstLink, handleDeepLink, installDesktopEntry } from './deep-links.ts';
 import { createMainWindow, clampZoom, workAreaFrom } from './main-window.ts';
 import { attachDevHarness } from './dev-harness.ts';
-import { createGameUpkeep, dotaIsRunning } from './game-upkeep.ts';
+import { createGameUpkeep, dotaIsRunning, launchWarning } from './game-upkeep.ts';
 import type { AppContext, AppProgress } from './app-context.ts';
 import type { BrowserWindow } from 'electron';
 
@@ -236,7 +236,7 @@ async function start(): Promise<void> {
     // the launch button is the last chance to notice before the game starts
     schemaService.heal();
     void shell.openExternal('steam://rungameid/570');
-    return { ok: true };
+    return { ok: true, warning: launchWarning(settings.get('dotaGamePath')) };
   });
 
   // only the installed build claims the scheme: a dev run must not point the system's d2mm://

@@ -16,12 +16,14 @@ document.getElementById('launchBtn')?.addEventListener('click', async () => {
   const btn = byId<HTMLButtonElement>('launchBtn');
   btn.disabled = true;
   btn.setAttribute('aria-busy', 'true');
+  let warning: string | null | undefined = null;
   try {
-    await window.api.game.launch();
+    ({ warning } = await window.api.game.launch());
   } finally {
     btn.disabled = false;
     btn.removeAttribute('aria-busy');
   }
+  if (warning) { toast(warning, 'warn', 9000); return; }
   toast(state.masterOff ? L`Запуск Dota 2 без модов…` : L`Запуск Dota 2 с модами…`);
 });
 

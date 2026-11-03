@@ -157,6 +157,7 @@ const EN = {
   'Порт прокси должен быть от 1 до 65535': 'The proxy port must be from 1 to 65535',
   'Прокси не ответил успешно': 'The proxy did not return a successful response',
   'Не удалось подключиться через прокси': 'Could not connect through the proxy',
+  'Steam ещё обновляет Dota 2: игра запустится, когда загрузка закончится. После обновления загляни в «Мои моды»': 'Steam is still updating Dota 2: the game starts once the download is done. After the update, have a look at My mods',
   'Не хватает места на диске: освободи ещё {0} МБ': 'Not enough disk space: free up another {0} MB',
   'Не удалось скачать {0}: {1}': 'Could not download {0}: {1}',
   '{0}: скачанный файл не совпадает с тем, что опубликовал автор мода. Попробуй позже': '{0}: what downloaded is not what the mod\'s author published. Try again later',

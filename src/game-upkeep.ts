@@ -243,4 +243,6 @@ export function createGameUpkeep({
 }
 
 export { REPAIR_RETRY_MS } from './game-repair.ts';
+/** What Steam's manifest says before Play: an update still downloading (src/steam-appstate.ts). */
+export { launchWarning } from './steam-appstate.ts';
 export type { PatchRepair, Stuck } from './game-repair.ts';
