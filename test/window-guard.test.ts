@@ -176,6 +176,7 @@ const VALID: Record<string, unknown[][]> = {
   'sounds:add': [['lion', 'Hero_Lion.Voodoo', 'layer', 0.8, new Uint8Array(44), 'ring.mp3']],
   'hud:state': [[]], 'hud:install': [[85]],
   'background:state': [[]], 'background:install': [[new Uint8Array(64), 'sunset.mp4', 0.2, 4], [null, null, 0.5, 0]],
+  'paint:state': [['juggernaut']], 'paint:install': [['juggernaut', { 'ability:juggernaut_blade_fury': '#00ff00' }, 'Juggernaut'], ['axe', {}, null]],
   'map:state': [[]], 'map:install': [['towers', '17538', null], ['trees', null, 'winter']],
   'arcana:state': [[]], 'arcana:install': [['terrorblade-arcana', [255, 0, 128], 'mod'], ['techies-arcana', [1, 2, 3], 'recolor']],
   'misc:openLangFolder': [[]], 'misc:openCacheFolder': [[]], 'misc:openToolsFolder': [[], ['Compiler']],

@@ -899,3 +899,25 @@
 .hud-screen { position: relative; aspect-ratio: 16 / 9; width: min(100%, 448px); align-self: center; border-radius: var(--radius-md); overflow: hidden; background: var(--bg-deep); }
 .hud-minimap { position: absolute; left: 0; bottom: 0; aspect-ratio: 1; background: color-mix(in srgb, var(--primary) 35%, transparent); border-top-right-radius: var(--radius-sm); transition: width var(--dur-fast) var(--ease-out); }
 .hud-bar { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); background: color-mix(in srgb, var(--primary) 60%, transparent); border-top-left-radius: var(--radius-sm); border-top-right-radius: var(--radius-sm); transition: width var(--dur-fast) var(--ease-out), height var(--dur-fast) var(--ease-out); }
+.background-look .scale-range { width: 100%; }
+
+/* a hero recoloured part by part (catalog/paint, issue #422) */
+.hero-paint-btn { flex-shrink: 0; margin-right: var(--space-2); }
+.paint-all { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+.paint-all-title { font-weight: 600; font-size: var(--text-sm); }
+.paint-all .paint-swatch { width: 36px; height: 36px; }
+.paint-rows { display: flex; flex-direction: column; gap: var(--space-1); }
+.paint-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--surface); }
+.paint-row-name { font-size: var(--text-sm); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.paint-row-cells { display: flex; gap: var(--space-3); }
+.paint-cell { display: flex; align-items: center; gap: var(--space-2); min-width: 168px; font-size: var(--text-sm); color: var(--text-muted); }
+.paint-cell.on { color: var(--text); }
+.paint-cell.none { color: var(--text-faint); padding-left: var(--space-1); }
+.paint-cell-label { flex: 1; }
+.paint-swatch { position: relative; flex-shrink: 0; width: 24px; height: 24px; border-radius: var(--radius-full); background: var(--c); border: 1px solid color-mix(in srgb, var(--c) 60%, var(--border)); cursor: pointer; transition: transform var(--dur-fast) var(--ease-standard); }
+.paint-swatch:hover { transform: scale(1.1); }
+.paint-swatch:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+.paint-swatch input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: 0; padding: 0; }
+.paint-cell:not(.on) .paint-swatch { opacity: 0.45; }
+.paint-tool { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px dashed var(--border); border-radius: var(--radius-md); }
+.paint-tool .btn { flex-shrink: 0; }

@@ -175,6 +175,17 @@ export interface BackgroundApi {
   install: (webm: Uint8Array | null, source: string | null, dim: number, blur: number) => Promise<Reply<{ record: LibRecord }>>;
 }
 
+/** One part of a hero that takes a colour of its own (src/recolor-layers.ts). */
+export interface PaintLayer { id: string; kind: 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item'; name: string | null; files: number }
+
+/** A hero recoloured part by part (src/hero-paint-service.ts). */
+export interface PaintApi {
+  /** the hero's layers, and the colour of each on now */
+  state: (hero: string) => Promise<Reply<{ layers: PaintLayer[]; installed: { id: string; layers: Record<string, string>; enabled: boolean } | null; vrf: boolean }>>;
+  /** the hero in a #rrggbb per layer that is on, put in My mods in place of the one before */
+  install: (hero: string, colors: Record<string, string>, label: string) => Promise<Reply<{ record: LibRecord }>>;
+}
+
 /** How a sound of the user's goes on an event: instead of Valve's, or with it. */
 export type SoundMode = 'replace' | 'layer';
 /** A sound of the user's on one event, as the hero's record keeps it. */

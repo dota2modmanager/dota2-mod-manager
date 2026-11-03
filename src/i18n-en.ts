@@ -267,6 +267,10 @@ const EN = {
   'В WebM нет видео VP8 или VP9': 'The WebM has no VP8 or VP9 video',
   'Нужен ValveResourceFormat: скачай его в окне': 'ValveResourceFormat is needed: download it in the window',
   'Размер интерфейса в игре: {0}%': 'In-game HUD size: {0}%',
+  'Нет такого героя: {0}': 'No such hero: {0}',
+  'Ни один файл не взял цвет': 'None of the files took the colour',
+  'Перекраска: {0}': 'Recolor: {0}',
+  'Выбери цвет хотя бы для одного слоя': 'Pick a colour for at least one layer',
 } satisfies Record<string, string>;
 
 export default EN;

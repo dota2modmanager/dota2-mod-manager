@@ -76,11 +76,14 @@ export interface HeroModalModel {
   /** the 3D preview (catalog/preview3d): the hero's name for its models, what each slot dresses, and
    * a key of what is on, so a pick draws it again; null hides the button */
   preview: { hero: string; slots: { slot: string; stock: string }[]; sig: string; open: boolean } | null;
+  /** the hero's npc name for the recolour window (views/hero-paint.ts); null hides its button */
+  paint: string | null;
 }
 
 export interface HeroModalActions {
   close: () => void;
   togglePreview: () => void;
+  openPaint: () => void;
   openSets: () => void;
   openSlot: (slot: string) => void;
 }

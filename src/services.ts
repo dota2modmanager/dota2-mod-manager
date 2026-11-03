@@ -29,6 +29,9 @@ import { createBaseStore } from './arcana-base-store.ts';
 import { createMapLooks } from './map-looks-service.ts';
 import { createMenuBackground } from './menu-background-service.ts';
 import { createHudScale } from './hud-scale-service.ts';
+import { createHeroPaint } from './hero-paint-service.ts';
+import { shadePixels } from './recolor-layers.ts';
+import type { Rgb } from './recolor.ts';
 import { createAbilitySounds } from './ability-sounds-service.ts';
 import { createBuildUndo } from './build-undo.ts';
 import { createModelGlb } from './model-glb.ts';
@@ -48,7 +51,7 @@ import { Icons } from './icons.ts';
 import { presetsService } from './presets-service.ts';
 import { createPresenceStatus } from './presence-status.ts';
 import { catalogModsReader, createDownloadStats, statKeysFor } from './download-stats.ts';
-import { setLang, t } from './i18n.ts';
+import { getLang, setLang, t } from './i18n.ts';
 import { errorText } from './error-text.ts';
 import type { AppContext, AppProgress } from './app-context.ts';
 import type { LibRecord } from './types.ts';
@@ -171,6 +174,10 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   // the in-game HUD smaller or larger, read back by ValveResourceFormat and compiled again (src/hud-scale-service.ts)
   const hudScale = createHudScale({ gamePath: () => settings.get('dotaGamePath'), installer, library, vrf: () => toolchain.pathOf('vrf'),
     compile: (job) => compiler.compile(job), onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
+  // a hero recoloured part by part, out of the game's own files (src/hero-paint-service.ts)
+  const heroPaint = createHeroPaint({ gamePath: () => settings.get('dotaGamePath'), installer, library, vanilla: () => schemaService.vanilla(), repaint: electronRepaint,
+    vrf: () => toolchain.pathOf('vrf'), compile: (job) => compiler.compile(job),
+    lang: getLang, onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
   const keepTools: AppContext['keepTools'] = async ({ force = false } = {}) => {
     if (!toolsKeeper) return false;
     try {
@@ -220,7 +227,17 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 
   return {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, hudScale, abilitySounds, buildUndo, heroPreview,
+    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, hudScale, heroPaint, abilitySounds, buildUndo, heroPreview,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };
+}
+
+/** A PNG in the chosen colour through Electron's image codec, which hands its pixels over as BGRA. */
+export function electronRepaint(png: Buffer, color: Rgb): Buffer {
+  const { nativeImage } = electron();
+  const img = nativeImage.createFromBuffer(png);
+  const size = img.getSize();
+  const pixels = Buffer.from(img.toBitmap());
+  shadePixels(pixels, color, { bgra: true });
+  return nativeImage.createFromBitmap(pixels, size).toPNG();
 }

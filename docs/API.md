@@ -68,6 +68,7 @@ the code, not in this page.
 | [`src/glb-embed.ts`](#srcglb-embedts) | A GLB with its pictures inside (issue #417). |
 | [`src/hero-grid.ts`](#srchero-gridts) | Hero grids for the pick screen out of this patch's numbers (issue #428). |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
+| [`src/hero-paint-service.ts`](#srchero-paint-servicets) | A hero recoloured part by part, as one record in My mods (issue #422; what the parts are is |
 | [`src/hero-preview.ts`](#srchero-previewts) | The models of a hero as the item builder dresses it, for the 3D preview in the hero's window |
 | [`src/hud-scale-service.ts`](#srchud-scale-servicets) | The in-game HUD made smaller or larger, as a record in My mods (issue #420; the CSS is |
 | [`src/hud-scale.ts`](#srchud-scalets) | The in-game HUD made smaller or larger (issue #420): the stylesheet that lays the HUD out, |
@@ -143,6 +144,7 @@ the code, not in this page.
 | [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
 | [`src/pumpkin.ts`](#srcpumpkints) | The pumpkin's side of the key (renderer/ui/pumpkin.ts asks, tools/pumpkin-worker answers). |
 | [`src/quit-after-build.ts`](#srcquit-after-buildts) | Quitting waits for the item table being written. |
+| [`src/recolor-layers.ts`](#srcrecolor-layersts) | A hero in colours of the user's choosing, part by part (issue #422): each ability's effect and its |
 | [`src/recolor.ts`](#srcrecolorts) | An item's effects in a colour of the user's choosing, built from the game's own files. |
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
@@ -3257,6 +3259,56 @@ Identity of a hero regardless of how the author spelled the folder. Authors mix
 "crystal_maiden", "crystalmaiden" and "CrystalMaiden" inside one pack, and each spelling
 used to count as a separate hero — which turned a single-hero skin into a "bundle of 3"
 and offered to split it into parts that make no sense.
+
+## src/hero-paint-service.ts
+
+A hero recoloured part by part, as one record in My mods (issue #422; what the parts are is
+src/recolor-layers.ts). The window lists the hero's layers and sends a colour for each one that is
+on; the pak is built from the game's own pak01, a file at a time, and goes early in the load order
+with the hero items, so it wins over a catalog mod of the same hero.
+
+Particles take the colour through src/recolor.ts. A picture is a compiled texture. Most of the
+hero's are block-compressed (all his small icons, nearly every ability icon): ValveResourceFormat
+reads one out as a PNG, it is repainted (`repaint`, Electron's image codec in the app), and
+Valve's compiler builds it again, as the child of a stylesheet that names it, which is how
+Panorama compiles a picture. The body's textures go the same way, as the colour of a material of
+the hero shader, and come back under the game's own names. A texture with a PNG inside
+(src/vtex.ts) needs neither tool: its PNG is repainted and put back behind the same header.
+
+A Dota update that reached the record builds it again with the same colours, a step at a time,
+after the update's repair has answered; the record's mark goes when that is done.
+
+### `PaintGenerated`
+
+```ts
+export interface PaintGenerated { paint: string; label: string; layers: Record<string, string> }
+```
+
+What a hero's paint record was built from: the hero, and each layer's colour as #rrggbb.
+
+### `PaintLayerView`
+
+```ts
+export interface PaintLayerView { id: string; kind: RecolorLayer['kind']; name: string | null; files: number }
+```
+
+One layer as the window lists it.
+
+### `createHeroPaint`
+
+```ts
+export function createHeroPaint({ gamePath, installer, library, vanilla, repaint, vrf = () => null, compile, decode = vrfPng, lang = () => 'en', onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** the game's own item table */ vanilla: () => string; /** a PNG in the chosen colour; Electron's codec in the app, a fake in tests */ repaint: (png: Buffer, color: Rgb) => Buffer
+```
+
+The service the paint:* channels call.
+
+### `vrfPng`
+
+```ts
+export async function vrfPng(exe: string, vtex: Buffer): Promise<Buffer>
+```
+
+A compressed picture read out as a PNG by ValveResourceFormat, in a folder of its own that goes after.
 
 ## src/hero-preview.ts
 
@@ -8049,6 +8101,103 @@ export function quitAfterBuild(app: { on(event: 'before-quit', fn: (e: QuitEvent
 @param settled  resolves once none is (schemaService.settled)
 ```
 
+## src/recolor-layers.ts
+
+A hero in colours of the user's choosing, part by part (issue #422): each ability's effect and its
+icon, the hero's other effects, the hero's icons and portrait, and the effects of the items picked
+for him in the item builder. Each part is a layer with a colour of its own and its own switch,
+and the whole recolour is one pak (src/hero-paint-service.ts).
+
+What belongs to an ability is read off the game's file names: Valve names an ability's particles
+after it (particles/units/heroes/hero_juggernaut/juggernaut_blade_fury_glow.vpcf for
+juggernaut_blade_fury), and its icon is panorama/images/spellicons/<ability>_png.vtex_c. The
+ability list itself is the hero's script (scripts/npc/heroes/npc_dota_hero_<name>.txt). Particles
+no ability claims are the hero's other effects: the attack, the crit, the portrait. An item's
+effect is every particle its visuals name, with the children those particles create (RERL).
+
+The body is the colour textures of his model's materials (materials/models/heroes/<model folder>/,
+*_color_*.vtex_c), the folder his script's "Model" is in.
+
+Particles take the colour through src/recolor.ts (the colours written in them move to the chosen
+hue); pictures and textures through `shadePixels` below, the same move pixel by pixel.
+
+### `LayerKind`
+
+```ts
+export type LayerKind = 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item'
+```
+
+What a layer recolours.
+
+### `RecolorLayer`
+
+```ts
+export interface RecolorLayer
+```
+
+One part of a hero that takes a colour of its own.
+
+### `heroAbilities`
+
+```ts
+export function heroAbilities(heroScript: string): string[]
+```
+
+The hero's abilities, in his script's order, once each; an Ability Draft copy (invoker_emp_ad) goes with its ability.
+
+### `heroModelFolder`
+
+```ts
+export function heroModelFolder(heroScript: string): string | null
+```
+
+The folder of the hero's model in his script, `juggernaut` for models/heroes/juggernaut/juggernaut.vmdl; null when it is not one of models/heroes.
+
+### `heroParticleFolder`
+
+```ts
+export function heroParticleFolder(paths: Iterable<string>, hero: string): string
+```
+
+The folder a hero's own particles are in.
+
+### `heroLayers`
+
+```ts
+export function heroLayers(paths: Iterable<string>, hero: string, abilities: string[], items: { id: string; name: string; particles: string[] }[] = [], model: string | null = null): RecolorLayer[]
+```
+
+The layers a hero has, from the paths in pak01. A layer with no files is left out: a hero with no
+picture for an ability, or an ability with no particle of its own, shows no row for it.
+
+```
+@param hero  the hero's name in his npc name, `juggernaut` for npc_dota_hero_juggernaut
+@param items the items picked for him, with the particles their visuals name
+@param model the folder of his model (`heroModelFolder`), for the body's textures
+```
+
+### `withChildren`
+
+```ts
+export function withChildren(roots: string[], refs: (path: string) => string[]): string[]
+```
+
+A particle and the particles it creates, followed down the tree once each.
+
+```
+@param refs the particles a file names (src/resource.ts references), compiled paths
+```
+
+### `shadePixels`
+
+```ts
+export function shadePixels(pixels: Buffer, target: Rgb, { bgra = false }: { bgra?: boolean } = {}): number
+```
+
+Pixels moved to the chosen colour in place, as `shade` moves a particle's colours: greys stay,
+the rest take the chosen hue. `rgba` is four bytes a pixel; `bgra` says the red and blue are
+swapped, as Electron's bitmaps have them on Windows.
+
 ## src/recolor.ts
 
 An item's effects in a colour of the user's choosing, built from the game's own files.
@@ -9382,6 +9531,14 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 ```
 
 Build every service over this userData folder.
+
+### `electronRepaint`
+
+```ts
+export function electronRepaint(png: Buffer, color: Rgb): Buffer
+```
+
+A PNG in the chosen colour through Electron's image codec, which hands its pixels over as BGRA.
 
 ## src/settings.ts
 

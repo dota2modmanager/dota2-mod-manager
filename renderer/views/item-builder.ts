@@ -21,6 +21,7 @@ import { COSMETIC_PREFIX } from '../core/constants.ts';
 import { catName } from '../core/categories.ts';
 import { pickedIn } from '../core/installed.ts';
 import { showSlotPicker, showHeroModal } from '../catalog/modal/root.tsx';
+import { openPaint } from './hero-paint.ts';
 import { byName, effectKey, effectPicture, heroesOf, liveDonor, liveEffects, liveStyle, setIsOn, stagedItemAction, tagLine } from '../catalog/builder/logic.ts';
 import { plural } from '../ui/format.ts';
 import { heroName } from '../ui/hero-name.ts';
@@ -235,6 +236,9 @@ function heroPreview(slots: CosmeticSlot[]) {
   };
 }
 
+/** The hero's npc name without its prefix (juggernaut), out of the slots' hero ids. */
+const heroNpc = (slots: CosmeticSlot[]): string | null => slots.find((s) => s.heroIds?.length)?.heroIds?.[0]?.replace(/^npc_dota_hero_/, '') || null;
+
 function drawHero(key: number, heroName: string, slots: CosmeticSlot[]): void {
   const sets = heroSets(heroName);
   const shown = sets.find((s) => setIsOn(s, pickedIn)) || sets[0];
@@ -253,9 +257,11 @@ function drawHero(key: number, heroName: string, slots: CosmeticSlot[]): void {
     }),
     sets: sets.length ? { name: shown.name, count: sets.length, on: sets.some((s) => setIsOn(s, pickedIn)) } : null,
     preview: heroPreview(slots),
+    paint: heroNpc(slots),
   }, {
     close: closeOverlay,
     togglePreview: () => { previewOpen = !previewOpen; drawHero(key, heroName, slots); },
+    openPaint: () => { const npc = heroNpc(slots); if (npc) void openPaint(npc, heroName, () => openItemHeroModal(heroName, null)); },
     openSets: () => openSets(heroName),
     openSlot: (slot) => openItemSlotModal(slot, null,
       { back: { label: heroName, hero: true, go: () => openItemHeroModal(heroName, null) } }),
