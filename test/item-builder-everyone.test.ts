@@ -1,6 +1,7 @@
 /* The item builder's look on everybody playing the hero (src/item-builder-everyone.ts): which of
  * a hero's wearables are dressed as the user's hero, with which files and block, and which are left
- * alone; and the pak holding one model under many paths once.
+ * alone; and the pak holding one file under many paths once. Most need no file: their block names
+ * the stock path the user's look is at (#414).
  *
  * The promise to the user: another player of a hero the user built looks like the user's hero, slot
  * by slot (his pick, else the stock item, else nothing), never his own store items on the user's
@@ -81,20 +82,21 @@ const read = (p: string) => GAME[p] ?? null;
 const wears = (list: SchemaPatch[], beneath: ReturnType<typeof entryAt>[] = [], heroes?: string[]) => everyoneWears(TABLE, list, beneath, read, heroes);
 const of = (out: SchemaPatch[], id: string) => out.find((p) => p.id === id)!;
 const paths = (patches: SchemaPatch[]) => Object.fromEntries(patches.map((p) => [p.id, (p.assets || []).map(entryPath).sort()]));
+const modelOf = (out: SchemaPatch[], id: string) => /"model_player"\s+"([^"]+)"/.exec(of(out, id).block)?.[1] ?? null;
 
 test("a hero the build dresses is worn by everybody as the user's is, slot by slot", () => {
   const pick = swordPick();
   const out = wears([pick]);
   assert.deepEqual(paths(out), {
-    6058: ['models/items/juggernaut/demon/demon.vmdl_c', 'models/items/juggernaut/demon/demon_style1.vmdl_c'],
-    9000: ['models/items/juggernaut/fire/fire.vmdl_c'],
-    9001: ['models/heroes/juggernaut/juggernaut_arcana.vmdl_c', 'models/items/juggernaut/swap/swap.vmdl_c'],
-    9003: ['models/items/juggernaut/fire/fire_mask.vmdl_c'],
+    6058: [],
+    9000: [],
+    9001: ['models/heroes/juggernaut/juggernaut_arcana.vmdl_c'],
+    9003: [],
     9006: ['models/items/juggernaut/charm/charm.vmdl_c'],
     9008: ['models/items/juggernaut/arcana/arcana_body.vmdl_c'],
-  }, "the styles' models too, and the arcanas' bodies; not the shared sword, the persona's, the one with no stock slot, Sven's, or one swapping a summon or another form");
-  for (const id of ['6058', '9000']) for (const en of of(out, id).assets!) assert.equal(en.data, pick.assets![0].data, 'the picked sword, one buffer the pak stores once');
-  assert.equal(of(out, '9003').assets![0].data.toString(), "the game's own mask", 'a slot nothing is picked in: the stock item');
+  }, "files only for the arcanas' bodies and a slot whose stock item has no model; not the shared sword, the persona's, the one with no stock slot, Sven's, or one swapping a summon or another form");
+  for (const id of ['6058', '9000', '9001']) assert.equal(modelOf(out, id), 'models/heroes/juggernaut/jugg_sword.vmdl', `${id}: the stock path, where the picked sword is`);
+  assert.equal(modelOf(out, '9003'), 'models/heroes/juggernaut/jugg_mask.vmdl', 'a slot nothing is picked in: the stock item');
   assert.match(of(out, '9003').block, /mask_glow/, 'with its visuals');
   assert.equal(of(out, '9006').assets![0].data.toString(), 'nothing to see', 'a stock item with no model: the invisible box');
   assert.doesNotMatch(of(out, '9006').block, /charm_ambient/, 'and none of its own particles');
@@ -102,9 +104,8 @@ test("a hero the build dresses is worn by everybody as the user's is, slot by sl
 
 test("an arcana's body is the user's hero's body, and its slot the user's (Planetfall under the Gar Beast)", () => {
   const out = wears([swordPick()]);
-  const swap = of(out, '9001').assets!;
-  assert.equal(swap.find((en) => entryPath(en).includes('arcana'))!.data.toString(), "the game's own Juggernaut", 'the plain body under the arcana');
-  assert.equal(swap.find((en) => entryPath(en).includes('swap'))!.data.toString(), 'the sword the user picked', 'and the picked sword under its own');
+  assert.equal(of(out, '9001').assets![0].data.toString(), "the game's own Juggernaut", 'the plain body under the arcana');
+  assert.equal(modelOf(out, '9001'), 'models/heroes/juggernaut/jugg_sword.vmdl', 'and the picked sword for the sword');
   assert.equal(of(out, '9008').assets![0].data.toString(), "the game's own Juggernaut");
   assert.doesNotMatch(of(out, '9008').block, /entity_model|arcana_ambient/, "the stock base's visuals in place of the arcana's");
   assert.match(of(out, '9008').block, /"name"\s+"Arcana Body"/);
@@ -127,10 +128,8 @@ test("an arcana's refits of other items are the user's too, and a slot it swaps 
   ].join('\n')).trim() };
   const pick = swordPick();
   const out = wears([pick, arcana]);
-  assert.deepEqual(paths(out)['9000'], ['models/items/juggernaut/arcana/fire_refit.vmdl_c', 'models/items/juggernaut/fire/fire.vmdl_c'],
-    'hovered, the fire sword is drawn as its refit: the picked sword is there as well');
-  for (const en of of(out, '9000').assets!) assert.equal(en.data, pick.assets![0].data);
-  assert.ok(!paths(out)['6058'].some((p) => p.includes('arcana')), "a swap of another style is not the one the patch leaves");
+  assert.deepEqual(paths(out)['9000'], [], 'the fire sword names the stock path, where no swap of the arcana reaches');
+  assert.equal(modelOf(out, '9000'), 'models/heroes/juggernaut/jugg_sword.vmdl');
   // the user's neck is the fire mask's own model, which the arcana swaps: what the user sees is the swap
   GAME['models/items/juggernaut/arcana/fire_mask_arcana.vmdl_c'] = Buffer.from('the arcana mask');
   const neck: SchemaPatch = { id: '8', block: item('8', "Juggernaut's Neck", 'default_item', 'neck', 'models/items/juggernaut/fire/fire_mask.vmdl').trim(), source: 'Picked neck' };
@@ -139,7 +138,7 @@ test("an arcana's refits of other items are the user's too, and a slot it swaps 
   } finally { delete GAME['models/items/juggernaut/arcana/fire_mask_arcana.vmdl_c']; }
 });
 
-test("a dressed wearable keeps its own id, name, picture and model path, with the pick's visuals in place of its own", () => {
+test("a dressed wearable keeps its own id, name and picture, with the pick's model path and visuals in place of its own", () => {
   const merged = mergeSchema(TABLE, [swordPick(), ...wears([swordPick()])]);
   assert.deepEqual(merged.conflicts, []);
   const fire = findItem(merged.text, '9000')!;
@@ -148,7 +147,7 @@ test("a dressed wearable keeps its own id, name, picture and model path, with th
   assert.match(block, /"name"\s+"Fire Sword"/);
   assert.match(block, /"prefab"\s+"wearable"/, 'not a default item: the game would treat it as one every account owns');
   assert.match(block, /"image_inventory"\s+"econ\/items\/9000"/);
-  assert.match(block, /"model_player"\s+"models\/items\/juggernaut\/fire\/fire.vmdl"/);
+  assert.match(block, /"model_player"\s+"models\/heroes\/juggernaut\/jugg_sword.vmdl"/, 'the stock path: a match loads it with the hero');
   assert.match(block, /picked_glow/, "the pick's particles");
   assert.doesNotMatch(block, /fire_ambient/, 'and not its own, which would hang off the picked sword');
 });
@@ -158,8 +157,8 @@ test("an arcana base's part dresses its slot, and the slots it leaves are the st
   const mask = entryAt('models/heroes/juggernaut/jugg_mask.vmdl_c', Buffer.from("the base's mask"));
   const out = wears([], [mask]);
   assert.deepEqual(Object.keys(paths(out)).sort(), ['6058', '9000', '9001', '9003', '9006', '9008']);
-  assert.equal(of(out, '9003').assets![0].data, mask.data, "the base's part");
-  assert.equal(of(out, '9000').assets![0].data.toString(), "the game's own sword", 'the slot the base leaves: the stock sword');
+  assert.equal(modelOf(out, '9003'), 'models/heroes/juggernaut/jugg_mask.vmdl', "the base's part, at the stock path");
+  assert.equal(modelOf(out, '9000'), 'models/heroes/juggernaut/jugg_sword.vmdl', 'the slot the base leaves: the stock sword');
 });
 
 test("a block another mod lifted stays that mod's, and a hero not on the list is not touched", () => {
@@ -174,8 +173,8 @@ test("every hero the build dresses is done in one go, each hero's wearables in h
   const jugg = swordPick();
   const out = wears([jugg, sven]);
   assert.deepEqual(Object.keys(paths(out)).sort(), ['6058', '9000', '9001', '9003', '9005', '9006', '9008']);
-  assert.equal(of(out, '9005').assets![0].data, sven.assets![0].data, "Sven's in Sven's pick");
-  assert.equal(of(out, '9000').assets![0].data, jugg.assets![0].data, "Juggernaut's in his");
+  assert.equal(modelOf(out, '9005'), 'models/heroes/sven/sven_sword.vmdl', "Sven's in Sven's pick");
+  assert.equal(modelOf(out, '9000'), 'models/heroes/juggernaut/jugg_sword.vmdl', "Juggernaut's in his");
   assert.deepEqual(Object.keys(paths(wears([jugg, sven], [], ['sven']))), ['9005'], 'and a list of heroes keeps to it');
 });
 
@@ -185,17 +184,24 @@ test("a file the build already puts at a wearable's path wins over the copy", ()
   assert.ok(!('9000' in paths(out)), 'nothing left to put there');
 });
 
-test('a pak with one model under many paths stores the bytes once, and reads back the same under each', () => {
+test('a pak with one body under many paths stores the bytes once, and reads back the same under each', () => {
   // big enough that a second copy cannot hide in the index's growth
-  const model = Buffer.alloc(64 * 1024, 'sword');
-  const pick = swordPick(model);
-  const swords = wears([pick]).flatMap((p) => p.assets!).filter((e) => e.data === model);
-  const one = buildVpk(pick.assets!);
-  const many = buildVpk([...pick.assets!, ...swords]);
+  const body = entryAt(BODY, Buffer.alloc(64 * 1024, 'body'));
+  const bodies = wears([swordPick()], [body]).flatMap((p) => p.assets!).filter((e) => e.data === body.data);
+  const one = buildVpk([body]);
+  const many = buildVpk([body, ...bodies]);
   assert.ok(many.length - one.length < 400, `only the index grows: ${many.length - one.length} bytes`);
   const back = readVpkEntries(many, 'pak01_dir.vpk');
-  assert.equal(back.length, 5);
-  for (const en of back) assert.ok(en.data.equals(model), entryPath(en));
+  assert.equal(back.length, 3, "the base's body, and under both arcanas' bodies");
+  for (const en of back) assert.ok(en.data.equals(body.data), entryPath(en));
+});
+
+test('a slot the user sees at a path no match loads for sure gets files, not the path (#414)', () => {
+  // the invisible box, a pick's own head, an arcana's refit: named in the block, an unloaded model is
+  // drawn as the ERROR model ("Attempting to set nonresident model", 2026-10-18)
+  const out = wears([swordPick()]);
+  assert.equal(modelOf(out, '9006'), 'models/items/juggernaut/charm/charm.vmdl', 'its own path');
+  assert.equal(of(out, '9006').assets![0].data.toString(), 'nothing to see', 'with the invisible box there');
 });
 
 // #402: the server sends another player's item with the style they wear it in. The user's pick in
