@@ -30,6 +30,7 @@ const EN = {
   'Для этой системы ({0}) нет сборки {1}': 'There is no build of {1} for this system ({0})',
   'Не указана папка игры': 'No game folder is set',
   'Не тот цвет': 'Not a colour',
+  'Нет такой арканы': 'No such arcana',
   'Этот мод нельзя обновить из каталога': 'This mod cannot be updated from the catalog',
   'Сохранить мод одним .vpk файлом': 'Save the mod as a single .vpk file',
   'Куда распаковать мод': 'Where to unpack the mod',

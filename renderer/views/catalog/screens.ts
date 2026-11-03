@@ -1,7 +1,7 @@
 /* The catalog's screens as catalog/screen/Screen.tsx draws them: the favourites, the home page,
  * the search results, one category, one slot of free looks. Each works out its model and hands it
  * over inside paint(), so a view transition captures the new screen whole. */
-import { arcanaLead } from './arcana.ts';
+import { arcanaLeads } from './arcana.ts';
 import { RAW_BASE, COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.ts';
 import { state } from '../../core/store.ts';
 import { pickedIn, firstCosmeticSlots } from '../../core/installed.ts';
@@ -170,8 +170,8 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
   // the mod that names no hero at the end rather than in the middle of the alphabet
   if (grouped && byHero) mods.sort((a, b) => (a._group ? 0 : 1) - (b._group ? 0 : 1) || String(a._group).localeCompare(String(b._group)));
 
-  // the arcana the app builds itself leads the tools, unless the toolbar narrows it away
-  const lead = categoryId === 'tools' && !f.favOnly ? await arcanaLead() : null;
+  // the arcanas the app builds itself lead the tools, unless the toolbar narrows them away
+  const lead = categoryId === 'tools' && !f.favOnly ? await arcanaLeads() : null;
   await paint(() => showScreen({
     kind: 'list',
     key: `cat:${categoryId}`,
@@ -179,7 +179,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
     accent: searchAccent(),
     back: byHero && f.hero ? 'heroes' : undefined,
     toolbar,
-    lead: lead && (!f.installedOnly || lead.installed) ? lead : null,
+    lead: lead?.filter((a) => !f.installedOnly || a.installed) ?? null,
     mods: { heading: false, mods, grouped, emptyText: NOTHING() },
     cosmetics: null,
   }, actions));

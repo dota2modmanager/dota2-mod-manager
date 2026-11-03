@@ -14,13 +14,33 @@ import { Library } from '../src/library.ts';
 import { buildVpk, entryAt, openVpkIndex } from '../src/vpk.ts';
 import { readKv3, readCell } from '../src/kv3.ts';
 import { dataBlock } from '../src/resource.ts';
-import { createArcanaService, hex, validColor } from '../src/arcana-service.ts';
+import { createArcanaService, hex, validColor, WINDOWS } from '../src/arcana-service.ts';
+import { ARCANA_WINDOWS } from '../src/channel-args.ts';
 import { encodeKv3, host, model, particle, remap, rerl, resource } from './helpers/kv3-build.ts';
 import type { LibRecord } from '../src/types.ts';
 
 const ARCANA = 'particles/econ/items/terrorblade/terrorblade_horns_arcana';
 const HERO = 'particles/units/heroes/hero_terrorblade';
 const DREADHUNT = 'particles/econ/items/terrorblade/dreadhunt';
+const TB = 'terrorblade-arcana';
+/** items_game with two prismatic gems in its colors section, as the game keeps them. */
+const TABLE = `"items_game"
+{
+	"colors"
+	{
+		"unusual_creators_light"
+		{
+			"color_name"	"UnusualCreatorsLight"
+			"hex_color"	"#D1F6F7"
+		}
+		"unusual_techies_swine"
+		{
+			"color_name"	"UnusualSwine"
+			"hex_color"	"#FFAF00"
+		}
+	}
+}
+`;
 
 /** A picture as the game ships one: a resource header, then a whole PNG file. */
 function picture(): Buffer {
@@ -37,7 +57,7 @@ function world(t: TestContext, { withArcana = true, bases, code }: { withArcana?
   const lang = path.join(game, 'dota_russian');
   fs.mkdirSync(lang, { recursive: true });
   fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
-  const files = [entryAt('scripts/items/items_game.txt', Buffer.from('the game'))];
+  const files = [entryAt('scripts/items/items_game.txt', Buffer.from(TABLE))];
   if (withArcana) {
     files.push(
       entryAt('models/heroes/terrorblade/terrorblade_arcana.vmdl_c', model('models/heroes/terrorblade/terrorblade_arcana.vmdl')),
@@ -71,16 +91,33 @@ test('a colour from the window is three whole numbers 0 to 255, and is written a
 
 test('the window is told whether the game has the arcana, and gets its picture', (t) => {
   const w = world(t);
-  const s = w.service.state();
+  const s = w.service.state().arcanas[0];
+  assert.equal(s.set, TB);
   assert.equal(s.available, true);
   assert.match(s.picture || '', /^data:image\/png;base64,/);
   assert.equal(s.installed, null);
-  assert.equal(world(t, { withArcana: false }).service.state().available, false, 'a game without it offers nothing to build');
+  assert.equal(world(t, { withArcana: false }).service.state().arcanas[0].available, false, 'a game without it offers nothing to build');
+});
+
+test("each arcana is offered on its own files, with the game's gems as colours; one the window does not build is refused", (t) => {
+  const w = world(t);
+  const { arcanas, gems } = w.service.state();
+  assert.deepEqual(arcanas.map((a) => a.set), Object.keys(WINDOWS));
+  assert.deepEqual(ARCANA_WINDOWS, Object.keys(WINDOWS), 'the window may ask for exactly these');
+  const techies = arcanas.find((a) => a.set === 'techies-arcana')!;
+  assert.equal(techies.name, 'Swine of the Sunken Galley');
+  assert.equal(techies.available, false, "this game has Terrorblade's files and not the cart");
+  assert.equal(techies.picture, null);
+  assert.deepEqual(gems, [
+    { key: 'unusual_creators_light', name: 'Creators Light', rgb: [209, 246, 247] },
+    { key: 'unusual_techies_swine', name: 'Swine', rgb: [255, 175, 0] },
+  ]);
+  assert.throws(() => w.service.install('pudge-arcana', [255, 0, 0], 'mod'), /арканы|arcana/i);
 });
 
 test('the arcana goes into My mods in an early slot, marked with what it was built from', (t) => {
   const w = world(t);
-  const rec = w.service.install([255, 193, 220], 'mod');
+  const rec = w.service.install(TB, [255, 193, 220], 'mod');
   assert.equal(rec.categoryId, 'hero-items');
   assert.equal(rec.styleLabel, '#ffc1dc');
   assert.deepEqual(rec.generated, { set: 'terrorblade-arcana', color: [255, 193, 220], mode: 'mod' });
@@ -89,14 +126,14 @@ test('the arcana goes into My mods in an early slot, marked with what it was bui
   assert.deepEqual(feet(w.lang, rec), [255, 193, 220], 'with no gem, its colour written in');
   const pak = openVpkIndex(path.join(w.lang, rec.files[0].relPath));
   assert.ok(pak.read('models/heroes/terrorblade/terrorblade.vmdl_c'), "the arcana's model under the plain one's name");
-  assert.deepEqual(w.service.state().installed, { id: rec.id, color: [255, 193, 220], mode: 'mod', enabled: true });
-  assert.throws(() => w.service.install([300, 0, 0], 'mod'), /цвет|colour/i);
+  assert.deepEqual(w.service.state().arcanas[0].installed, { id: rec.id, color: [255, 193, 220], mode: 'mod', enabled: true });
+  assert.throws(() => w.service.install(TB, [300, 0, 0], 'mod'), /цвет|colour/i);
 });
 
 test('choosing again builds it again in its place, one record and one pak', (t) => {
   const w = world(t);
-  const first = w.service.install([255, 193, 220], 'mod');
-  const again = w.service.install([60, 120, 255], 'recolor');
+  const first = w.service.install(TB, [255, 193, 220], 'mod');
+  const again = w.service.install(TB, [60, 120, 255], 'recolor');
   assert.equal(again.id, first.id);
   assert.deepEqual(again.files, first.files, 'the same slot');
   assert.equal(w.library.list().length, 1);
@@ -108,7 +145,7 @@ test('choosing again builds it again in its place, one record and one pak', (t) 
 
 test('a Dota update that reached it builds it again with its colour, and leaves it off if it was', (t) => {
   const w = world(t);
-  const rec = w.service.install([255, 193, 220], 'mod');
+  const rec = w.service.install(TB, [255, 193, 220], 'mod');
   w.installer.setEnabled(rec.files, false, rec.id);
   w.library.update(rec.id, { enabled: false });
   const other = w.library.add({ name: 'Some hud', categoryId: 'huds', styleLabel: null, fileRef: null, preview: null, files: [] } as never) as LibRecord;
@@ -134,7 +171,7 @@ test("with Terrorblade's base here the whole arcana is built from it, in the cho
     want: async (id: string) => { wanted.push(id); return false; },
   };
   const w = world(t, { bases });
-  const before = w.service.install([40, 120, 255], 'mod');
+  const before = w.service.install(TB, [40, 120, 255], 'mod');
   assert.deepEqual(wanted, ['fractal_horns_of_inner_abysm']);
   const pakOf = (rec: LibRecord) => openVpkIndex(path.join(w.lang, rec.files[0].relPath));
   assert.notEqual(pakOf(before).read(BODY)?.toString(), 'the base body', "not here: Valve's model, as before");
@@ -143,12 +180,12 @@ test("with Terrorblade's base here the whole arcana is built from it, in the cho
   assert.ok(pakOf(before).read(EYE), "the arcana's eye under Rictus Ripper's");
 
   here = true;
-  const rec = w.service.install([40, 120, 255], 'mod');
+  const rec = w.service.install(TB, [40, 120, 255], 'mod');
   assert.equal(pakOf(rec).read(BODY)?.toString(), 'the base body');
   assert.ok(pakOf(rec).read(EYE), "from the base too");
   const [r, g, b] = feet(w.lang, rec);
   assert.ok(b > r && b > g, `the base's red moved to blue, not ${[r, g, b]}`);
-  assert.deepEqual(feet(w.lang, w.service.install([255, 60, 40], 'mod')), [255, 60, 40], 'in its own colour, as it was made');
+  assert.deepEqual(feet(w.lang, w.service.install(TB, [255, 60, 40], 'mod')), [255, 60, 40], 'in its own colour, as it was made');
   assert.equal(w.library.list().length, 1, 'one record all along');
 });
 
@@ -164,7 +201,7 @@ test("the arcana leaves the paths the item builder's picks fill to them, and tak
     want: async () => false,
   };
   const w = world(t, { bases });
-  w.service.install([40, 120, 255], 'mod');
+  w.service.install(TB, [40, 120, 255], 'mod');
   const rec = () => w.library.list()[0];
   const has = (p: string) => Boolean(openVpkIndex(path.join(w.lang, rec().files[0].relPath)).read(p));
 
@@ -173,7 +210,7 @@ test("the arcana leaves the paths the item builder's picks fill to them, and tak
   assert.deepEqual((rec().generated as { under?: string[] }).under, [DEMON, HEAD]);
   assert.equal(w.service.giveWay(new Set([HEAD, DEMON])), false, 'the same picks: nothing to build');
 
-  w.service.install([255, 0, 0], 'mod');
+  w.service.install(TB, [255, 0, 0], 'mod');
   assert.equal(has(HEAD), false, 'a new colour keeps what was left to the picks');
 
   assert.equal(w.service.giveWay(new Set([DEMON])), true);
@@ -205,7 +242,7 @@ test('the arcana is built again when a pick whose form it dresses comes or goes,
   const kept = [...index.paths()].map((p) => entryAt(p, index.read(p) as Buffer));
   fs.writeFileSync(pak01, buildVpk([...kept, entryAt(META, meta), entryAt(`${EYE}_c`, particle(encodeKv3({ obj: [['m_ColorMin', { i32s: [255, 86, 86, 255] }]] })))]));
 
-  w.service.install([40, 120, 255], 'mod');
+  w.service.install(TB, [40, 120, 255], 'mod');
   const rec = () => w.library.list().find((r) => r.generated) as LibRecord;
   const carries = () => openVpkIndex(path.join(w.lang, rec().files[0].relPath)).read(META)?.toString('latin1').includes('dreadhunt_demon_ambient') ?? false;
   assert.equal(carries(), false, 'no demon picked: no eye on the metamorphosis');

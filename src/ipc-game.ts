@@ -245,7 +245,8 @@ export function registerGameIpc({
     }
   });
 
-  // The arcana window (src/arcana-service.ts): its picture and what is installed, and building it.
+  // The arcana window (src/arcana-service.ts): each arcana's picture and what is installed, the
+  // game's gems, and building one.
   // The built mod is a library record like any other; switching it off or removing it goes
   // through mods:setEnabled and mods:remove.
   ipcMain.handle('arcana:state', () => {
@@ -256,11 +257,11 @@ export function registerGameIpc({
     }
   });
 
-  ipcMain.handle('arcana:install', (e, color, mode) => {
+  ipcMain.handle('arcana:install', (e, set, color, mode) => {
     const stop = blocked('install');
     if (stop) return stop;
     try {
-      const record = arcana.install(color, mode);
+      const record = arcana.install(set, color, mode);
       afterDeployMaster();
       // the builder's copy of Terrorblade's base takes the new colour (src/arcana-base-color.ts);
       // the window does not wait on the table, the bar at the bottom counts it

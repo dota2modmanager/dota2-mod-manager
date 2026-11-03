@@ -106,7 +106,7 @@ contextBridge.exposeInMainWorld('api', {
   // the arcana built out of the game's own files, in a colour of the user's
   arcana: {
     state: () => ipcRenderer.invoke('arcana:state'),
-    install: (color, mode) => ipcRenderer.invoke('arcana:install', color, mode),
+    install: (set, color, mode) => ipcRenderer.invoke('arcana:install', set, color, mode),
   },
   // a mod's own video, and the still the window decodes out of it
   preview: {

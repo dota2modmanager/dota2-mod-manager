@@ -795,13 +795,30 @@ the pak lists them, it leaves to the item builder's picks; `forms`: the picks wh
 particle it carries (src/arcana.ts arcanaForms); `code`: the app's code it was built by. A
 change to any of them builds it again (giveWay).
 
+### `ArcanaWindow`
+
+```ts
+export interface ArcanaWindow
+```
+
+One arcana the window builds.
+
 ### `ArcanaState`
 
 ```ts
-export interface ArcanaState
+export interface ArcanaState { arcanas: ArcanaWindow[]; gems: GemColor[] }
 ```
 
-What the window shows.
+What the window shows: each arcana, and the game's prismatic gems to offer as colours.
+
+### `WINDOWS`
+
+```ts
+export const WINDOWS: Record<string, { picture: string; model: string; base?: string }> =
+```
+
+The arcanas the window builds: the picture it shows, the file whose presence says the game has
+ it, and the base the whole arcana is built from once it is here (src/arcana-bases.ts).
 
 ### `hex`
 
@@ -1272,6 +1289,14 @@ export type Check = (v: unknown) => string | null
 ```
 
 Why a value does not fit, or null when it does.
+
+### `ARCANA_WINDOWS`
+
+```ts
+export const ARCANA_WINDOWS = ['terrorblade-arcana', 'techies-arcana']
+```
+
+The arcanas the arcana window builds: src/arcana-service.ts WINDOWS, which a test keeps in step.
 
 ### `WINDOW_SETTINGS`
 

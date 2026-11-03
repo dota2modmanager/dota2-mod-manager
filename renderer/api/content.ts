@@ -119,16 +119,24 @@ export interface CosmeticsApi {
 /** The whole arcana, or only its colour over one the player has (src/arcana-service.ts). */
 export type ArcanaMode = 'mod' | 'recolor';
 
-/** The arcana built out of the game's own files, in a colour of the user's (src/arcana-service.ts). */
+/** One arcana the window builds: whether the game has its files, its picture, the one built before. */
+export interface ArcanaWindow {
+  set: string;
+  name: string;
+  available: boolean;
+  picture: string | null;
+  installed: { id: string; color: [number, number, number]; mode: ArcanaMode; enabled: boolean } | null;
+}
+
+/** A prismatic gem's colour, as items_game has it (src/gem-colors.ts). */
+export interface GemColor { key: string; name: string; rgb: [number, number, number] }
+
+/** The arcanas built out of the game's own files, in a colour of the user's (src/arcana-service.ts). */
 export interface ArcanaApi {
-  /** whether the game has the files, the arcana's picture out of it, and the one built before */
-  state: () => Promise<Reply<{
-    available: boolean;
-    picture: string | null;
-    installed: { id: string; color: [number, number, number]; mode: ArcanaMode; enabled: boolean } | null;
-  }>>;
-  /** build it and put it in My mods, in place of the one built before */
-  install: (color: [number, number, number], mode: ArcanaMode) => Promise<Reply<{ record: LibRecord }>>;
+  /** every arcana the window builds, and the game's prismatic gems to offer as colours */
+  state: () => Promise<Reply<{ arcanas: ArcanaWindow[]; gems: GemColor[] }>>;
+  /** build one and put it in My mods, in place of the one built before */
+  install: (set: string, color: [number, number, number], mode: ArcanaMode) => Promise<Reply<{ record: LibRecord }>>;
 }
 
 /** A mod's own video, and the still the window decodes out of it. */
