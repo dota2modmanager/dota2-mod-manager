@@ -5,6 +5,7 @@
  * a 190 MB file is a choice and not a surprise. */
 import { state } from '../../core/store.ts';
 import { esc, fmtMB, plural } from '../../ui/format.ts';
+import { toast } from '../../ui/toast.ts';
 import type { ShareEntry } from '../../api/content.ts';
 
 interface SharePlan { name: string; entries: ShareEntry[] }
@@ -92,7 +93,7 @@ export function shareDialog(plan: SharePlan): Promise<ShareOptions | null> {
  * and can run to hundreds of megabytes. Two equal buttons on the card made that a guess -
  * here the link is offered first, already made, and the file is one line below it.
  */
-export function shareSheet(preset: { name: string }, link: ShareLink | null): Promise<'file' | null> {
+export function shareSheet(preset: { name: string }, link: ShareLink | null, picture?: () => Promise<Blob>): Promise<'file' | null> {
   const skipped = link?.skipped || [];
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
@@ -113,6 +114,13 @@ export function shareSheet(preset: { name: string }, link: ShareLink | null): Pr
               : L`Открывается в менеджере и ставит моды из каталога.`}</div>` : `
             <div class="share-hint">${L`В пресете только свои моды — ссылка их не донесёт.`}</div>`}
         </div>
+
+        ${link?.web && picture ? `
+          <div class="share-way">
+            <div class="share-way-head"><span class="ms">qr_code_2</span>${L`Картинка`}</div>
+            <button class="btn" id="sharePicBtn"><span class="ms">content_copy</span>${L`Скопировать картинку`}</button>
+            <div class="share-hint">${L`Обложки модов и QR-код на ту же ссылку. Вставь в Discord или на стрим.`}</div>
+          </div>` : ''}
 
         <div class="share-way">
           <div class="share-way-head"><span class="ms">description</span>${L`Файл`}</div>
@@ -135,6 +143,16 @@ export function shareSheet(preset: { name: string }, link: ShareLink | null): Pr
       navigator.clipboard.writeText(link?.web || '');
       (overlay.querySelector('#shareUrl') as HTMLInputElement).select();
       flashCopied(e.currentTarget as CopyButton);
+    });
+    overlay.querySelector('#sharePicBtn')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget as CopyButton;
+      try {
+        const png = await picture!();
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+        flashCopied(btn);
+      } catch {
+        toast(L`Не получилось скопировать картинку`, 'error');
+      }
     });
     document.addEventListener('keydown', onKey);
   });

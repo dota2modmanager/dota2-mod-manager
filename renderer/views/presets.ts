@@ -22,10 +22,14 @@ import { showPresets } from '../presets/PresetsScreen.tsx';
 import type { OwnPreset, PresetsActions, SharedPreset } from '../presets/model.ts';
 import type { PresetRecord } from '../api/content.ts';
 import { shareDialog, shareSheet } from './presets/share.ts';
+import { presetPicture } from './presets/picture.ts';
+import { recPreviewUrl } from '../ui/thumb.ts';
+import { isVideo } from '../ui/media.ts';
 
 type Preset = PresetRecord;
 
 let presets: Preset[] = [];
+let byId = new Map<string, LibRecord>();
 let key = 0;
 
 registerView('presets', () => renderPresets(true));
@@ -101,7 +105,7 @@ function sharedCard(p: Preset): SharedPreset {
 async function renderPresets(fresh = false): Promise<void> {
   presets = await window.api.presets.list();
   const { installed } = await window.api.mods.list();
-  const byId = new Map<string, LibRecord>((installed as LibRecord[]).map((m) => [m.id, m]));
+  byId = new Map<string, LibRecord>((installed as LibRecord[]).map((m) => [m.id, m]));
   if (fresh) key++;
   await paint(() => showPresets({ key, presets: presets.map((p) => (p.wanted ? sharedCard(p) : ownCard(p, byId))) }, actions));
 }
@@ -112,7 +116,12 @@ async function share(id: string) {
   // the link is made up front: it is a local encode, and offering it already written beats a
   // button that might turn out to have nothing to copy
   const link = await window.api.presets.shareLink(id);
-  if (await shareSheet(preset, link.error ? null : link) !== 'file') return;
+  // the picture: the covers the card leads with, still pictures only
+  const covers = (preset.modIds || []).map((m) => byId.get(m)).map((r) => (r ? recPreviewUrl(r) : null))
+    .filter((u): u is string => Boolean(u) && !isVideo(u!));
+  const card = ownCard(preset, byId);
+  const picture = link.web ? () => presetPicture({ name: preset.name, count: card.count, covers, link: link.web! }) : undefined;
+  if (await shareSheet(preset, link.error ? null : link, picture) !== 'file') return;
   const plan = await window.api.presets.exportPlan(id);
   if (plan.error) { toast(plan.error, 'error', 6000); return; }
   if (!plan.entries.length) { toast(L`В пресете нет модов`, 'warn'); return; }
