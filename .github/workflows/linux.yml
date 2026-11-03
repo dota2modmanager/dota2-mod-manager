@@ -61,6 +61,43 @@ jobs:
           grep -q 'x-scheme-handler/d2mm' "$entry"
           grep -q 'application/x-d2mm' "$entry"
 
+      # The entry inside the AppImage is only a claim: on its first start the installed build
+      # writes its own entry to ~/.local/share/applications and asks the desktop to make it the
+      # handler (src/deep-links.ts, app.setAsDefaultProtocolClient). Started once here from the
+      # extracted image, the app has to leave xdg-mime naming it for both types (#229). This shows
+      # the registration, not a browser handing a link over: a runner has no browser session.
+      - name: After one start, xdg-mime names the app for d2mm links and presets
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          command -v xdg-mime >/dev/null || sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y xdg-utils
+          command -v xvfb-run >/dev/null || sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y xvfb
+          # an empty home, so nothing a runner image already holds can answer for us
+          export HOME="$RUNNER_TEMP/home"
+          mkdir -p "$HOME"
+          xvfb-run -a dist/squashfs-root/AppRun --no-sandbox > first-start.log 2>&1 &
+          pid=$!
+          for _ in $(seq 1 60); do
+            [ -f "$HOME/.local/share/applications/dota2-mod-manager.desktop" ] && break
+            sleep 1
+          done
+          sleep 3
+          kill "$pid" 2>/dev/null || true
+          ls -la "$HOME/.local/share/applications" || { cat first-start.log; exit 1; }
+          fail=0
+          for type in x-scheme-handler/d2mm application/x-d2mm; do
+            got=$(xdg-mime query default "$type" || true)
+            echo "$type -> ${got:-nothing}"
+            [ "$got" = "dota2-mod-manager.desktop" ] || fail=1
+          done
+          if [ "$fail" = 1 ]; then
+            cat "$HOME/.config/mimeapps.list" 2>/dev/null || true
+            cat "$HOME/.local/share/applications/mimeinfo.cache" 2>/dev/null || true
+            cat first-start.log
+            echo "::error::xdg-mime does not name dota2-mod-manager.desktop for both types"
+            exit 1
+          fi
+
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: AppImage
