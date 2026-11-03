@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { clampZoom, createMainWindow, windowFit, workAreaFrom, ZOOM_MAX, ZOOM_MIN } from '../src/main-window.ts';
+import { clampZoom, createMainWindow, startScale, windowFit, workAreaFrom, ZOOM_MAX, ZOOM_MIN } from '../src/main-window.ts';
 import { withElectron } from './helpers/fake-electron.ts';
 
 const ROOT = path.join(path.sep, 'app');
@@ -36,7 +36,7 @@ class FakeWindow {
   on(name: string, fn: Listener) { this.events.set(name, fn); }
 }
 
-function open({ uiScale = 1 as unknown, workArea = null as { width: number; height: number } | null, noScreen = false, built = true } = {}) {
+function open({ uiScale = 1 as unknown, workArea = null as { width: number; height: number } | null, noScreen = false, built = true, firstRun = false } = {}) {
   const store = new Map<string, unknown>([['uiScale', uiScale]]);
   const opened: string[] = [];
   const said: string[] = [];
@@ -53,6 +53,7 @@ function open({ uiScale = 1 as unknown, workArea = null as { width: number; heig
     diag: (m) => said.push(m),
     workArea,
     pageExists: () => built,
+    firstRun,
   }));
   const w = FakeWindow.last;
   /** Fire a page event with a preventable event object; answers whether it was prevented. */
@@ -100,12 +101,12 @@ test('window.open is refused, and a webview cannot be attached', () => {
 });
 
 test('Ctrl +, - and 0 scale the content within its range and remember it', () => {
-  const { w, fire, store } = open({ uiScale: 1.55 });
+  const { w, fire, store } = open({ uiScale: ZOOM_MAX - 0.05 });
   const key = (k: string, extra = {}) => fire('before-input-event', { type: 'keyDown', control: true, alt: false, key: k, ...extra });
   assert.equal(key('='), true);
   assert.equal(store.get('uiScale'), ZOOM_MAX, 'not past the top of the range');
   assert.equal(key('-'), true);
-  assert.ok(Math.abs((store.get('uiScale') as number) - 1.55) < 1e-9);
+  assert.ok(Math.abs((store.get('uiScale') as number) - (ZOOM_MAX - 0.05)) < 1e-9);
   assert.equal(key('0'), true);
   assert.equal(store.get('uiScale'), 1);
   assert.deepEqual(w.sent.map((m) => m[0]), ['ui:zoom', 'ui:zoom', 'ui:zoom'], 'the page is told each time');
@@ -128,6 +129,22 @@ test('the window fits a small screen, minimums included, and the designed size n
   assert.equal(open({ workArea: { width: 1093, height: 582 } }).w.options.height, 582, 'MM_WORKAREA stands in for the screen');
   assert.equal(open().w.options.height, 728, 'otherwise the primary display is asked');
   assert.equal(open({ noScreen: true }).w.options.height, 860, 'and a display that will not answer is the designed size');
+});
+
+test('a first run on a 1440p or 4K screen starts scaled up, in a window grown with it; after that the scale stays the one left', () => {
+  assert.equal(startScale({ width: 1920, height: 1032 }), 1, 'a 1080p screen starts as designed');
+  assert.equal(startScale({ width: 2560, height: 1400 }), 1.3);
+  assert.equal(startScale({ width: 3840, height: 2100 }), 1.95);
+  assert.equal(startScale(null), 1);
+  assert.ok(startScale({ width: 3840, height: 2100 }) <= ZOOM_MAX, 'inside the range');
+  const k4 = { width: 3840, height: 2100 };
+  const first = open({ workArea: k4, firstRun: true });
+  assert.equal(first.store.get('uiScale'), 1.95);
+  assert.deepEqual([first.w.options.width, first.w.options.height], [2652, 1677], 'the window grows with the scale');
+  const later = open({ workArea: k4, uiScale: 1.2 });
+  assert.equal(later.store.get('uiScale'), 1.2, 'a later start keeps the scale the user left');
+  assert.equal(later.w.options.width, 1632);
+  assert.deepEqual(windowFit({ width: 1366, height: 728 }, 1.5), windowFit({ width: 1366, height: 728 }), 'a small screen zoomed in keeps the window it had');
 });
 
 test('a work area is read from "WxH" and nothing else', () => {

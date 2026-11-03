@@ -144,6 +144,7 @@ async function start(): Promise<void> {
   guardTheApp({ app, ipcMain, session, appRoot, devUrl: process.env.MM_DEV_URL, log: diag });
   const sendProgress = (evt: AppProgress) => windowOpen()?.webContents.send('progress', evt);
 
+  const firstRun = !fs.existsSync(path.join(userData, 'settings.json')); // before anything saves it: picks the scale
   const services = createServices({ userData, appVersion: () => app.getVersion(), sendProgress, diag, fetchIcons: net.fetch });
   const {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
@@ -248,12 +249,11 @@ async function start(): Promise<void> {
 
   // The window (src/main-window.ts): sized to the screen, locked to the app's page, Ctrl +/-/0
   // scaling its content. Then whichever dev switch is set (src/dev-harness.ts).
-  const opened = createMainWindow({
-    appRoot, settings, diag,
+  const opened = createMainWindow({ appRoot, settings, diag,
     // dev: MM_WORKAREA=1366x728 stands in for a smaller screen (tools/sim profiles), and
     // MM_QUIET=1 keeps an automated run off the screen of whoever is using the machine
     workArea: workAreaFrom(process.env.MM_WORKAREA),
-    quiet: !!process.env.MM_QUIET,
+    quiet: !!process.env.MM_QUIET, firstRun,
   });
   win = opened;
   attachDevHarness(opened, { diag, appRoot, quit: () => app.quit() });

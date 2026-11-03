@@ -100,7 +100,7 @@ function Scale({ pct, actions }: { pct: number; actions: SettingsActions }) {
   return (
     <div className="scale-ctl">
       <button className="btn btn-sm scale-step" id="masterDown" aria-label={L`Мельче`} onClick={() => actions.scaleStep(-5)}><span className="ms">remove</span></button>
-      <input type="range" className="scale-range" id="masterRange" min="70" max="160" step="5" ref={range} aria-label={L`Масштаб`} />
+      <input type="range" className="scale-range" id="masterRange" min="70" max="250" step="5" ref={range} aria-label={L`Масштаб`} />
       <span className="scale-val" id="masterRangeVal" ref={val} />
       <button className="btn btn-sm scale-step" id="masterUp" aria-label={L`Крупнее`} onClick={() => actions.scaleStep(5)}><span className="ms">add</span></button>
       <button className="btn btn-sm" id="masterReset" onClick={() => actions.scaleStep(null)}>{L`Сбросить`}</button>
