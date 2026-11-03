@@ -105,6 +105,12 @@ contextBridge.exposeInMainWorld('api', {
   },
   // the arcana built out of the game's own files, in a colour of the user's
   // towers and trees from the game's own looks, per side
+  sounds: {
+    heroes: () => ipcRenderer.invoke('sounds:heroes'),
+    hero: (hero) => ipcRenderer.invoke('sounds:hero', hero),
+    add: (hero, event, mode, volume, wav, label) => ipcRenderer.invoke('sounds:add', hero, event, mode, volume, wav, label),
+    remove: (hero, event) => ipcRenderer.invoke('sounds:remove', hero, event),
+  },
   map: {
     state: () => ipcRenderer.invoke('map:state'),
     install: (kind, radiant, dire) => ipcRenderer.invoke('map:install', kind, radiant, dire),

@@ -16,6 +16,7 @@ import type { LibRecord } from '../../library/types.ts';
 import { pickModsDialog, type Candidate } from './pick-mods.ts';
 import { recolorFromLibrary } from '../catalog/arcana.ts';
 import { mapLooksFromLibrary } from '../catalog/map-looks.ts';
+import { soundsFromLibrary } from '../catalog/sounds.ts';
 import { labelFor, recLabelKey } from '../../library/labels.ts';
 import { askLabel, clearLabel } from './label.ts';
 import { lib, recById, screen } from './state.ts';
@@ -149,7 +150,7 @@ export function menuFor(id: string): MenuItem[] | null {
   const rec = recById(id);
   if (!rec) return null;
   const ordered = lib.order.has(rec.id);
-  const gen = rec.generated as { set?: string; map?: string } | undefined;
+  const gen = rec.generated as { set?: string; map?: string; sounds?: string } | undefined;
   const remove: MenuItem = { label: L`Удалить`, icon: 'delete', danger: true, onPick: () => deleteRecord(rec.id) };
   const key = recLabelKey(rec.id);
   const naming: (MenuItem | false)[] = [
@@ -171,6 +172,7 @@ export function menuFor(id: string): MenuItem[] | null {
     rec.updateAvailable && { separator: true },
     // what the app built: another colour or look is chosen in its window, not here
     Boolean(gen?.set) && { label: L`Перекрасить`, icon: 'palette', onPick: () => void recolorFromLibrary(String(gen?.set)) },
+    Boolean(gen?.sounds) && { label: L`Изменить звуки`, icon: 'graphic_eq', onPick: () => void soundsFromLibrary(String(gen?.sounds)) },
     Boolean(gen?.map) && { label: L`Изменить вид`, icon: 'tune', onPick: () => void mapLooksFromLibrary(gen?.map === 'trees' ? 'trees' : 'towers') },
     Boolean(rec.generated) && { separator: true },
     ...orderItems(rec),

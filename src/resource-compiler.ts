@@ -80,6 +80,11 @@ export function safeRel(rel: string): boolean {
   return !!rel && !path.isAbsolute(rel) && !/[\\:\0]/.test(rel) && rel.split('/').every((s) => s && s !== '.' && s !== '..');
 }
 
+/** What a source compiles to: a sound (.wav, .mp3) to a .vsnd_c, anything else to its own name and _c. */
+export function compiledOf(rel: string): string {
+  return /.(wav|mp3)$/i.test(rel) ? rel.replace(/.(wav|mp3)$/i, '.vsnd_c') : `${rel}_c`;
+}
+
 /** A source file to stage, at its path in the addon (models/heroes/razor/razor.vmdl). */
 export interface SourceFile { path: string; data: Buffer }
 
@@ -232,7 +237,7 @@ export function createResourceCompiler({ userDataDir, gamePath, chosen, keeper, 
           ? await run(w, [exe, ...args], { cwd: path.dirname(exe), env: wineEnv(prefix), timeoutMs: COMPILE_TIMEOUT_MS })
           : await run(exe, args, { cwd: path.dirname(exe), timeoutMs: COMPILE_TIMEOUT_MS });
         log(`resourcecompiler: ${rel} exited with ${code} after ${((Date.now() - started) / 1000).toFixed(1)} s`);
-        if (code !== 0 || !fs.existsSync(path.join(out, `${rel}_c`))) throw new Error(t('resourcecompiler.exe не собрал {0}: {1}', rel, tail(said) || `exit ${code}`));
+        if (code !== 0 || !fs.existsSync(path.join(out, compiledOf(rel)))) throw new Error(t('resourcecompiler.exe не собрал {0}: {1}', rel, tail(said) || `exit ${code}`));
       }
       // the compiled files, and not the tools' own notes about the addon beside them
       return walk(out).filter((rel) => rel.endsWith('_c') && !/^tools_/.test(rel)).map((rel) => entryAt(rel, fs.readFileSync(path.join(out, rel))));

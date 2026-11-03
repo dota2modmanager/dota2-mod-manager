@@ -269,6 +269,11 @@ const EN = {
   'Не удалось получить статистику OpenDota: {0}': 'Could not get the OpenDota stats: {0}',
   'Не нашёл аккаунт Steam, в который заходила Dota 2': 'Found no Steam account that has played Dota 2',
   'Закрой Dota 2: при выходе она перепишет файл сеток': 'Close Dota 2 first: it rewrites the grid file when it exits',
+  'У этого героя нет файла звуков': 'This hero has no sounds file',
+  'resourcecompiler.exe не собрал звуки': 'resourcecompiler.exe did not build the sounds',
+  'Свои звуки: {0}': 'Own sounds: {0}',
+  'Этот звук не подходит: {0}': 'This sound will not do: {0}',
+  'У героя нет такого звука': 'The hero has no such sound',
 } satisfies Record<string, string>;
 
 /** The table as a lookup: any Russian string, its English or nothing. */
