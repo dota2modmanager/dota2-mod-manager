@@ -29,11 +29,13 @@ export function createBuildUndo({ library, installer, settings, schema, log = ()
   log?: (msg: string) => void;
 }) {
   let shot: { records: Map<string, LibRecord>; everyone: boolean; off: boolean } | null = null;
+  // no game folder yet (a first start) says nothing is switched off, rather than throwing
+  const off = () => { try { return installer.masterIsOff(); } catch { return false; } };
 
   /** What the game wears now: called once a table is written, or dropped. */
   function mark(): void {
     const records = new Map(library.list().filter(touchesSchema).map((r) => [r.id, structuredClone(r)] as const));
-    shot = { records, everyone: !!settings.get(EVERYONE), off: installer.masterIsOff() };
+    shot = { records, everyone: !!settings.get(EVERYONE), off: off() };
   }
 
   /** The records the table reads, put back the way the picture has them. */
@@ -73,7 +75,7 @@ export function createBuildUndo({ library, installer, settings, schema, log = ()
     if (!shot) return { ok: false, reason: 'unknown' };
     if (!schema.cancel()) return { ok: false, reason: 'nothing' };
     const r = FileTx.run(() => {
-      if (installer.masterIsOff() !== shot!.off) installer.setMasterEnabled(!shot!.off);
+      if (off() !== shot!.off) installer.setMasterEnabled(!shot!.off);
       if (!!settings.get(EVERYONE) !== shot!.everyone) settings.set(EVERYONE, shot!.everyone);
       return putBack();
     }, log);
