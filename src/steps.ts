@@ -18,9 +18,20 @@ export function drain<R>(steps: Generator<unknown, R>): R {
 /** The step a walk yields between pieces of its work. */
 export const PAUSE = Symbol('pause');
 
-/** A generator run with the rest of the main process let in between its steps: for a channel the window waits on. */
-export async function runSteps<R>(steps: Generator<unknown, R>): Promise<R> {
+/**
+ * A generator run with the rest of the main process let in between its steps: for a channel the
+ * window waits on.
+ *
+ * With a signal, an abort stops it between two steps (issue #425): the generator is closed, so its
+ * `finally` blocks run and a write journal open inside it can roll back, and the promise rejects
+ * with the signal's reason. A step is never cut in half.
+ */
+export async function runSteps<R>(steps: Generator<unknown, R>, signal?: AbortSignal): Promise<R> {
   for (;;) {
+    if (signal?.aborted) {
+      steps.return(undefined as R);
+      throw signal.reason ?? new DOMException('Aborted', 'AbortError');
+    }
     const r = steps.next();
     if (r.done) return r.value;
     await new Promise<void>((resolve) => setImmediate(resolve));

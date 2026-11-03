@@ -8559,10 +8559,15 @@ The step a walk yields between pieces of its work.
 ### `runSteps`
 
 ```ts
-export async function runSteps<R>(steps: Generator<unknown, R>): Promise<R>
+export async function runSteps<R>(steps: Generator<unknown, R>, signal?: AbortSignal): Promise<R>
 ```
 
-A generator run with the rest of the main process let in between its steps: for a channel the window waits on.
+A generator run with the rest of the main process let in between its steps: for a channel the
+window waits on.
+
+With a signal, an abort stops it between two steps (issue #425): the generator is closed, so its
+`finally` blocks run and a write journal open inside it can roll back, and the promise rejects
+with the signal's reason. A step is never cut in half.
 
 ## src/support-prompt.ts
 
