@@ -27,7 +27,7 @@ import { electron } from './electron.ts';
 import type { Catalog } from './catalog.ts';
 import type { Settings } from './settings.ts';
 import { createPresetPlan } from './preset-plan.ts';
-import { isWindowRecord } from './arcana-base-color.ts';
+import { touchesSchema } from './preset-install.ts';
 import type { LibFile, LibRecord, PackMember, Preset, PresetEntry, PresetPick } from './types.ts';
 
 /** What of the installer presets ask: what a record is, where its files are, and packing. */
@@ -49,11 +49,8 @@ export function packableRecord(rec: LibRecord | null | undefined): rec is LibRec
     && (rec.files || []).some((f) => f.root === 'lang' && /_dir\.vpk$/i.test(f.relPath));
 }
 
-/** Does changing this record mean the item table has to be rebuilt? */
-export function touchesSchema(rec: LibRecord): boolean {
-  // the arcana window's record sets the colour the builder puts Terrorblade's base on in
-  return rec.categoryId === 'cosmetic' || (Array.isArray(rec.schema) && rec.schema.length > 0) || isWindowRecord(rec);
-}
+// in src/preset-install.ts, which the command line reaches without Electron
+export { touchesSchema } from './preset-install.ts';
 
 /**
  * Whether what is on is exactly this preset, so the Presets screen can say which one you are in:
