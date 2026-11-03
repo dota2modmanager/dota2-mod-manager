@@ -19,6 +19,7 @@ import type { ToolsKeeper } from './workshop-tools.ts';
 import type { createSchemaService } from './schema-service.ts';
 import type { createUpdateImpact } from './update-impact.ts';
 import type { createArcanaService } from './arcana-service.ts';
+import type { createMapLooks } from './map-looks-service.ts';
 import type { createGameIcons } from './game-icons.ts';
 import type { createModPreviews } from './mod-preview.ts';
 import type { createRemoteConfig } from './remote-config.ts';
@@ -61,6 +62,8 @@ export interface AppContext {
   updateImpact: ReturnType<typeof createUpdateImpact>;
   /** the arcana built out of the game's own files (src/arcana-service.ts) */
   arcana: ReturnType<typeof createArcanaService>;
+  /** towers and trees from the game's own looks (src/map-looks-service.ts) */
+  mapLooks: ReturnType<typeof createMapLooks>;
   icons: Icons;
   gameIcons: ReturnType<typeof createGameIcons>;
   modPreviews: ReturnType<typeof createModPreviews>;

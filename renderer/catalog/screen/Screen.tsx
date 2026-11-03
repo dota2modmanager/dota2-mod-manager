@@ -10,6 +10,7 @@ import { BuilderHub } from './BuilderHub.tsx';
 import { CosmeticGrid } from '../cosmetic/CosmeticCard.tsx';
 import { ModGrid } from '../card/ModGrid.tsx';
 import { ArcanaCard } from '../arcana/ArcanaCard.tsx';
+import { MapLookCard } from '../map/MapLookCard.tsx';
 
 interface Props { model: ScreenModel; actions: ScreenActions }
 
@@ -61,7 +62,8 @@ function List({ model: m, actions }: { model: Extract<ScreenModel, { kind: 'list
           {m.mods.heading && <div className="section-h"><span className="ms">extension</span>{L`Моды`}</div>}
           <div className="grid" id="modGrid">
             {m.lead?.map((a, i) => <ArcanaCard key={a.set} m={a} index={i} onOpen={actions.openArcana} />)}
-            <ModGrid listKey={m.key} mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead?.length ? undefined : m.mods.emptyText}
+            {m.mapLead && <MapLookCard m={m.mapLead} onOpen={actions.openMapLooks} />}
+            <ModGrid listKey={m.key} mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead?.length || m.mapLead ? undefined : m.mods.emptyText}
               onOpen={actions.openMod} onFavChanged={actions.favChanged} />
           </div>
         </>

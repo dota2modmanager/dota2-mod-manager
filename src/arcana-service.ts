@@ -25,7 +25,8 @@ import { pngFromVtex } from './vtex.ts';
 import { t } from './i18n.ts';
 import type { Installer } from './installer.ts';
 import type { Library } from './library.ts';
-import type { LibFile, LibRecord } from './types.ts';
+import type { LibRecord } from './types.ts';
+import { swapPak, writePak } from './generated-pak.ts';
 
 /** The whole arcana, or only its colour over one the player has. */
 export type ArcanaMode = 'mod' | 'recolor';
@@ -155,13 +156,6 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
     return c ? { ...params, code: c } : params;
   };
 
-  /** The built pak written into a slot in the early part of the load order; the files it took. */
-  function write(vpk: Buffer): LibFile[] {
-    installer.ensureLangFolder();
-    const pakName = installer.allocatePak(installer.usedPakNames(), true);
-    installer.writeInto(vpk, path.join(installer.langFolder(), pakName));
-    return [{ root: 'lang', relPath: pakName }];
-  }
 
   /**
    * A record built again from `params`, in the slot it had: the new pak goes in beside, then takes
@@ -169,13 +163,8 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
    */
   function replace(rec: LibRecord, params: Generated, keepOff = false): LibRecord {
     const vpk = build(params); // before anything on disk is touched: a build that fails leaves the old one
-    const oldBase = installer.slotBase(rec);
     const off = keepOff && rec.enabled === false;
-    let files = write(vpk);
-    installer.remove(rec.files, { recId: rec.id });
-    const newBase = installer.slotBase({ files });
-    if (oldBase && newBase && newBase !== oldBase) files = installer.moveToSlot({ files }, oldBase, newBase);
-    if (off) installer.setEnabled(files, false, rec.id);
+    const files = swapPak(installer, rec, vpk, off);
     return library.update(rec.id, { files, styleLabel: hex(params.color), generated: stamped(params), enabled: !off, updatedAt: Date.now() }) as LibRecord;
   }
 
@@ -235,7 +224,7 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
         log(`arcana: built again in ${hex(c)} (${params.mode})`);
         return rec;
       }
-      const files = write(build(params));
+      const files = writePak(installer, build(params));
       const rec = library.add({ name: RECOLOR_SETS[set].name, categoryId: CATEGORY, styleLabel: hex(c), fileRef: null, preview: null, files });
       log(`arcana: built in ${hex(c)} (${params.mode})`);
       return library.update(rec.id, { generated: stamped(params) }) as LibRecord;
@@ -269,7 +258,7 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
       const done: string[] = [];
       for (const rec of library.list()) {
         const g = rec.generated as Generated | undefined;
-        if (!g || !ids.includes(rec.id)) continue;
+        if (!g || !Object.hasOwn(WINDOWS, g.set) || !ids.includes(rec.id)) continue;
         try {
           replace(rec, g, true);
           done.push(rec.id);

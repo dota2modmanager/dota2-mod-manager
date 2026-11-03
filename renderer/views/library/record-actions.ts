@@ -15,6 +15,7 @@ import type { MenuItem } from '../../ui/menu.ts';
 import type { LibRecord } from '../../library/types.ts';
 import { pickModsDialog, type Candidate } from './pick-mods.ts';
 import { recolorFromLibrary } from '../catalog/arcana.ts';
+import { mapLooksFromLibrary } from '../catalog/map-looks.ts';
 import { labelFor, recLabelKey } from '../../library/labels.ts';
 import { askLabel, clearLabel } from './label.ts';
 import { lib, recById, screen } from './state.ts';
@@ -148,6 +149,7 @@ export function menuFor(id: string): MenuItem[] | null {
   const rec = recById(id);
   if (!rec) return null;
   const ordered = lib.order.has(rec.id);
+  const gen = rec.generated as { set?: string; map?: string } | undefined;
   const remove: MenuItem = { label: L`Удалить`, icon: 'delete', danger: true, onPick: () => deleteRecord(rec.id) };
   const key = recLabelKey(rec.id);
   const naming: (MenuItem | false)[] = [
@@ -167,8 +169,9 @@ export function menuFor(id: string): MenuItem[] | null {
   ] : [
     rec.updateAvailable && { label: L`Обновить до новой версии`, icon: 'upgrade', onPick: async () => { await updateRecord(rec.id); await screen.reload(); } },
     rec.updateAvailable && { separator: true },
-    // the arcana the app built: another colour is chosen in its window, not here
-    Boolean(rec.generated) && { label: L`Перекрасить`, icon: 'palette', onPick: () => void recolorFromLibrary(String((rec.generated as { set?: string }).set)) },
+    // what the app built: another colour or look is chosen in its window, not here
+    Boolean(gen?.set) && { label: L`Перекрасить`, icon: 'palette', onPick: () => void recolorFromLibrary(String(gen?.set)) },
+    Boolean(gen?.map) && { label: L`Изменить вид`, icon: 'tune', onPick: () => void mapLooksFromLibrary(gen?.map === 'trees' ? 'trees' : 'towers') },
     Boolean(rec.generated) && { separator: true },
     ...orderItems(rec),
     ordered && { separator: true },

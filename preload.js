@@ -104,6 +104,11 @@ contextBridge.exposeInMainWorld('api', {
     pickSet: (setId) => ipcRenderer.invoke('cosmetics:pickSet', setId),
   },
   // the arcana built out of the game's own files, in a colour of the user's
+  // towers and trees from the game's own looks, per side
+  map: {
+    state: () => ipcRenderer.invoke('map:state'),
+    install: (kind, radiant, dire) => ipcRenderer.invoke('map:install', kind, radiant, dire),
+  },
   arcana: {
     state: () => ipcRenderer.invoke('arcana:state'),
     install: (set, color, mode) => ipcRenderer.invoke('arcana:install', set, color, mode),

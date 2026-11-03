@@ -18,9 +18,9 @@ import type { AppContext } from './app-context.ts';
 export function registerGameIpc({
   // patchRepair() is read late and written through setPatchRepair: it changes while the app
   // runs, and a value captured at registration would answer for the wrong moment forever.
-  afterDeployMaster, arcana, blocked, diag, dotaIsRunning, gameIcons, icons, installer, library, modPreviews, remoteConfig,
+  afterDeployMaster, arcana, blocked, mapLooks, diag, dotaIsRunning, gameIcons, icons, installer, library, modPreviews, remoteConfig,
   repairAfterPatch, schemaService, settings, toolchain, patchRepair, setPatchRepair,
-}: Pick<AppContext, 'afterDeployMaster' | 'arcana' | 'blocked' | 'diag' | 'dotaIsRunning' | 'gameIcons' | 'icons' | 'installer' | 'library' | 'modPreviews' | 'remoteConfig' | 'repairAfterPatch' | 'schemaService' | 'settings' | 'toolchain' | 'patchRepair' | 'setPatchRepair'>): void {
+}: Pick<AppContext, 'afterDeployMaster' | 'arcana' | 'blocked' | 'mapLooks' | 'diag' | 'dotaIsRunning' | 'gameIcons' | 'icons' | 'installer' | 'library' | 'modPreviews' | 'remoteConfig' | 'repairAfterPatch' | 'schemaService' | 'settings' | 'toolchain' | 'patchRepair' | 'setPatchRepair'>): void {
   const { ipcMain, shell } = electron();
 
   // the action on Play's "Steam is still updating Dota" (src/steam-appstate.ts): Steam's own downloads
@@ -266,6 +266,22 @@ export function registerGameIpc({
       // the builder's copy of Terrorblade's base takes the new colour (src/arcana-base-color.ts);
       // the window does not wait on the table, the bar at the bottom counts it
       void schemaService.refreshInBackground();
+      return { ok: true, record };
+    } catch (err) {
+      return { error: errorText(err) };
+    }
+  });
+
+  // towers and trees from the game's own looks, per side (src/map-looks-service.ts)
+  ipcMain.handle('map:state', () => {
+    try { return { ok: true, ...mapLooks.state() }; } catch (err) { return { error: errorText(err) }; }
+  });
+  ipcMain.handle('map:install', (e, kind, radiant, dire) => {
+    const stop = blocked('install');
+    if (stop) return stop;
+    try {
+      const record = mapLooks.install(kind, radiant, dire);
+      afterDeployMaster();
       return { ok: true, record };
     } catch (err) {
       return { error: errorText(err) };

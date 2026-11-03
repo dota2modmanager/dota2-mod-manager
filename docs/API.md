@@ -59,6 +59,7 @@ the code, not in this page.
 | [`src/gamelang-steam.ts`](#srcgamelang-steamts) | What Steam says about the game's language (src/gamelang.ts has the rule): the -language in the |
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
 | [`src/gem-colors.ts`](#srcgem-colorsts) | The game's own prismatic gem colours, read out of items_game.txt (issue #392). The table keeps |
+| [`src/generated-pak.ts`](#srcgenerated-pakts) | A pak the app built itself (the arcana window, src/arcana-service.ts; the map looks, |
 | [`src/hero-grid.ts`](#srchero-gridts) | Hero grids for the pick screen out of this patch's numbers (issue #428). |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/i18n-zh-CN.ts`](#srci18n-zh-CNts) | Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key. |
@@ -94,6 +95,7 @@ the code, not in this page.
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
 | [`src/lz4.ts`](#srclz4ts) | LZ4 block format: literals and back-references, the compression Valve's KV3 writer uses |
 | [`src/main-window.ts`](#srcmain-windowts) | The one window the app has: its size on the screen it opens on, the single page it may show, |
+| [`src/map-looks-service.ts`](#srcmap-looks-servicets) | Towers and trees from the game's own looks, per side, built in the app (issues #446, #421). |
 | [`src/material.ts`](#srcmaterialts) | Compiled resources at the block level, and a material's expressions: what an item's gem colours. |
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
 | [`src/mod-doctor.ts`](#srcmod-doctorts) | The mod doctor: what is wrong with a mod, found in its files and the game's, before anybody |
@@ -2695,6 +2697,37 @@ export function findGem(gems: GemColor[], what: string): GemColor | null
 
 The gem whose key or name this is, ignoring case, spaces and an apostrophe; or null.
 
+## src/generated-pak.ts
+
+A pak the app built itself (the arcana window, src/arcana-service.ts; the map looks,
+src/map-looks-service.ts), written into the mods folder like an installed one: a numbered pak
+in the early part of the load order, and on a rebuild the new one in the slot the old one had.
+
+### `PakInstaller`
+
+```ts
+export type PakInstaller = Pick<Installer, 'langFolder' | 'ensureLangFolder' | 'usedPakNames' | 'allocatePak' | 'writeInto' | 'remove' | 'slotBase' | 'moveToSlot' | 'setEnabled'>
+```
+
+What writing and swapping a generated pak needs of the installer.
+
+### `writePak`
+
+```ts
+export function writePak(installer: PakInstaller, vpk: Buffer): LibFile[]
+```
+
+The built pak written into a slot in the early part of the load order; the files it took.
+
+### `swapPak`
+
+```ts
+export function swapPak(installer: PakInstaller, rec: LibRecord, vpk: Buffer, off: boolean): LibFile[]
+```
+
+`vpk` in place of the record's pak: written beside it, then moved into the slot the old one had,
+and switched off when `off`. The caller builds first, so a build that fails leaves the old one.
+
 ## src/hero-grid.ts
 
 Hero grids for the pick screen out of this patch's numbers (issue #428).
@@ -5132,6 +5165,62 @@ Open the window on the app's page, locked to it, with Ctrl +/-/0 scaling the con
 @param pageExists stands in for the disk when a test asks whether the page was built
 @param firstRun   no settings.json was there before this start: the scale is picked for the screen
 ```
+
+## src/map-looks-service.ts
+
+Towers and trees from the game's own looks, per side, built in the app (issues #446, #421).
+The window picks a look for Radiant and one for Dire; the pak comes out of the player's pak01
+(src/tower-looks.ts, src/tree-sets.ts) and goes into My mods as one record per kind, marked
+`generated` with what it was built from. Choosing again builds it again in its slot, and a
+Dota update that reached it builds it again from the new files.
+
+### `MapKind`
+
+```ts
+export type MapKind = 'towers' | 'trees'
+```
+
+The two kinds the window builds, each its catalog category.
+
+### `MapGenerated`
+
+```ts
+export interface MapGenerated { map: MapKind; radiant: string | null; dire: string | null }
+```
+
+What a generated record was built from. A side left null keeps the game's own.
+
+### `MapOption`
+
+```ts
+export interface MapOption { id: string; name: string; sides: Side[] }
+```
+
+One look a side can take.
+
+### `MapLooksState`
+
+```ts
+export interface MapLooksState
+```
+
+What the window shows: the looks of each kind, and the record built before, if any.
+
+### `OFFERED_TREES`
+
+```ts
+export const OFFERED_TREES: MapOption[] = TREE_SETS.filter((s) => !s.tinted).map((s) => ({ id: s.id, name: s.name, sides: BOTH }))
+```
+
+The tree sets the window offers: the tinted ones come out washed white on the default map.
+
+### `createMapLooks`
+
+```ts
+export function createMapLooks({ gamePath, installer, library, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; log?: (msg: string) => void; })
+```
+
+The service the map:* channels call, over the game folder, the installer and the library.
 
 ## src/material.ts
 
@@ -9148,6 +9237,14 @@ export function buildTowerLook({ pak01, text, id, sides }: { pak01: string; text
 
 A look for one side or both as one VPK, out of the game's pak01. A file the game lacks is left out and named.
 
+### `buildTowers`
+
+```ts
+export function buildTowers({ pak01, text, radiant, dire }: { pak01: string; text: string; radiant?: string | null; dire?: string | null }):
+```
+
+Each side's towers in a look of its own, or as they are where its id is null: one VPK out of pak01.
+
 ## src/tree-sets.ts
 
 Trees on the map from another of the game's tree sets, one set for Radiant and one for Dire
@@ -9178,10 +9275,11 @@ The models each side's trees wear on the default map, the most used first.
 ### `TreeSet`
 
 ```ts
-export interface TreeSet { id: string; name: string; models: string[] }
+export interface TreeSet { id: string; name: string; models: string[]; tinted?: boolean }
 ```
 
-One of the game's tree sets, named for the terrain it comes from.
+`tinted`: its terrain tints these models through the map, which the default map does not, so
+ they come out washed white there (seen in game, 2026-11-03); the app does not offer them.
 
 ### `TREE_SETS`
 

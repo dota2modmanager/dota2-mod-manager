@@ -167,6 +167,17 @@ const EN = {
   'Течис': 'Techies',
   'Аркана Течиса': "Techies' arcana",
   'Призматические самоцветы': 'Prismatic gems',
+  'Башни из игры': 'Towers from the game',
+  'Деревья из игры': 'Trees from the game',
+  'Своя для каждой стороны · из файлов игры': "One per side · from the game's files",
+  'Radiant и Dire': 'Radiant and Dire',
+  'Изменить вид': 'Change the look',
+  'Собрано и стоит в «Моих модах»': 'Built and in My mods',
+  'Убрано': 'Removed',
+  'Модели башен и их обломков берутся из предметов игры. Эффекты, которые предмет создаёт сам, и его звуки в файл не входят.':
+    "The tower and rubble models come from the game's items. Effects the item makes itself and its sounds do not go in the file.",
+  'Меняются деревья, которые можно срубить. Деревья-декорации по краям карты встроены в саму карту и остаются как были.':
+    'This changes the trees you can cut down. The decorative trees at the edges of the map are built into the map itself and stay as they were.',
   'Свой цвет': 'Own colour',
   'аркана из файлов игры': 'arcana from the game files',
   'стоит': 'installed',

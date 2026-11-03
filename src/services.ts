@@ -26,6 +26,7 @@ import { electron } from './electron.ts';
 import { createUpdateImpact, impactMods } from './update-impact.ts';
 import { createArcanaService, type Generated } from './arcana-service.ts';
 import { createBaseStore } from './arcana-base-store.ts';
+import { createMapLooks } from './map-looks-service.ts';
 import { TERRORBLADE_BASE } from './arcana-bases.ts';
 import { clientVersion } from './patch-watch.ts';
 import { createRemoteConfig } from './remote-config.ts';
@@ -122,6 +123,8 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   });
   // the arcana built out of the game's own files, in a colour of the user's (src/arcana.ts)
   const arcana = createArcanaService({ gamePath: () => settings.get('dotaGamePath'), installer, library, log: diag, bases, code: builderStamp });
+  // towers and trees from the game's own looks, per side (src/map-looks-service.ts)
+  const mapLooks = createMapLooks({ gamePath: () => settings.get('dotaGamePath'), installer, library, log: diag });
   const cursors = createCursors({ installer, library, settings });
   const adopt = createAdopt({ installer, library, schemaService });
   // what the app can be told after it shipped: a feature switched off with a reason, and dated
@@ -197,7 +200,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 
   return {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana,
+    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };
 }

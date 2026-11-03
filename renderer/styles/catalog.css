@@ -819,3 +819,14 @@
   object-fit: contain;
   mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%);
 }
+
+/* Towers and trees out of the game's own looks (catalog/map/MapLookModal.tsx): no picture on top,
+   so the window opens on its title, then a row of looks per side under the side's name. The looks
+   are pills without the colour dot (they have no colour), a tower's with its item picture. */
+.modal-body.map-looks { position: relative; padding-top: var(--space-5); }
+.map-looks .modal-title-row { padding-right: var(--space-6); }
+.map-side { display: flex; flex-direction: column; gap: var(--space-2); }
+.map-side-label { font-size: var(--text-xs); font-weight: var(--weight-semibold); color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+.map-looks .style-btn::before { display: none; }
+.map-looks .style-btn.map-look { padding-left: var(--space-2); }
+.map-look-icon { width: 36px; height: 24px; object-fit: cover; border-radius: var(--radius-xs); }
