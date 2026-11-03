@@ -9,8 +9,8 @@
  * own hero, is what everybody else's looked like.
  *
  * So a hero the build dresses (a pick, or a base's part, at one of his stock paths) is worn by
- * everybody exactly as the user's is, slot by slot. Every other wearable of his goes under the
- * file the user's hero wears in its slot, at each model path its block names, its styles' included:
+ * everybody exactly as the user's is, slot by slot. Every other wearable of his is worn as the file
+ * the user's hero wears in its slot:
  * - the build's, where it fills the stock path (a pick's model, else a base's part);
  * - the game's own stock item, where it does not: the Planetfall base fills Earthshaker's totem and
  *   bracers, and his belt is the plain one, so a store belt was drawn on the arcana (J0nathan550,
@@ -25,6 +25,16 @@
  * owner can wear it in, since the server sends their style with it, not the user's
  * (src/item-builder-styles.ts inEveryStyle).
  *
+ * Where that file is at the stock path (the first two), the block names the stock path and nothing
+ * is written for the item: a match loads a hero's stock models with him, whatever his owner wears.
+ * Elsewhere (a pick's own head, the invisible box, an arcana's refit) a path the block named would
+ * be loaded only if somebody wore it, and an unloaded one is drawn as nothing or the ERROR model
+ * ("Attempting to set nonresident model", 2026-10-18), so the file goes under each model path the
+ * item's block names, its styles' included. Writing a file under every path was 9,700 files on
+ * J0nathan550's library, and past about 5,500 of the game's models replaced, other heroes' spells
+ * drew stray models: Skywrath's Arcane Bolt with somebody's hands on it (#414). Neither copies of
+ * their own nor search paths of their own got past that; a limit of the game's, not of a pak.
+ *
  * An arcana that swaps the hero's body (an entity_model naming the hero) is dressed too, in the slot
  * it sits in (Planetfall in hero_base, under Earthshaker's Base). The server sets that body on its
  * owner, from its own table, so the swap cannot be taken out of the table; the file is what can be
@@ -33,9 +43,10 @@
  * arcana's body and particles with the Gar Beast's arms and belt on it.
  *
  * An arcana also swaps dozens of paid items' models for refits to its body (Planetfall 41, Dread
- * Retribution 30), and the user's built blocks keep those swaps. So a dressed item's refit path gets
- * the user's file as well, and a slot of the user's that is swapped itself is worn as what the swap
- * shows. With an arcana on, hovering any set in the loadout showed that set (J0nathan550, 2026-10-31).
+ * Retribution 30), and the user's built blocks keep those swaps. A dressed item that names the stock
+ * path is out of their way; one that gets files gets one under its refit path as well, and a slot of
+ * the user's that is swapped itself is worn as what the swap shows. With an arcana on, hovering any
+ * set in the loadout showed that set (J0nathan550, 2026-10-31).
  *
  * Left alone: a slot with no stock item, items shared with other heroes, a persona (a second hero
  * with slots of its own), and an item that swaps another form of the hero or one of his summons
@@ -44,7 +55,7 @@
  * For a persona the stock paths hold the empty models its base puts there, so another player's plain
  * items go the way the user's own do, and the persona's body is not dressed in them.
  *
- * The bytes are one buffer under many paths, and the pak stores them once (src/vpk-write.ts). Tried
+ * The files are one buffer under many paths, and the pak stores them once (src/vpk-write.ts). Tried
  * on Juggernaut first (five slots, about 140 wearables), then every hero (2026-10-30). The table is
  * walked once whatever the number of heroes: a walk a hero was 118 ms each.
  */
@@ -192,16 +203,18 @@ export function everyoneWears(text: string, list: SchemaPatch[], beneath: VpkEnt
     // Tectonic helm was drawn as its refit to Planetfall's body, a path nothing of ours filled
     const models = [...raw.matchAll(MODELS)].map((m) => compiled(m[1]).toLowerCase());
     const paths = new Set(models.flatMap((p) => (swaps.has(p) ? [p, swaps.get(p)!] : [p])));
-    const assets = [
-      ...(ours ? [...paths].map((p) => under(p, ours)) : []),
-      ...(body ? [...new Set(bodies)].map((p) => under(p, body)) : []),
-    ].filter((en) => !files.has(entryPath(en).toLowerCase()) && !(ours && entryPath(en) === entryPath(ours)));
-    if (!assets.length) continue;
+    const open = (en: VpkEntry) => !files.has(entryPath(en).toLowerCase()) && !(ours && entryPath(en) === entryPath(ours));
+    const copies = ours ? [...paths].map((p) => under(p, ours)).filter(open) : [];
+    const bodyFiles = body ? [...new Set(bodies)].map((p) => under(p, body)).filter(open) : [];
+    if (!copies.length && !bodyFiles.length) continue;
+    // the user's look at the stock path, which a match loads with the hero: the block names it, and
+    // nothing goes under the item's own paths (#414)
+    const byPath = !!ours && !!item.model && !!stock.model && entryPath(ours) === compiled(stock.model).toLowerCase();
     out.push({
       id: item.id,
       // in whatever style its owner wears it: the server sends theirs, and ours is the first (#402)
-      block: blockInEveryStyle(asItem(blocks.get(stock.id) ?? text.slice(stock.start, stock.end), text, item, item.model), raw),
-      assets,
+      block: blockInEveryStyle(asItem(blocks.get(stock.id) ?? text.slice(stock.start, stock.end), text, item, byPath ? entryPath(ours!).replace(/_c$/, '') : item.model), raw),
+      assets: byPath ? bodyFiles : [...copies, ...bodyFiles],
       source: `${stock.name}: everybody's`,
     });
   }
