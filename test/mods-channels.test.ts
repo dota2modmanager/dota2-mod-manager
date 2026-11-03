@@ -168,7 +168,7 @@ test('a mod a Dota update reached carries how many of its files changed and how 
   const axe = s.pak('pak31', [['models/heroes/axe/axe.vmdl_c', 'an axe model']])!;
   s.reached.set(hud.id, { since: '6946', changed: ['a', 'b'], removed: ['c'], sig: 'x' });
   const rows = (await s.list()).installed;
-  assert.deepEqual(rows.find((r) => r.id === hud.id)?.prePatch, { since: '6946', changed: 2, removed: 1 });
+  assert.deepEqual(rows.find((r) => r.id === hud.id)?.prePatch, { since: '6946', changed: 2, removed: 1, changedPaths: ['a', 'b'], removedPaths: ['c'] });
   assert.equal('prePatch' in (rows.find((r) => r.id === axe.id) || {}), false);
 });
 

@@ -9,8 +9,9 @@ export interface Tag {
   text: string;
   icon?: string;
   title?: string;
-  /** the pill opens a window: 'covers' is the list of who covers the row (views/library/covers.ts) */
-  opens?: 'covers';
+  /** the pill opens a window: 'covers' is the list of who covers the row (views/library/covers.ts),
+   * 'prePatch' what a Dota update changed under the mod (views/library/pre-patch.ts) */
+  opens?: 'covers' | 'prePatch';
 }
 
 /** A row's picture: a preview, a picture fetched by name when it scrolls near, or only a glyph. */
@@ -158,6 +159,8 @@ export interface LibraryActions {
   reorder: (id: string, to: number) => Promise<void>;
   /** the window that lists who covers a row, by record id or foreign-file key */
   covers: (key: string) => void;
+  /** the window that lists what a Dota update changed under a mod, and what to do about it */
+  prePatch: (id: string) => void;
   banner: (id: string, data?: string) => Promise<void>;
   enableAll: (on: boolean) => void;
   disableCosmetics: () => void;

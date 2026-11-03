@@ -38,6 +38,10 @@ type ListingDeps = Pick<AppContext, 'installer' | 'library' | 'fingerprints' | '
   guard?: () => unknown;
 };
 
+/** The paths of each kind a pre-patch mark carries to the window; the counts say how many in all. */
+const PATHS_SHOWN = 100;
+type PrePatch = { since: string | null; changed: number; removed: number; changedPaths: string[]; removedPaths: string[] };
+
 /** The mods:list answer, built over the services src/ipc-mods.ts hands it. */
 export function createModsListing({ installer, library, fingerprints, schemaService, updateImpact = null, terrainAges, notice, diag, refreshPresence, verifyStuck, guard }: ListingDeps) {
   return function listMods() {
@@ -138,9 +142,14 @@ export function createModsListing({ installer, library, fingerprints, schemaServ
     } catch { /* no game path */ }
 
     // a mod whose copies of Valve's files a Dota update changed since: it brings the old ones back
-    let prePatch = new Map<string, { since: string | null; changed: number; removed: number }>();
+    // and which files, a hundred of each at most, for the window its pill opens (issue #416)
+    let prePatch = new Map<string, PrePatch>();
     try {
-      if (updateImpact) for (const [id, m] of updateImpact.marked()) prePatch.set(id, { since: m.since, changed: m.changed.length, removed: m.removed.length });
+      if (updateImpact) {
+        for (const [id, m] of updateImpact.marked()) {
+          prePatch.set(id, { since: m.since, changed: m.changed.length, removed: m.removed.length, changedPaths: m.changed.slice(0, PATHS_SHOWN), removedPaths: m.removed.slice(0, PATHS_SHOWN) });
+        }
+      }
     } catch (err) { diag(`update impact not read: ${errorText(err)}`); prePatch = new Map(); }
 
     let slots = 0;

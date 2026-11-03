@@ -58,7 +58,8 @@ export interface LibRecord {
   coveredBy?: Cover[];
   staleMap?: boolean;
   /** a Dota update changed files this mod replaces since it was installed (src/update-impact.ts) */
-  prePatch?: { since: string | null; changed: number; removed: number };
+  /** the paths are the first hundred of each kind, for the window the pill opens (views/library/pre-patch.ts) */
+  prePatch?: { since: string | null; changed: number; removed: number; changedPaths?: string[]; removedPaths?: string[] };
   /** the catalog has a newer version of this mod than the one installed (src/mod-update.ts) */
   updateAvailable?: boolean;
   /** a copy of the pumpkin's mod this install did not earn, kept off (src/scream-guard.ts) */

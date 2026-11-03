@@ -13,6 +13,7 @@ import { pickModsDialog } from './pick-mods.ts';
 import { combineSelection, deleteRecord, menuFor, standalonePackable, updateRecord } from './record-actions.ts';
 import { lib, recById, screen } from './state.ts';
 import { showCovers } from './covers.ts';
+import { showPrePatch } from './pre-patch.ts';
 
 const tick = (ids: string[], on: boolean) => { for (const id of ids) { if (on) lib.sel.add(id); else lib.sel.delete(id); } screen.draw(); };
 
@@ -219,6 +220,15 @@ export const actions: LibraryActions = {
     if (to === null) return;
     const res = await window.api.mods.reorder(key, to);
     if (res?.error) toast(res.error, 'error', 6000);
+    await screen.reload();
+  },
+  prePatch: async (id) => {
+    const choice = await showPrePatch(id);
+    if (!choice) return;
+    const res = choice === 'update' ? (await updateRecord(id) ? {} : null)
+      : choice === 'off' ? await window.api.mods.setEnabled(id, false)
+        : await window.api.mods.clearPrePatch(id);
+    if (res && 'error' in res && res.error) toast(res.error, 'error', 6000);
     await screen.reload();
   },
   banner,
