@@ -6,6 +6,7 @@ import { heroName } from '../../ui/hero-name.ts';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import type { HeroModalActions, HeroModalModel } from './model.ts';
 import { CosThumb } from './parts.tsx';
+import { Preview3d } from '../preview3d/Preview3d.tsx';
 
 const noStagger = { '--i': 0 } as CSSProperties;
 
@@ -14,12 +15,19 @@ export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModa
     <div className="modal-body">
       <div className="modal-title-row">
         <div className="modal-title">{heroName(m.hero)}</div>
+        {m.preview && (
+          <button className={`btn btn-sm preview3d-toggle ${m.preview.open ? 'on' : ''}`} id="preview3dBtn" aria-pressed={m.preview.open}
+            title={L`Посмотреть героя в 3D в том, что надето`} onClick={actions.togglePreview}>
+            <span className="ms">view_in_ar</span>3D
+          </button>
+        )}
         <button className="modal-close" id="modalCloseBtn" aria-label={L`Закрыть`} onClick={actions.close}><span className="ms">close</span></button>
       </div>
       <div className="modal-sub">
         <span>{m.hub}</span>
         <span>{`· ${m.slots.length} ${plural(m.slots.length, 'слот', 'слота', 'слотов')}`}</span>
       </div>
+      {m.preview?.open && <Preview3d hero={m.preview.hero} slots={m.preview.slots} sig={m.preview.sig} />}
       <div className="item-slot-grid item-hero-slots">
         {m.sets && (
           <button className={`card item-slot-card ${m.sets.on ? 'installed' : ''}`} data-item-sets="true" style={noStagger} onClick={actions.openSets}>

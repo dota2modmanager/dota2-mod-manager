@@ -45,6 +45,7 @@ const ELECTRON_USERS = [
   'src/ipc-mods.ts',
   'src/ipc-packs.ts',
   'src/ipc-presets.ts',
+  'src/ipc-preview3d.ts',
   'src/ipc-pumpkin.ts',
   'src/ipc-settings.ts',
   'src/ipc-window.ts',

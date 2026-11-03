@@ -215,6 +215,22 @@ export function openItemHeroModal(heroName: string, from: Element | null): void 
     .catch(() => {});
 }
 
+/** The 3D preview is open: it stays so from one hero to the next, as a person who looks once looks again. */
+let previewOpen = false;
+
+/** What the 3D preview shows for the hero: each slot's stock item and what is picked on it. */
+function heroPreview(slots: CosmeticSlot[]) {
+  const hero = slots.find((s) => s.heroIds?.length)?.heroIds?.[0];
+  const dressed = slots.filter((s) => s.targetId && !s.persona);
+  if (!hero || !dressed.length) return null;
+  return {
+    hero,
+    slots: dressed.map((s) => ({ slot: s.slot, stock: s.targetId as string })),
+    sig: dressed.map((s) => { const p = pickedIn(s.slot); return p ? `${p.itemId}:${p.effectId || ''}` : '-'; }).join('|'),
+    open: previewOpen,
+  };
+}
+
 function drawHero(key: number, heroName: string, slots: CosmeticSlot[]): void {
   const sets = heroSets(heroName);
   const shown = sets.find((s) => setIsOn(s, pickedIn)) || sets[0];
@@ -232,8 +248,10 @@ function drawHero(key: number, heroName: string, slots: CosmeticSlot[]): void {
       };
     }),
     sets: sets.length ? { name: shown.name, count: sets.length, on: sets.some((s) => setIsOn(s, pickedIn)) } : null,
+    preview: heroPreview(slots),
   }, {
     close: closeOverlay,
+    togglePreview: () => { previewOpen = !previewOpen; drawHero(key, heroName, slots); },
     openSets: () => openSets(heroName),
     openSlot: (slot) => openItemSlotModal(slot, null,
       { back: { label: heroName, hero: true, go: () => openItemHeroModal(heroName, null) } }),

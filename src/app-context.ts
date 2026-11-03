@@ -22,6 +22,7 @@ import type { createArcanaService } from './arcana-service.ts';
 import type { createMapLooks } from './map-looks-service.ts';
 import type { createAbilitySounds } from './ability-sounds-service.ts';
 import type { createBuildUndo } from './build-undo.ts';
+import type { createHeroPreview } from './hero-preview.ts';
 import type { createGameIcons } from './game-icons.ts';
 import type { createModPreviews } from './mod-preview.ts';
 import type { createRemoteConfig } from './remote-config.ts';
@@ -70,6 +71,7 @@ export interface AppContext {
   /** sounds of the user's own on a hero's events (src/ability-sounds-service.ts) */
   abilitySounds: ReturnType<typeof createAbilitySounds>;
   buildUndo: ReturnType<typeof createBuildUndo>;
+  heroPreview: ReturnType<typeof createHeroPreview>;
   icons: Icons;
   gameIcons: ReturnType<typeof createGameIcons>;
   modPreviews: ReturnType<typeof createModPreviews>;

@@ -59,6 +59,8 @@ export interface CosmeticSlot {
   slotLabel?: string;
   heroLabel?: string;
   heroIds?: string[];
+  /** the stock item the slot dresses, in the item builder's slots */
+  targetId?: string;
   icon?: string;
   options: CosmeticOption[];
   effects?: { id: string; name: string }[];

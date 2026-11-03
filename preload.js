@@ -106,6 +106,10 @@ contextBridge.exposeInMainWorld('api', {
   },
   // the arcana built out of the game's own files, in a colour of the user's
   // towers and trees from the game's own looks, per side
+  // the item builder's 3D preview: the hero's models out of the game
+  preview3d: {
+    models: (hero, slots) => ipcRenderer.invoke('preview3d:models', hero, slots),
+  },
   sounds: {
     heroes: () => ipcRenderer.invoke('sounds:heroes'),
     hero: (hero) => ipcRenderer.invoke('sounds:hero', hero),

@@ -164,7 +164,7 @@ const VALID: Record<string, unknown[][]> = {
   'pumpkin:redeem': [['K7QX-M2PA-9HRT-WZ4N']], 'pumpkin:prizeAgain': [[]], 'pumpkin:hasPrize': [[]],
   'config:state': [[]], 'config:noticeSeen': [['notice-2026-10']],
   'patch:state': [[]], 'patch:repairState': [[]], 'patch:repairNow': [[]], 'patch:repairApp': [[]], 'patch:repairSeen': [[]], 'patch:setEnabled': [[true]],
-  'schema:refresh': [[]], 'schema:cancel': [[]], 'cosmetics:slots': [[]],
+  'schema:refresh': [[]], 'schema:cancel': [[]], 'cosmetics:slots': [[]], 'preview3d:models': [['magnataur', [{ slot: 'item:magnataur:head', stock: '9490' }]]],
   'cosmetics:heroPortraits': [[['1', '2']], [[1, 2]]], 'cosmetics:heroPortraitsByName': [[['npc_dota_hero_axe']]],
   'cosmetics:icons': [[['Shade of the Abyss']]],
   'cosmetics:pick': [['weather', '5810', 'Weather: Ash', ''], ['hero_axe_weapon', 4520, 'Axe', '1,2']],

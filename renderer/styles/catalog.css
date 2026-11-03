@@ -171,6 +171,41 @@
 /* the catalog's own search field, sized by itself rather than by the column it sits in */
 .item-picker-search { align-self: flex-start; }
 .item-hero-slots { margin-top: var(--space-4); }
+/* The hero in 3D (catalog/preview3d): a stage as wide as the window, the note over its middle. */
+.preview3d-toggle { margin-left: auto; margin-right: var(--space-6); flex-shrink: 0; }
+.preview3d-toggle.on { background: var(--md-primary-container); color: var(--md-on-primary-container, var(--text)); }
+.preview3d {
+  position: relative;
+  height: 360px;
+  margin-top: var(--space-4);
+  border-radius: var(--radius-md);
+  background: radial-gradient(ellipse at 50% 85%, var(--surface-hover), var(--bg-deep) 70%);
+  overflow: hidden;
+}
+.preview3d-stage, .preview3d-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.preview3d-stage canvas { cursor: grab; }
+.preview3d-stage canvas:active { cursor: grabbing; }
+.preview3d-note {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  text-align: center;
+  color: var(--text-muted);
+}
+.preview3d[data-status='loading'] .preview3d-note .ms { animation: preview3dSpin 1s linear infinite; }
+@keyframes preview3dSpin { to { rotate: 360deg; } }
+.preview3d-missing {
+  position: absolute;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  font-size: var(--text-xs, 12px);
+  opacity: 0.7;
+}
 .item-fx-head { margin-top: var(--space-5); }
 .item-fx-hint { margin-bottom: var(--space-3); }
 .item-back { margin-bottom: var(--space-2); }

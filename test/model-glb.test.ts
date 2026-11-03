@@ -15,9 +15,12 @@ test('a model path in any spelling the table uses, and nothing that is not one',
   assert.equal(modelFile(''), null);
 });
 
-test('one call for every model, with the clips only when some are asked for', () => {
+test('one call for every model, its bones always, its clips only when some are asked for', () => {
+  // without the animations switch the toolchain drops a wearable's skin, and it stands in its bind
+  // pose while the body plays its idle
   assert.deepEqual(exportArgs('p.vpk', 'o', ['a.vmdl_c', 'b.vmdl_c'], []),
-    ['-i', 'p.vpk', '-o', 'o', '-d', '-f', 'a.vmdl_c,b.vmdl_c', '--gltf_export_format', 'glb', '--gltf_export_materials']);
+    ['-i', 'p.vpk', '-o', 'o', '-d', '-f', 'a.vmdl_c,b.vmdl_c', '--gltf_export_format', 'glb', '--gltf_export_materials',
+      '--gltf_export_animations', '--gltf_animation_list', 'mm-no-clip']);
   assert.deepEqual(exportArgs('p.vpk', 'o', ['a.vmdl_c'], ['idle']).slice(-3), ['--gltf_export_animations', '--gltf_animation_list', 'idle']);
 });
 
@@ -27,14 +30,17 @@ function setup() {
   fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
   fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), 'pak');
   const calls: string[][] = [];
-  // writes a GLB for every model it is given, except the one the game lacks
+  // writes a GLB for every model it is given, except the one the game lacks; for one model alone,
+  // where -o says, as the real one does (it named the file after the folder, 2026-11-03)
   const run = async (_exe: string, args: string[]) => {
     calls.push(args);
     const out = args[args.indexOf('-o') + 1];
-    for (const f of args[args.indexOf('-f') + 1].split(',')) {
+    const files = args[args.indexOf('-f') + 1].split(',');
+    for (const f of files) {
       if (f.includes('missing')) continue;
-      fs.mkdirSync(path.dirname(glbAt(out, f)), { recursive: true });
-      fs.writeFileSync(glbAt(out, f), 'glb');
+      const at = files.length === 1 ? out : glbAt(out, f);
+      fs.mkdirSync(path.dirname(at), { recursive: true });
+      fs.writeFileSync(at, 'glb');
     }
   };
   return { dir, game, calls, run };
