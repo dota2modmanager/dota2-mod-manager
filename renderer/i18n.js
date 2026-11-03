@@ -299,7 +299,7 @@ const EN = {
   // ---------- launch + master switch (app.js) ----------
   'Сначала укажи путь к Dota 2 в настройках': 'Set the Dota 2 path in Settings first',
   'Запуск Dota 2 без модов…': 'Launching Dota 2 without mods…',
-  'Запуск Dota 2 с модами…': 'Launching Dota 2 with mods…',
+  'Запуск Dota 2 с модами…': 'Launching Dota 2 with mods…', 'Загрузки Steam': 'Steam downloads',
   'Моды включены': 'Mods enabled',
   'Моды выключены — игра запустится ванильной': 'Mods disabled — the game will launch vanilla',
 

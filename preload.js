@@ -115,6 +115,7 @@ contextBridge.exposeInMainWorld('api', {
   },
   game: {
     launch: () => ipcRenderer.invoke('game:launch'),
+    steamDownloads: () => ipcRenderer.invoke('game:steamDownloads'),
   },
   packs: {
     combine: (name, modIds) => ipcRenderer.invoke('packs:combine', { name, modIds }),
