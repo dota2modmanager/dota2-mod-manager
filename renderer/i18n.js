@@ -386,7 +386,7 @@ const EN = {
   'Выбери минимум 2 элемента': 'Pick at least 2 items',
   'Название объединённого пака:': 'Combined pack name:',
   'Название пака:': 'Pack name:',
-  'напр. «Анимешный сет»': 'e.g. «Anime set»',
+  'напр. «Анимешный сет»': 'e.g. «Anime set»', 'Подписать': 'Label', 'Убрать подпись': 'Remove the label', 'Изменить подпись': 'Edit the label', 'Подписать: своё название видно только здесь': 'Label it: your own name shows only here', 'напр. «Пудж, красный»': 'e.g. «Pudge, the red one»', 'Своё название для «{0}». Его видно только здесь: файл в игре не переименовывается. Пустое поле вернёт прежнее.': 'Your own name for «{0}». Only the app shows it: the file in the game keeps its name. Leave the field empty to go back to the old one.',
   'Объединить': 'Combine',
   'Пак «{0}»: {1} {2}': 'Pack «{0}»: {1} {2}',
   'Пересечения файлов: {0} (победил тот, что раньше в паке)':

@@ -90,6 +90,8 @@ export interface ExternalRowModel {
   simple: boolean;
   adopt: { title: string } | null;
   splittable: boolean;
+  /** the user gave the file a name of their own (library/labels.ts) */
+  labelled: boolean;
 }
 
 /** What the banners over the list say, as data; Banners.tsx words it. */
@@ -162,6 +164,6 @@ export interface LibraryActions {
   importFiles: () => void;
   importFolder: () => void;
   bulk: (what: 'enable' | 'disable' | 'combine' | 'extract' | 'adopt' | 'remove') => void;
-  external: (what: 'toggle' | 'adopt' | 'split' | 'remove', key: string) => Promise<void>;
+  external: (what: 'toggle' | 'adopt' | 'split' | 'remove' | 'label', key: string) => Promise<void>;
   noticeRead: () => void;
 }

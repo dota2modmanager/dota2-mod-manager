@@ -1,13 +1,16 @@
-/* Files in the mods folder that no record owns: switched, taken in ("Принять"), split by hero or
- * deleted. A cursor or font set is a whole folder, so it is only ever taken in. */
+/* Files in the mods folder that no record owns: switched, named, taken in ("Принять"), split by
+ * hero or deleted. A cursor or font set is a whole folder, so it is only ever taken in. */
 import { toast } from '../../ui/toast.ts';
 import { confirmDialog } from '../../ui/dialog.ts';
 import { catalogPreviewFor } from '../../ui/thumb.ts';
+import { fileLabelKey } from '../../library/labels.ts';
+import { askLabel } from './label.ts';
 import { lib, screen } from './state.ts';
 
-export async function external(what: 'toggle' | 'adopt' | 'split' | 'remove', key: string): Promise<void> {
+export async function external(what: 'toggle' | 'adopt' | 'split' | 'remove' | 'label', key: string): Promise<void> {
   const f = lib.external.find((x) => x.key === key);
   if (!f) return;
+  if (what === 'label') { await askLabel(fileLabelKey(f.key), f.fileName || f.name); return; }
   if (what === 'toggle') {
     await window.api.mods.externalSetEnabled(f.key, !f.enabled);
   } else if (what === 'adopt') {

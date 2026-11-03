@@ -13,6 +13,8 @@ export interface StoredSettings {
   uiScale: number;
   theme: string;
   favorites: string[];
+  /** the user's own names for rows in My mods, by "rec:<id>" or "file:<name>" (renderer/library/labels.ts) */
+  modLabels: Record<string, string>;
   panels: Record<string, unknown> | null;
   account: { id: string; username: string; avatar?: string | null } | null;
   discordPresence: boolean;
@@ -84,6 +86,8 @@ const DEFAULTS: StoredSettings = {
   pumpkinLit: false,
   // catalog mods the user starred: "<categoryId>|<mod name>" keys
   favorites: [],
+  // the user's own names for rows in My mods; the files keep theirs (renderer/library/labels.ts)
+  modLabels: {},
   // sizes and folded state of the title bar, status bar and category rail
   panels: null,
   // Discord identity, when signed in: { id, username, avatar }. No token is ever kept —

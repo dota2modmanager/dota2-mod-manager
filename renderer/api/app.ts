@@ -15,6 +15,8 @@ export interface StoredSettings {
   theme: string;
   /** starred catalog mods, as "<categoryId>|<name>" */
   favorites: string[];
+  /** the user's own names for rows in My mods (library/labels.ts) */
+  modLabels?: Record<string, string>;
   /** read through ui/chrome.ts readPanels, which fills in and clamps whatever is missing */
   panels: Partial<Panels> | null;
   account: { id: string; username: string; avatar?: string | null } | null;

@@ -5,6 +5,7 @@
  * outside a numbered pak and have no place in it. */
 import { catalogMatchesSearch } from '../ui/hero-name.ts';
 import { isCosmeticRec } from '../core/records.ts';
+import { labelFor, recLabelKey } from './labels.ts';
 import type { LibRecord } from './types.ts';
 
 const PAK_DIR = /^pak\d+_dir\.vpk$/i;
@@ -45,7 +46,9 @@ export function loadOrder(records: LibRecord[]): Map<string, Place> {
 /** Whether a record answers the search, by its own name or any of its members'. */
 export function matchesSearch(rec: LibRecord, query: string): boolean {
   const q = query.trim().toLowerCase();
-  return !q || catalogMatchesSearch(rec.name, q) || (rec.members || []).some((m) => catalogMatchesSearch(m.name, q));
+  const label = labelFor(recLabelKey(rec.id));
+  return !q || catalogMatchesSearch(rec.name, q) || Boolean(label && label.toLowerCase().includes(q))
+    || (rec.members || []).some((m) => catalogMatchesSearch(m.name, q));
 }
 
 /**
