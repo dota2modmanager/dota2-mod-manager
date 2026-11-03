@@ -440,6 +440,34 @@ test('the download cache reports its size and can be emptied', (t) => {
   assert.equal(s.installer.cachedArchive('heroes', 'Axe.zip'), null);
 });
 
+test('the download cache lists its archives, largest first, and drops one with its hash', (t) => {
+  const s = stand(t);
+  const dir = s.installer.downloadsDir;
+  fs.mkdirSync(path.join(dir, 'heroes'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'huds'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'heroes', 'Axe.zip'), Buffer.alloc(10));
+  fs.writeFileSync(path.join(dir, 'huds', 'Big HUD.zip'), Buffer.alloc(500));
+  fs.writeFileSync(path.join(dir, 'index.json'), JSON.stringify({ 'heroes/Axe.zip': { size: 10, sha256: 'x', at: 1 } }));
+
+  assert.deepEqual(s.installer.listDownloadCache().map((d) => [d.key, d.bytes]), [['huds/Big HUD.zip', 500], ['heroes/Axe.zip', 10]]);
+
+  assert.equal(s.installer.removeCachedDownload('heroes/Axe.zip'), true);
+  assert.equal(fs.existsSync(path.join(dir, 'heroes', 'Axe.zip')), false);
+  assert.deepEqual(s.installer.downloadIndex(), {});
+  assert.deepEqual(s.installer.listDownloadCache().map((d) => d.key), ['huds/Big HUD.zip']);
+});
+
+test('removing from the download cache refuses any key the listing did not give', (t) => {
+  const s = stand(t);
+  fs.mkdirSync(path.join(s.installer.downloadsDir, 'heroes'), { recursive: true });
+  const outside = path.join(path.dirname(s.installer.downloadsDir), 'keep.txt');
+  fs.writeFileSync(outside, 'mine');
+  assert.equal(s.installer.removeCachedDownload('../keep.txt'), false);
+  assert.equal(s.installer.removeCachedDownload('heroes/../../keep.txt'), false);
+  assert.equal(s.installer.removeCachedDownload('index.json'), false);
+  assert.ok(fs.existsSync(outside));
+});
+
 test('a cursor set another program put in the game is found, folders and all, unless the app manages cursors', (t) => {
   const s = stand(t);
   fs.mkdirSync(path.join(s.game, ...CURSOR, 'anim'), { recursive: true });

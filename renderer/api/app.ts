@@ -106,6 +106,9 @@ interface MiscApi {
   openExternal: (url: string | undefined) => Promise<Reply>;
   cacheSize: () => Promise<number>;
   clearCache: () => Promise<Reply>;
+  /** Every archive in the download cache, largest first (src/installer-downloads.ts listDownloadCache). */
+  cacheList: () => Promise<Array<{ key: string; categoryId: string; name: string; bytes: number; at: number }>>;
+  cacheRemove: (key: string) => Promise<{ ok: boolean }>;
   runTool: (dirName: string) => Promise<Reply>;
 }
 

@@ -211,6 +211,8 @@ export class Installer {
   cachedArchive(...a: Rest<typeof downloads.cachedArchive>) { return downloads.cachedArchive(this, ...a); }
   downloadCacheSize(...a: Rest<typeof downloads.downloadCacheSize>) { return downloads.downloadCacheSize(this, ...a); }
   clearDownloadCache(...a: Rest<typeof downloads.clearDownloadCache>) { return downloads.clearDownloadCache(this, ...a); }
+  listDownloadCache(...a: Rest<typeof downloads.listDownloadCache>) { return downloads.listDownloadCache(this, ...a); }
+  removeCachedDownload(...a: Rest<typeof downloads.removeCachedDownload>) { return downloads.removeCachedDownload(this, ...a); }
 
   // ---------- the load order: src/installer-slots.ts and src/slot-zones.ts ----------
 

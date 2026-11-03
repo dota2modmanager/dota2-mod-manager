@@ -123,6 +123,49 @@ export function downloadCacheSize(inst: Installer): number {
   return folderSize(inst.downloadsDir);
 }
 
+/** One archive in the download cache, as Settings lists it (issue #430). */
+export interface CachedDownload { key: string; categoryId: string; name: string; bytes: number; at: number }
+
+/**
+ * Every archive in the download cache, largest first. The key is "<category>/<file>", the same
+ * key the hash index uses, and the only thing removeCachedDownload accepts.
+ */
+export function listDownloadCache(inst: Installer): CachedDownload[] {
+  const out: CachedDownload[] = [];
+  let cats: fs.Dirent[] = [];
+  try { cats = fs.readdirSync(inst.downloadsDir, { withFileTypes: true }); } catch { return out; }
+  for (const cat of cats) {
+    if (!cat.isDirectory()) continue;
+    let files: fs.Dirent[] = [];
+    try { files = fs.readdirSync(path.join(inst.downloadsDir, cat.name), { withFileTypes: true }); } catch { continue; }
+    for (const f of files) {
+      if (!f.isFile()) continue;
+      try {
+        const st = fs.statSync(path.join(inst.downloadsDir, cat.name, f.name));
+        out.push({ key: `${cat.name}/${f.name}`, categoryId: cat.name, name: f.name, bytes: st.size, at: st.mtimeMs });
+      } catch { /* gone between the listing and the stat */ }
+    }
+  }
+  return out.sort((a, b) => b.bytes - a.bytes || a.key.localeCompare(b.key));
+}
+
+/**
+ * Delete one cached archive and its line in the hash index. Only a key the listing gave is
+ * accepted: the window hands this a string, and a joined path with "../" in it would delete
+ * whatever it pointed at.
+ */
+export function removeCachedDownload(inst: Installer, key: string): boolean {
+  const entry = inst.listDownloadCache().find((d) => d.key === key);
+  if (!entry) return false;
+  fs.rmSync(path.join(inst.downloadsDir, entry.categoryId, entry.name), { force: true });
+  const index = inst.downloadIndex();
+  if (key in index) {
+    delete index[key];
+    try { fs.writeFileSync(path.join(inst.downloadsDir, 'index.json'), JSON.stringify(index, null, 2)); } catch { /* the cache still works without it */ }
+  }
+  return true;
+}
+
 /** Empty the download cache, keeping the folder. */
 export function clearDownloadCache(inst: Installer): void {
   fs.rmSync(inst.downloadsDir, { recursive: true, force: true });

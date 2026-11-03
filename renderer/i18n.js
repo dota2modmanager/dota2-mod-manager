@@ -789,7 +789,7 @@ const EN = {
   'Моды перенесены в dota_{0} — папку, которую монтирует твоя озвучка. Перезапусти игру.':
     'Mods moved into dota_{0}, the folder your audio language mounts. Restart the game.',
   'Скопировано в буфер': 'Copied to clipboard',
-  'Кэш очищен': 'Cache cleared',
+  'Кэш очищен': 'Cache cleared', 'Архивы по одному': 'Archives one by one', 'Удалить {0}': 'Delete {0}', 'Архив уже удалён': 'That archive is already gone',
   'Язык переключён на 简体中文': 'Language switched to Simplified Chinese',
   'Язык переключён на English': 'Language switched to English',
   'Язык переключён на Русский': 'Language switched to Russian',

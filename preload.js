@@ -161,6 +161,8 @@ contextBridge.exposeInMainWorld('api', {
     openExternal: (url) => ipcRenderer.invoke('misc:openExternal', url),
     cacheSize: () => ipcRenderer.invoke('misc:cacheSize'),
     clearCache: () => ipcRenderer.invoke('misc:clearCache'),
+    cacheList: () => ipcRenderer.invoke('misc:cacheList'),
+    cacheRemove: (key) => ipcRenderer.invoke('misc:cacheRemove', key),
     runTool: (dirName) => ipcRenderer.invoke('misc:runTool', dirName),
   },
   // the pumpkin's key and the mod it opens (src/ipc-pumpkin.ts)

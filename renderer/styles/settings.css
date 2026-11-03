@@ -147,3 +147,9 @@
   .about-credits { grid-template-columns: 1fr; row-gap: 0; }
   .about-role { margin-top: var(--space-2); }
 }
+
+/* The download cache, one archive at a time (issue #430): a long list folded under the total,
+   each name cut with an ellipsis so a 150-character archive name cannot push the button off. */
+.cache-files .cache-file { margin-bottom: 6px; }
+.cache-file-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.cache-file-cat { margin-left: 8px; color: var(--text-muted); font-size: var(--text-sm); }

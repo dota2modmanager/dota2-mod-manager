@@ -26,6 +26,8 @@ export interface SettingsModel {
   dotaPath: string;
   dotaValid: boolean;
   cache: string;
+  /** each archive in the download cache, largest first, so one can go without the rest */
+  cacheFiles: Array<{ key: string; name: string; category: string; size: string }>;
   proxy: string;
   /** the Source 2 toolchain: a size and a button, never downloaded on its own */
   vrf: { ready: boolean; size: string } | null;
@@ -48,6 +50,7 @@ export interface SettingsActions extends CompilerActions {
   detect: () => void;
   browse: () => void;
   clearCache: () => void;
+  removeCached: (key: string) => void;
   proxySave: (value: string) => Promise<void>;
   proxyTest: (value: string) => Promise<void>;
   proxyClear: () => Promise<void>;
@@ -165,6 +168,18 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
           <button className="btn btn-sm" id="clearCacheBtn" onClick={actions.clearCache}>{L`Очистить`}</button>
         </div>
         <div className="settings-hint">{L`Скачанные архивы, чтобы не качать повторно. Удаление ничего не сломает.`}</div>
+        {m.cacheFiles.length > 0 && (
+          <details className="settings-adv cache-files" id="cacheFiles">
+            <summary>{L`Архивы по одному`} ({m.cacheFiles.length})</summary>
+            {m.cacheFiles.map((f) => (
+              <div className="settings-row cache-file" key={f.key}>
+                <span className="grow cache-file-name" title={f.key}>{f.name}<span className="cache-file-cat">{f.category}</span></span>
+                <span className="num">{f.size}</span>
+                <button className="btn btn-sm" aria-label={L`Удалить ${f.name}`} onClick={() => actions.removeCached(f.key)}>{L`Удалить`}</button>
+              </div>
+            ))}
+          </details>
+        )}
         <div className="settings-row spaced">
           <span className="settings-label">{L`Прокси загрузок`}</span>
           <ProxyControl value={m.proxy} onSave={actions.proxySave} onTest={actions.proxyTest} onClear={actions.proxyClear} />
