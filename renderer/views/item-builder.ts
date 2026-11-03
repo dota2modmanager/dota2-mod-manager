@@ -113,6 +113,9 @@ export function openItemSlotModal(slot: string, from: Element | null,
   loadCosmeticIcons(data.options.slice(0, 36).map((o) => o.name).filter(Boolean), () => {}).catch(() => {});
 }
 
+/** An effect of the game's own (Ethereal Flame and the like), src/item-builder-unusual.ts. */
+const GAME_EFFECT = /^unusual-\d+$/;
+
 function drawSlot(key: number, st: SlotState): void {
   const data = slotData(st.slot);
   if (!data) return;
@@ -141,7 +144,8 @@ function drawSlot(key: number, st: SlotState): void {
     styles: styles ? styles.map((name, index) => ({ index, name, picked: index === st.style })) : null,
     effects: effects.length ? {
       none: hasItem && !st.effectIds.length,
-      list: effects.map((fx) => ({ id: fx.id, name: fx.name, picture: effectPicture(fx.id), picked: hasItem && st.effectIds.includes(fx.id) })),
+      list: effects.filter((fx) => !GAME_EFFECT.test(fx.id)).map((fx) => ({ id: fx.id, name: fx.name, picture: effectPicture(fx.id), picked: hasItem && st.effectIds.includes(fx.id) })),
+      game: effects.filter((fx) => GAME_EFFECT.test(fx.id)).map((fx) => ({ id: fx.id, name: fx.name, picked: hasItem && st.effectIds.includes(fx.id) })),
       enabled: hasItem,
       hint: hasItem
         ? L`Можно выбрать несколько. Иней и Снег держатся не на всех моделях.`

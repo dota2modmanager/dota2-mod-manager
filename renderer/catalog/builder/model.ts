@@ -36,7 +36,11 @@ export interface SlotPickerModel {
   /** the chosen item's styles; null when it has one look */
   styles: { index: number; name: string; picked: boolean }[] | null;
   /** null when the slot takes no effects */
-  effects: { none: boolean; list: EffectCard[]; enabled: boolean; hint: string } | null;
+  effects: {
+    none: boolean; list: EffectCard[]; enabled: boolean; hint: string;
+    /** the game's own unusual effects (src/item-builder-unusual.ts), as a row of buttons under the cards */
+    game: { id: string; name: string; picked: boolean }[];
+  } | null;
   /** the slot's items with an effect of their own, to wear on the chosen one; null when none has one */
   donors: { none: boolean; list: { id: string; name: string; picked: boolean }[]; enabled: boolean } | null;
   summary: { name: string; effects: string };

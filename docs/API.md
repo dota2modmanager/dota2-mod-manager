@@ -95,6 +95,7 @@ the code, not in this page.
 | [`src/item-builder-refits.ts`](#srcitem-builder-refitsts) | Refits: an item's model made again to fit a body another item gives the hero. Faceless Void's |
 | [`src/item-builder-slots.ts`](#srcitem-builder-slotsts) | The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit |
 | [`src/item-builder-styles.ts`](#srcitem-builder-stylests) | An item's styles in the item builder: which ones it has, and its visuals with one of them made |
+| [`src/item-builder-unusual.ts`](#srcitem-builder-unusualts) | The game's unusual and ethereal effects on any item (issue #393): Ethereal Flame, Sunfire, the |
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
 | [`src/item-portraits.ts`](#srcitem-portraitsts) | A hero's HUD portrait and minimap icon as an item builder pick makes them, written once for the |
 | [`src/item-sounds.ts`](#srcitem-soundsts) | An item's sounds and voice, as a mod gives them to a hero who does not own the item. |
@@ -5133,6 +5134,60 @@ export function blockInEveryStyle(block: string, worn: string): string
 ```
 
 A built item block worn as `worn` (an item block of the game's), in every style `worn` has (inEveryStyle).
+
+## src/item-builder-unusual.ts
+
+The game's unusual and ethereal effects on any item (issue #393): Ethereal Flame, Sunfire, the
+Champion's Auras. An owned courier's effect is a number the Game Coordinator sends; here the
+item builder writes the effect's particle into the item's visuals as a `particle_create`, the
+modifier the game already creates thousands of particles with, and the builder's own effects
+use (src/item-builder-effects.ts). What each number draws is read out of items_game
+(src/unusual-effects.ts).
+
+A `particle_create` gives the particle its place at the model, not the control points an effect
+hangs on named attachments. Effects whose origin is such a point (the eye glows, Luminous Gaze)
+have nowhere to start from, so they are not offered; effects that follow the model and put a
+few extra points on the eyes are, and draw what follows the model.
+
+An effect rides in the pick's effect string as `unusual-<number>`, beside the builder's own,
+the donor and the style (src/item-builder.ts effectKey).
+
+### `UNUSUAL`
+
+```ts
+export const UNUSUAL = /^unusual-(\d+)$/
+```
+
+The token of a game effect in a pick's effect string.
+
+### `OfferedEffect`
+
+```ts
+export interface OfferedEffect { id: string; nameToken: string }
+```
+
+One game effect the picker offers: its token, and the game's own name for it to look up.
+
+### `offeredUnusual`
+
+```ts
+export function offeredUnusual(text: string, named: (id: number) => boolean): OfferedEffect[]
+```
+
+The effects the picker offers, by number: those the game names (dota_*.txt Attrib_Particle<n>),
+that start at the model rather than on its eyes, and that the builder does not offer already.
+
+```
+@param named whether the game has a name for an effect's number
+```
+
+### `unusualItemEffect`
+
+```ts
+export function unusualItemEffect(text: string, token: string): ItemEffect | null
+```
+
+The effect a token names, as the builder appends one; null when the table has no such number.
 
 ## src/item-builder.ts
 
