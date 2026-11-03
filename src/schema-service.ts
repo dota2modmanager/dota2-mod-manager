@@ -276,6 +276,6 @@ export function createSchemaService({ settings, library, installer, userDataDir,
 
   return {
     backupDir, patches, refresh, refreshInBackground, settled, busy, cancel, heal, setEnabled, harvest, split, migrate, state,
-    cosmeticSlots, cosmeticSlotsSteps, pickCosmetic, pickSet, migrateCosmeticSettings, askForBases,
+    cosmeticSlots, cosmeticSlotsSteps, pickCosmetic, pickSet, migrateCosmeticSettings, askForBases, vanilla,
   };
 }

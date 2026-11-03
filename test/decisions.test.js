@@ -59,7 +59,7 @@ test('the dependencies it names are the dependencies package.json declares', () 
     assert.ok(doc.includes(`\`${name}\``), `DECISIONS.md does not mention the dependency ${name}`);
   }
   assert.equal(ships.length, 4, `the entry says the app ships four dependencies, package.json declares ${ships.length}`);
-  assert.equal(builds.length, 14, `the entry says fourteen devDependencies in all, package.json declares ${builds.length}`);
+  assert.equal(builds.length, 16, `the entry says sixteen devDependencies in all, package.json declares ${builds.length}`);
 });
 
 test('the fingerprint index is fetched from the branch the entry says the catalog job writes', () => {

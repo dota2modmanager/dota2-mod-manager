@@ -49,6 +49,7 @@
   "devDependencies": {
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.187.0",
     "@vitejs/plugin-react": "^6.1.2",
     "axe-core": "^4.14.0",
     "electron": "^45.1.0",
@@ -59,6 +60,7 @@
     "qrcode-generator": "^2.0.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "three": "^0.187.0",
     "typescript": "^5.9.3",
     "vite": "^8.3.5"
   },

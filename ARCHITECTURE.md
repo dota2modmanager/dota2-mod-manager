@@ -628,6 +628,9 @@ that location is not writable.
 | `src/icons.ts`, `src/icon-match.ts`, `src/icon-wiki.ts` | Pictures off the Dota wikis: the cache and its misses, which file is an item's picture, and asking the two wikis |
 | `src/game-icons.ts`, `src/vtex.ts`, `src/toolchain.ts` | Item pictures out of the installed game, and the Source 2 tools fetched only when something needs them |
 | `src/model-glb.ts` | The game's models as GLB with their textures, exported by the Source 2 tools in one call per batch and cached per game build, for the 3D preview of [#417](https://github.com/dota2modmanager/dota2-mod-manager/issues/417) |
+| `src/glb-embed.ts` | A GLB with the PNG textures it links to put into its binary chunk, so the window loads a model from bytes alone; a picture it cannot have becomes one grey pixel |
+| `src/hero-preview.ts` | The 3D preview's models for a hero: the body out of its script (or an arcana's), and for each slot the pick or its stock item, exported through `model-glb` and handed over with their textures inside |
+| `src/ipc-preview3d.ts` | The channel `preview3d:models`: the hero's body and its slots' models as GLB bytes, or why there are none (no toolchain, no game, no body) |
 | `src/resource-compiler.ts`, `src/wine.ts`, `src/workshop-tools.ts` | Valve's resourcecompiler.exe from the Workshop Tools, found in the game, picked in Settings or kept, compiling sources staged in an addon of ours and handing back the compiled files; on Linux it runs under Wine in a prefix of the app's own, and a copy of the tools is kept for when Steam takes the Proton build's away |
 | `src/mod-preview.ts`, `src/mod-preview-pick.ts` | A picture for a mod that came with none, taken out of the mod itself, and which one is worth showing |
 | `src/preset-link.ts`, `src/preset-share.ts` | Presets as a link and as a file |

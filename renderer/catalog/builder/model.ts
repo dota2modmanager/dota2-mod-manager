@@ -69,10 +69,14 @@ export interface HeroModalModel {
   slots: SlotTile[];
   /** the sets tile: the picture of the set on, else the first one's */
   sets: { name: string; count: number; on: boolean } | null;
+  /** the 3D preview (catalog/preview3d): the hero's name for its models, what each slot dresses, and
+   * a key of what is on, so a pick draws it again; null hides the button */
+  preview: { hero: string; slots: { slot: string; stock: string }[]; sig: string; open: boolean } | null;
 }
 
 export interface HeroModalActions {
   close: () => void;
+  togglePreview: () => void;
   openSets: () => void;
   openSlot: (slot: string) => void;
 }

@@ -65,8 +65,10 @@ the code, not in this page.
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
 | [`src/gem-colors.ts`](#srcgem-colorsts) | The game's own prismatic gem colours, read out of items_game.txt (issue #392). The table keeps |
 | [`src/generated-pak.ts`](#srcgenerated-pakts) | A pak the app built itself (the arcana window, src/arcana-service.ts; the map looks, |
+| [`src/glb-embed.ts`](#srcglb-embedts) | A GLB with its pictures inside (issue #417). |
 | [`src/hero-grid.ts`](#srchero-gridts) | Hero grids for the pick screen out of this patch's numbers (issue #428). |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
+| [`src/hero-preview.ts`](#srchero-previewts) | The models of a hero as the item builder dresses it, for the 3D preview in the hero's window |
 | [`src/i18n-zh-CN.ts`](#srci18n-zh-CNts) | Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key. |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (src/). |
 | [`src/icon-match.ts`](#srcicon-matchts) | Which wiki file is an item's picture: the file names to try first, and how a wiki's listing is |
@@ -3044,6 +3046,48 @@ export function swapPak(installer: PakInstaller, rec: LibRecord, vpk: Buffer, of
 `vpk` in place of the record's pak: written beside it, then moved into the slot the old one had,
 and switched off when `off`. The caller builds first, so a build that fails leaves the old one.
 
+## src/glb-embed.ts
+
+A GLB with its pictures inside (issue #417).
+
+The toolchain exports a model as a GLB whose textures are PNG files beside it, named by relative
+links. The window reads a model from the bytes the main process hands it, with no folder to
+follow a link into, so each linked picture goes into the GLB's binary chunk and the image points
+at its slice of it: one file the three.js loader takes as it is.
+
+### `readGlb`
+
+```ts
+export function readGlb(buf: Buffer): { json: Gltf; bin: Buffer }
+```
+
+The GLB's JSON and binary chunks.
+
+### `writeGlb`
+
+```ts
+export function writeGlb(json: Gltf, bin: Buffer): Buffer
+```
+
+A GLB out of its two chunks, each padded as the format wants.
+
+### `BLANK_PNG`
+
+```ts
+export const BLANK_PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
+```
+
+A grey PNG of one pixel: what a picture that cannot be had becomes, since an image with no data fails its whole material.
+
+### `embedGlb`
+
+```ts
+export function embedGlb(file: string): Buffer
+```
+
+The GLB at `file` with every picture it links to put inside it. A link that leaves the GLB's
+folder, or names a file that is not there, gets the blank pixel: the model shows without that texture.
+
 ## src/hero-grid.ts
 
 Hero grids for the pick screen out of this patch's numbers (issue #428).
@@ -3207,6 +3251,41 @@ Identity of a hero regardless of how the author spelled the folder. Authors mix
 "crystal_maiden", "crystalmaiden" and "CrystalMaiden" inside one pack, and each spelling
 used to count as a separate hero — which turned a single-hero skin into a "bundle of 3"
 and offered to split it into parts that make no sense.
+
+## src/hero-preview.ts
+
+The models of a hero as the item builder dresses it, for the 3D preview in the hero's window
+(issue #417): the body, and for each slot the item picked there, or the stock item where none is.
+
+The models come out of the game's pak01 as GLB files with the toolchain (src/model-glb.ts), the
+body with its idle clip, and go to the window with their pictures inside (src/glb-embed.ts). In
+the game a wearable follows the hero's bones by name; the window does the same (renderer
+catalog/preview3d/scene.ts). An arcana that swaps the whole hero brings its own body, as the
+build does (src/item-builder.ts itemEffectPatch, the copy that names a hero).
+
+### `PreviewSlot`
+
+```ts
+export type PreviewSlot = { slot: string; stock: string }
+```
+
+A slot of the hero as the window names it: its id and the stock item it dresses.
+
+### `HeroModels`
+
+```ts
+export type HeroModels =
+```
+
+What the window gets: each model's bytes, or why there are none.
+
+### `createHeroPreview`
+
+```ts
+export function createHeroPreview({ glb, library, gamePath, vanilla, log = () => {} }: { glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'>; library: Pick<Library, 'list'>; gamePath: () => string | null; vanilla: () => string; log?: (msg: string) => void; })
+```
+
+The 3D preview's models, made on demand.
 
 ## src/i18n-zh-CN.ts
 

@@ -29,6 +29,8 @@ import { createBaseStore } from './arcana-base-store.ts';
 import { createMapLooks } from './map-looks-service.ts';
 import { createAbilitySounds } from './ability-sounds-service.ts';
 import { createBuildUndo } from './build-undo.ts';
+import { createModelGlb } from './model-glb.ts';
+import { createHeroPreview } from './hero-preview.ts';
 import { TERRORBLADE_BASE } from './arcana-bases.ts';
 import { clientVersion } from './patch-watch.ts';
 import { createRemoteConfig } from './remote-config.ts';
@@ -159,6 +161,9 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   // sounds of the user's own on a hero's events, compiled by the compiler above (src/ability-sounds-service.ts)
   const abilitySounds = createAbilitySounds({ gamePath: () => settings.get('dotaGamePath'), userDataDir: userData, installer, library,
     compile: (job) => compiler.compile(job), log: diag });
+  // the item builder's 3D preview: the game's models as GLB, out of the same toolchain (src/hero-preview.ts)
+  const heroPreview = createHeroPreview({ library, gamePath: () => settings.get('dotaGamePath'), vanilla: () => schemaService.vanilla(), log: diag,
+    glb: createModelGlb({ userDataDir: userData, toolchain, getGamePath: () => settings.get('dotaGamePath'), log: diag }) });
   const keepTools: AppContext['keepTools'] = async ({ force = false } = {}) => {
     if (!toolsKeeper) return false;
     try {
@@ -208,7 +213,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 
   return {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, abilitySounds, buildUndo,
+    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, abilitySounds, buildUndo, heroPreview,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };
 }

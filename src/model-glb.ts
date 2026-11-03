@@ -27,10 +27,15 @@ export function glbAt(root: string, file: string): string {
   return path.join(root, ...file.replace(/\.vmdl_c$/, '.glb').split('/'));
 }
 
+/** A clip name no model has: the bones without any animation (exportArgs). */
+const NO_CLIP = 'mm-no-clip';
+
 /** The toolchain's arguments for these models out of this archive into this folder. */
 export function exportArgs(pakFile: string, out: string, files: string[], clips: string[]): string[] {
   const args = ['-i', pakFile, '-o', out, '-d', '-f', files.join(','), '--gltf_export_format', 'glb', '--gltf_export_materials'];
-  if (clips.length) args.push('--gltf_export_animations', '--gltf_animation_list', clips.join(','));
+  // the toolchain writes a model's bones only with its clips; a wearable gets its bones and a list
+  // that names no clip, so it follows the body's bones without a file full of its own animations
+  args.push('--gltf_export_animations', '--gltf_animation_list', clips.length ? clips.join(',') : NO_CLIP);
   return args;
 }
 
@@ -68,14 +73,17 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
     if (!game || !exe) return out;
     const pakFile = path.join(game, 'dota', 'pak01_dir.vpk');
     // the clips are part of the file: a body with its idle is another cache entry than one without
-    const root = path.join(buildRoot(game), clips.length ? `clips-${clips.join('-').replace(/[^\w-]/g, '')}` : 'still');
+    const root = path.join(buildRoot(game), clips.length ? `clips-${clips.join('-').replace(/[^\w-]/g, '')}` : 'bones');
     const files = new Map(models.map((m) => [m, modelFile(m)]));
     const wanted = [...new Set([...files.values()].filter((f): f is string => !!f && !fs.existsSync(glbAt(root, f))))];
     if (wanted.length) {
       const job = queue.then(async () => {
         const started = Date.now();
         try {
-          await run(exe, exportArgs(pakFile, root, wanted, clips));
+          // one model alone, the toolchain takes -o for the file itself, not a folder to lay it out in
+          const to = wanted.length === 1 ? glbAt(root, wanted[0]) : root;
+          fs.mkdirSync(wanted.length === 1 ? path.dirname(to) : root, { recursive: true });
+          await run(exe, exportArgs(pakFile, to, wanted, clips));
           log(`models 3d: ${wanted.length} exported in ${Date.now() - started} ms`);
         } catch (err) {
           log(`models 3d: export failed (${(err as Error)?.message || err})`);
