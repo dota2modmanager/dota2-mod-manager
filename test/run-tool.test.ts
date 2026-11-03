@@ -69,3 +69,16 @@ test('a tool folder with no program in it, or gone from the disk, says so', asyn
   assert.ok(gone.error && /ENOENT|no such file/i.test(gone.error), gone.error);
   assert.deepEqual(s.opened, []);
 });
+
+test('the download cache folder opens in Explorer, made first when nothing was downloaded yet', async (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-cache-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const downloadsDir = path.join(dir, 'downloads');
+  const opened: string[] = [];
+  const channels = registerAgainst(() => registerMiscIpc({ installer: { downloadsDir, toolsDir: dir }, library: { list: () => [] } } as never), {
+    shell: { openPath: (p: string) => { opened.push(p); return Promise.resolve(''); }, openExternal: () => {} },
+  });
+  assert.deepEqual(await channels.get('misc:openCacheFolder')!({}), { ok: true });
+  assert.deepEqual(opened, [downloadsDir]);
+  assert.ok(fs.statSync(downloadsDir).isDirectory());
+});

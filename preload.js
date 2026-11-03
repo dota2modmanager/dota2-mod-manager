@@ -159,6 +159,7 @@ contextBridge.exposeInMainWorld('api', {
   },
   misc: {
     openLangFolder: () => ipcRenderer.invoke('misc:openLangFolder'),
+    openCacheFolder: () => ipcRenderer.invoke('misc:openCacheFolder'),
     openToolsFolder: (sub) => ipcRenderer.invoke('misc:openToolsFolder', sub),
     openExternal: (url) => ipcRenderer.invoke('misc:openExternal', url),
     cacheSize: () => ipcRenderer.invoke('misc:cacheSize'),

@@ -108,6 +108,7 @@ interface UiApi {
 
 interface MiscApi {
   openLangFolder: () => Promise<Reply>;
+  openCacheFolder: () => Promise<Reply>;
   openToolsFolder: (sub?: string) => Promise<Reply>;
   openExternal: (url: string | undefined) => Promise<Reply>;
   cacheSize: () => Promise<number>;

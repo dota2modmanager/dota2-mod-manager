@@ -54,7 +54,7 @@ export interface SettingsActions extends CompilerActions {
   beta: () => void;
   detect: () => void;
   browse: () => void;
-  clearCache: () => void;
+  clearCache: () => void; openCache: () => void;
   removeCached: (key: string) => void;
   proxySave: (value: string) => Promise<void>;
   proxyTest: (value: string) => Promise<void>;
@@ -167,6 +167,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
         <div className="settings-row">
           <span className="settings-label">{L`Размер`}</span>
           <Swap className="num" value={m.cache} />
+          <button className="btn btn-sm" id="openCacheBtn" onClick={actions.openCache}>{L`Показать в папке`}</button>
           <button className="btn btn-sm" id="clearCacheBtn" onClick={actions.clearCache}>{L`Очистить`}</button>
         </div>
         <div className="settings-hint">{L`Скачанные архивы, чтобы не качать повторно. Удаление ничего не сломает.`}</div>

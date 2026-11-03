@@ -180,7 +180,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'compiler:state': [], 'compiler:browse': [], 'compiler:forget': [], 'compiler:prepare': [], 'compiler:check': [], 'compiler:keep': [], 'compiler:removeKept': [],
   'arcana:state': [], 'arcana:install': [list(num(0, 255), 3), oneOf('mod', 'recolor')],
   // the small errands (src/ipc-misc.ts)
-  'misc:openLangFolder': [], 'misc:openToolsFolder': [optional(str(260, 1))],
+  'misc:openLangFolder': [], 'misc:openCacheFolder': [], 'misc:openToolsFolder': [optional(str(260, 1))],
   'misc:openExternal': [optional((v) => {
     if (typeof v !== 'string' || v.length > 4096) return fail('an address');
     try { return /^https?:$/.test(new URL(v).protocol) ? null : fail('an http or https address'); } catch { return fail('an address'); }
