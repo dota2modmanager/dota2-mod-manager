@@ -555,6 +555,8 @@ that location is not writable.
 | `src/item-visuals.ts` | What an item changes while it is worn, read from its `visuals` in items_game, and what a mod built from the game's files has to do for each change. How to build one: [docs/item-mods.md](docs/item-mods.md) |
 | `src/mod-doctor.ts` | What is wrong with a mod's VPK, read from its files and the game's: a model's animations that need an item (in its animation clips, which the game picks by, and its sequences), sequences in another order than the game's, a particle's child drawn on the wrong attachment or missing |
 | `src/arcana-service.ts` | The arcana window's side in the main process: what the window shows, the mod built into My mods in an early slot, and built again after a Dota update |
+| `src/generated-pak.ts` | A pak the app built itself, written into the mods folder in an early slot, and on a rebuild swapped into the slot the old one had (the arcana window, the map looks) |
+| `src/map-looks-service.ts` | Towers and trees from the game's own looks, one per side, built in the app into one My mods record per kind and built again after a Dota update ([#446](https://github.com/dota2modmanager/dota2-mod-manager/issues/446), [#421](https://github.com/dota2modmanager/dota2-mod-manager/issues/421)) |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
 | `src/discord-auth.ts`, `src/discord-presence.ts`, `src/presence-status.ts` | Signing in with Discord, and what the Discord status says and whether it is on |

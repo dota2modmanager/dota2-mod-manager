@@ -91,16 +91,28 @@ export function towerPlan(modifiers: AssetModifier[], side: Side): TowerPlan {
 export function buildTowerLook({ pak01, text, id, sides }: { pak01: string; text: string; id: string; sides: Side[] }): {
   vpk: Buffer; name: string; files: number; missing: string[]; skipped: string[];
 } {
-  const v = itemVisuals(text, id);
-  if (!v) throw new Error(`towers: no item ${id}`);
+  const r = buildTowers({ pak01, text, radiant: sides.includes('radiant') ? id : null, dire: sides.includes('dire') ? id : null });
+  return { ...r, name: r.names[0] };
+}
+
+/** Each side's towers in a look of its own, or as they are where its id is null: one VPK out of pak01. */
+export function buildTowers({ pak01, text, radiant, dire }: { pak01: string; text: string; radiant?: string | null; dire?: string | null }): {
+  vpk: Buffer; names: string[]; files: number; missing: string[]; skipped: string[];
+} {
   const files: TowerPlan['files'] = [];
   const skipped = new Set<string>();
-  for (const side of sides) {
+  const names: string[] = [];
+  for (const [side, id] of [['radiant', radiant], ['dire', dire]] as const) {
+    if (!id) continue;
+    const v = itemVisuals(text, id);
+    if (!v) throw new Error(`towers: no item ${id}`);
     const plan = towerPlan(v.modifiers, side);
     if (!plan.files.some((f) => f.at === compiled(DEFAULT_TOWER[side]))) throw new Error(`towers: ${v.name} has no ${side} tower`);
     files.push(...plan.files);
     for (const s of plan.skipped) skipped.add(s);
+    if (!names.includes(v.name)) names.push(v.name);
   }
+  if (!files.length) throw new Error('towers: pick a look for Radiant or Dire');
   const index = sharedVpkIndex(pak01);
   const entries = [];
   const missing: string[] = [];
@@ -109,5 +121,5 @@ export function buildTowerLook({ pak01, text, id, sides }: { pak01: string; text
     if (data) entries.push(entryAt(f.at, data as Buffer));
     else missing.push(f.from);
   }
-  return { vpk: buildVpk(entries), name: v.name, files: entries.length, missing, skipped: [...skipped] };
+  return { vpk: buildVpk(entries), names, files: entries.length, missing, skipped: [...skipped] };
 }

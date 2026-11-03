@@ -27,7 +27,9 @@ export const DEFAULT_TREES: Record<Side, string[]> = {
 };
 
 /** One of the game's tree sets, named for the terrain it comes from. */
-export interface TreeSet { id: string; name: string; models: string[] }
+/** `tinted`: its terrain tints these models through the map, which the default map does not, so
+ *  they come out washed white there (seen in game, 2026-11-03); the app does not offer them. */
+export interface TreeSet { id: string; name: string; models: string[]; tinted?: boolean }
 
 const tree = (...names: string[]) => names.map((n) => `models/props_tree/${n}.vmdl`);
 
@@ -40,9 +42,9 @@ export const TREE_SETS: TreeSet[] = [
   { id: 'autumn', name: 'Autumn', models: tree('tree_oak_autumn_01b', 'cornstack/cornstack') },
   { id: 'spring', name: 'Spring', models: tree('tree_oak_spring_01b', 'tree_oak_spring_01') },
   { id: 'desert', name: 'Desert', models: tree('palm_03a', 'palm_03', 'palm_02d', 'palm_02e', 'palm_02b') },
-  { id: 'desert-dire', name: 'Desert Dire', models: tree('dire_tree004_tint', 'dire_tree007_tintable') },
+  { id: 'desert-dire', name: 'Desert Dire', models: tree('dire_tree004_tint', 'dire_tree007_tintable'), tinted: true },
   { id: 'jungle', name: 'Jungle', models: tree('palm_02e', 'palm_02b') },
-  { id: 'coloseum', name: 'Coloseum', models: tree('olive/tree_oldolive', 'cypress/tree_cypress010', 'cypress/tree_cypress008', 'olive/tree_oldolive2', 'cypress/tree_cypress009') },
+  { id: 'coloseum', name: 'Coloseum', models: tree('olive/tree_oldolive', 'cypress/tree_cypress010', 'cypress/tree_cypress008', 'olive/tree_oldolive2', 'cypress/tree_cypress009'), tinted: true },
   { id: 'topiary', name: 'Topiary', models: tree('topiary/topiary001', 'topiary/topiary002') },
 ];
 
