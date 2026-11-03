@@ -174,7 +174,7 @@ const VALID: Record<string, unknown[][]> = {
   'arcana:state': [[]], 'arcana:install': [[[255, 0, 128], 'mod'], [[1, 2, 3], 'recolor']],
   'misc:openLangFolder': [[]], 'misc:openToolsFolder': [[], ['Compiler']],
   'misc:openExternal': [['https://dota2modmanager.com/docs/'], ['http://example.org'], [undefined]],
-  'misc:cacheSize': [[]], 'misc:clearCache': [[]], 'misc:runTool': [['Compiler']],
+  'misc:cacheSize': [[]], 'misc:clearCache': [[]], 'misc:cacheList': [[]], 'misc:cacheRemove': [['huds/Big HUD.zip']], 'misc:runTool': [['Compiler']],
   'diag:export': [[]], 'diag:rendererError': [['TypeError: x is undefined']],
   'uninstall:plan': [[]], 'uninstall:run': [[{ revert: true, mods: false, data: false }], [{ revert: true, mods: true, data: true }], [null]], 'uninstall:done': [[true]], 'uninstall:cancel': [[]],
 };
@@ -204,6 +204,7 @@ const HOSTILE: [string, unknown[], RegExp][] = [
   ['misc:openExternal', ['\\\\server\\share\\run.exe'], /address/],
   ['misc:openToolsFolder', [{ toString: () => '../..' }], /string/],
   ['misc:runTool', [''], /string/],
+  ['misc:cacheRemove', [{ key: '../x' }], /string/],
   ['mods:install', [{ categoryId: 'heroes', name: 'x', styleLabel: null, fileRef: 'a', preview: null, dest: 'C:\\' }], /unexpected key dest/],
   ['mods:install', [{ categoryId: 42, name: 'x' }], /categoryId/],
   ['mods:install', ['heroes'], /object/],

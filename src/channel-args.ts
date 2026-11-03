@@ -173,7 +173,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
     if (typeof v !== 'string' || v.length > 4096) return fail('an address');
     try { return /^https?:$/.test(new URL(v).protocol) ? null : fail('an http or https address'); } catch { return fail('an address'); }
   })],
-  'misc:cacheSize': [], 'misc:clearCache': [], 'misc:runTool': [str(260, 1)],
+  'misc:cacheSize': [], 'misc:clearCache': [], 'misc:cacheList': [], 'misc:cacheRemove': [str(520, 1)], 'misc:runTool': [str(260, 1)],
   // the pumpkin's key (src/ipc-pumpkin.ts)
   'pumpkin:redeem': [str(80)], 'pumpkin:prizeAgain': [], 'pumpkin:hasPrize': [],
   // diagnostics (src/ipc-diagnostics.ts)

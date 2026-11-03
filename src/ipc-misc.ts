@@ -59,6 +59,8 @@ export function registerMiscIpc({
     installer.clearDownloadCache();
     return { ok: true };
   });
+  ipcMain.handle('misc:cacheList', () => installer.listDownloadCache());
+  ipcMain.handle('misc:cacheRemove', (e, key) => ({ ok: installer.removeCachedDownload(key) }));
 
   ipcMain.handle('misc:runTool', (e, toolDirName) => {
     // find first exe inside the tool folder and launch it

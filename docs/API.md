@@ -2908,6 +2908,33 @@ export function downloadCacheSize(inst: Installer): number
 
 Bytes the download cache holds.
 
+### `CachedDownload`
+
+```ts
+export interface CachedDownload { key: string; categoryId: string; name: string; bytes: number; at: number }
+```
+
+One archive in the download cache, as Settings lists it (issue #430).
+
+### `listDownloadCache`
+
+```ts
+export function listDownloadCache(inst: Installer): CachedDownload[]
+```
+
+Every archive in the download cache, largest first. The key is "<category>/<file>", the same
+key the hash index uses, and the only thing removeCachedDownload accepts.
+
+### `removeCachedDownload`
+
+```ts
+export function removeCachedDownload(inst: Installer, key: string): boolean
+```
+
+Delete one cached archive and its line in the hash index. Only a key the listing gave is
+accepted: the window hands this a string, and a joined path with "../" in it would delete
+whatever it pointed at.
+
 ### `clearDownloadCache`
 
 ```ts

@@ -21,6 +21,7 @@ import { applyLanguage } from '../ui/language.ts';
 import { paint } from '../ui/transitions.ts';
 import { adultShown, adultHint, setAdultShown } from '../core/adult.ts';
 import { loadCatalog } from './catalog.ts';
+import { catName } from '../core/categories.ts';
 import { showSettings, type SettingsActions, type SettingsModel } from '../settings/SettingsScreen.tsx';
 
 let model: SettingsModel | null = null;
@@ -33,9 +34,10 @@ async function renderSettings(fresh = false): Promise<void> {
    * drew, and the compiler's state looks for Wine on disk. The longer the wait, the longer a click
    * lands on the page the redraw is about to replace (the Linux simulation's language switch, on
    * the pull request that added the compiler). */
-  const [s, cacheSize, version, tools, compiler, beta] = await Promise.all([
+  const [s, cacheSize, cacheFiles, version, tools, compiler, beta] = await Promise.all([
     window.api.settings.get(),
     window.api.misc.cacheSize(),
+    window.api.misc.cacheList().catch(() => []),
     window.api.update.version(),
     window.api.tools.state().catch(() => null), // older build
     window.api.compiler.state().catch(() => null),
@@ -56,6 +58,7 @@ async function renderSettings(fresh = false): Promise<void> {
     dotaPath: s.dotaGamePath || '',
     dotaValid: Boolean(s.dotaPathValid),
     cache: `${fmtMB(cacheSize)} MB`,
+    cacheFiles: cacheFiles.map((f) => ({ key: f.key, name: f.name, category: catName(f.categoryId), size: `${fmtMB(f.bytes)} MB` })),
     proxy: s.downloadProxy || '',
     // no row on a machine with no build of it: the button could only fail
     vrf: vrf && vrf.available !== false ? { ready: Boolean(vrf.ready), size: `${fmtMB(vrf.ready ? vrf.installedBytes : vrf.downloadBytes)} MB` } : null,
@@ -132,6 +135,11 @@ const actions: SettingsActions = {
   clearCache: async () => {
     await window.api.misc.clearCache();
     toast(L`Кэш очищен`);
+    renderSettings();
+  },
+  removeCached: async (key) => {
+    const r = await window.api.misc.cacheRemove(key);
+    if (!r?.ok) toast(L`Архив уже удалён`, 'error');
     renderSettings();
   },
   proxySave: async (value) => {
