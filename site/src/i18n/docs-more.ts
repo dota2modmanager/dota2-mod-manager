@@ -1,5 +1,5 @@
 /**
- * Ten more guides, in both languages.
+ * Eleven more guides, in both languages.
  *
  * A separate file from docs.ts for length alone: the two together are one table of pages, and
  * merging happens there. The rule is the same one that file states - both languages side by
@@ -26,7 +26,7 @@
  */
 import type { Doc } from './docs.ts';
 
-type Slug = 'uninstall' | 'terrain' | 'announcer' | 'language' | 'own-mods' | 'ai-mods' | 'catalog' | 'minify' | 'compare' | 'copies';
+type Slug = 'uninstall' | 'terrain' | 'announcer' | 'language' | 'own-mods' | 'ai-mods' | 'item-mods' | 'catalog' | 'minify' | 'compare' | 'copies';
 
 /*
  * The ai-mods page (October 2026) describes skills/dota2-modding in the repo: the skill an AI
@@ -38,6 +38,12 @@ const SETUP_PROMPT = 'Set up Dota 2 modding for me: https://dota2modmanager.com/
 const SETUP_PROMPT_RU = 'Настрой мне моддинг Доты 2: https://dota2modmanager.com/ai/setup.md';
 const PLUGIN_ADD = '/plugin marketplace add dota2modmanager/dota2-mod-manager';
 const PLUGIN_INSTALL = '/plugin install dota2-modding@dota2modmanager';
+
+/* The item-mods page (November 2026) is docs/item-mods.md for mod authors: the commands of
+ * tools/modkit and the item plan, with output copied from a run against the game of 2026-11-03. */
+const SETUP = "git clone https://github.com/dota2modmanager/dota2-mod-manager\ncd dota2-mod-manager\nnpm ci\nnpm run modkit -- check";
+const RECOLOR = "$ npm run modkit -- recolor terrorblade 40,120,255 --out work/mod\nterrorblade: 97 of 155 particle(s) recoloured (166 colours) into work/mod\n$ npm run modkit -- pack work/mod --out tb_blue.vpk\n97 file(s) from work/mod into tb_blue.vpk (0.4 MB); 0 left out as the game's own\n$ npm run doctor -- tb_blue.vpk\nnothing found";
+const PLAN = "$ npm run item-plan -- 5957\n5957 Fractal Horns of Inner Abysm: slot hero_base, for npc_dota_hero_terrorblade\n  built    the hero's own model\n  built    activity modifier \"abysm\"\n  built    a picture (ability_icon)\n  by hand  a sound\n  by hand  a particle the item creates\n  by hand  a model swap\n  cannot   custom_kill_effect\n  cannot   chatwheel x9";
 
 // ---------------------------------------------------------------------------
 // English
@@ -563,6 +569,98 @@ const en: Record<Slug, Doc> = {
           ['Will it touch my game?', 'It works in its own folder and builds the VPK there. Only the app writes into the game, when you install the mod.'],
           ['Can I share what it made?', 'Yes, with the catalog\'s community. Mind what you put in: a model or sound from somewhere else carries its author\'s licence.'],
         ],
+      },
+    ],
+  },
+
+  'item-mods': {
+    slug: 'item-mods',
+    title: 'Build a Dota 2 item mod from the game files: recolors, arcanas, icons, sounds',
+    h1: 'Build an item mod from the game files',
+    description:
+      'Recolor a hero, bring back an arcana you do not own, swap an icon or a sound, using the scripts we build our own mods with. Real commands and real output, checked against the game before you install.',
+    lead: 'Everything an item needs is already in your game: the arcana\'s model, its particles, its icons. A mod puts them under the names the plain hero uses. These are the commands we build our own mods with, in the order we run them, with the output they print.',
+    card: 'Recolor a hero, rebuild an arcana from the game files, swap icons and sounds. The scripts and their real output.',
+    updated: '2026-11-03',
+    blocks: [
+      { k: 'h2', t: 'What you need', id: 'setup' },
+      {
+        k: 'p',
+        t: 'Dota 2, <a href="https://nodejs.org/">Node.js 24</a> and git. The scripts live in our repository; clone it and let <code>modkit check</code> tell you which optional tools the mod you have in mind needs. Recolors and items rebuilt from the game need nothing else.',
+      },
+      { k: 'code', t: SETUP },
+      {
+        k: 'p',
+        t: 'None of the commands write into the folders the game mounts. They build a VPK in a work folder, and you install it by dragging it into the app\'s My mods, where it switches off in one click like any other mod.',
+      },
+
+      { k: 'h2', t: 'Recolor a hero\'s effects', id: 'recolor' },
+      {
+        k: 'p',
+        t: '<code>modkit recolor</code> takes a hero and a colour, finds every particle of that hero in the game\'s pak01 and rewrites its colours. <code>pack</code> turns the folder into a VPK, and the doctor reads the result against the game before anything starts.',
+      },
+      { k: 'code', t: RECOLOR },
+      {
+        k: 'note',
+        t: 'Colours painted into textures (projected rings, colour warps) stay as they are. The script tells you so, and the skill\'s recolor reference explains how to edit those by hand.',
+      },
+
+      { k: 'h2', t: 'Bring back an item you do not own', id: 'item' },
+      {
+        k: 'p',
+        t: 'Start with the plan. <code>item-plan</code> reads the item\'s visuals from the item table and prints one line per change it makes, with how a mod can give it. Here is Terrorblade\'s arcana, cut to one line of each kind:',
+      },
+      { k: 'code', t: PLAN },
+      {
+        k: 'cards',
+        items: [
+          ['built', 'The app\'s builder already does this: the swapped hero model, the pictures, an activity modifier taken off the animations.'],
+          ['by hand', 'A mod can do it, and the line says how: a particle the item creates hangs off one the hero always has, a model goes under the stock path.'],
+          ['cannot', 'Game logic that comes with the item itself: the kill effect, chat wheel lines, voice responses. No file carries it.'],
+        ],
+      },
+      {
+        k: 'p',
+        t: 'Name the stock path, not the paid one. A match loads the models the server\'s item table names, so a mod that puts the arcana\'s model under its own path looks right until a reconnect and then shows the ERROR model. The builder puts every file under the plain hero\'s path for that reason.',
+      },
+
+      { k: 'h2', t: 'Swap an icon or a portrait', id: 'pictures' },
+      {
+        k: 'p',
+        t: '<code>modkit pictures terrorblade --out work/pics</code> writes the hero\'s ability icons, portrait and minimap icon as PNG files. Edit them in any image editor, then <code>--from work/pics</code> compiles them back under the same names. The minimap icon also sits in a sprite sheet, and the script fills both.',
+      },
+
+      { k: 'h2', t: 'Change a sound', id: 'sound' },
+      {
+        k: 'p',
+        t: '<code>modkit sounds terrorblade</code> lists the hero\'s sound events. With <code>--addon my_sounds --out work/mod</code>, <code>--layer Hero_Terrorblade.Sunder=my.wav</code> plays your file on top of the stock one and <code>--replace</code> plays it instead. Sounds go through Valve\'s compiler, so this one needs the Dota 2 Workshop Tools (Steam, Dota 2, Properties, DLC) and Windows.',
+      },
+
+      { k: 'h2', t: 'Check it before the game, then in the game', id: 'check' },
+      {
+        k: 'steps',
+        items: [
+          ['The doctor, in seconds', '<code>npm run doctor -- my_mod.vpk</code> reads the mod against pak01: animations that still need an item\'s modifier, sequence numbers that differ from the game\'s, a child particle on the wrong attachment. "nothing found" is the answer you want.'],
+          ['The bench, in three minutes', '<code>npm run dota:bench -- --vpk my_mod.vpk --short</code> starts Dota in hero demo with the mod in a free slot, films the hero close, attacking and walking, and writes <code>verdict.json</code>. Windows, Steam running, Dota closed.'],
+          ['Compare with a mod that works', 'Bench the plain hero and a catalog mod of the same item. When yours differs, swap one resource block at a time between the two: the block that carries the bug shows up in two or three runs.'],
+        ],
+      },
+
+      { k: 'h2', t: 'Traps that cost us a day each', id: 'traps' },
+      {
+        k: 'list',
+        items: [
+          '<b>The game picks animations by the clips, not the sequences.</b> Fixing only the sequences changed nothing for a day of builds. The doctor reads both now.',
+          '<b>A child particle past its parent\'s control points</b> lands on the first one: a glow meant for the chest sat on the right eye.',
+          '<b>A recompiled model renumbers its sequences.</b> Online the server sends sequence numbers, so one missing clip shifts every animation after it. <code>modkit clips</code> puts Valve\'s names and numbers back.',
+          '<b>One picture a second hides the attack.</b> A fidget at rest looked like a swing; the bench takes 16 pictures 80 ms apart for that reason.',
+        ],
+      },
+
+      { k: 'h2', t: 'Rather tell an assistant?', id: 'ai' },
+      {
+        k: 'p',
+        t: 'The same scripts are a skill an AI assistant follows, with everything past this page: new models in Blender, animations, voice lines. <a href="/docs/ai-mods/">Make Dota 2 mods with AI</a> sets it up in one line. The full notes this page comes from are <a href="https://github.com/dota2modmanager/dota2-mod-manager/blob/main/docs/item-mods.md">docs/item-mods.md</a>.',
       },
     ],
   },
@@ -1489,6 +1587,98 @@ const ru: Record<Slug, Doc> = {
           ['Он полезет в мою игру?', 'Он работает в своей папке и там же собирает VPK. В игру пишет только программа, когда ты ставишь мод.'],
           ['Можно поделиться тем, что он сделал?', 'Да, с сообществом каталога. Смотри, что кладёшь внутрь: модель или звук из чужого источника несут лицензию своего автора.'],
         ],
+      },
+    ],
+  },
+
+  'item-mods': {
+    slug: 'item-mods',
+    title: 'Мод предмета для Доты 2 из файлов игры: перекраска, арканы, иконки, звуки',
+    h1: 'Мод предмета из файлов игры',
+    description:
+      'Перекрась героя, верни аркану, которой у тебя нет, замени иконку или звук. Скрипты, которыми мы собираем свои моды, с настоящим выводом и проверкой до установки.',
+    lead: 'Всё, что нужно предмету, уже лежит в твоей игре: модель арканы, её эффекты, иконки. Мод кладёт их под имена обычного героя. Ниже команды, которыми мы собираем свои моды, в том порядке, в каком мы их запускаем, и то, что они печатают.',
+    card: 'Перекраска героя, аркана из файлов игры, иконки и звуки. Скрипты и их настоящий вывод.',
+    updated: '2026-11-03',
+    blocks: [
+      { k: 'h2', t: 'Что понадобится', id: 'setup' },
+      {
+        k: 'p',
+        t: 'Dota 2, <a href="https://nodejs.org/">Node.js 24</a> и git. Скрипты лежат в нашем репозитории: склонируй его, и <code>modkit check</code> скажет, каких необязательных программ не хватает для твоей задумки. Перекраске и предметам из файлов игры больше ничего не нужно.',
+      },
+      { k: 'code', t: SETUP },
+      {
+        k: 'p',
+        t: 'Ни одна команда не пишет в папки, которые монтирует игра. Они собирают VPK в рабочей папке, а ставишь ты его перетаскиванием в «Мои моды»: там он выключается в один клик, как любой другой мод.',
+      },
+
+      { k: 'h2', t: 'Перекрасить эффекты героя', id: 'recolor' },
+      {
+        k: 'p',
+        t: '<code>modkit recolor</code> берёт героя и цвет, находит все его эффекты в pak01 игры и переписывает их цвета. <code>pack</code> собирает папку в VPK, а доктор сверяет результат с игрой ещё до запуска.',
+      },
+      { k: 'code', t: RECOLOR },
+      {
+        k: 'note',
+        t: 'Цвет, нарисованный в текстурах (кольца на земле, цветовые искажения), остаётся прежним. Скрипт об этом предупредит, а справка навыка по перекраске объясняет, как поправить такие места руками.',
+      },
+
+      { k: 'h2', t: 'Вернуть предмет, которого у тебя нет', id: 'item' },
+      {
+        k: 'p',
+        t: 'Начни с плана. <code>item-plan</code> читает визуал предмета из таблицы предметов и печатает по строке на каждое изменение, с тем, как мод может его дать. Вот аркана Terrorblade, по одной строке каждого вида:',
+      },
+      { k: 'code', t: PLAN },
+      {
+        k: 'cards',
+        items: [
+          ['built', 'Сборщик приложения уже это умеет: подменённая модель героя, картинки, модификатор активности, снятый с анимаций.'],
+          ['by hand', 'Мод это может, и строка говорит как: эффект, который создаёт предмет, вешается на эффект, который у героя есть всегда, модель кладётся под стоковый путь.'],
+          ['cannot', 'Логика игры, которая приходит с самим предметом: эффект убийства, фразы колеса, реплики. Её не несёт ни один файл.'],
+        ],
+      },
+      {
+        k: 'p',
+        t: 'Клади под стоковый путь, а не под платный. Матч загружает модели, которые называет таблица предметов сервера, поэтому мод с моделью арканы под её собственным путём выглядит нормально до переподключения, а потом показывает модель ERROR. Поэтому сборщик кладёт каждый файл под путь обычного героя.',
+      },
+
+      { k: 'h2', t: 'Заменить иконку или портрет', id: 'pictures' },
+      {
+        k: 'p',
+        t: '<code>modkit pictures terrorblade --out work/pics</code> выкладывает иконки способностей, портрет и иконку миникарты героя в PNG. Поправь их в любом редакторе, и <code>--from work/pics</code> соберёт их обратно под теми же именами. Иконка миникарты лежит ещё и в общем спрайте, скрипт заполняет оба места.',
+      },
+
+      { k: 'h2', t: 'Поменять звук', id: 'sound' },
+      {
+        k: 'p',
+        t: '<code>modkit sounds terrorblade</code> перечисляет звуковые события героя. С <code>--addon my_sounds --out work/mod</code> ключ <code>--layer Hero_Terrorblade.Sunder=my.wav</code> играет твой файл поверх стокового, а <code>--replace</code> вместо него. Звуки проходят через компилятор Valve, поэтому тут нужны Dota 2 Workshop Tools (Steam, Dota 2, Свойства, DLC) и Windows.',
+      },
+
+      { k: 'h2', t: 'Проверить до игры, потом в игре', id: 'check' },
+      {
+        k: 'steps',
+        items: [
+          ['Доктор, за секунды', '<code>npm run doctor -- my_mod.vpk</code> сверяет мод с pak01: анимации, которым всё ещё нужен модификатор предмета, номера секвенций не как в игре, дочерний эффект не на той точке. Ответ, который ты ждёшь: «nothing found».'],
+          ['Стенд, за три минуты', '<code>npm run dota:bench -- --vpk my_mod.vpk --short</code> запускает Доту в демо героя с модом в свободном слоте, снимает героя крупно, в атаке и на ходу, и пишет <code>verdict.json</code>. Windows, Steam запущен, Дота закрыта.'],
+          ['Сравнить с рабочим модом', 'Прогони стенд на обычном герое и на моде того же предмета из каталога. Если твой ведёт себя иначе, меняй между ними по одному блоку ресурса: блок с ошибкой находится за два-три прогона.'],
+        ],
+      },
+
+      { k: 'h2', t: 'Ловушки, на каждую из которых ушёл день', id: 'traps' },
+      {
+        k: 'list',
+        items: [
+          '<b>Игра выбирает анимацию по клипам, а не по секвенциям.</b> Правки одних секвенций день ничего не меняли. Теперь доктор читает и то, и другое.',
+          '<b>Дочерний эффект за пределами контрольных точек родителя</b> садится на первую из них: свечение для груди оказалось на правом глазу.',
+          '<b>Пересобранная модель перенумеровывает секвенции.</b> В онлайне сервер шлёт номера, и один потерянный клип сдвигает все анимации после него. <code>modkit clips</code> возвращает имена и номера Valve.',
+          '<b>Один кадр в секунду прячет атаку.</b> Движение в покое выглядело как замах, поэтому стенд снимает 16 кадров через 80 мс.',
+        ],
+      },
+
+      { k: 'h2', t: 'Проще рассказать ассистенту?', id: 'ai' },
+      {
+        k: 'p',
+        t: 'Те же скрипты оформлены как навык для ИИ-ассистента, и в нём есть всё, что дальше этой страницы: новые модели в Blender, анимации, реплики. <a href="/ru/docs/ai-mods/">Моды для Доты 2 с ИИ</a> настраивают его одной строкой. Полные заметки, из которых сделана эта страница, лежат в <a href="https://github.com/dota2modmanager/dota2-mod-manager/blob/main/docs/item-mods.md">docs/item-mods.md</a>.',
       },
     ],
   },
