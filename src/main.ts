@@ -31,6 +31,7 @@ import { createPatchWatcher } from './patch-watch.ts';
 import { moveLangFolder } from './gamelang.ts';
 import { uninstallFlow } from './uninstall-window.ts';
 import { isUninstallRun } from './uninstall-args.ts';
+import { cliBusy, cliCommand, exitWithCli } from './cli.ts';
 import { createGate } from './feature-gate.ts';
 import { settingsViewFor } from './settings-view.ts';
 import { registerIpc } from './ipc.ts';
@@ -61,13 +62,9 @@ try {
  *
  * electron-builder's portable target unpacks the app into a temp folder and runs it from there,
  * setting PORTABLE_EXECUTABLE_DIR to the folder the exe was actually launched from. Without using
- * that, "portable" would only mean "no installer": the settings, the mod library and the download
- * cache would still sit in %APPDATA%, and somebody carrying the exe on a stick would find none of
- * it on the next machine. So the data goes next to the exe, which is what the word promises.
- *
- * A folder that cannot be written to falls back to the ordinary location rather than failing.
- * That is what happens when the exe is dropped into Program Files, and a working app with its data
- * in the usual place beats a dead one.
+ * that, "portable" would only mean "no installer": the settings, the library and the cache would
+ * still sit in %APPDATA%. So the data goes next to the exe. A folder that cannot be written to
+ * (the exe dropped into Program Files) falls back to the ordinary location rather than failing.
  */
 const IS_PORTABLE = !!process.env.PORTABLE_EXECUTABLE_DIR;
 if (IS_PORTABLE) {
@@ -89,6 +86,7 @@ if (IS_PORTABLE) {
  * the reasoning are in src/uninstall-args.ts, which takes a command line so the cases can be
  * tested without being launched. */
 const IS_UNINSTALL = isUninstallRun(process.argv);
+const CLI = cliCommand(process.argv); // --apply, --list, --disable-all: no window (src/cli.ts)
 
 // A small rotating log every install keeps, so a support report does not depend on reproducing
 // the problem live (src/app-log.ts). MM_DIAG mirrors it for the screenshot harness.
@@ -116,7 +114,7 @@ const takeLink = (url: string | null | undefined) => handleDeepLink(url, {
 // One running copy only: two instances writing manifest.json would race each other, and a link
 // clicked while the app is open must reach the window that already exists.
 if (!app.requestSingleInstanceLock()) {
-  app.quit();
+  if (CLI) cliBusy(app); else app.quit();
 } else {
   app.on('second-instance', (e, argv) => {
     const w = windowOpen();
@@ -168,6 +166,8 @@ async function start(): Promise<void> {
     diag('uninstall window up');
     return;
   }
+  if (CLI) return exitWithCli(CLI, { installer, library, schemaService, presets: services.presets, sendProgress, afterDeployMaster: services.afterDeployMaster,
+    adoptImportedFiles: adopt.adoptImportedFiles, disableOtherCursors: cursors.disableOtherCursors, blocked: createGate({ remoteConfig, settings }) }, app);
 
   presets = services.presets;
 
