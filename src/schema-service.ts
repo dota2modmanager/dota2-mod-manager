@@ -153,6 +153,8 @@ export function createSchemaService({ settings, library, installer, userDataDir,
   const refreshInBackground = () => builds.inBackground();
   const settled = () => builds.settled();
   const busy = () => builds.busy();
+  /** The build in the background stopped before it writes (src/build-undo.ts puts the library back). */
+  const cancel = () => builds.cancel();
 
   // A Dota update overwrites the patched gameinfo and moves the item table underneath our
   // build. Runs on startup and before launching the game.
@@ -273,7 +275,7 @@ export function createSchemaService({ settings, library, installer, userDataDir,
   const askForBases = () => { if (bases && settings.get('schemaPatch')) for (const b of chooseBases(table.picks())) void bases.want(b.id); };
 
   return {
-    backupDir, patches, refresh, refreshInBackground, settled, busy, heal, setEnabled, harvest, split, migrate, state,
+    backupDir, patches, refresh, refreshInBackground, settled, busy, cancel, heal, setEnabled, harvest, split, migrate, state,
     cosmeticSlots, cosmeticSlotsSteps, pickCosmetic, pickSet, migrateCosmeticSettings, askForBases,
   };
 }

@@ -19,7 +19,10 @@
   color: var(--text-muted);
 }
 #progressLabel { color: var(--text); font-weight: 500; }
-#progressSize { font-variant-numeric: tabular-nums; }
+#progressSize { font-variant-numeric: tabular-nums; margin-left: auto; }
+/* the item table's build: Cancel puts back the change that started it (src/build-undo.ts) */
+#progressCancel { margin: -4px 0 -4px var(--space-3); }
+#progressCancel.hidden { display: none; }
 .progress-track { height: 4px; background: var(--surface-hover); border-radius: 3px; overflow: hidden; }
 .progress-fill {
   height: 100%; width: 0%;

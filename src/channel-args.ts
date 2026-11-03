@@ -171,6 +171,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'config:state': [], 'config:noticeSeen': [str(200, 1)],
   'patch:state': [], 'patch:repairState': [], 'patch:repairNow': [], 'patch:repairApp': [], 'patch:repairSeen': [], 'patch:setEnabled': [bool],
   'schema:refresh': [],
+  'schema:cancel': [],
   'cosmetics:slots': [],
   'cosmetics:heroPortraits': [list(either(str(100), num(0, 1e9)), 1000)],
   'cosmetics:heroPortraitsByName': [list(str(200), 1000)],

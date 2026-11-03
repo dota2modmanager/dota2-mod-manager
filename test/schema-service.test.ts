@@ -612,8 +612,8 @@ test('the bar shows a build only once it has run long enough to be seen, and cou
   bar({ stage: 'packed' });
   bar(null);
   assert.deepEqual(sent, [
-    { type: 'count', label: 'Building items', done: 3, total: 3 },
-    { type: 'count', label: 'Building items', done: 3, total: 3 },
+    { type: 'count', label: 'Building items', done: 3, total: 3, cancel: 'schema' },
+    { type: 'count', label: 'Building items', done: 3, total: 3, cancel: 'schema' },
     { type: 'done' },
   ], 'past the wait: the count, full while the pak is written, then the end');
 

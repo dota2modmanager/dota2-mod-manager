@@ -18,9 +18,9 @@ import type { AppContext } from './app-context.ts';
 export function registerGameIpc({
   // patchRepair() is read late and written through setPatchRepair: it changes while the app
   // runs, and a value captured at registration would answer for the wrong moment forever.
-  afterDeployMaster, arcana, blocked, mapLooks, diag, dotaIsRunning, gameIcons, icons, installer, library, modPreviews, remoteConfig,
+  afterDeployMaster, arcana, blocked, buildUndo, mapLooks, diag, dotaIsRunning, gameIcons, icons, installer, library, modPreviews, remoteConfig,
   repairAfterPatch, schemaService, settings, toolchain, patchRepair, setPatchRepair,
-}: Pick<AppContext, 'afterDeployMaster' | 'arcana' | 'blocked' | 'mapLooks' | 'diag' | 'dotaIsRunning' | 'gameIcons' | 'icons' | 'installer' | 'library' | 'modPreviews' | 'remoteConfig' | 'repairAfterPatch' | 'schemaService' | 'settings' | 'toolchain' | 'patchRepair' | 'setPatchRepair'>): void {
+}: Pick<AppContext, 'afterDeployMaster' | 'arcana' | 'blocked' | 'buildUndo' | 'mapLooks' | 'diag' | 'dotaIsRunning' | 'gameIcons' | 'icons' | 'installer' | 'library' | 'modPreviews' | 'remoteConfig' | 'repairAfterPatch' | 'schemaService' | 'settings' | 'toolchain' | 'patchRepair' | 'setPatchRepair'>): void {
   const { ipcMain, shell } = electron();
 
   // the action on Play's "Steam is still updating Dota" (src/steam-appstate.ts): Steam's own downloads
@@ -92,6 +92,8 @@ export function registerGameIpc({
   });
 
   ipcMain.handle('schema:refresh', () => schemaService.refresh());
+  // Cancel on the bar: the build stops and the change that started it goes back (src/build-undo.ts)
+  ipcMain.handle('schema:cancel', () => buildUndo.cancel());
 
   // Free cosmetics are generated from the installed game's own schema, so a weather or
   // courier Valve ships later appears in the list without an app update.

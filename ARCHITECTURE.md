@@ -602,7 +602,8 @@ that location is not writable.
 | `src/patcher.ts`, `src/patcher-gameinfo.ts`, `src/patcher-signatures.ts` | The search-path patch: the two gameinfo files and the signature list, byte for byte, both directions |
 | `src/schema.ts`, `src/schema-kv.ts`, `src/schema-items.ts`, `src/schema-merge.ts` | `items_game.txt`: walking it, reading its items, merging a mod's blocks, building the item pak |
 | `src/schema-service.ts`, `src/schema-cosmetics.ts`, `src/schema-harvest.ts` | The item table as the app keeps it: the build and the repair, the free cosmetics, and a mod's own blocks |
-| `src/schema-build.ts`, `src/build-bar.ts` | Building the table: each item builder pick built once and kept, and a build a step at a time in the background, a newer one stopping an older one before it writes, with the Play button waiting for the last; and the bar at the bottom of the window while it runs |
+| `src/schema-build.ts`, `src/background-builds.ts`, `src/build-bar.ts` | Building the table: each item builder pick built once and kept, and a build a step at a time in the background, a newer one stopping an older one before it writes, with the Play button waiting for the last; and the bar at the bottom of the window while it runs |
+| `src/build-undo.ts` | Cancel on the table's bar: the build stops before it writes, and the records the table reads go back to how they were at the last table written, so My mods and the game agree ([#425](https://github.com/dota2modmanager/dota2-mod-manager/issues/425)) |
 | `src/quit-after-build.ts` | Quitting while the item table is written waits for it, up to a limit, so the game is not left a change behind My mods |
 | `src/cosmetic-names.ts` | Official Chinese item names from the installed game's localization tokens; read-only and cached per game build |
 | `src/item-builder.ts`, `src/item-builder-slots.ts`, `src/item-builder-effects.ts` | The item builder: what it offers each hero and slot, the effects, and what a pick writes |
