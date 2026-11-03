@@ -62,6 +62,20 @@
 }
 .toast.error { border-left-color: var(--danger); }
 .toast.warn { border-left-color: var(--warning); }
+/* "What do I do?" under an error (ui/toast.ts): a link-weight button on its own line, so the
+   message keeps the whole width and the button reads as an offer, not a second alert */
+.toast-help {
+  display: block;
+  margin-top: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--primary-soft);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.toast-help:hover, .toast-help:focus-visible { text-decoration: underline; }
 @keyframes slideIn {
   from { transform: translateX(40px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
