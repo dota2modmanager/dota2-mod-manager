@@ -73,6 +73,7 @@ the code, not in this page.
 | [`src/ipc.ts`](#srcipcts) | Every IPC module, registered in one place over the context src/main.ts builds. A new |
 | [`src/item-builder-assets.ts`](#srcitem-builder-assetsts) | What an item builder pick needs beyond its block in items_game: the game's files it puts under |
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
+| [`src/item-builder-everyone-budget.ts`](#srcitem-builder-everyone-budgetts) | How much of everybody's look (src/item-builder-everyone.ts) the game can take, and whose. |
 | [`src/item-builder-everyone.ts`](#srcitem-builder-everyonets) | Everybody playing a hero wears the user's look for it, not only the user. |
 | [`src/item-builder-personas.ts`](#srcitem-builder-personasts) | Personas in the item builder: a hero's second look, with slots and items of its own. |
 | [`src/item-builder-refits.ts`](#srcitem-builder-refitsts) | Refits: an item's model made again to fit a body another item gives the hero. Faceless Void's |
@@ -3681,6 +3682,55 @@ export function itemEffects(): { id: string; name: string }[]
 
 The effect variants the synthetic cosmetics/items picker can apply.
 
+## src/item-builder-everyone-budget.ts
+
+How much of everybody's look (src/item-builder-everyone.ts) the game can take, and whose.
+
+The look on everybody puts one of the user's models under the path of every other item of a
+hero's slot, so a big library writes thousands of paths over a few hundred models: 583 picks
+dressed 9,082 items under 9,706 paths (J0nathan550, 2026-11-03). Past somewhere between 5,462
+and 6,574 entries in the mod folder's paks, the game started handing out wrong models: Skywrath
+Mage's Arcane Bolt and Concussive Shot flew with a stranger's hands or chest on them, a
+different one for a different half of the items (#414). It is the count and not any one file:
+two halves with no item in common both broke, and either alone at 5,464 entries did not; and it
+is not the pak, since the same files spread over pak02 to pak05 broke the same way.
+
+So the user picks the heroes it is for (none picked: every hero they built), and a hero goes in
+whole or not at all, in the user's order, else the hero picked most lately first, while the
+table's whole pak stays under a budget a thousand entries short of the last count seen working.
+Those left out are said in Settings, so a long list never breaks the game in silence.
+
+### `EVERYONE_ENTRY_BUDGET`
+
+```ts
+export const EVERYONE_ENTRY_BUDGET = 4500
+```
+
+Entries the mod folder's paks may hold with everybody's look in them: 5,462 was seen working.
+
+### `heroesByRecency`
+
+```ts
+export function heroesByRecency(records: { slot?: string; enabled?: boolean; installedAt?: number }[]): string[]
+```
+
+The heroes of the user's item builder picks (skywrath_mage), the one picked most lately first.
+
+### `withinBudget`
+
+```ts
+export function withinBudget(patches: EveryonePatch[], own: { patches: SchemaPatch[]; beneath: VpkEntry[] }, order: string[], budget = EVERYONE_ENTRY_BUDGET): { patches: EveryonePatch[]; left: string[] }
+```
+
+Everybody's look as far as the budget goes: whole heroes in `order`, each taken only if the paths
+it adds fit beside those already in.
+
+```
+@param own     the build's own patches and the files beneath them: they are in the pak whatever happens
+@param order   heroes by id (skywrath_mage), the first the most wanted
+@returns the patches taken, and the heroes that had something to dress and did not fit
+```
+
 ## src/item-builder-everyone.ts
 
 Everybody playing a hero wears the user's look for it, not only the user.
@@ -3733,10 +3783,18 @@ The bytes are one buffer under many paths, and the pak stores them once (src/vpk
 on Juggernaut first (five slots, about 140 wearables), then every hero (2026-10-30). The table is
 walked once whatever the number of heroes: a walk a hero was 118 ms each.
 
+### `EveryonePatch`
+
+```ts
+export type EveryonePatch = SchemaPatch & { hero: string }
+```
+
+A patch of everybody's look, with the hero it dresses (npc_dota_hero_*), for the budget to take whole heroes.
+
 ### `everyoneWears`
 
 ```ts
-export function everyoneWears(text: string, list: SchemaPatch[], beneath: VpkEntry[], read: (path: string) => Buffer | null, heroes?: string[]): SchemaPatch[]
+export function everyoneWears(text: string, list: SchemaPatch[], beneath: VpkEntry[], read: (path: string) => Buffer | null, heroes?: string[]): EveryonePatch[]
 ```
 
 The patches that dress every other wearable of each hero the build dresses as the user's hero is

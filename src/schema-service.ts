@@ -15,11 +15,12 @@ import * as schema from './schema.ts';
 import { createHarvest, type SchemaInstaller } from './schema-harvest.ts';
 import { createCosmetics } from './schema-cosmetics.ts';
 import { everyoneWears } from './item-builder-everyone.ts';
+import { withinBudget, heroesByRecency } from './item-builder-everyone-budget.ts';
 import { createBackgroundBuilds, createTableBuild, type BuildStep, type BuildYield, type Refreshed } from './schema-build.ts';
 import { drain } from './steps.ts';
 import { chooseBases } from './arcana-bases.ts';
 import type { BaseStore } from './arcana-base-store.ts';
-import { entryPath, sharedVpkIndex } from './vpk.ts';
+import { entryPath, sharedVpkIndex, type VpkEntry } from './vpk.ts';
 import type { Settings } from './settings.ts';
 import type { Library } from './library.ts';
 
@@ -99,6 +100,19 @@ export function createSchemaService({ settings, library, installer, userDataDir,
   }
   const vanilla = () => vanillaBase().text;
 
+  /**
+   * Everybody's look for the heroes the user picked (none: every hero they built), as much of it as
+   * the game can take (src/item-builder-everyone-budget.ts). Who did not fit is kept for Settings.
+   */
+  function everyone(text: string, own: schema.SchemaPatch[], beneath: VpkEntry[], pak: () => ReturnType<typeof sharedVpkIndex>) {
+    const chosen = (settings.get('everyoneHeroes') as string[] | undefined) ?? [];
+    const all = everyoneWears(text, own, beneath, (p) => pak().read(p), chosen.length ? chosen : undefined);
+    const { patches, left } = withinBudget(all, { patches: own, beneath }, chosen.length ? chosen : heroesByRecency(library.list()));
+    settings.set('everyoneLeftOut', left);
+    if (left.length) log(`schema: my look on everyone left out ${left.length} hero(es) to stay under the game's limit: ${left.join(', ')}`);
+    return patches;
+  }
+
   // the patches a build would merge, all at once
   const patches = (vanillaText: string, game: string) => drain(table.buildSteps(vanillaText, game)).list;
 
@@ -136,7 +150,7 @@ export function createSchemaService({ settings, library, installer, userDataDir,
       const { list: own, beneath } = yield* table.buildSteps(base.text, game);
       // every other player of the hero in the user's look, when asked for (src/item-builder-everyone.ts)
       const pak = () => sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
-      const list = settings.get('everyoneWearsMine') ? [...own, ...everyoneWears(base.text, own, beneath, (p) => pak().read(p))] : own;
+      const list = settings.get('everyoneWearsMine') ? [...own, ...everyone(base.text, own, beneath, pak)] : own;
       if (!list.length) return drop();
       const res = yield* schema.deploySteps({ gamePath: game, folder: patcher.FOLDER, patches: list, base, beneath });
       settings.set('schemaStamp', stampOf(res.stamp));

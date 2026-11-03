@@ -18,6 +18,8 @@ import * as gamelang from './gamelang.ts';
 import { readMinify, isMinifyFile, isMinifyPak } from './minify.ts';
 import type { Settings } from './settings.ts';
 import type { Library } from './library.ts';
+import { heroesByRecency } from './item-builder-everyone-budget.ts';
+import { heroDisplayName } from './hero-names.ts';
 
 /**
  * @param {object} deps
@@ -87,6 +89,8 @@ export function settingsViewFor({ settings, library, discordAuth, validateGamePa
     return {
       ...settings.all(),
       dotaPathValid: validateGamePath(game),
+      // the heroes the look on everybody can be for: those the user built, picked last first
+      everyoneBuilt: heroesByRecency(library.list()).map((id) => ({ id, name: heroDisplayName(id) })),
       minify,
       discordConfigured: discordAuth.isConfigured(),
       // What is left of the language question, now that the folder is always dota_russian:

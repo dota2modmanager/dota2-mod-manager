@@ -84,6 +84,7 @@ export const WINDOW_SETTINGS: Record<string, Check> = {
   discordPresence: bool,
   countDownloads: bool,
   everyoneWearsMine: bool,
+  everyoneHeroes: list(str(64), 300),
   favorites: list(str(500), 20000),
   langPromptSeen: bool,
   panels: either(oneOf(null), json(64 * 1024)),

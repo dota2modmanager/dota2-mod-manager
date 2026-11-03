@@ -11,6 +11,7 @@ import { Swap } from '../motion/Swap.tsx';
 import { Dropdown } from '../ui/Dropdown.tsx';
 import { ProxyControl } from './ProxyControl.ts';
 import { CompilerBlock, type CompilerActions } from './CompilerBlock.tsx';
+import { EveryoneBlock, type EveryoneActions, type EveryoneModel } from './EveryoneBlock.tsx';
 import type { CompilerState } from '../api/content.ts';
 
 export interface SettingsModel {
@@ -20,8 +21,8 @@ export interface SettingsModel {
   presence: boolean;
   /** installs of catalog mods are counted by the catalog's download counter */
   countDownloads: boolean;
-  /** the item builder's look on everybody playing the hero */
-  everyone: boolean;
+  /** the item builder's look on everybody playing the hero, and the heroes it is for */
+  everyone: EveryoneModel;
   beta: { eligible: boolean; on: boolean };
   dotaPath: string;
   dotaValid: boolean;
@@ -37,13 +38,12 @@ export interface SettingsModel {
   version: string;
 }
 
-export interface SettingsActions extends CompilerActions {
+export interface SettingsActions extends CompilerActions, EveryoneActions {
   language: (lang: string) => void;
   scale: (pct: number, live: boolean) => void;
   scaleStep: (delta: number | null) => void;
   presence: () => void;
   countDownloads: () => void;
-  everyone: () => void;
   beta: () => void;
   detect: () => void;
   browse: () => void;
@@ -192,13 +192,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
 
       {m.compiler && <CompilerBlock i={4} c={m.compiler} actions={actions} />}
 
-      <Block i={4} title={L`Конструктор предметов`}>
-        <div className="settings-row spaced">
-          <span className="settings-label">{L`Мой вид на всех, кто играет этим героем`}</span>
-          <Toggle id="everyoneToggle" on={m.everyone} label={L`Мой вид на всех, кто играет этим героем`} onClick={actions.everyone} />
-        </div>
-        <div className="settings-hint">{L`Кто бы ни играл героем, которого ты собрал, союзник или враг, у тебя на экране он будет в твоих предметах, а не в своих. Видишь это только ты. Работает с выключенным безопасным режимом.`}</div>
-      </Block>
+      <EveryoneBlock i={4} m={m.everyone} actions={actions} />
 
       <Block i={4} title={L`Каталог`}>
         <div className="settings-row">

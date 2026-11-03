@@ -69,6 +69,10 @@
   line-height: var(--leading-normal);
 }
 .settings-row + .settings-hint { margin-top: var(--space-2); }
+/* the heroes the look on everybody is for (settings/EveryoneBlock.tsx), and who did not fit */
+.settings-heroes-title { display: block; margin-top: var(--space-3); }
+.settings-heroes { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-2) 0; }
+.settings-warn { color: var(--warning); }
 /* A row that starts a new thought rather than continuing the last one. */
 .settings-row.spaced { margin-top: var(--space-4); }
 

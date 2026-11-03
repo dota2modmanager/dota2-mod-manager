@@ -23,6 +23,10 @@ export interface StoredSettings {
   countDownloads: boolean;
   /** everybody playing a hero the item builder dressed wears the same look (src/item-builder-everyone.ts) */
   everyoneWearsMine: boolean;
+  /** the heroes it dresses, by id; none: every hero built, as the game's limit allows (src/item-builder-everyone-budget.ts) */
+  everyoneHeroes: string[];
+  /** the heroes the last build left out to stay under that limit */
+  everyoneLeftOut: string[];
   schemaPatch: boolean;
   cosmetics: Record<string, unknown>;
   schemaStamp: string | null;
@@ -60,6 +64,8 @@ type UpdateEvent = { type: 'available' | 'portable' | 'downloaded'; version: str
 /** What the window calls settings: the stored values plus a few facts only main can answer (src/settings-view.ts). */
 export interface AppSettings extends StoredSettings {
   dotaPathValid: boolean;
+  /** the heroes the user built with the item builder, picked last first */
+  everyoneBuilt: { id: string; name: string }[];
   minify: MinifyState | null;
   discordConfigured: boolean;
   gameLang: {
