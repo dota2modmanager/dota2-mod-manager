@@ -271,4 +271,6 @@ export default {
   "Это не WebM": "这不是 WebM",
   "Фон больше {0} МБ": "背景超过 {0} MB",
   "В WebM нет видео VP8 или VP9": "WebM 中没有 VP8 或 VP9 视频",
+  "Нужен ValveResourceFormat: скачай его в окне": "需要 ValveResourceFormat：请在窗口中下载",
+  "Размер интерфейса в игре: {0}%": "游戏内界面大小：{0}%",
 } satisfies Record<string, string>;

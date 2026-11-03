@@ -159,6 +159,14 @@ export interface MapLooksApi {
   install: (kind: MapKind, radiant: string | null, dire: string | null) => Promise<Reply<{ record: LibRecord }>>;
 }
 
+/** The in-game HUD smaller or larger (src/hud-scale-service.ts). */
+export interface HudApi {
+  /** the scale on now, the HUD mod it would go on (null: the game's own), and whether ValveResourceFormat is downloaded */
+  state: () => Promise<Reply<{ installed: { id: string; scale: number; base: string; enabled: boolean } | null; hudMod: string | null; vrf: boolean }>>;
+  /** the HUD at this percent, put in My mods */
+  install: (scale: number) => Promise<Reply<{ record: LibRecord }>>;
+}
+
 /** The main menu's background of the user's own (src/menu-background-service.ts). */
 export interface BackgroundApi {
   /** the background on now, if any */

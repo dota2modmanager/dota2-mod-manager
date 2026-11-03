@@ -80,9 +80,18 @@ export function safeRel(rel: string): boolean {
   return !!rel && !path.isAbsolute(rel) && !/[\\:\0]/.test(rel) && rel.split('/').every((s) => s && s !== '.' && s !== '..');
 }
 
-/** What a source compiles to: a sound (.wav, .mp3) to a .vsnd_c, anything else to its own name and _c. */
+/** What a Panorama source compiles to: a style, a layout, a script. */
+const PANORAMA: Record<string, string> = { css: '.vcss_c', xml: '.vxml_c', js: '.vjs_c' };
+
+/**
+ * What a source compiles to: a sound (.wav, .mp3) to a .vsnd_c, a Panorama style, layout or
+ * script under panorama/ to .vcss_c, .vxml_c or .vjs_c, anything else to its own name and _c.
+ */
 export function compiledOf(rel: string): string {
-  return /.(wav|mp3)$/i.test(rel) ? rel.replace(/.(wav|mp3)$/i, '.vsnd_c') : `${rel}_c`;
+  if (/\.(wav|mp3)$/i.test(rel)) return rel.replace(/\.(wav|mp3)$/i, '.vsnd_c');
+  const pano = /^panorama\/.*\.(css|xml|js)$/i.exec(rel);
+  if (pano) return rel.slice(0, -pano[1].length - 1) + PANORAMA[pano[1].toLowerCase()];
+  return `${rel}_c`;
 }
 
 /** A source file to stage, at its path in the addon (models/heroes/razor/razor.vmdl). */

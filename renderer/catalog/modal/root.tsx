@@ -14,6 +14,7 @@ import { ArcanaModal, type ArcanaModalActions, type ArcanaModalModel } from '../
 import { MapLookModal, type MapLookModalActions, type MapLookModalModel } from '../map/MapLookModal.tsx';
 import { SoundModal, type SoundModalActions, type SoundModalModel } from '../sounds/SoundModal.tsx';
 import { BackgroundModal, type BackgroundModalActions, type BackgroundModalModel } from '../background/BackgroundModal.tsx';
+import { HudModal, type HudModalActions, type HudModalModel } from '../hud/HudModal.tsx';
 import { SlotPicker } from '../builder/SlotPicker.tsx';
 import { HeroModal } from '../builder/HeroModal.tsx';
 import { SetModal, SetsModal } from '../builder/SetsModal.tsx';
@@ -40,6 +41,7 @@ export const showMapLookModal = (model: MapLookModalModel, actions: MapLookModal
   show(<MapLookModal m={model} actions={actions} />);
 export const showSoundModal = (model: SoundModalModel, actions: SoundModalActions): void => show(<SoundModal m={model} actions={actions} />);
 export const showBackgroundModal = (model: BackgroundModalModel, actions: BackgroundModalActions): void => show(<BackgroundModal m={model} actions={actions} />);
+export const showHudModal = (model: HudModalModel, actions: HudModalActions): void => show(<HudModal m={model} actions={actions} />);
 export const showArcanaModal = (model: ArcanaModalModel, actions: ArcanaModalActions): void =>
   show(<ArcanaModal m={model} actions={actions} />);
 

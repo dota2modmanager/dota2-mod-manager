@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { compilerIn, createResourceCompiler, installOf, safeRel, type CompileJob } from '../src/resource-compiler.ts';
+import { compiledOf as compiledName, compilerIn, createResourceCompiler, installOf, safeRel, type CompileJob } from '../src/resource-compiler.ts';
 import { entryPath } from '../src/vpk.ts';
 import type { RunProcess } from '../src/wine.ts';
 
@@ -82,6 +82,17 @@ test('a compiler counts only where the Workshop Tools put one, in an install wit
   assert.equal(installOf(other), null, 'not the compiler');
   fs.rmSync(path.join(root, 'game', 'dota', 'gameinfo.gi'));
   assert.equal(installOf(exe), null, 'no game beside it');
+});
+
+test('a source is looked for under the name the compiler gives it: a sound, a Panorama file, anything else', () => {
+  const names = (rels: string[]) => rels.map((rel) => real(rel));
+  const real = (rel: string) => compiledName(rel);
+  assert.deepEqual(names(['sounds/d2mm/a.wav', 'sounds/d2mm/b.MP3']), ['sounds/d2mm/a.vsnd_c', 'sounds/d2mm/b.vsnd_c']);
+  // Panorama's sources keep their web names in content/ and compile to v-prefixed ones (hud_reborn.vcss_c)
+  assert.deepEqual(names(['panorama/styles/hud/hud_reborn.css', 'panorama/layout/dashboard.xml', 'panorama/scripts/hud.js']),
+    ['panorama/styles/hud/hud_reborn.vcss_c', 'panorama/layout/dashboard.vxml_c', 'panorama/scripts/hud.vjs_c']);
+  assert.deepEqual(names(['models/heroes/razor/razor.vmdl', 'soundevents/d2mm.vsndevts', 'styles/x.css']),
+    ['models/heroes/razor/razor.vmdl_c', 'soundevents/d2mm.vsndevts_c', 'styles/x.css_c']);
 });
 
 test('a path in an addon cannot climb out of it or name a drive', () => {

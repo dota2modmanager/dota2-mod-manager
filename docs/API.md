@@ -69,6 +69,8 @@ the code, not in this page.
 | [`src/hero-grid.ts`](#srchero-gridts) | Hero grids for the pick screen out of this patch's numbers (issue #428). |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/hero-preview.ts`](#srchero-previewts) | The models of a hero as the item builder dresses it, for the 3D preview in the hero's window |
+| [`src/hud-scale-service.ts`](#srchud-scale-servicets) | The in-game HUD made smaller or larger, as a record in My mods (issue #420; the CSS is |
+| [`src/hud-scale.ts`](#srchud-scalets) | The in-game HUD made smaller or larger (issue #420): the stylesheet that lays the HUD out, |
 | [`src/i18n-en.ts`](#srci18n-ents) | Native dialogs, errors and labels in English, keyed by the exact Russian source string. |
 | [`src/i18n-zh-CN.ts`](#srci18n-zh-CNts) | Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key. |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (src/). |
@@ -3289,6 +3291,122 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
 ```
 
 The 3D preview's models, made on demand.
+
+## src/hud-scale-service.ts
+
+The in-game HUD made smaller or larger, as a record in My mods (issue #420; the CSS is
+src/hud-scale.ts). One record. The style it starts from is the one in force: a HUD mod's copy
+when one is switched on (first in the load order wins, as in the game), else the game's own.
+ValveResourceFormat reads it back as CSS, the scale goes at its end, and Valve's compiler builds
+it again; the pak goes early in the load order, so it wins over the HUD mod it was made from.
+
+A Dota update that reached the record builds it again from the new style. That takes the two
+tools a few seconds, so it runs after the update's repair has answered, and the record's mark
+from src/update-impact.ts is lifted when it is done.
+
+### `HudGenerated`
+
+```ts
+export interface HudGenerated { hud: number; base: string }
+```
+
+What a HUD scale record was built from.
+
+### `HudState`
+
+```ts
+export interface HudState
+```
+
+What the window shows: the scale on now, if any, and whether the two tools are there.
+
+### `createHudScale`
+
+```ts
+export function createHudScale({ gamePath, installer, library, vrf, compile, decompile = vrfCss, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** ValveResourceFormat's CLI, when it is downloaded */ vrf: () => string | null; compile: (job: CompileJob) => Promise<VpkEntry[]>; /** a compiled style read back as CSS; tests hand one in */
+```
+
+The service the hud:* channels call.
+
+### `vrfCss`
+
+```ts
+export async function vrfCss(exe: string, style: Buffer): Promise<string>
+```
+
+A compiled style read back as CSS by ValveResourceFormat, in a folder of its own that goes after.
+
+## src/hud-scale.ts
+
+The in-game HUD made smaller or larger (issue #420): the stylesheet that lays the HUD out,
+written again with one rule added at its end, for Valve's compiler.
+
+panorama/styles/hud/hud_reborn.vcss_c holds the HUD's styles; a compiled style keeps them in a
+binary form, so the app reads them back as CSS with ValveResourceFormat, adds the rule, and has
+resourcecompiler.exe compile the whole file again. Panorama's own `ui-scale` scales a panel and
+all of it, and keeps clicks where the buttons are drawn; the game uses it in this file already.
+The bottom bar (portrait, abilities, items) and the minimap are scaled; the top bar is left.
+
+A style is a whole file: a HUD mod replaces this same one, so the rule goes on the copy that is
+in force (the HUD mod's when one is on), and a Dota update that changes the file means building
+again from the new one (src/hud-scale-service.ts).
+
+### `STYLE`
+
+```ts
+export const STYLE = 'panorama/styles/hud/hud_reborn.vcss_c'
+```
+
+The stylesheet in the pak.
+
+### `SOURCE`
+
+```ts
+export const SOURCE = 'panorama/styles/hud/hud_reborn.css'
+```
+
+The same stylesheet as the compiler's source in an addon.
+
+### `MIN_SCALE`
+
+```ts
+export const MIN_SCALE = 60
+```
+
+The smallest scale the window offers, in percent.
+
+### `MAX_SCALE`
+
+```ts
+export const MAX_SCALE = 130
+```
+
+The largest scale the window offers, in percent.
+
+### `clampScale`
+
+```ts
+export function clampScale(n: unknown): number
+```
+
+A scale the window sent, as a whole step in range; 100 for anything else.
+
+### `SCALED`
+
+```ts
+export const SCALED = ['#lower_hud', '#minimap_container']
+```
+
+The panels the scale goes on: the bottom bar, the minimap.
+
+### `withScale`
+
+```ts
+export function withScale(css: string, scale: number): string
+```
+
+The CSS ValveResourceFormat read out of the style, with the scale at its end. The tool's own
+banner comment goes, and a rule this added before is replaced rather than stacked.
 
 ## src/i18n-en.ts
 
@@ -8288,7 +8406,8 @@ A path inside an addon, as the game spells it: forward slashes, nothing that cli
 export function compiledOf(rel: string): string
 ```
 
-What a source compiles to: a sound (.wav, .mp3) to a .vsnd_c, anything else to its own name and _c.
+What a source compiles to: a sound (.wav, .mp3) to a .vsnd_c, a Panorama style, layout or
+script under panorama/ to .vcss_c, .vxml_c or .vjs_c, anything else to its own name and _c.
 
 ### `SourceFile`
 
