@@ -23,7 +23,7 @@ document.getElementById('launchBtn')?.addEventListener('click', async () => {
     btn.disabled = false;
     btn.removeAttribute('aria-busy');
   }
-  if (warning) { toast(warning, 'warn', 9000); return; }
+  if (warning) { toast(warning, 'warn', 9000, { label: L`Загрузки Steam`, run: () => { void window.api.game.steamDownloads(); } }); return; }
   toast(state.masterOff ? L`Запуск Dota 2 без модов…` : L`Запуск Dota 2 с модами…`);
 });
 

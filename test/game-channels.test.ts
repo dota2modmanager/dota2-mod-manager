@@ -101,6 +101,13 @@ test('the repair banner goes away once read, but not while the repair is still w
   assert.deepEqual(s.asked, ['repair manual']);
 });
 
+test('the Steam downloads button opens the Steam page and nothing the window names', async () => {
+  const opened: string[] = [];
+  const channels = registerAgainst(() => registerGameIpc({ settings: { get: () => null } } as never), { shell: { openExternal: async (u: string) => { opened.push(u); } } });
+  assert.deepEqual(await channels.get('game:steamDownloads')!({}, 'https://evil.example'), { ok: true });
+  assert.deepEqual(opened, ['steam://open/downloads']);
+});
+
 test('a notice marked as seen is remembered, and the list keeps only the last fifty', async () => {
   const s = stand();
   s.settingsData.seenNotices = Array.from({ length: 50 }, (_, i) => `old-${i}`);

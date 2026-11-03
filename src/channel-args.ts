@@ -118,7 +118,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'app:version': [], 'app:notes': [str(16)], 'app:notesSeen': [],
   'update:install': [], 'update:fetchPortable': [], 'update:revealPortable': [PATH],
   'beta:state': [], 'beta:set': [bool],
-  'game:launch': [],
+  'game:launch': [], 'game:steamDownloads': [],
   'ui:setZoom': [num(0.25, 5)],
   // settings and the account (src/ipc-settings.ts)
   'settings:get': [], 'settings:set': settingsSet, 'settings:testProxy': [downloadProxy], 'settings:detectDota': [], 'settings:browseDota': [],
