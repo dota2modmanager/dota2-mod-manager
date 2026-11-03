@@ -28,6 +28,7 @@ import { createArcanaService, type Generated } from './arcana-service.ts';
 import { createBaseStore } from './arcana-base-store.ts';
 import { createMapLooks } from './map-looks-service.ts';
 import { createAbilitySounds } from './ability-sounds-service.ts';
+import { createBuildUndo } from './build-undo.ts';
 import { TERRORBLADE_BASE } from './arcana-bases.ts';
 import { clientVersion } from './patch-watch.ts';
 import { createRemoteConfig } from './remote-config.ts';
@@ -111,7 +112,10 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   const onBuild = buildBar(sendProgress, () => t('Сборка предметов'));
   // the arcana window's Terrorblade leaves the paths the builder's picks fill to them
   const schemaService = createSchemaService({ settings, library, installer, userDataDir: userData, log: diag, bases, onBuild,
-    onDeployed: (filled) => arcana.giveWay(filled), modsOff: () => installer.masterIsOff() });
+    onDeployed: (filled) => { arcana.giveWay(filled); buildUndo.mark(); }, modsOff: () => installer.masterIsOff() });
+  // Cancel on the bar puts the library back to the table the game has (issue #425)
+  const buildUndo = createBuildUndo({ library, installer, settings, schema: schemaService, log: diag });
+  if (!settings.get('schemaPending')) buildUndo.mark();
   // the window closed while the table was written left the game a change behind (src/quit-after-build.ts)
   quitAfterBuild(electron().app, { busy: schemaService.busy, settled: schemaService.settled, log: diag });
   // which installed mods a Dota update reached (src/update-impact.ts)
@@ -204,7 +208,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 
   return {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, abilitySounds,
+    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, abilitySounds, buildUndo,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };
 }

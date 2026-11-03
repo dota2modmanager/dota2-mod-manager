@@ -21,6 +21,7 @@ import type { createUpdateImpact } from './update-impact.ts';
 import type { createArcanaService } from './arcana-service.ts';
 import type { createMapLooks } from './map-looks-service.ts';
 import type { createAbilitySounds } from './ability-sounds-service.ts';
+import type { createBuildUndo } from './build-undo.ts';
 import type { createGameIcons } from './game-icons.ts';
 import type { createModPreviews } from './mod-preview.ts';
 import type { createRemoteConfig } from './remote-config.ts';
@@ -43,7 +44,8 @@ import type * as portableUpdateModule from './portable-update.ts';
 export type AppProgress =
   | InstallProgress
   | ToolProgress
-  | { type: 'count'; label: string; done: number; total: number }
+  // cancel: the bar offers Cancel, and says whose build it stops (src/build-undo.ts)
+  | { type: 'count'; label: string; done: number; total: number; cancel?: 'schema' }
   | { type: 'done'; label?: string }
   | { type: 'error'; label: string; message: string };
 
@@ -67,6 +69,7 @@ export interface AppContext {
   mapLooks: ReturnType<typeof createMapLooks>;
   /** sounds of the user's own on a hero's events (src/ability-sounds-service.ts) */
   abilitySounds: ReturnType<typeof createAbilitySounds>;
+  buildUndo: ReturnType<typeof createBuildUndo>;
   icons: Icons;
   gameIcons: ReturnType<typeof createGameIcons>;
   modPreviews: ReturnType<typeof createModPreviews>;

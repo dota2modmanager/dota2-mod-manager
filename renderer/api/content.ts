@@ -52,6 +52,8 @@ export interface PatchApi {
   state: () => Promise<PatchState>;
   setEnabled: (on: boolean) => Promise<Reply>;
   refreshSchema: () => Promise<Reply>;
+  /** Stop the item table's build and put back the change that started it (issue #425). */
+  cancelBuild: () => Promise<{ ok: true; undone: number; left: string[] } | { ok: false; reason: 'nothing' | 'unknown' }>;
   /** what was done about the last Dota patch, and the two things the banner can ask for */
   repairState: () => Promise<RepairState>;
   repairNow: () => Promise<RepairState>;

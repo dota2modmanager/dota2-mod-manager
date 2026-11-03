@@ -28,8 +28,10 @@ the code, not in this page.
 | [`src/arcana-sets.ts`](#srcarcana-setsts) | The arcanas the app can build (src/arcana.ts): for each, the models it puts under the hero's own |
 | [`src/arcana.ts`](#srcarcanats) | An arcana as a mod, built from the game's own files: the look of an item a player has not got, |
 | [`src/atomic-file.ts`](#srcatomic-filets) | Replace a small file so that whoever reads it next - this process, or the next start after |
+| [`src/background-builds.ts`](#srcbackground-buildsts) | Builds of the item table in the background, one at a time (src/schema-service.ts runs them, |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/build-bar.ts`](#srcbuild-barts) | The bar at the bottom of the window while the item table builds in the background |
+| [`src/build-undo.ts`](#srcbuild-undots) | Cancel on the item table's bar (issue #425): the build stops, and the change that started it goes |
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
 | [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
@@ -1146,6 +1148,27 @@ Write `data` to `file` through a temporary file beside it. An antivirus or a bac
 holding the old file makes Windows refuse the rename for a moment, so it is tried a few times;
 if the file stays held, it is written in place as before rather than not written at all.
 
+## src/background-builds.ts
+
+Builds of the item table in the background, one at a time (src/schema-service.ts runs them,
+src/schema-build.ts is what they build).
+
+### `createBackgroundBuilds`
+
+```ts
+export function createBackgroundBuilds(steps: () => Generator<BuildYield, Refreshed, boolean | undefined>, onBuild: (step: BuildStep | null) => void)
+```
+
+Builds in the background, one at a time and in order. A build asked for while one runs stops
+that one before it writes anything, since its list of picks is out of date already, and builds
+once more from what the library holds then; everybody waiting gets the result of the build that
+wrote. A build run in place in between (heal, the patch switch) does the same, through `ran`.
+
+```
+@param steps    a build of the table, a step at a time
+@param onBuild  each step of a build in the background, and null when it ends
+```
+
 ## src/beta.ts
 
 The beta channel: who is let in, and which update feed this copy reads.
@@ -1236,12 +1259,41 @@ The bar at the bottom of the window while the item table builds in the backgroun
 ### `buildBar`
 
 ```ts
-export function buildBar(send: (evt: { type: 'count'; label: string; done: number; total: number } | { type: 'done' }) => void, label: () => string, after = 400, now = () => Date.now()): (step: BuildStep | null) => void
+export function buildBar(send: (evt: { type: 'count'; label: string; done: number; total: number; cancel?: 'schema' } | { type: 'done' }) => void, label: () => string, after = 400, now = () => Date.now()): (step: BuildStep | null) => void
 ```
 
 The bar at the bottom of the window for a build in the background: shown once the build has run
 for `after` ms, so a pick that takes a fifth of a second does not flash it, and counted in the
-picks built anew. A build with none to build, the merge and the write alone, shows nothing.
+picks built anew, with Cancel on it (src/build-undo.ts). A build with none to build, the merge
+and the write alone, shows nothing.
+
+## src/build-undo.ts
+
+Cancel on the item table's bar (issue #425): the build stops, and the change that started it goes
+back too.
+
+The table is what makes the game match My mods, so a build dropped halfway would leave the
+library saying a look is on while the game still wears the old one. Instead the app keeps a
+picture of the library as of the last table written (mark, after every write and at a start
+with nothing pending), and Cancel puts the records the table reads back the way that picture
+has them: a pick taken off again, a switched mod switched back, a look put back on. One change,
+all of it or none (src/file-tx.ts): a preset of thirty looks goes back whole.
+
+### `Undone`
+
+```ts
+export type Undone = { ok: true; undone: number; left: string[] } | { ok: false; reason: 'nothing' | 'unknown' }
+```
+
+What Cancel did: how many records went back, and the names of those that could not.
+
+### `createBuildUndo`
+
+```ts
+export function createBuildUndo({ library, installer, settings, schema, log = () => {} }: { library: Library; installer: Pick<Installer, 'setEnabled' | 'masterIsOff' | 'setMasterEnabled'>; settings: Pick<Settings, 'get' | 'set'>; schema: { cancel: () => boolean }; log?: (msg: string) => void; })
+```
+
+Cancel for the item table: a picture of what the game has, and the way back to it.
 
 ## src/capture.ts
 
@@ -8165,6 +8217,8 @@ and the Play button, which waits for the last build before the game starts.
 
 Hands on from [`src/build-bar.ts`](#srcbuild-barts): `buildBar`.
 
+Hands on from [`src/background-builds.ts`](#srcbackground-buildsts): `createBackgroundBuilds`.
+
 ### `BuildStep`
 
 ```ts
@@ -8204,22 +8258,6 @@ export function createTableBuild({ library, bases, log }: { library: Pick<Librar
 ```
 
 What goes into the table: every enabled record's patches, each item builder pick built once.
-
-### `createBackgroundBuilds`
-
-```ts
-export function createBackgroundBuilds(steps: () => Generator<BuildYield, Refreshed, boolean | undefined>, onBuild: (step: BuildStep | null) => void)
-```
-
-Builds in the background, one at a time and in order. A build asked for while one runs stops
-that one before it writes anything, since its list of picks is out of date already, and builds
-once more from what the library holds then; everybody waiting gets the result of the build that
-wrote. A build run in place in between (heal, the patch switch) does the same, through `ran`.
-
-```
-@param steps    a build of the table, a step at a time
-@param onBuild  each step of a build in the background, and null when it ends
-```
 
 ## src/schema-cosmetics.ts
 

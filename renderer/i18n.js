@@ -874,6 +874,8 @@ const EN = {
   'Диагностика': 'Diagnostics',
   'Экспортировать отчёт': 'Export report', 'Чиню…': 'Repairing…', 'Починить приложение': 'Repair the app', 'Починка возвращает патч игры, ищет пропавшие файлы модов и очищает картинки. Моды и пресеты не трогает.': 'Repair puts the game patch back, looks for missing mod files and clears the pictures. Your mods and presets stay as they are.', 'Не вышло? Отправь отчёт: в нём видно, на каком шаге.': 'Still broken? Send the report: it shows which step failed.', 'Всё в порядке': 'All good', 'Починка нашла проблемы': 'Repair found problems',
   'Отчёт сохранён': 'Report saved',
+  // ---------- Cancel on the item table's bar (shell/progress) ----------
+  'Эту сборку нельзя отменить: приложение не знает, что было в игре до неё': 'This build cannot be cancelled: the app does not know what the game had before it', 'Сборка отменена. Не вернулись: {0}': 'Build cancelled. Could not put back: {0}', 'Сборка отменена, моды как были': 'Build cancelled, your mods are as they were',
   // ---------- a sound of your own (catalog/sounds) ----------
   'Свой звук на способность': 'Your own sound on an ability', 'Героев со своими звуками: {0}': 'Heroes with your sounds: {0}', 'MP3, WAV или OGG': 'MP3, WAV or OGG', 'Твой файл вместо звука игры или поверх него': 'Your file in place of the game sound or over it',
   'Выбери героя': 'Pick a hero', 'Найти: Attack, Death, название способности…': 'Find: Attack, Death, an ability name…', 'Ничего не нашлось': 'Nothing found', 'Другой файл…': 'Another file…',

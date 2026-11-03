@@ -51,7 +51,7 @@ export interface StoredSettings {
  *  of a download, a batch counted in items, a named step, and the end either way. */
 type ProgressEvent =
   | { type: 'download'; label: string; loaded: number; total: number }
-  | { type: 'count'; label: string; done: number; total: number }
+  | { type: 'count'; label: string; done: number; total: number; cancel?: 'schema' }
   | { type: 'stage'; label: string; stage: string }
   | { type: 'done'; label?: string }
   | { type: 'error'; label: string; message: string };

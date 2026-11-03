@@ -67,6 +67,7 @@ contextBridge.exposeInMainWorld('api', {
     state: () => ipcRenderer.invoke('patch:state'),
     setEnabled: (on) => ipcRenderer.invoke('patch:setEnabled', on),
     refreshSchema: () => ipcRenderer.invoke('schema:refresh'),
+    cancelBuild: () => ipcRenderer.invoke('schema:cancel'),
     // what was done about the last Dota patch, and the two things the banner can ask for
     repairState: () => ipcRenderer.invoke('patch:repairState'),
     repairNow: () => ipcRenderer.invoke('patch:repairNow'),
