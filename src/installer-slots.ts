@@ -114,9 +114,10 @@ export function slotNumber(inst: Installer, rec: HasFiles): number | null {
  *   enabled mods only - a switched-off mod is renamed on disk and the game never sees it.
  *   Keyed rather than named, because two copies of the same mod in two slots share a name
  *   and are exactly the case worth reporting.
- * @returns {Map<string, Array<{name: string, files: number}>>} mod key -> who covers it
+ * @returns {Map<string, Cover[]>} mod key -> who covers it, worst first, with the paths each one
+ *   takes (sorted, at most COVER_PATHS of them, so the window can show which files and not only how many)
  */
-export function coverage(inst: Installer, mods: CoverageMod[]): Map<string, { name: string; files: number }[]> {
+export function coverage(inst: Installer, mods: CoverageMod[]): Map<string, Cover[]> {
   const owners = new Map<string, { key: string; name: string; slot: number; crc: number }[]>(); // inner path -> [{ key, name, slot, crc }]
   for (const mod of mods) {
     const dir = (mod.files || []).find((f) => f.root === 'lang' && /_dir\.vpk$/i.test(f.relPath));
@@ -133,25 +134,35 @@ export function coverage(inst: Installer, mods: CoverageMod[]): Map<string, { na
     }
   }
 
-  const covered = new Map<string, Map<string, number>>(); // loser key -> Map(winner name -> file count)
-  for (const [, list] of owners) {
+  // loser key -> winner key -> the winner's name and the paths it takes
+  const covered = new Map<string, Map<string, { name: string; paths: string[] }>>();
+  for (const [p, list] of owners) {
     if (list.length < 2) continue;
     const top = list.reduce((a, b) => (b.slot < a.slot ? b : a));
     for (const other of list) {
       // same bytes is not a fight: whichever the game picks, the file is identical
       if (other.key === top.key || other.crc === top.crc) continue;
-      const by = covered.get(other.key) || new Map<string, number>();
+      const by = covered.get(other.key) || new Map<string, { name: string; paths: string[] }>();
       covered.set(other.key, by);
-      by.set(top.name, (by.get(top.name) || 0) + 1);
+      const won = by.get(top.key) || { name: top.name, paths: [] };
+      by.set(top.key, won);
+      won.paths.push(p);
     }
   }
 
-  const out = new Map<string, { name: string; files: number }[]>();
+  const out = new Map<string, Cover[]>();
   for (const [loser, by] of covered) {
-    out.set(loser, [...by].map(([name, files]) => ({ name, files })).sort((a, b) => b.files - a.files));
+    out.set(loser, [...by].map(([key, { name, paths }]) => ({ key, name, files: paths.length, paths: paths.sort().slice(0, COVER_PATHS) }))
+      .sort((a, b) => b.files - a.files));
   }
   return out;
 }
+
+/** How many of the paths a winner takes are listed: the count stays whole, the list does not. */
+export const COVER_PATHS = 200;
+
+/** A mod that covers another: who (its key, as the caller gave it, and name), how many files, and which. */
+export interface Cover { key: string; name: string; files: number; paths: string[] }
 
 // highest free slot strictly below `n`, so climbing over one mod does not eat the whole
 // low range that the priority categories want

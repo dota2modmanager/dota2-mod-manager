@@ -32,7 +32,7 @@ function coveredTag(x: { coveredBy?: Cover[]; enabled: boolean }): Tag | null {
   if (!by || !by.length || !x.enabled) return null;
   const total = by.reduce((n, c) => n + c.files, 0);
   const who = by.map((c) => `«${catalogName(c.name)}» (${c.files})`).join(', ');
-  return { cls: 'covered', icon: 'layers', text: L`перекрыт`,
+  return { cls: 'covered', icon: 'layers', text: L`перекрыт`, opens: 'covers',
     title: L`Файлов перекрыто: ${total} — ${who}. Побеждает мод, который загружается раньше; порядок меняется правой кнопкой.` };
 }
 

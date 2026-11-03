@@ -12,6 +12,7 @@ import { handleImportResult } from './import.ts';
 import { pickModsDialog } from './pick-mods.ts';
 import { combineSelection, deleteRecord, menuFor, standalonePackable, updateRecord } from './record-actions.ts';
 import { lib, recById, screen } from './state.ts';
+import { showCovers } from './covers.ts';
 
 const tick = (ids: string[], on: boolean) => { for (const id of ids) { if (on) lib.sel.add(id); else lib.sel.delete(id); } screen.draw(); };
 
@@ -211,6 +212,13 @@ export const actions: LibraryActions = {
     const res = await window.api.mods.reorder(id, to);
     if (res?.error) toast(res.error, 'error', 6000);
     lib.still = true;
+    await screen.reload();
+  },
+  covers: async (key) => {
+    const to = await showCovers(key);
+    if (to === null) return;
+    const res = await window.api.mods.reorder(key, to);
+    if (res?.error) toast(res.error, 'error', 6000);
     await screen.reload();
   },
   banner,
