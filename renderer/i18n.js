@@ -136,12 +136,12 @@ const EN = {
   'Мой вид на всех, кто играет этим героем': 'My look on everyone playing that hero',
   'Кто бы ни играл героем, которого ты собрал, союзник или враг, у тебя на экране он будет в твоих предметах, а не в своих. Видишь это только ты. Работает с выключенным безопасным режимом.':
     'Whoever plays a hero you built, ally or enemy, wears your items on your screen, not their own. Only you see this. Works with safe mode off.',
-  'Для каких героев': 'For which heroes',
-  'Только для отмеченных героев.': 'Only for the heroes ticked.',
-  'Ничего не отмечено: для всех собранных героев, начиная с тех, что ты собирал последними, сколько выдержит игра.':
-    'Nothing ticked: every hero you built, the ones you built last first, as many as the game can take.',
-  'Не поместились, иначе игра начала бы показывать чужие модели: {0}. Отметь меньше героев, если нужен кто-то из них.':
-    'Left out, or the game would start showing the wrong models: {0}. Tick fewer heroes if you want one of them.',
+  'Для каких героев': 'For which heroes', 'Добавить героя…': 'Add a hero…', 'Убрать {0}': 'Remove {0}',
+  'Только для выбранных героев.': 'Only for the heroes chosen.',
+  'Никто не выбран: для всех собранных героев, начиная с тех, что ты собирал последними, сколько выдержит игра.':
+    'None chosen: every hero you built, the ones you built last first, as many as the game can take.',
+  'Не поместились, иначе игра начала бы показывать чужие модели: {0}. Выбери меньше героев, если нужен кто-то из них.':
+    'Left out, or the game would start showing the wrong models: {0}. Choose fewer heroes if you want one of them.',
 
   // ---------- item schema: catalog cards, library tag, conflict banners ----------
   'Моды спорят за один предмет': 'Mods disagree about the same item',

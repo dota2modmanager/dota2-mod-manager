@@ -7,10 +7,11 @@
  * hero that did not fit is named here rather than dropped in silence. */
 import type { CSSProperties } from 'react';
 import { heroName } from '../ui/hero-name.ts';
+import { Dropdown } from '../ui/Dropdown.tsx';
 
 export interface EveryoneActions {
   everyone: () => void;
-  /** a hero ticked or unticked in the list */
+  /** a hero added to the list, or taken off it */
   everyoneHero: (id: string) => void;
 }
 
@@ -18,7 +19,7 @@ export interface EveryoneModel {
   on: boolean;
   /** the heroes the user built, picked last first */
   built: { id: string; name: string }[];
-  /** the heroes ticked; none: all of them */
+  /** the heroes chosen; none: all of them */
   chosen: string[];
   /** who the last build left out */
   leftOut: string[];
@@ -40,27 +41,32 @@ export function EveryoneBlock({ i, m, actions }: { i: number; m: EveryoneModel; 
       <div className="settings-hint">{L`Кто бы ни играл героем, которого ты собрал, союзник или враг, у тебя на экране он будет в твоих предметах, а не в своих. Видишь это только ты. Работает с выключенным безопасным режимом.`}</div>
       {m.on && m.built.length > 0 && (
         <>
-          <div className="settings-label settings-heroes-title">{L`Для каких героев`}</div>
-          <div className="settings-heroes" role="group" aria-label={L`Для каких героев`}>
-            {m.built.map((h) => {
-              const on = m.chosen.includes(h.id);
-              return (
-                <button key={h.id} className={`fchip ${on ? 'active' : ''}`} aria-pressed={on} data-hero={h.id} onClick={() => actions.everyoneHero(h.id)}>
-                  {names.get(h.id)}
-                </button>
-              );
-            })}
+          {/* a hundred heroes built is a hundred chips: only the chosen ones are drawn, the rest wait in the list */}
+          <div className="settings-row spaced settings-heroes-title">
+            <span className="settings-label">{L`Для каких героев`}</span>
+            <Dropdown id="everyoneAddHero" icon="person_add" label={L`Добавить героя…`} value="" first={L`Добавить героя…`}
+              options={m.built.filter((h) => !m.chosen.includes(h.id)).map((h) => ({ value: h.id, label: names.get(h.id) ?? h.name }))}
+              onPick={(id) => { if (id) actions.everyoneHero(id); }} />
           </div>
+          {m.chosen.length > 0 && (
+            <div className="settings-heroes" role="group" aria-label={L`Для каких героев`}>
+              {m.chosen.map((id) => (
+                <button key={id} className="fchip active" data-hero={id} aria-label={L`Убрать ${names.get(id) ?? id}`} onClick={() => actions.everyoneHero(id)}>
+                  {names.get(id) ?? id}<span className="ms">close</span>
+                </button>
+              ))}
+            </div>
+          )}
           <div className="settings-hint">
             {m.chosen.length
-              ? L`Только для отмеченных героев.`
-              : L`Ничего не отмечено: для всех собранных героев, начиная с тех, что ты собирал последними, сколько выдержит игра.`}
+              ? L`Только для выбранных героев.`
+              : L`Никто не выбран: для всех собранных героев, начиная с тех, что ты собирал последними, сколько выдержит игра.`}
           </div>
         </>
       )}
       {m.on && leftNames.length > 0 && (
         <div className="settings-hint settings-warn" role="status">
-          {L`Не поместились, иначе игра начала бы показывать чужие модели: ${left}. Отметь меньше героев, если нужен кто-то из них.`}
+          {L`Не поместились, иначе игра начала бы показывать чужие модели: ${left}. Выбери меньше героев, если нужен кто-то из них.`}
         </div>
       )}
     </div>
