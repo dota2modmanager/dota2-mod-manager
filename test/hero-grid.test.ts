@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { buildGrid, createHeroGrids, gridFile, gridsIn, GRID_PREFIX, mergeGrids, type HeroStat } from '../src/hero-grid.ts';
+import { buildGrid, createHeroGrids, gridFile, gridsIn, GRID_PREFIX, keepNumbers, mergeGrids, type HeroStat } from '../src/hero-grid.ts';
 
 const STATS = JSON.parse(fs.readFileSync(new URL('./fixtures/hero-stats.json', import.meta.url), 'utf-8')) as HeroStat[];
 
@@ -71,6 +71,15 @@ test('the attribute grid has four bands and puts each hero under its own attribu
   const str = new Set(grid.categories[0].hero_ids);
   assert.ok(str.has(2), 'Axe is strength');
   assert.ok(!str.has(1), 'Anti-Mage is not');
+});
+
+test('only the numbers are kept from the answer: strings, names and junk rows go', () => {
+  const kept = keepNumbers([{ id: 1, localized_name: '<script>', primary_attr: 'agi', pub_pick: '10', pub_win: 5, img: '/x.png' }, { id: 'evil' }, null, { id: 2, primary_attr: 'mind' }]);
+  assert.equal(kept.length, 2);
+  assert.deepEqual(Object.keys(kept[0]).filter((k) => !/^\d_/.test(k)), ['id', 'primary_attr', 'pub_pick', 'pub_win']);
+  assert.equal(kept[0].pub_pick, 10);
+  assert.equal(kept[1].primary_attr, undefined);
+  assert.deepEqual(keepNumbers('not a list'), []);
 });
 
 test('stats without pub_pick are summed over the brackets', () => {

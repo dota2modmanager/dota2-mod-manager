@@ -143,6 +143,23 @@ export function gridsIn(text: string | null): string[] {
   }
 }
 
+const ATTRS = new Set(['str', 'agi', 'int', 'all']);
+const count = (v: unknown) => (Number.isFinite(Number(v)) && Number(v) >= 0 ? Math.floor(Number(v)) : 0);
+
+/** heroStats cut to the numbers a grid reads, so what is kept on disk is ours and nothing else. */
+export function keepNumbers(raw: unknown): HeroStat[] {
+  if (!Array.isArray(raw)) return [];
+  const out: HeroStat[] = [];
+  for (const h of raw as Array<Record<string, unknown>>) {
+    const id = count(h?.id);
+    if (!id) continue;
+    const kept: HeroStat = { id, primary_attr: ATTRS.has(String(h.primary_attr)) ? String(h.primary_attr) : undefined, pub_pick: count(h.pub_pick), pub_win: count(h.pub_win) };
+    for (let b = 1; b <= 8; b++) { kept[`${b}_pick`] = count(h[`${b}_pick`]); kept[`${b}_win`] = count(h[`${b}_win`]); }
+    out.push(kept);
+  }
+  return out;
+}
+
 const readOrNull = (file: string) => { try { return fs.readFileSync(file, 'utf-8'); } catch { return null; } };
 
 /**
@@ -170,8 +187,8 @@ export function createHeroGrids({ dataDir, accountDir, fetch = globalThis.fetch,
     try {
       const res = await fetch(HERO_STATS_API, { signal: AbortSignal.timeout(15000), ...downloadProxyFetchInit() } as RequestInit);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const stats = await res.json() as HeroStat[];
-      if (!Array.isArray(stats) || stats.length < 100) throw new Error(t('OpenDota прислал не список героев'));
+      const stats = keepNumbers(await res.json());
+      if (stats.length < 100) throw new Error(t('OpenDota прислал не список героев'));
       const got = { at: now(), stats };
       fs.mkdirSync(dataDir, { recursive: true });
       writeFileAtomic(cacheFile, JSON.stringify(got));
@@ -199,7 +216,10 @@ export function createHeroGrids({ dataDir, accountDir, fetch = globalThis.fetch,
     const before = readOrNull(file);
     const backup = path.join(dataDir, `hero_grid_config.${path.basename(dir)}.backup.json`);
     fs.mkdirSync(dataDir, { recursive: true });
-    if (before !== null && !fs.existsSync(backup)) fs.writeFileSync(backup, before);
+    // 'wx': written once, the first time, and never over a backup that is already there
+    if (before !== null) {
+      try { fs.writeFileSync(backup, before, { flag: 'wx' }); } catch (err) { if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err; }
+    }
     const wanted = GRID_KINDS.filter((k) => kinds.includes(k));
     fs.mkdirSync(path.dirname(file), { recursive: true });
     writeFileAtomic(file, mergeGrids(before, wanted.map((k) => buildGrid(stats, k))));

@@ -2695,6 +2695,14 @@ export function gridsIn(text: string | null): string[]
 
 Which of the app's grids are in a grid file now, by config name.
 
+### `keepNumbers`
+
+```ts
+export function keepNumbers(raw: unknown): HeroStat[]
+```
+
+heroStats cut to the numbers a grid reads, so what is kept on disk is ours and nothing else.
+
 ### `createHeroGrids`
 
 ```ts
