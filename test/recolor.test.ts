@@ -266,6 +266,20 @@ test('a colour is read as three numbers or a hex code, and nothing else', async 
   for (const bad of ['256,0,0', '1,2', 'pink', '', null]) assert.equal(parseColor(bad), null, String(bad));
 });
 
+test('a gem is asked for by its name and comes out of the table in the game (issue #392)', async (t) => {
+  const { gemTarget } = await import('../tools/recolor.mjs');
+  const game = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-gem-'));
+  t.after(() => fs.rmSync(game, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(game, 'dota'));
+  const table = '"items_game"\n{\n\t"colors"\n\t{\n\t\t"unusual_rubiline"\n\t\t{\n\t\t\t"color_name"\t\t"UnusualRubiline"\n\t\t\t"hex_color"\t\t"#D11FA1"\n\t\t}\n\t}\n}\n';
+  fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk([entryAt('scripts/items/items_game.txt', Buffer.from(table, 'latin1'))]));
+  const said: string[] = [];
+  t.mock.method(console, 'log', (m: string) => { said.push(m); });
+  assert.deepEqual(await gemTarget(game, 'rubiline'), [209, 31, 161]);
+  assert.deepEqual(said, ['Rubiline: #d11fa1']);
+  await assert.rejects(gemTarget(game, 'Midas Gold'), /no gem "Midas Gold"; the game has: Rubiline/);
+});
+
 test('a set becomes one VPK of the files that took the colour, from the game\'s own pak01', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-recolor-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));

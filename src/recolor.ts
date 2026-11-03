@@ -44,6 +44,15 @@ export const RECOLOR_SETS: Record<string, RecolorSet> = {
     shared: ['particles/units/heroes/hero_terrorblade/', 'particles/models/heroes/terrorblade/', 'particles/econ/items/terrorblade/'],
     materials: ['materials/models/heroes/terrorblade/', 'materials/models/items/terrorblade/'],
   },
+  'techies-arcana': {
+    name: 'Swine of the Sunken Galley',
+    // items_game, colors: unusual_techies_swine, the arcana's own gold (issue #392)
+    gem: [255, 175, 0],
+    own: ['particles/econ/items/techies/techies_arcana/'],
+    shared: ['particles/units/heroes/hero_techies/'],
+    // no material of the cart reads $GemColor (counted 2026-11-03): its wood and iron keep their colour
+    materials: ['materials/models/items/techies/bigshot/'],
+  },
 };
 
 /** A member name that holds a colour. Not m_bSaturateColorPreAlphaBlend: that one is a switch. */

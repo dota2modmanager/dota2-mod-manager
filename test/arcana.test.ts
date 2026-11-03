@@ -146,7 +146,36 @@ test('a child hung at an attachment its host does not bind goes first, handed a 
     ['C_OP_SetParentControlPointsToChildCP', 1, 2], 'only the new child is handed the point');
   assert.deepEqual(references(next), ['particles/ambient.vpcf', 'particles/eye.vpcf']);
   assert.throws(() => withChildAt(host(['particles/a.vpcf', 'particles/b.vpcf']), 'particles/eye.vpcf', 'attach_eye'), /already hands/, 'one that hands points is withChildren\'s');
-  assert.throws(() => withChildAt(host(), 'particles/eye.vpcf', 'attach_eye'), /binds no control point/, 'one point, bound to nothing it names: nothing to copy');
+  assert.throws(() => withChildAt(host(), 'particles/eye.vpcf', 'attach_eye'), /already hands/, 'one point with no number is still a point it hands on');
+});
+
+/* Techies' arcana ambient (issue #392) binds only its first point, with no number, and places two
+ * more beside the cart by operators of its own; the fuse it is given must land on neither. */
+test('a host that places points of its own gets the new one past them, and keeps its operators', () => {
+  const ambient = resource([['RERL', rerl(['particles/smoke.vpcf'])], ['DATA', encodeKv3({ obj: [
+    ['m_Children', { arr: [{ obj: [['m_ChildRef', { ref: 'particles/smoke.vpcf' }]] }] }],
+    ['m_PreEmissionOperators', { arr: [
+      { obj: [['_class', { str: 'C_OP_SetSingleControlPointPosition' }]] },
+      { obj: [['_class', { str: 'C_OP_SetSingleControlPointPosition' }], ['m_nCP1', { int: 2 }]] },
+    ] }],
+    ['m_controlPointConfigurations', { arr: [{ obj: [['m_name', { str: 'preview' }], ['m_drivers', { arr: [
+      { obj: [['m_iAttachType', { str: 'PATTACH_POINT_FOLLOW' }], ['m_attachmentName', { str: 'attach_attack4' }], ['m_entityName', { str: 'parent' }]] },
+    ] }]] }] }],
+  ] })]]);
+  const next = withChildAt(ambient, 'particles/fuse.vpcf', 'attach_fxhand');
+  const kv = readKv3(dataBlock(next).data);
+  const str = (n: Kv3Node) => (n as { value: string }).value;
+  const num = (n: Kv3Node) => numberOf(kv, n as Extract<Kv3Node, { kind: 'number' }>);
+  const driver = at(kv.root, 'm_controlPointConfigurations', 0, 'm_drivers', 1);
+  assert.deepEqual([num(at(driver, 'm_iControlPoint')), str(at(driver, 'm_attachmentName'))], [3, 'attach_fxhand'], 'points 1 and 2 belong to the host');
+  const ops = (at(kv.root, 'm_PreEmissionOperators') as Extract<Kv3Node, { kind: 'array' }>).items;
+  assert.deepEqual(ops.map((o) => str(at(o, '_class'))), ['C_OP_SetSingleControlPointPosition', 'C_OP_SetSingleControlPointPosition', 'C_OP_SetParentControlPointsToChildCP']);
+  assert.equal(num(at(ops[2], 'm_nFirstSourcePoint')), 3);
+  const nowhere = resource([['RERL', rerl(['particles/smoke.vpcf'])], ['DATA', encodeKv3({ obj: [
+    ['m_Children', { arr: [{ obj: [['m_ChildRef', { ref: 'particles/smoke.vpcf' }]] }] }],
+    ['m_controlPointConfigurations', { arr: [{ obj: [['m_drivers', { arr: [{ obj: [['m_entityName', { str: 'self' }]] }] }]] }] }],
+  ] })]]);
+  assert.throws(() => withChildAt(nowhere, 'particles/fuse.vpcf', 'attach_fxhand'), /binds no control point/, 'no attachment to copy a driver from');
 });
 
 test("a form's particle a host cannot take leaves the host as it was, and says so", (t) => {

@@ -23,6 +23,7 @@ the code, not in this page.
 | [`src/arcana-bases.ts`](#srcarcana-basests) | Arcana bases: an arcana rebuilt by hand in Valve's Workshop Tools so that it works as the hero's |
 | [`src/arcana-notes.ts`](#srcarcana-notests) | What an arcana does in the game once the item builder puts it on, as somebody played it. |
 | [`src/arcana-service.ts`](#srcarcana-servicets) | The arcana window's side in the main process (issue #118): what the window shows, and the mod it |
+| [`src/arcana-sets.ts`](#srcarcana-setsts) | The arcanas the app can build (src/arcana.ts): for each, the models it puts under the hero's own |
 | [`src/arcana.ts`](#srcarcanats) | An arcana as a mod, built from the game's own files: the look of an item a player has not got, |
 | [`src/atomic-file.ts`](#srcatomic-filets) | Replace a small file so that whoever reads it next - this process, or the next start after |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
@@ -57,6 +58,7 @@ the code, not in this page.
 | [`src/gamelang-folders.ts`](#srcgamelang-foldersts) | Making and moving the dota_<lang> folders (src/gamelang.ts has the rule): whether a voice pack is |
 | [`src/gamelang-steam.ts`](#srcgamelang-steamts) | What Steam says about the game's language (src/gamelang.ts has the rule): the -language in the |
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
+| [`src/gem-colors.ts`](#srcgem-colorsts) | The game's own prismatic gem colours, read out of items_game.txt (issue #392). The table keeps |
 | [`src/hero-grid.ts`](#srchero-gridts) | Hero grids for the pick screen out of this patch's numbers (issue #428). |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/i18n-zh-CN.ts`](#srci18n-zh-CNts) | Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key. |
@@ -821,6 +823,40 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
 
 _No description in the source._
 
+## src/arcana-sets.ts
+
+The arcanas the app can build (src/arcana.ts): for each, the models it puts under the hero's own
+names, its pictures, the particle that hosts its own, and the particles it swaps. Every entry is
+read off the item's visuals in items_game by `npm run item-plan` and checked in the game
+(docs/item-mods.md). Moved out of src/arcana.ts, which keeps how a set is built.
+
+### `ArcanaSet`
+
+```ts
+export interface ArcanaSet
+```
+
+The arcanas the app can build (src/arcana.ts): for each, the models it puts under the hero's own
+names, its pictures, the particle that hosts its own, and the particles it swaps. Every entry is
+read off the item's visuals in items_game by `npm run item-plan` and checked in the game
+(docs/item-mods.md). Moved out of src/arcana.ts, which keeps how a set is built.
+
+### `Child`
+
+```ts
+export interface Child { path: string; attachment?: string }
+```
+
+A particle to hang on another, and the model attachment it is drawn at (none: its parent's first point).
+
+### `ARCANA_SETS`
+
+```ts
+export const ARCANA_SETS: Record<string, ArcanaSet> =
+```
+
+_No description in the source._
+
 ## src/arcana.ts
 
 An arcana as a mod, built from the game's own files: the look of an item a player has not got,
@@ -845,29 +881,7 @@ puts the arcana's files where the plain hero's are:
   until the files it was built from change, so the app builds it again then.
 Not here: the kill effect (a modifier the item adds), the arcana's sounds and voice lines.
 
-### `ArcanaSet`
-
-```ts
-export interface ArcanaSet
-```
-
-_No description in the source._
-
-### `Child`
-
-```ts
-export interface Child { path: string; attachment?: string }
-```
-
-A particle to hang on another, and the model attachment it is drawn at (none: its parent's first point).
-
-### `ARCANA_SETS`
-
-```ts
-export const ARCANA_SETS: Record<string, ArcanaSet> =
-```
-
-_No description in the source._
+Hands on from [`src/arcana-sets.ts`](#srcarcana-setsts): `ARCANA_SETS`.
 
 ### `withChildren`
 
@@ -2601,6 +2615,56 @@ and therefore where a mod has to live.
 ```
 @param langs  a setting left out is left as it is
 ```
+
+## src/gem-colors.ts
+
+The game's own prismatic gem colours, read out of items_game.txt (issue #392). The table keeps
+them in its "colors" section, one block per gem: "unusual_creators_light" with a color_name
+("UnusualCreatorsLight") and a hex_color ("#..."). A colour picker can offer these next to free
+RGB, so "Creator's Light" on an arcana is the colour a real gem gives it.
+
+The section sits near the top of a 50 MB table, so it is found by its line rather than by
+walking every block before it.
+
+### `GemColor`
+
+```ts
+export interface GemColor { key: string; name: string; rgb: Rgb }
+```
+
+One prismatic gem colour.
+
+### `gemName`
+
+```ts
+export function gemName(colorName: string): string
+```
+
+"UnusualCreatorsLight" as "Creators Light"; digits stay one word: "International 2012".
+
+### `rgbOf`
+
+```ts
+export function rgbOf(hex: string): Rgb | null
+```
+
+"#FFAF00" as [255, 175, 0], or null.
+
+### `gemColors`
+
+```ts
+export function gemColors(text: string): GemColor[]
+```
+
+Every prismatic gem colour in the table, in the table's order.
+
+### `findGem`
+
+```ts
+export function findGem(gems: GemColor[], what: string): GemColor | null
+```
+
+The gem whose key or name this is, ignoring case, spaces and an apostrophe; or null.
 
 ## src/hero-grid.ts
 
