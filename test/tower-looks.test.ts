@@ -39,7 +39,7 @@ test('a side gets its files under the default names and is told what a file cann
   const v = itemVisuals(TABLE, '17538')!;
   assert.deepEqual(towerPlan(v.modifiers, 'radiant'), {
     files: [
-      { at: 'models/props_structures/tower_good.vmdl_c', from: 'models/props_structures/tower_dragon_white.vmdl_c' },
+      { at: 'models/props_structures/radiant_tower002.vmdl_c', from: 'models/props_structures/tower_dragon_white.vmdl_c' },
       { at: 'models/props_structures/default/radiant_tower002_dest_lvl1.vmdl_c', from: 'models/props_structures/tower_dragon_wght_dest_lvl1.vmdl_c' },
     ],
     skipped: ['particle_create particles/world_tower/radiant_tower_orb.vpcf'],
@@ -67,7 +67,7 @@ test('the pak holds the game\'s files under the tower\'s names, and says what th
     const paths = [...listVpkPaths(r.vpk)].sort();
     assert.deepEqual(paths, [
       'models/props_structures/dire_tower002.vmdl_c',
-      'models/props_structures/tower_good.vmdl_c',
+      'models/props_structures/radiant_tower002.vmdl_c',
       'particles/dire_fx/dire_tower002_destruction.vpcf_c',
     ]);
     assert.throws(() => buildTowerLook({ pak01, text: TABLE, id: '12937', sides: ['radiant'] }), /has no radiant tower/);
