@@ -15,6 +15,8 @@ import type { MenuItem } from '../../ui/menu.ts';
 import type { LibRecord } from '../../library/types.ts';
 import { pickModsDialog, type Candidate } from './pick-mods.ts';
 import { recolorFromLibrary } from '../catalog/arcana.ts';
+import { labelFor, recLabelKey } from '../../library/labels.ts';
+import { askLabel, clearLabel } from './label.ts';
 import { lib, recById, screen } from './state.ts';
 
 async function moveRecord(id: string, dir: number) {
@@ -147,11 +149,17 @@ export function menuFor(id: string): MenuItem[] | null {
   if (!rec) return null;
   const ordered = lib.order.has(rec.id);
   const remove: MenuItem = { label: L`Удалить`, icon: 'delete', danger: true, onPick: () => deleteRecord(rec.id) };
+  const key = recLabelKey(rec.id);
+  const naming: (MenuItem | false)[] = [
+    { label: L`Подписать`, icon: 'edit', onPick: () => askLabel(key, catalogName(rec.name)) },
+    Boolean(labelFor(key)) && { label: L`Убрать подпись`, icon: 'label_off', onPick: () => clearLabel(key) },
+  ];
   const items: (MenuItem | false | undefined)[] = rec.kind === 'pack' ? [
     // same rule as a mod row: the switch and the delete are on the row, the rest is here
     { label: L`Добавить моды в пак`, icon: 'add', onPick: () => addToPack(rec.id) },
     { label: L`Разобрать на отдельные моды`, icon: 'call_split', onPick: () => disbandPack(rec.id) },
     langDir(rec) && { label: L`Сохранить одним файлом`, icon: 'save', onPick: () => exportRecord(rec.id) },
+    ...naming,
     ordered && { separator: true },
     ...orderItems(rec),
     { separator: true },
@@ -170,6 +178,7 @@ export function menuFor(id: string): MenuItem[] | null {
     langDir(rec) && { label: L`Распаковать в папку`, icon: 'folder_open', onPick: () => unpackRecord(rec.id) },
     (rec.subjects || 0) >= 2 && { label: L`Разобрать по героям`, icon: 'call_split', onPick: () => splitRecord(rec.id) },
     rec.prePatch && { label: L`Убрать метку «до патча»`, icon: 'done', onPick: () => clearPrePatch(rec.id) },
+    ...naming,
     { separator: true },
     remove,
   ];

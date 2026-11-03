@@ -166,6 +166,12 @@ export function ExternalRow({ f, actions }: { f: ExternalRowModel; actions: Libr
             <span className="ms">library_add_check</span>{L`Принять`}
           </button>
         )}
+        {!f.simple && (
+          <button className="btn btn-sm btn-icon" data-extlabel={f.key} title={f.labelled ? L`Изменить подпись` : L`Подписать: своё название видно только здесь`}
+            aria-label={L`Подписать`} onClick={() => actions.external('label', f.key)}>
+            <span className="ms">edit</span>
+          </button>
+        )}
         {f.splittable && (
           <button className="btn btn-sm" data-extsplit={f.key} title={L`Разбить на отдельные моды по героям`}
             onClick={() => actions.external('split', f.key)}>

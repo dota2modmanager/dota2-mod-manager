@@ -86,6 +86,17 @@ export const WINDOW_SETTINGS: Record<string, Check> = {
   everyoneWearsMine: bool,
   favorites: list(str(500), 20000),
   langPromptSeen: bool,
+  modLabels: (v) => {
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return fail('an object');
+    const entries = Object.entries(v);
+    if (entries.length > 5000) return fail('at most 5000 labels');
+    for (const [k, label] of entries) {
+      if (!/^(rec|file):.{1,500}$/.test(k)) return `label key ${k.slice(0, 60)}: expected rec:<id> or file:<name>`;
+      const bad = str(80, 1)(label);
+      if (bad) return `label ${k.slice(0, 60)}: ${bad}`;
+    }
+    return null;
+  },
   panels: either(oneOf(null), json(64 * 1024)),
   pumpkin: bool,
   pumpkinLit: bool,

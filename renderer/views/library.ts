@@ -12,6 +12,7 @@ import { paint } from '../ui/transitions.ts';
 import { refreshNotices } from '../ui/notice.ts';
 import { loadOrder } from '../library/order.ts';
 import { pruneSelection } from '../library/selection.ts';
+import { labels } from '../library/labels.ts';
 import type { LibRecord } from '../library/types.ts';
 import { showLibrary } from '../library/root.tsx';
 import { actions } from './library/actions.ts';
@@ -29,6 +30,7 @@ async function renderLibrary(fresh = false): Promise<void> {
   // re-read rather than trust the boot copy: the banners over the list are about the folder on
   // disk right now, and a mod can go missing between two visits to this screen
   state.settings = await window.api.settings.get();
+  labels.map = state.settings.modLabels || {};
   lib.stuck = res.verifyStuck || [];
   try { lib.repair = await window.api.patch.repairState(); } catch { lib.repair = { state: 'idle' }; }
   await refreshNotices();

@@ -14,6 +14,7 @@ import { memberKey } from '../../library/selection.ts';
 import { pakFileName } from '../../library/order.ts';
 import type { ExternalRowModel, PackRowModel, RowModel, Tag } from '../../library/model.ts';
 import type { Cover, ExternalFile, LibRecord } from '../../library/types.ts';
+import { fileLabelKey, labelFor, recLabelKey } from '../../library/labels.ts';
 import { lib } from './state.ts';
 
 /* Mods that carry item-schema changes: their model installs like any other, but the effects and
@@ -53,10 +54,13 @@ const known = <T>(list: (T | null)[]): T[] => list.filter((x): x is T => x !== n
 export function modRow(rec: LibRecord, index: number): RowModel {
   const cosmetic = isCosmeticRec(rec);
   const place = lib.order.get(rec.id);
+  // the user's own name goes first, and the one the mod came with stays readable under it
+  const label = labelFor(recLabelKey(rec.id));
+  const kind = cosmetic ? catName(COSMETIC_PREFIX + rec.slot) + effectNames(rec) : catName(rec.categoryId);
   return {
     kind: 'mod',
     id: rec.id,
-    name: cosmetic ? cosmeticName(rec.name) : rec.name,
+    name: label || (cosmetic ? cosmeticName(rec.name) : rec.name),
     styleLabel: rec.styleLabel || null,
     enabled: rec.enabled,
     selected: lib.sel.has(rec.id),
@@ -76,7 +80,7 @@ export function modRow(rec: LibRecord, index: number): RowModel {
       prePatchTag(rec),
       rec.updateAvailable ? { cls: 'update', icon: 'upgrade', text: L`новая версия`, title: L`Автор выложил новую версию мода. Обнови его правой кнопкой: файл скачается заново, а место в порядке загрузки и включённость останутся.` } : null,
     ]),
-    meta: cosmetic ? catName(COSMETIC_PREFIX + rec.slot) + effectNames(rec) : catName(rec.categoryId),
+    meta: label ? `${catalogName(rec.name)} · ${kind}` : kind,
     pakFile: pakFileName(rec),
     toggle: isFontRec(rec) ? null : {
       title: isCursorRec(rec) ? L`Курсор в игре может быть только один — этот выключит остальные`
@@ -102,7 +106,7 @@ export function packRow(rec: LibRecord, index: number): PackRowModel {
   return {
     kind: 'pack',
     id: rec.id,
-    name: rec.name,
+    name: labelFor(recLabelKey(rec.id)) || rec.name,
     enabled: rec.enabled,
     selected: lib.sel.has(rec.id),
     open: lib.open.has(rec.id),
@@ -128,16 +132,19 @@ export function packRow(rec: LibRecord, index: number): PackRowModel {
 
 export function externalRow(f: ExternalFile): ExternalRowModel {
   const simple = f.kind === 'cursor' || f.kind === 'font'; // whole-folder sets: adopted, never switched
-  const name = f.kind === 'cursor' ? L`Курсор в игре` : f.name;
+  const own = simple ? null : labelFor(fileLabelKey(f.key));
+  const name = f.kind === 'cursor' ? L`Курсор в игре` : own || f.name;
   const label: Tag | null = f.duplicateOf
     ? { cls: 'dup', icon: 'content_copy', text: L`копия`, title: L`Тот же файл уже стоит как «${f.duplicateOf}» — эта копия лишняя` }
     : f.match ? { cls: 'match', text: matchLabel(f.match) }
       : f.info ? { cls: '', text: f.info } : null;
   // what the row is, then where it lives: the file name is what the user sees in the folder
-  const sub = f.kind === 'cursor' ? 'resource/cursor'
+  const what = f.kind === 'cursor' ? 'resource/cursor'
     : f.kind === 'font' ? L`шрифт · panorama/fonts`
       : f.duplicateOf ? L`копия «${f.duplicateOf}»`
         : f.match ? L`мод из каталога` : f.info ? L`опознан по содержимому` : L`внешний файл`;
+  // under the user's own name, the name the app found for the file is still worth reading
+  const sub = own && f.name !== f.fileName ? `${f.name} · ${what}` : what;
   return {
     key: f.key,
     name,
@@ -153,5 +160,6 @@ export function externalRow(f: ExternalFile): ExternalRowModel {
       title: f.match ? L`Привязать к каталогу и управлять как обычным модом` : L`Взять файл к себе — дальше как у обычного мода`,
     },
     splittable: (f.subjects || 0) >= 2,
+    labelled: Boolean(own),
   };
 }
