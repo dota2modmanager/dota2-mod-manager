@@ -26,6 +26,8 @@ import { showSettings, type SettingsActions, type SettingsModel } from '../setti
 
 let model: SettingsModel | null = null;
 let key = 0;
+/** the last run of "Repair the app", kept while the page redraws */
+let repair: SettingsModel['repair'] = null;
 
 registerView('settings', () => renderSettings(true));
 
@@ -67,6 +69,7 @@ async function renderSettings(fresh = false): Promise<void> {
     adult: adultShown(),
     adultHint: adultHint(),
     version,
+    repair,
   };
   await paint(draw);
 }
@@ -218,6 +221,15 @@ const actions: SettingsActions = {
     if (r?.cancelled) return;
     if (r?.error) toast(r.error, 'error', 7000);
     else toast(L`Отчёт сохранён`);
+  },
+  repair: async () => {
+    if (repair?.busy) return;
+    repair = { busy: true, steps: [] };
+    if (model) { model = { ...model, repair }; draw(); }
+    const steps = await window.api.patch.repairApp().catch((err) => [{ id: 'game', ok: false, text: err instanceof Error ? err.message : String(err) }]);
+    repair = { busy: false, steps };
+    toast(steps.every((s) => s.ok) ? L`Всё в порядке` : L`Починка нашла проблемы`, steps.every((s) => s.ok) ? 'ok' : 'warn');
+    renderSettings();
   },
   whatsNew: () => { showWhatsNew({ force: true }); },
   support: () => { showSupport(); },

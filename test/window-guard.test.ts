@@ -162,7 +162,7 @@ const VALID: Record<string, unknown[][]> = {
   'presets:importFile': [['C:\\Users\\me\\Downloads\\build.d2mm']],
   'pumpkin:redeem': [['K7QX-M2PA-9HRT-WZ4N']], 'pumpkin:prizeAgain': [[]], 'pumpkin:hasPrize': [[]],
   'config:state': [[]], 'config:noticeSeen': [['notice-2026-10']],
-  'patch:state': [[]], 'patch:repairState': [[]], 'patch:repairNow': [[]], 'patch:repairSeen': [[]], 'patch:setEnabled': [[true]],
+  'patch:state': [[]], 'patch:repairState': [[]], 'patch:repairNow': [[]], 'patch:repairApp': [[]], 'patch:repairSeen': [[]], 'patch:setEnabled': [[true]],
   'schema:refresh': [[]], 'cosmetics:slots': [[]],
   'cosmetics:heroPortraits': [[['1', '2']], [[1, 2]]], 'cosmetics:heroPortraitsByName': [[['npc_dota_hero_axe']]],
   'cosmetics:icons': [[['Shade of the Abyss']]],

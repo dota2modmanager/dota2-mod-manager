@@ -17,6 +17,7 @@ the code, not in this page.
 | [`src/app-context.ts`](#srcapp-contextts) | Everything the running app hands its IPC modules: the services src/main.ts builds at start, and the |
 | [`src/app-log.ts`](#srcapp-logts) | The app's own log: a small file every install keeps, so a support report (src/diagnostics.ts) |
 | [`src/app-page.ts`](#srcapp-pagets) | The page the main window loads. |
+| [`src/app-repair.ts`](#srcapp-repairts) | One button for when the app is in a strange state (issue #431). The fixes used to be spread |
 | [`src/arcana-base-color.ts`](#srcarcana-base-colorts) | An arcana base (src/arcana-bases.ts) in a colour of the user's: Terrorblade's, for the arcana |
 | [`src/arcana-base-store.ts`](#srcarcana-base-storets) | The arcana bases (src/arcana-bases.ts) brought down from their repository and kept here, so a |
 | [`src/arcana-bases.ts`](#srcarcana-basests) | Arcana bases: an arcana rebuilt by hand in Valve's Workshop Tools so that it works as the hero's |
@@ -290,6 +291,42 @@ export function loadAppPage(win: Pick<BrowserWindow, 'loadURL' | 'loadFile'>, { 
 
 Loads the page into the window and returns its address, the one the navigation guard lets
 through, or null when a checkout was never built (an installer always carries the page).
+
+## src/app-repair.ts
+
+One button for when the app is in a strange state (issue #431). The fixes used to be spread
+over three places: the patch banner put the game back, a missing pak only showed as a mod that
+did nothing in game, and stale pictures needed the toolchain removed and installed again. This
+runs them in order and answers a line per step, so the user sees what was wrong and what the
+app did about it.
+
+Nothing here deletes a mod or a preset. The caches it clears are the ones the app fills again by
+itself (catalog pictures, previews, icons out of the game); the download cache is the user's to
+clear, because filling it again costs them the downloads.
+
+### `RepairStep`
+
+```ts
+export interface RepairStep
+```
+
+One line of the result: which step, whether it found the app healthy, what it says.
+
+### `missingMods`
+
+```ts
+export function missingMods(records: Pick<LibRecord, 'name' | 'enabled' | 'files'>[], onDisk: (relPath: string) => string): string[]
+```
+
+Switched-on mods with a pak the mod folder no longer has, in any of its on/off spellings.
+
+### `repairApp`
+
+```ts
+export async function repairApp({ repairAfterPatch, patchRepair, records, onDisk, clearCaches }: { repairAfterPatch: (reason: unknown) => Promise<void>; patchRepair: () => PatchRepair; records: () => Pick<LibRecord, 'name' | 'enabled' | 'files'>[]; /** where a mod-folder file is right now (Installer.langFileOnDisk) */ onDisk: (relPath: string) => string; clearCaches: () => void; }): Promise<RepairStep[]>
+```
+
+Run the steps in order; a step that throws is a failed line, not a failed repair.
 
 ## src/arcana-base-color.ts
 

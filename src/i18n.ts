@@ -239,6 +239,13 @@ const EN = {
   'подготовка Wine': 'setting up Wine',
   'сборка пустой модели': 'compiling an empty model',
   'Копия Workshop Tools': 'Copy of the Workshop Tools',
+  'Dota 2 запущена: закрой игру и нажми ещё раз': 'Dota 2 is running: close the game and press it again',
+  'Не удалось вернуть патч игры': 'Could not put the game patch back',
+  'Патч игры возвращён': 'Game patch put back',
+  'Патч игры на месте': 'Game patch is in place',
+  'Файлов нет в папке модов: {0}. Удали и поставь их заново': 'Files missing from the mods folder: {0}. Remove those mods and install them again',
+  'Файлы всех модов на месте': 'Every mod has its files',
+  'Картинки и превью очищены, приложение соберёт их заново': 'Pictures and previews cleared; the app builds them again',
 } satisfies Record<string, string>;
 
 /** The table as a lookup: any Russian string, its English or nothing. */

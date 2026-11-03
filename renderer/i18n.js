@@ -854,7 +854,7 @@ const EN = {
 
   // ---------- diagnostics ----------
   'Диагностика': 'Diagnostics',
-  'Экспортировать отчёт': 'Export report',
+  'Экспортировать отчёт': 'Export report', 'Чиню…': 'Repairing…', 'Починить приложение': 'Repair the app', 'Починка возвращает патч игры, ищет пропавшие файлы модов и очищает картинки. Моды и пресеты не трогает.': 'Repair puts the game patch back, looks for missing mod files and clears the pictures. Your mods and presets stay as they are.', 'Не вышло? Отправь отчёт: в нём видно, на каком шаге.': 'Still broken? Send the report: it shows which step failed.', 'Всё в порядке': 'All good', 'Починка нашла проблемы': 'Repair found problems',
   'Отчёт сохранён': 'Report saved',
 };
 

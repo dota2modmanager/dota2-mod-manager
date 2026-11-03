@@ -59,6 +59,8 @@ window.api.patch.onRepair((st) => {
   // an update can change the map under a whole-map terrain (core/terrain-age.ts)
   if (st.state === 'done') switchOffStaleTerrains().then((off: unknown[]) => { if (off.length && state.view === 'library') render(); });
   if (state.view === 'library') { render(); return; }
+  // a button started it (Settings' "Repair the app"), and that button shows what came of it
+  if (st.reason === 'manual') return;
   if (st.state === 'waiting') toast(L`Dota обновилась — вернём моды, как только закроешь игру`, 'warn', 8000);
   else if (st.state === 'failed') toast(L`Dota обновилась, вернуть моды не вышло — загляни в «Мои моды»`, 'error', 8000);
   else if (st.state === 'done') toast(L`Dota обновилась — моды на месте`, 'ok', 6000);

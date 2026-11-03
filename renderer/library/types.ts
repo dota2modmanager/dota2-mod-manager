@@ -94,4 +94,6 @@ export interface RepairState {
   healed?: unknown[];
   /** the mods whose files the patch changed, by name */
   touched?: { build: string | null; mods: string[] };
+  /** what started it: 'manual' is a button the user pressed, which answers for itself */
+  reason?: unknown;
 }
