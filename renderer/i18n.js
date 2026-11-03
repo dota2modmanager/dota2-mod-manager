@@ -625,6 +625,10 @@ const EN = {
   // ---------- presets: sharing ----------
   'Скопировать': 'Copy',
   'Сохранить файлом…': 'Save as a file…',
+  'Скопировать картинку': 'Copy the picture',
+  'Обложки модов и QR-код на ту же ссылку. Вставь в Discord или на стрим.': 'Covers of the mods and a QR code of the same link. Paste it into Discord or a stream.',
+  'Не получилось скопировать картинку': 'Could not copy the picture',
+  'Наведи камеру телефона': 'Point a phone camera here',
   'Обновить по текущему состоянию': 'Update from what is on now',
   'Открывается в менеджере и ставит моды из каталога.': 'Opens in the manager and installs the mods from the catalog.',
   'В пресете только свои моды — ссылка их не донесёт.': 'This preset holds only mods of your own, and a link cannot carry those.',

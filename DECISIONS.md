@@ -64,6 +64,11 @@ second implementation of a format whose only test is whether the game draws the 
 encoder would be two. It has no dependencies of its own, and the app uses its decoder and encoder
 and nothing else.
 
+`qrcode-generator` was added on 2026-11-03 for the QR code on a preset's picture (issue #433).
+It is built into the window, has no dependencies, makes no network call and writes nothing: it
+turns the preset's link into a grid of dark and light squares. A QR encoder is Reed-Solomon codes,
+forty sizes and eight masks, and a mistake in one only shows as a phone that cannot read it.
+
 `eslint` was added on 2026-09-10 and is the one case where writing it here would have been the
 wrong answer. Two releases shipped in which no mod could be installed, because splitting a file
 left a function call pointing at a function that had stayed behind. Every test passed: they read
@@ -101,7 +106,7 @@ It also flips a check on the OpenSSF Scorecard, which recognises fuzzing in Java
 through a short list of libraries and not through generators of our own. That is a real reason and
 not the reason: the shrinking is.
 
-Seven more came on 2026-09-27 with the decision below, and `axe-core` on 2026-10-11 (above), thirteen
+Seven more came on 2026-09-27 with the decision below, `axe-core` on 2026-10-11 (above) and `qrcode-generator` on 2026-11-03 (above), fourteen
 devDependencies in all. `vite` and
 `@vitejs/plugin-react` build the window's page. `react`, `react-dom` and `motion` are written into
 that page once a screen imports them, which makes them part of the app in every sense but the
