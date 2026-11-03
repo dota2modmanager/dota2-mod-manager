@@ -17,6 +17,9 @@
  * A tenth, 'blood', comes after it once the pumpkin has taken a key (settings `blood`): the bloody
  * night, its colours in themes.css and its dressing in ui/blood.ts. It is not tied to the calendar:
  * it was earned with a key, and it stays earned.
+ *
+ * One more, 'custom', is the user's own, read from a JSON file (ui/custom-theme.ts, issue #432): it
+ * joins the round once one is loaded, and the mascot's right-click menu loads, saves and drops it.
  */
 import { state } from '../core/store.ts';
 import { RAW_BASE } from '../core/constants.ts';
@@ -25,10 +28,12 @@ import { lookOn } from './season.ts';
 import { dressHalloween } from './halloween.ts';
 import { dressBlood } from './blood.ts';
 import { pumpkinMascot } from './pumpkin-art.ts';
+import { bindThemeMenu, customCss, hasCustom } from './theme-menu.ts';
 
 const HEROES = ['ursa', 'brew', 'fura', 'storm', 'invoker', 'meepo', 'bh', 'axe'];
 const SECRET = 'secret';
 const BLOOD = 'blood';
+const CUSTOM = 'custom';
 /** knocks on the mascot that bring the pumpkin out */
 const KNOCKS = 20;
 /** how long the rainbow wears each hero */
@@ -36,7 +41,7 @@ const HUE_MS = 6000;
 
 const unlocked = () => state.settings?.secret === true;
 const bled = () => state.settings?.blood === true;
-const themes = () => [...HEROES, ...(unlocked() ? [SECRET] : []), ...(bled() ? [BLOOD] : [])];
+const themes = () => [...HEROES, ...(hasCustom() ? [CUSTOM] : []), ...(unlocked() ? [SECRET] : []), ...(bled() ? [BLOOD] : [])];
 /** the theme the window wears by name: the hero's, or 'secret' whatever look that has today */
 let current = HEROES[0];
 
@@ -83,6 +88,7 @@ function applyTheme(name: unknown): string {
   current = theme;
   const look = theme === SECRET ? lookOn(new Date()) : null;
   document.documentElement.dataset.theme = look ?? theme;
+  customCss(theme === CUSTOM);
   if (look === 'rainbow') startHues();
   else {
     stopHues();
@@ -92,6 +98,11 @@ function applyTheme(name: unknown): string {
   dressHalloween(look === 'halloween');
   dressBlood(theme === BLOOD);
   return theme;
+}
+
+/** Wear the user's own theme now, or the first hero's once it is dropped: the mascot's menu calls this. */
+export function wearCustom(on: boolean): void {
+  window.api.settings.set('theme', applyTheme(on ? CUSTOM : HEROES[0]));
 }
 
 /** Wear the secret theme now: the pumpkin calls this the moment its lock opens. */
@@ -141,6 +152,7 @@ export function initTheme(): void {
   applyTheme(state.settings?.theme);
   const mascot = document.querySelector<HTMLElement>('#themeMascot');
   if (!mascot) return;
+  bindThemeMenu(mascot, () => current === CUSTOM, wearCustom);
   // Knocks on the mascot, this session, counted from the first: at the twentieth the pumpkin
   // rolls out (ui/pumpkin.ts). A click that lands mid-spin still counts as a knock.
   let knocks = 0;
