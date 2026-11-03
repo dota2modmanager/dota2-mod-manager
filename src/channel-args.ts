@@ -181,6 +181,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'tools:state': [], 'tools:install': [str(100, 1)], 'tools:remove': [str(100, 1)],
   // resourcecompiler.exe (src/ipc-compiler.ts): its path comes from a dialog, never from here
   'compiler:state': [], 'compiler:browse': [], 'compiler:forget': [], 'compiler:prepare': [], 'compiler:check': [], 'compiler:keep': [], 'compiler:removeKept': [],
+  'map:state': [], 'map:install': [oneOf('towers', 'trees'), optional(str(40)), optional(str(40))],
   'arcana:state': [], 'arcana:install': [oneOf(...ARCANA_WINDOWS), list(num(0, 255), 3), oneOf('mod', 'recolor')],
   // the small errands (src/ipc-misc.ts)
   'misc:openLangFolder': [], 'misc:openCacheFolder': [], 'misc:openToolsFolder': [optional(str(260, 1))],

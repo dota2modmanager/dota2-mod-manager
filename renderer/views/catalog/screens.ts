@@ -2,6 +2,7 @@
  * the search results, one category, one slot of free looks. Each works out its model and hands it
  * over inside paint(), so a view transition captures the new screen whole. */
 import { arcanaLeads } from './arcana.ts';
+import { mapLookLead } from './map-looks.ts';
 import { RAW_BASE, COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.ts';
 import { state } from '../../core/store.ts';
 import { pickedIn, firstCosmeticSlots } from '../../core/installed.ts';
@@ -172,6 +173,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
 
   // the arcanas the app builds itself lead the tools, unless the toolbar narrows them away
   const lead = categoryId === 'tools' && !f.favOnly ? await arcanaLeads() : null;
+  const mapLead = !f.favOnly ? await mapLookLead(categoryId) : null;
   await paint(() => showScreen({
     kind: 'list',
     key: `cat:${categoryId}`,
@@ -180,6 +182,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
     back: byHero && f.hero ? 'heroes' : undefined,
     toolbar,
     lead: lead?.filter((a) => !f.installedOnly || a.installed) ?? null,
+    mapLead: mapLead && (!f.installedOnly || mapLead.installed) ? mapLead : null,
     mods: { heading: false, mods, grouped, emptyText: NOTHING() },
     cosmetics: null,
   }, actions));

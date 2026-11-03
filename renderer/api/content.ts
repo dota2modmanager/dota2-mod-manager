@@ -139,6 +139,24 @@ export interface ArcanaApi {
   install: (set: string, color: [number, number, number], mode: ArcanaMode) => Promise<Reply<{ record: LibRecord }>>;
 }
 
+/** A look a side of the map can take: a tower item or a tree set (src/map-looks-service.ts). */
+export interface MapOption { id: string; name: string; sides: ('radiant' | 'dire')[] }
+
+/** Towers or trees. */
+export type MapKind = 'towers' | 'trees';
+
+/** Towers and trees from the game's own looks, per side (src/map-looks-service.ts). */
+export interface MapLooksApi {
+  /** the looks of each kind, and the record built before for each */
+  state: () => Promise<Reply<{
+    towers: MapOption[];
+    trees: MapOption[];
+    installed: Record<MapKind, { id: string; radiant: string | null; dire: string | null; enabled: boolean } | null>;
+  }>>;
+  /** build a kind with a look per side (null: as in the game) and put it in My mods */
+  install: (kind: MapKind, radiant: string | null, dire: string | null) => Promise<Reply<{ record: LibRecord }>>;
+}
+
 /** A mod's own video, and the still the window decodes out of it. */
 export interface PreviewApi {
   video: (key: string) => Promise<Uint8Array | null>;

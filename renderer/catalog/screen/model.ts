@@ -3,6 +3,8 @@
  * markup in one place per shape. */
 import type { Filters, Mod } from '../types.ts';
 import type { ArcanaCardModel } from '../arcana/ArcanaCard.tsx';
+import type { MapLookCardModel } from '../map/MapLookCard.tsx';
+import type { MapKind } from '../../api/content.ts';
 import type { CosmeticItem } from '../cosmetic/CosmeticCard.tsx';
 
 export interface ToolbarModel {
@@ -62,6 +64,8 @@ export type ScreenModel =
     note?: string;
     /** a tool the app has in it, first in the grid (the arcana's, among the tools) */
     lead?: ArcanaCardModel[] | null;
+    /** towers or trees out of the game's own looks, first in those two categories */
+    mapLead?: MapLookCardModel | null;
     mods: (GridModel & { heading: boolean }) | null;
     cosmetics: { items: CosmeticItem[]; emptyText?: string; more?: string } | null;
   }
@@ -106,4 +110,5 @@ export interface ScreenActions {
   cosmeticFilter: (patch: { sort?: string; installedOnly?: boolean; favOnly?: boolean; search?: string }) => void;
   openHero: (hero: string, card: HTMLElement) => void;
   openArcana: (set: string, card: HTMLElement) => void;
+  openMapLooks: (kind: MapKind, card: HTMLElement) => void;
 }
