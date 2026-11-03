@@ -10,6 +10,7 @@
  */
 import { buildVpk, entryAt, sharedVpkIndex } from './vpk.ts';
 
+/** The side of the map a tree stands on. */
 export type Side = 'radiant' | 'dire';
 
 /** The models each side's trees wear on the default map, the most used first. */
