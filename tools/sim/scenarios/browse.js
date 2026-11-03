@@ -105,8 +105,9 @@ module.exports = async function browse(sim) {
     const shown = await sim.js(`(() => {
       const pane = document.querySelector('.view-pane[data-pane="catalog"]');
       return {
-        // a long list is drawn a page at a time, and its marker carries the whole length
-        cards: pane.querySelector('.grid-more') ? Number(pane.querySelector('.grid-more').dataset.total) : pane.querySelectorAll('.grid .card').length,
+        // a long list is drawn a page at a time, and its marker carries the whole length; the app's
+        // own cards first in a category (an arcana's colours, towers out of the game) are not mods
+        cards: pane.querySelector('.grid-more') ? Number(pane.querySelector('.grid-more').dataset.total) : pane.querySelectorAll('.grid .card:not([data-key^="builtin|"])').length,
         // Heroes opens on one tile per hero, each saying how many mods it holds
         tiles: pane.querySelector('#heroGrid')
           ? [...pane.querySelectorAll('#heroGrid .hero-count')].reduce((n, t) => n + Number(t.textContent), 0) : null,
