@@ -5107,10 +5107,10 @@ The UI scale, kept inside a range where the layout still holds together.
 ### `ZOOM_MAX`
 
 ```ts
-export const ZOOM_MAX = 1.6
+export const ZOOM_MAX = 2.5
 ```
 
-_No description in the source._
+2.5 so a 3840 px screen at 100% Windows scaling can be filled (issue #388).
 
 ### `clampZoom`
 
@@ -5123,10 +5123,24 @@ A scale the layout can take: anything else, including nonsense, becomes the near
 ### `windowFit`
 
 ```ts
-export function windowFit(workArea: { width: number; height: number } | null | undefined): typeof DESIGNED
+export function windowFit(workArea: { width: number; height: number } | null | undefined, scale = 1): typeof DESIGNED
 ```
 
-The window's size and minimums for a work area, or the designed size when there is none.
+The window's size and minimums for a work area, or the designed size when there is none. A
+scale above 1 on a screen wider than WIDE grows the window with its content, so 1.3 is not a
+1360-pixel window holding a 1046-pixel layout.
+
+### `startScale`
+
+```ts
+export function startScale(workArea: { width: number; height: number } | null | undefined): number
+```
+
+The scale a first launch starts at (issue #388). On a 1440p or 4K screen at 100% Windows
+scaling the designed window filled a third of it and its tiles were tiny, and people took the
+app for broken before they found the slider. Above WIDE: about 80% of the scale that fills the
+work area, in steps of 0.05, so the window still has room around it. 2560x1400 starts at 1.3,
+3840x2100 at 1.95.
 
 ### `workAreaFrom`
 
@@ -5139,7 +5153,7 @@ A work area written "1366x728" (MM_WORKAREA, tools/sim profiles), standing in fo
 ### `createMainWindow`
 
 ```ts
-export function createMainWindow({ appRoot, settings, diag, workArea = null, quiet = false, pageExists }: { appRoot: string; settings: Pick<Settings, 'get' | 'set'>; diag: (msg: string) => void; workArea?: { width: number; height: number } | null; quiet?: boolean; pageExists?: (p: string) => boolean; }): BrowserWindow
+export function createMainWindow({ appRoot, settings, diag, workArea = null, quiet = false, pageExists, firstRun = false }: { appRoot: string; settings: Pick<Settings, 'get' | 'set'>; diag: (msg: string) => void; workArea?: { width: number; height: number } | null; quiet?: boolean; pageExists?: (p: string) => boolean; firstRun?: boolean
 ```
 
 Open the window on the app's page, locked to it, with Ctrl +/-/0 scaling the content.
@@ -5149,6 +5163,7 @@ Open the window on the app's page, locked to it, with Ctrl +/-/0 scaling the con
 @param workArea   stands in for the screen's (MM_WORKAREA); otherwise the primary display is asked
 @param quiet      created hidden (MM_QUIET), so a measuring run never takes over the screen
 @param pageExists stands in for the disk when a test asks whether the page was built
+@param firstRun   no settings.json was there before this start: the scale is picked for the screen
 ```
 
 ## src/map-looks-service.ts

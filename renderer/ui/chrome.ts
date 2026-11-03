@@ -22,7 +22,7 @@ type PanelFold = 'topFolded' | 'bottomFolded' | 'railFolded';
 // the wheel was turning. Ctrl +/-/0 come from src/main-window.ts (there they also block Electron's own
 // zoom accelerators); Ctrl + wheel and the slider in Settings land here.
 const SCALE_MIN = 70;
-const SCALE_MAX = 160;
+const SCALE_MAX = 250; // src/main-window.ts ZOOM_MAX
 export const clampScale = (pct: unknown): number => Math.min(SCALE_MAX, Math.max(SCALE_MIN, Math.round(Number(pct) / 5) * 5));
 export const currentScalePct = (): number => Math.round((Number(state.settings?.uiScale) || 1) * 100);
 

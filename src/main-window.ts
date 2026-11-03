@@ -18,7 +18,8 @@ import type { Settings } from './settings.ts';
 
 /** The UI scale, kept inside a range where the layout still holds together. */
 export const ZOOM_MIN = 0.7;
-export const ZOOM_MAX = 1.6;
+/** 2.5 so a 3840 px screen at 100% Windows scaling can be filled (issue #388). */
+export const ZOOM_MAX = 2.5;
 
 /** A scale the layout can take: anything else, including nonsense, becomes the nearest one or 1. */
 export function clampZoom(v: unknown): number {
@@ -46,16 +47,38 @@ const DESIGNED = { width: 1360, height: 860, minWidth: 1020, minHeight: 640 };
  * The minimums are clamped too. A minimum taller than the screen is not a floor, it is a
  * guarantee of the same overflow, and it takes away the one thing the person can do about it.
  */
-/** The window's size and minimums for a work area, or the designed size when there is none. */
-export function windowFit(workArea: { width: number; height: number } | null | undefined): typeof DESIGNED {
+/**
+ * The window's size and minimums for a work area, or the designed size when there is none. A
+ * scale above 1 on a screen wider than WIDE grows the window with its content, so 1.3 is not a
+ * 1360-pixel window holding a 1046-pixel layout.
+ */
+export function windowFit(workArea: { width: number; height: number } | null | undefined, scale = 1): typeof DESIGNED {
   const { width: aw, height: ah } = workArea || { width: 0, height: 0 };
   if (!(aw > 0 && ah > 0)) return { ...DESIGNED };
+  const grow = aw > WIDE && scale > 1 ? scale : 1;
   return {
-    width: Math.min(DESIGNED.width, aw),
-    height: Math.min(DESIGNED.height, ah),
+    width: Math.min(Math.round(DESIGNED.width * grow), aw),
+    height: Math.min(Math.round(DESIGNED.height * grow), ah),
     minWidth: Math.min(DESIGNED.minWidth, aw),
     minHeight: Math.min(DESIGNED.minHeight, ah),
   };
+}
+
+/** Up to this many CSS pixels wide, a screen starts at scale 1. */
+const WIDE = 2000;
+
+/**
+ * The scale a first launch starts at (issue #388). On a 1440p or 4K screen at 100% Windows
+ * scaling the designed window filled a third of it and its tiles were tiny, and people took the
+ * app for broken before they found the slider. Above WIDE: about 80% of the scale that fills the
+ * work area, in steps of 0.05, so the window still has room around it. 2560x1400 starts at 1.3,
+ * 3840x2100 at 1.95.
+ */
+export function startScale(workArea: { width: number; height: number } | null | undefined): number {
+  const { width: aw, height: ah } = workArea || { width: 0, height: 0 };
+  if (!(aw > WIDE && ah > 0)) return 1;
+  const fills = Math.min(aw / DESIGNED.width, ah / DESIGNED.height);
+  return clampZoom(Math.max(1, Math.floor(fills * 0.8 * 20) / 20));
 }
 
 /** A work area written "1366x728" (MM_WORKAREA, tools/sim profiles), standing in for a smaller screen. */
@@ -78,22 +101,29 @@ function zoomFor(key: string, current: number): number | null {
  * @param workArea   stands in for the screen's (MM_WORKAREA); otherwise the primary display is asked
  * @param quiet      created hidden (MM_QUIET), so a measuring run never takes over the screen
  * @param pageExists stands in for the disk when a test asks whether the page was built
+ * @param firstRun   no settings.json was there before this start: the scale is picked for the screen
  */
-export function createMainWindow({ appRoot, settings, diag, workArea = null, quiet = false, pageExists }: {
+export function createMainWindow({ appRoot, settings, diag, workArea = null, quiet = false, pageExists, firstRun = false }: {
   appRoot: string;
   settings: Pick<Settings, 'get' | 'set'>;
   diag: (msg: string) => void;
   workArea?: { width: number; height: number } | null;
   quiet?: boolean;
   pageExists?: (p: string) => boolean;
+  firstRun?: boolean;
 }): BrowserWindow {
   const { app, BrowserWindow, dialog, screen, shell } = electron();
   let area = workArea;
   // no display info: better the designed size than no window at all
   if (!area) { try { area = screen.getPrimaryDisplay().workAreaSize; } catch { area = null; } }
+  // once the user has moved the slider or pressed Ctrl +/-, the scale is theirs
+  if (firstRun && startScale(area) !== 1) {
+    settings.set('uiScale', startScale(area));
+    diag(`first run on a ${area?.width}x${area?.height} work area: scale ${startScale(area)}`);
+  }
 
   const win = new BrowserWindow({
-    ...windowFit(area),
+    ...windowFit(area, clampZoom(settings.get('uiScale'))),
     backgroundColor: '#050506',
     autoHideMenuBar: true,
     frame: false,
