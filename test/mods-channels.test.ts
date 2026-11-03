@@ -138,7 +138,8 @@ test('a switched-on mod that hides another one\'s files is named on that row, an
   const first = s.pak('pak30', [['models/heroes/pudge/pudge.vmdl_c', 'version one']], { name: 'First' })!;
   const second = s.pak('pak31', [['models/heroes/pudge/pudge.vmdl_c', 'version two']], { name: 'Second' })!;
   let { installed } = await s.list();
-  assert.deepEqual(installed.find((r) => r.id === second.id)!.coveredBy, [{ name: 'First', files: 1 }]);
+  assert.deepEqual(installed.find((r) => r.id === second.id)!.coveredBy,
+    [{ key: first.id, name: 'First', files: 1, paths: ['models/heroes/pudge/pudge.vmdl_c'] }]);
   assert.equal(installed.find((r) => r.id === first.id)!.coveredBy, undefined, 'the game mounts the lower slot first, so it wins');
 
   s.installer.setEnabled(first.files, false, first.id);

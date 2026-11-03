@@ -11,8 +11,12 @@ export type Match = { categoryId: string; name: string; styleLabel?: string | nu
 
 /** Two mods can carry the same file, and the one loaded first wins it. */
 export interface Cover {
+  /** the winner's record id or foreign-file key (src/installer-slots.ts coverage) */
+  key?: string;
   name: string;
   files: number;
+  /** which files it takes, sorted, at most COVER_PATHS of them */
+  paths?: string[];
 }
 
 export interface Member {

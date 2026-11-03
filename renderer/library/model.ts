@@ -9,6 +9,8 @@ export interface Tag {
   text: string;
   icon?: string;
   title?: string;
+  /** the pill opens a window: 'covers' is the list of who covers the row (views/library/covers.ts) */
+  opens?: 'covers';
 }
 
 /** A row's picture: a preview, a picture fetched by name when it scrolls near, or only a glyph. */
@@ -152,6 +154,8 @@ export interface LibraryActions {
   adopt: (id: string) => Promise<void>;
   menu: (id: string) => { label?: string; icon?: string; separator?: boolean; disabled?: boolean; danger?: boolean; onPick?: () => void }[] | null;
   reorder: (id: string, to: number) => Promise<void>;
+  /** the window that lists who covers a row, by record id or foreign-file key */
+  covers: (key: string) => void;
   banner: (id: string, data?: string) => Promise<void>;
   enableAll: (on: boolean) => void;
   disableCosmetics: () => void;

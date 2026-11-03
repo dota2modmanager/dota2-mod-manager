@@ -61,7 +61,7 @@ export function ModRow({ r, masterOff, actions, motionKey }: RowProps & Moves & 
         <div className="lib-name">
           <span title={r.cosmetic?.name || r.name}>{catalogName(r.name)}</span>
           {r.styleLabel && <>{' '}<span className="lib-style-label" title={r.styleLabel}>({catalogLabel(r.styleLabel)})</span></>}
-          <Tags tags={r.tags} />
+          <Tags tags={r.tags} onOpen={() => actions.covers(r.id)} />
         </div>
         <div className="lib-meta"><span>{r.meta}</span>{r.pakFile && <PakFile name={r.pakFile} />}</div>
       </div>
@@ -155,7 +155,7 @@ export function ExternalRow({ f, actions }: { f: ExternalRowModel; actions: Libr
     <div className={`lib-row ${f.enabled ? '' : 'disabled'} ${f.dup ? 'dup' : ''}`}>
       <Thumb thumb={f.thumb} cls="lib-thumb" />
       <div className="lib-info">
-        <div className="lib-name">{f.name}<Tags tags={f.tags} /></div>
+        <div className="lib-name">{f.name}<Tags tags={f.tags} onOpen={() => actions.covers(f.key)} /></div>
         <div className="lib-meta">{f.fileName && <span>{f.fileName}</span>}{f.size && <span>{f.size}</span>}<span>{f.sub}</span></div>
       </div>
       <div className="lib-actions">

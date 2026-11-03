@@ -3412,7 +3412,7 @@ A record's slot as a number, or null for a mod that lives outside a numbered pak
 ### `coverage`
 
 ```ts
-export function coverage(inst: Installer, mods: CoverageMod[]): Map<string, { name: string; files: number }[]>
+export function coverage(inst: Installer, mods: CoverageMod[]): Map<string, Cover[]>
 ```
 
 Which mods are quietly covering which, file by file.
@@ -3429,8 +3429,25 @@ ship, which is why the CRC decides and a shared path on its own does not.
 enabled mods only - a switched-off mod is renamed on disk and the game never sees it.
 Keyed rather than named, because two copies of the same mod in two slots share a name
 and are exactly the case worth reporting.
-@returns {Map<string, Array<{name: string, files: number}>>} mod key -> who covers it
+@returns {Map<string, Cover[]>} mod key -> who covers it, worst first, with the paths each one
+takes (sorted, at most COVER_PATHS of them, so the window can show which files and not only how many)
 ```
+
+### `COVER_PATHS`
+
+```ts
+export const COVER_PATHS = 200
+```
+
+How many of the paths a winner takes are listed: the count stays whole, the list does not.
+
+### `Cover`
+
+```ts
+export interface Cover { key: string; name: string; files: number; paths: string[] }
+```
+
+A mod that covers another: who (its key, as the caller gave it, and name), how many files, and which.
 
 ### `freeSlotBelow`
 
