@@ -152,6 +152,7 @@ the code, not in this page.
 | [`src/terrain-age.ts`](#srcterrain-agets) | Terrains that replace the whole map, and whether the game's own map has moved on since. |
 | [`src/toolchain.ts`](#srctoolchaints) | Tools the app can borrow, fetched only when something actually needs them. |
 | [`src/tower-looks.ts`](#srctower-looksts) | Tower looks as a file mod (issue #446). The game has thirteen items that dress the towers: five |
+| [`src/tree-sets.ts`](#srctree-setsts) | Trees on the map from another of the game's tree sets, one set for Radiant and one for Dire |
 | [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
 | [`src/unusual-effects.ts`](#srcunusual-effectsts) | The game's unusual and ethereal effects, read out of items_game.txt (issue #393). An owned |
@@ -9105,6 +9106,66 @@ export function buildTowerLook({ pak01, text, id, sides }: { pak01: string; text
 ```
 
 A look for one side or both as one VPK, out of the game's pak01. A file the game lacks is left out and named.
+
+## src/tree-sets.ts
+
+Trees on the map from another of the game's tree sets, one set for Radiant and one for Dire
+(issue #421). Trees are entities that name their model by path, and the two sides use models
+of their own, so a pak that puts other models under the default trees' names changes the trees
+of one side and leaves the other alone. Counted on the default map (2026-11-03): 1370 Radiant
+trees in eight models, 1097 Dire trees in four.
+
+The sets are the ones the game's terrains use. Autumn, spring and summer reuse the default
+names, so the pak works there as well; terrains with trees of their own are left as they are.
+
+### `Side`
+
+```ts
+export type Side = 'radiant' | 'dire'
+```
+
+The side of the map a tree stands on.
+
+### `DEFAULT_TREES`
+
+```ts
+export const DEFAULT_TREES: Record<Side, string[]> =
+```
+
+The models each side's trees wear on the default map, the most used first.
+
+### `TreeSet`
+
+```ts
+export interface TreeSet { id: string; name: string; models: string[] }
+```
+
+One of the game's tree sets, named for the terrain it comes from.
+
+### `TREE_SETS`
+
+```ts
+export const TREE_SETS: TreeSet[] = [
+```
+
+The sets the terrains use, read out of their entity lumps (2026-11-03). The reef's coral trees
+are left out: they ship inside that map, not in pak01.
+
+### `treePlan`
+
+```ts
+export function treePlan(side: Side, set: TreeSet): { at: string; from: string }[]
+```
+
+Which file goes under which name: each default model of the side takes the set's models in turn.
+
+### `buildTrees`
+
+```ts
+export function buildTrees({ pak01, radiant, dire }: { pak01: string; radiant?: string | null; dire?: string | null }):
+```
+
+A pak with each side's trees from its set, out of the game's pak01; a side left out keeps its trees.
 
 ## src/types.ts
 
