@@ -7,7 +7,7 @@
  * hero that did not fit is named here rather than dropped in silence. */
 import type { CSSProperties } from 'react';
 import { heroName } from '../ui/hero-name.ts';
-import { Dropdown } from '../ui/Dropdown.tsx';
+import { HeroPicker } from './HeroPicker.tsx';
 
 export interface EveryoneActions {
   everyone: () => void;
@@ -41,12 +41,10 @@ export function EveryoneBlock({ i, m, actions }: { i: number; m: EveryoneModel; 
       <div className="settings-hint">{L`Кто бы ни играл героем, которого ты собрал, союзник или враг, у тебя на экране он будет в твоих предметах, а не в своих. Видишь это только ты. Работает с выключенным безопасным режимом.`}</div>
       {m.on && m.built.length > 0 && (
         <>
-          {/* a hundred heroes built is a hundred chips: only the chosen ones are drawn, the rest wait in the list */}
+          {/* a hundred heroes built is a hundred chips: only the chosen ones are drawn, the rest are typed */}
           <div className="settings-row spaced settings-heroes-title">
             <span className="settings-label">{L`Для каких героев`}</span>
-            <Dropdown id="everyoneAddHero" icon="person_add" label={L`Добавить героя…`} value="" first={L`Добавить героя…`}
-              options={m.built.filter((h) => !m.chosen.includes(h.id)).map((h) => ({ value: h.id, label: names.get(h.id) ?? h.name }))}
-              onPick={(id) => { if (id) actions.everyoneHero(id); }} />
+            <HeroPicker built={m.built} chosen={m.chosen} names={names} onPick={actions.everyoneHero} />
           </div>
           {m.chosen.length > 0 && (
             <div className="settings-heroes" role="group" aria-label={L`Для каких героев`}>
