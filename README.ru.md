@@ -225,6 +225,7 @@ v1.14rc7 проверяет принадлежность перед чистко
 | [После патча Доты](https://dota2modmanager.com/ru/docs/troubleshooting/) | Что ломается и что приложение возвращает |
 | [Моды с помощью ИИ](https://dota2modmanager.com/ru/docs/ai-mods/) · [skills/dota2-modding](skills/dota2-modding) · [docs/item-mods.md](docs/item-mods.md) | Скилл, которым ассистент собирает моды, и как мод предмета собирается из файлов игры |
 | [Все цифры, проверяемые](https://dota2modmanager.com/ru/facts/) | Версия, платформы, счётчики и как проверить каждую |
+| [docs/catalog-data.md](docs/catalog-data.md) | Весь каталог модов одним JSON-файлом, поле за полем: для твоего бота, сайта или скрипта |
 | [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/API.md](docs/API.md) | Кто за какое решение отвечает и что экспортирует каждый модуль |
 | [CONTRIBUTING.md](CONTRIBUTING.md) · [AGENTS.md](AGENTS.md) · [SECURITY.md](SECURITY.md) | Как работать над проектом, с ИИ-ассистентом и без, и как сообщить о дыре |
 | [docs/assurance-case.md](docs/assurance-case.md) | Что может пойти не так, что этому мешает и какой тест это держит |

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dota2modmanager/dota2-mod-manager/blob/main/docs/catalog-data.schema.json",
+  "title": "Dota 2 Mod Manager catalog data (https://dota2modmanager.com/catalog/data.json)",
+  "description": "Field by field in docs/catalog-data.md.",
+  "type": "object",
+  "required": ["v", "cats", "heroes", "mods"],
+  "properties": {
+    "v": { "const": 1 },
+    "cats": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "prefixItems": [
+          { "title": "id", "type": "string", "minLength": 1 },
+          { "title": "nameEn", "type": "string" },
+          { "title": "nameRu", "type": "string" },
+          { "title": "group", "enum": ["heroes", "world", "effects", "interface", "sound", "other"] }
+        ],
+        "minItems": 4
+      }
+    },
+    "heroes": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "prefixItems": [
+          { "title": "slug", "type": "string", "minLength": 1 },
+          { "title": "nameEn", "type": "string" },
+          { "title": "nameRu", "type": "string" },
+          { "title": "nicknames", "type": "string" }
+        ],
+        "minItems": 4
+      }
+    },
+    "mods": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "prefixItems": [
+          { "title": "key", "type": "string", "minLength": 1 },
+          { "title": "name", "type": "string", "minLength": 1 },
+          { "title": "cat", "type": "integer", "minimum": 0 },
+          { "title": "hero", "type": "integer", "minimum": -1 },
+          { "title": "img", "type": "string" },
+          { "title": "author", "type": "string" },
+          { "title": "date", "type": "integer", "minimum": 0 },
+          { "title": "styles", "type": "string" },
+          { "title": "slots", "type": "array", "items": { "type": "string" } },
+          { "title": "authorUrl", "type": "string" },
+          { "title": "authorPage", "type": "string" },
+          { "title": "countKey", "type": "string" }
+        ],
+        "minItems": 12
+      }
+    }
+  }
+}
