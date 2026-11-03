@@ -13,6 +13,8 @@ the code, not in this page.
 
 | Module | What it owns |
 |---|---|
+| [`src/ability-sounds-service.ts`](#srcability-sounds-servicets) | The window's half of a sound of the user's own on a hero's sound event (issue #423; the events |
+| [`src/ability-sounds.ts`](#srcability-soundsts) | A sound of the user's own on one of a hero's sound events (issue #423): the hero's events file |
 | [`src/adopt.ts`](#srcadoptts) | What a VPK has to go through before it counts as a mod. |
 | [`src/app-context.ts`](#srcapp-contextts) | Everything the running app hands its IPC modules: the services src/main.ts builds at start, and the |
 | [`src/app-log.ts`](#srcapp-logts) | The app's own log: a small file every install keeps, so a support report (src/diagnostics.ts) |
@@ -174,6 +176,146 @@ the code, not in this page.
 | [`src/wine.ts`](#srcwinets) | Running a Windows program on Linux, for the one that has no Linux build: resourcecompiler.exe, |
 | [`src/workshop-tools.ts`](#srcworkshop-toolsts) | A copy of the Workshop Tools kept in userData, for a Linux machine that plays the Linux build. |
 | [`src/write-jail.ts`](#srcwrite-jailts) | A run that may write only inside the folders it was given. |
+
+## src/ability-sounds-service.ts
+
+The window's half of a sound of the user's own on a hero's sound event (issue #423; the events
+themselves are src/ability-sounds.ts). One record in My mods per hero, since a hero's sounds are
+one events file and two paks of it would hide each other; each sound in it can be taken off on
+its own, and taking off the last removes the record.
+
+The user's WAVs are kept in userData/ability-sounds by their sha1, so building the hero again (a
+sound added or taken off, or after a Dota update rewrote his events file) needs nothing but what
+the app has. The window decodes whatever the user dropped in (MP3, OGG, WAV) and hands over
+16-bit PCM; this side checks it again before anything is compiled.
+
+### `SoundsGenerated`
+
+```ts
+export interface SoundsGenerated { sounds: string; edits: SoundEdit[] }
+```
+
+What a sounds record was built from.
+
+### `HeroSounds`
+
+```ts
+export interface HeroSounds { hero: string; events: HeroEvent[]; edits: SoundEdit[]; recId: string | null }
+```
+
+What the window shows for a hero: his events, and the sounds already on them.
+
+### `MAX_WAV`
+
+```ts
+export const MAX_WAV = 8 * 1024 * 1024
+```
+
+The longest sound the window takes: 30 s of 48 kHz stereo is 5.5 MB.
+
+### `createAbilitySounds`
+
+```ts
+export function createAbilitySounds({ gamePath, userDataDir, installer, library, compile, log = () => {} }: { gamePath: () => string | null | undefined; userDataDir: string; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update' | 'removeRecord'>; compile: (job: CompileJob) => Promise<VpkEntry[]>; log?: (msg: string) => void; })
+```
+
+The service the sounds:* channels call.
+
+## src/ability-sounds.ts
+
+A sound of the user's own on one of a hero's sound events (issue #423): the hero's events file
+out of the game, each chosen event made to play the user's sound instead of Valve's or on top of
+it, written back as KV3 text and compiled with the user's WAVs by Valve's resourcecompiler
+(src/resource-compiler.ts). The window and the service are src/ability-sounds-service.ts.
+
+Text, not binary: a events file written back as binary KV3 is dropped by the game in silence,
+every sound of the hero with it (skills/dota2-modding/references/sounds.md). Compiled from text,
+the compiler also measures each sound and lists the files the events use.
+
+The same rules tools/modkit/sounds.mjs has used on the Scream set: a replaced event keeps its
+template's type, level and mix group and loses its layers and length; a layered event gets a new
+event of the user's sound in its first free soundevent_layer, the way Valve's immortals layer.
+
+### `SoundMode`
+
+```ts
+export type SoundMode = 'replace' | 'layer'
+```
+
+How the user's sound goes on an event: instead of Valve's, or played with it.
+
+### `SoundEdit`
+
+```ts
+export interface SoundEdit { event: string; mode: SoundMode; volume: number; sound: string; name: string }
+```
+
+One event given a sound of the user's own. `sound` names the stored WAV (its sha1).
+
+### `HeroEvent`
+
+```ts
+export interface HeroEvent { name: string; type: string; files: number }
+```
+
+An event of the hero's, as the window lists it.
+
+### `eventsFile`
+
+```ts
+export const eventsFile = (hero: string) => `soundevents/game_sounds_heroes/game_sounds_${hero}.vsndevts_c`
+```
+
+The hero's events file in pak01: abilities, attacks, death, everything heard in a match.
+
+### `soundPath`
+
+```ts
+export const soundPath = (hero: string, sound: string) => `sounds/mods/d2mm/${hero}/${sound.slice(0, 16)}.vsnd`
+```
+
+Where a sound of the user's goes, compiled: one folder of ours per hero.
+
+### `heroesWithSounds`
+
+```ts
+export function heroesWithSounds(ix: Pick<VpkIndex, 'paths'>): string[]
+```
+
+The heroes that have an events file, by their game id.
+
+### `heroEvents`
+
+```ts
+export function heroEvents(kv: Kv3Block): HeroEvent[]
+```
+
+The events a sound can be put on: those that play one. An event of ours made by a layer is left out.
+
+### `editedEvents`
+
+```ts
+export function editedEvents(kv: Kv3Block, hero: string, edits: SoundEdit[]): { text: string; gone: string[] }
+```
+
+The hero's events with the user's sounds on them, as the KV3 text the compiler reads.
+An event the game no longer has is passed over and named in `gone`.
+
+### `kvText`
+
+```ts
+export function kvText(kv: Kv3Block, n: Kv3Node, ind = 0): string
+```
+
+KV3 text of a node, the way Valve's own sources are written.
+
+### `wavProblem`
+
+```ts
+export function wavProblem(buf: Buffer): string | null
+```
+
+Is this a WAV the compiler takes: plain 16-bit PCM at a rate the game plays. Null when it is.
 
 ## src/adopt.ts
 
@@ -7791,6 +7933,14 @@ export function safeRel(rel: string): boolean
 ```
 
 A path inside an addon, as the game spells it: forward slashes, nothing that climbs out.
+
+### `compiledOf`
+
+```ts
+export function compiledOf(rel: string): string
+```
+
+What a source compiles to: a sound (.wav, .mp3) to a .vsnd_c, anything else to its own name and _c.
 
 ### `SourceFile`
 
