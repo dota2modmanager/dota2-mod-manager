@@ -630,6 +630,8 @@ that location is not writable.
 | `src/mod-preview.ts`, `src/mod-preview-pick.ts` | A picture for a mod that came with none, taken out of the mod itself, and which one is worth showing |
 | `src/preset-link.ts`, `src/preset-share.ts` | Presets as a link and as a file |
 | `src/presets-service.ts`, `src/preset-plan.ts` | Presets: applying, packing and receiving one, and how one travels to somebody else |
+| `src/preset-install.ts` | Putting a preset on: an own one with mods to fetch back, a received one to resolve; the window and the command line share it |
+| `src/cli.ts` | The command line: `--apply <link>`, `--list`, `--disable-all`, run to an exit code with no window |
 | `src/pumpkin.ts` | The title bar pumpkin's key, checked once against its worker (`tools/pumpkin-worker`), and what it opens |
 | `src/scream-guard.ts` | What the pumpkin opens stays with the install that opened it: a copy found anywhere else is switched off and marked |
 | `src/diagnostics.ts`, `src/diagnostics-files.ts`, `src/diagnostics-render.ts` | The support report: what it gathers, what it reads off the disk, and how it is laid out |
