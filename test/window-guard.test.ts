@@ -173,7 +173,7 @@ const VALID: Record<string, unknown[][]> = {
   'tools:state': [[]], 'tools:install': [['Source2Viewer']], 'tools:remove': [['Source2Viewer']],
   'compiler:state': [[]], 'compiler:browse': [[]], 'compiler:forget': [[]], 'compiler:prepare': [[]], 'compiler:check': [[]], 'compiler:keep': [[]], 'compiler:removeKept': [[]],
   'arcana:state': [[]], 'arcana:install': [[[255, 0, 128], 'mod'], [[1, 2, 3], 'recolor']],
-  'misc:openLangFolder': [[]], 'misc:openToolsFolder': [[], ['Compiler']],
+  'misc:openLangFolder': [[]], 'misc:openCacheFolder': [[]], 'misc:openToolsFolder': [[], ['Compiler']],
   'misc:openExternal': [['https://dota2modmanager.com/docs/'], ['http://example.org'], [undefined]],
   'misc:cacheSize': [[]], 'misc:clearCache': [[]], 'misc:cacheList': [[]], 'misc:cacheRemove': [['huds/Big HUD.zip']], 'misc:runTool': [['Compiler']],
   'diag:export': [[]], 'diag:rendererError': [['TypeError: x is undefined']],

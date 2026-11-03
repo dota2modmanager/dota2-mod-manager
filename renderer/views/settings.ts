@@ -140,6 +140,10 @@ const actions: SettingsActions = {
     toast(L`Кэш очищен`);
     renderSettings();
   },
+  openCache: async () => {
+    const r = await window.api.misc.openCacheFolder();
+    if (r?.error) toast(r.error, 'error');
+  },
   removeCached: async (key) => {
     const r = await window.api.misc.cacheRemove(key);
     if (!r?.ok) toast(L`Архив уже удалён`, 'error');
