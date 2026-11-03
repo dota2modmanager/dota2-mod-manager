@@ -30,6 +30,7 @@ import {
 import { ITEM_EFFECTS, type ItemEffect } from './item-builder-effects.ts';
 import { itemAssets, normalizeAssetPath, type ItemAssets, type SummonModels } from './item-builder-assets.ts';
 import { styleOf, withStyle } from './item-builder-styles.ts';
+import { DONOR, donorOf, withDonorEffects } from './item-builder-donor.ts';
 
 export { itemSlots, itemSlotsSteps, itemSets, itemOptions } from './item-builder-slots.ts';
 export { itemEffects } from './item-builder-effects.ts';
@@ -74,6 +75,8 @@ function itemEffectById(effectId: unknown): ItemEffect | null {
  * and this is how a record stores them and how two picks are told apart, so "fire,snow" and
  * "snow,fire" are the same pick.
  *
+ * Another item's effect goes after them, as "from-<id>" (src/item-builder-donor.ts).
+ *
  * A style other than the item's first goes last, as "style-2" (src/item-builder-styles.ts). It
  * rides in the same string so that a record, a preset and a shared link carry it as they carry the
  * effects, with nothing new to keep in step; the first style is no token at all, which keeps every
@@ -83,12 +86,13 @@ export function effectKey(effectIds: string | string[] | null | undefined): stri
   const ids = (Array.isArray(effectIds) ? effectIds : String(effectIds || '').split(','))
     .map((id) => String(id).trim().toLowerCase())
     .filter(Boolean);
-  const want = new Set(ids.filter((id) => !/^style-\d+$/.test(id)));
+  const want = new Set(ids.filter((id) => !/^style-\d+$/.test(id) && !DONOR.test(id)));
   const known = ITEM_EFFECTS.map((e) => e.id).filter((id) => want.has(id));
   // an id nobody offers stays in, at the end, so the build can say which one it did not know
   const unknown = [...want].filter((id) => !known.includes(id)).sort();
+  const donor = ids.find((id) => DONOR.test(id));
   const style = styleOf(ids.join(','));
-  return [...known, ...unknown, ...(style ? [`style-${style}`] : [])].join(',');
+  return [...known, ...unknown, ...(donor ? [donor] : []), ...(style ? [`style-${style}`] : [])].join(',');
 }
 
 function setBlockId(blockText: string, id: string): string {
@@ -242,7 +246,7 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
   if (!target) throw new Error(t('items_game: default_item для предмета {0} не найден', itemId));
   const key = effectKey(effectIds);
   // several at once: the window offers them that way, and one unknown id refuses the whole pick
-  const effects = key.split(',').filter((id) => id && !/^style-\d+$/.test(id)).map((id) => {
+  const effects = key.split(',').filter((id) => id && !/^style-\d+$/.test(id) && !DONOR.test(id)).map((id) => {
     const effect = itemEffectById(id);
     if (!effect) throw new Error(t('items_game: эффект {0} не найден', id));
     return effect;
@@ -266,6 +270,8 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
   visuals = stripKeyBlocks(visuals, 'unlock');
   if (!styled.applied) visuals = stripKeyBlocks(visuals, 'styles');
   for (const effect of effects) visuals = appendItemEffect(visuals, effect);
+  const donor = donorOf(key);
+  if (donor) visuals = withDonorEffects(baseText, visuals, donor);
 
   let patched = setBlockId(itemBlock(baseText, source), target.id);
   patched = setScalarField(patched, 'name', targetFields.get('name') || target.name || target.id);

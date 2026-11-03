@@ -17,14 +17,15 @@ import { drain, PAUSE } from './steps.ts';
 import { styleTokens } from './item-builder-styles.ts';
 import { itemNote, untilReconnect, type ItemNote } from './arcana-notes.ts';
 import { personaSlots } from './item-builder-personas.ts';
+import { hasOwnEffect } from './item-builder-donor.ts';
 
 /** A slot of a hero the builder can dress, and the paid items that fit it. */
 export interface ItemSlot {
   slot: string; kind: 'item-effect'; base: string; targetId: string; equipSlot: string; heroIds: string[];
   heroLabel: string; slotLabel: string; label: string; icon: string;
-  /** `styles`: the name token of each style, for an item with more than one (src/item-builder-styles.ts);
-   *  `note`: what is known to go wrong with it in the game, or that nobody has checked (src/arcana-notes.ts) */
-  options: { id: string; name: string; styles?: string[]; note?: ItemNote }[];
+  /** `styles`: the name token of each style, for an item with more than one (src/item-builder-styles.ts); `note`: what is
+   *  known to go wrong with it in the game, or that nobody has checked (src/arcana-notes.ts); `fx`: a particle of its own, for another item to wear (src/item-builder-donor.ts) */
+  options: { id: string; name: string; styles?: string[]; note?: ItemNote; fx?: true }[];
   /** a persona's slot (src/item-builder-personas.ts): `part` false where the persona is picked */
   persona?: { hero: string; part: boolean };
 }
@@ -207,8 +208,7 @@ export function* itemSlotsSteps(text: string): Generator<typeof PAUSE, ItemSlot[
     const note = item.model && bare.has(target.base) ? untilReconnect(noted, t) : noted && { status: noted.status, text: t(noted.note) };
     target.options.push({
       id: item.id, name: toUtf8(item.name),
-      ...(styles.length ? { styles } : {}),
-      ...(note ? { note } : {}),
+      ...(styles.length ? { styles } : {}), ...(note ? { note } : {}), ...(hasOwnEffect(block, () => visualsOf(text, item)) ? { fx: true as const } : {}),
     });
   }
   for (const s of personaSlots(text)) slots.set(s.slot, s);

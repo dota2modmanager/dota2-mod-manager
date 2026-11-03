@@ -407,7 +407,7 @@ test('item cosmetics build one slot per hero part, infer missing stock slots, of
     { id: '9601', name: 'Bloodseeker offhand blade' },
     { id: '9701', name: 'Io Ambient' },
     { id: '9457', name: 'No visuals here' },
-    { id: '9455', name: 'Golden Full-Bore Bonanza' },
+    { id: '9455', name: 'Golden Full-Bore Bonanza', fx: true },
     { id: '9801', name: 'Tidehunter bonus anchor' },
   ]);
   assert.deepEqual(builder.itemEffects(), [

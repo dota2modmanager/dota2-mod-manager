@@ -81,6 +81,29 @@ export function SlotPicker({ m, actions }: { m: SlotPickerModel; actions: SlotPi
           </div>
         </>
       )}
+      {m.donors && (
+        <>
+          <div className="section-h item-fx-head"><span className="ms">swap_horiz</span>{L`Эффект другого предмета`}</div>
+          <div className="text-meta item-fx-hint" id="itemDonorHint">
+            {m.donors.enabled ? L`Частицы этого предмета на выбранном. Эффект, который держится на точке своей модели, может сесть иначе.` : L`Сначала выбери предмет выше.`}
+          </div>
+          <div className="item-pick-grid" id="donorGrid">
+            <button className={`card item-pick-card ${m.donors.none ? 'picked' : ''}`} data-donor-none="true"
+              style={{ '--i': 0 } as CSSProperties} aria-pressed={m.donors.none} disabled={!m.donors.enabled} onClick={() => actions.donor('')}>
+              <div className="card-media"><div className="noimg"><span className="ms">block</span></div></div>
+              <div className="card-body"><div className="card-name">{L`Свой эффект`}</div></div>
+            </button>
+            {m.donors.list.map((o, idx) => (
+              <button key={o.id} className={`card item-pick-card ${o.picked ? 'picked' : ''}`} data-donor-id={o.id}
+                style={{ '--i': Math.min(idx + 1, 24) } as CSSProperties} aria-pressed={o.picked} disabled={!m.donors?.enabled}
+                onClick={() => actions.donor(o.id)}>
+                <div className="card-media"><CosThumb name={o.name} fallback={m.slotIcon} /></div>
+                <div className="card-body"><div className="card-name" title={o.name}>{cosmeticName(o.name)}</div></div>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
       <div className="modal-note">{L`Вид подставляется в схему предметов игры — стандартный предмет просто рисуется как выбранный. Файлы модов это не трогает, и видно только тебе.`}</div>
       <div className="item-picker-foot" id="itemPickFoot">
         <BuilderFoot action={m.action} onApply={actions.apply}

@@ -874,6 +874,9 @@ const EN = {
   'Диагностика': 'Diagnostics',
   'Экспортировать отчёт': 'Export report', 'Чиню…': 'Repairing…', 'Починить приложение': 'Repair the app', 'Починка возвращает патч игры, ищет пропавшие файлы модов и очищает картинки. Моды и пресеты не трогает.': 'Repair puts the game patch back, looks for missing mod files and clears the pictures. Your mods and presets stay as they are.', 'Не вышло? Отправь отчёт: в нём видно, на каком шаге.': 'Still broken? Send the report: it shows which step failed.', 'Всё в порядке': 'All good', 'Починка нашла проблемы': 'Repair found problems',
   'Отчёт сохранён': 'Report saved',
+  // ---------- another item's effect (catalog/builder) ----------
+  'эффект: {0}': 'effect: {0}', 'Эффект другого предмета': 'Another item’s effect', 'Частицы этого предмета на выбранном. Эффект, который держится на точке своей модели, может сесть иначе.': 'That item’s particles on the one you chose. An effect held on a point of its own model can sit differently.',
+  'Сначала выбери предмет выше.': 'Pick an item above first.', 'Свой эффект': 'Its own effect',
   // ---------- Cancel on the item table's bar (shell/progress) ----------
   'Эту сборку нельзя отменить: приложение не знает, что было в игре до неё': 'This build cannot be cancelled: the app does not know what the game had before it', 'Сборка отменена. Не вернулись: {0}': 'Build cancelled. Could not put back: {0}', 'Сборка отменена, моды как были': 'Build cancelled, your mods are as they were',
   // ---------- a sound of your own (catalog/sounds) ----------

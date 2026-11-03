@@ -47,6 +47,8 @@ export interface CosmeticOption {
   styles?: string[];
   /** what is known to go wrong with it in the game, or that nobody has checked (src/arcana-notes.ts) */
   note?: { status: 'issues' | 'broken' | 'untested'; text: string };
+  /** it creates a particle of its own, which another item of the slot can wear (src/item-builder-donor.ts) */
+  fx?: boolean;
 }
 
 /** A slot of free cosmetics, or one of the item builder's (kind 'item-effect', slot 'item:...'). */
