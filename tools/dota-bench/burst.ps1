@@ -11,7 +11,7 @@ using System; using System.Drawing; using System.Drawing.Imaging; using System.R
 public struct RECT3 { public int Left, Top, Right, Bottom; }
 public static class W3 {
   [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT3 r);
-  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h); [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h); [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern void keybd_event(byte k, byte s, uint f, UIntPtr e);
   [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
   // brightness of every pixel, the way Pillow's "L" mode weighs the channels
   public static float[] Luma(Bitmap b) {
@@ -29,6 +29,9 @@ public static class W3 {
 [W3]::SetProcessDPIAware() | Out-Null
 $p = Get-Process dota2 -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $p) { Write-Output "no dota"; exit 1 }
+# Windows hands the front only to the window that last had input; an Alt tap counts as input,
+# so Dota can come forward while somebody else's window is in front (it is checked below)
+if ([W3]::GetForegroundWindow() -ne $p.MainWindowHandle) { [W3]::keybd_event(0x12, 0, 0, [UIntPtr]::Zero); [W3]::keybd_event(0x12, 0, 2, [UIntPtr]::Zero) }
 [W3]::SetForegroundWindow($p.MainWindowHandle) | Out-Null
 Start-Sleep -Milliseconds 200
 # never click, press or take a picture into another window: somebody may be using the computer
