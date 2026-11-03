@@ -12,6 +12,7 @@ import type { ModModalActions, ModModalModel } from './model.ts';
 import { CosmeticModal, type CosmeticModalActions, type CosmeticModalModel } from '../cosmetic/CosmeticModal.tsx';
 import { ArcanaModal, type ArcanaModalActions, type ArcanaModalModel } from '../arcana/ArcanaModal.tsx';
 import { MapLookModal, type MapLookModalActions, type MapLookModalModel } from '../map/MapLookModal.tsx';
+import { SoundModal, type SoundModalActions, type SoundModalModel } from '../sounds/SoundModal.tsx';
 import { SlotPicker } from '../builder/SlotPicker.tsx';
 import { HeroModal } from '../builder/HeroModal.tsx';
 import { SetModal, SetsModal } from '../builder/SetsModal.tsx';
@@ -36,6 +37,7 @@ export const showCosmeticModal = (model: CosmeticModalModel, actions: CosmeticMo
   show(<CosmeticModal m={model} actions={actions} />);
 export const showMapLookModal = (model: MapLookModalModel, actions: MapLookModalActions): void =>
   show(<MapLookModal m={model} actions={actions} />);
+export const showSoundModal = (model: SoundModalModel, actions: SoundModalActions): void => show(<SoundModal m={model} actions={actions} />);
 export const showArcanaModal = (model: ArcanaModalModel, actions: ArcanaModalActions): void =>
   show(<ArcanaModal m={model} actions={actions} />);
 

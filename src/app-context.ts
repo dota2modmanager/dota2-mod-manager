@@ -20,6 +20,7 @@ import type { createSchemaService } from './schema-service.ts';
 import type { createUpdateImpact } from './update-impact.ts';
 import type { createArcanaService } from './arcana-service.ts';
 import type { createMapLooks } from './map-looks-service.ts';
+import type { createAbilitySounds } from './ability-sounds-service.ts';
 import type { createGameIcons } from './game-icons.ts';
 import type { createModPreviews } from './mod-preview.ts';
 import type { createRemoteConfig } from './remote-config.ts';
@@ -64,6 +65,8 @@ export interface AppContext {
   arcana: ReturnType<typeof createArcanaService>;
   /** towers and trees from the game's own looks (src/map-looks-service.ts) */
   mapLooks: ReturnType<typeof createMapLooks>;
+  /** sounds of the user's own on a hero's events (src/ability-sounds-service.ts) */
+  abilitySounds: ReturnType<typeof createAbilitySounds>;
   icons: Icons;
   gameIcons: ReturnType<typeof createGameIcons>;
   modPreviews: ReturnType<typeof createModPreviews>;

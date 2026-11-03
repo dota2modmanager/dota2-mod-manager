@@ -27,6 +27,7 @@ import { createUpdateImpact, impactMods } from './update-impact.ts';
 import { createArcanaService, type Generated } from './arcana-service.ts';
 import { createBaseStore } from './arcana-base-store.ts';
 import { createMapLooks } from './map-looks-service.ts';
+import { createAbilitySounds } from './ability-sounds-service.ts';
 import { TERRORBLADE_BASE } from './arcana-bases.ts';
 import { clientVersion } from './patch-watch.ts';
 import { createRemoteConfig } from './remote-config.ts';
@@ -151,6 +152,9 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   });
   const compiler = createResourceCompiler({ userDataDir: userData, gamePath: () => settings.get('dotaGamePath'),
     chosen: () => settings.get('resourceCompilerPath'), keeper: toolsKeeper || undefined, log: diag });
+  // sounds of the user's own on a hero's events, compiled by the compiler above (src/ability-sounds-service.ts)
+  const abilitySounds = createAbilitySounds({ gamePath: () => settings.get('dotaGamePath'), userDataDir: userData, installer, library,
+    compile: (job) => compiler.compile(job), log: diag });
   const keepTools: AppContext['keepTools'] = async ({ force = false } = {}) => {
     if (!toolsKeeper) return false;
     try {
@@ -200,7 +204,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 
   return {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks,
+    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, abilitySounds,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };
 }

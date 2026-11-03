@@ -11,6 +11,7 @@ import { CosmeticGrid } from '../cosmetic/CosmeticCard.tsx';
 import { ModGrid } from '../card/ModGrid.tsx';
 import { ArcanaCard } from '../arcana/ArcanaCard.tsx';
 import { MapLookCard } from '../map/MapLookCard.tsx';
+import { SoundCard } from '../sounds/SoundCard.tsx';
 
 interface Props { model: ScreenModel; actions: ScreenActions }
 
@@ -63,7 +64,8 @@ function List({ model: m, actions }: { model: Extract<ScreenModel, { kind: 'list
           <div className="grid" id="modGrid">
             {m.lead?.map((a, i) => <ArcanaCard key={a.set} m={a} index={i} onOpen={actions.openArcana} />)}
             {m.mapLead && <MapLookCard m={m.mapLead} onOpen={actions.openMapLooks} />}
-            <ModGrid listKey={m.key} mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead?.length || m.mapLead ? undefined : m.mods.emptyText}
+            {m.soundLead && <SoundCard m={m.soundLead} onOpen={actions.openSounds} />}
+            <ModGrid listKey={m.key} mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead?.length || m.mapLead || m.soundLead ? undefined : m.mods.emptyText}
               onOpen={actions.openMod} onFavChanged={actions.favChanged} />
           </div>
         </>

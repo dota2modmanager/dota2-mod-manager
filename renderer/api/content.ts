@@ -157,6 +157,24 @@ export interface MapLooksApi {
   install: (kind: MapKind, radiant: string | null, dire: string | null) => Promise<Reply<{ record: LibRecord }>>;
 }
 
+/** How a sound of the user's goes on an event: instead of Valve's, or with it. */
+export type SoundMode = 'replace' | 'layer';
+/** A sound of the user's on one event, as the hero's record keeps it. */
+export interface SoundEdit { event: string; mode: SoundMode; volume: number; sound: string; name: string }
+/** An event of a hero's that plays a sound. */
+export interface HeroEvent { name: string; type: string; files: number }
+
+export interface SoundsApi {
+  /** every hero with an events file: game id and name */
+  heroes: () => Promise<Reply<{ heroes: { id: string; name: string }[] }>>;
+  /** a hero's events, and the sounds of the user's on them */
+  hero: (hero: string) => Promise<Reply<{ hero: string; events: HeroEvent[]; edits: SoundEdit[]; recId: string | null }>>;
+  /** a 16-bit PCM WAV on an event, the hero compiled again and put in My mods */
+  add: (hero: string, event: string, mode: SoundMode, volume: number, wav: Uint8Array, label: string) => Promise<Reply<{ record: LibRecord | null }>>;
+  /** the sound of the user's off an event; the last one off removes the record */
+  remove: (hero: string, event: string) => Promise<Reply<{ record: LibRecord | null }>>;
+}
+
 /** A mod's own video, and the still the window decodes out of it. */
 export interface PreviewApi {
   video: (key: string) => Promise<Uint8Array | null>;

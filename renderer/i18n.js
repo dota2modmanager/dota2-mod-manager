@@ -874,6 +874,12 @@ const EN = {
   'Диагностика': 'Diagnostics',
   'Экспортировать отчёт': 'Export report', 'Чиню…': 'Repairing…', 'Починить приложение': 'Repair the app', 'Починка возвращает патч игры, ищет пропавшие файлы модов и очищает картинки. Моды и пресеты не трогает.': 'Repair puts the game patch back, looks for missing mod files and clears the pictures. Your mods and presets stay as they are.', 'Не вышло? Отправь отчёт: в нём видно, на каком шаге.': 'Still broken? Send the report: it shows which step failed.', 'Всё в порядке': 'All good', 'Починка нашла проблемы': 'Repair found problems',
   'Отчёт сохранён': 'Report saved',
+  // ---------- a sound of your own (catalog/sounds) ----------
+  'Свой звук на способность': 'Your own sound on an ability', 'Героев со своими звуками: {0}': 'Heroes with your sounds: {0}', 'MP3, WAV или OGG': 'MP3, WAV or OGG', 'Твой файл вместо звука игры или поверх него': 'Your file in place of the game sound or over it',
+  'Выбери героя': 'Pick a hero', 'Найти: Attack, Death, название способности…': 'Find: Attack, Death, an ability name…', 'Ничего не нашлось': 'Nothing found', 'Другой файл…': 'Another file…',
+  'Выбрать файл…': 'Choose a file…', 'с': 's', 'Вместо звука игры': 'Instead of the game sound', 'Поверх звука игры': 'Over the game sound',
+  'Поставить': 'Put it on', 'Уже стоят': 'Already on', 'поверх': 'over', 'вместо': 'instead',
+  'Звук собирает компилятор Valve из Dota 2 Workshop Tools, бесплатного DLC в Steam. Один файл до 30 секунд, громкий приводится к уровню звуков игры.': 'Valve’s compiler from the Dota 2 Workshop Tools, a free DLC in Steam, builds the sound. One file up to 30 seconds; a loud one is brought down to the level of the game sounds.', 'Не удалось прочитать звуки игры': 'Could not read the game sounds', 'Этот файл не читается как звук': 'This file does not read as a sound', 'Изменить звуки': 'Change the sounds',
 };
 
 const translation = (key) => window.I18N_LANG === 'zh-CN' ? (window.ZH_CN?.[key] ?? EN[key]) : EN[key];

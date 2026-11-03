@@ -15,6 +15,7 @@ import { registerCompilerIpc } from './ipc-compiler.ts';
 import { registerDiagnosticsIpc } from './ipc-diagnostics.ts';
 import { registerPumpkinIpc } from './ipc-pumpkin.ts';
 import { registerGridIpc } from './ipc-grid.ts';
+import { registerSoundsIpc } from './ipc-sounds.ts';
 
 /** Register every channel the window can call. */
 export function registerIpc(ctx: AppContext): void {
@@ -31,4 +32,5 @@ export function registerIpc(ctx: AppContext): void {
   registerDiagnosticsIpc(ctx);
   registerPumpkinIpc(ctx);
   registerGridIpc(ctx);
+  registerSoundsIpc(ctx);
 }
