@@ -696,16 +696,19 @@ test('the free looks the window asks for at start come a step at a time, the sam
   assert.equal(body?.picked, '9059', 'with what is picked');
 });
 
-// #414: the look on everybody goes in hero by hero under a budget, and whoever it left out is
-// kept for Settings to name. Nothing here has another player's item to dress, so nobody is left out.
+// #414: the look on everybody goes on every hero built but those excluded, hero by hero under a
+// budget, and whoever it left out is kept for Settings to name. Here Sniper is built, and nothing
+// of another player's has a file to dress, so nobody is left out.
 test("the look on everybody builds with the table and says whom it left out", (t) => {
-  for (const heroes of [[], ['sniper']]) {
-    const s = service(t, { values: { schemaPatch: true, everyoneWearsMine: true, everyoneHeroes: heroes, everyoneLeftOut: ['stale'] } });
+  for (const excluded of [[], ['sniper']]) {
+    const s = service(t, { values: { schemaPatch: true, everyoneWearsMine: true, everyoneExcluded: excluded, everyoneLeftOut: ['stale'] } });
     modWith(s.library, 'Rifle mod', [riflePatch('models/mod/rifle.vmdl')]);
+    const pick = s.library.add({ name: 'Gone Rifle', categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [] });
+    s.library.update(pick.id, { slot: 'item:sniper:weapon', itemId: '99999' });
     const res = s.svc.refresh();
     assert.equal(res.ok, true);
-    assert.equal(schema.isDeployed(s.game, patcher.FOLDER), true, `heroes ${JSON.stringify(heroes)}: the table goes in`);
+    assert.equal(schema.isDeployed(s.game, patcher.FOLDER), true, `excluded ${JSON.stringify(excluded)}: the table goes in`);
     assert.deepEqual(s.settings.get('everyoneLeftOut'), [], 'what the last build left out replaces what an earlier one did');
-    assert.ok(!s.said.some((m) => /left out/.test(m)), 'nothing said when nothing was left out');
+    assert.ok(!s.said.some((m) => /my look on everyone/.test(m)), 'nothing said when nothing was left out');
   }
 });

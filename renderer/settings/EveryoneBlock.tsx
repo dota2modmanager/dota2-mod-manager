@@ -3,15 +3,15 @@
  *
  * The game takes only so many of its files before it hands out wrong models (#414,
  * src/item-builder-everyone-budget.ts), so a big library cannot have it on every hero at once.
- * Nothing picked means every hero built, the one picked most lately first, as far as it fits; a
- * hero that did not fit is named here rather than dropped in silence. */
+ * Every hero built is in, the one built most lately first, as far as it fits, but those the user
+ * excluded; a hero that did not fit is named here rather than dropped in silence. */
 import type { CSSProperties } from 'react';
 import { heroName } from '../ui/hero-name.ts';
 import { HeroPicker } from './HeroPicker.tsx';
 
 export interface EveryoneActions {
   everyone: () => void;
-  /** a hero added to the list, or taken off it */
+  /** a hero excluded, or let back in */
   everyoneHero: (id: string) => void;
 }
 
@@ -19,8 +19,8 @@ export interface EveryoneModel {
   on: boolean;
   /** the heroes the user built, picked last first */
   built: { id: string; name: string }[];
-  /** the heroes chosen; none: all of them */
-  chosen: string[];
+  /** the heroes left alone; every other one built is dressed */
+  excluded: string[];
   /** who the last build left out */
   leftOut: string[];
 }
@@ -41,30 +41,26 @@ export function EveryoneBlock({ i, m, actions }: { i: number; m: EveryoneModel; 
       <div className="settings-hint">{L`Кто бы ни играл героем, которого ты собрал, союзник или враг, у тебя на экране он будет в твоих предметах, а не в своих. Видишь это только ты. Работает с выключенным безопасным режимом.`}</div>
       {m.on && m.built.length > 0 && (
         <>
-          {/* a hundred heroes built is a hundred chips: only the chosen ones are drawn, the rest are typed */}
+          {/* a hundred heroes built is a hundred chips: only the excluded ones are drawn, the rest are typed */}
           <div className="settings-row spaced settings-heroes-title">
-            <span className="settings-label">{L`Для каких героев`}</span>
-            <HeroPicker built={m.built} chosen={m.chosen} names={names} onPick={actions.everyoneHero} />
+            <span className="settings-label">{L`Кроме героев`}</span>
+            <HeroPicker built={m.built} chosen={m.excluded} names={names} onPick={actions.everyoneHero} />
           </div>
-          {m.chosen.length > 0 && (
-            <div className="settings-heroes" role="group" aria-label={L`Для каких героев`}>
-              {m.chosen.map((id) => (
-                <button key={id} className="fchip active" data-hero={id} aria-label={L`Убрать ${names.get(id) ?? id}`} onClick={() => actions.everyoneHero(id)}>
+          {m.excluded.length > 0 && (
+            <div className="settings-heroes" role="group" aria-label={L`Кроме героев`}>
+              {m.excluded.map((id) => (
+                <button key={id} className="fchip" data-hero={id} aria-label={L`Вернуть ${names.get(id) ?? id}`} onClick={() => actions.everyoneHero(id)}>
                   {names.get(id) ?? id}<span className="ms">close</span>
                 </button>
               ))}
             </div>
           )}
-          <div className="settings-hint">
-            {m.chosen.length
-              ? L`Только для выбранных героев.`
-              : L`Никто не выбран: для всех собранных героев, начиная с тех, что ты собирал последними, сколько выдержит игра.`}
-          </div>
+          <div className="settings-hint">{L`Все собранные герои, начиная с тех, что ты собирал последними, сколько выдержит игра. Исключи тех, кто не нужен.`}</div>
         </>
       )}
       {m.on && leftNames.length > 0 && (
         <div className="settings-hint settings-warn" role="status">
-          {L`Не поместились, иначе игра начала бы показывать чужие модели: ${left}. Выбери меньше героев, если нужен кто-то из них.`}
+          {L`Не поместились, иначе игра начала бы показывать чужие модели: ${left}. Исключи тех, кто не нужен, чтобы освободить место.`}
         </div>
       )}
     </div>

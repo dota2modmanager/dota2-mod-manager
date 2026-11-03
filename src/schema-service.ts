@@ -101,13 +101,16 @@ export function createSchemaService({ settings, library, installer, userDataDir,
   const vanilla = () => vanillaBase().text;
 
   /**
-   * Everybody's look for the heroes the user picked (none: every hero they built), as much of it as
-   * the game can take (src/item-builder-everyone-budget.ts). Who did not fit is kept for Settings.
+   * Everybody's look for every hero the user built but those they excluded, the one built most
+   * lately first, as much of it as the game can take (src/item-builder-everyone-budget.ts). Who did
+   * not fit is kept for Settings.
    */
   function everyone(text: string, own: schema.SchemaPatch[], beneath: VpkEntry[], pak: () => ReturnType<typeof sharedVpkIndex>) {
-    const chosen = (settings.get('everyoneHeroes') as string[] | undefined) ?? [];
-    const all = everyoneWears(text, own, beneath, (p) => pak().read(p), chosen.length ? chosen : undefined);
-    const { patches, left } = withinBudget(all, { patches: own, beneath }, chosen.length ? chosen : heroesByRecency(library.list()));
+    const excluded = new Set((settings.get('everyoneExcluded') as string[] | undefined) ?? []);
+    const heroes = heroesByRecency(library.list()).filter((h) => !excluded.has(h));
+    if (!heroes.length) { settings.set('everyoneLeftOut', []); return []; }
+    const all = everyoneWears(text, own, beneath, (p) => pak().read(p), heroes);
+    const { patches, left } = withinBudget(all, { patches: own, beneath }, heroes);
     settings.set('everyoneLeftOut', left);
     if (left.length) log(`schema: my look on everyone left out ${left.length} hero(es) to stay under the game's limit: ${left.join(', ')}`);
     return patches;

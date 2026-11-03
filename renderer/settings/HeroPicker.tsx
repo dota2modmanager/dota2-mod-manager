@@ -1,5 +1,5 @@
-/* A hero typed by name, for the look on everybody (settings/EveryoneBlock.tsx): the heroes built
- * and not chosen yet that match drop down under the field, best first (settings/hero-suggest.ts).
+/* A hero typed by name, to leave out of the look on everybody (settings/EveryoneBlock.tsx): the
+ * heroes built and not excluded yet that match drop down under the field, best first (settings/hero-suggest.ts).
  * Enter takes the highlighted one, the arrows move it, Escape empties the field. A hundred heroes
  * in a list to scroll was the thing this replaced. */
 import { useState } from 'react';
@@ -25,7 +25,7 @@ export function HeroPicker({ built, chosen, names, onPick }: {
     <div className={`select-wrap custom-select-wrap hero-picker ${open ? 'open' : ''}`}>
       <input
         className="input" id="everyoneHeroInput" type="text" spellCheck={false} autoComplete="off"
-        placeholder={L`Начни вводить имя героя…`} aria-label={L`Добавить героя…`}
+        placeholder={L`Исключить героя: начни вводить имя…`} aria-label={L`Исключить героя`}
         role="combobox" aria-expanded={open} aria-controls="everyoneHeroList" aria-autocomplete="list"
         aria-activedescendant={open ? `everyoneHero-${found[Math.min(hi, found.length - 1)].id}` : undefined}
         value={query}

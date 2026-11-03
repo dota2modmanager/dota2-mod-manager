@@ -54,7 +54,7 @@ async function renderSettings(fresh = false): Promise<void> {
     everyone: {
       on: s.everyoneWearsMine === true,
       built: s.everyoneBuilt ?? [],
-      chosen: s.everyoneHeroes ?? [],
+      excluded: s.everyoneExcluded ?? [],
       leftOut: s.everyoneLeftOut ?? [],
     },
     beta,
@@ -119,10 +119,11 @@ const actions: SettingsActions = {
   // the build runs in the background; what it left out shows the next time Settings is drawn
   everyoneHero: async (id) => {
     if (!model) return;
-    const chosen = model.everyone.chosen.includes(id) ? model.everyone.chosen.filter((h) => h !== id) : [...model.everyone.chosen, id];
-    model = { ...model, everyone: { ...model.everyone, chosen } };
+    const was = model.everyone.excluded;
+    const excluded = was.includes(id) ? was.filter((h) => h !== id) : [...was, id];
+    model = { ...model, everyone: { ...model.everyone, excluded } };
     draw();
-    state.settings = await window.api.settings.set('everyoneHeroes', chosen);
+    state.settings = await window.api.settings.set('everyoneExcluded', excluded);
   },
   beta: async () => {
     if (!model) return;

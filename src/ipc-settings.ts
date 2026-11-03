@@ -79,7 +79,7 @@ export function registerSettingsIpc({
     // the status text is localized, so a language change has to redraw it too
     if (key === 'discordPresence' || key === 'uiLang') applyPresenceSetting();
     // the table is what the switch changes; the bar at the bottom counts the build
-    if (key === 'everyoneWearsMine' || key === 'everyoneHeroes') void schemaService.refreshInBackground();
+    if (key === 'everyoneWearsMine' || key === 'everyoneExcluded') void schemaService.refreshInBackground();
     return settingsView();
   });
 

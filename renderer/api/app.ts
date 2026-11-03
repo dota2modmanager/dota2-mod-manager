@@ -23,8 +23,8 @@ export interface StoredSettings {
   countDownloads: boolean;
   /** everybody playing a hero the item builder dressed wears the same look (src/item-builder-everyone.ts) */
   everyoneWearsMine: boolean;
-  /** the heroes it dresses, by id; none: every hero built, as the game's limit allows (src/item-builder-everyone-budget.ts) */
-  everyoneHeroes: string[];
+  /** the heroes it leaves alone, by id: every other hero built is dressed, as the game's limit allows (src/item-builder-everyone-budget.ts) */
+  everyoneExcluded: string[];
   /** the heroes the last build left out to stay under that limit */
   everyoneLeftOut: string[];
   schemaPatch: boolean;
