@@ -475,7 +475,7 @@ const EN = {
   '. Пока так, клиент может не пускать в матчмейкинг — и моды тут ни при чём. Приложение не смогло восстановить оригинал само: проверь целостность файлов Dota 2 через Steam, это чинит за минуту.':
     ". While that is true the client can refuse to matchmake, and mods have nothing to do with it. The app could not restore the original itself: verify Dota 2's files through Steam, it takes a minute.",
   'и': 'and',
-  'и ещё {0}': 'and {0} more',
+  'и ещё {0}': 'and {0} more', 'Обновить мод': 'Update the mod', 'В игре всё в порядке': 'It looks fine in the game', 'У автора есть новая версия: обнови мод, он встанет на то же место.': 'The author has a new version: update the mod and it keeps its place.', 'Новой версии в каталоге нет. Если в игре что-то сломалось, выключи мод и напиши автору, какие файлы поменялись.': 'The catalog has no newer version. If something broke in the game, switch the mod off and tell its author which files changed.', 'Что патч задел в «{0}»': 'What the patch changed under «{0}»', 'Dota{0} обновила файлы, которые подменяет этот мод. Мод возвращает их старые версии.': 'Dota{0} updated files this mod replaces. The mod brings back their old versions.', 'Изменены: {0}': 'Changed: {0}', 'Убраны из игры: {0}': 'Removed from the game: {0}',
   'Включено': 'Enabled', 'Выключено': 'Disabled',
 
   // ---------- presets ----------

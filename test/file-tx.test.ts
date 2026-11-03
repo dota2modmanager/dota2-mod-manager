@@ -155,6 +155,20 @@ test('rollback does not throw when the world moved under it', (t) => {
   assert.equal(logged.length, 1, 'and what could not be is written down');
 });
 
+test('a step the rollback cannot undo is written down by what it was and where, and the rest still runs', (t) => {
+  const root = tree(t);
+  put(root, 'pak10_dir.vpk', 'mod');
+  const logged: string[] = [];
+  const tx = new FileTx((m) => logged.push(m));
+  tx.write(path.join(root, 'pak11_dir.vpk'), Buffer.from('x'));
+  tx.remove(path.join(root, 'pak10_dir.vpk'));
+  // the file the rollback puts back is held open by somebody: Windows refuses the rename
+  failOnce(t, 'renameSync', 'EBUSY', (a) => String(a[1]).endsWith('pak10_dir.vpk'));
+  assert.doesNotThrow(() => tx.rollback());
+  assert.ok(logged.some((m) => /could not undo unremove .*pak10_dir\.vpk: EBUSY/.test(m)), logged.join(' | '));
+  assert.equal(fs.existsSync(path.join(root, 'pak11_dir.vpk')), false, 'the write before it is still undone');
+});
+
 test('commit and rollback are each once', (t) => {
   const root = tree(t);
   put(root, 'a.vpk', 'a');

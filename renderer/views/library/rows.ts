@@ -46,7 +46,7 @@ function prePatchTag(rec: LibRecord): Tag | null {
   const build = p.since ? ` ${p.since}` : '';
   const changed = p.changed ? L`Dota${build} поменяла файлы, которые подменяет этот мод: ${p.changed}. Мод возвращает их старые версии, и если в игре что-то выглядит не так, начни с него. Автору пора пересобрать мод.` : '';
   const removed = p.removed ? L`Dota${build} убрала файлы, которые подменяет этот мод: ${p.removed}. Эта часть мода больше ни на что не действует.` : '';
-  return { cls: 'stale', icon: 'history', text: L`до патча`, title: [changed, removed].filter(Boolean).join(' ') };
+  return { cls: 'stale', icon: 'history', text: L`до патча`, opens: 'prePatch', title: [changed, removed].filter(Boolean).join(' ') };
 }
 
 const known = <T>(list: (T | null)[]): T[] => list.filter((x): x is T => x !== null);

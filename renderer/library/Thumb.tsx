@@ -63,7 +63,7 @@ export function PackThumb({ p }: { p: PackRowModel }) {
 }
 
 /** The pills after a name, each after a space, as the name line has always spaced them. */
-export function Tags({ tags, onOpen }: { tags: Tag[]; onOpen?: () => void }) {
+export function Tags({ tags, onOpen }: { tags: Tag[]; onOpen?: (what: NonNullable<Tag['opens']>) => void }) {
   return (
     <>
       {tags.map((t, i) => {
@@ -73,7 +73,7 @@ export function Tags({ tags, onOpen }: { tags: Tag[]; onOpen?: () => void }) {
           <Fragment key={i}>
             {' '}
             {t.opens && onOpen
-              ? <button type="button" className={`${cls} opens`} title={t.title} onClick={onOpen}>{inner}</button>
+              ? <button type="button" className={`${cls} opens`} title={t.title} onClick={() => onOpen(t.opens!)}>{inner}</button>
               : <span className={cls} title={t.title}>{inner}</span>}
           </Fragment>
         );

@@ -61,7 +61,7 @@ export function ModRow({ r, masterOff, actions, motionKey }: RowProps & Moves & 
         <div className="lib-name">
           <span title={r.cosmetic?.name || r.name}>{catalogName(r.name)}</span>
           {r.styleLabel && <>{' '}<span className="lib-style-label" title={r.styleLabel}>({catalogLabel(r.styleLabel)})</span></>}
-          <Tags tags={r.tags} onOpen={() => actions.covers(r.id)} />
+          <Tags tags={r.tags} onOpen={(what) => (what === 'prePatch' ? actions.prePatch(r.id) : actions.covers(r.id))} />
         </div>
         <div className="lib-meta"><span>{r.meta}</span>{r.pakFile && <PakFile name={r.pakFile} />}</div>
       </div>
