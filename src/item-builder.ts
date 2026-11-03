@@ -31,6 +31,7 @@ import { ITEM_EFFECTS, type ItemEffect } from './item-builder-effects.ts';
 import { itemAssets, normalizeAssetPath, type ItemAssets, type SummonModels } from './item-builder-assets.ts';
 import { styleOf, withStyle } from './item-builder-styles.ts';
 import { DONOR, donorOf, withDonorEffects } from './item-builder-donor.ts';
+import { UNUSUAL, unusualItemEffect } from './item-builder-unusual.ts';
 
 export { itemSlots, itemSlotsSteps, itemSets, itemOptions } from './item-builder-slots.ts';
 export { itemEffects } from './item-builder-effects.ts';
@@ -86,13 +87,15 @@ export function effectKey(effectIds: string | string[] | null | undefined): stri
   const ids = (Array.isArray(effectIds) ? effectIds : String(effectIds || '').split(','))
     .map((id) => String(id).trim().toLowerCase())
     .filter(Boolean);
-  const want = new Set(ids.filter((id) => !/^style-\d+$/.test(id) && !DONOR.test(id)));
+  const want = new Set(ids.filter((id) => !/^style-\d+$/.test(id) && !DONOR.test(id) && !UNUSUAL.test(id)));
   const known = ITEM_EFFECTS.map((e) => e.id).filter((id) => want.has(id));
+  // the game's effects by their number, after the builder's own (src/item-builder-unusual.ts)
+  const unusual = [...new Set(ids.filter((id) => UNUSUAL.test(id)))].sort((a, b) => Number(UNUSUAL.exec(a)![1]) - Number(UNUSUAL.exec(b)![1]));
   // an id nobody offers stays in, at the end, so the build can say which one it did not know
   const unknown = [...want].filter((id) => !known.includes(id)).sort();
   const donor = ids.find((id) => DONOR.test(id));
   const style = styleOf(ids.join(','));
-  return [...known, ...unknown, ...(donor ? [donor] : []), ...(style ? [`style-${style}`] : [])].join(',');
+  return [...known, ...unusual, ...unknown, ...(donor ? [donor] : []), ...(style ? [`style-${style}`] : [])].join(',');
 }
 
 function setBlockId(blockText: string, id: string): string {
@@ -247,7 +250,7 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
   const key = effectKey(effectIds);
   // several at once: the window offers them that way, and one unknown id refuses the whole pick
   const effects = key.split(',').filter((id) => id && !/^style-\d+$/.test(id) && !DONOR.test(id)).map((id) => {
-    const effect = itemEffectById(id);
+    const effect = UNUSUAL.test(id) ? unusualItemEffect(baseText, id) : itemEffectById(id);
     if (!effect) throw new Error(t('items_game: эффект {0} не найден', id));
     return effect;
   });

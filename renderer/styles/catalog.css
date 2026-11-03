@@ -208,6 +208,10 @@
 }
 .item-fx-head { margin-top: var(--space-5); }
 .item-fx-hint { margin-bottom: var(--space-3); }
+/* the game's own unusual effects under the builder's cards: names only, so buttons rather than cards */
+#effectGrid + .item-fx-hint { margin-top: var(--space-4); }
+.item-fx-game { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.item-fx-game .style-btn::before { display: none; }
 .item-back { margin-bottom: var(--space-2); }
 .item-empty {
   display: flex;

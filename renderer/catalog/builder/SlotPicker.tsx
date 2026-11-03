@@ -79,6 +79,17 @@ export function SlotPicker({ m, actions }: { m: SlotPickerModel; actions: SlotPi
               </button>
             ))}
           </div>
+          {m.effects.game.length > 0 && (
+            <>
+              <div className="text-meta item-fx-hint">{L`Эффекты из игры, как у необычных курьеров. Свечение глаз не садится, поэтому его здесь нет.`}</div>
+              <div className="item-fx-game" id="gameEffectRow">
+                {m.effects.game.map((fx) => (
+                  <button key={fx.id} className={`style-btn ${fx.picked ? 'active' : ''}`} data-effect-id={fx.id} aria-pressed={fx.picked}
+                    disabled={!m.effects?.enabled} onClick={() => actions.effect(fx.id)}>{fx.name}</button>
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
       {m.donors && (

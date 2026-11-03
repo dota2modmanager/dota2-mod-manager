@@ -15,6 +15,7 @@ import type { Library } from './library.ts';
 import type { LibRecord } from './types.ts';
 import type { ItemSet } from './item-builder.ts';
 import { displaced, isSelectorSlot } from './item-builder-personas.ts';
+import { offeredUnusual } from './item-builder-unusual.ts';
 
 /** What the window is told about the free looks and the item builder (cosmeticSlots). */
 export type CosmeticSlots = { slots: CosmeticSlot[]; sets: ItemSet[]; names?: Record<string, string>; error?: string };
@@ -80,6 +81,11 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
         const pak = path.join(game, 'dota', 'pak01_dir.vpk');
         if (fs.existsSync(pak)) yield* sharedVpkIndexSteps(pak);
         const styleName = styleNamer(game, getLang(), (i) => t('Стиль {0}', i + 1));
+        yield PAUSE;
+        // the game's own unusual effects after the builder's, by the names the game gives them (issue #393)
+        const gameName = styleNamer(game, getLang(), () => '');
+        const offered = [...effects, ...offeredUnusual(text, (id) => !!gameName(`#Attrib_Particle${id}`, 0))
+          .map((e) => ({ id: e.id, name: gameName(e.nameToken, 0) }))];
         const entries = itemSlots.map((it) => {
           const rec = cosmeticRecordFor(it.slot);
           return {
@@ -89,7 +95,7 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
             pickedEffect: rec ? (rec.effectId || '') : '',
             recordId: rec ? rec.id : null,
             // a persona has no model for an effect to sit on
-            effects: it.persona && !it.persona.part ? [] : effects,
+            effects: it.persona && !it.persona.part ? [] : offered,
           };
         });
         const at = slots.findIndex((s) => s.slot === 'weather');
