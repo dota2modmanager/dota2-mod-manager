@@ -38,6 +38,7 @@ const ELECTRON_USERS = [
   'src/ipc-diagnostics.ts',
   'src/ipc-foreign.ts',
   'src/ipc-game.ts',
+  'src/ipc-grid.ts',
   'src/ipc-library.ts',
   'src/ipc-misc.ts',
   'src/ipc-mods.ts',

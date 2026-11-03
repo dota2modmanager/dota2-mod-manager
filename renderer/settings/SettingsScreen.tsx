@@ -12,6 +12,8 @@ import { Dropdown } from '../ui/Dropdown.tsx';
 import { ProxyControl } from './ProxyControl.ts';
 import { RepairSteps, type RepairRun } from './RepairSteps.tsx';
 import { CompilerBlock, type CompilerActions } from './CompilerBlock.tsx';
+import { GridBlock } from './GridBlock.tsx';
+import { Toggle } from './Toggle.tsx';
 import type { CompilerState } from '../api/content.ts';
 
 export interface SettingsModel {
@@ -74,10 +76,6 @@ const Block = ({ i, title, children }: { i?: number; title: ReactNode; children:
     {children}
   </div>
 );
-
-function Toggle({ id, on, label, onClick }: { id: string; on: boolean; label: string; onClick: () => void }) {
-  return <button className={`toggle ${on ? 'on' : ''}`} id={id} role="switch" aria-checked={on} aria-label={label} onClick={onClick} />;
-}
 
 /* The number moves while the slider is dragged and the window resizes on release: scaling on every
  * input event fights the drag, since the slider moves under the pointer. ui/chrome.ts paints the
@@ -210,6 +208,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
       )}
 
       {m.compiler && <CompilerBlock i={4} c={m.compiler} actions={actions} />}
+      <GridBlock i={4} />
 
       <Block i={4} title={L`Конструктор предметов`}>
         <div className="settings-row spaced">

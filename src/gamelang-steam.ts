@@ -71,7 +71,7 @@ function readLaunchOptions(file: string): string | null {
  * not an answer.
  * @param pick what to take out of one account's options
  */
-function fromLaunchOptions(gamePath: string | null | undefined, pick: (raw: string | null) => string | null): string | null {
+function steamRoots(gamePath: string | null | undefined): string[] {
   const roots: string[] = [];
   if (gamePath) {
     // <lib>/steamapps/common/dota 2 beta/game -> <lib>, which is the Steam root for a default install
@@ -82,7 +82,11 @@ function fromLaunchOptions(gamePath: string | null | undefined, pick: (raw: stri
       if (base) roots.push(path.join(base, 'Steam'));
     }
   }
-  for (const root of roots) {
+  return roots;
+}
+
+function fromLaunchOptions(gamePath: string | null | undefined, pick: (raw: string | null) => string | null): string | null {
+  for (const root of steamRoots(gamePath)) {
     const userdata = path.join(root, 'userdata');
     let ids: string[] = [];
     try { ids = fs.readdirSync(userdata).filter((d) => /^\d+$/.test(d)); } catch { continue; }
@@ -100,6 +104,25 @@ function fromLaunchOptions(gamePath: string | null | undefined, pick: (raw: stri
       if (v) values.add(v);
     }
     return values.size === 1 ? [...values][0] : null;
+  }
+  return null;
+}
+
+/**
+ * The userdata/<account> folder of whoever is logged in to Steam, where Dota keeps the files that
+ * follow the account (hero grids). Without a logged-in account, the one account that has played
+ * Dota on this machine; with several and none of them current, null rather than a guess.
+ */
+export function steamAccountDir(gamePath: string | null | undefined): string | null {
+  for (const root of steamRoots(gamePath)) {
+    const userdata = path.join(root, 'userdata');
+    let ids: string[] = [];
+    try { ids = fs.readdirSync(userdata).filter((d) => /^\d+$/.test(d) && d !== '0'); } catch { continue; }
+    if (!ids.length) continue;
+    const current = currentSteamUser(root);
+    if (current && ids.includes(current)) return path.join(userdata, current);
+    const played = ids.filter((id) => fs.existsSync(path.join(userdata, id, '570')));
+    return played.length === 1 ? path.join(userdata, played[0]) : null;
   }
   return null;
 }

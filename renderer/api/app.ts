@@ -77,6 +77,10 @@ export interface AppSettings extends StoredSettings {
   slotMigration: unknown;
 }
 
+/** Which hero grids the app made: the kinds it can make, and what the account's file holds now. */
+export type GridKind = 'winrate' | 'attribute' | 'popular';
+export interface GridState { account: boolean; kinds: GridKind[]; statsAt: number | null }
+
 interface WinApi {
   minimize: () => Promise<void>;
   maximize: () => Promise<void>;
@@ -148,6 +152,12 @@ export interface AppApi {
   misc: MiscApi;
   /** the pumpkin's key: the bloody theme and the mod it opens (src/ipc-pumpkin.ts) */
   pumpkin: PumpkinApi;
+  /** hero grids for the pick screen, written into the Steam account's grid file (src/hero-grid.ts) */
+  grids: {
+    state: () => Promise<GridState>;
+    apply: (kinds: GridKind[]) => Promise<Reply<{ kinds: GridKind[]; statsAt: number }>>;
+    remove: () => Promise<Reply<{ kinds: GridKind[] }>>;
+  };
   diag: { export: () => Promise<Dialog<{ path: string }>>; reportError: (msg: string) => void };
   onProgress: (cb: (evt: ProgressEvent) => void) => void;
   update: UpdateApi;

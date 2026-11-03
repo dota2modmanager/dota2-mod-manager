@@ -119,6 +119,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'update:install': [], 'update:fetchPortable': [], 'update:revealPortable': [PATH],
   'beta:state': [], 'beta:set': [bool],
   'game:launch': [], 'game:steamDownloads': [],
+  'grid:state': [], 'grid:apply': [list(oneOf('winrate', 'attribute', 'popular'), 3)], 'grid:remove': [],
   'ui:setZoom': [num(0.25, 5)],
   // settings and the account (src/ipc-settings.ts)
   'settings:get': [], 'settings:set': settingsSet, 'settings:testProxy': [downloadProxy], 'settings:detectDota': [], 'settings:browseDota': [],
