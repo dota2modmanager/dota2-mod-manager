@@ -27,6 +27,7 @@ import { createUpdateImpact, impactMods } from './update-impact.ts';
 import { createArcanaService, type Generated } from './arcana-service.ts';
 import { createBaseStore } from './arcana-base-store.ts';
 import { createMapLooks } from './map-looks-service.ts';
+import { createMenuBackground } from './menu-background-service.ts';
 import { createAbilitySounds } from './ability-sounds-service.ts';
 import { createBuildUndo } from './build-undo.ts';
 import { createModelGlb } from './model-glb.ts';
@@ -132,6 +133,8 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   const arcana = createArcanaService({ gamePath: () => settings.get('dotaGamePath'), installer, library, log: diag, bases, code: builderStamp });
   // towers and trees from the game's own looks, per side (src/map-looks-service.ts)
   const mapLooks = createMapLooks({ gamePath: () => settings.get('dotaGamePath'), installer, library, log: diag });
+  // a movie of the user's own behind the main menu (src/menu-background-service.ts)
+  const menuBackground = createMenuBackground({ gamePath: () => settings.get('dotaGamePath'), userDataDir: userData, installer, library, log: diag });
   const cursors = createCursors({ installer, library, settings });
   const adopt = createAdopt({ installer, library, schemaService });
   // what the app can be told after it shipped: a feature switched off with a reason, and dated
@@ -213,7 +216,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 
   return {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, abilitySounds, buildUndo, heroPreview,
+    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, abilitySounds, buildUndo, heroPreview,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };
 }

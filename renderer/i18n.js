@@ -874,6 +874,12 @@ const EN = {
   'Диагностика': 'Diagnostics',
   'Экспортировать отчёт': 'Export report', 'Чиню…': 'Repairing…', 'Починить приложение': 'Repair the app', 'Починка возвращает патч игры, ищет пропавшие файлы модов и очищает картинки. Моды и пресеты не трогает.': 'Repair puts the game patch back, looks for missing mod files and clears the pictures. Your mods and presets stay as they are.', 'Не вышло? Отправь отчёт: в нём видно, на каком шаге.': 'Still broken? Send the report: it shows which step failed.', 'Всё в порядке': 'All good', 'Починка нашла проблемы': 'Repair found problems',
   'Отчёт сохранён': 'Report saved',
+  // ---------- a main menu background of your own (catalog/background) ----------
+  'Свой фон меню': 'Your own menu background', 'Картинка, GIF или видео': 'A picture, GIF or video', 'Твоя картинка или ролик за главным меню Доты': 'Your picture or clip behind Dota’s main menu',
+  'Пока пусто': 'Nothing here yet', 'Затемнение': 'Dimming', 'Размытие': 'Blur',
+  'Готовлю ролик… {0}%': 'Preparing the clip… {0}%', 'Картинка, GIF или видео до 30 секунд. Ролик повторяется по кругу. Видео готовится в реальном времени: ролик на 30 секунд займёт 30 секунд.': 'A picture, GIF or video up to 30 seconds. The clip loops. A video is prepared in real time: a 30-second clip takes 30 seconds.', 'Этот компьютер не умеет кодировать VP9': 'This computer can’t encode VP9',
+  'Это видео окно открыть не смогло': 'The window couldn’t open this video', 'Нужна картинка, GIF или видео': 'Pick a picture, GIF or video', 'Получилось больше 40 МБ: возьми ролик короче': 'That came out over 40 MB: take a shorter clip',
+  'Не удалось прочитать фон': 'Couldn’t read the background', 'Изменить фон': 'Change the background',
   // ---------- a theme of your own (ui/custom-theme, ui/theme-menu) ----------
   'Это не JSON': 'This is not JSON', 'В файле нет темы': 'There is no theme in the file', 'Лишние поля: {0}': 'Fields a theme does not have: {0}',
   'У темы нет имени': 'The theme has no name', 'У темы нет цветов': 'The theme has no colours', 'Таких цветов тема не задаёт: {0}': 'A theme does not set these colours: {0}',

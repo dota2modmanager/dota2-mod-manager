@@ -34,7 +34,7 @@ function complete(english, chinese) {
 test('Simplified Chinese covers every renderer and native key, keeping every placeholder', () => {
   const context = renderer('zh-CN');
   complete(context.english, context.window.ZH_CN);
-  const nativeSource = read('src/i18n.ts').match(/const EN = (\{[\s\S]*?\}) satisfies Record<string, string>;/);
+  const nativeSource = read('src/i18n-en.ts').match(/const EN = (\{[\s\S]*?\}) satisfies Record<string, string>;/);
   assert.ok(nativeSource, 'native dictionary found');
   complete(vm.runInNewContext(`(${nativeSource[1]})`), nativeChinese);
   assert.deepEqual(Object.keys(context.window.ZH_CN_PLURAL).sort(), Object.keys(context.window.EN_PLURAL).sort());

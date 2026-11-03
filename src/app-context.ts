@@ -20,6 +20,7 @@ import type { createSchemaService } from './schema-service.ts';
 import type { createUpdateImpact } from './update-impact.ts';
 import type { createArcanaService } from './arcana-service.ts';
 import type { createMapLooks } from './map-looks-service.ts';
+import type { createMenuBackground } from './menu-background-service.ts';
 import type { createAbilitySounds } from './ability-sounds-service.ts';
 import type { createBuildUndo } from './build-undo.ts';
 import type { createHeroPreview } from './hero-preview.ts';
@@ -68,6 +69,8 @@ export interface AppContext {
   arcana: ReturnType<typeof createArcanaService>;
   /** towers and trees from the game's own looks (src/map-looks-service.ts) */
   mapLooks: ReturnType<typeof createMapLooks>;
+  /** a movie of the user's own behind the main menu (src/menu-background-service.ts) */
+  menuBackground: ReturnType<typeof createMenuBackground>;
   /** sounds of the user's own on a hero's events (src/ability-sounds-service.ts) */
   abilitySounds: ReturnType<typeof createAbilitySounds>;
   buildUndo: ReturnType<typeof createBuildUndo>;

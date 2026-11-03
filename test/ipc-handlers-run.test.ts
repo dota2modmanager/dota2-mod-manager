@@ -31,6 +31,7 @@ import * as preview3d from '../src/ipc-preview3d.ts';
 import * as pumpkin from '../src/ipc-pumpkin.ts';
 import * as settings from '../src/ipc-settings.ts';
 import * as sounds from '../src/ipc-sounds.ts';
+import * as background from '../src/ipc-background.ts';
 import * as windowIpc from '../src/ipc-window.ts';
 import { registerAgainst } from './helpers/fake-electron.ts';
 
@@ -39,7 +40,7 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const MODULES: Record<string, Record<string, unknown>> = {
   'ipc-compiler.ts': compiler, 'ipc-diagnostics.ts': diagnostics, 'ipc-foreign.ts': foreign, 'ipc-game.ts': game, 'ipc-grid.ts': grid, 'ipc-library.ts': library,
   'ipc-misc.ts': misc, 'ipc-mods.ts': mods, 'ipc-packs.ts': packs,
-  'ipc-presets.ts': presets, 'ipc-preview3d.ts': preview3d, 'ipc-pumpkin.ts': pumpkin, 'ipc-settings.ts': settings, 'ipc-sounds.ts': sounds, 'ipc-window.ts': windowIpc,
+  'ipc-presets.ts': presets, 'ipc-preview3d.ts': preview3d, 'ipc-pumpkin.ts': pumpkin, 'ipc-settings.ts': settings, 'ipc-sounds.ts': sounds, 'ipc-background.ts': background, 'ipc-window.ts': windowIpc,
 };
 
 const electron = {

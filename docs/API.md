@@ -69,6 +69,7 @@ the code, not in this page.
 | [`src/hero-grid.ts`](#srchero-gridts) | Hero grids for the pick screen out of this patch's numbers (issue #428). |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/hero-preview.ts`](#srchero-previewts) | The models of a hero as the item builder dresses it, for the 3D preview in the hero's window |
+| [`src/i18n-en.ts`](#srci18n-ents) | Native dialogs, errors and labels in English, keyed by the exact Russian source string. |
 | [`src/i18n-zh-CN.ts`](#srci18n-zh-CNts) | Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key. |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (src/). |
 | [`src/icon-match.ts`](#srcicon-matchts) | Which wiki file is an item's picture: the file names to try first, and how a wiki's listing is |
@@ -105,6 +106,8 @@ the code, not in this page.
 | [`src/main-window.ts`](#srcmain-windowts) | The one window the app has: its size on the screen it opens on, the single page it may show, |
 | [`src/map-looks-service.ts`](#srcmap-looks-servicets) | Towers and trees from the game's own looks, per side, built in the app (issues #446, #421). |
 | [`src/material.ts`](#srcmaterialts) | Compiled resources at the block level, and a material's expressions: what an item's gem colours. |
+| [`src/menu-background-service.ts`](#srcmenu-background-servicets) | The main menu background of the user's own as a record in My mods (issue #418; the pak itself is |
+| [`src/menu-background.ts`](#srcmenu-backgroundts) | The main menu background of the user's own (issue #418): a WebM behind the menu, dimmed and |
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
 | [`src/mod-doctor.ts`](#srcmod-doctorts) | The mod doctor: what is wrong with a mod, found in its files and the game's, before anybody |
 | [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
@@ -3287,6 +3290,12 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
 
 The 3D preview's models, made on demand.
 
+## src/i18n-en.ts
+
+Native dialogs, errors and labels in English, keyed by the exact Russian source string.
+
+_Exports nothing._
+
 ## src/i18n-zh-CN.ts
 
 Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key.
@@ -5763,6 +5772,147 @@ The material with some expressions rewritten (`change` returns new bytecode, or 
 ```
 @returns the new file and how many expressions changed
 ```
+
+## src/menu-background-service.ts
+
+The main menu background of the user's own as a record in My mods (issue #418; the pak itself is
+src/menu-background.ts). One record: a new background takes the place of the one before, in its
+slot. The window encodes the user's file to WebM and hands it over; the WebM is kept in
+userData/menu-backgrounds by its sha1, so a Dota update that reached the record builds it again
+out of the new layouts with nothing asked of the user, and a new dimming or blur needs no file.
+
+### `BackgroundGenerated`
+
+```ts
+export interface BackgroundGenerated extends BackgroundLook { background: string; source: string }
+```
+
+What a background record was built from.
+
+### `BackgroundState`
+
+```ts
+export interface BackgroundState { installed: { id: string; source: string; dim: number; blur: number; enabled: boolean } | null }
+```
+
+What the window shows: the background on now, if any.
+
+### `createMenuBackground`
+
+```ts
+export function createMenuBackground({ gamePath, userDataDir, installer, library, log = () => {} }: { gamePath: () => string | null | undefined; userDataDir: string; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; log?: (msg: string) => void; })
+```
+
+The service the background:* channels call.
+
+## src/menu-background.ts
+
+The main menu background of the user's own (issue #418): a WebM behind the menu, dimmed and
+blurred as they chose, in a pak made out of the game's own layouts.
+
+The menu's background is a Panorama panel, DOTADashboardBackgroundManager, which picks one of
+several backgrounds (the event's, the last match's...). Mods in the catalog do this by hand: the
+manager told to show the last match's background, and that background given a movie. This does
+the same to the compiled layouts of the player's own game, read out of pak01 and written back
+with one change each, so nothing else in them is a copy of an older patch:
+
+- dashboard.vxml_c and dashboard_background_manager.vxml_c: the manager's override-background
+  set to DOTADashboardBackgroundLastMatch, where the manager is made and in its own layout;
+- dashboard_background_last_match.vxml_c: every panel of it hidden, and a MoviePanel playing
+  the WebM put over them, with a black panel over it for the dimming.
+
+A compiled layout keeps its panels as a tree in the LaCo block, binary KV3 (src/kv3.ts); the
+styles are inline, so no stylesheet is compiled. The WebM goes into the pak as it is: the
+game's movie panel plays a file from the archive by its path. A Dota update can change any of
+the three layouts, so the record is built again from the new ones (src/menu-background-service.ts).
+
+### `MOVIE`
+
+```ts
+export const MOVIE = 'd2mm/menu_background.webm'
+```
+
+Where the movie sits in the pak, and the files the pak replaces.
+
+### `LAYOUTS`
+
+```ts
+export const LAYOUTS =
+```
+
+_No description in the source._
+
+### `BackgroundLook`
+
+```ts
+export interface BackgroundLook { dim: number; blur: number }
+```
+
+How the movie is shown: how dark the veil over it is (0 to 0.9) and how blurred (0 to 20 px).
+
+### `attribute`
+
+```ts
+export const attribute = (name: string, value: string): Obj
+```
+
+A panel's attribute as the compiler writes one: a name and its value under it.
+
+### `children`
+
+```ts
+export function children(node: Obj): Kv3Node[]
+```
+
+A node's children as a list that can be changed: one child alone is stored as `child`, more as `vecChildren`.
+
+### `panels`
+
+```ts
+export function panels(root: Kv3Node, name: string, out: Obj[] = []): Obj[]
+```
+
+Every panel of this name anywhere in the layout.
+
+### `setAttribute`
+
+```ts
+export function setAttribute(panel: Obj, name: string, value: string): void
+```
+
+The attribute `name` of a panel set to `value`, in place of the one it had.
+
+### `veil`
+
+```ts
+export const veil = (dim: number): string => `#000000${Math.round(Math.min(Math.max(dim, 0), 0.9) * 255).toString(16).padStart(2, '0')}`
+```
+
+The veil's colour: black, as opaque as the dimming.
+
+### `backgroundLayouts`
+
+```ts
+export function backgroundLayouts(read: (file: string) => Buffer | null, look: BackgroundLook): { path: string; data: Buffer }[]
+```
+
+The three layouts with the movie in them, out of the game's own.
+
+### `webmProblem`
+
+```ts
+export function webmProblem(webm: Buffer, max = 48 * 1024 * 1024): string | null
+```
+
+Why these bytes cannot be the menu's movie, or null: a WebM, with a VP8 or VP9 track.
+
+### `buildBackground`
+
+```ts
+export function buildBackground(ix: Pick<VpkIndex, 'read'>, webm: Buffer, look: BackgroundLook): Buffer
+```
+
+The pak: the three layouts and the movie.
 
 ## src/minify.ts
 

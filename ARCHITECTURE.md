@@ -557,6 +557,7 @@ that location is not writable.
 | `src/arcana-service.ts` | The arcana window's side in the main process: what the window shows, the mod built into My mods in an early slot, and built again after a Dota update |
 | `src/generated-pak.ts` | A pak the app built itself, written into the mods folder in an early slot, and on a rebuild swapped into the slot the old one had (the arcana window, the map looks) |
 | `src/map-looks-service.ts` | Towers and trees from the game's own looks, one per side, built in the app into one My mods record per kind and built again after a Dota update ([#446](https://github.com/dota2modmanager/dota2-mod-manager/issues/446), [#421](https://github.com/dota2modmanager/dota2-mod-manager/issues/421)) |
+| `src/menu-background.ts`, `src/menu-background-service.ts` | A picture, GIF or video of your own behind the main menu: the game's three dashboard layouts rewritten so the last match's background plays your WebM under a veil and blur, in one My mods record built again after a Dota update ([#418](https://github.com/dota2modmanager/dota2-mod-manager/issues/418)) |
 | `src/ability-sounds.ts`, `src/ability-sounds-service.ts` | A sound of your own on a hero's sound event: the events written as KV3 text with your sound instead of the game's or over it, compiled with your WAV by Valve's resourcecompiler into one My mods record per hero ([#423](https://github.com/dota2modmanager/dota2-mod-manager/issues/423)) |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
@@ -643,7 +644,7 @@ that location is not writable.
 | `src/uninstall-args.ts`, `src/uninstall-window.ts` | Whether this run is the uninstaller asking what to take along, and the window that asks |
 | `src/folder-size.ts` | Bytes under a folder, for the caches in Settings and the removal window |
 | `src/types.ts` | The shapes the main process hands between its modules |
-| `src/i18n.ts`, `src/i18n-zh-CN.ts`, `renderer/i18n.js`, `renderer/locales/*` | Russian, English and Simplified Chinese, for the main process and the window |
+| `src/i18n.ts`, `src/i18n-en.ts`, `src/i18n-zh-CN.ts`, `renderer/i18n.js`, `renderer/locales/*` | Russian, English and Simplified Chinese, for the main process and the window |
 | `renderer/app.ts`, `renderer/shell/*` | The window's start, and its own elements every screen reaches: the title bar, search, the switches, progress, drops, updates |
 | `renderer/api/*` | What every channel the window calls takes and answers |
 | `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*` | The four screens, in React |

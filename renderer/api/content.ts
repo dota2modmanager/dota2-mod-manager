@@ -159,6 +159,14 @@ export interface MapLooksApi {
   install: (kind: MapKind, radiant: string | null, dire: string | null) => Promise<Reply<{ record: LibRecord }>>;
 }
 
+/** The main menu's background of the user's own (src/menu-background-service.ts). */
+export interface BackgroundApi {
+  /** the background on now, if any */
+  state: () => Promise<Reply<{ installed: { id: string; source: string; dim: number; blur: number; enabled: boolean } | null }>>;
+  /** a WebM behind the menu (null: the one on now, with a new dimming and blur), put in My mods */
+  install: (webm: Uint8Array | null, source: string | null, dim: number, blur: number) => Promise<Reply<{ record: LibRecord }>>;
+}
+
 /** How a sound of the user's goes on an event: instead of Valve's, or with it. */
 export type SoundMode = 'replace' | 'layer';
 /** A sound of the user's on one event, as the hero's record keeps it. */
