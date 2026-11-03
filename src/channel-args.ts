@@ -23,6 +23,9 @@ import { validateDownloadProxy } from './download-proxy.ts';
 /** Why a value does not fit, or null when it does. */
 export type Check = (v: unknown) => string | null;
 
+/** The arcanas the arcana window builds: src/arcana-service.ts WINDOWS, which a test keeps in step. */
+export const ARCANA_WINDOWS = ['terrorblade-arcana', 'techies-arcana'];
+
 const fail = (what: string) => `expected ${what}`;
 
 const str = (max: number, min = 0): Check => (v) =>
@@ -178,7 +181,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'tools:state': [], 'tools:install': [str(100, 1)], 'tools:remove': [str(100, 1)],
   // resourcecompiler.exe (src/ipc-compiler.ts): its path comes from a dialog, never from here
   'compiler:state': [], 'compiler:browse': [], 'compiler:forget': [], 'compiler:prepare': [], 'compiler:check': [], 'compiler:keep': [], 'compiler:removeKept': [],
-  'arcana:state': [], 'arcana:install': [list(num(0, 255), 3), oneOf('mod', 'recolor')],
+  'arcana:state': [], 'arcana:install': [oneOf(...ARCANA_WINDOWS), list(num(0, 255), 3), oneOf('mod', 'recolor')],
   // the small errands (src/ipc-misc.ts)
   'misc:openLangFolder': [], 'misc:openCacheFolder': [], 'misc:openToolsFolder': [optional(str(260, 1))],
   'misc:openExternal': [optional((v) => {

@@ -793,6 +793,23 @@
 .arcana-own .ms { font-size: var(--text-md); }
 .arcana-own input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; }
 .modal-actions .arcana-mode { margin-left: auto; }
+/* The game's prismatic gems: dots quieter than the pills above them, named on the label line when
+   one is pointed at or picked, so 42 of them stay a palette rather than a wall of words. */
+.arcana-gems { display: flex; flex-direction: column; gap: var(--space-2); }
+.arcana-gems-label { display: flex; gap: var(--space-2); font-size: var(--text-xs); color: var(--text-faint); }
+.arcana-gem-name { color: var(--text-muted); }
+.arcana-gem-row { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.arcana-gem {
+  width: 20px; height: 20px; padding: 0;
+  border-radius: var(--radius-full);
+  border: 1px solid color-mix(in srgb, var(--c) 60%, var(--border));
+  background: var(--c);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
+}
+.arcana-gem:hover { transform: scale(1.15); }
+.arcana-gem:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.arcana-gem.active { box-shadow: 0 0 0 2px var(--bg-deep), 0 0 0 4px var(--c), 0 0 10px var(--c); }
 /* The arcana's own picture is a 256-pixel item icon: drawn whole, at about twice its size rather
    than four, in a shorter frame (the audio window's), its edges faded into the window's so its
    square background does not show. */

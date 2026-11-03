@@ -1,4 +1,4 @@
-/* The arcana built out of the game's own files (issue #118): its card among the tools and its
+/* The arcanas built out of the game's own files (issue #118): their cards among the tools and their
  * window. What the window shows comes from the main process (src/arcana-service.ts); what it
  * builds is a mod in My mods like any other, so switching it off and the load order are there. */
 import { refreshInstalledIndex } from '../../core/installed.ts';
@@ -8,15 +8,16 @@ import { toast } from '../../ui/toast.ts';
 import { showArcanaModal } from '../../catalog/modal/root.tsx';
 import type { ArcanaCardModel } from '../../catalog/arcana/ArcanaCard.tsx';
 import type { ArcanaMode } from '../../catalog/arcana/ArcanaModal.tsx';
-import { GEM, type Rgb } from '../../catalog/arcana/tint.ts';
+import { gemOf, type Rgb } from '../../catalog/arcana/tint.ts';
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './overlay.ts';
 import { screen } from './state.ts';
 
-type State = Awaited<ReturnType<typeof window.api.arcana.state>>;
+type State = Extract<Awaited<ReturnType<typeof window.api.arcana.state>>, { arcanas: unknown }>;
 
 let state: State | null = null;
 let open = false;
-let chosen: Rgb = GEM;
+let set = 'terrorblade-arcana';
+let chosen: Rgb = gemOf(set);
 let own: Rgb | null = null;
 let busy: ArcanaMode | null = null;
 sharesOverlay(() => { open = false; });
@@ -24,35 +25,43 @@ sharesOverlay(() => { open = false; });
 async function load(): Promise<State | null> {
   try {
     const s = await window.api.arcana.state();
-    state = s.error ? null : s;
+    state = s.error || !('arcanas' in s) ? null : s as State;
   } catch {
     state = null;
   }
   return state;
 }
 
-/** The card among the tools, or nothing when the game has no arcana to build from. */
-export async function arcanaLead(): Promise<ArcanaCardModel | null> {
+const shown = () => state?.arcanas.find((a) => a.set === set) ?? null;
+
+/** The cards among the tools, one for each arcana the game has the files for. */
+export async function arcanaLeads(): Promise<ArcanaCardModel[]> {
   const s = await load();
-  if (!s?.available) return null;
-  return { picture: s.picture, installed: s.installed?.color ?? null };
+  return (s?.arcanas || []).filter((a) => a.available)
+    .map((a) => ({ set: a.set, name: a.name, picture: a.picture, installed: a.installed?.color ?? null }));
 }
 
-export async function openArcanaWindow(from: Element | null): Promise<void> {
-  const s = state ?? await load();
-  if (!s?.available) return;
+export async function openArcanaWindow(which: string, from: Element | null): Promise<void> {
+  if (!state) await load();
+  const a = state?.arcanas.find((x) => x.set === which);
+  if (!a?.available) return;
   takeOverlay();
   open = true;
-  chosen = s.installed?.color ?? GEM;
+  set = which;
+  chosen = a.installed?.color ?? gemOf(set);
   own = null;
   openOverlay(draw, from);
 }
 
 function draw(): void {
-  if (!open || !state) return;
-  const installed = state.installed;
+  const a = shown();
+  if (!open || !state || !a) return;
+  const installed = a.installed;
   showArcanaModal({
-    picture: state.picture,
+    set: a.set,
+    name: a.name,
+    picture: a.picture,
+    gems: state.gems,
     chosen,
     own,
     installed: installed ? { color: installed.color, mode: installed.mode } : null,
@@ -69,12 +78,12 @@ function draw(): void {
   });
 }
 
-/** From My mods: the catalog's tools, with the arcana's window open over them. */
-export async function recolorFromLibrary(): Promise<void> {
+/** From My mods: the catalog's tools, with that arcana's window open over them. */
+export async function recolorFromLibrary(which: string): Promise<void> {
   store.activeCategory = 'tools';
   await switchView('catalog');
   await screen.redraw(); // a catalog kept from before is still on the category it had
-  await openArcanaWindow(null);
+  await openArcanaWindow(which, null);
 }
 
 async function install(mode: ArcanaMode): Promise<void> {
@@ -83,7 +92,7 @@ async function install(mode: ArcanaMode): Promise<void> {
   draw();
   let r: { error?: string };
   try {
-    r = await window.api.arcana.install(chosen, mode);
+    r = await window.api.arcana.install(set, chosen, mode);
   } catch (err) {
     r = { error: String((err as Error)?.message || err) };
   }
@@ -94,7 +103,7 @@ async function install(mode: ArcanaMode): Promise<void> {
 }
 
 async function remove(): Promise<void> {
-  const id = state?.installed?.id;
+  const id = shown()?.installed?.id;
   if (!id || busy) return;
   const r = await window.api.mods.remove(id);
   if (r.error) { toast(r.error, 'error'); return; }
@@ -102,7 +111,7 @@ async function remove(): Promise<void> {
   await after();
 }
 
-/** Everything the build shows on: My mods' index, the card, the open window. */
+/** Everything the build shows on: My mods' index, the cards, the open window. */
 async function after(): Promise<void> {
   await load();
   await refreshInstalledIndex();

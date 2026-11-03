@@ -134,7 +134,7 @@ const actions: ScreenActions = {
     renderCatalog();
   },
   openHero: (hero, card) => openItemHeroModal(hero, card),
-  openArcana: (card) => void openArcanaWindow(card),
+  openArcana: (set, card) => void openArcanaWindow(set, card),
 };
 
 async function renderCatalog(): Promise<void> {

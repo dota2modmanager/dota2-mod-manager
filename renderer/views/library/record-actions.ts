@@ -168,7 +168,7 @@ export function menuFor(id: string): MenuItem[] | null {
     rec.updateAvailable && { label: L`Обновить до новой версии`, icon: 'upgrade', onPick: async () => { await updateRecord(rec.id); await screen.reload(); } },
     rec.updateAvailable && { separator: true },
     // the arcana the app built: another colour is chosen in its window, not here
-    Boolean(rec.generated) && { label: L`Перекрасить`, icon: 'palette', onPick: () => void recolorFromLibrary() },
+    Boolean(rec.generated) && { label: L`Перекрасить`, icon: 'palette', onPick: () => void recolorFromLibrary(String((rec.generated as { set?: string }).set)) },
     Boolean(rec.generated) && { separator: true },
     ...orderItems(rec),
     ordered && { separator: true },

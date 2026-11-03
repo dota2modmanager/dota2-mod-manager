@@ -164,14 +164,17 @@ const EN = {
   'Золотой': 'Gold',
   'Белый': 'White',
   'Террорблейд': 'Terrorblade',
+  'Течис': 'Techies',
+  'Аркана Течиса': "Techies' arcana",
+  'Призматические самоцветы': 'Prismatic gems',
   'Свой цвет': 'Own colour',
   'аркана из файлов игры': 'arcana from the game files',
   'стоит': 'installed',
   'стоит только цвет': 'colour only, installed',
   'Аркана уже куплена? Только цвет': 'Own the arcana? Colour only',
   'Поставить аркану целиком': 'Install the whole arcana',
-  'Собирается из файлов твоей игры: модель, рога, свечение и иконки. Эффекта убийства и звуков арканы нет, их даёт сам предмет. После обновления Доты соберётся заново сам.':
-    "Built from your game's files: the model, horns, glow and icons. No kill effect or arcana sounds: those come with the item itself. Rebuilt on its own after a Dota update.",
+  'Собирается из файлов твоей игры: модель, эффекты и иконки. Звуков и эффекта убийства арканы нет, их даёт сам предмет. После обновления Доты соберётся заново сам.':
+    "Built from your game's files: the model, effects and icons. No arcana sounds or kill effect: those come with the item itself. Rebuilt on its own after a Dota update.",
   'Только цвет: перекрашивает аркану, которая у тебя уже есть. Модель и свечение даёт сама игра.':
     'Colour only: recolours the arcana you already own. The game brings the model and the glow.',
   'Аркана собрана и стоит в «Моих модах»': 'The arcana is built and in My mods',

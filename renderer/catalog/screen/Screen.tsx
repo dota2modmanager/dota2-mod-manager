@@ -60,8 +60,8 @@ function List({ model: m, actions }: { model: Extract<ScreenModel, { kind: 'list
         <>
           {m.mods.heading && <div className="section-h"><span className="ms">extension</span>{L`Моды`}</div>}
           <div className="grid" id="modGrid">
-            {m.lead && <ArcanaCard m={m.lead} onOpen={actions.openArcana} />}
-            <ModGrid listKey={m.key} mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead ? undefined : m.mods.emptyText}
+            {m.lead?.map((a, i) => <ArcanaCard key={a.set} m={a} index={i} onOpen={actions.openArcana} />)}
+            <ModGrid listKey={m.key} mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead?.length ? undefined : m.mods.emptyText}
               onOpen={actions.openMod} onFavChanged={actions.favChanged} />
           </div>
         </>
