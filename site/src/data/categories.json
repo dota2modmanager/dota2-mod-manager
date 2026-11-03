@@ -1399,6 +1399,16 @@
     {
       "id": "item-effects",
       "mods": [
+        {"name":"Black Dagon","styleLabel":null,"group":"dagon","image":{"src":"/mods/black-dagon.webp","width":854,"height":480},"author":"depex","authorUrl":"https://t.me/depexfx","date":1793701131},
+        {
+          "name": "Acid Desolator",
+          "styleLabel": null,
+          "group": "desolator",
+          "image": {"src":"/mods/acid-desolator.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1793687896
+        },
         {
           "name": "Hex Is Fucking Sick",
           "styleLabel": null,
@@ -2547,6 +2557,24 @@
     {
       "id": "backgrounds",
       "mods": [
+        {
+          "name": "Largo Background",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/largo-background.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1793701131
+        },
+        {
+          "name": "Ringmaster Background",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/ringmaster-background.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1793701131
+        },
         {
           "name": "Main Menu 7.00 Style",
           "styleLabel": null,
@@ -7982,6 +8010,15 @@
     {
       "id": "ranks",
       "mods": [
+        {
+          "name": "Immortal Ranks Ii",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/immortal-ranks-ii.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1793701131
+        },
         {"name":"Rose Chinese Medals","styleLabel":null,"group":null,"image":{"src":"/mods/rose-chinese-medals.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791974606},
         {
           "name": "Immortal Ranks",

@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1716,
+  "mods": 1719,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -62,6 +62,7 @@
         {"name":"Anti-Mage Prime","categoryId":"heroes","styleLabel":null,"slots":["weapon","misc","head","arms","belt"]},
         {"name":"Anti-Mage Ronin Warrior","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Turstarkuri Pilgrim","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","legs","shoulder"]},
+        {"name":"Cj Anti Mage","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head"]},
         {"name":"Immortal Anti-Mage","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","offhand"]}
       ]
     },
@@ -746,6 +747,8 @@
         {"name":"Chaos Invoker","categoryId":"heroes","styleLabel":null,"slots":["shoulder","arms","head","back","belt","misc"]},
         {"name":"Ice Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Blackguard Magus","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","misc","back","arms"]},
+        {"name":"Invoker Blood","categoryId":"heroes","styleLabel":"Style I","slots":["misc","arms","back","head","shoulder","belt"]},
+        {"name":"Invoker Blood","categoryId":"heroes","styleLabel":"Style II","slots":["misc","arms","back","head","shoulder","belt"]},
         {"name":"Invoker Dark Apex","categoryId":"heroes","styleLabel":null,"slots":["shoulder","misc","arms","back","head"]},
         {"name":"Invoker Dark Artistry","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
         {"name":"Invoker Dark Artistry v2","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},

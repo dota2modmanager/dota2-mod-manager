@@ -83,6 +83,28 @@
           "date": 1777911854
         },
         {
+          "name": "Invoker Blood",
+          "categoryId": "heroes",
+          "styleLabel": "Style I",
+          "group": null,
+          "slots": ["misc","arms","back","head","shoulder","belt"],
+          "image": {"src":"/mods/invoker-blood-style-i.webp","width":854,"height":480},
+          "author": "qizlik",
+          "authorUrl": "https://t.me/qizlikmod",
+          "date": 1793701131
+        },
+        {
+          "name": "Invoker Blood",
+          "categoryId": "heroes",
+          "styleLabel": "Style II",
+          "group": null,
+          "slots": ["misc","arms","back","head","shoulder","belt"],
+          "image": {"src":"/mods/invoker-blood-style-ii.webp","width":854,"height":480},
+          "author": "qizlik",
+          "authorUrl": "https://t.me/qizlikmod",
+          "date": 1793701131
+        },
+        {
           "name": "Invoker Dark Artistry v3",
           "categoryId": "heroes",
           "styleLabel": null,
@@ -9375,6 +9397,189 @@
       ]
     },
     {
+      "id": "antimage",
+      "name": "Anti-Mage",
+      "slug": "anti-mage",
+      "mods": [
+        {
+          "name": "Anti-Mage Illidan",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head","weapon","legs","offhand","shoulder"],
+          "image": {"src":"/mods/anti-mage-illidan.webp","width":854,"height":480},
+          "author": "Anonymous",
+          "authorUrl": null,
+          "date": 1769918621
+        },
+        {
+          "name": "Anti-Mage Fervent Conscript",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head","weapon","shoulder","offhand"],
+          "image": {"src":"/mods/anti-mage-fervent-conscript.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1790630988
+        },
+        {
+          "name": "Anti-Mage Turstarkuri Pilgrim",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head","weapon","legs","shoulder"],
+          "image": {"src":"/mods/anti-mage-turstarkuri-pilgrim.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1766149492
+        },
+        {
+          "name": "Anti-Mage Forgotten Planes",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head","weapon","shoulder"],
+          "image": {"src":"/mods/anti-mage-forgotten-planes.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1790294865
+        },
+        {
+          "name": "Anti-Mage Mod Rotten",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head","offhand","weapon"],
+          "image": {"src":"/mods/anti-mage-mod-rotten.webp","width":854,"height":480},
+          "author": "Mopsyara",
+          "authorUrl": "https://t.me/+AM_aLD0x2TcwY2My",
+          "date": 1791383152
+        },
+        {
+          "name": "Immortal Anti-Mage",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head","weapon","offhand"],
+          "image": {"src":"/mods/immortal-anti-mage.webp","width":854,"height":480},
+          "author": "Haruma",
+          "authorUrl": "https://t.me/DotA_2_Mods",
+          "date": 1781266231
+        },
+        {
+          "name": "Anti-Mage Bloody Reaper",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-bloody-reaper.webp","width":1280,"height":720},
+          "author": "CeoMods",
+          "authorUrl": "https://t.me/modsceo",
+          "date": 1786250017
+        },
+        {
+          "name": "Anti-Mage Daemon Hunter",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-daemon-hunter.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791449984
+        },
+        {
+          "name": "Anti-Mage Guilt Survivor",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-guilt-survivor.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1790809354
+        },
+        {
+          "name": "Anti-Mage Manta",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-manta.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1789935592
+        },
+        {
+          "name": "Anti-Mage Persona Sakura",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-persona-sakura.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1790709328
+        },
+        {
+          "name": "Anti-Mage Persona Sakuramix",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-persona-sakuramix.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1792860890
+        },
+        {
+          "name": "Anti-Mage Prime",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["weapon","misc","head","arms","belt"],
+          "image": {"src":"/mods/anti-mage-prime.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1787851451
+        },
+        {
+          "name": "Anti-Mage Ronin Warrior",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head","weapon"],
+          "image": {"src":"/mods/anti-mage-ronin-warrior.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1769787537
+        },
+        {
+          "name": "Anti-Mage Creep",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head"],
+          "image": {"src":"/mods/anti-mage-creep.webp","width":854,"height":480},
+          "author": "laskotdota",
+          "authorUrl": "https://t.me/laskotdota",
+          "date": 1768093343
+        },
+        {
+          "name": "Cj Anti Mage",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","misc","head"],
+          "image": {"src":"/mods/cj-anti-mage.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1793701131
+        }
+      ]
+    },
+    {
       "id": "batrider",
       "name": "Batrider",
       "slug": "batrider",
@@ -11384,178 +11589,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "antimage",
-      "name": "Anti-Mage",
-      "slug": "anti-mage",
-      "mods": [
-        {
-          "name": "Anti-Mage Illidan",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head","weapon","legs","offhand","shoulder"],
-          "image": {"src":"/mods/anti-mage-illidan.webp","width":854,"height":480},
-          "author": "Anonymous",
-          "authorUrl": null,
-          "date": 1769918621
-        },
-        {
-          "name": "Anti-Mage Fervent Conscript",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head","weapon","shoulder","offhand"],
-          "image": {"src":"/mods/anti-mage-fervent-conscript.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790630988
-        },
-        {
-          "name": "Anti-Mage Turstarkuri Pilgrim",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head","weapon","legs","shoulder"],
-          "image": {"src":"/mods/anti-mage-turstarkuri-pilgrim.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1766149492
-        },
-        {
-          "name": "Anti-Mage Forgotten Planes",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head","weapon","shoulder"],
-          "image": {"src":"/mods/anti-mage-forgotten-planes.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790294865
-        },
-        {
-          "name": "Anti-Mage Mod Rotten",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head","offhand","weapon"],
-          "image": {"src":"/mods/anti-mage-mod-rotten.webp","width":854,"height":480},
-          "author": "Mopsyara",
-          "authorUrl": "https://t.me/+AM_aLD0x2TcwY2My",
-          "date": 1791383152
-        },
-        {
-          "name": "Immortal Anti-Mage",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head","weapon","offhand"],
-          "image": {"src":"/mods/immortal-anti-mage.webp","width":854,"height":480},
-          "author": "Haruma",
-          "authorUrl": "https://t.me/DotA_2_Mods",
-          "date": 1781266231
-        },
-        {
-          "name": "Anti-Mage Bloody Reaper",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-bloody-reaper.webp","width":1280,"height":720},
-          "author": "CeoMods",
-          "authorUrl": "https://t.me/modsceo",
-          "date": 1786250017
-        },
-        {
-          "name": "Anti-Mage Daemon Hunter",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-daemon-hunter.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791449984
-        },
-        {
-          "name": "Anti-Mage Guilt Survivor",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-guilt-survivor.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1790809354
-        },
-        {
-          "name": "Anti-Mage Manta",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-manta.webp","width":854,"height":480},
-          "author": "твавт",
-          "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1789935592
-        },
-        {
-          "name": "Anti-Mage Persona Sakura",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-persona-sakura.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1790709328
-        },
-        {
-          "name": "Anti-Mage Persona Sakuramix",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-persona-sakuramix.webp","width":854,"height":480},
-          "author": "твавт",
-          "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1792860890
-        },
-        {
-          "name": "Anti-Mage Prime",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["weapon","misc","head","arms","belt"],
-          "image": {"src":"/mods/anti-mage-prime.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1787851451
-        },
-        {
-          "name": "Anti-Mage Ronin Warrior",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head","weapon"],
-          "image": {"src":"/mods/anti-mage-ronin-warrior.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1769787537
-        },
-        {
-          "name": "Anti-Mage Creep",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","misc","head"],
-          "image": {"src":"/mods/anti-mage-creep.webp","width":854,"height":480},
-          "author": "laskotdota",
-          "authorUrl": "https://t.me/laskotdota",
-          "date": 1768093343
         }
       ]
     },
