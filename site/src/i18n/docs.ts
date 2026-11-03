@@ -17,7 +17,7 @@
  * string serves both languages. Counts written as {mods} are filled by the layout too, because
  * a number typed into a guide is a number that will be wrong in a month.
  *
- * Ten more pages live in docs-more.ts and merge in at the bottom of this file. They were
+ * Eleven more pages live in docs-more.ts and merge in at the bottom of this file. They were
  * split off for length alone.
  */
 import { moreDocs } from './docs-more.ts';
@@ -69,6 +69,7 @@ export const docSlugs = [
   'install',
   'uninstall',
   'ai-mods',
+  'item-mods',
   'terrain',
   'announcer',
   'cosmetics',
@@ -84,7 +85,7 @@ export const docSlugs = [
 ] as const;
 export type DocSlug = (typeof docSlugs)[number];
 
-/** The five this file holds. The other ten live in docs-more.ts and are merged in below. */
+/** The five this file holds. The other eleven live in docs-more.ts and are merged in below. */
 type CoreSlug = 'install' | 'vpk' | 'safe' | 'cosmetics' | 'troubleshooting';
 
 export const docsIndex: Record<'en' | 'ru', DocsIndex> = {
