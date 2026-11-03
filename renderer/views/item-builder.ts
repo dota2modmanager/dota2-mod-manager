@@ -21,7 +21,7 @@ import { COSMETIC_PREFIX } from '../core/constants.ts';
 import { catName } from '../core/categories.ts';
 import { pickedIn } from '../core/installed.ts';
 import { showSlotPicker, showHeroModal } from '../catalog/modal/root.tsx';
-import { byName, effectKey, effectPicture, heroesOf, liveEffects, liveStyle, setIsOn, stagedItemAction, tagLine } from '../catalog/builder/logic.ts';
+import { byName, effectKey, effectPicture, heroesOf, liveDonor, liveEffects, liveStyle, setIsOn, stagedItemAction, tagLine } from '../catalog/builder/logic.ts';
 import { plural } from '../ui/format.ts';
 import { heroName } from '../ui/hero-name.ts';
 import { cosmeticName } from '../ui/cosmetic-name.ts';
@@ -93,7 +93,8 @@ interface Back {
   hero?: boolean;
 }
 
-interface SlotState { slot: string; selectedId: string; effectIds: string[]; style: number; query: string; back: Back | null; busy: boolean }
+/** `donor`: the item of the slot whose effect the chosen one wears, '' for none (src/item-builder-donor.ts) */
+interface SlotState { slot: string; selectedId: string; effectIds: string[]; donor: string; style: number; query: string; back: Back | null; busy: boolean }
 
 /**
  * @param from  the card it grows out of
@@ -107,7 +108,7 @@ export function openItemSlotModal(slot: string, from: Element | null,
   const live = pickedIn(slot);
   const selectedId = select || live?.itemId || '';
   const same = live?.itemId === selectedId;
-  const st: SlotState = { slot, selectedId, effectIds: same ? liveEffects(live) : [], style: same ? liveStyle(live) : 0, query, back, busy: false };
+  const st: SlotState = { slot, selectedId, effectIds: same ? liveEffects(live) : [], donor: same ? liveDonor(live) : '', style: same ? liveStyle(live) : 0, query, back, busy: false };
   openWindow(from, true, (key) => drawSlot(key, st));
   loadCosmeticIcons(data.options.slice(0, 36).map((o) => o.name).filter(Boolean), () => {}).catch(() => {});
 }
@@ -120,7 +121,11 @@ function drawSlot(key: number, st: SlotState): void {
   const effects = (data.effects || []).filter((fx) => fx.id);
   const chosen = hasItem ? data.options.find((o) => o.id === st.selectedId) : null;
   const styles = chosen?.styles && chosen.styles.length > 1 ? chosen.styles : null;
-  const names = [...effects.filter((e) => st.effectIds.includes(e.id)).map((e) => e.name), ...(styles && st.style ? [styles[st.style]] : [])];
+  // the slot's items with an effect of their own, the chosen one aside (issue #383)
+  const donors = data.options.filter((o) => o.fx && o.id !== st.selectedId);
+  const donor = hasItem && st.donor ? data.options.find((o) => o.id === st.donor) : null;
+  const names = [...effects.filter((e) => st.effectIds.includes(e.id)).map((e) => e.name), ...(donor ? [L`эффект: ${cosmeticName(donor.name)}`] : []),
+    ...(styles && st.style ? [styles[st.style]] : [])];
   const again = () => drawSlot(key, st);
   showSlotPicker(key, {
     back: st.back?.hero ? heroName(st.back.label) : cosmeticName(st.back?.label || '') || null,
@@ -142,6 +147,11 @@ function drawSlot(key: number, st: SlotState): void {
         ? L`Можно выбрать несколько. Иней и Снег держатся не на всех моделях.`
         : L`Эффект добавляется к предмету: сначала выбери его выше.`,
     } : null,
+    donors: donors.length ? {
+      none: hasItem && !st.donor,
+      list: donors.map((o) => ({ id: o.id, name: o.name, picked: hasItem && st.donor === o.id })),
+      enabled: hasItem,
+    } : null,
     summary: { name: chosen ? chosen.name : L`Стандартный`, effects: chosen && names.length ? names.join(', ') : '' },
     action: stagedItemAction(data.effects, live, st),
   }, {
@@ -152,6 +162,7 @@ function drawSlot(key: number, st: SlotState): void {
       if (st.busy) return;
       st.selectedId = id;
       if (!id) st.effectIds = []; // the stock item takes no effects
+      if (!id || id === st.donor) st.donor = '';
       // another item starts in its first style, or the one it is on in
       st.style = live?.itemId === id ? liveStyle(live) : 0;
       again();
@@ -164,6 +175,11 @@ function drawSlot(key: number, st: SlotState): void {
     effect: (id) => {
       if (st.busy || !st.selectedId) return;
       st.effectIds = !id ? [] : st.effectIds.includes(id) ? st.effectIds.filter((x) => x !== id) : [...st.effectIds, id];
+      again();
+    },
+    donor: (id) => {
+      if (st.busy || !st.selectedId) return;
+      st.donor = id === st.donor ? '' : id;
       again();
     },
     apply: () => applySlot(key, st, chosen),
@@ -180,7 +196,7 @@ async function applySlot(key: number, st: SlotState, chosen: CosmeticOption | nu
   st.busy = true;
   drawSlot(key, st);
   try {
-    await cat.pickCosmetic(st.slot, look, !!act.remove, effectKey(data.effects, st.effectIds, st.style));
+    await cat.pickCosmetic(st.slot, look, !!act.remove, effectKey(data.effects, st.effectIds, st.style, st.donor));
   } finally {
     st.busy = false;
     if (isOpen(key)) drawSlot(key, st);

@@ -83,6 +83,7 @@ the code, not in this page.
 | [`src/installer.ts`](#srcinstallerts) | The installer: everything that writes a mod into the game folder or takes it out again. The |
 | [`src/ipc.ts`](#srcipcts) | Every IPC module, registered in one place over the context src/main.ts builds. A new |
 | [`src/item-builder-assets.ts`](#srcitem-builder-assetsts) | What an item builder pick needs beyond its block in items_game: the game's files it puts under |
+| [`src/item-builder-donor.ts`](#srcitem-builder-donorts) | Another item's effect on the one worn (issue #383): a hat the user likes, with the particles of |
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
 | [`src/item-builder-everyone.ts`](#srcitem-builder-everyonets) | Everybody playing a hero wears the user's look for it, not only the user. |
 | [`src/item-builder-personas.ts`](#srcitem-builder-personasts) | Personas in the item builder: a hero's second look, with slots and items of its own. |
@@ -4324,6 +4325,59 @@ Read compiled asset bytes out of pak01 and stage them under the renamed path in 
 Juggernaut's arcana body made the plain hero's is a quarter of a second for a file thrown away
 ```
 
+## src/item-builder-donor.ts
+
+Another item's effect on the one worn (issue #383): a hat the user likes, with the particles of
+the immortal hat they do not.
+
+An item's own effects are asset modifiers in its visuals: `particle_create`, a particle the game
+creates on the item while it is worn, and `particle`, one the item puts in place of a stock
+effect of the hero (an ability's). The pick wears the donor's modifiers of those two kinds
+beside its own, and the game loads the particles by their own paths, as it does for the item's
+own (src/item-builder.ts). A particle the donor hangs on a point of its own model sits where the
+worn model has that point, or at its root where it has none.
+
+The donor rides in the pick's effect string as `from-<id>`, beside the effects and the style
+(src/item-builder.ts effectKey), so a record, a preset and a link carry it with nothing new.
+
+### `DONOR`
+
+```ts
+export const DONOR = /^from-(\d+)$/
+```
+
+The token of a donor in a pick's effect string.
+
+### `donorOf`
+
+```ts
+export function donorOf(key: string): string | null
+```
+
+The donor's id in an effect string, null for none.
+
+### `hasOwnEffect`
+
+```ts
+export const hasOwnEffect = (block: string, visuals: () => string | null): boolean
+```
+
+Whether an item has an effect another item could wear: what the picker offers as a donor. The
+ block is looked at first, so the visuals are read only for the few that create a particle.
+
+### `withDonorEffects`
+
+```ts
+export function withDonorEffects(baseText: string, visuals: string, donorId: string): string
+```
+
+The visuals with the donor's effects added: each of its particles the worn item does not create
+already, and each stock effect it replaces that the worn item leaves alone.
+
+```
+@throws when the donor is not in the table, or has no effect to give
+```
+
 ## src/item-builder-effects.ts
 
 The particle effects the item builder can put on top of an item: the effect's id, its name in
@@ -4902,6 +4956,8 @@ The effects of one pick as one string: ids in the order ITEM_EFFECTS lists them,
 comma separated, '' for none. A pick carries several (the window says "you can pick several"),
 and this is how a record stores them and how two picks are told apart, so "fire,snow" and
 "snow,fire" are the same pick.
+
+Another item's effect goes after them, as "from-<id>" (src/item-builder-donor.ts).
 
 A style other than the item's first goes last, as "style-2" (src/item-builder-styles.ts). It
 rides in the same string so that a record, a preset and a shared link carry it as they carry the

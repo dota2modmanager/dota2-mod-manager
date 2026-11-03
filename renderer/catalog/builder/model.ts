@@ -37,6 +37,8 @@ export interface SlotPickerModel {
   styles: { index: number; name: string; picked: boolean }[] | null;
   /** null when the slot takes no effects */
   effects: { none: boolean; list: EffectCard[]; enabled: boolean; hint: string } | null;
+  /** the slot's items with an effect of their own, to wear on the chosen one; null when none has one */
+  donors: { none: boolean; list: { id: string; name: string; picked: boolean }[]; enabled: boolean } | null;
   summary: { name: string; effects: string };
   action: BuilderAction;
 }
@@ -48,6 +50,7 @@ export interface SlotPickerActions {
   choose: (id: string) => void;
   style: (index: number) => void;
   effect: (id: string) => void;
+  donor: (id: string) => void;
   apply: () => void;
 }
 

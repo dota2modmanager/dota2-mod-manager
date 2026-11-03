@@ -274,6 +274,7 @@ const EN = {
   'Свои звуки: {0}': 'Own sounds: {0}',
   'Этот звук не подходит: {0}': 'This sound will not do: {0}',
   'У героя нет такого звука': 'The hero has no such sound',
+  'У предмета {0} нет своего эффекта': 'Item {0} has no effect of its own',
 } satisfies Record<string, string>;
 
 /** The table as a lookup: any Russian string, its English or nothing. */
