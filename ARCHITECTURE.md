@@ -534,6 +534,7 @@ that location is not writable.
 | `src/dev-harness.ts`, `src/capture.ts` | `MM_SHOT`, `MM_EVAL` and the other switches a script drives the window with, and the screenshot they take |
 | `src/game-upkeep.ts` | The work done at start: the game path, the mod folder following the audio language, the load-order layout, the migrations |
 | `src/game-repair.ts` | Putting the game back after something else changed it: a Dota patch, Steam's file check, waiting while Dota runs |
+| `src/app-repair.ts` | Settings' "Repair the app": the game patch, missing mod files and the rebuildable caches, a line per step |
 | `src/patch-watch.ts` | Noticing a game update the moment it lands |
 | `src/update-impact.ts` | Which installed mods a game update reached: Valve's files they replace that the patch changed or removed |
 | `src/mod-update.ts` | Whether the catalog has another version of an installed mod (its fingerprint is not among the catalog's), and replacing it in its own slot ([#171](https://github.com/dota2modmanager/dota2-mod-manager/issues/171)) |

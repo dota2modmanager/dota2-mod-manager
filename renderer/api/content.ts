@@ -45,6 +45,9 @@ export interface PatchState {
   [key: string]: unknown;
 }
 
+/** One line of Settings' "Repair the app" (src/app-repair.ts). */
+export interface RepairStep { id: 'game' | 'files' | 'caches'; ok: boolean; text: string; mods?: string[] }
+
 export interface PatchApi {
   state: () => Promise<PatchState>;
   setEnabled: (on: boolean) => Promise<Reply>;
@@ -53,6 +56,8 @@ export interface PatchApi {
   repairState: () => Promise<RepairState>;
   repairNow: () => Promise<RepairState>;
   repairSeen: () => Promise<RepairState>;
+  /** the patch, the mod files and the pictures, one line each */
+  repairApp: () => Promise<RepairStep[]>;
   onRepair: (cb: (st: RepairState) => void) => void;
 }
 

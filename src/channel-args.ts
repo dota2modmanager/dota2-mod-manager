@@ -154,7 +154,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'presets:importDialog': [], 'presets:importFile': [PATH],
   // the game: its schema, cosmetics, pictures, tools (src/ipc-game.ts)
   'config:state': [], 'config:noticeSeen': [str(200, 1)],
-  'patch:state': [], 'patch:repairState': [], 'patch:repairNow': [], 'patch:repairSeen': [], 'patch:setEnabled': [bool],
+  'patch:state': [], 'patch:repairState': [], 'patch:repairNow': [], 'patch:repairApp': [], 'patch:repairSeen': [], 'patch:setEnabled': [bool],
   'schema:refresh': [],
   'cosmetics:slots': [],
   'cosmetics:heroPortraits': [list(either(str(100), num(0, 1e9)), 1000)],

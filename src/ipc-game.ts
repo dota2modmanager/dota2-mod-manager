@@ -11,15 +11,16 @@ import { heroIdFromName } from './hero-names.ts';
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
 import { runSteps } from './steps.ts';
+import { repairApp } from './app-repair.ts';
 import type { AppContext } from './app-context.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerGameIpc({
   // patchRepair() is read late and written through setPatchRepair: it changes while the app
   // runs, and a value captured at registration would answer for the wrong moment forever.
-  afterDeployMaster, arcana, blocked, diag, dotaIsRunning, gameIcons, icons, modPreviews, remoteConfig,
+  afterDeployMaster, arcana, blocked, diag, dotaIsRunning, gameIcons, icons, installer, library, modPreviews, remoteConfig,
   repairAfterPatch, schemaService, settings, toolchain, patchRepair, setPatchRepair,
-}: Pick<AppContext, 'afterDeployMaster' | 'arcana' | 'blocked' | 'diag' | 'dotaIsRunning' | 'gameIcons' | 'icons' | 'modPreviews' | 'remoteConfig' | 'repairAfterPatch' | 'schemaService' | 'settings' | 'toolchain' | 'patchRepair' | 'setPatchRepair'>): void {
+}: Pick<AppContext, 'afterDeployMaster' | 'arcana' | 'blocked' | 'diag' | 'dotaIsRunning' | 'gameIcons' | 'icons' | 'installer' | 'library' | 'modPreviews' | 'remoteConfig' | 'repairAfterPatch' | 'schemaService' | 'settings' | 'toolchain' | 'patchRepair' | 'setPatchRepair'>): void {
   const { ipcMain } = electron();
 
   // A switch is honoured here rather than in the renderer: this is the boundary an old
@@ -51,6 +52,18 @@ export function registerGameIpc({
   ipcMain.handle('patch:repairNow', async () => {
     await repairAfterPatch('manual');
     return patchRepair();
+  });
+  // Settings' "Repair the app": the patch, the mod files, the pictures, a line each (src/app-repair.ts)
+  ipcMain.handle('patch:repairApp', async () => {
+    const steps = await repairApp({
+      repairAfterPatch, patchRepair,
+      records: () => library.list(),
+      onDisk: (rel) => installer.langFileOnDisk(rel),
+      clearCaches: () => { icons.clear(); gameIcons.clear(); modPreviews.clear(); },
+    });
+    // its lines are the news: a banner in My mods saying it again would be about a patch that did not happen
+    if (patchRepair().state === 'done') setPatchRepair({ state: 'idle' });
+    return steps;
   });
   // the banner is news, not a state of the game: once it has been read it goes away
   ipcMain.handle('patch:repairSeen', () => {

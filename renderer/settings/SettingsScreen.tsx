@@ -10,6 +10,7 @@ import { Reveal } from '../motion/Reveal.tsx';
 import { Swap } from '../motion/Swap.tsx';
 import { Dropdown } from '../ui/Dropdown.tsx';
 import { ProxyControl } from './ProxyControl.ts';
+import { RepairSteps, type RepairRun } from './RepairSteps.tsx';
 import { CompilerBlock, type CompilerActions } from './CompilerBlock.tsx';
 import type { CompilerState } from '../api/content.ts';
 
@@ -37,6 +38,8 @@ export interface SettingsModel {
   adult: boolean;
   adultHint: string;
   version: string;
+  /** the last run of "Repair the app": running, or its lines */
+  repair: RepairRun | null;
 }
 
 export interface SettingsActions extends CompilerActions {
@@ -58,6 +61,7 @@ export interface SettingsActions extends CompilerActions {
   refreshCatalog: () => void;
   adult: () => void;
   exportReport: () => void;
+  repair: () => void;
   whatsNew: () => void;
   /** the window asking for support (ui/support.ts) */
   support: () => void;
@@ -239,8 +243,11 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
 
       <Block i={5} title={L`Диагностика`}>
         <div className="settings-row spaced">
+          <button className="btn btn-sm" id="repairAppBtn" disabled={m.repair?.busy} onClick={actions.repair}><span className="ms">build</span>{m.repair?.busy ? L`Чиню…` : L`Починить приложение`}</button>
           <button className="btn btn-sm" id="diagExportBtn" onClick={actions.exportReport}><span className="ms">bug_report</span>{L`Экспортировать отчёт`}</button>
         </div>
+        <div className="settings-hint">{L`Починка возвращает патч игры, ищет пропавшие файлы модов и очищает картинки. Моды и пресеты не трогает.`}</div>
+        <RepairSteps run={m.repair} />
         <div className="settings-hint">{L`Путь к игре, список модов и последние записи журнала в одном файле. Пришли его, если что-то не работает.`}</div>
       </Block>
 
