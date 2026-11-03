@@ -22,6 +22,7 @@ import type { createArcanaService } from './arcana-service.ts';
 import type { createMapLooks } from './map-looks-service.ts';
 import type { createMenuBackground } from './menu-background-service.ts';
 import type { createHudScale } from './hud-scale-service.ts';
+import type { createHeroPaint } from './hero-paint-service.ts';
 import type { createAbilitySounds } from './ability-sounds-service.ts';
 import type { createBuildUndo } from './build-undo.ts';
 import type { createHeroPreview } from './hero-preview.ts';
@@ -74,6 +75,8 @@ export interface AppContext {
   menuBackground: ReturnType<typeof createMenuBackground>;
   /** the in-game HUD smaller or larger (src/hud-scale-service.ts) */
   hudScale: ReturnType<typeof createHudScale>;
+  /** a hero recoloured part by part (src/hero-paint-service.ts) */
+  heroPaint: ReturnType<typeof createHeroPaint>;
   /** sounds of the user's own on a hero's events (src/ability-sounds-service.ts) */
   abilitySounds: ReturnType<typeof createAbilitySounds>;
   buildUndo: ReturnType<typeof createBuildUndo>;

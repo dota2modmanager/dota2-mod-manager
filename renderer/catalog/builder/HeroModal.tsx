@@ -21,6 +21,11 @@ export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModa
             <span className="ms">view_in_ar</span>3D
           </button>
         )}
+        {m.paint && (
+          <button className="btn btn-sm hero-paint-btn" id="heroPaintBtn" title={L`Свой цвет для способностей, иконок и предметов`} onClick={actions.openPaint}>
+            <span className="ms">format_paint</span>{L`Перекрасить`}
+          </button>
+        )}
         <button className="modal-close" id="modalCloseBtn" aria-label={L`Закрыть`} onClick={actions.close}><span className="ms">close</span></button>
       </div>
       <div className="modal-sub">

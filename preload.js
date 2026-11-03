@@ -124,6 +124,10 @@ contextBridge.exposeInMainWorld('api', {
     state: () => ipcRenderer.invoke('background:state'),
     install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur),
   },
+  paint: {
+    state: (hero) => ipcRenderer.invoke('paint:state', hero),
+    install: (hero, colors, label) => ipcRenderer.invoke('paint:install', hero, colors, label),
+  },
   map: {
     state: () => ipcRenderer.invoke('map:state'),
     install: (kind, radiant, dire) => ipcRenderer.invoke('map:install', kind, radiant, dire),

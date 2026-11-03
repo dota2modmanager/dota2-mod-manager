@@ -42,6 +42,7 @@ const ELECTRON_USERS = [
   'src/ipc-sounds.ts',
   'src/ipc-background.ts',
   'src/ipc-hud.ts',
+  'src/ipc-paint.ts',
   'src/ipc-library.ts',
   'src/ipc-misc.ts',
   'src/ipc-mods.ts',

@@ -190,6 +190,8 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   // the in-game HUD's size (src/ipc-hud.ts), in percent
   'hud:state': [], 'hud:install': [num(60, 130)],
   'background:state': [], 'background:install': [optional(bytes(48 * MB)), optional(str(200)), num(0, 0.9), num(0, 20)],
+  // a hero recoloured part by part (src/ipc-paint.ts): his npc name, and a #rrggbb per layer that is on
+  'paint:state': [str(40, 2)], 'paint:install': [str(40, 2), json(64 * 1024), optional(str(80))],
   'map:state': [], 'map:install': [oneOf('towers', 'trees'), optional(str(40)), optional(str(40))],
   'arcana:state': [], 'arcana:install': [oneOf(...ARCANA_WINDOWS), list(num(0, 255), 3), oneOf('mod', 'recolor')],
   // the small errands (src/ipc-misc.ts)

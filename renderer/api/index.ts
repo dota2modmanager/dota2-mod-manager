@@ -5,7 +5,7 @@
  * from its handler in src/ipc-*.js; a change to what a handler answers changes the type beside
  * the others of its group here. */
 import type { AppApi } from './app.ts';
-import type { ArcanaApi, BackgroundApi, CatalogApi, HudApi, MapLooksApi, Preview3dApi, SoundsApi, CompilerApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';
+import type { ArcanaApi, BackgroundApi, CatalogApi, HudApi, PaintApi, MapLooksApi, Preview3dApi, SoundsApi, CompilerApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';
 import type { ModsApi, PacksApi } from './mods.ts';
 
 export interface Api extends AppApi {
@@ -26,6 +26,7 @@ export interface Api extends AppApi {
   hud: HudApi;
   /** a movie of the user's own behind the main menu */
   background: BackgroundApi;
+  paint: PaintApi;
   /** towers and trees from the game's own looks */
   map: MapLooksApi;
   /** sounds of the user's own on a hero's events */
