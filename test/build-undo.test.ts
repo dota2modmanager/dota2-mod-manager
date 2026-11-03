@@ -97,7 +97,7 @@ test('a first start with no game folder takes the picture without throwing', (t)
   // the installer throws "no Dota path" there; the start of the app took the picture and fell over
   const w = world(t);
   const undo = createBuildUndo({ library: w.library, installer: { masterIsOff: () => { throw new Error('no game'); } } as never,
-    settings: { get: () => false, set: () => {} }, schema: { cancel: () => true } });
+    settings: { get: () => false, set: () => {} } as never, schema: { cancel: () => true } });
   assert.doesNotThrow(() => undo.mark());
   assert.deepEqual(undo.cancel(), { ok: true, undone: 0, left: [] });
 });
