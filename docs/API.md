@@ -9057,7 +9057,8 @@ _No description in the source._
 export const DEFAULT_TOWER: Record<Side, string> =
 ```
 
-The model every tower of a side wears (scripts/npc/npc_units.txt, 2026-11-03).
+The model every tower of a side wears. The map's tower entities name it (maps/dota.vpk and hero
+demo, 2026-11-03), and that wins over npc_units.txt, which says tower_good for Radiant.
 
 ### `TowerLook`
 
