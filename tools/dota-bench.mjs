@@ -5,7 +5,7 @@
  *   npm run dota:bench -- --vpk <mod_dir.vpk> [--hero terrorblade] [--out <folder>] [--camera 900]
  *                          [--skills "q,w,r@enemy"] [--console-key "\\"] [--short] [--now]
  *                          [--idle-seconds 12] [--spawn] [--death]
- *   npm run dota:bench -- --vpk towers_dir.vpk --units npc_dota_goodguys_tower1_mid,npc_dota_badguys_tower1_mid
+ *   npm run dota:bench -- --vpk towers_dir.vpk --towers     the demo's two towers, for tower looks
  *   npm run dota:bench -- --hero terrorblade                the game as it is, for comparison
  *
  * It puts the mod into the language folder through the app's own installer (a free slot), starts
@@ -49,7 +49,7 @@ const W = 1920;
 const H = 1080;
 /** The demo panel, the ability bar and the hero on screen, measured in a 1600x900 window: they scale with the height. */
 const AT900 = {
-  level30: [170, 270], scepter: [117, 303], shard: [193, 303], dummy: [189, 213], enemy: [117, 213], mana: [18, 393], refresh: [126, 446], decline: [908, 563],
+  level30: [170, 270], scepter: [117, 303], shard: [193, 303], dummy: [189, 213], enemy: [117, 213], mana: [18, 393], refresh: [126, 446], decline: [908, 563], towers: [15, 417], towerGood: [98, 819], towerBad: [168, 773],
   icons: [583, 771, 467, 96], hero: [500, 40, 600, 600], fight: [630, 200, 290, 310],
 };
 const AT = Object.fromEntries(Object.entries(AT900).map(([k, v]) => [k, v.map((n) => Math.round(n * H / 900))]));
@@ -213,19 +213,30 @@ async function main() {
       heroBar = me(bars, centre);
     }
     if (!heroBar) throw new Error('bench: the hero\'s health bar is not on screen');
-    // --units: buildings and creeps instead of the hero (tower looks, #446). Each one is made next
-    // to the hero, pictured, then killed and filmed, which shows what it leaves when it falls
-    const units = (arg('--units') || '').split(',').filter(Boolean);
-    if (units.length) {
-      for (const unit of units) {
-        await command(`dota_create_unit ${unit}`);
-        await sleep(2500);
-        shot(`10-${unit}`);
-        await command(`dota_kill_unit_by_name ${unit}`);
-        burst(`10-${unit}-falls`, [W / 2 - 600, H / 2 - 450, 1200, 900], 16, 300, 0.4);
-        shot(`10-${unit}-after`);
+    // --towers: hero demo's "Towers" box puts up a Radiant and a Dire tower, and keeps its state
+    // from the last demo, so the box is read by its colour (light when ticked) before a click. A
+    // click on the minimap takes the camera to each tower. Towers named with --units are killed
+    // after their picture and filmed as they fall (the demo's own towers did not die by name).
+    if (process.argv.includes('--towers')) {
+      const box = path.join(out, 'box.png');
+      ps('shot.ps1', '-Out', box);
+      const [r, g, b] = ps('pixel.ps1', '-In', box, '-X', AT.towers[0] + 4, '-Y', AT.towers[1]).trim().split(/\s+/).map(Number);
+      fs.rmSync(box, { force: true });
+      if (r + g + b < 300) {
+        click(AT.towers);
+        await sleep(3000);
       }
-      fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify({ vpk: vpk ?? null, units, notes }, null, 2));
+      const names = (arg('--units') || '').split(',').filter(Boolean);
+      const looks = (arg('--look') || [AT.towerGood, AT.towerBad].map((p) => p.join(',')).join(';')).split(';').filter(Boolean);
+      for (const [k, at] of looks.entries()) {
+        click(at.split(',').map(Number));
+        await sleep(1500);
+        shot(`10-tower-${k + 1}`);
+        if (!names[k]) continue;
+        await command(`dota_kill_unit_by_name ${names[k]}`);
+        burst(`10-tower-${k + 1}-falls`, [W / 2 - 600, H / 2 - 450, 1200, 900], 16, 300, 0.4);
+      }
+      fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify({ vpk: vpk ?? null, towers: looks.length, notes }, null, 2));
       return;
     }
     // --idle-seconds: the hero left standing, close, for an idle that does something every few seconds
