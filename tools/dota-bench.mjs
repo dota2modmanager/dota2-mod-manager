@@ -226,6 +226,9 @@ async function main() {
         click(AT.towers);
         await sleep(3000);
       }
+      // the fog of war greys out the other side's base: all vision shows both as they are lit
+      await command('dota_all_vision 1');
+      await sleep(1000);
       const names = (arg('--units') || '').split(',').filter(Boolean);
       const looks = (arg('--look') || [AT.towerGood, AT.towerBad].map((p) => p.join(',')).join(';')).split(';').filter(Boolean);
       for (const [k, at] of looks.entries()) {
