@@ -590,6 +590,7 @@ that location is not writable.
 | `src/steam.ts` | Finding Steam and the game, and proving the folder is really a game |
 | `src/steam-appstate.ts` | What Steam's manifest says about Dota before Play: an update still downloading is said, not left for the user to wonder about |
 | `src/gamelang.ts`, `src/gamelang-steam.ts`, `src/gamelang-folders.ts` | Which folder Dota will mount, what Steam says about the game's language, and moving mods across when that changes |
+| `src/hero-grid.ts` | Hero grids for the pick screen out of OpenDota's heroStats, merged into the Steam account's `hero_grid_config.json` beside the user's own |
 | `src/patcher.ts`, `src/patcher-gameinfo.ts`, `src/patcher-signatures.ts` | The search-path patch: the two gameinfo files and the signature list, byte for byte, both directions |
 | `src/schema.ts`, `src/schema-kv.ts`, `src/schema-items.ts`, `src/schema-merge.ts` | `items_game.txt`: walking it, reading its items, merging a mod's blocks, building the item pak |
 | `src/schema-service.ts`, `src/schema-cosmetics.ts`, `src/schema-harvest.ts` | The item table as the app keeps it: the build and the repair, the free cosmetics, and a mod's own blocks |

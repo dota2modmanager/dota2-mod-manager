@@ -173,6 +173,11 @@ contextBridge.exposeInMainWorld('api', {
     prizeAgain: () => ipcRenderer.invoke('pumpkin:prizeAgain'),
     hasPrize: () => ipcRenderer.invoke('pumpkin:hasPrize'),
   },
+  grids: {
+    state: () => ipcRenderer.invoke('grid:state'),
+    apply: (kinds) => ipcRenderer.invoke('grid:apply', kinds),
+    remove: () => ipcRenderer.invoke('grid:remove'),
+  },
   diag: {
     export: () => ipcRenderer.invoke('diag:export'),
     reportError: (msg) => ipcRenderer.send('diag:rendererError', msg),

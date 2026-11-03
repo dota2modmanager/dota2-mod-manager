@@ -246,6 +246,23 @@ const EN = {
   'Файлов нет в папке модов: {0}. Удали и поставь их заново': 'Files missing from the mods folder: {0}. Remove those mods and install them again',
   'Файлы всех модов на месте': 'Every mod has its files',
   'Картинки и превью очищены, приложение соберёт их заново': 'Pictures and previews cleared; the app builds them again',
+  'Выше {0}': 'Above {0}',
+  'Ниже {0}': 'Below {0}',
+  'Процент побед': 'Win rate',
+  'Сила': 'Strength',
+  'Ловкость': 'Agility',
+  'Интеллект': 'Intelligence',
+  'Универсальные': 'Universal',
+  'По атрибутам': 'By attribute',
+  'Чаще всего берут': 'Most picked',
+  'Топ {0}': 'Top {0}',
+  'Следом': 'Next',
+  'Реже всех': 'Least picked',
+  'Файл сеток героев не похож на файл игры': 'The hero grid file does not look like one the game wrote',
+  'OpenDota прислал не список героев': 'OpenDota did not send a hero list',
+  'Не удалось получить статистику OpenDota: {0}': 'Could not get the OpenDota stats: {0}',
+  'Не нашёл аккаунт Steam, в который заходила Dota 2': 'Found no Steam account that has played Dota 2',
+  'Закрой Dota 2: при выходе она перепишет файл сеток': 'Close Dota 2 first: it rewrites the grid file when it exits',
 } satisfies Record<string, string>;
 
 /** The table as a lookup: any Russian string, its English or nothing. */

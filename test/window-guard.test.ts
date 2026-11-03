@@ -133,7 +133,7 @@ const VALID: Record<string, unknown[][]> = {
   'win:minimize': [[]], 'win:maximize': [[]], 'win:close': [[]], 'win:isMaximized': [[]],
   'app:version': [[]], 'app:notes': [['ru'], ['en']], 'app:notesSeen': [[]],
   'update:install': [[]], 'update:fetchPortable': [[]], 'update:revealPortable': [['C:\\Games\\Dota-2-Mod-Manager-Portable.exe']],
-  'beta:state': [[]], 'beta:set': [[true]], 'game:launch': [[]], 'game:steamDownloads': [[]], 'ui:setZoom': [[1.25]],
+  'beta:state': [[]], 'beta:set': [[true]], 'game:launch': [[]], 'game:steamDownloads': [[]], 'grid:state': [[]], 'grid:apply': [[['winrate']]], 'grid:remove': [[]], 'ui:setZoom': [[1.25]],
   'settings:get': [[]], 'settings:testProxy': [['']], 'settings:detectDota': [[]], 'settings:browseDota': [[]],
   'settings:set': [['discordPresence', false], ['favorites', ['heroes|Arcana|']], ['langPromptSeen', true],
     ['panels', { library: { width: 320 } }], ['panels', null], ['showAdult', true], ['theme', 'ursa'],
@@ -188,6 +188,7 @@ test('a call of every channel, as the window makes it, gets through', () => {
 
 /* What a script in the page could try, and the gate refuses. */
 const HOSTILE: [string, unknown[], RegExp][] = [
+  ['grid:apply', [['winrate', '../../etc']], /one of/],
   ['settings:set', ['dotaGamePath', 'C:\\Windows'], /may not set dotaGamePath/],
   ['settings:set', ['account', { id: '1', username: 'beta tester' }], /may not set account/],
   ['settings:set', ['schemaStamp', null], /may not set/],

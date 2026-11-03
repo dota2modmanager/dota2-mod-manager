@@ -133,7 +133,7 @@ const EN = {
   'Бета-версии выключены': 'Beta builds off',
 
   // ---------- the item builder's look on everybody (src/item-builder-everyone.ts) ----------
-  'Мой вид на всех, кто играет этим героем': 'My look on everyone playing that hero',
+  'Мой вид на всех, кто играет этим героем': 'My look on everyone playing that hero', 'По проценту побед': 'By win rate', 'По атрибутам, лучшие первыми': 'By attribute, best first', 'Чаще всего берут': 'Most picked', 'Сетки героев': 'Hero grids', 'Сетки появятся в выборе героя рядом с твоими, твои остаются как были. Цифры берутся с OpenDota по всем рангам за последние дни.': 'The grids show up in hero selection next to yours, and yours stay as they are. The numbers come from OpenDota, all ranks, the last few days.', 'Не нашёл аккаунт Steam, в который заходила Dota 2.': 'Found no Steam account that has played Dota 2.', 'Цифры от {0}.': 'Numbers from {0}.',
   'Кто бы ни играл героем, которого ты собрал, союзник или враг, у тебя на экране он будет в твоих предметах, а не в своих. Видишь это только ты. Работает с выключенным безопасным режимом.':
     'Whoever plays a hero you built, ally or enemy, wears your items on your screen, not their own. Only you see this. Works with safe mode off.',
 

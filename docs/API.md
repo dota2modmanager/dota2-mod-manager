@@ -57,6 +57,7 @@ the code, not in this page.
 | [`src/gamelang-folders.ts`](#srcgamelang-foldersts) | Making and moving the dota_<lang> folders (src/gamelang.ts has the rule): whether a voice pack is |
 | [`src/gamelang-steam.ts`](#srcgamelang-steamts) | What Steam says about the game's language (src/gamelang.ts has the rule): the -language in the |
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
+| [`src/hero-grid.ts`](#srchero-gridts) | Hero grids for the pick screen out of this patch's numbers (issue #428). |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/i18n-zh-CN.ts`](#srci18n-zh-CNts) | Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key. |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (src/). |
@@ -2370,6 +2371,16 @@ export const readKey = (text: string, key: string): string | null
 
 One "key" "value" pair out of a Valve KeyValues text, the first one that matches.
 
+### `steamAccountDir`
+
+```ts
+export function steamAccountDir(gamePath: string | null | undefined): string | null
+```
+
+The userdata/<account> folder of whoever is logged in to Steam, where Dota keeps the files that
+follow the account (hero grids). Without a logged-in account, the one account that has played
+Dota on this machine; with several and none of them current, null rather than a guess.
+
 ### `launchLanguage`
 
 ```ts
@@ -2437,7 +2448,7 @@ write into Steam's own config to set it up. Valve have already stopped mounting 
 folders; the languages with no voice pack of their own are the ones that could go the same
 way, while these three cannot - the game has to mount them to play their voices.
 
-Hands on from [`src/gamelang-steam.ts`](#srcgamelang-steamts): `launchLanguage`, `launchOptions`, `steamLanguage`.
+Hands on from [`src/gamelang-steam.ts`](#srcgamelang-steamts): `launchLanguage`, `launchOptions`, `steamAccountDir`, `steamLanguage`.
 
 Hands on from [`src/gamelang-folders.ts`](#srcgamelang-foldersts): `voiceInstalled`, `ensureLangFolder`, `moveLangFolder`.
 
@@ -2590,6 +2601,108 @@ and therefore where a mod has to live.
 ```
 @param langs  a setting left out is left as it is
 ```
+
+## src/hero-grid.ts
+
+Hero grids for the pick screen out of this patch's numbers (issue #428).
+
+The game keeps the grids in Steam's folder for the account, not in the game:
+userdata/<account>/570/remote/cfg/hero_grid_config.json. That makes them safe in any mode: no
+pak, no search path, nothing Valve checks. The numbers are OpenDota's public heroStats: picks
+and wins per rank bracket, for the matches of the last days.
+
+The file holds the user's own grids too, so the app never replaces it. It adds its grids as
+configs whose name starts with GRID_PREFIX, puts them back on the next apply, and takes only
+those away on "remove". The file as it was before the first write is kept in userData anyway.
+
+### `HERO_STATS_API`
+
+```ts
+export const HERO_STATS_API = 'https://api.opendota.com/api/heroStats'
+```
+
+Where the numbers come from.
+
+### `GRID_PREFIX`
+
+```ts
+export const GRID_PREFIX = 'D2MM · '
+```
+
+How the app's grids are told apart from the user's in the same file.
+
+### `GRID_KINDS`
+
+```ts
+export const GRID_KINDS = ['winrate', 'attribute', 'popular'] as const
+```
+
+The grids the app can make.
+
+### `GridKind`
+
+```ts
+export type GridKind = typeof GRID_KINDS[number]
+```
+
+One of the grids the app can make.
+
+### `HeroStat`
+
+```ts
+export interface HeroStat
+```
+
+One hero as heroStats lists it, cut to what a grid needs.
+
+### `gridName`
+
+```ts
+export function gridName(kind: GridKind): string
+```
+
+The name a grid of this kind carries in the pick screen, in the app's language.
+
+### `buildGrid`
+
+```ts
+export function buildGrid(stats: HeroStat[], kind: GridKind): Config
+```
+
+The grid of one kind out of heroStats: its name in the file and its categories.
+
+### `mergeGrids`
+
+```ts
+export function mergeGrids(existing: string | null, ours: Config[]): string
+```
+
+The file with the app's grids swapped for these; the user's configs and anything else stay.
+
+### `gridFile`
+
+```ts
+export const gridFile = (accountDir: string) => path.join(accountDir, '570', 'remote', 'cfg', 'hero_grid_config.json')
+```
+
+The grid file of the account, under a Steam account folder (userdata/<id>).
+
+### `gridsIn`
+
+```ts
+export function gridsIn(text: string | null): string[]
+```
+
+Which of the app's grids are in a grid file now, by config name.
+
+### `createHeroGrids`
+
+```ts
+export function createHeroGrids({ dataDir, accountDir, fetch = globalThis.fetch, now = Date.now }: { /** where the cache and the backup live (userData/hero-grid) */ dataDir: string; /** the logged-in account's userdata folder, or null when Steam has none */ accountDir: () => string | null; fetch?: typeof globalThis.fetch; now?: () => number; })
+```
+
+The grids for one account: the numbers fetched (and cached in userData, so a down API still
+leaves the last ones), the file written with a backup of how it was first.
 
 ## src/hero-names.ts
 

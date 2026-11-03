@@ -236,5 +236,5 @@ export function writeBootLanguages(gamePath: string, { ui, audio }: { ui?: strin
   return { ui, audio };
 }
 
-export { launchLanguage, launchOptions, steamLanguage } from './gamelang-steam.ts';
+export { launchLanguage, launchOptions, steamAccountDir, steamLanguage } from './gamelang-steam.ts';
 export { voiceInstalled, ensureLangFolder, moveLangFolder } from './gamelang-folders.ts';
