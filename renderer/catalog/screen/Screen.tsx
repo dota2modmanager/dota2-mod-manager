@@ -13,6 +13,7 @@ import { ArcanaCard } from '../arcana/ArcanaCard.tsx';
 import { MapLookCard } from '../map/MapLookCard.tsx';
 import { SoundCard } from '../sounds/SoundCard.tsx';
 import { BackgroundCard } from '../background/BackgroundCard.tsx';
+import { HudCard } from '../hud/HudCard.tsx';
 
 interface Props { model: ScreenModel; actions: ScreenActions }
 
@@ -67,7 +68,8 @@ function List({ model: m, actions }: { model: Extract<ScreenModel, { kind: 'list
             {m.mapLead && <MapLookCard m={m.mapLead} onOpen={actions.openMapLooks} />}
             {m.soundLead && <SoundCard m={m.soundLead} onOpen={actions.openSounds} />}
             {m.backgroundLead && <BackgroundCard m={m.backgroundLead} onOpen={actions.openBackground} />}
-            <ModGrid listKey={m.key} mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead?.length || m.mapLead || m.soundLead || m.backgroundLead ? undefined : m.mods.emptyText}
+            {m.hudLead && <HudCard m={m.hudLead} onOpen={actions.openHud} />}
+            <ModGrid listKey={m.key} mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead?.length || m.mapLead || m.soundLead || m.backgroundLead || m.hudLead ? undefined : m.mods.emptyText}
               onOpen={actions.openMod} onFavChanged={actions.favChanged} />
           </div>
         </>

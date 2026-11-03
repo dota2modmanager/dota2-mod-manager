@@ -28,6 +28,7 @@ import { createArcanaService, type Generated } from './arcana-service.ts';
 import { createBaseStore } from './arcana-base-store.ts';
 import { createMapLooks } from './map-looks-service.ts';
 import { createMenuBackground } from './menu-background-service.ts';
+import { createHudScale } from './hud-scale-service.ts';
 import { createAbilitySounds } from './ability-sounds-service.ts';
 import { createBuildUndo } from './build-undo.ts';
 import { createModelGlb } from './model-glb.ts';
@@ -167,6 +168,9 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   // the item builder's 3D preview: the game's models as GLB, out of the same toolchain (src/hero-preview.ts)
   const heroPreview = createHeroPreview({ library, gamePath: () => settings.get('dotaGamePath'), vanilla: () => schemaService.vanilla(), log: diag,
     glb: createModelGlb({ userDataDir: userData, toolchain, getGamePath: () => settings.get('dotaGamePath'), log: diag }) });
+  // the in-game HUD smaller or larger, read back by ValveResourceFormat and compiled again (src/hud-scale-service.ts)
+  const hudScale = createHudScale({ gamePath: () => settings.get('dotaGamePath'), installer, library, vrf: () => toolchain.pathOf('vrf'),
+    compile: (job) => compiler.compile(job), onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
   const keepTools: AppContext['keepTools'] = async ({ force = false } = {}) => {
     if (!toolsKeeper) return false;
     try {
@@ -216,7 +220,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 
   return {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, abilitySounds, buildUndo, heroPreview,
+    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, hudScale, abilitySounds, buildUndo, heroPreview,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };
 }

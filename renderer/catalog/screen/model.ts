@@ -6,6 +6,7 @@ import type { ArcanaCardModel } from '../arcana/ArcanaCard.tsx';
 import type { MapLookCardModel } from '../map/MapLookCard.tsx';
 import type { SoundCardModel } from '../sounds/SoundCard.tsx';
 import type { BackgroundCardModel } from '../background/BackgroundCard.tsx';
+import type { HudCardModel } from '../hud/HudCard.tsx';
 import type { MapKind } from '../../api/content.ts';
 import type { CosmeticItem } from '../cosmetic/CosmeticCard.tsx';
 
@@ -72,6 +73,8 @@ export type ScreenModel =
     soundLead?: SoundCardModel | null;
     /** a main menu background of the user's own, first among the backgrounds */
     backgroundLead?: BackgroundCardModel | null;
+    /** the in-game HUD smaller or larger, first among the HUDs */
+    hudLead?: HudCardModel | null;
     mods: (GridModel & { heading: boolean }) | null;
     cosmetics: { items: CosmeticItem[]; emptyText?: string; more?: string } | null;
   }
@@ -119,4 +122,5 @@ export interface ScreenActions {
   openMapLooks: (kind: MapKind, card: HTMLElement) => void;
   openSounds: (card: HTMLElement) => void;
   openBackground: (card: HTMLElement) => void;
+  openHud: (card: HTMLElement) => void;
 }

@@ -18,6 +18,7 @@ import { recolorFromLibrary } from '../catalog/arcana.ts';
 import { mapLooksFromLibrary } from '../catalog/map-looks.ts';
 import { soundsFromLibrary } from '../catalog/sounds.ts';
 import { backgroundFromLibrary } from '../catalog/background.ts';
+import { hudFromLibrary } from '../catalog/hud.ts';
 import { labelFor, recLabelKey } from '../../library/labels.ts';
 import { askLabel, clearLabel } from './label.ts';
 import { lib, recById, screen } from './state.ts';
@@ -151,7 +152,7 @@ export function menuFor(id: string): MenuItem[] | null {
   const rec = recById(id);
   if (!rec) return null;
   const ordered = lib.order.has(rec.id);
-  const gen = rec.generated as { set?: string; map?: string; sounds?: string; background?: string } | undefined;
+  const gen = rec.generated as { set?: string; map?: string; sounds?: string; background?: string; hud?: number } | undefined;
   const remove: MenuItem = { label: L`Удалить`, icon: 'delete', danger: true, onPick: () => deleteRecord(rec.id) };
   const key = recLabelKey(rec.id);
   const naming: (MenuItem | false)[] = [
@@ -175,6 +176,7 @@ export function menuFor(id: string): MenuItem[] | null {
     Boolean(gen?.set) && { label: L`Перекрасить`, icon: 'palette', onPick: () => void recolorFromLibrary(String(gen?.set)) },
     Boolean(gen?.sounds) && { label: L`Изменить звуки`, icon: 'graphic_eq', onPick: () => void soundsFromLibrary(String(gen?.sounds)) },
     Boolean(gen?.background) && { label: L`Изменить фон`, icon: 'wallpaper', onPick: () => void backgroundFromLibrary() },
+    typeof gen?.hud === 'number' && { label: L`Изменить размер`, icon: 'aspect_ratio', onPick: () => void hudFromLibrary() },
     Boolean(gen?.map) && { label: L`Изменить вид`, icon: 'tune', onPick: () => void mapLooksFromLibrary(gen?.map === 'trees' ? 'trees' : 'towers') },
     Boolean(rec.generated) && { separator: true },
     ...orderItems(rec),

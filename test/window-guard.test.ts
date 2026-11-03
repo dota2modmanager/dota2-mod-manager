@@ -174,6 +174,7 @@ const VALID: Record<string, unknown[][]> = {
   'compiler:state': [[]], 'compiler:browse': [[]], 'compiler:forget': [[]], 'compiler:prepare': [[]], 'compiler:check': [[]], 'compiler:keep': [[]], 'compiler:removeKept': [[]],
   'sounds:heroes': [[]], 'sounds:hero': [['lion']], 'sounds:remove': [['lion', 'Hero_Lion.Voodoo']],
   'sounds:add': [['lion', 'Hero_Lion.Voodoo', 'layer', 0.8, new Uint8Array(44), 'ring.mp3']],
+  'hud:state': [[]], 'hud:install': [[85]],
   'background:state': [[]], 'background:install': [[new Uint8Array(64), 'sunset.mp4', 0.2, 4], [null, null, 0.5, 0]],
   'map:state': [[]], 'map:install': [['towers', '17538', null], ['trees', null, 'winter']],
   'arcana:state': [[]], 'arcana:install': [['terrorblade-arcana', [255, 0, 128], 'mod'], ['techies-arcana', [1, 2, 3], 'recolor']],

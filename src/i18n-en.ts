@@ -265,6 +265,8 @@ const EN = {
   'Это не WebM': 'This is not a WebM',
   'Фон больше {0} МБ': 'The background is over {0} MB',
   'В WebM нет видео VP8 или VP9': 'The WebM has no VP8 or VP9 video',
+  'Нужен ValveResourceFormat: скачай его в окне': 'ValveResourceFormat is needed: download it in the window',
+  'Размер интерфейса в игре: {0}%': 'In-game HUD size: {0}%',
 } satisfies Record<string, string>;
 
 export default EN;

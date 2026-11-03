@@ -874,6 +874,11 @@ const EN = {
   'Диагностика': 'Diagnostics',
   'Экспортировать отчёт': 'Export report', 'Чиню…': 'Repairing…', 'Починить приложение': 'Repair the app', 'Починка возвращает патч игры, ищет пропавшие файлы модов и очищает картинки. Моды и пресеты не трогает.': 'Repair puts the game patch back, looks for missing mod files and clears the pictures. Your mods and presets stay as they are.', 'Не вышло? Отправь отчёт: в нём видно, на каком шаге.': 'Still broken? Send the report: it shows which step failed.', 'Всё в порядке': 'All good', 'Починка нашла проблемы': 'Repair found problems',
   'Отчёт сохранён': 'Report saved',
+  // ---------- the in-game HUD smaller or larger (catalog/hud) ----------
+  'Размер интерфейса в игре': 'In-game HUD size', 'Меньше или больше, чем даёт игра': 'Smaller or larger than the game allows', 'Нижняя панель и мини-карта меньше или больше, чем даёт игра': 'The bottom bar and the minimap, smaller or larger than the game allows',
+  'Поверх HUD-мода «{0}»: если его выключить, собери размер заново.': 'On top of the HUD mod “{0}”: if you switch it off, build the size again.', 'Скачать ValveResourceFormat': 'Download ValveResourceFormat', 'Стиль интерфейса собирает компилятор Valve из Dota 2 Workshop Tools, бесплатного DLC в Steam. После обновления Доты приложение соберёт его заново само.': 'Valve’s compiler from Dota 2 Workshop Tools, a free DLC on Steam, builds the HUD style. After a Dota update the app builds it again by itself.',
+  'Стиль интерфейса из игры читает ValveResourceFormat, его нужно один раз скачать. Собирает компилятор Valve из Dota 2 Workshop Tools.': 'ValveResourceFormat reads the HUD style out of the game. Download it once. Valve’s compiler from Dota 2 Workshop Tools builds it.', 'сейчас {0}%': 'now {0}%', 'Не удалось прочитать интерфейс игры': 'Couldn’t read the game’s HUD',
+  'Изменить размер': 'Change the size',
   // ---------- a main menu background of your own (catalog/background) ----------
   'Свой фон меню': 'Your own menu background', 'Картинка, GIF или видео': 'A picture, GIF or video', 'Твоя картинка или ролик за главным меню Доты': 'Your picture or clip behind Dota’s main menu',
   'Пока пусто': 'Nothing here yet', 'Затемнение': 'Dimming', 'Размытие': 'Blur',
