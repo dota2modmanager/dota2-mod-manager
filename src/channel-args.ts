@@ -24,7 +24,7 @@ import { validateDownloadProxy } from './download-proxy.ts';
 export type Check = (v: unknown) => string | null;
 
 /** The arcanas the arcana window builds: src/arcana-service.ts WINDOWS, which a test keeps in step. */
-export const ARCANA_WINDOWS = ['terrorblade-arcana', 'techies-arcana'];
+export const ARCANA_WINDOWS = ['terrorblade-arcana', 'techies-arcana', 'terrorblade-span', 'terrorblade-scythes', 'razor-crest'];
 
 const fail = (what: string) => `expected ${what}`;
 

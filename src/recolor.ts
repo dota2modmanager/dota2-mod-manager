@@ -21,39 +21,11 @@ import { attributeToken, constantExpression, rewriteExpressions, withConstant } 
 import { dataBlock } from './resource.ts';
 import { buildVpk, entryAt, sharedVpkIndex } from './vpk.ts';
 
-export type Rgb = [number, number, number];
+export type { Rgb } from './recolor-sets.ts';
+import type { Rgb } from './recolor-sets.ts';
 
-/** What can be recoloured, by path prefix in pak01, and the colour of the gem the item comes with. */
-export interface RecolorSet {
-  name: string;
-  gem: Rgb;
-  /** particles only this item uses: colours written in them follow the chosen one */
-  own: string[];
-  /** particles it shares with the hero and his other items: only the gem's tint changes */
-  shared: string[];
-  /** materials that read the gem's colour */
-  materials: string[];
-}
-
-export const RECOLOR_SETS: Record<string, RecolorSet> = {
-  'terrorblade-arcana': {
-    name: 'Fractal Horns of Inner Abysm',
-    // items_game, colors: unusual_terrorblade_abysm, "Reflection's Shade"
-    gem: [255, 60, 40],
-    own: ['particles/econ/items/terrorblade/terrorblade_horns_arcana/'],
-    shared: ['particles/units/heroes/hero_terrorblade/', 'particles/models/heroes/terrorblade/', 'particles/econ/items/terrorblade/'],
-    materials: ['materials/models/heroes/terrorblade/', 'materials/models/items/terrorblade/'],
-  },
-  'techies-arcana': {
-    name: 'Swine of the Sunken Galley',
-    // items_game, colors: unusual_techies_swine, the arcana's own gold (issue #392)
-    gem: [255, 175, 0],
-    own: ['particles/econ/items/techies/techies_arcana/'],
-    shared: ['particles/units/heroes/hero_techies/'],
-    // no material of the cart reads $GemColor (counted 2026-11-03): its wood and iron keep their colour
-    materials: ['materials/models/items/techies/bigshot/'],
-  },
-};
+export { RECOLOR_SETS, type RecolorSet } from './recolor-sets.ts';
+import { RECOLOR_SETS } from './recolor-sets.ts';
 
 /** A member name that holds a colour. Not m_bSaturateColorPreAlphaBlend: that one is a switch. */
 const COLOR_KEY = /^m_(?!b)\w*(Colou?r|Tint)\w*$/i;
@@ -277,7 +249,7 @@ export function recolorFiles({ pak01, set, target, bake = false }: { pak01: stri
     if (!particle && !material) continue;
     try {
       const file = index.read(p) as Buffer;
-      const r = particle ? recolorResource(file, target, { gem: def.gem, own: under(p, def.own), bake }) : { skipped: 0, ...recolorMaterial(file, target, { bake }) };
+      const r = particle ? recolorResource(file, target, { gem: def.bake ? undefined : def.gem, own: under(p, def.own), bake }) : { skipped: 0, ...recolorMaterial(file, target, { bake }) };
       changed += r.changed;
       skipped += r.skipped;
       if (r.changed) files.set(p, r.file);
@@ -292,7 +264,7 @@ export function recolorFiles({ pak01, set, target, bake = false }: { pak01: stri
 export function buildRecolor({ pak01, set, target, skip }: { pak01: string; set: string; target: Rgb; skip?: (p: string) => boolean }): {
   vpk: Buffer; files: number; changed: number; skipped: number; failed: Failed;
 } {
-  const r = recolorFiles({ pak01, set, target });
+  const r = recolorFiles({ pak01, set, target, bake: RECOLOR_SETS[set]?.bake });
   if (!r.files.size) throw new Error('recolor: nothing in the set took the colour');
   for (const p of r.files.keys()) if (skip?.(p.toLowerCase())) r.files.delete(p);
   return { vpk: buildVpk([...r.files].map(([p, f]) => entryAt(p, f))), files: r.files.size, changed: r.changed, skipped: r.skipped, failed: r.failed };

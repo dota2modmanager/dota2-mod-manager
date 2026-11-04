@@ -117,6 +117,11 @@ control point 15 (strength in control point 16) and to materials as `$GemColor`.
   gem. For one who does not, there is no gem and CP 16 is 0, so the build writes into the starting
   colours what all the tints would have made of them (`bakeTint`), bringing a colour over 255 down
   whole so its hue stays.
+- An item that comes with no gem (the immortals in `RECOLOR_SETS` marked `bake`: Span of Sorrow,
+  Scythes of Sorrow, Severing Crest) is built the second way for everybody, and its tints are left
+  as they are: a prismatic gem set in the item turns them on and shows that gem's colour. Benched
+  2026-11-04 with the item picked in the item builder (`--schema`): the effects take the colour,
+  the blades' teal is the model's own material and stays.
 - A material reads it in a VfxEval expression, `exists($GemColor) ? $GemColor : float3(...)`. The
   build replaces the read with a constant (`src/material.ts`): the attribute's token is MurmurHash2
   of the lowercased name, seed `0x31415926`; opcodes 0x19 ATTRIBUTE, 0x1F EXISTS, 0x04 BRANCH,

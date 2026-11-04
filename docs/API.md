@@ -147,6 +147,7 @@ the code, not in this page.
 | [`src/ready-presets-format.ts`](#srcready-presets-formatts) | The ready-made presets' format (config/presets.json, issue #391): a short list of builds picked |
 | [`src/ready-presets.ts`](#srcready-presetsts) | The ready-made presets (issue #391): config/presets.json on main, fetched and checked the way the |
 | [`src/recolor-layers.ts`](#srcrecolor-layersts) | A hero in colours of the user's choosing, part by part (issue #422): each ability's effect and its |
+| [`src/recolor-sets.ts`](#srcrecolor-setsts) | What src/recolor.ts can recolour: each item's particle and material folders, the colour of the |
 | [`src/recolor.ts`](#srcrecolorts) | An item's effects in a colour of the user's choosing, built from the game's own files. |
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
@@ -975,7 +976,7 @@ What the window shows: each arcana, and the game's prismatic gems to offer as co
 ### `WINDOWS`
 
 ```ts
-export const WINDOWS: Record<string, { picture: string; model: string; base?: string }> =
+export const WINDOWS: Record<string, { picture: string; model: string; base?: string; colorOnly?: boolean }> =
 ```
 
 The arcanas the window builds: the picture it shows, the file whose presence says the game has
@@ -1504,7 +1505,7 @@ Why a value does not fit, or null when it does.
 ### `ARCANA_WINDOWS`
 
 ```ts
-export const ARCANA_WINDOWS = ['terrorblade-arcana', 'techies-arcana']
+export const ARCANA_WINDOWS = ['terrorblade-arcana', 'techies-arcana', 'terrorblade-span', 'terrorblade-scythes', 'razor-crest']
 ```
 
 The arcanas the arcana window builds: src/arcana-service.ts WINDOWS, which a test keeps in step.
@@ -8288,6 +8289,35 @@ Pixels moved to the chosen colour in place, as `shade` moves a particle's colour
 the rest take the chosen hue. `rgba` is four bytes a pixel; `bgra` says the red and blue are
 swapped, as Electron's bitmaps have them on Windows.
 
+## src/recolor-sets.ts
+
+What src/recolor.ts can recolour: each item's particle and material folders, the colour of the
+gem it comes with, and whether that colour is baked in (an item with no gem of its own).
+
+### `Rgb`
+
+```ts
+export type Rgb = [number, number, number]
+```
+
+A colour as three whole numbers 0-255.
+
+### `RecolorSet`
+
+```ts
+export interface RecolorSet
+```
+
+What can be recoloured, by path prefix in pak01, and the colour of the gem the item comes with.
+
+### `RECOLOR_SETS`
+
+```ts
+export const RECOLOR_SETS: Record<string, RecolorSet> =
+```
+
+_No description in the source._
+
 ## src/recolor.ts
 
 An item's effects in a colour of the user's choosing, built from the game's own files.
@@ -8307,29 +8337,7 @@ the mod changes what the files do with the gem's colour instead:
   moved to the chosen one: every colour takes the chosen hue and keeps its own brightness and
   saturation scaled by the chosen colour's; black, white and greys stay as they are.
 
-### `Rgb`
-
-```ts
-export type Rgb = [number, number, number]
-```
-
-_No description in the source._
-
-### `RecolorSet`
-
-```ts
-export interface RecolorSet
-```
-
-What can be recoloured, by path prefix in pak01, and the colour of the gem the item comes with.
-
-### `RECOLOR_SETS`
-
-```ts
-export const RECOLOR_SETS: Record<string, RecolorSet> =
-```
-
-_No description in the source._
+Hands on from [`src/recolor-sets.ts`](#srcrecolor-setsts): `Rgb`, `RECOLOR_SETS`.
 
 ### `shade`
 

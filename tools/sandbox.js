@@ -219,7 +219,8 @@ function item() {
   const args = process.argv.slice(3);
   const at = args.indexOf('--game');
   const game = at === -1 ? GAME : path.resolve(args[at + 1]);
-  const names = args.filter((a, i) => i !== at && i !== at + 1);
+  // without --game, at is -1, and at + 1 would drop the first name
+  const names = at === -1 ? args : args.filter((a, i) => i !== at && i !== at + 1);
   const real = findDotaGamePathSync();
   if (!real || !names.length) {
     log(real ? 'usage: node tools/sandbox.js item "<item name>" [more] [--game <sandbox game>]' : 'the real game was not found');
