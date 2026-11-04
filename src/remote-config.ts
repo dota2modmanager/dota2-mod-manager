@@ -111,8 +111,16 @@ export function createRemoteConfig({ userDataDir, appVersion, log = () => {}, pu
   /** Extra hosts the archives can be fetched from, for src/net.ts to put in the chain. */
   const mirrors = () => read().mirrors;
 
-  return { refresh, feature, notices, beta, mirrors, url: CONFIG_URL, SWITCHABLE };
+  /** Catalog mods marked as misbehaving, still in date, with the text in one language. */
+  function issues(lang = 'en'): { cat: string; mod: string; text: string }[] {
+    const day = today();
+    return read().issues
+      .filter((i) => !i.until || i.until >= day)
+      .map((i) => ({ cat: i.cat, mod: i.mod, text: (lang === 'ru' ? i.ru : i.en) || i.en || i.ru }));
+  }
+
+  return { refresh, feature, notices, issues, beta, mirrors, url: CONFIG_URL, SWITCHABLE };
 }
 
 export { SWITCHABLE, BLOCKS_SINCE, MAX_TESTERS, MAX_MIRRORS, cmpVersion, applies, normalize } from './remote-config-format.ts';
-export type { Off, RemoteNotice, RemoteBlock, RemoteMirror, RemoteConfig } from './remote-config-format.ts';
+export type { Off, RemoteNotice, RemoteBlock, RemoteMirror, RemoteIssue, RemoteConfig } from './remote-config-format.ts';

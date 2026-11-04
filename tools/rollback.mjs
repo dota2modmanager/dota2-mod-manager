@@ -19,6 +19,8 @@
  *   node tools/rollback.mjs uninvite 123456789012345678             take it back off the list
  *   node tools/rollback.mjs mirror https://host/path/              another copy of the archives
  *   node tools/rollback.mjs unmirror gitlab.com                    stop sending anybody there
+ *   node tools/rollback.mjs issue heroes "Pudge Arcana" --en "…" --ru "…" [--until 2026-12-01]
+ *   node tools/rollback.mjs resolve heroes "Pudge Arcana"           the "!" comes off the card
  *   node tools/rollback.mjs sign                                      sign the file as it stands
  *
  * A block goes under `blocks`, which copies before BLOCKS_SINCE never read (see
@@ -53,7 +55,8 @@ const README = 'What the app reads after it has shipped: src/remote-config.js. E
   + 'the until field ignore it, so take a notice out once its date has passed. Write this file with '
   + 'tools/rollback.mjs, which signs it. "beta" is who is offered the unreleased build, as hashes; '
   + '"mirrors" name other places the archives can be fetched from, tried after the ones built '
-  + 'into the app.';
+  + 'into the app. "issues" mark catalog mods known to misbehave, by category id and catalog name: '
+  + 'the card carries a "!" and the mod’s window says what is wrong, until the until day if there is one.';
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -254,6 +257,32 @@ export function dropMirror(config, which) {
   return next;
 }
 
+/**
+ * Mark a catalog mod as misbehaving: a "!" on its card and the words in its window. Marking it again
+ * replaces what it said. The app's own rules decide what is taken, as for mirrors.
+ */
+export function markIssue(config, { cat, mod, en, ru, until }) {
+  const entry = { cat: String(cat || ''), mod: String(mod || ''), en: String(en || ''), ru: String(ru || ''), ...(until ? { until: String(until) } : {}) };
+  if (until && !DAY.test(entry.until)) throw new Error(`--until has to be a day, YYYY-MM-DD, not "${until}"`);
+  if (!entry.en || !entry.ru) throw new Error('an issue needs --en and --ru: the card is read in both');
+  if (normalize({ issues: [entry] }).issues.length !== 1) throw new Error('an issue needs the category id and the mod’s name in the catalog');
+  const next = structuredClone(config);
+  const rest = (next.issues || []).filter((i) => !(i.cat === entry.cat && i.mod === entry.mod));
+  next.issues = [...rest, entry];
+  return next;
+}
+
+/** Take the "!" off a mod again. */
+export function clearIssue(config, cat, mod) {
+  const list = config.issues || [];
+  const rest = list.filter((i) => !(i.cat === cat && i.mod === mod));
+  if (rest.length === list.length) throw new Error(`no issue here for "${mod}" in ${cat}`);
+  const next = structuredClone(config);
+  if (rest.length) next.issues = rest;
+  else delete next.issues;
+  return next;
+}
+
 /** What the file is doing today, one line each. */
 export function describe(config, today) {
   const lines = [];
@@ -271,6 +300,9 @@ export function describe(config, today) {
     lines.push(`${n.until && n.until < today ? 'expired ' : 'notice  '}        ${n.id} until ${n.until || 'no end'}`);
   }
   for (const m of config.mirrors || []) lines.push(`mirror          ${m.id}: ${m.base}`);
+  for (const i of config.issues || []) {
+    lines.push(`${i.until && i.until < today ? 'expired ' : 'issue   '}        ${i.cat} / ${i.mod}: ${i.en}${i.until ? ` (until ${i.until})` : ''}`);
+  }
   const testers = ((config.beta || {}).ids || []).length;
   if (testers) lines.push(`beta            ${testers} account(s) offered the unreleased build`);
   return lines.length ? lines : ['nothing is switched off and nobody is told anything'];
@@ -362,6 +394,10 @@ if (invokedDirectly) {
       const { config: next, id } = addMirror(config, subject, { id: flags.id === true ? '' : flags.id });
       console.log(`mirror ${id}`);
       write(next, today);
+    } else if (command === 'issue') {
+      write(markIssue(config, { cat: subject, mod: process.argv[4], en: flags.en, ru: flags.ru, until: flags.until }), today);
+    } else if (command === 'resolve') {
+      write(clearIssue(config, subject, process.argv[4]), today);
     } else if (command === 'unmirror') {
       write(dropMirror(config, subject), today);
     } else if (command === 'prune') {
