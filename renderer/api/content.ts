@@ -237,6 +237,15 @@ export interface PresetRecord {
   status?: { installed: number; download: number; embedded: number; free?: number; unavailable: string[] };
 }
 
+/** A ready-made preset as src/ipc-presets.ts answers it. */
+export interface ReadyPresetRecord {
+  id: string;
+  name: string;
+  about: string;
+  mods: { categoryId: string; name: string; styleLabel: string | null }[];
+  taken: string | null;
+}
+
 export interface PresetsApi {
   list: () => Promise<PresetRecord[]>;
   /** the stored presets, as saved (their members by identity, not yet resolved) */
@@ -251,5 +260,9 @@ export interface PresetsApi {
   importDialog: () => Promise<Dialog<{ preset: { name: string } }>>;
   importFile: (filePath: string) => Promise<Reply<{ preset: { name: string } }>>;
   resolve: (id: string) => Promise<Reply<{ installed: number; errors: string[] }>>;
+  /** the ready-made presets (config/presets.json), in the window's language; taken: the preset it became */
+  ready: () => Promise<ReadyPresetRecord[]>;
+  /** a ready preset added, installed and applied */
+  takeReady: (id: string) => Promise<Reply<{ installed: number; errors: string[] }>>;
   onLink: (cb: (res: unknown) => void) => void;
 }

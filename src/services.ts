@@ -39,6 +39,7 @@ import { createHeroPreview } from './hero-preview.ts';
 import { TERRORBLADE_BASE } from './arcana-bases.ts';
 import { clientVersion } from './patch-watch.ts';
 import { createRemoteConfig } from './remote-config.ts';
+import { createReadyPresets } from './ready-presets.ts';
 // the download chain, so a mirror named in that signed file joins it
 import { applyMirrors, setDownloadProxy } from './net.ts';
 import { createToolchain } from './toolchain.ts';
@@ -148,6 +149,9 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
      after this build shipped is in the chain from the first download rather than the second run. */
   applyMirrors(remoteConfig.mirrors());
   void remoteConfig.refresh().then(() => applyMirrors(remoteConfig.mirrors()));
+  // the ready-made presets the Presets screen offers (config/presets.json, src/ready-presets.ts)
+  const readyPresets = createReadyPresets({ userDataDir: userData, log: diag });
+  void readyPresets.refresh();
   // pictures for the cosmetics picker come through Electron's network stack (see src/icons.ts)
   const icons = new Icons(userData, fetchIcons);
   // ...unless the Source 2 toolchain is here, in which case they come out of the game itself
@@ -227,7 +231,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 
   return {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, hudScale, heroPaint, abilitySounds, buildUndo, heroPreview,
+    remoteConfig, readyPresets, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, hudScale, heroPaint, abilitySounds, buildUndo, heroPreview,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };
 }

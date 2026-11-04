@@ -29,6 +29,7 @@ import type { createHeroPreview } from './hero-preview.ts';
 import type { createGameIcons } from './game-icons.ts';
 import type { createModPreviews } from './mod-preview.ts';
 import type { createRemoteConfig } from './remote-config.ts';
+import type { createReadyPresets } from './ready-presets.ts';
 import type { presetsService } from './presets-service.ts';
 import type { createGate } from './feature-gate.ts';
 import type { createCursors } from './cursors.ts';
@@ -92,6 +93,8 @@ export interface AppContext {
   /** copy the game's Workshop Tools into the kept copy, with the bar at the bottom; whether it copied */
   keepTools: (opts?: { force?: boolean }) => Promise<boolean>;
   remoteConfig: ReturnType<typeof createRemoteConfig>;
+  /** the ready-made presets (config/presets.json) */
+  readyPresets: ReturnType<typeof createReadyPresets>;
   presets: ReturnType<typeof presetsService>;
   /** how many times each catalog mod was downloaded, and the hits this machine adds (src/download-stats.ts) */
   downloadStats: DownloadStats;

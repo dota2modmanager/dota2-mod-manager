@@ -7,7 +7,7 @@ import { AnimatePresence, MotionConfig } from 'motion/react';
 import { pane } from '../core/router.ts';
 import { bindContextMenu } from '../ui/menu.ts';
 import type { PresetsActions, PresetsModel } from './model.ts';
-import { OwnPresetCard, SharedPresetCard } from './PresetCard.tsx';
+import { OwnPresetCard, ReadyPresetCard, SharedPresetCard } from './PresetCard.tsx';
 
 function PresetsScreen({ m, actions }: { m: PresetsModel; actions: PresetsActions }) {
   const name = useRef<HTMLInputElement>(null);
@@ -47,6 +47,14 @@ function PresetsScreen({ m, actions }: { m: PresetsModel; actions: PresetsAction
           </div>
         )}
       </div>
+      {m.ready.length > 0 && (
+        <>
+          <div className="group-title preset-ready-title">{L`Готовые пресеты`}</div>
+          <div className="preset-ready-list">
+            {m.ready.map((p, i) => <ReadyPresetCard key={p.id} p={p} index={i} actions={actions} />)}
+          </div>
+        </>
+      )}
     </>
   );
 }

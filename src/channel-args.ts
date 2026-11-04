@@ -166,7 +166,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'presets:list': [], 'presets:save': [NAME], 'presets:update': [ID], 'presets:rename': [ID, NAME], 'presets:delete': [ID],
   'presets:apply': [ID], 'presets:resolve': [ID], 'presets:exportPlan': [ID], 'presets:shareLink': [ID],
   'presets:export': [ID, optional(shape({ skip: optional(list(str(1000), 10000)), author: optional(str(200)), note: optional(str(5000)) }))],
-  'presets:importDialog': [], 'presets:importFile': [PATH],
+  'presets:importDialog': [], 'presets:importFile': [PATH], 'presets:ready': [], 'presets:takeReady': [ID],
   // the game: its schema, cosmetics, pictures, tools (src/ipc-game.ts)
   'config:state': [], 'config:noticeSeen': [str(200, 1)],
   'patch:state': [], 'patch:repairState': [], 'patch:repairNow': [], 'patch:repairApp': [], 'patch:repairSeen': [], 'patch:setEnabled': [bool],

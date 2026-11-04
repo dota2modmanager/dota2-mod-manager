@@ -19,11 +19,12 @@ import path from 'node:path';
 import { Library } from '../src/library.ts';
 import { registerPresetsIpc } from '../src/ipc-presets.ts';
 import type { ModIdentity, Preset, PresetEntry } from '../src/types.ts';
+import type { ReadyPreset } from '../src/ready-presets-format.ts';
 import { registerAgainst } from './helpers/fake-electron.ts';
 
 const catalogLine = (name: string): PresetEntry => ({ kind: 'catalog', categoryId: 'heroes', name, styleLabel: null, fp: null });
 
-function stand(t: TestContext, { catalogHas = [] as string[] } = {}) {
+function stand(t: TestContext, { catalogHas = [] as string[], ready = [] as ReadyPreset[] } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-ipc-presets-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const library = new Library(dir);
@@ -65,6 +66,7 @@ function stand(t: TestContext, { catalogHas = [] as string[] } = {}) {
       presetState: (p: Preset) => (p.id === 'p1' ? 'active' : null),
       dropSharedPresetFile: () => log.push('drop file'),
     },
+    readyPresets: { list: () => ready, get: (id: string) => ready.find((p) => p.id === id) || null },
     adoptImportedFiles: () => ({ records: [] }),
     afterDeployMaster: () => log.push('master'),
     disableOtherCursors: () => {},
@@ -166,4 +168,28 @@ test('a link carries the catalog mods and says who sent it; a build of only own 
   assert.equal(r.count, 1);
   assert.equal(typeof r.code, 'string');
   assert.ok((await s.call('presets:shareLink', 'own')).error, 'a link cannot carry a file, and says so');
+});
+
+test('a ready preset is installed and applied in one press, and a second press applies the same one', async (t) => {
+  const winter: ReadyPreset = {
+    id: 'winter', ru: 'Зима', en: 'Winter', about: { ru: 'Снег', en: 'Snow' },
+    mods: [{ categoryId: 'river', name: 'Frozen River', styleLabel: null }, { categoryId: 'terrains', name: 'Dota+ Winter', styleLabel: null }],
+  };
+  const s = stand(t, { catalogHas: ['Frozen River', 'Dota+ Winter'], ready: [winter] });
+  const listed = await s.call('presets:ready') as { id: string; taken: string | null }[];
+  assert.deepEqual(listed.map((p) => [p.id, p.taken]), [['winter', null]]);
+
+  const r = await s.call('presets:takeReady', 'winter') as { ok: boolean; installed: number };
+  assert.equal(r.ok, true);
+  assert.ok(s.log.includes('install Frozen River') && s.log.includes('install Dota+ Winter'), s.log.join(', '));
+  const taken = s.library.listPresets();
+  assert.equal(taken.length, 1);
+  assert.equal(taken[0].wanted, undefined, 'it became an ordinary preset');
+  assert.equal(((await s.call('presets:ready')) as { taken: string | null }[])[0].taken, taken[0].id);
+
+  s.log.length = 0;
+  await s.call('presets:takeReady', 'winter');
+  assert.equal(s.library.listPresets().length, 1, 'no second copy');
+  assert.ok(s.log.some((l) => l.startsWith('apply')), s.log.join(', '));
+  assert.ok('error' in (await s.call('presets:takeReady', 'nope') as object));
 });
