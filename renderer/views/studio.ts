@@ -56,7 +56,7 @@ async function groups(): Promise<StudioGroup[]> {
 
   return [
     { id: 'hero', title: L`Герой`, tiles: [
-      tile({ id: 'builder', icon: 'checkroom', title: L`Конструктор предметов`, text: L`Любой предмет из игры на любого героя: наборы, арканы, персоны, стили и эффекты.`, open: () => goItems() }),
+      tile({ id: 'builder', icon: 'checkroom', title: L`Конструктор героев`, text: L`Любой предмет из игры на любого героя: наборы, арканы, персоны, стили и эффекты.`, open: () => goItems() }),
       tile({ id: 'paint', icon: 'format_paint', title: L`Перекраска героя`, text: L`Тело, оружие и эффекты в свои цвета, по частям. Открой героя в «Предметах» и нажми «Перекрасить».`, open: () => goItems() }),
       tile({ id: 'sounds', icon: 'graphic_eq', title: L`Свой звук на способность`, text: L`Твой файл вместо звука игры или поверх него`,
         status: sounds?.installed ? on(L`Героев со своими звуками: ${sounds.installed}`) : undefined, open: (el) => openSounds(el) }),
