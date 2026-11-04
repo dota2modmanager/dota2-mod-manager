@@ -14,6 +14,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { requireDeps } from './deps-check.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const OUT_PAGE = path.join(root, 'out', 'renderer', 'index.html');
@@ -53,6 +54,7 @@ export async function ensureUi(opts) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
+  requireDeps();
   const force = process.argv.includes('--force');
   const built = force ? (await buildUi({ quiet: false }), true) : await ensureUi({ quiet: false });
   if (!built) console.log('out/renderer is up to date');
