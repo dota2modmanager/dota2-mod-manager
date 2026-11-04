@@ -19,6 +19,8 @@ packaging/aur/.SRCINFO text eol=lf
 # here makes what you sign and what everyone downloads the same thing.
 config/app.json text eol=lf
 config/app.json.sig text eol=lf
+config/presets.json text eol=lf
+config/presets.json.sig text eol=lf
 
 # Anything below is bytes, not lines. Git guesses this correctly most of the time; the guess is
 # wrong exactly once, and the cost of it being wrong is a corrupted icon in a release.

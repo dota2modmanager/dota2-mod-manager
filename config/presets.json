@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "presets": [
+    {
+      "id": "minimal",
+      "ru": "Минимализм",
+      "en": "Minimal",
+      "about": {
+        "ru": "Тёмная простая карта, маленькие деревья и меньше лишних эффектов: видно только то, что важно в драке.",
+        "en": "A plain dark map, small trees and fewer extra effects, so you only see what matters in a fight."
+      },
+      "mods": [
+        { "category": "terrains", "name": "Dark Terrain Minify" },
+        { "category": "trees", "name": "Small Trees Minify" },
+        { "category": "shaders", "name": "Simple Minify Shader" },
+        { "category": "optimization", "name": "No Unnecessary Map Effects" },
+        { "category": "optimization", "name": "No Unnecessary Models" },
+        { "category": "huds", "name": "Default Lite Hud" }
+      ]
+    },
+    {
+      "id": "winter",
+      "ru": "Зима",
+      "en": "Winter",
+      "about": {
+        "ru": "Снежная карта, замёрзшая река и зимний фон главного меню.",
+        "en": "A snowy map, a frozen river and a winter main menu."
+      },
+      "mods": [
+        { "category": "terrains", "name": "Dota+ Winter" },
+        { "category": "river", "name": "Frozen River" },
+        { "category": "shaders", "name": "Winter" },
+        { "category": "backgrounds", "name": "Winter Forest" }
+      ]
+    },
+    {
+      "id": "the-international",
+      "ru": "The International",
+      "en": "The International",
+      "about": {
+        "ru": "Карта TI7, голос The International в роли комментатора и фон Nemestice.",
+        "en": "The TI7 map, the Voice of The International as your announcer and the Nemestice background."
+      },
+      "mods": [
+        { "category": "terrains", "name": "TI7 Reefs Edge" },
+        { "category": "announcers", "name": "Voice of The International" },
+        { "category": "river", "name": "Blue River" },
+        { "category": "backgrounds", "name": "Nemestice" }
+      ]
+    },
+    {
+      "id": "dark",
+      "ru": "Ночь",
+      "en": "Night",
+      "about": {
+        "ru": "Тёмная низкополигональная карта с деревьями, чёрная река и полностью чёрный HUD.",
+        "en": "A dark low-poly map with its trees, a black river and an all-black HUD."
+      },
+      "mods": [
+        { "category": "terrains", "name": "DarkPoly & Trees" },
+        { "category": "river", "name": "Black River" },
+        { "category": "huds", "name": "Total Black Hud" },
+        { "category": "shaders", "name": "Purple Outline" }
+      ]
+    },
+    {
+      "id": "anime",
+      "ru": "Аниме",
+      "en": "Anime",
+      "about": {
+        "ru": "Аниме-HUD, розовая река, мультяшные деревья и сакура в главном меню.",
+        "en": "An anime HUD, a pink river, cartoon trees and sakura in the main menu."
+      },
+      "mods": [
+        { "category": "huds", "name": "Anime Hud" },
+        { "category": "river", "name": "Pink River" },
+        { "category": "trees", "name": "Cartoon Trees" },
+        { "category": "shaders", "name": "Wave Lite Pink" },
+        { "category": "backgrounds", "name": "Sakura" }
+      ]
+    }
+  ]
+}

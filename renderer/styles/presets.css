@@ -98,6 +98,9 @@
 
 /* a preset received from someone else, not installed yet */
 .preset-card.shared { border-color: var(--primary); background: var(--primary-dim); }
+.preset-ready-title { margin: var(--space-5) 0 var(--space-3); }
+.preset-ready-list { display: flex; flex-direction: column; gap: var(--space-3); }
+.preset-about { font-size: 12.5px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
 .preset-note { font-size: 12.5px; color: var(--text); opacity: 0.85; margin-top: 8px; font-style: italic; }
 .preset-warn {
   display: flex; align-items: center; gap: 7px;

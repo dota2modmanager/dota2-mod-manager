@@ -571,6 +571,8 @@ const EN = {
   'Изменён': 'Changed',
   'Применён': 'Applied',
   'Пресет применён · доустановлено {0} {1}': 'Preset applied · installed {0} {1} it was missing',
+  'Пресет применён · установлено {0} {1}': 'Preset applied · installed {0} {1}',
+  'Готовые пресеты': 'Ready-made presets',
   'Своих модов нет на этом компьютере, из каталога их не вернуть: {0}': 'Your own mods are not on this computer, and the catalog cannot bring them back: {0}',
   'Удалить пресет «{0}»?': 'Delete preset «{0}»?',
 

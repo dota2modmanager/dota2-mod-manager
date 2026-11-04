@@ -19,8 +19,8 @@ import { paint } from '../ui/transitions.ts';
 import { recThumb } from '../library/thumbs.ts';
 import type { LibRecord } from '../library/types.ts';
 import { showPresets } from '../presets/PresetsScreen.tsx';
-import type { OwnPreset, PresetsActions, SharedPreset } from '../presets/model.ts';
-import type { PresetRecord } from '../api/content.ts';
+import type { OwnPreset, PresetsActions, ReadyPreset, SharedPreset } from '../presets/model.ts';
+import type { PresetRecord, ReadyPresetRecord } from '../api/content.ts';
 import { shareDialog, shareSheet } from './presets/share.ts';
 import { presetPicture } from './presets/picture.ts';
 import { recPreviewUrl } from '../ui/thumb.ts';
@@ -29,6 +29,7 @@ import { isVideo } from '../ui/media.ts';
 type Preset = PresetRecord;
 
 let presets: Preset[] = [];
+let ready: ReadyPresetRecord[] = [];
 let byId = new Map<string, LibRecord>();
 let key = 0;
 
@@ -102,12 +103,36 @@ function sharedCard(p: Preset): SharedPreset {
   };
 }
 
+// A ready-made preset (config/presets.json): the catalog's covers for its mods, its categories
+// counted, and whether it was taken already and is the one on now
+function readyCard(p: ReadyPresetRecord): ReadyPreset {
+  const thumbs = p.mods.map((m) => recThumb({ ...m, id: '', files: [] } as unknown as LibRecord));
+  const counts = new Map<string, number>();
+  for (const m of p.mods) counts.set(m.categoryId, (counts.get(m.categoryId) || 0) + 1);
+  const own = p.taken ? presets.find((x) => x.id === p.taken) : null;
+  return {
+    id: p.id,
+    name: p.name,
+    about: p.about,
+    count: mods(p.mods.length),
+    strip: thumbs.slice(0, STRIP),
+    rest: Math.max(0, thumbs.length - STRIP),
+    cats: [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id, n]) => ({ id, icon: catIcon(id), name: catName(id), n })),
+    taken: own && !own.wanted ? { on: own.on === 'active' } : null,
+  };
+}
+
 async function renderPresets(fresh = false): Promise<void> {
-  presets = await window.api.presets.list();
+  [presets, ready] = await Promise.all([window.api.presets.list(), window.api.presets.ready().catch(() => [])]);
   const { installed } = await window.api.mods.list();
   byId = new Map<string, LibRecord>((installed as LibRecord[]).map((m) => [m.id, m]));
   if (fresh) key++;
-  await paint(() => showPresets({ key, presets: presets.map((p) => (p.wanted ? sharedCard(p) : ownCard(p, byId))) }, actions));
+  // a ready preset taken is one of yours as well: renamed, shared or deleted from your list
+  await paint(() => showPresets({
+    key,
+    presets: presets.map((p) => (p.wanted ? sharedCard(p) : ownCard(p, byId))),
+    ready: ready.map(readyCard),
+  }, actions));
 }
 
 async function share(id: string) {
@@ -176,6 +201,16 @@ const actions: PresetsActions = {
     if (r.error) toast(r.error, 'error', 7000);
     else {
       toast(L`Установлено и применено: ${r.installed} ${plural(r.installed, 'мод', 'мода', 'модов')}`);
+      for (const err of (r.errors || []).slice(0, 3)) toast(err, 'warn', 7000);
+    }
+    await refreshInstalledIndex();
+    await renderPresets();
+  },
+  takeReady: async (id) => {
+    const r = await window.api.presets.takeReady(id);
+    if (r.error) toast(r.error, 'error', 7000);
+    else {
+      toast(r.installed ? L`Пресет применён · установлено ${r.installed} ${plural(r.installed, 'мод', 'мода', 'модов')}` : L`Пресет применён`);
       for (const err of (r.errors || []).slice(0, 3)) toast(err, 'warn', 7000);
     }
     await refreshInstalledIndex();

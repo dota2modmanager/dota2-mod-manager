@@ -9,7 +9,7 @@
 import { writePresetFile } from './preset-share.ts';
 import { encodePresetLink } from './preset-link.ts';
 import { createPresetInstall } from './preset-install.ts';
-import { t } from './i18n.ts';
+import { getLang, t } from './i18n.ts';
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
 import type { AppContext } from './app-context.ts';
@@ -19,9 +19,9 @@ import type { PresetEntry } from './types.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerPresetsIpc({
-  win, settings, catalog, installer, library, schemaService, presets,
+  win, settings, catalog, installer, library, schemaService, presets, readyPresets: ready,
   adoptImportedFiles, afterDeployMaster, disableOtherCursors, sendProgress, blocked,
-}: Pick<AppContext, 'win' | 'settings' | 'catalog' | 'installer' | 'library' | 'schemaService' | 'presets' | 'adoptImportedFiles' | 'afterDeployMaster' | 'disableOtherCursors' | 'sendProgress' | 'blocked'>): void {
+}: Pick<AppContext, 'win' | 'settings' | 'catalog' | 'installer' | 'library' | 'schemaService' | 'presets' | 'readyPresets' | 'adoptImportedFiles' | 'afterDeployMaster' | 'disableOtherCursors' | 'sendProgress' | 'blocked'>): void {
   const { app, dialog, ipcMain } = electron();
   // `win` arrives as a getter, not as the window. These are registered before the window
   // is created, so a value captured here would be undefined forever - which is exactly
@@ -157,6 +157,33 @@ export function registerPresetsIpc({
   ipcMain.handle('presets:resolve', async (e, id) => {
     const preset = library.getPreset(id);
     if (!preset || !preset.wanted) return { error: t('Пресет не найден') };
+    return flows.resolve(preset as typeof preset & { wanted: PresetEntry[] });
+  });
+
+  // The ready-made presets (issue #391): fetched once a start by src/services.ts, and answered from
+  // the last good copy until then. One that was taken already says so, by its id in the taken
+  // preset's source, so a second press does not make a second copy of it.
+  const takenFrom = (id: string) => library.listPresets().find((p) => (p.source as { ready?: string } | undefined)?.ready === id);
+  ipcMain.handle('presets:ready', () => {
+    const ru = getLang() === 'ru';
+    return ready.list().map((p) => ({
+      id: p.id, name: ru ? p.ru : p.en, about: ru ? p.about.ru || p.about.en : p.about.en || p.about.ru,
+      mods: p.mods, taken: takenFrom(p.id)?.id || null,
+    }));
+  });
+  // One press: the preset lands as a received one and is installed and applied straight away, the
+  // way a received preset's Install does it
+  ipcMain.handle('presets:takeReady', async (e, id) => {
+    const p = ready.get(String(id));
+    if (!p) return { error: t('Пресет не найден') };
+    const ru = getLang() === 'ru';
+    const preset = takenFrom(p.id) || library.addSharedPreset({
+      name: ru ? p.ru : p.en, note: ru ? p.about.ru : p.about.en, author: 'Dota 2 Mod Manager',
+      wanted: p.mods.map((m) => ({ kind: 'catalog' as const, ...m, fp: null })),
+    });
+    if (preset.source) (preset.source as { ready?: string }).ready = p.id;
+    library.save();
+    if (!preset.wanted) return flows.applyOwn(preset);
     return flows.resolve(preset as typeof preset & { wanted: PresetEntry[] });
   });
 }

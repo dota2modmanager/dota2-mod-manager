@@ -144,6 +144,8 @@ the code, not in this page.
 | [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
 | [`src/pumpkin.ts`](#srcpumpkints) | The pumpkin's side of the key (renderer/ui/pumpkin.ts asks, tools/pumpkin-worker answers). |
 | [`src/quit-after-build.ts`](#srcquit-after-buildts) | Quitting waits for the item table being written. |
+| [`src/ready-presets-format.ts`](#srcready-presets-formatts) | The ready-made presets' format (config/presets.json, issue #391): a short list of builds picked |
+| [`src/ready-presets.ts`](#srcready-presetsts) | The ready-made presets (issue #391): config/presets.json on main, fetched and checked the way the |
 | [`src/recolor-layers.ts`](#srcrecolor-layersts) | A hero in colours of the user's choosing, part by part (issue #422): each ability's effect and its |
 | [`src/recolor.ts`](#srcrecolorts) | An item's effects in a colour of the user's choosing, built from the game's own files. |
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
@@ -8099,6 +8101,94 @@ export function quitAfterBuild(app: { on(event: 'before-quit', fn: (e: QuitEvent
 @param app      what of Electron's app this needs
 @param busy     whether a build is running or asked for (schemaService.busy)
 @param settled  resolves once none is (schemaService.settled)
+```
+
+## src/ready-presets-format.ts
+
+The ready-made presets' format (config/presets.json, issue #391): a short list of builds picked
+from the catalog, shown in the Presets screen and on the site. It lives beside the remote config
+and is signed with the same key, so the list changes without a release and a proxy cannot put a
+build of its own choosing in front of people.
+
+Shape:
+  {
+    "version": 1,
+    "presets": [ { "id": "minimal", "ru": "Минимализм", "en": "Minimal",
+                   "about": { "ru": "…", "en": "…" },
+                   "mods": [ { "category": "terrains", "name": "Dark Terrain Minify" },
+                             { "category": "huds", "name": "Hud Fernando", "style": "gray" } ] } ]
+  }
+
+A mod is named the way the catalog files it, as a preset link names it (src/preset-link.ts), so
+a list entry is readable in a pull request and the site turns it into a link the app opens.
+Only catalog mods: a look from the game's item table needs safe mode off, and a ready preset
+should work for everybody who presses its button.
+
+### `MAX_PRESETS`
+
+```ts
+export const MAX_PRESETS = 30
+```
+
+A short list, read by people: more than this is a sign the file was not edited by one.
+
+### `MAX_MODS`
+
+```ts
+export const MAX_MODS = 60
+```
+
+Mods in one ready preset at most.
+
+### `ReadyMod`
+
+```ts
+export interface ReadyMod { categoryId: string; name: string; styleLabel: string | null }
+```
+
+A catalog mod as a ready preset names it.
+
+### `ReadyPreset`
+
+```ts
+export interface ReadyPreset
+```
+
+One ready preset, as far as it passed the checks below.
+
+### `normalizeReady`
+
+```ts
+export function normalizeReady(raw: unknown): ReadyPreset[]
+```
+
+The fetched JSON cut down to presets with an id, a name and at least one mod; the rest is dropped.
+
+## src/ready-presets.ts
+
+The ready-made presets (issue #391): config/presets.json on main, fetched and checked the way the
+remote config is (src/remote-config.ts) and kept between starts, so the list is there offline
+once it has been seen. The format and its checks are src/ready-presets-format.ts.
+
+Default-safe like the remote config: no file, no network, a bad signature or malformed JSON all
+leave the last good list, or none, and the Presets screen simply shows no ready presets.
+
+### `READY_URL`
+
+```ts
+export const READY_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/presets.json'
+```
+
+The list every copy of the app reads, on main in this repository; its signature is this with .sig on the end.
+
+### `createReadyPresets`
+
+```ts
+export function createReadyPresets({ userDataDir, log = () => {}, publicKey = CONFIG_PUBLIC_KEY }: { userDataDir: string; log?: (msg: string) => void; publicKey?: string; })
+```
+
+```
+@param opts.publicKey  whose signature to accept; the remote config's unless a test signs its own
 ```
 
 ## src/recolor-layers.ts

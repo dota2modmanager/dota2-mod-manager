@@ -8,7 +8,7 @@ import { motion } from 'motion/react';
 import { Thumb } from '../library/Thumb.tsx';
 import { foldAway, travel } from '../motion/list.ts';
 import { Swap } from '../motion/Swap.tsx';
-import type { OwnPreset, PresetsActions, SharedPreset } from './model.ts';
+import type { OwnPreset, PresetsActions, ReadyPreset, SharedPreset } from './model.ts';
 
 /* A card moves like a row of My mods: a card saved above it or deleted beside it makes it travel to
    its new place, and a deleted one folds away (motion/list.ts). Its entrance is cardIn in presets.css. */
@@ -93,6 +93,33 @@ export function SharedPresetCard({ p, index, actions }: { p: SharedPreset; index
       {p.note && <div className="preset-note">{p.note}</div>}
       <div className="preset-mods">{p.mods}</div>
       {p.warn && <div className="preset-warn"><span className="ms">warning</span>{p.warn}</div>}
+    </motion.div>
+  );
+}
+
+/* A ready-made preset: its covers and its counts like a card of your own, and one button that
+   installs what is missing and applies it. Taken once, it is a preset of yours and says so. */
+export function ReadyPresetCard({ p, index, actions }: { p: ReadyPreset; index: number; actions: PresetsActions }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <motion.div className={`preset-card ready${p.taken?.on ? ' is-active' : ''}`} style={{ '--i': index } as CSSProperties} {...cardMotion()}>
+      <div className="preset-head">
+        <div className="preset-name">{p.name}</div>
+        {p.taken?.on && <span className="preset-on"><span className="ms">check_circle</span>{L`Выбран`}</span>}
+        <span className="text-meta">{p.count}</span>
+        <button className={`btn btn-sm${p.taken?.on ? '' : ' btn-primary'}`} data-ready={p.id} disabled={busy || p.taken?.on}
+          onClick={() => { setBusy(true); actions.takeReady(p.id).finally(() => setBusy(false)); }}>
+          {p.taken ? (p.taken.on ? L`Применён` : L`Применить`) : <><span className="ms">download</span>{L`Установить`}</>}
+        </button>
+      </div>
+      {p.about && <div className="preset-about">{p.about}</div>}
+      <div className="preset-strip">
+        {p.strip.map((thumb, i) => <Thumb key={i} thumb={thumb} cls="preset-thumb" />)}
+        {p.rest > 0 && <div className="preset-more">{`+${p.rest}`}</div>}
+      </div>
+      <div className="preset-cats">
+        {p.cats.map((c) => <span key={c.id} className="preset-cat"><span className="ms">{c.icon}</span>{c.name}<b>{c.n}</b></span>)}
+      </div>
     </motion.div>
   );
 }

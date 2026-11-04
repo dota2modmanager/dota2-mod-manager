@@ -166,6 +166,8 @@ contextBridge.exposeInMainWorld('api', {
     importDialog: () => ipcRenderer.invoke('presets:importDialog'),
     importFile: (filePath) => ipcRenderer.invoke('presets:importFile', filePath),
     resolve: (id) => ipcRenderer.invoke('presets:resolve', id),
+    ready: () => ipcRenderer.invoke('presets:ready'),
+    takeReady: (id) => ipcRenderer.invoke('presets:takeReady', id),
     onLink: (cb) => ipcRenderer.on('preset-link', (e, res) => cb(res)),
   },
   account: {
