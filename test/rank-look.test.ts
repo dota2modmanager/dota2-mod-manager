@@ -113,13 +113,16 @@ test('the script knows the levels and the medal, in the game’s own words', () 
 });
 
 /** A Panorama panel, as much of one as the script touches. */
-interface Fake { id: string; paneltype: string; classes: Set<string>; kids: Fake[]; text: string; heroname?: string; heroid?: number; visible: boolean; vars: Record<string, number> }
+interface Fake { id: string; paneltype: string; classes: Set<string>; kids: Fake[]; text: string; heroname?: string; heroid?: number; herolevel?: number; visible: boolean; vars: Record<string, number> }
 const fake = (paneltype: string, id = '', classes: string[] = [], kids: Fake[] = [], extra: Partial<Fake> = {}): Fake => ({ id, paneltype, classes: new Set(classes), kids, text: '', visible: true, vars: {}, ...extra });
 const all = (p: Fake): Fake[] => p.kids.flatMap((k) => [k, ...all(k)]);
-/** Runs the script once on `root` and returns what it said in the console. */
-function runScript(js: string, root: Fake): string[] {
+/** Runs the script on `root`, then `between` before each of the next ticks; returns what it said in the console. */
+function runScript(js: string, root: Fake, ...between: (() => void)[]): string[] {
   const said: string[] = [];
-  const api = (p: Fake): unknown => new Proxy(p, { get: (t, k) => ({
+  // the game hands a script the same object for the same panel each time
+  const seen = new WeakMap<Fake, unknown>();
+  const api = (p: Fake): unknown => seen.get(p) ?? (seen.set(p, wrap(p)), seen.get(p));
+  const wrap = (p: Fake): unknown => new Proxy(p, { get: (t, k) => ({
     FindChildTraverse: (id: string) => { const f = all(t).find((c) => c.id === id); return f ? api(f) : null; },
     SetHasClass: (c: string, on: boolean) => { if (on) t.classes.add(c); else t.classes.delete(c); },
     BHasClass: (c: string) => t.classes.has(c),
@@ -128,8 +131,10 @@ function runScript(js: string, root: Fake): string[] {
     GetChild: (i: number) => api(t.kids[i]),
   } as Record<string | symbol, unknown>)[k] ?? Reflect.get(t, k) });
   const names: Record<string, string> = { '#npc_dota_hero_axe': 'Axe', '#npc_dota_hero_lina': 'Lina' };
-  const $ = { GetContextPanel: () => api(root), Localize: (s: string) => names[s] ?? s, Schedule: () => {}, Msg: (m: string) => said.push(m) };
+  let next: (() => void) | null = null;
+  const $ = { GetContextPanel: () => api(root), Localize: (s: string) => names[s] ?? s, Schedule: (_: number, f: () => void) => { next = f; }, Msg: (m: string) => said.push(m) };
   new Function('$', 'Players', js)($, {});
+  for (const step of between) { step(); (next as (() => void) | null)?.(); }
   return said;
 }
 
@@ -189,6 +194,19 @@ test('the card over a hero takes its level, and a part that breaks says so once'
   Object.defineProperty(broken.kids[1], 'classes', { get: () => { throw new Error('renamed'); } });
   const said = runScript(levelsScript({ medal: null, levels: { axe: 8 }, every: null }), broken);
   assert.ok(said.some((m) => /hero page failed: Error: renamed/.test(m)), said.join('\n'));
+});
+
+test('a badge that takes a level is given it, and gets the game’s back when its hero has none', () => {
+  const name = fake('Label', '', ['TabContentsHeroName'], [], { text: 'Axe' });
+  const badge = fake('DOTAHeroBadge', 'HeroBadge', [], [], { herolevel: 5 });
+  const page = fake('DOTAHeroPageNewV2', '', [], [name, badge]);
+  const levels: number[] = [];
+  runScript(levelsScript({ medal: null, levels: { axe: 30 }, every: null }), page,
+    () => { levels.push(badge.herolevel!); badge.herolevel = 2; }, // the game moves on to Lina before the page names her
+    () => { levels.push(badge.herolevel!); name.text = 'Lina'; },
+    () => { levels.push(badge.herolevel!); name.text = 'Axe'; },
+    () => levels.push(badge.herolevel!));
+  assert.deepEqual(levels, [30, 30, 2, 30]);
 });
 
 test('the include goes in front of the layout’s panel, once', () => {
