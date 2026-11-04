@@ -9,7 +9,7 @@ import { $ } from '../core/dom.ts';
 import { COSMETIC_PREFIX, RAIL_SECTIONS } from '../core/constants.ts';
 import { state } from '../core/store.ts';
 import { registerView, switchView, catalogOnShow } from '../core/router.ts';
-import { enterSection, sectionOnShow, ITEMS_HOME } from './catalog/sections.ts';
+import { enterSection, sectionOnShow } from './catalog/sections.ts';
 import { pickedIn } from '../core/installed.ts';
 import { catName, catIcon } from '../core/categories.ts';
 import { toast } from '../ui/toast.ts';
@@ -68,8 +68,9 @@ function catalogRail(): RailModel {
  * look the game lets you change (weather, terrain, couriers, wards...). Shown before the game's
  * table is read too, so the tab is never an empty column. */
 function itemsRail(): RailModel {
-  const builder = { ...(itemRailEntry() || { id: ITEMS_HOME, icon: catIcon(ITEMS_HOME) }), name: L`Конструктор героев` };
-  const sections: RailModel['sections'] = [{ label: null, items: [builder] }];
+  // the builder is there once the game's table has items to build from (a stub table has none)
+  const entry = itemRailEntry();
+  const sections: RailModel['sections'] = entry ? [{ label: null, items: [{ ...entry, name: L`Конструктор героев` }] }] : [];
   const looks = cosmeticSlotList()
     .filter((x) => !isItemCosmeticSlot(x.slot)) // the builder's slots have one entry of their own
     .map((s) => {
