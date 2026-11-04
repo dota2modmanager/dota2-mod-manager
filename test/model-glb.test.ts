@@ -104,3 +104,28 @@ test('a new game build empties the cache', async () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('a body exported with its physics is found inside the folder -o became', async () => {
+  const { dir, game, calls } = setup();
+  try {
+    // what the real toolchain did with Abaddon on 2026-11-04: two files, so -o was a folder
+    const run = async (_exe: string, args: string[]) => {
+      calls.push(args);
+      const out = args[args.indexOf('-o') + 1];
+      for (const f of ['models/heroes/abaddon/abaddon.vmdl_c', 'models/heroes/abaddon/abaddon_physics.vmdl_c']) {
+        fs.mkdirSync(path.dirname(glbAt(out, f)), { recursive: true });
+        fs.writeFileSync(glbAt(out, f), 'glb');
+      }
+    };
+    const glb = createModelGlb({ userDataDir: dir, toolchain: { pathOf: () => 'vrf.exe' }, getGamePath: () => game, run });
+    const body = 'models/heroes/abaddon/abaddon.vmdl';
+    const first = (await glb.glbs([body], ['idle']))[body];
+    assert.ok(first && fs.statSync(first).isFile(), `${first} is not a file`);
+    assert.equal(path.basename(first), 'abaddon.glb');
+    // the second ask finds it too, without exporting again
+    assert.equal((await glb.glbs([body], ['idle']))[body], first);
+    assert.equal(calls.length, 1);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
