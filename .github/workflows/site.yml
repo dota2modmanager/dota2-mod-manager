@@ -104,11 +104,15 @@ jobs:
       # It takes about a minute. On 2026-10-26 the download hung twice in a row for the whole job's
       # thirty minutes and the release went out without its site, so each try gets four minutes
       # and a stuck one is tried again.
+      # timeout stops npx but not the package install it started under sudo, which goes on holding the dpkg
+      # lock. On 2026-11-04 a slow mirror ran the first try out, and the next two failed at once on
+      # that lock, so a retry waits for the lock first: by then that install has usually finished.
       - name: Install WebKit for the iPhone tests
         working-directory: site
         timeout-minutes: 14
         run: |
           for try in 1 2 3; do
+            while sudo fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done
             timeout 240 npx playwright-core install --with-deps webkit && exit 0
             echo "::warning::WebKit install attempt $try did not finish"
           done
