@@ -121,7 +121,7 @@ export interface AppContext {
   refreshPresence: () => void;
   applyPresenceSetting: () => void;
   clampZoom: (v: unknown) => number;
-  releaseNotes: (version: string, lang: string) => string | null;
+  releaseNotes: (version: string, lang: string, seen?: string | null) => string | null;
   afterDeployMaster: () => void;
   deployAndApply: (pack: LibRecord) => { key: string; path: string }[];
   repairAfterPatch: (reason?: unknown) => Promise<void>;

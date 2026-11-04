@@ -226,6 +226,12 @@ html[lang="ru"] body.dropping::after {
   margin: 16px 0 7px; font-size: 14.5px; font-weight: 700; color: var(--text);
 }
 .notes-body h4:first-child { margin-top: 0; }
+/* each version's own heading, when the notes run over several (src/release-notes.ts) */
+.notes-body .notes-version {
+  margin: 22px 0 8px; padding-top: 14px; border-top: 1px solid var(--border);
+  font-size: 16px; font-weight: 800; color: var(--text);
+}
+.notes-body .notes-version:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
 .notes-body p { margin: 0 0 9px; }
 .notes-body ul { margin: 0 0 12px; padding-left: 18px; }
 .notes-body li { margin-bottom: 5px; }
