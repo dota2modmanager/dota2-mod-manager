@@ -271,7 +271,7 @@ const EN = {
   'Крипы Тьмы': 'Dire creeps', 'Осадные Света': 'Radiant siege creeps',
   'Осадные Тьмы': 'Dire siege creeps', 'Башни Света': 'Radiant towers',
   'Башни Тьмы': 'Dire towers', 'Комментатор': 'Announcer',
-  'Серия убийств': 'Kill streak', 'Баннер мультикилла': 'Multikill banner',
+  'Серия убийств': 'Kill streak', 'Баннер мультикилла': 'Multikill banner', 'Известная проблема': 'Known issue',
   'Поиск модов…': 'Search mods…', 'Очистить': 'Clear', 'Показать в папке': 'Show in folder', 'Свернуть': 'Minimize',
   'Развернуть': 'Maximize', 'Закрыть': 'Close', 'Поиск Dota 2…': 'Looking for Dota 2…',
   'Папка модов': 'Mods folder', 'Играть': 'Play',

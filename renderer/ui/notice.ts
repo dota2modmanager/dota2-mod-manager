@@ -10,9 +10,9 @@
  * now, the list is for "what did that message say again".
  */
 import { esc } from './format.ts';
-import type { Notice } from '../api/content.ts';
+import type { ModIssue, Notice } from '../api/content.ts';
 
-type NoticeState = { notices: Notice[]; seen: string[]; features: Record<string, unknown> };
+type NoticeState = { notices: Notice[]; issues?: ModIssue[]; seen: string[]; features: Record<string, unknown> };
 
 let state: NoticeState = { notices: [], seen: [], features: {} };
 
@@ -20,6 +20,11 @@ let state: NoticeState = { notices: [], seen: [], features: {} };
 export async function refreshNotices(): Promise<NoticeState> {
   try { state = await window.api.config.state(); } catch { /* keep whatever we had */ }
   return state;
+}
+
+/** What the signed config says is wrong with a catalog mod, or null when it says nothing. */
+export function modIssue(cat: string, name: string): string | null {
+  return (state.issues || []).find((i) => i.cat === cat && i.mod === name)?.text || null;
 }
 
 /** The newest notice this user has not put away, or null. */

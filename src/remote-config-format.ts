@@ -12,7 +12,8 @@
 //     "blocks":  [ { "id": "2026-09-16-install-2.7.0", "feature": "install",
 //                    "minVersion": "2.7.0", "maxVersion": "2.7.0", "until": "2026-09-27",
 //                    "ru": "…", "en": "…" } ],
-//     "beta":    { "salt": "d2mm-beta-1", "ids": ["<sha256 of salt:discordId>", …] }
+//     "beta":    { "salt": "d2mm-beta-1", "ids": ["<sha256 of salt:discordId>", …] },
+//     "issues":  [ { "cat": "heroes", "mod": "Pudge Arcana", "ru": "…", "en": "…", "until": "2026-12-01" } ]
 //   }
 //
 // `features` switches something off in every version. That is right when the cause is outside
@@ -26,6 +27,10 @@
 // `beta` is the list of Discord accounts the beta channel is offered to, as hashes: the file is
 // public and a list of a dozen people's accounts is not ours to publish. src/beta.ts does the
 // checking; this only reads the block and refuses anything that is not shaped like one.
+//
+// `issues` are catalog mods known to misbehave, by category id and the name the catalog gives the
+// mod. The catalog card carries a "!" and the mod's window says what is wrong. A mod a patch broke
+// is marked the same day, without a release and without touching rotten's catalog.
 
 // What the app is willing to be told to switch off. A name that is not on this list is
 // ignored: a typo in the config must not disable something at random, and this list is the
@@ -46,6 +51,8 @@ export const MAX_MIRRORS = 4;
 // the catalog's own host: a list entry claiming to be it would be claiming to be the origin
 const RAW_MIRROR_HOST = 'raw.githubusercontent.com';
 const MAX_TEXT = 500;
+// marks on catalog cards: a handful at a time, not a second catalog
+const MAX_ISSUES = 100;
 
 /** A feature switched off everywhere, with what to tell the user. */
 export interface Off { off: true; ru: string; en: string }
@@ -62,6 +69,9 @@ export interface RemoteBlock {
   minVersion: string | null; maxVersion: string | null; until: string;
 }
 
+/** A catalog mod known to misbehave, and what to tell whoever looks at it. */
+export interface RemoteIssue { cat: string; mod: string; ru: string; en: string; until: string | null }
+
 /** Another host the archives can be fetched from. */
 export interface RemoteMirror { id: string; base: string; host: string }
 
@@ -72,6 +82,7 @@ export interface RemoteConfig {
   blocks: RemoteBlock[];
   beta: { salt: string; ids: string[] } | null;
   mirrors: RemoteMirror[];
+  issues: RemoteIssue[];
 }
 
 /** Anything the raw JSON could hold in a place an object is expected. */
@@ -106,7 +117,7 @@ const validDay = (v: unknown): string | null => (typeof v === 'string' && /^\d{4
  * at a feature that cannot be switched is dropped rather than trusted. */
 export function normalize(raw: unknown): RemoteConfig {
   const out: RemoteConfig = {
-    features: {}, notices: [], blocks: [], beta: null, mirrors: [],
+    features: {}, notices: [], blocks: [], beta: null, mirrors: [], issues: [],
   };
   if (!isObject(raw)) return out;
 
@@ -190,6 +201,17 @@ export function normalize(raw: unknown): RemoteConfig {
     const id = str(m.id, 40) || host;
     if (out.mirrors.some((x) => x.id === id || x.base === base)) continue;
     out.mirrors.push({ id, base, host });
+  }
+
+  const issues = Array.isArray(raw.issues) ? raw.issues.slice(0, MAX_ISSUES) : [];
+  for (const i of issues) {
+    if (!isObject(i)) continue;
+    const cat = str(i.cat, 40);
+    const mod = str(i.mod, 120);
+    const ru = str(i.ru);
+    const en = str(i.en);
+    if (!cat || !mod || !(ru || en)) continue;
+    out.issues.push({ cat, mod, ru, en, until: validDay(i.until) });
   }
 
   return out;

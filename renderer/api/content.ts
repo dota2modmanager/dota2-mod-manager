@@ -103,8 +103,11 @@ export interface CompilerApi {
 
 export interface Notice { id: string; date?: string; level?: string; text: string; url?: string }
 
+/** A catalog mod the signed config marks as misbehaving, by category and catalog name. */
+export interface ModIssue { cat: string; mod: string; text: string }
+
 export interface ConfigApi {
-  state: () => Promise<{ features: Record<string, unknown>; notices: Notice[]; seen: string[] }>;
+  state: () => Promise<{ features: Record<string, unknown>; notices: Notice[]; issues?: ModIssue[]; seen: string[] }>;
   noticeSeen: (id: string) => Promise<string[]>;
 }
 
