@@ -160,7 +160,28 @@ function d2mmText(label, name, lvl) {
   label.SetDialogVariableInt(name, lvl);
   label.text = String(lvl);
 }
+var D2MM_BADGES = [];
+// a badge redraws itself, the medal model on the hero page included, from the level it is given,
+// as the game's own post-game screen gives it one; the game gives it the real level again when
+// the hero changes, and a badge whose hero has no level of its own gets that back
 function d2mmBadge(badge, lvl) {
+  if (badge.herolevel === undefined) return d2mmBadgeByHand(badge, lvl);
+  var rec = null;
+  for (var r = 0; r < D2MM_BADGES.length; r++) if (D2MM_BADGES[r].panel === badge) rec = D2MM_BADGES[r];
+  if (!rec) { rec = { panel: badge, mine: null, real: badge.herolevel }; D2MM_BADGES.push(rec); }
+  if (badge.herolevel !== rec.mine) rec.real = badge.herolevel;
+  if (d2mmKnown(lvl)) {
+    if (badge.herolevel !== lvl) badge.herolevel = lvl;
+    rec.mine = lvl;
+  } else if (rec.mine !== null) {
+    badge.herolevel = rec.real;
+    rec.mine = null;
+  }
+}
+// for a badge without the level to give it: the number and the tier class written in
+function d2mmBadgeByHand(badge, lvl) {
+  if (!d2mmKnown(lvl)) return;
+  d2mmSay("badge", "has no herolevel, written by hand");
   var all = [badge].concat(d2mmFind(badge, function (p) { return p.BHasClass("LevelStyle") || p.BHasClass("ModelStyle"); }));
   for (var a = 0; a < all.length; a++) {
     d2mmTier(all[a], lvl);
@@ -173,11 +194,10 @@ function d2mmBadge(badge, lvl) {
 }
 // the hero page names its hero only in words, so the hero is the one whose name it shows
 function d2mmPageHero(page) {
-  var shown = d2mmFind(page, function (p) { return p.BHasClass("TabContentsHeroName"); });
+  var shown = d2mmFind(page, function (p) { return p.paneltype === "Label" && (p.BHasClass("TabContentsHeroName") || p.BHasClass("TitleExtraLarge")) && p.text; });
   var name = shown.length ? shown[0].text : "";
-  d2mmSay("hero page", "shows " + name);
-  for (var key in D2MM_LEVELS) if (name && $.Localize("#npc_dota_hero_" + key) === name) return D2MM_LEVELS[key];
-  return D2MM_EVERY;
+  for (var key in D2MM_LEVELS) if (name && $.Localize("#npc_dota_hero_" + key).toLowerCase() === name.toLowerCase()) return D2MM_LEVELS[key];
+  return name ? D2MM_EVERY : null;
 }
 function d2mmApply() {
   var me = $.GetContextPanel();
@@ -204,13 +224,14 @@ function d2mmApply() {
       if (rank && D2MM_RANK) rank.text = D2MM_RANK;
       var badge = me.FindChildTraverse("HeroBadge");
       var own = d2mmLevel(d2mmHeroOf(me.FindChildTraverse("HeroImage")));
-      if (badge && d2mmKnown(own)) { me.SetHasClass("ShowHeroBadge", true); d2mmBadge(badge, own); }
+      if (badge && d2mmKnown(own)) me.SetHasClass("ShowHeroBadge", true);
+      if (badge) d2mmBadge(badge, own);
     }
   } catch (e) { d2mmSay("pick failed", e); }
   try {
     var strategy = me.FindChildTraverse("StrategyHeroBadge");
     var mine = strategy ? d2mmLevel(Players.GetPlayerSelectedHero(Players.GetLocalPlayer())) : null;
-    if (strategy && d2mmKnown(mine)) d2mmBadge(strategy, mine);
+    if (strategy) d2mmBadge(strategy, mine);
   } catch (e) { d2mmSay("strategy failed", e); }
   try {
     // the card that opens over a hero in the grid
@@ -218,7 +239,7 @@ function d2mmApply() {
     if (tip) {
       var tipLvl = d2mmLevel(d2mmHeroOf(tip.FindChildTraverse("HeroImage")));
       var tipBadge = tip.FindChildTraverse("HeroBadge");
-      if (tipBadge && d2mmKnown(tipLvl)) d2mmBadge(tipBadge, tipLvl);
+      if (tipBadge) d2mmBadge(tipBadge, tipLvl);
     }
   } catch (e) { d2mmSay("hero card failed", e); }
   try {
@@ -227,10 +248,12 @@ function d2mmApply() {
       var chosen = d2mmKnown(page);
       // the page's own badge and the one on its progress tab
       var bigs = d2mmFind(me, function (p) { return p.id === "HeroBadge" || p.id === "HeroBadgeProgression"; });
-      if (chosen) for (var b = 0; b < bigs.length; b++) d2mmBadge(bigs[b], page);
+      for (var b = 0; b < bigs.length; b++) d2mmBadge(bigs[b], page);
       // the experience to the next level is the real level's, so it goes while a level is chosen
       var xp = d2mmFind(me, function (p) { return p.id === "HeroLevelProgress" || p.BHasClass("CurrentLevelXPLabel") || p.BHasClass("NextLevelXPLabel"); });
       for (var x = 0; x < xp.length; x++) xp[x].visible = !chosen;
+      var named = d2mmFind(me, function (p) { return p.paneltype === "Label" && p.BHasClass("TabContentsHeroName"); });
+      d2mmSay("hero page " + (named.length ? named[0].text : ""), "level " + page + ", " + bigs.length + " badges, " + xp.length + " experience panels");
     }
   } catch (e) { d2mmSay("hero page failed", e); }
   $.Schedule(0.5, d2mmApply);
