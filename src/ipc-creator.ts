@@ -28,10 +28,13 @@ export function registerCreatorIpc({ win }: Pick<AppContext, 'win'>): void {
     pictures: d.styles.map((s) => {
       if (!s.picture || !IMAGE.test(s.picture)) return null;
       const p = path.join(store().folder(d.id), s.picture);
+      // the size and the bytes from one open file, so what is measured is what is read
+      let fd: number | null = null;
       try {
-        if (fs.statSync(p).size > SHOWN) return null;
-        return `data:${MIME[path.extname(p).toLowerCase()]};base64,${fs.readFileSync(p).toString('base64')}`;
-      } catch { return null; }
+        fd = fs.openSync(p, 'r');
+        if (fs.fstatSync(fd).size > SHOWN) return null;
+        return `data:${MIME[path.extname(p).toLowerCase()]};base64,${fs.readFileSync(fd).toString('base64')}`;
+      } catch { return null; } finally { if (fd !== null) fs.closeSync(fd); }
     }),
     missing: store().missing(d),
   });
