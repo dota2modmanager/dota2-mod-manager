@@ -65,7 +65,6 @@ module.exports = async function guideShots(sim) {
     }
     return sim.until(`document.documentElement.lang === ${lit(lang)}`, 10000);
   };
-  const safeOn = () => sim.js('document.getElementById("safeModeBtn").getAttribute("aria-checked") === "true"');
 
   for (const lang of ['en', 'ru']) {
     if (!sim.check(`the interface is in ${lang}`, await pick(lang))) continue;
@@ -95,38 +94,32 @@ module.exports = async function guideShots(sim) {
     await sim.until(`document.querySelectorAll('.lib-row[data-row]').length >= ${Math.min(2, picked.length - 1)}`, 10000);
     await take('my-mods', '#main', '.lib-row[data-row]');
 
-    // safe mode: the switch at the bottom, from it to Play
-    await sim.settle(600);
-    await sim.js(`document.querySelectorAll('#toasts > *').forEach((t) => t.remove())`);
-    await save('safe-mode', await sim.js(`(() => {
-      const bar = document.getElementById('statusbar').getBoundingClientRect();
-      const from = document.getElementById('safeModeBtn').getBoundingClientRect();
-      return { x: from.left - 14, y: bar.top, w: bar.right - from.left + 14, h: bar.height, vw: innerWidth, vh: innerHeight };
-    })()`));
+    // the item table, from the game files as Valve shipped them: Items lists the game's looks, and
+    // picking one asks before anything in the game changes, which is the whole second mechanism
+    await steps.itemTable(sim, false);
+    await steps.openSection(sim, 'items');
+    const slot = 'cosmetic:weather';
+    if (sim.check('Items lists the looks of the standard slots of the game', await sim.until(`document.querySelector('.rail-item[data-cat="${slot}"]')`, 8000))) {
+      await sim.click(`.rail-item[data-cat="${slot}"]`);
+      await sim.until(`document.querySelector('.rail-item.active')?.dataset.cat === ${lit(slot)} && document.querySelector('#catalogScreen .card')`, 8000);
+      await sim.settle(1500);
+      await take('cosmetics', '#main');
+      await sim.click('#catalogScreen .card:not(.installed) .card-media');
+      if (await sim.until(`document.getElementById('cosPickBtn')`, 5000)) {
+        await sim.click('#cosPickBtn');
+        if (await sim.until(`document.querySelector('.safe-box [data-c="no"]')`, 5000)) {
+          await sim.still();
+          await take('item-table-confirm', '.safe-box');
+          await sim.click('.safe-box [data-c="no"]'); // the sandbox stays as it was
+        }
+        await sim.key('Escape');
+      }
+    }
 
-    // ... and what the app says before it turns it off, which is the whole of the second mechanism
-    if (await safeOn()) {
-      await sim.click('#safeModeBtn');
-      if (await sim.until(`document.querySelector('.safe-box [data-c="yes"]')`, 5000)) {
-        await sim.still();
-        await take('safe-confirm', '.safe-box');
-        await sim.click('.safe-box [data-c="yes"]');
-      }
-    }
-    // free cosmetics, which need it off
-    if (await sim.until(`document.getElementById('safeModeBtn').getAttribute('aria-checked') === 'false'`, 15000)) {
-      await steps.openSection(sim, 'catalog');
-      const slot = await sim.until(`document.querySelector('.rail-item[data-cat^="cos:"], .rail-item[data-cat^="cosmetic"]')?.dataset.cat || null`, 8000);
-      if (sim.check('the catalog lists free cosmetics with safe mode off', !!slot)) {
-        await sim.click(`.rail-item[data-cat="${slot}"]`);
-        await sim.until(`document.querySelector('.rail-item.active')?.dataset.cat === ${lit(slot)}`, 8000);
-        await sim.settle(1500);
-        await take('cosmetics', '#main');
-      }
-      // and back on, as the sandbox was
-      await sim.click('#safeModeBtn');
-      await sim.until(`document.getElementById('safeModeBtn').getAttribute('aria-checked') === 'true'`, 15000);
-    }
+    // Settings, "Game files": the two ways explained, and the switch that takes the edit back
+    await steps.openSection(sim, 'settings');
+    await sim.js(`document.getElementById('itemTableSwitch')?.closest('.settings-block')?.scrollIntoView({ block: 'center' })`);
+    await take('game-files', '.settings-block:has(#itemTableSwitch)');
   }
 
   fs.writeFileSync(path.join(sim.out, 'guide-shots.json'), JSON.stringify(taken, null, 1));

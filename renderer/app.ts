@@ -10,6 +10,7 @@
 import './locales/zh-CN-catalog.js';
 import './locales/zh-CN-library.js';
 import './locales/zh-CN-app.js';
+import './locales/en-more.js';
 import './i18n.js';
 import './shell/errors.ts';
 import './ui/scroll-watch.ts';
@@ -20,8 +21,9 @@ import './shell/drop.ts';
 import './shell/progress.ts';
 import './shell/updates.ts';
 import './views/settings.ts';
+import './views/studio.ts';
 import { state } from './core/store.ts';
-import { render, invalidateViews } from './core/router.ts';
+import { render, invalidateViews, catalogOnShow } from './core/router.ts';
 import { refreshInstalledIndex, firstCosmeticSlots } from './core/installed.ts';
 import { switchOffStaleTerrains } from './core/terrain-age.ts';
 import { askAdultOnce } from './core/adult.ts';
@@ -101,7 +103,7 @@ async function offerToolchain(): Promise<void> {
   await refreshInstalledIndex();
   // the free looks are read out of the game's 50 MB table, most of a second on the first start:
   // the catalog is drawn without waiting for them, and drawn again with them once they are here
-  const looks = firstCosmeticSlots().then(() => { if (state.view === 'catalog') render(); });
+  const looks = firstCosmeticSlots().then(() => { if (catalogOnShow()) render(); });
   await loadCatalog();
   await looks;
 

@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="styles/library.css">
   <link rel="stylesheet" href="styles/presets.css">
   <link rel="stylesheet" href="styles/settings.css">
+  <link rel="stylesheet" href="styles/studio.css">
   <link rel="stylesheet" href="styles/feedback.css">
   <link rel="stylesheet" href="styles/transitions.css">
   <link rel="stylesheet" href="styles/pumpkin.css">
@@ -51,9 +52,10 @@
 
       <nav id="tbNav">
         <button class="tb-tab active" data-view="catalog" data-i18n="Каталог" aria-current="page">Catalog</button>
+        <button class="tb-tab" data-view="items" data-i18n="Предметы">Items</button>
+        <button class="tb-tab" data-view="studio" data-i18n="Мастерская">Workshop<span class="tb-new" id="studioNew" hidden></span></button>
         <button class="tb-tab" data-view="library" data-i18n="Мои моды">My mods<span class="tb-badge" id="libCount"></span></button>
         <button class="tb-tab" data-view="presets" data-i18n="Пресеты">Presets</button>
-        <button class="tb-tab" data-view="settings" data-i18n="Настройки">Settings</button>
       </nav>
 
       <!-- Where a stuck user goes: the catalog's wiki, in their language, and its Discord.
@@ -63,6 +65,10 @@
                 aria-haspopup="menu" aria-expanded="false"><span class="ms">help</span></button>
         <div class="tb-menu hidden" id="helpMenu" role="menu"></div>
       </div>
+
+      <!-- Settings is a place, so it is a tab, but it is visited rarely: a mark, not a word -->
+      <button class="tb-tab tb-icon-tab" data-view="settings" title="Settings" data-i18n-title="Настройки"
+              aria-label="Settings" data-i18n-aria="Настройки"><span class="ms">settings</span></button>
 
       <div class="tb-spacer"></div>
 
@@ -119,11 +125,6 @@
       <span class="dot" id="dotaStatusDot"></span>
       <span id="dotaStatusText">Looking for Dota 2…</span>
       <div class="sb-right">
-        <button class="mods-switch safe-switch on" id="safeModeBtn" role="switch" aria-checked="true" title="Safe mode: patch-only mods (effects, cosmetics) are hidden and inactive. Turn it off to enable them — the app will register its folder in the game files." data-i18n-title="Безопасный режим: моды из патча (эффекты, косметика) скрыты и не работают. Выключи, чтобы их включить — приложение впишет свою папку в файлы игры.">
-          <span class="ms safe-switch-icon">shield</span>
-          <span class="mods-switch-txt"><span data-i18n="Безопасно:">Safe:</span> <b id="safeModeState">on</b></span>
-          <span class="mods-switch-track"><span class="mods-switch-thumb"></span></span>
-        </button>
         <button class="btn btn-sm" id="openModsFolderBtn" title="Open the folder the mods are installed into" data-i18n-title="Открыть папку, куда ставятся моды"><span class="ms">folder_open</span><span data-i18n="Папка модов">Mods folder</span></button>
         <button class="mods-switch on" id="modsMasterBtn" role="switch" aria-checked="true" title="Turn all mods on/off at once (to launch the vanilla game)" data-i18n-title="Включить/выключить все моды сразу (для запуска ванильной игры)">
           <span class="mods-switch-txt"><span data-i18n="Моды:">Mods:</span> <b id="modsMasterState">on</b></span>

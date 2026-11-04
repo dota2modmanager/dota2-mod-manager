@@ -1,6 +1,7 @@
 /* What My mods can ask for (library/model.ts, LibraryActions): the ticks, the search, the switches,
  * the bulk bar, the banners and the foreign files. What a single row's menu does is in
  * record-actions.ts. */
+import { allowItemTable } from '../../ui/game-files.ts';
 import { isCursorRec, isCosmeticRec, isFontRec, isPackableRec } from '../../core/records.ts';
 import { toast } from '../../ui/toast.ts';
 import { confirmDialog } from '../../ui/dialog.ts';
@@ -139,6 +140,7 @@ async function updateAll() {
 
 async function banner(what: string, data?: string) {
   if (what === 'adoptAll') return adoptAll();
+  if (what === 'allowTable') { if (await allowItemTable()) await screen.reload(); return; }
   if (what === 'updateAll') return updateAll();
   if (what === 'combine') {
     const ids = await pickModsDialog(standalonePackable(), { title: L`Выбери моды для объединения в пак`, okLabel: L`Далее` });

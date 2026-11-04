@@ -1,12 +1,10 @@
-/* The status bar's buttons: launching the game, the switch that turns every mod off at once, and
- * safe mode, which keeps the game's own files untouched and the effects and free cosmetics off. */
-import { COSMETIC_PREFIX } from '../core/constants.ts';
+/* The status bar's buttons: launching the game and the switch that turns every mod off at once.
+ * Safe mode had a switch here until 3.0; the item table is now asked for where it is needed
+ * (ui/game-files.ts). */
 import { state } from '../core/store.ts';
 import { render, invalidateViews } from '../core/router.ts';
-import { refreshCosmeticSlots } from '../core/installed.ts';
 import { toast } from '../ui/toast.ts';
-import { safeModeDialog } from '../ui/dialog.ts';
-import { refreshPatchState, paintMasterSwitch } from '../ui/statusbar.ts';
+import { paintMasterSwitch } from '../ui/statusbar.ts';
 import { byId } from './dom.ts';
 
 document.getElementById('launchBtn')?.addEventListener('click', async () => {
@@ -40,23 +38,4 @@ document.getElementById('modsMasterBtn')?.addEventListener('click', async () => 
   // My mods draws every row from this, and it keeps what it built while you are elsewhere
   invalidateViews();
   if (state.view === 'library') render();
-});
-
-document.getElementById('safeModeBtn')?.addEventListener('click', async () => {
-  const btn = byId<HTMLButtonElement>('safeModeBtn');
-  const turningUnsafe = !state.settings?.schemaPatch; // currently safe -> about to turn it off
-  if (turningUnsafe && !await safeModeDialog()) return;
-  btn.disabled = true;
-  const r = await window.api.patch.setEnabled(turningUnsafe);
-  btn.disabled = false;
-  if (r.error) { toast(r.error, 'error'); return; }
-  if (state.settings) state.settings = { ...state.settings, schemaPatch: turningUnsafe };
-  toast(turningUnsafe ? L`Безопасный режим выключен — эффекты и косметика доступны` : L`Безопасный режим включён, файлы игры восстановлены. Эффекты и косметика ждут, пока не выключишь его снова.`);
-  await Promise.all([refreshCosmeticSlots(), refreshPatchState()]);
-  if (state.view === 'catalog') {
-    // the cosmetics rail section just appeared or disappeared: leave a category that no longer
-    // exists rather than show a dead one
-    if (!turningUnsafe && state.activeCategory.startsWith(COSMETIC_PREFIX)) state.activeCategory = 'all';
-    render();
-  }
 });

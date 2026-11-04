@@ -10,7 +10,7 @@
 import { state } from '../core/store.ts';
 import { render } from '../core/router.ts';
 import { refreshCosmeticSlots } from '../core/installed.ts';
-import { paintMasterSwitch, paintSafeModeSwitch, refreshSidebarStatus } from './statusbar.ts';
+import { paintMasterSwitch, refreshSidebarStatus } from './statusbar.ts';
 import { paintPanels, syncNavOverflow } from './chrome.ts';
 
 // translate the static app chrome (index.html markup) in place, preserving child nodes
@@ -42,12 +42,11 @@ export async function applyLanguage(want: unknown): Promise<void> {
   // Startup has already cached them before the first-run picker is shown.
   await refreshCosmeticSlots();
   applyStaticI18n();
-  // Both status bar switches say on or off in words, and the title bar has a sign-in button:
+  // The status bar switch says on or off in words, and the title bar has a sign-in button:
   // painted once at start, so an English switch left "вкл" and "Войти" on screen until the
   // next restart (found by the simulation's settings scenario, tools/sim, 2026-09-24). The
   // button is drawn by app.js, which this module cannot import, so it is told by an event.
   paintMasterSwitch();
-  paintSafeModeSwitch();
   document.dispatchEvent(new CustomEvent('mm:language', { detail: lang }));
   await refreshSidebarStatus();
   render();

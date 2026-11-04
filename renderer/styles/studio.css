@@ -1,0 +1,105 @@
+/* ============ The Workshop (renderer/studio/, views/studio.ts) ============
+   Tools grouped by what in the game they change. A tile is a row: the glyph, then name, one line
+   of what it does, and what is on now. Status is the app's "installed" green, so a glance down a
+   group says which of these are already in the game. */
+.studio { display: flex; flex-direction: column; gap: var(--space-6); }
+.studio-head { flex-direction: column; align-items: flex-start; gap: var(--space-1); margin-bottom: 0; }
+.studio-lede { margin: 0; font-size: var(--text-sm); color: var(--text-muted); max-width: 70ch; }
+
+.studio-group { display: flex; flex-direction: column; gap: var(--space-3); }
+.studio-group-title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+}
+.studio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-3);
+}
+
+.studio-tile {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  text-align: left;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+}
+.studio-tile:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+.studio-tile:active { background: var(--state-active); }
+.studio-tile:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.studio-tile.is-on { border-color: color-mix(in srgb, var(--installed) 30%, transparent); }
+
+.studio-glyph {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-dim);
+  color: var(--primary-soft);
+  overflow: hidden;
+}
+.studio-glyph .ms { font-size: var(--icon-lg); }
+.studio-glyph img { width: 100%; height: 100%; object-fit: cover; }
+
+.studio-body { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.studio-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+.studio-name.has-new { padding-right: 64px; }
+.studio-text { font-size: var(--text-sm); line-height: var(--leading-normal); color: var(--text-muted); }
+.studio-status {
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--installed);
+}
+.studio-new {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: 18px;
+}
+.studio-ext { font-size: var(--icon-sm); color: var(--text-faint); }
+
+/* ---- the title bar's parts 3.0 added ---- */
+/* Five sections and a gear need the room the product name took: below a wide window the logo and
+   the mascot say whose window this is, and every tab stays in sight */
+@media (max-width: 1600px) {
+  .tb-title, .tb-sub { display: none; }
+}
+/* Settings as a gear: a place, so still a tab with the underline, but no word */
+.tb-icon-tab { padding: 0 var(--space-2); -webkit-app-region: no-drag; }
+.tb-icon-tab .ms { font-size: var(--icon-md); }
+/* something in the Workshop not opened yet */
+.tb-new {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary-glow);
+}
+.tb-new[hidden] { display: none; }

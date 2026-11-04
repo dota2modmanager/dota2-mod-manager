@@ -1,18 +1,15 @@
-/* The two switches in the status bar, and the state behind them.
+/* The status bar's switch, and the state behind it and the item table.
  *
- * Master mods on or off, and safe mode. Any screen that changes what is installed has to
- * ask these to redraw, so the painting lives apart from the buttons: the click handlers
- * stay with the rest of the shell wiring in app.js, because turning safe mode off also
- * reloads the cosmetic slots and the catalog rail, and none of that belongs here.
+ * Master mods on or off. Any screen that changes what is installed has to ask it to redraw, so
+ * the painting lives apart from the button, whose click handler is in shell/switches.ts.
  */
 import { state } from '../core/store.ts';
 import { $ } from '../core/dom.ts';
 
-// Small, and only fetched where it's actually shown: the safe-mode switch's warning dot
-// and the Library's schema-conflict banner (see paintSafeModeSwitch / renderLibrary).
+// Small, and only fetched where it is shown: My mods' banners about the item table and the
+// "Game files" block in Settings (src/schema-service.ts state).
 export async function refreshPatchState(): Promise<void> {
   state.patchState = await window.api.patch.state();
-  paintSafeModeSwitch();
 }
 
 export function paintMasterSwitch(): void {
@@ -30,31 +27,6 @@ export async function refreshMasterSwitch(): Promise<void> {
     state.masterOff = !!r.off;
   } catch { state.masterOff = false; }
   paintMasterSwitch();
-}
-
-// ---------- safe mode (item-schema patch) ----------
-//
-// Off (safe, default) leaves the game untouched; on registers game/dota_mods in
-// gameinfo_branchspecific.gi and re-signs it in dota.signatures, which is what lets Dota
-// read the item-schema effects mods carry and the free cosmetics catalog. See src/patcher.ts.
-
-export function paintSafeModeSwitch(): void {
-  const btn = $('#safeModeBtn');
-  if (!btn) return;
-  const safe = !state.settings?.schemaPatch;
-  btn.classList.toggle('on', safe);
-  btn.setAttribute('aria-checked', String(safe));
-  $('#safeModeState').textContent = safe ? L`вкл` : L`выкл`;
-  const icon = btn.querySelector('.safe-switch-icon');
-  if (icon) icon.textContent = safe ? 'shield' : 'shield_moon';
-  // something needs attention: the patch fell off, the schema is stale, two mods want the
-  // same item, or another patcher is already in gameinfo — a dot, checked only when unsafe
-  const st = state.patchState;
-  // `signable` is false where the game ships no signature list at all, which is every Linux
-  // install: an unsigned patch there is the finished state, not a warning
-  const trouble = !safe && st && (st.stale || !st.patched || (st.signable && !st.signed)
-    || (st.conflicts || []).length || st.foreign);
-  btn.classList.toggle('trouble', !!trouble);
 }
 
 // The left of the bar: whether Dota was found, not whether it is running. It said "connected",

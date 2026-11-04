@@ -13,10 +13,12 @@
 const { lit } = require('../driver');
 const steps = require('../steps');
 
-const SECTIONS = ['catalog', 'library', 'presets', 'settings'];
+// the title bar's order, which is also Ctrl+1..6 (renderer/ui/hotkeys.ts)
+const SECTIONS = ['catalog', 'items', 'studio', 'library', 'presets', 'settings'];
 
+// Items draws in the catalog's pane (renderer/core/router.ts PANE_OF)
 const paneShown = (view) => `(() => {
-  const p = document.querySelector('.view-pane[data-pane="${view}"]');
+  const p = document.querySelector('.view-pane[data-pane="${view === 'items' ? 'catalog' : view}"]');
   return !!p && !p.hidden && p.childElementCount > 0;
 })()`;
 
@@ -32,7 +34,7 @@ const calm = `!document.documentElement.classList.contains('vt-screen')`;
 const stopVideos = `document.querySelectorAll('video').forEach((v) => v.pause()), true`;
 
 module.exports = async function browse(sim) {
-  // ---- the four sections, by their tabs ----
+  // ---- the sections, by their tabs ----
   for (const view of SECTIONS) {
     await sim.click(`.tb-tab[data-view="${view}"]`);
     const shown = await sim.until(`${paneShown(view)} && ${calm}`, 15000);

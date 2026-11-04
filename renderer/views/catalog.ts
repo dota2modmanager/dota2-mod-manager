@@ -8,7 +8,8 @@
 import { $ } from '../core/dom.ts';
 import { COSMETIC_PREFIX, RAIL_SECTIONS } from '../core/constants.ts';
 import { state } from '../core/store.ts';
-import { registerView, switchView } from '../core/router.ts';
+import { registerView, switchView, catalogOnShow } from '../core/router.ts';
+import { enterSection, sectionOnShow, ITEMS_HOME } from './catalog/sections.ts';
 import { pickedIn } from '../core/installed.ts';
 import { catName, catIcon } from '../core/categories.ts';
 import { toast } from '../ui/toast.ts';
@@ -39,11 +40,17 @@ import { openDecor } from './catalog/decor.ts';
 import { remember, screen, startFilters, view } from './catalog/state.ts';
 import { onDownloadCounts } from '../core/download-counts.ts';
 
-registerView('catalog', () => renderCatalog());
+// one pane, two tabs (views/catalog/sections.ts)
+registerView('catalog', () => { enterSection('catalog'); return renderCatalog(); });
+registerView('items', () => { enterSection('items'); return renderCatalog(); });
 
 // ---------- the rail (catalog/rail/Rail.tsx) ----------
 
 function railModel(): RailModel {
+  return sectionOnShow() === 'items' ? itemsRail() : catalogRail();
+}
+
+function catalogRail(): RailModel {
   const cats = new Set(visibleCategories().map((c) => c.id));
   const favCount = favoriteMods().length + favoriteCosmetics().length;
   const sections: RailModel['sections'] = [{ label: null, items: [
@@ -54,20 +61,22 @@ function railModel(): RailModel {
     const present = ids.filter((id) => cats.has(id));
     if (present.length) sections.push({ label: tr(label), items: present.map((id) => ({ id, icon: catIcon(id), name: catName(id) })) });
   }
-  // Free cosmetics only work once safe mode is off (the patch is what lets the game read them at
-  // all): showing the section without that would just be a list of dead buttons.
-  const cos = cosmeticSlotList();
-  if (cos.length) {
-    const items = cos
-      .filter((x) => !isItemCosmeticSlot(x.slot)) // the builder's slots have one entry of their own
-      .map((s) => {
-        const id = COSMETIC_PREFIX + s.slot;
-        return { id, icon: catIcon(id), name: catName(id), dot: Boolean(pickedIn(s.slot)) };
-      });
-    const builder = itemRailEntry();
-    if (builder) items.push(builder);
-    sections.push({ label: L`Косметика`, items });
-  }
+  return { active: state.activeCategory, sections };
+}
+
+/* Items: the builder first, it is what most people come here for, then the standard slots whose
+ * look the game lets you change (weather, terrain, couriers, wards...). Shown before the game's
+ * table is read too, so the tab is never an empty column. */
+function itemsRail(): RailModel {
+  const builder = { ...(itemRailEntry() || { id: ITEMS_HOME, icon: catIcon(ITEMS_HOME) }), name: L`Конструктор героев` };
+  const sections: RailModel['sections'] = [{ label: null, items: [builder] }];
+  const looks = cosmeticSlotList()
+    .filter((x) => !isItemCosmeticSlot(x.slot)) // the builder's slots have one entry of their own
+    .map((s) => {
+      const id = COSMETIC_PREFIX + s.slot;
+      return { id, icon: catIcon(id), name: catName(id), dot: Boolean(pickedIn(s.slot)) };
+    });
+  if (looks.length) sections.push({ label: L`Виды из игры`, items: looks });
   return { active: state.activeCategory, sections };
 }
 
@@ -126,7 +135,7 @@ const actions: ScreenActions = {
   retry: () => loadCatalog(true),
   openMod: (mod: Mod, card) => openModWindow(mod._cat || '', mod, card),
   favChanged: () => {
-    if (state.view !== 'catalog') return;
+    if (!catalogOnShow()) return;
     // in a list that IS the favourites, the card has to leave it
     if (state.activeCategory === 'favorites' || view.filters.favOnly) renderCatalog();
     else renderRail();
@@ -228,11 +237,11 @@ const CATALOG_MAX_AGE = 30 * 60 * 1000;
 export async function loadCatalog(force = false): Promise<void> {
   if (force) toast(L`Обновляю каталог…`);
   state.catalog = null;
-  if (state.view === 'catalog') renderCatalog();
+  if (catalogOnShow()) renderCatalog();
   const cat = await window.api.catalog.load(force);
   state.catalog = cat;
   if (!cat.error) buildModIndex();
-  if (state.view === 'catalog') renderCatalog();
+  if (catalogOnShow()) renderCatalog();
   if (!cat.error && waitingLink) {
     const link = waitingLink;
     waitingLink = null;
@@ -249,7 +258,7 @@ export async function loadCatalog(force = false): Promise<void> {
       if (fresh.error) return;
       state.catalog = fresh;
       buildModIndex();
-      if (state.view === 'catalog') renderCatalog();
+      if (catalogOnShow()) renderCatalog();
     });
   }
 }
@@ -280,7 +289,7 @@ window.api.catalog.onModLink((link) => void openModLink(link));
 // what the window's parts reach back into the screen for (views/catalog/state.ts)
 screen.redraw = renderCatalog;
 // a list sorted by popularity is put in order again once the numbers it sorts by arrive
-onDownloadCounts(() => { if (state.view === 'catalog' && view.filters.sort === 'popular') void renderCatalog(); });
+onDownloadCounts(() => { if (catalogOnShow() && view.filters.sort === 'popular') void renderCatalog(); });
 screen.rail = renderRail;
 screen.favChanged = actions.favChanged;
 // The item builder lives in views/item-builder.ts and reaches the catalog only through this.

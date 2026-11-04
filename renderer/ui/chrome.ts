@@ -12,6 +12,7 @@
 import { $ } from '../core/dom.ts';
 import { state } from '../core/store.ts';
 import { PANEL_DEFAULTS, PANEL_LIMITS, PANEL_ZOOM_LIMITS, type Panels, type PanelSize } from '../core/constants.ts';
+import { catalogOnShow } from '../core/router.ts';
 
 type PanelZoom = 'topZoom' | 'bottomZoom' | 'railZoom';
 type PanelFold = 'topFolded' | 'bottomFolded' | 'railFolded';
@@ -123,7 +124,7 @@ export function paintPanels(): void {
   document.body.classList.toggle('top-folded', p.topFolded);
   document.body.classList.toggle('bottom-folded', p.bottomFolded);
   document.body.classList.toggle('rail-folded', p.railFolded);
-  document.body.classList.toggle('rail-off', p.railFolded || state.view !== 'catalog');
+  document.body.classList.toggle('rail-off', p.railFolded || !catalogOnShow());
   paintPanelScales();
   paintGripToggle('#topToggle', p.topFolded ? 'expand_more' : 'expand_less',
     p.topFolded ? L`Развернуть верхнюю панель` : L`Свернуть верхнюю панель`);

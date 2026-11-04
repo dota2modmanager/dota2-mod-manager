@@ -22,6 +22,7 @@ import { heroMatchesSearch } from '../ui/hero-name.ts';
 import { paint } from '../ui/transitions.ts';
 import { remember, view } from './catalog/state.ts';
 import { catalogActions, heroSets, itemCosmeticSlots } from './item-builder.ts';
+import { catalogOnShow } from '../core/router.ts';
 
 const HUB = COSMETIC_PREFIX + 'items';
 
@@ -42,7 +43,7 @@ function hubModel(): ScreenModel {
     heroMatchesSearch(hero, q) && (!f.installedOnly || slots.some((s) => pickedIn(s.slot))));
   return {
     kind: 'builder' as const,
-    title: catName(HUB),
+    title: L`Конструктор героев`,
     search: view.cosSearch,
     installedOnly: f.installedOnly,
     count: (view.cosSearch || f.installedOnly) ? `${shown.length} ${plural(shown.length, 'герой', 'героя', 'героев')}` : '',
@@ -99,6 +100,6 @@ export function itemRailEntry() {
 
 /** Draw the hub again after a pick, when it is the screen on show; it stays where it was scrolled. */
 export async function refreshItemHub(): Promise<void> {
-  if (state.view !== 'catalog' || state.activeCategory !== HUB || !state.cosmeticSlots) return;
+  if (!catalogOnShow() || state.activeCategory !== HUB || !state.cosmeticSlots) return;
   drawHub();
 }

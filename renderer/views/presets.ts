@@ -6,6 +6,7 @@
  * used to empty every preset on screen, because the card counted only the records it could
  * resolve; a build outliving its installations is the point of storing identities, so a member
  * that is not installed is drawn as absent instead of dropped. */
+import { allowItemTable } from '../ui/game-files.ts';
 import { state } from '../core/store.ts';
 import { registerView, switchView } from '../core/router.ts';
 import { refreshInstalledIndex } from '../core/installed.ts';
@@ -174,6 +175,9 @@ const actions: PresetsActions = {
   },
   importFile: async () => handlePresetImport(await window.api.presets.importDialog()),
   apply: async (id) => {
+    // a look is a line in the game's item table: a preset that carries looks asks for it first,
+    // and a "not now" still applies the mods (ui/game-files.ts)
+    if (presets.find((p) => p.id === id)?.picks?.length) await allowItemTable();
     // a channel that rejects must not leave the button lying about it: that is the shape of the
     // bug that made Install look like a hang for two releases
     let r;
@@ -187,9 +191,8 @@ const actions: PresetsActions = {
       toast(r.installed ? L`Пресет применён · доустановлено ${r.installed} ${plural(r.installed, 'мод', 'мода', 'модов')}` : L`Пресет применён`);
       if (r.missing?.length) toast(L`Своих модов нет на этом компьютере, из каталога их не вернуть: ${r.missing.join(', ')}`, 'warn', 8000);
       for (const err of (r.errors || []).slice(0, 3)) toast(err, 'warn', 7000);
-      // a look is a line in the game's item table, which safe mode keeps the game from reading
       if (presets.find((p) => p.id === id)?.picks?.length && !state.settings?.schemaPatch) {
-        toast(L`Виды из игры в этом пресете заработают, когда выключишь безопасный режим`, 'warn', 8000);
+        toast(L`Виды из игры в этом пресете ждут разрешения на таблицу предметов`, 'warn', 8000);
       }
     }
     await refreshInstalledIndex();

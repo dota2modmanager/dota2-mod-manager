@@ -61,8 +61,8 @@
 
 > [!NOTE]
 > Not affiliated with Valve. Every mod here is client-side: nobody else sees them, and no other
-> player's game is touched. Safe mode is on by default and keeps the app out of Dota's own files
-> entirely; the one feature that changes them asks first and reverts byte for byte.
+> player's game is touched. VPK mods never touch Dota's own files. The looks from the game and
+> mods' effects need the item table, which asks once before it edits them and reverts byte for byte.
 
 > **Why not just copy the files yourself?** You can, and people do. What the app adds is
 > everything after that: switching a mod off before a match without deleting it, a weather effect
@@ -187,10 +187,11 @@ Nothing is injected into Dota's process, and no file of the game is opened while
 - Fonts and cursors go into the game's own folders, with the originals backed up first
 - Everything that writes to the game folder is one transaction: if a step fails, the whole
   change rolls back, displaced files included
-- Safe mode, on by default, means the app never touches Dota's own files. Turning it off adds
-  one line to `gameinfo_branchspecific.gi` and a signature to `dota.signatures` — both backed up
-  before the first edit, both restored byte for byte when it goes back on.
-  [What that buys and costs](https://dota2modmanager.com/docs/safe/)
+- VPK mods go into a folder Dota reads by itself, and Dota's own files stay as Valve shipped
+  them. The item table (looks from the game, the item builder, mods' effects) adds one line to
+  `gameinfo_branchspecific.gi` and a signature to `dota.signatures`. The app asks the first time
+  something needs it, backs both files up first, and Settings, Game files restores them byte for
+  byte. [What that buys and costs](https://dota2modmanager.com/docs/safe/)
 - After a Dota update the app checks its own work. If Valve changed the search paths that line
   is copied from, it writes the line again. It also compares the game files your mods replace
   with the new build, and a mod whose files the update changed gets a pre-patch mark in My mods:
@@ -222,7 +223,7 @@ installed here survives its uninstall.
 | [Installing mods](https://dota2modmanager.com/docs/install/) | The whole route, by hand and with the app |
 | [The language folder](https://dota2modmanager.com/docs/language/) | Why `-language` is not needed, and what it does when it is there |
 | [VPK and load order](https://dota2modmanager.com/docs/vpk/) | Pak slots, which mod wins, and `gameinfo.gi` |
-| [Safe mode](https://dota2modmanager.com/docs/safe/) | What the app writes into the game, and what it does not |
+| [Game files](https://dota2modmanager.com/docs/safe/) | What the app writes into the game, and what it does not |
 | [Free cosmetics](https://dota2modmanager.com/docs/cosmetics/) | The item table, and what it can and cannot give you |
 | [After a Dota patch](https://dota2modmanager.com/docs/troubleshooting/) | What breaks, and what the app puts back |
 | [Make mods with AI](https://dota2modmanager.com/docs/ai-mods/) · [skills/dota2-modding](skills/dota2-modding) · [docs/item-mods.md](docs/item-mods.md) | The skill an assistant builds mods with, and how an item mod is built from the game's files |

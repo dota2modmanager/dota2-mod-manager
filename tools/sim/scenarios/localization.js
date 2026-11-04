@@ -14,15 +14,8 @@ module.exports = async function localization(sim) {
     await sim.key(lang === 'en' ? 'Home' : lang === 'zh-CN' ? 'End' : now === 'en' ? 'Down' : 'Up');
     sim.check(`the interface switches to ${lang}`, await sim.until(`document.documentElement.lang === ${JSON.stringify(lang)}`, 10000));
   };
-  const safe = () => sim.js('document.getElementById("safeModeBtn").getAttribute("aria-checked") === "true"');
-  const setSafe = async (on) => {
-    if (await safe() === on) return;
-    await sim.click('#safeModeBtn');
-    if (!on && await sim.until(`document.querySelector('.safe-box [data-c="yes"]')`, 5000)) {
-      await sim.click('.safe-box [data-c="yes"]');
-    }
-    sim.check(`safe mode is ${on ? 'on' : 'off'}`, await sim.until(`document.getElementById('safeModeBtn').getAttribute('aria-checked') === '${on}'`, 15000));
-  };
+  // the item table, through Settings since 3.0 (steps.itemTable)
+  const setTable = async (on) => sim.check(`the item table is ${on ? 'on' : 'off'}`, (await steps.itemTable(sim, on)).ok);
   const search = async (query) => {
     await steps.openSection(sim, 'catalog');
     await sim.click('#globalSearch');
@@ -39,13 +32,13 @@ module.exports = async function localization(sim) {
 
   try {
     await pick('en');
-    await setSafe(false);
+    await setTable(true);
     // A CI sandbox without a copied game schema still runs the catalog-search checks below.
     const hasItems = await sim.js('window.api.cosmetics.slots().then(({slots}) => slots.some(s => s.slot === "item:abaddon:head"))');
     if (hasItems) {
       for (const lang of ['en', 'zh-CN', 'ru', 'en']) {
         await pick(lang);
-        await steps.openSection(sim, 'catalog');
+        await steps.openSection(sim, 'items');
         await sim.click('.rail-item[data-cat="cosmetic:items"]');
         await sim.until(`document.querySelector('[data-item-hero="Abaddon"]')`, 10000);
         await sim.click('[data-item-hero="Abaddon"]');
@@ -80,7 +73,7 @@ module.exports = async function localization(sim) {
     await sim.key('Backspace');
   } finally {
     if (await sim.js('!document.getElementById("modalOverlay").classList.contains("hidden")')) await sim.key('Escape');
-    await setSafe(!original.schemaPatch);
+    await setTable(original.schemaPatch === true);
     await pick(original.uiLang || 'en');
   }
 };

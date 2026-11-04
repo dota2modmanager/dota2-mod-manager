@@ -955,7 +955,8 @@ const EN = {
   'Звук собирает компилятор Valve из Dota 2 Workshop Tools, бесплатного DLC в Steam. Один файл до 30 секунд, громкий приводится к уровню звуков игры.': 'Valve’s compiler from the Dota 2 Workshop Tools, a free DLC in Steam, builds the sound. One file up to 30 seconds; a loud one is brought down to the level of the game sounds.', 'Не удалось прочитать звуки игры': 'Could not read the game sounds', 'Этот файл не читается как звук': 'This file does not read as a sound', 'Изменить звуки': 'Change the sounds',
 };
 
-const translation = (key) => window.I18N_LANG === 'zh-CN' ? (window.ZH_CN?.[key] ?? EN[key]) : EN[key];
+const english = (key) => EN[key] ?? window.EN_MORE?.[key]; // locales/en-more.js: the 3.0 screens
+const translation = (key) => window.I18N_LANG === 'zh-CN' ? (window.ZH_CN?.[key] ?? english(key)) : english(key);
 function canonKey(strings) {
   let k = strings[0];
   for (let i = 1; i < strings.length; i++) k += '{' + (i - 1) + '}' + strings[i];

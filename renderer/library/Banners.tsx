@@ -32,6 +32,13 @@ export function Banners({ b, actions }: { b: BannersModel; actions: LibraryActio
           <b>{L`Моды выключены`}</b>{L` мастер-переключателем внизу справа — игра запустится ванильной. Включи, чтобы менять моды по отдельности.`}
         </Banner>
       )}
+      {b.tableOff > 0 && (
+        <Banner kind="info" icon="auto_awesome"
+          action={<BannerButton id="allowTableBtn" icon="auto_awesome" label={L`Включить`} onClick={() => actions.banner('allowTable')} />}>
+          <b>{L`Виды из игры и эффекты модов не работают`}</b>
+          {L`: ${b.tableOff} в списке ждут таблицу предметов. Игра читает её, только если приложение впишет свою папку в файлы Dota.`}
+        </Banner>
+      )}
       {b.matched > 0 && (
         <Banner kind="info" icon="library_add_check"
           action={<BannerButton id="adoptAllBtn" icon="library_add_check" label={L`Привязать все`} onClick={() => actions.banner('adoptAll')} />}>

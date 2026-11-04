@@ -1,7 +1,7 @@
 /* Keys for the things done every session.
  *
  * The rare actions went to the right mouse button (see ui/menu.ts); this is the other half:
- * moving between the four sections, getting to the search box, and refreshing the catalog.
+ * moving between the sections, getting to the search box, and refreshing the catalog.
  * Nothing here deletes or installs anything - a keyboard is easy to hit by accident, and the
  * app writes into somebody's game files.
  *
@@ -12,7 +12,8 @@
  */
 import { $ } from '../core/dom.ts';
 
-const SECTIONS = ['catalog', 'library', 'presets', 'settings'];
+// in the title bar's order, Settings last (3.0 added Items and the Workshop)
+const SECTIONS = ['catalog', 'items', 'studio', 'library', 'presets', 'settings'];
 
 // .confirm-overlay covers the confirm, the prompt, the share sheet and the what's-new notes
 const overlayOpen = (): boolean => !!document.querySelector('.confirm-overlay, .lang-pick-overlay')
@@ -37,7 +38,7 @@ export function bindHotkeys({ onSection, onRefresh }: { onSection: (view: string
     }
     if (overlayOpen()) return;
 
-    if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key >= '1' && e.key <= '4') {
+    if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key >= '1' && e.key <= '6') {
       e.preventDefault();
       onSection(SECTIONS[Number(e.key) - 1]);
       return;

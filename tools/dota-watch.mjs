@@ -46,7 +46,7 @@ export function issueBody(build, sha) {
   return [
     'Every Dota build, compared with the one before it, from [SteamTracking/GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2). Written by `tools/dota-watch.mjs` every thirty minutes; each new build is a comment below.',
     '',
-    'Each comment starts with what the app depends on: the search paths in `gameinfo.gi` (the safe-mode-off patch copies them), the search-path keys the engine reads, `gameinfo_branchspecific.gi` and `items_game.txt`. Then the `pak01` changes, and the catalog mods that replace files the update changed or removed: those are the mods to rebuild.',
+    'Each comment starts with what the app depends on: the search paths in `gameinfo.gi` (the item table patch copies them), the search-path keys the engine reads, `gameinfo_branchspecific.gi` and `items_game.txt`. Then the `pak01` changes, and the catalog mods that replace files the update changed or removed: those are the mods to rebuild.',
     '',
     'To compare any two builds yourself: `npm run dota:diff -- <from> <to>`.',
     '',
