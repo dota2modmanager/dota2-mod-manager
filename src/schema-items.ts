@@ -227,8 +227,7 @@ export function baseItemFor(text: string, slot: string | null | undefined): Sche
 /**
  * The slots the game has no free item for, where it puts on whichever item is flagged as the free
  * one: the multikill banner (two banners, neither with visuals: the game draws the one worn) and the
- * Tormentor. A look there is the picked item itself with "baseitem" set, the way ArdysaModsTools
- * does it, and its options need no visuals block.
+ * Tormentor. A look there is the picked item with "baseitem" set (as ArdysaModsTools does it).
  */
 export const OWNERLESS_SLOTS = ['multikill_banner', 'tormentor'];
 
