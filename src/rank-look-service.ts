@@ -1,7 +1,7 @@
 /* The rank medal and hero levels of the player's own screen, as one record in My mods (what goes
  * into it is src/rank-look.ts). The two styles are read back as CSS from the copy in force (a mod's
  * when one carries them, else the game's), the medal's rules go at their end, and Valve's compiler
- * builds them again with the levels script; the three layouts get the script's include. The pak
+ * builds them again with the levels script; the four layouts get the script's include. The pak
  * goes early in the load order, so it wins over the mod it was made from.
  *
  * A Dota update that reached the record builds it again from the new files, after the update's
