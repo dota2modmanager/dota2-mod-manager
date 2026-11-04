@@ -29,8 +29,9 @@
 }
 @keyframes hwaOoze { 0% { transform: scaleY(0.15); } 85% { transform: scaleY(1); } 100% { transform: scaleY(0.92); } }
 
-/* a spider on a thread, letting itself down and climbing back */
-.hwa-hang { position: absolute; right: 22%; top: var(--top); width: 34px; }
+/* a spider on a thread, letting itself down and climbing back. 40% from the right is a gap at
+   the top of every section: on Home it sat on the GitHub star count at 22% */
+.hwa-hang { position: absolute; right: 40%; top: var(--top); width: 34px; }
 .hwa-thread {
   position: absolute; left: 50%; top: 0; width: 1px; height: 120px;
   background: color-mix(in srgb, var(--md-on-surface) 45%, transparent);
@@ -74,5 +75,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .hwa-blood i, .hwa-thread, .hwa-hanger, .hwa-web.top, .hwa-web.bottom { animation: none; }
+  /* held at the top of its climb: with no animation the thread was its whole length and the
+     spider sat at its top end */
+  .hwa-thread { transform: scaleY(0.25); }
+  .hwa-hanger { transform: translateY(26px); }
   .hwa-runner { display: none; }
 }

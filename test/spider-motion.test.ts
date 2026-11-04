@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { runStep, exitTarget, isGone, EXIT, OUT, type Runner } from '../renderer/ui/spider-motion.ts';
+import { runStep, exitTarget, isGone, burstRoom, EXIT, OUT, MAX_LOOSE, MAX_SPIDERS, type Runner } from '../renderer/ui/spider-motion.ts';
 
 const W = 1280, H = 800, DT = 1 / 60;
 const far = { w: W, h: H, px: -9999, py: -9999, dt: DT };
@@ -65,4 +65,13 @@ test('a spider with time left wanders inside the window', () => {
   const random = seeded(11);
   const s = runner(640, 400, { life: 120 });
   assert.equal(framesToGo(s, 60 * 60, random), null);
+});
+
+test('clicking Broodmother over and over tops the brood up to the cap and never past it', () => {
+  let out = 0;
+  for (let click = 0; click < 50; click++) out += burstRoom(14, out);
+  assert.equal(out, MAX_LOOSE);
+  assert.equal(burstRoom(14, MAX_LOOSE), 0);
+  assert.equal(burstRoom(14, MAX_LOOSE - 3), 3);
+  assert.ok(MAX_LOOSE < MAX_SPIDERS, 'the bloody night keeps room for its residents');
 });

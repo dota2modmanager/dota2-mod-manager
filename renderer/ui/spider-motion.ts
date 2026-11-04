@@ -10,8 +10,16 @@
 export const OUT = 60;
 /** Where a leaving spider heads: past the line it is gone at, so it never stops short of it. */
 export const EXIT = OUT + 40;
-/** How many can be out at once. A burst into a window that already holds this many adds none. */
-export const MAX_SPIDERS = 160;
+/** How many can be out at once. A burst into a window that already holds this many adds none.
+ *  160 until 3.0: each is an SVG redrawn every frame, and clicking Broodmother's mods over and over
+ *  kept the window at the ceiling for as long as the clicking went on, which a slower machine felt. */
+export const MAX_SPIDERS = 48;
+/** How many of those can be loose ones (Broodmother's, which leave), so the bloody night's
+ *  residents always have room. */
+export const MAX_LOOSE = 36;
+
+/** How many of a burst of `asked` may come out while `loose` are already about: never past the cap. */
+export const burstRoom = (asked: number, loose: number): number => Math.max(0, Math.min(asked, MAX_LOOSE - loose));
 
 export interface Runner {
   x: number; y: number; vx: number; vy: number; a: number;
