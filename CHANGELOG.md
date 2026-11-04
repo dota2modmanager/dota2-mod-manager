@@ -2,6 +2,24 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.0.2
+
+### Fixed
+
+- "My look on everyone playing that hero" no longer turns other players' items into the red ERROR
+  model. It works the way it did before 3.0.0 again. With a very large library, a few spells (such
+  as Skywrath Mage's Arcane Bolt) can again show stray item models.
+- Scrolling no longer gets stuck: when the window ignores the mouse wheel, the app scrolls the page
+  itself.
+
+### Your own rank medal and Dota Plus hero levels
+
+- The level you choose for a hero now shows on the hero grid, the card that opens over a hero, the
+  hero page and its Progress tab, not only on the pick badge.
+- Badges show the medal for the level you chose, and no longer flash the real level when a page
+  opens.
+- A hero you did not choose a level for shows its real level again.
+
 ## 3.0.1
 
 ### Fixed
