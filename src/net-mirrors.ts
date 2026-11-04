@@ -52,6 +52,9 @@ const MIRRORED: Record<string, string | undefined> = {
   // the switches and notices, which matter most on the day GitHub is the thing that is down
   'dota2modmanager/dota2-mod-manager/main/config/app.json': 'app.json',
   'dota2modmanager/dota2-mod-manager/main/config/app.json.sig': 'app.json.sig',
+  // the ready-made presets the Presets screen offers (src/ready-presets.ts)
+  'dota2modmanager/dota2-mod-manager/main/config/presets.json': 'presets.json',
+  'dota2modmanager/dota2-mod-manager/main/config/presets.json.sig': 'presets.json.sig',
   // and the signatures, or this mirror stops being one the day the catalog's key is pinned:
   // a data file whose signature cannot be fetched is a data file the app refuses.
   'h6rd/Dota2PornFxWeb/main/assets/signatures/mods.json.sig': 'mods.json.sig',

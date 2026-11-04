@@ -28,12 +28,12 @@ on:
   # mirrors. A change to one of those is a change to the site.
   push:
     branches: [main]
-    paths: ['site/**', '.github/workflows/site.yml', 'docs/p/**', 'docs/terms/**', 'docs/code-signing-policy*.md', 'PRIVACY*.md', 'CHANGELOG*.md', 'config/app.json*']
+    paths: ['site/**', '.github/workflows/site.yml', 'docs/p/**', 'docs/terms/**', 'docs/code-signing-policy*.md', 'PRIVACY*.md', 'CHANGELOG*.md', 'config/app.json*', 'config/presets.json*']
   # A pull request that touches the site gets the build and the check on its output, and nothing
   # is deployed. Dependabot's Astro 7 bump passed every test in this repository while building
   # the site as version 0.0.0, because nothing built the site before a merge.
   pull_request:
-    paths: ['site/**', '.github/workflows/site.yml', 'docs/p/**', 'docs/terms/**', 'docs/code-signing-policy*.md', 'PRIVACY*.md', 'CHANGELOG*.md', 'config/app.json*']
+    paths: ['site/**', '.github/workflows/site.yml', 'docs/p/**', 'docs/terms/**', 'docs/code-signing-policy*.md', 'PRIVACY*.md', 'CHANGELOG*.md', 'config/app.json*', 'config/presets.json*']
   workflow_dispatch:
 
 # Read only. This job used to commit the IndexNow ledger back, which is why it once needed write

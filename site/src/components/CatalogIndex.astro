@@ -16,6 +16,7 @@ import { categories } from '../lib/categories';
 import { heroes, totalHeroMods } from '../lib/heroes';
 import { heroCopy } from '../i18n/heroes';
 import Browser from './Browser.astro';
+import ReadyPresets from './ReadyPresets.astro';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -38,6 +39,8 @@ const pages = new Set(categories.map((c) => c.id));
   <h1>{h1}</h1>
   <p class="lead">{lead}</p>
   <Browser lang={lang} mode="all" mods={catalog.slice(0, 48)} context="all" />
+
+  <ReadyPresets lang={lang} />
 
   <section class="kinds">
     <h2>{b.allKinds}</h2>

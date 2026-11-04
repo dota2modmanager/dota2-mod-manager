@@ -1050,6 +1050,21 @@ section { padding: 56px 0; }
   .pager-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 .prose-block { padding-block: 32px 0; padding-inline: 0; }
+/* the ready-made presets (ReadyPresets.astro): a fan of covers beside what the set is and its mods */
+.ready { padding: 48px 0 0; }
+.ready h2 { font-size: clamp(22px, 2.6vw, 30px); }
+.ready-list { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); list-style: none; padding: 0; margin: 16px 0 0; }
+.ready-card { display: flex; flex-direction: column; background: var(--surface-container); border: 1px solid var(--border); border-radius: var(--radius); }
+.ready-covers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; background: var(--surface-low); border-radius: var(--radius) var(--radius) 0 0; overflow: hidden; }
+.ready-covers img { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+.ready-body { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px 18px; flex: 1; }
+.ready-body h3 { margin: 0; font-size: 19px; }
+.ready-body h3 small { font-size: 13px; font-weight: 500; color: var(--text-faint); margin-left: 6px; }
+.ready-body > p { margin: 0; color: var(--text-dim); font-size: 14.5px; }
+.ready-mods { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0; }
+.ready-mods li { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--surface-low); border: 1px solid var(--border); }
+.ready-mods small { color: var(--text-faint); margin-left: 6px; }
+.ready-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px; }
 .kinds { padding: 48px 0 0; }
 .kinds h2 { font-size: clamp(22px, 2.6vw, 30px); }
 .kinds h2 + .chips { margin-bottom: 24px; }
