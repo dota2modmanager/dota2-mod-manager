@@ -35,6 +35,7 @@ import { openSounds } from './catalog/sounds.ts';
 import { openBackground } from './catalog/background.ts';
 import { openHud } from './catalog/hud.ts';
 import { openRank } from './catalog/rank.ts';
+import { openDecor } from './catalog/decor.ts';
 import { remember, screen, startFilters, view } from './catalog/state.ts';
 import { onDownloadCounts } from '../core/download-counts.ts';
 
@@ -145,6 +146,7 @@ const actions: ScreenActions = {
   openBackground: (card) => void openBackground(card),
   openHud: (card) => void openHud(card),
   openRank: (card) => void openRank(card),
+  openDecor: (card) => void openDecor(card),
 };
 
 async function renderCatalog(): Promise<void> {

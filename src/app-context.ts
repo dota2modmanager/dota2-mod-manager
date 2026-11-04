@@ -23,6 +23,7 @@ import type { createMapLooks } from './map-looks-service.ts';
 import type { createMenuBackground } from './menu-background-service.ts';
 import type { createHudScale } from './hud-scale-service.ts';
 import type { createRankLook } from './rank-look-service.ts';
+import type { createMapDecor } from './map-decor.ts';
 import type { createHeroPaint } from './hero-paint-service.ts';
 import type { createAbilitySounds } from './ability-sounds-service.ts';
 import type { createBuildUndo } from './build-undo.ts';
@@ -79,6 +80,8 @@ export interface AppContext {
   hudScale: ReturnType<typeof createHudScale>;
   /** the rank medal and hero levels of the player's own screen (src/rank-look-service.ts) */
   rankLook: ReturnType<typeof createRankLook>;
+  /** the map without its decor (src/map-decor.ts) */
+  mapDecor: ReturnType<typeof createMapDecor>;
   /** a hero recoloured part by part (src/hero-paint-service.ts) */
   heroPaint: ReturnType<typeof createHeroPaint>;
   /** sounds of the user's own on a hero's events (src/ability-sounds-service.ts) */
