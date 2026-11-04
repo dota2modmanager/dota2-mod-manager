@@ -7,6 +7,7 @@ import { soundLead } from './sounds.ts';
 import { backgroundLead } from './background.ts';
 import { hudLead } from './hud.ts';
 import { rankLead } from './rank.ts';
+import { decorLead } from './decor.ts';
 import { RAW_BASE, COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.ts';
 import { state } from '../../core/store.ts';
 import { pickedIn, firstCosmeticSlots } from '../../core/installed.ts';
@@ -182,6 +183,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
   const backgroundCard = !f.favOnly ? backgroundLead(categoryId) : null;
   const hudCard = !f.favOnly ? hudLead(categoryId) : null;
   const rankCard = !f.favOnly ? rankLead(categoryId) : null;
+  const decorCard = !f.favOnly ? decorLead(categoryId) : null;
   await paint(() => showScreen({
     kind: 'list',
     key: `cat:${categoryId}`,
@@ -195,6 +197,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
     backgroundLead: backgroundCard && (!f.installedOnly || backgroundCard.installed) ? backgroundCard : null,
     hudLead: hudCard && (!f.installedOnly || hudCard.scale !== null) ? hudCard : null,
     rankLead: rankCard && (!f.installedOnly || rankCard.installed) ? rankCard : null,
+    decorLead: decorCard && (!f.installedOnly || decorCard.installed) ? decorCard : null,
     mods: { heading: false, mods, grouped, emptyText: NOTHING() },
     cosmetics: null,
   }, actions));

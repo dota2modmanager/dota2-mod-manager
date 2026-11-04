@@ -44,6 +44,7 @@ const ELECTRON_USERS = [
   'src/ipc-background.ts',
   'src/ipc-hud.ts',
   'src/ipc-rank.ts',
+  'src/ipc-decor.ts',
   'src/ipc-paint.ts',
   'src/ipc-library.ts',
   'src/ipc-misc.ts',

@@ -8,6 +8,7 @@ import type { SoundCardModel } from '../sounds/SoundCard.tsx';
 import type { BackgroundCardModel } from '../background/BackgroundCard.tsx';
 import type { HudCardModel } from '../hud/HudCard.tsx';
 import type { RankCardModel } from '../rank/RankCard.tsx';
+import type { DecorCardModel } from '../decor/DecorCard.tsx';
 import type { MapKind } from '../../api/content.ts';
 import type { CosmeticItem } from '../cosmetic/CosmeticCard.tsx';
 
@@ -77,6 +78,8 @@ export type ScreenModel =
     /** the in-game HUD smaller or larger, first among the HUDs */
     hudLead?: HudCardModel | null;
     rankLead?: RankCardModel | null;
+    /** the map without its decor, first in Optimization */
+    decorLead?: DecorCardModel | null;
     mods: (GridModel & { heading: boolean }) | null;
     cosmetics: { items: CosmeticItem[]; emptyText?: string; more?: string } | null;
   }
@@ -126,4 +129,5 @@ export interface ScreenActions {
   openBackground: (card: HTMLElement) => void;
   openHud: (card: HTMLElement) => void;
   openRank: (card: HTMLElement) => void;
+  openDecor: (card: HTMLElement) => void;
 }

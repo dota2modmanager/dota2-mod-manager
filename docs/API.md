@@ -110,6 +110,7 @@ the code, not in this page.
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
 | [`src/lz4.ts`](#srclz4ts) | LZ4 block format: literals and back-references, the compression Valve's KV3 writer uses |
 | [`src/main-window.ts`](#srcmain-windowts) | The one window the app has: its size on the screen it opens on, the single page it may show, |
+| [`src/map-decor.ts`](#srcmap-decorts) | The map without its decor: grass, flowers, ferns and critters, or stones, bones, debris and the |
 | [`src/map-looks-service.ts`](#srcmap-looks-servicets) | Towers and trees from the game's own looks, per side, built in the app (issues #446, #421). |
 | [`src/material.ts`](#srcmaterialts) | Compiled resources at the block level, and a material's expressions: what an item's gem colours. |
 | [`src/menu-background-service.ts`](#srcmenu-background-servicets) | The main menu background of the user's own as a record in My mods (issue #418; the pak itself is |
@@ -5967,6 +5968,96 @@ Open the window on the app's page, locked to it, with Ctrl +/-/0 scaling the con
 @param pageExists stands in for the disk when a test asks whether the page was built
 @param firstRun   no settings.json was there before this start: the scale is picked for the screen
 ```
+
+## src/map-decor.ts
+
+The map without its decor: grass, flowers, ferns and critters, or stones, bones, debris and the
+stains on the ground, gone from the map, as a record in My mods.
+
+The list is the map's own, read each time it is built: every material the map names, and every
+material of each model it names, out of the map in force (a whole-map terrain's in the language
+folder, else the game's) and its models in pak01. A hand-kept list goes stale with every patch
+(ArdysaModsTools keeps 646 paths, 195 of them still on the map of 2026-11-04); this one is rebuilt
+after an update, like the HUD scale.
+
+A material, not a model, is what goes: most of the decor is baked into the map's own meshes
+(worldnodes/*agg_prop_flowers*), which no file in pak01 replaces, but those meshes draw with
+pak01's materials. Each decor material is a copy of the game's dev/transparent, which draws
+nothing and casts no shadow. tools/toolsnodraw was tried first: the game draws its "NODRAW"
+texture. Trees, buildings, cliffs, water, the ground and everything a player plays around are
+left alone (bench, 2026-11-04).
+
+### `DecorGroup`
+
+```ts
+export type DecorGroup = 'plants' | 'debris'
+```
+
+The two kinds of decor, each switched on its own.
+
+### `DECOR_GROUPS`
+
+```ts
+export const DECOR_GROUPS: DecorGroup[] = ['plants', 'debris']
+```
+
+_No description in the source._
+
+### `BLANK`
+
+```ts
+export const BLANK = 'materials/dev/transparent.vmat_c'
+```
+
+The material every decor material becomes: the game's own, which draws nothing.
+
+### `DecorGenerated`
+
+```ts
+export interface DecorGenerated { decor: DecorGroup[] }
+```
+
+What a decor record was built from.
+
+### `decorMaterialsSteps`
+
+```ts
+export function* decorMaterialsSteps(map: VpkIndex, pak: VpkIndex): Generator<typeof PAUSE, Record<DecorGroup, string[]>>
+```
+
+Each group's materials on `map`, in pak01, sorted. A pause after each stretch of files.
+
+### `decorPak`
+
+```ts
+export function decorPak(pak: VpkIndex, mats: Record<DecorGroup, string[]>, groups: DecorGroup[]): Buffer
+```
+
+The pak: each material of the groups asked for, as the blank one.
+
+### `clampGroups`
+
+```ts
+export function clampGroups(raw: unknown): DecorGroup[]
+```
+
+The groups the window sent that are groups, each once, in their order.
+
+### `DecorState`
+
+```ts
+export interface DecorState
+```
+
+What the window shows: the groups on now, and how many materials each takes on this map.
+
+### `createMapDecor`
+
+```ts
+export function createMapDecor({ gamePath, installer, library, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; onRebuilt?: (id: string) => void; log?: (msg: string) => void; })
+```
+
+The service the decor:* channels call.
 
 ## src/map-looks-service.ts
 
