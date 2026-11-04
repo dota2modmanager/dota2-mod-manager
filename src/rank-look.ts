@@ -12,7 +12,7 @@
  *
  * A level is a number the client asks Steam for, so no style can change it. A script can: Panorama
  * runs the JavaScript a layout includes, and the script writes the number into the label and sets
- * the tier class on the badge every half second. It goes into five layouts, by adding one
+ * the tier class on the badge ten times a second. It goes into five layouts, by adding one
  * include to the tree in their LaCo block (as src/menu-background.ts does): the hero grid of the
  * menu and the pick screen, the player's own panel at the pick, the strategy screen, the hero
  * page with its badge, progress tab and experience bar, and the card that opens over a hero.
@@ -104,7 +104,7 @@ export function withMedal(css: string, medal: Medal): string {
 
 /**
  * The script the layouts include. It knows the levels and the medal, finds what is on its
- * panel each half second (hero cards, the player's own panel at the pick, the strategy badge) and
+ * panel ten times a second (hero cards, the player's own panel at the pick, the strategy badge) and
  * writes them in. Each part is in a try of its own: a panel a patch renamed stops that part only,
  * and says so once in the game's console. `ids` names the chosen heroes by the number the game
  * gives them, for the panels that know a hero only by it.
@@ -194,14 +194,27 @@ function d2mmBadgeByHand(badge, lvl) {
 }
 // the hero page names its hero only in words, so the hero is the one whose name it shows
 function d2mmPageHero(page) {
-  var shown = d2mmFind(page, function (p) { return p.paneltype === "Label" && (p.BHasClass("TabContentsHeroName") || p.BHasClass("TitleExtraLarge")) && p.text; });
-  var name = shown.length ? shown[0].text : "";
+  var labels = d2mmLook("page names", function () { return d2mmFind(page, function (p) { return p.paneltype === "Label" && (p.BHasClass("TabContentsHeroName") || p.BHasClass("TitleExtraLarge")); }); });
+  var name = "";
+  for (var l = 0; l < labels.length && !name; l++) name = labels[l].text;
   for (var key in D2MM_LEVELS) if (name && $.Localize("#npc_dota_hero_" + key).toLowerCase() === name.toLowerCase()) return D2MM_LEVELS[key];
   return name ? D2MM_EVERY : null;
 }
+var D2MM_TICK = 0;
+var D2MM_SEEN = {};
+// the tree is walked again once a second, and what it found is looked at ten times a second: a
+// badge the game sets back to the real level when it opens is on the chosen one before it shows
+function d2mmLook(key, find) {
+  var had = D2MM_SEEN[key];
+  var gone = false;
+  if (had) for (var i = 0; i < had.length; i++) if (had[i].IsValid && !had[i].IsValid()) gone = true;
+  if (!had || gone || D2MM_TICK % 10 === 0) D2MM_SEEN[key] = find();
+  return D2MM_SEEN[key];
+}
 function d2mmApply() {
   var me = $.GetContextPanel();
-  try {
+  D2MM_TICK++;
+  if (D2MM_TICK % 5 === 1) try {
     var cards = d2mmFind(me, function (p) { return p.BHasClass("HeroCard"); });
     if (cards.length) {
       var first = cards[0].FindChildTraverse("HeroImage");
@@ -222,23 +235,26 @@ function d2mmApply() {
     if (me.BHasClass("IsLocalPlayerPawn")) {
       var rank = me.FindChildTraverse("PlayerRank");
       if (rank && D2MM_RANK) rank.text = D2MM_RANK;
-      var badge = me.FindChildTraverse("HeroBadge");
-      var own = d2mmLevel(d2mmHeroOf(me.FindChildTraverse("HeroImage")));
+      var badge = d2mmLook("pick badge", function () { return [me.FindChildTraverse("HeroBadge")].filter(Boolean); })[0];
+      var own = d2mmLevel(d2mmHeroOf(d2mmLook("pick hero", function () { return [me.FindChildTraverse("HeroImage")].filter(Boolean); })[0]));
       if (badge && d2mmKnown(own)) me.SetHasClass("ShowHeroBadge", true);
       if (badge) d2mmBadge(badge, own);
     }
   } catch (e) { d2mmSay("pick failed", e); }
   try {
-    var strategy = me.FindChildTraverse("StrategyHeroBadge");
+    var strategy = d2mmLook("strategy", function () { return [me.FindChildTraverse("StrategyHeroBadge")].filter(Boolean); })[0];
     var mine = strategy ? d2mmLevel(Players.GetPlayerSelectedHero(Players.GetLocalPlayer())) : null;
     if (strategy) d2mmBadge(strategy, mine);
   } catch (e) { d2mmSay("strategy failed", e); }
   try {
     // the card that opens over a hero in the grid
-    var tip = me.BHasClass("HeroCardTooltipContents") ? me : d2mmFind(me, function (p) { return p.BHasClass("HeroCardTooltipContents"); })[0];
-    if (tip) {
-      var tipLvl = d2mmLevel(d2mmHeroOf(tip.FindChildTraverse("HeroImage")));
-      var tipBadge = tip.FindChildTraverse("HeroBadge");
+    var tip = d2mmLook("hero card", function () {
+      var card = me.BHasClass("HeroCardTooltipContents") ? me : d2mmFind(me, function (p) { return p.BHasClass("HeroCardTooltipContents"); })[0];
+      return card ? [card.FindChildTraverse("HeroImage"), card.FindChildTraverse("HeroBadge")] : [];
+    });
+    if (tip.length) {
+      var tipLvl = d2mmLevel(d2mmHeroOf(tip[0]));
+      var tipBadge = tip[1];
       if (tipBadge) d2mmBadge(tipBadge, tipLvl);
     }
   } catch (e) { d2mmSay("hero card failed", e); }
@@ -247,16 +263,16 @@ function d2mmApply() {
       var page = d2mmPageHero(me);
       var chosen = d2mmKnown(page);
       // the page's own badge and the one on its progress tab
-      var bigs = d2mmFind(me, function (p) { return p.id === "HeroBadge" || p.id === "HeroBadgeProgression"; });
+      var bigs = d2mmLook("page badges", function () { return d2mmFind(me, function (p) { return p.id === "HeroBadge" || p.id === "HeroBadgeProgression"; }); });
       for (var b = 0; b < bigs.length; b++) d2mmBadge(bigs[b], page);
       // the experience to the next level is the real level's, so it goes while a level is chosen
-      var xp = d2mmFind(me, function (p) { return p.id === "HeroLevelProgress" || p.BHasClass("CurrentLevelXPLabel") || p.BHasClass("NextLevelXPLabel"); });
+      var xp = d2mmLook("page experience", function () { return d2mmFind(me, function (p) { return p.id === "HeroLevelProgress" || p.BHasClass("CurrentLevelXPLabel") || p.BHasClass("NextLevelXPLabel"); }); });
       for (var x = 0; x < xp.length; x++) xp[x].visible = !chosen;
-      var named = d2mmFind(me, function (p) { return p.paneltype === "Label" && p.BHasClass("TabContentsHeroName"); });
+      var named = d2mmLook("page name", function () { return d2mmFind(me, function (p) { return p.paneltype === "Label" && p.BHasClass("TabContentsHeroName"); }); });
       d2mmSay("hero page " + (named.length ? named[0].text : ""), "level " + page + ", " + bigs.length + " badges, " + xp.length + " experience panels");
     }
   } catch (e) { d2mmSay("hero page failed", e); }
-  $.Schedule(0.5, d2mmApply);
+  $.Schedule(0.1, d2mmApply);
 }
 d2mmApply();
 `;

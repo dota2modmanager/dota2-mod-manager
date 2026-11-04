@@ -209,6 +209,19 @@ test('a badge that takes a level is given it, and gets the game’s back when it
   assert.deepEqual(levels, [30, 30, 2, 30]);
 });
 
+test('a badge the game sets back is on the chosen level the next tick, without walking the page again', () => {
+  const badge = fake('DOTAHeroBadge', 'HeroBadge', [], [], { herolevel: 5 });
+  const page = fake('DOTAHeroPageNewV2', '', [], [fake('Label', '', ['TabContentsHeroName'], [], { text: 'Axe' }), badge]);
+  const levels: number[] = [];
+  let walked = 0;
+  const count = () => { walked = 0; Object.defineProperty(page, 'kids', { configurable: true, get: () => { walked++; return [page.kids0, badge]; } }); };
+  Object.assign(page, { kids0: page.kids[0] });
+  runScript(levelsScript({ medal: null, levels: { axe: 30 }, every: null }), page,
+    () => { count(); badge.herolevel = 5; }, // the game opens the badge on the real level
+    () => levels.push(badge.herolevel!, walked));
+  assert.deepEqual(levels, [30, 0]);
+});
+
 test('the include goes in front of the layout’s panel, once', () => {
   const game = layout(styles(), panel('DOTAHeroGrid'));
   const once = withScript(game);
