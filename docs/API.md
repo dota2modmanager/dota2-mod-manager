@@ -1747,7 +1747,7 @@ export function lookPatch(text: string, game: string, rec: Pick<LibRecord, 'name
 ```
 
 A look's patch: its slot's base item dressed in the picked item's visuals, and for a courier its
-models under the base's paths. Null for a slot with no base item.
+models under the base's paths; in a slot with no base item, the picked item flagged as the free one.
 
 Without the game's files to read the block still goes on, particles and all: the models are what
 a lobby would miss, not the look.
@@ -9438,6 +9438,24 @@ The free "base item" of a slot - the one every account owns (555 Default Weather
 590 Default Terrain, ...). Dressing it in another item's visuals is what makes a paid
 cosmetic the default one.
 
+### `OWNERLESS_SLOTS`
+
+```ts
+export const OWNERLESS_SLOTS = ['multikill_banner', 'tormentor']
+```
+
+The slots the game has no free item for, where it puts on whichever item is flagged as the free
+one: the multikill banner (two banners, neither with visuals: the game draws the one worn) and the
+Tormentor. A look there is the picked item with "baseitem" set (as ArdysaModsTools does it).
+
+### `ownerlessPatch`
+
+```ts
+export function ownerlessPatch(text: string, slot: string, itemId: string): string | null
+```
+
+An ownerless slot's look: the picked item's block with "baseitem" "1", or null when it is not in that slot.
+
 ### `cosmeticOptions`
 
 ```ts
@@ -9747,7 +9765,7 @@ them, and this file builds the result and writes it into the game. Callers impor
 
 Hands on from [`src/schema-kv.ts`](#srcschema-kvts): `blockBounds`, `eachChild`, `Bounds`, `KvChild`.
 
-Hands on from [`src/schema-items.ts`](#srcschema-itemsts): `SCHEMA_REL`, `findItem`, `itemFields`, `listItems`, `listItemsSteps`, `toUtf8`, `itemSearchText`, `inferredItemSlot`, `baseItemFor`, `cosmeticOptions`, `readGameSchema`, `gameSchemaStamp`, `SchemaItem`, `GameSchema`.
+Hands on from [`src/schema-items.ts`](#srcschema-itemsts): `SCHEMA_REL`, `findItem`, `itemFields`, `listItems`, `listItemsSteps`, `toUtf8`, `itemSearchText`, `inferredItemSlot`, `baseItemFor`, `cosmeticOptions`, `OWNERLESS_SLOTS`, `ownerlessPatch`, `readGameSchema`, `gameSchemaStamp`, `SchemaItem`, `GameSchema`.
 
 Hands on from [`src/schema-merge.ts`](#srcschema-mergets): `reindent`, `ownedAssetNeedles`, `blockUsesAssets`, `deltaTable`, `extractDeltas`, `stripKeyBlocks`, `baseItemPatch`, `mergeSchema`, `validateSchema`, `SchemaDelta`, `SchemaPatch`, `MergeResult`.
 

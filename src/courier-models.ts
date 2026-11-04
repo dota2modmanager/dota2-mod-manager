@@ -11,7 +11,7 @@
  * sends its number. A model that cannot be numbered so is left out (gameAssetEntries): the donkey
  * is better than a courier playing its death for its run.
  */
-import { findItem, eachChild, blockBounds, baseItemFor, baseItemPatch, type SchemaPatch } from './schema.ts';
+import { findItem, eachChild, blockBounds, baseItemFor, baseItemPatch, ownerlessPatch, type SchemaPatch } from './schema.ts';
 import { gameAssetEntries } from './item-builder-assets.ts';
 import type { AssetCopy } from './item-builder-slots.ts';
 import type { VpkEntry } from './vpk.ts';
@@ -74,7 +74,7 @@ export function courierCopies(text: string, targetId: string, sourceId: string):
 
 /**
  * A look's patch: its slot's base item dressed in the picked item's visuals, and for a courier its
- * models under the base's paths. Null for a slot with no base item.
+ * models under the base's paths; in a slot with no base item, the picked item flagged as the free one.
  *
  * Without the game's files to read the block still goes on, particles and all: the models are what
  * a lobby would miss, not the look.
@@ -82,7 +82,10 @@ export function courierCopies(text: string, targetId: string, sourceId: string):
  */
 export function lookPatch(text: string, game: string, rec: Pick<LibRecord, 'name' | 'slot' | 'itemId'>, log: (msg: string) => void): SchemaPatch | null {
   const target = baseItemFor(text, rec.slot);
-  if (!target) return null;
+  if (!target) {
+    const own = ownerlessPatch(text, rec.slot || '', String(rec.itemId));
+    return own ? { id: String(rec.itemId), block: own, source: rec.name } : null;
+  }
   const block = baseItemPatch(text, target.id, String(rec.itemId));
   const copies = courierCopies(text, target.id, String(rec.itemId));
   let assets: VpkEntry[] = [];
