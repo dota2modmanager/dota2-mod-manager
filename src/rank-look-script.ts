@@ -6,7 +6,7 @@ import { TIERS, type RankLook } from './rank-look.ts';
 
 /**
  * The script the layouts include. It knows the levels and the medal, finds what is on its
- * panel ten times a second (hero cards, the player's own panel at the pick, the strategy badge) and
+ * panel every frame (hero cards, the player's own panel at the pick, the strategy badge) and
  * writes them in. Each part is in a try of its own: a panel a patch renamed stops that part only,
  * and says so once in the game's console. `ids` names the chosen heroes by the number the game
  * gives them, for the panels that know a hero only by it.
@@ -104,19 +104,28 @@ function d2mmPageHero(page) {
 }
 var D2MM_TICK = 0;
 var D2MM_SEEN = {};
-// the tree is walked again once a second, and what it found is looked at ten times a second: a
-// badge the game sets back to the real level when it opens is on the chosen one before it shows
+// the script runs every frame, so a badge the game opens on the real level is on the chosen one
+// before the frame is drawn. The badges are found by the game's own finders, which are quick; what
+// only a walk of the tree finds is walked for again every fifteen frames and kept in between
 function d2mmLook(key, find) {
   var had = D2MM_SEEN[key];
   var gone = false;
   if (had) for (var i = 0; i < had.length; i++) if (had[i].IsValid && !had[i].IsValid()) gone = true;
-  if (!had || gone || D2MM_TICK % 10 === 0) D2MM_SEEN[key] = find();
+  if (!had || gone || D2MM_TICK % 15 === 0) D2MM_SEEN[key] = find();
   return D2MM_SEEN[key];
+}
+// the panels with this class, copied into an array a script can join
+function d2mmClassed(panel, cls) {
+  var got = panel.FindChildrenWithClassTraverse(cls);
+  var out = [];
+  for (var i = 0; i < got.length; i++) out.push(got[i]);
+  return out;
 }
 function d2mmApply() {
   var me = $.GetContextPanel();
   D2MM_TICK++;
-  if (D2MM_TICK % 5 === 1) try {
+  // the game does not set a tile back, so the tiles are seen to twice a second or so
+  if (D2MM_TICK % 30 === 1) try {
     var cards = d2mmFind(me, function (p) { return p.BHasClass("HeroCard"); });
     if (cards.length) {
       var first = cards[0].FindChildTraverse("HeroImage");
@@ -137,26 +146,23 @@ function d2mmApply() {
     if (me.BHasClass("IsLocalPlayerPawn")) {
       var rank = me.FindChildTraverse("PlayerRank");
       if (rank && D2MM_RANK) rank.text = D2MM_RANK;
-      var badge = d2mmLook("pick badge", function () { return [me.FindChildTraverse("HeroBadge")].filter(Boolean); })[0];
-      var own = d2mmLevel(d2mmHeroOf(d2mmLook("pick hero", function () { return [me.FindChildTraverse("HeroImage")].filter(Boolean); })[0]));
+      var badge = me.FindChildTraverse("HeroBadge");
+      var own = d2mmLevel(d2mmHeroOf(me.FindChildTraverse("HeroImage")));
       if (badge && d2mmKnown(own)) me.SetHasClass("ShowHeroBadge", true);
       if (badge) d2mmBadge(badge, own);
     }
   } catch (e) { d2mmSay("pick failed", e); }
   try {
-    var strategy = d2mmLook("strategy", function () { return [me.FindChildTraverse("StrategyHeroBadge")].filter(Boolean); })[0];
+    var strategy = me.FindChildTraverse("StrategyHeroBadge");
     var mine = strategy ? d2mmLevel(Players.GetPlayerSelectedHero(Players.GetLocalPlayer())) : null;
     if (strategy) d2mmBadge(strategy, mine);
   } catch (e) { d2mmSay("strategy failed", e); }
   try {
     // the card that opens over a hero in the grid
-    var tip = d2mmLook("hero card", function () {
-      var card = me.BHasClass("HeroCardTooltipContents") ? me : d2mmFind(me, function (p) { return p.BHasClass("HeroCardTooltipContents"); })[0];
-      return card ? [card.FindChildTraverse("HeroImage"), card.FindChildTraverse("HeroBadge")] : [];
-    });
-    if (tip.length) {
-      var tipLvl = d2mmLevel(d2mmHeroOf(tip[0]));
-      var tipBadge = tip[1];
+    var tip = me.BHasClass("HeroCardTooltipContents") ? me : d2mmClassed(me, "HeroCardTooltipContents")[0];
+    if (tip) {
+      var tipLvl = d2mmLevel(d2mmHeroOf(tip.FindChildTraverse("HeroImage")));
+      var tipBadge = tip.FindChildTraverse("HeroBadge");
       if (tipBadge) d2mmBadge(tipBadge, tipLvl);
     }
   } catch (e) { d2mmSay("hero card failed", e); }
@@ -165,16 +171,16 @@ function d2mmApply() {
       var page = d2mmPageHero(me);
       var chosen = d2mmKnown(page);
       // the page's own badge and the one on its progress tab
-      var bigs = d2mmLook("page badges", function () { return d2mmFind(me, function (p) { return p.id === "HeroBadge" || p.id === "HeroBadgeProgression"; }); });
+      var bigs = [me.FindChildTraverse("HeroBadge"), me.FindChildTraverse("HeroBadgeProgression")].filter(Boolean);
       for (var b = 0; b < bigs.length; b++) d2mmBadge(bigs[b], page);
       // the experience to the next level is the real level's, so it goes while a level is chosen
-      var xp = d2mmLook("page experience", function () { return d2mmFind(me, function (p) { return p.id === "HeroLevelProgress" || p.BHasClass("CurrentLevelXPLabel") || p.BHasClass("NextLevelXPLabel"); }); });
+      var xp = d2mmClassed(me, "CurrentLevelXPLabel").concat(d2mmClassed(me, "NextLevelXPLabel"), d2mmLook("page bars", function () { return d2mmFind(me, function (p) { return p.id === "HeroLevelProgress"; }); }));
       for (var x = 0; x < xp.length; x++) xp[x].visible = !chosen;
       var named = d2mmLook("page name", function () { return d2mmFind(me, function (p) { return p.paneltype === "Label" && p.BHasClass("TabContentsHeroName"); }); });
       d2mmSay("hero page " + (named.length ? named[0].text : ""), "level " + page + ", " + bigs.length + " badges, " + xp.length + " experience panels");
     }
   } catch (e) { d2mmSay("hero page failed", e); }
-  $.Schedule(0.1, d2mmApply);
+  $.Schedule(0, d2mmApply);
 }
 d2mmApply();
 `;
