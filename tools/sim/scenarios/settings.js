@@ -10,7 +10,7 @@
  */
 const steps = require('../steps');
 
-const SECTIONS = ['catalog', 'library', 'presets', 'settings'];
+const SECTIONS = ['catalog', 'items', 'studio', 'library', 'presets', 'settings'];
 
 // visible text in Cyrillic that is ours: not a mod's name, not a card, not a user's input
 const leftovers = `(() => {
@@ -43,8 +43,9 @@ module.exports = async function settings(sim) {
     return sim.until(`document.documentElement.lang === '${lang}' || (window.api && document.querySelector('.tb-tab[data-view="catalog"]')?.textContent.trim() === '${lang === 'en' ? 'Catalog' : 'Каталог'}')`, 8000);
   };
   const english = await pick('en');
-  const tabs = await sim.js(`[...document.querySelectorAll('.tb-tab')].map((t) => t.firstChild.textContent.trim()).join(', ')`);
-  sim.check('switching the language to English renames the sections', english && tabs === 'Catalog, My mods, Presets, Settings', `tabs: ${tabs}`);
+  // Settings is the gear, named by its label rather than a word on the tab
+  const tabs = await sim.js(`[...document.querySelectorAll('.tb-tab:not(.tb-icon-tab)')].map((t) => t.firstChild.textContent.trim()).concat(document.querySelector('.tb-icon-tab').getAttribute('aria-label')).join(', ')`);
+  sim.check('switching the language to English renames the sections', english && tabs === 'Catalog, Items, Workshop, My mods, Presets, Settings', `tabs: ${tabs}`);
   sim.check('the choice is saved', (await sim.js('window.api.settings.get()')).uiLang === 'en');
   for (const view of SECTIONS) {
     await steps.openSection(sim, view);

@@ -25,7 +25,7 @@ const steps = require('../steps');
 const { lit } = require('../driver');
 const { measure, isLarge, NODES, HIDE_TEXT } = require('../contrast');
 
-const SECTIONS = ['catalog', 'library', 'presets', 'settings'];
+const SECTIONS = ['catalog', 'items', 'studio', 'library', 'presets', 'settings'];
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 /** Roles a person operates: each needs a name a screen reader can say. */
 const CONTROLS = new Set(['button', 'link', 'checkbox', 'switch', 'textbox', 'searchbox', 'combobox', 'listbox', 'menuitem',

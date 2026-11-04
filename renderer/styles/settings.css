@@ -161,3 +161,8 @@
 .repair-steps li.ok .ms { color: var(--success, #4ade80); }
 .repair-steps li.bad .ms { color: var(--warning); }
 .repair-mods { display: block; color: var(--text-muted); font-size: var(--text-xs); margin-top: 2px; }
+
+/* "Game files" (settings/GameFilesBlock.tsx): the state beside the switch, and the line when the
+   edit fell off */
+.settings-state { margin-left: auto; font-size: var(--text-sm); color: var(--text-muted); }
+.settings-hint.warn { color: var(--warning); }

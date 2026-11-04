@@ -24,6 +24,7 @@ import { doInstall, installPack, onInstalling, packMemberName } from './install.
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './overlay.ts';
 import { installing, screen } from './state.ts';
 import { modIssue } from '../../ui/notice.ts';
+import { catalogOnShow } from '../../core/router.ts';
 
 interface ModWindow {
   categoryId: string;
@@ -181,5 +182,5 @@ function savePack(mod: Mod, name: string, modNames: string[]): void {
   packs.push({ name, mods: modNames });
   saveCustomPacks(packs);
   toast(L`Пак «${name}» сохранён — он появился в категории Паки`);
-  if (state.view === 'catalog' && state.activeCategory === 'packs') { closeOverlay(); screen.redraw(); }
+  if (catalogOnShow() && state.activeCategory === 'packs') { closeOverlay(); screen.redraw(); }
 }

@@ -49,7 +49,8 @@ Miss the second and the button exists but does nothing; miss the third and TypeS
 call. `test/ipc-contract.test.js` and `test/api-types.test.js` hold the four together. The renderer is split by view
 (`catalog.ts`, `library.ts`, `presets.ts` and `settings.ts`, the larger ones with their parts in a
 folder of the same name) with shared pieces under `renderer/ui/`. Each draws with React components
-from the folder of its name under `renderer/`: `catalog/`, `library/`, `presets/`, `settings/`.
+from the folder of its name under `renderer/`: `catalog/`, `library/`, `presets/`, `settings/`,
+`studio/`.
 
 ## Where mods end up
 
@@ -162,7 +163,7 @@ the same stock materials into every VPK and authors carry the same filler partic
 own mods. Paths were the first attempt, a blocklist of stock paths was the second, CRC comparison
 is the one that works.
 
-## The item schema and safe mode
+## The item schema and the item table switch
 
 Some things cannot be done from a language folder at all. The engine reads
 `scripts/items/items_game.txt` through the MOD path only, so skinchanger-style sets with their own
@@ -170,8 +171,9 @@ effects and the free cosmetics the game already ships do nothing from where mods
 
 Supporting them means registering another folder ahead of the game's content, which means editing
 `gameinfo_branchspecific.gi` and re-signing it in `dota.signatures`. That is a change to Valve's
-own files, so it is off until the user agrees to it once, which is what the safe mode switch in
-the status bar means. `src/patcher.ts` performs it and reverses it byte for byte, and
+own files, so it is off until the user agrees to it once. Since 3.0 there is no switch in the
+status bar: the first look, set or preset that needs the table asks (`renderer/ui/game-files.ts`),
+and Settings, Game files turns it back off. `src/patcher.ts` performs it and reverses it byte for byte, and
 `src/schema-service.ts` decides when the schema is rebuilt: always from the installed game's own
 item table, never from a copy a mod happened to ship.
 
@@ -657,7 +659,7 @@ that location is not writable.
 | `src/i18n.ts`, `src/i18n-en.ts`, `src/i18n-zh-CN.ts`, `renderer/i18n.js`, `renderer/locales/*` | Russian, English and Simplified Chinese, for the main process and the window |
 | `renderer/app.ts`, `renderer/shell/*` | The window's start, and its own elements every screen reaches: the title bar, search, the switches, progress, drops, updates |
 | `renderer/api/*` | What every channel the window calls takes and answers |
-| `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*` | The four screens, in React |
+| `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*`, `renderer/studio/*` | The screens, in React; Items is the catalog screen with the game's looks (`views/catalog/sections.ts`), the Workshop gathers the tools built from the game's own files |
 | `renderer/creator/*` | The author's window: drafts of mods for the catalog, opened from the account menu |
 | `renderer/views/*` | What each screen reads and does around its components |
 | `renderer/ui/*` | Dialogs, toasts, the media player, the install queue, shared chrome, and the focus and names a keyboard and a screen reader need (`a11y.ts`) |

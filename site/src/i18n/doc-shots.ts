@@ -6,7 +6,7 @@
  * goes into the section `after` names, under that section's steps, or its first paragraph when it
  * has no steps, so it sits where the text says what to press. The guides' own text stays as it is.
  */
-export type ShotName = 'mod-window' | 'my-mods' | 'safe-mode' | 'safe-confirm' | 'terrains' | 'announcers' | 'tools' | 'cosmetics';
+export type ShotName = 'mod-window' | 'my-mods' | 'game-files' | 'item-table-confirm' | 'terrains' | 'announcers' | 'tools' | 'cosmetics';
 
 export interface DocShot {
   /** the h2 id of the section it belongs to */
@@ -32,20 +32,20 @@ export const docShots: Record<string, DocShot[]> = {
       caption: { en: 'Every installed mod in My mods, with its switch and Delete.', ru: 'Каждый поставленный мод в «Моих модах», с переключателем и кнопкой «Удалить».' },
     },
     {
-      after: 'reset', shot: 'safe-mode',
-      caption: { en: 'The bar at the bottom of the window. Safe mode on means the game files are as they were.', ru: 'Полоса внизу окна. Безопасный режим включён: файлы игры такие, какими были.' },
+      after: 'reset', shot: 'game-files',
+      caption: { en: 'Settings, Game files. With the item table off, the game files are as Valve shipped them.', ru: 'Настройки, «Файлы игры». С выключенной таблицей предметов файлы игры такие, какими их выпустила Valve.' },
     },
   ],
   safe: [
     {
-      after: 'methods', shot: 'safe-confirm',
-      caption: { en: 'What the app says before it turns safe mode off: the two files it will change, and that it keeps the originals.', ru: 'Что приложение говорит перед выключением безопасного режима: какие два файла оно поменяет и что оригиналы сохранит.' },
+      after: 'methods', shot: 'item-table-confirm',
+      caption: { en: 'What the app asks before the first look from the game goes on: the two files it will change, and that it keeps the originals.', ru: 'Что приложение спрашивает перед первым видом из игры: какие два файла оно поменяет и что оригиналы сохранит.' },
     },
   ],
   cosmetics: [
     {
       after: 'what', shot: 'cosmetics',
-      caption: { en: 'With safe mode off, the catalog lists looks for your default items. Here, the weather.', ru: 'С выключенным безопасным режимом в каталоге появляются виды для стандартных предметов. Здесь погода.' },
+      caption: { en: 'Items lists looks for your default items. Here, the weather.', ru: 'В разделе «Предметы» виды для стандартных предметов. Здесь погода.' },
     },
   ],
   terrain: [

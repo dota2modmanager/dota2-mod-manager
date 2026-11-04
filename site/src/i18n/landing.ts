@@ -207,7 +207,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
     cards: [
       ['One click in, one click out', 'The app downloads the mod, puts it in a free pak slot and cleans up after itself. No copying files, no renaming pak51_dir.vpk by hand.'],
       ['Switch off, do not delete', 'Turn a mod off before a match and back on after. Your library stays, the game folder stays clean.'],
-      ['Cosmetics you already own', 'Weather, couriers, wards, loading screens, announcers, mega-kills. Read from the game\'s own item table, so anything Valve adds shows up by itself. Editing that table is the one thing here that changes a game file instead of adding a VPK beside it, so it waits until you turn safe mode off. <a href="~/docs/safe/">What you are turning off</a>.'],
+      ['Cosmetics you already own', 'Weather, couriers, wards, loading screens, announcers, mega-kills. Read from the game\'s own item table, so anything Valve adds shows up by itself. Editing that table is the one thing here that changes a game file instead of adding a VPK beside it, so the app asks once before the first look goes on. <a href="~/docs/safe/">What it changes</a>.'],
       ['It tells you when mods collide', 'Two mods that carry the same file cannot both win. The app says which one the game is loading and lets you swap the order.'],
       ['Setups by link', 'Save the mods you run as a preset and send it in one message. The other side opens it and gets the same look.'],
       ['It survives Dota patches', 'After a game update the app puts back what the patch wiped, and it writes to the game folder as one transaction - if anything fails, everything goes back.'],
@@ -333,7 +333,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
     cards: [
       ['Поставил и убрал в один клик', 'Приложение само качает мод, кладёт его в свободный слот и убирает за собой. Не надо копировать файлы и переименовывать pak51_dir.vpk руками.'],
       ['Выключить, а не удалять', 'Выключи мод перед каткой и включи обратно после. Библиотека остаётся, папка игры чистая.'],
-      ['Косметика, которая уже твоя', 'Погода, курьеры, варды, экраны загрузки, комментаторы, мега-киллы. Читается из таблицы предметов самой игры, поэтому новое от Valve появляется само. Правка этой таблицы - единственное здесь, что меняет файл игры, а не кладёт VPK рядом, поэтому она ждёт, пока ты не выключишь безопасный режим. <a href="~/docs/safe/">Что именно выключаешь</a>.'],
+      ['Косметика, которая уже твоя', 'Погода, курьеры, варды, экраны загрузки, комментаторы, мега-киллы. Читается из таблицы предметов самой игры, поэтому новое от Valve появляется само. Правка этой таблицы - единственное здесь, что меняет файл игры, а не кладёт VPK рядом, поэтому приложение один раз спрашивает перед первым видом. <a href="~/docs/safe/">Что именно меняется</a>.'],
       ['Говорит, когда моды спорят', 'Два мода с одним и тем же файлом не могут выиграть оба. Приложение показывает, чей файл грузит игра, и даёт поменять порядок.'],
       ['Сборки ссылкой', 'Сохрани набор включённых модов пресетом и отправь одним сообщением. На той стороне откроется то же самое.'],
       ['Переживает патчи Доты', 'После обновления игры приложение возвращает на место то, что патч стёр, а в папку игры пишет одной транзакцией: если что-то сорвётся, всё вернётся как было.'],

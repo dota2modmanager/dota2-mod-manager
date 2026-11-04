@@ -18,6 +18,7 @@ import { toast } from '../ui/toast.ts';
 import { cosmeticName } from '../ui/cosmetic-name.ts';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
 import { closeOverlay } from './catalog/overlay.ts';
+import { allowItemTable } from '../ui/game-files.ts';
 import { afterPick, heroSets, isOpen, openItemHeroModal, openItemSlotModal, openWindow } from './item-builder.ts';
 import type { CosmeticSet } from '../catalog/types.ts';
 import type { BuilderAction } from '../catalog/builder/model.ts';
@@ -91,6 +92,7 @@ const setAction = (st: SetState): BuilderAction => (st.busy ? { label: L`Над�
 
 async function applySet(key: number, st: SetState): Promise<void> {
   if (setAction(st).off) return;
+  if (!await allowItemTable()) return;
   st.busy = true;
   drawSet(key, st);
   let r: { error?: string; applied?: number; pieces?: number };

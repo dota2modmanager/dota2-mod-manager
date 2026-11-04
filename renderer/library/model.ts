@@ -98,6 +98,8 @@ export interface ExternalRowModel {
 /** What the banners over the list say, as data; Banners.tsx words it. */
 export interface BannersModel {
   masterOff: boolean;
+  /** looks picked and mods whose effects live in the item table, while the game is not allowed to read it (ui/game-files.ts) */
+  tableOff: number;
   /** installed and foreign files recognised as catalog mods, waiting to be linked */
   matched: number;
   nearLimit: { slots: number; ceil: number } | null;

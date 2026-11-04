@@ -12,7 +12,7 @@
  * It needs a game table with items in it. The sandbox copies the real one when the machine has
  * Dota, along with the files of the five Blightfall pieces (tools/sandbox.js); a CI runner has
  * no Dota and a stub table, and there the scenario says so and stops. It leaves what it found:
- * safe mode on, no picks.
+ * the item table off (the game files as Valve shipped them), no picks.
  */
 const steps = require('../steps');
 const dota = require('../dota');
@@ -26,33 +26,28 @@ module.exports = async function builder(sim) {
   const where = await steps.gameOf(sim);
   if (!where) return;
   const { game } = where;
-  const safeOn = () => sim.js(`document.getElementById('safeModeBtn').getAttribute('aria-checked') === 'true'`);
-  const setSafe = async (on) => {
-    if (await safeOn() === on) return true;
-    await sim.click('#safeModeBtn');
-    if (!on && await sim.until(`document.querySelector('.safe-box [data-c="yes"]')`, 5000)) {
-      // on a short screen it lost its title off the top and its buttons off the bottom (668 px of
-      // box in a 584 px window, a 1366x768 laptop at 125%)
-      const box = await sim.js(`(() => { const b = document.querySelector('.safe-box').getBoundingClientRect();
-        return { top: Math.round(b.top), bottom: Math.round(b.bottom), window: innerHeight }; })()`);
-      sim.check('the safe mode window fits in the app window, its title and its buttons both', box.top >= 0 && box.bottom <= box.window,
-        `box ${box.top}..${box.bottom}, window ${box.window}`, box);
-      await sim.click('.safe-box [data-c="yes"]');
-    }
-    return sim.until(`document.getElementById('safeModeBtn').getAttribute('aria-checked') === '${on}'`, 15000);
-  };
+  // the item table, through Settings since 3.0 (steps.itemTable); the window explaining it has to fit
+  const setTable = async (on) => (await steps.itemTable(sim, on, { onAsk: on && (async () => {
+    // on a short screen it lost its title off the top and its buttons off the bottom (668 px of
+    // box in a 584 px window, a 1366x768 laptop at 125%)
+    const box = await sim.js(`(() => { const b = document.querySelector('.safe-box').getBoundingClientRect();
+      return { top: Math.round(b.top), bottom: Math.round(b.bottom), window: innerHeight }; })()`);
+    sim.check('the item table window fits in the app window, its title and its buttons both', box.top >= 0 && box.bottom <= box.window,
+      `box ${box.top}..${box.bottom}, window ${box.window}`, box);
+  }) })).ok;
   const picks = () => sim.js(`window.api.mods.list().then(({ installed }) => installed
     .filter((r) => r.categoryId === 'cosmetic' && String(r.slot).startsWith('item:'))
     .map((r) => ({ id: r.id, slot: r.slot, itemId: r.itemId, effectId: r.effectId || '', on: r.enabled !== false })))`);
   const applied = `document.getElementById('itemApplyBtn')?.disabled && !/…/.test(document.getElementById('itemApplyBtn').textContent)`;
 
-  // the builder writes into the item table, which safe mode keeps the game from reading
-  if (!sim.check('safe mode turns off, so the item table can be built', await setSafe(false), `switch: safe ${await safeOn()}`)) return;
+  // the builder writes into the item table, which the game reads only once it is allowed to
+  if (!sim.check('the item table is allowed, so it can be built', await setTable(true), 'the Game files switch stayed off')) return;
+  await steps.openSection(sim, 'items');
   const items = '.rail-item[data-cat="cosmetic:items"]';
   if (!await sim.until(`document.querySelector('${items}')`, 10000)) {
     sim.check('the sandbox has a game table with items to build', true,
       'a stub table (no Dota on this machine to copy one from): nothing to build, nothing checked');
-    await setSafe(true);
+    await setTable(false);
     return;
   }
 
@@ -109,7 +104,7 @@ module.exports = async function builder(sim) {
   await sim.key('Escape');
   for (const r of await picks()) await sim.js(`window.api.mods.remove(${JSON.stringify(r.id)})`);
   await sleep(500);
-  sim.check('the picks come off, and safe mode goes back on', !(await picks()).length && await setSafe(true),
+  sim.check('the picks come off, and the game files go back to the originals',!(await picks()).length && await setTable(false),
     JSON.stringify(await picks()));
   await sim.click('[data-view="catalog"]');
 };

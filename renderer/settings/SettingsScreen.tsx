@@ -13,6 +13,7 @@ import { ProxyControl } from './ProxyControl.ts';
 import { RepairSteps, type RepairRun } from './RepairSteps.tsx';
 import { CompilerBlock, type CompilerActions } from './CompilerBlock.tsx';
 import { GridBlock } from './GridBlock.tsx';
+import { GameFilesBlock } from './GameFilesBlock.tsx';
 import { Toggle } from './Toggle.tsx';
 import type { CompilerState } from '../api/content.ts';
 
@@ -162,6 +163,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
           <button className="btn btn-sm" id="browseBtn" onClick={actions.browse}>{L`Указать вручную`}</button>
         </div>
       </Block>
+      <GameFilesBlock i={2} everyone={m.everyone} onEveryone={actions.everyone} />
 
       <Block i={3} title={L`Кэш загрузок`}>
         <div className="settings-row">
@@ -210,14 +212,6 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
 
       {m.compiler && <CompilerBlock i={4} c={m.compiler} actions={actions} />}
       <GridBlock i={4} />
-
-      <Block i={4} title={L`Конструктор предметов`}>
-        <div className="settings-row spaced">
-          <span className="settings-label">{L`Мой вид на всех, кто играет этим героем`}</span>
-          <Toggle id="everyoneToggle" on={m.everyone} label={L`Мой вид на всех, кто играет этим героем`} onClick={actions.everyone} />
-        </div>
-        <div className="settings-hint">{L`Кто бы ни играл героем, которого ты собрал, союзник или враг, у тебя на экране он будет в твоих предметах, а не в своих. Видишь это только ты. Работает с выключенным безопасным режимом.`}</div>
-      </Block>
 
       <Block i={4} title={L`Каталог`}>
         <div className="settings-row">

@@ -156,8 +156,39 @@ function answerNextDialog(answer) {
 
 async function openSection(sim, view) {
   await sim.click(`.tb-tab[data-view="${view}"]`);
+  // Items draws in the catalog's pane (renderer/core/router.ts PANE_OF)
+  const paneName = view === 'items' ? 'catalog' : view;
   return sim.until(`document.querySelector('.tb-tab.active')?.dataset.view === ${lit(view)}
-    && !document.querySelector(${lit(`.view-pane[data-pane="${view}"]`)})?.hidden && ${calm}`, 10000);
+    && !document.querySelector(${lit(`.view-pane[data-pane="${paneName}"]`)})?.hidden && ${calm}`, 10000);
+}
+
+/**
+ * The item table on or off, the way a person does it since 3.0: Settings, "Game files", its switch
+ * (renderer/settings/GameFilesBlock.tsx). Turning it on shows the window that explains it
+ * (renderer/ui/game-files.ts), `onAsk` looks at that window before it is answered; turning it off
+ * asks to confirm. Safe mode had a switch of its own in the status bar until then.
+ * @returns {Promise<{ asked: boolean, ok: boolean }>} whether a window came up, and whether the switch ended as asked
+ */
+async function itemTable(sim, on, { onAsk } = {}) {
+  await openSection(sim, 'settings');
+  if (!await sim.until(`document.getElementById('itemTableSwitch')`, 8000)) return { asked: false, ok: false };
+  const state = () => sim.js(`document.getElementById('itemTableSwitch').getAttribute('aria-checked') === 'true'`);
+  if (await state() === on) return { asked: false, ok: true };
+  // a toast still up from before is not this answer
+  await sim.js(`document.querySelectorAll('#toasts .toast').forEach((t) => { t.dataset.simOld = '1'; })`);
+  await sim.click('#itemTableSwitch');
+  const box = on ? '.safe-box [data-c="yes"]' : '.confirm-overlay [data-c="yes"]';
+  const asked = Boolean(await sim.until(`document.querySelector(${lit(box)})`, 5000));
+  if (asked) {
+    if (onAsk) await onAsk();
+    await sim.click(box);
+  }
+  // a refusal (the game holds gameinfo open) is a red toast that fades in a few seconds, so it is
+  // read here, while it is still up, rather than by the caller after the wait
+  const flipped = `document.getElementById('itemTableSwitch').getAttribute('aria-checked') === '${on}'`;
+  await sim.until(`${flipped} || document.querySelector('#toasts .toast.error:not([data-sim-old])')`, 15000);
+  const said = await sim.js(`[...document.querySelectorAll('#toasts .toast')].map((t) => t.textContent.trim()).join(' | ')`);
+  return { asked, ok: Boolean(await sim.js(flipped)), said };
 }
 
 /**
@@ -337,5 +368,5 @@ async function allCards(sim) {
 module.exports = {
   calm, modalOpen, listing, listingDiff, readyMods, openSection, heroesList, categoryList, installFromCard, allCards,
   libraryRows, rowOf, setEnabled, removeFromLibrary, gameOf, gameLoads, mountedOurs, whoServes,
-  modFile, answerNextDialog,
+  modFile, answerNextDialog, itemTable,
 };

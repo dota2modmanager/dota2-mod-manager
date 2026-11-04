@@ -15,7 +15,7 @@ import { lib } from './state.ts';
 function banners(): BannersModel {
   const s: Partial<AppSettings> = state.settings || {};
   const gl: Partial<AppSettings['gameLang']> = s.gameLang || {};
-  const patch = (state.patchState || {}) as { conflicts?: { mods: string[] }[]; foreign?: string; vanillaOk?: boolean };
+  const patch = (state.patchState || {}) as { conflicts?: { mods: string[] }[]; foreign?: string; vanillaOk?: boolean; mods?: number; cosmeticsPicked?: number };
   const conflicts = patch.conflicts || [];
   const ourMods = lib.records.length;
   const m = s.minify;
@@ -23,6 +23,7 @@ function banners(): BannersModel {
   const lang = gl.launchLang;
   return {
     masterOff: state.masterOff,
+    tableOff: s.schemaPatch || state.masterOff ? 0 : (patch.mods || 0) + (patch.cosmeticsPicked || 0),
     matched: lib.records.filter((r) => r.match).length + lib.external.filter((f) => f.match && !f.duplicateOf).length,
     nearLimit: lib.slots >= 90 ? { slots: lib.slots, ceil: lib.slotCeil } : null,
     conflicts: conflicts.length ? { lists: conflicts.slice(0, 3).map((c) => c.mods), more: Math.max(0, conflicts.length - 3) } : null,

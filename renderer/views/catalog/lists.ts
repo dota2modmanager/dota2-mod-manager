@@ -119,11 +119,11 @@ export function favoriteMods(): Mod[] {
 
 // ---------- free looks ----------
 
-// Cosmetics only work with the schema patch on, so with safe mode they are not offered
-// anywhere: the rail, the favourites, the search all ask here first.
+// Offered whether or not the game reads the item table yet: picking one asks for it
+// (ui/game-files.ts). Until 3.0 safe mode hid all of them, and the builder with them.
 /** The free looks and the builder's slots on offer: a hero with a persona on, its persona's alone (catalog/builder/logic.ts withPersonas). */
 export function cosmeticSlotList(): CosmeticSlot[] {
-  return state.settings?.schemaPatch ? withPersonas(state.cosmeticSlots || [], pickedIn) : [];
+  return withPersonas(state.cosmeticSlots || [], pickedIn);
 }
 
 export function slotData(slot: string): CosmeticSlot | null {

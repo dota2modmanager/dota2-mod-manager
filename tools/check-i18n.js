@@ -202,7 +202,9 @@ function jsFiles(dir, skip) {
 }
 
 const SIDES = [
-  { name: 'renderer', dict: 'renderer/i18n.js', calls: ['L', 'tr'], files: jsFiles('renderer', ['renderer/i18n.js']) },
+  // the window's dictionary is i18n.js plus the screens 3.0 added (renderer/locales/en-more.js),
+  // which i18n.js reads as a fallback: one table, kept in two files so neither outgrows its budget
+  { name: 'renderer', dict: 'renderer/i18n.js', more: ['renderer/locales/en-more.js'], calls: ['L', 'tr'], files: jsFiles('renderer', ['renderer/i18n.js', 'renderer/locales/en-more.js']) },
   { name: 'main', dict: 'src/i18n-en.ts', calls: ['t'], files: jsFiles('src', ['src/i18n.ts', 'src/i18n-en.ts']) },
 ];
 
@@ -264,13 +266,13 @@ function translationReport(dict, file) {
 function main() {
   let missing = 0;
   for (const side of SIDES) {
-    const dupes = duplicateKeys(side.dict);
+    const dupes = [side.dict, ...(side.more || [])].flatMap((f) => duplicateKeys(f));
     if (dupes.length) {
       missing += dupes.length;
       console.log(`\n${dupes.length} key(s) written more than once in ${side.dict}:`);
       for (const [key, seen] of dupes) console.log(`  ${JSON.stringify(key)}  lines ${seen.join(', ')}`);
     }
-    const dict = readDict(side.dict);
+    const dict = Object.assign({}, ...(side.more || []).map(readDict), readDict(side.dict));
     const used = new Set();
     const gaps = [];
     for (const file of side.files) {
