@@ -2,6 +2,21 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.0.1
+
+### Fixed
+
+- The 3D preview in the item builder works again. For heroes whose body comes with a physics
+  model, such as Abaddon, it said it could not get the model out of the game.
+- The catalog no longer gets stuck on "Loading the catalog" when you open a category while it is
+  still loading.
+- The close button in the hero window no longer covers the Recolor button.
+
+### What's new keeps the big release
+
+"What's new" and Home now show this fix together with the 3.0.0 notes, and anything else you missed
+since the last version you opened.
+
 ## 3.0.0
 
 ### A new layout, and a Home screen
