@@ -2,6 +2,79 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.0.0
+
+### A new layout, and a Home screen
+
+The window now opens on Home. It shows the version, the project's GitHub stars, a way into every
+section with what is in it now, the newest mods in the catalog, what changed in this version, and
+anything that needs your attention, such as Dota not found or mods switched off. Click the name or
+the logo at the top left to come back to it.
+
+The title bar has new sections. Items holds the hero builder and the looks from the game, which
+used to sit in the catalog's list. Workshop gathers everything the app builds from your own game
+files, and marks new tools with a dot. Settings moved to the gear icon. The window opens at
+1440x900 so all of it fits, and on 1440p and 4K screens it starts scaled up, now up to 250%.
+
+The "Safe" switch is gone. The app asks for the item table, which the item builder and the looks
+from the game need, the first time you open one of them. You can switch it in Settings → Game
+files.
+
+### New in the Workshop
+
+- **Hero recolour by layers:** each ability, the body, the portrait and each picked item in a
+  colour of its own.
+- **Your own sound on a hero's ability**, instead of the game's sound or over it, built with
+  Valve's own compiler.
+- **Towers and trees from the game's own looks**, a different one for Radiant and for Dire.
+- **Map without decor:** take grass, flowers, stones and debris off the map.
+- **A main menu background of your own** from a picture, GIF or video.
+- **The in-game HUD** smaller or larger, from 60% to 130%.
+- **Your own rank medal and Dota Plus hero levels**, seen only on your screen.
+- **Hero grids for the pick screen** from this patch's win rates.
+- Gem colours for Techies' arcana and for three immortals: Terrorblade's Span and Scythes of
+  Sorrow, and Razor's Severing Crest.
+- Two more free cosmetic slots: the multikill banner and the Tormentor.
+
+### Item builder
+
+- See the hero in 3D, turning in the items you picked.
+- Put the game's unusual and ethereal effects on any item, or another item's effect on the one you
+  wear.
+- An arcana's body follows the style you picked, and other players' items take your look in
+  whatever style they wear.
+
+### Presets
+
+- Ready-made presets: five builds from the catalog, installed and applied with one press.
+- Share a preset as a picture with its mods' covers and a QR code.
+
+### When something goes wrong
+
+- Every error ends with "What do I do?", which opens the right part of the guide, and "Send a
+  report", which saves the diagnostics and opens Discord.
+- Settings has a "Repair the app" button that runs every fix in order.
+- While Dota is open, the status bar says so and the app writes nothing to the game until you close
+  it.
+- Play warns you when Steam is still updating Dota, with a button to Steam's downloads.
+- The app checks free disk space before it writes a mod.
+- A catalog mod with a known problem carries a "!" with the reason.
+
+### My mods
+
+- Give any row a name of your own.
+- Click the "overruled" pill to see which mod covers this one, file by file, and move it above.
+- Click the "pre-patch" pill to see what the Dota update changed and what to do about it.
+- Settings lists the download cache archive by archive, deletes one at a time and opens its folder.
+
+### Fixed
+
+- Clicking Broodmother over and over no longer fills the window with spiders and slows it down.
+- The Halloween look stays under an open mod window, and its spider no longer covers the GitHub
+  stars.
+- Cancel on the item table's bar puts back the change that started the build.
+- Couriers with fewer animations than the donkey keep their own models.
+
 ## 2.21.0
 
 ### Mods by author, and a catalog that remembers
