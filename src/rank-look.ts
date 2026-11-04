@@ -12,9 +12,10 @@
  *
  * A level is a number the client asks Steam for, so no style can change it. A script can: Panorama
  * runs the JavaScript a layout includes, and the script writes the number into the label and sets
- * the tier class on the badge every half second. It goes into three layouts, by adding one
+ * the tier class on the badge every half second. It goes into four layouts, by adding one
  * include to the tree in their LaCo block (as src/menu-background.ts does): the hero grid of the
- * menu and the pick screen, the player's own panel at the pick, and the strategy screen.
+ * menu and the pick screen, the player's own panel at the pick, the strategy screen, and the hero
+ * page with its badge and experience bar.
  *
  * Tried in the game on 2026-11-04: the profile medal, the hero grid and the pick badge took them.
  */
@@ -31,8 +32,8 @@ export interface RankLook { medal: Medal | null; levels: Record<string, number>;
 
 /** The two styles that hold the medal's rules, as compiled in the pak and as the compiler's source. */
 export const STYLES = ['panorama/styles/dotastyles', 'panorama/styles/avatar_rank_tier'].map((p) => ({ compiled: `${p}.vcss_c`, source: `${p}.css` }));
-/** The layouts the levels script goes into: the hero grid, the player's panel at the pick, the strategy screen. */
-export const LAYOUTS = ['panorama/layout/hero_grid_new.vxml_c', 'panorama/layout/hud/dota_hud_hero_picking_player.vxml_c', 'panorama/layout/hud/dota_hud_pregame.vxml_c'];
+/** The layouts the levels script goes into: the hero grid, the player's panel at the pick, the strategy screen, the hero page. */
+export const LAYOUTS = ['panorama/layout/hero_grid_new.vxml_c', 'panorama/layout/hud/dota_hud_hero_picking_player.vxml_c', 'panorama/layout/hud/dota_hud_pregame.vxml_c', 'panorama/layout/dashboard_page_hero_new_v2.vxml_c'];
 /** The script, as the compiler's source and as the layouts name it. */
 export const SCRIPT = { source: 'panorama/scripts/d2mm_rank_look.js', compiled: 'panorama/scripts/d2mm_rank_look.vjs_c', ref: 'panorama/scripts/d2mm_rank_look.vjs' };
 
@@ -125,14 +126,28 @@ function d2mmTier(panel, lvl) {
   for (var t = 0; t < D2MM_TIERS.length; t++) panel.SetHasClass(D2MM_TIERS[t], D2MM_TIERS[t] === tier);
 }
 function d2mmBadge(badge, lvl) {
-  var all = [badge].concat(badge.FindChildrenWithClassTraverse("LevelStyle"));
+  var all = [badge].concat(badge.FindChildrenWithClassTraverse("LevelStyle"), badge.FindChildrenWithClassTraverse("ModelStyle"));
   for (var a = 0; a < all.length; a++) {
     d2mmTier(all[a], lvl);
+    all[a].SetDialogVariableInt("hero_level", lvl);
     for (var c = 0; c < all[a].GetChildCount(); c++) {
       var ch = all[a].GetChild(c);
-      if (ch.paneltype === "Label") ch.text = String(lvl);
+      if (ch.paneltype === "Label") d2mmText(ch, "hero_level", lvl);
     }
   }
+}
+// the game binds these labels to a dialog variable and binds it again when its number comes, so
+// the number goes into the variable on the label itself, where the lookup starts, and the text
+function d2mmText(label, name, lvl) {
+  label.SetDialogVariableInt(name, lvl);
+  label.text = String(lvl);
+}
+// the hero page names its hero only in words, so the hero is the one whose name it shows
+function d2mmPageHero(page) {
+  var shown = page.FindChildrenWithClassTraverse("TabContentsHeroName");
+  var name = shown.length ? shown[0].text : "";
+  for (var key in D2MM_LEVELS) if (name && $.Localize("#npc_dota_hero_" + key) === name) return D2MM_LEVELS[key];
+  return D2MM_EVERY;
 }
 function d2mmApply() {
   var me = $.GetContextPanel();
@@ -143,7 +158,7 @@ function d2mmApply() {
       var lvl = img ? d2mmLevel(img.heroname) : null;
       if (lvl === null || lvl === undefined) continue;
       var label = cards[i].FindChildTraverse("HeroBadgeLevel");
-      if (label) label.text = String(lvl);
+      if (label) d2mmText(label, "hero_badge_level", lvl);
       d2mmTier(cards[i], lvl);
       var parts = ["HeroBadgeStatus", "HeroBadgeIcon"];
       for (var p = 0; p < parts.length; p++) { var part = cards[i].FindChildTraverse(parts[p]); if (part) d2mmTier(part, lvl); }
@@ -163,6 +178,17 @@ function d2mmApply() {
     var strategy = me.FindChildTraverse("StrategyHeroBadge");
     var mine = strategy ? d2mmLevel(Players.GetPlayerSelectedHero(Players.GetLocalPlayer())) : null;
     if (strategy && mine !== null && mine !== undefined) d2mmBadge(strategy, mine);
+  } catch (e) {}
+  try {
+    if (me.paneltype === "DOTAHeroPageNewV2") {
+      var page = d2mmPageHero(me);
+      var big = me.FindChildTraverse("HeroBadge");
+      var chosen = page !== null && page !== undefined;
+      if (big && chosen) d2mmBadge(big, page);
+      // the experience to the next level is the real level's, so it goes while a level is chosen
+      var xp = me.FindChildrenWithClassTraverse("LevelProgressXPValuesContainer").concat([me.FindChildTraverse("HeroLevelProgress")]);
+      for (var x = 0; x < xp.length; x++) if (xp[x]) xp[x].visible = !chosen;
+    }
   } catch (e) {}
   $.Schedule(0.5, d2mmApply);
 }
