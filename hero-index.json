@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1719,
+  "mods": 1721,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -72,6 +72,7 @@
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Arc Warden Ancient Gaoler","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
         {"name":"Arc Warden Black Hole","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder"]},
+        {"name":"Arc Warden Black Knight","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden Chicken Gun","categoryId":"heroes","styleLabel":null,"slots":["back","arms","misc","shoulder","head"]},
         {"name":"Arc Warden Frosty Toy","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
         {"name":"Arc Warden Gray Monster","categoryId":"heroes","styleLabel":null,"slots":["back","arms","shoulder","head"]},
@@ -1502,6 +1503,7 @@
         {"name":"Pudge Abscession Immortal","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","shoulder"]},
         {"name":"Pudge Arcana Diretide","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge Arcana Elephant","categoryId":"heroes","styleLabel":null,"slots":["weapon","belt","misc","head","back","arms"]},
+        {"name":"Pudge Big Smoke","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc","base","offhand","shoulder"]},
         {"name":"Pudge Candy Cat","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
         {"name":"Pudge CM","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon"]},
         {"name":"Pudge Dendi Arcana","categoryId":"heroes","styleLabel":null,"slots":["back","belt","arms","head","weapon","misc"]},
