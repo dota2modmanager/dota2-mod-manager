@@ -108,7 +108,7 @@ const OWN_FIELDS = ['name', 'prefab', 'item_name', 'item_description', 'image_in
 
 /**
  * A built block worn as another item of the same hero and slot (src/item-builder-everyone.ts): the
- * built visuals, under that item's id, its own name and picture, and `model` as its model path.
+ * built visuals, under that item's id, its own name and picture, and the model path its block names.
  */
 export function asItem(block: string, text: string, item: { id: string; start: number }, model: string | null): string {
   const own = itemFields(text, item);

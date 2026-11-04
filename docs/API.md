@@ -4850,8 +4850,8 @@ with a plain item hanging off it, the thing src/item-builder-personas.ts keeps o
 own hero, is what everybody else's looked like.
 
 So a hero the build dresses (a pick, or a base's part, at one of his stock paths) is worn by
-everybody exactly as the user's is, slot by slot. Every other wearable of his is worn as the file
-the user's hero wears in its slot:
+everybody exactly as the user's is, slot by slot. Every other wearable of his goes under the
+file the user's hero wears in its slot, at each model path its block names, its styles' included:
 - the build's, where it fills the stock path (a pick's model, else a base's part);
 - the game's own stock item, where it does not: the Planetfall base fills Earthshaker's totem and
   bracers, and his belt is the plain one, so a store belt was drawn on the arcana (J0nathan550,
@@ -4866,16 +4866,6 @@ picture, so its own particles do not hang off our model; and it is the same in e
 owner can wear it in, since the server sends their style with it, not the user's
 (src/item-builder-styles.ts inEveryStyle).
 
-Where that file is at the stock path (the first two), the block names the stock path and nothing
-is written for the item: a match loads a hero's stock models with him, whatever his owner wears.
-Elsewhere (a pick's own head, the invisible box, an arcana's refit) a path the block named would
-be loaded only if somebody wore it, and an unloaded one is drawn as nothing or the ERROR model
-("Attempting to set nonresident model", 2026-10-18), so the file goes under each model path the
-item's block names, its styles' included. Writing a file under every path was 9,700 files on
-J0nathan550's library, and past about 5,500 of the game's models replaced, other heroes' spells
-drew stray models: Skywrath's Arcane Bolt with somebody's hands on it (#414). Neither copies of
-their own nor search paths of their own got past that; a limit of the game's, not of a pak.
-
 An arcana that swaps the hero's body (an entity_model naming the hero) is dressed too, in the slot
 it sits in (Planetfall in hero_base, under Earthshaker's Base). The server sets that body on its
 owner, from its own table, so the swap cannot be taken out of the table; the file is what can be
@@ -4884,10 +4874,9 @@ body), else the game's plain one. With the Gar Beast picked, another player's Pl
 arcana's body and particles with the Gar Beast's arms and belt on it.
 
 An arcana also swaps dozens of paid items' models for refits to its body (Planetfall 41, Dread
-Retribution 30), and the user's built blocks keep those swaps. A dressed item that names the stock
-path is out of their way; one that gets files gets one under its refit path as well, and a slot of
-the user's that is swapped itself is worn as what the swap shows. With an arcana on, hovering any
-set in the loadout showed that set (J0nathan550, 2026-10-31).
+Retribution 30), and the user's built blocks keep those swaps. So a dressed item's refit path gets
+the user's file as well, and a slot of the user's that is swapped itself is worn as what the swap
+shows. With an arcana on, hovering any set in the loadout showed that set (J0nathan550, 2026-10-31).
 
 Left alone: a slot with no stock item, items shared with other heroes, a persona (a second hero
 with slots of its own), and an item that swaps another form of the hero or one of his summons
@@ -4896,7 +4885,7 @@ with slots of its own), and an item that swaps another form of the hero or one o
 For a persona the stock paths hold the empty models its base puts there, so another player's plain
 items go the way the user's own do, and the persona's body is not dressed in them.
 
-The files are one buffer under many paths, and the pak stores them once (src/vpk-write.ts). Tried
+The bytes are one buffer under many paths, and the pak stores them once (src/vpk-write.ts). Tried
 on Juggernaut first (five slots, about 140 wearables), then every hero (2026-10-30). The table is
 walked once whatever the number of heroes: a walk a hero was 118 ms each.
 
@@ -5457,7 +5446,7 @@ export function asItem(block: string, text: string, item: { id: string; start: n
 ```
 
 A built block worn as another item of the same hero and slot (src/item-builder-everyone.ts): the
-built visuals, under that item's id, its own name and picture, and `model` as its model path.
+built visuals, under that item's id, its own name and picture, and the model path its block names.
 
 ### `defaultItemForWearable`
 
