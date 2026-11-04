@@ -86,6 +86,9 @@
 }
 .modal-body { padding: 16px 22px 22px; display: flex; flex-direction: column; gap: 13px; }
 .modal-title-row { display: flex; align-items: flex-start; gap: 12px; }
+/* the close button is placed over the window's corner, so a row that holds it keeps that corner
+   free: the hero window's Recolor button sat under it */
+.modal-title-row:has(> .modal-close) { padding-right: var(--space-6); }
 .modal-title { font-size: 20px; font-weight: 800; flex: 1; }
 .modal-close {
   position: absolute;
