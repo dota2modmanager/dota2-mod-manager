@@ -27,6 +27,20 @@ export function glbAt(root: string, file: string): string {
   return path.join(root, ...file.replace(/\.vmdl_c$/, '.glb').split('/'));
 }
 
+/**
+ * The GLB a model's export left, or null. Asked for one model, the toolchain names the file after
+ * -o; but a body that brings its physics along is two files, and then -o is a folder holding the
+ * archive's layout: abaddon.glb/models/heroes/abaddon/abaddon.glb. Read as a file, that folder
+ * failed the whole 3D preview (2026-11-04).
+ */
+export function foundGlb(root: string, file: string): string | null {
+  const at = glbAt(root, file);
+  const stat = fs.statSync(at, { throwIfNoEntry: false });
+  if (stat?.isFile()) return at;
+  const inside = stat?.isDirectory() ? glbAt(at, file) : null;
+  return inside && fs.statSync(inside, { throwIfNoEntry: false })?.isFile() ? inside : null;
+}
+
 /** A clip name no model has: the bones without any animation (exportArgs). */
 const NO_CLIP = 'mm-no-clip';
 
@@ -75,7 +89,7 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
     // the clips are part of the file: a body with its idle is another cache entry than one without
     const root = path.join(buildRoot(game), clips.length ? `clips-${clips.join('-').replace(/[^\w-]/g, '')}` : 'bones');
     const files = new Map(models.map((m) => [m, modelFile(m)]));
-    const wanted = [...new Set([...files.values()].filter((f): f is string => !!f && !fs.existsSync(glbAt(root, f))))];
+    const wanted = [...new Set([...files.values()].filter((f): f is string => !!f && !foundGlb(root, f)))];
     if (wanted.length) {
       const job = queue.then(async () => {
         const started = Date.now();
@@ -92,7 +106,7 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
       queue = job;
       await job;
     }
-    for (const [m, f] of files) if (f && fs.existsSync(glbAt(root, f))) out[m] = glbAt(root, f);
+    for (const [m, f] of files) if (f) out[m] = foundGlb(root, f);
     return out;
   }
 

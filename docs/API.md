@@ -6853,6 +6853,17 @@ export function glbAt(root: string, file: string): string
 
 Where the toolchain puts a model's GLB under its output folder: the archive's layout, .glb for .vmdl_c.
 
+### `foundGlb`
+
+```ts
+export function foundGlb(root: string, file: string): string | null
+```
+
+The GLB a model's export left, or null. Asked for one model, the toolchain names the file after
+-o; but a body that brings its physics along is two files, and then -o is a folder holding the
+archive's layout: abaddon.glb/models/heroes/abaddon/abaddon.glb. Read as a file, that folder
+failed the whole 3D preview (2026-11-04).
+
 ### `exportArgs`
 
 ```ts
