@@ -86,11 +86,6 @@
 .studio-ext { font-size: var(--icon-sm); color: var(--text-faint); }
 
 /* ---- the title bar's parts 3.0 added ---- */
-/* Five sections and a gear need the room the product name took: below a wide window the logo and
-   the mascot say whose window this is, and every tab stays in sight */
-@media (max-width: 1600px) {
-  .tb-title, .tb-sub { display: none; }
-}
 /* Settings as a gear: a place, so still a tab with the underline, but no word */
 .tb-icon-tab { padding: 0 var(--space-2); -webkit-app-region: no-drag; }
 .tb-icon-tab .ms { font-size: var(--icon-md); }

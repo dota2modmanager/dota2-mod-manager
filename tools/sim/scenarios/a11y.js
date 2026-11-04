@@ -25,7 +25,7 @@ const steps = require('../steps');
 const { lit } = require('../driver');
 const { measure, isLarge, NODES, HIDE_TEXT } = require('../contrast');
 
-const SECTIONS = ['catalog', 'items', 'studio', 'library', 'presets', 'settings'];
+const SECTIONS = ['home', 'catalog', 'items', 'studio', 'library', 'presets', 'settings'];
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 /** Roles a person operates: each needs a name a screen reader can say. */
 const CONTROLS = new Set(['button', 'link', 'checkbox', 'switch', 'textbox', 'searchbox', 'combobox', 'listbox', 'menuitem',
@@ -115,7 +115,7 @@ module.exports = async function a11y(sim) {
     await steps.openSection(sim, view);
     await sim.settle(600);
     sim.check(`${view}: a screen reader is told it is the open section`,
-      await sim.js(`[...document.querySelectorAll('.tb-tab[aria-current]')].map((b) => b.dataset.view).join() === ${lit(view)}`));
+      await sim.js(`[...document.querySelectorAll('.tb-tab[aria-current], #tbHome[aria-current]')].map((b) => b.dataset.view || 'home').join() === ${lit(view)}`));
     await audit(view);
   }
 

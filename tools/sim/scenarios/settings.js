@@ -10,7 +10,7 @@
  */
 const steps = require('../steps');
 
-const SECTIONS = ['catalog', 'items', 'studio', 'library', 'presets', 'settings'];
+const SECTIONS = ['home', 'catalog', 'items', 'studio', 'library', 'presets', 'settings'];
 
 // visible text in Cyrillic that is ours: not a mod's name, not a card, not a user's input
 const leftovers = `(() => {

@@ -14,7 +14,7 @@ const { lit } = require('../driver');
 const steps = require('../steps');
 
 // the title bar's order, which is also Ctrl+1..6 (renderer/ui/hotkeys.ts)
-const SECTIONS = ['catalog', 'items', 'studio', 'library', 'presets', 'settings'];
+const SECTIONS = ['home', 'catalog', 'items', 'studio', 'library', 'presets', 'settings'];
 
 // Items draws in the catalog's pane (renderer/core/router.ts PANE_OF)
 const paneShown = (view) => `(() => {
@@ -36,7 +36,7 @@ const stopVideos = `document.querySelectorAll('video').forEach((v) => v.pause())
 module.exports = async function browse(sim) {
   // ---- the sections, by their tabs ----
   for (const view of SECTIONS) {
-    await sim.click(`.tb-tab[data-view="${view}"]`);
+    await sim.click(steps.tabOf(view));
     const shown = await sim.until(`${paneShown(view)} && ${calm}`, 15000);
     if (!sim.check(`the ${view} section opens from its tab`, shown, 'its pane stayed hidden or empty for 15 s')) continue;
     await sim.move(sim.x, 8); // off anything that lifts on hover
@@ -47,11 +47,19 @@ module.exports = async function browse(sim) {
   }
 
   // ---- and by the keyboard ----
-  for (const [i, view] of SECTIONS.entries()) {
+  // Home has no number: the name in the title bar is its way in
+  for (const [i, view] of SECTIONS.filter((v) => v !== 'home').entries()) {
     await sim.key(String(i + 1), ['control']);
     const on = await sim.until(`document.querySelector('.tb-tab.active')?.dataset.view === '${view}' && ${paneShown(view)} && ${calm}`, 8000);
     sim.check(`Ctrl+${i + 1} opens the ${view} section`, on, `the active tab is ${await sim.js(`document.querySelector('.tb-tab.active')?.dataset.view`)}`);
   }
+
+  // ---- Home: a way into each section, and the name in the title bar back to it ----
+  await steps.openSection(sim, 'home');
+  await sim.click('.home-dest[data-go="studio"]');
+  sim.check('a section on Home opens that section', await sim.until(`${steps.openNow('studio')} && ${paneShown('studio')} && ${calm}`, 8000));
+  await sim.click('#tbHome');
+  sim.check('the name in the title bar goes back to Home', await sim.until(`${steps.openNow('home')} && ${paneShown('home')} && ${calm}`, 8000));
 
   // ---- two tabs in a row, faster than the screen change between them ----
   // The browser aimed every click at the page root while it animated, and the second tab did

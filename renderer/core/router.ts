@@ -99,6 +99,9 @@ export function switchView(view: string): Promise<void> {
     // the underline says which section this is; aria-current says it to a screen reader
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
+  // Home has no tab: the name in the title bar is its way in, and says so while it is showing
+  const home = document.getElementById('tbHome');
+  if (view === 'home') home?.setAttribute('aria-current', 'page'); else home?.removeAttribute('aria-current');
   state.view = view;
   const railOff = paneOf(view) !== 'catalog';
   $('#catRail').classList.toggle('hidden', railOff);

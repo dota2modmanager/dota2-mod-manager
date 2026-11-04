@@ -570,6 +570,7 @@ that location is not writable.
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
 | `src/discord-auth.ts`, `src/discord-presence.ts`, `src/presence-status.ts` | Signing in with Discord, and what the Discord status says and whether it is on |
 | `src/release-notes.ts` | The "What's new" text, out of the changelogs shipped with the build |
+| `src/repo-stars.ts` | The project's GitHub star count on Home, asked at most every six hours and kept on disk |
 | `src/feature-gate.ts` | Whether a write to the game may go ahead: not while Dota is open, not when `config/app.json` switched the feature off |
 | `preload.js` | The `window.api` surface, and nothing else crosses |
 | `src/installer.ts` | The door to everything below that writes a mod into the game folder or takes it out |
@@ -659,7 +660,7 @@ that location is not writable.
 | `src/i18n.ts`, `src/i18n-en.ts`, `src/i18n-zh-CN.ts`, `renderer/i18n.js`, `renderer/locales/*` | Russian, English and Simplified Chinese, for the main process and the window |
 | `renderer/app.ts`, `renderer/shell/*` | The window's start, and its own elements every screen reaches: the title bar, search, the switches, progress, drops, updates |
 | `renderer/api/*` | What every channel the window calls takes and answers |
-| `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*`, `renderer/studio/*` | The screens, in React; Items is the catalog screen with the game's looks (`views/catalog/sections.ts`), the Workshop gathers the tools built from the game's own files |
+| `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*`, `renderer/studio/*`, `renderer/home/*` | The screens, in React; Home is where the window opens and where the name in the title bar leads; Items is the catalog screen with the game's looks (`views/catalog/sections.ts`), the Workshop gathers the tools built from the game's own files |
 | `renderer/creator/*` | The author's window: drafts of mods for the catalog, opened from the account menu |
 | `renderer/views/*` | What each screen reads and does around its components |
 | `renderer/ui/*` | Dialogs, toasts, the media player, the install queue, shared chrome, and the focus and names a keyboard and a screen reader need (`a11y.ts`) |

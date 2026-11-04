@@ -26,6 +26,9 @@ export function markSeen(id: string): void {
   try { storage()?.setItem(KEY, JSON.stringify([...s])); } catch { /* the badge comes back, nothing else */ }
 }
 
+/** How many Workshop tools have not been opened yet on this machine (Home says so). */
+export const newCount = (): number => ALL.filter(isNew).length;
+
 /** The dot on the Workshop tab, while any tile is still new. */
 export function paintStudioDot(): void {
   const dot = document.getElementById('studioNew');

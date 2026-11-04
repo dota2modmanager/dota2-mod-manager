@@ -129,7 +129,7 @@ const settingsSet: Check[] = [
 export const CHANNEL_ARGS: Record<string, Check[]> = {
   // the window and the app (src/ipc-window.ts, src/main.ts)
   'win:minimize': [], 'win:maximize': [], 'win:close': [], 'win:isMaximized': [],
-  'app:version': [], 'app:notes': [str(16)], 'app:notesSeen': [],
+  'app:version': [], 'app:notes': [str(16)], 'app:notesSeen': [], 'app:stars': [],
   'update:install': [], 'update:fetchPortable': [], 'update:revealPortable': [PATH],
   'beta:state': [], 'beta:set': [bool],
   'game:launch': [], 'game:steamDownloads': [],

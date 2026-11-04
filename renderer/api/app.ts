@@ -137,6 +137,8 @@ interface UpdateApi {
   version: () => Promise<string>;
   notes: (lang: string) => Promise<{ version: string; notes: string; unseen: boolean }>;
   notesSeen: () => Promise<Reply>;
+  /** the project's GitHub stars, null when it could not be had (src/repo-stars.ts) */
+  stars: () => Promise<number | null>;
   onUpdate: (cb: (evt: UpdateEvent) => void) => void;
 }
 

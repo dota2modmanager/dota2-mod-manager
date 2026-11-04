@@ -22,8 +22,9 @@ import './shell/progress.ts';
 import './shell/updates.ts';
 import './views/settings.ts';
 import './views/studio.ts';
+import './views/home.ts';
 import { state } from './core/store.ts';
-import { render, invalidateViews, catalogOnShow } from './core/router.ts';
+import { render, invalidateViews, catalogOnShow, switchView } from './core/router.ts';
 import { refreshInstalledIndex, firstCosmeticSlots } from './core/installed.ts';
 import { switchOffStaleTerrains } from './core/terrain-age.ts';
 import { askAdultOnce } from './core/adult.ts';
@@ -101,6 +102,8 @@ async function offerToolchain(): Promise<void> {
   await refreshPatchState();
   await switchOffStaleTerrains();
   await refreshInstalledIndex();
+  // the window opens on Home (3.0): drawn now, and again once the catalog's newest mods are in
+  if (state.view === 'home') await switchView('home');
   // the free looks are read out of the game's 50 MB table, most of a second on the first start:
   // the catalog is drawn without waiting for them, and drawn again with them once they are here
   const looks = firstCosmeticSlots().then(() => { if (catalogOnShow()) render(); });

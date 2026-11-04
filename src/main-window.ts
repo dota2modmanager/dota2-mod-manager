@@ -28,13 +28,15 @@ export function clampZoom(v: unknown): number {
   return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
 }
 
-/** The size this is designed at, and the smallest it still works at. */
-const DESIGNED = { width: 1360, height: 860, minWidth: 1020, minHeight: 640 };
+/** The size this is designed at, and the smallest it still works at. 1440x900 since 3.0: five
+ *  sections, the gear and the name in the title bar, and Home's six newest mods in one row, all
+ *  at once; 1360 lost the "Dota 2" beside the name. */
+const DESIGNED = { width: 1440, height: 900, minWidth: 1020, minHeight: 640 };
 
 /* The window has to fit the screen it opens on.
  *
- * 1360x860 is the size this is designed at, and on a 1366x768 laptop, still one of the most
- * common screens there is, a window 860 tall does not fit a work area about 730 tall. Windows
+ * 1440x900 is the size this is designed at, and on a 1366x768 laptop, still one of the most
+ * common screens there is, a window 900 tall does not fit a work area about 730 tall. Windows
  * places it anyway and the bottom of it sits under the taskbar or past the edge of the screen,
  * where the launch bar and the last rows of a list are. Nothing is broken and nothing scrolls
  * wrong; the part of the window holding them is simply not on the screen, which reads exactly
@@ -50,7 +52,7 @@ const DESIGNED = { width: 1360, height: 860, minWidth: 1020, minHeight: 640 };
 /**
  * The window's size and minimums for a work area, or the designed size when there is none. A
  * scale above 1 on a screen wider than WIDE grows the window with its content, so 1.3 is not a
- * 1360-pixel window holding a 1046-pixel layout.
+ * 1440-pixel window holding a 1108-pixel layout.
  */
 export function windowFit(workArea: { width: number; height: number } | null | undefined, scale = 1): typeof DESIGNED {
   const { width: aw, height: ah } = workArea || { width: 0, height: 0 };
@@ -71,8 +73,8 @@ const WIDE = 2000;
  * The scale a first launch starts at (issue #388). On a 1440p or 4K screen at 100% Windows
  * scaling the designed window filled a third of it and its tiles were tiny, and people took the
  * app for broken before they found the slider. Above WIDE: about 80% of the scale that fills the
- * work area, in steps of 0.05, so the window still has room around it. 2560x1400 starts at 1.3,
- * 3840x2100 at 1.95.
+ * work area, in steps of 0.05, so the window still has room around it. 2560x1400 starts at 1.2,
+ * 3840x2100 at 1.85.
  */
 export function startScale(workArea: { width: number; height: number } | null | undefined): number {
   const { width: aw, height: ah } = workArea || { width: 0, height: 0 };

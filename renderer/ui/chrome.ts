@@ -206,11 +206,26 @@ function bindNavScroll(): void {
   // own zoom decides how much room it really has
   const tb = document.querySelector<HTMLElement>('#titlebar');
   if (tb) {
+    // Measured, not guessed from the width: the tabs come first, then the name, so the bar gives
+    // up the "Dota 2" pill, then the search's width, and the name only when nothing else is
+    // left. The name stays on screen otherwise, so a screenshot says which program it is.
+    const nav = document.querySelector<HTMLElement>('#tbNav');
+    const crowded = () => !!nav && nav.scrollWidth > nav.clientWidth + 1;
     const syncWidth = () => {
-      tb.classList.toggle('narrow', tb.clientWidth < 1000);
-      tb.classList.toggle('tiny', tb.clientWidth < 870);
+      tb.classList.remove('narrow', 'tight', 'tiny');
+      for (const step of ['narrow', 'tight', 'tiny']) {
+        if (!crowded()) break;
+        tb.classList.add(step);
+      }
+      syncNavOverflow();
     };
-    new ResizeObserver(syncWidth).observe(tb);
+    // a frame later: the classes change the sizes being watched, and a change inside the
+    // callback is a loop the browser stops and reports
+    let queued = 0;
+    const watch = new ResizeObserver(() => { cancelAnimationFrame(queued); queued = requestAnimationFrame(syncWidth); });
+    watch.observe(tb);
+    // a tab's word changes with the language and the bar's width does not
+    document.querySelectorAll('#tbNav .tb-tab').forEach((t) => watch.observe(t));
     syncWidth();
   }
 

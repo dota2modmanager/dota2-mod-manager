@@ -243,6 +243,7 @@ export async function loadCatalog(force = false): Promise<void> {
   state.catalog = cat;
   if (!cat.error) buildModIndex();
   if (catalogOnShow()) renderCatalog();
+  window.dispatchEvent(new Event('mm:catalog')); // Home shows its newest mods (views/home.ts)
   if (!cat.error && waitingLink) {
     const link = waitingLink;
     waitingLink = null;

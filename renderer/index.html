@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="styles/presets.css">
   <link rel="stylesheet" href="styles/settings.css">
   <link rel="stylesheet" href="styles/studio.css">
+  <link rel="stylesheet" href="styles/home.css">
   <link rel="stylesheet" href="styles/feedback.css">
   <link rel="stylesheet" href="styles/transitions.css">
   <link rel="stylesheet" href="styles/pumpkin.css">
@@ -40,9 +41,12 @@
     <!-- Custom title bar -->
     <header id="titlebar">
       <div class="tb-brand">
+        <!-- the name goes Home (3.0), the way a site's logo does -->
+        <button class="tb-home" id="tbHome" title="Home" data-i18n-title="Главная">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l7 4v8l-7 8-7-8V6z"/><path d="M12 8v6"/><path d="M9 11h6"/></svg>
         <span class="tb-title" data-i18n="Менеджер модов">Mod Manager</span>
         <span class="tb-sub">Dota 2</span>
+        </button>
         <!-- Click the hero to recolour the window. The catalog's own site does this beside
              its logo and h6rd let us bring both the mascots and the idea across. -->
         <button class="tb-mascot" id="themeMascot" title="Change the colours" data-i18n-title="Сменить цвета">
@@ -51,7 +55,7 @@
       </div>
 
       <nav id="tbNav">
-        <button class="tb-tab active" data-view="catalog" data-i18n="Каталог" aria-current="page">Catalog</button>
+        <button class="tb-tab" data-view="catalog" data-i18n="Каталог">Catalog</button>
         <button class="tb-tab" data-view="items" data-i18n="Предметы">Items</button>
         <button class="tb-tab" data-view="studio" data-i18n="Мастерская">Workshop<span class="tb-new" id="studioNew" hidden></span></button>
         <button class="tb-tab" data-view="library" data-i18n="Мои моды">My mods<span class="tb-badge" id="libCount"></span></button>

@@ -49,7 +49,7 @@ export interface State {
 }
 
 export const state: State = {
-  view: 'catalog',
+  view: 'home',
   catalog: null,
   cosmeticSlots: null,
   cosmeticSets: null,
