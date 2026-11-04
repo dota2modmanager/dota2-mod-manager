@@ -217,6 +217,31 @@ async function main() {
   const turn = [W / 2 + 200, H / 2, W / 2 - 250, H / 2].join(',');
   try {
     const started = Date.now();
+    // --menu: the game's own screens instead of the demo, for what a mod changes there (a menu
+    // background, a medal, a hero badge). A picture once the menu is up, then one after each
+    // click of --clicks "x,y;x,y" (points in the 1920x1080 window), three seconds apart; "wait:N"
+    // in the list is a picture N seconds on, with no click.
+    if (process.argv.includes('--menu')) {
+      spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H)], { detached: true, stdio: 'ignore' }).unref();
+      await until(() => /CResponseSystem/.test(logSince(log, started)), 240000, 'the game to load').catch(() => note('no word of the menu in console.log; taking the pictures anyway'));
+      await sleep(Number(arg('--menu-wait', '25')) * 1000);
+      shot('01-menu');
+      for (const [k, at] of (arg('--clicks') || '').split(';').filter(Boolean).entries()) {
+        // "wait:20" is no click, only a picture twenty seconds later (a match loading)
+        if (at.startsWith('wait:')) { await sleep(Number(at.slice(5)) * 1000); shot(`02-click-${k + 1}`); continue; }
+        // Panorama takes a click only on a panel the pointer is already over
+        const p = at.split(',').map(Number);
+        input('hover', p[0] - 6, p[1]);
+        await sleep(400);
+        input('hover', ...p);
+        await sleep(400);
+        click(p);
+        await sleep(3000);
+        shot(`02-click-${k + 1}`);
+      }
+      fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify({ vpk: vpk ?? null, menu: true, notes }, null, 2));
+      return;
+    }
     spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H), '+dota_demo_hero', `npc_dota_hero_${hero}`, '+dota_camera_distance', camera], { detached: true, stdio: 'ignore' }).unref();
     await until(() => /OnAddNewHeroEntry/.test(logSince(log, started)), 240000, 'the demo to start');
     await sleep(4000);

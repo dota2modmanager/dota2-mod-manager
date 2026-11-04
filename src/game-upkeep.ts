@@ -50,6 +50,9 @@ type RunCommand = (cmd: string, args: string[], done: (err: Error | null, stdout
 /** One step of the work done at start: its name for the log, and the work. */
 type Step = { name: string; run: () => unknown };
 
+/** The watch that keeps asking whether Dota is running and tells the window (src/game-watch.ts). */
+export { createGameWatch } from './game-watch.ts';
+
 /** Run each step in order; one that throws is logged as skipped and the rest still run. */
 export async function runSteps(steps: Step[], diag: (msg: string) => void): Promise<void> {
   for (const step of steps) {

@@ -189,6 +189,14 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   // the menu's background (src/ipc-background.ts): a WebM the window encoded, or null for a new look alone
   // the in-game HUD's size (src/ipc-hud.ts), in percent
   'hud:state': [], 'hud:install': [num(60, 130)],
+  // the author's drafts (src/ipc-creator.ts): the files come from a dialog, never from here
+  'creator:list': [], 'creator:remove': [ID], 'creator:export': [ID],
+  'creator:save': [optional(ID), shape({
+    name: optional(str(500)), category: optional(str(60)), hero: optional(str(60)), description: optional(str(5000)), author: optional(str(200)),
+    replaces: optional(shape({ category: str(60, 1), name: str(500, 1) })), styles: optional(list(shape({ label: str(200) }), 12)),
+  })],
+  'creator:attach': [ID, num(0, 11), oneOf('vpk', 'picture')],
+  'rank:state': [], 'rank:pictures': [], 'rank:install': [json(64 * 1024)],
   'background:state': [], 'background:install': [optional(bytes(48 * MB)), optional(str(200)), num(0, 0.9), num(0, 20)],
   // a hero recoloured part by part (src/ipc-paint.ts): his npc name, and a #rrggbb per layer that is on
   'paint:state': [str(40, 2)], 'paint:install': [str(40, 2), json(64 * 1024), optional(str(80))],

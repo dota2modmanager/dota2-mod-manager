@@ -116,9 +116,21 @@ contextBridge.exposeInMainWorld('api', {
     add: (hero, event, mode, volume, wav, label) => ipcRenderer.invoke('sounds:add', hero, event, mode, volume, wav, label),
     remove: (hero, event) => ipcRenderer.invoke('sounds:remove', hero, event),
   },
+  creator: {
+    list: () => ipcRenderer.invoke('creator:list'),
+    save: (id, fields) => ipcRenderer.invoke('creator:save', id, fields),
+    attach: (id, style, kind) => ipcRenderer.invoke('creator:attach', id, style, kind),
+    remove: (id) => ipcRenderer.invoke('creator:remove', id),
+    export: (id) => ipcRenderer.invoke('creator:export', id),
+  },
   hud: {
     state: () => ipcRenderer.invoke('hud:state'),
     install: (scale) => ipcRenderer.invoke('hud:install', scale),
+  },
+  rank: {
+    state: () => ipcRenderer.invoke('rank:state'),
+    pictures: () => ipcRenderer.invoke('rank:pictures'),
+    install: (look) => ipcRenderer.invoke('rank:install', look),
   },
   background: {
     state: () => ipcRenderer.invoke('background:state'),
@@ -144,6 +156,8 @@ contextBridge.exposeInMainWorld('api', {
   game: {
     launch: () => ipcRenderer.invoke('game:launch'),
     steamDownloads: () => ipcRenderer.invoke('game:steamDownloads'),
+    // Dota opened or closed: while it is open nothing is written to the game (src/game-watch.ts)
+    onRunning: (cb) => ipcRenderer.on('game:running', (e, running) => cb(!!running)),
   },
   packs: {
     combine: (name, modIds) => ipcRenderer.invoke('packs:combine', { name, modIds }),

@@ -4,6 +4,7 @@
  * in the early part of the load order, and on a rebuild the new one in the slot the old one had.
  */
 import path from 'node:path';
+import { sharedVpkIndex } from './vpk.ts';
 import type { Installer } from './installer.ts';
 import type { LibFile, LibRecord } from './types.ts';
 
@@ -30,4 +31,28 @@ export function swapPak(installer: PakInstaller, rec: LibRecord, vpk: Buffer, of
   if (oldBase && newBase && newBase !== oldBase) files = installer.moveToSlot({ files }, oldBase, newBase);
   if (off) installer.setEnabled(files, false, rec.id);
   return files;
+}
+
+const pakNumber = (rel: string) => Number(/pak(\d+)_/i.exec(rel)?.[1] ?? Infinity);
+
+/**
+ * The copy of a game file that is in force before a generated pak of ours: the first switched-on
+ * mod's, in load order (the first copy wins, as in the game), else the game's own in pak01. Null
+ * when neither has it. `own` is the generated record itself, which never counts.
+ */
+export function fileInForce({ game, langFolder, records, own, file }: {
+  game: string; langFolder: string; records: LibRecord[]; own?: string | null; file: string;
+}): { data: Buffer; from: LibRecord | null } | null {
+  const paks = records
+    .filter((r) => r.id !== own && r.enabled !== false)
+    .flatMap((r) => (r.files || []).filter((f) => f.root === 'lang' && /_dir\.vpk$/i.test(f.relPath)).map((f) => ({ r, rel: f.relPath })))
+    .sort((a, b) => pakNumber(a.rel) - pakNumber(b.rel));
+  for (const { r, rel } of paks) {
+    try {
+      const data = sharedVpkIndex(path.join(langFolder, rel)).read(file);
+      if (data) return { data, from: r };
+    } catch { /* a pak that cannot be read is not the one in force either */ }
+  }
+  const data = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk')).read(file);
+  return data ? { data, from: null } : null;
 }

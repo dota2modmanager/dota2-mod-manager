@@ -534,6 +534,7 @@ that location is not writable.
 | `src/main-window.ts`, `src/app-page.ts` | The window: its size on the screen it opens on, the one page it may show, Ctrl +/-/0 |
 | `src/dev-harness.ts`, `src/capture.ts` | `MM_SHOT`, `MM_EVAL` and the other switches a script drives the window with, and the screenshot they take |
 | `src/game-upkeep.ts` | The work done at start: the game path, the mod folder following the audio language, the load-order layout, the migrations |
+| `src/game-watch.ts` | Whether Dota is open, asked every few seconds and told to the window when it changes |
 | `src/game-repair.ts` | Putting the game back after something else changed it: a Dota patch, Steam's file check, waiting while Dota runs |
 | `src/app-repair.ts` | Settings' "Repair the app": the game patch, missing mod files and the rebuildable caches, a line per step |
 | `src/patch-watch.ts` | Noticing a game update the moment it lands |
@@ -560,12 +561,13 @@ that location is not writable.
 | `src/map-looks-service.ts` | Towers and trees from the game's own looks, one per side, built in the app into one My mods record per kind and built again after a Dota update ([#446](https://github.com/dota2modmanager/dota2-mod-manager/issues/446), [#421](https://github.com/dota2modmanager/dota2-mod-manager/issues/421)) |
 | `src/menu-background.ts`, `src/menu-background-service.ts` | A picture, GIF or video of your own behind the main menu: the game's three dashboard layouts rewritten so the last match's background plays your WebM under a veil and blur, in one My mods record built again after a Dota update ([#418](https://github.com/dota2modmanager/dota2-mod-manager/issues/418)) |
 | `src/hud-scale.ts`, `src/hud-scale-service.ts` | The in-game HUD smaller or larger: the HUD's stylesheet in force (a HUD mod's or the game's) read back by ValveResourceFormat, Panorama's `ui-scale` added on the bottom bar and the minimap, compiled again by Valve's resourcecompiler into one My mods record that is built again after a Dota update ([#420](https://github.com/dota2modmanager/dota2-mod-manager/issues/420)) |
+| `src/rank-look.ts`, `src/rank-look-service.ts`, `src/ipc-rank.ts` | The rank medal and Dota Plus hero levels of the player's own screen: the medal's rules copied with the chosen picture at the end of the two styles that draw it (read back by ValveResourceFormat), a script that writes the levels and badge tiers into the hero grid, the pick and the strategy screen, included into those three layouts through their LaCo tree, all compiled by Valve's resourcecompiler into one My mods record that is built again after a Dota update; channels `rank:state`, `rank:pictures`, `rank:install` |
 | `src/ability-sounds.ts`, `src/ability-sounds-service.ts` | A sound of your own on a hero's sound event: the events written as KV3 text with your sound instead of the game's or over it, compiled with your WAV by Valve's resourcecompiler into one My mods record per hero ([#423](https://github.com/dota2modmanager/dota2-mod-manager/issues/423)) |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
 | `src/discord-auth.ts`, `src/discord-presence.ts`, `src/presence-status.ts` | Signing in with Discord, and what the Discord status says and whether it is on |
 | `src/release-notes.ts` | The "What's new" text, out of the changelogs shipped with the build |
-| `src/feature-gate.ts` | Whether a feature has been switched off from `config/app.json`, asked once |
+| `src/feature-gate.ts` | Whether a write to the game may go ahead: not while Dota is open, not when `config/app.json` switched the feature off |
 | `preload.js` | The `window.api` surface, and nothing else crosses |
 | `src/installer.ts` | The door to everything below that writes a mod into the game folder or takes it out |
 | `src/installer-downloads.ts` | Getting a catalog archive onto this machine |
@@ -597,6 +599,7 @@ that location is not writable.
 | `src/net.ts`, `src/net-mirrors.ts`, `src/net-fetch.ts`, `src/net-download.ts`, `src/download-proxy.ts` | Downloads across the mirror chain: the hosts and how each is doing, an optional user proxy, a request along it, a file to disk checked against its hash |
 | `src/remote-config.ts`, `src/remote-config-format.ts` | The switches and notices this project can change after a release, the version ranges a switch can be held to, the signature over them, and the checks the fetched file goes through |
 | `src/ready-presets.ts`, `src/ready-presets-format.ts` | The ready-made presets (`config/presets.json`): fetched and checked like the remote config, kept between starts, cut down to catalog mods with a name in both languages |
+| `src/creator.ts` | The author's drafts of mods for the catalog, kept under userData, and one written out as an archive in the catalog's shape |
 | `tools/sign-catalog.js` | The signing side, for whoever holds a private key |
 | `src/safe-zip.ts` | Every foreign archive comes through here |
 | `src/steam.ts` | Finding Steam and the game, and proving the folder is really a game |
@@ -653,6 +656,7 @@ that location is not writable.
 | `renderer/app.ts`, `renderer/shell/*` | The window's start, and its own elements every screen reaches: the title bar, search, the switches, progress, drops, updates |
 | `renderer/api/*` | What every channel the window calls takes and answers |
 | `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*` | The four screens, in React |
+| `renderer/creator/*` | The author's window: drafts of mods for the catalog, opened from the account menu |
 | `renderer/views/*` | What each screen reads and does around its components |
 | `renderer/ui/*` | Dialogs, toasts, the media player, the install queue, shared chrome, and the focus and names a keyboard and a screen reader need (`a11y.ts`) |
 | `renderer/core/*` | What the screens share: the store, the router, the records, the categories, the 18+ question |

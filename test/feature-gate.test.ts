@@ -54,3 +54,17 @@ test('any language that is not Russian is asked for in English', () => {
   blocked('install');
   assert.deepEqual(seen, ['en']);
 });
+
+test('with Dota open nothing that writes the game goes through, and the answer says why', () => {
+  let open = true;
+  const blocked = createGate({
+    remoteConfig: { feature: () => ({ off: false }) },
+    settings: settingsWith({ uiLang: 'ru' }),
+    gameOpen: () => open,
+  });
+  const answer = blocked('toggle');
+  assert.equal(answer?.gameOpen, true);
+  assert.match(String(answer?.error), /Dota 2/);
+  open = false;
+  assert.equal(blocked('toggle'), null);
+});

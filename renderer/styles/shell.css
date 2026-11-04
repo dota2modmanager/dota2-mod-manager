@@ -412,6 +412,7 @@
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warning); flex-shrink: 0; }
 .dot.ok { background: var(--success); box-shadow: 0 0 8px rgba(52, 211, 153, 0.5); }
 .dot.bad { background: var(--danger); }
+.dot.warn { background: var(--warning); }
 /* launch + master-mods controls (status bar, right cluster) */
 .sb-right { margin-left: auto; display: flex; align-items: center; gap: 14px; flex-shrink: 0; padding-left: 8px; }
 
