@@ -42,8 +42,7 @@ import { releaseNotes } from './release-notes.ts';
 import { firstLink, handleDeepLink, installDesktopEntry } from './deep-links.ts';
 import { createMainWindow, clampZoom, workAreaFrom } from './main-window.ts';
 import { attachDevHarness } from './dev-harness.ts';
-import { createGameUpkeep, dotaIsRunning, launchWarning } from './game-upkeep.ts';
-import { createGameWatch } from './game-watch.ts';
+import { createGameUpkeep, createGameWatch, dotaIsRunning, launchWarning } from './game-upkeep.ts';
 import type { AppContext, AppProgress } from './app-context.ts';
 import type { BrowserWindow } from 'electron';
 
@@ -171,14 +170,11 @@ async function start(): Promise<void> {
     adoptImportedFiles: adopt.adoptImportedFiles, disableOtherCursors: cursors.disableOtherCursors, blocked: createGate({ remoteConfig, settings }) }, app);
 
   presets = services.presets;
-
   let updater: ReturnType<typeof createUpdater> | null = null;
   let patchWatcher: ReturnType<typeof createPatchWatcher> | null = null;
-  // The last few things the interface said went wrong, so a report can list them separately from
-  // two thousand lines of ordinary log (see diag:rendererError).
+  // what the interface last said went wrong, for a report to list apart from the log (diag:rendererError)
   const rendererErrors: unknown[] = [];
-  // Dota open or not, for the status bar and the channels that write the game (src/game-watch.ts)
-  const gameWatch = createGameWatch({ isRunning: () => dotaIsRunning(), send: (running) => win?.webContents.send('game:running', running) });
+  const gameWatch = createGameWatch({ isRunning: () => dotaIsRunning(), send: (running) => win?.webContents.send('game:running', running) }); // Dota open or not: the status bar and the gate
 
   /* Everything the IPC modules may ask for, in one place. What changes while the app runs (the
      window, the updater, the patch watcher, the upkeep's state) is a function read when needed. */
@@ -261,8 +257,8 @@ async function start(): Promise<void> {
   win = opened;
   attachDevHarness(opened, { diag, appRoot, quit: () => app.quit() });
   diag('createWindow done');
-  // launched BY a link (cold start): the renderer has to exist before it can be told
   opened.webContents.on('did-finish-load', () => { gameWatch.stop(); gameWatch.start(); });
+  // launched BY a link (cold start): the renderer has to exist before it can be told
   const cold = firstLink(process.argv);
   if (cold) opened.webContents.once('did-finish-load', () => takeLink(cold));
   presenceStatus.apply();

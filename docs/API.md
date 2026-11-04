@@ -2661,6 +2661,8 @@ Nothing is written while Dota is running. It holds gameinfo and its paks open, s
 half-succeed, and the client has already read the files anyway. The app says it is waiting and
 tries again after the game exits.
 
+Hands on from [`src/game-watch.ts`](#srcgame-watchts): `createGameWatch`.
+
 Hands on from [`src/game-repair.ts`](#srcgame-repairts): `REPAIR_RETRY_MS`, `PatchRepair`, `Stuck`.
 
 Hands on from [`src/steam-appstate.ts`](#srcsteam-appstatets): `launchWarning`.
