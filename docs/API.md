@@ -2702,7 +2702,9 @@ says so: the status bar names it, and the channels that write the game folder an
 Dota first" (src/feature-gate.ts) from the answer kept here, without asking the system again.
 
 The check runs a process list (src/game-upkeep.ts dotaIsRunning), which is async and never
-holds the main process.
+holds the main process. It runs every few seconds while the game is closed and every second while
+it is open, so the app lets go within a second of the game closing; a refusal asks again at once
+too, so the next click after the game is gone goes through.
 
 ### `GameWatch`
 
@@ -2715,13 +2717,14 @@ The watch: the last answer, and the switch that starts and stops asking.
 ### `createGameWatch`
 
 ```ts
-export function createGameWatch({ isRunning, send, everyMs = 5000 }: { isRunning: () => Promise<boolean>; send: (running: boolean) => void; everyMs?: number; }): GameWatch
+export function createGameWatch({ isRunning, send, everyMs = 5000, openMs = 1000 }: { isRunning: () => Promise<boolean>; send: (running: boolean) => void; everyMs?: number; openMs?: number; }): GameWatch
 ```
 
 ```
 @param isRunning  whether the Dota client is running, asked of the system
 @param send       told the new answer each time it changes
-@param everyMs    how often to ask
+@param everyMs    how often to ask while the game is closed
+@param openMs     how often to ask while it is open
 ```
 
 ## src/gamelang-folders.ts
