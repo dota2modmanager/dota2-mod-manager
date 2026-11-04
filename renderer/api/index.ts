@@ -6,6 +6,7 @@
  * the others of its group here. */
 import type { AppApi } from './app.ts';
 import type { ArcanaApi, BackgroundApi, CatalogApi, HudApi, RankApi, PaintApi, MapLooksApi, Preview3dApi, SoundsApi, CompilerApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';
+import type { CreatorApi } from './creator.ts';
 import type { ModsApi, PacksApi } from './mods.ts';
 
 export interface Api extends AppApi {
@@ -32,6 +33,8 @@ export interface Api extends AppApi {
   map: MapLooksApi;
   /** sounds of the user's own on a hero's events */
   sounds: SoundsApi;
+  /** an author's drafts of mods for the catalog */
+  creator: CreatorApi;
   /** the item builder's 3D preview */
   preview3d: Preview3dApi;
   preview: PreviewApi;

@@ -3,7 +3,7 @@
   "measured": "2026-10-03",
   "watchAt": 300,
   "files": {
-    "renderer/i18n.js": 957,
-    "renderer/locales/zh-CN-app.js": 312
+    "renderer/i18n.js": 990,
+    "renderer/locales/zh-CN-app.js": 345
   }
 }

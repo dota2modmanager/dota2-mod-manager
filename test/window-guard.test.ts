@@ -162,6 +162,7 @@ const VALID: Record<string, unknown[][]> = {
   'presets:export': [[ID, { skip: [ID], author: 'me', note: 'gg' }]], 'presets:importDialog': [[]],
   'presets:importFile': [['C:\\Users\\me\\Downloads\\build.d2mm']],
   'presets:ready': [[]], 'presets:takeReady': [['the-international']],
+  'creator:list': [[]], 'creator:save': [[null, { name: 'Glow' }]], 'creator:attach': [['00000000-0000-0000-0000-000000000000', 0, 'vpk']], 'creator:remove': [['00000000-0000-0000-0000-000000000000']], 'creator:export': [['00000000-0000-0000-0000-000000000000']],
   'pumpkin:redeem': [['K7QX-M2PA-9HRT-WZ4N']], 'pumpkin:prizeAgain': [[]], 'pumpkin:hasPrize': [[]],
   'config:state': [[]], 'config:noticeSeen': [['notice-2026-10']],
   'patch:state': [[]], 'patch:repairState': [[]], 'patch:repairNow': [[]], 'patch:repairApp': [[]], 'patch:repairSeen': [[]], 'patch:setEnabled': [[true]],

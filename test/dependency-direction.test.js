@@ -35,6 +35,7 @@ const ELECTRON_USERS = [
   'src/discord-auth.ts',
   'src/electron.ts',
   'src/ipc-compiler.ts',
+  'src/ipc-creator.ts',
   'src/ipc-diagnostics.ts',
   'src/ipc-foreign.ts',
   'src/ipc-game.ts',
