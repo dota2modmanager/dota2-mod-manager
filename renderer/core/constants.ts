@@ -71,6 +71,8 @@ const COSMETIC_SLOTS: Record<string, SlotMeta> = {
   announcer: { label: 'Комментатор', icon: 'campaign' },
   mega_kills: { label: 'Мега-килл', icon: 'record_voice_over' },
   streak_effect: { label: 'Серия убийств', icon: 'local_fire_department' },
+  multikill_banner: { label: 'Баннер мультикилла', icon: 'celebration' },
+  tormentor: { label: 'Торментор', icon: 'deployed_code' },
 };
 export const COSMETIC_PREFIX = 'cosmetic:';
 export function cosmeticMeta(slot: string): SlotMeta {

@@ -70,6 +70,14 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
         const rec = cosmeticRecordFor(slot);
         slots.push({ slot, base: base.id, picked: rec ? rec.itemId : null, recordId: rec ? rec.id : null, options });
       }
+      // the banner and the Tormentor have no free item: the picked one becomes it (schema.OWNERLESS_SLOTS)
+      for (const slot of schema.OWNERLESS_SLOTS) {
+        if (seen.has(slot)) continue;
+        const options = schema.cosmeticOptions(text, slot);
+        if (!options.length) continue;
+        const rec = cosmeticRecordFor(slot);
+        slots.push({ slot, base: '', picked: rec ? rec.itemId : null, recordId: rec ? rec.id : null, options });
+      }
       yield PAUSE;
       const itemSlots = yield* itemBuilder.itemSlotsSteps(text);
       yield PAUSE;

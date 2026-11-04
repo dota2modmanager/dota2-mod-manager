@@ -25,7 +25,7 @@ export { blockBounds, eachChild } from './schema-kv.ts';
 export type { Bounds, KvChild } from './schema-kv.ts';
 export {
   SCHEMA_REL, findItem, itemFields, listItems, listItemsSteps, toUtf8, itemSearchText, inferredItemSlot, baseItemFor,
-  cosmeticOptions, readGameSchema, gameSchemaStamp,
+  cosmeticOptions, OWNERLESS_SLOTS, ownerlessPatch, readGameSchema, gameSchemaStamp,
 } from './schema-items.ts';
 export type { SchemaItem, GameSchema } from './schema-items.ts';
 export {

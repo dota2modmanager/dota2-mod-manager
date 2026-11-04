@@ -225,13 +225,32 @@ export function baseItemFor(text: string, slot: string | null | undefined): Sche
 }
 
 /**
+ * The slots the game has no free item for, where it puts on whichever item is flagged as the free
+ * one: the multikill banner (two banners, neither with visuals: the game draws the one worn) and the
+ * Tormentor. A look there is the picked item itself with "baseitem" set, the way ArdysaModsTools
+ * does it, and its options need no visuals block.
+ */
+export const OWNERLESS_SLOTS = ['multikill_banner', 'tormentor'];
+
+/** An ownerless slot's look: the picked item's block with "baseitem" "1", or null when it is not in that slot. */
+export function ownerlessPatch(text: string, slot: string, itemId: string): string | null {
+  if (!OWNERLESS_SLOTS.includes(slot)) return null;
+  const item = listItems(text).find((i) => i.id === itemId);
+  if (!item || slotOf(item) !== slot) return null;
+  const block = text.slice(item.start, item.end).replace(/[ \t]*"baseitem"[ \t]+"[^"]*"[ \t]*\r?\n/i, '');
+  const close = block.lastIndexOf('}');
+  return `${block.slice(0, close).trimEnd()}\r\n\t\t\t"baseitem"\t\t"1"\r\n\t\t${block.slice(close)}`;
+}
+
+/**
  * What can be put on that base item, read straight out of the installed game: anything Valve
  * adds to the schema later shows up on its own, without an app update.
  * @returns name is the schema's own English name, sorted A-Z
  */
 export function cosmeticOptions(text: string, slot: string): { id: string; name: string }[] {
+  const ownerless = OWNERLESS_SLOTS.includes(slot);
   return listItems(text)
-    .filter((i) => slotOf(i) === slot && !i.baseitem && i.hasVisuals && i.name)
+    .filter((i) => slotOf(i) === slot && !i.baseitem && (i.hasVisuals || ownerless) && i.name)
     .map((i) => ({ id: i.id, name: toUtf8(i.name) }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
