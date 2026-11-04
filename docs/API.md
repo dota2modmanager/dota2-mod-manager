@@ -39,6 +39,7 @@ the code, not in this page.
 | [`src/cli.ts`](#srcclits) | The command line (issue #436): put a preset on, list the mods, or switch them all off, with no |
 | [`src/cosmetic-names.ts`](#srccosmetic-namests) | Display names come from Valve's installed localization, while schema names remain the keys |
 | [`src/courier-models.ts`](#srccourier-modelsts) | A courier look's models, under the Default Courier's paths. |
+| [`src/creator.ts`](#srccreatorts) | The author's drafts (issue #236, step 1): a mod being made for the catalog, kept on the author's |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/deep-links.ts`](#srcdeep-linksts) | d2mm:// links: a preset or a single mod clicked anywhere on the system, and on Linux, telling |
 | [`src/dev-harness.ts`](#srcdev-harnessts) | The switches that let a script drive the window: a screenshot after some clicks (MM_SHOT and |
@@ -1750,6 +1751,57 @@ a lobby would miss, not the look.
 ```
 @param log  a model left out, and why
 ```
+
+## src/creator.ts
+
+The author's drafts (issue #236, step 1): a mod being made for the catalog, kept on the author's
+disk until it is ready, and then written out as one archive in the catalog's own shape for the
+catalog's maintainer. Nothing is uploaded: the catalog is not ours to write to, and an upload
+service is the second step, decided with its maintainer.
+
+A draft is a folder under userData/creator/<id>/: draft.json and the files it names, copied in so
+the draft survives the originals being moved. Each style is a look of the mod with its own VPK
+and picture, the way the catalog lists styles.
+
+### `DraftStyle`
+
+```ts
+export interface DraftStyle { label: string; vpk: string | null; picture: string | null }
+```
+
+One look of the mod: its label, its VPK and its picture, by file name inside the draft.
+
+### `Draft`
+
+```ts
+export interface Draft
+```
+
+A mod being made for the catalog.
+
+### `DraftFields`
+
+```ts
+export type DraftFields = Partial<Pick<Draft, 'name' | 'category' | 'hero' | 'description' | 'author' | 'replaces'>> & { styles?: { label: string }[] }
+```
+
+What the form may change; the rest is the store's.
+
+### `createCreator`
+
+```ts
+export function createCreator({ userDataDir }: { userDataDir: string })
+```
+
+The drafts under userDataDir/creator, and the archive one of them becomes.
+
+### `Creator`
+
+```ts
+export type Creator = ReturnType<typeof createCreator>
+```
+
+The store createCreator makes.
 
 ## src/cursors.ts
 

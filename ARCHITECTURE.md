@@ -597,6 +597,7 @@ that location is not writable.
 | `src/net.ts`, `src/net-mirrors.ts`, `src/net-fetch.ts`, `src/net-download.ts`, `src/download-proxy.ts` | Downloads across the mirror chain: the hosts and how each is doing, an optional user proxy, a request along it, a file to disk checked against its hash |
 | `src/remote-config.ts`, `src/remote-config-format.ts` | The switches and notices this project can change after a release, the version ranges a switch can be held to, the signature over them, and the checks the fetched file goes through |
 | `src/ready-presets.ts`, `src/ready-presets-format.ts` | The ready-made presets (`config/presets.json`): fetched and checked like the remote config, kept between starts, cut down to catalog mods with a name in both languages |
+| `src/creator.ts` | The author's drafts of mods for the catalog, kept under userData, and one written out as an archive in the catalog's shape |
 | `tools/sign-catalog.js` | The signing side, for whoever holds a private key |
 | `src/safe-zip.ts` | Every foreign archive comes through here |
 | `src/steam.ts` | Finding Steam and the game, and proving the folder is really a game |
@@ -653,6 +654,7 @@ that location is not writable.
 | `renderer/app.ts`, `renderer/shell/*` | The window's start, and its own elements every screen reaches: the title bar, search, the switches, progress, drops, updates |
 | `renderer/api/*` | What every channel the window calls takes and answers |
 | `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*` | The four screens, in React |
+| `renderer/creator/*` | The author's window: drafts of mods for the catalog, opened from the account menu |
 | `renderer/views/*` | What each screen reads and does around its components |
 | `renderer/ui/*` | Dialogs, toasts, the media player, the install queue, shared chrome, and the focus and names a keyboard and a screen reader need (`a11y.ts`) |
 | `renderer/core/*` | What the screens share: the store, the router, the records, the categories, the 18+ question |

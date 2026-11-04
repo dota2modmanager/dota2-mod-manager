@@ -20,6 +20,7 @@ import { registerPreview3dIpc } from './ipc-preview3d.ts';
 import { registerBackgroundIpc } from './ipc-background.ts';
 import { registerHudIpc } from './ipc-hud.ts';
 import { registerPaintIpc } from './ipc-paint.ts';
+import { registerCreatorIpc } from './ipc-creator.ts';
 
 /** Register every channel the window can call. */
 export function registerIpc(ctx: AppContext): void {
@@ -41,4 +42,5 @@ export function registerIpc(ctx: AppContext): void {
   registerBackgroundIpc(ctx);
   registerHudIpc(ctx);
   registerPaintIpc(ctx);
+  registerCreatorIpc(ctx);
 }

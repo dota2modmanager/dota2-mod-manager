@@ -16,6 +16,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import * as compiler from '../src/ipc-compiler.ts';
+import * as creator from '../src/ipc-creator.ts';
 import * as diagnostics from '../src/ipc-diagnostics.ts';
 // the grid channels look for Steam where it installs by default: not the real one on this machine
 import './helpers/no-steam.ts';
@@ -40,7 +41,7 @@ import { registerAgainst } from './helpers/fake-electron.ts';
 const ROOT = path.resolve(import.meta.dirname, '..');
 
 const MODULES: Record<string, Record<string, unknown>> = {
-  'ipc-compiler.ts': compiler, 'ipc-diagnostics.ts': diagnostics, 'ipc-foreign.ts': foreign, 'ipc-game.ts': game, 'ipc-grid.ts': grid, 'ipc-library.ts': library,
+  'ipc-compiler.ts': compiler, 'ipc-creator.ts': creator, 'ipc-diagnostics.ts': diagnostics, 'ipc-foreign.ts': foreign, 'ipc-game.ts': game, 'ipc-grid.ts': grid, 'ipc-library.ts': library,
   'ipc-misc.ts': misc, 'ipc-mods.ts': mods, 'ipc-packs.ts': packs,
   'ipc-presets.ts': presets, 'ipc-preview3d.ts': preview3d, 'ipc-pumpkin.ts': pumpkin, 'ipc-settings.ts': settings, 'ipc-sounds.ts': sounds, 'ipc-background.ts': background, 'ipc-hud.ts': hud, 'ipc-paint.ts': paint, 'ipc-window.ts': windowIpc,
 };

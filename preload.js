@@ -116,6 +116,13 @@ contextBridge.exposeInMainWorld('api', {
     add: (hero, event, mode, volume, wav, label) => ipcRenderer.invoke('sounds:add', hero, event, mode, volume, wav, label),
     remove: (hero, event) => ipcRenderer.invoke('sounds:remove', hero, event),
   },
+  creator: {
+    list: () => ipcRenderer.invoke('creator:list'),
+    save: (id, fields) => ipcRenderer.invoke('creator:save', id, fields),
+    attach: (id, style, kind) => ipcRenderer.invoke('creator:attach', id, style, kind),
+    remove: (id) => ipcRenderer.invoke('creator:remove', id),
+    export: (id) => ipcRenderer.invoke('creator:export', id),
+  },
   hud: {
     state: () => ipcRenderer.invoke('hud:state'),
     install: (scale) => ipcRenderer.invoke('hud:install', scale),

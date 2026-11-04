@@ -8,6 +8,8 @@ import { confirmDialog } from '../ui/dialog.ts';
 import { bindHelp } from '../ui/help.ts';
 import { bindHotkeys } from '../ui/hotkeys.ts';
 import { loadCatalog } from '../views/catalog.ts';
+import { openCreator } from '../views/creator.ts';
+import { openMenu } from '../ui/menu.ts';
 import { byId } from './dom.ts';
 import type { AppSettings } from '../api/app.ts';
 
@@ -46,7 +48,7 @@ export function paintAccount(): void {
   if (!s.discordConfigured) { host.innerHTML = ''; return; }
   const acc = s.account;
   host.innerHTML = acc
-    ? `<button class="tb-user" id="tbUserBtn" title="${esc(L`Выйти из аккаунта`)}">
+    ? `<button class="tb-user" id="tbUserBtn" title="${esc(L`Аккаунт`)}">
          ${acc.avatar ? `<img src="${esc(acc.avatar)}" alt="">` : '<span class="ms">person</span>'}
          <span class="tb-user-name">${esc(acc.username)}</span>
        </button>`
@@ -63,11 +65,20 @@ export function paintAccount(): void {
     state.settings = await window.api.settings.get();
     paintAccount();
   });
-  document.getElementById('tbUserBtn')?.addEventListener('click', async () => {
-    if (!await confirmDialog(L`Выйти из аккаунта «${acc?.username}»?`, { okLabel: L`Выйти`, danger: false })) return;
-    await window.api.account.signOut();
-    state.settings = await window.api.settings.get();
-    paintAccount();
+  // the account's menu: the author's drafts (views/creator.ts), and signing out
+  document.getElementById('tbUserBtn')?.addEventListener('click', (e) => {
+    const btn = e.currentTarget as HTMLElement;
+    const r = btn.getBoundingClientRect();
+    openMenu([
+      { label: L`Кабинет автора`, icon: 'edit_note', onPick: () => void openCreator(btn) },
+      { separator: true },
+      { label: L`Выйти`, icon: 'logout', onPick: async () => {
+        if (!await confirmDialog(L`Выйти из аккаунта «${acc?.username}»?`, { okLabel: L`Выйти`, danger: false })) return;
+        await window.api.account.signOut();
+        state.settings = await window.api.settings.get();
+        paintAccount();
+      } },
+    ], r.left, r.bottom + 4);
   });
 }
 // drawn in whichever language was on when it was drawn (see applyLanguage in ui/language.ts)
