@@ -21,12 +21,16 @@ interface FeatureSwitches {
   feature(name: string, lang: 'ru' | 'en'): { off: boolean; note?: string };
 }
 
-/** @returns the answer to send back, or null to carry on */
-export function createGate({ remoteConfig, settings }: {
-  remoteConfig: FeatureSwitches; settings: Pick<Settings, 'get'>;
-}): (name: string) => { error: string } | null {
+/**
+ * @param gameOpen  whether Dota is open (src/game-watch.ts): the game holds its files, so nothing is written
+ * @returns the answer to send back, or null to carry on
+ */
+export function createGate({ remoteConfig, settings, gameOpen = () => false }: {
+  remoteConfig: FeatureSwitches; settings: Pick<Settings, 'get'>; gameOpen?: () => boolean;
+}): (name: string) => { error: string; gameOpen?: true } | null {
   const uiLang = () => (settings.get('uiLang') === 'ru' ? 'ru' : 'en');
   return (name) => {
+    if (gameOpen()) return { error: t('Dota 2 открыта. Закрой игру, и моды можно будет ставить и переключать'), gameOpen: true };
     const f = remoteConfig.feature(name, uiLang());
     return f.off ? { error: f.note || t('Эта возможность временно отключена') } : null;
   };

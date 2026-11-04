@@ -43,6 +43,7 @@ import { firstLink, handleDeepLink, installDesktopEntry } from './deep-links.ts'
 import { createMainWindow, clampZoom, workAreaFrom } from './main-window.ts';
 import { attachDevHarness } from './dev-harness.ts';
 import { createGameUpkeep, dotaIsRunning, launchWarning } from './game-upkeep.ts';
+import { createGameWatch } from './game-watch.ts';
 import type { AppContext, AppProgress } from './app-context.ts';
 import type { BrowserWindow } from 'electron';
 
@@ -176,6 +177,8 @@ async function start(): Promise<void> {
   // The last few things the interface said went wrong, so a report can list them separately from
   // two thousand lines of ordinary log (see diag:rendererError).
   const rendererErrors: unknown[] = [];
+  // Dota open or not, for the status bar and the channels that write the game (src/game-watch.ts)
+  const gameWatch = createGameWatch({ isRunning: () => dotaIsRunning(), send: (running) => win?.webContents.send('game:running', running) });
 
   /* Everything the IPC modules may ask for, in one place. What changes while the app runs (the
      window, the updater, the patch watcher, the upkeep's state) is a function read when needed. */
@@ -184,7 +187,7 @@ async function start(): Promise<void> {
     toolchain, compiler, toolsKeeper, keepTools, remoteConfig, readyPresets: services.readyPresets, presets, arcana, mapLooks: services.mapLooks, menuBackground: services.menuBackground, hudScale: services.hudScale, heroPaint: services.heroPaint, abilitySounds: services.abilitySounds, buildUndo: services.buildUndo, heroPreview: services.heroPreview, discordAuth, portableUpdater, autoUpdater,
     // One gate, handed to every module that guards a channel with it. Two copies is how installing
     // broke once: the call went to one file and the helper stayed in the other.
-    blocked: createGate({ remoteConfig, settings }),
+    blocked: createGate({ remoteConfig, settings, gameOpen: () => gameWatch.running() }),
     settingsView: settingsViewFor({
       settings, library, discordAuth, validateGamePath,
       langFolder: () => upkeep.langFolder(),
@@ -259,6 +262,7 @@ async function start(): Promise<void> {
   attachDevHarness(opened, { diag, appRoot, quit: () => app.quit() });
   diag('createWindow done');
   // launched BY a link (cold start): the renderer has to exist before it can be told
+  opened.webContents.on('did-finish-load', () => { gameWatch.stop(); gameWatch.start(); });
   const cold = firstLink(process.argv);
   if (cold) opened.webContents.once('did-finish-load', () => takeLink(cold));
   presenceStatus.apply();

@@ -88,6 +88,7 @@ const EN = {
   'Путь к Dota 2 не задан': 'Dota 2 path is not set',
   // ---- item schema / search-path patch ----
   'Закрой Dota 2 перед изменением файлов игры': 'Close Dota 2 before changing game files',
+  'Dota 2 открыта. Закрой игру, и моды можно будет ставить и переключать': 'Dota 2 is open. Close the game to install and switch mods',
   'Не найден {0}': '{0} not found',
   'items_game.txt не найден в pak01 игры': 'items_game.txt is not in the game\'s pak01',
   'items_game: незакрытая кавычка': 'items_game: unterminated quote',
