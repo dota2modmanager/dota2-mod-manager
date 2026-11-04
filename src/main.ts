@@ -198,7 +198,7 @@ async function start(): Promise<void> {
     applyPresenceSetting: () => presenceStatus.apply(),
     setPresenceView: (view) => presenceStatus.setView(view),
     // the "What's new" text for a version, out of the changelogs shipped with the build
-    releaseNotes: (version, lang) => releaseNotes(version, lang, appRoot),
+    releaseNotes: (version, lang, seen) => releaseNotes(version, lang, appRoot, seen),
     repairAfterPatch: (reason) => upkeep.repairAfterPatch(reason),
     setPatchRepair: (next) => upkeep.setPatchRepair(next),
     importVpkPaths: services.importVpkPaths, importVpkBuffers: services.importVpkBuffers,

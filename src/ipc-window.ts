@@ -73,7 +73,7 @@ export function registerWindowIpc({
   ipcMain.handle('app:notes', (e, lang) => {
     const version = app.getVersion();
     const seen = settings.get('lastSeenVersion');
-    return { version, notes: releaseNotes(version, lang), unseen: !!seen && seen !== version };
+    return { version, notes: releaseNotes(version, lang, seen), unseen: !!seen && seen !== version };
   });
 
   // the GitHub star count on Home (src/repo-stars.ts), made on first ask: userData is set by then

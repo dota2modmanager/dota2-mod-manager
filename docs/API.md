@@ -155,7 +155,7 @@ the code, not in this page.
 | [`src/recolor-layers.ts`](#srcrecolor-layersts) | A hero in colours of the user's choosing, part by part (issue #422): each ability's effect and its |
 | [`src/recolor-sets.ts`](#srcrecolor-setsts) | What src/recolor.ts can recolour: each item's particle and material folders, the colour of the |
 | [`src/recolor.ts`](#srcrecolorts) | An item's effects in a colour of the user's choosing, built from the game's own files. |
-| [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
+| [`src/release-notes.ts`](#srcrelease-notests) | The changelog for the "What's new" window and Home. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
 | [`src/repo-stars.ts`](#srcrepo-starsts) | How many stars the project has on GitHub, for the Home screen (renderer/home/). |
@@ -8850,7 +8850,13 @@ A set recoloured into one VPK, from the game's pak01, for a hero whose item brin
 
 ## src/release-notes.ts
 
-The changelog section for one version, for the "What's new" window.
+The changelog for the "What's new" window and Home.
+
+Not only the version now running: a fix shipped an hour after a big release would otherwise
+replace that release's notes before anybody had read them. So the notes run from the start of
+this line (3.0.0 for 3.0.1, 3.1.0 for 3.1.2) up to now, newest first, and further back to the
+version the user last saw, for whoever skipped a few. Each version under its own heading once
+there is more than one.
 
 The same files CI puts on the release page ship inside the build (package.json, build.files),
 so the window works offline and needs no GitHub call. A Russian interface reads
@@ -8868,16 +8874,34 @@ export function changelogSection(text: string, version: string): string | null
 
 The section's text for `version` out of one changelog, or null when it has none.
 
+### `changelogVersions`
+
+```ts
+export function changelogVersions(text: string): string[]
+```
+
+The release versions a changelog has a heading for, betas left out.
+
+### `notesRange`
+
+```ts
+export function notesRange(versions: string[], version: string, seen: string | null): string[]
+```
+
+The versions whose notes go with `version`: its line from x.y.0, and anything newer than `seen`.
+
 ### `releaseNotes`
 
 ```ts
-export function releaseNotes(version: string, lang: string, appPath: string): string | null
+export function releaseNotes(version: string, lang: string, appPath: string, seen: string | null = null): string | null
 ```
 
-The notes for `version` in the interface's language when there is a translation.
+The notes for `version` in the interface's language when there is a translation, with the
+versions before it that go with it (notesRange), each under "## <version>" when there are several.
 
 ```
 @param appPath  where the build's files are (app.getAppPath())
+@param seen     the version whose notes the user saw last, or null
 @returns markdown, or null when this version has no section anywhere
 ```
 
