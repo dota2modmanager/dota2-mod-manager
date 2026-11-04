@@ -19,19 +19,21 @@ function trouble(): boolean {
 }
 
 export function GameFilesBlock({ i, everyone, onEveryone }: { i: number; everyone: boolean; onEveryone: () => void }) {
-  const [on, setOn] = useState(Boolean(state.settings?.schemaPatch));
+  // read from the settings on every draw, not kept here: a screen drawn again (a language change
+  // remounts it) from a copy taken mid-switch showed the table off while it was on (2026-11-04)
+  const on = Boolean(state.settings?.schemaPatch);
   const [busy, setBusy] = useState(false);
 
   const flip = async () => {
     if (busy) return;
     setBusy(true);
     try {
-      if (!on) setOn(await allowItemTable());
+      if (!on) await allowItemTable();
       else if (await confirmDialog(L`Вернуть файлы игры к оригиналу? Виды из игры и эффекты модов перестанут работать, VPK-моды останутся.`, { okLabel: L`Вернуть`, danger: false })) {
-        setOn(!(await setItemTable(false)));
+        await setItemTable(false);
       }
     } finally {
-      setBusy(false);
+      setBusy(false); // draws again, with what setItemTable left in the settings
     }
   };
 
