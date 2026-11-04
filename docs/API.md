@@ -60,6 +60,7 @@ the code, not in this page.
 | [`src/game-icons.ts`](#srcgame-iconsts) | Item pictures taken from the installed game instead of scraped off a wiki. |
 | [`src/game-repair.ts`](#srcgame-repairts) | Putting the game back after something else changed it (src/game-upkeep.ts runs this at start |
 | [`src/game-upkeep.ts`](#srcgame-upkeepts) | Keeping the game folder the way the user left it, while other programs change it underneath. |
+| [`src/game-watch.ts`](#srcgame-watchts) | Is Dota open right now, asked every few seconds and told to the window when it changes. |
 | [`src/gamelang-folders.ts`](#srcgamelang-foldersts) | Making and moving the dota_<lang> folders (src/gamelang.ts has the rule): whether a voice pack is |
 | [`src/gamelang-steam.ts`](#srcgamelang-steamts) | What Steam says about the game's language (src/gamelang.ts has the rule): the -language in the |
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
@@ -2354,10 +2355,11 @@ One definition, handed to whoever needs it, so there is no second copy to leave 
 ### `createGate`
 
 ```ts
-export function createGate({ remoteConfig, settings }: { remoteConfig: FeatureSwitches; settings: Pick<Settings, 'get'>; }): (name: string) => { error: string } | null
+export function createGate({ remoteConfig, settings, gameOpen = () => false }: { remoteConfig: FeatureSwitches; settings: Pick<Settings, 'get'>; gameOpen?: () => boolean; }): (name: string) => { error: string; gameOpen?: true } | null
 ```
 
 ```
+@param gameOpen  whether Dota is open (src/game-watch.ts): the game holds its files, so nothing is written
 @returns the answer to send back, or null to carry on
 ```
 
@@ -2686,6 +2688,39 @@ export function createGameUpkeep({ settings, installer, library, schemaService, 
 ```
 
 _No description in the source._
+
+## src/game-watch.ts
+
+Is Dota open right now, asked every few seconds and told to the window when it changes.
+
+While the game runs it holds its paks and gameinfo open, and anything written then either fails
+halfway on Windows or waits for the next start to be read. The app stays open beside the game
+(the catalog, favourites and presets are worth browsing with Dota up), so instead of closing it
+says so: the status bar names it, and the channels that write the game folder answer "close
+Dota first" (src/feature-gate.ts) from the answer kept here, without asking the system again.
+
+The check runs a process list (src/game-upkeep.ts dotaIsRunning), which is async and never
+holds the main process.
+
+### `GameWatch`
+
+```ts
+export interface GameWatch
+```
+
+The watch: the last answer, and the switch that starts and stops asking.
+
+### `createGameWatch`
+
+```ts
+export function createGameWatch({ isRunning, send, everyMs = 5000 }: { isRunning: () => Promise<boolean>; send: (running: boolean) => void; everyMs?: number; }): GameWatch
+```
+
+```
+@param isRunning  whether the Dota client is running, asked of the system
+@param send       told the new answer each time it changes
+@param everyMs    how often to ask
+```
 
 ## src/gamelang-folders.ts
 
