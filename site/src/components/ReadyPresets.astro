@@ -1,0 +1,57 @@
+---
+/**
+ * The ready-made presets (src/lib/presets.ts), the same list the app's Presets screen offers: each a
+ * card with its mods' pictures, what it is, and two links. One opens it in the app, and the other
+ * is the preset's page, which lists the mods for somebody who does not have the app yet.
+ */
+import type { Lang } from '../i18n/ui';
+import { categoryText } from '../i18n/categories';
+import { thumbOf, groupOf } from '../lib/catalog';
+import { readyPresets } from '../lib/presets';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const ru = lang === 'ru';
+const COVERS = 4;
+const count = (n: number) => (ru
+  ? `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'мод' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'мода' : 'модов'}`
+  : `${n} mod${n === 1 ? '' : 's'}`);
+---
+
+{readyPresets.length > 0 && (
+  <section class="ready" id="presets" aria-labelledby="ready-title">
+    <h2 id="ready-title">{ru ? 'Готовые пресеты' : 'Ready-made presets'}</h2>
+    <p class="prose">{ru
+      ? 'Наборы модов, которые ставятся одной кнопкой. Они же лежат в приложении, в разделе «Пресеты».'
+      : 'Sets of mods you install with one button. The app has them too, under Presets.'}</p>
+    <ul class="ready-list">
+      {readyPresets.map((p) => {
+        const covers = p.mods.map((m) => m.mod?.img).filter((img): img is string => Boolean(img)).slice(0, COVERS);
+        const code = p.code[lang];
+        return (
+          <li class="ready-card">
+            <div class="ready-covers" aria-hidden="true">
+              {covers.map((img) => <img src={thumbOf(img)} alt="" loading="lazy" decoding="async" width="400" height="225" />)}
+            </div>
+            <div class="ready-body">
+              <h3>{p.name[lang]} <small>{count(p.mods.length)}</small></h3>
+              <p>{p.about[lang]}</p>
+              <ul class="ready-mods">
+                {p.mods.map((m) => (
+                  <li data-group={groupOf(m.cat)}>
+                    {m.mod ? <a href={`${ru ? '/ru' : ''}/mods/${m.mod.key}/`}>{m.name}</a> : m.name}
+                    <small>{categoryText(lang, m.cat).name}</small>
+                  </li>
+                ))}
+              </ul>
+              <div class="ready-actions">
+                <a class="btn" href={`d2mm://preset/${code}`}>{ru ? 'Открыть в приложении' : 'Open in the app'}</a>
+                <a class="btn ghost" href={`/p/#${code}`}>{ru ? 'Ссылка на пресет' : 'Preset link'}</a>
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
+)}
