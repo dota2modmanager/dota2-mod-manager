@@ -186,7 +186,8 @@ async function itemTable(sim, on, { onAsk } = {}) {
   // a refusal (the game holds gameinfo open) is a red toast that fades in a few seconds, so it is
   // read here, while it is still up, rather than by the caller after the wait
   const flipped = `document.getElementById('itemTableSwitch').getAttribute('aria-checked') === '${on}'`;
-  await sim.until(`${flipped} || document.querySelector('#toasts .toast.error:not([data-sim-old])')`, 15000);
+  // turning it off rebuilds the packs and puts both files back; a CI runner took longer than 15 s
+  await sim.until(`${flipped} || document.querySelector('#toasts .toast.error:not([data-sim-old])')`, 45000);
   const said = await sim.js(`[...document.querySelectorAll('#toasts .toast')].map((t) => t.textContent.trim()).join(' | ')`);
   return { asked, ok: Boolean(await sim.js(flipped)), said };
 }
