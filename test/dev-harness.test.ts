@@ -62,6 +62,16 @@ test('the steps run in the order a person would take them, and the picture is wr
   assert.equal(said.at(-1), 'capture done 1360x860');
 });
 
+test('a category with no view first opens the section its rail belongs to, since the window opens on Home', async (t) => {
+  for (const [cat, view] of [['heroes', 'catalog'], ['cosmetic:axe', 'items']]) {
+    const w = fakeWindow();
+    await takeShot(w.win, { MM_SHOT: path.join(tmp(t), 's.png'), MM_CAT: cat }, { diag: () => {}, wait: now });
+    const js = w.log.filter((l) => l.startsWith('js '));
+    assert.match(js[0], new RegExp(`data-view="${view}"`), cat);
+    assert.match(js[1], new RegExp(`data-cat="${cat}"`), cat);
+  }
+});
+
 test('a quiet run never brings the window forward', async (t) => {
   const w = fakeWindow();
   await takeShot(w.win, { MM_SHOT: path.join(tmp(t), 's.png'), MM_QUIET: '1' }, { diag: () => {}, wait: now });
