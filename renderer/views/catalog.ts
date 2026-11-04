@@ -163,7 +163,8 @@ async function renderCatalog(): Promise<void> {
   const cat = state.catalog;
   if (!cat || cat.error) {
     bannerLayer().replaceChildren();
-    await paint(() => showScreen(cat
+    // paint() may run this a frame late: a "Loading" landing after the catalog drew stayed for good
+    await paint(() => state.catalog === cat && showScreen(cat
       ? { kind: 'offline', offline: Boolean(cat.offline), error: String(cat.error) }
       : { kind: 'loading' }, actions));
     return;
