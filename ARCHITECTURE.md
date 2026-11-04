@@ -546,7 +546,7 @@ that location is not writable.
 | `src/lz4.ts` | LZ4 block format: decoding, chained frames, and literals-only encoding |
 | `src/material.ts` | A material's expressions (KV3 blobs or NTRO): a read of `$GemColor` swapped for a constant |
 | `src/resource.ts` | Compiled resources at the block level: a block replaced, the resources a file names (RERL) added to |
-| `src/recolor.ts` | An item's particles and materials in a chosen colour, out of the game's own pak01, as one VPK: what its gem colours, pointed at the chosen colour ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118)) |
+| `src/recolor.ts`, `src/recolor-sets.ts` | An item's particles and materials in a chosen colour, out of the game's own pak01, as one VPK: what its gem colours, pointed at the chosen colour ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118)), and the items it knows, the immortals with no gem baked in ([#392](https://github.com/dota2modmanager/dota2-mod-manager/issues/392)) |
 | `src/gem-colors.ts` | The game's own prismatic gem colours, read out of the "colors" section of items_game, for a colour picker to offer and for `npm run recolor -- --gem` ([#392](https://github.com/dota2modmanager/dota2-mod-manager/issues/392)) |
 | `src/unusual-effects.ts` | The game's unusual and ethereal effects out of items_game (`attribute_controlled_attached_particles`), with the particle, how it attaches and the English name of each, for drawing one with a file mod ([#393](https://github.com/dota2modmanager/dota2-mod-manager/issues/393)) |
 | `src/arcana.ts` | An arcana as a mod built from the game's own files, for a player who has not got it: its models, glow and pictures under the plain hero's names, its colour written in |

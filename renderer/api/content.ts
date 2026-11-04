@@ -128,6 +128,8 @@ export interface ArcanaWindow {
   available: boolean;
   picture: string | null;
   installed: { id: string; color: [number, number, number]; mode: ArcanaMode; enabled: boolean } | null;
+  /** only the colour is built, for an item the hero wears (an immortal with no gem of its own) */
+  colorOnly: boolean;
 }
 
 /** A prismatic gem's colour, as items_game has it (src/gem-colors.ts). */

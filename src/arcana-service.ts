@@ -49,6 +49,8 @@ export interface ArcanaWindow {
   /** the arcana's own picture out of the game, as a data URL */
   picture: string | null;
   installed: { id: string; color: Rgb; mode: ArcanaMode; enabled: boolean } | null;
+  /** only the colour can be built: an item the player wears, their own or the item builder's */
+  colorOnly: boolean;
 }
 
 /** What the window shows: each arcana, and the game's prismatic gems to offer as colours. */
@@ -56,7 +58,7 @@ export interface ArcanaState { arcanas: ArcanaWindow[]; gems: GemColor[] }
 
 /** The arcanas the window builds: the picture it shows, the file whose presence says the game has
  *  it, and the base the whole arcana is built from once it is here (src/arcana-bases.ts). */
-export const WINDOWS: Record<string, { picture: string; model: string; base?: string }> = {
+export const WINDOWS: Record<string, { picture: string; model: string; base?: string; colorOnly?: boolean }> = {
   'terrorblade-arcana': {
     picture: 'panorama/images/econ/heroes/terrorblade/arcana_terrorblade_png.vtex_c',
     model: 'models/heroes/terrorblade/terrorblade_arcana.vmdl_c',
@@ -65,6 +67,22 @@ export const WINDOWS: Record<string, { picture: string; model: string; base?: st
   'techies-arcana': {
     picture: 'panorama/images/econ/items/techies/bigshot/bigshot_png.vtex_c',
     model: 'models/items/techies/bigshot/bigshot.vmdl_c',
+  },
+  // the immortals (src/recolor.ts): their effects in a colour, on the item the hero wears
+  'terrorblade-span': {
+    picture: 'panorama/images/econ/items/terrorblade/terrorblade_ti8_immortal_back/terrorblade_ti8_immortal_back_png.vtex_c',
+    model: 'models/items/terrorblade/terrorblade_ti8_immortal_back/terrorblade_ti8_immortal_back.vmdl_c',
+    colorOnly: true,
+  },
+  'terrorblade-scythes': {
+    picture: 'panorama/images/econ/items/terrorblade/tb_ti9_immortal_weapon/tb_ti9_immortal_weapon_png.vtex_c',
+    model: 'models/items/terrorblade/tb_ti9_immortal_weapon/tb_ti9_immortal_weapon.vmdl_c',
+    colorOnly: true,
+  },
+  'razor-crest': {
+    picture: 'panorama/images/econ/items/razor/razor_helmet_blade/razor_helmet_blade_png.vtex_c',
+    model: 'models/items/razor/razor_helmet_blade/razor_helmet_blade.vmdl_c',
+    colorOnly: true,
   },
 };
 /** Where the record sits in My mods and in the load order. */
@@ -204,6 +222,7 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
           available: Boolean(has?.available),
           picture: has?.available ? has.picture : null,
           installed: rec && g ? { id: rec.id, color: g.color, mode: g.mode, enabled: rec.enabled !== false } : null,
+          colorOnly: Boolean(WINDOWS[set].colorOnly),
         };
       });
       return { arcanas, gems: game?.gems ?? [] };
@@ -218,7 +237,7 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
       // what it left to the builder's picks stays left to them: the picks are the same
       const under = (old?.generated as Generated | undefined)?.under;
       const forms = formsPicked(set);
-      const params: Generated = { set, color: c, mode: mode === 'recolor' ? 'recolor' : 'mod', ...(under ? { under } : {}), ...(forms.length ? { forms } : {}) };
+      const params: Generated = { set, color: c, mode: mode === 'recolor' || WINDOWS[set].colorOnly ? 'recolor' : 'mod', ...(under ? { under } : {}), ...(forms.length ? { forms } : {}) };
       if (old) {
         const rec = replace(old, params);
         log(`arcana: built again in ${hex(c)} (${params.mode})`);

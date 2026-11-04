@@ -66,6 +66,7 @@ function draw(): void {
     own,
     installed: installed ? { color: installed.color, mode: installed.mode } : null,
     busy,
+    colorOnly: a.colorOnly,
   }, {
     close: closeOverlay,
     choose: (c, isOwn) => {

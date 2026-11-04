@@ -165,7 +165,7 @@ const EN = {
   'Белый': 'White',
   'Террорблейд': 'Terrorblade',
   'Течис': 'Techies',
-  'Аркана Течиса': "Techies' arcana",
+  'Аркана Течиса': "Techies' arcana", 'Крылья Террорблейда': "Terrorblade's wings", 'Косы Террорблейда': "Terrorblade's scythes", 'Гребень Разора': "Razor's crest", 'Разор': 'Razor', 'эффекты в цвете самоцвета': 'effects in a gem colour', 'Перекрашивает эффекты предмета, когда он надет: твой собственный или выбранный в конструкторе предметов. Сам предмет не даёт.': 'Recolours the item’s effects while the hero wears it, your own or one picked in the item builder. It does not give you the item.',
   'Призматические самоцветы': 'Prismatic gems',
   'Башни из игры': 'Towers from the game',
   'Деревья из игры': 'Trees from the game',

@@ -16,7 +16,11 @@ export type Rgb = [number, number, number];
 export const GEM: Rgb = [255, 60, 40];
 
 /** Each arcana's own gem (src/recolor.ts RECOLOR_SETS), the colour its picture is drawn in. */
-export const GEMS: Record<string, Rgb> = { 'terrorblade-arcana': GEM, 'techies-arcana': [255, 175, 0] };
+export const GEMS: Record<string, Rgb> = {
+  'terrorblade-arcana': GEM, 'techies-arcana': [255, 175, 0],
+  // the immortals have no gem: the commonest colour of their effects stands in for one
+  'terrorblade-span': [64, 192, 255], 'terrorblade-scythes': [160, 224, 255], 'razor-crest': [192, 192, 255],
+};
 
 /** The gem an arcana comes with, Terrorblade's for one this window does not know. */
 export const gemOf = (set: string | null | undefined): Rgb => (set && GEMS[set]) || GEM;

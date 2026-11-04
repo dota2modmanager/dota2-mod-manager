@@ -25,6 +25,8 @@ export interface ArcanaModalModel {
   installed: { color: Rgb; mode: ArcanaMode } | null;
   /** what is being built right now */
   busy: ArcanaMode | null;
+  /** only the colour is built: an immortal the hero wears, with no gem of its own */
+  colorOnly?: boolean;
 }
 
 export interface ArcanaModalActions {
@@ -60,7 +62,7 @@ export function ArcanaModal({ m, actions }: { m: ArcanaModalModel; actions: Arca
   const ownColor = m.own ?? (isPreset || gemPicked ? null : m.chosen);
   const installed = m.installed;
   const current = installed && same(installed.color, m.chosen);
-  const wholeArcana = installed?.mode !== 'recolor';
+  const wholeArcana = !m.colorOnly && installed?.mode !== 'recolor';
   const words = arcanaWords(m.set, m.name);
   const pointed = hover ? m.gems.find((g) => same(g.rgb, hover)) : null;
 
@@ -78,8 +80,8 @@ export function ArcanaModal({ m, actions }: { m: ArcanaModalModel; actions: Arca
         </div>
         <div className="modal-sub">
           <span>{words.hero()}</span>
-          <span>{`· ${L`аркана из файлов игры`}`}</span>
-          {installed && <span>{`· ${wholeArcana ? L`стоит` : L`стоит только цвет`} ${toHex(installed.color).toUpperCase()}`}</span>}
+          <span>{`· ${m.colorOnly ? L`эффекты в цвете самоцвета` : L`аркана из файлов игры`}`}</span>
+          {installed && <span>{`· ${wholeArcana || m.colorOnly ? L`стоит` : L`стоит только цвет`} ${toHex(installed.color).toUpperCase()}`}</span>}
         </div>
         <div className="style-row" onMouseLeave={() => setHover(null)}>
           {PRESETS.map((p) => (
@@ -117,7 +119,7 @@ export function ArcanaModal({ m, actions }: { m: ArcanaModalModel; actions: Arca
           {m.busy
             ? <button className="btn btn-primary" disabled><span className="ms">progress_activity</span>{L`Собираю…`}</button>
             : !installed
-              ? <button className="btn btn-primary" id="arcanaInstallBtn" onClick={() => actions.install('mod')}><span className="ms">download</span>{L`Установить`}</button>
+              ? <button className="btn btn-primary" id="arcanaInstallBtn" onClick={() => actions.install(m.colorOnly ? 'recolor' : 'mod')}><span className="ms">download</span>{L`Установить`}</button>
               : current
                 ? <button className="btn btn-primary" disabled><span className="ms">check</span>{L`Установлено`}</button>
                 : <button className="btn btn-primary" id="arcanaInstallBtn" onClick={() => actions.install(installed.mode)}><span className="ms">palette</span>{L`Перекрасить`}</button>}
@@ -125,14 +127,16 @@ export function ArcanaModal({ m, actions }: { m: ArcanaModalModel; actions: Arca
             <button className="btn btn-danger" id="arcanaRemoveBtn" onClick={actions.remove}><span className="ms">delete</span>{L`Убрать`}</button>
           )}
           {/* the other build, for the few who have the arcana: an action of its own, not a switch */}
-          {!m.busy && (
+          {!m.busy && !m.colorOnly && (
             <button className="btn btn-ghost btn-sm arcana-mode" id="arcanaModeBtn" onClick={() => actions.install(wholeArcana ? 'recolor' : 'mod')}>
               {wholeArcana ? L`Аркана уже куплена? Только цвет` : L`Поставить аркану целиком`}
             </button>
           )}
         </div>
         <div className="modal-note">
-          {wholeArcana
+          {m.colorOnly
+            ? L`Перекрашивает эффекты предмета, когда он надет: твой собственный или выбранный в конструкторе предметов. Сам предмет не даёт.`
+            : wholeArcana
             ? L`Собирается из файлов твоей игры: модель, эффекты и иконки. Звуков и эффекта убийства арканы нет, их даёт сам предмет. После обновления Доты соберётся заново сам.`
             : L`Только цвет: перекрашивает аркану, которая у тебя уже есть. Модель и свечение даёт сама игра.`}
         </div>
