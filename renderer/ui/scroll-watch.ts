@@ -3,9 +3,15 @@
  * inside. When a few ticks in a row leave a pane that has room exactly where it was, the window
  * writes what it sees into the app's log (diag:rendererError), so the next report that says
  * "scrolling broke" carries the state it broke in: the pane, its sizes, the zoom, what was under
- * the pointer, whether a screen change was on show. Once a minute at most. */
+ * the pointer, whether a screen change was on show. Once a minute at most.
+ *
+ * The first such report from a machine that could look (2026-11-04) showed the wheel reaching the
+ * main pane with 1580 px still below, no screen change and no dialog: nothing of ours held it, the
+ * browser just did not move. Clicking around let it go. So from the second stuck tick in a row
+ * the watch scrolls the pane itself, by the tick's own distance. A tick something took on purpose
+ * (the 3D preview zooms on it) is left alone. */
 import { scrollerAt, transitioning } from './transitions.ts';
-import { stuck, type Tick } from '../core/scroll-stuck.ts';
+import { NUDGE_AFTER, stuck, tickPx, type Tick } from '../core/scroll-stuck.ts';
 
 const IN_A_ROW = 3;
 const QUIET_MS = 60_000;
@@ -36,9 +42,10 @@ document.addEventListener('wheel', (e) => {
   // the browser scrolls after the event; two frames is when it has
   requestAnimationFrame(() => requestAnimationFrame(() => {
     const tick = { dy: e.deltaY, before, after: pane.scrollTop, max: pane.scrollHeight - pane.clientHeight };
-    streak = stuck(tick) ? streak + 1 : 0;
+    streak = !e.defaultPrevented && stuck(tick) ? streak + 1 : 0;
+    if (streak >= NUDGE_AFTER) pane.scrollBy({ top: tickPx(e.deltaY, e.deltaMode, pane.clientHeight), behavior: 'instant' });
+    // the streak is not reset here: the ticks after the report still need the nudge
     if (streak < IN_A_ROW || Date.now() - said < QUIET_MS) return;
-    streak = 0;
     said = Date.now();
     report(pane, tick, e);
   }));
