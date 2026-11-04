@@ -16,6 +16,8 @@ export interface CreatorDraft {
   pictures: (string | null)[];
   /** what is still missing before it can be sent, in words */
   missing: string[];
+  /** what the catalog's upload rules refuse in it (src/creator-premod.ts), in words */
+  problems: string[];
 }
 
 /** What the form may change in a draft. */
@@ -29,6 +31,6 @@ export interface CreatorApi {
   /** a style's VPK or picture, picked in a dialog */
   attach: (id: string, style: number, kind: 'vpk' | 'picture') => Promise<Reply<{ draft?: CreatorDraft; cancelled?: true }>>;
   remove: (id: string) => Promise<Reply<object>>;
-  /** the draft as an archive for the catalog's maintainer, saved where the user says */
-  export: (id: string) => Promise<Reply<{ path?: string; size?: number; cancelled?: true }>>;
+  /** the draft as PreMod's archive, saved where the user says; previews are each style's picture as 854x480 WebP */
+  export: (id: string, previews: (Uint8Array | null)[]) => Promise<Reply<{ path?: string; size?: number; cancelled?: true }>>;
 }

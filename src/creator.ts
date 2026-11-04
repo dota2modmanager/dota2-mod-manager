@@ -1,7 +1,7 @@
 /*
  * The author's drafts (issue #236, step 1): a mod being made for the catalog, kept on the author's
- * disk until it is ready, and then written out as one archive in the catalog's own shape for the
- * catalog's maintainer. Nothing is uploaded: the catalog is not ours to write to, and an upload
+ * disk until it is ready, and then written out as the archive the catalog's own packer makes
+ * (src/creator-premod.ts) for the catalog's maintainer. Nothing is uploaded: the catalog is not ours to write to, and an upload
  * service is the second step, decided with its maintainer.
  *
  * A draft is a folder under userData/creator/<id>/: draft.json and the files it names, copied in so
@@ -11,8 +11,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import AdmZip from 'adm-zip';
 import { VPK_SIGNATURE } from './vpk-read.ts';
+import { catalogProblems, isWebp, MAX_STYLES, premodArchive } from './creator-premod.ts';
 import { t } from './i18n.ts';
 
 /** One look of the mod: its label, its VPK and its picture, by file name inside the draft. */
@@ -36,7 +36,6 @@ export interface Draft {
 export type DraftFields = Partial<Pick<Draft, 'name' | 'category' | 'hero' | 'description' | 'author' | 'replaces'>> & { styles?: { label: string }[] };
 
 const PICTURE = /\.(png|jpe?g|webp|gif|mp4|webm)$/i;
-const MAX_STYLES = 12;
 const MAX_TEXT = 2000;
 const ID = /^[0-9a-f-]{36}$/;
 
@@ -135,34 +134,23 @@ export function createCreator({ userDataDir }: { userDataDir: string }) {
   }
 
   /**
-   * The draft as one archive for the catalog's maintainer: mod.json in the catalog's shape (a
-   * mod with its styles, each with its file and preview, and the author), and the files under
-   * the names it gives them. Refused while something is missing.
+   * The draft as the archive PreMod makes, for the catalog's maintainer. Each style's preview is the
+   * WebP the window drew from its picture at 854x480; a style the window could not draw (a clip, or
+   * a picture too big to show) takes its picture as it is when that is a WebP already. Refused while
+   * something is missing or the catalog's rules say no.
    */
-  function bundle(id: string): { name: string; zip: Buffer } {
+  function bundle(id: string, previews: (Uint8Array | null)[] = []): { name: string; zip: Buffer } {
     const d = read(id);
-    const gaps = missing(d);
+    const gaps = [...missing(d), ...catalogProblems(d)];
     if (gaps.length) throw new Error(t('Не хватает: {0}', gaps.join(', ')));
-    const zip = new AdmZip();
-    const base = d.name.replace(/[<>:"/\\|?*]/g, '_');
-    const named = d.styles.map((s, i) => {
-      const tag = d.styles.length > 1 ? ` ${(s.label || String(i + 1)).replace(/[<>:"/\\|?*]/g, '_')}` : '';
-      const vpk = `${base}${tag}.vpk`;
-      const preview = `${base}${tag}${path.extname(s.picture!)}`;
-      zip.addFile(`files/${vpk}`, fs.readFileSync(path.join(folder(id), s.vpk!)));
-      zip.addFile(`previews/${preview}`, fs.readFileSync(path.join(folder(id), s.picture!)));
-      return { label: s.label || null, file: vpk, preview };
+    const styles = d.styles.map((s, i) => {
+      const drawn = previews[i];
+      const own = fs.readFileSync(path.join(folder(id), s.picture!));
+      const preview = isWebp(drawn) ? Buffer.from(drawn!) : isWebp(own) ? own : null;
+      if (!preview) throw new Error(t('Каталогу нужна картинка-превью, а не видео: {0}', s.label || d.name));
+      return { label: s.label, vpk: fs.readFileSync(path.join(folder(id), s.vpk!)), preview };
     });
-    const entry = {
-      name: d.name,
-      preview: named[0].preview,
-      file: named[0].file,
-      ...(named.length > 1 ? { styles: named.map((n) => ({ label: n.label, file: n.file, preview: n.preview })) } : {}),
-      links: [{ type: 'author', url: d.author }],
-    };
-    const meta = { category: d.category, hero: d.hero || null, description: d.description || null, replaces: d.replaces, entry };
-    zip.addFile('mod.json', Buffer.from(JSON.stringify(meta, null, 2)));
-    return { name: `${base}.zip`, zip: zip.toBuffer() };
+    return premodArchive(d, styles);
   }
 
   return { list, save, attach, remove, missing, bundle, folder };

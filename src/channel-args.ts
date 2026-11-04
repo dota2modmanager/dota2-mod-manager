@@ -190,7 +190,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   // the in-game HUD's size (src/ipc-hud.ts), in percent
   'hud:state': [], 'hud:install': [num(60, 130)],
   // the author's drafts (src/ipc-creator.ts): the files come from a dialog, never from here
-  'creator:list': [], 'creator:remove': [ID], 'creator:export': [ID],
+  'creator:list': [], 'creator:remove': [ID], 'creator:export': [ID, optional(list(optional(bytes(8 * MB)), 3))],
   'creator:save': [optional(ID), shape({
     name: optional(str(500)), category: optional(str(60)), hero: optional(str(60)), description: optional(str(5000)), author: optional(str(200)),
     replaces: optional(shape({ category: str(60, 1), name: str(500, 1) })), styles: optional(list(shape({ label: str(200) }), 12)),
