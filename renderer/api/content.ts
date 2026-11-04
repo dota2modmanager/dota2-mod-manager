@@ -169,6 +169,21 @@ export interface HudApi {
   install: (scale: number) => Promise<Reply<{ record: LibRecord }>>;
 }
 
+/** A rank medal: tier 0 (not calibrated) to 8 (Immortal), stars 1 to 5, an Immortal's leaderboard place. */
+export interface RankMedal { tier: number; stars: number; top: 0 | 5000 | 100 | 10 }
+/** The medal (null: the player's own), a level per hero, and one for every hero not named. */
+export interface RankLook { medal: RankMedal | null; levels: Record<string, number>; every: number | null }
+
+/** The rank medal and hero levels of the player's own screen (src/rank-look-service.ts). */
+export interface RankApi {
+  /** the look on now, the heroes of this patch, and whether ValveResourceFormat is downloaded */
+  state: () => Promise<Reply<{ installed: { id: string; look: RankLook; enabled: boolean } | null; heroes: { id: string; name: string }[]; vrf: boolean }>>;
+  /** the medals by picture name (rank0..rank8, rank8a..c) and the six badge tiers, as data URIs */
+  pictures: () => Promise<Reply<{ medals: Record<string, string>; badges: string[] }>>;
+  /** the look built and put in My mods */
+  install: (look: RankLook) => Promise<Reply<{ record: LibRecord }>>;
+}
+
 /** The main menu's background of the user's own (src/menu-background-service.ts). */
 export interface BackgroundApi {
   /** the background on now, if any */
