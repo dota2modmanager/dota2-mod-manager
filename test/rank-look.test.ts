@@ -13,7 +13,8 @@ import { Library } from '../src/library.ts';
 import { buildVpk, entryAt, openVpkIndex } from '../src/vpk.ts';
 import { readKv3, type Kv3Node } from '../src/kv3.ts';
 import { resourceBlock } from '../src/resource.ts';
-import { clampLook, LAYOUTS, levelsScript, medalImage, SCRIPT, STYLES, tierOf, withMedal, withScript } from '../src/rank-look.ts';
+import { clampLook, LAYOUTS, medalImage, SCRIPT, STYLES, tierOf, withMedal, withScript } from '../src/rank-look.ts';
+import { levelsScript } from '../src/rank-look-script.ts';
 import { createRankLook } from '../src/rank-look-service.ts';
 import { encodeKv3, resource, type V } from './helpers/kv3-build.ts';
 import type { CompileJob } from '../src/resource-compiler.ts';
@@ -214,8 +215,8 @@ test('a badge the game sets back is on the chosen level the next tick, without w
   const page = fake('DOTAHeroPageNewV2', '', [], [fake('Label', '', ['TabContentsHeroName'], [], { text: 'Axe' }), badge]);
   const levels: number[] = [];
   let walked = 0;
-  const count = () => { walked = 0; Object.defineProperty(page, 'kids', { configurable: true, get: () => { walked++; return [page.kids0, badge]; } }); };
-  Object.assign(page, { kids0: page.kids[0] });
+  const kids = page.kids;
+  const count = () => { walked = 0; Object.defineProperty(page, 'kids', { get: () => { walked++; return kids; } }); };
   runScript(levelsScript({ medal: null, levels: { axe: 30 }, every: null }), page,
     () => { count(); badge.herolevel = 5; }, // the game opens the badge on the real level
     () => levels.push(badge.herolevel!, walked));

@@ -148,6 +148,7 @@ the code, not in this page.
 | [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
 | [`src/pumpkin.ts`](#srcpumpkints) | The pumpkin's side of the key (renderer/ui/pumpkin.ts asks, tools/pumpkin-worker answers). |
 | [`src/quit-after-build.ts`](#srcquit-after-buildts) | Quitting waits for the item table being written. |
+| [`src/rank-look-script.ts`](#srcrank-look-scriptts) | The script the rank look puts into the game's layouts (src/rank-look.ts says which and why): |
 | [`src/rank-look-service.ts`](#srcrank-look-servicets) | The rank medal and hero levels of the player's own screen, as one record in My mods (what goes |
 | [`src/rank-look.ts`](#srcrank-lookts) | The rank medal and the Dota Plus hero levels the player sees on their own screen: a medal and |
 | [`src/ready-presets-format.ts`](#srcready-presets-formatts) | The ready-made presets' format (config/presets.json, issue #391): a short list of builds picked |
@@ -8363,6 +8364,24 @@ export function quitAfterBuild(app: { on(event: 'before-quit', fn: (e: QuitEvent
 @param settled  resolves once none is (schemaService.settled)
 ```
 
+## src/rank-look-script.ts
+
+The script the rank look puts into the game's layouts (src/rank-look.ts says which and why):
+Panorama JavaScript, written out with the player's levels and medal in it. Out of rank-look.ts
+when it outgrew that file's budget.
+
+### `levelsScript`
+
+```ts
+export function levelsScript(look: RankLook, ids: Record<number, string> = {}): string
+```
+
+The script the layouts include. It knows the levels and the medal, finds what is on its
+panel ten times a second (hero cards, the player's own panel at the pick, the strategy badge) and
+writes them in. Each part is in a try of its own: a panel a patch renamed stops that part only,
+and says so once in the game's console. `ids` names the chosen heroes by the number the game
+gives them, for the panels that know a hero only by it.
+
 ## src/rank-look-service.ts
 
 The rank medal and hero levels of the player's own screen, as one record in My mods (what goes
@@ -8424,7 +8443,7 @@ small picture, so the medal keeps its size.
 
 A level is a number the client asks Steam for, so no style can change it. A script can: Panorama
 runs the JavaScript a layout includes, and the script writes the number into the label and sets
-the tier class on the badge every half second. It goes into five layouts, by adding one
+the tier class on the badge ten times a second. It goes into five layouts, by adding one
 include to the tree in their LaCo block (as src/menu-background.ts does): the hero grid of the
 menu and the pick screen, the player's own panel at the pick, the strategy screen, the hero
 page with its badge, progress tab and experience bar, and the card that opens over a hero.
@@ -8521,18 +8540,6 @@ The CSS ValveResourceFormat read out of a style, with the medal's rules at its e
 that puts a medal on, copied with the chosen one, and every rule that puts stars on, copied with
 the chosen stars (none for tiers 0 and 8). The tool's banner goes, and rules this added before
 are replaced rather than stacked.
-
-### `levelsScript`
-
-```ts
-export function levelsScript(look: RankLook, ids: Record<number, string> = {}): string
-```
-
-The script the layouts include. It knows the levels and the medal, finds what is on its
-panel each half second (hero cards, the player's own panel at the pick, the strategy badge) and
-writes them in. Each part is in a try of its own: a panel a patch renamed stops that part only,
-and says so once in the game's console. `ids` names the chosen heroes by the number the game
-gives them, for the panels that know a hero only by it.
 
 ### `withScript`
 
