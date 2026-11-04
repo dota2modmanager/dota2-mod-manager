@@ -174,6 +174,8 @@ async function itemTable(sim, on, { onAsk } = {}) {
   if (!await sim.until(`document.getElementById('itemTableSwitch')`, 8000)) return { asked: false, ok: false };
   const state = () => sim.js(`document.getElementById('itemTableSwitch').getAttribute('aria-checked') === 'true'`);
   if (await state() === on) return { asked: false, ok: true };
+  // the switch sits at the right edge, where toasts land: wait for the last one to go
+  await sim.until(`!document.querySelector('#toasts .toast')`, 8000);
   // a toast still up from before is not this answer
   await sim.js(`document.querySelectorAll('#toasts .toast').forEach((t) => { t.dataset.simOld = '1'; })`);
   await sim.click('#itemTableSwitch');
@@ -305,6 +307,9 @@ async function setEnabled(sim, name, on) {
 async function removeFromLibrary(sim, name) {
   const row = rowOf(await libraryRows(sim), name);
   if (!row) return false;
+  // the last removal's toast sits over the top rows for a few seconds (the banner about the item
+  // table moves them up under it); a hand waits for it to go rather than clicking the toast
+  await sim.until(`!document.querySelector('#toasts .toast')`, 8000);
   await sim.click(`.lib-row[data-row="${row.id}"] [data-del]`);
   if (await sim.until(`document.querySelector('.confirm-overlay [data-c="yes"]')`, 5000)) {
     await sim.still();
