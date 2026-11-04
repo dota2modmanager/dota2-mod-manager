@@ -25,6 +25,17 @@ export async function schemaPak(file) {
   return buildVpk([entryAt(TABLE, data)]);
 }
 
+/** A rename that answers whether there was anything to rename. */
+function moveIfThere(from, to) {
+  try {
+    fs.renameSync(from, to);
+    return true;
+  } catch (err) {
+    if (err.code === 'ENOENT') return false;
+    throw err;
+  }
+}
+
 /**
  * The table into the game for the run. Answers how to put back what was there: the app's own
  * deployed table, or nothing.
@@ -51,11 +62,12 @@ export async function placeSchema(file, game, heal = null) {
   const dest = path.join(dir, 'pak01_dir.vpk');
   const keep = `${dest}.bench-kept`;
   fs.mkdirSync(dir, { recursive: true });
-  // a kept one from a run that died is the app's: it goes back before this run takes its place
-  if (fs.existsSync(keep)) fs.renameSync(keep, dest);
-  const had = fs.existsSync(dest);
-  if (had) fs.renameSync(dest, keep);
-  fs.writeFileSync(dest, pak);
+  // Moved, not asked about first: the rename says whether the file was there, so nothing can come
+  // or go between a check and the move. A kept one from a run that died is the app's: it goes
+  // back before this run takes its place.
+  moveIfThere(keep, dest);
+  const had = moveIfThere(dest, keep);
+  fs.writeFileSync(dest, pak, { flag: 'wx' });
   return () => {
     fs.rmSync(dest, { force: true });
     if (had) fs.renameSync(keep, dest);
