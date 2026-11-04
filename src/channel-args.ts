@@ -189,6 +189,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   // the menu's background (src/ipc-background.ts): a WebM the window encoded, or null for a new look alone
   // the in-game HUD's size (src/ipc-hud.ts), in percent
   'hud:state': [], 'hud:install': [num(60, 130)],
+  'rank:state': [], 'rank:pictures': [], 'rank:install': [json(64 * 1024)],
   'background:state': [], 'background:install': [optional(bytes(48 * MB)), optional(str(200)), num(0, 0.9), num(0, 20)],
   // a hero recoloured part by part (src/ipc-paint.ts): his npc name, and a #rrggbb per layer that is on
   'paint:state': [str(40, 2)], 'paint:install': [str(40, 2), json(64 * 1024), optional(str(80))],

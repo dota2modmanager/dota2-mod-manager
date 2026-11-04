@@ -120,6 +120,11 @@ contextBridge.exposeInMainWorld('api', {
     state: () => ipcRenderer.invoke('hud:state'),
     install: (scale) => ipcRenderer.invoke('hud:install', scale),
   },
+  rank: {
+    state: () => ipcRenderer.invoke('rank:state'),
+    pictures: () => ipcRenderer.invoke('rank:pictures'),
+    install: (look) => ipcRenderer.invoke('rank:install', look),
+  },
   background: {
     state: () => ipcRenderer.invoke('background:state'),
     install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur),
