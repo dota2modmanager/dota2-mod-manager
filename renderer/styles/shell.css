@@ -40,6 +40,25 @@
   flex-shrink: 0;        /* never let a crowded title bar wrap the product name */
   white-space: nowrap;
 }
+/* the logo and the name are one button to Home (3.0) */
+.tb-home {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 var(--space-2);
+  margin-left: calc(var(--space-2) * -1);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+.tb-home:hover { background: var(--surface-hover); }
+.tb-home:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.tb-home[aria-current] .tb-title { color: var(--primary-soft); }
 .tb-title {
   font-family: var(--font-head);
   font-weight: 700;
@@ -303,6 +322,7 @@
 
 /* a cramped bar drops the wordmark before the tabs */
 #titlebar.narrow .tb-sub { display: none; }
+#titlebar.tight .tb-search { width: 140px; }
 #titlebar.tiny .tb-title { display: none; }
 .tb-ctl {
   width: 44px;

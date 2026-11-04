@@ -70,7 +70,7 @@ export async function renderFavorites(actions: ScreenActions): Promise<void> {
 }
 
 /** The catalog's own list of what arrived lately, newest first, as mods the app knows. */
-function recentMods(): Mod[] {
+export function recentMods(): Mod[] {
   return (catalogData()?.mods?.recentlyAddedMods || [])
     .map((r) => {
       const hit = state.modIndex.get(r.name.toLowerCase());

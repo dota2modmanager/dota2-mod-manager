@@ -24,6 +24,8 @@ byId('winMax').addEventListener('click', () => window.api.win.maximize());
 byId('winClose').addEventListener('click', () => window.api.win.close());
 window.api.win.onMaximized(paintMaximized);
 
+byId('tbHome').addEventListener('click', () => { if (state.view !== 'home') switchView('home'); });
+
 document.querySelectorAll<HTMLElement>('.tb-tab').forEach((btn) => {
   btn.addEventListener('click', () => { if (btn.dataset.view) switchView(btn.dataset.view); });
 });

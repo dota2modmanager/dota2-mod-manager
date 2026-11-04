@@ -158,6 +158,7 @@ the code, not in this page.
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
+| [`src/repo-stars.ts`](#srcrepo-starsts) | How many stars the project has on GitHub, for the Home screen (renderer/home/). |
 | [`src/resource-compiler.ts`](#srcresource-compilerts) | resourcecompiler.exe: Valve's compiler from the Dota 2 Workshop Tools, run on sources the app |
 | [`src/resource.ts`](#srcresourcets) | Compiled Source 2 resources at the block level: the blocks of a file, one replaced by new bytes, |
 | [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
@@ -5983,7 +5984,7 @@ export function windowFit(workArea: { width: number; height: number } | null | u
 
 The window's size and minimums for a work area, or the designed size when there is none. A
 scale above 1 on a screen wider than WIDE grows the window with its content, so 1.3 is not a
-1360-pixel window holding a 1046-pixel layout.
+1440-pixel window holding a 1108-pixel layout.
 
 ### `startScale`
 
@@ -5994,8 +5995,8 @@ export function startScale(workArea: { width: number; height: number } | null | 
 The scale a first launch starts at (issue #388). On a 1440p or 4K screen at 100% Windows
 scaling the designed window filled a third of it and its tiles were tiny, and people took the
 app for broken before they found the slider. Above WIDE: about 80% of the scale that fills the
-work area, in steps of 0.05, so the window still has room around it. 2560x1400 starts at 1.3,
-3840x2100 at 1.95.
+work area, in steps of 0.05, so the window still has room around it. 2560x1400 starts at 1.2,
+3840x2100 at 1.85.
 
 ### `workAreaFrom`
 
@@ -9089,6 +9090,40 @@ export function createRemoteConfig({ userDataDir, appVersion, log = () => {}, pu
 wants to sign its own fixture, which it cannot do with a private key that is not here
 @param opts.now          the clock a notice's until date is read against
 ```
+
+## src/repo-stars.ts
+
+How many stars the project has on GitHub, for the Home screen (renderer/home/).
+
+Asked of api.github.com at most every six hours and kept in a small file under userData, so
+the number is there at once on the next start and stays there when the network is not.
+GitHub lets an unsigned caller sixty requests an hour; one in six hours is nowhere near it.
+It never throws and never waits long: a count that cannot be had is null, and Home shows
+the link without a number.
+
+### `STARS_API`
+
+```ts
+export const STARS_API = 'https://api.github.com/repos/dota2modmanager/dota2-mod-manager'
+```
+
+Where the count is read: the repository's own record, which carries stargazers_count.
+
+### `RepoStarsOptions`
+
+```ts
+export interface RepoStarsOptions
+```
+
+Where the count is kept, and the clock and network a test hands in instead.
+
+### `createRepoStars`
+
+```ts
+export function createRepoStars({ cacheFile, fetch = globalThis.fetch, now = Date.now }: RepoStarsOptions)
+```
+
+The star count for Home, cached on disk and asked for again after six hours.
 
 ## src/resource-compiler.ts
 

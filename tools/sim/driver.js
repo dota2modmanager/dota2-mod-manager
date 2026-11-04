@@ -86,9 +86,12 @@ class Sim {
     await this.awake();
     const [cw] = this.win.getContentSize();
     this.scale = cw / (await this.js('window.innerWidth'));
-    await this.until(`document.querySelector('.rail-item[data-cat]')`, 30000);
-    // every scenario starts where the app opens: on the catalog, with no window over it,
-    // whatever the one before it left on screen
+    // the window opens on Home (3.0) and draws the catalog when it is first visited
+    const home = await this.until(`document.querySelector('.view-pane[data-pane="home"] .home-dests')`, 30000);
+    this.check('the window opens on Home, with a way into every section', !!home
+      && await this.js(`document.querySelectorAll('.home-dest[data-go]').length === 5`));
+    // every scenario starts on the catalog, with no window over it, whatever the one before it
+    // left on screen
     if (await this.js(`!document.getElementById('modalOverlay').classList.contains('hidden')`)) {
       await this.key('Escape');
       await this.until(`document.getElementById('modalOverlay').classList.contains('hidden')`, 3000);
@@ -98,6 +101,7 @@ class Sim {
       await this.until(`document.querySelector('.tb-tab.active')?.dataset.view === 'catalog'
         && !document.documentElement.classList.contains('vt-screen')`, 8000);
     }
+    await this.until(`document.querySelector('.rail-item[data-cat]')`, 30000);
     const blocking = await this.js(`[...document.querySelectorAll('.confirm-overlay, .lang-pick-overlay')].map((d) => d.textContent.trim().slice(0, 80))`);
     this.check('the window opens on the catalog with nothing in front of it', !blocking.length, blocking.join(' | '));
     return { scale: this.scale };

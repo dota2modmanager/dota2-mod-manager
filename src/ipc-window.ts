@@ -8,6 +8,7 @@ import path from 'node:path';
 import { t } from './i18n.ts';
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
+import { createRepoStars } from './repo-stars.ts';
 import type { AppContext } from './app-context.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
@@ -73,6 +74,13 @@ export function registerWindowIpc({
     const version = app.getVersion();
     const seen = settings.get('lastSeenVersion');
     return { version, notes: releaseNotes(version, lang), unseen: !!seen && seen !== version };
+  });
+
+  // the GitHub star count on Home (src/repo-stars.ts), made on first ask: userData is set by then
+  let stars: ReturnType<typeof createRepoStars> | null = null;
+  ipcMain.handle('app:stars', () => {
+    stars ||= createRepoStars({ cacheFile: path.join(app.getPath('userData'), 'repo-stars.json') });
+    return stars.get();
   });
 
   ipcMain.handle('app:notesSeen', () => {

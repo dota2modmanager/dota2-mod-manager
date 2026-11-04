@@ -123,27 +123,27 @@ test('the title bar is told when the window is maximized and back', () => {
 });
 
 test('the window fits a small screen, minimums included, and the designed size needs no screen at all', () => {
-  assert.deepEqual(windowFit({ width: 1366, height: 728 }), { width: 1360, height: 728, minWidth: 1020, minHeight: 640 });
+  assert.deepEqual(windowFit({ width: 1366, height: 728 }), { width: 1366, height: 728, minWidth: 1020, minHeight: 640 });
   assert.deepEqual(windowFit({ width: 1000, height: 600 }), { width: 1000, height: 600, minWidth: 1000, minHeight: 600 });
-  assert.deepEqual(windowFit(null), { width: 1360, height: 860, minWidth: 1020, minHeight: 640 });
+  assert.deepEqual(windowFit(null), { width: 1440, height: 900, minWidth: 1020, minHeight: 640 });
   assert.equal(open({ workArea: { width: 1093, height: 582 } }).w.options.height, 582, 'MM_WORKAREA stands in for the screen');
   assert.equal(open().w.options.height, 728, 'otherwise the primary display is asked');
-  assert.equal(open({ noScreen: true }).w.options.height, 860, 'and a display that will not answer is the designed size');
+  assert.equal(open({ noScreen: true }).w.options.height, 900, 'and a display that will not answer is the designed size');
 });
 
 test('a first run on a 1440p or 4K screen starts scaled up, in a window grown with it; after that the scale stays the one left', () => {
   assert.equal(startScale({ width: 1920, height: 1032 }), 1, 'a 1080p screen starts as designed');
-  assert.equal(startScale({ width: 2560, height: 1400 }), 1.3);
-  assert.equal(startScale({ width: 3840, height: 2100 }), 1.95);
+  assert.equal(startScale({ width: 2560, height: 1400 }), 1.2);
+  assert.equal(startScale({ width: 3840, height: 2100 }), 1.85);
   assert.equal(startScale(null), 1);
   assert.ok(startScale({ width: 3840, height: 2100 }) <= ZOOM_MAX, 'inside the range');
   const k4 = { width: 3840, height: 2100 };
   const first = open({ workArea: k4, firstRun: true });
-  assert.equal(first.store.get('uiScale'), 1.95);
-  assert.deepEqual([first.w.options.width, first.w.options.height], [2652, 1677], 'the window grows with the scale');
+  assert.equal(first.store.get('uiScale'), 1.85);
+  assert.deepEqual([first.w.options.width, first.w.options.height], [2664, 1665], 'the window grows with the scale');
   const later = open({ workArea: k4, uiScale: 1.2 });
   assert.equal(later.store.get('uiScale'), 1.2, 'a later start keeps the scale the user left');
-  assert.equal(later.w.options.width, 1632);
+  assert.equal(later.w.options.width, 1728);
   assert.deepEqual(windowFit({ width: 1366, height: 728 }, 1.5), windowFit({ width: 1366, height: 728 }), 'a small screen zoomed in keeps the window it had');
 });
 

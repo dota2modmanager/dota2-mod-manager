@@ -154,11 +154,18 @@ function answerNextDialog(answer) {
   return { asked, restore: () => { dialog.showOpenDialog = real; } };
 }
 
+/** Where a section is opened from: its tab, or for Home the name in the title bar (3.0). */
+const tabOf = (view) => (view === 'home' ? '#tbHome' : `.tb-tab[data-view="${view}"]`);
+/** The section the window says is open, as an expression. */
+const openNow = (view) => (view === 'home'
+  ? `document.getElementById('tbHome')?.hasAttribute('aria-current')`
+  : `document.querySelector('.tb-tab.active')?.dataset.view === ${lit(view)}`);
+
 async function openSection(sim, view) {
-  await sim.click(`.tb-tab[data-view="${view}"]`);
+  await sim.click(tabOf(view));
   // Items draws in the catalog's pane (renderer/core/router.ts PANE_OF)
   const paneName = view === 'items' ? 'catalog' : view;
-  return sim.until(`document.querySelector('.tb-tab.active')?.dataset.view === ${lit(view)}
+  return sim.until(`${openNow(view)}
     && !document.querySelector(${lit(`.view-pane[data-pane="${paneName}"]`)})?.hidden && ${calm}`, 10000);
 }
 
@@ -174,6 +181,10 @@ async function itemTable(sim, on, { onAsk } = {}) {
   if (!await sim.until(`document.getElementById('itemTableSwitch')`, 8000)) return { asked: false, ok: false };
   const state = () => sim.js(`document.getElementById('itemTableSwitch').getAttribute('aria-checked') === 'true'`);
   if (await state() === on) return { asked: false, ok: true };
+  // Settings is longer than the window and the switch sits low in it: on a 1360x860 window the
+  // click went below the last pixel of the page (localization, CI, 2026-11-04)
+  await sim.js(`document.getElementById('itemTableSwitch').scrollIntoView({ block: 'center', behavior: 'instant' })`);
+  await sim.still();
   // the switch sits at the right edge, where toasts land: wait for the last one to go
   await sim.until(`!document.querySelector('#toasts .toast')`, 8000);
   // a toast still up from before is not this answer
@@ -374,5 +385,5 @@ async function allCards(sim) {
 module.exports = {
   calm, modalOpen, listing, listingDiff, readyMods, openSection, heroesList, categoryList, installFromCard, allCards,
   libraryRows, rowOf, setEnabled, removeFromLibrary, gameOf, gameLoads, mountedOurs, whoServes,
-  modFile, answerNextDialog, itemTable,
+  modFile, answerNextDialog, itemTable, tabOf, openNow,
 };

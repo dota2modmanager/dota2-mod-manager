@@ -131,7 +131,7 @@ const BYTES = new Uint8Array([1, 2, 3]);
 const ID = '3b241101-e2bb-4255-8caf-4136c566a962';
 const VALID: Record<string, unknown[][]> = {
   'win:minimize': [[]], 'win:maximize': [[]], 'win:close': [[]], 'win:isMaximized': [[]],
-  'app:version': [[]], 'app:notes': [['ru'], ['en']], 'app:notesSeen': [[]],
+  'app:version': [[]], 'app:notes': [['ru'], ['en']], 'app:notesSeen': [[]], 'app:stars': [[]],
   'update:install': [[]], 'update:fetchPortable': [[]], 'update:revealPortable': [['C:\\Games\\Dota-2-Mod-Manager-Portable.exe']],
   'beta:state': [[]], 'beta:set': [[true]], 'game:launch': [[]], 'game:steamDownloads': [[]], 'grid:state': [[]], 'grid:apply': [[['winrate']]], 'grid:remove': [[]], 'ui:setZoom': [[1.25]],
   'settings:get': [[]], 'settings:testProxy': [['']], 'settings:detectDota': [[]], 'settings:browseDota': [[]],
