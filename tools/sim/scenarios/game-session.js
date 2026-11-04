@@ -25,6 +25,8 @@ module.exports = async function gameSession(sim) {
   const toasts = () => sim.js(`[...document.querySelectorAll('#toasts .toast')].map((t) => t.textContent.trim()).join(' | ')`);
   const safeOn = () => sim.js(`document.getElementById('safeModeBtn').getAttribute('aria-checked') === 'true'`);
   const repair = () => sim.js('window.api.patch.repairState()');
+  // the status bar says Dota is open until the app sees it close (src/game-watch.ts asks every second)
+  const seenClosed = () => sim.until(`document.getElementById('dotaStatusDot')?.className !== 'dot warn'`, 5000);
   const turnSafeOff = async () => {
     await sim.click('#safeModeBtn');
     if (!await sim.until(`document.querySelector('.safe-box [data-c="yes"]')`, 5000)) return false;
@@ -52,6 +54,7 @@ module.exports = async function gameSession(sim) {
   await sim.shot('refused-while-running');
   await world.quitGame(running, game);
   await sleep(1000);
+  sim.check('the app sees the game close within a few seconds', await seenClosed(), 'the status bar still says Dota is open');
 
   // 2. the game is closed: it goes through, and the game would load it
   await turnSafeOff();
@@ -74,6 +77,7 @@ module.exports = async function gameSession(sim) {
   await sim.shot('update-while-running');
   await world.quitGame(running, game);
   await sleep(800);
+  await seenClosed();
   if (banner) await sim.click('#repairNowBtn');
   const healed = await sim.until(`window.api.patch.repairState().then((r) => r.state !== 'waiting' && r)`, 30000);
   sim.check('with the game closed the repair runs and puts the search path back', healed && healed.state !== 'failed' && world.searchPathsOurs(game),

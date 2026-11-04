@@ -7,11 +7,14 @@
  * Dota first" (src/feature-gate.ts) from the answer kept here, without asking the system again.
  *
  * The check runs a process list (src/game-upkeep.ts dotaIsRunning), which is async and never
- * holds the main process.
+ * holds the main process. It runs every few seconds while the game is closed and every second while
+ * it is open, so the app lets go within a second of the game closing; a refusal asks again at once
+ * too, so the next click after the game is gone goes through.
  */
 
 /** The watch: the last answer, and the switch that starts and stops asking. */
 export interface GameWatch {
+  /** The last answer; an answer of "open" also asks again, without waiting for it. */
   running(): boolean;
   start(): void;
   stop(): void;
@@ -22,13 +25,15 @@ export interface GameWatch {
 /**
  * @param isRunning  whether the Dota client is running, asked of the system
  * @param send       told the new answer each time it changes
- * @param everyMs    how often to ask
+ * @param everyMs    how often to ask while the game is closed
+ * @param openMs     how often to ask while it is open
  */
-export function createGameWatch({ isRunning, send, everyMs = 5000 }: {
-  isRunning: () => Promise<boolean>; send: (running: boolean) => void; everyMs?: number;
+export function createGameWatch({ isRunning, send, everyMs = 5000, openMs = 1000 }: {
+  isRunning: () => Promise<boolean>; send: (running: boolean) => void; everyMs?: number; openMs?: number;
 }): GameWatch {
   let now = false;
-  let timer: ReturnType<typeof setInterval> | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let on = false;
   let asking = false;
   let told = false;
 
@@ -44,18 +49,27 @@ export function createGameWatch({ isRunning, send, everyMs = 5000 }: {
     }
   };
 
+  const next = (): void => {
+    if (!on) return;
+    timer = setTimeout(() => { void check().finally(next); }, now ? openMs : everyMs);
+    timer.unref?.();
+  };
+
   return {
-    running: () => now,
+    running: () => {
+      if (now) void check();
+      return now;
+    },
     check,
     start() {
-      if (timer) return;
+      if (on) return;
+      on = true;
       told = false; // a page loaded afresh has not heard the answer yet
-      void check();
-      timer = setInterval(() => { void check(); }, everyMs);
-      timer.unref?.();
+      void check().finally(next);
     },
     stop() {
-      if (timer) clearInterval(timer);
+      on = false;
+      if (timer) clearTimeout(timer);
       timer = null;
     },
   };
