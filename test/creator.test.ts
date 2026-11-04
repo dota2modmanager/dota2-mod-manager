@@ -1,6 +1,6 @@
 /* The author's drafts (src/creator.ts, issue #236): a draft keeps what the form sends, refuses a file
- * that is not what it says, names what is still missing, and comes out as one archive in the
- * catalog's shape with every file it names inside. */
+ * that is not what it says, names what is still missing, and comes out as the archive PreMod makes
+ * (src/creator-premod.ts), held to the catalog's upload rules. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -65,25 +65,48 @@ test('what is missing is named, and the archive is refused until nothing is', ()
   assert.equal(creator.missing(two).length, 4);
 });
 
-test('the archive holds mod.json in the catalog shape and every file it names', () => {
+const WEBP = Buffer.concat([Buffer.from('RIFF'), Buffer.alloc(4), Buffer.from('WEBPVP8 '), Buffer.alloc(8)]);
+
+test('the archive is the one PreMod makes: the VPK zipped, a WebP preview, mod.json and hash.json', () => {
   const { creator, vpk, png } = setup();
-  const d = creator.save(null, { name: 'Blue: glow', category: 'river', author: 'https://example.com/me', styles: [{ label: 'Day' }, { label: 'Night' }] });
+  const d = creator.save(null, { name: 'Blue glow', category: 'river', author: 'https://example.com/me', styles: [{ label: 'Day' }, { label: 'Night' }] });
   for (const i of [0, 1]) {
     creator.attach(d.id, i, 'vpk', vpk);
     creator.attach(d.id, i, 'picture', png);
   }
-  const { name, zip } = creator.bundle(d.id);
-  assert.equal(name, 'Blue_ glow.zip');
+  assert.throws(() => creator.bundle(d.id), /видео|clip/i, 'a PNG the window did not draw is no preview');
+  const { name, zip } = creator.bundle(d.id, [WEBP, WEBP]);
+  assert.equal(name, 'Blue glow.zip');
   const z = new AdmZip(zip);
-  const meta = JSON.parse(z.readAsText('mod.json'));
-  assert.equal(meta.category, 'river');
-  assert.equal(meta.entry.name, 'Blue: glow');
-  assert.deepEqual(meta.entry.styles.map((s: { label: string }) => s.label), ['Day', 'Night']);
-  assert.deepEqual(meta.entry.links, [{ type: 'author', url: 'https://example.com/me' }]);
-  for (const s of meta.entry.styles) {
-    assert.ok(z.getEntry(`files/${s.file}`), s.file);
-    assert.ok(z.getEntry(`previews/${s.preview}`), s.preview);
-  }
+  assert.deepEqual(z.getEntries().map((e) => e.entryName).sort(),
+    ['Blue glow Night.webp', 'Blue glow Night.zip', 'Blue glow.webp', 'Blue glow.zip', 'hash.json', 'mod.json', 'submit.json']);
+  const entry = JSON.parse(z.readAsText('mod.json'));
+  assert.equal(entry.name, 'Blue glow');
+  assert.equal(entry.file, 'Blue glow.zip');
+  assert.equal(entry.preview, 'Blue glow.webp');
+  assert.deepEqual(entry.styles.map((s: { label: string }) => s.label), ['Day', 'Night']);
+  assert.deepEqual(entry.links, [{ type: 'author', url: 'https://example.com/me' }]);
+  const inner = new AdmZip(z.getEntry('Blue glow.zip')!.getData());
+  assert.deepEqual(inner.getEntries().map((e) => e.entryName), ['Blue glow.vpk']);
+  const hash = JSON.parse(z.readAsText('hash.json'));
+  assert.equal(hash.mod_name, 'Blue glow');
+  assert.match(hash.vpk_hash, /^[0-9a-f]{64}$/);
+  assert.deepEqual(JSON.parse(z.readAsText('submit.json')), { mode: 'new', category: 'river', hero: null, description: null });
+  assert.ok(z.getEntry('Blue glow.webp')!.getData().equals(WEBP));
+});
+
+test('the catalog’s rules: a Latin name, the hero in a hero’s mod, three styles at most', () => {
+  const { creator, vpk, png } = setup();
+  const d = creator.save(null, { name: 'Синий свет', category: 'heroes', hero: 'Anti-Mage', author: 'me' });
+  creator.attach(d.id, 0, 'vpk', vpk);
+  creator.attach(d.id, 0, 'picture', png);
+  assert.throws(() => creator.bundle(d.id, [WEBP]), /латиниц|Latin/i);
+  creator.save(d.id, { name: 'Blue Glow' });
+  assert.throws(() => creator.bundle(d.id, [WEBP]), /геро|hero/i);
+  creator.save(d.id, { name: 'Antimage Blue Glow' });
+  assert.equal(creator.bundle(d.id, [WEBP]).name, 'Antimage Blue Glow.zip');
+  const many = creator.save(d.id, { styles: [1, 2, 3, 4].map((i) => ({ label: `s${i}` })) });
+  assert.equal(many.styles.length, 3, 'the form keeps no more styles than the catalog takes');
 });
 
 test('a style dropped takes its files with it, and a deleted draft is gone from disk', () => {

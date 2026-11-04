@@ -39,6 +39,7 @@ the code, not in this page.
 | [`src/cli.ts`](#srcclits) | The command line (issue #436): put a preset on, list the mods, or switch them all off, with no |
 | [`src/cosmetic-names.ts`](#srccosmetic-namests) | Display names come from Valve's installed localization, while schema names remain the keys |
 | [`src/courier-models.ts`](#srccourier-modelsts) | A courier look's models, under the Default Courier's paths. |
+| [`src/creator-premod.ts`](#srccreator-premodts) | A draft as the catalog takes it: the archive h6rd/PreMod makes, and the rules the catalog's |
 | [`src/creator.ts`](#srccreatorts) | The author's drafts (issue #236, step 1): a mod being made for the catalog, kept on the author's |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/deep-links.ts`](#srcdeep-linksts) | d2mm:// links: a preset or a single mod clicked anywhere on the system, and on Linux, telling |
@@ -1757,11 +1758,62 @@ a lobby would miss, not the look.
 @param log  a model left out, and why
 ```
 
+## src/creator-premod.ts
+
+A draft as the catalog takes it: the archive h6rd/PreMod makes, and the rules the catalog's
+upload page (h6rd/Dota2PornFxWeb, upload.js) holds a mod to. An author who sends this archive
+sends what rotten's own tool would have made, so nobody repacks it by hand.
+
+PreMod's archive, one per mod:
+  <name>.zip    the VPK, zipped on its own
+  <name>.webp   the preview, 854×480
+  mod.json      the catalog entry: name, preview, file, tags, links
+  hash.json     mod_name, and the sha256 of the VPK and of its zip
+A mod with styles carries one zip and one preview per style, named `<name> <label>`, and lists
+them in mod.json the way the catalog lists styles. What the upload form asks besides the files
+(category, hero, description, the mod it updates) goes in submit.json, under the form's names.
+
+The rules are the upload page's: a Latin name with single spaces, 29 characters at most (39 for
+the two heroes whose names are that long), the hero's name in it for a hero's mod, no more than
+three styles with labels of 12 characters, and 100 MB for the whole archive.
+
+### `MAX_STYLES`
+
+```ts
+export const MAX_STYLES = 3
+```
+
+The most looks one catalog mod may have.
+
+### `catalogProblems`
+
+```ts
+export function catalogProblems(d: { name: string; category: string; hero: string; styles: { label: string }[] }): string[]
+```
+
+What the draft needs to fit the catalog's rules, beyond what is still missing, in words.
+
+### `isWebp`
+
+```ts
+export const isWebp = (b: Buffer | Uint8Array | null | undefined): boolean
+```
+
+Is this a WebP picture, by its RIFF header.
+
+### `premodArchive`
+
+```ts
+export function premodArchive(d: { name: string; category: string; hero: string; description: string; author: string; replaces: { category: string; name: string } | null }, styles: PackedStyle[]): { name: string; zip: Buffer }
+```
+
+The archive PreMod would make of these files, with the form's fields beside it.
+
 ## src/creator.ts
 
 The author's drafts (issue #236, step 1): a mod being made for the catalog, kept on the author's
-disk until it is ready, and then written out as one archive in the catalog's own shape for the
-catalog's maintainer. Nothing is uploaded: the catalog is not ours to write to, and an upload
+disk until it is ready, and then written out as the archive the catalog's own packer makes
+(src/creator-premod.ts) for the catalog's maintainer. Nothing is uploaded: the catalog is not ours to write to, and an upload
 service is the second step, decided with its maintainer.
 
 A draft is a folder under userData/creator/<id>/: draft.json and the files it names, copied in so

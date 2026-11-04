@@ -7,6 +7,7 @@ import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
 import { t } from './i18n.ts';
 import { createCreator, type Creator, type Draft } from './creator.ts';
+import { catalogProblems } from './creator-premod.ts';
 import type { AppContext } from './app-context.ts';
 
 // a picture is shown in the form as a data URL, up to this size; a bigger one or a clip is named
@@ -37,6 +38,7 @@ export function registerCreatorIpc({ win }: Pick<AppContext, 'win'>): void {
       } catch { return null; } finally { if (fd !== null) fs.closeSync(fd); }
     }),
     missing: store().missing(d),
+    problems: catalogProblems(d),
   });
 
   ipcMain.handle('creator:list', () => answer(() => ({ drafts: store().list().map(shown) })));
@@ -52,8 +54,8 @@ export function registerCreatorIpc({ win }: Pick<AppContext, 'win'>): void {
     return { draft: shown(store().attach(id, style, vpk ? 'vpk' : 'picture', res.filePaths[0])) };
   }));
   ipcMain.handle('creator:remove', (e, id) => answer(() => { store().remove(id); return {}; }));
-  ipcMain.handle('creator:export', (e, id) => answer(async () => {
-    const { name, zip } = store().bundle(id);
+  ipcMain.handle('creator:export', (e, id, previews) => answer(async () => {
+    const { name, zip } = store().bundle(id, Array.isArray(previews) ? previews : []);
     const res = await dialog.showSaveDialog(win(), {
       title: t('Сохранить мод для каталога'),
       defaultPath: path.join(app.getPath('downloads'), name),

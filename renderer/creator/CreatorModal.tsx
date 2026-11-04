@@ -74,7 +74,7 @@ function DraftForm({ d, m, actions }: { d: CreatorDraft; m: CreatorModel; action
       <div className="creator-grid">
         <div className="creator-fields">
           <label className="creator-field"><span>{L`Название`}</span>
-            <input className="input" id="creatorName" defaultValue={d.name} maxLength={120} onBlur={(e) => set({ name: e.currentTarget.value })} />
+            <input className="input" id="creatorName" defaultValue={d.name} maxLength={39} placeholder={L`Латиницей, с именем героя для мода героя`} onBlur={(e) => set({ name: e.currentTarget.value })} />
           </label>
           <Dropdown id="creatorCategory" icon="category" label={L`Категория`} value={d.category} first={L`Выбери категорию`}
             options={m.categories} onPick={(category) => set({ category })} />
@@ -102,7 +102,7 @@ function DraftForm({ d, m, actions }: { d: CreatorDraft; m: CreatorModel; action
         <div className="map-side-label">{many ? L`Стили` : L`Файлы`}</div>
         {d.styles.map((s, i) => (
           <div className="creator-style" key={i}>
-            {many && <input className="input" defaultValue={s.label} placeholder={L`Название стиля`} maxLength={120}
+            {many && <input className="input" defaultValue={s.label} placeholder={L`Название стиля`} maxLength={12}
               onBlur={(e) => set({ styles: styles.map((x, j) => (j === i ? { label: e.currentTarget.value } : x)) })} />}
             <button className={`btn btn-sm${s.vpk ? '' : ' btn-primary'}`} disabled={m.busy} onClick={() => actions.attach(d.id, i, 'vpk')}>
               <span className="ms">{s.vpk ? 'check' : 'upload_file'}</span>VPK</button>
@@ -113,18 +113,19 @@ function DraftForm({ d, m, actions }: { d: CreatorDraft; m: CreatorModel; action
             {many && <button className="btn btn-ghost btn-xs" aria-label={L`Убрать стиль`} onClick={() => set({ styles: styles.filter((_, j) => j !== i) })}><span className="ms">delete</span></button>}
           </div>
         ))}
-        {d.styles.length < 12 && (
+        {d.styles.length < 3 && (
           <button className="btn btn-ghost btn-sm" id="creatorAddStyle" onClick={() => set({ styles: [...styles, { label: '' }] })}><span className="ms">add</span>{L`Ещё стиль`}</button>
         )}
       </div>
 
       {d.missing.length > 0 && <div className="preset-warn"><span className="ms">info</span>{L`Не хватает: ${d.missing.join(', ')}`}</div>}
+      {d.problems.length > 0 && <div className="preset-warn"><span className="ms">rule</span>{L`Для каталога нужно: ${d.problems.join(', ')}`}</div>}
       <div className="modal-actions">
         <button className="btn btn-danger" id="creatorDeleteBtn" disabled={m.busy} onClick={() => actions.remove(d.id)}>{L`Удалить черновик`}</button>
-        <button className="btn btn-primary" id="creatorExportBtn" disabled={m.busy || d.missing.length > 0} onClick={() => actions.export(d.id)}>
+        <button className="btn btn-primary" id="creatorExportBtn" disabled={m.busy || d.missing.length > 0 || d.problems.length > 0} onClick={() => actions.export(d.id)}>
           <span className="ms">archive</span>{L`Сохранить архив для каталога`}</button>
       </div>
-      <div className="modal-note">{L`В архиве описание мода в формате каталога, VPK и картинки: всё, что нужно ведущему каталога, чтобы добавить мод.`}</div>
+      <div className="modal-note">{L`Архив собран так же, как его собирает PreMod: VPK в своём zip, превью WebP 854×480, mod.json и hash.json. Ведущему каталога ничего не придётся перепаковывать.`}</div>
     </>
   );
 }
