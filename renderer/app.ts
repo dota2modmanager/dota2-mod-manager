@@ -12,6 +12,7 @@ import './locales/zh-CN-library.js';
 import './locales/zh-CN-app.js';
 import './i18n.js';
 import './shell/errors.ts';
+import './ui/scroll-watch.ts';
 import { paintAccount, paintMaximized } from './shell/titlebar.ts';
 import './shell/switches.ts';
 import './shell/search.ts';

@@ -98,8 +98,38 @@ document.addEventListener('click', (e) => {
   });
 }, true);
 
+/* The wheel goes the same way: while a screen change is on show it lands on the root, which does
+   not scroll, so the pane under the pointer stood still. Under load a change lasts long enough
+   for that to read as scrolling being broken (issue #330). A tick on the root ends the animation,
+   and the ticks gathered meanwhile scroll whatever is under the pointer once the screen is up. */
+let wheeled: { x: number; y: number; dy: number } | null = null;
+document.addEventListener('wheel', (e) => {
+  if (!current || e.ctrlKey || e.target !== document.documentElement) return;
+  const px = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1;
+  if (wheeled) { wheeled.dy += e.deltaY * px; return; }
+  wheeled = { x: e.clientX, y: e.clientY, dy: e.deltaY * px };
+  const vt = current;
+  vt.skipTransition();
+  vt.finished.catch(() => {}).finally(() => {
+    const w = wheeled;
+    wheeled = null;
+    if (w) scrollerAt(w.x, w.y)?.scrollBy({ top: w.dy, behavior: 'instant' });
+  });
+}, { capture: true, passive: true });
+
+/** The nearest element under a point that can scroll up or down. */
+export function scrollerAt(x: number, y: number): HTMLElement | null {
+  for (let el = document.elementFromPoint(x, y); el instanceof HTMLElement; el = el.parentElement) {
+    if (el.scrollHeight > el.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(el).overflowY)) return el;
+  }
+  return null;
+}
+
 /* A mod's window used to grow out of the card it was clicked on, as one named box the
    browser moved and resized. It was one movement on paper and two on screen: the picture
    travelled across the window while the frame did something else, and no amount of matching
    the curves fixed the impression. The window now opens where windows open and the picture
    arrives inside it - plain CSS, see the top of modal.css for the clock. */
+
+/** Whether a screen change is on show right now (ui/scroll-watch.ts reports it). */
+export const transitioning = (): boolean => current !== null;

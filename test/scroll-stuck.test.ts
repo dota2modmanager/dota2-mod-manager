@@ -1,0 +1,17 @@
+/* The wheel watch's rule (renderer/core/scroll-stuck.ts, issue #330): a tick counts as stuck only
+ * when the pane had room in the way it was turned and did not move. */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { stuck } from '../renderer/core/scroll-stuck.ts';
+
+test('a pane with room below that stays put on a tick down is stuck', () => {
+  assert.equal(stuck({ dy: 100, before: 400, after: 400, max: 1900 }), true);
+  assert.equal(stuck({ dy: -100, before: 400, after: 400, max: 1900 }), true);
+});
+
+test('a pane that moved, or had nowhere to go, is not', () => {
+  assert.equal(stuck({ dy: 100, before: 400, after: 500, max: 1900 }), false);
+  assert.equal(stuck({ dy: 100, before: 1900, after: 1900, max: 1900 }), false, 'at the bottom, a tick down goes nowhere');
+  assert.equal(stuck({ dy: -100, before: 0, after: 0, max: 1900 }), false, 'at the top, a tick up goes nowhere');
+  assert.equal(stuck({ dy: 100, before: 1899.5, after: 1899.5, max: 1900 }), false, 'half a pixel short is the bottom');
+});
