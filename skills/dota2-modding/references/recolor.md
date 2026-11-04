@@ -8,7 +8,7 @@ npm run modkit -- pack work/mod --out necro_red.vpk
 npm run doctor -- necro_red.vpk
 ```
 
-This rewrites the colours written in the hero's particles (`particles/units/heroes/hero_<hero>/`
+Work in `work/` at the repo root: git ignores it. This rewrites the colours written in the hero's particles (`particles/units/heroes/hero_<hero>/`
 and `particles/status_fx/status_effect_<hero>*`). Add an item's folder with
 `--include particles/econ/items/<hero>/<item>/`.
 
@@ -19,7 +19,8 @@ several hues: Necrophos' greens run from yellow-green to teal and came out purpl
 `--one-pass` exists for heroes with one hue. Colours with almost no saturation (white cores,
 greys) stay as they are, which keeps the bright centres of effects bright.
 
-Colours the recolour cannot reach:
+Colours the recolour cannot reach. Tell the person which of these their hero has before you call
+the mod done (for Necrophos: the Ghost Shroud ring and the status effect's colour warp):
 
 - **Colours drawn in a texture.** A projected material (Necrophos' Ghost Shroud ring on the
   ground, `materials/particle/projected_spirit`) is a picture. Recolour the decompiled PNG (keep
@@ -27,9 +28,14 @@ Colours the recolour cannot reach:
   source with DXT5 and all four channels (below). A `.vmat` of your own pointing at a PNG loses the
   alpha, and the ring becomes a square on the ground.
 - **Colour warps.** A status effect may colour the model through a shared 3D lookup texture
-  (`colorwarp_morphling1` serves eleven effects). Do not repaint the shared one: decompile the
-  status effect `.vpcf`, point it at a lookup that already has your colour (Bloodseeker's
-  `colorwarp_rupture` is red), compile it under the status effect's path.
+  (`colorwarp_morphling1` serves eleven effects). Do not repaint the shared one: point the status
+  effect at a lookup that already has your colour (Bloodseeker's `colorwarp_rupture` is red).
+  `modkit warp` does it in the compiled file, with no compile and nothing written into the game:
+
+  ```
+  npm run modkit -- find colorwarp --ext vtex_c
+  npm run modkit -- warp particles/status_fx/status_effect_necrolyte_spirit.vpcf_c materials/models/heroes/statuseffects/colorwarp_rupture.vtex --out work/mod
+  ```
 - **Gem colours** of arcanas, which the game sets at play time ([items-from-game.md](items-from-game.md)).
 
 What the recolour can make worse, seen on red:
@@ -39,8 +45,9 @@ What the recolour can make worse, seen on red:
   the small green component from colours (184,44,44 drifts orange when clipped).
 - **Additive red on green grass looks yellow.** Thin or remove wide additive haze layers.
 - **MOD2X renderers multiply what is under them by twice their colour.** Pure red there zeroes the
-  green and blue of the ground and fills the screen with red fog. Keep some green and blue in
-  those colours.
+  green and blue of the ground and fills the screen with red fog. `modkit recolor` keeps every
+  channel of those particles at 30% of the strongest and says how many it lifted; a recolour made
+  another way has to do the same.
 - **Switching an additive layer to alpha blending** drew black squares: the textures have no alpha.
 
 ## Materials: body, weapon, hiding a part

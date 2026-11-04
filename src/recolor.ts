@@ -190,6 +190,31 @@ export function shadeColors(kv: Kv3Block, target: Rgb, skip?: RegExp, from?: Rgb
 }
 
 /**
+ * A particle drawn with a MOD2X renderer multiplies what is under it by twice its colour, so a
+ * channel near zero there wipes that channel off the ground: pure red fills the lane with red fog.
+ * Every channel of its colours is lifted to at least `share` of the strongest, which keeps the hue
+ * and leaves the ground its own colour under it. Particles drawn any other way come back as they
+ * were.
+ */
+export function liftForMod2x(file: Buffer, share = 0.3): { file: Buffer; changed: number } {
+  const block = dataBlock(file);
+  const kv = readKv3(block.data);
+  if (!kv.strings.some((x) => /BLEND_MODE_MOD2X/.test(x))) return { file, changed: 0 };
+  let changed = 0;
+  for (const a of kv.arrays) {
+    if (!COLOR_KEY.test(a.key) || (a.cells.length !== 3 && a.cells.length !== 4)) continue;
+    if (a.cells.some((c) => c === null || c.float)) continue;
+    const cells = a.cells as NonNullable<(typeof a.cells)[number]>[];
+    const rgb = cells.slice(0, 3).map((c) => readCell(kv, c));
+    const floor = Math.round(Math.max(...rgb) * share);
+    if (rgb.every((n) => n >= floor)) continue;
+    rgb.forEach((n, i) => { if (n < floor) writeCell(kv, cells[i], floor); });
+    changed++;
+  }
+  return { file: changed ? block.replace(kv.encode()) : file, changed };
+}
+
+/**
  * One compiled particle in the chosen colour. With `gem`, the gem's tint is pointed at the chosen
  * colour; with `own` (the default), a particle the gem does not tint has its written colours moved.
  * With `bake`, for a hero who has no gem (src/arcana.ts), that tint is off and what is written is

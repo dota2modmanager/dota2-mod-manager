@@ -19,7 +19,7 @@ import { writeKv3 } from '../src/kv3-write.ts';
 import { at, encodeKv3, kv3Block, particle, range, remap, resource } from './helpers/kv3-build.ts';
 import { attributeToken, materialExpressions, withConstant } from '../src/material.ts';
 import { dataBlock, resourceBlocks } from '../src/resource.ts';
-import { buildRecolor, recolorMaterial, recolorResource, shade, type Rgb } from '../src/recolor.ts';
+import { buildRecolor, liftForMod2x, recolorMaterial, recolorResource, shade, type Rgb } from '../src/recolor.ts';
 import { buildVpk, entryAt, openVpkIndex } from '../src/vpk.ts';
 
 const PINK: Rgb = [255, 193, 220];
@@ -328,4 +328,18 @@ test('an immortal with no gem has its colour written in: the game turns its tint
   const kv = readKv3(dataBlock(openVpkIndex(mod).read(`${wings}/glow.vpcf_c`) as Buffer).data);
   assert.deepEqual(kv.arrays.find((a) => a.key === 'm_ConstantColor')!.cells.map((c) => readCell(kv, c!)).slice(0, 3), PINK, 'baked: the colour the tint would give');
   assert.deepEqual(range(kv, at(kv.root, 'm_Initializers', 0, 'm_vOutputMax')), [1, 1, 1], 'the tint itself is left: with no gem it is off');
+});
+
+test('a MOD2X layer keeps some of every channel, so pure red does not fill the ground with red fog', () => {
+  const mod2x = (color: number[]) => particle(encodeKv3({ obj: [
+    ['m_ColorMin', { i32s: color }],
+    ['m_Renderers', { arr: [{ obj: [['m_nOutputBlendMode', { str: 'PARTICLE_OUTPUT_BLEND_MODE_MOD2X' }]] }] }],
+  ] }));
+  const color = (file: Buffer) => { const kv = readKv3(dataBlock(file).data); return kv.arrays.find((a) => a.key === 'm_ColorMin')!.cells.map((c) => readCell(kv, c!)); };
+  const r = liftForMod2x(mod2x([180, 1, 2, 255]));
+  assert.equal(r.changed, 1);
+  assert.deepEqual(color(r.file), [180, 54, 54, 255], 'every channel at least 30% of the strongest, alpha as it was');
+  assert.equal(liftForMod2x(mod2x([180, 90, 60, 255])).changed, 0, 'a colour that has them already is left');
+  const plain = particle(encodeKv3({ obj: [['m_ColorMin', { i32s: [180, 1, 2, 255] }]] }));
+  assert.equal(liftForMod2x(plain).file, plain, 'a particle drawn another way comes back as it was');
 });
