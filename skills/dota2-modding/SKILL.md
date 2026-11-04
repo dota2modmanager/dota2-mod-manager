@@ -21,8 +21,13 @@ idle, attack, spawn and run animations, sounds, icons, a hero-picker scene with 
    Source2Viewer (VRF), Blender and Python, and says how to get what is missing. Recolours and
    items from the game's files need only Node and Dota. Anything compiled (models, materials,
    textures, sounds, clips) needs the Workshop Tools, which exist for Windows only.
-3. **Make a work folder** outside the game, such as `mods/<mod-name>/`, and keep every
-   intermediate file there. Never write into `dota 2 beta/game/dota*` by hand.
+3. **Work in `work/<mod-name>/`** at the repo root (git ignores it) and keep every intermediate
+   file there. Never write into `dota 2 beta/game/dota*` by hand.
+4. **Know what writes into the game.** `modkit compile` (and `clips`, `sounds`, `pictures`, which
+   compile) creates an addon under `game/dota_addons/<addon>`, which is how the Workshop Tools
+   work, and the bench installs the mod and starts Dota. `find`, `extract`, `recolor`, `warp`,
+   `pack` and the doctor only read the game. Where the person wants nothing written into the game,
+   stop before the first and ask.
 
 ## Find out what they want
 

@@ -108,6 +108,8 @@ test('a resource named in RERL is added once, with its id, and the blocks after 
   for (const b of resourceBlocks(next)) assert.equal(b.at % 16, 0, `${b.name} stays aligned`);
   assert.equal(next.readUInt32LE(0), next.length);
   assert.deepEqual(references(resource([['DATA', data]])), [], 'a file with no RERL names nothing');
+  assert.deepEqual(references(withReferences(file, ['materials/colorwarp.vtex_c', 'particles/a.vpcf_c'])), ['particles/a.vpcf', 'materials/colorwarp.vtex'],
+    'a compiled name goes in as the compiler names it, by its source');
 });
 
 test('a particle is given another child, copied from its first, and names it in RERL', () => {

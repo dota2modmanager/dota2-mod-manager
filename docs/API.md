@@ -8784,6 +8784,18 @@ export function shadeColors(kv: Kv3Block, target: Rgb, skip?: RegExp, from?: Rgb
 
 The colours written in a particle moved to the chosen one (but those `skip` names); `skipped` counts those with no room.
 
+### `liftForMod2x`
+
+```ts
+export function liftForMod2x(file: Buffer, share = 0.3): { file: Buffer; changed: number }
+```
+
+A particle drawn with a MOD2X renderer multiplies what is under it by twice its colour, so a
+channel near zero there wipes that channel off the ground: pure red fills the lane with red fog.
+Every channel of its colours is lifted to at least `share` of the strongest, which keeps the hue
+and leaves the ground its own colour under it. Particles drawn any other way come back as they
+were.
+
 ### `recolorResource`
 
 ```ts
@@ -9292,7 +9304,9 @@ export function withReferences(file: Buffer, paths: string[]): Buffer
 ```
 
 The file with `paths` added to the resources its RERL block names (those already there are kept
-once). A file with no RERL block is refused: adding a block is not done here.
+once). A file with no RERL block is refused: adding a block is not done here. A path is named as
+the compiler names it, by its source: `colorwarp.vtex`, not the compiled `colorwarp.vtex_c`, so a
+compiled name given here loses its `_c` rather than going in as a reference nothing loads.
 
 ## src/safe-zip.ts
 

@@ -89,11 +89,13 @@ export function references(file: Buffer): string[] {
 
 /**
  * The file with `paths` added to the resources its RERL block names (those already there are kept
- * once). A file with no RERL block is refused: adding a block is not done here.
+ * once). A file with no RERL block is refused: adding a block is not done here. A path is named as
+ * the compiler names it, by its source: `colorwarp.vtex`, not the compiled `colorwarp.vtex_c`, so a
+ * compiled name given here loses its `_c` rather than going in as a reference nothing loads.
  */
 export function withReferences(file: Buffer, paths: string[]): Buffer {
   const names = [...references(file)];
-  for (const p of paths) if (!names.includes(p)) names.push(p);
+  for (const p of paths.map((x) => x.replace(/_c$/i, ''))) if (!names.includes(p)) names.push(p);
   const entries = Buffer.alloc(names.length * 16);
   const text: Buffer[] = [];
   let at = 8 + entries.length;
