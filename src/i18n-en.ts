@@ -272,6 +272,21 @@ const EN = {
   'Ни один файл не взял цвет': 'None of the files took the colour',
   'Перекраска: {0}': 'Recolor: {0}',
   'Выбери цвет хотя бы для одного слоя': 'Pick a colour for at least one layer',
+  'Черновик не найден': 'Draft not found',
+  'Это не VPK-файл': 'This is not a VPK file',
+  'Картинка должна быть PNG, JPG, WebP, GIF или видео MP4/WebM': 'The picture has to be a PNG, JPG, WebP, GIF or an MP4/WebM video',
+  'название': 'the name',
+  'категория': 'the category',
+  'автор': 'the author',
+  'VPK стиля{0}': 'the VPK of style{0}',
+  'картинка': 'the picture',
+  'картинка стиля{0}': 'the picture of style{0}',
+  'название стиля {0}': 'the name of style {0}',
+  'Не хватает: {0}': 'Still missing: {0}',
+  'VPK мода': "The mod's VPK",
+  'Картинка мода': "The mod's picture",
+  'Картинки и видео': 'Pictures and videos',
+  'Сохранить мод для каталога': 'Save the mod for the catalog',
 } satisfies Record<string, string>;
 
 export default EN;
