@@ -88,6 +88,7 @@ const EN = {
   'Путь к Dota 2 не задан': 'Dota 2 path is not set',
   // ---- item schema / search-path patch ----
   'Закрой Dota 2 перед изменением файлов игры': 'Close Dota 2 before changing game files',
+  'Dota 2 открыта. Закрой игру, и моды можно будет ставить и переключать': 'Dota 2 is open. Close the game to install and switch mods',
   'Не найден {0}': '{0} not found',
   'items_game.txt не найден в pak01 игры': 'items_game.txt is not in the game\'s pak01',
   'items_game: незакрытая кавычка': 'items_game: unterminated quote',
@@ -266,7 +267,7 @@ const EN = {
   'Фон больше {0} МБ': 'The background is over {0} MB',
   'В WebM нет видео VP8 или VP9': 'The WebM has no VP8 or VP9 video',
   'Нужен ValveResourceFormat: скачай его в окне': 'ValveResourceFormat is needed: download it in the window',
-  'Размер интерфейса в игре: {0}%': 'In-game HUD size: {0}%',
+  'Размер интерфейса в игре: {0}%': 'In-game HUD size: {0}%', 'Ранг и уровни героев': 'Rank and hero levels', 'Выбери медаль или уровень хотя бы одного героя': 'Pick a medal or a level for at least one hero',
   'Нет такого героя: {0}': 'No such hero: {0}',
   'Ни один файл не взял цвет': 'None of the files took the colour',
   'Перекраска: {0}': 'Recolor: {0}',

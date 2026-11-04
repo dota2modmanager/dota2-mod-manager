@@ -9,7 +9,7 @@ import { confirmDialog } from '../ui/dialog.ts';
 import { fmtMB } from '../ui/format.ts';
 import { showCreatorModal } from '../catalog/modal/root.tsx';
 import type { CreatorModel } from '../creator/CreatorModal.tsx';
-import type { CreatorDraft } from '../api/content.ts';
+import type { CreatorDraft } from '../api/creator.ts';
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './catalog/overlay.ts';
 
 // a mod for the catalog is a mod: not a tool, a guide or a link

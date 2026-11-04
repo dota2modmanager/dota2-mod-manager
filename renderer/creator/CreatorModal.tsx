@@ -3,7 +3,7 @@
  * catalog is not ours to write to. The mod window's markup and classes (.modal-body, .map-side,
  * .style-btn), so it reads as one of them. */
 import { Dropdown } from '../ui/Dropdown.tsx';
-import type { CreatorDraft, CreatorFields } from '../api/content.ts';
+import type { CreatorDraft, CreatorFields } from '../api/creator.ts';
 
 /** What the window draws: the drafts, the one open, and the choices its form offers. */
 export interface CreatorModel {

@@ -61,6 +61,7 @@ the code, not in this page.
 | [`src/game-icons.ts`](#srcgame-iconsts) | Item pictures taken from the installed game instead of scraped off a wiki. |
 | [`src/game-repair.ts`](#srcgame-repairts) | Putting the game back after something else changed it (src/game-upkeep.ts runs this at start |
 | [`src/game-upkeep.ts`](#srcgame-upkeepts) | Keeping the game folder the way the user left it, while other programs change it underneath. |
+| [`src/game-watch.ts`](#srcgame-watchts) | Is Dota open right now, asked every few seconds and told to the window when it changes. |
 | [`src/gamelang-folders.ts`](#srcgamelang-foldersts) | Making and moving the dota_<lang> folders (src/gamelang.ts has the rule): whether a voice pack is |
 | [`src/gamelang-steam.ts`](#srcgamelang-steamts) | What Steam says about the game's language (src/gamelang.ts has the rule): the -language in the |
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
@@ -145,9 +146,12 @@ the code, not in this page.
 | [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
 | [`src/pumpkin.ts`](#srcpumpkints) | The pumpkin's side of the key (renderer/ui/pumpkin.ts asks, tools/pumpkin-worker answers). |
 | [`src/quit-after-build.ts`](#srcquit-after-buildts) | Quitting waits for the item table being written. |
+| [`src/rank-look-service.ts`](#srcrank-look-servicets) | The rank medal and hero levels of the player's own screen, as one record in My mods (what goes |
+| [`src/rank-look.ts`](#srcrank-lookts) | The rank medal and the Dota Plus hero levels the player sees on their own screen: a medal and |
 | [`src/ready-presets-format.ts`](#srcready-presets-formatts) | The ready-made presets' format (config/presets.json, issue #391): a short list of builds picked |
 | [`src/ready-presets.ts`](#srcready-presetsts) | The ready-made presets (issue #391): config/presets.json on main, fetched and checked the way the |
 | [`src/recolor-layers.ts`](#srcrecolor-layersts) | A hero in colours of the user's choosing, part by part (issue #422): each ability's effect and its |
+| [`src/recolor-sets.ts`](#srcrecolor-setsts) | What src/recolor.ts can recolour: each item's particle and material folders, the colour of the |
 | [`src/recolor.ts`](#srcrecolorts) | An item's effects in a colour of the user's choosing, built from the game's own files. |
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
@@ -976,7 +980,7 @@ What the window shows: each arcana, and the game's prismatic gems to offer as co
 ### `WINDOWS`
 
 ```ts
-export const WINDOWS: Record<string, { picture: string; model: string; base?: string }> =
+export const WINDOWS: Record<string, { picture: string; model: string; base?: string; colorOnly?: boolean }> =
 ```
 
 The arcanas the window builds: the picture it shows, the file whose presence says the game has
@@ -1505,7 +1509,7 @@ Why a value does not fit, or null when it does.
 ### `ARCANA_WINDOWS`
 
 ```ts
-export const ARCANA_WINDOWS = ['terrorblade-arcana', 'techies-arcana']
+export const ARCANA_WINDOWS = ['terrorblade-arcana', 'techies-arcana', 'terrorblade-span', 'terrorblade-scythes', 'razor-crest']
 ```
 
 The arcanas the arcana window builds: src/arcana-service.ts WINDOWS, which a test keeps in step.
@@ -2405,10 +2409,11 @@ One definition, handed to whoever needs it, so there is no second copy to leave 
 ### `createGate`
 
 ```ts
-export function createGate({ remoteConfig, settings }: { remoteConfig: FeatureSwitches; settings: Pick<Settings, 'get'>; }): (name: string) => { error: string } | null
+export function createGate({ remoteConfig, settings, gameOpen = () => false }: { remoteConfig: FeatureSwitches; settings: Pick<Settings, 'get'>; gameOpen?: () => boolean; }): (name: string) => { error: string; gameOpen?: true } | null
 ```
 
 ```
+@param gameOpen  whether Dota is open (src/game-watch.ts): the game holds its files, so nothing is written
 @returns the answer to send back, or null to carry on
 ```
 
@@ -2710,6 +2715,8 @@ Nothing is written while Dota is running. It holds gameinfo and its paks open, s
 half-succeed, and the client has already read the files anyway. The app says it is waiting and
 tries again after the game exits.
 
+Hands on from [`src/game-watch.ts`](#srcgame-watchts): `createGameWatch`.
+
 Hands on from [`src/game-repair.ts`](#srcgame-repairts): `REPAIR_RETRY_MS`, `PatchRepair`, `Stuck`.
 
 Hands on from [`src/steam-appstate.ts`](#srcsteam-appstatets): `launchWarning`.
@@ -2737,6 +2744,42 @@ export function createGameUpkeep({ settings, installer, library, schemaService, 
 ```
 
 _No description in the source._
+
+## src/game-watch.ts
+
+Is Dota open right now, asked every few seconds and told to the window when it changes.
+
+While the game runs it holds its paks and gameinfo open, and anything written then either fails
+halfway on Windows or waits for the next start to be read. The app stays open beside the game
+(the catalog, favourites and presets are worth browsing with Dota up), so instead of closing it
+says so: the status bar names it, and the channels that write the game folder answer "close
+Dota first" (src/feature-gate.ts) from the answer kept here, without asking the system again.
+
+The check runs a process list (src/game-upkeep.ts dotaIsRunning), which is async and never
+holds the main process. It runs every few seconds while the game is closed and every second while
+it is open, so the app lets go within a second of the game closing; a refusal asks again at once
+too, so the next click after the game is gone goes through.
+
+### `GameWatch`
+
+```ts
+export interface GameWatch
+```
+
+The watch: the last answer, and the switch that starts and stops asking.
+
+### `createGameWatch`
+
+```ts
+export function createGameWatch({ isRunning, send, everyMs = 5000, openMs = 1000 }: { isRunning: () => Promise<boolean>; send: (running: boolean) => void; everyMs?: number; openMs?: number; }): GameWatch
+```
+
+```
+@param isRunning  whether the Dota client is running, asked of the system
+@param send       told the new answer each time it changes
+@param everyMs    how often to ask while the game is closed
+@param openMs     how often to ask while it is open
+```
 
 ## src/gamelang-folders.ts
 
@@ -3107,6 +3150,16 @@ export function swapPak(installer: PakInstaller, rec: LibRecord, vpk: Buffer, of
 
 `vpk` in place of the record's pak: written beside it, then moved into the slot the old one had,
 and switched off when `off`. The caller builds first, so a build that fails leaves the old one.
+
+### `fileInForce`
+
+```ts
+export function fileInForce({ game, langFolder, records, own, file }: { game: string; langFolder: string; records: LibRecord[]; own?: string | null; file: string; }): { data: Buffer; from: LibRecord | null } | null
+```
+
+The copy of a game file that is in force before a generated pak of ours: the first switched-on
+mod's, in load order (the first copy wins, as in the game), else the game's own in pak01. Null
+when neither has it. `own` is the generated record itself, which never counts.
 
 ## src/glb-embed.ts
 
@@ -8155,6 +8208,184 @@ export function quitAfterBuild(app: { on(event: 'before-quit', fn: (e: QuitEvent
 @param settled  resolves once none is (schemaService.settled)
 ```
 
+## src/rank-look-service.ts
+
+The rank medal and hero levels of the player's own screen, as one record in My mods (what goes
+into it is src/rank-look.ts). The two styles are read back as CSS from the copy in force (a mod's
+when one carries them, else the game's), the medal's rules go at their end, and Valve's compiler
+builds them again with the levels script; the three layouts get the script's include. The pak
+goes early in the load order, so it wins over the mod it was made from.
+
+A Dota update that reached the record builds it again from the new files, after the update's
+repair has answered, and the record's mark from src/update-impact.ts is lifted when it is done.
+The window's pictures (the medals, the badge tiers) come out of the game too: the badges are
+PNGs in their textures, the medals are compressed and need ValveResourceFormat.
+
+### `RankGenerated`
+
+```ts
+export interface RankGenerated { rank: RankLook }
+```
+
+What a rank record was built from.
+
+### `RankState`
+
+```ts
+export interface RankState
+```
+
+What the window shows: the look on now, if any, the heroes of this patch, and whether ValveResourceFormat is there.
+
+### `MEDAL_PICTURES`
+
+```ts
+export const MEDAL_PICTURES = [...Array.from({ length: 9 }, (_, i) => `rank${i}`), 'rank8a', 'rank8b', 'rank8c']
+```
+
+The medals the window offers, by the name of their picture, and the six badge tiers.
+
+### `createRankLook`
+
+```ts
+export function createRankLook({ gamePath, installer, library, vrf, compile, decompile = vrfCss, run = runTool, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** ValveResourceFormat's CLI, when it is downloaded */ vrf: () => string | null; compile: (job: CompileJob) => Promise<VpkEntry[]>; /** a compiled style read back as CSS; tests hand one in */
+```
+
+The service the rank:* channels call.
+
+## src/rank-look.ts
+
+The rank medal and the Dota Plus hero levels the player sees on their own screen: a medal and
+stars of their choosing, and a level from 1 to 30 for any hero, with the tier badge that level
+earns. Nobody else sees any of it. The game draws other players' medals from the same classes,
+so the medal is everyone's in this player's game, while the levels are only on the player's own
+hero cards and on their own pick.
+
+The medal is a picture a style puts on a panel by class: `.RankTier3 .RankTierImage` gets
+rank3_psd, `.RankPips2 .RankPipImage` gets pip2_psd. So the app reads the two styles that carry
+those rules back as CSS (ValveResourceFormat), and adds a copy of each rule with the chosen
+picture in it at the end, where it wins. A rule drawn small (`.Minimal`, the mini folder) gets the
+small picture, so the medal keeps its size.
+
+A level is a number the client asks Steam for, so no style can change it. A script can: Panorama
+runs the JavaScript a layout includes, and the script writes the number into the label and sets
+the tier class on the badge every half second. It goes into three layouts, by adding one
+include to the tree in their LaCo block (as src/menu-background.ts does): the hero grid of the
+menu and the pick screen, the player's own panel at the pick, and the strategy screen.
+
+Tried in the game on 2026-11-04: the profile medal, the hero grid and the pick badge took them.
+
+### `Medal`
+
+```ts
+export interface Medal { tier: number; stars: number; top: 0 | 5000 | 100 | 10 }
+```
+
+A medal: the tier (0 not calibrated, 8 Immortal), the stars of tiers 1 to 7, and an Immortal's leaderboard place.
+
+### `RankLook`
+
+```ts
+export interface RankLook { medal: Medal | null; levels: Record<string, number>; every: number | null }
+```
+
+What the player picked: a medal or the game's own, a level per hero, and one for every hero not named.
+
+### `STYLES`
+
+```ts
+export const STYLES = ['panorama/styles/dotastyles', 'panorama/styles/avatar_rank_tier'].map((p) => ({ compiled: `${p}.vcss_c`, source: `${p}.css` }))
+```
+
+The two styles that hold the medal's rules, as compiled in the pak and as the compiler's source.
+
+### `LAYOUTS`
+
+```ts
+export const LAYOUTS = ['panorama/layout/hero_grid_new.vxml_c', 'panorama/layout/hud/dota_hud_hero_picking_player.vxml_c', 'panorama/layout/hud/dota_hud_pregame.vxml_c']
+```
+
+The layouts the levels script goes into: the hero grid, the player's panel at the pick, the strategy screen.
+
+### `SCRIPT`
+
+```ts
+export const SCRIPT = { source: 'panorama/scripts/d2mm_rank_look.js', compiled: 'panorama/scripts/d2mm_rank_look.vjs_c', ref: 'panorama/scripts/d2mm_rank_look.vjs' }
+```
+
+The script, as the compiler's source and as the layouts name it.
+
+### `TIERS`
+
+```ts
+export const TIERS = ['BronzeTier', 'SilverTier', 'GoldTier', 'PlatinumTier', 'MasterTier', 'GrandmasterTier']
+```
+
+The badge tiers in order, as the game's classes name them; a level's tier is (level - 1) / 5.
+
+### `tierOf`
+
+```ts
+export const tierOf = (level: number): number => Math.min(5, Math.max(0, Math.floor((level - 1) / 5)))
+```
+
+The tier a level from 1 to 30 earns, 0 (bronze) to 5 (grandmaster).
+
+### `clampLook`
+
+```ts
+export function clampLook(raw: unknown): RankLook
+```
+
+What the window sent, kept to what the game has: tiers 0 to 8, stars 1 to 5, levels 1 to 30.
+
+### `lookIsEmpty`
+
+```ts
+export const lookIsEmpty = (look: RankLook): boolean => !look.medal && look.every === null && !Object.keys(look.levels).length
+```
+
+Whether there is anything to build.
+
+### `medalImage`
+
+```ts
+export function medalImage(m: Medal, mini: boolean): string
+```
+
+The medal's picture, as the rules name one; `mini` for a rule that draws it small.
+
+### `withMedal`
+
+```ts
+export function withMedal(css: string, medal: Medal): string
+```
+
+The CSS ValveResourceFormat read out of a style, with the medal's rules at its end: every rule
+that puts a medal on, copied with the chosen one, and every rule that puts stars on, copied with
+the chosen stars (none for tiers 0 and 8). The tool's banner goes, and rules this added before
+are replaced rather than stacked.
+
+### `levelsScript`
+
+```ts
+export function levelsScript(look: RankLook): string
+```
+
+The script the layouts include. It knows the levels and the medal, finds what is on its
+panel each half second (hero cards, the player's own panel at the pick, the strategy badge) and
+writes them in. Each part is in a try of its own: a panel a patch renamed stops that part only.
+
+### `withScript`
+
+```ts
+export function withScript(layout: Buffer): Buffer
+```
+
+A compiled layout that also includes the script: one SCRIPTS node put in front of its panel,
+the way the compiler writes `<scripts><include src="..."/></scripts>`. A layout that has it
+already is left as it is.
+
 ## src/ready-presets-format.ts
 
 The ready-made presets' format (config/presets.json, issue #391): a short list of builds picked
@@ -8340,6 +8571,35 @@ Pixels moved to the chosen colour in place, as `shade` moves a particle's colour
 the rest take the chosen hue. `rgba` is four bytes a pixel; `bgra` says the red and blue are
 swapped, as Electron's bitmaps have them on Windows.
 
+## src/recolor-sets.ts
+
+What src/recolor.ts can recolour: each item's particle and material folders, the colour of the
+gem it comes with, and whether that colour is baked in (an item with no gem of its own).
+
+### `Rgb`
+
+```ts
+export type Rgb = [number, number, number]
+```
+
+A colour as three whole numbers 0-255.
+
+### `RecolorSet`
+
+```ts
+export interface RecolorSet
+```
+
+What can be recoloured, by path prefix in pak01, and the colour of the gem the item comes with.
+
+### `RECOLOR_SETS`
+
+```ts
+export const RECOLOR_SETS: Record<string, RecolorSet> =
+```
+
+_No description in the source._
+
 ## src/recolor.ts
 
 An item's effects in a colour of the user's choosing, built from the game's own files.
@@ -8359,29 +8619,7 @@ the mod changes what the files do with the gem's colour instead:
   moved to the chosen one: every colour takes the chosen hue and keeps its own brightness and
   saturation scaled by the chosen colour's; black, white and greys stay as they are.
 
-### `Rgb`
-
-```ts
-export type Rgb = [number, number, number]
-```
-
-_No description in the source._
-
-### `RecolorSet`
-
-```ts
-export interface RecolorSet
-```
-
-What can be recoloured, by path prefix in pak01, and the colour of the gem the item comes with.
-
-### `RECOLOR_SETS`
-
-```ts
-export const RECOLOR_SETS: Record<string, RecolorSet> =
-```
-
-_No description in the source._
+Hands on from [`src/recolor-sets.ts`](#srcrecolor-setsts): `Rgb`, `RECOLOR_SETS`.
 
 ### `shade`
 

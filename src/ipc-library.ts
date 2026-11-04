@@ -19,15 +19,17 @@ import type { LibRecord } from './types.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerLibraryIpc({
-  applyMasterToCursors, disableOtherCosmetics, disableOtherCursors,
+  applyMasterToCursors, blocked, disableOtherCosmetics, disableOtherCursors,
   installer, isCursorRecord, library, refreshPresence, schemaService,
-}: Pick<AppContext, 'applyMasterToCursors' | 'disableOtherCosmetics' | 'disableOtherCursors' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService'>): void {
+}: Pick<AppContext, 'applyMasterToCursors' | 'blocked' | 'disableOtherCosmetics' | 'disableOtherCursors' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService'>): void {
   const { ipcMain } = electron();
   ipcMain.handle('mods:masterState', () => {
     try { return { off: installer.masterIsOff() }; } catch { return { off: false }; }
   });
 
   ipcMain.handle('mods:setMaster', (e, enabled) => {
+    const stop = blocked('toggle'); // Dota open: it holds the files
+    if (stop) return stop;
     try {
       const r = installer.setMasterEnabled(!!enabled);
       applyMasterToCursors(!!enabled);
@@ -48,6 +50,8 @@ export function registerLibraryIpc({
   }, installer.log);
 
   ipcMain.handle('mods:setEnabled', async (e, id, enabled) => {
+    const stop = blocked('toggle'); // Dota open: it holds the files
+    if (stop) return stop;
     const rec = library.find(id);
     if (!rec) return { error: t('Мод не найден') };
     // a copy of the pumpkin's mod this install did not earn stays off (src/scream-guard.ts)
@@ -84,6 +88,8 @@ export function registerLibraryIpc({
    * milliseconds each.
    */
   ipcMain.handle('mods:removeMany', async (e, ids) => {
+    const stop = blocked('toggle'); // Dota open: it holds the files
+    if (stop) return stop;
     const errors: string[] = [];
     let removed = 0;
     let schemaTouched = false;
@@ -106,6 +112,8 @@ export function registerLibraryIpc({
   // per mod. Cursors and cosmetics are left out because only one of each can be live and
   // the screen never offers them here.
   ipcMain.handle('mods:setEnabledMany', async (e, ids, enabled) => {
+    const stop = blocked('toggle'); // Dota open: it holds the files
+    if (stop) return stop;
     const errors: string[] = [];
     let changed = 0;
     let schemaTouched = false;
@@ -156,6 +164,8 @@ export function registerLibraryIpc({
   });
 
   ipcMain.handle('mods:remove', async (e, id) => {
+    const stop = blocked('toggle'); // Dota open: it holds the files
+    if (stop) return stop;
     const rec = library.find(id);
     if (!rec) return { error: t('Мод не найден') };
     try {

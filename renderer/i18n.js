@@ -165,7 +165,7 @@ const EN = {
   'Белый': 'White',
   'Террорблейд': 'Terrorblade',
   'Течис': 'Techies',
-  'Аркана Течиса': "Techies' arcana",
+  'Аркана Течиса': "Techies' arcana", 'Крылья Террорблейда': "Terrorblade's wings", 'Косы Террорблейда': "Terrorblade's scythes", 'Гребень Разора': "Razor's crest", 'Разор': 'Razor', 'эффекты в цвете самоцвета': 'effects in a gem colour', 'Перекрашивает эффекты предмета, когда он надет: твой собственный или выбранный в конструкторе предметов. Сам предмет не даёт.': 'Recolours the item’s effects while the hero wears it, your own or one picked in the item builder. It does not give you the item.',
   'Призматические самоцветы': 'Prismatic gems',
   'Башни из игры': 'Towers from the game',
   'Деревья из игры': 'Trees from the game',
@@ -844,7 +844,7 @@ const EN = {
   'Язык переключён на Русский': 'Language switched to Russian',
 
   // ---------- status bar ----------
-  'Dota 2 найдена': 'Dota 2 found',
+  'Dota 2 найдена': 'Dota 2 found', 'Dota 2 открыта: закрой её, чтобы ставить моды': 'Dota 2 is open: close it to install mods', 'Пока игра открыта, она держит свои файлы, и моды не ставятся и не переключаются. Каталог, избранное и пресеты работают.': 'While the game is open it holds its files, so mods cannot be installed or switched. The catalog, favourites and presets still work.',
   'Dota 2 не найдена — укажи путь в настройках': 'Dota 2 not found — set the path in Settings',
 
   // ---------- what's new ----------
@@ -906,7 +906,7 @@ const EN = {
   'Экспортировать отчёт': 'Export report', 'Чиню…': 'Repairing…', 'Починить приложение': 'Repair the app', 'Починка возвращает патч игры, ищет пропавшие файлы модов и очищает картинки. Моды и пресеты не трогает.': 'Repair puts the game patch back, looks for missing mod files and clears the pictures. Your mods and presets stay as they are.', 'Не вышло? Отправь отчёт: в нём видно, на каком шаге.': 'Still broken? Send the report: it shows which step failed.', 'Всё в порядке': 'All good', 'Починка нашла проблемы': 'Repair found problems',
   'Отчёт сохранён': 'Report saved',
   // ---------- the in-game HUD smaller or larger (catalog/hud) ----------
-  'Размер интерфейса в игре': 'In-game HUD size', 'Меньше или больше, чем даёт игра': 'Smaller or larger than the game allows', 'Нижняя панель и мини-карта меньше или больше, чем даёт игра': 'The bottom bar and the minimap, smaller or larger than the game allows',
+  'Размер интерфейса в игре': 'In-game HUD size', 'Меньше или больше, чем даёт игра': 'Smaller or larger than the game allows', 'Нижняя панель и мини-карта меньше или больше, чем даёт игра': 'The bottom bar and the minimap, smaller or larger than the game allows', 'Свой ранг и уровни героев': 'Your own rank and hero levels', 'Медаль и уровни Dota Plus, которые видишь только ты': 'A medal and Dota Plus levels only you see', 'Медаль': 'Medal', 'Моя': 'Mine', 'Топ {0}': 'Top {0}', 'Уровни героев': 'Hero levels', 'Всем героям': 'Every hero', 'как в игре': 'as in the game', 'Найти героя': 'Find a hero', 'Уровень: {0}': 'Level: {0}', 'Другие игроки видят твою настоящую медаль и уровни. Выбранная медаль у тебя на экране стоит у всех игроков. После обновления Доты приложение соберёт всё заново само.': 'Other players see your real medal and levels. On your screen the chosen medal shows for every player. After a Dota update the app builds it all again by itself.', 'Не удалось прочитать файлы игры': 'Could not read the game files', 'Изменить ранг и уровни': 'Change rank and levels',
   'Поверх HUD-мода «{0}»: если его выключить, собери размер заново.': 'On top of the HUD mod “{0}”: if you switch it off, build the size again.', 'Скачать ValveResourceFormat': 'Download ValveResourceFormat', 'Стиль интерфейса собирает компилятор Valve из Dota 2 Workshop Tools, бесплатного DLC в Steam. После обновления Доты приложение соберёт его заново само.': 'Valve’s compiler from Dota 2 Workshop Tools, a free DLC on Steam, builds the HUD style. After a Dota update the app builds it again by itself.',
   'Стиль интерфейса из игры читает ValveResourceFormat, его нужно один раз скачать. Собирает компилятор Valve из Dota 2 Workshop Tools.': 'ValveResourceFormat reads the HUD style out of the game. Download it once. Valve’s compiler from Dota 2 Workshop Tools builds it.', 'сейчас {0}%': 'now {0}%', 'Не удалось прочитать интерфейс игры': 'Couldn’t read the game’s HUD',
   'Изменить размер': 'Change the size',

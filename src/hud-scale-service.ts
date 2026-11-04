@@ -11,8 +11,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { clampScale, SOURCE, STYLE, withScale } from './hud-scale.ts';
-import { swapPak, writePak, type PakInstaller } from './generated-pak.ts';
-import { buildVpk, entryPath, sharedVpkIndex } from './vpk.ts';
+import { fileInForce, swapPak, writePak, type PakInstaller } from './generated-pak.ts';
+import { buildVpk, entryPath } from './vpk.ts';
 import { runTool } from './toolchain.ts';
 import { t } from './i18n.ts';
 import type { Library } from './library.ts';
@@ -30,8 +30,6 @@ export interface HudState {
   hudMod: string | null;
   vrf: boolean;
 }
-
-const pakNumber = (rel: string) => Number(/pak(\d+)_/i.exec(rel)?.[1] ?? Infinity);
 
 /** The service the hud:* channels call. */
 export function createHudScale({ gamePath, installer, library, vrf, compile, decompile = vrfCss, onRebuilt = () => {}, log = () => {} }: {
@@ -53,20 +51,9 @@ export function createHudScale({ gamePath, installer, library, vrf, compile, dec
   function baseStyle(): { data: Buffer; from: LibRecord | null } {
     const game = gamePath();
     if (!game) throw new Error(t('Не указана папка игры'));
-    const own = mine()?.id;
-    const paks = library.list()
-      .filter((r) => r.id !== own && r.enabled !== false)
-      .flatMap((r) => (r.files || []).filter((f) => f.root === 'lang' && /_dir\.vpk$/i.test(f.relPath)).map((f) => ({ r, rel: f.relPath })))
-      .sort((a, b) => pakNumber(a.rel) - pakNumber(b.rel));
-    for (const { r, rel } of paks) {
-      try {
-        const data = sharedVpkIndex(path.join(installer.langFolder(), rel)).read(STYLE);
-        if (data) return { data, from: r };
-      } catch { /* a pak that cannot be read is not the one in force either */ }
-    }
-    const data = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk')).read(STYLE);
-    if (!data) throw new Error(t('В игре нет файла {0}', STYLE));
-    return { data, from: null };
+    const got = fileInForce({ game, langFolder: installer.langFolder(), records: library.list(), own: mine()?.id, file: STYLE });
+    if (!got) throw new Error(t('В игре нет файла {0}', STYLE));
+    return got;
   }
 
   async function build(scale: number): Promise<{ vpk: Buffer; base: string }> {

@@ -145,7 +145,11 @@ export interface AppApi {
   settings: SettingsApi;
   ui: UiApi;
   /** warning: Steam is still updating the game (src/steam-appstate.ts), said before it starts */
-  game: { launch: () => Promise<Reply<{ warning?: string | null }>>; steamDownloads: () => Promise<Reply> };
+  game: {
+    launch: () => Promise<Reply<{ warning?: string | null }>>; steamDownloads: () => Promise<Reply>;
+    /** Dota opened or closed; while it is open the channels that write the game answer with `gameOpen` */
+    onRunning: (cb: (running: boolean) => void) => void;
+  };
   account: { signIn: () => Promise<Reply<{ account: NonNullable<StoredSettings['account']> }>>; signOut: () => Promise<Reply> };
   /** the beta channel: shown only to an account the signed list names (src/beta.ts) */
   beta: { state: () => Promise<{ eligible: boolean; on: boolean }>; set: (on: boolean) => Promise<{ eligible: boolean; on: boolean }> };

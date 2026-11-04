@@ -177,6 +177,7 @@ const VALID: Record<string, unknown[][]> = {
   'sounds:heroes': [[]], 'sounds:hero': [['lion']], 'sounds:remove': [['lion', 'Hero_Lion.Voodoo']],
   'sounds:add': [['lion', 'Hero_Lion.Voodoo', 'layer', 0.8, new Uint8Array(44), 'ring.mp3']],
   'hud:state': [[]], 'hud:install': [[85]],
+  'rank:state': [[]], 'rank:pictures': [[]], 'rank:install': [[{ medal: null, levels: { axe: 30 }, every: null }]],
   'background:state': [[]], 'background:install': [[new Uint8Array(64), 'sunset.mp4', 0.2, 4], [null, null, 0.5, 0]],
   'paint:state': [['juggernaut']], 'paint:install': [['juggernaut', { 'ability:juggernaut_blade_fury': '#00ff00' }, 'Juggernaut'], ['axe', {}, null]],
   'map:state': [[]], 'map:install': [['towers', '17538', null], ['trees', null, 'winter']],

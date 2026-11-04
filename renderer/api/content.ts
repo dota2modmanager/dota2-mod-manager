@@ -128,6 +128,8 @@ export interface ArcanaWindow {
   available: boolean;
   picture: string | null;
   installed: { id: string; color: [number, number, number]; mode: ArcanaMode; enabled: boolean } | null;
+  /** only the colour is built, for an item the hero wears (an immortal with no gem of its own) */
+  colorOnly: boolean;
 }
 
 /** A prismatic gem's colour, as items_game has it (src/gem-colors.ts). */
@@ -167,6 +169,21 @@ export interface HudApi {
   install: (scale: number) => Promise<Reply<{ record: LibRecord }>>;
 }
 
+/** A rank medal: tier 0 (not calibrated) to 8 (Immortal), stars 1 to 5, an Immortal's leaderboard place. */
+export interface RankMedal { tier: number; stars: number; top: 0 | 5000 | 100 | 10 }
+/** The medal (null: the player's own), a level per hero, and one for every hero not named. */
+export interface RankLook { medal: RankMedal | null; levels: Record<string, number>; every: number | null }
+
+/** The rank medal and hero levels of the player's own screen (src/rank-look-service.ts). */
+export interface RankApi {
+  /** the look on now, the heroes of this patch, and whether ValveResourceFormat is downloaded */
+  state: () => Promise<Reply<{ installed: { id: string; look: RankLook; enabled: boolean } | null; heroes: { id: string; name: string }[]; vrf: boolean }>>;
+  /** the medals by picture name (rank0..rank8, rank8a..c) and the six badge tiers, as data URIs */
+  pictures: () => Promise<Reply<{ medals: Record<string, string>; badges: string[] }>>;
+  /** the look built and put in My mods */
+  install: (look: RankLook) => Promise<Reply<{ record: LibRecord }>>;
+}
+
 /** The main menu's background of the user's own (src/menu-background-service.ts). */
 export interface BackgroundApi {
   /** the background on now, if any */
@@ -202,38 +219,6 @@ export interface SoundsApi {
   add: (hero: string, event: string, mode: SoundMode, volume: number, wav: Uint8Array, label: string) => Promise<Reply<{ record: LibRecord | null }>>;
   /** the sound of the user's off an event; the last one off removes the record */
   remove: (hero: string, event: string) => Promise<Reply<{ record: LibRecord | null }>>;
-}
-
-/** An author's draft of a mod for the catalog (src/creator.ts), as the form shows it. */
-export interface CreatorDraft {
-  id: string;
-  name: string;
-  category: string;
-  hero: string;
-  description: string;
-  author: string;
-  styles: { label: string; vpk: string | null; picture: string | null }[];
-  replaces: { category: string; name: string } | null;
-  updatedAt: number;
-  /** each style's picture as a data URL, or null for none, a clip or one too big to show */
-  pictures: (string | null)[];
-  /** what is still missing before it can be sent, in words */
-  missing: string[];
-}
-
-/** What the form may change in a draft. */
-export type CreatorFields = Partial<Pick<CreatorDraft, 'name' | 'category' | 'hero' | 'description' | 'author' | 'replaces'>> & { styles?: { label: string }[] };
-
-/** The author's drafts (src/ipc-creator.ts). */
-export interface CreatorApi {
-  list: () => Promise<Reply<{ drafts: CreatorDraft[] }>>;
-  /** a new draft (id null), or one's fields changed */
-  save: (id: string | null, fields: CreatorFields) => Promise<Reply<{ draft: CreatorDraft }>>;
-  /** a style's VPK or picture, picked in a dialog */
-  attach: (id: string, style: number, kind: 'vpk' | 'picture') => Promise<Reply<{ draft?: CreatorDraft; cancelled?: true }>>;
-  remove: (id: string) => Promise<Reply<object>>;
-  /** the draft as an archive for the catalog's maintainer, saved where the user says */
-  export: (id: string) => Promise<Reply<{ path?: string; size?: number; cancelled?: true }>>;
 }
 
 /** The item builder's 3D preview (src/hero-preview.ts): the body with its idle and each slot's model, as GLB bytes. */

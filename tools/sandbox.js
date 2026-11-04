@@ -8,6 +8,9 @@
  *   node tools/sandbox.js reset    restore the tree to pristine, wipe userData, keep mods
  *   node tools/sandbox.js status   what is on disk right now
  *   node tools/sandbox.js pin      point the settings at the sandbox game (start:sandbox runs it)
+ *   node tools/sandbox.js item "Ancient Exile - Head" [more names] [--game <sandbox game>]
+ *                                  an item's files from the real game into the sandbox's pak01,
+ *                                  with every effect the item builder can put on it
  *
  * The layout mirrors a real Steam library, because the app derives things from it: the game
  * path ends in ...\dota 2 beta\game (src/steam.ts) and src/gamelang.ts walks three levels up
@@ -179,6 +182,64 @@ const BUILDER_SAMPLE = [
   'Blightfall - Head', 'Blightfall - Shoulder', 'Blightfall - Back', 'Blightfall - Weapon', 'Blightfall - Mount',
   'Compendium Rider of Avarice Helmet',
 ];
+
+/**
+ * The files the item builder needs to build these items with any of its effects or the game's
+ * unusual ones: what their visuals name and what a build copies, in compiled paths.
+ */
+function itemAssets(ix, schemaText, names) {
+  const builder = require('../src/item-builder.ts');
+  const { offeredUnusual } = require('../src/item-builder-unusual.ts');
+  const compiled = (p) => { const c = String(p).toLowerCase().replace(/\\/g, '/'); return c.endsWith('_c') ? c : `${c}_c`; };
+  const effects = [null, ...builder.itemEffects().map((fx) => fx.id), ...offeredUnusual(schemaText, () => true).map((fx) => fx.id)];
+  const want = new Set();
+  const found = [];
+  for (const sl of builder.itemSlots(schemaText)) {
+    for (const o of sl.options.filter((x) => names.includes(x.name))) {
+      found.push(o.name);
+      for (const fx of effects) {
+        let built;
+        try { built = builder.itemEffectPatch(schemaText, o.id, fx); } catch { continue; }
+        for (const m of built.block.matchAll(/"((?:models|particles|materials)\/[^"]+\.(?:vmdl|vpcf|vmat|vtex))"/gi)) want.add(compiled(m[1]));
+        for (const c of built.assetCopies) { want.add(compiled(c.from)); want.add(compiled(c.to)); }
+      }
+    }
+  }
+  const out = [];
+  for (const rel of want) {
+    const data = ix.read(rel);
+    if (data) out.push(entry(rel, data));
+  }
+  return { entries: out, found: [...new Set(found)] };
+}
+
+/** `item`: the named items' files added to the sandbox's pak01, for building them in the app. */
+function item() {
+  const { openVpkIndex, listVpkPathsFile } = require('../src/vpk.ts');
+  const args = process.argv.slice(3);
+  const at = args.indexOf('--game');
+  const game = at === -1 ? GAME : path.resolve(args[at + 1]);
+  // without --game, at is -1, and at + 1 would drop the first name
+  const names = at === -1 ? args : args.filter((a, i) => i !== at && i !== at + 1);
+  const real = findDotaGamePathSync();
+  if (!real || !names.length) {
+    log(real ? 'usage: node tools/sandbox.js item "<item name>" [more] [--game <sandbox game>]' : 'the real game was not found');
+    process.exitCode = 1;
+    return;
+  }
+  const pak = path.join(game, 'dota', 'pak01_dir.vpk');
+  const own = openVpkIndex(pak);
+  const schemaText = own.read(SCHEMA_REL).toString('latin1');
+  const { entries, found } = itemAssets(openVpkIndex(path.join(real, 'dota', 'pak01_dir.vpk')), schemaText, names);
+  const missing = names.filter((n) => !found.includes(n));
+  if (missing.length) log('  not an item the builder offers:', missing.join(', '));
+  const have = new Set(listVpkPathsFile(pak));
+  const added = entries.filter((e) => !have.has(e.name === ' ' ? e.folder : `${e.folder}/${e.name}.${e.ext}`));
+  const kept = [...have].map((rel) => entry(rel, own.read(rel)));
+  fs.writeFileSync(`${pak}.new`, buildVpk([...kept, ...added]));
+  fs.renameSync(`${pak}.new`, pak);
+  log(`  ${added.length} files of ${found.join(', ') || 'nothing'} added to ${pak}`);
+}
 
 function builderAssets(real, schemaText) {
   const { openVpkIndex } = require('../src/vpk.ts');
@@ -586,9 +647,9 @@ function status() {
 }
 
 const cmd = process.argv[2] || 'status';
-const commands = { seed, reset, status, pin };
+const commands = { seed, reset, status, pin, item };
 if (!commands[cmd]) {
-  log('usage: node tools/sandbox.js <seed|reset|status|pin>');
+  log('usage: node tools/sandbox.js <seed|reset|status|pin|item>');
   process.exitCode = 1;
 } else {
   Promise.resolve(commands[cmd]()).catch((e) => {

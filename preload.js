@@ -127,6 +127,11 @@ contextBridge.exposeInMainWorld('api', {
     state: () => ipcRenderer.invoke('hud:state'),
     install: (scale) => ipcRenderer.invoke('hud:install', scale),
   },
+  rank: {
+    state: () => ipcRenderer.invoke('rank:state'),
+    pictures: () => ipcRenderer.invoke('rank:pictures'),
+    install: (look) => ipcRenderer.invoke('rank:install', look),
+  },
   background: {
     state: () => ipcRenderer.invoke('background:state'),
     install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur),
@@ -151,6 +156,8 @@ contextBridge.exposeInMainWorld('api', {
   game: {
     launch: () => ipcRenderer.invoke('game:launch'),
     steamDownloads: () => ipcRenderer.invoke('game:steamDownloads'),
+    // Dota opened or closed: while it is open nothing is written to the game (src/game-watch.ts)
+    onRunning: (cb) => ipcRenderer.on('game:running', (e, running) => cb(!!running)),
   },
   packs: {
     combine: (name, modIds) => ipcRenderer.invoke('packs:combine', { name, modIds }),

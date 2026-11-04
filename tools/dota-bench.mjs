@@ -7,6 +7,12 @@
  *                          [--idle-seconds 12] [--spawn] [--death]
  *   npm run dota:bench -- --vpk towers_dir.vpk --towers     the demo's two towers, for tower looks
  *   npm run dota:bench -- --hero terrorblade                the game as it is, for comparison
+ *   npm run dota:bench -- --vpk pick.vpk --schema items_game.txt --hero juggernaut
+ *                          a build that changes the item table too (tools/dota-bench/schema.mjs)
+ *   npm run dota:bench -- --vpk sounds.vpk --sound mine.wav --hero juggernaut --skills q
+ *                          whether the game plays that sound when the abilities are cast: what the
+ *                          computer plays is recorded (record.ps1) and the sound looked for in it
+ *                          (hear.mjs), into verdict.json as "sound"
  *
  * It puts the mod into the language folder through the app's own installer (a free slot), starts
  * Dota straight into hero demo with the hero (`+dota_demo_hero`, no client screens), and plays a
@@ -41,6 +47,8 @@ import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { attackVerdict, readDiffs } from './dota-bench/verdict.mjs';
+import { placeSchema } from './dota-bench/schema.mjs';
+import { hear } from './dota-bench/hear.mjs';
 import { readBars, bodyOf, spawned, follow, frame, readSkills, bindOf, unknownCommands, SCAN, SKILLS, DEFAULT_SKILLS } from './dota-bench/scene.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -142,6 +150,17 @@ async function main() {
   const log = path.join(game, 'dota', 'console.log');
   const placed = vpk ? await install(path.resolve(vpk), game, settings.langSuffix || 'russian') : null;
   if (placed) console.log(`bench: mod in ${placed}`);
+  const table = arg('--schema');
+  let unplace = null;
+  try {
+    // safe mode off in the app: a patch an update unsigned is applied again, as the app's next start would
+    const heal = settings.schemaPatch === true ? { backupDir: path.join(process.env.APPDATA || '', 'Dota 2 Mod Manager', 'backups', 'patch') } : null;
+    unplace = table ? await placeSchema(path.resolve(table), game, heal) : null;
+  } catch (e) {
+    if (placed) fs.rmSync(placed, { force: true });
+    throw e;
+  }
+  if (unplace) console.log('bench: item table in dota_mods');
   const shots = [];
   const notes = [];
   const note = (msg) => { notes.push(msg); console.log(`bench: ${msg}`); };
@@ -198,6 +217,31 @@ async function main() {
   const turn = [W / 2 + 200, H / 2, W / 2 - 250, H / 2].join(',');
   try {
     const started = Date.now();
+    // --menu: the game's own screens instead of the demo, for what a mod changes there (a menu
+    // background, a medal, a hero badge). A picture once the menu is up, then one after each
+    // click of --clicks "x,y;x,y" (points in the 1920x1080 window), three seconds apart; "wait:N"
+    // in the list is a picture N seconds on, with no click.
+    if (process.argv.includes('--menu')) {
+      spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H)], { detached: true, stdio: 'ignore' }).unref();
+      await until(() => /CResponseSystem/.test(logSince(log, started)), 240000, 'the game to load').catch(() => note('no word of the menu in console.log; taking the pictures anyway'));
+      await sleep(Number(arg('--menu-wait', '25')) * 1000);
+      shot('01-menu');
+      for (const [k, at] of (arg('--clicks') || '').split(';').filter(Boolean).entries()) {
+        // "wait:20" is no click, only a picture twenty seconds later (a match loading)
+        if (at.startsWith('wait:')) { await sleep(Number(at.slice(5)) * 1000); shot(`02-click-${k + 1}`); continue; }
+        // Panorama takes a click only on a panel the pointer is already over
+        const p = at.split(',').map(Number);
+        input('hover', p[0] - 6, p[1]);
+        await sleep(400);
+        input('hover', ...p);
+        await sleep(400);
+        click(p);
+        await sleep(3000);
+        shot(`02-click-${k + 1}`);
+      }
+      fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify({ vpk: vpk ?? null, menu: true, notes }, null, 2));
+      return;
+    }
     spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H), '+dota_demo_hero', `npc_dota_hero_${hero}`, '+dota_camera_distance', camera], { detached: true, stdio: 'ignore' }).unref();
     await until(() => /OnAddNewHeroEntry/.test(logSince(log, started)), 240000, 'the demo to start');
     await sleep(4000);
@@ -379,7 +423,15 @@ async function main() {
     burst('06-attack-close-side', close, 12, 120, 0.5);
     input('key', inspectKey);
     await sleep(2000);
+    const sound = arg('--sound');
+    if (sound && process.argv.includes('--short')) note('--sound is heard while the abilities are cast, which --short leaves out');
     if (!process.argv.includes('--short')) {
+      // what the game plays while the abilities go, for --sound to be looked for in
+      const heard = path.join(out, 'heard.wav');
+      const stop = path.join(out, 'heard.stop');
+      fs.rmSync(stop, { force: true });
+      const recorder = sound ? spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(HERE, 'dota-bench', 'record.ps1'), '-Out', heard, '-Seconds', '600', '-Stop', stop], { stdio: 'ignore' }) : null;
+      const recorded = recorder ? new Promise((r) => recorder.on('exit', r)) : null;
       // every ability, cooldowns refreshed before each, the ones aimed at a hero on the enemy
       for (const { key, enemy: aimed } of skills) {
         const look = path.join(out, `07-before-${key}.png`);
@@ -406,6 +458,14 @@ async function main() {
         click(bodyOf(heroBar, cam));
         await sleep(1500);
       }
+      if (recorder) {
+        fs.writeFileSync(stop, '');
+        await recorded;
+        const file = path.join(out, 'verdict.json');
+        const result = fs.existsSync(heard) ? hear(path.resolve(sound), heard) : { heard: false, score: 0, at: 0, error: 'nothing was recorded' };
+        fs.writeFileSync(file, JSON.stringify({ ...JSON.parse(fs.readFileSync(file, 'utf8')), sound: result }, null, 2));
+        console.log(`bench: the sound ${result.heard ? 'was heard' : 'WAS NOT HEARD'} (match ${result.score} at ${result.at} s of the casts)`);
+      }
     }
     shot('08-end');
   } finally {
@@ -413,6 +473,7 @@ async function main() {
     await until(() => !dotaRunning(), 60000, 'Dota to close').catch(() => {});
     try { fs.copyFileSync(log, path.join(out, 'console.log')); } catch { /* the game wrote none */ }
     if (placed) { fs.rmSync(placed, { force: true }); console.log('bench: mod taken out'); }
+    if (unplace) { unplace(); console.log('bench: item table taken out'); }
   }
   console.log(`bench: ${shots.length} pictures in ${out}`);
 }

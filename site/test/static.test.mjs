@@ -79,6 +79,12 @@ test('every link on the site lands on something the build wrote', () => {
       const to = local(ref.replaceAll('&amp;', '&'), from);
       if (!to) continue;
       if (!exists(to.path)) { broken.push(`${from}: ${ref}`); continue; }
+      // the preset page's fragment is the preset itself, which the link check above decodes
+      if (to.path === '/p/' && to.hash) {
+        const why = appLinkProblem(`d2mm://preset/${to.hash}`);
+        if (why) broken.push(`${from}: ${ref.slice(0, 60)} ${why}`);
+        continue;
+      }
       if (to.hash && html.has(to.path) && !ids(html.get(to.path)).has(to.hash)) {
         broken.push(`${from}: ${ref} names no element on ${to.path}`);
       }

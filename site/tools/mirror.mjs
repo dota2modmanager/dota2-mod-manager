@@ -45,6 +45,8 @@ const SOURCES = [
   ['fingerprints.json', 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/catalog-data/fingerprints.json'],
   ['app.json', 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json'],
   ['app.json.sig', 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json.sig'],
+  ['presets.json', 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/presets.json'],
+  ['presets.json.sig', 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/presets.json.sig'],
 ];
 
 async function one(name, url) {

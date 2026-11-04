@@ -24,7 +24,7 @@ import { validateDownloadProxy } from './download-proxy.ts';
 export type Check = (v: unknown) => string | null;
 
 /** The arcanas the arcana window builds: src/arcana-service.ts WINDOWS, which a test keeps in step. */
-export const ARCANA_WINDOWS = ['terrorblade-arcana', 'techies-arcana'];
+export const ARCANA_WINDOWS = ['terrorblade-arcana', 'techies-arcana', 'terrorblade-span', 'terrorblade-scythes', 'razor-crest'];
 
 const fail = (what: string) => `expected ${what}`;
 
@@ -196,6 +196,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
     replaces: optional(shape({ category: str(60, 1), name: str(500, 1) })), styles: optional(list(shape({ label: str(200) }), 12)),
   })],
   'creator:attach': [ID, num(0, 11), oneOf('vpk', 'picture')],
+  'rank:state': [], 'rank:pictures': [], 'rank:install': [json(64 * 1024)],
   'background:state': [], 'background:install': [optional(bytes(48 * MB)), optional(str(200)), num(0, 0.9), num(0, 20)],
   // a hero recoloured part by part (src/ipc-paint.ts): his npc name, and a #rrggbb per layer that is on
   'paint:state': [str(40, 2)], 'paint:install': [str(40, 2), json(64 * 1024), optional(str(80))],

@@ -4,7 +4,8 @@
  * After each, tools/sim/dota.js asks whether the game would load what the app left.
  *
  * What the app promises (src/game-upkeep.ts, src/ipc-game.ts, src/patch-watch.ts):
- *   - it does not write gameinfo while the game holds it open, and says so;
+ *   - it does not write gameinfo while the game holds it open, and says so (the game watch
+ *     in src/game-watch.ts may refuse first, with its own words);
  *   - an update that lands while the game runs is noticed, the repair waits for the game to
  *     close, and My mods says why the mods are off until then;
  *   - once the game is closed the repair runs, by itself or on "I closed it, retry".
@@ -24,6 +25,8 @@ module.exports = async function gameSession(sim) {
   const toasts = () => sim.js(`[...document.querySelectorAll('#toasts .toast')].map((t) => t.textContent.trim()).join(' | ')`);
   const safeOn = () => sim.js(`document.getElementById('safeModeBtn').getAttribute('aria-checked') === 'true'`);
   const repair = () => sim.js('window.api.patch.repairState()');
+  // the status bar says Dota is open until the app sees it close (src/game-watch.ts asks every second)
+  const seenClosed = () => sim.until(`document.getElementById('dotaStatusDot')?.className !== 'dot warn'`, 5000);
   const turnSafeOff = async () => {
     await sim.click('#safeModeBtn');
     if (!await sim.until(`document.querySelector('.safe-box [data-c="yes"]')`, 5000)) return false;
@@ -46,11 +49,12 @@ module.exports = async function gameSession(sim) {
   const asked = await turnSafeOff();
   const said = await toasts();
   sim.check('with the game running, turning safe mode off is refused and the app says why',
-    asked && /Закрой Dota 2|Close Dota 2/.test(said) && !world.searchPathsOurs(game),
+    asked && /Закрой Dota 2|Close Dota 2|Закрой игру|close the game/i.test(said) && !world.searchPathsOurs(game),
     `dialog shown: ${asked}; toasts: "${said}"; search paths ours: ${world.searchPathsOurs(game)}`);
   await sim.shot('refused-while-running');
   await world.quitGame(running, game);
   await sleep(1000);
+  sim.check('the app sees the game close within a few seconds', await seenClosed(), 'the status bar still says Dota is open');
 
   // 2. the game is closed: it goes through, and the game would load it
   await turnSafeOff();
@@ -73,6 +77,7 @@ module.exports = async function gameSession(sim) {
   await sim.shot('update-while-running');
   await world.quitGame(running, game);
   await sleep(800);
+  await seenClosed();
   if (banner) await sim.click('#repairNowBtn');
   const healed = await sim.until(`window.api.patch.repairState().then((r) => r.state !== 'waiting' && r)`, 30000);
   sim.check('with the game closed the repair runs and puts the search path back', healed && healed.state !== 'failed' && world.searchPathsOurs(game),

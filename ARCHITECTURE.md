@@ -534,6 +534,7 @@ that location is not writable.
 | `src/main-window.ts`, `src/app-page.ts` | The window: its size on the screen it opens on, the one page it may show, Ctrl +/-/0 |
 | `src/dev-harness.ts`, `src/capture.ts` | `MM_SHOT`, `MM_EVAL` and the other switches a script drives the window with, and the screenshot they take |
 | `src/game-upkeep.ts` | The work done at start: the game path, the mod folder following the audio language, the load-order layout, the migrations |
+| `src/game-watch.ts` | Whether Dota is open, asked every few seconds and told to the window when it changes |
 | `src/game-repair.ts` | Putting the game back after something else changed it: a Dota patch, Steam's file check, waiting while Dota runs |
 | `src/app-repair.ts` | Settings' "Repair the app": the game patch, missing mod files and the rebuildable caches, a line per step |
 | `src/patch-watch.ts` | Noticing a game update the moment it lands |
@@ -546,7 +547,7 @@ that location is not writable.
 | `src/lz4.ts` | LZ4 block format: decoding, chained frames, and literals-only encoding |
 | `src/material.ts` | A material's expressions (KV3 blobs or NTRO): a read of `$GemColor` swapped for a constant |
 | `src/resource.ts` | Compiled resources at the block level: a block replaced, the resources a file names (RERL) added to |
-| `src/recolor.ts` | An item's particles and materials in a chosen colour, out of the game's own pak01, as one VPK: what its gem colours, pointed at the chosen colour ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118)) |
+| `src/recolor.ts`, `src/recolor-sets.ts` | An item's particles and materials in a chosen colour, out of the game's own pak01, as one VPK: what its gem colours, pointed at the chosen colour ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118)), and the items it knows, the immortals with no gem baked in ([#392](https://github.com/dota2modmanager/dota2-mod-manager/issues/392)) |
 | `src/gem-colors.ts` | The game's own prismatic gem colours, read out of the "colors" section of items_game, for a colour picker to offer and for `npm run recolor -- --gem` ([#392](https://github.com/dota2modmanager/dota2-mod-manager/issues/392)) |
 | `src/unusual-effects.ts` | The game's unusual and ethereal effects out of items_game (`attribute_controlled_attached_particles`), with the particle, how it attaches and the English name of each, for drawing one with a file mod ([#393](https://github.com/dota2modmanager/dota2-mod-manager/issues/393)) |
 | `src/arcana.ts` | An arcana as a mod built from the game's own files, for a player who has not got it: its models, glow and pictures under the plain hero's names, its colour written in |
@@ -560,12 +561,13 @@ that location is not writable.
 | `src/map-looks-service.ts` | Towers and trees from the game's own looks, one per side, built in the app into one My mods record per kind and built again after a Dota update ([#446](https://github.com/dota2modmanager/dota2-mod-manager/issues/446), [#421](https://github.com/dota2modmanager/dota2-mod-manager/issues/421)) |
 | `src/menu-background.ts`, `src/menu-background-service.ts` | A picture, GIF or video of your own behind the main menu: the game's three dashboard layouts rewritten so the last match's background plays your WebM under a veil and blur, in one My mods record built again after a Dota update ([#418](https://github.com/dota2modmanager/dota2-mod-manager/issues/418)) |
 | `src/hud-scale.ts`, `src/hud-scale-service.ts` | The in-game HUD smaller or larger: the HUD's stylesheet in force (a HUD mod's or the game's) read back by ValveResourceFormat, Panorama's `ui-scale` added on the bottom bar and the minimap, compiled again by Valve's resourcecompiler into one My mods record that is built again after a Dota update ([#420](https://github.com/dota2modmanager/dota2-mod-manager/issues/420)) |
+| `src/rank-look.ts`, `src/rank-look-service.ts`, `src/ipc-rank.ts` | The rank medal and Dota Plus hero levels of the player's own screen: the medal's rules copied with the chosen picture at the end of the two styles that draw it (read back by ValveResourceFormat), a script that writes the levels and badge tiers into the hero grid, the pick and the strategy screen, included into those three layouts through their LaCo tree, all compiled by Valve's resourcecompiler into one My mods record that is built again after a Dota update; channels `rank:state`, `rank:pictures`, `rank:install` |
 | `src/ability-sounds.ts`, `src/ability-sounds-service.ts` | A sound of your own on a hero's sound event: the events written as KV3 text with your sound instead of the game's or over it, compiled with your WAV by Valve's resourcecompiler into one My mods record per hero ([#423](https://github.com/dota2modmanager/dota2-mod-manager/issues/423)) |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
 | `src/discord-auth.ts`, `src/discord-presence.ts`, `src/presence-status.ts` | Signing in with Discord, and what the Discord status says and whether it is on |
 | `src/release-notes.ts` | The "What's new" text, out of the changelogs shipped with the build |
-| `src/feature-gate.ts` | Whether a feature has been switched off from `config/app.json`, asked once |
+| `src/feature-gate.ts` | Whether a write to the game may go ahead: not while Dota is open, not when `config/app.json` switched the feature off |
 | `preload.js` | The `window.api` surface, and nothing else crosses |
 | `src/installer.ts` | The door to everything below that writes a mod into the game folder or takes it out |
 | `src/installer-downloads.ts` | Getting a catalog archive onto this machine |
@@ -673,7 +675,7 @@ that location is not writable.
 | `tools/arcana-bases-manifest.mjs` | manifest.json and its signature for the bases' repository: the only list of files and hashes the app takes, written and signed in one step |
 | `tools/item-plan.mjs` | `npm run item-plan -- <item>`: `src/item-visuals.ts` from the command line, the first step of building an item as a mod |
 | `tools/mod-doctor.mjs` | `npm run doctor -- <mod_dir.vpk>`: `src/mod-doctor.ts` from the command line, against the game folder in the app's settings |
-| `tools/dota-bench.mjs`, `tools/dota-bench/*.ps1` | `npm run dota:bench -- --vpk <mod_dir.vpk>`: a mod tried in the real game on Windows with nobody at the keyboard: hero demo started with the mod in a free slot, the hero levelled, set on a dummy, its abilities pressed, and pictures taken, a burst of them through the swing, and whether the attack swings (`tools/dota-bench/verdict.mjs`) |
+| `tools/dota-bench.mjs`, `tools/dota-bench/*.ps1` | `npm run dota:bench -- --vpk <mod_dir.vpk>`: a mod tried in the real game on Windows with nobody at the keyboard: hero demo started with the mod in a free slot, the hero levelled, set on a dummy, its abilities pressed, and pictures taken, a burst of them through the swing, and whether the attack swings (`tools/dota-bench/verdict.mjs`); a build's item table tried through `dota_mods` (`schema.mjs`), and a sound heard in what the game played (`record.ps1`, `hear.mjs`) |
 | `tools/seo-report.mjs`, `tools/seo-state.mjs` | The weekly reach and search report posted to [issue #3](https://github.com/dota2modmanager/dota2-mod-manager/issues/3), and the numbers it carries from one week to the next inside the comment |
 | `tools/release-gate.mjs` | First job of every release: waits until the tagged commit has passed the checks in `.github/required-checks.json`, and refuses it otherwise |
 | `tools/check-credentials.mjs`, `tools/google-auth.mjs` | Every morning before the radar: tries each secret against its service and writes what works, what fails and when each expires, for the radar to report |

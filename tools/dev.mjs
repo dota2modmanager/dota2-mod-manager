@@ -11,7 +11,9 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
+import { requireDeps } from './deps-check.mjs';
 
+requireDeps();
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const electron = createRequire(import.meta.url)('electron');
 

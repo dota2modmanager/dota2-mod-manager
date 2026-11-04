@@ -42,7 +42,7 @@ import { releaseNotes } from './release-notes.ts';
 import { firstLink, handleDeepLink, installDesktopEntry } from './deep-links.ts';
 import { createMainWindow, clampZoom, workAreaFrom } from './main-window.ts';
 import { attachDevHarness } from './dev-harness.ts';
-import { createGameUpkeep, dotaIsRunning, launchWarning } from './game-upkeep.ts';
+import { createGameUpkeep, createGameWatch, dotaIsRunning, launchWarning } from './game-upkeep.ts';
 import type { AppContext, AppProgress } from './app-context.ts';
 import type { BrowserWindow } from 'electron';
 
@@ -153,7 +153,7 @@ async function start(): Promise<void> {
   // and a patch took while the app was closed, and the migrations older versions left behind.
   const upkeep = createGameUpkeep({
     settings, installer, library, schemaService, updateImpact, reconcileCursors: cursors.reconcileCursors, diag,
-    rebuildGenerated: (ids) => [...arcana.rebuild(ids), ...services.mapLooks.rebuild(ids), ...services.menuBackground.rebuild(ids), ...services.hudScale.rebuild(ids), ...services.heroPaint.rebuild(ids)],
+    rebuildGenerated: (ids) => [...arcana.rebuild(ids), ...services.mapLooks.rebuild(ids), ...services.menuBackground.rebuild(ids), ...services.hudScale.rebuild(ids), ...services.rankLook.rebuild(ids), ...services.heroPaint.rebuild(ids)],
     send: (repair) => windowOpen()?.webContents.send('patch-repair', repair),
     findGame: findDotaGamePath, validGame: validateGamePath,
   });
@@ -170,21 +170,20 @@ async function start(): Promise<void> {
     adoptImportedFiles: adopt.adoptImportedFiles, disableOtherCursors: cursors.disableOtherCursors, blocked: createGate({ remoteConfig, settings }) }, app);
 
   presets = services.presets;
-
   let updater: ReturnType<typeof createUpdater> | null = null;
   let patchWatcher: ReturnType<typeof createPatchWatcher> | null = null;
-  // The last few things the interface said went wrong, so a report can list them separately from
-  // two thousand lines of ordinary log (see diag:rendererError).
+  // what the interface last said went wrong, for a report to list apart from the log (diag:rendererError)
   const rendererErrors: unknown[] = [];
+  const gameWatch = createGameWatch({ isRunning: () => dotaIsRunning(), send: (running) => win?.webContents.send('game:running', running) }); // Dota open or not: the status bar and the gate
 
   /* Everything the IPC modules may ask for, in one place. What changes while the app runs (the
      window, the updater, the patch watcher, the upkeep's state) is a function read when needed. */
   const ctx: AppContext = {
     settings, catalog, installer, library, fingerprints, schemaService, updateImpact, icons, gameIcons, modPreviews,
-    toolchain, compiler, toolsKeeper, keepTools, remoteConfig, readyPresets: services.readyPresets, presets, arcana, mapLooks: services.mapLooks, menuBackground: services.menuBackground, hudScale: services.hudScale, heroPaint: services.heroPaint, abilitySounds: services.abilitySounds, buildUndo: services.buildUndo, heroPreview: services.heroPreview, discordAuth, portableUpdater, autoUpdater,
+    toolchain, compiler, toolsKeeper, keepTools, remoteConfig, readyPresets: services.readyPresets, presets, arcana, mapLooks: services.mapLooks, menuBackground: services.menuBackground, hudScale: services.hudScale, rankLook: services.rankLook, heroPaint: services.heroPaint, abilitySounds: services.abilitySounds, buildUndo: services.buildUndo, heroPreview: services.heroPreview, discordAuth, portableUpdater, autoUpdater,
     // One gate, handed to every module that guards a channel with it. Two copies is how installing
     // broke once: the call went to one file and the helper stayed in the other.
-    blocked: createGate({ remoteConfig, settings }),
+    blocked: createGate({ remoteConfig, settings, gameOpen: () => gameWatch.running() }),
     settingsView: settingsViewFor({
       settings, library, discordAuth, validateGamePath,
       langFolder: () => upkeep.langFolder(),
@@ -258,6 +257,7 @@ async function start(): Promise<void> {
   win = opened;
   attachDevHarness(opened, { diag, appRoot, quit: () => app.quit() });
   diag('createWindow done');
+  opened.webContents.on('did-finish-load', () => { gameWatch.stop(); gameWatch.start(); });
   // launched BY a link (cold start): the renderer has to exist before it can be told
   const cold = firstLink(process.argv);
   if (cold) opened.webContents.once('did-finish-load', () => takeLink(cold));

@@ -310,3 +310,22 @@ test('a set becomes one VPK of the files that took the colour, from the game\'s 
   assert.equal(materialExpressions(read('materials/models/heroes/terrorblade/armor.vmat_c'))[0].code.length, TINT.length + 13);
   assert.throws(() => buildRecolor({ pak01, set: 'nobody', target: PINK }), /no set/);
 });
+
+test('an immortal with no gem has its colour written in: the game turns its tint off for it (issue #392)', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-recolor-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const pak01 = path.join(dir, 'pak01_dir.vpk');
+  const wings = 'particles/econ/items/terrorblade/terrorblade_back_ti8';
+  const tinted = encodeKv3({ obj: [['m_ConstantColor', { i32s: [0, 210, 255, 255] }], ['m_Initializers', { arr: [remap(15)] }]] });
+  fs.writeFileSync(pak01, buildVpk([
+    entryAt(`${wings}/glow.vpcf_c`, particle(tinted)),
+    entryAt('particles/econ/items/terrorblade/terrorblade_horns_arcana/glow.vpcf_c', particle(kv3Block())),
+  ]));
+  const out = buildRecolor({ pak01, set: 'terrorblade-span', target: PINK });
+  assert.equal(out.files, 1, 'the wings only, not the arcana beside them');
+  const mod = path.join(dir, 'mod_dir.vpk');
+  fs.writeFileSync(mod, out.vpk);
+  const kv = readKv3(dataBlock(openVpkIndex(mod).read(`${wings}/glow.vpcf_c`) as Buffer).data);
+  assert.deepEqual(kv.arrays.find((a) => a.key === 'm_ConstantColor')!.cells.map((c) => readCell(kv, c!)).slice(0, 3), PINK, 'baked: the colour the tint would give');
+  assert.deepEqual(range(kv, at(kv.root, 'm_Initializers', 0, 'm_vOutputMax')), [1, 1, 1], 'the tint itself is left: with no gem it is off');
+});
