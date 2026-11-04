@@ -1,0 +1,10 @@
+{
+  // The preset bot. See worker.mjs for what it does and README.md for how it is set up.
+  "$schema": "../../site/node_modules/wrangler/config-schema.json",
+  "name": "d2mm-preset-bot",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-09-01",
+  "routes": [{ "pattern": "bot.dota2modmanager.com", "custom_domain": true }],
+  "observability": { "enabled": true }
+  // DISCORD_PUBLIC_KEY is a secret: npx wrangler secret put DISCORD_PUBLIC_KEY
+}
