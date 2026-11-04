@@ -53,8 +53,10 @@ export function createCreator({ userDataDir }: { userDataDir: string }) {
   function read(id: string): Draft {
     try { return JSON.parse(fs.readFileSync(file(id), 'utf-8')) as Draft; } catch { throw new Error(t('Черновик не найден')); }
   }
+  // two saves in one millisecond still come out in the order they were made
+  let last = 0;
   function write(d: Draft): Draft {
-    d.updatedAt = Date.now();
+    d.updatedAt = last = Math.max(Date.now(), last + 1);
     fs.mkdirSync(folder(d.id), { recursive: true });
     fs.writeFileSync(file(d.id), JSON.stringify(d, null, 2));
     return d;
