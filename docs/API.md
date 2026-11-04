@@ -8368,7 +8368,7 @@ export function quitAfterBuild(app: { on(event: 'before-quit', fn: (e: QuitEvent
 The rank medal and hero levels of the player's own screen, as one record in My mods (what goes
 into it is src/rank-look.ts). The two styles are read back as CSS from the copy in force (a mod's
 when one carries them, else the game's), the medal's rules go at their end, and Valve's compiler
-builds them again with the levels script; the four layouts get the script's include. The pak
+builds them again with the levels script; the five layouts get the script's include. The pak
 goes early in the load order, so it wins over the mod it was made from.
 
 A Dota update that reached the record builds it again from the new files, after the update's
@@ -8424,10 +8424,10 @@ small picture, so the medal keeps its size.
 
 A level is a number the client asks Steam for, so no style can change it. A script can: Panorama
 runs the JavaScript a layout includes, and the script writes the number into the label and sets
-the tier class on the badge every half second. It goes into four layouts, by adding one
+the tier class on the badge every half second. It goes into five layouts, by adding one
 include to the tree in their LaCo block (as src/menu-background.ts does): the hero grid of the
-menu and the pick screen, the player's own panel at the pick, the strategy screen, and the hero
-page with its badge and experience bar.
+menu and the pick screen, the player's own panel at the pick, the strategy screen, the hero
+page with its badge, progress tab and experience bar, and the card that opens over a hero.
 
 Tried in the game on 2026-11-04: the profile medal, the hero grid and the pick badge took them.
 
@@ -8458,10 +8458,10 @@ The two styles that hold the medal's rules, as compiled in the pak and as the co
 ### `LAYOUTS`
 
 ```ts
-export const LAYOUTS = ['panorama/layout/hero_grid_new.vxml_c', 'panorama/layout/hud/dota_hud_hero_picking_player.vxml_c', 'panorama/layout/hud/dota_hud_pregame.vxml_c', 'panorama/layout/dashboard_page_hero_new_v2.vxml_c']
+export const LAYOUTS = ['panorama/layout/hero_grid_new.vxml_c', 'panorama/layout/hud/dota_hud_hero_picking_player.vxml_c', 'panorama/layout/hud/dota_hud_pregame.vxml_c', 'panorama/layout/dashboard_page_hero_new_v2.vxml_c', 'panorama/layout/tooltips/tooltip_hero_card.vxml_c']
 ```
 
-The layouts the levels script goes into: the hero grid, the player's panel at the pick, the strategy screen, the hero page.
+The layouts the levels script goes into: the hero grid, the player's panel at the pick, the strategy screen, the hero page, the card over a hero.
 
 ### `SCRIPT`
 
@@ -8525,12 +8525,14 @@ are replaced rather than stacked.
 ### `levelsScript`
 
 ```ts
-export function levelsScript(look: RankLook): string
+export function levelsScript(look: RankLook, ids: Record<number, string> = {}): string
 ```
 
 The script the layouts include. It knows the levels and the medal, finds what is on its
 panel each half second (hero cards, the player's own panel at the pick, the strategy badge) and
-writes them in. Each part is in a try of its own: a panel a patch renamed stops that part only.
+writes them in. Each part is in a try of its own: a panel a patch renamed stops that part only,
+and says so once in the game's console. `ids` names the chosen heroes by the number the game
+gives them, for the panels that know a hero only by it.
 
 ### `withScript`
 

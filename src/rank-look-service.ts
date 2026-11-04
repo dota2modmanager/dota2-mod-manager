@@ -1,7 +1,7 @@
 /* The rank medal and hero levels of the player's own screen, as one record in My mods (what goes
  * into it is src/rank-look.ts). The two styles are read back as CSS from the copy in force (a mod's
  * when one carries them, else the game's), the medal's rules go at their end, and Valve's compiler
- * builds them again with the levels script; the four layouts get the script's include. The pak
+ * builds them again with the levels script; the five layouts get the script's include. The pak
  * goes early in the load order, so it wins over the mod it was made from.
  *
  * A Dota update that reached the record builds it again from the new files, after the update's
@@ -66,6 +66,18 @@ export function createRankLook({ gamePath, installer, library, vrf, compile, dec
     return got.data;
   };
 
+  /** The number the game gives each of these heroes, out of its hero script; a hero it lacks is left out. */
+  const heroIds = (heroes: string[]): Record<number, string> => {
+    const ids: Record<number, string> = {};
+    for (const hero of heroes) {
+      try {
+        const id = /"HeroID"\s+"(\d+)"/.exec(pak01().read(`scripts/npc/heroes/npc_dota_hero_${hero}.txt`)?.toString('utf8') ?? '')?.[1];
+        if (id) ids[Number(id)] = hero;
+      } catch { /* not in this game: the name is enough where the game gives one */ }
+    }
+    return ids;
+  };
+
   async function build(look: RankLook): Promise<Buffer> {
     const files: { path: string; data: Buffer }[] = [];
     if (look.medal) {
@@ -73,7 +85,7 @@ export function createRankLook({ gamePath, installer, library, vrf, compile, dec
       if (!exe) throw new Error(t('Нужен ValveResourceFormat: скачай его в окне'));
       for (const s of STYLES) files.push({ path: s.source, data: Buffer.from(withMedal(await decompile(exe, inForce(s.compiled)), look.medal)) });
     }
-    files.push({ path: SCRIPT.source, data: Buffer.from(levelsScript(look)) });
+    files.push({ path: SCRIPT.source, data: Buffer.from(levelsScript(look, heroIds(Object.keys(look.levels)))) });
     const want = new Set([SCRIPT.compiled, ...(look.medal ? STYLES.map((s) => s.compiled) : [])]);
     const built = (await compile({ id: 'rank_look', files, compile: files.map((f) => f.path) })).filter((e) => want.has(entryPath(e)));
     const missing = [...want].filter((p) => !built.some((e) => entryPath(e) === p));

@@ -113,13 +113,14 @@ test('the script knows the levels and the medal, in the game’s own words', () 
 });
 
 /** A Panorama panel, as much of one as the script touches. */
-interface Fake { id: string; paneltype: string; classes: Set<string>; kids: Fake[]; text: string; heroname?: string; visible: boolean; vars: Record<string, number> }
+interface Fake { id: string; paneltype: string; classes: Set<string>; kids: Fake[]; text: string; heroname?: string; heroid?: number; visible: boolean; vars: Record<string, number> }
 const fake = (paneltype: string, id = '', classes: string[] = [], kids: Fake[] = [], extra: Partial<Fake> = {}): Fake => ({ id, paneltype, classes: new Set(classes), kids, text: '', visible: true, vars: {}, ...extra });
 const all = (p: Fake): Fake[] => p.kids.flatMap((k) => [k, ...all(k)]);
-function runScript(js: string, root: Fake): void {
+/** Runs the script once on `root` and returns what it said in the console. */
+function runScript(js: string, root: Fake): string[] {
+  const said: string[] = [];
   const api = (p: Fake): unknown => new Proxy(p, { get: (t, k) => ({
     FindChildTraverse: (id: string) => { const f = all(t).find((c) => c.id === id); return f ? api(f) : null; },
-    FindChildrenWithClassTraverse: (c: string) => all(t).filter((x) => x.classes.has(c)).map(api),
     SetHasClass: (c: string, on: boolean) => { if (on) t.classes.add(c); else t.classes.delete(c); },
     BHasClass: (c: string) => t.classes.has(c),
     SetDialogVariableInt: (n: string, v: number) => { t.vars[n] = v; },
@@ -127,43 +128,67 @@ function runScript(js: string, root: Fake): void {
     GetChild: (i: number) => api(t.kids[i]),
   } as Record<string | symbol, unknown>)[k] ?? Reflect.get(t, k) });
   const names: Record<string, string> = { '#npc_dota_hero_axe': 'Axe', '#npc_dota_hero_lina': 'Lina' };
-  new Function('$', 'Players', js)({ GetContextPanel: () => api(root), Localize: (s: string) => names[s] ?? s, Schedule: () => {} }, {});
+  const $ = { GetContextPanel: () => api(root), Localize: (s: string) => names[s] ?? s, Schedule: () => {}, Msg: (m: string) => said.push(m) };
+  new Function('$', 'Players', js)($, {});
+  return said;
 }
 
-test('a hero card takes the level into the variable its label is bound to, not only its text', () => {
-  const label = fake('Label', 'HeroBadgeLevel');
-  const card = fake('Panel', '', ['HeroCard'], [fake('DOTAHeroImage', 'HeroImage', [], [], { heroname: 'npc_dota_hero_axe' }), fake('Panel', 'HeroBadgeStatus', [], [label])]);
-  runScript(levelsScript({ medal: null, levels: { axe: 23 }, every: null }), fake('Panel', '', [], [card]));
-  assert.equal(label.text, '23');
-  assert.equal(label.vars.hero_badge_level, 23);
-  assert.ok(card.classes.has('MasterTier'));
+test('a hero card takes the level into the variable its label is bound to, by name or by number', () => {
+  const card = (img: Partial<Fake>) => {
+    const label = fake('Label', 'HeroBadgeLevel');
+    return { label, panel: fake('Panel', '', ['HeroCard'], [fake('DOTAHeroImage', 'HeroImage', [], [], img), fake('Panel', 'HeroBadgeStatus', [], [label])]) };
+  };
+  const byName = card({ heroname: 'npc_dota_hero_axe' });
+  const byNumber = card({ heroname: '', heroid: 2 });
+  const other = card({ heroname: '', heroid: 25 });
+  const said = runScript(levelsScript({ medal: null, levels: { axe: 23 }, every: null }, { 2: 'axe' }), fake('Panel', '', [], [byName.panel, byNumber.panel, other.panel]));
+  for (const c of [byName, byNumber]) {
+    assert.equal(c.label.text, '23');
+    assert.equal(c.label.vars.hero_badge_level, 23);
+    assert.ok(c.panel.classes.has('MasterTier'));
+  }
+  assert.equal(other.label.text, '', 'a hero with no level keeps the game’s');
+  assert.deepEqual(said, ['d2mm rank look: hero grid: 3 cards, the first npc_dota_hero_axe #undefined']);
 });
 
-test('the hero page shows the chosen level on its badge and hides the real experience', () => {
+test('the hero page shows the chosen level on its badges and hides the real experience', () => {
   const page = (name: string) => {
     const level = fake('Label');
-    const xp = fake('Panel', '', ['LevelProgressXPValuesContainer']);
-    const bar = fake('ProgressBar', 'HeroLevelProgress');
+    const progress = fake('Label');
+    const xp = [fake('Label', '', ['CurrentLevelXPLabel']), fake('Label', '', ['NextLevelXPLabel']), fake('ProgressBar', 'HeroLevelProgress')];
     const root = fake('DOTAHeroPageNewV2', '', [], [
       fake('Label', '', ['TabContentsHeroName'], [], { text: name }),
       fake('DOTAHeroBadge', 'HeroBadge', [], [fake('DOTAHeroBadge', '', ['ModelStyle'], [fake('DOTAScenePanel', 'RankScene'), level])]),
-      xp, bar,
+      fake('Panel', '', [], xp),
+      fake('DOTAPlusHeroPageV2', '', [], [fake('DOTAHeroBadge', 'HeroBadgeProgression', [], [fake('DOTAHeroBadge', '', ['ModelStyle'], [progress])])]),
     ]);
-    return { root, level, xp, bar };
+    return { root, level, progress, xp };
   };
   const axe = page('Axe');
   runScript(levelsScript({ medal: null, levels: { axe: 8 }, every: null }), axe.root);
   assert.equal(axe.level.text, '8');
   assert.equal(axe.level.vars.hero_level, 8);
-  assert.equal(axe.xp.visible, false);
-  assert.equal(axe.bar.visible, false);
+  assert.equal(axe.progress.text, '8', 'the progress tab’s badge too');
+  assert.deepEqual(axe.xp.map((p) => p.visible), [false, false, false]);
   const lina = page('Lina');
   runScript(levelsScript({ medal: null, levels: { axe: 8 }, every: null }), lina.root);
   assert.equal(lina.level.text, '', 'a hero with no level of its own keeps the game’s');
-  assert.equal(lina.xp.visible, true);
+  assert.deepEqual(lina.xp.map((p) => p.visible), [true, true, true]);
   const every = page('Lina');
   runScript(levelsScript({ medal: null, levels: { axe: 8 }, every: 30 }), every.root);
   assert.equal(every.level.text, '30');
+});
+
+test('the card over a hero takes its level, and a part that breaks says so once', () => {
+  const level = fake('Label');
+  const tip = fake('Panel', '', ['HeroCardTooltipContents'], [fake('DOTAHeroImage', 'HeroImage', [], [], { heroid: 2 }), fake('DOTAHeroBadge', 'HeroBadge', [], [fake('DOTAHeroBadge', '', ['LevelStyle'], [level])])]);
+  runScript(levelsScript({ medal: null, levels: { axe: 12 }, every: null }, { 2: 'axe' }), tip);
+  assert.equal(level.text, '12');
+  assert.ok(tip.kids[1].classes.has('GoldTier'));
+  const broken = fake('DOTAHeroPageNewV2', '', [], [fake('Label', '', ['TabContentsHeroName'], [], { text: 'Axe' }), fake('DOTAHeroBadge', 'HeroBadge')]);
+  Object.defineProperty(broken.kids[1], 'classes', { get: () => { throw new Error('renamed'); } });
+  const said = runScript(levelsScript({ medal: null, levels: { axe: 8 }, every: null }), broken);
+  assert.ok(said.some((m) => /hero page failed: Error: renamed/.test(m)), said.join('\n'));
 });
 
 test('the include goes in front of the layout’s panel, once', () => {
@@ -202,7 +227,7 @@ function world(t: TestContext) {
   return { service, library, jobs, rebuilt, pak };
 }
 
-test('a look is one record: both styles with the medal, the script, and the four layouts including it', async (t) => {
+test('a look is one record: both styles with the medal, the script, and the five layouts including it', async (t) => {
   const w = world(t);
   assert.deepEqual(w.service.state(), { installed: null, heroes: [{ id: 'antimage', name: 'Anti-Mage' }, { id: 'axe', name: 'Axe' }], vrf: true });
   await assert.rejects(w.service.install({ medal: null, levels: {}, every: null }), /медаль|medal/i);
