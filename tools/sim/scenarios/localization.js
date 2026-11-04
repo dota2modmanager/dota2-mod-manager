@@ -15,7 +15,10 @@ module.exports = async function localization(sim) {
     sim.check(`the interface switches to ${lang}`, await sim.until(`document.documentElement.lang === ${JSON.stringify(lang)}`, 10000));
   };
   // the item table, through Settings since 3.0 (steps.itemTable)
-  const setTable = async (on) => sim.check(`the item table is ${on ? 'on' : 'off'}`, (await steps.itemTable(sim, on)).ok);
+  const setTable = async (on) => {
+    const r = await steps.itemTable(sim, on);
+    return sim.check(`the item table is ${on ? 'on' : 'off'}`, r.ok, `asked: ${r.asked}; toasts: "${r.said || ''}"`);
+  };
   const search = async (query) => {
     await steps.openSection(sim, 'catalog');
     await sim.click('#globalSearch');
