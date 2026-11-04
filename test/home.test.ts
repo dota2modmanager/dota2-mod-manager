@@ -19,6 +19,11 @@ test('a section written as a plain list gives its items, and nothing gives nothi
   assert.deepEqual(notePoints('just a paragraph'), []);
 });
 
+test('a heading two versions share is listed once, so no two rows share a key', () => {
+  const notes = '## 3.0.2\n\n### Fixed\n\n### Rank look\n\n## 3.0.1\n\n### Fixed\n\n### What\'s new';
+  assert.deepEqual(notePoints(notes), ['Fixed', 'Rank look', "What's new"]);
+});
+
 test('news comes newest first, undated last, three at most', () => {
   const n = latestNews([
     { id: 'a', text: 'a', date: '2026-10-01' }, { id: 'b', text: 'b' },
