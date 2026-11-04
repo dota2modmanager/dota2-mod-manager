@@ -238,6 +238,9 @@ export function spawnSpider(x: number, y: number, opts: SpawnOptions = {}): numb
   return spiders.length;
 }
 
+/** How many loose spiders (ones that will leave) there are now. */
+export const loose = () => spiders.filter((s) => !s.stays).length;
+
 /** How many residents (spiders that stay) there are now. */
 export const residents = () => spiders.filter((s) => s.stays).length;
 
