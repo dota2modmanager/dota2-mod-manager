@@ -191,7 +191,7 @@ async function itemTable(sim, on, { onAsk } = {}) {
   // turning it off rebuilds the packs and puts both files back; a CI runner took longer than 15 s
   await sim.until(`${flipped} || document.querySelector('#toasts .toast.error:not([data-sim-old])')`, 45000);
   const said = await sim.js(`[...document.querySelectorAll('#toasts .toast')].map((t) => t.textContent.trim()).join(' | ')`);
-  return { asked, ok: Boolean(await sim.js(flipped)), said };
+  return { asked, ok: Boolean(await sim.js(flipped)), said, click: sim.lastClick };
 }
 
 /**

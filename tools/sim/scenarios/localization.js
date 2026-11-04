@@ -17,7 +17,7 @@ module.exports = async function localization(sim) {
   // the item table, through Settings since 3.0 (steps.itemTable)
   const setTable = async (on) => {
     const r = await steps.itemTable(sim, on);
-    return sim.check(`the item table is ${on ? 'on' : 'off'}`, r.ok, `asked: ${r.asked}; toasts: "${r.said || ''}"`);
+    return sim.check(`the item table is ${on ? 'on' : 'off'}`, r.ok, `asked: ${r.asked}; toasts: "${r.said || ''}"; click: ${JSON.stringify(r.click)}`);
   };
   const search = async (query) => {
     await steps.openSection(sim, 'catalog');
