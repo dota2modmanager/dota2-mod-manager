@@ -465,6 +465,8 @@
 .card-pills { display: flex; gap: 5px; min-width: 0; }
 .card-meta-split .mtag { backdrop-filter: none; background: var(--surface); }
 /* a whole-map terrain built for an older map than the game's: read over the picture */
+/* a mod the signed config marks as misbehaving: one character, the words are in its title */
+.mtag-issue { font-weight: 800; min-width: 20px; justify-content: center; }
 .mtag.warn {
   color: var(--warning);
   background: rgba(40, 30, 6, 0.78);

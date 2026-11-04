@@ -23,6 +23,7 @@ import { customPacks, saveCustomPacks } from './lists.ts';
 import { doInstall, installPack, onInstalling, packMemberName } from './install.ts';
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './overlay.ts';
 import { installing, screen } from './state.ts';
+import { modIssue } from '../../ui/notice.ts';
 
 interface ModWindow {
   categoryId: string;
@@ -112,6 +113,7 @@ function drawModal(): void {
     guidesHtml: modGuidesHtml(mod),
     links: otherLinks.map((l) => ({ index: links.indexOf(l), label: tr(LINK_LABEL[l.type || ''] || l.type || 'Ссылка') })),
     note: NOTE[categoryId]?.() ?? null,
+    issue: modIssue(categoryId, mod.name),
   };
 
   showModModal(model, {

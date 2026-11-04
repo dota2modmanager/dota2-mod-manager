@@ -8821,7 +8821,8 @@ Shape:
     "blocks":  [ { "id": "2026-09-16-install-2.7.0", "feature": "install",
                    "minVersion": "2.7.0", "maxVersion": "2.7.0", "until": "2026-09-27",
                    "ru": "…", "en": "…" } ],
-    "beta":    { "salt": "d2mm-beta-1", "ids": ["<sha256 of salt:discordId>", …] }
+    "beta":    { "salt": "d2mm-beta-1", "ids": ["<sha256 of salt:discordId>", …] },
+    "issues":  [ { "cat": "heroes", "mod": "Pudge Arcana", "ru": "…", "en": "…", "until": "2026-12-01" } ]
   }
 
 `features` switches something off in every version. That is right when the cause is outside
@@ -8835,6 +8836,10 @@ tools/rollback.mjs writes both, signs the file and refuses the mistakes.
 `beta` is the list of Discord accounts the beta channel is offered to, as hashes: the file is
 public and a list of a dozen people's accounts is not ours to publish. src/beta.ts does the
 checking; this only reads the block and refuses anything that is not shaped like one.
+
+`issues` are catalog mods known to misbehave, by category id and the name the catalog gives the
+mod. The catalog card carries a "!" and the mod's window says what is wrong. A mod a patch broke
+is marked the same day, without a release and without touching rotten's catalog.
 
 ### `SWITCHABLE`
 
@@ -8899,6 +8904,14 @@ export interface RemoteBlock
 
 A feature switched off for a range of builds until a day.
 
+### `RemoteIssue`
+
+```ts
+export interface RemoteIssue { cat: string; mod: string; ru: string; en: string; until: string | null }
+```
+
+A catalog mod known to misbehave, and what to tell whoever looks at it.
+
 ### `RemoteMirror`
 
 ```ts
@@ -8957,7 +8970,7 @@ say. A remote switch that fails open is a feature; one that fails closed is an o
 
 The format and its checks are src/remote-config-format.ts.
 
-Hands on from [`src/remote-config-format.ts`](#srcremote-config-formatts): `SWITCHABLE`, `BLOCKS_SINCE`, `MAX_TESTERS`, `MAX_MIRRORS`, `cmpVersion`, `applies`, `normalize`, `Off`, `RemoteNotice`, `RemoteBlock`, `RemoteMirror`, `RemoteConfig`.
+Hands on from [`src/remote-config-format.ts`](#srcremote-config-formatts): `SWITCHABLE`, `BLOCKS_SINCE`, `MAX_TESTERS`, `MAX_MIRRORS`, `cmpVersion`, `applies`, `normalize`, `Off`, `RemoteNotice`, `RemoteBlock`, `RemoteMirror`, `RemoteIssue`, `RemoteConfig`.
 
 ### `CONFIG_URL`
 

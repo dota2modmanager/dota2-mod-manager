@@ -323,3 +323,18 @@ test('a mirror comes out by its id or by its host, and the last one leaves no ke
   assert.throws(() => dropMirror(EMPTY, 'rotten'), /no mirror here/);
 });
 
+
+test('a mod marked as misbehaving is what the app reads, and comes off again by its name', async () => {
+  const { markIssue, clearIssue, describe } = await load();
+  const pudge = { cat: 'heroes', mod: 'Pudge Arcana', en: 'Artifacts on the back', ru: 'Артефакты на спине', until: '' };
+  let config = markIssue(EMPTY, pudge);
+  config = markIssue(config, { ...pudge, en: 'Back fixed, hook still wrong', until: '2026-10-01' });
+  assert.deepEqual(current.normalize(config).issues, [{ ...pudge, en: 'Back fixed, hook still wrong', until: '2026-10-01' }], 'marking again replaces');
+  assert.deepEqual(describe(config, TODAY), ['issue           heroes / Pudge Arcana: Back fixed, hook still wrong (until 2026-10-01)']);
+
+  assert.throws(() => markIssue(EMPTY, { ...pudge, ru: '' }), /--en and --ru/);
+  assert.throws(() => markIssue(EMPTY, { ...pudge, cat: '' }), /category id/);
+  assert.throws(() => markIssue(EMPTY, { ...pudge, until: 'soon' }), /YYYY-MM-DD/);
+  assert.throws(() => clearIssue(config, 'heroes', 'Someone else'), /no issue here/);
+  assert.equal('issues' in clearIssue(config, 'heroes', 'Pudge Arcana'), false);
+});

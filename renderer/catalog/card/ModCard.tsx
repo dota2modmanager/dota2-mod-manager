@@ -17,6 +17,7 @@ import { previewUrl } from '../../ui/media.ts';
 import { openPlayer } from '../../ui/player.ts';
 import { toggleQueued } from '../../ui/queue.ts';
 import { staleTerrainWhy } from '../../core/terrain-age.ts';
+import { modIssue } from '../../ui/notice.ts';
 import { installTarget } from '../mods.ts';
 import { SLOT_TAGS, modTags, tagLabel } from '../tags.ts';
 import { catalogName, catalogLabel } from '../../ui/catalog-name.ts';
@@ -69,7 +70,9 @@ export function ModCard({ mod: m, index, withCat = false, moves = false, onOpen,
    * room for about two words. Пак / Свой / Ссылка are about the mod itself, so they are counted
    * first and the tags take what is left; what a mod does comes before the slot it sits in. */
   const looks = m.styles ? Math.min(m.styles.length, 5) : 0;
-  const badges = (isPack ? 1 : 0) + (m._custom ? 1 : 0) + (external ? 1 : 0);
+  // a mod the signed config marks as misbehaving: one "!" chip, the words on hover and in its window
+  const issue = modIssue(cat, m.name);
+  const badges = (isPack ? 1 : 0) + (m._custom ? 1 : 0) + (external ? 1 : 0) + (issue ? 1 : 0);
   const room = Math.max(0, (looks > 2 ? 1 : 2) - badges);
   const labels = catalogConstants().TAG_CONFIGS?.[cat]?.map;
   const tags = modTags(m).sort((a, b) => (SLOT_TAGS.has(a) ? 1 : 0) - (SLOT_TAGS.has(b) ? 1 : 0)).slice(0, room);
@@ -116,6 +119,7 @@ export function ModCard({ mod: m, index, withCat = false, moves = false, onOpen,
           </button>
         )}
         <div className="media-tags" style={{ '--looks': looks } as CSSProperties}>
+          {issue && <span className="mtag warn mtag-issue" title={issue} aria-label={issue}>!</span>}
           {isPack && <span className="mtag">{L`Пак`}</span>}
           {stale && (
             <span className="mtag warn" title={staleTerrainWhy()} data-owned="react" hidden={stale === 'awaiting'}

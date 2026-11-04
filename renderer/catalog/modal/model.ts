@@ -36,6 +36,8 @@ export interface ModModalModel {
   guidesHtml: string;
   links: { index: number; label: string }[];
   note: string | null;
+  /** what the signed config says is wrong with the mod */
+  issue: string | null;
 }
 
 export interface ModModalActions {

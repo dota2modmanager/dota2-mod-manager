@@ -36,6 +36,7 @@ export function registerGameIpc({
   ipcMain.handle('config:state', () => ({
     features: Object.fromEntries(remoteConfig.SWITCHABLE.map((n) => [n, remoteConfig.feature(n, uiLang())])),
     notices: remoteConfig.notices(uiLang()),
+    issues: remoteConfig.issues(uiLang()),
     seen: settings.get('seenNotices') || [],
   }));
 

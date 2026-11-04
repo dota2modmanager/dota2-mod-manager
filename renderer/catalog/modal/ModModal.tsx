@@ -62,6 +62,7 @@ export function ModModal({ m, actions }: { m: ModModalModel; actions: ModModalAc
             ))}
           </div>
         )}
+        {m.issue && <div className="modal-note warn" role="note"><b>{L`Известная проблема`}:</b> {m.issue}</div>}
         {m.note && <div className="modal-note">{m.note}</div>}
       </div>
     </>
