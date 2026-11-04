@@ -20,6 +20,7 @@ import { registerPreview3dIpc } from './ipc-preview3d.ts';
 import { registerBackgroundIpc } from './ipc-background.ts';
 import { registerHudIpc } from './ipc-hud.ts';
 import { registerRankIpc } from './ipc-rank.ts';
+import { registerDecorIpc } from './ipc-decor.ts';
 import { registerPaintIpc } from './ipc-paint.ts';
 import { registerCreatorIpc } from './ipc-creator.ts';
 
@@ -43,6 +44,7 @@ export function registerIpc(ctx: AppContext): void {
   registerBackgroundIpc(ctx);
   registerHudIpc(ctx);
   registerRankIpc(ctx);
+  registerDecorIpc(ctx);
   registerPaintIpc(ctx);
   registerCreatorIpc(ctx);
 }

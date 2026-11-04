@@ -178,6 +178,16 @@ export interface RankMedal { tier: number; stars: number; top: 0 | 5000 | 100 | 
 export interface RankLook { medal: RankMedal | null; levels: Record<string, number>; every: number | null }
 
 /** The rank medal and hero levels of the player's own screen (src/rank-look-service.ts). */
+/** A kind of decor taken off the map (src/map-decor.ts). */
+export type DecorGroup = 'plants' | 'debris';
+
+/** The map without its decor (src/ipc-decor.ts). */
+export interface DecorApi {
+  /** the groups off the map now, and how many materials each takes on this map */
+  state: () => Promise<Reply<{ installed: { id: string; groups: DecorGroup[]; enabled: boolean } | null; counts: Record<DecorGroup, number> | null }>>;
+  install: (groups: DecorGroup[]) => Promise<Reply<{ record: LibRecord }>>;
+}
+
 export interface RankApi {
   /** the look on now, the heroes of this patch, and whether ValveResourceFormat is downloaded */
   state: () => Promise<Reply<{ installed: { id: string; look: RankLook; enabled: boolean } | null; heroes: { id: string; name: string }[]; vrf: boolean }>>;

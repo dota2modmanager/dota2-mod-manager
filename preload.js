@@ -132,6 +132,10 @@ contextBridge.exposeInMainWorld('api', {
     pictures: () => ipcRenderer.invoke('rank:pictures'),
     install: (look) => ipcRenderer.invoke('rank:install', look),
   },
+  decor: {
+    state: () => ipcRenderer.invoke('decor:state'),
+    install: (groups) => ipcRenderer.invoke('decor:install', groups),
+  },
   background: {
     state: () => ipcRenderer.invoke('background:state'),
     install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur),

@@ -16,6 +16,7 @@ import { SoundModal, type SoundModalActions, type SoundModalModel } from '../sou
 import { BackgroundModal, type BackgroundModalActions, type BackgroundModalModel } from '../background/BackgroundModal.tsx';
 import { HudModal, type HudModalActions, type HudModalModel } from '../hud/HudModal.tsx';
 import { RankModal, type RankModalActions, type RankModalModel } from '../rank/RankModal.tsx';
+import { DecorModal, type DecorModalActions, type DecorModalModel } from '../decor/DecorModal.tsx';
 import { PaintModal, type PaintModalActions, type PaintModalModel } from '../paint/PaintModal.tsx';
 import { CreatorModal, type CreatorActions, type CreatorModel } from '../../creator/CreatorModal.tsx';
 import { SlotPicker } from '../builder/SlotPicker.tsx';
@@ -48,6 +49,7 @@ export const showBackgroundModal = (model: BackgroundModalModel, actions: Backgr
 export const showHudModal = (model: HudModalModel, actions: HudModalActions): void => show(<HudModal m={model} actions={actions} />);
 export const showCreatorModal = (model: CreatorModel, actions: CreatorActions): void => show(<CreatorModal m={model} actions={actions} />);
 export const showRankModal = (model: RankModalModel, actions: RankModalActions): void => show(<RankModal m={model} actions={actions} />);
+export const showDecorModal = (model: DecorModalModel, actions: DecorModalActions): void => show(<DecorModal m={model} actions={actions} />);
 export const showArcanaModal = (model: ArcanaModalModel, actions: ArcanaModalActions): void =>
   show(<ArcanaModal m={model} actions={actions} />);
 
