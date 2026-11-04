@@ -61,12 +61,25 @@ export function paintSafeModeSwitch(): void {
 // which read as the game being open, and was lit with the game closed. Which folder inside the game the mods land in
 // is the app's business, not the user's - the full path is in Settings and in a diagnostics
 // report, which is where somebody actually chasing a problem goes.
+// Dota open is said here too: the app stays up beside the game for the catalog and the presets,
+// and nothing is written to the game until it closes (src/game-watch.ts)
+let gameOpen = false;
+window.api.game.onRunning((running) => {
+  gameOpen = running;
+  void refreshSidebarStatus();
+});
+
 export async function refreshSidebarStatus(): Promise<void> {
   const s = await window.api.settings.get();
   state.settings = s;
   const dotEl = $('#dotaStatusDot');
   const txtEl = $('#dotaStatusText');
-  if (s.dotaPathValid) {
+  if (s.dotaPathValid && gameOpen) {
+    dotEl.className = 'dot warn';
+    txtEl.textContent = L`Dota 2 открыта: закрой её, чтобы ставить моды`;
+    txtEl.parentElement?.setAttribute('title', L`Пока игра открыта, она держит свои файлы, и моды не ставятся и не переключаются. Каталог, избранное и пресеты работают.`);
+  } else if (s.dotaPathValid) {
+    txtEl.parentElement?.removeAttribute('title');
     dotEl.className = 'dot ok';
     txtEl.textContent = L`Dota 2 найдена`;
   } else {

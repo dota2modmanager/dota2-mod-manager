@@ -815,7 +815,7 @@ const EN = {
   'Язык переключён на Русский': 'Language switched to Russian',
 
   // ---------- status bar ----------
-  'Dota 2 найдена': 'Dota 2 found',
+  'Dota 2 найдена': 'Dota 2 found', 'Dota 2 открыта: закрой её, чтобы ставить моды': 'Dota 2 is open: close it to install mods', 'Пока игра открыта, она держит свои файлы, и моды не ставятся и не переключаются. Каталог, избранное и пресеты работают.': 'While the game is open it holds its files, so mods cannot be installed or switched. The catalog, favourites and presets still work.',
   'Dota 2 не найдена — укажи путь в настройках': 'Dota 2 not found — set the path in Settings',
 
   // ---------- what's new ----------

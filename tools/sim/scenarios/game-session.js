@@ -4,7 +4,8 @@
  * After each, tools/sim/dota.js asks whether the game would load what the app left.
  *
  * What the app promises (src/game-upkeep.ts, src/ipc-game.ts, src/patch-watch.ts):
- *   - it does not write gameinfo while the game holds it open, and says so;
+ *   - it does not write gameinfo while the game holds it open, and says so (the game watch
+ *     in src/game-watch.ts may refuse first, with its own words);
  *   - an update that lands while the game runs is noticed, the repair waits for the game to
  *     close, and My mods says why the mods are off until then;
  *   - once the game is closed the repair runs, by itself or on "I closed it, retry".
@@ -46,7 +47,7 @@ module.exports = async function gameSession(sim) {
   const asked = await turnSafeOff();
   const said = await toasts();
   sim.check('with the game running, turning safe mode off is refused and the app says why',
-    asked && /Закрой Dota 2|Close Dota 2/.test(said) && !world.searchPathsOurs(game),
+    asked && /Закрой Dota 2|Close Dota 2|Закрой игру|close the game/i.test(said) && !world.searchPathsOurs(game),
     `dialog shown: ${asked}; toasts: "${said}"; search paths ours: ${world.searchPathsOurs(game)}`);
   await sim.shot('refused-while-running');
   await world.quitGame(running, game);

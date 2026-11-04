@@ -33,9 +33,10 @@ function stand(t: TestContext) {
   const library = new Library(path.join(dir, 'userdata'));
   const calls: string[] = [];
   let refreshed = 0;
+  let gameOpen = false;
   let build: () => Promise<unknown> = async () => ({ ok: true });
   const channels = registerAgainst(() => registerLibraryIpc({
-    applyMasterToCursors: (on: boolean) => calls.push(`master cursors ${on}`),
+    applyMasterToCursors: (on: boolean) => calls.push(`master cursors ${on}`), blocked: (name: string) => (gameOpen ? { error: `blocked ${name}` } : null),
     disableOtherCosmetics: (rec: LibRecord) => { calls.push(`other looks off for ${rec.name}`); return ['Old look']; },
     disableOtherCursors: (id: string) => { calls.push(`other cursors off for ${id}`); return ['Old cursors']; },
     installer, isCursorRecord: (rec: LibRecord) => rec.categoryId === 'cursors', library,
@@ -52,8 +53,21 @@ function stand(t: TestContext) {
   const withBlocks = (rec: LibRecord) => { library.update(rec.id, { schema: ['"1" { }'] } as never); return library.find(rec.id)!; };
   const files = () => fs.readdirSync(lang).sort();
   const refreshWith = (b: () => Promise<unknown>) => { build = b; };
-  return { lang, installer, library, call, mod, withBlocks, files, calls, refreshed: () => refreshed, refreshWith };
+  return { lang, installer, library, call, mod, withBlocks, files, calls, refreshed: () => refreshed, refreshWith, openGame: () => { gameOpen = true; } };
 }
+
+test('with the game open no switch, removal or master change touches a file, and the answer says why', async (t) => {
+  const s = stand(t);
+  const rec = s.mod('pak30');
+  s.openGame();
+  assert.deepEqual(await s.call('mods:setEnabled', rec.id, false), { error: 'blocked toggle' });
+  assert.deepEqual(await s.call('mods:setEnabledMany', [rec.id], false), { error: 'blocked toggle' });
+  assert.deepEqual(await s.call('mods:remove', rec.id), { error: 'blocked toggle' });
+  assert.deepEqual(await s.call('mods:removeMany', [rec.id]), { error: 'blocked toggle' });
+  assert.deepEqual(await s.call('mods:setMaster', false), { error: 'blocked toggle' });
+  assert.deepEqual(s.files(), ['pak30_dir.vpk']);
+  assert.equal(s.library.find(rec.id)!.enabled, true);
+});
 
 test('switching a mod off renames it, switching it on puts it back, and a mod nobody has is an error', async (t) => {
   const s = stand(t);

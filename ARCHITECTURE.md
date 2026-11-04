@@ -534,6 +534,7 @@ that location is not writable.
 | `src/main-window.ts`, `src/app-page.ts` | The window: its size on the screen it opens on, the one page it may show, Ctrl +/-/0 |
 | `src/dev-harness.ts`, `src/capture.ts` | `MM_SHOT`, `MM_EVAL` and the other switches a script drives the window with, and the screenshot they take |
 | `src/game-upkeep.ts` | The work done at start: the game path, the mod folder following the audio language, the load-order layout, the migrations |
+| `src/game-watch.ts` | Whether Dota is open, asked every few seconds and told to the window when it changes |
 | `src/game-repair.ts` | Putting the game back after something else changed it: a Dota patch, Steam's file check, waiting while Dota runs |
 | `src/app-repair.ts` | Settings' "Repair the app": the game patch, missing mod files and the rebuildable caches, a line per step |
 | `src/patch-watch.ts` | Noticing a game update the moment it lands |
@@ -565,7 +566,7 @@ that location is not writable.
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
 | `src/discord-auth.ts`, `src/discord-presence.ts`, `src/presence-status.ts` | Signing in with Discord, and what the Discord status says and whether it is on |
 | `src/release-notes.ts` | The "What's new" text, out of the changelogs shipped with the build |
-| `src/feature-gate.ts` | Whether a feature has been switched off from `config/app.json`, asked once |
+| `src/feature-gate.ts` | Whether a write to the game may go ahead: not while Dota is open, not when `config/app.json` switched the feature off |
 | `preload.js` | The `window.api` surface, and nothing else crosses |
 | `src/installer.ts` | The door to everything below that writes a mod into the game folder or takes it out |
 | `src/installer-downloads.ts` | Getting a catalog archive onto this machine |
