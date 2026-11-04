@@ -13,7 +13,8 @@ import { Library } from '../src/library.ts';
 import { buildVpk, entryAt, openVpkIndex } from '../src/vpk.ts';
 import { readKv3, type Kv3Node } from '../src/kv3.ts';
 import { resourceBlock } from '../src/resource.ts';
-import { clampLook, LAYOUTS, levelsScript, medalImage, SCRIPT, STYLES, tierOf, withMedal, withScript } from '../src/rank-look.ts';
+import { clampLook, LAYOUTS, medalImage, SCRIPT, STYLES, tierOf, withMedal, withScript } from '../src/rank-look.ts';
+import { levelsScript } from '../src/rank-look-script.ts';
 import { createRankLook } from '../src/rank-look-service.ts';
 import { encodeKv3, resource, type V } from './helpers/kv3-build.ts';
 import type { CompileJob } from '../src/resource-compiler.ts';
@@ -207,6 +208,19 @@ test('a badge that takes a level is given it, and gets the game’s back when it
     () => { levels.push(badge.herolevel!); name.text = 'Axe'; },
     () => levels.push(badge.herolevel!));
   assert.deepEqual(levels, [30, 30, 2, 30]);
+});
+
+test('a badge the game sets back is on the chosen level the next tick, without walking the page again', () => {
+  const badge = fake('DOTAHeroBadge', 'HeroBadge', [], [], { herolevel: 5 });
+  const page = fake('DOTAHeroPageNewV2', '', [], [fake('Label', '', ['TabContentsHeroName'], [], { text: 'Axe' }), badge]);
+  const levels: number[] = [];
+  let walked = 0;
+  const kids = page.kids;
+  const count = () => { walked = 0; Object.defineProperty(page, 'kids', { get: () => { walked++; return kids; } }); };
+  runScript(levelsScript({ medal: null, levels: { axe: 30 }, every: null }), page,
+    () => { count(); badge.herolevel = 5; }, // the game opens the badge on the real level
+    () => levels.push(badge.herolevel!, walked));
+  assert.deepEqual(levels, [30, 0]);
 });
 
 test('the include goes in front of the layout’s panel, once', () => {

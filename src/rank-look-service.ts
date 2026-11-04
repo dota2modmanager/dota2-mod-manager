@@ -11,7 +11,8 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { clampLook, LAYOUTS, levelsScript, lookIsEmpty, SCRIPT, STYLES, withMedal, withScript, type RankLook } from './rank-look.ts';
+import { clampLook, LAYOUTS, lookIsEmpty, SCRIPT, STYLES, withMedal, withScript, type RankLook } from './rank-look.ts';
+import { levelsScript } from './rank-look-script.ts';
 import { fileInForce, swapPak, writePak, type PakInstaller } from './generated-pak.ts';
 import { vrfCss } from './hud-scale-service.ts';
 import { buildVpk, entryAt, entryPath, sharedVpkIndex } from './vpk.ts';
