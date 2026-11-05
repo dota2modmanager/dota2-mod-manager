@@ -1,7 +1,8 @@
 /* The pieces of the recolour window (PaintModal.tsx): a colour well, a layer's switch with its colour,
  * and a tile that shows a part of the hero in the colours it is getting. An icon layer that is on
  * shades the picture as the build will (shade.ts); an effect layer that is on rings it in its colour,
- * since an effect has no picture of its own to shade. */
+ * since an effect has no picture of its own to shade. A click on a picture switches the layer that
+ * shades it. */
 import type { CSSProperties, ReactNode } from 'react';
 import { CosThumb } from '../builder/parts.tsx';
 import { useShaded } from './shade.ts';
@@ -35,6 +36,19 @@ export function Chip({ cell, label, actions }: { cell: PaintCell; label: string;
 
 const ring = (fx: PaintCell | null): CSSProperties | undefined => (fx?.on ? { '--fx': fx.color } as CSSProperties : undefined);
 
+/** A picture that is the switch of the layer shading it; without that layer, just the picture. */
+function Pic({ layer, label, cls, style, actions, children }: {
+  layer: PaintCell | null; label: string; cls: string; style?: CSSProperties; actions: CellActions; children: ReactNode;
+}) {
+  if (!layer) return <span className={cls} style={style}>{children}</span>;
+  return (
+    <button className={`${cls} paint-pic-btn`} style={style} role="switch" aria-checked={layer.on} aria-label={label} title={label}
+      data-layer={layer.id} onClick={() => actions.toggle(layer.id)}>
+      {children}
+    </button>
+  );
+}
+
 /**
  * An ability: its icon, shaded while its icon layer is on, ringed while its effect is.
  * @param picture  the icon out of the game, null for none: the glyph stands in
@@ -46,9 +60,9 @@ export function AbilityTile({ name, picture, effect, icon, actions }: {
   const on = !!(effect?.on || icon?.on);
   return (
     <div className={`paint-tile ${on ? 'on' : ''}`}>
-      <span className={`paint-pic ${effect?.on ? 'fx' : ''}`} style={ring(effect)}>
+      <Pic layer={icon} label={`${name}: ${L`Иконка`}`} cls={`paint-pic ${effect?.on ? 'fx' : ''}`} style={ring(effect)} actions={actions}>
         {shown ? <img src={shown} alt="" draggable={false} /> : <span className="ms">bolt</span>}
-      </span>
+      </Pic>
       <span className="paint-tile-name" title={name}>{name}</span>
       <span className="paint-chips">
         {effect && <Chip cell={effect} label={L`Эффект`} actions={actions} />}
@@ -79,9 +93,9 @@ export function HeroCard({ name, picture, effects, portrait, body, actions, chil
   const shown = useShaded(picture, portrait?.on ? portrait.color : null);
   return (
     <aside className="paint-hero">
-      <span className={`paint-portrait ${effects?.on ? 'fx' : ''}`} style={ring(effects)}>
+      <Pic layer={portrait} label={L`Иконка и портрет`} cls={`paint-portrait ${effects?.on ? 'fx' : ''}`} style={ring(effects)} actions={actions}>
         {shown ? <img src={shown} alt="" draggable={false} /> : <span className="ms">person</span>}
-      </span>
+      </Pic>
       <span className="paint-hero-name">{name}</span>
       <span className="paint-hero-chips">
         {effects && <Chip cell={effects} label={L`Атака и прочее`} actions={actions} />}
