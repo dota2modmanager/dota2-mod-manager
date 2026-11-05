@@ -38,10 +38,13 @@ const pakNumber = (rel: string) => Number(/pak(\d+)_/i.exec(rel)?.[1] ?? Infinit
 /**
  * The copy of a game file that is in force before a generated pak of ours: the first switched-on
  * mod's, in load order (the first copy wins, as in the game), else the game's own in pak01. Null
- * when neither has it. `own` is the generated record itself, which never counts.
+ * when neither has it. `own` is the generated record itself, which never counts. A caller that
+ * cannot work on every copy says which it can with `usable`; a mod's copy it refuses is passed over
+ * and named to `passedOver`.
  */
-export function fileInForce({ game, langFolder, records, own, file }: {
+export function fileInForce({ game, langFolder, records, own, file, usable = () => true, passedOver = () => {} }: {
   game: string; langFolder: string; records: LibRecord[]; own?: string | null; file: string;
+  usable?: (data: Buffer) => boolean; passedOver?: (rec: LibRecord) => void;
 }): { data: Buffer; from: LibRecord | null } | null {
   const paks = records
     .filter((r) => r.id !== own && r.enabled !== false)
@@ -50,7 +53,8 @@ export function fileInForce({ game, langFolder, records, own, file }: {
   for (const { r, rel } of paks) {
     try {
       const data = sharedVpkIndex(path.join(langFolder, rel)).read(file);
-      if (data) return { data, from: r };
+      if (data && usable(data)) return { data, from: r };
+      if (data) passedOver(r);
     } catch { /* a pak that cannot be read is not the one in force either */ }
   }
   const data = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk')).read(file);

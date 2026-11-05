@@ -129,8 +129,11 @@ export function kvText(kv: Kv3Block, n: Kv3Node, ind = 0): string {
     return n.cell?.float ? (Number.isInteger(v) ? v.toFixed(1) : String(+v.toFixed(6))) : String(v);
   }
   if (n.kind === 'other' && n.type === 2) return n.value ? 'true' : 'false';
+  // the same two answers, as a type of their own and with no value (limiter_stop_oldest has them)
+  if (n.kind === 'other' && n.type === 13) return 'true';
+  if (n.kind === 'other' && n.type === 14) return 'false';
   if (n.kind === 'other' && n.type === 1) return 'null';
-  throw new Error(`no KV3 text for a ${n.kind}`);
+  throw new Error(`no KV3 text for a ${n.kind} of type ${n.kind === 'other' ? n.type : '?'}`);
 }
 
 /** Is this a WAV the compiler takes: plain 16-bit PCM at a rate the game plays. Null when it is. */

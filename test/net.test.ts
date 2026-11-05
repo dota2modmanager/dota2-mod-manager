@@ -199,13 +199,32 @@ test('a mirror that keeps failing is stood down instead of asked every time', as
   assert.equal(up.hits, 4, 'and every request still got its answer');
 });
 
-test('a 404 is the file missing, not the mirror failing', async (t) => {
+test('a 404 from the origin is the file missing, not the mirror failing', async (t) => {
   const first = await serve(t, dead(404));
   const second = await serve(t, body('should not be reached'));
-  net.setMirrors([first.mirror(), second.mirror()]);
+  net.setMirrors([{ ...first.mirror(), origin: true }, second.mirror()]);
 
   await assert.rejects(() => net.fetchText(RAW_URL), /404/);
   assert.equal(second.hits, 0, 'no point asking another mirror of the same repo');
+});
+
+test('a 404 from a mirror only says it has no copy: the next one is asked', async (t) => {
+  const blocked = await serve(t, dead(503));
+  const bucket = await serve(t, dead(404));
+  const proxy = await serve(t, body('the new mod'));
+  net.setMirrors([{ ...blocked.mirror(), origin: true }, bucket.mirror(), proxy.mirror()]);
+
+  assert.equal(await net.fetchText(RAW_URL), 'the new mod');
+  assert.equal(bucket.hits, 1, 'and a host that has no copy is not asked twice');
+  assert.deepEqual(net.mirrorHealth().filter((h) => h.why === 'HTTP 404'), [], 'nor marked down for it');
+});
+
+test('a 404 from every mirror comes back as a 404', async (t) => {
+  const blocked = await serve(t, dead(503));
+  const bucket = await serve(t, dead(404));
+  net.setMirrors([{ ...blocked.mirror(), origin: true }, bucket.mirror()]);
+
+  await assert.rejects(() => net.fetchText(RAW_URL), /HTTP 404/);
 });
 
 test('a download that was cut short resumes where it stopped', async (t) => {

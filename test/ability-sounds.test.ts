@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { editedEvents, eventsFile, heroEvents, heroesWithSounds, soundPath, wavProblem, type SoundEdit } from '../src/ability-sounds.ts';
+import { editedEvents, eventsFile, heroEvents, heroesWithSounds, kvText, soundPath, wavProblem, type SoundEdit } from '../src/ability-sounds.ts';
 import type { Kv3Block, Kv3Node } from '../src/kv3.ts';
 
 const s = (value: string): Kv3Node => ({ kind: 'string', value });
@@ -20,6 +20,13 @@ const KV = {
 } as unknown as Kv3Block;
 
 const edit = (event: string, mode: SoundEdit['mode']): SoundEdit => ({ event, mode, volume: 0.9, sound: 'a1b2c3d4e5f6a7b8c9d0', name: 'boom.mp3' });
+
+test('an event with a true or false of the compact kind is written as text (18 heroes have one)', () => {
+  const flag = (type: number): Kv3Node => ({ kind: 'other', type });
+  const text = kvText(KV, obj({ on: flag(13), off: flag(14), plain: { kind: 'other', type: 2, value: 1 }, none: flag(1) }));
+  assert.equal(text, '{\n\ton = true\n\toff = false\n\tplain = true\n\tnone = null\n}');
+  assert.throws(() => kvText(KV, flag(99)), /type 99/);
+});
 
 test('the window is offered the events that play a sound, and the heroes that have a file of them', () => {
   assert.deepEqual(heroEvents(KV).map((e) => e.name), ['Hero_Lion.Voodoo', 'Hero_Lion.FingerOfDeath'], 'an event that plays nothing has no sound to change');

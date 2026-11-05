@@ -1,6 +1,6 @@
 // A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a
 // failure noted against its host, and the first good answer returned.
-import { stoodDown, noteFailure, noteSuccess, entriesFor, liveOrder } from './net-mirrors.ts';
+import { stoodDown, noteFailure, noteSuccess, entriesFor, liveOrder, type Entry } from './net-mirrors.ts';
 import { downloadProxyFetchInit } from './download-proxy.ts';
 
 const ATTEMPTS_PER_MIRROR = 2;
@@ -37,10 +37,12 @@ export async function fetchMirrored(url: string, {
   const usable = entriesFor(url, { small, trustedOnly }).filter((e) => !exclude.includes(e.host));
   const candidates = liveOrder(usable);
   let last: unknown = null;
+  let missing: { res: Response; from: Entry } | null = null;
+  const lacking = new Set<string>();
   for (let pass = 0; pass < ATTEMPTS_PER_MIRROR; pass++) {
     for (const candidate of candidates) {
       const host = candidate.host;
-      if (stoodDown(host)) continue;
+      if (stoodDown(host) || lacking.has(host)) continue;
       try {
         const res = await fetch(candidate.url, {
           headers,
@@ -48,8 +50,18 @@ export async function fetchMirrored(url: string, {
           ...downloadProxyFetchInit(),
         } as RequestInit & { dispatcher?: unknown });
         if (!res.ok && res.status !== 206) {
-          // 404 is the file, not the mirror: another mirror of the same repo will not have it
-          if (res.status === 404) { onMirror(candidate); return res; }
+          /* A 404 from the origin is the file: it is not in the catalog's repository. From anything
+           * else it only says that host has no copy. The bucket is filled nightly and within a
+           * budget, so a new mod is missing there, and stopping at that 404 left everybody who
+           * cannot reach GitHub without the catalog's newest mods, with three working proxies
+           * never asked. Not a failure of the host, so no mark against it. */
+          if (res.status === 404) {
+            if (candidate.origin) { onMirror(candidate); return res; }
+            lacking.add(host);
+            missing = { res, from: candidate };
+            log(`mirror ${host} has no copy`);
+            continue;
+          }
           throw new Error(`HTTP ${res.status}`);
         }
         noteSuccess(host);
@@ -63,6 +75,8 @@ export async function fetchMirrored(url: string, {
       }
     }
   }
+  // nobody had it, and those who answered said so: the same answer the origin would have given
+  if (missing) { onMirror(missing.from); return missing.res; }
   /* Say which kind of failure this was, so the interface can say something a player
    * understands. "fetch failed" is what Node calls being unable to open a socket, and it is
    * what the catalog screen printed at somebody who had simply turned their wifi off.
