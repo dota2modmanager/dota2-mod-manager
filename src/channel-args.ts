@@ -77,6 +77,8 @@ const PATH = str(4096, 1);
 const NAME = str(500);
 /** A picture: a catalog address or a frame as a data URI. */
 const PREVIEW = optional(str(16 * MB));
+/** One pick of a saved look in the item builder (renderer/views/item-looks.ts). */
+const LOOK_PICK = shape({ slot: str(200, 1), itemId: str(20, 1), name: str(500), effectId: optional(str(500)) });
 
 /**
  * The settings the window has a control for, and what each may be set to. The rest - the game
@@ -88,6 +90,7 @@ export const WINDOW_SETTINGS: Record<string, Check> = {
   countDownloads: bool,
   everyoneWearsMine: bool,
   favorites: list(str(500), 20000),
+  itemLooks: list(shape({ id: str(60, 1), hero: str(200, 1), name: str(80, 1), picks: list(LOOK_PICK, 40), at: num(0, 1e14) }), 2000),
   langPromptSeen: bool,
   modLabels: (v) => {
     if (!v || typeof v !== 'object' || Array.isArray(v)) return fail('an object');
@@ -177,7 +180,8 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'cosmetics:heroPortraitsByName': [list(str(200), 1000)],
   'cosmetics:icons': [list(str(500), 20000)],
   'cosmetics:pick': [str(100, 1), either(str(100), num(0, 1e9)), optional(NAME), optional(either(str(100), num(0, 1e9)))],
-  'cosmetics:pickSet': [either(str(100, 1), num(0, 1e9))],
+  'cosmetics:pickSet': [either(str(100, 1), num(0, 1e9)), optional(num(0, 64))],
+  'cosmetics:wearLook': [str(200, 1), list(LOOK_PICK, 40)],
   'preview:video': [str(500, 1)], 'preview:frame': [str(500, 1), bytes(32 * MB)],
   'tools:state': [], 'tools:install': [str(100, 1)], 'tools:remove': [str(100, 1)],
   // resourcecompiler.exe (src/ipc-compiler.ts): its path comes from a dialog, never from here

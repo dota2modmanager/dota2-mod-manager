@@ -174,7 +174,8 @@ function signaturesFor(branchText) {
 }
 
 /* What the item builder reads out of pak01 besides the table, copied from the real game so the
- * sandbox can run it: every hero's two portraits (its hub shows them), and for a whole set
+ * sandbox can run it: every hero's two portraits and its script (its hub shows them, grouped by
+ * the attribute the script names), and for a whole set
  * (Blightfall, so "Equip the whole set" builds every piece) and one more wearable the model and
  * particles it copies plus the effect particles it points at. A few MB. Only these, rather than
  * the whole archive: the real one is tens of gigabytes. */
@@ -252,6 +253,8 @@ function builderAssets(real, schemaText) {
     for (const id of new Set(slots.flatMap((sl) => sl.heroIds))) {
       want.add(`panorama/images/heroes/npc_dota_hero_${id}_png.vtex_c`);
       want.add(`panorama/images/heroes/selection/npc_dota_hero_${id}_png.vtex_c`);
+      // the hero's script: its main attribute puts it in its group of the hub (src/item-builder-details.ts)
+      want.add(`scripts/npc/heroes/npc_dota_hero_${id}.txt`);
     }
     const compiled = (p) => { const c = String(p).toLowerCase().replace(/\\/g, '/'); return c.endsWith('_c') ? c : `${c}_c`; };
     const effects = builder.itemEffects().map((fx) => fx.id);

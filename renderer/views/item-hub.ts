@@ -14,7 +14,7 @@ import { COSMETIC_PREFIX } from '../core/constants.ts';
 import { catName, catIcon } from '../core/categories.ts';
 import { pickedIn, firstCosmeticSlots } from '../core/installed.ts';
 import { showScreen } from '../catalog/screen/root.tsx';
-import { heroCardMeta, heroesOf } from '../catalog/builder/logic.ts';
+import { ATTRIBUTES, attributeRank, heroCardMeta, heroesOf } from '../catalog/builder/logic.ts';
 import type { CosmeticSlot } from '../catalog/types.ts';
 import type { ScreenActions, ScreenModel } from '../catalog/screen/model.ts';
 import { plural } from '../ui/format.ts';
@@ -36,23 +36,32 @@ const hubActions = (): ScreenActions => ({
   },
 });
 
+/** The groups' names, as the game's hero grid heads them. */
+const GROUP_NAMES = (): string[] => [L`Сила`, L`Ловкость`, L`Интеллект`, L`Универсальные`, L`Другие`];
+
 function hubModel(): ScreenModel {
   const f = view.filters;
   const q = view.cosSearch.trim().toLowerCase();
-  const shown = heroesOf(itemCosmeticSlots()).filter(([hero, slots]) =>
+  const shown = heroesOf(itemCosmeticSlots(), state.heroAttrs).filter(([hero, slots]) =>
     heroMatchesSearch(hero, q) && (!f.installedOnly || slots.some((s) => pickedIn(s.slot))));
+  const names = GROUP_NAMES();
+  const groups = [...ATTRIBUTES, 'other'].map((attr, i) => ({
+    attr,
+    name: names[i],
+    heroes: shown.filter(([, slots]) => attributeRank(slots, state.heroAttrs) === i).map(([hero, slots]) => ({
+      hero,
+      icon: heroPortraits.get(hero) || null,
+      installed: slots.some((s) => pickedIn(s.slot)),
+      meta: heroCardMeta(slots, heroSets(hero), pickedIn),
+    })),
+  })).filter((g) => g.heroes.length);
   return {
     kind: 'builder' as const,
     title: L`Конструктор героев`,
     search: view.cosSearch,
     installedOnly: f.installedOnly,
     count: (view.cosSearch || f.installedOnly) ? `${shown.length} ${plural(shown.length, 'герой', 'героя', 'героев')}` : '',
-    heroes: shown.map(([hero, slots]) => ({
-      hero,
-      icon: heroPortraits.get(hero) || null,
-      installed: slots.some((s) => pickedIn(s.slot)),
-      meta: heroCardMeta(slots, heroSets(hero), pickedIn),
-    })),
+    groups,
   };
 }
 

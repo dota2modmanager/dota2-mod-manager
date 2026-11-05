@@ -57,6 +57,21 @@
   --installed: #2bffa3;
   --danger: var(--md-error);
   --warning: #fcd34d;
+  /* the game's own colours for a hero's main attribute and an item's rarity: data the game shows
+     the same way everywhere, so the item builder shows them as the game does (issue #526) */
+  --attr-str: #e5533d;
+  --attr-agi: #3fcf54;
+  --attr-int: #34b4e6;
+  --attr-all: #b98cf3;
+  --rarity-common: #b0c3d9;
+  --rarity-uncommon: #5e98d9;
+  --rarity-rare: #4b69ff;
+  --rarity-mythical: #8847ff;
+  --rarity-legendary: #d32ce6;
+  --rarity-ancient: #eb4b4b;
+  --rarity-immortal: #e4ae39;
+  --rarity-arcana: #ade55c;
+  --rarity-seasonal: #fff34f;
 
   /* ---------- Spacing: 4px base, 7 steps ----------
      Pick by meaning, not by eye:

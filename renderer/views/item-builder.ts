@@ -20,16 +20,13 @@ import { state } from '../core/store.ts';
 import { COSMETIC_PREFIX } from '../core/constants.ts';
 import { catName } from '../core/categories.ts';
 import { pickedIn } from '../core/installed.ts';
-import { showSlotPicker, showHeroModal } from '../catalog/modal/root.tsx';
-import { openPaint } from './hero-paint.ts';
-import { byName, effectKey, effectPicture, heroesOf, liveDonor, liveEffects, liveStyle, setIsOn, stagedItemAction, tagLine } from '../catalog/builder/logic.ts';
-import { plural } from '../ui/format.ts';
+import { showSlotPicker } from '../catalog/modal/root.tsx';
+import { byName, effectKey, effectPicture, liveDonor, liveEffects, liveStyle, stagedItemAction, tagLine } from '../catalog/builder/logic.ts';
 import { heroName } from '../ui/hero-name.ts';
 import { cosmeticName } from '../ui/cosmetic-name.ts';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
 import { cosmeticSlotList, slotData } from './catalog/lists.ts';
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './catalog/overlay.ts';
-import { openSets } from './item-sets.ts';
 import type { CosmeticOption, CosmeticSet, CosmeticSlot } from '../catalog/types.ts';
 import type { ScreenActions } from '../catalog/screen/model.ts';
 
@@ -49,7 +46,6 @@ export function bindItemBuilder(ctx: BuilderCtx): void {
 
 const panel = () => document.getElementById('modalContent') as HTMLElement;
 
-const HUB = COSMETIC_PREFIX + 'items';
 
 export function itemCosmeticSlots(): CosmeticSlot[] {
   return cosmeticSlotList().filter((s) => s.kind === 'item-effect' || String(s.slot || '').startsWith('item:'));
@@ -208,64 +204,9 @@ async function applySlot(key: number, st: SlotState, chosen: CosmeticOption | nu
   }
 }
 
-// ---------- a hero: its sets as one tile, then a tile per item slot ----------
-
-const heroSlots = (hero: string): CosmeticSlot[] => heroesOf(itemCosmeticSlots()).find(([h]) => h === hero)?.[1] || [];
-
-export function openItemHeroModal(heroName: string, from: Element | null): void {
-  const slots = heroSlots(heroName);
-  openWindow(from, false, (key) => drawHero(key, heroName, slots));
-  const sets = heroSets(heroName);
-  loadCosmeticIcons([sets[0]?.name, ...slots.slice(0, 12).map((s) => pickedIn(s.slot)?.name || s.options[0]?.name)].filter(Boolean), () => {})
-    .catch(() => {});
-}
-
-/** The 3D preview is open: it stays so from one hero to the next, as a person who looks once looks again. */
-let previewOpen = false;
-
-/** What the 3D preview shows for the hero: each slot's stock item and what is picked on it. */
-function heroPreview(slots: CosmeticSlot[]) {
-  const hero = slots.find((s) => s.heroIds?.length)?.heroIds?.[0];
-  const dressed = slots.filter((s) => s.targetId && !s.persona);
-  if (!hero || !dressed.length) return null;
-  return {
-    hero,
-    slots: dressed.map((s) => ({ slot: s.slot, stock: s.targetId as string })),
-    sig: dressed.map((s) => { const p = pickedIn(s.slot); return p ? `${p.itemId}:${p.effectId || ''}` : '-'; }).join('|'),
-    open: previewOpen,
-  };
-}
-
-/** The hero's npc name without its prefix (juggernaut), out of the slots' hero ids. */
-const heroNpc = (slots: CosmeticSlot[]): string | null => slots.find((s) => s.heroIds?.length)?.heroIds?.[0]?.replace(/^npc_dota_hero_/, '') || null;
-
-function drawHero(key: number, heroName: string, slots: CosmeticSlot[]): void {
-  const sets = heroSets(heroName);
-  const shown = sets.find((s) => setIsOn(s, pickedIn)) || sets[0];
-  showHeroModal(key, {
-    hero: heroName,
-    hub: catName(HUB),
-    slots: slots.map((s) => {
-      const live = pickedIn(s.slot);
-      return {
-        slot: s.slot,
-        label: s.slotLabel || s.label || '',
-        icon: s.icon || 'checkroom',
-        liveName: live?.name || null,
-        meta: live ? live.name : `${s.options.length} ${plural(s.options.length, 'вариант', 'варианта', 'вариантов')}`,
-      };
-    }),
-    sets: sets.length ? { name: shown.name, count: sets.length, on: sets.some((s) => setIsOn(s, pickedIn)) } : null,
-    preview: heroPreview(slots),
-    paint: heroNpc(slots),
-  }, {
-    close: closeOverlay,
-    togglePreview: () => { previewOpen = !previewOpen; drawHero(key, heroName, slots); },
-    openPaint: () => { const npc = heroNpc(slots); if (npc) void openPaint(npc, heroName, () => openItemHeroModal(heroName, null)); },
-    openSets: () => openSets(heroName),
-    openSlot: (slot) => openItemSlotModal(slot, null,
-      { back: { label: heroName, hero: true, go: () => openItemHeroModal(heroName, null) } }),
-  });
+/** Take what is on a slot off, the stock item back (the hero window's "Снять"). */
+export async function takeOff(slot: string): Promise<void> {
+  if (cat) await cat.pickCosmetic(slot, { id: '', name: L`Стандартный` } as CosmeticOption, true);
 }
 
 /** Let go of an open builder window: another window is taking the overlay, or it closed. */

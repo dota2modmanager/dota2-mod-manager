@@ -59,10 +59,11 @@ export function pickedIn(slot: string): LibRecord | null {
 // most of the app's actions (toggling a regular mod, searching the catalog) never need
 // them, so this is fetched only where a cosmetic pick could actually have changed.
 export async function refreshCosmeticSlots(): Promise<void> {
-  const { slots, sets, names } = await window.api.cosmetics.slots();
+  const { slots, sets, names, heroAttrs } = await window.api.cosmetics.slots();
   setCosmeticNames(names || {});
   state.cosmeticSlots = slots || [];
   state.cosmeticSets = sets || []; // the item builder's sets, read with the slots they fill
+  state.heroAttrs = heroAttrs || {};
   // Picks, safe mode and translated labels can change the catalog's rail as well as the
   // screen asking - so nothing kept is still right.
   invalidateViews();

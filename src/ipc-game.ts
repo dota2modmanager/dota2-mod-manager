@@ -236,11 +236,11 @@ export function registerGameIpc({
   });
 
   // A whole set, one write to the game for all its pieces (schema-service pickSet).
-  ipcMain.handle('cosmetics:pickSet', async (e, setId) => {
+  ipcMain.handle('cosmetics:pickSet', async (e, setId, style) => {
     const stop = blocked('cosmetics');
     if (stop) return stop;
     try {
-      const picked = schemaService.pickSet(setId, { write: false });
+      const picked = schemaService.pickSet(setId, { write: false, style: Number(style) || 0 });
       await schemaService.refreshInBackground();
       return { ok: true, ...picked };
     } catch (err) {

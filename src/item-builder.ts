@@ -8,7 +8,7 @@
  * hero model too, under the plain hero's. src/schema-service.ts applies it along with
  * the rest of the free cosmetics; src/schema.ts reads and merges the table.
  *
- * What the builder offers (slots, sets, effects) is src/item-builder-slots.ts, re-exported here;
+ * What the builder offers (slots, sets, effects) is src/item-builder-slots.ts and src/item-builder-sets.ts, re-exported here;
  * this file is what a pick writes.
  *
  * Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
@@ -33,11 +33,13 @@ import { styleOf, withStyle } from './item-builder-styles.ts';
 import { DONOR, donorOf, withDonorEffects } from './item-builder-donor.ts';
 import { UNUSUAL, unusualItemEffect } from './item-builder-unusual.ts';
 
-export { itemSlots, itemSlotsSteps, itemSets, itemOptions } from './item-builder-slots.ts';
+export { itemSlots, itemSlotsSteps, itemOptions } from './item-builder-slots.ts';
+export { itemSets } from './item-builder-sets.ts';
 export { itemEffects } from './item-builder-effects.ts';
 export { gameAssetEntries, summonModels } from './item-builder-assets.ts';
 export type { SummonModels } from './item-builder-assets.ts';
-export type { ItemSlot, ItemSet, AssetCopy } from './item-builder-slots.ts';
+export type { ItemSlot, AssetCopy } from './item-builder-slots.ts';
+export type { ItemSet } from './item-builder-sets.ts';
 
 // ---------- reading the game's own schema ----------
 

@@ -679,6 +679,53 @@ test('a whole set goes on in one write, a row per piece, and a piece already on 
   assert.throws(() => service.pickSet('404'), /Set not found/);
 });
 
+test('a set carries what the game says about it: rarity, release date, event (issue #526)', () => {
+  const field = (k: string, v: string) => `\n\t\t\t"${k}"\t\t"${v}"`;
+  const text = itemSetTable().replace('"name"\t\t"Sniper Set"', `"name"\t\t"Sniper Set"${field('item_rarity', 'Immortal')}`
+    + `${field('creation_date', '2016-05-01')}${field('event_id', 'EVENT_ID_INTERNATIONAL_2016')}`);
+  const sets = builder.itemSets(text);
+  const sniper = sets.find((s) => s.name === 'Sniper Set');
+  assert.deepEqual([sniper?.rarity, sniper?.date, sniper?.event, sniper?.styles], ['immortal', '2016-05-01', 'EVENT_ID_INTERNATIONAL_2016', 1]);
+  const blood = sets.find((s) => s.name === 'Bloodseeker Set');
+  assert.deepEqual([blood?.rarity, blood?.date, blood?.event], ['', '', ''], 'a set the game says nothing about');
+});
+
+test("a saved look goes on in one write, and the hero's other picks go off, kept in My mods (issue #527)", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-looks-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const game = path.join(dir, 'game');
+  fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+  fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), vpk.buildVpk([entry(schema.SCHEMA_REL, itemSetTable())]));
+  const library = new Library(path.join(dir, 'lib'));
+  let writes = 0;
+  const settings = settingsIn({ dotaGamePath: game, schemaPatch: false }, (k) => { if (k === 'schemaStamp') writes++; });
+  const service = createSchemaService({ settings, library, installer: NO_INSTALLER, userDataDir: dir });
+  const picks = () => library.list().filter((r) => r.categoryId === 'cosmetic' && r.enabled !== false);
+
+  const arcana = service.pickCosmetic('item:sniper:hero_base', '9970', 'Sniper Arcana');
+  service.pickCosmetic('item:sniper:back', '9951', 'Sniper Spare Cape');
+  service.pickCosmetic('item:bloodseeker:weapon', '9953', 'Bloodseeker Headmaster Wand');
+  writes = 0;
+  const res = service.wearLook('item:sniper:', [
+    { slot: 'item:sniper:head', itemId: '9457', name: 'No visuals here', effectId: 'fire' },
+    { slot: 'item:sniper:back', itemId: '9455', name: 'Golden Full-Bore Bonanza' },
+    { slot: 'item:bloodseeker:weapon', itemId: '1', name: 'not this hero' },
+  ]);
+  assert.deepEqual(res, { applied: 2, picks: 3 }, "another hero's pick in the list is skipped and counted");
+  assert.equal(writes, 1, 'one write for the whole look');
+  assert.deepEqual(picks().map((r) => [r.slot, r.itemId, r.effectId || '']).sort(), [
+    ['item:bloodseeker:weapon', '9953', ''],
+    ['item:sniper:back', '9455', ''],
+    ['item:sniper:head', '9457', 'fire'],
+  ]);
+  assert.equal(library.find(arcana!.id)?.enabled, false, 'the arcana went off, kept in My mods');
+  assert.throws(() => service.wearLook('item:../:', []), /Look not found/);
+
+  // a style a piece does not have leaves it in its first
+  service.pickSet('9960', { style: 1 });
+  assert.equal(picks().find((r) => r.slot === 'item:sniper:back')?.effectId || '', '');
+});
+
 /** A hero's stock base and its arcana, as items_game has Juggernaut's: a whole other hero model,
  *  an activity modifier, two styles, and a swap for another unit's model that is not the hero's. */
 function arcanaTable() {

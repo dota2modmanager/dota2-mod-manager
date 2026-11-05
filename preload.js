@@ -102,7 +102,8 @@ contextBridge.exposeInMainWorld('api', {
     heroPortraits: (ids) => ipcRenderer.invoke('cosmetics:heroPortraits', ids),
     heroPortraitsByName: (names) => ipcRenderer.invoke('cosmetics:heroPortraitsByName', names),
     pick: (slot, itemId, itemName, effectId) => ipcRenderer.invoke('cosmetics:pick', slot, itemId, itemName, effectId),
-    pickSet: (setId) => ipcRenderer.invoke('cosmetics:pickSet', setId),
+    pickSet: (setId, style) => ipcRenderer.invoke('cosmetics:pickSet', setId, style),
+    wearLook: (hero, picks) => ipcRenderer.invoke('cosmetics:wearLook', hero, picks),
   },
   // the arcana built out of the game's own files, in a colour of the user's
   // towers and trees from the game's own looks, per side

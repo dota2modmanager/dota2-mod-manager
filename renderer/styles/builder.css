@@ -1,0 +1,142 @@
+/* ============ The item builder: hub, hero window, sets ============
+   The hub is the catalog's hero grid split the way the game splits its own; the hero window is a
+   changing room, a row per slot with what is on it; a set says what the game says about it. */
+
+/* ---------- hub: four groups, as the game's hero grid has them ---------- */
+.hub-group { margin-bottom: var(--space-5); }
+.hub-group[data-attr="str"] { --attr: var(--attr-str); }
+.hub-group[data-attr="agi"] { --attr: var(--attr-agi); }
+.hub-group[data-attr="int"] { --attr: var(--attr-int); }
+.hub-group[data-attr="all"] { --attr: var(--attr-all); }
+.hub-group-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-head);
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+}
+.hub-attr {
+  width: var(--space-3);
+  height: var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--attr, var(--text-faint));
+  box-shadow: 0 0 var(--space-2) color-mix(in srgb, var(--attr, transparent) 60%, transparent);
+}
+.hub-group-count {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-faint);
+}
+.hub-group .hero-grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: var(--space-2); }
+
+/* ---------- hero window: a row per slot ---------- */
+.dress-slots {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.dress-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-right: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+.dress-row:last-child { border-bottom: 0; }
+.dress-row.on { background: color-mix(in srgb, var(--installed) 5%, transparent); }
+.dress-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+.dress-open:hover { background: var(--state-hover); }
+.dress-open:focus-visible { outline: none; box-shadow: var(--focus-ring-inset); }
+.dress-thumb {
+  flex-shrink: 0;
+  width: 72px;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+}
+.dress-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dress-thumb .noimg { color: var(--text-faint); display: grid; place-items: center; }
+.dress-thumb .noimg .ms { font-size: var(--icon-lg); }
+.dress-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-px); }
+.dress-slot { font-size: var(--text-xs); color: var(--text-faint); }
+.dress-item {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dress-row:not(.on) .dress-item { color: var(--text-muted); font-weight: var(--weight-medium); }
+.dress-more { font-size: var(--text-xs); color: var(--text-faint); white-space: nowrap; }
+.dress-chev { color: var(--text-faint); font-size: var(--icon-md); }
+.dress-off { flex-shrink: 0; }
+
+.dress-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.dress-actions .btn.on { border-color: color-mix(in srgb, var(--installed) 55%, var(--border)); }
+.dress-count {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- hero window: saved looks ---------- */
+.dress-looks { display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--border); }
+.dress-looks-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.dress-looks-head h3 { margin: 0; font-family: var(--font-head); font-size: var(--text-base); font-weight: var(--weight-bold); }
+.dress-look-list { display: flex; flex-direction: column; gap: var(--space-1); }
+.dress-look {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.dress-look .dress-thumb { width: 56px; }
+.dress-look.on { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--installed) 55%, transparent); }
+.dress-worn { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--text-xs); color: var(--installed); padding: 0 var(--space-2); }
+.dress-worn .ms { font-size: var(--icon-sm); }
+.dress-note { font-size: var(--text-sm); color: var(--text-faint); }
+
+/* ---------- sets: what the game says about one ---------- */
+[data-rarity] { --rarity: var(--text-faint); }
+[data-rarity="common"] { --rarity: var(--rarity-common); }
+[data-rarity="uncommon"] { --rarity: var(--rarity-uncommon); }
+[data-rarity="rare"] { --rarity: var(--rarity-rare); }
+[data-rarity="mythical"] { --rarity: var(--rarity-mythical); }
+[data-rarity="legendary"] { --rarity: var(--rarity-legendary); }
+[data-rarity="ancient"] { --rarity: var(--rarity-ancient); }
+[data-rarity="immortal"] { --rarity: var(--rarity-immortal); }
+[data-rarity="arcana"] { --rarity: var(--rarity-arcana); }
+[data-rarity="seasonal"] { --rarity: var(--rarity-seasonal); }
+.set-rarity { color: var(--rarity); font-weight: var(--weight-semibold); }
+.card[data-rarity] .card-media { border-bottom: 2px solid var(--rarity); }
+.card[data-rarity] .card-meta { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
+.set-facts { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-sm); color: var(--text-muted); }
+.set-desc { font-size: var(--text-sm); color: var(--text-muted); line-height: var(--leading-normal); max-width: 80ch; }
+.set-styles { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.set-styles-label { font-size: var(--text-xs); color: var(--text-faint); margin-right: var(--space-1); }

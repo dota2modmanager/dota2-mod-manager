@@ -127,6 +127,7 @@ const EN = {
   'Сломана: на текстуре спины артефакты': 'Broken: the back texture is glitched',
   'для него нет слота в конструкторе': 'the builder has no slot for it',
   'Набор не найден': 'Set not found',
+  'Образ не найден': 'Look not found',
   'items_game: эффект {0} не найден': 'items_game: effect {0} not found',
   'items_game: у предмета {0} нет блока visuals': 'items_game: item {0} has no visuals block',
   'items_game: подозрительно мало предметов ({0})': 'items_game: suspiciously few items ({0})',

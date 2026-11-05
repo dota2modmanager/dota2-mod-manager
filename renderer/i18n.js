@@ -36,6 +36,7 @@ window.EN_PLURAL = {
   'наборов': ['set', 'sets'],
   'деталей': ['piece', 'pieces'],
   'видов': ['look', 'looks'],
+  'предметов': ['item', 'items'],
 };
 
 const EN = {

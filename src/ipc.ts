@@ -23,6 +23,7 @@ import { registerRankIpc } from './ipc-rank.ts';
 import { registerDecorIpc } from './ipc-decor.ts';
 import { registerPaintIpc } from './ipc-paint.ts';
 import { registerCreatorIpc } from './ipc-creator.ts';
+import { registerLooksIpc } from './ipc-looks.ts';
 
 /** Register every channel the window can call. */
 export function registerIpc(ctx: AppContext): void {
@@ -47,4 +48,5 @@ export function registerIpc(ctx: AppContext): void {
   registerDecorIpc(ctx);
   registerPaintIpc(ctx);
   registerCreatorIpc(ctx);
+  registerLooksIpc(ctx);
 }
