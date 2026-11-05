@@ -25,6 +25,6 @@ export async function spotlight(selector: string, ms = 4000): Promise<boolean> {
   el.classList.remove('spotlit');
   void el.offsetWidth; // a second visit rings it again
   el.classList.add('spotlit');
-  setTimeout(() => el.classList.remove('spotlit'), 2600);
+  setTimeout(() => el.classList.remove('spotlit'), 3100);
   return true;
 }

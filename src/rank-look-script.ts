@@ -102,6 +102,18 @@ function d2mmPageHero(page) {
   for (var key in D2MM_LEVELS) if (name && $.Localize("#npc_dota_hero_" + key).toLowerCase() === name.toLowerCase()) return D2MM_LEVELS[key];
   return name ? D2MM_EVERY : null;
 }
+// the portrait's badge is the game's own panel and puts its tier class back on every update, so
+// the frame round the portrait is drawn on the overlay inside it, which the game leaves alone
+var D2MM_PORTRAIT = null;
+function d2mmPortrait(frame, lvl) {
+  var overlay = frame.FindChildTraverse("PortraitHeroBadgeOverlay");
+  if (!overlay) return d2mmSay("portrait", "no PortraitHeroBadgeOverlay");
+  var want = d2mmKnown(lvl) ? 'url("s2r://panorama/images/hud/portrait_hero_badge_frame_tier_' + (Math.min(5, Math.floor((lvl - 1) / 5)) + 1) + '_psd.vtex")' : null;
+  if (want === D2MM_PORTRAIT) return;
+  overlay.style.backgroundImage = want;
+  D2MM_PORTRAIT = want;
+  if (d2mmKnown(lvl)) d2mmTier(frame, lvl);
+}
 var D2MM_TICK = 0;
 var D2MM_SEEN = {};
 // the script runs every frame, so a badge the game opens on the real level is on the chosen one
@@ -174,7 +186,7 @@ function d2mmApply() {
     if (d2mmKnown(played)) {
       var frame = me.FindChildTraverse("unitbadge");
       var unit = frame ? Players.GetLocalPlayerPortraitUnit() : -1;
-      if (frame && Entities.IsRealHero(unit) && Entities.GetPlayerOwnerID(unit) === Players.GetLocalPlayer()) d2mmTier(frame, played);
+      if (frame) d2mmPortrait(frame, Entities.IsRealHero(unit) && Entities.GetPlayerOwnerID(unit) === Players.GetLocalPlayer() ? played : null);
       var bar = me.paneltype === "DOTATopBarPlayer" ? me : null;
       if (bar && d2mmHeroOf(bar.FindChildTraverse("HeroImage")).replace(/^npc_dota_hero_/, "") === own) d2mmTier(bar, played);
     }

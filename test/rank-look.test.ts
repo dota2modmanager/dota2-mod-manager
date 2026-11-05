@@ -114,7 +114,7 @@ test('the script knows the levels and the medal, in the game’s own words', () 
 });
 
 /** A Panorama panel, as much of one as the script touches. */
-interface Fake { id: string; paneltype: string; classes: Set<string>; kids: Fake[]; text: string; heroname?: string; heroid?: number; herolevel?: number; visible: boolean; vars: Record<string, number> }
+interface Fake { id: string; paneltype: string; classes: Set<string>; kids: Fake[]; text: string; heroname?: string; heroid?: number; herolevel?: number; visible: boolean; vars: Record<string, number>; style?: Record<string, string | null> }
 const fake = (paneltype: string, id = '', classes: string[] = [], kids: Fake[] = [], extra: Partial<Fake> = {}): Fake => ({ id, paneltype, classes: new Set(classes), kids, text: '', visible: true, vars: {}, ...extra });
 const all = (p: Fake): Fake[] => p.kids.flatMap((k) => [k, ...all(k)]);
 /** The match the script is in: the local player's hero and the unit in the portrait, which is that hero unless said. */
@@ -267,12 +267,18 @@ function world(t: TestContext) {
 
 test('in a match the player’s own hero shows its level on the portrait, the top bar and the player card', () => {
   const lvl = { medal: null, levels: { axe: 30 }, every: null };
-  const frame = fake('DOTAUnitHeroBadge', 'unitbadge', ['BronzeTier']);
-  runIn({ hero: 'npc_dota_hero_axe' }, levelsScript(lvl), fake('DOTAHud', 'Hud', [], [fake('Panel', '', [], [frame])]));
-  assert.ok(frame.classes.has('GrandmasterTier') && !frame.classes.has('BronzeTier'), [...frame.classes].join(' '));
-  const ally = fake('DOTAUnitHeroBadge', 'unitbadge', ['BronzeTier']);
+  const overlay = () => fake('Panel', 'PortraitHeroBadgeOverlay', [], [], { style: {} });
+  const ring = overlay();
+  const frame = fake('DOTAUnitHeroBadge', 'unitbadge', ['BronzeTier'], [ring]);
+  // the game's panel puts its own tier back between frames; the frame drawn on the overlay stays
+  runIn({ hero: 'npc_dota_hero_axe' }, levelsScript(lvl), fake('DOTAHud', 'Hud', [], [fake('Panel', '', [], [frame])]),
+    () => { frame.classes.clear(); frame.classes.add('BronzeTier'); });
+  assert.match(String(ring.style!.backgroundImage), /portrait_hero_badge_frame_tier_6_psd/);
+  const allyRing = overlay();
+  const ally = fake('DOTAUnitHeroBadge', 'unitbadge', ['BronzeTier'], [allyRing]);
   runIn({ hero: 'npc_dota_hero_axe', portraitOwn: false }, levelsScript(lvl), fake('DOTAHud', 'Hud', [], [ally]));
   assert.deepEqual([...ally.classes], ['BronzeTier'], 'another player’s unit in the portrait keeps its own frame');
+  assert.equal(allyRing.style!.backgroundImage, undefined);
   const bar = (hero: string) => fake('DOTATopBarPlayer', '', ['BronzeTier'], [fake('DOTAHeroImage', 'HeroImage', [], [], { heroname: hero })]);
   const mine = bar('npc_dota_hero_axe');
   const theirs = bar('npc_dota_hero_lina');

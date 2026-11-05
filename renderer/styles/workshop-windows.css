@@ -31,8 +31,10 @@
 .map-side-label .text-meta { margin-left: var(--space-1); text-transform: none; letter-spacing: normal; font-weight: var(--weight-body); }
 .sound-hero-head-name { flex: 1; min-width: 0; font-family: var(--font-head); font-size: var(--text-md); font-weight: var(--weight-semibold); }
 
-/* towers and trees: a card per look, its picture over its name */
-.map-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: var(--space-2); }
+/* towers and trees: a card per look, its picture over its name. The window is wide enough for a
+   side's looks to stand in one row, so both sides are seen at once without scrolling */
+.modal-content:has(.map-looks) { width: min(1180px, calc(94vw / var(--content-zoom))); }
+.map-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: var(--space-2); }
 .map-card {
   position: relative; display: flex; flex-direction: column; gap: var(--space-1); padding: 0 0 var(--space-2);
   border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--text-muted);
@@ -49,7 +51,7 @@
 }
 .map-card-pic .ms { font-size: var(--icon-xl); }
 .map-card-pic.loading .ms { opacity: 0.4; }
-.map-card-name { padding: 0 var(--space-2); font-size: var(--text-sm); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map-card-name { padding: 0 var(--space-1); font-size: var(--text-xs); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .map-card-check { position: absolute; top: var(--space-1); right: var(--space-1); font-size: var(--icon-md); color: var(--primary); }
 
 @media (prefers-reduced-motion: reduce) {

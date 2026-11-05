@@ -412,12 +412,14 @@
 .ctx-sep { height: 1px; margin: var(--space-1) var(--space-2); background: var(--border); }
 
 /* where a Workshop tile sent the person (ui/spotlight.ts): the thing rings twice in the accent and lets go */
-.spotlit { position: relative; animation: spotlit 1.2s var(--ease-out) 2; border-radius: var(--radius-md); }
+/* body: above a block's own entrance animation (.settings-block), which is drawn from a later file */
+body .spotlit { position: relative; animation: spotlit 3s var(--ease-out) both; border-radius: var(--radius-md); }
+/* held long enough to be seen once the scroll has stopped, then let go */
 @keyframes spotlit {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 70%, transparent), 0 0 0 2px var(--primary); }
-  70% { box-shadow: 0 0 0 14px transparent, 0 0 0 2px var(--primary); }
-  100% { box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent; }
+  0%, 12% { outline: 2px solid transparent; outline-offset: 6px; background-color: transparent; }
+  22%, 78% { outline: 2px solid var(--primary); outline-offset: 2px; background-color: color-mix(in srgb, var(--primary) 12%, transparent); }
+  100% { outline: 2px solid transparent; outline-offset: 2px; background-color: transparent; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .spotlit { animation: none; box-shadow: var(--focus-ring); }
+  body .spotlit { animation: none; box-shadow: var(--focus-ring); }
 }

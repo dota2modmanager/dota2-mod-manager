@@ -187,7 +187,8 @@ function trim(src: string): Promise<string> {
   return p;
 }
 
-function useTrimmed(src: string | null): string | null {
+/** A picture cut to its figure, once the cut is made (null until then). */
+export function useTrimmed(src: string | null): string | null {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!src) { setUrl(null); return; }
