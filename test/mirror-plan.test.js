@@ -9,7 +9,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
 
-const { staleCopies, publishedHash, checkBody } = require('../tools/mirror-plan.js');
+const { staleCopies, publishedHash, checkBody, fits } = require('../tools/mirror-plan.js');
 
 const sha = (text) => crypto.createHash('sha256').update(text).digest('hex');
 const KRATOS = 'assets/files/heroes/Axe Kratos.zip';
@@ -164,4 +164,11 @@ test('clearing out the last version: a beta touches only its own copies', () => 
     ['updates/Dota-2-Mod-Manager-Setup-beta.exe'],
     'a release frees the beta binaries, which is where the bucket gets its space back',
   );
+});
+
+test('a full bucket still takes a new version of what it holds, at the cost of the difference', () => {
+  assert.equal(fits({ used: 100, budget: 90, already: 30, size: 20 }), true, 'smaller than the copy it replaces');
+  assert.equal(fits({ used: 100, budget: 90, size: 1 }), false, 'a new object does not fit');
+  assert.equal(fits({ used: 80, budget: 90, already: 10, size: 20 }), true, 'exactly at the budget');
+  assert.equal(fits({ used: 80, budget: 90, already: 10, size: 21 }), false);
 });

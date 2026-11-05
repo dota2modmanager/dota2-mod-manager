@@ -22,7 +22,7 @@
  */
 import { readKv3, type Kv3Block, type Kv3Node } from './kv3.ts';
 import { writeKv3 } from './kv3-write.ts';
-import { resourceBlock } from './resource.ts';
+import { resourceBlock, resourceBlocks } from './resource.ts';
 import { children } from './menu-background.ts';
 
 /** A medal: the tier (0 not calibrated, 8 Immortal), the stars of tiers 1 to 7, and an Immortal's leaderboard place. */
@@ -122,6 +122,11 @@ function names(n: Kv3Node, ref: string): boolean {
   if (n.kind === 'object') return [...n.members.values()].some((v) => names(v, ref));
   if (n.kind === 'array') return n.items.some((v) => names(v, ref));
   return false;
+}
+
+/** Whether the script's include can be put into this layout: an older compile keeps no tree in a LaCo block. */
+export function takesScript(layout: Buffer): boolean {
+  try { return resourceBlocks(layout).some((b) => b.name === 'LaCo'); } catch { return false; }
 }
 
 /**

@@ -12,7 +12,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { clampLook, LAYOUTS, lookIsEmpty, SCRIPT, STYLES, withMedal, withScript, type RankLook } from './rank-look.ts';
+import { clampLook, LAYOUTS, lookIsEmpty, SCRIPT, STYLES, takesScript, withMedal, withScript, type RankLook } from './rank-look.ts';
 import { levelsScript } from './rank-look-script.ts';
 import { fileInForce, swapPak, writePak, type PakInstaller } from './generated-pak.ts';
 import { vrfCss } from './hud-scale-service.ts';
@@ -69,8 +69,11 @@ export function createRankLook({ gamePath, installer, library, vrf, compile, dec
     return g;
   };
   const pak01 = () => sharedVpkIndex(path.join(game(), 'dota', 'pak01_dir.vpk'));
-  const inForce = (file: string): Buffer => {
-    const got = fileInForce({ game: game(), langFolder: installer.langFolder(), records: library.list(), own: mine()?.id, file });
+  const inForce = (file: string, usable?: (data: Buffer) => boolean): Buffer => {
+    const got = fileInForce({
+      game: game(), langFolder: installer.langFolder(), records: library.list(), own: mine()?.id, file, usable,
+      passedOver: (rec) => log(`rank look: ${rec.name} carries ${file} in a form the script cannot go into, using the next copy`),
+    });
     if (!got) throw new Error(t('В игре нет файла {0}', file));
     return got.data;
   };
@@ -99,7 +102,7 @@ export function createRankLook({ gamePath, installer, library, vrf, compile, dec
     const built = (await compile({ id: 'rank_look', files, compile: files.map((f) => f.path) })).filter((e) => want.has(entryPath(e)));
     const missing = [...want].filter((p) => !built.some((e) => entryPath(e) === p));
     if (missing.length) throw new Error(t('resourcecompiler.exe не собрал {0}: {1}', SCRIPT.source, missing.join(', ')));
-    return buildVpk([...built, ...LAYOUTS.map((p) => entryAt(p, withScript(inForce(p))))]);
+    return buildVpk([...built, ...LAYOUTS.map((p) => entryAt(p, withScript(inForce(p, takesScript))))]);
   }
 
   /** The record built from `look`: in the old one's slot, or a new record. */

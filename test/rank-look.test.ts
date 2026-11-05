@@ -256,15 +256,17 @@ function world(t: TestContext) {
   const library = new Library(userdata);
   const jobs: CompileJob[] = [];
   const rebuilt: string[] = [];
+  const logged: string[] = [];
   const service = createRankLook({
     gamePath: () => game, installer, library, vrf: () => 'vrf.exe',
     decompile: async (exe, style) => `${CSS}/* from ${style.toString()} */\n`,
     compile: async (job) => { jobs.push(job); return job.files.map((f) => entryAt(f.path.replace(/\.css$/, '.vcss_c').replace(/\.js$/, '.vjs_c'), f.data)); },
     run: async () => {},
     onRebuilt: (id) => rebuilt.push(id),
+    log: (msg) => logged.push(msg),
   });
   const pak = (rec: { files: { relPath: string }[] }) => openVpkIndex(path.join(installer.langFolder(), rec.files[0].relPath));
-  return { service, library, jobs, rebuilt, pak };
+  return { service, installer, library, jobs, rebuilt, logged, pak };
 }
 
 test('in a match the player’s own hero shows its level on the portrait, the top bar and the player card', () => {
@@ -316,6 +318,17 @@ test('a look is one record: both styles with the medal, the script, and the layo
   assert.deepEqual(w.jobs[1].compile, [SCRIPT.source]);
   assert.equal(w.pak(again).read(STYLES[0].compiled), null);
   assert.deepEqual(w.service.state().installed, { id: rec.id, look: { medal: null, levels: {}, every: 20 }, enabled: true });
+});
+
+test('a mod’s layout with no tree is passed over for the game’s copy, and named in the log', async (t) => {
+  const w = world(t);
+  const old = resource([['RED2', Buffer.from('editor')], ['DATA', Buffer.from('<root/>')]]);
+  fs.writeFileSync(path.join(w.installer.langFolder(), 'pak40_dir.vpk'), buildVpk([entryAt(LAYOUTS[0], old)]));
+  w.library.add({ name: 'Old Interface', categoryId: 'parts', styleLabel: null, fileRef: null, preview: null, files: [{ root: 'lang', relPath: 'pak40_dir.vpk' }] });
+
+  const rec = await w.service.install({ medal: { tier: 6, stars: 2, top: 0 }, levels: {}, every: null });
+  assert.deepEqual(shape(w.pak(rec).read(LAYOUTS[0])!).refs, [SCRIPT.ref], 'the game’s copy took the script');
+  assert.ok(w.logged.some((m) => m.includes('Old Interface') && m.includes(LAYOUTS[0])), w.logged.join('; '));
 });
 
 test('after an update the record is built again in its slot, and says so', async (t) => {

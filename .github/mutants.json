@@ -515,10 +515,10 @@
       "test": "test/net.test.ts"
     },
     {
-      "name": "a missing file is held against the mirror",
+      "name": "a file missing from the origin is looked for on every mirror",
       "file": "src/net-fetch.ts",
       "anchor": "export async function fetchMirrored(url: string, {",
-      "from": "if (res.status === 404) { onMirror(candidate); return res; }",
+      "from": "if (candidate.origin) { onMirror(candidate); return res; }",
       "to": ";",
       "test": "test/net.test.ts"
     },

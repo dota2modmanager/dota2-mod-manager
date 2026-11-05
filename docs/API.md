@@ -3222,12 +3222,14 @@ and switched off when `off`. The caller builds first, so a build that fails leav
 ### `fileInForce`
 
 ```ts
-export function fileInForce({ game, langFolder, records, own, file }: { game: string; langFolder: string; records: LibRecord[]; own?: string | null; file: string; }): { data: Buffer; from: LibRecord | null } | null
+export function fileInForce({ game, langFolder, records, own, file, usable = () => true, passedOver = () => {} }: { game: string; langFolder: string; records: LibRecord[]; own?: string | null; file: string; usable?: (data: Buffer) => boolean; passedOver?: (rec: LibRecord) => void; }): { data: Buffer; from: LibRecord | null } | null
 ```
 
 The copy of a game file that is in force before a generated pak of ours: the first switched-on
 mod's, in load order (the first copy wins, as in the game), else the game's own in pak01. Null
-when neither has it. `own` is the generated record itself, which never counts.
+when neither has it. `own` is the generated record itself, which never counts. A caller that
+cannot work on every copy says which it can with `usable`; a mod's copy it refuses is passed over
+and named to `passedOver`.
 
 ## src/glb-embed.ts
 
@@ -8900,6 +8902,14 @@ The CSS ValveResourceFormat read out of a style, with the medal's rules at its e
 that puts a medal on, copied with the chosen one, and every rule that puts stars on, copied with
 the chosen stars (none for tiers 0 and 8). The tool's banner goes, and rules this added before
 are replaced rather than stacked.
+
+### `takesScript`
+
+```ts
+export function takesScript(layout: Buffer): boolean
+```
+
+Whether the script's include can be put into this layout: an older compile keeps no tree in a LaCo block.
 
 ### `withScript`
 

@@ -54,7 +54,7 @@ const FIRST = ['heroes', 'terrains', 'shaders', 'trees', 'river', 'backgrounds',
 
 import { iterMods } from './catalog-mods.js';
 import { createR2, purgeCache } from './r2-client.js';
-import { staleCopies, publishedHash, checkBody, budgetNote } from './mirror-plan.js';
+import { staleCopies, publishedHash, checkBody, budgetNote, fits } from './mirror-plan.js';
 
 /* The bucket, and SigV4 with it, live in tools/r2-client.js: the release assets need the same
    signing and a second copy of eighty lines of crypto is how the catalog walk in this very file
@@ -208,7 +208,8 @@ const index = [];
 for (const item of wanted) {
   if (have.has(item.path) && !changed.has(item.path)) { index.push(item.path); skipped++; continue; }
   if (copied >= LIMIT) { stopped = 'limit'; break; }
-  if (used >= BUDGET) { stopped = 'budget'; break; }
+  // a new object past the budget is not worth fetching; one that replaces a copy may still fit
+  if (!have.has(item.path) && used >= BUDGET) { stopped = 'budget'; continue; }
 
   try {
     const res = await fetch(item.source || `${RAW}/${item.path}`);
@@ -217,7 +218,11 @@ for (const item of wanted) {
     if (body.length > MAX_FILE) { tooBig++; continue; }
     // replacing an object costs the difference, not the whole file again
     const already = have.get(item.path) || 0;
-    if (used - already + body.length > BUDGET) { stopped = 'budget'; break; }
+    if (!fits({ used, budget: BUDGET, already, size: body.length })) {
+      stopped = 'budget';
+      if (have.has(item.path)) index.push(item.path);
+      continue;
+    }
 
     /* Measured against what the catalog published before it goes anywhere. A mirror that
        carries bytes the app will refuse is worse than a mirror that carries nothing: the app
