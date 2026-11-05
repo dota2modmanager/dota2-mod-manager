@@ -117,8 +117,12 @@ test('the script knows the levels and the medal, in the game’s own words', () 
 interface Fake { id: string; paneltype: string; classes: Set<string>; kids: Fake[]; text: string; heroname?: string; heroid?: number; herolevel?: number; visible: boolean; vars: Record<string, number> }
 const fake = (paneltype: string, id = '', classes: string[] = [], kids: Fake[] = [], extra: Partial<Fake> = {}): Fake => ({ id, paneltype, classes: new Set(classes), kids, text: '', visible: true, vars: {}, ...extra });
 const all = (p: Fake): Fake[] => p.kids.flatMap((k) => [k, ...all(k)]);
+/** The match the script is in: the local player's hero and the unit in the portrait, which is that hero unless said. */
+interface Match { hero: string; portraitOwn?: boolean }
+const MENU: Match = { hero: '' };
 /** Runs the script on `root`, then `between` before each of the next ticks; returns what it said in the console. */
-function runScript(js: string, root: Fake, ...between: (() => void)[]): string[] {
+function runScript(js: string, root: Fake, ...between: (() => void)[]): string[] { return runIn(MENU, js, root, ...between); }
+function runIn(match: Match, js: string, root: Fake, ...between: (() => void)[]): string[] {
   const said: string[] = [];
   // the game hands a script the same object for the same panel each time
   const seen = new WeakMap<Fake, unknown>();
@@ -135,7 +139,9 @@ function runScript(js: string, root: Fake, ...between: (() => void)[]): string[]
   const names: Record<string, string> = { '#npc_dota_hero_axe': 'Axe', '#npc_dota_hero_lina': 'Lina' };
   let next: (() => void) | null = null;
   const $ = { GetContextPanel: () => api(root), Localize: (s: string) => names[s] ?? s, Schedule: (_: number, f: () => void) => { next = f; }, Msg: (m: string) => said.push(m) };
-  new Function('$', 'Players', js)($, {});
+  const players = { GetLocalPlayer: () => 3, GetPlayerSelectedHero: () => match.hero, GetLocalPlayerPortraitUnit: () => 400 };
+  const entities = { IsRealHero: () => true, GetPlayerOwnerID: () => (match.portraitOwn === false ? 7 : 3) };
+  new Function('$', 'Players', 'Entities', js)($, players, entities);
   for (const step of between) { step(); (next as (() => void) | null)?.(); }
   return said;
 }
@@ -259,7 +265,33 @@ function world(t: TestContext) {
   return { service, library, jobs, rebuilt, pak };
 }
 
-test('a look is one record: both styles with the medal, the script, and the five layouts including it', async (t) => {
+test('in a match the player’s own hero shows its level on the portrait, the top bar and the player card', () => {
+  const lvl = { medal: null, levels: { axe: 30 }, every: null };
+  const frame = fake('DOTAUnitHeroBadge', 'unitbadge', ['BronzeTier']);
+  runIn({ hero: 'npc_dota_hero_axe' }, levelsScript(lvl), fake('DOTAHud', 'Hud', [], [fake('Panel', '', [], [frame])]));
+  assert.ok(frame.classes.has('GrandmasterTier') && !frame.classes.has('BronzeTier'), [...frame.classes].join(' '));
+  const ally = fake('DOTAUnitHeroBadge', 'unitbadge', ['BronzeTier']);
+  runIn({ hero: 'npc_dota_hero_axe', portraitOwn: false }, levelsScript(lvl), fake('DOTAHud', 'Hud', [], [ally]));
+  assert.deepEqual([...ally.classes], ['BronzeTier'], 'another player’s unit in the portrait keeps its own frame');
+  const bar = (hero: string) => fake('DOTATopBarPlayer', '', ['BronzeTier'], [fake('DOTAHeroImage', 'HeroImage', [], [], { heroname: hero })]);
+  const mine = bar('npc_dota_hero_axe');
+  const theirs = bar('npc_dota_hero_lina');
+  runIn({ hero: 'npc_dota_hero_axe' }, levelsScript(lvl), mine);
+  runIn({ hero: 'npc_dota_hero_axe' }, levelsScript(lvl), theirs);
+  assert.ok(mine.classes.has('GrandmasterTier'));
+  assert.ok(theirs.classes.has('BronzeTier') && !theirs.classes.has('GrandmasterTier'));
+  const name = fake('Label', 'HeroName', [], [], { text: 'AXE' });
+  const badge = fake('DOTAHeroBadge', 'HeroBadge', [], [], { herolevel: 5 });
+  const levels: number[] = [];
+  runIn({ hero: 'npc_dota_hero_axe' }, levelsScript(lvl), fake('DOTAHUDInspect', '', [], [badge, name]),
+    () => { levels.push(badge.herolevel!); name.text = 'Lina'; badge.herolevel = 12; }, // the card opens on another player
+    () => levels.push(badge.herolevel!));
+  assert.deepEqual(levels, [30, 12]);
+  // in the menu there is no hero of the player's own, and nothing to say about it
+  assert.deepEqual(runScript(levelsScript(lvl), fake('DOTAUnitHeroBadge', 'unitbadge')), []);
+});
+
+test('a look is one record: both styles with the medal, the script, and the layouts including it', async (t) => {
   const w = world(t);
   assert.deepEqual(w.service.state(), { installed: null, heroes: [{ id: 'antimage', name: 'Anti-Mage' }, { id: 'axe', name: 'Axe' }], vrf: true });
   await assert.rejects(w.service.install({ medal: null, levels: {}, every: null }), /медаль|medal/i);

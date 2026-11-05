@@ -12,10 +12,11 @@
  *
  * A level is a number the client asks Steam for, so no style can change it. A script can: Panorama
  * runs the JavaScript a layout includes, and the script writes the number into the label and sets
- * the tier class on the badge every frame. It goes into five layouts, by adding one
+ * the tier class on the badge every frame. It goes into the layouts LAYOUTS lists, by adding one
  * include to the tree in their LaCo block (as src/menu-background.ts does): the hero grid of the
  * menu and the pick screen, the player's own panel at the pick, the strategy screen, the hero
- * page with its badge, progress tab and experience bar, and the card that opens over a hero.
+ * page with its badge, progress tab and experience bar, the card that opens over a hero, and in a
+ * match the frame round the portrait, the top bar and the card that opens on a player.
  *
  * Tried in the game on 2026-11-04: the profile medal, the hero grid and the pick badge took them.
  */
@@ -32,8 +33,13 @@ export interface RankLook { medal: Medal | null; levels: Record<string, number>;
 
 /** The two styles that hold the medal's rules, as compiled in the pak and as the compiler's source. */
 export const STYLES = ['panorama/styles/dotastyles', 'panorama/styles/avatar_rank_tier'].map((p) => ({ compiled: `${p}.vcss_c`, source: `${p}.css` }));
-/** The layouts the levels script goes into: the hero grid, the player's panel at the pick, the strategy screen, the hero page, the card over a hero. */
-export const LAYOUTS = ['panorama/layout/hero_grid_new.vxml_c', 'panorama/layout/hud/dota_hud_hero_picking_player.vxml_c', 'panorama/layout/hud/dota_hud_pregame.vxml_c', 'panorama/layout/dashboard_page_hero_new_v2.vxml_c', 'panorama/layout/tooltips/tooltip_hero_card.vxml_c'];
+/**
+ * The layouts the levels script goes into: the hero grid, the player's panel at the pick, the
+ * strategy screen, the hero page, the card over a hero, and in a match the HUD (the frame round the
+ * portrait), a player's place on the top bar and the card that opens on a player.
+ */
+export const LAYOUTS = ['panorama/layout/hero_grid_new.vxml_c', 'panorama/layout/hud/dota_hud_hero_picking_player.vxml_c', 'panorama/layout/hud/dota_hud_pregame.vxml_c', 'panorama/layout/dashboard_page_hero_new_v2.vxml_c', 'panorama/layout/tooltips/tooltip_hero_card.vxml_c',
+  'panorama/layout/hud/hud_reborn.vxml_c', 'panorama/layout/hud/dota_hud_top_bar_player.vxml_c', 'panorama/layout/hud/dota_hud_inspect.vxml_c'];
 /** The script, as the compiler's source and as the layouts name it. */
 export const SCRIPT = { source: 'panorama/scripts/d2mm_rank_look.js', compiled: 'panorama/scripts/d2mm_rank_look.vjs_c', ref: 'panorama/scripts/d2mm_rank_look.vjs' };
 

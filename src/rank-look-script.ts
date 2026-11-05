@@ -167,6 +167,26 @@ function d2mmApply() {
     }
   } catch (e) { d2mmSay("hero card failed", e); }
   try {
+    // in a match, the player's own hero: the frame round the portrait, the top bar, and the card
+    // that opens on a player. A hero is in a match once, so its name tells the player's own apart
+    var own = String(Players.GetPlayerSelectedHero(Players.GetLocalPlayer()) || "").replace(/^npc_dota_hero_/, "");
+    var played = own ? d2mmLevel(own) : null;
+    if (d2mmKnown(played)) {
+      var frame = me.FindChildTraverse("unitbadge");
+      var unit = frame ? Players.GetLocalPlayerPortraitUnit() : -1;
+      if (frame && Entities.IsRealHero(unit) && Entities.GetPlayerOwnerID(unit) === Players.GetLocalPlayer()) d2mmTier(frame, played);
+      var bar = me.paneltype === "DOTATopBarPlayer" ? me : null;
+      if (bar && d2mmHeroOf(bar.FindChildTraverse("HeroImage")).replace(/^npc_dota_hero_/, "") === own) d2mmTier(bar, played);
+    }
+    var inspect = me.paneltype === "DOTAHUDInspect" ? me : null;
+    var card = inspect && inspect.FindChildTraverse("HeroBadge");
+    if (card) {
+      var shown = inspect.FindChildTraverse("HeroName");
+      var mineShown = own && shown && shown.text.toLowerCase() === $.Localize("#npc_dota_hero_" + own).toLowerCase();
+      d2mmBadge(card, mineShown ? played : null);
+    }
+  } catch (e) { d2mmSay("match failed", e); }
+  try {
     if (me.paneltype === "DOTAHeroPageNewV2") {
       var page = d2mmPageHero(me);
       var chosen = d2mmKnown(page);
