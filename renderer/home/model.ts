@@ -50,13 +50,15 @@ const plain = (s: string): string => s
 
 /**
  * A version's changelog section as one line per change: its `###` headings, which is how the
- * changelog names each change; a section written as a plain list gives its items instead.
+ * changelog names each change; a section written as a plain list gives its items instead. A heading
+ * two versions share ("Fixed" in 3.0.2 and 3.0.1) is listed once: the list is keyed by its text,
+ * and two rows with one key left a Russian row on screen after switching to English.
  */
 export function notePoints(section: string | null | undefined, max = NOTES_SHOWN): string[] {
   const lines = String(section || '').split(/\r?\n/);
   const heads = lines.filter((l) => /^###\s+/.test(l)).map((l) => plain(l.replace(/^###\s+/, '')));
   const items = heads.length ? heads : lines.filter((l) => /^[-*]\s+/.test(l)).map((l) => plain(l.replace(/^[-*]\s+/, '')));
-  return items.filter(Boolean).slice(0, max);
+  return [...new Set(items.filter(Boolean))].slice(0, max);
 }
 
 /** The newest news first, the ones without a date after those with one. */
