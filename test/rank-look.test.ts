@@ -325,3 +325,14 @@ test('after an update the record is built again in its slot, and says so', async
   assert.deepEqual(w.rebuilt, [rec.id]);
   assert.equal(w.library.list().length, 1);
 });
+
+test('a look built by an older app is built again with this app’s script, once', async (t) => {
+  const w = world(t);
+  const rec = await w.service.install({ medal: { tier: 1, stars: 1, top: 0 }, levels: {}, every: null });
+  assert.equal(w.service.refreshScript(), null, 'built by this app: nothing to do');
+  w.library.update(rec.id, { generated: { rank: (rec.generated as { rank: unknown }).rank } });
+  assert.equal(w.service.refreshScript(), rec.id);
+  await new Promise((r) => setTimeout(r, 50));
+  assert.deepEqual(w.rebuilt, [rec.id]);
+  assert.equal(w.service.refreshScript(), null, 'the new build carries the mark');
+});

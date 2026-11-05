@@ -112,6 +112,7 @@ function d2mmPortrait(frame, lvl) {
   if (want === D2MM_PORTRAIT) return;
   overlay.style.backgroundImage = want;
   D2MM_PORTRAIT = want;
+  d2mmSay("portrait " + (want ? "level " + lvl : "the game's own"), "frame on the overlay");
   if (d2mmKnown(lvl)) d2mmTier(frame, lvl);
 }
 var D2MM_TICK = 0;

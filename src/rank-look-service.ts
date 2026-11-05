@@ -8,6 +8,7 @@
  * repair has answered, and the record's mark from src/update-impact.ts is lifted when it is done.
  * The window's pictures (the medals, the badge tiers) come out of the game too: the badges are
  * PNGs in their textures, the medals are compressed and need ValveResourceFormat. */
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -25,8 +26,15 @@ import type { LibRecord } from './types.ts';
 import type { CompileJob } from './resource-compiler.ts';
 import type { VpkEntry } from './vpk.ts';
 
-/** What a rank record was built from. */
-export interface RankGenerated { rank: RankLook }
+/** What a rank record was built from, and the script it carries (SCRIPT_MARK when it was built). */
+export interface RankGenerated { rank: RankLook; script?: string }
+
+/**
+ * The script and the layouts it goes into, as a short mark. A record built by an older app keeps
+ * that app's script in its pak, so a new part of it (the level in a match) stays out of the game
+ * until the record is built again; the app does that at start when the marks differ.
+ */
+export const SCRIPT_MARK = createHash('sha1').update(levelsScript.toString() + JSON.stringify(LAYOUTS)).digest('hex').slice(0, 12);
 
 /** What the window shows: the look on now, if any, the heroes of this patch, and whether ValveResourceFormat is there. */
 export interface RankState {
@@ -97,7 +105,7 @@ export function createRankLook({ gamePath, installer, library, vrf, compile, dec
   /** The record built from `look`: in the old one's slot, or a new record. */
   async function put(look: RankLook, keepOff: boolean): Promise<LibRecord> {
     const vpk = await build(look);
-    const g: RankGenerated = { rank: look };
+    const g: RankGenerated = { rank: look, script: SCRIPT_MARK };
     const name = t('Ранг и уровни героев');
     const old = mine();
     if (old) {
@@ -169,15 +177,30 @@ export function createRankLook({ gamePath, installer, library, vrf, compile, dec
      * returns. Nothing is answered as built yet; `onRebuilt` says when it is.
      */
     rebuild(ids: string[]): string[] {
+      return again(ids);
+    },
+
+    /** The record built again when its pak carries another app's script; its id then, else null. */
+    refreshScript(): string | null {
       const rec = mine();
       const g = rec?.generated as RankGenerated | undefined;
-      if (!rec || !g || !ids.includes(rec.id)) return [];
-      heroCache = null;
-      pictureCache = null;
-      setTimeout(() => {
-        put(clampLook(g.rank), true).then(() => onRebuilt(rec.id), (err) => log(`rank look: could not build again after the update: ${(err as Error).message}`));
-      }, 0);
-      return [];
+      if (!rec || !g || g.script === SCRIPT_MARK) return null;
+      log(`rank look: the script changed (${g.script ?? 'none'} -> ${SCRIPT_MARK}), building again`);
+      again([rec.id]);
+      return rec.id;
     },
   };
+
+  /** The record among `ids` built again from the files in force, after this returns; `onRebuilt` says when. */
+  function again(ids: string[]): string[] {
+    const rec = mine();
+    const g = rec?.generated as RankGenerated | undefined;
+    if (!rec || !g || !ids.includes(rec.id)) return [];
+    heroCache = null;
+    pictureCache = null;
+    setTimeout(() => {
+      put(clampLook(g.rank), true).then(() => onRebuilt(rec.id), (err) => log(`rank look: could not build again: ${(err as Error).message}`));
+    }, 0);
+    return [];
+  }
 }

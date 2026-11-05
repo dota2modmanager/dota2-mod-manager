@@ -8745,10 +8745,20 @@ PNGs in their textures, the medals are compressed and need ValveResourceFormat.
 ### `RankGenerated`
 
 ```ts
-export interface RankGenerated { rank: RankLook }
+export interface RankGenerated { rank: RankLook; script?: string }
 ```
 
-What a rank record was built from.
+What a rank record was built from, and the script it carries (SCRIPT_MARK when it was built).
+
+### `SCRIPT_MARK`
+
+```ts
+export const SCRIPT_MARK = createHash('sha1').update(levelsScript.toString() + JSON.stringify(LAYOUTS)).digest('hex').slice(0, 12)
+```
+
+The script and the layouts it goes into, as a short mark. A record built by an older app keeps
+that app's script in its pak, so a new part of it (the level in a match) stays out of the game
+until the record is built again; the app does that at start when the marks differ.
 
 ### `RankState`
 
