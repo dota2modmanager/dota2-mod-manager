@@ -84,6 +84,8 @@ jobs:
       # failing, so a bad minute at GitHub costs freshness and not a deploy.
       - name: Build
         working-directory: site
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: npm run build
 
       # The build reads the app's version and each page's card off the disk around it, and both

@@ -19,6 +19,8 @@
  * prints, and it is rounded down rather than up.
  */
 
+import { githubHeaders } from './github';
+
 const CATALOG = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/data/mods.json';
 const RELEASES = 'https://api.github.com/repos/dota2modmanager/dota2-mod-manager/releases?per_page=100';
 const UA = { 'User-Agent': 'dota2modmanager-site' };
@@ -91,7 +93,7 @@ async function catalogCounts() {
 }
 
 async function releaseCounts() {
-  const res = await fetch(RELEASES, { headers: UA });
+  const res = await fetch(RELEASES, { headers: githubHeaders() });
   if (!res.ok) throw new Error(`releases ${res.status}`);
   const list = await res.json();
   if (!Array.isArray(list) || !list.length) throw new Error('releases: empty');

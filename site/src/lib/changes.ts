@@ -18,6 +18,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { REPO_ROOT } from './paths';
 import { appVersion } from './schema';
+import { githubHeaders } from './github';
 import type { Lang } from '../i18n/ui';
 
 const RELEASES = 'https://api.github.com/repos/dota2modmanager/dota2-mod-manager/releases?per_page=100';
@@ -96,7 +97,7 @@ export function compareVersions(a: string, b: string): number {
 /** Version -> publication date, for every published stable release; null when GitHub is out of reach. */
 let published: Promise<Map<string, string> | null> | null = null;
 function publishedReleases() {
-  published ||= fetch(RELEASES, { headers: { 'User-Agent': 'dota2modmanager-site' } })
+  published ||= fetch(RELEASES, { headers: githubHeaders() })
     .then((r) => (r.ok ? r.json() : null))
     .then((list) => {
       if (!Array.isArray(list)) return null;

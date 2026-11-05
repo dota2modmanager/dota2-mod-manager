@@ -12,7 +12,8 @@
  * pak01's materials. Each decor material is a copy of the game's dev/transparent, which draws
  * nothing and casts no shadow. tools/toolsnodraw was tried first: the game draws its "NODRAW"
  * texture. Trees, buildings, cliffs, water, the ground and everything a player plays around are
- * left alone (bench, 2026-11-04). */
+ * left alone (bench, 2026-11-04). What is left of a mesh costs nothing to speak of: on an RTX 4060
+ * both groups off gave 1-2% more FPS at each spot of the map (dota:bench --fps, 2026-11-06). */
 import fs from 'node:fs';
 import path from 'node:path';
 import { buildVpk, entryAt, openVpkIndex, sharedVpkIndexSteps, type VpkIndex } from './vpk.ts';
