@@ -17,7 +17,7 @@ import { buildVpk, entryAt, listVpkPathsFile } from '../src/vpk.ts';
 import { compiledOf, type CompileJob } from '../src/resource-compiler.ts';
 import { createAbilitySounds } from '../src/ability-sounds-service.ts';
 import { encodeWav } from '../renderer/catalog/sounds/wav.ts';
-import { wavProblem } from '../src/ability-sounds.ts';
+import { heroesWithSounds, soundHero, wavProblem } from '../src/ability-sounds.ts';
 import { encodeKv3, resource, type V } from './helpers/kv3-build.ts';
 
 const event = (file: string): V => ({ obj: [['type', { str: 'dota_src1_3d' }], ['volume', { dbl: 1 }], ['vsnd_files', { arr: [{ str: file }] }]] });
@@ -47,11 +47,18 @@ function world(t: TestContext) {
   return { lang, library, service, jobs, paths };
 }
 
+test('an events file names its hero without underscores, and an event’s own file is not a hero', () => {
+  const ix = { paths: () => ['crystalmaiden', 'lion', 'muerta_release_event'].map((h) => `soundevents/game_sounds_heroes/game_sounds_${h}.vsndevts_c`) };
+  assert.deepEqual(heroesWithSounds(ix), ['crystalmaiden', 'lion']);
+  assert.equal(soundHero('crystalmaiden'), 'crystal_maiden', 'her portrait and name are under crystal_maiden');
+  assert.equal(soundHero('lion'), 'lion');
+});
+
 const tone = (hz: number) => Buffer.from(encodeWav(Float32Array.from({ length: 4410 }, (_, i) => Math.sin(i / 44100 * 2 * Math.PI * hz))));
 
 test('the window is offered the heroes and their events', (t) => {
   const { service } = world(t);
-  assert.deepEqual(service.heroes(), [{ id: 'lion', name: 'Lion' }]);
+  assert.deepEqual(service.heroes(), [{ id: 'lion', hero: 'lion', name: 'Lion' }]);
   const h = service.hero('lion');
   assert.deepEqual(h.events.map((e) => e.name), ['Hero_Lion.Voodoo', 'Hero_Lion.FingerOfDeath']);
   assert.deepEqual(h.edits, []);

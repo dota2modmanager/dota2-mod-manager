@@ -23,7 +23,8 @@ export const DEFAULT_TOWER: Record<Side, string> = {
 };
 
 /** One item that dresses the towers, with the sides it has something for. */
-export interface TowerLook { id: string; name: string; sides: Side[] }
+/** A look, the sides it dresses and the tower model it puts on each (the window draws a look the game has no picture of from it). */
+export interface TowerLook { id: string; name: string; sides: Side[]; models: Partial<Record<Side, string>> }
 
 /** What a look does to one side: files under the default names, and what it leaves out. */
 export interface TowerPlan { files: { at: string; from: string }[]; skipped: string[] }
@@ -62,8 +63,14 @@ export function towerLooks(text: string): TowerLook[] {
   return towerLookIds(text).map((id) => {
     const v = itemVisuals(text, id);
     const sides = new Set<Side>();
-    for (const m of v?.modifiers || []) if (ENTITY.test(m.type)) { const s = sideOf(m.asset); if (s) sides.add(s); }
-    return { id, name: v?.name || id, sides: (['radiant', 'dire'] as Side[]).filter((s) => sides.has(s)) };
+    const models: Partial<Record<Side, string>> = {};
+    for (const m of v?.modifiers || []) {
+      if (!ENTITY.test(m.type)) continue;
+      const s = sideOf(m.asset);
+      if (s) sides.add(s);
+      if (s && m.modifier && !models[s]) models[s] = m.modifier;
+    }
+    return { id, name: v?.name || id, sides: (['radiant', 'dire'] as Side[]).filter((s) => sides.has(s)), models };
   }).filter((l) => l.sides.length);
 }
 

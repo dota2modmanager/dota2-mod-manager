@@ -1,0 +1,57 @@
+/* ============ Windows the Workshop opens (renderer/catalog/sounds, catalog/map) ============
+   Each pick is a picture: a hero as hero selection shows him, a tower or tree set as the game draws
+   it. A picked card is ringed in the accent and ticked; the rest stay quiet until pointed at. */
+
+/* a sound of the user's own: every hero first, searchable, then the one picked at the top */
+.sound-step { display: flex; flex-direction: column; gap: var(--space-3); }
+.sound-heroes {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: var(--space-2);
+  max-height: 46vh; overflow-y: auto; padding: var(--space-1) var(--space-1) var(--space-1) 0;
+}
+.sound-hero {
+  position: relative; display: flex; flex-direction: column; gap: var(--space-1); padding: 0 0 var(--space-1);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-muted);
+  font: inherit; cursor: pointer; overflow: hidden; text-align: center;
+  transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.sound-hero:hover { border-color: var(--border-strong); color: var(--text); }
+.sound-hero:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.sound-hero-pic {
+  display: grid; place-items: center; width: 100%; aspect-ratio: 16 / 9; object-fit: cover;
+  background: var(--bg-deep); color: var(--text-faint);
+}
+.sound-hero-name { padding: 0 var(--space-1); font-size: var(--text-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sound-hero.has { border-color: color-mix(in srgb, var(--primary) 55%, var(--border)); color: var(--text); }
+.sound-hero-mark {
+  position: absolute; top: var(--space-1); right: var(--space-1); font-size: var(--text-sm);
+  padding: var(--space-px); border-radius: var(--radius-full); background: var(--bg-deep); color: var(--primary);
+}
+.sound-hero-head { display: flex; align-items: center; gap: var(--space-3); }
+.sound-hero-head .sound-hero-pic { width: 96px; border-radius: var(--radius-sm); }
+.map-side-label .text-meta { margin-left: var(--space-1); text-transform: none; letter-spacing: normal; font-weight: var(--weight-body); }
+.sound-hero-head-name { flex: 1; min-width: 0; font-family: var(--font-head); font-size: var(--text-md); font-weight: var(--weight-semibold); }
+
+/* towers and trees: a card per look, its picture over its name */
+.map-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: var(--space-2); }
+.map-card {
+  position: relative; display: flex; flex-direction: column; gap: var(--space-1); padding: 0 0 var(--space-2);
+  border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--text-muted);
+  font: inherit; cursor: pointer; overflow: hidden;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.map-card:hover { border-color: var(--border-strong); color: var(--text); }
+.map-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.map-card.on { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); color: var(--text); }
+.map-card-pic {
+  display: grid; place-items: center; width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
+  background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--primary) 10%, var(--bg-elev)), var(--bg-deep));
+  color: var(--text-faint);
+}
+.map-card-pic .ms { font-size: var(--icon-xl); }
+.map-card-pic.loading .ms { opacity: 0.4; }
+.map-card-name { padding: 0 var(--space-2); font-size: var(--text-sm); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map-card-check { position: absolute; top: var(--space-1); right: var(--space-1); font-size: var(--icon-md); color: var(--primary); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sound-hero, .map-card { transition: none; }
+}

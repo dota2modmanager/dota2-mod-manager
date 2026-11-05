@@ -21,6 +21,8 @@ export interface Attachment { name: string; bone: string; offset: [number, numbe
 export interface Preview3dApi {
   /** an effect's particle system, for its picture; null where the game has none */
   effect: (id: string) => Promise<{ def: ParticleDef; sprites: Record<string, Uint8Array> } | null>;
+  /** a map prop's model alone (a tree set's) as GLB bytes, for its picture; null without the game or the toolchain */
+  model: (file: string) => Promise<Uint8Array | null>;
   models: (hero: string, slots: { slot: string; stock: string }[]) => Promise<
     | {
       ok: true; body: Uint8Array; clip: string | null; stage: HeroStage; pedestal: Uint8Array | null;

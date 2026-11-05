@@ -149,7 +149,8 @@ export interface ArcanaApi {
 }
 
 /** A look a side of the map can take: a tower item or a tree set (src/map-looks-service.ts). */
-export interface MapOption { id: string; name: string; sides: ('radiant' | 'dire')[] }
+/** One look a side can take, and the model it puts on each side, which the window draws where the game has no picture of it. */
+export interface MapOption { id: string; name: string; sides: ('radiant' | 'dire')[]; models: Partial<Record<'radiant' | 'dire', string>> }
 
 /** Towers or trees. */
 export type MapKind = 'towers' | 'trees';
@@ -161,6 +162,8 @@ export interface MapLooksApi {
     towers: MapOption[];
     trees: MapOption[];
     installed: Record<MapKind, { id: string; radiant: string | null; dire: string | null; enabled: boolean } | null>;
+    /** the model each side stands in as the game ships, for the picture of "As in the game" */
+    own: Record<MapKind, Record<'radiant' | 'dire', string>>;
   }>>;
   /** build a kind with a look per side (null: as in the game) and put it in My mods */
   install: (kind: MapKind, radiant: string | null, dire: string | null) => Promise<Reply<{ record: LibRecord }>>;
@@ -228,8 +231,8 @@ export interface SoundEdit { event: string; mode: SoundMode; volume: number; sou
 export interface HeroEvent { name: string; type: string; files: number }
 
 export interface SoundsApi {
-  /** every hero with an events file: game id and name */
-  heroes: () => Promise<Reply<{ heroes: { id: string; name: string }[] }>>;
+  /** every hero with an events file: the file's name, the hero's own id (for his portrait) and his name */
+  heroes: () => Promise<Reply<{ heroes: { id: string; hero: string; name: string }[] }>>;
   /** a hero's events, and the sounds of the user's on them */
   hero: (hero: string) => Promise<Reply<{ hero: string; events: HeroEvent[]; edits: SoundEdit[]; recId: string | null }>>;
   /** a 16-bit PCM WAV on an event, the hero compiled again and put in My mods */

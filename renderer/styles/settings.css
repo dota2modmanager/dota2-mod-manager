@@ -166,3 +166,9 @@
    edit fell off */
 .settings-state { margin-left: auto; font-size: var(--text-sm); color: var(--text-muted); }
 .settings-hint.warn { color: var(--warning); }
+
+/* switches that belong together (GridBlock.tsx): one column after the longest name, the name a click target too */
+.settings-switches { display: grid; grid-template-columns: max-content auto; justify-content: start; align-items: center; gap: var(--space-3) var(--space-5); margin-top: var(--space-2); }
+.settings-switch-row { display: contents; cursor: pointer; }
+.settings-switches .settings-label { min-width: 0; }
+.settings-switches + .settings-hint { margin-top: var(--space-4); }

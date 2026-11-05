@@ -33,14 +33,17 @@ export function GridBlock({ i }: { i: number }) {
 
   const date = st.statsAt ? new Date(st.statsAt).toLocaleDateString(window.i18nLocale()) : null;
   return (
-    <div className="settings-block" style={{ '--i': i } as CSSProperties}>
+    <div className="settings-block" id="gridBlock" style={{ '--i': i } as CSSProperties}>
       <h3>{L`Сетки героев`}</h3>
-      {KINDS.map(({ kind, label }) => (
-        <div className="settings-row spaced" key={kind}>
-          <span className="settings-label">{label()}</span>
-          <Toggle id={`grid-${kind}`} on={st.kinds.includes(kind)} label={label()} disabled={busy || !st.account} onClick={() => { void flip(kind); }} />
-        </div>
-      ))}
+      {/* one column of switches after the longest name, so they line up whatever the language */}
+      <div className="settings-switches">
+        {KINDS.map(({ kind, label }) => (
+          <label className="settings-switch-row" key={kind}>
+            <span className="settings-label">{label()}</span>
+            <Toggle id={`grid-${kind}`} on={st.kinds.includes(kind)} label={label()} disabled={busy || !st.account} onClick={() => { void flip(kind); }} />
+          </label>
+        ))}
+      </div>
       <div className="settings-hint">
         {st.account
           ? L`Сетки появятся в выборе героя рядом с твоими, твои остаются как были. Цифры берутся с OpenDota по всем рангам за последние дни.`

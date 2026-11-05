@@ -1,12 +1,18 @@
 /* The window for a sound of the user's own on a hero's event (issue #423): a hero, one of his
  * events, a file, instead of the game's sound or over it, then the build. The sounds already on the
  * hero are listed under it, each to take off on its own. The mod window's markup and classes
- * (.modal-body, .style-btn), so it reads as one of them. */
-import { Dropdown } from '../../ui/Dropdown.tsx';
+ * (.modal-body, .style-btn), so it reads as one of them. The heroes are a searchable grid of their
+ * portraits (SoundHeroes.tsx), the events a searchable list that scrolls inside the window. */
+import { PickerSearch } from '../builder/parts.tsx';
+import { SoundHeroes, SoundHeroHead } from './SoundHeroes.tsx';
 import type { HeroEvent, SoundEdit, SoundMode } from '../../api/content.ts';
 
 export interface SoundModalModel {
   heroes: { id: string; name: string }[];
+  portraits: Record<string, string>;
+  /** heroes with a sound of the user's on them */
+  sounded: string[];
+  heroFilter: string;
   hero: string | null;
   events: HeroEvent[];
   edits: SoundEdit[];
@@ -21,6 +27,9 @@ export interface SoundModalModel {
 export interface SoundModalActions {
   close: () => void;
   hero: (id: string) => void;
+  heroFilter: (text: string) => void;
+  /** back to every hero */
+  heroes: () => void;
   filter: (text: string) => void;
   event: (name: string) => void;
   file: (f: File) => void;
@@ -47,14 +56,13 @@ export function SoundModal({ m, actions }: { m: SoundModalModel; actions: SoundM
       </div>
       <div className="modal-sub"><span>{L`Твой файл вместо звука игры или поверх него`}</span></div>
 
-      <Dropdown id="soundHero" icon="person" label={L`Герой`} value={m.hero || ''} first={L`Выбери героя`}
-        options={m.heroes.map((h) => ({ value: h.id, label: h.name }))} onPick={actions.hero} />
+      {!m.hero && <SoundHeroes m={{ heroes: m.heroes, portraits: m.portraits, sounded: m.sounded, query: m.heroFilter }} pick={actions.hero} search={actions.heroFilter} />}
 
       {m.hero && (
         <div className="map-side">
-          <div className="map-side-label">{L`Звук`}</div>
-          <input className="input" id="soundFilter" placeholder={L`Найти: Attack, Death, название способности…`} value={m.filter}
-            onChange={(e) => actions.filter(e.currentTarget.value)} />
+          <SoundHeroHead name={m.heroes.find((h) => h.id === m.hero)?.name || m.hero} portrait={m.portraits[m.hero]} back={actions.heroes} />
+          <div className="map-side-label">{L`Звук`} <span className="text-meta">{shown.length === m.events.length ? m.events.length : `${shown.length} / ${m.events.length}`}</span></div>
+          <PickerSearch id="soundFilter" value={m.filter} onChange={actions.filter} />
           <div className="sound-events">
             {shown.map((e) => (
               <button key={e.name} className={`style-btn ${m.event === e.name ? 'active' : ''}`} title={e.name} onClick={() => actions.event(e.name)}>
@@ -88,13 +96,13 @@ export function SoundModal({ m, actions }: { m: SoundModalModel; actions: SoundM
         </div>
       )}
 
-      <div className="modal-actions">
+      {m.hero && <div className="modal-actions">
         {m.busy
           ? <button className="btn btn-primary" disabled><span className="ms">progress_activity</span>{L`Собираю…`}</button>
           : <button className="btn btn-primary" id="soundInstallBtn" disabled={!m.event || !m.file} onClick={actions.install}>
             <span className="ms">download</span>{L`Поставить`}
           </button>}
-      </div>
+      </div>}
 
       {m.edits.length > 0 && (
         <div className="map-side">

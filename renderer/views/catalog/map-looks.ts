@@ -38,7 +38,8 @@ export async function mapLookLead(category: string): Promise<MapLookCardModel | 
   const s = await load();
   if (!s || !s[category].length) return null;
   const picture = category === 'towers' ? s.towers[0].name : null;
-  if (picture) void loadCosmeticIcons([picture], () => {});
+  // every tower set's picture now, so the window opens on them rather than waiting for each
+  if (picture) void loadCosmeticIcons(s.towers.map((o) => o.name), () => {});
   return { kind: category, picture, installed: Boolean(s.installed[category]) };
 }
 
@@ -60,6 +61,7 @@ function draw(): void {
   showMapLookModal({
     kind,
     options: state[kind],
+    own: state.own[kind],
     chosen,
     installed: had ? { radiant: had.radiant, dire: had.dire } : null,
     busy,

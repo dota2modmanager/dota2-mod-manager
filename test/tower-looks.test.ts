@@ -30,8 +30,8 @@ const TABLE = `"items_game"\n{\n\t"items"\n\t{\n${
 test('the items that put a model on a tower, each once, with the sides they dress', () => {
   assert.deepEqual(towerLookIds(TABLE), ['17538', '12937']);
   assert.deepEqual(towerLooks(TABLE), [
-    { id: '17538', name: 'New Bloom Building Effects', sides: ['radiant', 'dire'] },
-    { id: '12937', name: 'Guardians of the Lost Path Dire Towers', sides: ['dire'] },
+    { id: '17538', name: 'New Bloom Building Effects', sides: ['radiant', 'dire'], models: { radiant: 'models/props_structures/tower_dragon_white.vmdl', dire: 'models/props_structures/tower_dragon_black.vmdl' } },
+    { id: '12937', name: 'Guardians of the Lost Path Dire Towers', sides: ['dire'], models: { dire: 'models/props_structures/rock_golem/tower_dire_rock_golem.vmdl' } },
   ]);
 });
 

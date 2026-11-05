@@ -305,13 +305,21 @@ export const soundPath = (hero: string, sound: string) => `sounds/mods/d2mm/${he
 
 Where a sound of the user's goes, compiled: one folder of ours per hero.
 
+### `soundHero`
+
+```ts
+export const soundHero = (file: string): string => SOUND_HERO[file] || file
+```
+
+The hero's own id for an events file's name: "crystalmaiden" is "crystal_maiden".
+
 ### `heroesWithSounds`
 
 ```ts
 export function heroesWithSounds(ix: Pick<VpkIndex, 'paths'>): string[]
 ```
 
-The heroes that have an events file, by their game id.
+The heroes that have an events file, by the file's name (an event's sounds of the release kind are not a hero's).
 
 ### `heroEvents`
 
@@ -6325,10 +6333,10 @@ What a generated record was built from. A side left null keeps the game's own.
 ### `MapOption`
 
 ```ts
-export interface MapOption { id: string; name: string; sides: Side[] }
+export interface MapOption { id: string; name: string; sides: Side[]; models: Partial<Record<Side, string>> }
 ```
 
-One look a side can take.
+One look a side can take, and the model it puts on each side, which the window draws where the game has no picture of it.
 
 ### `MapLooksState`
 
@@ -6341,7 +6349,7 @@ What the window shows: the looks of each kind, and the record built before, if a
 ### `OFFERED_TREES`
 
 ```ts
-export const OFFERED_TREES: MapOption[] = TREE_SETS.filter((s) => !s.tinted).map((s) => ({ id: s.id, name: s.name, sides: BOTH }))
+export const OFFERED_TREES: MapOption[] = TREE_SETS.filter((s) => !s.tinted).map((s) => ({ id: s.id, name: s.name, sides: BOTH, models: { radiant: s.models[0], dire: s.models[0] } }))
 ```
 
 The tree sets the window offers: the tinted ones come out washed white on the default map.
@@ -8726,7 +8734,7 @@ gives them, for the panels that know a hero only by it.
 The rank medal and hero levels of the player's own screen, as one record in My mods (what goes
 into it is src/rank-look.ts). The two styles are read back as CSS from the copy in force (a mod's
 when one carries them, else the game's), the medal's rules go at their end, and Valve's compiler
-builds them again with the levels script; the five layouts get the script's include. The pak
+builds them again with the levels script; the layouts get the script's include. The pak
 goes early in the load order, so it wins over the mod it was made from.
 
 A Dota update that reached the record builds it again from the new files, after the update's
@@ -8782,10 +8790,11 @@ small picture, so the medal keeps its size.
 
 A level is a number the client asks Steam for, so no style can change it. A script can: Panorama
 runs the JavaScript a layout includes, and the script writes the number into the label and sets
-the tier class on the badge every frame. It goes into five layouts, by adding one
+the tier class on the badge every frame. It goes into the layouts LAYOUTS lists, by adding one
 include to the tree in their LaCo block (as src/menu-background.ts does): the hero grid of the
 menu and the pick screen, the player's own panel at the pick, the strategy screen, the hero
-page with its badge, progress tab and experience bar, and the card that opens over a hero.
+page with its badge, progress tab and experience bar, the card that opens over a hero, and in a
+match the frame round the portrait, the top bar and the card that opens on a player.
 
 Tried in the game on 2026-11-04: the profile medal, the hero grid and the pick badge took them.
 
@@ -8816,10 +8825,12 @@ The two styles that hold the medal's rules, as compiled in the pak and as the co
 ### `LAYOUTS`
 
 ```ts
-export const LAYOUTS = ['panorama/layout/hero_grid_new.vxml_c', 'panorama/layout/hud/dota_hud_hero_picking_player.vxml_c', 'panorama/layout/hud/dota_hud_pregame.vxml_c', 'panorama/layout/dashboard_page_hero_new_v2.vxml_c', 'panorama/layout/tooltips/tooltip_hero_card.vxml_c']
+export const LAYOUTS = ['panorama/layout/hero_grid_new.vxml_c', 'panorama/layout/hud/dota_hud_hero_picking_player.vxml_c', 'panorama/layout/hud/dota_hud_pregame.vxml_c', 'panorama/layout/dashboard_page_hero_new_v2.vxml_c', 'panorama/layout/tooltips/tooltip_hero_card.vxml_c',
 ```
 
-The layouts the levels script goes into: the hero grid, the player's panel at the pick, the strategy screen, the hero page, the card over a hero.
+The layouts the levels script goes into: the hero grid, the player's panel at the pick, the
+strategy screen, the hero page, the card over a hero, and in a match the HUD (the frame round the
+portrait), a player's place on the top bar and the card that opens on a player.
 
 ### `SCRIPT`
 
@@ -11148,10 +11159,10 @@ demo, 2026-11-03), and that wins over npc_units.txt, which says tower_good for R
 ### `TowerLook`
 
 ```ts
-export interface TowerLook { id: string; name: string; sides: Side[] }
+export interface TowerLook { id: string; name: string; sides: Side[]; models: Partial<Record<Side, string>> }
 ```
 
-One item that dresses the towers, with the sides it has something for.
+A look, the sides it dresses and the tower model it puts on each (the window draws a look the game has no picture of from it).
 
 ### `TowerPlan`
 

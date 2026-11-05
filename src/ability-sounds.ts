@@ -31,12 +31,23 @@ export const eventsFile = (hero: string) => `soundevents/game_sounds_heroes/game
 /** Where a sound of the user's goes, compiled: one folder of ours per hero. */
 export const soundPath = (hero: string, sound: string) => `sounds/mods/d2mm/${hero}/${sound.slice(0, 16)}.vsnd`;
 
-/** The heroes that have an events file, by their game id. */
+/**
+ * The hero an events file is for, where its name leaves out the underscores the hero's own id has
+ * (game_sounds_crystalmaiden for crystal_maiden). Counted on the game of 2026-11-05: these nine.
+ */
+const SOUND_HERO: Record<string, string> = {
+  crystalmaiden: 'crystal_maiden', doombringer: 'doom_bringer', drowranger: 'drow_ranger', nightstalker: 'night_stalker',
+  sandking: 'sand_king', shadowshaman: 'shadow_shaman', skeletonking: 'skeleton_king', stormspirit: 'storm_spirit', witchdoctor: 'witch_doctor',
+};
+/** The hero's own id for an events file's name: "crystalmaiden" is "crystal_maiden". */
+export const soundHero = (file: string): string => SOUND_HERO[file] || file;
+
+/** The heroes that have an events file, by the file's name (an event's sounds of the release kind are not a hero's). */
 export function heroesWithSounds(ix: Pick<VpkIndex, 'paths'>): string[] {
   const out: string[] = [];
   for (const p of ix.paths()) {
     const m = /^soundevents\/game_sounds_heroes\/game_sounds_([a-z0-9_]+)\.vsndevts_c$/.exec(p);
-    if (m) out.push(m[1]);
+    if (m && !m[1].endsWith('_release_event')) out.push(m[1]);
   }
   return out.sort();
 }

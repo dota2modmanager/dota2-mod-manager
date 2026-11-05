@@ -21,4 +21,9 @@ export function registerPreview3dIpc({ heroPreview, toolchain, diag }: Pick<AppC
   ipcMain.handle('preview3d:effect', async (e, id) => {
     try { return await heroPreview.effect(id); } catch (err) { diag(`preview 3d effect: ${errorText(err)}`); return null; }
   });
+  // a map prop's model alone (a tree set's), which the window draws as its picture
+  ipcMain.handle('preview3d:model', async (e, file) => {
+    if (!toolchain.pathOf('vrf')) return null;
+    try { return await heroPreview.model(file); } catch (err) { diag(`preview 3d model: ${errorText(err)}`); return null; }
+  });
 }

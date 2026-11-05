@@ -50,13 +50,16 @@ function world(t: TestContext) {
 test("the window is offered the table's tower looks with their sides, and the tree sets that hold up on the default map", (t) => {
   const s = world(t).service.state();
   assert.deepEqual(s.towers, [
-    { id: '17538', name: 'New Bloom Building Effects', sides: ['radiant', 'dire'] },
-    { id: '12937', name: 'Guardians of the Lost Path Dire Towers', sides: ['dire'] },
+    { id: '17538', name: 'New Bloom Building Effects', sides: ['radiant', 'dire'], models: { radiant: 'models/props_structures/tower_dragon_white.vmdl', dire: 'models/props_structures/tower_dragon_black.vmdl' } },
+    { id: '12937', name: 'Guardians of the Lost Path Dire Towers', sides: ['dire'], models: { dire: 'models/props_structures/rock_golem/tower_dire_rock_golem.vmdl' } },
   ]);
   assert.deepEqual(s.trees, OFFERED_TREES);
   assert.ok(!s.trees.some((o) => TREE_SETS.find((x) => x.id === o.id)?.tinted), 'no set the map has to tint');
   assert.ok(s.trees.some((o) => o.id === 'winter'));
   assert.deepEqual(s.installed, { towers: null, trees: null });
+  // the picture of "As in the game" is the model each side stands in
+  assert.deepEqual(s.own.towers, { radiant: 'models/props_structures/radiant_tower002.vmdl', dire: 'models/props_structures/dire_tower002.vmdl' });
+  assert.equal(s.trees.find((o) => o.id === 'winter')?.models.radiant, 'models/props_tree/tree_pine_01_heavysnow.vmdl');
 });
 
 test('each kind is one record in My mods, built again in its place when chosen again', (t) => {

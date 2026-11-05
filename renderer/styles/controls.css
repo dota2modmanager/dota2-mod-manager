@@ -410,3 +410,14 @@
 .ctx-item.danger .ms { color: var(--danger); }
 .ctx-item.danger:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
 .ctx-sep { height: 1px; margin: var(--space-1) var(--space-2); background: var(--border); }
+
+/* where a Workshop tile sent the person (ui/spotlight.ts): the thing rings twice in the accent and lets go */
+.spotlit { position: relative; animation: spotlit 1.2s var(--ease-out) 2; border-radius: var(--radius-md); }
+@keyframes spotlit {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 70%, transparent), 0 0 0 2px var(--primary); }
+  70% { box-shadow: 0 0 0 14px transparent, 0 0 0 2px var(--primary); }
+  100% { box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spotlit { animation: none; box-shadow: var(--focus-ring); }
+}
