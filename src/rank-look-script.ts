@@ -104,6 +104,16 @@ function d2mmPageHero(page) {
 }
 // the portrait's badge is the game's own panel and puts its tier class back on every update, so
 // the frame round the portrait is drawn on the overlay inside it, which the game leaves alone
+// the unit the portrait shows, chosen as the game chooses it: the one being inspected, else the
+// first selected, else the player's hero (in this script the game's own portrait unit answers -1)
+function d2mmPortraitUnit() {
+  var me = Players.GetLocalPlayer();
+  var q = Players.GetQueryUnit(me);
+  if (q !== undefined && q !== -1) return q;
+  var sel = Players.GetSelectedEntities(me);
+  if (sel && sel.length && sel[0] !== -1) return sel[0];
+  return Players.GetPlayerHeroEntityIndex(me);
+}
 var D2MM_PORTRAIT = null;
 function d2mmPortrait(frame, lvl) {
   var overlay = frame.FindChildTraverse("PortraitHeroBadgeOverlay");
@@ -187,10 +197,11 @@ function d2mmApply() {
     // each layout says once what it found, so a match's console tells which step stopped
     var frame = own ? me.FindChildTraverse("unitbadge") : null;
     if (frame) {
-      var unit = Players.GetLocalPlayerPortraitUnit();
-      var owned = Entities.IsRealHero(unit) && Entities.GetPlayerOwnerID(unit) === Players.GetLocalPlayer();
+      var unit = d2mmPortraitUnit();
+      var hero = Players.GetPlayerHeroEntityIndex(Players.GetLocalPlayer());
+      var owned = hero !== -1 && unit === hero;
       d2mmSay("match " + own + " level " + played + (owned ? " in the portrait" : " not in the portrait"),
-        "unit " + unit + ", its player " + Entities.GetPlayerOwnerID(unit) + ", local " + Players.GetLocalPlayer());
+        "unit " + unit + ", the player's hero " + hero);
       d2mmPortrait(frame, owned && d2mmKnown(played) ? played : null);
     } else if (own) d2mmSay("match in " + me.paneltype + "#" + me.id, "no unitbadge here");
     if (d2mmKnown(played)) {

@@ -117,7 +117,7 @@ test('the script knows the levels and the medal, in the game’s own words', () 
 interface Fake { id: string; paneltype: string; classes: Set<string>; kids: Fake[]; text: string; heroname?: string; heroid?: number; herolevel?: number; visible: boolean; vars: Record<string, number>; style?: Record<string, string | null> }
 const fake = (paneltype: string, id = '', classes: string[] = [], kids: Fake[] = [], extra: Partial<Fake> = {}): Fake => ({ id, paneltype, classes: new Set(classes), kids, text: '', visible: true, vars: {}, ...extra });
 const all = (p: Fake): Fake[] => p.kids.flatMap((k) => [k, ...all(k)]);
-/** The match the script is in: the local player's hero and the unit in the portrait, which is that hero unless said. */
+/** The match the script is in: the local player's hero, and whether the portrait shows it (nothing selected) or another player's unit. */
 interface Match { hero: string; portraitOwn?: boolean }
 const MENU: Match = { hero: '' };
 /** Runs the script on `root`, then `between` before each of the next ticks; returns what it said in the console. */
@@ -139,7 +139,9 @@ function runIn(match: Match, js: string, root: Fake, ...between: (() => void)[])
   const names: Record<string, string> = { '#npc_dota_hero_axe': 'Axe', '#npc_dota_hero_lina': 'Lina' };
   let next: (() => void) | null = null;
   const $ = { GetContextPanel: () => api(root), Localize: (s: string) => names[s] ?? s, Schedule: (_: number, f: () => void) => { next = f; }, Msg: (m: string) => said.push(m) };
-  const players = { GetLocalPlayer: () => 3, GetPlayerSelectedHero: () => match.hero, GetLocalPlayerPortraitUnit: () => 400 };
+  // the hero is unit 400; another player's unit is in the portrait when the player selected it
+  const players = { GetLocalPlayer: () => 3, GetPlayerSelectedHero: () => match.hero, GetPlayerHeroEntityIndex: () => 400,
+    GetQueryUnit: () => -1, GetSelectedEntities: () => (match.portraitOwn === false ? [512] : []) };
   const entities = { IsRealHero: () => true, GetPlayerOwnerID: () => (match.portraitOwn === false ? 7 : 3) };
   new Function('$', 'Players', 'Entities', js)($, players, entities);
   for (const step of between) { step(); (next as (() => void) | null)?.(); }
