@@ -2,6 +2,28 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.2.0
+
+### Hero levels in a match
+
+- The chosen Dota Plus level now shows in a match too: on the frame round your hero's portrait,
+  on your hero in the top bar, and on the card that opens when you click yourself.
+- The rank and levels mod no longer costs frames. It used to search the whole interface on
+  every frame, which dropped FPS in the lobby and in a match by a third or more.
+- After an app update the mod rebuilds itself when its script changed, so you get the fixes
+  without applying it again.
+
+### Workshop windows
+
+- Your own ability sound: pick a hero from a grid of portraits with a search, then find the
+  sound in that hero's list with a second search. Crystal Maiden has her name and portrait now.
+- Towers and trees: every look is a card with a picture, and both sides fit in one window
+  without scrolling. Tree sets and towers with no item picture are drawn from their models.
+- The Techies arcana picture shows the whole figure, centred, in its window and on its tile.
+- The Hero grids tile opens Settings at the grid switches and highlights them. The switches
+  line up in one column.
+- The Hero recolour tile opens the first hero in Items and highlights the Recolour button.
+
 ## 3.1.0
 
 ### A changing room for each hero
