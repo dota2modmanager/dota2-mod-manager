@@ -48,7 +48,7 @@
   transition: box-shadow var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
 }
 .paint-pic.wide { width: 112px; height: 74px; }
-/* a picture that switches its icon layer */
+/* a picture that switches its icon layer, or an item's effect */
 .paint-pic-btn { padding: 0; font: inherit; color: inherit; cursor: pointer; }
 .paint-pic-btn:hover { border-color: var(--border-strong); }
 .paint-pic-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }

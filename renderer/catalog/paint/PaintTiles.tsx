@@ -2,7 +2,7 @@
  * and a tile that shows a part of the hero in the colours it is getting. An icon layer that is on
  * shades the picture as the build will (shade.ts); an effect layer that is on rings it in its colour,
  * since an effect has no picture of its own to shade. A click on a picture switches the layer that
- * shades it. */
+ * shades it, or an item's only layer, its effect. */
 import type { CSSProperties, ReactNode } from 'react';
 import { CosThumb } from '../builder/parts.tsx';
 import { useShaded } from './shade.ts';
@@ -76,9 +76,9 @@ export function AbilityTile({ name, picture, effect, icon, actions }: {
 export function ItemTile({ name, cell, actions }: { name: string; cell: PaintCell; actions: CellActions }) {
   return (
     <div className={`paint-tile ${cell.on ? 'on' : ''}`}>
-      <span className={`paint-pic wide ${cell.on ? 'fx' : ''}`} style={ring(cell)}>
+      <Pic layer={cell} label={`${name}: ${L`Эффект`}`} cls={`paint-pic wide ${cell.on ? 'fx' : ''}`} style={ring(cell)} actions={actions}>
         <CosThumb name={name} fallback="checkroom" cls="paint-pic-img" />
-      </span>
+      </Pic>
       <span className="paint-tile-name" title={name}>{name}</span>
       <span className="paint-chips"><Chip cell={cell} label={L`Эффект`} actions={actions} /></span>
     </div>
