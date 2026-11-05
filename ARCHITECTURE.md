@@ -675,7 +675,7 @@ that location is not writable.
 | `tools/sandbox.js` | The throwaway game tree |
 | `src/write-jail.ts` | A run started with `--write-jail` writes nowhere else |
 | `tools/e2e.mjs`, `test/fixtures/e2e/*` | Installing, switching and removing a mod by clicking through the real window, offline, in the sandbox |
-| `tools/r2-sync.mjs`, `tools/r2-release.mjs`, `tools/r2-client.js`, `tools/mirror-plan.js` | The archive mirror, the update mirror, the signing they share, and which archives the mirror copies again or refuses |
+| `tools/r2-sync.mjs`, `tools/r2-release.mjs`, `tools/r2-client.js`, `tools/mirror-plan.js` | The picture mirror, the update mirror, the signing they share, and which pictures the mirror copies again or refuses |
 | `tools/gen-fingerprints.js` | Regenerating the published fingerprint map, and `mod-paths.json`, the files each pak mod replaces |
 | `tools/dota-diff.mjs`, `tools/dota-watch.mjs` | What a Dota build changed, read from GameTracking-Dota2: by hand with `npm run dota:diff`, and twice an hour in the "Dota updates" issue |
 | `tools/recolor.mjs` | `npm run recolor`: the recolour, or with `--arcana` the whole arcana, as a VPK to import, before the window offers it |

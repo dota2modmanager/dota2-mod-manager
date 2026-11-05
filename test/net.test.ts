@@ -63,7 +63,7 @@ function tempDir(t: TestContext): string {
 
 test.afterEach(() => net.setMirrors(null));
 
-test('a host the signed config names joins the chain, after our own copy and before the proxies', () => {
+test('a host the signed config names joins the chain, after our own site and before the proxies', () => {
   /* The built-in list is compiled in, so arranging a second copy of the catalog somewhere used
      to mean a release and then waiting for people to take it. */
   const GITLAB = 'https://gitlab.com/rotten/mirror/-/raw/main/assets/files/';
@@ -74,7 +74,7 @@ test('a host the signed config names joins the chain, after our own copy and bef
   assert.equal(list[at], `${GITLAB}heroes/Mod.zip`, 'the path after assets/files/ is kept');
   // the whole prefix, not a host anywhere in the string: a substring check here reads as a
   // security check to the scanner, and it would be a bad one
-  assert.ok(at > list.findIndex((u) => u.startsWith('https://cdn.dota2modmanager.com/')), 'after our own bucket');
+  assert.ok(at > list.indexOf(RAW_URL), 'after the origin');
   assert.ok(at < list.findIndex((u) => u.startsWith('https://ghproxy.net/')), 'before the proxies, which are GitHub again');
 
   net.applyMirrors([]);
@@ -140,25 +140,18 @@ test('the four startup files can also come from the site, and nothing else can',
     assert.equal(list[0], url, 'GitHub is still asked first');
   }
   const mod = `${RAW_HOST}h6rd/Dota2PornFxWeb/main/assets/files/heroes/some-mod.zip`;
-  // The bucket on cdn. holds the archives; the site itself must not be asked for one.
   assert.ok(!net.mirrorsFor(mod, { small: true }).some((u) => u.startsWith('https://dota2modmanager.com/mirror/')),
     'a mod archive is not on the site and must not be asked for there');
 });
 
-// The archives live in a bucket now, which is the only entry on the list that is not GitHub
-// wearing a different hostname. The catalog JSON must not be asked for there and the bucket
-// must not be asked before the origin.
-test('a mod archive can come from the bucket, after GitHub and not before it', () => {
+// The bucket held old mods only once the catalog outgrew it, so every recent one cost a 404 there.
+// Its copies of the app, the toolchain and the pictures stay: those have other addresses.
+test('a mod archive is never asked for at the bucket', () => {
   const mod = `${RAW_HOST}h6rd/Dota2PornFxWeb/main/assets/files/heroes/Gopo%20Pudge.zip`;
   const list = net.mirrorsFor(mod);
   assert.equal(list[0], mod, 'the origin is still asked first');
-  assert.equal(list[1], 'https://cdn.dota2modmanager.com/assets/files/heroes/Gopo%20Pudge.zip');
-  assert.ok(list.indexOf('https://cdn.dota2modmanager.com/assets/files/heroes/Gopo%20Pudge.zip')
-    < list.findIndex((u) => u.includes('ghproxy')), 'and before the proxies, which go down with GitHub');
-
-  const catalog = `${RAW_HOST}h6rd/Dota2PornFxWeb/main/assets/data/mods.json`;
-  assert.ok(!net.mirrorsFor(catalog, { small: true }).some((u) => u.includes('cdn.dota2modmanager.com')),
-    'the catalog json is on the site, not in the bucket');
+  assert.equal(list.some((u) => u.startsWith('https://cdn.dota2modmanager.com/')), false);
+  assert.ok(list.some((u) => u.startsWith('https://ghproxy.net/')), 'the proxies still carry it');
 });
 
 test('a URL that is not on GitHub raw is its own only mirror', () => {

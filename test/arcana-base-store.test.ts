@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { blobSha, createBaseStore, signedListing, safeListing, BASES_REPO, BASES_PUBLIC_KEY, type Listing } from '../src/arcana-base-store.ts';
+import { PINNED, blobSha, createBaseStore, signedListing, safeListing, BASES_REPO, BASES_PUBLIC_KEY, type Listing } from '../src/arcana-base-store.ts';
 import { entryPath } from '../src/vpk.ts';
 
 const RAW = `https://raw.githubusercontent.com/${BASES_REPO}/main/`;
@@ -95,6 +95,27 @@ test('a base asked for comes down whole, is said to be ready once, and a build g
   const before = r.asked.length;
   assert.equal(await s.want('bladeform_legacy'), true, 'asked again in the same run: the same answer');
   assert.equal(r.asked.length, before, 'nothing asked of the network');
+});
+
+test('a pinned file comes from its commit and takes the place of the one the manifest lists', async (t) => {
+  /* The young Invoker's body: the repository's newest is larger than the game's, and the key that
+     signs its manifest is not ours, so the app asks for the older file by commit. */
+  const OLD = 'older body';
+  const r = repo(JUGG);
+  const body = 'models/heroes/juggernaut/juggernaut.vmdl_c';
+  const fetchUrl = async (url: string) => (url.includes('/abc123/') ? new Response(OLD) : r.fetchUrl(url));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-basestore-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const s = createBaseStore({ dir, key: KEY, fetchUrl, pins: { bladeform_legacy: { commit: 'abc123', files: { [body]: blobSha(Buffer.from(OLD)) } } } });
+
+  assert.equal(await s.want('bladeform_legacy'), true);
+  assert.equal(s.entries('bladeform_legacy')!.find((e) => e.name === 'juggernaut')!.data.toString(), OLD);
+});
+
+test('the young Invoker keeps the body the size of the game\'s', () => {
+  const pin = PINNED.acolyte_of_the_lost_arts;
+  assert.match(pin.commit, /^[0-9a-f]{40}$/, 'a commit, which cannot move');
+  assert.deepEqual(Object.keys(pin.files).sort(), ['models/heroes/invoker/invoker.vmdl_c', 'models/heroes/invoker/invoker/invoker_kid_vmorf.vtex_c']);
 });
 
 test('a file that is not what the repository names is refused, and the base is not ready', async (t) => {

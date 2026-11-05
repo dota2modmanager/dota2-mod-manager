@@ -12,7 +12,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import AdmZip from 'adm-zip';
 
-import { openZip, safeJoin, isUnsafeName } from '../src/safe-zip.ts';
+import { LIMITS, openZip, safeJoin, isUnsafeName } from '../src/safe-zip.ts';
 import { FileTx } from '../src/file-tx.ts';
 import rawZipJs from './fixtures/raw-zip.js';
 const { rawZip } = rawZipJs;
@@ -67,6 +67,14 @@ test('a file that is big but compresses like a real mod passes', () => {
   const archive = openZip(makeZip([['pak01_dir.vpk', crypto.randomBytes(2 * MB)]]));
   assert.equal(archive.files.length, 1);
   assert.equal(archive.files[0].read().length, 2 * MB);
+});
+
+test('a voice pack over a gigabyte fits, and the limits stay under what a read can take', () => {
+  // the Warcraft III voices on Hugging Face, refused twice over until the limits were raised
+  assert.ok(LIMITS.archiveBytes > 1092318134, 'the zip');
+  assert.ok(LIMITS.entryBytes > 1296886177, 'the one pak inside it');
+  assert.ok(LIMITS.archiveBytes < 2 ** 31, 'fs.readFile refuses 2 GiB');
+  assert.ok(LIMITS.entryBytes < 2 ** 31);
 });
 
 test('names that would escape the folder never reach the caller', () => {

@@ -40,11 +40,32 @@ const BRANCH = 'main';
  * that one belongs to the catalog's author, and the bases are not his to vouch for.
  */
 export const BASES_PUBLIC_KEY = 'MCowBQYDK2VwAyEAAzqINyzZu0s84UbXXU+9uRuN0Z8IH7TO2oSCMO0tcMU=';
-const rawUrl = (rel: string) => `https://raw.githubusercontent.com/${BASES_REPO}/${BRANCH}/${rel}`;
+const rawUrl = (rel: string, ref = BRANCH) => `https://raw.githubusercontent.com/${BASES_REPO}/${ref}/${rel}`;
 /** how long a base that could not be had waits before it is asked for again: a build runs on every pick */
 const RETRY_MS = 5 * 60 * 1000;
 /** files brought down at once: Rubick's base is 135 of them */
 const PARALLEL = 6;
+
+/** Files of a base to take from one commit rather than from the manifest's. */
+export type Pins = Record<string, { commit: string; files: Record<string, string> }>;
+
+/**
+ * Files of bases taken from an older commit of the repository than the manifest names. A hash
+ * here stands in for the signature: it is compiled into a signed app, and `bring` still checks it.
+ *
+ * The Acolyte's body: the commit after this one rebuilt it 1.351 times larger, and with the hero at
+ * Valve's ModelScale of 0.74 the young Invoker stood as tall as the grown one. This body is the
+ * size the game's own persona has. Take these out once the repository publishes a body that size.
+ */
+export const PINNED: Pins = {
+  acolyte_of_the_lost_arts: {
+    commit: 'ec1eef2638edb95389c3e3314d6b3f02892b83bc',
+    files: {
+      'models/heroes/invoker/invoker.vmdl_c': 'd77cd4d619063848d24c65cfe6d4e9441a0f94b5',
+      'models/heroes/invoker/invoker/invoker_kid_vmorf.vtex_c': 'ca8c2e440d26e80c3b264df4e560fdbc303a0324',
+    },
+  },
+};
 
 /** Each base's files: its path inside the base, as the repository spells it -> git's hash of it. */
 export type Listing = Record<string, Record<string, string>>;
@@ -113,10 +134,12 @@ export interface BaseStoreDeps {
   fetchUrl?: (url: string, opts: { small?: boolean }) => Promise<Response>;
   /** the key the list has to be signed with, for tests; BASES_PUBLIC_KEY */
   key?: string;
+  /** the files taken from an older commit, for tests; PINNED */
+  pins?: Pins;
 }
 
 /** The bases on disk, and bringing one down when a build needs it (the header says how). */
-export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetchUrl = fetchMirrored, key = BASES_PUBLIC_KEY }: BaseStoreDeps) {
+export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetchUrl = fetchMirrored, key = BASES_PUBLIC_KEY, pins = PINNED }: BaseStoreDeps) {
   const blobs = path.join(dir, 'blobs');
   const readyFile = path.join(dir, 'ready.json');
   const listingFile = path.join(dir, 'listing.json');
@@ -160,7 +183,7 @@ export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetch
 
   async function bring(id: string, rel: string, sha: string): Promise<void> {
     if (fs.existsSync(blobPath(sha))) return;
-    const url = rawUrl(`src/${id}/${rel.split('/').map(encodeURIComponent).join('/')}`);
+    const url = rawUrl(`src/${id}/${rel.split('/').map(encodeURIComponent).join('/')}`, pins[id]?.files[rel] ? pins[id].commit : BRANCH);
     const res = await fetchUrl(url, {});
     if (!res.ok) throw new Error(`${rel}: HTTP ${res.status}`);
     const data = Buffer.from(await res.arrayBuffer());
@@ -194,6 +217,7 @@ export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetch
     let files: Record<string, string> | undefined;
     try {
       files = (await listing)[id];
+      if (files && pins[id]) files = { ...files, ...pins[id].files };
     } catch (err) {
       listing = null; // asked again next time, the network may be back
       throw err;
