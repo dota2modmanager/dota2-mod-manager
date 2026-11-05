@@ -184,10 +184,16 @@ function d2mmApply() {
     // that opens on a player. A hero is in a match once, so its name tells the player's own apart
     var own = String(Players.GetPlayerSelectedHero(Players.GetLocalPlayer()) || "").replace(/^npc_dota_hero_/, "");
     var played = own ? d2mmLevel(own) : null;
+    // each layout says once what it found, so a match's console tells which step stopped
+    var frame = own ? me.FindChildTraverse("unitbadge") : null;
+    if (frame) {
+      var unit = Players.GetLocalPlayerPortraitUnit();
+      var owned = Entities.IsRealHero(unit) && Entities.GetPlayerOwnerID(unit) === Players.GetLocalPlayer();
+      d2mmSay("match " + own + " level " + played + (owned ? " in the portrait" : " not in the portrait"),
+        "unit " + unit + ", its player " + Entities.GetPlayerOwnerID(unit) + ", local " + Players.GetLocalPlayer());
+      d2mmPortrait(frame, owned && d2mmKnown(played) ? played : null);
+    } else if (own) d2mmSay("match in " + me.paneltype + "#" + me.id, "no unitbadge here");
     if (d2mmKnown(played)) {
-      var frame = me.FindChildTraverse("unitbadge");
-      var unit = frame ? Players.GetLocalPlayerPortraitUnit() : -1;
-      if (frame) d2mmPortrait(frame, Entities.IsRealHero(unit) && Entities.GetPlayerOwnerID(unit) === Players.GetLocalPlayer() ? played : null);
       var bar = me.paneltype === "DOTATopBarPlayer" ? me : null;
       if (bar && d2mmHeroOf(bar.FindChildTraverse("HeroImage")).replace(/^npc_dota_hero_/, "") === own) d2mmTier(bar, played);
     }
