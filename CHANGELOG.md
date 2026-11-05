@@ -2,6 +2,63 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.1.0
+
+### A changing room for each hero
+
+The item builder works like Dota's own loadout screen now.
+
+- The hero list is the game's hero grid: Strength, Agility, Intelligence and Universal side by
+  side, with the portraits from hero selection.
+- Each hero opens in one window. The hero stands on the left, the tabs run down the middle (sets,
+  each slot, your saved looks), and the right side shows what the tab offers. Only that part
+  scrolls.
+- Every slot shows what the hero wears, with a button to take it off. Another button puts every
+  default item back.
+- A slot has tabs for its items, the chosen item's styles, effects, and an effect taken from
+  another item. Effects sit on three shelves: unusual, seasonal and courier. They keep the names
+  the game gives them in English, such as Frostbloom or Ethereal Flame, so you can find them the
+  way players call them.
+- Every item, set piece and persona shows its rarity colour and year.
+
+### Sets and saved looks
+
+- Sets show their rarity, release date and event. Sort them by name, newest, oldest or rarest,
+  and filter by rarity, year, event and styles. The app remembers your filters.
+- A set with styles has a style switch, and "Equip the whole set" puts each piece on in that
+  style.
+- Save what a hero wears as a look, rename or delete it, and put it back on in one click. The
+  hero's other items switch off and stay in My mods.
+
+### The 3D preview, staged as in Dota
+
+- The hero stands where Dota's loadout screen puts it: the same camera, scale, light, background
+  and pedestal, all read from your game files.
+- The hero plays the loadout animation for the items it wears, and its materials use the game's
+  shading.
+- Item effects and the hero's own loadout effects play around the model, with their textures.
+- Personas and arcanas show their own body. Crystal Maiden's arcana animates instead of standing
+  in a T-pose.
+
+### Hero recolour you can see
+
+- The recolour window shows the hero's portrait, abilities and items as pictures. Each picture
+  takes the colour it will get in the game, and an effect you switch on rings its picture in its
+  colour.
+- Pick one of the game's 45 prismatic gem colours for every layer at once, or switch all layers
+  on or off with one button.
+- Click an ability's picture or the portrait to switch its icon, and an item's picture to switch
+  its effect.
+
+### Fixed
+
+- The recolour window scrolls, so you can reach the items and the "Put it on" button at the
+  bottom.
+- Sets that Dota shows with an empty slot's picture, such as Witch Rylai, show their first piece.
+- The Techies arcana recolour in the Workshop has its picture again.
+- Hero level badges show the level you chose from the first frame. The real level no longer
+  flashes for a moment when a page opens.
+
 ## 3.0.2
 
 ### Fixed
