@@ -23,7 +23,7 @@ install: the commands that need a game build a throwaway one first (`npm run san
 | Claim | Evidence | Runs in CI as | Run it yourself |
 |---|---|---|---|
 | A mod installs, switches and uninstalls through the real window, and the game folder ends byte for byte as it started | `tools/e2e.mjs` presses the buttons in the real window over a sandbox game tree, with a fixed catalog so the check does not depend on the live one | Window: "Install a mod through the window", on Linux and on Windows | `npm run e2e` |
-| It works on the screens and renderers people have: 1366x768 to 4K, scales from 100% to 200%, software rendering, no GPU raster | `tools/sim/`, the profiles in `tools/sim/profiles.json` | Simulation: one screen per system on every pull request, the full set nightly | `npm run sim` |
+| It works on the screens and renderers people have: 1366x768 to 4K, scales from 100% to 200%, software rendering, no GPU raster | `tools/sim/`, the profiles in `tools/sim/profiles.json` | Simulation: the full set nightly, a failed scenario launched twice before it counts | `npm run sim` |
 | An update keeps your mods, your favourites and your settings | `.github/workflows/update.yml` installs the last release, uses it, runs a freshly built installer over it the way an update arrives, and checks everything is still there | Update, on pull requests that touch the path and weekly | in CI only: it installs software |
 | The keyboard and a screen reader can do what a mouse can | [docs/accessibility.md](accessibility.md): each promise with the check behind it | Simulation, the a11y scenario | `npm run sim -- --scenario a11y` |
 
