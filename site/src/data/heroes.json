@@ -343,7 +343,7 @@
           "slots": ["misc"],
           "image": {"src":"/mods/invoker-infernus-forge.webp","width":854,"height":480},
           "author": "4d4mf",
-          "authorUrl": "https://t.me/vpk4d4mmf",
+          "authorUrl": "https://discordapp.com/users/694961381354504285/",
           "date": 1792947904
         },
         {
@@ -9597,7 +9597,7 @@
           "image": {"src":"/mods/cj-anti-mage.webp","width":854,"height":480},
           "author": "Swin-РукаBlood",
           "authorUrl": "https://discord.gg/SCnUSB4j6S",
-          "date": 1793771850
+          "date": 1793862465
         }
       ]
     },
@@ -14718,6 +14718,156 @@
       ]
     },
     {
+      "id": "siren",
+      "name": "Naga Siren",
+      "slug": "naga-siren",
+      "mods": [
+        {
+          "name": "Naga Siren 42 Bratuha",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","tail","weapon","offhand","legs","misc"],
+          "image": {"src":"/mods/naga-siren-42-bratuha.webp","width":1280,"height":720},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1786848392
+        },
+        {
+          "name": "Naga Siren Izayoi Miku",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc","arms","head","tail","weapon","offhand","legs"],
+          "image": {"src":"/mods/naga-siren-izayoi-miku.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1772755574
+        },
+        {
+          "name": "Aquamarine Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","tail","weapon","offhand","misc"],
+          "image": {"src":"/mods/aquamarine-naga-siren.webp","width":854,"height":480},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1782925485
+        },
+        {
+          "name": "Naga Siren Allure of the Deep",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","tail","weapon","offhand"],
+          "image": {"src":"/mods/naga-siren-allure-of-the-deep.webp","width":854,"height":480},
+          "author": "Haruma",
+          "authorUrl": "https://t.me/DotA_2_Mods",
+          "date": 1779092133
+        },
+        {
+          "name": "Naga Siren Coral Cultist Frost",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","tail","weapon","offhand"],
+          "image": {"src":"/mods/naga-siren-coral-cultist-frost.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1791372524
+        },
+        {
+          "name": "Naga Siren Diretide",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","tail","weapon","offhand"],
+          "image": {"src":"/mods/naga-siren-diretide.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1791253117
+        },
+        {
+          "name": "Naga Siren Immortal",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","tail","weapon","offhand"],
+          "image": {"src":"/mods/naga-siren-immortal.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1791342818
+        },
+        {
+          "name": "Princess Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","tail","weapon","offhand"],
+          "image": {"src":"/mods/princess-naga-siren.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1790202695
+        },
+        {
+          "name": "Purple Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["offhand","weapon","tail","head","arms"],
+          "image": {"src":"/mods/purple-naga-siren.webp","width":854,"height":480},
+          "author": "zitock",
+          "authorUrl": "https://steamcommunity.com/profiles/76561198790474721/",
+          "date": 1787950241
+        },
+        {
+          "name": "Witchblvde Purple Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","tail","weapon","offhand"],
+          "image": {"src":"/mods/witchblvde-purple-naga-siren.webp","width":854,"height":480},
+          "author": "blvdness",
+          "authorUrl": "https://t.me/blvdness",
+          "date": 1793862465
+        },
+        {
+          "name": "Naga Siren Bell Of Meranthia",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["tail","head","offhand","weapon"],
+          "image": {"src":"/mods/naga-siren-bell-of-meranthia.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1792609094
+        },
+        {
+          "name": "Nude Naga Siren",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/nude-naga-siren.webp","width":854,"height":480},
+          "author": "Pinkpapa",
+          "authorUrl": "https://www.patreon.com/Pinkpapa",
+          "date": 1767120602
+        },
+        {
+          "name": "Naga Siren Snickers",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "group": "naga-siren",
+          "slots": ["weapon","offhand"],
+          "image": {"src":"/mods/naga-siren-snickers.webp","width":854,"height":480},
+          "author": "Arthas",
+          "authorUrl": "https://t.me/ArthasModMaker",
+          "date": 1785412684
+        }
+      ]
+    },
+    {
       "id": "phantom_assassin",
       "name": "Phantom Assassin",
       "slug": "phantom-assassin",
@@ -15581,145 +15731,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1764003644
-        }
-      ]
-    },
-    {
-      "id": "siren",
-      "name": "Naga Siren",
-      "slug": "naga-siren",
-      "mods": [
-        {
-          "name": "Naga Siren 42 Bratuha",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","tail","weapon","offhand","legs","misc"],
-          "image": {"src":"/mods/naga-siren-42-bratuha.webp","width":1280,"height":720},
-          "author": "NahuiToSay",
-          "authorUrl": "https://t.me/NahuiToSay",
-          "date": 1786848392
-        },
-        {
-          "name": "Naga Siren Izayoi Miku",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc","arms","head","tail","weapon","offhand","legs"],
-          "image": {"src":"/mods/naga-siren-izayoi-miku.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1772755574
-        },
-        {
-          "name": "Aquamarine Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","tail","weapon","offhand","misc"],
-          "image": {"src":"/mods/aquamarine-naga-siren.webp","width":854,"height":480},
-          "author": "NahuiToSay",
-          "authorUrl": "https://t.me/NahuiToSay",
-          "date": 1782925485
-        },
-        {
-          "name": "Naga Siren Allure of the Deep",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","tail","weapon","offhand"],
-          "image": {"src":"/mods/naga-siren-allure-of-the-deep.webp","width":854,"height":480},
-          "author": "Haruma",
-          "authorUrl": "https://t.me/DotA_2_Mods",
-          "date": 1779092133
-        },
-        {
-          "name": "Naga Siren Coral Cultist Frost",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","tail","weapon","offhand"],
-          "image": {"src":"/mods/naga-siren-coral-cultist-frost.webp","width":854,"height":480},
-          "author": "драг",
-          "authorUrl": "https://t.me/dragvpk",
-          "date": 1791372524
-        },
-        {
-          "name": "Naga Siren Diretide",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","tail","weapon","offhand"],
-          "image": {"src":"/mods/naga-siren-diretide.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1791253117
-        },
-        {
-          "name": "Naga Siren Immortal",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","tail","weapon","offhand"],
-          "image": {"src":"/mods/naga-siren-immortal.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1791342818
-        },
-        {
-          "name": "Princess Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","tail","weapon","offhand"],
-          "image": {"src":"/mods/princess-naga-siren.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1790202695
-        },
-        {
-          "name": "Purple Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["offhand","weapon","tail","head","arms"],
-          "image": {"src":"/mods/purple-naga-siren.webp","width":854,"height":480},
-          "author": "zitock",
-          "authorUrl": "https://steamcommunity.com/profiles/76561198790474721/",
-          "date": 1787950241
-        },
-        {
-          "name": "Naga Siren Bell Of Meranthia",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["tail","head","offhand","weapon"],
-          "image": {"src":"/mods/naga-siren-bell-of-meranthia.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1792609094
-        },
-        {
-          "name": "Nude Naga Siren",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/nude-naga-siren.webp","width":854,"height":480},
-          "author": "Pinkpapa",
-          "authorUrl": "https://www.patreon.com/Pinkpapa",
-          "date": 1767120602
-        },
-        {
-          "name": "Naga Siren Snickers",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "group": "naga-siren",
-          "slots": ["weapon","offhand"],
-          "image": {"src":"/mods/naga-siren-snickers.webp","width":854,"height":480},
-          "author": "Arthas",
-          "authorUrl": "https://t.me/ArthasModMaker",
-          "date": 1785412684
         }
       ]
     },

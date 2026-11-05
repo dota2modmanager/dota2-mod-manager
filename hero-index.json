@@ -1,6 +1,6 @@
 {
-  "heroes": 151,
-  "mods": 1721,
+  "heroes": 152,
+  "mods": 1725,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1705,10 +1705,14 @@
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },
-    "shopkeeper": {"name":"Shopkeeper","mods":[{"name":"Gabe Shopkeeper","categoryId":"other","styleLabel":null,"slots":[]}]},
+    "shopkeeper": {"name":"Shopkeeper","mods":[{"name":"Gabe Shopkeeper","categoryId":"other","styleLabel":null,"slots":[]},{"name":"Warcraft III","categoryId":"terrains","styleLabel":null,"slots":[]}]},
     "shopkeeper_dire": {
       "name": "Shopkeeper Dire",
-      "mods": [{"name":"Gabe Shopkeeper","categoryId":"other","styleLabel":null,"slots":[]},{"name":"Old Shadow Fiend Secret Shop","categoryId":"other","styleLabel":null,"slots":[]}]
+      "mods": [
+        {"name":"Gabe Shopkeeper","categoryId":"other","styleLabel":null,"slots":[]},
+        {"name":"Old Shadow Fiend Secret Shop","categoryId":"other","styleLabel":null,"slots":[]},
+        {"name":"Warcraft III","categoryId":"terrains","styleLabel":null,"slots":[]}
+      ]
     },
     "shredder": {
       "name": "Timbersaw",
@@ -1756,7 +1760,8 @@
         {"name":"Naga Siren Snickers","categoryId":"hero-items","styleLabel":null,"slots":["weapon","offhand"]},
         {"name":"Nude Naga Siren","categoryId":"heroes","styleLabel":null,"slots":[]},
         {"name":"Princess Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]},
-        {"name":"Purple Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["offhand","weapon","tail","head","arms"]}
+        {"name":"Purple Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["offhand","weapon","tail","head","arms"]},
+        {"name":"Witchblvde Purple Naga Siren","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","weapon","offhand"]}
       ]
     },
     "skywrath_mage": {
@@ -2344,6 +2349,7 @@
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },
+    "world": {"name":"World","mods":[{"name":"Warcraft III Towers","categoryId":"towers","styleLabel":null,"slots":["misc","head"]}]},
     "wraith_king": {
       "name": "Wraith King",
       "mods": [
