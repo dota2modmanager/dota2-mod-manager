@@ -180,6 +180,8 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   // the in-game HUD smaller or larger, read back by ValveResourceFormat and compiled again (src/hud-scale-service.ts)
   const hudScale = createHudScale({ gamePath: () => settings.get('dotaGamePath'), installer, library, vrf: () => toolchain.pathOf('vrf'),
     compile: (job) => compiler.compile(job), onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
+  // a look built by an older app carries its script: built again once the item table is done
+  void schemaService.settled().then(() => rankLook.refreshScript());
   // the rank medal and hero levels of the player's own screen (src/rank-look-service.ts)
   const rankLook = createRankLook({ gamePath: () => settings.get('dotaGamePath'), installer, library, vrf: () => toolchain.pathOf('vrf'),
     compile: (job) => compiler.compile(job), onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });

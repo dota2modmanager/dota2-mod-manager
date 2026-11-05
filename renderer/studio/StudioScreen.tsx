@@ -6,6 +6,7 @@
  * is on now (the green status, the same colour "installed" has everywhere in the app). */
 import { motion } from 'motion/react';
 import { dur, ease } from '../motion/tokens.ts';
+import { isCutOut, useTrimmed } from '../catalog/arcana/tint.ts';
 
 export interface StudioTile {
   id: string;
@@ -25,6 +26,12 @@ export interface StudioTile {
 
 export interface StudioGroup { id: string; title: string; tiles: StudioTile[] }
 
+/** An arcana's picture cut to its figure, so a set's tall art stands whole in the middle of the square. */
+function Picture({ src }: { src: string }) {
+  const cut = useTrimmed(src);
+  return <img src={cut || src} className={cut && isCutOut(cut) ? 'cutout' : undefined} alt="" draggable={false} />;
+}
+
 function Tile({ t, i, onOpen }: { t: StudioTile; i: number; onOpen: (t: StudioTile, el: HTMLElement) => void }) {
   return (
     <motion.button type="button" className={`studio-tile${t.status?.on ? ' is-on' : ''}`} data-tool={t.id}
@@ -32,7 +39,7 @@ function Tile({ t, i, onOpen }: { t: StudioTile; i: number; onOpen: (t: StudioTi
       transition={{ duration: dur('--dur-medium'), ease: ease('--ease-out'), delay: Math.min(i, 12) * 0.025 }}
       onClick={(e) => onOpen(t, e.currentTarget)}>
       <span className="studio-glyph" aria-hidden="true">
-        {t.picture ? <img src={t.picture} alt="" draggable={false} /> : <span className="ms">{t.icon}</span>}
+        {t.picture ? <Picture src={t.picture} /> : <span className="ms">{t.icon}</span>}
       </span>
       <span className="studio-body">
         <span className={`studio-name${t.fresh ? ' has-new' : ''}`}>

@@ -11,6 +11,9 @@
 import { registerView, switchView, pane } from '../core/router.ts';
 import { state } from '../core/store.ts';
 import { paint } from '../ui/transitions.ts';
+import { spotlight, waitFor } from '../ui/spotlight.ts';
+import { openItemHeroModal } from './item-hero.ts';
+import { firstHubHero } from './item-hub.ts';
 import { arcanaLeads, openArcanaWindow } from './catalog/arcana.ts';
 import { mapLookLead, openMapLooks } from './catalog/map-looks.ts';
 import { soundLead, openSounds } from './catalog/sounds.ts';
@@ -34,9 +37,19 @@ async function goItems(): Promise<void> {
   await switchView('items');
 }
 
+/** Settings, scrolled to the hero grids' switches and ringed: the block draws once the account is read. */
 async function goGrids(): Promise<void> {
   await switchView('settings');
-  document.querySelector('[id^="grid-"]')?.closest('.settings-block')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  await spotlight('#gridBlock');
+}
+
+/** The first hero's window in Items, its "Recolour" button ringed: the recolour lives there, per hero. */
+async function goPaint(): Promise<void> {
+  await goItems();
+  const hero = await waitFor(firstHubHero, 8000);
+  if (!hero) return;
+  openItemHeroModal(hero, null);
+  await spotlight('#heroPaintBtn');
 }
 
 async function importVpk(): Promise<void> {
@@ -57,7 +70,7 @@ async function groups(): Promise<StudioGroup[]> {
   return [
     { id: 'hero', title: L`Герой`, tiles: [
       tile({ id: 'builder', icon: 'checkroom', title: L`Конструктор героев`, text: L`Любой предмет из игры на любого героя: наборы, арканы, персоны, стили и эффекты.`, open: () => goItems() }),
-      tile({ id: 'paint', icon: 'format_paint', title: L`Перекраска героя`, text: L`Тело, оружие и эффекты в свои цвета, по частям. Открой героя в «Предметах» и нажми «Перекрасить».`, open: () => goItems() }),
+      tile({ id: 'paint', icon: 'format_paint', title: L`Перекраска героя`, text: L`Тело, оружие и эффекты в свои цвета, по частям. Открой героя в «Предметах» и нажми «Перекрасить».`, open: () => goPaint() }),
       tile({ id: 'sounds', icon: 'graphic_eq', title: L`Свой звук на способность`, text: L`Твой файл вместо звука игры или поверх него`,
         status: sounds?.installed ? on(L`Героев со своими звуками: ${sounds.installed}`) : undefined, open: (el) => openSounds(el) }),
     ] },

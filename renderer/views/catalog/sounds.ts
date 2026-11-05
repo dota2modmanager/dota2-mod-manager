@@ -15,16 +15,19 @@ import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './overlay
 import { screen } from './state.ts';
 
 let open = false;
-let heroes: { id: string; name: string }[] = [];
-let m: Omit<SoundModalModel, 'heroes'> = blank(null);
+let heroes: { id: string; hero: string; name: string }[] = [];
+let portraits: Record<string, string> = {};
+let heroFilter = '';
+let m: Omit<SoundModalModel, 'heroes' | 'portraits' | 'sounded' | 'heroFilter'> = blank(null);
 let wav: Uint8Array | null = null;
 sharesOverlay(() => { open = false; });
 
-function blank(hero: string | null): Omit<SoundModalModel, 'heroes'> {
+function blank(hero: string | null): Omit<SoundModalModel, 'heroes' | 'portraits' | 'sounded' | 'heroFilter'> {
   return { hero, events: [], edits: [], filter: '', event: null, file: null, mode: 'replace', volume: 1, busy: false };
 }
 
-const sounded = () => [...store.installedIndex.values()].filter((r) => (r.generated as { sounds?: string } | undefined)?.sounds).length;
+const soundedHeroes = () => [...store.installedIndex.values()].map((r) => (r.generated as { sounds?: string } | undefined)?.sounds).filter((h): h is string => !!h);
+const sounded = () => soundedHeroes().length;
 
 /** The card first among the hero sounds. */
 export function soundLead(category: string): SoundCardModel | null {
@@ -41,15 +44,25 @@ export async function openSounds(from: Element | null, hero: string | null = nul
   takeOverlay();
   open = true;
   m = blank(null);
+  heroFilter = '';
   openOverlay(draw, from);
   if (hero) await pickHero(hero);
+  // the portraits come after the window is up: the first time they take the game a moment
+  if (!Object.keys(portraits).length) {
+    // the portraits are by the hero's own id, the window's keys by the events file's
+    const got: Record<string, string> = await window.api.cosmetics.heroPortraits(heroes.map((h) => h.hero)).catch(() => ({}));
+    portraits = Object.fromEntries(heroes.filter((h) => got[h.hero]).map((h) => [h.id, got[h.hero]]));
+    draw();
+  }
 }
 
 function draw(): void {
   if (!open) return;
-  showSoundModal({ ...m, heroes }, {
+  showSoundModal({ ...m, heroes, portraits, sounded: soundedHeroes(), heroFilter }, {
     close: closeOverlay,
     hero: (id) => void pickHero(id),
+    heroFilter: (text) => { heroFilter = text; draw(); },
+    heroes: () => { m = { ...blank(null), file: m.file }; draw(); },
     filter: (text) => { m = { ...m, filter: text }; draw(); },
     event: (name) => { m = { ...m, event: name }; draw(); },
     file: (f) => void pickFile(f),

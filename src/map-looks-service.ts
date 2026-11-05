@@ -7,8 +7,8 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { buildTowers, towerLooks, type Side, type TowerLook } from './tower-looks.ts';
-import { buildTrees, TREE_SETS } from './tree-sets.ts';
+import { buildTowers, DEFAULT_TOWER, towerLooks, type Side, type TowerLook } from './tower-looks.ts';
+import { buildTrees, DEFAULT_TREES, TREE_SETS } from './tree-sets.ts';
 import { swapPak, writePak, type PakInstaller } from './generated-pak.ts';
 import { sharedVpkIndex } from './vpk.ts';
 import { t } from './i18n.ts';
@@ -21,21 +21,23 @@ export type MapKind = 'towers' | 'trees';
 /** What a generated record was built from. A side left null keeps the game's own. */
 export interface MapGenerated { map: MapKind; radiant: string | null; dire: string | null }
 
-/** One look a side can take. */
-export interface MapOption { id: string; name: string; sides: Side[] }
+/** One look a side can take, and the model it puts on each side, which the window draws where the game has no picture of it. */
+export interface MapOption { id: string; name: string; sides: Side[]; models: Partial<Record<Side, string>> }
 
 /** What the window shows: the looks of each kind, and the record built before, if any. */
 export interface MapLooksState {
   towers: MapOption[];
   trees: MapOption[];
   installed: Record<MapKind, { id: string; radiant: string | null; dire: string | null; enabled: boolean } | null>;
+  /** the model each side stands in as the game ships, for the picture of "As in the game" */
+  own: Record<MapKind, Record<Side, string>>;
 }
 
 const KINDS: MapKind[] = ['towers', 'trees'];
 const BOTH: Side[] = ['radiant', 'dire'];
 
 /** The tree sets the window offers: the tinted ones come out washed white on the default map. */
-export const OFFERED_TREES: MapOption[] = TREE_SETS.filter((s) => !s.tinted).map((s) => ({ id: s.id, name: s.name, sides: BOTH }));
+export const OFFERED_TREES: MapOption[] = TREE_SETS.filter((s) => !s.tinted).map((s) => ({ id: s.id, name: s.name, sides: BOTH, models: { radiant: s.models[0], dire: s.models[0] } }));
 
 /** The service the map:* channels call, over the game folder, the installer and the library. */
 export function createMapLooks({ gamePath, installer, library, log = () => {} }: {
@@ -110,7 +112,8 @@ export function createMapLooks({ gamePath, installer, library, log = () => {} }:
         const g = rec?.generated as MapGenerated | undefined;
         installed[kind] = rec && g ? { id: rec.id, radiant: g.radiant, dire: g.dire, enabled: rec.enabled !== false } : null;
       }
-      return { towers: options('towers'), trees: options('trees'), installed };
+      const own = { towers: DEFAULT_TOWER, trees: { radiant: DEFAULT_TREES.radiant[0], dire: DEFAULT_TREES.dire[0] } };
+      return { towers: options('towers'), trees: options('trees'), installed, own };
     },
 
     /** Build a kind with a look per side and install it, in place of the one built before. */

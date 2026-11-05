@@ -63,6 +63,7 @@ export async function tinted(src: string, rgb: Rgb, gem: Rgb = GEM): Promise<str
   ctx.putImageData(pixels, 0, 0);
   const url = canvas.toDataURL('image/png');
   done.set(key, url);
+  tintedFrom.set(url, src);
   return url;
 }
 
@@ -140,7 +141,62 @@ export function useArcanaPicture(set: string, known?: ArcanaPicture | null): str
   const name = got && !got.picture ? got.name : '';
   const icon = useSyncExternalStore((fn) => subscribeIcon(name, fn), () => (name ? cosmeticIcon(name) : null));
   useEffect(() => { if (name && !cosmeticIconKnown(name)) void loadCosmeticIcons([name], () => {}); }, [name]);
-  return got?.picture ?? icon ?? null;
+  return useTrimmed(got?.picture ?? icon ?? null);
+}
+
+const trims = new Map<string, Promise<string>>();
+/** Pictures that stand on nothing (a set's art, Techies'): drawn whole, without the faded edge a square icon gets. */
+const cutOut = new Set<string>();
+/** Whether a picture this file handed out stands on nothing; a tinted copy of it counts too. */
+export const isCutOut = (src: string | null): boolean => !!src && (cutOut.has(src) || [...cutOut].some((c) => tintedFrom.get(src) === c));
+const tintedFrom = new Map<string, string>();
+
+/**
+ * The picture cut to what is drawn on it. A set's art stands on nothing, with empty room round the
+ * figure (Techies' cart filled the lower right of a tall frame), so the window showed it off centre
+ * and small; a square icon has no empty edge and comes back as it was.
+ */
+function trim(src: string): Promise<string> {
+  let p = trims.get(src);
+  if (p) return p;
+  p = load(src).then((img) => {
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return src;
+    ctx.drawImage(img, 0, 0);
+    const d = ctx.getImageData(0, 0, w, h).data;
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (d[(y * w + x) * 4 + 3] < 16) continue;
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    }
+    if (x1 < 0 || (x0 === 0 && y0 === 0 && x1 === w - 1 && y1 === h - 1)) return src;
+    const out = document.createElement('canvas');
+    out.width = x1 - x0 + 1;
+    out.height = y1 - y0 + 1;
+    out.getContext('2d')?.drawImage(canvas, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+    const url = out.toDataURL('image/png');
+    cutOut.add(url);
+    return url;
+  }, () => src);
+  trims.set(src, p);
+  return p;
+}
+
+/** A picture cut to its figure, once the cut is made (null until then). */
+export function useTrimmed(src: string | null): string | null {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!src) { setUrl(null); return; }
+    let live = true;
+    trim(src).then((u) => { if (live) setUrl(u); });
+    return () => { live = false; };
+  }, [src]);
+  return url;
 }
 
 export const toHex = (c: Rgb) => `#${c.map((n) => n.toString(16).padStart(2, '0')).join('')}`;

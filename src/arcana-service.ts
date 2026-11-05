@@ -65,8 +65,9 @@ export const WINDOWS: Record<string, { picture: string; model: string; base?: st
     base: TERRORBLADE_BASE,
   },
   'techies-arcana': {
-    // the item's own icon is block-compressed (src/vtex.ts takes PNG only); the set's picture is a PNG
-    picture: 'panorama/images/econ/sets/v2/swine_of_the_sunken_galley_set_small_png.vtex_c',
+    // the item's own icon is block-compressed (src/vtex.ts takes PNG only); the set's picture is a
+    // PNG, the full size of it (448 by 678): the window cuts it to the figure (arcana/tint.ts trim)
+    picture: 'panorama/images/econ/sets/v2/swine_of_the_sunken_galley_set_png.vtex_c',
     model: 'models/items/techies/bigshot/bigshot.vmdl_c',
   },
   // the immortals (src/recolor.ts): their effects in a colour, on the item the hero wears

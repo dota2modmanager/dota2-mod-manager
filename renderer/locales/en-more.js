@@ -122,5 +122,7 @@ const EN = {
   "Сначала выбери предмет.": "Choose an item first.",
   "Можно выбрать несколько. Названия как в игре.": "You can pick several. Names as the game has them.",
   "Свечение глаз не садится на предмет, поэтому его здесь нет.": "Eye glows do not sit on an item, so they are not here.",
+  "Есть свой звук": "Has a sound of yours",
+  "Другой герой": "Another hero",
 };
 window.EN_MORE = EN;

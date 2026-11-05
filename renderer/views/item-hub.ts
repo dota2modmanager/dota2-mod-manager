@@ -67,6 +67,10 @@ function hubModel(): ScreenModel {
 
 const drawHub = () => showScreen(hubModel(), hubActions());
 
+/** The hub's first hero by name (Abaddon), once the item table is read; null until then. */
+export const firstHubHero = (): string | null =>
+  heroesOf(itemCosmeticSlots(), state.heroAttrs).map(([hero]) => hero).sort((a, b) => a.localeCompare(b))[0] || null;
+
 const hubNote = (note: string) => paint(() => showScreen(
   { kind: 'list', key: 'cos:items:note', title: catName(HUB), toolbar: null, note, mods: null, cosmetics: null }, hubActions()));
 

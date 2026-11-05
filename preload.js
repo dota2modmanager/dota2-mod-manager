@@ -111,6 +111,7 @@ contextBridge.exposeInMainWorld('api', {
   preview3d: {
     models: (hero, slots) => ipcRenderer.invoke('preview3d:models', hero, slots),
     effect: (id) => ipcRenderer.invoke('preview3d:effect', id),
+    model: (file) => ipcRenderer.invoke('preview3d:model', file),
   },
   sounds: {
     heroes: () => ipcRenderer.invoke('sounds:heroes'),

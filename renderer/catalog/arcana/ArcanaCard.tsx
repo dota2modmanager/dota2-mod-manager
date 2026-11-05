@@ -4,7 +4,7 @@
 import { CardShell } from '../card/CardShell.tsx';
 import { CardName } from '../card/CardName.tsx';
 import { arcanaWords } from './heroes.ts';
-import { gemOf, useArcanaPicture, useTinted, type Rgb } from './tint.ts';
+import { gemOf, isCutOut, useArcanaPicture, useTinted, type Rgb } from './tint.ts';
 
 export interface ArcanaCardModel {
   set: string;
@@ -20,7 +20,7 @@ export function ArcanaCard({ m, index, onOpen }: { m: ArcanaCardModel; index: nu
   const picture = useTinted(useArcanaPicture(m.set, m), m.installed ?? gem, gem);
   return (
     <CardShell moves={false} installed={Boolean(m.installed)} dataKey={`builtin|arcana|${m.set}`} index={index} onClick={(e) => onOpen(m.set, e.currentTarget)}>
-      <div className="card-media">
+      <div className={`card-media ${isCutOut(picture) ? 'cutout' : ''}`}>
         {picture ? <img src={picture} alt="" /> : <div className="noimg"><span className="ms">palette</span></div>}
       </div>
       <div className="card-body">

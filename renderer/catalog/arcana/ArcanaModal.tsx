@@ -4,7 +4,7 @@
  * anything is built (tint.ts). */
 import { useRef, useState, type CSSProperties } from 'react';
 import { arcanaWords } from './heroes.ts';
-import { gemOf, toHex, useArcanaPicture, useTinted, type Rgb } from './tint.ts';
+import { gemOf, isCutOut, toHex, useArcanaPicture, useTinted, type Rgb } from './tint.ts';
 
 export type ArcanaMode = 'mod' | 'recolor';
 
@@ -68,7 +68,7 @@ export function ArcanaModal({ m, actions }: { m: ArcanaModalModel; actions: Arca
 
   return (
     <>
-      <div className="modal-media cos arcana-media">
+      <div className={`modal-media cos arcana-media ${isCutOut(picture) ? 'cutout' : ''}`}>
         {picture ? <img src={picture} alt="" /> : <div className="noimg"><span className="ms">palette</span></div>}
         <button className="modal-close" id="modalCloseBtn" aria-label={L`Закрыть`} onClick={actions.close}>
           <span className="ms">close</span>

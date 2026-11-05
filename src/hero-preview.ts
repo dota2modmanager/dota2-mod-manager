@@ -170,5 +170,12 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     return def ? { def, sprites: await spritesOf([def]) } : null;
   }
 
-  return { plan, models, effect };
+  /** One model alone, a map prop's or a tower look's, for a picture of it, as GLB bytes with its pictures inside; null where the game has none. */
+  async function model(file: string): Promise<Uint8Array | null> {
+    if (!/^models\/(props_|items\/world\/)[\w/.-]+\.vmdl$/i.test(file)) return null;
+    const got = (await glb.glbs([file]))[file];
+    return got ? embedGlb(got) : null;
+  }
+
+  return { plan, models, effect, model };
 }

@@ -11,7 +11,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { editedEvents, eventsFile, heroEvents, heroesWithSounds, soundPath, wavProblem, type HeroEvent, type SoundEdit, type SoundMode } from './ability-sounds.ts';
+import { editedEvents, eventsFile, heroEvents, heroesWithSounds, soundHero, soundPath, wavProblem, type HeroEvent, type SoundEdit, type SoundMode } from './ability-sounds.ts';
 import { swapPak, writePak, type PakInstaller } from './generated-pak.ts';
 import { buildVpk, sharedVpkIndex, type VpkEntry } from './vpk.ts';
 import { readKv3 } from './kv3.ts';
@@ -81,7 +81,7 @@ export function createAbilitySounds({ gamePath, userDataDir, installer, library,
       return null;
     }
     const vpk = await build(hero, edits);
-    const name = t('Свои звуки: {0}', heroDisplayName(hero));
+    const name = t('Свои звуки: {0}', heroDisplayName(soundHero(hero)));
     const generated: SoundsGenerated = { sounds: hero, edits };
     if (old) {
       const files = swapPak(installer, old, vpk, false);
@@ -92,9 +92,9 @@ export function createAbilitySounds({ gamePath, userDataDir, installer, library,
   }
 
   return {
-    /** Every hero with an events file, game id and name. */
-    heroes(): { id: string; name: string }[] {
-      return heroesWithSounds(pak01()).map((id) => ({ id, name: heroDisplayName(id) }));
+    /** Every hero with an events file: the file's name, the hero's own id (for his portrait), and his name. */
+    heroes(): { id: string; hero: string; name: string }[] {
+      return heroesWithSounds(pak01()).map((id) => ({ id, hero: soundHero(id), name: heroDisplayName(soundHero(id)) }));
     },
 
     /** A hero's events and the sounds of the user's on them. */
