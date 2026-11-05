@@ -38,8 +38,10 @@ test('while the game is open it is asked every second, and a refusal asks again 
   let asked = 0;
   const watch = createGameWatch({ isRunning: async () => { asked++; return open; }, send: () => {}, everyMs: 60_000, openMs: 20 });
   watch.start();
-  await new Promise((r) => setTimeout(r, 130));
-  assert.ok(asked >= 4, `asked ${asked} times in 130 ms`);
+  // four asks take 60 ms on an idle machine; a busy Windows runner's timers can take a few times that
+  const started = Date.now();
+  while (asked < 4 && Date.now() - started < 2000) await new Promise((r) => setTimeout(r, 10));
+  assert.ok(asked >= 4, `asked ${asked} times in ${Date.now() - started} ms`);
   open = false;
   assert.equal(watch.running(), true, 'the gate reads the last answer');
   await new Promise((r) => setImmediate(r));

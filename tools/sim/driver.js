@@ -329,6 +329,9 @@ class Sim {
    * changed blocks outlined.
    */
   async integrity(name, { limit = 0.002 } = {}) {
+    // a toast fades on its own, and one fading between the two frames is not the page drawing
+    // wrong: one left from the app's start lay over the catalog's first frame on Windows runners
+    await this.until(`!document.querySelector('#toasts .toast')`, 8000);
     const first = await this.win.webContents.capturePage();
     this.win.webContents.invalidate();
     await sleep(350);
