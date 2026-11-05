@@ -1,29 +1,26 @@
 #!/usr/bin/env node
 /**
- * A copy of the mod archives that does not live on GitHub.
+ * A copy of the catalog's preview pictures that does not live on GitHub.
  *
- * The app already has a second source for the four files it needs to start: the site carries
- * those. What it had no answer for is the archives themselves. Every mirror it knows is a proxy
- * standing in front of GitHub, so the three-hour outage on 2026-08-17 meant nobody could
- * install anything at all. This puts the archives in Cloudflare R2, which is a different
- * company having a different bad day.
+ * The renderer asks raw.githubusercontent for every preview directly, so somebody who cannot reach
+ * GitHub gets a catalog that loads and a grid of empty squares. All of them come to about 40 MB,
+ * which is the difference between a usable window and a blank one.
  *
- * What gets copied: the catalog lists every mod and the file it ships as. An object already
- * here at the size upstream reports is left alone, so a run only moves what actually changed -
- * and a mod its author has replaced does change, which this file claimed to notice and did not
- * until 2026-09-10. The free tier is 10 GB and the catalog is close to it, so there is a budget
- * - the categories people install from first go first, and the run stops when the budget is
- * spent instead of failing halfway through.
+ * The archives lived here too until 2026-11-05. The catalog had grown past the free tier's 10 GB,
+ * so new mods stopped fitting and the copy held only the old ones. An object already here at the
+ * size upstream reports is left alone, so a run only moves what actually changed.
  *
- * The index written at the end is what keeps the app from guessing: without it, every install
- * of a mod that did not fit would cost a round trip to R2 and a 404 before falling back.
+ * --drop-archives deletes what is left of them under assets/files/. Copies of the app up to 3.2.0
+ * ask this bucket for a mod and stop at its 404, so it runs by hand, once those copies have
+ * updated, and never on a schedule.
  *
  * No SDK. R2 speaks S3, S3 wants SigV4, and SigV4 is a hash of a canonical string: eighty lines
  * that never change, against a dependency with a supply chain.
  *
- *   node tools/r2-sync.mjs --limit 5     copy at most five archives, which is the smoke test
- *   node tools/r2-sync.mjs --budget 9    stop at nine gigabytes in the bucket
- *   node tools/r2-sync.mjs --dry         say what it would do and touch nothing
+ *   node tools/r2-sync.mjs --limit 5        copy at most five pictures, which is the smoke test
+ *   node tools/r2-sync.mjs --budget 9       stop at nine gigabytes in the bucket
+ *   node tools/r2-sync.mjs --dry            say what it would do and touch nothing
+ *   node tools/r2-sync.mjs --drop-archives  delete the old mod archives as well
  */
 const ACCOUNT = process.env.R2_ACCOUNT_ID || '';
 const KEY = process.env.R2_ACCESS_KEY_ID || '';
@@ -39,18 +36,10 @@ const flag = (name, fallback) => {
 const DRY = args.includes('--dry');
 const LIMIT = Number(flag('--limit', '0')) || Infinity;
 const BUDGET = Number(flag('--budget', '9')) * 1024 ** 3;
-/* A cap on one archive, so a single mod cannot eat the bucket. It started at 400 MB, which
- * turned out to exclude exactly one thing: a 1.02 GB voice pack. The catalog fits in 5.6 GB,
- * there is room, and the point of the mirror is that an install works when GitHub does not -
- * including that one.
- */
-const MAX_FILE = Number(flag('--max-file', '1200')) * 1024 ** 2;
-
-/* Categories in the order they are worth having a second copy of: what somebody installs in
- * their first hour, then everything else in catalog order.
- */
-const FIRST = ['heroes', 'terrains', 'shaders', 'trees', 'river', 'backgrounds', 'hero-items',
-  'creeps', 'cursors', 'mega-kill', 'announcers', 'hero-sounds', 'couriers', 'wards'];
+const DROP = args.includes('--drop-archives');
+const ARCHIVES = 'assets/files/';
+const TYPES = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
+const typeOf = (key) => TYPES[key.split('.').pop().toLowerCase()] || 'application/octet-stream';
 
 import { iterMods } from './catalog-mods.js';
 import { createR2, purgeCache } from './r2-client.js';
@@ -99,52 +88,25 @@ const catalog = await catalogRes.json();
 const byCategory = catalog.modsData || catalog;
 
 const wanted = [];
-const rank = (id) => (FIRST.indexOf(id) < 0 ? FIRST.length : FIRST.indexOf(id));
 
-/* tools and news are not mods people install, so the bucket does not carry them. Everything
-   else comes through iterMods, which knows that five categories arrive as { groups: [...] }
-   rather than as an array - the thing this file used to get wrong, and the reason 313 mods had
-   never been mirrored. */
+/* tools and news are not mods people install. Everything else comes through iterMods, which knows
+   that five categories arrive as { groups: [...] } rather than as an array. */
 for (const { categoryId, mod } of iterMods(byCategory, { skip: ['tools', 'news'] })) {
-  {
-    const ref = mod?.file;
-    if (typeof ref !== 'string' || !/\.(vpk|zip)$/i.test(ref)) continue;
-    /* Some entries carry a whole URL rather than a file name: the catalog keeps its heaviest
-       mods on Hugging Face. The key stays the shape the app asks for, so the app does not have
-       to know where the original came from. */
-    const absolute = /^https?:\/\//i.test(ref);
-    const name = absolute ? decodeURIComponent(ref.split('/').pop()) : ref;
-    wanted.push({
-      path: `assets/files/${categoryId}/${name}`,
-      source: absolute ? ref : null,
-      rank: rank(categoryId),
-    });
-  }
-
-  /* The picture as well as the archive.
-   *
-   * The renderer asks raw.githubusercontent for every preview directly, so a user who cannot
-   * reach GitHub gets a catalog that loads and a grid of empty squares - the app looks broken
-   * while working. All 1,336 of them come to about 38 MB, which is nothing beside the archives
-   * and is the difference between a usable window and a blank one.
-   *
-   * First in the list on purpose: a picture is what somebody looks at before deciding to spend
-   * 300 MB on the mod under it, and if the budget ever runs out it should run out on archives.
-   */
   const preview = mod?.preview;
   if (typeof preview === 'string' && preview && !/^https?:\/\//i.test(preview)) {
     const key = preview.startsWith('assets/previews/')
       ? preview
       : `assets/previews/${categoryId}/${preview}`;
-    wanted.push({ path: key, source: null, rank: -1 });
+    wanted.push({ path: key });
   }
 }
-wanted.sort((a, b) => a.rank - b.rank);
-console.log(`catalog: ${wanted.length} archives`);
+console.log(`catalog: ${wanted.length} pictures`);
 
 const have = await listBucket();
-let used = [...have.values()].reduce((n, v) => n + v, 0);
-console.log(`bucket: ${have.size} objects, ${(used / 1024 ** 3).toFixed(2)} GB of ${(BUDGET / 1024 ** 3).toFixed(0)} GB budget`);
+const archives = [...have.keys()].filter((key) => key.startsWith(ARCHIVES));
+// the old archives are on their way out and take no room from a new picture
+let used = [...have].reduce((n, [key, size]) => (key.startsWith(ARCHIVES) ? n : n + size), 0);
+console.log(`bucket: ${have.size} objects, ${archives.length} of them old archives, ${(used / 1024 ** 3).toFixed(2)} GB of ${(BUDGET / 1024 ** 3).toFixed(0)} GB budget`);
 
 /* What upstream has, so a copy can be told from a copy of something older.
  *
@@ -166,7 +128,7 @@ async function sourceSizes(items) {
       const item = queue.shift();
       if (!item) return;
       try {
-        const res = await fetch(item.source || `${RAW}/${item.path}`, { method: 'HEAD' });
+        const res = await fetch(`${RAW}/${item.path}`, { method: 'HEAD' });
         if (res.ok) sizes.set(item.path, Number(res.headers.get('content-length')) || 0);
       } catch { /* asked again as a GET below, or left alone */ }
     }
@@ -200,27 +162,23 @@ const replaced = [];
 let copied = 0;
 let skipped = 0;
 let failed = 0;
-let tooBig = 0;
 let refused = 0;
 let stopped = '';
-const index = [];
 
 for (const item of wanted) {
-  if (have.has(item.path) && !changed.has(item.path)) { index.push(item.path); skipped++; continue; }
+  if (have.has(item.path) && !changed.has(item.path)) { skipped++; continue; }
   if (copied >= LIMIT) { stopped = 'limit'; break; }
   // a new object past the budget is not worth fetching; one that replaces a copy may still fit
   if (!have.has(item.path) && used >= BUDGET) { stopped = 'budget'; continue; }
 
   try {
-    const res = await fetch(item.source || `${RAW}/${item.path}`);
+    const res = await fetch(`${RAW}/${item.path}`);
     if (!res.ok) throw new Error(`source HTTP ${res.status}`);
     const body = Buffer.from(await res.arrayBuffer());
-    if (body.length > MAX_FILE) { tooBig++; continue; }
     // replacing an object costs the difference, not the whole file again
     const already = have.get(item.path) || 0;
     if (!fits({ used, budget: BUDGET, already, size: body.length })) {
       stopped = 'budget';
-      if (have.has(item.path)) index.push(item.path);
       continue;
     }
 
@@ -232,7 +190,6 @@ for (const item of wanted) {
     if (!ok) {
       refused++;
       console.log(`not copied ${item.path}: source hashes to ${got.slice(0, 12)}, the catalog publishes ${want.slice(0, 12)}`);
-      if (have.has(item.path)) index.push(item.path);
       continue;
     }
 
@@ -242,12 +199,11 @@ for (const item of wanted) {
     if (DRY) {
       console.log(`would ${verb === 'copied' ? 'copy' : 'refresh'} ${item.path} (${mb} MB)`);
     } else {
-      await put(item.path, body, item.path.endsWith('.vpk') ? 'application/octet-stream' : 'application/zip');
+      await put(item.path, body, typeOf(item.path));
       console.log(`${verb} ${item.path} (${mb} MB)`);
     }
     used += body.length - already;
     copied++;
-    index.push(item.path);
     // only what was replaced: an object nobody could have downloaded yet is in no cache
     if (replacing && !DRY) replaced.push(`${PUBLIC_BASE}/${item.path}`);
   } catch (e) {
@@ -256,13 +212,15 @@ for (const item of wanted) {
   }
 }
 
-/* The list the app reads before it decides where to ask. */
-if (!DRY) {
-  const payload = JSON.stringify({ updated: new Date().toISOString().slice(0, 10), count: index.length, files: index.sort() });
-  await put('index.json', Buffer.from(payload), 'application/json');
+if (DROP) {
+  for (const key of archives) {
+    if (DRY) console.log(`would delete ${key}`);
+    else await r2.remove(key);
+  }
+  console.log(`${DRY ? 'would delete' : 'deleted'} ${archives.length} old archives`);
 }
 
-/* A replaced archive that stays cached at the edge is the stale-mirror bug from 2026-09-10 in a new
+/* A replaced picture that stays cached at the edge is the stale-mirror bug from 2026-09-10 in a new
    place: the bucket holds the new bytes and everybody is still served the old ones. Until
    2026-09-15 a missing zone id or purge token only printed a line, and the purge had in fact never
    run once. Now the job goes red, which the radar reports. */
@@ -273,8 +231,8 @@ if (replaced.length && purge && (purge.skipped || purge.failed)) {
   process.exitCode = 1;
 }
 
-console.log(`\ncopied ${copied}, already current ${skipped}, too big ${tooBig}, failed ${failed}, refused ${refused}${stopped ? `, stopped on ${stopped}` : ''}`);
-console.log(`bucket now ~${(used / 1024 ** 3).toFixed(2)} GB, index lists ${index.length} archives`);
+console.log(`\ncopied ${copied}, already current ${skipped}, failed ${failed}, refused ${refused}${stopped ? `, stopped on ${stopped}` : ''}`);
+console.log(`bucket now ~${(used / 1024 ** 3).toFixed(2)} GB`);
 
 /* Out of room is not an error - nothing is broken, and everything already mirrored still serves -
    but it is the mirror quietly stopping, so it goes on the run as a warning rather than as the

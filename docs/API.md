@@ -646,6 +646,27 @@ Base64 SPKI of the ed25519 key the bases' manifest is signed with. J0nathan550 h
 private half; `tools/sign-catalog.js --keygen` makes a pair in this form. Not the catalog's key:
 that one belongs to the catalog's author, and the bases are not his to vouch for.
 
+### `Pins`
+
+```ts
+export type Pins = Record<string, { commit: string; files: Record<string, string> }>
+```
+
+Files of a base to take from one commit rather than from the manifest's.
+
+### `PINNED`
+
+```ts
+export const PINNED: Pins =
+```
+
+Files of bases taken from an older commit of the repository than the manifest names. A hash
+here stands in for the signature: it is compiled into a signed app, and `bring` still checks it.
+
+The Acolyte's body: the commit after this one rebuilt it 1.351 times larger, and with the hero at
+Valve's ModelScale of 0.74 the young Invoker stood as tall as the grown one. This body is the
+size the game's own persona has. Take these out once the repository publishes a body that size.
+
 ### `Listing`
 
 ```ts
@@ -693,7 +714,7 @@ What a store is made with: where it keeps the bases, and whom it tells.
 ### `createBaseStore`
 
 ```ts
-export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetchUrl = fetchMirrored, key = BASES_PUBLIC_KEY }: BaseStoreDeps)
+export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetchUrl = fetchMirrored, key = BASES_PUBLIC_KEY, pins = PINNED }: BaseStoreDeps)
 ```
 
 The bases on disk, and bringing one down when a build needs it (the header says how).
@@ -9782,6 +9803,22 @@ export interface OpenedZip
 ```
 
 A foreign archive, opened: what is safe to hand out of it, and a way to unpack it.
+
+### `LIMITS`
+
+```ts
+export const LIMITS =
+```
+
+Measured against the 104 real archives on disk (catalog mods, fonts, cursors, packs),
+not guessed: the heaviest zip is 64 MB, the largest single entry unpacks to 301 MB, the
+fullest archive holds 111 files, and the tightest compression is 80x (cursor bitmaps).
+Every limit sits several times above that, so a legitimate archive never meets one.
+The size limits were raised on 2026-11-05: a voice pack on Hugging Face is a 1.02 GB zip holding
+one 1.21 GB pak, and it was refused as too large. They stop just short of 2 GiB, which
+fs.readFile refuses outright.
+The ratio is only judged on entries big enough to matter — a 20 KB text file that packs
+500x is not a threat, and small assets compress hard all the time.
 
 ### `isUnsafeName`
 

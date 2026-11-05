@@ -51,7 +51,7 @@ export async function fetchMirrored(url: string, {
         } as RequestInit & { dispatcher?: unknown });
         if (!res.ok && res.status !== 206) {
           /* A 404 from the origin is the file: it is not in the catalog's repository. From anything
-           * else it only says that host has no copy. The bucket is filled nightly and within a
+           * else it only says that host has no copy. A mirror is filled on its own schedule and within a
            * budget, so a new mod is missing there, and stopping at that 404 left everybody who
            * cannot reach GitHub without the catalog's newest mods, with three working proxies
            * never asked. Not a failure of the host, so no mark against it. */

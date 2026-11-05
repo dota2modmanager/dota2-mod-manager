@@ -8,7 +8,7 @@
  * visible on the day a release fixes something urgent, and by then it is too late to arrange a
  * second route.
  *
- * The mods and the catalog already have one (tools/r2-sync.mjs). This puts the release itself
+ * The pictures and the catalog already have one (tools/r2-sync.mjs). This puts the release itself
  * there too: the manifests electron-updater reads and the binaries they point at, under
  * updates/ in the same bucket, served from cdn.dota2modmanager.com.
  *

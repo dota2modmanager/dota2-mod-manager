@@ -1,8 +1,8 @@
-# The archives, kept somewhere that is not GitHub.
+# The preview pictures and the pinned toolchain, kept somewhere that is not GitHub.
 #
-# The catalog and the fingerprint map already have a second home on the site. The mods
-# themselves are gigabytes, so they go to R2, where storage is free up to ten of them and
-# nobody charges for reading them back out.
+# The catalog and the fingerprint map already have a second home on the site. The pictures and
+# the tools go to R2, where nobody charges for reading them back out. The mod archives are not
+# copied here any more: tools/r2-sync.mjs says why.
 #
 # Nightly, because the catalog grows on its own schedule and a day-old mirror is a mirror.
 # Manual, because the first run and every "did that work" after it happens by hand.
@@ -14,11 +14,15 @@ on:
   workflow_dispatch:
     inputs:
       limit:
-        description: 'How many archives to copy this run (blank means as many as fit)'
+        description: 'How many pictures to copy this run (blank means as many as fit)'
         required: false
         default: ''
       dry:
         description: 'Say what it would do and touch nothing'
+        type: boolean
+        default: false
+      drop_archives:
+        description: 'Delete the old mod archives. Copies up to 3.2.0 stop at this 404, so only once they have updated'
         type: boolean
         default: false
       release:
@@ -46,7 +50,7 @@ jobs:
 
       # The sync itself needs nothing but Node. The toolchain step below reaches into
       # src/toolchain.ts, which unpacks a zip through src/safe-zip.ts, which needs adm-zip -
-      # so without this the run copied every archive and then went red on its last step. It
+      # so without this the run copied everything and then went red on its last step. It
       # had been failing that way since the step was added, and a job that always fails is a
       # job nobody reads: that is how the bucket went a night without anybody noticing.
       - name: Install what the toolchain step needs
@@ -58,7 +62,7 @@ jobs:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           # Replacing an object does not replace what the cache in front of it already handed
-          # out, and .zip and .vpk are cached by default, so replaced objects are purged. The zone
+          # out, and pictures are cached by default, so replaced objects are purged. The zone
           # id is an identifier, not a secret, and lives here: kept as a secret, nobody ever set
           # it, and the purge never once ran. The token is the one the site deploys with, which
           # needs Zone, Cache Purge on this zone as well. A purge that is skipped or refused
@@ -67,11 +71,13 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           LIMIT: ${{ inputs.limit }}
           DRY: ${{ inputs.dry }}
+          DROP_ARCHIVES: ${{ inputs.drop_archives }}
         run: |
           set -euo pipefail
           argv=""
           [ -n "${LIMIT:-}" ] && argv="--limit $LIMIT"
           [ "${DRY:-false}" = "true" ] && argv="$argv --dry"
+          [ "${DROP_ARCHIVES:-false}" = "true" ] && argv="$argv --drop-archives"
           node tools/r2-sync.mjs $argv
 
       # The pinned toolchain, so the one feature that needs a 50 MB download from somebody

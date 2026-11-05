@@ -69,19 +69,12 @@ const ourSite = (url: string): string | null => {
   return name ? `https://dota2modmanager.com/mirror/${name}` : null;
 };
 
-/* And the archives themselves, in a bucket rather than in front of GitHub.
- *
- * Every proxy above is GitHub wearing a different hostname, so during the outage on
- * 2026-08-17 a mod could not be installed at all. tools/r2-sync.mjs keeps a copy of the whole
- * catalog here and refreshes it nightly. It sits after the origin on purpose: GitHub is asked
- * first, and a mod added to the catalog since last night costs one 404 here before the proxies
- * get their turn, which is a fair price for the day GitHub is down.
+/* The archives themselves stay where the catalog keeps them. They were copied to our R2 bucket
+ * until 2026-11-05, when the catalog outgrew the free tier: new mods no longer fitted, and a mirror
+ * holding only the old ones answered 404 for everything recent. The hosts the signed config names
+ * (applyMirrors) and the proxies carry the whole catalog.
  */
 const CATALOG_FILES = `${RAW_HOST}h6rd/Dota2PornFxWeb/main/assets/files/`;
-
-const bucket = (url: string): string | null => (url.startsWith(CATALOG_FILES)
-  ? `https://cdn.dota2modmanager.com/assets/files/${url.slice(CATALOG_FILES.length)}`
-  : null);
 
 export const DEFAULT_MIRRORS: readonly Mirror[] = [
   /* `origin: true` marks the host the catalog's own URLs name, and exactly one entry may carry
@@ -91,7 +84,6 @@ export const DEFAULT_MIRRORS: readonly Mirror[] = [
      cannot quietly inherit the privilege. */
   { host: 'raw.githubusercontent.com', map: (url) => url, origin: true },
   { host: 'dota2modmanager.com', map: ourSite, smallOnly: true },
-  { host: 'cdn.dota2modmanager.com', map: bucket },
   { host: 'cdn.jsdelivr.net', map: jsdelivr, smallOnly: true },
   { host: 'ghproxy.net', map: proxy('ghproxy.net') },
   { host: 'gh-proxy.com', map: proxy('gh-proxy.com') },
@@ -188,9 +180,9 @@ export function setMirrors(list: readonly Mirror[] | null | undefined): void {
  * Put the hosts the signed config names into the chain, or take them out again.
  *
  * The built-in list is compiled in, so arranging a second copy of the catalog somewhere used to
- * mean a release and then waiting for people to take it. These sit after our own bucket and
- * before the proxies, because a proxy is GitHub wearing a different hostname and one of these is
- * a real second copy. None of them is ever the origin: the bytes are checked against the hash
+ * mean a release and then waiting for people to take it. These sit after our own site and before
+ * the proxies, because a proxy is GitHub wearing a different hostname and one of these is a real
+ * second copy. None of them is ever the origin: the bytes are checked against the hash
  * the catalog publishes, and when nothing matches it is the origin's copy that is believed, so
  * what a host named here can do is serve a download or fail it.
  *
@@ -227,7 +219,7 @@ export function applyMirrors(list: unknown): number {
     }));
   if (!extra.length) { setMirrors(null); return DEFAULT_MIRRORS.length; }
 
-  const at = DEFAULT_MIRRORS.findIndex((m) => m.host === 'cdn.dota2modmanager.com');
+  const at = DEFAULT_MIRRORS.findIndex((m) => m.host === 'dota2modmanager.com');
   const next = [...DEFAULT_MIRRORS];
   next.splice(at + 1, 0, ...extra);
   setMirrors(next);
