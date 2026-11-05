@@ -1,23 +1,30 @@
-/* The window for a hero recoloured part by part (issue #422): a row per layer the hero has, each
- * with its switch and its colour, grouped as his abilities (the effect and the icon side by side),
- * the rest of him, and the items picked for him. A colour at the top goes to every layer that is
- * on. Reached from the hero's window in the item builder, and back to it. */
-import type { CSSProperties, ReactNode } from 'react';
-import { plural } from '../../ui/format.ts';
+/* The window for a hero recoloured part by part (issue #422). The hero stands on the left as hero
+ * selection shows him, with his own layers under him; on the right the colour for everything that
+ * is on (the game's prismatic gems, or any), his abilities as their icons and the items picked for
+ * him as their pictures. Each picture shows its colour as the build will put it (PaintTiles.tsx).
+ * Reached from the hero's window in the item builder, and back to it. */
+import type { CSSProperties } from 'react';
 import { BuilderFoot, BuilderHead } from '../builder/parts.tsx';
 import type { BuilderAction } from '../builder/model.ts';
+import { AbilityTile, HeroCard, ItemTile, Swatch, type PaintCell } from './PaintTiles.tsx';
 
-/** One switch and colour, for one layer. */
-export interface PaintCell { id: string; on: boolean; color: string }
+export type { PaintCell } from './PaintTiles.tsx';
 
 export interface PaintModalModel {
   hero: string;
+  /** his portrait out of the game, upright as hero selection has it; null until it comes */
+  portrait: string | null;
   /** the colour the top swatch gives every layer that is on */
   all: string;
-  abilities: { name: string; effect: PaintCell | null; icon: PaintCell | null }[];
+  /** the game's prismatic gems, offered as colours for all */
+  gems: { key: string; name: string; hex: string }[];
+  abilities: { key: string; name: string; picture: string | null; effect: PaintCell | null; icon: PaintCell | null }[];
   /** the rest of the hero: his other effects, his icon and portrait, his body's textures */
   own: { effects: PaintCell | null; portrait: PaintCell | null; body: PaintCell | null };
   items: { name: string; cell: PaintCell }[];
+  /** layers on, of how many */
+  on: number;
+  total: number;
   /** the layers on, by name, for the line at the foot */
   summary: string;
   action: BuilderAction;
@@ -34,101 +41,80 @@ export interface PaintModalActions {
   toggle: (id: string) => void;
   color: (id: string, hex: string) => void;
   all: (hex: string) => void;
+  /** every layer on, or every layer off */
+  every: (on: boolean) => void;
   apply: () => void;
   getTool: () => void;
 }
 
-function Swatch({ color, label, onColor, id }: { color: string; label: string; onColor: (hex: string) => void; id?: string }) {
+function AllColor({ m, actions }: { m: PaintModalModel; actions: PaintModalActions }) {
+  const picked = m.gems.find((g) => g.hex.toLowerCase() === m.all.toLowerCase());
   return (
-    <label className="paint-swatch" style={{ '--c': color } as CSSProperties} title={label} id={id}>
-      <input type="color" value={color} aria-label={label} onInput={(e) => onColor(e.currentTarget.value)} />
-    </label>
-  );
-}
-
-function Cell({ cell, label, actions }: { cell: PaintCell; label: string; actions: PaintModalActions }) {
-  return (
-    <div className={`paint-cell ${cell.on ? 'on' : ''}`} data-layer={cell.id}>
-      <button className={`toggle sm ${cell.on ? 'on' : ''}`} role="switch" aria-checked={cell.on} aria-label={label} onClick={() => actions.toggle(cell.id)} />
-      <span className="paint-cell-label">{label}</span>
-      <Swatch color={cell.color} label={label} onColor={(hex) => actions.color(cell.id, hex)} />
+    <div className="paint-all">
+      <Swatch color={m.all} label={L`Цвет для всех включённых`} onColor={actions.all} id="paintAll" cls="lg" />
+      <div className="paint-all-text">
+        <div className="paint-all-title">{L`Цвет для всех включённых`}{picked && <span className="paint-gem-name">{picked.name}</span>}</div>
+        <div className="text-meta">{L`Потом любой слой можно перекрасить отдельно.`}</div>
+        {m.gems.length > 0 && (
+          <div className="arcana-gem-row paint-gems">
+            {m.gems.map((g) => (
+              <button key={g.key} className={`arcana-gem ${g === picked ? 'active' : ''}`} style={{ '--c': g.hex } as CSSProperties}
+                title={g.name} aria-label={g.name} onClick={() => actions.all(g.hex)} />
+            ))}
+          </div>
+        )}
+      </div>
+      <button className="btn btn-sm btn-ghost paint-every" onClick={() => actions.every(m.on < m.total)}>
+        <span className="ms">{m.on < m.total ? 'select_all' : 'deselect'}</span>{m.on < m.total ? L`Включить все` : L`Выключить все`}
+      </button>
     </div>
   );
 }
 
-function Group({ icon, title, children }: { icon: string; title: string; children: ReactNode }) {
-  return (
-    <>
-      <div className="section-h item-fx-head"><span className="ms">{icon}</span>{title}</div>
-      <div className="paint-rows">{children}</div>
-    </>
-  );
-}
-
 export function PaintModal({ m, actions }: { m: PaintModalModel; actions: PaintModalActions }) {
-  const count = m.abilities.reduce((n, a) => n + (a.effect ? 1 : 0) + (a.icon ? 1 : 0), 0) + (m.own.effects ? 1 : 0) + (m.own.portrait ? 1 : 0) + (m.own.body ? 1 : 0) + m.items.length;
   return (
     <div className="modal-body item-picker-body paint-body">
       <BuilderHead back={m.hero} onBack={actions.back} title={L`Перекраска`} onClose={actions.close}
-        sub={<><span>{L`свой цвет для каждой части героя`}</span><span>{`· ${count} ${plural(count, 'слой', 'слоя', 'слоёв')}`}</span></>} />
+        sub={<><span>{L`свой цвет для каждой части героя`}</span><span>{`· ${L`слоёв включено: ${m.on} из ${m.total}`}`}</span></>} />
 
-      <div className="paint-all">
-        <Swatch color={m.all} label={L`Цвет для всех включённых`} onColor={actions.all} id="paintAll" />
-        <div>
-          <div className="paint-all-title">{L`Цвет для всех включённых`}</div>
-          <div className="text-meta">{L`Потом любой слой можно перекрасить отдельно.`}</div>
-        </div>
-      </div>
+      <div className="paint-layout">
+        <HeroCard name={m.hero} picture={m.portrait} effects={m.own.effects} portrait={m.own.portrait} body={m.own.body} actions={actions} />
 
-      {m.abilities.length > 0 && (
-        <Group icon="bolt" title={L`Способности`}>
-          {m.abilities.map((a) => (
-            <div className="paint-row" key={a.name}>
-              <div className="paint-row-name" title={a.name}>{a.name}</div>
-              <div className="paint-row-cells">
-                {a.effect ? <Cell cell={a.effect} label={L`Эффект`} actions={actions} /> : <span className="paint-cell none">{L`Эффекта нет`}</span>}
-                {a.icon ? <Cell cell={a.icon} label={L`Иконка`} actions={actions} /> : <span className="paint-cell none">{L`Иконки нет`}</span>}
+        <div className="paint-main">
+          <AllColor m={m} actions={actions} />
+
+          {m.abilities.length > 0 && (
+            <section>
+              <div className="section-h item-fx-head"><span className="ms">bolt</span>{L`Способности`}</div>
+              <div className="paint-grid">
+                {m.abilities.map((a) => <AbilityTile key={a.key} name={a.name} picture={a.picture} effect={a.effect} icon={a.icon} actions={actions} />)}
               </div>
-            </div>
-          ))}
-        </Group>
-      )}
+            </section>
+          )}
 
-      {(m.own.effects || m.own.portrait || m.own.body) && (
-        <Group icon="person" title={L`Герой`}>
-          <div className="paint-row">
-            <div className="paint-row-name">{m.hero}</div>
-            <div className="paint-row-cells">
-              {m.own.effects && <Cell cell={m.own.effects} label={L`Атака и прочее`} actions={actions} />}
-              {m.own.portrait && <Cell cell={m.own.portrait} label={L`Иконка и портрет`} actions={actions} />}
-              {m.own.body && <Cell cell={m.own.body} label={L`Тело`} actions={actions} />}
+          {m.items.length > 0 && (
+            <section>
+              <div className="section-h item-fx-head"><span className="ms">checkroom</span>{L`Предметы`}</div>
+              <div className="paint-grid">
+                {m.items.map((it) => <ItemTile key={it.cell.id} name={it.name} cell={it.cell} actions={actions} />)}
+              </div>
+            </section>
+          )}
+
+          {!m.vrf && (
+            <div className="paint-tool">
+              <span className="text-meta">{L`Иконки и тело почти все сжаты: их читает ValveResourceFormat, его нужно один раз скачать. Собирает их компилятор Valve из Dota 2 Workshop Tools. Без него они останутся как в игре.`}</span>
+              <button className="btn btn-sm" id="paintToolBtn" disabled={m.gettingTool} onClick={actions.getTool}>
+                <span className="ms">{m.gettingTool ? 'progress_activity' : 'download'}</span>{L`Скачать ValveResourceFormat`}
+              </button>
             </div>
+          )}
+          <div className="modal-note">
+            {L`Цвет берут частицы, где он записан числом. Часть эффектов красит текстура: они останутся как в игре. Тело красится целиком, кожа тоже.`}
           </div>
-        </Group>
-      )}
-
-      {m.items.length > 0 && (
-        <Group icon="checkroom" title={L`Предметы`}>
-          {m.items.map((it) => (
-            <div className="paint-row" key={it.cell.id}>
-              <div className="paint-row-name" title={it.name}>{it.name}</div>
-              <div className="paint-row-cells"><Cell cell={it.cell} label={L`Эффект`} actions={actions} /></div>
-            </div>
-          ))}
-        </Group>
-      )}
-
-      {!m.vrf && (
-        <div className="paint-tool">
-          <span className="text-meta">{L`Иконки и тело почти все сжаты: их читает ValveResourceFormat, его нужно один раз скачать. Собирает их компилятор Valve из Dota 2 Workshop Tools. Без него они останутся как в игре.`}</span>
-          <button className="btn btn-sm" id="paintToolBtn" disabled={m.gettingTool} onClick={actions.getTool}>
-            <span className="ms">{m.gettingTool ? 'progress_activity' : 'download'}</span>{L`Скачать ValveResourceFormat`}
-          </button>
         </div>
-      )}
-      <div className="modal-note">
-        {L`Цвет берут частицы, где он записан числом. Часть эффектов красит текстура: они останутся как в игре. Тело красится целиком, кожа тоже.`}
       </div>
+
       <div className="item-picker-foot" id="paintFoot">
         <BuilderFoot action={m.busy ? { label: L`Собираю…`, icon: 'progress_activity', off: true } : m.action} onApply={actions.apply}
           summary={m.summary || L`Ни один слой не включён`} />

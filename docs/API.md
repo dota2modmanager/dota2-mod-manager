@@ -73,6 +73,7 @@ the code, not in this page.
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/hero-paint-service.ts`](#srchero-paint-servicets) | A hero recoloured part by part, as one record in My mods (issue #422; what the parts are is |
 | [`src/hero-preview.ts`](#srchero-previewts) | The models of a hero as the item builder dresses it, for the 3D preview in the hero's window |
+| [`src/hero-showcase.ts`](#srchero-showcasets) | How the game stages a hero on its loadout, for the 3D preview (issue #417), out of the game's |
 | [`src/hud-scale-service.ts`](#srchud-scale-servicets) | The in-game HUD made smaller or larger, as a record in My mods (issue #420; the CSS is |
 | [`src/hud-scale.ts`](#srchud-scalets) | The in-game HUD made smaller or larger (issue #420): the stylesheet that lays the HUD out, |
 | [`src/i18n-en.ts`](#srci18n-ents) | Native dialogs, errors and labels in English, keyed by the exact Russian source string. |
@@ -92,11 +93,13 @@ the code, not in this page.
 | [`src/installer.ts`](#srcinstallerts) | The installer: everything that writes a mod into the game folder or takes it out again. The |
 | [`src/ipc.ts`](#srcipcts) | Every IPC module, registered in one place over the context src/main.ts builds. A new |
 | [`src/item-builder-assets.ts`](#srcitem-builder-assetsts) | What an item builder pick needs beyond its block in items_game: the game's files it puts under |
+| [`src/item-builder-details.ts`](#srcitem-builder-detailsts) | What the item builder's window shows beside the items, out of the game's own files: each hero's |
 | [`src/item-builder-donor.ts`](#srcitem-builder-donorts) | Another item's effect on the one worn (issue #383): a hat the user likes, with the particles of |
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
 | [`src/item-builder-everyone.ts`](#srcitem-builder-everyonets) | Everybody playing a hero wears the user's look for it, not only the user. |
 | [`src/item-builder-personas.ts`](#srcitem-builder-personasts) | Personas in the item builder: a hero's second look, with slots and items of its own. |
 | [`src/item-builder-refits.ts`](#srcitem-builder-refitsts) | Refits: an item's model made again to fit a body another item gives the hero. Faceless Void's |
+| [`src/item-builder-sets.ts`](#srcitem-builder-setsts) | The item builder's sets: what a set of the game's puts on, and what the game says about it |
 | [`src/item-builder-slots.ts`](#srcitem-builder-slotsts) | The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit |
 | [`src/item-builder-styles.ts`](#srcitem-builder-stylests) | An item's styles in the item builder: which ones it has, and its visuals with one of them made |
 | [`src/item-builder-unusual.ts`](#srcitem-builder-unusualts) | The game's unusual and ethereal effects on any item (issue #393): Ethereal Flame, Sunfire, the |
@@ -123,6 +126,7 @@ the code, not in this page.
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
 | [`src/model-glb.ts`](#srcmodel-glbts) | Models out of the installed game as glTF, for a 3D preview of a hero in the chosen items (issue #417). |
+| [`src/model-loadout.ts`](#srcmodel-loadoutts) | The animation a hero plays on the game's loadout screen, for the 3D preview (issue #417). |
 | [`src/model-scale.ts`](#srcmodel-scalets) | A compiled model made bigger about its origin, and how much bigger one model is than another. |
 | [`src/model-sequences.ts`](#srcmodel-sequencests) | A model put under another model's path that numbers its sequences as that one does. |
 | [`src/model-skin.ts`](#srcmodel-skints) | A model with one of its material sets made the one it wears by default. |
@@ -135,6 +139,7 @@ the code, not in this page.
 | [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts |
 | [`src/overlays-cursor.ts`](#srcoverlays-cursorts) | Cursor sets (src/overlays.ts is the door for fonts and cursors). |
 | [`src/overlays.ts`](#srcoverlaysts) | Fonts and cursors: loose files written over the game's own. |
+| [`src/particle-spec.ts`](#srcparticle-spects) | The particles an item or a hero shows on its loadout, read out of the game for the 3D preview |
 | [`src/patch-watch.ts`](#srcpatch-watchts) | Noticing that Dota was patched, while the app is open. |
 | [`src/patcher-gameinfo.ts`](#srcpatcher-gameinfots) | The two gameinfo files (src/patcher.ts explains the patch): the SearchPaths block read out of |
 | [`src/patcher-signatures.ts`](#srcpatcher-signaturests) | The signature list, dota.signatures (src/patcher.ts explains the patch): the hashes the client |
@@ -3499,13 +3504,107 @@ export type HeroModels =
 
 What the window gets: each model's bytes, or why there are none.
 
+### `entityModel`
+
+```ts
+export function entityModel(block: string, hero: string): string | null
+```
+
+The body an item's "entity_model" modifier puts the hero in: a persona's, which the item's own
+copies leave out because a persona goes on through its base (src/item-builder-personas.ts).
+
 ### `createHeroPreview`
 
 ```ts
-export function createHeroPreview({ glb, library, gamePath, vanilla, log = () => {} }: { glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'>; library: Pick<Library, 'list'>; gamePath: () => string | null; vanilla: () => string; log?: (msg: string) => void; })
+export function createHeroPreview({ glb, library, gamePath, vanilla, log = () => {} }: { glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'> & Partial<Pick<ReturnType<typeof createModelGlb>, 'sprites'>>; library: Pick<Library, 'list'>; gamePath: () => string | null; vanilla: () => string; log?: (msg: string) => void; })
 ```
 
 The 3D preview's models, made on demand.
+
+## src/hero-showcase.ts
+
+How the game stages a hero on its loadout, for the 3D preview (issue #417), out of the game's
+own files rather than tuned by eye:
+
+ - the camera is panorama/layout/models/loadout/loadout_camera.vmdl's "loadout_camera_fullbody":
+   straight in front of the hero, 668 units out and 80 up, looking level (read out of the model on
+   2026-11-05; it is one keyframe, so it is written here);
+ - the hero stands at the origin at its script's LoadoutScale (Juggernaut 0.85, Pudge 0.98);
+ - its light, ambient, background colour and pedestal are its entry in
+   scripts/npc/portraits_showcase.txt, where an arcana's own model has an entry of its own.
+
+Positions and directions go to the window in the GLB's space: the toolchain turns Source's
+(x forward, y left, z up, inches) into (y, z, x) metres, which is why a hero faces +Z there.
+
+### `LOADOUT_CAMERA`
+
+```ts
+export const LOADOUT_CAMERA = { x: 668.17529, y: 0, z: 79.86814 }
+```
+
+The loadout camera, in Source units: loadout_camera_fullbody's one keyframe.
+
+### `Vec3`
+
+```ts
+export type Vec3 = [number, number, number]
+```
+
+A point or a direction, in Source's axes or the GLB's as the name using it says.
+
+### `Rgb`
+
+```ts
+export type Rgb = [number, number, number]
+```
+
+A linear colour, 1 being the game's 255.
+
+### `HeroStage`
+
+```ts
+export interface HeroStage
+```
+
+What the window stages the hero with. Colours are linear, 1 is the game's 255.
+
+### `toGlb`
+
+```ts
+export const toGlb = ([x, y, z]: Vec3, scale = 1): Vec3 => [y * scale, z * scale, x * scale]
+```
+
+A point or direction in Source's axes, in the GLB's.
+
+### `forward`
+
+```ts
+export function forward(angles: Vec3): Vec3
+```
+
+The way Source angles (pitch down, yaw, roll) look.
+
+### `showcaseEntry`
+
+```ts
+export function showcaseEntry(text: string, keys: string[]): Map<string, string> | null
+```
+
+The fields of the first of `keys` that portraits_showcase.txt has an entry for, or null.
+
+### `heroStage`
+
+```ts
+export function heroStage(showcase: string | null, script: string | null, keys: string[]): HeroStage
+```
+
+The stage for a hero.
+
+```
+@param showcase  portraits_showcase.txt, or null when the game has none
+@param script    the hero's script, for its LoadoutScale
+@param keys      the entries to look for, the most particular first: the body's model, then the hero
+```
 
 ## src/hud-scale-service.ts
 
@@ -4746,6 +4845,74 @@ Read compiled asset bytes out of pak01 and stage them under the renamed path in 
 Juggernaut's arcana body made the plain hero's is a quarter of a second for a file thrown away
 ```
 
+## src/item-builder-details.ts
+
+What the item builder's window shows beside the items, out of the game's own files: each hero's
+main attribute, which puts the heroes in the order the game's own hero grid has them (strength,
+agility, intelligence, universal), and a set's rarity, date, event and styles in the player's
+language (issue #526).
+
+### `HeroAttribute`
+
+```ts
+export type HeroAttribute = 'str' | 'agi' | 'int' | 'all'
+```
+
+A hero's main attribute as the game's hero grid groups them.
+
+### `heroAttributesSteps`
+
+```ts
+export function* heroAttributesSteps(index: Pick<VpkIndex, 'read'>, ids: string[]): Generator<typeof PAUSE, Record<string, HeroAttribute>>
+```
+
+Each hero's main attribute, out of its script in the game's archive
+(scripts/npc/heroes/npc_dota_hero_<id>.txt, "AttributePrimary"). A pause every sixteen heroes:
+the 128 reads are a few milliseconds each on a cold disk. A hero whose script is missing is left
+out, and the window puts it after the four groups.
+
+```
+@param ids  hero ids without the npc_dota_hero_ prefix
+```
+
+### `itemFacts`
+
+```ts
+export function itemFacts(block: string): { rarity?: string; date?: string }
+```
+
+An item's rarity key ("mythical") and the day it came out ("2021-09-01"), out of its block, for
+the item builder's cards: each left out when the block does not say.
+
+### `eventName`
+
+```ts
+export function eventName(id: string): string
+```
+
+An event id as a person reads it: "EVENT_ID_FALL_2021" is "Fall 2021", "EVENT_ID_INTERNATIONAL_2019"
+"The International 2019". The game names its events only in pictures and store banners, so the
+id is all there is to go on. A bare number and "EVENT_ID_NONE" are no event.
+
+### `SetDetails`
+
+```ts
+export type SetDetails = ItemSet & { title: string; rarityName: string; eventName: string; description: string; styleNames: string[] }
+```
+
+A set as the window shows it: its name, rarity and description in the player's language, its event, and its styles' names.
+
+### `setDetails`
+
+```ts
+export function setDetails(sets: ItemSet[], named: (token: string) => string, stylesOf: (itemId: string) => string[] | undefined): SetDetails[]
+```
+
+```
+@param named  the game's localization: a token's text, '' for one it lacks (cosmetic-names.ts styleNamer)
+@param stylesOf  an item's style names in the player's language, by its id, for the items that have more than one
+```
+
 ## src/item-builder-donor.ts
 
 Another item's effect on the one worn (issue #383): a hat the user likes, with the particles of
@@ -4819,7 +4986,9 @@ the credits of the program it goes into.
 export type ItemEffect = { id: string; name: string; type: string; modifier: string }
 ```
 
-An effect the builder can add to an item: a particle it creates.
+An effect the builder can add to an item: a particle it creates. Its name is the game's own
+English one in every language, as players look effects up by it ("Frostbloom"); the four the
+game names are its Attrib_Particle96, 163, 826 and 828, the other three are courier ambients.
 
 ### `ITEM_EFFECTS`
 
@@ -5112,6 +5281,57 @@ pick. The arcana's refit of the stock bracers is for when no bracers are picked.
 @param picks  each pick's patch, and the stock path its own model goes under as entryPath writes it
 ```
 
+## src/item-builder-sets.ts
+
+The item builder's sets: what a set of the game's puts on, and what the game says about it
+(rarity, release date, event). Out of src/item-builder-slots.ts when that file reached its
+budget; callers import it through src/item-builder.ts.
+
+Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
+(https://github.com/TheFleece).
+Copyright (C) 2026 h6rd
+Copyright (C) 2026 TheFleece
+SPDX-License-Identifier: GPL-3.0-or-later
+The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
+the credits of the program it goes into.
+
+### `ItemSet`
+
+```ts
+export interface ItemSet
+```
+
+A set, as the builder puts it on; see itemSets. What the game says about it comes as it is in
+the table: `rarity` a key of its "rarities" ("mythical"), `date` as "2021-08-18", `event` an
+event id ("EVENT_ID_FALL_2021"), and the name and description as localization tokens. `styles`
+is the most looks any of its pieces has, 1 for none.
+
+### `itemSets`
+
+```ts
+export function itemSets(text: string, slots: Pick<ItemSlot, 'slot' | 'slotLabel' | 'options' | 'persona'>[] = itemSlots(text)): ItemSet[]
+```
+
+A hero's sets as the builder puts them on: every wearable of the set that has a slot in the
+builder, in one write (schema-service pickSet).
+
+A set used to be one more slot, "bundle", put on as if it were one item. It is several, with
+no stock item to stand in for, so on the game of 2026-09-24 1760 of its 1971 choices did not
+build and the other 211 put a model-less block over whichever stock item came first.
+
+Only hero items are listed. A set's loading screen, cursor, HUD, ward, announcer or taunt
+has a tab of its own or is not the app's to set, and nobody puts one on with a set. A hero
+item the builder leaves alone (a persona) is listed as not fitting, with why: it
+is part of what the set looks like. A set with nothing to put on is left out, and so is a store
+bundle of several sets ("Bounty Hunter's Big Bundle": 22 items, 7 slots): more of its pieces
+want a taken slot than fit, and the first of each would dress the hero in a mix of sets that
+are each listed on their own anyway. Valve's "DO NOT USE" is left out as well.
+
+```
+@param text  items_game
+@param slots  itemSlots(text), when the caller has it already
+```
+
 ## src/item-builder-slots.ts
 
 The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit
@@ -5134,14 +5354,6 @@ export interface ItemSlot
 
 A slot of a hero the builder can dress, and the paid items that fit it.
 
-### `ItemSet`
-
-```ts
-export interface ItemSet { id: string; name: string; heroIds: string[]; fit: number; heroLabel: string; pieces: SetPiece[] }
-```
-
-A set, as the builder puts it on; see itemSets.
-
 ### `AssetCopy`
 
 ```ts
@@ -5153,6 +5365,14 @@ picture the game has in some of its folders only) is left out when the game has 
 names the hero instead of a path: where its model lives is in the hero's script, which the
 table does not say, and it goes in with the item's activity modifiers taken off (arcana.ts asModel).
 A summon's (forged spirits) names its unit, and is numbered as the plain model (model-sequences.ts).
+
+### `canonicalHeroId`
+
+```ts
+export function canonicalHeroId(hero: unknown): string
+```
+
+A hero id as the builder keys its slots: no npc_dota_hero_ prefix, lower case, Io as the table names it (wisp).
 
 ### `canonicalItemSlot`
 
@@ -5231,32 +5451,6 @@ export function* itemSlotsSteps(text: string): Generator<typeof PAUSE, ItemSlot[
 ```
 
 itemSlots, a pause every couple of thousand items: the table's 26 000 are a quarter of a second.
-
-### `itemSets`
-
-```ts
-export function itemSets(text: string, slots: Pick<ItemSlot, 'slot' | 'slotLabel' | 'options' | 'persona'>[] = itemSlots(text)): ItemSet[]
-```
-
-A hero's sets as the builder puts them on: every wearable of the set that has a slot in the
-builder, in one write (schema-service pickSet).
-
-A set used to be one more slot, "bundle", put on as if it were one item. It is several, with
-no stock item to stand in for, so on the game of 2026-09-24 1760 of its 1971 choices did not
-build and the other 211 put a model-less block over whichever stock item came first.
-
-Only hero items are listed. A set's loading screen, cursor, HUD, ward, announcer or taunt
-has a tab of its own or is not the app's to set, and nobody puts one on with a set. A hero
-item the builder leaves alone (a persona) is listed as not fitting, with why: it
-is part of what the set looks like. A set with nothing to put on is left out, and so is a store
-bundle of several sets ("Bounty Hunter's Big Bundle": 22 items, 7 slots): more of its pieces
-want a taken slot than fit, and the first of each would dress the hero in a mix of sets that
-are each listed on their own anyway. Valve's "DO NOT USE" is left out as well.
-
-```
-@param text  items_game
-@param slots  itemSlots(text), when the caller has it already
-```
 
 ### `itemOptions`
 
@@ -5404,7 +5598,7 @@ game draws the wearable where the stock item was. An arcana that swaps the whole
 hero model too, under the plain hero's. src/schema-service.ts applies it along with
 the rest of the free cosmetics; src/schema.ts reads and merges the table.
 
-What the builder offers (slots, sets, effects) is src/item-builder-slots.ts, re-exported here;
+What the builder offers (slots, sets, effects) is src/item-builder-slots.ts and src/item-builder-sets.ts, re-exported here;
 this file is what a pick writes.
 
 Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
@@ -5415,7 +5609,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
 the credits of the program it goes into.
 
-Hands on from [`src/item-builder-slots.ts`](#srcitem-builder-slotsts): `itemSlots`, `itemSlotsSteps`, `itemSets`, `itemOptions`, `ItemSlot`, `ItemSet`, `AssetCopy`.
+Hands on from [`src/item-builder-slots.ts`](#srcitem-builder-slotsts): `itemSlots`, `itemSlotsSteps`, `itemOptions`, `ItemSlot`, `AssetCopy`.
+
+Hands on from [`src/item-builder-sets.ts`](#srcitem-builder-setsts): `itemSets`, `ItemSet`.
 
 Hands on from [`src/item-builder-effects.ts`](#srcitem-builder-effectsts): `itemEffects`.
 
@@ -6862,6 +7058,14 @@ export function exportArgs(pakFile: string, out: string, files: string[], clips:
 
 The toolchain's arguments for these models out of this archive into this folder.
 
+### `spriteAt`
+
+```ts
+export function spriteAt(root: string, texture: string): string | null
+```
+
+Where a texture's picture landed: the file itself, or the largest frame of its sheet.
+
 ### `createModelGlb`
 
 ```ts
@@ -6869,6 +7073,64 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
 ```
 
 GLB files of the game's models, made on demand and kept per game build.
+
+## src/model-loadout.ts
+
+The animation a hero plays on the game's loadout screen, for the 3D preview (issue #417).
+
+A hero's model lists its sequences in its ASEQ block, each with the activities it answers to: the
+first is an ACT_ name, the rest are modifiers an item can switch on. The loadout plays the
+sequence for ACT_DOTA_LOADOUT; the names differ per hero (Abaddon's loadout_anim, Juggernaut's
+loadout_default_anim, Pudge's pudge_loadout), so they are read out of the model, not guessed.
+
+An item can bring its own: Pudge's Dragonclaw Hook plays pudge_loadout under "whalehook". The
+sequence picked is the one whose modifiers are all among the items worn, with the most of them;
+with none worn, the plain one with no modifier at all. ACT_DOTA_LOADOUT_STATUE is a still pose
+for statues and is not the loadout.
+
+### `Sequence`
+
+```ts
+export interface Sequence { name: string; acts: string[] }
+```
+
+A sequence's name and every activity it answers to, the ACT_ one and its modifiers.
+
+### `modelSequences`
+
+```ts
+export function modelSequences(model: Buffer | null): Sequence[]
+```
+
+The model's sequences, or none when the file has no sequence block or one this reader cannot take.
+
+### `idleSequence`
+
+```ts
+export function idleSequence(seqs: Sequence[]): string | null
+```
+
+The plain idle: the sequence named "idle", else an idle with no modifier ("arcana_idle_anim").
+
+### `loadoutSequence`
+
+```ts
+export function loadoutSequence(seqs: Sequence[], modifiers: string[] = []): string | null
+```
+
+The loadout sequence for what the hero wears, or null for a model that has none.
+
+```
+@param modifiers  the activity modifiers of the items worn, as items_game names them
+```
+
+### `itemActivities`
+
+```ts
+export function itemActivities(block: string): string[]
+```
+
+The activity modifiers an item's visuals switch on: Dragonclaw Hook's "whalehook".
 
 ## src/model-scale.ts
 
@@ -7533,6 +7795,94 @@ export class Overlays
 ```
 
 The font and cursor files of one install: writing them, keeping the originals, putting them back.
+
+## src/particle-spec.ts
+
+The particles an item or a hero shows on its loadout, read out of the game for the 3D preview
+(issue #417), and the attachment points they hang on.
+
+A particle system (.vpcf_c) is a KV3 tree: emitters, initializers, operators, renderers, the
+control points and what drives them, and child systems. The window plays an approximation of a
+few dozen of the commonest of those (renderer/catalog/preview3d/particles.ts), so this hands it
+the tree as plain JSON, children inlined, without interpreting it. A model's attachments
+(attach_sword, attach_hitloc) are in its MDAT blocks: a bone, an offset and a turn from it.
+
+Which systems: an item's "particle_create" asset modifiers for its first style, the ones the
+game spawns only on the loadout included, the team-only ones for Radiant; and the hero's own
+RenderablePortrait "loadout" particles, which the game plays as the loadout opens.
+
+### `Json`
+
+```ts
+export type Json = null | boolean | number | string | Json[] | { [k: string]: Json }
+```
+
+A KV3 value as plain JSON, as the window gets it over IPC.
+
+### `ParticleDef`
+
+```ts
+export interface ParticleDef { path: string; tree: { [k: string]: Json }; children: ParticleDef[] }
+```
+
+A system with its children, as the window plays it.
+
+### `Attachment`
+
+```ts
+export interface Attachment { name: string; bone: string; offset: [number, number, number]; rotation: [number, number, number, number] }
+```
+
+An attachment point: the bone it follows, and where it sits from it in the bone's own space (Source units).
+
+### `kvJson`
+
+```ts
+export function kvJson(kv: Kv3Block, n: Kv3Node | undefined): Json
+```
+
+A KV3 node as plain JSON.
+
+### `particleDef`
+
+```ts
+export function particleDef(read: (path: string) => Buffer | null, path: string, budget = { left: 24 }, depth = 0): ParticleDef | null
+```
+
+A system and its children, at most `budget` systems in all: a system with dozens of children
+would cost the window more than its look is worth.
+
+### `particleTextures`
+
+```ts
+export function particleTextures(def: ParticleDef): string[]
+```
+
+Every texture a system and its children draw with, once each.
+
+### `itemParticles`
+
+```ts
+export function itemParticles(block: string): string[]
+```
+
+The particle_create systems an item block brings, for its first style.
+
+### `heroLoadoutParticles`
+
+```ts
+export function heroLoadoutParticles(script: string): string[]
+```
+
+The hero's own loadout particles, out of its script's RenderablePortrait block.
+
+### `modelAttachments`
+
+```ts
+export function modelAttachments(model: Buffer | null): Attachment[]
+```
+
+A model's attachment points.
 
 ## src/patch-watch.ts
 
@@ -9506,10 +9856,10 @@ picks that used to live in settings.json. A pick is a library record like any ot
 ### `CosmeticSlots`
 
 ```ts
-export type CosmeticSlots = { slots: CosmeticSlot[]; sets: ItemSet[]; names?: Record<string, string>; error?: string }
+export type CosmeticSlots =
 ```
 
-What the window is told about the free looks and the item builder (cosmeticSlots).
+`heroAttrs`: each hero's main attribute by its id without the prefix, for the order of the game's hero grid.
 
 ### `CosmeticSlot`
 

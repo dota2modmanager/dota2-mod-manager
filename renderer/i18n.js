@@ -36,6 +36,8 @@ window.EN_PLURAL = {
   'наборов': ['set', 'sets'],
   'деталей': ['piece', 'pieces'],
   'видов': ['look', 'looks'],
+  'предметов': ['item', 'items'],
+  'образов': ['look', 'looks'],
 };
 
 const EN = {
@@ -914,7 +916,7 @@ const EN = {
   'Иконки и тело почти все сжаты: их читает ValveResourceFormat, его нужно один раз скачать. Собирает их компилятор Valve из Dota 2 Workshop Tools. Без него они останутся как в игре.': 'Nearly all icons and the body are compressed. ValveResourceFormat reads them, so download it once. Valve’s compiler from Dota 2 Workshop Tools builds them again. Without it they stay as the game has them.', 'Тело': 'Body', 'тело': 'body',
   // ---------- a hero recoloured part by part (catalog/paint) ----------
   'Свой цвет для способностей, иконок и предметов': 'Your own colour for abilities, icons and items', 'Перекраска': 'Recolor',
-  'свой цвет для каждой части героя': 'a colour of your own for each part of the hero', 'Цвет для всех включённых': 'One colour for every layer on', 'Потом любой слой можно перекрасить отдельно.': 'Any layer can then take a colour of its own.',
+  'слоёв включено: {0} из {1}': 'layers on: {0} of {1}', 'свой цвет для каждой части героя': 'a colour of your own for each part of the hero', 'Цвет для всех включённых': 'One colour for every layer on', 'Потом любой слой можно перекрасить отдельно.': 'Any layer can then take a colour of its own.',
   'Способности': 'Abilities', 'Эффект': 'Effect', 'Иконка': 'Icon',
   'Эффекта нет': 'No effect', 'Иконки нет': 'No icon', 
   'Атака и прочее': 'Attack and the rest', 'Иконка и портрет': 'Icon and portrait', 

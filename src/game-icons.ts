@@ -32,6 +32,8 @@ import { folderSize } from './folder-size.ts';
 
 // Enough to fill a screen of tiles in one go; the renderer asks in batches of 24.
 const MAX_PER_CALL = 60;
+/** The picture the game gives an item it has none for: the empty slot. */
+const STAND_IN = /(^|\/)testitem_slot_empty$/i;
 
 const safeName = (imagePath: string) => `${crypto.createHash('sha1').update(imagePath).digest('hex').slice(0, 16)}.png`;
 
@@ -61,8 +63,15 @@ export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () 
     try {
       const { text } = schema.readGameSchema(game);
       const map = new Map<string, string>();
-      for (const item of schema.listItems(text)) {
-        if (item.image && item.name) map.set(item.name, item.image);
+      const items = schema.listItems(text);
+      for (const item of items) {
+        if (item.image && item.name && !STAND_IN.test(item.image)) map.set(item.name, item.image);
+      }
+      // a set the game shows with the empty slot's picture (Witch Rylai, a vote-only set) shows its first piece's
+      for (const item of items) {
+        if (!item.name || map.has(item.name) || !item.bundleItems.length) continue;
+        const piece = item.bundleItems.map((n) => map.get(n)).find(Boolean);
+        if (piece) map.set(item.name, piece);
       }
       index = map;
       indexStamp = stamp;
@@ -222,25 +231,47 @@ export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () 
    * it, the portrait from hero selection, which is a PNG for 116 of them. The eight left (the
    * newest heroes) keep their glyph. Both go into the same cache as item pictures.
    * @param ids  hero ids without the npc_dota_hero_ prefix, e.g. "antimage"
+   * @param tall  the hero selection portrait first, for the builder's grid laid out like the game's
    * @returns the ones a picture was found for
    */
-  async function heroPortraits(ids: unknown[]): Promise<Record<string, string>> {
+  async function heroPortraits(ids: unknown[], tall = false): Promise<Record<string, string>> {
     const out: Record<string, string> = {};
     if (!ready()) return out;
     // names, never paths: they go into one
     const valid = [...new Set(ids)].filter((id): id is string => typeof id === 'string' && /^[a-z0-9_]+$/.test(id));
     const wide = (id: string) => `heroes/npc_dota_hero_${id}`;
-    const tall = (id: string) => `heroes/selection/npc_dota_hero_${id}`;
+    const upright = (id: string) => `heroes/selection/npc_dota_hero_${id}`;
     const cached = (imagePath: string) => fs.existsSync(cacheFile(imagePath));
-    await extract(valid.map(wide).filter((p) => !cached(p)));
-    takeReadyMade(valid.filter((id) => !cached(wide(id))).map(tall).filter((p) => !cached(p)));
+    if (tall) takeReadyMade(valid.map(upright).filter((p) => !cached(p)));
+    await extract(valid.filter((id) => !tall || !cached(upright(id))).map(wide).filter((p) => !cached(p)));
+    if (!tall) takeReadyMade(valid.filter((id) => !cached(wide(id))).map(upright).filter((p) => !cached(p)));
     for (const id of valid) {
-      const hit = [wide(id), tall(id)].find(cached);
+      const hit = (tall ? [upright(id), wide(id)] : [wide(id), upright(id)]).find(cached);
       if (hit) out[id] = `data:image/png;base64,${fs.readFileSync(cacheFile(hit)).toString('base64')}`;
     }
     return out;
   }
 
-  return { ready, getMany, heroPortraits, size, clear, root };
+  /**
+   * Abilities' icons out of the installed game, as data URIs, for the window that recolours a hero:
+   * the picture is what the colour is seen on. Most are block-compressed, so without the toolchain
+   * only the few stored as a PNG come back.
+   * @param names  ability names as the game writes them, e.g. "crystal_maiden_crystal_nova"
+   */
+  async function abilityIcons(names: unknown[]): Promise<Record<string, string>> {
+    const out: Record<string, string> = {};
+    if (!ready()) return out;
+    const valid = [...new Set(names)].filter((n): n is string => typeof n === 'string' && /^[a-z0-9_]+$/.test(n));
+    const icon = (n: string) => `spellicons/${n}`;
+    const missing = valid.map(icon).filter((p) => !fs.existsSync(cacheFile(p)));
+    await extract(missing);
+    for (const n of valid) {
+      const file = cacheFile(icon(n));
+      if (fs.existsSync(file)) out[n] = `data:image/png;base64,${fs.readFileSync(file).toString('base64')}`;
+    }
+    return out;
+  }
+
+  return { ready, getMany, heroPortraits, abilityIcons, size, clear, root };
 }
 

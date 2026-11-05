@@ -1,0 +1,342 @@
+/* ============ The item builder: hub and the hero's window ============
+   The hub is the game's hero grid: four columns of upright portraits, side by side. The hero's
+   window is the game's loadout: the hero on the left, its slots down the middle, a grid on the
+   right, and it keeps one size: only the grid scrolls. */
+
+/* ---------- hub: four columns, as the game's hero grid has them ---------- */
+.hub-columns {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+@media (max-width: 1100px) { .hub-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.hub-group[data-attr="str"], .wardrobe[data-attr="str"] { --attr: var(--attr-str); }
+.hub-group[data-attr="agi"], .wardrobe[data-attr="agi"] { --attr: var(--attr-agi); }
+.hub-group[data-attr="int"], .wardrobe[data-attr="int"] { --attr: var(--attr-int); }
+.hub-group[data-attr="all"], .wardrobe[data-attr="all"] { --attr: var(--attr-all); }
+/* a hero the game did not say the attribute of comes after the four, across the whole width */
+.hub-group[data-attr="other"] { grid-column: 1 / -1; }
+.hub-group-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-head);
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+}
+.hub-attr {
+  flex-shrink: 0;
+  width: var(--space-3);
+  height: var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--attr, var(--text-faint));
+  box-shadow: 0 0 var(--space-2) color-mix(in srgb, var(--attr, transparent) 60%, transparent);
+}
+.hub-group-count {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-faint);
+}
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: var(--space-1);
+}
+/* upright, as hero selection draws them; the name only on hover, where it does not cover the grid */
+.hero-tile.hub-tile { aspect-ratio: 2 / 3; border-radius: var(--radius-xs); }
+.hub-tile .hero-art img { object-position: center top; }
+.hub-tile .hero-name {
+  padding: var(--space-3) var(--space-1) var(--space-1);
+  font-size: var(--text-xs);
+  text-align: center;
+  white-space: normal;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
+.hub-tile:hover .hero-name, .hub-tile:focus-visible .hero-name { opacity: 1; }
+.hub-tile .hero-installed { top: var(--space-px); left: var(--space-px); font-size: var(--icon-sm); }
+.hub-tile.installed { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--installed) 70%, transparent); }
+
+/* ---------- the hero's window: one size, three columns ---------- */
+.modal-content.wardrobe-modal {
+  width: min(1360px, calc(96vw / var(--content-zoom)));
+  height: calc(92vh / var(--content-zoom));
+  max-height: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.modal-body.wardrobe {
+  flex: 1;
+  min-height: 0;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5) 0;
+}
+.ward-head { display: flex; align-items: center; gap: var(--space-3); min-height: var(--hit-min); }
+.ward-head .modal-title { flex: 0 1 auto; font-size: var(--text-lg); }
+.ward-head .hub-attr { width: var(--space-2); height: var(--space-2); }
+.ward-state { font-size: var(--text-sm); color: var(--text-faint); }
+.ward-head .modal-close { position: static; margin-left: auto; }
+.ward-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(240px, 420px) 248px minmax(0, 1fr);
+  gap: var(--space-4);
+}
+@media (max-width: 1100px) { .ward-body { grid-template-columns: 0 220px minmax(0, 1fr); gap: 0 var(--space-3); } .ward-stage { visibility: hidden; } }
+
+/* the hero, left: the portrait over the colour of its attribute, or the 3D view */
+.ward-stage { display: flex; flex-direction: column; gap: var(--space-2); min-height: 0; padding-bottom: var(--space-4); }
+.ward-portrait {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 90%, color-mix(in srgb, var(--attr, var(--primary)) 22%, var(--surface-hover)), var(--bg-deep) 75%);
+  color: var(--text-faint);
+}
+/* the game's selection portrait is small: drawn near its own size rather than blown up */
+.ward-portrait img { width: min(70%, 200px); height: auto; border-radius: var(--radius-sm); box-shadow: var(--shadow-3); display: block; }
+.ward-portrait .ms { font-size: var(--icon-xl); }
+.ward-stage .preview3d { flex: 1; height: auto; min-height: 0; margin-top: 0; display: flex; }
+.ward-stage .preview3d .ward-portrait { position: relative; z-index: 1; }
+.ward-stage-tools { display: flex; gap: var(--space-2); }
+.ward-stage-tools .preview3d-toggle { margin: 0; }
+.ward-stage-tools .btn { flex: 1; justify-content: center; }
+.ward-reset { justify-content: center; }
+
+/* the tabs, middle: the sets, each slot with what is on it, the saved looks */
+.ward-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-px);
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: var(--space-4);
+}
+.ward-rail-sep { flex-shrink: 0; height: 1px; margin: var(--space-1) var(--space-2); background: var(--border); }
+.ward-rail-row { position: relative; flex-shrink: 0; }
+.ward-rail-tab {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+.ward-rail-tab:hover { background: var(--state-hover); }
+.ward-rail-tab:focus-visible { outline: none; box-shadow: var(--focus-ring-inset); }
+.ward-rail-tab.active { background: var(--state-selected); box-shadow: inset 3px 0 0 var(--primary); }
+.ward-thumb {
+  flex-shrink: 0;
+  width: 56px;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+}
+.ward-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ward-thumb .noimg, .ward-thumb-icon { color: var(--text-faint); display: grid; place-items: center; }
+.ward-thumb .ms { font-size: var(--icon-md); }
+.ward-rail-row.on .ward-thumb { box-shadow: inset 0 -2px 0 var(--installed); }
+.ward-rail-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-px); }
+.ward-rail-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+.ward-rail-sub { font-size: var(--text-xs); color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ward-rail-row.on .ward-rail-sub { color: var(--text-muted); }
+/* the row's take-off: in reach of the row it clears, quiet until the row is pointed at */
+.ward-off {
+  position: absolute;
+  top: 50%;
+  right: var(--space-1);
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface-solid);
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+}
+.ward-off .ms { font-size: var(--icon-sm); }
+.ward-rail-row:hover .ward-off, .ward-off:focus-visible { opacity: 1; }
+.ward-off:hover { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 50%, var(--border)); }
+.ward-off:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.ward-rail-row:has(.ward-off) .ward-rail-text { padding-right: var(--space-6); }
+.ward-tab-count {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* what the tab offers, right: a head, the grid that scrolls, the bar that puts it on */
+.ward-pane { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.ward-slot { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.ward-pane-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.ward-pane-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 var(--space-2) 0 0;
+  font-family: var(--font-head);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+}
+.ward-pane-head .item-picker-search { margin-left: auto; align-self: center; }
+.ward-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-px);
+  padding: var(--space-px);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+}
+.ward-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+}
+.ward-tab:hover:not(:disabled) { color: var(--text); background: var(--state-hover); }
+.ward-tab.active { background: var(--md-primary-container, var(--primary-soft)); color: var(--md-on-primary-container, var(--text)); }
+.ward-tab.active .ward-tab-count { background: color-mix(in srgb, var(--text) 12%, transparent); color: inherit; }
+.ward-tab:disabled { opacity: var(--disabled-opacity); cursor: default; }
+.ward-tab:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.ward-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-px) var(--space-2) var(--space-4) var(--space-px);
+}
+.ward-grid { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
+.set-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+.wardrobe .item-picker-foot { position: static; margin: 0 calc(-1 * var(--space-5)) 0 0; padding-left: var(--space-3); }
+.wardrobe .set-toolbar { flex-wrap: wrap; }
+.ward-on { color: var(--installed); font-weight: var(--weight-semibold); display: inline-flex; align-items: center; gap: var(--space-1); }
+.ward-on .ms { font-size: var(--icon-sm); }
+.ward-shelf-note { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); font-size: var(--text-xs); color: var(--text-faint); }
+.ward-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 44ch;
+  margin: var(--space-7) auto;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.ward-empty .ms { font-size: var(--icon-xl); color: var(--text-faint); }
+
+/* ---------- effects: shelves of cards, named as the game names them ---------- */
+.ward-shelves { display: flex; flex-direction: column; gap: var(--space-4); }
+.ward-shelf { display: flex; flex-direction: column; gap: var(--space-2); }
+.ward-shelf-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-muted);
+}
+.fx-grid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: var(--space-2); }
+.fx-card .card-media { aspect-ratio: 16 / 9; }
+.fx-card .card-body { min-height: 0; padding: var(--space-2); }
+.fx-glyph {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 60%, hsl(var(--fx-hue, 260) 70% 55% / 0.55), hsl(var(--fx-hue, 260) 40% 18% / 0.9) 70%);
+  color: hsl(var(--fx-hue, 260) 90% 85%);
+}
+.fx-glyph .ms { font-size: var(--icon-lg); }
+.fx-check {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  font-size: var(--icon-md);
+  color: var(--primary);
+  text-shadow: 0 0 var(--space-2) rgba(0, 0, 0, 0.8);
+}
+
+/* ---------- saved looks: a card with four of its items ---------- */
+.look-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.look-card { display: flex; flex-direction: column; overflow: hidden; }
+.look-mosaic {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  aspect-ratio: 16 / 10;
+  gap: 1px;
+  background: var(--border);
+}
+.look-mosaic[data-count="1"] { grid-template-columns: 1fr; }
+.look-mosaic > * { display: block; width: 100%; height: 100%; min-height: 0; background: var(--bg-elev); overflow: hidden; }
+.look-mosaic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.look-mosaic .noimg { display: grid; place-items: center; height: 100%; color: var(--text-faint); }
+.look-actions { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-2); }
+.look-actions .btn-primary { margin-right: auto; }
+.look-actions .ward-on { margin-right: auto; }
+
+/* ---------- rarity: the game's colour on every item it sells ---------- */
+[data-rarity] { --rarity: var(--text-faint); }
+[data-rarity="common"] { --rarity: var(--rarity-common); }
+[data-rarity="uncommon"] { --rarity: var(--rarity-uncommon); }
+[data-rarity="rare"] { --rarity: var(--rarity-rare); }
+[data-rarity="mythical"] { --rarity: var(--rarity-mythical); }
+[data-rarity="legendary"] { --rarity: var(--rarity-legendary); }
+[data-rarity="ancient"] { --rarity: var(--rarity-ancient); }
+[data-rarity="immortal"] { --rarity: var(--rarity-immortal); }
+[data-rarity="arcana"] { --rarity: var(--rarity-arcana); }
+[data-rarity="seasonal"] { --rarity: var(--rarity-seasonal); }
+.set-rarity { color: var(--rarity); font-weight: var(--weight-semibold); }
+.card[data-rarity] .card-media { border-bottom: 2px solid var(--rarity); }
+.card[data-rarity] .card-meta { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
+.set-about { display: flex; flex-direction: column; gap: var(--space-2); }
+.set-facts { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); font-size: var(--text-sm); color: var(--text-muted); }
+.set-desc { font-size: var(--text-sm); color: var(--text-muted); line-height: var(--leading-normal); max-width: 80ch; }
+.set-styles { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.set-styles-label { font-size: var(--text-xs); color: var(--text-faint); margin-right: var(--space-1); }
+.ward-stage .preview3d-missing { z-index: 2; right: var(--space-3); }

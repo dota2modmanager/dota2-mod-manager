@@ -4,6 +4,7 @@
 import type { Dialog, Reply } from './reply.ts';
 import type { MinifyState } from '../core/minify-notice.ts';
 import type { Panels } from '../core/constants.ts';
+import type { ItemLook } from '../catalog/types.ts';
 
 /** What settings.json holds (src/settings.ts DEFAULTS, and the few keys main adds later). */
 export interface StoredSettings {
@@ -27,6 +28,8 @@ export interface StoredSettings {
   everyoneWearsMine: boolean;
   schemaPatch: boolean;
   cosmetics: Record<string, unknown>;
+  /** the item builder's saved looks (views/item-looks.ts) */
+  itemLooks: ItemLook[];
   schemaStamp: string | null;
   toolsPromptSeen: boolean;
   /** null until the one question about adult mods is answered (core/adult.ts) */

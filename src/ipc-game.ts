@@ -112,9 +112,9 @@ export function registerGameIpc({
   // Sources: the mod's own files and the game's own pictures when the toolchain is here
   // (exact, offline, no rate limit), the wiki for whatever is left.
   // the item builder's hub: every hero's portrait, out of the installed game
-  ipcMain.handle('cosmetics:heroPortraits', async (e, ids) => {
+  ipcMain.handle('cosmetics:heroPortraits', async (e, ids, tall) => {
     try {
-      return await gameIcons.heroPortraits((Array.isArray(ids) ? ids : []).slice(0, 300));
+      return await gameIcons.heroPortraits((Array.isArray(ids) ? ids : []).slice(0, 300), tall === true);
     } catch (err) {
       diag('hero portraits failed: ' + errorText(err));
       return {};
@@ -236,11 +236,11 @@ export function registerGameIpc({
   });
 
   // A whole set, one write to the game for all its pieces (schema-service pickSet).
-  ipcMain.handle('cosmetics:pickSet', async (e, setId) => {
+  ipcMain.handle('cosmetics:pickSet', async (e, setId, style) => {
     const stop = blocked('cosmetics');
     if (stop) return stop;
     try {
-      const picked = schemaService.pickSet(setId, { write: false });
+      const picked = schemaService.pickSet(setId, { write: false, style: Number(style) || 0 });
       await schemaService.refreshInBackground();
       return { ok: true, ...picked };
     } catch (err) {

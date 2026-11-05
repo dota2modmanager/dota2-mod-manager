@@ -53,6 +53,20 @@ export function exportArgs(pakFile: string, out: string, files: string[], clips:
   return args;
 }
 
+/** Where a texture's picture landed: the file itself, or the largest frame of its sheet. */
+export function spriteAt(root: string, texture: string): string | null {
+  const base = path.join(root, texture.replace(/\.vtex$/, ''));
+  if (fs.existsSync(`${base}.png`)) return `${base}.png`;
+  let names: string[] = [];
+  try { names = fs.readdirSync(path.dirname(base)); } catch { return null; }
+  // a sheet comes out as frames of its first sequence (name_seq0_3.png), or a picture per sequence
+  // (name_seq12.png: Crystal Maiden's fleks3, 64 specks); missed, its systems drew solid dots
+  const stem = path.basename(base).toLowerCase();
+  const frame = (n: string) => n.toLowerCase().startsWith(`${stem}_seq`) && /_seq(0_\d+|\d+)\.png$/i.test(n.slice(stem.length));
+  const frames = names.filter(frame).map((n) => path.join(path.dirname(base), n));
+  return frames.sort((a, b) => fs.statSync(b).size - fs.statSync(a).size)[0] || null;
+}
+
 /** GLB files of the game's models, made on demand and kept per game build. */
 export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runTool, log = () => {} }: {
   userDataDir: string; toolchain: { pathOf: (name: string) => string | null };
@@ -110,8 +124,42 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
     return out;
   }
 
+  /**
+   * The picture of each particle texture as PNG bytes: the texture itself, or for a sheet of
+   * frames (smoke, fire) its largest frame, which shows the most of it. Null for one the game lacks.
+   * @param textures texture paths as a particle names them, "materials/particle/smoke/wispy.vtex"
+   */
+  async function sprites(textures: string[]): Promise<Record<string, Buffer | null>> {
+    const game = getGamePath();
+    const exe = toolchain.pathOf('vrf');
+    const out: Record<string, Buffer | null> = Object.fromEntries(textures.map((t) => [t, null]));
+    const valid = textures.filter((t) => /^materials\/[\w/.-]+\.vtex$/.test(t) && !t.includes('..'));
+    if (!game || !exe || !valid.length) return out;
+    const root = path.join(buildRoot(game), 'sprites');
+    const wanted = valid.filter((t) => !spriteAt(root, t));
+    if (wanted.length) {
+      const job = queue.then(async () => {
+        const started = Date.now();
+        try {
+          fs.mkdirSync(root, { recursive: true });
+          await run(exe, ['-i', path.join(game, 'dota', 'pak01_dir.vpk'), '-o', root, '-d', '-f', wanted.map((t) => `${t}_c`).join(',')]);
+          log(`sprites: ${wanted.length} exported in ${Date.now() - started} ms`);
+        } catch (err) {
+          log(`sprites: export failed (${(err as Error)?.message || err})`);
+        }
+      });
+      queue = job;
+      await job;
+    }
+    for (const t of valid) {
+      const at = spriteAt(root, t);
+      out[t] = at ? fs.readFileSync(at) : null;
+    }
+    return out;
+  }
+
   /** Everything exported so far, gone. */
   function clear(): void { fs.rmSync(base, { recursive: true, force: true }); }
 
-  return { glbs, clear };
+  return { glbs, sprites, clear };
 }

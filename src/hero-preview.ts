@@ -12,6 +12,12 @@ import { findItem, itemFields } from './schema.ts';
 import { itemEffectPatch } from './item-builder.ts';
 import { heroModelPath, normalizeAssetPath } from './item-builder-assets.ts';
 import { sharedVpkIndex } from './vpk.ts';
+import { personaLayouts } from './item-builder-personas.ts';
+import { ITEM_EFFECTS } from './item-builder-effects.ts';
+import { unusualItemEffect } from './item-builder-unusual.ts';
+import { idleSequence, itemActivities, loadoutSequence, modelSequences } from './model-loadout.ts';
+import { heroStage, type HeroStage } from './hero-showcase.ts';
+import { heroLoadoutParticles, itemParticles, modelAttachments, particleDef, particleTextures, type Attachment, type ParticleDef } from './particle-spec.ts';
 import type { createModelGlb } from './model-glb.ts';
 import type { Library } from './library.ts';
 
@@ -20,11 +26,18 @@ export type PreviewSlot = { slot: string; stock: string };
 
 /** What the window gets: each model's bytes, or why there are none. */
 export type HeroModels =
-  | { ok: true; body: Uint8Array; parts: { slot: string; name: string; glb: Uint8Array }[]; missing: string[] }
+  | {
+    ok: true; body: Uint8Array; clip: string | null; stage: HeroStage; pedestal: Uint8Array | null;
+    parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[] }[]; missing: string[];
+    /** the body's attachment points, and the particles: on the body (part -1) or on a part, by its place in `parts` */
+    attachments: Attachment[]; particles: { part: number; def: ParticleDef }[];
+    /** the particles' textures as PNG bytes, by the path they name (src/model-glb.ts sprites) */
+    sprites: Record<string, Uint8Array>;
+  }
   | { ok: false; reason: 'no-game' | 'no-tool' | 'no-body' };
 
-/** The bones' clips the body is exported with: the hero standing, as the hero's window shows it. */
-const CLIPS = ['idle'];
+/** The clip a body without a loadout sequence stands in (Lone Druid, Magnus). */
+const IDLE = 'idle';
 
 /**
  * The model an item puts on in the style picked, and the body it swaps the hero for. The build
@@ -44,53 +57,118 @@ function itemModel(text: string, itemId: string, key: string | undefined, hero: 
   return { model: item ? itemFields(text, item).get('model_player') || null : null, body };
 }
 
+/**
+ * The body an item's "entity_model" modifier puts the hero in: a persona's, which the item's own
+ * copies leave out because a persona goes on through its base (src/item-builder-personas.ts).
+ */
+export function entityModel(block: string, hero: string): string | null {
+  for (const m of block.matchAll(/"asset_modifier\d*"\s*\{([^{}]*)\}/gi)) {
+    const field = (k: string) => new RegExp(`"${k}"\\s+"([^"]*)"`, 'i').exec(m[1])?.[1];
+    if (field('type')?.toLowerCase() === 'entity_model' && field('asset') === hero && /\.vmdl$/i.test(field('modifier') || '')) return field('modifier')!;
+  }
+  return null;
+}
+
 /** The 3D preview's models, made on demand. */
 export function createHeroPreview({ glb, library, gamePath, vanilla, log = () => {} }: {
-  glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'>;
+  glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'> & Partial<Pick<ReturnType<typeof createModelGlb>, 'sprites'>>;
   library: Pick<Library, 'list'>;
   gamePath: () => string | null;
   vanilla: () => string;
   log?: (msg: string) => void;
 }) {
   /** The hero's body and what each slot wears now. */
-  function plan(name: string, slots: PreviewSlot[]): { body: string; parts: { slot: string; name: string; model: string }[] } | null {
+  function plan(name: string, slots: PreviewSlot[]): {
+    body: string; clip: string | null; idle: string; stage: HeroStage; heroFx: string[]; read: (p: string) => Buffer | null;
+    parts: { slot: string; name: string; model: string; fx: string[] }[];
+  } | null {
     // the window names the hero as its slots do (magnataur); the scripts and the table, in full
     const hero = name.startsWith('npc_dota_hero_') ? name : `npc_dota_hero_${name}`;
     const game = gamePath();
     if (!game) return null;
     const text = vanilla();
-    let body = normalizeAssetPath(heroModelPath(sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk')), hero));
-    const parts: { slot: string; name: string; model: string }[] = [];
+    const ix = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
+    let body = normalizeAssetPath(heroModelPath(ix, hero));
+    const parts: { slot: string; name: string; model: string; fx: string[] }[] = [];
+    const modifiers: string[] = [];
+    // a persona's own slot is worn under a plain one, and wears the persona's stock item until a pick
+    const given = new Map((personaLayouts(text).get(hero.replace(/^npc_dota_hero_/, ''))?.parts || []).map((x) => [x.slot, x.given?.id]));
     for (const s of slots) {
       const rec = library.list().find((r) => r.categoryId === 'cosmetic' && r.slot === s.slot && r.enabled !== false && r.itemId);
-      const stockItem = findItem(text, s.stock);
+      const stockItem = findItem(text, given.get(s.slot.split(':').pop() || '') || s.stock);
       const stock = stockItem ? itemFields(text, stockItem) : null;
       const picked = rec ? itemModel(text, String(rec.itemId), rec.effectId as string | undefined, hero, stock?.get('model_player') || null) : null;
-      if (picked?.body) body = normalizeAssetPath(picked.body);
+      const block = rec ? findItem(text, String(rec.itemId)) : null;
+      const swap = picked?.body || (block ? entityModel(block.text, hero) : null);
+      if (swap) body = normalizeAssetPath(swap);
+      if (block) modifiers.push(...itemActivities(block.text));
       const model = picked?.model || stock?.get('model_player');
-      if (model) parts.push({ slot: s.slot, name: rec?.name || stock?.get('name') || '', model: normalizeAssetPath(model) });
+      // the item's own particles, or the stock item's where nothing is picked (src/particle-spec.ts)
+      const fx = itemParticles((block || stockItem)?.text || '');
+      if (model) parts.push({ slot: s.slot, name: rec?.name || stock?.get('name') || '', model: normalizeAssetPath(model), fx });
     }
-    return { body, parts };
+    // the loadout the game plays for what is worn (src/model-loadout.ts), read out of the body itself
+    const seqs = modelSequences(ix.read(body.replace(/\.vmdl$/i, '.vmdl_c')));
+    const clip = loadoutSequence(seqs, modifiers);
+    const idle = idleSequence(seqs) || IDLE;
+    // the game's own staging (src/hero-showcase.ts): an arcana's body has an entry of its own
+    const script = ix.read(`scripts/npc/heroes/${hero}.txt`)?.toString('utf8') ?? null;
+    const stage = heroStage(ix.read('scripts/npc/portraits_showcase.txt')?.toString('utf8') ?? null, script, [body, hero]);
+    return { body, clip, idle, stage, parts, heroFx: script ? heroLoadoutParticles(script) : [], read: (f) => ix.read(f) };
   }
 
-  /** The body with its idle and each slot's model, as GLB bytes with their pictures inside. */
+  /** The body with its loadout clip and its idle, and each slot's model, as GLB bytes with their pictures inside. */
   async function models(hero: string, slots: PreviewSlot[], hasTool: boolean): Promise<HeroModels> {
     if (!hasTool) return { ok: false, reason: 'no-tool' };
     let p: ReturnType<typeof plan>;
     try { p = plan(hero, slots); } catch (err) { log(`preview 3d: ${(err as Error)?.message || err}`); return { ok: false, reason: 'no-body' }; }
     if (!p) return { ok: false, reason: 'no-game' };
-    const bodyFile = (await glb.glbs([p.body], CLIPS))[p.body];
+    const bodyFile = (await glb.glbs([p.body], p.clip && p.clip !== p.idle ? [p.clip, p.idle] : [p.idle]))[p.body];
     if (!bodyFile) return { ok: false, reason: 'no-body' };
-    const files = await glb.glbs(p.parts.map((x) => x.model));
+    const pedestal = p.stage.pedestal;
+    const files = await glb.glbs([...p.parts.map((x) => x.model), ...(pedestal ? [pedestal] : [])]);
     const missing: string[] = [];
-    const parts: { slot: string; name: string; glb: Uint8Array }[] = [];
+    const parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[] }[] = [];
+    const particles: { part: number; def: ParticleDef }[] = [];
+    // one budget for every system the hero brings: a few dozen is what the window plays smoothly
+    const budget = { left: 48 };
+    const fx = (part: number, paths: string[]) => {
+      for (const path of paths) {
+        const def = particleDef(p.read, path, budget);
+        if (def) particles.push({ part, def });
+      }
+    };
     for (const x of p.parts) {
       const f = files[x.model];
-      if (f) parts.push({ slot: x.slot, name: x.name, glb: embedGlb(f) });
-      else missing.push(x.name || x.model);
+      if (!f) { missing.push(x.name || x.model); continue; }
+      parts.push({ slot: x.slot, name: x.name, glb: embedGlb(f), attachments: modelAttachments(p.read(x.model.replace(/\.vmdl$/i, '.vmdl_c'))) });
+      fx(parts.length - 1, x.fx);
     }
-    return { ok: true, body: embedGlb(bodyFile), parts, missing };
+    fx(-1, p.heroFx);
+    const stand = pedestal ? files[pedestal] : null;
+    const sprites = await spritesOf(particles.map((x) => x.def));
+    return {
+      ok: true, body: embedGlb(bodyFile), clip: p.clip, stage: p.stage, pedestal: stand ? embedGlb(stand) : null, parts, missing,
+      attachments: modelAttachments(p.read(p.body.replace(/\.vmdl$/i, '.vmdl_c'))), particles, sprites,
+    };
   }
 
-  return { plan, models };
+  /** The textures these systems draw with, as the window takes them. */
+  async function spritesOf(defs: ParticleDef[]): Promise<Record<string, Uint8Array>> {
+    const wanted = [...new Set(defs.flatMap(particleTextures))];
+    const got = wanted.length && glb.sprites ? await glb.sprites(wanted) : {};
+    return Object.fromEntries(Object.entries(got).filter((e): e is [string, Buffer] => !!e[1]).map(([k, v]) => [k, new Uint8Array(v)]));
+  }
+
+  /** An effect the builder offers (one of its own, or the game's unusual-<n>) as its particle system, for its picture. */
+  async function effect(id: string): Promise<{ def: ParticleDef; sprites: Record<string, Uint8Array> } | null> {
+    const game = gamePath();
+    const fx = ITEM_EFFECTS.find((e) => e.id === id) || unusualItemEffect(vanilla(), id);
+    if (!game || !fx) return null;
+    const ix = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
+    const def = particleDef((f) => ix.read(f), fx.modifier.toLowerCase());
+    return def ? { def, sprites: await spritesOf([def]) } : null;
+  }
+
+  return { plan, models, effect };
 }

@@ -22,6 +22,8 @@ export interface StoredSettings {
   countDownloads: boolean;
   schemaPatch: boolean;
   cosmetics: Record<string, unknown>;
+  /** the item builder's saved looks per hero (issue #527), apart from presets */
+  itemLooks: { id: string; hero: string; name: string; picks: { slot: string; itemId: string; name: string; effectId?: string }[]; at: number }[];
   schemaStamp: string | null;
   /** a build of the item table was asked for and has not written yet: the next start builds it */
   schemaPending: boolean;
@@ -110,6 +112,8 @@ const DEFAULTS: StoredSettings = {
   // they can be toggled/deleted/shared like any other mod. Kept only so an old settings
   // file has something to migrate from.
   cosmetics: {},
+  // the item builder's saved looks: a hero's picks under a name, put back on in one click
+  itemLooks: [],
   // items_game.txt build the deployed schema was made from, to spot a game update
   schemaStamp: null,
   lastPreset: null,

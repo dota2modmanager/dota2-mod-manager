@@ -74,6 +74,9 @@ test('the builder offers a slot to pick the persona in, and one for each of its 
   ]);
   assert.deepEqual(slots[0].options, [{ id: '13786', name: 'The Toy Butcher' }]);
   assert.ok(isSelectorSlot(slots[0].slot) && !isSelectorSlot(slots[2].slot));
+  // a persona has a rarity as any item does, and its card says it
+  const rare = personaSlots(TABLE.replace('"The Toy Butcher"', '"The Toy Butcher"\n\t\t\t"item_rarity"\t\t"Immortal"'));
+  assert.equal(rare[0].options[0].rarity, 'immortal');
 });
 
 test("with the persona on the hero wears its items alone, the game's own where nothing is picked", () => {

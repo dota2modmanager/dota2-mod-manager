@@ -1,0 +1,94 @@
+/* A hero recoloured part by part (catalog/paint, issue #422): the hero on the left as hero selection
+ * shows him, his abilities and items on the right, each picture in the colour it is getting. A layer
+ * that is on is told by its colour itself: the picture shaded, or ringed in the effect's colour. */
+/* the window it opens in has a fixed height and hides what overflows (builder.css .wardrobe-modal): the body scrolls itself */
+.paint-body { flex: 1; min-height: 0; overflow-y: auto; }
+.paint-layout { flex: 1 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--space-5); align-items: start; }
+.paint-main { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.paint-main > section { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* the hero: his portrait, his name, his own layers */
+.paint-hero { position: sticky; top: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.paint-portrait {
+  display: grid; place-items: center; aspect-ratio: 3 / 4; overflow: hidden;
+  border-radius: var(--radius-md); background: var(--bg-deep); border: 1px solid var(--border);
+  transition: box-shadow var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+}
+.paint-portrait img { width: 100%; height: 100%; object-fit: cover; }
+.paint-portrait > .ms { font-size: var(--icon-xl); color: var(--text-faint); }
+.paint-hero-name { font-family: var(--font-head); font-size: var(--text-md); font-weight: var(--weight-semibold); }
+.paint-hero-chips { display: flex; flex-direction: column; gap: var(--space-2); }
+.paint-hero-chips .paint-chip { justify-content: space-between; }
+
+/* an effect that is on rings its picture in its colour */
+.paint-pic.fx, .paint-portrait.fx {
+  border-color: var(--fx);
+  box-shadow: 0 0 0 1px var(--fx), 0 0 18px color-mix(in srgb, var(--fx) 45%, transparent);
+}
+
+/* the colour for everything that is on */
+.paint-all { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+.paint-all-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.paint-all-title { display: flex; gap: var(--space-2); align-items: baseline; font-weight: var(--weight-semibold); font-size: var(--text-sm); }
+.paint-gem-name { font-weight: var(--weight-body); font-size: var(--text-xs); color: var(--text-muted); }
+.paint-gems { margin-top: var(--space-2); }
+.paint-every { flex-shrink: 0; }
+
+/* abilities and items: a picture, a name, a switch per layer */
+.paint-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(184px, 1fr)); gap: var(--space-3); }
+.paint-tile {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-2);
+  padding: var(--space-3); border-radius: var(--radius-md); background: var(--surface); border: 1px solid transparent;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.paint-tile.on { border-color: var(--border); }
+.paint-pic {
+  display: grid; place-items: center; width: 72px; height: 72px; overflow: hidden;
+  border-radius: var(--radius-sm); background: var(--bg-deep); border: 1px solid var(--border);
+  transition: box-shadow var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+}
+.paint-pic.wide { width: 112px; height: 74px; }
+/* a picture that switches its icon layer, or an item's effect */
+.paint-pic-btn { padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.paint-pic-btn:hover { border-color: var(--border-strong); }
+.paint-pic-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.paint-pic img, .paint-pic-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.paint-pic-img { display: block; width: 100%; height: 100%; }
+.paint-pic-img .noimg { display: grid; place-items: center; width: 100%; height: 100%; }
+.paint-pic > .ms, .paint-pic-img .ms { font-size: var(--icon-lg); color: var(--text-faint); }
+.paint-tile-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-sm); font-weight: var(--weight-semibold); }
+.paint-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-1); }
+
+/* a layer: its switch is its name, its colour beside it */
+.paint-chip {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-px) var(--space-1) var(--space-px) var(--space-2); border-radius: var(--radius-full);
+  border: 1px solid var(--border); background: var(--bg-deep);
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.paint-chip.on { border-color: color-mix(in srgb, var(--c) 70%, var(--border)); background: color-mix(in srgb, var(--c) 14%, var(--bg-deep)); }
+.paint-chip-btn { padding: 0; border: 0; background: none; color: var(--text-faint); font: inherit; font-size: var(--text-xs); cursor: pointer; }
+.paint-chip.on .paint-chip-btn { color: var(--text); }
+.paint-chip-btn:focus-visible { outline: none; text-decoration: underline; }
+.paint-chip:hover { border-color: var(--border-strong); }
+
+/* a colour well: the system's picker under a round swatch */
+.paint-swatch { position: relative; flex-shrink: 0; width: 24px; height: 24px; border-radius: var(--radius-full); background: var(--c); border: 1px solid color-mix(in srgb, var(--c) 60%, var(--border)); cursor: pointer; transition: transform var(--dur-fast) var(--ease-standard); }
+.paint-swatch.sm { width: 16px; height: 16px; }
+.paint-swatch.lg { width: 40px; height: 40px; }
+.paint-swatch:hover { transform: scale(1.1); }
+.paint-swatch:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+.paint-swatch input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: 0; padding: 0; }
+.paint-chip:not(.on) .paint-swatch { opacity: 0.45; }
+
+.paint-tool { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px dashed var(--border); border-radius: var(--radius-md); }
+.paint-tool .btn { flex-shrink: 0; }
+
+@media (max-width: 900px) {
+  .paint-layout { grid-template-columns: minmax(0, 1fr); }
+  .paint-hero { position: static; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .paint-portrait { width: 96px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .paint-portrait, .paint-pic, .paint-tile, .paint-chip, .paint-swatch { transition: none; }
+}

@@ -77,8 +77,11 @@ module.exports = async function builder(sim) {
   // ---- one piece opened from the set, given two effects ----
   const head = await sim.js(`[...document.querySelectorAll('[data-piece]')].findIndex((c) => /- Head/.test(c.textContent)) + 1`);
   if (!sim.check('the set window lists its head piece', head > 0, 'no piece named "- Head"')) return;
+  // a piece opens its slot's tab with it chosen; the effects are a tab of their own there
   await sim.click(`[data-piece]@${head}`);
-  await sim.until(`document.getElementById('effectGrid') && !document.querySelector('[data-effect-id="fire"]').disabled`, 5000);
+  await sim.until(`document.querySelector('[data-slot-view="effects"]') && !document.querySelector('[data-slot-view="effects"]').disabled`, 5000);
+  await sim.click('[data-slot-view="effects"]');
+  await sim.until(`document.getElementById('effectGrid') && document.querySelector('[data-effect-id="fire"]')`, 5000);
   // the window grows open, and a click during that lands wherever the card was a moment before
   await sim.still();
   const pick = async (fx) => {

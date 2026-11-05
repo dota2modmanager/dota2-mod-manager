@@ -9,6 +9,7 @@ import type { PaintCell, PaintModalModel } from '../catalog/paint/PaintModal.tsx
 import type { PaintLayer } from '../api/content.ts';
 import { closeOverlay } from './catalog/overlay.ts';
 import { isOpen, openWindow } from './item-builder.ts';
+import { toHex } from '../catalog/arcana/tint.ts';
 
 interface PaintState {
   hero: string;
@@ -23,6 +24,10 @@ interface PaintState {
   busy: boolean;
   vrf: boolean;
   gettingTool: boolean;
+  /** his portrait and his abilities' icons, as they come from the game */
+  portrait: string | null;
+  icons: Record<string, string>;
+  gems: { key: string; name: string; hex: string }[];
 }
 
 const START = '#7f5af0';
@@ -40,8 +45,26 @@ export async function openPaint(hero: string, label: string, back: () => void): 
     busy: false,
     vrf: r.vrf,
     gettingTool: false,
+    portrait: null,
+    icons: {},
+    gems: [],
   };
-  openWindow(null, true, (key) => draw(key, st));
+  openWindow(null, true, (key) => { draw(key, st); void pictures(key, st); });
+}
+
+/** The pictures the colours are shown on, and the gems offered: each drawn in as it comes. */
+async function pictures(key: number, st: PaintState): Promise<void> {
+  const id = st.hero.replace(/^npc_dota_hero_/, '');
+  const abilities = [...new Set(st.layers.filter((l) => l.kind === 'ability' || l.kind === 'abilityIcon').map((l) => l.id.slice(l.id.indexOf(':') + 1)))];
+  const [portraits, icons, arcana] = await Promise.all([
+    window.api.cosmetics.heroPortraits([id], true).catch(() => ({} as Record<string, string>)),
+    window.api.paint.icons(abilities).catch(() => ({})),
+    window.api.arcana.state().catch(() => null),
+  ]);
+  st.portrait = portraits[id] || null;
+  st.icons = icons;
+  st.gems = arcana && !arcana.error ? arcana.gems.map((g) => ({ key: g.key, name: g.name, hex: toHex(g.rgb) })) : [];
+  draw(key, st);
 }
 
 /** The colours the button would put on: a #rrggbb for each layer that is on. */
@@ -65,9 +88,13 @@ function draw(key: number, st: PaintState): void {
   const m: PaintModalModel = {
     hero: st.label,
     all: st.all,
-    abilities: abilities.map((a) => ({ name: a.name, effect: cell(`ability:${a.key}`), icon: cell(`abilityIcon:${a.key}`) })),
+    portrait: st.portrait,
+    gems: st.gems,
+    abilities: abilities.map((a) => ({ key: a.key, name: a.name, picture: st.icons[a.key] || null, effect: cell(`ability:${a.key}`), icon: cell(`abilityIcon:${a.key}`) })),
     own: { effects: cell('effects'), portrait: cell('portrait'), body: cell('body') },
     items: st.layers.filter((l) => l.kind === 'item').map((l) => ({ name: l.name || l.id, cell: cell(l.id)! })),
+    on: st.on.size,
+    total: st.layers.length,
     summary: named.length ? named.slice(0, 4).join(', ') + (named.length > 4 ? ` +${named.length - 4}` : '') : '',
     action: !Object.keys(want).length
       ? { label: st.installed ? L`Включи хотя бы один слой` : L`Поставить`, icon: 'format_paint', off: true }
@@ -85,6 +112,7 @@ function draw(key: number, st: PaintState): void {
     toggle: (id) => { if (st.on.has(id)) st.on.delete(id); else st.on.add(id); redraw(); },
     color: (id, hex) => { st.colors.set(id, hex); st.on.add(id); redraw(); },
     all: (hex) => { st.all = hex; for (const id of st.on) st.colors.set(id, hex); redraw(); },
+    every: (on) => { st.on = new Set(on ? st.layers.map((l) => l.id) : []); redraw(); },
     apply: () => void apply(key, st),
     getTool: () => void getTool(key, st),
   });

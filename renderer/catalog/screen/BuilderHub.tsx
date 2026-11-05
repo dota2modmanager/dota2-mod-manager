@@ -1,15 +1,17 @@
-/* The item builder's front: every hero whose items the game's own table lets it build, with what is
- * on the hero rather than how many slots it has (92 of 124 heroes have four to six, so "5 slots"
- * told nobody anything). A hero opens its window (builder/HeroModal.tsx). */
+/* The item builder's front: every hero whose items the game's own table lets it build, laid out as
+ * the game's hero grid: four columns side by side (strength, agility, intelligence, universal, each
+ * alphabetical) of upright portraits without names, so a hero is found where a player already looks
+ * for it. The name shows on hover and in the tooltip with what the hero wears; a tick marks a hero
+ * wearing something. A hero opens its window (builder/HeroModal.tsx). */
 import type { CSSProperties } from 'react';
 import { heroName } from '../../ui/hero-name.ts';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import type { ScreenActions, ScreenModel } from './model.ts';
-import { CardName } from '../card/CardName.tsx';
 
 type Model = Extract<ScreenModel, { kind: 'builder' }>;
 
 export function BuilderHub({ m, actions }: { m: Model; actions: ScreenActions }) {
+  let i = 0;
   return (
     <>
       <div className="view-header"><h1 className="view-title">{m.title}</h1></div>
@@ -28,25 +30,26 @@ export function BuilderHub({ m, actions }: { m: Model; actions: ScreenActions })
           <span className="count" id="cosCount">{m.count}</span>
         </div>
       </div>
-      <div id="itemHub">
-        {m.heroes.length ? (
-          <div className="grid">
-            {m.heroes.map((h, i) => (
-              <div key={h.hero} className={`card ${h.installed ? 'installed' : ''}`} data-item-hero={h.hero}
-                style={{ '--i': Math.min(i, 28) } as CSSProperties} onClick={(e) => actions.openHero(h.hero, e.currentTarget)}>
-                <div className="card-media">
-                  <span className="card-thumb">
-                    {h.icon ? <img src={h.icon} alt="" loading="lazy" /> : <div className="noimg"><span className="ms">person</span></div>}
-                  </span>
-                </div>
-                <div className="card-body">
-                  <CardName>{heroName(h.hero)}</CardName>
-                  <div className="card-meta"><span>{cosmeticName(h.meta)}</span></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : <div className="empty-note">{L`Ничего не найдено — сбрось фильтры`}</div>}
+      <div id="itemHub" className="hub-columns">
+        {m.groups.length ? m.groups.map((g) => (
+          <section key={g.attr} className="hub-group" data-attr={g.attr}>
+            <h2 className="hub-group-title"><span className="hub-attr" aria-hidden="true" />{g.name}<span className="hub-group-count">{g.heroes.length}</span></h2>
+            <div className="hub-grid">
+              {g.heroes.map((h) => {
+                const name = heroName(h.hero);
+                return (
+                  <button key={h.hero} className={`hero-tile hub-tile ${h.installed ? 'installed' : ''}`} data-item-hero={h.hero} aria-label={name}
+                    style={{ '--i': Math.min(i++, 40) } as CSSProperties} title={`${name}\n${cosmeticName(h.meta)}`}
+                    onClick={(e) => actions.openHero(h.hero, e.currentTarget)}>
+                    <span className="hero-art">{h.icon ? <img src={h.icon} alt="" loading="lazy" /> : <span className="ms">person</span>}</span>
+                    {h.installed && <span className="hero-installed ms" aria-hidden="true">check_circle</span>}
+                    <span className="hero-name">{name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )) : <div className="empty-note">{L`Ничего не найдено — сбрось фильтры`}</div>}
       </div>
     </>
   );

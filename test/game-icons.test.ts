@@ -76,6 +76,7 @@ test('hero portraits come out of pak01 by hero id: the landscape one, else the o
   };
   fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk([
     file('heroes', 'axe', pngOf(128, 72)),
+    file('heroes/selection', 'axe', pngOf(60, 90)),
     // stored block-compressed, as most landscape portraits are: not a PNG to copy out
     file('heroes', 'abaddon', Buffer.from('DXT5 blocks, not a picture')),
     file('heroes/selection', 'abaddon', pngOf(142, 188)),
@@ -90,6 +91,9 @@ test('hero portraits come out of pak01 by hero id: the landscape one, else the o
   assert.equal(size(got.axe), '128x72', 'the landscape portrait where it is a PNG');
   assert.equal(size(got.abaddon), '142x188', 'the hero selection portrait where the landscape one is compressed');
   assert.deepEqual(await icons.heroPortraits(['axe']), { axe: got.axe }, 'a second ask reads the cache');
+  const tall = await icons.heroPortraits(['axe', 'abaddon'], true);
+  assert.equal(size(tall.axe), '60x90', "upright first, for the builder's grid laid out as the game's");
+  assert.equal(size(tall.abaddon), '142x188');
 
   const none = createGameIcons({ userDataDir: userDir(t), toolchain: noTool, getGamePath: () => null });
   assert.deepEqual(await none.heroPortraits(['axe']), {}, 'no game, no portraits, no error');

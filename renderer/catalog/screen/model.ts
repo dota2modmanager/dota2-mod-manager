@@ -103,7 +103,8 @@ export type ScreenModel =
     search: string;
     installedOnly: boolean;
     count: string;
-    heroes: { hero: string; icon: string | null; installed: boolean; meta: string }[];
+    /** the heroes in the four groups of the game's hero grid, then any the game did not say */
+    groups: { attr: string; name: string; heroes: { hero: string; icon: string | null; installed: boolean; meta: string }[] }[];
   };
 
 /** What the screen can ask the catalog to do. */

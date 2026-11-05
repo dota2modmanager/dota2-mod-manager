@@ -12,20 +12,21 @@
  */
 import { heroDisplayName } from './vpk.ts';
 import { t } from './i18n.ts';
-import { listItems, listItemsSteps, toUtf8, eachChild, blockBounds, itemSearchText, inferredItemSlot, type SchemaItem } from './schema.ts';
+import { listItemsSteps, toUtf8, eachChild, blockBounds, itemSearchText, inferredItemSlot, type SchemaItem } from './schema.ts';
 import { drain, PAUSE } from './steps.ts';
 import { styleTokens } from './item-builder-styles.ts';
 import { itemNote, untilReconnect, type ItemNote } from './arcana-notes.ts';
 import { personaSlots } from './item-builder-personas.ts';
 import { hasOwnEffect } from './item-builder-donor.ts';
+import { itemFacts } from './item-builder-details.ts';
 
 /** A slot of a hero the builder can dress, and the paid items that fit it. */
 export interface ItemSlot {
   slot: string; kind: 'item-effect'; base: string; targetId: string; equipSlot: string; heroIds: string[];
   heroLabel: string; slotLabel: string; label: string; icon: string;
   /** `styles`: the name token of each style, for an item with more than one (src/item-builder-styles.ts); `note`: what is
-   *  known to go wrong with it in the game, or that nobody has checked (src/arcana-notes.ts); `fx`: a particle of its own, for another item to wear (src/item-builder-donor.ts) */
-  options: { id: string; name: string; styles?: string[]; note?: ItemNote; fx?: true }[];
+   *  known to go wrong with it in the game, or that nobody has checked (src/arcana-notes.ts); `fx`: a particle of its own, for another item to wear (src/item-builder-donor.ts); `rarity`, `date`: src/item-builder-details.ts itemFacts */
+  options: { id: string; name: string; styles?: string[]; note?: ItemNote; fx?: true; rarity?: string; date?: string }[];
   /** a persona's slot (src/item-builder-personas.ts): `part` false where the persona is picked */
   persona?: { hero: string; part: boolean };
 }
@@ -36,14 +37,6 @@ function visualsOf(text: string, item: { start: number }): string | null {
   eachChild(text, blockBounds(text, item.start), (c) => { if (!out && c.isBlock && c.key.toLowerCase() === 'visuals') out = text.slice(c.start, c.end); });
   return out;
 }
-
-/** One piece of a set: where it goes, or why it does not. */
-type SetPiece =
-  | { name: string; itemId: string; fits: true; slot: string; slotLabel: string }
-  | { name: string; itemId: string; fits: false; reason: string };
-
-/** A set, as the builder puts it on; see itemSets. */
-export interface ItemSet { id: string; name: string; heroIds: string[]; fit: number; heroLabel: string; pieces: SetPiece[] }
 
 /**
  * A file in the game's archive staged under another path in the built VPK; an `optional` one (a
@@ -77,7 +70,8 @@ const ITEM_SLOT_ORDER = [
   'ability4', 'ability_ultimate', 'summon', 'voice', 'shapeshift', 'misc',
 ];
 
-function canonicalHeroId(hero: unknown): string {
+/** A hero id as the builder keys its slots: no npc_dota_hero_ prefix, lower case, Io as the table names it (wisp). */
+export function canonicalHeroId(hero: unknown): string {
   const clean = String(hero || '').toLowerCase().replace(/^npc_dota_hero_/, '');
   return clean === 'io' ? 'wisp' : clean;
 }
@@ -207,7 +201,7 @@ export function* itemSlotsSteps(text: string): Generator<typeof PAUSE, ItemSlot[
     const noted = itemNote(heroIds, block, item.id);
     const note = item.model && bare.has(target.base) ? untilReconnect(noted, t) : noted && { status: noted.status, text: t(noted.note) };
     target.options.push({
-      id: item.id, name: toUtf8(item.name),
+      id: item.id, name: toUtf8(item.name), ...itemFacts(block),
       ...(styles.length ? { styles } : {}), ...(note ? { note } : {}), ...(hasOwnEffect(block, () => visualsOf(text, item)) ? { fx: true as const } : {}),
     });
   }
@@ -222,63 +216,6 @@ export function* itemSlotsSteps(text: string): Generator<typeof PAUSE, ItemSlot[
       if (byHero && a.heroIds.join(',') !== b.heroIds.join(',')) return byHero;
       return (order.get(a.equipSlot) ?? 999) - (order.get(b.equipSlot) ?? 999) || a.label.localeCompare(b.label);
     });
-}
-
-/**
- * A hero's sets as the builder puts them on: every wearable of the set that has a slot in the
- * builder, in one write (schema-service pickSet).
- *
- * A set used to be one more slot, "bundle", put on as if it were one item. It is several, with
- * no stock item to stand in for, so on the game of 2026-09-24 1760 of its 1971 choices did not
- * build and the other 211 put a model-less block over whichever stock item came first.
- *
- * Only hero items are listed. A set's loading screen, cursor, HUD, ward, announcer or taunt
- * has a tab of its own or is not the app's to set, and nobody puts one on with a set. A hero
- * item the builder leaves alone (a persona) is listed as not fitting, with why: it
- * is part of what the set looks like. A set with nothing to put on is left out, and so is a store
- * bundle of several sets ("Bounty Hunter's Big Bundle": 22 items, 7 slots): more of its pieces
- * want a taken slot than fit, and the first of each would dress the hero in a mix of sets that
- * are each listed on their own anyway. Valve's "DO NOT USE" is left out as well.
- * @param text  items_game
- * @param slots  itemSlots(text), when the caller has it already
- */
-export function itemSets(text: string, slots: Pick<ItemSlot, 'slot' | 'slotLabel' | 'options' | 'persona'>[] = itemSlots(text)): ItemSet[] {
-  const items = listItems(text);
-  const byName = new Map(items.map((i) => [i.name, i]));
-  const home = new Map<string, Pick<ItemSlot, 'slot' | 'slotLabel'>>(); // wearable id -> its slot in the builder
-  for (const s of slots) if (!s.persona) for (const o of s.options) home.set(o.id, s);
-  const out: ItemSet[] = [];
-  for (const set of items) {
-    if (set.prefab !== 'bundle' || !set.bundleItems || !set.bundleItems.length || /do not use/i.test(set.name)) continue;
-    const heroes = itemHeroes(text, set);
-    if (!heroes.length) continue;
-    const pieces: SetPiece[] = [];
-    const taken = new Set<string>();
-    let collide = 0;
-    for (const name of set.bundleItems) {
-      const it = byName.get(name);
-      if (!it || it.prefab !== 'wearable') continue; // not a hero item
-      const at = home.get(it.id);
-      if (at && !taken.has(at.slot)) {
-        taken.add(at.slot);
-        pieces.push({ name: toUtf8(it.name), itemId: it.id, fits: true, slot: at.slot, slotLabel: at.slotLabel });
-        continue;
-      }
-      if (at) collide++;
-      const reason = at ? t('второй предмет на тот же слот')
-        : isPersonaItem(it) ? t('персона: конструктор их не меняет')
-          : t('для него нет слота в конструкторе');
-      pieces.push({ name: toUtf8(it.name), itemId: it.id, fits: false, reason });
-    }
-    const fit = pieces.filter((p) => p.fits).length;
-    if (!fit || collide > fit) continue;
-    const heroIds = heroes.map(canonicalHeroId);
-    out.push({
-      id: set.id, name: toUtf8(set.name), heroIds, fit, pieces,
-      heroLabel: heroIds.map((id) => heroDisplayName(id)).join(' / '),
-    });
-  }
-  return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /** Wearable items with visuals and a matching stock default_item, offered under cosmetics/items. */

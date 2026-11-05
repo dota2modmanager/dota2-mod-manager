@@ -3,7 +3,7 @@
  * pick does to the game is src/item-builder.ts. */
 import { plural } from '../../ui/format.ts';
 import { cosmeticNameMatches } from '../../ui/cosmetic-name.ts';
-import type { CosmeticSet, CosmeticSlot } from '../types.ts';
+import type { CosmeticSet, CosmeticSlot, HeroAttribute } from '../types.ts';
 import type { BuilderAction } from './model.ts';
 
 type ItemSlot = CosmeticSlot;
@@ -105,14 +105,27 @@ export function withPersonas<T extends ItemSlot>(slots: T[], pickedIn: PickedIn)
   return slots.filter((s) => (s.persona ? !s.persona.part || on.has(s.persona.hero) : !(s.heroIds || []).some((h) => on.has(h))));
 }
 
-/** The builder's slots by the hero they belong to, heroes in alphabetical order. */
-export function heroesOf(slots: ItemSlot[]): [string, ItemSlot[]][] {
+/** The four groups of the game's hero grid, in its order. */
+export const ATTRIBUTES: HeroAttribute[] = ['str', 'agi', 'int', 'all'];
+
+/** A hero's place among the groups: its attribute's, or after them for a hero the game did not say. */
+export const attributeRank = (slots: ItemSlot[], attrs: Record<string, HeroAttribute>): number => {
+  const at = ATTRIBUTES.indexOf(attrs[slots[0]?.heroIds?.[0] || '']);
+  return at === -1 ? ATTRIBUTES.length : at;
+};
+
+/**
+ * The builder's slots by the hero they belong to, in the order of the game's hero grid: strength,
+ * agility, intelligence, universal, each alphabetical (attrs: src/item-builder-details.ts). Without
+ * the attributes, alphabetical.
+ */
+export function heroesOf(slots: ItemSlot[], attrs: Record<string, HeroAttribute> = {}): [string, ItemSlot[]][] {
   const heroes = new Map<string, ItemSlot[]>();
   for (const s of slots) {
     const key = s.heroLabel || s.label || s.slot;
     heroes.set(key, [...(heroes.get(key) || []), s]);
   }
-  return [...heroes.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  return [...heroes.entries()].sort((a, b) => attributeRank(a[1], attrs) - attributeRank(b[1], attrs) || a[0].localeCompare(b[0]));
 }
 
 // What is on the hero, rather than how many slots it has: 92 of 124 heroes have four to six, so
@@ -138,3 +151,16 @@ export function setCount(set: ItemSet): string {
   const n = set.pieces.length;
   return set.fit < n ? L`${set.fit} из ${n} ${plural(n, 'детали', 'деталей', 'деталей')}` : `${n} ${plural(n, 'деталь', 'детали', 'деталей')}`;
 }
+
+/** The shelves of a slot's effects tab: the courier unusuals, the seasonal ones, and the ambients of particular couriers. */
+export type EffectGroup = 'unusual' | 'seasonal' | 'courier';
+
+// the builder's own effects by what the game draws them for (src/item-builder-effects.ts); the
+// game's are unusual-<number>, and its numbers from 800 up are the seasonal ones (Frostbloom 826)
+const OWN_GROUP: Record<string, EffectGroup> = {
+  fire: 'unusual', lightnings: 'unusual', frostbloom: 'seasonal', snow: 'seasonal', bubbles: 'seasonal', 'sand-storm': 'courier', ghost: 'courier',
+};
+export const effectGroup = (id: string): EffectGroup => OWN_GROUP[id] || (Number(/^unusual-(\d+)$/.exec(id)?.[1]) >= 800 ? 'seasonal' : 'unusual');
+
+/** A rarity key as the game prints it in every language: "mythical" is "Mythical". */
+export const rarityName = (key: string | undefined): string => (key ? key.charAt(0).toUpperCase() + key.slice(1) : '');

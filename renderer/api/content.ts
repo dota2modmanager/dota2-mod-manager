@@ -2,7 +2,7 @@
  * schema and the free cosmetics it enables, the pictures, the Source 2 toolchain, what the network
  * told the app, and presets. */
 import type { CatalogData } from '../catalog/data.ts';
-import type { CosmeticSet, CosmeticSlot } from '../catalog/types.ts';
+import type { CosmeticSet, CosmeticSlot, HeroAttribute, LookPick } from '../catalog/types.ts';
 import type { LibRecord, RepairState } from '../library/types.ts';
 import type { Dialog, Reply } from './reply.ts';
 
@@ -112,13 +112,15 @@ export interface ConfigApi {
 }
 
 export interface CosmeticsApi {
-  slots: () => Promise<{ slots: CosmeticSlot[]; sets: CosmeticSet[]; names?: Record<string, string> } & Record<string, unknown>>;
+  slots: () => Promise<{ slots: CosmeticSlot[]; sets: CosmeticSet[]; heroAttrs?: Record<string, HeroAttribute>; names?: Record<string, string> } & Record<string, unknown>>;
   /** pictures by name; the clips among them come back to be decoded here (ui/cosmetic-icons.ts) */
   icons: (names: string[]) => Promise<{ pictures: Record<string, string | null>; decode: string[] }>;
-  heroPortraits: (ids: string[]) => Promise<Record<string, string>>;
+  heroPortraits: (ids: string[], tall?: boolean) => Promise<Record<string, string>>;
   heroPortraitsByName: (names: string[]) => Promise<Record<string, string>>;
   pick: (slot: string, itemId: string, itemName: string, effectId: string) => Promise<Reply<{ record: LibRecord }>>;
-  pickSet: (setId: string) => Promise<Reply<{ applied: number; pieces: number }>>;
+  /** style: the look each piece that has it goes on in, 0 for the first */
+  pickSet: (setId: string, style?: number) => Promise<Reply<{ applied: number; pieces: number }>>;
+  wearLook: (hero: string, picks: LookPick[]) => Promise<Reply<{ applied: number; picks: number }>>;
 }
 
 /** The whole arcana, or only its colour over one the player has (src/arcana-service.ts). */
@@ -214,6 +216,8 @@ export interface PaintApi {
   state: (hero: string) => Promise<Reply<{ layers: PaintLayer[]; installed: { id: string; layers: Record<string, string>; enabled: boolean } | null; vrf: boolean }>>;
   /** the hero in a #rrggbb per layer that is on, put in My mods in place of the one before */
   install: (hero: string, colors: Record<string, string>, label: string) => Promise<Reply<{ record: LibRecord }>>;
+  /** the abilities' icons out of the game, by ability name; the ones it could not read are left out */
+  icons: (abilities: string[]) => Promise<Record<string, string>>;
 }
 
 /** How a sound of the user's goes on an event: instead of Valve's, or with it. */
@@ -232,13 +236,6 @@ export interface SoundsApi {
   add: (hero: string, event: string, mode: SoundMode, volume: number, wav: Uint8Array, label: string) => Promise<Reply<{ record: LibRecord | null }>>;
   /** the sound of the user's off an event; the last one off removes the record */
   remove: (hero: string, event: string) => Promise<Reply<{ record: LibRecord | null }>>;
-}
-
-/** The item builder's 3D preview (src/hero-preview.ts): the body with its idle and each slot's model, as GLB bytes. */
-export interface Preview3dApi {
-  models: (hero: string, slots: { slot: string; stock: string }[]) => Promise<
-    | { ok: true; body: Uint8Array; parts: { slot: string; name: string; glb: Uint8Array }[]; missing: string[] }
-    | { ok: false; reason: 'no-game' | 'no-tool' | 'no-body'; error?: string }>;
 }
 
 /** A mod's own video, and the still the window decodes out of it. */

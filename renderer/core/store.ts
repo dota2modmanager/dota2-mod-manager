@@ -14,7 +14,7 @@
  */
 import { PANEL_DEFAULTS, type Panels } from './constants.ts';
 import type { CatalogData } from '../catalog/data.ts';
-import type { CosmeticSet, CosmeticSlot, Mod } from '../catalog/types.ts';
+import type { CosmeticSet, CosmeticSlot, HeroAttribute, Mod } from '../catalog/types.ts';
 import type { LibRecord } from '../library/types.ts';
 import type { AppSettings } from '../api/app.ts';
 import type { PatchState } from '../api/content.ts';
@@ -26,6 +26,8 @@ export interface State {
   cosmeticSlots: CosmeticSlot[] | null;
   /** the item builder's sets (src/item-builder.ts itemSets) */
   cosmeticSets: CosmeticSet[] | null;
+  /** each hero's main attribute by its id, for the order of the game's hero grid */
+  heroAttrs: Record<string, HeroAttribute>;
   /** src/patcher.ts + schema-service state: patched/signed/conflicts/foreign */
   patchState: PatchState | null;
   /** what settings.json holds (src/settings.ts) */
@@ -53,6 +55,7 @@ export const state: State = {
   catalog: null,
   cosmeticSlots: null,
   cosmeticSets: null,
+  heroAttrs: {},
   patchState: null,
   settings: null,
   activeCategory: 'all',
