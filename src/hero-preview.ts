@@ -12,9 +12,12 @@ import { findItem, itemFields } from './schema.ts';
 import { itemEffectPatch } from './item-builder.ts';
 import { heroModelPath, normalizeAssetPath } from './item-builder-assets.ts';
 import { sharedVpkIndex } from './vpk.ts';
+import { personaLayouts } from './item-builder-personas.ts';
+import { ITEM_EFFECTS } from './item-builder-effects.ts';
+import { unusualItemEffect } from './item-builder-unusual.ts';
 import { itemActivities, loadoutSequence, modelSequences } from './model-loadout.ts';
 import { heroStage, type HeroStage } from './hero-showcase.ts';
-import { heroLoadoutParticles, itemParticles, modelAttachments, particleDef, type Attachment, type ParticleDef } from './particle-spec.ts';
+import { heroLoadoutParticles, itemParticles, modelAttachments, particleDef, particleTextures, type Attachment, type ParticleDef } from './particle-spec.ts';
 import type { createModelGlb } from './model-glb.ts';
 import type { Library } from './library.ts';
 
@@ -28,6 +31,8 @@ export type HeroModels =
     parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[] }[]; missing: string[];
     /** the body's attachment points, and the particles: on the body (part -1) or on a part, by its place in `parts` */
     attachments: Attachment[]; particles: { part: number; def: ParticleDef }[];
+    /** the particles' textures as PNG bytes, by the path they name (src/model-glb.ts sprites) */
+    sprites: Record<string, Uint8Array>;
   }
   | { ok: false; reason: 'no-game' | 'no-tool' | 'no-body' };
 
@@ -52,9 +57,21 @@ function itemModel(text: string, itemId: string, key: string | undefined, hero: 
   return { model: item ? itemFields(text, item).get('model_player') || null : null, body };
 }
 
+/**
+ * The body an item's "entity_model" modifier puts the hero in: a persona's, which the item's own
+ * copies leave out because a persona goes on through its base (src/item-builder-personas.ts).
+ */
+export function entityModel(block: string, hero: string): string | null {
+  for (const m of block.matchAll(/"asset_modifier\d*"\s*\{([^{}]*)\}/gi)) {
+    const field = (k: string) => new RegExp(`"${k}"\\s+"([^"]*)"`, 'i').exec(m[1])?.[1];
+    if (field('type')?.toLowerCase() === 'entity_model' && field('asset') === hero && /\.vmdl$/i.test(field('modifier') || '')) return field('modifier')!;
+  }
+  return null;
+}
+
 /** The 3D preview's models, made on demand. */
 export function createHeroPreview({ glb, library, gamePath, vanilla, log = () => {} }: {
-  glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'>;
+  glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'> & Partial<Pick<ReturnType<typeof createModelGlb>, 'sprites'>>;
   library: Pick<Library, 'list'>;
   gamePath: () => string | null;
   vanilla: () => string;
@@ -74,13 +91,16 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     let body = normalizeAssetPath(heroModelPath(ix, hero));
     const parts: { slot: string; name: string; model: string; fx: string[] }[] = [];
     const modifiers: string[] = [];
+    // a persona's own slot is worn under a plain one, and wears the persona's stock item until a pick
+    const given = new Map((personaLayouts(text).get(hero.replace(/^npc_dota_hero_/, ''))?.parts || []).map((x) => [x.slot, x.given?.id]));
     for (const s of slots) {
       const rec = library.list().find((r) => r.categoryId === 'cosmetic' && r.slot === s.slot && r.enabled !== false && r.itemId);
-      const stockItem = findItem(text, s.stock);
+      const stockItem = findItem(text, given.get(s.slot.split(':').pop() || '') || s.stock);
       const stock = stockItem ? itemFields(text, stockItem) : null;
       const picked = rec ? itemModel(text, String(rec.itemId), rec.effectId as string | undefined, hero, stock?.get('model_player') || null) : null;
-      if (picked?.body) body = normalizeAssetPath(picked.body);
       const block = rec ? findItem(text, String(rec.itemId)) : null;
+      const swap = picked?.body || (block ? entityModel(block.text, hero) : null);
+      if (swap) body = normalizeAssetPath(swap);
       if (block) modifiers.push(...itemActivities(block.text));
       const model = picked?.model || stock?.get('model_player');
       // the item's own particles, or the stock item's where nothing is picked (src/particle-spec.ts)
@@ -124,11 +144,29 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     }
     fx(-1, p.heroFx);
     const stand = pedestal ? files[pedestal] : null;
+    const sprites = await spritesOf(particles.map((x) => x.def));
     return {
       ok: true, body: embedGlb(bodyFile), clip: p.clip, stage: p.stage, pedestal: stand ? embedGlb(stand) : null, parts, missing,
-      attachments: modelAttachments(p.read(p.body.replace(/\.vmdl$/i, '.vmdl_c'))), particles,
+      attachments: modelAttachments(p.read(p.body.replace(/\.vmdl$/i, '.vmdl_c'))), particles, sprites,
     };
   }
 
-  return { plan, models };
+  /** The textures these systems draw with, as the window takes them. */
+  async function spritesOf(defs: ParticleDef[]): Promise<Record<string, Uint8Array>> {
+    const wanted = [...new Set(defs.flatMap(particleTextures))];
+    const got = wanted.length && glb.sprites ? await glb.sprites(wanted) : {};
+    return Object.fromEntries(Object.entries(got).filter((e): e is [string, Buffer] => !!e[1]).map(([k, v]) => [k, new Uint8Array(v)]));
+  }
+
+  /** An effect the builder offers (one of its own, or the game's unusual-<n>) as its particle system, for its picture. */
+  async function effect(id: string): Promise<{ def: ParticleDef; sprites: Record<string, Uint8Array> } | null> {
+    const game = gamePath();
+    const fx = ITEM_EFFECTS.find((e) => e.id === id) || unusualItemEffect(vanilla(), id);
+    if (!game || !fx) return null;
+    const ix = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
+    const def = particleDef((f) => ix.read(f), fx.modifier.toLowerCase());
+    return def ? { def, sprites: await spritesOf([def]) } : null;
+  }
+
+  return { plan, models, effect };
 }

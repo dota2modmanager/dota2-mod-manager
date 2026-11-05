@@ -56,8 +56,8 @@ void main() {
 `;
 
 const fragmentShader = /* glsl */`
-uniform sampler2D uColor, uNormal, uMasks1, uMasks2, uFresnelWarp, uDiffuseWarp;
-uniform float uHasNormal, uHasMasks1, uHasMasks2, uHasDiffuseWarp, uAlphaTest;
+uniform sampler2D uColor, uNormal, uMasks1, uMasks2, uFresnelWarp, uDiffuseWarp, uCubeMask;
+uniform float uHasNormal, uHasMasks1, uHasMasks2, uHasDiffuseWarp, uAlphaTest, uSelfIllumOn, uHasCubeMask;
 uniform float uWarpFull, uMetalFull, uSelfIllumFull, uSpecFull, uExpFull;
 uniform float uSpecScale, uSpecExp, uRimScale, uCubeScale, uWarpRow;
 uniform vec3 uSpecColor, uRimColorM;
@@ -100,7 +100,8 @@ void main() {
   vec4 m2 = uHasMasks2 > 0.5 ? texture2D(uMasks2, vUv0) : vec4(0.0);
   float warpMask = mix(m1.g, 1.0, uWarpFull);
   float metal = mix(m1.b, 1.0, uMetalFull);
-  float selfIllum = mix(m1.a, 1.0, uSelfIllumFull);
+  // the mask's alpha is self-illumination only where the material switches it on
+  float selfIllum = mix(m1.a, 1.0, uSelfIllumFull) * uSelfIllumOn;
   float specMask = mix(m2.r, 1.0, uSpecFull);
   float expo = mix(m2.a * 127.0 + 1.0, uSpecExp, uExpFull);
   float nv = clamp(dot(n, v), 0.0, 1.0);
@@ -119,7 +120,8 @@ void main() {
 
   vec3 r = reflect(-v, n);
   vec3 env = mix(uGround, uSky * 2.0, smoothstep(-0.3, 0.6, dot(r, uUp)));
-  col += env * albedo * metal * uCubeScale * 0.35;
+  float cubeMask = uHasCubeMask > 0.5 ? texture2D(uCubeMask, vUv0).r : metal;
+  col += env * albedo * cubeMask * uCubeScale * 0.35;
 
   col += uRim * uRimColorM * fres.g * m2.g * uRimScale * clamp(up + 0.35, 0.0, 1.0);
   col = mix(col, albedo, selfIllum);
@@ -165,10 +167,11 @@ async function heroMaterial(gltf: GLTF, from: THREE.Material, lights: HeroLights
   const num = (k: string, d = 0) => vmat.FloatParams?.[k] ?? d;
   const vec = (k: string, d: number[]) => vmat.VectorParams?.[k] ?? d;
   const tp = vmat.TextureParams || {};
-  const [color, normal, masks1, masks2, fresnel, diffuseWarp] = await Promise.all([
+  const [color, normal, masks1, masks2, fresnel, diffuseWarp, cubeMask] = await Promise.all([
     textureNamed(gltf, tp.g_tColor, 'color'), textureNamed(gltf, tp.g_tNormal),
     int.F_MASKS_1 ? textureNamed(gltf, tp.g_tMasks1) : null, int.F_MASKS_2 ? textureNamed(gltf, tp.g_tMasks2) : null,
     textureNamed(gltf, tp.g_tFresnelWarp, 'lookup'), int.F_DIFFUSE_WARP ? textureNamed(gltf, tp.g_tDiffuseWarp, 'ramp') : null,
+    int.F_MASK_CUBE_MAP_BY_SEPARATE_MASK ? textureNamed(gltf, tp.g_tCubeMapSeparateMask) : null,
   ]);
   if (!color || !fresnel) return null;
   const scale = vec('g_vTexCoordScale', [1, 1]);
@@ -185,7 +188,9 @@ async function heroMaterial(gltf: GLTF, from: THREE.Material, lights: HeroLights
       uHasDiffuseWarp: { value: diffuseWarp ? num('g_flDiffuseWarpBlendToFull', 1) > 0 || masks1 ? 1 : 0 : 0 },
       // the lower half of a warp is the plain ramp; the upper, a second one a mask can pick
       uWarpRow: { value: 0.75 },
-      uAlphaTest: { value: int.F_ALPHA_TEST ? 0.5 : 0 },
+      uAlphaTest: { value: int.F_ALPHA_TEST ? num('g_flAlphaTestReference', 0.5) : 0 },
+      uSelfIllumOn: { value: int.F_SELF_ILLUM ? 1 : 0 },
+      uCubeMask: { value: cubeMask || blank }, uHasCubeMask: { value: cubeMask ? 1 : 0 },
       uWarpFull: { value: num('g_flDiffuseWarpBlendToFull') }, uMetalFull: { value: num('g_flMetalnessBlendToFull') },
       uSelfIllumFull: { value: num('g_flSelfIllumBlendToFull') }, uSpecFull: { value: num('g_flSpecularBlendToFull') },
       uExpFull: { value: num('g_flSpecularExponentBlendToFull') },

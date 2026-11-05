@@ -88,7 +88,8 @@ function setPane(list: SetsState, st: SetState, redraw: () => void, openPiece: (
       count: setCount(set),
       pieces: set.pieces.map((p, index) => {
         const on = p.fits && pickedIn(p.slot)?.itemId === p.itemId;
-        return { index, name: p.name, fits: p.fits, on, meta: !p.fits ? p.reason || '' : on ? `${p.slotLabel} · ${L`Надето`}` : p.slotLabel || '' };
+        const rarity = p.fits ? p.rarity || '' : '';
+        return { index, name: p.name, fits: p.fits, on, rarity, rarityName: rarityName(rarity), meta: !p.fits ? p.reason || '' : on ? `${p.slotLabel} · ${L`Надето`}` : p.slotLabel || '' };
       }),
       facts: { rarity: set.rarity || '', rarityName: set.rarityName || rarityName(set.rarity), date: set.date || '', event: set.eventName || '', description: set.description || '' },
       styles: (set.styleNames?.length || 0) > 1 ? (set.styleNames as string[]).map((name, index) => ({ index, name, picked: index === st.style })) : null,

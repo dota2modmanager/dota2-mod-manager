@@ -1,5 +1,5 @@
-/* The channel of the 3D preview in the item builder's hero window (issue #417): the hero's body
- * and each slot's model as GLB bytes. The thinking is in src/hero-preview.ts; the export runs in
+/* The channels of the 3D preview in the item builder's hero window (issue #417): the hero's body
+ * and each slot's model as GLB bytes, and an effect's particle system for its picture. The thinking is in src/hero-preview.ts; the export runs in
  * the toolchain's own process (src/model-glb.ts), one at a time, and is kept per game build. */
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
@@ -16,5 +16,9 @@ export function registerPreview3dIpc({ heroPreview, toolchain, diag }: Pick<AppC
       diag(`preview 3d: ${errorText(err)}`);
       return { ok: false, reason: 'no-body', error: errorText(err) };
     }
+  });
+  // an effect's particle system, which the window draws as the effect's picture
+  ipcMain.handle('preview3d:effect', async (e, id) => {
+    try { return await heroPreview.effect(id); } catch (err) { diag(`preview 3d effect: ${errorText(err)}`); return null; }
   });
 }

@@ -80,7 +80,7 @@ const hueGlow = (gh: number) => (r: number, g: number, b: number): number => {
   return near * Math.min(1, Math.max(0, (s - 0.45) / 0.3)) * Math.min(1, Math.max(0, (v - 0.55) / 0.3));
 };
 
-function hsv([r, g, b]: Rgb): [number, number, number] {
+export function hsv([r, g, b]: Rgb): [number, number, number] {
   const max = Math.max(r, g, b) / 255;
   const d = max - Math.min(r, g, b) / 255;
   let h = 0;
@@ -93,7 +93,7 @@ function hsv([r, g, b]: Rgb): [number, number, number] {
   return [h, max ? d / max : 0, max];
 }
 
-function rgbOf(h: number, s: number, v: number): Rgb {
+export function rgbOf(h: number, s: number, v: number): Rgb {
   const c = v * s;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = v - c;

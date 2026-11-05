@@ -39,6 +39,8 @@ export interface ParticleSpec {
   mortal: boolean;
   /** how it is drawn; none: it only carries its children */
   draw: 'add' | 'blend' | 'none'; bright: number;
+  /** the texture its sprites are, as the game names it; null for a plain glow */
+  texture: string | null;
   cps: Map<number, ControlPoint>;
   children: ParticleSpec[];
 }
@@ -99,7 +101,7 @@ export function particleSpec(def: ParticleDef, inherited: Map<number, ControlPoi
     alpha: [alphaOf(t.m_ConstantColor), alphaOf(t.m_ConstantColor)], colors: [rgb(t.m_ConstantColor, [1, 1, 1]), rgb(t.m_ConstantColor, [1, 1, 1])],
     spawn: { cp: 0, sphere: [0, 0], bias: [1, 1, 1], speed: [0, 0], local: null, offset: null, localOffset: false, noise: null, ring: null, onModel: false },
     mortal: false, gravity: [0, 0, 0], drag: 0, jitter: 0, fadeIn: 0, fadeOut: 0, size: { from: 1, to: 1, start: 0, end: 1 }, fade: null, lock: null,
-    draw: 'none', bright: 1, cps, children: [],
+    draw: 'none', bright: 1, texture: null, cps, children: [],
   };
   for (const e of list(t.m_Emitters)) {
     const c = str(e._class);
@@ -116,9 +118,12 @@ export function particleSpec(def: ParticleDef, inherited: Map<number, ControlPoi
   for (const i of list(t.m_Initializers)) initializer(s, i);
   for (const o of list(t.m_Operators)) operator(s, o);
   for (const r of list(t.m_Renderers)) {
-    if (!/^C_OP_Render(Sprites|Trails|Ropes|SpriteTrail)$/.test(str(r._class)) || s.draw !== 'none') continue;
+    // a modulating renderer darkens what is behind it; drawn as a plain sprite it would be a grey square
+    if (!/^C_OP_Render(Sprites|Trails|Ropes|SpriteTrail)$/.test(str(r._class)) || s.draw !== 'none' || /BLEND_MODE_MOD/.test(str(r.m_nOutputBlendMode))) continue;
     s.draw = /ADD/.test(str(r.m_nOutputBlendMode)) || r.m_bAdditive === true ? 'add' : 'blend';
     s.bright = Math.min(4, Math.max(1, one(r.m_flOverbrightFactor, 1)));
+    const input = Array.isArray(r.m_vecTexturesInput) ? obj(r.m_vecTexturesInput[0])?.m_hTexture : r.m_hTexture;
+    s.texture = typeof input === 'string' ? input.toLowerCase() : null;
   }
   s.children = def.children.map((c) => particleSpec(c, cps));
   return s;

@@ -69,6 +69,26 @@ export function particleDef(read: (path: string) => Buffer | null, path: string,
   return { path, tree, children };
 }
 
+/** The texture a renderer draws its sprites with, as the game names it. */
+function rendererTexture(r: { [k: string]: Json }): string | null {
+  const input = Array.isArray(r.m_vecTexturesInput) ? (r.m_vecTexturesInput[0] as { [k: string]: Json } | undefined)?.m_hTexture : r.m_hTexture;
+  return typeof input === 'string' && /^materials\/[\w/.-]+\.vtex$/i.test(input) ? input.toLowerCase() : null;
+}
+
+/** Every texture a system and its children draw with, once each. */
+export function particleTextures(def: ParticleDef): string[] {
+  const out = new Set<string>();
+  const walk = (d: ParticleDef) => {
+    for (const r of (Array.isArray(d.tree.m_Renderers) ? d.tree.m_Renderers : []) as { [k: string]: Json }[]) {
+      const t = r && typeof r === 'object' ? rendererTexture(r) : null;
+      if (t) out.add(t);
+    }
+    d.children.forEach(walk);
+  };
+  walk(def);
+  return [...out];
+}
+
 /** The particle_create systems an item block brings, for its first style. */
 export function itemParticles(block: string): string[] {
   const out: string[] = [];

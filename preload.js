@@ -110,6 +110,7 @@ contextBridge.exposeInMainWorld('api', {
   // the item builder's 3D preview: the hero's models out of the game
   preview3d: {
     models: (hero, slots) => ipcRenderer.invoke('preview3d:models', hero, slots),
+    effect: (id) => ipcRenderer.invoke('preview3d:effect', id),
   },
   sounds: {
     heroes: () => ipcRenderer.invoke('sounds:heroes'),
@@ -143,6 +144,7 @@ contextBridge.exposeInMainWorld('api', {
   },
   paint: {
     state: (hero) => ipcRenderer.invoke('paint:state', hero),
+    icons: (abilities) => ipcRenderer.invoke('paint:icons', abilities),
     install: (hero, colors, label) => ipcRenderer.invoke('paint:install', hero, colors, label),
   },
   map: {

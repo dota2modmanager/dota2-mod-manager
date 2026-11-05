@@ -691,6 +691,13 @@ test('a set carries what the game says about it: rarity, release date, event (is
   assert.deepEqual([blood?.rarity, blood?.date, blood?.event], ['', '', ''], 'a set the game says nothing about');
 });
 
+test("a set's piece carries its own rarity, as the slot offering it does", () => {
+  const text = itemSetTable().replace('"name"\t\t"Golden Full-Bore Bonanza"', '"name"\t\t"Golden Full-Bore Bonanza"\n\t\t\t"item_rarity"\t\t"Mythical"');
+  const sniper = builder.itemSets(text).find((s) => s.name === 'Sniper Set');
+  assert.deepEqual(sniper?.pieces.filter((p) => p.fits).map((p) => [p.name, 'rarity' in p ? p.rarity : undefined]),
+    [['Golden Full-Bore Bonanza', 'mythical'], ['No visuals here', undefined]]);
+});
+
 test("a saved look goes on in one write, and the hero's other picks go off, kept in My mods (issue #527)", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-looks-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));

@@ -79,6 +79,8 @@ export interface SetPiece {
   fits: boolean;
   reason?: string;
   slotLabel?: string;
+  /** the item's rarity as the game names it, for a piece that fits */
+  rarity?: string;
 }
 
 export interface CosmeticSet {

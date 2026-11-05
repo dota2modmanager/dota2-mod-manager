@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { buildVpk, entryAt } from '../src/vpk.ts';
 import { writeGlb, readGlb } from '../src/glb-embed.ts';
-import { createHeroPreview } from '../src/hero-preview.ts';
+import { createHeroPreview, entityModel } from '../src/hero-preview.ts';
 
 const jugg = `\t\t\t"used_by_heroes"\n\t\t\t{\n\t\t\t\t"npc_dota_hero_juggernaut"\t\t"1"\n\t\t\t}\n`;
 const block = (id: string, fields: [string, string][], visuals = '') =>
@@ -102,4 +102,12 @@ test('nothing to show says why: no toolchain, no game, no body', async () => {
   assert.deepEqual(await preview([], { gamePath: null }).hp.models('juggernaut', SLOTS, true), { ok: false, reason: 'no-game' });
   assert.deepEqual(await preview([], { have: () => false }).hp.models('juggernaut', SLOTS, true), { ok: false, reason: 'no-body' });
   assert.deepEqual(await preview().hp.models('nobody', SLOTS, true), { ok: false, reason: 'no-body' });
+});
+
+test('a persona puts the hero in the body its "entity_model" names, and only for that hero', () => {
+  const block = '"visuals"\n{\n\t"asset_modifier0" { "type" "persona" "persona" "1" }\n'
+    + '\t"asset_modifier1" { "type" "entity_model" "asset" "npc_dota_hero_crystal_maiden" "modifier" "models/heroes/crystal_maiden_persona/crystal_maiden_persona.vmdl" }\n}';
+  assert.equal(entityModel(block, 'npc_dota_hero_crystal_maiden'), 'models/heroes/crystal_maiden_persona/crystal_maiden_persona.vmdl');
+  assert.equal(entityModel(block, 'npc_dota_hero_lina'), null);
+  assert.equal(entityModel('"asset_modifier" { "type" "entity_model" "asset" "npc_dota_hero_lina" "modifier" "particles/x.vpcf" }', 'npc_dota_hero_lina'), null, 'a body is a model');
 });

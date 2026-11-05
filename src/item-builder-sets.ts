@@ -14,10 +14,11 @@ import { heroDisplayName } from './vpk.ts';
 import { t } from './i18n.ts';
 import { listItems, toUtf8, eachChild, blockBounds } from './schema.ts';
 import { canonicalHeroId, isPersonaItem, itemHeroes, itemSlots, type ItemSlot } from './item-builder-slots.ts';
+import { itemFacts } from './item-builder-details.ts';
 
 /** One piece of a set: where it goes, or why it does not. `styles`: how many looks the piece has, when more than one. */
 type SetPiece =
-  | { name: string; itemId: string; fits: true; slot: string; slotLabel: string; styles?: number }
+  | { name: string; itemId: string; fits: true; slot: string; slotLabel: string; styles?: number; rarity?: string }
   | { name: string; itemId: string; fits: false; reason: string };
 
 /**
@@ -83,7 +84,8 @@ export function itemSets(text: string, slots: Pick<ItemSlot, 'slot' | 'slotLabel
       if (at && !taken.has(at.slot)) {
         taken.add(at.slot);
         const styles = looks.get(it.id);
-        pieces.push({ name: toUtf8(it.name), itemId: it.id, fits: true, slot: at.slot, slotLabel: at.slotLabel, ...(styles ? { styles } : {}) });
+        const { rarity } = itemFacts(text.slice(it.start, it.end));
+        pieces.push({ name: toUtf8(it.name), itemId: it.id, fits: true, slot: at.slot, slotLabel: at.slotLabel, ...(styles ? { styles } : {}), ...(rarity ? { rarity } : {}) });
         continue;
       }
       if (at) collide++;

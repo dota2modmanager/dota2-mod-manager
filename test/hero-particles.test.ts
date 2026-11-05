@@ -2,7 +2,8 @@
  * and what the window makes of a system's tree (renderer/catalog/preview3d/particle-def.ts). */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { heroLoadoutParticles, itemParticles, modelAttachments, particleDef } from '../src/particle-spec.ts';
+import { heroLoadoutParticles, itemParticles, modelAttachments, particleDef, particleTextures } from '../src/particle-spec.ts';
+import { coverGain } from '../renderer/catalog/preview3d/particles.ts';
 import { particleSpec, range, vec } from '../renderer/catalog/preview3d/particle-def.ts';
 import type { ParticleDef } from '../renderer/api/preview3d.ts';
 
@@ -108,4 +109,21 @@ test('control points: an attachment on the item or the hero, a point set off ano
   assert.equal(s.draw, 'none');
   assert.deepEqual(s.children[0].cps.get(0), { entity: 'self', attachment: 'attach_sword' });
   assert.equal(s.children[0].draw, 'blend');
+});
+
+test('a sprite draws the texture its first input names, and a MOD2X renderer is left out', () => {
+  const tex = (t: string, blend = 'PARTICLE_OUTPUT_BLEND_MODE_ADD') => ({ _class: 'C_OP_RenderSprites', m_nOutputBlendMode: blend, m_vecTexturesInput: [{ m_hTexture: t }] });
+  const s = particleSpec(def({ m_Renderers: [tex('materials/particle/darken.vtex', 'PARTICLE_OUTPUT_BLEND_MODE_MOD2X'), tex('Materials/Particle/Snow.vtex')] }));
+  assert.deepEqual([s.draw, s.texture], ['add', 'materials/particle/snow.vtex']);
+  // the textures to export: each system's and its children's, once, and nothing that is not a texture path
+  const tree = def({ m_Renderers: [tex('materials/particle/snow.vtex')] }, [def({ m_Renderers: [tex('materials/particle/snow.vtex'), tex('../x.vtex')] }), def({ m_Renderers: [tex('materials/particle/glow.vtex')] })]);
+  assert.deepEqual(particleTextures(tree), ['materials/particle/snow.vtex', 'materials/particle/glow.vtex']);
+});
+
+test('an untextured cloud is dimmed by how much of the frame it covers, at its largest', () => {
+  const base = { rate: 0, burst: 10, life: [1, 1] as [number, number], max: 100, radius: [5, 5] as [number, number], size: { from: 1, to: 1, start: 0, end: 1 } };
+  assert.equal(coverGain(base), 1, 'a few specks stay as bright as written');
+  const snow = { ...base, burst: 200, radius: [10, 10] as [number, number], size: { from: 12, to: 1, start: 0, end: 1 } };
+  assert.ok(coverGain(snow) < 0.1, 'a burst that starts twelve times its size is a dome, and dimmed');
+  assert.ok(coverGain({ ...snow, size: { from: 1, to: 1, start: 0, end: 1 } }) > coverGain(snow));
 });

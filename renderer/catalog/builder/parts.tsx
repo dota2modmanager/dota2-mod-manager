@@ -1,6 +1,6 @@
 /* What every item builder window shares: a look's picture, the header with its way back, the bar
  * along the bottom, and what an empty search says. */
-import { useEffect, useRef, type ReactNode, type RefObject } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { watchIconFor } from '../../ui/cosmetic-icons.ts';
 import { useCosmeticIcon } from '../cosmetic/CosmeticCard.tsx';
 import type { BuilderAction } from './model.ts';
@@ -71,4 +71,28 @@ export function PickerSearch({ id, value, onChange, inputRef }: {
       <input type="text" id={id} ref={inputRef} placeholder={L`Поиск…`} value={value} autoComplete="off" onChange={(e) => onChange(e.target.value)} />
     </div>
   );
+}
+
+/**
+ * An effect's picture: its own where the builder has one, else drawn out of the game's particles
+ * (preview3d/effect-thumb.ts) once the card is on screen, the glyph until then.
+ */
+export function FxThumb({ id, picture }: { id: string; picture: string | null }) {
+  const [drawn, setDrawn] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (picture || !ref.current) return undefined;
+    let gone = false;
+    const seen = new IntersectionObserver((at) => {
+      if (!at.some((e) => e.isIntersecting)) return;
+      seen.disconnect();
+      void import('../preview3d/effect-thumb.ts').then(({ effectThumb }) => effectThumb(id)).then((uri) => { if (!gone) setDrawn(uri); }, () => {});
+    });
+    seen.observe(ref.current);
+    return () => { gone = true; seen.disconnect(); };
+  }, [id, picture]);
+  const shown = picture || drawn;
+  return shown
+    ? <span className="card-thumb"><img src={shown} alt="" loading="lazy" /></span>
+    : <div className="fx-glyph" ref={ref}><span className="ms">auto_awesome</span></div>;
 }

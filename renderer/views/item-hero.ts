@@ -61,7 +61,8 @@ let previewOpen = true;
 /** What the 3D preview shows for the hero: each slot's stock item and what is picked on it. */
 function heroPreview(slots: CosmeticSlot[]) {
   const hero = slots.find((s) => s.heroIds?.length)?.heroIds?.[0];
-  const dressed = slots.filter((s) => s.targetId && !s.persona);
+  // a persona's slots too: picked, it is the body, and its slots dress it (src/hero-preview.ts)
+  const dressed = slots.filter((s) => s.targetId);
   if (!hero || !dressed.length) return null;
   return {
     hero,

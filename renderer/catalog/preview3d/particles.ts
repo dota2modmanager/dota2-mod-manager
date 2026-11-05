@@ -25,17 +25,38 @@ void main() {
   gl_Position = projectionMatrix * mv;
 }`;
 const fragmentShader = /* glsl */`
-uniform float uBright;
+uniform float uBright, uHasTex;
+uniform sampler2D uTex;
 varying vec4 vTint;
 void main() {
+  if (uHasTex > 0.5) {
+    vec4 t = texture2D(uTex, gl_PointCoord);
+    gl_FragColor = vec4(vTint.rgb * t.rgb * uBright, vTint.a * t.a);
+    return;
+  }
   float r = length(gl_PointCoord - 0.5) * 2.0;
-  float soft = pow(clamp(1.0 - r, 0.0, 1.0), 1.6);
+  // a glow that falls off from its middle, as a sprite of smoke or fire does, not a lit disc
+  float soft = exp(-r * r * 5.0) * step(r, 1.0);
   gl_FragColor = vec4(vTint.rgb * uBright, vTint.a * soft);
 }`;
 
 const rand = (r: [number, number]) => r[0] + Math.random() * (r[1] - r[0]);
 const randV = (a: V3, b: V3) => new THREE.Vector3(rand([a[0], b[0]]), rand([a[1], b[1]]), rand([a[2], b[2]]));
 const tmp3 = new THREE.Matrix3();
+/** The game's sprites are textures mostly empty around a wisp; a solid soft dot carries more
+ * light than they do, so an additive one gives back this share of it. */
+const ADD_GAIN = 0.5;
+/**
+ * How much of its light a system keeps for the area it covers at once: a few dozen large sprites in
+ * the game are thin veils of smoke and rays, and drawn as solid dots on top of each other they would
+ * whiten the stage. Snow (hundreds of specks) keeps all of it; an arcana's base mist, a tenth.
+ */
+export function coverGain(s: Pick<ParticleSpec, 'rate' | 'burst' | 'life' | 'max' | 'radius' | 'size'>): number {
+  const alive = Math.min(s.max, s.burst + s.rate * (s.life[0] + s.life[1]) / 2);
+  // at its largest: a speck that starts twelve times its radius covers what a cloud does
+  const r = (s.radius[0] + s.radius[1]) / 2 * Math.max(s.size.from, s.size.to, 0.01);
+  return Math.min(1, Math.sqrt(6000 / Math.max(1, alive * r * r)));
+}
 
 class System {
   readonly points: THREE.Points;
@@ -53,12 +74,16 @@ class System {
   private lockAt: THREE.Vector3 | null = null;
 
   private readonly s: ParticleSpec;
+  private readonly gain: number;
   private readonly cp: (n: number) => THREE.Matrix4;
   private readonly src: () => THREE.Matrix4;
   private readonly surface: () => THREE.Vector3 | null;
 
-  constructor(s: ParticleSpec, cp: (n: number) => THREE.Matrix4, src: () => THREE.Matrix4, surface: () => THREE.Vector3 | null, px: { value: number }) {
+  constructor(s: ParticleSpec, cp: (n: number) => THREE.Matrix4, src: () => THREE.Matrix4, surface: () => THREE.Vector3 | null, px: { value: number },
+    tex: THREE.Texture | null) {
     this.s = s;
+    // a texture carries its own wisp and falls off as the game draws it; a plain dot needs the share
+    this.gain = tex ? 1 : coverGain(s);
     this.cp = cp;
     this.src = src;
     this.surface = surface;
@@ -78,8 +103,14 @@ class System {
     g.setDrawRange(0, 0);
     this.points = new THREE.Points(g, new THREE.ShaderMaterial({
       vertexShader, fragmentShader, transparent: true, depthWrite: false,
-      blending: s.draw === 'add' ? THREE.AdditiveBlending : THREE.NormalBlending,
-      uniforms: { uPx: px, uBright: { value: s.draw === 'add' ? s.bright : 1 } },
+      // added light leaves the canvas's alpha alone: the stage's colour is behind it, and a sprite's dark
+      // corners written as opaque would cover it with a black square
+      blending: s.draw === 'add' ? THREE.CustomBlending : THREE.NormalBlending,
+      blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor,
+      uniforms: {
+        uPx: px, uBright: { value: s.draw === 'add' ? Math.min(2, s.bright) * (tex ? 1 : ADD_GAIN) : 1 },
+        uTex: { value: tex }, uHasTex: { value: tex ? 1 : 0 },
+      },
     }));
     this.points.frustumCulled = false;
     this.points.visible = s.draw !== 'none';
@@ -118,7 +149,7 @@ class System {
     this.life[i] = Math.max(0.05, rand(this.s.life));
     const k = Math.random();
     const [c0, c1] = this.s.colors;
-    this.base.set([rand(this.s.radius) * 2 * src.getMaxScaleOnAxis(), rand(this.s.alpha),
+    this.base.set([rand(this.s.radius) * 2 * src.getMaxScaleOnAxis(), rand(this.s.alpha) * this.gain,
       c0[0] + (c1[0] - c0[0]) * k, c0[1] + (c1[1] - c0[1]) * k, c0[2] + (c1[2] - c0[2]) * k], i * 5);
   }
 
@@ -182,6 +213,11 @@ class System {
     for (const name of ['position', 'tint', 'size']) (geo.getAttribute(name) as THREE.BufferAttribute).needsUpdate = true;
   }
 
+  /** Take in where its particles are now. */
+  expand(box: THREE.Box3): void {
+    for (let i = 0; i < this.alive; i++) box.expandByPoint(new THREE.Vector3().fromArray(this.pos, i * 3));
+  }
+
   /** Start the emitters again, as the effect is played anew; the particles in the air stay, and a lasting glow is not doubled. */
   restart(): void { if (this.s.mortal) { this.time = 0; this.acc = 0; this.burst = false; } }
 
@@ -191,12 +227,28 @@ class System {
   }
 }
 
+/** The sprites the main process sent (PNG bytes by texture path) as textures the shader samples. */
+export async function spriteTextures(sprites: Record<string, Uint8Array>): Promise<Map<string, THREE.Texture>> {
+  const out = new Map<string, THREE.Texture>();
+  await Promise.all(Object.entries(sprites).map(async ([path, bytes]) => {
+    try {
+      const tex = new THREE.Texture(await createImageBitmap(new Blob([bytes as BlobPart], { type: 'image/png' })));
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.flipY = false;
+      tex.needsUpdate = true;
+      out.set(path, tex);
+    } catch { /* a picture the window cannot decode: that system stays a glow */ }
+  }));
+  return out;
+}
+
 /**
  * Every system the hero brings, in the scene.
  * @param src      the hero model's root, whose matrix takes Source's axes and inches to the scene's
  * @param viewPx   pixels per unit of size at one unit away: the canvas height over 2 tan(fov / 2)
  */
-export function playParticles(scene: THREE.Scene, list: { spec: ParticleSpec; self: Carrier }[], hero: Carrier, src: THREE.Object3D) {
+export function playParticles(scene: THREE.Scene, list: { spec: ParticleSpec; self: Carrier }[], hero: Carrier, src: THREE.Object3D,
+  textures: Map<string, THREE.Texture> = new Map()) {
   const px = { value: 500 };
   const systems: System[] = [];
   const srcMatrix = () => src.matrixWorld;
@@ -218,7 +270,8 @@ export function playParticles(scene: THREE.Scene, list: { spec: ParticleSpec; se
         return new THREE.Matrix4().compose(new THREE.Vector3(...att.offset), new THREE.Quaternion(...att.rotation), new THREE.Vector3(1, 1, 1))
           .premultiply(bone.matrixWorld);
       };
-      const sys = new System(s, cp, srcMatrix, () => (s.spawn.cp === 0 && s.cps.get(0)?.entity === 'self' ? self : hero).surface(), px);
+      const sys = new System(s, cp, srcMatrix, () => (s.spawn.cp === 0 && s.cps.get(0)?.entity === 'self' ? self : hero).surface(), px,
+        (s.texture && textures.get(s.texture)) || null);
       systems.push(sys);
       scene.add(sys.points);
       s.children.forEach(add);
@@ -231,6 +284,8 @@ export function playParticles(scene: THREE.Scene, list: { spec: ParticleSpec; se
       const step = Math.min(dt, 0.05);
       for (const s of systems) s.update(step);
     },
+    /** Where every particle is now, for a camera to frame them. */
+    bounds(): THREE.Box3 { const box = new THREE.Box3(); for (const s of systems) if (s.points.visible) s.expand(box); return box; },
     /** Play every system again from its start, as the loadout begins anew. */
     restart(): void { for (const s of systems) s.restart(); },
     dispose(): void { for (const s of systems) { s.points.removeFromParent(); s.dispose(); } },

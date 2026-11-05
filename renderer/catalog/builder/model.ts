@@ -96,6 +96,9 @@ interface PieceCard {
   name: string;
   fits: boolean;
   on: boolean;
+  /** the piece's rarity as the game names it, and in the window's words; empty where it has none */
+  rarity: string;
+  rarityName: string;
   meta: string;
 }
 

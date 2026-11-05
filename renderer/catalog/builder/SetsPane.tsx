@@ -112,19 +112,20 @@ export function SetPane({ m, actions }: { m: SetPaneModel; actions: SetPaneActio
         <div className="item-pick-grid ward-grid">
           {m.pieces.map((p) => {
             const cls = `card item-pick-card item-piece ${p.fits ? '' : 'is-disabled'} ${p.on ? 'installed' : ''}`;
+            const tint = p.rarity ? { 'data-rarity': p.rarity } : {};
             const body = (
               <>
                 <div className="card-media"><CosThumb name={p.name} fallback="checkroom" /></div>
                 <div className="card-body">
                   <div className="card-name" title={p.name}>{cosmeticName(p.name)}</div>
-                  <div className="card-meta"><span>{p.meta}</span></div>
+                  <div className="card-meta">{p.rarityName && <span className="set-rarity">{p.rarityName}</span>}<span>{p.meta}</span></div>
                 </div>
               </>
             );
             // a piece opens its slot's tab with it chosen, where its effects go on
             return p.fits
-              ? <button key={p.index} className={cls} data-piece={p.index} style={stagger(p.index)} title={L`Открыть слот: эффекты и стиль`} onClick={() => actions.piece(p.index)}>{body}</button>
-              : <div key={p.index} className={cls} style={stagger(p.index)}>{body}</div>;
+              ? <button key={p.index} className={cls} data-piece={p.index} {...tint} style={stagger(p.index)} title={L`Открыть слот: эффекты и стиль`} onClick={() => actions.piece(p.index)}>{body}</button>
+              : <div key={p.index} className={cls} {...tint} style={stagger(p.index)}>{body}</div>;
           })}
         </div>
         <div className="ward-shelf-note">{L`Набор надевается без эффектов. Чтобы добавить эффект, открой деталь.`}</div>

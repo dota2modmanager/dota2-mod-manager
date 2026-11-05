@@ -17,7 +17,7 @@ import { useHeroShader } from './hero-material.ts';
 import { backdrop, buildStage, heroLights, LOADOUT_FOV, PLAIN_STAGE, widthDistance, worldLights } from './stage.ts';
 import type { Attachment, HeroStage, ParticleDef } from '../../api/preview3d.ts';
 import { particleSpec } from './particle-def.ts';
-import { playParticles, type Carrier } from './particles.ts';
+import { playParticles, spriteTextures, type Carrier } from './particles.ts';
 
 /** A wearable's bones in the order a parent comes before its children, each with the hero's bone of its name. */
 function linkBones(wearable: THREE.Object3D, hero: Map<string, THREE.Bone>): { bone: THREE.Bone; to: THREE.Bone | null }[] {
@@ -113,10 +113,12 @@ function turntable(el: HTMLElement, onZoom: (dy: number) => void) {
  * @param stage  how the game stages the hero (src/hero-showcase.ts)
  * @param pedestal  the model it stands on, if its showcase names one
  * @param particles  the systems on the body (part -1) or on a part, by its place in `parts`; not played when `still`
+ * @param sprites  their textures, PNG bytes by the path they name
  */
 export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uint8Array[], {
   still = false, clip = null as string | null, stage = PLAIN_STAGE as HeroStage, pedestal = null as Uint8Array | null,
   attachments = { body: [] as Attachment[], parts: [] as Attachment[][] }, particles = [] as { part: number; def: ParticleDef }[],
+  sprites = {} as Record<string, Uint8Array>,
 } = {}): Promise<() => void> {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -211,10 +213,11 @@ export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uin
   // the hero model's root node: its matrix takes Source's axes and inches to the scene's
   const src = hero.scene.children.find((o) => !(o as THREE.Mesh).isMesh && o.matrix.getMaxScaleOnAxis() < 0.5) || hero.scene;
   const heroCarrier: Carrier = { bones: heroBones, attachments: attachments.body, surface: surfaceOf(hero.scene) };
+  const textures = still ? new Map<string, THREE.Texture>() : await spriteTextures(sprites);
   const fx = still ? null : playParticles(scene, particles.flatMap(({ part, def }) => {
     const self = part < 0 ? heroCarrier : carriers[part];
     return self ? [{ spec: particleSpec(def), self }] : [];
-  }), heroCarrier, src);
+  }), heroCarrier, src, textures);
   // the loadout's effects come with its animation: each time it starts over, so do they
   if (fx && playing?.name === clip) mixer.addEventListener('loop', () => fx.restart());
 
@@ -256,6 +259,7 @@ export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uin
     spin.dispose();
     mixer.stopAllAction();
     fx?.dispose();
+    for (const t of textures.values()) t.dispose();
     scene.traverse((o) => {
       const mesh = o as THREE.Mesh;
       mesh.geometry?.dispose();

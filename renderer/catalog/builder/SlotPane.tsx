@@ -10,7 +10,7 @@ import { useRef, type CSSProperties } from 'react';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import type { SlotPaneActions, SlotPaneModel, SlotView } from './model.ts';
 import type { EffectGroup } from './logic.ts';
-import { BuilderFoot, CosThumb, EmptySearch, PickerSearch } from './parts.tsx';
+import { BuilderFoot, CosThumb, EmptySearch, FxThumb, PickerSearch } from './parts.tsx';
 
 /** The words on an item's note tag (src/arcana-notes.ts); the note itself is its tooltip, and the
  *  chosen item's note is spelled out under its name at the foot, beside the button that puts it on. */
@@ -105,9 +105,7 @@ export function SlotPane({ m, actions }: { m: SlotPaneModel; actions: SlotPaneAc
                     <button key={fx.id} className={`card item-pick-card fx-card ${fx.picked ? 'picked' : ''}`} data-effect-id={fx.id}
                       style={{ ...stagger(idx), ...(fx.picture ? {} : hue(fx.name)) }} aria-pressed={fx.picked} onClick={() => actions.effect(fx.id)}>
                       <div className="card-media">
-                        {fx.picture
-                          ? <span className="card-thumb"><img src={fx.picture} alt="" loading="lazy" /></span>
-                          : <div className="fx-glyph"><span className="ms">auto_awesome</span></div>}
+                        <FxThumb id={fx.id} picture={fx.picture} />
                         {fx.picked && <span className="fx-check ms" aria-hidden="true">check_circle</span>}
                       </div>
                       <div className="card-body"><div className="card-name" title={fx.name}>{fx.name}</div></div>

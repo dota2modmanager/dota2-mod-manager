@@ -216,6 +216,8 @@ export interface PaintApi {
   state: (hero: string) => Promise<Reply<{ layers: PaintLayer[]; installed: { id: string; layers: Record<string, string>; enabled: boolean } | null; vrf: boolean }>>;
   /** the hero in a #rrggbb per layer that is on, put in My mods in place of the one before */
   install: (hero: string, colors: Record<string, string>, label: string) => Promise<Reply<{ record: LibRecord }>>;
+  /** the abilities' icons out of the game, by ability name; the ones it could not read are left out */
+  icons: (abilities: string[]) => Promise<Record<string, string>>;
 }
 
 /** How a sound of the user's goes on an event: instead of Valve's, or with it. */

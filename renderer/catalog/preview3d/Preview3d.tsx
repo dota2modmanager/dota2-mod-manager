@@ -30,7 +30,7 @@ export function Preview3d({ hero, slots, sig, still = false, fallback }: {
         if (gone || !host.current) return;
         const off = await mountScene(host.current, r.body, r.parts.map((p) => p.glb), {
           still, clip: r.clip, stage: r.stage, pedestal: r.pedestal,
-          attachments: { body: r.attachments, parts: r.parts.map((p) => p.attachments) }, particles: r.particles,
+          attachments: { body: r.attachments, parts: r.parts.map((p) => p.attachments) }, particles: r.particles, sprites: r.sprites,
         });
         if (gone) { off(); return; }
         dispose = off;

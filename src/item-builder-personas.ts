@@ -21,6 +21,7 @@ import {
   canonicalItemSlot, itemHeroes, matchItemSlot, itemSlotId, itemSlotIcon, itemSlotLabel, slotDisplayLabel, type ItemSlot,
 } from './item-builder-slots.ts';
 import { heroDisplayName } from './hero-names.ts';
+import { itemFacts } from './item-builder-details.ts';
 import { entryPath, type VpkEntry } from './vpk.ts';
 import { heroModelPath } from './item-builder-assets.ts';
 import { modelScaleAgainst } from './model-scale.ts';
@@ -131,7 +132,7 @@ export function personaSlots(text: string): ItemSlot[] {
     return {
       slot: itemSlotId([hero], slot), kind: 'item-effect' as const, base: target.id, targetId: target.id, equipSlot: slot, heroIds: [hero],
       heroLabel: heroDisplayName(hero), slotLabel: slotDisplayLabel(plain), label: itemSlotLabel([hero], plain), icon: itemSlotIcon(plain),
-      options: options.map((o) => ({ id: o.id, name: toUtf8(o.name) })), persona: { hero, part },
+      options: options.map((o) => ({ id: o.id, name: toUtf8(o.name), ...itemFacts(text.slice(o.start, o.end)) })), persona: { hero, part },
     };
   }));
 }

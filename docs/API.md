@@ -3504,10 +3504,19 @@ export type HeroModels =
 
 What the window gets: each model's bytes, or why there are none.
 
+### `entityModel`
+
+```ts
+export function entityModel(block: string, hero: string): string | null
+```
+
+The body an item's "entity_model" modifier puts the hero in: a persona's, which the item's own
+copies leave out because a persona goes on through its base (src/item-builder-personas.ts).
+
 ### `createHeroPreview`
 
 ```ts
-export function createHeroPreview({ glb, library, gamePath, vanilla, log = () => {} }: { glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'>; library: Pick<Library, 'list'>; gamePath: () => string | null; vanilla: () => string; log?: (msg: string) => void; })
+export function createHeroPreview({ glb, library, gamePath, vanilla, log = () => {} }: { glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'> & Partial<Pick<ReturnType<typeof createModelGlb>, 'sprites'>>; library: Pick<Library, 'list'>; gamePath: () => string | null; vanilla: () => string; log?: (msg: string) => void; })
 ```
 
 The 3D preview's models, made on demand.
@@ -7049,6 +7058,14 @@ export function exportArgs(pakFile: string, out: string, files: string[], clips:
 
 The toolchain's arguments for these models out of this archive into this folder.
 
+### `spriteAt`
+
+```ts
+export function spriteAt(root: string, texture: string): string | null
+```
+
+Where a texture's picture landed: the file itself, or the largest frame of its sheet (name_seq0_N.png).
+
 ### `createModelGlb`
 
 ```ts
@@ -7826,6 +7843,14 @@ export function particleDef(read: (path: string) => Buffer | null, path: string,
 
 A system and its children, at most `budget` systems in all: a system with dozens of children
 would cost the window more than its look is worth.
+
+### `particleTextures`
+
+```ts
+export function particleTextures(def: ParticleDef): string[]
+```
+
+Every texture a system and its children draw with, once each.
 
 ### `itemParticles`
 
