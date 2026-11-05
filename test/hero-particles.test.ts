@@ -2,8 +2,12 @@
  * and what the window makes of a system's tree (renderer/catalog/preview3d/particle-def.ts). */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spriteAt } from '../src/model-glb.ts';
 import { heroLoadoutParticles, itemParticles, modelAttachments, particleDef, particleTextures } from '../src/particle-spec.ts';
-import { coverGain } from '../renderer/catalog/preview3d/particles.ts';
+import { coverGain, crowdGain } from '../renderer/catalog/preview3d/gain.ts';
 import { particleSpec, range, vec } from '../renderer/catalog/preview3d/particle-def.ts';
 import type { ParticleDef } from '../renderer/api/preview3d.ts';
 
@@ -126,4 +130,32 @@ test('an untextured cloud is dimmed by how much of the frame it covers, at its l
   const snow = { ...base, burst: 200, radius: [10, 10] as [number, number], size: { from: 12, to: 1, start: 0, end: 1 } };
   assert.ok(coverGain(snow) < 0.1, 'a burst that starts twelve times its size is a dome, and dimmed');
   assert.ok(coverGain({ ...snow, size: { from: 1, to: 1, start: 0, end: 1 } }) > coverGain(snow));
+});
+
+test('an additive burst of hundreds keeps a share of its light, a few sparks all of it', () => {
+  assert.equal(crowdGain({ rate: 0, burst: 12, life: [1, 1], max: 100 }), 1);
+  // Crystal Maiden's loadout snow: 1200 a second for a second, capped at 400
+  assert.equal(crowdGain({ rate: 1200, burst: 0, life: [1, 1], max: 400 }), 0.05);
+});
+
+test("a texture's picture: the file itself, else the largest frame of its sheet in either of the toolchain's layouts", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-sprites-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const dir = path.join(root, 'materials', 'particle');
+  fs.mkdirSync(dir, { recursive: true });
+  const put = (name: string, bytes: number) => fs.writeFileSync(path.join(dir, name), Buffer.alloc(bytes));
+  put('glow.png', 10);
+  put('smoke_seq0_0.png', 5); put('smoke_seq0_1.png', 9);
+  put('fleks3_seq0.png', 4); put('fleks3_seq12.png', 8); put('fleks3_b_seq0.png', 99);
+  assert.equal(spriteAt(root, 'materials/particle/glow.vtex'), path.join(dir, 'glow.png'));
+  assert.equal(spriteAt(root, 'materials/particle/smoke.vtex'), path.join(dir, 'smoke_seq0_1.png'));
+  assert.equal(spriteAt(root, 'materials/particle/fleks3.vtex'), path.join(dir, 'fleks3_seq12.png'), 'another texture of a longer name is not its frame');
+  assert.equal(spriteAt(root, 'materials/particle/none.vtex'), null);
+});
+
+test('a renderer the file switches off draws nothing, nor does one lying flat on the ground', () => {
+  const sprite = (extra: object) => ({ _class: 'C_OP_RenderSprites', m_nOutputBlendMode: 'PARTICLE_OUTPUT_BLEND_MODE_ADD', ...extra });
+  assert.equal(particleSpec(def({ m_Renderers: [sprite({ m_bDisableOperator: true })] })).draw, 'none');
+  assert.equal(particleSpec(def({ m_Renderers: [sprite({ m_nOrientationType: 'PARTICLE_ORIENTATION_WORLD_Z_ALIGNED' })] })).draw, 'none');
+  assert.equal(particleSpec(def({ m_Renderers: [sprite({})] })).draw, 'add');
 });

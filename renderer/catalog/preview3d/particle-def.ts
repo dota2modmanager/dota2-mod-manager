@@ -46,7 +46,8 @@ export interface ParticleSpec {
 }
 
 const obj = (j: ParticleJson | undefined): O | null => (j && typeof j === 'object' && !Array.isArray(j) ? j : null);
-const list = (j: ParticleJson | undefined): O[] => (Array.isArray(j) ? j.map(obj).filter((x): x is O => !!x) : []);
+// an operator the file switches off (m_bDisableOperator) does nothing in the game: Crystal Maiden's arcana has a disabled glow
+const list = (j: ParticleJson | undefined): O[] => (Array.isArray(j) ? j.map(obj).filter((x): x is O => !!x && x.m_bDisableOperator !== true) : []);
 const str = (j: ParticleJson | undefined) => (typeof j === 'string' ? j : '');
 
 /** A number the file gives as a plain number or as a literal or uniform-random value; a range. */
@@ -118,8 +119,10 @@ export function particleSpec(def: ParticleDef, inherited: Map<number, ControlPoi
   for (const i of list(t.m_Initializers)) initializer(s, i);
   for (const o of list(t.m_Operators)) operator(s, o);
   for (const r of list(t.m_Renderers)) {
-    // a modulating renderer darkens what is behind it; drawn as a plain sprite it would be a grey square
-    if (!/^C_OP_Render(Sprites|Trails|Ropes|SpriteTrail)$/.test(str(r._class)) || s.draw !== 'none' || /BLEND_MODE_MOD/.test(str(r.m_nOutputBlendMode))) continue;
+    // a modulating renderer darkens what is behind it; drawn as a plain sprite it would be a grey square.
+    // One lying on the ground is a thin line from the loadout camera; stood up to face it, a wall of light
+    if (!/^C_OP_Render(Sprites|Trails|Ropes|SpriteTrail)$/.test(str(r._class)) || s.draw !== 'none' || /BLEND_MODE_MOD/.test(str(r.m_nOutputBlendMode))
+      || /WORLD_Z_ALIGNED|ALIGN_TO_PARTICLE_NORMAL/.test(str(r.m_nOrientationType))) continue;
     s.draw = /ADD/.test(str(r.m_nOutputBlendMode)) || r.m_bAdditive === true ? 'add' : 'blend';
     s.bright = Math.min(4, Math.max(1, one(r.m_flOverbrightFactor, 1)));
     const input = Array.isArray(r.m_vecTexturesInput) ? obj(r.m_vecTexturesInput[0])?.m_hTexture : r.m_hTexture;

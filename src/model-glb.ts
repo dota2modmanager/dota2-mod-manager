@@ -53,14 +53,17 @@ export function exportArgs(pakFile: string, out: string, files: string[], clips:
   return args;
 }
 
-/** Where a texture's picture landed: the file itself, or the largest frame of its sheet (name_seq0_N.png). */
+/** Where a texture's picture landed: the file itself, or the largest frame of its sheet. */
 export function spriteAt(root: string, texture: string): string | null {
   const base = path.join(root, texture.replace(/\.vtex$/, ''));
   if (fs.existsSync(`${base}.png`)) return `${base}.png`;
   let names: string[] = [];
   try { names = fs.readdirSync(path.dirname(base)); } catch { return null; }
-  const stem = `${path.basename(base)}_seq0_`;
-  const frames = names.filter((n) => n.startsWith(stem) && n.endsWith('.png')).map((n) => path.join(path.dirname(base), n));
+  // a sheet comes out as frames of its first sequence (name_seq0_3.png), or a picture per sequence
+  // (name_seq12.png: Crystal Maiden's fleks3, 64 specks); missed, its systems drew solid dots
+  const stem = path.basename(base).toLowerCase();
+  const frame = (n: string) => n.toLowerCase().startsWith(`${stem}_seq`) && /_seq(0_\d+|\d+)\.png$/i.test(n.slice(stem.length));
+  const frames = names.filter(frame).map((n) => path.join(path.dirname(base), n));
   return frames.sort((a, b) => fs.statSync(b).size - fs.statSync(a).size)[0] || null;
 }
 

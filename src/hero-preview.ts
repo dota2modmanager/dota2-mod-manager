@@ -15,7 +15,7 @@ import { sharedVpkIndex } from './vpk.ts';
 import { personaLayouts } from './item-builder-personas.ts';
 import { ITEM_EFFECTS } from './item-builder-effects.ts';
 import { unusualItemEffect } from './item-builder-unusual.ts';
-import { itemActivities, loadoutSequence, modelSequences } from './model-loadout.ts';
+import { idleSequence, itemActivities, loadoutSequence, modelSequences } from './model-loadout.ts';
 import { heroStage, type HeroStage } from './hero-showcase.ts';
 import { heroLoadoutParticles, itemParticles, modelAttachments, particleDef, particleTextures, type Attachment, type ParticleDef } from './particle-spec.ts';
 import type { createModelGlb } from './model-glb.ts';
@@ -79,7 +79,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
 }) {
   /** The hero's body and what each slot wears now. */
   function plan(name: string, slots: PreviewSlot[]): {
-    body: string; clip: string | null; stage: HeroStage; heroFx: string[]; read: (p: string) => Buffer | null;
+    body: string; clip: string | null; idle: string; stage: HeroStage; heroFx: string[]; read: (p: string) => Buffer | null;
     parts: { slot: string; name: string; model: string; fx: string[] }[];
   } | null {
     // the window names the hero as its slots do (magnataur); the scripts and the table, in full
@@ -108,11 +108,13 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
       if (model) parts.push({ slot: s.slot, name: rec?.name || stock?.get('name') || '', model: normalizeAssetPath(model), fx });
     }
     // the loadout the game plays for what is worn (src/model-loadout.ts), read out of the body itself
-    const clip = loadoutSequence(modelSequences(ix.read(body.replace(/\.vmdl$/i, '.vmdl_c'))), modifiers);
+    const seqs = modelSequences(ix.read(body.replace(/\.vmdl$/i, '.vmdl_c')));
+    const clip = loadoutSequence(seqs, modifiers);
+    const idle = idleSequence(seqs) || IDLE;
     // the game's own staging (src/hero-showcase.ts): an arcana's body has an entry of its own
     const script = ix.read(`scripts/npc/heroes/${hero}.txt`)?.toString('utf8') ?? null;
     const stage = heroStage(ix.read('scripts/npc/portraits_showcase.txt')?.toString('utf8') ?? null, script, [body, hero]);
-    return { body, clip, stage, parts, heroFx: script ? heroLoadoutParticles(script) : [], read: (f) => ix.read(f) };
+    return { body, clip, idle, stage, parts, heroFx: script ? heroLoadoutParticles(script) : [], read: (f) => ix.read(f) };
   }
 
   /** The body with its loadout clip and its idle, and each slot's model, as GLB bytes with their pictures inside. */
@@ -121,7 +123,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     let p: ReturnType<typeof plan>;
     try { p = plan(hero, slots); } catch (err) { log(`preview 3d: ${(err as Error)?.message || err}`); return { ok: false, reason: 'no-body' }; }
     if (!p) return { ok: false, reason: 'no-game' };
-    const bodyFile = (await glb.glbs([p.body], p.clip && p.clip !== IDLE ? [p.clip, IDLE] : [IDLE]))[p.body];
+    const bodyFile = (await glb.glbs([p.body], p.clip && p.clip !== p.idle ? [p.clip, p.idle] : [p.idle]))[p.body];
     if (!bodyFile) return { ok: false, reason: 'no-body' };
     const pedestal = p.stage.pedestal;
     const files = await glb.glbs([...p.parts.map((x) => x.model), ...(pedestal ? [pedestal] : [])]);

@@ -7064,7 +7064,7 @@ The toolchain's arguments for these models out of this archive into this folder.
 export function spriteAt(root: string, texture: string): string | null
 ```
 
-Where a texture's picture landed: the file itself, or the largest frame of its sheet (name_seq0_N.png).
+Where a texture's picture landed: the file itself, or the largest frame of its sheet.
 
 ### `createModelGlb`
 
@@ -7103,6 +7103,14 @@ export function modelSequences(model: Buffer | null): Sequence[]
 ```
 
 The model's sequences, or none when the file has no sequence block or one this reader cannot take.
+
+### `idleSequence`
+
+```ts
+export function idleSequence(seqs: Sequence[]): string | null
+```
+
+The plain idle: the sequence named "idle", else an idle with no modifier ("arcana_idle_anim").
 
 ### `loadoutSequence`
 

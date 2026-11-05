@@ -34,6 +34,13 @@ export function modelSequences(model: Buffer | null): Sequence[] {
 }
 
 const LOADOUT = 'ACT_DOTA_LOADOUT';
+const IDLE = 'ACT_DOTA_IDLE';
+
+/** The plain idle: the sequence named "idle", else an idle with no modifier ("arcana_idle_anim"). */
+export function idleSequence(seqs: Sequence[]): string | null {
+  return seqs.find((s) => s.name === 'idle')?.name
+    ?? seqs.find((s) => s.acts.length === 1 && s.acts[0] === IDLE)?.name ?? null;
+}
 
 /**
  * The loadout sequence for what the hero wears, or null for a model that has none.
@@ -41,8 +48,13 @@ const LOADOUT = 'ACT_DOTA_LOADOUT';
  */
 export function loadoutSequence(seqs: Sequence[], modifiers: string[] = []): string | null {
   const worn = new Set(modifiers.map((m) => m.toLowerCase()));
-  const loadouts = seqs.filter((s) => s.acts.includes(LOADOUT))
-    .map((s) => ({ name: s.name, mods: s.acts.filter((a) => !a.startsWith('ACT_')).map((a) => a.toLowerCase()) }));
+  const mods = (s: Sequence) => s.acts.filter((a) => !a.startsWith('ACT_')).map((a) => a.toLowerCase());
+  let loadouts = seqs.filter((s) => s.acts.includes(LOADOUT)).map((s) => ({ name: s.name, mods: mods(s) }));
+  // a body of its own (Crystal Maiden's arcana) writes its loadout as an idle with the "loadout" modifier
+  if (!loadouts.length) {
+    loadouts = seqs.filter((s) => s.acts.includes(IDLE) && mods(s).includes('loadout'))
+      .map((s) => ({ name: s.name, mods: mods(s).filter((m) => m !== 'loadout') }));
+  }
   const fits = loadouts.filter((s) => s.mods.length && s.mods.every((m) => worn.has(m)))
     .sort((a, b) => b.mods.length - a.mods.length);
   return (fits[0] || loadouts.find((s) => !s.mods.length) || loadouts[0])?.name ?? null;

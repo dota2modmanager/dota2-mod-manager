@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import type { Attachment } from '../../api/preview3d.ts';
 import type { ParticleSpec, V3 } from './particle-def.ts';
+import { coverGain, crowdGain } from './gain.ts';
 
 /** A model that carries particles: its bones by name, its attachment points, and points on its surface. */
 export interface Carrier { bones: Map<string, THREE.Bone>; attachments: Attachment[]; surface: () => THREE.Vector3 | null }
@@ -29,12 +30,13 @@ uniform float uBright, uHasTex;
 uniform sampler2D uTex;
 varying vec4 vTint;
 void main() {
+  float r = length(gl_PointCoord - 0.5) * 2.0;
   if (uHasTex > 0.5) {
-    vec4 t = texture2D(uTex, gl_PointCoord);
+    // one frame of a sheet, or a texture with no alpha of its own: its edge fades, never a square
+    vec4 t = texture2D(uTex, gl_PointCoord) * smoothstep(1.0, 0.6, r);
     gl_FragColor = vec4(vTint.rgb * t.rgb * uBright, vTint.a * t.a);
     return;
   }
-  float r = length(gl_PointCoord - 0.5) * 2.0;
   // a glow that falls off from its middle, as a sprite of smoke or fire does, not a lit disc
   float soft = exp(-r * r * 5.0) * step(r, 1.0);
   gl_FragColor = vec4(vTint.rgb * uBright, vTint.a * soft);
@@ -42,22 +44,18 @@ void main() {
 
 const rand = (r: [number, number]) => r[0] + Math.random() * (r[1] - r[0]);
 const randV = (a: V3, b: V3) => new THREE.Vector3(rand([a[0], b[0]]), rand([a[1], b[1]]), rand([a[2], b[2]]));
+/** A point inside the ellipsoid these corners bound: the game's velocity noise is smooth, and drawn in a box it grew a box of snow. */
+const randIn = (a: V3, b: V3) => {
+  const d = new THREE.Vector3().randomDirection().multiplyScalar(Math.cbrt(Math.random()));
+  return new THREE.Vector3((a[0] + b[0]) / 2 + d.x * (b[0] - a[0]) / 2, (a[1] + b[1]) / 2 + d.y * (b[1] - a[1]) / 2, (a[2] + b[2]) / 2 + d.z * (b[2] - a[2]) / 2);
+};
 const tmp3 = new THREE.Matrix3();
 /** The game's sprites are textures mostly empty around a wisp; a solid soft dot carries more
  * light than they do, so an additive one gives back this share of it. */
 const ADD_GAIN = 0.5;
-/**
- * How much of its light a system keeps for the area it covers at once: a few dozen large sprites in
- * the game are thin veils of smoke and rays, and drawn as solid dots on top of each other they would
- * whiten the stage. Snow (hundreds of specks) keeps all of it; an arcana's base mist, a tenth.
- */
-export function coverGain(s: Pick<ParticleSpec, 'rate' | 'burst' | 'life' | 'max' | 'radius' | 'size'>): number {
-  const alive = Math.min(s.max, s.burst + s.rate * (s.life[0] + s.life[1]) / 2);
-  // at its largest: a speck that starts twelve times its radius covers what a cloud does
-  const r = (s.radius[0] + s.radius[1]) / 2 * Math.max(s.size.from, s.size.to, 0.01);
-  return Math.min(1, Math.sqrt(6000 / Math.max(1, alive * r * r)));
-}
-
+/** Narrower than this, a sprite's frame is drawn as a dot, with this share of the light. */
+const SPECK = 24;
+const SPECK_GAIN = 0.35;
 class System {
   readonly points: THREE.Points;
   private readonly pos: Float32Array;
@@ -83,7 +81,8 @@ class System {
     tex: THREE.Texture | null) {
     this.s = s;
     // a texture carries its own wisp and falls off as the game draws it; a plain dot needs the share
-    this.gain = tex ? 1 : coverGain(s);
+    // a sprite drawn as a dot in place of its picture: the picture was mostly empty around a speck
+    this.gain = coverGain(s) * (s.draw === 'add' ? crowdGain(s) : 1) * (s.texture && !tex ? SPECK_GAIN : 1);
     this.cp = cp;
     this.src = src;
     this.surface = surface;
@@ -142,7 +141,7 @@ class System {
     }
     if (sp.offset) p.add(this.through(sp.localOffset ? at : src, randV(...sp.offset)));
     if (sp.local) v.add(this.through(at, randV(...sp.local)));
-    if (sp.noise) v.add(this.through(src, randV(...sp.noise)));
+    if (sp.noise) v.add(this.through(src, randIn(...sp.noise)));
     this.pos.set([p.x, p.y, p.z], i * 3);
     this.vel.set([v.x, v.y, v.z], i * 3);
     this.age[i] = 0;
@@ -232,7 +231,10 @@ export async function spriteTextures(sprites: Record<string, Uint8Array>): Promi
   const out = new Map<string, THREE.Texture>();
   await Promise.all(Object.entries(sprites).map(async ([path, bytes]) => {
     try {
-      const tex = new THREE.Texture(await createImageBitmap(new Blob([bytes as BlobPart], { type: 'image/png' })));
+      const bitmap = await createImageBitmap(new Blob([bytes as BlobPart], { type: 'image/png' }));
+      // a frame of a few pixels (fleks3: 15 by 9) blown up to a sprite is a glyph, not a speck: those stay dots
+      if (bitmap.width < SPECK) return;
+      const tex = new THREE.Texture(bitmap);
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.flipY = false;
       tex.needsUpdate = true;
@@ -272,6 +274,7 @@ export function playParticles(scene: THREE.Scene, list: { spec: ParticleSpec; se
       };
       const sys = new System(s, cp, srcMatrix, () => (s.spawn.cp === 0 && s.cps.get(0)?.entity === 'self' ? self : hero).surface(), px,
         (s.texture && textures.get(s.texture)) || null);
+      sys.points.name = s.path;
       systems.push(sys);
       scene.add(sys.points);
       s.children.forEach(add);

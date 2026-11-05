@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { forward, heroStage, showcaseEntry, toGlb, LOADOUT_CAMERA } from '../src/hero-showcase.ts';
-import { itemActivities, loadoutSequence, modelSequences } from '../src/model-loadout.ts';
+import { idleSequence, itemActivities, loadoutSequence, modelSequences } from '../src/model-loadout.ts';
 import { widthDistance } from '../renderer/catalog/preview3d/stage.ts';
 
 const near = (a: number[], b: number[]) => a.every((v, i) => Math.abs(v - b[i]) < 1e-6);
@@ -81,6 +81,20 @@ test('the loadout clip is the one for what is worn, the plain one otherwise', ()
   assert.equal(loadoutSequence(SEQS.filter((s) => s.name === 'idle')), null);
   assert.deepEqual(modelSequences(null), []);
   assert.deepEqual(modelSequences(Buffer.from('not a model')), []);
+});
+
+test('a body of its own writes its loadout as an idle with "loadout", and its idle under its own name (CM arcana)', () => {
+  const arcana = [
+    { name: 'arcana_idle_anim', acts: ['ACT_DOTA_IDLE'] },
+    { name: 'arcana_agg_idle_anim', acts: ['ACT_DOTA_IDLE', 'aggressive'] },
+    { name: 'arcana_loadout_spawn', acts: ['ACT_DOTA_SPAWN', 'loadout'] },
+    { name: 'arcana_loadout_idle_long', acts: ['ACT_DOTA_IDLE', 'loadout'] },
+    { name: 'dplus_arcana_loadout_idle_long', acts: ['ACT_DOTA_IDLE', 'loadout', 'loadout', 'dota_plus'] },
+  ];
+  assert.equal(loadoutSequence(arcana, ['arcana']), 'arcana_loadout_idle_long');
+  assert.equal(idleSequence(arcana), 'arcana_idle_anim');
+  assert.equal(idleSequence(SEQS), 'idle', 'a sequence named idle first');
+  assert.equal(idleSequence([]), null);
 });
 
 test('an item’s activities are its first style’s "activity" modifiers', () => {

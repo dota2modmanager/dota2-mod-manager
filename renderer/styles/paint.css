@@ -1,7 +1,8 @@
 /* A hero recoloured part by part (catalog/paint, issue #422): the hero on the left as hero selection
  * shows him, his abilities and items on the right, each picture in the colour it is getting. A layer
  * that is on is told by its colour itself: the picture shaded, or ringed in the effect's colour. */
-.paint-body { flex: 1 0 auto; }
+/* the window it opens in has a fixed height and hides what overflows (builder.css .wardrobe-modal): the body scrolls itself */
+.paint-body { flex: 1; min-height: 0; overflow-y: auto; }
 .paint-layout { flex: 1 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--space-5); align-items: start; }
 .paint-main { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
 .paint-main > section { display: flex; flex-direction: column; gap: var(--space-3); }
