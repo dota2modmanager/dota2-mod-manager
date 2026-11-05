@@ -73,6 +73,7 @@ the code, not in this page.
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/hero-paint-service.ts`](#srchero-paint-servicets) | A hero recoloured part by part, as one record in My mods (issue #422; what the parts are is |
 | [`src/hero-preview.ts`](#srchero-previewts) | The models of a hero as the item builder dresses it, for the 3D preview in the hero's window |
+| [`src/hero-showcase.ts`](#srchero-showcasets) | How the game stages a hero on its loadout, for the 3D preview (issue #417), out of the game's |
 | [`src/hud-scale-service.ts`](#srchud-scale-servicets) | The in-game HUD made smaller or larger, as a record in My mods (issue #420; the CSS is |
 | [`src/hud-scale.ts`](#srchud-scalets) | The in-game HUD made smaller or larger (issue #420): the stylesheet that lays the HUD out, |
 | [`src/i18n-en.ts`](#srci18n-ents) | Native dialogs, errors and labels in English, keyed by the exact Russian source string. |
@@ -125,6 +126,7 @@ the code, not in this page.
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
 | [`src/model-glb.ts`](#srcmodel-glbts) | Models out of the installed game as glTF, for a 3D preview of a hero in the chosen items (issue #417). |
+| [`src/model-loadout.ts`](#srcmodel-loadoutts) | The animation a hero plays on the game's loadout screen, for the 3D preview (issue #417). |
 | [`src/model-scale.ts`](#srcmodel-scalets) | A compiled model made bigger about its origin, and how much bigger one model is than another. |
 | [`src/model-sequences.ts`](#srcmodel-sequencests) | A model put under another model's path that numbers its sequences as that one does. |
 | [`src/model-skin.ts`](#srcmodel-skints) | A model with one of its material sets made the one it wears by default. |
@@ -137,6 +139,7 @@ the code, not in this page.
 | [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts |
 | [`src/overlays-cursor.ts`](#srcoverlays-cursorts) | Cursor sets (src/overlays.ts is the door for fonts and cursors). |
 | [`src/overlays.ts`](#srcoverlaysts) | Fonts and cursors: loose files written over the game's own. |
+| [`src/particle-spec.ts`](#srcparticle-spects) | The particles an item or a hero shows on its loadout, read out of the game for the 3D preview |
 | [`src/patch-watch.ts`](#srcpatch-watchts) | Noticing that Dota was patched, while the app is open. |
 | [`src/patcher-gameinfo.ts`](#srcpatcher-gameinfots) | The two gameinfo files (src/patcher.ts explains the patch): the SearchPaths block read out of |
 | [`src/patcher-signatures.ts`](#srcpatcher-signaturests) | The signature list, dota.signatures (src/patcher.ts explains the patch): the hashes the client |
@@ -3508,6 +3511,91 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
 ```
 
 The 3D preview's models, made on demand.
+
+## src/hero-showcase.ts
+
+How the game stages a hero on its loadout, for the 3D preview (issue #417), out of the game's
+own files rather than tuned by eye:
+
+ - the camera is panorama/layout/models/loadout/loadout_camera.vmdl's "loadout_camera_fullbody":
+   straight in front of the hero, 668 units out and 80 up, looking level (read out of the model on
+   2026-11-05; it is one keyframe, so it is written here);
+ - the hero stands at the origin at its script's LoadoutScale (Juggernaut 0.85, Pudge 0.98);
+ - its light, ambient, background colour and pedestal are its entry in
+   scripts/npc/portraits_showcase.txt, where an arcana's own model has an entry of its own.
+
+Positions and directions go to the window in the GLB's space: the toolchain turns Source's
+(x forward, y left, z up, inches) into (y, z, x) metres, which is why a hero faces +Z there.
+
+### `LOADOUT_CAMERA`
+
+```ts
+export const LOADOUT_CAMERA = { x: 668.17529, y: 0, z: 79.86814 }
+```
+
+The loadout camera, in Source units: loadout_camera_fullbody's one keyframe.
+
+### `Vec3`
+
+```ts
+export type Vec3 = [number, number, number]
+```
+
+A point or a direction, in Source's axes or the GLB's as the name using it says.
+
+### `Rgb`
+
+```ts
+export type Rgb = [number, number, number]
+```
+
+A linear colour, 1 being the game's 255.
+
+### `HeroStage`
+
+```ts
+export interface HeroStage
+```
+
+What the window stages the hero with. Colours are linear, 1 is the game's 255.
+
+### `toGlb`
+
+```ts
+export const toGlb = ([x, y, z]: Vec3, scale = 1): Vec3 => [y * scale, z * scale, x * scale]
+```
+
+A point or direction in Source's axes, in the GLB's.
+
+### `forward`
+
+```ts
+export function forward(angles: Vec3): Vec3
+```
+
+The way Source angles (pitch down, yaw, roll) look.
+
+### `showcaseEntry`
+
+```ts
+export function showcaseEntry(text: string, keys: string[]): Map<string, string> | null
+```
+
+The fields of the first of `keys` that portraits_showcase.txt has an entry for, or null.
+
+### `heroStage`
+
+```ts
+export function heroStage(showcase: string | null, script: string | null, keys: string[]): HeroStage
+```
+
+The stage for a hero.
+
+```
+@param showcase  portraits_showcase.txt, or null when the game has none
+@param script    the hero's script, for its LoadoutScale
+@param keys      the entries to look for, the most particular first: the body's model, then the hero
+```
 
 ## src/hud-scale-service.ts
 
@@ -6969,6 +7057,56 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
 
 GLB files of the game's models, made on demand and kept per game build.
 
+## src/model-loadout.ts
+
+The animation a hero plays on the game's loadout screen, for the 3D preview (issue #417).
+
+A hero's model lists its sequences in its ASEQ block, each with the activities it answers to: the
+first is an ACT_ name, the rest are modifiers an item can switch on. The loadout plays the
+sequence for ACT_DOTA_LOADOUT; the names differ per hero (Abaddon's loadout_anim, Juggernaut's
+loadout_default_anim, Pudge's pudge_loadout), so they are read out of the model, not guessed.
+
+An item can bring its own: Pudge's Dragonclaw Hook plays pudge_loadout under "whalehook". The
+sequence picked is the one whose modifiers are all among the items worn, with the most of them;
+with none worn, the plain one with no modifier at all. ACT_DOTA_LOADOUT_STATUE is a still pose
+for statues and is not the loadout.
+
+### `Sequence`
+
+```ts
+export interface Sequence { name: string; acts: string[] }
+```
+
+A sequence's name and every activity it answers to, the ACT_ one and its modifiers.
+
+### `modelSequences`
+
+```ts
+export function modelSequences(model: Buffer | null): Sequence[]
+```
+
+The model's sequences, or none when the file has no sequence block or one this reader cannot take.
+
+### `loadoutSequence`
+
+```ts
+export function loadoutSequence(seqs: Sequence[], modifiers: string[] = []): string | null
+```
+
+The loadout sequence for what the hero wears, or null for a model that has none.
+
+```
+@param modifiers  the activity modifiers of the items worn, as items_game names them
+```
+
+### `itemActivities`
+
+```ts
+export function itemActivities(block: string): string[]
+```
+
+The activity modifiers an item's visuals switch on: Dragonclaw Hook's "whalehook".
+
 ## src/model-scale.ts
 
 A compiled model made bigger about its origin, and how much bigger one model is than another.
@@ -7632,6 +7770,86 @@ export class Overlays
 ```
 
 The font and cursor files of one install: writing them, keeping the originals, putting them back.
+
+## src/particle-spec.ts
+
+The particles an item or a hero shows on its loadout, read out of the game for the 3D preview
+(issue #417), and the attachment points they hang on.
+
+A particle system (.vpcf_c) is a KV3 tree: emitters, initializers, operators, renderers, the
+control points and what drives them, and child systems. The window plays an approximation of a
+few dozen of the commonest of those (renderer/catalog/preview3d/particles.ts), so this hands it
+the tree as plain JSON, children inlined, without interpreting it. A model's attachments
+(attach_sword, attach_hitloc) are in its MDAT blocks: a bone, an offset and a turn from it.
+
+Which systems: an item's "particle_create" asset modifiers for its first style, the ones the
+game spawns only on the loadout included, the team-only ones for Radiant; and the hero's own
+RenderablePortrait "loadout" particles, which the game plays as the loadout opens.
+
+### `Json`
+
+```ts
+export type Json = null | boolean | number | string | Json[] | { [k: string]: Json }
+```
+
+A KV3 value as plain JSON, as the window gets it over IPC.
+
+### `ParticleDef`
+
+```ts
+export interface ParticleDef { path: string; tree: { [k: string]: Json }; children: ParticleDef[] }
+```
+
+A system with its children, as the window plays it.
+
+### `Attachment`
+
+```ts
+export interface Attachment { name: string; bone: string; offset: [number, number, number]; rotation: [number, number, number, number] }
+```
+
+An attachment point: the bone it follows, and where it sits from it in the bone's own space (Source units).
+
+### `kvJson`
+
+```ts
+export function kvJson(kv: Kv3Block, n: Kv3Node | undefined): Json
+```
+
+A KV3 node as plain JSON.
+
+### `particleDef`
+
+```ts
+export function particleDef(read: (path: string) => Buffer | null, path: string, budget = { left: 24 }, depth = 0): ParticleDef | null
+```
+
+A system and its children, at most `budget` systems in all: a system with dozens of children
+would cost the window more than its look is worth.
+
+### `itemParticles`
+
+```ts
+export function itemParticles(block: string): string[]
+```
+
+The particle_create systems an item block brings, for its first style.
+
+### `heroLoadoutParticles`
+
+```ts
+export function heroLoadoutParticles(script: string): string[]
+```
+
+The hero's own loadout particles, out of its script's RenderablePortrait block.
+
+### `modelAttachments`
+
+```ts
+export function modelAttachments(model: Buffer | null): Attachment[]
+```
+
+A model's attachment points.
 
 ## src/patch-watch.ts
 

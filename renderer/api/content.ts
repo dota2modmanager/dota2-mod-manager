@@ -236,13 +236,6 @@ export interface SoundsApi {
   remove: (hero: string, event: string) => Promise<Reply<{ record: LibRecord | null }>>;
 }
 
-/** The item builder's 3D preview (src/hero-preview.ts): the body with its idle and each slot's model, as GLB bytes. */
-export interface Preview3dApi {
-  models: (hero: string, slots: { slot: string; stock: string }[]) => Promise<
-    | { ok: true; body: Uint8Array; parts: { slot: string; name: string; glb: Uint8Array }[]; missing: string[] }
-    | { ok: false; reason: 'no-game' | 'no-tool' | 'no-body'; error?: string }>;
-}
-
 /** A mod's own video, and the still the window decodes out of it. */
 export interface PreviewApi {
   video: (key: string) => Promise<Uint8Array | null>;

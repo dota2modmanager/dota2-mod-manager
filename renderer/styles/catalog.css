@@ -183,6 +183,8 @@
   overflow: hidden;
 }
 .preview3d-stage, .preview3d-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* the hero's own colour behind it, as its showcase in the game has it (scene.ts sets --stage-tint) */
+.preview3d-stage { background: radial-gradient(ellipse 90% 55% at 50% 55%, color-mix(in srgb, var(--stage-tint, transparent) 32%, transparent), transparent 80%); }
 .preview3d-stage canvas { cursor: grab; }
 .preview3d-stage canvas:active { cursor: grabbing; }
 .preview3d-note {

@@ -5,7 +5,8 @@
  * from its handler in src/ipc-*.js; a change to what a handler answers changes the type beside
  * the others of its group here. */
 import type { AppApi } from './app.ts';
-import type { ArcanaApi, BackgroundApi, CatalogApi, HudApi, RankApi, DecorApi, PaintApi, MapLooksApi, Preview3dApi, SoundsApi, CompilerApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';
+import type { ArcanaApi, BackgroundApi, CatalogApi, HudApi, RankApi, DecorApi, PaintApi, MapLooksApi, SoundsApi, CompilerApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';
+import type { Preview3dApi } from './preview3d.ts';
 import type { CreatorApi } from './creator.ts';
 import type { ModsApi, PacksApi } from './mods.ts';
 

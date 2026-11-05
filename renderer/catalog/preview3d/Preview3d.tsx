@@ -2,7 +2,7 @@
  * each slot wears now. It asks the main process for the models when it is shown and again when a
  * pick changes (`sig`), and draws them with the scene beside this file, loaded only then. */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import type { Preview3dApi } from '../../api/content.ts';
+import type { Preview3dApi } from '../../api/preview3d.ts';
 
 type Status = { kind: 'loading' } | { kind: 'shown'; missing: string[] } | { kind: 'no-tool' } | { kind: 'failed'; text: string };
 
@@ -28,7 +28,10 @@ export function Preview3d({ hero, slots, sig, still = false, fallback }: {
       try {
         const { mountScene } = await import('./scene.ts');
         if (gone || !host.current) return;
-        const off = await mountScene(host.current, r.body, r.parts.map((p) => p.glb), { still });
+        const off = await mountScene(host.current, r.body, r.parts.map((p) => p.glb), {
+          still, clip: r.clip, stage: r.stage, pedestal: r.pedestal,
+          attachments: { body: r.attachments, parts: r.parts.map((p) => p.attachments) }, particles: r.particles,
+        });
         if (gone) { off(); return; }
         dispose = off;
         setStatus({ kind: 'shown', missing: r.missing });
