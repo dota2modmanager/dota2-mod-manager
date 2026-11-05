@@ -292,7 +292,7 @@ async function main() {
         for (const [spot, [x, y]] of Object.entries(SPOTS)) {
           await command(`dota_camera_set_lookatpos ${x} ${y}`);
           await sleep(3000);
-          const from = fs.statSync(log).size;
+          const from = fs.readFileSync(log).length;
           await command('cl_resetfps');
           await sleep(3000);
           const busy = [];
