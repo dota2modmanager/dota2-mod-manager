@@ -1,19 +1,17 @@
 name: Simulation
 
-# A hand on the app, on simulated machines (tools/sim). Every pull request and every change the
-# merge queue lands runs the "pr" set: one screen per system, a few minutes. Every night, and on
-# demand, the "full" set runs every screen and renderer in tools/sim/profiles.json. The report and
-# every picture are uploaded whether it passed or not, because the picture of a pass is what a
-# failure next week gets compared with.
+# A hand on the app, on simulated machines (tools/sim): every screen and renderer in
+# tools/sim/profiles.json, every night and on demand. The report and every picture are uploaded
+# whether it passed or not, because the picture of a pass is what a failure next week gets
+# compared with.
 #
-# Not a required check yet: it reads the live catalog, and a check that goes red over somebody
-# else's outage gets switched off within a week. It becomes one after a fortnight of runs shows
-# how often that happens.
+# Not on pull requests or on main since 2026-11-05. It ran on every one, and of 60 commits on main
+# from 2026-11-03, 17 went red here and almost all for timing on a busy runner, not for the app,
+# while it never blocked a merge. A red cross on every other commit taught everybody to ignore it.
+# At night a failed scenario gets a second launch (--retry), a failure that holds shows on the
+# pinned "Project status" issue (tools/radar.mjs reads a scheduled workflow's last run), and
+# `gh workflow run sim.yml -f set=pr` runs the short set on demand before a risky merge.
 on:
-  pull_request:
-  merge_group:
-  push:
-    branches: [main]
   schedule:
     - cron: '23 2 * * *'
   workflow_dispatch:
@@ -27,7 +25,7 @@ permissions:
 
 concurrency:
   group: sim-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 jobs:
   windows:
@@ -46,8 +44,8 @@ jobs:
       - name: Run the simulation
         shell: bash
         env:
-          SET: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (inputs.set || 'full') || 'pr' }}
-        run: node tools/sim/run.mjs --set "$SET"
+          SET: ${{ inputs.set || 'full' }}
+        run: node tools/sim/run.mjs --set "$SET" --retry
       - name: Keep the report
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -86,8 +84,8 @@ jobs:
         run: node tools/sandbox.js seed --no-mods
       - name: Run the simulation
         env:
-          SET: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (inputs.set || 'full') || 'pr' }}
-        run: node tools/sim/run.mjs --set "$SET"
+          SET: ${{ inputs.set || 'full' }}
+        run: node tools/sim/run.mjs --set "$SET" --retry
       - name: Keep the report
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

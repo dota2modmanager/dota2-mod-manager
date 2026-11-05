@@ -101,3 +101,24 @@ test('a scenario that wrote no check fails the run, and so does a launch with no
   assert.deepEqual(silentScenarios('scroll,mods,presets', checks), ['presets: wrote no check at all']);
   assert.deepEqual(silentScenarios('scroll', []), ['scroll: wrote no check at all', 'the launch wrote no checks']);
 });
+
+test('a second launch runs only the scenarios that failed or wrote nothing, and a launch without results runs them all', async () => {
+  const { toRetry, launch } = await load();
+  const checks = [
+    { scenario: 'browse', ok: false }, { scenario: 'browse', ok: true },
+    { scenario: 'scroll', ok: true }, { scenario: 'mods', ok: false },
+  ];
+  assert.deepEqual(toRetry('browse,scroll,mods,presets', { checks }), ['browse', 'mods', 'presets']);
+  assert.deepEqual(toRetry('browse,scroll', { checks: [{ scenario: 'browse', ok: true }, { scenario: 'scroll', ok: true }] }), []);
+  assert.deepEqual(toRetry('browse,scroll', null), ['browse', 'scroll']);
+  assert.match(launch('fhd', 'default', { scenarios: 'browse', platform: 'win32', suffix: '--retry' }).out, /fhd--default--retry$/, 'its pictures do not cover the first launch’s');
+});
+
+test('the simulation runs at night and on demand, with a second launch, and not on pull requests', () => {
+  const yml = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'sim.yml'), 'utf8');
+  const on = yml.slice(yml.indexOf('\non:'), yml.indexOf('\npermissions:'));
+  assert.match(on, /schedule:/);
+  assert.match(on, /workflow_dispatch:/);
+  assert.doesNotMatch(on, /pull_request|merge_group|push:/);
+  assert.equal((yml.match(/run\.mjs --set "\$SET" --retry/g) || []).length, 2);
+});

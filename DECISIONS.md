@@ -640,19 +640,37 @@ a pull request merges and before a release builds.
 
 Since 2026-10-11 the same tool also answers the removal window the uninstaller opens, three ways,
 and checks the game folder is byte for byte what it was. The simulator (`tools/sim/`) drives more
-through the window on every pull request, on Windows and on Linux: presets, imports, the item
+through the window every night, on Windows and on Linux: presets, imports, the item
 builder, mod switches checked against what the game would load, and the keyboard alone. And
 `.github/workflows/update.yml` builds an installer from a pull request that touches the install path
 and runs it over the last release the way an update arrives.
 
 What it still does not cover: the required check installs one mod of one shape, a zip holding a
-single VPK, in one category; the simulator and the update rehearsal are not required, so a red one
-does not stop a merge by itself, and the radar reports it the next morning. The AppImage is built
+single VPK, in one category; the update rehearsal is not required, so a red one does not stop a merge
+by itself, and the radar reports it the next morning. The simulator runs only at night since
+2026-11-05 (see *The simulator runs at night* below). The AppImage is built
 on every pull request and installed only on a tag.
 
 *Check:* `.github/workflows/e2e.yml` and the `e2e-linux` and `e2e-windows` artifacts it uploads:
 a screenshot per launch, the window's own step report and the app log; `.github/workflows/sim.yml`
 and `.github/workflows/update.yml`.
+
+### The simulator runs at night
+
+Until 2026-11-05 the simulator ran on every pull request, in the merge queue and on every commit to
+`main`. It never blocked a merge, yet of the 60 commits on `main` from 2026-11-03 it marked 17 red,
+almost all for timing on a busy runner: a toast fading between the two frames of the repaint
+check, a list not drawn within 15 seconds. It caught one real bug in that time, a Russian heading
+left on the English Home screen. A red cross on every other commit taught everybody to stop
+reading it, and each one cost a look.
+
+So it runs every night and on demand (`gh workflow run sim.yml -f set=pr`), and at night a failed
+scenario gets a second launch of its own; only a failure that comes back counts. Retrying on every
+pull request would double a fifteen-minute wait whenever a run fails. A failure that holds shows on
+the pinned "Project status" issue the next morning, since the radar reads a scheduled workflow's
+last run. The required checks are unchanged.
+
+*Check:* `.github/workflows/sim.yml`, `--retry` in `tools/sim/run.mjs`.
 
 ### A preset is the whole state, looks included
 
