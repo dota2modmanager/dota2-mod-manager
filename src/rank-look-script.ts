@@ -96,7 +96,7 @@ function d2mmBadgeByHand(badge, lvl) {
 }
 // the hero page names its hero only in words, so the hero is the one whose name it shows
 function d2mmPageHero(page) {
-  var labels = d2mmLook("page names", function () { return d2mmFind(page, function (p) { return p.paneltype === "Label" && (p.BHasClass("TabContentsHeroName") || p.BHasClass("TitleExtraLarge")); }); });
+  var labels = d2mmLook("page names", function () { return d2mmClassed(page, "TabContentsHeroName").concat(d2mmClassed(page, "TitleExtraLarge")).filter(function (p) { return p.paneltype === "Label"; }); });
   var name = "";
   for (var l = 0; l < labels.length && !name; l++) name = labels[l].text;
   for (var key in D2MM_LEVELS) if (name && $.Localize("#npc_dota_hero_" + key).toLowerCase() === name.toLowerCase()) return D2MM_LEVELS[key];
@@ -129,12 +129,12 @@ var D2MM_TICK = 0;
 var D2MM_SEEN = {};
 // the script runs every frame, so a badge the game opens on the real level is on the chosen one
 // before the frame is drawn. The badges are found by the game's own finders, which are quick; what
-// only a walk of the tree finds is walked for again every fifteen frames and kept in between
+// only a walk of the tree finds is walked for again once a second and kept in between
 function d2mmLook(key, find) {
   var had = D2MM_SEEN[key];
   var gone = false;
   if (had) for (var i = 0; i < had.length; i++) if (had[i].IsValid && !had[i].IsValid()) gone = true;
-  if (!had || gone || D2MM_TICK % 15 === 0) D2MM_SEEN[key] = find();
+  if (!had || gone || D2MM_TICK % 60 === 0) D2MM_SEEN[key] = find();
   return D2MM_SEEN[key];
 }
 // the panels with this class, copied into an array a script can join
@@ -144,12 +144,36 @@ function d2mmClassed(panel, cls) {
   for (var i = 0; i < got.length; i++) out.push(got[i]);
   return out;
 }
+// which layout this copy of the script is in, so each does only its own part: the HUD and the
+// lobby pages are trees of thousands of panels, and a search of them every frame in every copy
+// (ten top bar players, ten pick players) cost the game a third of its frames
+var D2MM_ROLES = { DOTAHeroGridNew: "grid", DOTAHudHeroPickingPlayer: "pick", DOTAHudPreGame: "pregame", TooltipContents: "tooltip",
+  DOTATopBarPlayer: "bar", DOTAHUDInspect: "inspect", DOTAHeroPageNewV2: "page" };
+function d2mmRole(me) {
+  if (me.BHasClass("HeroCardTooltipContents")) return "tooltip";
+  if (D2MM_ROLES[me.paneltype]) return D2MM_ROLES[me.paneltype];
+  // the grid's own layout, as tests and older patches name its root
+  if (d2mmClassed(me, "HeroCard").length) return "grid";
+  return "hud";
+}
+var D2MM_ROLE = null;
+// one panel found once and kept while it lives; one not there yet is looked for twice a second
+var D2MM_KEPT = {};
+function d2mmKeep(key, find) {
+  var k = D2MM_KEPT[key];
+  if (k && k.panel && (!k.panel.IsValid || k.panel.IsValid())) return k.panel;
+  if (k && !k.panel && D2MM_TICK - k.at < 30) return null;
+  var panel = find() || null;
+  D2MM_KEPT[key] = { panel: panel, at: D2MM_TICK };
+  return panel;
+}
 function d2mmApply() {
   var me = $.GetContextPanel();
+  if (D2MM_ROLE === null) D2MM_ROLE = d2mmRole(me);
   D2MM_TICK++;
   // the game does not set a tile back, so the tiles are seen to twice a second or so
-  if (D2MM_TICK % 30 === 1) try {
-    var cards = d2mmFind(me, function (p) { return p.BHasClass("HeroCard"); });
+  if (D2MM_ROLE === "grid" && D2MM_TICK % 30 === 1) try {
+    var cards = d2mmClassed(me, "HeroCard");
     if (cards.length) {
       var first = cards[0].FindChildTraverse("HeroImage");
       d2mmSay("hero grid", cards.length + " cards, the first " + (first ? first.heroname + " #" + first.heroid : "without an image"));
@@ -166,7 +190,7 @@ function d2mmApply() {
     }
   } catch (e) { d2mmSay("hero grid failed", e); }
   try {
-    if (me.BHasClass("IsLocalPlayerPawn")) {
+    if (D2MM_ROLE === "pick" && me.BHasClass("IsLocalPlayerPawn")) {
       var rank = me.FindChildTraverse("PlayerRank");
       if (rank && D2MM_RANK) rank.text = D2MM_RANK;
       var badge = me.FindChildTraverse("HeroBadge");
@@ -176,26 +200,26 @@ function d2mmApply() {
     }
   } catch (e) { d2mmSay("pick failed", e); }
   try {
-    var strategy = me.FindChildTraverse("StrategyHeroBadge");
+    var strategy = D2MM_ROLE === "pregame" ? d2mmKeep("strategy", function () { return me.FindChildTraverse("StrategyHeroBadge"); }) : null;
     var mine = strategy ? d2mmLevel(Players.GetPlayerSelectedHero(Players.GetLocalPlayer())) : null;
     if (strategy) d2mmBadge(strategy, mine);
   } catch (e) { d2mmSay("strategy failed", e); }
   try {
     // the card that opens over a hero in the grid
-    var tip = me.BHasClass("HeroCardTooltipContents") ? me : d2mmClassed(me, "HeroCardTooltipContents")[0];
+    var tip = D2MM_ROLE !== "tooltip" ? null : me.BHasClass("HeroCardTooltipContents") ? me : d2mmKeep("tip", function () { return d2mmClassed(me, "HeroCardTooltipContents")[0]; });
     if (tip) {
       var tipLvl = d2mmLevel(d2mmHeroOf(tip.FindChildTraverse("HeroImage")));
       var tipBadge = tip.FindChildTraverse("HeroBadge");
       if (tipBadge) d2mmBadge(tipBadge, tipLvl);
     }
   } catch (e) { d2mmSay("hero card failed", e); }
-  try {
+  if (D2MM_ROLE === "hud" || D2MM_ROLE === "bar" || D2MM_ROLE === "inspect") try {
     // in a match, the player's own hero: the frame round the portrait, the top bar, and the card
     // that opens on a player. A hero is in a match once, so its name tells the player's own apart
     var own = String(Players.GetPlayerSelectedHero(Players.GetLocalPlayer()) || "").replace(/^npc_dota_hero_/, "");
     var played = own ? d2mmLevel(own) : null;
     // each layout says once what it found, so a match's console tells which step stopped
-    var frame = own ? me.FindChildTraverse("unitbadge") : null;
+    var frame = own && D2MM_ROLE === "hud" ? d2mmKeep("unitbadge", function () { return me.FindChildTraverse("unitbadge"); }) : null;
     if (frame) {
       var unit = d2mmPortraitUnit();
       var hero = Players.GetPlayerHeroEntityIndex(Players.GetLocalPlayer());
@@ -203,12 +227,12 @@ function d2mmApply() {
       d2mmSay("match " + own + " level " + played + (owned ? " in the portrait" : " not in the portrait"),
         "unit " + unit + ", the player's hero " + hero);
       d2mmPortrait(frame, owned && d2mmKnown(played) ? played : null);
-    } else if (own) d2mmSay("match in " + me.paneltype + "#" + me.id, "no unitbadge here");
-    if (d2mmKnown(played)) {
-      var bar = me.paneltype === "DOTATopBarPlayer" ? me : null;
-      if (bar && d2mmHeroOf(bar.FindChildTraverse("HeroImage")).replace(/^npc_dota_hero_/, "") === own) d2mmTier(bar, played);
     }
-    var inspect = me.paneltype === "DOTAHUDInspect" ? me : null;
+    if (d2mmKnown(played)) {
+      var bar = D2MM_ROLE === "bar" ? me : null;
+      if (bar && d2mmHeroOf(d2mmKeep("bar hero", function () { return bar.FindChildTraverse("HeroImage"); })).replace(/^npc_dota_hero_/, "") === own) d2mmTier(bar, played);
+    }
+    var inspect = D2MM_ROLE === "inspect" ? me : null;
     var card = inspect && inspect.FindChildTraverse("HeroBadge");
     if (card) {
       var shown = inspect.FindChildTraverse("HeroName");
@@ -217,16 +241,16 @@ function d2mmApply() {
     }
   } catch (e) { d2mmSay("match failed", e); }
   try {
-    if (me.paneltype === "DOTAHeroPageNewV2") {
+    if (D2MM_ROLE === "page") {
       var page = d2mmPageHero(me);
       var chosen = d2mmKnown(page);
       // the page's own badge and the one on its progress tab
       var bigs = [me.FindChildTraverse("HeroBadge"), me.FindChildTraverse("HeroBadgeProgression")].filter(Boolean);
       for (var b = 0; b < bigs.length; b++) d2mmBadge(bigs[b], page);
       // the experience to the next level is the real level's, so it goes while a level is chosen
-      var xp = d2mmClassed(me, "CurrentLevelXPLabel").concat(d2mmClassed(me, "NextLevelXPLabel"), d2mmLook("page bars", function () { return d2mmFind(me, function (p) { return p.id === "HeroLevelProgress"; }); }));
+      var xp = d2mmLook("page experience", function () { return d2mmClassed(me, "CurrentLevelXPLabel").concat(d2mmClassed(me, "NextLevelXPLabel"), d2mmFind(me, function (p) { return p.id === "HeroLevelProgress"; })); });
       for (var x = 0; x < xp.length; x++) xp[x].visible = !chosen;
-      var named = d2mmLook("page name", function () { return d2mmFind(me, function (p) { return p.paneltype === "Label" && p.BHasClass("TabContentsHeroName"); }); });
+      var named = d2mmLook("page name", function () { return d2mmClassed(me, "TabContentsHeroName"); });
       d2mmSay("hero page " + (named.length ? named[0].text : ""), "level " + page + ", " + bigs.length + " badges, " + xp.length + " experience panels");
     }
   } catch (e) { d2mmSay("hero page failed", e); }
