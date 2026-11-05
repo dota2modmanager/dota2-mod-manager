@@ -8366,7 +8366,7 @@ export function levelsScript(look: RankLook, ids: Record<number, string> = {}): 
 ```
 
 The script the layouts include. It knows the levels and the medal, finds what is on its
-panel ten times a second (hero cards, the player's own panel at the pick, the strategy badge) and
+panel every frame (hero cards, the player's own panel at the pick, the strategy badge) and
 writes them in. Each part is in a try of its own: a panel a patch renamed stops that part only,
 and says so once in the game's console. `ids` names the chosen heroes by the number the game
 gives them, for the panels that know a hero only by it.
@@ -8432,7 +8432,7 @@ small picture, so the medal keeps its size.
 
 A level is a number the client asks Steam for, so no style can change it. A script can: Panorama
 runs the JavaScript a layout includes, and the script writes the number into the label and sets
-the tier class on the badge ten times a second. It goes into five layouts, by adding one
+the tier class on the badge every frame. It goes into five layouts, by adding one
 include to the tree in their LaCo block (as src/menu-background.ts does): the hero grid of the
 menu and the pick screen, the player's own panel at the pick, the strategy screen, the hero
 page with its badge, progress tab and experience bar, and the card that opens over a hero.

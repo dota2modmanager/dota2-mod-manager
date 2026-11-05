@@ -125,6 +125,7 @@ function runScript(js: string, root: Fake, ...between: (() => void)[]): string[]
   const api = (p: Fake): unknown => seen.get(p) ?? (seen.set(p, wrap(p)), seen.get(p));
   const wrap = (p: Fake): unknown => new Proxy(p, { get: (t, k) => ({
     FindChildTraverse: (id: string) => { const f = all(t).find((c) => c.id === id); return f ? api(f) : null; },
+    FindChildrenWithClassTraverse: (c: string) => all(t).filter((x) => x.classes.has(c)).map(api),
     SetHasClass: (c: string, on: boolean) => { if (on) t.classes.add(c); else t.classes.delete(c); },
     BHasClass: (c: string) => t.classes.has(c),
     SetDialogVariableInt: (n: string, v: number) => { t.vars[n] = v; },
@@ -210,17 +211,16 @@ test('a badge that takes a level is given it, and gets the game’s back when it
   assert.deepEqual(levels, [30, 30, 2, 30]);
 });
 
-test('a badge the game sets back is on the chosen level the next tick, without walking the page again', () => {
+test('a badge the game sets back is on the chosen level the next frame', () => {
   const badge = fake('DOTAHeroBadge', 'HeroBadge', [], [], { herolevel: 5 });
   const page = fake('DOTAHeroPageNewV2', '', [], [fake('Label', '', ['TabContentsHeroName'], [], { text: 'Axe' }), badge]);
   const levels: number[] = [];
-  let walked = 0;
-  const kids = page.kids;
-  const count = () => { walked = 0; Object.defineProperty(page, 'kids', { get: () => { walked++; return kids; } }); };
+  const progress = fake('DOTAHeroBadge', 'HeroBadgeProgression', [], [], { herolevel: 5 });
   runScript(levelsScript({ medal: null, levels: { axe: 30 }, every: null }), page,
-    () => { count(); badge.herolevel = 5; }, // the game opens the badge on the real level
-    () => levels.push(badge.herolevel!, walked));
-  assert.deepEqual(levels, [30, 0]);
+    () => { badge.herolevel = 5; }, // the game opens the badge on the real level
+    () => { levels.push(badge.herolevel!); page.kids.push(progress); }, // the Progress tab opens with a badge of its own
+    () => levels.push(progress.herolevel!));
+  assert.deepEqual(levels, [30, 30]);
 });
 
 test('the include goes in front of the layout’s panel, once', () => {
