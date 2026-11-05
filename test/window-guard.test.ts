@@ -167,7 +167,7 @@ const VALID: Record<string, unknown[][]> = {
   'config:state': [[]], 'config:noticeSeen': [['notice-2026-10']],
   'patch:state': [[]], 'patch:repairState': [[]], 'patch:repairNow': [[]], 'patch:repairApp': [[]], 'patch:repairSeen': [[]], 'patch:setEnabled': [[true]],
   'schema:refresh': [[]], 'schema:cancel': [[]], 'cosmetics:slots': [[]], 'preview3d:models': [['magnataur', [{ slot: 'item:magnataur:head', stock: '9490' }]]],
-  'cosmetics:heroPortraits': [[['1', '2']], [[1, 2]]], 'cosmetics:heroPortraitsByName': [[['npc_dota_hero_axe']]],
+  'cosmetics:heroPortraits': [[['1', '2']], [[1, 2]], [['axe'], true]], 'cosmetics:heroPortraitsByName': [[['npc_dota_hero_axe']]],
   'cosmetics:icons': [[['Shade of the Abyss']]],
   'cosmetics:pick': [['weather', '5810', 'Weather: Ash', ''], ['hero_axe_weapon', 4520, 'Axe', '1,2']],
   'cosmetics:pickSet': [['20510'], [20510], ['20510', 1]],

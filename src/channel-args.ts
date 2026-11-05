@@ -176,7 +176,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'schema:refresh': [],
   'schema:cancel': [],
   'cosmetics:slots': [],
-  'cosmetics:heroPortraits': [list(either(str(100), num(0, 1e9)), 1000)],
+  'cosmetics:heroPortraits': [list(either(str(100), num(0, 1e9)), 1000), optional(bool)],
   'cosmetics:heroPortraitsByName': [list(str(200), 1000)],
   'cosmetics:icons': [list(str(500), 20000)],
   'cosmetics:pick': [str(100, 1), either(str(100), num(0, 1e9)), optional(NAME), optional(either(str(100), num(0, 1e9)))],

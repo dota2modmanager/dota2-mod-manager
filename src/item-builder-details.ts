@@ -35,6 +35,16 @@ export function* heroAttributesSteps(index: Pick<VpkIndex, 'read'>, ids: string[
   return out;
 }
 
+/**
+ * An item's rarity key ("mythical") and the day it came out ("2021-09-01"), out of its block, for
+ * the item builder's cards: each left out when the block does not say.
+ */
+export function itemFacts(block: string): { rarity?: string; date?: string } {
+  const rarity = /\n\t*"item_rarity"\s+"(\w+)"/.exec(block)?.[1]?.toLowerCase();
+  const date = /\n\t*"creation_date"\s+"(\d{4}-\d{2}-\d{2})/.exec(block)?.[1];
+  return { ...(rarity ? { rarity } : {}), ...(date ? { date } : {}) };
+}
+
 /** The words of an event id that are not a name of their own, in the order the game uses. */
 const EVENT_WORDS: Record<string, string> = { INTERNATIONAL: 'The International', PLUS: 'Dota Plus', TEAM: 'Team' };
 

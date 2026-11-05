@@ -49,6 +49,9 @@ export interface CosmeticOption {
   note?: { status: 'issues' | 'broken' | 'untested'; text: string };
   /** it creates a particle of its own, which another item of the slot can wear (src/item-builder-donor.ts) */
   fx?: boolean;
+  /** an item builder wearable's rarity key ("mythical") and release day ("2021-09-01"), src/item-builder-details.ts itemFacts */
+  rarity?: string;
+  date?: string;
 }
 
 /** A slot of free cosmetics, or one of the item builder's (kind 'item-effect', slot 'item:...'). */

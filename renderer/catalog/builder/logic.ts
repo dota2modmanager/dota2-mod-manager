@@ -151,3 +151,16 @@ export function setCount(set: ItemSet): string {
   const n = set.pieces.length;
   return set.fit < n ? L`${set.fit} из ${n} ${plural(n, 'детали', 'деталей', 'деталей')}` : `${n} ${plural(n, 'деталь', 'детали', 'деталей')}`;
 }
+
+/** The shelves of a slot's effects tab: the courier unusuals, the seasonal ones, and the ambients of particular couriers. */
+export type EffectGroup = 'unusual' | 'seasonal' | 'courier';
+
+// the builder's own effects by what the game draws them for (src/item-builder-effects.ts); the
+// game's are unusual-<number>, and its numbers from 800 up are the seasonal ones (Frostbloom 826)
+const OWN_GROUP: Record<string, EffectGroup> = {
+  fire: 'unusual', lightnings: 'unusual', frostbloom: 'seasonal', snow: 'seasonal', bubbles: 'seasonal', 'sand-storm': 'courier', ghost: 'courier',
+};
+export const effectGroup = (id: string): EffectGroup => OWN_GROUP[id] || (Number(/^unusual-(\d+)$/.exec(id)?.[1]) >= 800 ? 'seasonal' : 'unusual');
+
+/** A rarity key as the game prints it in every language: "mythical" is "Mythical". */
+export const rarityName = (key: string | undefined): string => (key ? key.charAt(0).toUpperCase() + key.slice(1) : '');

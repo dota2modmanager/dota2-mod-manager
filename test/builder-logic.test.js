@@ -119,3 +119,14 @@ test('a hero with a persona on shows its persona\'s slots alone, and one without
     "the Toy Butcher on: Pudge's plain weapon goes, the persona's comes, other heroes stay");
   assert.deepEqual(shown(['item:pudge:weapon']), shown([]), 'a plain pick is no persona');
 });
+
+test("an effect sits on its shelf: the courier unusuals, the game's seasonal ones from 800 up, a courier's own ambient", async () => {
+  const { effectGroup, rarityName } = await load();
+  assert.equal(effectGroup('unusual-15'), 'unusual', 'Ethereal Flame');
+  assert.equal(effectGroup('unusual-826'), 'seasonal', 'Frostbloom');
+  assert.equal(effectGroup('frostbloom'), 'seasonal', "the builder's own, drawn with the same particle");
+  assert.equal(effectGroup('fire'), 'unusual');
+  assert.equal(effectGroup('sand-storm'), 'courier');
+  assert.equal(rarityName('mythical'), 'Mythical', 'as the game prints it in every language');
+  assert.equal(rarityName(undefined), '');
+});

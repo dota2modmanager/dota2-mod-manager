@@ -4778,6 +4778,15 @@ out, and the window puts it after the four groups.
 @param ids  hero ids without the npc_dota_hero_ prefix
 ```
 
+### `itemFacts`
+
+```ts
+export function itemFacts(block: string): { rarity?: string; date?: string }
+```
+
+An item's rarity key ("mythical") and the day it came out ("2021-09-01"), out of its block, for
+the item builder's cards: each left out when the block does not say.
+
 ### `eventName`
 
 ```ts
@@ -4880,7 +4889,9 @@ the credits of the program it goes into.
 export type ItemEffect = { id: string; name: string; type: string; modifier: string }
 ```
 
-An effect the builder can add to an item: a particle it creates.
+An effect the builder can add to an item: a particle it creates. Its name is the game's own
+English one in every language, as players look effects up by it ("Frostbloom"); the four the
+game names are its Attrib_Particle96, 163, 826 and 828, the other three are courier ambients.
 
 ### `ITEM_EFFECTS`
 

@@ -222,20 +222,22 @@ export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () 
    * it, the portrait from hero selection, which is a PNG for 116 of them. The eight left (the
    * newest heroes) keep their glyph. Both go into the same cache as item pictures.
    * @param ids  hero ids without the npc_dota_hero_ prefix, e.g. "antimage"
+   * @param tall  the hero selection portrait first, for the builder's grid laid out like the game's
    * @returns the ones a picture was found for
    */
-  async function heroPortraits(ids: unknown[]): Promise<Record<string, string>> {
+  async function heroPortraits(ids: unknown[], tall = false): Promise<Record<string, string>> {
     const out: Record<string, string> = {};
     if (!ready()) return out;
     // names, never paths: they go into one
     const valid = [...new Set(ids)].filter((id): id is string => typeof id === 'string' && /^[a-z0-9_]+$/.test(id));
     const wide = (id: string) => `heroes/npc_dota_hero_${id}`;
-    const tall = (id: string) => `heroes/selection/npc_dota_hero_${id}`;
+    const upright = (id: string) => `heroes/selection/npc_dota_hero_${id}`;
     const cached = (imagePath: string) => fs.existsSync(cacheFile(imagePath));
-    await extract(valid.map(wide).filter((p) => !cached(p)));
-    takeReadyMade(valid.filter((id) => !cached(wide(id))).map(tall).filter((p) => !cached(p)));
+    if (tall) takeReadyMade(valid.map(upright).filter((p) => !cached(p)));
+    await extract(valid.filter((id) => !tall || !cached(upright(id))).map(wide).filter((p) => !cached(p)));
+    if (!tall) takeReadyMade(valid.filter((id) => !cached(wide(id))).map(upright).filter((p) => !cached(p)));
     for (const id of valid) {
-      const hit = [wide(id), tall(id)].find(cached);
+      const hit = (tall ? [upright(id), wide(id)] : [wide(id), upright(id)]).find(cached);
       if (hit) out[id] = `data:image/png;base64,${fs.readFileSync(cacheFile(hit)).toString('base64')}`;
     }
     return out;

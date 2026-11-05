@@ -97,8 +97,10 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
         yield PAUSE;
         // the game's own unusual effects after the builder's, by the names the game gives them (issue #393)
         const gameName = styleNamer(game, getLang(), () => '');
-        const offered = [...effects, ...offeredUnusual(text, (id) => !!gameName(`#Attrib_Particle${id}`, 0))
-          .map((e) => ({ id: e.id, name: gameName(e.nameToken, 0) }))];
+        // effects by their English names in every language: players look them up as "Ethereal Flame"
+        const english = styleNamer(game, 'en', () => '');
+        const offered = [...effects, ...offeredUnusual(text, (id) => !!english(`#Attrib_Particle${id}`, 0))
+          .map((e) => ({ id: e.id, name: english(e.nameToken, 0) }))];
         const entries = itemSlots.map((it) => {
           const rec = cosmeticRecordFor(it.slot);
           return {

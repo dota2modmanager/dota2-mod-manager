@@ -112,5 +112,15 @@ const EN = {
   "Со стилями": "With styles",
   "Стиль набора": "Set style",
   "Надеть в этом стиле": "Equip in this style",
+  // the hero's window laid out as the game's loadout: slot tabs, effect shelves
+  "Сохрани надетое": "Save what is on",
+  "Открыть слот: эффекты и стиль": "Open the slot: effects and style",
+  "Необычные": "Unusual",
+  "Сезонные": "Seasonal",
+  "От курьеров": "From couriers",
+  "Эффект добавляется к предмету: сначала выбери его.": "An effect goes on an item: choose one first.",
+  "Сначала выбери предмет.": "Choose an item first.",
+  "Можно выбрать несколько. Названия как в игре.": "You can pick several. Names as the game has them.",
+  "Свечение глаз не садится на предмет, поэтому его здесь нет.": "Eye glows do not sit on an item, so they are not here.",
 };
 window.EN_MORE = EN;

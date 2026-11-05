@@ -19,9 +19,7 @@ import { RankModal, type RankModalActions, type RankModalModel } from '../rank/R
 import { DecorModal, type DecorModalActions, type DecorModalModel } from '../decor/DecorModal.tsx';
 import { PaintModal, type PaintModalActions, type PaintModalModel } from '../paint/PaintModal.tsx';
 import { CreatorModal, type CreatorActions, type CreatorModel } from '../../creator/CreatorModal.tsx';
-import { SlotPicker } from '../builder/SlotPicker.tsx';
 import { HeroModal } from '../builder/HeroModal.tsx';
-import { SetModal, SetsModal } from '../builder/SetsModal.tsx';
 import type * as B from '../builder/model.ts';
 
 const panel = document.getElementById('modalContent') as HTMLElement;
@@ -53,11 +51,5 @@ export const showDecorModal = (model: DecorModalModel, actions: DecorModalAction
 export const showArcanaModal = (model: ArcanaModalModel, actions: ArcanaModalActions): void =>
   show(<ArcanaModal m={model} actions={actions} />);
 
-export const showSlotPicker = (key: number, m: B.SlotPickerModel, actions: B.SlotPickerActions): void =>
-  show(<SlotPicker key={key} m={m} actions={actions} />);
 export const showHeroModal = (key: number, m: B.HeroModalModel, actions: B.HeroModalActions): void =>
   show(<HeroModal key={key} m={m} actions={actions} />);
-export const showSetsModal = (key: number, m: B.SetsModalModel, actions: B.SetsModalActions): void =>
-  show(<SetsModal key={key} m={m} actions={actions} />);
-export const showSetModal = (key: number, m: B.SetModalModel, actions: B.SetModalActions): void =>
-  show(<SetModal key={key} m={m} actions={actions} />);

@@ -1,8 +1,8 @@
-/* The item builder's front: every hero whose items the game's own table lets it build, laid out like
- * the game's hero grid (strength, agility, intelligence, universal, each alphabetical) in the
- * catalog's portrait tiles, so a hero is found where a player already looks for it. A tick marks a
- * hero wearing something; what it wears is in the tile's tooltip. A hero opens its window
- * (builder/HeroModal.tsx). */
+/* The item builder's front: every hero whose items the game's own table lets it build, laid out as
+ * the game's hero grid: four columns side by side (strength, agility, intelligence, universal, each
+ * alphabetical) of upright portraits without names, so a hero is found where a player already looks
+ * for it. The name shows on hover and in the tooltip with what the hero wears; a tick marks a hero
+ * wearing something. A hero opens its window (builder/HeroModal.tsx). */
 import type { CSSProperties } from 'react';
 import { heroName } from '../../ui/hero-name.ts';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
@@ -30,15 +30,15 @@ export function BuilderHub({ m, actions }: { m: Model; actions: ScreenActions })
           <span className="count" id="cosCount">{m.count}</span>
         </div>
       </div>
-      <div id="itemHub">
+      <div id="itemHub" className="hub-columns">
         {m.groups.length ? m.groups.map((g) => (
           <section key={g.attr} className="hub-group" data-attr={g.attr}>
             <h2 className="hub-group-title"><span className="hub-attr" aria-hidden="true" />{g.name}<span className="hub-group-count">{g.heroes.length}</span></h2>
-            <div className="hero-grid">
+            <div className="hub-grid">
               {g.heroes.map((h) => {
                 const name = heroName(h.hero);
                 return (
-                  <button key={h.hero} className={`hero-tile ${h.installed ? 'installed' : ''}`} data-item-hero={h.hero}
+                  <button key={h.hero} className={`hero-tile hub-tile ${h.installed ? 'installed' : ''}`} data-item-hero={h.hero} aria-label={name}
                     style={{ '--i': Math.min(i++, 40) } as CSSProperties} title={`${name}\n${cosmeticName(h.meta)}`}
                     onClick={(e) => actions.openHero(h.hero, e.currentTarget)}>
                     <span className="hero-art">{h.icon ? <img src={h.icon} alt="" loading="lazy" /> : <span className="ms">person</span>}</span>

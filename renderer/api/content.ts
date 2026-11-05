@@ -115,7 +115,7 @@ export interface CosmeticsApi {
   slots: () => Promise<{ slots: CosmeticSlot[]; sets: CosmeticSet[]; heroAttrs?: Record<string, HeroAttribute>; names?: Record<string, string> } & Record<string, unknown>>;
   /** pictures by name; the clips among them come back to be decoded here (ui/cosmetic-icons.ts) */
   icons: (names: string[]) => Promise<{ pictures: Record<string, string | null>; decode: string[] }>;
-  heroPortraits: (ids: string[]) => Promise<Record<string, string>>;
+  heroPortraits: (ids: string[], tall?: boolean) => Promise<Record<string, string>>;
   heroPortraitsByName: (names: string[]) => Promise<Record<string, string>>;
   pick: (slot: string, itemId: string, itemName: string, effectId: string) => Promise<Reply<{ record: LibRecord }>>;
   /** style: the look each piece that has it goes on in, 0 for the first */

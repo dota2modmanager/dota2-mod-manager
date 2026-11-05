@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { eventName, heroAttributesSteps, setDetails } from '../src/item-builder-details.ts';
+import { eventName, heroAttributesSteps, itemFacts, setDetails } from '../src/item-builder-details.ts';
 import { drain } from '../src/steps.ts';
 import { activeFilters, filterSets, readSetFilters, setFacets, SET_FILTERS, writeSetFilters } from '../renderer/catalog/builder/set-filters.ts';
 import type { ItemSet } from '../src/item-builder-sets.ts';
@@ -107,3 +107,11 @@ test('the sets toolbar comes back as it was left, and a stored value it cannot u
   assert.deepEqual(readSetFilters(store), SET_FILTERS);
   assert.deepEqual(readSetFilters(null), SET_FILTERS);
 });
+
+test("an item's rarity and release day come out of its own block, and only what the block says", () => {
+  const block = ['"4321"', '\t{', '\t\t"name"\t\t"Blightfall - Head"', '\t\t"item_rarity"\t\t"Mythical"', '\t\t"creation_date"\t\t"2021-08-18"', '\t}'].join('\n');
+  assert.deepEqual(itemFacts(block), { rarity: 'mythical', date: '2021-08-18' });
+  assert.deepEqual(itemFacts(['"1"', '\t{', '\t\t"name"\t\t"Stock"', '\t}'].join('\n')), {}, 'a stock item says neither');
+  assert.deepEqual(itemFacts(['"2"', '\t{', '\t\t"creation_date"\t\t"soon"', '\t}'].join('\n')), {}, 'a date that is not one is left out');
+});
+

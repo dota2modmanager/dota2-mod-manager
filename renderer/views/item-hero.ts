@@ -1,8 +1,13 @@
-/* A hero's window in the item builder (catalog/builder/HeroModal.tsx): what each slot wears, one
- * piece or all of them taken off, the hero's sets, and its saved looks (views/item-looks.ts). Out
- * of views/item-builder.ts, which keeps the slot picker and the window on show. */
-import { COSMETIC_PREFIX } from '../core/constants.ts';
-import { catName } from '../core/categories.ts';
+/* A hero's window in the item builder (catalog/builder/HeroModal.tsx), laid out as the game's own
+ * loadout: the hero on the left, its tabs down the middle (its sets, each slot with what is on it,
+ * the looks saved for it), and what the tab offers on the right. A slot's pane is
+ * views/item-builder.ts, the sets' views/item-sets.ts, the looks views/item-looks.ts. Every way
+ * into the builder opens this window: a hero from the hub, a slot's card found by the catalog's
+ * search, a set.
+ *
+ * It used to be three windows, each opening the next with a way back, and the hero's own one a
+ * column of rows that ran past the bottom of the screen once the 3D view was on. */
+import { state } from '../core/store.ts';
 import { pickedIn } from '../core/installed.ts';
 import { showHeroModal } from '../catalog/modal/root.tsx';
 import { heroesOf, setIsOn } from '../catalog/builder/logic.ts';
@@ -12,29 +17,46 @@ import { confirmDialog, promptDialog } from '../ui/dialog.ts';
 import { allowItemTable } from '../ui/game-files.ts';
 import { toast } from '../ui/toast.ts';
 import { openPaint } from './hero-paint.ts';
-import { openSets } from './item-sets.ts';
-import { afterPick, heroSets, isOpen, itemCosmeticSlots, openItemSlotModal, openWindow, takeOff } from './item-builder.ts';
+import { loadSetIcons, setsPane, type SetsState } from './item-sets.ts';
+import { afterPick, heroSets, isOpen, itemCosmeticSlots, openWindow, slotPane, slotState, takeOff, type SlotState } from './item-builder.ts';
 import { deleteLook, heroKey, lookIsOn, looksOf, renameLook, saveLook, wornPicks } from './item-looks.ts';
+import { heroPortrait } from './item-hub.ts';
 import { closeOverlay } from './catalog/overlay.ts';
 import type { CosmeticSlot } from '../catalog/types.ts';
-
-const HUB = COSMETIC_PREFIX + 'items';
+import type { HeroPane, HeroTab } from '../catalog/builder/model.ts';
 
 const heroSlots = (hero: string): CosmeticSlot[] => heroesOf(itemCosmeticSlots()).find(([h]) => h === hero)?.[1] || [];
 
-export function openItemHeroModal(heroName: string, from: Element | null): void {
-  const st: HeroState = { heroName, busy: false };
-  openWindow(from, false, (key) => drawHero(key, st));
+interface HeroState { heroName: string; busy: boolean; tab: HeroTab; slot: SlotState | null; sets: SetsState }
+
+/** The tab a hero's window was left on, for the next hero: a person going through sets keeps going through sets. */
+let lastTab: 'sets' | 'looks' | 'slot' = 'sets';
+
+/**
+ * @param opts.slot  open on this slot's tab, with `query` typed into its search and `select` chosen
+ */
+export function openItemHeroModal(heroName: string, from: Element | null, opts: { slot?: string; query?: string; select?: string } = {}): void {
   const slots = heroSlots(heroName);
   const sets = heroSets(heroName);
-  loadCosmeticIcons([sets[0]?.name, ...slots.map((s) => pickedIn(s.slot)?.name), ...looksOf(heroKey(slots)).map((l) => l.picks[0]?.name)]
+  const first = slots[0]?.slot || 'looks';
+  const tab = opts.slot || (lastTab === 'sets' && sets.length ? 'sets' : lastTab === 'looks' ? 'looks' : first);
+  const st: HeroState = { heroName, busy: false, tab, slot: null, sets: { query: '', set: null } };
+  if (tab !== 'sets' && tab !== 'looks') st.slot = slotState(tab, opts);
+  if (tab === 'sets') loadSetIcons(heroName);
+  openWindow(from, true, (key) => drawHero(key, st));
+  loadCosmeticIcons([...slots.map((s) => pickedIn(s.slot)?.name), ...looksOf(heroKey(slots)).flatMap((l) => l.picks.map((p) => p.name))]
     .filter((n): n is string => !!n), () => {}).catch(() => {});
 }
 
-interface HeroState { heroName: string; busy: boolean }
+/** A slot's card from the catalog's search or favourites: its hero's window, on that slot. */
+export function openItemSlotModal(slot: string, from: Element | null, opts: { query?: string; select?: string } = {}): void {
+  const hero = heroesOf(itemCosmeticSlots()).find(([, slots]) => slots.some((s) => s.slot === slot))?.[0];
+  if (hero) openItemHeroModal(hero, from, { slot, ...opts });
+}
 
-/** The 3D preview is open: it stays so from one hero to the next, as a person who looks once looks again. */
-let previewOpen = false;
+/** The 3D view is open: the stage's default, as the game's loadout shows the hero; turned off, it stays
+ *  off from one hero to the next, for a machine it is slow on. */
+let previewOpen = true;
 
 /** What the 3D preview shows for the hero: each slot's stock item and what is picked on it. */
 function heroPreview(slots: CosmeticSlot[]) {
@@ -57,7 +79,6 @@ function drawHero(key: number, st: HeroState): void {
   // read again on every draw: a persona picked or taken off changes which slots the hero has
   const slots = heroSlots(heroName);
   const sets = heroSets(heroName);
-  const shown = sets.find((s) => setIsOn(s, pickedIn)) || sets[0];
   const hero = heroKey(slots);
   const again = () => { if (isOpen(key)) drawHero(key, st); };
   // one change at a time, then the window again with what is on
@@ -67,9 +88,36 @@ function drawHero(key: number, st: HeroState): void {
     again();
     try { await work(); } finally { st.busy = false; again(); }
   };
+  const goSlot = (slot: string, select = '') => {
+    st.tab = slot;
+    st.slot = slotState(slot, { select });
+    lastTab = 'slot';
+    again();
+  };
+  // a slot the hero lost (a persona taken off) leaves its tab for the first one
+  if (st.tab !== 'sets' && st.tab !== 'looks' && !slots.some((s) => s.slot === st.tab)) {
+    st.tab = sets.length ? 'sets' : slots[0]?.slot || 'looks';
+    st.slot = st.tab === 'sets' || st.tab === 'looks' ? null : slotState(st.tab);
+  }
+  const looks = looksOf(hero);
+  let pane: HeroPane;
+  if (st.tab === 'sets') pane = setsPane(heroName, st.sets, again, goSlot);
+  else if (st.tab === 'looks') {
+    pane = {
+      kind: 'looks',
+      looks: looks.map((l) => ({ id: l.id, name: l.name, pictures: l.picks.map((p) => p.name).filter(Boolean), on: lookIsOn(l, slots) })),
+      canSave: slots.some((s) => pickedIn(s.slot)) && !looks.some((l) => lookIsOn(l, slots)),
+    };
+  } else {
+    const p = st.slot && slotPane(st.slot, again);
+    pane = p ? { kind: 'slot', ...p } : { kind: 'looks', looks: [], canSave: false };
+  }
+  const worn = sets.find((s) => setIsOn(s, pickedIn));
   showHeroModal(key, {
     hero: heroName,
-    hub: catName(HUB),
+    portrait: heroPortrait(heroName),
+    attr: state.heroAttrs?.[slots[0]?.heroIds?.[0] || ''] || '',
+    tab: st.tab,
     slots: slots.map((s) => ({
       slot: s.slot,
       label: s.slotLabel || s.label || '',
@@ -79,18 +127,26 @@ function drawHero(key: number, st: HeroState): void {
     })),
     changed: slots.filter((s) => pickedIn(s.slot)).length,
     busy: st.busy,
-    sets: sets.length ? { name: shown.name, count: sets.length, on: sets.some((s) => setIsOn(s, pickedIn)) } : null,
-    looks: looksOf(hero).map((l) => ({ id: l.id, name: l.name, count: l.picks.length, picture: l.picks[0]?.name || null, on: lookIsOn(l, slots) })),
+    sets: sets.length ? { count: sets.length, on: worn ? worn.name : null } : null,
+    looks: looks.length,
     preview: heroPreview(slots),
     paint: heroNpc(slots),
+    pane,
   }, {
     close: closeOverlay,
+    tab: (tab) => {
+      if (tab === st.tab && tab !== 'sets') return;
+      if (tab === 'sets') { st.sets.set = null; lastTab = 'sets'; loadSetIcons(heroName); }
+      if (tab === 'looks') lastTab = 'looks';
+      if (tab === 'sets' || tab === 'looks') { st.tab = tab; st.slot = null; again(); } else goSlot(tab);
+    },
     togglePreview: () => { previewOpen = !previewOpen; again(); },
     openPaint: () => { const npc = heroNpc(slots); if (npc) void openPaint(npc, heroName, () => openItemHeroModal(heroName, null)); },
-    openSets: () => openSets(heroName),
-    openSlot: (slot) => openItemSlotModal(slot, null,
-      { back: { label: heroName, hero: true, go: () => openItemHeroModal(heroName, null) } }),
-    takeOff: (slot) => void busy(() => takeOff(slot)),
+    takeOff: (slot) => void busy(async () => {
+      await takeOff(slot);
+      // the slot's pane starts again from what is on now: the stock item
+      if (st.slot?.slot === slot) st.slot = slotState(slot);
+    }),
     resetAll: () => void busy(async () => {
       const ids = slots.map((s) => pickedIn(s.slot)?.id).filter((id): id is string => !!id);
       if (!ids.length) return;
@@ -98,18 +154,19 @@ function drawHero(key: number, st: HeroState): void {
       if (r.error) { toast(r.error, 'error'); return; }
       toast(L`Вернули как в игре`);
       await afterPick();
+      if (st.slot) st.slot = slotState(st.slot.slot);
     }),
     saveLook: () => void (async () => {
       const picks = wornPicks(slots);
       if (!picks.length) return;
-      const name = await promptDialog(L`Как назвать образ?`, { value: L`Образ ${looksOf(hero).length + 1}`, okLabel: L`Сохранить` });
+      const name = await promptDialog(L`Как назвать образ?`, { value: L`Образ ${looks.length + 1}`, okLabel: L`Сохранить` });
       if (!name) return;
       await saveLook(hero, name, picks);
       toast(L`Образ сохранён: ${name}`);
       again();
     })(),
     wearLook: (id) => void busy(async () => {
-      const look = looksOf(hero).find((l) => l.id === id);
+      const look = looks.find((l) => l.id === id);
       if (!look || !await allowItemTable()) return;
       const r = await window.api.cosmetics.wearLook(hero, look.picks);
       if (r.error) { toast(r.error, 'error'); return; }
@@ -117,14 +174,14 @@ function drawHero(key: number, st: HeroState): void {
       await afterPick();
     }),
     renameLook: (id) => void (async () => {
-      const look = looksOf(hero).find((l) => l.id === id);
+      const look = looks.find((l) => l.id === id);
       const name = look && await promptDialog(L`Новое название образа`, { value: look.name, okLabel: L`Сохранить` });
       if (!name) return;
       await renameLook(id, name);
       again();
     })(),
     deleteLook: (id) => void (async () => {
-      const look = looksOf(hero).find((l) => l.id === id);
+      const look = looks.find((l) => l.id === id);
       if (!look || !await confirmDialog(L`Удалить образ «${cosmeticName(look.name)}»? Надетые предметы останутся.`)) return;
       await deleteLook(id);
       again();

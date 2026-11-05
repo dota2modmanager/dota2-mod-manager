@@ -83,10 +83,14 @@ export async function renderItemCosmeticHub(): Promise<void> {
   await paint(drawHub);
 }
 
-// A hero's portrait, read out of the installed game (src/game-icons.ts heroPortraits): the game
-// keeps them as plain PNG, so this needs no toolchain and no network. Keyed by the label the hub
-// shows. They used to ship inside the app, 132 of Valve's pictures in a GPL repository.
+// A hero's portrait from hero selection, upright as the game's own grid shows them, read out of the
+// installed game (src/game-icons.ts heroPortraits): the game keeps them as plain PNG, so this
+// needs no toolchain and no network. Keyed by the label the hub shows. They used to ship inside
+// the app, 132 of Valve's pictures in a GPL repository.
 const heroPortraits = new Map<string, string | null>();
+
+/** A hero's portrait by the label the hub shows, for its window's stage; null before the hub read it or when the game has none. */
+export const heroPortrait = (label: string): string | null => heroPortraits.get(label) || null;
 
 async function loadHeroPortraits(heroes: [string, CosmeticSlot[]][]): Promise<void> {
   const want = new Map<string, string[]>(); // hero id -> the labels that show it
@@ -96,7 +100,7 @@ async function loadHeroPortraits(heroes: [string, CosmeticSlot[]][]): Promise<vo
   }
   if (!want.size) return;
   let got: Record<string, string> = {};
-  try { got = await window.api.cosmetics.heroPortraits([...want.keys()]); } catch { /* no game: glyphs */ }
+  try { got = await window.api.cosmetics.heroPortraits([...want.keys()], true); } catch { /* no game: glyphs */ }
   for (const [id, labels] of want) for (const label of labels) heroPortraits.set(label, got[id] || null);
 }
 

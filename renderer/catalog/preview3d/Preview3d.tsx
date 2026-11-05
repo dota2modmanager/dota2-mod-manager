@@ -1,13 +1,14 @@
 /* The 3D preview in the item builder's hero window (issue #417): the hero turning slowly in what
  * each slot wears now. It asks the main process for the models when it is shown and again when a
  * pick changes (`sig`), and draws them with the scene beside this file, loaded only then. */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Preview3dApi } from '../../api/content.ts';
 
 type Status = { kind: 'loading' } | { kind: 'shown'; missing: string[] } | { kind: 'no-tool' } | { kind: 'failed'; text: string };
 
-export function Preview3d({ hero, slots, sig, still = false }: {
-  hero: string; slots: { slot: string; stock: string }[]; sig: string; still?: boolean;
+/** @param fallback  what the stage shows when the models cannot be had (the hero window's portrait), the reason under it */
+export function Preview3d({ hero, slots, sig, still = false, fallback }: {
+  hero: string; slots: { slot: string; stock: string }[]; sig: string; still?: boolean; fallback?: ReactNode;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
@@ -59,7 +60,9 @@ export function Preview3d({ hero, slots, sig, still = false }: {
           <button className="btn btn-sm" id="preview3dTool" onClick={() => void getTool()}><span className="ms">download</span>{L`Скачать`}</button>
         </div>
       )}
-      {status.kind === 'failed' && <div className="preview3d-note"><span className="ms">error</span>{status.text}</div>}
+      {status.kind === 'failed' && (fallback
+        ? <>{fallback}<div className="preview3d-missing" title={status.text}>{status.text}</div></>
+        : <div className="preview3d-note"><span className="ms">error</span>{status.text}</div>)}
       {status.kind === 'shown' && status.missing.length > 0 && (
         <div className="preview3d-missing" title={status.missing.join(', ')}>{L`Без модели: ${status.missing.length}`}</div>
       )}

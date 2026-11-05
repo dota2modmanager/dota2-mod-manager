@@ -1,8 +1,11 @@
-/* What the item builder's windows show, worked out by views/item-builder.ts (which keeps what is
- * chosen, what is on and what the button does) and drawn by the components beside this file. */
+/* What the item builder's hero window shows, worked out by views/item-hero.ts (the window),
+ * views/item-builder.ts (a slot) and views/item-sets.ts (the sets), and drawn by the components
+ * beside this file. One window, laid out as the game's own loadout: the hero on the left, its
+ * slots down the middle, what one of them offers on the right. */
 import type { SetFilters } from './set-filters.ts';
+import type { EffectGroup } from './logic.ts';
 
-/** The one button along a builder window's bottom, and what it will put on. */
+/** The one button along a pane's bottom, and what it will put on. */
 export interface BuilderAction {
   label: string;
   icon: string;
@@ -10,10 +13,16 @@ export interface BuilderAction {
   remove?: boolean;
 }
 
-interface OptionCard {
+/** What a card says of an item the game sells: its rarity key (for the colour), its name, and its year. */
+interface Rarity {
+  rarity: string;
+  rarityName: string;
+  year: string;
+}
+
+interface OptionCard extends Rarity {
   id: string;
   name: string;
-  tags: string;
   picked: boolean;
   on: boolean;
   /** what is known to go wrong with it in the game, or that nobody has checked (src/arcana-notes.ts) */
@@ -27,30 +36,29 @@ interface EffectCard {
   picked: boolean;
 }
 
-export interface SlotPickerModel {
-  back: string | null;
+/** The tabs over a slot's grid: its items, the chosen one's styles, effects on top, another item's effect. */
+export type SlotView = 'items' | 'styles' | 'effects' | 'donors';
+
+export interface SlotPaneModel {
   title: string;
-  optionsCount: number;
   query: string;
   slotIcon: string;
+  view: SlotView;
   options: OptionCard[];
+  /** how many items the slot offers, the search aside */
+  optionsCount: number;
   /** the chosen item's styles; null when it has one look */
   styles: { index: number; name: string; picked: boolean }[] | null;
-  /** null when the slot takes no effects */
-  effects: {
-    none: boolean; list: EffectCard[]; enabled: boolean; hint: string;
-    /** the game's own unusual effects (src/item-builder-unusual.ts), as a row of buttons under the cards */
-    game: { id: string; name: string; picked: boolean }[];
-  } | null;
+  /** null when the slot takes no effects; `count` all there are, the search aside */
+  effects: { none: boolean; enabled: boolean; count: number; picked: number; groups: { group: EffectGroup; list: EffectCard[] }[] } | null;
   /** the slot's items with an effect of their own, to wear on the chosen one; null when none has one */
-  donors: { none: boolean; list: { id: string; name: string; picked: boolean }[]; enabled: boolean } | null;
+  donors: { none: boolean; list: { id: string; name: string; picked: boolean }[]; enabled: boolean; count: number } | null;
   summary: { name: string; effects: string };
   action: BuilderAction;
 }
 
-export interface SlotPickerActions {
-  back: () => void;
-  close: () => void;
+export interface SlotPaneActions {
+  view: (v: SlotView) => void;
   search: (q: string) => void;
   choose: (id: string) => void;
   style: (index: number) => void;
@@ -59,71 +67,14 @@ export interface SlotPickerActions {
   apply: () => void;
 }
 
-interface SlotRow {
-  slot: string;
-  label: string;
-  icon: string;
-  /** the look on, whose picture and name the row shows; null for the hero's own item */
-  liveName: string | null;
-  /** how many items the slot offers */
-  options: number;
-}
-
-/** A saved look (views/item-looks.ts): `picture` the name of its first item, `on` the hero wears it now. */
-interface LookRow {
-  id: string;
-  name: string;
-  count: number;
-  picture: string | null;
-  on: boolean;
-}
-
-export interface HeroModalModel {
-  hero: string;
-  hub: string;
-  slots: SlotRow[];
-  /** how many slots carry a pick */
-  changed: number;
-  /** a take-off, reset or look is on its way to the game */
-  busy: boolean;
-  /** the sets button: the picture of the set on, else the first one's */
-  sets: { name: string; count: number; on: boolean } | null;
-  looks: LookRow[];
-  /** the 3D preview (catalog/preview3d): the hero's name for its models, what each slot dresses, and
-   * a key of what is on, so a pick draws it again; null hides the button */
-  preview: { hero: string; slots: { slot: string; stock: string }[]; sig: string; open: boolean } | null;
-  /** the hero's npc name for the recolour window (views/hero-paint.ts); null hides its button */
-  paint: string | null;
-}
-
-export interface HeroModalActions {
-  close: () => void;
-  togglePreview: () => void;
-  openPaint: () => void;
-  openSets: () => void;
-  openSlot: (slot: string) => void;
-  takeOff: (slot: string) => void;
-  resetAll: () => void;
-  saveLook: () => void;
-  wearLook: (id: string) => void;
-  renameLook: (id: string) => void;
-  deleteLook: (id: string) => void;
-}
-
-interface SetCard {
+interface SetCard extends Rarity {
   id: string;
   name: string;
   on: boolean;
   meta: string;
-  /** a rarity key, for its colour, and its name; '' when the game gives none */
-  rarity: string;
-  rarityName: string;
-  /** the year it came out, '' when the game does not say */
-  year: string;
 }
 
-export interface SetsModalModel {
-  hero: string;
+export interface SetsPaneModel {
   count: number;
   query: string;
   sets: SetCard[];
@@ -133,9 +84,7 @@ export interface SetsModalModel {
   active: number;
 }
 
-export interface SetsModalActions {
-  back: () => void;
-  close: () => void;
+export interface SetsPaneActions {
   search: (q: string) => void;
   open: (id: string) => void;
   filter: (patch: Partial<SetFilters>) => void;
@@ -150,9 +99,8 @@ interface PieceCard {
   meta: string;
 }
 
-export interface SetModalModel {
+export interface SetPaneModel {
   name: string;
-  hero: string;
   count: string;
   pieces: PieceCard[];
   /** what the game says about the set; empty strings where it says nothing */
@@ -162,10 +110,72 @@ export interface SetModalModel {
   action: BuilderAction;
 }
 
-export interface SetModalActions {
+export interface SetPaneActions {
   back: () => void;
-  close: () => void;
   piece: (index: number) => void;
   style: (index: number) => void;
   apply: () => void;
+}
+
+/** A saved look (views/item-looks.ts): `pictures` the names of its items, `on` the hero wears it now. */
+interface LookRow {
+  id: string;
+  name: string;
+  pictures: string[];
+  on: boolean;
+}
+
+interface SlotRow {
+  slot: string;
+  label: string;
+  icon: string;
+  /** the look on, whose picture and name the row shows; null for the hero's own item */
+  liveName: string | null;
+  /** how many items the slot offers */
+  options: number;
+}
+
+/** The middle column: 'sets', 'looks' or a slot's id. */
+export type HeroTab = string;
+
+export type HeroPane =
+  | { kind: 'slot'; m: SlotPaneModel; actions: SlotPaneActions }
+  | { kind: 'sets'; m: SetsPaneModel; actions: SetsPaneActions }
+  | { kind: 'set'; m: SetPaneModel; actions: SetPaneActions }
+  | { kind: 'looks'; looks: LookRow[]; canSave: boolean };
+
+export interface HeroModalModel {
+  hero: string;
+  /** the hero's portrait from hero selection, for the stage while the 3D view is off */
+  portrait: string | null;
+  /** its main attribute, for the colour under its name (src/item-builder-details.ts) */
+  attr: string;
+  tab: HeroTab;
+  slots: SlotRow[];
+  /** how many slots carry a pick */
+  changed: number;
+  /** a take-off, reset or look is on its way to the game */
+  busy: boolean;
+  /** the sets tab, null when the hero has none */
+  sets: { count: number; on: string | null } | null;
+  looks: number;
+  /** the 3D preview (catalog/preview3d): the hero's name for its models, what each slot dresses, and
+   * a key of what is on, so a pick draws it again; null hides the button */
+  preview: { hero: string; slots: { slot: string; stock: string }[]; sig: string; open: boolean } | null;
+  /** the hero's npc name for the recolour window (views/hero-paint.ts); null hides its button */
+  paint: string | null;
+  pane: HeroPane;
+}
+
+export interface HeroModalActions {
+  close: () => void;
+  tab: (tab: HeroTab) => void;
+  togglePreview: () => void;
+  openPaint: () => void;
+  takeOff: (slot: string) => void;
+  resetAll: () => void;
+  saveLook: () => void;
+  wearLook: (id: string) => void;
+  renameLook: (id: string) => void;
+  deleteLook: (id: string) => void;
 }

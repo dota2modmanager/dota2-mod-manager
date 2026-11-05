@@ -410,15 +410,16 @@ test('item cosmetics build one slot per hero part, infer missing stock slots, of
     { id: '9455', name: 'Golden Full-Bore Bonanza', fx: true },
     { id: '9801', name: 'Tidehunter bonus anchor' },
   ]);
+  // the effects by the game's own English names in every language: players look them up as "Frostbloom"
   assert.deepEqual(builder.itemEffects(), [
     { id: '', name: 'No effect' },
-    { id: 'fire', name: 'Fire' },
-    { id: 'lightnings', name: 'Lightnings' },
+    { id: 'fire', name: 'Trail of Burning Doom' },
+    { id: 'lightnings', name: 'Ionic Vapor' },
     { id: 'frostbloom', name: 'Frostbloom' },
-    { id: 'snow', name: 'Snow' },
+    { id: 'snow', name: 'Snowdrift' },
     { id: 'bubbles', name: 'Bubbles' },
-    { id: 'sand-storm', name: 'Sand Storm' },
-    { id: 'ghost', name: 'Ghost' },
+    { id: 'sand-storm', name: 'Desert Sands' },
+    { id: 'ghost', name: 'Anniversary Ghost' },
   ]);
 });
 
@@ -797,7 +798,7 @@ test('an arcana is offered and dresses the stock item of its slot, the hero base
   assert.equal(slot?.slotLabel, 'Hero base');
   // the arcana, and not the persona beside it; with no note, as its base fixes what J0nathan550's
   // pass found (src/arcana-bases.ts)
-  assert.deepEqual(slot?.options, [{ id: '9059', name: 'Bladeform Legacy' }], 'the arcana, and not the persona beside it');
+  assert.deepEqual(slot?.options, [{ id: '9059', name: 'Bladeform Legacy', rarity: 'arcana' }], 'the arcana, and not the persona beside it');
   assert.equal(builder.defaultItemForWearable(text, '9059')?.id, '811');
   assert.equal(builder.defaultItemForWearable(text, '9070'), null, 'a persona does not dress the stock base');
 });
