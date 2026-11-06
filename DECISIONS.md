@@ -472,6 +472,27 @@ change what is installed or where a link goes.
 *Check:* `translation` in `renderer/i18n.js` and `t` in `src/i18n.ts` for the fallback, and
 `test/chinese.test.js`, `test/chinese-catalog.test.ts` and `test/chinese-heroes.test.ts`.
 
+### Hero items go in as files, and the item table keeps only what files cannot do
+
+Decided on 2026-11-06. A pick from the item builder is a pak in the language folder. The game reads that folder by itself, so nothing of the game's is edited and no permission is asked.
+
+The table needs `gameinfo_branchspecific.gi` patched and signed in `dota.signatures`. A pak needs neither. A pick was already mostly files: its model under the stock path, its swapped particles, sounds and pictures. The block in the table added four things, and three of them fit in files:
+
+| The table said | A file says |
+|---|---|
+| `particle_create` | `particle_cfg_list` in the wearable's key values, the mechanism 68 of the game's own models use |
+| `model_skin` | the material set made the model's default |
+| `activity` | the hero body with the modifier taken off, one body per hero for all picks |
+| the rest (`TABLE_ONLY` in `src/item-files.ts`) | nothing yet |
+
+An added effect also has to reach the item's surface. Calvin's constructor at dota-studio showed how: hitboxes from the item's vertices and a copy of the effect that starts on them. We use the idea, not his code. `src/model-hitboxes.ts` and `src/particle-surface.ts` were written from the game's files, and his way of merging items into the hero's body stays out: he reports bone conflicts on some items, a wearable under a stock path has none, and a merged body would lose the item's own motions and hide rules.
+
+What stays on the table: a slot with no stock model, a second model (`additional_wearable`), hidden hero parts (`bodygroup_visibility`), item scale, kill effects, the game's non-hero looks, personas, and mods that carry item blocks. A pick with such a part still goes in, and the window counts it as waiting for the table.
+
+Someone who already allowed the table stays on it. New picks with the table off go as files. Moving everyone is a later step, after enough items have been compared in the game.
+
+*Check:* `test/item-files.test.ts` for what a pick's block asks of its files, and `npm run dota:bench -- --vpk <the pak> --hero axe` for the real game.
+
 ### The anti-cheat notice is rewritten, and there is no switch for it
 
 When Dota cannot verify the game before matchmaking, Valve's window says the anti-cheat "was

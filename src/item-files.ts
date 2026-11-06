@@ -1,0 +1,168 @@
+/**
+ * The item builder's picks as files alone: a look the game takes from a pak in the language folder,
+ * with no edit of the game's own files and no line in its item table.
+ *
+ * A pick has always been mostly files: its model under the stock path, its particle swaps, sounds
+ * and pictures (src/item-builder-assets.ts). The table's block added what a file was thought unable
+ * to say. Most of that a file can say after all:
+ *  - the item's `particle_create`s go into the wearable's own key values (src/model-particles.ts),
+ *    with hitboxes on its surface for them to spread over (src/model-hitboxes.ts);
+ *  - its material set is made the model's default (src/model-skin.ts);
+ *  - its activity modifiers are taken off the hero's body, so the item's motions are the plain ones
+ *    (arcana.ts asModel), one body per hero whatever the number of picks.
+ *
+ * What is left needs the table: `TABLE_ONLY`, and a slot with no stock model to stand in for. A pick
+ * with such a part still goes in by files, and says what it lost (`left`), so the window can tell
+ * and the person can allow the table. Calvin's constructor (dota-studio) showed that a whole look
+ * can be files; merging items into the hero's body as it does is not done here, since a body keeps
+ * one skeleton and his own notes speak of bone conflicts: a wearable stays a wearable.
+ */
+import path from 'node:path';
+import { eachChild, blockBounds } from './schema.ts';
+import { asModel } from './arcana.ts';
+import { heroModelPath, firstStyleSkin } from './item-builder-assets.ts';
+import { itemHeroes } from './item-builder-slots.ts';
+import { withParticles } from './model-particles.ts';
+import { withSurfaceHitboxes } from './model-hitboxes.ts';
+import { withSkin } from './model-skin.ts';
+import { surfaceSystem } from './particle-surface.ts';
+import { sharedVpkIndex, entryAt, entryPath, type VpkEntry } from './vpk.ts';
+import { PAUSE } from './steps.ts';
+import type { SchemaPatch } from './schema-merge.ts';
+
+/** What of an item a file cannot say, by the type of its asset_modifier, with the word the log uses. */
+const TABLE_ONLY: Record<string, string> = {
+  additional_wearable: 'a second model',
+  bodygroup_visibility: 'the hero parts it hides',
+  entity_scale: 'its size',
+  hero_scale: 'its size',
+  custom_kill_effect: 'its kill effect',
+  particle_combined: 'its paired effects',
+  particle_control_point: 'its effect points',
+  hex_model: 'its hex model',
+  buff_modifier: 'its buff effect',
+  arcana_level: 'its arcana levels',
+  pet: 'its pet',
+};
+
+/** A pick built for the table, with what this needs to know of it (src/schema-build.ts). */
+export interface PickPatch extends SchemaPatch {
+  /** the stock path the item's model went under, null when it wears none */
+  own?: string | null;
+  /** the effects the person put on it, as systems */
+  added?: string[];
+  /** a model with no stock model to go under */
+  unplaced?: boolean;
+  /** an item pick, which can go as files; anything else in the list cannot */
+  item?: boolean;
+}
+
+/** One source and what of it stays behind without the table. */
+export interface LeftBehind { source: string; what: string[] }
+
+/** A build's files, and what of the picks they could not carry. */
+export interface ItemFiles { entries: VpkEntry[]; left: LeftBehind[] }
+
+/** The fields of each asset_modifier in an item block's visuals. */
+function modifiers(block: string): Map<string, string>[] {
+  const out: Map<string, string>[] = [];
+  eachChild(block, blockBounds(block, 0), (c) => {
+    if (!c.isBlock || c.key.toLowerCase() !== 'visuals') return;
+    eachChild(block, c.body!, (m) => {
+      if (!m.isBlock || !/^asset_modifier\d*$/i.test(m.key)) return;
+      const fields = new Map<string, string>();
+      eachChild(block, m.body!, (f) => { if (!f.isBlock) fields.set(f.key.toLowerCase(), f.value); });
+      const style = fields.get('style');
+      if (!style || style === '0') out.push(fields);
+    });
+  });
+  return out;
+}
+
+const ofType = (mods: Map<string, string>[], type: string) => mods.filter((f) => (f.get('type') || '').toLowerCase() === type);
+
+/** The visuals block alone, which firstStyleSkin walks from its first brace. */
+function visualsOf(block: string): string {
+  let out = '';
+  eachChild(block, blockBounds(block, 0), (c) => { if (c.isBlock && c.key.toLowerCase() === 'visuals') out = block.slice(c.start, c.end); });
+  return out;
+}
+
+/** The set a pick wears its model in, 0 for the first. */
+function skinOf(block: string, mods: Map<string, string>[]): number {
+  const visuals = visualsOf(block);
+  return Number(ofType(mods, 'model_skin')[0]?.get('skin') ?? (visuals && firstStyleSkin(visuals))) || 0;
+}
+
+/**
+ * What a pick's block asks of its files: its effects, material set and motions, and what it asks
+ * that a file cannot say.
+ */
+export function pickParts(patch: Pick<PickPatch, 'block' | 'own' | 'unplaced'>): { systems: string[]; skin: number; motions: string[]; left: string[] } {
+  const mods = modifiers(patch.block);
+  const words = (type: string) => [...new Set(ofType(mods, type).map((f) => f.get('modifier') || '').filter(Boolean))];
+  const systems = words('particle_create');
+  const left = [...new Set(mods.flatMap((f) => TABLE_ONLY[(f.get('type') || '').toLowerCase()] ?? []))];
+  if (patch.unplaced) left.push('its model');
+  if (systems.length && !patch.own) left.push('its effect');
+  return { systems, skin: skinOf(patch.block, mods), motions: words('activity'), left };
+}
+
+/** A wearable as it goes in: in its material set, carrying its effects. Null: the file stays as it was. */
+export function wornModel(model: Buffer, skin: number, systems: string[]): Buffer | null {
+  const out = skin ? withSkin(model, skin) : model;
+  if (!out || !systems.length) return out;
+  // no boxes (a model this cannot read) leaves the effect at the model's origin, which is still the effect
+  return withParticles(withSurfaceHitboxes(out) ?? out, systems);
+}
+
+/**
+ * The list a table build made, as one pak's files.
+ * @param game  the game folder, for models the pick did not already copy
+ * @param beneath  files that go in after the picks' (the arcana bases)
+ */
+export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: string): Generator<typeof PAUSE, ItemFiles> {
+  const index = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
+  const read = (p: string) => index.read(p);
+  const entries = new Map<string, VpkEntry>();
+  const left: LeftBehind[] = [];
+  const bodies = new Map<string, string[]>();
+  for (const patch of list) {
+    const source = patch.source || String(patch.id);
+    // a persona, worn through the table; what is not a pick at all, a mod's block, the caller counts itself
+    if (!patch.item) { if (patch.own !== undefined) left.push({ source, what: ['its persona'] }); continue; }
+    const { systems, skin, motions, left: what } = pickParts(patch);
+    for (const e of patch.assets || []) if (!entries.has(entryPath(e).toLowerCase())) entries.set(entryPath(e).toLowerCase(), e);
+    if (patch.own && (systems.length || skin)) {
+      const at = patch.own.toLowerCase();
+      const entry = entries.get(at);
+      // an effect the person added spreads over the item; the item's own was made for it
+      const added = new Set((patch.added ?? []).map((s) => s.toLowerCase()));
+      const worn = entry && wornModel(entry.data, skin, systems.map((s) => {
+        const copy = added.has(s.toLowerCase()) ? surfaceSystem(read, s) : null;
+        for (const e of copy?.entries ?? []) entries.set(entryPath(e).toLowerCase(), e);
+        return copy?.root ?? s;
+      }));
+      if (worn) entries.set(at, entryAt(entryPath(entry), worn));
+      else if (systems.length) what.push('its effect');
+      yield PAUSE;
+    }
+    if (motions.length) {
+      for (const hero of itemHeroes(patch.block, { start: 0 })) bodies.set(hero, [...new Set([...(bodies.get(hero) ?? []), ...motions])]);
+    }
+    if (what.length) left.push({ source, what });
+  }
+  for (const [hero, motions] of bodies) {
+    const at = `${heroModelPath(index, hero)}_c`.toLowerCase().replace(/_c_c$/, '_c');
+    const body = entries.get(at)?.data ?? read(at);
+    if (!body) continue;
+    try {
+      entries.set(at, entryAt(at, motions.reduce((model, modifier) => asModel(model, modifier), body)));
+    } catch {
+      left.push({ source: hero, what: ['its motions'] });
+    }
+    yield PAUSE;
+  }
+  for (const e of beneath) if (!entries.has(entryPath(e).toLowerCase())) entries.set(entryPath(e).toLowerCase(), e);
+  return { entries: [...entries.values()], left };
+}

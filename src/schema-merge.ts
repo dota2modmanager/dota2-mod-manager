@@ -14,7 +14,7 @@ const SLICE = 8_000_000;
 export interface SchemaDelta { id: string; name: string; block: string }
 
 /** One block to splice into the game's table, and the files that come with it. */
-export interface SchemaPatch { id: string | number; block: string; source?: string; assets?: VpkEntry[] }
+export interface SchemaPatch { id: string | number; block: string; source?: string; assets?: VpkEntry[]; own?: string | null; added?: string[]; unplaced?: boolean; item?: boolean }
 
 
 /** What a merge did with each patch; see mergeSchema. */

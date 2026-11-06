@@ -14,6 +14,7 @@ const EN = {
   'Не тот цвет': 'Not a colour',
   'Нет такой арканы': 'No such arcana',
   'Деревья: Radiant {0}, Dire {1}': 'Trees: Radiant {0}, Dire {1}',
+  'Предметы героев: {0}': 'Hero items: {0}',
   'Башни: Radiant {0}, Dire {1}': 'Towers: Radiant {0}, Dire {1}',
   'как в игре': 'as in the game',
   'Такого вида нет в игре': 'The game has no such look',

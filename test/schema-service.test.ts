@@ -92,16 +92,16 @@ const NO_INSTALLER: SchemaInstaller = {
   installedSize: () => { throw new Error('the installer was not meant to be asked'); },
 };
 
-function service(t: TestContext, { values = {}, installer = NO_INSTALLER, text = GAME_TABLE, bases, onBuild, modsOff } = {} as {
+function service(t: TestContext, { values = {}, installer = NO_INSTALLER, text = GAME_TABLE, bases, onBuild, modsOff, pak } = {} as {
   values?: Record<string, unknown>; installer?: SchemaInstaller; text?: string; bases?: Parameters<typeof createSchemaService>[0]['bases'];
-  onBuild?: Parameters<typeof createSchemaService>[0]['onBuild']; modsOff?: () => boolean;
+  onBuild?: Parameters<typeof createSchemaService>[0]['onBuild']; modsOff?: () => boolean; pak?: Parameters<typeof createSchemaService>[0]['pak'];
 }) {
   const g = game(t, text);
   fs.mkdirSync(g.userData, { recursive: true });
   const library = new Library(g.userData);
   const settings = settingsIn({ dotaGamePath: g.game, schemaPatch: false, ...values });
   const said: string[] = [];
-  const svc = createSchemaService({ settings, library, installer, userDataDir: g.userData, log: (m) => said.push(m), bases, onBuild, modsOff });
+  const svc = createSchemaService({ settings, library, installer, userDataDir: g.userData, log: (m) => said.push(m), bases, onBuild, pak, modsOff });
   return { ...g, library, settings, svc, said };
 }
 
@@ -442,6 +442,26 @@ const STYLED_TABLE = table([
   ...FILLER,
 ]);
 const soundFile = (events: [string, string][]) => resource([['DATA', encodeKv3({ obj: events.map(([name, file]) => [name, { obj: [['vsnd_files', { arr: [{ str: file }] }]] }]) })]]);
+
+test('with the table off a pick goes in as a pak of its own, and leaves with the last pick', (t) => {
+  const written: Buffer[] = [];
+  const pak = {
+    langFolder: () => 'lang', ensureLangFolder: () => {}, usedPakNames: () => new Set<string>(), allocatePak: () => 'pak09_dir.vpk',
+    writeInto: (vpk: Buffer) => { written.push(vpk); }, remove: () => {}, slotBase: () => null, moveToSlot: (r: { files: LibFile[] }) => r.files, setEnabled: () => {},
+  };
+  const s = service(t, { text: STYLED_TABLE, pak: pak as never });
+  fs.writeFileSync(path.join(s.game, 'dota', 'pak01_dir.vpk'), schema.buildSchemaVpk(STYLED_TABLE, []));
+
+  const rec = s.svc.pickCosmetic('item:earthshaker:arms', '7293', 'Bracers of the Cavern Luminar', '') as LibRecord;
+  assert.equal(written.length, 1, 'the pick was built with nothing asked of the game');
+  assert.equal(schema.isDeployed(s.game, patcher.FOLDER), false, 'and no table went up');
+  assert.equal(s.library.list().filter((r) => (r.generated as { itemFiles?: boolean } | undefined)?.itemFiles).length, 1);
+  assert.equal(s.svc.state().cosmeticsPicked, 0, 'a pick that goes as files waits for nothing');
+
+  s.library.removeRecord(rec.id);
+  s.svc.refresh();
+  assert.equal(s.library.list().length, 0, 'the last pick took the pak with it');
+});
 
 test("a pick's sounds go into the built table's pak, its styles are named from the game, and a broken file costs only the sounds", (t) => {
   const s = service(t, { values: { schemaPatch: true }, text: STYLED_TABLE });

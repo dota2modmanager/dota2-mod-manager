@@ -121,7 +121,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   // the item table built in the background says how far it is on the bar at the bottom
   const onBuild = buildBar(sendProgress, () => t('Сборка предметов'));
   // the arcana window's Terrorblade leaves the paths the builder's picks fill to them
-  const schemaService = createSchemaService({ settings, library, installer, userDataDir: userData, log: diag, bases, onBuild,
+  const schemaService = createSchemaService({ settings, library, installer, pak: installer, userDataDir: userData, log: diag, bases, onBuild,
     onDeployed: (filled) => { arcana.giveWay(filled); buildUndo.mark(); }, modsOff: () => installer.masterIsOff() });
   // Cancel on the bar puts the library back to the table the game has (issue #425)
   const buildUndo = createBuildUndo({ library, installer, settings, schema: schemaService, log: diag });

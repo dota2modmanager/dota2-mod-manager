@@ -17,7 +17,6 @@ import { plural } from '../ui/format.ts';
 import { toast } from '../ui/toast.ts';
 import { cosmeticName } from '../ui/cosmetic-name.ts';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
-import { allowItemTable } from '../ui/game-files.ts';
 import { afterPick, heroSets } from './item-builder.ts';
 import type { CosmeticSet } from '../catalog/types.ts';
 import type { BuilderAction, HeroPane } from '../catalog/builder/model.ts';
@@ -110,7 +109,6 @@ const setAction = (st: SetState): BuilderAction => (st.busy ? { label: L`Над�
 
 async function applySet(st: SetState, redraw: () => void): Promise<void> {
   if (setAction(st).off) return;
-  if (!await allowItemTable()) return;
   st.busy = true;
   redraw();
   let r: { error?: string; applied?: number; pieces?: number };

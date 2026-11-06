@@ -243,9 +243,10 @@ function appendItemEffect(visuals: string, effect: ItemEffect): string {
  *   item that swaps one; without it the swap stays in the table and shows in hero demo only
  * @param refit  the model another pick makes of this one's, to wear in its place where the game
  *   has it (src/item-builder-refits.ts)
- * @returns `own`: the stock path the item's model goes under, null when it wears none of its own
+ * @returns `own`: the stock path the item's model goes under, null when it wears none of its own;
+ *   `added`: the systems of the effects asked for; `unplaced`: the slot has no stock model for it to go under, so only the table can put it on
  */
-export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels, refit?: string): { id: string; block: string; own: string | null } & ItemAssets {
+export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels, refit?: string): { id: string; block: string; own: string | null; added: string[]; unplaced: boolean } & ItemAssets {
   const source = findItem(baseText, itemId);
   if (!source) throw new Error(t('items_game: предмет {0} не найден', itemId));
   const target = targetId ? listItems(baseText).find((i) => i.id === targetId) || null : defaultItemForWearable(baseText, itemId);
@@ -288,5 +289,5 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
   if (underStock) patched = setScalarField(patched, 'model_player', targetModel);
   else if (styled.model) patched = setScalarField(patched, 'model_player', styled.model);
   patched = setVisualsBlock(patched, visuals);
-  return { id: target.id, block: patched, own: underStock ? `${normalizeAssetPath(targetModel)}_c` : null, ...assets };
+  return { id: target.id, block: patched, own: underStock ? `${normalizeAssetPath(targetModel)}_c` : null, added: effects.map((e) => e.modifier), unplaced: !!sourceModel && !targetModel, ...assets };
 }
