@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { forward, heroStage, showcaseEntry, toGlb, LOADOUT_CAMERA } from '../src/hero-showcase.ts';
-import { idleSequence, itemActivities, itemModifiers, loadoutSequence, modelSequences, motionList } from '../src/model-loadout.ts';
+import { idleSequence, itemActivities, itemModifiers, loadoutSequence, modelSequences, motionList, wearableClip } from '../src/model-loadout.ts';
 import { motionLabels } from '../renderer/catalog/preview3d/motion-label.ts';
 import { widthDistance } from '../renderer/catalog/preview3d/stage.ts';
 
@@ -175,4 +175,12 @@ test('the list of motions has what the hero does, by kind, without its layers an
     ['loadout', 'stance'], ['idle', 'idle'], ['run_anim', 'run'], ['attack_main_anim', 'attack'],
     ['counter_helix_anim', 'ability'], ['axe_victory', 'emote'], ['death', 'other'],
   ]);
+});
+
+test('a wearable stands in its loadout, else its idle, and a bind pose is no clip', () => {
+  assert.equal(wearableClip([{ name: 'bind_pose', acts: [] }]), null);
+  assert.equal(wearableClip([{ name: 'bindPose', acts: [] }, { name: 'a', acts: ['ACT_DOTA_IDLE'] }, { name: 'b', acts: ['ACT_DOTA_LOADOUT'] }]), 'b');
+  assert.equal(wearableClip([{ name: 'a', acts: ['ACT_DOTA_IDLE'] }, { name: 'run', acts: ['ACT_DOTA_RUN'] }]), 'a');
+  assert.equal(wearableClip([{ name: 'solar_idle', acts: [] }, { name: 'cast', acts: ['ACT_DOTA_OVERRIDE_ABILITY_3'] }]), 'solar_idle');
+  assert.equal(wearableClip([{ name: 'cast', acts: ['ACT_DOTA_OVERRIDE_ABILITY_3'] }]), null);
 });

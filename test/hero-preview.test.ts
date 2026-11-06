@@ -18,6 +18,8 @@ const TABLE = `"items_game"\n{\n\t"items"\n\t{\n${[
   block('812', [['name', 'Juggernaut’s Mask'], ['prefab', 'default_item'], ['item_slot', 'head'], ['model_player', 'models/heroes/juggernaut/jugg_mask.vmdl']],
     '\t\t\t"visuals"\n\t\t\t{\n\t\t\t\t"asset_modifier"\n\t\t\t\t{\n\t\t\t\t\t"type"\t\t"particle_create"\n'
     + '\t\t\t\t\t"modifier"\t\t"particles/units/heroes/hero_juggernaut/jugg_mask_glow.vpcf"\n\t\t\t\t}\n\t\t\t}\n'),
+  block('5001', [['name', 'Fitting Arms'], ['prefab', 'wearable'], ['item_slot', 'arms'], ['model_player', 'models/items/juggernaut/arms.vmdl']],
+    '\t\t\t"visuals"\n\t\t\t{\n\t\t\t\t"asset_modifier"\n\t\t\t\t{\n\t\t\t\t\t"type"\t\t"model"\n\t\t\t\t\t"asset"\t\t"models/items/juggernaut/paid_mask/paid_mask.vmdl"\n\t\t\t\t\t"modifier"\t\t"models/items/juggernaut/paid_mask/paid_mask_fit.vmdl"\n\t\t\t\t}\n\t\t\t}\n'),
   block('5000', [['name', 'Paid Mask'], ['prefab', 'wearable'], ['item_slot', 'head'], ['model_player', 'models/items/juggernaut/paid_mask/paid_mask.vmdl']]),
   block('9059', [['name', 'Bladeform Legacy'], ['prefab', 'wearable'], ['item_rarity', 'arcana'], ['item_slot', 'hero_base']],
     '\t\t\t"visuals"\n\t\t\t{\n\t\t\t\t"asset_modifier"\n\t\t\t\t{\n\t\t\t\t\t"type"\t\t"entity_model"\n\t\t\t\t\t"asset"\t\t"npc_dota_hero_juggernaut"\n'
@@ -68,7 +70,7 @@ test('the body comes out of the hero’s script, and each slot wears its stock i
   const { hp } = preview();
   const p = hp.plan('juggernaut', SLOTS)!;
   assert.equal(p.body, 'models/heroes/juggernaut/juggernaut.vmdl');
-  assert.deepEqual(p.parts, [{ slot: 'item:juggernaut:head', name: 'Juggernaut’s Mask', model: 'models/heroes/juggernaut/jugg_mask.vmdl', skin: 0,
+  assert.deepEqual(p.parts, [{ slot: 'item:juggernaut:head', name: 'Juggernaut’s Mask', model: 'models/heroes/juggernaut/jugg_mask.vmdl', skin: 0, clip: null,
     fx: ['particles/units/heroes/hero_juggernaut/jugg_mask_glow.vpcf'] }]);
 });
 
@@ -125,4 +127,11 @@ test('every clip of a body comes as its file, and a body the game lacks as null'
   assert.ok(bytes && bytes.length > 0);
   assert.equal(asked.at(-1)?.clips, 'all');
   assert.equal(await hp.motions('models/heroes/nobody/nobody.vmdl'), null);
+});
+
+test('an item worn with one that refits it wears the refit', () => {
+  const { hp } = preview([{ slot: 'head', itemId: '5000', name: 'Paid Mask' }, { slot: 'arms', itemId: '5001', name: 'Fitting Arms' }]);
+  const p = hp.plan('juggernaut', [{ slot: 'head', stock: '812' }, { slot: 'arms', stock: '812' }]);
+  assert.equal(p?.parts.find((x) => x.slot === 'head')?.model, 'models/items/juggernaut/paid_mask/paid_mask_fit.vmdl');
+  assert.equal(p?.parts.find((x) => x.slot === 'arms')?.model, 'models/items/juggernaut/arms.vmdl');
 });
