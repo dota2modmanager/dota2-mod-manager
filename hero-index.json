@@ -489,7 +489,6 @@
         {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":null,"slots":["back"]},
         {"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":"Tyrian","slots":["back"]},
         {"name":"Drow Ranger Stranger Arcana","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","legs","misc","weapon","shoulder"]},
-        {"name":"Emblem Of The Diretide Pink","categoryId":"emblems","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nude Drow Ranger","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","misc"]},
@@ -2312,7 +2311,10 @@
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },
-    "world": {"name":"World","mods":[{"name":"Warcraft III Towers","categoryId":"towers","styleLabel":null,"slots":["misc","head"]}]},
+    "world": {
+      "name": "World",
+      "mods": [{"name":"Warcraft III Dire","categoryId":"towers","styleLabel":null,"slots":["misc","head"]},{"name":"Warcraft III Radiant","categoryId":"towers","styleLabel":null,"slots":["misc","head"]}]
+    },
     "wraith_king": {
       "name": "Wraith King",
       "mods": [

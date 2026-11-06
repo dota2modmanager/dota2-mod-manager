@@ -2657,6 +2657,15 @@
       "id": "backgrounds",
       "mods": [
         {
+          "name": "Everyone Got Banned",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/everyone-got-banned.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1793998477
+        },
+        {
           "name": "Hero Loadout 7 00 Style",
           "styleLabel": null,
           "group": null,
@@ -3990,6 +3999,15 @@
     {
       "id": "hero-sounds",
       "mods": [
+        {
+          "name": "Shadow Fiend Taunt 2021",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/shadow-fiend-taunt-2021.webp","width":854,"height":480},
+          "author": "xvii",
+          "authorUrl": "https://t.me/xviivpk",
+          "date": 1793998477
+        },
         {"name":"Doom Sematary Ult","styleLabel":null,"group":null,"image":{"src":"/mods/doom-sematary-ult.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1793525913},
         {
           "name": "Shadow Fiend Requiem Of Poop",
@@ -7454,22 +7472,22 @@
           "image": {"src":"/mods/emblem-of-the-diretide-pink.webp","width":854,"height":480},
           "author": "cursedseizures",
           "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1793949506
-        },
-        {
-          "name": "Emblem Of The Diretide Black",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/emblem-of-the-diretide-black.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1793530595
+          "date": 1793998477
         },
         {
           "name": "Emblem Of The Diretide White",
           "styleLabel": null,
           "group": null,
           "image": {"src":"/mods/emblem-of-the-diretide-white.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1793998477
+        },
+        {
+          "name": "Emblem Of The Diretide Black",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/emblem-of-the-diretide-black.webp","width":854,"height":480},
           "author": "cursedseizures",
           "authorUrl": "https://t.me/cvrsxdseizures",
           "date": 1793530595
@@ -8232,6 +8250,104 @@
       ]
     },
     {
+      "id": "towers",
+      "mods": [
+        {"name":"Crownfall Dire","styleLabel":null,"group":"dire-tower","image":{"src":"/mods/crownfall-dire.webp","width":854,"height":480},"author":"ZerdacK","authorUrl":null,"date":1794001215},
+        {"name":"Crownfall Radiant","styleLabel":null,"group":"radiant-tower","image":{"src":"/mods/crownfall-radiant.webp","width":854,"height":480},"author":"ZerdacK","authorUrl":null,"date":1794001215},
+        {
+          "name": "Declaration of the Divine Light",
+          "styleLabel": null,
+          "group": "radiant-tower",
+          "image": {"src":"/mods/declaration-of-the-divine-light.webp","width":854,"height":480},
+          "author": "ZerdacK",
+          "authorUrl": null,
+          "date": 1794001215
+        },
+        {
+          "name": "Declaration of the Divine Shadow",
+          "styleLabel": null,
+          "group": "dire-tower",
+          "image": {"src":"/mods/declaration-of-the-divine-shadow.webp","width":854,"height":480},
+          "author": "ZerdacK",
+          "authorUrl": null,
+          "date": 1794001215
+        },
+        {
+          "name": "Grasp of the Elder Gods Dire",
+          "styleLabel": null,
+          "group": "dire-tower",
+          "image": {"src":"/mods/grasp-of-the-elder-gods-dire.webp","width":854,"height":480},
+          "author": "ZerdacK",
+          "authorUrl": null,
+          "date": 1794001215
+        },
+        {
+          "name": "Grasp of the Elder Gods Radiant",
+          "styleLabel": null,
+          "group": "radiant-tower",
+          "image": {"src":"/mods/grasp-of-the-elder-gods-radiant.webp","width":854,"height":480},
+          "author": "ZerdacK",
+          "authorUrl": null,
+          "date": 1794001215
+        },
+        {
+          "name": "Guardians of the Lost Path Dire",
+          "styleLabel": null,
+          "group": "dire-tower",
+          "image": {"src":"/mods/guardians-of-the-lost-path-dire.webp","width":854,"height":480},
+          "author": "ZerdacK",
+          "authorUrl": null,
+          "date": 1794001215
+        },
+        {
+          "name": "Guardians of the Lost Path Radiant",
+          "styleLabel": null,
+          "group": "radiant-tower",
+          "image": {"src":"/mods/guardians-of-the-lost-path-radiant.webp","width":854,"height":480},
+          "author": "ZerdacK",
+          "authorUrl": null,
+          "date": 1794001215
+        },
+        {
+          "name": "Stoneclaw Scavengers Dire",
+          "styleLabel": null,
+          "group": "dire-tower",
+          "image": {"src":"/mods/stoneclaw-scavengers-dire.webp","width":854,"height":480},
+          "author": "ZerdacK",
+          "authorUrl": null,
+          "date": 1794001215
+        },
+        {
+          "name": "Stoneclaw Scavengers Radiant",
+          "styleLabel": null,
+          "group": "radiant-tower",
+          "image": {"src":"/mods/stoneclaw-scavengers-radiant.webp","width":854,"height":480},
+          "author": "ZerdacK",
+          "authorUrl": null,
+          "date": 1794001215
+        },
+        {
+          "name": "Warcraft III Dire",
+          "styleLabel": null,
+          "group": "dire-tower",
+          "image": {"src":"/mods/warcraft-iii-dire-2.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": 1794001215
+        },
+        {
+          "name": "Warcraft III Radiant",
+          "styleLabel": null,
+          "group": "radiant-tower",
+          "image": {"src":"/mods/warcraft-iii-radiant-2.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": 1794001215
+        },
+        {"name":"Holiday Radiant Tower","styleLabel":null,"group":"radiant-tower","image":{"src":"/mods/holiday-radiant-tower.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766624100}
+      ]
+    },
+    {
       "id": "ranged-attack",
       "mods": [
         {
@@ -8973,21 +9089,6 @@
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1788932483
         }
-      ]
-    },
-    {
-      "id": "towers",
-      "mods": [
-        {
-          "name": "Warcraft III Towers",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/warcraft-iii-towers.webp","width":854,"height":480},
-          "author": "Fr0dech",
-          "authorUrl": "https://t.me/fr0dech_vpk",
-          "date": 1793866697
-        },
-        {"name":"Holiday Radiant Tower","styleLabel":null,"group":null,"image":{"src":"/mods/holiday-radiant-tower.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1766624100}
       ]
     },
     {

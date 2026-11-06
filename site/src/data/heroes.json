@@ -1589,17 +1589,6 @@
           "date": 1764003644
         },
         {
-          "name": "Emblem Of The Diretide Pink",
-          "categoryId": "emblems",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/emblem-of-the-diretide-pink.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1793949506
-        },
-        {
           "name": "Green Diretide Ranged Attack",
           "categoryId": "ranged-attack",
           "styleLabel": null,
