@@ -64,6 +64,12 @@ function surfaceOf(root: THREE.Object3D): () => THREE.Vector3 | null {
   };
 }
 
+/** The meshes of these names out of sight: a body group an item turned off. */
+function hideMeshes(root: THREE.Object3D, names: string[]): void {
+  if (!names.length) return;
+  root.traverse((o) => { if ((o as THREE.Mesh).isMesh && names.some((n) => o.name.toLowerCase().includes(n))) o.visible = false; });
+}
+
 /** The scene once it stands in the window. */
 export interface HeroScene {
   /**
@@ -84,11 +90,12 @@ export interface HeroScene {
  * @param pedestal  the model it stands on, if its showcase names one
  * @param particles  the systems on the body (part -1) or on a part, by its place in `parts`; not played when `still`
  * @param sprites  their textures, PNG bytes by the path they name
+ * @param hidden  the meshes the items worn turn off, by name
  */
 export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uint8Array[], {
   still = false, label = '', clip = null as string | null, stage = PLAIN_STAGE as HeroStage, pedestal = null as Uint8Array | null,
   attachments = { body: [] as Attachment[], parts: [] as Attachment[][] }, particles = [] as { part: number; def: ParticleDef }[],
-  sprites = {} as Record<string, Uint8Array>,
+  sprites = {} as Record<string, Uint8Array>, hidden = { body: [] as string[], parts: [] as string[][] },
 } = {}): Promise<HeroScene> {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -121,6 +128,7 @@ export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uin
     } catch { /* no pedestal: the floor alone */ }
   }
   const heroBones = bonesByName(hero.scene);
+  hideMeshes(hero.scene, hidden.body);
 
   const worn: { root: THREE.Object3D; bones: { bone: THREE.Bone; to: THREE.Bone | null }[]; own: boolean }[] = [];
   // a clip of a wearable's own moves the bones the hero lacks: a cape, a tail, a mount's head
@@ -132,6 +140,7 @@ export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uin
       await useHeroShader(g, lights);
       table.add(g.scene);
       const bones = linkBones(g.scene, heroBones);
+      hideMeshes(g.scene, hidden.parts[i] || []);
       const own = g.animations.length > 0;
       if (own) {
         const m = new THREE.AnimationMixer(g.scene);

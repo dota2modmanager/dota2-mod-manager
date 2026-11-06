@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { buildVpk, entryAt } from '../src/vpk.ts';
 import { writeGlb, readGlb } from '../src/glb-embed.ts';
-import { createHeroPreview, entityModel, wornSkin } from '../src/hero-preview.ts';
+import { createHeroPreview, entityModel, wornSkin, wornExtras } from '../src/hero-preview.ts';
 
 const jugg = `\t\t\t"used_by_heroes"\n\t\t\t{\n\t\t\t\t"npc_dota_hero_juggernaut"\t\t"1"\n\t\t\t}\n`;
 const block = (id: string, fields: [string, string][], visuals = '') =>
@@ -70,7 +70,7 @@ test('the body comes out of the hero’s script, and each slot wears its stock i
   const { hp } = preview();
   const p = hp.plan('juggernaut', SLOTS)!;
   assert.equal(p.body, 'models/heroes/juggernaut/juggernaut.vmdl');
-  assert.deepEqual(p.parts, [{ slot: 'item:juggernaut:head', name: 'Juggernaut’s Mask', model: 'models/heroes/juggernaut/jugg_mask.vmdl', skin: 0, clip: null,
+  assert.deepEqual(p.parts, [{ slot: 'item:juggernaut:head', name: 'Juggernaut’s Mask', model: 'models/heroes/juggernaut/jugg_mask.vmdl', skin: 0, clip: null, hidden: [],
     fx: ['particles/units/heroes/hero_juggernaut/jugg_mask_glow.vpcf'] }]);
 });
 
@@ -134,4 +134,11 @@ test('an item worn with one that refits it wears the refit', () => {
   const p = hp.plan('juggernaut', [{ slot: 'head', stock: '812' }, { slot: 'arms', stock: '812' }]);
   assert.equal(p?.parts.find((x) => x.slot === 'head')?.model, 'models/items/juggernaut/paid_mask/paid_mask_fit.vmdl');
   assert.equal(p?.parts.find((x) => x.slot === 'arms')?.model, 'models/items/juggernaut/arms.vmdl');
+});
+
+test('what an item wears besides its model, in its first style', () => {
+  const visuals = '"visuals"\n{\n"asset_modifier0" { "type" "additional_wearable" "asset" "models/Items/x/fx.vmdl" }\n'
+    + '"asset_modifier1" { "type" "bodygroup_visibility" "asset" "models/heroes/lina/lina.vmdl" "modifier" "Upper_Body" "value" "1" }\n'
+    + '"asset_modifier2" { "type" "additional_wearable" "style" "1" "asset" "models/items/x/other.vmdl" }\n}';
+  assert.deepEqual(wornExtras(visuals), { models: ['models/items/x/fx.vmdl'], groups: [{ model: 'models/heroes/lina/lina.vmdl', group: 'upper_body', value: 1 }] });
 });

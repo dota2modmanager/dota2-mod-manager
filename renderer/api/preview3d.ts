@@ -31,7 +31,7 @@ export interface Preview3dApi {
   models: (hero: string, slots: { slot: string; stock: string }[]) => Promise<
     | {
       ok: true; body: Uint8Array; clip: string | null; model: string; motions: Motion[]; stage: HeroStage; pedestal: Uint8Array | null;
-      parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[] }[]; missing: string[];
+      parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[]; hidden: string[] }[]; missing: string[]; hidden: string[];
       attachments: Attachment[]; particles: { part: number; def: ParticleDef }[]; sprites: Record<string, Uint8Array>;
     }
     | { ok: false; reason: 'no-game' | 'no-tool' | 'no-body'; error?: string }>;

@@ -7,24 +7,20 @@
  * ("head_@1_#&1" is choice 1 of "head"), and `m_nDefaultMeshGroupMask` holds a bit per choice. So a
  * file can make any choice the model's own default, and no line of the table is needed.
  */
-import { numberOf, readKv3, setNumber, type Kv3Node } from './kv3.ts';
+import { numberOf, readKv3, setNumber, type Kv3Block, type Kv3Node } from './kv3.ts';
 import { writeKv3 } from './kv3-write.ts';
 import { resourceBlock } from './resource.ts';
 
+type Num = Extract<Kv3Node, { kind: 'number' }>;
 const CHOICE = /^(.+?)_@(\d+)_/;
 /** The bits a mask can hold exactly in the number this reads it into. */
 const SAFE_BITS = 52;
 
-/**
- * The model with these groups set, or null when it has none of them.
- * @param groups  the group's name and the choice to make
- */
-export function withBodygroups(model: Buffer, groups: Map<string, number>): Buffer | null {
-  const block = resourceBlock(model, 'DATA');
-  const kv = readKv3(block.data);
+/** The default mask with these groups set; null when the model has none of them. */
+function maskWith(kv: Kv3Block, groups: Map<string, number>): { held: Num; mask: bigint } | null {
   const root = kv.root.kind === 'object' ? kv.root.members : null;
   const names = root?.get('m_meshGroups');
-  const held = root?.get('m_nDefaultMeshGroupMask') as Kv3Node | undefined;
+  const held = root?.get('m_nDefaultMeshGroupMask');
   if (names?.kind !== 'array' || held?.kind !== 'number' || names.items.length > SAFE_BITS) return null;
   let mask = BigInt(Math.round(numberOf(kv, held) ?? 0));
   let did = false;
@@ -36,7 +32,40 @@ export function withBodygroups(model: Buffer, groups: Map<string, number>): Buff
     mask = Number(m[2]) === want ? mask | on : mask & ~on;
     did = true;
   });
-  if (!did) return null;
-  if (!setNumber(kv, held, Number(mask))) return null;
+  return did ? { held, mask } : null;
+}
+
+/**
+ * The model with these groups set, or null when it has none of them.
+ * @param groups  the group's name and the choice to make
+ */
+export function withBodygroups(model: Buffer, groups: Map<string, number>): Buffer | null {
+  const block = resourceBlock(model, 'DATA');
+  const kv = readKv3(block.data);
+  const made = maskWith(kv, groups);
+  if (!made || !setNumber(kv, made.held, Number(made.mask))) return null;
   return block.replace(writeKv3(kv));
+}
+
+/**
+ * The names of the meshes these groups turn off: the toolchain exports every mesh of a model
+ * whatever its mask, so the 3D preview hides them by name.
+ */
+export function hiddenMeshes(model: Buffer, groups: Map<string, number>): string[] {
+  const kv = readKv3(resourceBlock(model, 'DATA').data);
+  const made = maskWith(kv, groups);
+  const masks = kv.root.kind === 'object' ? kv.root.members.get('m_refMeshGroupMasks') : null;
+  if (!made || masks?.kind !== 'array') return [];
+  const ctrl = readKv3(resourceBlock(model, 'CTRL').data);
+  const list = ctrl.root.kind === 'object' ? ctrl.root.members.get('embedded_meshes') : null;
+  if (list?.kind !== 'array') return [];
+  return list.items.flatMap((m) => {
+    if (m.kind !== 'object') return [];
+    const field = (a: string, b: string) => m.members.get(a) ?? m.members.get(b);
+    const name = field('name', 'm_Name');
+    const index = field('mesh_index', 'm_nMeshIndex');
+    const bits = masks.items[index?.kind === 'number' ? numberOf(ctrl, index) ?? 0 : 0];
+    if (name?.kind !== 'string' || bits?.kind !== 'number') return [];
+    return (BigInt.asUintN(64, BigInt(Math.round(numberOf(kv, bits) ?? 0))) & made.mask) === BigInt(0) ? [name.value.toLowerCase()] : [];
+  });
 }
