@@ -180,3 +180,11 @@ test('a change on a system falls on what is under it, and the one under it can h
   const both = editedEntries(read, 'particles/a.vpcf', cleanEdits({ 'particles/a.vpcf': { size: 200 }, 'particles/b.vpcf': { size: 150 } }));
   assert.equal(n(tree(both, 'particles/b.vpcf_c'), 'm_flConstantRadius'), 9);
 });
+
+test('a burst with no number written starts from the hundred the engine gives it', () => {
+  const one = new Map([['particles/burst.vpcf_c', system([['m_nMaxParticles', { int: 100 }], ['m_Emitters', { objs: [op('C_OP_InstantaneousEmitter')] }]])]]);
+  const out = editedEntries((p) => one.get(p), 'particles/burst.vpcf', { [WHOLE]: { count: 300 } });
+  const kv = tree(out, 'particles/burst.vpcf_c');
+  assert.equal(n(kv, 'm_Emitters', 0, 'm_nParticlesToEmit', 'm_flLiteralValue'), 300);
+  assert.equal(n(kv, 'm_nMaxParticles'), 300);
+});
