@@ -47,7 +47,7 @@ export function heroLights(stage: HeroStage): HeroLights {
   const ambient = rgb(stage.ambient?.color, [0.9, 1, 1]);
   const w = worldLights(stage);
   return {
-    key: w.key.clone(), keyColor: rgb(stage.key?.color, [1.33, 1.38, 1.44], 1.25),
+    key: w.key.clone(), keyColor: rgb(stage.key?.color, [1.33, 1.38, 1.44], 0.8),
     fill: w.fill.clone(), fillColor: ambient.clone().multiplyScalar(0.35),
     up: new THREE.Vector3(0, 1, 0), sky: ambient.clone().multiplyScalar(0.22), ground: ambient.clone().multiplyScalar(0.06),
     rim: new THREE.Color(0.9, 0.95, 1.0),

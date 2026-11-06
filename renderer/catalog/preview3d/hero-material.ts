@@ -14,8 +14,8 @@
  * may add a floor under that weight: the curve is near nought facing the eye, and that is what keeps
  * a dark armour dark.
  *
- * What this does not do: the game's cube map (the preview reflects a sky-to-ground gradient
- * instead), status effects and cloaking. A material with another shader keeps the loader's own. */
+ * What this does not do: the game's cube map (the preview reflects a gradient from the ground to a
+ * cool sky, which is what turns the bare metal of Luna's cat blue), status effects and cloaking. A material with another shader keeps the loader's own. */
 import * as THREE from 'three';
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -127,13 +127,13 @@ void main() {
   vec3 r = reflect(-v, n);
   float spec = pow(max(dot(r, uKey), 0.0), expo) * max(dot(n, uKey), 0.0) * length(uKeyColor)
     + 0.5 * pow(max(dot(r, uFill), 0.0), expo) * max(dot(n, uFill), 0.0) * length(uFillColor);
-  col += specTint * spec * specMask * uSpecScale * max(fres.b, metal * 0.2);
+  col += specTint * spec * specMask * uSpecScale * max(fres.b, metal * 0.06);
 
-  vec3 env = mix(uGround, uSky * 2.0, smoothstep(-0.3, 0.6, dot(r, uUp)));
+  vec3 env = mix(uGround, vec3(0.35, 0.55, 1.0) * 1.4, smoothstep(-0.3, 0.6, dot(r, uUp)));
   float cubeMask = uHasCubeMask > 0.5 ? texture2D(uCubeMask, vUv0).r : metal;
   col += env * albedo * cubeMask * uCubeScale * 0.35;
 
-  col += uRim * uRimColorM * fres.g * m2.g * uRimScale * clamp(up + 0.35, 0.0, 1.0);
+  col += uRim * uRimColorM * fres.g * m2.g * uRimScale * 0.35 * clamp(up + 0.35, 0.0, 1.0);
   if (uDetailMode > 1.5 && uDetailMode < 2.5) col += detailLight;
   col = mix(col, albedo, selfIllum);
 
@@ -215,7 +215,7 @@ async function heroMaterial(gltf: GLTF, from: THREE.Material, lights: HeroLights
       uSelfIllumFull: { value: num('g_flSelfIllumBlendToFull') }, uSpecFull: { value: num('g_flSpecularBlendToFull') },
       uExpFull: { value: num('g_flSpecularExponentBlendToFull') },
       uSpecScale: { value: num('g_flSpecularScale', 1) }, uSpecExp: { value: num('g_flSpecularExponent', 20) },
-      uRimScale: { value: num('g_flRimLightScale', 1) }, uCubeScale: { value: int.F_SPECULAR_CUBE_MAP ? num('g_flCubeMapScalar', 1) : 0 },
+      uRimScale: { value: num('g_flRimLightScale', 1) }, uCubeScale: { value: num('g_flCubeMapScalar', 1) },
       uSpecColor: { value: new THREE.Color().fromArray(vec('g_vSpecularColor', [1, 1, 1])) },
       uRimColorM: { value: new THREE.Color().fromArray(vec('g_vRimLightColor', [1, 1, 1])) },
       uUvTransform: { value: new THREE.Vector4(scale[0], scale[1], offset[0], offset[1]) },

@@ -1,5 +1,6 @@
 /* The 3D preview's free camera (renderer/catalog/preview3d/camera.ts) and how a wearable finds the
  * hero's bones (bonemerge.ts). */
+import { bloomShare } from '../renderer/catalog/preview3d/bloom.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
@@ -11,6 +12,14 @@ const skeleton = (...names: string[]) => {
   for (const n of names) { const b = new THREE.Bone(); b.name = n; root.add(b); }
   return root;
 };
+
+test('the glow takes nothing under its soft start and nearly all of a pixel far over the line', () => {
+  assert.equal(bloomShare(0), 0);
+  assert.equal(bloomShare(0.4, 1, 0.5), 0);
+  assert.ok(bloomShare(0.8, 1, 0.5) > 0 && bloomShare(0.8, 1, 0.5) < 0.1);
+  assert.ok(bloomShare(1.2, 1, 0.5) > bloomShare(1, 1, 0.5));
+  assert.ok(bloomShare(8, 1, 0.5) > 0.85);
+});
 
 test('the camera starts level, in front of the hero, and climbs an arc of the same radius', () => {
   const target = { x: 0, y: 2, z: 0 };

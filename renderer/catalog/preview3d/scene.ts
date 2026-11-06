@@ -21,6 +21,7 @@ import type { Attachment, HeroStage, ParticleDef } from '../../api/preview3d.ts'
 import { particleSpec } from './particle-def.ts';
 import { playParticles, spriteTextures, type Carrier } from './particles.ts';
 import { motionPlayer, type PlayMotion } from './motion-player.ts';
+import { createBloom } from './bloom.ts';
 
 /** Up to about 1500 vertices of every mesh under `root`, where the pose puts them in the world. */
 function posedPoints(root: THREE.Object3D): THREE.Vector3[] {
@@ -211,10 +212,12 @@ export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uin
     onReset: () => { zoom = 1; tilt = 0; target.copy(home); place(); },
   });
 
+  const glow = createBloom(renderer);
   const fit = () => {
     const w = host.clientWidth || 1;
     const h = host.clientHeight || 1;
     renderer.setSize(w, h, false);
+    glow.resize();
     camera.aspect = w / h;
     place();
   };
@@ -238,7 +241,7 @@ export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uin
     lights.key.copy(world.key).transformDirection(camera.matrixWorldInverse);
     lights.fill.copy(world.fill).transformDirection(camera.matrixWorldInverse);
     lights.up.set(0, 1, 0).transformDirection(camera.matrixWorldInverse);
-    renderer.render(scene, camera);
+    glow.render(scene, camera);
   };
   tick();
 
@@ -248,6 +251,7 @@ export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uin
     resize.disconnect();
     controls.dispose();
     clips.dispose();
+    glow.dispose();
     mixer.stopAllAction();
     fx?.dispose();
     for (const t of textures.values()) t.dispose();
