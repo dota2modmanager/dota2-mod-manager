@@ -10,7 +10,8 @@
  *  - its material set is made the model's default (src/model-skin.ts);
  *  - its activity modifiers are taken off the hero's body, so the item's motions are the plain ones
  *    (arcana.ts asModel), one body per hero whatever the number of picks;
- *  - the hero parts it hides become the default of the model that has them (src/model-bodygroups.ts).
+ *  - the hero parts it hides become the default of the model that has them (src/model-bodygroups.ts);
+ *  - a second model it wears goes inside its first (src/model-merge.ts).
  *
  * What is left needs the table: `TABLE_ONLY`, and a slot with no stock model to stand in for. A pick
  * with such a part still goes in by files, and says what it lost (`left`), so the window can tell
@@ -27,6 +28,7 @@ import { withParticles } from './model-particles.ts';
 import { withSurfaceHitboxes } from './model-hitboxes.ts';
 import { withSkin } from './model-skin.ts';
 import { withBodygroups } from './model-bodygroups.ts';
+import { mergedModel } from './model-merge.ts';
 import { surfaceSystem } from './particle-surface.ts';
 import { sharedVpkIndex, entryAt, entryPath, type VpkEntry } from './vpk.ts';
 import { PAUSE } from './steps.ts';
@@ -34,7 +36,6 @@ import type { SchemaPatch } from './schema-merge.ts';
 
 /** What of an item a file cannot say, by the type of its asset_modifier, with the word the log uses. */
 const TABLE_ONLY: Record<string, string> = {
-  additional_wearable: 'a second model',
   entity_scale: 'its size',
   hero_scale: 'its size',
   custom_kill_effect: 'its kill effect',
@@ -102,7 +103,7 @@ function skinOf(block: string, mods: Map<string, string>[]): number {
  * What a pick's block asks of its files: its effects, material set and motions, and what it asks
  * that a file cannot say.
  */
-export function pickParts(patch: Pick<PickPatch, 'block' | 'own' | 'unplaced'>): { systems: string[]; skin: number; motions: string[]; groups: BodyGroup[]; left: string[] } {
+export function pickParts(patch: Pick<PickPatch, 'block' | 'own' | 'unplaced'>): { systems: string[]; skin: number; motions: string[]; groups: BodyGroup[]; extras: string[]; left: string[] } {
   const mods = modifiers(patch.block);
   const words = (type: string) => [...new Set(ofType(mods, type).map((f) => f.get('modifier') || '').filter(Boolean))];
   const systems = words('particle_create');
@@ -110,7 +111,7 @@ export function pickParts(patch: Pick<PickPatch, 'block' | 'own' | 'unplaced'>):
   if (patch.unplaced) left.push('its model');
   if (systems.length && !patch.own) left.push('its effect');
   const groups = ofType(mods, 'bodygroup_visibility').flatMap((f) => (f.get('asset') && f.get('modifier') ? [{ model: normalizeAssetPath(f.get('asset')), group: (f.get('modifier') as string).toLowerCase(), value: Number(f.get('value')) || 0 }] : []));
-  return { systems, skin: skinOf(patch.block, mods), motions: words('activity'), groups, left };
+  return { systems, skin: skinOf(patch.block, mods), motions: words('activity'), groups, extras: [...new Set(ofType(mods, 'additional_wearable').flatMap((f) => (f.get('asset') ? [normalizeAssetPath(f.get('asset'))] : [])))], left };
 }
 
 /** A wearable as it goes in: in its material set, carrying its effects. Null: the file stays as it was. */
@@ -137,7 +138,7 @@ export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: st
     const source = patch.source || String(patch.id);
     // a persona, worn through the table; what is not a pick at all, a mod's block, the caller counts itself
     if (!patch.item) { if (patch.own !== undefined) left.push({ source, what: ['its persona'] }); continue; }
-    const { systems, skin, motions, groups, left: what } = pickParts(patch);
+    const { systems, skin, motions, groups, extras, left: what } = pickParts(patch);
     for (const e of patch.assets || []) if (!entries.has(entryPath(e).toLowerCase())) entries.set(entryPath(e).toLowerCase(), e);
     if (patch.own && (systems.length || skin)) {
       const at = patch.own.toLowerCase();
@@ -151,6 +152,19 @@ export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: st
       }));
       if (worn) entries.set(at, entryAt(entryPath(entry), worn));
       else if (systems.length) what.push('its effect');
+      yield PAUSE;
+    }
+    if (extras.length) {
+      const at = patch.own?.toLowerCase();
+      const entry = at ? entries.get(at) : null;
+      for (const extra of extras) {
+        const second = read(`${extra.replace(/_c$/, '')}_c`);
+        const current = at ? entries.get(at) : null;
+        let joined: Buffer | null = null;
+        try { joined = current && second ? mergedModel(current.data, second) : null; } catch { /* a model this cannot read stays out, and the window says so */ }
+        if (joined && at && entry) entries.set(at, entryAt(entryPath(entry), joined));
+        else what.push('a second model');
+      }
       yield PAUSE;
     }
     if (motions.length) {

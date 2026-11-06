@@ -24,12 +24,12 @@ test('a second style\'s entries are not the pick\'s', () => {
 
 test('motions, a material set and what only the table does', () => {
   const p = pickParts({
-    block: block(`${mod('activity', 'axe_blackthorn')}"asset_modifier"\n{\n"type"\t"model_skin"\n"skin"\t"2"\n}\n${mod('additional_wearable', 'x')}`),
+    block: block(`${mod('activity', 'axe_blackthorn')}"asset_modifier"\n{\n"type"\t"model_skin"\n"skin"\t"2"\n}\n${mod('pet', 'x')}`),
     own: 'm',
   });
   assert.deepEqual(p.motions, ['axe_blackthorn']);
   assert.equal(p.skin, 2);
-  assert.deepEqual(p.left, ['a second model']);
+  assert.deepEqual(p.left, ['its pet']);
 });
 
 test('a slot with no stock model loses the model', () => {
