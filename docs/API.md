@@ -6040,6 +6040,21 @@ export function pickParts(patch: Pick<PickPatch, 'block' | 'own' | 'unplaced'>):
 What a pick's block asks of its files: its effects, material set and motions, and what it asks
 that a file cannot say.
 
+### `extraPlaces`
+
+```ts
+export function extraPlaces(stock: string[], extras: string[]): { under: { path: string; model: string | null }[]; merged: string[] }
+```
+
+Where a pick's second models go. The stock item's second model stays in the game's table, so the
+game makes it for a pick that goes as files: the pick's own takes its path, and with none left
+that path goes empty. A second model the stock item has no path for rides inside the first.
+
+```
+@param stock  the stock item's second models
+@param extras  the pick's
+```
+
 ### `wornModel`
 
 ```ts
@@ -7412,6 +7427,15 @@ The model with these groups set, or null when it has none of them.
 ```
 @param groups  the group's name and the choice to make
 ```
+
+### `withoutMeshes`
+
+```ts
+export function withoutMeshes(model: Buffer): Buffer | null
+```
+
+The model with nothing to draw. A stock item's second model comes from the table whatever goes
+under the item's path, so a pick without one leaves that file empty. Null: not a model this reads.
 
 ### `hiddenMeshes`
 

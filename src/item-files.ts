@@ -20,14 +20,14 @@
  * one skeleton and his own notes speak of bone conflicts: a wearable stays a wearable.
  */
 import path from 'node:path';
-import { eachChild, blockBounds, itemFields } from './schema.ts';
+import { eachChild, blockBounds, findItem, itemFields, listItemsSteps } from './schema.ts';
 import { asModel } from './arcana.ts';
 import { heroModelPath, firstStyleSkin, normalizeAssetPath } from './item-builder-assets.ts';
 import { itemHeroes } from './item-builder-slots.ts';
 import { withParticles } from './model-particles.ts';
 import { withSurfaceHitboxes } from './model-hitboxes.ts';
 import { withSkin } from './model-skin.ts';
-import { withBodygroups } from './model-bodygroups.ts';
+import { withBodygroups, withoutMeshes } from './model-bodygroups.ts';
 import { mergedModel } from './model-merge.ts';
 import { surfaceSystem } from './particle-surface.ts';
 import { sharedVpkIndex, entryAt, entryPath, type VpkEntry } from './vpk.ts';
@@ -111,7 +111,25 @@ export function pickParts(patch: Pick<PickPatch, 'block' | 'own' | 'unplaced'>):
   if (patch.unplaced) left.push('its model');
   if (systems.length && !patch.own) left.push('its effect');
   const groups = ofType(mods, 'bodygroup_visibility').flatMap((f) => (f.get('asset') && f.get('modifier') ? [{ model: normalizeAssetPath(f.get('asset')), group: (f.get('modifier') as string).toLowerCase(), value: Number(f.get('value')) || 0 }] : []));
-  return { systems, skin: skinOf(patch.block, mods), motions: words('activity'), groups, extras: [...new Set(ofType(mods, 'additional_wearable').flatMap((f) => (f.get('asset') ? [normalizeAssetPath(f.get('asset'))] : [])))], left };
+  return { systems, skin: skinOf(patch.block, mods), motions: words('activity'), groups, extras: extrasOf(patch.block), left };
+}
+
+/** The second models of a block, as paths. */
+function extrasOf(block: string): string[] {
+  return [...new Set(ofType(modifiers(block), 'additional_wearable').flatMap((f) => (f.get('asset') ? [normalizeAssetPath(f.get('asset'))] : [])))];
+}
+
+/**
+ * Where a pick's second models go. The stock item's second model stays in the game's table, so the
+ * game makes it for a pick that goes as files: the pick's own takes its path, and with none left
+ * that path goes empty. A second model the stock item has no path for rides inside the first.
+ * @param stock  the stock item's second models
+ * @param extras  the pick's
+ */
+export function extraPlaces(stock: string[], extras: string[]): { under: { path: string; model: string | null }[]; merged: string[] } {
+  const merged = extras.filter((x) => !stock.includes(x));
+  const under = stock.filter((s) => !extras.includes(s)).map((path) => ({ path, model: merged.shift() ?? null }));
+  return { under, merged };
 }
 
 /** A wearable as it goes in: in its material set, carrying its effects. Null: the file stays as it was. */
@@ -134,6 +152,7 @@ export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: st
   const left: LeftBehind[] = [];
   const bodies = new Map<string, string[]>();
   const hidden = new Map<string, Map<string, number>>();
+  let table: string | undefined;
   for (const patch of list) {
     const source = patch.source || String(patch.id);
     // a persona, worn through the table; what is not a pick at all, a mod's block, the caller counts itself
@@ -154,10 +173,24 @@ export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: st
       else if (systems.length) what.push('its effect');
       yield PAUSE;
     }
-    if (extras.length) {
+    if (patch.own && table === undefined) {
+      table = (read('scripts/items/items_game.txt') as Buffer).toString('utf8');
+      yield* listItemsSteps(table);
+    }
+    const stockItem = patch.own && table ? findItem(table, patch.id) : null;
+    const { under, merged } = extraPlaces(stockItem ? extrasOf(stockItem.text) : [], extras);
+    for (const u of under) {
+      const at = `${u.path.replace(/_c$/, '')}_c`.toLowerCase();
+      const file = read(u.model ? `${u.model.replace(/_c$/, '')}_c` : at);
+      const put = file && (u.model ? file : withoutMeshes(file));
+      if (put) entries.set(at, entryAt(at, put));
+      else what.push('a second model');
+      yield PAUSE;
+    }
+    if (merged.length) {
       const at = patch.own?.toLowerCase();
       const entry = at ? entries.get(at) : null;
-      for (const extra of extras) {
+      for (const extra of merged) {
         const second = read(`${extra.replace(/_c$/, '')}_c`);
         const current = at ? entries.get(at) : null;
         let joined: Buffer | null = null;

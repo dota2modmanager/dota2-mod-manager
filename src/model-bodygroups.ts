@@ -48,6 +48,22 @@ export function withBodygroups(model: Buffer, groups: Map<string, number>): Buff
 }
 
 /**
+ * The model with nothing to draw. A stock item's second model comes from the table whatever goes
+ * under the item's path, so a pick without one leaves that file empty. Null: not a model this reads.
+ */
+export function withoutMeshes(model: Buffer): Buffer | null {
+  const block = resourceBlock(model, 'DATA');
+  const kv = readKv3(block.data);
+  const root = kv.root.kind === 'object' ? kv.root.members : null;
+  const masks = root?.get('m_refMeshGroupMasks');
+  const held = root?.get('m_nDefaultMeshGroupMask');
+  if (masks?.kind !== 'array' || held?.kind !== 'number') return null;
+  const all = [held, ...masks.items];
+  if (!all.every((n) => n.kind === 'number' && setNumber(kv, n, 0))) return null;
+  return block.replace(writeKv3(kv));
+}
+
+/**
  * The names of the meshes these groups turn off: the toolchain exports every mesh of a model
  * whatever its mask, so the 3D preview hides them by name.
  */
