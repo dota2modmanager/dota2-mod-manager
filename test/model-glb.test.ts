@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { createModelGlb, exportArgs, glbAt, modelFile } from '../src/model-glb.ts';
+import { createModelGlb, exportArgs, gameInfo, glbAt, modelFile } from '../src/model-glb.ts';
 
 test('a model path in any spelling the table uses, and nothing that is not one', () => {
   assert.equal(modelFile('models/heroes/techies/techies.vmdl'), 'models/heroes/techies/techies.vmdl_c');
@@ -26,6 +26,13 @@ test('one call for every model, its bones always, its clips only when some are a
   const all = exportArgs('p.vpk', 'o', ['a.vmdl_c'], 'all');
   assert.ok(all.includes('--gltf_export_animations'));
   assert.ok(!all.includes('--gltf_animation_list') && !all.includes('--gltf_export_materials'));
+});
+
+test('a lone file is exported as itself, and its game folder sends the toolchain to the real game', () => {
+  const args = exportArgs('C:/skin/model.vmdl_c', 'o.glb', [], []);
+  assert.ok(!args.includes('-f'));
+  assert.deepEqual(args.slice(0, 5), ['-i', 'C:/skin/model.vmdl_c', '-o', 'o.glb', '-d']);
+  assert.match(gameInfo('C:\\Steam\\game\\dota'), /Game\t"C:\/Steam\/game\/dota"/);
 });
 
 function setup() {

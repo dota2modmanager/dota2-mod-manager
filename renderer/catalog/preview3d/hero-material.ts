@@ -127,7 +127,7 @@ void main() {
   vec3 r = reflect(-v, n);
   float spec = pow(max(dot(r, uKey), 0.0), expo) * max(dot(n, uKey), 0.0) * length(uKeyColor)
     + 0.5 * pow(max(dot(r, uFill), 0.0), expo) * max(dot(n, uFill), 0.0) * length(uFillColor);
-  col += specTint * spec * specMask * uSpecScale * max(fres.b, metal);
+  col += specTint * spec * specMask * uSpecScale * max(fres.b, metal * 0.2);
 
   vec3 env = mix(uGround, uSky * 2.0, smoothstep(-0.3, 0.6, dot(r, uUp)));
   float cubeMask = uHasCubeMask > 0.5 ? texture2D(uCubeMask, vUv0).r : metal;
