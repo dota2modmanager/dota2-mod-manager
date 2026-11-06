@@ -24,12 +24,13 @@ const valid = (p: unknown): string => {
 const nameOf = (p: string) => path.posix.basename(p, '.vpcf');
 
 /** The service the fx:* channels call. */
-export function createEffectEdit({ gamePath, installer, library, sprites, log = () => {} }: {
+export function createEffectEdit({ gamePath, installer, library, sprites, onRebuilt = () => {}, log = () => {} }: {
   gamePath: () => string | null | undefined;
   installer: PakInstaller;
   library: Pick<Library, 'list' | 'add' | 'update'>;
   /** the textures of a system and its children, as the window takes them */
   sprites: (defs: ParticleDef[]) => Promise<Record<string, Uint8Array>>;
+  onRebuilt?: (id: string) => void;
   log?: (msg: string) => void;
 }) {
   let all: { game: string; paths: string[] } | null = null;
@@ -51,6 +52,26 @@ export function createEffectEdit({ gamePath, installer, library, sprites, log = 
     const { ix } = index();
     const changed = new Map(editedEntries((p) => ix.read(p), effect, edits).map((e) => [entryPath(e), e.data]));
     return particleDef((p) => changed.get(p) ?? ix.read(p), effect);
+  }
+
+  /** The effect with these changes, put in My mods in place of the one before. */
+  function install(raw: unknown, rawEdits: unknown): LibRecord {
+    const effect = valid(raw);
+    const edits = cleanEdits(rawEdits);
+    const { ix } = index();
+    const entries = editedEntries((p) => ix.read(p), effect, edits);
+    if (!entries.length) throw new Error(t('Здесь нечего менять: в этом эффекте нет таких чисел'));
+    const vpk = buildVpk(entries);
+    const generated: EffectGenerated = { effect, edits };
+    const name = t('Эффект: {0}', nameOf(effect));
+    const old = recordOf(effect);
+    log(`effect edit: ${effect}, ${entries.length} systems`);
+    if (old) {
+      const off = old.enabled === false;
+      return library.update(old.id, { name, files: swapPak(installer, old, vpk, off), generated, updatedAt: Date.now() }) as LibRecord;
+    }
+    const rec = library.add({ name, categoryId: 'imported', styleLabel: null, fileRef: null, preview: null, files: writePak(installer, vpk) });
+    return library.update(rec.id, { generated }) as LibRecord;
   }
 
   return {
@@ -84,24 +105,18 @@ export function createEffectEdit({ gamePath, installer, library, sprites, log = 
       return defOf(valid(raw), cleanEdits(edits));
     },
 
-    /** The effect with these changes, put in My mods in place of the one before. */
-    install(raw: unknown, rawEdits: unknown): LibRecord {
-      const effect = valid(raw);
-      const edits = cleanEdits(rawEdits);
-      const { ix } = index();
-      const entries = editedEntries((p) => ix.read(p), effect, edits);
-      if (!entries.length) throw new Error(t('Здесь нечего менять: в этом эффекте нет таких чисел'));
-      const vpk = buildVpk(entries);
-      const generated: EffectGenerated = { effect, edits };
-      const name = t('Эффект: {0}', nameOf(effect));
-      const old = recordOf(effect);
-      log(`effect edit: ${effect}, ${entries.length} systems`);
-      if (old) {
-        const off = old.enabled === false;
-        return library.update(old.id, { name, files: swapPak(installer, old, vpk, off), generated, updatedAt: Date.now() }) as LibRecord;
+    install,
+
+    /** The records among `ids` built again from the game's new files, one at a time out of the way of the start. */
+    rebuild(ids: string[]): string[] {
+      for (const rec of library.list()) {
+        const g = rec.generated as EffectGenerated | undefined;
+        if (!g?.effect || !ids.includes(rec.id)) continue;
+        setTimeout(() => {
+          try { install(g.effect, g.edits); onRebuilt(rec.id); } catch (err) { log(`effect edit: could not build ${g.effect} again after the update: ${(err as Error).message}`); }
+        }, 0);
       }
-      const rec = library.add({ name, categoryId: 'imported', styleLabel: null, fileRef: null, preview: null, files: writePak(installer, vpk) });
-      return library.update(rec.id, { generated }) as LibRecord;
+      return [];
     },
   };
 }

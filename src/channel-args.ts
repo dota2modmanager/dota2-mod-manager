@@ -199,7 +199,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   // the in-game HUD's layout (src/ipc-hud.ts): what src/hud-scale.ts cleanParts then puts in range
   'hud:state': [], 'hud:install': [list(HUD_PART, 11)],
   // the effect editor (src/ipc-effects.ts): src/effect-edit.ts cleanEdits keeps what it knows of the changes
-  'fx:search': [str(200)], 'fx:load': [str(300, 1)], 'fx:preview': [str(300, 1), EFFECT_EDITS], 'fx:install': [str(300, 1), EFFECT_EDITS],
+  'fx:search': [str(200)], 'fx:heroes': [], 'fx:hero': [str(40, 2)], 'fx:load': [str(300, 1)], 'fx:preview': [str(300, 1), EFFECT_EDITS], 'fx:install': [str(300, 1), EFFECT_EDITS],
   // the author's drafts (src/ipc-creator.ts): the files come from a dialog, never from here
   'creator:list': [], 'creator:remove': [ID], 'creator:export': [ID, optional(list(optional(bytes(8 * MB)), 3))],
   'creator:save': [optional(ID), shape({

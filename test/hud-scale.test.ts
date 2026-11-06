@@ -61,6 +61,20 @@ test('the plan: a panel keeps its corner as it scales, and what is inside the ba
   assert.equal(moved.y, items.y - 100);
 });
 
+test('a flipped HUD keeps a move, mirrored, and only the panels it mirrors need that', () => {
+  const css = withLayout('', [{ id: 'minimap_container', x: 40, y: -60 }, { id: 'topbar', y: 30 }]);
+  assert.match(css, /\.HUDFlipped #minimap_container\s*\{\s*transform: translateX\(-40px\) translateY\(-60px\) scaleX\(-1\);/);
+  assert.doesNotMatch(css, /\.HUDFlipped #topbar/);
+});
+
+test('larger abilities widen the bar both ways and push what is beside them', () => {
+  const parts = [{ id: 'abilities', scale: 120 }];
+  assert.equal(boxOf(shapeOf('PortraitGroup'), parts).x, shapeOf('PortraitGroup').x - 25);
+  assert.equal(boxOf(shapeOf('inventory'), parts).x, shapeOf('inventory').x + 25);
+  assert.equal(boxOf(shapeOf('health_mana'), parts).w, shapeOf('health_mana').w + 50);
+  assert.equal(boxOf(shapeOf('lower_hud'), parts).x, shapeOf('lower_hud').x - 25);
+});
+
 test('a panel with nothing left on it leaves the list, and order does not make a new layout', () => {
   const one = withPatch([], 'shop_launcher_block', { hidden: true });
   assert.deepEqual(one, [{ id: 'shop_launcher_block', hidden: true }]);

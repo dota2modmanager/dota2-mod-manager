@@ -41,6 +41,8 @@ export interface ParticleSpec {
   draw: 'add' | 'blend' | 'none'; bright: number;
   /** the texture its sprites are, as the game names it; null for a plain glow */
   texture: string | null;
+  /** how far the sprite's picture is brought to grey before its colour goes on, 0 to 1 */
+  grey: number;
   cps: Map<number, ControlPoint>;
   children: ParticleSpec[];
 }
@@ -102,7 +104,7 @@ export function particleSpec(def: ParticleDef, inherited: Map<number, ControlPoi
     alpha: [alphaOf(t.m_ConstantColor), alphaOf(t.m_ConstantColor)], colors: [rgb(t.m_ConstantColor, [1, 1, 1]), rgb(t.m_ConstantColor, [1, 1, 1])],
     spawn: { cp: 0, sphere: [0, 0], bias: [1, 1, 1], speed: [0, 0], local: null, offset: null, localOffset: false, noise: null, ring: null, onModel: false },
     mortal: false, gravity: [0, 0, 0], drag: 0, jitter: 0, fadeIn: 0, fadeOut: 0, size: { from: 1, to: 1, start: 0, end: 1 }, fade: null, lock: null,
-    draw: 'none', bright: 1, texture: null, cps, children: [],
+    draw: 'none', bright: 1, texture: null, grey: 0, cps, children: [],
   };
   for (const e of list(t.m_Emitters)) {
     const c = str(e._class);
@@ -125,6 +127,7 @@ export function particleSpec(def: ParticleDef, inherited: Map<number, ControlPoi
       || /WORLD_Z_ALIGNED|ALIGN_TO_PARTICLE_NORMAL/.test(str(r.m_nOrientationType))) continue;
     s.draw = /ADD/.test(str(r.m_nOutputBlendMode)) || r.m_bAdditive === true ? 'add' : 'blend';
     s.bright = Math.min(4, Math.max(1, one(r.m_flOverbrightFactor, 1)));
+    s.grey = Math.min(1, Math.max(0, one(r.m_flDesaturation, 0)));
     const input = Array.isArray(r.m_vecTexturesInput) ? obj(r.m_vecTexturesInput[0])?.m_hTexture : r.m_hTexture;
     s.texture = typeof input === 'string' ? input.toLowerCase() : null;
   }

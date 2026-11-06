@@ -133,6 +133,8 @@ contextBridge.exposeInMainWorld('api', {
   },
   fx: {
     search: (query) => ipcRenderer.invoke('fx:search', query),
+    heroes: () => ipcRenderer.invoke('fx:heroes'),
+    hero: (hero) => ipcRenderer.invoke('fx:hero', hero),
     load: (path) => ipcRenderer.invoke('fx:load', path),
     preview: (path, edits) => ipcRenderer.invoke('fx:preview', path, edits),
     install: (path, edits) => ipcRenderer.invoke('fx:install', path, edits),

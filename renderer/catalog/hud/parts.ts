@@ -1,6 +1,7 @@
 /* The HUD's panels as the editor draws them: where each stands on a 1920 x 1080 screen with nothing
  * changed, read off the game at that size, and how a change moves it. A panel keeps the corner the
- * game aligns it to while it scales, and what is inside the bottom bar goes with the bar.
+ * game aligns it to while it scales, and what is inside the bottom bar goes with the bar. The
+ * abilities stand in the bar's own row: larger, they widen it both ways and push what is beside them.
  * src/hud-scale.ts lists the same ids, and a test keeps the two in step. */
 
 /** What was changed on one panel (src/hud-scale.ts). */
@@ -34,6 +35,12 @@ export const SHAPES: PartShape[] = [
   { id: 'HudChat', x: 300, y: 640, w: 560, h: 160, ax: 0, ay: 1 },
 ];
 
+/** The width of the row of abilities that scales, read off the game on a hero of four: the talent tree beside them stays. */
+const ABILITY_ROW = 250;
+/** Stand on the left of the row, and go left as it widens; the health and mana widen with it. */
+const LEFT_OF_ROW = new Set(['lower_hud', 'PortraitGroup', 'stats_container']);
+const WIDE_WITH_ROW = new Set(['lower_hud', 'abilities', 'health_mana']);
+
 /** A shape by id. */
 export const shapeOf = (id: string): PartShape => SHAPES.find((s) => s.id === id) ?? SHAPES[0];
 
@@ -47,6 +54,9 @@ export function boxOf(s: PartShape, parts: HudPart[]): { x: number; y: number; w
   const barShape = shapeOf('lower_hud');
   const k = scaleOf(bar);
   const k2 = k * scaleOf(own);
+  const widen = ABILITY_ROW * (scaleOf(parts.find((p) => p.id === 'abilities')) - 1) * k;
+  const shift = (LEFT_OF_ROW.has(s.id) || WIDE_WITH_ROW.has(s.id) ? -widen / 2 : s.id === 'inventory' ? widen / 2 : 0);
+  const across = WIDE_WITH_ROW.has(s.id) ? widen : 0;
   // the point that holds still, carried by the bar first
   const px = s.x + s.w * s.ax;
   const py = s.y + s.h * s.ay;
@@ -54,10 +64,12 @@ export function boxOf(s: PartShape, parts: HudPart[]): { x: number; y: number; w
   const hy = barShape.y + barShape.h * barShape.ay;
   const ax = s.inside ? hx + (px - hx) * k + (bar?.x ?? 0) : px;
   const ay = s.inside ? hy + (py - hy) * k + (bar?.y ?? 0) : py;
+  // the row is what scales, so the abilities' box takes the widening and not their whole width times the scale
+  const wide = s.id === 'abilities' ? s.w * k : s.w * k2;
   return {
-    x: ax - s.w * k2 * s.ax + (own?.x ?? 0) * k,
+    x: ax - wide * s.ax + (own?.x ?? 0) * k + shift,
     y: ay - s.h * k2 * s.ay + (own?.y ?? 0) * k,
-    w: s.w * k2,
+    w: wide + across,
     h: s.h * k2,
     unit: s.inside ? k : 1,
   };

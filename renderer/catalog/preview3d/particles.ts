@@ -26,7 +26,7 @@ void main() {
   gl_Position = projectionMatrix * mv;
 }`;
 const fragmentShader = /* glsl */`
-uniform float uBright, uHasTex;
+uniform float uBright, uHasTex, uGrey;
 uniform sampler2D uTex;
 varying vec4 vTint;
 void main() {
@@ -34,7 +34,8 @@ void main() {
   if (uHasTex > 0.5) {
     // one frame of a sheet, or a texture with no alpha of its own: its edge fades, never a square
     vec4 t = texture2D(uTex, gl_PointCoord) * smoothstep(1.0, 0.6, r);
-    gl_FragColor = vec4(vTint.rgb * t.rgb * uBright, vTint.a * t.a);
+    vec3 c = mix(t.rgb, vec3(dot(t.rgb, vec3(0.299, 0.587, 0.114))), uGrey);
+    gl_FragColor = vec4(vTint.rgb * c * uBright, vTint.a * t.a);
     return;
   }
   // a glow that falls off from its middle, as a sprite of smoke or fire does, not a lit disc
@@ -108,7 +109,7 @@ class System {
       blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor,
       uniforms: {
         uPx: px, uBright: { value: s.draw === 'add' ? Math.min(2, s.bright) * (tex ? 1 : ADD_GAIN) : 1 },
-        uTex: { value: tex }, uHasTex: { value: tex ? 1 : 0 },
+        uTex: { value: tex }, uHasTex: { value: tex ? 1 : 0 }, uGrey: { value: s.grey },
       },
     }));
     this.points.frustumCulled = false;
@@ -217,8 +218,6 @@ class System {
     for (let i = 0; i < this.alive; i++) box.expandByPoint(new THREE.Vector3().fromArray(this.pos, i * 3));
   }
 
-  /** Start the emitters again, as the effect is played anew; the particles in the air stay, and a lasting glow is not doubled. */
-  restart(): void { if (this.s.mortal) { this.time = 0; this.acc = 0; this.burst = false; } }
 
   dispose(): void {
     this.points.geometry.dispose();
@@ -290,8 +289,6 @@ export function playParticles(scene: THREE.Scene, list: { spec: ParticleSpec; se
     },
     /** Where every particle is now, for a camera to frame them. */
     bounds(): THREE.Box3 { const box = new THREE.Box3(); for (const s of systems) if (s.points.visible) s.expand(box); return box; },
-    /** Play every system again from its start, as the loadout begins anew. */
-    restart(): void { for (const s of systems) s.restart(); },
     dispose(): void { for (const s of systems) { s.points.removeFromParent(); s.dispose(); } },
   };
 }
