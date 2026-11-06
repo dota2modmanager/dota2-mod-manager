@@ -54,6 +54,7 @@ the code, not in this page.
 | [`src/download-stats.ts`](#srcdownload-statsts) | How many times each catalog mod was downloaded, counted by the catalog's own counter (a |
 | [`src/effect-edit-service.ts`](#srceffect-edit-servicets) | The effect editor: finding an effect among the game's, showing it changed, and a change put in |
 | [`src/effect-edit.ts`](#srceffect-editts) | An effect of the game changed by hand: its size, how many particles it makes, how long they live, |
+| [`src/effect-finder.ts`](#srceffect-finderts) | Finding an effect by what it is, not by its file: a hero, his abilities, and the effects that |
 | [`src/electron.ts`](#srcelectronts) | Electron's main-process API, asked for at the moment it is used. |
 | [`src/error-text.ts`](#srcerror-textts) | What a caught error says, as one line of text. |
 | [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
@@ -2467,7 +2468,7 @@ What an effect's record was built from.
 ### `createEffectEdit`
 
 ```ts
-export function createEffectEdit({ gamePath, installer, library, sprites, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** the textures of a system and its children, as the window takes them */ sprites: (defs: ParticleDef[]) => Promise<Record<string, Uint8Array>>; log?: (msg: string) => void; })
+export function createEffectEdit({ gamePath, installer, library, sprites, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** the textures of a system and its children, as the window takes them */ sprites: (defs: ParticleDef[]) => Promise<Record<string, Uint8Array>>; onRebuilt?: (id: string) => void; log?: (msg: string) => void
 ```
 
 The service the fx:* channels call.
@@ -2484,7 +2485,9 @@ range can be scaled while the rest (a value read from a control point, a curve) 
 The changed file keeps its path, so a pak with it replaces the effect wherever the game plays it.
 
 Colour takes the chosen hue and saturation and keeps each colour's brightness. A sprite's own
-picture is not touched, so an effect drawn in a strongly coloured texture shifts only so far.
+picture may be coloured too, and is multiplied by these: the renderer's desaturation brings it in
+as grey, the game's own switch for it, so the chosen colour is the one that shows, a sheet of
+frames keeps working, and no texture has to be copied or compiled.
 
 ### `EffectEdit`
 
@@ -2557,6 +2560,38 @@ export function editedEntries(read: (p: string) => Buffer | null | undefined, ro
 ```
 
 The changed files of an effect, under the paths they have in the game.
+
+## src/effect-finder.ts
+
+Finding an effect by what it is, not by its file: a hero, his abilities, and the effects that
+belong to each. What belongs to an ability is read off the game's file names, the same way a
+hero's recolour reads it (src/recolor-layers.ts). An ability's files include what its effects
+create, so a file that another one in the group brings along is left out of the list: it is
+reached through that effect's systems.
+
+### `EffectGroup`
+
+```ts
+export interface EffectGroup { id: string; kind: 'ability' | 'effects' | 'items'; ability: string | null; name: string | null; paths: string[] }
+```
+
+One line of a hero's effects: an ability's, his other ones, or his items'.
+
+### `AbilityHit`
+
+```ts
+export interface AbilityHit { hero: string; ability: string; name: string }
+```
+
+An ability a search found.
+
+### `createEffectFinder`
+
+```ts
+export function createEffectFinder({ index, lang, heroes }: { index: () => VpkIndex; lang: () => string; /** the heroes, with their name in the npc's and in the app's language */ heroes: () => { hero: string; name: string }[]; })
+```
+
+The finder over the game's pak.
 
 ## src/electron.ts
 

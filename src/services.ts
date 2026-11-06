@@ -30,6 +30,8 @@ import { createMapLooks } from './map-looks-service.ts';
 import { createMenuBackground } from './menu-background-service.ts';
 import { createHudScale } from './hud-scale-service.ts';
 import { createEffectEdit } from './effect-edit-service.ts';
+import { createEffectFinder } from './effect-finder.ts';
+import { sharedVpkIndex } from './vpk.ts';
 import { createMapDecor } from './map-decor.ts';
 import { createRankLook } from './rank-look-service.ts';
 import { createHeroPaint } from './hero-paint-service.ts';
@@ -182,7 +184,8 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   const hudScale = createHudScale({ gamePath: () => settings.get('dotaGamePath'), installer, library, vrf: () => toolchain.pathOf('vrf'),
     compile: (job) => compiler.compile(job), onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
   // an effect of the game changed by hand (src/effect-edit-service.ts)
-  const effectEdit = createEffectEdit({ gamePath: () => settings.get('dotaGamePath'), installer, library, sprites: (defs) => heroPreview.sprites(defs), log: diag });
+  const effectEdit = createEffectEdit({ gamePath: () => settings.get('dotaGamePath'), installer, library, sprites: (defs) => heroPreview.sprites(defs), onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
+  const effectFinder = createEffectFinder({ index: () => sharedVpkIndex(path.join(settings.get('dotaGamePath') as string, 'dota', 'pak01_dir.vpk')), lang: getLang, heroes: () => abilitySounds.heroes() });
   // a look built by an older app carries its script: built again once the item table is done
   void schemaService.settled().then(() => rankLook.refreshScript());
   // the rank medal and hero levels of the player's own screen (src/rank-look-service.ts)
@@ -243,7 +246,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 
   return {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, readyPresets, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, hudScale, effectEdit, rankLook, mapDecor, heroPaint, abilitySounds, buildUndo, heroPreview,
+    remoteConfig, readyPresets, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, hudScale, effectEdit, effectFinder, rankLook, mapDecor, heroPaint, abilitySounds, buildUndo, heroPreview,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };
 }

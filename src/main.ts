@@ -153,7 +153,7 @@ async function start(): Promise<void> {
   // and a patch took while the app was closed, and the migrations older versions left behind.
   const upkeep = createGameUpkeep({
     settings, installer, library, schemaService, updateImpact, reconcileCursors: cursors.reconcileCursors, diag,
-    rebuildGenerated: (ids) => [...arcana.rebuild(ids), ...services.mapLooks.rebuild(ids), ...services.menuBackground.rebuild(ids), ...services.hudScale.rebuild(ids), ...services.rankLook.rebuild(ids), ...services.mapDecor.rebuild(ids), ...services.heroPaint.rebuild(ids)],
+    rebuildGenerated: (ids) => [...arcana.rebuild(ids), ...services.mapLooks.rebuild(ids), ...services.menuBackground.rebuild(ids), ...services.hudScale.rebuild(ids), ...services.effectEdit.rebuild(ids), ...services.rankLook.rebuild(ids), ...services.mapDecor.rebuild(ids), ...services.heroPaint.rebuild(ids)],
     send: (repair) => windowOpen()?.webContents.send('patch-repair', repair),
     findGame: findDotaGamePath, validGame: validateGamePath,
   });
@@ -180,7 +180,7 @@ async function start(): Promise<void> {
      window, the updater, the patch watcher, the upkeep's state) is a function read when needed. */
   const ctx: AppContext = {
     settings, catalog, installer, library, fingerprints, schemaService, updateImpact, icons, gameIcons, modPreviews,
-    toolchain, compiler, toolsKeeper, keepTools, remoteConfig, readyPresets: services.readyPresets, presets, arcana, mapLooks: services.mapLooks, menuBackground: services.menuBackground, hudScale: services.hudScale, effectEdit: services.effectEdit, rankLook: services.rankLook, mapDecor: services.mapDecor, heroPaint: services.heroPaint, abilitySounds: services.abilitySounds, buildUndo: services.buildUndo, heroPreview: services.heroPreview, discordAuth, portableUpdater, autoUpdater,
+    toolchain, compiler, toolsKeeper, keepTools, remoteConfig, readyPresets: services.readyPresets, presets, arcana, mapLooks: services.mapLooks, menuBackground: services.menuBackground, hudScale: services.hudScale, effectEdit: services.effectEdit, effectFinder: services.effectFinder, rankLook: services.rankLook, mapDecor: services.mapDecor, heroPaint: services.heroPaint, abilitySounds: services.abilitySounds, buildUndo: services.buildUndo, heroPreview: services.heroPreview, discordAuth, portableUpdater, autoUpdater,
     // One gate, handed to every module that guards a channel with it. Two copies is how installing
     // broke once: the call went to one file and the helper stayed in the other.
     blocked: createGate({ remoteConfig, settings, gameOpen: () => gameWatch.running() }),

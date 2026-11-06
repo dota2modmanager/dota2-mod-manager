@@ -197,8 +197,8 @@ export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uin
     const self = part < 0 ? heroCarrier : carriers[part];
     return self ? [{ spec: particleSpec(def), self }] : [];
   }), heroCarrier, src, textures);
-  // the loadout's effects come with its animation: each time it starts over, so do they
-  if (fx && clips.home?.name === clip) mixer.addEventListener('loop', (e) => { if (e.action.getClip() === clips.home) fx.restart(); });
+  // a hero's loadout effect plays once, as the game plays it when he comes out, however long his
+  // animation goes round: started over it reads as a bug, a burst or a snowfall with no end
 
   renderer.domElement.tabIndex = 0;
   renderer.domElement.setAttribute('aria-label', label);

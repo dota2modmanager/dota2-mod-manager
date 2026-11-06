@@ -72,7 +72,10 @@ export const partsOfScale = (scale: number): HudPart[] => cleanParts([{ id: 'low
 
 const MARK = '/* d2mm: HUD scale */';
 
-/** One panel's rule. */
+/** The panels a flipped HUD mirrors with a transform of its own, stronger than a plain one. */
+const MIRRORED = new Set(['lower_hud', 'minimap_container']);
+
+/** One panel's rule, and a second where the flipped HUD would take its offset away: on the other side of the screen a move goes the other way. */
 function ruleOf(p: HudPart): string {
   const lines: string[] = [];
   if (p.hidden) lines.push('visibility: collapse;');
@@ -80,7 +83,9 @@ function ruleOf(p: HudPart): string {
   if (p.x || p.y) lines.push(`transform: translateX(${p.x ?? 0}px) translateY(${p.y ?? 0}px);`);
   if (p.opacity) lines.push(`opacity: ${p.opacity / 100};`);
   if (p.tint) lines.push(`wash-color: ${p.tint};`);
-  return `#${p.id}\n{\n${lines.map((l) => `\t${l}`).join('\n')}\n}\n`;
+  const rule = `#${p.id}\n{\n${lines.map((l) => `\t${l}`).join('\n')}\n}\n`;
+  if (!(p.x || p.y) || !MIRRORED.has(p.id)) return rule;
+  return `${rule}\n.HUDFlipped #${p.id}\n{\n\ttransform: translateX(${-(p.x ?? 0)}px) translateY(${p.y ?? 0}px) scaleX(-1);\n}\n`;
 }
 
 /**

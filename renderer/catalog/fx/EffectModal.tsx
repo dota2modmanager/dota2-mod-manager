@@ -1,8 +1,9 @@
 /* The effect editor: find one of the game's effects, change its size, count, life, speed and
  * colour, for all of it or one of the systems it is made of, and see it play. The list on the
  * left is the search until an effect is open, then that effect's systems. */
-import { EffectStage } from './EffectStage.tsx';
-import type { EffectEdit, EffectEdits } from '../../api/fx.ts';
+import { EffectStage, hasSprites } from './EffectStage.tsx';
+import { particleSpec } from '../preview3d/particle-def.ts';
+import type { AbilityHit, EffectEdit, EffectEdits, EffectGroup } from '../../api/fx.ts';
 import type { ParticleDef } from '../../api/preview3d.ts';
 
 export const WHOLE = '*';
@@ -17,7 +18,20 @@ export interface EffectOpen {
 export interface EffectModalModel {
   query: string;
   results: string[];
+  hits: AbilityHit[];
   saved: { path: string; name: string }[];
+  heroes: { hero: string; name: string }[];
+  /** the selection portraits out of the game, by hero */
+  portraits: Record<string, string>;
+  /** the abilities' icons, by ability */
+  icons: Record<string, string>;
+  /** the hero open in the list, and his effects */
+  hero: string | null;
+  groups: EffectGroup[];
+  /** the line of his effects open in the list */
+  group: string | null;
+  /** goes up each time the effect is asked to play again */
+  play: number;
   open: EffectOpen | null;
   /** the system the sliders are on, or WHOLE */
   chosen: string;
@@ -34,6 +48,10 @@ export interface EffectModalActions {
   query: (q: string) => void;
   open: (path: string) => void;
   back: () => void;
+  hero: (hero: string | null) => void;
+  group: (id: string | null) => void;
+  hit: (hit: AbilityHit) => void;
+  replay: () => void;
   choose: (key: string) => void;
   edit: (patch: Partial<EffectEdit>) => void;
   reset: () => void;
@@ -72,21 +90,84 @@ function Controls({ m, actions }: { m: EffectModalModel; actions: EffectModalAct
   );
 }
 
+const groupName = (g: EffectGroup) => (g.kind === 'ability' ? g.name || g.ability || '' : g.kind === 'items' ? L`Эффекты предметов` : L`Другие эффекты героя`);
+
+function Files({ paths, actions }: { paths: string[]; actions: EffectModalActions }) {
+  return (
+    <ul>
+      {paths.map((p) => (
+        <li key={p}><button type="button" className="fx-row" data-effect={p} onClick={() => actions.open(p)}>
+          <span>{last(p)}</span><small>{folder(p)}</small>
+        </button></li>
+      ))}
+    </ul>
+  );
+}
+
+function Heroes({ m, actions }: { m: EffectModalModel; actions: EffectModalActions }) {
+  const q = m.query.trim().toLowerCase();
+  const shown = q ? m.heroes.filter((h) => h.name.toLowerCase().includes(q) || h.hero.includes(q)) : m.heroes;
+  if (!shown.length) return null;
+  return (
+    <div className="fx-heroes" id="fxHeroes">
+      {shown.map((h) => (
+        <button key={h.hero} type="button" className="fx-hero" data-hero={h.hero} title={h.name} aria-label={h.name} onClick={() => actions.hero(h.hero)}>
+          {m.portraits[h.hero] ? <img src={m.portraits[h.hero]} alt="" draggable={false} /> : <span>{h.name}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Hero({ m, actions }: { m: EffectModalModel; actions: EffectModalActions }) {
+  const name = m.heroes.find((h) => h.hero === m.hero)?.name;
+  const g = m.groups.find((x) => x.id === m.group);
+  return (
+    <>
+      <button type="button" className="btn btn-ghost fx-back" id="fxHeroBack" onClick={() => (g ? actions.group(null) : actions.hero(null))}>
+        <span className="ms">arrow_back</span>{g ? name : L`Все герои`}
+      </button>
+      {g
+        ? <Files paths={g.paths} actions={actions} />
+        : <ul>
+          {m.groups.map((x) => (
+            <li key={x.id}><button type="button" className="fx-row fx-group" data-group={x.id} onClick={() => actions.group(x.id)}>
+              {x.ability && m.icons[x.ability] ? <img src={m.icons[x.ability]} alt="" draggable={false} /> : <span className="ms">{x.kind === 'items' ? 'shield' : 'auto_awesome'}</span>}
+              <span>{groupName(x)}</span>
+            </button></li>
+          ))}
+          {!m.groups.length && <li className="modal-note">{L`У этого героя не нашлось своих эффектов`}</li>}
+        </ul>}
+    </>
+  );
+}
+
 function Finder({ m, actions }: { m: EffectModalModel; actions: EffectModalActions }) {
-  const list = m.query.trim() ? m.results : m.saved.map((s) => s.path);
+  const q = m.query.trim();
   return (
     <div className="fx-list">
-      <input type="search" className="fx-search" id="fxSearch" autoFocus value={m.query} placeholder={L`Герой, предмет или способность`}
+      <input type="search" className="fx-search" id="fxSearch" autoFocus value={m.query} placeholder={L`Герой, способность или файл`}
         aria-label={L`Найти эффект`} onChange={(e) => actions.query(e.currentTarget.value)} />
-      {!m.query.trim() && m.saved.length > 0 && <div className="fx-list-head">{L`Уже изменённые`}</div>}
-      <ul>
-        {list.map((p) => (
-          <li key={p}><button type="button" className="fx-row" data-effect={p} onClick={() => actions.open(p)}>
-            <span>{last(p)}</span><small>{folder(p)}</small>
-          </button></li>
-        ))}
-      </ul>
-      {m.query.trim() && !m.results.length && <div className="modal-note">{L`Таких эффектов нет. Названия в файлах игры английские: juggernaut, blade fury.`}</div>}
+      {q
+        ? <>
+          <Heroes m={m} actions={actions} />
+          {m.hits.length > 0 && <ul>
+            {m.hits.map((h) => (
+              <li key={h.ability}><button type="button" className="fx-row" data-hit={h.ability} onClick={() => actions.hit(h)}>
+                <span>{h.name}</span><small>{m.heroes.find((x) => x.hero === h.hero)?.name}</small>
+              </button></li>
+            ))}
+          </ul>}
+          <Files paths={m.results} actions={actions} />
+          {!m.results.length && !m.hits.length && <div className="modal-note">{L`Ничего не нашлось`}</div>}
+        </>
+        : m.hero
+          ? <Hero m={m} actions={actions} />
+          : <>
+            {m.saved.length > 0 && <div className="fx-list-head">{L`Уже изменённые`}</div>}
+            {m.saved.length > 0 && <Files paths={m.saved.map((x) => x.path)} actions={actions} />}
+            <Heroes m={m} actions={actions} />
+          </>}
     </div>
   );
 }
@@ -123,8 +204,12 @@ export function EffectModal({ m, actions }: { m: EffectModalModel; actions: Effe
         {m.open ? <Systems open={m.open} m={m} actions={actions} /> : <Finder m={m} actions={actions} />}
         <div className="fx-view">
           {m.open
-            ? <EffectStage path={m.open.path} def={m.open.def} sprites={m.open.sprites} />
-            : <div className="fx-empty"><span className="ms">{m.busy === 'load' ? 'progress_activity' : 'auto_awesome'}</span><span>{L`Выбери эффект слева: он заиграет здесь`}</span></div>}
+            ? <div className="fx-stage">
+              <EffectStage path={m.open.path} def={m.open.def} sprites={m.open.sprites} play={m.play} />
+              <button type="button" className="fx-replay" id="fxReplay" aria-label={L`Проиграть ещё раз`} title={L`Проиграть ещё раз`} onClick={actions.replay}><span className="ms">replay</span></button>
+              {!hasSprites(particleSpec(m.open.def)) && <div className="fx-none">{L`Этот эффект сделан из моделей или света, просмотр его не рисует. В игре он есть.`}</div>}
+            </div>
+            : <div className="fx-empty"><span className="ms">{m.busy === 'load' ? 'progress_activity' : 'auto_awesome'}</span><span>{L`Выбери героя и способность слева: эффект заиграет здесь`}</span></div>}
           {m.open && <Controls m={m} actions={actions} />}
         </div>
       </div>

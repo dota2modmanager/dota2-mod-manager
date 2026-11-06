@@ -9,7 +9,9 @@
  * The changed file keeps its path, so a pak with it replaces the effect wherever the game plays it.
  *
  * Colour takes the chosen hue and saturation and keeps each colour's brightness. A sprite's own
- * picture is not touched, so an effect drawn in a strongly coloured texture shifts only so far.
+ * picture may be coloured too, and is multiplied by these: the renderer's desaturation brings it in
+ * as grey, the game's own switch for it, so the chosen colour is the one that shows, a sheet of
+ * frames keeps working, and no texture has to be copied or compiled.
  */
 import { readKv3, numberOf, writeCell, type Kv3Block, type Kv3Node } from './kv3.ts';
 import { writeKv3 } from './kv3-write.ts';
@@ -29,6 +31,8 @@ export const MIN_SCALE = 10;
 export const MAX_SCALE = 300;
 
 const SCALES = ['size', 'count', 'life', 'speed'] as const;
+/** The renderers that draw a picture in the particle's colour. */
+const DRAWN = /^C_OP_Render(Sprites|Trails|Ropes|SpriteTrail)$/;
 const pathOf = (p: string) => p.toLowerCase().replace(/\\/g, '/').replace(/\.vpcf_c$/, '.vpcf');
 
 /** What the window sent: known fields, values in range, nothing that changes nothing. */
@@ -107,6 +111,9 @@ function tint(kv: Kv3Block, n: Kv3Node | undefined, rgb: [number, number, number
   return true;
 }
 
+/** A parameter of the file that is this number. */
+const literal = (v: number): Kv3Node => ({ kind: 'object', members: new Map<string, Kv3Node>([['m_nType', { kind: 'string', value: 'PF_TYPE_LITERAL' }], ['m_flLiteralValue', made(v, false)]]) });
+
 /** The changes on one system's tree, made in place; whether any field took one. */
 export function editTree(kv: Kv3Block, edit: EffectEdit): boolean {
   const root = members(kv.root);
@@ -150,6 +157,14 @@ export function editTree(kv: Kv3Block, edit: EffectEdit): boolean {
       const m = members(n);
       if (classOf(n) === 'C_INIT_RandomColor') did.push(tint(kv, m?.get('m_ColorMin'), rgb), tint(kv, m?.get('m_ColorMax'), rgb));
       if (classOf(n) === 'C_OP_ColorInterpolate') did.push(tint(kv, m?.get('m_ColorFade'), rgb));
+    }
+    // a system with no colour of its own is white, and white takes no hue
+    if (!root.has('m_ConstantColor')) { root.set('m_ConstantColor', { kind: 'array', items: [...rgb, 255].map((v) => made(v, true)) }); did.push(true); }
+    for (const r of items(root.get('m_Renderers'))) {
+      const m = members(r);
+      if (!m || !DRAWN.test(classOf(r))) continue;
+      m.set('m_flDesaturation', literal(1));
+      did.push(true);
     }
   }
   return did.some(Boolean);

@@ -33,6 +33,7 @@ const files = new Map<string, Buffer>([
       op('C_INIT_RandomLifeTime', [['m_fLifetimeMin', { dbl: 1 }], ['m_fLifetimeMax', { dbl: 3 }]]),
       op('C_INIT_CreateWithinSphere', [['m_fSpeedMin', uniform(5, 15)], ['m_fSpeedMax', curve]]),
     ] }],
+    ['m_Renderers', { objs: [op('C_OP_RenderSprites'), op('C_OP_RenderDeferredLight')] }],
     ['m_Children', { objs: [[['m_ChildRef', { str: 'particles/b.vpcf' }]]] }],
   ])],
   ['particles/b.vpcf_c', system([['m_flConstantRadius', { dbl: 3 }]])],
@@ -67,6 +68,15 @@ test('a colour takes the hue and keeps its brightness and its alpha', () => {
   assert.deepEqual([0, 1, 2, 3].map((i) => n(kv, 'm_ConstantColor', i)), [0, 200, 0, 255]);
 });
 
+test('a sprite comes in as grey so the colour is the one that shows, and a white system takes a colour', () => {
+  const made = editedEntries(read, 'particles/a.vpcf', { [WHOLE]: { tint: '#00ff00' } });
+  const a = tree(made, 'particles/a.vpcf_c');
+  assert.equal(n(a, 'm_Renderers', 0, 'm_flDesaturation', 'm_flLiteralValue'), 1);
+  assert.equal(at(a.root, 'm_Renderers', 1, 'm_flDesaturation'), undefined, 'a light has no picture');
+  const b = tree(made, 'particles/b.vpcf_c');
+  assert.deepEqual([0, 1, 2, 3].map((i) => n(b, 'm_ConstantColor', i)), [0, 255, 0, 255]);
+});
+
 test('a system takes its own changes on top of those on the whole effect', () => {
   const made = editedEntries(read, 'particles/a.vpcf', { [WHOLE]: { size: 200 }, 'particles/b.vpcf': { size: 150 } });
   assert.equal(n(tree(made, 'particles/a.vpcf_c'), 'm_flConstantRadius'), 20);
@@ -96,8 +106,20 @@ function world(t: TestContext) {
   const installer = new Installer({ userDataDir: userdata, getGamePath: () => game, getLangSuffix: () => 'russian', onProgress: () => {} } as never);
   const library = new Library(userdata);
   const service = createEffectEdit({ gamePath: () => game, installer, library, sprites: async () => ({}) });
-  return { service, library, installer };
+  return { service, library, installer, game: () => game };
 }
+
+test('the update builds an effect again from the new files, and the record keeps its changes', async (t) => {
+  const dir = world(t);
+  const rec = dir.service.install('particles/a.vpcf', { [WHOLE]: { size: 200 } });
+  const seen: string[] = [];
+  const after = createEffectEdit({ gamePath: dir.game, installer: dir.installer, library: dir.library, sprites: async () => ({}), onRebuilt: (id) => seen.push(id) });
+  assert.deepEqual(after.rebuild(['other']), []);
+  after.rebuild([rec.id]);
+  await new Promise((r) => setTimeout(r, 5));
+  assert.deepEqual(seen, [rec.id]);
+  assert.deepEqual(after.saved(), [{ path: 'particles/a.vpcf', name: 'a' }]);
+});
 
 test('search takes every word, shortest path first', (t) => {
   const { service } = world(t);

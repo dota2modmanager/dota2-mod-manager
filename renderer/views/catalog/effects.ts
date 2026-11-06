@@ -5,11 +5,11 @@ import { refreshInstalledIndex } from '../../core/installed.ts';
 import { toast } from '../../ui/toast.ts';
 import { showEffectModal } from '../../catalog/modal/root.tsx';
 import { WHOLE, type EffectModalModel } from '../../catalog/fx/EffectModal.tsx';
-import type { EffectEdit, EffectEdits } from '../../api/fx.ts';
+import type { AbilityHit, EffectEdit, EffectEdits } from '../../api/fx.ts';
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './overlay.ts';
 import { screen } from './state.ts';
 
-const EMPTY: EffectModalModel = { query: '', results: [], saved: [], open: null, chosen: WHOLE, edits: {}, same: true, installed: false, busy: null };
+const EMPTY: EffectModalModel = { query: '', results: [], hits: [], saved: [], heroes: [], portraits: {}, icons: {}, hero: null, groups: [], group: null, play: 0, open: null, chosen: WHOLE, edits: {}, same: true, installed: false, busy: null };
 /** How long after a slider stops the effect is asked for again. */
 const SETTLE = 120;
 
@@ -30,6 +30,45 @@ export async function openEffects(from: Element | null): Promise<void> {
   open = true;
   openOverlay(draw, from);
   await search('');
+  await heroes();
+}
+
+/** The heroes, and their portraits when the game has given them. */
+async function heroes(): Promise<void> {
+  const r = await window.api.fx.heroes();
+  if (r.error || !('heroes' in r)) return;
+  const list = [...r.heroes].sort((a, b) => a.name.localeCompare(b.name));
+  m = { ...m, heroes: list };
+  draw();
+  const portraits: Record<string, string> = await window.api.cosmetics.heroPortraits(list.map((h) => h.hero)).catch(() => ({}));
+  m = { ...m, portraits };
+  draw();
+}
+
+/** A hero's effects, with an ability's line open when one is given. */
+async function showHero(hero: string | null, group: string | null = null): Promise<void> {
+  if (!hero) { m = { ...m, hero: null, groups: [], group: null }; draw(); return; }
+  const r = await window.api.fx.hero(hero);
+  if (r.error || !('groups' in r)) { toast(r.error || L`Не удалось прочитать эффект`, 'error'); return; }
+  m = { ...m, hero, groups: r.groups, group, query: '', results: [], hits: [] };
+  draw();
+  const abilities = r.groups.flatMap((g) => (g.ability ? [g.ability] : []));
+  const icons: Record<string, string> = await window.api.paint.icons(abilities).catch(() => ({}));
+  m = { ...m, icons: { ...m.icons, ...icons } };
+  draw();
+}
+
+/** A line of the hero's effects: one effect alone opens at once. */
+function showGroup(id: string | null): void {
+  const g = m.groups.find((x) => x.id === id);
+  m = { ...m, group: id };
+  draw();
+  if (g?.paths.length === 1) void load(g.paths[0]);
+}
+
+async function showHit(hit: AbilityHit): Promise<void> {
+  await showHero(hit.hero, null);
+  showGroup(m.groups.find((g) => g.ability === hit.ability)?.id ?? null);
 }
 
 function draw(): void {
@@ -38,6 +77,10 @@ function draw(): void {
     close: closeOverlay,
     query: (q) => { m = { ...m, query: q }; draw(); void search(q); },
     open: (p) => void load(p),
+    hero: (hero) => void showHero(hero),
+    group: showGroup,
+    hit: (hit) => void showHit(hit),
+    replay: () => { m = { ...m, play: m.play + 1 }; draw(); },
     back: () => { m = { ...m, open: null, edits: {}, chosen: WHOLE, same: true, installed: false }; draw(); },
     choose: (chosen) => { m = { ...m, chosen }; draw(); },
     edit,
@@ -50,7 +93,7 @@ async function search(q: string): Promise<void> {
   const r = await window.api.fx.search(q);
   if (r.error || !('paths' in r)) { toast(r.error || L`Не удалось прочитать эффект`, 'error'); return; }
   if (q !== m.query) return;
-  m = { ...m, results: r.paths, saved: r.saved };
+  m = { ...m, results: r.paths, hits: r.abilities, saved: r.saved };
   draw();
 }
 
