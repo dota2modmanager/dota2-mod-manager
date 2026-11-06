@@ -13,6 +13,11 @@
  *                          whether the game plays that sound when the abilities are cast: what the
  *                          computer plays is recorded (record.ps1) and the sound looked for in it
  *                          (hear.mjs), into verdict.json as "sound"
+ *   npm run dota:bench -- --fps [--vpk pak.vpk] [--against <verdict.json>]
+ *                          how fast the real map runs, in a match of a private lobby: FPS at each
+ *                          spot, and how busy the graphics card is at 60 FPS (dota-bench/fps.mjs).
+ *                          The game keeps the last lobby's settings: set a password and cheats
+ *                          once by hand. With no cheats the match does not start and the run stops.
  *
  * It puts the mod into the language folder through the app's own installer (a free slot), starts
  * Dota straight into hero demo with the hero (`+dota_demo_hero`, no client screens), and plays a
@@ -49,6 +54,7 @@ import { fileURLToPath } from 'node:url';
 import { attackVerdict, readDiffs } from './dota-bench/verdict.mjs';
 import { placeSchema } from './dota-bench/schema.mjs';
 import { hear } from './dota-bench/hear.mjs';
+import { SPOTS, readFps, readBusy, mean, fpsChange } from './dota-bench/fps.mjs';
 import { readBars, bodyOf, spawned, follow, frame, readSkills, bindOf, unknownCommands, SCAN, SKILLS, DEFAULT_SKILLS } from './dota-bench/scene.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -61,6 +67,9 @@ const AT900 = {
   icons: [583, 771, 467, 96], hero: [500, 40, 600, 600], fight: [630, 200, 290, 310],
 };
 const AT = Object.fromEntries(Object.entries(AT900).map(([k, v]) => [k, v.map((n) => Math.round(n * H / 900))]));
+
+/** The play menu and the lobby's button, in the 1920x1080 window; a note about the last match sits at `dismiss`. */
+const LOBBY = { dismiss: [960, 597], play: [1696, 1034], create: [1617, 709] };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const arg = (name, fallback = null) => { const i = process.argv.indexOf(name); return i === -1 ? fallback : process.argv[i + 1]; };
@@ -94,6 +103,13 @@ function logSince(log, since) {
   let fd;
   try { fd = fs.openSync(log, 'r'); } catch { return ''; }
   try { return fs.fstatSync(fd).mtimeMs > since ? fs.readFileSync(fd, 'utf8') : ''; } finally { fs.closeSync(fd); }
+}
+
+/** The graphics card's busy figure now (dota-bench/fps.mjs), or null without an NVIDIA card. */
+function cardBusy() {
+  try {
+    return readBusy(execFileSync('nvidia-smi', ['--query-gpu=utilization.gpu,clocks.gr', '--format=csv,noheader,nounits'], { encoding: 'utf8' }));
+  } catch { return null; }
 }
 
 function ps(script, ...args) {
@@ -240,6 +256,65 @@ async function main() {
         shot(`02-click-${k + 1}`);
       }
       fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify({ vpk: vpk ?? null, menu: true, notes }, null, 2));
+      return;
+    }
+    // --fps: a match of a private lobby rather than the demo, whose small map is not the one played
+    if (process.argv.includes('--fps')) {
+      const press = async (at, wait) => {
+        input('hover', at[0] - 6, at[1]);
+        await sleep(300);
+        input('hover', ...at);
+        await sleep(300);
+        click(at);
+        await sleep(wait);
+      };
+      spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H), '-condebug'], { detached: true, stdio: 'ignore' }).unref();
+      await until(() => /CResponseSystem/.test(logSince(log, started)), 240000, 'the game to load');
+      await sleep(30000);
+      await press(LOBBY.dismiss, 2500);
+      await press(LOBBY.play, 2500);
+      await press(LOBBY.create, 4000);
+      shot('01-lobby');
+      const inLobby = Date.now();
+      await press(LOBBY.play, 3000);
+      await until(() => /HERO_SELECTION/.test(logSince(log, inLobby).slice(-200000)), 120000, 'the picks');
+      await sleep(4000);
+      await command(`dota_select_hero npc_dota_hero_${hero}`);
+      await sleep(3000);
+      await command('dota_dev forcegamestart', 'fps_max 999', 'cl_showfps 2');
+      await until(() => /STATE_PRE_GAME/.test(logSince(log, inLobby).slice(-200000)), 120000, 'the match, which takes a lobby with cheats on');
+      await sleep(6000);
+      await command('dota_pause', 'dota_all_vision 1');
+      await sleep(3000);
+      const measure = async (cap) => {
+        await command(`fps_max ${cap}`);
+        const run = {};
+        for (const [spot, [x, y]] of Object.entries(SPOTS)) {
+          await command(`dota_camera_set_lookatpos ${x} ${y}`);
+          await sleep(3000);
+          const from = fs.readFileSync(log).length;
+          await command('cl_resetfps');
+          await sleep(3000);
+          const busy = [];
+          for (let k = 0; k < 8; k++) { busy.push(cardBusy()); await sleep(450); }
+          await sleep(3000);
+          shot(`${cap}-${spot}`);
+          await command('cl_printfps');
+          run[spot] = { fps: readFps(fs.readFileSync(log).subarray(from).toString('latin1')), busy: mean(busy) };
+          console.log(`bench: ${cap} ${spot}: ${run[spot].fps} FPS, card busy ${run[spot].busy}`);
+        }
+        return run;
+      };
+      const free = await measure(999);
+      const held = await measure(60);
+      const result = { vpk: vpk ?? null, free, held, notes };
+      const against = arg('--against');
+      if (against) {
+        const was = JSON.parse(fs.readFileSync(against, 'utf8'));
+        result.against = { free: fpsChange(free, was.free), held: fpsChange(held, was.held) };
+        console.table(result.against.free);
+      }
+      fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify(result, null, 2));
       return;
     }
     spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H), '+dota_demo_hero', `npc_dota_hero_${hero}`, '+dota_camera_distance', camera], { detached: true, stdio: 'ignore' }).unref();
