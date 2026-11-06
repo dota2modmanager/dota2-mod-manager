@@ -37,7 +37,7 @@ import type { LibRecord } from './types.ts';
 import type { Library } from './library.ts';
 
 /** A pick of the item builder as built: its block, and the game's files under the plain paths. */
-type ItemPick = { id: string; block: string; own: string | null; assets: VpkEntry[] } & ItemAssets;
+type ItemPick = { id: string; block: string; own: string | null; added: string[]; unplaced: boolean; assets: VpkEntry[] } & ItemAssets;
 
 /** How far a build is: the picks built anew so far out of those it has to, or the stage of the write. */
 export type BuildStep = { done: number; total: number } | { stage: 'merged' | 'checked' | 'packed' };
@@ -175,7 +175,7 @@ export function createTableBuild({ library, bases, log }: {
             used.add(key);
             const assets = rec.persona && !isSelectorSlot(rec.slot)
               ? personaAssets(rec, pick.assets, ready) : withoutBaseFiles(String(rec.itemId), pick.assets, ready);
-            const patch = { id: pick.id, block: pick.block, assets, source: rec.name };
+            const patch = { id: pick.id, block: pick.block, assets, source: rec.name, own: pick.own, added: pick.added, unplaced: pick.unplaced, item: !rec.persona };
             out.push(patch);
             owned.push({ patch, own: pick.own });
             sounds.push(...pick.sounds);

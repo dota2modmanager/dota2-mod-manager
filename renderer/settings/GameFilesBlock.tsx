@@ -40,7 +40,7 @@ export function GameFilesBlock({ i, everyone, onEveryone }: { i: number; everyon
   return (
     <div className="settings-block" style={{ '--i': i } as CSSProperties}>
       <h3>{L`Файлы игры`}</h3>
-      <div className="settings-hint">{L`Приложение ставит моды двумя способами. VPK-моды кладёт в папку, которую Dota читает сама, и файлы игры не трогает. Виды из игры, конструктор предметов и эффекты модов работают через таблицу предметов: ради неё приложение вписывает свою папку в gameinfo_branchspecific.gi и подписывает его в dota.signatures.`}</div>
+      <div className="settings-hint">{L`Приложение ставит моды двумя способами. VPK-моды кладёт в папку, которую Dota читает сама, и файлы игры не трогает. Предметы героев идут туда же. Остальные виды из игры и эффекты модов работают через таблицу предметов: ради неё приложение вписывает свою папку в gameinfo_branchspecific.gi и подписывает его в dota.signatures.`}</div>
       <div className="settings-row spaced">
         <span className="settings-label">{L`Таблица предметов`}</span>
         <Swap className="settings-state" value={on}>{on ? L`работает` : L`выключена, файлы игры как у Valve`}</Swap>

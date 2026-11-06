@@ -14,7 +14,6 @@ import { heroesOf, setIsOn } from '../catalog/builder/logic.ts';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
 import { cosmeticName } from '../ui/cosmetic-name.ts';
 import { confirmDialog, promptDialog } from '../ui/dialog.ts';
-import { allowItemTable } from '../ui/game-files.ts';
 import { toast } from '../ui/toast.ts';
 import { openPaint } from './hero-paint.ts';
 import { loadSetIcons, setsPane, type SetsState } from './item-sets.ts';
@@ -168,7 +167,7 @@ function drawHero(key: number, st: HeroState): void {
     })(),
     wearLook: (id) => void busy(async () => {
       const look = looks.find((l) => l.id === id);
-      if (!look || !await allowItemTable()) return;
+      if (!look) return;
       const r = await window.api.cosmetics.wearLook(hero, look.picks);
       if (r.error) { toast(r.error, 'error'); return; }
       toast(r.applied === r.picks ? L`Надето: ${look.name}` : L`Надето ${r.applied} из ${r.picks}`);

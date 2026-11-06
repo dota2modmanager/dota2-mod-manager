@@ -76,7 +76,8 @@ export async function pickCosmetic(slot: string, o: CosmeticOption, remove: bool
   const effect = isItemCosmeticSlot(slot) ? String(effectId || '') : '';
   const k = COSMETIC_PREFIX + slot + '|' + o.id + '|' + effect;
   if (installing.has(k)) return;
-  if (!remove && !await allowItemTable()) return;
+  // an item goes in by files; the game's other looks are lines in its table
+  if (!remove && !isItemCosmeticSlot(slot) && !await allowItemTable()) return;
   const live = pickedIn(slot);
   installing.add(k);
   if (open) drawCosmeticModal();

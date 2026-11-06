@@ -104,6 +104,8 @@ the code, not in this page.
 | [`src/item-builder-styles.ts`](#srcitem-builder-stylests) | An item's styles in the item builder: which ones it has, and its visuals with one of them made |
 | [`src/item-builder-unusual.ts`](#srcitem-builder-unusualts) | The game's unusual and ethereal effects on any item (issue #393): Ethereal Flame, Sunfire, the |
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
+| [`src/item-files-service.ts`](#srcitem-files-servicets) | The picks' pak: the item builder's looks in the language folder, for the game to read with nothing |
+| [`src/item-files.ts`](#srcitem-filests) | The item builder's picks as files alone: a look the game takes from a pak in the language folder, |
 | [`src/item-portraits.ts`](#srcitem-portraitsts) | A hero's HUD portrait and minimap icon as an item builder pick makes them, written once for the |
 | [`src/item-sounds.ts`](#srcitem-soundsts) | An item's sounds and voice, as a mod gives them to a hero who does not own the item. |
 | [`src/item-visuals.ts`](#srcitem-visualsts) | What an item does to the game, read from its block in items_game ("visuals"), and what a mod |
@@ -126,7 +128,9 @@ the code, not in this page.
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
 | [`src/model-glb.ts`](#srcmodel-glbts) | Models out of the installed game as glTF, for a 3D preview of a hero in the chosen items (issue #417). |
+| [`src/model-hitboxes.ts`](#srcmodel-hitboxests) | Hitboxes laid over a wearable's surface, so an effect started on it spreads over the item. |
 | [`src/model-loadout.ts`](#srcmodel-loadoutts) | The animation a hero plays on the game's loadout screen, for the 3D preview (issue #417). |
+| [`src/model-particles.ts`](#srcmodel-particlests) | Particles a model brings by itself, with no item table to create them. |
 | [`src/model-scale.ts`](#srcmodel-scalets) | A compiled model made bigger about its origin, and how much bigger one model is than another. |
 | [`src/model-sequences.ts`](#srcmodel-sequencests) | A model put under another model's path that numbers its sequences as that one does. |
 | [`src/model-skin.ts`](#srcmodel-skints) | A model with one of its material sets made the one it wears by default. |
@@ -140,6 +144,7 @@ the code, not in this page.
 | [`src/overlays-cursor.ts`](#srcoverlays-cursorts) | Cursor sets (src/overlays.ts is the door for fonts and cursors). |
 | [`src/overlays.ts`](#srcoverlaysts) | Fonts and cursors: loose files written over the game's own. |
 | [`src/particle-spec.ts`](#srcparticle-spects) | The particles an item or a hero shows on its loadout, read out of the game for the 3D preview |
+| [`src/particle-surface.ts`](#srcparticle-surfacets) | An effect made to spread over a wearable's surface. |
 | [`src/patch-watch.ts`](#srcpatch-watchts) | Noticing that Dota was patched, while the app is open. |
 | [`src/patcher-gameinfo.ts`](#srcpatcher-gameinfots) | The two gameinfo files (src/patcher.ts explains the patch): the SearchPaths block read out of |
 | [`src/patcher-signatures.ts`](#srcpatcher-signaturests) | The signature list, dota.signatures (src/patcher.ts explains the patch): the hashes the client |
@@ -174,7 +179,7 @@ the code, not in this page.
 | [`src/schema-items.ts`](#srcschema-itemsts) | Reading items_game.txt (src/schema.ts): the items section, one item's fields, the list the |
 | [`src/schema-kv.ts`](#srcschema-kvts) | KeyValues navigation for items_game.txt (src/schema.ts): finding a block's braces and walking |
 | [`src/schema-merge.ts`](#srcschema-mergets) | Mod deltas and the merge (src/schema.ts): which item blocks a mod changed, lifted out of the |
-| [`src/schema-service.ts`](#srcschema-servicets) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
+| [`src/schema-service.ts`](#srcschema-servicets) | Orchestration around the item schema: what goes into it, when it is rebuilt, how a game update |
 | [`src/schema.ts`](#srcschemats) | Item-schema engine: the game's own scripts/items/items_game.txt is the only place |
 | [`src/scream-guard.ts`](#srcscream-guardts) | The pumpkin's mod belongs to whoever opened the pumpkin (src/pumpkin.ts). |
 | [`src/services.ts`](#srcservicests) | What the app is built from: every long-lived service, created once in the order they depend on |
@@ -5716,7 +5721,7 @@ The stock default_item that matches a wearable by slot and by the hero(es) that 
 ### `itemEffectPatch`
 
 ```ts
-export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels, refit?: string): { id: string; block: string; own: string | null } & ItemAssets
+export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels, refit?: string): { id: string; block: string; own: string | null; added: string[]; unplaced: boolean } & ItemAssets
 ```
 
 Turn one paid wearable into the hero's stock item for that slot.
@@ -5739,7 +5744,113 @@ when it is created, and a reconnect keeps them.
 item that swaps one; without it the swap stays in the table and shows in hero demo only
 @param refit  the model another pick makes of this one's, to wear in its place where the game
 has it (src/item-builder-refits.ts)
-@returns `own`: the stock path the item's model goes under, null when it wears none of its own
+@returns `own`: the stock path the item's model goes under, null when it wears none of its own;
+`added`: the systems of the effects asked for; `unplaced`: the slot has no stock model for it to go under, so only the table can put it on
+```
+
+## src/item-files-service.ts
+
+The picks' pak: the item builder's looks in the language folder, for the game to read with nothing
+of its own changed (src/item-files.ts says what goes in). One record in My mods, marked `generated`,
+so its slot, its switch and the master switch work as for any mod; built again in its slot when a
+pick changes, and taken away with the last pick.
+
+### `ItemFilesGenerated`
+
+```ts
+export interface ItemFilesGenerated { itemFiles: true; picks: number; left: LeftBehind[] }
+```
+
+What the pak's record was built from.
+
+### `isItemFilesRecord`
+
+```ts
+export const isItemFilesRecord = (rec: object) => ((rec as { generated?: ItemFilesGenerated }).generated)?.itemFiles === true
+```
+
+A record of this pak, for the code that goes through every record.
+
+### `createItemFilesPak`
+
+```ts
+export function createItemFilesPak({ installer, library, log = () => {} }: { installer: PakInstaller & { remove(files: LibRecord['files'], opts: { recId: string }): void }; library: Pick<Library, 'list' | 'add' | 'update' | 'removeRecord'>; log?: (msg: string) => void; })
+```
+
+The pak's one record over the installer and the library.
+
+## src/item-files.ts
+
+The item builder's picks as files alone: a look the game takes from a pak in the language folder,
+with no edit of the game's own files and no line in its item table.
+
+A pick has always been mostly files: its model under the stock path, its particle swaps, sounds
+and pictures (src/item-builder-assets.ts). The table's block added what a file was thought unable
+to say. Most of that a file can say after all:
+ - the item's `particle_create`s go into the wearable's own key values (src/model-particles.ts),
+   with hitboxes on its surface for them to spread over (src/model-hitboxes.ts);
+ - its material set is made the model's default (src/model-skin.ts);
+ - its activity modifiers are taken off the hero's body, so the item's motions are the plain ones
+   (arcana.ts asModel), one body per hero whatever the number of picks.
+
+What is left needs the table: `TABLE_ONLY`, and a slot with no stock model to stand in for. A pick
+with such a part still goes in by files, and says what it lost (`left`), so the window can tell
+and the person can allow the table. Calvin's constructor (dota-studio) showed that a whole look
+can be files; merging items into the hero's body as it does is not done here, since a body keeps
+one skeleton and his own notes speak of bone conflicts: a wearable stays a wearable.
+
+### `PickPatch`
+
+```ts
+export interface PickPatch extends SchemaPatch
+```
+
+A pick built for the table, with what this needs to know of it (src/schema-build.ts).
+
+### `LeftBehind`
+
+```ts
+export interface LeftBehind { source: string; what: string[] }
+```
+
+One source and what of it stays behind without the table.
+
+### `ItemFiles`
+
+```ts
+export interface ItemFiles { entries: VpkEntry[]; left: LeftBehind[] }
+```
+
+A build's files, and what of the picks they could not carry.
+
+### `pickParts`
+
+```ts
+export function pickParts(patch: Pick<PickPatch, 'block' | 'own' | 'unplaced'>): { systems: string[]; skin: number; motions: string[]; left: string[] }
+```
+
+What a pick's block asks of its files: its effects, material set and motions, and what it asks
+that a file cannot say.
+
+### `wornModel`
+
+```ts
+export function wornModel(model: Buffer, skin: number, systems: string[]): Buffer | null
+```
+
+A wearable as it goes in: in its material set, carrying its effects. Null: the file stays as it was.
+
+### `itemFilesSteps`
+
+```ts
+export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: string): Generator<typeof PAUSE, ItemFiles>
+```
+
+The list a table build made, as one pak's files.
+
+```
+@param game  the game folder, for models the pick did not already copy
+@param beneath  files that go in after the picks' (the arcana bases)
 ```
 
 ## src/item-portraits.ts
@@ -7144,6 +7255,61 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
 
 GLB files of the game's models, made on demand and kept per game build.
 
+## src/model-hitboxes.ts
+
+Hitboxes laid over a wearable's surface, so an effect started on it spreads over the item.
+
+A particle system can start on a hitbox set of a model and pick points on those boxes. A wearable
+has no hitboxes, and the mesh the game's effects read instead it keeps only for a hero's body, so
+on an item the same system piles up in a ball at the model's origin, in the hand. Calvin's
+constructor (dota-studio) showed the way out: boxes made from the item's own vertices, in a set
+the particle points at, with `m_bUseBones` off (src/particle-surface.ts makes that copy).
+
+Each vertex goes to its heaviest bone and into the bone's own space (a box follows its bone), and
+the vertices of a bone are gathered into cells, one box per cell: small enough to read as the
+item's shape, and at most MAX_BOXES of them, since a system picks among boxes on every spawn.
+
+### `SURFACE_SET`
+
+```ts
+export const SURFACE_SET = 'mm_surface'
+```
+
+The set the boxes go in, which a system made to spread over them names.
+
+### `SurfaceBox`
+
+```ts
+export interface SurfaceBox { bone: string; min: number[]; max: number[] }
+```
+
+One box: the bone it follows, its corners in that bone's space.
+
+### `nameHash`
+
+```ts
+export function nameHash(name: string): number
+```
+
+The 32-bit MurmurHash2 the game keeps its names by: a lowercase name, seed 0x31415926.
+
+### `surfaceBoxes`
+
+```ts
+export function surfaceBoxes(file: Buffer): SurfaceBox[]
+```
+
+The boxes for a model's surface: as fine as MAX_BOXES lets them be. None for a model with no vertices.
+
+### `withSurfaceHitboxes`
+
+```ts
+export function withSurfaceHitboxes(model: Buffer, names: string[] = [SURFACE_SET]): Buffer | null
+```
+
+`model` with its surface boxes as a hitbox set under each of `names` on each of its meshes, or null
+for a model this cannot read or that has no vertices of its own. A set it already has stays.
+
 ## src/model-loadout.ts
 
 The animation a hero plays on the game's loadout screen, for the 3D preview (issue #417).
@@ -7246,6 +7412,41 @@ export function itemActivities(block: string): string[]
 ```
 
 The activity modifiers an item's visuals switch on: Dragonclaw Hook's "whalehook".
+
+## src/model-particles.ts
+
+Particles a model brings by itself, with no item table to create them.
+
+A model's key values can list particles (`particle_cfg_list`): the game's own pedestals and
+Lycan's spirit wolves carry their ambient that way, 68 models of the game of 2026-11-06. Each row
+names a system and which of its control point configurations to start it with, and "preview" is
+the one a system's author points at the model's attachments. So a wearable under a stock path can
+carry what the item's `particle_create` entries would have made: the idea of building a look out
+of files alone comes from Calvin's constructor (dota-studio), this is the game's mechanism
+written here from its own files.
+
+The key values are a text in the model's DATA block, in the KV3 text form, and a system named
+there must also be in the file's reference list or the game does not load it.
+
+### `keyValuesWithParticles`
+
+```ts
+export function keyValuesWithParticles(text: string, paths: string[]): string
+```
+
+`text` with its particle list replaced by these systems; a text of the KV3 kind stays one.
+
+### `withParticles`
+
+```ts
+export function withParticles(model: Buffer, paths: string[]): Buffer | null
+```
+
+`model` with these particle systems of its own, or null for a model whose block this cannot change.
+
+```
+@param paths  the systems, as `.vpcf` paths; the ones already listed are replaced
+```
 
 ## src/model-scale.ts
 
@@ -7998,6 +8199,31 @@ export function modelAttachments(model: Buffer | null): Attachment[]
 ```
 
 A model's attachment points.
+
+## src/particle-surface.ts
+
+An effect made to spread over a wearable's surface.
+
+The game's unusual effects start with C_INIT_CreateOnModel reading the model's mesh, which it
+keeps only for the hero's own body: on a wearable the same system piles up at the model's origin.
+Calvin's constructor (dota-studio) answers with hitboxes over the item and a copy of the system
+that reads those instead; the same is done here, against the boxes src/model-hitboxes.ts lays in
+SURFACE_SET. Each system of the tree is copied under SURFACE: mesh and bones
+off in its emitters, and a mesh-skinning operator swapped for one that holds a particle to the
+box it started in, since the item moves with the hero's bones.
+
+### `surfaceSystem`
+
+```ts
+export function surfaceSystem(read: (p: string) => Buffer | null | undefined, system: string): { root: string; entries: VpkEntry[] } | null
+```
+
+The copies of `system` and its children that spread over a surface, or null where no system of
+the tree starts on the model (it hangs on attachment points, and goes on as it is).
+
+```
+@returns the root's path, and the files to put in the pak
+```
 
 ## src/patch-watch.ts
 
@@ -10315,7 +10541,7 @@ An item block a mod changed, lifted out of the table it shipped.
 ### `SchemaPatch`
 
 ```ts
-export interface SchemaPatch { id: string | number; block: string; source?: string; assets?: VpkEntry[] }
+export interface SchemaPatch { id: string | number; block: string; source?: string; assets?: VpkEntry[]; own?: string | null; added?: string[]; unplaced?: boolean; item?: boolean }
 ```
 
 One block to splice into the game's table, and the files that come with it.
@@ -10442,9 +10668,8 @@ validateSchema, a pause every few megabytes of the brace count and every few tho
 
 ## src/schema-service.ts
 
-Orchestration around the item schema: what goes into it, when it is rebuilt, and how a
-game update is repaired. Kept out of src/main.ts so the whole flow can be exercised without
-starting Electron.
+Orchestration around the item schema: what goes into it, when it is rebuilt, how a game update
+is repaired. Kept out of src/main.ts so the whole flow can be exercised without Electron.
 
 The rules it enforces:
   - the schema is ALWAYS rebuilt from the installed game's own items_game.txt, so it can
@@ -10480,7 +10705,7 @@ The patch and the built table as Settings shows them; the patcher's own state is
 ### `createSchemaService`
 
 ```ts
-export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {}, onDeployed = () => {}, modsOff = () => false }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; bases?: Pick<BaseStore, 'entries' | 'want'>; onBuild?: (step: BuildStep | null) => void; onDeployed?: (filled: Set<string>) => void; modsOff?: () => boolean; })
+export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {}, onDeployed = () => {}, modsOff = () => false, pak }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; bases?: Pick<BaseStore, 'entries' | 'want'>; onBuild?: (step: BuildStep | null) => void; onDeployed?: (filled: Set<string>) => void; modsOff?: () => boolean; pak?: PakInstaller; })
 ```
 
 The item table and the search-path patch, kept in step with the library and the installed game.

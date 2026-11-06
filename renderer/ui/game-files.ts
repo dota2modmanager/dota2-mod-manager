@@ -47,7 +47,7 @@ function itemTableDialog(): Promise<boolean> {
     overlay.innerHTML = `
       <div class="confirm-box safe-box" role="dialog" aria-modal="true" aria-labelledby="tableDlgTitle">
         <div class="safe-title" id="tableDlgTitle">${L`Включить виды из игры и эффекты`}</div>
-        <p class="safe-lede">${L`Виды предметов, конструктор героев и эффекты модов работают через таблицу предметов игры. Чтобы Dota её прочитала, приложение впишет свою папку в два файла игры:`}</p>
+        <p class="safe-lede">${L`Предметы героев ставятся файлами и таблицы не просят. Она нужна для остального: видов из игры вроде погоды и курьеров, эффектов модов и тех частей предметов, которые файлом не передать. Чтобы Dota её прочитала, приложение впишет свою папку в два файла игры:`}</p>
         <dl class="safe-files">
           <dt><code>gameinfo_branchspecific.gi</code></dt>
           <dd>${L`+ строка с папкой модов`}</dd>

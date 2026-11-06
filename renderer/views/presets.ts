@@ -38,6 +38,8 @@ registerView('presets', () => renderPresets(true));
 
 const STRIP = 12;
 const mods = (n: number) => `${n} ${plural(n, 'мод', 'мода', 'модов')}`;
+/** A preset with looks only the item table can put on: a hero's items go in by files. */
+const tableLooks = (p: { picks?: { slot: string }[] } | undefined) => !!p?.picks?.some((x) => !x.slot.startsWith('item:'));
 
 function ownCard(p: Preset, byId: Map<string, LibRecord>): OwnPreset {
   const recs = p.modIds.map((id) => byId.get(id)).filter((r): r is LibRecord => Boolean(r));
@@ -177,7 +179,7 @@ const actions: PresetsActions = {
   apply: async (id) => {
     // a look is a line in the game's item table: a preset that carries looks asks for it first,
     // and a "not now" still applies the mods (ui/game-files.ts)
-    if (presets.find((p) => p.id === id)?.picks?.length) await allowItemTable();
+    if (tableLooks(presets.find((p) => p.id === id))) await allowItemTable();
     // a channel that rejects must not leave the button lying about it: that is the shape of the
     // bug that made Install look like a hang for two releases
     let r;
@@ -191,7 +193,7 @@ const actions: PresetsActions = {
       toast(r.installed ? L`Пресет применён · доустановлено ${r.installed} ${plural(r.installed, 'мод', 'мода', 'модов')}` : L`Пресет применён`);
       if (r.missing?.length) toast(L`Своих модов нет на этом компьютере, из каталога их не вернуть: ${r.missing.join(', ')}`, 'warn', 8000);
       for (const err of (r.errors || []).slice(0, 3)) toast(err, 'warn', 7000);
-      if (presets.find((p) => p.id === id)?.picks?.length && !state.settings?.schemaPatch) {
+      if (tableLooks(presets.find((p) => p.id === id)) && !state.settings?.schemaPatch) {
         toast(L`Виды из игры в этом пресете ждут разрешения на таблицу предметов`, 'warn', 8000);
       }
     }

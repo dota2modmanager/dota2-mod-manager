@@ -1,6 +1,5 @@
-// Orchestration around the item schema: what goes into it, when it is rebuilt, and how a
-// game update is repaired. Kept out of src/main.ts so the whole flow can be exercised without
-// starting Electron.
+// Orchestration around the item schema: what goes into it, when it is rebuilt, how a game update
+// is repaired. Kept out of src/main.ts so the whole flow can be exercised without Electron.
 //
 // The rules it enforces:
 //   - the schema is ALWAYS rebuilt from the installed game's own items_game.txt, so it can
@@ -15,7 +14,9 @@ import * as schema from './schema.ts';
 import { createHarvest, type SchemaInstaller } from './schema-harvest.ts';
 import { createCosmetics } from './schema-cosmetics.ts';
 import { everyoneWears } from './item-builder-everyone.ts';
-import { createBackgroundBuilds, createTableBuild, type BuildStep, type BuildYield, type Refreshed } from './schema-build.ts';
+import { createBackgroundBuilds, createTableBuild, isItemPick, type BuildStep, type BuildYield, type Refreshed } from './schema-build.ts';
+import { createItemFilesPak } from './item-files-service.ts';
+import type { PakInstaller } from './generated-pak.ts';
 import { drain } from './steps.ts';
 import { chooseBases } from './arcana-bases.ts';
 import type { BaseStore } from './arcana-base-store.ts';
@@ -66,14 +67,16 @@ export interface SchemaState extends Partial<patcher.PatchState> {
  * @param deps.onDeployed the paths, lowercased, the written table's picks fill (none once it is
  *   taken off): the arcana window's Terrorblade gives them up (src/arcana-service.ts giveWay)
  * @param deps.modsOff whether the master switch has every mod off (installer.masterIsOff)
+ * @param deps.pak the installer as src/generated-pak.ts needs it: without it, picks wait for the table
  */
 /** The item table and the search-path patch, kept in step with the library and the installed game. */
-export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {}, onDeployed = () => {}, modsOff = () => false }: {
+export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {}, onDeployed = () => {}, modsOff = () => false, pak }: {
   settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void;
   bases?: Pick<BaseStore, 'entries' | 'want'>;
   onBuild?: (step: BuildStep | null) => void;
   onDeployed?: (filled: Set<string>) => void;
   modsOff?: () => boolean;
+  pak?: PakInstaller;
 }) {
   const backupDir = path.join(userDataDir, 'backups', 'patch');
   const gamePath = () => settings.get('dotaGamePath');
@@ -81,10 +84,12 @@ export function createSchemaService({ settings, library, installer, userDataDir,
   const stampOf = (table: string | null) => (table ? [table, builderStamp()].filter(Boolean).join('|') : null);
   // every pick built once, and the patches of everything else (src/schema-build.ts)
   const table = createTableBuild({ library, bases, log });
+  // the picks without the table: a pak in the language folder
+  const files = pak && createItemFilesPak({ installer: pak, library, log });
+  const picksOn = () => library.list().filter((r) => r.enabled !== false && isItemPick(r));
 
-  // The game's table is 50 MB and walking its 25k items costs ~300 ms, while the picker
-  // asks about a dozen slots in a row. Hold on to the text until the game itself changes:
-  // the stamp is a stat() of the paks, so noticing an update stays cheap.
+  // The game's table is 50 MB, its 25k items ~300 ms to walk, and the picker asks about a dozen
+  // slots in a row: kept until the game changes, which a stat() of the paks notices cheaply.
   let cache: { stamp: string | null; base: schema.GameSchema | null } = { stamp: null, base: null };
   /** The game's own table, read once per build of the game. */
   function vanillaBase(): schema.GameSchema {
@@ -126,10 +131,21 @@ export function createSchemaService({ settings, library, installer, userDataDir,
         onDeployed(new Set());
         return { ok: true, deployed: false, patches: 0 };
       };
-      // the master switch renames the paks in the language folder; the table is in a folder of
-      // its own, so it stayed and the picked cosmetics with it while "mods off" said vanilla. It
-      // goes, and the switch turned on builds it again (src/ipc-library.ts mods:setMaster)
-      if (!settings.get('schemaPatch') || modsOff()) return drop();
+      // the master switch renames the language folder's paks; the table, in a folder of its own, stayed
+      // while "mods off" said vanilla. It goes, and the switch builds it again (src/ipc-library.ts)
+      if (modsOff()) return drop();
+      if (!settings.get('schemaPatch')) {
+        const picks = picksOn().length;
+        if (!files || !picks) { files?.clear(); return drop(); }
+        const base = vanillaBase();
+        const filled = yield* files.buildSteps(yield* table.buildSteps(base.text, game), game, picks);
+        const out = drop(); // the table's, if one was up: the pak takes over after it
+        files.commit();
+        settings.set('schemaStamp', stampOf(base.stamp));
+        onDeployed(filled);
+        return { ...out, deployed: true, patches: picks };
+      }
+      files?.clear();
       // through the cache, not around it: this runs on every mod removed, enabled or
       // switched off, and re-extracting 50 MB from the game's pak each time was the wait
       const base = vanillaBase();
@@ -166,6 +182,8 @@ export function createSchemaService({ settings, library, installer, userDataDir,
     // verified original back is the whole repair (see patcher.restoreBranch).
     if (!settings.get('schemaPatch')) {
       try {
+        // a Dota update reaches the picks' pak as it reaches the table
+        if (files && picksOn().length && !modsOff() && stampOf(vanillaBase().stamp) !== settings.get('schemaStamp')) void refreshInBackground();
         if (patcher.state(game, patcher.FOLDER).vanillaOk) return { ok: true, healed: [] };
         patcher.revert({ gamePath: game, folder: patcher.FOLDER, backupDir });
         return { ok: true, healed: patcher.state(game, patcher.FOLDER).vanillaOk ? ['vanilla'] : [] };
@@ -251,7 +269,8 @@ export function createSchemaService({ settings, library, installer, userDataDir,
       deployed: false,
       stale: false,
       mods: library.list().filter((r) => r.enabled !== false && Array.isArray(r.schema) && r.schema.length).length,
-      cosmeticsPicked: library.list().filter((r) => r.categoryId === 'cosmetic' && r.enabled !== false).length,
+      // a pick that goes as files asks nothing of the table, unless a part of it stays behind
+      cosmeticsPicked: library.list().filter((r) => r.categoryId === 'cosmetic' && r.enabled !== false && !(files && isItemPick(r))).length + (files?.left().length ?? 0),
       conflicts: conflicts(),
     };
     if (!game) return out;
