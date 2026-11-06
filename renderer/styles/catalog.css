@@ -1019,6 +1019,7 @@
 .fx-empty .ms { font-size: var(--text-xl); }
 .fx-controls { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-4); }
 .fx-tint { grid-column: 1 / -1; }
+.fx-items { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--text-muted); cursor: pointer; }
 @media (max-width: 860px) { .fx-room { grid-template-columns: minmax(0, 1fr); } }
 .background-look .scale-range { width: 100%; }
 /* the rank medal and hero levels of the player's own screen (catalog/rank/RankModal.tsx) */

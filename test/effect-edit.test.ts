@@ -37,6 +37,7 @@ const files = new Map<string, Buffer>([
     ['m_Children', { objs: [[['m_ChildRef', { str: 'particles/b.vpcf' }]]] }],
   ])],
   ['particles/b.vpcf_c', system([['m_flConstantRadius', { dbl: 3 }]])],
+  ['particles/c.vpcf_c', system([['m_flConstantRadius', { dbl: 5 }]])],
 ]);
 const read = (p: string) => files.get(p);
 
@@ -95,7 +96,7 @@ test('what the window sends is kept to what this knows, in range', () => {
   assert.deepEqual(cleanEdits(null), {});
 });
 
-function world(t: TestContext) {
+function world(t: TestContext, finder?: Parameters<typeof createEffectEdit>[0]['finder']) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-fx-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const game = path.join(dir, 'game');
@@ -105,7 +106,7 @@ function world(t: TestContext) {
   const userdata = path.join(dir, 'userdata');
   const installer = new Installer({ userDataDir: userdata, getGamePath: () => game, getLangSuffix: () => 'russian', onProgress: () => {} } as never);
   const library = new Library(userdata);
-  const service = createEffectEdit({ gamePath: () => game, installer, library, sprites: async () => ({}) });
+  const service = createEffectEdit({ gamePath: () => game, installer, library, sprites: async () => ({}), finder });
   return { service, library, installer, game: () => game };
 }
 
@@ -139,13 +140,43 @@ test('one record per effect: built again in its place, and read back with its ch
   assert.equal(n(kv, 'm_flConstantRadius'), 30);
   const back = await service.load('particles/a.vpcf');
   assert.deepEqual(back.edits, { [WHOLE]: { size: 300 } });
-  assert.equal(back.def.tree.m_flConstantRadius, 30, 'what plays is what was built');
+  assert.equal(back.defs[0].tree.m_flConstantRadius, 30, 'what plays is what was built');
   assert.deepEqual(service.saved(), [{ path: 'particles/a.vpcf', name: 'a' }]);
 });
 
 test('what plays follows the sliders, a change that reaches nothing says so, and a path that is no effect is refused', (t) => {
   const { service } = world(t);
-  assert.equal(service.preview('particles/a.vpcf', { [WHOLE]: { size: 50 } })?.tree.m_flConstantRadius, 5);
+  assert.equal(service.preview('particles/a.vpcf', { [WHOLE]: { size: 50 } })[0].tree.m_flConstantRadius, 5);
   assert.throws(() => service.install('particles/b.vpcf', { [WHOLE]: { speed: 200 } }));
   assert.throws(() => service.preview('models/evil.vmdl', {}));
+});
+
+test('an ability takes its changes on all its files, item versions only when asked', async (t) => {
+  const finder = {
+    ability: () => ({ name: 'Blast', paths: ['particles/a.vpcf', 'particles/b.vpcf'], files: ['particles/a.vpcf', 'particles/b.vpcf'] }),
+    variants: () => ['particles/c.vpcf'],
+  };
+  const { service, installer } = world(t, finder);
+  const id = 'ability:axe/axe_blast';
+  const loaded = await service.load(id);
+  assert.equal(loaded.name, 'Blast');
+  assert.equal(loaded.variants, 1);
+  assert.equal(loaded.defs.length, 2);
+  const rec = service.install(id, { [WHOLE]: { size: 200 } }, false);
+  const pak = () => [...openVpkIndex(path.join(installer.langFolder(), rec.files[0].relPath)).paths()];
+  assert.ok(pak().includes('particles/a.vpcf_c'));
+  assert.ok(!pak().includes('particles/c.vpcf_c'), 'no item version unless asked');
+  const withItems = service.install(id, { [WHOLE]: { size: 200 } }, true);
+  assert.equal(withItems.id, rec.id);
+  const inside = [...openVpkIndex(path.join(installer.langFolder(), withItems.files[0].relPath)).paths()];
+  assert.ok(inside.includes('particles/c.vpcf_c'));
+  assert.equal((await service.load(id)).items, true);
+  assert.deepEqual(service.saved(), [{ path: id, name: 'Blast' }]);
+});
+
+test('a change on a system falls on what is under it, and the one under it can have its own', () => {
+  const down = editedEntries(read, 'particles/a.vpcf', cleanEdits({ 'particles/a.vpcf': { size: 200 } }));
+  assert.equal(n(tree(down, 'particles/b.vpcf_c'), 'm_flConstantRadius'), 6);
+  const both = editedEntries(read, 'particles/a.vpcf', cleanEdits({ 'particles/a.vpcf': { size: 200 }, 'particles/b.vpcf': { size: 150 } }));
+  assert.equal(n(tree(both, 'particles/b.vpcf_c'), 'm_flConstantRadius'), 9);
 });

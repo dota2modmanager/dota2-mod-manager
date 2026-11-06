@@ -9,10 +9,15 @@ import type { ParticleDef } from '../../api/preview3d.ts';
 export const WHOLE = '*';
 
 export interface EffectOpen {
+  /** a file, or `ability:hero/ability` for all of an ability's */
   path: string;
+  name: string;
   systems: { path: string; depth: number }[];
-  def: ParticleDef;
+  defs: ParticleDef[];
   sprites: Record<string, Uint8Array>;
+  /** how many effects items play in its place, and whether the change takes them along */
+  variants: number;
+  items: boolean;
 }
 
 export interface EffectModalModel {
@@ -53,6 +58,7 @@ export interface EffectModalActions {
   hit: (hit: AbilityHit) => void;
   replay: () => void;
   choose: (key: string) => void;
+  items: (on: boolean) => void;
   edit: (patch: Partial<EffectEdit>) => void;
   reset: () => void;
   install: () => void;
@@ -165,7 +171,9 @@ function Finder({ m, actions }: { m: EffectModalModel; actions: EffectModalActio
           ? <Hero m={m} actions={actions} />
           : <>
             {m.saved.length > 0 && <div className="fx-list-head">{L`Уже изменённые`}</div>}
-            {m.saved.length > 0 && <Files paths={m.saved.map((x) => x.path)} actions={actions} />}
+            {m.saved.length > 0 && <ul>
+              {m.saved.map((x) => <li key={x.path}><button type="button" className="fx-row" data-effect={x.path} onClick={() => actions.open(x.path)}><span>{x.name}</span></button></li>)}
+            </ul>}
             <Heroes m={m} actions={actions} />
           </>}
     </div>
@@ -173,12 +181,13 @@ function Finder({ m, actions }: { m: EffectModalModel; actions: EffectModalActio
 }
 
 function Systems({ open, m, actions }: { open: EffectOpen; m: EffectModalModel; actions: EffectModalActions }) {
+  const ability = open.path.startsWith('ability:');
   return (
     <div className="fx-list">
       <button type="button" className="btn btn-ghost fx-back" id="fxBack" onClick={actions.back}><span className="ms">arrow_back</span>{L`К поиску`}</button>
       <ul>
         <li><button type="button" className={`fx-row${m.chosen === WHOLE ? ' is-chosen' : ''}`} data-system={WHOLE} onClick={() => actions.choose(WHOLE)}>
-          <span>{L`Весь эффект`}</span>{m.edits[WHOLE] && <i className="hud-list-mark" />}
+          <span>{ability ? L`Вся способность` : L`Весь эффект`}</span>{m.edits[WHOLE] && <i className="hud-list-mark" />}
         </button></li>
         {open.systems.map((s) => (
           <li key={s.path}><button type="button" className={`fx-row${m.chosen === s.path ? ' is-chosen' : ''}`} data-system={s.path} data-depth={Math.min(s.depth, 3)} onClick={() => actions.choose(s.path)}>
@@ -195,7 +204,7 @@ export function EffectModal({ m, actions }: { m: EffectModalModel; actions: Effe
   return (
     <div className="modal-body fx-editor">
       <div className="modal-title-row">
-        <div className="modal-title">{m.open ? last(m.open.path) : L`Редактор эффектов`}</div>
+        <div className="modal-title">{m.open ? m.open.name : L`Редактор эффектов`}</div>
         <button className="modal-close" id="modalCloseBtn" aria-label={L`Закрыть`} onClick={actions.close}>
           <span className="ms">close</span>
         </button>
@@ -205,12 +214,16 @@ export function EffectModal({ m, actions }: { m: EffectModalModel; actions: Effe
         <div className="fx-view">
           {m.open
             ? <div className="fx-stage">
-              <EffectStage path={m.open.path} def={m.open.def} sprites={m.open.sprites} play={m.play} />
+              <EffectStage path={m.open.path} defs={m.open.defs} sprites={m.open.sprites} play={m.play} />
               <button type="button" className="fx-replay" id="fxReplay" aria-label={L`Проиграть ещё раз`} title={L`Проиграть ещё раз`} onClick={actions.replay}><span className="ms">replay</span></button>
-              {!hasSprites(particleSpec(m.open.def)) && <div className="fx-none">{L`Этот эффект сделан из моделей или света, просмотр его не рисует. В игре он есть.`}</div>}
+              {!m.open.defs.some((d) => hasSprites(particleSpec(d))) && <div className="fx-none">{L`Этот эффект сделан из моделей или света, просмотр его не рисует. В игре он есть.`}</div>}
             </div>
             : <div className="fx-empty"><span className="ms">{m.busy === 'load' ? 'progress_activity' : 'auto_awesome'}</span><span>{L`Выбери героя и способность слева: эффект заиграет здесь`}</span></div>}
           {m.open && <Controls m={m} actions={actions} />}
+          {m.open && m.open.variants > 0 && <label className="fx-items">
+            <input type="checkbox" className="lib-check" id="fxItems" checked={m.open.items} onChange={(e) => actions.items(e.currentTarget.checked)} />
+            <span>{L`И на версиях от предметов: ${m.open.variants}`}</span>
+          </label>}
         </div>
       </div>
       {m.open && <div className="modal-actions">

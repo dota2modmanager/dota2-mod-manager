@@ -170,16 +170,15 @@ export function editTree(kv: Kv3Block, edit: EffectEdit): boolean {
   return did.some(Boolean);
 }
 
-/** The changes that fall on one system: its own over those on the whole effect. */
-function falling(edits: EffectEdits, path: string): EffectEdit | null {
-  const all = edits[WHOLE] ?? {};
-  const own = edits[pathOf(path)] ?? {};
+/** The changes that fall on one system: those on the whole effect, then on each system above it, then its own. */
+function falling(edits: EffectEdits, chain: string[]): EffectEdit | null {
+  const layers = [WHOLE, ...chain.map(pathOf)].flatMap((k) => edits[k] ?? []);
   const out: EffectEdit = {};
   for (const k of SCALES) {
-    const v = Math.round(((all[k] ?? 100) * (own[k] ?? 100)) / 100);
-    if (v !== 100) out[k] = v;
+    const v = layers.reduce((n, e) => n * ((e[k] ?? 100) / 100), 100);
+    if (Math.round(v) !== 100) out[k] = Math.round(v);
   }
-  const hue = own.tint ?? all.tint;
+  const hue = layers.findLast((e) => e.tint)?.tint;
   if (hue) out.tint = hue;
   return Object.keys(out).length ? out : null;
 }
@@ -209,8 +208,11 @@ export function systemsOf(read: (p: string) => Buffer | null | undefined, root: 
 /** The changed files of an effect, under the paths they have in the game. */
 export function editedEntries(read: (p: string) => Buffer | null | undefined, root: string, edits: EffectEdits): VpkEntry[] {
   const out: VpkEntry[] = [];
-  for (const { path } of systemsOf(read, root)) {
-    const edit = falling(edits, path);
+  const chain: string[] = [];
+  for (const { path, depth } of systemsOf(read, root)) {
+    chain.length = depth;
+    chain.push(path);
+    const edit = falling(edits, chain);
     const bytes = read(`${path}_c`);
     if (!edit || !bytes) continue;
     const block = resourceBlock(bytes, 'DATA');

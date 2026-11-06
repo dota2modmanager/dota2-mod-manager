@@ -21,7 +21,8 @@ let asked = 0;
 let timer: ReturnType<typeof setTimeout> | undefined;
 sharesOverlay(() => { open = false; });
 
-const key = (e: EffectEdits) => JSON.stringify(Object.keys(e).sort().map((k) => [k, e[k]]));
+const key = (e: EffectEdits, items = false) => JSON.stringify([items, ...Object.keys(e).sort().map((k) => [k, e[k]])]);
+const settle = () => { m = { ...m, same: key(m.edits, m.open?.items) === on }; };
 
 /** The window. */
 export async function openEffects(from: Element | null): Promise<void> {
@@ -61,6 +62,8 @@ async function showHero(hero: string | null, group: string | null = null): Promi
 /** A line of the hero's effects: one effect alone opens at once. */
 function showGroup(id: string | null): void {
   const g = m.groups.find((x) => x.id === id);
+  // an ability opens whole: one colour goes on all its files, and a file of it can still be picked
+  if (g?.ability && m.hero) { void load(`ability:${m.hero}/${g.ability}`); return; }
   m = { ...m, group: id };
   draw();
   if (g?.paths.length === 1) void load(g.paths[0]);
@@ -83,6 +86,7 @@ function draw(): void {
     replay: () => { m = { ...m, play: m.play + 1 }; draw(); },
     back: () => { m = { ...m, open: null, edits: {}, chosen: WHOLE, same: true, installed: false }; draw(); },
     choose: (chosen) => { m = { ...m, chosen }; draw(); },
+    items: (items) => { if (m.open) { m = { ...m, open: { ...m.open, items } }; settle(); draw(); } },
     edit,
     reset: () => changed({}),
     install: () => void install(),
@@ -101,10 +105,10 @@ async function load(path: string): Promise<void> {
   m = { ...m, busy: 'load' };
   draw();
   const r = await window.api.fx.load(path);
-  if (r.error || !('def' in r)) { m = { ...m, busy: null }; toast(r.error || L`Не удалось прочитать эффект`, 'error', 8000); draw(); return; }
-  on = key(r.edits);
+  if (r.error || !('defs' in r)) { m = { ...m, busy: null }; toast(r.error || L`Не удалось прочитать эффект`, 'error', 8000); draw(); return; }
+  on = key(r.edits, r.items);
   m = { ...m, busy: null, chosen: WHOLE, edits: r.edits, same: true, installed: Object.keys(r.edits).length > 0,
-    open: { path: r.path, systems: r.systems, def: r.def, sprites: r.sprites } };
+    open: { path: r.path, name: r.name, systems: r.systems, defs: r.defs, sprites: r.sprites, variants: r.variants, items: r.items } };
   draw();
 }
 
@@ -117,7 +121,8 @@ function edit(patch: Partial<EffectEdit>): void {
 }
 
 function changed(edits: EffectEdits): void {
-  m = { ...m, edits, same: key(edits) === on };
+  m = { ...m, edits };
+  settle();
   draw();
   clearTimeout(timer);
   timer = setTimeout(() => void replay(), SETTLE);
@@ -128,8 +133,8 @@ async function replay(): Promise<void> {
   if (!showing) return;
   const ask = ++asked;
   const r = await window.api.fx.preview(showing.path, m.edits);
-  if (ask !== asked || m.open?.path !== showing.path || !('def' in r) || !r.def) return;
-  m = { ...m, open: { ...showing, def: r.def } };
+  if (ask !== asked || m.open?.path !== showing.path || !('defs' in r) || !r.defs.length) return;
+  m = { ...m, open: { ...m.open, defs: r.defs } };
   draw();
 }
 
@@ -138,11 +143,11 @@ async function install(): Promise<void> {
   if (m.busy || !effect) return;
   m = { ...m, busy: 'build' };
   draw();
-  const r = await window.api.fx.install(effect, m.edits).catch((err) => ({ error: String(err?.message || err) }));
+  const r = await window.api.fx.install(effect, m.edits, m.open?.items).catch((err) => ({ error: String(err?.message || err) }));
   m = { ...m, busy: null };
   if (r.error) { toast(r.error, 'error', 8000); draw(); return; }
   toast(L`Собрано и стоит в «Моих модах»`);
-  on = key(m.edits);
+  on = key(m.edits, m.open?.items);
   m = { ...m, same: true, installed: true };
   await refreshInstalledIndex();
   await screen.redraw();
