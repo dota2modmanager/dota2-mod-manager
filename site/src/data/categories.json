@@ -3479,15 +3479,6 @@
       "id": "parts",
       "mods": [
         {"name":"Anime Scoreboard","styleLabel":null,"group":"scoreboard","image":{"src":"/mods/anime-scoreboard.webp","width":854,"height":480},"author":"KoH4atb_H3T","authorUrl":null,"date":1793862465},
-        {
-          "name": "Gridstudio Hero Meta",
-          "styleLabel": null,
-          "group": "misc",
-          "image": {"src":"/mods/gridstudio-hero-meta.webp","width":854,"height":480},
-          "author": "GridStudio",
-          "authorUrl": "https://gridstudio.me",
-          "date": 1793862465
-        },
         {"name":"Black Minimap","styleLabel":null,"group":"minimap","image":{"src":"/mods/black-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1793620367},
         {
           "name": "Dark Grey Minimap",

@@ -1,5 +1,5 @@
 {
-  "count": 1885,
+  "count": 1884,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -1424,7 +1424,6 @@
     "c478c9d3487c4dcd9656dbe098be0bcef3059416": [{"name":"Hoodwink Taunt","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
     "c486d2b8a2f28bfeb09664f4086f3feb6f8b23a7": [{"name":"Clockwerk Apex Automated","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "c4be87b04064e0024a2aeb88af9ef48a21375a7f": [{"name":"Summer Quarteros Curios","categoryId":"ti-bp-effects","styleLabel":null,"type":"vpk"}],
-    "c4e68b357cf9d3c6b385f05deffd91174af8d5f6": [{"name":"Gridstudio Hero Meta","categoryId":"parts","styleLabel":null,"type":"vpk"}],
     "c4ef0c0634afbe53ecf0d3ae9e6ca2c6b709cd01": [{"name":"Reptilian Radiant Creeps","categoryId":"creeps","styleLabel":"Style I","type":"vpk"}],
     "c564a19c8e2021a71551b5af3894f1581f40e41d": [{"name":"Electric River","categoryId":"river","styleLabel":null,"type":"vpk"}],
     "c58353cf76f5aa393eee7c6eae4c3e3d49800236": [{"name":"Wave Lite Peach","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
