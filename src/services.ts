@@ -10,6 +10,7 @@ import path from 'node:path';
 import { Settings } from './settings.ts';
 import { beginNightAgain } from './pumpkin.ts';
 import { Catalog } from './catalog.ts';
+import { createPreviewStore } from './preview-cache.ts';
 import { Installer } from './installer.ts';
 import * as importer from './import.ts';
 import { createCursors } from './cursors.ts';
@@ -83,6 +84,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   setDownloadProxy(settings.get('downloadProxy'));
   setLang(settings.get('uiLang'));
   const catalog = new Catalog(userData);
+  const previewStore = createPreviewStore({ dir: path.join(userData, 'preview-cache'), log: diag });
   const library = new Library(userData);
   const downloadStats = createDownloadStats({
     cacheFile: path.join(userData, 'download-counts.json'),
@@ -245,7 +247,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   const importVpkBuffers: AppContext['importVpkBuffers'] = (items) => runImport((onStep) => importer.importVpkBuffers(installer, Array.isArray(items) ? items : [], onStep));
 
   return {
-    settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
+    previewStore, settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
     remoteConfig, readyPresets, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, hudScale, effectEdit, effectFinder, rankLook, mapDecor, heroPaint, abilitySounds, buildUndo, heroPreview,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };

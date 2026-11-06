@@ -36,6 +36,7 @@ import { createGate } from './feature-gate.ts';
 import { settingsViewFor } from './settings-view.ts';
 import { registerIpc } from './ipc.ts';
 import { guardTheApp } from './window-guard.ts';
+import { PRIVILEGED_SCHEME, servePreviews } from './preview-cache.ts';
 import { jailLogTo, jailRoots, jailThisRun } from './write-jail.ts';
 import { createAppLog } from './app-log.ts';
 import { releaseNotes } from './release-notes.ts';
@@ -46,10 +47,11 @@ import { createGameUpkeep, createGameWatch, dotaIsRunning, launchWarning } from 
 import type { AppContext, AppProgress } from './app-context.ts';
 import type { BrowserWindow } from 'electron';
 
-const { app, ipcMain, shell, net, session } = electron();
+const { app, ipcMain, shell, net, session, protocol } = electron();
 
 // a sandbox run (--write-jail=<folder>) writes nowhere else, from its first write on (src/write-jail.ts)
 jailThisRun(process.argv, process.env);
+protocol.registerSchemesAsPrivileged([PRIVILEGED_SCHEME]); // before the app is ready, or the window will not know the address
 
 /** electron-updater, which a development checkout may not have installed yet. */
 type AutoUpdater = UpdaterLike & { quitAndInstall(): void };
@@ -79,12 +81,9 @@ if (IS_PORTABLE) {
 /* Asked to put up the removal window, unless this is an update wearing the same clothes.
  *
  * The uninstaller runs the app once with --uninstall to ask what should go along with it, and
- * reads the exit code for the answer (build/installer.nsh). An update runs the old uninstaller
- * with --updated and /KEEP_APP_DATA, and the NSIS side already stops there. This is the second
- * lock on the same door: it went wrong once, in front of everybody, and the failure mode is a
- * person being asked whether to delete their mods while they are merely updating. Both locks and
- * the reasoning are in src/uninstall-args.ts, which takes a command line so the cases can be
- * tested without being launched. */
+ * reads the exit code for the answer (build/installer.nsh). An update must never land here: it
+ * would ask somebody merely updating whether to delete their mods. Both locks against that and
+ * the reasoning are in src/uninstall-args.ts. */
 const IS_UNINSTALL = isUninstallRun(process.argv);
 const CLI = cliCommand(process.argv); // --apply, --list, --disable-all: no window (src/cli.ts)
 
@@ -170,6 +169,7 @@ async function start(): Promise<void> {
     adoptImportedFiles: adopt.adoptImportedFiles, disableOtherCursors: cursors.disableOtherCursors, blocked: createGate({ remoteConfig, settings }) }, app);
 
   presets = services.presets;
+  servePreviews(session.defaultSession, services.previewStore);
   let updater: ReturnType<typeof createUpdater> | null = null;
   let patchWatcher: ReturnType<typeof createPatchWatcher> | null = null;
   // what the interface last said went wrong, for a report to list apart from the log (diag:rendererError)
@@ -179,7 +179,7 @@ async function start(): Promise<void> {
   /* Everything the IPC modules may ask for, in one place. What changes while the app runs (the
      window, the updater, the patch watcher, the upkeep's state) is a function read when needed. */
   const ctx: AppContext = {
-    settings, catalog, installer, library, fingerprints, schemaService, updateImpact, icons, gameIcons, modPreviews,
+    settings, catalog, previewStore: services.previewStore, installer, library, fingerprints, schemaService, updateImpact, icons, gameIcons, modPreviews,
     toolchain, compiler, toolsKeeper, keepTools, remoteConfig, readyPresets: services.readyPresets, presets, arcana, mapLooks: services.mapLooks, menuBackground: services.menuBackground, hudScale: services.hudScale, effectEdit: services.effectEdit, effectFinder: services.effectFinder, rankLook: services.rankLook, mapDecor: services.mapDecor, heroPaint: services.heroPaint, abilitySounds: services.abilitySounds, buildUndo: services.buildUndo, heroPreview: services.heroPreview, discordAuth, portableUpdater, autoUpdater,
     // One gate, handed to every module that guards a channel with it. Two copies is how installing
     // broke once: the call went to one file and the helper stayed in the other.

@@ -161,6 +161,7 @@ the code, not in this page.
 | [`src/preset-plan.ts`](#srcpreset-plants) | How a preset travels to somebody else (src/presets-service.ts applies, packs and receives |
 | [`src/preset-share.ts`](#srcpreset-sharets) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
 | [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
+| [`src/preview-cache.ts`](#srcpreview-cachets) | The catalog's pictures, kept on this disk and served from it. |
 | [`src/pumpkin.ts`](#srcpumpkints) | The pumpkin's side of the key (renderer/ui/pumpkin.ts asks, tools/pumpkin-worker answers). |
 | [`src/quit-after-build.ts`](#srcquit-after-buildts) | Quitting waits for the item table being written. |
 | [`src/rank-look-script.ts`](#srcrank-look-scriptts) | The script the rank look puts into the game's layouts (src/rank-look.ts says which and why): |
@@ -8064,6 +8065,14 @@ export function noteFailure(host: string, why: string): void
 
 _No description in the source._
 
+### `noteStall`
+
+```ts
+export function noteStall(host: string, why: string): void
+```
+
+A host that took a whole timeout to say nothing is blocked rather than unlucky, so it stands down now.
+
 ### `noteSuccess`
 
 ```ts
@@ -8137,6 +8146,14 @@ config this way and derives the host from the address; this is the same rule aga
 where the address becomes a request, so nothing that reaches applyMirrors another way (a test,
 a later caller) can point downloads at plain http or at a host other than the one whose
 failures stand it down. The bytes are still checked against the catalog's hashes either way.
+
+### `pictureBases`
+
+```ts
+export function pictureBases(): string[]
+```
+
+The picture folders on hosts the signed config names (src/preview-cache.ts).
 
 ### `applyMirrors`
 
@@ -9248,6 +9265,134 @@ Everything about presets that needs the running app's services.
 @param deps.deployAndApply  rebuilds one pack's VPK
 @param deps.settings       where the preset applied last is kept (presetState)
 ```
+
+## src/preview-cache.ts
+
+The catalog's pictures, kept on this disk and served from it.
+
+The window used to ask raw.githubusercontent.com for every preview itself and turn to the mirror
+only once that failed. Where GitHub answers, that is under a second. Where it is blocked the
+connection hangs rather than failing: measured 2026-11-07, 33 category pictures on a clean run
+and not one drawn a minute later, while the catalog itself had loaded in seconds. The picture
+did not fail for the fallback to start, it just never came.
+
+So the window's requests for a catalog picture are redirected here (servePreviews). A picture on
+disk is answered from disk. One that is not goes to the mirror first, because that host is not
+blocked and its edge cache keeps a picture a few hundred kilobytes away from anybody; the other
+hosts join in after a moment instead of after a timeout. warm() then fetches the rest of the
+catalog in the background, a few at a time, so a category somebody opens for the first time is
+on disk already.
+
+Hosts that fetch GitHub on behalf of anybody (ghproxy and friends) stay out of this list. They
+carry mod archives because a digest checks those. A picture has no digest and goes straight to
+an image decoder, so it comes from a host that holds the catalog's own files.
+
+Videos stay out too: they are hundreds of megabytes together and the player wants Range
+requests. The window asks the mirror for those directly (ui/media.ts).
+
+### `SCHEME`
+
+```ts
+export const SCHEME = 'mm-preview'
+```
+
+The address scheme the window's pictures are answered on.
+
+### `PRIVILEGED_SCHEME`
+
+```ts
+export const PRIVILEGED_SCHEME = { scheme: SCHEME, privileges: { standard: true, secure: true } }
+```
+
+What the window has to be told about the scheme, before the app is ready.
+
+### `WATCHED`
+
+```ts
+export const WATCHED = `${RAW}${PREVIEWS}*`
+```
+
+The address pattern the window's picture requests are caught by.
+
+### `FRESH_MS`
+
+```ts
+export const FRESH_MS = 7 * 24 * 3600 * 1000
+```
+
+A picture older than this is asked about again, in case its author replaced it under the same name.
+
+### `pictureOf`
+
+```ts
+export function pictureOf(url: string): string | null
+```
+
+The catalog path of a picture address, encoded as it arrived, or null for anything else.
+
+### `redirectFor`
+
+```ts
+export function redirectFor(url: string): string | null
+```
+
+Where the window's request goes instead; null leaves it alone.
+
+### `pictureType`
+
+```ts
+export function pictureType(b: Uint8Array): string | null
+```
+
+What these bytes really are, or null when they are no picture at all: a host's error page, say.
+
+### `hostsFor`
+
+```ts
+export function hostsFor(rel: string): string[]
+```
+
+Hosts that carry this picture, best first.
+
+### `picturesIn`
+
+```ts
+export function picturesIn(mods: unknown, constants: unknown): string[]
+```
+
+Every picture the catalog names, categories first, encoded the way the window asks for them.
+
+### `Picture`
+
+```ts
+export interface Picture { bytes: Uint8Array; type: string }
+```
+
+A picture ready to hand over.
+
+### `createPreviewStore`
+
+```ts
+export function createPreviewStore({ dir, fetchFn = (url, init) => fetch(url, { ...init, ...downloadProxyFetchInit() } as RequestInit), stagger = STAGGER_MS, log = () => {}, }: StoreOptions)
+```
+
+The folder of pictures, and the one way in and out of it.
+
+### `PreviewStore`
+
+```ts
+export type PreviewStore = ReturnType<typeof createPreviewStore>
+```
+
+What createPreviewStore hands back.
+
+### `servePreviews`
+
+```ts
+export function servePreviews(session: Electron.Session, store: PreviewStore): void
+```
+
+Answers the scheme from the store and points the window's picture requests at it.
 
 ## src/pumpkin.ts
 

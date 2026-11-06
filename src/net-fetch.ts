@@ -1,13 +1,13 @@
 // A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a
 // failure noted against its host, and the first good answer returned.
-import { stoodDown, noteFailure, noteSuccess, entriesFor, liveOrder, type Entry } from './net-mirrors.ts';
+import { stoodDown, noteFailure, noteStall, noteSuccess, entriesFor, liveOrder, type Entry } from './net-mirrors.ts';
 import { downloadProxyFetchInit } from './download-proxy.ts';
 
 const ATTEMPTS_PER_MIRROR = 2;
 
 // A stalled connection has to give up eventually or the install sits there forever. The
 // body has its own, longer budget: a 300 MB mod on a slow line is not a stall.
-const HEAD_TIMEOUT_MS = 20000;
+const HEAD_TIMEOUT_MS = 10000;
 
 /** How a fetch walks the mirrors (see fetchMirrored). */
 export interface FetchOptions {
@@ -70,7 +70,7 @@ export async function fetchMirrored(url: string, {
       } catch (err) {
         last = err;
         const why = err instanceof Error ? err.message : String(err);
-        noteFailure(host, why);
+        if ((err as Error)?.name === 'TimeoutError') noteStall(host, why); else noteFailure(host, why);
         log(`mirror ${host} failed: ${why}`);
       }
     }

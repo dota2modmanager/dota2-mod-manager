@@ -22,7 +22,8 @@ function stand({ picked = [] as string[], signIn = async () => ({ id: '1', usern
   const window = { isDestroyed: () => false, show: () => log.push('show'), focus: () => log.push('focus') };
   const channels = registerAgainst(() => registerSettingsIpc({
     applyPresenceSetting: () => log.push('presence setting'),
-    catalog: { load: async () => ({}) },
+    catalog: { load: async () => ({ mods: { modsData: { heroes: [{ preview: 'a.webp' }] } }, constants: {} }) },
+    previewStore: { warm: async (rels: string[]) => { log.push(`warm ${rels.length}`); throw new Error('a full disk'); } },
     discordAuth: { signIn },
     findDotaGamePath: async () => GAME,
     library: {},
@@ -44,6 +45,13 @@ function stand({ picked = [] as string[], signIn = async () => ({ id: '1', usern
   const call = (channel: string, ...args: unknown[]) => channels.get(channel)!({}, ...args);
   return { call, store, log };
 }
+
+test('a loaded catalog starts its pictures coming, and trouble with those is no trouble with the catalog', async () => {
+  const s = stand();
+  const loaded = await s.call('catalog:load') as { mods?: unknown };
+  assert.ok(loaded.mods);
+  assert.deepEqual(s.log, ['warm 1']);
+});
 
 test('picking the Steam folder instead of game inside it is taken to mean game', async () => {
   const s = stand({ picked: [BETA] });

@@ -22,6 +22,8 @@ export interface Mirror {
   origin?: boolean;
   /** caps file size, so it serves the small JSON and never an archive */
   smallOnly?: boolean;
+  /** the folder of the catalog's preview pictures, on a host that keeps the whole catalog */
+  pictures?: string;
 }
 
 /** One URL worth trying for a file, and the mirror it came from. */
@@ -110,6 +112,11 @@ export function noteFailure(host: string, why: string): void {
   if (h.fails >= FAIL_THRESHOLD) { h.until = Date.now() + COOLDOWN_MS; h.fails = 0; }
   h.why = why;
   health.set(host, h);
+}
+
+/** A host that took a whole timeout to say nothing is blocked rather than unlucky, so it stands down now. */
+export function noteStall(host: string, why: string): void {
+  health.set(host, { fails: 0, until: Date.now() + COOLDOWN_MS, why });
 }
 
 export function noteSuccess(host: string): void {
@@ -210,12 +217,19 @@ export function wellFormedMirror(m: unknown): m is { base: string; host: string 
     && u.host === host.toLowerCase() && u.pathname.endsWith('/');
 }
 
+/** The picture folders on hosts the signed config names (src/preview-cache.ts). */
+export function pictureBases(): string[] {
+  return MIRRORS.flatMap((m) => (m.pictures ? [m.pictures] : []));
+}
+
 export function applyMirrors(list: unknown): number {
   const extra: Mirror[] = (Array.isArray(list) ? list : [])
     .filter(wellFormedMirror)
     .map((m) => ({
       host: m.host,
       map: (url: string) => (url.startsWith(CATALOG_FILES) ? m.base + url.slice(CATALOG_FILES.length) : null),
+      // these hosts copy the catalog's folders whole, so the pictures sit beside the archives
+      ...(m.base.endsWith('/assets/files/') ? { pictures: m.base.replace(/files\/$/, 'previews/') } : {}),
     }));
   if (!extra.length) { setMirrors(null); return DEFAULT_MIRRORS.length; }
 

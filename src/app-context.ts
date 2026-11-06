@@ -9,6 +9,7 @@
 import type { BrowserWindow } from 'electron';
 import type { Settings } from './settings.ts';
 import type { Catalog } from './catalog.ts';
+import type { PreviewStore } from './preview-cache.ts';
 import type { Installer, InstallProgress } from './installer.ts';
 import type { Library } from './library.ts';
 import type { Fingerprints } from './fingerprints.ts';
@@ -66,6 +67,8 @@ export interface AppContext {
   // ---- the services ----
   settings: Settings;
   catalog: Catalog;
+  /** the catalog's pictures on this disk (src/preview-cache.ts) */
+  previewStore: PreviewStore;
   installer: Installer;
   library: Library;
   fingerprints: Fingerprints;
