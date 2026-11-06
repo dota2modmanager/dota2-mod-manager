@@ -193,7 +193,6 @@ async function heroMaterial(gltf: GLTF, from: THREE.Material, lights: HeroLights
   const detailScale = vec('g_vDetailTexCoordScale', [1, 1]);
   const detailOffset = vec('g_vDetailTexCoordOffset', [0, 0]);
   const blank = color;
-  const translucent = !!int.F_TRANSLUCENT;
   return new THREE.ShaderMaterial({
     vertexShader, fragmentShader,
     uniforms: {
@@ -215,15 +214,27 @@ async function heroMaterial(gltf: GLTF, from: THREE.Material, lights: HeroLights
       uSelfIllumFull: { value: num('g_flSelfIllumBlendToFull') }, uSpecFull: { value: num('g_flSpecularBlendToFull') },
       uExpFull: { value: num('g_flSpecularExponentBlendToFull') },
       uSpecScale: { value: num('g_flSpecularScale', 1) }, uSpecExp: { value: num('g_flSpecularExponent', 20) },
-      uRimScale: { value: num('g_flRimLightScale', 1) }, uCubeScale: { value: num('g_flCubeMapScalar', 1) },
+      uRimScale: { value: rimScale(num('g_flRimLightScale', 1)) }, uCubeScale: { value: num('g_flCubeMapScalar', 1) },
       uSpecColor: { value: new THREE.Color().fromArray(vec('g_vSpecularColor', [1, 1, 1])) },
       uRimColorM: { value: new THREE.Color().fromArray(vec('g_vRimLightColor', [1, 1, 1])) },
       uUvTransform: { value: new THREE.Vector4(scale[0], scale[1], offset[0], offset[1]) },
     },
     side: (from as THREE.MeshStandardMaterial).side,
-    transparent: translucent,
-    depthWrite: !translucent,
+    ...blendOf(int),
   });
+}
+
+/** A rim stops growing here: half the game's materials say 2, a tenth say 10 or more, and at 10 this shader washes Death Prophet's dark blue dress white where the game does not. */
+const RIM_TOP = 3;
+export const rimScale = (written: number): number => Math.min(written, RIM_TOP);
+
+/**
+ * How a material lies over what is behind it. An additive one only brightens: Death Prophet's
+ * spirits, drawn solid, hid the dress they float over.
+ */
+export function blendOf(int: Record<string, number>): { transparent: boolean; depthWrite: boolean; blending: THREE.Blending } {
+  const seen = !!(int.F_TRANSLUCENT || int.F_ADDITIVE_BLEND);
+  return { transparent: seen, depthWrite: !seen, blending: int.F_ADDITIVE_BLEND ? THREE.AdditiveBlending : THREE.NormalBlending };
 }
 
 /** Every hero material of a model swapped for the game's shader; the rest stay as the loader made them. */

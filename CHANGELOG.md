@@ -2,6 +2,63 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.3.0
+
+### HUD editor
+
+- The HUD size window is now a plan of your screen with eleven of the game's panels on it. Drag a
+  panel, nudge it by a pixel with the arrow keys, resize it, tint it, fade it or hide it.
+- Larger abilities widen the bar on the plan the same way they do in the game, and push the
+  portrait and inventory aside.
+- A moved minimap or bottom bar keeps its place when you mirror the HUD in the game's settings.
+
+### Effect editor
+
+- A new Workshop window opens any of the game's 82,000 effects. Find one through a hero, an
+  ability, an item or a search by name, then change its size, count, lifetime, speed and colour.
+- Colour shows on any sprite, even an orange fire texture.
+- An ability opens as one effect, with all its files changing together. A checkbox adds the
+  versions from items, such as an arcana's.
+- The picture plays the changed effect once after each edit, and a button plays it again.
+- Edited effects rebuild themselves after a Dota update.
+
+### Hero items without the item table
+
+- Hero items now install as files. The app leaves `gameinfo` and the signature file alone, and it
+  no longer asks for the item table before a hero item.
+- Files now carry an item's effects, material set, the hero's motions, the parts it hides and its
+  second model, such as Death Prophet's spirits or Phoenix's fire.
+- Effects you add to an item spread over its surface instead of gathering in a ball.
+- The window tells you which picks still need the table: item size, kill effects and a few others.
+  If you already allowed the table, nothing changes for you.
+
+### 3D preview
+
+- Items sit on the hero the way they do in the game. Bracers and armour that floated or fell
+  behind now follow the bones.
+- The camera moves freely: drag to tilt, right button to shift, wheel to zoom, WASD with Q and E
+  to fly. Double click puts it back.
+- The list above the stage plays any animation of the hero, and motions follow what the hero wears.
+- Wearables play their own animations, second models show, and parts an item hides disappear.
+- Materials, light and glow sit closer to the game's, and styles with their own material set show
+  in it.
+- Glowing parts of an item only brighten what is behind them, and very strong rim light no longer
+  washes a dark item white.
+- Effects on a hero play once, as in the game, instead of bursting forever.
+
+### Fixes
+
+- New mods download again for people who reach the catalog through a mirror.
+- Mods larger than 1 GB install.
+- The rank look builds when another mod carries a broken copy of a layout.
+- 18 heroes that refused a custom sound take one now.
+- The young Invoker is back to the game's size.
+
+### Thanks
+
+- Harlord (dota-studio.lol) gave this release many of its ideas: how items sit on the hero, the
+  look of the 3D preview, and building items as files. Harlord is now in the credits in Settings.
+
 ## 3.2.0
 
 ### Hero levels in a match
