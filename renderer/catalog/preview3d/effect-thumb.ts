@@ -22,10 +22,10 @@ let queue: Promise<unknown> = Promise.resolve();
 
 /** Source's axes and inches to the scene's: the same turn and scale a hero model's root has. */
 const M = 0.0254;
-const SOURCE = new THREE.Matrix4().set(0, M, 0, 0, 0, 0, M, 0, M, 0, 0, 0, 0, 0, 0, 1);
+export const SOURCE_AXES = new THREE.Matrix4().set(0, M, 0, 0, 0, 0, M, 0, M, 0, 0, 0, 0, 0, 0, 1);
 
 /** Nothing to hang on: the effect sits at the point, and what spawns on a model spawns in a ball around it. */
-const empty: Carrier = {
+export const EMPTY_CARRIER: Carrier = {
   bones: new Map(), attachments: [],
   surface: () => new THREE.Vector3().randomDirection().multiplyScalar(0.35 * Math.cbrt(Math.random())).add(new THREE.Vector3(0, 0.5, 0)),
 };
@@ -58,17 +58,17 @@ async function draw(id: string): Promise<string | null> {
   scene.background = new THREE.Color(0x0e0d14);
   const src = new THREE.Object3D();
   src.matrixAutoUpdate = false;
-  src.matrix.copy(SOURCE);
+  src.matrix.copy(SOURCE_AXES);
   scene.add(src);
   src.updateMatrixWorld(true);
   const camera = new THREE.PerspectiveCamera(FOV, W / H, 0.01, 200);
   const viewPx = H / (2 * Math.tan(THREE.MathUtils.degToRad(FOV / 2)));
-  const fx = playParticles(scene, [{ spec: particleSpec(got.def), self: empty }], empty, src, textures);
+  const fx = playParticles(scene, [{ spec: particleSpec(got.def), self: EMPTY_CARRIER }], EMPTY_CARRIER, src, textures);
   try {
     // a courier's trail is drawn as it walks: the point goes round a small circle, as a courier would
     for (let t = 0; t < RUN; t += 1 / 30) {
       const a = t * WALK;
-      src.matrix.makeTranslation(Math.sin(a) * RING, 0, Math.cos(a) * RING).multiply(SOURCE);
+      src.matrix.makeTranslation(Math.sin(a) * RING, 0, Math.cos(a) * RING).multiply(SOURCE_AXES);
       src.updateMatrixWorld(true);
       fx.update(1 / 30, viewPx);
     }

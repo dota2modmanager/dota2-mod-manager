@@ -3,6 +3,7 @@
  * told the app, and presets. */
 import type { CatalogData } from '../catalog/data.ts';
 import type { CosmeticSet, CosmeticSlot, HeroAttribute, LookPick } from '../catalog/types.ts';
+import type { HudPart } from '../catalog/hud/parts.ts';
 import type { LibRecord, RepairState } from '../library/types.ts';
 import type { Dialog, Reply } from './reply.ts';
 
@@ -169,12 +170,12 @@ export interface MapLooksApi {
   install: (kind: MapKind, radiant: string | null, dire: string | null) => Promise<Reply<{ record: LibRecord }>>;
 }
 
-/** The in-game HUD smaller or larger (src/hud-scale-service.ts). */
+/** The in-game HUD laid out by hand (src/hud-scale-service.ts). */
 export interface HudApi {
-  /** the scale on now, the HUD mod it would go on (null: the game's own), and whether ValveResourceFormat is downloaded */
-  state: () => Promise<Reply<{ installed: { id: string; scale: number; base: string; enabled: boolean } | null; hudMod: string | null; vrf: boolean }>>;
-  /** the HUD at this percent, put in My mods */
-  install: (scale: number) => Promise<Reply<{ record: LibRecord }>>;
+  /** the layout on now, the HUD mod it would go on (null: the game's own), and whether ValveResourceFormat is downloaded */
+  state: () => Promise<Reply<{ installed: { id: string; parts: HudPart[]; base: string; enabled: boolean } | null; hudMod: string | null; vrf: boolean }>>;
+  /** the HUD with this layout, put in My mods */
+  install: (parts: HudPart[]) => Promise<Reply<{ record: LibRecord }>>;
 }
 
 /** A rank medal: tier 0 (not calibrated) to 8 (Immortal), stars 1 to 5, an Immortal's leaderboard place. */

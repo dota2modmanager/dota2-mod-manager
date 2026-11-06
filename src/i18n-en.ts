@@ -262,7 +262,7 @@ const EN = {
   'Фон больше {0} МБ': 'The background is over {0} MB',
   'В WebM нет видео VP8 или VP9': 'The WebM has no VP8 or VP9 video',
   'Нужен ValveResourceFormat: скачай его в окне': 'ValveResourceFormat is needed: download it in the window',
-  'Размер интерфейса в игре: {0}%': 'In-game HUD size: {0}%', 'Ранг и уровни героев': 'Rank and hero levels', 'Выбери медаль или уровень хотя бы одного героя': 'Pick a medal or a level for at least one hero', 'Карта без декора': 'Map without decor', 'Выбери, что убрать с карты': 'Pick what to take off the map',
+  'Не удалось прочитать эффект': 'Couldn’t read the effect', 'Здесь нечего менять: в этом эффекте нет таких чисел': 'Nothing to change: this effect has no such numbers', 'Эффект: {0}': 'Effect: {0}', 'Интерфейс в игре: панелей изменено {0}': 'In-game HUD: {0} panels changed', 'Ранг и уровни героев': 'Rank and hero levels', 'Выбери медаль или уровень хотя бы одного героя': 'Pick a medal or a level for at least one hero', 'Карта без декора': 'Map without decor', 'Выбери, что убрать с карты': 'Pick what to take off the map',
   'Нет такого героя: {0}': 'No such hero: {0}',
   'Ни один файл не взял цвет': 'None of the files took the colour',
   'Перекраска: {0}': 'Recolor: {0}',

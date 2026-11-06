@@ -22,6 +22,7 @@ import type { createArcanaService } from './arcana-service.ts';
 import type { createMapLooks } from './map-looks-service.ts';
 import type { createMenuBackground } from './menu-background-service.ts';
 import type { createHudScale } from './hud-scale-service.ts';
+import type { createEffectEdit } from './effect-edit-service.ts';
 import type { createRankLook } from './rank-look-service.ts';
 import type { createMapDecor } from './map-decor.ts';
 import type { createHeroPaint } from './hero-paint-service.ts';
@@ -78,6 +79,7 @@ export interface AppContext {
   menuBackground: ReturnType<typeof createMenuBackground>;
   /** the in-game HUD smaller or larger (src/hud-scale-service.ts) */
   hudScale: ReturnType<typeof createHudScale>;
+  effectEdit: ReturnType<typeof createEffectEdit>;
   /** the rank medal and hero levels of the player's own screen (src/rank-look-service.ts) */
   rankLook: ReturnType<typeof createRankLook>;
   /** the map without its decor (src/map-decor.ts) */

@@ -78,6 +78,11 @@ const NAME = str(500);
 /** A picture: a catalog address or a frame as a data URI. */
 const PREVIEW = optional(str(16 * MB));
 /** One pick of a saved look in the item builder (renderer/views/item-looks.ts). */
+const HUD_PART = shape({ id: str(40, 1), scale: optional(num(60, 130)), x: optional(num(-1920, 1920)), y: optional(num(-1920, 1920)), opacity: optional(num(10, 100)), tint: optional(str(7, 7)), hidden: optional(bool) });
+const EFFECT_EDITS: Check = (v) => {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return fail('an object');
+  return Object.keys(v).length <= 64 && JSON.stringify(v).length <= 16000 ? null : fail('at most 64 systems');
+};
 const LOOK_PICK = shape({ slot: str(200, 1), itemId: str(20, 1), name: str(500), effectId: optional(str(500)) });
 
 /**
@@ -191,8 +196,10 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'preview3d:models': [str(80, 1), list(shape({ slot: str(120, 1), stock: str(20, 1) }), 40)], 'preview3d:motions': [str(200, 1)], 'preview3d:effect': [str(40, 1)], 'preview3d:model': [str(200, 1)], 'sounds:hero': [str(60, 1)], 'sounds:remove': [str(60, 1), str(200, 1)],
   'sounds:add': [str(60, 1), str(200, 1), oneOf('replace', 'layer'), num(0.05, 1), bytes(8 * MB), str(200)],
   // the menu's background (src/ipc-background.ts): a WebM the window encoded, or null for a new look alone
-  // the in-game HUD's size (src/ipc-hud.ts), in percent
-  'hud:state': [], 'hud:install': [num(60, 130)],
+  // the in-game HUD's layout (src/ipc-hud.ts): what src/hud-scale.ts cleanParts then puts in range
+  'hud:state': [], 'hud:install': [list(HUD_PART, 11)],
+  // the effect editor (src/ipc-effects.ts): src/effect-edit.ts cleanEdits keeps what it knows of the changes
+  'fx:search': [str(200)], 'fx:load': [str(300, 1)], 'fx:preview': [str(300, 1), EFFECT_EDITS], 'fx:install': [str(300, 1), EFFECT_EDITS],
   // the author's drafts (src/ipc-creator.ts): the files come from a dialog, never from here
   'creator:list': [], 'creator:remove': [ID], 'creator:export': [ID, optional(list(optional(bytes(8 * MB)), 3))],
   'creator:save': [optional(ID), shape({

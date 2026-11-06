@@ -129,7 +129,13 @@ contextBridge.exposeInMainWorld('api', {
   },
   hud: {
     state: () => ipcRenderer.invoke('hud:state'),
-    install: (scale) => ipcRenderer.invoke('hud:install', scale),
+    install: (parts) => ipcRenderer.invoke('hud:install', parts),
+  },
+  fx: {
+    search: (query) => ipcRenderer.invoke('fx:search', query),
+    load: (path) => ipcRenderer.invoke('fx:load', path),
+    preview: (path, edits) => ipcRenderer.invoke('fx:preview', path, edits),
+    install: (path, edits) => ipcRenderer.invoke('fx:install', path, edits),
   },
   rank: {
     state: () => ipcRenderer.invoke('rank:state'),

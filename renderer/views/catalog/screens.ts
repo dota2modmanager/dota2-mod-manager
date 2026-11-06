@@ -195,7 +195,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
     mapLead: mapLead && (!f.installedOnly || mapLead.installed) ? mapLead : null,
     soundLead: soundCard && (!f.installedOnly || soundCard.installed) ? soundCard : null,
     backgroundLead: backgroundCard && (!f.installedOnly || backgroundCard.installed) ? backgroundCard : null,
-    hudLead: hudCard && (!f.installedOnly || hudCard.scale !== null) ? hudCard : null,
+    hudLead: hudCard && (!f.installedOnly || hudCard.changed !== null) ? hudCard : null,
     rankLead: rankCard && (!f.installedOnly || rankCard.installed) ? rankCard : null,
     decorLead: decorCard && (!f.installedOnly || decorCard.installed) ? decorCard : null,
     mods: { heading: false, mods, grouped, emptyText: NOTHING() },

@@ -6,6 +6,7 @@
  * the others of its group here. */
 import type { AppApi } from './app.ts';
 import type { ArcanaApi, BackgroundApi, CatalogApi, HudApi, RankApi, DecorApi, PaintApi, MapLooksApi, SoundsApi, CompilerApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';
+import type { FxApi } from './fx.ts';
 import type { Preview3dApi } from './preview3d.ts';
 import type { CreatorApi } from './creator.ts';
 import type { ModsApi, PacksApi } from './mods.ts';
@@ -26,6 +27,7 @@ export interface Api extends AppApi {
   arcana: ArcanaApi;
   /** the in-game HUD smaller or larger */
   hud: HudApi;
+  fx: FxApi;
   rank: RankApi;
   decor: DecorApi;
   /** a movie of the user's own behind the main menu */

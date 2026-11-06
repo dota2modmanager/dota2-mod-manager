@@ -15,6 +15,7 @@ import { MapLookModal, type MapLookModalActions, type MapLookModalModel } from '
 import { SoundModal, type SoundModalActions, type SoundModalModel } from '../sounds/SoundModal.tsx';
 import { BackgroundModal, type BackgroundModalActions, type BackgroundModalModel } from '../background/BackgroundModal.tsx';
 import { HudModal, type HudModalActions, type HudModalModel } from '../hud/HudModal.tsx';
+import { EffectModal, type EffectModalActions, type EffectModalModel } from '../fx/EffectModal.tsx';
 import { RankModal, type RankModalActions, type RankModalModel } from '../rank/RankModal.tsx';
 import { DecorModal, type DecorModalActions, type DecorModalModel } from '../decor/DecorModal.tsx';
 import { PaintModal, type PaintModalActions, type PaintModalModel } from '../paint/PaintModal.tsx';
@@ -45,6 +46,7 @@ export const showSoundModal = (model: SoundModalModel, actions: SoundModalAction
 export const showPaintModal = (key: number, model: PaintModalModel, actions: PaintModalActions): void => show(<PaintModal key={key} m={model} actions={actions} />);
 export const showBackgroundModal = (model: BackgroundModalModel, actions: BackgroundModalActions): void => show(<BackgroundModal m={model} actions={actions} />);
 export const showHudModal = (model: HudModalModel, actions: HudModalActions): void => show(<HudModal m={model} actions={actions} />);
+export const showEffectModal = (model: EffectModalModel, actions: EffectModalActions): void => show(<EffectModal m={model} actions={actions} />);
 export const showCreatorModal = (model: CreatorModel, actions: CreatorActions): void => show(<CreatorModal m={model} actions={actions} />);
 export const showRankModal = (model: RankModalModel, actions: RankModalActions): void => show(<RankModal m={model} actions={actions} />);
 export const showDecorModal = (model: DecorModalModel, actions: DecorModalActions): void => show(<DecorModal m={model} actions={actions} />);

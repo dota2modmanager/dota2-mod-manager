@@ -1,7 +1,7 @@
-/* The in-game HUD made smaller or larger, as a record in My mods (issue #420; the CSS is
+/* The in-game HUD laid out by hand, as a record in My mods (issue #420; the CSS is
  * src/hud-scale.ts). One record. The style it starts from is the one in force: a HUD mod's copy
  * when one is switched on (first in the load order wins, as in the game), else the game's own.
- * ValveResourceFormat reads it back as CSS, the scale goes at its end, and Valve's compiler builds
+ * ValveResourceFormat reads it back as CSS, the layout goes at its end, and Valve's compiler builds
  * it again; the pak goes early in the load order, so it wins over the HUD mod it was made from.
  *
  * A Dota update that reached the record builds it again from the new style. That takes the two
@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { clampScale, SOURCE, STYLE, withScale } from './hud-scale.ts';
+import { cleanParts, partsOfScale, SOURCE, STYLE, withLayout, type HudPart } from './hud-scale.ts';
 import { fileInForce, swapPak, writePak, type PakInstaller } from './generated-pak.ts';
 import { buildVpk, entryPath } from './vpk.ts';
 import { runTool } from './toolchain.ts';
@@ -20,13 +20,16 @@ import type { LibRecord } from './types.ts';
 import type { CompileJob } from './resource-compiler.ts';
 import type { VpkEntry } from './vpk.ts';
 
-/** What a HUD scale record was built from. */
-export interface HudGenerated { hud: number; base: string }
+/** What a HUD record was built from. `hud` is the bottom bar's scale; a record from before the editor has nothing else. */
+export interface HudGenerated { hud: number; base: string; parts?: HudPart[] }
 
-/** What the window shows: the scale on now, if any, and whether the two tools are there. */
+/** The layout a record holds. */
+const partsOf = (g: HudGenerated): HudPart[] => g.parts ?? partsOfScale(g.hud);
+
+/** What the window shows: the layout on now, if any, and whether the two tools are there. */
 export interface HudState {
-  installed: { id: string; scale: number; base: string; enabled: boolean } | null;
-  /** the HUD mod whose style the scale would go on, or null for the game's own */
+  installed: { id: string; parts: HudPart[]; base: string; enabled: boolean } | null;
+  /** the HUD mod whose style the layout would go on, or null for the game's own */
   hudMod: string | null;
   vrf: boolean;
 }
@@ -56,30 +59,30 @@ export function createHudScale({ gamePath, installer, library, vrf, compile, dec
     return got;
   }
 
-  async function build(scale: number): Promise<{ vpk: Buffer; base: string }> {
+  async function build(parts: HudPart[]): Promise<{ vpk: Buffer; base: string }> {
     const exe = vrf();
     if (!exe) throw new Error(t('Нужен ValveResourceFormat: скачай его в окне'));
     const { data, from } = baseStyle();
-    const css = withScale(await decompile(exe, data), scale);
+    const css = withLayout(await decompile(exe, data), parts);
     const entries = await compile({ id: 'hud_scale', files: [{ path: SOURCE, data: Buffer.from(css) }], compile: [SOURCE] });
     const style = entries.filter((e) => entryPath(e) === STYLE);
     if (!style.length) throw new Error(t('resourcecompiler.exe не собрал {0}: {1}', SOURCE, STYLE));
     return { vpk: buildVpk(style), base: from?.name || 'game' };
   }
 
-  const nameOf = (scale: number) => t('Размер интерфейса в игре: {0}%', scale);
+  const nameOf = (parts: HudPart[]) => t('Интерфейс в игре: панелей изменено {0}', parts.length);
 
-  /** The record built at `scale`: in the old one's slot, or a new record. */
-  async function put(scale: number, keepOff: boolean): Promise<LibRecord> {
-    const { vpk, base } = await build(scale);
-    const g: HudGenerated = { hud: scale, base };
+  /** The record built with `parts`: in the old one's slot, or a new record. */
+  async function put(parts: HudPart[], keepOff: boolean): Promise<LibRecord> {
+    const { vpk, base } = await build(parts);
+    const g: HudGenerated = { hud: parts.find((p) => p.id === 'lower_hud')?.scale ?? 100, base, parts };
     const old = mine();
     if (old) {
       const off = keepOff && old.enabled === false;
       const files = swapPak(installer, old, vpk, off);
-      return library.update(old.id, { name: nameOf(scale), files, generated: g, enabled: !off, updatedAt: Date.now() }) as LibRecord;
+      return library.update(old.id, { name: nameOf(parts), files, generated: g, enabled: !off, updatedAt: Date.now() }) as LibRecord;
     }
-    const rec = library.add({ name: nameOf(scale), categoryId: 'huds', styleLabel: null, fileRef: null, preview: null, files: writePak(installer, vpk) });
+    const rec = library.add({ name: nameOf(parts), categoryId: 'huds', styleLabel: null, fileRef: null, preview: null, files: writePak(installer, vpk) });
     return library.update(rec.id, { generated: g }) as LibRecord;
   }
 
@@ -90,17 +93,17 @@ export function createHudScale({ gamePath, installer, library, vrf, compile, dec
       let hudMod: string | null = null;
       try { hudMod = baseStyle().from?.name ?? null; } catch { /* no game yet: nothing to say */ }
       return {
-        installed: rec && g ? { id: rec.id, scale: g.hud, base: g.base, enabled: rec.enabled !== false } : null,
+        installed: rec && g ? { id: rec.id, parts: partsOf(g), base: g.base, enabled: rec.enabled !== false } : null,
         hudMod,
         vrf: !!vrf(),
       };
     },
 
-    /** The HUD at `scale` percent, put in My mods in place of the one before. */
-    async install(scale: unknown): Promise<LibRecord> {
-      const s = clampScale(scale);
-      const rec = await put(s, false);
-      log(`hud scale: ${s}% on, from ${(rec.generated as HudGenerated).base}`);
+    /** The HUD with this layout, put in My mods in place of the one before. */
+    async install(raw: unknown): Promise<LibRecord> {
+      const parts = cleanParts(raw);
+      const rec = await put(parts, false);
+      log(`hud layout: ${parts.length} panels changed, from ${(rec.generated as HudGenerated).base}`);
       return rec;
     },
 
@@ -113,7 +116,7 @@ export function createHudScale({ gamePath, installer, library, vrf, compile, dec
       const g = rec?.generated as HudGenerated | undefined;
       if (!rec || !g || !ids.includes(rec.id)) return [];
       setTimeout(() => {
-        put(g.hud, true).then(() => onRebuilt(rec.id), (err) => log(`hud scale: could not build again after the update: ${(err as Error).message}`));
+        put(partsOf(g), true).then(() => onRebuilt(rec.id), (err) => log(`hud layout: could not build again after the update: ${(err as Error).message}`));
       }, 0);
       return [];
     },

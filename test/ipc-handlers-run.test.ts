@@ -35,6 +35,7 @@ import * as pumpkin from '../src/ipc-pumpkin.ts';
 import * as settings from '../src/ipc-settings.ts';
 import * as sounds from '../src/ipc-sounds.ts';
 import * as background from '../src/ipc-background.ts';
+import * as effects from '../src/ipc-effects.ts';
 import * as hud from '../src/ipc-hud.ts';
 import * as rank from '../src/ipc-rank.ts';
 import * as decor from '../src/ipc-decor.ts';
@@ -49,7 +50,7 @@ const USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-ipc-run-'));
 const MODULES: Record<string, Record<string, unknown>> = {
   'ipc-compiler.ts': compiler, 'ipc-creator.ts': creator, 'ipc-diagnostics.ts': diagnostics, 'ipc-foreign.ts': foreign, 'ipc-game.ts': game, 'ipc-grid.ts': grid, 'ipc-library.ts': library, 'ipc-looks.ts': looks,
   'ipc-misc.ts': misc, 'ipc-mods.ts': mods, 'ipc-packs.ts': packs,
-  'ipc-presets.ts': presets, 'ipc-preview3d.ts': preview3d, 'ipc-pumpkin.ts': pumpkin, 'ipc-settings.ts': settings, 'ipc-sounds.ts': sounds, 'ipc-background.ts': background, 'ipc-hud.ts': hud, 'ipc-rank.ts': rank, 'ipc-decor.ts': decor, 'ipc-paint.ts': paint, 'ipc-window.ts': windowIpc,
+  'ipc-effects.ts': effects, 'ipc-presets.ts': presets, 'ipc-preview3d.ts': preview3d, 'ipc-pumpkin.ts': pumpkin, 'ipc-settings.ts': settings, 'ipc-sounds.ts': sounds, 'ipc-background.ts': background, 'ipc-hud.ts': hud, 'ipc-rank.ts': rank, 'ipc-decor.ts': decor, 'ipc-paint.ts': paint, 'ipc-window.ts': windowIpc,
 };
 
 const electron = {

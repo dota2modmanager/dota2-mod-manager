@@ -1,5 +1,5 @@
-/* The channels of the window for the in-game HUD made smaller or larger (issue #420): the scale
- * on now and whether ValveResourceFormat is there, and a scale put on. The thinking is in
+/* The channels of the window for the in-game HUD laid out by hand (issue #420): the layout on now
+ * and whether ValveResourceFormat is there, and a layout put on. The thinking is in
  * src/hud-scale-service.ts; a build reads the style back with ValveResourceFormat and compiles it
  * with Valve's resourcecompiler, a second or two, each in its own process. */
 import { electron } from './electron.ts';
@@ -12,11 +12,11 @@ export function registerHudIpc({ hudScale, afterDeployMaster, blocked }: Pick<Ap
   ipcMain.handle('hud:state', () => {
     try { return { ok: true, ...hudScale.state() }; } catch (err) { return { error: errorText(err) }; }
   });
-  ipcMain.handle('hud:install', async (e, scale) => {
+  ipcMain.handle('hud:install', async (e, parts) => {
     const stop = blocked('install');
     if (stop) return stop;
     try {
-      const record = await hudScale.install(scale);
+      const record = await hudScale.install(parts);
       afterDeployMaster();
       return { ok: true, record };
     } catch (err) {

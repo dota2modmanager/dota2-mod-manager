@@ -52,6 +52,8 @@ the code, not in this page.
 | [`src/disk-space.ts`](#srcdisk-spacets) | Room on the disk, checked before a mod is written (issue #426). A disk that fills up halfway |
 | [`src/download-proxy.ts`](#srcdownload-proxyts) | The optional HTTP/HTTPS route for app downloads, kept separate from Electron's browser session |
 | [`src/download-stats.ts`](#srcdownload-statsts) | How many times each catalog mod was downloaded, counted by the catalog's own counter (a |
+| [`src/effect-edit-service.ts`](#srceffect-edit-servicets) | The effect editor: finding an effect among the game's, showing it changed, and a change put in |
+| [`src/effect-edit.ts`](#srceffect-editts) | An effect of the game changed by hand: its size, how many particles it makes, how long they live, |
 | [`src/electron.ts`](#srcelectronts) | Electron's main-process API, asked for at the moment it is used. |
 | [`src/error-text.ts`](#srcerror-textts) | What a caught error says, as one line of text. |
 | [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
@@ -74,8 +76,8 @@ the code, not in this page.
 | [`src/hero-paint-service.ts`](#srchero-paint-servicets) | A hero recoloured part by part, as one record in My mods (issue #422; what the parts are is |
 | [`src/hero-preview.ts`](#srchero-previewts) | The models of a hero as the item builder dresses it, for the 3D preview in the hero's window |
 | [`src/hero-showcase.ts`](#srchero-showcasets) | How the game stages a hero on its loadout, for the 3D preview (issue #417), out of the game's |
-| [`src/hud-scale-service.ts`](#srchud-scale-servicets) | The in-game HUD made smaller or larger, as a record in My mods (issue #420; the CSS is |
-| [`src/hud-scale.ts`](#srchud-scalets) | The in-game HUD made smaller or larger (issue #420): the stylesheet that lays the HUD out, |
+| [`src/hud-scale-service.ts`](#srchud-scale-servicets) | The in-game HUD laid out by hand, as a record in My mods (issue #420; the CSS is |
+| [`src/hud-scale.ts`](#srchud-scalets) | The in-game HUD laid out by hand (issues #420 and later): the stylesheet that lays the HUD out, |
 | [`src/i18n-en.ts`](#srci18n-ents) | Native dialogs, errors and labels in English, keyed by the exact Russian source string. |
 | [`src/i18n-zh-CN.ts`](#srci18n-zh-CNts) | Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key. |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (src/). |
@@ -2448,6 +2450,114 @@ export type DownloadStats = ReturnType<typeof createDownloadStats>
 
 One app's counter (createDownloadStats).
 
+## src/effect-edit-service.ts
+
+The effect editor: finding an effect among the game's, showing it changed, and a change put in
+My mods. The changes themselves are src/effect-edit.ts. One record per effect, built from the
+game's own file: making the same effect again replaces it, in its place in the load order.
+
+### `EffectGenerated`
+
+```ts
+export interface EffectGenerated { effect: string; edits: EffectEdits }
+```
+
+What an effect's record was built from.
+
+### `createEffectEdit`
+
+```ts
+export function createEffectEdit({ gamePath, installer, library, sprites, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** the textures of a system and its children, as the window takes them */ sprites: (defs: ParticleDef[]) => Promise<Record<string, Uint8Array>>; log?: (msg: string) => void; })
+```
+
+The service the fx:* channels call.
+
+## src/effect-edit.ts
+
+An effect of the game changed by hand: its size, how many particles it makes, how long they live,
+how fast they leave, and its colour.
+
+A particle system is a KV3 tree, and each of these is a handful of numbers in it: a system's
+constant radius and lifespan, its emitters' rates, the ranges its initializers roll from. A number
+in the file is either plain, or a parameter that says how it is made, and a literal or a random
+range can be scaled while the rest (a value read from a control point, a curve) is left alone.
+The changed file keeps its path, so a pak with it replaces the effect wherever the game plays it.
+
+Colour takes the chosen hue and saturation and keeps each colour's brightness. A sprite's own
+picture is not touched, so an effect drawn in a strongly coloured texture shifts only so far.
+
+### `EffectEdit`
+
+```ts
+export interface EffectEdit { size?: number; count?: number; life?: number; speed?: number; tint?: string }
+```
+
+One system's changes, in percent of what the file says; what is left out stays.
+
+### `EffectEdits`
+
+```ts
+export type EffectEdits = Record<string, EffectEdit>
+```
+
+A whole effect's changes, by system path. `WHOLE` holds what goes on every system of it.
+
+### `WHOLE`
+
+```ts
+export const WHOLE = '*'
+```
+
+The key of the changes that go on every system.
+
+### `MIN_SCALE`
+
+```ts
+export const MIN_SCALE = 10
+```
+
+The lowest a slider goes, in percent.
+
+### `MAX_SCALE`
+
+```ts
+export const MAX_SCALE = 300
+```
+
+The highest a slider goes, in percent.
+
+### `cleanEdits`
+
+```ts
+export function cleanEdits(raw: unknown): EffectEdits
+```
+
+What the window sent: known fields, values in range, nothing that changes nothing.
+
+### `editTree`
+
+```ts
+export function editTree(kv: Kv3Block, edit: EffectEdit): boolean
+```
+
+The changes on one system's tree, made in place; whether any field took one.
+
+### `systemsOf`
+
+```ts
+export function systemsOf(read: (p: string) => Buffer | null | undefined, root: string): { path: string; depth: number }[]
+```
+
+The paths of a system and all under it, each once, root first.
+
+### `editedEntries`
+
+```ts
+export function editedEntries(read: (p: string) => Buffer | null | undefined, root: string, edits: EffectEdits): VpkEntry[]
+```
+
+The changed files of an effect, under the paths they have in the game.
+
 ## src/electron.ts
 
 Electron's main-process API, asked for at the moment it is used.
@@ -3658,10 +3768,10 @@ The stage for a hero.
 
 ## src/hud-scale-service.ts
 
-The in-game HUD made smaller or larger, as a record in My mods (issue #420; the CSS is
+The in-game HUD laid out by hand, as a record in My mods (issue #420; the CSS is
 src/hud-scale.ts). One record. The style it starts from is the one in force: a HUD mod's copy
 when one is switched on (first in the load order wins, as in the game), else the game's own.
-ValveResourceFormat reads it back as CSS, the scale goes at its end, and Valve's compiler builds
+ValveResourceFormat reads it back as CSS, the layout goes at its end, and Valve's compiler builds
 it again; the pak goes early in the load order, so it wins over the HUD mod it was made from.
 
 A Dota update that reached the record builds it again from the new style. That takes the two
@@ -3671,10 +3781,10 @@ from src/update-impact.ts is lifted when it is done.
 ### `HudGenerated`
 
 ```ts
-export interface HudGenerated { hud: number; base: string }
+export interface HudGenerated { hud: number; base: string; parts?: HudPart[] }
 ```
 
-What a HUD scale record was built from.
+What a HUD record was built from. `hud` is the bottom bar's scale; a record from before the editor has nothing else.
 
 ### `HudState`
 
@@ -3682,7 +3792,7 @@ What a HUD scale record was built from.
 export interface HudState
 ```
 
-What the window shows: the scale on now, if any, and whether the two tools are there.
+What the window shows: the layout on now, if any, and whether the two tools are there.
 
 ### `createHudScale`
 
@@ -3702,16 +3812,18 @@ A compiled style read back as CSS by ValveResourceFormat, in a folder of its own
 
 ## src/hud-scale.ts
 
-The in-game HUD made smaller or larger (issue #420): the stylesheet that lays the HUD out,
-written again with one rule added at its end, for Valve's compiler.
+The in-game HUD laid out by hand (issues #420 and later): the stylesheet that lays the HUD out,
+written again with rules added at its end, for Valve's compiler.
 
 panorama/styles/hud/hud_reborn.vcss_c holds the HUD's styles; a compiled style keeps them in a
-binary form, so the app reads them back as CSS with ValveResourceFormat, adds the rule, and has
-resourcecompiler.exe compile the whole file again. Panorama's own `ui-scale` scales a panel and
-all of it, and keeps clicks where the buttons are drawn; the game uses it in this file already.
-The bottom bar (portrait, abilities, items) and the minimap are scaled; the top bar is left.
+binary form, so the app reads them back as CSS with ValveResourceFormat, adds the rules, and has
+resourcecompiler.exe compile the whole file again. A rule goes on a panel by its id, and carries
+only what Panorama itself uses in this file: `ui-scale` scales a panel and all of it and keeps
+clicks where the buttons are drawn, `transform` moves it, `wash-color` tints it, and
+`visibility: collapse` takes it off the screen. Rules the game gives to a state (a flipped HUD,
+the seconds before the match) are stronger than these and stay in force.
 
-A style is a whole file: a HUD mod replaces this same one, so the rule goes on the copy that is
+A style is a whole file: a HUD mod replaces this same one, so the rules go on the copy that is
 in force (the HUD mod's when one is on), and a Dota update that changes the file means building
 again from the new one (src/hud-scale-service.ts).
 
@@ -3747,6 +3859,31 @@ export const MAX_SCALE = 130
 
 The largest scale the window offers, in percent.
 
+### `MAX_SHIFT`
+
+```ts
+export const MAX_SHIFT = 1920
+```
+
+How far a panel can be moved, in the HUD's own pixels (the screen is 1080 high to it).
+
+### `PARTS`
+
+```ts
+export const PARTS = [
+```
+
+The panels the window offers, by id in the HUD's layout. renderer/catalog/hud/parts.ts draws them,
+and a test keeps the two in step.
+
+### `HudPart`
+
+```ts
+export interface HudPart { id: string; scale?: number; x?: number; y?: number; opacity?: number; tint?: string; hidden?: boolean }
+```
+
+What was changed on one panel; what was not is left out.
+
 ### `clampScale`
 
 ```ts
@@ -3755,22 +3892,30 @@ export function clampScale(n: unknown): number
 
 A scale the window sent, as a whole step in range; 100 for anything else.
 
-### `SCALED`
+### `cleanParts`
 
 ```ts
-export const SCALED = ['#lower_hud', '#minimap_container']
+export function cleanParts(raw: unknown): HudPart[]
 ```
 
-The panels the scale goes on: the bottom bar, the minimap.
+What the window sent, as panels this knows, values in range and defaults dropped.
 
-### `withScale`
+### `partsOfScale`
 
 ```ts
-export function withScale(css: string, scale: number): string
+export const partsOfScale = (scale: number): HudPart[] => cleanParts([{ id: 'lower_hud', scale }, { id: 'minimap_container', scale }])
 ```
 
-The CSS ValveResourceFormat read out of the style, with the scale at its end. The tool's own
-banner comment goes, and a rule this added before is replaced rather than stacked.
+The layout an older record meant by its one scale: the bottom bar and the minimap.
+
+### `withLayout`
+
+```ts
+export function withLayout(css: string, raw: unknown): string
+```
+
+The CSS ValveResourceFormat read out of the style, with the layout at its end. The tool's own
+banner comment goes, and rules this added before are replaced rather than stacked.
 
 ## src/i18n-en.ts
 

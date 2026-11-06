@@ -951,13 +951,64 @@
 .background-empty .ms { font-size: var(--text-xl); }
 .background-look { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
 .background-look .scale-range { width: 100%; max-width: none; }
-/* the in-game HUD smaller or larger (catalog/hud/HudModal.tsx): the bottom of a screen, to scale */
-.hud-scale .modal-title-row { padding-right: var(--space-6); }
-.hud-scale { display: flex; flex-direction: column; gap: var(--space-3); }
-.hud-scale .scale-range { width: 100%; max-width: none; }
-.hud-screen { position: relative; aspect-ratio: 16 / 9; width: min(100%, 448px); align-self: center; border-radius: var(--radius-md); overflow: hidden; background: var(--bg-deep); }
-.hud-minimap { position: absolute; left: 0; bottom: 0; aspect-ratio: 1; background: color-mix(in srgb, var(--primary) 35%, transparent); border-top-right-radius: var(--radius-sm); transition: width var(--dur-fast) var(--ease-out); }
-.hud-bar { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); background: color-mix(in srgb, var(--primary) 60%, transparent); border-top-left-radius: var(--radius-sm); border-top-right-radius: var(--radius-sm); transition: width var(--dur-fast) var(--ease-out), height var(--dur-fast) var(--ease-out); }
+/* the HUD editor (catalog/hud/HudModal.tsx): the plan of a screen, then the list and the chosen panel beside it */
+.modal-content:has(> .hud-editor), .modal-content:has(.hud-editor) { width: min(1120px, calc(94vw / var(--content-zoom))); }
+.hud-editor { display: flex; flex-direction: column; gap: var(--space-3); }
+.hud-editor .modal-title-row { padding-right: var(--space-6); }
+.hud-editor .scale-range { width: 100%; max-width: none; }
+.hud-room { display: grid; grid-template-columns: minmax(0, 1fr) 248px; gap: var(--space-4); align-items: start; }
+.hud-plan { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.hud-screen { position: relative; aspect-ratio: 16 / 9; width: 100%; border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-deep); box-shadow: inset 0 0 0 1px var(--border); touch-action: none; }
+.hud-block { --part-tint: var(--primary); position: absolute; display: grid; grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 1), minmax(0, 1fr)); gap: 1px; padding: 0; border: 0; border-radius: var(--radius-xs); background: color-mix(in srgb, var(--part-tint) 34%, transparent); cursor: grab; }
+.hud-block:active { cursor: grabbing; }
+.hud-block:hover { background: color-mix(in srgb, var(--part-tint) 48%, transparent); }
+.hud-block.is-frame { background: color-mix(in srgb, var(--part-tint) 12%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--part-tint) 30%, transparent); }
+.hud-block.is-chosen { outline: 2px solid var(--primary); outline-offset: 1px; z-index: 1; }
+.hud-block.is-hidden { background: none; box-shadow: inset 0 0 0 1px var(--border-strong); }
+.hud-block.is-hidden .hud-cell { visibility: hidden; }
+.hud-block:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.hud-cell { background: color-mix(in srgb, var(--part-tint) 40%, transparent); border-radius: var(--space-px); }
+.hud-side { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.hud-list { display: flex; flex-direction: column; list-style: none; margin: 0; padding: 0; }
+.hud-list li { display: flex; align-items: center; border-radius: var(--radius-xs); }
+.hud-list li.is-chosen { background: var(--surface); }
+.hud-list li.is-inside .hud-list-name { padding-left: var(--space-4); }
+.hud-list-name { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-2); border: 0; background: none; color: var(--text-muted); font: inherit; font-size: var(--text-sm); text-align: left; cursor: pointer; }
+.hud-list li.is-chosen .hud-list-name, .hud-list-name:hover { color: var(--text); }
+.hud-list-mark { width: var(--space-1); height: var(--space-1); border-radius: var(--radius-full); background: var(--primary); }
+.hud-list-eye { display: grid; place-items: center; padding: var(--space-1); border: 0; background: none; color: var(--text-faint); cursor: pointer; }
+.hud-list-eye:hover, .hud-list-eye[aria-pressed="true"] { color: var(--text); }
+.hud-list-eye .ms { font-size: var(--icon-sm); }
+.hud-panel { display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.hud-panel-name { font-family: var(--font-display); font-size: var(--text-base); font-weight: 600; color: var(--text); }
+.hud-panel-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: var(--hit-min); font-size: var(--text-sm); color: var(--text-muted); }
+.hud-tint { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; }
+.hud-tint input { width: var(--space-5); height: var(--space-5); padding: 0; border: 0; border-radius: var(--radius-xs); background: none; cursor: pointer; }
+@media (max-width: 860px) { .hud-room { grid-template-columns: minmax(0, 1fr); } }
+/* the effect editor (catalog/fx/EffectModal.tsx): a list, then the effect playing with its sliders under it */
+.modal-content:has(.fx-editor) { width: min(1120px, calc(94vw / var(--content-zoom))); }
+.fx-editor { display: flex; flex-direction: column; gap: var(--space-3); }
+.fx-editor .modal-title-row { padding-right: var(--space-6); }
+.fx-editor .scale-range { width: 100%; max-width: none; }
+.fx-room { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+.fx-list { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.fx-list ul { display: flex; flex-direction: column; list-style: none; margin: 0; padding: 0; max-height: 440px; overflow-y: auto; }
+.fx-list-head { font-size: var(--text-sm); color: var(--text-muted); }
+.fx-search { width: 100%; min-height: var(--hit-min); padding: 0 var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; font-size: var(--text-sm); }
+.fx-search:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.fx-back { align-self: flex-start; }
+.fx-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-2); width: 100%; padding: var(--space-1) var(--space-2); border: 0; border-radius: var(--radius-xs); background: none; color: var(--text-muted); font: inherit; font-size: var(--text-sm); text-align: left; overflow-wrap: anywhere; cursor: pointer; }
+.fx-row small { flex-basis: 100%; font-size: var(--text-xs); color: var(--text-faint); }
+.fx-row:hover, .fx-row.is-chosen { background: var(--surface); color: var(--text); }
+.fx-row[data-depth="1"] { padding-left: var(--space-4); }
+.fx-row[data-depth="2"], .fx-row[data-depth="3"] { padding-left: var(--space-5); }
+.fx-view { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.fx-canvas { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--radius-sm); background: var(--bg-deep); }
+.fx-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); aspect-ratio: 16 / 9; border-radius: var(--radius-sm); background: var(--bg-deep); color: var(--text-faint); font-size: var(--text-sm); }
+.fx-empty .ms { font-size: var(--text-xl); }
+.fx-controls { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-4); }
+.fx-tint { grid-column: 1 / -1; }
+@media (max-width: 860px) { .fx-room { grid-template-columns: minmax(0, 1fr); } }
 .background-look .scale-range { width: 100%; }
 /* the rank medal and hero levels of the player's own screen (catalog/rank/RankModal.tsx) */
 .rank-look { display: flex; flex-direction: column; gap: var(--space-4); }

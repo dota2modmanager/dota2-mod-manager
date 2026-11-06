@@ -207,5 +207,5 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     return got ? embedGlb(got) : null;
   }
 
-  return { plan, models, motions, effect, model };
+  return { plan, models, motions, effect, model, sprites: spritesOf };
 }

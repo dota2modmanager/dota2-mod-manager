@@ -19,6 +19,7 @@ import { mapLookLead, openMapLooks } from './catalog/map-looks.ts';
 import { soundLead, openSounds } from './catalog/sounds.ts';
 import { backgroundLead, openBackground } from './catalog/background.ts';
 import { hudLead, openHud } from './catalog/hud.ts';
+import { openEffects } from './catalog/effects.ts';
 import { rankLead, openRank } from './catalog/rank.ts';
 import { decorLead, openDecor } from './catalog/decor.ts';
 import { openCreator } from './creator.ts';
@@ -78,6 +79,9 @@ async function groups(): Promise<StudioGroup[]> {
     { id: 'colors', title: L`Свой цвет предмета`, tiles: arcanas.map((a) => tile({ id: `arcana:${a.set}`, icon: 'palette', picture: a.picture, title: a.name,
       text: L`Любой из призматических гемов игры или свой цвет, на модели и на эффектах.`,
       status: a.installed ? on(L`Свой цвет стоит`) : undefined, open: (el) => openArcanaWindow(a.set, el) })) },
+    { id: 'effects', title: L`Эффекты`, tiles: [
+      tile({ id: 'effects', icon: 'auto_awesome', title: L`Редактор эффектов`, text: L`Размер, количество, скорость и цвет любого эффекта игры.`, open: (el) => openEffects(el) }),
+    ] },
     { id: 'map', title: L`Карта`, tiles: [
       ...(towers ? [tile({ id: 'towers', icon: 'fort', title: L`Башни из игры`, text: L`Башни любого события, свои у Света и у Тьмы.`,
         status: towers.installed ? on(L`Стоят`) : undefined, open: (el) => openMapLooks('towers', el) })] : []),
@@ -89,8 +93,8 @@ async function groups(): Promise<StudioGroup[]> {
     { id: 'ui', title: L`Интерфейс`, tiles: [
       tile({ id: 'background', icon: 'wallpaper', title: L`Свой фон главного меню`, text: L`Картинка, GIF или видео вместо фона меню.`,
         status: backgroundLead('backgrounds')?.installed ? on(L`Стоит`) : undefined, open: (el) => openBackground(el) }),
-      tile({ id: 'hud', icon: 'aspect_ratio', title: L`Размер интерфейса в игре`, text: L`HUD меньше или больше, чем разрешают настройки игры.`,
-        status: hud?.scale != null ? on(`${hud.scale}%`) : undefined, open: (el) => openHud(el) }),
+      tile({ id: 'hud', icon: 'dashboard_customize', title: L`Редактор интерфейса`, text: L`Двигай панели HUD, меняй их размер и оттенок, убирай лишнее.`,
+        status: hud?.changed != null ? on(L`Панелей изменено: ${hud.changed}`) : undefined, open: (el) => openHud(el) }),
       tile({ id: 'rank', icon: 'military_tech', title: L`Ранг и уровни героев`, text: L`Своя медаль и уровни героев на твоём экране. Видишь только ты.`,
         status: rankLead('ranks')?.installed ? on(L`Стоит`) : undefined, open: (el) => openRank(el) }),
       tile({ id: 'grids', icon: 'grid_view', title: L`Сетки героев`, text: L`Герои по проценту побед, по атрибутам и по частоте пиков этого патча, прямо в выборе героя.`, open: () => goGrids() }),

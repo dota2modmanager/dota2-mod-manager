@@ -19,6 +19,7 @@ import { registerSoundsIpc } from './ipc-sounds.ts';
 import { registerPreview3dIpc } from './ipc-preview3d.ts';
 import { registerBackgroundIpc } from './ipc-background.ts';
 import { registerHudIpc } from './ipc-hud.ts';
+import { registerEffectsIpc } from './ipc-effects.ts';
 import { registerRankIpc } from './ipc-rank.ts';
 import { registerDecorIpc } from './ipc-decor.ts';
 import { registerPaintIpc } from './ipc-paint.ts';
@@ -44,6 +45,7 @@ export function registerIpc(ctx: AppContext): void {
   registerPreview3dIpc(ctx);
   registerBackgroundIpc(ctx);
   registerHudIpc(ctx);
+  registerEffectsIpc(ctx);
   registerRankIpc(ctx);
   registerDecorIpc(ctx);
   registerPaintIpc(ctx);
