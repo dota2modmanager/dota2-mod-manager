@@ -17,6 +17,11 @@ export function registerPreview3dIpc({ heroPreview, toolchain, diag }: Pick<AppC
       return { ok: false, reason: 'no-body', error: errorText(err) };
     }
   });
+  // every clip of a body, the first time the window is asked for one beyond the loadout
+  ipcMain.handle('preview3d:motions', async (e, body) => {
+    if (!toolchain.pathOf('vrf')) return null;
+    try { return await heroPreview.motions(body); } catch (err) { diag(`preview 3d motions: ${errorText(err)}`); return null; }
+  });
   // an effect's particle system, which the window draws as the effect's picture
   ipcMain.handle('preview3d:effect', async (e, id) => {
     try { return await heroPreview.effect(id); } catch (err) { diag(`preview 3d effect: ${errorText(err)}`); return null; }

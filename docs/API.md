@@ -3535,6 +3535,20 @@ export type HeroModels =
 
 What the window gets: each model's bytes, or why there are none.
 
+### `wornSkin`
+
+```ts
+export function wornSkin(visuals: string): number
+```
+
+The material set an item wears its model in, 0 for the first: what its style says, or a
+"model_skin" modifier for the style picked. Luna's Midnight Locks is one model and three sets, and
+861 hero items are of this kind (2026-11-06).
+
+```
+@param visuals  the item's visuals with the picked style made its first (withStyle)
+```
+
 ### `entityModel`
 
 ```ts
@@ -3547,7 +3561,7 @@ copies leave out because a persona goes on through its base (src/item-builder-pe
 ### `createHeroPreview`
 
 ```ts
-export function createHeroPreview({ glb, library, gamePath, vanilla, log = () => {} }: { glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'> & Partial<Pick<ReturnType<typeof createModelGlb>, 'sprites'>>; library: Pick<Library, 'list'>; gamePath: () => string | null; vanilla: () => string; log?: (msg: string) => void; })
+export function createHeroPreview({ glb, library, gamePath, vanilla, log = () => {} }: { glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'> & Partial<Pick<ReturnType<typeof createModelGlb>, 'sprites' | 'skinned'>>; library: Pick<Library, 'list'>; gamePath: () => string | null; vanilla: () => string; log?: (msg: string) => void; })
 ```
 
 The 3D preview's models, made on demand.
@@ -4791,6 +4805,14 @@ export function normalizeAssetPath(p: unknown): string
 
 _No description in the source._
 
+### `firstStyleSkin`
+
+```ts
+export function firstStyleSkin(visuals: string): string | undefined
+```
+
+The material set the first style's block names ("skin"), as a string, or undefined for none.
+
 ### `itemAssets`
 
 ```ts
@@ -5674,6 +5696,14 @@ export function asItem(block: string, text: string, item: { id: string; start: n
 
 A built block worn as another item of the same hero and slot (src/item-builder-everyone.ts): the
 built visuals, under that item's id, its own name and picture, and the model path its block names.
+
+### `itemVisuals`
+
+```ts
+export function itemVisuals(text: string, item: { start: number }): string | null
+```
+
+The text of an item's "visuals" block, or null for an item without one.
 
 ### `defaultItemForWearable`
 
@@ -7082,10 +7112,18 @@ The GLB a model's export left, or null. Asked for one model, the toolchain names
 archive's layout: abaddon.glb/models/heroes/abaddon/abaddon.glb. Read as a file, that folder
 failed the whole 3D preview (2026-11-04).
 
+### `gameInfo`
+
+```ts
+export const gameInfo = (dota: string) => `"GameInfo"\n{\n\tFileSystem\n\t{\n\t\tSearchPaths\n\t\t{\n\t\t\tGame\t"${dota.replace(/\\/g, '/')}"\n\t\t}\n\t}\n}\n`
+```
+
+A gameinfo.gi that sends the toolchain to this game folder for what a lone file refers to.
+
 ### `exportArgs`
 
 ```ts
-export function exportArgs(pakFile: string, out: string, files: string[], clips: string[]): string[]
+export function exportArgs(pakFile: string, out: string, files: string[], clips: string[] | 'all'): string[]
 ```
 
 The toolchain's arguments for these models out of this archive into this folder.
@@ -7135,6 +7173,51 @@ export function modelSequences(model: Buffer | null): Sequence[]
 ```
 
 The model's sequences, or none when the file has no sequence block or one this reader cannot take.
+
+### `itemModifiers`
+
+```ts
+export function itemModifiers(text: string): ReadonlySet<string>
+```
+
+Every activity modifier any item switches on, in lower case, from items_game; found once per table.
+
+### `MotionGroup`
+
+```ts
+export type MotionGroup = typeof MOTION_GROUPS[number]
+```
+
+A kind of motion in that list.
+
+### `Motion`
+
+```ts
+export interface Motion { name: string; group: MotionGroup; act: string; mods: string[]; once: boolean }
+```
+
+A motion in that list: its sequence, its kind, its activity and modifiers for a label, and whether it ends.
+
+### `motionList`
+
+```ts
+export function motionList(seqs: Sequence[], modifiers: string[] = [], ofItems: ReadonlySet<string> = new Set()): Motion[]
+```
+
+What the body can be shown doing, by kind. A sequence with no activity is a layer of another one
+("@counter_helix") or the bind pose, and a statue's activity is the same motion again (Axe's
+"attack_main" under his "attack_main_anim").
+
+An item's modifier changes more than the loadout: Dragonclaw Hook's Pudge runs and swings by
+"whalehook" too. So the game's own rule for the loadout goes for each motion: of the sequences
+that differ only in the modifiers worn, those with the most of them stand for the rest. A
+sequence that needs an item the hero does not wear is not one it can do: Pudge alone has 30 of
+those in his stance, in every mix of hooks and arms.
+
+```
+@param modifiers  the activity modifiers of the items worn, as items_game names them
+@param ofItems    every modifier some item switches on (itemModifiers)
+```
 
 ### `idleSequence`
 

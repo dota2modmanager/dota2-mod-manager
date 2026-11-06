@@ -6,16 +6,18 @@
  * the game a wearable follows the hero's bones by name; the window does the same (renderer
  * catalog/preview3d/scene.ts). An arcana that swaps the whole hero brings its own body, as the
  * build does (src/item-builder.ts itemEffectPatch, the copy that names a hero). */
+import fs from 'node:fs';
 import path from 'node:path';
 import { embedGlb } from './glb-embed.ts';
 import { findItem, itemFields } from './schema.ts';
-import { itemEffectPatch } from './item-builder.ts';
-import { heroModelPath, normalizeAssetPath } from './item-builder-assets.ts';
+import { itemEffectPatch, itemVisuals } from './item-builder.ts';
+import { firstStyleSkin, heroModelPath, normalizeAssetPath } from './item-builder-assets.ts';
+import { styleOf, withStyle } from './item-builder-styles.ts';
 import { sharedVpkIndex } from './vpk.ts';
 import { personaLayouts } from './item-builder-personas.ts';
 import { ITEM_EFFECTS } from './item-builder-effects.ts';
 import { unusualItemEffect } from './item-builder-unusual.ts';
-import { idleSequence, itemActivities, loadoutSequence, modelSequences } from './model-loadout.ts';
+import { idleSequence, itemActivities, itemModifiers, loadoutSequence, modelSequences, motionList, type Motion } from './model-loadout.ts';
 import { heroStage, type HeroStage } from './hero-showcase.ts';
 import { heroLoadoutParticles, itemParticles, modelAttachments, particleDef, particleTextures, type Attachment, type ParticleDef } from './particle-spec.ts';
 import type { createModelGlb } from './model-glb.ts';
@@ -28,6 +30,8 @@ export type PreviewSlot = { slot: string; stock: string };
 export type HeroModels =
   | {
     ok: true; body: Uint8Array; clip: string | null; stage: HeroStage; pedestal: Uint8Array | null;
+    /** the body's model path, for `motions`, and what else it can be shown doing */
+    model: string; motions: Motion[];
     parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[] }[]; missing: string[];
     /** the body's attachment points, and the particles: on the body (part -1) or on a part, by its place in `parts` */
     attachments: Attachment[]; particles: { part: number; def: ParticleDef }[];
@@ -58,6 +62,22 @@ function itemModel(text: string, itemId: string, key: string | undefined, hero: 
 }
 
 /**
+ * The material set an item wears its model in, 0 for the first: what its style says, or a
+ * "model_skin" modifier for the style picked. Luna's Midnight Locks is one model and three sets, and
+ * 861 hero items are of this kind (2026-11-06).
+ * @param visuals  the item's visuals with the picked style made its first (withStyle)
+ */
+export function wornSkin(visuals: string): number {
+  const own = Number(firstStyleSkin(visuals));
+  if (own) return own;
+  for (const m of visuals.matchAll(/"asset_modifier\d*"\s*\{([^{}]*)\}/gi)) {
+    if (!/"type"\s+"model_skin"/i.test(m[1])) continue;
+    if (Number(/"style"\s+"(\d+)"/i.exec(m[1])?.[1] || 0) === 0) return Number(/"skin"\s+"(\d+)"/i.exec(m[1])?.[1] || 0);
+  }
+  return 0;
+}
+
+/**
  * The body an item's "entity_model" modifier puts the hero in: a persona's, which the item's own
  * copies leave out because a persona goes on through its base (src/item-builder-personas.ts).
  */
@@ -71,7 +91,7 @@ export function entityModel(block: string, hero: string): string | null {
 
 /** The 3D preview's models, made on demand. */
 export function createHeroPreview({ glb, library, gamePath, vanilla, log = () => {} }: {
-  glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'> & Partial<Pick<ReturnType<typeof createModelGlb>, 'sprites'>>;
+  glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'> & Partial<Pick<ReturnType<typeof createModelGlb>, 'sprites' | 'skinned'>>;
   library: Pick<Library, 'list'>;
   gamePath: () => string | null;
   vanilla: () => string;
@@ -79,8 +99,8 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
 }) {
   /** The hero's body and what each slot wears now. */
   function plan(name: string, slots: PreviewSlot[]): {
-    body: string; clip: string | null; idle: string; stage: HeroStage; heroFx: string[]; read: (p: string) => Buffer | null;
-    parts: { slot: string; name: string; model: string; fx: string[] }[];
+    body: string; clip: string | null; idle: string; motions: Motion[]; stage: HeroStage; heroFx: string[]; read: (p: string) => Buffer | null;
+    parts: { slot: string; name: string; model: string; skin: number; fx: string[] }[];
   } | null {
     // the window names the hero as its slots do (magnataur); the scripts and the table, in full
     const hero = name.startsWith('npc_dota_hero_') ? name : `npc_dota_hero_${name}`;
@@ -89,7 +109,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     const text = vanilla();
     const ix = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
     let body = normalizeAssetPath(heroModelPath(ix, hero));
-    const parts: { slot: string; name: string; model: string; fx: string[] }[] = [];
+    const parts: { slot: string; name: string; model: string; skin: number; fx: string[] }[] = [];
     const modifiers: string[] = [];
     // a persona's own slot is worn under a plain one, and wears the persona's stock item until a pick
     const given = new Map((personaLayouts(text).get(hero.replace(/^npc_dota_hero_/, ''))?.parts || []).map((x) => [x.slot, x.given?.id]));
@@ -105,7 +125,10 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
       const model = picked?.model || stock?.get('model_player');
       // the item's own particles, or the stock item's where nothing is picked (src/particle-spec.ts)
       const fx = itemParticles((block || stockItem)?.text || '');
-      if (model) parts.push({ slot: s.slot, name: rec?.name || stock?.get('name') || '', model: normalizeAssetPath(model), fx });
+      const worn = block || stockItem;
+      const visuals = worn ? itemVisuals(text, worn) : null;
+      const skin = visuals ? wornSkin(withStyle(visuals, styleOf(String(rec?.effectId || ''))).visuals) : 0;
+      if (model) parts.push({ slot: s.slot, name: rec?.name || stock?.get('name') || '', model: normalizeAssetPath(model), skin, fx });
     }
     // the loadout the game plays for what is worn (src/model-loadout.ts), read out of the body itself
     const seqs = modelSequences(ix.read(body.replace(/\.vmdl$/i, '.vmdl_c')));
@@ -114,7 +137,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     // the game's own staging (src/hero-showcase.ts): an arcana's body has an entry of its own
     const script = ix.read(`scripts/npc/heroes/${hero}.txt`)?.toString('utf8') ?? null;
     const stage = heroStage(ix.read('scripts/npc/portraits_showcase.txt')?.toString('utf8') ?? null, script, [body, hero]);
-    return { body, clip, idle, stage, parts, heroFx: script ? heroLoadoutParticles(script) : [], read: (f) => ix.read(f) };
+    return { body, clip, idle, motions: motionList(seqs, modifiers, itemModifiers(text)), stage, parts, heroFx: script ? heroLoadoutParticles(script) : [], read: (f) => ix.read(f) };
   }
 
   /** The body with its loadout clip and its idle, and each slot's model, as GLB bytes with their pictures inside. */
@@ -139,7 +162,8 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
       }
     };
     for (const x of p.parts) {
-      const f = files[x.model];
+      const worn = x.skin && glb.skinned ? await glb.skinned(x.model, x.skin, p.read(x.model.replace(/\.vmdl$/i, '.vmdl_c'))) : null;
+      const f = worn || files[x.model];
       if (!f) { missing.push(x.name || x.model); continue; }
       parts.push({ slot: x.slot, name: x.name, glb: embedGlb(f), attachments: modelAttachments(p.read(x.model.replace(/\.vmdl$/i, '.vmdl_c'))) });
       fx(parts.length - 1, x.fx);
@@ -148,9 +172,15 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     const stand = pedestal ? files[pedestal] : null;
     const sprites = await spritesOf(particles.map((x) => x.def));
     return {
-      ok: true, body: embedGlb(bodyFile), clip: p.clip, stage: p.stage, pedestal: stand ? embedGlb(stand) : null, parts, missing,
+      ok: true, body: embedGlb(bodyFile), clip: p.clip, model: p.body, motions: p.motions, stage: p.stage, pedestal: stand ? embedGlb(stand) : null, parts, missing,
       attachments: modelAttachments(p.read(p.body.replace(/\.vmdl$/i, '.vmdl_c'))), particles, sprites,
     };
+  }
+
+  /** Every clip of a body as GLB bytes, without its pictures: the window lays them over the model it has. Null where the game has none. */
+  async function motions(body: string): Promise<Uint8Array | null> {
+    const got = (await glb.glbs([body], 'all'))[body];
+    return got ? fs.readFileSync(got) : null;
   }
 
   /** The textures these systems draw with, as the window takes them. */
@@ -177,5 +207,5 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     return got ? embedGlb(got) : null;
   }
 
-  return { plan, models, effect, model };
+  return { plan, models, motions, effect, model };
 }

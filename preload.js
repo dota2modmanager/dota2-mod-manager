@@ -110,6 +110,7 @@ contextBridge.exposeInMainWorld('api', {
   // the item builder's 3D preview: the hero's models out of the game
   preview3d: {
     models: (hero, slots) => ipcRenderer.invoke('preview3d:models', hero, slots),
+    motions: (body) => ipcRenderer.invoke('preview3d:motions', body),
     effect: (id) => ipcRenderer.invoke('preview3d:effect', id),
     model: (file) => ipcRenderer.invoke('preview3d:model', file),
   },

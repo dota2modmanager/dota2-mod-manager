@@ -123,7 +123,8 @@ function itemBlock(text: string, item: { start: number; end: number }): string {
   return text.slice(item.start, item.end);
 }
 
-function itemVisuals(text: string, item: { start: number }): string | null {
+/** The text of an item's "visuals" block, or null for an item without one. */
+export function itemVisuals(text: string, item: { start: number }): string | null {
   let visuals = null as string | null;
   eachChild(text, blockBounds(text, item.start), (c) => {
     if (c.isBlock && c.key.toLowerCase() === 'visuals') visuals = text.slice(c.start, c.end);

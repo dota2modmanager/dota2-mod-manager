@@ -10,6 +10,7 @@
 // userData under the game's build: a new build can change any model, so the old cache goes.
 import fs from 'node:fs';
 import path from 'node:path';
+import { withSkin } from './model-skin.ts';
 import crypto from 'node:crypto';
 import { runTool } from './toolchain.ts';
 import { gameSchemaStamp } from './schema-items.ts';
@@ -41,12 +42,17 @@ export function foundGlb(root: string, file: string): string | null {
   return inside && fs.statSync(inside, { throwIfNoEntry: false })?.isFile() ? inside : null;
 }
 
+/** A gameinfo.gi that sends the toolchain to this game folder for what a lone file refers to. */
+export const gameInfo = (dota: string) => `"GameInfo"\n{\n\tFileSystem\n\t{\n\t\tSearchPaths\n\t\t{\n\t\t\tGame\t"${dota.replace(/\\/g, '/')}"\n\t\t}\n\t}\n}\n`;
+
 /** A clip name no model has: the bones without any animation (exportArgs). */
 const NO_CLIP = 'mm-no-clip';
 
 /** The toolchain's arguments for these models out of this archive into this folder. */
-export function exportArgs(pakFile: string, out: string, files: string[], clips: string[]): string[] {
-  const args = ['-i', pakFile, '-o', out, '-d', '-f', files.join(','), '--gltf_export_format', 'glb', '--gltf_export_materials'];
+export function exportArgs(pakFile: string, out: string, files: string[], clips: string[] | 'all'): string[] {
+  // a body for its clips alone: the window has its pictures already, and Axe's 75 clips are one 11 MB file in 1.6 s
+  if (clips === 'all') return ['-i', pakFile, '-o', out, '-d', '-f', files.join(','), '--gltf_export_format', 'glb', '--gltf_export_animations'];
+  const args = ['-i', pakFile, '-o', out, '-d', ...(files.length ? ['-f', files.join(',')] : []), '--gltf_export_format', 'glb', '--gltf_export_materials'];
   // the toolchain writes a model's bones only with its clips; a wearable gets its bones and a list
   // that names no clip, so it follows the body's bones without a file full of its own animations
   args.push('--gltf_export_animations', '--gltf_animation_list', clips.length ? clips.join(',') : NO_CLIP);
@@ -92,16 +98,16 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
    * The GLB of each model, exported if it is not in the cache yet; a model the game lacks, or
    * any model when the toolchain is not downloaded, comes back as null.
    * @param models model paths as items_game names them, "models/heroes/techies/techies.vmdl"
-   * @param clips animation clips to keep, for the hero's body; wearables follow its bones
+   * @param clips animation clips to keep, for the hero's body; wearables follow its bones. 'all' is every clip and no pictures
    */
-  async function glbs(models: string[], clips: string[] = []): Promise<Record<string, string | null>> {
+  async function glbs(models: string[], clips: string[] | 'all' = []): Promise<Record<string, string | null>> {
     const game = getGamePath();
     const exe = toolchain.pathOf('vrf');
     const out: Record<string, string | null> = Object.fromEntries(models.map((m) => [m, null]));
     if (!game || !exe) return out;
     const pakFile = path.join(game, 'dota', 'pak01_dir.vpk');
     // the clips are part of the file: a body with its idle is another cache entry than one without
-    const root = path.join(buildRoot(game), clips.length ? `clips-${clips.join('-').replace(/[^\w-]/g, '')}` : 'bones');
+    const root = path.join(buildRoot(game), clips === 'all' ? 'motions' : clips.length ? `clips-${clips.join('-').replace(/[^\w-]/g, '')}` : 'bones');
     const files = new Map(models.map((m) => [m, modelFile(m)]));
     const wanted = [...new Set([...files.values()].filter((f): f is string => !!f && !foundGlb(root, f)))];
     if (wanted.length) {
@@ -122,6 +128,44 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
     }
     for (const [m, f] of files) if (f) out[m] = foundGlb(root, f);
     return out;
+  }
+
+  /**
+   * The GLB of a model in another material set, or null where it has no such set. The archive holds
+   * the model in its first set, and the toolchain draws what the model's own meshes say, so the
+   * file exported is the model with the set made its own (src/model-skin.ts). It lies alone in a
+   * little game folder whose gameinfo.gi points at the real game, which is where the toolchain
+   * finds its materials and pictures.
+   * @param model  as items_game names it
+   * @param bytes  the model's file out of the archive
+   */
+  async function skinned(model: string, skin: number, bytes: Buffer | null): Promise<string | null> {
+    const game = getGamePath();
+    const exe = toolchain.pathOf('vrf');
+    const file = modelFile(model);
+    if (!game || !exe || !file || !bytes) return null;
+    const root = path.join(buildRoot(game), 'skins', String(skin));
+    const found = foundGlb(root, file);
+    if (found) return found;
+    const worn = withSkin(bytes, skin);
+    if (!worn || worn === bytes) return null;
+    const job = queue.then(async () => {
+      try {
+        const folder = path.join(root, 'source', 'game', 'mm');
+        const at = path.join(folder, ...file.split('/'));
+        fs.mkdirSync(path.dirname(at), { recursive: true });
+        fs.writeFileSync(at, worn);
+        fs.writeFileSync(path.join(folder, 'gameinfo.gi'), gameInfo(path.join(game, 'dota')));
+        const to = glbAt(root, file);
+        fs.mkdirSync(path.dirname(to), { recursive: true });
+        await run(exe, exportArgs(at, to, [], []));
+      } catch (err) {
+        log(`models 3d: skin export failed (${(err as Error)?.message || err})`);
+      }
+    });
+    queue = job;
+    await job;
+    return foundGlb(root, file);
   }
 
   /**
@@ -161,5 +205,5 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
   /** Everything exported so far, gone. */
   function clear(): void { fs.rmSync(base, { recursive: true, force: true }); }
 
-  return { glbs, sprites, clear };
+  return { glbs, skinned, sprites, clear };
 }

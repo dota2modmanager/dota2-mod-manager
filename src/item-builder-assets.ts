@@ -63,7 +63,7 @@ function stockModelsOf(text: string, heroes: string[]): Set<string> {
 const FORM = /^models\/heroes\//;
 
 /** The material set the first style's block names ("skin"), as a string, or undefined for none. */
-function firstStyleSkin(visuals: string): string | undefined {
+export function firstStyleSkin(visuals: string): string | undefined {
   let skin: string | undefined;
   eachChild(visuals, blockBounds(visuals, 0), (c) => {
     if (!c.isBlock || c.key.toLowerCase() !== 'styles') return;

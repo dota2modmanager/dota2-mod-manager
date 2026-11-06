@@ -9,9 +9,13 @@
  * The fresnel warp is three curves read by how much a surface faces the eye (R colour, G rim,
  * B specular); the diffuse warp is the hero's own light ramp, read by the half-lambert term.
  *
- * What this does not do: the game's cube map (the preview reflects a sky-to-ground gradient
- * instead), the detail texture, status effects and cloaking. A material with another shader keeps
- * the loader's own. */
+ * Specular is Phong on the reflection, weighted by the fresnel warp's blue except on metal, which
+ * shines at every angle. The scales are the game's own and large (Abaddon's body is 80), so nothing
+ * may add a floor under that weight: the curve is near nought facing the eye, and that is what keeps
+ * a dark armour dark.
+ *
+ * What this does not do: the game's cube map (the preview reflects a gradient from the ground to a
+ * cool sky, which is what turns the bare metal of Luna's cat blue), status effects and cloaking. A material with another shader keeps the loader's own. */
 import * as THREE from 'three';
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -34,12 +38,13 @@ const vertexShader = /* glsl */`
 #include <common>
 #include <morphtarget_pars_vertex>
 #include <skinning_pars_vertex>
-uniform vec4 uUvTransform;
-varying vec2 vUv0;
+uniform vec4 uUvTransform, uDetailTransform;
+varying vec2 vUv0, vUvDetail;
 varying vec3 vNormalV;
 varying vec3 vViewPos;
 void main() {
   vUv0 = uv * uUvTransform.xy + uUvTransform.zw;
+  vUvDetail = uv * uDetailTransform.xy + uDetailTransform.zw;
   #include <beginnormal_vertex>
   #include <morphinstance_vertex>
   #include <morphnormal_vertex>
@@ -56,13 +61,13 @@ void main() {
 `;
 
 const fragmentShader = /* glsl */`
-uniform sampler2D uColor, uNormal, uMasks1, uMasks2, uFresnelWarp, uDiffuseWarp, uCubeMask;
+uniform sampler2D uColor, uNormal, uMasks1, uMasks2, uFresnelWarp, uDiffuseWarp, uCubeMask, uDetail;
 uniform float uHasNormal, uHasMasks1, uHasMasks2, uHasDiffuseWarp, uAlphaTest, uSelfIllumOn, uHasCubeMask;
-uniform float uWarpFull, uMetalFull, uSelfIllumFull, uSpecFull, uExpFull;
+uniform float uWarpFull, uMetalFull, uSelfIllumFull, uSpecFull, uExpFull, uDetailMode, uDetailFactor, uDetailFull;
 uniform float uSpecScale, uSpecExp, uRimScale, uCubeScale, uWarpRow;
-uniform vec3 uSpecColor, uRimColorM;
+uniform vec3 uSpecColor, uRimColorM, uDetailTint;
 uniform vec3 uKey, uKeyColor, uFill, uFillColor, uUp, uSky, uGround, uRim;
-varying vec2 vUv0;
+varying vec2 vUv0, vUvDetail;
 varying vec3 vNormalV;
 varying vec3 vViewPos;
 
@@ -98,6 +103,12 @@ void main() {
   vec3 v = normalize(vViewPos);
   vec4 m1 = uHasMasks1 > 0.5 ? texture2D(uMasks1, vUv0) : vec4(0.0, 1.0, 0.0, 0.0);
   vec4 m2 = uHasMasks2 > 0.5 ? texture2D(uMasks2, vUv0) : vec4(0.0);
+  // the doubling mode works on the decoded value: that is what turns Abaddon's pale horse blue
+  float detailMask = mix(m1.r, 1.0, uDetailFull) * uDetailFactor;
+  vec3 detail = uDetailMode > 0.5 ? texture2D(uDetail, vUvDetail).rgb * uDetailTint : vec3(0.5);
+  vec3 detailLight = pow(detail, vec3(2.2)) * detailMask;
+  if (uDetailMode > 2.5) albedo *= mix(vec3(1.0), pow(detail, vec3(2.2)) * 2.0, detailMask);
+  else if (uDetailMode > 0.5 && uDetailMode < 1.5) albedo += detailLight;
   float warpMask = mix(m1.g, 1.0, uWarpFull);
   float metal = mix(m1.b, 1.0, uMetalFull);
   // the mask's alpha is self-illumination only where the material switches it on
@@ -110,20 +121,20 @@ void main() {
   float up = dot(n, uUp);
   vec3 ambient = mix(uGround, uSky, up * 0.5 + 0.5);
   vec3 light = warp(n, uKey, warpMask) * uKeyColor + warp(n, uFill, warpMask) * uFillColor + ambient;
-  vec3 col = albedo * light * (1.0 - metal * 0.85);
+  vec3 col = albedo * light * (1.0 - metal);
 
-  vec3 specTint = mix(vec3(1.0), albedo, m2.b) * uSpecColor;
-  vec3 hk = normalize(uKey + v), hf = normalize(uFill + v);
-  float spec = pow(max(dot(n, hk), 0.0), expo) * max(dot(n, uKey), 0.0) * length(uKeyColor)
-    + 0.5 * pow(max(dot(n, hf), 0.0), expo) * max(dot(n, uFill), 0.0) * length(uFillColor);
-  col += specTint * spec * specMask * uSpecScale * (0.35 + fres.b);
-
+  vec3 specTint = mix(vec3(1.0), albedo, max(m2.b, metal)) * uSpecColor;
   vec3 r = reflect(-v, n);
-  vec3 env = mix(uGround, uSky * 2.0, smoothstep(-0.3, 0.6, dot(r, uUp)));
+  float spec = pow(max(dot(r, uKey), 0.0), expo) * max(dot(n, uKey), 0.0) * length(uKeyColor)
+    + 0.5 * pow(max(dot(r, uFill), 0.0), expo) * max(dot(n, uFill), 0.0) * length(uFillColor);
+  col += specTint * spec * specMask * uSpecScale * max(fres.b, metal * 0.06);
+
+  vec3 env = mix(uGround, vec3(0.35, 0.55, 1.0) * 1.4, smoothstep(-0.3, 0.6, dot(r, uUp)));
   float cubeMask = uHasCubeMask > 0.5 ? texture2D(uCubeMask, vUv0).r : metal;
   col += env * albedo * cubeMask * uCubeScale * 0.35;
 
-  col += uRim * uRimColorM * fres.g * m2.g * uRimScale * clamp(up + 0.35, 0.0, 1.0);
+  col += uRim * uRimColorM * fres.g * m2.g * uRimScale * 0.35 * clamp(up + 0.35, 0.0, 1.0);
+  if (uDetailMode > 1.5 && uDetailMode < 2.5) col += detailLight;
   col = mix(col, albedo, selfIllum);
 
   gl_FragColor = vec4(col, uAlphaTest > 0.0 ? 1.0 : base.a);
@@ -143,7 +154,7 @@ const shared = (lights: HeroLights) => ({
  * one it shares as sRGB wherever it used it as a colour (masks 1 is its emissive map), and a mask
  * read as sRGB is a different mask. Colours are decoded to linear on the GPU; lookups are clamped.
  */
-async function textureNamed(gltf: GLTF, name: string | undefined, kind: 'color' | 'data' | 'lookup' | 'ramp' = 'data'): Promise<THREE.Texture | null> {
+async function textureNamed(gltf: GLTF, name: string | undefined, kind: 'color' | 'data' | 'lookup' | 'ramp' | 'tile' = 'data'): Promise<THREE.Texture | null> {
   if (!name) return null;
   const list = (gltf.parser.json.textures || []) as { name?: string }[];
   const index = list.findIndex((t) => t.name === name);
@@ -152,6 +163,7 @@ async function textureNamed(gltf: GLTF, name: string | undefined, kind: 'color' 
     const tex = (await gltf.parser.getDependency('texture', index) as THREE.Texture).clone();
     tex.colorSpace = kind === 'color' || kind === 'ramp' ? THREE.SRGBColorSpace : THREE.NoColorSpace;
     if (kind === 'lookup' || kind === 'ramp') { tex.wrapS = THREE.ClampToEdgeWrapping; tex.wrapT = THREE.ClampToEdgeWrapping; }
+    if (kind === 'tile') { tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; }
     tex.needsUpdate = true;
     return tex;
   } catch {
@@ -167,15 +179,19 @@ async function heroMaterial(gltf: GLTF, from: THREE.Material, lights: HeroLights
   const num = (k: string, d = 0) => vmat.FloatParams?.[k] ?? d;
   const vec = (k: string, d: number[]) => vmat.VectorParams?.[k] ?? d;
   const tp = vmat.TextureParams || {};
-  const [color, normal, masks1, masks2, fresnel, diffuseWarp, cubeMask] = await Promise.all([
+  const detailMode = num('g_flDetailBlendFactor', 1) > 0 ? int.F_DETAIL || 0 : 0;
+  const [color, normal, masks1, masks2, fresnel, diffuseWarp, cubeMask, detail] = await Promise.all([
     textureNamed(gltf, tp.g_tColor, 'color'), textureNamed(gltf, tp.g_tNormal),
     int.F_MASKS_1 ? textureNamed(gltf, tp.g_tMasks1) : null, int.F_MASKS_2 ? textureNamed(gltf, tp.g_tMasks2) : null,
     textureNamed(gltf, tp.g_tFresnelWarp, 'lookup'), int.F_DIFFUSE_WARP ? textureNamed(gltf, tp.g_tDiffuseWarp, 'ramp') : null,
     int.F_MASK_CUBE_MAP_BY_SEPARATE_MASK ? textureNamed(gltf, tp.g_tCubeMapSeparateMask) : null,
+    detailMode ? textureNamed(gltf, tp.g_tDetail, 'tile') : null,
   ]);
   if (!color || !fresnel) return null;
   const scale = vec('g_vTexCoordScale', [1, 1]);
   const offset = vec('g_vTexCoordOffset', [0, 0]);
+  const detailScale = vec('g_vDetailTexCoordScale', [1, 1]);
+  const detailOffset = vec('g_vDetailTexCoordOffset', [0, 0]);
   const blank = color;
   const translucent = !!int.F_TRANSLUCENT;
   return new THREE.ShaderMaterial({
@@ -191,11 +207,15 @@ async function heroMaterial(gltf: GLTF, from: THREE.Material, lights: HeroLights
       uAlphaTest: { value: int.F_ALPHA_TEST ? num('g_flAlphaTestReference', 0.5) : 0 },
       uSelfIllumOn: { value: int.F_SELF_ILLUM ? 1 : 0 },
       uCubeMask: { value: cubeMask || blank }, uHasCubeMask: { value: cubeMask ? 1 : 0 },
+      uDetail: { value: detail || blank }, uDetailMode: { value: detail ? detailMode : 0 },
+      uDetailFactor: { value: num('g_flDetailBlendFactor', 1) }, uDetailFull: { value: num('g_flDetailBlendToFull') },
+      uDetailTint: { value: new THREE.Color().fromArray(vec('g_vDetail1ColorTint', [1, 1, 1])) },
+      uDetailTransform: { value: new THREE.Vector4(detailScale[0], detailScale[1], detailOffset[0], detailOffset[1]) },
       uWarpFull: { value: num('g_flDiffuseWarpBlendToFull') }, uMetalFull: { value: num('g_flMetalnessBlendToFull') },
       uSelfIllumFull: { value: num('g_flSelfIllumBlendToFull') }, uSpecFull: { value: num('g_flSpecularBlendToFull') },
       uExpFull: { value: num('g_flSpecularExponentBlendToFull') },
       uSpecScale: { value: num('g_flSpecularScale', 1) }, uSpecExp: { value: num('g_flSpecularExponent', 20) },
-      uRimScale: { value: num('g_flRimLightScale', 1) }, uCubeScale: { value: int.F_SPECULAR_CUBE_MAP ? num('g_flCubeMapScalar', 1) : 0 },
+      uRimScale: { value: num('g_flRimLightScale', 1) }, uCubeScale: { value: num('g_flCubeMapScalar', 1) },
       uSpecColor: { value: new THREE.Color().fromArray(vec('g_vSpecularColor', [1, 1, 1])) },
       uRimColorM: { value: new THREE.Color().fromArray(vec('g_vRimLightColor', [1, 1, 1])) },
       uUvTransform: { value: new THREE.Vector4(scale[0], scale[1], offset[0], offset[1]) },

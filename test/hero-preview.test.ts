@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { buildVpk, entryAt } from '../src/vpk.ts';
 import { writeGlb, readGlb } from '../src/glb-embed.ts';
-import { createHeroPreview, entityModel } from '../src/hero-preview.ts';
+import { createHeroPreview, entityModel, wornSkin } from '../src/hero-preview.ts';
 
 const jugg = `\t\t\t"used_by_heroes"\n\t\t\t{\n\t\t\t\t"npc_dota_hero_juggernaut"\t\t"1"\n\t\t\t}\n`;
 const block = (id: string, fields: [string, string][], visuals = '') =>
@@ -41,9 +41,9 @@ type Pick = { slot: string; itemId: string; name: string };
 type Opts = { gamePath?: string | null; have?: (model: string) => boolean };
 function preview(picks: Pick[] = [], { gamePath = game(), have = () => true }: Opts = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-glbs-'));
-  const asked: { models: string[]; clips: string[] }[] = [];
+  const asked: { models: string[]; clips: string[] | 'all' }[] = [];
   const glb = {
-    glbs: async (models: string[], clips: string[] = []) => {
+    glbs: async (models: string[], clips: string[] | 'all' = []) => {
       asked.push({ models, clips });
       return Object.fromEntries(models.map((m, i) => {
         if (!have(m)) return [m, null];
@@ -57,11 +57,18 @@ function preview(picks: Pick[] = [], { gamePath = game(), have = () => true }: O
   return { hp: createHeroPreview({ glb, library, gamePath: () => gamePath, vanilla: () => TABLE }), asked };
 }
 
+test('an item wears the material set of its first style, or of a modifier for that style', () => {
+  assert.equal(wornSkin('"visuals"\n{\n"styles"\n{\n"0"\n{\n"name" "a"\n"skin" "2"\n}\n"1"\n{\n"skin" "5"\n}\n}\n}'), 2);
+  assert.equal(wornSkin('"visuals"\n{\n"asset_modifier"\n{\n"type" "model_skin"\n"skin" "3"\n}\n}'), 3);
+  assert.equal(wornSkin('"visuals"\n{\n"asset_modifier"\n{\n"type" "model_skin"\n"style" "1"\n"skin" "3"\n}\n}'), 0);
+  assert.equal(wornSkin('"visuals"\n{\n"asset_modifier"\n{\n"type" "activity"\n"modifier" "x"\n}\n}'), 0);
+});
+
 test('the body comes out of the hero’s script, and each slot wears its stock item until one is picked', () => {
   const { hp } = preview();
   const p = hp.plan('juggernaut', SLOTS)!;
   assert.equal(p.body, 'models/heroes/juggernaut/juggernaut.vmdl');
-  assert.deepEqual(p.parts, [{ slot: 'item:juggernaut:head', name: 'Juggernaut’s Mask', model: 'models/heroes/juggernaut/jugg_mask.vmdl',
+  assert.deepEqual(p.parts, [{ slot: 'item:juggernaut:head', name: 'Juggernaut’s Mask', model: 'models/heroes/juggernaut/jugg_mask.vmdl', skin: 0,
     fx: ['particles/units/heroes/hero_juggernaut/jugg_mask_glow.vpcf'] }]);
 });
 
@@ -110,4 +117,12 @@ test('a persona puts the hero in the body its "entity_model" names, and only for
   assert.equal(entityModel(block, 'npc_dota_hero_crystal_maiden'), 'models/heroes/crystal_maiden_persona/crystal_maiden_persona.vmdl');
   assert.equal(entityModel(block, 'npc_dota_hero_lina'), null);
   assert.equal(entityModel('"asset_modifier" { "type" "entity_model" "asset" "npc_dota_hero_lina" "modifier" "particles/x.vpcf" }', 'npc_dota_hero_lina'), null, 'a body is a model');
+});
+
+test('every clip of a body comes as its file, and a body the game lacks as null', async () => {
+  const { hp, asked } = preview([], { have: (m) => m === 'models/heroes/axe/axe.vmdl' });
+  const bytes = await hp.motions('models/heroes/axe/axe.vmdl');
+  assert.ok(bytes && bytes.length > 0);
+  assert.equal(asked.at(-1)?.clips, 'all');
+  assert.equal(await hp.motions('models/heroes/nobody/nobody.vmdl'), null);
 });

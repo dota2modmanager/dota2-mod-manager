@@ -267,7 +267,8 @@ export function playParticles(scene: THREE.Scene, list: { spec: ParticleSpec; se
         }
         const [first, second] = c.entity === 'self' ? [self, hero] : [hero, self];
         const att = c.attachment ? first.attachments.find((a) => a.name === c.attachment) || second.attachments.find((a) => a.name === c.attachment) : null;
-        const bone = att ? first.bones.get(att.bone) || second.bones.get(att.bone) || hero.bones.get(att.bone) : null;
+        const key = att?.bone.toLowerCase() ?? '';
+        const bone = att ? first.bones.get(key) || second.bones.get(key) || hero.bones.get(key) : null;
         if (!att || !bone) return srcMatrix();
         return new THREE.Matrix4().compose(new THREE.Vector3(...att.offset), new THREE.Quaternion(...att.rotation), new THREE.Vector3(1, 1, 1))
           .premultiply(bone.matrixWorld);

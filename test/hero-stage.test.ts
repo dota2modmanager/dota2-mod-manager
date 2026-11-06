@@ -4,7 +4,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { forward, heroStage, showcaseEntry, toGlb, LOADOUT_CAMERA } from '../src/hero-showcase.ts';
-import { idleSequence, itemActivities, loadoutSequence, modelSequences } from '../src/model-loadout.ts';
+import { idleSequence, itemActivities, itemModifiers, loadoutSequence, modelSequences, motionList } from '../src/model-loadout.ts';
+import { motionLabels } from '../renderer/catalog/preview3d/motion-label.ts';
 import { widthDistance } from '../renderer/catalog/preview3d/stage.ts';
 
 const near = (a: number[], b: number[]) => a.every((v, i) => Math.abs(v - b[i]) < 1e-6);
@@ -109,8 +110,69 @@ test('an item’s activities are its first style’s "activity" modifiers', () =
 
 test('the camera steps back far enough for the hero’s width, and further for a narrower view', () => {
   const t = Math.tan((20 * Math.PI) / 360);
-  assert.ok(Math.abs(widthDistance({ x: 2, z: 0 }, 1, 20, { x: 1, z: 0 }, 1) - 1 / t) < 1e-9);
+  assert.ok(Math.abs(widthDistance({ x: 2, z: 0 }, 1, 20, { x: 1, z: 0 }, 0, 1) - 1 / t) < 1e-9);
   assert.ok(widthDistance({ x: 2, z: 0 }, 0.5, 20) > widthDistance({ x: 2, z: 0 }, 1, 20));
   // seen from the side, the hero's depth is its width
-  assert.ok(Math.abs(widthDistance({ x: 0, z: 2 }, 1, 20, { x: 0, z: 1 }, 1) - 1 / t) < 1e-9);
+  assert.ok(Math.abs(widthDistance({ x: 0, z: 2 }, 1, 20, { x: 0, z: 1 }, 0, 1) - 1 / t) < 1e-9);
+});
+
+test('a hero holding a weapon out to one side steps back for its far end', () => {
+  const t = Math.tan((20 * Math.PI) / 360);
+  const centred = widthDistance({ x: 2, z: 0 }, 1, 20, { x: 1, z: 0 }, 0, 1);
+  assert.ok(Math.abs(widthDistance({ x: 2, z: 0 }, 1, 20, { x: 1, z: 0 }, -1, 1) - (centred + 1 / t)) < 1e-9);
+});
+
+test('what the hero wears changes every motion it has a variant for, as the loadout', () => {
+  const seqs = [
+    { name: 'run', acts: ['ACT_DOTA_RUN'] }, { name: 'run_hook', acts: ['ACT_DOTA_RUN', 'whalehook'] },
+    { name: 'run_injured', acts: ['ACT_DOTA_RUN', 'injured'] }, { name: 'run_injured_hook', acts: ['ACT_DOTA_RUN', 'injured', 'whalehook'] },
+    { name: 'attack', acts: ['ACT_DOTA_ATTACK'] }, { name: 'attack2', acts: ['ACT_DOTA_ATTACK'] },
+  ];
+  assert.deepEqual(motionList(seqs, ['WhaleHook']).map((m) => m.name), ['run_hook', 'run_injured_hook', 'attack', 'attack2']);
+  assert.deepEqual(motionList(seqs).map((m) => m.name), ['run', 'run_hook', 'run_injured', 'run_injured_hook', 'attack', 'attack2']);
+});
+
+test('a motion that needs an item the hero does not wear is not on its list', () => {
+  const text = '"asset_modifier" { "type" "activity" "modifier" "Whalehook" }\n"asset_modifier" { "type" "activity" "asset" "ACT_DOTA_RUN" "modifier" "harpoon" }\n"attributes" { "activity" "1" }';
+  const ofItems = itemModifiers(text);
+  assert.deepEqual([...ofItems].sort(), ['harpoon', 'whalehook']);
+  assert.equal(itemModifiers(text), ofItems);
+  const seqs = [
+    { name: 'run', acts: ['ACT_DOTA_RUN'] }, { name: 'run_injured', acts: ['ACT_DOTA_RUN', 'injured'] },
+    { name: 'run_hook', acts: ['ACT_DOTA_RUN', 'whalehook'] }, { name: 'run_both', acts: ['ACT_DOTA_RUN', 'whalehook', 'harpoon'] },
+  ];
+  assert.deepEqual(motionList(seqs, [], ofItems).map((m) => m.name), ['run', 'run_injured']);
+  assert.deepEqual(motionList(seqs, ['whalehook'], ofItems).map((m) => m.name), ['run_injured', 'run_hook']);
+});
+
+test('a swing, a spell and a taunt have an end; standing, running and being held do not', () => {
+  const list = motionList([
+    { name: 'idle', acts: ['ACT_DOTA_IDLE'] }, { name: 'run', acts: ['ACT_DOTA_RUN'] }, { name: 'stun', acts: ['ACT_DOTA_DISABLED'] },
+    { name: 'channel', acts: ['ACT_DOTA_GENERIC_CHANNEL_1'] }, { name: 'attack', acts: ['ACT_DOTA_ATTACK'] },
+    { name: 'spell', acts: ['ACT_DOTA_CAST_ABILITY_4'] }, { name: 'taunt', acts: ['ACT_DOTA_TAUNT'] }, { name: 'death', acts: ['ACT_DOTA_DIE'] },
+  ]);
+  assert.deepEqual(list.filter((m) => m.once).map((m) => m.name), ['attack', 'spell', 'taunt', 'death']);
+});
+
+test('a motion is named for what it does, numbered among its like; one with no word keeps the file\u2019s name', () => {
+  const word = (act: string, ability: string | null) => (ability ? `Ability ${ability}` : ({ ATTACK: 'Attack', RUN: 'Run' } as Record<string, string>)[act] ?? null);
+  const m = (name: string, act: string, mods: string[] = []) => ({ name, act, mods });
+  assert.deepEqual(motionLabels([
+    m('attack_main_anim', 'ACT_DOTA_ATTACK'), m('attack_alt_anim', 'ACT_DOTA_ATTACK2'), m('run_injured_anim', 'ACT_DOTA_RUN', ['injured']),
+    m('counter_helix_anim', 'ACT_DOTA_CAST_ABILITY_3'), m('berserkers_call', 'ACT_DOTA_OVERRIDE_ABILITY_1'), m('axe_ice_skate_anim', 'ACT_DOTA_ICE_SKATE'),
+  ], word), ['Attack 1', 'Attack 2', 'Run (injured)', 'Ability 3', 'Ability 1', 'Axe ice skate']);
+});
+
+test('the list of motions has what the hero does, by kind, without its layers and the statue copies', () => {
+  const list = motionList([
+    { name: 'bindPose', acts: [] }, { name: '@counter_helix', acts: [] },
+    { name: 'axe_victory', acts: ['ACT_DOTA_VICTORY'] }, { name: 'attack_main_anim', acts: ['ACT_DOTA_ATTACK'] },
+    { name: 'attack_main', acts: ['ACT_DOTA_ATTACK_STATUE'] }, { name: 'run_anim', acts: ['ACT_DOTA_RUN'] },
+    { name: 'idle', acts: ['ACT_DOTA_IDLE'] }, { name: 'loadout', acts: ['ACT_DOTA_LOADOUT'] },
+    { name: 'counter_helix_anim', acts: ['ACT_DOTA_CAST_ABILITY_3'] }, { name: 'death', acts: ['ACT_DOTA_DIE'] },
+  ]);
+  assert.deepEqual(list.map((m) => [m.name, m.group]), [
+    ['loadout', 'stance'], ['idle', 'idle'], ['run_anim', 'run'], ['attack_main_anim', 'attack'],
+    ['counter_helix_anim', 'ability'], ['axe_victory', 'emote'], ['death', 'other'],
+  ]);
 });
