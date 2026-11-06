@@ -274,6 +274,9 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
           <span className="about-role">{L`Арканы в конструкторе`}</span>
           <span>J0nathan550</span>
           <a className="settings-link" id="arcanaCreditLink" onClick={() => actions.open('https://github.com/J0nathan550')}>github.com/J0nathan550</a>
+          <span className="about-role">{L`Идеи 3D-просмотра и сборки файлами`}</span>
+          <span>Harlord</span>
+          <a className="settings-link" id="harlordLink" onClick={() => actions.open('https://dota-studio.lol/')}>dota-studio.lol</a>
           <span className="about-role">{L`Видео о менеджере`}</span>
           <span>hanta</span>
           <a className="settings-link" id="thanksLink" onClick={() => actions.open('https://www.youtube.com/@hqnta')}>youtube.com/@hqnta</a>

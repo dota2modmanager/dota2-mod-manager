@@ -377,6 +377,10 @@ writing VPK archives is done by this repository's own code, which is why `src/vp
   there, so Razor runs forward and Juggernaut keeps all his animations. The fixed arcanas, personas and
   immortals live in [hero-base-fixes](https://github.com/dota2modmanager/hero-base-fixes), and the
   app downloads them from there, signed.
+- **[Harlord](https://discord.com/users/436420477511139329)** ([dota-studio.lol](https://dota-studio.lol/),
+  [Telegram](https://t.me/harlord_mods)) gave this app many of its ideas: how items sit on the hero,
+  the look of the 3D preview, and building items as files with no item table. Harlord let us test
+  dota-studio.lol and take ideas from it. The code here is our own.
 - **Dota's updates** are read from [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2)
   by [SteamTracking](https://github.com/SteamTracking), which commits every Dota build as text within
   the hour. The [Dota updates](https://github.com/dota2modmanager/dota2-mod-manager/issues/225)
