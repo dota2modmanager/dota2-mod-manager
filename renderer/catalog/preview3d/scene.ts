@@ -20,6 +20,7 @@ import { backdrop, buildStage, heroLights, LOADOUT_FOV, PLAIN_STAGE, widthDistan
 import type { Attachment, HeroStage, ParticleDef } from '../../api/preview3d.ts';
 import { particleSpec } from './particle-def.ts';
 import { playParticles, spriteTextures, type Carrier } from './particles.ts';
+import { motionPlayer, type PlayMotion } from './motion-player.ts';
 
 /** Up to about 1500 vertices of every mesh under `root`, where the pose puts them in the world. */
 function posedPoints(root: THREE.Object3D): THREE.Vector3[] {
@@ -64,8 +65,11 @@ function surfaceOf(root: THREE.Object3D): () => THREE.Vector3 | null {
 
 /** The scene once it stands in the window. */
 export interface HeroScene {
-  /** Play this clip, out of the body's own or out of the file `motions` brings; null for the loadout. False when neither has it. */
-  play: (name: string | null, motions?: () => Promise<Uint8Array | null>) => Promise<boolean>;
+  /**
+   * Play this clip, out of the body's own or out of the file `motions` brings; null for the loadout. False when neither has it.
+   * @param onEnd  given, the clip plays once and the hero goes back to the loadout, then this is called
+   */
+  play: PlayMotion;
   /** The camera and the hero's turn back where they started. */
   resetView: () => void;
   dispose: () => void;
@@ -132,8 +136,7 @@ export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uin
   table.traverse((o) => { if ((o as THREE.Mesh).isMesh) { o.castShadow = true; o.frustumCulled = false; } });
 
   const mixer = new THREE.AnimationMixer(hero.scene);
-  const playing = hero.animations.find((a) => a.name === clip) || hero.animations.find((a) => /idle/i.test(a.name)) || hero.animations[0];
-  let action = playing ? mixer.clipAction(playing).play() : null;
+  const clips = motionPlayer(mixer, hero.animations, clip, async (bytes) => (await parse(bytes)).animations);
 
   const syncWorn = () => {
     table.updateMatrixWorld(true);
@@ -147,9 +150,9 @@ export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uin
   // framed on everything worn through the whole loadout, as the game's camera never moves: the
   // skinned vertices as each pose has them, a mount and a raised sword included
   const points: THREE.Vector3[] = [];
-  const samples = playing ? 5 : 1;
+  const samples = clips.home ? 5 : 1;
   for (let i = 0; i < samples; i++) {
-    mixer.setTime(playing ? (playing.duration * i) / samples : 0);
+    mixer.setTime(clips.home ? (clips.home.duration * i) / samples : 0);
     syncWorn();
     points.push(...posedPoints(table));
   }
@@ -194,7 +197,7 @@ export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uin
     return self ? [{ spec: particleSpec(def), self }] : [];
   }), heroCarrier, src, textures);
   // the loadout's effects come with its animation: each time it starts over, so do they
-  if (fx && playing?.name === clip) mixer.addEventListener('loop', (e) => { if (e.action === action && action.getClip() === playing) fx.restart(); });
+  if (fx && clips.home?.name === clip) mixer.addEventListener('loop', (e) => { if (e.action.getClip() === clips.home) fx.restart(); });
 
   renderer.domElement.tabIndex = 0;
   renderer.domElement.setAttribute('aria-label', label);
@@ -239,29 +242,12 @@ export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uin
   };
   tick();
 
-  // the clips beyond the two the model came with
-  let others: THREE.AnimationClip[] | null = null;
-  const play: HeroScene['play'] = async (name, motions) => {
-    if (name && !hero.animations.some((a) => a.name === name) && !others && motions) {
-      const bytes = await motions();
-      if (bytes) others = (await parse(bytes)).animations;
-    }
-    const next = !name ? playing : hero.animations.find((a) => a.name === name) || others?.find((a) => a.name === name);
-    if (!next) return false;
-    const was = action;
-    action = mixer.clipAction(next);
-    if (was !== action) {
-      action.reset().play();
-      if (was) was.crossFadeTo(action, 0.2, false);
-    }
-    return true;
-  };
-
   const dispose = () => {
     cancelAnimationFrame(frame);
     timer.dispose();
     resize.disconnect();
     controls.dispose();
+    clips.dispose();
     mixer.stopAllAction();
     fx?.dispose();
     for (const t of textures.values()) t.dispose();
@@ -280,5 +266,5 @@ export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uin
     renderer.domElement.remove();
     host.style.removeProperty('--stage-tint');
   };
-  return { play, resetView: controls.reset, dispose };
+  return { play: clips.play, resetView: controls.reset, dispose };
 }

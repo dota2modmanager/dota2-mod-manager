@@ -18,7 +18,7 @@ export interface ParticleDef { path: string; tree: { [k: string]: ParticleJson }
 export interface Attachment { name: string; bone: string; offset: [number, number, number]; rotation: [number, number, number, number] }
 
 /** What a body can be shown doing (src/model-loadout.ts motionList). */
-export interface Motion { name: string; group: 'stance' | 'idle' | 'run' | 'attack' | 'ability' | 'emote' | 'other' }
+export interface Motion { name: string; group: 'stance' | 'idle' | 'run' | 'attack' | 'ability' | 'emote' | 'other'; act: string; mods: string[]; once: boolean }
 
 /** The item builder's 3D preview (src/hero-preview.ts): the body with its loadout clip, each slot's model and the pedestal, as GLB bytes. */
 export interface Preview3dApi {

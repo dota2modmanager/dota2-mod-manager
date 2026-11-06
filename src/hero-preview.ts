@@ -16,7 +16,7 @@ import { sharedVpkIndex } from './vpk.ts';
 import { personaLayouts } from './item-builder-personas.ts';
 import { ITEM_EFFECTS } from './item-builder-effects.ts';
 import { unusualItemEffect } from './item-builder-unusual.ts';
-import { idleSequence, itemActivities, loadoutSequence, modelSequences, motionList, type MotionGroup } from './model-loadout.ts';
+import { idleSequence, itemActivities, itemModifiers, loadoutSequence, modelSequences, motionList, type Motion } from './model-loadout.ts';
 import { heroStage, type HeroStage } from './hero-showcase.ts';
 import { heroLoadoutParticles, itemParticles, modelAttachments, particleDef, particleTextures, type Attachment, type ParticleDef } from './particle-spec.ts';
 import type { createModelGlb } from './model-glb.ts';
@@ -30,7 +30,7 @@ export type HeroModels =
   | {
     ok: true; body: Uint8Array; clip: string | null; stage: HeroStage; pedestal: Uint8Array | null;
     /** the body's model path, for `motions`, and what else it can be shown doing */
-    model: string; motions: { name: string; group: MotionGroup }[];
+    model: string; motions: Motion[];
     parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[] }[]; missing: string[];
     /** the body's attachment points, and the particles: on the body (part -1) or on a part, by its place in `parts` */
     attachments: Attachment[]; particles: { part: number; def: ParticleDef }[];
@@ -82,7 +82,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
 }) {
   /** The hero's body and what each slot wears now. */
   function plan(name: string, slots: PreviewSlot[]): {
-    body: string; clip: string | null; idle: string; motions: { name: string; group: MotionGroup }[]; stage: HeroStage; heroFx: string[]; read: (p: string) => Buffer | null;
+    body: string; clip: string | null; idle: string; motions: Motion[]; stage: HeroStage; heroFx: string[]; read: (p: string) => Buffer | null;
     parts: { slot: string; name: string; model: string; fx: string[] }[];
   } | null {
     // the window names the hero as its slots do (magnataur); the scripts and the table, in full
@@ -117,7 +117,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     // the game's own staging (src/hero-showcase.ts): an arcana's body has an entry of its own
     const script = ix.read(`scripts/npc/heroes/${hero}.txt`)?.toString('utf8') ?? null;
     const stage = heroStage(ix.read('scripts/npc/portraits_showcase.txt')?.toString('utf8') ?? null, script, [body, hero]);
-    return { body, clip, idle, motions: motionList(seqs), stage, parts, heroFx: script ? heroLoadoutParticles(script) : [], read: (f) => ix.read(f) };
+    return { body, clip, idle, motions: motionList(seqs, modifiers, itemModifiers(text)), stage, parts, heroFx: script ? heroLoadoutParticles(script) : [], read: (f) => ix.read(f) };
   }
 
   /** The body with its loadout clip and its idle, and each slot's model, as GLB bytes with their pictures inside. */

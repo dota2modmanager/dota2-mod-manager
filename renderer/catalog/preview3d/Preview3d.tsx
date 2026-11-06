@@ -2,11 +2,13 @@
  * each slot wears now. It asks the main process for the models when it is shown and again when a
  * pick changes (`sig`), and draws them with the scene beside this file, loaded only then. Over the
  * stage, what the hero is doing: the loadout, or any other clip of its body, which stays through a
- * change of items; the clips come in one file the first time one is asked for. */
+ * change of items, or plays once and hands back if it is a motion with an end; the clips come in
+ * one file the first time one is asked for. */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Motion, Preview3dApi } from '../../api/preview3d.ts';
 import type { HeroScene } from './scene.ts';
 import { Dropdown } from '../../ui/Dropdown.tsx';
+import { motionLabels } from './motion-label.ts';
 
 type Status = { kind: 'loading' } | { kind: 'shown'; missing: string[] } | { kind: 'no-tool' } | { kind: 'failed'; text: string };
 
@@ -14,11 +16,30 @@ const MOTION_ICON: Record<Motion['group'], string> = {
   stance: 'accessibility_new', idle: 'self_improvement', run: 'directions_run', attack: 'swords', ability: 'auto_awesome', emote: 'celebration', other: 'more_horiz',
 };
 
-/** A sequence's name as a label: its hero's name off the front and the file's "_anim" off the end. */
-function motionLabel(name: string, hero: string): string {
-  const own = `${hero.replace(/^npc_dota_hero_/, '')}_`;
-  const text = (name.startsWith(own) ? name.slice(own.length) : name).replace(/_anim$/, '').replace(/_/g, ' ');
-  return text.charAt(0).toUpperCase() + text.slice(1);
+/** What the game calls an activity, in this window's language; null for one with no plain word. */
+function motionWord(act: string, ability: string | null): string | null {
+  if (ability) return L`Способность ${ability}`;
+  switch (act) {
+    case 'LOADOUT': return L`Стойка`;
+    case 'LOADOUT_RARE': return L`Редкая стойка`;
+    case 'SPAWN': return L`Появление`;
+    case 'IDLE': return L`Покой`;
+    case 'IDLE_RARE': return L`Редкий покой`;
+    case 'RUN': return L`Бег`;
+    case 'ATTACK': return L`Атака`;
+    case 'TAUNT': return L`Насмешка`;
+    case 'VICTORY': return L`Победа`;
+    case 'DEFEAT': return L`Поражение`;
+    case 'DIE': return L`Смерть`;
+    case 'FLAIL': return L`В воздухе`;
+    case 'DISABLED': return L`Оглушение`;
+    case 'TELEPORT': return L`Телепорт`;
+    case 'TELEPORT_END': return L`Конец телепорта`;
+    case 'GENERIC_CHANNEL': return L`Каст с удержанием`;
+    case 'CAPTURE': return L`Портрет`;
+    case 'VERSUS': return L`Перед боем`;
+    default: return null;
+  }
 }
 
 /** @param fallback  what the stage shows when the models cannot be had (the hero window's portrait), the reason under it */
@@ -69,7 +90,7 @@ export function Preview3d({ hero, slots, sig, still = false, fallback }: {
         setMotions(r.motions);
         // an item that swaps the body takes the clips of the old one with it
         if (wanted.current && !r.motions.some((m) => m.name === wanted.current)) { wanted.current = ''; setMotion(''); }
-        if (wanted.current) void shown.play(wanted.current, motionFile);
+        if (wanted.current) void shown.play(wanted.current, motionFile, handBack(r.motions, wanted.current));
         setStatus({ kind: 'shown', missing: r.missing });
       } catch (err) {
         if (!gone) setStatus({ kind: 'failed', text: String((err as Error)?.message || err) });
@@ -87,12 +108,19 @@ export function Preview3d({ hero, slots, sig, still = false, fallback }: {
     else setAttempt((n) => n + 1);
   };
 
+  /** The end of a motion that has one: the list goes back to the hero's own. */
+  const handBack = (list: Motion[], name: string) => (list.find((m) => m.name === name)?.once ? () => {
+    if (wanted.current !== name) return;
+    wanted.current = '';
+    setMotion('');
+  } : undefined);
+
   const pickMotion = async (name: string) => {
     wanted.current = name;
     setMotion(name);
     setNoMotions(false);
     setBusy(true);
-    const played = await scene.current?.play(name || null, motionFile);
+    const played = await scene.current?.play(name || null, motionFile, handBack(motions, name));
     setBusy(false);
     if (played === false && wanted.current === name) {
       clips.current.delete(body.current);
@@ -109,7 +137,7 @@ export function Preview3d({ hero, slots, sig, still = false, fallback }: {
         <div className="preview3d-tools" data-busy={busy}>
           {motions.length > 0 && (
             <Dropdown id="preview3dMotion" icon={busy ? 'progress_activity' : 'animation'} label={L`Анимация`} value={motion} first={L`Как в игре`}
-              options={motions.map((m) => ({ value: m.name, label: motionLabel(m.name, hero), icon: MOTION_ICON[m.group] }))}
+              options={motionLabels(motions, motionWord).map((label, i) => ({ value: motions[i].name, label, icon: MOTION_ICON[motions[i].group] }))}
               onPick={(name) => void pickMotion(name)} />
           )}
           <button className="btn btn-sm btn-ghost preview3d-home" id="preview3dHome" title={L`Вернуть вид`} aria-label={L`Вернуть вид`}

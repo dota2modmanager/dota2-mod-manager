@@ -7136,6 +7136,14 @@ export function modelSequences(model: Buffer | null): Sequence[]
 
 The model's sequences, or none when the file has no sequence block or one this reader cannot take.
 
+### `itemModifiers`
+
+```ts
+export function itemModifiers(text: string): ReadonlySet<string>
+```
+
+Every activity modifier any item switches on, in lower case, from items_game; found once per table.
+
 ### `MotionGroup`
 
 ```ts
@@ -7144,15 +7152,34 @@ export type MotionGroup = typeof MOTION_GROUPS[number]
 
 A kind of motion in that list.
 
+### `Motion`
+
+```ts
+export interface Motion { name: string; group: MotionGroup; act: string; mods: string[]; once: boolean }
+```
+
+A motion in that list: its sequence, its kind, its activity and modifiers for a label, and whether it ends.
+
 ### `motionList`
 
 ```ts
-export function motionList(seqs: Sequence[]): { name: string; group: MotionGroup }[]
+export function motionList(seqs: Sequence[], modifiers: string[] = [], ofItems: ReadonlySet<string> = new Set()): Motion[]
 ```
 
 What the body can be shown doing, by kind. A sequence with no activity is a layer of another one
 ("@counter_helix") or the bind pose, and a statue's activity is the same motion again (Axe's
 "attack_main" under his "attack_main_anim").
+
+An item's modifier changes more than the loadout: Dragonclaw Hook's Pudge runs and swings by
+"whalehook" too. So the game's own rule for the loadout goes for each motion: of the sequences
+that differ only in the modifiers worn, those with the most of them stand for the rest. A
+sequence that needs an item the hero does not wear is not one it can do: Pudge alone has 30 of
+those in his stance, in every mix of hooks and arms.
+
+```
+@param modifiers  the activity modifiers of the items worn, as items_game names them
+@param ofItems    every modifier some item switches on (itemModifiers)
+```
 
 ### `idleSequence`
 
