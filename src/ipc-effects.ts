@@ -20,13 +20,13 @@ export function registerEffectsIpc({ effectEdit, effectFinder, abilitySounds, af
     try { return { ok: true, ...(await effectEdit.load(path)) }; } catch (err) { return { error: errorText(err) }; }
   });
   ipcMain.handle('fx:preview', (e, path, edits) => {
-    try { return { ok: true, def: effectEdit.preview(path, edits) }; } catch (err) { return { error: errorText(err) }; }
+    try { return { ok: true, defs: effectEdit.preview(path, edits) }; } catch (err) { return { error: errorText(err) }; }
   });
-  ipcMain.handle('fx:install', (e, path, edits) => {
+  ipcMain.handle('fx:install', (e, path, edits, items) => {
     const stop = blocked('install');
     if (stop) return stop;
     try {
-      const record = effectEdit.install(path, edits);
+      const record = effectEdit.install(path, edits, items === true);
       afterDeployMaster();
       return { ok: true, record };
     } catch (err) {

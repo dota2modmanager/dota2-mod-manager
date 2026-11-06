@@ -137,7 +137,7 @@ contextBridge.exposeInMainWorld('api', {
     hero: (hero) => ipcRenderer.invoke('fx:hero', hero),
     load: (path) => ipcRenderer.invoke('fx:load', path),
     preview: (path, edits) => ipcRenderer.invoke('fx:preview', path, edits),
-    install: (path, edits) => ipcRenderer.invoke('fx:install', path, edits),
+    install: (path, edits, items) => ipcRenderer.invoke('fx:install', path, edits, items),
   },
   rank: {
     state: () => ipcRenderer.invoke('rank:state'),

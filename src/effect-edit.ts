@@ -31,6 +31,8 @@ export const MIN_SCALE = 10;
 export const MAX_SCALE = 300;
 
 const SCALES = ['size', 'count', 'life', 'speed'] as const;
+/** What a burst makes when its file says nothing. */
+const BURST = 100;
 /** The renderers that draw a picture in the particle's colour. */
 const DRAWN = /^C_OP_Render(Sprites|Trails|Ropes|SpriteTrail)$/;
 const pathOf = (p: string) => p.toLowerCase().replace(/\\/g, '/').replace(/\.vpcf_c$/, '.vpcf');
@@ -135,6 +137,11 @@ export function editTree(kv: Kv3Block, edit: EffectEdit): boolean {
     did.push(scale(kv, root, 'm_nMaxParticles', k), scale(kv, root, 'm_nInitialParticles', k));
     fields(emits, /^C_OP_ContinuousEmitter$/, ['m_flEmitRate'], k);
     fields(emits, /^C_OP_InstantaneousEmitter$/, ['m_nParticlesToEmit'], k);
+    // a burst with no number written is the engine's default of a hundred, and only a number written can change it
+    for (const n of emits) {
+      const m = members(n);
+      if (m && classOf(n) === 'C_OP_InstantaneousEmitter' && !m.has('m_nParticlesToEmit')) { m.set('m_nParticlesToEmit', literal(BURST * k)); did.push(true); }
+    }
   }
   if (edit.life) {
     const k = edit.life / 100;
@@ -170,16 +177,15 @@ export function editTree(kv: Kv3Block, edit: EffectEdit): boolean {
   return did.some(Boolean);
 }
 
-/** The changes that fall on one system: its own over those on the whole effect. */
-function falling(edits: EffectEdits, path: string): EffectEdit | null {
-  const all = edits[WHOLE] ?? {};
-  const own = edits[pathOf(path)] ?? {};
+/** The changes that fall on one system: those on the whole effect, then on each system above it, then its own. */
+function falling(edits: EffectEdits, chain: string[]): EffectEdit | null {
+  const layers = [WHOLE, ...chain.map(pathOf)].flatMap((k) => edits[k] ?? []);
   const out: EffectEdit = {};
   for (const k of SCALES) {
-    const v = Math.round(((all[k] ?? 100) * (own[k] ?? 100)) / 100);
-    if (v !== 100) out[k] = v;
+    const v = layers.reduce((n, e) => n * ((e[k] ?? 100) / 100), 100);
+    if (Math.round(v) !== 100) out[k] = Math.round(v);
   }
-  const hue = own.tint ?? all.tint;
+  const hue = layers.findLast((e) => e.tint)?.tint;
   if (hue) out.tint = hue;
   return Object.keys(out).length ? out : null;
 }
@@ -209,8 +215,11 @@ export function systemsOf(read: (p: string) => Buffer | null | undefined, root: 
 /** The changed files of an effect, under the paths they have in the game. */
 export function editedEntries(read: (p: string) => Buffer | null | undefined, root: string, edits: EffectEdits): VpkEntry[] {
   const out: VpkEntry[] = [];
-  for (const { path } of systemsOf(read, root)) {
-    const edit = falling(edits, path);
+  const chain: string[] = [];
+  for (const { path, depth } of systemsOf(read, root)) {
+    chain.length = depth;
+    chain.push(path);
+    const edit = falling(edits, chain);
     const bytes = read(`${path}_c`);
     if (!edit || !bytes) continue;
     const block = resourceBlock(bytes, 'DATA');

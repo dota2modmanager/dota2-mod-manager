@@ -128,6 +128,16 @@ export function loadoutSequence(seqs: Sequence[], modifiers: string[] = []): str
   return (fits[0] || loadouts.find((s) => !s.mods.length) || loadouts[0])?.name ?? null;
 }
 
+/**
+ * What a wearable does on its own while the hero stands: its loadout, else its idle, else a clip
+ * named for standing. Of the worn models in the game about a third have one (a cape, a tail, a
+ * mount's head); the rest are bones that follow the body and nothing else.
+ */
+export function wearableClip(seqs: Sequence[]): string | null {
+  const plain = seqs.filter((s) => !/bind_?pose|^@/i.test(s.name));
+  return loadoutSequence(plain) ?? idleSequence(plain) ?? plain.find((s) => /idle|loadout/i.test(s.name))?.name ?? null;
+}
+
 /** The activity modifiers an item's visuals switch on: Dragonclaw Hook's "whalehook". */
 export function itemActivities(block: string): string[] {
   const out: string[] = [];

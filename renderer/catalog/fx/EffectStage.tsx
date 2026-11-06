@@ -18,7 +18,7 @@ const widest = (s: ParticleSpec): number => Math.max(s.draw === 'none' ? 0 : s.r
 /** Whether any system of it is drawn in sprites: a model, a light or a shake has nothing to show here. */
 export const hasSprites = (s: ParticleSpec): boolean => s.draw !== 'none' || s.children.some(hasSprites);
 
-export function EffectStage({ path, def, sprites, play }: { path: string; def: ParticleDef; sprites: Record<string, Uint8Array>; play: number }) {
+export function EffectStage({ path, defs, sprites, play }: { path: string; defs: ParticleDef[]; sprites: Record<string, Uint8Array>; play: number }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const gl = useRef<THREE.WebGLRenderer | null>(null);
   const fit = useRef<{ path: string; camera: THREE.PerspectiveCamera } | null>(null);
@@ -54,7 +54,8 @@ export function EffectStage({ path, def, sprites, play }: { path: string; def: P
       scene.add(src);
       src.updateMatrixWorld(true);
       const viewPx = h / (2 * Math.tan(THREE.MathUtils.degToRad(FOV / 2)));
-      const start = () => playParticles(scene, [{ spec: particleSpec(def), self: EMPTY_CARRIER }], EMPTY_CARRIER, src, textures.current?.got ?? new Map());
+      const specs = defs.map((d) => particleSpec(d));
+      const start = () => playParticles(scene, specs.map((spec) => ({ spec, self: EMPTY_CARRIER })), EMPTY_CARRIER, src, textures.current?.got ?? new Map());
       if (fit.current?.path !== path) {
         // a run of its own to see how far it reaches: what is played starts from nothing
         const probe = start();
@@ -62,7 +63,7 @@ export function EffectStage({ path, def, sprites, play }: { path: string; def: P
         const box = probe.bounds();
         probe.dispose();
         if (box.isEmpty()) box.setFromCenterAndSize(new THREE.Vector3(0, 0.5, 0), new THREE.Vector3(1, 1, 1));
-        const view = Math.max(MIN_VIEW, widest(particleSpec(def)) * 2.4);
+        const view = Math.max(MIN_VIEW, ...specs.map((s) => widest(s) * 2.4));
         const size = box.getSize(new THREE.Vector3()).max(new THREE.Vector3(view, view, view));
         const centre = box.getCenter(new THREE.Vector3());
         const tan = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
@@ -87,7 +88,7 @@ export function EffectStage({ path, def, sprites, play }: { path: string; def: P
       done = () => fx.dispose();
     })();
     return () => { stopped = true; cancelAnimationFrame(frame); done(); };
-  }, [path, def, sprites, play]);
+  }, [path, defs, sprites, play]);
 
   return <canvas ref={canvas} className="fx-canvas" id="fxCanvas" aria-label={path} />;
 }

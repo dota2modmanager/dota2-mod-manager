@@ -80,7 +80,7 @@ export function Preview3d({ hero, slots, sig, still = false, fallback }: {
         const { mountScene } = await import('./scene.ts');
         if (gone || !host.current) return;
         const shown = await mountScene(host.current, r.body, r.parts.map((p) => p.glb), {
-          still, label: L`Герой в 3D`, clip: r.clip, stage: r.stage, pedestal: r.pedestal,
+          still, label: L`Герой в 3D`, clip: r.clip, stage: r.stage, pedestal: r.pedestal, hidden: { body: r.hidden, parts: r.parts.map((p) => p.hidden) },
           attachments: { body: r.attachments, parts: r.parts.map((p) => p.attachments) }, particles: r.particles, sprites: r.sprites,
         });
         if (gone) { shown.dispose(); return; }

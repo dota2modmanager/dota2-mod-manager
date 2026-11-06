@@ -12,6 +12,8 @@ import type { VpkIndex } from './vpk-read.ts';
 export interface EffectGroup { id: string; kind: 'ability' | 'effects' | 'items'; ability: string | null; name: string | null; paths: string[] }
 /** An ability a search found. */
 export interface AbilityHit { hero: string; ability: string; name: string }
+/** An ability as one thing to change: what it plays, and all the files it may call on. */
+export interface AbilityEffects { name: string | null; paths: string[]; files: string[] }
 
 const LANG_FILE: Record<string, string> = { ru: 'russian', en: 'english', 'zh-CN': 'schinese' };
 const HERO = /^[a-z0-9_]{2,40}$/;
@@ -36,14 +38,17 @@ function roots(read: (p: string) => Buffer | null, files: string[]): string[] {
 }
 
 /** The finder over the game's pak. */
-export function createEffectFinder({ index, lang, heroes }: {
+export function createEffectFinder({ index, lang, heroes, table = () => null }: {
   index: () => VpkIndex;
   lang: () => string;
   /** the heroes, with their name in the npc's and in the app's language */
   heroes: () => { hero: string; name: string }[];
+  /** the game's item table, for the particles items swap in */
+  table?: () => string | null;
 }) {
   let names: { lang: string; map: Map<string, string> } | null = null;
   let abilities: { lang: string; list: AbilityHit[] } | null = null;
+  let swaps: { text: string; map: Map<string, string[]> } | null = null;
 
   /** Ability names in the app's language, out of the game's abilities_*.txt. */
   function abilityNames(): Map<string, string> {
@@ -60,7 +65,40 @@ export function createEffectFinder({ index, lang, heroes }: {
   const nameOf = (ability: string) => abilityNames().get(`dota_tooltip_ability_${ability}`) || null;
   const scriptOf = (hero: string) => (HERO.test(hero) ? index().read(`scripts/npc/heroes/npc_dota_hero_${hero}.txt`)?.toString('utf8') ?? null : null);
 
+  /** The table's `particle` modifiers: a file of the game, and what items put in its place. */
+  function swapped(): Map<string, string[]> {
+    const text = table();
+    if (!text) return new Map();
+    if (swaps?.text === text) return swaps.map;
+    const map = new Map<string, string[]>();
+    for (const m of text.matchAll(/"asset_modifier\d*"\s*\{([^{}]*)\}/gi)) {
+      if (!/"type"\s*"particle"/i.test(m[1])) continue;
+      const from = /"asset"\s*"([^"]+\.vpcf)"/i.exec(m[1])?.[1].toLowerCase().replace(/\\/g, '/');
+      const to = /"modifier"\s*"([^"]+\.vpcf)"/i.exec(m[1])?.[1].toLowerCase().replace(/\\/g, '/');
+      if (from && to && from !== to) map.set(from, [...new Set([...(map.get(from) ?? []), to])]);
+    }
+    swaps = { text, map };
+    return map;
+  }
+
   return {
+    /** One ability of a hero, or null when he has no effects for it. */
+    ability(hero: string, ability: string): AbilityEffects | null {
+      const script = scriptOf(hero);
+      if (!script) return null;
+      const ix = index();
+      const layer = heroLayers([...ix.paths()], hero, heroAbilities(script)).find((l) => l.kind === 'ability' && l.name === ability);
+      if (!layer) return null;
+      return { name: nameOf(ability), paths: roots((p) => ix.read(p), layer.files).map(vpcf), files: layer.files.map(vpcf) };
+    },
+
+    /** The effects items play in place of these files, as far as the game has them. */
+    variants(files: string[]): string[] {
+      const map = swapped();
+      const ix = index();
+      return [...new Set(files.flatMap((f) => map.get(f) ?? []))].filter((p) => ix.read(`${p}_c`)).sort();
+    },
+
     /** A hero's effects, ability by ability, in his script's order. */
     hero(hero: string): EffectGroup[] {
       const script = scriptOf(hero);

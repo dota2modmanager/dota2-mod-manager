@@ -177,7 +177,7 @@ const VALID: Record<string, unknown[][]> = {
   'compiler:state': [[]], 'compiler:browse': [[]], 'compiler:forget': [[]], 'compiler:prepare': [[]], 'compiler:check': [[]], 'compiler:keep': [[]], 'compiler:removeKept': [[]],
   'sounds:heroes': [[]], 'sounds:hero': [['lion']], 'sounds:remove': [['lion', 'Hero_Lion.Voodoo']],
   'sounds:add': [['lion', 'Hero_Lion.Voodoo', 'layer', 0.8, new Uint8Array(44), 'ring.mp3']],
-  'fx:search': [['axe']], 'fx:heroes': [[]], 'fx:hero': [['axe']], 'fx:load': [['particles/a.vpcf']], 'fx:preview': [['particles/a.vpcf', {}]], 'fx:install': [['particles/a.vpcf', {}]],
+  'fx:search': [['axe']], 'fx:heroes': [[]], 'fx:hero': [['axe']], 'fx:load': [['particles/a.vpcf']], 'fx:preview': [['particles/a.vpcf', {}]], 'fx:install': [['particles/a.vpcf', {}], ['particles/a.vpcf', {}, true]],
   'hud:state': [[]], 'hud:install': [[[{ id: 'lower_hud', scale: 85 }]]],
   'decor:state': [[]], 'decor:install': [[['plants', 'debris']]],
   'rank:state': [[]], 'rank:pictures': [[]], 'rank:install': [[{ medal: null, levels: { axe: 30 }, every: null }]],

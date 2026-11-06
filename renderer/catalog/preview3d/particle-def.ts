@@ -114,7 +114,7 @@ export function particleSpec(def: ParticleDef, inherited: Map<number, ControlPoi
       s.duration = one(e.m_flEmissionDuration, 0);
       s.start = start;
     } else if (c === 'C_OP_InstantaneousEmitter') {
-      s.burst += Math.round(one(e.m_nParticlesToEmit, 1));
+      s.burst += Math.round(one(e.m_nParticlesToEmit, 100));
       s.start = start;
     }
   }

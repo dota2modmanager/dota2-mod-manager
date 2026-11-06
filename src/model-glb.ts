@@ -138,13 +138,14 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
    * finds its materials and pictures.
    * @param model  as items_game names it
    * @param bytes  the model's file out of the archive
+   * @param clip   a clip of its own to keep, for a wearable that has one
    */
-  async function skinned(model: string, skin: number, bytes: Buffer | null): Promise<string | null> {
+  async function skinned(model: string, skin: number, bytes: Buffer | null, clip: string | null = null): Promise<string | null> {
     const game = getGamePath();
     const exe = toolchain.pathOf('vrf');
     const file = modelFile(model);
     if (!game || !exe || !file || !bytes) return null;
-    const root = path.join(buildRoot(game), 'skins', String(skin));
+    const root = path.join(buildRoot(game), 'skins', clip ? `${skin}-${clip.replace(/[^\w-]/g, '')}` : String(skin));
     const found = foundGlb(root, file);
     if (found) return found;
     const worn = withSkin(bytes, skin);
@@ -158,7 +159,7 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
         fs.writeFileSync(path.join(folder, 'gameinfo.gi'), gameInfo(path.join(game, 'dota')));
         const to = glbAt(root, file);
         fs.mkdirSync(path.dirname(to), { recursive: true });
-        await run(exe, exportArgs(at, to, [], []));
+        await run(exe, exportArgs(at, to, [], clip ? [clip] : []));
       } catch (err) {
         log(`models 3d: skin export failed (${(err as Error)?.message || err})`);
       }

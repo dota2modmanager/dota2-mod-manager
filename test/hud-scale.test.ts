@@ -63,7 +63,7 @@ test('the plan: a panel keeps its corner as it scales, and what is inside the ba
 
 test('a flipped HUD keeps a move, mirrored, and only the panels it mirrors need that', () => {
   const css = withLayout('', [{ id: 'minimap_container', x: 40, y: -60 }, { id: 'topbar', y: 30 }]);
-  assert.match(css, /\.HUDFlipped #minimap_container\s*\{\s*transform: translateX\(-40px\) translateY\(-60px\) scaleX\(-1\);/);
+  assert.match(css, /\.HUDFlipped #minimap_container\s*\{\s*transform: translateX\(40px\) translateY\(-60px\) scaleX\(-1\);/);
   assert.doesNotMatch(css, /\.HUDFlipped #topbar/);
 });
 

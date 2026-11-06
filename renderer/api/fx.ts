@@ -21,10 +21,10 @@ export interface FxApi {
   heroes: () => Promise<Reply<{ heroes: { hero: string; name: string }[] }>>;
   /** a hero's effects, ability by ability */
   hero: (hero: string) => Promise<Reply<{ groups: EffectGroup[] }>>;
-  /** one effect: its systems, the changes on it now, and how it plays with them */
-  load: (path: string) => Promise<Reply<{ path: string; edits: EffectEdits; def: ParticleDef; sprites: Record<string, Uint8Array>; systems: { path: string; depth: number }[] }>>;
-  /** how an effect plays with these changes */
-  preview: (path: string, edits: EffectEdits) => Promise<Reply<{ def: ParticleDef | null }>>;
-  /** the effect with these changes, put in My mods */
-  install: (path: string, edits: EffectEdits) => Promise<Reply<{ record: LibRecord }>>;
+  /** one effect, or `ability:hero/ability` for all of an ability's: its systems, the changes on it now, how it plays with them, and how many item versions it has */
+  load: (path: string) => Promise<Reply<{ path: string; name: string; edits: EffectEdits; defs: ParticleDef[]; sprites: Record<string, Uint8Array>; systems: { path: string; depth: number }[]; variants: number; items: boolean }>>;
+  /** how it plays with these changes */
+  preview: (path: string, edits: EffectEdits) => Promise<Reply<{ defs: ParticleDef[] }>>;
+  /** it with these changes, put in My mods; `items` takes the versions items play along */
+  install: (path: string, edits: EffectEdits, items?: boolean) => Promise<Reply<{ record: LibRecord }>>;
 }

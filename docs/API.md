@@ -130,9 +130,11 @@ the code, not in this page.
 | [`src/mod-preview-pick.ts`](#srcmod-preview-pickts) | Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
+| [`src/model-bodygroups.ts`](#srcmodel-bodygroupsts) | A model with some of its body groups shown differently by default. |
 | [`src/model-glb.ts`](#srcmodel-glbts) | Models out of the installed game as glTF, for a 3D preview of a hero in the chosen items (issue #417). |
 | [`src/model-hitboxes.ts`](#srcmodel-hitboxests) | Hitboxes laid over a wearable's surface, so an effect started on it spreads over the item. |
 | [`src/model-loadout.ts`](#srcmodel-loadoutts) | The animation a hero plays on the game's loadout screen, for the 3D preview (issue #417). |
+| [`src/model-merge.ts`](#srcmodel-mergets) | Two models as one file: the mesh of a second model carried inside the first. |
 | [`src/model-particles.ts`](#srcmodel-particlests) | Particles a model brings by itself, with no item table to create them. |
 | [`src/model-scale.ts`](#srcmodel-scalets) | A compiled model made bigger about its origin, and how much bigger one model is than another. |
 | [`src/model-sequences.ts`](#srcmodel-sequencests) | A model put under another model's path that numbers its sequences as that one does. |
@@ -2460,15 +2462,15 @@ game's own file: making the same effect again replaces it, in its place in the l
 ### `EffectGenerated`
 
 ```ts
-export interface EffectGenerated { effect: string; edits: EffectEdits }
+export interface EffectGenerated { effect: string; edits: EffectEdits; items?: boolean; name?: string }
 ```
 
-What an effect's record was built from.
+What an effect's record was built from. `effect` is a file, or `ability:hero/ability` for all of an ability's.
 
 ### `createEffectEdit`
 
 ```ts
-export function createEffectEdit({ gamePath, installer, library, sprites, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** the textures of a system and its children, as the window takes them */ sprites: (defs: ParticleDef[]) => Promise<Record<string, Uint8Array>>; onRebuilt?: (id: string) => void; log?: (msg: string) => void
+export function createEffectEdit({ gamePath, installer, library, sprites, finder, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** the textures of a system and its children, as the window takes them */ sprites: (defs: ParticleDef[]) => Promise<Record<string, Uint8Array>>; /** an ability's effects, read off the game (src/effect-finder.ts) */ finder?: Pick<ReturnType<typeof createEffectFinder>, 'ability' | 'variants'>
 ```
 
 The service the fx:* channels call.
@@ -2585,10 +2587,18 @@ export interface AbilityHit { hero: string; ability: string; name: string }
 
 An ability a search found.
 
+### `AbilityEffects`
+
+```ts
+export interface AbilityEffects { name: string | null; paths: string[]; files: string[] }
+```
+
+An ability as one thing to change: what it plays, and all the files it may call on.
+
 ### `createEffectFinder`
 
 ```ts
-export function createEffectFinder({ index, lang, heroes }: { index: () => VpkIndex; lang: () => string; /** the heroes, with their name in the npc's and in the app's language */ heroes: () => { hero: string; name: string }[]; })
+export function createEffectFinder({ index, lang, heroes, table = () => null }: { index: () => VpkIndex; lang: () => string; /** the heroes, with their name in the npc's and in the app's language */ heroes: () => { hero: string; name: string }[]; /** the game's item table, for the particles items swap in */ table?: () => string | null; })
 ```
 
 The finder over the game's pak.
@@ -3707,6 +3717,14 @@ export function entityModel(block: string, hero: string): string | null
 
 The body an item's "entity_model" modifier puts the hero in: a persona's, which the item's own
 copies leave out because a persona goes on through its base (src/item-builder-personas.ts).
+
+### `wornExtras`
+
+```ts
+export function wornExtras(visuals: string): { models: string[]; groups: { model: string; group: string; value: number }[] }
+```
+
+What an item wears besides its model, in the first style: second models, and the body groups it sets.
 
 ### `createHeroPreview`
 
@@ -5971,7 +5989,9 @@ to say. Most of that a file can say after all:
    with hitboxes on its surface for them to spread over (src/model-hitboxes.ts);
  - its material set is made the model's default (src/model-skin.ts);
  - its activity modifiers are taken off the hero's body, so the item's motions are the plain ones
-   (arcana.ts asModel), one body per hero whatever the number of picks.
+   (arcana.ts asModel), one body per hero whatever the number of picks;
+ - the hero parts it hides become the default of the model that has them (src/model-bodygroups.ts);
+ - a second model it wears goes inside its first (src/model-merge.ts).
 
 What is left needs the table: `TABLE_ONLY`, and a slot with no stock model to stand in for. A pick
 with such a part still goes in by files, and says what it lost (`left`), so the window can tell
@@ -5986,6 +6006,14 @@ export interface PickPatch extends SchemaPatch
 ```
 
 A pick built for the table, with what this needs to know of it (src/schema-build.ts).
+
+### `BodyGroup`
+
+```ts
+export interface BodyGroup { model: string; group: string; value: number }
+```
+
+A choice of a body group an item makes, on the model that has the group.
 
 ### `LeftBehind`
 
@@ -6006,11 +6034,26 @@ A build's files, and what of the picks they could not carry.
 ### `pickParts`
 
 ```ts
-export function pickParts(patch: Pick<PickPatch, 'block' | 'own' | 'unplaced'>): { systems: string[]; skin: number; motions: string[]; left: string[] }
+export function pickParts(patch: Pick<PickPatch, 'block' | 'own' | 'unplaced'>): { systems: string[]; skin: number; motions: string[]; groups: BodyGroup[]; extras: string[]; left: string[] }
 ```
 
 What a pick's block asks of its files: its effects, material set and motions, and what it asks
 that a file cannot say.
+
+### `extraPlaces`
+
+```ts
+export function extraPlaces(stock: string[], extras: string[]): { under: { path: string; model: string | null }[]; merged: string[] }
+```
+
+Where a pick's second models go. The stock item's second model stays in the game's table, so the
+game makes it for a pick that goes as files: the pick's own takes its path, and with none left
+that path goes empty. A second model the stock item has no path for rides inside the first.
+
+```
+@param stock  the stock item's second models
+@param extras  the pick's
+```
 
 ### `wornModel`
 
@@ -7363,6 +7406,46 @@ file with a fixed path (a terrain's maps/dota.vpk) has to make room first.
 @returns the record, updated
 ```
 
+## src/model-bodygroups.ts
+
+A model with some of its body groups shown differently by default.
+
+An item hides parts of the hero through `bodygroup_visibility`: Sniper's hats take his head group
+to its second choice, which has no hair. The game reads that from its table. A model says the same
+for itself: each mesh belongs to a choice of a group, `m_meshGroups` names the choices
+("head_@1_#&1" is choice 1 of "head"), and `m_nDefaultMeshGroupMask` holds a bit per choice. So a
+file can make any choice the model's own default, and no line of the table is needed.
+
+### `withBodygroups`
+
+```ts
+export function withBodygroups(model: Buffer, groups: Map<string, number>): Buffer | null
+```
+
+The model with these groups set, or null when it has none of them.
+
+```
+@param groups  the group's name and the choice to make
+```
+
+### `withoutMeshes`
+
+```ts
+export function withoutMeshes(model: Buffer): Buffer | null
+```
+
+The model with nothing to draw. A stock item's second model comes from the table whatever goes
+under the item's path, so a pick without one leaves that file empty. Null: not a model this reads.
+
+### `hiddenMeshes`
+
+```ts
+export function hiddenMeshes(model: Buffer, groups: Map<string, number>): string[]
+```
+
+The names of the meshes these groups turn off: the toolchain exports every mesh of a model
+whatever its mask, so the 3D preview hides them by name.
+
 ## src/model-glb.ts
 
 Models out of the installed game as glTF, for a 3D preview of a hero in the chosen items (issue #417).
@@ -7585,6 +7668,16 @@ The loadout sequence for what the hero wears, or null for a model that has none.
 @param modifiers  the activity modifiers of the items worn, as items_game names them
 ```
 
+### `wearableClip`
+
+```ts
+export function wearableClip(seqs: Sequence[]): string | null
+```
+
+What a wearable does on its own while the hero stands: its loadout, else its idle, else a clip
+named for standing. Of the worn models in the game about a third have one (a cape, a tail, a
+mount's head); the rest are bones that follow the body and nothing else.
+
 ### `itemActivities`
 
 ```ts
@@ -7592,6 +7685,47 @@ export function itemActivities(block: string): string[]
 ```
 
 The activity modifiers an item's visuals switch on: Dragonclaw Hook's "whalehook".
+
+## src/model-merge.ts
+
+Two models as one file: the mesh of a second model carried inside the first.
+
+An item can wear a second model (`additional_wearable`): Death Prophet's skirts bring their
+spirits, Phoenix's wings their fire. The game makes that second wearable from its table, and a
+pick that goes as files has only its slot's one stock path to sit under. A compiled model keeps
+its meshes inside itself, each mesh a pair of blocks that `CTRL.embedded_meshes` names, so the
+second model's blocks can come along:
+ - its blocks are added to the file and named in CTRL, under the next mesh index;
+ - DATA gets a line for the mesh in its group and LOD masks, the same as the first mesh's;
+ - a bone the first model lacks joins its skeleton, under the parent it had. A vertex names its
+   bones through `m_remappingTable`, so the mesh keeps its own numbering and only its table is
+   rewritten to the joined skeleton;
+ - its materials join the resources the file names, and every material set, which keep the same
+   length and order (src/model-skin.ts).
+
+A wearable follows the hero by bone name, so what is merged follows as it did by itself. Its own
+clips stay behind, and a second model with morphs is refused, as is the older mesh layout.
+
+### `withBlocks`
+
+```ts
+export function withBlocks(file: Buffer, blocks: { name: string; data: Buffer }[]): Buffer
+```
+
+The file with these blocks after its own, each on a 16-byte line, as the compiler lays them.
+
+### `mergedModel`
+
+```ts
+export function mergedModel(first: Buffer, second: Buffer): Buffer | null
+```
+
+The first model with the second's meshes in it, or null where the two cannot go together.
+
+```
+@param first   the wearable's model
+@param second  the model it brings along
+```
 
 ## src/model-particles.ts
 

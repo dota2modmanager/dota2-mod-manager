@@ -32,3 +32,15 @@ test('a search finds an ability by its name or its id, and a hero that is not on
   assert.deepEqual(finder().abilities('  '), []);
   assert.deepEqual(finder().hero('../evil'), []);
 });
+
+test('an ability reads as what it plays and the files it may call on, and a table says what items swap in', () => {
+  const table = '"items" { "1" { "visuals" { "asset_modifier1" { "type" "particle" "asset" "particles/units/heroes/hero_axe/axe_berserkers_call_a.vpcf" "modifier" "particles/econ/items/axe/axe_ti9/axe_ti9_call.vpcf" } "asset_modifier2" { "type" "particle_create" "modifier" "particles/econ/items/axe/axe_ti9/none.vpcf" } "asset_modifier3" { "type" "particle" "asset" "particles/units/heroes/hero_axe/axe_berserkers_call.vpcf" "modifier" "particles/econ/items/axe/gone.vpcf" } } } }';
+  const f = createEffectFinder({ index: () => index, lang: () => 'en', heroes: () => [], table: () => table });
+  const a = f.ability('axe', 'axe_berserkers_call');
+  assert.deepEqual(a?.paths, ['particles/units/heroes/hero_axe/axe_berserkers_call.vpcf']);
+  assert.equal(a?.files.length, 2);
+  // a swap to a file the game does not have is no version
+  assert.deepEqual(f.variants(a!.files), ['particles/econ/items/axe/axe_ti9/axe_ti9_call.vpcf']);
+  assert.equal(f.ability('axe', 'nothing'), null);
+  assert.deepEqual(finder().variants(a!.files), []);
+});
