@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { forward, heroStage, showcaseEntry, toGlb, LOADOUT_CAMERA } from '../src/hero-showcase.ts';
-import { idleSequence, itemActivities, loadoutSequence, modelSequences } from '../src/model-loadout.ts';
+import { idleSequence, itemActivities, loadoutSequence, modelSequences, motionList } from '../src/model-loadout.ts';
 import { widthDistance } from '../renderer/catalog/preview3d/stage.ts';
 
 const near = (a: number[], b: number[]) => a.every((v, i) => Math.abs(v - b[i]) < 1e-6);
@@ -109,8 +109,28 @@ test('an item’s activities are its first style’s "activity" modifiers', () =
 
 test('the camera steps back far enough for the hero’s width, and further for a narrower view', () => {
   const t = Math.tan((20 * Math.PI) / 360);
-  assert.ok(Math.abs(widthDistance({ x: 2, z: 0 }, 1, 20, { x: 1, z: 0 }, 1) - 1 / t) < 1e-9);
+  assert.ok(Math.abs(widthDistance({ x: 2, z: 0 }, 1, 20, { x: 1, z: 0 }, 0, 1) - 1 / t) < 1e-9);
   assert.ok(widthDistance({ x: 2, z: 0 }, 0.5, 20) > widthDistance({ x: 2, z: 0 }, 1, 20));
   // seen from the side, the hero's depth is its width
-  assert.ok(Math.abs(widthDistance({ x: 0, z: 2 }, 1, 20, { x: 0, z: 1 }, 1) - 1 / t) < 1e-9);
+  assert.ok(Math.abs(widthDistance({ x: 0, z: 2 }, 1, 20, { x: 0, z: 1 }, 0, 1) - 1 / t) < 1e-9);
+});
+
+test('a hero holding a weapon out to one side steps back for its far end', () => {
+  const t = Math.tan((20 * Math.PI) / 360);
+  const centred = widthDistance({ x: 2, z: 0 }, 1, 20, { x: 1, z: 0 }, 0, 1);
+  assert.ok(Math.abs(widthDistance({ x: 2, z: 0 }, 1, 20, { x: 1, z: 0 }, -1, 1) - (centred + 1 / t)) < 1e-9);
+});
+
+test('the list of motions has what the hero does, by kind, without its layers and the statue copies', () => {
+  const list = motionList([
+    { name: 'bindPose', acts: [] }, { name: '@counter_helix', acts: [] },
+    { name: 'axe_victory', acts: ['ACT_DOTA_VICTORY'] }, { name: 'attack_main_anim', acts: ['ACT_DOTA_ATTACK'] },
+    { name: 'attack_main', acts: ['ACT_DOTA_ATTACK_STATUE'] }, { name: 'run_anim', acts: ['ACT_DOTA_RUN'] },
+    { name: 'idle', acts: ['ACT_DOTA_IDLE'] }, { name: 'loadout', acts: ['ACT_DOTA_LOADOUT'] },
+    { name: 'counter_helix_anim', acts: ['ACT_DOTA_CAST_ABILITY_3'] }, { name: 'death', acts: ['ACT_DOTA_DIE'] },
+  ]);
+  assert.deepEqual(list.map((m) => [m.name, m.group]), [
+    ['loadout', 'stance'], ['idle', 'idle'], ['run_anim', 'run'], ['attack_main_anim', 'attack'],
+    ['counter_helix_anim', 'ability'], ['axe_victory', 'emote'], ['death', 'other'],
+  ]);
 });

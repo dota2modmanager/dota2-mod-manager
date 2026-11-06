@@ -23,13 +23,15 @@ export const PLAIN_STAGE: HeroStage = {
  * How far from the hero's middle the camera must stand for the hero's width, as the camera sees
  * it, to fit a view of this shape with a margin; the depth is added because the near side is closer.
  * @param side  the camera's right in the world, flat
+ * @param off  how far along it the hero's middle is from the line the camera looks down: a long
+ *   weapon held out to one side puts it there, and the far end has that much further to fit
  */
 export function widthDistance(size: { x: number; z: number }, aspect: number, fovDeg: number,
-  side: { x: number; z: number } = { x: 1, z: 0 }, margin = 1.08): number {
+  side: { x: number; z: number } = { x: 1, z: 0 }, off = 0, margin = 1.08): number {
   const t = Math.tan((fovDeg * Math.PI) / 360);
   const seen = Math.abs(size.x * side.x) + Math.abs(size.z * side.z);
   const deep = Math.abs(size.x * side.z) + Math.abs(size.z * side.x);
-  return (seen / 2) * margin / (t * Math.max(aspect, 0.05)) + deep / 2;
+  return (seen / 2 + Math.abs(off)) * margin / (t * Math.max(aspect, 0.05)) + deep / 2;
 }
 
 const v3 = (a: [number, number, number] | null | undefined, d: [number, number, number]) => new THREE.Vector3(...(a || d)).normalize();

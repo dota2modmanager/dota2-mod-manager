@@ -943,7 +943,7 @@ const EN = {
   'Убрать свою тему': 'Remove your theme',
   // ---------- 3D preview ----------
   'Посмотреть героя в 3D в том, что надето': 'See the hero in 3D wearing what you picked', 'Не найдена папка игры': 'Game folder not found', 'Не удалось достать модель героя из игры': 'Couldn’t get the hero’s model out of the game',
-  'Достаю модели из игры…': 'Getting the models out of the game…', 'Модели из игры достаёт ValveResourceFormat, его нужно один раз скачать.': 'ValveResourceFormat gets the models out of the game. Download it once.', 'Без модели: {0}': 'No model: {0}',
+  'Достаю модели из игры…': 'Getting the models out of the game…', 'Модели из игры достаёт ValveResourceFormat, его нужно один раз скачать.': 'ValveResourceFormat gets the models out of the game. Download it once.', 'Без модели: {0}': 'No model: {0}', 'Герой в 3D': 'The hero in 3D', 'Анимация': 'Animation', 'Вернуть вид': 'Reset the view', 'Не удалось достать анимации': 'Could not get the animations', 'Левая кнопка': 'Left button', 'вращать': 'turn', 'Правая': 'Right', 'двигать': 'move', 'Колесо': 'Wheel', 'ближе': 'closer', 'лететь': 'fly', 'быстрее': 'faster',
   // ---------- another item's effect (catalog/builder) ----------
   'эффект: {0}': 'effect: {0}', 'Эффект другого предмета': 'Another item’s effect', 'Частицы этого предмета на выбранном. Эффект, который держится на точке своей модели, может сесть иначе.': 'That item’s particles on the one you chose. An effect held on a point of its own model can sit differently.',
   'Сначала выбери предмет выше.': 'Pick an item above first.', 'Свой эффект': 'Its own effect',

@@ -6,6 +6,7 @@
  * the game a wearable follows the hero's bones by name; the window does the same (renderer
  * catalog/preview3d/scene.ts). An arcana that swaps the whole hero brings its own body, as the
  * build does (src/item-builder.ts itemEffectPatch, the copy that names a hero). */
+import fs from 'node:fs';
 import path from 'node:path';
 import { embedGlb } from './glb-embed.ts';
 import { findItem, itemFields } from './schema.ts';
@@ -15,7 +16,7 @@ import { sharedVpkIndex } from './vpk.ts';
 import { personaLayouts } from './item-builder-personas.ts';
 import { ITEM_EFFECTS } from './item-builder-effects.ts';
 import { unusualItemEffect } from './item-builder-unusual.ts';
-import { idleSequence, itemActivities, loadoutSequence, modelSequences } from './model-loadout.ts';
+import { idleSequence, itemActivities, loadoutSequence, modelSequences, motionList, type MotionGroup } from './model-loadout.ts';
 import { heroStage, type HeroStage } from './hero-showcase.ts';
 import { heroLoadoutParticles, itemParticles, modelAttachments, particleDef, particleTextures, type Attachment, type ParticleDef } from './particle-spec.ts';
 import type { createModelGlb } from './model-glb.ts';
@@ -28,6 +29,8 @@ export type PreviewSlot = { slot: string; stock: string };
 export type HeroModels =
   | {
     ok: true; body: Uint8Array; clip: string | null; stage: HeroStage; pedestal: Uint8Array | null;
+    /** the body's model path, for `motions`, and what else it can be shown doing */
+    model: string; motions: { name: string; group: MotionGroup }[];
     parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[] }[]; missing: string[];
     /** the body's attachment points, and the particles: on the body (part -1) or on a part, by its place in `parts` */
     attachments: Attachment[]; particles: { part: number; def: ParticleDef }[];
@@ -79,7 +82,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
 }) {
   /** The hero's body and what each slot wears now. */
   function plan(name: string, slots: PreviewSlot[]): {
-    body: string; clip: string | null; idle: string; stage: HeroStage; heroFx: string[]; read: (p: string) => Buffer | null;
+    body: string; clip: string | null; idle: string; motions: { name: string; group: MotionGroup }[]; stage: HeroStage; heroFx: string[]; read: (p: string) => Buffer | null;
     parts: { slot: string; name: string; model: string; fx: string[] }[];
   } | null {
     // the window names the hero as its slots do (magnataur); the scripts and the table, in full
@@ -114,7 +117,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     // the game's own staging (src/hero-showcase.ts): an arcana's body has an entry of its own
     const script = ix.read(`scripts/npc/heroes/${hero}.txt`)?.toString('utf8') ?? null;
     const stage = heroStage(ix.read('scripts/npc/portraits_showcase.txt')?.toString('utf8') ?? null, script, [body, hero]);
-    return { body, clip, idle, stage, parts, heroFx: script ? heroLoadoutParticles(script) : [], read: (f) => ix.read(f) };
+    return { body, clip, idle, motions: motionList(seqs), stage, parts, heroFx: script ? heroLoadoutParticles(script) : [], read: (f) => ix.read(f) };
   }
 
   /** The body with its loadout clip and its idle, and each slot's model, as GLB bytes with their pictures inside. */
@@ -148,9 +151,15 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     const stand = pedestal ? files[pedestal] : null;
     const sprites = await spritesOf(particles.map((x) => x.def));
     return {
-      ok: true, body: embedGlb(bodyFile), clip: p.clip, stage: p.stage, pedestal: stand ? embedGlb(stand) : null, parts, missing,
+      ok: true, body: embedGlb(bodyFile), clip: p.clip, model: p.body, motions: p.motions, stage: p.stage, pedestal: stand ? embedGlb(stand) : null, parts, missing,
       attachments: modelAttachments(p.read(p.body.replace(/\.vmdl$/i, '.vmdl_c'))), particles, sprites,
     };
+  }
+
+  /** Every clip of a body as GLB bytes, without its pictures: the window lays them over the model it has. Null where the game has none. */
+  async function motions(body: string): Promise<Uint8Array | null> {
+    const got = (await glb.glbs([body], 'all'))[body];
+    return got ? fs.readFileSync(got) : null;
   }
 
   /** The textures these systems draw with, as the window takes them. */
@@ -177,5 +186,5 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     return got ? embedGlb(got) : null;
   }
 
-  return { plan, models, effect, model };
+  return { plan, models, motions, effect, model };
 }

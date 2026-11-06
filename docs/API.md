@@ -7085,7 +7085,7 @@ failed the whole 3D preview (2026-11-04).
 ### `exportArgs`
 
 ```ts
-export function exportArgs(pakFile: string, out: string, files: string[], clips: string[]): string[]
+export function exportArgs(pakFile: string, out: string, files: string[], clips: string[] | 'all'): string[]
 ```
 
 The toolchain's arguments for these models out of this archive into this folder.
@@ -7135,6 +7135,24 @@ export function modelSequences(model: Buffer | null): Sequence[]
 ```
 
 The model's sequences, or none when the file has no sequence block or one this reader cannot take.
+
+### `MotionGroup`
+
+```ts
+export type MotionGroup = typeof MOTION_GROUPS[number]
+```
+
+A kind of motion in that list.
+
+### `motionList`
+
+```ts
+export function motionList(seqs: Sequence[]): { name: string; group: MotionGroup }[]
+```
+
+What the body can be shown doing, by kind. A sequence with no activity is a layer of another one
+("@counter_helix") or the bind pose, and a statue's activity is the same motion again (Axe's
+"attack_main" under his "attack_main_anim").
 
 ### `idleSequence`
 

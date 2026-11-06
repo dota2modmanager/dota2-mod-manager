@@ -45,7 +45,9 @@ export function foundGlb(root: string, file: string): string | null {
 const NO_CLIP = 'mm-no-clip';
 
 /** The toolchain's arguments for these models out of this archive into this folder. */
-export function exportArgs(pakFile: string, out: string, files: string[], clips: string[]): string[] {
+export function exportArgs(pakFile: string, out: string, files: string[], clips: string[] | 'all'): string[] {
+  // a body for its clips alone: the window has its pictures already, and Axe's 75 clips are one 11 MB file in 1.6 s
+  if (clips === 'all') return ['-i', pakFile, '-o', out, '-d', '-f', files.join(','), '--gltf_export_format', 'glb', '--gltf_export_animations'];
   const args = ['-i', pakFile, '-o', out, '-d', '-f', files.join(','), '--gltf_export_format', 'glb', '--gltf_export_materials'];
   // the toolchain writes a model's bones only with its clips; a wearable gets its bones and a list
   // that names no clip, so it follows the body's bones without a file full of its own animations
@@ -92,16 +94,16 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
    * The GLB of each model, exported if it is not in the cache yet; a model the game lacks, or
    * any model when the toolchain is not downloaded, comes back as null.
    * @param models model paths as items_game names them, "models/heroes/techies/techies.vmdl"
-   * @param clips animation clips to keep, for the hero's body; wearables follow its bones
+   * @param clips animation clips to keep, for the hero's body; wearables follow its bones. 'all' is every clip and no pictures
    */
-  async function glbs(models: string[], clips: string[] = []): Promise<Record<string, string | null>> {
+  async function glbs(models: string[], clips: string[] | 'all' = []): Promise<Record<string, string | null>> {
     const game = getGamePath();
     const exe = toolchain.pathOf('vrf');
     const out: Record<string, string | null> = Object.fromEntries(models.map((m) => [m, null]));
     if (!game || !exe) return out;
     const pakFile = path.join(game, 'dota', 'pak01_dir.vpk');
     // the clips are part of the file: a body with its idle is another cache entry than one without
-    const root = path.join(buildRoot(game), clips.length ? `clips-${clips.join('-').replace(/[^\w-]/g, '')}` : 'bones');
+    const root = path.join(buildRoot(game), clips === 'all' ? 'motions' : clips.length ? `clips-${clips.join('-').replace(/[^\w-]/g, '')}` : 'bones');
     const files = new Map(models.map((m) => [m, modelFile(m)]));
     const wanted = [...new Set([...files.values()].filter((f): f is string => !!f && !foundGlb(root, f)))];
     if (wanted.length) {

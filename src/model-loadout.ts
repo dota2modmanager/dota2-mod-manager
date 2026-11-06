@@ -33,6 +33,31 @@ export function modelSequences(model: Buffer | null): Sequence[] {
   }
 }
 
+/** The kinds of motion the 3D preview's list goes by, in its order. */
+const MOTION_GROUPS = ['stance', 'idle', 'run', 'attack', 'ability', 'emote', 'other'] as const;
+/** A kind of motion in that list. */
+export type MotionGroup = typeof MOTION_GROUPS[number];
+
+const motionGroup = (act: string): MotionGroup => {
+  if (/^ACT_DOTA_(LOADOUT|SPAWN)/.test(act)) return 'stance';
+  if (act.startsWith('ACT_DOTA_IDLE')) return 'idle';
+  if (/^ACT_DOTA_(RUN|WALK)/.test(act)) return 'run';
+  if (act.startsWith('ACT_DOTA_ATTACK')) return 'attack';
+  if (/^ACT_DOTA_(CAST|OVERRIDE_ABILITY|GENERIC_CHANNEL|CHANNEL)/.test(act)) return 'ability';
+  if (/^ACT_DOTA_(TAUNT|VICTORY)/.test(act)) return 'emote';
+  return 'other';
+};
+
+/**
+ * What the body can be shown doing, by kind. A sequence with no activity is a layer of another one
+ * ("@counter_helix") or the bind pose, and a statue's activity is the same motion again (Axe's
+ * "attack_main" under his "attack_main_anim").
+ */
+export function motionList(seqs: Sequence[]): { name: string; group: MotionGroup }[] {
+  const out = seqs.filter((s) => s.acts.length && !s.acts[0].includes('_STATUE')).map((s) => ({ name: s.name, group: motionGroup(s.acts[0]) }));
+  return MOTION_GROUPS.flatMap((g) => out.filter((m) => m.group === g));
+}
+
 const LOADOUT = 'ACT_DOTA_LOADOUT';
 const IDLE = 'ACT_DOTA_IDLE';
 

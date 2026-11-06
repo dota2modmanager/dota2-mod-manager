@@ -41,9 +41,9 @@ type Pick = { slot: string; itemId: string; name: string };
 type Opts = { gamePath?: string | null; have?: (model: string) => boolean };
 function preview(picks: Pick[] = [], { gamePath = game(), have = () => true }: Opts = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-glbs-'));
-  const asked: { models: string[]; clips: string[] }[] = [];
+  const asked: { models: string[]; clips: string[] | 'all' }[] = [];
   const glb = {
-    glbs: async (models: string[], clips: string[] = []) => {
+    glbs: async (models: string[], clips: string[] | 'all' = []) => {
       asked.push({ models, clips });
       return Object.fromEntries(models.map((m, i) => {
         if (!have(m)) return [m, null];
@@ -110,4 +110,12 @@ test('a persona puts the hero in the body its "entity_model" names, and only for
   assert.equal(entityModel(block, 'npc_dota_hero_crystal_maiden'), 'models/heroes/crystal_maiden_persona/crystal_maiden_persona.vmdl');
   assert.equal(entityModel(block, 'npc_dota_hero_lina'), null);
   assert.equal(entityModel('"asset_modifier" { "type" "entity_model" "asset" "npc_dota_hero_lina" "modifier" "particles/x.vpcf" }', 'npc_dota_hero_lina'), null, 'a body is a model');
+});
+
+test('every clip of a body comes as its file, and a body the game lacks as null', async () => {
+  const { hp, asked } = preview([], { have: (m) => m === 'models/heroes/axe/axe.vmdl' });
+  const bytes = await hp.motions('models/heroes/axe/axe.vmdl');
+  assert.ok(bytes && bytes.length > 0);
+  assert.equal(asked.at(-1)?.clips, 'all');
+  assert.equal(await hp.motions('models/heroes/nobody/nobody.vmdl'), null);
 });
