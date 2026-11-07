@@ -163,6 +163,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   const icons = new Icons(userData, fetchIcons);
   // ...unless the Source 2 toolchain is here, in which case they come out of the game itself
   const toolchain = createToolchain({ userDataDir: userData, onProgress: sendProgress, log: diag });
+  setTimeout(() => { toolchain.catchUp().catch((e) => diag(`toolchain: could not update: ${(e as Error)?.message || e}`)); }, 15000).unref();
   const gameIcons = createGameIcons({ userDataDir: userData, toolchain, getGamePath: () => settings.get('dotaGamePath'), log: diag });
   // ...and the same toolchain gives a mod that came with no picture one out of itself
   const modPreviews = createModPreviews({ userDataDir: userData, toolchain, langFileOf: (relPath) => installer.langFileOnDisk(relPath), log: diag });

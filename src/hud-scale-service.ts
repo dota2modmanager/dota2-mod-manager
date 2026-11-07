@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { cleanParts, partsOfScale, SOURCE, STYLE, withLayout, type HudPart } from './hud-scale.ts';
-import { fileInForce, swapPak, writePak, type PakInstaller } from './generated-pak.ts';
+import { cssInForce, fileInForce, swapPak, writePak, type PakInstaller } from './generated-pak.ts';
 import { buildVpk, entryPath } from './vpk.ts';
 import { runTool } from './toolchain.ts';
 import { t } from './i18n.ts';
@@ -62,8 +62,12 @@ export function createHudScale({ gamePath, installer, library, vrf, compile, dec
   async function build(parts: HudPart[]): Promise<{ vpk: Buffer; base: string }> {
     const exe = vrf();
     if (!exe) throw new Error(t('Нужен ValveResourceFormat: скачай его в окне'));
-    const { data, from } = baseStyle();
-    const css = withLayout(await decompile(exe, data), parts);
+    const game = gamePath();
+    if (!game) throw new Error(t('Не указана папка игры'));
+    const got = await cssInForce({ game, langFolder: installer.langFolder(), records: library.list(), own: mine()?.id, file: STYLE }, (style) => decompile(exe, style), log);
+    if (!got) throw new Error(t('В игре нет файла {0}', STYLE));
+    const { from } = got;
+    const css = withLayout(got.css, parts);
     const entries = await compile({ id: 'hud_scale', files: [{ path: SOURCE, data: Buffer.from(css) }], compile: [SOURCE] });
     const style = entries.filter((e) => entryPath(e) === STYLE);
     if (!style.length) throw new Error(t('resourcecompiler.exe не собрал {0}: {1}', SOURCE, STYLE));
@@ -131,6 +135,8 @@ export async function vrfCss(exe: string, style: Buffer): Promise<string> {
     const out = path.join(dir, 'hud_reborn.css');
     fs.writeFileSync(src, style);
     await runTool(exe, ['-i', src, '-o', out, '-d']);
+    // it answers 0 for a file it could not read, and writes nothing
+    if (!fs.existsSync(out)) throw new Error(t('ValveResourceFormat не смог прочитать стиль интерфейса'));
     return fs.readFileSync(out, 'utf8');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

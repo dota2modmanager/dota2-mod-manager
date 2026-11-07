@@ -52,30 +52,31 @@ export const HOST_BUILD = `${process.platform}-${process.arch}`;
  * refuses to start (EACCES), so every item icon and hero portrait on Linux failed into the log
  * from 2.4.0 on. A machine with no build of its own here gets no tool rather than another's.
  *
- * Measured 2026-09-07 (Windows) and 2026-10-18 (Linux) for 20.0: each digest comes from GitHub's
- * own release API and was confirmed by downloading the file and hashing it, and each archive was
- * opened to check the executable is at its root under the name below. */
+ * Measured 2026-11-07 for 20.1: each digest comes from GitHub's own release API and was confirmed
+ * by downloading the file and hashing it, and each archive was opened to check the executable is
+ * at its root under the name below. 20.0 could not read a style built by a recent resourcecompiler
+ * (Crystal Interface, Material You): it exited 0 and wrote nothing. */
 const VRF = {
-  version: '20.0',
+  version: '20.1',
   license: 'MIT',
   project: 'https://github.com/ValveResourceFormat/ValveResourceFormat',
 };
-const VRF_RELEASE = 'https://github.com/ValveResourceFormat/ValveResourceFormat/releases/download/20.0';
+const VRF_RELEASE = 'https://github.com/ValveResourceFormat/ValveResourceFormat/releases/download/20.1';
 /** Every tool's pins, by build (HOST_BUILD's shape): the comment above says why there are several. */
 export const BUILT_IN_PINS: Record<string, Record<string, Pin>> = {
   vrf: {
     'win32-x64': {
       ...VRF,
       url: `${VRF_RELEASE}/cli-windows-x64.zip`,
-      sha256: 'd32ab327b8bbb42a2528866afb03bb582bdb779d0005488da32b90292afd3ff5',
-      bytes: 52735867,
+      sha256: '67aaf8a67a85ca60fd09ff343e62103a4cdf3a2d177fc656231d7d734c5b3aa3',
+      bytes: 52773073,
       exe: 'Source2Viewer-CLI.exe',
     },
     'linux-x64': {
       ...VRF,
       url: `${VRF_RELEASE}/cli-linux-x64.zip`,
-      sha256: '3e8af47cd6ce52e8068904f2aa1dda23c56a6b96a8310b25090f0711cda76a8a',
-      bytes: 53059004,
+      sha256: '29d25a6d6b62377fc5386c3e5145b0a2180a401a50041afe9494b3f503deaef5',
+      bytes: 53094205,
       exe: 'Source2Viewer-CLI',
     },
   },
@@ -109,22 +110,11 @@ export function fallbackName(name: string, version: string, build: string): stri
   return build === 'win32-x64' ? `${name}-${version}.zip` : `${name}-${version}-${build}.zip`;
 }
 
-/* Whose releases a pin may point at.
- *
- * "Some GitHub release with a matching digest" is not a pin: the digest travels in the same
- * file as the URL, so a rewritten config could name any repository on GitHub and hand over its
- * own hash to check it against. The owner is what makes the pin mean anything, and it is
- * decided here rather than in a file off the network.
- *
- * Two owners, because the project moved: Source 2 Viewer used to live under SteamDatabase and
- * now has an organisation of its own. GitHub 301s the old release URLs, so downloading still
- * works - but this check reads the URL as written in the pin rather than where it ends up, and
- * a pin naming the new owner would have been refused by a rule that only knew the old one. A
- * stale tool nobody can update, failing closed and quietly.
- *
- * Both are listed rather than the redirect being trusted. A redirect is a promise GitHub makes
- * today; the point of this list is that the owner is decided here.
- */
+/* Whose releases a pin may point at. The digest travels in the same file as the URL, so a rewritten
+ * config could otherwise name any repository and hand over its own hash: the owner is what makes a
+ * pin mean anything, and it is decided here. Two owners, because Source 2 Viewer moved from
+ * SteamDatabase to its own organisation, and this reads the URL as written, not where GitHub 301s
+ * it. */
 const PIN_REPOS: Record<string, string[]> = {
   vrf: ['ValveResourceFormat/ValveResourceFormat', 'SteamDatabase/ValveResourceFormat'],
 };
@@ -202,10 +192,8 @@ export function createToolchain({ userDataDir, onProgress = () => {}, log = () =
       log(`toolchain: ${name} ${have.version} (${have.build || 'win32-x64'}) was recorded but cannot run here as ${build}, fetching again`);
     }
 
-    /* Whatever happens next, the bar at the bottom of the window hears how it ended. It hides
-     * only on 'done' or 'error', and this used to send neither: a finished download left
-     * "Downloading: vrf 50.3 / 50.3 MB" on screen until the app was closed, and a failed one
-     * did the same with the bar stuck wherever the bytes had stopped. */
+    /* Whatever happens next, the bar at the bottom of the window hears how it ended: it hides only
+     * on 'done' or 'error', and without them it stayed up until the app was closed. */
     try {
       const exe = await fetchAndUnpack(name, pin);
       onProgress({ type: 'done', label: name });
@@ -213,6 +201,15 @@ export function createToolchain({ userDataDir, onProgress = () => {}, log = () =
     } catch (err) {
       onProgress({ type: 'error', label: name, message: String((err as Error)?.message || err) });
       throw err;
+    }
+  }
+
+  /** A tool on disk brought up to its pin: pathOf takes whatever is there, so nothing else would. */
+  async function catchUp(): Promise<void> {
+    for (const name of TOOL_NAMES) {
+      const have = installed()[name];
+      const pin = pinFor(name, build);
+      if (have && pin && have.version !== pin.version) await ensure(name);
     }
   }
 
@@ -295,6 +292,6 @@ export function createToolchain({ userDataDir, onProgress = () => {}, log = () =
     remember(name, null);
   }
 
-  return { ensure, pathOf, state, remove, root, TOOL_NAMES };
+  return { ensure, catchUp, pathOf, state, remove, root, TOOL_NAMES };
 }
 

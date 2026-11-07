@@ -66,6 +66,12 @@ test('installing into a folder the game does not mount is broken', () => {
   assert.match(p[0].detail, /dota_russian/);
 });
 
+test('with the item table off, an unpatched game is how it should be', () => {
+  const r = healthy();
+  r.patchAndSchema = { ...r.patchAndSchema, patched: false, enabled: false };
+  assert.ok(!findProblems(r).some((x) => /not patched/i.test(x.what)));
+});
+
 test('an unpatched game is broken', () => {
   const r = healthy();
   r.patchAndSchema = { ...r.patchAndSchema, patched: false };
