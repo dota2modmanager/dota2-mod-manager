@@ -79,7 +79,7 @@ async function closeWindow(win) {
  */
 function brightest(win) {
   return win.evaluate(() => new Promise((done) => {
-    const stage = document.querySelector('#fxCanvas');
+    const stage = document.querySelector('.fx-canvas canvas');
     const small = document.createElement('canvas');
     small.width = 120;
     small.height = Math.round((120 * stage.height) / stage.width);
@@ -137,7 +137,7 @@ const STEPS = {
     await win.locator('.fx-editor input[type="range"]').first().fill('150');
     await settle(win, 1500);
     const frame = await brightest(win);
-    const box = await win.locator('#fxCanvas').boundingBox();
+    const box = await win.locator('.fx-canvas canvas').boundingBox();
     return { frame: Buffer.from(frame.split(',')[1], 'base64'), box };
   },
 };

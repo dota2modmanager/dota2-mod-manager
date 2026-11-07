@@ -2,6 +2,20 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.5.0
+
+### 3D preview
+
+- The hero's 3D preview in the Hero builder and the picture in the effect editor now draw
+  particles from the game's own particle data. Effects that were missing or showed as solid
+  squares appear, and they stay on the item while the hero moves.
+- Putting on another item keeps the current picture and camera until the new one is ready, and
+  the line beside the equip button says the preview is updating.
+- Items with an animation of their own, such as Io's Altar Ball, move the way they do in the game.
+- Known issue: Arc Warden in his default items can show without a head.
+
+Thanks to HarlordLeg for the new renderer, built on dota-loadout by justkiddingxd.
+
 ## 3.4.0
 
 ### Ability effects
