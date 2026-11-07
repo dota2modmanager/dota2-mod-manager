@@ -13,7 +13,10 @@ export interface Category {
   mods: Array<Omit<HeroMod, 'slots' | 'categoryId'>>;
 }
 
-export const categories: Category[] = (data as { categories: Category[] }).categories;
+/* 18+ mods are on no page of the site (src/lib/heroes.ts says why); a category of nothing else has no page. */
+export const categories: Category[] = (data as { categories: Category[] }).categories
+  .map((c) => ({ ...c, mods: c.mods.filter((m) => !m.adult) }))
+  .filter((c) => c.mods.length);
 
 export const categoryById = new Map(categories.map((c) => [c.id, c]));
 

@@ -11,7 +11,7 @@
 import { pathIn, type Lang } from '../i18n/ui';
 import { heroCopy } from '../i18n/heroes';
 import { browse } from '../i18n/browse';
-import { heroes, totalHeroMods } from '../lib/heroes';
+import { heroes, heroPicture, totalHeroMods } from '../lib/heroes';
 import { thumbOf } from '../lib/catalog';
 import { ruName } from '../i18n/hero-names';
 import Icon from './Icon.astro';
@@ -29,12 +29,11 @@ const modWord = (n: number) =>
 
 const tiles = heroes.map((h) => {
   const ru = ruName(h.name);
-  const newest = [...h.mods].filter((m) => m.image).sort((a, b2) => (b2.date ?? 0) - (a.date ?? 0))[0];
   return {
     ...h,
     /* what players call them, under the name the game writes; only when it is not the same */
     local: lang === 'ru' && ru?.nom && ru.nom.toLowerCase() !== h.name.toLowerCase() ? ru.nom : null,
-    pic: newest?.image?.src ?? null,
+    pic: heroPicture(h)?.src ?? null,
     latest: Math.max(0, ...h.mods.map((m) => m.date ?? 0)),
     hay: [h.name, ru?.nom, ...(ru?.alt ?? [])].filter(Boolean).join(' ').toLowerCase(),
   };
