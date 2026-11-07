@@ -5,7 +5,11 @@
  * creates on the item while it is worn, and `particle`, one the item puts in place of a stock
  * effect of the hero (an ability's). The pick wears the donor's modifiers of those two kinds
  * beside its own, and the game loads the particles by their own paths, as it does for the item's
- * own (src/item-builder.ts). A particle the donor hangs on a point of its own model sits where the
+ * own (src/item-builder.ts). An ability's new look comes with its icon and its sound, so the
+ * donor's `ability_icon` and `sound` go along: Puck's Blossom of the Merry Wanderer gave the
+ * ult its effect and left the stock icon (issue #534). An item whose only effect is an ability's,
+ * Tinker's Interstellar Astrarium head, is a donor too: the picker used to offer only items that
+ * create a particle. A particle the donor hangs on a point of its own model sits where the
  * worn model has that point, or at its root where it has none.
  *
  * The donor rides in the pick's effect string as `from-<id>`, beside the effects and the style
@@ -24,7 +28,10 @@ export function donorOf(key: string): string | null {
 
 type Modifier = { text: string; type: string; asset: string; modifier: string };
 
-/** The `particle_create` and `particle` modifiers of a visuals block, each as its text. */
+/** The kinds of modifier a donor gives: its particles, and the icon and sound of an ability it restyles. */
+const GIVEN = new Set(['particle_create', 'particle', 'ability_icon', 'sound']);
+
+/** The modifiers of a visuals block a donor can give (GIVEN), each as its text. */
 function effectModifiers(visuals: string): Modifier[] {
   const out: Modifier[] = [];
   eachChild(visuals, blockBounds(visuals, 0), (c) => {
@@ -33,24 +40,26 @@ function effectModifiers(visuals: string): Modifier[] {
     eachChild(visuals, c.body, (x) => { if (!x.isBlock) f.set(x.key.toLowerCase(), x.value); });
     const type = (f.get('type') || '').toLowerCase();
     // one tied to a style other than the first is worn only in that style, which the pick is not in
-    if ((type !== 'particle_create' && type !== 'particle') || (f.get('style') || '0') !== '0') return;
+    if (!GIVEN.has(type) || (f.get('style') || '0') !== '0') return;
     // numbered in most blocks (asset_modifier3): unnumbered, it cannot clash with the worn item's own
     out.push({ text: visuals.slice(c.start, c.end).replace(/^"asset_modifier\d*"/i, '"asset_modifier"'), type, asset: (f.get('asset') || '').toLowerCase(), modifier: (f.get('modifier') || '').toLowerCase() });
   });
   return out;
 }
 
+const isParticle = (m: Modifier) => m.type === 'particle_create' || m.type === 'particle';
+
 /** Whether an item has an effect another item could wear: what the picker offers as a donor. The
- *  block is looked at first, so the visuals are read only for the few that create a particle. */
+ *  block is looked at first, so the visuals are read only for the few that have a particle. */
 export const hasOwnEffect = (block: string, visuals: () => string | null): boolean =>
-  /particle_create/i.test(block) && effectModifiers(visuals() || '"visuals"{}').some((m) => m.type === 'particle_create');
+  /"particle(_create)?"/i.test(block) && effectModifiers(visuals() || '"visuals"{}').some(isParticle);
 
 /**
- * The visuals with the donor's effects added: each of its particles the worn item does not create
- * already, and each stock effect it replaces that the worn item leaves alone.
- * @throws when the donor is not in the table, or has no effect to give
+ * The donor's modifiers the worn item takes, each as its text: each particle it does not create
+ * already, and each stock effect, ability icon and sound it leaves alone.
+ * @throws when the donor is not in the table, or has no particle to give
  */
-export function withDonorEffects(baseText: string, visuals: string, donorId: string): string {
+export function donorAdditions(baseText: string, visuals: string, donorId: string): string[] {
   const donor = findItem(baseText, donorId);
   if (!donor) throw new Error(t('items_game: предмет {0} не найден', donorId));
   let donorVisuals = '';
@@ -58,12 +67,25 @@ export function withDonorEffects(baseText: string, visuals: string, donorId: str
     if (c.isBlock && c.key.toLowerCase() === 'visuals') donorVisuals = baseText.slice(c.start, c.end);
   });
   const given = donorVisuals ? effectModifiers(donorVisuals) : [];
-  if (!given.length) throw new Error(t('У предмета {0} нет своего эффекта', donorId));
+  if (!given.some(isParticle)) throw new Error(t('У предмета {0} нет своего эффекта', donorId));
   const own = effectModifiers(visuals);
-  const created = new Set(own.filter((m) => m.type === 'particle_create').map((m) => m.modifier));
-  const replaced = new Set(own.filter((m) => m.type === 'particle').map((m) => m.asset));
-  const add = given.filter((m) => (m.type === 'particle_create' ? !created.has(m.modifier) : !replaced.has(m.asset)));
+  // a created particle is told apart by itself, a replacement by what it replaces
+  const keyOf = (m: Modifier) => `${m.type} ${m.type === 'particle_create' ? m.modifier : m.asset}`;
+  const taken = new Set(own.map(keyOf));
+  return given.filter((m) => !taken.has(keyOf(m))).map((m) => m.text);
+}
+
+/** The visuals with these modifiers added at the end of the block. */
+export function withModifiers(visuals: string, add: string[]): string {
   const close = visuals.lastIndexOf('}');
   if (close === -1 || !add.length) return visuals;
-  return `${visuals.slice(0, close).replace(/[ \t\r\n]*$/, '')}\r\n\t${add.map((m) => m.text).join('\r\n\t')}\r\n${visuals.slice(close)}`;
+  return `${visuals.slice(0, close).replace(/[ \t\r\n]*$/, '')}\r\n\t${add.join('\r\n\t')}\r\n${visuals.slice(close)}`;
+}
+
+/**
+ * The visuals with the donor's effects added (donorAdditions).
+ * @throws when the donor is not in the table, or has no particle to give
+ */
+export function withDonorEffects(baseText: string, visuals: string, donorId: string): string {
+  return withModifiers(visuals, donorAdditions(baseText, visuals, donorId));
 }

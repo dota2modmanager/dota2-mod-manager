@@ -38,7 +38,9 @@ const TIERS: Record<string, string[]> = {
 const TIER_NAMES = () => TIERS[window.I18N_LANG] ?? TIERS.en;
 const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 const TOPS = { 5000: 'a', 100: 'b', 10: 'c' } as const;
-const tierOf = (level: number) => Math.min(5, Math.max(0, Math.floor((level - 1) / 5)));
+/** The first level of each badge tier, as src/rank-look.ts TIER_FROM has them (#549). */
+const TIER_FROM = [1, 6, 12, 18, 25, 30];
+const tierOf = (level: number) => Math.max(0, TIER_FROM.filter((from) => level >= from).length - 1);
 const picture = (m: RankMedal) => (m.tier === 8 && m.top ? `rank8${TOPS[m.top]}` : `rank${m.tier}`);
 
 function Badge({ m, level }: { m: RankModalModel; level: number | null }) {

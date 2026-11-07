@@ -30,7 +30,7 @@ import {
 import { ITEM_EFFECTS, type ItemEffect } from './item-builder-effects.ts';
 import { itemAssets, normalizeAssetPath, type ItemAssets, type SummonModels } from './item-builder-assets.ts';
 import { styleOf, withStyle } from './item-builder-styles.ts';
-import { DONOR, donorOf, withDonorEffects } from './item-builder-donor.ts';
+import { DONOR, donorAdditions, donorOf, withModifiers } from './item-builder-donor.ts';
 import { UNUSUAL, unusualItemEffect } from './item-builder-unusual.ts';
 
 export { itemSlots, itemSlotsSteps, itemOptions } from './item-builder-slots.ts';
@@ -278,7 +278,14 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
   if (!styled.applied) visuals = stripKeyBlocks(visuals, 'styles');
   for (const effect of effects) visuals = appendItemEffect(visuals, effect);
   const donor = donorOf(key);
-  if (donor) visuals = withDonorEffects(baseText, visuals, donor);
+  if (donor) {
+    const added = donorAdditions(baseText, visuals, donor);
+    visuals = withModifiers(visuals, added);
+    // the donor's swaps get their files as the item's own do: icons, particles, sounds (issue #534)
+    const extra = itemAssets(baseText, `"visuals"\r\n{\r\n${added.join('\r\n')}\r\n}`, itemHeroes(baseText, source), summon);
+    assets.assetCopies.push(...extra.assetCopies);
+    assets.sounds.push(...extra.sounds);
+  }
 
   let patched = setBlockId(itemBlock(baseText, source), target.id);
   patched = setScalarField(patched, 'name', targetFields.get('name') || target.name || target.id);

@@ -2,7 +2,7 @@
  * Panorama JavaScript, written out with the player's levels and medal in it. Out of rank-look.ts
  * when it outgrew that file's budget.
  */
-import { TIERS, type RankLook } from './rank-look.ts';
+import { TIER_FROM, TIERS, type RankLook } from './rank-look.ts';
 
 /**
  * The script the layouts include. It knows the levels and the medal, finds what is on its
@@ -21,6 +21,7 @@ var D2MM_EVERY = ${look.every === null ? 'null' : look.every};
 var D2MM_IDS = ${JSON.stringify(ids)};
 var D2MM_RANK = ${rank};
 var D2MM_TIERS = ${JSON.stringify(TIERS)};
+var D2MM_TIER_FROM = ${JSON.stringify(TIER_FROM)};
 var D2MM_SAID = {};
 // one line per thing in the game's console (-condebug writes it to dota/console.log), so a part
 // that finds nothing can be told from one that is not there
@@ -51,8 +52,13 @@ function d2mmFind(panel, test, out) {
   }
   return out;
 }
+function d2mmTierOf(lvl) {
+  var t = 0;
+  while (t + 1 < D2MM_TIER_FROM.length && lvl >= D2MM_TIER_FROM[t + 1]) t++;
+  return t;
+}
 function d2mmTier(panel, lvl) {
-  var tier = D2MM_TIERS[Math.min(5, Math.floor((lvl - 1) / 5))];
+  var tier = D2MM_TIERS[d2mmTierOf(lvl)];
   panel.SetHasClass("NoTier", false);
   for (var t = 0; t < D2MM_TIERS.length; t++) panel.SetHasClass(D2MM_TIERS[t], D2MM_TIERS[t] === tier);
 }
@@ -118,7 +124,7 @@ var D2MM_PORTRAIT = null;
 function d2mmPortrait(frame, lvl) {
   var overlay = frame.FindChildTraverse("PortraitHeroBadgeOverlay");
   if (!overlay) return d2mmSay("portrait", "no PortraitHeroBadgeOverlay");
-  var want = d2mmKnown(lvl) ? 'url("s2r://panorama/images/hud/portrait_hero_badge_frame_tier_' + (Math.min(5, Math.floor((lvl - 1) / 5)) + 1) + '_psd.vtex")' : null;
+  var want = d2mmKnown(lvl) ? 'url("s2r://panorama/images/hud/portrait_hero_badge_frame_tier_' + (d2mmTierOf(lvl) + 1) + '_psd.vtex")' : null;
   if (want === D2MM_PORTRAIT) return;
   overlay.style.backgroundImage = want;
   D2MM_PORTRAIT = want;

@@ -5189,7 +5189,11 @@ An item's own effects are asset modifiers in its visuals: `particle_create`, a p
 creates on the item while it is worn, and `particle`, one the item puts in place of a stock
 effect of the hero (an ability's). The pick wears the donor's modifiers of those two kinds
 beside its own, and the game loads the particles by their own paths, as it does for the item's
-own (src/item-builder.ts). A particle the donor hangs on a point of its own model sits where the
+own (src/item-builder.ts). An ability's new look comes with its icon and its sound, so the
+donor's `ability_icon` and `sound` go along: Puck's Blossom of the Merry Wanderer gave the
+ult its effect and left the stock icon (issue #534). An item whose only effect is an ability's,
+Tinker's Interstellar Astrarium head, is a donor too: the picker used to offer only items that
+create a particle. A particle the donor hangs on a point of its own model sits where the
 worn model has that point, or at its root where it has none.
 
 The donor rides in the pick's effect string as `from-<id>`, beside the effects and the style
@@ -5218,7 +5222,28 @@ export const hasOwnEffect = (block: string, visuals: () => string | null): boole
 ```
 
 Whether an item has an effect another item could wear: what the picker offers as a donor. The
- block is looked at first, so the visuals are read only for the few that create a particle.
+ block is looked at first, so the visuals are read only for the few that have a particle.
+
+### `donorAdditions`
+
+```ts
+export function donorAdditions(baseText: string, visuals: string, donorId: string): string[]
+```
+
+The donor's modifiers the worn item takes, each as its text: each particle it does not create
+already, and each stock effect, ability icon and sound it leaves alone.
+
+```
+@throws when the donor is not in the table, or has no particle to give
+```
+
+### `withModifiers`
+
+```ts
+export function withModifiers(visuals: string, add: string[]): string
+```
+
+The visuals with these modifiers added at the end of the block.
 
 ### `withDonorEffects`
 
@@ -5226,11 +5251,10 @@ Whether an item has an effect another item could wear: what the picker offers as
 export function withDonorEffects(baseText: string, visuals: string, donorId: string): string
 ```
 
-The visuals with the donor's effects added: each of its particles the worn item does not create
-already, and each stock effect it replaces that the worn item leaves alone.
+The visuals with the donor's effects added (donorAdditions).
 
 ```
-@throws when the donor is not in the table, or has no effect to give
+@throws when the donor is not in the table, or has no particle to give
 ```
 
 ## src/item-builder-effects.ts
@@ -9658,12 +9682,21 @@ The script, as the compiler's source and as the layouts name it.
 export const TIERS = ['BronzeTier', 'SilverTier', 'GoldTier', 'PlatinumTier', 'MasterTier', 'GrandmasterTier']
 ```
 
-The badge tiers in order, as the game's classes name them; a level's tier is (level - 1) / 5.
+The badge tiers in order, as the game's classes name them.
+
+### `TIER_FROM`
+
+```ts
+export const TIER_FROM = [1, 6, 12, 18, 25, 30]
+```
+
+The first level of each tier. The tiers are not five levels each: bronze 1-5, silver 6-11, gold
+12-17, platinum 18-24, master 25-29, grandmaster 30 alone (#549).
 
 ### `tierOf`
 
 ```ts
-export const tierOf = (level: number): number => Math.min(5, Math.max(0, Math.floor((level - 1) / 5)))
+export const tierOf = (level: number): number => Math.max(0, TIER_FROM.filter((from) => level >= from).length - 1)
 ```
 
 The tier a level from 1 to 30 earns, 0 (bronze) to 5 (grandmaster).

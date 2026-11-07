@@ -43,10 +43,15 @@ export const LAYOUTS = ['panorama/layout/hero_grid_new.vxml_c', 'panorama/layout
 /** The script, as the compiler's source and as the layouts name it. */
 export const SCRIPT = { source: 'panorama/scripts/d2mm_rank_look.js', compiled: 'panorama/scripts/d2mm_rank_look.vjs_c', ref: 'panorama/scripts/d2mm_rank_look.vjs' };
 
-/** The badge tiers in order, as the game's classes name them; a level's tier is (level - 1) / 5. */
+/** The badge tiers in order, as the game's classes name them. */
 export const TIERS = ['BronzeTier', 'SilverTier', 'GoldTier', 'PlatinumTier', 'MasterTier', 'GrandmasterTier'];
+/**
+ * The first level of each tier. The tiers are not five levels each: bronze 1-5, silver 6-11, gold
+ * 12-17, platinum 18-24, master 25-29, grandmaster 30 alone (#549).
+ */
+export const TIER_FROM = [1, 6, 12, 18, 25, 30];
 /** The tier a level from 1 to 30 earns, 0 (bronze) to 5 (grandmaster). */
-export const tierOf = (level: number): number => Math.min(5, Math.max(0, Math.floor((level - 1) / 5)));
+export const tierOf = (level: number): number => Math.max(0, TIER_FROM.filter((from) => level >= from).length - 1);
 
 const HERO = /^[a-z0-9_]{2,40}$/;
 const whole = (v: unknown, lo: number, hi: number): number | null => {
