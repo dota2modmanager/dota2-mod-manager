@@ -60,6 +60,13 @@ export interface BrowseCopy {
   /** the link from the closer look to the mod's own page */
   modPage: string;
   mods: [string, string, string];
+  /** the 18+ button on /catalog/, its badge on a card, and the question it asks once (src/scripts/adult.ts) */
+  adultBadge: string;
+  adultHint: string;
+  adultTitle: string;
+  adultText: string;
+  adultYes: string;
+  adultNo: string;
 }
 
 export const browse: Record<'en' | 'ru', BrowseCopy> = {
@@ -111,6 +118,12 @@ export const browse: Record<'en' | 'ru', BrowseCopy> = {
     kindPage: 'More {kind}',
     modPage: "The mod's page",
     mods: ['mod', 'mods', 'mods'],
+    adultBadge: '18+',
+    adultHint: 'Mods with explicit hero models, listed only if you are 18 or older',
+    adultTitle: 'Show 18+ mods?',
+    adultText: 'A few mods replace heroes with explicit, nude models. They are hidden everywhere on this site. Show them in the catalog only if you are 18 or older and want to see them. Press 18+ again to hide them.',
+    adultYes: "I'm 18 or older, show them",
+    adultNo: "Don't show",
   },
   ru: {
     searchLabel: 'Поиск по каталогу',
@@ -160,5 +173,11 @@ export const browse: Record<'en' | 'ru', BrowseCopy> = {
     kindPage: 'Ещё: {kind}',
     modPage: 'Страница мода',
     mods: ['мод', 'мода', 'модов'],
+    adultBadge: '18+',
+    adultHint: 'Моды с откровенными моделями героев, только если тебе есть 18',
+    adultTitle: 'Показать моды 18+?',
+    adultText: 'Несколько модов заменяют героев откровенными, голыми моделями. На сайте они скрыты везде. Покажи их в каталоге, только если тебе есть 18 лет и ты хочешь их видеть. Нажми 18+ ещё раз, чтобы снова скрыть.',
+    adultYes: 'Мне есть 18, показать',
+    adultNo: 'Не показывать',
   },
 };

@@ -10,8 +10,8 @@
  * RAIL_SECTIONS), and each group wears one of Dota's item rarity colours. That is the one place
  * the site uses colour to mean something: the dot on a card says what kind of mod it is.
  */
-import { categories } from './categories';
-import { heroes } from './heroes';
+import { adultCategoryMods, categories } from './categories';
+import { adultHeroMods, heroes } from './heroes';
 import { categoryText } from '../i18n/categories';
 import { ruName } from '../i18n/hero-names';
 import { slugify } from './slug';
@@ -135,6 +135,37 @@ export const catalog: CatalogMod[] = [...byName.values()].sort((a, b) => (b.date
   }
 }
 
+/**
+ * The 18+ mods, one card each, which no page of the site shows (src/lib/heroes.ts). Only the
+ * catalog's browser lists them, after asking. They have no page of their own, so their keys are
+ * apart from the others' ("18-<name>") and never take an address a page has.
+ */
+export const adultCatalog: CatalogMod[] = (() => {
+  const out = new Map<string, CatalogMod>();
+  const add = (cat: string, hero: string | null, m: (typeof adultCategoryMods)[number]['mod'] & { slots?: string[] }) => {
+    const have = out.get(`${cat}|${m.name}`);
+    if (have) { have.hero ??= hero; if (m.styleLabel && !have.styles.includes(m.styleLabel)) have.styles.push(m.styleLabel); return; }
+    out.set(`${cat}|${m.name}`, {
+      key: '', name: m.name, cat, style: m.styleLabel, styles: m.styleLabel ? [m.styleLabel] : [], hero,
+      img: m.image?.src ?? null, author: m.author, authorUrl: m.authorUrl, date: m.date, slots: m.slots ?? [],
+      countKey: countKeyOf(cat, m.group, m.name),
+      looks: [{ label: m.styleLabel, img: m.image?.src ?? null, width: m.image?.width ?? 854, height: m.image?.height ?? 480 }],
+    });
+  };
+  for (const { cat, mod } of adultCategoryMods) add(cat, null, mod);
+  for (const { hero, mod } of adultHeroMods) add((mod as { categoryId?: string }).categoryId ?? 'heroes', hero, mod);
+  const taken = new Set<string>();
+  const list = [...out.values()].sort((a, b) => (b.date ?? 0) - (a.date ?? 0) || a.name.localeCompare(b.name));
+  for (const m of list) {
+    const base = `18-${slugify(m.name) || 'mod'}`;
+    let k = base;
+    for (let n = 2; taken.has(k); n++) k = `${base}-${n}`;
+    taken.add(k);
+    m.key = k;
+  }
+  return list;
+})();
+
 /** Every category the catalog has, biggest first, with the heroes category counted too. */
 export const catalogCategories = (() => {
   const count = new Map<string, number>();
@@ -172,9 +203,15 @@ export function catalogPayload() {
       : [c.id, categoryText('en', c.id).name, categoryText('ru', c.id).name, c.group]),
     // the nicknames players type ("кристалка", "сф") as a fourth field, for the site's search
     heroes: heroes.map((h) => [h.slug, h.name, ruName(h.name)?.nom ?? h.name, (ruName(h.name)?.alt ?? []).join('|')]),
-    mods: catalog.map((m) => [
-      m.key, m.name, catIndex.get(m.cat), m.hero ? heroIndex.get(m.hero) : -1,
-      m.img ? m.img.replace(/^\/mods\/|\.webp$/g, '') : '', m.author ?? '', m.date ?? 0, m.styles.join('|'), m.slots, m.authorUrl ?? '',
-    ]),
+    mods: catalog.map(row),
+    // the 18+ mods, apart: the browser shows them only after the visitor says yes (src/scripts/browse.ts);
+    // one in a kind of mod with nothing else to list is left out
+    adult: adultCatalog.filter((m) => catIndex.has(m.cat)).map(row),
   };
+  function row(m: CatalogMod): Array<string | number | string[]> {
+    return [
+      m.key, m.name, catIndex.get(m.cat)!, m.hero && heroIndex.has(m.hero) ? heroIndex.get(m.hero)! : -1,
+      m.img ? m.img.replace(/^\/mods\/|\.webp$/g, '') : '', m.author ?? '', m.date ?? 0, m.styles.join('|'), m.slots, m.authorUrl ?? '',
+    ];
+  }
 }

@@ -47,9 +47,9 @@ test('data.json has the format version the doc describes', () => {
   assert.deepEqual(Object.keys(data).sort(), [...schema.required].sort());
 });
 
-for (const part of ['cats', 'heroes', 'mods']) {
+for (const part of ['cats', 'heroes', 'mods', 'adult']) {
   test(`every row of ${part} fits the schema`, () => {
-    assert.deepEqual(rowProblems(part, data[part], schema.properties[part].items).slice(0, 10), []);
+    assert.deepEqual(rowProblems(part, data[part], (schema.properties[part].items.$ref ? schema.properties.mods.items : schema.properties[part].items)).slice(0, 10), []);
   });
 }
 

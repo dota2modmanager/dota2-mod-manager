@@ -18,6 +18,7 @@ The file is compact on purpose (about 1500 mods in one request), so rows are arr
 | `cats` | array of category rows | Every category, in the app's sidebar order. |
 | `heroes` | array of hero rows | Every hero that has mods. |
 | `mods` | array of mod rows | Every mod. A mod that comes in several styles is one row. |
+| `adult` | array of mod rows | The few mods the catalog tags 18+ (explicit hero models), apart from `mods`. No page of the site shows them, and their key (`18-...`) has no page: the site's catalog lists them only after the visitor says they are 18. Leave them out unless you ask the same. |
 
 ## Category row
 
