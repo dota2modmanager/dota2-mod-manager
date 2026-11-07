@@ -57,3 +57,10 @@
 @media (prefers-reduced-motion: reduce) {
   .sound-hero, .map-card { transition: none; }
 }
+
+/* a hero's ability icons: a row of pictures per ability, square like the game draws them, the
+   abilities scrolling inside the window so the hero at the top stays in sight */
+.icon-abilities { display: flex; flex-direction: column; gap: var(--space-3); max-height: 56vh; overflow-y: auto; padding-right: var(--space-1); }
+.icon-cards { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
+.icon-card-pic { aspect-ratio: 1 / 1; }
+.icon-card:disabled { cursor: progress; }

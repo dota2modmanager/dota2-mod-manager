@@ -17,6 +17,7 @@ import { firstHubHero } from './item-hub.ts';
 import { arcanaLeads, openArcanaWindow } from './catalog/arcana.ts';
 import { mapLookLead, openMapLooks } from './catalog/map-looks.ts';
 import { soundLead, openSounds } from './catalog/sounds.ts';
+import { iconsPicked, openAbilityIcons } from './catalog/ability-icons.ts';
 import { backgroundLead, openBackground } from './catalog/background.ts';
 import { hudLead, openHud } from './catalog/hud.ts';
 import { openEffects } from './catalog/effects.ts';
@@ -65,6 +66,7 @@ async function groups(): Promise<StudioGroup[]> {
     arcanaLeads().catch(() => []), mapLookLead('towers').catch(() => null), mapLookLead('trees').catch(() => null),
   ]);
   const sounds = soundLead('hero-sounds');
+  const icons = iconsPicked();
   const hud = hudLead('huds');
   const tile = (t: Omit<StudioTile, 'fresh'>): StudioTile => ({ ...t, fresh: isNew(t.id) });
 
@@ -74,6 +76,8 @@ async function groups(): Promise<StudioGroup[]> {
       tile({ id: 'paint', icon: 'format_paint', title: L`Перекраска героя`, text: L`Тело, оружие и эффекты в свои цвета, по частям. Открой героя в «Предметах» и нажми «Перекрасить».`, open: () => goPaint() }),
       tile({ id: 'sounds', icon: 'graphic_eq', title: L`Свой звук на способность`, text: L`Твой файл вместо звука игры или поверх него`,
         status: sounds?.installed ? on(L`Героев со своими звуками: ${sounds.installed}`) : undefined, open: (el) => openSounds(el) }),
+      tile({ id: 'ability-icons', icon: 'imagesmode', title: L`Иконки способностей`, text: L`Любая иконка способности из предметов героя: аркана, стили, наборы.`,
+        status: icons ? on(L`Героев со своими иконками: ${icons}`) : undefined, open: (el) => openAbilityIcons(el) }),
     ] },
     // arcanas and the immortals whose colour is baked into their effects, one tile each
     { id: 'colors', title: L`Свой цвет предмета`, tiles: arcanas.map((a) => tile({ id: `arcana:${a.set}`, icon: 'palette', picture: a.picture, title: a.name,

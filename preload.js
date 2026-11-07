@@ -152,6 +152,14 @@ contextBridge.exposeInMainWorld('api', {
     state: () => ipcRenderer.invoke('background:state'),
     install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur),
   },
+  // a hero's ability icons picked from his own cosmetics'
+  icons: {
+    heroes: () => ipcRenderer.invoke('icons:heroes'),
+    hero: (hero) => ipcRenderer.invoke('icons:hero', hero),
+    pictures: (icons) => ipcRenderer.invoke('icons:pictures', icons),
+    set: (hero, ability, icon) => ipcRenderer.invoke('icons:set', hero, ability, icon),
+    clear: (hero) => ipcRenderer.invoke('icons:clear', hero),
+  },
   paint: {
     state: (hero) => ipcRenderer.invoke('paint:state', hero),
     icons: (abilities) => ipcRenderer.invoke('paint:icons', abilities),

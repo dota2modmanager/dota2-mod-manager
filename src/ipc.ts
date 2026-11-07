@@ -23,6 +23,7 @@ import { registerEffectsIpc } from './ipc-effects.ts';
 import { registerRankIpc } from './ipc-rank.ts';
 import { registerDecorIpc } from './ipc-decor.ts';
 import { registerPaintIpc } from './ipc-paint.ts';
+import { registerIconsIpc } from './ipc-icons.ts';
 import { registerCreatorIpc } from './ipc-creator.ts';
 import { registerLooksIpc } from './ipc-looks.ts';
 
@@ -49,6 +50,7 @@ export function registerIpc(ctx: AppContext): void {
   registerRankIpc(ctx);
   registerDecorIpc(ctx);
   registerPaintIpc(ctx);
+  registerIconsIpc(ctx);
   registerCreatorIpc(ctx);
   registerLooksIpc(ctx);
 }

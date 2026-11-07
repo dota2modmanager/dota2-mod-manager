@@ -256,15 +256,17 @@ export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () 
    * Abilities' icons out of the installed game, as data URIs, for the window that recolours a hero:
    * the picture is what the colour is seen on. Most are block-compressed, so without the toolchain
    * only the few stored as a PNG come back.
-   * @param names  ability names as the game writes them, e.g. "crystal_maiden_crystal_nova"
+   * @param names  ability names as the game writes them, e.g. "crystal_maiden_crystal_nova", or a
+   *   cosmetic's icon under the same folder, "earthshaker/earthshaker_arcana/earthshaker_fissure"
    */
   async function abilityIcons(names: unknown[]): Promise<Record<string, string>> {
     const out: Record<string, string> = {};
     if (!ready()) return out;
-    const valid = [...new Set(names)].filter((n): n is string => typeof n === 'string' && /^[a-z0-9_]+$/.test(n));
+    // names, never paths: no "..", no leading slash, a few folders at most
+    const valid = [...new Set(names)].filter((n): n is string => typeof n === 'string' && /^[a-z0-9_]+(?:\/[a-z0-9_]+){0,5}$/.test(n));
     const icon = (n: string) => `spellicons/${n}`;
     const missing = valid.map(icon).filter((p) => !fs.existsSync(cacheFile(p)));
-    await extract(missing);
+    for (let i = 0; i < missing.length; i += MAX_PER_CALL) await extract(missing.slice(i, i + MAX_PER_CALL));
     for (const n of valid) {
       const file = cacheFile(icon(n));
       if (fs.existsSync(file)) out[n] = `data:image/png;base64,${fs.readFileSync(file).toString('base64')}`;

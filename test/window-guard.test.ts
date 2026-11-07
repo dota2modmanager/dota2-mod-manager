@@ -183,6 +183,8 @@ const VALID: Record<string, unknown[][]> = {
   'rank:state': [[]], 'rank:pictures': [[]], 'rank:install': [[{ medal: null, levels: { axe: 30 }, every: null }]],
   'background:state': [[]], 'background:install': [[new Uint8Array(64), 'sunset.mp4', 0.2, 4], [null, null, 0.5, 0]],
   'paint:state': [['juggernaut']], 'paint:icons': [[['juggernaut_blade_fury']], [[]]], 'paint:install': [['juggernaut', { 'ability:juggernaut_blade_fury': '#00ff00' }, 'Juggernaut'], ['axe', {}, null]],
+  'icons:heroes': [[]], 'icons:hero': [['earthshaker']], 'icons:pictures': [[['earthshaker_fissure', 'earthshaker/earthshaker_arcana/earthshaker_fissure']], [[]]],
+  'icons:set': [['earthshaker', 'earthshaker_fissure', 'earthshaker_fissure_alt_gold'], ['earthshaker', 'earthshaker_fissure', null]], 'icons:clear': [['earthshaker']],
   'map:state': [[]], 'map:install': [['towers', '17538', null], ['trees', null, 'winter']],
   'arcana:state': [[]], 'arcana:install': [['terrorblade-arcana', [255, 0, 128], 'mod'], ['techies-arcana', [1, 2, 3], 'recolor']],
   'misc:openLangFolder': [[]], 'misc:openCacheFolder': [[]], 'misc:openToolsFolder': [[], ['Compiler']],

@@ -211,6 +211,9 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   // the map without its decor (src/ipc-decor.ts): the groups taken off
   'decor:state': [], 'decor:install': [list(oneOf('plants', 'debris'), 2)],
   'background:state': [], 'background:install': [optional(bytes(48 * MB)), optional(str(200)), num(0, 0.9), num(0, 20)],
+  // a hero's ability icons from his own cosmetics' (src/ipc-icons.ts): his npc name, an ability, an icon under spellicons or null for the game's
+  'icons:heroes': [], 'icons:hero': [str(40, 2)], 'icons:pictures': [list(str(160, 1), 200)],
+  'icons:set': [str(40, 2), str(100, 1), optional(str(160, 1))], 'icons:clear': [str(40, 2)],
   // a hero recoloured part by part (src/ipc-paint.ts): his npc name, and a #rrggbb per layer that is on
   'paint:state': [str(40, 2)], 'paint:icons': [list(str(100), 60)], 'paint:install': [str(40, 2), json(64 * 1024), optional(str(80))],
   'map:state': [], 'map:install': [oneOf('towers', 'trees'), optional(str(40)), optional(str(40))],
