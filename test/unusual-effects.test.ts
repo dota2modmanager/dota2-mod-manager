@@ -65,7 +65,7 @@ test('the names players know, by effect number', () => {
 
 test('each effect with its particle, how it attaches and its points; one with no particle is left out', () => {
   assert.deepEqual(unusualEffects(TABLE, ENGLISH), [
-    { id: 4, name: 'Self-Made Aura', system: 'particles/econ/courier/courier_selfmade/courier_selfmade.vpcf', attachType: 'rootbone_follow', points: [] },
+    { id: 4, name: 'Self-Made Aura', system: 'particles/econ/courier/courier_selfmade/courier_selfmade.vpcf', attachType: 'rootbone_follow', points: [], entity: 'parent' },
     {
       id: 17, name: 'Luminous Gaze', system: 'particles/econ/courier/courier_eye_glow_01/courier_eye_glow_01.vpcf', attachType: 'customorigin',
       points: [

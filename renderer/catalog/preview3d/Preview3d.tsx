@@ -6,9 +6,10 @@
  * one file the first time one is asked for. */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Motion, Preview3dApi } from '../../api/preview3d.ts';
-import type { HeroScene } from './scene.ts';
+import type { HeroScene, SceneViewport } from './scene.ts';
 import { Dropdown } from '../../ui/Dropdown.tsx';
 import { motionLabels } from './motion-label.ts';
+import type { StudioView } from './studio-settings.ts';
 
 type Status = { kind: 'loading' } | { kind: 'shown'; missing: string[] } | { kind: 'no-tool' } | { kind: 'failed'; text: string };
 
@@ -43,11 +44,29 @@ function motionWord(act: string, ability: string | null): string | null {
 }
 
 /** @param fallback  what the stage shows when the models cannot be had (the hero window's portrait), the reason under it */
-export function Preview3d({ hero, slots, sig, still = false, fallback }: {
-  hero: string; slots: { slot: string; stock: string }[]; sig: string; still?: boolean; fallback?: ReactNode;
+export function Preview3d({ hero, slots, sig, still = false, fallback, onSettled }: {
+  hero: string; slots: { slot: string; stock: string }[]; sig: string; still?: boolean; fallback?: ReactNode; onSettled?: (result: { sig: string; ok: boolean }) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const savedView = useRef<{ hero: string; view: StudioView } | null>(null);
+  const motionRequest = useRef(0);
   const scene = useRef<HeroScene | null>(null);
+  const viewport = useRef<SceneViewport | null>(null);
+  const mountQueue = useRef(Promise.resolve());
+  const lifetime = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const session = new AbortController();
+    lifetime.current = session;
+    return () => {
+      session.abort();
+      scene.current?.dispose();
+      scene.current = null;
+      viewport.current?.dispose();
+      viewport.current = null;
+    };
+  }, []);
+
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const [motions, setMotions] = useState<Motion[]>([]);
@@ -66,40 +85,63 @@ export function Preview3d({ hero, slots, sig, still = false, fallback }: {
 
   useEffect(() => {
     let gone = false;
-    let dispose: (() => void) | null = null;
-    setStatus({ kind: 'loading' });
+    const session = lifetime.current!;
+    motionRequest.current++;
+    setBusy(false);
+    setStatus(current => current.kind === 'shown' ? current : { kind: 'loading' });
     void (async () => {
-      const r: Awaited<ReturnType<Preview3dApi['models']>> = await window.api.preview3d.models(hero, slots);
-      if (gone) return;
-      if (!r.ok) {
-        setStatus(r.reason === 'no-tool' ? { kind: 'no-tool' }
-          : { kind: 'failed', text: r.reason === 'no-game' ? L`Не найдена папка игры` : L`Не удалось достать модель героя из игры` });
-        return;
-      }
       try {
-        const { mountScene } = await import('./scene.ts');
+        const r: Awaited<ReturnType<Preview3dApi['models']>> = await window.api.preview3d.models(hero, slots);
+        if (gone) return;
+        if (!r.ok) {
+          onSettled?.({ sig, ok: false });
+          setStatus(r.reason === 'no-tool' ? { kind: 'no-tool' }
+            : { kind: 'failed', text: r.reason === 'no-game' ? L`Не найдена папка игры` : L`Не удалось достать модель героя из игры` });
+          return;
+        }
+        const { mountScene, createSceneViewport } = await import('./scene.ts');
         if (gone || !host.current) return;
-        const shown = await mountScene(host.current, r.body, r.parts.map((p) => p.glb), {
-          still, label: L`Герой в 3D`, clip: r.clip, stage: r.stage, pedestal: r.pedestal, hidden: { body: r.hidden, parts: r.parts.map((p) => p.hidden) },
-          attachments: { body: r.attachments, parts: r.parts.map((p) => p.attachments) }, particles: r.particles, sprites: r.sprites,
+        const update = mountQueue.current.catch(() => {}).then(async () => {
+          if (gone || session.signal.aborted || !host.current) return;
+          const previous = scene.current;
+          previous?.suspend();
+          const shared = viewport.current ??= createSceneViewport(host.current, L`Герой в 3D`);
+          const shown = await mountScene(host.current, r.body, r.parts.map((p) => p.glb), {
+            signal: session.signal,
+            viewState: savedView.current?.hero === hero ? previous?.view() ?? savedView.current.view : undefined,
+            still, label: L`Герой в 3D`, clip: r.clip, heroModel: r.model, stage: r.stage, pedestal: r.pedestal, hidden: { body: r.hidden, parts: r.parts.map((p) => p.hidden) },
+            attachments: { body: r.attachments, parts: r.parts.map((p) => p.attachments) }, particles: r.particles, sprites: r.sprites, resources: r.resources,
+          }, shared);
+          if (session.signal.aborted) { shown.dispose(); return; }
+          previous?.dispose();
+          scene.current = shown;
+          savedView.current = { hero, view: shown.view() };
+          if (gone) return;
+          body.current = r.model;
+          setMotions(r.motions);
+          // an item that swaps the body takes the clips of the old one with it
+          if (wanted.current && !r.motions.some((m) => m.name === wanted.current)) { wanted.current = ''; setMotion(''); }
+          if (wanted.current) {
+            void shown.play(wanted.current, motionFile, handBack(r.motions, wanted.current)).catch(() => {
+              if (!gone) setNoMotions(true);
+            });
+          }
+          setStatus({ kind: 'shown', missing: r.missing });
+          onSettled?.({ sig, ok: r.missing.length === 0 });
         });
-        if (gone) { shown.dispose(); return; }
-        dispose = shown.dispose;
-        scene.current = shown;
-        body.current = r.model;
-        setMotions(r.motions);
-        // an item that swaps the body takes the clips of the old one with it
-        if (wanted.current && !r.motions.some((m) => m.name === wanted.current)) { wanted.current = ''; setMotion(''); }
-        if (wanted.current) void shown.play(wanted.current, motionFile, handBack(r.motions, wanted.current));
-        setStatus({ kind: 'shown', missing: r.missing });
+        mountQueue.current = update;
+        await update;
       } catch (err) {
-        if (!gone) setStatus({ kind: 'failed', text: String((err as Error)?.message || err) });
+        if (!gone) {
+          setStatus({ kind: 'failed', text: String((err as Error)?.message || err) });
+          onSettled?.({ sig, ok: false });
+        }
       }
     })();
-    return () => { gone = true; scene.current = null; dispose?.(); };
+    return () => { gone = true; };
     // the slots are what `sig` says; a new array each draw is not a new look
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hero, sig, attempt]);
+  }, [hero, sig, attempt, still]);
 
   const getTool = async () => {
     setStatus({ kind: 'loading' });
@@ -120,7 +162,9 @@ export function Preview3d({ hero, slots, sig, still = false, fallback }: {
     setMotion(name);
     setNoMotions(false);
     setBusy(true);
-    const played = await scene.current?.play(name || null, motionFile, handBack(motions, name));
+    const request = ++motionRequest.current;
+    const played = await scene.current?.play(name || null, motionFile, handBack(motions, name)).catch(() => false);
+    if (request !== motionRequest.current) return;
     setBusy(false);
     if (played === false && wanted.current === name) {
       clips.current.delete(body.current);
@@ -131,7 +175,7 @@ export function Preview3d({ hero, slots, sig, still = false, fallback }: {
   };
 
   return (
-    <div className="preview3d" id="preview3d" data-status={status.kind}>
+    <div className="preview3d preview3d-studio" id="preview3d" data-status={status.kind}>
       <div className="preview3d-stage" ref={host} />
       {status.kind === 'shown' && (
         <div className="preview3d-tools" data-busy={busy}>

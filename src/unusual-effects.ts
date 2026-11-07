@@ -12,11 +12,11 @@
 import { blockBounds, eachChild } from './schema-kv.ts';
 
 /** One control point of an effect, put on a named attachment of the model. */
-export interface EffectPoint { index: number; attachType: string; attachment: string | null }
+export interface EffectPoint { index: number; attachType: string; attachment: string | null; entity?: string }
 
 /** One effect the table knows, with the name players know it by when it has one. */
 export interface UnusualEffect {
-  id: number; name: string | null; system: string; attachType: string; points: EffectPoint[];
+  id: number; name: string | null; system: string; attachType: string; attachment?: string; entity?: string; points: EffectPoint[];
 }
 
 /** The section's bounds, found by its line at the table's first level, or null. */
@@ -44,6 +44,8 @@ export function unusualEffects(text: string, english = ''): UnusualEffect[] {
     eachChild(text, c.body, (f) => {
       if (f.key === 'system' && !f.isBlock) effect.system = f.value;
       else if (f.key === 'attach_type' && !f.isBlock) effect.attachType = f.value;
+      else if (f.key === 'attach_entity' && !f.isBlock) effect.entity = f.value;
+      else if (f.key === 'attachment' && !f.isBlock) effect.attachment = f.value;
       else if (f.key === 'control_points' && f.isBlock) {
         eachChild(text, f.body, (p) => {
           if (!p.isBlock) return;
@@ -53,6 +55,7 @@ export function unusualEffects(text: string, english = ''): UnusualEffect[] {
             if (v.key === 'control_point_index') point.index = Number(v.value);
             if (v.key === 'attach_type') point.attachType = v.value;
             if (v.key === 'attachment') point.attachment = v.value;
+            if (v.key === 'attach_entity') point.entity = v.value;
           });
           effect.points.push(point);
         });

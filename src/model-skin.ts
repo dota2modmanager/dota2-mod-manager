@@ -40,7 +40,6 @@ export function withSkin(model: Buffer, skin: number): Buffer | null {
     if (!swap.size) return model;
 
     let out = model;
-    let changed = false;
     const meshes = resourceBlocks(model).filter((b) => b.name === 'MDAT').length;
     for (let k = 0; k < meshes; k++) {
       const block = resourceBlock(out, 'MDAT', k);
@@ -51,10 +50,11 @@ export function withSkin(model: Buffer, skin: number): Buffer | null {
         const to = swap.get(s.value.toLowerCase());
         if (to) { s.value = to; hit = true; }
       }
-      if (hit) { out = block.replace(writeKv3(kv)); changed = true; }
+      if (hit) out = block.replace(writeKv3(kv));
     }
-    // the meshes in files of their own (m_refMeshes) are the plain unit's to everyone else too
-    if (!changed) return null;
+    // Even with external m_refMeshes, the material groups in DATA control the
+    // selected look. Previously we rejected such models just because they had
+    // no embedded MDAT we could rewrite (Spectre arcana head/body).
     const first = groups.items[0];
     const set = member(groups.items[skin], 'm_materials');
     if (first.kind !== 'object' || !set) return null;

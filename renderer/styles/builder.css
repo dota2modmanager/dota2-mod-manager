@@ -88,7 +88,10 @@
   grid-template-columns: minmax(240px, 420px) 248px minmax(0, 1fr);
   gap: var(--space-4);
 }
-@media (max-width: 1100px) { .ward-body { grid-template-columns: 0 220px minmax(0, 1fr); gap: 0 var(--space-3); } .ward-stage { visibility: hidden; } }
+@media (max-width: 1100px) {
+  .ward-body { grid-template-columns: minmax(135px, 220px) minmax(0, 1fr); grid-template-rows: minmax(360px, 48vh) minmax(240px, 1fr); overflow: auto; }
+  .ward-stage { grid-column: 1 / -1; }
+}
 
 /* the hero, left: the portrait over the colour of its attribute, or the 3D view */
 .ward-stage { display: flex; flex-direction: column; gap: var(--space-2); min-height: 0; padding-bottom: var(--space-4); }
@@ -106,6 +109,7 @@
 .ward-portrait img { width: min(70%, 200px); height: auto; border-radius: var(--radius-sm); box-shadow: var(--shadow-3); display: block; }
 .ward-portrait .ms { font-size: var(--icon-xl); }
 .ward-stage .preview3d { flex: 1; height: auto; min-height: 0; margin-top: 0; display: flex; }
+.ward-stage .preview3d:fullscreen { width: 100vw; height: 100vh; }
 .ward-stage .preview3d .ward-portrait { position: relative; z-index: 1; }
 .ward-stage-tools { display: flex; gap: var(--space-2); }
 .ward-stage-tools .preview3d-toggle { margin: 0; }
@@ -340,3 +344,6 @@
 .set-styles { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
 .set-styles-label { font-size: var(--text-xs); color: var(--text-faint); margin-right: var(--space-1); }
 .ward-stage .preview3d-missing { z-index: 2; right: var(--space-3); }
+
+.ward-equip-progress { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--text-muted); font-size: var(--text-sm); }
+.ward-equip-progress:empty { display: none; }

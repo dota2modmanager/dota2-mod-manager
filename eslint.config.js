@@ -98,6 +98,11 @@ module.exports = [
     rules,
   },
   {
+    // The bundled renderer exports ES modules.
+    files: ['test/loadout-*.test.js', 'test/sprite-texture-selection.test.js', 'test/tinker-cosmic-*.test.js'],
+    languageOptions: { sourceType: 'module' },
+  },
+  {
     /* The mail worker runs in Cloudflare's runtime rather than in Node: a module, with fetch and
        friends, and none of Node's own globals. */
     files: ['tools/email-worker/**/*.js'],

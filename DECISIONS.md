@@ -75,6 +75,15 @@ draws it with WebGL; the models never leave the computer, and the library makes 
 A glTF loader, skinning, an orbit camera and physically based lighting are each a project of their
 own, and the window loads the 640 KB with `import()` only when someone opens the preview.
 
+`dota-loadout` is bundled by Vite from a local npm package in `vendor/dota-loadout`.
+The bundled version is based on 0.1.0. It replaces the independent approximate particle renderer: three.js supplies
+WebGL, loaders and geometry, but not Dota's particle operators, snapshots, material
+semantics or attachment rules. The desktop adapter is TypeScript; the library runtime
+is retained in JavaScript, with MIT notices and the import provenance alongside it.
+Both the dressed hero and recolor preview use it. The renderer receives only local
+resource packets over IPC; it never loads models from the upstream hosting service.
+Run `npm run test:preview` to verify the integration.
+
 `eslint` was added on 2026-09-10 and is the one case where writing it here would have been the
 wrong answer. Two releases shipped in which no mod could be installed, because splitting a file
 left a function call pointing at a function that had stayed behind. Every test passed: they read
@@ -112,7 +121,7 @@ It also flips a check on the OpenSSF Scorecard, which recognises fuzzing in Java
 through a short list of libraries and not through generators of our own. That is a real reason and
 not the reason: the shrinking is.
 
-Seven more came on 2026-09-27 with the decision below, `axe-core` on 2026-10-11 (above), `qrcode-generator` on 2026-11-03 and `three` with `@types/three` the same day (above), sixteen
+Seven more came on 2026-09-27 with the decision below, `axe-core` on 2026-10-11 (above), `qrcode-generator` on 2026-11-03 and `three` with `@types/three` the same day (above), and `dota-loadout` for the Studio renderer, seventeen
 devDependencies in all. `vite` and
 `@vitejs/plugin-react` build the window's page. `react`, `react-dom` and `motion` are written into
 that page once a screen imports them, which makes them part of the app in every sense but the

@@ -121,3 +121,16 @@ unmodified from Google Fonts and remain under their own licenses:
 Refresh them with tools/fonts.js, which reads the same stylesheets Google
 serves so the weights and character ranges stay the ones the app was built
 against.
+
+Dota loadout renderer
+
+Dota-loadout 0.1.0, Copyright (c) 2026 dota-loadout contributors, MIT.
+Upstream: https://github.com/justkiddingxd/dota-loadout
+The local npm package includes the port author's modifications.
+Original MIT text: vendor/dota-loadout/LICENSE; provenance and local modifications:
+vendor/dota-loadout/NOTICE.md and vendor/dota-loadout/PROVENANCE.md.
+The renderer is bundled in out/renderer; its license is also included in
+out/renderer/THIRD-PARTY-LICENSES.md.
+
+VTEX sheet metadata uses the documented layout in ValveResourceFormat's
+Texture.GetSpriteSheetData (MIT); Source2Viewer attribution above applies.

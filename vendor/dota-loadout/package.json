@@ -1,0 +1,30 @@
+{
+  "name": "dota-loadout",
+  "version": "0.1.0-studio.1",
+  "private": true,
+  "type": "module",
+  "license": "MIT AND GPL-3.0-or-later",
+  "description": "dota-loadout 0.1.0 with desktop preview extensions",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./studio": {
+      "types": "./studio/index.d.ts",
+      "default": "./studio/scene-source.mjs"
+    }
+  },
+  "peerDependencies": {
+    "three": ">=0.186.1 <0.188.0"
+  },
+  "files": [
+    "src",
+    "studio",
+    "index.d.ts",
+    "LICENSE",
+    "SOURCE2-VIEWER-LICENSE",
+    "NOTICE.md",
+    "PROVENANCE.md"
+  ]
+}

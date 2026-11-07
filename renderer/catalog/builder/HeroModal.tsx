@@ -2,17 +2,21 @@
  * on the left (its portrait, or the 3D view), its tabs down the middle (the sets, each slot with
  * what is on it and a way to take it off, the looks saved for it), and the tab's grid on the
  * right. The window keeps one size whatever the tab: only the grid scrolls. */
+import { useState } from 'react';
 import { plural } from '../../ui/format.ts';
 import { heroName } from '../../ui/hero-name.ts';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import type { HeroModalActions, HeroModalModel, HeroPane } from './model.ts';
-import { CosThumb } from './parts.tsx';
+import { CosThumb, WardrobeProgress } from './parts.tsx';
 import { SlotPane } from './SlotPane.tsx';
 import { SetPane, SetsPane } from './SetsPane.tsx';
 import { LooksPane } from './LooksPane.tsx';
 import { Preview3d } from '../preview3d/Preview3d.tsx';
 
 export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModalActions }) {
+  const [finished, setFinished] = useState<{ sig: string; ok: boolean } | null>(() => m.preview ? { sig: m.preview.sig, ok: true } : null);
+  const progress = m.busy || (m.preview?.open && finished && finished.sig !== m.preview.sig) ? 'pending'
+    : m.preview?.open && finished?.sig === m.preview.sig && !finished.ok ? 'failed' : null;
   const name = heroName(m.hero);
   const portrait = <div className="ward-portrait">{m.portrait ? <img src={m.portrait} alt="" /> : <span className="ms">person</span>}</div>;
   return (
@@ -26,7 +30,7 @@ export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModa
       <div className="ward-body">
         <aside className="ward-stage">
           {m.preview?.open
-            ? <Preview3d hero={m.preview.hero} slots={m.preview.slots} sig={m.preview.sig} fallback={portrait} />
+            ? <Preview3d hero={m.preview.hero} slots={m.preview.slots} sig={m.preview.sig} fallback={portrait} onSettled={setFinished} />
             : portrait}
           <div className="ward-stage-tools">
             {m.preview && (
@@ -76,7 +80,7 @@ export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModa
             sub={m.looks ? `${m.looks} ${plural(m.looks, 'образ', 'образа', 'образов')}` : L`Сохрани надетое`} on={false} data={{ 'data-looks-tab': 'true' }} />
         </nav>
         <section className="ward-pane">
-          <Pane pane={m.pane} m={m} actions={actions} />
+          <WardrobeProgress.Provider value={progress}><Pane pane={m.pane} m={m} actions={actions} /></WardrobeProgress.Provider>
         </section>
       </div>
     </div>

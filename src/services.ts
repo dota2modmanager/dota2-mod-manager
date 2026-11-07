@@ -189,7 +189,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
     compile: (job) => compiler.compile(job), onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
   // an effect of the game changed by hand (src/effect-edit-service.ts)
   const effectFinder = createEffectFinder({ index: () => sharedVpkIndex(path.join(settings.get('dotaGamePath') as string, 'dota', 'pak01_dir.vpk')), lang: getLang, heroes: () => abilitySounds.heroes(), table: () => schemaService.vanilla() });
-  const effectEdit = createEffectEdit({ gamePath: () => settings.get('dotaGamePath'), installer, library, sprites: (defs) => heroPreview.sprites(defs), finder: effectFinder, onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
+  const effectEdit = createEffectEdit({ gamePath: () => settings.get('dotaGamePath'), installer, library, sprites: (defs) => heroPreview.sprites(defs), resources: (defs) => heroPreview.resources(defs), finder: effectFinder, onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
   // a look built by an older app carries its script: built again once the item table is done
   void schemaService.settled().then(() => rankLook.refreshScript());
   // the rank medal and hero levels of the player's own screen (src/rank-look-service.ts)
