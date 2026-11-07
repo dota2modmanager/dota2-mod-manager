@@ -14,7 +14,6 @@ export function readGlb(bytes){
 export function writeGlb({json,bin,extra=[]}){
  let text=enc.encode(JSON.stringify(json)),pad=(4-text.length%4)%4,j=new Uint8Array(text.length+pad);j.fill(32);j.set(text);const chunks=[{type:0x4e4f534a,bytes:j},...(bin.length?[{type:0x004e4942,bytes:bin}]:[]),...extra];const size=12+chunks.reduce((n,c)=>n+8+c.bytes.length,0),out=new Uint8Array(size),v=new DataView(out.buffer);v.setUint32(0,0x46546c67,true);v.setUint32(4,2,true);v.setUint32(8,size,true);let at=12;for(const c of chunks){v.setUint32(at,c.bytes.length,true);v.setUint32(at+4,c.type,true);out.set(c.bytes,at+8);at+=8+c.bytes.length;}return out;
 }
-const mimeOf=s=>/webp/i.test(s)?'image/webp':'image/png';
 const rgba=c=>Array.from(c??[1,1,1,1],v=>finite(v,1));
 export function normalizeAttachment(row){const v=row?.value??row,k=Math.max(1,Math.min(4,Number(v?.m_nInfluences??v?.bones?.length??1)));if(!v)return null;const bones=(v.bones??v.m_influenceNames??[]).slice(0,k);if(!bones.length)return null;return{bones,offsets:(v.offsets??v.m_vInfluenceOffsets??bones.map(()=>[0,0,0])).slice(0,k),rotations:(v.rotations??v.m_vInfluenceRotations??bones.map(()=>[0,0,0,1])).slice(0,k),weights:(v.weights??v.m_influenceWeights??bones.map((_,i)=>i?0:1)).slice(0,k),ignoreRotation:!!(v.ignoreRotation??v.m_bIgnoreRotation)};}
 export class SceneSource {

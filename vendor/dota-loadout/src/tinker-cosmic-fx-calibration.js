@@ -29,7 +29,8 @@ export function calibrateCosmicFxRenderer(renderer, systemPath) {
   if (!name.startsWith('tinker_cosmic_') || renderer._class !== 'C_OP_RenderSprites') return renderer;
 
   const tex = renderer.m_vecTexturesInput?.find(i => i?.m_hTexture)?.m_hTexture?.split('/').at(-1)?.toLowerCase() || '';
-  let maxBright = null, radiusFactor = 1, maxRadius = null, alphaFactor = 1, softenDisc = false;
+  let maxBright, radiusFactor;
+  let maxRadius = Infinity, alphaFactor = 1, softenDisc = false;
   if (name === 'tinker_cosmic_weapon_ambient_blob' && tex === 'primitive_circle_solid.vtex') {
     // This uses TWO Source 2 caustic/zoom textures that our lightweight shader
     // doesn't yet composite. Without them, a radius-1.7 × overbright-10 disc is
@@ -51,14 +52,10 @@ export function calibrateCosmicFxRenderer(renderer, systemPath) {
   } else return renderer;
 
   const r = { ...renderer };
-  if (maxBright !== null) {
-    const original = literal(renderer.m_flOverbrightFactor, 1);
-    r.m_flOverbrightFactor = valueLike(renderer.m_flOverbrightFactor, Math.min(maxBright, original));
-  }
-  if (radiusFactor !== 1) {
-    const original = literal(renderer.m_flRadiusScale, 1);
-    r.m_flRadiusScale = valueLike(renderer.m_flRadiusScale, Math.min(original * radiusFactor, maxRadius || Infinity));
-  }
+  const brightness = literal(renderer.m_flOverbrightFactor, 1);
+  r.m_flOverbrightFactor = valueLike(renderer.m_flOverbrightFactor, Math.min(maxBright, brightness));
+  const radius = literal(renderer.m_flRadiusScale, 1);
+  r.m_flRadiusScale = valueLike(renderer.m_flRadiusScale, Math.min(radius * radiusFactor, maxRadius));
   if (alphaFactor !== 1) {
     const original = literal(renderer.m_flAlphaScale, 1);
     r.m_flAlphaScale = valueLike(renderer.m_flAlphaScale, original * alphaFactor);

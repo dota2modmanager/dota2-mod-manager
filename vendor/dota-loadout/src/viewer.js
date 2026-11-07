@@ -536,7 +536,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     const named = config != null && configs(def).find((c) => c.m_name === config);
     if (named) return (named.m_drivers || []).map(driverOf);
     // An event's config that the system lacks names an attach type (absorigin, point_follow…).
-    if (config && /^(absorigin|point|world)/.test(config)) return [{ cp: 0, type: `PATTACH_${config.replace(/^point/, 'point').toUpperCase()}`, attachment: null, offset: null }];
+    if (config && /^(absorigin|point|world)/.test(config)) return [{ cp: 0, type: `PATTACH_${config.toUpperCase()}`, attachment: null, offset: null }];
     return ((configs(def).find(c=>c.m_name==='preview') || configs(def)[0])?.m_drivers || []).map(driverOf);
   };
   const cpOf = (m) => { const c = { pos: new THREE.Vector3(), quat: new THREE.Quaternion(), matrix() { return new THREE.Matrix4().compose(this.pos, this.quat, new THREE.Vector3(1, 1, 1)); } }; m.decompose(c.pos, c.quat, new THREE.Vector3()); return c; };

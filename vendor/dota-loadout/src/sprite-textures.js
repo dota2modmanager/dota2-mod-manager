@@ -26,6 +26,6 @@ export function resolveSpriteTextures(renderer = {}) {
     // actual flare coverage packed into RGB. The Source A channel mix would
     // otherwise turn that opaque alpha into a solid white rectangular card.
     alphaChannelFromLuma: !!path && first?.input.m_nTextureChannels === 'SPRITECARD_TEXTURE_CHANNEL_MIX_A' &&
-      /\/lens_flare\/|\/(?:combined_flare|anam_white_bloom)\.vtex$/i.test(path),
+      (/\/lens_flare\//i.test(path) || /\/(?:combined_flare|anam_white_bloom)\.vtex$/i.test(path)),
   };
 }

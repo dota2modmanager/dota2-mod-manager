@@ -131,8 +131,7 @@ class Particle {
   initV(f) { return this.initial ? this.initial.getV(f) : this.getV(f); }
   snapshot() { const c = Object.assign(Object.create(Particle.prototype), this); c.pos = this.pos.clone(); c.prev = this.prev.clone(); c.color = this.color.clone(); c.normal = this.normal.clone(); c.rot = this.rot.clone(); c.rotSpeed = this.rotSpeed.clone(); c.hbo = this.hbo.clone(); c.initial = null; return c; }
 }
-function setMethod(p, f, value, method, current = false, dt = 0) {
-  const base = current ? p.getS(f) : p.initS(f);
+function setMethod(p, f, value, method, dt = 0) {
   switch (method) {
     case 'PARTICLE_SET_SCALE_INITIAL_VALUE': return p.initS(f) * value;
     case 'PARTICLE_SET_ADD_TO_INITIAL_VALUE': return p.initS(f) + value;
@@ -720,7 +719,7 @@ const OP = {
   },
   C_OP_RampScalarSpline(d) {
     const r0 = d.m_RateMin ?? 0, r1 = d.m_RateMax ?? 0, f = field(d.m_nField, F.Radius), easeOut = d.m_bEaseOut;
-    return (ps, dt, s, str) => { for (const p of ps) { let k = p.nage; k = easeOut ? 1 - (1 - k) * (1 - k) : k * k; p.setS(f, p.getS(f) + lerp(r0, r1, hash(p.uid, 14)) * dt * str * (easeOut ? 2 * (1 - p.nage) : 2 * p.nage)); } };
+    return (ps, dt, s, str) => { for (const p of ps) { p.setS(f, p.getS(f) + lerp(r0, r1, hash(p.uid, 14)) * dt * str * (easeOut ? 2 * (1 - p.nage) : 2 * p.nage)); } };
   },
   C_OP_SpinUpdate: () => (ps, dt, s, str) => { for (const p of ps) p.rot.addScaledVector(p.rotSpeed, dt * str); },
   C_OP_OscillateVector(d) {
@@ -745,7 +744,7 @@ const OP = {
   },
   C_OP_DistanceToCP(d) {
     const i0 = number(d.m_flInputMin), i1 = number(d.m_flInputMax, 128), o0 = number(d.m_flOutputMin), o1 = number(d.m_flOutputMax, 1), cp = d.m_nStartCP ?? 0, out = field(d.m_nFieldOutput, F.Radius), method = d.m_nSetMethod;
-    return (ps, dt, s) => { for (const p of ps) { const dist = s.cp(cp).pos.distanceTo(p.pos); p.setS(out, setMethod(p, out, remapClamped(dist, i0(p, s), i1(p, s), o0(p, s), o1(p, s)), method, true)); } };
+    return (ps, dt, s) => { for (const p of ps) { const dist = s.cp(cp).pos.distanceTo(p.pos); p.setS(out, setMethod(p, out, remapClamped(dist, i0(p, s), i1(p, s), o0(p, s), o1(p, s)), method)); } };
   },
   C_OP_SetFloatAttributeToVectorExpression(d) {
     const a = vector(d.m_vInput1), b = vector(d.m_vInput2), out = field(d.m_nOutputField, F.ScratchFloat), e = d.m_nExpression;
@@ -840,7 +839,7 @@ const OP = {
   },
   C_OP_SetFloat(d) {
     const v = number(d.m_InputValue), out = field(d.m_nOutputField, F.Radius), method = d.m_nSetMethod, lerpK = number(d.m_Lerp, 1);
-    return (ps, dt, s) => { for (const p of ps) { let x = v(p, s); if (ANGLE.has(out) && !/SCALE/.test(method || '')) x *= Math.PI / 180; p.setS(out, lerp(p.getS(out), setMethod(p, out, x, method, true), lerpK(p, s))); } };
+    return (ps, dt, s) => { for (const p of ps) { let x = v(p, s); if (ANGLE.has(out) && !/SCALE/.test(method || '')) x *= Math.PI / 180; p.setS(out, lerp(p.getS(out), setMethod(p, out, x, method), lerpK(p, s))); } };
   },
   C_OP_Noise(d) {
     const out = field(d.m_nFieldOutput, F.Radius), lo = d.m_flOutputMin ?? 0, hi = d.m_flOutputMax ?? 1, scale = d.m_fl4NoiseScale ?? 0.1, add = d.m_bAdditive, ts = d.m_flNoiseAnimationTimeScale ?? 0;
@@ -905,13 +904,13 @@ const OP = {
   // The difference of a field from the previous particle's, remapped.
   C_OP_DifferencePreviousParticle(d) {
     const fin = field(d.m_nFieldInput, F.Radius), out = field(d.m_nFieldOutput, F.Radius), i0 = d.m_flInputMin ?? 0, i1 = d.m_flInputMax ?? 1, o0 = d.m_flOutputMin ?? 0, o1 = d.m_flOutputMax ?? 1, method = d.m_nSetMethod, active = d.m_bActiveRange;
-    return (ps) => { for (let i = 1; i < ps.length; i++) { const x = ps[i].getS(fin) - ps[i - 1].getS(fin); if (active && (x < i0 || x > i1)) continue; ps[i].setS(out, setMethod(ps[i], out, remapClamped(x, i0, i1, o0, o1), method, true)); } };
+    return (ps) => { for (let i = 1; i < ps.length; i++) { const x = ps[i].getS(fin) - ps[i - 1].getS(fin); if (active && (x < i0 || x > i1)) continue; ps[i].setS(out, setMethod(ps[i], out, remapClamped(x, i0, i1, o0, o1), method)); } };
   },
   // How far along from one control point to another a particle is, remapped into a field.
   C_OP_PercentageBetweenCPs(d) {
     const out = field(d.m_nFieldOutput, F.Alpha), i0 = d.m_flInputMin ?? 0, i1 = d.m_flInputMax ?? 1, o0 = d.m_flOutputMin ?? 0, o1 = d.m_flOutputMax ?? 1, a = d.m_nStartCP ?? 0, b = d.m_nEndCP ?? 1, method = d.m_nSetMethod, active = d.m_bActiveRange, radial = d.m_bRadialCheck !== false;
     return (ps, dt, s) => { const A = s.cp(a).pos, B = s.cp(b).pos, seg = B.clone().sub(A), len2 = Math.max(1e-6, seg.lengthSq());
-      for (const p of ps) { const x = radial ? p.pos.distanceTo(A) / Math.sqrt(len2) : p.pos.clone().sub(A).dot(seg) / len2; if (active && (x < i0 || x > i1)) continue; p.setS(out, setMethod(p, out, remapClamped(x, i0, i1, o0, o1), method, true)); } };
+      for (const p of ps) { const x = radial ? p.pos.distanceTo(A) / Math.sqrt(len2) : p.pos.clone().sub(A).dot(seg) / len2; if (active && (x < i0 || x > i1)) continue; p.setS(out, setMethod(p, out, remapClamped(x, i0, i1, o0, o1), method)); } };
   },
   // The world, here the ground under the hero: particles stop at it, bouncing back by the bounce amount.
   C_OP_WorldTraceConstraint(d) {
@@ -1142,7 +1141,7 @@ Object.assign(OP, {
     const component = (v, i) => (i >= 0 && i <= 2 ? v.getComponent(i) : 0);
     return (ps, dt, s, str) => {
       let a = a0, b = b0; if (cp >= 0) { const c = s.cp(cp).pos; if (fmin >= 0) a *= component(c, fmin); if (fmax >= 0) b *= component(c, fmax); }
-      for (const p of ps) { let ph = Math.min(sync ? s.age : p.age, clamp) * rate; ph -= Math.floor(ph); p.setS(out, lerp(p.getS(out), setMethod(p, out, a + (b - a) * 2 * Math.min(ph, 1 - ph), method, true, dt), str)); }
+      for (const p of ps) { let ph = Math.min(sync ? s.age : p.age, clamp) * rate; ph -= Math.floor(ph); p.setS(out, lerp(p.getS(out), setMethod(p, out, a + (b - a) * 2 * Math.min(ph, 1 - ph), method, dt), str)); }
     };
   },
   // Particles placed along a path with m_bSaveOffset keep their place on it as its control points move.
@@ -1211,7 +1210,7 @@ Object.assign(OP, {
           pass.push(!active || (d2 <= b && a <= d2)); return lerp(lo, hi, saturate((d2 - a) / (b === a ? 1 : b - a)));
         });
         if (!pass.some(Boolean)) continue;
-        lanes.forEach((p, i) => { const cur = p.getS(out), delta = (setMethod(p, out, vals[i], method, true, dt) - cur) * (pass[i] ? str : 0); p.setS(out, add ? cur + (cur + delta) : cur + delta); });
+        lanes.forEach((p, i) => { const cur = p.getS(out), delta = (setMethod(p, out, vals[i], method, dt) - cur) * (pass[i] ? str : 0); p.setS(out, add ? cur + (cur + delta) : cur + delta); });
       }
     };
   },
@@ -1253,13 +1252,13 @@ Object.assign(OP, {
   C_OP_RemapParticleCountToScalar(d) {
     const i0 = number(d.m_nInputMin), i1 = number(d.m_nInputMax, 1), o0 = number(d.m_flOutputMin), o1 = number(d.m_flOutputMax, 1), out = field(d.m_nFieldOutput, F.Radius), method = d.m_nSetMethod, active = d.m_bActiveRange;
     return (ps, dt, s, str) => { const a = Math.trunc(i0(null, s)), b = Math.trunc(i1(null, s)), [lo, hi] = outputs(out, o0(null, s), o1(null, s));
-      for (const p of ps) { if (active && (p.index < a || p.index >= b)) continue; p.setS(out, lerp(p.getS(out), setMethod(p, out, remapClamped(p.index, a, b, lo, hi), method, true, dt), str)); } };
+      for (const p of ps) { if (active && (p.index < a || p.index >= b)) continue; p.setS(out, lerp(p.getS(out), setMethod(p, out, remapClamped(p.index, a, b, lo, hi), method, dt), str)); } };
   },
   C_OP_PercentageBetweenTransforms(d) {
     const out = field(d.m_nFieldOutput, F.Radius), i0 = d.m_flInputMin ?? 0, i1 = d.m_flInputMax ?? 1, [o0, o1] = outputs(out, d.m_flOutputMin ?? 0, d.m_flOutputMax ?? 1), ta = transform(d.m_TransformStart, 0), tb = transform(d.m_TransformEnd, 0);
     const method = d.m_nSetMethod, active = d.m_bActiveRange, radial = d.m_bRadialCheck !== false;
     return (ps, dt, s) => { const a = translation(ta(s)), b = translation(tb(s));
-      for (const p of ps) { const x = percentage(p.pos, a, b, radial); if (active && !(i0 <= x && x <= i1)) continue; p.setS(out, setMethod(p, out, lerp(o0, o1, saturate((x - i0) / (i1 === i0 ? 1 : i1 - i0))), method, true, dt)); } };
+      for (const p of ps) { const x = percentage(p.pos, a, b, radial); if (active && !(i0 <= x && x <= i1)) continue; p.setS(out, setMethod(p, out, lerp(o0, o1, saturate((x - i0) / (i1 === i0 ? 1 : i1 - i0))), method, dt)); } };
   },
   C_OP_PercentageBetweenTransformsVector(d) {
     const out = field(d.m_nFieldOutput, F.Color), i0 = d.m_flInputMin ?? 0, i1 = d.m_flInputMax ?? 1, o0 = vec(d.m_vecOutputMin), o1 = vec(d.m_vecOutputMax, [1, 1, 1]), ta = transform(d.m_TransformStart, 0), tb = transform(d.m_TransformEnd, 0);
@@ -1272,13 +1271,13 @@ Object.assign(OP, {
     const a = number(d.m_flInput1, 1), b = number(d.m_flInput2, 0), out = field(d.m_nOutputField, F.Radius), method = d.m_nSetMethod, e = String(d.m_nExpression ?? 'SCALAR_EXPRESSION_ADD').replace('SCALAR_EXPRESSION_', '');
     const fn = { ADD: (x, y) => x + y, SUBTRACT: (x, y) => x - y, MUL: (x, y) => x * y, DIVIDE: (x, y) => (y === 0 ? 0 : x / y), INPUT_1: (x) => x, MIN: Math.min, MAX: Math.max, MOD: (x, y) => x % y,
       EQUAL: (x, y) => (x === y ? 1 : 0), GT: (x, y) => (x > y ? 1 : 0), LT: (x, y) => (x < y ? 1 : 0) }[e] || (() => 0), cmp = ['EQUAL', 'GT', 'LT'].includes(e);
-    return (ps, dt, s, str) => { for (const p of ps) { const v = fn(a(p, s), b(p, s)); p.setS(out, setMethod(p, out, cmp ? v : v * str, method, true, dt)); } };
+    return (ps, dt, s, str) => { for (const p of ps) { const v = fn(a(p, s), b(p, s)); p.setS(out, setMethod(p, out, cmp ? v : v * str, method, dt)); } };
   },
   // Line of sight (m_bLOS) would need world traces: never blocked here.
   C_OP_DistanceBetweenTransforms(d) {
     const out = field(d.m_nFieldOutput, F.Radius), i0 = number(d.m_flInputMin), i1 = number(d.m_flInputMax, 128), o0 = number(d.m_flOutputMin), o1 = number(d.m_flOutputMax, 1), ta = transform(d.m_TransformStart, 0), tb = transform(d.m_TransformEnd, 0), method = d.m_nSetMethod;
     return (ps, dt, s, str) => { const dist = translation(ta(s)).distanceTo(translation(tb(s)));
-      for (const p of ps) { const a = i0(p, s), b = i1(p, s), v = lerp(o0(p, s), o1(p, s), saturate((dist - a) / (b === a ? 1 : b - a))); p.setS(out, lerp(p.getS(out), setMethod(p, out, v, method, true, dt), str)); } };
+      for (const p of ps) { const a = i0(p, s), b = i1(p, s), v = lerp(o0(p, s), o1(p, s), saturate((dist - a) / (b === a ? 1 : b - a))); p.setS(out, lerp(p.getS(out), setMethod(p, out, v, method, dt), str)); } };
   },
   // Fields of different kinds (a vector and a float): nothing.
   C_OP_LerpToOtherAttribute(d) {
@@ -1295,7 +1294,7 @@ Object.assign(OP, {
     const out = field(d.m_nFieldOutput, F.Radius), i0 = d.m_nInputMin ?? 0, i1 = d.m_nInputMax ?? 1, [o0, o1] = outputs(out, d.m_flOutputMin ?? 0, d.m_flOutputMax ?? 1), back = d.m_bBackwards, method = d.m_nSetMethod; let done = false;
     return (ps, dt, s, str) => {
       if (done || s.endedAt === undefined) return; done = true; const n = ps.length, a = Math.min(n, Math.max(0, back ? n - i1 - 1 : i0)), b = Math.min(n, Math.max(0, back ? n - i0 : i1));
-      for (let i = a; i < b; i++) { const p = ps[i]; p.setS(out, lerp(p.getS(out), setMethod(p, out, remapClamped(i, a, back ? b - 1 : b, back ? o1 : o0, back ? o0 : o1), method, true, dt), str)); }
+      for (let i = a; i < b; i++) { const p = ps[i]; p.setS(out, lerp(p.getS(out), setMethod(p, out, remapClamped(i, a, back ? b - 1 : b, back ? o1 : o0, back ? o0 : o1), method, dt), str)); }
     };
   },
   // The set method applies to the target; the lerp runs from the initial value for the initial-value methods only.
