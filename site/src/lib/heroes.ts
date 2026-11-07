@@ -19,6 +19,10 @@ export interface HeroImage {
 
 export interface HeroMod {
   name: string;
+  /** The catalog's category; a hero's own skins are 'heroes'. */
+  categoryId?: string;
+  /** Tagged 18+ by the catalog. Never read past this file: such mods are dropped below. */
+  adult?: boolean;
   styleLabel: string | null;
   /** The catalog group the mod sits in (a hero item's hero, a creep's side), part of its download
       counter's key; null in a category without groups. */
@@ -39,9 +43,25 @@ export interface Hero {
   mods: HeroMod[];
 }
 
-export const heroes: Hero[] = (data as { heroes: Hero[] }).heroes;
+/* Mods the catalog tags 18+ (explicit hero models) are on no page of the site: not the landing,
+   not a hero's page, not a mod page, not the catalog. The app shows them only after the user says
+   they are 18 and want them (renderer/core/adult.ts); a public page cannot ask first. A hero left
+   with nothing else has no page. */
+export const heroes: Hero[] = (data as { heroes: Hero[] }).heroes
+  .map((h) => ({ ...h, mods: h.mods.filter((m) => !m.adult) }))
+  .filter((h) => h.mods.length);
 
 export const heroBySlug = new Map(heroes.map((h) => [h.slug, h]));
+
+/**
+ * The picture a hero is shown by: their newest skin, and only without one their newest mod of
+ * any kind. A ranged-attack pack lists every ranged hero, so "newest of any kind" gave nine of the
+ * twelve heroes on the landing the same picture of an attack.
+ */
+export function heroPicture(hero: Hero): HeroImage | null {
+  const pictured = hero.mods.filter((m) => m.image).sort((a, b) => (b.date ?? 0) - (a.date ?? 0));
+  return (pictured.find((m) => (m.categoryId ?? 'heroes') === 'heroes') ?? pictured[0])?.image ?? null;
+}
 
 export const totalHeroMods = heroes.reduce((n, h) => n + h.mods.length, 0);
 

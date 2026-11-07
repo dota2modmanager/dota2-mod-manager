@@ -23,7 +23,7 @@ import { compareVersions, latestRelease } from '../lib/changes';
 import Icon from './Icon.astro';
 import { siteStats } from '../lib/stats';
 import { shotNames, shotUrl, shotAlt } from '../lib/media';
-import { heroes } from '../lib/heroes';
+import { heroes, heroPicture } from '../lib/heroes';
 import { catalog, catalogCategories, thumbOf, groupOf } from '../lib/catalog';
 import { categoryText } from '../i18n/categories';
 import { pathIn, type Lang } from '../i18n/ui';
@@ -110,10 +110,10 @@ const finalArt = [heroPics[2], firstOf(['terrains'], 1)[0], firstOf(['item-effec
 
 /* The heroes with the most made for them, each shown by their newest render. */
 const topHeroes = [...heroes]
-  .filter((h) => h.mods.some((m) => m.image))
+  .filter((h) => heroPicture(h))
   .sort((a, b) => b.mods.length - a.mods.length)
   .slice(0, 12)
-  .map((h) => ({ ...h, pic: [...h.mods].filter((m) => m.image).sort((a, b) => (b.date ?? 0) - (a.date ?? 0))[0].image!.src }));
+  .map((h) => ({ ...h, pic: heroPicture(h)!.src }));
 
 const captions = [c.shotCatalog, c.shotBuilder, c.shotWorkshop, c.shotEffects, c.shotHud, c.shotLibrary];
 const shots = shotNames.map((name, i) => ({ src: shotUrl(lang, name), caption: captions[i], label: c.shotLabels[i], alt: shotAlt[lang][name] }));

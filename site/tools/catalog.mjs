@@ -125,7 +125,7 @@ function catalogIndex(modsData) {
       if (!mod?.name) continue;
       const author = (mod.links || []).find((l) => l.type === 'author')?.url
         || (mod.linkType === 'author' ? mod.linkUrl : null);
-      const common = { author, group, date: mod.meta?.date ?? null, tags: mod.tags || {} };
+      const common = { author, group, date: mod.meta?.date ?? null, tags: mod.tags || {}, adult: Boolean(mod.tags?.adult) };
       if (Array.isArray(mod.styles) && mod.styles.length) {
         for (const st of mod.styles) {
           byKey.set(`${categoryId} ${mod.name} ${st.label || ''}`, { ...common, preview: st.preview || mod.preview });
@@ -280,6 +280,8 @@ for (const [, entry] of merged) {
       author: meta?.author ?? null,
       authorUrl: meta?.author ? profile(meta.author) : null,
       date: meta?.date ?? null,
+      // tagged 18+ by the catalog: kept out of every page (src/lib/adult.ts)
+      ...(meta?.adult ? { adult: true } : {}),
     });
   }
 
@@ -360,6 +362,7 @@ for (const [categoryId, data] of Object.entries(mods.modsData)) {
         author: meta?.author ?? null,
         authorUrl: meta?.author ? profile(meta.author) : null,
         date: meta?.date ?? null,
+        ...(meta?.adult ? { adult: true } : {}),
       });
     }
   }
