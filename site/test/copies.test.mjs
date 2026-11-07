@@ -50,8 +50,9 @@ for (const [lang, home, guide, paid] of [
   test(`the ${lang} guide on copies is built, lists the four signs and the official addresses`, () => {
     const body = read(guide);
     for (const id of ['signs', 'official', 'already']) assert.match(body, new RegExp(`id="${id}"`), `no #${id} section`);
-    // written in October 2026, so not under the September date the older guides carry
-    assert.match(body, /<time datetime="2026-10-19">/, 'the guide shows a date from before it was written');
+    // written in October 2026, so not under the September date the older guides carry; later checks move it on
+    const date = /<time datetime="(\d{4}-\d{2}-\d{2})">/.exec(body)?.[1] ?? '';
+    assert.ok(date >= '2026-10-19', `the guide shows a date from before it was written: ${date}`);
     for (const url of ['https://github.com/dota2modmanager/dota2-mod-manager', 'https://gitlab.com/TheFleece/dota2-mod-manager']) {
       assert.ok(body.includes(`href="${url}"`), `the guide does not link ${url}`);
     }

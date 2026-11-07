@@ -895,7 +895,7 @@ const en: Record<Slug, Doc> = {
       'Dota 2 Mod Manager is free, open source and has no paid version. Four signs of a copy you should not run, and the only addresses that are ours.',
     lead: 'We keep finding this app under other names: renamed, closed, sometimes for money. Some of them run our code with our name taken off. You cannot check what else they do, and you do not need them, because the original costs nothing.',
     card: 'Paid launchers, renamed copies, apps that want a login. Four signs, and the addresses that are really ours.',
-    updated: '2026-10-19',
+    updated: '2026-11-07',
     blocks: [
       { k: 'h2', t: 'What is going around', id: 'what' },
       {
@@ -933,6 +933,24 @@ const en: Record<Slug, Doc> = {
         t: 'The D2PFX catalog, where the mods come from, lists the app in its own Tools section and links here. Anything else that looks like this app did not come from us.',
       },
 
+      { k: 'h2', t: 'Dota 2 Changer PRO is not this app', id: 'dota2changer' },
+      {
+        k: 'p',
+        t: 'Since November 2026 the launcher of Dota 2 Changer (dota2changer.com) calls itself Dota 2 Mod Manager. Its download page is titled "Dota 2 Mod Manager — Dota 2 Changer PRO". It is a different program from a different team. We share no code with it, have no deal with it and never agreed to the name.',
+      },
+      {
+        k: 'p',
+        t: 'Dota 2 Mod Manager has carried this name since its first release on 20 July 2026. Their page with that title says it was published on 4 November 2026. A search for the name now finds both, and here is how to tell which one you have:',
+      },
+      {
+        k: 'list',
+        items: [
+          '<b>Ours</b> needs no account, has every mod free and keeps its whole source on <a href="https://github.com/dota2modmanager/dota2-mod-manager" rel="noopener">GitHub</a>. It downloads only from this site and from GitHub releases.',
+          '<b>Theirs</b> asks you to sign in to a Dota 2 Changer account, locks part of its mods behind PREMIUM or VIP and does not publish its code. It downloads from dota2changer.com.',
+        ],
+      },
+      { k: 'p', t: 'Both are free to install. If you meant this one, the download button on <a href="~/">dota2modmanager.com</a> is the right one. <a href="~/docs/compare/#table">The two side by side</a>.' },
+
       { k: 'h2', t: 'Forks that say so', id: 'forks' },
       {
         k: 'p',
@@ -954,6 +972,7 @@ const en: Record<Slug, Doc> = {
       {
         k: 'faq',
         items: [
+          ['Is Dota 2 Changer PRO the same as Dota 2 Mod Manager?', 'No. Dota 2 Changer named its launcher Dota 2 Mod Manager in November 2026, but it is a separate, closed program that needs an account. This app has had the name since July 2026 and has nothing to do with it. <a href="~/docs/copies/#dota2changer">How to tell them apart</a>.'],
           ['Is there a paid or Pro version of Dota 2 Mod Manager?', 'No. There is one version, it is free, and every feature is in it. A Pro, Premium or VIP Dota 2 Mod Manager is not ours.'],
           ['A launcher does the same thing under another name. Is it safe?', 'Ask it for its source code and for what it is built on. If it shows you neither, you cannot know what else it does on your computer, and the original does the same job for free.'],
           ['Can someone sell this app?', 'The licence allows charging for a copy, as long as the buyer gets the full source under GPL-3.0 and the original notices stay in. You never have to buy it: the same program is free here.'],
@@ -970,6 +989,7 @@ const en: Record<Slug, Doc> = {
       'What to check before running any Dota 2 mod installer: source, who built the file, what it asks for, whether its catalog is live. With honest answers for this one and the alternatives.',
     lead: 'You are about to let a program write into your game folder. Five questions decide whether that is a reasonable thing to do, and they are the same five whatever you end up installing.',
     card: 'Five questions to ask any mod installer, answered for this one and for the alternatives.',
+    updated: '2026-11-07',
     blocks: [
       { k: 'h2', t: 'The five questions', id: 'questions' },
       {
@@ -982,6 +1002,18 @@ const en: Record<Slug, Doc> = {
           ['What happens when two mods collide?', 'Two mods carrying the same file cannot both apply. A manager that does not mention this is leaving you to work it out from the map.'],
         ],
       },
+
+      { k: 'h2', t: 'Side by side', id: 'table' },
+      { k: 'table', head: ["","Dota 2 Mod Manager","Dota 2 Changer PRO","DOTA Mods Installer","Ulibka Launcher"], rows: [["Price","Free, every mod","Free app, part of the mods need PREMIUM or VIP","Free, a donation removes ads","Free after you join their Telegram channels"],
+        ["Account","None. Discord is optional and only signs a setup you share","Required, a Dota 2 Changer account","Not stated on its site","Required: Telegram, tied to your hardware ID"],
+        ["Source code","Open, GPL-3.0, built by public CI","Closed","Closed","Closed and obfuscated"],
+        ["How it changes the game","Files next to the game, removed in one click","A VPK pack it builds and connects","A VPK pack you place yourself","A DLL injected into the running game"],
+        ["Mods","{mods} from the D2PFX catalog, read live","19,000+ by its own count","3,400+ by its own count","The D2PFX catalog, 737 hero mods when we looked"],
+        ["Builds mods from your game files","Item builder with a 3D preview, effect, HUD and map editors, your own sounds","Not on its page","A texture and particle editor","No"],
+        ["Load order and collisions","Shown, and you change the order","Not on its page","No","No"],
+        ["Systems","Windows, Linux","Windows, macOS, Linux","Windows","Windows"],
+        ["Risk for your account","Cosmetic files only","Cosmetic packs","Cosmetic packs","Its own FAQ says it breaks Valve's rules. <a href=\"~/docs/ulibka-launcher/\">What it does</a>"]] },
+      { k: 'note', t: "Their columns say what their own sites say, checked on 7 November 2026. Where a site says nothing, the cell says so." },
 
       { k: 'h2', t: 'This one, answered', id: 'here' },
       {
@@ -1021,12 +1053,16 @@ const en: Record<Slug, Doc> = {
             'Not an alternative and not a rival. It builds mods by patching the game where this installs finished ones from a catalog, and the two are made to run together: this app installs into whichever folder the game will really mount, including the one Minify picked, keeps pak65 to pak67 free for it, and leaves its files alone. Install both and you get the catalog from here and the game changes from there. <a href="~/docs/minify/">What Minify is, and running the two together</a>.',
           ],
           [
-            'Dota 2 SkinChanger (dota2changer.com)',
-            'A website rather than a program: you pick mods in a browser, it generates a VPK pack, and you place that pack in the game folder yourself. Part of its collection is behind a paid tier. Nothing updates itself afterwards, and a pack built last month is the pack you keep.',
+            'Dota 2 Changer PRO (dota2changer.com)',
+            'A website and, since November 2026, a launcher. You pick mods in your Dota 2 Changer account, it builds a VPK pack and connects it to the game. You need an account, part of the mods need PREMIUM or VIP, and the code is closed. Its launcher page is titled "Dota 2 Mod Manager". It is not this app and not connected to it. <a href="~/docs/copies/#dota2changer">More on that</a>.',
           ],
           [
             'Skin changers and inventory changers (Overplus, MetaSkins and the like)',
             'A different category of thing. They advertise unlocking items you do not own, they are closed source, with no public build anybody can check. Where this app adds a file next to the game and can take it back, these change the files of the game itself, and you have their word for what else they touch.',
+          ],
+          [
+            'Ulibka Launcher (ulibkalauncher.ru)',
+            'Sold as a skin changer, built as a cheat: it injects a library into the running game, fakes your medal and MMR, and ships a spoofer that changes your MAC address and MachineGuid. Its own FAQ says it breaks Valve\'s rules. Its mods are the D2PFX catalog. <a href="~/docs/ulibka-launcher/">What it does, with hashes to check</a>.',
           ],
           [
             'Renamed copies of this app',
@@ -1913,7 +1949,7 @@ const ru: Record<Slug, Doc> = {
       'Dota 2 Mod Manager бесплатный, с открытым кодом и без платной версии. Четыре признака копии, которую не стоит запускать, и единственные адреса, которые наши.',
     lead: 'Мы всё чаще находим это приложение под чужими названиями: переименованное, с закрытым кодом, иногда за деньги. Часть таких копий работает на нашем коде, только наше имя из них убрано. Что ещё они делают, проверить нельзя, и они тебе не нужны: оригинал бесплатный.',
     card: 'Платные лаунчеры, переименованные копии, программы с обязательным входом. Четыре признака и адреса, которые правда наши.',
-    updated: '2026-10-19',
+    updated: '2026-11-07',
     blocks: [
       { k: 'h2', t: 'Что гуляет по сети', id: 'what' },
       {
@@ -1951,6 +1987,24 @@ const ru: Record<Slug, Doc> = {
         t: 'Каталог D2PFX, откуда берутся моды, держит приложение в своём разделе Tools со ссылкой сюда. Всё остальное, что похоже на это приложение, пришло не от нас.',
       },
 
+      { k: 'h2', t: 'Dota 2 Changer PRO это не мы', id: 'dota2changer' },
+      {
+        k: 'p',
+        t: 'С ноября 2026 года лаунчер Dota 2 Changer (dota2changer.com) называет себя Dota 2 Mod Manager. Его страница скачивания озаглавлена «Dota 2 Mod Manager — Dota 2 Changer PRO». Это другая программа от другой команды. Общего кода у нас нет, договорённостей нет, и на это название мы не соглашались.',
+      },
+      {
+        k: 'p',
+        t: 'Dota 2 Mod Manager носит это имя с первого релиза 20 июля 2026 года. Их страница с таким заголовком, по её же данным, опубликована 4 ноября 2026 года. Теперь по этому имени поиск находит обе программы, и вот как понять, какая у тебя:',
+      },
+      {
+        k: 'list',
+        items: [
+          '<b>Наша</b> работает без аккаунта, все моды в ней бесплатные, весь код открыт на <a href="https://github.com/dota2modmanager/dota2-mod-manager" rel="noopener">GitHub</a>. Скачивается только с этого сайта и со страницы релизов на GitHub.',
+          '<b>Их</b> просит войти в аккаунт Dota 2 Changer, часть модов закрывает за PREMIUM или VIP и не публикует код. Скачивается с dota2changer.com.',
+        ],
+      },
+      { k: 'p', t: 'Ставятся обе бесплатно. Если ты искал эту, правильная кнопка скачивания на <a href="~/">dota2modmanager.com</a>. <a href="~/docs/compare/#table">Обе рядом в таблице</a>.' },
+
       { k: 'h2', t: 'Форки, которые этого не скрывают', id: 'forks' },
       {
         k: 'p',
@@ -1972,6 +2026,7 @@ const ru: Record<Slug, Doc> = {
       {
         k: 'faq',
         items: [
+          ['Dota 2 Changer PRO и Dota 2 Mod Manager это одно и то же?', 'Нет. Dota 2 Changer назвал свой лаунчер Dota 2 Mod Manager в ноябре 2026 года, но это отдельная закрытая программа, которой нужен аккаунт. У этого приложения такое имя с июля 2026 года, и с ней оно никак не связано. <a href="~/docs/copies/#dota2changer">Как их отличить</a>.'],
           ['Есть платная или Pro-версия Dota 2 Mod Manager?', 'Нет. Версия одна, бесплатная, и в ней есть всё. Dota 2 Mod Manager Pro, Premium или VIP - не наш.'],
           ['Лаунчер делает то же самое, но называется иначе. Ему можно верить?', 'Спроси у него исходный код и на чём он сделан. Если он не показывает ни того, ни другого, узнать, что ещё он делает на твоём компьютере, нельзя, а оригинал делает ту же работу бесплатно.'],
           ['Это приложение вообще можно продавать?', 'Лицензия разрешает брать деньги за копию, если покупатель получает все исходники под GPL-3.0 и в копии остаются имена авторов оригинала. Покупать его тебе не нужно: здесь та же программа бесплатно.'],
@@ -1988,6 +2043,7 @@ const ru: Record<Slug, Doc> = {
       'Что проверить до запуска любой программы для модов Дота 2: исходники, кто собрал файл, что она просит, живой ли у неё каталог. С честными ответами про эту программу и про остальные.',
     lead: 'Ты собираешься пустить программу писать в папку с игрой. Пять вопросов решают, разумно ли это, и они одни и те же, что бы ты в итоге ни поставил.',
     card: 'Пять вопросов к любой программе для модов, с ответами про эту и про остальные.',
+    updated: '2026-11-07',
     blocks: [
       { k: 'h2', t: 'Пять вопросов', id: 'questions' },
       {
@@ -2000,6 +2056,18 @@ const ru: Record<Slug, Doc> = {
           ['Что будет, если два мода столкнутся?', 'Два мода с одним файлом не могут примениться оба. Менеджер, который об этом молчит, оставляет тебя выяснять это по карте.'],
         ],
       },
+
+      { k: 'h2', t: 'Таблица сравнения', id: 'table' },
+      { k: 'table', head: ["","Dota 2 Mod Manager","Dota 2 Changer PRO","DOTA Mods Installer","Ulibka Launcher"], rows: [["Цена","Бесплатно, все моды","Приложение бесплатное, часть модов только с PREMIUM или VIP","Бесплатно, донат убирает рекламу","Бесплатно после подписки на их Telegram-каналы"],
+        ["Аккаунт","Не нужен. Discord по желанию, только чтобы подписать набор, которым делишься","Нужен аккаунт Dota 2 Changer","На сайте не сказано","Нужен Telegram, вход привязан к железу"],
+        ["Исходный код","Открыт, GPL-3.0, сборка в публичном CI","Закрыт","Закрыт","Закрыт и обфусцирован"],
+        ["Как меняет игру","Файлы рядом с игрой, снимаются одним кликом","VPK-пак, который он собирает и подключает","VPK-пак, который ты кладёшь сам","DLL, внедрённая в запущенную игру"],
+        ["Моды","{mods} из каталога D2PFX, читаются вживую","19 000+ по их счёту","3 400+ по их счёту","Каталог D2PFX, 737 модов героев, когда мы смотрели"],
+        ["Собирает моды из файлов твоей игры","Конструктор предметов с 3D, редакторы эффектов, HUD и карты, свои звуки","На их странице нет","Редактор текстур и частиц","Нет"],
+        ["Порядок загрузки и конфликты","Показывает, порядок меняешь ты","На их странице нет","Нет","Нет"],
+        ["Системы","Windows, Linux","Windows, macOS, Linux","Windows","Windows"],
+        ["Риск для аккаунта","Только косметические файлы","Косметические паки","Косметические паки","В своём FAQ сами пишут, что нарушают правила Valve. <a href=\"~/docs/ulibka-launcher/\">Что он делает</a>"]] },
+      { k: 'note', t: "Колонки других программ написаны по их собственным сайтам на 7 ноября 2026 года. Если сайт молчит, в клетке так и написано." },
 
       { k: 'h2', t: 'Ответы про эту', id: 'here' },
       {
@@ -2039,12 +2107,16 @@ const ru: Record<Slug, Doc> = {
             'Не альтернатива и не конкурент. Он собирает моды, патча саму игру, а это приложение ставит готовые из каталога, и вместе они работать умеют: приложение ставит моды в ту папку, которую игра смонтирует на самом деле, включая выбранную Minify, держит для него свободными pak65-pak67 и не трогает его файлы. Поставишь обе - каталог берёшь отсюда, изменения игры оттуда. <a href="~/docs/minify/">Что такое Minify и как держать обе</a>.',
           ],
           [
-            'Dota 2 SkinChanger (dota2changer.com)',
-            'Не программа, а сайт: моды выбираются в браузере, он собирает VPK-пак, а класть его в папку игры ты идёшь сам. Часть коллекции платная. Дальше ничего не обновляется: собранный месяц назад пак таким у тебя и остаётся.',
+            'Dota 2 Changer PRO (dota2changer.com)',
+            'Сайт и с ноября 2026 года ещё и лаунчер. Моды выбираются в аккаунте Dota 2 Changer, он собирает VPK-пак и подключает его к игре. Нужен аккаунт, часть модов только с PREMIUM или VIP, код закрыт. Страница их лаунчера называется «Dota 2 Mod Manager». Это не наше приложение и не связано с ним. <a href="~/docs/copies/#dota2changer">Подробнее</a>.',
           ],
           [
             'Скинченджеры и инвентарь-ченджеры (Overplus, MetaSkins и подобные)',
             'Другая категория вещей. Они обещают открыть предметы, которыми ты не владеешь, у них закрытый код и нет публичной сборки, которую можно проверить. Разница простая: эта программа кладёт файл рядом с игрой и умеет его забрать, а они меняют файлы самой игры, и что там ещё затронуто, известно только с их слов.',
+          ],
+          [
+            'Ulibka Launcher (ulibkalauncher.ru)',
+            'Продаётся как скинченджер, устроен как чит: внедряет библиотеку в запущенную игру, подменяет медаль и MMR, и в нём есть спуфер, который меняет MAC-адрес и MachineGuid. В своём FAQ сами пишут, что нарушают правила Valve. Моды в нём из каталога D2PFX. <a href="~/docs/ulibka-launcher/">Что он делает, с хешами для проверки</a>.',
           ],
           [
             'Переименованные копии этого приложения',

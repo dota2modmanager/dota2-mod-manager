@@ -23,6 +23,7 @@
 import { moreDocs } from './docs-more.ts';
 import { toolDocs } from './docs-tools.ts';
 import { featureDocs } from './docs-features.ts';
+import { rivalDocs } from './docs-rivals.ts';
 
 export type Block =
   | { k: 'p'; t: string }
@@ -31,6 +32,8 @@ export type Block =
   | { k: 'steps'; items: Array<[string, string]> }
   | { k: 'list'; items: string[] }
   | { k: 'cards'; items: Array<[string, string]> }
+  /** A table: the first column names the row. Cells may carry links and <code>. */
+  | { k: 'table'; head: string[]; rows: string[][] }
   | { k: 'code'; t: string }
   /** One line for the reader to paste somewhere else: it wraps on a phone and has a Copy button. */
   | { k: 'prompt'; t: string }
@@ -84,6 +87,7 @@ export const docSlugs = [
   'own-mods',
   'safe',
   'copies',
+  'ulibka-launcher',
   'catalog',
   'minify',
   'compare',
@@ -1117,6 +1121,6 @@ const ru: Record<CoreSlug, Doc> = {
 };
 
 export const docs: Record<'en' | 'ru', Record<DocSlug, Doc>> = {
-  en: { ...en, ...moreDocs.en, ...toolDocs.en, ...featureDocs.en },
-  ru: { ...ru, ...moreDocs.ru, ...toolDocs.ru, ...featureDocs.ru },
+  en: { ...en, ...moreDocs.en, ...toolDocs.en, ...featureDocs.en, ...rivalDocs.en },
+  ru: { ...ru, ...moreDocs.ru, ...toolDocs.ru, ...featureDocs.ru, ...rivalDocs.ru },
 };
