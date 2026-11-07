@@ -14,6 +14,7 @@ import { withSkin } from './model-skin.ts';
 import crypto from 'node:crypto';
 import { runTool } from './toolchain.ts';
 import { gameSchemaStamp } from './schema-items.ts';
+import { spriteFrames } from './sprite-frames.ts';
 
 type Run = (exe: string, args: string[]) => Promise<void>;
 
@@ -49,9 +50,9 @@ export const gameInfo = (dota: string) => `"GameInfo"\n{\n\tFileSystem\n\t{\n\t\
 const NO_CLIP = 'mm-no-clip';
 
 /** The toolchain's arguments for these models out of this archive into this folder. */
-export function exportArgs(pakFile: string, out: string, files: string[], clips: string[] | 'all'): string[] {
+export function exportArgs(pakFile: string, out: string, files: string[], clips: string[] | 'all', materials = false): string[] {
   // a body for its clips alone: the window has its pictures already, and Axe's 75 clips are one 11 MB file in 1.6 s
-  if (clips === 'all') return ['-i', pakFile, '-o', out, '-d', '-f', files.join(','), '--gltf_export_format', 'glb', '--gltf_export_animations'];
+  if (clips === 'all') return ['-i', pakFile, '-o', out, '-d', '-f', files.join(','), '--gltf_export_format', 'glb', '--gltf_export_animations', ...(materials ? ['--gltf_export_materials'] : [])];
   const args = ['-i', pakFile, '-o', out, '-d', ...(files.length ? ['-f', files.join(',')] : []), '--gltf_export_format', 'glb', '--gltf_export_materials'];
   // the toolchain writes a model's bones only with its clips; a wearable gets its bones and a list
   // that names no clip, so it follows the body's bones without a file full of its own animations
@@ -100,24 +101,26 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
    * @param models model paths as items_game names them, "models/heroes/techies/techies.vmdl"
    * @param clips animation clips to keep, for the hero's body; wearables follow its bones. 'all' is every clip and no pictures
    */
-  async function glbs(models: string[], clips: string[] | 'all' = []): Promise<Record<string, string | null>> {
+  async function glbs(models: string[], clips: string[] | 'all' = [], materials = false): Promise<Record<string, string | null>> {
     const game = getGamePath();
     const exe = toolchain.pathOf('vrf');
     const out: Record<string, string | null> = Object.fromEntries(models.map((m) => [m, null]));
     if (!game || !exe) return out;
     const pakFile = path.join(game, 'dota', 'pak01_dir.vpk');
     // the clips are part of the file: a body with its idle is another cache entry than one without
-    const root = path.join(buildRoot(game), clips === 'all' ? 'motions' : clips.length ? `clips-${clips.join('-').replace(/[^\w-]/g, '')}` : 'bones');
+    const root = path.join(buildRoot(game), clips === 'all' ? (materials ? 'full' : 'motions') : clips.length ? `clips-${clips.join('-').replace(/[^\w-]/g, '')}` : 'bones');
     const files = new Map(models.map((m) => [m, modelFile(m)]));
-    const wanted = [...new Set([...files.values()].filter((f): f is string => !!f && !foundGlb(root, f)))];
-    if (wanted.length) {
+    const missing = () => [...new Set([...files.values()].filter((f): f is string => !!f && !foundGlb(root, f)))];
+    if (missing().length) {
       const job = queue.then(async () => {
+        const wanted = missing();
+        if (!wanted.length) return;
         const started = Date.now();
         try {
           // one model alone, the toolchain takes -o for the file itself, not a folder to lay it out in
           const to = wanted.length === 1 ? glbAt(root, wanted[0]) : root;
           fs.mkdirSync(wanted.length === 1 ? path.dirname(to) : root, { recursive: true });
-          await run(exe, exportArgs(pakFile, to, wanted, clips));
+          await run(exe, exportArgs(pakFile, to, wanted, clips, materials));
           log(`models 3d: ${wanted.length} exported in ${Date.now() - started} ms`);
         } catch (err) {
           log(`models 3d: export failed (${(err as Error)?.message || err})`);
@@ -170,8 +173,8 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
   }
 
   /**
-   * The picture of each particle texture as PNG bytes: the texture itself, or for a sheet of
-   * frames (smoke, fire) its largest frame, which shows the most of it. Null for one the game lacks.
+   * PNG textures plus every exported sheet frame, keyed by sequence and frame number.
+   * The base key remains available to older callers. Null for one the game lacks.
    * @param textures texture paths as a particle names them, "materials/particle/smoke/wispy.vtex"
    */
   async function sprites(textures: string[]): Promise<Record<string, Buffer | null>> {
@@ -181,9 +184,11 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
     const valid = textures.filter((t) => /^materials\/[\w/.-]+\.vtex$/.test(t) && !t.includes('..'));
     if (!game || !exe || !valid.length) return out;
     const root = path.join(buildRoot(game), 'sprites');
-    const wanted = valid.filter((t) => !spriteAt(root, t));
-    if (wanted.length) {
+    const missing = () => [...new Set(valid.filter((t) => !spriteAt(root, t)))];
+    if (missing().length) {
       const job = queue.then(async () => {
+        const wanted = missing();
+        if (!wanted.length) return;
         const started = Date.now();
         try {
           fs.mkdirSync(root, { recursive: true });
@@ -199,6 +204,7 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
     for (const t of valid) {
       const at = spriteAt(root, t);
       out[t] = at ? fs.readFileSync(at) : null;
+      for (const frame of spriteFrames(root, t)) out[frame.key] = fs.readFileSync(frame.file);
     }
     return out;
   }

@@ -4,6 +4,9 @@
  * size budget (tools/size-budget.mjs). tools/check-i18n.js reads both. */
 'use strict';
 const EN = {
+  'Предпросмотр эффекта': 'Effect preview',
+  'Не удалось открыть 3D': 'Could not open 3D preview',
+  'Часть эффекта пока не поддерживается': 'Some parts of this effect are not supported yet',
   "Мастерская": "Workshop",
   "Виды из игры": "Looks from the game",
   "Новое": "New",
@@ -139,5 +142,7 @@ const EN = {
   "Изменить иконки": "Change the icons",
   "Любая иконка способности из предметов героя: аркана, стили, наборы.": "Any ability icon from the hero's items: arcana, styles, sets.",
   "Героев со своими иконками: {0}": "Heroes with icons picked: {0}",
+  "Надеваю скин…": "Equipping skin…",
+  "Не удалось обновить 3D": "Could not update 3D preview",
 };
 window.EN_MORE = EN;

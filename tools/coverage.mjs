@@ -47,6 +47,8 @@ const WHY = 'How much of each file the suite covers, and the aggregate floor. to
 /** Rounding noise, not a licence to slip: half a point is about one line in a 200-line file. */
 const TOLERANCE = 0.5;
 const SEP = String.fromCharCode(92);
+// A local npm dependency resolves outside node_modules; measure app code, not upstream code.
+const VENDOR_COVERAGE_EXCLUDE = '--test-coverage-exclude=vendor/**';
 
 /** hit/found as a percentage, where nothing to cover counts as covered. */
 export function pct(hit, found) {
@@ -197,6 +199,7 @@ function runSuite() {
   const out = path.join(os.tmpdir(), `d2mm-coverage-${process.pid}.lcov`);
   const args = [
     '--test', '--experimental-test-coverage',
+    VENDOR_COVERAGE_EXCLUDE,
     '--test-reporter=spec', '--test-reporter-destination=stdout',
     '--test-reporter=lcov', `--test-reporter-destination=${out}`,
     'test/**/*.test.js', 'test/**/*.test.ts',

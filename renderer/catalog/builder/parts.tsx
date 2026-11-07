@@ -1,6 +1,6 @@
 /* What every item builder window shares: a look's picture, the header with its way back, the bar
  * along the bottom, and what an empty search says. */
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { watchIconFor } from '../../ui/cosmetic-icons.ts';
 import { useCosmeticIcon } from '../cosmetic/CosmeticCard.tsx';
 import type { BuilderAction } from './model.ts';
@@ -38,11 +38,18 @@ export function BuilderHead({ back, onBack, title, sub, onClose }: {
   );
 }
 
+/** Status of the active wardrobe write and its corresponding 3D refresh. */
+export const WardrobeProgress = createContext<'pending' | 'failed' | null>(null);
+
 /** What goes along the window's bottom: what it will put on, and the one button that does it. */
 export function BuilderFoot({ summary, action, onApply }: { summary: ReactNode; action: BuilderAction; onApply: () => void }) {
+  const progress = useContext(WardrobeProgress);
   return (
     <>
       <div className="item-picker-sum">{summary}</div>
+      <span className="ward-equip-progress" role="status">
+        {progress === 'pending' ? <><span className="ms" aria-hidden="true">progress_activity</span>{L`Надеваю скин…`}</> : progress === 'failed' ? L`Не удалось обновить 3D` : ''}
+      </span>
       <button className="btn btn-primary" id="itemApplyBtn" disabled={action.off} onClick={onApply}>
         <span className="ms">{action.icon}</span>{action.label}
       </button>

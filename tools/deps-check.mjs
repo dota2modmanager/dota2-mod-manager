@@ -24,7 +24,8 @@ export function staleDeps(root = ROOT) {
   const names = Object.keys({ ...top.dependencies, ...top.devDependencies, ...top.optionalDependencies });
   const out = [];
   for (const name of names) {
-    const want = pkgs[`node_modules/${name}`];
+    const entry = pkgs[`node_modules/${name}`];
+    const want = entry?.link ? pkgs[entry.resolved] : entry;
     if (!want || want.optional) continue;
     let have = null;
     try {

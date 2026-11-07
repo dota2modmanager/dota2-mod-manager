@@ -1,22 +1,14 @@
-/* The pictures of the item builder's effects: each effect's own particle system out of the game
- * (src/hero-preview.ts effect), played by the 3D preview's particles (particles.ts) for a couple
- * of seconds on a point walking a small circle, the way a courier carries them, and taken as one frame. The game has no picture of its unusual
- * effects, only their names; this shows their colour and their shape, the way the preview plays
- * them. One renderer draws them all, one at a time, and each picture is kept for the session. */
+/* Effect thumbnails use the same native loadout simulation as the hero and recolor editor.
+ * Jobs run sequentially and release their WebGL context when the frame has been captured. */
 import * as THREE from 'three';
-import { particleSpec } from './particle-def.ts';
-import { playParticles, spriteTextures, type Carrier } from './particles.ts';
+import type { Carrier } from './particles.ts';
+import type { HeroScene } from './scene.ts';
+import { effectCarrier } from './loadout-source.ts';
 
 const W = 320;
 const H = 180;
-const FOV = 30;
 /** How long an effect runs before its picture is taken: long enough to fill out, short of a burst's end. */
 const RUN = 2.5;
-/** The circle the effect's point walks while it runs, in metres, and how fast it turns, in radians a second. */
-const RING = 0.5;
-const WALK = 2.2;
-
-let renderer: THREE.WebGLRenderer | null = null;
 const kept = new Map<string, Promise<string | null>>();
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -50,42 +42,15 @@ function lit(canvas: HTMLCanvasElement): boolean {
 async function draw(id: string): Promise<string | null> {
   const got = await window.api.preview3d.effect(id);
   if (!got) return null;
-  const textures = await spriteTextures(got.sprites);
-  renderer ??= new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-  renderer.setSize(W, H, false);
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0e0d14);
-  const src = new THREE.Object3D();
-  src.matrixAutoUpdate = false;
-  src.matrix.copy(SOURCE_AXES);
-  scene.add(src);
-  src.updateMatrixWorld(true);
-  const camera = new THREE.PerspectiveCamera(FOV, W / H, 0.01, 200);
-  const viewPx = H / (2 * Math.tan(THREE.MathUtils.degToRad(FOV / 2)));
-  const fx = playParticles(scene, [{ spec: particleSpec(got.def), self: EMPTY_CARRIER }], EMPTY_CARRIER, src, textures);
+  const host=document.createElement('div');host.style.cssText=`position:fixed;left:0;top:0;width:${W}px;height:${H}px;opacity:0;pointer-events:none`;document.body.append(host);
+  let scene:HeroScene|undefined;
   try {
-    // a courier's trail is drawn as it walks: the point goes round a small circle, as a courier would
-    for (let t = 0; t < RUN; t += 1 / 30) {
-      const a = t * WALK;
-      src.matrix.makeTranslation(Math.sin(a) * RING, 0, Math.cos(a) * RING).multiply(SOURCE_AXES);
-      src.updateMatrixWorld(true);
-      fx.update(1 / 30, viewPx);
-    }
-    const box = fx.bounds();
-    if (box.isEmpty()) box.setFromCenterAndSize(new THREE.Vector3(0, 0.5, 0), new THREE.Vector3(1, 1, 1));
-    const size = box.getSize(new THREE.Vector3()).max(new THREE.Vector3(0.3, 0.3, 0.3));
-    const centre = box.getCenter(new THREE.Vector3());
-    const tan = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
-    const d = Math.max(size.y / 2 / tan, size.x / 2 / (tan * (W / H))) * 1.15 + size.z / 2;
-    camera.position.set(centre.x, centre.y + d * 0.15, centre.z + d);
-    camera.lookAt(centre);
-    renderer.render(scene, camera);
-    return lit(renderer.domElement) ? renderer.domElement.toDataURL('image/webp', 0.85) : null;
-  } finally {
-    fx.dispose();
-    for (const t of textures.values()) t.dispose();
-  }
+    const {mountScene}=await import('./scene.ts');
+    scene=await mountScene(host,effectCarrier(),[],{isolated:true,particles:[{part:-1,def:got.def}],sprites:got.sprites,resources:got.resources});
+    await new Promise(resolve=>setTimeout(resolve,RUN*1000));
+    const image=scene.capture(),canvas=host.querySelector('canvas');
+    return canvas&&lit(canvas)?image:null;
+  } finally { scene?.dispose();host.remove(); }
 }
 
 /** An effect's picture as a data URI, or null where the game has no system for it or the window cannot draw. */

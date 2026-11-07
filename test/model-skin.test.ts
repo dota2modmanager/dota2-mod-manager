@@ -46,3 +46,13 @@ test('the first set is the model as it is, and a set it has not got is refused',
   assert.equal(withSkin(MODEL, 3), null);
   assert.equal(withSkin(Buffer.from('not a resource'), 2), null);
 });
+
+
+test('style material group works on external-mesh models without an MDAT block', () => {
+  const external=resource([['DATA',encodeKv3({obj:[['m_materialGroups',{objs:[
+    group('0',['materials/spectre/base.vmat']),group('1',['materials/spectre/alt.vmat']),
+  ]}]]})]]);
+  const result=withSkin(external,1);
+  assert.ok(result, 'model group changes should be allowed without embedded meshes');
+  assert.deepEqual(strings(block(result,'DATA')), ['0','materials/spectre/alt.vmat','1','materials/spectre/alt.vmat']);
+});

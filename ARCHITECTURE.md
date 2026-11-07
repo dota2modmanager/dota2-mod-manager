@@ -651,9 +651,14 @@ that location is not writable.
 | `src/model-glb.ts` | The game's models as GLB with their textures, exported by the Source 2 tools in one call per batch and cached per game build, for the 3D preview of [#417](https://github.com/dota2modmanager/dota2-mod-manager/issues/417) |
 | `src/glb-embed.ts` | A GLB with the PNG textures it links to put into its binary chunk, so the window loads a model from bytes alone; a picture it cannot have becomes one grey pixel |
 | `src/hero-preview.ts` | The 3D preview's models for a hero: the body out of its script (or an arcana's), and for each slot the pick or its stock item, exported through `model-glb` and handed over with their textures inside |
+| `src/hero-preview-picks.ts`, `src/hero-particle-styles.ts` | Resolve equipped and default models, selected styles, and their ambient particle replacements |
+| `src/model-style-meshes.ts`, `src/model-snapshot-fallback.ts` | Select style meshes and recover missing particle surfaces from exported geometry |
 | `src/model-loadout.ts` | The sequences a hero model has, out of its own ASEQ block, and the loadout one the game plays for the items worn (an item's activity modifiers pick the variant) |
 | `src/hero-showcase.ts` | How the game stages a hero on its loadout: the loadout camera, the hero's LoadoutScale, and its light, ambient, background colour and pedestal out of `portraits_showcase.txt` |
-| `src/particle-spec.ts` | The particles an item (`particle_create`) or a hero (its loadout) brings, as the system's KV3 tree in JSON with children inlined, and a model's attachment points; the window plays an approximation of them |
+| `src/particle-spec.ts` | The particles an item (`particle_create`) or a hero (its loadout) brings, as the system's KV3 tree in JSON with children inlined, and a model's attachment points; the full loadout runtime consumes them |
+| `src/loadout-resources.ts`, `src/loadout-material.ts`, `src/loadout-sheet.ts` | Full particle dependencies, native Dota material inputs and VTEX frame timing for the loadout engine; shared by the hero and recolor editor |
+| `src/particle-snapshot.ts` | Decompresses SNAP blocks and keeps positions, joint weights, colors and particle attributes |
+| `src/sprite-frames.ts` | Discovers every exported sprite-sheet sequence and frame in numeric order |
 | `src/ipc-preview3d.ts` | The channel `preview3d:models`: the hero's body and its slots' models as GLB bytes, or why there are none (no toolchain, no game, no body) |
 | `src/recolor-layers.ts` | A hero split into layers for a colour each: every ability's particles and icon, the rest of his effects, his portraits, the colour textures of his body, and each picked item ([#422](https://github.com/dota2modmanager/dota2-mod-manager/issues/422)) |
 | `src/hero-paint-service.ts`, `src/ipc-paint.ts` | The channels `paint:state` and `paint:install`: the hero recoloured layer by layer into one record of My mods, its compressed pictures read out by ValveResourceFormat and compiled again, built again after a Dota update |
@@ -707,3 +712,7 @@ that location is not writable.
 | `tools/size-budget.mjs` | Holds the files listed in `.github/size-budget.json` at their length, and stops any other file crossing 300 lines unnoticed |
 | `tools/mutate.mjs` | Breaks one promise at a time from `.github/mutants.json` and fails where no test goes red, or where the mutant no longer applies to the code it names |
 | `tools/rollback.mjs` | Switches a feature off for the broken releases only, or everywhere, writes and signs `config/app.json`, and refuses a range old copies cannot read or a key the app does not pin |
+
+### 3D loadout renderer
+
+The preview uses `vendor/dota-loadout` as a local npm dependency, with desktop integration maintained in this repository. The TypeScript modules `renderer/catalog/preview3d/scene.ts`, `loadout-source.ts`, `loadout-textures.ts` and `loadout-controls.ts` own desktop data adaptation, cancellation and input. The vendored engine owns animation, bone merging, particles, material shading and HDR. `EffectStage.tsx` and effect thumbnails share that engine. The older independent runtime is retained for its existing regression tests, but is not used to render these views. No remote assets or iframe are used. See `vendor/dota-loadout/PROVENANCE.md`.

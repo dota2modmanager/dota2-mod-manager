@@ -2,9 +2,8 @@
  * colour, for all of it or one of the systems it is made of, and see it play. The list on the
  * left is the search until an effect is open, then that effect's systems. */
 import { EffectStage, hasSprites } from './EffectStage.tsx';
-import { particleSpec } from '../preview3d/particle-def.ts';
 import type { AbilityHit, EffectEdit, EffectEdits, EffectGroup } from '../../api/fx.ts';
-import type { ParticleDef } from '../../api/preview3d.ts';
+import type { ParticleDef, LoadoutResources } from '../../api/preview3d.ts';
 
 export const WHOLE = '*';
 
@@ -15,6 +14,7 @@ export interface EffectOpen {
   systems: { path: string; depth: number }[];
   defs: ParticleDef[];
   sprites: Record<string, Uint8Array>;
+  resources?: LoadoutResources;
   /** how many effects items play in its place, and whether the change takes them along */
   variants: number;
   items: boolean;
@@ -214,9 +214,9 @@ export function EffectModal({ m, actions }: { m: EffectModalModel; actions: Effe
         <div className="fx-view">
           {m.open
             ? <div className="fx-stage">
-              <EffectStage path={m.open.path} defs={m.open.defs} sprites={m.open.sprites} play={m.play} />
+              <EffectStage path={m.open.path} defs={m.open.defs} sprites={m.open.sprites} resources={m.open.resources} play={m.play} />
               <button type="button" className="fx-replay" id="fxReplay" aria-label={L`Проиграть ещё раз`} title={L`Проиграть ещё раз`} onClick={actions.replay}><span className="ms">replay</span></button>
-              {!m.open.defs.some((d) => hasSprites(particleSpec(d))) && <div className="fx-none">{L`Этот эффект сделан из моделей или света, просмотр его не рисует. В игре он есть.`}</div>}
+              {!m.open.defs.some((d) => hasSprites(d)) && <div className="fx-none">{L`Этот эффект сделан из моделей или света, просмотр его не рисует. В игре он есть.`}</div>}
             </div>
             : <div className="fx-empty"><span className="ms">{m.busy === 'load' ? 'progress_activity' : 'auto_awesome'}</span><span>{L`Выбери героя и способность слева: эффект заиграет здесь`}</span></div>}
           {m.open && <Controls m={m} actions={actions} />}

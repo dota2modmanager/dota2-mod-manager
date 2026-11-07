@@ -11,11 +11,29 @@ export interface HeroStage {
   pedestal: string | null;
 }
 
+export interface SnapshotPoint {
+  position: [number, number, number];
+  weights: [string, number][];
+  color?: [number, number, number];
+  normal?: [number, number, number];
+  alpha?: number;
+  radius?: number;
+  attributes?: Record<number, number | [number, number, number]>;
+}
+
 export type ParticleJson = null | boolean | number | string | ParticleJson[] | { [k: string]: ParticleJson };
 /** A game particle system as JSON, its children inlined (src/particle-spec.ts). */
-export interface ParticleDef { path: string; tree: { [k: string]: ParticleJson }; children: ParticleDef[] }
+export interface ParticleDef { path: string; tree: { [k: string]: ParticleJson }; children: ParticleDef[]; childGroup?: number; delay?: number; endcap?: boolean; snapshot?: SnapshotPoint[]; snapshots?: Record<number, SnapshotPoint[]> }
 /** An attachment point of a model: its bone, and its offset and turn from it in Source units. */
-export interface Attachment { name: string; bone: string; offset: [number, number, number]; rotation: [number, number, number, number] }
+export interface LoadoutAttachment { bones: string[]; offsets: number[][]; rotations: number[][]; weights: number[]; ignoreRotation: boolean }
+export interface LoadoutResources {
+  snapshots: Record<string, Record<string, unknown>>;
+  materials: Record<string, { shader: string; floats: Record<string, number>; ints: Record<string, number>; vectors: Record<string, number[]>; textures: Record<string, string> }>;
+  models: Record<string, { data: string }>;
+  sheets: Record<string, { id: number; clamp: boolean; frames: { time: number; uv: number[]; crop: number[] }[] }[]>;
+  missing: string[];
+}
+export interface Attachment extends Partial<LoadoutAttachment> { name: string; bone: string; offset: [number, number, number]; rotation: [number, number, number, number] }
 
 /** What a body can be shown doing (src/model-loadout.ts motionList). */
 export interface Motion { name: string; group: 'stance' | 'idle' | 'run' | 'attack' | 'ability' | 'emote' | 'other'; act: string; mods: string[]; once: boolean }
@@ -23,7 +41,7 @@ export interface Motion { name: string; group: 'stance' | 'idle' | 'run' | 'atta
 /** The item builder's 3D preview (src/hero-preview.ts): the body with its loadout clip, each slot's model and the pedestal, as GLB bytes. */
 export interface Preview3dApi {
   /** an effect's particle system, for its picture; null where the game has none */
-  effect: (id: string) => Promise<{ def: ParticleDef; sprites: Record<string, Uint8Array> } | null>;
+  effect: (id: string) => Promise<{ def: ParticleDef; sprites: Record<string, Uint8Array>; resources?: LoadoutResources } | null>;
   /** a map prop's model alone (a tree set's) as GLB bytes, for its picture; null without the game or the toolchain */
   model: (file: string) => Promise<Uint8Array | null>;
   /** every clip of a body, without its pictures, as GLB bytes; null without the game or the toolchain */
@@ -32,7 +50,7 @@ export interface Preview3dApi {
     | {
       ok: true; body: Uint8Array; clip: string | null; model: string; motions: Motion[]; stage: HeroStage; pedestal: Uint8Array | null;
       parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[]; hidden: string[] }[]; missing: string[]; hidden: string[];
-      attachments: Attachment[]; particles: { part: number; def: ParticleDef }[]; sprites: Record<string, Uint8Array>;
+      attachments: Attachment[]; particles: { part: number; def: ParticleDef }[]; sprites: Record<string, Uint8Array>; resources?: LoadoutResources;
     }
     | { ok: false; reason: 'no-game' | 'no-tool' | 'no-body'; error?: string }>;
 }

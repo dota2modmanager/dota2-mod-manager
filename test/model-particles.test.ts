@@ -2,7 +2,7 @@
  * models write them, on any text a model can have there. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { keyValuesWithParticles } from '../src/model-particles.ts';
+import { keyValueParticles, keyValuesWithParticles } from '../src/model-particles.ts';
 
 const HEAD = '<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->';
 const row = (p: string) => `name = resource:"${p}"`;
@@ -26,4 +26,10 @@ test('a list already there is replaced, not stacked', () => {
   assert.ok(!t.includes('particles/old.vpcf'));
   assert.equal(t.match(/particle_cfg_list/g)?.length, 1);
   assert.ok(t.includes(row('particles/a.vpcf')) && t.includes(row('particles/b.vpcf')));
+});
+
+test('a wearable uses its authored ambient systems and their named configuration', () => {
+  const text = keyValuesWithParticles('', ['particles/Offhand.vpcf']).replace('"preview"', '"offhand"');
+  assert.deepEqual(keyValueParticles(text), [{ path: 'particles/offhand.vpcf', config: 'offhand' }]);
+  assert.deepEqual(keyValueParticles('{ attack = resource:"particles/attack.vpcf" }'), []);
 });

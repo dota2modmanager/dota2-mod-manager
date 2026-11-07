@@ -10,6 +10,9 @@ import { buildVpk, entryAt } from '../src/vpk.ts';
 import { writeGlb, readGlb } from '../src/glb-embed.ts';
 import { createHeroPreview, entityModel, wornSkin, wornExtras } from '../src/hero-preview.ts';
 
+import { monkeyKingCrown, previewStockHead, previewParticleReader, previewParticleReplacements } from '../src/hero-preview-picks.ts';
+import { withStyle } from '../src/item-builder-styles.ts';
+
 const jugg = `\t\t\t"used_by_heroes"\n\t\t\t{\n\t\t\t\t"npc_dota_hero_juggernaut"\t\t"1"\n\t\t\t}\n`;
 const block = (id: string, fields: [string, string][], visuals = '') =>
   `\t\t"${id}"\n\t\t{\n${fields.map(([k, v]) => `\t\t\t"${k}"\t\t"${v}"\n`).join('')}${jugg}${visuals}\t\t}\n`;
@@ -64,6 +67,13 @@ test('an item wears the material set of its first style, or of a modifier for th
   assert.equal(wornSkin('"visuals"\n{\n"asset_modifier"\n{\n"type" "model_skin"\n"skin" "3"\n}\n}'), 3);
   assert.equal(wornSkin('"visuals"\n{\n"asset_modifier"\n{\n"type" "model_skin"\n"style" "1"\n"skin" "3"\n}\n}'), 0);
   assert.equal(wornSkin('"visuals"\n{\n"asset_modifier"\n{\n"type" "activity"\n"modifier" "x"\n}\n}'), 0);
+});
+
+test('a fixed visual skin is used unless the selected style explicitly overrides it', () => {
+  assert.equal(wornSkin('"visuals" { "skin" "1" }'), 1);
+  assert.equal(wornSkin('"visuals" { "skin" "1" "styles" { "0" { "skin" "0" } } }', 2), 0);
+  assert.equal(wornSkin('"visuals" { "skin" "1" "asset_modifier" { "type" "model_skin" "skin" "0" } }', 2), 0);
+  assert.equal(wornSkin('"visuals" { "styles" { "1" { "skin" "1" } } }', 2), 2);
 });
 
 test('the body comes out of the hero’s script, and each slot wears its stock item until one is picked', () => {
@@ -141,4 +151,60 @@ test('what an item wears besides its model, in its first style', () => {
     + '"asset_modifier1" { "type" "bodygroup_visibility" "asset" "models/heroes/lina/lina.vmdl" "modifier" "Upper_Body" "value" "1" }\n'
     + '"asset_modifier2" { "type" "additional_wearable" "style" "1" "asset" "models/items/x/other.vmdl" }\n}';
   assert.deepEqual(wornExtras(visuals), { models: ['models/items/x/fx.vmdl'], groups: [{ model: 'models/heroes/lina/lina.vmdl', group: 'upper_body', value: 1 }] });
+});
+
+test('Monkey King arcana has a separate crown, selected only with the arcana', () => {
+  const schema = TABLE.replace('"5000"', '"34183"');
+  assert.equal(monkeyKingCrown(schema, 'npc_dota_hero_monkey_king', [{ itemId: '9050' }])?.id, '34183');
+  assert.equal(monkeyKingCrown(schema, 'npc_dota_hero_monkey_king', []), null);
+});
+
+test('the selected arcana style replaces nested particle reads as well as roots', () => {
+  const styled = withStyle(`"visuals" {
+    "styles" { "0" {} "1" {} "2" {} }
+    "asset_modifier0" { "type" "particle_combined" "asset" "particles/blade.vpcf" "modifier" "particles/blade_red.vpcf" "style" "1" }
+    "asset_modifier1" { "type" "particle_combined" "asset" "particles/blade.vpcf" "modifier" "particles/blade_gold.vpcf" "style" "2" }
+  }`, 2);
+  const read = previewParticleReader(file => Buffer.from(file), previewParticleReplacements(styled.visuals));
+  assert.equal(read('particles/blade.vpcf_c')?.toString(), 'particles/blade_gold.vpcf_c');
+  assert.equal(read('particles/untouched.vpcf_c')?.toString(), 'particles/untouched.vpcf_c');
+});
+
+test('the stock head fallback selects only an actual asset for the matching body', () => {
+  const model = 'models/heroes/phantom_lancer/phantom_lancer_head.vmdl';
+  const body = 'models/heroes/phantom_lancer/phantom_lancer.vmdl';
+  const pack = { has: (file: string) => file === model + '_c' };
+  assert.equal(previewStockHead(TABLE, 'npc_dota_hero_phantom_lancer', body, pack), model);
+  assert.equal(previewStockHead(TABLE, 'npc_dota_hero_phantom_lancer', body, { has: () => false }), null);
+  assert.equal(previewStockHead(TABLE, 'npc_dota_hero_phantom_lancer', model, pack), null);
+});
+
+test('Phantom Lancer retains his body head under Concord Reversion', () => {
+  const hero = 'npc_dota_hero_phantom_lancer';
+  const body = 'models/heroes/phantom_lancer/phantom_lancer.vmdl';
+  const face = 'models/heroes/phantom_lancer/phantom_lancer_head.vmdl';
+  const hat = 'models/items/phantom_lancer/concord_reversion/hat.vmdl';
+  const slot = 'item:phantom_lancer:head';
+  const table = `"items_game" { "items" {
+    ${block('127', [['prefab', 'default_item'], ['item_slot', 'body_head'], ['model_player', face]])}
+    ${block('637', [['prefab', 'default_item'], ['item_slot', 'head']])}
+    ${block('5000', [['name', 'Concord Reversion'], ['prefab', 'wearable'], ['item_slot', 'head'], ['model_player', hat]])}
+  } }`.replaceAll('npc_dota_hero_juggernaut', hero);
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-pl-head-'));
+  try {
+    fs.mkdirSync(path.join(root, 'dota'));
+    fs.writeFileSync(path.join(root, 'dota', 'pak01_dir.vpk'), buildVpk([
+      entryAt(`scripts/npc/heroes/${hero}.txt`, Buffer.from(`"DOTAHeroes" {
+"Model" "${body}"
+}`)),
+      entryAt(face + '_c', Buffer.from('model')),
+    ]));
+    const library = { list: () => [{ categoryId: 'cosmetic', slot, itemId: '5000', name: 'Concord Reversion' }] } as never;
+    const hp = createHeroPreview({ glb: { glbs: async () => ({}) }, library, gamePath: () => root, vanilla: () => table });
+    assert.deepEqual(hp.plan(hero, [{ slot, stock: '637' }])?.parts.map(part => [part.slot, part.model]), [
+      [slot, hat], ['body_head', face],
+    ]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });

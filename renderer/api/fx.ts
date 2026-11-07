@@ -1,6 +1,6 @@
 /* The effect editor's channels (src/ipc-effects.ts). */
 import type { LibRecord } from '../library/types.ts';
-import type { ParticleDef } from './preview3d.ts';
+import type { ParticleDef, LoadoutResources } from './preview3d.ts';
 import type { Reply } from './reply.ts';
 
 /** One effect's changes (src/effect-edit.ts): percent of what the file says, and a colour. */
@@ -22,7 +22,7 @@ export interface FxApi {
   /** a hero's effects, ability by ability */
   hero: (hero: string) => Promise<Reply<{ groups: EffectGroup[] }>>;
   /** one effect, or `ability:hero/ability` for all of an ability's: its systems, the changes on it now, how it plays with them, and how many item versions it has */
-  load: (path: string) => Promise<Reply<{ path: string; name: string; edits: EffectEdits; defs: ParticleDef[]; sprites: Record<string, Uint8Array>; systems: { path: string; depth: number }[]; variants: number; items: boolean }>>;
+  load: (path: string) => Promise<Reply<{ path: string; name: string; edits: EffectEdits; defs: ParticleDef[]; sprites: Record<string, Uint8Array>; resources?: LoadoutResources; systems: { path: string; depth: number }[]; variants: number; items: boolean }>>;
   /** how it plays with these changes */
   preview: (path: string, edits: EffectEdits) => Promise<Reply<{ defs: ParticleDef[] }>>;
   /** it with these changes, put in My mods; `items` takes the versions items play along */

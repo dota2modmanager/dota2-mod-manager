@@ -7,7 +7,7 @@
        moving every relative URL on the page to another host. Navigation itself is refused
        in src/main-window.ts, which is the part CSP has no say over. -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' mm-preview: https://raw.githubusercontent.com https://cdn.dota2modmanager.com data: blob:; media-src https://raw.githubusercontent.com https://cdn.dota2modmanager.com blob:; connect-src 'self' blob: data:; object-src 'none'; frame-src 'none'; child-src 'none'; form-action 'none'; base-uri 'none'">
+        content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' mm-preview: https://raw.githubusercontent.com https://cdn.dota2modmanager.com data: blob:; media-src https://raw.githubusercontent.com https://cdn.dota2modmanager.com blob:; connect-src 'self' blob: data:; object-src 'none'; frame-src 'none'; child-src 'none'; form-action 'none'; base-uri 'none'">
   <title>Dota 2 Mod Manager</title>
   <!-- Order matters: tokens define the scales, base and shell set the ground
        rules, component files follow. Adding a file means adding it here. -->

@@ -39,3 +39,12 @@ test('a dependency the pull brought and an older version are both named', () => 
 test('this checkout matches its own lock', () => {
   assert.deepEqual(staleDeps(), []);
 });
+
+test('a local npm dependency is checked against its linked lockfile record', () => {
+  const root=tree({ a:'1.2.0', b:'2.0.4', c:'3.1.0' });
+  const file=path.join(root,'package-lock.json'),lock=JSON.parse(fs.readFileSync(file,'utf8'));
+  lock.packages['node_modules/a']={link:true,resolved:'vendor/a'};lock.packages['vendor/a']={version:'1.2.0'};fs.writeFileSync(file,JSON.stringify(lock));
+  assert.deepEqual(staleDeps(root),[]);
+  lock.packages['vendor/a'].version='1.3.0';fs.writeFileSync(file,JSON.stringify(lock));
+  assert.deepEqual(staleDeps(root),[{name:'a',want:'1.3.0',have:'1.2.0'}]);
+});

@@ -140,3 +140,17 @@ test('a body exported with its physics is found inside the folder -o became', as
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('overlapping preview requests share a completed model export', async () => {
+  const { dir, game, calls, run } = setup();
+  try {
+    const glb = createModelGlb({ userDataDir: dir, toolchain: { pathOf: () => 'vrf.exe' }, getGamePath: () => game, run });
+    const models = ['models/heroes/techies/techies.vmdl'];
+    const [first, second] = await Promise.all([glb.glbs(models), glb.glbs(models)]);
+    assert.ok(first[models[0]]);
+    assert.deepEqual(first, second);
+    assert.equal(calls.length, 1);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

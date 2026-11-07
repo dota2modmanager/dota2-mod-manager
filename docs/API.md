@@ -77,6 +77,8 @@ the code, not in this page.
 | [`src/hero-grid.ts`](#srchero-gridts) | Hero grids for the pick screen out of this patch's numbers (issue #428). |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/hero-paint-service.ts`](#srchero-paint-servicets) | A hero recoloured part by part, as one record in My mods (issue #422; what the parts are is |
+| [`src/hero-particle-styles.ts`](#srchero-particle-stylests) | Keep genuine model-born particles, but never spawn a style-0 version beside |
+| [`src/hero-preview-picks.ts`](#srchero-preview-picksts) | Equipment metadata used to build the desktop preview. |
 | [`src/hero-preview.ts`](#srchero-previewts) | The models of a hero as the item builder dresses it, for the 3D preview in the hero's window |
 | [`src/hero-showcase.ts`](#srchero-showcasets) | How the game stages a hero on its loadout, for the 3D preview (issue #417), out of the game's |
 | [`src/hud-scale-service.ts`](#srchud-scale-servicets) | The in-game HUD laid out by hand, as a record in My mods (issue #420; the CSS is |
@@ -121,6 +123,9 @@ the code, not in this page.
 | [`src/kv3-write.ts`](#srckv3-writets) | A KV3 block written anew from its tree (src/kv3.ts), for changes that are more than a number: |
 | [`src/kv3.ts`](#srckv3ts) | Binary KV3, the format Source 2 compiles particles and most other resources into: read far |
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
+| [`src/loadout-material.ts`](#srcloadout-materialts) | Native Dota material inputs for the bundled loadout shader. PBR metalness is not a substitute |
+| [`src/loadout-resources.ts`](#srcloadout-resourcests) | Complete effect dependencies for the real loadout runtime, shared by hero and recolor views. |
+| [`src/loadout-sheet.ts`](#srcloadout-sheetts) | VTEX sprite-sheet metadata. Layout: ValveResourceFormat Texture.GetSpriteSheetData (MIT), |
 | [`src/lz4.ts`](#srclz4ts) | LZ4 block format: literals and back-references, the compression Valve's KV3 writer uses |
 | [`src/main-window.ts`](#srcmain-windowts) | The one window the app has: its size on the screen it opens on, the single page it may show, |
 | [`src/map-decor.ts`](#srcmap-decorts) | The map without its decor: grass, flowers, ferns and critters, or stones, bones, debris and the |
@@ -143,6 +148,8 @@ the code, not in this page.
 | [`src/model-scale.ts`](#srcmodel-scalets) | A compiled model made bigger about its origin, and how much bigger one model is than another. |
 | [`src/model-sequences.ts`](#srcmodel-sequencests) | A model put under another model's path that numbers its sequences as that one does. |
 | [`src/model-skin.ts`](#srcmodel-skints) | A model with one of its material sets made the one it wears by default. |
+| [`src/model-snapshot-fallback.ts`](#srcmodel-snapshot-fallbackts) | Last-resort particle snapshot for assets whose .vsnap is absent from the |
+| [`src/model-style-meshes.ts`](#srcmodel-style-meshests) | Source 2 exports bodygroup alternatives as independent glTF nodes. VRF doesn't |
 | [`src/mods-listing.ts`](#srcmods-listingts) | What My mods is drawn from: the answer to mods:list (src/ipc-mods.ts), which every screen asks |
 | [`src/net-download.ts`](#srcnet-downloadts) | A file downloaded to disk across the mirror chain (src/net.ts explains it): resumed where a |
 | [`src/net-fetch.ts`](#srcnet-fetchts) | A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a |
@@ -152,6 +159,7 @@ the code, not in this page.
 | [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts |
 | [`src/overlays-cursor.ts`](#srcoverlays-cursorts) | Cursor sets (src/overlays.ts is the door for fonts and cursors). |
 | [`src/overlays.ts`](#srcoverlaysts) | Fonts and cursors: loose files written over the game's own. |
+| [`src/particle-snapshot.ts`](#srcparticle-snapshotts) |  |
 | [`src/particle-spec.ts`](#srcparticle-spects) | The particles an item or a hero shows on its loadout, read out of the game for the 3D preview |
 | [`src/particle-surface.ts`](#srcparticle-surfacets) | An effect made to spread over a wearable's surface. |
 | [`src/patch-watch.ts`](#srcpatch-watchts) | Noticing that Dota was patched, while the app is open. |
@@ -195,6 +203,7 @@ the code, not in this page.
 | [`src/services.ts`](#srcservicests) | What the app is built from: every long-lived service, created once in the order they depend on |
 | [`src/settings.ts`](#srcsettingsts) | Simple JSON settings store in userData |
 | [`src/slot-zones.ts`](#srcslot-zonests) | The load order in two parts. |
+| [`src/sprite-frames.ts`](#srcsprite-framests) |  |
 | [`src/steam-appstate.ts`](#srcsteam-appstatets) | What Steam's own manifest says about Dota right now (issue #427). Pressing Play while Steam is |
 | [`src/steam.ts`](#srcsteamts) | Finding Steam, and then finding Dota inside it. |
 | [`src/steps.ts`](#srcstepsts) | Work a step at a time. |
@@ -2665,7 +2674,7 @@ What an effect's record was built from. `effect` is a file, or `ability:hero/abi
 ### `createEffectEdit`
 
 ```ts
-export function createEffectEdit({ gamePath, installer, library, sprites, finder, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** the textures of a system and its children, as the window takes them */ sprites: (defs: ParticleDef[]) => Promise<Record<string, Uint8Array>>; /** an ability's effects, read off the game (src/effect-finder.ts) */ finder?: Pick<ReturnType<typeof createEffectFinder>, 'ability' | 'variants'>
+export function createEffectEdit({ gamePath, installer, library, sprites, resources, finder, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** the textures of a system and its children, as the window takes them */ sprites: (defs: ParticleDef[]) => Promise<Record<string, Uint8Array>>; resources?: (defs: ParticleDef[]) => Promise<LoadoutResources>; /** an ability's effects, read off the game (src/effect-finder.ts) */
 ```
 
 The service the fx:* channels call.
@@ -3873,37 +3882,42 @@ export async function vrfPng(exe: string, vtex: Buffer): Promise<Buffer>
 
 A compressed picture read out as a PNG by ValveResourceFormat, in a folder of its own that goes after.
 
-## src/hero-preview.ts
+## src/hero-particle-styles.ts
 
-The models of a hero as the item builder dresses it, for the 3D preview in the hero's window
-(issue #417): the body, and for each slot the item picked there, or the stock item where none is.
+Keep genuine model-born particles, but never spawn a style-0 version beside
+a style-specific override of the very same root (Spectre's *_ambient_v2_*).
+This is restricted to matching canonical paths and leaves unrelated
+weapon/shoulder or caster particles intact.
 
-The models come out of the game's pak01 as GLB files with the toolchain (src/model-glb.ts), the
-body with its idle clip, and go to the window with their pictures inside (src/glb-embed.ts). In
-the game a wearable follows the hero's bones by name; the window does the same (renderer
-catalog/preview3d/scene.ts). An arcana that swaps the whole hero brings its own body, as the
-build does (src/item-builder.ts itemEffectPatch, the copy that names a hero).
-
-### `PreviewSlot`
+### `styleParticleRoots`
 
 ```ts
-export type PreviewSlot = { slot: string; stock: string }
+export function styleParticleRoots(model: {path: string; config: string}[], selected: string[], style: number)
 ```
 
-A slot of the hero as the window names it: its id and the stock item it dresses.
+Keep genuine model-born particles, but never spawn a style-0 version beside
+a style-specific override of the very same root (Spectre's *_ambient_v2_*).
+This is restricted to matching canonical paths and leaves unrelated
+weapon/shoulder or caster particles intact.
 
-### `HeroModels`
+## src/hero-preview-picks.ts
+
+Equipment metadata used to build the desktop preview.
+
+### `itemModel`
 
 ```ts
-export type HeroModels =
+export function itemModel(text: string, itemId: string, key: string | undefined, hero: string, stock: string | null): { model: string | null; body: string | null; block?: string; replacements?: Map<string, string> }
 ```
 
-What the window gets: each model's bytes, or why there are none.
+The model an item puts on in the style picked, and the body it swaps the hero for. The build
+copies the item's model over the stock one (`stock`); its other copies are particles and other
+units' models, which the hero does not wear.
 
 ### `wornSkin`
 
 ```ts
-export function wornSkin(visuals: string): number
+export function wornSkin(visuals: string, fallback = 0): number
 ```
 
 The material set an item wears its model in, 0 for the first: what its style says, or a
@@ -3930,6 +3944,67 @@ export function wornExtras(visuals: string): { models: string[]; groups: { model
 ```
 
 What an item wears besides its model, in the first style: second models, and the body groups it sets.
+
+### `monkeyKingCrown`
+
+```ts
+export function monkeyKingCrown(text: string, hero: string, equipped: { itemId?: string | number | null }[])
+```
+
+The separately authored crown that accompanies Great Sage's Reckoning.
+
+### `previewParticleReplacements`
+
+```ts
+export function previewParticleReplacements(visuals: string): Map<string, string>
+```
+
+Use the selected style's replacements even when they affect a different model's ambient.
+
+### `previewParticleReader`
+
+```ts
+export function previewParticleReader(read: (path: string) => Buffer | null, replacements: Map<string, string>, own?: Map<string, string>)
+```
+
+Economy replacements can target a nested child as well as the equipped effect's root.
+
+### `previewStockHead`
+
+```ts
+export function previewStockHead(text: string, hero: string, body: string, index: Pick<VpkIndex, 'has'>, hatEquipped = false): string | null
+```
+
+The hidden body_head slot supplies the face independently of a hat or hair.
+
+## src/hero-preview.ts
+
+The models of a hero as the item builder dresses it, for the 3D preview in the hero's window
+(issue #417): the body, and for each slot the item picked there, or the stock item where none is.
+
+The models come out of the game's pak01 as GLB files with the toolchain (src/model-glb.ts), the
+body with its idle clip, and go to the window with their pictures inside (src/glb-embed.ts). In
+the game a wearable follows the hero's bones by name; the window does the same (renderer
+catalog/preview3d/scene.ts). An arcana that swaps the whole hero brings its own body, as the
+build does (src/item-builder.ts itemEffectPatch, the copy that names a hero).
+
+Hands on from [`src/hero-preview-picks.ts`](#srchero-preview-picksts): `entityModel`, `wornExtras`, `wornSkin`.
+
+### `PreviewSlot`
+
+```ts
+export type PreviewSlot = { slot: string; stock: string }
+```
+
+A slot of the hero as the window names it: its id and the stock item it dresses.
+
+### `HeroModels`
+
+```ts
+export type HeroModels =
+```
+
+What the window gets: each model's bytes, or why there are none.
 
 ### `createHeroPreview`
 
@@ -6902,6 +6977,92 @@ export class Library
 
 _No description in the source._
 
+## src/loadout-material.ts
+
+Native Dota material inputs for the bundled loadout shader. PBR metalness is not a substitute
+for Source's self-illumination, rim, diffuse and specular masks.
+
+### `NativeMaterial`
+
+```ts
+export interface NativeMaterial { shader: string; floats: Record<string,number>; ints: Record<string,number>; vectors: Record<string,number[]>; textures: Record<string,string> }
+```
+
+Native shader parameters stay separate so zero-valued flags and packed masks survive export.
+
+### `readLoadoutMaterial`
+
+```ts
+export function readLoadoutMaterial(file:Buffer|null):NativeMaterial|null
+```
+
+Accept both current KV3 and older NTRO materials from the installed game.
+
+### `loadoutDescriptor`
+
+```ts
+export function loadoutDescriptor(m:NativeMaterial):Record<string,unknown>
+```
+
+Channel layout is the native hero.vfx layout used by dota-loadout.
+
+### `LOADOUT_MASKS`
+
+```ts
+export const LOADOUT_MASKS:Record<string,string>={masks:'g_tMasks1',specular:'g_tMasks2',normal:'g_tNormal',detail:'g_tDetail',fresnel:'g_tFresnelWarp',diffuseWarp:'g_tDiffuseWarp'}
+```
+
+Texture roles the loadout shader reads from GLB extras instead of glTF's PBR channels.
+
+## src/loadout-resources.ts
+
+Complete effect dependencies for the real loadout runtime, shared by hero and recolor views.
+
+### `resourcePaths`
+
+```ts
+export function resourcePaths(value:Json):string[]
+```
+
+Collect native dependency paths without allowing arbitrary files or parent-directory traversal.
+
+### `loadoutResources`
+
+```ts
+export async function loadoutResources(defs:ParticleDef[],read:(p:string)=>Buffer|null,glb:Exporter):Promise<LoadoutResources>
+```
+
+Resolve effects and their children into a local resource packet.
+
+### `loadoutModel`
+
+```ts
+export async function loadoutModel(file:string,model:string,read:(p:string)=>Buffer|null,glb:Exporter):Promise<Buffer>
+```
+
+Add native material descriptors to exported GLBs.
+
+### `loadoutModels`
+
+```ts
+export async function loadoutModels( models: { file: string; model: string }[], read: (path: string) => Buffer | null, glb: Exporter, onMissing?: (model: string) => void, ): Promise<(Buffer | null)[]>
+```
+
+Export all material masks together so VRF opens the game archive once per batch.
+
+## src/loadout-sheet.ts
+
+VTEX sprite-sheet metadata. Layout: ValveResourceFormat Texture.GetSpriteSheetData (MIT),
+https://github.com/ValveResourceFormat/ValveResourceFormat . Frame PNGs are exported by VRF.
+
+### `loadoutSheet`
+
+```ts
+export function loadoutSheet(file:Buffer|null):LoadoutResources['sheets'][string]
+```
+
+Retain authored sequence IDs and frame durations when VRF exports individual frame PNGs.
+
 ## src/lz4.ts
 
 LZ4 block format: literals and back-references, the compression Valve's KV3 writer uses
@@ -7914,7 +8075,7 @@ A gameinfo.gi that sends the toolchain to this game folder for what a lone file 
 ### `exportArgs`
 
 ```ts
-export function exportArgs(pakFile: string, out: string, files: string[], clips: string[] | 'all'): string[]
+export function exportArgs(pakFile: string, out: string, files: string[], clips: string[] | 'all', materials = false): string[]
 ```
 
 The toolchain's arguments for these models out of this archive into this folder.
@@ -8167,6 +8328,22 @@ export function keyValuesWithParticles(text: string, paths: string[]): string
 
 `text` with its particle list replaced by these systems; a text of the KV3 kind stays one.
 
+### `keyValueParticles`
+
+```ts
+export function keyValueParticles(text: string): { path: string; config: string }[]
+```
+
+Read only the authored ambient list from the model's KV3 text.
+
+### `modelParticleEntries`
+
+```ts
+export function modelParticleEntries(model: Buffer | null): ReturnType<typeof keyValueParticles>
+```
+
+Ambient systems authored on a compiled model.
+
 ### `withParticles`
 
 ```ts
@@ -8295,6 +8472,67 @@ export function withSkin(model: Buffer, skin: number): Buffer | null
 ```
 
 `model` wearing material set `skin` by default; null where it has no such set or no mesh of its own to change.
+
+## src/model-snapshot-fallback.ts
+
+Last-resort particle snapshot for assets whose .vsnap is absent from the
+installed archive (notably PA's arcana weapon surfaces). An approximation
+from the *actual* skinned GLB is preferable to dropping every particle that
+samples that snapshot. Never replace a real .vsnap or invent an arbitrary
+free-floating point in space.
+
+### `snapshotFromModel`
+
+```ts
+export function snapshotFromModel(bytes: Uint8Array, side: 'left' | 'right' | null = null, max = 192): { position: number[][]; skinning: Weight[][] } | null
+```
+
+Sample skinned geometry when the game archive has no authored particle snapshot.
+
+## src/model-style-meshes.ts
+
+Source 2 exports bodygroup alternatives as independent glTF nodes. VRF doesn't
+carry their game-side bodygroup visibility into glTF: *_copy, *_alt and the
+first-style mesh can consequently all be drawn on top of one another.
+
+This is deliberately conservative. We only hide meshes when a model contains
+an explicit pair of primary and _alt materials on separate primitives. Models
+without that pair, including unrelated copy-named components, remain untouched.
+
+### `selectStyleMeshes`
+
+```ts
+export function selectStyleMeshes(data: Uint8Array, style = 0): Buffer
+```
+
+Keep only the first or alternative authored mesh for a model with an alternate bodygroup.
+
+### `syncArcanaStyles`
+
+```ts
+export function syncArcanaStyles<T extends { model: string; style?: number; explicitBaseStyle?: boolean }>(parts: T[]): void
+```
+
+A style chosen on a set's head also controls the exported alt meshes on its siblings.
+
+### `styleFamily`
+
+```ts
+export function styleFamily(model: string): string
+```
+
+Only multi-piece items from the same authored collection inherit a selected style.
+
+### `hidePreviewOnlyMeshes`
+
+```ts
+export function hidePreviewOnlyMeshes(data: Uint8Array): Buffer
+```
+
+Exported cinematic-only geometry is not part of the normal hero idle.
+Spectre's arcana has five landing-page dissolve blades which VRF exports as
+regular GLB nodes: in the inventory they appear as huge flat white shards.
+The material name is an explicit opt-in, not a broad 'hide extra meshes' rule.
 
 ## src/mods-listing.ts
 
@@ -8859,15 +9097,25 @@ export class Overlays
 
 The font and cursor files of one install: writing them, keeping the originals, putting them back.
 
+## src/particle-snapshot.ts
+
+### `snapshotPoints`
+
+```ts
+export function snapshotPoints(file: Buffer, data: { num_particles?: unknown; attributes?: unknown; string_list?: unknown }): SnapshotPoint[]
+```
+
+Decode the attributes of a compiled snapshot without treating local points as world coordinates.
+
 ## src/particle-spec.ts
 
 The particles an item or a hero shows on its loadout, read out of the game for the 3D preview
 (issue #417), and the attachment points they hang on.
 
 A particle system (.vpcf_c) is a KV3 tree: emitters, initializers, operators, renderers, the
-control points and what drives them, and child systems. The window plays an approximation of a
-few dozen of the commonest of those (renderer/catalog/preview3d/particles.ts), so this hands it
-the tree as plain JSON, children inlined, without interpreting it. A model's attachments
+control points and what drives them, and child systems. The independent TS runtime executes
+supported operations in file order and diagnoses unsupported ones. This sends the full tree,
+child timing and snapshots rather than flattening them into one approximate sprite. A model's attachments
 (attach_sword, attach_hitloc) are in its MDAT blocks: a bone, an offset and a turn from it.
 
 Which systems: an item's "particle_create" asset modifiers for its first style, the ones the
@@ -8885,7 +9133,7 @@ A KV3 value as plain JSON, as the window gets it over IPC.
 ### `ParticleDef`
 
 ```ts
-export interface ParticleDef { path: string; tree: { [k: string]: Json }; children: ParticleDef[] }
+export interface ParticleDef { path: string; tree: { [k: string]: Json }; children: ParticleDef[]; childGroup?: number; delay?: number; endcap?: boolean; snapshot?: SnapshotPoint[]; snapshots?: Record<number, SnapshotPoint[]> }
 ```
 
 A system with its children, as the window plays it.
@@ -8893,7 +9141,7 @@ A system with its children, as the window plays it.
 ### `Attachment`
 
 ```ts
-export interface Attachment { name: string; bone: string; offset: [number, number, number]; rotation: [number, number, number, number] }
+export interface Attachment extends Partial<LoadoutAttachment> { name: string; bone: string; offset: [number, number, number]; rotation: [number, number, number, number] }
 ```
 
 An attachment point: the bone it follows, and where it sits from it in the bone's own space (Source units).
@@ -8906,10 +9154,18 @@ export function kvJson(kv: Kv3Block, n: Kv3Node | undefined): Json
 
 A KV3 node as plain JSON.
 
+### `dataTree`
+
+```ts
+export function dataTree(file: Buffer | null): { [k: string]: Json } | null
+```
+
+The DATA tree of a compiled resource, or null for one the reader cannot take.
+
 ### `particleDef`
 
 ```ts
-export function particleDef(read: (path: string) => Buffer | null, path: string, budget = { left: 24 }, depth = 0): ParticleDef | null
+export function particleDef(read: (path: string) => Buffer | null, path: string, budget = { left: 128 }, depth = 0, inherited = new Map<number, SnapshotPoint[]>()): ParticleDef | null
 ```
 
 A system and its children, at most `budget` systems in all: a system with dozens of children
@@ -8931,6 +9187,14 @@ export function itemParticles(block: string): string[]
 
 The particle_create systems an item block brings, for its first style.
 
+### `bindItemParticle`
+
+```ts
+export function bindItemParticle(def: ParticleDef, effect: UnusualEffect | undefined, configName = ''): ParticleDef
+```
+
+Overlay economy control points onto the root particle's preview configuration.
+
 ### `heroLoadoutParticles`
 
 ```ts
@@ -8946,6 +9210,14 @@ export function modelAttachments(model: Buffer | null): Attachment[]
 ```
 
 A model's attachment points.
+
+### `particleReport`
+
+```ts
+export function particleReport(def: ParticleDef): object
+```
+
+Preserve operator parameters for diagnosing missing rendering features; no texture bytes.
 
 ## src/particle-surface.ts
 
@@ -11948,6 +12220,16 @@ game refuses puts back what already moved and throws; the next call tries again.
 @returns {boolean} whether a mod moved
 ```
 
+## src/sprite-frames.ts
+
+### `spriteFrames`
+
+```ts
+export function spriteFrames(root: string, texture: string): { key: string; file: string }[]
+```
+
+VRF exports sheet sequences as name_seqN_frame.png or name_seqN.png.
+
 ## src/steam-appstate.ts
 
 What Steam's own manifest says about Dota right now (issue #427). Pressing Play while Steam is
@@ -12658,7 +12940,7 @@ the item always plays, the way an arcana's host particle works (src/arcana.ts).
 ### `EffectPoint`
 
 ```ts
-export interface EffectPoint { index: number; attachType: string; attachment: string | null }
+export interface EffectPoint { index: number; attachType: string; attachment: string | null; entity?: string }
 ```
 
 One control point of an effect, put on a named attachment of the model.

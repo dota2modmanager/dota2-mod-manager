@@ -35,6 +35,28 @@ export function keyValuesWithParticles(text: string, paths: string[]): string {
   return `${text.slice(0, open)}\t${list}\n${text.slice(open)}`;
 }
 
+/** Read only the authored ambient list from the model's KV3 text. */
+export function keyValueParticles(text: string): { path: string; config: string }[] {
+  const list = LIST.exec(text)?.[0] ?? '';
+  return [...list.matchAll(/\{([^{}]*)\}/g)].flatMap(([, row]) => {
+    const path = /\bname\s*=\s*(?:resource\s*:\s*)?"(particles\/[\w/.-]+\.vpcf)"/i.exec(row)?.[1];
+    const config = /\bconfig\s*=\s*"([^"]*)"/i.exec(row)?.[1] || '';
+    return path ? [{ path: path.toLowerCase(), config }] : [];
+  });
+}
+
+/** Ambient systems authored on a compiled model. */
+export function modelParticleEntries(model: Buffer | null): ReturnType<typeof keyValueParticles> {
+  if (!model) return [];
+  try {
+    const kv = readKv3(resourceBlock(model, 'DATA').data);
+    const text = member(member(kv.root, 'm_modelInfo'), 'm_keyValueText');
+    return text?.kind === 'string' ? keyValueParticles(text.value) : [];
+  } catch {
+    return [];
+  }
+}
+
 /**
  * `model` with these particle systems of its own, or null for a model whose block this cannot change.
  * @param paths  the systems, as `.vpcf` paths; the ones already listed are replaced

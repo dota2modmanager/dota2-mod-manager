@@ -9,6 +9,7 @@ import { buildVpk, entryPath, sharedVpkIndex, type VpkEntry } from './vpk.ts';
 import { t } from './i18n.ts';
 import type { createEffectFinder } from './effect-finder.ts';
 import type { Library } from './library.ts';
+import type { LoadoutResources } from '../renderer/api/preview3d.ts';
 import type { LibRecord } from './types.ts';
 
 /** How many effects a search hands back: past that the words are too wide. */
@@ -32,12 +33,13 @@ const nameOf = (p: string) => path.posix.basename(p, '.vpcf');
 interface Target { name: string; roots: string[]; variants: string[] }
 
 /** The service the fx:* channels call. */
-export function createEffectEdit({ gamePath, installer, library, sprites, finder, onRebuilt = () => {}, log = () => {} }: {
+export function createEffectEdit({ gamePath, installer, library, sprites, resources, finder, onRebuilt = () => {}, log = () => {} }: {
   gamePath: () => string | null | undefined;
   installer: PakInstaller;
   library: Pick<Library, 'list' | 'add' | 'update'>;
   /** the textures of a system and its children, as the window takes them */
   sprites: (defs: ParticleDef[]) => Promise<Record<string, Uint8Array>>;
+  resources?: (defs: ParticleDef[]) => Promise<LoadoutResources>;
   /** an ability's effects, read off the game (src/effect-finder.ts) */
   finder?: Pick<ReturnType<typeof createEffectFinder>, 'ability' | 'variants'>;
   onRebuilt?: (id: string) => void;
@@ -134,7 +136,7 @@ export function createEffectEdit({ gamePath, installer, library, sprites, finder
       if (!defs.length) throw new Error(t('Не удалось прочитать эффект'));
       const seen = new Set<string>();
       const systems = target.roots.flatMap((r) => systemsOf((p) => ix.read(p), r)).filter((s) => !seen.has(s.path) && seen.add(s.path));
-      return { path: effect, name: target.name, edits, defs, sprites: await sprites(defs), systems, variants: target.variants.length, items: !!made?.items };
+      return { path: effect, name: target.name, edits, defs, sprites: await sprites(defs), ...(resources ? { resources: await resources(defs) } : {}), systems, variants: target.variants.length, items: !!made?.items };
     },
 
     /** How an effect plays with these changes. */

@@ -1,296 +1,136 @@
-/* The 3D preview's scene (issue #417): the hero playing its loadout, each item on it, lit and
- * framed as the game's loadout shows a hero (stage.ts) in the game's own hero shader (hero-material.ts).
- *
- * The models come from the main process as GLB bytes with their pictures inside (src/hero-preview.ts).
- * A wearable follows the hero's bones by name, as in the game (bonemerge.ts); the scene does that
- * each frame.
- *
- * Dragging sideways turns the hero, as in the game, and the lights stay; the camera is free to move
- * around that (camera.ts). The window can play any of the body's other clips: they come apart from
- * the model, once, the first time one is asked for (Preview3d.tsx).
- *
- * three.js is about 640 KB, so this file is loaded with import() when the preview opens and the
- * window pays nothing for it until then. */
-import * as THREE from 'three';
-import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { boneKey, bonesByName, linkBones } from './bonemerge.ts';
-import { cameraAt, clampTilt, keyMove, stepZoom, viewControls } from './camera.ts';
-import { useHeroShader } from './hero-material.ts';
-import { backdrop, buildStage, heroLights, LOADOUT_FOV, PLAIN_STAGE, widthDistance, worldLights } from './stage.ts';
-import type { Attachment, HeroStage, ParticleDef } from '../../api/preview3d.ts';
-import { particleSpec } from './particle-def.ts';
-import { playParticles, spriteTextures, type Carrier } from './particles.ts';
-import { motionPlayer, type PlayMotion } from './motion-player.ts';
-import { createBloom } from './bloom.ts';
+/* Desktop adapter for the desktop preview's patched dota-loadout. Rendering, simulation, skinning,
+ * materials and HDR stay in that library; this module owns IPC data and React lifecycle only. */
+import { Mesh, Vector3 } from 'three';
+import { HeroViewer } from 'dota-loadout';
+import { SceneSource, readGlb } from 'dota-loadout/studio';
+import type { Attachment, HeroStage, ParticleDef, LoadoutResources } from '../../api/preview3d.ts';
+import type { StudioView } from './studio-settings.ts';
+import { loadoutTextures } from './loadout-textures.ts';
+import { loadoutAttachments, loadoutEffects, ownerOf, visibleGlb } from './loadout-source.ts';
+import { loadoutControls, loadoutView, restoreLoadoutView } from './loadout-controls.ts';
+import { loadoutParticleBounds } from './loadout-bounds.ts';
 
-/** Up to about 1500 vertices of every mesh under `root`, where the pose puts them in the world. */
-function posedPoints(root: THREE.Object3D): THREE.Vector3[] {
-  const out: THREE.Vector3[] = [];
-  root.traverse((o) => {
-    const mesh = o as THREE.Mesh;
-    const pos = mesh.isMesh ? mesh.geometry.getAttribute('position') : null;
-    if (!pos || !mesh.visible) return;
-    const step = Math.max(1, Math.floor(pos.count / 1500));
-    for (let i = 0; i < pos.count; i += step) out.push(mesh.getVertexPosition(i, new THREE.Vector3()).applyMatrix4(mesh.matrixWorld));
-  });
-  return out;
-}
-
-/**
- * The box most of the points are in: a few stray vertices (a bone the hero lacks, a part hidden far
- * off) put the hero in a corner of a frame sized for them.
- */
-function spread(points: THREE.Vector3[], cut = 0.001): THREE.Box3 {
-  const box = new THREE.Box3();
-  if (!points.length) return box.setFromCenterAndSize(new THREE.Vector3(), new THREE.Vector3(1, 1, 1));
-  const at = (axis: 'x' | 'y' | 'z') => {
-    const v = points.map((p) => p[axis]).sort((a, b) => a - b);
-    const lo = Math.floor(v.length * cut);
-    return [v[lo], v[Math.min(v.length - 1, v.length - 1 - lo)]];
-  };
-  const [x, y, z] = [at('x'), at('y'), at('z')];
-  return box.set(new THREE.Vector3(x[0], y[0], z[0]), new THREE.Vector3(x[1], y[1], z[1]));
-}
-
-/** A random point on the surface of the meshes under `root`, where the pose puts it now. */
-function surfaceOf(root: THREE.Object3D): () => THREE.Vector3 | null {
-  const meshes: THREE.Mesh[] = [];
-  root.traverse((o) => { if ((o as THREE.Mesh).isMesh && (o as THREE.Mesh).geometry.getAttribute('position')) meshes.push(o as THREE.Mesh); });
-  return () => {
-    const m = meshes[Math.floor(Math.random() * meshes.length)];
-    if (!m) return null;
-    const i = Math.floor(Math.random() * m.geometry.getAttribute('position').count);
-    return m.getVertexPosition(i, new THREE.Vector3()).applyMatrix4(m.matrixWorld);
-  };
-}
-
-/** The meshes of these names out of sight: a body group an item turned off. */
-function hideMeshes(root: THREE.Object3D, names: string[]): void {
-  if (!names.length) return;
-  root.traverse((o) => { if ((o as THREE.Mesh).isMesh && names.some((n) => o.name.toLowerCase().includes(n))) o.visible = false; });
-}
-
-/** The scene once it stands in the window. */
 export interface HeroScene {
-  /**
-   * Play this clip, out of the body's own or out of the file `motions` brings; null for the loadout. False when neither has it.
-   * @param onEnd  given, the clip plays once and the hero goes back to the loadout, then this is called
-   */
-  play: PlayMotion;
-  /** The camera and the hero's turn back where they started. */
-  resetView: () => void;
-  dispose: () => void;
+  play:(name:string|null,load?:()=>Promise<Uint8Array|null>,onEnd?:()=>void)=>Promise<boolean>;
+  resetView:()=>void; view:()=>StudioView; dispose:()=>void;
+  effects:(defs:{part:number;def:ParticleDef}[])=>Promise<void>;
+  capture:()=>string;
+  suspend:()=>void;
+}
+export interface SceneOptions {
+  signal?:AbortSignal;viewState?:StudioView;still?:boolean;label?:string;clip?:string|null;
+  heroModel?:string; stage?:HeroStage;pedestal?:Uint8Array|null;attachments?:{body:Attachment[];parts:Attachment[][]};
+  particles?:{part:number;def:ParticleDef}[];sprites?:Record<string,Uint8Array>;resources?:LoadoutResources;
+  hidden?:{body:string[];parts:string[][]};isolated?:boolean;onWarnings?:(warnings:string[])=>void;
 }
 
-/**
- * Put the scene in `host`.
- * @param label  what a screen reader calls the stage
- * @param clip  the body's loadout clip (src/model-loadout.ts); without it, its idle
- * @param stage  how the game stages the hero (src/hero-showcase.ts)
- * @param pedestal  the model it stands on, if its showcase names one
- * @param particles  the systems on the body (part -1) or on a part, by its place in `parts`; not played when `still`
- * @param sprites  their textures, PNG bytes by the path they name
- * @param hidden  the meshes the items worn turn off, by name
- */
-export async function mountScene(host: HTMLElement, body: Uint8Array, parts: Uint8Array[], {
-  still = false, label = '', clip = null as string | null, stage = PLAIN_STAGE as HeroStage, pedestal = null as Uint8Array | null,
-  attachments = { body: [] as Attachment[], parts: [] as Attachment[][] }, particles = [] as { part: number; def: ParticleDef }[],
-  sprites = {} as Record<string, Uint8Array>, hidden = { body: [] as string[], parts: [] as string[][] },
-} = {}): Promise<HeroScene> {
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  host.append(renderer.domElement);
+/** A window owns one WebGL context; scene data can be replaced inside it. */
+export function createSceneViewport(host: HTMLElement, label = '') {
+  const canvas = document.createElement('canvas');
+  canvas.setAttribute('aria-label', label);
+  canvas.style.cssText = 'width:100%;height:100%;display:block;touch-action:none';
+  host.append(canvas);
+  const viewport = {
+    afterUpdate: () => {},
+    viewer: new HeroViewer(canvas, {
+      assets: 'file:///unused-local-assets/', controls: true, wheel: 'zoom',
+      framing: 'full', textureScale: 1, bloom: .35, softParticles: true,
+      onFrame: dt => controls.tick(dt),
+      onAfterUpdate: () => viewport.afterUpdate(),
+    }),
+    canvas,
+    dispose() {
+      controls.dispose();
+      viewport.viewer.dispose();
+      canvas.remove();
+      host.style.removeProperty('--stage-tint');
+    },
+  };
+  const controls = loadoutControls(viewport.viewer);
+  return viewport;
+}
 
-  const scene = new THREE.Scene();
-  const lights = heroLights(stage);
-  const world = worldLights(stage);
-  const behind = backdrop(stage);
-  if (behind) host.style.setProperty('--stage-tint', behind);
-  const loader = new GLTFLoader();
-  const parse = (bytes: Uint8Array): Promise<GLTF> => loader.parseAsync(bytes.slice().buffer, '');
-  const hero = await parse(body);
-  await useHeroShader(hero, lights);
-  const table = new THREE.Group();
-  table.add(hero.scene);
-  table.scale.setScalar(stage.scale);
-  scene.add(table);
-  if (pedestal) {
-    try {
-      const stand = await parse(pedestal);
-      await useHeroShader(stand, lights);
-      stand.scene.traverse((o) => { if ((o as THREE.Mesh).isMesh) o.receiveShadow = true; });
-      scene.add(stand.scene);
-    } catch { /* no pedestal: the floor alone */ }
-  }
-  const heroBones = bonesByName(hero.scene);
-  hideMeshes(hero.scene, hidden.body);
+export type SceneViewport = ReturnType<typeof createSceneViewport>;
 
-  const worn: { root: THREE.Object3D; bones: { bone: THREE.Bone; to: THREE.Bone | null }[]; own: boolean }[] = [];
-  // a clip of a wearable's own moves the bones the hero lacks: a cape, a tail, a mount's head
-  const wornClips: THREE.AnimationMixer[] = [];
-  const carriers: (Carrier | null)[] = [];
-  for (const [i, bytes] of parts.entries()) {
-    try {
-      const g = await parse(bytes);
-      await useHeroShader(g, lights);
-      table.add(g.scene);
-      const bones = linkBones(g.scene, heroBones);
-      hideMeshes(g.scene, hidden.parts[i] || []);
-      const own = g.animations.length > 0;
-      if (own) {
-        const m = new THREE.AnimationMixer(g.scene);
-        m.clipAction(g.animations[0]).play();
-        wornClips.push(m);
-      }
-      worn.push({ root: g.scene, bones, own });
-      carriers[i] = { bones: new Map(bones.map((b) => [boneKey(b.bone.name), b.bone])), attachments: attachments.parts[i] || [], surface: surfaceOf(g.scene) };
-    } catch { carriers[i] = null; /* one model the loader cannot read: the rest still show */ }
-  }
-  table.traverse((o) => { if ((o as THREE.Mesh).isMesh) { o.castShadow = true; o.frustumCulled = false; } });
-
-  const mixer = new THREE.AnimationMixer(hero.scene);
-  const clips = motionPlayer(mixer, hero.animations, clip, async (bytes) => (await parse(bytes)).animations);
-
-  const syncWorn = () => {
-    table.updateMatrixWorld(true);
-    for (const w of worn) {
-      for (const { bone, to } of w.bones) {
-        if (to) bone.matrixWorld.copy(to.matrixWorld);
-        else if (bone.parent) {
-          if (w.own) bone.updateMatrix();
-          bone.matrixWorld.multiplyMatrices(bone.parent.matrixWorld, bone.matrix);
-        }
+export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Array[],options:SceneOptions={}, sharedViewport?:SceneViewport):Promise<HeroScene>{
+  const {signal}=options;signal?.throwIfAborted();
+  const source = new SceneSource();
+  const viewport = sharedViewport ?? createSceneViewport(host, options.label);
+  const { canvas, viewer: live } = viewport;
+  let disposed=false,loadedMotions=false,request=0,previous='',end:undefined|(()=>void),currentDefs=options.particles??[];
+  const afterUpdate = () => {
+    const playing = live.hero?.playing ?? '';
+    if (end && previous && playing !== previous) { const done = end; end = undefined; done(); }
+    previous = playing;
+  };
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    request++;
+    if (viewport.afterUpdate === afterUpdate) viewport.afterUpdate = () => {};
+    if (!sharedViewport) viewport.dispose();
+    source.dispose();
+    signal?.removeEventListener('abort', dispose);
+  };
+  const check=()=>{signal?.throwIfAborted();if(disposed)throw new DOMException('Scene disposed','AbortError');};
+  signal?.addEventListener('abort',dispose,{once:true});
+  try {
+    source.addGlb(visibleGlb(body,options.hidden?.body??[]),{key:'hero',owner:'hero'});
+    if (options.heroModel === 'models/heroes/wisp/wisp.vmdl' &&
+      options.particles?.some(({ def }) => /\/wisp_ambient\.vpcf$/i.test(def.path))) {
+      // Io's native ambient draws the core. Preserve the proxy for bounds and
+      // particle surface sampling, but do not render it as opaque geometry.
+      for (const [id, material] of source.materialMetadata) {
+        if (material.owner === 'hero' && material.name === 'io_color') source.manifest.materials[id].cloak = 1;
       }
     }
-  };
-  // framed on everything worn through the whole loadout, as the game's camera never moves: the
-  // skinned vertices as each pose has them, a mount and a raised sword included
-  const points: THREE.Vector3[] = [];
-  const samples = clips.home ? 5 : 1;
-  for (let i = 0; i < samples; i++) {
-    mixer.setTime(clips.home ? (clips.home.duration * i) / samples : 0);
-    syncWorn();
-    points.push(...posedPoints(table));
-  }
-  mixer.setTime(0);
-  const box = spread(points);
-  const size = box.getSize(new THREE.Vector3());
-  const centre = box.getCenter(new THREE.Vector3());
-  buildStage(scene, box, stage);
-
-  // the game's loadout camera, level and straight at the hero; stepped back only for a hero wider
-  // than the stage, and toward the hero by the wheel
-  const fov = LOADOUT_FOV;
-  const camera = new THREE.PerspectiveCamera(fov, 1, 0.05, 400);
-  const spot = new THREE.Vector3(...stage.camera);
-  const home = new THREE.Vector3(0, spot.y, 0);
-  const target = home.clone();
-  const view = new THREE.Vector3(spot.x, 0, spot.z).normalize();
-  const side = new THREE.Vector3().crossVectors(view, new THREE.Vector3(0, 1, 0)).normalize();
-  const base = Math.hypot(spot.x, spot.z);
-  let zoom = 1;
-  let tilt = 0;
-  const distance = () => Math.max(base, centre.dot(view) + widthDistance(size, camera.aspect, fov, side, centre.dot(side))) * zoom;
-  const place = () => {
-    const at = cameraAt(target, view, tilt, distance());
-    camera.position.set(at.x, at.y, at.z);
-    camera.lookAt(target);
-    camera.updateProjectionMatrix();
-  };
-  /** The camera's point moved, along the camera's right, its flat forward and up; it stays near the hero. */
-  const move = (right: number, forward: number, up: number) => {
-    target.addScaledVector(side, -right).addScaledVector(view, -forward);
-    target.y += up;
-    target.sub(home).clampLength(0, base).add(home);
-    place();
-  };
-  // the hero model's root node: its matrix takes Source's axes and inches to the scene's
-  const src = hero.scene.children.find((o) => !(o as THREE.Mesh).isMesh && o.matrix.getMaxScaleOnAxis() < 0.5) || hero.scene;
-  const heroCarrier: Carrier = { bones: heroBones, attachments: attachments.body, surface: surfaceOf(hero.scene) };
-  const textures = still ? new Map<string, THREE.Texture>() : await spriteTextures(sprites);
-  const fx = still ? null : playParticles(scene, particles.flatMap(({ part, def }) => {
-    const self = part < 0 ? heroCarrier : carriers[part];
-    return self ? [{ spec: particleSpec(def), self }] : [];
-  }), heroCarrier, src, textures);
-  // a hero's loadout effect plays once, as the game plays it when he comes out, however long his
-  // animation goes round: started over it reads as a bug, a burst or a snowfall with no end
-
-  renderer.domElement.tabIndex = 0;
-  renderer.domElement.setAttribute('aria-label', label);
-  const controls = viewControls(renderer.domElement, {
-    onTilt: (d) => { tilt = clampTilt(tilt + d); place(); },
-    onPan: (dx, dy) => {
-      const perPixel = (2 * distance() * Math.tan(THREE.MathUtils.degToRad(fov / 2))) / (host.clientHeight || 1);
-      move(-dx * perPixel, 0, dy * perPixel);
-    },
-    onZoom: (dy) => { zoom = stepZoom(zoom, dy); place(); },
-    onReset: () => { zoom = 1; tilt = 0; target.copy(home); place(); },
-  });
-
-  const glow = createBloom(renderer);
-  const fit = () => {
-    const w = host.clientWidth || 1;
-    const h = host.clientHeight || 1;
-    renderer.setSize(w, h, false);
-    glow.resize();
-    camera.aspect = w / h;
-    place();
-  };
-  const resize = new ResizeObserver(fit);
-  resize.observe(host);
-  fit();
-
-  const timer = new THREE.Timer();
-  let frame = 0;
-  const tick = (now?: number) => {
-    frame = requestAnimationFrame(tick);
-    timer.update(now);
-    const dt = still ? 0 : timer.getDelta();
-    mixer.update(dt);
-    for (const m of wornClips) m.update(dt);
-    table.rotation.y = controls.step();
-    const go = keyMove(controls.keys, timer.getDelta(), distance());
-    if (go.right || go.forward || go.up) move(go.right, go.forward, go.up);
-    syncWorn();
-    fx?.update(dt, renderer.domElement.height / (2 * Math.tan(THREE.MathUtils.degToRad(fov / 2))));
-    // the hero shader reads its lights in view space; the camera is still, but its matrix is cheap
-    lights.key.copy(world.key).transformDirection(camera.matrixWorldInverse);
-    lights.fill.copy(world.fill).transformDirection(camera.matrixWorldInverse);
-    lights.up.set(0, 1, 0).transformDirection(camera.matrixWorldInverse);
-    glow.render(scene, camera);
-  };
-  tick();
-
-  const dispose = () => {
-    cancelAnimationFrame(frame);
-    timer.dispose();
-    resize.disconnect();
-    controls.dispose();
-    clips.dispose();
-    glow.dispose();
-    mixer.stopAllAction();
-    for (const m of wornClips) m.stopAllAction();
-    fx?.dispose();
-    for (const t of textures.values()) t.dispose();
-    scene.traverse((o) => {
-      const mesh = o as THREE.Mesh;
-      mesh.geometry?.dispose();
-      for (const m of ([] as THREE.Material[]).concat(mesh.material || [])) {
-        const uniforms = (m as THREE.ShaderMaterial).uniforms || {};
-        for (const v of [...Object.values(m), ...Object.values(uniforms).map((u) => u?.value)]) {
-          if ((v as THREE.Texture)?.isTexture) (v as THREE.Texture).dispose();
+    source.manifest.attachments.hero=loadoutAttachments(options.attachments?.body??[]);
+    parts.forEach((part,i)=>{const owner=ownerOf(i);source.addGlb(visibleGlb(part,options.hidden?.parts[i]??[]),{key:owner,owner,itemId:owner});source.manifest.attachments[owner]=loadoutAttachments(options.attachments?.parts[i]??[]);});
+    if(!options.isolated){const response=await fetch(new URL('./studio-pedestal.glb',import.meta.url),{signal});if(!response.ok)throw Error('Cannot load local pedestal');const pedestal=new Uint8Array(await response.arrayBuffer());check();source.addGlb(pedestal,{key:'pedestal',owner:'pedestal'});source.manifest.studioPedestal=true;}
+    if(options.clip&&source.manifest.animations)source.manifest.animations.idle=options.clip;
+    if(options.stage?.background)host.style.setProperty('--stage-tint',`rgb(${options.stage.background.map(x=>Math.round(x*255)).join(',')})`);
+    const textures=await loadoutTextures(source,options.sprites??{},options.resources);check();
+    let queue:Promise<void>=Promise.resolve();
+    const applyEffects=async(defs:{part:number;def:ParticleDef}[])=>{
+      check();await live.hero?.studioEffects({});check();source.clearEffects();
+      const patch=loadoutEffects(source,defs,textures,options.resources);
+      await live.hero?.studioEffects(patch);check();
+      const warnings=[...source.warnings,...patch.warnings,...(live.hero?.lib.unsupported??[])];
+      options.onWarnings?.([...new Set(warnings)]);
+      if(warnings.length)console.warn('3D preview: resource diagnostics',warnings);
+    };
+    const load=async()=>{
+      check();
+      await live.load(source.source());check();
+      if(options.isolated)live.hero?.turntable.traverse(object=>{if(object instanceof Mesh)for(const material of Array.isArray(object.material)?object.material:[object.material]){material.colorWrite=false;material.depthWrite=false;object.castShadow=false;}});
+      await applyEffects(currentDefs);check();live.paused=!!options.still;
+    };
+    await load();
+    if(options.isolated&&live.hero){
+      for(let i=0;i<90;i++)live.hero.update(1/60,live.camera);
+      const box=loadoutParticleBounds(live.hero.lib.group);
+      if(!box.isEmpty()&&box.getSize(new Vector3()).length()<500){live.view.center.copy(box.getCenter(new Vector3()));live.view.size=box.getSize(new Vector3()).max(new Vector3(1,1,1));live.place();}
+      await applyEffects(currentDefs);
+    }
+    const initial=loadoutView(live);if(options.viewState)restoreLoadoutView(live,options.viewState);
+    viewport.afterUpdate = afterUpdate;
+    return{
+      suspend:()=>{request++;end=undefined;},
+      dispose,view:()=>loadoutView(live),resetView:()=>restoreLoadoutView(live,initial),
+      capture:()=>{live.frame();return canvas.toDataURL('image/webp',.9);},
+      effects(defs){currentDefs=defs;const ticket=++request;queue=queue.catch(()=>{}).then(async()=>{if(ticket===request)await applyEffects(defs);});return queue;},
+      async play(name,fetchMotions,onEnd){
+        const ticket=++request;end=undefined;const chosen=name??source.manifest.animations?.idle??'';
+        if(!live.animations.some(a=>a.name===chosen)&&!loadedMotions&&fetchMotions){
+          const bytes=await fetchMotions();check();if(ticket!==request||!bytes)return false;
+          const view=loadoutView(live);source.addGlb(bytes,{key:'animations',owner:'animation-source'});
+          const list=source.manifest.animations?.list??[];
+          for(const animation of readGlb(bytes).json.animations??[])if(animation.name&&!list.some(a=>a.name===animation.name))list.push({name:animation.name,loop:/idle|walk|run|loadout/i.test(animation.name)});
+          source.manifest.animations={...source.manifest.animations,list};loadedMotions=true;await load();check();if(ticket!==request)return false;restoreLoadoutView(live,view);
         }
-        m.dispose();
-      }
-    });
-    renderer.dispose();
-    renderer.domElement.remove();
-    host.style.removeProperty('--stage-tint');
-  };
-  return { play: clips.play, resetView: controls.reset, dispose };
+        if(!live.animations.some(a=>a.name===chosen))return false;
+        live.play(chosen);previous=live.hero?.playing??chosen;end=onEnd;return true;
+      },
+    };
+  }catch(error){dispose();throw error;}
 }

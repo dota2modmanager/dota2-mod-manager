@@ -7,6 +7,7 @@
   "main": "src/main.ts",
   "scripts": {
     "start": "node tools/ui-build.mjs && electron .",
+    "test:preview": "node --test \"test/loadout-*.test.ts\" \"test/loadout-*.test.js\" test/hero-preview.test.ts test/particle-snapshot.test.ts test/sprite-frames.test.ts test/sprite-texture-selection.test.js \"test/tinker-cosmic-*.test.js\"",
     "dev": "node tools/dev.mjs",
     "build:ui": "node tools/ui-build.mjs --force",
     "dist": "electron-builder --win",
@@ -62,7 +63,8 @@
     "react-dom": "^19.3.1",
     "three": "^0.187.0",
     "typescript": "^5.9.3",
-    "vite": "^8.3.5"
+    "vite": "^8.3.5",
+    "dota-loadout": "file:vendor/dota-loadout"
   },
   "dependencies": {
     "adm-zip": "^0.6.1",
@@ -86,7 +88,8 @@
       "CHANGELOG.md",
       "CHANGELOG.ru.md",
       "LICENSE",
-      "NOTICE"
+      "NOTICE",
+      "vendor/dota-loadout/**/*"
     ],
     "beforePack": "./tools/before-pack.cjs",
     "protocols": [
