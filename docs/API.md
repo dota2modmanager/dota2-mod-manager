@@ -95,11 +95,13 @@ the code, not in this page.
 | [`src/installer-write.ts`](#srcinstaller-writets) | Writing a mod into the game folder and taking it out again (src/installer.ts is the door): a |
 | [`src/installer.ts`](#srcinstallerts) | The installer: everything that writes a mod into the game folder or takes it out again. The |
 | [`src/ipc.ts`](#srcipcts) | Every IPC module, registered in one place over the context src/main.ts builds. A new |
+| [`src/item-builder-ability-fx.ts`](#srcitem-builder-ability-fxts) | An item's ability effects without its model, as the game's loadout wears them. |
 | [`src/item-builder-assets.ts`](#srcitem-builder-assetsts) | What an item builder pick needs beyond its block in items_game: the game's files it puts under |
 | [`src/item-builder-details.ts`](#srcitem-builder-detailsts) | What the item builder's window shows beside the items, out of the game's own files: each hero's |
 | [`src/item-builder-donor.ts`](#srcitem-builder-donorts) | Another item's effect on the one worn (issue #383): a hat the user likes, with the particles of |
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
 | [`src/item-builder-everyone.ts`](#srcitem-builder-everyonets) | Everybody playing a hero wears the user's look for it, not only the user. |
+| [`src/item-builder-fx-patch.ts`](#srcitem-builder-fx-patchts) | What a pick in an ability effects slot writes (src/item-builder-ability-fx.ts says what the slots |
 | [`src/item-builder-personas.ts`](#srcitem-builder-personasts) | Personas in the item builder: a hero's second look, with slots and items of its own. |
 | [`src/item-builder-refits.ts`](#srcitem-builder-refitsts) | Refits: an item's model made again to fit a body another item gives the hero. Faceless Void's |
 | [`src/item-builder-sets.ts`](#srcitem-builder-setsts) | The item builder's sets: what a set of the game's puts on, and what the game says about it |
@@ -4980,6 +4982,137 @@ export function registerIpc(ctx: AppContext): void
 
 Register every channel the window can call.
 
+## src/item-builder-ability-fx.ts
+
+An item's ability effects without its model, as the game's loadout wears them.
+
+Every hero has hidden loadout slots, ability_effects_1 to ability_effects_9, one per ability
+that has effects to change: the hero's script names the ability of each (Earthshaker's
+ability_effects_2 is earthshaker_enchant_totem). An item that can go in one says so in its
+static attributes, `"can_equip_as_ability_effects" "2"`, once for each slot it fits, and marks
+the modifiers that slot takes, `"apply_when_equipped_in_ability_effects_slot" "2"`. Worn there,
+the item gives those modifiers and nothing else: Bracers of the Cavern Luminar's Enchant Totem
+on the Intergalactic Orbliterator's arms. Totem of Deep Magma fits all four of Earthshaker's.
+
+The slot's stock item is one for all heroes, "All Heroes' Default Ability Effects 2", with no
+model and no visuals. A pick writes the marked modifiers into it (src/item-builder-fx-patch.ts),
+so the picks of every hero in slot 2 share one block: mergeFxPatches joins them. Their
+particles, icons and sounds go under the plain paths as any pick's do (src/item-builder-assets.ts),
+ahead of the other picks', as the slot wins over the item worn in the game.
+
+The persona slots (ability_effects_1_persona_1) and the shared asset_modifiers sets, which the
+game hands out per account and no item names, are not offered.
+
+### `FX_SLOT`
+
+```ts
+export const FX_SLOT = /^ability_effects_(\d+)$/
+```
+
+A hero's ability effects slot, by its name in the table.
+
+### `fxSlotOf`
+
+```ts
+export function fxSlotOf(slot: unknown): number
+```
+
+The number of an ability effects slot, from its name or a builder slot's id (item:earthshaker:ability_effects_2); 0 for any other.
+
+### `fxSlotsOf`
+
+```ts
+export function fxSlotsOf(block: string): number[]
+```
+
+The slots an item block says it can be worn in as ability effects, in either form the table writes the attribute.
+
+### `fxVisuals`
+
+```ts
+export function fxVisuals(visuals: string, n: number): string
+```
+
+The visuals with only the modifiers ability effects slot `n` takes, in the first style. The pick
+is made the first style first (src/item-builder-styles.ts withStyle), so a style of 0, of none,
+or Valve's "default" on Totem of Deep Magma, is the one worn; its mark goes, as the stock item
+has no styles to choose from.
+
+### `hasModifiers`
+
+```ts
+export const hasModifiers = (visuals: string): boolean => /"asset_modifier\d*"/i.test(visuals)
+```
+
+Whether a visuals block has a modifier left in it.
+
+### `fxTarget`
+
+```ts
+export function fxTarget(items: SchemaItem[], n: number): SchemaItem | null
+```
+
+The stock item of ability effects slot `n`: the one for all heroes, with no persona in its slot.
+
+### `fxSlotLabel`
+
+```ts
+export const fxSlotLabel = (n: number): string => t('Эффекты способности {0}', n)
+```
+
+A slot's name for an ability effects slot, before the hero's script names its ability (src/schema-cosmetics.ts).
+
+### `fxAbilityLabel`
+
+```ts
+export const fxAbilityLabel = (ability: string): string => t('Эффекты: {0}', ability)
+```
+
+A slot's name once its ability is known: "Эффекты: Enchant Totem".
+
+### `fxSlots`
+
+```ts
+export function fxSlots(text: string, items: SchemaItem[], heroesOf: (item: SchemaItem) => string[], slotOf: (hero: string, equipSlot: string, targetId: string) => ItemSlot): ItemSlot[]
+```
+
+The builder's ability effects slots: one for each hero and slot some item of his fits, with the
+items that fit it. Whether the hero has that slot is his script's to say (src/schema-cosmetics.ts).
+
+```
+@param slotOf  the builder's slot fields for a hero and a slot name (src/item-builder-slots.ts)
+@param heroesOf  an item's heroes, npc_dota_hero_*
+```
+
+### `namedFxSlots`
+
+```ts
+export function namedFxSlots<S extends Pick<ItemSlot, 'abilityFx' | 'heroIds' | 'equipSlot' | 'slotLabel' | 'label' | 'heroLabel'>>(slots: S[], read: (file: string) => Buffer | null, lang: string): S[]
+```
+
+The ability effects slots named by their ability, as the hero's script and the game's text say
+("Эффекты: Enchant Totem"), and without those of a hero whose script has no such slot. Without
+the game's files they keep their numbers.
+
+```
+@param read  a file of pak01
+@param lang  the app's language
+```
+
+### `mergeFxPatches`
+
+```ts
+export function mergeFxPatches(list: SchemaPatch[], isFx: (p: SchemaPatch) => boolean): SchemaPatch[]
+```
+
+The patches with each ability effects slot's picks joined into one: the first pick's block with
+every other one's modifiers added, and all their files, the first pick's ahead. Two blocks of
+one id would leave the last alone in the table (src/schema-merge.ts), and with it one hero's effects.
+
+```
+@param isFx  whether a patch is an ability effects pick
+```
+
 ## src/item-builder-assets.ts
 
 What an item builder pick needs beyond its block in items_game: the game's files it puts under
@@ -5365,6 +5498,27 @@ dressed. Merged after the build's own, whose files and blocks win where both nam
 @param heroes   only these, as items_game names them without npc_dota_hero_; none: all of them
 ```
 
+## src/item-builder-fx-patch.ts
+
+What a pick in an ability effects slot writes (src/item-builder-ability-fx.ts says what the slots
+are): the stock item of the slot, with the marked modifiers of the item picked, and the files
+they need under the plain paths. The item's model, and every modifier the slot does not take,
+stay out: that is what the slot is for.
+
+### `abilityFxPatch`
+
+```ts
+export function abilityFxPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, n: number, summon?: SummonModels): { id: string; block: string; own: null; added: string[]; unplaced: false } & ItemAssets
+```
+
+The block of ability effects slot `n` with what `itemId` gives it, in the style its key names.
+Shaped as item-builder.ts itemEffectPatch answers, with no model of its own.
+
+```
+@param summon  the plain models of the hero's summons, for an effect that swaps one (Techies' mines)
+@throws when the item or the slot's stock item is not in the table, or the item gives the slot nothing
+```
+
 ## src/item-builder-personas.ts
 
 Personas in the item builder: a hero's second look, with slots and items of its own.
@@ -5600,7 +5754,7 @@ is the most looks any of its pieces has, 1 for none.
 ### `itemSets`
 
 ```ts
-export function itemSets(text: string, slots: Pick<ItemSlot, 'slot' | 'slotLabel' | 'options' | 'persona'>[] = itemSlots(text)): ItemSet[]
+export function itemSets(text: string, slots: Pick<ItemSlot, 'slot' | 'slotLabel' | 'options' | 'persona' | 'abilityFx'>[] = itemSlots(text)): ItemSet[]
 ```
 
 A hero's sets as the builder puts them on: every wearable of the set that has a slot in the
@@ -5908,6 +6062,14 @@ Hands on from [`src/item-builder-effects.ts`](#srcitem-builder-effectsts): `item
 
 Hands on from [`src/item-builder-assets.ts`](#srcitem-builder-assetsts): `gameAssetEntries`, `summonModels`, `SummonModels`.
 
+### `setVisualsBlock`
+
+```ts
+export function setVisualsBlock(blockText: string, visuals: string): string
+```
+
+An item block with these visuals in place of its own, or added at its end where it has none.
+
 ### `effectKey`
 
 ```ts
@@ -5950,6 +6112,34 @@ export function defaultItemForWearable(text: string, sourceId: string | number):
 ```
 
 The stock default_item that matches a wearable by slot and by the hero(es) that can equip it.
+
+### `withoutFileSwaps`
+
+```ts
+export function withoutFileSwaps(visuals: string, units: Set<string>, stock: Set<string>): string
+```
+
+The visuals without the model swaps the built files already make: the hero's own model swapped
+for an arcana's, and a stock item's model for another, where the pick puts that model under the
+plain path, and a hero's other form swapped for the item's (hero_model_change) the same way, and
+a summon's model put under the unit's. Each left in names a model only the paid item loads.
+
+The game wears an item's model only once it is loaded, and what a match loads is what the
+server's own item table names: the stock paths. Joining a match the client loaded the paid
+models with the hero, so the swaps worked; after a reconnect it did not, and the console said
+"Attempting to set nonresident model 'models/items/earthshaker/es_cosmic/es_cosmic_totem.vmdl'
+for item Def 459", the totem an ERROR model and the rest the plain hero (2026-10-18). Under the
+stock paths the same files are loaded either way.
+
+A persona's switch to its own loadout ("persona") goes too: the persona is worn as the plain
+hero (src/item-builder-personas.ts), and switched it would put on the persona's stock items,
+which are not where the picks for its slots are.
+
+```
+@param units  the heroes whose own model the pick puts under their path, and the summons whose
+model it puts under the unit's
+@param stock  the stock models the pick puts another model under, as normalizeAssetPath writes them
+```
 
 ### `itemEffectPatch`
 

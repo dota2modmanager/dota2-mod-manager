@@ -284,6 +284,9 @@ const EN = {
   'Картинка мода': "The mod's picture",
   'Картинки и видео': 'Pictures and videos',
   'Сохранить мод для каталога': 'Save the mod for the catalog',
+  'Эффекты способности {0}': 'Ability effects {0}',
+  'Эффекты: {0}': 'Effects: {0}',
+  'У предмета {0} нет эффектов для этой способности': 'Item {0} has no effects for this ability',
 } satisfies Record<string, string>;
 
 export default EN;

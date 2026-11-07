@@ -17,6 +17,7 @@ import type { LibRecord } from './types.ts';
 import type { ItemSet } from './item-builder.ts';
 import { displaced, isSelectorSlot } from './item-builder-personas.ts';
 import { offeredUnusual } from './item-builder-unusual.ts';
+import { fxSlotOf, namedFxSlots } from './item-builder-ability-fx.ts';
 
 /** What the window is told about the free looks and the item builder (cosmeticSlots). */
 /** `heroAttrs`: each hero's main attribute by its id without the prefix, for the order of the game's hero grid. */
@@ -83,16 +84,19 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
         slots.push({ slot, base: '', picked: rec ? rec.itemId : null, recordId: rec ? rec.id : null, options });
       }
       yield PAUSE;
-      const itemSlots = yield* itemBuilder.itemSlotsSteps(text);
+      // the style and ability names are read out of the game's index: opened here a pause at a time
+      const pak = path.join(game, 'dota', 'pak01_dir.vpk');
+      const ix = fs.existsSync(pak) ? yield* sharedVpkIndexSteps(pak) : null;
+      // an ability effects slot by its ability's name, and none the hero has not got (src/item-builder-ability-fx.ts)
+      const listed = yield* itemBuilder.itemSlotsSteps(text);
+      const itemSlots = ix ? namedFxSlots(listed, (p) => ix.read(p), getLang()) : listed;
       yield PAUSE;
       let sets: (ItemSet | SetDetails)[] = itemBuilder.itemSets(text, itemSlots);
       let heroAttrs: Record<string, HeroAttribute> = {};
       yield PAUSE;
       const effects = itemBuilder.itemEffects();
       if (itemSlots.length && effects.length) {
-        // the style names are read out of the game's index: opened here a pause at a time
-        const pak = path.join(game, 'dota', 'pak01_dir.vpk');
-        if (fs.existsSync(pak)) heroAttrs = yield* heroAttributesSteps(yield* sharedVpkIndexSteps(pak), itemSlots.flatMap((it) => it.heroIds));
+        if (ix) heroAttrs = yield* heroAttributesSteps(ix, itemSlots.flatMap((it) => it.heroIds));
         const styleName = styleNamer(game, getLang(), (i) => t('Стиль {0}', i + 1));
         yield PAUSE;
         // the game's own unusual effects after the builder's, by the names the game gives them (issue #393)
@@ -109,8 +113,8 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
             picked: rec ? rec.itemId : null,
             pickedEffect: rec ? (rec.effectId || '') : '',
             recordId: rec ? rec.id : null,
-            // a persona has no model for an effect to sit on
-            effects: it.persona && !it.persona.part ? [] : offered,
+            // a persona has no model for an effect to sit on, and an ability effects slot no model at all
+            effects: (it.persona && !it.persona.part) || it.abilityFx ? [] : offered,
           };
         });
         const named = new Map(entries.flatMap((it) => it.options.map((o) => [o.id, o.styles] as const)));
@@ -186,7 +190,8 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
     const set = itemBuilder.itemSets(vanilla()).find((x) => x.id === String(setId));
     if (!set) throw new Error(t('Набор не найден'));
     const fits = set.pieces.flatMap((p) => (p.fits && p.slot ? [p] : []));
-    offTheHero(`item:${set.heroIds.join('+')}:`, new Set(fits.map((p) => p.slot)));
+    // a set leaves the ability effects slots as they are, as the game's loadout does
+    offTheHero(`item:${set.heroIds.join('+')}:`, new Set(fits.map((p) => p.slot)), true);
     const n = Math.max(0, Math.floor(Number(style) || 0));
     for (const p of fits) {
       const live = cosmeticRecordFor(p.slot);
@@ -197,10 +202,10 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
     return { applied: fits.length, pieces: set.pieces.length };
   }
 
-  /** The hero's picks off but those on the slots named: kept in My mods, to be put back on. */
-  function offTheHero(hero: string, keep: Set<string>): void {
+  /** The hero's picks off but those on the slots named, and with `keepFx` those in his ability effects slots: kept in My mods, to be put back on. */
+  function offTheHero(hero: string, keep: Set<string>, keepFx = false): void {
     for (const r of library.list()) {
-      if (r.categoryId === 'cosmetic' && r.enabled !== false && r.slot?.startsWith(hero) && !keep.has(r.slot)) library.setEnabled(r.id, false);
+      if (r.categoryId === 'cosmetic' && r.enabled !== false && r.slot?.startsWith(hero) && !keep.has(r.slot) && !(keepFx && fxSlotOf(r.slot))) library.setEnabled(r.id, false);
     }
   }
 

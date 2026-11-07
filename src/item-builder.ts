@@ -55,7 +55,8 @@ function setScalarField(blockText: string, key: string, value: string): string {
   return close === -1 ? blockText : `${blockText.slice(0, close)}\r\n\t${line}\r\n${blockText.slice(close)}`;
 }
 
-function setVisualsBlock(blockText: string, visuals: string): string {
+/** An item block with these visuals in place of its own, or added at its end where it has none. */
+export function setVisualsBlock(blockText: string, visuals: string): string {
   const body = blockBounds(blockText, 0);
   let hit = null as { start: number; end: number } | null;
   eachChild(blockText, body, (c) => {
@@ -103,7 +104,6 @@ export function effectKey(effectIds: string | string[] | null | undefined): stri
 function setBlockId(blockText: string, id: string): string {
   return String(blockText).replace(/^\s*"\d+"/, `"${id}"`);
 }
-
 
 /** What an item keeps of its own when it wears another's block: what the game shows of it by name. */
 const OWN_FIELDS = ['name', 'prefab', 'item_name', 'item_description', 'image_inventory', 'item_rarity'];
@@ -182,7 +182,7 @@ export function defaultItemForWearable(text: string, sourceId: string | number):
  *   model it puts under the unit's
  * @param stock  the stock models the pick puts another model under, as normalizeAssetPath writes them
  */
-function withoutFileSwaps(visuals: string, units: Set<string>, stock: Set<string>): string {
+export function withoutFileSwaps(visuals: string, units: Set<string>, stock: Set<string>): string {
   const cut: { start: number; end: number }[] = [];
   eachChild(visuals, blockBounds(visuals, 0), (c) => {
     if (!c.isBlock || !/^asset_modifier\d*$/i.test(c.key)) return;
