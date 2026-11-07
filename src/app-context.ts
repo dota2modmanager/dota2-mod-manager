@@ -28,6 +28,7 @@ import type { createEffectFinder } from './effect-finder.ts';
 import type { createRankLook } from './rank-look-service.ts';
 import type { createMapDecor } from './map-decor.ts';
 import type { createHeroPaint } from './hero-paint-service.ts';
+import type { createAbilityIcons } from './ability-icons-service.ts';
 import type { createAbilitySounds } from './ability-sounds-service.ts';
 import type { createBuildUndo } from './build-undo.ts';
 import type { createHeroPreview } from './hero-preview.ts';
@@ -91,6 +92,8 @@ export interface AppContext {
   mapDecor: ReturnType<typeof createMapDecor>;
   /** a hero recoloured part by part (src/hero-paint-service.ts) */
   heroPaint: ReturnType<typeof createHeroPaint>;
+  /** a hero's ability icons picked from his own cosmetics' (src/ability-icons-service.ts) */
+  abilityIcons: ReturnType<typeof createAbilityIcons>;
   /** sounds of the user's own on a hero's events (src/ability-sounds-service.ts) */
   abilitySounds: ReturnType<typeof createAbilitySounds>;
   buildUndo: ReturnType<typeof createBuildUndo>;

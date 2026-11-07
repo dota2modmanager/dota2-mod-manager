@@ -7,6 +7,7 @@
 import type { AppApi } from './app.ts';
 import type { ArcanaApi, BackgroundApi, CatalogApi, HudApi, RankApi, DecorApi, PaintApi, MapLooksApi, SoundsApi, CompilerApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';
 import type { FxApi } from './fx.ts';
+import type { IconsApi } from './icons.ts';
 import type { Preview3dApi } from './preview3d.ts';
 import type { CreatorApi } from './creator.ts';
 import type { ModsApi, PacksApi } from './mods.ts';
@@ -33,6 +34,8 @@ export interface Api extends AppApi {
   /** a movie of the user's own behind the main menu */
   background: BackgroundApi;
   paint: PaintApi;
+  /** a hero's ability icons picked from his own cosmetics' */
+  icons: IconsApi;
   /** towers and trees from the game's own looks */
   map: MapLooksApi;
   /** sounds of the user's own on a hero's events */

@@ -13,6 +13,8 @@ the code, not in this page.
 
 | Module | What it owns |
 |---|---|
+| [`src/ability-icons-service.ts`](#srcability-icons-servicets) | The window's half of a hero's ability icons picked from his own cosmetics' (what there is to pick |
+| [`src/ability-icons.ts`](#srcability-iconsts) | A hero's ability icons picked one by one from the icons his own cosmetics already ship: Fissure |
 | [`src/ability-sounds-service.ts`](#srcability-sounds-servicets) | The window's half of a sound of the user's own on a hero's sound event (issue #423; the events |
 | [`src/ability-sounds.ts`](#srcability-soundsts) | A sound of the user's own on one of a hero's sound events (issue #423): the hero's events file |
 | [`src/adopt.ts`](#srcadoptts) | What a VPK has to go through before it counts as a mod. |
@@ -218,6 +220,196 @@ the code, not in this page.
 | [`src/wine.ts`](#srcwinets) | Running a Windows program on Linux, for the one that has no Linux build: resourcecompiler.exe, |
 | [`src/workshop-tools.ts`](#srcworkshop-toolsts) | A copy of the Workshop Tools kept in userData, for a Linux machine that plays the Linux build. |
 | [`src/write-jail.ts`](#srcwrite-jailts) | A run that may write only inside the folders it was given. |
+
+## src/ability-icons-service.ts
+
+The window's half of a hero's ability icons picked from his own cosmetics' (what there is to pick
+and how it goes in is src/ability-icons.ts). One record in My mods per hero, since two paks of the
+same icon would hide each other; each ability's pick can be put back to the game's own on its
+own, and putting back the last takes the record with it.
+
+The record goes early in the load order with the hero items (categoryId hero-items), so a catalog
+mod of the hero does not cover it. What it holds is copies of the game's own pictures, so a Dota
+update that reached it builds it again from the new ones.
+
+### `IconsGenerated`
+
+```ts
+export interface IconsGenerated { abilityIcons: string; picks: Record<string, string> }
+```
+
+What an icons record was built from: the hero, and the icon picked for each ability.
+
+### `IconChoiceView`
+
+```ts
+export interface IconChoiceView { icon: string; item: string; style: number | null }
+```
+
+One icon as the window draws it.
+
+### `AbilityIconsView`
+
+```ts
+export interface AbilityIconsView { ability: string; name: string; choices: IconChoiceView[] }
+```
+
+An ability with its icons, its name in the app's language.
+
+### `HeroIcons`
+
+```ts
+export interface HeroIcons
+```
+
+What the window shows for a hero.
+
+### `createAbilityIcons`
+
+```ts
+export function createAbilityIcons({ gamePath, installer, library, vanilla, vrf = () => null, lang = () => 'en', log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller & Pick<Installer, 'swapSlots'>; library: Pick<Library, 'list' | 'add' | 'update' | 'removeRecord'>; /** the game's own item table */ vanilla: () => string; /** ValveResourceFormat's CLI, when it is downloaded: the window's pictures are read with it */ vrf?: () => string | null
+```
+
+The service the icons:* channels call.
+
+## src/ability-icons.ts
+
+A hero's ability icons picked one by one from the icons his own cosmetics already ship: Fissure
+as the plain one, or as the arcana's, the Deep Magma totem's, the TI9 one... The window and the
+record are src/ability-icons-service.ts.
+
+What there is to pick is read off the game's item table: a cosmetic that changes an icon says so
+with an asset modifier of type ability_icon, "asset" the ability (its icon is
+panorama/images/spellicons/<asset>_png.vtex_c) and "modifier" the picture it shows instead, under
+the same folder. Only items whose used_by_heroes names the hero count, so a hero is offered his
+own icons and nobody else's. The game of 2026-11-07 has 1053 such modifiers; Earthshaker's
+Fissure alone has a dozen.
+
+Putting one on needs no compiler: the picked icon's compiled file is copied, byte for byte, to the
+ability's own path, which is what the item builder does with a cosmetic's icon
+(src/item-builder-assets.ts PICTURES), and over every picture a cosmetic would show for the
+ability instead (`forcedFiles`), so the pick is what the HUD draws whatever the hero wears.
+
+### `ICON_NAME`
+
+```ts
+export const ICON_NAME = /^[a-z0-9_]+(?:\/[a-z0-9_]+){0,5}$/
+```
+
+An icon's name as items_game writes a modifier: a path under spellicons, without the suffix.
+
+### `iconFile`
+
+```ts
+export const iconFile = (icon: string) => `panorama/images/spellicons/${icon}_png.vtex_c`
+```
+
+The compiled picture of an icon (an ability's own, or one a cosmetic shows instead).
+
+### `IconModifier`
+
+```ts
+export interface IconModifier { asset: string; modifier: string; style: number | null; at: number }
+```
+
+One ability_icon modifier of the item table.
+
+### `IconChoice`
+
+```ts
+export interface IconChoice { icon: string; item: string; itemId: string; style: number | null; locKey?: string }
+```
+
+One icon the window offers for an ability: the picture, and the cosmetic or set it comes from.
+
+### `AbilityIcons`
+
+```ts
+export interface AbilityIcons { ability: string; choices: IconChoice[] }
+```
+
+An ability the hero has a choice of icons for, with its choices in the table's order.
+
+### `iconModifiers`
+
+```ts
+export function iconModifiers(text: string): IconModifier[]
+```
+
+Every ability_icon modifier in the table, wherever it sits. The fields are read by key: one in
+the game of 2026-11-07 (Wraith King's Frostivus Bone Guard) has "modifier" before "asset".
+
+### `setLabel`
+
+```ts
+export function setLabel(name: string): string
+```
+
+"tine_of_the_behemoth_icons" as "Tine of the Behemoth": a shared set's name has no text of its own.
+
+### `modifierSets`
+
+```ts
+export function modifierSets(text: string): IconSource[]
+```
+
+The entries of the table's asset_modifiers section, each a named set of modifiers that is not an
+item and names no hero (Earthshaker's SLTV icons, Phantom Assassin's Ravening ones: 151 icon
+modifiers on the game of 2026-11-07). An id of `set:<n>` keeps them apart from items.
+
+### `IconSource`
+
+```ts
+export interface IconSource
+```
+
+An item of the table, or a set of its asset_modifiers section (`shared`), with where its block is.
+
+### `heroIconChoices`
+
+```ts
+export function heroIconChoices(text: string, sources: IconSource[], hero: string, order: string[], has: (file: string) => boolean, modifiers: IconModifier[] = iconModifiers(text)): AbilityIcons[]
+```
+
+The icons a hero can pick for each ability, once each by picture, those whose picture the game has
+and whose ability has an icon of its own to replace. They come from the items whose used_by_heroes
+names him, and from the shared sets (`modifierSets`) for an ability in his script: a set names no
+hero, so the ability is what makes it his. Abilities in `order` (his script's) come first, in that
+order; any other his items name (a summon's) follow by name.
+
+```
+@param sources the table's items (src/schema-items.ts listItems) and its shared sets
+@param has     whether pak01 holds a file
+```
+
+### `forcedFiles`
+
+```ts
+export function forcedFiles(ability: string, icon: string, modifiers: IconModifier[]): string[]
+```
+
+Every file a pick of `ability` has to cover: its own icon, and each picture a cosmetic swaps it to.
+A cosmetic that is on (worn on the account, or picked in the item builder through the item table)
+makes the HUD draw its own picture instead of the ability's: with Bracers of the Cavern Luminar on,
+Enchant Totem is earthshaker/bracers_of_the_cavern_luminar/earthshaker_enchant_totem, and a pick
+under the plain path alone was never seen (J0nathan550, 2026-11-07). The picked picture is left as
+it is: it already is what it should show.
+
+### `iconEntries`
+
+```ts
+export function iconEntries(read: (file: string) => Buffer | null, picks: Record<string, string>, modifiers: IconModifier[] = [], has: (file: string) => boolean = () => true): { entries: VpkEntry[]; gone: string[] }
+```
+
+The pak's files: each picked icon's compiled picture under every path its ability can be drawn
+from (`forcedFiles`), those the game has. A picture two abilities share (10 of 976 on the game
+of 2026-11-07: Keeper's Illuminate and its Spirit Form one) goes to the pick that comes first in
+`picks`. A pick the game has no file for any more (a Dota update took it) is left out and named
+in `gone`.
+
+```
+@param has  whether the game has a file; a path nothing is drawn from is not worth a copy
+```
 
 ## src/ability-sounds-service.ts
 

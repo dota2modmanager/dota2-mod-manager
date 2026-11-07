@@ -47,6 +47,7 @@ const ELECTRON_USERS = [
   'src/ipc-rank.ts',
   'src/ipc-decor.ts',
   'src/ipc-paint.ts',
+  'src/ipc-icons.ts',
   'src/ipc-library.ts',
   'src/ipc-looks.ts',
   'src/ipc-misc.ts',

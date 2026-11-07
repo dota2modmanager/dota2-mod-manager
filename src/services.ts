@@ -36,6 +36,7 @@ import { sharedVpkIndex } from './vpk.ts';
 import { createMapDecor } from './map-decor.ts';
 import { createRankLook } from './rank-look-service.ts';
 import { createHeroPaint } from './hero-paint-service.ts';
+import { createAbilityIcons } from './ability-icons-service.ts';
 import { shadePixels } from './recolor-layers.ts';
 import type { Rgb } from './recolor.ts';
 import { createAbilitySounds } from './ability-sounds-service.ts';
@@ -200,6 +201,9 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   const heroPaint = createHeroPaint({ gamePath: () => settings.get('dotaGamePath'), installer, library, vanilla: () => schemaService.vanilla(), repaint: electronRepaint,
     vrf: () => toolchain.pathOf('vrf'), compile: (job) => compiler.compile(job),
     lang: getLang, onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
+  // a hero's ability icons picked from his own cosmetics' (src/ability-icons-service.ts)
+  const abilityIcons = createAbilityIcons({ gamePath: () => settings.get('dotaGamePath'), installer, library, vanilla: () => schemaService.vanilla(),
+    vrf: () => toolchain.pathOf('vrf'), lang: getLang, log: diag });
   const keepTools: AppContext['keepTools'] = async ({ force = false } = {}) => {
     if (!toolsKeeper) return false;
     try {
@@ -249,7 +253,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 
   return {
     previewStore, settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, readyPresets, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, hudScale, effectEdit, effectFinder, rankLook, mapDecor, heroPaint, abilitySounds, buildUndo, heroPreview,
+    remoteConfig, readyPresets, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, hudScale, effectEdit, effectFinder, rankLook, mapDecor, heroPaint, abilityIcons, abilitySounds, buildUndo, heroPreview,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };
 }
