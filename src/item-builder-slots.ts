@@ -19,6 +19,7 @@ import { itemNote, untilReconnect, type ItemNote } from './arcana-notes.ts';
 import { personaSlots } from './item-builder-personas.ts';
 import { hasOwnEffect } from './item-builder-donor.ts';
 import { itemFacts } from './item-builder-details.ts';
+import { fxSlotLabel, fxSlotOf, fxSlots } from './item-builder-ability-fx.ts';
 
 /** A slot of a hero the builder can dress, and the paid items that fit it. */
 export interface ItemSlot {
@@ -29,6 +30,8 @@ export interface ItemSlot {
   options: { id: string; name: string; styles?: string[]; note?: ItemNote; fx?: true; rarity?: string; date?: string }[];
   /** a persona's slot (src/item-builder-personas.ts): `part` false where the persona is picked */
   persona?: { hero: string; part: boolean };
+  /** an ability effects slot's number: its picks give their effects, not their model (src/item-builder-ability-fx.ts) */
+  abilityFx?: number;
 }
 
 /** An item's visuals block, as text; null when it has none. */
@@ -68,6 +71,7 @@ const ITEM_SLOT_ORDER = [
   'persona_selector', 'head', 'body_head', 'hair', 'neck', 'shoulder', 'shoulders', 'arm', 'arms', 'gloves', 'back', 'weapon', 'offhand', 'offhand_weapon',
   'shield', 'armor', 'belt', 'legs', 'mount', 'wings', 'tail', 'costume', 'ambient', 'ambient_effects', 'ability1', 'ability2', 'ability3',
   'ability4', 'ability_ultimate', 'summon', 'voice', 'shapeshift', 'misc',
+  ...Array.from({ length: 9 }, (_, i) => `ability_effects_${i + 1}`),
 ];
 
 /** A hero id as the builder keys its slots: no npc_dota_hero_ prefix, lower case, Io as the table names it (wisp). */
@@ -100,6 +104,7 @@ function titleLabel(text: unknown): string {
 /** A slot's name as a tile says it, in the user's language: "Оружие". */
 export function slotDisplayLabel(slot: string): string {
   const equipSlot = canonicalItemSlot(slot);
+  if (fxSlotOf(equipSlot)) return fxSlotLabel(fxSlotOf(equipSlot));
   return titleLabel(t(ITEM_SLOT_LABEL[equipSlot] || equipSlot.replace(/_/g, ' ')));
 }
 
@@ -127,6 +132,7 @@ export function isPersonaItem(item: Partial<SchemaItem> | null): boolean {
 
 /** The icon a slot's tile shows while nothing in it has a picture. */
 export function itemSlotIcon(slot: string): string {
+  if (fxSlotOf(slot)) return 'auto_awesome';
   return ({
     head: 'face', body_head: 'face', hair: 'content_cut', neck: 'checkroom', weapon: 'swords', offhand: 'shield', offhand_weapon: 'shield', shield: 'shield', armor: 'security',
     shoulder: 'accessibility_new', shoulders: 'accessibility_new', belt: 'checkroom', arm: 'front_hand', arms: 'front_hand', gloves: 'front_hand', back: 'checkroom',
@@ -206,6 +212,9 @@ export function* itemSlotsSteps(text: string): Generator<typeof PAUSE, ItemSlot[
     });
   }
   for (const s of personaSlots(text)) slots.set(s.slot, s);
+  // the hidden ones the game wears an item's ability effects in, without its model
+  yield PAUSE;
+  for (const s of fxSlots(text, items, heroesOf, slotFields)) slots.set(s.slot, s);
 
   const order = new Map(ITEM_SLOT_ORDER.map((slot, i) => [slot, i]));
   return [...slots.values()]
@@ -216,6 +225,15 @@ export function* itemSlotsSteps(text: string): Generator<typeof PAUSE, ItemSlot[
       if (byHero && a.heroIds.join(',') !== b.heroIds.join(',')) return byHero;
       return (order.get(a.equipSlot) ?? 999) - (order.get(b.equipSlot) ?? 999) || a.label.localeCompare(b.label);
     });
+}
+
+/** A slot of one hero, with nothing in it yet. */
+function slotFields(hero: string, equipSlot: string, targetId: string): ItemSlot {
+  const heroIds = [canonicalHeroId(hero)];
+  return {
+    slot: itemSlotId(heroIds, equipSlot), kind: 'item-effect', base: targetId, targetId, equipSlot, heroIds,
+    heroLabel: heroDisplayName(heroIds[0]), slotLabel: slotDisplayLabel(equipSlot), label: itemSlotLabel(heroIds, equipSlot), icon: itemSlotIcon(equipSlot), options: [],
+  };
 }
 
 /** Wearable items with visuals and a matching stock default_item, offered under cosmetics/items. */

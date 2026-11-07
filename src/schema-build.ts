@@ -30,6 +30,8 @@ import { isSelectorSlot, leftOut, personaAssets, personaRecords, personaScaleOf,
 import { scaledModels } from './model-scale.ts';
 import { createColoredBases, windowColor } from './arcana-base-color.ts';
 import { lookPatch } from './courier-models.ts';
+import { fxSlotOf, mergeFxPatches } from './item-builder-ability-fx.ts';
+import { abilityFxPatch } from './item-builder-fx-patch.ts';
 import type { BaseStore } from './arcana-base-store.ts';
 import { sharedVpkIndex, sharedVpkIndexSteps, type VpkEntry } from './vpk.ts';
 import { PAUSE } from './steps.ts';
@@ -93,14 +95,18 @@ export function createTableBuild({ library, bases, log }: {
   // and by how much bigger a persona's body makes its models (src/model-scale.ts)
   const pickKey = (rec: BuildRecord, ready: ReadyBase[], refit?: string, scale?: number) => {
     const own = ownBase(rec, ready);
-    return `${rec.itemId}|${itemBuilder.effectKey(rec.effectId)}${own ? `|${own.base.id}:${baseSignature(own)}` : ''}${rec.persona ? `@${rec.persona.target}` : ''}${refit ? `~${refit}` : ''}${scale ? `*${scale}` : ''}`;
+    const fx = fxSlotOf(rec.slot);
+    return `${rec.itemId}|${itemBuilder.effectKey(rec.effectId)}${fx ? `#fx${fx}` : ''}${own ? `|${own.base.id}:${baseSignature(own)}` : ''}${rec.persona ? `@${rec.persona.target}` : ''}${refit ? `~${refit}` : ''}${scale ? `*${scale}` : ''}`;
   };
   function builtPick(vanillaText: string, game: string, key: string, rec: BuildRecord, own: ReadyBase | undefined, refit: string | undefined, scale?: number): ItemPick {
     let pick = built.get(key);
     if (!pick) {
       // a summon's plain model, from the game's unit scripts: read only for an item that swaps one
       const summon: itemBuilder.SummonModels = (...args) => summonModels(sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk')))(...args);
-      const made = itemBuilder.itemEffectPatch(vanillaText, String(rec.itemId), rec.effectId, rec.persona?.target, summon, refit);
+      // in an ability effects slot the item gives its effects for that ability and no model (src/item-builder-ability-fx.ts)
+      const fx = fxSlotOf(rec.slot);
+      const made = fx ? abilityFxPatch(vanillaText, String(rec.itemId), rec.effectId, fx, summon)
+        : itemBuilder.itemEffectPatch(vanillaText, String(rec.itemId), rec.effectId, rec.persona?.target, summon, refit);
       pick = { ...made, assets: scaledModels(itemBuilder.gameAssetEntries(game, made.assetCopies, own && ((p) => own.paths.has(p))), scale,
         (p, why) => log(`schema: ${rec.name}: ${p} left at its own size: ${why}`)) };
       built.set(key, pick);
@@ -147,11 +153,14 @@ export function createTableBuild({ library, bases, log }: {
     const sprites: SpriteSwap[] = [];
     // a copy: a build in the background goes on while the user changes the library; with each
     // persona's own items in, and what cannot be worn with it out (src/item-builder-personas.ts)
-    const { records, left } = personaRecords(library.list().filter((r) => r.enabled !== false), vanillaText);
+    const { records: all, left } = personaRecords(library.list().filter((r) => r.enabled !== false), vanillaText);
+    // the ability effects slots' picks first: the build keeps the first file of a path and the first
+    // sound swap, and in the game the slot's effects win over those of the item worn
+    const records = [...all.filter((r) => fxSlotOf(r.slot)), ...all.filter((r) => !fxSlotOf(r.slot))];
     for (const { rec, why } of left) log(`schema: ${rec.name} left out of the build: ${why}`);
     const models = new Map<BuildRecord, PickModels>();
     for (const rec of records) {
-      const m = isItemPick(rec) ? pickModels(vanillaText, String(rec.itemId), rec.effectId) : null;
+      const m = isItemPick(rec) && !fxSlotOf(rec.slot) ? pickModels(vanillaText, String(rec.itemId), rec.effectId) : null;
       if (m) models.set(rec, m);
     }
     const refits = refitsOf(models);
@@ -164,6 +173,7 @@ export function createTableBuild({ library, bases, log }: {
     const total = records.filter((r) => isItemPick(r) && !built.has(pickKey(r, ready, refits.get(r), scaleOf(r)))).length;
     if (total && fs.existsSync(pak)) yield* sharedVpkIndexSteps(pak);
     let done = 0;
+    const fxPatches = new Set<schema.SchemaPatch>();
     const owned: { patch: schema.SchemaPatch; own: string | null }[] = [];
     for (const rec of records) {
       if (rec.categoryId === 'cosmetic') {
@@ -177,6 +187,7 @@ export function createTableBuild({ library, bases, log }: {
               ? personaAssets(rec, pick.assets, ready) : withoutBaseFiles(String(rec.itemId), pick.assets, ready);
             const patch = { id: pick.id, block: pick.block, assets, source: rec.name, own: pick.own, added: pick.added, unplaced: pick.unplaced, item: !rec.persona };
             out.push(patch);
+            if (fxSlotOf(rec.slot)) fxPatches.add(patch);
             owned.push({ patch, own: pick.own });
             sounds.push(...pick.sounds);
             voices.push(...pick.voices);
@@ -198,10 +209,12 @@ export function createTableBuild({ library, bases, log }: {
       for (const d of rec.schema) out.push({ id: d.id, block: d.block, source: rec.name });
     }
     ownModelsWin(owned);
+    // every hero's picks in one ability effects slot dress the one stock item all heroes wear there
+    const list = mergeFxPatches(out, (p) => fxPatches.has(p));
     // Two picks rewrite the same soundevents file, portrait settings and sprite sheet, and the build
     // keeps the first file of a path it is given: so every pick's go into one copy of each, ahead
     // of all other files.
-    const first = out.find((p) => p.assets);
+    const first = list.find((p) => p.assets);
     if (first) {
       try {
         // eslint-disable-next-line require-yield
@@ -219,7 +232,7 @@ export function createTableBuild({ library, bases, log }: {
       }
     }
     for (const key of built.keys()) if (!used.has(key)) built.delete(key); // a pick taken off lets its files go
-    return { list: out, beneath: ready.flatMap((r) => r.entries) };
+    return { list, beneath: ready.flatMap((r) => r.entries) };
   }
 
   return {

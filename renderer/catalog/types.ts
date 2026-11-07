@@ -69,6 +69,8 @@ export interface CosmeticSlot {
   effects?: { id: string; name: string }[];
   /** a persona's slot (src/item-builder-personas.ts): `part` false where the persona is picked */
   persona?: { hero: string; part: boolean };
+  /** an ability effects slot's number: its picks give their effects, not their model (src/item-builder-ability-fx.ts) */
+  abilityFx?: number;
 }
 
 /** One piece of an item set, and whether the builder can put it on (src/item-builder.ts itemSets). */

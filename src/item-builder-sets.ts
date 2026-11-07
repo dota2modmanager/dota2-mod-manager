@@ -57,13 +57,14 @@ function topValues(text: string, item: { start: number }): Map<string, string> {
  * @param text  items_game
  * @param slots  itemSlots(text), when the caller has it already
  */
-export function itemSets(text: string, slots: Pick<ItemSlot, 'slot' | 'slotLabel' | 'options' | 'persona'>[] = itemSlots(text)): ItemSet[] {
+export function itemSets(text: string, slots: Pick<ItemSlot, 'slot' | 'slotLabel' | 'options' | 'persona' | 'abilityFx'>[] = itemSlots(text)): ItemSet[] {
   const items = listItems(text);
   const byName = new Map(items.map((i) => [i.name, i]));
   const home = new Map<string, Pick<ItemSlot, 'slot' | 'slotLabel'>>(); // wearable id -> its slot in the builder
   const looks = new Map<string, number>(); // wearable id -> how many styles it has
   for (const s of slots) {
-    if (s.persona) continue;
+    // a set's item is worn in its own slot; in an ability effects slot it would bring its effects alone
+    if (s.persona || s.abilityFx) continue;
     for (const o of s.options) {
       home.set(o.id, s);
       if (o.styles && o.styles.length > 1) looks.set(o.id, o.styles.length);
