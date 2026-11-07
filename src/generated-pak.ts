@@ -33,6 +33,28 @@ export function swapPak(installer: PakInstaller, rec: LibRecord, vpk: Buffer, of
   return files;
 }
 
+type InForce = Parameters<typeof fileInForce>[0];
+
+/**
+ * A compiled style in force, read back as CSS. A mod's copy the tool cannot read is passed over for
+ * the next one, down to the game's own, so one odd mod does not stop the build. The game's copy
+ * failing is a real failure and is thrown. Null when nobody has the file.
+ */
+export async function cssInForce(where: Omit<InForce, 'usable' | 'passedOver'>, decompile: (style: Buffer) => Promise<string>, log: (msg: string) => void = () => {}): Promise<{ css: string; from: LibRecord | null } | null> {
+  const refused: Buffer[] = [];
+  for (;;) {
+    const got = fileInForce({ ...where, usable: (data) => !refused.some((r) => r.equals(data)) });
+    if (!got) return null;
+    try {
+      return { css: await decompile(got.data), from: got.from };
+    } catch (err) {
+      if (!got.from) throw err;
+      log(`${got.from.name} carries ${where.file} in a form the tool cannot read, using the next copy`);
+      refused.push(got.data);
+    }
+  }
+}
+
 const pakNumber = (rel: string) => Number(/pak(\d+)_/i.exec(rel)?.[1] ?? Infinity);
 
 /**

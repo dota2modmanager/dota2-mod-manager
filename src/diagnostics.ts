@@ -266,7 +266,8 @@ export function findProblems(r: Omit<Report, 'problems'>, { app }: { app?: { upd
   const ps = r.patchAndSchema || {};
   if (ps.error) add('broken', 'The patch/schema state could not be read', String(ps.error));
   else {
-    if (ps.patched === false) add('broken', 'The game is not patched', 'Search paths are untouched, so no mod folder is mounted.');
+    // the patch is for the item table: with that off the game finds mods in its language folder anyway
+    if (ps.patched === false && ps.enabled) add('broken', 'The game is not patched', 'Search paths are untouched, so the item table is not mounted.');
     /* Mods with item-table edits are on, and the table in the game is missing or older than the
        one they need. This used to ask for two fields nothing ever set, so it never fired. */
     if (ps.enabled && ps.mods && (!ps.deployed || ps.stale)) {

@@ -1,0 +1,51 @@
+---------------
+File: C:\Users\user\AppData\Local\Temp\d2mm-hud-LwD63n\hud_reborn.vcss_c
+Exception: ValveResourceFormat.Utils.UnexpectedMagicException: Unknown KVType for variable 'datatype': 26 (0x1A)
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadValue(Context context, KV3BinaryNodeType datatype) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 1034
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadBinaryValue(Context context, KV3BinaryNodeType datatype, KVFlag flagInfo) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 783
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ParseBinaryKV3(Context context, KVObject parent) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 778
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadValue(Context context, KV3BinaryNodeType datatype) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 1028
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadValue(Context context, KV3BinaryNodeType datatype) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 981
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadBinaryValue(Context context, KV3BinaryNodeType datatype, KVFlag flagInfo) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 783
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ParseBinaryKV3(Context context, KVObject parent) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 778
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadValue(Context context, KV3BinaryNodeType datatype) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 1028
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadBinaryValue(Context context, KV3BinaryNodeType datatype, KVFlag flagInfo) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 783
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadBuffer(Int32 version, BinaryReader reader) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 675
+   at ValveResourceFormat.Blocks.ResourceEditInfo2.Read(BinaryReader reader) in /_/ValveResourceFormat/Resource/Blocks/ResourceEditInfo2.cs:line 58
+   at ValveResourceFormat.Resource.Read(Stream input, Boolean verifyFileSize, Boolean leaveOpen) in /_/ValveResourceFormat/Resource/Resource.cs:line 266
+   at CLI.Decompiler.ProcessFile(String path, Stream stream, String originalPath, IFileLoader fileLoader) in /_/CLI/Decompiler.cs:line 656
+
+---------------
+File: C:\Users\user\AppData\Local\Temp\d2mm-hud-GE5obo\hud_reborn.vcss_c
+Exception: ValveResourceFormat.Utils.UnexpectedMagicException: Unknown KVType for variable 'datatype': 26 (0x1A)
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadValue(Context context, KV3BinaryNodeType datatype) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 1034
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadBinaryValue(Context context, KV3BinaryNodeType datatype, KVFlag flagInfo) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 783
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ParseBinaryKV3(Context context, KVObject parent) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 778
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadValue(Context context, KV3BinaryNodeType datatype) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 1028
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadValue(Context context, KV3BinaryNodeType datatype) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 981
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadBinaryValue(Context context, KV3BinaryNodeType datatype, KVFlag flagInfo) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 783
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ParseBinaryKV3(Context context, KVObject parent) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 778
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadValue(Context context, KV3BinaryNodeType datatype) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 1028
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadBinaryValue(Context context, KV3BinaryNodeType datatype, KVFlag flagInfo) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 783
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadBuffer(Int32 version, BinaryReader reader) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 675
+   at ValveResourceFormat.Blocks.ResourceEditInfo2.Read(BinaryReader reader) in /_/ValveResourceFormat/Resource/Blocks/ResourceEditInfo2.cs:line 58
+   at ValveResourceFormat.Resource.Read(Stream input, Boolean verifyFileSize, Boolean leaveOpen) in /_/ValveResourceFormat/Resource/Resource.cs:line 266
+   at CLI.Decompiler.ProcessFile(String path, Stream stream, String originalPath, IFileLoader fileLoader) in /_/CLI/Decompiler.cs:line 656
+
+---------------
+File: C:\Users\user\AppData\Local\Temp\d2mm-hud-v9jGLo\hud_reborn.vcss_c
+Exception: ValveResourceFormat.Utils.UnexpectedMagicException: Unknown KVType for variable 'datatype': 26 (0x1A)
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadValue(Context context, KV3BinaryNodeType datatype) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 1034
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadBinaryValue(Context context, KV3BinaryNodeType datatype, KVFlag flagInfo) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 783
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ParseBinaryKV3(Context context, KVObject parent) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 778
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadValue(Context context, KV3BinaryNodeType datatype) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 1028
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadValue(Context context, KV3BinaryNodeType datatype) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 981
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadBinaryValue(Context context, KV3BinaryNodeType datatype, KVFlag flagInfo) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 783
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ParseBinaryKV3(Context context, KVObject parent) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 778
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadValue(Context context, KV3BinaryNodeType datatype) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 1028
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadBinaryValue(Context context, KV3BinaryNodeType datatype, KVFlag flagInfo) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 783
+   at ValveResourceFormat.ResourceTypes.BinaryKV3.ReadBuffer(Int32 version, BinaryReader reader) in /_/ValveResourceFormat/Resource/ResourceTypes/BinaryKV3.cs:line 675
+   at ValveResourceFormat.Blocks.ResourceEditInfo2.Read(BinaryReader reader) in /_/ValveResourceFormat/Resource/Blocks/ResourceEditInfo2.cs:line 58
+   at ValveResourceFormat.Resource.Read(Stream input, Boolean verifyFileSize, Boolean leaveOpen) in /_/ValveResourceFormat/Resource/Resource.cs:line 266
+   at CLI.Decompiler.ProcessFile(String path, Stream stream, String originalPath, IFileLoader fileLoader) in /_/CLI/Decompiler.cs:line 656
+

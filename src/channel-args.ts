@@ -81,7 +81,7 @@ const PREVIEW = optional(str(16 * MB));
 const HUD_PART = shape({ id: str(40, 1), scale: optional(num(60, 130)), x: optional(num(-1920, 1920)), y: optional(num(-1920, 1920)), opacity: optional(num(10, 100)), tint: optional(str(7, 7)), hidden: optional(bool) });
 const EFFECT_EDITS: Check = (v) => {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return fail('an object');
-  return Object.keys(v).length <= 64 && JSON.stringify(v).length <= 16000 ? null : fail('at most 64 systems');
+  return Object.keys(v).length <= 64 ? json(16000)(v) : fail('at most 64 systems');
 };
 const LOOK_PICK = shape({ slot: str(200, 1), itemId: str(20, 1), name: str(500), effectId: optional(str(500)) });
 

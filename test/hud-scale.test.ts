@@ -105,10 +105,14 @@ function world(t: TestContext) {
   const jobs: CompileJob[] = [];
   const rebuilt: string[] = [];
   let tool: string | null = 'vrf.exe';
+  let unreadable = '';
   const service = createHudScale({
     gamePath: () => game, installer, library, vrf: () => tool,
     // the "decompiled" CSS says which compiled style it came from
-    decompile: async (exe, style) => `${GAME_CSS}/* from ${style.toString()} */\n`,
+    decompile: async (exe, style) => {
+      if (unreadable && new RegExp(`^(${unreadable})`).test(style.toString())) throw new Error('the tool could not read it');
+      return `${GAME_CSS}/* from ${style.toString()} */\n`;
+    },
     compile: async (job) => { jobs.push(job); return [entryAt(STYLE, job.files[0].data)]; },
     onRebuilt: (id) => rebuilt.push(id),
   });
@@ -119,7 +123,7 @@ function world(t: TestContext) {
     fs.writeFileSync(path.join(installer.langFolder(), pak), buildVpk([entryAt(STYLE, Buffer.from(`${name} style`))]));
     return library.add({ name, categoryId: 'huds', styleLabel: null, fileRef: null, preview: null, files: [{ root: 'lang', relPath: pak }] });
   };
-  return { service, library, installer, jobs, rebuilt, built, hudMod, game, noTool: () => { tool = null; } };
+  return { service, library, installer, jobs, rebuilt, built, hudMod, game, noTool: () => { tool = null; }, cannotRead: (name: string) => { unreadable = name; } };
 }
 
 test('on the game’s own HUD: one record, compiled from the game’s style with the scale at its end', async (t) => {
@@ -149,6 +153,16 @@ test('with a HUD mod on, the scale goes on the HUD mod’s style and the pak com
   assert.match(w.built(again), /from Immortal HUD style/);
   w.library.update(mod.id, { enabled: false });
   assert.equal(w.service.state().hudMod, null);
+});
+
+test('a mod’s style the tool cannot read is passed over for the game’s, and the game’s own failing is an error', async (t) => {
+  const w = world(t);
+  w.hudMod('Crystal');
+  w.cannotRead('Crystal');
+  const rec = await w.service.install(bar(83));
+  assert.match(w.built(rec), /from game style/);
+  w.cannotRead('Crystal|game');
+  await assert.rejects(() => w.service.install(bar(70)), /could not read/);
 });
 
 test('without ValveResourceFormat nothing is built, and it says what to get', async (t) => {

@@ -14,7 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { clampLook, LAYOUTS, lookIsEmpty, SCRIPT, STYLES, takesScript, withMedal, withScript, type RankLook } from './rank-look.ts';
 import { levelsScript } from './rank-look-script.ts';
-import { fileInForce, swapPak, writePak, type PakInstaller } from './generated-pak.ts';
+import { cssInForce, fileInForce, swapPak, writePak, type PakInstaller } from './generated-pak.ts';
 import { vrfCss } from './hud-scale-service.ts';
 import { buildVpk, entryAt, entryPath, sharedVpkIndex } from './vpk.ts';
 import { pngFromVtex } from './vtex.ts';
@@ -95,7 +95,11 @@ export function createRankLook({ gamePath, installer, library, vrf, compile, dec
     if (look.medal) {
       const exe = vrf();
       if (!exe) throw new Error(t('Нужен ValveResourceFormat: скачай его в окне'));
-      for (const s of STYLES) files.push({ path: s.source, data: Buffer.from(withMedal(await decompile(exe, inForce(s.compiled)), look.medal)) });
+      for (const s of STYLES) {
+        const got = await cssInForce({ game: game(), langFolder: installer.langFolder(), records: library.list(), own: mine()?.id, file: s.compiled }, (style) => decompile(exe, style), log);
+        if (!got) throw new Error(t('В игре нет файла {0}', s.compiled));
+        files.push({ path: s.source, data: Buffer.from(withMedal(got.css, look.medal)) });
+      }
     }
     files.push({ path: SCRIPT.source, data: Buffer.from(levelsScript(look, heroIds(Object.keys(look.levels)))) });
     const want = new Set([SCRIPT.compiled, ...(look.medal ? STYLES.map((s) => s.compiled) : [])]);
