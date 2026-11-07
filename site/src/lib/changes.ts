@@ -18,7 +18,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { REPO_ROOT } from './paths';
 import { appVersion } from './schema';
-import { githubHeaders } from './github';
+import { githubHeaders } from './github.ts';
 import type { Lang } from '../i18n/ui';
 
 const RELEASES = 'https://api.github.com/repos/dota2modmanager/dota2-mod-manager/releases?per_page=100';

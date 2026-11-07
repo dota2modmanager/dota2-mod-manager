@@ -19,7 +19,7 @@
  * prints, and it is rounded down rather than up.
  */
 
-import { githubHeaders } from './github';
+import { githubHeaders } from './github.ts';
 
 const CATALOG = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/data/mods.json';
 const RELEASES = 'https://api.github.com/repos/dota2modmanager/dota2-mod-manager/releases?per_page=100';

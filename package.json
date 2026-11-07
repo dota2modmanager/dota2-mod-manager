@@ -3,7 +3,7 @@
   "productName": "Dota 2 Mod Manager",
   "version": "3.3.2",
   "desktopName": "dota2-mod-manager.desktop",
-  "description": "Desktop mod manager for Dota 2 — browse, install, toggle and preset 1100+ cosmetic mods from the D2PFX catalog",
+  "description": "Mod manager and modding toolkit for Dota 2: a catalog of 1000+ mods, an item builder with a 3D preview, and a Workshop of editors for effects, the HUD, the map and sounds",
   "main": "src/main.ts",
   "scripts": {
     "start": "node tools/ui-build.mjs && electron .",

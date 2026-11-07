@@ -24,7 +24,7 @@ const SMALL = 760;
 export const SMALL_WIDTH = SMALL;
 
 const SOURCES = [
-  ...['catalog', 'heroes', 'my-mods'].flatMap((name) => ['en', 'ru'].map((lang) => `screenshots/dota-2-mod-manager-${name}-${lang}.webp`)),
+  ...['catalog', 'builder', 'workshop', 'effects', 'hud', 'my-mods'].flatMap((name) => ['en', 'ru'].map((lang) => `screenshots/dota-2-mod-manager-${name}-${lang}.webp`)),
   'video/dota-2-mod-manager-review-hanta.webp',
 ];
 

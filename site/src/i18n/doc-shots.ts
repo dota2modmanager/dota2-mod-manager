@@ -6,7 +6,7 @@
  * goes into the section `after` names, under that section's steps, or its first paragraph when it
  * has no steps, so it sits where the text says what to press. The guides' own text stays as it is.
  */
-export type ShotName = 'mod-window' | 'my-mods' | 'game-files' | 'item-table-confirm' | 'terrains' | 'announcers' | 'tools' | 'cosmetics';
+export type ShotName = 'builder' | 'workshop' | 'effects' | 'hud' | 'mod-window' | 'my-mods' | 'game-files' | 'item-table-confirm' | 'terrains' | 'announcers' | 'tools' | 'cosmetics';
 
 export interface DocShot {
   /** the h2 id of the section it belongs to */
@@ -16,6 +16,26 @@ export interface DocShot {
 }
 
 export const docShots: Record<string, DocShot[]> = {
+  builder: [
+    {
+      after: 'what', shot: 'builder',
+      caption: { en: 'The changing room: the slots, the items for each, and the hero in 3D.', ru: 'Примерочная: слоты, предметы для каждого и герой в 3D.' },
+    },
+  ],
+  workshop: [
+    {
+      after: 'what', shot: 'workshop',
+      caption: { en: 'The Workshop, grouped by what each tool changes in the game.', ru: 'Мастерская: инструменты разложены по тому, что они меняют в игре.' },
+    },
+    {
+      after: 'effects', shot: 'effects',
+      caption: { en: 'An ability opened as one effect, with a preview that plays each edit.', ru: 'Способность открыта как один эффект, превью проигрывает каждую правку.' },
+    },
+    {
+      after: 'hud', shot: 'hud',
+      caption: { en: 'The HUD as a plan of your screen.', ru: 'HUD как план твоего экрана.' },
+    },
+  ],
   install: [
     {
       after: 'app', shot: 'mod-window',

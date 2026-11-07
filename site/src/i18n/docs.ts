@@ -21,6 +21,8 @@
  * split off for length alone.
  */
 import { moreDocs } from './docs-more.ts';
+import { toolDocs } from './docs-tools.ts';
+import { featureDocs } from './docs-features.ts';
 
 export type Block =
   | { k: 'p'; t: string }
@@ -67,7 +69,10 @@ export interface DocsIndex {
  */
 export const docSlugs = [
   'install',
+  'features',
   'uninstall',
+  'builder',
+  'workshop',
   'ai-mods',
   'item-mods',
   'terrain',
@@ -85,7 +90,7 @@ export const docSlugs = [
 ] as const;
 export type DocSlug = (typeof docSlugs)[number];
 
-/** The five this file holds. The other eleven live in docs-more.ts and are merged in below. */
+/** The five this file holds. The rest live in docs-more.ts and docs-tools.ts and are merged in below. */
 type CoreSlug = 'install' | 'vpk' | 'safe' | 'cosmetics' | 'troubleshooting';
 
 export const docsIndex: Record<'en' | 'ru', DocsIndex> = {
@@ -1112,6 +1117,6 @@ const ru: Record<CoreSlug, Doc> = {
 };
 
 export const docs: Record<'en' | 'ru', Record<DocSlug, Doc>> = {
-  en: { ...en, ...moreDocs.en },
-  ru: { ...ru, ...moreDocs.ru },
+  en: { ...en, ...moreDocs.en, ...toolDocs.en, ...featureDocs.en },
+  ru: { ...ru, ...moreDocs.ru, ...toolDocs.ru, ...featureDocs.ru },
 };

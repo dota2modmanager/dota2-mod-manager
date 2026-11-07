@@ -48,7 +48,10 @@ export const GET: APIRoute = async () => {
 
   const body = `# Dota 2 Mod Manager
 
-> A free, open-source app for ${platforms} that installs cosmetic mods for Dota 2 in one click. It reads
+> A free, open-source mod manager and modding toolkit for Dota 2, for ${platforms}. It installs cosmetic
+> mods in one click, puts any item from the game on any hero with a live 3D preview (the item builder),
+> and edits effects, the HUD, hero colours, the map and sounds from the user's own game files (the
+> Workshop). It reads
 > the open D2PFX catalog directly (${n.format(stats.mods)} mods across ${stats.categories} categories), installs each
 > mod into a free pak slot in the game's language folder, tells you which of two mods carrying
 > the same file the game is loading, and puts everything back after a Dota patch. Version
@@ -107,6 +110,10 @@ Facts worth quoting accurately:
   with Valve, Steam's terms do not formally permit changing game files without Valve's
   consent, and Valve can change how it applies them.
 - The app never asks for a Steam login. Anything that does is not installing a file.
+- The item builder and the Workshop build mods from the player's own game files, so nothing is
+  downloaded for them and only that player's screen shows the result. Hero items install as plain
+  files; item size, kill effects and a few other picks use the optional item table. Guides:
+  https://dota2modmanager.com/docs/builder/ and https://dota2modmanager.com/docs/workshop/
 - **It runs alongside Dota2 Minify**, which is a different kind of tool: Minify compiles mods,
   this installs them from a catalog. Both put their work in a language folder and Dota mounts
   one, so the app reads Minify's own configuration, reports which of the two the game is set to
