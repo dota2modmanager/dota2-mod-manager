@@ -2,6 +2,22 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.3.3
+
+### HUD editor and rank tool
+
+- Builds no longer stop with "ENOENT hud_reborn.css". Interface mods from a recent compiler, such
+  as Crystal Interface and Material You Interface, broke the old file reader. Source 2 Viewer 20.1
+  reads them.
+- The app now updates a helper tool already on your disk, so you do not stay on the old reader.
+- If one interface mod has a style the app cannot read, it takes the next copy and keeps building.
+
+### Fixes
+
+- The diagnostic report no longer says "BROKEN: not patched" when you switched the item table off.
+- The effect editor refuses an edit it cannot save, with a message, where it used to throw an
+  error.
+
 ## 3.3.2
 
 ### Pictures
