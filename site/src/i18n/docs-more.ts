@@ -467,7 +467,7 @@ const en: Record<Slug, Doc> = {
       },
       {
         k: 'p',
-        t: 'Or describe the mod to an AI assistant and let it run those tools for you: <a href="~/docs/ai-mods/">making mods with AI</a>.',
+        t: 'The app does much of this for you: the <a href="~/docs/workshop/">Workshop</a> edits effects, the HUD, colours and the map, and the <a href="~/docs/builder/">item builder</a> dresses any hero in any item from the game. Or describe the mod to an AI assistant and let it run those tools for you: <a href="~/docs/ai-mods/">making mods with AI</a>.',
       },
 
       { k: 'h2', t: 'Questions', id: 'faq' },
@@ -1485,7 +1485,7 @@ const ru: Record<Slug, Doc> = {
       },
       {
         k: 'p',
-        t: 'Или опиши мод ИИ-ассистенту, и он сам прогонит эти инструменты: <a href="~/docs/ai-mods/">моды с помощью ИИ</a>.',
+        t: 'Многое приложение сделает само: <a href="~/docs/workshop/">Мастерская</a> правит эффекты, HUD, цвета и карту, а <a href="~/docs/builder/">конструктор предметов</a> одевает любого героя в любой предмет из игры. Или опиши мод ИИ-ассистенту, и он сам прогонит эти инструменты: <a href="~/docs/ai-mods/">моды с помощью ИИ</a>.',
       },
 
       { k: 'h2', t: 'Вопросы', id: 'faq' },

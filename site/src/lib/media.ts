@@ -13,7 +13,7 @@
  */
 export type Lang = 'en' | 'ru';
 
-export const shotNames = ['catalog', 'heroes', 'my-mods'] as const;
+export const shotNames = ['catalog', 'builder', 'workshop', 'effects', 'hud', 'my-mods'] as const;
 export type ShotName = (typeof shotNames)[number];
 
 export const shotUrl = (lang: Lang, name: ShotName) =>
@@ -66,13 +66,19 @@ export const shotAlt: Record<Lang, Record<ShotName, string>> = {
   en: {
     catalog:
       'The Dota 2 mod catalog inside Dota 2 Mod Manager: cards from the D2PFX collection with previews and tags',
-    heroes: 'The heroes screen: every skin and mod for one Dota 2 hero in a single list',
+    builder: 'The item builder: a Dota 2 hero in a live 3D preview next to the items for each slot',
+    workshop: 'The Workshop: tools that build Dota 2 mods from the game files, grouped by what they change',
+    effects: 'The effect editor: sliders for a Dota 2 ability effect next to a preview of it playing',
+    hud: 'The HUD editor: a plan of the Dota 2 screen with panels to move and resize',
     'my-mods': 'My mods: installed Dota 2 mods with toggles and their load order',
   },
   ru: {
     catalog:
       'Каталог модов для Доты 2 в окне Dota 2 Mod Manager: карточки скинов из коллекции D2PFX с превью и тегами',
-    heroes: 'Экран героев: все скины и моды на одного героя Доты 2 одним списком',
+    builder: 'Конструктор предметов: герой Доты 2 в живом 3D-просмотре рядом с предметами для каждого слота',
+    workshop: 'Мастерская: инструменты, которые собирают моды для Доты 2 из файлов игры',
+    effects: 'Редактор эффектов: ползунки эффекта способности Доты 2 рядом с его проигрыванием',
+    hud: 'Редактор HUD: план экрана Доты 2 с панелями, которые можно двигать и менять',
     'my-mods': 'Мои моды: установленные моды Доты 2 с переключателями и порядком загрузки',
   },
 };

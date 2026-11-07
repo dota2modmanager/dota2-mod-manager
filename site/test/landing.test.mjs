@@ -218,15 +218,17 @@ test('the tabs of the app switch by click and by keyboard', async () => {
   const { context, page } = await open('desktop');
   const visible = () => page.locator('.show-panel').evaluateAll((ps) => ps.map((p) => !p.hidden));
   const tabs = page.locator('.show-tab');
+  const last = (await tabs.count()) - 1;
+  const only = (n) => Array.from({ length: last + 1 }, (_, i) => i === n);
   await tabs.nth(1).click();
-  assert.deepEqual(await visible(), [false, true, false, false]);
+  assert.deepEqual(await visible(), only(1));
   await page.keyboard.press('End');
-  assert.deepEqual(await visible(), [false, false, false, true]);
+  assert.deepEqual(await visible(), only(last));
   await page.keyboard.press('ArrowRight');
-  assert.deepEqual(await visible(), [true, false, false, false], 'ArrowRight from the last wraps to the first');
+  assert.deepEqual(await visible(), only(0), 'ArrowRight from the last wraps to the first');
   await page.keyboard.press('ArrowLeft');
-  assert.deepEqual(await visible(), [false, false, false, true]);
-  assert.equal(await tabs.nth(3).evaluate((t) => t === document.activeElement && t.tabIndex === 0), true);
+  assert.deepEqual(await visible(), only(last));
+  assert.equal(await tabs.nth(last).evaluate((t) => t === document.activeElement && t.tabIndex === 0), true);
   // leaving the clip's tab stops the clip
   await page.keyboard.press('Home');
   assert.equal(await page.locator('#film').evaluate((v) => v.paused), true);
@@ -570,7 +572,7 @@ test('Halloween dresses the page: webs, blood, spiders that come down with the s
   // middle of the screen, the second all the way to the bottom of it once the page is read through
   const read = () => page.evaluate(() => [...document.querySelectorAll('.hw-hanger')].map((h) => h.getBoundingClientRect().bottom));
   const before = await read();
-  for (const y of [800, 1600, 2400, 3200]) { await page.evaluate((v) => scrollTo(0, v), y); await page.waitForTimeout(120); }
+  for (const y of [800, 1600, 2400, 3200, 4000, 4800, 5600]) { await page.evaluate((v) => scrollTo(0, v), y); await page.waitForTimeout(120); }
   await page.waitForTimeout(300);
   const after = await read();
   assert.ok(after.every((v, i) => v > before[i] + 60), `the spiders did not come down: ${before} -> ${after}`);

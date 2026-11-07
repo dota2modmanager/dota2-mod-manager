@@ -52,7 +52,7 @@ function cardText(lang, path) {
   if (path === '/') {
     return {
       title: 'Dota 2 Mod Manager',
-      caption: lang === 'ru' ? 'Мод-менеджер для Доты 2' : 'A mod manager for Dota 2',
+      caption: lang === 'ru' ? 'Менеджер модов и инструменты для модинга Доты 2' : 'The mod manager and modding toolkit for Dota 2',
     };
   }
   if (path === '/docs/') return { title: docsIndex[lang].h1, caption: docsIndex[lang].description };

@@ -40,8 +40,8 @@
     <text x="72" y="86" fill="#9a8fb8" font-size="14" font-weight="600" letter-spacing="3.6">OPEN SOURCE DESKTOP APP</text>
     <text x="70" y="152" fill="#efe9ff" font-size="52" font-weight="700" letter-spacing="-1">Dota 2 Mod Manager</text>
     <rect x="72" y="172" width="220" height="2" fill="url(#rule)"/>
-    <text x="72" y="212" fill="#c3b8dc" font-size="21">Mods for Dota 2, without the file juggling.</text>
-    <text x="72" y="248" fill="#8d84a6" font-size="16">1000+ mods from one catalog. Switch them off before a match. Send a setup as a link.</text>
+    <text x="72" y="212" fill="#c3b8dc" font-size="21">The mod manager and modding toolkit for Dota 2.</text>
+    <text x="72" y="248" fill="#8d84a6" font-size="16">1000+ mods. Any item on any hero. Editors for effects, the HUD and the map.</text>
   </g>
 
   <!-- left foot: the claims a stranger checks first -->

@@ -115,7 +115,7 @@ const topHeroes = [...heroes]
   .slice(0, 12)
   .map((h) => ({ ...h, pic: [...h.mods].filter((m) => m.image).sort((a, b) => (b.date ?? 0) - (a.date ?? 0))[0].image!.src }));
 
-const captions = [c.shotCatalog, c.shotHeroes, c.shotLibrary];
+const captions = [c.shotCatalog, c.shotBuilder, c.shotWorkshop, c.shotEffects, c.shotHud, c.shotLibrary];
 const shots = shotNames.map((name, i) => ({ src: shotUrl(lang, name), caption: captions[i], label: c.shotLabels[i], alt: shotAlt[lang][name] }));
 
 const finderLead = c.finderLead.replace('{mods}', nf.format(stats.mods)).replace('{word}', word(stats.mods, c.statWords[0]));
@@ -207,6 +207,21 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
   <div class="wrap">
     <h2 class="reveal">{c.showTitle}</h2>
     <Show lang={lang} shots={shots} tablist={c.shotsTablist} video={{ label: c.showVideo, caption: c.filmCaption, play: c.filmPlay }} />
+  </div>
+</section>
+
+<section id="make">
+  <div class="wrap">
+    <h2 class="reveal">{c.makeTitle}</h2>
+    <p class="lead reveal" set:html={link(c.makeLead)} />
+    <div class="bento">
+      {c.make.map(([title, text]) => (
+        <article class="tile reveal">
+          <h3>{title}</h3>
+          <p set:html={link(text)} />
+        </article>
+      ))}
+    </div>
   </div>
 </section>
 

@@ -88,15 +88,23 @@ export interface Landing {
 
   shotsTitle: string;
   shotCatalog: string;
+  shotBuilder: string;
+  shotWorkshop: string;
+  shotEffects: string;
+  shotHud: string;
   shotLibrary: string;
-  shotHeroes: string;
-  shotLabels: [string, string, string];
+  shotLabels: [string, string, string, string, string, string];
   /** Accessible name for the tab list that switches between the screenshots. */
   shotsTablist: string;
 
   huntComplete: string;
   /** Shown to somebody who arrived on a link from a person who found all eight. */
   huntShared: string;
+
+  /** The tools that make mods, as one section. makeLead may carry a link. */
+  makeTitle: string;
+  makeLead: string;
+  make: Array<[string, string]>;
 
   whatTitle: string;
   cards: Array<[string, string]>;
@@ -127,7 +135,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
     heroKicker: 'Free · open source · Windows and Linux',
     heroTitle: 'Dota 2',
     heroTitleAccent: 'Mod Manager',
-    heroLead: 'A mod manager for Dota 2: {mods} {word} from the D2PFX catalog in one place. One click to install, one to take back. Plus the cosmetics your account already owns and setups you can send as a link.',
+    heroLead: 'The mod manager and modding toolkit for Dota 2. Install {mods} {word} from the D2PFX catalog in one click, put any item from the game on any hero with a live 3D preview, and edit effects, the HUD and the map in the Workshop.',
     download: 'Download',
     dlInstaller: { title: 'Windows installer', note: 'Installs, adds a shortcut, updates itself' },
     dlPortable: { title: 'Windows portable', note: 'One file, runs from anywhere, nothing installed' },
@@ -196,12 +204,29 @@ export const landing: Record<'en' | 'ru', Landing> = {
     shotsTitle: 'What it looks like',
     shotCatalog: 'The catalog: every mod in the community collection, sorted the way its authors sorted it.',
     shotLibrary: 'Your mods: switch one off before a match, back on after. The app says when one mod is covering another.',
-    shotHeroes: 'Everything for one hero in one place, with the tags that say what a mod actually changes.',
-    shotLabels: ['Catalog', 'Heroes', 'My mods'],
+    shotBuilder: 'The item builder: any item from the game on any hero, in a live 3D preview.',
+    shotWorkshop: 'The Workshop: tools that build mods from your own game files.',
+    shotEffects: 'The effect editor: change any ability or effect and watch it play.',
+    shotHud: 'The HUD editor: move, resize, tint or hide panels on a plan of your screen.',
+    shotLabels: ['Catalog', 'Item builder', 'Workshop', 'Effects', 'HUD', 'My mods'],
     shotsTablist: 'Screens of the app',
 
     huntComplete: 'You found all of them. The site is wearing every palette at once.',
     huntShared: 'Somebody found all eight. Yours are still hidden.',
+
+    makeTitle: 'Make the game yours',
+    makeLead: 'The Workshop and the item builder make mods from your own game files. Pick what you want and the app builds it, with no Source 2 tools to learn. <a href="~/docs/workshop/">Everything in the Workshop</a>.',
+    make: [
+      ['Any item on any hero', 'Sets, arcanas and single items from the game, with a live 3D preview. Hero items install as plain files. <a href="~/docs/builder/">The item builder</a>.'],
+      ['Effect editor', 'Size, count, lifetime, speed and colour for any of the game\'s 82,000 effects, or a whole ability at once.'],
+      ['HUD editor', 'A plan of your screen with eleven panels. Drag, resize, tint, fade or hide them.'],
+      ['Hero recolour', 'The body, the weapon and the effects in your own colours, part by part.'],
+      ['Item colours', 'Arcanas in any of the game\'s prismatic gems or a colour of your own.'],
+      ['The map', 'Towers from any event, trees from any season, and a map with the decor taken off.'],
+      ['Menu background', 'A picture, a GIF or a video in place of the main menu.'],
+      ['Ability sounds', 'Your own file instead of the game\'s sound, or on top of it.'],
+      ['Rank and hero grids', 'A medal and hero levels only you see, and grids built from this patch\'s win and pick rates.'],
+    ],
 
     whatTitle: 'What you get',
     cards: [
@@ -232,6 +257,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
 
     faqTitle: 'Questions',
     faq: [
+      ['Can I make my own mods?', 'Yes, without Source 2 tools. The <a href="~/docs/builder/">item builder</a> dresses any hero in any item from the game, the <a href="~/docs/workshop/">Workshop</a> edits effects, the HUD and the map, and an <a href="~/docs/ai-mods/">AI assistant</a> can build the rest from a description.'],
       ['Is this a cheat?', 'No. The mods change how things look on your screen only. Nobody else in the match sees them.'],
       ['What kinds of mods are there?', 'Hero skins, terrains, announcers, music, cursors, fonts, item effects, trees, the river, Roshan, mega-kills. All of it lives in the D2PFX catalog, which the community keeps adding to. <a href="~/docs/catalog/">What that catalog is</a>.'],
       ['Will I get banned?', 'Bans are for cheats, and cosmetic mods are not cheats: a mod changes only how the game looks on your screen and gives no advantage. In eight years we know of no ban for one. The app never touches your account, and there is no login unless you want your name on a shared setup. <a href="~/docs/safe/#ban">The longer answer</a>.'],
@@ -253,7 +279,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
     heroKicker: 'Бесплатно · открытый код · Windows и Linux',
     heroTitle: 'Dota 2',
     heroTitleAccent: 'Mod Manager',
-    heroLead: 'Мод-менеджер для Доты 2: {mods} {word} из каталога D2PFX в одном месте. Один клик поставить, один - убрать. Плюс косметика, которая у тебя и так есть, и сборки, которые отправляются ссылкой.',
+    heroLead: 'Мод-менеджер и инструмент для моддинга Доты 2. Ставь {mods} {word} из каталога D2PFX в один клик, надевай любой предмет из игры на любого героя с живым 3D-просмотром и правь эффекты, HUD и карту в Мастерской.',
     download: 'Скачать',
     dlInstaller: { title: 'Windows, установщик', note: 'Поставит, сделает ярлык, обновляется сам' },
     dlPortable: { title: 'Windows, портативная', note: 'Один файл, запускается откуда угодно' },
@@ -319,15 +345,32 @@ export const landing: Record<'en' | 'ru', Landing> = {
     creatorAlt: 'Превью ролика hanta про Dota 2 Mod Manager, за ним каталог модов в окне приложения',
 
 
-    shotsTitle: 'Как выглядит менеджер модов для Доты 2',
+    shotsTitle: 'Как это выглядит',
     shotCatalog: 'Каталог: все моды и скины из коллекции D2PFX, в том порядке, в котором это разложили её авторы.',
     shotLibrary: 'Мои моды: выключил перед каткой, включил после. Приложение говорит, когда один мод перекрывает другой.',
-    shotHeroes: 'Все скины на одного героя Доты 2 в одном месте, с чипами, которые говорят, что мод меняет на самом деле.',
-    shotLabels: ['Каталог', 'Герои', 'Мои моды'],
+    shotBuilder: 'Конструктор предметов: любой предмет из игры на любого героя, в живом 3D-просмотре.',
+    shotWorkshop: 'Мастерская: инструменты, которые собирают моды из файлов твоей игры.',
+    shotEffects: 'Редактор эффектов: меняй любую способность или эффект и смотри, как они играют.',
+    shotHud: 'Редактор HUD: двигай, меняй размер, подкрашивай и скрывай панели на плане экрана.',
+    shotLabels: ['Каталог', 'Конструктор', 'Мастерская', 'Эффекты', 'HUD', 'Мои моды'],
     shotsTablist: 'Экраны приложения',
 
     huntComplete: 'Ты нашёл всех. Сайт надел все палитры разом.',
     huntShared: 'Кто-то нашёл всех восьмерых. У тебя они ещё спрятаны.',
+
+    makeTitle: 'Сделай игру своей',
+    makeLead: 'Мастерская и конструктор предметов собирают моды из файлов твоей игры. Выбери, что хочешь, и приложение соберёт сам мод: учить инструменты Source 2 не нужно. <a href="~/docs/workshop/">Всё, что есть в Мастерской</a>.',
+    make: [
+      ['Любой предмет на любого героя', 'Сеты, арканы и отдельные предметы из игры с живым 3D-просмотром. Предметы героев ставятся обычными файлами. <a href="~/docs/builder/">Конструктор предметов</a>.'],
+      ['Редактор эффектов', 'Размер, количество, время жизни, скорость и цвет любого из 82 000 эффектов игры или целой способности.'],
+      ['Редактор HUD', 'План твоего экрана с одиннадцатью панелями. Двигай, меняй размер, подкрашивай, делай прозрачнее или скрывай.'],
+      ['Перекраска героя', 'Тело, оружие и эффекты в свои цвета, по частям.'],
+      ['Цвета предметов', 'Арканы в любом призматическом геме игры или в своём цвете.'],
+      ['Карта', 'Башни любого события, деревья любого сезона и карта без декора.'],
+      ['Фон меню', 'Картинка, GIF или видео вместо главного меню.'],
+      ['Звуки способностей', 'Твой файл вместо звука игры или поверх него.'],
+      ['Ранг и сетки героев', 'Медаль и уровни героев, которые видишь только ты, и сетки по винрейту и пикам этого патча.'],
+    ],
 
     whatTitle: 'Что умеет мод-менеджер',
     cards: [
@@ -358,6 +401,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
 
     faqTitle: 'Вопросы про моды в Доте 2',
     faq: [
+      ['Можно делать свои моды?', 'Да, и без инструментов Source 2. <a href="~/docs/builder/">Конструктор предметов</a> одевает любого героя в любой предмет из игры, <a href="~/docs/workshop/">Мастерская</a> правит эффекты, HUD и карту, а остальное по описанию соберёт <a href="~/docs/ai-mods/">ИИ-ассистент</a>.'],
       ['Это чит?', 'Нет. Моды меняют только картинку у тебя на экране. Соперники и союзники ничего этого не видят.'],
       ['Какие моды бывают?', 'Скины на героев, ландшафты (в народе терраины), комментаторы, музыка, курсоры, шрифты, эффекты предметов, деревья, река, Рошан, мега-киллы. Всё это лежит в каталоге D2PFX, и его пополняет сообщество. <a href="~/docs/catalog/">Что это за каталог</a>.'],
       ['Забанят?', 'Банят за читы, а косметические моды не читы: мод меняет только то, как игра выглядит на твоём экране, и не даёт преимущества. За восемь лет мы не знаем ни одного бана за них. Приложение не трогает твой аккаунт, вход нужен только если хочешь подписать свою сборку ником. <a href="~/docs/safe/#ban">Развёрнутый ответ</a>.'],

@@ -61,8 +61,9 @@
 
 > [!NOTE]
 > Not affiliated with Valve. Every mod here is client-side: nobody else sees them, and no other
-> player's game is touched. VPK mods never touch Dota's own files. The looks from the game and
-> mods' effects need the item table, which asks once before it edits them and reverts byte for byte.
+> player's game is touched. VPK mods and hero items from the builder never touch Dota's own files.
+> Looks for default items, item size and mods' effects need the item table, which asks once before
+> it edits them and reverts byte for byte.
 
 > **Why not just copy the files yourself?** You can, and people do. What the app adds is
 > everything after that: switching a mod off before a match without deleting it, a weather effect
@@ -73,10 +74,14 @@
 
 ## What it does
 
+The mod manager and modding toolkit for Dota 2: install mods from the community catalog, or build your own from the game's files.
+
 <table>
 <tr><td width="210"><b>The whole catalog</b></td><td>1000+ mods in 41 categories, read live from the <a href="https://github.com/h6rd/Dota2PornFxWeb">D2PFX</a> repository, so a mod added today installs today</td></tr>
 <tr><td><b>One click in, one click out</b></td><td>The app downloads it, picks a free pak slot and cleans up after itself. Categories that must load early get low slots by themselves</td></tr>
 <tr><td><b>Switch off, don't delete</b></td><td>Turn a mod off before a match and back on after. Your library stays, the game folder stays clean</td></tr>
+<tr><td><b>Any item on any hero</b></td><td>The item builder: sets, arcanas and single items from the game on any hero, with a live 3D preview. Hero items install as plain files. <a href="https://dota2modmanager.com/docs/builder/">The guide</a></td></tr>
+<tr><td><b>A Workshop of editors</b></td><td>Change any of the game's 82,000 effects, move and resize HUD panels, recolour a hero, swap towers and trees, set your own menu background and ability sounds. All built from your own game files. <a href="https://dota2modmanager.com/docs/workshop/">The guide</a></td></tr>
 <tr><td><b>Looks for the default items</b></td><td>Weather, couriers, wards, loading screens, announcers, mega-kills: the default item every account has is drawn as any other item in the game, on your screen and nobody else's. The list comes from the game's own item table, so anything Valve adds appears by itself</td></tr>
 <tr><td><b>It says when mods collide</b></td><td>Two mods carrying the same file cannot both win. The app names the file, says which mod the game loads it from, and lets you reorder</td></tr>
 <tr><td><b>Setups by link</b></td><td>Save what you run as a preset and send it in one message. The other side opens it and gets the same look</td></tr>
@@ -100,7 +105,9 @@
 </details>
 
 <div align="center">
-  <img src="site/public/screenshots/dota-2-mod-manager-heroes-en.webp" alt="Mods grouped hero by hero" width="49%">
+  <img src="site/public/screenshots/dota-2-mod-manager-builder-en.webp" alt="The item builder with a 3D preview" width="49%">
+  <img src="site/public/screenshots/dota-2-mod-manager-workshop-en.webp" alt="The Workshop" width="49%">
+  <img src="site/public/screenshots/dota-2-mod-manager-effects-en.webp" alt="The effect editor" width="49%">
   <img src="site/public/screenshots/dota-2-mod-manager-my-mods-en.webp" alt="Installed mods, with the load order" width="49%">
 </div>
 
@@ -187,8 +194,9 @@ Nothing is injected into Dota's process, and no file of the game is opened while
 - Fonts and cursors go into the game's own folders, with the originals backed up first
 - Everything that writes to the game folder is one transaction: if a step fails, the whole
   change rolls back, displaced files included
-- VPK mods go into a folder Dota reads by itself, and Dota's own files stay as Valve shipped
-  them. The item table (looks from the game, the item builder, mods' effects) adds one line to
+- VPK mods and hero items from the builder go into a folder Dota reads by itself, and Dota's own
+  files stay as Valve shipped them. The item table (looks for default items, item size, kill
+  effects, mods' effects) adds one line to
   `gameinfo_branchspecific.gi` and a signature to `dota.signatures`. The app asks the first time
   something needs it, backs both files up first, and Settings, Game files restores them byte for
   byte. [What that buys and costs](https://dota2modmanager.com/docs/safe/)
@@ -221,6 +229,8 @@ installed here survives its uninstall.
 | | |
 |---|---|
 | [Installing mods](https://dota2modmanager.com/docs/install/) | The whole route, by hand and with the app |
+| [Item builder](https://dota2modmanager.com/docs/builder/) | Any item on any hero, the 3D preview, and which picks need the item table |
+| [Workshop](https://dota2modmanager.com/docs/workshop/) | The effect and HUD editors, recolours, the map, sounds and the rest |
 | [The language folder](https://dota2modmanager.com/docs/language/) | Why `-language` is not needed, and what it does when it is there |
 | [VPK and load order](https://dota2modmanager.com/docs/vpk/) | Pak slots, which mod wins, and `gameinfo.gi` |
 | [Game files](https://dota2modmanager.com/docs/safe/) | What the app writes into the game, and what it does not |

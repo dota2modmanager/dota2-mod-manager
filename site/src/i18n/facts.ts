@@ -85,6 +85,14 @@ export const facts: Record<'en' | 'ru', FactsPage> = {
             'Two mods carrying the same file cannot both apply. The app says which one the game is loading, and you drag them into a different order to change the answer.',
           ],
           [
+            'Puts any item from the game on any hero',
+            'The item builder shows sets, arcanas and single items on the hero in a live 3D preview. Hero items install as plain files.',
+          ],
+          [
+            'Edits the game from a Workshop of tools',
+            'Effects, HUD panels, hero colours, towers, trees, the menu background and ability sounds, all built from your own game files.',
+          ],
+          [
             'Unlocks cosmetics your account already owns',
             'Weather, couriers, wards, loading screens, announcers, mega-kills. Read out of the game\'s own item table, so anything Valve adds appears without an app update.',
           ],
@@ -264,6 +272,14 @@ export const facts: Record<'en' | 'ru', FactsPage> = {
           [
             'Показывает, чей мод выигрывает',
             'Два мода с одним и тем же файлом не могут примениться оба. Программа говорит, чей файл грузит игра, и порядок меняется перетаскиванием.',
+          ],
+          [
+            'Надевает любой предмет из игры на любого героя',
+            'Конструктор предметов показывает сеты, арканы и отдельные предметы на герое в живом 3D-просмотре. Предметы героев ставятся обычными файлами.',
+          ],
+          [
+            'Правит игру инструментами Мастерской',
+            'Эффекты, панели HUD, цвета героя, башни, деревья, фон меню и звуки способностей. Всё собирается из файлов твоей игры.',
           ],
           [
             'Открывает косметику, которая уже твоя',
