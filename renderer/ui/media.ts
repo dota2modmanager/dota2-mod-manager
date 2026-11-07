@@ -28,6 +28,21 @@ export function isVideo(src: string | null | undefined): boolean { return /\.(mp
 export function isAudio(src: string | null | undefined): boolean { return /\.(mp3|wav|ogg)$/i.test(src || ''); }
 export function isMedia(src: string | null | undefined): boolean { return isVideo(src) || isAudio(src); }
 
+/**
+ * The address a picture or clip starts from. The main process answers for catalog pictures
+ * (src/preview-cache.ts) but a clip has to stream, so the window asks for it itself, and it asks
+ * the mirror first: a blocked GitHub hangs instead of failing, and nothing here would move on.
+ */
+export function firstSrc<T extends string | null>(url: T): T | string {
+  return (isVideo(url) && mirrorOf(url)) || url;
+}
+
+/** Where to ask next once `src` has failed for `url`, or null when nobody else has it. */
+export function spareSrc(src: string, url: string | null): string | null {
+  if (src === url) return isVideo(url) ? null : mirrorOf(url);
+  return src === firstSrc(url) ? url : null;
+}
+
 // resolve a repo-relative or absolute link to a full URL
 export function resolveUrl(url: string | null | undefined): string | null {
   if (!url) return null;

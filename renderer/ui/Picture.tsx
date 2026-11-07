@@ -9,7 +9,7 @@
  * React draws as a picture goes through here or through catalog/card/Media.tsx.
  */
 import { useState } from 'react';
-import { isVideo, mirrorOf, mediaGaveUp } from './media.ts';
+import { isVideo, firstSrc, spareSrc, mediaGaveUp } from './media.ts';
 
 interface Props {
   url: string;
@@ -21,12 +21,12 @@ interface Props {
 }
 
 export function Picture({ url, cls, fallback = 'image_not_supported', lazy = true }: Props) {
-  const [state, setState] = useState({ url, src: url, gaveUp: false });
+  const [state, setState] = useState({ url, src: firstSrc(url), gaveUp: false });
   // a new address is a new picture, with its own retry
-  if (state.url !== url) setState({ url, src: url, gaveUp: false });
+  if (state.url !== url) setState({ url, src: firstSrc(url), gaveUp: false });
   if (state.gaveUp) return <div className={cls}><span className="ms thumb-glyph">{fallback}</span></div>;
   const failed = () => {
-    const spare = state.src === url ? mirrorOf(url) : null;
+    const spare = spareSrc(state.src, url);
     if (spare) setState({ url, src: spare, gaveUp: false });
     else { setState({ url, src: state.src, gaveUp: true }); mediaGaveUp(); }
   };

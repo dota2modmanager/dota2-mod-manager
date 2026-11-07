@@ -2,9 +2,9 @@
 /**
  * A copy of the catalog's preview pictures that does not live on GitHub.
  *
- * The renderer asks raw.githubusercontent for every preview directly, so somebody who cannot reach
- * GitHub gets a catalog that loads and a grid of empty squares. All of them come to about 40 MB,
- * which is the difference between a usable window and a blank one.
+ * The app asks this copy first for every preview (src/preview-cache.ts), so somebody who cannot
+ * reach GitHub still gets a catalog full of pictures. Everything under assets/previews comes to
+ * about 400 MB, clips included.
  *
  * The archives lived here too until 2026-11-05. The catalog had grown past the free tier's 10 GB,
  * so new mods stopped fitting and the copy held only the old ones. An object already here at the
@@ -38,12 +38,15 @@ const LIMIT = Number(flag('--limit', '0')) || Infinity;
 const BUDGET = Number(flag('--budget', '9')) * 1024 ** 3;
 const DROP = args.includes('--drop-archives');
 const ARCHIVES = 'assets/files/';
-const TYPES = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
+const TYPES = {
+  png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', ico: 'image/x-icon',
+  mp4: 'video/mp4', webm: 'video/webm', mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg',
+};
 const typeOf = (key) => TYPES[key.split('.').pop().toLowerCase()] || 'application/octet-stream';
 
 import { iterMods } from './catalog-mods.js';
 import { createR2, purgeCache } from './r2-client.js';
-import { staleCopies, publishedHash, checkBody, budgetNote, fits } from './mirror-plan.js';
+import { staleCopies, publishedHash, checkBody, budgetNote, fits, previewPaths } from './mirror-plan.js';
 
 /* The bucket, and SigV4 with it, live in tools/r2-client.js: the release assets need the same
    signing and a second copy of eighty lines of crypto is how the catalog walk in this very file
@@ -99,6 +102,22 @@ for (const { categoryId, mod } of iterMods(byCategory, { skip: ['tools', 'news']
       : `assets/previews/${categoryId}/${preview}`;
     wanted.push({ path: key });
   }
+}
+
+/* The walk above sees a mod's first picture and nothing else. On 2026-11-07 that left 198 files out
+   of this bucket, among them every category cover, every style's picture and the hero art, and
+   those are the ones the app could not show behind a blocked GitHub. The repository's own listing
+   names all of them in one request; if it does not answer, tonight's run is the walk alone. */
+try {
+  const token = process.env.GITHUB_TOKEN;
+  const res = await fetch('https://api.github.com/repos/h6rd/Dota2PornFxWeb/git/trees/main?recursive=1', {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const known = new Set(wanted.map((item) => item.path));
+  for (const path of previewPaths(await res.json())) if (!known.has(path)) wanted.push({ path });
+} catch (e) {
+  console.log(`repository listing unavailable: ${e.message}`);
 }
 console.log(`catalog: ${wanted.length} pictures`);
 

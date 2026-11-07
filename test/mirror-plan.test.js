@@ -9,7 +9,18 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
 
-const { staleCopies, publishedHash, checkBody, fits } = require('../tools/mirror-plan.js');
+const { staleCopies, publishedHash, checkBody, fits, previewPaths } = require('../tools/mirror-plan.js');
+
+test('the bucket copies every preview the repository lists, covers and clips with them', () => {
+  const tree = [
+    { path: 'assets/previews/categories/shaders.webp', type: 'blob' },
+    { path: 'assets/previews/heroes/clip.mp4', type: 'blob' },
+    { path: 'assets/previews/heroes', type: 'tree' },
+    { path: 'assets/files/heroes/mod.zip', type: 'blob' },
+  ];
+  assert.deepEqual(previewPaths({ tree }), ['assets/previews/categories/shaders.webp', 'assets/previews/heroes/clip.mp4']);
+  assert.deepEqual(previewPaths(null), []);
+});
 
 const sha = (text) => crypto.createHash('sha256').update(text).digest('hex');
 const KRATOS = 'assets/files/heroes/Axe Kratos.zip';

@@ -214,7 +214,18 @@ function currentPlan(stable, beta) {
   return { uploads, keep: new Set(uploads.map((u) => `${UPDATES}${u.name}`)) };
 }
 
+/**
+ * Every preview in a GitHub tree listing, each once, with its path as the bucket stores it.
+ *
+ * @param {{tree?: Array<{path: string, type: string}>}} listing  the git/trees answer
+ */
+function previewPaths(listing) {
+  return (listing?.tree || [])
+    .filter((entry) => entry.type === 'blob' && entry.path.startsWith('assets/previews/'))
+    .map((entry) => entry.path);
+}
+
 module.exports = {
-  staleCopies, publishedHash, checkBody, budgetNote, fits, releasePlan, retargetFeed, staleReleaseFiles, currentPlan,
+  previewPaths, staleCopies, publishedHash, checkBody, budgetNote, fits, releasePlan, retargetFeed, staleReleaseFiles, currentPlan,
   UPDATES, BETA_MARK, betaName,
 };

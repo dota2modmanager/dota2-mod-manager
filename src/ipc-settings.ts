@@ -3,6 +3,7 @@
  * Both settings handlers answer with the whole view rather than the bare store, because the
  * renderer caches whatever it is handed - see src/settings-view.ts for what that cost once.
  */
+import { picturesIn } from './preview-cache.ts';
 import path from 'node:path';
 
 import { setLang, t } from './i18n.ts';
@@ -17,10 +18,10 @@ import type { AppContext } from './app-context.ts';
 export function registerSettingsIpc({
   // The four read late are main-process state that changes while the app runs; setPresenceView
   // writes one back. Passing values here would freeze them at registration time.
-  applyPresenceSetting, catalog, discordAuth, findDotaGamePath, moveLangFolder,
+  applyPresenceSetting, catalog, previewStore, discordAuth, findDotaGamePath, moveLangFolder,
   refreshPresence, remoteConfig, schemaService, settings, settingsView, validateGamePath,
   langFolder, patchWatcher, setPresenceView, updater, win,
-}: Pick<AppContext, 'applyPresenceSetting' | 'catalog' | 'discordAuth' | 'findDotaGamePath' | 'moveLangFolder' | 'refreshPresence' | 'remoteConfig' | 'schemaService' | 'settings' | 'settingsView' | 'validateGamePath' | 'langFolder' | 'patchWatcher' | 'setPresenceView' | 'updater' | 'win'>): void {
+}: Pick<AppContext, 'applyPresenceSetting' | 'catalog' | 'previewStore' | 'discordAuth' | 'findDotaGamePath' | 'moveLangFolder' | 'refreshPresence' | 'remoteConfig' | 'schemaService' | 'settings' | 'settingsView' | 'validateGamePath' | 'langFolder' | 'patchWatcher' | 'setPresenceView' | 'updater' | 'win'>): void {
   const { dialog, ipcMain } = electron();
   /* The beta channel, from the switch in settings and the list in the signed config.
    *
@@ -149,7 +150,10 @@ export function registerSettingsIpc({
   // ----- catalog -----
   ipcMain.handle('catalog:load', async (e, force) => {
     try {
-      return await catalog.load({ forceRefresh: !!force });
+      const data = await catalog.load({ forceRefresh: !!force });
+      // the catalog just answered, so the network is up: the rest of its pictures come in behind it
+      void previewStore.warm(picturesIn(data.mods, data.constants)).catch(() => {});
+      return data;
     } catch (err) {
       /* The kind of failure travels with the words. "fetch failed" is Node's way of saying it
          could not open a socket, and printing that at somebody who turned their wifi off is

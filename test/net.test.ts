@@ -12,6 +12,14 @@ import type { AddressInfo } from 'node:net';
 import crypto from 'node:crypto';
 
 import * as net from '../src/net.ts';
+import { noteStall, stoodDown, resetHealth } from '../src/net-mirrors.ts';
+
+test('one silent timeout stands a host down, so a blocked GitHub costs one wait and not three', () => {
+  resetHealth();
+  noteStall('raw.githubusercontent.com', 'timed out');
+  assert.equal(stoodDown('raw.githubusercontent.com'), true);
+  resetHealth();
+});
 import type { Mirror } from '../src/net.ts';
 const { RAW_HOST } = net;
 

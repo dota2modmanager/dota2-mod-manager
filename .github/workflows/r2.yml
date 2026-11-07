@@ -61,6 +61,8 @@ jobs:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          # the listing of the catalog's repository, read-only and public, past the shared rate limit
+          GITHUB_TOKEN: ${{ github.token }}
           # Replacing an object does not replace what the cache in front of it already handed
           # out, and pictures are cached by default, so replaced objects are purged. The zone
           # id is an identifier, not a secret, and lives here: kept as a secret, nobody ever set
