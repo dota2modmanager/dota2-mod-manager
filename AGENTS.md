@@ -120,6 +120,7 @@ npm --prefix site test        # links, markup, every kind of page at 320-1440 px
 npm --prefix site run look    # pictures of every kind of page, desktop and phone
 npm run guide-shots           # the app's own pictures in the guides, taken in the sandbox
 node tools/site-shots.mjs <dir>  # the site's and the README's big pictures, on the real game through a write jail
+node tools/site-tour.mjs <dir>   # the tour on the site, filmed off the app in both languages, after site-shots
 ```
 
 The tests are what CI runs before the site deploys. The WebKit ones (every browser on an iPhone

@@ -1,6 +1,6 @@
 /**
  * Everything in the app, screen by screen: where each function lives and how to use it. The
- * landing's tiles link to the sections here, so an id that changes breaks a link (site/test).
+ * landing’s tiles link to the sections here, so an id that changes breaks a link (site/test).
  * Read off the windows themselves (renderer/), and merged into the rest in docs.ts.
  */
 import type { Doc } from './docs.ts';
@@ -68,7 +68,7 @@ export const featureDocs: Record<'en' | 'ru', { features: Doc }> = {
         { k: 'h2', t: 'Hero recolour', id: 'paint' },
         {
           k: 'p',
-          t: '<b>Where:</b> open a hero in Items and press Recolour, the button beside the hero's name. Pick a colour for all the parts, or for one layer each: body, weapon, abilities, attacks, items, icon and portrait.',
+          t: '<b>Where:</b> open a hero in Items and press Recolour, the button beside the hero’s name. Pick a colour for all the parts, or for one layer each: body, weapon, abilities, attacks, items, icon and portrait.',
         },
         {
           k: 'note',
