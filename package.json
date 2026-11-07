@@ -1,7 +1,7 @@
 {
   "name": "dota2-mod-manager",
   "productName": "Dota 2 Mod Manager",
-  "version": "3.3.2",
+  "version": "3.3.3",
   "desktopName": "dota2-mod-manager.desktop",
   "description": "Mod manager and modding toolkit for Dota 2: a catalog of 1000+ mods, an item builder with a 3D preview, and a Workshop of editors for effects, the HUD, the map and sounds",
   "main": "src/main.ts",
