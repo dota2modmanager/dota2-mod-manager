@@ -274,6 +274,8 @@ test('no check throws, whatever it is handed', () => {
   const loop: Record<string, unknown> = {};
   loop.self = loop;
   assert.match(String(checkArgs('settings:set', ['panels', loop])), /JSON/);
+  assert.match(String(checkArgs('fx:install', [' ', { a: 0n }])), /JSON/, 'a value JSON cannot write is refused, not thrown');
+  assert.match(String(checkArgs('fx:install', [' ', loop])), /JSON/);
 });
 
 test('the browser is asked for two permissions at most, and only by the app\'s pages', () => {

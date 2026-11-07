@@ -15,7 +15,6 @@
  * the game and playwright-core and sharp from site/node_modules. Move the window's look, run it again.
  */
 import { createRequire } from 'node:module';
-import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -45,7 +44,7 @@ if (!fs.existsSync(GAME)) {
   fs.mkdirSync(path.join(GAME, 'dota_russian'), { recursive: true });
   fs.mkdirSync(USER, { recursive: true });
   for (const n of ['dota', 'bin', 'core']) {
-    execSync(`cmd /c mklink /J "${path.join(GAME, n)}" "${path.join(REAL, n).replace(/\//g, '\\')}"`);
+    fs.symlinkSync(path.join(REAL, n), path.join(GAME, n), 'junction');
   }
 }
 
@@ -90,7 +89,7 @@ async function brightest(win) {
 }
 
 function linkTools() {
-  if (!fs.existsSync(TOOLS) && fs.existsSync(HAVE)) execSync(`cmd /c mklink /J "${TOOLS}" "${HAVE}"`);
+  if (!fs.existsSync(TOOLS) && fs.existsSync(HAVE)) fs.symlinkSync(HAVE, TOOLS, 'junction');
 }
 
 const STEPS = {
@@ -131,7 +130,8 @@ const STEPS = {
 linkTools();
 for (const lang of ['en', 'ru']) {
   const file = path.join(USER, 'settings.json');
-  const was = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
+  let was = {};
+  try { was = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* the first run has no settings yet */ }
   fs.writeFileSync(file, JSON.stringify({ ...was, dotaGamePath: GAME, uiLang: lang, langPromptSeen: true }));
 
   const app = await _electron.launch({
