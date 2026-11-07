@@ -101,7 +101,8 @@ test('what the window sends is kept to what the game has', () => {
     { medal: { tier: 3, stars: 1, top: 0 }, levels: { axe: 30, juggernaut: 17 }, every: null });
   assert.deepEqual(clampLook({ medal: { tier: 8, top: 100 }, every: 5 }), { medal: { tier: 8, stars: 1, top: 100 }, levels: {}, every: 5 });
   assert.deepEqual(clampLook('nonsense'), { medal: null, levels: {}, every: null });
-  assert.deepEqual([1, 5, 6, 25, 26, 30].map(tierOf), [0, 0, 1, 4, 5, 5]);
+  // the tiers are 5, 6, 6, 7 and 5 levels long, and grandmaster is level 30 alone (#549)
+  assert.deepEqual([1, 5, 6, 11, 12, 17, 18, 24, 25, 29, 30].map(tierOf), [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5]);
 });
 
 test('the script knows the levels and the medal, in the game’s own words', () => {
@@ -148,6 +149,15 @@ function runIn(match: Match, js: string, root: Fake, ...between: (() => void)[])
   return said;
 }
 
+test('in the game the script draws the badge of the tier the level is in (#549)', () => {
+  for (const [lvl, tier] of [[5, 'BronzeTier'], [11, 'SilverTier'], [12, 'GoldTier'], [24, 'PlatinumTier'], [29, 'MasterTier'], [30, 'GrandmasterTier']] as const) {
+    const label = fake('Label', 'HeroBadgeLevel');
+    const panel = fake('Panel', '', ['HeroCard'], [fake('DOTAHeroImage', 'HeroImage', [], [], { heroname: 'npc_dota_hero_axe' }), fake('Panel', 'HeroBadgeStatus', [], [label])]);
+    runScript(levelsScript({ medal: null, levels: { axe: lvl }, every: null }), fake('Panel', '', [], [panel]));
+    assert.ok(panel.classes.has(tier), `level ${lvl} is ${tier}`);
+  }
+});
+
 test('a hero card takes the level into the variable its label is bound to, by name or by number', () => {
   const card = (img: Partial<Fake>) => {
     const label = fake('Label', 'HeroBadgeLevel');
@@ -160,7 +170,8 @@ test('a hero card takes the level into the variable its label is bound to, by na
   for (const c of [byName, byNumber]) {
     assert.equal(c.label.text, '23');
     assert.equal(c.label.vars.hero_badge_level, 23);
-    assert.ok(c.panel.classes.has('MasterTier'));
+    // 23 is platinum: platinum runs from 18 to 24 (#549)
+    assert.ok(c.panel.classes.has('PlatinumTier'));
   }
   assert.equal(other.label.text, '', 'a hero with no level keeps the game’s');
   assert.deepEqual(said, ['d2mm rank look: hero grid: 3 cards, the first npc_dota_hero_axe #undefined']);
