@@ -91,3 +91,11 @@ test('the catalog lists the 18+ mods only after the visitor says they are 18, an
   assert.ok(!(await shown()).includes(names[0]));
   await context.close();
 });
+
+test('the pages 18+ mods once had send their visitors to the catalog', () => {
+  const rules = fs.readFileSync(path.join(DIST, '_redirects'), 'utf-8');
+  for (const pic of ['pudge-with-a-penis', 'nude-marci']) {
+    assert.match(rules, new RegExp(`^/mods/${pic}/ /catalog/ 301$`, 'm'));
+    assert.match(rules, new RegExp(`^/ru/mods/${pic}/ /ru/catalog/ 301$`, 'm'));
+  }
+});
