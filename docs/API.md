@@ -3401,6 +3401,16 @@ export function swapPak(installer: PakInstaller, rec: LibRecord, vpk: Buffer, of
 `vpk` in place of the record's pak: written beside it, then moved into the slot the old one had,
 and switched off when `off`. The caller builds first, so a build that fails leaves the old one.
 
+### `cssInForce`
+
+```ts
+export async function cssInForce(where: Omit<InForce, 'usable' | 'passedOver'>, decompile: (style: Buffer) => Promise<string>, log: (msg: string) => void = () => {}): Promise<{ css: string; from: LibRecord | null } | null>
+```
+
+A compiled style in force, read back as CSS. A mod's copy the tool cannot read is passed over for
+the next one, down to the game's own, so one odd mod does not stop the build. The game's copy
+failing is a real failure and is thrown. Null when nobody has the file.
+
 ### `fileInForce`
 
 ```ts

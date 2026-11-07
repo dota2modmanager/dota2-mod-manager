@@ -109,9 +109,14 @@ jobs:
       # timeout stops npx but not the package install it started under sudo, which goes on holding the dpkg
       # lock. On 2026-11-04 a slow mirror ran the first try out, and the next two failed at once on
       # that lock, so a retry waits for the lock first: by then that install has usually finished.
+      # On 2026-11-07 the mirror hung past the step's limit and turned main red with nothing wrong
+      # in the code. A failed install now skips the WebKit tests for this run with a warning: the
+      # next deploy, a day at most away, runs them again.
       - name: Install WebKit for the iPhone tests
+        id: webkit
         working-directory: site
         timeout-minutes: 14
+        continue-on-error: true
         run: |
           for try in 1 2 3; do
             while sudo fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done
@@ -123,7 +128,7 @@ jobs:
       - name: Test the pages in a browser
         working-directory: site
         env:
-          SITE_WEBKIT: required
+          SITE_WEBKIT: ${{ steps.webkit.outcome == 'success' && 'required' || '' }}
         run: npm test
 
       # The screenshot of whatever failed, and the screen it failed on.
