@@ -137,24 +137,26 @@ async function settled(done: () => boolean | Promise<boolean>) {
 test('an old picture is asked about, and only a changed one is replaced', async (t) => {
   const dir = tempDir(t);
   const seen: (string | null)[] = [];
-  let answer: Response | null = picture();
+  // a new answer for every question: on Windows a replace can fail while the file is being read,
+  // the store then asks again, and a body read once cannot be read a second time
+  let answer = () => picture();
   const store = createPreviewStore({
     dir,
-    fetchFn: async (_, init) => { seen.push(new Headers(init.headers).get('if-modified-since')); return answer!; },
+    fetchFn: async (_, init) => { seen.push(new Headers(init.headers).get('if-modified-since')); return answer(); },
   });
   await store.get(REL);
   const file = path.join(dir, fs.readdirSync(dir)[0]);
   const old = new Date(Date.now() - FRESH_MS - 1000);
   fs.utimesSync(file, old, old);
 
-  answer = new Response(null, { status: 304 });
+  answer = () => new Response(null, { status: 304 });
   await store.get(REL);
   await settled(() => Date.now() - fs.statSync(file).mtimeMs < 5000);
   assert.equal(seen[1], old.toUTCString());
 
   fs.utimesSync(file, old, old);
   const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]);
-  answer = picture(png);
+  answer = () => picture(png);
   await store.get(REL);
   await settled(async () => (await store.get(REL))?.type === 'image/png');
 });
