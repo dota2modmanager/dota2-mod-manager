@@ -3787,7 +3787,8 @@
           "image": {"src":"/mods/tcoaal-mach-v1.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792448425
+          "date": 1792448425,
+          "adult": true
         },
         {
           "name": "Tcoaal Mach v2",
@@ -3796,7 +3797,8 @@
           "image": {"src":"/mods/tcoaal-mach-v2.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
           "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792448425
+          "date": 1792448425,
+          "adult": true
         },
         {"name":"Anime Search Bar","styleLabel":null,"group":"search-bar","image":{"src":"/mods/anime-search-bar.webp","width":397,"height":1022},"author":"Defendor","authorUrl":null,"date":1792412054},
         {
