@@ -1098,6 +1098,13 @@ section { padding: 56px 0; }
 .quick-pic img { width: 100%; height: 100%; object-fit: cover; }
 .quick-body { padding: 22px 24px 24px; display: grid; gap: 14px; }
 .quick-body h2 { margin: 0; font-size: clamp(22px, 3vw, 30px); }
+/* the 18+ question (src/scripts/adult.ts): the quick view's box, narrower, no picture */
+.adult-ask { width: min(520px, calc(100vw - 24px)); }
+.adult-ask p { margin: 0; color: var(--text-dim); }
+.adult-ask .btn-row { justify-content: flex-end; }
+/* the 18+ button sits at the end of the result line, quiet until it is on */
+.result-line .adult-chip { margin-left: auto; --tone: var(--immortal); }
+.mcard-adult { background: var(--immortal); color: #1d1200; }
 .quick-facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; font-size: 14.5px; }
 .quick-facts dt { color: var(--text-faint); }
 .quick-facts dd { margin: 0; color: var(--text); }

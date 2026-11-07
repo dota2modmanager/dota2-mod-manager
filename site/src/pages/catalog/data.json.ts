@@ -3,7 +3,7 @@
  * describes. One file for both languages, since only the category and hero names differ and
  * both are in it.
  */
-import { catalog, catalogPayload } from '../../lib/catalog';
+import { adultCatalog, catalog, catalogPayload } from '../../lib/catalog';
 import { authorOf } from '../../lib/authors';
 
 export function GET() {
@@ -11,9 +11,12 @@ export function GET() {
   // cards drawn from this file lead there the way the ones in the HTML do. After it, the download
   // counter's key when it is not plain category/name (a mod in a group), '' when it is
   const payload = catalogPayload();
-  payload.mods.forEach((row, i) => {
-    const m = catalog[i];
+  const byKey = new Map([...catalog, ...adultCatalog].map((m) => [m.key, m]));
+  const tail = (rows: typeof payload.mods) => rows.forEach((row) => {
+    const m = byKey.get(row[0] as string)!;
     row.push(authorOf(m)?.slug ?? '', m.countKey === `${m.cat}/${m.name}` ? '' : m.countKey);
   });
+  tail(payload.mods);
+  tail(payload.adult);
   return new Response(JSON.stringify(payload), { headers: { 'Content-Type': 'application/json' } });
 }

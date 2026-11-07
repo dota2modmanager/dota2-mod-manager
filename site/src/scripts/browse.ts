@@ -14,6 +14,7 @@
 import { loadCatalog, presetCode, appLink, webLink, fmtDay, isNew, el, type Catalog, type Mod, type Lang } from './catalog';
 import { readSet, writeSet, markCards as markIn, SET_KEY } from './set';
 import { showCounts, paintCards } from './downloads';
+import { adultShown, setAdultShown, askAdult } from './adult';
 
 type Words = {
   shown: string; prev: string; next: string; pageOf: string; range: string; add: string; remove: string; look: string; newBadge: string; by: string;
@@ -21,6 +22,7 @@ type Words = {
   openApp: string; copyLink: string; copied: string; noCompress: string; appNote: string; close: string;
   tray: string; setName: string; heroPage: string; kindPage: string; mods: [string, string, string];
   slots: Record<string, string>; heroesLabel: string; heroBase: string; catBase: string; modBase: string; modPage: string; authorBase: string; plainStyle: string;
+  adultBadge: string;
 };
 
 const BATCH = 48;
@@ -52,6 +54,10 @@ export function initBrowser(root: HTMLElement) {
   // inside the toolbar's rows only: the cards carry data-cat too
   const catBtns = [...root.querySelectorAll<HTMLButtonElement>('#browse-cats [data-cat]')];
   const slotBtns = [...root.querySelectorAll<HTMLButtonElement>('#browse-slots [data-slot]')];
+  // on /catalog/ only: the 18+ mods, listed once the visitor says yes (src/scripts/adult.ts)
+  const adultBtn = root.querySelector<HTMLButtonElement>('#browse-adult');
+  const adultAsk = document.getElementById('adult-ask') as HTMLDialogElement | null;
+  let adultOn = !!adultBtn && adultShown();
 
   // ---- state, read from the address ----
   const params = new URLSearchParams(location.search);
@@ -84,6 +90,8 @@ export function initBrowser(root: HTMLElement) {
   let counts: Record<string, number> | null = null;
   void showCounts(grid).then((c) => (counts = c));
   const need = () => loadCatalog(lang).then((c) => (catalog = c));
+  /** A mod by its key: the 18+ ones only while they are listed. */
+  const find = (key: string): Mod | undefined => catalog?.byKey.get(key) ?? (adultOn ? catalog?.adult.find((m) => m.key === key) : undefined);
 
   // ---- the set ----
   let picked = new Set(readSet());
@@ -118,7 +126,8 @@ export function initBrowser(root: HTMLElement) {
     li.dataset.count = m.countKey;
 
     const pic = el('a', 'mcard-pic');
-    pic.href = `${w.modBase}${m.key}/`;
+    // an 18+ mod has no page of its own: its card opens the closer look and nothing else
+    pic.href = m.adult ? `#mod=${encodeURIComponent(m.key)}` : `${w.modBase}${m.key}/`;
     pic.dataset.open = '';
     if (m.thumb) {
       const img = el('img');
@@ -131,7 +140,8 @@ export function initBrowser(root: HTMLElement) {
     } else {
       pic.append(el('span', 'none', m.name));
     }
-    if (isNew(m)) pic.append(el('span', 'mcard-new', w.newBadge));
+    if (m.adult) pic.append(el('span', 'mcard-new mcard-adult', w.adultBadge));
+    else if (isNew(m)) pic.append(el('span', 'mcard-new', w.newBadge));
 
     const add = el('button', 'mcard-add');
     add.type = 'button';
@@ -167,7 +177,7 @@ export function initBrowser(root: HTMLElement) {
     key: li.dataset.key!, name: li.dataset.name!, date: Number(li.dataset.date), hay: li.dataset.hay!,
     slots: (li.dataset.slots || '').split(' ').filter(Boolean), group: li.dataset.group!, cat: '', el: li,
   }));
-  const fromData = (c: Catalog): Row[] => c.mods.map((m) => ({
+  const fromData = (c: Catalog): Row[] => [...c.mods, ...(adultOn ? c.adult : [])].map((m) => ({
     key: m.key, name: m.name.toLowerCase(), date: m.date, hay: m.hay, slots: m.slots, group: m.group, cat: m.cat, mod: m,
   }));
 
@@ -249,6 +259,7 @@ export function initBrowser(root: HTMLElement) {
       b.hidden = !!state.group && b.dataset.group !== state.group;
     }
     for (const b of slotBtns) { const on = (b.dataset.slot || '') === state.slot; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }
+    if (adultBtn) { adultBtn.classList.toggle('on', adultOn); adultBtn.setAttribute('aria-pressed', String(adultOn)); }
   };
 
   let timer = 0;
@@ -261,6 +272,17 @@ export function initBrowser(root: HTMLElement) {
   catBtns.forEach((b) => b.addEventListener('click', () => { state.cat = state.cat === b.dataset.cat ? '' : b.dataset.cat!; if (state.cat) state.group = b.dataset.group || ''; changed(); }));
   slotBtns.forEach((b) => b.addEventListener('click', () => { state.slot = b.dataset.slot || ''; changed(); }));
   clear.addEventListener('click', () => { state.q = ''; state.group = ''; state.cat = ''; state.slot = ''; input.value = ''; changed(); input.focus(); });
+  /* "18+": asks the first time, and lists them on a yes; pressed again, hides them without asking */
+  const listAdult = async (on: boolean) => {
+    if (on && !adultShown()) {
+      if (!adultAsk || !(await askAdult(adultAsk))) return false;
+    }
+    setAdultShown(on);
+    adultOn = on;
+    if (catalog) { rows = fromData(catalog); state.page = 1; saveState(); apply(); } else paintCount();
+    return true;
+  };
+  adultBtn?.addEventListener('click', () => { void listAdult(!adultOn); });
   prevBtn?.addEventListener('click', () => goTo(state.page - 1));
   nextBtn?.addEventListener('click', () => goTo(state.page + 1));
   pageNums?.addEventListener('click', (e) => {
@@ -308,7 +330,9 @@ export function initBrowser(root: HTMLElement) {
 
   async function open(key: string, from?: HTMLElement) {
     if (!catalog) { try { await need(); } catch { return; } }
-    const m = catalog!.byKey.get(key);
+    // a link to an 18+ mod asks first, as the button does
+    if (!find(key) && adultBtn && catalog!.adult.some((x) => x.key === key) && !(await listAdult(true))) return;
+    const m = find(key);
     if (!m) return;
     current = key;
     opener = from ?? null;
@@ -326,7 +350,7 @@ export function initBrowser(root: HTMLElement) {
     qFacts.replaceChildren(...facts.flatMap(([k, v]) => { const dd = el('dd'); dd.append(v); return [el('dt', '', k), dd]; }));
     qLinks.replaceChildren();
     const linkTo = (href: string, text: string) => { const a = el('a', '', text); a.href = href; return a; };
-    const links: HTMLAnchorElement[] = [linkTo(`${w.modBase}${m.key}/`, w.modPage)];
+    const links: HTMLAnchorElement[] = m.adult ? [] : [linkTo(`${w.modBase}${m.key}/`, w.modPage)];
     if (m.hero && context !== 'hero') links.push(linkTo(`${w.heroBase}${m.hero}/`, w.heroPage.replace('{hero}', m.heroName ?? '')));
     if (m.cat !== 'heroes' && context !== 'category') links.push(linkTo(`${w.catBase}${m.cat}/`, w.kindPage.replace('{kind}', m.catName)));
     links.forEach((a, i) => { if (i) qLinks.append(' · '); qLinks.append(a); });
@@ -349,7 +373,11 @@ export function initBrowser(root: HTMLElement) {
   dialog.addEventListener('click', (e) => { if (e.target === dialog) close(); });
   qAdd.addEventListener('click', () => { if (current) toggle(current); });
   // the mod's own page: it shows the mod to anybody, with its picture in a chat's preview
-  qCopy.addEventListener('click', () => { if (current) copy(`${location.origin}${w.modBase}${current}/`); });
+  qCopy.addEventListener('click', () => {
+    if (!current) return;
+    // an 18+ mod has no page: its link is the catalog's closer look, which asks first
+    copy(find(current)?.adult ? `${location.origin}${location.pathname}#mod=${encodeURIComponent(current)}` : `${location.origin}${w.modBase}${current}/`);
+  });
   qApp.addEventListener('click', (e) => { if (!qCode) { e.preventDefault(); say(w.noCompress); } });
 
   // ---- the tray ----
@@ -367,7 +395,7 @@ export function initBrowser(root: HTMLElement) {
     if (!n) return;
     const run = ++trayRun;
     if (!catalog) { try { await need(); } catch { return; } }
-    const mods = [...picked].map((k) => catalog!.byKey.get(k)).filter(Boolean) as Mod[];
+    const mods = [...picked].map((k) => find(k)).filter(Boolean) as Mod[];
     const code = await presetCode(w.setName, mods);
     if (run !== trayRun) return;
     trayCode = code;

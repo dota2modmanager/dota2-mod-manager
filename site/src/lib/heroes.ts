@@ -44,10 +44,15 @@ export interface Hero {
 }
 
 /* Mods the catalog tags 18+ (explicit hero models) are on no page of the site: not the landing,
-   not a hero's page, not a mod page, not the catalog. The app shows them only after the user says
-   they are 18 and want them (renderer/core/adult.ts); a public page cannot ask first. A hero left
-   with nothing else has no page. */
-export const heroes: Hero[] = (data as { heroes: Hero[] }).heroes
+   not a hero's page, not a mod page. The catalog's browser alone lists them, and only after the
+   visitor says they are 18 and want them (src/scripts/browse.ts), the way the app asks
+   (renderer/core/adult.ts). A hero left with nothing else has no page. */
+const raw = (data as { heroes: Hero[] }).heroes;
+
+/** The 18+ mods, each with the hero it is for: what the catalog's browser shows once asked. */
+export const adultHeroMods = raw.flatMap((h) => h.mods.filter((m) => m.adult).map((mod) => ({ hero: h.slug, mod })));
+
+export const heroes: Hero[] = raw
   .map((h) => ({ ...h, mods: h.mods.filter((m) => !m.adult) }))
   .filter((h) => h.mods.length);
 

@@ -14,7 +14,12 @@ export interface Category {
 }
 
 /* 18+ mods are on no page of the site (src/lib/heroes.ts says why); a category of nothing else has no page. */
-export const categories: Category[] = (data as { categories: Category[] }).categories
+const raw = (data as { categories: Category[] }).categories;
+
+/** The 18+ mods of each category, for the catalog's browser once the visitor has said yes. */
+export const adultCategoryMods = raw.flatMap((c) => c.mods.filter((m) => m.adult).map((mod) => ({ cat: c.id, mod })));
+
+export const categories: Category[] = raw
   .map((c) => ({ ...c, mods: c.mods.filter((m) => !m.adult) }))
   .filter((c) => c.mods.length);
 

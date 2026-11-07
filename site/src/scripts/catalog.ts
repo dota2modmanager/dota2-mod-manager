@@ -36,6 +36,8 @@ export interface Mod {
   hay: string;
   /** the download counter's key, category/group/name (src/scripts/downloads.ts) */
   countKey: string;
+  /** tagged 18+: no page of its own, and listed only after the visitor says yes (src/scripts/adult.ts) */
+  adult?: boolean;
 }
 
 export interface Catalog {
@@ -44,6 +46,8 @@ export interface Catalog {
   /** en, ru and the nicknames are what a search matches; name is the page's language */
   heroes: Array<{ slug: string; name: string; en: string; ru: string; alt: string[] }>;
   byKey: Map<string, Mod>;
+  /** the 18+ mods, apart from the rest and from byKey: the browser adds them once asked */
+  adult: Mod[];
 }
 
 let pending: Promise<Catalog> | null = null;
@@ -62,17 +66,19 @@ export function loadCatalog(lang: Lang): Promise<Catalog> {
 type Raw = {
   cats: Array<[string, string, string, Group]>;
   heroes: Array<[string, string, string, string?]>;
-  mods: Array<[string, string, number, number, string, string, number, string, string[], string, string?, string?]>;
+  mods: Array<Row>;
+  adult?: Array<Row>;
 };
+type Row = [string, string, number, number, string, string, number, string, string[], string, string?, string?];
 
 function decode(raw: Raw, lang: Lang): Catalog {
   const L = lang === 'ru' ? 2 : 1;
   const cats = raw.cats.map((c) => ({ id: c[0], name: c[L], group: c[3], n: 0, en: c[1], ru: c[2] }));
   const heroes = raw.heroes.map((h) => ({ slug: h[0], name: h[L], en: h[1], ru: h[2], alt: h[3] ? h[3].split('|') : [] }));
-  const mods: Mod[] = raw.mods.map((m) => {
+  const mod = (m: Row, counted: boolean): Mod => {
     const cat = cats[m[2]];
     const hero = m[3] >= 0 ? heroes[m[3]] : null;
-    cat.n++;
+    if (counted) cat.n++;
     const img = m[4] ? `/mods/${m[4]}.webp` : null;
     return {
       key: m[0], name: m[1], cat: cat.id, catName: cat.name, group: cat.group,
@@ -82,9 +88,12 @@ function decode(raw: Raw, lang: Lang): Catalog {
       countKey: m[11] || `${cat.id}/${m[1]}`,
       // both languages' names, so "пудж" finds Pudge on the English page too
       hay: [m[1], m[7].replace(/\|/g, ' '), m[5], cat.en, cat.ru, hero?.en, hero?.ru].filter(Boolean).join(' ').toLowerCase(),
+      ...(counted ? {} : { adult: true }),
     };
-  });
-  return { mods, cats: cats.map(({ id, name, group, n }) => ({ id, name, group, n })), heroes, byKey: new Map(mods.map((m) => [m.key, m])) };
+  };
+  const mods = raw.mods.map((m) => mod(m, true));
+  const adult = (raw.adult ?? []).map((m) => mod(m, false));
+  return { mods, adult, cats: cats.map(({ id, name, group, n }) => ({ id, name, group, n })), heroes, byKey: new Map(mods.map((m) => [m.key, m])) };
 }
 
 /** Every word of the query somewhere in the mod's name, hero, author or category. */

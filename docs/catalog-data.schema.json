@@ -4,7 +4,7 @@
   "title": "Dota 2 Mod Manager catalog data (https://dota2modmanager.com/catalog/data.json)",
   "description": "Field by field in docs/catalog-data.md.",
   "type": "object",
-  "required": ["v", "cats", "heroes", "mods"],
+  "required": ["v", "cats", "heroes", "mods", "adult"],
   "properties": {
     "v": { "const": 1 },
     "cats": {
@@ -53,6 +53,11 @@
         ],
         "minItems": 12
       }
+    },
+    "adult": {
+      "description": "Mods the catalog tags 18+ (explicit hero models), as mod rows. No page shows them and their key has no page: the site's catalog lists them only after the visitor says they are 18. Leave them out unless you ask the same.",
+      "type": "array",
+      "items": { "$ref": "#/properties/mods/items" }
     }
   }
 }
