@@ -6648,6 +6648,15 @@
     {
       "id": "huds",
       "mods": [
+        {
+          "name": "Ghoulsss Full Red Hud",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/ghoulsss-full-red-hud.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1794043573
+        },
         {"name":"Lain Hud","styleLabel":null,"group":null,"image":{"src":"/mods/lain-hud.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1793178545},
         {"name":"Hud Fernando","styleLabel":"clear","group":null,"image":{"src":"/mods/hud-fernando-clear.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1792993494},
         {"name":"Hud Fernando","styleLabel":"gray","group":null,"image":{"src":"/mods/hud-fernando-gray.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1792993494},
@@ -8357,22 +8366,22 @@
           "image": {"src":"/mods/pink-diretide-ranged-attack.webp","width":854,"height":480},
           "author": "cursedseizures",
           "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1793959752
-        },
-        {
-          "name": "Black Diretide Ranged Attack",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/black-diretide-ranged-attack.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1793953543
+          "date": 1794043573
         },
         {
           "name": "White Diretide Ranged Attack",
           "styleLabel": null,
           "group": null,
           "image": {"src":"/mods/white-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1794043573
+        },
+        {
+          "name": "Black Diretide Ranged Attack",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/black-diretide-ranged-attack.webp","width":854,"height":480},
           "author": "cursedseizures",
           "authorUrl": "https://t.me/cvrsxdseizures",
           "date": 1793953543
