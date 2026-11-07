@@ -2,6 +2,21 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.3.1
+
+### Pictures
+
+- Catalog pictures now load in about a second, even when GitHub is blocked where you live. Before,
+  they could stay blank for over a minute.
+- The app keeps pictures on your disk, so they show at once next time and work without internet.
+- It fetches the rest of the catalog's pictures in the background, about 70 MB once.
+- Category covers and style pictures no longer go missing behind a blocked GitHub.
+
+### Downloads
+
+- If GitHub is blocked, your first mod waits about 10 seconds and the next ones start straight
+  away. Each mod used to wait 20 seconds.
+
 ## 3.3.0
 
 ### HUD editor
