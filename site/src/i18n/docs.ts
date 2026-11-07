@@ -22,6 +22,7 @@
  */
 import { moreDocs } from './docs-more.ts';
 import { toolDocs } from './docs-tools.ts';
+import { featureDocs } from './docs-features.ts';
 
 export type Block =
   | { k: 'p'; t: string }
@@ -68,6 +69,7 @@ export interface DocsIndex {
  */
 export const docSlugs = [
   'install',
+  'features',
   'uninstall',
   'builder',
   'workshop',
@@ -1115,6 +1117,6 @@ const ru: Record<CoreSlug, Doc> = {
 };
 
 export const docs: Record<'en' | 'ru', Record<DocSlug, Doc>> = {
-  en: { ...en, ...moreDocs.en, ...toolDocs.en },
-  ru: { ...ru, ...moreDocs.ru, ...toolDocs.ru },
+  en: { ...en, ...moreDocs.en, ...toolDocs.en, ...featureDocs.en },
+  ru: { ...ru, ...moreDocs.ru, ...toolDocs.ru, ...featureDocs.ru },
 };

@@ -215,8 +215,24 @@ const heroName = (name: string) => (lang === 'ru' ? ruName(name)?.nom ?? name : 
     <h2 class="reveal">{c.makeTitle}</h2>
     <p class="lead reveal" set:html={link(c.makeLead)} />
     <div class="bento">
-      {c.make.map(([title, text]) => (
+      {c.make.map(([title, text, id]) => (
         <article class="tile reveal">
+          <h3><a href={`${pathIn(lang, '/docs/features/')}#${id}`}>{title}</a></h3>
+          <p set:html={link(text)} />
+        </article>
+      ))}
+    </div>
+    <p class="make-all reveal"><a class="btn" href={pathIn(lang, '/docs/features/')}>{c.makeAll}</a></p>
+  </div>
+</section>
+
+<section id="edge">
+  <div class="wrap">
+    <h2 class="reveal">{c.edgeTitle}</h2>
+    <p class="lead reveal" set:html={link(c.edgeLead)} />
+    <div class="edges">
+      {c.edges.map(([title, text]) => (
+        <article class="edge reveal">
           <h3>{title}</h3>
           <p set:html={link(text)} />
         </article>

@@ -229,6 +229,7 @@ installed here survives its uninstall.
 | | |
 |---|---|
 | [Installing mods](https://dota2modmanager.com/docs/install/) | The whole route, by hand and with the app |
+| [Every function, and where to find it](https://dota2modmanager.com/docs/features/) | All of the app, screen by screen, and how to use each tool |
 | [Item builder](https://dota2modmanager.com/docs/builder/) | Any item on any hero, the 3D preview, and which picks need the item table |
 | [Workshop](https://dota2modmanager.com/docs/workshop/) | The effect and HUD editors, recolours, the map, sounds and the rest |
 | [The language folder](https://dota2modmanager.com/docs/language/) | Why `-language` is not needed, and what it does when it is there |

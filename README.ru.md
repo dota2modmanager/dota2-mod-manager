@@ -229,6 +229,7 @@ v1.14rc7 проверяет принадлежность перед чистко
 | [Установка модов](https://dota2modmanager.com/ru/docs/install/) | Весь путь, руками и приложением |
 | [Языковая папка](https://dota2modmanager.com/ru/docs/language/) | Почему `-language` не нужен и что он делает, когда стоит |
 | [VPK и порядок загрузки](https://dota2modmanager.com/ru/docs/vpk/) | Слоты pak, кто побеждает и при чём тут `gameinfo.gi` |
+| [Все функции, и где их найти](https://dota2modmanager.com/ru/docs/features/) | Всё приложение по экранам и как пользоваться каждым инструментом |
 | [Конструктор предметов](https://dota2modmanager.com/ru/docs/builder/) | Любой предмет на любого героя, 3D-просмотр и какому выбору нужна таблица |
 | [Мастерская](https://dota2modmanager.com/ru/docs/workshop/) | Редакторы эффектов и HUD, перекраска, карта, звуки и остальное |
 | [Файлы игры](https://dota2modmanager.com/ru/docs/safe/) | Что приложение пишет в игру, а что нет |

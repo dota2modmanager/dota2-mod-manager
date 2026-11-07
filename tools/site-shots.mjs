@@ -52,7 +52,7 @@ const settle = (win, ms) => win.waitForTimeout(ms);
 
 async function clearDialogs(win) {
   for (let i = 0; i < 6; i++) {
-    const quiet = win.locator('button').filter({ hasText: /^(Напомнить позже|Не показывать|Не сейчас|Remind me later|Do not show|Not now)$/ });
+    const quiet = win.locator('button').filter({ hasText: /^(Напомнить позже|Не показывать|Не сейчас|Понятно|Remind me later|Do not show|Not now|Got it)$/ });
     if (!(await quiet.count())) return;
     await quiet.first().click().catch(() => {});
     await settle(win, 500);
@@ -73,19 +73,31 @@ async function closeWindow(win) {
   await settle(win, 600);
 }
 
-/** An effect plays once, so stop the frame near its peak: the moment the stage is brightest. */
-async function brightest(win) {
-  let best = 0;
-  let bestAt = 300;
-  const from = Date.now();
-  for (let i = 0; i < 12; i++) {
-    const shot = await win.locator('#fxCanvas').screenshot();
-    const { channels } = await sharp(shot).stats();
-    const lit = channels[0].mean + channels[1].mean + channels[2].mean;
-    if (lit > best) { best = lit; bestAt = Date.now() - from; }
-  }
-  await win.click('#fxReplay').catch(() => {});
-  await settle(win, bestAt);
+/**
+ * An effect plays once and a screenshot takes longer than its peak, so the page keeps its own best
+ * frame: the one with the most lit pixels, read in the same animation frame the stage drew it.
+ */
+function brightest(win) {
+  return win.evaluate(() => new Promise((done) => {
+    const stage = document.querySelector('#fxCanvas');
+    const small = document.createElement('canvas');
+    small.width = 120;
+    small.height = Math.round((120 * stage.height) / stage.width);
+    const ctx = small.getContext('2d', { willReadFrequently: true });
+    let best = 0;
+    let frame = null;
+    const from = performance.now();
+    document.querySelector('#fxReplay')?.click();
+    const step = () => {
+      ctx.drawImage(stage, 0, 0, small.width, small.height);
+      const { data } = ctx.getImageData(0, 0, small.width, small.height);
+      let lit = 0;
+      for (let i = 0; i < data.length; i += 4) if (data[i] + data[i + 1] + data[i + 2] > 180) lit++;
+      if (lit > best) { best = lit; frame = stage.toDataURL('image/png'); }
+      if (performance.now() - from < 4500) window.requestAnimationFrame(step); else done(frame);
+    };
+    window.requestAnimationFrame(step);
+  }));
 }
 
 function linkTools() {
@@ -118,12 +130,15 @@ const STEPS = {
     await win.click('[data-tool="effects"]');
     await win.waitForSelector('.fx-editor', { timeout: 30000 });
     await settle(win, 2500);
-    await win.click('[data-hero="lina"]');
+    await win.click('[data-hero="ember_spirit"]');
     await settle(win, 1500);
-    await win.click('[data-group]:has-text("Dragon Slave"), [data-group]');
+    await win.click('[data-group="ability:ember_spirit_sleight_of_fist"]');
     await settle(win, 6000);
-    await win.click('#fxReplay').catch(() => {});
-    await brightest(win);
+    await win.locator('.fx-editor input[type="range"]').first().fill('150');
+    await settle(win, 1500);
+    const frame = await brightest(win);
+    const box = await win.locator('#fxCanvas').boundingBox();
+    return { frame: Buffer.from(frame.split(',')[1], 'base64'), box };
   },
 };
 
@@ -154,9 +169,14 @@ for (const lang of ['en', 'ru']) {
   for (const [name, step] of Object.entries(STEPS)) {
     if (ONLY.length && !ONLY.includes(name)) continue;
     try {
-      await step(win);
+      const over = await step(win);
       await win.mouse.move(2, 2);
-      const png = await win.screenshot();
+      let png = await win.screenshot();
+      if (over) {
+        const { x, y, width, height } = over.box;
+        const frame = await sharp(over.frame).resize(Math.round(width), Math.round(height)).toBuffer();
+        png = await sharp(png).composite([{ input: frame, left: Math.round(x), top: Math.round(y) }]).png().toBuffer();
+      }
       await sharp(png).resize(1360, 860, { fit: 'cover', position: 'top' }).webp({ quality: 86 })
         .toFile(path.join(DEST, `dota-2-mod-manager-${name}-${lang}.webp`));
       if (GUIDE.includes(name)) await sharp(png).resize({ width: 1200 }).webp({ quality: 84 }).toFile(path.join(root, 'site', 'public', 'guides', `${name}-${lang}.webp`));

@@ -104,7 +104,13 @@ export interface Landing {
   /** The tools that make mods, as one section. makeLead may carry a link. */
   makeTitle: string;
   makeLead: string;
-  make: Array<[string, string]>;
+  make: Array<[string, string, string]>;
+  /** The link under the tools, to the guide with all of them. */
+  makeAll: string;
+  /** What sets the app apart. edgeLead may carry a link. */
+  edgeTitle: string;
+  edgeLead: string;
+  edges: Array<[string, string]>;
 
   whatTitle: string;
   cards: Array<[string, string]>;
@@ -162,7 +168,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
     finderEmpty: 'Nothing by that name. Try a hero, or one word from the title.',
 
     showTitle: 'See it work',
-    showVideo: 'Install in one take',
+    showVideo: 'The whole app in one take',
 
     heroesTitle: 'Pick your hero',
     heroesLead: 'Each hero with a set made for them gets a page with all of it.',
@@ -217,15 +223,26 @@ export const landing: Record<'en' | 'ru', Landing> = {
     makeTitle: 'Make the game yours',
     makeLead: 'The Workshop and the item builder make mods from your own game files. Pick what you want and the app builds it, with no Source 2 tools to learn. <a href="~/docs/workshop/">Everything in the Workshop</a>.',
     make: [
-      ['Any item on any hero', 'Sets, arcanas and single items from the game, with a live 3D preview. Hero items install as plain files. <a href="~/docs/builder/">The item builder</a>.'],
-      ['Effect editor', 'Size, count, lifetime, speed and colour for any of the game\'s 82,000 effects, or a whole ability at once.'],
-      ['HUD editor', 'A plan of your screen with eleven panels. Drag, resize, tint, fade or hide them.'],
-      ['Hero recolour', 'The body, the weapon and the effects in your own colours, part by part.'],
-      ['Item colours', 'Arcanas in any of the game\'s prismatic gems or a colour of your own.'],
-      ['The map', 'Towers from any event, trees from any season, and a map with the decor taken off.'],
-      ['Menu background', 'A picture, a GIF or a video in place of the main menu.'],
-      ['Ability sounds', 'Your own file instead of the game\'s sound, or on top of it.'],
-      ['Rank and hero grids', 'A medal and hero levels only you see, and grids built from this patch\'s win and pick rates.'],
+      ['Any item on any hero', 'Sets, arcanas and single items from the game, with a live 3D preview. Hero items install as plain files. <a href="~/docs/builder/">The item builder</a>.', 'items'],
+      ['Effect editor', 'Size, count, lifetime, speed and colour for any of the game\'s 82,000 effects, or a whole ability at once.', 'effects'],
+      ['HUD editor', 'A plan of your screen with eleven panels. Drag, resize, tint, fade or hide them.', 'hud'],
+      ['Hero recolour', 'The body, the weapon and the effects in your own colours, part by part.', 'paint'],
+      ['Item colours', 'Arcanas in any of the game\'s prismatic gems or a colour of your own.', 'colors'],
+      ['The map', 'Towers from any event, trees from any season, and a map with the decor taken off.', 'towers'],
+      ['Menu background', 'A picture, a GIF or a video in place of the main menu.', 'background'],
+      ['Ability sounds', 'Your own file instead of the game\'s sound, or on top of it.', 'sounds'],
+      ['Rank and hero grids', 'A medal and hero levels only you see, and grids built from this patch\'s win and pick rates.', 'rank'],
+    ],
+    makeAll: 'Every function and how to use it',
+    edgeTitle: 'What makes it different',
+    edgeLead: 'A mod manager installs what other people made. This one also builds what you think of, and keeps both working. <a href="~/docs/compare/">How it compares</a>.',
+    edges: [
+      ['See it before it reaches the game', 'The changing room puts the hero on stage in 3D, in what you picked, with its real animations. Nothing touches the game until you press the button.'],
+      ['Built from your own game', 'The tools read Dota on your disk, so a new item is there the day Valve adds it, with nothing to download and no pack going stale.'],
+      ['No Source 2 tools to learn', 'Sliders, colours and a plan of your screen. The app decompiles the file, edits it, compiles it and packs it for you.'],
+      ['One list for everything', 'Catalog mods and what you built sit together in My mods, with one load order. When two collide, the app names them.'],
+      ['It survives a Dota patch', 'The app sees the update, waits for the game to close and puts back what the patch took off. You press Play as usual.'],
+      ['It works behind a blocked GitHub', 'Pictures load from your disk, and mods come through mirrors of their own. With GitHub blocked, the catalog still opens in about a second.'],
     ],
 
     whatTitle: 'What you get',
@@ -306,7 +323,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
     finderEmpty: 'Ничего с таким названием. Попробуй героя или одно слово из названия.',
 
     showTitle: 'Как это выглядит',
-    showVideo: 'Установка одним дублем',
+    showVideo: 'Всё приложение одним дублем',
 
     heroesTitle: 'Выбери героя',
     heroesLead: 'У каждого героя, для которого кто-то сделал сет, своя страница со всеми его модами.',
@@ -361,15 +378,26 @@ export const landing: Record<'en' | 'ru', Landing> = {
     makeTitle: 'Сделай игру своей',
     makeLead: 'Мастерская и конструктор предметов собирают моды из файлов твоей игры. Выбери, что хочешь, и приложение соберёт сам мод: учить инструменты Source 2 не нужно. <a href="~/docs/workshop/">Всё, что есть в Мастерской</a>.',
     make: [
-      ['Любой предмет на любого героя', 'Сеты, арканы и отдельные предметы из игры с живым 3D-просмотром. Предметы героев ставятся обычными файлами. <a href="~/docs/builder/">Конструктор предметов</a>.'],
-      ['Редактор эффектов', 'Размер, количество, время жизни, скорость и цвет любого из 82 000 эффектов игры или целой способности.'],
-      ['Редактор HUD', 'План твоего экрана с одиннадцатью панелями. Двигай, меняй размер, подкрашивай, делай прозрачнее или скрывай.'],
-      ['Перекраска героя', 'Тело, оружие и эффекты в свои цвета, по частям.'],
-      ['Цвета предметов', 'Арканы в любом призматическом геме игры или в своём цвете.'],
-      ['Карта', 'Башни любого события, деревья любого сезона и карта без декора.'],
-      ['Фон меню', 'Картинка, GIF или видео вместо главного меню.'],
-      ['Звуки способностей', 'Твой файл вместо звука игры или поверх него.'],
-      ['Ранг и сетки героев', 'Медаль и уровни героев, которые видишь только ты, и сетки по винрейту и пикам этого патча.'],
+      ['Любой предмет на любого героя', 'Сеты, арканы и отдельные предметы из игры с живым 3D-просмотром. Предметы героев ставятся обычными файлами. <a href="~/docs/builder/">Конструктор предметов</a>.', 'items'],
+      ['Редактор эффектов', 'Размер, количество, время жизни, скорость и цвет любого из 82 000 эффектов игры или целой способности.', 'effects'],
+      ['Редактор HUD', 'План твоего экрана с одиннадцатью панелями. Двигай, меняй размер, подкрашивай, делай прозрачнее или скрывай.', 'hud'],
+      ['Перекраска героя', 'Тело, оружие и эффекты в свои цвета, по частям.', 'paint'],
+      ['Цвета предметов', 'Арканы в любом призматическом геме игры или в своём цвете.', 'colors'],
+      ['Карта', 'Башни любого события, деревья любого сезона и карта без декора.', 'towers'],
+      ['Фон меню', 'Картинка, GIF или видео вместо главного меню.', 'background'],
+      ['Звуки способностей', 'Твой файл вместо звука игры или поверх него.', 'sounds'],
+      ['Ранг и сетки героев', 'Медаль и уровни героев, которые видишь только ты, и сетки по винрейту и пикам этого патча.', 'rank'],
+    ],
+    makeAll: 'Все функции и как ими пользоваться',
+    edgeTitle: 'Чем он отличается',
+    edgeLead: 'Менеджер модов ставит то, что сделали другие. Этот ещё и собирает то, что придумал ты, и следит, чтобы всё работало. <a href="~/docs/compare/">Сравнение с другими</a>.',
+    edges: [
+      ['Посмотри до того, как оно попадёт в игру', 'В примерочной герой стоит на сцене в 3D, в том, что ты выбрал, с настоящими анимациями. Игра ничего не получит, пока ты не нажмёшь кнопку.'],
+      ['Собрано из твоей же игры', 'Инструменты читают Доту на твоём диске, поэтому новый предмет доступен в день выхода, качать ничего не надо, и паки не устаревают.'],
+      ['Source 2 учить не надо', 'Ползунки, цвета и план экрана. Распаковку, правку, компиляцию и упаковку приложение делает само.'],
+      ['Один список на всё', 'Моды из каталога и твои сборки лежат вместе в «Моих модах», с одним порядком загрузки. Если два мода спорят, приложение их назовёт.'],
+      ['Переживает патч Доты', 'Приложение видит обновление, ждёт, пока игра закроется, и возвращает то, что патч снял. Ты просто жмёшь «Играть».'],
+      ['Работает при заблокированном GitHub', 'Картинки грузятся с твоего диска, а моды идут через свои зеркала. Без GitHub каталог всё равно открывается примерно за секунду.'],
     ],
 
     whatTitle: 'Что умеет мод-менеджер',

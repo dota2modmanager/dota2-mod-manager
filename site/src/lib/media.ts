@@ -33,12 +33,12 @@ export const srcsetFor = (url: string, fullWidth: number) =>
 export const tourUrl = (lang: Lang) => `/video/dota-2-mod-manager-tour-${lang}.webm`;
 export const tourPoster = (lang: Lang) => `/video/dota-2-mod-manager-tour-${lang}.webp`;
 
-/** Measured off the files themselves, not remembered: 24.15s and 24.40s, both PT24S. */
-export const TOUR_SECONDS = 24;
-export const TOUR_ISO = 'PT24S';
+/** tools/site-tour.mjs films both languages to about 41 seconds. */
+export const TOUR_SECONDS = 41;
+export const TOUR_ISO = 'PT41S';
 /** When the clip was first published with the site. */
 export const TOUR_UPLOADED = '2026-08-09';
-export const TOUR_SIZE = { width: 880, height: 556 };
+export const TOUR_SIZE = { width: 1100, height: 696 };
 export const SHOT_SIZE = { width: 1360, height: 860 };
 
 /**
@@ -99,13 +99,13 @@ export const shotTitle: Record<Lang, Record<ShotName, string>> = {
 
 export const tourText: Record<Lang, { name: string; description: string }> = {
   en: {
-    name: 'Installing two Dota 2 mods in one take',
+    name: 'Dota 2 Mod Manager in one take',
     description:
-      'Twenty-four seconds of Dota 2 Mod Manager: find a hero in the catalog, take a set, take a second one, install both. Filmed off the app itself, no cuts and no speed-up.',
+      'Forty seconds of Dota 2 Mod Manager: install a mod from the catalog, dress a hero in the item builder, open the Workshop, make an effect bigger, move the minimap and switch a mod off in My mods. Filmed off the app on the real game. We cut the waits for loading and sped nothing up.',
   },
   ru: {
-    name: 'Как поставить два мода на Доту 2, один дубль',
+    name: 'Dota 2 Mod Manager одним дублем',
     description:
-      'Двадцать четыре секунды работы Dota 2 Mod Manager: находим героя в каталоге, берём сет, берём второй, ставим оба. Снято с самого приложения, без склеек и без ускорения.',
+      'Сорок секунд работы Dota 2 Mod Manager: ставим мод из каталога, одеваем героя в конструкторе, открываем Мастерскую, увеличиваем эффект, двигаем мини-карту и выключаем мод в «Моих модах». Снято с приложения на настоящей игре. Мы вырезали только ожидание загрузки, ускорения нет.',
   },
 };
