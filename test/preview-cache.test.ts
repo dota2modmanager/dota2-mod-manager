@@ -125,6 +125,15 @@ test('an error page is not a picture and is not kept', async (t) => {
   assert.ok(!fs.existsSync(dir) || FILE_COUNT(dir) === 0);
 });
 
+/** The question about an old picture runs behind the answer, so a test waits for what it did. */
+async function settled(done: () => boolean | Promise<boolean>) {
+  const until = Date.now() + 5000;
+  while (!(await done())) {
+    assert.ok(Date.now() < until, 'it never happened');
+    await new Promise((r) => setTimeout(r, 10));
+  }
+}
+
 test('an old picture is asked about, and only a changed one is replaced', async (t) => {
   const dir = tempDir(t);
   const seen: (string | null)[] = [];
@@ -140,16 +149,14 @@ test('an old picture is asked about, and only a changed one is replaced', async 
 
   answer = new Response(null, { status: 304 });
   await store.get(REL);
-  await new Promise((r) => setTimeout(r, 50));
+  await settled(() => Date.now() - fs.statSync(file).mtimeMs < 5000);
   assert.equal(seen[1], old.toUTCString());
-  assert.ok(Date.now() - fs.statSync(file).mtimeMs < 5000, 'still current, so it is not asked again for a week');
 
   fs.utimesSync(file, old, old);
   const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]);
   answer = picture(png);
   await store.get(REL);
-  await new Promise((r) => setTimeout(r, 50));
-  assert.equal((await store.get(REL))?.type, 'image/png');
+  await settled(async () => (await store.get(REL))?.type === 'image/png');
 });
 
 test('warming fetches what is missing and stops when the network is gone', async (t) => {
