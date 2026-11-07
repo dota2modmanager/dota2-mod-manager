@@ -2,6 +2,32 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.4.0
+
+### Ability effects
+
+- Each hero in the Hero builder has new tabs, one per ability, such as "Effects: Enchant Totem"
+  for Earthshaker. Pick an item there and the hero gets only its effects for that ability:
+  particles, sounds and icon, without its model. This is the game's own ability effects slot, so
+  you can wear one set and another item's spell effects, like the Intergalactic Orbliterator's
+  arms with the Enchant Totem of Bracers of the Cavern Luminar.
+- 120 heroes have these tabs, for every ability the game lets an item restyle. One item can fill
+  several: Totem of Deep Magma changes all four of Earthshaker's.
+- The effects in these tabs win over the ones of the item you wear. Putting on a set leaves them
+  as they are.
+
+### Ability icons
+
+- New in the Workshop: "Ability icons". Pick a hero, then any icon his cosmetics have for each
+  ability, such as a dozen for Earthshaker's Fissure. The icon stays even with an item on that
+  brings its own. "The game's own" takes your pick off.
+
+### Another item's effect
+
+- An item that only restyles an ability, such as Tinker's Interstellar Astrarium head, can now be
+  picked as the effect.
+- The effect now brings the ability's icon and sound with it, not only the particles.
+
 ## 3.3.3
 
 ### HUD editor and rank tool
