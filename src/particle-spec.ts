@@ -14,6 +14,7 @@ import { readKv3, numberOf, type Kv3Block, type Kv3Node } from './kv3.ts';
 import type { UnusualEffect } from './unusual-effects.ts';
 import type { SnapshotPoint, LoadoutAttachment } from '../renderer/api/preview3d.ts';
 import { snapshotPoints } from './particle-snapshot.ts';
+import { blockBounds, eachChild } from './schema-kv.ts';
 import { resourceBlocks, resourceBlock } from './resource.ts';
 
 /** A KV3 value as plain JSON, as the window gets it over IPC. */
@@ -151,7 +152,7 @@ export function bindItemParticle(def: ParticleDef, effect: UnusualEffect | undef
       m_iControlPoint: point.index,
       m_iAttachType: (point.attachType || effect?.attachType || '').toUpperCase(),
       m_attachmentName: point.attachment ?? '',
-      m_entityName: entity === 'parent' ? 'parent' : 'self',
+      m_entityName: entity === 'parent' || entity === 'self_with_wearables' ? entity : 'self',
     });
   }
   return { ...def, tree: { ...def.tree, m_controlPointConfigurations: [{ m_name: 'preview', m_drivers: drivers }] } };
@@ -159,8 +160,17 @@ export function bindItemParticle(def: ParticleDef, effect: UnusualEffect | undef
 
 /** The hero's own loadout particles, out of its script's RenderablePortrait block. */
 export function heroLoadoutParticles(script: string): string[] {
-  const block = /"RenderablePortrait"\s*\{[\s\S]*?"Particles"\s*\{([^{}]*)\}/i.exec(script)?.[1] || '';
-  return [...block.matchAll(/"(particles\/[\w/.-]+\.vpcf)"\s+"loadout"/gi)].map((m) => m[1].toLowerCase());
+  const portrait = /"RenderablePortrait"\s*\{/i.exec(script);
+  if (!portrait) return [];
+  const out: string[] = [];
+  eachChild(script, blockBounds(script, portrait.index + portrait[0].length - 1), field => {
+    if (!field.isBlock || field.key.toLowerCase() !== 'particles') return;
+    eachChild(script, field.body, particle => {
+      if (/^particles\/[\w/.-]+\.vpcf$/i.test(particle.key)
+        && (particle.isBlock || particle.value.toLowerCase() === 'loadout')) out.push(particle.key.toLowerCase());
+    });
+  });
+  return out;
 }
 
 /** A model's attachment points. */

@@ -12,6 +12,7 @@ import { Dropdown } from '../ui/Dropdown.tsx';
 import { ProxyControl } from './ProxyControl.ts';
 import { RepairSteps, type RepairRun } from './RepairSteps.tsx';
 import { CompilerBlock, type CompilerActions } from './CompilerBlock.tsx';
+import { PreviewCacheBlock } from './PreviewCacheBlock.tsx';
 import { GridBlock } from './GridBlock.tsx';
 import { GameFilesBlock } from './GameFilesBlock.tsx';
 import { Toggle } from './Toggle.tsx';
@@ -210,6 +211,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
         </Block>
       )}
 
+      <PreviewCacheBlock ready={!!m.vrf?.ready} game={m.dotaValid} />
       {m.compiler && <CompilerBlock i={4} c={m.compiler} actions={actions} />}
       <GridBlock i={4} />
 

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { buildHero } from 'dota-loadout';
-import { SceneSource } from 'dota-loadout/studio';
+import { readGlb, SceneSource, writeGlb } from 'dota-loadout/studio';
 import { animatedLoadoutModel } from './fixtures/loadout-model.ts';
 import { loadoutEffects, loadoutAttachments, loadoutPacket, visibleGlb } from '../renderer/catalog/preview3d/loadout-source.ts';
 import type { ParticleDef } from '../renderer/api/preview3d.ts';
@@ -37,7 +37,7 @@ test('full particle packets retain child metadata and do not mutate the editor d
   const source=new SceneSource();source.owners.set('part-0','part-0');
   const out=loadoutEffects(source,[{part:0,def:root}],{});
   assert.equal(out.effects[0].owner,'part-0');
-  assert.equal((out.systems['studio/0/particles/bound'].m_Children as {m_ChildRef:string}[])[0].m_ChildRef,'studio/0/particles/child');source.dispose();
+  assert.equal((out.systems['studio/part-0-0/particles/bound'].m_Children as {m_ChildRef:string}[])[0].m_ChildRef,'studio/part-0-0/particles/child');source.dispose();
 });
 
 test('weighted attachment inputs and hidden mesh exclusion survive the desktop boundary',()=>{
@@ -112,5 +112,89 @@ test('a missing weapon attachment falls back to the valid weapon CP instead of t
     const cps = hero.effects[0].sim.cps;
     assert.ok(cps.get(0)!.pos.length() > 1);
     assert.deepEqual(cps.get(10)!.pos.toArray(), cps.get(0)!.pos.toArray());
+  } finally { hero.dispose(); source.dispose(); }
+});
+
+test('live Gems color preserves particle identity and elapsed simulation time', async () => {
+  const source = new SceneSource();
+  source.addGlb(animatedLoadoutModel(), { key: 'hero', owner: 'hero' });
+  source.manifest.attachments.hero = attachments();
+  const hero = await buildHero(source.manifest, source.url, new THREE.LoadingManager(), { value: 0 }, light());
+  try {
+    const patch = loadoutEffects(source, [{ part: -1, def: def() }], {});
+    await hero.studioEffects(patch);
+    const camera = new THREE.PerspectiveCamera();
+    hero.update(.05, camera);
+    const effect = hero.effects[0], particle = effect.sim.particles[0];
+    assert.ok(particle);
+    const age = particle.age;
+    const id = Object.keys(patch.sourcePaths)[0];
+    hero.studioGemEffects({ [id]: { rgb: [1, .4, 0], own: true, bake: true } });
+    hero.update(.05, camera);
+    assert.equal(hero.effects[0], effect);
+    assert.equal(effect.sim.particles[0], particle);
+    assert.ok(particle.age > age);
+  } finally { hero.dispose(); source.dispose(); }
+});
+
+test('native material defaults preserve exported cutout alpha and separate opacity maps', () => {
+  const glb = readGlb(animatedLoadoutModel());
+  const material = glb.json.materials[0];
+  material.alphaMode = 'MASK';
+  material.alphaCutoff = .35;
+  glb.json.extras = { dotaStudio: { materials: { [material.name]: { descriptor: { alphaTest: 0, translucent: false } } } } };
+  const source = new SceneSource();
+  try {
+    source.addGlb(writeGlb(glb), { key: 'weapon' });
+    assert.equal(source.manifest.materials['weapon::0'].alphaTest, .35);
+    material.alphaMode = 'OPAQUE';
+    glb.json.extras.dotaStudio.materials[material.name].images = { opacity: { mime: 'image/png', data: 'AA==' } };
+    source.addGlb(writeGlb(glb), { key: 'cutout' });
+    assert.equal(source.manifest.materials['cutout::0'].alphaTest, .5);
+    assert.equal(source.manifest.materials['cutout::0'].opacity, 'cutout::0-opacity');
+  } finally {
+    source.dispose();
+  }
+});
+
+test('replacing a static wearable keeps the body and its running ambient simulation', async () => {
+  const source = new SceneSource(), replacement = new SceneSource();
+  source.addGlb(animatedLoadoutModel(), {key:'hero',owner:'hero'});
+  source.manifest.attachments.hero = attachments();
+  const staticGlb = readGlb(animatedLoadoutModel());
+  delete staticGlb.json.animations;
+  replacement.addGlb(writeGlb(staticGlb), {key:'wear-1',owner:'part-0'});
+  const hero = await buildHero(source.manifest, source.url, new THREE.LoadingManager(), {value:0}, light());
+  try {
+    const camera = new THREE.PerspectiveCamera(), rows = [{part:-1,def:def()}];
+    await hero.studioEffects(loadoutEffects(source, rows, {}));
+    hero.update(.1, camera);
+    const body = hero.turntable.children[0], sim = hero.effects[0].sim;
+    assert.equal(await hero.studioReplaceParts([{owner:'part-0',source:replacement.source()}], () => true), true);
+    await hero.studioEffects(loadoutEffects(source, [{part:0,def:def()}, ...rows], {}), undefined, true);
+    hero.update(.1, camera);
+    assert.equal(hero.turntable.children[0], body);
+    assert.ok(hero.slotMeshes('part-0').length > 0);
+    assert.ok(hero.effects.some(effect => effect.sim === sim));
+    assert.equal(await hero.studioReplaceParts([{owner:'part-0',source:null}], () => true), true);
+    assert.equal(hero.slotMeshes('part-0').length, 0);
+  } finally { hero.dispose(); source.dispose(); replacement.dispose(); }
+});
+
+test('Terrorblade blade children emit at their own named attachment', async () => {
+  const source = new SceneSource();
+  source.addGlb(animatedLoadoutModel(), {key:'hero',owner:'hero'});
+  source.manifest.terrorbladeWeaponOwners = ['part-0'];
+  source.manifest.attachments['part-0'] = { ...attachments(), edge:loadoutAttachments([{name:'edge',bone:'hand',offset:[50,0,0],rotation:[0,0,0,1]}]).edge };
+  const root = def(), child = def();
+  child.path = 'particles/blade-edge.vpcf';
+  child.tree.m_controlPointConfigurations = [{m_name:'preview',m_drivers:[{m_iControlPoint:0,m_iAttachType:'point_follow',m_attachmentName:'edge'}]}];
+  root.children = [child];
+  const hero = await buildHero(source.manifest, source.url, new THREE.LoadingManager(), {value:0}, light());
+  try {
+    await hero.studioEffects(loadoutEffects(source,[{part:0,def:root}],{}));
+    hero.update(.03, new THREE.PerspectiveCamera());
+    const sim = hero.effects[0].sim as typeof hero.effects[number]['sim'] & {children:{particles:{pos:THREE.Vector3}[]}[]};
+    assert.ok(Math.abs(sim.particles[0].pos.distanceTo(sim.children[0].particles[0].pos)-50) < .01);
   } finally { hero.dispose(); source.dispose(); }
 });

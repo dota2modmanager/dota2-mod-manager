@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { findGem, gemColors, gemName, rgbOf } from '../src/gem-colors.ts';
+import { findGem, gemColors, gemName, prismaticGemArt, rgbOf } from '../src/gem-colors.ts';
 
 const TABLE = `"items_game"
 {
@@ -65,4 +65,15 @@ test('names and colours read as people write them', () => {
   assert.deepEqual(rgbOf('#FFAF00'), [255, 175, 0]);
   assert.deepEqual(rgbOf('ffaf00'), [255, 175, 0]);
   assert.equal(rgbOf('#FFF'), null);
+});
+
+test('prismatic artwork reads the game socket image and mask once', () => {
+  const header = Buffer.alloc(16);
+  header.writeUInt32LE(header.length);
+  const png = Buffer.from('89504e470d0a1a0a0000000049454e44ae426082', 'hex');
+  const requested: string[] = [];
+  const art = prismaticGemArt({ read: path => { requested.push(path); return Buffer.concat([header, png]); } });
+  assert.deepEqual(requested, ['gem_color', 'gem_color_mask'].map(name => `panorama/images/econ/sockets/${name}_png.vtex_c`));
+  assert.equal(art?.image, `data:image/png;base64,${png.toString('base64')}`);
+  assert.equal(art?.mask, art?.image);
 });

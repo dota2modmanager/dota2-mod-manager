@@ -4,6 +4,23 @@
  * size budget (tools/size-budget.mjs). tools/check-i18n.js reads both. */
 'use strict';
 const EN = {
+  'Кэш 3D-превью': '3D preview cache',
+  'Выгрузить модели и эффекты': 'Prepare models and effects',
+  'Завершаем текущего героя…': 'Finishing the current hero…',
+  'Список героев пока недоступен.': 'The hero list is not available yet.',
+  'По желанию: заранее выгружает GLB и ресурсы частиц для текущего набора каждого героя. При следующем открытии 3D-превью готовые файлы берутся из локального кэша. Выгрузка может занять время и место на диске. Картинки каталога не выгружаются.': 'Optional: prepare GLBs and particle resources for each hero’s current loadout. The 3D preview can reuse those files from its local cache. Preparation may take time and use disk space. Catalog images are excluded.',
+  'Для выгрузки нужны установленная Dota 2 и инструмент Source 2.': 'Preparation requires an installed copy of Dota 2 and the Source 2 tool.',
+  'Обработано героев: {0} из {1}': 'Heroes processed: {0} of {1}',
+  'Ошибки: {0}': 'Failed: {0}',
+  'Частично: {0}': 'Partial: {0}',
+  'Остановить': 'Stop',
+  'Чужой эффект': 'Other effect',
+  'Самоцветы': 'Gems',
+  'Сохранить цвет': 'Save color',
+  'Сбросить изменения': 'Discard changes',
+  'Цвет сохранён в «Моих модах»': 'Color saved in My Mods',
+  'Надень предмет, чтобы увидеть цвет в 3D и сохранить его.': 'Equip the item to preview and save its color.',
+  'Не удалось загрузить самоцветы': 'Could not load gems',
   'Предпросмотр эффекта': 'Effect preview',
   'Не удалось открыть 3D': 'Could not open 3D preview',
   'Часть эффекта пока не поддерживается': 'Some parts of this effect are not supported yet',

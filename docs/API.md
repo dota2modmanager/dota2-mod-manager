@@ -77,7 +77,7 @@ the code, not in this page.
 | [`src/hero-grid.ts`](#srchero-gridts) | Hero grids for the pick screen out of this patch's numbers (issue #428). |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/hero-paint-service.ts`](#srchero-paint-servicets) | A hero recoloured part by part, as one record in My mods (issue #422; what the parts are is |
-| [`src/hero-particle-styles.ts`](#srchero-particle-stylests) | Keep genuine model-born particles, but never spawn a style-0 version beside |
+| [`src/hero-particle-styles.ts`](#srchero-particle-stylests) |  |
 | [`src/hero-preview-picks.ts`](#srchero-preview-picksts) | Equipment metadata used to build the desktop preview. |
 | [`src/hero-preview.ts`](#srchero-previewts) | The models of a hero as the item builder dresses it, for the 3D preview in the hero's window |
 | [`src/hero-showcase.ts`](#srchero-showcasets) | How the game stages a hero on its loadout, for the 3D preview (issue #417), out of the game's |
@@ -182,6 +182,7 @@ the code, not in this page.
 | [`src/rank-look-script.ts`](#srcrank-look-scriptts) | The script the rank look puts into the game's layouts (src/rank-look.ts says which and why): |
 | [`src/rank-look-service.ts`](#srcrank-look-servicets) | The rank medal and hero levels of the player's own screen, as one record in My mods (what goes |
 | [`src/rank-look.ts`](#srcrank-lookts) | The rank medal and the Dota Plus hero levels the player sees on their own screen: a medal and |
+| [`src/razor-crest-preview.ts`](#srcrazor-crest-previewts) |  |
 | [`src/ready-presets-format.ts`](#srcready-presets-formatts) | The ready-made presets' format (config/presets.json, issue #391): a short list of builds picked |
 | [`src/ready-presets.ts`](#srcready-presetsts) | The ready-made presets (issue #391): config/presets.json on main, fetched and checked the way the |
 | [`src/recolor-layers.ts`](#srcrecolor-layersts) | A hero in colours of the user's choosing, part by part (issue #422): each ability's effect and its |
@@ -1228,7 +1229,7 @@ One arcana the window builds.
 ### `ArcanaState`
 
 ```ts
-export interface ArcanaState { arcanas: ArcanaWindow[]; gems: GemColor[] }
+export interface ArcanaState { arcanas: ArcanaWindow[]; gems: GemColor[]; gemArt: ReturnType<typeof prismaticGemArt> }
 ```
 
 What the window shows: each arcana, and the game's prismatic gems to offer as colours.
@@ -3540,10 +3541,26 @@ walking every block before it.
 ### `GemColor`
 
 ```ts
-export interface GemColor { key: string; name: string; rgb: Rgb }
+export interface GemColor { key: string; name: string; rgb: Rgb; picture?: string }
 ```
 
 One prismatic gem colour.
+
+### `prismaticGemArt`
+
+```ts
+export function prismaticGemArt(index: Pick<VpkIndex, 'read'>): { image: string; mask: string | null } | null
+```
+
+The shared prismatic socket artwork and its color overlay, from the installed game.
+
+### `prismaticGemPictures`
+
+```ts
+export function prismaticGemPictures(gems: GemColor[], index: Pick<VpkIndex, 'has' | 'read'>): GemColor[]
+```
+
+Some client builds ship individual socket art alongside the shared layers.
 
 ### `gemName`
 
@@ -3888,11 +3905,6 @@ A compressed picture read out as a PNG by ValveResourceFormat, in a folder of it
 
 ## src/hero-particle-styles.ts
 
-Keep genuine model-born particles, but never spawn a style-0 version beside
-a style-specific override of the very same root (Spectre's *_ambient_v2_*).
-This is restricted to matching canonical paths and leaves unrelated
-weapon/shoulder or caster particles intact.
-
 ### `styleParticleRoots`
 
 ```ts
@@ -3903,6 +3915,30 @@ Keep genuine model-born particles, but never spawn a style-0 version beside
 a style-specific override of the very same root (Spectre's *_ambient_v2_*).
 This is restricted to matching canonical paths and leaves unrelated
 weapon/shoulder or caster particles intact.
+
+### `isStockTerrorbladeBlade`
+
+```ts
+export const isStockTerrorbladeBlade = (path: string)
+```
+
+Checks whether a particle path refers to Terrorblade's default sword effect.
+
+### `replaceTerrorbladeBladeFx`
+
+```ts
+export function replaceTerrorbladeBladeFx(body: string, model: string, roots: Iterable<string>)
+```
+
+Determines whether Terrorblade's stock sword particles should be suppressed when a replacement provides its own effects.
+
+### `bladeSnapshots`
+
+```ts
+export function bladeSnapshots(def: ParticleDef, replacements?: Map<string, string>): ParticleDef
+```
+
+Use the wearable's native snapshot wherever its particle tree names the stock one.
 
 ## src/hero-preview-picks.ts
 
@@ -3956,15 +3992,23 @@ The separately authored crown that accompanies Great Sage's Reckoning.
 ### `previewParticleReplacements`
 
 ```ts
-export function previewParticleReplacements(visuals: string): Map<string, string>
+export function previewParticleReplacements(visuals: string, includeSnapshots = false): Map<string, string>
 ```
 
 Use the selected style's replacements even when they affect a different model's ambient.
 
+### `previewBladeReplacements`
+
+```ts
+export function previewBladeReplacements(existing: Map<string, string> | undefined, visuals: string | null | undefined)
+```
+
+Resolves blade model replacements for Terrorblade's 3D cosmetic preview.
+
 ### `previewParticleReader`
 
 ```ts
-export function previewParticleReader(read: (path: string) => Buffer | null, replacements: Map<string, string>, own?: Map<string, string>)
+export function previewParticleReader(read: (path: string) => Buffer | null, replacements: Map<string, string>, own?: Map<string, string>, suppressStockBlades = false)
 ```
 
 Economy replacements can target a nested child as well as the equipped effect's root.
@@ -3976,6 +4020,30 @@ export function previewStockHead(text: string, hero: string, body: string, index
 ```
 
 The hidden body_head slot supplies the face independently of a hat or hair.
+
+### `previewEquipment`
+
+```ts
+export function previewEquipment<T extends { slot?: unknown }>(text: string, installed: readonly T[], slots: readonly { slot: string; tryOn?: { itemId: string; effectId: string } }[])
+```
+
+Overlay temporary builder picks on the installed loadout, without changing either input.
+
+### `previewHeroParticles`
+
+```ts
+export function previewHeroParticles(script: string | null, hero: string, stockWeapon: boolean, index: Pick<VpkIndex, 'has'>): string[]
+```
+
+Razor's stock weapon is a particle, so it can exist even without a wearable model.
+
+### `previewCrestParticles`
+
+```ts
+export function previewCrestParticles(roots: string[], model: string, itemId: string, index: Pick<VpkIndex, 'paths'>): string[]
+```
+
+Some builds ship the Crest glow separately from the wearable's particle list.
 
 ## src/hero-preview.ts
 
@@ -3993,10 +4061,10 @@ Hands on from [`src/hero-preview-picks.ts`](#srchero-preview-picksts): `entityMo
 ### `PreviewSlot`
 
 ```ts
-export type PreviewSlot = { slot: string; stock: string }
+export type PreviewSlot = { slot: string; stock: string; tryOn?: { itemId: string; effectId: string } }
 ```
 
-A slot of the hero as the window names it: its id and the stock item it dresses.
+A preview slot with its stock item and an optional unsaved selection.
 
 ### `HeroModels`
 
@@ -7108,7 +7176,7 @@ for Source's self-illumination, rim, diffuse and specular masks.
 ### `NativeMaterial`
 
 ```ts
-export interface NativeMaterial { shader: string; floats: Record<string,number>; ints: Record<string,number>; vectors: Record<string,number[]>; textures: Record<string,string> }
+export interface NativeMaterial { shader: string; floats: Record<string,number>; ints: Record<string,number>; vectors: Record<string,number[]>; textures: Record<string,string>; gemParams?: string[] }
 ```
 
 Native shader parameters stay separate so zero-valued flags and packed masks survive export.
@@ -7132,7 +7200,7 @@ Channel layout is the native hero.vfx layout used by dota-loadout.
 ### `LOADOUT_MASKS`
 
 ```ts
-export const LOADOUT_MASKS:Record<string,string>={masks:'g_tMasks1',specular:'g_tMasks2',normal:'g_tNormal',detail:'g_tDetail',fresnel:'g_tFresnelWarp',diffuseWarp:'g_tDiffuseWarp'}
+export const LOADOUT_MASKS:Record<string,string>={opacity:'g_tOpacity',masks:'g_tMasks1',specular:'g_tMasks2',normal:'g_tNormal',detail:'g_tDetail',fresnel:'g_tFresnelWarp',diffuseWarp:'g_tDiffuseWarp'}
 ```
 
 Texture roles the loadout shader reads from GLB extras instead of glTF's PBR channels.
@@ -10546,6 +10614,41 @@ export function withScript(layout: Buffer): Buffer
 A compiled layout that also includes the script: one SCRIPTS node put in front of its panel,
 the way the compiler writes `<scripts><include src="..."/></scripts>`. A layout that has it
 already is left as it is.
+
+## src/razor-crest-preview.ts
+
+### `goldenCrestModel`
+
+```ts
+export function goldenCrestModel(text: string, model: string, itemId: string): string | undefined
+```
+
+The distinct golden model path to try for the regular Crest's preview.
+
+### `crestActivities`
+
+```ts
+export function crestActivities(text: string, itemId: string, visuals: string): string[]
+```
+
+Use the same authored animation modifiers for both finishes of the same helmet.
+
+### `normalCrestOnGoldenRig`
+
+```ts
+export function normalCrestOnGoldenRig(normal: Buffer, goldenFile: string): Buffer | null
+```
+
+Borrow only the gold model's geometry and rig. Material indices must correspond before
+moving the normal version's textures and shader metadata onto the donor.
+
+### `mergeCrestAttachments`
+
+```ts
+export function mergeCrestAttachments(normal: Attachment[], donor: Attachment[]): Attachment[]
+```
+
+Prefer the donor rig's attachment points, retaining points unique to the original.
 
 ## src/ready-presets-format.ts
 

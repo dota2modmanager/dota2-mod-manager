@@ -8,10 +8,36 @@
  * walking every block before it.
  */
 import { blockBounds, eachChild } from './schema-kv.ts';
+import { pngFromVtex } from './vtex.ts';
+import type { VpkIndex } from './vpk.ts';
 import type { Rgb } from './recolor.ts';
 
 /** One prismatic gem colour. */
-export interface GemColor { key: string; name: string; rgb: Rgb }
+export interface GemColor { key: string; name: string; rgb: Rgb; picture?: string }
+
+/** The shared prismatic socket artwork and its color overlay, from the installed game. */
+export function prismaticGemArt(index: Pick<VpkIndex, 'read'>): { image: string; mask: string | null } | null {
+  const read = (name: string) => {
+    const png = pngFromVtex(index.read(`panorama/images/econ/sockets/${name}_png.vtex_c`));
+    return png && `data:image/png;base64,${png.toString('base64')}`;
+  };
+  const image = read('gem_color');
+  return image ? { image, mask: read('gem_color_mask') } : null;
+}
+
+/** Some client builds ship individual socket art alongside the shared layers. */
+export function prismaticGemPictures(gems: GemColor[], index: Pick<VpkIndex, 'has' | 'read'>): GemColor[] {
+  return gems.map(gem => {
+    const slug = gem.key.replace(/^unusual_/, '');
+    for (const name of [`gem_color_${slug}`, `gem_color_${gem.key}`]) {
+      const path = `panorama/images/econ/sockets/${name}_png.vtex_c`;
+      if (!index.has(path)) continue;
+      const png = pngFromVtex(index.read(path));
+      if (png) return { ...gem, picture: `data:image/png;base64,${png.toString('base64')}` };
+    }
+    return gem;
+  });
+}
 
 /** "UnusualCreatorsLight" as "Creators Light"; digits stay one word: "International 2012". */
 export function gemName(colorName: string): string {

@@ -10,7 +10,7 @@ import { buildVpk, entryAt } from '../src/vpk.ts';
 import { writeGlb, readGlb } from '../src/glb-embed.ts';
 import { createHeroPreview, entityModel, wornSkin, wornExtras } from '../src/hero-preview.ts';
 
-import { bodySkinFor, monkeyKingCrown, previewStockHead, previewParticleReader, previewParticleReplacements } from '../src/hero-preview-picks.ts';
+import { bodySkinFor, monkeyKingCrown, previewStockHead, previewParticleReader, previewParticleReplacements, previewHeroParticles } from '../src/hero-preview-picks.ts';
 import { withStyle } from '../src/item-builder-styles.ts';
 
 const jugg = `\t\t\t"used_by_heroes"\n\t\t\t{\n\t\t\t\t"npc_dota_hero_juggernaut"\t\t"1"\n\t\t\t}\n`;
@@ -242,4 +242,44 @@ test('Snowbeast uses separate authored indexes for the head and Primal Beast bod
     assert.equal(bodySkinFor(selected, 'npc_dota_hero_primal_beast', body, true), style + 1);
     assert.equal(bodySkinFor(selected, 'npc_dota_hero_primal_beast', body), undefined);
   }
+});
+
+test('trying on a wearable or stock only changes the current preview plan', () => {
+  const { hp } = preview();
+  const worn = { ...SLOTS[0], tryOn: { itemId: '5000', effectId: '' } };
+  assert.equal(hp.plan('juggernaut', [worn, SLOTS[1]])?.parts[0].name, 'Paid Mask');
+  assert.equal(hp.plan('juggernaut', SLOTS)?.parts[0].name, 'Juggernaut’s Mask');
+  const installed = preview([{ slot: SLOTS[0].slot, itemId: '5000', name: 'Paid Mask' }]).hp;
+  const stock = { ...SLOTS[0], tryOn: { itemId: '', effectId: '' } };
+  assert.equal(installed.plan('juggernaut', [stock, SLOTS[1]])?.parts[0].name, 'Juggernaut’s Mask');
+  assert.equal(installed.plan('juggernaut', SLOTS)?.parts[0].name, 'Paid Mask');
+});
+
+test('Razor resolves a stock lightning particle even without a weapon model', () => {
+  const whip = 'particles/units/heroes/hero_razor/razor_whip_ambient.vpcf';
+  const portrait = 'particles/units/heroes/hero_razor/razor_loadout.vpcf';
+  const script = `"RenderablePortrait" { "Particles" { "${portrait}" { "0" { "location" "attach_hitloc" } } } }`;
+  const index = { has: (path: string) => path === whip + '_c' || path === portrait + '_c' };
+  assert.deepEqual(previewHeroParticles(script, 'npc_dota_hero_razor', true, index), [portrait, whip]);
+  assert.deepEqual(previewHeroParticles(script, 'npc_dota_hero_razor', false, index), [portrait]);
+  assert.deepEqual(previewHeroParticles(null, 'npc_dota_hero_razor', true, { has: () => false }), []);
+});
+
+test('Terrorblade arcana uses the native blade effect and its snapshot instead of the stock trail', async () => {
+  const { bladeSnapshots, replaceTerrorbladeBladeFx } = await import('../src/hero-particle-styles.ts');
+  const arcana = 'models/heroes/terrorblade/terrorblade_arcana.vmdl';
+  const stock = 'models/heroes/terrorblade/weapon.vmdl';
+  const weapon = 'models/items/terrorblade/marauders_weapon/marauders_weapon.vmdl';
+  const trail = 'particles/units/heroes/hero_terrorblade/terrorblade_ambient_sword_l.vpcf';
+  const custom = 'particles/econ/items/terrorblade/marauders_weapon/ambient.vpcf';
+  const from = 'particles/models/heroes/terrorblade/weapon.vsnap', to = 'particles/models/items/terrorblade/marauders_weapon/weapon.vsnap';
+  assert.equal(replaceTerrorbladeBladeFx(arcana, stock, [custom]), false);
+  assert.equal(replaceTerrorbladeBladeFx(arcana, weapon, [trail, 'particles/error/null.vpcf']), false);
+  assert.equal(replaceTerrorbladeBladeFx(arcana, weapon, [custom]), true);
+  const read = previewParticleReader(file => Buffer.from(file), new Map(), undefined, true);
+  assert.equal(read(trail + '_c'), null);
+  assert.equal(read(custom + '_c')?.toString(), custom + '_c');
+  const def = { path:custom, tree:{m_hSnapshot:from+'_c'}, children:[] };
+  assert.equal(bladeSnapshots(def, new Map([[from,to]])).tree.m_hSnapshot, to);
+  assert.equal(def.tree.m_hSnapshot, from+'_c');
 });

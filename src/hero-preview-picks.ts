@@ -3,6 +3,8 @@ import { blockBounds, eachChild, findItem, itemFields, listItems } from './schem
 import { itemHeroes } from './item-builder-slots.ts';
 import type { VpkIndex } from './vpk.ts';
 import { itemEffectPatch } from './item-builder.ts';
+import { isStockTerrorbladeBlade } from './hero-particle-styles.ts';
+import { heroLoadoutParticles } from './particle-spec.ts';
 import { normalizeAssetPath } from './item-builder-assets.ts';
 export { wornSkin } from './item-builder-assets.ts';
 
@@ -80,25 +82,35 @@ export function monkeyKingCrown(text: string, hero: string, equipped: { itemId?:
 }
 
 /** Use the selected style's replacements even when they affect a different model's ambient. */
-export function previewParticleReplacements(visuals: string): Map<string, string> {
+export function previewParticleReplacements(visuals: string, includeSnapshots = false): Map<string, string> {
   const replacements = new Map<string, string>();
   eachChild(visuals, blockBounds(visuals, 0), modifier => {
     if (!modifier.isBlock || !/^asset_modifier\d*$/i.test(modifier.key)) return;
     const fields = new Map<string, string>();
     eachChild(visuals, modifier.body!, f => { if (!f.isBlock) fields.set(f.key.toLowerCase(), f.value); });
-    if (!['particle', 'particle_combined'].includes(fields.get('type') ?? '') || (fields.get('style') ?? '0') !== '0') return;
-    const from = fields.get('asset')?.toLowerCase(), to = fields.get('modifier')?.toLowerCase();
-    if (from?.endsWith('.vpcf') && to?.endsWith('.vpcf')) replacements.set(from, to);
+    const type = fields.get('type') ?? '';
+    if ((fields.get('style') ?? '0') !== '0') return;
+    const suffix = type === 'particle_snapshot' && includeSnapshots ? '.vsnap'
+      : ['particle', 'particle_combined'].includes(type) ? '.vpcf' : null;
+    const from = normalizeAssetPath(fields.get('asset')).replace(/_c$/, '');
+    const to = normalizeAssetPath(fields.get('modifier')).replace(/_c$/, '');
+    if (suffix && from.endsWith(suffix) && to.endsWith(suffix)) replacements.set(from, to);
   });
   return replacements;
 }
 
+/** Resolves blade model replacements for Terrorblade's 3D cosmetic preview. */
+export function previewBladeReplacements(existing: Map<string, string> | undefined, visuals: string | null | undefined) {
+  return visuals ? new Map([...previewParticleReplacements(visuals, true), ...existing ?? []]) : existing;
+}
+
 /** Economy replacements can target a nested child as well as the equipped effect's root. */
-export function previewParticleReader(read: (path: string) => Buffer | null, replacements: Map<string, string>, own?: Map<string, string>) {
+export function previewParticleReader(read: (path: string) => Buffer | null, replacements: Map<string, string>, own?: Map<string, string>, suppressStockBlades = false) {
   return (file: string) => {
     const key = file.replace(/_c$/i, '');
-    const selected = own?.get(key) ?? replacements.get(key);
-    return read(selected ? selected + '_c' : file);
+    const selected = own?.get(key) ?? replacements.get(key) ?? key;
+    if (suppressStockBlades && isStockTerrorbladeBlade(selected)) return null;
+    return selected === key ? read(file) : read(selected + '_c');
   };
 }
 
@@ -117,4 +129,41 @@ export function previewStockHead(text: string, hero: string, body: string, index
   const conventional = `models/heroes/${name}/${name}_head.vmdl`;
   // A conventional face is safe under hats only for the known independent meshes.
   return splitHead && (!hatEquipped || name === 'invoker' || name === 'phantom_lancer') && hasModel(conventional) ? conventional : null;
+}
+
+/** Overlay temporary builder picks on the installed loadout, without changing either input. */
+export function previewEquipment<T extends { slot?: unknown }>(text: string, installed: readonly T[],
+  slots: readonly { slot: string; tryOn?: { itemId: string; effectId: string } }[]) {
+  const staged = new Map(slots.flatMap(s => s.tryOn ? [[s.slot, s.tryOn] as const] : []));
+  return [
+    ...installed.filter(r => !staged.has(String(r.slot))),
+    ...[...staged].flatMap(([slot, pick]) => {
+      const item = pick.itemId && findItem(text, pick.itemId);
+      return item ? [{ ...pick, slot, name: itemFields(text, item).get('name') ?? '' }] : [];
+    }),
+  ];
+}
+
+
+/** Razor's stock weapon is a particle, so it can exist even without a wearable model. */
+export function previewHeroParticles(script: string | null, hero: string, stockWeapon: boolean, index: Pick<VpkIndex, 'has'>): string[] {
+  const particles = script ? heroLoadoutParticles(script) : [];
+  if (hero !== 'npc_dota_hero_razor' || !stockWeapon) return particles;
+  const folder = 'particles/units/heroes/hero_razor/';
+  const candidates = ['razor_whip_ambient', 'razor_weapon_ambient', 'razor_whip', 'razor_weapon', 'razor_loadout'];
+  const weapon = candidates.map(name => folder + name + '.vpcf').find(path => index.has(path + '_c'));
+  return weapon ? [...new Set([...particles, weapon])] : particles;
+}
+
+/** Some builds ship the Crest glow separately from the wearable's particle list. */
+export function previewCrestParticles(roots: string[], model: string, itemId: string, index: Pick<VpkIndex, 'paths'>): string[] {
+  if (itemId !== '6646' || !/razor_helmet_blade/i.test(model)) return roots;
+  const folder = 'particles/econ/items/razor/razor_punctured_crest/';
+  if (roots.some(root => root.startsWith(folder) && /ambient/i.test(root))) return roots;
+  for (const path of index.paths()) {
+    if (path.startsWith(folder) && /\/[^/]+_ambient\.vpcf_c$/i.test(path) && !/gold/i.test(path)) {
+      return [...roots, path.slice(0, -2)];
+    }
+  }
+  return roots;
 }

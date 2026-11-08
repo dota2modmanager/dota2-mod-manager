@@ -2,18 +2,57 @@
  * on the left (its portrait, or the 3D view), its tabs down the middle (the sets, each slot with
  * what is on it and a way to take it off, the looks saved for it), and the tab's grid on the
  * right. The window keeps one size whatever the tab: only the grid scrolls. */
-import { useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { plural } from '../../ui/format.ts';
 import { heroName } from '../../ui/hero-name.ts';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import type { HeroModalActions, HeroModalModel, HeroPane } from './model.ts';
 import { CosThumb, WardrobeProgress } from './parts.tsx';
+import type { ArcanaWindow, GemArt, GemColor } from '../../api/content.ts';
+import { gemOf, type Rgb } from '../arcana/tint.ts';
+import { gemColor } from './gems.ts';
+import { GemsPane } from './GemsPane.tsx';
 import { SlotPane } from './SlotPane.tsx';
 import { SetPane, SetsPane } from './SetsPane.tsx';
 import { LooksPane } from './LooksPane.tsx';
 import { Preview3d } from '../preview3d/Preview3d.tsx';
 
 export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModalActions }) {
+  const [palette, setPalette] = useState<{ arcanas: ArcanaWindow[]; gems: GemColor[]; gemArt: GemArt | null } | null>(null);
+  const [paletteError, setPaletteError] = useState(false);
+  const [drafts, setDrafts] = useState<Record<string, Rgb>>({});
+  const gem = m.pane.kind === 'slot' ? m.pane.m.gem : undefined;
+  const needPalette = Boolean(gem || Object.keys(m.preview?.gemSlots ?? {}).length);
+  useEffect(() => {
+    if (!needPalette) return;
+    let active = true;
+    void window.api.arcana.state().then(result => {
+      if (!active) return;
+      setPaletteError(Boolean(result.error));
+      if (!result.error) setPalette(result);
+    }).catch(() => { if (active) setPaletteError(true); });
+    return () => { active = false; };
+  }, [needPalette]);
+  const gemSlots = m.preview?.gemSlots;
+  const previewGems = useMemo(() => Object.entries(gemSlots ?? {}).flatMap(([set, slot]) => {
+    const entry = palette?.arcanas.find(item => item.set === set);
+    if (!entry) return [];
+    const original = gemOf(set);
+    const { color, inherited, explicit } = gemColor(set, palette?.arcanas ?? [], drafts, gemSlots ?? {});
+    const stock = color.every((channel, i) => channel === original[i]);
+    if (stock && entry.preview.bake && !inherited && !explicit) return [];
+    return [{ set, slot, color, stock: stock && !entry.preview.bake, rules: stock && !entry.preview.bake ? { ...entry.preview, shared: [...entry.preview.own, ...entry.preview.shared], own: [] } : entry.preview }];
+  }), [drafts, palette, gemSlots]);
+  const item = palette?.arcanas.find(entry => entry.set === gem?.set);
+  const gems = gem && <GemsPane key={gem.set} set={gem.set} item={item} gems={palette?.gems ?? []} art={palette?.gemArt}
+    equipped={gem.equipped} unavailable={paletteError} color={gemColor(gem.set, palette?.arcanas ?? [], drafts, gemSlots ?? {}).color}
+    choose={color => setDrafts(current => {
+      const next = { ...current };
+      if (color) next[gem.set] = color;
+      else delete next[gem.set];
+      return next;
+    })}
+    saved={updated => setPalette(current => current && { ...current, arcanas: current.arcanas.map(entry => entry.set === updated.set ? updated : entry) })} />;
   const [finished, setFinished] = useState<{ sig: string; ok: boolean } | null>(() => m.preview ? { sig: m.preview.sig, ok: true } : null);
   const progress = m.busy || (m.preview?.open && finished && finished.sig !== m.preview.sig) ? 'pending'
     : m.preview?.open && finished?.sig === m.preview.sig && !finished.ok ? 'failed' : null;
@@ -30,7 +69,7 @@ export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModa
       <div className="ward-body">
         <aside className="ward-stage">
           {m.preview?.open
-            ? <Preview3d hero={m.preview.hero} slots={m.preview.slots} sig={m.preview.sig} fallback={portrait} onSettled={setFinished} />
+            ? <Preview3d hero={m.preview.hero} slots={m.preview.slots} sig={m.preview.sig} gems={previewGems} fallback={portrait} onSettled={setFinished} />
             : portrait}
           <div className="ward-stage-tools">
             {m.preview && (
@@ -80,7 +119,7 @@ export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModa
             sub={m.looks ? `${m.looks} ${plural(m.looks, 'образ', 'образа', 'образов')}` : L`Сохрани надетое`} on={false} data={{ 'data-looks-tab': 'true' }} />
         </nav>
         <section className="ward-pane">
-          <WardrobeProgress.Provider value={progress}><Pane pane={m.pane} m={m} actions={actions} /></WardrobeProgress.Provider>
+          <WardrobeProgress.Provider value={progress}><Pane pane={m.pane} m={m} actions={actions} gems={gems} gemCount={palette?.gems.length} /></WardrobeProgress.Provider>
         </section>
       </div>
     </div>
@@ -103,9 +142,9 @@ function RailTab({ id, tab, actions, icon, label, count, sub, on, data }: {
   );
 }
 
-function Pane({ pane, m, actions }: { pane: HeroPane; m: HeroModalModel; actions: HeroModalActions }) {
+function Pane({ pane, m, actions, gems, gemCount }: { pane: HeroPane; m: HeroModalModel; actions: HeroModalActions; gems?: ReactNode; gemCount?: number }) {
   switch (pane.kind) {
-    case 'slot': return <SlotPane m={pane.m} actions={pane.actions} />;
+    case 'slot': return <SlotPane m={pane.m} actions={pane.actions} gems={gems} gemCount={gemCount} />;
     case 'sets': return <SetsPane m={pane.m} actions={pane.actions} />;
     case 'set': return <SetPane m={pane.m} actions={pane.actions} />;
     default: return <LooksPane looks={pane.looks} canSave={pane.canSave} busy={m.busy} actions={actions} />;

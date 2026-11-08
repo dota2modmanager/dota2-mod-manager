@@ -1,12 +1,13 @@
 /* Native Dota material inputs for the bundled loadout shader. PBR metalness is not a substitute
  * for Source's self-illumination, rim, diffuse and specular masks. */
+import { attributeToken, materialExpressions, withConstant } from './material.ts';
 import { readKv3 } from './kv3.ts';
 import { kvJson } from './particle-spec.ts';
 import { resourceBlock, resourceBlocks } from './resource.ts';
 import type { Json } from './particle-spec.ts';
 
 /** Native shader parameters stay separate so zero-valued flags and packed masks survive export. */
-export interface NativeMaterial { shader: string; floats: Record<string,number>; ints: Record<string,number>; vectors: Record<string,number[]>; textures: Record<string,string> }
+export interface NativeMaterial { shader: string; floats: Record<string,number>; ints: Record<string,number>; vectors: Record<string,number[]>; textures: Record<string,string>; gemParams?: string[] }
 
 /** Legacy materials still use NTRO: follow the field offsets recorded in the resource itself. */
 function ntro(file: Buffer): Record<string,Json> {
@@ -56,6 +57,15 @@ export function readLoadoutMaterial(file:Buffer|null):NativeMaterial|null {
         else if(kind==='textures'&&typeof value==='string')out.textures[row.m_name]=value.replace(/_c$/,'');
       }
     }
+    // The workshop calls the separate cutout map transparency; some materials
+    // expose it under that name instead of opacity.
+    if (out.textures.g_tTransparency) out.textures.g_tOpacity ??= out.textures.g_tTransparency;
+    // Malformed or unsupported expression data must not discard otherwise usable textures.
+    try {
+      const token = attributeToken('$GemColor');
+      const gemParams = materialExpressions(file).filter(e => withConstant(e.code, token, [1, 1, 1])).map(e => e.name);
+      if (gemParams.length) out.gemParams = gemParams;
+    } catch { /* static material inputs still work */ }
     return out;
   }catch{return null;}
 }
@@ -63,7 +73,9 @@ export function readLoadoutMaterial(file:Buffer|null):NativeMaterial|null {
 /** Channel layout is the native hero.vfx layout used by dota-loadout. */
 export function loadoutDescriptor(m:NativeMaterial):Record<string,unknown>{
   const f=(k:string,d=0)=>m.floats[k]??d, v=(k:string,d=[1,1,1])=>m.vectors[k]?.slice(0,d.length)??d;
-  return {expectsReflectionCube:!!m.ints.F_SPECULAR_CUBE_MAP&&!!m.textures.g_tCubeMap,detailMode:m.ints.F_DETAIL??0,detailBlend:f('g_flDetailBlendFactor',1),detailScale:v('g_vDetailTexCoordScale',[1,1]),detailTint:v('g_vDetail1ColorTint'),rimColor:v('g_vRimLightColor'),rimScale:f('g_flRimLightScale'),specColor:v('g_vSpecularColor'),specScale:f('g_flSpecularScale',1),specExponent:f('g_flSpecularExponent',16),alphaTest:m.ints.F_ALPHA_TEST?f('g_flAlphaTestReference',.5):0,translucent:!!m.ints.F_TRANSLUCENT,additive:!!m.ints.F_ADDITIVE_BLEND,cloak:m.ints.F_ENABLE_CLOAK?f('g_flMaterialCloakFactor'):0};
+  const detailGem = m.gemParams?.includes('g_vDetail1ColorTint');
+  const specGem = m.gemParams?.includes('g_vSpecularColor');
+  return {...(detailGem ? {detailGem} : {}),...(specGem ? {specGem:v('g_vSpecularColor')} : {}),expectsReflectionCube:!!m.ints.F_SPECULAR_CUBE_MAP&&!!m.textures.g_tCubeMap,detailMode:m.ints.F_DETAIL??0,detailBlend:f('g_flDetailBlendFactor',1),detailScale:v('g_vDetailTexCoordScale',[1,1]),detailTint:v('g_vDetail1ColorTint'),rimColor:v('g_vRimLightColor'),rimScale:f('g_flRimLightScale'),specColor:v('g_vSpecularColor'),specScale:f('g_flSpecularScale',1),specExponent:f('g_flSpecularExponent',16),alphaTest:m.ints.F_ALPHA_TEST?f('g_flAlphaTestReference',.5):0,translucent:!!m.ints.F_TRANSLUCENT,additive:!!m.ints.F_ADDITIVE_BLEND,cloak:m.ints.F_ENABLE_CLOAK?f('g_flMaterialCloakFactor'):0};
 }
 /** Texture roles the loadout shader reads from GLB extras instead of glTF's PBR channels. */
-export const LOADOUT_MASKS:Record<string,string>={masks:'g_tMasks1',specular:'g_tMasks2',normal:'g_tNormal',detail:'g_tDetail',fresnel:'g_tFresnelWarp',diffuseWarp:'g_tDiffuseWarp'};
+export const LOADOUT_MASKS:Record<string,string>={opacity:'g_tOpacity',masks:'g_tMasks1',specular:'g_tMasks2',normal:'g_tNormal',detail:'g_tDetail',fresnel:'g_tFresnelWarp',diffuseWarp:'g_tDiffuseWarp'};
