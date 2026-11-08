@@ -530,6 +530,7 @@ that location is not writable.
 |---|---|
 | `src/main.ts` | Electron lifecycle, auto-update, and the order the app starts in |
 | `src/services.ts` | Every long-lived service, built once in the order they depend on each other |
+| `src/large-answer.ts` | An IPC answer too big for one message: its big pieces stay in the main process and `preload.js` fetches them in slices. |
 | `src/ipc.ts`, `src/ipc-*.ts` | Every IPC module registered in one place, and the handlers themselves, one file per group of channels, each naming what it needs |
 | `src/app-context.ts`, `src/electron.ts` | What the IPC modules are handed, and Electron asked for when a module registers |
 | `src/window-guard.ts`, `src/channel-args.ts` | Who may call the main process and with what: the sender, every channel's arguments, the page's permissions and navigation |

@@ -74,14 +74,34 @@ export function spriteAt(root: string, texture: string): string | null {
   return frames.sort((a, b) => fs.statSync(b).size - fs.statSync(a).size)[0] || null;
 }
 
+const MAX_EXPORTS = 2;
+
 /** GLB files of the game's models, made on demand and kept per game build. */
 export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runTool, log = () => {} }: {
   userDataDir: string; toolchain: { pathOf: (name: string) => string | null };
   getGamePath: () => string | null; run?: Run; log?: (msg: string) => void;
 }) {
   const base = path.join(userDataDir, 'models3d');
-  // one export at a time: two at once would both start the program and fight over the disk
-  let queue: Promise<unknown> = Promise.resolve();
+  // Two exports at once, no more: a third only fights the others for the disk. Most of an export
+  // is the program opening the game's archive, so a hero of five files waits half as long.
+  let running = 0;
+  const waiting: (() => void)[] = [];
+  const limited = async (work: () => Promise<void>) => {
+    if (running >= MAX_EXPORTS) await new Promise<void>((go) => waiting.push(go));
+    running++;
+    try { await work(); } finally { running--; waiting.shift()?.(); }
+  };
+  // A file on its way is waited for, not exported a second time over itself.
+  const exporting = new Map<string, Promise<void>>();
+  const exportOnce = async (root: string, files: string[], work: (fresh: string[]) => Promise<void>) => {
+    const key = (file: string) => `${root}|${file}`;
+    const busy = files.flatMap((file) => exporting.get(key(file)) ?? []);
+    const fresh = files.filter((file) => !exporting.has(key(file)));
+    const job = fresh.length ? limited(() => work(fresh)) : null;
+    if (job) for (const file of fresh) exporting.set(key(file), job);
+    await Promise.all([...busy, ...(job ? [job] : [])]);
+    for (const file of fresh) exporting.delete(key(file));
+  };
 
   /** This build's folder, made empty the first time a build is seen. */
   function buildRoot(game: string): string {
@@ -112,9 +132,7 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
     const files = new Map(models.map((m) => [m, modelFile(m)]));
     const missing = () => [...new Set([...files.values()].filter((f): f is string => !!f && !foundGlb(root, f)))];
     if (missing().length) {
-      const job = queue.then(async () => {
-        const wanted = missing();
-        if (!wanted.length) return;
+      await exportOnce(root, missing(), async (wanted) => {
         const started = Date.now();
         try {
           // one model alone, the toolchain takes -o for the file itself, not a folder to lay it out in
@@ -126,8 +144,6 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
           log(`models 3d: export failed (${(err as Error)?.message || err})`);
         }
       });
-      queue = job;
-      await job;
     }
     for (const [m, f] of files) if (f) out[m] = foundGlb(root, f);
     return out;
@@ -155,7 +171,7 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
     if (found) return found;
     const worn = withSkin(bytes, skin);
     if (!worn || worn === bytes) return null;
-    const job = queue.then(async () => {
+    await exportOnce(root, [file], async () => {
       try {
         const folder = path.join(root, 'source', 'game', 'mm');
         const at = path.join(folder, ...file.split('/'));
@@ -169,8 +185,6 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
         log(`models 3d: skin export failed (${(err as Error)?.message || err})`);
       }
     });
-    queue = job;
-    await job;
     return foundGlb(root, file);
   }
 
@@ -188,9 +202,7 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
     const root = path.join(buildRoot(game), 'sprites');
     const missing = () => [...new Set(valid.filter((t) => !spriteAt(root, t)))];
     if (missing().length) {
-      const job = queue.then(async () => {
-        const wanted = missing();
-        if (!wanted.length) return;
+      await exportOnce(root, missing(), async (wanted) => {
         const started = Date.now();
         try {
           fs.mkdirSync(root, { recursive: true });
@@ -200,8 +212,6 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
           log(`sprites: export failed (${(err as Error)?.message || err})`);
         }
       });
-      queue = job;
-      await job;
     }
     for (const t of valid) {
       const at = spriteAt(root, t);

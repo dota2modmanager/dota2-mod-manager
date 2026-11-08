@@ -124,6 +124,7 @@ the code, not in this page.
 | [`src/kv3-cells.ts`](#srckv3-cellsts) | The numbers in a parsed KV3 block (src/kv3.ts): read one where it lies, change it there, and the |
 | [`src/kv3-write.ts`](#srckv3-writets) | A KV3 block written anew from its tree (src/kv3.ts), for changes that are more than a number: |
 | [`src/kv3.ts`](#srckv3ts) | Binary KV3, the format Source 2 compiles particles and most other resources into: read far |
+| [`src/large-answer.ts`](#srclarge-answerts) | An answer too big for one IPC message. |
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
 | [`src/loadout-material.ts`](#srcloadout-materialts) | Native Dota material inputs for the bundled loadout shader. PBR metalness is not a substitute |
 | [`src/loadout-resources.ts`](#srcloadout-resourcests) | Complete effect dependencies for the real loadout runtime, shared by hero and recolor views. |
@@ -7054,6 +7055,31 @@ export function readKv3(block: Buffer): Kv3Block
 
 Read a KV3 block (a resource's DATA block, magic included).
 
+## src/large-answer.ts
+
+An answer too big for one IPC message.
+
+Electron hands an answer to the window as one message, and a message of 787 MB (Primal Beast in
+Age of Attrition, 2026-11-08) ends the main process with no error to catch: the whole app closes.
+So the big pieces of an answer stay here. The answer names them, and preload.js fetches each in
+slices no message can choke on, then puts the answer back together.
+
+### `LargeRef`
+
+```ts
+export type LargeRef = { $large: number; size: number; text: boolean }
+```
+
+What stands in an answer for a piece that stays behind.
+
+### `createLargeAnswers`
+
+```ts
+export function createLargeAnswers({ now = Date.now, smallest = SMALLEST, slice = SLICE } = {})
+```
+
+The store behind one channel's answers.
+
 ## src/library.ts
 
 Library: manifest of installed mods + presets
@@ -7122,6 +7148,14 @@ export function resourcePaths(value:Json):string[]
 ```
 
 Collect native dependency paths without allowing arbitrary files or parent-directory traversal.
+
+### `drawnModels`
+
+```ts
+export function drawnModels(defs:ParticleDef[]):Set<string>
+```
+
+The models the effects' renderers draw. Others a tree names (a hero's body to emit from) cost a full export and draw nothing.
 
 ### `loadoutResources`
 

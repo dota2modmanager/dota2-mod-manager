@@ -25,10 +25,12 @@ class FakeWindow {
   events = new Map<string, Listener>();
   page = new Map<string, Listener>();
   sent: unknown[][] = [];
+  reloads = 0;
   openHandler: Listener = () => null;
   webContents = {
     on: (name: string, fn: Listener) => { this.page.set(name, fn); },
     send: (...a: unknown[]) => { this.sent.push(a); },
+    reload: () => { this.reloads++; },
     setWindowOpenHandler: (fn: Listener) => { this.openHandler = fn; },
   };
   constructor(options: Record<string, any>) { this.options = options; FakeWindow.last = this; }
@@ -159,4 +161,16 @@ test('a scale out of range, or not a number, becomes one the layout can take', (
   assert.equal(clampZoom('1.2'), 1.2);
   assert.equal(clampZoom('big'), 1);
   assert.equal(clampZoom(-1), 1);
+});
+
+test('a window that dies says so in the log and comes back, once a minute at most', () => {
+  const { w, said } = open();
+  const gone = w.page.get('render-process-gone')!;
+  gone({}, { reason: 'clean-exit', exitCode: 0 });
+  assert.equal(w.reloads, 0);
+  gone({}, { reason: 'crashed', exitCode: 5 });
+  assert.equal(w.reloads, 1);
+  gone({}, { reason: 'oom', exitCode: 9 });
+  assert.equal(w.reloads, 1);
+  assert.ok(said.some((line) => line.includes('window process gone: crashed (5)')));
 });

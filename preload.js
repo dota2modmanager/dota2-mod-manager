@@ -1,5 +1,24 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
+// The big pieces of a 3D preview answer come in slices (src/large-answer.ts), and go back in their places.
+async function wholeAnswer(value) {
+  if (Array.isArray(value)) return Promise.all(value.map(wholeAnswer));
+  if (!value || typeof value !== 'object' || ArrayBuffer.isView(value)) return value;
+  if (value.$large === undefined) {
+    const out = {};
+    for (const key of Object.keys(value)) out[key] = await wholeAnswer(value[key]);
+    return out;
+  }
+  const bytes = new Uint8Array(value.size);
+  for (let at = 0; at < value.size;) {
+    const slice = await ipcRenderer.invoke('preview3d:slice', value.$large, at);
+    if (!slice?.byteLength) throw new Error('3D preview: a piece of the answer was lost');
+    bytes.set(slice, at);
+    at += slice.byteLength;
+  }
+  return value.text ? new TextDecoder().decode(bytes) : bytes;
+}
+
 contextBridge.exposeInMainWorld('api', {
   win: {
     minimize: () => ipcRenderer.invoke('win:minimize'),
@@ -109,10 +128,10 @@ contextBridge.exposeInMainWorld('api', {
   // towers and trees from the game's own looks, per side
   // the item builder's 3D preview: the hero's models out of the game
   preview3d: {
-    models: (hero, slots) => ipcRenderer.invoke('preview3d:models', hero, slots),
-    motions: (body) => ipcRenderer.invoke('preview3d:motions', body),
-    effect: (id) => ipcRenderer.invoke('preview3d:effect', id),
-    model: (file) => ipcRenderer.invoke('preview3d:model', file),
+    models: (hero, slots) => ipcRenderer.invoke('preview3d:models', hero, slots).then(wholeAnswer),
+    motions: (body) => ipcRenderer.invoke('preview3d:motions', body).then(wholeAnswer),
+    effect: (id) => ipcRenderer.invoke('preview3d:effect', id).then(wholeAnswer),
+    model: (file) => ipcRenderer.invoke('preview3d:model', file).then(wholeAnswer),
   },
   sounds: {
     heroes: () => ipcRenderer.invoke('sounds:heroes'),

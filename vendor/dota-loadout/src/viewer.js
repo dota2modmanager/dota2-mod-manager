@@ -1,4 +1,5 @@
 import {mergeWearableClips} from './wearable-clips.js';
+import {holdRootMotion,rootBones} from './root-motion.js';
 import {activeSkinJoints,attachmentSkinBones,resolveModelAttachment} from './skin-joints.js';
 import {particleSurfaceMeshes} from './surface-meshes.js';
 import {snapshotBinding} from '../studio/snapshot-bindings.mjs';
@@ -428,7 +429,8 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   }
   const a = manifest.animations || {}, list = (a.list?.length ? [...a.list, ...[...clips.keys()].filter(name=>!a.list.some(x=>x.name===name)).map(name=>({name,loop:/(?:idle|run|walk|loadout)/i.test(name)}))] : [...clips.keys()].map((name) => ({ name,loop:/(?:idle|run|walk|loadout)/i.test(name) }))).filter((x) => clips.has(x.name));
   for (const item of list) if (item.additive) clips.get(item.name).blendMode = THREE.AdditiveAnimationBlendMode;
-  const action = (name) => { const c = clips.get(name); return c ? mixer.clipAction(c) : null; };
+  const restBones = rootBones(root), held = new Set();
+  const action = (name) => { const c = clips.get(name); if (!c) return null; if (!held.has(c)) { held.add(c); holdRootMotion(c, restBones); } return mixer.clipAction(c); };
   const idleName = clips.has(a.idle) ? a.idle : list[0]?.name;
   const idle = idleName ? action(idleName) : null; let current = idle, currentName = idleName;
   const loops = new Set(list.filter((x) => x.loop).map((x) => x.name)); if (idleName) loops.add(idleName);

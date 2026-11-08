@@ -42,3 +42,30 @@ test('Mace of Aeons idle animates the plates during both hero idle and loadout',
   mergeWearableClips(clips, model, [], [], new Set([staff.name]), bone => bone.name, bone => bone, 'aeons_loadout');
   for (const clip of clips.values()) assert.deepEqual(clip.tracks.map(t => t.name), [plate.uuid + '.position']);
 });
+
+test('a clip that carries the hero across the floor keeps him on the spot, and keeps his height and sway', async () => {
+  const { AnimationClip, Bone, Group, VectorKeyframeTrack } = await import('three');
+  const { holdRootMotion, rootBones } = await import('../vendor/dota-loadout/src/root-motion.js');
+  const root = new Group(), pelvis = new Bone(), spine = new Bone(), arm = new Bone();
+  pelvis.name = 'pelvis'; spine.name = 'spine'; arm.name = 'arm';
+  pelvis.position.set(0, 2.5, 0.1);
+  root.add(pelvis); pelvis.add(spine); spine.add(arm);
+  const rest = rootBones(root);
+  assert.deepEqual([...rest.keys()].filter(key => key.length < 10).sort(), ['pelvis', 'spine']);
+  const times = Array.from({ length: 61 }, (_, i) => i / 10);
+  const walk = times.flatMap(t => [Math.sin(t * 20) * 0.1, 2.5 + t * 0.2, t * 4]);
+  const clip = new AnimationClip('debut', 6, [new VectorKeyframeTrack('pelvis.position', times, walk)]);
+  assert.equal(holdRootMotion(clip, rest), true);
+  const { values } = clip.tracks[0];
+  for (let i = 0; i < values.length; i += 3) {
+    assert.ok(Math.abs(values[i + 2] - 0.1) < 1.2, `z ${values[i + 2]}`);
+    assert.ok(Math.abs(values[i + 1] - walk[i + 1]) < 1e-5, 'height stays');
+  }
+  assert.ok(Math.max(...values.filter((_, i) => i % 3 === 0)) > 0.02, 'the sway stays');
+  const idle = new AnimationClip('idle', 2, [new VectorKeyframeTrack('pelvis.position', [0, 1, 2], [0, 2.5, 0.1, 0.1, 2.6, 0.2, 0, 2.5, 0.1])]);
+  assert.equal(holdRootMotion(idle, rest), false);
+  // Marci's debut loop: hardly moves, and all of it 17 metres from her place
+  const away = new AnimationClip('loop', 2, [new VectorKeyframeTrack('pelvis.position', [0, 1, 2], [0.7, 2.5, 17.4, 0.8, 2.6, 17.5, 0.7, 2.5, 17.4])]);
+  assert.equal(holdRootMotion(away, rest), true);
+  assert.deepEqual([...away.tracks[0].values].map(v => +v.toFixed(2)), [-0.05, 2.5, 0.05, 0.05, 2.6, 0.15, -0.05, 2.5, 0.05]);
+});
