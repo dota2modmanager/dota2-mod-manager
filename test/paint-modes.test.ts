@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { hsv, paintPixel, paintPixels, paintValue, parsePaint, type Rgb } from '../src/recolor-modes.ts';
 import { shade } from '../src/recolor.ts';
 import { hsv01, paintPixel as windowPixel, splitPaint, paintValue as windowValue, PAINT_MODES } from '../renderer/catalog/paint/paint-mode.ts';
-import { effectPalette, materialPaint, previewPaint } from '../renderer/catalog/paint/preview-paint.ts';
+import { effectPalette, materialPaint, previewPaint, scenePaints } from '../renderer/catalog/paint/preview-paint.ts';
 import type { PaintLayer } from '../renderer/api/content.ts';
 import { editorOf, isPicture, layerLabel, paintSummary } from '../renderer/views/hero-paint-model.ts';
 
@@ -83,6 +83,21 @@ test("the 3D hero takes the colours of the layers that are on, an item's own ove
   assert.equal(materialPaint('part-1', 'materials/models/items/abaddon/y/y.vmat', 'abaddon:head', paint), null, 'an item with no colour of its own stays');
   assert.equal(materialPaint('pedestal', 'materials/models/heroes/x.vmat', undefined, paint), null);
   assert.deepEqual(effectPalette({ 3: 'particles/econ/items/abaddon/mount_fx.vpcf', 4: 'particles/other.vpcf' }, paint), { 3: { rgb: [1, 0, 0], own: true, bake: false } });
+});
+
+test("every worn part finds its slot in the scene, not the body alone", () => {
+  // as the scene listed them for Centaur in a real run; a regex that lost its backslash matched only the body
+  const tone: [number, number, number, number] = [0.26, 0.65, 1, 1];
+  const paint = { body: tone, parts: { 'item:centaur:head': tone, 'item:centaur:tail': tone }, effects: {} };
+  const materials: [string, { owner: string; materialPath: string }][] = [
+    ['hero::0', { owner: 'hero', materialPath: 'materials/models/heroes/centaur/centaur_color.vmat' }],
+    ['part-0::0', { owner: 'part-0', materialPath: 'materials/models/items/centaur/corrupted_contender_head/corrupted_contender_head.vmat' }],
+    ['part-1::0', { owner: 'part-1', materialPath: 'materials/models/items/centaur/corrupted_contender_weapon/corrupted_contender_weapon.vmat' }],
+    ['part-12::0', { owner: 'part-12', materialPath: 'materials/models/items/centaur/x/x.vmat' }],
+    ['pedestal::0', { owner: 'pedestal', materialPath: 'studio-stone' }],
+  ];
+  const slots = ['item:centaur:head', 'item:centaur:weapon', ...Array(10).fill('item:centaur:other'), 'item:centaur:tail'];
+  assert.deepEqual(Object.keys(scenePaints(materials, slots, paint)), ['hero::0', 'part-0::0', 'part-12::0']);
 });
 
 test("the editor works on the layer picked, or on every layer that is on; only pictures take a mode", () => {

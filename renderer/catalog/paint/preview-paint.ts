@@ -64,6 +64,20 @@ export function materialPaint(owner: string, path: string, slot: string | undefi
   return path.toLowerCase().replace(/\\/g, '/').startsWith('materials/models/heroes/') ? paint.body : null;
 }
 
+/**
+ * Every material of the scene with a colour, by its id: the scene's materials as [id, owner and
+ * file], and the slot each worn part (part-<n>) stands in.
+ */
+export function scenePaints(materials: Iterable<[string, { owner: string; materialPath: string }]>, partSlots: readonly string[], paint: PreviewPaint): Record<string, PaintTone> {
+  const out: Record<string, PaintTone> = {};
+  for (const [id, m] of materials) {
+    const part = /^part-(\d+)$/.exec(m.owner);
+    const tone = materialPaint(m.owner, m.materialPath, part ? partSlots[Number(part[1])] : undefined, paint);
+    if (tone) out[id] = tone;
+  }
+  return out;
+}
+
 /** The scene's particle systems (id to path) that take a colour, as the gem palette has them. */
 export function effectPalette(sourcePaths: Record<string, string>, paint: PreviewPaint): Record<string, { rgb: number[]; own: boolean; bake: boolean }> {
   const out: Record<string, { rgb: number[]; own: boolean; bake: boolean }> = {};

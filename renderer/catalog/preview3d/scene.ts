@@ -13,7 +13,7 @@ import { loadoutParticleBounds } from './loadout-bounds.ts';
 import { loadoutGem, loadoutMaterialGem } from './loadout-gems.ts';
 import type { PreviewGem } from '../builder/gems.ts';
 import { toHex } from '../arcana/tint.ts';
-import { effectPalette, materialPaint, NO_PAINT, type PaintTone, type PreviewPaint } from '../paint/preview-paint.ts';
+import { effectPalette, NO_PAINT, scenePaints, type PreviewPaint } from '../paint/preview-paint.ts';
 
 export interface HeroScene {
   play:(name:string|null,load?:()=>Promise<Uint8Array|null>,onEnd?:()=>void)=>Promise<boolean>;
@@ -134,13 +134,7 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
         if (gem && (!gem.stock || descriptor?.detailGem || descriptor?.specGem)) colors[id] = toHex(gem.color);
       }
       hero?.studioGemMaterials(colors);
-      const paints: Record<string, PaintTone> = {};
-      for (const materials of [source, ...overrides.values()]) for (const [id, material] of materials?.materialMetadata ?? []) {
-        const part = /^part-(d+)$/.exec(material.owner);
-        const tone = materialPaint(material.owner, material.materialPath, part ? look.partSlots?.[Number(part[1])] : undefined, currentPaint);
-        if (tone) paints[id] = tone;
-      }
-      hero?.studioPaintMaterials(paints);
+      hero?.studioPaintMaterials(scenePaints([source, ...overrides.values()].flatMap(m => [...(m?.materialMetadata ?? [])]), look.partSlots ?? [], currentPaint));
       const palette = Object.fromEntries(Object.entries(sourcePaths).flatMap(([id, path]) => {
         const gem = loadoutGem(path, currentGems);
         return gem ? [[id, { rgb: gem.color.map(n => n / 255), own: gem.own, bake: !!gem.bake }]] : [];
