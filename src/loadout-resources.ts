@@ -19,12 +19,27 @@ export function resourcePaths(value:Json):string[]{
   return value&&typeof value==='object'?Object.values(value).flatMap(resourcePaths):[];
 }
 
+/** The models the effects' renderers draw. Others a tree names (a hero's body to emit from) cost a full export and draw nothing. */
+export function drawnModels(defs:ParticleDef[]):Set<string>{
+  const out=new Set<string>();
+  const visit=(def:ParticleDef)=>{
+    const renderers=(def.tree as {m_Renderers?:unknown}).m_Renderers;
+    if(Array.isArray(renderers))for(const renderer of renderers as {_class?:string;m_ModelList?:{m_model?:unknown}[]}[]){
+      if(renderer?._class!=='C_OP_RenderModels'||!Array.isArray(renderer.m_ModelList))continue;
+      for(const row of renderer.m_ModelList)if(typeof row?.m_model==='string')out.add(plain(row.m_model));
+    }
+    def.children.forEach(visit);
+  };
+  defs.forEach(visit);
+  return out;
+}
+
 /** Resolve effects and their children into a local resource packet. */
 export async function loadoutResources(defs:ParticleDef[],read:(p:string)=>Buffer|null,glb:Exporter):Promise<LoadoutResources>{
-  const out:LoadoutResources={snapshots:{},materials:{},models:{},sheets:{},missing:[]},seen=new Set<string>(),queue:string[]=[],models:string[]=[];
+  const out:LoadoutResources={snapshots:{},materials:{},models:{},sheets:{},missing:[]},seen=new Set<string>(),queue:string[]=[],models:string[]=[],drawn=drawnModels(defs);
   const visit=(def:ParticleDef)=>{queue.push(...resourcePaths(def.tree));def.children.forEach(visit);};defs.forEach(visit);
   for(let i=0;i<queue.length;i++){
-    const p=plain(queue[i]);if(!safe(p)||seen.has(p))continue;seen.add(p);
+    const p=plain(queue[i]);if(!safe(p)||seen.has(p)||(p.endsWith('.vmdl')&&!drawn.has(p)))continue;seen.add(p);
     if(seen.size>1024){out.missing.push('Effect dependency limit exceeded');break;}
     const file=read(p+'_c');if(!file){out.missing.push(p);continue;}
     if(p.endsWith('.vsnap')){
@@ -107,6 +122,9 @@ export async function loadoutModels(
           missingColor.add(found);
         } else if (image === undefined || !json.images?.[image]) missingColor.add(found);
       }
+      // A model's references name every material set it has; the masks of the sets it does not wear were most of a body's weight.
+      const worn = new Set((json.materials ?? []).map(material => base(material.name ?? '')));
+      for (const path of materials.keys()) if (!worn.has(base(path))) materials.delete(path);
       return { model, glb, materials, missingColor };
     } catch (error) {
       if (!onMissing) throw error;

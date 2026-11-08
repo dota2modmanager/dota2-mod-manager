@@ -14,5 +14,5 @@ export function animatedLoadoutModel():Uint8Array{
   const inverse=add([1,0,0,0,0,1,0,0,0,0,1,0,0,-1,0,1],'MAT4',1);
   const times=add([0,1],'SCALAR',2,[0],[1]),moves=add([0,1,0,0,2,0],'VEC3',2);
   const bin=new Uint8Array(size);let at=0;for(const bytes of chunks){bin.set(bytes,at);at+=bytes.length;}
-  return writeGlb({json:{asset:{version:'2.0'},scene:0,scenes:[{nodes:[0,1]}],nodes:[{name:'hand',translation:[0,1,0]},{name:'triangle',mesh:0,skin:0}],skins:[{joints:[0],inverseBindMatrices:inverse}],meshes:[{primitives:[{attributes:{POSITION:position,JOINTS_0:joints,WEIGHTS_0:weights},material:0}]}],materials:[{name:'native'}],animations:[{name:'idle',channels:[{sampler:0,target:{node:0,path:'translation'}}],samplers:[{input:times,output:moves}]}],accessors,bufferViews:views,buffers:[{byteLength:size}]},bin});
+  return writeGlb({json:{asset:{version:'2.0'},scene:0,scenes:[{nodes:[0,1]}],nodes:[{name:'hand',translation:[0,1,0]},{name:'triangle',mesh:0,skin:0}],skins:[{joints:[0],inverseBindMatrices:inverse}],meshes:[{primitives:[{attributes:{POSITION:position,JOINTS_0:joints,WEIGHTS_0:weights},material:0}]}],materials:[{name:'materials/hero.vmat'}],animations:[{name:'idle',channels:[{sampler:0,target:{node:0,path:'translation'}}],samplers:[{input:times,output:moves}]}],accessors,bufferViews:views,buffers:[{byteLength:size}]},bin});
 }

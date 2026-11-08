@@ -165,13 +165,15 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     try { p = plan(hero, slots); } catch (err) { log(`preview 3d: ${(err as Error)?.message || err}`); return { ok: false, reason: 'no-body' }; }
     if (!p) return { ok: false, reason: 'no-game' };
     const bodyClips = p.clip && p.clip !== p.idle ? [p.clip, p.idle] : [p.idle];
-    const bodyFile = (await glb.glbs([p.body], bodyClips))[p.body];
-    if (!bodyFile) return { ok: false, reason: 'no-body' };
-    const styledBodyFile = p.bodySkin && glb.skinned
-      ? await glb.skinned(p.body, p.bodySkin, p.read(p.body.replace(/\.vmdl$/i, '.vmdl_c')), bodyClips) : null;
     const pedestal = p.stage.pedestal;
-    const files = await glb.glbs([...p.parts.filter((x) => !x.clip).map((x) => x.model), ...(pedestal ? [pedestal] : [])]);
-    for (const clip of new Set(p.parts.flatMap((x) => x.clip ?? []))) Object.assign(files, await glb.glbs(p.parts.filter((x) => x.clip === clip).map((x) => x.model), [clip]));
+    const [bodyFiles, styledBodyFile, files, ...clipFiles] = await Promise.all([
+      glb.glbs([p.body], bodyClips),
+      p.bodySkin && glb.skinned ? glb.skinned(p.body, p.bodySkin, p.read(p.body.replace(/\.vmdl$/i, '.vmdl_c')), bodyClips) : null,
+      glb.glbs([...p.parts.filter((x) => !x.clip).map((x) => x.model), ...(pedestal ? [pedestal] : [])]),
+      ...[...new Set(p.parts.flatMap((x) => x.clip ?? []))].map((clip) => glb.glbs(p.parts.filter((x) => x.clip === clip).map((x) => x.model), [clip])),
+    ]);
+    const bodyFile = bodyFiles[p.body]; if (!bodyFile) return { ok: false, reason: 'no-body' };
+    const skinnedParts = await Promise.all(p.parts.map((x) => x.skin && glb.skinned ? glb.skinned(x.model, x.skin, p.read(x.model.replace(/\.vmdl$/i, '.vmdl_c')), x.clip) : null));
     const missing: string[] = [];
     const parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[]; hidden: string[] }[] = [];
     const modelInputs = [{ file: styledBodyFile || bodyFile, model: p.body, skin: p.bodySkin }];
@@ -188,9 +190,8 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
         if (def) particles.push({ part, def: bindItemParticle(def, p.bindings.get(particle) ?? p.bindings.get(root), 'preview') });
       }
     };
-    for (const x of p.parts) {
-      const worn = x.skin && glb.skinned ? await glb.skinned(x.model, x.skin, p.read(x.model.replace(/\.vmdl$/i, '.vmdl_c')), x.clip) : null;
-      const f = worn || files[x.model];
+    for (const [i, x] of p.parts.entries()) {
+      const f = skinnedParts[i] || files[x.model] || clipFiles.find((got) => got[x.model])?.[x.model];
       if (!f) { missing.push(x.name || x.model); continue; }
       const model = p.read(x.model.replace(/\.vmdl$/i, '.vmdl_c'));
       const attachments = modelAttachments(model);
@@ -216,18 +217,17 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     fx(-2, [...p.bodyFx, ...p.heroFx]);
     if (!particles.length && /\/wisp\/wisp\.vmdl$/i.test(p.body)) fx(-2, ['particles/units/heroes/hero_wisp/wisp_ambient.vpcf']);
     const stand = pedestal ? files[pedestal] : null;
-    const cached = preparedModels;
     const keyOf = ({ file, model, skin }: typeof modelInputs[number]) => JSON.stringify([file, model, skin]);
     const pending = new Map(modelInputs.map(input => [keyOf(input), input]));
-    for (const key of cached.keys()) pending.delete(key);
+    for (const key of preparedModels.keys()) pending.delete(key);
     const fresh = await loadoutModels([...pending.values()], p.read, glb);
     const loaded = new Map([...pending.keys()].map((key, i) => [key, fresh[i]!]));
     const next = new Map<string, Buffer>();
     let bytes = 0;
     const [body, ...wearables] = modelInputs.map(input => {
       const key = keyOf(input);
-      const model = loaded.get(key) ?? cached.get(key)!;
-      if (!next.has(key) && bytes + model.byteLength <= 64 * 1024 * 1024) {
+      const model = loaded.get(key) ?? preparedModels.get(key)!;
+      if (!next.has(key) && bytes + model.byteLength <= 256 * 1024 * 1024) {
         next.set(key, model);
         bytes += model.byteLength;
       }

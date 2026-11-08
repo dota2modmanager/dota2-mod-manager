@@ -43,7 +43,7 @@ test('complete particle dependencies keep snapshots, materials and animated mode
  const files:Record<string,Buffer>={'particles/a.vsnap_c':snapshot,'models/prop.vmdl_c':modelData,'models/reference_only.vmdl_c':modelData,'materials/hero.vmat_c':material(),'materials/mask.vtex_c':resource([['DATA',Buffer.alloc(40)]])};
  let full=false;
  const glb={glbs:async(paths:string[],clips?:string[]|'all',materials?:boolean)=>{assert.deepEqual(paths,['models/prop.vmdl']);full=clips==='all'&&materials===true;return{'models/prop.vmdl':model};},sprites:async()=>({'materials/mask.vtex':Buffer.from('PNG')})};
- const def={path:'particles/root.vpcf',children:[],tree:{m_hSnapshot:'particles/a.vsnap',m_hModel:'models/prop.vmdl',missing:'materials/missing.vtex'}};
+ const def={path:'particles/root.vpcf',children:[],tree:{m_hSnapshot:'particles/a.vsnap',m_hModel:'models/reference_only.vmdl',m_Renderers:[{_class:'C_OP_RenderModels',m_ModelList:[{m_model:'models/prop.vmdl'}]}],missing:'materials/missing.vtex'}};
  const result=await loadoutResources([def],p=>files[p]??null,glb);assert.equal(full,true);assert.deepEqual(result.snapshots['particles/a.vsnap'].position,[[2,0,0]]);assert.equal(result.materials['materials/hero.vmat'].textures.g_tMasks1,'materials/mask.vtex');assert.ok(result.models['models/prop.vmdl'].data);assert.ok(result.missing.includes('materials/missing.vtex'));
  const enriched=await loadoutModel(model,'models/prop.vmdl',p=>files[p]??null,glb),meta=readGlb(enriched).json.extras.dotaStudio;
  assert.equal(meta.materials['materials/hero.vmat'].descriptor.specScale,0);assert.equal(meta.materials['materials/hero.vmat'].images.masks.data,Buffer.from('PNG').toString('base64'));
@@ -97,4 +97,32 @@ test('Arc Warden legacy face uses its exported mask and detail with additive pre
   assert.equal(face.detail, 'arc-image-2');
   assert.equal(face.previewLighting, true);
   source.dispose();
+});
+
+test('a model the effects only name is left out with everything it brings, and a model wears only its own masks', async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'loadout-heavy-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const named = 'models/heroes/test/body.vmdl';
+  const asked: string[] = [];
+  const files: Record<string, Buffer> = {
+    [named + '_c']: resource([['RERL', rerl(['materials/body.vmat'])]]),
+    'materials/body.vmat_c': material(),
+  };
+  const glb = { glbs: async (paths: string[]) => { asked.push(...paths); return {}; } };
+  const res = await loadoutResources([{ path: 'particles/a.vpcf', children: [], tree: { m_hModel: named } } as never], p => files[p] ?? null, glb);
+  assert.deepEqual(asked, []);
+  assert.deepEqual(res.materials, {});
+  assert.deepEqual(res.missing, []);
+
+  const { loadoutModels } = await import('../src/loadout-resources.ts');
+  const file = path.join(root, 'body.glb'), model = 'models/two_sets.vmdl';
+  fs.writeFileSync(file, writeGlb({ json: { materials: [{ name: 'materials/worn.vmat' }] }, bin: new Uint8Array() }));
+  const sets: Record<string, Buffer> = {
+    [model + '_c']: resource([['RERL', rerl(['materials/worn.vmat', 'materials/other_set.vmat'])]]),
+    'materials/worn.vmat_c': material(),
+    'materials/other_set.vmat_c': material(),
+  };
+  const wanted: string[] = [];
+  const [out] = await loadoutModels([{ file, model }], p => sets[p] ?? null, { glbs: async () => ({}), sprites: async (paths: string[]) => { wanted.push(...paths); return {}; } });
+  assert.deepEqual(Object.keys(readGlb(out!).json.extras.dotaStudio.materials), ['materials/worn.vmat']);
 });

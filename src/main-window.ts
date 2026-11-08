@@ -167,6 +167,15 @@ export function createMainWindow({ appRoot, settings, diag, workArea = null, qui
   // A webview or a nested frame would be a second way in with the same preload on it.
   win.webContents.on('will-attach-webview', (event) => event.preventDefault());
 
+  // A window that dies leaves a black rectangle and no word why. It comes back, once a minute at most.
+  let revived = 0;
+  win.webContents.on('render-process-gone', (_event, details) => {
+    diag(`window process gone: ${details.reason} (${details.exitCode})`);
+    if (details.reason === 'clean-exit' || Date.now() - revived < 60_000) return;
+    revived = Date.now();
+    win.webContents.reload();
+  });
+
   win.on('maximize', () => win.webContents.send('win:maximized', true));
   win.on('unmaximize', () => win.webContents.send('win:maximized', false));
 
