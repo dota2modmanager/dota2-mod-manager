@@ -45,6 +45,8 @@ test('Chinese is restored before the renderer draws, with a Chinese date and num
   assert.equal(context.window.I18N_LANG, 'zh-CN');
   assert.equal(context.window.i18nLocale(), 'zh-CN');
   assert.equal(context.window.tr('Настройки'), '设置');
+  assert.equal(context.window.tr('Разор'), '雷泽');
+  assert.equal(context.window.tr('Гребень Разора'), '雷泽的头冠');
   assert.equal(vm.runInContext('L`Надето: ${"Official item"}`', context), '已装备：Official item');
   assert.equal(context.window.tr(null), null);
   assert.equal(context.window.tr('an external item name'), 'an external item name');
