@@ -133,7 +133,7 @@ const VALID: Record<string, unknown[][]> = {
   'win:minimize': [[]], 'win:maximize': [[]], 'win:close': [[]], 'win:isMaximized': [[]],
   'app:version': [[]], 'app:notes': [['ru'], ['en']], 'app:notesSeen': [[]], 'app:stars': [[]],
   'update:install': [[]], 'update:fetchPortable': [[]], 'update:revealPortable': [['C:\\Games\\Dota-2-Mod-Manager-Portable.exe']],
-  'beta:state': [[]], 'beta:set': [[true]], 'game:launch': [[]], 'game:steamDownloads': [[]], 'grid:state': [[]], 'grid:apply': [[['winrate']]], 'grid:remove': [[]], 'ui:setZoom': [[1.25]],
+  'beta:state': [[]], 'beta:set': [[true]], 'game:launch': [[]], 'game:steamDownloads': [[]], 'game:steamProperties': [[]], 'grid:state': [[]], 'grid:apply': [[['winrate']]], 'grid:remove': [[]], 'ui:setZoom': [[1.25]],
   'settings:get': [[]], 'settings:testProxy': [['']], 'settings:detectDota': [[]], 'settings:browseDota': [[]],
   'settings:set': [['discordPresence', false], ['favorites', ['heroes|Arcana|']], ['langPromptSeen', true],
     ['modLabels', { 'rec:3b241101': 'Pudge, the red one', 'file:pak33_dir.vpk': 'Old Ursa' }], ['modLabels', {}],

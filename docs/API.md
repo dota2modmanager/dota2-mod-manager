@@ -106,6 +106,7 @@ the code, not in this page.
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
 | [`src/item-builder-everyone.ts`](#srcitem-builder-everyonets) | Everybody playing a hero wears the user's look for it, not only the user. |
 | [`src/item-builder-fx-patch.ts`](#srcitem-builder-fx-patchts) | What a pick in an ability effects slot writes (src/item-builder-ability-fx.ts says what the slots |
+| [`src/item-builder-kinetic.ts`](#srcitem-builder-kineticts) | Kinetic gems on any item: the game's animation gems (Fishstick, Rampant, Twister), which an owned |
 | [`src/item-builder-personas.ts`](#srcitem-builder-personasts) | Personas in the item builder: a hero's second look, with slots and items of its own. |
 | [`src/item-builder-refits.ts`](#srcitem-builder-refitsts) | Refits: an item's model made again to fit a body another item gives the hero. Faceless Void's |
 | [`src/item-builder-sets.ts`](#srcitem-builder-setsts) | The item builder's sets: what a set of the game's puts on, and what the game says about it |
@@ -116,6 +117,7 @@ the code, not in this page.
 | [`src/item-files-service.ts`](#srcitem-files-servicets) | The picks' pak: the item builder's looks in the language folder, for the game to read with nothing |
 | [`src/item-files.ts`](#srcitem-filests) | The item builder's picks as files alone: a look the game takes from a pak in the language folder, |
 | [`src/item-portraits.ts`](#srcitem-portraitsts) | A hero's HUD portrait and minimap icon as an item builder pick makes them, written once for the |
+| [`src/item-skin.ts`](#srcitem-skints) | Which material set an item's visuals wear its model in (src/model-skin.ts makes a model wear it). |
 | [`src/item-sounds.ts`](#srcitem-soundsts) | An item's sounds and voice, as a mod gives them to a hero who does not own the item. |
 | [`src/item-visuals.ts`](#srcitem-visualsts) | What an item does to the game, read from its block in items_game ("visuals"), and what a mod |
 | [`src/kv3-blobs.ts`](#srckv3-blobsts) | Binary blobs in a KV3 block (src/kv3.ts): where they lie, how they are read, and how they are |
@@ -209,6 +211,7 @@ the code, not in this page.
 | [`src/steps.ts`](#srcstepsts) | Work a step at a time. |
 | [`src/support-prompt.ts`](#srcsupport-promptts) | When the window asking people to support the project comes up on its own. |
 | [`src/terrain-age.ts`](#srcterrain-agets) | Terrains that replace the whole map, and whether the game's own map has moved on since. |
+| [`src/toolchain-bucket.ts`](#srctoolchain-bucketts) | The toolchain's copy in our bucket: where it is, what it is called, and when it is asked first. |
 | [`src/toolchain.ts`](#srctoolchaints) | Tools the app can borrow, fetched only when something actually needs them. |
 | [`src/tower-looks.ts`](#srctower-looksts) | Tower looks as a file mod (issue #446). The game has thirteen items that dress the towers: five |
 | [`src/tree-sets.ts`](#srctree-setsts) | Trees on the map from another of the game's tree sets, one set for Radiant and one for Dire |
@@ -3904,6 +3907,8 @@ weapon/shoulder or caster particles intact.
 
 Equipment metadata used to build the desktop preview.
 
+Hands on from [`src/item-builder-assets.ts`](#srcitem-builder-assetsts): `wornSkin`.
+
 ### `itemModel`
 
 ```ts
@@ -3913,20 +3918,6 @@ export function itemModel(text: string, itemId: string, key: string | undefined,
 The model an item puts on in the style picked, and the body it swaps the hero for. The build
 copies the item's model over the stock one (`stock`); its other copies are particles and other
 units' models, which the hero does not wear.
-
-### `wornSkin`
-
-```ts
-export function wornSkin(visuals: string, fallback = 0, model?: string): number
-```
-
-The material set an item wears its model in, 0 for the first: what its style says, or a
-"model_skin" modifier for the style picked. Luna's Midnight Locks is one model and three sets, and
-861 hero items are of this kind (2026-11-06).
-
-```
-@param visuals  the item's visuals with the picked style made its first (withStyle)
-```
 
 ### `bodySkinFor`
 
@@ -5395,6 +5386,8 @@ the plain paths (models, particles, the hero's own model), and the sounds and vo
 hero's own (src/item-sounds.ts writes those). src/item-builder.ts makes the block and asks this
 for the rest; the build reads the files out of pak01 here, in gameAssetEntries.
 
+Hands on from [`src/item-skin.ts`](#srcitem-skints): `firstStyleSkin`, `wornSkin`.
+
 ### `SpriteSwap`
 
 ```ts
@@ -5426,14 +5419,6 @@ export function normalizeAssetPath(p: unknown): string
 ```
 
 _No description in the source._
-
-### `firstStyleSkin`
-
-```ts
-export function firstStyleSkin(visuals: string): string | undefined
-```
-
-The material set the first style's block names ("skin"), as a string, or undefined for none.
 
 ### `itemAssets`
 
@@ -5705,6 +5690,14 @@ export function itemEffects(): { id: string; name: string }[]
 
 The effect variants the synthetic cosmetics/items picker can apply.
 
+### `appendItemEffect`
+
+```ts
+export function appendItemEffect(visuals: string, effect: ItemEffect): string
+```
+
+The visuals with an effect's particle created, after the ones they create already.
+
 ## src/item-builder-everyone.ts
 
 Everybody playing a hero wears the user's look for it, not only the user.
@@ -5793,6 +5786,76 @@ Shaped as item-builder.ts itemEffectPatch answers, with no model of its own.
 @param summon  the plain models of the hero's summons, for an effect that swaps one (Techies' mines)
 @throws when the item or the slot's stock item is not in the table, or the item gives the slot nothing
 ```
+
+## src/item-builder-kinetic.ts
+
+Kinetic gems on any item: the game's animation gems (Fishstick, Rampant, Twister), which an owned
+item carries in a socket the Game Coordinator sends and a mod cannot change. The table's
+"asset_modifiers" section says what each does: an activity (or ALL) and the modifier the hero's
+animations for it are marked with.
+
+A gem rides in the pick's effect string as `kinetic-<name>`, beside the effects (src/item-builder.ts
+effectKey). It goes in twice, as an arcana's animations do. In the table, which hero demo reads. And
+in the hero's model under its own path with the modifier taken off (arcana.ts asModel), because
+online the server sets the modifiers from its own table, where the stock item has none. One hero
+model goes in however many gems the hero wears, so the build gathers them (kineticEntries). A hero
+whose model is swapped by an arcana keeps that body: it goes in over the gems' (`beneath`).
+
+### `KINETIC`
+
+```ts
+export const KINETIC = /^kinetic-([\w-]+)$/
+```
+
+A gem's token in a pick's effect string, with its name in the table.
+
+### `KineticGem`
+
+```ts
+export interface KineticGem { name: string; token: string; activities: [string, string][] }
+```
+
+One gem of the table: its `name`, the token of the name the game shows, and [activity, modifier] pairs.
+
+### `kineticGems`
+
+```ts
+export function kineticGems(text: string): Map<string, KineticGem>
+```
+
+Every gem in the table, by its name in lower case.
+
+### `offeredKinetic`
+
+```ts
+export function offeredKinetic(text: string, heroes: string[]): { id: string; nameToken: string; fallback: string }[]
+```
+
+The gems a hero's model can play, as the picker offers them. @param heroes  npc_dota_hero_*
+
+### `picksGems`
+
+```ts
+export function picksGems(text: string, effectKey: string): KineticGem[]
+```
+
+The gems among a pick's effects. @throws when the table has no such gem, as an unknown effect does
+
+### `withKinetics`
+
+```ts
+export function withKinetics(visuals: string, gems: KineticGem[]): string
+```
+
+The visuals wearing these gems' activity modifiers, for hero demo.
+
+### `kineticEntries`
+
+```ts
+export function kineticEntries(game: string, worn: Map<string, Set<string>>): VpkEntry[]
+```
+
+Each hero's model with the modifiers of all the gems the hero wears taken off. @param worn  hero -> modifiers
 
 ## src/item-builder-personas.ts
 
@@ -6077,7 +6140,7 @@ A slot of a hero the builder can dress, and the paid items that fit it.
 ### `AssetCopy`
 
 ```ts
-export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[]; skin?: number } | { from: string; to: string; unit: string; skin?: number }
+export type AssetCopy = { from: string; to: string; optional?: boolean; skin?: number } | { from: string; hero: string; activities: string[]; skin?: number } | { from: string; to: string; unit: string; skin?: number }
 ```
 
 A file in the game's archive staged under another path in the built VPK; an `optional` one (a
@@ -6419,7 +6482,7 @@ model it puts under the unit's
 ### `itemEffectPatch`
 
 ```ts
-export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels, refit?: string): { id: string; block: string; own: string | null; added: string[]; unplaced: boolean } & ItemAssets
+export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels, refit?: string): { id: string; block: string; own: string | null; added: string[]; unplaced: boolean; kinetic: string[]; heroes: string[] } & ItemAssets
 ```
 
 Turn one paid wearable into the hero's stock item for that slot.
@@ -6614,6 +6677,32 @@ export function portraitEntries(gamePath: string, portraits: PortraitSwap[], spr
 
 The portrait settings and sprite sheet of every pick, to go into the build ahead of the picks' own
 files. A hero whose own model the game does not name is left out and said in `log`.
+
+## src/item-skin.ts
+
+Which material set an item's visuals wear its model in (src/model-skin.ts makes a model wear it).
+
+### `firstStyleSkin`
+
+```ts
+export function firstStyleSkin(visuals: string): string | undefined
+```
+
+The material set the first style's block names ("skin"), as a string, or undefined for none.
+
+### `wornSkin`
+
+```ts
+export function wornSkin(visuals: string, fallback = 0, model?: string): number
+```
+
+The material set an item wears its model in, 0 for the first: what its style says, or a
+"model_skin" modifier for the style picked. Luna's Midnight Locks is one model and three sets, and
+861 hero items are of this kind (2026-11-06).
+
+```
+@param visuals  the item's visuals with the picked style made its first (withStyle)
+```
 
 ## src/item-sounds.ts
 
@@ -12584,6 +12673,36 @@ export function createTerrainAges({ downloadsDir, gamePath, storeFile, fetchTail
 @param deps.fetchTail     the last bytes of a catalog archive, for a terrain nobody has downloaded yet
 ```
 
+## src/toolchain-bucket.ts
+
+The toolchain's copy in our bucket: where it is, what it is called, and when it is asked first.
+
+### `FALLBACK_BASE`
+
+```ts
+export const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/'
+```
+
+The bucket's folder of pinned archives.
+
+### `downloadOrder`
+
+```ts
+export const downloadOrder = (release: string, spare: string, githubDown: boolean): [string, string] => (githubDown ? [spare, release] : [release, spare])
+```
+
+Where to ask for a pinned archive, in order. The bucket goes first while GitHub is known to be
+down: its three proxies then wait out a timeout each, half a minute of a bar at nothing, before
+the one copy that works gets asked. The digest checks the bytes from either.
+
+### `fallbackName`
+
+```ts
+export function fallbackName(name: string, version: string, build: string): string
+```
+
+The name of a pinned archive in the bucket. The version goes in, and the build off Windows.
+
 ## src/toolchain.ts
 
 Tools the app can borrow, fetched only when something actually needs them.
@@ -12607,6 +12726,8 @@ Rules this file exists to enforce:
     got a 404, and the pins below were used anyway. A channel that never carried anything is
     not a rollback plan, and an unsigned file that can redirect a fifty megabyte download is
     not one worth building. Removed 2026-09-16; a new tool version travels with a release.
+
+Hands on from [`src/toolchain-bucket.ts`](#srctoolchain-bucketts): `downloadOrder`, `fallbackName`.
 
 ### `ToolProgress`
 
@@ -12639,16 +12760,6 @@ export function pinFor(name: string, build: string = HOST_BUILD): Pin | null
 ```
 
 A tool's pin for one build, or null when that build has none.
-
-### `fallbackName`
-
-```ts
-export function fallbackName(name: string, version: string, build: string): string
-```
-
-The name of the copy of a pinned archive in the bucket, keyed by the tool, the version and the
-build. The Windows build keeps the name it had when it was the only one: every release before
-the Linux pin asks for exactly that name.
 
 ### `validPin`
 

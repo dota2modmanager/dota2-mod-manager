@@ -33,6 +33,7 @@ export function CompilerBlock({ i, c, actions }: { i: number; c: CompilerState; 
         <span className={`dot ${c.exe ? 'ok' : 'bad'}`} />
       </div>
       <div className="settings-row">
+        {!c.exe && <button className="btn btn-sm" id="compilerSteamBtn" onClick={() => { void window.api.game.steamProperties(); }}>{L`Открыть в Steam`}</button>}
         <button className="btn btn-sm" id="compilerBrowseBtn" onClick={actions.compilerBrowse}>{L`Указать вручную`}</button>
         {c.chosen && <button className="btn btn-sm" id="compilerForgetBtn" onClick={actions.compilerForget}>{L`Сбросить`}</button>}
       </div>
@@ -68,7 +69,7 @@ export function CompilerBlock({ i, c, actions }: { i: number; c: CompilerState; 
         }}>{L`Проверить`}</button>
       </div>
       <div className="settings-hint">{L`Проверка собирает пустую модель во временном аддоне и сразу его удаляет: игра не меняется.`}</div>
-      <div className="settings-hint">{L`Компилятор из Dota 2 Workshop Tools собирает модели и эффекты аркан, для которых ещё нет готовой основы. Workshop Tools ставятся в Steam как бесплатное дополнение к Windows-версии игры.`}</div>
+      <div className="settings-hint">{L`Компилятор из Dota 2 Workshop Tools собирает модели и эффекты аркан, для которых ещё нет готовой основы. Workshop Tools ставятся в Steam как бесплатное дополнение к Windows-версии игры: свойства Dota 2, вкладка «Доп. контент», галочка Dota 2 Workshop Tools.`}</div>
       {c.needsWine && <div className="settings-hint">{L`Steam удаляет Workshop Tools, когда Dota переключают обратно на Linux-версию, поэтому приложение хранит их копию вместе с Windows-файлами самой Dota и работает с ней. Остальная игра не копируется.`}</div>}
       {c.needsWine && <div className="settings-hint">{L`На Linux Workshop Tools ставятся, только когда Dota запущена через Proton (Свойства → Совместимость). Компилятор запускается через Wine в отдельном префиксе приложения, твой ~/.wine не трогается.`}</div>}
     </div>

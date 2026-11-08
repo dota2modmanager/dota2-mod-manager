@@ -9,11 +9,15 @@ const SITE = 'https://dota2modmanager.com/';
 
 /** A section of /docs/troubleshooting/ and the words that point at it, in Russian, English and Chinese. */
 const SECTIONS: Array<[anchor: string, words: RegExp]> = [
+  ['workshop-tools', /Workshop Tools/i],
   ['patch', /обновлен|патч|update|patch|更新|补丁/i],
   ['crash', /не запуска|вылета|crash|won't start|will not start|does not start|崩溃|无法启动/i],
   ['conflict', /конфликт|перекрыва|conflict|covered|冲突|覆盖/i],
   ['nothing', /не видно|ничего не измен|nothing changed|not in the game|没有变化|没有生效/i],
 ];
+
+/** The error asks for the Workshop Tools, which one click in Steam gets closer: the toast offers it. */
+export const needsWorkshopTools = (message: string): boolean => /Workshop Tools/i.test(message);
 
 /** The guide's address for this error, in the site's language for the app's. */
 export function errorHelpUrl(message: string, lang: string): string {

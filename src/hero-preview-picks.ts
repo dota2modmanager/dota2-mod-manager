@@ -3,7 +3,8 @@ import { blockBounds, eachChild, findItem, itemFields, listItems } from './schem
 import { itemHeroes } from './item-builder-slots.ts';
 import type { VpkIndex } from './vpk.ts';
 import { itemEffectPatch } from './item-builder.ts';
-import { firstStyleSkin, normalizeAssetPath } from './item-builder-assets.ts';
+import { normalizeAssetPath } from './item-builder-assets.ts';
+export { wornSkin } from './item-builder-assets.ts';
 
 /**
  * The model an item puts on in the style picked, and the body it swaps the hero for. The build
@@ -28,29 +29,6 @@ export function itemModel(text: string, itemId: string, key: string | undefined,
   return { model: item ? itemFields(text, item).get('model_player') || null : null, body };
 }
 
-/**
- * The material set an item wears its model in, 0 for the first: what its style says, or a
- * "model_skin" modifier for the style picked. Luna's Midnight Locks is one model and three sets, and
- * 861 hero items are of this kind (2026-11-06).
- * @param visuals  the item's visuals with the picked style made its first (withStyle)
- */
-export function wornSkin(visuals: string, fallback = 0, model?: string): number {
-  if (!visuals) return fallback;
-  const own = firstStyleSkin(visuals);
-  if (own !== undefined && /^\d+$/.test(own)) return Number(own);
-  for (const m of visuals.matchAll(/"asset_modifier\d*"\s*\{([^{}]*)\}/gi)) {
-    if (!/"type"\s+"model_skin"/i.test(m[1])) continue;
-    const target = normalizeAssetPath(/"asset"\s+"([^"]+)"/i.exec(m[1])?.[1]).replace(/_c$/, '');
-    if (model !== undefined && /^(?:npc_dota_hero_|models\/)/.test(target) && target !== model) continue;
-    const skin = /"skin"\s+"(\d+)"/i.exec(m[1])?.[1];
-    if (skin !== undefined && Number(/"style"\s+"(\d+)"/i.exec(m[1])?.[1] || 0) === 0) return Number(skin);
-  }
-  let skin = fallback;
-  eachChild(visuals, blockBounds(visuals, 0), field => {
-    if (!field.isBlock && field.key.toLowerCase() === 'skin' && /^\d+$/.test(field.value)) skin = Number(field.value);
-  });
-  return skin;
-}
 /** A material group explicitly addressed to the hero body, even on a wearable. */
 export function bodySkinFor(visuals: string, hero: string, model: string, implicitBody = false): number | undefined {
   let skin: number | undefined;

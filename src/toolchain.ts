@@ -23,6 +23,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { downloadFile } from './net.ts';
+import { RAW_HOST, stoodDown } from './net-mirrors.ts';
+import { downloadOrder, FALLBACK_BASE, fallbackName } from './toolchain-bucket.ts';
 import { openZip } from './safe-zip.ts';
 import { FileTx } from './file-tx.ts';
 import { t } from './i18n.ts';
@@ -90,25 +92,7 @@ export function pinFor(name: string, build: string = HOST_BUILD): Pin | null {
   return BUILT_IN_PINS[name]?.[build] || null;
 }
 
-/* A copy of the pinned archive in this project's own bucket.
- *
- * The primary URL is a GitHub release, and every mirror src/net.ts knows is a proxy standing
- * in front of GitHub, so all of them go down together. This one does not: tools/r2-toolchain.mjs
- * copies the pinned archive there, byte for byte, after checking it against the same digest.
- *
- * Safe from anywhere, and that is the point of a pin: the digest lives in this file rather than
- * travelling with the URL, so whoever hands the bytes over cannot also decide what they should
- * hash to. The address is written here for the same reason the owner allowlist below is.
- */
-const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/';
-/**
- * The name of the copy of a pinned archive in the bucket, keyed by the tool, the version and the
- * build. The Windows build keeps the name it had when it was the only one: every release before
- * the Linux pin asks for exactly that name.
- */
-export function fallbackName(name: string, version: string, build: string): string {
-  return build === 'win32-x64' ? `${name}-${version}.zip` : `${name}-${version}-${build}.zip`;
-}
+export { downloadOrder, fallbackName } from './toolchain-bucket.ts';
 
 /* Whose releases a pin may point at. The digest travels in the same file as the URL, so a rewritten
  * config could otherwise name any repository and hand over its own hash: the owner is what makes a
@@ -217,16 +201,17 @@ export function createToolchain({ userDataDir, onProgress = () => {}, log = () =
     const dest = path.join(root, `${name}-${pin.version}.zip`);
     onProgress({ type: 'stage', label: name, stage: 'download' });
     const onBytes = (loaded: number, total: number) => onProgress({ type: 'download', label: name, loaded, total });
+    const spare = FALLBACK_BASE + fallbackName(name, pin.version, build);
+    const [first, second] = downloadOrder(pin.url, spare, stoodDown(new URL(RAW_HOST).host));
     let got;
     try {
-      got = await downloadFile(pin.url, dest, { expectSha256: pin.sha256, onProgress: onBytes, log });
+      got = await downloadFile(first, dest, { expectSha256: pin.sha256, onProgress: onBytes, log });
     } catch (err) {
       // Every mirror in net.ts is GitHub wearing another hostname, so a GitHub outage takes
       // the whole chain. The bucket is the one copy that does not share its fate.
-      const spare = FALLBACK_BASE + fallbackName(name, pin.version, build);
-      log(`toolchain: ${name} not available from the release (${(err as Error)?.message || err}), trying ${spare}`);
+      log(`toolchain: ${name} not available from ${first} (${(err as Error)?.message || err}), trying ${second}`);
       try {
-        got = await downloadFile(spare, dest, { expectSha256: pin.sha256, onProgress: onBytes, log });
+        got = await downloadFile(second, dest, { expectSha256: pin.sha256, onProgress: onBytes, log });
       } catch (spareErr) {
         /* The first error is the one worth having. If the release handed over bytes that did
          * not match the pin, that is what somebody needs to read - not a 404 from the copy

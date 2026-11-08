@@ -4,11 +4,12 @@ import * as THREE from 'three';
 import type { Carrier } from './particles.ts';
 import type { HeroScene } from './scene.ts';
 import { effectCarrier } from './loadout-source.ts';
+import { drawnBox } from './effect-frame.ts';
 
 const W = 320;
 const H = 180;
-/** How long an effect runs before its picture is taken: long enough to fill out, short of a burst's end. */
-const RUN = 2.5;
+/** How long an effect runs on screen before its picture is taken, on top of the seconds the scene simulates to frame it. */
+const RUN = 1;
 const kept = new Map<string, Promise<string | null>>();
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -22,34 +23,40 @@ export const EMPTY_CARRIER: Carrier = {
   surface: () => new THREE.Vector3().randomDirection().multiplyScalar(0.35 * Math.cbrt(Math.random())).add(new THREE.Vector3(0, 0.5, 0)),
 };
 
-/**
- * Whether a frame shows anything: many unusual effects take their colour from the courier that
- * wears them, which a picture has none of, and come out as a dark frame the glyph says more than.
- */
-function lit(canvas: HTMLCanvasElement): boolean {
-  const small = document.createElement('canvas');
-  small.width = 32;
-  small.height = 18;
-  const g = small.getContext('2d', { willReadFrequently: true });
-  if (!g) return true;
-  g.drawImage(canvas, 0, 0, 32, 18);
-  const px = g.getImageData(0, 0, 32, 18).data;
-  let bright = 0;
-  for (let i = 0; i < px.length; i += 4) if (Math.max(px[i], px[i + 1], px[i + 2]) > 50) bright++;
-  return bright >= 4;
+/** The frame cut to what it drew and scaled to a card's picture: an effect fills the card however far it spread. */
+function framed(canvas: HTMLCanvasElement): string | null {
+  const copy = document.createElement('canvas');
+  copy.width = canvas.width;
+  copy.height = canvas.height;
+  // on black, as the game draws them: an additive particle writes colour and hardly any alpha, so
+  // a picture with an alpha channel would lose most of it
+  const g = copy.getContext('2d', { willReadFrequently: true, alpha: false });
+  if (!g) return null;
+  g.drawImage(canvas, 0, 0);
+  const box = drawnBox(g.getImageData(0, 0, copy.width, copy.height).data, copy.width, copy.height);
+  if (!box) return null;
+  const out = document.createElement('canvas');
+  out.width = W;
+  out.height = H;
+  const c = out.getContext('2d', { alpha: false });
+  if (!c) return null;
+  c.imageSmoothingQuality = 'high';
+  c.drawImage(copy, box.x, box.y, box.w, box.h, 0, 0, W, H);
+  return out.toDataURL('image/webp', 0.85);
 }
 
 async function draw(id: string): Promise<string | null> {
   const got = await window.api.preview3d.effect(id);
   if (!got) return null;
-  const host=document.createElement('div');host.style.cssText=`position:fixed;left:0;top:0;width:${W}px;height:${H}px;opacity:0;pointer-events:none`;document.body.append(host);
+  const host=document.createElement('div');host.style.cssText=`position:fixed;left:0;top:0;width:${W*2}px;height:${H*2}px;opacity:0;pointer-events:none`;document.body.append(host);
   let scene:HeroScene|undefined;
   try {
     const {mountScene}=await import('./scene.ts');
     scene=await mountScene(host,effectCarrier(),[],{isolated:true,particles:[{part:-1,def:got.def}],sprites:got.sprites,resources:got.resources});
     await new Promise(resolve=>setTimeout(resolve,RUN*1000));
-    const image=scene.capture(),canvas=host.querySelector('canvas');
-    return canvas&&lit(canvas)?image:null;
+    scene.capture();
+    const canvas=host.querySelector('canvas');
+    return canvas?framed(canvas):null;
   } finally { scene?.dispose();host.remove(); }
 }
 

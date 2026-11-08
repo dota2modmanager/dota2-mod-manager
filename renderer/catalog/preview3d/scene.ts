@@ -95,7 +95,7 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
       check(); source.clearEffects();
       const patch=loadoutEffects(source,defs,textures,options.resources);
       await hero?.studioEffects(patch);check();
-      const warnings=[...source.warnings,...patch.warnings,...(live.hero?.lib.unsupported??[])];
+      const warnings=[...source.warnings,...patch.warnings,...(hero?.lib.unsupported??[])];
       options.onWarnings?.([...new Set(warnings)]);
       if(warnings.length)console.warn('3D preview: resource diagnostics',warnings);
     };
