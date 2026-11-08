@@ -220,7 +220,7 @@ export default {
   "Звуки": "音效",
   "Ландшафт": "地形",
   "Сборка · {0} героев": "整合包 · {0} 个英雄",
-  "resourcecompiler.exe не найден. Он входит в Dota 2 Workshop Tools: поставь их в Steam или укажи файл вручную": "未找到 resourcecompiler.exe。它包含在 Dota 2 Workshop Tools 中：请在 Steam 中安装，或手动选择该文件",
+  "Нужны Dota 2 Workshop Tools, бесплатное дополнение в Steam. Открой свойства Dota 2, вкладку «Доп. контент», отметь Dota 2 Workshop Tools и дождись загрузки": "需要 Dota 2 Workshop Tools，这是 Steam 中的免费附加内容。打开 Dota 2 的属性，进入 DLC 选项卡，勾选 Dota 2 Workshop Tools 并等待下载完成",
   "Для resourcecompiler.exe нужен Wine: поставь его из пакетов своей системы или Proton в Steam": "resourcecompiler.exe 需要 Wine：请从系统软件包安装，或在 Steam 中安装 Proton",
   "resourcecompiler.exe не собрал {0}: {1}": "resourcecompiler.exe 无法编译 {0}：{1}",
   "Выбери resourcecompiler.exe в папке game/bin/win64 игры с Workshop Tools": "请选择装有 Workshop Tools 的游戏中 game/bin/win64 文件夹里的 resourcecompiler.exe",

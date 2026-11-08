@@ -13,6 +13,8 @@ import { itemHeroes, type AssetCopy } from './item-builder-slots.ts';
 import { asModel } from './arcana.ts';
 import { numberedAs } from './model-sequences.ts';
 import { withSkin } from './model-skin.ts';
+import { firstStyleSkin } from './item-skin.ts';
+export { firstStyleSkin, wornSkin } from './item-skin.ts';
 import type { SoundSwap, VoiceCue } from './item-sounds.ts';
 
 /** A sprite of the game's sprite sheets shown in place of another (the minimap's hero icons are). */
@@ -61,18 +63,6 @@ function stockModelsOf(text: string, heroes: string[]): Set<string> {
  * Rictus Ripper's demon came out as the plain one, or as whatever another mod put at demon.vmdl.
  */
 const FORM = /^models\/heroes\//;
-
-/** The material set the first style's block names ("skin"), as a string, or undefined for none. */
-export function firstStyleSkin(visuals: string): string | undefined {
-  let skin: string | undefined;
-  eachChild(visuals, blockBounds(visuals, 0), (c) => {
-    if (!c.isBlock || c.key.toLowerCase() !== 'styles') return;
-    eachChild(visuals, c.body!, (st) => {
-      if (st.isBlock && st.key === '0') eachChild(visuals, st.body!, (f) => { if (!f.isBlock && f.key.toLowerCase() === 'skin') skin ??= f.value; });
-    });
-  });
-  return skin;
-}
 
 /**
  * The files an item's visuals swap, to stage under the plain paths: particles, models, and the
@@ -269,18 +259,19 @@ export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | nu
   const out: VpkEntry[] = [];
   const seen = new Set<string>();
   for (const copy of assetCopies || []) {
-    const from = compiledAssetPath(copy.from);
     const to = compiledAssetPath('hero' in copy ? heroModelPath(ix, copy.hero) : copy.to);
+    // a hero's copy from nowhere is the hero's own model, with its modifiers off (src/item-builder-kinetic.ts)
+    const from = 'hero' in copy && !copy.from ? to : compiledAssetPath(copy.from);
     if (!from || !to || seen.has(to) || skip?.(to.toLowerCase())) continue;
     const data = ix.read(from);
     if (!data && 'optional' in copy && copy.optional) continue;
     if (!data) throw new Error(t('Не найден {0}', from));
     // in the item's material set first (src/model-skin.ts): a unit is left out if it has not got it,
-    // a hero's body goes in as it is, since a body in the wrong colours beats the plain hero
-    const worn = 'unit' in copy && copy.skin ? withSkin(data, copy.skin) : 'hero' in copy && copy.skin ? withSkin(data, copy.skin) ?? data : data;
+    // a hero's body or an item goes in as it is, since the wrong colours beat the plain model
+    const worn = 'unit' in copy && copy.skin ? withSkin(data, copy.skin) : copy.skin ? withSkin(data, copy.skin) ?? data : data;
     // the resolver saw it numbered (summonModels); a game changed since would leave the unit plain
     const bytes = 'unit' in copy ? worn && numberedAs(worn, ix.read(to) ?? Buffer.alloc(0))
-      : 'hero' in copy ? heroModelBytes(worn!, copy.activities) : data;
+      : 'hero' in copy ? heroModelBytes(worn!, copy.activities) : worn;
     if (!bytes) continue;
     out.push(entryAt(to, bytes));
     seen.add(to);

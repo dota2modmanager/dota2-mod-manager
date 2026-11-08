@@ -26,6 +26,8 @@ export function registerGameIpc({
   // the action on Play's "Steam is still updating Dota" (src/steam-appstate.ts): Steam's own downloads
   // page, the one address outside http(s) the window can ask for, and it takes nothing from the window
   ipcMain.handle('game:steamDownloads', () => { void shell.openExternal('steam://open/downloads'); return { ok: true }; });
+  // Dota's properties, where the DLC tab installs the Workshop Tools
+  ipcMain.handle('game:steamProperties', () => { void shell.openExternal('steam://gameproperties/570'); return { ok: true }; });
 
   // A switch is honoured here rather than in the renderer: this is the boundary an old
   // window, a stale screen or a replayed click all have to come through. `blocked` arrives

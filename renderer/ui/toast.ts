@@ -11,7 +11,7 @@
  * the people who can read it. */
 import { $ } from '../core/dom.ts';
 import { announce } from './a11y.ts';
-import { errorHelpUrl } from './error-help.ts';
+import { errorHelpUrl, needsWorkshopTools } from './error-help.ts';
 import { HELP_LINKS } from '../core/constants.ts';
 
 type ToastKind = 'ok' | 'warn' | 'error';
@@ -20,13 +20,16 @@ type ToastKind = 'ok' | 'warn' | 'error';
 export type ToastAction = { label: string; run: () => void };
 
 export function toast(msg: string, type: ToastKind = 'ok', ms = 4000, action?: ToastAction): void {
+  const steam = type === 'error' && !action && needsWorkshopTools(msg);
+  // steps to follow, in another window: they stay up long enough to read and start on
+  if (steam) ms = Math.max(ms, 30000);
   const el = document.createElement('div');
   el.className = `toast ${type === 'ok' ? '' : type}`;
   el.textContent = msg;
   const act = action || (type === 'error'
     ? { label: L`Что делать?`, run: () => { void window.api.misc.openExternal(errorHelpUrl(msg, window.I18N_LANG)); } }
     : null);
-  const acts = [act, !action && type === 'error' ? { label: L`Отправить отчёт`, run: () => { void sendReport(); } } : null];
+  const acts = [steam ? { label: L`Открыть в Steam`, run: () => { void window.api.game.steamProperties(); } } : null, act, !action && type === 'error' ? { label: L`Отправить отчёт`, run: () => { void sendReport(); } } : null];
   for (const a of acts) {
     if (!a) continue;
     const help = document.createElement('button');

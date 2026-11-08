@@ -151,7 +151,7 @@ export interface AppApi {
   ui: UiApi;
   /** warning: Steam is still updating the game (src/steam-appstate.ts), said before it starts */
   game: {
-    launch: () => Promise<Reply<{ warning?: string | null }>>; steamDownloads: () => Promise<Reply>;
+    launch: () => Promise<Reply<{ warning?: string | null }>>; steamDownloads: () => Promise<Reply>; steamProperties: () => Promise<Reply>;
     /** Dota opened or closed; while it is open the channels that write the game answer with `gameOpen` */
     onRunning: (cb: (running: boolean) => void) => void;
   };

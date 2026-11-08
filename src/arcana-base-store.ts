@@ -184,7 +184,8 @@ export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetch
   async function bring(id: string, rel: string, sha: string): Promise<void> {
     if (fs.existsSync(blobPath(sha))) return;
     const url = rawUrl(`src/${id}/${rel.split('/').map(encodeURIComponent).join('/')}`, pins[id]?.files[rel] ? pins[id].commit : BRANCH);
-    const res = await fetchUrl(url, {});
+    // small: jsDelivr serves these too, and the proxies go down with GitHub; the sha checks the bytes
+    const res = await fetchUrl(url, { small: true });
     if (!res.ok) throw new Error(`${rel}: HTTP ${res.status}`);
     const data = Buffer.from(await res.arrayBuffer());
     if (blobSha(data) !== sha) throw new Error(`${rel}: not the file the repository names`);

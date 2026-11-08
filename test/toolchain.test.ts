@@ -13,7 +13,7 @@ import type { AddressInfo } from 'node:net';
 import AdmZip from 'adm-zip';
 
 import * as net from '../src/net.ts';
-import { createToolchain, BUILT_IN_PINS, validPin, runTool, fallbackName, type ToolProgress } from '../src/toolchain.ts';
+import { createToolchain, BUILT_IN_PINS, validPin, runTool, fallbackName, downloadOrder, type ToolProgress } from '../src/toolchain.ts';
 
 /** The Windows build's pin: what the tests below download, on whichever system runs them. */
 const WIN = BUILT_IN_PINS.vrf['win32-x64'];
@@ -230,6 +230,11 @@ test('a machine with no build of a tool is told so, and offered nothing', async 
   const state = tc.state().find((s) => s.name === 'vrf');
   assert.equal(state?.available, false);
   assert.equal(state?.ready, false);
+});
+
+test('with GitHub known to be down the bucket is asked first, not after three timeouts', () => {
+  assert.deepEqual(downloadOrder('release', 'bucket', false), ['release', 'bucket']);
+  assert.deepEqual(downloadOrder('release', 'bucket', true), ['bucket', 'release']);
 });
 
 test('the copy in the bucket keeps the name released versions ask for', () => {

@@ -32,6 +32,7 @@ import { createColoredBases, windowColor } from './arcana-base-color.ts';
 import { lookPatch } from './courier-models.ts';
 import { fxSlotOf, mergeFxPatches } from './item-builder-ability-fx.ts';
 import { abilityFxPatch } from './item-builder-fx-patch.ts';
+import { kineticEntries } from './item-builder-kinetic.ts';
 import type { BaseStore } from './arcana-base-store.ts';
 import { sharedVpkIndex, sharedVpkIndexSteps, type VpkEntry } from './vpk.ts';
 import { PAUSE } from './steps.ts';
@@ -39,7 +40,7 @@ import type { LibRecord } from './types.ts';
 import type { Library } from './library.ts';
 
 /** A pick of the item builder as built: its block, and the game's files under the plain paths. */
-type ItemPick = { id: string; block: string; own: string | null; added: string[]; unplaced: boolean; assets: VpkEntry[] } & ItemAssets;
+type ItemPick = { id: string; block: string; own: string | null; added: string[]; unplaced: boolean; kinetic?: string[]; heroes?: string[]; assets: VpkEntry[] } & ItemAssets;
 
 /** How far a build is: the picks built anew so far out of those it has to, or the stage of the write. */
 export type BuildStep = { done: number; total: number } | { stage: 'merged' | 'checked' | 'packed' };
@@ -151,6 +152,7 @@ export function createTableBuild({ library, bases, log }: {
     const voices: VoiceCue[] = [];
     const portraits: PortraitSwap[] = [];
     const sprites: SpriteSwap[] = [];
+    const gems = new Map<string, Set<string>>();
     // a copy: a build in the background goes on while the user changes the library; with each
     // persona's own items in, and what cannot be worn with it out (src/item-builder-personas.ts)
     const { records: all, left } = personaRecords(library.list().filter((r) => r.enabled !== false), vanillaText);
@@ -193,6 +195,7 @@ export function createTableBuild({ library, bases, log }: {
             voices.push(...pick.voices);
             portraits.push(...pick.portraits);
             sprites.push(...pick.sprites);
+            if (pick.kinetic?.length) for (const hero of pick.heroes ?? []) { const on = gems.get(hero) ?? new Set<string>(); gems.set(hero, on); for (const m of pick.kinetic) on.add(m); }
           } else {
             const patch = lookPatch(vanillaText, game, rec, log);
             if (patch) out.push(patch);
@@ -232,7 +235,14 @@ export function createTableBuild({ library, bases, log }: {
       }
     }
     for (const key of built.keys()) if (!used.has(key)) built.delete(key); // a pick taken off lets its files go
-    return { list, beneath: ready.flatMap((r) => r.entries) };
+    let moves: VpkEntry[] = [];
+    try {
+      // eslint-disable-next-line require-yield
+      moves = yield* sharedEntries('kinetic', [...gems].map(([hero, on]) => [hero, [...on].sort()]), function* () { return kineticEntries(game, gems); });
+    } catch (err) {
+      log(`schema: the kinetic gems' animations left out of the build: ${(err as Error)?.message || err}`);
+    }
+    return { list, beneath: [...ready.flatMap((r) => r.entries), ...moves] };
   }
 
   return {

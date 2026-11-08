@@ -17,6 +17,7 @@ import type { LibRecord } from './types.ts';
 import type { ItemSet } from './item-builder.ts';
 import { displaced, isSelectorSlot } from './item-builder-personas.ts';
 import { offeredUnusual } from './item-builder-unusual.ts';
+import { offeredKinetic } from './item-builder-kinetic.ts';
 import { fxSlotOf, namedFxSlots } from './item-builder-ability-fx.ts';
 
 /** What the window is told about the free looks and the item builder (cosmeticSlots). */
@@ -114,7 +115,7 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
             pickedEffect: rec ? (rec.effectId || '') : '',
             recordId: rec ? rec.id : null,
             // a persona has no model for an effect to sit on, and an ability effects slot no model at all
-            effects: (it.persona && !it.persona.part) || it.abilityFx ? [] : offered,
+            effects: (it.persona && !it.persona.part) || it.abilityFx ? [] : [...offered, ...offeredKinetic(text, it.heroIds).map((g) => ({ id: g.id, name: english(g.nameToken, 0) || g.fallback }))],
           };
         });
         const named = new Map(entries.flatMap((it) => it.options.map((o) => [o.id, o.styles] as const)));

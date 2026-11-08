@@ -100,7 +100,7 @@ export function slotState(slot: string, { query = '', select = '' }: { query?: s
 
 /** An effect of the game's own (Ethereal Flame and the like), src/item-builder-unusual.ts. */
 const GAME_EFFECT = /^unusual-\d+$/;
-const GROUPS: EffectGroup[] = ['unusual', 'seasonal', 'courier'];
+const GROUPS: EffectGroup[] = ['kinetic', 'unusual', 'seasonal', 'courier'];
 
 const facts = (o: { rarity?: string; date?: string }) => ({ rarity: o.rarity || '', rarityName: rarityName(o.rarity), year: (o.date || '').slice(0, 4) });
 

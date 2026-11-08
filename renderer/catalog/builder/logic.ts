@@ -65,9 +65,19 @@ export function stagedItemAction(
     : { label: L`Сохранить стиль`, icon: 'palette' };
 }
 
-// The effects that have a picture. A fixed set, the same ids src/item-builder.ts offers, so the
-// screen never has to ask what is in a folder.
-const EFFECT_PICTURES = new Set(['bubbles', 'fire', 'frostbloom', 'ghost', 'lightnings', 'sand-storm', 'snow']);
+// The effects that ship with a picture, so the shelf shows them at once on any machine. A fixed
+// set, so the screen never has to ask what is in a folder: the builder's own ids, and the game's
+// unusual ones tools/effect-pictures.mjs drew. Any other effect (a patch's new one) is drawn live,
+// which takes seconds of WebGL each (preview3d/effect-thumb.ts).
+const EFFECT_PICTURES = new Set([
+  'bubbles', 'fire', 'frostbloom', 'ghost', 'lightnings', 'sand-storm', 'snow',
+  'unusual-15', 'unusual-21', 'unusual-22', 'unusual-32', 'unusual-46', 'unusual-47',
+  'unusual-57', 'unusual-61', 'unusual-68', 'unusual-73', 'unusual-74', 'unusual-76',
+  'unusual-109', 'unusual-129', 'unusual-138', 'unusual-155', 'unusual-156', 'unusual-157',
+  'unusual-158', 'unusual-159', 'unusual-185', 'unusual-196', 'unusual-205', 'unusual-206',
+  'unusual-268', 'unusual-827', 'unusual-833', 'unusual-834', 'unusual-835', 'unusual-836',
+  'unusual-837',
+]);
 
 export const effectPicture = (id: string): string | null => (EFFECT_PICTURES.has(id) ? `./assets/effects/${id}.webp` : null);
 
@@ -152,15 +162,15 @@ export function setCount(set: ItemSet): string {
   return set.fit < n ? L`${set.fit} из ${n} ${plural(n, 'детали', 'деталей', 'деталей')}` : `${n} ${plural(n, 'деталь', 'детали', 'деталей')}`;
 }
 
-/** The shelves of a slot's effects tab: the courier unusuals, the seasonal ones, and the ambients of particular couriers. */
-export type EffectGroup = 'unusual' | 'seasonal' | 'courier';
+/** The shelves of a slot's effects tab: the hero's kinetic gems, the courier unusuals, the seasonal ones, and the ambients of particular couriers. */
+export type EffectGroup = 'kinetic' | 'unusual' | 'seasonal' | 'courier';
 
 // the builder's own effects by what the game draws them for (src/item-builder-effects.ts); the
 // game's are unusual-<number>, and its numbers from 800 up are the seasonal ones (Frostbloom 826)
 const OWN_GROUP: Record<string, EffectGroup> = {
   fire: 'unusual', lightnings: 'unusual', frostbloom: 'seasonal', snow: 'seasonal', bubbles: 'seasonal', 'sand-storm': 'courier', ghost: 'courier',
 };
-export const effectGroup = (id: string): EffectGroup => OWN_GROUP[id] || (Number(/^unusual-(\d+)$/.exec(id)?.[1]) >= 800 ? 'seasonal' : 'unusual');
+export const effectGroup = (id: string): EffectGroup => (id.startsWith('kinetic-') ? 'kinetic' : OWN_GROUP[id]) || (Number(/^unusual-(\d+)$/.exec(id)?.[1]) >= 800 ? 'seasonal' : 'unusual');
 
 /** A rarity key as the game prints it in every language: "mythical" is "Mythical". */
 export const rarityName = (key: string | undefined): string => (key ? key.charAt(0).toUpperCase() + key.slice(1) : '');

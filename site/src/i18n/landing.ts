@@ -29,6 +29,7 @@ export interface Landing {
   dlPortable: { title: string; note: string };
   dlLinux: { title: string; note: string };
   dlAll: string;
+  dlMirror: string;
   /** Under each number. {word} is filled from statWords so the noun matches the count. */
   statLabels: [string, string, string, string];
   /** Singular / few / many, for the first three tiles. English repeats itself, Russian does not. */
@@ -147,6 +148,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
     dlPortable: { title: 'Windows portable', note: 'One file, runs from anywhere, nothing installed' },
     dlLinux: { title: 'Linux AppImage', note: 'chmod +x and run it' },
     dlAll: 'All files, checksums and release notes on GitHub',
+    dlMirror: 'GitHub down? Our mirror:',
     source: 'Source code',
     heroMeta: 'Windows 10/11 and Linux · no account · updates itself',
     statLabels: ['{word} in the catalog', '{word}', '{word}', 'free'],
@@ -302,6 +304,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
     dlPortable: { title: 'Windows, портативная', note: 'Один файл, запускается откуда угодно' },
     dlLinux: { title: 'Linux, AppImage', note: 'chmod +x и запускай' },
     dlAll: 'Все файлы, хеши и список изменений на GitHub',
+    dlMirror: 'GitHub лежит? Наше зеркало:',
     source: 'Исходный код',
     heroMeta: 'Windows 10/11 и Linux · без аккаунта · обновляется само',
     statLabels: ['{word} в каталоге', '{word}', '{word}', 'бесплатно'],
