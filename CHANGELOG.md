@@ -2,6 +2,43 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.6.0
+
+### Hero builder
+
+- New: kinetic gems. Heroes who have them get a "Kinetic gems" shelf under Effects, such as Fish!
+  for Lion. Gems on a few heroes, such as Tusk and Skywrath Mage, play only in offline games.
+- Effect tiles show real pictures. Before, many stayed empty or took seconds to draw.
+- Meepo's Crimson head now looks red in the game.
+- The 3D preview shows the right head on Arc Warden and Tinker, and Mace of Aeons animates on
+  Faceless Void. The Abominable Snowbeast changes materials on Primal Beast's head and body.
+  Skin and cloth have softer highlights, and one broken particle no longer stops the others.
+
+### Dota 2 Workshop Tools
+
+- When a tool is missing, the error tells you what to do: open Dota 2's properties in Steam, go to
+  the DLC tab and tick Dota 2 Workshop Tools. An "Open in Steam" button takes you there, in the
+  error and in Settings.
+
+### When GitHub is down
+
+- Tools download from our own server first, so installing VRF takes seconds instead of half a
+  minute. Arcana base files have a mirror too.
+- The site's download menu also links the installers on our own server.
+
+### Chinese
+
+- Hero and tower names match the game's own: Razor is now 雷泽, and the tower sets name their
+  faction.
+
+### Website
+
+- 18+ mods no longer appear on the site's pages. The catalog lists them only after you confirm you
+  are 18.
+- Each hero's tile on the site shows that hero's own skin.
+
+Thanks to HarlordLeg for the 3D preview fixes and to F21HGG for the Chinese names.
+
 ## 3.5.0
 
 ### 3D preview
