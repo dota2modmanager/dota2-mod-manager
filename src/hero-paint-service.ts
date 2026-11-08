@@ -16,7 +16,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { heroAbilities, heroLayers, heroModelFolder, modelColorTextures, withChildren, withShares, type RecolorLayer } from './recolor-layers.ts';
+import { heroAbilities, heroLayers, heroModelFolder, itemModelPaths, modelColorTextures, withChildren, withShares, type RecolorLayer } from './recolor-layers.ts';
 import { recolorResource, type Rgb } from './recolor.ts';
 import { parsePaint, rgbOfHex, type PaintMode } from './recolor-modes.ts';
 import { references } from './resource.ts';
@@ -41,8 +41,6 @@ export interface PaintLayerView { id: string; kind: RecolorLayer['kind']; name: 
 const HERO = /^[a-z0-9_]{2,40}$/;
 const ITEM_ID = /^\d{1,9}$/;
 const LANG_FILE: Record<string, string> = { ru: 'russian', en: 'english', 'zh-CN': 'schinese' };
-// the item's model, and a style's other one
-const MODEL = /"model_player\d*"\s+"(models\/[^"]+\.vmdl)"/gi;
 /** The worn items as the window hands them: item ids, no more than a hero has slots for. */
 const wornOf = (items: unknown): string[] => (Array.isArray(items) ? [...new Set(items.filter((x): x is string => typeof x === 'string' && ITEM_ID.test(x)))].slice(0, 24) : []);
 // the item's own particles, as its visuals name them
@@ -89,7 +87,8 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
       const block = findItem(text, id)?.text;
       const name = block && /"name"\s+"([^"]+)"/.exec(block)?.[1];
       if (!block) return [];
-      const models = [...block.matchAll(MODEL)].map((m) => m[1]);
+      // its own model and the units it dresses: a mount, a ward, a bear, a hex (src/recolor-layers.ts)
+      const models = itemModelPaths(block);
       return [{ id, name: name || id, particles: [...block.matchAll(PARTICLE)].map((m) => m[1]), textures: modelColorTextures(models, (p) => index.read(p) as Buffer | null) }];
     });
   }

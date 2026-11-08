@@ -198,3 +198,30 @@ export function withShares(layers: RecolorLayer[]): { layer: RecolorLayer; share
     shares: layer.kind === 'itemModel' ? [...new Set(layer.files.flatMap((f) => owners.get(f) ?? []))].filter((id) => id !== layer.id) : [],
   }));
 }
+
+// the asset_modifier types that put a model of the item's own on the hero or on a unit of his;
+// a portrait's background, a pet, a bodygroup switch and the stock model a style replaces are not
+const MODEL_FROM: Record<string, 'asset' | 'modifier' | 'both'> = {
+  entity_model: 'both', model: 'modifier', hero_model_change: 'modifier', hex_model: 'both', additional_wearable: 'asset',
+};
+
+/**
+ * Every model an item's block puts in the game, in its order, once each: its own (model_player,
+ * model_player1…), and those its visuals bring by asset_modifier - the unit it dresses (Juggernaut's
+ * Healing Ward, Lone Druid's bear, Witch Doctor's Death Ward), a style's model in place of the stock
+ * one, the hero's body an arcana swaps in, a hex, an extra wearable.
+ */
+export function itemModelPaths(block: string): string[] {
+  const out: string[] = [];
+  const add = (p: string | undefined) => { const m = p?.trim().toLowerCase(); if (m && /^models\/.+\.vmdl$/.test(m) && !out.includes(m)) out.push(m); };
+  for (const m of block.matchAll(/"model_player\d*"\s+"([^"]+)"/gi)) add(m[1]);
+  // an asset_modifier is an innermost block: no braces inside it
+  for (const b of block.matchAll(/\{([^{}]*)\}/g)) {
+    const field = (k: string) => new RegExp(`"${k}"\\s+"([^"]*)"`, 'i').exec(b[1])?.[1];
+    const take = MODEL_FROM[(field('type') || '').toLowerCase()];
+    if (!take) continue;
+    if (take !== 'modifier') add(field('asset'));
+    if (take !== 'asset') add(field('modifier'));
+  }
+  return out;
+}

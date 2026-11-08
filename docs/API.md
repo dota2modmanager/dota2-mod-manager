@@ -10857,6 +10857,17 @@ drawn from one texture (Troll Warlord's four axes, Alchemist's bottles): the gam
 texture one colour, so the window moves those layers together rather than show two colours the
 game will not.
 
+### `itemModelPaths`
+
+```ts
+export function itemModelPaths(block: string): string[]
+```
+
+Every model an item's block puts in the game, in its order, once each: its own (model_player,
+model_player1…), and those its visuals bring by asset_modifier - the unit it dresses (Juggernaut's
+Healing Ward, Lone Druid's bear, Witch Doctor's Death Ward), a style's model in place of the stock
+one, the hero's body an arcana swaps in, a hex, an extra wearable.
+
 ## src/recolor-modes.ts
 
 How a picture takes its layer's colour in the hero's recolour (issue #422): the window offers a

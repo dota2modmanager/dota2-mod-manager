@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { heroAbilities, heroLayers, heroModelFolder, heroParticleFolder, shadePixels, withChildren, withShares } from '../src/recolor-layers.ts';
+import { heroAbilities, heroLayers, heroModelFolder, heroParticleFolder, itemModelPaths, shadePixels, withChildren, withShares } from '../src/recolor-layers.ts';
 
 const SCRIPT = `"DOTAHeroes"
 {
@@ -101,5 +101,28 @@ test("items drawn from one texture are told of each other, so the window moves t
   ]);
   assert.deepEqual(rows.map((r) => [r.layer.id, r.shares]), [
     ['body', []], ['itemModel:373', ['itemModel:374']], ['itemModel:374', ['itemModel:373']], ['itemModel:375', []],
+  ]);
+});
+
+test("an item's models: its own, and the units it dresses, not the stock model a style replaces nor its portrait", () => {
+  // trimmed from items_game: a Healing Ward, a style that swaps a stock model, an arcana's body, an extra wearable, a pet and a portrait
+  const block = `"12770"
+{
+	"name"		"The Ward of Odocoeleus"
+	"model_player"		"models/items/juggernaut/jugg_head/jugg_head.vmdl"
+	"portraits" { "models/items/juggernaut/ward/portrait_only.vmdl" { "PortraitFOV" "38" } }
+	"visuals"
+	{
+		"asset_modifier0" { "type" "entity_model" "asset" "npc_dota_juggernaut_healing_ward" "modifier" "models/items/juggernaut/ward/odocoeleus_ward.vmdl" }
+		"asset_modifier1" { "type" "model" "asset" "models/heroes/juggernaut/jugg_sword.vmdl" "modifier" "models/items/juggernaut/sword_style2.vmdl" }
+		"asset_modifier2" { "type" "hero_model_change" "asset" "models/heroes/juggernaut/juggernaut.vmdl" "modifier" "models/heroes/juggernaut/juggernaut_arcana.vmdl" }
+		"asset_modifier3" { "type" "additional_wearable" "asset" "models/items/juggernaut/cape_extra.vmdl" }
+		"asset_modifier4" { "type" "pet" "asset" "models/items/courier/pet.vmdl" }
+		"asset_modifier5" { "type" "portrait_background_model" "asset" "models/ui/background.vmdl" }
+	}
+}`;
+  assert.deepEqual(itemModelPaths(block), [
+    'models/items/juggernaut/jugg_head/jugg_head.vmdl', 'models/items/juggernaut/ward/odocoeleus_ward.vmdl', 'models/items/juggernaut/sword_style2.vmdl',
+    'models/heroes/juggernaut/juggernaut_arcana.vmdl', 'models/items/juggernaut/cape_extra.vmdl',
   ]);
 });
