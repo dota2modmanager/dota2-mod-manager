@@ -88,7 +88,8 @@ export function FxThumb({ id, picture }: { id: string; picture: string | null })
   const [drawn, setDrawn] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (picture || !ref.current) return undefined;
+    // a kinetic gem is an animation: nothing to draw
+    if (picture || id.startsWith('kinetic-') || !ref.current) return undefined;
     let gone = false;
     const seen = new IntersectionObserver((at) => {
       if (!at.some((e) => e.isIntersecting)) return;
@@ -101,5 +102,5 @@ export function FxThumb({ id, picture }: { id: string; picture: string | null })
   const shown = picture || drawn;
   return shown
     ? <span className="card-thumb"><img src={shown} alt="" loading="lazy" /></span>
-    : <div className="fx-glyph" ref={ref}><span className="ms">auto_awesome</span></div>;
+    : <div className="fx-glyph" ref={ref}><span className="ms">{id.startsWith('kinetic-') ? 'directions_run' : 'auto_awesome'}</span></div>;
 }

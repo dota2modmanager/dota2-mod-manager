@@ -1116,3 +1116,13 @@ test("a pick that changes the hero's other form puts the form's model under its 
   assert.match(pick.block, /"type"\s+"ability_icon"/, 'the rest of the visuals stay');
   assert.match(pick.block, /n_creep_ogre_med/, 'only a form under models/heroes/ is staged; anything else stays for the game');
 });
+
+// Everglyph Goggles of the Crimson Witness: the plain goggles' model in material set 1, the red one.
+// The pick goes under the stock head's path, where the server's table has no skin: it came out blue.
+test('an item put under a stock path wears its own material set', () => {
+  const item = (id: string, name: string, prefab: string, model: string, extra = '') => `\t\t"${id}"\n\t\t{\n\t\t\t"name"\t\t"${name}"\n\t\t\t"prefab"\t\t"${prefab}"\n\t\t\t"item_slot"\t\t"head"\n\t\t\t"model_player"\t\t"${model}"\n\t\t\t"used_by_heroes"\n\t\t\t{\n\t\t\t\t"npc_dota_hero_meepo"\t\t"1"\n\t\t\t}\n\t\t\t"visuals"\n\t\t\t{\n${extra}\t\t\t}\n\t\t}\n`;
+  const text = `"items_game"\n{\n\t"items"\n\t{\n${item('1', 'Stock', 'default_item', 'models/heroes/meepo/head.vmdl')}${item('2', 'Goggles', 'wearable', 'models/items/meepo/goggles.vmdl')}${item('3', 'Crimson', 'wearable', 'models/items/meepo/goggles.vmdl', '\t\t\t\t"skin"\t\t"1"\n')}\t}\n}\n`;
+  const copy = (id: string) => builder.itemEffectPatch(text, id, '').assetCopies[0];
+  assert.deepEqual(copy('3'), { from: 'models/items/meepo/goggles.vmdl', to: 'models/heroes/meepo/head.vmdl', skin: 1 });
+  assert.deepEqual(copy('2'), { from: 'models/items/meepo/goggles.vmdl', to: 'models/heroes/meepo/head.vmdl' });
+});

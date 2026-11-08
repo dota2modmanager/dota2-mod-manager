@@ -23,6 +23,13 @@ interface Props {
 const { copy, big = false, anchor = false } = Astro.props;
 
 const RELEASE = 'https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download';
+/* The same files on our bucket (tools/r2-release.mjs), for the hours GitHub's releases are down. */
+const MIRROR = 'https://cdn.dota2modmanager.com/updates';
+const spare = [
+  { name: 'Windows', file: `${MIRROR}/Dota-2-Mod-Manager-Setup.exe` },
+  { name: 'Portable', file: `${MIRROR}/Dota-2-Mod-Manager-Portable.exe` },
+  { name: 'Linux', file: `${MIRROR}/Dota-2-Mod-Manager.AppImage` },
+];
 const items = [
   { os: 'win', file: `${RELEASE}/Dota-2-Mod-Manager-Setup.exe`, ...copy.dlInstaller },
   { os: 'win', file: `${RELEASE}/Dota-2-Mod-Manager-Portable.exe`, ...copy.dlPortable },
@@ -46,6 +53,7 @@ const items = [
       </a>
     ))}
     <a class="dl-all" href="https://github.com/dota2modmanager/dota2-mod-manager/releases/latest" rel="noopener">{copy.dlAll}</a>
+    <p class="dl-spare">{copy.dlMirror} {spare.map((s, i) => <>{i > 0 && ', '}<a href={s.file} download>{s.name}</a></>)}</p>
   </div>
 </details>
 
@@ -115,6 +123,14 @@ const items = [
     font-size: 13px;
     color: var(--text-dim);
   }
+
+  .dl-spare {
+    margin: 0;
+    padding: 0 12px 4px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .dl-spare a { color: inherit; text-decoration: underline; }
 
   @media (prefers-reduced-motion: reduce) {
     .dl-menu { animation: none; }

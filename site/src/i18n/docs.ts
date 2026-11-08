@@ -587,6 +587,18 @@ const en: Record<CoreSlug, Doc> = {
         ],
       },
 
+      { k: 'h2', t: 'It asks for the Dota 2 Workshop Tools', id: 'workshop-tools' },
+      { k: 'p', t: 'Custom sounds, the HUD editor, the rank tool and some arcanas compile files with Valve\'s compiler. It comes with the Dota 2 Workshop Tools, a free add-on to the game in Steam. You install it once.' },
+      {
+        k: 'steps',
+        items: [
+          ['Open the properties', 'In your Steam library, right-click Dota 2 and pick <b>Properties</b>. The <b>Open in Steam</b> button on the error does this for you.'],
+          ['Go to the DLC tab', 'Tick <b>Dota 2 Workshop Tools</b>. It costs nothing.'],
+          ['Wait for the download', 'Steam downloads it like a game update, in its Downloads page. It takes a few gigabytes.'],
+          ['Try again', 'Repeat what you were doing in the app. No restart, and no file to move or pick by hand.'],
+        ],
+      },
+
       { k: 'h2', t: 'Starting over cleanly', id: 'reset' },
       {
         k: 'p',
@@ -1089,6 +1101,18 @@ const ru: Record<CoreSlug, Doc> = {
           'Папки <code>dota_</code> нет ни одной? Значит озвучка английская, а для неё Valve папку не поставляет. <a href="~/docs/install/#english">Что делать вместо этого</a>.',
           'Файл с именем <code>!pak51_dir.vpk</code> или <code>mymod.vpk</code> не монтируется никогда. Нужно <code>pakNN_dir.vpk</code>.',
           'Если мод подменяет сет, которого у тебя нет, ему нужен ещё и патч таблицы предметов, не только архив. <a href="~/docs/cosmetics/">Почему</a>.',
+        ],
+      },
+
+      { k: 'h2', t: 'Просит Dota 2 Workshop Tools', id: 'workshop-tools' },
+      { k: 'p', t: 'Свои звуки, редактор HUD, ранг и часть аркан собирает компилятор Valve. Он входит в Dota 2 Workshop Tools, бесплатное дополнение к игре в Steam. Ставится один раз.' },
+      {
+        k: 'steps',
+        items: [
+          ['Открой свойства', 'В библиотеке Steam нажми правой кнопкой по Dota 2 и выбери <b>Свойства</b>. Кнопка <b>Открыть в Steam</b> на ошибке делает это за тебя.'],
+          ['Перейди на вкладку «Доп. контент»', 'Отметь <b>Dota 2 Workshop Tools</b>. Это бесплатно.'],
+          ['Дождись загрузки', 'Steam скачает дополнение как обновление игры, ход виден в его разделе «Загрузки». Весит несколько гигабайт.'],
+          ['Попробуй ещё раз', 'Повтори действие в приложении. Перезапускать ничего не нужно, переносить и указывать файлы тоже.'],
         ],
       },
 

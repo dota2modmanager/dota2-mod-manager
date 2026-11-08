@@ -181,6 +181,7 @@ contextBridge.exposeInMainWorld('api', {
   game: {
     launch: () => ipcRenderer.invoke('game:launch'),
     steamDownloads: () => ipcRenderer.invoke('game:steamDownloads'),
+    steamProperties: () => ipcRenderer.invoke('game:steamProperties'),
     // Dota opened or closed: while it is open nothing is written to the game (src/game-watch.ts)
     onRunning: (cb) => ipcRenderer.on('game:running', (e, running) => cb(!!running)),
   },

@@ -213,7 +213,7 @@ export function createResourceCompiler({ userDataDir, gamePath, chosen, keeper, 
   /** Everything a compile needs before it starts: the compiler, and here Wine with its prefix made. */
   async function prepare(): Promise<{ exe: string; install: string; wine: string | null }> {
     const found = locate();
-    if (!found) throw new Error(t('resourcecompiler.exe не найден. Он входит в Dota 2 Workshop Tools: поставь их в Steam или укажи файл вручную'));
+    if (!found) throw new Error(t('Нужны Dota 2 Workshop Tools, бесплатное дополнение в Steam. Открой свойства Dota 2, вкладку «Доп. контент», отметь Dota 2 Workshop Tools и дождись загрузки'));
     if (!needsWine) return { ...found, wine: null };
     const w = wine();
     if (!w) throw new Error(t('Для resourcecompiler.exe нужен Wine: поставь его из пакетов своей системы или Proton в Steam'));

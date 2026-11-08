@@ -140,7 +140,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'app:version': [], 'app:notes': [str(16)], 'app:notesSeen': [], 'app:stars': [],
   'update:install': [], 'update:fetchPortable': [], 'update:revealPortable': [PATH],
   'beta:state': [], 'beta:set': [bool],
-  'game:launch': [], 'game:steamDownloads': [],
+  'game:launch': [], 'game:steamDownloads': [], 'game:steamProperties': [],
   'grid:state': [], 'grid:apply': [list(oneOf('winrate', 'attribute', 'popular'), 3)], 'grid:remove': [],
   'ui:setZoom': [num(0.25, 5)],
   // settings and the account (src/ipc-settings.ts)

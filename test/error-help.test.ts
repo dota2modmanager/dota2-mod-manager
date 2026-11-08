@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { errorHelpUrl } from '../renderer/ui/error-help.ts';
+import { errorHelpUrl, needsWorkshopTools } from '../renderer/ui/error-help.ts';
 
 const GUIDE = 'https://dota2modmanager.com/docs/troubleshooting/';
 
@@ -33,9 +33,16 @@ test('every anchor it can give is a section the guide has', async () => {
   const { docs } = await import('../site/src/i18n/docs.ts');
   for (const lang of ['en', 'ru'] as const) {
     const ids = new Set(docs[lang].troubleshooting.blocks.map((b) => ('id' in b ? b.id : undefined)).filter(Boolean));
-    for (const msg of ['update', 'crash', 'conflict', 'nothing changed']) {
+    for (const msg of ['update', 'crash', 'conflict', 'nothing changed', 'Dota 2 Workshop Tools']) {
       const anchor = errorHelpUrl(msg, lang).split('#')[1];
       assert.ok(anchor && ids.has(anchor), `${lang}: #${anchor} for "${msg}"`);
     }
   }
+});
+
+test('an error about the Workshop Tools leads to the steps that install them, before any other section', () => {
+  const said = 'Нужны Dota 2 Workshop Tools, бесплатное дополнение в Steam. Открой свойства Dota 2, вкладку «Доп. контент», отметь Dota 2 Workshop Tools и дождись загрузки';
+  assert.match(errorHelpUrl(said, 'ru'), /#workshop-tools$/);
+  assert.ok(needsWorkshopTools(said));
+  assert.ok(!needsWorkshopTools('Could not download Axe.zip'));
 });

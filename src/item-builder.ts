@@ -27,11 +27,12 @@ import {
 import {
   canonicalItemSlot, isPersonaItem, itemHeroes, matchItemSlot,
 } from './item-builder-slots.ts';
-import { ITEM_EFFECTS, type ItemEffect } from './item-builder-effects.ts';
-import { itemAssets, normalizeAssetPath, type ItemAssets, type SummonModels } from './item-builder-assets.ts';
+import { appendItemEffect, ITEM_EFFECTS, type ItemEffect } from './item-builder-effects.ts';
+import { itemAssets, normalizeAssetPath, wornSkin, type ItemAssets, type SummonModels } from './item-builder-assets.ts';
 import { styleOf, withStyle } from './item-builder-styles.ts';
 import { DONOR, donorAdditions, donorOf, withModifiers } from './item-builder-donor.ts';
 import { UNUSUAL, unusualItemEffect } from './item-builder-unusual.ts';
+import { KINETIC, picksGems, withKinetics } from './item-builder-kinetic.ts';
 
 export { itemSlots, itemSlotsSteps, itemOptions } from './item-builder-slots.ts';
 export { itemSets } from './item-builder-sets.ts';
@@ -202,29 +203,6 @@ export function withoutFileSwaps(visuals: string, units: Set<string>, stock: Set
   return out;
 }
 
-function appendItemEffect(visuals: string, effect: ItemEffect): string {
-  const needle = String(effect.modifier || '').toLowerCase();
-  if (needle && visuals.toLowerCase().includes(needle)) return visuals;
-  const block = `"asset_modifier"\r\n{\r\n\t"type"\t\t"${effect.type}"\r\n\t"modifier"\t\t"${effect.modifier}"\r\n}`;
-  // set from inside the walk, which is why they are widened by hand
-  let after = null as number | null;
-  let before = null as number | null;
-  eachChild(visuals, blockBounds(visuals, 0), (c) => {
-    if (!c.isBlock || c.key.toLowerCase() !== 'asset_modifier') return;
-    const fields = new Map<string, string>();
-    eachChild(visuals, c.body, (f) => { if (!f.isBlock) fields.set(f.key.toLowerCase(), f.value); });
-    const type = (fields.get('type') || '').toLowerCase();
-    if (type === 'particle_create') after = c.end;
-    else if (after !== null && before === null) before = c.start;
-  });
-  const close = visuals.lastIndexOf('}');
-  const at = before ?? after ?? close;
-  if (at === -1) return visuals;
-  const prefix = '\r\n\t';
-  const suffix = before === null ? '\r\n' : '\r\n\t';
-  return `${visuals.slice(0, at)}${prefix}${block}${suffix}${visuals.slice(at)}`;
-}
-
 /* Turn one paid wearable into the hero's stock item for that slot.
  *
  * The block stays the donor item almost verbatim: only the header is rewritten to the matching
@@ -246,14 +224,14 @@ function appendItemEffect(visuals: string, effect: ItemEffect): string {
  * @returns `own`: the stock path the item's model goes under, null when it wears none of its own;
  *   `added`: the systems of the effects asked for; `unplaced`: the slot has no stock model for it to go under, so only the table can put it on
  */
-export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels, refit?: string): { id: string; block: string; own: string | null; added: string[]; unplaced: boolean } & ItemAssets {
+export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels, refit?: string): { id: string; block: string; own: string | null; added: string[]; unplaced: boolean; kinetic: string[]; heroes: string[] } & ItemAssets {
   const source = findItem(baseText, itemId);
   if (!source) throw new Error(t('items_game: предмет {0} не найден', itemId));
   const target = targetId ? listItems(baseText).find((i) => i.id === targetId) || null : defaultItemForWearable(baseText, itemId);
   if (!target) throw new Error(t('items_game: default_item для предмета {0} не найден', itemId));
   const key = effectKey(effectIds);
   // several at once: the window offers them that way, and one unknown id refuses the whole pick
-  const effects = key.split(',').filter((id) => id && !/^style-\d+$/.test(id) && !DONOR.test(id)).map((id) => {
+  const effects = key.split(',').filter((id) => id && !/^style-\d+$/.test(id) && !DONOR.test(id) && !KINETIC.test(id)).map((id) => {
     const effect = UNUSUAL.test(id) ? unusualItemEffect(baseText, id) : itemEffectById(id);
     if (!effect) throw new Error(t('items_game: эффект {0} не найден', id));
     return effect;
@@ -269,7 +247,8 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
   const sourceModel = styled.model || sourceFields.get('model_player') || '';
   const targetModel = targetFields.get('model_player') || '';
   const underStock = !!sourceModel && !!targetModel && normalizeAssetPath(sourceModel) !== normalizeAssetPath(targetModel);
-  if (underStock) assets.assetCopies.unshift(...(refit ? [{ from: refit, to: targetModel, optional: true }] : []), { from: sourceModel, to: targetModel });
+  // in its own material set: the stock item the server knows has none (Everglyph Goggles of the Crimson Witness, the plain goggles in set 1)
+  if (underStock) assets.assetCopies.unshift(...(refit ? [{ from: refit, to: targetModel, optional: true }] : []), { from: sourceModel, to: targetModel, ...(wornSkin(visuals) ? { skin: wornSkin(visuals) } : {}) });
 
   const copiedHeroes = new Set(assets.assetCopies.flatMap((c) => ('hero' in c ? [c.hero] : 'unit' in c ? [c.unit] : [])));
   const copiedStock = new Set(assets.assetCopies.flatMap((c) => ('to' in c ? [normalizeAssetPath(c.to)] : [])));
@@ -287,6 +266,9 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
     assets.sounds.push(...extra.sounds);
   }
 
+  const gems = picksGems(baseText, key);
+  visuals = withKinetics(visuals, gems);
+
   let patched = setBlockId(itemBlock(baseText, source), target.id);
   patched = setScalarField(patched, 'name', targetFields.get('name') || target.name || target.id);
   patched = setScalarField(patched, 'prefab', 'default_item');
@@ -296,5 +278,5 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
   if (underStock) patched = setScalarField(patched, 'model_player', targetModel);
   else if (styled.model) patched = setScalarField(patched, 'model_player', styled.model);
   patched = setVisualsBlock(patched, visuals);
-  return { id: target.id, block: patched, own: underStock ? `${normalizeAssetPath(targetModel)}_c` : null, added: effects.map((e) => e.modifier), unplaced: !!sourceModel && !targetModel, ...assets };
+  return { id: target.id, block: patched, own: underStock ? `${normalizeAssetPath(targetModel)}_c` : null, added: effects.map((e) => e.modifier), unplaced: !!sourceModel && !targetModel, kinetic: gems.flatMap((g) => g.activities.map((a) => a[1])), heroes: itemHeroes(baseText, source), ...assets };
 }

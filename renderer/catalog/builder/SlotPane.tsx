@@ -17,7 +17,7 @@ import { BuilderFoot, CosThumb, EmptySearch, FxThumb, PickerSearch } from './par
 const NOTE_TAG = { issues: () => L`Есть баги`, broken: () => L`Сломана`, untested: () => L`Не проверено` } as const;
 
 const SHELF: Record<EffectGroup, () => string> = {
-  unusual: () => L`Необычные`, seasonal: () => L`Сезонные`, courier: () => L`От курьеров`,
+  kinetic: () => L`Кинетические камни`, unusual: () => L`Необычные`, seasonal: () => L`Сезонные`, courier: () => L`От курьеров`,
 };
 
 const stagger = (i: number) => ({ '--i': Math.min(i, 24) }) as CSSProperties;

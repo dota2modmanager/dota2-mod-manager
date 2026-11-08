@@ -11,6 +11,7 @@
  * the credits of the program it goes into.
  */
 import { t } from './i18n.ts';
+import { blockBounds, eachChild } from './schema.ts';
 
 /** An effect the builder can add to an item: a particle it creates. Its name is the game's own
  * English one in every language, as players look effects up by it ("Frostbloom"); the four the
@@ -66,4 +67,28 @@ export const ITEM_EFFECTS: ItemEffect[] = [
 /** The effect variants the synthetic cosmetics/items picker can apply. */
 export function itemEffects(): { id: string; name: string }[] {
   return [{ id: '', name: t('Без эффекта') }, ...ITEM_EFFECTS.map(({ id, name }) => ({ id, name }))];
+}
+
+/** The visuals with an effect's particle created, after the ones they create already. */
+export function appendItemEffect(visuals: string, effect: ItemEffect): string {
+  const needle = String(effect.modifier || '').toLowerCase();
+  if (needle && visuals.toLowerCase().includes(needle)) return visuals;
+  const block = `"asset_modifier"\r\n{\r\n\t"type"\t\t"${effect.type}"\r\n\t"modifier"\t\t"${effect.modifier}"\r\n}`;
+  // set from inside the walk, which is why they are widened by hand
+  let after = null as number | null;
+  let before = null as number | null;
+  eachChild(visuals, blockBounds(visuals, 0), (c) => {
+    if (!c.isBlock || c.key.toLowerCase() !== 'asset_modifier') return;
+    const fields = new Map<string, string>();
+    eachChild(visuals, c.body, (f) => { if (!f.isBlock) fields.set(f.key.toLowerCase(), f.value); });
+    const type = (fields.get('type') || '').toLowerCase();
+    if (type === 'particle_create') after = c.end;
+    else if (after !== null && before === null) before = c.start;
+  });
+  const close = visuals.lastIndexOf('}');
+  const at = before ?? after ?? close;
+  if (at === -1) return visuals;
+  const prefix = '\r\n\t';
+  const suffix = before === null ? '\r\n' : '\r\n\t';
+  return `${visuals.slice(0, at)}${prefix}${block}${suffix}${visuals.slice(at)}`;
 }
