@@ -28,6 +28,22 @@ export function itemModel(text: string, itemId: string, key: string | undefined,
   const item = findItem(text, itemId);
   return { model: item ? itemFields(text, item).get('model_player') || null : null, body };
 }
+
+/** A material group explicitly addressed to the hero body, even on a wearable. */
+export function bodySkinFor(visuals: string, hero: string, model: string, implicitBody = false): number | undefined {
+  let skin: number | undefined;
+  eachChild(visuals, blockBounds(visuals, 0), modifier => {
+    if (!modifier.isBlock || !/^asset_modifier\d*$/i.test(modifier.key)) return;
+    const fields = new Map<string, string>();
+    eachChild(visuals, modifier.body, f => { if (!f.isBlock) fields.set(f.key.toLowerCase(), f.value); });
+    const target = normalizeAssetPath(fields.get('asset')).replace(/_c$/, '');
+    const value = fields.get('skin');
+    if (fields.get('type')?.toLowerCase() === 'model_skin' && (fields.get('style') ?? '0') === '0' &&
+        (target === hero || target === 'npc_dota_hero_' + hero || target === model || (!target && implicitBody)) && value !== undefined && /^\d+$/.test(value)) skin = Number(value);
+  });
+  return skin;
+}
+
 /**
  * The body an item's "entity_model" modifier puts the hero in: a persona's, which the item's own
  * copies leave out because a persona goes on through its base (src/item-builder-personas.ts).
@@ -35,7 +51,7 @@ export function itemModel(text: string, itemId: string, key: string | undefined,
 export function entityModel(block: string, hero: string): string | null {
   for (const m of block.matchAll(/"asset_modifier\d*"\s*\{([^{}]*)\}/gi)) {
     const field = (k: string) => new RegExp(`"${k}"\\s+"([^"]*)"`, 'i').exec(m[1])?.[1];
-    if (field('type')?.toLowerCase() === 'entity_model' && field('asset') === hero && /\.vmdl$/i.test(field('modifier') || '')) return field('modifier')!;
+    if (field('type')?.toLowerCase() === 'entity_model' && (field('style') ?? '0') === '0' && field('asset') === hero && /\.vmdl$/i.test(field('modifier') || '')) return field('modifier')!;
   }
   return null;
 }
@@ -89,15 +105,16 @@ export function previewParticleReader(read: (path: string) => Buffer | null, rep
 /** The hidden body_head slot supplies the face independently of a hat or hair. */
 export function previewStockHead(text: string, hero: string, body: string, index: Pick<VpkIndex, 'has'>, hatEquipped = false): string | null {
   const name = hero.replace(/^npc_dota_hero_/, '');
-  if (!['arc_warden', 'invoker', 'phantom_lancer'].includes(name) || body !== `models/heroes/${name}/${name}.vmdl`) return null;
+  const splitHead = ['arc_warden', 'faceless_void', 'invoker', 'phantom_lancer', 'tinker'].includes(name);
+  if (body !== `models/heroes/${name}/${name}.vmdl`) return null;
   const hasModel = (model: string) => index.has(normalizeAssetPath(model) + '_c');
   const heads = listItems(text).filter(item =>
-    /^(?:head|body_head)$/.test(item.slot) && (item.baseitem || item.prefab === 'default_item')
+    (item.slot === 'body_head' || (splitHead && item.slot === 'head')) && (item.baseitem || item.prefab === 'default_item')
     && item.model && item.model !== body && !/persona|hair/i.test(item.model) && itemHeroes(text, item).includes(hero)
     && hasModel(item.model));
   const head = heads.find(item => item.slot === 'body_head') ?? (!hatEquipped ? heads[0] : undefined);
   if (head) return normalizeAssetPath(head.model);
   const conventional = `models/heroes/${name}/${name}_head.vmdl`;
-  // Phantom Lancer and Invoker ship the conventional path in body_head.
-  return (!hatEquipped || name !== 'arc_warden') && hasModel(conventional) ? conventional : null;
+  // A conventional face is safe under hats only for the known independent meshes.
+  return splitHead && (!hatEquipped || name === 'invoker' || name === 'phantom_lancer') && hasModel(conventional) ? conventional : null;
 }

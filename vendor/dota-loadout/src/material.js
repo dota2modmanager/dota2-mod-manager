@@ -60,6 +60,11 @@ export function heroMaterial(m, texture, time, light, cube = null) {
     tCube: { value: m.cube && cube ? cube(m.cube) : null }, uCubeScale: { value: m.cubeScale ?? 0 }, uToSource: { value: TO_SOURCE },
   };
   const useCube = !!(m.cube && cube);
+  // Missing environment lighting must not make the reflective parts black.
+  const missingReflection = m.previewLighting && m.expectsReflectionCube;
+  uniforms.uMetalness = { value: useCube ? 1 : m.metalnessWithoutCube ?? (missingReflection ? 0.45 : 1) };
+  uniforms.uPreviewLighting = { value: m.previewLighting ? 1 : 0 };
+  material.customProgramCacheKey = () => JSON.stringify([!!m.color, !!m.exponent, !!m.normal, m.detailMode, useCube, !!m.cubeByMetalness, !!m.unlit]);
   material.userData.hero = uniforms;
   // The hero's prismatic gem colours the detail (and the specular) of the materials that read it;
   // without one they take their own colour back. hex: '#rrggbb' or null.
@@ -75,6 +80,7 @@ export function heroMaterial(m, texture, time, light, cube = null) {
       .replace('#include <common>', `#include <common>
 #define USE_PACKED_NORMALMAP
 uniform sampler2D tExponent, tMasks, tSpec, tDetail, tFresnel, tDiffuseWarp; uniform float uTime, uDetailBlend, uSpecExponent, uSpecScale, uDiffuseWarp, uCubeScale; uniform vec2 uDetailScale, uDetailScroll;
+uniform float uMetalness, uPreviewLighting;
 uniform mat3 uToSource;${useCube ? '\nuniform samplerCube tCube;' : ''}
 uniform vec3 uRimColor, uSpecColor, uDetailTint, uLightDir, uLightColor, uAmbientDir, uAmbientColor, uAmbientTint, uShadowColor, uUp;`)
       .replace('#include <opaque_fragment>', `${m.color ? '' : 'vec2 vMapUv = vec2(0.0);'}
@@ -91,10 +97,15 @@ heroShadow = getShadow(directionalShadowMap[0], directionalLightShadows[0].shado
 float heroHalf = heroNL * 0.5 + 0.5;
 vec3 heroRamp = mix(vec3(heroHalf), texture2D(tDiffuseWarp, vec2(heroHalf, 0.5)).rgb, uDiffuseWarp * heroMasks.a);
 vec3 heroDiffuse = heroRamp * heroShadow * uLightColor + clamp(dot(uAmbientDir, normal), 0.0, 1.0) * uAmbientColor + (1.0 - heroShadow) * uShadowColor;
-vec3 heroSpecular = clamp(heroNL, 0.0, 1.0) * pow(max(dot(uLightDir, heroR), 0.001), heroExponent) * uLightColor * uSpecScale * heroSpec.r * mix(heroBase, uSpecColor, heroSpec.b) * max(heroWarp.b, heroSpec.g);
-vec3 heroLit = mix(heroAlbedo * heroDiffuse + heroSpecular, heroSpecular, heroSpec.g) + heroMasks.b * uRimColor * uAmbientTint * max(dot(normal, uUp), 0.0) * heroWarp.r;
+// Keep the native metal mask. Without the game's lighting stages, dielectric
+// highlights need a bounded gain, and near-zero exponents gloss entire limbs.
+float dielectricPreview = uPreviewLighting * (1.0 - heroSpec.g);
+float previewExponent = mix(heroExponent, max(heroExponent, 5.0), dielectricPreview);
+float previewGain = mix(uSpecScale, min(uSpecScale, 0.65), dielectricPreview);
+vec3 heroSpecular = clamp(heroNL, 0.0, 1.0) * pow(max(dot(uLightDir, heroR), 0.001), previewExponent) * uLightColor * previewGain * heroSpec.r * mix(heroBase, uSpecColor, heroSpec.b) * max(heroWarp.b, heroSpec.g);
+vec3 heroLit = mix(heroAlbedo * heroDiffuse + heroSpecular, heroSpecular, heroSpec.g * uMetalness) + heroMasks.b * uRimColor * uAmbientTint * max(dot(normal, uUp), 0.0) * heroWarp.r;
 ${useCube ? `heroLit += textureCube(tCube, uToSource * inverseTransformDirection(heroR, viewMatrix)).rgb * uCubeScale * ${m.cubeByMetalness ? 'heroSpec.g' : 'heroSpec.r * mix(heroWarp.b, 1.0, heroSpec.g)'} * mix(vec3(1.0), heroBase, max(heroSpec.b, heroSpec.g));` : ''}
-${DETAIL_OUT[m.detailMode] ?? 'outgoingLight = mix(heroLit, heroAlbedo, clamp(heroDetailTex.a * heroDetail + heroMasks.g, 0.0, 1.0));'}
+${m.unlit ? 'outgoingLight = heroBase + heroDetailColor * heroDetail;' : DETAIL_OUT[m.detailMode] ?? 'outgoingLight = mix(heroLit, heroAlbedo, clamp(heroDetailTex.a * heroDetail + heroMasks.g, 0.0, 1.0));'}
 #include <opaque_fragment>`);
   };
   return material;

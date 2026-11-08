@@ -91,19 +91,21 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
     if(options.stage?.background)host.style.setProperty('--stage-tint',`rgb(${options.stage.background.map(x=>Math.round(x*255)).join(',')})`);
     const textures=await loadoutTextures(source,options.sprites??{},options.resources);check();
     let queue:Promise<void>=Promise.resolve();
-    const applyEffects=async(defs:{part:number;def:ParticleDef}[])=>{
-      check();await live.hero?.studioEffects({});check();source.clearEffects();
+    const applyEffects=async(defs:{part:number;def:ParticleDef}[],hero=live.hero)=>{
+      check(); source.clearEffects();
       const patch=loadoutEffects(source,defs,textures,options.resources);
-      await live.hero?.studioEffects(patch);check();
-      const warnings=[...source.warnings,...patch.warnings,...(live.hero?.lib.unsupported??[])];
+      await hero?.studioEffects(patch);check();
+      const warnings=[...source.warnings,...patch.warnings,...(hero?.lib.unsupported??[])];
       options.onWarnings?.([...new Set(warnings)]);
       if(warnings.length)console.warn('3D preview: resource diagnostics',warnings);
     };
     const load=async()=>{
       check();
-      await live.load(source.source());check();
-      if(options.isolated)live.hero?.turntable.traverse(object=>{if(object instanceof Mesh)for(const material of Array.isArray(object.material)?object.material:[object.material]){material.colorWrite=false;material.depthWrite=false;object.castShadow=false;}});
-      await applyEffects(currentDefs);check();live.paused=!!options.still;
+      await live.load(source.source(), async hero => {
+        if(options.isolated)hero.turntable.traverse(object=>{if(object instanceof Mesh)for(const material of Array.isArray(object.material)?object.material:[object.material]){material.colorWrite=false;material.depthWrite=false;object.castShadow=false;}});
+        await applyEffects(currentDefs, hero);
+      });
+      check();live.paused=!!options.still;
     };
     await load();
     if(options.isolated&&live.hero){

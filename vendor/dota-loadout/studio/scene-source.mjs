@@ -29,10 +29,24 @@ export class SceneSource {
   const image=index=>{if(images.has(index))return images.get(index);const img=json.images?.[index];if(!img)return null;let uri=img.uri;if(!uri&&Number.isInteger(img.bufferView)){const b=json.bufferViews?.[img.bufferView];if(!b)throw Error('Invalid GLB image');uri=this.blob(glb.bin.subarray(b.byteOffset??0,(b.byteOffset??0)+b.byteLength),img.mimeType??'image/png');}if(uri&&!/^(?:blob:|data:)/.test(uri))throw Error('GLB must contain embedded textures');const name=prefix+'-image-'+index;this.files.set('textures/'+name,uri);images.set(index,name);return name;};
   const texture=info=>{if(!info||!Number.isInteger(info.index))return null;const tex=json.textures?.[info.index];return image(tex?.extensions?.EXT_texture_webp?.source??tex?.source);};
   const materialByName=meta.materials??{};
+  const materialStem = name => name.toLowerCase().replaceAll('\\','/').split('/').at(-1).replace(/\.vmat(?:_c)?$/, '');
   for(const[i,m]of(json.materials??[]).entries()){
-   const original=m.name??'material-'+i,id=prefix+'::'+i,base=m.pbrMetallicRoughness??{},native=materialByName[original]??materialByName[compiled(original)]??Object.entries(materialByName).find(([n])=>n.split('/').at(-1).replace(/\.vmat(?:_c)?$/,'')===original.replace(/\.vmat(?:_c)?$/,''))?.[1];
-   const embedded={color:texture(base.baseColorTexture),normal:texture(m.normalTexture)},descriptor={...embedded,alphaTest:m.alphaMode==='MASK'?(m.alphaCutoff??.5):0,translucent:m.alphaMode==='BLEND',specScale:base.metallicFactor??.2,rimScale:.15,baseColor:rgba(base.baseColorFactor),...(native?.descriptor??{})};
+   const original=m.name??'material-'+i,id=prefix+'::'+i,base=m.pbrMetallicRoughness??{},native=materialByName[original]??materialByName[compiled(original)]??Object.entries(materialByName).find(([n])=>materialStem(n)===materialStem(original))?.[1];
+   const embedded={color:texture(base.baseColorTexture),normal:texture(m.normalTexture)},descriptor={...embedded,previewLighting:register,alphaTest:m.alphaMode==='MASK'?(m.alphaCutoff??.5):0,translucent:m.alphaMode==='BLEND',specScale:base.roughnessFactor === undefined ? .2 : .2 * (1 - base.roughnessFactor),rimScale:.15,baseColor:rgba(base.baseColorFactor),...(native?.descriptor??{})};
    for(const[field,info]of Object.entries(native?.images??{})){if(info?.data){const name=id+'-'+field;this.files.set('textures/'+name,'data:'+(info.mime??'image/png')+';base64,'+info.data);descriptor[field]=name;}}
+   if (materialStem(original) === 'arc_warden_base_additive') {
+     const legacyImage = pattern => image((json.images ?? []).findIndex(row => pattern.test(row.name ?? '')));
+     descriptor.masks ??= legacyImage(/arc_warden_base_additive_vmat_g_tmasks1/i);
+     descriptor.detail ??= legacyImage(/arc_warden_detail_psd/i);
+   }
+   // Older Arc Warden wearables can omit the native shader flags in the export.
+   // Keep their color visible when the renderer has the metal mask but no cube.
+   const sourcePath = String(meta.sourceModel ?? model ?? '').replaceAll('\\', '/').toLowerCase();
+   if (register && sourcePath.startsWith('models/items/arc_warden/') && descriptor.specular) {
+     descriptor.expectsReflectionCube = true;
+     descriptor.metalnessWithoutCube = 0.3;
+   }
+   if (!embedded.color && native?.images?.color?.data && descriptor.baseColor?.slice(0,3).every(value => value === 0)) descriptor.baseColor = [1,1,1,descriptor.baseColor[3]];
    if(!register&&!native&&!descriptor.color){json.materials[i]={name:id};this.warnings.push('Particle model material unavailable: '+original);continue;}
    this.manifest.materials[id]=this.sanitizeMaterial(calibratePreviewMaterial(descriptor,original),embedded);this.materialMetadata.set(id,{name:original,materialPath:Object.entries(materialByName).find(([,v])=>v===native)?.[0]??original,owner,itemId});
    // The host shader loads these textures. GLTFLoader must not decode them a

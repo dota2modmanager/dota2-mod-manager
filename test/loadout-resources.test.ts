@@ -9,7 +9,7 @@ import { loadoutResources,loadoutModel,resourcePaths } from '../src/loadout-reso
 import { loadoutSheet } from '../src/loadout-sheet.ts';
 import { exportArgs } from '../src/model-glb.ts';
 import { animatedLoadoutModel } from './fixtures/loadout-model.ts';
-import { readGlb } from '../vendor/dota-loadout/studio/scene-source.mjs';
+import { SceneSource, readGlb, writeGlb } from 'dota-loadout/studio';
 const material=()=>resource([['DATA',encodeKv3({obj:[
  ['m_shaderName',{str:'hero.vfx'}],
  ['m_floatParams',{objs:[[['m_name',{str:'g_flSpecularScale'}],['m_flValue',{dbl:0}]]]}],
@@ -49,4 +49,52 @@ test('complete particle dependencies keep snapshots, materials and animated mode
  assert.equal(meta.materials['materials/hero.vmat'].descriptor.specScale,0);assert.equal(meta.materials['materials/hero.vmat'].images.masks.data,Buffer.from('PNG').toString('base64'));
  assert.ok(exportArgs('pak','out',['model'],'all',true).includes('--gltf_export_materials'));assert.ok(!exportArgs('pak','out',['model'],'all').includes('--gltf_export_materials'));
  assert.deepEqual(resourcePaths({a:'materials/../../escape.vtex',b:'https://bad/a.vtex',c:'models/prop.vmdl'}),['models/prop.vmdl']);
+});
+
+test('preview materials recover a missing color map and apply an alternate body skin over the stock GLB texture', async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'loadout-color-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const file = path.join(root, 'body.glb'), model = 'models/heroes/test/body.vmdl';
+  const base = 'materials/test/face.vmat', alternate = 'materials/test/snow.vmat';
+  const vmat = (color: string) => resource([['DATA', encodeKv3({ obj: [
+    ['m_textureParams', { objs: [[['m_name', { str: 'g_tColor' }], ['m_pValue', { str: color }]]] }],
+  ] })]]);
+  const files: Record<string, Buffer> = {
+    [model + '_c']: resource([['RERL', rerl([base, alternate])], ['DATA', encodeKv3({ obj: [
+      ['m_materialGroups', { objs: [[['m_materials', { arr: [{ str: base }] }]], [['m_materials', { arr: [{ str: alternate }] }]]] }],
+    ] })]]),
+    [base + '_c']: vmat('materials/face.vtex'),
+    [alternate + '_c']: vmat('materials/snow.vtex'),
+  };
+  const glb = { glbs: async () => ({}), sprites: async (paths: string[]) => Object.fromEntries(paths.map(p => [p, Buffer.from(p)])) };
+  const { loadoutModels } = await import('../src/loadout-resources.ts');
+  const material = { name: 'Materials\\Test\\FACE.VMAT_C', pbrMetallicRoughness: { baseColorFactor: [0, 0, 0, 1] } };
+  fs.writeFileSync(file, writeGlb({ json: { materials: [material] }, bin: new Uint8Array() }));
+  const [plain] = await loadoutModels([{ file, model }], p => files[p] ?? null, glb);
+  const source = new SceneSource();
+  source.addGlb(plain!, { key: 'hero' });
+  assert.deepEqual(source.manifest.materials['hero::0'].baseColor, [1, 1, 1, 1]);
+  assert.equal(source.url('textures/hero::0-color').split(',')[1], Buffer.from('materials/face.vtex').toString('base64'));
+  source.dispose();
+
+  fs.writeFileSync(file, writeGlb({ json: { materials: [{ ...material, pbrMetallicRoughness: { baseColorTexture: { index: 0 } } }],
+    textures: [{ source: 0 }], images: [{ uri: 'data:image/png;base64,AAAA' }] }, bin: new Uint8Array() }));
+  const [styled] = await loadoutModels([{ file, model, skin: 1 }], p => files[p] ?? null, glb);
+  assert.equal(readGlb(styled!).json.extras.dotaStudio.materials[base].images.color.data, Buffer.from('materials/snow.vtex').toString('base64'));
+});
+
+test('Arc Warden legacy face uses its exported mask and detail with additive preview shading', () => {
+  const source = new SceneSource();
+  const names = ['arc_warden_base_additive_vmat_g_tcolor_8c2156b8.vtex',
+    'arc_warden_base_additive_vmat_g_tmasks1_6a828d53.vtex', 'arc_warden_detail_psd_52001dd5.vtex'];
+  source.addGlb(writeGlb({ json: {
+    materials: [{ name: 'arc_warden_base_additive', pbrMetallicRoughness: { baseColorTexture: { index: 0 } } }],
+    textures: [{ source: 0 }], images: names.map(name => ({ name, uri: 'data:image/png;base64,AAAA' })),
+  }, bin: new Uint8Array() }), { key: 'arc' });
+  const face = source.manifest.materials['arc::0'];
+  assert.equal(face.additive, true);
+  assert.equal(face.masks, 'arc-image-1');
+  assert.equal(face.detail, 'arc-image-2');
+  assert.equal(face.previewLighting, true);
+  source.dispose();
 });

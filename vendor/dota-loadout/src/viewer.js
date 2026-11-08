@@ -95,15 +95,25 @@ void main() {
 
   // A hero: his id (from options.assets), a hero folder's address (with hero.json inside), or
   // { manifest, url(path) } for bundlers.
-  async load(source) {
+  async load(source, prepare) {
     const ticket = ++this.loading;
     if (typeof source === 'string' && /^[a-z_0-9]+$/.test(source)) source = new URL(`heroes/${source}/`, this.assets).href;
     const { manifest, url } = typeof source === 'string' ? await fetchHero(source) : source;
     if (ticket !== this.loading) return null;
-    const manager = new THREE.LoadingManager(); manager.onProgress = (_, loaded, total) => this.options.onProgress?.(loaded, total);
+    const manager = new THREE.LoadingManager();
+    let pendingTextures = false, finishTextures;
+    manager.onStart = () => { pendingTextures = true; };
+    manager.onProgress = (_, loaded, total) => this.options.onProgress?.(loaded, total);
+    manager.onLoad = () => { pendingTextures = false; finishTextures?.(); };
     const hero = await buildHero(manifest, url, manager, this.time, this.light, this.textureScale);
+    try {
+      if (ticket === this.loading) await prepare?.(hero);
+    } catch (error) {
+      hero.dispose();
+      throw error;
+    }
     // Textures load in the background; the hero shows once they are all in.
-    await new Promise((done) => { if (!manager.itemsTotal || manager.itemsLoaded >= manager.itemsTotal) done(); else { manager.onLoad = done; manager.onError = () => {}; } });
+    if (pendingTextures && ticket === this.loading) await new Promise(done => { finishTextures = done; });
     if (ticket !== this.loading) { hero.dispose(); return null; }
     this.unload(); this.hero = hero; this.scene.add(hero.lib.group, hero.turntable);
     this.applyLighting(manifest.lighting || DEFAULT_LIGHTING, hero);
@@ -298,11 +308,15 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     let invokerKnot = false;
     scene.traverse(node => { if (node.isMesh && /crimson_taoist_head/i.test(node.userData.studioSourceName || node.name)) invokerKnot = true; });
     const skinned = [], rigid = [], extra = [], localBones = [];
-    const seenBones = new Set();
+    const seenBones = new Set(), privateBones = new Map();
+    const privateRoot = node => {
+      for (let bone = node; bone?.isBone; bone = bone.parent) if (boneKey(bone) === privateAnchor) return bone;
+      return null;
+    };
     scene.traverse((o) => { if (o.isSkinnedMesh) skinned.push(o); else if (o.isMesh) rigid.push(o); });
     for (const mesh of skinned) {
       const active=activeSkinJoints(mesh,attachmentSkinBones(attachmentRows));
-      const mapped = mesh.skeleton.bones.map((b, i) => { if(!active.has(i))return b; const own = originalHeroBones[boneKey(b)] || originalHeroBones[b.name.toLowerCase()]; const knot = invokerKnot && boneKey(b) === 'topknot_0'; const privateBone = boneKey(b) === privateAnchor; if (own && !knot && !privateBone) return own; if (b.parent && boneKey(b.parent) === privateAnchor) return b; if (invokerKnot && b.parent && boneKey(b.parent) === 'topknot_0') return b; const parent = (knot && originalHeroBones.head_1) || (b.parent && (originalHeroBones[boneKey(b.parent)] || originalHeroBones[b.parent.name.toLowerCase()])) || (manifest.id==='morphling'&&/^shark_(?:r|l)(?:_back)?_01_jnt$/.test(boneKey(b))?bones.root:null);
+      const mapped = mesh.skeleton.bones.map((b, i) => { if(!active.has(i))return b; const own = originalHeroBones[boneKey(b)] || originalHeroBones[b.name.toLowerCase()]; const knot = invokerKnot && boneKey(b) === 'topknot_0'; const anchor = privateRoot(b), privateBone = anchor === b; if (anchor) privateBones.set(boneKey(b), b); if (anchor && !privateBone) return b; if (own && !knot && !privateBone) return own; if (invokerKnot && b.parent && boneKey(b.parent) === 'topknot_0') return b; const parent = (knot && originalHeroBones.head_1) || (b.parent && (originalHeroBones[boneKey(b.parent)] || originalHeroBones[b.parent.name.toLowerCase()])) || (manifest.id==='morphling'&&/^shark_(?:r|l)(?:_back)?_01_jnt$/.test(boneKey(b))?bones.root:null);
         if (parent && !extra.some((x) => x.bone === b)) {
           // Where it hangs under the hero's bone, from the bind poses of the two: the item's own of
           // that bone (its weapon's bone, Pugna's sceptre, bound otherwise than his default one's),
@@ -326,7 +340,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
       mesh.bind(new THREE.Skeleton(mapped, mesh.skeleton.boneInverses), mesh.bindMatrix);
     }
     // Unskinned items stay as they are, beside the hero.
-    return { meshes: [...skinned, ...rigid], extra, localBones };
+    return { meshes: [...skinned, ...rigid], extra, localBones, privateBones };
   };
   // Register only joints belonging to equipment that is actually worn. This
   // restores another active joint after removing a same-named sword or cannon.
@@ -369,8 +383,8 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
       asset.studioTrackNodes.set(node.uuid, node);
       if (node.name && !asset.studioTrackNodes.has(node.name)) asset.studioTrackNodes.set(node.name, node);
     });
-    const privateAnchor = name.startsWith('part-') && asset.animations.length === 1
-      ? { loadout_ti7: 'weapon_root', timb_ti9_loadout: 'ripsawbase9_0' }[asset.animations[0].name]
+    const privateAnchor = name.startsWith('part-')
+      ? asset.animations.map(clip => ({ loadout_ti7: 'weapon_root', timb_ti9_loadout: 'ripsawbase9_0' })[clip.name]).find(Boolean)
       : undefined;
     const w = fit(asset.scene, manifest.attachments?.[name], privateAnchor);
     defaults.set(name, w);
@@ -404,10 +418,12 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   const mixer = new THREE.AnimationMixer(root), clips = new Map(heroModel.animations.map((a) => [a.name, a]));
   for (const [owner, model] of Object.entries(loaded)) {
     if (owner === 'hero' || owner === 'pedestal') continue;
-    const privateBones = new Map((worn.get(owner)?.extra ?? []).filter(x => x.privateBone).map(x => [x.key, x.bone]));
+    const fitted = worn.get(owner);
+    const privateBones = fitted?.privateBones ?? new Map();
+    const ownBones = new Map((fitted?.localBones ?? []).flatMap(({ bone, keys }) => keys.map(key => [key, bone])));
     const shared = privateBones.size ? new Set([...heroBoneNames].filter(key => !privateBones.has(key))) : heroBoneNames;
     mergeWearableClips(clips, model, manifest.wearableSequences?.[owner] ?? [], manifest.animations?.list ?? [], shared, boneKey,
-      node => privateBones.get(boneKey(node)) || bones[boneKey(node)] || root.getObjectByName(node.name),
+      node => privateBones.get(boneKey(node)) || ownBones.get(boneKey(node)) || bones[boneKey(node)] || root.getObjectByName(node.name),
       owner.startsWith('part-') ? manifest.animations?.idle : undefined);
   }
   const a = manifest.animations || {}, list = (a.list?.length ? [...a.list, ...[...clips.keys()].filter(name=>!a.list.some(x=>x.name===name)).map(name=>({name,loop:/(?:idle|run|walk|loadout)/i.test(name)}))] : [...clips.keys()].map((name) => ({ name,loop:/(?:idle|run|walk|loadout)/i.test(name) }))).filter((x) => clips.has(x.name));
@@ -500,8 +516,9 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   // Attachments by model: the hero's, and those of what each slot wears.
   const attachments = { ...manifest.attachments };
   const attachment = (name, owner, entity = 'self') => resolveModelAttachment(attachments,name,owner,entity);
-  const attachmentMatrix = (at) => {
-    const influence = i => { const bone = bones[at.bones[i].toLowerCase()]; if(!bone) return null;
+  const attachmentMatrix = (at, owner) => {
+    const local = Object.values(attachments[owner] || {}).includes(at) ? worn.get(owner) : null;
+    const influence = i => { const key = at.bones[i].toLowerCase(), bone = local?.privateBones?.get(key) || local?.localBones?.find(joint => joint.keys.includes(key))?.bone || bones[key]; if(!bone) return null;
       return toSource(bone.matrixWorld.clone().multiply(new THREE.Matrix4().compose(new THREE.Vector3(...at.offsets[i]).multiplyScalar(0.0254), new THREE.Quaternion(...at.rotations[i]), new THREE.Vector3(1,1,1)))); };
     if(at.bones.length===1&&!at.ignoreRotation)return influence(0);
     const position=new THREE.Vector3(),scale=new THREE.Vector3(),rotation=new THREE.Quaternion(0,0,0,0);let total=0,reference;
@@ -543,7 +560,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   const placeCP = (d, owner, origin) => {
     if (d.type === 'PATTACH_WORLDORIGIN') { const c = cpOf(origin); if (d.offset) c.pos.add(d.offset); return c; }
     const at = /POINT|CENTER/.test(d.type) && d.attachment ? attachment(d.attachment, owner, d.entity) : null;
-    const matrix = at && attachmentMatrix(at);
+    const matrix = at && attachmentMatrix(at, d.entity === 'parent' ? 'hero' : owner);
     if (d.attachment && /POINT|CENTER/.test(d.type) && !matrix) return null;
     const c = cpOf(matrix || origin);
     if (d.offset) c.pos.add(d.offset.clone().applyQuaternion(c.quat));
@@ -627,7 +644,16 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
       for (const [from, to] of Object.entries(w.style.particles)) { replaced.set(from, to); replacedBy.set(from, slot); }
       for (const [from, to] of Object.entries(w.style.snapshots)) lib.aliases.set(from, to);
     }
-    effects = list.map((e) => { const def = lib.system(replaced.get(e.system) ?? e.system); return def ? Object.assign(instance(def, replacedBy.get(e.system) || e.owner, driversFor(def, null)),{color:e.color??null}) : null; }).filter(Boolean);
+    effects = list.flatMap(e => {
+      const system = replaced.get(e.system) ?? e.system;
+      try {
+        const def = lib.system(system);
+        return def ? [{ ...instance(def, replacedBy.get(e.system) || e.owner, driversFor(def, null)), system, color: e.color ?? null }] : [];
+      } catch (error) {
+        lib.unsupported.add(`Particle setup failed: ${system} (${error?.message || error})`);
+        return [];
+      }
+    });
   };
   ambient();
 
@@ -671,29 +697,23 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     async studioEffects(patch) {
       if (studioDisposed) throw Object.assign(Error('Scene disposed'), {name:'AbortError'});
       const nextFiles = new Set(Object.values(patch.fxModels || {}).map(info => info.file));
+      const loadedProps = await Promise.all([...nextFiles].filter(file => !propModels[file]).map(async file => {
+        try { return [file, await loader.loadAsync(url(file))]; }
+        catch (error) { lib.unsupported.add(`Particle model failed to load: ${file} (${error?.message || error})`); return null; }
+      }));
+      if (studioDisposed) {
+        for (const row of loadedProps) if (row) disposeProp(row[1]);
+        throw Object.assign(Error('Scene disposed'), { name: 'AbortError' });
+      }
+      for (const row of loadedProps) if (row) {
+        propModels[row[0]] = row[1]; studioPropFiles.add(row[0]);
+      }
       for (const file of studioPropFiles) if (!nextFiles.has(file)) { disposeProp(propModels[file]); delete propModels[file]; studioPropFiles.delete(file); }
       for (const e of effects) e.sim.dispose(); effects = [];
       for (const e of live) e.sim.dispose(); live.length = 0;
       for (const { texture } of lib.cache.values()) texture?.dispose(); lib.cache.clear();
       lib.materials = patch.materials || {};lib.systems = patch.systems || {}; lib.textures = patch.textures || {}; lib.snapshots = patch.snapshots || {};
       for (const [path, def] of Object.entries(lib.systems)) if (def && !def._path) Object.defineProperty(def, '_path', { value: path });
-      for (const [path, info] of Object.entries(patch.fxModels || {})) {
-        if (propModels[info.file]) continue;
-        let gltf;
-        try {
-          gltf = await loader.loadAsync(url(info.file));
-        } catch (error) {
-          if (studioDisposed) throw Object.assign(Error('Scene disposed'), { name: 'AbortError' });
-          lib.unsupported.add(`Particle model failed to load: ${path} (${error?.message || error})`);
-          continue;
-        }
-        if (studioDisposed) {
-          disposeProp(gltf);
-          throw Object.assign(Error('Scene disposed'), { name: 'AbortError' });
-        }
-        propModels[info.file] = gltf;
-        studioPropFiles.add(info.file);
-      }
       manifest.fxModels = patch.fxModels || {}; manifest.effects = patch.effects || [];
       ambient();
       return { systems: effects.length, warnings: [...lib.unsupported] };
@@ -717,15 +737,22 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
       for (const p of props) { const later = props.some((q) => q !== p && q.file === p.file && q.sequence === p.sequence && q.frame > p.frame && q.at >= 0); p.scene.visible = p.at >= 0 && !later; if (p.scene.visible) p.mixer.setTime(p.at); }
       turntable.updateMatrixWorld(true); schedule();
       const origin = heroOrigin();
-      for (const e of effects) drive(e, origin);
-      for (const e of live) drive(e, origin);
-      for (const e of [...effects, ...live]) e.sim.update(dt);
+      const tick = list => {
+        for (let i = 0; i < list.length; i++) {
+          const e = list[i];
+          try { drive(e, origin); e.sim.update(dt); e.sim.render(camera, groupInverse); }
+          catch (error) {
+            lib.unsupported.add(`Particle runtime failed: ${e.system ?? e.owner} (${error?.message || error})`);
+            e.sim.dispose(); list.splice(i--, 1);
+          }
+        }
+      };
+      tick(effects); tick(live);
       // Spent effects go: stopped and empty, killed, or long past (a stray endless one). One that
       // outlives its animation by a second is stopped (Marci's taunt basket, which no event stops).
       for (let i = live.length - 1; i >= 0; i--) { const e = live[i]; e.born += dt;
         e.over = e.sequence === currentName ? 0 : (e.over || 0) + dt; if (e.over > 1) e.sim.stopEmission();
         if (e.kill || e.sim.finished || e.born > 20 || (e.born > 0.5 && e.sim.count() === 0 && e.sequence !== currentName)) { e.sim.dispose(); live.splice(i, 1); } }
-      for (const e of [...effects, ...live]) e.sim.render(camera, groupInverse);
     },
     // The rectangle the hero covers on screen (normalized device coordinates), with a small margin.
     screenBox(camera) {

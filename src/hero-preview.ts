@@ -32,7 +32,7 @@ import { bindItemParticle, particleReport, heroLoadoutParticles, itemParticles, 
 import type { createModelGlb } from './model-glb.ts';
 import type { Library } from './library.ts';
 
-import { entityModel, itemModel, monkeyKingCrown, previewStockHead, previewParticleReader, previewParticleReplacements, wornExtras, wornSkin } from './hero-preview-picks.ts';
+import { bodySkinFor, entityModel, itemModel, monkeyKingCrown, previewStockHead, previewParticleReader, previewParticleReplacements, wornExtras, wornSkin } from './hero-preview-picks.ts';
 
 export { entityModel, wornExtras, wornSkin } from './hero-preview-picks.ts';
 
@@ -83,7 +83,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     const hides = new Map<string, Map<string, number>>();
     const modifiers: string[] = [], bodyFx: string[] = [];
     const replacements = new Map<string, string>();
-    let authoredBodySkin: number | undefined;
+    let authoredBodySkin: number | undefined; const bodySkinVisuals: { visuals: string; item: string }[] = [];
     const swaps = new Map<string, Map<string, string>>();
     const given = new Map((personaLayouts(text).get(hero.replace(/^npc_dota_hero_/, ''))?.parts || []).map((x) => [x.slot, x.given?.id]));
     const equipped = library.list().filter((r) => r.categoryId === 'cosmetic' && r.enabled !== false && r.itemId);
@@ -117,12 +117,13 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
       const bodySlot = s.slot.endsWith(':hero_base');
       const swap = (styled && entityModel(styled.visuals, hero)) || picked?.body || (ioBody || (bodySlot && rec) ? model : null);
       if (swap) body = normalizeAssetPath(swap);
-      if (block) modifiers.push(...itemActivities(styled?.applied ? styled.visuals : block.text));
+      if (rec && styled?.visuals) bodySkinVisuals.push({ visuals: styled.visuals, item: String(rec.itemId) });
+      if (block) modifiers.push(...itemActivities(styled?.applied ? styled.visuals : block.text), ...(String(rec?.itemId) === '7571' ? ['aeons'] : []));
       const fx = itemParticles(styled?.applied ? styled.visuals : picked?.block || worn?.text || '');
       const fallbackSkin = Number(worn && itemFields(text, worn).get('skin')) || 0;
-      const skin = styled ? wornSkin(styled.visuals, fallbackSkin) : fallbackSkin;
+      const skin = styled ? wornSkin(styled.visuals, fallbackSkin, normalizeAssetPath(model)) : fallbackSkin;
       const styleInfo = chosenStyle > 0 ? { style: chosenStyle } : explicitBaseStyle ? { explicitBaseStyle: true } : {};
-      if (bodySlot || swap || ioBody) {
+      if (bodySlot || swap || ioBody || String(rec?.itemId) === '34368') {
         if (styled) for (const [from, to] of previewParticleReplacements(styled.visuals)) replacements.set(from, to);
         if (ioBody) for (const [from, to] of picked?.replacements ?? []) replacements.set(from, to);
         if (rec && (bodySlot || swap)) authoredBodySkin = wornSkin(styled?.visuals ?? '', fallbackSkin || (String(rec.itemId) === '7247' ? chosenStyle : 0));
@@ -134,11 +135,13 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
       for (const g of also.groups) hides.set(g.model, (hides.get(g.model) ?? new Map()).set(g.group, g.value));
       if (rec) swaps.set(s.slot, pickModels(text, String(rec.itemId), rec.effectId as string | undefined)?.swaps ?? new Map());
     }
+    for (const made of swaps.values()) if (made.has(body)) { body = made.get(body)!; break; }
     const headSlot = slots.find(slot => slot.slot.endsWith(':head'));
     const stockHead = previewStockHead(text, hero, body, ix, !!headSlot && equipped.some(row => row.slot === headSlot.slot));
     if (stockHead && !parts.some(part => part.slot.endsWith(':body_head') || part.model === stockHead)) parts.push({ slot: 'body_head', name: 'Head', model: stockHead, skin: 0, fx: [], clip: null, hidden: [] });
     const bodyFamily = styleFamily(body);
-    const bodySkin = bodyFamily && familyStyles.has(bodyFamily) ? familyStyles.get(bodyFamily)! : authoredBodySkin ?? 0;
+    const targetedSkin = bodySkinVisuals.reduce<number | undefined>((skin, { visuals, item }) => bodySkinFor(visuals, hero, body, hero === 'npc_dota_hero_primal_beast' && item === '24736') ?? skin, undefined);
+    const bodySkin = targetedSkin ?? (bodyFamily && familyStyles.has(bodyFamily) ? familyStyles.get(bodyFamily)! : authoredBodySkin ?? 0);
     for (const x of parts) {
       for (const [slot, made] of swaps) if (slot !== x.slot) x.model = normalizeAssetPath(made.get(x.model) || x.model);
       const file = ix.read(x.model.replace(/\.vmdl$/i, '.vmdl_c'));
@@ -146,10 +149,9 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
       const off = hides.get(x.model);
       if (off && file) x.hidden = hiddenMeshes(file, off);
     }
-    const bodyFile = ix.read(body.replace(/\.vmdl$/i, '.vmdl_c'));
-    const bodyOff = hides.get(body);
+    const bodyFile = ix.read(body.replace(/\.vmdl$/i, '.vmdl_c')), bodyOff = hides.get(body);
     const hidden = bodyOff && bodyFile ? hiddenMeshes(bodyFile, bodyOff) : [];
-    const seqs = modelSequences(ix.read(body.replace(/\.vmdl$/i, '.vmdl_c')));
+    const seqs = modelSequences(bodyFile);
     const clip = loadoutSequence(seqs, modifiers) ?? (hero === 'npc_dota_hero_wisp' ? wearableClip(seqs) : null);
     const idle = idleSequence(seqs) || IDLE;
     const script = ix.read(`scripts/npc/heroes/${hero}.txt`)?.toString('utf8') ?? null;
@@ -157,7 +159,6 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     const bindings = new Map(unusualEffects(text).map((effect) => [effect.system.toLowerCase(), effect]));
     return { body, bodySkin, bodyFx, replacements, clip, idle, bindings, motions: motionList(seqs, modifiers, itemModifiers(text)), stage, parts, hidden, heroFx: script ? heroLoadoutParticles(script) : [], read: (f) => ix.read(f) };
   }
-
   async function models(hero: string, slots: PreviewSlot[], hasTool: boolean): Promise<HeroModels> {
     if (!hasTool) return { ok: false, reason: 'no-tool' };
     let p: ReturnType<typeof plan>;
@@ -167,13 +168,13 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     const bodyFile = (await glb.glbs([p.body], bodyClips))[p.body];
     if (!bodyFile) return { ok: false, reason: 'no-body' };
     const styledBodyFile = p.bodySkin && glb.skinned
-      ? await glb.skinned(p.body, p.bodySkin, p.read(p.body.replace(/\.vmdl$/i, '.vmdl_c')), p.clip) : null;
+      ? await glb.skinned(p.body, p.bodySkin, p.read(p.body.replace(/\.vmdl$/i, '.vmdl_c')), bodyClips) : null;
     const pedestal = p.stage.pedestal;
     const files = await glb.glbs([...p.parts.filter((x) => !x.clip).map((x) => x.model), ...(pedestal ? [pedestal] : [])]);
     for (const clip of new Set(p.parts.flatMap((x) => x.clip ?? []))) Object.assign(files, await glb.glbs(p.parts.filter((x) => x.clip === clip).map((x) => x.model), [clip]));
     const missing: string[] = [];
     const parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[]; hidden: string[] }[] = [];
-    const modelInputs = [{ file: styledBodyFile || bodyFile, model: p.body }];
+    const modelInputs = [{ file: styledBodyFile || bodyFile, model: p.body, skin: p.bodySkin }];
     const styles: number[] = [];
     const particles: { part: number; def: ParticleDef }[] = [];
     const budget = { left: 256 };
@@ -193,7 +194,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
       if (!f) { missing.push(x.name || x.model); continue; }
       const model = p.read(x.model.replace(/\.vmdl$/i, '.vmdl_c'));
       const attachments = modelAttachments(model);
-      modelInputs.push({ file: f, model: x.model });
+      modelInputs.push({ file: f, model: x.model, skin: x.skin });
       styles.push(x.style ?? 0);
       parts.push({ slot: x.slot, name: x.name, glb: Buffer.alloc(0), attachments, hidden: x.hidden });
       const index = parts.length - 1;
@@ -216,7 +217,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     if (!particles.length && /\/wisp\/wisp\.vmdl$/i.test(p.body)) fx(-2, ['particles/units/heroes/hero_wisp/wisp_ambient.vpcf']);
     const stand = pedestal ? files[pedestal] : null;
     const cached = preparedModels;
-    const keyOf = ({ file, model }: typeof modelInputs[number]) => JSON.stringify([file, model]);
+    const keyOf = ({ file, model, skin }: typeof modelInputs[number]) => JSON.stringify([file, model, skin]);
     const pending = new Map(modelInputs.map(input => [keyOf(input), input]));
     for (const key of cached.keys()) pending.delete(key);
     const fresh = await loadoutModels([...pending.values()], p.read, glb);
@@ -251,7 +252,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     }
     const sprites = await spritesOf(definitions, resources);
     return {
-      ok: true, body: hidePreviewOnlyMeshes(body!), clip: p.clip, model: p.body, motions: p.motions, stage: p.stage, pedestal: stand ? embedGlb(stand) : null, parts, missing, hidden: p.hidden,
+      ok: true, body: hidePreviewOnlyMeshes(body!), clip: p.clip ?? p.idle, model: p.body, motions: p.motions, stage: p.stage, pedestal: stand ? embedGlb(stand) : null, parts, missing, hidden: p.hidden,
       attachments: modelAttachments(p.read(p.body.replace(/\.vmdl$/i, '.vmdl_c'))), particles, sprites, resources,
     };
   }

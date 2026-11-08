@@ -10,7 +10,7 @@ import { buildVpk, entryAt } from '../src/vpk.ts';
 import { writeGlb, readGlb } from '../src/glb-embed.ts';
 import { createHeroPreview, entityModel, wornSkin, wornExtras } from '../src/hero-preview.ts';
 
-import { monkeyKingCrown, previewStockHead, previewParticleReader, previewParticleReplacements } from '../src/hero-preview-picks.ts';
+import { bodySkinFor, monkeyKingCrown, previewStockHead, previewParticleReader, previewParticleReplacements } from '../src/hero-preview-picks.ts';
 import { withStyle } from '../src/item-builder-styles.ts';
 
 const jugg = `\t\t\t"used_by_heroes"\n\t\t\t{\n\t\t\t\t"npc_dota_hero_juggernaut"\t\t"1"\n\t\t\t}\n`;
@@ -206,5 +206,40 @@ test('Phantom Lancer retains his body head under Concord Reversion', () => {
     ]);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('Primal Beast body material modifiers respect the selected style and do not recolor the wearable', () => {
+  const hero = 'npc_dota_hero_primal_beast';
+  const body = 'models/heroes/primal_beast/primal_beast.vmdl';
+  const visuals = `"visuals" { "styles" { "0" { "name" "Frigid Indigo" } "1" { "name" "Rosy-Cheeked Ravager" } }
+    "asset_modifier0" { "type" "model_skin" "asset" "${body}" "style" "0" "skin" "2" }
+    "asset_modifier1" { "type" "model_skin" "asset" "${hero}" "style" "1" "skin" "3" }
+  }`;
+  assert.equal(bodySkinFor(visuals, hero, body), 2);
+  assert.equal(bodySkinFor(withStyle(visuals, 1).visuals, hero, body), 3);
+  assert.equal(wornSkin(visuals, 0, 'models/items/primal_beast/snowbeast_head.vmdl'), 0);
+});
+
+test('Tinker and Faceless Void can restore their stock face independently of the weapon slot', () => {
+  for (const name of ['tinker', 'faceless_void']) {
+    const body = `models/heroes/${name}/${name}.vmdl`, head = body.replace('.vmdl', '_head.vmdl');
+    assert.equal(previewStockHead(TABLE, 'npc_dota_hero_' + name, body, { has: p => p === head + '_c' }), head);
+    assert.equal(previewStockHead(TABLE, 'npc_dota_hero_' + name, body, { has: p => p === head + '_c' }, true), null);
+  }
+});
+
+test('Snowbeast uses separate authored indexes for the head and Primal Beast body', () => {
+  const visuals = `"visuals" {
+    "asset_modifier" { "type" "model_skin" "skin" "1" "style" "0" }
+    "asset_modifier" { "type" "model_skin" "skin" "2" "style" "1" }
+    "styles" { "0" { "skin" "0" } "1" { "skin" "1" } }
+  }`;
+  const body = 'models/heroes/primal_beast/primal_beast_base.vmdl';
+  for (const style of [0, 1]) {
+    const selected = withStyle(visuals, style).visuals;
+    assert.equal(wornSkin(selected), style);
+    assert.equal(bodySkinFor(selected, 'npc_dota_hero_primal_beast', body, true), style + 1);
+    assert.equal(bodySkinFor(selected, 'npc_dota_hero_primal_beast', body), undefined);
   }
 });

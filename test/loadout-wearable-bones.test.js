@@ -26,3 +26,19 @@ test('hero bone bindings cannot be replaced by an item of the same name',()=>{
   s.attach(w);s.detach(w);
   assert.equal(own.root.name,'hero');assert.equal(inverse.root,9);
 });
+
+test('Mace of Aeons idle animates the plates during both hero idle and loadout', async () => {
+  const { AnimationClip, Bone, Group, VectorKeyframeTrack } = await import('three');
+  const { mergeWearableClips } = await import('../vendor/dota-loadout/src/wearable-clips.js');
+  const scene = new Group();
+  const staff = new Bone(), plate = new Bone();
+  staff.name = 'staff_1';
+  plate.name = 'plate_01';
+  scene.add(staff);
+  staff.add(plate);
+  const track = name => new VectorKeyframeTrack(name + '.position', [0, 1], [0, 0, 0, 0, 1, 0]);
+  const model = { scene, animations: [new AnimationClip('idle', 1, [track(staff.name), track(plate.name)])] };
+  const clips = new Map(['idle', 'aeons_loadout'].map(name => [name, new AnimationClip(name, 1, [])]));
+  mergeWearableClips(clips, model, [], [], new Set([staff.name]), bone => bone.name, bone => bone, 'aeons_loadout');
+  for (const clip of clips.values()) assert.deepEqual(clip.tracks.map(t => t.name), [plate.uuid + '.position']);
+});
