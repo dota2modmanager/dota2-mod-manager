@@ -1424,8 +1424,8 @@
   "Snow Dagon": "积雪 达贡之神力",
   "Green Dagon": "绿色 达贡之神力",
   "White Dagon": "白色 达贡之神力",
-  "GG Iron Branch": "精彩对局 铁 树枝",
-  "Christmas Iron Branch": "圣诞 铁 树枝",
+  "GG Iron Branch": "精彩对局 铁树枝干",
+  "Christmas Iron Branch": "圣诞 铁树枝干",
   "White Ethereal": "白色 虚灵",
   "Purple Hex": "紫色 变羊",
   "Winter Hex": "冬季 变羊",
@@ -1576,5 +1576,13 @@
   "Japanese Background": "日式背景",
   "Girl Resting Under Tree": "树下休憩的少女",
   "Stylish Cat": "时髦猫咪",
-  "Main Menu 7.00 Style": "7.00 风格主菜单"
+  "Main Menu 7.00 Style": "7.00 风格主菜单",
+  "Declaration of the Divine Light": "圣光宣言天辉防御塔",
+  "Declaration of the Divine Shadow": "圣影宣言夜魇防御塔",
+  "Grasp of the Elder Gods Radiant": "古神之势 - 天辉防御塔",
+  "Grasp of the Elder Gods Dire": "古神之势 - 夜魇防御塔",
+  "Guardians of the Lost Path Radiant": "失落之径的卫士 - 天辉防御塔",
+  "Guardians of the Lost Path Dire": "失落之径的卫士 - 夜魇防御塔",
+  "Stoneclaw Scavengers Radiant": "石爪清道夫天辉防御塔",
+  "Stoneclaw Scavengers Dire": "石爪清道夫夜魇防御塔"
 }
