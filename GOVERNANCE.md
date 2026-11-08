@@ -36,12 +36,13 @@ question "what happens if one person stops".
 [docs/second-maintainer.md](docs/second-maintainer.md) is the whole of it, including what to do on
 the day it matters.
 
-**Maintainers: J0nathan550 ([@J0nathan550](https://github.com/J0nathan550)) and h6rd
-([@h6rd](https://github.com/h6rd)).** Both have landed a run of pull requests here: J0nathan550 the
-arcanas in the item builder and fixes across the app, h6rd the item builder itself. They hold the
-Maintain role on the repository: they review and merge pull requests, manage issues and labels,
-and cut releases by the procedure in [RELEASING.md](RELEASING.md). They do not change the
-repository's settings, its branch rule or its secrets; those stay with the two owners above.
+**Maintainers: J0nathan550 ([@J0nathan550](https://github.com/J0nathan550)), h6rd
+([@h6rd](https://github.com/h6rd)) and HarlordLeg ([@HarlordLeg](https://github.com/HarlordLeg)).**
+All three have landed pull requests here: J0nathan550 the arcanas in the item builder and fixes
+across the app, h6rd the item builder itself, HarlordLeg the hero loadout renderer in the 3D preview.
+They hold the Maintain role on the repository: they review and merge pull requests, manage issues
+and labels, and cut releases by the procedure in [RELEASING.md](RELEASING.md). They do not change
+the repository's settings, its branch rule or its secrets; those stay with the two owners above.
 
 **Contributors.** Anybody who opens an issue, a pull request or a translation.
 [CONTRIBUTING.md](CONTRIBUTING.md) says what a change has to carry; nothing else is expected, and
@@ -71,6 +72,7 @@ two people voting only ever tie.
 | [@Nersaa](https://github.com/Nersaa) | Second maintainer | 2026-09-23 |
 | [@J0nathan550](https://github.com/J0nathan550) | Maintainer | 2026-10-29 |
 | [@h6rd](https://github.com/h6rd) | Maintainer | 2026-10-29 |
+| [@HarlordLeg](https://github.com/HarlordLeg) | Maintainer | 2026-11-08 |
 
 Land changes over time, show the care this project asks for, and you can be invited. The
 maintainer invites, the row goes in this table, so the list of people who can merge is the same
