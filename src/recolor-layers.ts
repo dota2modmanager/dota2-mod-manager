@@ -11,18 +11,21 @@
  * effect is every particle its visuals name, with the children those particles create (RERL).
  *
  * The body is the colour textures of his model's materials (materials/models/heroes/<model folder>/,
- * *_color_*.vtex_c), the folder his script's "Model" is in.
+ * *_color_*.vtex_c), the folder his script's "Model" is in. An item's own colour is the colour
+ * textures its model's materials name (`itemModel:<id>`), apart from its effect.
  *
  * Particles take the colour through src/recolor.ts (the colours written in them move to the chosen
  * hue); pictures and textures through `shadePixels` below, the same move pixel by pixel. */
 import { shade, type Rgb } from './recolor.ts';
+import { readLoadoutMaterial } from './loadout-material.ts';
+import { references } from './resource.ts';
 
 /** What a layer recolours. */
-export type LayerKind = 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item';
+export type LayerKind = 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item' | 'itemModel';
 
 /** One part of a hero that takes a colour of its own. */
 export interface RecolorLayer {
-  /** `ability:<name>`, `abilityIcon:<name>`, `effects`, `portrait`, `body`, `item:<id>` */
+  /** `ability:<name>`, `abilityIcon:<name>`, `effects`, `portrait`, `body`, `item:<id>`, `itemModel:<id>` */
   id: string;
   kind: LayerKind;
   /** the ability's or the item's name, for the window to word */
@@ -79,10 +82,10 @@ function claims(ability: string, hero: string, particle: string): boolean {
  * The layers a hero has, from the paths in pak01. A layer with no files is left out: a hero with no
  * picture for an ability, or an ability with no particle of its own, shows no row for it.
  * @param hero  the hero's name in his npc name, `juggernaut` for npc_dota_hero_juggernaut
- * @param items the items picked for him, with the particles their visuals name
+ * @param items the items he wears, with the particles their visuals name and their model's colour textures
  * @param model the folder of his model (`heroModelFolder`), for the body's textures
  */
-export function heroLayers(paths: Iterable<string>, hero: string, abilities: string[], items: { id: string; name: string; particles: string[] }[] = [], model: string | null = null): RecolorLayer[] {
+export function heroLayers(paths: Iterable<string>, hero: string, abilities: string[], items: { id: string; name: string; particles: string[]; textures?: string[] }[] = [], model: string | null = null): RecolorLayer[] {
   const all = [...paths];
   const folder = heroParticleFolder(all, hero);
   const own = all.filter((p) => p.startsWith(folder) && p.endsWith('.vpcf_c'));
@@ -112,6 +115,9 @@ export function heroLayers(paths: Iterable<string>, hero: string, abilities: str
   for (const item of items) {
     const files = item.particles.map((p) => p.toLowerCase().replace(/\.vpcf$/, '.vpcf_c')).filter((p) => present.has(p));
     if (files.length) layers.push({ id: `item:${item.id}`, kind: 'item', name: item.name, files: [...new Set(files)] });
+    // after the body's: an item's own colour wins over the body's on a texture they share
+    const textures = (item.textures ?? []).filter((p) => present.has(p));
+    if (textures.length) layers.push({ id: `itemModel:${item.id}`, kind: 'itemModel', name: item.name, files: [...new Set(textures)] });
   }
   return layers;
 }
@@ -150,4 +156,30 @@ export function shadePixels(pixels: Buffer, target: Rgb, { bgra = false }: { bgr
     changed++;
   }
   return changed;
+}
+
+/**
+ * The colour textures a model's materials name, as compiled paths: a model names its meshes and
+ * materials (RERL), a material its textures, and the colour is g_tColor. An item's own colour.
+ */
+export function modelColorTextures(models: string[], read: (path: string) => Buffer | null): string[] {
+  const out = new Set<string>();
+  const seen = new Set<string>();
+  const queue = models.map((m) => m.toLowerCase().replace(/_c$/, ''));
+  for (let i = 0; i < queue.length && seen.size < 256; i++) {
+    const p = queue[i];
+    if (seen.has(p)) continue;
+    seen.add(p);
+    const file = read(`${p}_c`);
+    if (!file) continue;
+    if (p.endsWith('.vmat')) {
+      const color = readLoadoutMaterial(file)?.textures.g_tColor;
+      if (color) out.add(`${color.toLowerCase().replace(/_c$/, '')}_c`);
+      continue;
+    }
+    try {
+      queue.push(...references(file).map((r) => r.toLowerCase().replace(/_c$/, '')).filter((r) => /\.(vmat|vmesh)$/.test(r)));
+    } catch { /* a file that names nothing */ }
+  }
+  return [...out];
 }

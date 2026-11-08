@@ -186,6 +186,7 @@ the code, not in this page.
 | [`src/ready-presets-format.ts`](#srcready-presets-formatts) | The ready-made presets' format (config/presets.json, issue #391): a short list of builds picked |
 | [`src/ready-presets.ts`](#srcready-presetsts) | The ready-made presets (issue #391): config/presets.json on main, fetched and checked the way the |
 | [`src/recolor-layers.ts`](#srcrecolor-layersts) | A hero in colours of the user's choosing, part by part (issue #422): each ability's effect and its |
+| [`src/recolor-modes.ts`](#srcrecolor-modests) | How a picture takes its layer's colour in the hero's recolour (issue #422): the window offers a |
 | [`src/recolor-sets.ts`](#srcrecolor-setsts) | What src/recolor.ts can recolour: each item's particle and material folders, the colour of the |
 | [`src/recolor.ts`](#srcrecolorts) | An item's effects in a colour of the user's choosing, built from the game's own files. |
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog for the "What's new" window and Home. |
@@ -3874,23 +3875,23 @@ after the update's repair has answered; the record's mark goes when that is done
 ### `PaintGenerated`
 
 ```ts
-export interface PaintGenerated { paint: string; label: string; layers: Record<string, string> }
+export interface PaintGenerated { paint: string; label: string; layers: Record<string, string>; items?: string[] }
 ```
 
-What a hero's paint record was built from: the hero, and each layer's colour as #rrggbb.
+What a hero's paint record was built from: the hero, each layer's colour as '#rrggbb[:mode]', and the stock items he wore.
 
 ### `PaintLayerView`
 
 ```ts
-export interface PaintLayerView { id: string; kind: RecolorLayer['kind']; name: string | null; files: number }
+export interface PaintLayerView { id: string; kind: RecolorLayer['kind']; name: string | null; files: number; particles?: string[] }
 ```
 
-One layer as the window lists it.
+One layer as the window lists it; an effect layer with its particles, for the 3D preview to tint.
 
 ### `createHeroPaint`
 
 ```ts
-export function createHeroPaint({ gamePath, installer, library, vanilla, repaint, vrf = () => null, compile, decode = vrfPng, lang = () => 'en', onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** the game's own item table */ vanilla: () => string; /** a PNG in the chosen colour; Electron's codec in the app, a fake in tests */ repaint: (png: Buffer, color: Rgb) => Buffer
+export function createHeroPaint({ gamePath, installer, library, vanilla, repaint, vrf = () => null, compile, decode = vrfPng, lang = () => 'en', onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** the game's own item table */ vanilla: () => string; /** a PNG in the chosen colour and mode (src/recolor-modes.ts); Electron's codec in the app, a fake in tests */ repaint: (png: Buffer, color: Rgb, mode: PaintMode) => Buffer
 ```
 
 The service the paint:* channels call.
@@ -10753,7 +10754,8 @@ no ability claims are the hero's other effects: the attack, the crit, the portra
 effect is every particle its visuals name, with the children those particles create (RERL).
 
 The body is the colour textures of his model's materials (materials/models/heroes/<model folder>/,
-*_color_*.vtex_c), the folder his script's "Model" is in.
+*_color_*.vtex_c), the folder his script's "Model" is in. An item's own colour is the colour
+textures its model's materials name (`itemModel:<id>`), apart from its effect.
 
 Particles take the colour through src/recolor.ts (the colours written in them move to the chosen
 hue); pictures and textures through `shadePixels` below, the same move pixel by pixel.
@@ -10761,7 +10763,7 @@ hue); pictures and textures through `shadePixels` below, the same move pixel by 
 ### `LayerKind`
 
 ```ts
-export type LayerKind = 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item'
+export type LayerKind = 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item' | 'itemModel'
 ```
 
 What a layer recolours.
@@ -10801,7 +10803,7 @@ The folder a hero's own particles are in.
 ### `heroLayers`
 
 ```ts
-export function heroLayers(paths: Iterable<string>, hero: string, abilities: string[], items: { id: string; name: string; particles: string[] }[] = [], model: string | null = null): RecolorLayer[]
+export function heroLayers(paths: Iterable<string>, hero: string, abilities: string[], items: { id: string; name: string; particles: string[]; textures?: string[] }[] = [], model: string | null = null): RecolorLayer[]
 ```
 
 The layers a hero has, from the paths in pak01. A layer with no files is left out: a hero with no
@@ -10809,7 +10811,7 @@ picture for an ability, or an ability with no particle of its own, shows no row 
 
 ```
 @param hero  the hero's name in his npc name, `juggernaut` for npc_dota_hero_juggernaut
-@param items the items picked for him, with the particles their visuals name
+@param items the items he wears, with the particles their visuals name and their model's colour textures
 @param model the folder of his model (`heroModelFolder`), for the body's textures
 ```
 
@@ -10834,6 +10836,129 @@ export function shadePixels(pixels: Buffer, target: Rgb, { bgra = false }: { bgr
 Pixels moved to the chosen colour in place, as `shade` moves a particle's colours: greys stay,
 the rest take the chosen hue. `rgba` is four bytes a pixel; `bgra` says the red and blue are
 swapped, as Electron's bitmaps have them on Windows.
+
+### `modelColorTextures`
+
+```ts
+export function modelColorTextures(models: string[], read: (path: string) => Buffer | null): string[]
+```
+
+The colour textures a model's materials name, as compiled paths: a model names its meshes and
+materials (RERL), a material its textures, and the colour is g_tColor. An item's own colour.
+
+## src/recolor-modes.ts
+
+How a picture takes its layer's colour in the hero's recolour (issue #422): the window offers a
+mode beside the colour, and the build, the window's pictures (renderer/catalog/paint/shade.ts)
+and the 3D preview's shader (vendor/dota-loadout/src/material.js, studioPaint) all move a pixel
+by the same rule, so what the 3D hero shows is what the game will.
+
+  tint   greys stay; the rest take the hue, their saturation and brightness scaled by the colour's
+         (the rule particles follow too, src/recolor.ts shade)
+  keep   greys stay; the rest take the hue alone, so every shade and highlight of the item stays
+  full   every pixel takes the hue and the colour's saturation: the item painted over, greys too
+  rgb    greys stay; the hue runs once round the wheel across the texture, from the colour's own
+
+A layer's colour travels as '#rrggbb' or '#rrggbb:mode'; the plain form is tint, which is how
+every record made before the modes reads.
+
+### `Rgb`
+
+```ts
+export type Rgb = [number, number, number]
+```
+
+How a picture takes its layer's colour in the hero's recolour (issue #422): the window offers a
+mode beside the colour, and the build, the window's pictures (renderer/catalog/paint/shade.ts)
+and the 3D preview's shader (vendor/dota-loadout/src/material.js, studioPaint) all move a pixel
+by the same rule, so what the 3D hero shows is what the game will.
+
+  tint   greys stay; the rest take the hue, their saturation and brightness scaled by the colour's
+         (the rule particles follow too, src/recolor.ts shade)
+  keep   greys stay; the rest take the hue alone, so every shade and highlight of the item stays
+  full   every pixel takes the hue and the colour's saturation: the item painted over, greys too
+  rgb    greys stay; the hue runs once round the wheel across the texture, from the colour's own
+
+A layer's colour travels as '#rrggbb' or '#rrggbb:mode'; the plain form is tint, which is how
+every record made before the modes reads.
+
+### `PaintMode`
+
+```ts
+export type PaintMode = 'tint' | 'keep' | 'full' | 'rgb'
+```
+
+How a picture takes its layer's colour; the comment at the top of this file says what each does.
+
+### `PAINT_MODES`
+
+```ts
+export const PAINT_MODES: readonly PaintMode[] = ['tint', 'keep', 'full', 'rgb']
+```
+
+The modes in the order the window offers them.
+
+### `parsePaint`
+
+```ts
+export function parsePaint(value: unknown): { hex: string; mode: PaintMode } | null
+```
+
+A layer's colour and mode out of '#rrggbb[:mode]'; null for anything else.
+
+### `paintValue`
+
+```ts
+export const paintValue = (hex: string, mode: PaintMode = 'tint'): string => (mode === 'tint' ? hex.toLowerCase() : `${hex.toLowerCase()}:${mode}`)
+```
+
+'#rrggbb' for tint, '#rrggbb:mode' for the rest.
+
+### `rgbOfHex`
+
+```ts
+export const rgbOfHex = (hex: string): Rgb => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as Rgb
+```
+
+'#rrggbb' as its three channels.
+
+### `hsv`
+
+```ts
+export function hsv([r, g, b]: Rgb): Rgb
+```
+
+h in [0, 1), s and v in [0, 1].
+
+### `fromHsv`
+
+```ts
+export function fromHsv([h, s, v]: Rgb): Rgb
+```
+
+A colour out of `hsv`'s h, s and v, back to 0-255 channels.
+
+### `paintPixel`
+
+```ts
+export function paintPixel(from: Rgb, target: Rgb, mode: PaintMode, u = 0, v = 0): Rgb | null
+```
+
+One pixel in the colour, by the mode; null where it stays as it is.
+
+```
+@param target the colour as HSV (`hsv`), worked out once for the whole picture
+@param u,v    where the pixel is on the texture, 0 to 1: the rainbow runs along them
+```
+
+### `paintPixels`
+
+```ts
+export function paintPixels(pixels: Buffer | Uint8ClampedArray, width: number, color: Rgb, mode: PaintMode, { bgra = false }: { bgra?: boolean } = {}): number
+```
+
+A bitmap moved to the colour in place, four bytes a pixel; `bgra` says red and blue are swapped,
+as Electron's bitmaps have them on Windows. Answers how many pixels changed.
 
 ## src/recolor-sets.ts
 
@@ -12297,7 +12422,7 @@ Build every service over this userData folder.
 ### `electronRepaint`
 
 ```ts
-export function electronRepaint(png: Buffer, color: Rgb): Buffer
+export function electronRepaint(png: Buffer, color: Rgb, mode: PaintMode = 'tint'): Buffer
 ```
 
 A PNG in the chosen colour through Electron's image codec, which hands its pixels over as BGRA.

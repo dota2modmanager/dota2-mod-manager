@@ -714,6 +714,8 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     lastTime = now;
   };
   let studioMaterialGems = null;
+  // the recolour window's paint per material: [h, s, v, mode], applied as it changes
+  let studioMaterialPaints = null;
   let studioDisposed = false; const studioPropFiles = new Set();
   const studioParts = new Map();
   const releasePart = (owner) => {
@@ -838,6 +840,10 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
       }
     },
     studioGemMaterials(colors) { studioMaterialGems = colors; },
+    studioPaintMaterials(paints) {
+      studioMaterialPaints = paints;
+      for (const [name, material] of materials) { const p = paints?.[name]; material.userData.paint?.(p ? p.slice(0, 3) : null, p ? p[3] : 0); }
+    },
     studioEffectsVisible(visible) { lib.group.visible = !!visible; },
  animations: list.map((x) => ({ ...x, loop: loops.has(x.name), duration: clips.get(x.name).duration })),
     play: (name) => start(name),
@@ -848,6 +854,8 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
         const blend = 1 - Math.exp(-dt * 20);
         for (const [name, material] of materials) material.userData.gem?.(studioMaterialGems[name] ?? null, blend);
       }
+      // a material made after the paint came (an item put on since) takes it too
+      if (studioMaterialPaints) for (const [name, material] of materials) { const p = studioMaterialPaints[name]; material.userData.paint?.(p ? p.slice(0, 3) : null, p ? p[3] : 0); }
       mixer.update(dt); for (const w of worn.values()) w.companion?.mixer.update(dt);
       // A later event with the same model in the same animation takes over (Ringmaster's box: built, then broken).
       for (const p of props) p.at = currentName === p.sequence && current ? current.time - p.frame / 30 : -1;

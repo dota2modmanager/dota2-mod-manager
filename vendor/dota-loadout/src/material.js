@@ -88,6 +88,14 @@ export function heroMaterial(m, texture, time, light, cube = null) {
     }
   };
   if (m.specGem) uniforms.uSpecColor.value.copy(srgb(m.specGem));
+  // The recolour window paints the colour texture the way its build will (src/recolor-modes.ts):
+  // mode 0 off, 1 tint, 2 hue only, 3 whole, 4 rainbow over the texture. The target is HSV.
+  uniforms.uPaintMode = { value: 0 };
+  uniforms.uPaintHsv = { value: new THREE.Vector3() };
+  material.userData.paint = (hsv, mode) => {
+    uniforms.uPaintMode.value = hsv ? mode : 0;
+    if (hsv) uniforms.uPaintHsv.value.set(hsv[0], hsv[1], hsv[2]);
+  };
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
     shader.fragmentShader = shader.fragmentShader
@@ -97,9 +105,33 @@ uniform sampler2D tExponent, tMasks, tSpec, tDetail, tFresnel, tDiffuseWarp; uni
 uniform float uMetalness, uPreviewLighting;
 uniform mat3 uToSource;${useCube ? '\nuniform samplerCube tCube;' : ''}
 uniform float uGlowMix; uniform vec3 uGlowTint;
+uniform float uPaintMode; uniform vec3 uPaintHsv;
+vec3 paintHsv(vec3 c) {
+  vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+  vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+  vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+  float d = q.x - min(q.w, q.y);
+  return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + 1e-10)), d / (q.x + 1e-10), q.x);
+}
+vec3 paintRgb(vec3 c) {
+  vec3 p = abs(fract(c.xxx + vec3(1.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0);
+  return c.z * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), c.y);
+}
+vec3 studioPaint(vec3 linear, vec2 uv) {
+  if (uPaintMode < 0.5) return linear;
+  vec3 hsv = paintHsv(pow(max(linear, vec3(0.0)), vec3(1.0 / 2.2)));
+  vec3 t = uPaintHsv, next;
+  if (uPaintMode > 2.5 && uPaintMode < 3.5) next = vec3(t.x, t.y, min(1.0, hsv.z * t.z));
+  else if (hsv.y < 0.1) return linear;
+  else if (uPaintMode < 1.5) next = vec3(t.x, min(1.0, hsv.y * t.y), min(1.0, hsv.z * t.z));
+  else if (uPaintMode < 2.5) next = vec3(t.x, hsv.y, hsv.z);
+  else next = vec3(fract(t.x + (fract(uv.x) + fract(uv.y)) * 0.5), max(hsv.y, 0.6), min(1.0, hsv.z * max(t.z, 0.5) * 1.2));
+  return pow(paintRgb(next), vec3(2.2));
+}
 uniform vec3 uRimColor, uSpecColor, uDetailTint, uLightDir, uLightColor, uAmbientDir, uAmbientColor, uAmbientTint, uShadowColor, uUp;`)
       .replace('#include <opaque_fragment>', `${m.color ? '' : 'vec2 vMapUv = vec2(0.0);'}
 vec4 heroMasks = texture2D(tMasks, vMapUv), heroSpec = texture2D(tSpec, vMapUv), heroDetailTex = texture2D(tDetail, vMapUv * uDetailScale + fract(uDetailScroll * uTime));
+diffuseColor.rgb = studioPaint(diffuseColor.rgb, vMapUv);
 vec3 heroBase = diffuseColor.rgb, heroV = normalize(vViewPosition), heroR = reflect(-heroV, normal);
 vec4 heroWarp = texture2D(tFresnel, vec2(clamp(dot(normal, heroV), 0.0, 1.0), 0.5));
 float heroDetail = heroMasks.r * uDetailBlend, heroNL = dot(normal, uLightDir), heroExponent = uSpecExponent * ${m.exponent ? 'texture2D(tExponent, vMapUv).r' : m.normal ? 'texture2D(normalMap, vNormalMapUv).b' : '1.0'};

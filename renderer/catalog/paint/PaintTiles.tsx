@@ -1,18 +1,21 @@
 /* The pieces of the recolour window (PaintModal.tsx): a colour well, a layer's switch with its colour,
  * and a tile that shows a part of the hero in the colours it is getting. An icon layer that is on
  * shades the picture as the build will (shade.ts); an effect layer that is on rings it in its colour,
- * since an effect has no picture of its own to shade. A click on a picture switches the layer that
- * shades it, or an item's only layer, its effect. */
+ * since an effect has no picture of its own to shade. A click on a picture picks its layer for the
+ * editor above (PaintEditor.tsx); a click on a layer's name switches it, and picks it when it goes on. */
 import type { CSSProperties, ReactNode } from 'react';
 import { CosThumb } from '../builder/parts.tsx';
 import { useShaded } from './shade.ts';
+import type { PaintMode } from './paint-mode.ts';
 
 /** One switch and colour, for one layer. */
-export interface PaintCell { id: string; on: boolean; color: string }
+export interface PaintCell { id: string; on: boolean; color: string; mode: PaintMode; selected: boolean }
 
 export interface CellActions {
   toggle: (id: string) => void;
   color: (id: string, hex: string) => void;
+  /** the layer the editor works on */
+  select: (id: string) => void;
 }
 
 /** A colour well: the system's picker under a round swatch. */
@@ -27,7 +30,7 @@ export function Swatch({ color, label, onColor, id, cls = '' }: { color: string;
 /** A layer's switch, its name on it, and its colour beside it. */
 export function Chip({ cell, label, actions }: { cell: PaintCell; label: string; actions: CellActions }) {
   return (
-    <span className={`paint-chip ${cell.on ? 'on' : ''}`} data-layer={cell.id} style={{ '--c': cell.color } as CSSProperties}>
+    <span className={`paint-chip ${cell.on ? 'on' : ''} ${cell.selected ? 'sel' : ''}`} data-layer={cell.id} style={{ '--c': cell.color } as CSSProperties}>
       <button className="paint-chip-btn" role="switch" aria-checked={cell.on} onClick={() => actions.toggle(cell.id)}>{label}</button>
       <Swatch color={cell.color} label={label} onColor={(hex) => actions.color(cell.id, hex)} cls="sm" />
     </span>
@@ -36,18 +39,20 @@ export function Chip({ cell, label, actions }: { cell: PaintCell; label: string;
 
 const ring = (fx: PaintCell | null): CSSProperties | undefined => (fx?.on ? { '--fx': fx.color } as CSSProperties : undefined);
 
-/** A picture that is the switch of the layer shading it; without that layer, just the picture. */
+/** A picture that picks the layer it shows for the editor; without a layer, just the picture. */
 function Pic({ layer, label, cls, style, actions, children }: {
   layer: PaintCell | null; label: string; cls: string; style?: CSSProperties; actions: CellActions; children: ReactNode;
 }) {
   if (!layer) return <span className={cls} style={style}>{children}</span>;
   return (
-    <button className={`${cls} paint-pic-btn`} style={style} role="switch" aria-checked={layer.on} aria-label={label} title={label}
-      data-layer={layer.id} onClick={() => actions.toggle(layer.id)}>
+    <button className={`${cls} paint-pic-btn`} style={style} aria-pressed={layer.selected} aria-label={label} title={label}
+      data-pick={layer.id} onClick={() => actions.select(layer.id)}>
       {children}
     </button>
   );
 }
+
+const picked = (...cells: (PaintCell | null)[]) => cells.some((c) => c?.selected);
 
 /**
  * An ability: its icon, shaded while its icon layer is on, ringed while its effect is.
@@ -56,11 +61,11 @@ function Pic({ layer, label, cls, style, actions, children }: {
 export function AbilityTile({ name, picture, effect, icon, actions }: {
   name: string; picture: string | null; effect: PaintCell | null; icon: PaintCell | null; actions: CellActions;
 }) {
-  const shown = useShaded(picture, icon?.on ? icon.color : null);
+  const shown = useShaded(picture, icon?.on ? icon.color : null, icon?.mode);
   const on = !!(effect?.on || icon?.on);
   return (
-    <div className={`paint-tile ${on ? 'on' : ''}`}>
-      <Pic layer={icon} label={`${name}: ${L`Иконка`}`} cls={`paint-pic ${effect?.on ? 'fx' : ''}`} style={ring(effect)} actions={actions}>
+    <div className={`paint-tile ${on ? 'on' : ''} ${picked(effect, icon) ? 'sel' : ''}`}>
+      <Pic layer={effect ?? icon} label={name} cls={`paint-pic ${effect?.on ? 'fx' : ''}`} style={ring(effect)} actions={actions}>
         {shown ? <img src={shown} alt="" draggable={false} /> : <span className="ms">bolt</span>}
       </Pic>
       <span className="paint-tile-name" title={name}>{name}</span>
@@ -72,37 +77,41 @@ export function AbilityTile({ name, picture, effect, icon, actions }: {
   );
 }
 
-/** An item picked for the hero: its picture, ringed while its effects are getting a colour. */
-export function ItemTile({ name, cell, actions }: { name: string; cell: PaintCell; actions: CellActions }) {
+/** An item the hero wears: its picture, ringed while its effects are getting a colour; its own colour and its effect as layers. */
+export function ItemTile({ name, model, effect, actions }: { name: string; model: PaintCell | null; effect: PaintCell | null; actions: CellActions }) {
   return (
-    <div className={`paint-tile ${cell.on ? 'on' : ''}`}>
-      <Pic layer={cell} label={`${name}: ${L`Эффект`}`} cls={`paint-pic wide ${cell.on ? 'fx' : ''}`} style={ring(cell)} actions={actions}>
+    <div className={`paint-tile ${model?.on || effect?.on ? 'on' : ''} ${picked(model, effect) ? 'sel' : ''}`}>
+      <Pic layer={model ?? effect} label={name} cls={`paint-pic wide ${effect?.on ? 'fx' : ''} ${model?.on ? 'tinted' : ''}`}
+        style={{ ...ring(effect), ...(model?.on ? { '--c': model.color } : {}) } as CSSProperties} actions={actions}>
         <CosThumb name={name} fallback="checkroom" cls="paint-pic-img" />
       </Pic>
       <span className="paint-tile-name" title={name}>{name}</span>
-      <span className="paint-chips"><Chip cell={cell} label={L`Эффект`} actions={actions} /></span>
+      <span className="paint-chips">
+        {model && <Chip cell={model} label={L`Цвет`} actions={actions} />}
+        {effect && <Chip cell={effect} label={L`Эффект`} actions={actions} />}
+      </span>
     </div>
   );
 }
 
-/** The hero himself, as the game's hero selection shows him: the portrait shaded while its layer is on, ringed while his effects are. */
-export function HeroCard({ name, picture, effects, portrait, body, actions, children }: {
-  name: string; picture: string | null; effects: PaintCell | null; portrait: PaintCell | null; body: PaintCell | null;
-  actions: CellActions; children?: ReactNode;
+/** The hero's own layers under his stage: his other effects, his icon and portrait, his body. */
+export function HeroLayers({ name, picture, effects, portrait, body, actions }: {
+  name: string; picture: string | null; effects: PaintCell | null; portrait: PaintCell | null; body: PaintCell | null; actions: CellActions;
 }) {
-  const shown = useShaded(picture, portrait?.on ? portrait.color : null);
+  const shown = useShaded(picture, portrait?.on ? portrait.color : null, portrait?.mode);
   return (
-    <aside className="paint-hero">
+    <div className="paint-hero-row">
       <Pic layer={portrait} label={L`Иконка и портрет`} cls={`paint-portrait ${effects?.on ? 'fx' : ''}`} style={ring(effects)} actions={actions}>
         {shown ? <img src={shown} alt="" draggable={false} /> : <span className="ms">person</span>}
       </Pic>
-      <span className="paint-hero-name">{name}</span>
-      <span className="paint-hero-chips">
-        {effects && <Chip cell={effects} label={L`Атака и прочее`} actions={actions} />}
-        {portrait && <Chip cell={portrait} label={L`Иконка и портрет`} actions={actions} />}
-        {body && <Chip cell={body} label={L`Тело`} actions={actions} />}
-      </span>
-      {children}
-    </aside>
+      <div className="paint-hero-side">
+        <span className="paint-hero-name">{name}</span>
+        <span className="paint-hero-chips">
+          {body && <Chip cell={body} label={L`Тело`} actions={actions} />}
+          {effects && <Chip cell={effects} label={L`Атака и прочее`} actions={actions} />}
+          {portrait && <Chip cell={portrait} label={L`Иконка и портрет`} actions={actions} />}
+        </span>
+      </div>
+    </div>
   );
 }
