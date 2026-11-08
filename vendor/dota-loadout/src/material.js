@@ -69,7 +69,7 @@ export function heroMaterial(m, texture, time, light, cube = null) {
   const missingReflection = m.previewLighting && m.expectsReflectionCube;
   uniforms.uMetalness = { value: useCube ? 1 : m.metalnessWithoutCube ?? (missingReflection ? 0.45 : 1) };
   uniforms.uPreviewLighting = { value: m.previewLighting ? 1 : 0 };
-  material.customProgramCacheKey = () => JSON.stringify([!!m.color, !!m.exponent, !!m.normal, m.detailMode, useCube, !!m.cubeByMetalness, !!m.unlit, bakedGlow]);
+  material.customProgramCacheKey = () => JSON.stringify([!!m.color, !!m.exponent, !!m.normal, m.detailMode, useCube, !!m.cubeByMetalness, !!m.unlit, bakedGlow, !!m.workshopMasks, !!m.selfIllum, !!m.masks, !!m.specular]);
   material.userData.hero = uniforms;
   // The hero's prismatic gem colours the detail (and the specular) of the materials that read it;
   // without one they take their own colour back. hex: '#rrggbb' or null.
@@ -130,7 +130,13 @@ vec3 studioPaint(vec3 linear, vec2 uv) {
 }
 uniform vec3 uRimColor, uSpecColor, uDetailTint, uLightDir, uLightColor, uAmbientDir, uAmbientColor, uAmbientTint, uShadowColor, uUp;`)
       .replace('#include <opaque_fragment>', `${m.color ? '' : 'vec2 vMapUv = vec2(0.0);'}
-vec4 heroMasks = texture2D(tMasks, vMapUv), heroSpec = texture2D(tSpec, vMapUv), heroDetailTex = texture2D(tDetail, vMapUv * uDetailScale + fract(uDetailScroll * uTime));
+vec4 heroMasks = texture2D(tMasks, vMapUv), heroSpec = texture2D(tSpec, vMapUv);
+${m.workshopMasks ? `// the game's own masks, in the Workshop's layout: masks 1 R detail, G diffuse warp, B metalness,
+// A self-illumination (only where F_SELF_ILLUM is on); masks 2 R specular, G rim, B tint, A exponent
+vec4 heroRaw1 = ${m.masks ? 'heroMasks' : 'vec4(0.0)'}, heroRaw2 = ${m.specular ? 'heroSpec' : 'vec4(0.0)'};
+heroMasks = vec4(heroRaw1.r, ${m.selfIllum ? 'heroRaw1.a' : '0.0'}, heroRaw2.g, heroRaw1.g);
+heroSpec = vec4(heroRaw2.r, heroRaw1.b, heroRaw2.b, heroRaw2.a);` : ''}
+vec4 heroDetailTex = texture2D(tDetail, vMapUv * uDetailScale + fract(uDetailScroll * uTime));
 diffuseColor.rgb = studioPaint(diffuseColor.rgb, vMapUv);
 vec3 heroBase = diffuseColor.rgb, heroV = normalize(vViewPosition), heroR = reflect(-heroV, normal);
 vec4 heroWarp = texture2D(tFresnel, vec2(clamp(dot(normal, heroV), 0.0, 1.0), 0.5));

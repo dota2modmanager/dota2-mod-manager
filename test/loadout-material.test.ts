@@ -72,4 +72,7 @@ test('an NTRO material names its textures through RERL, and keeps its shader and
   assert.equal(m.textures.g_tMasks1, 'materials/models/heroes/abaddon/abaddon_body_masks1_tga.vtex');
   // a hero material read is drawn by the hero shader, not as a translucent stand-in
   assert.equal(loadoutDescriptor(m).translucent, false);
+  // the game's own masks, in the Workshop's layout, which the renderer reads in its own order unless told
+  assert.equal(loadoutDescriptor(m).workshopMasks, true);
+  assert.equal(loadoutDescriptor(m).selfIllum, false, 'self-illumination only where F_SELF_ILLUM is on');
 });
