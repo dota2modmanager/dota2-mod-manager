@@ -3883,7 +3883,7 @@ What a hero's paint record was built from: the hero, each layer's colour as '#rr
 ### `PaintLayerView`
 
 ```ts
-export interface PaintLayerView { id: string; kind: RecolorLayer['kind']; name: string | null; files: number; particles?: string[] }
+export interface PaintLayerView { id: string; kind: RecolorLayer['kind']; name: string | null; files: number; particles?: string[]; shares?: string[] }
 ```
 
 One layer as the window lists it; an effect layer with its particles, for the 3D preview to tint.
@@ -10845,6 +10845,17 @@ export function modelColorTextures(models: string[], read: (path: string) => Buf
 
 The colour textures a model's materials name, as compiled paths: a model names its meshes and
 materials (RERL), a material its textures, and the colour is g_tColor. An item's own colour.
+
+### `withShares`
+
+```ts
+export function withShares(layers: RecolorLayer[]): { layer: RecolorLayer; shares: string[] }[]
+```
+
+Each layer with the other items' colour layers it shares a texture with. Two worn items can be
+drawn from one texture (Troll Warlord's four axes, Alchemist's bottles): the game gives that
+texture one colour, so the window moves those layers together rather than show two colours the
+game will not.
 
 ## src/recolor-modes.ts
 

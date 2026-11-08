@@ -15,6 +15,8 @@ export interface PaintEditorModel {
   picture: boolean;
   on: boolean;
   gems: { key: string; name: string; hex: string }[];
+  /** the other items drawn from the same texture, which take this colour too */
+  shared?: string;
 }
 
 export interface PaintEditorActions {
@@ -50,6 +52,7 @@ export function PaintEditor({ m, actions }: { m: PaintEditorModel; actions: Pain
             {m.id === null ? L`Цвет и режим для всех включённых. Нажми на часть героя, чтобы покрасить её отдельно.`
               : m.picture ? L`Цвет этой части; режим говорит, как текстура его берёт.` : L`Эффект берёт только цвет: его частицы окрашиваются в выбранный тон.`}
           </div>
+          {m.shared && <div className="text-meta paint-shared"><span className="ms">link</span>{L`Общая текстура с: ${m.shared}. В игре у них один цвет, поэтому они красятся вместе.`}</div>}
         </div>
         {m.id !== null && (
           <span className="paint-editor-tools">

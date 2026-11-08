@@ -183,3 +183,18 @@ export function modelColorTextures(models: string[], read: (path: string) => Buf
   }
   return [...out];
 }
+
+/**
+ * Each layer with the other items' colour layers it shares a texture with. Two worn items can be
+ * drawn from one texture (Troll Warlord's four axes, Alchemist's bottles): the game gives that
+ * texture one colour, so the window moves those layers together rather than show two colours the
+ * game will not.
+ */
+export function withShares(layers: RecolorLayer[]): { layer: RecolorLayer; shares: string[] }[] {
+  const owners = new Map<string, string[]>();
+  for (const l of layers) if (l.kind === 'itemModel') for (const f of l.files) owners.set(f, [...(owners.get(f) ?? []), l.id]);
+  return layers.map((layer) => ({
+    layer,
+    shares: layer.kind === 'itemModel' ? [...new Set(layer.files.flatMap((f) => owners.get(f) ?? []))].filter((id) => id !== layer.id) : [],
+  }));
+}

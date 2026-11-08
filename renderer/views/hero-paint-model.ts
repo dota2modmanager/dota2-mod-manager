@@ -47,5 +47,7 @@ export function editorOf(st: EditorSource): PaintEditorModel {
     picture,
     on: st.on.has(layer.id),
     gems: st.gems,
+    // the items it shares a texture with, which take its colour too
+    ...(layer.shares?.length ? { shared: layer.shares.map((id) => st.layers.find((l) => l.id === id)?.name || id).join(', ') } : {}),
   };
 }

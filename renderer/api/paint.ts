@@ -7,6 +7,8 @@ export interface PaintLayer {
   id: string; kind: 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item' | 'itemModel'; name: string | null; files: number;
   /** an effect layer's particles, compiled paths: the 3D preview tints those it plays */
   particles?: string[];
+  /** an item's colour layer: the other items' that share a texture with it, and so a colour */
+  shares?: string[];
 }
 
 /** A hero recoloured part by part (src/hero-paint-service.ts). */

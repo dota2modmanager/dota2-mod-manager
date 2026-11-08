@@ -16,7 +16,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { heroAbilities, heroLayers, heroModelFolder, modelColorTextures, withChildren, type RecolorLayer } from './recolor-layers.ts';
+import { heroAbilities, heroLayers, heroModelFolder, modelColorTextures, withChildren, withShares, type RecolorLayer } from './recolor-layers.ts';
 import { recolorResource, type Rgb } from './recolor.ts';
 import { parsePaint, rgbOfHex, type PaintMode } from './recolor-modes.ts';
 import { references } from './resource.ts';
@@ -36,7 +36,7 @@ import type { LibRecord } from './types.ts';
 export interface PaintGenerated { paint: string; label: string; layers: Record<string, string>; items?: string[]; left?: number }
 
 /** One layer as the window lists it; an effect layer with its particles, for the 3D preview to tint. */
-export interface PaintLayerView { id: string; kind: RecolorLayer['kind']; name: string | null; files: number; particles?: string[] }
+export interface PaintLayerView { id: string; kind: RecolorLayer['kind']; name: string | null; files: number; particles?: string[]; shares?: string[] }
 
 const HERO = /^[a-z0-9_]{2,40}$/;
 const ITEM_ID = /^\d{1,9}$/;
@@ -183,7 +183,10 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
         compileList.push(css);
       }
       const wanted = new Set(list.map((p) => p.path));
-      const out = await compile({ id: 'hero_paint', files, compile: compileList });
+      // Valve's compiler now and then dies of an access violation after it has written its output
+      // (seen on Batrider among twelve running at once): one more try before the pictures stay as they are
+      const job = { id: 'hero_paint', files, compile: compileList };
+      const out = await compile(job).catch((e: Error) => { log(`hero paint: compiling again after: ${e.message.slice(0, 200)}`); return compile(job); });
       return out.flatMap((e) => {
         const p = entryPath(e);
         const own = /^materials\/d2mm_paint\/(t\d+)_png_[0-9a-f]+\.vtex_c$/.exec(p);
@@ -225,8 +228,9 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
       const rec = mine(hero);
       const g = rec?.generated as PaintGenerated | undefined;
       return {
-        layers: layers(hero, wornOf([...wornOf(items), ...(g?.items ?? [])])).map((l) => ({
+        layers: withShares(layers(hero, wornOf([...wornOf(items), ...(g?.items ?? [])]))).map(({ layer: l, shares }) => ({
           id: l.id, kind: l.kind, files: l.files.length,
+          ...(shares.length ? { shares } : {}),
           name: l.kind === 'item' || l.kind === 'itemModel' ? l.name! : l.name ? names.get(`dota_tooltip_ability_${l.name}`) || l.name : null,
           // what the 3D preview may play of an effect layer, to show it in its colour there
           ...(l.kind === 'item' || l.kind === 'effects' ? { particles: l.files.slice(0, 400) } : {}),

@@ -112,4 +112,6 @@ test("the editor works on the layer picked, or on every layer that is on; only p
   const fx = editorOf({ ...base, selected: 'item:7' });
   assert.deepEqual([fx.mode, fx.picture, fx.on, fx.color], ['tint', false, false, '#7f5af0']);
   assert.equal(editorOf({ ...base, selected: 'gone' }).id, null, 'a layer that went away hands the editor back to all');
+  const shared = editorOf({ ...base, layers: [...LAYERS.map((l) => (l.id === 'itemModel:7' ? { ...l, shares: ['itemModel:8'] } : l)), { id: 'itemModel:8', kind: 'itemModel', name: 'Spectral Shadow Back', files: 1 }], selected: 'itemModel:7' });
+  assert.equal(shared.shared, 'Spectral Shadow Back', 'the editor names the items that share its texture');
 });

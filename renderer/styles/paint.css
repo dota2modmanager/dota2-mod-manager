@@ -132,3 +132,5 @@ span.paint-stage-fallback { font-size: var(--icon-xl); color: var(--text-faint);
 @media (prefers-reduced-motion: reduce) {
   .paint-portrait, .paint-pic, .paint-tile, .paint-chip, .paint-swatch, .paint-ready, .paint-mode { transition: none; }
 }
+.paint-shared { display: flex; align-items: center; gap: var(--space-1); }
+.paint-shared .ms { font-size: var(--icon-sm, 16px); color: var(--primary); }

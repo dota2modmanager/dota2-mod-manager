@@ -171,3 +171,16 @@ test("a worn item's own colour is its model's colour texture, painted in the mod
   await new Promise((r) => setTimeout(r, 50));
   assert.deepEqual(painted.at(-1), ['0,255,0', 'keep'], 'the rebuild after an update paints the item again');
 });
+
+test("Valve's compiler that dies once is tried again before the pictures stay as they are", async (t) => {
+  let calls = 0;
+  const w = world(t, {
+    vrf: () => 'vrf.exe',
+    decode: async () => Buffer.from('decoded'),
+    compile: async () => { if (calls++ === 0) throw new Error('Encountered accessviolation.'); return [entryAt(PORTRAIT, Buffer.from('compiled'))]; },
+  });
+  const rec = await w.paint.install('juggernaut', { portrait: '#0000ff' }, 'Juggernaut');
+  assert.equal(calls, 2);
+  assert.equal(pakOf(w.lang, rec).read(PORTRAIT)?.toString(), 'compiled');
+  assert.equal((rec.generated as { left?: number }).left, undefined);
+});

@@ -142,12 +142,15 @@ function draw(key: number, st: PaintState): void {
     gettingTool: st.gettingTool,
   };
   const redraw = () => draw(key, st);
+  // items drawn from one texture take one colour in the game: their layers move together
+  const linked = (id: string) => [id, ...(st.layers.find((l) => l.id === id)?.shares ?? [])];
   const toggle = (id: string) => {
-    if (st.on.has(id)) st.on.delete(id);
-    else { st.on.add(id); st.selected = id; }
+    const off = st.on.has(id);
+    for (const x of linked(id)) if (off) st.on.delete(x); else st.on.add(x);
+    if (!off) st.selected = id;
     redraw();
   };
-  const color = (id: string, hex: string) => { st.colors.set(id, hex); st.on.add(id); redraw(); };
+  const color = (id: string, hex: string) => { for (const x of linked(id)) { st.colors.set(x, hex); st.on.add(x); } redraw(); };
   showPaintModal(key, m, {
     back: st.back,
     close: closeOverlay,
@@ -162,7 +165,7 @@ function draw(key: number, st: PaintState): void {
         redraw();
       },
       mode: (mode) => {
-        if (st.selected) { st.modes.set(st.selected, mode); st.on.add(st.selected); redraw(); return; }
+        if (st.selected) { for (const x of linked(st.selected)) { st.modes.set(x, mode); st.on.add(x); } redraw(); return; }
         st.allMode = mode;
         for (const id of st.on) st.modes.set(id, mode);
         redraw();

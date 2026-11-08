@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { heroAbilities, heroLayers, heroModelFolder, heroParticleFolder, shadePixels, withChildren } from '../src/recolor-layers.ts';
+import { heroAbilities, heroLayers, heroModelFolder, heroParticleFolder, shadePixels, withChildren, withShares } from '../src/recolor-layers.ts';
 
 const SCRIPT = `"DOTAHeroes"
 {
@@ -88,4 +88,18 @@ test("the body is the colour textures in his model's folder, not its masks or a 
     `${dir}juggernaut_fresnelwarprim_tga_1128410f.vtex_c`, `${dir}old/juggernaut_color_psd_1.vtex_c`, `${dir}juggernaut_sword_color_tga_ab12.vtex_c`], 'juggernaut', [], [], 'juggernaut');
   assert.deepEqual(body.map((l) => [l.id, l.files]), [['body', [`${dir}juggernaut_torso_color_psd_4087f5cf.vtex_c`, `${dir}juggernaut_sword_color_tga_ab12.vtex_c`]]]);
   assert.deepEqual(heroLayers([`${dir}juggernaut_torso_color_psd_4087f5cf.vtex_c`], 'juggernaut', []), [], 'no model folder, no body');
+});
+
+test("items drawn from one texture are told of each other, so the window moves them together", () => {
+  // Troll Warlord's axes, as the game has them: two items, one texture between them, and the body's too
+  const axe = 'materials/models/heroes/troll_warlord/troll_warlord_axe_large_color_psd_903ae5e5.vtex_c';
+  const rows = withShares([
+    { id: 'body', kind: 'body', files: [axe, 'materials/models/heroes/troll_warlord/troll_body_color.vtex_c'] },
+    { id: 'itemModel:373', kind: 'itemModel', name: 'Axe', files: [axe] },
+    { id: 'itemModel:374', kind: 'itemModel', name: 'Axe off-hand', files: [axe] },
+    { id: 'itemModel:375', kind: 'itemModel', name: 'Head', files: ['materials/models/heroes/troll_warlord/head_color.vtex_c'] },
+  ]);
+  assert.deepEqual(rows.map((r) => [r.layer.id, r.shares]), [
+    ['body', []], ['itemModel:373', ['itemModel:374']], ['itemModel:374', ['itemModel:373']], ['itemModel:375', []],
+  ]);
 });
