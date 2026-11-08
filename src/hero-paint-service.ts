@@ -33,7 +33,7 @@ import type { Library } from './library.ts';
 import type { LibRecord } from './types.ts';
 
 /** What a hero's paint record was built from: the hero, each layer's colour as '#rrggbb[:mode]', and the stock items he wore. */
-export interface PaintGenerated { paint: string; label: string; layers: Record<string, string>; items?: string[] }
+export interface PaintGenerated { paint: string; label: string; layers: Record<string, string>; items?: string[]; left?: number }
 
 /** One layer as the window lists it; an effect layer with its particles, for the 3D preview to tint. */
 export interface PaintLayerView { id: string; kind: RecolorLayer['kind']; name: string | null; files: number; particles?: string[] }
@@ -203,7 +203,9 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
     if (!entries.size) throw new Error(t('Ни один файл не взял цвет'));
     const vpk = buildVpk([...entries.values()]);
     const count = entries.size;
-    const g: PaintGenerated = { paint: hero, label, layers: colors, ...(worn.length ? { items: worn } : {}) };
+    // pictures the tools could not build again stay as the game has them; the window says how many
+    const left = compressed.filter((c) => !entries.has(c.path)).length;
+    const g: PaintGenerated = { paint: hero, label, layers: colors, ...(worn.length ? { items: worn } : {}), ...(left ? { left } : {}) };
     const name = t('Перекраска: {0}', label);
     const old = mine(hero);
     log(`hero paint: ${hero}, ${Object.keys(colors).length} layer(s), ${count} file(s)`);

@@ -200,7 +200,10 @@ async function apply(key: number, st: PaintState): Promise<void> {
   } else {
     st.installed = want;
     await refreshInstalledIndex();
-    toast(L`Готово: ${st.label} в новых цветах. Запусти игру, чтобы увидеть.`, 'ok');
+    // textures Valve's compiler could not build again went in as the game has them: say so, not "done"
+    const left = (r.record.generated as { left?: number } | undefined)?.left ?? 0;
+    if (left) toast(L`${st.label}: частицы перекрашены, но текстур осталось как в игре: ${left}. Их собирает компилятор из Dota 2 Workshop Tools, подробности в журнале.`, 'error', 10000);
+    else toast(L`Готово: ${st.label} в новых цветах. Запусти игру, чтобы увидеть.`, 'ok');
   }
   draw(key, st);
 }

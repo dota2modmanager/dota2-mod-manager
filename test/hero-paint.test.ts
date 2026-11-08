@@ -121,12 +121,14 @@ test("a compressed picture is read out by ValveResourceFormat and compiled again
   const css = jobs[0].files.find((f) => f.path === jobs[0].compile.find((p) => p.endsWith('.css')))!.data.toString();
   assert.ok(css.includes('url("file://{images}/heroes/icons/npc_dota_hero_juggernaut.png")'), css);
   assert.equal(pakOf(w.lang, rec).read(PORTRAIT)?.toString(), 'compiled');
+  assert.equal((rec.generated as { left?: number }).left, undefined, 'nothing left out');
   assert.equal(pakOf(w.lang, rec).read('panorama/styles/d2mm_hero_paint.vcss_c'), null, "the style that named it is not the game's to load");
 
   const broken = world(t, { vrf: () => 'vrf.exe', decode: async () => Buffer.from('decoded'), compile: async () => { throw new Error('no compiler'); } });
   const still = await broken.paint.install('juggernaut', { 'ability:juggernaut_blade_fury': '#00ff00', portrait: '#0000ff' }, 'Juggernaut');
   assert.deepEqual(furyColor(broken.lang, still), [40, 255, 40], 'a compiler that fails leaves the pictures out, not the particles');
   assert.equal(pakOf(broken.lang, still).read(PORTRAIT), null);
+  assert.equal((still.generated as { left?: number }).left, 1, 'the record says how many pictures stayed as the game has them');
 });
 
 const HELM = 'models/items/juggernaut/helm/helm.vmdl';

@@ -3875,7 +3875,7 @@ after the update's repair has answered; the record's mark goes when that is done
 ### `PaintGenerated`
 
 ```ts
-export interface PaintGenerated { paint: string; label: string; layers: Record<string, string>; items?: string[] }
+export interface PaintGenerated { paint: string; label: string; layers: Record<string, string>; items?: string[]; left?: number }
 ```
 
 What a hero's paint record was built from: the hero, each layer's colour as '#rrggbb[:mode]', and the stock items he wore.
