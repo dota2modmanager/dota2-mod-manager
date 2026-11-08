@@ -390,7 +390,9 @@ GPL — в [NOTICE](NOTICE).
 **[Harlord](https://discord.com/users/436420477511139329)** ([dota-studio.lol](https://dota-studio.lol/),
 [Telegram](https://t.me/harlord_mods)): отсюда многие идеи приложения. Посадка предметов на героя,
 вид 3D-просмотра и сборка предметов файлами без таблицы. Harlord разрешил тестировать
-dota-studio.lol и брать оттуда идеи, код здесь наш.
+dota-studio.lol и брать оттуда идеи, код здесь наш. Под именем
+[HarlordLeg](https://github.com/HarlordLeg) Harlord сделал движок набора героя в 3D-просмотре и с
+2026-11-08 входит в мейнтейнеры.
 
 **Обновления Доты** читаются из [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2)
 от [SteamTracking](https://github.com/SteamTracking): там каждая сборка Доты появляется текстом в
