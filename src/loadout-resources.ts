@@ -3,6 +3,7 @@ import { references } from './resource.ts';
 import { dataTree, type ParticleDef, type Json } from './particle-spec.ts';
 import { snapshotPoints } from './particle-snapshot.ts';
 import { embedGlb, readGlb, writeGlb } from './glb-embed.ts';
+import { modelSkinMaterials } from './model-skin.ts';
 import { loadoutSheet } from './loadout-sheet.ts';
 import { readLoadoutMaterial, loadoutDescriptor, LOADOUT_MASKS } from './loadout-material.ts';
 import type { LoadoutResources } from '../renderer/api/preview3d.ts';
@@ -74,31 +75,64 @@ function modelMaterials(model: string, read: (path: string) => Buffer | null) {
 
 /** Export all material masks together so VRF opens the game archive once per batch. */
 export async function loadoutModels(
-  models: { file: string; model: string }[], read: (path: string) => Buffer | null,
+  models: { file: string; model: string; skin?: number }[], read: (path: string) => Buffer | null,
   glb: Exporter, onMissing?: (model: string) => void,
 ): Promise<(Buffer | null)[]> {
-  const found = models.map(({ model }) => modelMaterials(model, read));
-  const wanted=[...new Set(found.flatMap(map => [...map.values()]).flatMap(m=>Object.values(LOADOUT_MASKS).flatMap(k=>m.textures[k]??[])))];
-  const textures=glb.sprites&&wanted.length?await glb.sprites(wanted):{};
-  return models.map(({ file, model }, index) => {
+  const prepared = models.map(({ file, model, skin }) => {
     try {
-      const { json, bin } = readGlb(embedGlb(file));
-      const materials: Record<string, unknown> = {};
-      for (const [path, material] of found[index]) {
-        const images: Record<string, { mime: string; data: string }> = {};
-        for (const [field, key] of Object.entries(LOADOUT_MASKS)) {
-          const bytes = textures[material.textures[key]];
-          if (bytes) images[field] = { mime: 'image/png', data: bytes.toString('base64') };
-        }
-        materials[path] = { descriptor: loadoutDescriptor(material), images };
+      const glb = readGlb(embedGlb(file));
+      const materials = modelMaterials(model, read);
+      const json = glb.json as typeof glb.json & {
+        materials?: { name?: string; pbrMetallicRoughness?: { baseColorTexture?: { index: number } } }[];
+        textures?: { source?: number; extensions?: { EXT_texture_webp?: { source: number } } }[];
+      };
+      const key = (name: string) => plain(name.replace(/\\/g, '/')).replace(/\.vmat$/, '');
+      const base = (name: string) => key(name).split('/').at(-1);
+      const missingColor = new Set<string>();
+      const swaps = skin ? modelSkinMaterials(read(plain(model) + '_c'), skin) : new Map<string, string>();
+      const names = [...new Set([...materials.keys(), ...[...swaps.keys()].map(plain)])];
+      for (const material of json.materials ?? []) {
+        const index = material.pbrMetallicRoughness?.baseColorTexture?.index;
+        const texture = index === undefined ? undefined : json.textures?.[index];
+        const image = texture?.extensions?.EXT_texture_webp?.source ?? texture?.source;
+        const name = material.name ?? '';
+        const aliases = names.filter(path => base(path) === base(name));
+        const found = names.find(path => key(path) === key(name)) ?? (aliases.length === 1 ? aliases[0] : undefined);
+        if (!found) continue;
+        const alternate = swaps.get(found) ?? swaps.get(found + '_c');
+        const path = alternate && plain(alternate);
+        const native = path && safe(path) ? readLoadoutMaterial(read(path + '_c')) : null;
+        if (native?.textures.g_tColor) {
+          materials.set(found, native);
+          missingColor.add(found);
+        } else if (image === undefined || !json.images?.[image]) missingColor.add(found);
       }
-      const meta = json as typeof json & { extras?: Record<string, unknown> };
-      meta.extras = { ...meta.extras, dotaStudio: { sourceModel: model, materials } };
-      return writeGlb(meta, bin);
+      return { model, glb, materials, missingColor };
     } catch (error) {
       if (!onMissing) throw error;
       onMissing(model);
       return null;
     }
+  });
+  const roles = (recoverColor: boolean) => recoverColor ? { ...LOADOUT_MASKS, color: 'g_tColor' } : LOADOUT_MASKS;
+  const wanted = [...new Set(prepared.flatMap(row => row ? [...row.materials].flatMap(([path, material]) =>
+    Object.values(roles(row.missingColor.has(path))).flatMap(key => material.textures[key] ? [plain(material.textures[key])] : [])) : []))];
+  const textures = glb.sprites && wanted.length ? await glb.sprites(wanted) : {};
+  return prepared.map(row => {
+    if (!row) return null;
+    const { glb: { json, bin }, model, missingColor } = row;
+    const materials: Record<string, unknown> = {};
+    for (const [path, material] of row.materials) {
+      const images: Record<string, { mime: string; data: string }> = {};
+      for (const [field, key] of Object.entries(roles(missingColor.has(path)))) {
+        const asset = material.textures[key];
+        const bytes = asset ? textures[plain(asset)] : null;
+        if (bytes) images[field] = { mime: 'image/png', data: bytes.toString('base64') };
+      }
+      materials[path] = { descriptor: loadoutDescriptor(material), images };
+    }
+    const meta = json as typeof json & { extras?: Record<string, unknown> };
+    meta.extras = { ...meta.extras, dotaStudio: { sourceModel: model, materials } };
+    return writeGlb(meta, bin);
   });
 }

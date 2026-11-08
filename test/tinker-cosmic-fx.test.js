@@ -52,3 +52,15 @@ test('other heroes keep their current blob appearance',()=>{
  const t=blobAppearance('materials/models/particle/sphere_fire2.vmat',{});
  assert.equal(t.metalness,0.35);assert.equal(t.clearcoat,1);assert.equal(t.opacity,0.9);
 });
+
+test('preview preserves diffuse color when a reflective material has no cube', async () => {
+ const {heroMaterial}=await import('../vendor/dota-loadout/src/material.js');
+ const descriptor={previewLighting:true,expectsReflectionCube:true};
+ const fallback=heroMaterial(descriptor,()=>null,{value:0},{});
+ const reflected=heroMaterial({...descriptor,cube:'environment'},()=>null,{value:0},{},()=>null);
+ const native=heroMaterial({...descriptor,previewLighting:false},()=>null,{value:0},{});
+ assert.equal(fallback.userData.hero.uMetalness.value,0.45);
+ assert.equal(reflected.userData.hero.uMetalness.value,1);
+ assert.equal(native.userData.hero.uMetalness.value,1);
+ for(const material of [fallback,reflected,native]) material.dispose();
+});

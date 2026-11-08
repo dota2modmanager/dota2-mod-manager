@@ -27,6 +27,23 @@ function materials(n: Kv3Node, out: Extract<Kv3Node, { kind: 'string' }>[] = [])
   return out;
 }
 
+function materialSwaps(groups: Kv3Node[], skin: number): Map<string, string> {
+  const plain = items(member(groups[0], 'm_materials')).map(text);
+  const chosen = items(member(groups[skin], 'm_materials')).map(text);
+  return new Map(plain.flatMap((material, i) => chosen[i] && chosen[i].toLowerCase() !== material.toLowerCase()
+    ? [[material.toLowerCase(), chosen[i]] as const] : []));
+}
+
+/** The native material substitutions for a preview skin, including external meshes. */
+export function modelSkinMaterials(model: Buffer | null, skin: number): Map<string, string> {
+  if (!model || !skin) return new Map();
+  try {
+    return materialSwaps(items(member(readKv3(resourceBlock(model, 'DATA').data).root, 'm_materialGroups')), skin);
+  } catch {
+    return new Map();
+  }
+}
+
 /** `model` wearing material set `skin` by default; null where it has no such set or no mesh of its own to change. */
 export function withSkin(model: Buffer, skin: number): Buffer | null {
   if (!skin) return model;
@@ -34,9 +51,7 @@ export function withSkin(model: Buffer, skin: number): Buffer | null {
     const data = readKv3(resourceBlock(model, 'DATA').data);
     const groups = member(data.root, 'm_materialGroups');
     if (groups?.kind !== 'array' || skin >= groups.items.length) return null;
-    const plain = items(member(groups.items[0], 'm_materials')).map(text);
-    const chosen = items(member(groups.items[skin], 'm_materials')).map(text);
-    const swap = new Map<string, string>(plain.map((m, i): [string, string] => [m.toLowerCase(), chosen[i] ?? '']).filter(([m, to]) => !!to && to.toLowerCase() !== m));
+    const swap = materialSwaps(groups.items, skin);
     if (!swap.size) return model;
 
     let out = model;

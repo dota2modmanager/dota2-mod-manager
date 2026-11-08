@@ -14,7 +14,7 @@ export class HeroViewer {
  paused:boolean; loading:number; readonly animations:Animation[];
  view:{center:THREE.Vector3;size?:THREE.Vector3;distance:number;zoom:number;zoomTarget:number;pitch:number};
  turn:{angle:number;target:number;velocity:number};
- load(source:{manifest:SceneManifest;url:(path:string)=>string}):Promise<unknown>;
+ load(source:{manifest:SceneManifest;url:(path:string)=>string},prepare?:(hero:Hero)=>Promise<void>):Promise<unknown>;
  play(name:string):number; unload():void; fit():void; place():void; frame():void; dispose():void;
 }
 export function buildHero(manifest:SceneManifest,url:(path:string)=>string,manager:THREE.LoadingManager,time:{value:number},light:Record<string,{value:unknown}>,textureScale?:number):Promise<Hero & {effects:{sim:{particles:{pos:THREE.Vector3}[];cps:Map<number,{pos:THREE.Vector3}>}}[];dispose():void}>;

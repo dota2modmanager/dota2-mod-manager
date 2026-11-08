@@ -3917,7 +3917,7 @@ units' models, which the hero does not wear.
 ### `wornSkin`
 
 ```ts
-export function wornSkin(visuals: string, fallback = 0): number
+export function wornSkin(visuals: string, fallback = 0, model?: string): number
 ```
 
 The material set an item wears its model in, 0 for the first: what its style says, or a
@@ -3927,6 +3927,14 @@ The material set an item wears its model in, 0 for the first: what its style say
 ```
 @param visuals  the item's visuals with the picked style made its first (withStyle)
 ```
+
+### `bodySkinFor`
+
+```ts
+export function bodySkinFor(visuals: string, hero: string, model: string, implicitBody = false): number | undefined
+```
+
+A material group explicitly addressed to the hero body, even on a wearable.
 
 ### `entityModel`
 
@@ -7045,7 +7053,7 @@ Add native material descriptors to exported GLBs.
 ### `loadoutModels`
 
 ```ts
-export async function loadoutModels( models: { file: string; model: string }[], read: (path: string) => Buffer | null, glb: Exporter, onMissing?: (model: string) => void, ): Promise<(Buffer | null)[]>
+export async function loadoutModels( models: { file: string; model: string; skin?: number }[], read: (path: string) => Buffer | null, glb: Exporter, onMissing?: (model: string) => void, ): Promise<(Buffer | null)[]>
 ```
 
 Export all material masks together so VRF opens the game archive once per batch.
@@ -8464,6 +8472,14 @@ m_materialGroups lists every set in the same order), and set 0 takes the set's l
 own name and place, so that whether the game reads the meshes, the first set or the one named
 "0", it finds the chosen one. The materials are already among the model's references: every
 set's are.
+
+### `modelSkinMaterials`
+
+```ts
+export function modelSkinMaterials(model: Buffer | null, skin: number): Map<string, string>
+```
+
+The native material substitutions for a preview skin, including external meshes.
 
 ### `withSkin`
 
