@@ -136,15 +136,16 @@ export interface ArcanaWindow {
   installed: { id: string; color: [number, number, number]; mode: ArcanaMode; enabled: boolean } | null;
   /** only the colour is built, for an item the hero wears (an immortal with no gem of its own) */
   colorOnly: boolean;
+  preview: { own: string[]; shared: string[]; materials: string[]; bake: boolean };
 }
 
-/** A prismatic gem's colour, as items_game has it (src/gem-colors.ts). */
-export interface GemColor { key: string; name: string; rgb: [number, number, number] }
+export interface GemArt { image: string; mask: string | null }
+export interface GemColor { key: string; name: string; rgb: [number, number, number]; picture?: string }
 
 /** The arcanas built out of the game's own files, in a colour of the user's (src/arcana-service.ts). */
 export interface ArcanaApi {
   /** every arcana the window builds, and the game's prismatic gems to offer as colours */
-  state: () => Promise<Reply<{ arcanas: ArcanaWindow[]; gems: GemColor[] }>>;
+  state: () => Promise<Reply<{ arcanas: ArcanaWindow[]; gems: GemColor[]; gemArt: GemArt | null }>>;
   /** build one and put it in My mods, in place of the one built before */
   install: (set: string, color: [number, number, number], mode: ArcanaMode) => Promise<Reply<{ record: LibRecord }>>;
 }

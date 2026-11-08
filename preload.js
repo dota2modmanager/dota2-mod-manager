@@ -128,6 +128,7 @@ contextBridge.exposeInMainWorld('api', {
   // towers and trees from the game's own looks, per side
   // the item builder's 3D preview: the hero's models out of the game
   preview3d: {
+    warm: (hero, slots) => ipcRenderer.invoke('preview3d:warm', hero, slots),
     models: (hero, slots) => ipcRenderer.invoke('preview3d:models', hero, slots).then(wholeAnswer),
     motions: (body) => ipcRenderer.invoke('preview3d:motions', body).then(wholeAnswer),
     effect: (id) => ipcRenderer.invoke('preview3d:effect', id).then(wholeAnswer),

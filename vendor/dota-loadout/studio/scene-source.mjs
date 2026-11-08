@@ -34,6 +34,11 @@ export class SceneSource {
    const original=m.name??'material-'+i,id=prefix+'::'+i,base=m.pbrMetallicRoughness??{},native=materialByName[original]??materialByName[compiled(original)]??Object.entries(materialByName).find(([n])=>materialStem(n)===materialStem(original))?.[1];
    const embedded={color:texture(base.baseColorTexture),normal:texture(m.normalTexture)},descriptor={...embedded,previewLighting:register,alphaTest:m.alphaMode==='MASK'?(m.alphaCutoff??.5):0,translucent:m.alphaMode==='BLEND',specScale:base.roughnessFactor === undefined ? .2 : .2 * (1 - base.roughnessFactor),rimScale:.15,baseColor:rgba(base.baseColorFactor),...(native?.descriptor??{})};
    for(const[field,info]of Object.entries(native?.images??{})){if(info?.data){const name=id+'-'+field;this.files.set('textures/'+name,'data:'+(info.mime??'image/png')+';base64,'+info.data);descriptor[field]=name;}}
+   // VRF may already have packed the cutout into base color alpha. Native
+   // flags are not always exposed, so a false default must not erase it.
+   if (!descriptor.alphaTest && m.alphaMode === 'MASK') descriptor.alphaTest = m.alphaCutoff ?? .5;
+   if (m.alphaMode === 'BLEND') descriptor.translucent = true;
+   if (descriptor.opacity && !descriptor.translucent && !descriptor.additive && !descriptor.alphaTest) descriptor.alphaTest = .5;
    if (materialStem(original) === 'arc_warden_base_additive') {
      const legacyImage = pattern => image((json.images ?? []).findIndex(row => pattern.test(row.name ?? '')));
      descriptor.masks ??= legacyImage(/arc_warden_base_additive_vmat_g_tmasks1/i);
@@ -73,17 +78,17 @@ export class SceneSource {
 function normalized(value,map){if(typeof value==='string'){const v=compiled(value);return map.get(v)??v;}if(Array.isArray(value))return value.map(v=>normalized(v,map));if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,normalized(v,map)]));return value;}
 const bytes64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 export function effectSource(scene,entries,{glow=null}={}){
- const systems={},textures={},snapshots={},effects=[],fxModels={},materials={},bindings=[],warnings=[];
+ const sourcePaths={},systems={},textures={},snapshots={},effects=[],fxModels={},materials={},bindings=[],warnings=[];
  for(const[index,entry]of entries.entries()){
   const packet=entry.packet??{};if(packet.error){warnings.push((entry.effectId??index)+': '+packet.error);continue;}
   warnings.push(...(packet.missing??[]).map(p=>'Missing particle resource: '+p));
-  const prefix='studio/'+index+'/',remap=new Map();for(const path of Object.keys(packet.definitions??{}))remap.set(compiled(path),prefix+systemKey(path));
+  const prefix='studio/'+(entry.namespace??index)+'/',remap=new Map();for(const path of Object.keys(packet.definitions??{}))remap.set(compiled(path),prefix+systemKey(path));
   for(const path of Object.keys(packet.textures??{}))remap.set(compiled(path),prefix+compiled(path));
   for(const path of Object.keys(packet.snapshots??{}))remap.set(compiled(path),prefix+compiled(path));
   for(const path of Object.keys(packet.models??{}))remap.set(compiled(path),prefix+compiled(path));
   for(const path of Object.keys(packet.materials??{}))remap.set(compiled(path),prefix+compiled(path));
   for(const[path,value]of Object.entries(packet.materials??{}))materials[remap.get(compiled(path))]=normalized(value,remap);
-  for(const[path,value]of Object.entries(packet.definitions??{})){const id=remap.get(compiled(path)),def=normalized(value,remap);def.m_nMaxParticles=Math.min(4000,finite(def.m_nMaxParticles,1000)>0?finite(def.m_nMaxParticles,1000):1000);if(entry.color){const rgb=entry.color.map(n=>Math.round(n*255));forceParticleColor(def,rgb);enableDarkBlend(def,rgb);}systems[id]=def;}
+  for(const[path,value]of Object.entries(packet.definitions??{})){const id=remap.get(compiled(path)),def=normalized(value,remap);def.m_nMaxParticles=Math.min(4000,finite(def.m_nMaxParticles,1000)>0?finite(def.m_nMaxParticles,1000):1000);sourcePaths[id]=path;if(entry.color){const rgb=entry.color.map(n=>Math.round(n*255));forceParticleColor(def,rgb);enableDarkBlend(def,rgb);}systems[id]=def;}
   for(const[path,t]of Object.entries(packet.textures??{})){
    const id=remap.get(compiled(path)),file=t.data?'data:'+(t.mime??'image/png')+';base64,'+t.data:t.url;if(!file)continue;
    textures[id]={file,sequences:(t.sequences??[]).map(seq=>({clamp:!!seq.clamp,frames:(seq.frames??[]).map(frame=>{
@@ -99,7 +104,7 @@ export function effectSource(scene,entries,{glow=null}={}){
   bindings.push({id,system:root,owner,effectId:entry.effectId??id,itemId:entry.itemId??null,color:entry.color??null,ghost:!!entry.ghost});effects.push({system:root,owner,color:entry.color??null});
  }
  if(glow)for(const path of ['materials/particle/particle_glow_05.vtex','materials/particle/particle_glow_01.vtex','materials/particle/smoke1/smoke1.vtex'])textures[path]??={file:glow};
- return{systems,textures,snapshots,effects,fxModels,materials,bindings,warnings};
+ return{systems,sourcePaths,textures,snapshots,effects,fxModels,materials,bindings,warnings};
 }
 
 export function applyParticleBinding(def,binding){

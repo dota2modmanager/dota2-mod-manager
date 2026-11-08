@@ -652,6 +652,7 @@ that location is not writable.
 | `src/model-glb.ts` | The game's models as GLB with their textures, exported by the Source 2 tools in one call per batch and cached per game build, for the 3D preview of [#417](https://github.com/dota2modmanager/dota2-mod-manager/issues/417) |
 | `src/glb-embed.ts` | A GLB with the PNG textures it links to put into its binary chunk, so the window loads a model from bytes alone; a picture it cannot have becomes one grey pixel |
 | `src/hero-preview.ts` | The 3D preview's models for a hero: the body out of its script (or an arcana's), and for each slot the pick or its stock item, exported through `model-glb` and handed over with their textures inside |
+| `src/razor-crest-preview.ts` | Resolve Severing Crest's preview rig and carry over the original helmet's materials and attachments |
 | `src/hero-preview-picks.ts`, `src/hero-particle-styles.ts` | Resolve equipped and default models, selected styles, and their ambient particle replacements |
 | `src/model-style-meshes.ts`, `src/model-snapshot-fallback.ts` | Select style meshes and recover missing particle surfaces from exported geometry |
 | `src/model-loadout.ts` | The sequences a hero model has, out of its own ASEQ block, and the loadout one the game plays for the items worn (an item's activity modifiers pick the variant) |
@@ -661,6 +662,7 @@ that location is not writable.
 | `src/particle-snapshot.ts` | Decompresses SNAP blocks and keeps positions, joint weights, colors and particle attributes |
 | `src/sprite-frames.ts` | Discovers every exported sprite-sheet sequence and frame in numeric order |
 | `src/ipc-preview3d.ts` | The channel `preview3d:models`: the hero's body and its slots' models as GLB bytes, or why there are none (no toolchain, no game, no body) |
+| `renderer/settings/PreviewCacheBlock.tsx` | Optional per-hero preparation of the GLB and particle-resource disk cache via `preview3d:warm` |
 | `src/recolor-layers.ts` | A hero split into layers for a colour each: every ability's particles and icon, the rest of his effects, his portraits, the colour textures of his body, and each picked item ([#422](https://github.com/dota2modmanager/dota2-mod-manager/issues/422)) |
 | `src/hero-paint-service.ts`, `src/ipc-paint.ts` | The channels `paint:state` and `paint:install`: the hero recoloured layer by layer into one record of My mods, its compressed pictures read out by ValveResourceFormat and compiled again, built again after a Dota update |
 | `src/resource-compiler.ts`, `src/wine.ts`, `src/workshop-tools.ts` | Valve's resourcecompiler.exe from the Workshop Tools, found in the game, picked in Settings or kept, compiling sources staged in an addon of ours and handing back the compiled files; on Linux it runs under Wine in a prefix of the app's own, and a copy of the tools is kept for when Steam takes the Proton build's away |

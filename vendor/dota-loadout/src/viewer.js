@@ -1,6 +1,6 @@
 import {mergeWearableClips} from './wearable-clips.js';
 import {holdRootMotion,rootBones} from './root-motion.js';
-import {activeSkinJoints,attachmentSkinBones,resolveModelAttachment} from './skin-joints.js';
+import {activeSkinJoints,attachmentSkinBones,resolveAttachmentOwner} from './skin-joints.js';
 import {particleSurfaceMeshes} from './surface-meshes.js';
 import {snapshotBinding} from '../studio/snapshot-bindings.mjs';
 import {wearableBoneOwners} from './wearable-bones.js';
@@ -233,7 +233,14 @@ void main() {
       mesh.visible && mesh.geometry?.drawRange.count > 0 && mesh.material?.uniforms?.uFeather?.value > 0
     )) {
       const fx = fxGroup, shadows = r.shadowMap.autoUpdate; fx.visible = false; r.shadowMap.autoUpdate = false; this.scene.overrideMaterial = this.soft.material;
-      r.setRenderTarget(this.soft.target); r.clear(); r.render(this.scene, this.camera);
+      const transparent = [];
+      this.scene.traverseVisible(o => {
+        if (o.isMesh && (Array.isArray(o.material) ? o.material.every(m => !m.depthWrite) : !o.material.depthWrite)) {
+          transparent.push(o); o.visible = false;
+        }
+      });
+      try { r.setRenderTarget(this.soft.target); r.clear(); r.render(this.scene, this.camera); }
+      finally { for (const mesh of transparent) mesh.visible = true; }
       this.scene.overrideMaterial = null; r.shadowMap.autoUpdate = shadows; fx.visible = this.studioEffectsEnabled !== false;
       SOFT.tSceneDepth.value = this.soft.target.depthTexture; SOFT.uNear.value = this.camera.near; SOFT.uFar.value = this.camera.far; SOFT.uSoft.value = true;
     }
@@ -266,16 +273,16 @@ const shrink = (scale) => (scale >= 1 ? undefined : (t) => {
 });
 export async function buildHero(manifest, url, manager, time, light, textureScale = 1) {
   // Each texture once (particle models make materials of their own, many a second).
-  const made = [], textureCache = new Map(), textureOf = (loader, address) => (file, srgb = false) => {
-    const href = address(`textures/${file}`), key = `${href}#${srgb}`; if (textureCache.has(key)) return textureCache.get(key);
+  const made = [], textureCache = new Map(), textureOf = (loader, address, scope = '') => (file, srgb = false) => {
+    const href = address(`textures/${file}`), key = `${scope}${href}#${srgb}`; if (textureCache.has(key)) return textureCache.get(key);
     const t = loader.load(href, shrink(textureScale)); t.flipY = false; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.anisotropy = 4; made.push(t); textureCache.set(key, t); return t;
   };
   const texture = textureOf(new THREE.TextureLoader(manager), url);
   // Cube maps from their strip of faces (+X −X +Y −Y +Z −Z in the game's axes), one of each.
   const cubes = new Map();
-  const cubeOf = (address, loading) => (file) => {
-    const href = address(`textures/${file}`); if (cubes.has(href)) return cubes.get(href);
-    const t = new THREE.CubeTexture(); t.colorSpace = THREE.SRGBColorSpace; cubes.set(href, t); made.push(t);
+  const cubeOf = (address, loading, scope = '') => (file) => {
+    const href = address(`textures/${file}`), key = scope + href; if (cubes.has(key)) return cubes.get(key);
+    const t = new THREE.CubeTexture(); t.colorSpace = THREE.SRGBColorSpace; cubes.set(key, t); made.push(t);
     new THREE.ImageLoader(loading).load(href, (img) => {
       const s = img.height; t.images = [0, 1, 2, 3, 4, 5].map((i) => { const c = document.createElement('canvas'); c.width = c.height = s; c.getContext('2d').drawImage(img, i * s, 0, s, s, 0, 0, s, s); return c; });
       t.needsUpdate = true;
@@ -304,7 +311,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   // In particular Tinker's two cannons and Timbersaw's articulated claw must
   // not bind to a detached item's animation rig after changing loadout.
   const originalHeroBones = { ...bones };
-
+  const bladeOwners = new Set(manifest.terrorbladeWeaponOwners);
   const fit = (scene,attachmentRows,privateAnchor) => {
     let invokerKnot = false;
     scene.traverse(node => { if (node.isMesh && /crimson_taoist_head/i.test(node.userData.studioSourceName || node.name)) invokerKnot = true; });
@@ -405,7 +412,9 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     const key = skin?.[o.userData.material] ?? o.userData.material, m = mats[key]; o.visible = !!m; if (!m) return;
     if (!materials.has(base + key)) materials.set(base + key, heroMaterial(m, tex, time, light, cubeMap));
     if (!o.material.userData.hero) o.material.dispose(); // the loader's; ours are shared
-    o.material = materials.get(base + key);if(o.geometry.attributes.color)o.material.vertexColors=true;
+    o.material = materials.get(base + key);
+    if (m.additive) o.castShadow = o.receiveShadow = false;
+    if(o.geometry.attributes.color)o.material.vertexColors=true;
   };
   const dress = (group, ...rest) => group.traverse((o) => { if (o.isMesh) dressMesh(o, ...rest); });
   dress(turntable);
@@ -517,9 +526,9 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   lib.loader.manager = manager;
   // Attachments by model: the hero's, and those of what each slot wears.
   const attachments = { ...manifest.attachments };
-  const attachment = (name, owner, entity = 'self') => resolveModelAttachment(attachments,name,owner,entity);
+  const attachment = (name, owner, entity = 'self') => resolveAttachmentOwner(attachments,name,owner,entity);
   const attachmentMatrix = (at, owner) => {
-    const local = Object.values(attachments[owner] || {}).includes(at) ? worn.get(owner) : null;
+    const local = worn.get(owner);
     const influence = i => { const key = at.bones[i].toLowerCase(), bone = local?.privateBones?.get(key) || local?.localBones?.find(joint => joint.keys.includes(key))?.bone || bones[key]; if(!bone) return null;
       return toSource(bone.matrixWorld.clone().multiply(new THREE.Matrix4().compose(new THREE.Vector3(...at.offsets[i]).multiplyScalar(0.0254), new THREE.Quaternion(...at.rotations[i]), new THREE.Vector3(1,1,1)))); };
     if(at.bones.length===1&&!at.ignoreRotation)return influence(0);
@@ -549,7 +558,11 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   // The hero's origin as a control point: his turn on the turntable, in the game's axes (facing +x,
   // z up) — the conversion to glTF taken out on both sides, not only before.
   const heroOrigin = () => toSource(root.matrixWorld.clone()).multiply(SOURCE_TO_GLTF);
-  const driverOf = (d) => ({ cp: d.m_iControlPoint ?? 0, type: d.m_iAttachType || 'PATTACH_ABSORIGIN_FOLLOW', attachment: d.m_attachmentName || null, entity: d.m_entityName || 'self', offset: d.m_vecOffset ? new THREE.Vector3(...d.m_vecOffset) : null });
+  const attachType = (type, attachment) => {
+    const name = String(type || '').toUpperCase();
+    return name ? (name.startsWith('PATTACH_') ? name : 'PATTACH_' + name) : attachment ? 'PATTACH_POINT_FOLLOW' : 'PATTACH_ABSORIGIN_FOLLOW';
+  };
+  const driverOf = (d) => ({ cp: d.m_iControlPoint ?? 0, type: attachType(d.m_iAttachType, d.m_attachmentName), attachment: d.m_attachmentName || null, entity: d.m_entityName || 'self', offset: d.m_vecOffset ? new THREE.Vector3(...d.m_vecOffset) : null });
   const configs = (def) => def.m_controlPointConfigurations || [];
   const driversFor = (def, config) => {
     const named = config != null && configs(def).find((c) => c.m_name === config);
@@ -562,7 +575,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   const placeCP = (d, owner, origin) => {
     if (d.type === 'PATTACH_WORLDORIGIN') { const c = cpOf(origin); if (d.offset) c.pos.add(d.offset); return c; }
     const at = /POINT|CENTER/.test(d.type) && d.attachment ? attachment(d.attachment, owner, d.entity) : null;
-    const matrix = at && attachmentMatrix(at, d.entity === 'parent' ? 'hero' : owner);
+    const matrix = at && attachmentMatrix(at.at, at.owner);
     if (d.attachment && /POINT|CENTER/.test(d.type) && !matrix) return null;
     const c = cpOf(matrix || origin);
     if (d.offset) c.pos.add(d.offset.clone().applyQuaternion(c.quat));
@@ -599,7 +612,14 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     for(const{w,r}of refitted)if(r.fitted&&w.meshes.some(m=>meshes.includes(m)))meshes=[...meshes.filter(m=>!w.meshes.includes(m)),...r.fitted.meshes];
     meshes=meshes.filter(m=>m.parent&&m.visible);
     sim.model = { ...model,...snapshotBinding(meshes,SOURCE_TO_GLTF,model), surface: () => surfacePoint(owner || 'hero') };
-    const e = { sim, owner, drivers, fixed: new Map() }, origin = heroOrigin();
+    const origin = heroOrigin();
+    // Weapon children can author blade-specific attachment points. They inherit
+    // the rest of the parent's points, including gem and operator-driven values.
+    const children = bladeOwners.has(owner) ? [...sim.all()].slice(1).flatMap(child => {
+      const attached = driversFor(child.def, null).filter(d => d.attachment && /POINT|CENTER/.test(d.type) && d.cp !== 15 && d.cp !== 16);
+      return attached.length ? [{ child, attached, fixed: new Map(attached.filter(d => !follows(d)).map(d => [d.cp, placeCP(d, owner, origin)])) }] : [];
+    }) : [];
+    const e = { sim, owner, drivers, children, fixed: new Map() };
     for (const d of drivers) if (!follows(d)) e.fixed.set(d.cp, placeCP(d, owner, origin));
     return e;
   };
@@ -627,14 +647,21 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     // A missing auxiliary point belongs near the effect's working attachment.
     // Leaving it at the hero origin stretches ropes across the scene.
     if (itemAnchor) for (const cp of unresolved) cps.set(cp, itemAnchor);
+    for (const { child, attached, fixed } of e.children) {
+      for (const driver of attached) {
+        const point = fixed.has(driver.cp) ? fixed.get(driver.cp) : placeCP(driver, e.owner, origin);
+        if (point) child.state.attachmentPoints.set(driver.cp, point);
+        else child.state.attachmentPoints.delete(driver.cp);
+      }
+    }
     const gem = e.color ? [cpOf(new THREE.Matrix4().makeTranslation(...e.color.map(n=>Math.round(n*255)))),cpOf(new THREE.Matrix4().makeTranslation(1,1,0))] : gemPoints(e.owner); if (gem) { cps.set(15, gem[0]); cps.set(16, gem[1]); }
   };
   // The ambient effects: the hero's own and his items' — a slot's default ones only while it wears
   // its default. Worn items may put their own effects and snapshots in place of the hero's.
   let effects = [], studioIsolated=false;
   const replaced = new Map(), replacedBy = new Map(), unusuals = new Map();
-  const ambient = () => {
-    for (const e of effects) e.sim.dispose();
+  const ambient = (retained = new Map()) => {
+    for (const e of effects) if (!retained.has(e.system)) e.sim.dispose();
     replaced.clear(); replacedBy.clear(); lib.aliases.clear();
     const list = (manifest.effects || []).filter((e) => !worn.get(e.owner)?.item);
     // A slot's default replaces effects while it is worn (the hero's own default, always).
@@ -648,6 +675,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     }
     effects = list.flatMap(e => {
       const system = replaced.get(e.system) ?? e.system;
+      if (retained.has(system)) return [retained.get(system)];
       try {
         const def = lib.system(system);
         return def ? [{ ...instance(def, replacedBy.get(e.system) || e.owner, driversFor(def, null)), system, color: e.color ?? null }] : [];
@@ -664,8 +692,6 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   const fire = (ev) => {
     if (ev.stop) { for (const e of live) if (e.system === ev.system) { e.sim.stopEmission(); if (ev.instantly) e.kill = true; } return; }
     const def = lib.system(replaced.get(ev.system) ?? ev.system); if (!def) return;
-    // Events give attach types in short (point_follow) or as the game's names (PATTACH_POINT_FOLLOW).
-    const attachType = (type, att) => (type ? (/^PATTACH_/.test(type) ? type : `PATTACH_${type.toUpperCase()}`) : att ? 'PATTACH_POINT_FOLLOW' : 'PATTACH_ABSORIGIN_FOLLOW');
     const drivers = ev.points ? ev.points.map(([att, type], cp) => att || cp === 0 ? { cp, type: attachType(type, att), attachment: att, offset: null } : null).filter(Boolean) : driversFor(def, ev.config);
     live.push(Object.assign(instance(def, replacedBy.get(ev.system) || 'hero', drivers), { system: ev.system, sequence: ev.sequence, stopOnSeqChange: ev.stopOnSeqChange, born: 0 }));
   };
@@ -687,7 +713,27 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     }
     lastTime = now;
   };
+  let studioMaterialGems = null;
   let studioDisposed = false; const studioPropFiles = new Set();
+  const studioParts = new Map();
+  const releasePart = (owner) => {
+    const part = worn.get(owner);
+    if (!part) return;
+    takeOff(part);
+    worn.delete(owner);
+    delete attachments[owner];
+    for (const mesh of part.meshes) {
+      mesh.geometry.dispose();
+      const key = mesh.userData.material;
+      materials.get(key)?.dispose();
+      materials.delete(key);
+    }
+    defaults.delete(owner);
+    delete loaded[owner];
+    for (let i = samples.length - 1; i >= 0; i--) if (part.meshes.includes(samples[i][0])) samples.splice(i, 1);
+    studioParts.get(owner)?.();
+    studioParts.delete(owner);
+  };
   const disposeProp = gltf => gltf?.scene.traverse(o => { o.geometry?.dispose(); for (const m of Array.isArray(o.material) ? o.material : [o.material]) m?.dispose(); });
   return {
     turntable, lib, box, heroBox, live, get effects() { return effects; },
@@ -696,7 +742,57 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     studioIsolation(value){studioIsolated=!!value;},
     studioReplayEffects(){for(const e of live)e.sim.dispose();live.length=0;ambient();},
     studioSeekEffects(seconds){ambient();const duration=Math.max(0,Math.min(5,seconds));for(const e of effects){drive(e,heroOrigin());for(let t=0;t<duration;t+=1/120){drive(e,heroOrigin());e.sim.update(Math.min(1/120,duration-t));}}},
-    async studioEffects(patch) {
+    async studioReplaceParts(changes, current) {
+      const prepared = await Promise.allSettled(changes.map(async ({owner, source}) => {
+        if (!source) return {owner, source};
+        const asset = await loader.loadAsync(source.url(source.manifest.models[owner]));
+        return {owner, source, asset};
+      }));
+      const discard = () => {
+        for (const row of prepared) if (row.status === 'fulfilled' && row.value.asset) disposeProp(row.value.asset);
+      };
+      const failure = prepared.find(row => row.status === 'rejected');
+      if (failure || studioDisposed || !current() || prepared.some(row => row.value?.asset?.animations.length)) {
+        discard();
+        if (failure) throw failure.reason;
+        return false;
+      }
+      for (const {value: {owner, source, asset}} of prepared) {
+        releasePart(owner);
+        bladeOwners.delete(owner);
+        if (!source) continue;
+        if (source.manifest.terrorbladeWeaponOwners?.includes(owner)) bladeOwners.add(owner);
+        const descriptors = source.manifest.materials;
+        const itemManager = new THREE.LoadingManager();
+        const addresses = new Set();
+        const address = path => { const href = source.url(path); addresses.add(href); return href; };
+        const scope = source.manifest.models[owner] + ":";
+        const itemTexture = textureOf(new THREE.TextureLoader(itemManager), address, scope);
+        const itemCube = cubeOf(address, itemManager, scope);
+        attachments[owner] = source.manifest.attachments[owner];
+        const part = fit(asset.scene, attachments[owner]);
+        dress(asset.scene, descriptors, itemTexture, '', itemCube);
+        worn.set(owner, { ...part, item: null });
+        putOn(part);
+        for (const mesh of part.meshes) {
+          const count = mesh.geometry.attributes.position.count, step = Math.max(1, Math.ceil(count / 600));
+          for (let i = 0; i < count; i += step) samples.push([mesh, i]);
+        }
+        studioParts.set(owner, () => {
+          for (const href of addresses) {
+            for (const [map, key] of [[textureCache, scope + href + '#true'], [textureCache, scope + href + '#false'], [cubes, scope + href]]) {
+              const tex = map.get(key);
+              if (!tex) continue;
+              tex.dispose(); map.delete(key);
+              const index = made.indexOf(tex);
+              if (index >= 0) made.splice(index, 1);
+            }
+          }
+        });
+      }
+      return true;
+    },
+    async studioEffects(patch, descriptors, preserveHero = false) {
       if (studioDisposed) throw Object.assign(Error('Scene disposed'), {name:'AbortError'});
       const nextFiles = new Set(Object.values(patch.fxModels || {}).map(info => info.file));
       const loadedProps = await Promise.all([...nextFiles].filter(file => !propModels[file]).map(async file => {
@@ -711,13 +807,16 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
         propModels[row[0]] = row[1]; studioPropFiles.add(row[0]);
       }
       for (const file of studioPropFiles) if (!nextFiles.has(file)) { disposeProp(propModels[file]); delete propModels[file]; studioPropFiles.delete(file); }
-      for (const e of effects) e.sim.dispose(); effects = [];
+      const retained = new Map(preserveHero ? effects.filter(e => e.owner === 'hero' && patch.effects.some(next => next.system === e.system)).map(e => [e.system, e]) : []);
       for (const e of live) e.sim.dispose(); live.length = 0;
-      for (const { texture } of lib.cache.values()) texture?.dispose(); lib.cache.clear();
+      for (const key of lib.cache.keys()) if (!preserveHero || !key.startsWith('studio/hero-')) lib.cache.delete(key);
+      const keptTextures = new Set([...lib.cache.values()].map(entry => entry.texture));
+      for (const [key, texture] of lib.images) if (!keptTextures.has(texture)) { texture.dispose(); lib.images.delete(key); }
       lib.materials = patch.materials || {};lib.systems = patch.systems || {}; lib.textures = patch.textures || {}; lib.snapshots = patch.snapshots || {};
       for (const [path, def] of Object.entries(lib.systems)) if (def && !def._path) Object.defineProperty(def, '_path', { value: path });
+      if (descriptors) Object.assign(manifest.materials, descriptors);
       manifest.fxModels = patch.fxModels || {}; manifest.effects = patch.effects || [];
-      ambient();
+      ambient(retained);
       return { systems: effects.length, warnings: [...lib.unsupported] };
     },
     studioMaterial(name, patch) {
@@ -727,12 +826,28 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
       turntable.traverse((o) => { if (o.isMesh && o.userData.material === name) dressMesh(o); });
       lib.group.traverse(o=>{if(!o.isMesh||o.userData.material!==name)return;const fresh=heroMaterial(manifest.materials[name],texture,time,light,cube);for(const material of Array.isArray(o.material)?o.material:[o.material]){material.copy(fresh);material.userData=fresh.userData;material.userData.studioParticleBaseColor=material.color.clone();material.userData.studioParticleBaseOpacity=material.opacity;material.onBeforeCompile=fresh.onBeforeCompile;material.needsUpdate=true;}fresh.dispose();});
     },
+    studioGemEffects(palette) {
+      for (const effect of effects) {
+        const root = palette[effect.system];
+        effect.gemTarget = root && !root.bake ? root.rgb : null;
+        if (!effect.color || !effect.gemTarget) effect.color = effect.gemTarget;
+        for (const sim of effect.sim.all()) {
+          const gem = palette[sim.def._path];
+          sim.studioColorTarget = gem?.own ? gem.rgb : null;
+        }
+      }
+    },
+    studioGemMaterials(colors) { studioMaterialGems = colors; },
     studioEffectsVisible(visible) { lib.group.visible = !!visible; },
  animations: list.map((x) => ({ ...x, loop: loops.has(x.name), duration: clips.get(x.name).duration })),
     play: (name) => start(name),
     // The clip playing: the animation's variant for what is worn.
     get playing() { return currentName; },
     update(dt, camera) {
+      if (studioMaterialGems) {
+        const blend = 1 - Math.exp(-dt * 20);
+        for (const [name, material] of materials) material.userData.gem?.(studioMaterialGems[name] ?? null, blend);
+      }
       mixer.update(dt); for (const w of worn.values()) w.companion?.mixer.update(dt);
       // A later event with the same model in the same animation takes over (Ringmaster's box: built, then broken).
       for (const p of props) p.at = currentName === p.sequence && current ? current.time - p.frame / 30 : -1;
@@ -742,6 +857,10 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
       const tick = list => {
         for (let i = 0; i < list.length; i++) {
           const e = list[i];
+          if (e.gemTarget && e.color) {
+            const blend = 1 - Math.exp(-dt * 20);
+            e.color = e.color.map((channel, i) => THREE.MathUtils.lerp(channel, e.gemTarget[i], blend));
+          }
           try { drive(e, origin); e.sim.update(dt); e.sim.render(camera, groupInverse); }
           catch (error) {
             lib.unsupported.add(`Particle runtime failed: ${e.system ?? e.owner} (${error?.message || error})`);
@@ -822,7 +941,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
       refit(); ambient(); remodify(); reskin(); gemTint();
     },
     dispose() {
-      studioDisposed = true; loaded['animation-source']?.scene.traverse(o=>{o.geometry?.dispose();for(const material of Array.isArray(o.material)?o.material:[o.material])material?.dispose();}); for (const file of studioPropFiles) disposeProp(propModels[file]); studioPropFiles.clear();
+      studioDisposed = true; for (const release of studioParts.values()) release(); studioParts.clear(); loaded['animation-source']?.scene.traverse(o=>{o.geometry?.dispose();for(const material of Array.isArray(o.material)?o.material:[o.material])material?.dispose();}); for (const file of studioPropFiles) disposeProp(propModels[file]); studioPropFiles.clear();
       mixer.stopAllAction(); for (const p of props) p.mixer.stopAllAction(); turntable.traverse((o) => { o.geometry?.dispose(); });
       for (const r of wearing.values()) for (const mesh of r.meshes || []) mesh.geometry?.dispose();
       for (const w of defaults.values()) for (const mesh of w.meshes) mesh.geometry?.dispose();

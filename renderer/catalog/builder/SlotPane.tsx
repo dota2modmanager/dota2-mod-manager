@@ -6,7 +6,7 @@
  *
  * The four used to sit one under another in a window that scrolled past the screen; a person who
  * came for an effect scrolled through every item of the slot to reach it. */
-import { useRef, type CSSProperties } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import type { SlotPaneActions, SlotPaneModel, SlotView } from './model.ts';
 import type { EffectGroup } from './logic.ts';
@@ -25,36 +25,47 @@ const stagger = (i: number) => ({ '--i': Math.min(i, 24) }) as CSSProperties;
 /** An effect without a picture of its own: a tile coloured by its name, so the shelf is not a wall of one glyph. */
 const hue = (name: string) => ({ '--fx-hue': [...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7) }) as CSSProperties;
 
-export function SlotPane({ m, actions }: { m: SlotPaneModel; actions: SlotPaneActions }) {
+export function SlotPane({ m, actions, gems, gemCount }: { m: SlotPaneModel; actions: SlotPaneActions; gems?: ReactNode; gemCount?: number }) {
   const search = useRef<HTMLInputElement>(null);
+  const tabList = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const list = tabList.current;
+    const active = list?.querySelector('[aria-selected="true"]');
+    if (!list || !active) return;
+    const frame = list.getBoundingClientRect(), tab = active.getBoundingClientRect();
+    if (tab.right > frame.right) list.scrollLeft += tab.right - frame.right;
+    if (tab.left < frame.left) list.scrollLeft -= frame.left - tab.left;
+  }, [m.view, gemCount]);
   const noted = m.options.find((o) => o.picked && o.note)?.note;
   const picked = m.options.find((o) => o.picked && o.id);
   const clear = () => {
     actions.search('');
     search.current?.focus();
   };
-  const tabs: { id: SlotView; label: string; count: number | string; off?: boolean; hint?: string }[] = [
+  const tabs: { id: SlotView; label: string; count: number | string; off?: boolean; hint?: string; shortLabel?: string }[] = [
     { id: 'items', label: L`Предметы`, count: m.optionsCount + 1 },
     ...(m.styles ? [{ id: 'styles' as const, label: L`Стиль`, count: m.styles.length }] : []),
     ...(m.effects ? [{ id: 'effects' as const, label: L`Эффекты`, count: m.effects.picked ? `${m.effects.picked} / ${m.effects.count}` : m.effects.count,
       off: !m.effects.enabled, hint: L`Эффект добавляется к предмету: сначала выбери его.` }] : []),
-    ...(m.donors ? [{ id: 'donors' as const, label: L`Эффект другого предмета`, count: m.donors.count, off: !m.donors.enabled, hint: L`Сначала выбери предмет.` }] : []),
+    ...(m.gem ? [{ id: 'gems' as const, label: L`Самоцветы`, count: gemCount ?? '' }] : []),
+    ...(m.donors ? [{ id: 'donors' as const, label: L`Эффект другого предмета`, shortLabel: L`Чужой эффект`, count: m.donors.count, off: !m.donors.enabled, hint: L`Сначала выбери предмет.` }] : []),
   ];
   return (
     <div className="ward-slot">
       <div className="ward-pane-head">
         <h3 className="ward-pane-title">{m.title}</h3>
-        <div className="ward-tabs" role="tablist" aria-label={m.title}>
+        <div className="ward-tabs" ref={tabList} role="tablist" aria-label={m.title}>
           {tabs.map((t) => (
             <button key={t.id} role="tab" className={`ward-tab ${m.view === t.id ? 'active' : ''}`} data-slot-view={t.id} aria-selected={m.view === t.id}
-              disabled={t.off} title={t.off ? t.hint : undefined} onClick={() => actions.view(t.id)}>
-              {t.label}<span className="ward-tab-count">{t.count}</span>
+              disabled={t.off} aria-label={t.shortLabel ? t.label : undefined} title={t.off ? t.hint : t.shortLabel && t.label} onClick={() => actions.view(t.id)}>
+              {t.shortLabel ?? t.label}{t.count !== '' && <span className="ward-tab-count">{t.count}</span>}
             </button>
           ))}
         </div>
-        {m.view !== 'styles' && <PickerSearch id="itemSlotSearch" value={m.query} onChange={actions.search} inputRef={search} />}
+        {m.view !== 'styles' && m.view !== 'gems' && <PickerSearch id="itemSlotSearch" value={m.query} onChange={actions.search} inputRef={search} />}
       </div>
       <div className="ward-scroll" key={m.view}>
+        {m.view === 'gems' && gems}
         {m.view === 'items' && (
           <div className="item-pick-grid ward-grid" id="itemPickGrid">
             {m.options.length ? m.options.map((o, i) => (

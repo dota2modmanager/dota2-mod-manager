@@ -1,3 +1,4 @@
+import type { PreviewSlot } from '../../api/preview3d.ts';
 /* What the item builder's hero window shows, worked out by views/item-hero.ts (the window),
  * views/item-builder.ts (a slot) and views/item-sets.ts (the sets), and drawn by the components
  * beside this file. One window, laid out as the game's own loadout: the hero on the left, its
@@ -37,13 +38,14 @@ interface EffectCard {
 }
 
 /** The tabs over a slot's grid: its items, the chosen one's styles, effects on top, another item's effect. */
-export type SlotView = 'items' | 'styles' | 'effects' | 'donors';
+export type SlotView = 'items' | 'styles' | 'effects' | 'gems' | 'donors';
 
 export interface SlotPaneModel {
   title: string;
   query: string;
   slotIcon: string;
   view: SlotView;
+  gem?: { set: string; equipped: boolean };
   options: OptionCard[];
   /** how many items the slot offers, the search aside */
   optionsCount: number;
@@ -164,7 +166,7 @@ export interface HeroModalModel {
   looks: number;
   /** the 3D preview (catalog/preview3d): the hero's name for its models, what each slot dresses, and
    * a key of what is on, so a pick draws it again; null hides the button */
-  preview: { hero: string; slots: { slot: string; stock: string }[]; sig: string; open: boolean } | null;
+  preview: { hero: string; slots: PreviewSlot[]; sig: string; open: boolean; gemSlots: Record<string, string> } | null;
   /** the hero's npc name for the recolour window (views/hero-paint.ts); null hides its button */
   paint: string | null;
   pane: HeroPane;

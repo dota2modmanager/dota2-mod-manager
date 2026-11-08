@@ -21,6 +21,20 @@ export function registerPreview3dIpc({ heroPreview, toolchain, diag }: Pick<AppC
       return { ok: false, reason: 'no-body', error: errorText(err) };
     }
   });
+  let warming = false;
+  ipcMain.handle('preview3d:warm', async (_e, hero, slots) => {
+    if (warming || !toolchain.pathOf('vrf')) return { ok: false };
+    warming = true;
+    try {
+      const result = await heroPreview.models(hero, slots, true);
+      return result.ok ? { ok: true, missing: result.missing.length + (result.resources?.missing.length ?? 0) } : { ok: false };
+    } catch (err) {
+      diag(`preview 3d warm: ${errorText(err)}`);
+      return { ok: false };
+    } finally {
+      warming = false;
+    }
+  });
   // every clip of a body, the first time the window is asked for one beyond the loadout
   ipcMain.handle('preview3d:motions', async (e, body) => {
     if (!toolchain.pathOf('vrf')) return null;

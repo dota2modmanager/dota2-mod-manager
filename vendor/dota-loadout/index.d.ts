@@ -4,7 +4,10 @@ export interface Hero {
  box:THREE.Box3; heroBox:THREE.Box3; turntable:THREE.Group;
  animations:Animation[]; readonly playing:string; slotMeshes(slot:string):THREE.Mesh[];
  lib:{group:THREE.Group;unsupported:Set<string>};
- studioEffects(patch:Partial<EffectPatch>):Promise<unknown>;
+ studioReplaceParts(changes:{owner:string;source:{manifest:SceneManifest;url:(path:string)=>string}|null}[], current:()=>boolean):Promise<boolean>;
+ studioEffects(patch:Partial<EffectPatch>, descriptors?:SceneManifest['materials'], preserveHero?:boolean):Promise<unknown>;
+ studioGemEffects(palette:Record<string,{rgb:number[];own:boolean;bake:boolean}>):void;
+ studioGemMaterials(colors:Record<string,string>):void;
  studioEffectsVisible(value:boolean):void;
  update(dt:number,camera:THREE.Camera):void;
 }
@@ -17,4 +20,4 @@ export class HeroViewer {
  load(source:{manifest:SceneManifest;url:(path:string)=>string},prepare?:(hero:Hero)=>Promise<void>):Promise<unknown>;
  play(name:string):number; unload():void; fit():void; place():void; frame():void; dispose():void;
 }
-export function buildHero(manifest:SceneManifest,url:(path:string)=>string,manager:THREE.LoadingManager,time:{value:number},light:Record<string,{value:unknown}>,textureScale?:number):Promise<Hero & {effects:{sim:{particles:{pos:THREE.Vector3}[];cps:Map<number,{pos:THREE.Vector3}>}}[];dispose():void}>;
+export function buildHero(manifest:SceneManifest,url:(path:string)=>string,manager:THREE.LoadingManager,time:{value:number},light:Record<string,{value:unknown}>,textureScale?:number):Promise<Hero & {effects:{sim:{particles:{pos:THREE.Vector3;age:number}[];cps:Map<number,{pos:THREE.Vector3}>}}[];dispose():void}>;

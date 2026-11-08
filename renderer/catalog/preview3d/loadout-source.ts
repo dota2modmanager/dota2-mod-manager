@@ -2,6 +2,7 @@ import { SceneSource, effectSource, readGlb, writeGlb, type EffectPacket, type N
 import type { Attachment, ParticleDef, LoadoutResources } from '../../api/preview3d.ts';
 import type { PacketTexture } from './loadout-textures.ts';
 
+
 export const ownerOf=(part:number):string=>part<0?'hero':`part-${part}`;
 export function loadoutAttachments(rows:Attachment[]):Record<string,NativeAttachment>{
   return Object.fromEntries(rows.map(a=>[a.name,{bones:a.bones??[a.bone],offsets:a.offsets??[a.offset],rotations:a.rotations??[a.rotation],weights:a.weights??[1],ignoreRotation:a.ignoreRotation??false}]));
@@ -50,7 +51,12 @@ export function loadoutPacket(def:ParticleDef,resources?:LoadoutResources):Effec
 }
 export function loadoutEffects(source:SceneSource,particles:{part:number;def:ParticleDef}[],textures:Record<string,PacketTexture>,resources?:LoadoutResources){
   for(const {part}of particles)if(part>=0)source.owners.set(ownerOf(part),ownerOf(part));
-  return effectSource(source,particles.map(({part,def},i)=>({effectId:`native-${i}`,scope:part<0?'hero':'item',itemId:ownerOf(part),packet:{...loadoutPacket(def,resources),textures}})));
+  const counts = new Map<string, number>();
+  return effectSource(source,particles.map(({part,def},i)=>{
+    const owner = ownerOf(part), ordinal = counts.get(owner) ?? 0;
+    counts.set(owner, ordinal + 1);
+    return {namespace:owner+'-'+ordinal,effectId:`native-${i}`,scope:part<0?'hero':'item',itemId:ownerOf(part),packet:{...loadoutPacket(def,resources),textures}};
+  }));
 }
 
 /** Remove hidden meshes before the runtime measures bounds or samples particle surfaces. */

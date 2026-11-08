@@ -8,16 +8,26 @@ export interface PacketTexture { url:string; sequences?:{clamp:boolean;frames:Fr
  * Passing only the largest frame makes animated blades look like stationary glowing dots. */
 export async function loadoutTextures(source:SceneSource,bytes:Record<string,Uint8Array>,resources?:LoadoutResources):Promise<Record<string,PacketTexture>>{
   const out:Record<string,PacketTexture>={};
+  const frames = new Map<string, {seq: number; frame: number; bytes: Uint8Array}[]>();
+  for (const [key, value] of Object.entries(bytes)) {
+    const match = /^(.*)#seq=(\d+)&frame=(\d+)$/.exec(key);
+    if (!match) continue;
+    const path = match[1]!, entries = frames.get(path) ?? [];
+    entries.push({seq: Number(match[2]), frame: Number(match[3]), bytes: value});
+    frames.set(path, entries);
+  }
   for(const [path,data] of Object.entries(bytes)){
     if(path.includes('#seq='))continue;
-    const entries=Object.entries(bytes).flatMap(([key,value])=>{
-      if(!key.startsWith(path+'#seq='))return [];
-      const m=/#seq=(\d+)&frame=(\d+)$/.exec(key);return m?[{seq:Number(m[1]),frame:Number(m[2]),bytes:value}]:[];
-    });
+    const entries = frames.get(path) ?? [];
     if(!entries.length){out[path]={url:source.blob(data,'image/png')};continue;}
     const images:ImageBitmap[]=[];
     try{
-      for(const item of entries)images.push(await createImageBitmap(new Blob([item.bytes.slice().buffer],{type:'image/png'})));
+      for (let i = 0; i < entries.length; i += 8) {
+        const decoded = await Promise.allSettled(entries.slice(i, i + 8).map(item => createImageBitmap(new Blob([item.bytes.slice().buffer], {type:'image/png'}))));
+        for (const result of decoded) if (result.status === 'fulfilled') images.push(result.value);
+        const error = decoded.find(result => result.status === 'rejected');
+        if (error) throw error.reason;
+      }
       const width=Math.max(...images.map(i=>i.width)),height=Math.max(...images.map(i=>i.height));
       const columns=Math.ceil(Math.sqrt(entries.length)),rows=Math.ceil(entries.length/columns),scale=Math.min(1,4096/(columns*(width+2)),4096/(rows*(height+2)));
       const w=Math.max(1,Math.floor(width*scale)),h=Math.max(1,Math.floor(height*scale)),cw=w+2,ch=h+2;
@@ -49,7 +59,9 @@ export async function loadoutTextures(source:SceneSource,bytes:Record<string,Uin
         const frames=sequences[i].frames;
         for(let f=0;f<frames.length;f++)if(!frames[f])frames[f]=frames.find(Boolean)??{time:1/30,uv:[0,0,0,0]};
       }
-      out[path]={url:canvas.toDataURL('image/png'),sequences};
+      const atlas = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!atlas) throw Error('Cannot encode sprite atlas');
+      out[path]={url:source.blob(new Uint8Array(await atlas.arrayBuffer()), 'image/png'),sequences};
     }finally{images.forEach(image=>image.close());}
   }
   return out;

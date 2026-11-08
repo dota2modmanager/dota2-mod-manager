@@ -18,7 +18,7 @@ import { ARCANA_SETS, arcanaForms, arcanaPictures, arcanaSwaps, buildArcana } fr
 import { buildRecolor, RECOLOR_SETS, type Rgb } from './recolor.ts';
 import { TERRORBLADE_BASE } from './arcana-bases.ts';
 import { baseInColor } from './arcana-base-color.ts';
-import { gemColors, type GemColor } from './gem-colors.ts';
+import { gemColors, prismaticGemArt, prismaticGemPictures, type GemColor } from './gem-colors.ts';
 import type { BaseStore } from './arcana-base-store.ts';
 import { buildVpk, entryAt, entryPath, listVpkPathsFile, sharedVpkIndex } from './vpk.ts';
 import { pngFromVtex } from './vtex.ts';
@@ -51,10 +51,11 @@ export interface ArcanaWindow {
   installed: { id: string; color: Rgb; mode: ArcanaMode; enabled: boolean } | null;
   /** only the colour can be built: an item the player wears, their own or the item builder's */
   colorOnly: boolean;
+  preview: { own: string[]; shared: string[]; materials: string[]; bake: boolean };
 }
 
 /** What the window shows: each arcana, and the game's prismatic gems to offer as colours. */
-export interface ArcanaState { arcanas: ArcanaWindow[]; gems: GemColor[] }
+export interface ArcanaState { arcanas: ArcanaWindow[]; gems: GemColor[]; gemArt: ReturnType<typeof prismaticGemArt> }
 
 /** The arcanas the window builds: the picture it shows, the file whose presence says the game has
  *  it, and the base the whole arcana is built from once it is here (src/arcana-bases.ts). */
@@ -114,7 +115,7 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
   /* What the game has, read once per pak01: its index is 384 000 entries and the tools screen
    * asks every time it opens. A Dota update rewrites the file, and that is read again. */
   type Seen = { available: boolean; picture: string | null };
-  let probe: { pak: string; mtime: number; sets: Record<string, Seen>; gems: GemColor[] } | null = null;
+  let probe: { pak: string; mtime: number; sets: Record<string, Seen>; gems: GemColor[]; gemArt: ReturnType<typeof prismaticGemArt> } | null = null;
 
   /* The builder's enabled picks whose form has a particle for the arcana to carry. */
   const formsPicked = (set: string): string[] => {
@@ -143,7 +144,7 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
         sets[set] = { available, picture: png ? `data:image/png;base64,${png.toString('base64')}` : null };
       }
       const table = index.read('scripts/items/items_game.txt');
-      return probe = { pak, mtime, sets, gems: table ? gemColors(table.toString('latin1')) : [] };
+      return probe = { pak, mtime, sets, gemArt: prismaticGemArt(index), gems: table ? prismaticGemPictures(gemColors(table.toString('latin1')), index) : [] };
     } catch (err) {
       log(`arcana: the game could not be read: ${(err as Error).message}`);
       return null;
@@ -218,6 +219,7 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
         const rec = mine(set);
         const g = rec?.generated as Generated | undefined;
         const has = game?.sets[set];
+        const { own, shared, materials, bake = false } = RECOLOR_SETS[set];
         return {
           set,
           name: RECOLOR_SETS[set].name,
@@ -225,9 +227,10 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
           picture: has?.available ? has.picture : null,
           installed: rec && g ? { id: rec.id, color: g.color, mode: g.mode, enabled: rec.enabled !== false } : null,
           colorOnly: Boolean(WINDOWS[set].colorOnly),
+          preview: { own, shared, materials, bake },
         };
       });
-      return { arcanas, gems: game?.gems ?? [] };
+      return { arcanas, gems: game?.gems ?? [], gemArt: game?.gemArt ?? null };
     },
 
     /** Build one of the arcanas (or its colour) and install it, in place of the one built before. */

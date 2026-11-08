@@ -14,6 +14,7 @@ import { paint } from '../ui/transitions.ts';
 import { spotlight, waitFor } from '../ui/spotlight.ts';
 import { openItemHeroModal } from './item-hero.ts';
 import { firstHubHero } from './item-hub.ts';
+import { openBuilderGems } from './item-hero.ts';
 import { arcanaLeads, openArcanaWindow } from './catalog/arcana.ts';
 import { mapLookLead, openMapLooks } from './catalog/map-looks.ts';
 import { soundLead, openSounds } from './catalog/sounds.ts';
@@ -82,7 +83,7 @@ async function groups(): Promise<StudioGroup[]> {
     // arcanas and the immortals whose colour is baked into their effects, one tile each
     { id: 'colors', title: L`Свой цвет предмета`, tiles: arcanas.map((a) => tile({ id: `arcana:${a.set}`, icon: 'palette', picture: a.picture, title: a.name,
       text: L`Любой из призматических гемов игры или свой цвет, на модели и на эффектах.`,
-      status: a.installed ? on(L`Свой цвет стоит`) : undefined, open: (el) => openArcanaWindow(a.set, el) })) },
+      status: a.installed ? on(L`Свой цвет стоит`) : undefined, open: async (el) => { if (!await openBuilderGems(a.set, el).catch(() => false)) await openArcanaWindow(a.set, el); } })) },
     { id: 'effects', title: L`Эффекты`, tiles: [
       tile({ id: 'effects', icon: 'auto_awesome', title: L`Редактор эффектов`, text: L`Размер, количество, скорость и цвет любого эффекта игры.`, open: (el) => openEffects(el) }),
     ] },

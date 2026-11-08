@@ -427,7 +427,7 @@ function eulerAngles(q) {
 }
 const forwardAngles = (f) => { const xy = Math.hypot(f.x, f.y); return xy <= 0.001 ? new THREE.Vector3(f.z > 0 ? -Math.PI / 2 : Math.PI / 2, 0, 0) : new THREE.Vector3(Math.atan2(-f.z, xy), Math.atan2(f.y, f.x), 0); };
 // Whether a control point was given: in the game one never set reads zero (here it would read cp 0).
-const known = (s, i) => { for (let t = s; t; t = t.parent) if (t.own.has(i)) return true; return s.sim.root.cps.has(i); };
+const known = (s, i) => { for (let t = s; t; t = t.parent) if (t.own.has(i) || t.attachmentPoints.has(i)) return true; return s.sim.root.cps.has(i); };
 const cpValue = (s, i) => (known(s, i) ? s.cp(i).pos.clone() : new THREE.Vector3());
 // Sets a control point's position, keeping its orientation (SetControlPointValue).
 const setCPValue = (s, i, v) => s.override(i, v, s.cp(i).quat);
@@ -1342,10 +1342,10 @@ class ControlPoint {
   matrix() { return new THREE.Matrix4().compose(this.pos, this.quat, new THREE.Vector3(1, 1, 1)); }
 }
 class State {
-  constructor(sim, parent) { this.sim = sim; this.parent = parent; this.own = new Map(); this.age = 0; this.start = 0; this.prevDt = 0; this.seed = Math.floor(rnd() * 1e6); }
+  constructor(sim, parent) { this.sim = sim; this.parent = parent; this.own = new Map(); this.attachmentPoints = new Map(); this.age = 0; this.start = 0; this.prevDt = 0; this.seed = Math.floor(rnd() * 1e6); }
   get max() { return this.sim.maxParticles; }
   get model() { return this.sim.root.model; }
-  cp(i) { return this.own.get(i) || (this.parent ? this.parent.cp(i) : this.sim.root.cps.get(i) || this.sim.root.cps.get(0) || new ControlPoint()); }
+  cp(i) { return this.own.get(i) || this.attachmentPoints.get(i) || (this.parent ? this.parent.cp(i) : this.sim.root.cps.get(i) || this.sim.root.cps.get(0) || new ControlPoint()); }
   setCP(i, pos) { const c = this.own.get(i) || new ControlPoint(); c.pos.copy(pos); this.own.set(i, c); }
   setCPRotation(i, q) { const c = this.own.get(i) || Object.assign(new ControlPoint(), { pos: this.cp(i).pos.clone() }); c.quat.copy(q); this.own.set(i, c); }
   override(i, pos, quat, byParent = false) { const c = this.own.get(i) || new ControlPoint(); c.pos.copy(pos); if (quat) c.quat.copy(quat); this.own.set(i, c); if (byParent && quat) (this.parentTurns ||= new Set()).add(i); }
@@ -1416,6 +1416,13 @@ export class Simulation {
     this.particles.push(p);
   }
   update(dt, first = true) {
+    const target = this.studioColorTarget;
+    if (target || this.studioColorMix) {
+      const blend = 1 - Math.exp(-dt * 20);
+      this.studioColorMix = THREE.MathUtils.lerp(this.studioColorMix ?? 0, target ? 1 : 0, blend);
+      if (target) (this.studioColor ??= new THREE.Vector3(...target)).lerp(TMP_STUDIO_COLOR.fromArray(target), blend);
+      if (!target && this.studioColorMix < .001) { this.studioColorMix = 0; this.studioColor = null; }
+    }
     if (this.delay > 0) { this.delay -= dt; if (this.delay > 0) return; }
     if (first && this.preSim > 0 && !this.preSimDone) { this.preSimDone = true; for (let t = 0; t < this.preSim; t += this.maxStep) this.step(this.maxStep); }
     let left = Math.min(dt, this.maxStep * 10);
@@ -1447,7 +1454,11 @@ export class Simulation {
   // C_OP_RestartAfterDuration: the emitters start over, as do the children's; the particles alive live
   // on. A stopped effect stays stopped.
   restart() { const s = this.state; s.restartAt = undefined; if (this.stopped) return; s.start = s.age; for (const e of this.emitters) e.fn.reset(); for (const c of this.children) c.restart(); }
-  render(camera, groupInverse) { for (const r of this.renderers) r.update(r.strength && r.strength(this.state) <= 0 ? [] : this.particles, this.state, camera, groupInverse); for (const c of this.children) c.render(camera, groupInverse); }
+  render(camera, groupInverse) { for (const r of this.renderers) {
+      const tint = r.batch?.mesh.material.uniforms.studioGemMix;
+      if (tint) tint.value = this.studioColorMix ?? 0;
+      r.update(r.strength && r.strength(this.state) <= 0 ? [] : this.particles, this.state, camera, groupInverse);
+    } for (const c of this.children) c.render(camera, groupInverse); }
   *all() { yield this; for (const c of this.children) yield* c.all(); }
   count() { let n = this.particles.length; for (const c of this.children) n += c.count(); return n; }
 }
@@ -1458,7 +1469,7 @@ attribute vec4 color; attribute vec4 uvA; attribute vec4 uvB; attribute float bl
 varying vec4 vColor; varying vec2 vUvA; varying vec2 vUvB; varying float vBlend;
 void main() { vColor = color; vUvA = mix(uvA.xy, uvA.zw, uv); vUvB = mix(uvB.xy, uvB.zw, uv); vBlend = blend; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 const fragmentShader = `
-uniform sampler2D map; uniform sampler2D alphaMask; uniform bool useAlphaMask; uniform bool alphaFromLuma; uniform bool alphaChannelFromLuma; uniform bool studioSoftDisc; uniform float overbright; uniform float addSelf; uniform bool studioRecolor; uniform bool saturateColor; uniform int mode; uniform bool blendFrames; uniform int channels;
+uniform sampler2D map; uniform sampler2D alphaMask; uniform bool useAlphaMask; uniform bool alphaFromLuma; uniform bool alphaChannelFromLuma; uniform bool studioSoftDisc; uniform float overbright; uniform float addSelf; uniform bool studioRecolor; uniform float studioGemMix; uniform bool saturateColor; uniform int mode; uniform bool blendFrames; uniform int channels;
 uniform sampler2D tSceneDepth; uniform vec2 uSceneSize; uniform float uNear, uFar, uFeather; uniform bool uSoft;
 varying vec4 vColor; varying vec2 vUvA; varying vec2 vUvB; varying float vBlend;
 // m_nTextureChannels: which of the texture's channels give the alpha (the game's spritecard; as
@@ -1483,6 +1494,7 @@ vec4 channelMix(vec4 t) {
 float viewDepth(float d) { float z = d * 2.0 - 1.0; return 2.0 * uNear * uFar / (uFar + uNear - z * (uFar - uNear)); }
 void main() {
   vec4 t = texture2D(map, vUvA); if (blendFrames) t = mix(t, texture2D(map, vUvB), vBlend); if (studioRecolor) t.rgb = vec3(max(t.r, max(t.g, t.b))); t = channelMix(t);
+  t.rgb = mix(t.rgb, vec3(max(t.r, max(t.g, t.b))), studioGemMix);
   vec3 c = vColor.rgb * t.rgb; float a = t.a * vColor.a;
   // The alpha-cloud resources use grayscale coverage even with opaque PNG alpha.
   // Explicit mask layers must be combined with the colour layer, not displayed
@@ -1517,7 +1529,7 @@ function material(texInfo, r) {
   const feather = /ON_/.test(r.m_nFeatheringMode || '') ? number(r.m_flFeatheringMaxDist, FEATHER)(null, null) * 0.0254 : 0;
   const m = new THREE.ShaderMaterial({
     vertexShader, fragmentShader, transparent: true, depthWrite: false, side: THREE.DoubleSide,
-    uniforms: { studioRecolor: { value: r.m_bStudioRecolor === true }, map: { value: tex }, alphaMask: { value: texInfo.maskTexture || tex }, useAlphaMask: { value: !!texInfo.maskTexture }, alphaFromLuma: { value: !!texInfo.alphaFromLuma }, alphaChannelFromLuma: { value: !!texInfo.alphaChannelFromLuma }, studioSoftDisc: { value: r.studioSoftDisc === true }, overbright: { value: number(r.m_flOverbrightFactor, 1)(null, null) }, addSelf: { value: 1 + number(r.m_flAddSelfAmount, 0)(null, null) },
+    uniforms: { studioGemMix: { value: 0 }, studioRecolor: { value: r.m_bStudioRecolor === true }, map: { value: tex }, alphaMask: { value: texInfo.maskTexture || tex }, useAlphaMask: { value: !!texInfo.maskTexture }, alphaFromLuma: { value: !!texInfo.alphaFromLuma }, alphaChannelFromLuma: { value: !!texInfo.alphaChannelFromLuma }, studioSoftDisc: { value: r.studioSoftDisc === true }, overbright: { value: number(r.m_flOverbrightFactor, 1)(null, null) }, addSelf: { value: 1 + number(r.m_flAddSelfAmount, 0)(null, null) },
       saturateColor: { value: r.m_bSaturateColorPreAlphaBlend !== false }, mode: { value: mode }, blendFrames: { value: r.m_bBlendFramesSeq0 !== false }, ...SOFT, uFeather: { value: feather },
       channels: { value: CHANNELS.indexOf(texInfo.channel ?? 'SPRITECARD_TEXTURE_CHANNEL_MIX_RGBA') } },
   });
@@ -1583,7 +1595,14 @@ function billboard(camera, groupInverse) {
 // m_vecColorScale: a renderer's own tint over its particles' colour (Featherfall's white rim drawn
 // red, its smoke pink, its shadow dark grey). Without one, the colour as it is.
 const colorScale = (r) => { if (!r.m_vecColorScale) return null; const v = vector(r.m_vecColorScale, [1, 1, 1]); return (p, s) => v(p, s); };
-const scaled = (k, p, s) => { const c = p.color; if (!k) return [c.x, c.y, c.z]; const m = k(p, s); return [c.x * m.x, c.y * m.y, c.z * m.z]; };
+const TMP_STUDIO_COLOR = new THREE.Vector3();
+const scaled = (k, p, s) => {
+  const { studioColor, studioColorMix } = s.sim;
+  const c = studioColor ? TMP_STUDIO_COLOR.copy(p.color).lerp(studioColor, studioColorMix) : p.color;
+  if (!k) return [c.x, c.y, c.z];
+  const m = k(p, s);
+  return [c.x * m.x, c.y * m.y, c.z * m.z];
+};
 // The engine's blob shader is approximated with a fused metaball surface.
 class BlobRenderer {
  constructor(r,lib,sim){this.r=r;this.lib=lib;const native=lib.materials?.[r.m_hMaterial],appearance=blobAppearance(r.m_hMaterial,native);this.material=new THREE.MeshPhysicalMaterial({color:new THREE.Color().setRGB(...appearance.tint.slice(0,3)),vertexColors:true,roughness:appearance.roughness,metalness:appearance.metalness,clearcoat:appearance.clearcoat,transparent:true,opacity:appearance.opacity,side:THREE.DoubleSide});const normal=native?.textures?.g_tNormal;if(normal&&lib.textures?.[normal])this.material.normalMap=lib.texture({m_hTexture:normal}).texture;this.surface=new MarchingCubes(28,this.material,false,true,16000);this.surface.frustumCulled=false;lib.group.add(this.surface);lib.unsupported.add('C_OP_RenderBlobs: approximate metaball surface');}
@@ -1718,7 +1737,7 @@ export class Library {
   // models (optional): { get(vmdl) → { scene, clip } } gives the models of C_OP_RenderModels.
   constructor({ systems, textures, snapshots, url, models = null, options = {} }) {
     this.models = models;
-    this.options = options; this.systems = systems; this.textures = textures; this.snapshots = snapshots; this.url = url; this.cache = new Map(); this.unsupported = new Set();
+    this.options = options; this.systems = systems; this.textures = textures; this.snapshots = snapshots; this.url = url; this.cache = new Map(); this.images = new Map(); this.unsupported = new Set();
     // Snapshots worn items put in place of the hero's (Juggernaut's sword glow along another blade).
     this.aliases = new Map();
     this.group = new THREE.Group(); this.group.matrixAutoUpdate = false; this.group.matrix.copy(SOURCE_TO_GLTF); this.loader = new THREE.TextureLoader();
@@ -1745,9 +1764,16 @@ export class Library {
     if (!this.textures[path] && r.m_nOutputBlendMode !== 'PARTICLE_OUTPUT_BLEND_MODE_MOD2X') path = this.textures[standIn(path)] ? standIn(path) : path;
     const raw = r.m_nOutputBlendMode === 'PARTICLE_OUTPUT_BLEND_MODE_MOD2X', key = raw ? `${path}#raw` : path;
     if (!this.cache.has(key)) {
-      const info = this.textures[path], t = info ? this.loader.load(this.url(info.file), this.options.onTexture) : null;
-      if (t) { t.colorSpace = raw ? THREE.NoColorSpace : THREE.SRGBColorSpace; t.flipY = false; t.wrapS = t.wrapT = THREE.RepeatWrapping; }
-      this.cache.set(key, { texture: t, info });
+      const info = this.textures[path], url = info ? this.url(info.file) : null;
+      const imageKey = url && (raw ? 'raw:' : 'srgb:') + url;
+      let texture = imageKey ? this.images.get(imageKey) : null;
+      if (imageKey && !texture) {
+        texture = this.loader.load(url, this.options.onTexture);
+        texture.colorSpace = raw ? THREE.NoColorSpace : THREE.SRGBColorSpace;
+        texture.flipY = false; texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        this.images.set(imageKey, texture);
+      }
+      this.cache.set(key, { texture, info });
     }
     const result = this.cache.get(key);
     const mask = spec.maskPath && spec.maskPath !== path && this.textures[spec.maskPath]
@@ -1770,7 +1796,7 @@ export class Library {
     }
   }
   snapshot(path) { const data = this.snapshots[this.aliases.get(path) ?? path]; return data?.position?.length ? new Snapshot(data, null) : null; }
-  dispose() { this.group.traverse((o) => { o.geometry?.dispose(); o.material?.dispose(); }); for (const { texture } of this.cache.values()) texture?.dispose(); }
+  dispose() { this.group.traverse((o) => { o.geometry?.dispose(); o.material?.dispose(); }); for (const texture of this.images.values()) texture.dispose(); }
 }
 
 // A bone's twin on the other side (RightWeapon0_JNT, LeftWeapon0_JNT), if the name has a side.

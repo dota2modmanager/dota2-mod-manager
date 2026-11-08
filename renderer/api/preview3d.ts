@@ -39,14 +39,18 @@ export interface Attachment extends Partial<LoadoutAttachment> { name: string; b
 export interface Motion { name: string; group: 'stance' | 'idle' | 'run' | 'attack' | 'ability' | 'emote' | 'other'; act: string; mods: string[]; once: boolean }
 
 /** The item builder's 3D preview (src/hero-preview.ts): the body with its loadout clip, each slot's model and the pedestal, as GLB bytes. */
+export interface PreviewSlot { slot: string; stock: string; tryOn?: { itemId: string; effectId: string } }
+
 export interface Preview3dApi {
+  /** Prepare the disk cache for one hero without returning its large 3D data to the window. */
+  warm: (hero: string, slots: PreviewSlot[]) => Promise<{ ok: boolean; missing?: number; error?: string }>;
   /** an effect's particle system, for its picture; null where the game has none */
   effect: (id: string) => Promise<{ def: ParticleDef; sprites: Record<string, Uint8Array>; resources?: LoadoutResources } | null>;
   /** a map prop's model alone (a tree set's) as GLB bytes, for its picture; null without the game or the toolchain */
   model: (file: string) => Promise<Uint8Array | null>;
   /** every clip of a body, without its pictures, as GLB bytes; null without the game or the toolchain */
   motions: (body: string) => Promise<Uint8Array | null>;
-  models: (hero: string, slots: { slot: string; stock: string }[]) => Promise<
+  models: (hero: string, slots: PreviewSlot[]) => Promise<
     | {
       ok: true; body: Uint8Array; clip: string | null; model: string; motions: Motion[]; stage: HeroStage; pedestal: Uint8Array | null;
       parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[]; hidden: string[] }[]; missing: string[]; hidden: string[];

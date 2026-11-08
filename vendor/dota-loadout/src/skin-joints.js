@@ -19,15 +19,18 @@ export const attachmentSkinBones=rows=>Object.values(rows??{}).flatMap(row=>(row
 // The particle entity 'self_with_wearables' resolves attachments across the entire
 // equipped loadout, not only the particle's owner. Spectre's arcana effects use it
 // for head, skirt and shoulder points. Keep 'parent' tied to the hero alone.
-export const resolveModelAttachment=(rows,name,owner,entity='self')=>{
+export const resolveAttachmentOwner=(rows,name,owner,entity='self')=>{
   const find=key=>{const values=rows[key];if(!values)return null;
     return values[name]??Object.entries(values).find(([k])=>k.toLowerCase()===String(name).toLowerCase())?.[1]??null;};
-  if(entity==='parent')return find('hero');
-  const own=find(owner);if(own)return own;
+  const entry=key=>{const at=find(key);return at ? {at, owner:key} : null;};
+  if(entity==='parent')return entry('hero');
+  const own=entry(owner);if(own)return own;
   if(entity==='self_with_wearables')for(const key of Object.keys(rows)){
     if(key!=='hero'&&key!==owner&&key!=='pedestal'){
-      const at=find(key);if(at)return at;
+      const match=entry(key);if(match)return match;
     }
   }
-  return find('hero');
+  return entry('hero');
 };
+
+export const resolveModelAttachment = (...args) => resolveAttachmentOwner(...args)?.at ?? null;

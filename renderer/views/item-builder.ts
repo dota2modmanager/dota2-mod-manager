@@ -16,6 +16,7 @@
  * itself through bindItemBuilder. It keeps what is chosen and works out what each window shows;
  * catalog/builder/ draws it, and catalog/builder/logic.ts holds the rules.
  */
+import { gemSetOf } from '../catalog/builder/gems.ts';
 import { state } from '../core/store.ts';
 import { pickedIn } from '../core/installed.ts';
 import { byName, effectGroup, effectKey, effectPicture, liveDonor, liveEffects, liveStyle, rarityName, stagedItemAction, type EffectGroup } from '../catalog/builder/logic.ts';
@@ -89,13 +90,24 @@ export interface SlotState { slot: string; selectedId: string; effectIds: string
  * @param opts.query  typed into the search, for a card found by the catalog's search or in favourites
  * @param opts.select  the item chosen, for a piece opened from its set
  */
-export function slotState(slot: string, { query = '', select = '' }: { query?: string; select?: string } = {}): SlotState {
+export function slotState(slot: string, { query = '', select = '', view = 'items' }: { query?: string; select?: string; view?: SlotView } = {}): SlotState {
   const live = pickedIn(slot);
   const selectedId = select || live?.itemId || '';
   const same = live?.itemId === selectedId;
   const data = slotData(slot);
   if (data) loadCosmeticIcons(data.options.slice(0, 36).map((o) => o.name).filter(Boolean), () => {}).catch(() => {});
-  return { slot, selectedId, effectIds: same ? liveEffects(live) : [], donor: same ? liveDonor(live) : '', style: same ? liveStyle(live) : 0, query, view: 'items', busy: false };
+  return { slot, selectedId, effectIds: same ? liveEffects(live) : [], donor: same ? liveDonor(live) : '', style: same ? liveStyle(live) : 0, query, view, busy: false };
+}
+
+/** The staged choice sent to the read-only preview, using the same style and effect encoding as Equip. */
+export function tryOnPick(st: SlotState | null) {
+  if (!st) return undefined;
+  const data = slotData(st.slot);
+  if (!data || (st.selectedId && !data.options.some(option => option.id === st.selectedId))) return undefined;
+  const live = pickedIn(st.slot);
+  const effectId = st.selectedId ? effectKey(data.effects, st.effectIds, st.style, st.donor) : '';
+  if ((live?.itemId ?? '') === st.selectedId && (live?.effectId ?? '') === effectId) return undefined;
+  return { itemId: st.selectedId, effectId };
 }
 
 /** An effect of the game's own (Ethereal Flame and the like), src/item-builder-unusual.ts. */
@@ -112,9 +124,10 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
   const hasItem = !!st.selectedId;
   const effects = (data.effects || []).filter((fx) => fx.id);
   const chosen = hasItem ? data.options.find((o) => o.id === st.selectedId) : null;
+  const gem = gemSetOf(chosen?.name);
   const styles = chosen?.styles && chosen.styles.length > 1 ? chosen.styles : null;
   // a tab with nothing to show for the item chosen falls back to the items
-  if ((st.view === 'styles' && !styles) || (st.view !== 'items' && !hasItem)) st.view = 'items';
+  if ((st.view === 'gems' && !gem) || (st.view === 'styles' && !styles) || (st.view !== 'items' && !hasItem)) st.view = 'items';
   // the slot's items with an effect of their own, the chosen one aside (issue #383)
   const donors = data.options.filter((o) => o.fx && o.id !== st.selectedId);
   const donor = hasItem && st.donor ? data.options.find((o) => o.id === st.donor) : null;
@@ -127,6 +140,7 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
     query: st.query,
     slotIcon: data.icon || 'checkroom',
     view: st.view,
+    gem: gem ? { set: gem, equipped: live?.itemId === st.selectedId } : undefined,
     // the hero's own item first: choosing it is how a pick comes off
     options: byName([{ id: '', name: L`Стандартный`, tags: [] }, ...data.options], st.view === 'items' ? st.query : '').map((o) => ({
       id: o.id, name: o.name, picked: o.id === st.selectedId, on: o.id ? live?.itemId === o.id : !live, ...facts(o),

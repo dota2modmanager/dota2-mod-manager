@@ -5,11 +5,15 @@
  * change of items, or plays once and hands back if it is a motion with an end; the clips come in
  * one file the first time one is asked for. */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import type { Motion, Preview3dApi } from '../../api/preview3d.ts';
-import type { HeroScene, SceneViewport } from './scene.ts';
+import type { Motion, Preview3dApi, PreviewSlot } from '../../api/preview3d.ts';
+import type { HeroScene, SceneOptions, SceneViewport } from './scene.ts';
 import { Dropdown } from '../../ui/Dropdown.tsx';
 import { motionLabels } from './motion-label.ts';
 import type { StudioView } from './studio-settings.ts';
+
+import type { PreviewGem } from '../builder/gems.ts';
+
+const noGems: readonly PreviewGem[] = [];
 
 type Status = { kind: 'loading' } | { kind: 'shown'; missing: string[] } | { kind: 'no-tool' } | { kind: 'failed'; text: string };
 
@@ -44,13 +48,23 @@ function motionWord(act: string, ability: string | null): string | null {
 }
 
 /** @param fallback  what the stage shows when the models cannot be had (the hero window's portrait), the reason under it */
-export function Preview3d({ hero, slots, sig, still = false, fallback, onSettled }: {
-  hero: string; slots: { slot: string; stock: string }[]; sig: string; still?: boolean; fallback?: ReactNode; onSettled?: (result: { sig: string; ok: boolean }) => void;
+export function Preview3d({ hero, slots, sig, gems = noGems, still = false, fallback, onSettled }: {
+  hero: string; slots: PreviewSlot[]; sig: string; gems?: readonly PreviewGem[]; still?: boolean; fallback?: ReactNode; onSettled?: (result: { sig: string; ok: boolean }) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const savedView = useRef<{ hero: string; view: StudioView } | null>(null);
   const motionRequest = useRef(0);
   const scene = useRef<HeroScene | null>(null);
+  const latestGems = useRef(gems);
+  useEffect(() => {
+    latestGems.current = gems;
+    const timer = setTimeout(() => {
+      void scene.current?.gems(gems).catch(error => {
+        if (error?.name !== 'AbortError') console.warn('3D gem preview:', error);
+      });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [gems]);
   const viewport = useRef<SceneViewport | null>(null);
   const mountQueue = useRef(Promise.resolve());
   const lifetime = useRef<AbortController | null>(null);
@@ -104,24 +118,35 @@ export function Preview3d({ hero, slots, sig, still = false, fallback, onSettled
         const update = mountQueue.current.catch(() => {}).then(async () => {
           if (gone || session.signal.aborted || !host.current) return;
           const previous = scene.current;
-          previous?.suspend();
-          const shared = viewport.current ??= createSceneViewport(host.current, L`Герой в 3D`);
-          const shown = await mountScene(host.current, r.body, r.parts.map((p) => p.glb), {
-            signal: session.signal,
+          const initialGems = latestGems.current;
+          const options: SceneOptions = {
+            signal: session.signal, gems: initialGems, partSlots: r.parts.map(p => p.slot),
             viewState: savedView.current?.hero === hero ? previous?.view() ?? savedView.current.view : undefined,
             still, label: L`Герой в 3D`, clip: r.clip, heroModel: r.model, stage: r.stage, pedestal: r.pedestal, hidden: { body: r.hidden, parts: r.parts.map((p) => p.hidden) },
             attachments: { body: r.attachments, parts: r.parts.map((p) => p.attachments) }, particles: r.particles, sprites: r.sprites, resources: r.resources,
-          }, shared);
-          if (session.signal.aborted) { shown.dispose(); return; }
-          previous?.dispose();
-          scene.current = shown;
+          };
+          const parts = r.parts.map(p => p.glb);
+          const current = () => !gone && !session.signal.aborted;
+          const reused = savedView.current?.hero === hero && await previous?.replace(r.body, parts, options, current);
+          if (!current()) return;
+          let shown = previous!;
+          if (!reused) {
+            await previous?.suspend();
+            if (!current() || !host.current) return;
+            const shared = viewport.current ??= createSceneViewport(host.current, L`Герой в 3D`);
+            shown = await mountScene(host.current, r.body, parts, options, shared);
+            if (session.signal.aborted) { shown.dispose(); return; }
+            previous?.dispose();
+            scene.current = shown;
+          }
+          if (initialGems !== latestGems.current) await shown.gems(latestGems.current);
           savedView.current = { hero, view: shown.view() };
           if (gone) return;
           body.current = r.model;
           setMotions(r.motions);
           // an item that swaps the body takes the clips of the old one with it
           if (wanted.current && !r.motions.some((m) => m.name === wanted.current)) { wanted.current = ''; setMotion(''); }
-          if (wanted.current) {
+          if (wanted.current && !reused) {
             void shown.play(wanted.current, motionFile, handBack(r.motions, wanted.current)).catch(() => {
               if (!gone) setNoMotions(true);
             });

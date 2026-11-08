@@ -7,8 +7,9 @@
  *
  * It used to be three windows, each opening the next with a way back, and the hero's own one a
  * column of rows that ran past the bottom of the screen once the 3D view was on. */
+import { gemSetOf } from '../catalog/builder/gems.ts';
 import { state } from '../core/store.ts';
-import { pickedIn } from '../core/installed.ts';
+import { firstCosmeticSlots, pickedIn } from '../core/installed.ts';
 import { showHeroModal } from '../catalog/modal/root.tsx';
 import { heroesOf, setIsOn } from '../catalog/builder/logic.ts';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
@@ -17,7 +18,7 @@ import { confirmDialog, promptDialog } from '../ui/dialog.ts';
 import { toast } from '../ui/toast.ts';
 import { openPaint } from './hero-paint.ts';
 import { loadSetIcons, setsPane, type SetsState } from './item-sets.ts';
-import { afterPick, heroSets, isOpen, itemCosmeticSlots, openWindow, slotPane, slotState, takeOff, type SlotState } from './item-builder.ts';
+import { afterPick, heroSets, isOpen, itemCosmeticSlots, openWindow, slotPane, slotState, takeOff, tryOnPick, type SlotState } from './item-builder.ts';
 import { deleteLook, heroKey, lookIsOn, looksOf, renameLook, saveLook, wornPicks } from './item-looks.ts';
 import { heroPortrait } from './item-hub.ts';
 import { closeOverlay } from './catalog/overlay.ts';
@@ -34,7 +35,7 @@ let lastTab: 'sets' | 'looks' | 'slot' = 'sets';
 /**
  * @param opts.slot  open on this slot's tab, with `query` typed into its search and `select` chosen
  */
-export function openItemHeroModal(heroName: string, from: Element | null, opts: { slot?: string; query?: string; select?: string } = {}): void {
+export function openItemHeroModal(heroName: string, from: Element | null, opts: { slot?: string; query?: string; select?: string; view?: 'gems' } = {}): void {
   const slots = heroSlots(heroName);
   const sets = heroSets(heroName);
   const first = slots[0]?.slot || 'looks';
@@ -45,6 +46,21 @@ export function openItemHeroModal(heroName: string, from: Element | null, opts: 
   openWindow(from, true, (key) => drawHero(key, st));
   loadCosmeticIcons([...slots.map((s) => pickedIn(s.slot)?.name), ...looksOf(heroKey(slots)).flatMap((l) => l.picks.map((p) => p.name))]
     .filter((n): n is string => !!n), () => {}).catch(() => {});
+}
+
+/** Open the same item the Workshop recolors, with the 3D view visible. */
+export async function openBuilderGems(set: string, from: Element | null): Promise<boolean> {
+  if (!itemCosmeticSlots().length) await firstCosmeticSlots();
+  for (const [hero, slots] of heroesOf(itemCosmeticSlots())) {
+    for (const slot of slots) {
+      const item = slot.options.find(option => gemSetOf(option.name) === set);
+      if (!item) continue;
+      previewOpen = true;
+      openItemHeroModal(hero, from, { slot: slot.slot, select: item.id, view: 'gems' });
+      return true;
+    }
+  }
+  return false;
 }
 
 /** A slot's card from the catalog's search or favourites: its hero's window, on that slot. */
@@ -58,17 +74,27 @@ export function openItemSlotModal(slot: string, from: Element | null, opts: { qu
 let previewOpen = true;
 
 /** What the 3D preview shows for the hero: each slot's stock item and what is picked on it. */
-function heroPreview(slots: CosmeticSlot[]) {
+function heroPreview(slots: CosmeticSlot[], active: SlotState | null) {
   const hero = slots.find((s) => s.heroIds?.length)?.heroIds?.[0];
   // a persona's slots too: picked, it is the body, and its slots dress it (src/hero-preview.ts); not
   // the ability effects slots, whose stock item has no model and whose picks bring none
   const dressed = slots.filter((s) => s.targetId && !s.abilityFx);
   if (!hero || !dressed.length) return null;
+  const tryOn = tryOnPick(active);
+  const previewSlots = dressed.map(s => ({
+    slot: s.slot, stock: s.targetId as string, ...(s.slot === active?.slot && tryOn ? { tryOn } : {}),
+  }));
+  const pick = (slot: typeof previewSlots[number]) => slot.tryOn ?? pickedIn(slot.slot);
   return {
     hero,
-    slots: dressed.map((s) => ({ slot: s.slot, stock: s.targetId as string })),
-    sig: dressed.map((s) => { const p = pickedIn(s.slot); return p ? `${p.itemId}:${p.effectId || ''}` : '-'; }).join('|'),
+    slots: previewSlots,
+    sig: JSON.stringify(previewSlots.map(s => [s.slot, s.stock, pick(s)?.itemId ?? '', pick(s)?.effectId ?? ''])),
     open: previewOpen,
+    gemSlots: Object.fromEntries(previewSlots.flatMap((s, i) => {
+      const item = pick(s);
+      const set = gemSetOf(dressed[i].options.find(o => o.id === item?.itemId)?.name);
+      return set ? [[set, s.slot]] : [];
+    })),
   };
 }
 
@@ -111,6 +137,12 @@ function drawHero(key: number, st: HeroState): void {
     };
   } else {
     const p = st.slot && slotPane(st.slot, again);
+    if (p) {
+      const choose = p.actions.choose;
+      p.actions.choose = id => { previewOpen = true; choose(id); };
+      const view = p.actions.view;
+      p.actions.view = tab => { if (tab === 'gems') previewOpen = true; view(tab); };
+    }
     pane = p ? { kind: 'slot', ...p } : { kind: 'looks', looks: [], canSave: false };
   }
   const worn = sets.find((s) => setIsOn(s, pickedIn));
@@ -130,7 +162,7 @@ function drawHero(key: number, st: HeroState): void {
     busy: st.busy,
     sets: sets.length ? { count: sets.length, on: worn ? worn.name : null } : null,
     looks: looks.length,
-    preview: heroPreview(slots),
+    preview: heroPreview(slots, st.slot),
     paint: heroNpc(slots),
     pane,
   }, {

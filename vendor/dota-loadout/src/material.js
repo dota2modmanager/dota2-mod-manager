@@ -59,19 +59,33 @@ export function heroMaterial(m, texture, time, light, cube = null) {
     tDiffuseWarp: { value: m.diffuseWarp ? texture(m.diffuseWarp) : BLACK }, uDiffuseWarp: { value: m.diffuseWarp ? 1 : 0 },
     tCube: { value: m.cube && cube ? cube(m.cube) : null }, uCubeScale: { value: m.cubeScale ?? 0 }, uToSource: { value: TO_SOURCE },
   };
+  // The builder can inherit a prismatic color onto a cosmetic whose glow
+  // is painted in the base texture rather than linked to $GemColor.
+  const bakedGlow = !!m.previewLighting && !m.detailGem && !m.specGem && !!(m.masks || m.additive);
+  uniforms.uGlowTint = { value: new THREE.Color(1, 1, 1) };
+  uniforms.uGlowMix = { value: 0 };
   const useCube = !!(m.cube && cube);
   // Missing environment lighting must not make the reflective parts black.
   const missingReflection = m.previewLighting && m.expectsReflectionCube;
   uniforms.uMetalness = { value: useCube ? 1 : m.metalnessWithoutCube ?? (missingReflection ? 0.45 : 1) };
   uniforms.uPreviewLighting = { value: m.previewLighting ? 1 : 0 };
-  material.customProgramCacheKey = () => JSON.stringify([!!m.color, !!m.exponent, !!m.normal, m.detailMode, useCube, !!m.cubeByMetalness, !!m.unlit]);
+  material.customProgramCacheKey = () => JSON.stringify([!!m.color, !!m.exponent, !!m.normal, m.detailMode, useCube, !!m.cubeByMetalness, !!m.unlit, bakedGlow]);
   material.userData.hero = uniforms;
   // The hero's prismatic gem colours the detail (and the specular) of the materials that read it;
   // without one they take their own colour back. hex: '#rrggbb' or null.
-  if (m.detailGem || m.specGem) material.userData.gem = (hex) => {
+  if (m.detailGem || m.specGem || bakedGlow) material.userData.gem = (hex, blend = 1) => {
     const c = hex ? new THREE.Color(hex) : null;
-    if (m.detailGem) uniforms.uDetailTint.value.copy(c || srgb(m.detailTint || [1, 1, 1]));
-    if (m.specGem) uniforms.uSpecColor.value.copy(c || srgb(m.specGem));
+    if (m.detailGem) uniforms.uDetailTint.value.lerp(c || srgb(m.detailTint || [1, 1, 1]), blend);
+    if (m.specGem) uniforms.uSpecColor.value.lerp(c || srgb(m.specGem), blend);
+    if (bakedGlow) {
+      if (c) {
+        c.multiplyScalar(1 / Math.max(c.r, c.g, c.b, 0.0001));
+        if (uniforms.uGlowMix.value === 0) uniforms.uGlowTint.value.copy(c);
+        else uniforms.uGlowTint.value.lerp(c, blend);
+      }
+      uniforms.uGlowMix.value = THREE.MathUtils.lerp(uniforms.uGlowMix.value, c ? 1 : 0, blend);
+      if (!c && uniforms.uGlowMix.value < 0.001) uniforms.uGlowMix.value = 0;
+    }
   };
   if (m.specGem) uniforms.uSpecColor.value.copy(srgb(m.specGem));
   material.onBeforeCompile = (shader) => {
@@ -82,6 +96,7 @@ export function heroMaterial(m, texture, time, light, cube = null) {
 uniform sampler2D tExponent, tMasks, tSpec, tDetail, tFresnel, tDiffuseWarp; uniform float uTime, uDetailBlend, uSpecExponent, uSpecScale, uDiffuseWarp, uCubeScale; uniform vec2 uDetailScale, uDetailScroll;
 uniform float uMetalness, uPreviewLighting;
 uniform mat3 uToSource;${useCube ? '\nuniform samplerCube tCube;' : ''}
+uniform float uGlowMix; uniform vec3 uGlowTint;
 uniform vec3 uRimColor, uSpecColor, uDetailTint, uLightDir, uLightColor, uAmbientDir, uAmbientColor, uAmbientTint, uShadowColor, uUp;`)
       .replace('#include <opaque_fragment>', `${m.color ? '' : 'vec2 vMapUv = vec2(0.0);'}
 vec4 heroMasks = texture2D(tMasks, vMapUv), heroSpec = texture2D(tSpec, vMapUv), heroDetailTex = texture2D(tDetail, vMapUv * uDetailScale + fract(uDetailScroll * uTime));
@@ -89,6 +104,7 @@ vec3 heroBase = diffuseColor.rgb, heroV = normalize(vViewPosition), heroR = refl
 vec4 heroWarp = texture2D(tFresnel, vec2(clamp(dot(normal, heroV), 0.0, 1.0), 0.5));
 float heroDetail = heroMasks.r * uDetailBlend, heroNL = dot(normal, uLightDir), heroExponent = uSpecExponent * ${m.exponent ? 'texture2D(tExponent, vMapUv).r' : m.normal ? 'texture2D(normalMap, vNormalMapUv).b' : '1.0'};
 vec3 heroDetailColor = heroDetailTex.rgb * uDetailTint;
+${bakedGlow && m.detailMode === 2 ? 'heroDetailColor = mix(heroDetailColor, max(heroDetailColor.r, max(heroDetailColor.g, heroDetailColor.b)) * uGlowTint, uGlowMix);' : ''}
 ${DETAIL_ALBEDO[m.detailMode] ?? 'vec3 heroAlbedo = heroBase + heroDetailColor * heroDetail;'}
 float heroShadow = 1.0;
 #if NUM_DIR_LIGHT_SHADOWS > 0
@@ -106,6 +122,8 @@ vec3 heroSpecular = clamp(heroNL, 0.0, 1.0) * pow(max(dot(uLightDir, heroR), 0.0
 vec3 heroLit = mix(heroAlbedo * heroDiffuse + heroSpecular, heroSpecular, heroSpec.g * uMetalness) + heroMasks.b * uRimColor * uAmbientTint * max(dot(normal, uUp), 0.0) * heroWarp.r;
 ${useCube ? `heroLit += textureCube(tCube, uToSource * inverseTransformDirection(heroR, viewMatrix)).rgb * uCubeScale * ${m.cubeByMetalness ? 'heroSpec.g' : 'heroSpec.r * mix(heroWarp.b, 1.0, heroSpec.g)'} * mix(vec3(1.0), heroBase, max(heroSpec.b, heroSpec.g));` : ''}
 ${m.unlit ? 'outgoingLight = heroBase + heroDetailColor * heroDetail;' : DETAIL_OUT[m.detailMode] ?? 'outgoingLight = mix(heroLit, heroAlbedo, clamp(heroDetailTex.a * heroDetail + heroMasks.g, 0.0, 1.0));'}
+${bakedGlow ? `vec3 paintedGlow = ${m.additive ? 'outgoingLight' : 'heroAlbedo'};
+outgoingLight += (max(paintedGlow.r, max(paintedGlow.g, paintedGlow.b)) * uGlowTint - paintedGlow) * uGlowMix * ${m.additive ? '1.0' : 'heroMasks.g'};` : ''}
 #include <opaque_fragment>`);
   };
   return material;

@@ -10,8 +10,8 @@ export interface SceneManifest {
  [key: string]: unknown;
 }
 export interface EffectPacket { root: string; definitions: Record<string,Record<string,Json>>; textures?: Record<string,unknown>; snapshots?: Record<string,unknown>; materials?: Record<string,unknown>; models?: Record<string,unknown>; missing?: string[] }
-export interface EffectEntry { packet: EffectPacket; itemId?: string; scope?: string; effectId?: string; color?: number[] }
-export interface EffectPatch { systems: Record<string,Record<string,Json>>; textures: Record<string,TextureInfo>; snapshots: Record<string,unknown>; effects: { system:string; owner:string; color:number[]|null }[]; fxModels: Record<string,unknown>; materials: Record<string,unknown>; warnings: string[] }
+export interface EffectEntry { namespace?:string; packet: EffectPacket; itemId?: string; scope?: string; effectId?: string; color?: number[] }
+export interface EffectPatch { sourcePaths: Record<string,string>; systems: Record<string,Record<string,Json>>; textures: Record<string,TextureInfo>; snapshots: Record<string,unknown>; effects: { system:string; owner:string; color:number[]|null }[]; fxModels: Record<string,unknown>; materials: Record<string,unknown>; warnings: string[] }
 export class SceneSource {
  constructor(options?: { createUrl?: (blob:Blob)=>string; revokeUrl?: (url:string)=>void });
  manifest: SceneManifest; files: Map<string,string>; owners: Map<string,string>; urls: Set<string>; warnings: string[];
