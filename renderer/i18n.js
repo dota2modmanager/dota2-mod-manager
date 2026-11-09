@@ -251,8 +251,8 @@ const EN = {
   'Ничего не найдено. Очисти поиск': 'Nothing found. Clear the search',
   'Изменено {0} из {1}': 'Changed {0} of {1}',
   'Надето {0} из {1} {2}': 'Equipped {0} of {1} {2}',
-  'Набор надевается без эффектов. Чтобы добавить эффект, открой деталь.':
-    'A set goes on without effects. Open a piece to add one.',
+  'Набор надевается без эффектов и занимает только свои слоты. Чтобы добавить эффект или сменить стиль одной детали, открой её.':
+    'A set goes on without effects and takes its own slots only. To add an effect or change the style of one piece, open it.',
   'Эффект добавляется к предмету: сначала выбери его выше.': 'An effect goes on an item: choose one above first.',
   'Конструктор предметов': 'Item builder', 'Арканы в конструкторе': 'Arcanas in the item builder', 'Идеи 3D-просмотра и сборки файлами': 'Ideas behind the 3D preview and file builds',
   'конструктор предметов': 'item builder',

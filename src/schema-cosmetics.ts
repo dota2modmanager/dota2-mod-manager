@@ -18,7 +18,11 @@ import type { ItemSet } from './item-builder.ts';
 import { displaced, isSelectorSlot } from './item-builder-personas.ts';
 import { offeredUnusual } from './item-builder-unusual.ts';
 import { offeredKinetic } from './item-builder-kinetic.ts';
-import { fxSlotOf, namedFxSlots } from './item-builder-ability-fx.ts';
+import { namedFxSlots } from './item-builder-ability-fx.ts';
+import { hasBase } from './arcana-bases.ts';
+
+/** A persona's own piece: weapon_persona_1 (src/item-builder-personas.ts). */
+const PERSONA_PIECE = /_persona_\d+$/;
 
 /** What the window is told about the free looks and the item builder (cosmeticSlots). */
 /** `heroAttrs`: each hero's main attribute by its id without the prefix, for the order of the game's hero grid. */
@@ -179,10 +183,12 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
    * already keeps the ones it has. With write false the writing is the caller's, which builds in
    * the background (src/ipc-game.ts).
    *
-   * The set is the whole hero: every other pick of his goes off, kept in My mods to be put back
-   * on. An arcana picked in his hero base before stayed on, and its base put the arcana's body
-   * under the hero's own path, so Earthshaker wore the Gar Beast on Planetfall's body
-   * (J0nathan550, 2026-10-31). So do a persona and its pieces, which he would wear in its place.
+   * The set takes its own slots, as the game's loadout does, and the hero's other picks stay on:
+   * the set going on as the whole hero took Queen of Pain's arcana off her back with the Bloodfeather
+   * Finery, which is a shoulder and legs (issue #577). Two kinds still go off, kept in My mods to be
+   * put back on. An arcana with a base (src/arcana-bases.ts) puts its body under the hero's own path,
+   * so Earthshaker wore the Gar Beast on Planetfall's body (J0nathan550, 2026-10-31). A persona and
+   * its pieces would be worn in the set's place.
    *
    * `style` is the look chosen in the set's window (issue #526): a piece that has it wears it, one
    * with fewer looks wears its first.
@@ -191,8 +197,12 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
     const set = itemBuilder.itemSets(vanilla()).find((x) => x.id === String(setId));
     if (!set) throw new Error(t('Набор не найден'));
     const fits = set.pieces.flatMap((p) => (p.fits && p.slot ? [p] : []));
-    // a set leaves the ability effects slots as they are, as the game's loadout does
-    offTheHero(`item:${set.heroIds.join('+')}:`, new Set(fits.map((p) => p.slot)), true);
+    const hero = `item:${set.heroIds.join('+')}:`;
+    for (const r of library.list()) {
+      if (r.categoryId !== 'cosmetic' || r.enabled === false || !r.slot?.startsWith(hero)) continue;
+      const persona = isSelectorSlot(r.slot) || PERSONA_PIECE.test(r.slot);
+      if (persona || (r.itemId && hasBase(String(r.itemId)))) library.setEnabled(r.id, false);
+    }
     const n = Math.max(0, Math.floor(Number(style) || 0));
     for (const p of fits) {
       const live = cosmeticRecordFor(p.slot);
@@ -203,10 +213,10 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
     return { applied: fits.length, pieces: set.pieces.length };
   }
 
-  /** The hero's picks off but those on the slots named, and with `keepFx` those in his ability effects slots: kept in My mods, to be put back on. */
-  function offTheHero(hero: string, keep: Set<string>, keepFx = false): void {
+  /** The hero's picks off but those on the slots named: kept in My mods, to be put back on. */
+  function offTheHero(hero: string, keep: Set<string>): void {
     for (const r of library.list()) {
-      if (r.categoryId === 'cosmetic' && r.enabled !== false && r.slot?.startsWith(hero) && !keep.has(r.slot) && !(keepFx && fxSlotOf(r.slot))) library.setEnabled(r.id, false);
+      if (r.categoryId === 'cosmetic' && r.enabled !== false && r.slot?.startsWith(hero) && !keep.has(r.slot)) library.setEnabled(r.id, false);
     }
   }
 
