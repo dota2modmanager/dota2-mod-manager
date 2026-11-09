@@ -27,6 +27,7 @@ import { styleOf } from './item-builder-styles.ts';
 import { basesHereSteps, withoutBaseFiles, type ReadyBase } from './arcana-bases.ts';
 import { ownModelsWin, pickModels, refitsOf, type PickModels } from './item-builder-refits.ts';
 import { isSelectorSlot, leftOut, personaAssets, personaRecords, personaScaleOf, personaScales, personasOn, type BuildRecord } from './item-builder-personas.ts';
+import { withoutOthersEffects } from './persona-base-effects.ts';
 import { scaledModels } from './model-scale.ts';
 import { createColoredBases, windowColor } from './arcana-base-color.ts';
 import { lookPatch } from './courier-models.ts';
@@ -149,7 +150,8 @@ export function createTableBuild({ library, bases, log }: {
     // to 20 MB each), which held the window for most of a second after every start (issue #286)
     yield* listItemsSteps(vanillaText);
     // Terrorblade's in the arcana window's colour while its record is on (src/arcana-base-color.ts)
-    const ready = colored(bases ? yield* basesHereSteps(picks(), bases, log) : [], windowColor(library.list()));
+    // the persona bases without another item's effects (src/persona-base-effects.ts)
+    const ready = withoutOthersEffects(vanillaText, colored(bases ? yield* basesHereSteps(picks(), bases, log) : [], windowColor(library.list())));
     const out: schema.SchemaPatch[] = [];
     const sounds: SoundSwap[] = [];
     const voices: VoiceCue[] = [];
@@ -200,7 +202,8 @@ export function createTableBuild({ library, bases, log }: {
             owned.push({ patch, own: pick.own });
             sounds.push(...pick.sounds);
             voices.push(...pick.voices);
-            portraits.push(...pick.portraits);
+            // a persona's body bigger than Valve's is framed as much further off (src/item-portraits.ts)
+            portraits.push(...pick.portraits.map((p) => (scales.get(p.hero.replace(/^npc_dota_hero_/, '')) ? { ...p, scale: scales.get(p.hero.replace(/^npc_dota_hero_/, '')) } : p)));
             sprites.push(...pick.sprites);
             if (!worn(rec)) for (const swap of [...pick.sounds, ...pick.voices, ...pick.portraits, ...pick.sprites]) fromPersona.add(swap);
             if (pick.kinetic?.length) for (const hero of pick.heroes ?? []) { const on = gems.get(hero) ?? new Set<string>(); gems.set(hero, on); for (const m of pick.kinetic) on.add(m); }

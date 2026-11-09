@@ -232,3 +232,32 @@ test('without the table a persona whose base is here wears its own items, not th
     assert.equal(pak.find((e) => entryPath(e) === 'models/heroes/pudge/pudge.vmdl_c')?.data.toString(), 'the toy body');
   } finally { fs.rmSync(game, { recursive: true, force: true }); }
 });
+
+test("a persona's base keeps its persona's own effects and loses another item's", async () => {
+  // the Acolyte's base carried Magus Apex's eyes as Invoker's orbs, over the persona's own
+  const { withoutOthersEffects } = await import('../src/persona-base-effects.ts');
+  const base = ARCANA_BASES.find((b) => b.id === 'the_toy_butcher')!;
+  const ready = [readyBase(base, [
+    entryAt('models/heroes/pudge/pudge.vmdl_c', Buffer.from('body')),
+    entryAt('particles/econ/items/pudge/pudge_immortal/hook_glow.vpcf_c', Buffer.from('an immortal\'s')),
+    entryAt('particles/units/heroes/hero_pudge/pudge_meathook.vpcf_c', Buffer.from('child particles/econ/items/pudge/pudge_immortal/hook_glow.vpcf')),
+    entryAt('particles/units/heroes/hero_pudge/pudge_rot.vpcf_c', Buffer.from('its own rot')),
+  ])];
+  const kept = withoutOthersEffects(TABLE, ready)[0];
+  assert.deepEqual(kept.entries.map((e) => entryPath(e)).sort(), ['models/heroes/pudge/pudge.vmdl_c', 'particles/units/heroes/hero_pudge/pudge_rot.vpcf_c']);
+  assert.equal(kept.paths.has('particles/units/heroes/hero_pudge/pudge_meathook.vpcf_c'), false, 'the plain path is the persona\'s copy again');
+  const own = [readyBase(base, [entryAt('particles/econ/items/pudge_cute/toy/glow.vpcf_c', Buffer.from('its own'))])];
+  assert.equal(withoutOthersEffects(TABLE.replace('"particles/units/heroes/hero_pudge_cute/pudge_cute_meathook.vpcf"', '"particles/econ/items/pudge_cute/toy/glow.vpcf"'), own)[0].entries.length, 1, 'a folder the persona names stays');
+});
+
+test("a persona's summon has a slot of its own, under the plain hero's summon", () => {
+  const extra = [
+    item('8001', "Pudge's Pet", 'default_item', 'summon'),
+    item('8002', "Pudge Persona Pet", 'default_item', 'summon_persona_1'),
+    item('8003', 'Toy Pet', 'wearable', 'summon_persona_1'),
+  ].join('\n');
+  const table = TABLE.replace(/\n\t\}\n\}\n$/, `\n${extra}\n\t}\n}\n`);
+  const part = personaLayouts(table).get('pudge')!.parts.find((p) => p.slot === 'summon_persona_1');
+  assert.deepEqual([part?.host.id, part?.given?.id, part?.options.map((o) => o.id)], ['8001', '8002', ['8003']]);
+  assert.ok(!personaLayouts(TABLE).get('pudge')!.parts.some((p) => p.slot.startsWith('summon')), 'none where the hero has no summon');
+});

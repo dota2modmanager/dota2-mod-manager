@@ -171,6 +171,7 @@ the code, not in this page.
 | [`src/patcher-gameinfo.ts`](#srcpatcher-gameinfots) | The two gameinfo files (src/patcher.ts explains the patch): the SearchPaths block read out of |
 | [`src/patcher-signatures.ts`](#srcpatcher-signaturests) | The signature list, dota.signatures (src/patcher.ts explains the patch): the hashes the client |
 | [`src/patcher.ts`](#srcpatcherts) | Search-path patch: registers an extra content folder ahead of the game's own, which |
+| [`src/persona-base-effects.ts`](#srcpersona-base-effectsts) | What of a persona's base the build takes: its persona's own effects, not another item's. |
 | [`src/png-strip.ts`](#srcpng-stripts) | A cube map's six faces as one strip, for the 3D preview's hero shader, which reads a cube from a |
 | [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
 | [`src/presence-status.ts`](#srcpresence-statusts) | What the user's Discord profile says while the app is open: which screen they are on, and how |
@@ -5533,10 +5534,10 @@ A sprite of the game's sprite sheets shown in place of another (the minimap's he
 ### `PortraitSwap`
 
 ```ts
-export interface PortraitSwap { model: string; hero: string }
+export interface PortraitSwap { model: string; hero: string; scale?: number }
 ```
 
-A hero model whose HUD portrait settings go under the hero's own model's path.
+scale: how much bigger the body under the plain path is than the model whose settings these are
 
 ### `ItemAssets`
 
@@ -6783,10 +6784,20 @@ Both files are written whole, as the game's with those entries changed, and only
 changed. The approach is BetterSource2Viewer's character export (ExportPortraits,
 CharacterIcons.ReplaceSprites; MIT). The pictures themselves are plain copies (item-builder-assets.ts).
 
+### `scaledPortrait`
+
+```ts
+export function scaledPortrait(block: string, scale: number): string
+```
+
+A portrait block framed for a body `scale` times bigger: the camera and the light stand as much
+further from the origin, at the same angles and field of view. The young Invoker's body is 1.351
+times Valve's (src/arcana-base-store.ts), and the camera Valve set for its own was too close.
+
 ### `withPortraits`
 
 ```ts
-export function withPortraits(text: string, swaps: { from: string; to: string }[]): string
+export function withPortraits(text: string, swaps: { from: string; to: string; scale?: number }[]): string
 ```
 
 The portrait settings with each arcana's block written under the model it stands in for.
@@ -9877,6 +9888,24 @@ leftover from an earlier one. What goes back in place of the patched file is ver
 against that list rather than taken on faith: this is the moment the game becomes vanilla
 again, and a copy that is even one byte off leaves the client refusing to matchmake with
 no mod in sight to blame.
+
+## src/persona-base-effects.ts
+
+What of a persona's base the build takes: its persona's own effects, not another item's.
+Kept apart from src/item-builder-personas.ts, which says how a persona is worn.
+
+### `withoutOthersEffects`
+
+```ts
+export function withoutOthersEffects(text: string, ready: ReadyBase[]): ReadyBase[]
+```
+
+A persona's base without another item's effects: the Acolyte's carries Magus Apex's eyes as its
+orbs and its Sun Strike, at the plain hero's paths, and they won over the persona's own orbs. An
+effect folder under particles/econ/items/ that none of the persona's own items names is another
+item's: its files go, and so does a plain path's file that leads into it, where the persona's
+own copy or the game's then stands. The other bases' folders are their persona's own (axe_carnival,
+dk_persona, mirana_persona).
 
 ## src/png-strip.ts
 
